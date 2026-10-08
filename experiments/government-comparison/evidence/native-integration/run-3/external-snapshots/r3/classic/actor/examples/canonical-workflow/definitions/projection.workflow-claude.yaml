@@ -1,0 +1,46 @@
+apiVersion: markitect.foundation/v1
+kind: Projection
+metadata:
+  namespace: example
+  name: workflow-claude
+purpose: Select the canonical workflow meaning for an independent claude representation.
+spec:
+  source:
+    definitions:
+      - apiVersion: workflow.example.org/v1
+        kind: Rule
+        namespace: example
+        name: retain-source-authority
+      - apiVersion: workflow.example.org/v1
+        kind: Process
+        namespace: example
+        name: review-workflow-change
+      - apiVersion: workflow.example.org/v1
+        kind: Responsibility
+        namespace: example
+        name: workflow-owner
+      - apiVersion: workflow.example.org/v1
+        kind: Gate
+        namespace: example
+        name: source-review
+  representation: claude
+  target:
+    repository: .
+    path: assistant/
+  policies:
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: example
+      name: rule-to-claude
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: example
+      name: process-to-claude
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: example
+      name: responsibility-to-claude
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: example
+      name: gate-to-claude

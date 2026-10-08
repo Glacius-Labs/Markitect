@@ -1,0 +1,674 @@
+version: 0.12.0
+revision: c507172b24da9005904422c03cc3d66a2b5efcec
+provisional: false
+entry: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+digest: sha256:50e919bced9d02c70eaf133920e7399dd90fecd17831f3a855caa9b1db012bf8
+snapshotDigest: 65fe599fdad205a0a9b63abcbbc0ca70e75a76210d1149e5098cb049dc912f8e
+toolDigest: sha256:6ead68bd199eef020077908d21776dcfd6a438bd54bf7af1ddabd8490770cf93
+inputs:
+    - key: /Project/mymeetings-adoption-pilot
+      path: markitect.yaml
+      hash: sha256:dcb07a04dd812457cd489b0c2155d1b0112f46244ce0c1b80308945300a15d3d
+      reason: project policy and bindings
+      resource:
+        apiVersion: markitect.example.org/v1alpha1
+        kind: Project
+        metadata:
+            name: mymeetings-adoption-pilot
+        spec:
+            targets:
+                - markdown
+                - codex
+            areas:
+                - name: architecture
+                  path: resources
+                  imports:
+                    - source
+                    - narrative
+                - name: engineering
+                  path: agent-guidance
+                  imports:
+                    - architecture
+                - name: source
+                  path: src
+                - name: narrative
+                  path: docs
+            checks:
+                - name: module-project-references
+                  run:
+                    - pwsh
+                    - -NoProfile
+                    - -File
+                    - scripts/check-module-project-references.ps1
+            domains:
+                - package:mymeetings-architecture/domains/architecture.yaml
+            packages:
+                - name: mymeetings-architecture
+                  version: 2.0.0
+                  source: git:e0ae3c5181323e0d2a03312524010cc817652330
+                  archive: .markitect/packages/mymeetings-architecture-2.0.0.zip
+                  sha256: 0ed97c9f0b21e10b5e2a0ff232bdb910bd468ac04f84441ae24d5b7cefb2b504
+    - key: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+      path: resources/feature-meeting-attendance.yaml
+      hash: sha256:0561d752aea2c5c82e2b8f18ce072089fd6530827d53d5a079526864192311aa
+      reason: required by architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee via usesFeature
+      via:
+        - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+          relation: usesFeature
+          domainApiVersion: architecture.mymeetings.example/v1alpha1
+          path: resources/usecase-add-meeting-attendee.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Feature
+        metadata:
+            name: meeting-attendance
+            namespace: architecture
+        spec:
+            documents:
+                - apiVersion: architecture.mymeetings.example/v1alpha1
+                  kind: Narrative
+                  name: cqrs-read-model-decision
+                  namespace: architecture
+                - apiVersion: architecture.mymeetings.example/v1alpha1
+                  kind: Narrative
+                  name: meeting-attendee-view
+                  namespace: architecture
+                - apiVersion: architecture.mymeetings.example/v1alpha1
+                  kind: Narrative
+                  name: architecture-test-decision
+                  namespace: architecture
+            module:
+                apiVersion: architecture.mymeetings.example/v1alpha1
+                kind: Module
+                name: meetings
+                namespace: architecture
+            summary: Read and change meeting attendee membership.
+    - key: architecture/architecture.mymeetings.example/v1alpha1/Handler/add-meeting-attendee
+      path: resources/handler-add-meeting-attendee.yaml
+      hash: sha256:0c53616c51fb164e96f6a574ab28003f6963b68b00967788ce6baaf3ceb0becb
+      reason: required by architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee via hasHandler
+      via:
+        - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+          relation: hasHandler
+          domainApiVersion: architecture.mymeetings.example/v1alpha1
+          path: resources/usecase-add-meeting-attendee.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        metadata:
+            name: add-meeting-attendee
+            namespace: architecture
+        spec:
+            common: []
+            sourceFiles:
+                - src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandHandler.cs
+            summary: Command handler that adds a member as attendee.
+    - key: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      path: resources/module-meetings.yaml
+      hash: sha256:9a4e2ab5611609fc6e713b8a0c874c42e76942fc7448b72256506c6e7477f75f
+      reason: required by architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee via belongsToModule
+      via:
+        - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+          relation: belongsToModule
+          domainApiVersion: architecture.mymeetings.example/v1alpha1
+          path: resources/feature-meeting-attendance.yaml
+          line: 1
+        - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+          relation: belongsToModule
+          domainApiVersion: architecture.mymeetings.example/v1alpha1
+          path: resources/usecase-add-meeting-attendee.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Module
+        metadata:
+            name: meetings
+            namespace: architecture
+        spec:
+            dependsOn:
+                - apiVersion: architecture.mymeetings.example/v1alpha1
+                  kind: Core
+                  name: core
+                  namespace: architecture
+                - apiVersion: architecture.mymeetings.example/v1alpha1
+                  kind: Interface
+                  name: administration-events
+                  namespace: architecture
+                - apiVersion: architecture.mymeetings.example/v1alpha1
+                  kind: Interface
+                  name: payments-events
+                  namespace: architecture
+                - apiVersion: architecture.mymeetings.example/v1alpha1
+                  kind: Interface
+                  name: registrations-events
+                  namespace: architecture
+                - apiVersion: architecture.mymeetings.example/v1alpha1
+                  kind: Interface
+                  name: user-access-events
+                  namespace: architecture
+            projectFiles:
+                - src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj
+                - src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj
+                - src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj
+            purpose: Meeting groups, meetings, attendance, comments and membership.
+    - key: architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision
+      path: resources/narrative-architecture-test-decision.yaml
+      hash: sha256:da54a85673409c11d60d584394ba93fb2f7c54036eed5393942848154c08f449
+      reason: required by architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance via documents
+      via:
+        - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+          relation: documents
+          domainApiVersion: architecture.mymeetings.example/v1alpha1
+          path: resources/feature-meeting-attendance.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Narrative
+        metadata:
+            name: architecture-test-decision
+            namespace: architecture
+        spec:
+            owner:
+                apiVersion: architecture.mymeetings.example/v1alpha1
+                kind: Module
+                name: meetings
+                namespace: architecture
+            sourceFiles:
+                - docs/architecture-decision-log/0017-implement-archictecture-tests.md
+            summary: Human-owned ADR records project-owned architecture tests for rules the compiler cannot enforce.
+    - key: architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision
+      path: resources/narrative-cqrs-read-model-decision.yaml
+      hash: sha256:4ac9d7ba82287c9e3ec72d8540f32d0096e1d5f31ab4e02f8d4c5031321de989
+      reason: required by architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance via documents
+      via:
+        - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+          relation: documents
+          domainApiVersion: architecture.mymeetings.example/v1alpha1
+          path: resources/feature-meeting-attendance.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Narrative
+        metadata:
+            name: cqrs-read-model-decision
+            namespace: architecture
+        spec:
+            owner:
+                apiVersion: architecture.mymeetings.example/v1alpha1
+                kind: Module
+                name: meetings
+                namespace: architecture
+            sourceFiles:
+                - docs/architecture-decision-log/0007-use-cqrs-architectural-style.md
+            summary: Human-owned ADR records the separate relational read model and write aggregate model.
+    - key: architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view
+      path: resources/narrative-meeting-attendee-view.yaml
+      hash: sha256:3c8ed59f138b6e6c05db819ef9be3fdf096267d70c694a360f678896f0907952
+      reason: required by architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance via documents
+      via:
+        - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+          relation: documents
+          domainApiVersion: architecture.mymeetings.example/v1alpha1
+          path: resources/feature-meeting-attendance.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Narrative
+        metadata:
+            name: meeting-attendee-view
+            namespace: architecture
+        spec:
+            owner:
+                apiVersion: architecture.mymeetings.example/v1alpha1
+                kind: Module
+                name: meetings
+                namespace: architecture
+            sourceFiles:
+                - src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql
+            summary: Human-owned SQL view defines one row per attendee joined to member display data.
+    - key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      path: resources/usecase-add-meeting-attendee.yaml
+      hash: sha256:0003af1f28b953946f46f1c11772829a0d80e97918e5099a1f18248fa2335c91
+      reason: entry
+      resource:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        metadata:
+            name: add-meeting-attendee
+            namespace: architecture
+            labels:
+                feature-ownership: required
+                validation: required
+        spec:
+            aggregates:
+                - apiVersion: architecture.mymeetings.example/v1alpha1
+                  kind: Aggregate
+                  name: meeting
+                  namespace: architecture
+            feature:
+                apiVersion: architecture.mymeetings.example/v1alpha1
+                kind: Feature
+                name: meeting-attendance
+                namespace: architecture
+            handler:
+                apiVersion: architecture.mymeetings.example/v1alpha1
+                kind: Handler
+                name: add-meeting-attendee
+                namespace: architecture
+            intent: Command
+            module:
+                apiVersion: architecture.mymeetings.example/v1alpha1
+                kind: Module
+                name: meetings
+                namespace: architecture
+            sourceFiles:
+                - src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommand.cs
+            summary: Add a member to a Meeting as an attendee.
+            validators:
+                - apiVersion: architecture.mymeetings.example/v1alpha1
+                  kind: Validator
+                  name: add-meeting-attendee
+                  namespace: architecture
+    - key: architecture/architecture.mymeetings.example/v1alpha1/Validator/add-meeting-attendee
+      path: resources/validator-add-meeting-attendee.yaml
+      hash: sha256:80c495c8cdaff973ba614f0d701bb1d2bdc1eeba56372825d072a2b6bf379dff
+      reason: required by architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee via hasValidator
+      via:
+        - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+          relation: hasValidator
+          domainApiVersion: architecture.mymeetings.example/v1alpha1
+          path: resources/usecase-add-meeting-attendee.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Validator
+        metadata:
+            name: add-meeting-attendee
+            namespace: architecture
+        spec:
+            sourceFiles:
+                - src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs
+            summary: FluentValidation rule requiring an add-attendee command MeetingId.
+    - key: file:docs/architecture-decision-log/0007-use-cqrs-architectural-style.md
+      path: docs/architecture-decision-log/0007-use-cqrs-architectural-style.md
+      hash: sha256:499e8ef95b0cbec811d1e8897a3baea3de8b1ec29579bec43f01b5ea8ae9f25d
+      reason: declared input of architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision
+      text: |-
+        # 7. Use CQRS architectural style
+
+        Date: 2019-07-01
+
+        Log date: 2019-11-04
+
+        ## Status
+
+        Accepted
+
+        ## Context
+
+        Our application should handle 2 types of requests - reading and writing. </br>
+
+        For now, it looks like:</br>
+
+        - for reading, we need data model in relational form to return data in tabular/flattened way (tables, lists, dictionaries).
+        - for writing, we need to have a graph of objects to perform more sophisticated work like validations, business rules checks, calculations.
+
+        ## Decision
+
+        We applied the CQRS architectural style/pattern for each business module. Each module will have a separate model for reading and writing. For now, it will be the simplest CQRS implementation when the read model is immediate consistent. This kind of separation is useful even in simple modules like User Access.
+
+        ## Consequences
+        - Façade method of each module should take as parameter only Command or Query object
+        - We have optimized models for writes and reads (SRP principle).
+        - We can process Commands and Queries in different ways
+        - As Command or Query is an object, we can easily serialize them and save/log them.
+    - key: file:docs/architecture-decision-log/0017-implement-archictecture-tests.md
+      path: docs/architecture-decision-log/0017-implement-archictecture-tests.md
+      hash: sha256:f23ffbec091f4421ee4e1dea370905bc982ccae240cae04f39f3f8bb7dc07407
+      reason: declared input of architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision
+      text: |-
+        # 17. Implement Architecture Tests
+
+        Date: 2019-11-16
+
+        ## Status
+
+        Accepted
+
+        ## Context
+
+        In some cases it is not possible to enforce the application architecture, design or established conventions using compiler (compile-time). For this reason, code implementations can diverge from the original design and architecture. We want to minimize this behavior, not only by code review.
+
+        ## Decision
+
+        We decided to implement Unit Tests for our architecture. </br>
+        We will implement tests for each module separately and one tests library for general architecture. We will use _NetArchTest_ library which was created exactly for this purpose.
+
+        ## Consequences
+        - We will have quick feedback about breaking the design rules
+        - Unit tests for architecture are documenting our architecture to some level
+        - We will have dependency to external library
+        - We need to implement some _"reflection-based"_ code to check some rules, because library does not provide everything what we need
+        - This kind of tests are a bit slower than normal unit tests (because of reflection)
+        - More tests to maintain
+    - key: file:src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql
+      path: src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql
+      hash: sha256:24d4295e8aa931b0ea09b069b8c1852cddd74eeaf49ac017a0e15be9b0a42426
+      reason: declared input of architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view
+      text: "\uFEFF\x43\x52\x45\x41\x54\x45\x20\x56\x49\x45\x57\x20\x5B\x6D\x65\x65\x74\x69\x6E\x67\x73\x5D\x2E\x5B\x76\x5F\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x73\x5D\n\x41\x53\n\x53\x45\x4C\x45\x43\x54\n\x20\x20\x20\x20\x5B\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x5D\x2E\x5B\x4D\x65\x65\x74\x69\x6E\x67\x49\x64\x5D\x2C\n\x20\x20\x20\x20\x5B\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x5D\x2E\x5B\x41\x74\x74\x65\x6E\x64\x65\x65\x49\x64\x5D\x2C\n\x20\x20\x20\x20\x5B\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x5D\x2E\x5B\x44\x65\x63\x69\x73\x69\x6F\x6E\x44\x61\x74\x65\x5D\x2C\n\x20\x20\x20\x20\x5B\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x5D\x2E\x5B\x52\x6F\x6C\x65\x43\x6F\x64\x65\x5D\x2C\n\x20\x20\x20\x20\x5B\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x5D\x2E\x5B\x47\x75\x65\x73\x74\x73\x4E\x75\x6D\x62\x65\x72\x5D\x2C\n\n\x20\x20\x20\x20\x5B\x4D\x65\x6D\x62\x65\x72\x5D\x2E\x5B\x46\x69\x72\x73\x74\x4E\x61\x6D\x65\x5D\x2C\n\x20\x20\x20\x20\x5B\x4D\x65\x6D\x62\x65\x72\x5D\x2E\x5B\x4C\x61\x73\x74\x4E\x61\x6D\x65\x5D\n\x46\x52\x4F\x4D\x20\x5B\x6D\x65\x65\x74\x69\x6E\x67\x73\x5D\x2E\x5B\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x73\x5D\x20\x41\x53\x20\x5B\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x5D\n\x20\x20\x20\x20\x49\x4E\x4E\x45\x52\x20\x4A\x4F\x49\x4E\x20\x5B\x6D\x65\x65\x74\x69\x6E\x67\x73\x5D\x2E\x5B\x4D\x65\x6D\x62\x65\x72\x73\x5D\x20\x41\x53\x20\x5B\x4D\x65\x6D\x62\x65\x72\x5D\n\x20\x20\x20\x20\x20\x20\x20\x20\x4F\x4E\x20\x5B\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x5D\x2E\x5B\x41\x74\x74\x65\x6E\x64\x65\x65\x49\x64\x5D\x20\x3D\x20\x5B\x4D\x65\x6D\x62\x65\x72\x5D\x2E\x5B\x49\x64\x5D\n\x47\x4F"
+    - key: file:src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj
+      path: src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj
+      hash: sha256:f5c6a67a30c5cf7804cfbda1f1094ce6f3a26d4be15bfd56f010c0796ad834f2
+      reason: declared input of architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      text: "\uFEFF\x3C\x50\x72\x6F\x6A\x65\x63\x74\x20\x53\x64\x6B\x3D\"\x4D\x69\x63\x72\x6F\x73\x6F\x66\x74\x2E\x4E\x45\x54\x2E\x53\x64\x6B\"\x3E\n\x20\x20\x3C\x49\x74\x65\x6D\x47\x72\x6F\x75\x70\x3E\n\x20\x20\x20\x20\x3C\x50\x72\x6F\x6A\x65\x63\x74\x52\x65\x66\x65\x72\x65\x6E\x63\x65\x20\x49\x6E\x63\x6C\x75\x64\x65\x3D\"\x2E\x2E\\\x2E\x2E\\\x41\x64\x6D\x69\x6E\x69\x73\x74\x72\x61\x74\x69\x6F\x6E\\\x49\x6E\x74\x65\x67\x72\x61\x74\x69\x6F\x6E\x45\x76\x65\x6E\x74\x73\\\x43\x6F\x6D\x70\x61\x6E\x79\x4E\x61\x6D\x65\x2E\x4D\x79\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x4D\x6F\x64\x75\x6C\x65\x73\x2E\x41\x64\x6D\x69\x6E\x69\x73\x74\x72\x61\x74\x69\x6F\x6E\x2E\x49\x6E\x74\x65\x67\x72\x61\x74\x69\x6F\x6E\x45\x76\x65\x6E\x74\x73\x2E\x63\x73\x70\x72\x6F\x6A\"\x20\x2F\x3E\n\x20\x20\x20\x20\x3C\x50\x72\x6F\x6A\x65\x63\x74\x52\x65\x66\x65\x72\x65\x6E\x63\x65\x20\x49\x6E\x63\x6C\x75\x64\x65\x3D\"\x2E\x2E\\\x2E\x2E\\\x50\x61\x79\x6D\x65\x6E\x74\x73\\\x49\x6E\x74\x65\x67\x72\x61\x74\x69\x6F\x6E\x45\x76\x65\x6E\x74\x73\\\x43\x6F\x6D\x70\x61\x6E\x79\x4E\x61\x6D\x65\x2E\x4D\x79\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x4D\x6F\x64\x75\x6C\x65\x73\x2E\x50\x61\x79\x6D\x65\x6E\x74\x73\x2E\x49\x6E\x74\x65\x67\x72\x61\x74\x69\x6F\x6E\x45\x76\x65\x6E\x74\x73\x2E\x63\x73\x70\x72\x6F\x6A\"\x2F\x3E\n\x20\x20\x20\x20\x3C\x50\x72\x6F\x6A\x65\x63\x74\x52\x65\x66\x65\x72\x65\x6E\x63\x65\x20\x49\x6E\x63\x6C\x75\x64\x65\x3D\"\x2E\x2E\\\x2E\x2E\\\x52\x65\x67\x69\x73\x74\x72\x61\x74\x69\x6F\x6E\x73\\\x49\x6E\x74\x65\x67\x72\x61\x74\x69\x6F\x6E\x45\x76\x65\x6E\x74\x73\\\x43\x6F\x6D\x70\x61\x6E\x79\x4E\x61\x6D\x65\x2E\x4D\x79\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x4D\x6F\x64\x75\x6C\x65\x73\x2E\x52\x65\x67\x69\x73\x74\x72\x61\x74\x69\x6F\x6E\x73\x2E\x49\x6E\x74\x65\x67\x72\x61\x74\x69\x6F\x6E\x45\x76\x65\x6E\x74\x73\x2E\x63\x73\x70\x72\x6F\x6A\"\x20\x2F\x3E\n\x20\x20\x20\x20\x3C\x50\x72\x6F\x6A\x65\x63\x74\x52\x65\x66\x65\x72\x65\x6E\x63\x65\x20\x49\x6E\x63\x6C\x75\x64\x65\x3D\"\x2E\x2E\\\x2E\x2E\\\x55\x73\x65\x72\x41\x63\x63\x65\x73\x73\\\x49\x6E\x74\x65\x67\x72\x61\x74\x69\x6F\x6E\x45\x76\x65\x6E\x74\x73\\\x43\x6F\x6D\x70\x61\x6E\x79\x4E\x61\x6D\x65\x2E\x4D\x79\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x4D\x6F\x64\x75\x6C\x65\x73\x2E\x55\x73\x65\x72\x41\x63\x63\x65\x73\x73\x2E\x49\x6E\x74\x65\x67\x72\x61\x74\x69\x6F\x6E\x45\x76\x65\x6E\x74\x73\x2E\x63\x73\x70\x72\x6F\x6A\"\x20\x2F\x3E\n\x20\x20\x3C\x2F\x49\x74\x65\x6D\x47\x72\x6F\x75\x70\x3E\n\x3C\x2F\x50\x72\x6F\x6A\x65\x63\x74\x3E\n"
+    - key: file:src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommand.cs
+      path: src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommand.cs
+      hash: sha256:4d0d909caafcdc64fb3016b61ba6eb633866af109a168f6da47a2f4e9e69fbed
+      reason: declared input of architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      text: "\uFEFF\x75\x73\x69\x6E\x67\x20\x43\x6F\x6D\x70\x61\x6E\x79\x4E\x61\x6D\x65\x2E\x4D\x79\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x4D\x6F\x64\x75\x6C\x65\x73\x2E\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x41\x70\x70\x6C\x69\x63\x61\x74\x69\x6F\x6E\x2E\x43\x6F\x6E\x74\x72\x61\x63\x74\x73\x3B\n\n\x6E\x61\x6D\x65\x73\x70\x61\x63\x65\x20\x43\x6F\x6D\x70\x61\x6E\x79\x4E\x61\x6D\x65\x2E\x4D\x79\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x4D\x6F\x64\x75\x6C\x65\x73\x2E\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x41\x70\x70\x6C\x69\x63\x61\x74\x69\x6F\x6E\x2E\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x41\x64\x64\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\n\x7B\n\x20\x20\x20\x20\x70\x75\x62\x6C\x69\x63\x20\x63\x6C\x61\x73\x73\x20\x41\x64\x64\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x43\x6F\x6D\x6D\x61\x6E\x64\x20\x3A\x20\x43\x6F\x6D\x6D\x61\x6E\x64\x42\x61\x73\x65\n\x20\x20\x20\x20\x7B\n\x20\x20\x20\x20\x20\x20\x20\x20\x70\x75\x62\x6C\x69\x63\x20\x47\x75\x69\x64\x20\x4D\x65\x65\x74\x69\x6E\x67\x49\x64\x20\x7B\x20\x67\x65\x74\x3B\x20\x7D\n\n\x20\x20\x20\x20\x20\x20\x20\x20\x70\x75\x62\x6C\x69\x63\x20\x69\x6E\x74\x20\x47\x75\x65\x73\x74\x73\x4E\x75\x6D\x62\x65\x72\x20\x7B\x20\x67\x65\x74\x3B\x20\x7D\n\n\x20\x20\x20\x20\x20\x20\x20\x20\x70\x75\x62\x6C\x69\x63\x20\x41\x64\x64\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x43\x6F\x6D\x6D\x61\x6E\x64\x28\x47\x75\x69\x64\x20\x6D\x65\x65\x74\x69\x6E\x67\x49\x64\x2C\x20\x69\x6E\x74\x20\x67\x75\x65\x73\x74\x73\x4E\x75\x6D\x62\x65\x72\x29\n\x20\x20\x20\x20\x20\x20\x20\x20\x7B\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x4D\x65\x65\x74\x69\x6E\x67\x49\x64\x20\x3D\x20\x6D\x65\x65\x74\x69\x6E\x67\x49\x64\x3B\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x47\x75\x65\x73\x74\x73\x4E\x75\x6D\x62\x65\x72\x20\x3D\x20\x67\x75\x65\x73\x74\x73\x4E\x75\x6D\x62\x65\x72\x3B\n\x20\x20\x20\x20\x20\x20\x20\x20\x7D\n\x20\x20\x20\x20\x7D\n\x7D"
+    - key: file:src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandHandler.cs
+      path: src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandHandler.cs
+      hash: sha256:1fd5d13c6199b616e33127dbe528e1c3d3f06520dd612dba6066b1e8587995ca
+      reason: declared input of architecture/architecture.mymeetings.example/v1alpha1/Handler/add-meeting-attendee
+      text: "\uFEFF\x75\x73\x69\x6E\x67\x20\x43\x6F\x6D\x70\x61\x6E\x79\x4E\x61\x6D\x65\x2E\x4D\x79\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x4D\x6F\x64\x75\x6C\x65\x73\x2E\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x41\x70\x70\x6C\x69\x63\x61\x74\x69\x6F\x6E\x2E\x43\x6F\x6E\x66\x69\x67\x75\x72\x61\x74\x69\x6F\x6E\x2E\x43\x6F\x6D\x6D\x61\x6E\x64\x73\x3B\n\x75\x73\x69\x6E\x67\x20\x43\x6F\x6D\x70\x61\x6E\x79\x4E\x61\x6D\x65\x2E\x4D\x79\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x4D\x6F\x64\x75\x6C\x65\x73\x2E\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x44\x6F\x6D\x61\x69\x6E\x2E\x4D\x65\x65\x74\x69\x6E\x67\x47\x72\x6F\x75\x70\x73\x3B\n\x75\x73\x69\x6E\x67\x20\x43\x6F\x6D\x70\x61\x6E\x79\x4E\x61\x6D\x65\x2E\x4D\x79\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x4D\x6F\x64\x75\x6C\x65\x73\x2E\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x44\x6F\x6D\x61\x69\x6E\x2E\x4D\x65\x65\x74\x69\x6E\x67\x73\x3B\n\x75\x73\x69\x6E\x67\x20\x43\x6F\x6D\x70\x61\x6E\x79\x4E\x61\x6D\x65\x2E\x4D\x79\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x4D\x6F\x64\x75\x6C\x65\x73\x2E\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x44\x6F\x6D\x61\x69\x6E\x2E\x4D\x65\x6D\x62\x65\x72\x73\x3B\n\n\x6E\x61\x6D\x65\x73\x70\x61\x63\x65\x20\x43\x6F\x6D\x70\x61\x6E\x79\x4E\x61\x6D\x65\x2E\x4D\x79\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x4D\x6F\x64\x75\x6C\x65\x73\x2E\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x41\x70\x70\x6C\x69\x63\x61\x74\x69\x6F\x6E\x2E\x4D\x65\x65\x74\x69\x6E\x67\x73\x2E\x41\x64\x64\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\n\x7B\n\x20\x20\x20\x20\x69\x6E\x74\x65\x72\x6E\x61\x6C\x20\x63\x6C\x61\x73\x73\x20\x41\x64\x64\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x43\x6F\x6D\x6D\x61\x6E\x64\x48\x61\x6E\x64\x6C\x65\x72\x20\x3A\x20\x49\x43\x6F\x6D\x6D\x61\x6E\x64\x48\x61\x6E\x64\x6C\x65\x72\x3C\x41\x64\x64\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x43\x6F\x6D\x6D\x61\x6E\x64\x3E\n\x20\x20\x20\x20\x7B\n\x20\x20\x20\x20\x20\x20\x20\x20\x70\x72\x69\x76\x61\x74\x65\x20\x72\x65\x61\x64\x6F\x6E\x6C\x79\x20\x49\x4D\x65\x6D\x62\x65\x72\x43\x6F\x6E\x74\x65\x78\x74\x20\x5F\x6D\x65\x6D\x62\x65\x72\x43\x6F\x6E\x74\x65\x78\x74\x3B\n\x20\x20\x20\x20\x20\x20\x20\x20\x70\x72\x69\x76\x61\x74\x65\x20\x72\x65\x61\x64\x6F\x6E\x6C\x79\x20\x49\x4D\x65\x65\x74\x69\x6E\x67\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x20\x5F\x6D\x65\x65\x74\x69\x6E\x67\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x3B\n\x20\x20\x20\x20\x20\x20\x20\x20\x70\x72\x69\x76\x61\x74\x65\x20\x72\x65\x61\x64\x6F\x6E\x6C\x79\x20\x49\x4D\x65\x65\x74\x69\x6E\x67\x47\x72\x6F\x75\x70\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x20\x5F\x6D\x65\x65\x74\x69\x6E\x67\x47\x72\x6F\x75\x70\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x3B\n\n\x20\x20\x20\x20\x20\x20\x20\x20\x70\x75\x62\x6C\x69\x63\x20\x41\x64\x64\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x43\x6F\x6D\x6D\x61\x6E\x64\x48\x61\x6E\x64\x6C\x65\x72\x28\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x49\x4D\x65\x6D\x62\x65\x72\x43\x6F\x6E\x74\x65\x78\x74\x20\x6D\x65\x6D\x62\x65\x72\x43\x6F\x6E\x74\x65\x78\x74\x2C\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x49\x4D\x65\x65\x74\x69\x6E\x67\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x20\x6D\x65\x65\x74\x69\x6E\x67\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x2C\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x49\x4D\x65\x65\x74\x69\x6E\x67\x47\x72\x6F\x75\x70\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x20\x6D\x65\x65\x74\x69\x6E\x67\x47\x72\x6F\x75\x70\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x29\n\x20\x20\x20\x20\x20\x20\x20\x20\x7B\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5F\x6D\x65\x6D\x62\x65\x72\x43\x6F\x6E\x74\x65\x78\x74\x20\x3D\x20\x6D\x65\x6D\x62\x65\x72\x43\x6F\x6E\x74\x65\x78\x74\x3B\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5F\x6D\x65\x65\x74\x69\x6E\x67\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x20\x3D\x20\x6D\x65\x65\x74\x69\x6E\x67\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x3B\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5F\x6D\x65\x65\x74\x69\x6E\x67\x47\x72\x6F\x75\x70\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x20\x3D\x20\x6D\x65\x65\x74\x69\x6E\x67\x47\x72\x6F\x75\x70\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x3B\n\x20\x20\x20\x20\x20\x20\x20\x20\x7D\n\n\x20\x20\x20\x20\x20\x20\x20\x20\x70\x75\x62\x6C\x69\x63\x20\x61\x73\x79\x6E\x63\x20\x54\x61\x73\x6B\x20\x48\x61\x6E\x64\x6C\x65\x28\x41\x64\x64\x4D\x65\x65\x74\x69\x6E\x67\x41\x74\x74\x65\x6E\x64\x65\x65\x43\x6F\x6D\x6D\x61\x6E\x64\x20\x72\x65\x71\x75\x65\x73\x74\x2C\x20\x43\x61\x6E\x63\x65\x6C\x6C\x61\x74\x69\x6F\x6E\x54\x6F\x6B\x65\x6E\x20\x63\x61\x6E\x63\x65\x6C\x6C\x61\x74\x69\x6F\x6E\x54\x6F\x6B\x65\x6E\x29\n\x20\x20\x20\x20\x20\x20\x20\x20\x7B\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x76\x61\x72\x20\x6D\x65\x65\x74\x69\x6E\x67\x20\x3D\x20\x61\x77\x61\x69\x74\x20\x5F\x6D\x65\x65\x74\x69\x6E\x67\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x2E\x47\x65\x74\x42\x79\x49\x64\x41\x73\x79\x6E\x63\x28\x6E\x65\x77\x20\x4D\x65\x65\x74\x69\x6E\x67\x49\x64\x28\x72\x65\x71\x75\x65\x73\x74\x2E\x4D\x65\x65\x74\x69\x6E\x67\x49\x64\x29\x29\x3B\n\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x76\x61\x72\x20\x6D\x65\x65\x74\x69\x6E\x67\x47\x72\x6F\x75\x70\x20\x3D\x20\x61\x77\x61\x69\x74\x20\x5F\x6D\x65\x65\x74\x69\x6E\x67\x47\x72\x6F\x75\x70\x52\x65\x70\x6F\x73\x69\x74\x6F\x72\x79\x2E\x47\x65\x74\x42\x79\x49\x64\x41\x73\x79\x6E\x63\x28\x6D\x65\x65\x74\x69\x6E\x67\x2E\x47\x65\x74\x4D\x65\x65\x74\x69\x6E\x67\x47\x72\x6F\x75\x70\x49\x64\x28\x29\x29\x3B\n\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x6D\x65\x65\x74\x69\x6E\x67\x2E\x41\x64\x64\x41\x74\x74\x65\x6E\x64\x65\x65\x28\x6D\x65\x65\x74\x69\x6E\x67\x47\x72\x6F\x75\x70\x2C\x20\x5F\x6D\x65\x6D\x62\x65\x72\x43\x6F\x6E\x74\x65\x78\x74\x2E\x4D\x65\x6D\x62\x65\x72\x49\x64\x2C\x20\x72\x65\x71\x75\x65\x73\x74\x2E\x47\x75\x65\x73\x74\x73\x4E\x75\x6D\x62\x65\x72\x29\x3B\n\x20\x20\x20\x20\x20\x20\x20\x20\x7D\n\x20\x20\x20\x20\x7D\n\x7D"
+    - key: file:src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs
+      path: src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs
+      hash: sha256:b15e22a0954fe096f89a22d1a1d69c1228ddf84fea14e597f8fe7cb842e04171
+      reason: declared input of architecture/architecture.mymeetings.example/v1alpha1/Validator/add-meeting-attendee
+      text: |
+        using FluentValidation;
+
+        namespace CompanyName.MyMeetings.Modules.Meetings.Application.Meetings.AddMeetingAttendee
+        {
+            internal class AddMeetingAttendeeCommandValidator : AbstractValidator<AddMeetingAttendeeCommand>
+            {
+                public AddMeetingAttendeeCommandValidator()
+                {
+                    this.RuleFor(c => c.MeetingId).NotEmpty()
+                        .WithMessage("Meeting id cannot be empty.");
+                }
+            }
+        }
+    - key: file:src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj
+      path: src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj
+      hash: sha256:8d654c44b7bebb6b31a9f2f606927f45b5072193adc4eef8cce3f3cf3b278df3
+      reason: declared input of architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      text: |
+        <Project Sdk="Microsoft.NET.Sdk" />
+    - key: file:src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj
+      path: src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj
+      hash: sha256:04e4d9e751e5f8d5833592e05e79f847114c452e31a21cb5bc6f6808f10d88df
+      reason: declared input of architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      text: "\uFEFF\x3C\x50\x72\x6F\x6A\x65\x63\x74\x20\x53\x64\x6B\x3D\"\x4D\x69\x63\x72\x6F\x73\x6F\x66\x74\x2E\x4E\x45\x54\x2E\x53\x64\x6B\"\x20\x2F\x3E\n"
+    - key: domain:package:mymeetings-architecture/file:domains/architecture.yaml
+      path: domains/architecture.yaml
+      package: mymeetings-architecture
+      packageVersion: 2.0.0
+      hash: sha256:b46900d7ed055446734599f8b6091d027f4776c5557d213f9e2c6b6103f527c5
+      reason: selected language definition
+      domainApiVersion: architecture.mymeetings.example/v1alpha1
+      domainName: mymeetings-architecture-v2
+      text: |
+        apiVersion: markitect.example.org/v1alpha1
+        kind: Domain
+        metadata:
+          name: mymeetings-architecture-v2
+        spec:
+          apiVersion: architecture.mymeetings.example/v1alpha1
+          kinds:
+            Aggregate:
+              inputsField: sourceFiles
+              required: [summary, module]
+              properties:
+                module: {type: ref, refKind: Module}
+                sourceFiles: {type: array, items: {type: string}}
+                summary: {type: string}
+            Common:
+              inputsField: sourceFiles
+              required: [summary, owner]
+              properties:
+                owner: {type: ref, refKind: Core}
+                sourceFiles: {type: array, items: {type: string}}
+                summary: {type: string}
+            Core:
+              inputsField: projectFiles
+              required: [purpose]
+              properties:
+                projectFiles: {type: array, items: {type: string}}
+                purpose: {type: string}
+            Feature:
+              required: [summary, module]
+              properties:
+                documents: {type: array, items: {type: ref, refKind: Narrative}}
+                module: {type: ref, refKind: Module}
+                summary: {type: string}
+            Handler:
+              inputsField: sourceFiles
+              required: [summary]
+              properties:
+                common: {type: array, items: {type: ref, refKind: Common}}
+                sourceFiles: {type: array, items: {type: string}}
+                summary: {type: string}
+            Interface:
+              inputsField: sourceFiles
+              required: [summary, provider]
+              properties:
+                provider: {type: ref, refKind: Module}
+                sourceFiles: {type: array, items: {type: string}}
+                summary: {type: string}
+            Module:
+              inputsField: projectFiles
+              required: [purpose, dependsOn]
+              properties:
+                dependsOn: {type: array, items: {type: ref}}
+                projectFiles: {type: array, items: {type: string}}
+                purpose: {type: string}
+            Narrative:
+              inputsField: sourceFiles
+              required: [summary, owner]
+              properties:
+                owner: {type: ref, refKind: Module}
+                sourceFiles: {type: array, items: {type: string}}
+                summary: {type: string}
+            Product:
+              required: [purpose, components]
+              properties:
+                components: {type: array, items: {type: ref}}
+                purpose: {type: string}
+            UseCase:
+              inputsField: sourceFiles
+              required: [intent, summary, module, handler]
+              properties:
+                aggregates: {type: array, items: {type: ref, refKind: Aggregate}}
+                feature: {type: ref, refKind: Feature}
+                handler: {type: ref, refKind: Handler}
+                intent:
+                  type: string
+                  enum: [Command, Query]
+                module: {type: ref, refKind: Module}
+                sourceFiles: {type: array, items: {type: string}}
+                summary: {type: string}
+                validators: {type: array, items: {type: ref, refKind: Validator}}
+            Validator:
+              inputsField: sourceFiles
+              required: [summary]
+              properties:
+                sourceFiles: {type: array, items: {type: string}}
+                summary: {type: string}
+          relations:
+            belongsToModule:
+              description: Feature, Aggregate and UseCase identify their owning Module.
+              field: module
+              sourceKinds: [Aggregate, Feature, UseCase]
+              targetKinds: [Module]
+              minTargets: 1
+              maxTargets: 1
+              context: true
+              invalidate: true
+            commonOwnedByCore:
+              description: Shared application and domain contracts have explicit stable Core ownership.
+              field: owner
+              sourceKinds: [Common]
+              targetKinds: [Core]
+              minTargets: 1
+              maxTargets: 1
+              context: true
+              invalidate: true
+            dependsOn:
+              description: Declared direct project boundary dependencies target stable Core, explicit Interface contracts, or a Module for policy checking.
+              field: dependsOn
+              sourceKinds: [Module]
+              targetKinds: [Core, Interface, Module]
+              context: false
+              invalidate: true
+              acyclic: true
+            documents:
+              description: Human-owned decision or evidence documents relevant to a Feature.
+              field: documents
+              sourceKinds: [Feature]
+              targetKinds: [Narrative]
+              context: true
+              invalidate: true
+            hasHandler:
+              description: Every modeled UseCase owns exactly one Handler.
+              field: handler
+              sourceKinds: [UseCase]
+              targetKinds: [Handler]
+              minTargets: 1
+              maxTargets: 1
+              context: true
+              invalidate: true
+            hasValidator:
+              description: Optional command/query-specific validation implementation.
+              field: validators
+              sourceKinds: [UseCase]
+              targetKinds: [Validator]
+              context: true
+              invalidate: true
+            providedBy:
+              description: An Interface identifies its publishing Module.
+              field: provider
+              sourceKinds: [Interface]
+              targetKinds: [Module]
+              minTargets: 1
+              maxTargets: 1
+              context: true
+              invalidate: true
+            productComposes:
+              description: The Product composition root includes its Core and business Modules.
+              field: components
+              sourceKinds: [Product]
+              targetKinds: [Core, Module]
+              minTargets: 1
+              context: true
+              invalidate: true
+            usesCommon:
+              description: A UseCase Handler explicitly reuses a shared Core concept.
+              field: common
+              sourceKinds: [Handler]
+              targetKinds: [Common]
+              context: true
+              invalidate: true
+            usesFeature:
+              description: A UseCase may name its Feature grouping.
+              field: feature
+              sourceKinds: [UseCase]
+              targetKinds: [Feature]
+              maxTargets: 1
+              context: true
+              invalidate: true
+          constraints:
+            - name: module-dependencies-cross-only-through-explicit-boundaries
+              description: A Module's declared boundary dependencies cannot point directly at another Module.
+              select: {kind: Module}
+              assert:
+                op: allowed-targets
+                relation: dependsOn
+                values: [Core, Interface]
+            - name: selected-feature-owner-matches-usecase-module
+              description: The explicitly selected UseCase cohort must agree with the Module owner reached through its Feature.
+              select:
+                kind: UseCase
+                labels: {feature-ownership: required}
+              assert:
+                op: same-target
+                left: [belongsToModule]
+                right: [usesFeature, belongsToModule]
+
+            - name: selected-validation-cohort-is-command
+              description: Resources in the explicitly selected v2 validation cohort must be Commands.
+              select:
+                kind: UseCase
+                labels: {validation: required}
+              assert:
+                op: equal
+                field: intent
+                value: Command
+            - name: selected-commands-require-validator
+              description: Commands explicitly selected for the v2 validation cohort must have at least one Validator.
+              select:
+                kind: UseCase
+                labels: {validation: required}
+              assert:
+                op: count
+                scope: resource
+                relation: hasValidator
+                min: 1
+      role: domain
+policyResults:
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: module-dependencies-cross-only-through-explicit-boundaries
+      subject: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      status: passed
+      constraintDigest: sha256:9a7a41ae99897dae2c5ae64e3067d6f1db761f6a7c52fe025c2f5195a167ad5d
+      subjectDigest: sha256:ae333873ff4bfc0a1628abec11a40ad9099f7a4613e53e60b3f14e9092166c81
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-commands-require-validator
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      status: passed
+      constraintDigest: sha256:8d4e312bdb9a2f5569371b9a6be101ee76a9ea0d4007b0087e441031d248f2a8
+      subjectDigest: sha256:36d45d06bd8a4301c02653687494a2c2f7fd26604e5eeef574a1bce70a1b9e2e
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:41c4e7e1dd003c2399965ef81b92105efc42d4bd7f6a978328c2ef68366454d2
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-add-meeting-attendee.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-add-meeting-attendee.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-attendance.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-validation-cohort-is-command
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      status: passed
+      constraintDigest: sha256:7a6203e87bf7e0fe7a4d80b71a3fd33e9c235e79198c03ac9a04627bd109c193
+      subjectDigest: sha256:36d45d06bd8a4301c02653687494a2c2f7fd26604e5eeef574a1bce70a1b9e2e

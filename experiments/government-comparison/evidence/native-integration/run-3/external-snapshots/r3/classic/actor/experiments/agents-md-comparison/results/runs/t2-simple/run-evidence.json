@@ -1,0 +1,237 @@
+{
+  "evidenceType": "agents-md-comparison-fresh-agent-run",
+  "executionMode": "fresh-collaboration-agent",
+  "runId": "t2-simple",
+  "agentIdentity": "/root/r2_t2_simple",
+  "task": "t2",
+  "arm": "simple",
+  "workspace": "<R2>\\workspaces\\t2-simple\\checkout",
+  "preparedManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "sourceManifestSha256": "61f0774164179d61018a2f862354b12e24928d1b77e039581abaf17df221f671",
+  "candidateCommitBeforeAgent": "3bb85d2c3bb02966e96fe9a5432bad13422484a2",
+  "candidateCommitAfterAgent": "3bb85d2c3bb02966e96fe9a5432bad13422484a2",
+  "startedAtUtc": "2026-10-03T17:46:07.8345118+02:00",
+  "completedAtUtc": "2026-10-03T15:58:17.3236409+00:00",
+  "agentReportPath": "agent-report.txt",
+  "agentReportSha256": "d33b53be6edee047cae10e91a563b1acf070b43f94c42739a5d83c36a7327bdc",
+  "agentReportText": "Implemented the Task 2 migration in the assigned trial checkout. Both selected Commands now have internal FluentValidation classes that reject an empty `MeetingId`. The policy and architecture checks reflect that requirement.\n\nThe baseline check failed as expected with both validators absent: 2 failed, 10 passed. After restoring the validators, all 12 architecture checks passed. The Meetings Application build succeeded with 0 warnings and 0 errors. The first restore attempt was blocked by NuGet vulnerability-feed access; restoring from the specified public NuGet source with audit disabled succeeded.\n\nNo separate maintained projections or waiver files were present. The task context and impact files were also absent. Build success verifies compilation; it does not establish runtime registration.",
+  "automaticAgentInstructions": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+      "bytes": 2666
+    }
+  ],
+  "compiledInputs": [],
+  "frozenWorkspaceAssets": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+      "bytes": 2666
+    },
+    {
+      "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+      "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+      "bytes": 927
+    },
+    {
+      "path": ".tools/architecture-check/TestBase.cs",
+      "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+      "bytes": 1194
+    },
+    {
+      "path": ".tools/architecture-check/LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "bytes": 1091
+    },
+    {
+      "path": "docs/engineering-policy.md",
+      "sha256": "39dda00dfbf21e935a3fe7ef8e79b3894514e284df8f37c1b14f98b38dbf20db",
+      "bytes": 361
+    }
+  ],
+  "frozenWorkspaceAssetChanges": [
+    {
+      "path": "docs/engineering-policy.md",
+      "change": "modified",
+      "expectedSha256": "39dda00dfbf21e935a3fe7ef8e79b3894514e284df8f37c1b14f98b38dbf20db",
+      "actualSha256": "d390960d9f922ebd69e66845231b5e8a9202d5a416ed81e0e045263a2a38ba63"
+    }
+  ],
+  "compiledInputChanges": [],
+  "model": null,
+  "modelEvidenceStatus": "unavailable from collaboration backend metadata",
+  "toolEvents": null,
+  "toolUsageEvidenceStatus": "unavailable; the collaboration backend exposes only the final agent report",
+  "tokenUsage": null,
+  "tokenUsageEvidenceStatus": "unavailable; no CLI JSONL events or metering were collected",
+  "workspaceStatus": " M docs/engineering-policy.md\n M src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs\n?? src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs\n?? src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs\n",
+  "workspaceDelta": [
+    {
+      "root": "<R2>\\workspaces\\t2-simple\\checkout",
+      "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+      "change": "modified",
+      "before": {
+        "bytes": 7248,
+        "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3"
+      },
+      "after": {
+        "bytes": 8776,
+        "sha256": "59374f46a2aad5d275d1bb11e888ba78e2e34ff662c1ab1033b4c8ed7ad0c236"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-simple\\checkout",
+      "path": "docs/engineering-policy.md",
+      "change": "modified",
+      "before": {
+        "bytes": 361,
+        "sha256": "39dda00dfbf21e935a3fe7ef8e79b3894514e284df8f37c1b14f98b38dbf20db"
+      },
+      "after": {
+        "bytes": 277,
+        "sha256": "d390960d9f922ebd69e66845231b5e8a9202d5a416ed81e0e045263a2a38ba63"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-simple\\checkout",
+      "path": "src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs",
+      "change": "created",
+      "after": {
+        "bytes": 414,
+        "sha256": "2d1fcf5dffc28e1e348e60c6bdba7fa01d599fed0a550d5fa998e6e7beda3a76"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-simple\\checkout",
+      "path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs",
+      "change": "created",
+      "after": {
+        "bytes": 434,
+        "sha256": "999be058a06d9387be037ef0658d1b4a9acf044e98451e692a4ebea15c884e7c"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-simple\\checkout",
+      "path": ".telemetry/reads.jsonl",
+      "change": "created",
+      "after": {
+        "bytes": 2991,
+        "sha256": "cae421461624cd85d09fe75a8d5ae2174b838b9792833fdec8de8f764f37134d"
+      }
+    }
+  ],
+  "workspaceDiffPath": "workspace.diff",
+  "workspaceDiffSha256": "86e79bb57ef5f59ae18a1b6647fdbaa886808480a47d53d2b6d75c460e3cafb1",
+  "fileReadLedger": {
+    "recordsPath": "reads.jsonl",
+    "helperSha256Before": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+    "helperSha256After": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+    "helperMutated": false,
+    "helperRecordedContentReads": 16,
+    "records": [
+      {
+        "path": "AGENTS.md",
+        "bytes": 2666,
+        "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+        "readType": "content"
+      },
+      {
+        "path": "docs/engineering-policy.md",
+        "bytes": 361,
+        "sha256": "39dda00dfbf21e935a3fe7ef8e79b3894514e284df8f37c1b14f98b38dbf20db",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+        "bytes": 7248,
+        "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/AcceptMeetingGroupProposalCommandValidator.cs",
+        "bytes": 508,
+        "sha256": "62a208c97c79a038d3466494c460b00c57550c2e424cc28d27a3746ddeb36e9a",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+        "bytes": 642,
+        "sha256": "2f0d3e0797c1fdf2c35bc4f61d1bce373dff83fac85236fb252895dd2cc61249",
+        "readType": "content"
+      },
+      {
+        "path": "src/global.json",
+        "bytes": 113,
+        "sha256": "8dc87e6f68213f4444f20306d8057b48947550912e25a5b897702a51eea23d95",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommand.cs",
+        "bytes": 504,
+        "sha256": "d0702f233e4aa2587592497b3a8c8595146dd80544544bbc5b49f59816add7d9",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommand.cs",
+        "bytes": 385,
+        "sha256": "8904c0d5d2b91b5dfaeae90a81e8ee83bd6cf65a6a0682df268d92fdff024f32",
+        "readType": "content"
+      },
+      {
+        "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+        "bytes": 927,
+        "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/MeetingComments/AddMeetingComment/AddMeetingCommentCommandValidator.cs",
+        "bytes": 578,
+        "sha256": "c568409bc4d95ef5f6d423a218c7e000741d72b296fc0adcc3ea99707c077775",
+        "readType": "content"
+      },
+      {
+        "path": ".tools/architecture-check/TestBase.cs",
+        "bytes": 1194,
+        "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+        "bytes": 7248,
+        "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3",
+        "readType": "content"
+      },
+      {
+        "path": "docs/engineering-policy.md",
+        "bytes": 277,
+        "sha256": "d390960d9f922ebd69e66845231b5e8a9202d5a416ed81e0e045263a2a38ba63",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs",
+        "bytes": 434,
+        "sha256": "999be058a06d9387be037ef0658d1b4a9acf044e98451e692a4ebea15c884e7c",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs",
+        "bytes": 414,
+        "sha256": "2d1fcf5dffc28e1e348e60c6bdba7fa01d599fed0a550d5fa998e6e7beda3a76",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+        "bytes": 8776,
+        "sha256": "59374f46a2aad5d275d1bb11e888ba78e2e34ff662c1ab1033b4c8ed7ad0c236",
+        "readType": "content"
+      }
+    ],
+    "limit": "Only reads through .tools/read.ps1 are logged."
+  },
+  "markitectExecutable": null,
+  "externalTreeDeltas": [],
+  "externalWriteDetected": false,
+  "externalWritePolicy": "Any detected out-of-workspace change is reported and left in place for review."
+}

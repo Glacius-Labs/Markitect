@@ -1,0 +1,2276 @@
+{
+  "schemaVersion": 1,
+  "classification": "D: overall inconclusive; specific feasible governance capability, no measured cost advantage",
+  "integration": {
+    "schemaVersion": 1,
+    "pullRequest": "https://github.com/Glacius-Labs/Markitect/pull/58",
+    "reviewedHead": "1996ef2106e2df6aa8f5955359fa4a5542004799",
+    "base": "f4240e2b56575ac13e294aa8537937e19a9e503e",
+    "integratedCommit": "a23db5f48854cbf7723789843aaa10ddf06cdb0b",
+    "mergedAt": "2026-10-03T13:33:49Z",
+    "integratedTreeMatchesReviewedHead": true,
+    "candidateCI": {
+      "run": "https://github.com/Glacius-Labs/Markitect/actions/runs/37126319833",
+      "headSha": "1996ef2106e2df6aa8f5955359fa4a5542004799",
+      "windowsQuality": "success",
+      "linuxQuality": "success"
+    },
+    "mainCI": {
+      "run": "https://github.com/Glacius-Labs/Markitect/actions/runs/37126611702",
+      "headSha": "a23db5f48854cbf7723789843aaa10ddf06cdb0b",
+      "conclusion": "success"
+    },
+    "review": {
+      "kind": "independent agent review; not a human GitHub approval",
+      "publicBaseAndHeadMatchedLocalDiff": true,
+      "changedPathCount": 154,
+      "blockers": [],
+      "nonBlockingFindings": [
+        "Two deliberately preserved replay runs duplicate many captures; total reviewed payload is about 3.29 MB."
+      ]
+    },
+    "experimentTool": {
+      "sourceCommit": "a23db5f48854cbf7723789843aaa10ddf06cdb0b",
+      "vcsModified": false,
+      "goVersion": "go1.27.1",
+      "platform": "windows/amd64",
+      "sha256": "6aae29acf67217b9538a2076ff199102b44c84183f2e0dff4718584e84e064df",
+      "kind": "local clean-source build, not a published release asset"
+    },
+    "publishedRelease": "v0.12.0",
+    "newReleasePublished": false
+  },
+  "runs": [
+    {
+      "runId": "t1-simple",
+      "study": "R2",
+      "agentIdentity": "/root/r2_t1_simple",
+      "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+      "candidateCommit": "d65d4cb4475066cf6cc77b9e7adcdc159fd6d146",
+      "externalWriteDetected": false,
+      "readEvents": 16,
+      "meteredBytes": 21386,
+      "manualChanges": [
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/GetMeetingPeopleCountQuery.cs",
+          "change": "created",
+          "after": {
+            "bytes": 396,
+            "sha256": "3741a4bb982f207b089310d545ec367910d82b65c20abd0cdfc314963751067f"
+          }
+        },
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/GetMeetingPeopleCountQueryHandler.cs",
+          "change": "created",
+          "after": {
+            "bytes": 1292,
+            "sha256": "11a9985fa5426707932ef77497b91a3eb7557ba730d2528155fa969e1c689c93"
+          }
+        }
+      ],
+      "generatedChanges": [],
+      "telemetryChanges": [
+        {
+          "path": ".telemetry/reads.jsonl",
+          "change": "created",
+          "after": {
+            "bytes": 3095,
+            "sha256": "d6ce4a679ea88dd83274f9bb8cf71a7584906c937a3525ff6f3253bd4df80f4d"
+          }
+        }
+      ],
+      "assetChanges": [],
+      "compiledInputChanges": [],
+      "operatorCommands": [
+        {
+          "name": "meetings-application-build",
+          "exitCode": 0,
+          "rawOutputSha256": "18215e7891b1e19c60d898978e1914d0458606d632f1971a093948eec072a602",
+          "testCount": null
+        },
+        {
+          "name": "bounded-test-runner-restore",
+          "exitCode": 0,
+          "rawOutputSha256": "5e6264d6cc9c87bf62f16879d2c9df8d9f376e9172ea37d3bb1b39b77a301234",
+          "testCount": null
+        },
+        {
+          "name": "linked-application-architecture-tests",
+          "exitCode": 0,
+          "rawOutputSha256": "5e718dd2608f4c1e1fb8dedc7bf6171608a5fb1e5e5499cbe2022e04d5f706a5",
+          "testCount": 10
+        },
+        {
+          "name": "evaluated-project-reference-policy",
+          "exitCode": 0,
+          "rawOutputSha256": "9e5ab349adc1135af4f6daeca41f89ffabd5fe0c81e0d4dea43c45da87704fc1",
+          "testCount": null
+        }
+      ],
+      "changedArtifactsArchive": {
+        "path": "runs/t1-simple/changed-artifacts.zip",
+        "sha256": "a3084711ca1a2c29922fc7693e04a5ae9ab784833df4c7abb2e08e1edc0f824c",
+        "bytes": 2424,
+        "meaning": "exact changed-file bytes, including new untracked files that ordinary git diff omits"
+      }
+    },
+    {
+      "runId": "t1-markitect",
+      "study": "R2",
+      "agentIdentity": "/root/r2_t1_markitect",
+      "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+      "candidateCommit": "bf18931e8c49555a0b8fda8133d809767a70c96b",
+      "externalWriteDetected": false,
+      "readEvents": 21,
+      "meteredBytes": 76291,
+      "manualChanges": [
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs",
+          "change": "modified",
+          "before": {
+            "bytes": 444,
+            "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7"
+          },
+          "after": {
+            "bytes": 447,
+            "sha256": "e9d2da17368d3591d03efeb003cbc4ac71dac91dc13558c38726aff236db09cc"
+          }
+        },
+        {
+          "path": "agent-guidance/architecture-review.skill.yaml",
+          "change": "modified",
+          "before": {
+            "bytes": 1293,
+            "sha256": "8da80c8c098ad1f41dc8f15bb97020c3fcc19959fe8452d781b40005ad08229a"
+          },
+          "after": {
+            "bytes": 1455,
+            "sha256": "f8b5fdebf702897fbab2fb34b117704331a226b76c81204ee70b367692e886bf"
+          }
+        },
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/GetMeetingPeopleCountQuery.cs",
+          "change": "created",
+          "after": {
+            "bytes": 396,
+            "sha256": "3741a4bb982f207b089310d545ec367910d82b65c20abd0cdfc314963751067f"
+          }
+        },
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/GetMeetingPeopleCountQueryHandler.cs",
+          "change": "created",
+          "after": {
+            "bytes": 895,
+            "sha256": "2f581590828f1f78a825e9c2c6aee5af58371f16ef4ef0d1e512206e61799cb2"
+          }
+        },
+        {
+          "path": "resources/handler-get-meeting-people-count.yaml",
+          "change": "created",
+          "after": {
+            "bytes": 374,
+            "sha256": "c656f3368e2ce524a477027912b9d90e974d7479f14cdb7f86a5a3c68916c9e0"
+          }
+        },
+        {
+          "path": "resources/usecase-get-meeting-people-count.yaml",
+          "change": "created",
+          "after": {
+            "bytes": 937,
+            "sha256": "4ced0080ae565de999bb126b9576db4452f4f7eb151b29497dc5ae326f30c187"
+          }
+        }
+      ],
+      "generatedChanges": [],
+      "telemetryChanges": [
+        {
+          "path": ".telemetry/reads.jsonl",
+          "change": "created",
+          "after": {
+            "bytes": 3868,
+            "sha256": "0f8f4b4b6b04bd2d6150bc3c3e31dea8a73f6eeac98571a80b7a58e6ded8cfeb"
+          }
+        }
+      ],
+      "assetChanges": [
+        {
+          "path": "agent-guidance/architecture-review.skill.yaml",
+          "change": "modified",
+          "expectedSha256": "8da80c8c098ad1f41dc8f15bb97020c3fcc19959fe8452d781b40005ad08229a",
+          "actualSha256": "f8b5fdebf702897fbab2fb34b117704331a226b76c81204ee70b367692e886bf"
+        }
+      ],
+      "compiledInputChanges": [],
+      "operatorCommands": [
+        {
+          "name": "meetings-application-build",
+          "exitCode": 0,
+          "rawOutputSha256": "1b62d537d58622269ab44483a39f7ee9f1eaa69089dec54671bbaa83406008d4",
+          "testCount": null
+        },
+        {
+          "name": "bounded-test-runner-restore",
+          "exitCode": 0,
+          "rawOutputSha256": "93dfac0286d38442640efebfd203db9858cba743c6f2d90d672b8a0e7777a69b",
+          "testCount": null
+        },
+        {
+          "name": "linked-application-architecture-tests",
+          "exitCode": 0,
+          "rawOutputSha256": "6272c16b47a30e34049d504c3057a06c54da6cfdd65210fa6330335c32711444",
+          "testCount": 10
+        },
+        {
+          "name": "evaluated-project-reference-policy",
+          "exitCode": 0,
+          "rawOutputSha256": "f09acbdb88ac95fbfb97cbeee589b59b3704d6f65439b52e019e2c161ba73f22",
+          "testCount": null
+        }
+      ],
+      "changedArtifactsArchive": {
+        "path": "runs/t1-markitect/changed-artifacts.zip",
+        "sha256": "9d86a104ca5dc46c2a17031b1c21444e188702070054325b2ca2f63f3c20d414",
+        "bytes": 4299,
+        "meaning": "exact changed-file bytes, including new untracked files that ordinary git diff omits"
+      },
+      "contextInputs": [
+        {
+          "key": "/Project/mymeetings-adoption-pilot",
+          "path": "markitect.yaml",
+          "hash": "sha256:e6a20d968317395d67baeda6577b2788e94ebc19efa2a35ffc0974cae97d6fb3",
+          "reason": "project policy and bindings"
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory",
+          "path": "resources/common-sql-connection-factory.yaml",
+          "hash": "sha256:425a419c3a483f9c0873d626b611dc5daff60980ff944df923a0684656deb498",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees via usesCommon",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees",
+              "relation": "usesCommon",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/handler-get-meeting-attendees.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Core/core",
+          "path": "resources/core.yaml",
+          "hash": "sha256:d7c062010500b488e14f470e6b22902a93288a2f0ce4a540d795ffbe27ab046c",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory via commonOwnedByCore",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory",
+              "relation": "commonOwnedByCore",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/common-sql-connection-factory.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+          "path": "resources/feature-meeting-attendance.yaml",
+          "hash": "sha256:0561d752aea2c5c82e2b8f18ce072089fd6530827d53d5a079526864192311aa",
+          "reason": "required by engineering/Skill/architecture-review via uses",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees",
+              "relation": "usesFeature",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/usecase-get-meeting-attendees.yaml",
+              "line": 1
+            },
+            {
+              "from": "engineering/Skill/architecture-review",
+              "relation": "uses",
+              "path": "agent-guidance/architecture-review.skill.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees",
+          "path": "resources/handler-get-meeting-attendees.yaml",
+          "hash": "sha256:fa33297271d78cc07e200edfa970fd6c3c4f72f39408cf7c1f8ea1539f1cbd39",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees via hasHandler",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees",
+              "relation": "hasHandler",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/usecase-get-meeting-attendees.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Module/meetings",
+          "path": "resources/module-meetings.yaml",
+          "hash": "sha256:9a4e2ab5611609fc6e713b8a0c874c42e76942fc7448b72256506c6e7477f75f",
+          "reason": "required by engineering/Skill/architecture-review via uses",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+              "relation": "belongsToModule",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/feature-meeting-attendance.yaml",
+              "line": 1
+            },
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees",
+              "relation": "belongsToModule",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/usecase-get-meeting-attendees.yaml",
+              "line": 1
+            },
+            {
+              "from": "engineering/Skill/architecture-review",
+              "relation": "uses",
+              "path": "agent-guidance/architecture-review.skill.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision",
+          "path": "resources/narrative-architecture-test-decision.yaml",
+          "hash": "sha256:da54a85673409c11d60d584394ba93fb2f7c54036eed5393942848154c08f449",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance via documents",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+              "relation": "documents",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/feature-meeting-attendance.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision",
+          "path": "resources/narrative-cqrs-read-model-decision.yaml",
+          "hash": "sha256:4ac9d7ba82287c9e3ec72d8540f32d0096e1d5f31ab4e02f8d4c5031321de989",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance via documents",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+              "relation": "documents",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/feature-meeting-attendance.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view",
+          "path": "resources/narrative-meeting-attendee-view.yaml",
+          "hash": "sha256:3c8ed59f138b6e6c05db819ef9be3fdf096267d70c694a360f678896f0907952",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance via documents",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+              "relation": "documents",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/feature-meeting-attendance.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees",
+          "path": "resources/usecase-get-meeting-attendees.yaml",
+          "hash": "sha256:cf1e7391ce6ebc8ae33f5e12ea7df632cc78b2305fc49ff97f9cc25b4c678dfd",
+          "reason": "required by engineering/Skill/architecture-review via uses",
+          "via": [
+            {
+              "from": "engineering/Skill/architecture-review",
+              "relation": "uses",
+              "path": "agent-guidance/architecture-review.skill.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "engineering/Skill/architecture-review",
+          "path": "agent-guidance/architecture-review.skill.yaml",
+          "hash": "sha256:8da80c8c098ad1f41dc8f15bb97020c3fcc19959fe8452d781b40005ad08229a",
+          "reason": "entry"
+        },
+        {
+          "key": "mymeetings-architecture::/Package/mymeetings-architecture",
+          "path": "markitect-package.yaml",
+          "hash": "sha256:eae0ec6a6870b2becad3fb51780135b834d3ce176ded0e8516259765748160cc",
+          "reason": "package policy and exports for mymeetings-architecture",
+          "packageVersion": "1.0.0"
+        },
+        {
+          "key": "mymeetings-architecture::constitution/Workflow/vertical-slice",
+          "path": "areas/constitution/vertical-slice.workflow.yaml",
+          "hash": "sha256:adfee2bbdc34f299c45dae48383c3f1c9a2a18b225ae0ac2c02792d9b273ef13",
+          "reason": "required by engineering/Skill/architecture-review via uses",
+          "via": [
+            {
+              "from": "engineering/Skill/architecture-review",
+              "relation": "uses",
+              "path": "agent-guidance/architecture-review.skill.yaml",
+              "line": 1
+            }
+          ],
+          "packageVersion": "1.0.0"
+        },
+        {
+          "key": "file:docs/architecture-decision-log/0007-use-cqrs-architectural-style.md",
+          "path": "docs/architecture-decision-log/0007-use-cqrs-architectural-style.md",
+          "hash": "sha256:499e8ef95b0cbec811d1e8897a3baea3de8b1ec29579bec43f01b5ea8ae9f25d",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision"
+        },
+        {
+          "key": "file:docs/architecture-decision-log/0017-implement-archictecture-tests.md",
+          "path": "docs/architecture-decision-log/0017-implement-archictecture-tests.md",
+          "hash": "sha256:f23ffbec091f4421ee4e1dea370905bc982ccae240cae04f39f3f8bb7dc07407",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision"
+        },
+        {
+          "key": "file:src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj",
+          "path": "src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj",
+          "hash": "sha256:4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Core/core"
+        },
+        {
+          "key": "file:src/BuildingBlocks/Application/Data/ISqlConnectionFactory.cs",
+          "path": "src/BuildingBlocks/Application/Data/ISqlConnectionFactory.cs",
+          "hash": "sha256:6997430518126608967a78351c968ba8ac0a414d892e07ab79298734f5b706d5",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory"
+        },
+        {
+          "key": "file:src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+          "path": "src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+          "hash": "sha256:3e1a9f612f8cfcc2e2a8b2ef085685f9f3d1a55c4b901e8d88af6ec37d283195",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Core/core"
+        },
+        {
+          "key": "file:src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+          "path": "src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+          "hash": "sha256:4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Core/core"
+        },
+        {
+          "key": "file:src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+          "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+          "hash": "sha256:24d4295e8aa931b0ea09b069b8c1852cddd74eeaf49ac017a0e15be9b0a42426",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view"
+        },
+        {
+          "key": "file:src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+          "path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+          "hash": "sha256:f5c6a67a30c5cf7804cfbda1f1094ce6f3a26d4be15bfd56f010c0796ad834f2",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Module/meetings"
+        },
+        {
+          "key": "file:src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQuery.cs",
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQuery.cs",
+          "hash": "sha256:dfa148d4e5fad2567cf3589c521cac32dbc1451c3ae01e31c099cd705dc9235a",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees"
+        },
+        {
+          "key": "file:src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+          "hash": "sha256:29ed4b95fdaf75d0838e78382c23306b6f13466626a86fc85f237bef34088685",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees"
+        },
+        {
+          "key": "file:src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj",
+          "path": "src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj",
+          "hash": "sha256:8d654c44b7bebb6b31a9f2f606927f45b5072193adc4eef8cce3f3cf3b278df3",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Module/meetings"
+        },
+        {
+          "key": "file:src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+          "path": "src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+          "hash": "sha256:04e4d9e751e5f8d5833592e05e79f847114c452e31a21cb5bc6f6808f10d88df",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Module/meetings"
+        },
+        {
+          "key": "domain:package:mymeetings-architecture/file:domains/architecture.yaml",
+          "path": "domains/architecture.yaml",
+          "hash": "sha256:508af1aca1fc747bdebb095a7d05af600753403a5416f95f0cfd84cc878456b6",
+          "reason": "selected language definition",
+          "role": "domain",
+          "packageVersion": "1.0.0"
+        }
+      ],
+      "contextBytes": 53013
+    },
+    {
+      "runId": "t2-simple",
+      "study": "R2",
+      "agentIdentity": "/root/r2_t2_simple",
+      "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+      "candidateCommit": "3bb85d2c3bb02966e96fe9a5432bad13422484a2",
+      "externalWriteDetected": false,
+      "readEvents": 16,
+      "meteredBytes": 32275,
+      "manualChanges": [
+        {
+          "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+          "change": "modified",
+          "before": {
+            "bytes": 7248,
+            "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3"
+          },
+          "after": {
+            "bytes": 8776,
+            "sha256": "59374f46a2aad5d275d1bb11e888ba78e2e34ff662c1ab1033b4c8ed7ad0c236"
+          }
+        },
+        {
+          "path": "docs/engineering-policy.md",
+          "change": "modified",
+          "before": {
+            "bytes": 361,
+            "sha256": "39dda00dfbf21e935a3fe7ef8e79b3894514e284df8f37c1b14f98b38dbf20db"
+          },
+          "after": {
+            "bytes": 277,
+            "sha256": "d390960d9f922ebd69e66845231b5e8a9202d5a416ed81e0e045263a2a38ba63"
+          }
+        },
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs",
+          "change": "created",
+          "after": {
+            "bytes": 414,
+            "sha256": "2d1fcf5dffc28e1e348e60c6bdba7fa01d599fed0a550d5fa998e6e7beda3a76"
+          }
+        },
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs",
+          "change": "created",
+          "after": {
+            "bytes": 434,
+            "sha256": "999be058a06d9387be037ef0658d1b4a9acf044e98451e692a4ebea15c884e7c"
+          }
+        }
+      ],
+      "generatedChanges": [],
+      "telemetryChanges": [
+        {
+          "path": ".telemetry/reads.jsonl",
+          "change": "created",
+          "after": {
+            "bytes": 2991,
+            "sha256": "cae421461624cd85d09fe75a8d5ae2174b838b9792833fdec8de8f764f37134d"
+          }
+        }
+      ],
+      "assetChanges": [
+        {
+          "path": "docs/engineering-policy.md",
+          "change": "modified",
+          "expectedSha256": "39dda00dfbf21e935a3fe7ef8e79b3894514e284df8f37c1b14f98b38dbf20db",
+          "actualSha256": "d390960d9f922ebd69e66845231b5e8a9202d5a416ed81e0e045263a2a38ba63"
+        }
+      ],
+      "compiledInputChanges": [],
+      "operatorCommands": [
+        {
+          "name": "meetings-application-build",
+          "exitCode": 0,
+          "rawOutputSha256": "d96d375a607d17d871bd99e477b2129bdd0665369e5d8bb53ca3cd61a95e25ad",
+          "testCount": null
+        },
+        {
+          "name": "bounded-test-runner-restore",
+          "exitCode": 0,
+          "rawOutputSha256": "3b57dc847c12e3f13d081b6eae20b1ae74af794c5a4b9916d9ede623e4070eb8",
+          "testCount": null
+        },
+        {
+          "name": "linked-application-architecture-tests",
+          "exitCode": 0,
+          "rawOutputSha256": "864e45ad1445debda285499b4f38f2d833c550b330175b696548a59750ab9b56",
+          "testCount": 14
+        },
+        {
+          "name": "evaluated-project-reference-policy",
+          "exitCode": 0,
+          "rawOutputSha256": "892cfe41976f1dd0c5b5c46b9085055499e831f6e92251289f17561e92fb6ef1",
+          "testCount": null
+        }
+      ],
+      "changedArtifactsArchive": {
+        "path": "runs/t2-simple/changed-artifacts.zip",
+        "sha256": "be2bae5a04bbbf64ce777a560c193cb609e9d1ce4eb79a5c79c9b0f0c9a47cbf",
+        "bytes": 4208,
+        "meaning": "exact changed-file bytes, including new untracked files that ordinary git diff omits"
+      }
+    },
+    {
+      "runId": "t2-markitect",
+      "study": "R2",
+      "agentIdentity": "/root/r2_t2_markitect",
+      "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+      "candidateCommit": "286bfa78c87f770a3c2c2208f2eaef4f96ecd969",
+      "externalWriteDetected": false,
+      "readEvents": 19,
+      "meteredBytes": 96233,
+      "manualChanges": [
+        {
+          "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+          "change": "modified",
+          "before": {
+            "bytes": 7248,
+            "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3"
+          },
+          "after": {
+            "bytes": 8770,
+            "sha256": "c9d1e19bd28d0c59f58cde8e877dfe60416b3a48acbdc84de65bed18cec80ee9"
+          }
+        },
+        {
+          "path": "resources/usecase-add-meeting-attendee.yaml",
+          "change": "modified",
+          "before": {
+            "bytes": 1100,
+            "sha256": "7117f5683a75dd6378225fd1d020418a9cc24ad197598a9fb8d7354b3c0ed001"
+          },
+          "after": {
+            "bytes": 1257,
+            "sha256": "72839c087b8ca30a60e0b93bd83b7e720a266efe7abe6c48fc1e672d5e8a87e2"
+          }
+        },
+        {
+          "path": "resources/usecase-cancel-meeting.yaml",
+          "change": "modified",
+          "before": {
+            "bytes": 1063,
+            "sha256": "139ce0862ad67c1f16d31d3d1582ade05a881061f5f3adbe814ecd3f9bc8101c"
+          },
+          "after": {
+            "bytes": 1214,
+            "sha256": "8ebc8316bf0573bb81a90eba4d22096b7cae5084c0beff16d34e284e616e0439"
+          }
+        },
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs",
+          "change": "created",
+          "after": {
+            "bytes": 413,
+            "sha256": "cd477bfb51208241307951dc39e155af9bb1988865cf6650f8f8718138447b1a"
+          }
+        },
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs",
+          "change": "created",
+          "after": {
+            "bytes": 433,
+            "sha256": "27e6f268d02b1ef6f7a48c4da79cca376040fa02e82e56e0e374f4bb3f5ec137"
+          }
+        },
+        {
+          "path": "resources/validator-add-meeting-attendee.yaml",
+          "change": "created",
+          "after": {
+            "bytes": 336,
+            "sha256": "ade916b26f7621730ea327305a8591d72db1d5e4f88ef244c24261c3379b5a63"
+          }
+        },
+        {
+          "path": "resources/validator-cancel-meeting.yaml",
+          "change": "created",
+          "after": {
+            "bytes": 315,
+            "sha256": "ae428b0524a842b66d5f0b521d7be14946faadf6007f9811aa2b6a0a3a92bf0f"
+          }
+        }
+      ],
+      "generatedChanges": [
+        {
+          "path": "docs/markitect/README.md",
+          "change": "modified",
+          "before": {
+            "bytes": 194,
+            "sha256": "765283bf78566e8d7ea31eff5256c41e1b84b6fa8328e74dcfaa854369a20ffd"
+          },
+          "after": {
+            "bytes": 188,
+            "sha256": "5724ef94f0c858cb22641d3b002128b6e8be168b7c7312807f8340ef34a35622"
+          }
+        },
+        {
+          "path": "docs/markitect/engineering/architecture-review.skill.md",
+          "change": "modified",
+          "before": {
+            "bytes": 1183,
+            "sha256": "d4eb1aac73ed77ba3ebefd40a2d497e76678b9889b02a08d8d86646371a60958"
+          },
+          "after": {
+            "bytes": 1170,
+            "sha256": "b07a27fb6a150172929c76d38b4f25c66ec95b92929a81fd5e46c7eaecdb128c"
+          }
+        },
+        {
+          "path": "docs/markitect/engineering/README.md",
+          "change": "modified",
+          "before": {
+            "bytes": 140,
+            "sha256": "bbc339f79b88c723f1f4e34fa0f0bdd95b75bb367eeb7cb07337a5e034db01a0"
+          },
+          "after": {
+            "bytes": 136,
+            "sha256": "a8cb324bfa773409b68d879bfa27c1ce99baa4434950335c569575f09c470f4b"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/aggregate-meeting-comment.aggregate.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 663,
+            "sha256": "9c2ef20c984f982928ea4e62d65d06155c491ba1b86f20b5668fe3f29666b18c"
+          },
+          "after": {
+            "bytes": 649,
+            "sha256": "414e033cf59f18fd8562c9502c8d1c031568448465402cfc3cb549de5da231f6"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/aggregate-meeting-group.aggregate.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 657,
+            "sha256": "2cb18c8fdccbd06dab106cb676137eacede1161715ee8aca996c86a1626cbc13"
+          },
+          "after": {
+            "bytes": 643,
+            "sha256": "2e6b6218a1e57ba71107049f656246cf96327fff0b49676d77cbfbf8e7e360cc"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/aggregate-meeting-proposal.aggregate.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 709,
+            "sha256": "6240c9b10906343a6ebeca03f25f4296d77d8c097142798a58739257b08c2b80"
+          },
+          "after": {
+            "bytes": 695,
+            "sha256": "7e4277ded8946396d673191fd983cf614e1db71ca168dc713a6de65954003861"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/aggregate-meeting.aggregate.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 646,
+            "sha256": "c67863468564149a3fa2715ba871cc686dde4132aee68c66f2b466b632b91717"
+          },
+          "after": {
+            "bytes": 632,
+            "sha256": "35c47d54304d74414c8de8dd910d4394b2b825ab08b8fbd04ffcbeee79d0e407"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/aggregate-payer.aggregate.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 604,
+            "sha256": "689adee3972a99e54b04b987c0a36202d38a19cf835bf92f77431e9ac9042474"
+          },
+          "after": {
+            "bytes": 590,
+            "sha256": "8ce403d9ef5711c2ebc91750bc94b43b40eae32f338aa21b89ef230324a69157"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/aggregate-user-registration.aggregate.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 684,
+            "sha256": "50548821a33444101e84502626efba64ea081aea7173598d6f14370e59017feb"
+          },
+          "after": {
+            "bytes": 670,
+            "sha256": "bb32d5bc45aa8aa7963a9b2f0302555fe8fe494f468f932a0614b0be273da78c"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/aggregate-user.aggregate.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 625,
+            "sha256": "3878a4327eab37d3965aec7f54a868cc21efe220f73c21c61193ad9437fc1a2f"
+          },
+          "after": {
+            "bytes": 611,
+            "sha256": "2b46c7e141f5b862bba59c710545b77d0f6c10a7134bfeafbad526809fbec3b9"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/common-aggregate-root-marker.common.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 642,
+            "sha256": "f0f7c6706b20a0a2d640273847f6ed0abd071e66829f708222875c09bac2daa7"
+          },
+          "after": {
+            "bytes": 628,
+            "sha256": "1815920b2d36e63a237e64f88f2287d8b9df7544c76b91db19f693ab33fdeee1"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/common-sql-connection-factory.common.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 656,
+            "sha256": "a17746c8f2c421d6002b09da427e6daa18ea8033d51fb0669586c088ce4b75ef"
+          },
+          "after": {
+            "bytes": 642,
+            "sha256": "6f32875bf42f858fafc9e959ec745d40ee3856407f224b9e03623de3ca0fc900"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/common-unit-of-work.common.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 614,
+            "sha256": "be9d18f109d29db59a2cd8cb94703f82e70ea215f43214da6d4380e70479c731"
+          },
+          "after": {
+            "bytes": 600,
+            "sha256": "6f625d94ab4862d0e9840014c886a7dd5949e29ee2779ca40e4ead7f302ac8f4"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/core.core.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 539,
+            "sha256": "ee3f93ecff0ceeff3555a082db72cbc225cd19114674aea3c64b8b07f81d2236"
+          },
+          "after": {
+            "bytes": 530,
+            "sha256": "58389c4e5d3557923541350ceb5ebeec898aa4d7d78f65f38f619223e293a069"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/feature-authentication.feature.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 902,
+            "sha256": "c50ca30d1e519d79ac4987424c788ecb4c9e083e66c1cdcbf087b40d0a9184fe"
+          },
+          "after": {
+            "bytes": 887,
+            "sha256": "ccb850f968ea5024675e9f91f9bc95afb6b677969a4651a7ef75e033f2f91a9a"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/feature-group-proposals.feature.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 908,
+            "sha256": "25c3d7585fb136efe3b00042ad214334667c709a13923aa0ec36655e5a46f7f9"
+          },
+          "after": {
+            "bytes": 893,
+            "sha256": "acd8d7c1477437ceedb6521c1389c5db27814c7b5b59e9bef8a407c674c2d8e4"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/feature-meeting-attendance.feature.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 1470,
+            "sha256": "7281843159f0e3c422a851a89b8b6a0daa51a1b38690f3f8c06616ad27a8bf45"
+          },
+          "after": {
+            "bytes": 1453,
+            "sha256": "91c2fe162934f4410c5543cf4b4f44bc9b9335fedd0a7ac7a26754ca37048a3f"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/feature-meeting-fees.feature.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 886,
+            "sha256": "572690e2bbeb5569a35123a5cd7bea8a90bb1937defe8afdd361fe04a90bf580"
+          },
+          "after": {
+            "bytes": 871,
+            "sha256": "32b460341414886ed22879e694b9bb97aad178bf748b95d3e12e3133add911be"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/feature-meeting-groups.feature.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 1170,
+            "sha256": "2cd86336f47e7a68df106b439f5f8a32b9d3f4e0a79147cb6fd2b8b8f8a7832f"
+          },
+          "after": {
+            "bytes": 1154,
+            "sha256": "0b84d48e36f7513f654c91fc6251affb95fac2e81a0e349ae7e14355d354a5ed"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/feature-meeting-lifecycle.feature.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 1169,
+            "sha256": "ca67d193c1420edb45ba4b8f619b132c8e1d359a365b5a5067a0d72683607af9"
+          },
+          "after": {
+            "bytes": 1153,
+            "sha256": "16bd768cbd867c7ccf98cd68c32f91d7ac937dc756895aa3dec96f3b38feb3e8"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/feature-price-list.feature.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 850,
+            "sha256": "7735e872053bf8517ff5725512b1c5f045f45b6545d01d12a22e2761b120ca3d"
+          },
+          "after": {
+            "bytes": 835,
+            "sha256": "e2df828e49632a664bafdead924d7808b45125f0e0e08aaf0e1ea346d626dd03"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/feature-user-registration.feature.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 910,
+            "sha256": "07f39d2cf3f8ade6d56f07db3d0e035589e081014bc052f9037164e91b38404c"
+          },
+          "after": {
+            "bytes": 895,
+            "sha256": "8e9fff16bd366735ca1f70f724d8622b94d3465c053ba351e91b3d6205702852"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/handler-accept-proposal.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 444,
+            "sha256": "22b28cf92f4ef7f2c5660ddfd90a562fd390be5800bbac217903589ba99ba412"
+          },
+          "after": {
+            "bytes": 434,
+            "sha256": "444646ac2661e0bf073b60b1accf34b7063852333986616f762897e93b635c08"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/handler-add-meeting-attendee.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 410,
+            "sha256": "fa592547d893c6c71b92629a5bdbc78f112048f85314a042e3ed2a25583d1905"
+          },
+          "after": {
+            "bytes": 400,
+            "sha256": "500836b481b84570ab5f7fe5b61bdc94f1c2935fcc5a89146053577a16b06699"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/handler-authenticate.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 385,
+            "sha256": "1ed3ae53b62165d341fb4073b0f998228fae1523073759b6adeca95c7bde85d7"
+          },
+          "after": {
+            "bytes": 375,
+            "sha256": "d393a66c27072995ccdbcc23c77f87e8fad2ca2a431c183b7f63805ae4f1d546"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/handler-cancel-meeting.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 380,
+            "sha256": "f86bcce45fd4fa3f047e48f2777acbb633f36f60d9b6ed7afde8701bec3d04fe"
+          },
+          "after": {
+            "bytes": 370,
+            "sha256": "d13b06829c2f3a51ee3d6c38c90c22fad3463b05741373c8cd30c8db71a0fe6b"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/handler-create-meeting.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 402,
+            "sha256": "7b7a7c088990b3fc71192655f7d03aebcc916a12af32bf7f38acf665dcd78c48"
+          },
+          "after": {
+            "bytes": 392,
+            "sha256": "36e821c0e01b2925dc26333667fe628d54302d87f9cc50ee5921c31e46c12d3c"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/handler-create-price-list-item.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 431,
+            "sha256": "fc38aeaee4b1f5d3b23d32b183083f2590b244f6a9299dca7f1fb67bc7af9dcc"
+          },
+          "after": {
+            "bytes": 421,
+            "sha256": "efd4ee2b86433c64ce29e6c0a6c92ee22cafde5ad3f25ae638d67a8a585878e8"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/handler-get-meeting-attendees.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 719,
+            "sha256": "c884870cf32634de969e9dd01c901ffd1f93f2838425553be08d4aeda8e9f371"
+          },
+          "after": {
+            "bytes": 705,
+            "sha256": "c7e68daa1dc65b34837677f3d1a4cfecf7ff07ee28156be48bb2edf1dce8b247"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/handler-get-meeting-fees.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 396,
+            "sha256": "01c8df38ea9cf21b2ac29a91883d34e7e015f1d58488116ff98b990b9efacba4"
+          },
+          "after": {
+            "bytes": 386,
+            "sha256": "0476cbfc7b7151fb7e88327c9e087fabc9c790cd458532fc9a1b53917f6c1f54"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/handler-get-meeting-group-details.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 422,
+            "sha256": "3f9b5e9c17067fdc096409d9125e071844f67f908839365447f35565e8fda5f2"
+          },
+          "after": {
+            "bytes": 412,
+            "sha256": "15b289ce08cd7fd32557761e807ffa719e55709acb788eb53412ded9ad9abe9f"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/handler-get-member.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 375,
+            "sha256": "a65d17b204ee4e6e2e939c5eac94f547db846102d1d89ddebcd63e13f015d4f8"
+          },
+          "after": {
+            "bytes": 365,
+            "sha256": "178b6dfc475aec4f2ad76dc09e305ff23f0473a1e33391fc7f651ffc0318a264"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/handler-propose-meeting-group.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 433,
+            "sha256": "4f13e125af1f9a6245cb4cd05932348dfae48e365e5e40d2d2c3fbfdcfbd1e99"
+          },
+          "after": {
+            "bytes": 423,
+            "sha256": "3ac47ebcdf78fabc8a04c77c3b97b61f12cf67130b6ed8758155c9ea6dcf55ba"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/handler-register-new-user.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 407,
+            "sha256": "f50067c4d6316d231cff839f45a6832946da6fd9e82b5b02c2d0c67a5dd57a8c"
+          },
+          "after": {
+            "bytes": 397,
+            "sha256": "6e80fb5bd804d978d8b74f892518cb3d1d98f2f67c011d7bb4859173ce0a99ab"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/interface-administration-events.interface.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 758,
+            "sha256": "e9db61b78d9f3dd871ba60d08dbc57c72fd7c2704b94a60df2f361153a9c945e"
+          },
+          "after": {
+            "bytes": 744,
+            "sha256": "cb52d8bee14f6f7f51191016aebdbcad562c5c28d1718bda6084532414d49e7e"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/interface-administration-module-api.interface.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 675,
+            "sha256": "4bbdc456dc15d72c907a4510f8a452887fed043692373ab2710e506fe1b2ecfa"
+          },
+          "after": {
+            "bytes": 661,
+            "sha256": "8d78d964ea72031e437605c67a0d7b8cdc5482f11464e409ddb2352903433de6"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/interface-meetings-events.interface.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 850,
+            "sha256": "18b5e8b18e3aa59d3344f3aad7f944c5b54e92994da40a32b9cee80055faf451"
+          },
+          "after": {
+            "bytes": 836,
+            "sha256": "20f488f1af7d9553414ca5e27e0a1c49070a683118e8f535ade1cd90b898f99b"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/interface-meetings-module-api.interface.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 627,
+            "sha256": "34428c6ae44e5e4b42f29c2d117e0fa4cbc53593fbe763de0eb11558c3bbe259"
+          },
+          "after": {
+            "bytes": 613,
+            "sha256": "cc570a582d453672832a206d49f8ac5580662a2f3c064427d6444aa3cea81795"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/interface-payments-events.interface.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 770,
+            "sha256": "ece09eaeb52547a2366996f03b49ac07de51c964bf517bc39518441f7d9e7c68"
+          },
+          "after": {
+            "bytes": 756,
+            "sha256": "176b89b1c0c48b7f0ce16d8ac22df1c2df40bcbaef96749519bb8e0e446c607f"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/interface-payments-module-api.interface.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 627,
+            "sha256": "fcabfa3fd3a4c9b00d487fabf1682153bb2fdf1cbd7a33e7674b3aacaf58c5e5"
+          },
+          "after": {
+            "bytes": 613,
+            "sha256": "a3921c483fa2d74f7c5dc97066580e847b0ae7da28ace7aa558a2dd0c281c1b7"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/interface-registrations-events.interface.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 693,
+            "sha256": "5a5f9a11b28530c038a9ee891fb6f02d11015f51ddf49e76a6808f434eafa244"
+          },
+          "after": {
+            "bytes": 679,
+            "sha256": "6a0a88a60ca8a26b588f9368c7ed1bf24e897c458570b814ed52d2417a5c30c8"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/interface-registrations-module-api.interface.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 667,
+            "sha256": "7eee8f0e492d91328d836d9f486bec56a2f909b3bcfc369e416a5f69c3cea946"
+          },
+          "after": {
+            "bytes": 653,
+            "sha256": "4ab992a03ed277149bec3ab117221a41dbd12913f8e6b8d05bcceb5baf04243a"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/interface-user-access-events.interface.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 648,
+            "sha256": "f2011dce903b1476f6499ddacda7e9144a948ea229ba32eb93033dd7781cefea"
+          },
+          "after": {
+            "bytes": 634,
+            "sha256": "63dd6bc6aec6317b7e230333e6d7aad8afd6f57431d87d14d15688a4bfd5c31e"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/interface-user-access-module-api.interface.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 648,
+            "sha256": "d85775fba911379be50e8f367113ef11c4bb5ad65db8fbbe3ee176f5ce279add"
+          },
+          "after": {
+            "bytes": 634,
+            "sha256": "b8eef8cce25352e0f9b08126c6e48830bb6b4cf925ec6b6912090c8bbcd16d94"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/module-administration.module.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2319,
+            "sha256": "8f63d6037bc15510af7955db850e5949e20bdfbf116f7a5a5f476eb10e89d484"
+          },
+          "after": {
+            "bytes": 2292,
+            "sha256": "f3cd9724ebea58bb5e4d4676001e959f049fb0bde11f2c4d3435b740b9cc8013"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/module-meetings.module.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2549,
+            "sha256": "9e737d38285c0d79619d85ad8bcf270ffc76feca7c1241805cdd636ac9607306"
+          },
+          "after": {
+            "bytes": 2521,
+            "sha256": "ab028d706954cfb9b74bd650a77a39f102b6f7e3420c8db9fd72a94485a5d6cb"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/module-payments.module.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2544,
+            "sha256": "acf7a4c164e7b5c81079e3e5eaec151384969fb31801eda8c4f3f588dea9a753"
+          },
+          "after": {
+            "bytes": 2516,
+            "sha256": "4b85818bf5a2c4554db4eb687dbfb6892c3b1bd87603e34f0523ba0f59244b04"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/module-registrations.module.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 1442,
+            "sha256": "52f272ceb0acd7a16956385d40940da2946af91af4733be2276444a553754607"
+          },
+          "after": {
+            "bytes": 1418,
+            "sha256": "68306baa14aa7803b3645c8b4a3c70cb3d03b1d0f3b4ba0a03452f97a3d10866"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/module-user-access.module.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 1706,
+            "sha256": "3077207e0b8b97fba374954254cf30aec8f67ad0dbe80cb2857da4593a4582aa"
+          },
+          "after": {
+            "bytes": 1681,
+            "sha256": "8132c8d50742f834aec5082e5f764fd1240953af38651b32c13666e592c06ceb"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/narrative-architecture-test-decision.narrative.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 694,
+            "sha256": "433af0f46494df5e729c95924edc67192d770994ed78ad1a69db945f3cb6ca6d"
+          },
+          "after": {
+            "bytes": 680,
+            "sha256": "3e112208d7c359e436cf90fa96b06c470ad2718ddc65e59c072adce830880a18"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/narrative-cqrs-read-model-decision.narrative.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 679,
+            "sha256": "4a3010f973216bb1e608acdaea37f6fb2a79c0edb3bb76fa71100caf72c950b7"
+          },
+          "after": {
+            "bytes": 665,
+            "sha256": "25df96e142d7d1f6def226325fea4200df4ff347b61198215b06d2baa16b31d2"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/narrative-meeting-attendee-view.narrative.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 693,
+            "sha256": "01a4a106f8e50ae76412915d33b9ad28c0c763f07f45ece76eb3fec42a485c37"
+          },
+          "after": {
+            "bytes": 679,
+            "sha256": "2b59017b879e79c13c053b332f1e73dbe3459e6ecd689661390b40902e5dc288"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/narrative-module-event-boundary-decision.narrative.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 705,
+            "sha256": "6a01df701c762ac770d424ff4077897e73bace7c08ad8440e28343bc9c94501c"
+          },
+          "after": {
+            "bytes": 691,
+            "sha256": "c4e161b378306064dcf6c5dc6f1b7e677ae6d799b4aaabc3172beaeb71b4acbb"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/product-mymeetings.product.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 1872,
+            "sha256": "f1c8cbeca2f1f2a520f79a4c85f58e5b5ffb14d385a7866e360463c952334f77"
+          },
+          "after": {
+            "bytes": 1854,
+            "sha256": "2b80834e101ced69a2ae705a1a42260222cb137a279a0efd121a799af70db4d8"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/README.md",
+          "change": "modified",
+          "before": {
+            "bytes": 7309,
+            "sha256": "bc6591742acef34437c8a35582c8bd58c77cd38e19370ae835d96097017dbdbf"
+          },
+          "after": {
+            "bytes": 7473,
+            "sha256": "ce284b3e95366a4ce57f1121ab38be5b389db45af18ea1236de4f851ae0cd5a3"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-accept-proposal.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2299,
+            "sha256": "e35d3b5104544cfbe34740d0722f8d69c5f951fee1c488d9b1218d00e20b383e"
+          },
+          "after": {
+            "bytes": 2267,
+            "sha256": "0d3c757a56e6d8a314041bf5c51c9930034d103a519cf951744eae54ac28758c"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-add-meeting-attendee.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2264,
+            "sha256": "b0c133c4220bb1ba0a4c7ce7ba3ded6433f9d3bdcc14fa7c60da49963359c262"
+          },
+          "after": {
+            "bytes": 3345,
+            "sha256": "759d5d0bfe813ca73c9ce7e9f717e721e1f3f6738ef9caef4b0672ce62c55679"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-authenticate.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2453,
+            "sha256": "8b956342b969323005cdad406b5fd8725aa1dd42c93756d95aeefc2705cdf8a3"
+          },
+          "after": {
+            "bytes": 2420,
+            "sha256": "8b070666aef1e539ae89dfb59a5556693b5a9540c4b9d907f16ace4add8b950c"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-cancel-meeting.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2195,
+            "sha256": "e1e1c5e6362ff9faa667cd8f84b62b881d60c8da1cc92c01c7f3cce840ebdd29"
+          },
+          "after": {
+            "bytes": 3234,
+            "sha256": "9ca4508cb2917003450620347eadf270635bde1dbf201dbeabe481952a0ac084"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-create-meeting.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2235,
+            "sha256": "c7b884ae19d5df08b771e0363cb6c21311ce269400d4f0d4b855f4d682081161"
+          },
+          "after": {
+            "bytes": 2203,
+            "sha256": "4e1d2122628dc4efd891f2a07714358b666c18f3feea8c357b0cc72777894563"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-create-price-list-item.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2009,
+            "sha256": "c68db15e91467efa448a01ff6d6ccde6542337e4b3a3b5ac0b72b1dda6b7f7e7"
+          },
+          "after": {
+            "bytes": 1978,
+            "sha256": "26570b6c7e9a4a2019d3382bda58db179054579a3f5d4e6aaa084d6f213358da"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-get-meeting-attendees.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2044,
+            "sha256": "ad1c5a6cbd54c2b6888d74c08f2f88b54cd0157932a7f817868867ec512f2fed"
+          },
+          "after": {
+            "bytes": 2013,
+            "sha256": "f59db6bc6bac9d15ae781dfa07512da5d0bcdd77b9389b19d9d56ebec304565a"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-get-meeting-fees.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 1960,
+            "sha256": "3b2b5860c2f18e5f0bf802732edd998e35c94542b810f8bf8f8c1a3908a9b986"
+          },
+          "after": {
+            "bytes": 1929,
+            "sha256": "3a94b553bc07db7683c38a9652797e5c5ce05a42b927a8f6f006ec3ff76704c1"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-get-meeting-group-details.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2305,
+            "sha256": "ce777c62e22611055a517bf2590a8e41a4d9571cf231ef0c9cd9a72b949536d0"
+          },
+          "after": {
+            "bytes": 2273,
+            "sha256": "25d7e6fa163dcd8ab85b40555183054506386ea271c340e639cec6856b428a44"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-get-member.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 1943,
+            "sha256": "87727f49b1911d51235f4bf64e287d5294310e80c30a6c803ee17e08b761b832"
+          },
+          "after": {
+            "bytes": 1912,
+            "sha256": "bfd800a46a5977ab3940ab71aac7cb0af04eb3d08fe6677d827254006529095e"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-propose-meeting-group.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2589,
+            "sha256": "658ee6fc4ce8c48c143d64a7624d59639a5aad5ee3f0a73f5d95a4b44e39f96a"
+          },
+          "after": {
+            "bytes": 2556,
+            "sha256": "13616e85757a278bf52b6b3a09f486a159e2d9e037f64ddb319f3bdc3d1a7c1b"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-register-new-user.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2307,
+            "sha256": "f61c5ac23ea9f648732dfdc20a6479f3324aa0cde09cee0c3061befdabedc109"
+          },
+          "after": {
+            "bytes": 2275,
+            "sha256": "8cba75bb7eb0a39833b18eb1918115d0dda1aba11125d28474c50cdd55c6e120"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/validator-authenticate.validator.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 377,
+            "sha256": "ea9fb398fcf5066be518dc2b795f2348c6cb13c8c5deca4c4b8a9d37569e16b0"
+          },
+          "after": {
+            "bytes": 368,
+            "sha256": "42b7cd64e3d0ec45f5d6b73712eb3af1b5098933ac4534decccc382cb62c14bd"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/validator-propose-meeting-group.validator.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 420,
+            "sha256": "166f7209f2bb5e8ee68685dc911bbe5e4439192ab483691b31bb5429ca6951df"
+          },
+          "after": {
+            "bytes": 411,
+            "sha256": "65e8f9ab2c22d15d243044d50ef0436a31e95ba738d1c42c2335e8cdee43adb5"
+          }
+        },
+        {
+          "path": "docs/markitect/_domains/architecture.mymeetings.example.v1alpha1.domain.md",
+          "change": "modified",
+          "before": {
+            "bytes": 12818,
+            "sha256": "3cb35d96c6250823381192cd4ada12fecb6b3351d197a6efb0557add2d61e3e1"
+          },
+          "after": {
+            "bytes": 14017,
+            "sha256": "9f99f45d703c37fad8a16eb94b8054a03b79917b7a19b74ed750a28c0318bb37"
+          }
+        },
+        {
+          "path": "docs/markitect/_domains/README.md",
+          "change": "modified",
+          "before": {
+            "bytes": 247,
+            "sha256": "1718e599e04b70345a80b09da9ee8962069a27db10943595ab4673b479526601"
+          },
+          "after": {
+            "bytes": 243,
+            "sha256": "b34acdd4c74e6e4213e85c8752e3f199b491c6a490da8d2f9bb22ad8e42930bf"
+          }
+        },
+        {
+          "path": ".agents/skills/architecture-review/SKILL.md",
+          "change": "modified",
+          "before": {
+            "bytes": 847,
+            "sha256": "9617823da5fcf7bfadda7ad14ea6e1339269dbfb6b13803ae1eb2198a2ded07e"
+          },
+          "after": {
+            "bytes": 832,
+            "sha256": "fdd5c7786097bebc37caf27eeed4a1ca0fba584e0c07840f4989079ce65ccd5e"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/validator-add-meeting-attendee.validator.architecture.mymeetings.example.v1alpha1.md",
+          "change": "created",
+          "after": {
+            "bytes": 393,
+            "sha256": "358d2eec0843fea37dfcdcf2740208f58c3eb844d709e46a1b88b5b2583c73e6"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/validator-cancel-meeting.validator.architecture.mymeetings.example.v1alpha1.md",
+          "change": "created",
+          "after": {
+            "bytes": 366,
+            "sha256": "6669dea7c12c6d2714e135801987b540e9970e20e7b3f095944553bcf60fd3c1"
+          }
+        }
+      ],
+      "telemetryChanges": [
+        {
+          "path": ".telemetry/reads.jsonl",
+          "change": "created",
+          "after": {
+            "bytes": 3398,
+            "sha256": "b438b1497c77bbc5f95a4a6dd279cfe95ed05f88f1cbd45eeb06a09ab9472766"
+          }
+        }
+      ],
+      "assetChanges": [],
+      "compiledInputChanges": [],
+      "operatorCommands": [
+        {
+          "name": "meetings-application-build",
+          "exitCode": 0,
+          "rawOutputSha256": "9500612d77eec5b6f181efab9a371aee6bcd1162607fd6f457310858803bfe39",
+          "testCount": null
+        },
+        {
+          "name": "bounded-test-runner-restore",
+          "exitCode": 0,
+          "rawOutputSha256": "0af360d79aca1edbb7f72771743b4a09722d9ae08074dbe3356daafb60cd818b",
+          "testCount": null
+        },
+        {
+          "name": "linked-application-architecture-tests",
+          "exitCode": 0,
+          "rawOutputSha256": "d4ddbdc2403de5541adf390968fbd03d3a27693ef7b092862c5ca2e55bc08e59",
+          "testCount": 13
+        },
+        {
+          "name": "evaluated-project-reference-policy",
+          "exitCode": 0,
+          "rawOutputSha256": "8fad05d0636675f90af2322596b894dfa5090e9cb02e73b4907b6b6c48b25f68",
+          "testCount": null
+        }
+      ],
+      "changedArtifactsArchive": {
+        "path": "runs/t2-markitect/changed-artifacts.zip",
+        "sha256": "0c7fd5580a175473cdbcc3d3299d36efb6c21ad9bc9a146a566661b17389534e",
+        "bytes": 58313,
+        "meaning": "exact changed-file bytes, including new untracked files that ordinary git diff omits"
+      },
+      "contextInputs": [
+        {
+          "key": "/Project/mymeetings-adoption-pilot",
+          "path": "markitect.yaml",
+          "hash": "sha256:dcb07a04dd812457cd489b0c2155d1b0112f46244ce0c1b80308945300a15d3d",
+          "reason": "project policy and bindings"
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+          "path": "resources/feature-meeting-attendance.yaml",
+          "hash": "sha256:0561d752aea2c5c82e2b8f18ce072089fd6530827d53d5a079526864192311aa",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee via usesFeature",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee",
+              "relation": "usesFeature",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/usecase-add-meeting-attendee.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Handler/add-meeting-attendee",
+          "path": "resources/handler-add-meeting-attendee.yaml",
+          "hash": "sha256:0c53616c51fb164e96f6a574ab28003f6963b68b00967788ce6baaf3ceb0becb",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee via hasHandler",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee",
+              "relation": "hasHandler",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/usecase-add-meeting-attendee.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Module/meetings",
+          "path": "resources/module-meetings.yaml",
+          "hash": "sha256:9a4e2ab5611609fc6e713b8a0c874c42e76942fc7448b72256506c6e7477f75f",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee via belongsToModule",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+              "relation": "belongsToModule",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/feature-meeting-attendance.yaml",
+              "line": 1
+            },
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee",
+              "relation": "belongsToModule",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/usecase-add-meeting-attendee.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision",
+          "path": "resources/narrative-architecture-test-decision.yaml",
+          "hash": "sha256:da54a85673409c11d60d584394ba93fb2f7c54036eed5393942848154c08f449",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance via documents",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+              "relation": "documents",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/feature-meeting-attendance.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision",
+          "path": "resources/narrative-cqrs-read-model-decision.yaml",
+          "hash": "sha256:4ac9d7ba82287c9e3ec72d8540f32d0096e1d5f31ab4e02f8d4c5031321de989",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance via documents",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+              "relation": "documents",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/feature-meeting-attendance.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view",
+          "path": "resources/narrative-meeting-attendee-view.yaml",
+          "hash": "sha256:3c8ed59f138b6e6c05db819ef9be3fdf096267d70c694a360f678896f0907952",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance via documents",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+              "relation": "documents",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/feature-meeting-attendance.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee",
+          "path": "resources/usecase-add-meeting-attendee.yaml",
+          "hash": "sha256:64176c528b01f2c22cdb7737c459d1623a44fc9f934be556cd040a37997e6790",
+          "reason": "entry"
+        },
+        {
+          "key": "file:docs/architecture-decision-log/0007-use-cqrs-architectural-style.md",
+          "path": "docs/architecture-decision-log/0007-use-cqrs-architectural-style.md",
+          "hash": "sha256:499e8ef95b0cbec811d1e8897a3baea3de8b1ec29579bec43f01b5ea8ae9f25d",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision"
+        },
+        {
+          "key": "file:docs/architecture-decision-log/0017-implement-archictecture-tests.md",
+          "path": "docs/architecture-decision-log/0017-implement-archictecture-tests.md",
+          "hash": "sha256:f23ffbec091f4421ee4e1dea370905bc982ccae240cae04f39f3f8bb7dc07407",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision"
+        },
+        {
+          "key": "file:src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+          "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+          "hash": "sha256:24d4295e8aa931b0ea09b069b8c1852cddd74eeaf49ac017a0e15be9b0a42426",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view"
+        },
+        {
+          "key": "file:src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+          "path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+          "hash": "sha256:f5c6a67a30c5cf7804cfbda1f1094ce6f3a26d4be15bfd56f010c0796ad834f2",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Module/meetings"
+        },
+        {
+          "key": "file:src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommand.cs",
+          "path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommand.cs",
+          "hash": "sha256:4d0d909caafcdc64fb3016b61ba6eb633866af109a168f6da47a2f4e9e69fbed",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee"
+        },
+        {
+          "key": "file:src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandHandler.cs",
+          "path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandHandler.cs",
+          "hash": "sha256:1fd5d13c6199b616e33127dbe528e1c3d3f06520dd612dba6066b1e8587995ca",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Handler/add-meeting-attendee"
+        },
+        {
+          "key": "file:src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj",
+          "path": "src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj",
+          "hash": "sha256:8d654c44b7bebb6b31a9f2f606927f45b5072193adc4eef8cce3f3cf3b278df3",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Module/meetings"
+        },
+        {
+          "key": "file:src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+          "path": "src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+          "hash": "sha256:04e4d9e751e5f8d5833592e05e79f847114c452e31a21cb5bc6f6808f10d88df",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Module/meetings"
+        },
+        {
+          "key": "domain:package:mymeetings-architecture/file:domains/architecture.yaml",
+          "path": "domains/architecture.yaml",
+          "hash": "sha256:b46900d7ed055446734599f8b6091d027f4776c5557d213f9e2c6b6103f527c5",
+          "reason": "selected language definition",
+          "role": "domain",
+          "packageVersion": "2.0.0"
+        }
+      ],
+      "contextBytes": 43712
+    },
+    {
+      "runId": "t3-simple",
+      "study": "R3",
+      "agentIdentity": "/root/r3_t3_simple",
+      "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+      "candidateCommit": "ae9035f3d7a493673122d72a5100392d9dd1a744",
+      "externalWriteDetected": false,
+      "readEvents": 18,
+      "meteredBytes": 27149,
+      "manualChanges": [
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+          "change": "modified",
+          "before": {
+            "bytes": 2036,
+            "sha256": "996f50dd9cafe4df62d3ccc49f92be578fae5e851ffb8b8960b8a8284730d625"
+          },
+          "after": {
+            "bytes": 2150,
+            "sha256": "7c95c313d2718d4329c4e4056a023e0834621bdd1bfbe93e36d2c7c0e9d25e25"
+          }
+        },
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs",
+          "change": "modified",
+          "before": {
+            "bytes": 444,
+            "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7"
+          },
+          "after": {
+            "bytes": 493,
+            "sha256": "a0d40aa6aeb3f8957e2f7df8c6d77944042db022fedf60f0a0fea132f81d0179"
+          }
+        },
+        {
+          "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+          "change": "modified",
+          "before": {
+            "bytes": 467,
+            "sha256": "f45b41dfa11cac9b87b69e8ce780291be551b73170ec20e33a6fdbb2ff637e84"
+          },
+          "after": {
+            "bytes": 505,
+            "sha256": "52c82e8a99f5f1744878875d3b9ae7357fe213dca74cd3879e589f2592cc94fc"
+          }
+        }
+      ],
+      "generatedChanges": [],
+      "telemetryChanges": [
+        {
+          "path": ".telemetry/reads.jsonl",
+          "change": "created",
+          "after": {
+            "bytes": 3454,
+            "sha256": "f8c01a4f4f74f95d7538db04229827df5102a8eea905bced507eaa3c7f4b5926"
+          }
+        }
+      ],
+      "assetChanges": [],
+      "compiledInputChanges": [],
+      "operatorCommands": [
+        {
+          "name": "meetings-application-build",
+          "exitCode": 0,
+          "rawOutputSha256": "02104c62be7f078a13bb41da3e34b2b951c3a286237df593248c20cd60e96f0d",
+          "testCount": null
+        },
+        {
+          "name": "bounded-test-runner-restore",
+          "exitCode": 0,
+          "rawOutputSha256": "a0b133d321dddf185d510688aab6d792b0d0f44b6680c1adc6bf047a61d8d4a1",
+          "testCount": null
+        },
+        {
+          "name": "linked-application-architecture-tests",
+          "exitCode": 0,
+          "rawOutputSha256": "6ae701f9f7afbfa996b588b3e4aeecdcb45a8214e26afedb213950588508a8e3",
+          "testCount": 10
+        },
+        {
+          "name": "evaluated-project-reference-policy",
+          "exitCode": 0,
+          "rawOutputSha256": "4ca856b3114adcde985862b98c342c2f7ae5ac750534782fa67997276c9f4ba4",
+          "testCount": null
+        }
+      ],
+      "changedArtifactsArchive": {
+        "path": "runs/t3-simple/changed-artifacts.zip",
+        "sha256": "d92f213225bbd19aecee396a248ce8d1f09171ffb2b60be03903a04eabb4997d",
+        "bytes": 2959,
+        "meaning": "exact changed-file bytes, including new untracked files that ordinary git diff omits"
+      }
+    },
+    {
+      "runId": "t3-markitect",
+      "study": "R3",
+      "agentIdentity": "/root/r3_t3_markitect",
+      "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+      "candidateCommit": "ba66728b9b87f6c38abc02ddba1c8d0fbc5ec8e3",
+      "externalWriteDetected": false,
+      "readEvents": 25,
+      "meteredBytes": 194573,
+      "manualChanges": [
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+          "change": "modified",
+          "before": {
+            "bytes": 2036,
+            "sha256": "996f50dd9cafe4df62d3ccc49f92be578fae5e851ffb8b8960b8a8284730d625"
+          },
+          "after": {
+            "bytes": 2150,
+            "sha256": "7c95c313d2718d4329c4e4056a023e0834621bdd1bfbe93e36d2c7c0e9d25e25"
+          }
+        },
+        {
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs",
+          "change": "modified",
+          "before": {
+            "bytes": 444,
+            "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7"
+          },
+          "after": {
+            "bytes": 493,
+            "sha256": "a0d40aa6aeb3f8957e2f7df8c6d77944042db022fedf60f0a0fea132f81d0179"
+          }
+        },
+        {
+          "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+          "change": "modified",
+          "before": {
+            "bytes": 467,
+            "sha256": "f45b41dfa11cac9b87b69e8ce780291be551b73170ec20e33a6fdbb2ff637e84"
+          },
+          "after": {
+            "bytes": 505,
+            "sha256": "52c82e8a99f5f1744878875d3b9ae7357fe213dca74cd3879e589f2592cc94fc"
+          }
+        },
+        {
+          "path": "resources/handler-get-meeting-attendees.yaml",
+          "change": "modified",
+          "before": {
+            "bytes": 519,
+            "sha256": "77ab67d96846002a4aec33deda8bf60bf68ac2fcaf04103570ab794ddcba9877"
+          },
+          "after": {
+            "bytes": 566,
+            "sha256": "2147b5263cc53d90fbaded8c38a0525c7e6255fe66366131c39266f57dfe6a2c"
+          }
+        },
+        {
+          "path": "resources/narrative-meeting-attendee-view.yaml",
+          "change": "modified",
+          "before": {
+            "bytes": 521,
+            "sha256": "241eff5a5e951ac439a0284df0a29c5d2537cfa1b31d6ca3a33270300ce2cb10"
+          },
+          "after": {
+            "bytes": 569,
+            "sha256": "02eb7d0c6621c6159e0687c5182e9b4825c728af3cd5bb91d7afca40bb51d00f"
+          }
+        },
+        {
+          "path": "resources/usecase-get-meeting-attendees.yaml",
+          "change": "modified",
+          "before": {
+            "bytes": 943,
+            "sha256": "85d248f6ad5162b5d1be98e081061a4f6b2f02bdfd770586b10dc519d6d30379"
+          },
+          "after": {
+            "bytes": 983,
+            "sha256": "41efd5138a4e7ec3b716bb0b4c26f842d8036c6ded7aeb80cfa22c9625c45604"
+          }
+        }
+      ],
+      "generatedChanges": [
+        {
+          "path": "docs/markitect/architecture/handler-get-meeting-attendees.handler.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 719,
+            "sha256": "c884870cf32634de969e9dd01c901ffd1f93f2838425553be08d4aeda8e9f371"
+          },
+          "after": {
+            "bytes": 766,
+            "sha256": "34219fcaf9b37a42c36e3eb9f3be49fbd51b75291ce591ce1a486526df2a52e5"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/narrative-meeting-attendee-view.narrative.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 693,
+            "sha256": "01a4a106f8e50ae76412915d33b9ad28c0c763f07f45ece76eb3fec42a485c37"
+          },
+          "after": {
+            "bytes": 741,
+            "sha256": "f90ae44ed83f9472a8a3fcbf197bb8dd06dee4d65272d744b752d196b0d191b1"
+          }
+        },
+        {
+          "path": "docs/markitect/architecture/usecase-get-meeting-attendees.usecase.architecture.mymeetings.example.v1alpha1.md",
+          "change": "modified",
+          "before": {
+            "bytes": 2044,
+            "sha256": "ad1c5a6cbd54c2b6888d74c08f2f88b54cd0157932a7f817868867ec512f2fed"
+          },
+          "after": {
+            "bytes": 2084,
+            "sha256": "b1cad00d1ed1f82bf4a418fb9a7c91cde55d403d0b791c0692af44072747cd16"
+          }
+        }
+      ],
+      "telemetryChanges": [
+        {
+          "path": ".telemetry/reads.jsonl",
+          "change": "created",
+          "after": {
+            "bytes": 4622,
+            "sha256": "91dd93dd4a105e1b9e220b5bb97baae9cc18e66656950bb137404f93b5c6bc85"
+          }
+        }
+      ],
+      "assetChanges": [],
+      "compiledInputChanges": [],
+      "operatorCommands": [
+        {
+          "name": "meetings-application-build",
+          "exitCode": 0,
+          "rawOutputSha256": "7e31cb17425f227978b4a8f34a8d0573a0b06a910d6a02e6c32b6a0d5cd7cd2b",
+          "testCount": null
+        },
+        {
+          "name": "bounded-test-runner-restore",
+          "exitCode": 0,
+          "rawOutputSha256": "5e632c0316d3f9df8a480baeaf4d90d9b6b340c188a0c2043b6c1f95e3a0510e",
+          "testCount": null
+        },
+        {
+          "name": "linked-application-architecture-tests",
+          "exitCode": 0,
+          "rawOutputSha256": "7e364d69df99b523636570da20f44ba812b197e74e72afe0871f6a19d9aef3c8",
+          "testCount": 10
+        },
+        {
+          "name": "evaluated-project-reference-policy",
+          "exitCode": 0,
+          "rawOutputSha256": "27a0cf91e3f1e80588b86ce2adf5f2cecb92900cfff292b6bb5a7b07bbec3b02",
+          "testCount": null
+        }
+      ],
+      "changedArtifactsArchive": {
+        "path": "runs/t3-markitect/changed-artifacts.zip",
+        "sha256": "e35b24956128a4f89f572ed05518a901cec34281200ca26a2e945f10648f3215",
+        "bytes": 6785,
+        "meaning": "exact changed-file bytes, including new untracked files that ordinary git diff omits"
+      },
+      "contextInputs": [
+        {
+          "key": "/Project/mymeetings-adoption-pilot",
+          "path": "markitect.yaml",
+          "hash": "sha256:e6a20d968317395d67baeda6577b2788e94ebc19efa2a35ffc0974cae97d6fb3",
+          "reason": "project policy and bindings"
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory",
+          "path": "resources/common-sql-connection-factory.yaml",
+          "hash": "sha256:425a419c3a483f9c0873d626b611dc5daff60980ff944df923a0684656deb498",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees via usesCommon",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees",
+              "relation": "usesCommon",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/handler-get-meeting-attendees.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Core/core",
+          "path": "resources/core.yaml",
+          "hash": "sha256:d7c062010500b488e14f470e6b22902a93288a2f0ce4a540d795ffbe27ab046c",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory via commonOwnedByCore",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory",
+              "relation": "commonOwnedByCore",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/common-sql-connection-factory.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+          "path": "resources/feature-meeting-attendance.yaml",
+          "hash": "sha256:0561d752aea2c5c82e2b8f18ce072089fd6530827d53d5a079526864192311aa",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees via usesFeature",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees",
+              "relation": "usesFeature",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/usecase-get-meeting-attendees.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees",
+          "path": "resources/handler-get-meeting-attendees.yaml",
+          "hash": "sha256:fa33297271d78cc07e200edfa970fd6c3c4f72f39408cf7c1f8ea1539f1cbd39",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees via hasHandler",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees",
+              "relation": "hasHandler",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/usecase-get-meeting-attendees.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Module/meetings",
+          "path": "resources/module-meetings.yaml",
+          "hash": "sha256:9a4e2ab5611609fc6e713b8a0c874c42e76942fc7448b72256506c6e7477f75f",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees via belongsToModule",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+              "relation": "belongsToModule",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/feature-meeting-attendance.yaml",
+              "line": 1
+            },
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees",
+              "relation": "belongsToModule",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/usecase-get-meeting-attendees.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision",
+          "path": "resources/narrative-architecture-test-decision.yaml",
+          "hash": "sha256:da54a85673409c11d60d584394ba93fb2f7c54036eed5393942848154c08f449",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance via documents",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+              "relation": "documents",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/feature-meeting-attendance.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision",
+          "path": "resources/narrative-cqrs-read-model-decision.yaml",
+          "hash": "sha256:4ac9d7ba82287c9e3ec72d8540f32d0096e1d5f31ab4e02f8d4c5031321de989",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance via documents",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+              "relation": "documents",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/feature-meeting-attendance.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view",
+          "path": "resources/narrative-meeting-attendee-view.yaml",
+          "hash": "sha256:3c8ed59f138b6e6c05db819ef9be3fdf096267d70c694a360f678896f0907952",
+          "reason": "required by architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance via documents",
+          "via": [
+            {
+              "from": "architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance",
+              "relation": "documents",
+              "domainApiVersion": "architecture.mymeetings.example/v1alpha1",
+              "path": "resources/feature-meeting-attendance.yaml",
+              "line": 1
+            }
+          ]
+        },
+        {
+          "key": "architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees",
+          "path": "resources/usecase-get-meeting-attendees.yaml",
+          "hash": "sha256:cf1e7391ce6ebc8ae33f5e12ea7df632cc78b2305fc49ff97f9cc25b4c678dfd",
+          "reason": "entry"
+        },
+        {
+          "key": "file:docs/architecture-decision-log/0007-use-cqrs-architectural-style.md",
+          "path": "docs/architecture-decision-log/0007-use-cqrs-architectural-style.md",
+          "hash": "sha256:499e8ef95b0cbec811d1e8897a3baea3de8b1ec29579bec43f01b5ea8ae9f25d",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision"
+        },
+        {
+          "key": "file:docs/architecture-decision-log/0017-implement-archictecture-tests.md",
+          "path": "docs/architecture-decision-log/0017-implement-archictecture-tests.md",
+          "hash": "sha256:f23ffbec091f4421ee4e1dea370905bc982ccae240cae04f39f3f8bb7dc07407",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision"
+        },
+        {
+          "key": "file:src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj",
+          "path": "src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj",
+          "hash": "sha256:4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Core/core"
+        },
+        {
+          "key": "file:src/BuildingBlocks/Application/Data/ISqlConnectionFactory.cs",
+          "path": "src/BuildingBlocks/Application/Data/ISqlConnectionFactory.cs",
+          "hash": "sha256:6997430518126608967a78351c968ba8ac0a414d892e07ab79298734f5b706d5",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory"
+        },
+        {
+          "key": "file:src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+          "path": "src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+          "hash": "sha256:3e1a9f612f8cfcc2e2a8b2ef085685f9f3d1a55c4b901e8d88af6ec37d283195",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Core/core"
+        },
+        {
+          "key": "file:src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+          "path": "src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+          "hash": "sha256:4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Core/core"
+        },
+        {
+          "key": "file:src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+          "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+          "hash": "sha256:24d4295e8aa931b0ea09b069b8c1852cddd74eeaf49ac017a0e15be9b0a42426",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view"
+        },
+        {
+          "key": "file:src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+          "path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+          "hash": "sha256:f5c6a67a30c5cf7804cfbda1f1094ce6f3a26d4be15bfd56f010c0796ad834f2",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Module/meetings"
+        },
+        {
+          "key": "file:src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQuery.cs",
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQuery.cs",
+          "hash": "sha256:dfa148d4e5fad2567cf3589c521cac32dbc1451c3ae01e31c099cd705dc9235a",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees"
+        },
+        {
+          "key": "file:src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+          "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+          "hash": "sha256:29ed4b95fdaf75d0838e78382c23306b6f13466626a86fc85f237bef34088685",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees"
+        },
+        {
+          "key": "file:src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj",
+          "path": "src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj",
+          "hash": "sha256:8d654c44b7bebb6b31a9f2f606927f45b5072193adc4eef8cce3f3cf3b278df3",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Module/meetings"
+        },
+        {
+          "key": "file:src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+          "path": "src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+          "hash": "sha256:04e4d9e751e5f8d5833592e05e79f847114c452e31a21cb5bc6f6808f10d88df",
+          "reason": "declared input of architecture/architecture.mymeetings.example/v1alpha1/Module/meetings"
+        },
+        {
+          "key": "domain:package:mymeetings-architecture/file:domains/architecture.yaml",
+          "path": "domains/architecture.yaml",
+          "hash": "sha256:508af1aca1fc747bdebb095a7d05af600753403a5416f95f0cfd84cc878456b6",
+          "reason": "selected language definition",
+          "role": "domain",
+          "packageVersion": "1.0.0"
+        }
+      ],
+      "contextBytes": 48434
+    }
+  ],
+  "limits": [
+    "One pair per task, no randomization or repeats",
+    "Fresh collaboration agents, backend model identity/tool/model/token counters unavailable",
+    "Read helper is partial instrumentation",
+    "Audit covers persistent known roots, not all OS writes or transient mutations",
+    "Task 3 relocated after auto-review denial; common parent guidance differs from Tasks 1/2",
+    "Task 2 old/new policy history supplied only to B",
+    "No database, runtime registration, human acceptance, or productivity measurement"
+  ]
+}

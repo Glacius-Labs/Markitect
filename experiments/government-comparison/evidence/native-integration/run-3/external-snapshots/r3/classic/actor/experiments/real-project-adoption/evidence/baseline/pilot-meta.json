@@ -1,0 +1,19 @@
+{
+  "startedAt": "2026-10-03T04:38:49.702308+02:00",
+  "task": "Add GetMeetingAttendeeCount query accepting MeetingId and returning only the count of attendee records returned by existing GetMeetingAttendees; guests are not separate records; no endpoint.",
+  "baselinePath": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final",
+  "expectedCommit": "ec01cb6805f93c8a4dbe37efe2a129a58a7ed28d",
+  "endedAt": "2026-10-03T04:46:08.9625479+02:00",
+  "compile": {
+    "command": "dotnet build src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj --verbosity minimal -p:RestoreSources=https://api.nuget.org/v3/index.json",
+    "exitCode": 0,
+    "result": "Build succeeded; 0 warnings; 0 errors",
+    "runtimeOrDatabaseCalls": "none"
+  },
+  "changedFiles": [
+    "src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQuery.cs",
+    "src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQueryHandler.cs"
+  ],
+  "finalGitStatus": "?? src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/",
+  "toolModelTelemetry": "Call/token telemetry was not separately instrumented; no token counts inferred."
+}

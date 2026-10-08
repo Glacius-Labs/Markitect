@@ -1,0 +1,733 @@
+{
+  "protocol": "operating-model-proof/v5",
+  "runId": "c9-checkout-defect-v5-02",
+  "classification": "controlled-non-AI-candidate",
+  "defect": "Checkout drops accepted Orders line total before Billing",
+  "fixtureSourceRevision": "f9c714ec84ce425001e9e671fff35e6a875a816c",
+  "fixtureEvidenceRevision": "6fe80b8bcbf75970957932d759fa57634f3fd398",
+  "markitectSourceSHA": "6a79b0d015801f3f37e42cacd049179cc795be42",
+  "cliDigest": "sha256:03c551536335ee580b870e703a6a40ef8777c5a8139042f8f0f7e8e7e88729aa",
+  "runnerDigest": "sha256:7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57",
+  "reportDigest": "sha256:d9229113737625d2b7925c963c564268427382dec31aa22fa561be95c3c358ae",
+  "status": "failed",
+  "outcome": "failed",
+  "ledgerHead": "sha256:78db53655fcb3c3a0de850f05d8e2b2fc93c3eabe2270c56dc7a2a2c24f3f9ba",
+  "ledgerSelectionDigest": "sha256:bb9271eb335891df858cb8aea6ffd40ed4b175f7801d6f8a9632d479066169d5",
+  "assuranceNodes": [
+    {
+      "nodeId": "billing",
+      "scopeIds": [
+        "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]"
+      ],
+      "children": null,
+      "outcome": "passed",
+      "recordId": "sha256:802b0d9be67b5fad39056ac5f358e58e26c560b05ebfb9fbf5c633230348d68b",
+      "resultId": "sha256:04d3db3058227b9e3c1a7337d0f6eab0288ee9e6058a23efe57464a36e54535c"
+    },
+    {
+      "nodeId": "checkout",
+      "scopeIds": [
+        "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]",
+        "[\"commerce.recursive-assurance/v1\",\"CheckoutComposition\",\"checkout\",\"add-order-to-outstanding\"]",
+        "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]"
+      ],
+      "children": [
+        "billing",
+        "orders"
+      ],
+      "outcome": "failed",
+      "recordId": "sha256:2a25f9a951e5f7937d520047ecb33e074b46e045527e067df7e554caa8bcdb83",
+      "resultId": "sha256:f230a3a946193cb97f05a3d0786862218bd11536e14bc95ccaa0683ed5224ca2"
+    },
+    {
+      "nodeId": "commerce",
+      "scopeIds": [
+        "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]",
+        "[\"commerce.recursive-assurance/v1\",\"CheckoutComposition\",\"checkout\",\"add-order-to-outstanding\"]",
+        "[\"commerce.recursive-assurance/v1\",\"CommerceComposition\",\"commerce\",\"combine-two-checkouts\"]",
+        "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]"
+      ],
+      "children": [
+        "billing",
+        "checkout"
+      ],
+      "outcome": "failed",
+      "recordId": "sha256:b4bfec93f94b3677a42780497ac8c73bc58f1d08fd1a416098c2b76dbce13736",
+      "resultId": "sha256:d32e56b150d8682e9c9c6192f968123174f68e9b1e9e050cf5ed2297835239ae"
+    },
+    {
+      "nodeId": "orders",
+      "scopeIds": [
+        "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]"
+      ],
+      "children": null,
+      "outcome": "passed",
+      "recordId": "sha256:2a719d7f3c40aaf49050de67f96258569f6e0d3f93f4c6d12414f47d39319d35",
+      "resultId": "sha256:4e1a61d753aa0cca9d9b911613f928436b4e34ece4ae34c8c8947271c4fdecfb"
+    }
+  ],
+  "assuranceRoots": [
+    {
+      "nodeId": "commerce",
+      "scopeIds": [
+        "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]",
+        "[\"commerce.recursive-assurance/v1\",\"CheckoutComposition\",\"checkout\",\"add-order-to-outstanding\"]",
+        "[\"commerce.recursive-assurance/v1\",\"CommerceComposition\",\"commerce\",\"combine-two-checkouts\"]",
+        "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]"
+      ],
+      "children": [
+        "billing",
+        "checkout"
+      ],
+      "outcome": "failed",
+      "recordId": "sha256:b4bfec93f94b3677a42780497ac8c73bc58f1d08fd1a416098c2b76dbce13736",
+      "resultId": "sha256:d32e56b150d8682e9c9c6192f968123174f68e9b1e9e050cf5ed2297835239ae"
+    }
+  ],
+  "scopes": [
+    {
+      "scopeId": "billing",
+      "recordId": "sha256:802b0d9be67b5fad39056ac5f358e58e26c560b05ebfb9fbf5c633230348d68b",
+      "resultId": "sha256:04d3db3058227b9e3c1a7337d0f6eab0288ee9e6058a23efe57464a36e54535c",
+      "outcome": "passed",
+      "checks": [
+        {
+          "id": "independent-verifier-receipt",
+          "version": "agent-execution-receipt/v1alpha1",
+          "digest": "sha256:a759b7a5f74d53694240c61292dc00fc3b05a523f02972dfbf54ff01853d5e80",
+          "outcome": "passed"
+        },
+        {
+          "id": "recursive-assurance-billing",
+          "version": "fixed-command-input/v1",
+          "digest": "sha256:773d9139ffbc3d150ea5e9d0760feae0eb0d0a823f33a1e5531ab127b0f045c8",
+          "outcome": "passed"
+        }
+      ],
+      "verifier": {
+        "scopeId": "billing",
+        "recordId": "sha256:802b0d9be67b5fad39056ac5f358e58e26c560b05ebfb9fbf5c633230348d68b",
+        "resultId": "sha256:04d3db3058227b9e3c1a7337d0f6eab0288ee9e6058a23efe57464a36e54535c",
+        "outcome": "passed",
+        "runId": "c3301a5ab52b9ca3d4df38920be8278b",
+        "inputDigest": "sha256:207782863ad3ae2ea4a4ae4e91848c493dcc1ad3fa77e8cc2df4bf212a445bda",
+        "receiptDigest": "sha256:ce621a5ee5d1be568775df0378072c80ceff5bb823b66bc60ea7a7bc7e2e178e",
+        "evidenceSnapshotDigest": "sha256:746002c81793856e0cc15c9df55b810e6592bac0d738810ad94cee2f5355fc99",
+        "evidenceRefsDigest": null,
+        "evidenceRefCount": null,
+        "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+      },
+      "candidateDigest": "sha256:bbfdeb6305cd5c6b38bc2a50f5aa64c47a5023e24222600679c596a4e793e668",
+      "planDigest": "sha256:b562748522e14e0c68f630966980630fc0a2315016572e7a88a214e460dc40ca",
+      "materializedArtifacts": [
+        {
+          "path": "src/Billing/BillingQuery.cs",
+          "digest": "sha256:42957746e493197674b04f7fc2f5e16f7cc38543b9a055902a8c25c159d0d7d2",
+          "mode": "100644",
+          "change": "created"
+        }
+      ]
+    },
+    {
+      "scopeId": "checkout",
+      "recordId": "sha256:2a25f9a951e5f7937d520047ecb33e074b46e045527e067df7e554caa8bcdb83",
+      "resultId": "sha256:f230a3a946193cb97f05a3d0786862218bd11536e14bc95ccaa0683ed5224ca2",
+      "outcome": "failed",
+      "checks": [
+        {
+          "id": "independent-verifier-receipt",
+          "version": "agent-execution-receipt/v1alpha1",
+          "digest": "sha256:2d6ea6dd09c71050c35caf4b9d569273377f26a84862252373431a98ed11b92a",
+          "outcome": "failed"
+        },
+        {
+          "id": "recursive-assurance-checkout",
+          "version": "fixed-command-input/v1",
+          "digest": "sha256:a8859f093bb16f5030fc895d393341eb1f6d25123deb1a2369b574e043e36fa7",
+          "outcome": "failed"
+        }
+      ],
+      "verifier": {
+        "scopeId": "checkout",
+        "recordId": "sha256:2a25f9a951e5f7937d520047ecb33e074b46e045527e067df7e554caa8bcdb83",
+        "resultId": "sha256:f230a3a946193cb97f05a3d0786862218bd11536e14bc95ccaa0683ed5224ca2",
+        "outcome": "failed",
+        "runId": "4dadca2f3210c5fcfb4b57699557fc40",
+        "inputDigest": "sha256:6b44ee150f76a39cad7ddb88bb2dab0de88e0aa8333c7561dcaf646bdaf1bec5",
+        "receiptDigest": "sha256:a98c9effe6de72aab345baee508d84b98976abce6392dda1aa1fababbe0d64ff",
+        "evidenceSnapshotDigest": "sha256:72b5fbfee21ce5c8e09f1b357c911f8eacbf18049c9c0d016927f4d20afbb38b",
+        "evidenceRefsDigest": null,
+        "evidenceRefCount": null,
+        "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+      },
+      "candidateDigest": "sha256:74e57b4fcc41d01900e8edf71e48481ed48038a54738470e12e7857789fd421c",
+      "planDigest": "sha256:e2a0824d7f07c7dd503aad08fa9625f5232f2c9dab31caaf1dadcee93440cf40",
+      "materializedArtifacts": [
+        {
+          "path": "src/Checkout/CheckoutComposer.cs",
+          "digest": "sha256:5093e25d1f70d8712f0232b2c73341794a56c155168c4a4e0774beb14ef1910b",
+          "mode": "100644",
+          "change": "created"
+        }
+      ]
+    },
+    {
+      "scopeId": "commerce",
+      "recordId": "sha256:b4bfec93f94b3677a42780497ac8c73bc58f1d08fd1a416098c2b76dbce13736",
+      "resultId": "sha256:d32e56b150d8682e9c9c6192f968123174f68e9b1e9e050cf5ed2297835239ae",
+      "outcome": "failed",
+      "checks": [
+        {
+          "id": "independent-verifier-receipt",
+          "version": "agent-execution-receipt/v1alpha1",
+          "digest": "sha256:02ceca296dedcf228740d0432560b165fcb5703ba1431c6a5291911cd1dd14a1",
+          "outcome": "failed"
+        },
+        {
+          "id": "recursive-assurance-commerce",
+          "version": "fixed-command-input/v1",
+          "digest": "sha256:8d5e32ac4516759918f38eabf46b5c6aa5681400b968f303914d4c4b4cbb9a5e",
+          "outcome": "failed"
+        }
+      ],
+      "verifier": {
+        "scopeId": "commerce",
+        "recordId": "sha256:b4bfec93f94b3677a42780497ac8c73bc58f1d08fd1a416098c2b76dbce13736",
+        "resultId": "sha256:d32e56b150d8682e9c9c6192f968123174f68e9b1e9e050cf5ed2297835239ae",
+        "outcome": "failed",
+        "runId": "fe95614d21bcdf7d173be15cf240d108",
+        "inputDigest": "sha256:ef82761bb2313543ebfe5a58b7c9e61149b8361267fd039aa06389146cf328b0",
+        "receiptDigest": "sha256:8ebc2c9807decdd3b0e979fceb10ff2f14b7b6d48ea95dd78430687f9b8b4b5a",
+        "evidenceSnapshotDigest": "sha256:99b9c61a8af3f29b1afc559fe680a918c6c75120e1fbe049cf7ed245c95b5179",
+        "evidenceRefsDigest": null,
+        "evidenceRefCount": null,
+        "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+      },
+      "candidateDigest": "sha256:b5615104e8c6eb5e7c40c90559cb754447485d2a7a87282a12a3d4616cbb10a3",
+      "planDigest": "sha256:afc853ca84a784d66c5745babb20877413b75fb8c3940b52e0eed36878c1c3c9",
+      "materializedArtifacts": [
+        {
+          "path": "src/Commerce/CommerceComposer.cs",
+          "digest": "sha256:f1121dd7ba1102e56c67dc29711315ad8ecd645ed7b9c16832692e89d5caf51f",
+          "mode": "100644",
+          "change": "created"
+        }
+      ]
+    },
+    {
+      "scopeId": "orders",
+      "recordId": "sha256:2a719d7f3c40aaf49050de67f96258569f6e0d3f93f4c6d12414f47d39319d35",
+      "resultId": "sha256:4e1a61d753aa0cca9d9b911613f928436b4e34ece4ae34c8c8947271c4fdecfb",
+      "outcome": "passed",
+      "checks": [
+        {
+          "id": "independent-verifier-receipt",
+          "version": "agent-execution-receipt/v1alpha1",
+          "digest": "sha256:c0ba4557f6ac2b1b510888c280593ade9188b43e17a4b8d3878eafa25c60762b",
+          "outcome": "passed"
+        },
+        {
+          "id": "recursive-assurance-orders",
+          "version": "fixed-command-input/v1",
+          "digest": "sha256:0de1ba8fb8acf945fd773de7bd021750b4ceb6dd1fafbda6a01ed156ed22b345",
+          "outcome": "passed"
+        }
+      ],
+      "verifier": {
+        "scopeId": "orders",
+        "recordId": "sha256:2a719d7f3c40aaf49050de67f96258569f6e0d3f93f4c6d12414f47d39319d35",
+        "resultId": "sha256:4e1a61d753aa0cca9d9b911613f928436b4e34ece4ae34c8c8947271c4fdecfb",
+        "outcome": "passed",
+        "runId": "207ec03f3f0b07743d8779bd17cc97d2",
+        "inputDigest": "sha256:c6f402ef542726f4d861405012af39f0d866bd10c516706754f490e722337f9b",
+        "receiptDigest": "sha256:1cc75a5c64979da9de0865949888db362eba08783ad4a1574e7141cbb71932e9",
+        "evidenceSnapshotDigest": "sha256:c53a17adc086c9255001762cdfde0fc2f1f33698bb1b53dc6dd2fdd386b5b4c4",
+        "evidenceRefsDigest": null,
+        "evidenceRefCount": null,
+        "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+      },
+      "candidateDigest": "sha256:ecdd86861d55f8a056564d43c623d7f2ed251a32f4b5af3174bec7208c6ae6f5",
+      "planDigest": "sha256:d6420e2a0ef260245f9634b1c098594f8b4e5dfa0fbdc0a19dcad69229c4a079",
+      "materializedArtifacts": [
+        {
+          "path": "src/Orders/OrderRules.cs",
+          "digest": "sha256:a655698844423d13a67093b2e1ff528465e446f6f926d4545c404bf53b6b14af",
+          "mode": "100644",
+          "change": "created"
+        }
+      ]
+    }
+  ],
+  "driverEvent": {
+    "exitCode": 1,
+    "elapsedWallMilliseconds": 126279,
+    "stdoutDigest": "sha256:2590d2a7758ad6a9ef58477d461f95e88d1435814ccd196e28f07d8054c6e2a9",
+    "metricsDigest": "sha256:2590d2a7758ad6a9ef58477d461f95e88d1435814ccd196e28f07d8054c6e2a9"
+  },
+  "limits": [
+    "The control bytes were explicit non-AI candidate inputs and are not attributed to an Executor.",
+    "Each listed Verifier was a fresh, separately fingerprinted invocation; the evidence does not authenticate provider identity or prove correctness or acceptance.",
+    "One controlled challenge does not establish an error or catch rate.",
+    "Two distinct controller Verify invocations were recorded for this unchanged control evidence after delayed tool feedback; both complete cohorts are retained, with no candidate or source correction between them."
+  ],
+  "verificationAttempts": [
+    {
+      "attemptId": "29bf68462dea4d1085bfc061d299411f",
+      "exitCode": 1,
+      "elapsedWallMilliseconds": 126279,
+      "reportDigest": "sha256:d9229113737625d2b7925c963c564268427382dec31aa22fa561be95c3c358ae",
+      "status": "failed",
+      "outcome": "failed",
+      "ledgerHead": "sha256:78db53655fcb3c3a0de850f05d8e2b2fc93c3eabe2270c56dc7a2a2c24f3f9ba",
+      "ledgerSelectionDigest": "sha256:bb9271eb335891df858cb8aea6ffd40ed4b175f7801d6f8a9632d479066169d5",
+      "assuranceNodes": [
+        {
+          "nodeId": "billing",
+          "children": null,
+          "outcome": "passed",
+          "recordId": "sha256:802b0d9be67b5fad39056ac5f358e58e26c560b05ebfb9fbf5c633230348d68b",
+          "resultId": "sha256:04d3db3058227b9e3c1a7337d0f6eab0288ee9e6058a23efe57464a36e54535c"
+        },
+        {
+          "nodeId": "checkout",
+          "children": [
+            "billing",
+            "orders"
+          ],
+          "outcome": "failed",
+          "recordId": "sha256:2a25f9a951e5f7937d520047ecb33e074b46e045527e067df7e554caa8bcdb83",
+          "resultId": "sha256:f230a3a946193cb97f05a3d0786862218bd11536e14bc95ccaa0683ed5224ca2"
+        },
+        {
+          "nodeId": "commerce",
+          "children": [
+            "billing",
+            "checkout"
+          ],
+          "outcome": "failed",
+          "recordId": "sha256:b4bfec93f94b3677a42780497ac8c73bc58f1d08fd1a416098c2b76dbce13736",
+          "resultId": "sha256:d32e56b150d8682e9c9c6192f968123174f68e9b1e9e050cf5ed2297835239ae"
+        },
+        {
+          "nodeId": "orders",
+          "children": null,
+          "outcome": "passed",
+          "recordId": "sha256:2a719d7f3c40aaf49050de67f96258569f6e0d3f93f4c6d12414f47d39319d35",
+          "resultId": "sha256:4e1a61d753aa0cca9d9b911613f928436b4e34ece4ae34c8c8947271c4fdecfb"
+        }
+      ],
+      "assuranceRoots": [
+        {
+          "nodeId": "commerce",
+          "children": [
+            "billing",
+            "checkout"
+          ],
+          "outcome": "failed",
+          "recordId": "sha256:b4bfec93f94b3677a42780497ac8c73bc58f1d08fd1a416098c2b76dbce13736",
+          "resultId": "sha256:d32e56b150d8682e9c9c6192f968123174f68e9b1e9e050cf5ed2297835239ae"
+        }
+      ],
+      "scopes": [
+        {
+          "scopeId": "billing",
+          "recordId": "sha256:802b0d9be67b5fad39056ac5f358e58e26c560b05ebfb9fbf5c633230348d68b",
+          "resultId": "sha256:04d3db3058227b9e3c1a7337d0f6eab0288ee9e6058a23efe57464a36e54535c",
+          "outcome": "passed",
+          "checks": [
+            {
+              "id": "independent-verifier-receipt",
+              "version": "agent-execution-receipt/v1alpha1",
+              "digest": "sha256:a759b7a5f74d53694240c61292dc00fc3b05a523f02972dfbf54ff01853d5e80",
+              "outcome": "passed"
+            },
+            {
+              "id": "recursive-assurance-billing",
+              "version": "fixed-command-input/v1",
+              "digest": "sha256:773d9139ffbc3d150ea5e9d0760feae0eb0d0a823f33a1e5531ab127b0f045c8",
+              "outcome": "passed"
+            }
+          ],
+          "verifier": {
+            "runId": "c3301a5ab52b9ca3d4df38920be8278b",
+            "outcome": "passed",
+            "inputDigest": "sha256:207782863ad3ae2ea4a4ae4e91848c493dcc1ad3fa77e8cc2df4bf212a445bda",
+            "receiptDigest": "sha256:ce621a5ee5d1be568775df0378072c80ceff5bb823b66bc60ea7a7bc7e2e178e",
+            "evidenceSnapshotDigest": "sha256:746002c81793856e0cc15c9df55b810e6592bac0d738810ad94cee2f5355fc99",
+            "evidenceRefCount": 5,
+            "evidenceRefs": [
+              "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"billing-dotnet\"]",
+              "examples/recursive-assurance/checks/Billing.Checks.csproj",
+              "examples/recursive-assurance/checks/Billing.Program.cs",
+              "src/Billing/BillingQuery.cs"
+            ],
+            "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+          }
+        },
+        {
+          "scopeId": "checkout",
+          "recordId": "sha256:2a25f9a951e5f7937d520047ecb33e074b46e045527e067df7e554caa8bcdb83",
+          "resultId": "sha256:f230a3a946193cb97f05a3d0786862218bd11536e14bc95ccaa0683ed5224ca2",
+          "outcome": "failed",
+          "checks": [
+            {
+              "id": "independent-verifier-receipt",
+              "version": "agent-execution-receipt/v1alpha1",
+              "digest": "sha256:2d6ea6dd09c71050c35caf4b9d569273377f26a84862252373431a98ed11b92a",
+              "outcome": "failed"
+            },
+            {
+              "id": "recursive-assurance-checkout",
+              "version": "fixed-command-input/v1",
+              "digest": "sha256:a8859f093bb16f5030fc895d393341eb1f6d25123deb1a2369b574e043e36fa7",
+              "outcome": "failed"
+            }
+          ],
+          "verifier": {
+            "runId": "4dadca2f3210c5fcfb4b57699557fc40",
+            "outcome": "failed",
+            "inputDigest": "sha256:6b44ee150f76a39cad7ddb88bb2dab0de88e0aa8333c7561dcaf646bdaf1bec5",
+            "receiptDigest": "sha256:a98c9effe6de72aab345baee508d84b98976abce6392dda1aa1fababbe0d64ff",
+            "evidenceSnapshotDigest": "sha256:72b5fbfee21ce5c8e09f1b357c911f8eacbf18049c9c0d016927f4d20afbb38b",
+            "evidenceRefCount": 15,
+            "evidenceRefs": [
+              "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]",
+              "[\"commerce.recursive-assurance/v1\",\"CheckoutComposition\",\"checkout\",\"add-order-to-outstanding\"]",
+              "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"billing-dotnet\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"checkout-dotnet\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"orders-dotnet\"]",
+              "examples/recursive-assurance/checks/Billing.Checks.csproj",
+              "examples/recursive-assurance/checks/Billing.Program.cs",
+              "examples/recursive-assurance/checks/Checkout.Checks.csproj",
+              "examples/recursive-assurance/checks/Checkout.Program.cs",
+              "examples/recursive-assurance/checks/Orders.Checks.csproj",
+              "examples/recursive-assurance/checks/Orders.Program.cs",
+              "src/Billing/BillingQuery.cs",
+              "src/Checkout/CheckoutComposer.cs",
+              "src/Orders/OrderRules.cs"
+            ],
+            "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+          }
+        },
+        {
+          "scopeId": "commerce",
+          "recordId": "sha256:b4bfec93f94b3677a42780497ac8c73bc58f1d08fd1a416098c2b76dbce13736",
+          "resultId": "sha256:d32e56b150d8682e9c9c6192f968123174f68e9b1e9e050cf5ed2297835239ae",
+          "outcome": "failed",
+          "checks": [
+            {
+              "id": "independent-verifier-receipt",
+              "version": "agent-execution-receipt/v1alpha1",
+              "digest": "sha256:02ceca296dedcf228740d0432560b165fcb5703ba1431c6a5291911cd1dd14a1",
+              "outcome": "failed"
+            },
+            {
+              "id": "recursive-assurance-commerce",
+              "version": "fixed-command-input/v1",
+              "digest": "sha256:8d5e32ac4516759918f38eabf46b5c6aa5681400b968f303914d4c4b4cbb9a5e",
+              "outcome": "failed"
+            }
+          ],
+          "verifier": {
+            "runId": "fe95614d21bcdf7d173be15cf240d108",
+            "outcome": "failed",
+            "inputDigest": "sha256:ef82761bb2313543ebfe5a58b7c9e61149b8361267fd039aa06389146cf328b0",
+            "receiptDigest": "sha256:8ebc2c9807decdd3b0e979fceb10ff2f14b7b6d48ea95dd78430687f9b8b4b5a",
+            "evidenceSnapshotDigest": "sha256:99b9c61a8af3f29b1afc559fe680a918c6c75120e1fbe049cf7ed245c95b5179",
+            "evidenceRefCount": 20,
+            "evidenceRefs": [
+              "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]",
+              "[\"commerce.recursive-assurance/v1\",\"CheckoutComposition\",\"checkout\",\"add-order-to-outstanding\"]",
+              "[\"commerce.recursive-assurance/v1\",\"CommerceComposition\",\"commerce\",\"combine-two-checkouts\"]",
+              "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"billing-dotnet\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"checkout-dotnet\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"commerce-dotnet\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"orders-dotnet\"]",
+              "examples/recursive-assurance/checks/Billing.Checks.csproj",
+              "examples/recursive-assurance/checks/Billing.Program.cs",
+              "examples/recursive-assurance/checks/Checkout.Checks.csproj",
+              "examples/recursive-assurance/checks/Checkout.Program.cs",
+              "examples/recursive-assurance/checks/Commerce.Checks.csproj",
+              "examples/recursive-assurance/checks/Commerce.Program.cs",
+              "examples/recursive-assurance/checks/Orders.Checks.csproj",
+              "examples/recursive-assurance/checks/Orders.Program.cs",
+              "src/Billing/BillingQuery.cs",
+              "src/Checkout/CheckoutComposer.cs",
+              "src/Commerce/CommerceComposer.cs",
+              "src/Orders/OrderRules.cs"
+            ],
+            "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+          }
+        },
+        {
+          "scopeId": "orders",
+          "recordId": "sha256:2a719d7f3c40aaf49050de67f96258569f6e0d3f93f4c6d12414f47d39319d35",
+          "resultId": "sha256:4e1a61d753aa0cca9d9b911613f928436b4e34ece4ae34c8c8947271c4fdecfb",
+          "outcome": "passed",
+          "checks": [
+            {
+              "id": "independent-verifier-receipt",
+              "version": "agent-execution-receipt/v1alpha1",
+              "digest": "sha256:c0ba4557f6ac2b1b510888c280593ade9188b43e17a4b8d3878eafa25c60762b",
+              "outcome": "passed"
+            },
+            {
+              "id": "recursive-assurance-orders",
+              "version": "fixed-command-input/v1",
+              "digest": "sha256:0de1ba8fb8acf945fd773de7bd021750b4ceb6dd1fafbda6a01ed156ed22b345",
+              "outcome": "passed"
+            }
+          ],
+          "verifier": {
+            "runId": "207ec03f3f0b07743d8779bd17cc97d2",
+            "outcome": "passed",
+            "inputDigest": "sha256:c6f402ef542726f4d861405012af39f0d866bd10c516706754f490e722337f9b",
+            "receiptDigest": "sha256:1cc75a5c64979da9de0865949888db362eba08783ad4a1574e7141cbb71932e9",
+            "evidenceSnapshotDigest": "sha256:c53a17adc086c9255001762cdfde0fc2f1f33698bb1b53dc6dd2fdd386b5b4c4",
+            "evidenceRefCount": 5,
+            "evidenceRefs": [
+              "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"orders-dotnet\"]",
+              "examples/recursive-assurance/checks/Orders.Checks.csproj",
+              "examples/recursive-assurance/checks/Orders.Program.cs",
+              "src/Orders/OrderRules.cs"
+            ],
+            "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+          }
+        }
+      ]
+    },
+    {
+      "attemptId": "f9235bda10104952a87866f254e95d75",
+      "exitCode": 1,
+      "elapsedWallMilliseconds": 119830,
+      "reportDigest": "sha256:b334a4ab461cb9d5dd20319ecbbbc9f797bc8291ffd7eedf85d805a8e2bb5ef5",
+      "status": "failed",
+      "outcome": "failed",
+      "ledgerHead": "sha256:8641feb516a1844526d9b607b13006055358a2344a4a5669b3e3a070a445e93e",
+      "ledgerSelectionDigest": "sha256:bb9271eb335891df858cb8aea6ffd40ed4b175f7801d6f8a9632d479066169d5",
+      "assuranceNodes": [
+        {
+          "nodeId": "billing",
+          "children": null,
+          "outcome": "passed",
+          "recordId": "sha256:802b0d9be67b5fad39056ac5f358e58e26c560b05ebfb9fbf5c633230348d68b",
+          "resultId": "sha256:cbd86892dc653c3e55e4a26f4db47779c26e1d35b37b59240222176f069ac7ca"
+        },
+        {
+          "nodeId": "checkout",
+          "children": [
+            "billing",
+            "orders"
+          ],
+          "outcome": "failed",
+          "recordId": "sha256:2a25f9a951e5f7937d520047ecb33e074b46e045527e067df7e554caa8bcdb83",
+          "resultId": "sha256:e68c0d1b373515f5670abb0c1255cf8b0eaba56ee645dc3347a262c3a1fbb049"
+        },
+        {
+          "nodeId": "commerce",
+          "children": [
+            "billing",
+            "checkout"
+          ],
+          "outcome": "failed",
+          "recordId": "sha256:b4bfec93f94b3677a42780497ac8c73bc58f1d08fd1a416098c2b76dbce13736",
+          "resultId": "sha256:6f98c8679299633611e3d269ecf8e77c8b6998a19c1e313c1c58285e24e84ef2"
+        },
+        {
+          "nodeId": "orders",
+          "children": null,
+          "outcome": "passed",
+          "recordId": "sha256:2a719d7f3c40aaf49050de67f96258569f6e0d3f93f4c6d12414f47d39319d35",
+          "resultId": "sha256:f40af12698b499e3141d1f0871ed52e60add905e7a8e9c5705c14efa177a31d2"
+        }
+      ],
+      "assuranceRoots": [
+        {
+          "nodeId": "commerce",
+          "children": [
+            "billing",
+            "checkout"
+          ],
+          "outcome": "failed",
+          "recordId": "sha256:b4bfec93f94b3677a42780497ac8c73bc58f1d08fd1a416098c2b76dbce13736",
+          "resultId": "sha256:6f98c8679299633611e3d269ecf8e77c8b6998a19c1e313c1c58285e24e84ef2"
+        }
+      ],
+      "scopes": [
+        {
+          "scopeId": "billing",
+          "recordId": "sha256:802b0d9be67b5fad39056ac5f358e58e26c560b05ebfb9fbf5c633230348d68b",
+          "resultId": "sha256:cbd86892dc653c3e55e4a26f4db47779c26e1d35b37b59240222176f069ac7ca",
+          "outcome": "passed",
+          "checks": [
+            {
+              "id": "independent-verifier-receipt",
+              "version": "agent-execution-receipt/v1alpha1",
+              "digest": "sha256:a759b7a5f74d53694240c61292dc00fc3b05a523f02972dfbf54ff01853d5e80",
+              "outcome": "passed"
+            },
+            {
+              "id": "recursive-assurance-billing",
+              "version": "fixed-command-input/v1",
+              "digest": "sha256:773d9139ffbc3d150ea5e9d0760feae0eb0d0a823f33a1e5531ab127b0f045c8",
+              "outcome": "passed"
+            }
+          ],
+          "verifier": {
+            "runId": "40c4f332cc43829d54460b4609f23a62",
+            "outcome": "passed",
+            "inputDigest": "sha256:207782863ad3ae2ea4a4ae4e91848c493dcc1ad3fa77e8cc2df4bf212a445bda",
+            "receiptDigest": "sha256:ccf8ff20f061e2aa4139ebad838621c339ba98feeb5019cbd6f74c865fc3df61",
+            "evidenceSnapshotDigest": "sha256:746002c81793856e0cc15c9df55b810e6592bac0d738810ad94cee2f5355fc99",
+            "evidenceRefCount": 5,
+            "evidenceRefs": [
+              "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"billing-dotnet\"]",
+              "examples/recursive-assurance/checks/Billing.Checks.csproj",
+              "examples/recursive-assurance/checks/Billing.Program.cs",
+              "src/Billing/BillingQuery.cs"
+            ],
+            "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+          }
+        },
+        {
+          "scopeId": "checkout",
+          "recordId": "sha256:2a25f9a951e5f7937d520047ecb33e074b46e045527e067df7e554caa8bcdb83",
+          "resultId": "sha256:e68c0d1b373515f5670abb0c1255cf8b0eaba56ee645dc3347a262c3a1fbb049",
+          "outcome": "failed",
+          "checks": [
+            {
+              "id": "independent-verifier-receipt",
+              "version": "agent-execution-receipt/v1alpha1",
+              "digest": "sha256:2d6ea6dd09c71050c35caf4b9d569273377f26a84862252373431a98ed11b92a",
+              "outcome": "failed"
+            },
+            {
+              "id": "recursive-assurance-checkout",
+              "version": "fixed-command-input/v1",
+              "digest": "sha256:a8859f093bb16f5030fc895d393341eb1f6d25123deb1a2369b574e043e36fa7",
+              "outcome": "failed"
+            }
+          ],
+          "verifier": {
+            "runId": "3dfa102ff9494d3c161d4bfc68504fad",
+            "outcome": "failed",
+            "inputDigest": "sha256:a930df0fe32b4203ec13c03e4e7d05fecb1361f90e78be37295d777cc43c08e0",
+            "receiptDigest": "sha256:a3c767c9572541cd6f12296d049f23035bc5096a8446eb38ef342d7a654c552a",
+            "evidenceSnapshotDigest": "sha256:72b5fbfee21ce5c8e09f1b357c911f8eacbf18049c9c0d016927f4d20afbb38b",
+            "evidenceRefCount": 15,
+            "evidenceRefs": [
+              "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]",
+              "[\"commerce.recursive-assurance/v1\",\"CheckoutComposition\",\"checkout\",\"add-order-to-outstanding\"]",
+              "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"billing-dotnet\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"checkout-dotnet\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"orders-dotnet\"]",
+              "examples/recursive-assurance/checks/Billing.Checks.csproj",
+              "examples/recursive-assurance/checks/Billing.Program.cs",
+              "examples/recursive-assurance/checks/Checkout.Checks.csproj",
+              "examples/recursive-assurance/checks/Checkout.Program.cs",
+              "examples/recursive-assurance/checks/Orders.Checks.csproj",
+              "examples/recursive-assurance/checks/Orders.Program.cs",
+              "src/Billing/BillingQuery.cs",
+              "src/Checkout/CheckoutComposer.cs",
+              "src/Orders/OrderRules.cs"
+            ],
+            "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+          }
+        },
+        {
+          "scopeId": "commerce",
+          "recordId": "sha256:b4bfec93f94b3677a42780497ac8c73bc58f1d08fd1a416098c2b76dbce13736",
+          "resultId": "sha256:6f98c8679299633611e3d269ecf8e77c8b6998a19c1e313c1c58285e24e84ef2",
+          "outcome": "failed",
+          "checks": [
+            {
+              "id": "independent-verifier-receipt",
+              "version": "agent-execution-receipt/v1alpha1",
+              "digest": "sha256:02ceca296dedcf228740d0432560b165fcb5703ba1431c6a5291911cd1dd14a1",
+              "outcome": "failed"
+            },
+            {
+              "id": "recursive-assurance-commerce",
+              "version": "fixed-command-input/v1",
+              "digest": "sha256:8d5e32ac4516759918f38eabf46b5c6aa5681400b968f303914d4c4b4cbb9a5e",
+              "outcome": "failed"
+            }
+          ],
+          "verifier": {
+            "runId": "a53187953e274d3d7e5b65760f65f1f0",
+            "outcome": "failed",
+            "inputDigest": "sha256:a198f7e45219bfd4da44c2db2c4e4cb698f1482f53a6f096e097ba04efb6a07d",
+            "receiptDigest": "sha256:ab61ce4cee017b925c23852368b637f501230395b07bddaa034ae56d82dde6b2",
+            "evidenceSnapshotDigest": "sha256:99b9c61a8af3f29b1afc559fe680a918c6c75120e1fbe049cf7ed245c95b5179",
+            "evidenceRefCount": 20,
+            "evidenceRefs": [
+              "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]",
+              "[\"commerce.recursive-assurance/v1\",\"CheckoutComposition\",\"checkout\",\"add-order-to-outstanding\"]",
+              "[\"commerce.recursive-assurance/v1\",\"CommerceComposition\",\"commerce\",\"combine-two-checkouts\"]",
+              "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"billing-dotnet\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"checkout-dotnet\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"commerce-dotnet\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"orders-dotnet\"]",
+              "examples/recursive-assurance/checks/Billing.Checks.csproj",
+              "examples/recursive-assurance/checks/Billing.Program.cs",
+              "examples/recursive-assurance/checks/Checkout.Checks.csproj",
+              "examples/recursive-assurance/checks/Checkout.Program.cs",
+              "examples/recursive-assurance/checks/Commerce.Checks.csproj",
+              "examples/recursive-assurance/checks/Commerce.Program.cs",
+              "examples/recursive-assurance/checks/Orders.Checks.csproj",
+              "examples/recursive-assurance/checks/Orders.Program.cs",
+              "src/Billing/BillingQuery.cs",
+              "src/Checkout/CheckoutComposer.cs",
+              "src/Commerce/CommerceComposer.cs",
+              "src/Orders/OrderRules.cs"
+            ],
+            "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+          }
+        },
+        {
+          "scopeId": "orders",
+          "recordId": "sha256:2a719d7f3c40aaf49050de67f96258569f6e0d3f93f4c6d12414f47d39319d35",
+          "resultId": "sha256:f40af12698b499e3141d1f0871ed52e60add905e7a8e9c5705c14efa177a31d2",
+          "outcome": "passed",
+          "checks": [
+            {
+              "id": "independent-verifier-receipt",
+              "version": "agent-execution-receipt/v1alpha1",
+              "digest": "sha256:c0ba4557f6ac2b1b510888c280593ade9188b43e17a4b8d3878eafa25c60762b",
+              "outcome": "passed"
+            },
+            {
+              "id": "recursive-assurance-orders",
+              "version": "fixed-command-input/v1",
+              "digest": "sha256:0de1ba8fb8acf945fd773de7bd021750b4ceb6dd1fafbda6a01ed156ed22b345",
+              "outcome": "passed"
+            }
+          ],
+          "verifier": {
+            "runId": "7ef44f8d75fbe860ab14db14f27bfaed",
+            "outcome": "passed",
+            "inputDigest": "sha256:c6f402ef542726f4d861405012af39f0d866bd10c516706754f490e722337f9b",
+            "receiptDigest": "sha256:767c85e295cda05f64c505101537a90fbaa2ee449b4caa22f1cee1fe15056012",
+            "evidenceSnapshotDigest": "sha256:c53a17adc086c9255001762cdfde0fc2f1f33698bb1b53dc6dd2fdd386b5b4c4",
+            "evidenceRefCount": 5,
+            "evidenceRefs": [
+              "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]",
+              "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"recursive-assurance\",\"orders-dotnet\"]",
+              "examples/recursive-assurance/checks/Orders.Checks.csproj",
+              "examples/recursive-assurance/checks/Orders.Program.cs",
+              "src/Orders/OrderRules.cs"
+            ],
+            "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+          }
+        }
+      ]
+    }
+  ]
+}

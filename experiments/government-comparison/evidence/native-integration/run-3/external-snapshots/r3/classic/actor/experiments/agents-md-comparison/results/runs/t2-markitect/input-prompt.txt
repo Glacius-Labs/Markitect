@@ -1,0 +1,27 @@
+Work only inside this fresh checkout. Do not inspect parent directories, other trials,
+operator files, hidden acceptance criteria, memories, or prior sessions. Do not write outside
+this checkout or bypass the sandbox. The task below is the current authoritative request.
+Use .tools/read.ps1 -Path <relative-path> for content reads so the experiment can meter them;
+normal rg searches are allowed and separately recorded. The helper log is not a complete OS
+I/O monitor. Do not alter the helper or supplied .agent-input files.
+Use the existing governance supplied in this checkout. If .agent-input/context.yaml exists,
+read that compiled task context first; also read .agent-input/impact.yaml when present.
+Failed-policy analysis can produce useful output with exit 1: it does not mean compliance.
+The local .tools/markitect.exe, when present, is the integrated candidate, not a release.
+Keep existing governance coherent with the change; do not introduce a different mechanism.
+Run focused checks and a Meetings Application build from src, honoring src/global.json.
+The common bounded existing-test facade is available with:
+dotnet test ../.tools/architecture-check/MeetingsArchitectureCheck.csproj
+Run that command from src. It links the checkout architecture tests; hidden task oracles
+are not in this facade. Do not edit the facade itself; edit project-owned tests when needed.
+Use the same public NuGet source https://api.nuget.org/v3/index.json when restore is needed.
+Do not publish, change unrelated modules, waive a policy just to inspect it, or create an API.
+There is no interactive operator assistance. If blocked, preserve the failure and explain it.
+Finish with changed files, checks and their exact outcomes, architecture decisions, missing
+or irrelevant guidance, governance upkeep, and the limits of what was actually verified.
+
+Work only in this trial workspace. Do not read files from the parent repository, another trial, the operator evidence directory, hidden evaluation material, or original Git history. Read any provided `.agent-input` task context first. For every source or documentation file whose contents you read, use the provided helper from the workspace root: `pwsh -NoProfile -File .tools/read.ps1 -Path <workspace-relative-path>`. This logs content reads with byte counts and SHA-256; metadata searches are not content reads. Keep all writes inside this workspace. When building this .NET project, run from `src` so the nearest `global.json` selects the SDK; report the observed SDK version.
+
+# Task 2: Complete the selected-command Validator policy migration
+
+The adopter needs to complete its selected-Command Validator migration. Implement a FluentValidation class for every Command named by the policy. Each Validator must reject an empty `MeetingId` using the existing FluentValidation style. Keep the adopter's policy representation consistent with the implementation, remove any temporary waiver, and refresh maintained projections where present. Keep the existing executable architecture checks coherent with the new rule, and demonstrate a failing baseline and a passing repaired candidate. Build the Meetings Application project. Report the validation you performed, the commands and outputs you used, and any nonzero commands or blocked checks. Do not weaken or waive the selected policy.

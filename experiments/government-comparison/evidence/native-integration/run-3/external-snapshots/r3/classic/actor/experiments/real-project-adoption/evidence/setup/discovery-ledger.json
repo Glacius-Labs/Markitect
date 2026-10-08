@@ -1,0 +1,123 @@
+{
+  "candidate": {
+    "branch": "codex/pilot-assisted",
+    "revision": "fd94a689aab857704c3a4a45ac2abe0fc0e3185c",
+    "commitMessage": "Adopt Markitect for assisted architecture pilot"
+  },
+  "tool": {
+    "version": "0.12.0",
+    "binary": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\public-v012\\markitect-v0.12.0-windows-amd64.exe",
+    "binarySha256": "b03424560caa460322e3580785d6abc9dfbf2137df878e03ddedcf76b3a8fa47",
+    "toolDigest": "sha256:b03424560caa460322e3580785d6abc9dfbf2137df878e03ddedcf76b3a8fa47"
+  },
+  "snapshotDigest": "594d527fe69074a9fd7357983ce7c7a8d50307812e638a517c939382673de8ef",
+  "modelDigest": "sha256:d115aeef1780a8bdf9aaec2dca2d67c696b4892740c7e59830d6dcd035c89e94",
+  "selection": {
+    "kind": "Skill",
+    "namespace": "engineering",
+    "name": "architecture-review",
+    "entry": "engineering/Skill/architecture-review",
+    "provisional": false
+  },
+  "fixedContext": {
+    "path": "context.yaml",
+    "digest": "sha256:6f78259094ab85df7498aa78e6120521fb7a82ca865d00d116cd2a7319dfe1fa",
+    "inputEntries": 26,
+    "typedResourceInputs": 11,
+    "definitionInputs": 3,
+    "projectArtifactFiles": 12,
+    "exitCode": 0
+  },
+  "contextRun": {
+    "manifest": "assisted-final/context-run.yaml",
+    "taskId": "copy-me-query-convention",
+    "taskPath": "work-items/copy-me-query-convention.md",
+    "digest": "sha256:c9ec63e24bd1cf0fdf8b70a92a0e9479f86c4d2eccd6e6d938e157937b09c30b",
+    "inputEntries": 38,
+    "typedResourceInputs": 11,
+    "definitionInputs": 3,
+    "projectArtifactFiles": 12,
+    "runManifestRecords": 1,
+    "taskFileRecords": 1,
+    "declaredSourceFileRecords": 10,
+    "exitCode": 0,
+    "sourceFiles": [
+      "docs/architecture-decision-log/0007-use-cqrs-architectural-style.md",
+      "docs/architecture-decision-log/0009-use-2-layered-architectural-style-for-reads.md",
+      "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+      "src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQuery.cs",
+      "src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQueryHandler.cs",
+      "src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/MeetingGroupDetailsDto.cs",
+      "src/Modules/Meetings/Application/Countries/GetAllCountriesQuery.cs",
+      "src/Modules/Meetings/Application/Countries/GetAllCountriesQueryHandler.cs",
+      "src/Modules/UserAccess/Application/Emails/GetAllEmailsQuery.cs",
+      "src/Modules/UserAccess/Application/Emails/GetAllEmailsQueryHandler.cs"
+    ],
+    "manifestSha256": "de031e5d0e7ea8cd40a2639706aeec6a02320131d662b4210fff85b53681f0a6"
+  },
+  "model": {
+    "path": "model.yaml",
+    "modelDigest": "sha256:d115aeef1780a8bdf9aaec2dca2d67c696b4892740c7e59830d6dcd035c89e94",
+    "validationStatus": "passed",
+    "exitCode": 0
+  },
+  "check": {
+    "path": "check.yaml",
+    "status": "passed",
+    "exitCode": 0
+  },
+  "sourceManifest": {
+    "path": "assisted-final/source-manifest.json",
+    "upstreamCommit": "91c8ef24b4cb6ef558c95d8267fa07d68c7059f8",
+    "fileCount": 646,
+    "bytes": 711461.0,
+    "exact": true,
+    "report": "reconciliation/source-manifest-check.json"
+  },
+  "packagePins": {
+    "path": "setup/package-pins.json",
+    "sha256": "4152e071a4fa50a9ff414f953f1ea60fcbec9368af56ff8d972316a125855d1f"
+  },
+  "outputs": [
+    {
+      "path": "context.yaml",
+      "sha256": "08ceffd5ad97c69d7cf31b2200b61cffd7faeee93cc3699bfd188299a7c0b1f1",
+      "bytes": 52873
+    },
+    {
+      "path": "context-run-copy-me.yaml",
+      "sha256": "fb4e03dea6aa0bd20b35c4dd057a6b6fa838b15afd55498952410d7bc9add7e2",
+      "bytes": 98288
+    },
+    {
+      "path": "model.yaml",
+      "sha256": "5af293a190a1ed03311f3cde11b2080d890ade6d952044154bbf18a33877a44a",
+      "bytes": 163782
+    },
+    {
+      "path": "check.yaml",
+      "sha256": "eeb8e6898f2d751f682b0a46aa38ba824915d7e18b33c967dfe86115c55a60fc",
+      "bytes": 46203
+    },
+    {
+      "path": "context-skill.json",
+      "sha256": "1a79625b83a6e29b482ad257e0872c460bc82b10daf8f3765b3bc27dec240794",
+      "bytes": 315427
+    },
+    {
+      "path": "context-run-copy-me.json",
+      "sha256": "16f83ae4df9a91a77b609b486dfcbd7b20b8fa5399582a85d35ce9fb64cf7555",
+      "bytes": 368050
+    },
+    {
+      "path": "model.json",
+      "sha256": "d219407fcb5bb5243026056bd38bd4b63f77d0aea837efa206fc0f2d13ad61b9",
+      "bytes": 425379
+    },
+    {
+      "path": "check.json",
+      "sha256": "896a7e5b65a9f3407fd431f69932191458321740c53a81eee58517ae27385731",
+      "bytes": 304830
+    }
+  ]
+}

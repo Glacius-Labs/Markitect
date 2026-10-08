@@ -1,0 +1,5 @@
+# Historical v0.13 semantic runtime and consumers
+
+This owner isolates the published Domain/resource/finite-policy IR and its existing consumers from the new structural Core. Their validated projection contracts, normalization, provenance, Plan/Apply/Verify, independent fixed checks, accounting and drift/impact behavior remain supported implementation evidence. They are not obsolete or alternative canonical authorities.
+
+Host compatibility adapters preserve source and command contracts; the new canonical compiler does not import this tree or lower Definitions into historical Resources. The package name `core` inside `kernel` is historical, not the current conceptual kernel. Explicit migration can generalize consumers while preserving their regression evidence; no aliases belong in the new Core.

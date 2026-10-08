@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Interface
+metadata:
+  name: user-access-events
+  namespace: architecture
+spec:
+  summary: The referenced UserAccess IntegrationEvents project currently declares no event source file in this snapshot.
+  provider: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: user-access, namespace: architecture}
+  sourceFiles:
+    []

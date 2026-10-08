@@ -1,0 +1,24 @@
+apiVersion: markitect.example.org/module/v1alpha1
+name: unknown-ontology-dotnet
+version: 1.0.0
+type: projection
+purpose: Registers the bounded .NET representation capability and its independent project-owned check.
+requires:
+  core: "1"
+  modules: []
+provides:
+  schemas: []
+  projectors:
+    - id: dotnet-source
+      version: 1.0.0
+      target: dotnet
+      allKinds: true
+      allowedRoots:
+        - src/UnknownOntology/
+      guidance: >
+        Represent the selected Definitions and apply each matching
+        ProjectionPolicy. Choose suitable source filenames; no filename or
+        project-file convention is prescribed. Escalate missing, ambiguous or
+        conflicting behavior guidance rather than inventing semantics.
+      requiredChecks:
+        - unknown-ontology-behavior

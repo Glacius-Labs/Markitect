@@ -1,0 +1,74 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: markitect-development
+spec:
+    targets:
+        - codex
+        - claude
+        - markdown
+    areas:
+        - name: core
+          path: internal/host/embedded/resources
+          rules:
+            - name: canonical-ownership
+        - name: development
+          path: .markitect/areas/development
+          imports:
+            - core
+            - documentation
+            - contribution
+            - module-configs
+            - hooks
+            - pipelines
+          rules:
+            - name: module-verification
+        - name: documentation
+          path: docs
+        - name: contribution
+          path: CONTRIBUTING.md
+        - name: module-configs
+          path: .markitect/modules
+        - name: hooks
+          path: .githooks
+        - name: pipelines
+          path: .github/workflows/ci.yaml
+    checks:
+        - name: architecture-imports
+          run:
+            - go
+            - test
+            - ./internal/tooling/architecture
+        - name: managed-artifacts
+          run:
+            - go
+            - run
+            - ./cmd/markitect-check-artifacts
+            - --repo
+            - .
+            - --config
+            - markitect-artifacts.yaml
+        - name: module-checks
+          run:
+            - go
+            - run
+            - ./cmd/markitect-check-modules
+            - --repo
+            - .
+            - --hooks
+            - .markitect/modules/githooks.config
+            - --pipelines
+            - .markitect/modules/pipelines.config
+        - name: go-tests
+          run:
+            - go
+            - test
+            - ./...
+            - -count=1
+    adapters:
+        - name: engineering-representations
+          type: local-projection
+          version: v1alpha1
+          config:
+            contracts: .markitect/modules/projections.config
+            coverage: markitect-artifacts.yaml

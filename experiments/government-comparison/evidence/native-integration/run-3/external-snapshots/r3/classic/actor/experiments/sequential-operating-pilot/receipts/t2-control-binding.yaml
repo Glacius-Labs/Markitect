@@ -1,0 +1,12 @@
+{
+  "schema": "markitect-sequence-t2-missed-fanout-control/v1",
+  "task2SourceRevision": "a2e0ab51eee175a9a5231fc2e833811b86d98281",
+  "task2EvidenceRevision": "ba6074ccd3e06f2b889c0ac8178f8df8e08165b3",
+  "target": "src/Fulfillment/FulfillOrderHandler.cs",
+  "task2BytesPath": "controls/t2-missed-fanout/task2-target-before.cs",
+  "task2BytesSha256": "f4e25883bdcd2a8f66aa2abd3b4b483ad22a500463ef9da14c8fbdd72bf6bd0d",
+  "task1SourceRevision": "b23bc2ac27a03b7062c4b79cda33266f29084f44",
+  "task1BytesPath": "controls/t2-missed-fanout/task1-target-control.cs",
+  "task1BytesSha256": "16e3c0d8abdf780e7be392ff23ea09d163f91ea255cdeda43f56a4d8f991bab1",
+  "classification": "simulated stale representation negative/restoration check; not an actual missed planner outcome and not autonomous repair"
+}

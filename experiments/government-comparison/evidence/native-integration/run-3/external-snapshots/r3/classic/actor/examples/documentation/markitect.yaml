@@ -1,0 +1,16 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: documentation-example
+spec:
+    targets:
+        - markdown
+    areas:
+        - name: implementation
+          path: .markitect/areas/implementation
+          imports:
+            - project-source
+        - name: project-source
+          path: docs/implementation/src
+        - name: operations
+          path: .markitect/areas/operations

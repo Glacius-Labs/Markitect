@@ -1,0 +1,11 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Handler
+metadata:
+  name: propose-meeting-group
+  namespace: architecture
+spec:
+  summary: Command handler that creates a MeetingGroup proposal.
+  sourceFiles:
+    - src/Modules/Meetings/Application/MeetingGroupProposals/ProposeMeetingGroup/ProposeMeetingGroupCommandHandler.cs
+  common:
+    []

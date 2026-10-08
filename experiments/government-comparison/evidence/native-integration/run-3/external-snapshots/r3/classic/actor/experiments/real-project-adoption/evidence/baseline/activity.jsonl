@@ -1,0 +1,1 @@
+{"type":"mistake","detail":"Three guessed file paths were absent; the ledger helper wrote empty invalid records after read failures. Removed those invalid records before proceeding; no source content was obtained from those paths.","correction":"Used the filename inventory to locate the actual SQL connection factory and valid analogous query handler."}

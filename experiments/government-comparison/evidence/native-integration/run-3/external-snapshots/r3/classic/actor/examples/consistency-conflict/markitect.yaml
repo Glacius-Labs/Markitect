@@ -1,0 +1,17 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: consistency-conflict
+spec:
+    targets:
+        - markdown
+    areas:
+        - name: documentation
+          path: docs
+        - name: sample
+          path: .markitect/areas/sample
+          imports:
+            - documentation
+    consistency:
+        functionalPredicates:
+            - owner

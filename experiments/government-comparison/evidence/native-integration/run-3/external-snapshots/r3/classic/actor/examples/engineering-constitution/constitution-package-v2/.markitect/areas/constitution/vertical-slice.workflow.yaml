@@ -1,0 +1,11 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Workflow
+metadata:
+    name: vertical-slice
+    namespace: constitution
+spec:
+    text: |
+        Use the selected UseCase and its compiled dependencies. Follow the owning
+        Module, required Handler and approved extension-point relations from the
+        active Domain. In constitution v2, check its per-UseCase Validator policy
+        and report any exact dated exception as waived, never passed.

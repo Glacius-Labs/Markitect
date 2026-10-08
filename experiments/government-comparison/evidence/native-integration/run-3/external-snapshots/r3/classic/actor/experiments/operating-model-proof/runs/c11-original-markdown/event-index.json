@@ -1,0 +1,48 @@
+{
+  "schema": "markitect.c11-event-index/v1",
+  "runId": "c11-original-markdown",
+  "recordedAtUtc": "2026-10-06T07:50:33.565193+00:00",
+  "source": "events.jsonl and corresponding event files; maps local random filename to CLI attemptId",
+  "events": [
+    {
+      "eventFile": "propose-80e03309b9264876b83708515177d737.json",
+      "action": "propose",
+      "attemptId": "ee5d77aeb5114c22ae0479c56f254fec",
+      "exitCode": 0,
+      "stdoutDigest": "sha256:3fab2fcc9e05e7b1cefff0496e64d01d606eacec228e49de3e332d41244f753d",
+      "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "externalOutputDigest": "sha256:3fab2fcc9e05e7b1cefff0496e64d01d606eacec228e49de3e332d41244f753d",
+      "status": "planned",
+      "proposalDigest": "sha256:15d040df7e2280cdbb8d627901f785495457110463b16371e873952bab2c486d",
+      "runDigest": null,
+      "evidenceRevision": null,
+      "ledgerHead": "",
+      "recordIds": [],
+      "written": null,
+      "plannedOutputs": []
+    },
+    {
+      "eventFile": "execute-cb8af01b8a2041fe90e2ff6a0a9c19ca.json",
+      "action": "execute",
+      "attemptId": "c557c467ed9949b4a4c3a1e8212ac7f2",
+      "exitCode": 0,
+      "stdoutDigest": "sha256:d62633b9c03d61ba819e8df531c51510296228bdb9643b4b0e7041d24b7158f1",
+      "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "externalOutputDigest": "sha256:d62633b9c03d61ba819e8df531c51510296228bdb9643b4b0e7041d24b7158f1",
+      "status": "planned",
+      "proposalDigest": null,
+      "runDigest": "sha256:22a303606ffa0a8bd75c82fa69074a9035880b2be0c6816759829151ffe6ccfc",
+      "evidenceRevision": null,
+      "ledgerHead": null,
+      "recordIds": [],
+      "written": null,
+      "plannedOutputs": [
+        {
+          "bytes": 5245,
+          "digest": "sha256:cdde804540f42b39dc9970025d37737eb9f07943e8c49a19d2fdeb1978ab9ff9",
+          "path": "docs/represented/workflow.md/index.md"
+        }
+      ]
+    }
+  ]
+}

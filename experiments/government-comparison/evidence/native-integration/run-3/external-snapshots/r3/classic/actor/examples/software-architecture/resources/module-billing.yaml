@@ -1,0 +1,22 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Module
+metadata:
+    name: billing
+    namespace: engineering
+spec:
+    dependsOn:
+        - kind: Core
+          name: platform-core
+          namespace: engineering
+        - kind: Common
+          name: shared-kernel
+          namespace: engineering
+    interfaces:
+        - kind: Interface
+          name: order-accepted
+          namespace: engineering
+    product:
+        kind: Product
+        name: commerce
+        namespace: engineering
+    purpose: Own invoice issuance and payment accounting.

@@ -1,0 +1,66 @@
+apiVersion: public-mission.example.org/v1
+purpose: Project-owned vocabulary for a bounded mission decision over effect axes and capabilities.
+kinds:
+  Mission:
+    purpose: A requested effect with explicit required axis and capability references.
+    properties:
+      effectAxis:
+        purpose: The exact EffectAxis against which the requested magnitude is interpreted.
+        type: reference
+        minCount: 1
+        maxCount: 1
+        target:
+          apiVersion: public-mission.example.org/v1
+          kind: EffectAxis
+      capability:
+        purpose: The exact Capability required to perform this mission.
+        type: reference
+        minCount: 1
+        maxCount: 1
+        target:
+          apiVersion: public-mission.example.org/v1
+          kind: Capability
+      requestedUnit:
+        purpose: The unit of the requested magnitude.
+        type: string
+        minCount: 1
+        maxCount: 1
+      requestedMagnitude:
+        purpose: The mission's requested magnitude in the referenced axis unit.
+        type: integer
+        minCount: 1
+        maxCount: 1
+  EffectAxis:
+    purpose: A measurable effect dimension with an inclusive supported magnitude range and unit.
+    properties:
+      unit:
+        purpose: The unit used for magnitudes on this axis.
+        type: string
+        minCount: 1
+        maxCount: 1
+      minimumMagnitude:
+        purpose: The inclusive minimum magnitude supported on this axis.
+        type: integer
+        minCount: 1
+        maxCount: 1
+      maximumMagnitude:
+        purpose: The inclusive maximum magnitude supported on this axis.
+        type: integer
+        minCount: 1
+        maxCount: 1
+  Capability:
+    purpose: A named ability supporting one exact EffectAxis up to a maximum magnitude.
+    properties:
+      effectAxis:
+        purpose: The exact EffectAxis supported by this Capability.
+        type: reference
+        minCount: 1
+        maxCount: 1
+        target:
+          apiVersion: public-mission.example.org/v1
+          kind: EffectAxis
+      maximumMagnitude:
+        purpose: The greatest magnitude this Capability can support on its referenced axis.
+        type: integer
+        minCount: 1
+        maxCount: 1

@@ -1,0 +1,45 @@
+{
+  "purpose": "two read-only candidates for authorized synthetic Dispatch fixture; not private adopter evidence",
+  "promptSha256": "e25667b861df092270fcf8434920a05778a327b5552c93f74ddfef04486bbda6",
+  "promptBytes": 51413,
+  "scope": [
+    {
+      "path": "resources/list-open-listings.yaml",
+      "sha256": "76a7c8ff1a03663bfca71947210c36a3d0f2a8945808f9b2353505e6b5f02ba6",
+      "matchesSyntheticProductFixture": true
+    },
+    {
+      "path": "resources/process.yaml",
+      "sha256": "7e9493e8f33b0b8ceb2089873ea110164f4f98bda286aca62e64f21742976c79",
+      "matchesSyntheticProductFixture": true
+    },
+    {
+      "path": "fixtures/listings.json",
+      "sha256": "8c70fe29785986e6be45eeb0ea7221518cb2d5a49ab8b381636f1fc9d0b43add",
+      "matchesSyntheticProductFixture": true
+    },
+    {
+      "path": "tools/check_contract.py",
+      "sha256": "6e2af5dc8826e5716b18dce47cf9af8feaf9554c21fa5da92fa07ea678db61fd",
+      "matchesSyntheticProductFixture": true
+    },
+    {
+      "path": "tools/test_contract_checker.py",
+      "sha256": "261e1ae02b1fa73e40ef57dd90ffb98d6734ba2da0e86f7d155dc09f2b365344",
+      "matchesSyntheticProductFixture": true
+    },
+    {
+      "path": "context.yaml",
+      "sha256": "dfdedf269decfe14e68672be86dd4c30cd730e5e3063e84dc0e168e4f28bb619",
+      "origin": "locally compiled from the 17-file synthetic Dispatch seed; no Konfyra or other adopter input"
+    },
+    {
+      "path": "plan.yaml",
+      "sha256": "6d459e03a4420286d41066f572fb08d2e0132485570b422d255d3d1bd6559625",
+      "origin": "locally compiled from the 17-file synthetic Dispatch seed; no Konfyra or other adopter input"
+    }
+  ],
+  "provider": "installed authenticated Codex CLI; same account as previous successful read-only runs; no new provider configuration",
+  "canonicalAdoption": false,
+  "writesByAgent": false
+}

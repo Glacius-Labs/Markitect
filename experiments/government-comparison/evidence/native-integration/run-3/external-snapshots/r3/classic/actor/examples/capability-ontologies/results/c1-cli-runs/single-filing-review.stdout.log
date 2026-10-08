@@ -1,0 +1,127 @@
+model:
+    revision: d5a1ae438776a55b23ceed10dcd9c1f47022a0bd
+    digest: sha256:852ba1b145f19cc59ea18e5f9f70a49bb36a9b00c61eb57e2a9f6eb6d4949fc4
+    schemas:
+        - apiVersion: filing.example.org/v1
+          purpose: Tracks a submitted filing and its human review outcome.
+          kinds:
+            Filing:
+                purpose: Records the state of a submitted dossier.
+                properties:
+                    status:
+                        purpose: Records the filing lifecycle state.
+                        type: enum
+                        minCount: 1
+                        maxCount: 1
+                        values:
+                            - draft
+                            - submitted
+                            - returned
+                            - accepted
+                    title:
+                        purpose: Names the submitted filing.
+                        type: string
+                        minCount: 1
+                        maxCount: 1
+            Review:
+                purpose: Records one review disposition and explanation.
+                properties:
+                    filing:
+                        purpose: Identifies the filing under review.
+                        type: reference
+                        minCount: 1
+                        maxCount: 1
+                        target:
+                            apiVersion: filing.example.org/v1
+                            kind: Filing
+                    filingKind:
+                        purpose: Identifies the reviewed subject's nominal Kind.
+                        type: kindReference
+                        minCount: 1
+                        maxCount: 1
+                    outcome:
+                        purpose: Records the review disposition.
+                        type: enum
+                        minCount: 1
+                        maxCount: 1
+                        values:
+                            - comment
+                            - return
+                            - accept
+                    reasons:
+                        purpose: Lists concise findings.
+                        type: string
+                        minCount: 0
+                        maxCount: -1
+                    reviewer:
+                        purpose: Names the reviewer.
+                        type: string
+                        minCount: 1
+                        maxCount: 1
+          source:
+            path: module:c1-filing-review@1.0.0/schema.yaml
+            digest: sha256:d1718b05e222ed49494abc5b5da6d5360202b9b8cf747c5d14527cd58e194c37
+            line: 1
+    definitions:
+        - apiVersion: filing.example.org/v1
+          kind: Filing
+          metadata:
+            name: dossier-17
+            namespace: vendor-a
+          purpose: Records the dossier submitted by vendor A.
+          spec:
+            status: submitted
+            title: Data processing dossier
+          source:
+            path: examples/capability-ontologies/filing-review/filing.yaml
+            digest: sha256:89468027afbb651a02365c9b4668aca4e9a798d6118d03534889419bdafa2885
+            line: 1
+        - apiVersion: filing.example.org/v1
+          kind: Review
+          metadata:
+            name: initial-review
+            namespace: vendor-a
+          purpose: Captures reviewer feedback on dossier 17.
+          spec:
+            filing:
+                apiVersion: filing.example.org/v1
+                kind: Filing
+                name: dossier-17
+                namespace: vendor-a
+            filingKind:
+                apiVersion: filing.example.org/v1
+                kind: Filing
+            outcome: comment
+            reasons:
+                - Clarify the retention period
+            reviewer: reviewer-42
+          source:
+            path: examples/capability-ontologies/filing-review/review.yaml
+            digest: sha256:895ea9d63e748cee22fd52044a982570bf75f633cd7d202f854b3fb04acf22c4
+            line: 1
+    edges:
+        - from: '["filing.example.org/v1","Review","vendor-a","initial-review"]'
+          to: '["filing.example.org/v1","Filing","vendor-a","dossier-17"]'
+          property: filing
+          source:
+            path: examples/capability-ontologies/filing-review/review.yaml
+            digest: sha256:895ea9d63e748cee22fd52044a982570bf75f633cd7d202f854b3fb04acf22c4
+            line: 1
+modules:
+    - pin:
+        name: c1-filing-review
+        version: 1.0.0
+        digest: sha256:67cb56a56472bfe920db6fbe5a9a3523b46e038434f837ccd72456000f536996
+      type: schema
+      digest: sha256:67cb56a56472bfe920db6fbe5a9a3523b46e038434f837ccd72456000f536996
+      manifest: examples/capability-ontologies/filing-review/module.yaml
+      files:
+        - examples/capability-ontologies/filing-review/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+projectors: []
+provisional: false
+revision: d5a1ae438776a55b23ceed10dcd9c1f47022a0bd
+sourceDigest: 55b1f18739b4f16f24c86c69211a0dff4a78b034af299a8e8ec69c35408d255c
+status: passed

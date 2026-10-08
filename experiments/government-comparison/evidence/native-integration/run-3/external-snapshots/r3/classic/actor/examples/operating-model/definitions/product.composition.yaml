@@ -1,0 +1,20 @@
+apiVersion: commerce.operating-model/v1
+kind: ProductComposition
+metadata:
+  namespace: commerce
+  name: orders-and-billing
+purpose: >
+  This product composition uses the Orders total of an accepted order as one
+  amount in the Billing outstanding-total query, alongside previously open
+  amounts.
+spec:
+  orders:
+    apiVersion: commerce.operating-model/v1
+    kind: OrderRules
+    namespace: orders
+    name: accepted-order-total
+  billing:
+    apiVersion: commerce.operating-model/v1
+    kind: BillingQuery
+    namespace: billing
+    name: outstanding-order-total

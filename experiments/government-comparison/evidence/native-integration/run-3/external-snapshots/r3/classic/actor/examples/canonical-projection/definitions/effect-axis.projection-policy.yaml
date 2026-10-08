@@ -1,0 +1,14 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: commerce
+  name: effect-axis-to-dotnet
+purpose: Constrains representation of the project-specific EffectAxis in the .NET target.
+spec:
+  sourceKind:
+    apiVersion: commerce.example.org/v1
+    kind: EffectAxis
+  targetTechnology: dotnet
+  guidance: >
+    Preserve the declared application boundary and keep this responsibility
+    visible in the application layer.

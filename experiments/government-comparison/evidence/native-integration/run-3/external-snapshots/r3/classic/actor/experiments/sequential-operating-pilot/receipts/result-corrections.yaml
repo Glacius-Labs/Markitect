@@ -1,0 +1,109 @@
+{
+  "schema": "markitect-sequence-result-corrections/v1",
+  "correctsResult": {
+    "sha256": "759dae867f215fce36f0e83598166667c3118c23ca3f8a84cfe91b41374d4966",
+    "sourcePath": "result.yaml",
+    "packagePath": "attempt-02-result.yaml",
+    "packagedSha256": "6650b959e086f2c087dc416a6d4611f6fba4bb50bb977bdecb198eea4ea9badf"
+  },
+  "originalRetainedUnchanged": true,
+  "freezeReceiptCorrection": {
+    "originalField": "protocol.freezeReceiptPath and protocol.freezeReceiptSha256",
+    "problem": "The original completed result accidentally references the prior attempt freeze receipt. Attempt 02 was independently frozen by the receipt below before its actors.",
+    "correctSha256": "976bec9a49cef4c75731f5134d7396a9493402f8bfa53aedf78e5aee049a15d9",
+    "protocolSha256": "808f8d6d21a2fa796f15c26b69fa9c89f9f6cec7478da6a7759d9c3ee3bb9458",
+    "correctSourcePath": "freeze-receipt.yaml",
+    "packagePath": "attempt-02-freeze-receipt.yaml",
+    "packagedSha256": "dcf74de8af7faebb00b3523f9560bd5a3c804b112a9dcb184d111fcff82844d1"
+  },
+  "firstVerificationPhaseProvenance": [
+    {
+      "runId": "7d4ad366f2f0a101fbd477d512181208",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"fulfillment-dotnet\"]",
+      "inputDigest": "sha256:6d535d1fe52f57f5ab9a627e3a66796d73a41995ecb4d7ac4dd9d6a16895d714",
+      "promptDigest": "sha256:1bcc8accf65e93db796638e23121522e58a8effc26bc7da65193c184df43e8fb",
+      "dispatch": {
+        "agentId": "<actor-edddbbb14142>",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "files": {
+        "invocation.json": "387b1eb730c434f84119a963549f60118bb2974312a03fb8b7bf2b2cc8fbedfc",
+        "prompt.txt": "1bcc8accf65e93db796638e23121522e58a8effc26bc7da65193c184df43e8fb",
+        "response-schema.json": "91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "ready.json": "e8f49dc030a56700cbeef6e10b2a4c403cbbbb536939b6d463e7ab8faecadde8",
+        "dispatch.json": "193bdaf47c1254e37f2568ef5577a77e4cc9dde19a14e3125b739810aab2ca08",
+        "response.actor-draft.json": null,
+        "response.json": null,
+        "raw-response.json": null,
+        "normalized-response.json": null,
+        "emitted-response.json": null
+      },
+      "classification": "No response published: exclusive draft creation denied by default sandbox; Host runner failed.",
+      "absentDigestMeaning": "File absent; not an empty response or a zero digest."
+    },
+    {
+      "runId": "b217ed5639ad67d0dc3167c476b092aa",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"orders-dotnet\"]",
+      "inputDigest": "sha256:750d06e7b0de885715687cb51972e035acb684f3087dd78e06bcd0a2a8422d28",
+      "promptDigest": "sha256:bc0029cddde9416df4c76f12bf05777300850232ce6e71c389ff3d1c2d7b31c8",
+      "dispatch": {
+        "agentId": "<actor-6f44bd8090b2>",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "files": {
+        "invocation.json": "2f50fd888576a0706e6ba3271ef12452ed61030efb66cbf40966d9b58371d4bf",
+        "prompt.txt": "bc0029cddde9416df4c76f12bf05777300850232ce6e71c389ff3d1c2d7b31c8",
+        "response-schema.json": "91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "ready.json": "bff002c8f64381775d641b23dd187507dfb183e43ee2360d3824cc47e2a71024",
+        "dispatch.json": "9f1bda5769d39db21be4cbbdbdec1c463d797e875a175c1ab7e0a5960eb1c2aa",
+        "response.actor-draft.json": "ea8b0a150e66a567ef567b1493cc87dc583e59aa0d56163a70a24b6a6d3d80bf",
+        "response.json": "ea8b0a150e66a567ef567b1493cc87dc583e59aa0d56163a70a24b6a6d3d80bf",
+        "raw-response.json": "ea8b0a150e66a567ef567b1493cc87dc583e59aa0d56163a70a24b6a6d3d80bf",
+        "normalized-response.json": "f56c6b60b8aa3e748e84c7ea8e71df44d5533f21b235a25e6b72e5035bf8943d",
+        "emitted-response.json": "f56c6b60b8aa3e748e84c7ea8e71df44d5533f21b235a25e6b72e5035bf8943d"
+      },
+      "classification": "Orders first-phase verifier passed; not an actor-format failure.",
+      "absentDigestMeaning": "File absent; not an empty response or a zero digest."
+    },
+    {
+      "runId": "006404018ec29261f5739a952ac28034",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"commerce-markdown\"]",
+      "inputDigest": "sha256:fd82ec7b4f7fb9658f0ee8db4d7f9f12a6699c7b50f0cc4bd0554713def405ea",
+      "promptDigest": "sha256:366ebaebf56d9311b8411352e498b502c5c268fd6350cb9a99ea348a81c4d787",
+      "dispatch": {
+        "agentId": "<actor-b4b3b51fefdf>",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "files": {
+        "invocation.json": "f9b2e3b3e6d48b1c940da9e6fa57a799ca9ca7ce229375bbf39c6080f5224012",
+        "prompt.txt": "366ebaebf56d9311b8411352e498b502c5c268fd6350cb9a99ea348a81c4d787",
+        "response-schema.json": "91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "ready.json": "23a8c1bbd9739cdbce43793c7fb28e1b5bde1b9b6d714bb3e9df001919c2f2b1",
+        "dispatch.json": "417d375ac9877eeda5ec12f59172c3e72a1575ccd26be0eb7dc53e13c57b0222",
+        "response.actor-draft.json": "2fe1488990ece4d4fb7577d18e595f6082881e681d56fff7b44718a564366d7a",
+        "response.json": "2fe1488990ece4d4fb7577d18e595f6082881e681d56fff7b44718a564366d7a",
+        "raw-response.json": "2fe1488990ece4d4fb7577d18e595f6082881e681d56fff7b44718a564366d7a",
+        "normalized-response.json": "290074f896116b9add7dc37d1f7e17287782110e625f010cd11db81a49a370c1",
+        "emitted-response.json": "290074f896116b9add7dc37d1f7e17287782110e625f010cd11db81a49a370c1"
+      },
+      "classification": "Parent response rejected for one incorrect required check subject; missing f37 in the encoded check digest. This is actor-authored, not bridge mutation.",
+      "absentDigestMeaning": "File absent; not an empty response or a zero digest."
+    }
+  ],
+  "actorInventoryScope": {
+    "originalResultRows": 12,
+    "additionalFirstPhaseJobs": 3,
+    "totalAttempt02Jobs": 15,
+    "missingPublicationJobs": 1,
+    "note": "The result table retained closing T1 retry plus T2/T3 jobs; this supplement also accounts for the initial Attempt 02 phase. No failure is removed or reclassified as success."
+  },
+  "accountingInterpretation": "Intervention records mix root and coordinator AI work, actor handoffs and tool actions. Category counts are not counts of independent human interventions, attention measurements, or exhaustive effort. Human attention is unavailable.",
+  "scope": "Reporting correction only. No source, target, runtime, ledger, queue or acceptance criterion changes.",
+  "packagingNote": "Source paths and source digests refer to the retained external evidence. Package paths are relative to the package root; packaged digests identify sanitized copies. These navigation annotations were added when packaging; the original correction receipt remains unchanged."
+}

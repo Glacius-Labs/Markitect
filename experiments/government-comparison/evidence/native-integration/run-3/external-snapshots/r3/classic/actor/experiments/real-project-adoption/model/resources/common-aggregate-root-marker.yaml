@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Common
+metadata:
+  name: aggregate-root-marker
+  namespace: architecture
+spec:
+  summary: Shared aggregate-root marker used to distinguish aggregate roots in bounded contexts.
+  owner: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Core, name: core, namespace: architecture}
+  sourceFiles:
+    - src/BuildingBlocks/Domain/IAggregateRoot.cs

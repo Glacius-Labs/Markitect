@@ -1,0 +1,15 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Package
+metadata:
+  name: mymeetings-architecture
+spec:
+  version: 1.0.0
+  domains:
+    - domains/architecture.yaml
+  areas:
+    - name: constitution
+      path: areas/constitution
+  exports:
+    - kind: Workflow
+      name: vertical-slice
+      namespace: constitution

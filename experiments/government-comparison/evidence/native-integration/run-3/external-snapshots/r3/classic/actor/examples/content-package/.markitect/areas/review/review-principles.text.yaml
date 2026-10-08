@@ -1,0 +1,7 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Text
+metadata:
+    name: review-principles
+    namespace: review
+spec:
+    text: State each conclusion at the strength supported by its evidence.

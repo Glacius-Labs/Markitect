@@ -1,0 +1,82 @@
+{
+  "apiVersion": "markitect.canonical/controller-audit/v1alpha1",
+  "digest": "sha256:7f5596d2abffb46c4aca323dedcb8223054e61d532cecb4bb57d93793feca961",
+  "status": "complete",
+  "coverage": "declared canonical Projections and configured target roots; bounded current evidence",
+  "baseRevision": "ba061721da875f0201e2c0c23a795b2ec300a78c",
+  "sourceRevision": "ba061721da875f0201e2c0c23a795b2ec300a78c",
+  "configDigest": "sha256:95f4d8b28399284aa82e828933d8c56272b665a0975409703956307f7f93515b",
+  "ledgerHead": "sha256:5d853d15bd88a71c82a9b620f33ea100164f2eee7adffcc5925a98cb533c690c",
+  "ledgerSelectionDigest": "sha256:213958c57a3f4df9a372d4ce58452a744aff208cb7946174840c11174068bbdc",
+  "proposalDigest": "sha256:de07ea6d776a834908078eb2695e72a0dbf990f0e1051d40155c86293e1f650d",
+  "planStatus": "planned",
+  "projections": [
+    {
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "scopeIds": [
+        "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+        "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+        "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+      ],
+      "policyIds": [
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"effect-axis-to-dotnet\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"handler-to-dotnet\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"use-case-to-dotnet\"]"
+      ],
+      "assuranceScopeIds": [
+        "commerce-dotnet"
+      ],
+      "activeRecordIds": [
+        "sha256:f17e328c293443cd3e334fe151a7e32ff2e35c81a63889782507065af1ca2fae"
+      ],
+      "freshVerificationResultIds": [
+        "sha256:8894e0de6c2ae85d5942c13202d2f34b6ae5595ebd2995cb5a6f56306b9084d8"
+      ],
+      "artifactPaths": [
+        "src/Commerce/Commerce.csproj",
+        "src/Commerce/CreateOrderHandler.cs",
+        "src/Commerce/EffectAxis.cs"
+      ],
+      "checkIds": [
+        "canonical-projection-fixture",
+        "independent-verifier-receipt"
+      ],
+      "status": "passed",
+      "outcome": "passed"
+    },
+    {
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-markdown\"]",
+      "scopeIds": [
+        "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+        "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+        "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+      ],
+      "policyIds": [
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"effectaxis-markdown\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"handler-markdown\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"usecase-markdown\"]"
+      ],
+      "assuranceScopeIds": [
+        "commerce-markdown"
+      ],
+      "activeRecordIds": [
+        "sha256:ab33af24a862a34a5f3844820fdeb068b8f370a1146de4677044b0bdca85c29a"
+      ],
+      "freshVerificationResultIds": [
+        "sha256:383c6cc34a50f15fbad572afbe289ddb9b8e8765441d8fc59be6a646a1d4e26f"
+      ],
+      "artifactPaths": [
+        "docs/represented/index.md"
+      ],
+      "checkIds": [
+        "canonical-projection-fixture",
+        "independent-verifier-receipt"
+      ],
+      "status": "passed",
+      "outcome": "passed"
+    }
+  ],
+  "exclusions": [],
+  "findings": [],
+  "nextSteps": []
+}

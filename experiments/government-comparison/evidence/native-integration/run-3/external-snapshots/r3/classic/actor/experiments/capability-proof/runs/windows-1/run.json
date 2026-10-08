@@ -1,0 +1,15 @@
+{
+  "id": "windows-1",
+  "sourceCommit": "bc97980e6e7bc0b44a0546736a7095e0a23bfce0",
+  "protocolCommit": "e4d8b63b25824f490170fec1e2bc155f26a6eda2",
+  "productBaseline": "75031b8eca8161b0a247414741828bfb2e1d9069",
+  "command": "go test ./examples -run '^TestCapabilityProofGlobalAcquisitionStopWitness$' -count=1 -v",
+  "platform": "windows/amd64",
+  "goVersion": "go1.27.1",
+  "exitCode": 0,
+  "harnessResult": "PASS",
+  "capabilityResult": "FAIL",
+  "validity": "VALID",
+  "limits": "Missing-object control refused at ls-tree size metadata, not cat-file. Positive snapshots separately contain unrelated exact bytes. No IO syscall trace or full three-projection execution experiment.",
+  "rawLogSha256": "21433ea9ff30157ba8a7105b69b7e0af1102b1705c1547227f8d6953cb00cf82"
+}

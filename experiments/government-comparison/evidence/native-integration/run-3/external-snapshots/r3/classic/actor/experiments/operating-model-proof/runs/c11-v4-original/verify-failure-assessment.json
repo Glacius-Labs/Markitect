@@ -1,0 +1,23 @@
+{
+  "schema": "markitect.c11-verify-assessment/v1",
+  "runId": "c11-v4-original",
+  "recordedAtUtc": "2026-10-06T08:11:03Z",
+  "classification": "INVALID_CONFIGURATION_INCOMPLETE_BEFORE_PROVIDER",
+  "attemptId": "ecee308440eb471dbe77739a8fbb2f0e",
+  "eventFile": "experiments/operating-model-proof/runs/c11-v4-original/events/verify-7fcc93e58e074f4baab79a5c9e90f539.json",
+  "eventFileSha256": "53acbc335a109cbc348e7dacf05070f403f057c11ff3e3271ff43587519a2693",
+  "exitCode": 2,
+  "status": "incomplete",
+  "outcome": "incomplete",
+  "verifierRuns": [],
+  "providerExecutorInvoked": false,
+  "independentVerifierInvoked": false,
+  "selectedCheckName": "c11-workflow-markdown-original",
+  "diagnostic": "fixed checks for assurance scope \"workflow-markdown\": scope check \"c11-workflow-markdown-original\" is not declared by the selected source config",
+  "stdoutDigest": "sha256:f4dcdc86fe4c843cb022b9be2fc107866dc0a868b4fa4e5d59575f5a5f819856",
+  "stderrBytes": 145,
+  "stderrDigest": "sha256:d35524e632710390238e2b78fed85cf3d0129482899e76457be23bc00c50af42",
+  "externalOutputDigest": "sha256:f4dcdc86fe4c843cb022b9be2fc107866dc0a868b4fa4e5d59575f5a5f819856",
+  "interpretation": "Configuration rejected before provider/verifier work. This is neither an AI/Module result nor an external review rejection.",
+  "limitations": "No semantic finding, fresh Verifier evidence, or owner acceptance was produced."
+}

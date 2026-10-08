@@ -1,0 +1,14 @@
+apiVersion: architecture.example.org/v1
+purpose: Describes an application component map and dependencies.
+kinds:
+  Component:
+    purpose: Identifies one owned software unit and its layer.
+    properties:
+      name: {purpose: Names the component., type: string, minCount: 1, maxCount: 1}
+      layer: {purpose: Places the component in a layer., type: enum, minCount: 1, maxCount: 1, values: [presentation, domain, infrastructure]}
+  Dependency:
+    purpose: Records a directed dependency between components.
+    properties:
+      source: {purpose: Identifies the dependent component., type: reference, minCount: 1, maxCount: 1, target: {apiVersion: architecture.example.org/v1, kind: Component}}
+      target: {purpose: Identifies the dependency target., type: reference, minCount: 1, maxCount: 1, target: {apiVersion: architecture.example.org/v1, kind: Component}}
+      rationale: {purpose: States the dependency reason., type: string, minCount: 1, maxCount: 1}

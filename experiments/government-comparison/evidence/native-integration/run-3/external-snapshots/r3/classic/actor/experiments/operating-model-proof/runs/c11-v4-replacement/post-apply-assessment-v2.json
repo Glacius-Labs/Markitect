@@ -1,0 +1,40 @@
+{
+  "schema": "markitect.c11-post-apply-assessment/v2",
+  "runId": "c11-v4-replacement",
+  "recordedAtUtc": "2026-10-06T07:50:33.565193+00:00",
+  "priorAssessmentPath": "experiments/operating-model-proof/runs/c11-v4-replacement/assessment.json",
+  "priorAssessmentSha256": "2D48C182EA923E0E55F19AEDA42DB4884AE29B4774E097FB5CD25788D67E4F96",
+  "classification": "MATERIALIZED_UNVERIFIED",
+  "apply": {
+    "attemptId": "3448d7df06cf4cae825320184fb473b3",
+    "exitCode": 0,
+    "externalOutputDigest": "sha256:9f7052a0268440970322b958b4eb2f1367078a1142d1e4c1ac0872e8f7b02ba1",
+    "reviewedRunDigest": "sha256:7e705beef3fbfa7dc73559d02138ca36abd2e1b6530fe35cf56fb739fd9bbe45",
+    "status": "materialized-unverified",
+    "output": {
+      "path": "docs/represented/workflow.md/canonical-projection.md",
+      "mode": "100644",
+      "bytes": 10228,
+      "sha256": "417192b78fbdfd22b643e8c02091f46347819587cd02b68d0f73144415fddc71"
+    },
+    "recordId": "sha256:b42c1d5d5a393bf3a791ec10a6847ab346752d55a4294280c6151abf61db39ef",
+    "ledgerHead": "sha256:e48915118c324a524d61376f9ee01188f280fd542a7bae0fb5f8fcc3a82c32a2",
+    "evidenceRevision": "3d53e0ddd00c20a117b3c658788d572fb3bb2777"
+  },
+  "recordStore": {
+    "exists": true,
+    "head": "sha256:e48915118c324a524d61376f9ee01188f280fd542a7bae0fb5f8fcc3a82c32a2",
+    "privateLogsExists": false
+  },
+  "providerExecutorInvoked": false,
+  "verifierInvoked": false,
+  "ownerAcceptance": false,
+  "limitations": "The output is materialized and ledger-backed but remains unverified until a fresh independent Verifier completes.",
+  "priorPostApplyAssessmentPath": "experiments/operating-model-proof/runs/c11-v4-replacement/post-apply-assessment.json",
+  "priorPostApplyAssessmentSha256": "ffc6c612b3f6a6dafd3b42d05cde51244853c0a9d54fd84630cbfc92e467cf42",
+  "representationEvidenceLimits": {
+    "evidenceBoundary": "These fixed checks establish bounded representation facts for the selected inputs; they do not establish general semantic equivalence, AI projection quality, or owner acceptance.",
+    "originalMarkdown": "The matcher associates the exact specification with heading/name and kind/API fragments. It does not require explicit namespace text in emitted markup; its trace to the full GraphKey relies on selected source and record scope.",
+    "replacementMarkdown": "The fixed check parses the emitted full metadata/specification and Schema representation against the selected inputs."
+  }
+}

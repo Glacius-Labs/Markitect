@@ -1,0 +1,7 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Handler
+metadata:
+    name: get-order-handler
+    namespace: engineering
+spec:
+    summary: Reads an order through its owning Aggregate.

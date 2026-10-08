@@ -1,0 +1,100 @@
+name: WinGet validation
+
+on:
+  pull_request:
+    paths:
+      - 'packaging/winget/**'
+      - '.github/workflows/winget-validation.yaml'
+  push:
+    branches: [main]
+    paths:
+      - 'packaging/winget/**'
+      - '.github/workflows/winget-validation.yaml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Local lifecycle or public catalog test after indexing
+        type: choice
+        required: true
+        default: local
+        options:
+          - local
+          - catalog-install
+          - catalog-upgrade
+
+permissions:
+  contents: read
+
+concurrency:
+  group: winget-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  portable:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      WINGET_TEST_MODE: ${{ inputs.mode || 'local' }}
+    steps:
+      - name: Check out manifests and runner
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install pinned Windows Package Manager
+        shell: pwsh
+        run: |
+          $bootstrap = Join-Path $env:RUNNER_TEMP 'winget-v1.29.380'
+          New-Item -ItemType Directory -Path $bootstrap | Out-Null
+          $release = 'https://github.com/microsoft/winget-cli/releases/download/v1.29.380'
+          $bundle = Join-Path $bootstrap 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle'
+          $dependencies = Join-Path $bootstrap 'DesktopAppInstaller_Dependencies.zip'
+          Invoke-WebRequest "$release/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -OutFile $bundle
+          Invoke-WebRequest "$release/DesktopAppInstaller_Dependencies.zip" -OutFile $dependencies
+          if ((Get-FileHash $bundle).Hash -ne '65DEA9C01CE08EE7B763366B27C0E651F97DB857C11CA9B9C301826C10092F2E') { throw 'WinGet bundle SHA-256 mismatch' }
+          if ((Get-FileHash $dependencies).Hash -ne 'BA875AFE9D190F61218985AC0292A99D1DB710BF93E13C68944CA9D89F0D82D1') { throw 'WinGet dependencies SHA-256 mismatch' }
+          Expand-Archive -LiteralPath $dependencies -DestinationPath (Join-Path $bootstrap 'dependencies')
+          $dependencyPaths = @(Get-ChildItem (Join-Path $bootstrap 'dependencies/x64') -Filter '*.appx' | Select-Object -ExpandProperty FullName)
+          Add-AppxPackage -Path $bundle -DependencyPath $dependencyPaths
+          $app = Get-AppxPackage -Name Microsoft.DesktopAppInstaller | Sort-Object Version -Descending | Select-Object -First 1
+          if (-not $app) { throw 'Windows Package Manager is not installed on this runner' }
+          $binary = Join-Path $app.InstallLocation 'winget.exe'
+          if (-not (Test-Path -LiteralPath $binary)) { throw 'Windows Package Manager executable is missing' }
+          $version = & $binary --version
+          if ($LASTEXITCODE -ne 0 -or $version -ne 'v1.29.380') { throw "Unexpected Windows Package Manager version: $version" }
+          Write-Host $version
+          "WINGET_BINARY=$binary" >> $env:GITHUB_ENV
+
+      - name: Limit disposable runner to the community source
+        shell: pwsh
+        run: |
+          & $env:WINGET_BINARY source remove --name msstore --disable-interactivity
+          if ($LASTEXITCODE -ne 0) { throw 'Could not remove the unrelated Microsoft Store source from this disposable runner' }
+
+      - name: Validate all canonical release manifests
+        shell: pwsh
+        run: |
+          $manifestVersions = @(Get-ChildItem -LiteralPath 'packaging/winget/GlaciusLabs.Markitect' -Directory)
+          if ($manifestVersions.Count -eq 0) { throw 'No canonical WinGet manifests found' }
+          foreach ($manifestVersion in $manifestVersions) {
+            & $env:WINGET_BINARY validate --manifest $manifestVersion.FullName --disable-interactivity
+            if ($LASTEXITCODE -ne 0) { throw "Manifest validation failed for $($manifestVersion.Name)" }
+          }
+
+      - name: Check catalog command and inventory contracts
+        shell: pwsh
+        run: ./packaging/winget/Test-CatalogContract.ps1
+
+      - name: Validate and test portable installation and upgrade
+        shell: pwsh
+        run: |
+          ./packaging/winget/Test-InstallUpgrade.ps1 -WingetBinary $env:WINGET_BINARY -OutputDirectory (Join-Path $env:RUNNER_TEMP 'markitect-winget-evidence') -Mode $env:WINGET_TEST_MODE
+
+      - name: Upload package evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: winget-${{ github.sha }}
+          path: ${{ runner.temp }}/markitect-winget-evidence/
+          if-no-files-found: warn
+          retention-days: 14

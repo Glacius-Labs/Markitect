@@ -1,0 +1,19 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: UseCase
+metadata:
+  name: get-meeting-fees
+  namespace: architecture
+  labels:
+    feature-ownership: required
+spec:
+  intent: Query
+  summary: Read the configured fee for a Meeting.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: payments, namespace: architecture}
+  feature: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Feature, name: meeting-fees, namespace: architecture}
+  handler: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Handler, name: get-meeting-fees, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Payments/Application/MeetingFees/GetMeetingFees/GetMeetingFeesQuery.cs
+  aggregates:
+    []
+  validators:
+    []

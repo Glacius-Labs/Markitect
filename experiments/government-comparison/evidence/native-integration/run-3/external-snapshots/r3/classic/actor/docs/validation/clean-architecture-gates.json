@@ -1,0 +1,126 @@
+{
+  "schema": "markitect-clean-architecture-validation/v1",
+  "startingCommit": "e116e5c16d63546260a2155e80d8965da72ba30b",
+  "productionCommit": "c63a1e6d1e7859fed5e95ca415eb71abf0c6af95",
+  "classification": "technical validation; local runs and GitHub CI recorded separately; no release or adopter acceptance",
+  "windows": {
+    "platform": "windows/amd64",
+    "toolchain": "go1.27.1",
+    "fixedSnapshotVerify": {
+      "revision": "c63a1e6d1e7859fed5e95ca415eb71abf0c6af95",
+      "provisional": false,
+      "status": "passed",
+      "declaredChecks": [
+        "architecture-imports",
+        "managed-artifacts",
+        "module-checks",
+        "go-tests"
+      ],
+      "allCheckExitCodes": 0,
+      "reportSHA256": "ba80815fe515176e583f2ff13b3d8217aee106231eae1b8f9070f9870a0574dd"
+    },
+    "additionalPassed": [
+      "go vet ./...",
+      "go build ./...",
+      "go mod verify",
+      "schema",
+      "format",
+      "working-tree check",
+      "package and bootstrap smoke",
+      "packaged architecture/module/artifact commands"
+    ]
+  },
+  "linux": {
+    "platform": "linux/amd64",
+    "toolchain": "go1.27.1",
+    "network": "disabled",
+    "sourceCommit": "c63a1e6d1e7859fed5e95ca415eb71abf0c6af95",
+    "sourceArchiveSHA256": "c916452d93a83db5aec35d658fc69b45f1d140d4886af337ab542c94879c5cb6",
+    "imageID": "sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195",
+    "materializedCommit": "da0fa51d161f907979cfdb7b8ccc34095e2e18c2",
+    "materializedCommitMeaning": "isolated synthetic Git identity for exact archive bytes, not the original commit",
+    "status": "passed",
+    "logSHA256": "8937a98eaa5f4b59d1d0362254936d07fb78e8ed63b5c77136b6fce524147ba2",
+    "passed": [
+      "go test ./...",
+      "go vet ./...",
+      "go build ./...",
+      "go mod verify",
+      "authoring benchmark fixtures",
+      "schema",
+      "format",
+      "fixed root check/context",
+      "module/artifact checks",
+      "13 executable project fixtures",
+      "source package and bootstrap smoke"
+    ]
+  },
+  "compatibility": {
+    "baseline": "e116e5c16d63546260a2155e80d8965da72ba30b",
+    "candidate": "621f1a722880cf5b9d403b5753f5ac9152e16358",
+    "commands": 24,
+    "isolatedFixtures": 6,
+    "allExitCodes": 0,
+    "modelBytes": "identical",
+    "allowedDifferences": [
+      "executable toolDigest",
+      "aggregate context digest binding executable"
+    ],
+    "historicalSchemasAndPackageArchives": "unchanged"
+  },
+  "architecture": {
+    "currentForbiddenEdges": 0,
+    "coreToModules": 0,
+    "moduleToSiblingModules": 0,
+    "moduleToHost": 0,
+    "productionAndTests": true,
+    "allPlatformFiles": true,
+    "approvedExternalCoreImport": "go.yaml.in/yaml/v3",
+    "realViolatingPatchCheckpoint": "fcd7765c9f4363a82141f6dfbdae40b0bcfe357f",
+    "realIllegalEdgesDetected": 3,
+    "unmanagedFileDetected": true,
+    "independentAutomatedReview": "no remaining blocker; not human acceptance"
+  },
+  "integration": {
+    "pullRequest": "https://github.com/Glacius-Labs/Markitect/pull/77",
+    "push": "performed under direct user authorization",
+    "productionCodeUnchangedAfter": "c63a1e6d1e7859fed5e95ca415eb71abf0c6af95",
+    "verifiedCandidate": {
+      "head": "a81f6bf89228905d0c6d6ea2f669d69bf62764ff",
+      "base": "e116e5c16d63546260a2155e80d8965da72ba30b",
+      "checkout": "9245b6e045219be60a0fad8bf58553fcac19a138",
+      "checkoutMeaning": "GitHub pull_request synthetic merge revision, distinct from the PR head",
+      "runID": 37199863935,
+      "runURL": "https://github.com/Glacius-Labs/Markitect/actions/runs/37199863935",
+      "status": "passed",
+      "jobs": [
+        {
+          "id": 111429152685,
+          "name": "Quality (ubuntu-24.04)",
+          "status": "success",
+          "url": "https://github.com/Glacius-Labs/Markitect/actions/runs/37199863935/job/111429152685",
+          "completedAt": "2026-10-04T11:48:00Z"
+        },
+        {
+          "id": 111429152936,
+          "name": "Quality (windows-latest)",
+          "status": "success",
+          "url": "https://github.com/Glacius-Labs/Markitect/actions/runs/37199863935/job/111429152936",
+          "completedAt": "2026-10-04T11:55:59Z"
+        }
+      ]
+    },
+    "finalDocumentationUpdate": "must pass exact-head CI before merge; PR records final head and merge identity",
+    "blocker": null,
+    "release": "none; v0.13.0 remains immutable"
+  },
+  "konfyra": {
+    "scopeCount": 36,
+    "candidateCount": 4,
+    "existingHandoffValidation": "passed",
+    "newAcquisition": false,
+    "ownerAcceptance": false,
+    "canonicalAdoption": false,
+    "privateContentIncluded": false
+  }
+}

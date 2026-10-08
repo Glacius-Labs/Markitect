@@ -1,0 +1,51 @@
+{
+  "apiVersion": "markitect.two-area-pilot/fixture-manifest/v1",
+  "attempt": 2,
+  "status": "fixture-prepared-no-execution",
+  "branch": "codex/two-area-pilot-attempt-02",
+  "changedBranch": "codex/two-area-pilot-attempt-02-change",
+  "createdFromCommit": "5657d795b155ffe6bb03cb3b8c075839812ce198",
+  "predecessorAttempt1ChangedCommit": "53f9e36fd71cec34e34a5694e47d7cc3ccb6f251",
+  "baseCommit": "7f3cf2b3c18fbddb015a3278d88a8321ce959eaa",
+  "changedCommit": "0c426b66e2424175c3ad804c7a82ed849778ee9d",
+  "policyCorrection": {
+    "path": "definitions/policy.handler-dotnet.yaml",
+    "requirement": "Buildable .NET 10 net10.0 class library; Orders project+handler paths; Fulfillment project+handler paths; no external packages or sibling project dependencies; preserve public API/callback/effect boundaries; internal names/decomposition remain discretionary."
+  },
+  "changedSourcePaths": [
+    "definitions/rule.shared-quantity.yaml"
+  ],
+  "baseModel": {
+    "digest": "sha256:d67f98ce08290fe072cd8b382cb9058d912718ba8577371d3db5c32c301dee45",
+    "status": "passed"
+  },
+  "changedModel": {
+    "digest": "sha256:c2c25c73991d2da578faec2a9a91f5ea9fa28e94cada5ae7bfcee0ce4f0d9320",
+    "status": "passed"
+  },
+  "sourceBundle": {
+    "refs": [
+      "refs/heads/codex/two-area-pilot-attempt-02",
+      "refs/heads/codex/two-area-pilot-attempt-02-change"
+    ],
+    "sha256": "3891d8a65900091b101fb97429e548a119a1d2885cabd43a942fd015e0b06bb9",
+    "path": "source-attempt-02.bundle"
+  },
+  "projections": [
+    {
+      "target": "src/Orders/",
+      "id": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"orders-dotnet\"]"
+    },
+    {
+      "target": "src/Fulfillment/",
+      "id": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"fulfillment-dotnet\"]"
+    },
+    {
+      "target": "docs/represented/",
+      "id": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"commerce-markdown\"]"
+    }
+  ],
+  "modulePins": "unchanged from attempt01 pinned source inputs",
+  "preflight": "Read-only canonical model action passed at base and changed immutable commits.",
+  "execution": "No actors, runtime calls, controller operations, Apply, or ledger writes in this preparation."
+}

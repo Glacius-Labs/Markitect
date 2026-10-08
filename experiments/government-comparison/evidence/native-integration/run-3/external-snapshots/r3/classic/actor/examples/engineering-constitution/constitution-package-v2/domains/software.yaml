@@ -1,0 +1,158 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Domain
+metadata:
+    name: engineering-constitution-v2
+spec:
+    apiVersion: engineering.markitect.org/v1beta1
+    kinds:
+        Authorizer:
+            required:
+                - summary
+            properties:
+                summary:
+                    type: string
+        Core:
+            required:
+                - purpose
+            properties:
+                purpose:
+                    type: string
+        EventPublisher:
+            required:
+                - summary
+            properties:
+                summary:
+                    type: string
+        Handler:
+            required:
+                - summary
+            properties:
+                summary:
+                    type: string
+        Mapper:
+            required:
+                - summary
+            properties:
+                summary:
+                    type: string
+        Module:
+            required:
+                - purpose
+            properties:
+                dependsOn:
+                    type: array
+                    items:
+                        type: ref
+                purpose:
+                    type: string
+        UseCase:
+            required:
+                - intent
+                - summary
+                - module
+                - handlers
+            properties:
+                extensions:
+                    type: array
+                    items:
+                        type: ref
+                handlers:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: Handler
+                intent:
+                    type: string
+                    enum:
+                        - Command
+                        - Query
+                module:
+                    type: ref
+                    refKind: Module
+                summary:
+                    type: string
+                validators:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: Validator
+        Validator:
+            required:
+                - summary
+            properties:
+                summary:
+                    type: string
+    relations:
+        belongsToModule:
+            description: The single Module boundary that owns a UseCase.
+            field: module
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Module
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        dependsOn:
+            description: A Module's explicit design dependencies.
+            field: dependsOn
+            sourceKinds:
+                - Module
+            targetKinds:
+                - Core
+                - Module
+            context: true
+            invalidate: true
+            acyclic: true
+        handledBy:
+            description: The single required Handler owned by a UseCase.
+            field: handlers
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Handler
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        hasExtension:
+            description: Optional, explicitly approved extension points.
+            field: extensions
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Validator
+                - Authorizer
+                - Mapper
+                - EventPublisher
+            context: true
+            invalidate: true
+        hasValidator:
+            description: Explicit Validator extension subject to the v2 per-UseCase policy.
+            field: validators
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Validator
+            context: true
+            invalidate: true
+    constraints:
+        - name: module-depends-on-core-only
+          description: Module-to-Module dependencies are not part of this constitution.
+          select:
+            kind: Module
+          assert:
+            op: allowed-targets
+            relation: dependsOn
+            values:
+                - Core
+        - name: each-usecase-has-validator
+          description: Every UseCase has a Validator extension in constitution v2.
+          select:
+            kind: UseCase
+          assert:
+            op: count
+            scope: resource
+            relation: hasValidator
+            min: 1

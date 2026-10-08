@@ -1,0 +1,9 @@
+apiVersion: software.markitect.org/v1alpha1
+kind: Module
+metadata:
+    name: payments
+    namespace: engineering
+    labels:
+        layer: application
+spec:
+    layer: application

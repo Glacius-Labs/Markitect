@@ -1,0 +1,54 @@
+{
+  "status": "complete",
+  "executionMode": "fresh-collaboration-agent",
+  "runId": "t2-simple",
+  "task": "t2",
+  "arm": "simple",
+  "workspace": "<R2>\\workspaces\\t2-simple\\checkout",
+  "preparedManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "sourceManifestSha256": "61f0774164179d61018a2f862354b12e24928d1b77e039581abaf17df221f671",
+  "candidateCommit": "3bb85d2c3bb02966e96fe9a5432bad13422484a2",
+  "promptSha256": "41da3800f657e572b5696bd45e35976768cdec54fb3a5a3c724b41281fbeee12",
+  "promptPath": "input-prompt.txt",
+  "automaticAgentInstructions": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+      "bytes": 2666
+    }
+  ],
+  "compiledInputs": [],
+  "frozenWorkspaceAssets": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+      "bytes": 2666
+    },
+    {
+      "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+      "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+      "bytes": 927
+    },
+    {
+      "path": ".tools/architecture-check/TestBase.cs",
+      "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+      "bytes": 1194
+    },
+    {
+      "path": ".tools/architecture-check/LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "bytes": 1091
+    },
+    {
+      "path": "docs/engineering-policy.md",
+      "sha256": "39dda00dfbf21e935a3fe7ef8e79b3894514e284df8f37c1b14f98b38dbf20db",
+      "bytes": 361
+    }
+  ],
+  "compiledInputChanges": [],
+  "readHelperSha256Before": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+  "markitectExecutableSha256Before": null,
+  "startedAtUtc": "2026-10-03T17:46:07.8345118+02:00",
+  "completedAtUtc": "2026-10-03T15:58:17.3449109+00:00"
+}

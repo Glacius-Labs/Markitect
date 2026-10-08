@@ -1,0 +1,13 @@
+{
+  "schema": "markitect-two-area-transport-retry/v1",
+  "attempt": 3,
+  "phase": "shared-rule-change",
+  "retryNumber": 1,
+  "maximumRetries": 1,
+  "reason": "Orders candidate used unsupported mode 0644; Host rejected the aggregate Execute before Apply.",
+  "priorRunDigest": "sha256:705d4aa454a896c95b143c32b6ef78f0545a5ca87d43b062d76b4c3d1d23287f",
+  "priorOrdersRunId": "5a0fff0f6d54558b1128c995422280ae",
+  "changesToSourceRuntimeChecksPromptTemplate": false,
+  "decision": "one ordinary Execute retry, preserving original response; compare exact leaf inputs",
+  "recordedAt": "2026-10-06T22:51:32.369799+00:00"
+}

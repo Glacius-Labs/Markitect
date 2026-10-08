@@ -1,0 +1,9 @@
+{
+  "status": "invalid-pre-call-freeze-setup",
+  "reason": "PowerShell boolean literal serialization failed before a structured control plan was written",
+  "artifactSha256": "38e0b9de817f645c4bec37c0d4a3e58baecccb040f5718dc069a72c7385a0bed",
+  "controllerInvoked": false,
+  "providerInvoked": false,
+  "fixtureOrLedgerMutated": false,
+  "supersededBy": "c4-aligned-control-freeze-02"
+}

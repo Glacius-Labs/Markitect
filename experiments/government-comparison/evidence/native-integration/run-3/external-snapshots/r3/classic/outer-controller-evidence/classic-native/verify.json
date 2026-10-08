@@ -1,0 +1,359 @@
+{
+  "apiVersion": "markitect.canonical/controller-verification/v1alpha1",
+  "digest": "sha256:5c24df3ca63c72e31691b2c52fdf74c6b54f2adf139649f45c4ce7ba8115dee6",
+  "status": "passed",
+  "outcome": "passed",
+  "sourceRevision": "ba061721da875f0201e2c0c23a795b2ec300a78c",
+  "evidenceRevision": "1b1957598779563be3a01aa613ef27593fa8f747",
+  "configDigest": "sha256:95f4d8b28399284aa82e828933d8c56272b665a0975409703956307f7f93515b",
+  "ledgerHead": "sha256:5d853d15bd88a71c82a9b620f33ea100164f2eee7adffcc5925a98cb533c690c",
+  "ledgerSelectionDigest": "sha256:213958c57a3f4df9a372d4ce58452a744aff208cb7946174840c11174068bbdc",
+  "results": [
+    {
+      "apiVersion": "markitect.example.org/verification-result/v1alpha1",
+      "id": "sha256:383c6cc34a50f15fbad572afbe289ddb9b8e8765441d8fc59be6a646a1d4e26f",
+      "recordId": "sha256:ab33af24a862a34a5f3844820fdeb068b8f370a1146de4677044b0bdca85c29a",
+      "revision": "ba061721da875f0201e2c0c23a795b2ec300a78c",
+      "modelDigest": "sha256:734444b65d397674b36f7b7e3d7e4e9769f46fd14aab440e7f39c7ca96dc4691",
+      "targetSnapshotDigest": "sha256:02d5f36ab1611fc30d141c2232bbbb4863fc94dee90f2359d83aab26786d378c",
+      "evidenceRevision": "1b1957598779563be3a01aa613ef27593fa8f747",
+      "evidenceSnapshotDigest": "sha256:dcc9bc88b374bcd45e623c5f676d61a47d38cbbba5a8812cb35ee0c97c0c2786",
+      "controllerConfigDigest": "sha256:95f4d8b28399284aa82e828933d8c56272b665a0975409703956307f7f93515b",
+      "controllerVerifierInputDigest": "sha256:109afed085d73d7bb70c2e8b595f7a82fa705afbfcb67bf0ec56289a15cf73c0",
+      "verifier": {
+        "id": "markitect-agentexec/verifier",
+        "version": "protocol-test-double/1",
+        "digest": "sha256:a557c54fe4b12d31ff5b3c26bb4e9dc7b23e65a7268082642fb53ae486f8dcb5"
+      },
+      "checks": [
+        {
+          "id": "canonical-projection-fixture",
+          "version": "fixed-command-input/v1",
+          "digest": "sha256:d7a6b6a4e9a441cfea3deb274fe246797f1d88f699e39807ff75ac61ac1cf6ea",
+          "outcome": "passed"
+        },
+        {
+          "id": "independent-verifier-receipt",
+          "version": "agent-execution-observation-coverage/v1alpha1",
+          "digest": "sha256:aac4b3cbba93e8197acafc4c65d3e4f23864fa7ef0752edce67a2516397d14b8",
+          "outcome": "passed"
+        }
+      ],
+      "outcome": "passed",
+      "reason": "Verifier receipt sha256:365d711c392e68fc9e4e02f2b2cf7648eda472aa8f54d2fe2c5b346c1df7dfbd; run 90669de75e654b410a4e0f15fa7bd3c1; input sha256:109afed085d73d7bb70c2e8b595f7a82fa705afbfcb67bf0ec56289a15cf73c0. The separate invocation is bounded machine evidence; provider identity, semantic sufficiency, and human acceptance remain unproven."
+    },
+    {
+      "apiVersion": "markitect.example.org/verification-result/v1alpha1",
+      "id": "sha256:8894e0de6c2ae85d5942c13202d2f34b6ae5595ebd2995cb5a6f56306b9084d8",
+      "recordId": "sha256:f17e328c293443cd3e334fe151a7e32ff2e35c81a63889782507065af1ca2fae",
+      "revision": "ba061721da875f0201e2c0c23a795b2ec300a78c",
+      "modelDigest": "sha256:734444b65d397674b36f7b7e3d7e4e9769f46fd14aab440e7f39c7ca96dc4691",
+      "targetSnapshotDigest": "sha256:bf8897d513732bf510e6a39633fddef765815d876af2a0930e8537c926db5274",
+      "evidenceRevision": "1b1957598779563be3a01aa613ef27593fa8f747",
+      "evidenceSnapshotDigest": "sha256:6db0db3cfe83e2453eef524df1fa2960876ba2a0e58da7d94f39d8911266d4e3",
+      "controllerConfigDigest": "sha256:95f4d8b28399284aa82e828933d8c56272b665a0975409703956307f7f93515b",
+      "controllerVerifierInputDigest": "sha256:9a442197710320ff71ea1292cac5ce739c819b1028cb3ee30b22b8d9359589fe",
+      "verifier": {
+        "id": "markitect-agentexec/verifier",
+        "version": "protocol-test-double/1",
+        "digest": "sha256:a557c54fe4b12d31ff5b3c26bb4e9dc7b23e65a7268082642fb53ae486f8dcb5"
+      },
+      "checks": [
+        {
+          "id": "canonical-projection-fixture",
+          "version": "fixed-command-input/v1",
+          "digest": "sha256:855dd98a1e495073c7e08a5b108bab0f67272a5b2fc5b1688d83b7ae35263c6e",
+          "outcome": "passed"
+        },
+        {
+          "id": "independent-verifier-receipt",
+          "version": "agent-execution-observation-coverage/v1alpha1",
+          "digest": "sha256:d8e9e4dde82d335520cf849635699feaa1c976cb667ce2b1dc8b74e56b2513d2",
+          "outcome": "passed"
+        }
+      ],
+      "outcome": "passed",
+      "reason": "Verifier receipt sha256:1d8546b6fed5dcc7093a7a1f09313595cdeaa215d5b03354992010548cf73c6c; run efaeb1ca1aef4d4eb053de5ccbf70e4b; input sha256:9a442197710320ff71ea1292cac5ce739c819b1028cb3ee30b22b8d9359589fe. The separate invocation is bounded machine evidence; provider identity, semantic sufficiency, and human acceptance remain unproven."
+    }
+  ],
+  "verifierRuns": [
+    {
+      "scopeId": "commerce-dotnet",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "recordId": "sha256:f17e328c293443cd3e334fe151a7e32ff2e35c81a63889782507065af1ca2fae",
+      "resultId": "sha256:8894e0de6c2ae85d5942c13202d2f34b6ae5595ebd2995cb5a6f56306b9084d8",
+      "evidenceSnapshotDigest": "sha256:6db0db3cfe83e2453eef524df1fa2960876ba2a0e58da7d94f39d8911266d4e3",
+      "configFingerprint": "sha256:a557c54fe4b12d31ff5b3c26bb4e9dc7b23e65a7268082642fb53ae486f8dcb5",
+      "receiptDigest": "sha256:1d8546b6fed5dcc7093a7a1f09313595cdeaa215d5b03354992010548cf73c6c",
+      "inputDigest": "sha256:9a442197710320ff71ea1292cac5ce739c819b1028cb3ee30b22b8d9359589fe",
+      "runId": "efaeb1ca1aef4d4eb053de5ccbf70e4b",
+      "outcome": "passed",
+      "evidenceRefs": [
+        "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+        "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+        "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"effect-axis-to-dotnet\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"handler-to-dotnet\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"use-case-to-dotnet\"]",
+        "examples/canonical-projection/evidence/check.go",
+        "src/Commerce/Commerce.csproj",
+        "src/Commerce/CreateOrderHandler.cs",
+        "src/Commerce/EffectAxis.cs"
+      ],
+      "observations": [
+        {
+          "subject": "artifact:examples/canonical-projection/evidence/check.go",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "artifact:src/Commerce/Commerce.csproj",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "artifact:src/Commerce/CreateOrderHandler.cs",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "artifact:src/Commerce/EffectAxis.cs",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "check:eyJpZCI6ImNhbm9uaWNhbC1wcm9qZWN0aW9uLWZpeHR1cmUiLCJ2ZXJzaW9uIjoiZml4ZWQtY29tbWFuZC1pbnB1dC92MSIsImRpZ2VzdCI6InNoYTI1Njo4NTVkZDk4YTFlNDk1MDczYzdlMDhhNWIxMDhiYWIwZjY3MjcyYTViMmZjNWIxNjg4ZDgzYjdhZTM1MjYzYzZlIn0",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "policy:[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"effect-axis-to-dotnet\"]",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "policy:[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"handler-to-dotnet\"]",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "policy:[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"use-case-to-dotnet\"]",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "scope:[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "scope:[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "scope:[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        }
+      ],
+      "receipt": {
+        "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+        "runId": "efaeb1ca1aef4d4eb053de5ccbf70e4b",
+        "inputDigest": "sha256:9a442197710320ff71ea1292cac5ce739c819b1028cb3ee30b22b8d9359589fe",
+        "contextDigest": "sha256:e410f33f5edfa92404dd4c9bfdd7b3f8e0596c6ba727b29d54163b78458b8c23",
+        "configDigest": "sha256:a557c54fe4b12d31ff5b3c26bb4e9dc7b23e65a7268082642fb53ae486f8dcb5",
+        "commandDigest": "sha256:a15be56daed6a5aa2e528771032b8df26062023c2ed55553c9644c308539161a",
+        "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+        "runtimeFilesDigest": "sha256:ffb418b3ee63b2b17fcde9b59fe5011c897c58906f1c826697dd1fdc185a02ba",
+        "providerVersion": "protocol-test-double/1",
+        "providerVersionDigest": "sha256:19c58903451c38bd0b3543208ef4dc21241ad67978d7b2a7b9ef3f812ffae3d5",
+        "stdoutDigest": "sha256:af3ab8ffddb2232b85f197b0b155d0cc929139f5cb612bf55b157ef1fdc13380",
+        "stderrDigest": "sha256:fcb17a0f3fdeb5502aad01747c75f14650a4b09ff9d6674e8b0e8f0e6c7987d6",
+        "privateLogDigest": "",
+        "outcome": "passed",
+        "wallTimeMilliseconds": 520,
+        "retryCount": 0
+      }
+    },
+    {
+      "scopeId": "commerce-markdown",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-markdown\"]",
+      "recordId": "sha256:ab33af24a862a34a5f3844820fdeb068b8f370a1146de4677044b0bdca85c29a",
+      "resultId": "sha256:383c6cc34a50f15fbad572afbe289ddb9b8e8765441d8fc59be6a646a1d4e26f",
+      "evidenceSnapshotDigest": "sha256:dcc9bc88b374bcd45e623c5f676d61a47d38cbbba5a8812cb35ee0c97c0c2786",
+      "configFingerprint": "sha256:a557c54fe4b12d31ff5b3c26bb4e9dc7b23e65a7268082642fb53ae486f8dcb5",
+      "receiptDigest": "sha256:365d711c392e68fc9e4e02f2b2cf7648eda472aa8f54d2fe2c5b346c1df7dfbd",
+      "inputDigest": "sha256:109afed085d73d7bb70c2e8b595f7a82fa705afbfcb67bf0ec56289a15cf73c0",
+      "runId": "90669de75e654b410a4e0f15fa7bd3c1",
+      "outcome": "passed",
+      "evidenceRefs": [
+        "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+        "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+        "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"effectaxis-markdown\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"handler-markdown\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"usecase-markdown\"]",
+        "docs/represented/index.md",
+        "examples/canonical-projection/evidence/check.go",
+        "src/Commerce/Commerce.csproj",
+        "src/Commerce/CreateOrderHandler.cs",
+        "src/Commerce/EffectAxis.cs"
+      ],
+      "observations": [
+        {
+          "subject": "artifact:docs/represented/index.md",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "artifact:examples/canonical-projection/evidence/check.go",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "artifact:src/Commerce/Commerce.csproj",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "artifact:src/Commerce/CreateOrderHandler.cs",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "artifact:src/Commerce/EffectAxis.cs",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "check:eyJpZCI6ImNhbm9uaWNhbC1wcm9qZWN0aW9uLWZpeHR1cmUiLCJ2ZXJzaW9uIjoiZml4ZWQtY29tbWFuZC1pbnB1dC92MSIsImRpZ2VzdCI6InNoYTI1NjpkN2E2YjZhNGU5YTQ0MWNmZWEzZGViMjc0ZmUyNDY3OTdmMWQ4OGY2OTllMzk4MDdmZjc1YWM2MWFjMWNmNmVhIn0",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "policy:[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"effectaxis-markdown\"]",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "policy:[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"handler-markdown\"]",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "policy:[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"usecase-markdown\"]",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "scope:[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "scope:[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        },
+        {
+          "subject": "scope:[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]",
+          "outcome": "passed",
+          "detail": "Protocol test double echoed the required observation; no semantic assessment was performed."
+        }
+      ],
+      "receipt": {
+        "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+        "runId": "90669de75e654b410a4e0f15fa7bd3c1",
+        "inputDigest": "sha256:109afed085d73d7bb70c2e8b595f7a82fa705afbfcb67bf0ec56289a15cf73c0",
+        "contextDigest": "sha256:f81cc8ab64fdffae1b6dcc3659834494471860b965ef2a18b1a12c11c7cafdd0",
+        "configDigest": "sha256:a557c54fe4b12d31ff5b3c26bb4e9dc7b23e65a7268082642fb53ae486f8dcb5",
+        "commandDigest": "sha256:a15be56daed6a5aa2e528771032b8df26062023c2ed55553c9644c308539161a",
+        "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+        "runtimeFilesDigest": "sha256:ffb418b3ee63b2b17fcde9b59fe5011c897c58906f1c826697dd1fdc185a02ba",
+        "providerVersion": "protocol-test-double/1",
+        "providerVersionDigest": "sha256:19c58903451c38bd0b3543208ef4dc21241ad67978d7b2a7b9ef3f812ffae3d5",
+        "stdoutDigest": "sha256:8c2a55c99ee241a883ec29db0a0debc33fb5675e2deb045d10d19627570d4644",
+        "stderrDigest": "sha256:b94dcdbfe78573c380fd538a68692f55a7faf4d44e78f58844a5cfffea909d3b",
+        "privateLogDigest": "",
+        "outcome": "passed",
+        "wallTimeMilliseconds": 516,
+        "retryCount": 0
+      }
+    }
+  ],
+  "assurance": {
+    "InputDigest": "sha256:8d474df2baebd9309e3a7dce80f9b042568623dee4079721a138bfadaf2b0cf0",
+    "Invocations": [
+      {
+        "NodeID": "commerce-dotnet",
+        "Attempts": 1,
+        "Status": "completed",
+        "Outcome": "passed",
+        "Causes": null
+      },
+      {
+        "NodeID": "commerce-markdown",
+        "Attempts": 1,
+        "Status": "completed",
+        "Outcome": "passed",
+        "Causes": null
+      }
+    ],
+    "Evaluation": {
+      "Roots": [
+        {
+          "NodeID": "commerce-markdown",
+          "ScopeIDs": [
+            "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+            "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+            "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+          ],
+          "Children": [
+            "commerce-dotnet"
+          ],
+          "Outcome": "passed",
+          "RecordID": "sha256:ab33af24a862a34a5f3844820fdeb068b8f370a1146de4677044b0bdca85c29a",
+          "ResultID": "sha256:383c6cc34a50f15fbad572afbe289ddb9b8e8765441d8fc59be6a646a1d4e26f",
+          "Causes": null
+        }
+      ],
+      "Nodes": [
+        {
+          "NodeID": "commerce-dotnet",
+          "ScopeIDs": [
+            "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+            "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+            "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+          ],
+          "Children": null,
+          "Outcome": "passed",
+          "RecordID": "sha256:f17e328c293443cd3e334fe151a7e32ff2e35c81a63889782507065af1ca2fae",
+          "ResultID": "sha256:8894e0de6c2ae85d5942c13202d2f34b6ae5595ebd2995cb5a6f56306b9084d8",
+          "Causes": null
+        },
+        {
+          "NodeID": "commerce-markdown",
+          "ScopeIDs": [
+            "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+            "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+            "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+          ],
+          "Children": [
+            "commerce-dotnet"
+          ],
+          "Outcome": "passed",
+          "RecordID": "sha256:ab33af24a862a34a5f3844820fdeb068b8f370a1146de4677044b0bdca85c29a",
+          "ResultID": "sha256:383c6cc34a50f15fbad572afbe289ddb9b8e8765441d8fc59be6a646a1d4e26f",
+          "Causes": null
+        }
+      ]
+    },
+    "WallTime": 1059189800
+  },
+  "limits": [
+    "Repository commands are bounded to selected immutable Git blobs and their captured bytes; command execution does not authenticate the executable environment.",
+    "The configured Verifier is a fresh, separately fingerprinted invocation. Its receipt binds invocation inputs and runtime fingerprint, but does not prove provider identity, semantic correctness, or human acceptance.",
+    "Private runner logs remain in the explicitly configured external private log directory; this report includes receipt digests and structured observations, not raw logs."
+  ]
+}

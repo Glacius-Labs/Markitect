@@ -1,0 +1,6 @@
+{
+  "status": "approved",
+  "executeReportSha256": "4b746df3082120c05f7d0f2310ade6e37e6dbd2c950c4ccf2b14fb59ebcabf9f",
+  "executeDigest": "sha256:b87bd40e05f9ddd08cb06e9fbb8305de6a19765c42ddbec6526fd6136f76cfdb",
+  "reviewerReference": "Independent Scientist review: evidence/native-integration/run-3/classic/execute-external-review.md#decision"
+}

@@ -1,0 +1,43 @@
+{
+  "sequence": 1,
+  "startedAt": "2026-10-08T00:38:57.2168872Z",
+  "finishedAt": "2026-10-08T00:38:57.5789347Z",
+  "phase": "execute",
+  "slotId": "positive-root-executor",
+  "scopes": [
+    "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]"
+  ],
+  "result": {
+    "Response": {
+      "apiVersion": "",
+      "runId": "",
+      "nonce": "",
+      "role": "",
+      "inputDigest": "",
+      "outcome": "",
+      "candidateFiles": null,
+      "evidenceRefs": null,
+      "verifierObservations": null,
+      "uncertainty": null
+    },
+    "Receipt": {
+      "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+      "runId": "56ddc8bd5023b34391dff7d70f4c8e27",
+      "inputDigest": "sha256:80e8391f5c4ef0fcf72100623a45fd584e3f07209836486107dd5faa44a8b900",
+      "contextDigest": "sha256:6b349874e19a554828cb8e3f4357eb729547e7570db81a7f57fbd8361722cd84",
+      "configDigest": "sha256:6610400d8e16b26f383dae3a4181a90c991c73be57beb9d2c6ed04d459ddd392",
+      "commandDigest": "sha256:f61f01710d6c05be019e5d8f841a3db601a8e56350231d258718455504c698fe",
+      "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+      "runtimeFilesDigest": "sha256:7704980c2c864f3c1cd690a2766c067f59efb080b9110cecffa3c0e7cdf4fb99",
+      "providerVersion": "python-fixed-role-response-v1",
+      "providerVersionDigest": "sha256:724397c0b5615e3a70af28508cd6b20e6857a6b1340d6e352d8c7b71c6cc1621",
+      "stdoutDigest": "sha256:7d434a9c103ced86de2886a74bdc7ce589c7956b0f4f5bb356fc896f6b9c6092",
+      "stderrDigest": "sha256:d5169feeee345171bec8caad7f44ac4e4b8431970e520e6807f709f3b03ca21e",
+      "privateLogDigest": "",
+      "outcome": "incomplete",
+      "wallTimeMilliseconds": 353,
+      "retryCount": 0
+    }
+  },
+  "error": "executor response contains verifier or inference output"
+}

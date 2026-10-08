@@ -1,0 +1,15 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Package
+metadata:
+    name: engineering-constitution
+spec:
+    areas:
+        - name: constitution
+          path: .markitect/areas/constitution
+    domains:
+        - domains/software.yaml
+    version: 2.0.0
+    exports:
+        - kind: Workflow
+          name: vertical-slice
+          namespace: constitution

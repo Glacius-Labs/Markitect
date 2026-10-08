@@ -1,0 +1,6 @@
+/bin/
+.cache/
+/.gocache/
+/.artifacts/
+*.test
+coverage.out

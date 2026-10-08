@@ -1,0 +1,88 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Domain
+metadata:
+    name: delivery
+spec:
+    apiVersion: delivery.markitect.org/v1alpha1
+    kinds:
+        Release:
+            required:
+                - sourceRevision
+                - policy
+                - evidence
+            properties:
+                evidence:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: ReleaseEvidence
+                policy:
+                    type: ref
+                    refKind: ReleasePolicy
+                sourceRevision:
+                    type: string
+        ReleaseEvidence:
+            required:
+                - sourceRevision
+                - check
+                - result
+            properties:
+                check:
+                    type: string
+                result:
+                    type: string
+                    enum:
+                        - passed
+                        - failed
+                sourceRevision:
+                    type: string
+        ReleasePolicy:
+            required:
+                - requiredChecks
+            properties:
+                channel:
+                    type: string
+                    enum:
+                        - stable
+                        - preview
+                requiredChecks:
+                    type: array
+                    items:
+                        type: string
+    relations:
+        governedBy:
+            description: Desired release policy used by a release record.
+            field: policy
+            sourceKinds:
+                - Release
+            targetKinds:
+                - ReleasePolicy
+            context: true
+            invalidate: true
+        hasEvidence:
+            description: Immutable observed check evidence for a desired release.
+            field: evidence
+            sourceKinds:
+                - Release
+            targetKinds:
+                - ReleaseEvidence
+            context: true
+            invalidate: true
+    constraints:
+        - name: release-evidence-must-pass
+          description: A recorded check result must be passing; evidence remains distinct from the requested release state.
+          select:
+            kind: ReleaseEvidence
+          assert:
+            op: allowed
+            field: result
+            values:
+                - passed
+        - name: release-has-evidence
+          description: A release observation is incomplete until at least one check result is recorded.
+          select:
+            kind: Release
+          assert:
+            op: count
+            relation: hasEvidence
+            min: 1

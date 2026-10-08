@@ -1,0 +1,131 @@
+{
+  "status": "materialized-unverified",
+  "sourceRevision": "ba061721da875f0201e2c0c23a795b2ec300a78c",
+  "runDigest": "sha256:b87bd40e05f9ddd08cb06e9fbb8305de6a19765c42ddbec6526fd6136f76cfdb",
+  "written": [
+    "docs/represented/index.md",
+    "src/Commerce/Commerce.csproj",
+    "src/Commerce/CreateOrderHandler.cs",
+    "src/Commerce/EffectAxis.cs"
+  ],
+  "records": [
+    {
+      "apiVersion": "markitect.example.org/projection-record/v1alpha1",
+      "id": "sha256:f17e328c293443cd3e334fe151a7e32ff2e35c81a63889782507065af1ca2fae",
+      "revision": "ba061721da875f0201e2c0c23a795b2ec300a78c",
+      "modelDigest": "sha256:734444b65d397674b36f7b7e3d7e4e9769f46fd14aab440e7f39c7ca96dc4691",
+      "planDigest": "sha256:5f213f5a22173a5ef4f2b26e7228445c4536269572745309795c61eecb742d75",
+      "inputSnapshotDigest": "sha256:5ed69b37f1767e354f215822ee9753388e09c8cf30237f0dab4f5ce5aa0d6fec",
+      "requestDigest": "sha256:979b92430594c96ae03e0734bef343a5676ed7fe53cd099d95aed5b57817d5a2",
+      "module": {
+        "name": "markitect-dotnet",
+        "version": "1.0.0",
+        "digest": "sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c"
+      },
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "projector": {
+        "id": "dotnet-source",
+        "version": "1.0.0"
+      },
+      "scopeIds": [
+        "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+        "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+        "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+      ],
+      "policyIds": [
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"effect-axis-to-dotnet\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"handler-to-dotnet\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"use-case-to-dotnet\"]"
+      ],
+      "artifacts": [
+        {
+          "path": "src/Commerce/Commerce.csproj",
+          "digest": "sha256:c2838d41e181638de6686b67de0d967fee53c20935b72c4361a5ad00afb60d37",
+          "mode": "100644",
+          "change": "created"
+        },
+        {
+          "path": "src/Commerce/CreateOrderHandler.cs",
+          "digest": "sha256:075e6db0bca7af027566efb3b8087daf5f117fa0e920e65ca2f2d1bb2707e97b",
+          "mode": "100644",
+          "change": "created"
+        },
+        {
+          "path": "src/Commerce/EffectAxis.cs",
+          "digest": "sha256:132a45b3126ee75b96c82a60e6fef4f8398d68cde8aba17995c0035d64a586a8",
+          "mode": "100644",
+          "change": "created"
+        }
+      ],
+      "targetSnapshotDigest": "sha256:bf8897d513732bf510e6a39633fddef765815d876af2a0930e8537c926db5274",
+      "state": "materialized-unverified"
+    },
+    {
+      "apiVersion": "markitect.example.org/projection-record/v1alpha1",
+      "id": "sha256:ab33af24a862a34a5f3844820fdeb068b8f370a1146de4677044b0bdca85c29a",
+      "revision": "ba061721da875f0201e2c0c23a795b2ec300a78c",
+      "modelDigest": "sha256:734444b65d397674b36f7b7e3d7e4e9769f46fd14aab440e7f39c7ca96dc4691",
+      "planDigest": "sha256:c93c55d253c528f5bae63dc7d6604cc95f80bbf8e413339fc4653e8f273ff09c",
+      "inputSnapshotDigest": "sha256:5ed69b37f1767e354f215822ee9753388e09c8cf30237f0dab4f5ce5aa0d6fec",
+      "requestDigest": "sha256:72e858047e0bb4ee72fc04becb868e276a65d9670e48161be5bc02c5603088dd",
+      "module": {
+        "name": "markitect-markdown",
+        "version": "1.0.0",
+        "digest": "sha256:029a61498008aa2c8e12e437abffe11d5eb74f9bab3de107d348cfa7d38f5c83"
+      },
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-markdown\"]",
+      "projector": {
+        "id": "markdown-documentation",
+        "version": "1.0.0"
+      },
+      "scopeIds": [
+        "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+        "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+        "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+      ],
+      "policyIds": [
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"effectaxis-markdown\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"handler-markdown\"]",
+        "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"usecase-markdown\"]"
+      ],
+      "artifacts": [
+        {
+          "path": "docs/represented/index.md",
+          "digest": "sha256:650491bb209ecff55c6fac5e56f1154aca2bb7b0399418d046d7dcec376efd45",
+          "mode": "100644",
+          "change": "created"
+        }
+      ],
+      "targetSnapshotDigest": "sha256:02d5f36ab1611fc30d141c2232bbbb4863fc94dee90f2359d83aab26786d378c",
+      "state": "materialized-unverified"
+    }
+  ],
+  "ledgerHead": "sha256:67706474def2a4169ac59061311717064e5f52a1cab678dea2b2b104c913cf39",
+  "evidenceRevision": "1b1957598779563be3a01aa613ef27593fa8f747",
+  "evidencePaths": [
+    "docs/represented/index.md",
+    "examples/canonical-projection/canonical.yaml",
+    "examples/canonical-projection/definitions/commerce.markdown-projection.yaml",
+    "examples/canonical-projection/definitions/commerce.projection.yaml",
+    "examples/canonical-projection/definitions/create-order.effect-axis.yaml",
+    "examples/canonical-projection/definitions/create-order.handler.yaml",
+    "examples/canonical-projection/definitions/create-order.projection-policy.yaml",
+    "examples/canonical-projection/definitions/create-order.use-case.yaml",
+    "examples/canonical-projection/definitions/effect-axis.projection-policy.yaml",
+    "examples/canonical-projection/definitions/effectaxis-markdown.yaml",
+    "examples/canonical-projection/definitions/handler-markdown.yaml",
+    "examples/canonical-projection/definitions/handler.projection-policy.yaml",
+    "examples/canonical-projection/definitions/usecase-markdown.yaml",
+    "examples/canonical-projection/evidence/check.go",
+    "examples/canonical-projection/modules/commerce/module.yaml",
+    "examples/canonical-projection/modules/commerce/schema.yaml",
+    "examples/canonical-projection/modules/dotnet/module.yaml",
+    "examples/canonical-projection/modules/foundation/module.yaml",
+    "examples/canonical-projection/modules/foundation/schema.yaml",
+    "examples/canonical-projection/modules/markdown/module.yaml",
+    "src/Commerce/Commerce.csproj",
+    "src/Commerce/CreateOrderHandler.cs",
+    "src/Commerce/EffectAxis.cs"
+  ],
+  "evidenceRefreshRequired": null
+}

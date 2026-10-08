@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "pullRequest": "https://github.com/Glacius-Labs/Markitect/pull/58",
+  "reviewedHead": "1996ef2106e2df6aa8f5955359fa4a5542004799",
+  "base": "f4240e2b56575ac13e294aa8537937e19a9e503e",
+  "integratedCommit": "a23db5f48854cbf7723789843aaa10ddf06cdb0b",
+  "mergedAt": "2026-10-03T13:33:49Z",
+  "integratedTreeMatchesReviewedHead": true,
+  "candidateCI": {
+    "run": "https://github.com/Glacius-Labs/Markitect/actions/runs/37126319833",
+    "headSha": "1996ef2106e2df6aa8f5955359fa4a5542004799",
+    "windowsQuality": "success",
+    "linuxQuality": "success"
+  },
+  "mainCI": {
+    "run": "https://github.com/Glacius-Labs/Markitect/actions/runs/37126611702",
+    "headSha": "a23db5f48854cbf7723789843aaa10ddf06cdb0b",
+    "conclusion": "success"
+  },
+  "review": {
+    "kind": "independent agent review; not a human GitHub approval",
+    "publicBaseAndHeadMatchedLocalDiff": true,
+    "changedPathCount": 154,
+    "blockers": [],
+    "nonBlockingFindings": ["Two deliberately preserved replay runs duplicate many captures; total reviewed payload is about 3.29 MB."]
+  },
+  "experimentTool": {
+    "sourceCommit": "a23db5f48854cbf7723789843aaa10ddf06cdb0b",
+    "vcsModified": false,
+    "goVersion": "go1.27.1",
+    "platform": "windows/amd64",
+    "sha256": "6aae29acf67217b9538a2076ff199102b44c84183f2e0dff4718584e84e064df",
+    "kind": "local clean-source build, not a published release asset"
+  },
+  "publishedRelease": "v0.12.0",
+  "newReleasePublished": false
+}

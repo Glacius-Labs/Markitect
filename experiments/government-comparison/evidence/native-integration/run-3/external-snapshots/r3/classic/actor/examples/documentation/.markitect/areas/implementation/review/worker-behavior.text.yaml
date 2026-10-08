@@ -1,0 +1,10 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Text
+metadata:
+    name: worker-behavior
+    namespace: implementation
+spec:
+    text: |
+        The worker exposes an attempt limit of three.
+    files:
+        - docs/implementation/src/worker.go

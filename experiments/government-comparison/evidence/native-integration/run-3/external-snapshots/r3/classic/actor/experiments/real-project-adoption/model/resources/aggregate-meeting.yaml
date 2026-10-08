@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Aggregate
+metadata:
+  name: meeting
+  namespace: architecture
+spec:
+  summary: Meeting aggregate root owns attendees, waitlist, not-attendees and meeting lifecycle.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Meetings/Domain/Meetings/Meeting.cs

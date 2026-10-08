@@ -1,0 +1,406 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  quality:
+    name: Existing source quality gates
+    uses: ./.github/workflows/ci.yaml
+    permissions:
+      contents: read
+
+  preflight:
+    name: Validate release source and build bundle
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+      bundle_sha256: ${{ steps.release.outputs.bundle_sha256 }}
+    steps:
+      - name: Check out tagged source and history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Validate tag, source version, main ancestry, and build bundle
+        id: release
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]] || { echo "release tag is not a supported vSemVer: $TAG" >&2; exit 1; }
+          tagged_commit="$(git rev-parse "refs/tags/$TAG^{commit}")"
+          [[ "$tagged_commit" == "$SOURCE_SHA" ]] || { echo "tag does not resolve to the workflow source commit" >&2; exit 1; }
+          git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "tagged commit is not contained in origin/main" >&2; exit 1; }
+
+          version_output="$(go run ./cmd/markitect version)"
+          source_version="$(sed -E 's/^Markitect ([^ ]+) \(.+$/\1/' <<< "$version_output")"
+          [[ "$version_output" == "Markitect $source_version (linux/amd64)" ]] || { echo "could not read the source version from Markitect" >&2; exit 1; }
+          [[ "$TAG" == "v$source_version" ]] || { echo "release tag $TAG does not match source version $source_version" >&2; exit 1; }
+
+          bundle_path="$RUNNER_TEMP/markitect-$TAG-bundle.zip"
+          go run ./cmd/markitect bundle --repo . --revision "$SOURCE_SHA" --output "$bundle_path"
+          bundle_sha256="$(sha256sum "$bundle_path" | cut -d ' ' -f 1)"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$source_version" >> "$GITHUB_OUTPUT"
+          echo "bundle_sha256=$bundle_sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Confirm current remote tag resolves to the workflow source commit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          resolve_remote_tag_commit() {
+            local type sha response depth=0
+            response="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG")"
+            type="$(jq -r '.object.type // empty' <<< "$response")"
+            sha="$(jq -r '.object.sha // empty' <<< "$response")"
+            while [[ "$type" == tag ]]; do
+              depth=$((depth + 1))
+              [[ $depth -le 8 ]] || { echo "annotated tag chain is unreasonably deep" >&2; return 1; }
+              response="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/git/tags/$sha")"
+              type="$(jq -r '.object.type // empty' <<< "$response")"
+              sha="$(jq -r '.object.sha // empty' <<< "$response")"
+            done
+            [[ "$type" == commit && "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "remote release tag does not resolve to a Git commit" >&2; return 1; }
+            printf '%s' "$sha"
+          }
+          remote_tag_commit="$(resolve_remote_tag_commit)"
+          [[ "$remote_tag_commit" == "$SOURCE_SHA" ]] || { echo "current remote release tag no longer resolves to the workflow source commit" >&2; exit 1; }
+
+  bundle-smoke:
+    name: Bundle install smoke (${{ matrix.os }})
+    needs:
+      - quality
+      - preflight
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - windows-latest
+    steps:
+      - name: Check out tagged source and history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Install bundle and verify bootstrap (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          EXPECTED_BUNDLE_SHA256: ${{ needs.preflight.outputs.bundle_sha256 }}
+          RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
+        run: |
+          set -euo pipefail
+          bundle_path="$RUNNER_TEMP/markitect-$RELEASE_TAG-bundle.zip"
+          go run ./cmd/markitect bundle --repo . --revision "$GITHUB_SHA" --output "$bundle_path"
+          actual_sha256="$(sha256sum "$bundle_path" | cut -d ' ' -f 1)"
+          [[ "$actual_sha256" == "$EXPECTED_BUNDLE_SHA256" ]] || { echo "bundle is not deterministic across release jobs" >&2; exit 1; }
+
+          consumer="$RUNNER_TEMP/markitect-consumer-$GITHUB_RUN_ID"
+          mkdir -p "$consumer"
+          cp -R examples/minimal/. "$consumer/"
+          git -C "$consumer" init -b "feature/release-smoke-$GITHUB_RUN_ID"
+          git -C "$consumer" config user.name "Markitect Release CI"
+          git -C "$consumer" config user.email "markitect-release-ci@users.noreply.github.com"
+          git -C "$consumer" add .
+          git -C "$consumer" commit -m "Create isolated Markitect release smoke fixture"
+
+          go run ./cmd/markitect install --repo "$consumer" --bundle "$bundle_path" --sha256 "$actual_sha256" --write
+          cd "$consumer"
+          go test .markitect/bootstrap/run.go .markitect/bootstrap/run_test.go
+          authoring_output="$(go run .markitect/bootstrap/run.go authoring)"
+          grep -Fq 'core/Skill/authoring' <<< "$authoring_output"
+          notices="$(go run .markitect/bootstrap/run.go licenses)"
+          grep -Fq 'Copyright 2009 The Go Authors.' <<< "$notices"
+          grep -Fq 'END OF TERMS AND CONDITIONS' <<< "$notices"
+          adapter_source="$RUNNER_TEMP/markitect-adapter-source-$GITHUB_RUN_ID"
+          adapter_bin="$RUNNER_TEMP/markitect-adapter-bin-$GITHUB_RUN_ID"
+          mkdir -p "$adapter_source" "$adapter_bin"
+          unzip -q "$consumer/.markitect/tool/source.zip" -d "$adapter_source"
+          (cd "$adapter_source" && go build -trimpath -buildvcs=false -o "$adapter_bin/markitect-adapter-dotnet" ./cmd/markitect-adapter-dotnet)
+          echo "$adapter_bin" >> "$GITHUB_PATH"
+          export PATH="$adapter_bin:$PATH"
+          example_output="$(go run .markitect/bootstrap/run.go check --repo "$consumer")"
+          grep -Eq '^status: passed$' <<< "$example_output"
+          domain_output="$(go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/canonical-engineering")"
+          grep -Eq '^status: passed$' <<< "$domain_output"
+          go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/canonical-engineering" --kind Skill --name architecture-review --namespace engineering
+          go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/canonical-engineering"
+          go run .markitect/bootstrap/run.go format --repo "$GITHUB_WORKSPACE/examples/canonical-engineering"
+          go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/engineering-constitution"
+          go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/engineering-constitution"
+          go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/engineering-constitution" --namespace engineering --kind Skill --name add-order
+          go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/engineering-discovery"
+          go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/software-architecture"
+          go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/software-architecture"
+          go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/software-architecture" --namespace engineering --kind Skill --name implement-order
+          go run .markitect/bootstrap/run.go format --repo "$GITHUB_WORKSPACE/examples/software-architecture"
+          domain_repo="$RUNNER_TEMP/markitect-canonical-engineering-$GITHUB_RUN_ID"
+          mkdir -p "$domain_repo"
+          cp -R "$GITHUB_WORKSPACE/examples/canonical-engineering/." "$domain_repo/"
+          git -C "$domain_repo" init -b feature/canonical-smoke
+          git -C "$domain_repo" config user.name 'Markitect Release CI'
+          git -C "$domain_repo" config user.email 'markitect-release-ci@users.noreply.github.com'
+          git -C "$domain_repo" add .
+          git -C "$domain_repo" commit -m 'Create isolated canonical engineering fixture'
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action observe --adapter markitect-render
+          mkdir -p "$domain_repo/.artifacts/markitect/reconcile"
+          domain_plan="$domain_repo/.artifacts/markitect/reconcile/plan.yaml"
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action plan --adapter markitect-render > "$domain_plan"
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action apply --adapter markitect-render --plan "$domain_plan" --write
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action verify --adapter markitect-render --plan "$domain_plan"
+          adapter_plan="$domain_repo/.artifacts/markitect/reconcile/dotnet-plan.yaml"
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action observe --adapter dotnet-dependencies
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action plan --adapter dotnet-dependencies > "$adapter_plan"
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action verify --adapter dotnet-dependencies --plan "$adapter_plan"
+
+      - name: Install bundle and verify bootstrap (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          EXPECTED_BUNDLE_SHA256: ${{ needs.preflight.outputs.bundle_sha256 }}
+          RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
+        run: |
+          $bundlePath = Join-Path $env:RUNNER_TEMP "markitect-$env:RELEASE_TAG-bundle.zip"
+          go run ./cmd/markitect bundle --repo . --revision $env:GITHUB_SHA --output $bundlePath
+          if ($LASTEXITCODE -ne 0) { throw "Bundle creation failed with exit code $LASTEXITCODE" }
+          $actualSha256 = (Get-FileHash -LiteralPath $bundlePath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualSha256 -ne $env:EXPECTED_BUNDLE_SHA256) { throw 'Bundle is not deterministic across release jobs' }
+
+          $consumer = Join-Path $env:RUNNER_TEMP "markitect-consumer-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Path $consumer | Out-Null
+          Get-ChildItem -Force examples/minimal | Copy-Item -Destination $consumer -Recurse -Force
+          git -C $consumer init -b "feature/release-smoke-$env:GITHUB_RUN_ID"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not create the isolated feature branch' }
+          git -C $consumer config user.name 'Markitect Release CI'
+          git -C $consumer config user.email 'markitect-release-ci@users.noreply.github.com'
+          git -C $consumer add .
+          git -C $consumer commit -m 'Create isolated Markitect release smoke fixture'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not commit the isolated feature fixture' }
+
+          go run ./cmd/markitect install --repo $consumer --bundle $bundlePath --sha256 $actualSha256 --write
+          if ($LASTEXITCODE -ne 0) { throw "Bundle installation failed with exit code $LASTEXITCODE" }
+          Push-Location $consumer
+          go test .markitect/bootstrap/run.go .markitect/bootstrap/run_test.go
+          if ($LASTEXITCODE -ne 0) { throw 'Installed bootstrap tests failed' }
+          $authoring = go run .markitect/bootstrap/run.go authoring
+          if ($LASTEXITCODE -ne 0) { throw 'Installed authoring command failed' }
+          if (($authoring -join "`n") -notmatch 'core/Skill/authoring') { throw 'Installed bundle omitted the authoring Skill' }
+          $notices = go run .markitect/bootstrap/run.go licenses
+          if ($LASTEXITCODE -ne 0) { throw 'Installed third-party notices failed' }
+          if (($notices -join "`n") -notmatch 'Copyright 2009 The Go Authors.' -or ($notices -join "`n") -notmatch 'END OF TERMS AND CONDITIONS') { throw 'Installed bundle omitted third-party notices' }
+          $adapterSource = Join-Path $env:RUNNER_TEMP "markitect-adapter-source-$env:GITHUB_RUN_ID"
+          $adapterBin = Join-Path $env:RUNNER_TEMP "markitect-adapter-bin-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Path $adapterSource, $adapterBin -Force | Out-Null
+          Expand-Archive -LiteralPath (Join-Path $consumer '.markitect/tool/source.zip') -DestinationPath $adapterSource
+          Push-Location $adapterSource
+          go build -trimpath -buildvcs=false -o (Join-Path $adapterBin 'markitect-adapter-dotnet.exe') ./cmd/markitect-adapter-dotnet
+          if ($LASTEXITCODE -ne 0) { throw 'Could not build .NET reference adapter from installed source bundle' }
+          Pop-Location
+          $adapterBin >> $env:GITHUB_PATH
+          $env:PATH = "$adapterBin;$env:PATH"
+          $example = go run .markitect/bootstrap/run.go check --repo $consumer
+          if ($LASTEXITCODE -ne 0) { throw 'Installed example check failed' }
+          if (($example -join "`n") -notmatch '(?m)^status: passed$') { throw 'Installed bundle did not pass the minimal example check' }
+          $domainExample = Join-Path $env:GITHUB_WORKSPACE 'examples/canonical-engineering'
+          $domainCheck = go run .markitect/bootstrap/run.go check --repo $domainExample
+          if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering check failed' }
+          if (($domainCheck -join "`n") -notmatch '(?m)^status: passed$') { throw 'Installed bundle did not pass the canonical engineering example check' }
+          go run .markitect/bootstrap/run.go context --repo $domainExample --kind Skill --name architecture-review --namespace engineering
+          if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering context failed' }
+          go run .markitect/bootstrap/run.go model --repo $domainExample
+          if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering model failed' }
+          go run .markitect/bootstrap/run.go format --repo $domainExample
+          if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering format failed' }
+          $constitutionExample = Join-Path $env:GITHUB_WORKSPACE 'examples/engineering-constitution'
+          go run .markitect/bootstrap/run.go check --repo $constitutionExample
+          if ($LASTEXITCODE -ne 0) { throw 'Installed bundle constitution check failed' }
+          go run .markitect/bootstrap/run.go model --repo $constitutionExample
+          if ($LASTEXITCODE -ne 0) { throw 'Installed bundle constitution model failed' }
+          go run .markitect/bootstrap/run.go context --repo $constitutionExample --namespace engineering --kind Skill --name add-order
+          if ($LASTEXITCODE -ne 0) { throw 'Installed bundle constitution context failed' }
+          go run .markitect/bootstrap/run.go check --repo (Join-Path $env:GITHUB_WORKSPACE 'examples/engineering-discovery')
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary engineering discovery check failed' }
+          $architectureExample = Join-Path $env:GITHUB_WORKSPACE 'examples/software-architecture'
+          go run .markitect/bootstrap/run.go check --repo $architectureExample
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture check failed' }
+          go run .markitect/bootstrap/run.go model --repo $architectureExample
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture model failed' }
+          go run .markitect/bootstrap/run.go context --repo $architectureExample --namespace engineering --kind Skill --name implement-order
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture context failed' }
+          go run .markitect/bootstrap/run.go format --repo $architectureExample
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture format failed' }
+          $domainRepo = Join-Path $env:RUNNER_TEMP "markitect-canonical-engineering-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Path $domainRepo | Out-Null
+          Get-ChildItem -LiteralPath $domainExample -Force | Copy-Item -Destination $domainRepo -Recurse -Force
+          if ($LASTEXITCODE -ne 0) { throw 'Could not prepare canonical engineering reconciliation fixture' }
+          git -C $domainRepo init -b feature/canonical-smoke
+          if ($LASTEXITCODE -ne 0) { throw 'Could not initialize canonical engineering feature branch' }
+          git -C $domainRepo config user.name 'Markitect Release CI'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not configure canonical engineering fixture identity' }
+          git -C $domainRepo config user.email 'markitect-release-ci@users.noreply.github.com'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not configure canonical engineering fixture email' }
+          git -C $domainRepo add .
+          if ($LASTEXITCODE -ne 0) { throw 'Could not stage canonical engineering fixture' }
+          git -C $domainRepo commit -m 'Create isolated canonical engineering fixture'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not commit canonical engineering fixture' }
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action observe --adapter markitect-render
+          if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering observe failed' }
+          $evidenceDir = Join-Path $domainRepo '.artifacts/markitect/reconcile'
+          New-Item -ItemType Directory -Path $evidenceDir -Force | Out-Null
+          $domainPlan = Join-Path $evidenceDir 'plan.yaml'
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action plan --adapter markitect-render | Set-Content -LiteralPath $domainPlan -Encoding utf8
+          if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering plan failed' }
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action apply --adapter markitect-render --plan $domainPlan --write
+          if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering apply failed' }
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action verify --adapter markitect-render --plan $domainPlan
+          if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering verify failed' }
+          $adapterPlan = Join-Path $evidenceDir 'dotnet-plan.yaml'
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action observe --adapter dotnet-dependencies
+          if ($LASTEXITCODE -ne 0) { throw 'Installed .NET adapter observe failed' }
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action plan --adapter dotnet-dependencies | Set-Content -LiteralPath $adapterPlan -Encoding utf8
+          if ($LASTEXITCODE -ne 0) { throw 'Installed .NET adapter plan failed' }
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action verify --adapter dotnet-dependencies --plan $adapterPlan
+          if ($LASTEXITCODE -ne 0) { throw 'Installed .NET adapter verify failed' }
+          Pop-Location
+
+  assemble:
+    name: Build and retain exact-source release assets
+    needs:
+      - quality
+      - preflight
+      - bundle-smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ needs.preflight.outputs.tag }}
+      VERSION: ${{ needs.preflight.outputs.version }}
+      EXPECTED_BUNDLE_SHA256: ${{ needs.preflight.outputs.bundle_sha256 }}
+    steps:
+      - name: Check out exact tagged source and history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Build bundle, portable CLIs, and provenance YAML
+        id: assets
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$(git rev-parse "refs/tags/$TAG^{commit}")" == "$SOURCE_SHA" ]] || { echo "release tag moved away from the workflow source commit" >&2; exit 1; }
+          git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "release source commit is no longer contained in origin/main" >&2; exit 1; }
+          [[ "$(go run ./cmd/markitect version)" == "Markitect $VERSION (linux/amd64)" ]] || { echo "release source version changed" >&2; exit 1; }
+
+          out="$RUNNER_TEMP/markitect-release-$GITHUB_SHA"
+          mkdir -p "$out"
+          bundle="$out/markitect-$TAG-bundle.zip"
+          go run ./cmd/markitect bundle --repo . --revision "$SOURCE_SHA" --output "$bundle"
+          bundle_sha256="$(sha256sum "$bundle" | cut -d ' ' -f 1)"
+          [[ "$bundle_sha256" == "$EXPECTED_BUNDLE_SHA256" ]] || { echo "release bundle differs from the bundle tested on both platforms" >&2; exit 1; }
+
+          linux_binary="$out/markitect-$TAG-linux-amd64"
+          windows_binary="$out/markitect-$TAG-windows-amd64.exe"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/internal/host/cli.version=$VERSION" -o "$linux_binary" ./cmd/markitect
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/internal/host/cli.version=$VERSION" -o "$windows_binary" ./cmd/markitect
+
+          linux_sha256="$(sha256sum "$linux_binary" | cut -d ' ' -f 1)"
+          windows_sha256="$(sha256sum "$windows_binary" | cut -d ' ' -f 1)"
+          toolchain="$(go version)"
+          provenance="$out/markitect-$TAG-provenance.yaml"
+          cat > "$provenance" <<EOF
+          schemaVersion: "1"
+          tag: "$TAG"
+          sourceCommit: "$SOURCE_SHA"
+          workflowRunId: "$GITHUB_RUN_ID"
+          workflowRunAttempt: "$GITHUB_RUN_ATTEMPT"
+          workflowRun: "https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT"
+          toolchain: "$toolchain"
+          assets:
+            - name: "$(basename "$bundle")"
+              sha256: "$bundle_sha256"
+            - name: "$(basename "$linux_binary")"
+              sha256: "$linux_sha256"
+            - name: "$(basename "$windows_binary")"
+              sha256: "$windows_sha256"
+          EOF
+
+          printf 'out=%s\n' "$out" >> "$GITHUB_OUTPUT"
+          printf 'bundle=%s\n' "$bundle" >> "$GITHUB_OUTPUT"
+          printf 'linux_binary=%s\n' "$linux_binary" >> "$GITHUB_OUTPUT"
+          printf 'windows_binary=%s\n' "$windows_binary" >> "$GITHUB_OUTPUT"
+          printf 'provenance=%s\n' "$provenance" >> "$GITHUB_OUTPUT"
+
+      - name: Confirm remote tag before retaining assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          resolve_remote_tag_commit() {
+            local type sha response depth=0
+            response="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG")"
+            type="$(jq -r '.object.type // empty' <<< "$response")"
+            sha="$(jq -r '.object.sha // empty' <<< "$response")"
+            while [[ "$type" == tag ]]; do
+              depth=$((depth + 1))
+              [[ $depth -le 8 ]] || { echo "annotated tag chain is unreasonably deep" >&2; return 1; }
+              response="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/git/tags/$sha")"
+              type="$(jq -r '.object.type // empty' <<< "$response")"
+              sha="$(jq -r '.object.sha // empty' <<< "$response")"
+            done
+            [[ "$type" == commit && "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "remote release tag does not resolve to a Git commit" >&2; return 1; }
+            printf '%s' "$sha"
+          }
+          remote_tag_commit="$(resolve_remote_tag_commit)"
+          [[ "$remote_tag_commit" == "$SOURCE_SHA" ]] || { echo "current remote release tag no longer resolves to the workflow source commit" >&2; exit 1; }
+
+      - name: Upload the run-scoped release artifact (30-day transport retention)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: markitect-release-${{ github.sha }}
+          path: ${{ runner.temp }}/markitect-release-${{ github.sha }}/*
+          if-no-files-found: error
+          retention-days: 30

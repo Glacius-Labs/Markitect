@@ -1,0 +1,11 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Handler
+metadata:
+  name: get-meeting-attendees
+  namespace: architecture
+spec:
+  summary: Read handler for attendee rows filtered by MeetingId.
+  sourceFiles:
+    - src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs
+  common:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Common, name: sql-connection-factory, namespace: architecture}

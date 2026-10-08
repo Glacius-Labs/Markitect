@@ -1,0 +1,7 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Text
+metadata:
+    name: deployment-guide
+    namespace: operations
+spec:
+    text: Deploy the built service through the normal release process and record the selected version.

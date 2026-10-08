@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Interface
+metadata:
+  name: registrations-events
+  namespace: architecture
+spec:
+  summary: Registration integration-event contract for new user registration.
+  provider: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: registrations, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Registrations/IntegrationEvents/NewUserRegisteredIntegrationEvent.cs

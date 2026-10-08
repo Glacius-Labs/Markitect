@@ -1,0 +1,394 @@
+{
+  "protocol": "operating-model-proof/c8-auditall-readonly/v2",
+  "status": "frozen-awaiting-parent-review",
+  "trial": "c8-orders-auditall-control-02",
+  "expectedAction": "controller-propose",
+  "providerCall": false,
+  "write": false,
+  "runId": "c8-orders-auditall-readonly-02",
+  "fixture": {
+    "root": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-drift-fixture-02",
+    "publicOriginCommit": "b5e669419a86c340ee8c8c8548821e00c0c400b4",
+    "baselineCommit": "86c46fd2a0da53dbcac407569a487f96e8198c04",
+    "baselineTree": "9817632eb7cc7d88a220afd06421360a773885f8",
+    "head": "606c1d6f243ee351f04ff0e20ee1685ce5b7c780",
+    "tree": "bd974f076ea51d28b1fa1b96addf62ff37a3da28",
+    "branch": "codex/operating-model-c8-drift-02",
+    "clean": true,
+    "indexSha256": "1e49a2fe3a21355fd877617a1cbed41c8a9b0eba8de337dace728b99969c6234",
+    "trackedFileCount": 36,
+    "changedPaths": [
+      "src/Orders/OrderRules.cs"
+    ]
+  },
+  "mutation": {
+    "path": "src/Orders/OrderRules.cs",
+    "baselineSha256": "553264bd9c7249d3e4ac755f0651b10006f32bed7ed8b9a39b0a964f44be7a30",
+    "driftSha256": "5116feef3333a0b22203a6b0f127edaf9249c216b3a6d5e618017dd7b137c69b",
+    "baselineGitBlob": "e36f4b64af6ce6cb880fd8f863b3411c3ca119c9",
+    "driftGitBlob": "48ab603fdc826bdbfc492225a57b8fde9c695fde",
+    "exactChange": "quantity <= 0 changed to quantity < 0",
+    "mode": "100644",
+    "canonicalBytesChanged": false
+  },
+  "targets": [
+    {
+      "gitBlob": "48ab603fdc826bdbfc492225a57b8fde9c695fde",
+      "sha256": "5116feef3333a0b22203a6b0f127edaf9249c216b3a6d5e618017dd7b137c69b",
+      "path": "src/Orders/OrderRules.cs",
+      "bytes": 474
+    },
+    {
+      "gitBlob": "06eb6a3869794902a19a71dce94affd7f8f1ea48",
+      "sha256": "e115deb66b51e651d97d6323ff31648e256b6fb64e9ac546e78474a0472ac4dc",
+      "path": "src/Billing/BillingQuery.cs",
+      "bytes": 684
+    },
+    {
+      "gitBlob": "382c25a6e4dfa6ebb8ea491946b7cc1ae7514a85",
+      "sha256": "9d126d792f567a173988f3474563bfb46f79e9ff321056a4ee252a0635874ece",
+      "path": "docs/represented/index.md",
+      "bytes": 6592
+    }
+  ],
+  "config": {
+    "path": "examples/operating-model/canonical-documentation-aligned.yaml",
+    "sha256": "5291f6f3651fb5885930d3ccb700b47cdaa4f6c364ee240f9bb3f4c397f98f55",
+    "fixedCheckCount": 4,
+    "explicitInputCount": 8,
+    "fixedCheckInputs": [
+      {
+        "sha256": "6ec61ed84fcf6c12451f6a731b0a54071a7ef824d153ab19173028c005f7da8e",
+        "path": "examples/operating-model/checks/Orders.Checks.csproj",
+        "bytes": 429
+      },
+      {
+        "sha256": "ccc5783b7a3ae976b00ca4106627e8068bd752529211f90d485e441176a338ed",
+        "path": "examples/operating-model/checks/Orders.Program.cs",
+        "bytes": 815
+      },
+      {
+        "sha256": "083c2891ddfb4ec6373d1f0279325c2179f5c23da340db57ed4d80802a6b487c",
+        "path": "examples/operating-model/checks/Billing.Checks.csproj",
+        "bytes": 431
+      },
+      {
+        "sha256": "972099963b95215e6cd0dfaefc7961cf8986effc416dde32b3cb1414481381ae",
+        "path": "examples/operating-model/checks/Billing.Program.cs",
+        "bytes": 817
+      },
+      {
+        "sha256": "c279aa4f1d2cd6bcc2570ed913667bd64e0f788a35e75a3991f110725e26d3ae",
+        "path": "examples/operating-model/checks/Composition.Checks.csproj",
+        "bytes": 489
+      },
+      {
+        "sha256": "78132279a45d81e2946ce21669733bd3153ccbf13310dd70725da4cf2195e93b",
+        "path": "examples/operating-model/checks/Composition.Program.cs",
+        "bytes": 653
+      },
+      {
+        "sha256": "7ce85b8e09c299216bd28d7c5f389f78cbf155f23a28f4a2ae18996a526ac677",
+        "path": "examples/operating-model/checks/Documentation.Checks.csproj",
+        "bytes": 382
+      },
+      {
+        "sha256": "0bd602b938e87696c6d4d3e9b453dbda32ac475a4b33dfb0ee5b748d19092beb",
+        "path": "examples/operating-model/checks/Documentation.Program.cs",
+        "bytes": 1137
+      }
+    ]
+  },
+  "selectedModelInputs": [
+    {
+      "sha256": "5291f6f3651fb5885930d3ccb700b47cdaa4f6c364ee240f9bb3f4c397f98f55",
+      "path": "examples/operating-model/canonical-documentation-aligned.yaml",
+      "bytes": 3488
+    },
+    {
+      "sha256": "284b8db6398e8c2df36d877e31bcf5fb3aba8383590e6e1dd9591ab6833e8cfa",
+      "path": "examples/operating-model/definitions/billing-dotnet.projection-policy.yaml",
+      "bytes": 662
+    },
+    {
+      "sha256": "7f652d4fc5695b55a0327912b244919c945a7e3b6bd86d9ebacebd58b37d4a79",
+      "path": "examples/operating-model/definitions/billing-markdown.projection-policy.yaml",
+      "bytes": 532
+    },
+    {
+      "sha256": "48b90c7387f9f096edf81a570d862e868c3644c91f08cd9d689123c2a277affb",
+      "path": "examples/operating-model/definitions/billing.billing-query.yaml",
+      "bytes": 342
+    },
+    {
+      "sha256": "c62ffef1363ebddaee1f6ee3ad1d392ec22934445c2cbe1f3bded3084acb5c25",
+      "path": "examples/operating-model/definitions/billing.projection.yaml",
+      "bytes": 582
+    },
+    {
+      "sha256": "2c592b36560ff2b6adea2a21f1edd01aab681bb53645b87bcd81cfdc0295d998",
+      "path": "examples/operating-model/definitions/orders-dotnet.projection-policy.yaml",
+      "bytes": 714
+    },
+    {
+      "sha256": "ebf0e4827bfeb084786896355ec4d6999a526085cc2d0e5eb72530312b78efc4",
+      "path": "examples/operating-model/definitions/orders-markdown.projection-policy.yaml",
+      "bytes": 546
+    },
+    {
+      "sha256": "821055452b3433525eb854ec4c51ce7bd8ea15788ed8e8a537e3a80a1be3f872",
+      "path": "examples/operating-model/definitions/orders.order-rules.yaml",
+      "bytes": 406
+    },
+    {
+      "sha256": "f046a2d8969a2bf71abb0873f2ace221630d92c6e53d4e73d795faa4fd0be890",
+      "path": "examples/operating-model/definitions/orders.projection.yaml",
+      "bytes": 571
+    },
+    {
+      "sha256": "1f77f1edfe7a9320bea5b341cf71d84b0650d1a593bbd0a72a9792ce421a5b23",
+      "path": "examples/operating-model/definitions/product-documentation-aligned.projection.yaml",
+      "bytes": 1599
+    },
+    {
+      "sha256": "f7ae09216718b1fcfb7e4b5b6f0eaf501df6a2fae257b2304a3ad963cdffe564",
+      "path": "examples/operating-model/definitions/product-markdown.projection-policy.yaml",
+      "bytes": 555
+    },
+    {
+      "sha256": "107c587628f751ea5f2d68a9ee300b1bba43a0a9bf381700dec12b0ad812d684",
+      "path": "examples/operating-model/definitions/product.composition.yaml",
+      "bytes": 567
+    },
+    {
+      "sha256": "e7a1f954591740eda21fa1b00f3f61023b7cd165d6b117fb00f8cde5819cf1a0",
+      "path": "examples/operating-model/definitions/representation-policy-markdown.projection-policy.yaml",
+      "bytes": 759
+    },
+    {
+      "sha256": "345321595390864adbd629897d2bcb999cc25ead8b8bb4cd9d573d47c1f9de18",
+      "path": "examples/operating-model/modules/billing-dotnet/module.yaml",
+      "bytes": 861
+    },
+    {
+      "sha256": "337f695bda366b226c8ed0977279d0e24a67a09824943f51da214150345a8051",
+      "path": "examples/operating-model/modules/commerce/module.yaml",
+      "bytes": 286
+    },
+    {
+      "sha256": "a348408bb0ed949506b9544bd36f02109eff474e1dfd9a11d7ecd0180e81b48e",
+      "path": "examples/operating-model/modules/commerce/schema.yaml",
+      "bytes": 1086
+    },
+    {
+      "sha256": "074d9275cb728f11030eccabb6db6d5b4215bb5152596b7efd29f67cf12790d6",
+      "path": "examples/operating-model/modules/foundation/module.yaml",
+      "bytes": 276
+    },
+    {
+      "sha256": "a06850f14a9e9cbea29881058f764493606200f430ac2334d121f605f0e643e2",
+      "path": "examples/operating-model/modules/foundation/schema.yaml",
+      "bytes": 2822
+    },
+    {
+      "sha256": "ffba6965b341743ff1bd98bd3d3126c2606cef9ea0fb85d0ddc6f8dbc1f9576e",
+      "path": "examples/operating-model/modules/markdown/module.yaml",
+      "bytes": 939
+    },
+    {
+      "sha256": "eb6334933b4fdc93d540d25d2c23d981ebad540d985d72fcb4a577b48b0a09aa",
+      "path": "examples/operating-model/modules/orders-dotnet/module.yaml",
+      "bytes": 856
+    }
+  ],
+  "productSource": {
+    "cliSourceCommit": "4465186738d3980a0db2eb2c529683410fc9737f",
+    "cliPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-final-gates-4465186-3b6ebea04111430cbe2ad670ba6621c0\\markitect-current.exe",
+    "cliSha256": "0783edf583692b3b69616eee35f2c4dd0f64c585246bdc4f809e0372f2570143",
+    "buildReceiptPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-final-gates-4465186-3b6ebea04111430cbe2ad670ba6621c0\\build-receipt-v2.json",
+    "buildReceiptSha256": "0f9774ea07c57944ca89a61a1450c1429eea7e62ade3440c2b189ddf4749cf27",
+    "runnerPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\canonical-assurance-preflight\\Markitect\\internal\\tooling\\codexrunner\\runner.py",
+    "runnerSha256": "b632fd3b7b5766183fcdb8bfccb3de9ad81053fda5f6acf35bac288b0b21a594",
+    "runnerGitBlobAtCliSource": "45b9d585a08eca286c672546de710ba044eeeca3",
+    "driverPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\canonical-assurance-preflight\\Markitect\\experiments\\operating-model-proof\\run.py",
+    "driverSha256": "e6eb92eb86b4826b2afb9e54fb08660c50dc048d8138a627debb7d64789dcc00",
+    "harnessCommit": "73dfbec9c223bfe3681f732b6f61bd18cf1fe9da",
+    "harnessBranch": "codex/canonical-assurance-preflight",
+    "codexExecutablePath": "C:\\Users\\Consiliari\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\codex\\codex.exe",
+    "codexExecutableSha256": "280cb1c4e3375d94dbdcba1a191f4f6adbf73c293be1e4f16c74b006662b9c54",
+    "pythonPath": "C:\\Python313\\python.exe",
+    "pythonSha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+    "runtimePath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02\\runtime.json",
+    "runtimeSha256": "d6fd06de247af4adc2132bc28cfe992ac8bd02b0e429aa1ae8b4953006fadd7d"
+  },
+  "runtime": {
+    "auditAll": true,
+    "apiVersion": "markitect.canonical/controller/v1alpha1",
+    "assuranceRoots": [
+      "product"
+    ],
+    "assuranceScopes": [
+      {
+        "checkInputs": [
+          "examples/operating-model/checks/Orders.Checks.csproj",
+          "examples/operating-model/checks/Orders.Program.cs"
+        ],
+        "id": "orders",
+        "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"orders-dotnet\"]",
+        "children": [],
+        "checkNames": [
+          "operating-model-orders"
+        ]
+      },
+      {
+        "checkInputs": [
+          "examples/operating-model/checks/Billing.Checks.csproj",
+          "examples/operating-model/checks/Billing.Program.cs"
+        ],
+        "id": "billing",
+        "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"billing-dotnet\"]",
+        "children": [],
+        "checkNames": [
+          "operating-model-billing"
+        ]
+      },
+      {
+        "checkInputs": [
+          "examples/operating-model/checks/Composition.Checks.csproj",
+          "examples/operating-model/checks/Composition.Program.cs",
+          "examples/operating-model/checks/Documentation.Checks.csproj",
+          "examples/operating-model/checks/Documentation.Program.cs"
+        ],
+        "id": "product",
+        "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"product-markdown\"]",
+        "children": [
+          "orders",
+          "billing"
+        ],
+        "checkNames": [
+          "operating-model-composition",
+          "operating-model-documentation"
+        ]
+      }
+    ],
+    "referenceDepth": 1,
+    "executorArgs0": "C:\\Users\\Consiliari\\.codex\\worktrees\\canonical-assurance-preflight\\Markitect\\internal\\tooling\\codexrunner\\runner.py",
+    "executorRuntimeFile0": "C:\\Users\\Consiliari\\.codex\\worktrees\\canonical-assurance-preflight\\Markitect\\internal\\tooling\\codexrunner\\runner.py",
+    "verifierArgs0": "C:\\Users\\Consiliari\\.codex\\worktrees\\canonical-assurance-preflight\\Markitect\\internal\\tooling\\codexrunner\\runner.py",
+    "verifierRuntimeFile0": "C:\\Users\\Consiliari\\.codex\\worktrees\\canonical-assurance-preflight\\Markitect\\internal\\tooling\\codexrunner\\runner.py",
+    "allFourPathFieldsEqual": true,
+    "providerCallsExpected": 0,
+    "recordStorePath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02\\state\\record-store",
+    "privateLogsPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02\\state\\private-logs"
+  },
+  "history": {
+    "copySource": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-drift-trial-02\\state\\record-store",
+    "copiedRoot": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02\\state\\record-store",
+    "head": "sha256:aa16eda8bfa59b785f46edec864de1c118fd6dbafb69ffe36a7a3cd7fb9b049b",
+    "eventCount": 7,
+    "fileCount": 8,
+    "allHashesMatchedPriorManifest": true,
+    "provenanceWarning": "The 7 historical records predate this auditAll runtime and its current cache provenance. They cannot support PASS or noop claims for this trial; report actual freshness conservatively.",
+    "manifest": [
+      {
+        "path": "events/00000000000000000001-39bba77860544b8d4828269aa20c581f2a4c2d6ff07121dc4d225f6177e242b7.json",
+        "bytes": 1675,
+        "sha256": "30c83e4d85ae86c232e9e70cad254bc73889dbf08aed4f479648b4881c9b7b05"
+      },
+      {
+        "path": "events/00000000000000000002-5a07e14f772785c5232255a15731da065f4c7b17c64909c3657aba2505561964.json",
+        "bytes": 1663,
+        "sha256": "b5b4a365447fc5da423d548e9cda1d496ab9eea2397560c5f37f7407f499a562"
+      },
+      {
+        "path": "events/00000000000000000003-815df38faa23ead40aa8be808d81b55172011b6b94e026c2b768c4affb7d8fc5.json",
+        "bytes": 2340,
+        "sha256": "dd7641ec0acfea7d26da0e26f1beb9656930253e3ebf2f0443a53306e041a057"
+      },
+      {
+        "path": "events/00000000000000000004-71b817a8ed465fe78ddbddc7bc59ee3b4ef8ca5b9c6e965da12410c1b682e925.json",
+        "bytes": 560,
+        "sha256": "8167970d3a6b1c18fac973cfd76cccec328c04ea45d5b71012a62faa268be703"
+      },
+      {
+        "path": "events/00000000000000000005-112f482e8d50aab708d622ef78491717a2391465df5d7b0bf2a7cbb648bc182c.json",
+        "bytes": 1844,
+        "sha256": "976ca8f72c1609d078ab60250143aa637f95b92854f40bcc9c7803d6fee54a44"
+      },
+      {
+        "path": "events/00000000000000000006-fbae197da05e3cc4d3403258dd6e8c1b7f114c63099aa8d7717a30c33a222c50.json",
+        "bytes": 1664,
+        "sha256": "2580f9be89d9119d39c16ed2848859979357e9c677fd1b295ffc8f82819f2854"
+      },
+      {
+        "path": "events/00000000000000000007-aa16eda8bfa59b785f46edec864de1c118fd6dbafb69ffe36a7a3cd7fb9b049b.json",
+        "bytes": 1663,
+        "sha256": "f3accc5a4f1647439c0a57017dd7e1176cf5baf55b27477247760504c0801de7"
+      },
+      {
+        "path": "store.json",
+        "bytes": 207,
+        "sha256": "014c546c61071a061117df67199bbea3aaed90e6d54235436aaaa1fcedbdde1b"
+      }
+    ]
+  },
+  "scopeExpectations": {
+    "orders": "Owned target has one deliberate quantity guard drift; report actual Module work/refusal and tests",
+    "billing": "Target bytes are unchanged and unowned by the deliberate defect; report if actually read or refreshed",
+    "product": "Parent Markdown bytes are unchanged, but report any actual parent verification or global evidence refresh",
+    "freshness": "Separate target materialization work from source/evidence revision freshness and runner fingerprint effects"
+  },
+  "noClaims": [
+    "No owner acceptance or semantic approval.",
+    "No PASS/noop inference from historical cache records.",
+    "No provider invocation or generated candidate.",
+    "AuditAll=true is the only scope behavior toggle; new runtime fingerprints can still require freshness.",
+    "C8-02 auditAll=false discovery miss remains immutable.",
+    "C8-v1 harness preflight failure remains preserved; no alternate/direct CLI bypass was used."
+  ],
+  "command": [
+    "C:\\Python313\\python.exe",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\canonical-assurance-preflight\\Markitect\\experiments\\operating-model-proof\\run.py",
+    "propose",
+    "--run-id",
+    "c8-orders-auditall-readonly-02",
+    "--fixture",
+    "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-drift-fixture-02",
+    "--cli",
+    "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-final-gates-4465186-3b6ebea04111430cbe2ad670ba6621c0\\markitect-current.exe",
+    "--config",
+    "examples/operating-model/canonical-documentation-aligned.yaml",
+    "--runtime",
+    "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02\\runtime.json",
+    "--build-receipt",
+    "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-final-gates-4465186-3b6ebea04111430cbe2ad670ba6621c0\\build-receipt-v2.json",
+    "--external-root",
+    "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02\\staging",
+    "--base",
+    "86c46fd2a0da53dbcac407569a487f96e8198c04",
+    "--revision",
+    "606c1d6f243ee351f04ff0e20ee1685ce5b7c780"
+  ],
+  "externalStage": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02\\staging",
+  "externalStageAbsentBeforeInvocation": true,
+  "stateParentValidation": {
+    "rootPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02",
+    "rootAttributes": "Directory",
+    "rootLinkType": null,
+    "statePath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02\\state",
+    "stateAttributes": "Directory",
+    "stateLinkType": null,
+    "storePath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02\\state\\record-store",
+    "storeAttributes": "Directory",
+    "storeLinkType": null,
+    "privateLogsPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02\\state\\private-logs",
+    "privateLogsAttributes": "Directory",
+    "privateLogsLinkType": null,
+    "privateLogsInitiallyEmpty": true
+  },
+  "previousAttempt": {
+    "runPath": "experiments/operating-model-proof/runs/c8-orders-auditall-control-01/attempt-01-outcome.json",
+    "classification": "invalid-preflight-no-controller-call",
+    "reason": "v5 driver requires adapter path under its own checkout; preserved without retry."
+  }
+}

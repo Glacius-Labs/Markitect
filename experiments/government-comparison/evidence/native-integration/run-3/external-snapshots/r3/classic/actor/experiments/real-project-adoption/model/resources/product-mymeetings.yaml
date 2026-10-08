@@ -1,0 +1,14 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Product
+metadata:
+  name: mymeetings
+  namespace: architecture
+spec:
+  purpose: Compose the MyMeetings modular monolith from stable BuildingBlocks and five business Modules.
+  components:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Core, name: core, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: administration, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: payments, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: registrations, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: user-access, namespace: architecture}

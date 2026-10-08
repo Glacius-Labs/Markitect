@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Aggregate
+metadata:
+  name: user-registration
+  namespace: architecture
+spec:
+  summary: UserRegistration aggregate root tracks registration confirmation.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: registrations, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Registrations/Domain/UserRegistrations/UserRegistration.cs

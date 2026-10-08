@@ -1,0 +1,19 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: UseCase
+metadata:
+  name: create-meeting
+  namespace: architecture
+  labels:
+    feature-ownership: required
+spec:
+  intent: Command
+  summary: Create a Meeting through its owning MeetingGroup.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  feature: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Feature, name: meeting-lifecycle, namespace: architecture}
+  handler: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Handler, name: create-meeting, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Meetings/Application/Meetings/CreateMeeting/CreateMeetingCommand.cs
+  aggregates:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Aggregate, name: meeting-group, namespace: architecture}
+  validators:
+    []

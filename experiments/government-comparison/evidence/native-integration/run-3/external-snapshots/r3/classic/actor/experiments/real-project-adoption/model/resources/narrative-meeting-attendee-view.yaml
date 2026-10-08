@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Narrative
+metadata:
+  name: meeting-attendee-view
+  namespace: architecture
+spec:
+  summary: Human-owned SQL view defines one row per attendee joined to member display data.
+  owner: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  sourceFiles:
+    - src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql

@@ -1,0 +1,5 @@
+The implementation path is clear, but the authorized checkout could not be modified. Auto-review rejected the patch because this temporary MyMeetings checkout is outside the writable roots and explicitly barred workaround edits. I made no changes.
+
+The focused change is to add IsFeePaid to MeetingAttendeeDto, select the stored flag in the existing attendee query, and expose MeetingAttendees.IsFeePaid in v_MeetingAttendees. The table already stores the flag, and the existing Payments integration updates it through Meetings.
+
+Read ADR 0009, ADR 0014, and docs/engineering-policy.md. No .agent-input/context.yaml, .agent-input/impact.yaml, or .tools/markitect.exe was present. The SDK selected from src is 8.0.418. Build and architecture checks were not run because they would write into the unauthorized checkout.

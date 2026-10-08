@@ -1,0 +1,10 @@
+{
+  "apiVersion": "dispatch.example.org/v1alpha1",
+  "kind": "DispatchBoard",
+  "metadata": { "name": "north", "namespace": "dispatch" },
+  "spec": { "listings": [
+    { "kind": "Listing", "name": "renewal-a", "namespace": "dispatch" },
+    { "kind": "Listing", "name": "renewal-b", "namespace": "dispatch" },
+    { "kind": "Listing", "name": "renewal-c", "namespace": "dispatch" }
+  ] }
+}

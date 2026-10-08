@@ -1,0 +1,21 @@
+{
+  "kind": "operator-assessment",
+  "runId": "c3-insufficient-04",
+  "claim": "Insufficient-guidance control: fresh Executor escalates before candidate materialization",
+  "classification": "INVALID",
+  "protocol": "operating-model-proof/v5",
+  "fixtureRevision": "1573e2ca67d07647dcf3c3713ec1d475dd13a2e8",
+  "markitectSourceSHA": "6a79b0d015801f3f37e42cacd049179cc795be42",
+  "cliDigest": "sha256:03c551536335ee580b870e703a6a40ef8777c5a8139042f8f0f7e8e7e88729aa",
+  "runnerDigest": "sha256:7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57",
+  "providerVersion": "0.130.0",
+  "model": "gpt-5.5",
+  "reasoningEffort": "high",
+  "proposalAttempt": "62507202a0f148949a0545ffa632a95d",
+  "proposalExitCode": 2,
+  "proposalElapsedWallMilliseconds": 248,
+  "stdoutDigest": "sha256:69fa9c21754ab0e4beb84ade1ca0c3b4e699f4b1bf21dd0bad2ecd95c969b716",
+  "stderrDigest": "sha256:612e79cb381cf1be2c69db000e41d0d19f5509ab4cbaa283b43a6f5b1c9206ac",
+  "providerInvoked": false,
+  "interpretation": "Invalid harness setup, not an agent outcome. An empty ledger directory was created where the controller requires the RecordStore root path itself to be absent. Host failed opening the missing store.json before any native Executor invocation. This attempt remains preserved and was not retried under this run ID."
+}

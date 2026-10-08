@@ -1,0 +1,67 @@
+{
+    "name":  "combined-positive",
+    "action":  "canonical model",
+    "binary":  {
+                   "sourceCommit":  "216e101baa2021fb6bf091206b323407aa471b26",
+                   "sha256":  "ba0fe8b3b6bd1676091eaa492c58600a08429f2f6e3ff79d9d8cff2d142b30f9"
+               },
+    "argv":  [
+                 "markitect",
+                 "canonical",
+                 "--action",
+                 "model",
+                 "--repo",
+                 "\u003cisolated-trial-repository\u003e",
+                 "--revision",
+                 "fe78ca35541ecd38ddc391b116d686686c40a039",
+                 "--config",
+                 "examples/capability-ontologies/canonical.yaml"
+             ],
+    "revision":  "fe78ca35541ecd38ddc391b116d686686c40a039",
+    "repository":  "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\c1-cli-combined-positive-384928b173bd4a0ca0705900f2c5a50f",
+    "seedSourceCommit":  "769d95062cb060e5eb688768a85b200ff3130602",
+    "sourceDigest":  "33215fc54148201ffceb457662d4250c3ccf0be4d6fd18f40179fa74b06b83da",
+    "status":  "passed",
+    "exitCode":  0,
+    "model":  {
+                  "digest":  "sha256:b25f1e8f74858a867a8f9adddd1005e9f5d029a80b5a1e320adf316837978d59",
+                  "schemaCount":  5,
+                  "definitionCount":  12,
+                  "edgeCount":  7,
+                  "edgesBlockSha256":  "6cf906c5f0ee25f71160adaddaf3fe30fc3840a81a93540ba29013b1d4ec803f"
+              },
+    "expected":  {
+                     "status":  "passed",
+                     "exitCode":  0,
+                     "diagnostic":  "",
+                     "schemaCount":  5,
+                     "definitionCount":  12,
+                     "edgeCount":  7
+                 },
+    "expectationMatched":  true,
+    "diagnosticCodes":  [
+
+                        ],
+    "inputs":  [
+                   {
+                       "path":  "examples/capability-ontologies/canonical.yaml",
+                       "sha256":  "5cfd051f7a10f2ca479638cf4610bc1149cb6f8729019e799966033a7e3bd745",
+                       "byteLength":  2397
+                   }
+               ],
+    "stdout":  {
+                   "path":  "examples/capability-ontologies/results/c1-cli-runs/combined-positive.stdout.log",
+                   "sha256":  "359160e6af53622998f39ae079c2129d831ca3985c22084c73b7b9a2a03bd793",
+                   "byteLength":  23848
+               },
+    "stderr":  {
+                   "path":  "examples/capability-ontologies/results/c1-cli-runs/combined-positive.stderr.log",
+                   "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                   "byteLength":  0
+               },
+    "repositoryBundle":  {
+                             "path":  "examples/capability-ontologies/results/c1-cli-runs/combined-positive.bundle",
+                             "sha256":  "db1f66398ef307906586fb696b25d05188e15a343e6913571dcb98a757849cae",
+                             "byteLength":  6311
+                         }
+}

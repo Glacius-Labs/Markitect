@@ -1,0 +1,25 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+    name: setup-workspace
+    namespace: general
+spec:
+    text: |
+        Follow the [setup workflow](../workflows/setup-workspace.md#steps).
+        See the [canonical workflow YAML](../workflows/setup-workspace.yaml#steps) when editing its source.
+        Read the [tool guide](../tools/README.md) before choosing a local tool.
+        ![Workspace flow][workspace-flow]
+
+        [workspace-flow]: ../images/workspace-flow.svg?view=compact#components "Workspace flow diagram"
+
+        Inline code stays literal: `../workflows/not-a-link.md`.
+
+        ```markdown
+        [This fenced link](../workflows/not-a-link.md)
+        ![This fenced image](../images/not-an-image.svg)
+        [workspace-flow]: ../images/not-an-image.svg?view=compact#fake
+        ```
+    description: Set up a workspace using the canonical workflow and related human documentation.
+    uses:
+        - kind: Workflow
+          name: setup-workspace

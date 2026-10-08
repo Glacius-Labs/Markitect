@@ -1,0 +1,15 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Workflow
+metadata:
+    name: refund-review
+    namespace: support
+spec:
+    text: |
+        Confirm the order number and tracking history. For damage, collect a description and photograph. Apply the refund policy, explain the available options, and escalate loss or conflicting evidence to a support lead.
+    rules:
+        - kind: Rule
+          name: customer-data
+          namespace: shared
+    uses:
+        - kind: Text
+          name: refund-policy

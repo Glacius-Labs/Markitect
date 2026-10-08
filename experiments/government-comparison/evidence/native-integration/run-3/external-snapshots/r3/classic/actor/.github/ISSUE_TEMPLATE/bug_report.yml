@@ -1,0 +1,53 @@
+name: Bug report
+description: Report behavior that does not match the documented Markitect contract.
+title: "bug: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For general questions, see [SUPPORT.md](https://github.com/Glacius-Labs/Markitect/blob/main/SUPPORT.md). Do not include secrets or private repository content.
+  - type: input
+    id: version
+    attributes:
+      label: Markitect version
+      description: Include the release or source revision, and how Markitect was installed.
+      placeholder: v0.4.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system and Go version, if running from source.
+      placeholder: Windows 11; Go 1.27.1
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and inputs
+      description: Include the command, relevant configuration, and a small reproducible example. Remove secrets and private content.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the complete diagnostic or output relevant to the issue.
+      render: text
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked the current documentation and removed secrets or private repository content.
+          required: true

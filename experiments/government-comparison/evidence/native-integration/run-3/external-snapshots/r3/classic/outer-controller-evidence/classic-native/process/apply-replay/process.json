@@ -1,0 +1,42 @@
+{
+  "argv": [
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\standard-operating-model\\Markitect\\.artifacts\\classic-readiness\\v0.14.1-r1\\artifacts\\markitect-v0.14.1-windows-amd64.exe",
+    "canonical",
+    "--repo",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r3\\classic\\actor",
+    "--config",
+    "examples/canonical-projection/canonical.yaml",
+    "--runtime",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r3\\classic\\released\\runtime.json",
+    "--action",
+    "controller-apply",
+    "--base",
+    "ba061721da875f0201e2c0c23a795b2ec300a78c",
+    "--revision",
+    "ba061721da875f0201e2c0c23a795b2ec300a78c",
+    "--plan",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r3\\classic\\outer-controller-evidence\\classic-native\\execute.json",
+    "--expect",
+    "sha256:b87bd40e05f9ddd08cb06e9fbb8305de6a19765c42ddbec6526fd6136f76cfdb",
+    "--write"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r3\\classic\\actor",
+  "returnCode": 2,
+  "wallSeconds": 3.6415536000858992,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r3\\classic\\outer-controller-evidence\\classic-native\\process\\apply-replay\\stdout.log",
+      "sha256": "9c75d6a1526b7988312be40950fd7a72c21d061c15448cc65e14df11f2029a3b",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r3\\classic\\outer-controller-evidence\\classic-native\\process\\apply-replay\\stderr.log",
+      "sha256": "3f22a033415fef1bb21ac8c6005209e727bccc12819b50e725af2d41f060019b",
+      "kind": "stderr.log"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+plan: <R2>\operator\preparation\t1-markitect/render-plan.stdout.txt
+status: applied
+written:
+    - docs/markitect/engineering/architecture-review.skill.md

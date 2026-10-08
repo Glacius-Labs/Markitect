@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "C:\\Python313\\python.exe",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\standard-operating-model\\Markitect\\.artifacts\\classic-readiness\\v0.14.1-r1\\smoke\\protocol_test_double.py"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r3\\classic\\actor",
+  "returnCode": 0,
+  "wallSeconds": 0.14062730001751333,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r3\\classic\\role-evidence\\d44e95ad61dafad15f8b899cc46f7854ac7057181f02d94a4b3e5308511ad609\\stdout.log",
+      "sha256": "af3ab8ffddb2232b85f197b0b155d0cc929139f5cb612bf55b157ef1fdc13380",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r3\\classic\\role-evidence\\d44e95ad61dafad15f8b899cc46f7854ac7057181f02d94a4b3e5308511ad609\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    }
+  ]
+}

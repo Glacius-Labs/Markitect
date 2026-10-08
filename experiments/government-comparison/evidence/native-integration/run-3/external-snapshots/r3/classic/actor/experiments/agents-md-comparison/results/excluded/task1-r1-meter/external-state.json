@@ -1,0 +1,53 @@
+{
+  "status": "started",
+  "executionMode": "fresh-collaboration-agent",
+  "runId": "t1-simple",
+  "task": "t1",
+  "arm": "simple",
+  "workspace": "<R1>\\workspaces\\t1-simple\\checkout",
+  "preparedManifestSha256": "17b771e31f7b6af60e41ec7456b1f24b8f5edadb8301a75f0b17fc77a4e4afdc",
+  "frozenManifestSha256": "17b771e31f7b6af60e41ec7456b1f24b8f5edadb8301a75f0b17fc77a4e4afdc",
+  "sourceManifestSha256": "99fe6a51fa51cbd21cfc1c405c1a9743c4487ff2f5502358b864a4fefcb05c09",
+  "candidateCommit": "fa47c26f6a0ea74e1a1e6ac9a5a144084ea31d57",
+  "promptSha256": "5e2df2f3ee0fa60d5b4190e76e895502ddf4daf6acc09e7f4f179714d378d134",
+  "promptPath": "input-prompt.txt",
+  "automaticAgentInstructions": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+      "bytes": 2666
+    }
+  ],
+  "compiledInputs": [],
+  "frozenWorkspaceAssets": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+      "bytes": 2666
+    },
+    {
+      "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+      "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+      "bytes": 927
+    },
+    {
+      "path": ".tools/architecture-check/TestBase.cs",
+      "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+      "bytes": 1194
+    },
+    {
+      "path": ".tools/architecture-check/LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "bytes": 1091
+    },
+    {
+      "path": "docs/engineering-policy.md",
+      "sha256": "3fad7de63b29ffd32b893956b88314d0e3471249af8dc774fcf4ff565e637296",
+      "bytes": 377
+    }
+  ],
+  "compiledInputChanges": [],
+  "readHelperSha256Before": "a0d6061dd63f773470e5e7b7ee4831f2e5198d5808a5036f428b7a045c83e5d8",
+  "markitectExecutableSha256Before": null,
+  "startedAtUtc": "2026-10-03T14:57:36.2990807+00:00"
+}

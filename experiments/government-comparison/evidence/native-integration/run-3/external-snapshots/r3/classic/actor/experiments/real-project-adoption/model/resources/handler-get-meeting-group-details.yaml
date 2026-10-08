@@ -1,0 +1,11 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Handler
+metadata:
+  name: get-meeting-group-details
+  namespace: architecture
+spec:
+  summary: Read handler for MeetingGroup details.
+  sourceFiles:
+    - src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQueryHandler.cs
+  common:
+    []

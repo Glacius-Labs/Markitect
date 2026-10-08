@@ -1,0 +1,21 @@
+{
+  "acceptedCandidate": false,
+  "candidateFileCount": 7,
+  "classification": "SUPPLEMENTAL_OBSERVATION",
+  "evidenceReferencesAreContentDigests": true,
+  "materialized": false,
+  "note": "Provider returned a proposal, but Host rejected references outside the exact supplied ID/path set. Telemetry is from the bound private provider log; the rejected response did not populate receipt usage.",
+  "observedToolCalls": 0,
+  "privateLogDigest": "sha256:2e5a3f339e0a8d4aa8dc021749d6dcd45f9768d716a7d04cdbe91ed782b5a177",
+  "protocol": "operating-model-proof/v3",
+  "providerOutcome": "proposed",
+  "providerReportedUsage": {
+    "cached_input_tokens": 2432,
+    "input_tokens": 16611,
+    "output_tokens": 1686,
+    "reasoning_output_tokens": 516
+  },
+  "receiptRunId": "c44a99227877835d4db1454638c76e5c",
+  "reviewedRunAttempt": "17c51bdcfda5478990ce8b67687766f4",
+  "runId": "c3-insufficient-02"
+}

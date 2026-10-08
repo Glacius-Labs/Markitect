@@ -1,0 +1,14 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: commerce
+  name: handler-to-dotnet
+purpose: Guides representation of commerce handlers in the selected .NET target.
+spec:
+  sourceKind:
+    apiVersion: commerce.example.org/v1
+    kind: Handler
+  targetTechnology: dotnet
+  guidance: >
+    Keep application orchestration explicit and isolate infrastructure access
+    behind declared boundaries.

@@ -1,0 +1,8 @@
+apiVersion: delivery.example.org/v1
+kind: Rollout
+metadata: {namespace: payments, name: production-rollout}
+purpose: Describes the controlled production rollout.
+spec:
+  deployment: {namespace: payments, name: production}
+  strategy: rolling
+  approvalRequired: true

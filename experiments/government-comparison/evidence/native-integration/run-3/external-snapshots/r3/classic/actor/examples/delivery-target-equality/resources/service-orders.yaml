@@ -1,0 +1,11 @@
+apiVersion: delivery.example.org/v1alpha1
+kind: Service
+metadata:
+    name: orders-api
+    namespace: engineering
+spec:
+    product:
+        kind: Product
+        name: commerce
+        namespace: engineering
+    purpose: Publishes order-management capabilities.

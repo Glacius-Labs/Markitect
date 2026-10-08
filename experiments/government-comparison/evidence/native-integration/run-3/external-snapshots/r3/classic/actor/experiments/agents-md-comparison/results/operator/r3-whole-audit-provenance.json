@@ -1,0 +1,7 @@
+{
+  "baselineSource": "operator/runs/t3-simple/pre-run-audit.json",
+  "baselineSha256": "ce30e914e1daa7195eadcb51c5831dd4d44afa29e270cbfb98ee18865b825c50",
+  "meaning": "Exact preexisting first-agent audit reused as whole-R3 baseline after collection; no new after-the-fact baseline measurement",
+  "copiedAfterRuns": true,
+  "reason": "Relocation setup did not create the additional whole-experiment-before alias; per-agent pre/post audits were already captured"
+}

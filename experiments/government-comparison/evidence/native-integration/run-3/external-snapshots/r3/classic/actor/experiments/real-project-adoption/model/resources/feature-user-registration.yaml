@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Feature
+metadata:
+  name: user-registration
+  namespace: architecture
+spec:
+  summary: Register a new User and publish the resulting event.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: registrations, namespace: architecture}
+  documents:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Narrative, name: module-event-boundary-decision, namespace: architecture}

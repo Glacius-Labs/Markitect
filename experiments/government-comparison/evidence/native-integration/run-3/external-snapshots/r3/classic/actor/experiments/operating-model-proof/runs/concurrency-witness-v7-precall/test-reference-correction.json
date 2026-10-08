@@ -1,0 +1,11 @@
+{
+  "protocol": "operating-model-proof/v7",
+  "kind": "append-only-evidence-reference-correction",
+  "corrects": "experiments/operating-model-proof/runs/concurrency-witness-v7-precall/invocation-binding-amendment.json",
+  "correction": "The first focused test name listed in that amendment was imprecise. The exact test name in the pinned source is test_codex_launch_uses_read_only_ephemeral_flags_and_private_telemetry.",
+  "otherTestName": "test_codex_launch_does_not_mark_broken_or_partial_prompt_delivery",
+  "source": "internal/tooling/codexrunner/test_runner.py",
+  "sourceCommit": "d081b0aa151d3771ac672bbc0d59fc5d1a2170a1",
+  "adapterSha256": "sha256:d5af7ba511bf0bae7ed1aaca28bfbff4aefd36616cc6947d08de149e9ed363e9",
+  "scope": "This corrects only a test identifier; it does not alter the invocation-binding or simultaneity gate."
+}

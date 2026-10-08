@@ -1,0 +1,67 @@
+{
+    "name":  "single-architecture",
+    "action":  "canonical model",
+    "binary":  {
+                   "sourceCommit":  "216e101baa2021fb6bf091206b323407aa471b26",
+                   "sha256":  "ba0fe8b3b6bd1676091eaa492c58600a08429f2f6e3ff79d9d8cff2d142b30f9"
+               },
+    "argv":  [
+                 "markitect",
+                 "canonical",
+                 "--action",
+                 "model",
+                 "--repo",
+                 "\u003cisolated-trial-repository\u003e",
+                 "--revision",
+                 "70b2763382f372d1833f6f6ad4c2df1b45f3074c",
+                 "--config",
+                 "examples/capability-ontologies/canonical.yaml"
+             ],
+    "revision":  "70b2763382f372d1833f6f6ad4c2df1b45f3074c",
+    "repository":  "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\c1-cli-single-architecture-fb89040469334e0fb8d659dab9d6dc52",
+    "seedSourceCommit":  "769d95062cb060e5eb688768a85b200ff3130602",
+    "sourceDigest":  "bb07196b3a65cb809e7cfb01393cb9a718d339cc54a68e223028099fcc9dc268",
+    "status":  "passed",
+    "exitCode":  0,
+    "model":  {
+                  "digest":  "sha256:b82d642d32f2dba349bf6140dd765bd49d4914e8a9a7571a0d757a20c92765b9",
+                  "schemaCount":  1,
+                  "definitionCount":  3,
+                  "edgeCount":  2,
+                  "edgesBlockSha256":  "050254dbc4d4ce3a25a41590134aaef44f83058c6c58202379e413d6cf0c8f4d"
+              },
+    "expected":  {
+                     "status":  "passed",
+                     "exitCode":  0,
+                     "diagnostic":  "",
+                     "schemaCount":  1,
+                     "definitionCount":  3,
+                     "edgeCount":  2
+                 },
+    "expectationMatched":  true,
+    "diagnosticCodes":  [
+
+                        ],
+    "inputs":  [
+                   {
+                       "path":  "examples/capability-ontologies/canonical.yaml",
+                       "sha256":  "3d0c7b9b39b948f859b36878b1a728358a3202e51182282f1eba18a15266d5c6",
+                       "byteLength":  608
+                   }
+               ],
+    "stdout":  {
+                   "path":  "examples/capability-ontologies/results/c1-cli-runs/single-architecture.stdout.log",
+                   "sha256":  "8709e769e07d302d5c86b6a08dc2730862758a71aad6cd1e786eb03c482d8fbb",
+                   "byteLength":  5586
+               },
+    "stderr":  {
+                   "path":  "examples/capability-ontologies/results/c1-cli-runs/single-architecture.stderr.log",
+                   "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                   "byteLength":  0
+               },
+    "repositoryBundle":  {
+                             "path":  "examples/capability-ontologies/results/c1-cli-runs/single-architecture.bundle",
+                             "sha256":  "32aea4f86adc53631729d81f5a8a8193911d47ddefcb22fb6b4d96f7ca83e9f2",
+                             "byteLength":  5977
+                         }
+}

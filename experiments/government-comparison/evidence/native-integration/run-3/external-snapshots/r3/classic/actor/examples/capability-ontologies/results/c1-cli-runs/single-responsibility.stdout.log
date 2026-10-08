@@ -1,0 +1,134 @@
+model:
+    revision: 2536080612df07f8c84227f920399edb62cf1b44
+    digest: sha256:1a4bb4bf97bcf8cba333430c6eece12d8ceabed18d68e9fb33b9781087bac881
+    schemas:
+        - apiVersion: responsibility.example.org/v1
+          purpose: Records work ownership and workflow decision authority.
+          kinds:
+            Role:
+                purpose: Names a workflow role and its authority.
+                properties:
+                    authority:
+                        purpose: States the role's authority.
+                        type: enum
+                        minCount: 1
+                        maxCount: 1
+                        values:
+                            - owner
+                            - approver
+                            - operator
+                    name:
+                        purpose: Gives the role a readable name.
+                        type: string
+                        minCount: 1
+                        maxCount: 1
+            WorkItem:
+                purpose: Assigns accountability and review participation.
+                properties:
+                    accountable:
+                        purpose: Identifies the accountable role.
+                        type: reference
+                        minCount: 1
+                        maxCount: 1
+                        target:
+                            apiVersion: responsibility.example.org/v1
+                            kind: Role
+                    reviewers:
+                        purpose: Lists review roles.
+                        type: reference
+                        minCount: 0
+                        maxCount: -1
+                        target:
+                            apiVersion: responsibility.example.org/v1
+                            kind: Role
+                    title:
+                        purpose: Names the work.
+                        type: string
+                        minCount: 1
+                        maxCount: 1
+          source:
+            path: module:c1-workflow-responsibility@1.0.0/schema.yaml
+            digest: sha256:c91a5836f3d29e3fe530d3f104750033966d27d9aa7c860aae0c82ec02e3fbc4
+            line: 1
+    definitions:
+        - apiVersion: responsibility.example.org/v1
+          kind: Role
+          metadata:
+            name: approver
+            namespace: release
+          purpose: Reviews the release task before completion.
+          spec:
+            authority: approver
+            name: Release approver
+          source:
+            path: examples/capability-ontologies/workflow-responsibility/approver.yaml
+            digest: sha256:6e57bae088579fcce9dd3ef2c76d5e4e26692e52b39af79c1dda5e6188f786b9
+            line: 1
+        - apiVersion: responsibility.example.org/v1
+          kind: Role
+          metadata:
+            name: owner
+            namespace: release
+          purpose: Owns completion of the release task.
+          spec:
+            authority: owner
+            name: Release owner
+          source:
+            path: examples/capability-ontologies/workflow-responsibility/owner.yaml
+            digest: sha256:2327201a33d4e16243913a27dc95ca6710b0ce10890d5d9b3608440f3b0eb2c3
+            line: 1
+        - apiVersion: responsibility.example.org/v1
+          kind: WorkItem
+          metadata:
+            name: publish-candidate
+            namespace: release
+          purpose: Assigns ownership and review for publishing a candidate.
+          spec:
+            accountable:
+                apiVersion: responsibility.example.org/v1
+                kind: Role
+                name: owner
+                namespace: release
+            reviewers:
+                - apiVersion: responsibility.example.org/v1
+                  kind: Role
+                  name: approver
+                  namespace: release
+            title: Publish the candidate
+          source:
+            path: examples/capability-ontologies/workflow-responsibility/work-item.yaml
+            digest: sha256:0c865c67db7b8c6038e2508e8f3106e125be5afbeec2a12535c7777594948f99
+            line: 1
+    edges:
+        - from: '["responsibility.example.org/v1","WorkItem","release","publish-candidate"]'
+          to: '["responsibility.example.org/v1","Role","release","owner"]'
+          property: accountable
+          source:
+            path: examples/capability-ontologies/workflow-responsibility/work-item.yaml
+            digest: sha256:0c865c67db7b8c6038e2508e8f3106e125be5afbeec2a12535c7777594948f99
+            line: 1
+        - from: '["responsibility.example.org/v1","WorkItem","release","publish-candidate"]'
+          to: '["responsibility.example.org/v1","Role","release","approver"]'
+          property: reviewers[0]
+          source:
+            path: examples/capability-ontologies/workflow-responsibility/work-item.yaml
+            digest: sha256:0c865c67db7b8c6038e2508e8f3106e125be5afbeec2a12535c7777594948f99
+            line: 1
+modules:
+    - pin:
+        name: c1-workflow-responsibility
+        version: 1.0.0
+        digest: sha256:aebbb76a56d7866ee2e881c3957c0a2d2bce61893a78aa034f7d70ecde1713de
+      type: schema
+      digest: sha256:aebbb76a56d7866ee2e881c3957c0a2d2bce61893a78aa034f7d70ecde1713de
+      manifest: examples/capability-ontologies/workflow-responsibility/module.yaml
+      files:
+        - examples/capability-ontologies/workflow-responsibility/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+projectors: []
+provisional: false
+revision: 2536080612df07f8c84227f920399edb62cf1b44
+sourceDigest: 0715ab6f5d3285916ac2df2dd9f261572f029a8d372b88364c434addd9df41cc
+status: passed

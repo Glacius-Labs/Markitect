@@ -1,0 +1,59 @@
+# Product refinement decisions
+
+This document owns technical product decisions and deferred design options supporting the canonical [product vision](vision.md). The vision owns the thesis, responsibility model and benefit hypothesis. The [roadmap](implementation-plan.md) is the sole owner of shipped source and planned-work status; [Usage](usage.md) owns supported Project syntax and CLI behavior. v0.10.0 established the canonical engineering model, declared Domains, a normalized semantic IR, and configured projection and observation adapters. Detailed contracts and delivery evidence belong to the [canonical engineering plan](canonical-engineering-plan.md).
+
+## Product principles
+
+| Area | Decision |
+|---|---|
+| Compilation mechanism | Compile explicitly modeled engineering knowledge and policy into validated relationships, bounded checks, context, impact, and configured consumer actions in support of the [vision](vision.md). |
+| Small generic kernel | The kernel owns resource identity, typed references and relations, deterministic diagnostics, scope, and a normalized semantic representation. Domains define the vocabulary and bounded constraints. |
+| Domain-first language | Versioned Domain definitions load before resources and define resource shapes, relation descriptors, and supported constraints. The bundled AI-working vocabulary is one Domain. Software and delivery vocabularies are examples of the same mechanism. |
+| Canonical scope | Canonical ownership applies to modeled assertions and explicit mappings. It does not make unmodeled repository facts canonical or elevate generated output into source. |
+| Normative and descriptive knowledge | Model intended structure and rules together when rules refer to modeled concepts. Keep intent, policy, observation, and human judgment distinguishable. |
+| Relation semantics | Each relation declares its use in context, invalidation, and cycle checks. A relationship name alone does not imply every behavior. |
+| Bounded constraints | Constraints are closed, deterministic declarations over the model and explicitly selected resource sets. Their grammar must remain reviewable; arbitrary code and model execution are outside the kernel. |
+| Explicit adapters | Mappings are canonical inputs. Adapters consume the normalized model and may project files or use an explicit observe, plan, apply, and verify lifecycle. External state is observed independently, so drift can be detected while the model is unchanged. |
+| Evidence limits | Results identify fixed source, Domain, Project configuration, mappings, adapter, and observation inputs. A passing check proves only its configured assertion for those inputs; it does not establish semantic truth or transfer human acceptance. |
+| Opaque project artifacts | Repositories, source code, schemas, infrastructure, CI, and documentation remain explicit inputs. Domain-specific source analysis belongs in a configured adapter or project-owned check. |
+| Versioned delivery | v0.10.0 ships the generic capability as a supported product. The roadmap records implemented coverage and remaining limits. |
+
+## Product hypothesis and evidence
+
+The [vision](vision.md#current-basis-and-unproven-benefit) owns the value hypothesis. Explicit canonical ownership and change impact are proposed mechanisms for reducing rediscovery and synchronization, especially when a policy has several consumers and changes repeatedly. Their modeling and maintenance cost must be included, rather than treating generated output or technical feasibility as user benefit.
+
+That user-level benefit is not established by shipping the capability. The synthetic consumer proof demonstrates one bounded technical case, not measured reductions in real team effort or production defects. v0.10.0 ships the defined technical product model and an executable end-to-end example with explicit limits on correctness evidence. Claims about productivity, semantic accuracy, or broad reconciliation value require repeated real tasks and observed external use. [Measurement](measurement.md) owns that evidence method.
+
+The v0.10.0 constraint language starts with a finite set of deterministic assertions. A general policy engine such as CUE or OPA is not silently embedded in that contract. Evaluate whether one should be integrated after comparing the bounded language against real policy cases, including authoring clarity, validation behavior, adapter reuse, and operational cost. Extend the kernel only for semantics that repeated cases show it must own.
+
+## Content packages
+
+The v0.3.0 source model implements the first bounded content-package slice. Its user-facing contract is in [Content packages](content-packages.md). It uses exact direct pins and offline archives, keeps package resources read-only, rejects nested imports, and treats packages as context/API boundaries rather than confidentiality boundaries.
+
+## Templates and interfaces
+
+Minimal one-time project initialization is in the current source model. It creates only the Project file and one area README after preview and validation. It uses no custom templates, executes no scripts, and does not synchronize created projects with an evolving template. The precise contract and its structural-verification limit are in [Usage](usage.md); source status remains in the [roadmap](implementation-plan.md).
+
+Reconciliation ships through explicit adapter contracts with bounded observe, plan, capability-gated apply, and verify operations. Broad runtime/operator operation, hidden background controllers, and inferred integrations remain outside the product. Custom-domain typed references are limited to the same API version; the bundled AI Domain may explicitly use registered custom resources. MCP and LSP remain separate interface choices and require evidence of authoring friction before adoption.
+
+## CLI distribution assessment (2026-10-01)
+
+The public Apache-2.0 repository already publishes immutable Windows and Linux amd64 executables. A pinned release URL plus its published SHA-256 gives a direct installation path without Go, GitHub CLI, or an account; the README owns the concrete commands. `go install` is a short alternative for developers who already have the required Go toolchain. Project pinning through `markitect install` is a separate workflow.
+
+Consider [WinGet's portable package format](https://learn.microsoft.com/en-us/windows/package-manager/winget/) as the first package-manager publication. Its community manifest must carry a versioned download URL and SHA-256 and must be validated against the actual executable. Publishing there would add a familiar `winget install` and managed upgrades, but requires a manifest update and installation test for each Markitect release. No WinGet package is published by this source change.
+
+For Linux, retain the direct binary now. A [Homebrew tap](https://docs.brew.sh/Taps) can serve Linux, but would require users to install Homebrew and maintain another repository and formula for each release. Native `.deb`/`.rpm` assets can be considered if users need distribution-native installation; an APT repository adds signing and repository operations. The current assets do not include macOS or arm64, so a cross-platform Homebrew path would overstate support. Do not document a package-manager command until its package has been published and installation tested.
+
+## MCP assessment (2026-10-01)
+
+MCP could help an authoring agent discover Markitect's graph and request typed, bounded results without constructing shell commands or parsing CLI text. The existing `find`, `explain`, `context`, and `impact` operations are plausible read-only tools; embedded authoring guidance is a plausible resource. The current CLI already exposes these operations and returns structured YAML with snapshot and tool identity. A local `find` call against the minimal example returned a resource identity, canonical path, `provisional: true`, a snapshot digest, and a tool digest. MCP would add an interface, not a new source of truth or new analysis capability.
+
+The [MCP server model](https://modelcontextprotocol.io/specification/2026-07-28/server/index) distinguishes model-invoked tools from contextual resources. The [standard transports](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports) include local stdio and remote HTTP. If a pilot is justified, start with local stdio over the existing Go application API. The user selects one canonical repository root when starting the server; model-supplied paths cannot select another checkout or escape that root. Calls requiring fixed evidence must name an exact revision, and `impact` must name both base and candidate commits. Working-tree queries remain explicitly provisional. Preserve diagnostics, tool and snapshot identity, and package bytes pinned by the selected snapshot. The first pilot should have no write operations, Project-declared command execution, model calls, remote service, implicit repository selection, or claim of human acceptance. [MCP tool descriptions](https://modelcontextprotocol.io/specification/2026-07-28/server/tools) alone do not enforce these boundaries.
+
+Do not commit an MCP server to the product roadmap on interface appeal alone. First compare the same preselected real authoring tasks and commits through the CLI and a small MCP prototype in two clients that prospective users actually use. Record successful task completion, wrong-repository or wrong-revision attempts and rejections, tool-call count, latency, and the size and usefulness of returned context. Include invalid revisions, package references, and paths in the boundary checks. Proceed only if the adapter improves the workflow without changing Markitect's deterministic results or ownership boundaries. This assessment is a pilot criterion, not evidence that MCP has already delivered a benefit.
+
+A [local read-only stdio prototype](../experiments/mcp-pilot/README.md) now wraps `find`, `explain`, and `context` for a pinned repository and commit. One synthetic fixed-snapshot `find` smoke test produced the same YAML through MCP and the CLI. The prototype returns text blocks and negotiates MCP protocol versions `2025-06-18` and `2025-11-25`. The [client evaluation](../experiments/mcp-pilot/evaluation.md) records completed Codex query tasks with six byte-identical CLI/MCP outputs, answer defects in both package variants, and Claude Code connected but blocked by expired authentication. The bounded pilot is concluded without sufficient evidence to adopt MCP. A completed second-client comparison and repeated evidence of authoring benefit are deferred criteria for future reconsideration. It remains outside the supported CLI binaries and product roadmap.
+
+## Measurement
+
+Use fixed snapshots, predeclared expected effects, correctness-first scoring, and repeated comparable tasks. Validate the target language with cases that distinguish relation-specific context, invalidation, and cycle semantics; verify that adding or removing resources invalidates set-based constraints; and demonstrate both generated projection drift and external drift under an unchanged model. Missing measurements are unavailable, not zero. Do not infer model token savings from context bytes or one successful evidence-reuse decision. [Measurement](measurement.md) owns the procedure.

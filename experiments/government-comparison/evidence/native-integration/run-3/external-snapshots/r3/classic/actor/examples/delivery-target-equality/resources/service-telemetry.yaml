@@ -1,0 +1,11 @@
+apiVersion: delivery.example.org/v1alpha1
+kind: Service
+metadata:
+    name: telemetry-api
+    namespace: engineering
+spec:
+    product:
+        kind: Product
+        name: telemetry
+        namespace: engineering
+    purpose: Publishes telemetry capabilities.

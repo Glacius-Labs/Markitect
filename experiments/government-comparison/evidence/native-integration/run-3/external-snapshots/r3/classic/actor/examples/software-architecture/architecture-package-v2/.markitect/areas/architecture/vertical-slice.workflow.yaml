@@ -1,0 +1,11 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Workflow
+metadata:
+    name: vertical-slice
+    namespace: architecture
+spec:
+    text: |
+        Implement the selected UseCase within its owning Product and Module boundaries.
+        Follow the explicit Feature, Aggregate, Interface, Handler, and extension relations.
+        Use only the canonical package policy and report its selected subjects and outcomes.
+        This workflow describes architecture inputs; it does not infer code structure.

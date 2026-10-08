@@ -1,0 +1,11 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Interface
+metadata:
+    name: billing-terms
+    namespace: engineering
+spec:
+    provider:
+        kind: Module
+        name: billing
+        namespace: engineering
+    summary: Published billing terms used when presenting order totals.

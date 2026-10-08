@@ -1,0 +1,30 @@
+taskId: refund-triage-query-only
+readOnly: true
+entry:
+  kind: Skill
+  namespace: support
+  name: refund-triage
+find:
+  exactFilters:
+    kind: Skill
+    namespace: support
+  expectedIdentities:
+    - support/Skill/refund-triage
+explain:
+  entryKey: support/Skill/refund-triage
+  outgoing:
+    - shared/Rule/customer-data
+    - support/Agent/refund-specialist
+    - support/Contract/refund-decision
+    - support/Workflow/refund-review
+contextInputs:
+  - markitect.yaml
+  - .markitect/areas/shared/customer-data.rule.yaml
+  - .markitect/areas/support/refund-decision.contract.yaml
+  - .markitect/areas/support/refund-policy.text.yaml
+  - .markitect/areas/support/refund-review.workflow.yaml
+  - .markitect/areas/support/refund-specialist.agent.yaml
+  - .markitect/areas/support/refund-triage.skill.yaml
+forbiddenActions:
+  - write
+  - commit

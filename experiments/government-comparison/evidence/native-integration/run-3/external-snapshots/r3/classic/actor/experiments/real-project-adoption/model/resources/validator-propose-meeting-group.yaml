@@ -1,0 +1,9 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Validator
+metadata:
+  name: propose-meeting-group
+  namespace: architecture
+spec:
+  summary: FluentValidation rules for new MeetingGroup proposals.
+  sourceFiles:
+    - src/Modules/Meetings/Application/MeetingGroupProposals/ProposeMeetingGroup/ProposeMeetingGroupCommandValidator.cs

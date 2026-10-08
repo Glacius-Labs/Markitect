@@ -1,0 +1,12 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: delivery-target-equality
+spec:
+    targets:
+        - markdown
+    areas:
+        - name: engineering
+          path: resources
+    domains:
+        - domains/delivery-topology.yaml

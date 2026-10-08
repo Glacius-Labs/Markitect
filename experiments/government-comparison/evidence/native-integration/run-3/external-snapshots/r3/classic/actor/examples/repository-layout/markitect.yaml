@@ -1,0 +1,25 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: repository-layout-example
+spec:
+    targets:
+        - claude
+    areas:
+        - name: shared
+          path: .markitect/areas/shared
+        - name: engineering
+          path: .markitect/areas/engineering
+          imports:
+            - shared
+            - documentation
+        - name: documentation
+          path: docs
+    documentation:
+        roots:
+            - docs
+    ruleAdapters:
+        change-review:
+            - kind: Rule
+              name: change-review
+              namespace: engineering

@@ -1,0 +1,4 @@
+# Preserve exact pre-dispatch input bytes; these files are hash-bound.
+# The frozen literal task-text scalar also retains an indented blank line.
+architecture-review.skill.yaml whitespace=cr-at-eol,-blank-at-eol
+architecture-check/LICENSE whitespace=cr-at-eol

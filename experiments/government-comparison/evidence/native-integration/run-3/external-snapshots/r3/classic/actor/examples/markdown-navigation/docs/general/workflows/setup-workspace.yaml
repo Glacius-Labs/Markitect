@@ -1,0 +1,11 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Workflow
+metadata:
+    name: setup-workspace
+    namespace: general
+spec:
+    text: |
+        ## Steps
+
+        1. Inspect the repository instructions.
+        2. Confirm the required tools and access.

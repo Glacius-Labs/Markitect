@@ -1,0 +1,10 @@
+{
+  "temporarySkillSha256": "6ebf373aa409472afdc50d576ec7f76a02ff082c864714e8dd5caa5c2ddba50e",
+  "staleApplyExitCode": 2,
+  "staleApplyStdout": "",
+  "staleApplyStderr": "reconciliation plan is stale or was modified; observe and plan again from the current working tree\n",
+  "staleApplySourceTreeUnchangedDuringAttempt": true,
+  "originalBytesSha256": "e3d72b4a231b35f781acfaaf1958ffcf7434993f58a0f61852b82dac851a6ef3",
+  "restoredBytesSha256": "e3d72b4a231b35f781acfaaf1958ffcf7434993f58a0f61852b82dac851a6ef3",
+  "exactBytesRestored": true
+}

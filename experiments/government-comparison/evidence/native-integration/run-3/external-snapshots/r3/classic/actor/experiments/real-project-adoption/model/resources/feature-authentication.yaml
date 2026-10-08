@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Feature
+metadata:
+  name: authentication
+  namespace: architecture
+spec:
+  summary: Authenticate User credentials and expose permission-facing identity.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: user-access, namespace: architecture}
+  documents:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Narrative, name: architecture-test-decision, namespace: architecture}

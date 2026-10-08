@@ -1,0 +1,807 @@
+{
+  "evidenceType": "evaluated-dotnet-project-references",
+  "evidenceScope": "Only explicitly mapped Module Application/Domain/IntegrationEvents projects and BuildingBlocks Application/Domain/Infrastructure.",
+  "upstreamCommit": "91c8ef24b4cb6ef558c95d8267fa07d68c7059f8",
+  "snapshotRevision": "ec01cb6805f93c8a4dbe37efe2a129a58a7ed28d",
+  "sourceManifestSha256": "5f3ba17fde2f6304b06e90516e54525b46142ea05dd161f772e3bd9f135cbfb8",
+  "configuration": "Debug",
+  "dotnetSdk": "8.0.418",
+  "evaluatedProjectCount": 18,
+  "projects": [
+    {
+      "id": "architecture.administration.application",
+      "resource": "architecture.administration",
+      "layer": "Application",
+      "path": "src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj",
+      "projectReferenceCount": 5,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.user-access.application",
+      "resource": "architecture.user-access",
+      "layer": "Application",
+      "path": "src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj",
+      "projectReferenceCount": 3,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.registrations.integration-events",
+      "resource": "architecture.registrations",
+      "layer": "IntegrationEvents",
+      "path": "src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj",
+      "projectReferenceCount": 1,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.registrations.domain",
+      "resource": "architecture.registrations",
+      "layer": "Domain",
+      "path": "src/Modules/Registrations/Domain/CompanyName.MyMeetings.Modules.Registrations.Domain.csproj",
+      "projectReferenceCount": 1,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.registrations.application",
+      "resource": "architecture.registrations",
+      "layer": "Application",
+      "path": "src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj",
+      "projectReferenceCount": 3,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.payments.integration-events",
+      "resource": "architecture.payments",
+      "layer": "IntegrationEvents",
+      "path": "src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj",
+      "projectReferenceCount": 1,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.payments.domain",
+      "resource": "architecture.payments",
+      "layer": "Domain",
+      "path": "src/Modules/Payments/Domain/CompanyName.MyMeetings.Modules.Payments.Domain.csproj",
+      "projectReferenceCount": 1,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.payments.application",
+      "resource": "architecture.payments",
+      "layer": "Application",
+      "path": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "projectReferenceCount": 6,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.meetings.integration-events",
+      "resource": "architecture.meetings",
+      "layer": "IntegrationEvents",
+      "path": "src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+      "projectReferenceCount": 1,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.meetings.domain",
+      "resource": "architecture.meetings",
+      "layer": "Domain",
+      "path": "src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj",
+      "projectReferenceCount": 1,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.meetings.application",
+      "resource": "architecture.meetings",
+      "layer": "Application",
+      "path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "projectReferenceCount": 6,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.core.infrastructure",
+      "resource": "architecture.core",
+      "layer": "Infrastructure",
+      "path": "src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "projectReferenceCount": 1,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.core.domain",
+      "resource": "architecture.core",
+      "layer": "Domain",
+      "path": "src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "projectReferenceCount": 0,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.core.application",
+      "resource": "architecture.core",
+      "layer": "Application",
+      "path": "src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj",
+      "projectReferenceCount": 1,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.administration.integration-events",
+      "resource": "architecture.administration",
+      "layer": "IntegrationEvents",
+      "path": "src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj",
+      "projectReferenceCount": 1,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.administration.domain",
+      "resource": "architecture.administration",
+      "layer": "Domain",
+      "path": "src/Modules/Administration/Domain/CompanyName.MyMeetings.Modules.Administration.Domain.csproj",
+      "projectReferenceCount": 1,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.user-access.domain",
+      "resource": "architecture.user-access",
+      "layer": "Domain",
+      "path": "src/Modules/UserAccess/Domain/CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj",
+      "projectReferenceCount": 1,
+      "controlInjectionApplied": false
+    },
+    {
+      "id": "architecture.user-access.integration-events",
+      "resource": "architecture.user-access",
+      "layer": "IntegrationEvents",
+      "path": "src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj",
+      "projectReferenceCount": 1,
+      "controlInjectionApplied": false
+    }
+  ],
+  "referenceEdgeCount": 35,
+  "edges": [
+    {
+      "source": "architecture.administration.application",
+      "sourceResource": "architecture.administration",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj",
+      "target": "architecture.meetings.integration-events",
+      "targetResource": "architecture.meetings",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\..\\Meetings\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+      "definingProject": "src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj",
+      "status": "allowed",
+      "explanation": "cross-module reference targets the allowed IntegrationEvents contract layer",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.payments.application",
+      "sourceResource": "architecture.payments",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "target": "architecture.registrations.integration-events",
+      "targetResource": "architecture.registrations",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\..\\Registrations\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj",
+      "definingProject": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "status": "allowed",
+      "explanation": "cross-module reference targets the allowed IntegrationEvents contract layer",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.payments.application",
+      "sourceResource": "architecture.payments",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "target": "architecture.user-access.integration-events",
+      "targetResource": "architecture.user-access",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\..\\UserAccess\\IntegrationEvents\\CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj",
+      "definingProject": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "status": "allowed",
+      "explanation": "cross-module reference targets the allowed IntegrationEvents contract layer",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.payments.application",
+      "sourceResource": "architecture.payments",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "target": "architecture.payments.domain",
+      "targetResource": "architecture.payments",
+      "targetLayer": "Domain",
+      "targetPath": "src/Modules/Payments/Domain/CompanyName.MyMeetings.Modules.Payments.Domain.csproj",
+      "evaluatedIdentity": "..\\Domain\\CompanyName.MyMeetings.Modules.Payments.Domain.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.payments.application",
+      "sourceResource": "architecture.payments",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "target": "architecture.payments.integration-events",
+      "targetResource": "architecture.payments",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.payments.domain",
+      "sourceResource": "architecture.payments",
+      "sourceLayer": "Domain",
+      "sourcePath": "src/Modules/Payments/Domain/CompanyName.MyMeetings.Modules.Payments.Domain.csproj",
+      "target": "architecture.core.domain",
+      "targetResource": "architecture.core",
+      "targetLayer": "Domain",
+      "targetPath": "src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "evaluatedIdentity": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final\\src\\BuildingBlocks\\Domain\\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.payments.integration-events",
+      "sourceResource": "architecture.payments",
+      "sourceLayer": "IntegrationEvents",
+      "sourcePath": "src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj",
+      "target": "architecture.core.infrastructure",
+      "targetResource": "architecture.core",
+      "targetLayer": "Infrastructure",
+      "targetPath": "src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "evaluatedIdentity": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final\\src\\BuildingBlocks\\Infrastructure\\CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.payments.application",
+      "sourceResource": "architecture.payments",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "target": "architecture.meetings.integration-events",
+      "targetResource": "architecture.meetings",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\..\\Meetings\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+      "definingProject": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "status": "allowed",
+      "explanation": "cross-module reference targets the allowed IntegrationEvents contract layer",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.registrations.application",
+      "sourceResource": "architecture.registrations",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj",
+      "target": "architecture.core.application",
+      "targetResource": "architecture.core",
+      "targetLayer": "Application",
+      "targetPath": "src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj",
+      "evaluatedIdentity": "..\\..\\..\\BuildingBlocks\\Application\\CompanyName.MyMeetings.BuildingBlocks.Application.csproj",
+      "definingProject": "src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.registrations.application",
+      "sourceResource": "architecture.registrations",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj",
+      "target": "architecture.registrations.integration-events",
+      "targetResource": "architecture.registrations",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.registrations.domain",
+      "sourceResource": "architecture.registrations",
+      "sourceLayer": "Domain",
+      "sourcePath": "src/Modules/Registrations/Domain/CompanyName.MyMeetings.Modules.Registrations.Domain.csproj",
+      "target": "architecture.core.domain",
+      "targetResource": "architecture.core",
+      "targetLayer": "Domain",
+      "targetPath": "src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "evaluatedIdentity": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final\\src\\BuildingBlocks\\Domain\\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.registrations.integration-events",
+      "sourceResource": "architecture.registrations",
+      "sourceLayer": "IntegrationEvents",
+      "sourcePath": "src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj",
+      "target": "architecture.core.infrastructure",
+      "targetResource": "architecture.core",
+      "targetLayer": "Infrastructure",
+      "targetPath": "src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "evaluatedIdentity": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final\\src\\BuildingBlocks\\Infrastructure\\CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.user-access.application",
+      "sourceResource": "architecture.user-access",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj",
+      "target": "architecture.meetings.integration-events",
+      "targetResource": "architecture.meetings",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\..\\Meetings\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+      "definingProject": "src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj",
+      "status": "allowed",
+      "explanation": "cross-module reference targets the allowed IntegrationEvents contract layer",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.user-access.application",
+      "sourceResource": "architecture.user-access",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj",
+      "target": "architecture.user-access.domain",
+      "targetResource": "architecture.user-access",
+      "targetLayer": "Domain",
+      "targetPath": "src/Modules/UserAccess/Domain/CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj",
+      "evaluatedIdentity": "..\\Domain\\CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.user-access.application",
+      "sourceResource": "architecture.user-access",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj",
+      "target": "architecture.user-access.integration-events",
+      "targetResource": "architecture.user-access",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\IntegrationEvents\\CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.registrations.application",
+      "sourceResource": "architecture.registrations",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj",
+      "target": "architecture.registrations.domain",
+      "targetResource": "architecture.registrations",
+      "targetLayer": "Domain",
+      "targetPath": "src/Modules/Registrations/Domain/CompanyName.MyMeetings.Modules.Registrations.Domain.csproj",
+      "evaluatedIdentity": "..\\Domain\\CompanyName.MyMeetings.Modules.Registrations.Domain.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.user-access.domain",
+      "sourceResource": "architecture.user-access",
+      "sourceLayer": "Domain",
+      "sourcePath": "src/Modules/UserAccess/Domain/CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj",
+      "target": "architecture.core.domain",
+      "targetResource": "architecture.core",
+      "targetLayer": "Domain",
+      "targetPath": "src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "evaluatedIdentity": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final\\src\\BuildingBlocks\\Domain\\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.payments.application",
+      "sourceResource": "architecture.payments",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "target": "architecture.administration.integration-events",
+      "targetResource": "architecture.administration",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\..\\Administration\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj",
+      "definingProject": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "status": "allowed",
+      "explanation": "cross-module reference targets the allowed IntegrationEvents contract layer",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.meetings.domain",
+      "sourceResource": "architecture.meetings",
+      "sourceLayer": "Domain",
+      "sourcePath": "src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj",
+      "target": "architecture.core.domain",
+      "targetResource": "architecture.core",
+      "targetLayer": "Domain",
+      "targetPath": "src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "evaluatedIdentity": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final\\src\\BuildingBlocks\\Domain\\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.administration.application",
+      "sourceResource": "architecture.administration",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj",
+      "target": "architecture.registrations.integration-events",
+      "targetResource": "architecture.registrations",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\..\\Registrations\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj",
+      "definingProject": "src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj",
+      "status": "allowed",
+      "explanation": "cross-module reference targets the allowed IntegrationEvents contract layer",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.administration.application",
+      "sourceResource": "architecture.administration",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj",
+      "target": "architecture.user-access.integration-events",
+      "targetResource": "architecture.user-access",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\..\\UserAccess\\IntegrationEvents\\CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj",
+      "definingProject": "src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj",
+      "status": "allowed",
+      "explanation": "cross-module reference targets the allowed IntegrationEvents contract layer",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.administration.application",
+      "sourceResource": "architecture.administration",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj",
+      "target": "architecture.administration.domain",
+      "targetResource": "architecture.administration",
+      "targetLayer": "Domain",
+      "targetPath": "src/Modules/Administration/Domain/CompanyName.MyMeetings.Modules.Administration.Domain.csproj",
+      "evaluatedIdentity": "..\\Domain\\CompanyName.MyMeetings.Modules.Administration.Domain.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.administration.application",
+      "sourceResource": "architecture.administration",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj",
+      "target": "architecture.administration.integration-events",
+      "targetResource": "architecture.administration",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.administration.domain",
+      "sourceResource": "architecture.administration",
+      "sourceLayer": "Domain",
+      "sourcePath": "src/Modules/Administration/Domain/CompanyName.MyMeetings.Modules.Administration.Domain.csproj",
+      "target": "architecture.core.domain",
+      "targetResource": "architecture.core",
+      "targetLayer": "Domain",
+      "targetPath": "src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "evaluatedIdentity": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final\\src\\BuildingBlocks\\Domain\\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.administration.integration-events",
+      "sourceResource": "architecture.administration",
+      "sourceLayer": "IntegrationEvents",
+      "sourcePath": "src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj",
+      "target": "architecture.core.infrastructure",
+      "targetResource": "architecture.core",
+      "targetLayer": "Infrastructure",
+      "targetPath": "src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "evaluatedIdentity": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final\\src\\BuildingBlocks\\Infrastructure\\CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.meetings.integration-events",
+      "sourceResource": "architecture.meetings",
+      "sourceLayer": "IntegrationEvents",
+      "sourcePath": "src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+      "target": "architecture.core.infrastructure",
+      "targetResource": "architecture.core",
+      "targetLayer": "Infrastructure",
+      "targetPath": "src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "evaluatedIdentity": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final\\src\\BuildingBlocks\\Infrastructure\\CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.core.application",
+      "sourceResource": "architecture.core",
+      "sourceLayer": "Application",
+      "sourcePath": "src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj",
+      "target": "architecture.core.domain",
+      "targetResource": "architecture.core",
+      "targetLayer": "Domain",
+      "targetPath": "src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "evaluatedIdentity": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final\\src\\BuildingBlocks\\Domain\\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.meetings.application",
+      "sourceResource": "architecture.meetings",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "target": "architecture.administration.integration-events",
+      "targetResource": "architecture.administration",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\..\\Administration\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj",
+      "definingProject": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "status": "allowed",
+      "explanation": "cross-module reference targets the allowed IntegrationEvents contract layer",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.meetings.application",
+      "sourceResource": "architecture.meetings",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "target": "architecture.payments.integration-events",
+      "targetResource": "architecture.payments",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\..\\Payments\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj",
+      "definingProject": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "status": "allowed",
+      "explanation": "cross-module reference targets the allowed IntegrationEvents contract layer",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.meetings.application",
+      "sourceResource": "architecture.meetings",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "target": "architecture.registrations.integration-events",
+      "targetResource": "architecture.registrations",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\..\\Registrations\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj",
+      "definingProject": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "status": "allowed",
+      "explanation": "cross-module reference targets the allowed IntegrationEvents contract layer",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.meetings.application",
+      "sourceResource": "architecture.meetings",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "target": "architecture.user-access.integration-events",
+      "targetResource": "architecture.user-access",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\..\\UserAccess\\IntegrationEvents\\CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj",
+      "definingProject": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "status": "allowed",
+      "explanation": "cross-module reference targets the allowed IntegrationEvents contract layer",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.meetings.application",
+      "sourceResource": "architecture.meetings",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "target": "architecture.meetings.domain",
+      "targetResource": "architecture.meetings",
+      "targetLayer": "Domain",
+      "targetPath": "src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj",
+      "evaluatedIdentity": "..\\Domain\\CompanyName.MyMeetings.Modules.Meetings.Domain.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.meetings.application",
+      "sourceResource": "architecture.meetings",
+      "sourceLayer": "Application",
+      "sourcePath": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "target": "architecture.meetings.integration-events",
+      "targetResource": "architecture.meetings",
+      "targetLayer": "IntegrationEvents",
+      "targetPath": "src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+      "evaluatedIdentity": "..\\IntegrationEvents\\CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.core.infrastructure",
+      "sourceResource": "architecture.core",
+      "sourceLayer": "Infrastructure",
+      "sourcePath": "src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "target": "architecture.core.application",
+      "targetResource": "architecture.core",
+      "targetLayer": "Application",
+      "targetPath": "src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj",
+      "evaluatedIdentity": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final\\src\\BuildingBlocks\\Application\\CompanyName.MyMeetings.BuildingBlocks.Application.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    },
+    {
+      "source": "architecture.user-access.integration-events",
+      "sourceResource": "architecture.user-access",
+      "sourceLayer": "IntegrationEvents",
+      "sourcePath": "src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj",
+      "target": "architecture.core.infrastructure",
+      "targetResource": "architecture.core",
+      "targetLayer": "Infrastructure",
+      "targetPath": "src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "evaluatedIdentity": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\adoption\\baseline-final\\src\\BuildingBlocks\\Infrastructure\\CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "definingProject": "src/Directory.Build.targets",
+      "status": "allowed",
+      "explanation": "same owner or inward to Core",
+      "controlInjected": false
+    }
+  ],
+  "policy": {
+    "crossModuleTargetLayers": [
+      "IntegrationEvents"
+    ],
+    "coreMayReferenceModules": false
+  },
+  "findings": [],
+  "control": {
+    "enabled": false,
+    "injectedEdgeDetectedAndRejected": false,
+    "scratchTargetLocation": null
+  },
+  "inputs": [
+    {
+      "path": "source-manifest.json",
+      "sha256": "5f3ba17fde2f6304b06e90516e54525b46142ea05dd161f772e3bd9f135cbfb8"
+    },
+    {
+      "path": "src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj",
+      "sha256": "4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd"
+    },
+    {
+      "path": "src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "sha256": "3e1a9f612f8cfcc2e2a8b2ef085685f9f3d1a55c4b901e8d88af6ec37d283195"
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "sha256": "4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd"
+    },
+    {
+      "path": "src/Directory.Build.props",
+      "sha256": "35658597595b1283540e5c2b38d6e5a70f83b0e8843f9358185af14fbb725c42"
+    },
+    {
+      "path": "src/Directory.Build.targets",
+      "sha256": "1d9eef2fc500b0ac026f24445a631b74e352bedf5e28e888a13d3d52d43ec984"
+    },
+    {
+      "path": "src/Directory.Packages.props",
+      "sha256": "1247510f1eeebc6407e8c242b9896d7d84359f0d738035da9b1d53983796d448"
+    },
+    {
+      "path": "src/global.json",
+      "sha256": "8dc87e6f68213f4444f20306d8057b48947550912e25a5b897702a51eea23d95"
+    },
+    {
+      "path": "src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj",
+      "sha256": "169213c87cd635a9c6daad6b4f0468385cd218a27cf4b0d3326a504de34fbe1b"
+    },
+    {
+      "path": "src/Modules/Administration/Domain/CompanyName.MyMeetings.Modules.Administration.Domain.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1"
+    },
+    {
+      "path": "src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj",
+      "sha256": "4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd"
+    },
+    {
+      "path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "sha256": "2f0d3e0797c1fdf2c35bc4f61d1bce373dff83fac85236fb252895dd2cc61249"
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj",
+      "sha256": "e6fcb8e1e93a724d47a829cffd19d47840a5eb088e9ace43f3a34bbaf1524b07"
+    },
+    {
+      "path": "src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1"
+    },
+    {
+      "path": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "sha256": "69815bba19b417069bd15711fa50fd2d8cc0680909925298f8267938445798ae"
+    },
+    {
+      "path": "src/Modules/Payments/Domain/CompanyName.MyMeetings.Modules.Payments.Domain.csproj",
+      "sha256": "4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd"
+    },
+    {
+      "path": "src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1"
+    },
+    {
+      "path": "src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj",
+      "sha256": "3c3459c17575dbb209258e974f0e303ebc22cbca90536b881e7c2cacbc3fa47b"
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/CompanyName.MyMeetings.Modules.Registrations.Domain.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1"
+    },
+    {
+      "path": "src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1"
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj",
+      "sha256": "b1e78668f67f00af0a5b676a172fcf28223522e678bec8a6b2d76647b7aca04f"
+    },
+    {
+      "path": "src/Modules/UserAccess/Domain/CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1"
+    },
+    {
+      "path": "src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1"
+    },
+    {
+      "path": "../../../experiments/real-project-adoption/checks/check-module-project-references.ps1",
+      "sha256": "f5cd05dd73388805cdca41b1e47372cf2462462c191d9e54ae89e90451a3bae4"
+    },
+    {
+      "path": "../../../experiments/real-project-adoption/checks/project-map.json",
+      "sha256": "b7c94e9288d4a0456ce17e0b10d88b7928638a0acb3856fd5c8f45e516f1fb25"
+    }
+  ],
+  "proves": [
+    "MSBuild evaluated ProjectReference items under the recorded revision, SDK, configuration, and hashed project/import inputs.",
+    "The listed edges were checked against the explicit owner and layer policy."
+  ],
+  "doesNotProve": [
+    "Runtime DI, reflection, plugin loading, network calls, or other dependency mechanisms.",
+    "That IntegrationEvents contains only stable public contracts or that a referenced contract is semantically appropriate.",
+    "Behavior, business meaning, unlisted projects, or architecture outside the explicit map."
+  ]
+}

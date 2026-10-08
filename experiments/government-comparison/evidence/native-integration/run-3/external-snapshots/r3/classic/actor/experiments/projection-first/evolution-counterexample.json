@@ -1,0 +1,16 @@
+{
+  "status": "excluded from successful convergence proof",
+  "reason": "fixed checker unit test duplicates the original exact preCommitCommand and rejects a canonical change before selected checks run",
+  "checkOutcome": [
+    {
+      "name": "checker-tests",
+      "tool": "python",
+      "exitCode": 1,
+      "milliseconds": 173,
+      "output": "...F\r\n======================================================================\r\nFAIL: test_fixture_exercises_filter_tie_break_and_complete_rows (test_contract_checker.ContractCheckerTests.test_fixture_exercises_filter_tie_break_and_complete_rows)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"<fixed-check-workspace>\\tools\\test_contract_checker.py\", line 14, in test_fixture_exercises_filter_tie_break_and_complete_rows\r\n    self.assertEqual(process[\"spec\"][\"preCommitCommand\"], \"python tools/check_contract.py\")\r\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: 'python -m unittest discover -s tools -p test_con[46 chars]t.py' != 'python tools/check_contract.py'\r\n- python -m unittest discover -s tools -p test_contract_checker.py && python tools/check_contract.py\r\n+ python tools/check_contract.py\r\n\r\n\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.011s\r\n\r\nFAILED (failures=1)\r\n"
+    }
+  ],
+  "originalReportStatus": "incomplete",
+  "productDefect": "a failed required gate outside contract-selected checks initially produced incomplete instead of drift; fixed with regression test",
+  "authorityBoundary": "independent fixed checker was not edited to turn this historical failure green"
+}

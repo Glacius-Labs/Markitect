@@ -1,0 +1,14 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+    name: deployment-review
+    namespace: engineering
+spec:
+    text: |
+        Review the selected Deployment's Service and Environment. Compare their Product ownership explicitly; the current Domain model does not assert that those owners match.
+    description: Review one deployment target and its declared Service and Environment.
+    uses:
+        - apiVersion: delivery.example.org/v1alpha1
+          kind: Deployment
+          name: orders-production
+          namespace: engineering

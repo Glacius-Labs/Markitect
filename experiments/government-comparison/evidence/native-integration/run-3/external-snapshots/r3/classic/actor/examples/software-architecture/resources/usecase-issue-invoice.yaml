@@ -1,0 +1,32 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: UseCase
+metadata:
+    name: issue-invoice
+    namespace: engineering
+    labels:
+        feature-ownership: required
+        validation: required
+spec:
+    aggregates:
+        - kind: Aggregate
+          name: invoice
+          namespace: engineering
+    feature:
+        kind: Feature
+        name: invoicing
+        namespace: engineering
+    handler:
+        kind: Handler
+        name: issue-invoice-handler
+        namespace: engineering
+    intent: Command
+    mappers:
+        - kind: Mapper
+          name: order-to-invoice
+          namespace: engineering
+    module:
+        kind: Module
+        name: billing
+        namespace: engineering
+    summary: Create an invoice for an accepted order.
+    validators: []

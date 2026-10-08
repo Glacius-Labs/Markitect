@@ -1,0 +1,15 @@
+apiVersion: delivery.example.org/v1alpha1
+kind: Deployment
+metadata:
+    name: telemetry-production
+    namespace: engineering
+spec:
+    environment:
+        kind: Environment
+        name: telemetry-production
+        namespace: engineering
+    purpose: Deliver telemetry to its matching independent production environment.
+    service:
+        kind: Service
+        name: telemetry-api
+        namespace: engineering

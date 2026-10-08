@@ -1,0 +1,103 @@
+{
+  "protocol": "operating-model-proof/v5",
+  "recordType": "pre-native-control-freeze",
+  "status": "frozen",
+  "createdAtUtc": "2026-10-06T04:24:57.8851811Z",
+  "sourceSha": "6a79b0d015801f3f37e42cacd049179cc795be42",
+  "driverPath": "experiments/operating-model-proof/run.py",
+  "driverSha256": "a2dc55d213db619349885b8fd44a85078ce0190402e8f36fe46eb3a6a30d585b",
+  "providerWrapperPath": "internal/tooling/codexrunner/runner.py",
+  "providerWrapperSha256": "7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57",
+  "cliPath": "C:/Users/Consiliari/AppData/Local/Temp/markitect-live-proof-1hs4ntmh/markitect-v5.exe",
+  "cliSha256": "03c551536335ee580b870e703a6a40ef8777c5a8139042f8f0f7e8e7e88729aa",
+  "buildReceiptPath": "C:/Users/Consiliari/AppData/Local/Temp/markitect-live-proof-1hs4ntmh/build-receipt-v5.json",
+  "buildReceiptSha256": "6425f113b858f215ecc471a8075e8800f5422c581efb4e3f1dddcda5295c5a53",
+  "runtimePath": "C:/Users/Consiliari/AppData/Local/Temp/markitect-operating-model-20261006-c4-positive-v5-01/runtime.json",
+  "runtimeSha256": "af2c31b099c2004ce3ed4792399c910eb24094fab077fea4fc5b2ae32a64cad2",
+  "runtimeBytes": 235208502,
+  "externalRoot": "C:/Users/Consiliari/AppData/Local/Temp/markitect-operating-model-20261006-c4-positive-v5-01",
+  "recordStorePath": "C:/Users/Consiliari/AppData/Local/Temp/markitect-operating-model-20261006-c4-positive-v5-01/record-store",
+  "recordStoreExists": false,
+  "privateLogsPath": "C:/Users/Consiliari/AppData/Local/Temp/markitect-operating-model-20261006-c4-positive-v5-01/private-logs",
+  "privateLogsExists": false,
+  "fixtureOriginSha": "140ffdb9547f025ec2a6e0dd0d2e38f9d0a090c7",
+  "fixtureSubsetCommit": "b24fd775b3537302ba2ebece970c55ffdef5f7eb",
+  "config": "examples/operating-model/canonical.yaml",
+  "base": null,
+  "revision": null,
+  "provider": {
+    "product": "Codex CLI",
+    "reasoning": "high",
+    "configuredRoles": [
+      "executor",
+      "verifier"
+    ],
+    "model": "gpt-5.5",
+    "version": "0.130.0"
+  },
+  "scopes": [
+    {
+      "check": "operating-model-orders",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"orders-dotnet\"]",
+      "policy": "examples/operating-model/definitions/orders-dotnet.projection-policy.yaml",
+      "source": "commerce.operating-model/v1/OrderRules/orders/accepted-order-total",
+      "id": "orders",
+      "target": "src/Orders/",
+      "module": "operating-model-orders-dotnet@1.0.0"
+    },
+    {
+      "check": "operating-model-billing",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"billing-dotnet\"]",
+      "policy": "examples/operating-model/definitions/billing-dotnet.projection-policy.yaml",
+      "source": "commerce.operating-model/v1/BillingQuery/billing/outstanding-order-total",
+      "id": "billing",
+      "target": "src/Billing/",
+      "module": "operating-model-billing-dotnet@1.0.0"
+    },
+    {
+      "policies": [
+        "examples/operating-model/definitions/orders-markdown.projection-policy.yaml",
+        "examples/operating-model/definitions/billing-markdown.projection-policy.yaml",
+        "examples/operating-model/definitions/product-markdown.projection-policy.yaml"
+      ],
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"product-markdown\"]",
+      "checks": [
+        "operating-model-composition",
+        "operating-model-documentation"
+      ],
+      "sources": [
+        "commerce.operating-model/v1/ProductComposition/commerce/orders-and-billing",
+        "commerce.operating-model/v1/OrderRules/orders/accepted-order-total",
+        "commerce.operating-model/v1/BillingQuery/billing/outstanding-order-total"
+      ],
+      "id": "product",
+      "target": "docs/represented/",
+      "module": "operating-model-markdown@1.0.0"
+    }
+  ],
+  "fixedCheckCount": 4,
+  "explicitCheckInputCount": 8,
+  "readOnlyProposalRun": "c4-module-proposal-v5-01",
+  "proposalDigest": "sha256:c81a24af93cef65debc252368dc6d255ab09e376c56c8f845ef20789a5eb76c5",
+  "proposalInputDigest": "sha256:5193a22361597226aab6e063e25af7b493aac96e492b1955d5de5c3866693573",
+  "executorRunId": "c4-execute-v5-01",
+  "requestedAction": "execute",
+  "plannedMutation": "provider invocation to generate external candidate files only",
+  "targetWritesBeforeApply": 0,
+  "applyAuthorizedOnlyAfterReviewedCandidate": true,
+  "candidatePolicyReview": [
+    "orders-dotnet projection policy and OrderRules source",
+    "billing-dotnet projection policy and BillingQuery source",
+    "product-markdown projection policies, ProductComposition, child scope definitions"
+  ],
+  "noAutoRepair": true,
+  "ownerAcceptance": "not claimed",
+  "evidenceRevision": "object-only after exact reviewed apply",
+  "verifier": "fresh independent invocation against exact applied revision; must include all supplied scoped source/context/policy/artifact refs",
+  "limits": [
+    "No canonical intent mutation.",
+    "No fixture write until an exact provider candidate cohort is reviewed against supplied canonical policies.",
+    "No provider output may be treated as human acceptance.",
+    "No unknown/unowned paths are claimed as adopted."
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "schema": "markitect-pilot-attribution-correction/v1",
+  "correctsReceiptSha256": "sha256:93dacc43f940d75cf955d80f6b56fe392a110a1a40b25b255768816d92c8debc",
+  "rawResponseSha256": "sha256:111da5ceb603b15f0ab0e4b550a09958f4473d36caf2c6bad064700b7d2cd6aa",
+  "correction": "Coordinator initial attribution to mode0644 was incorrect. 0644 is supported. The Orders.csproj candidate omitted the required mode field; Host decoded empty mode and rejected it in agentexec validation. Original receipt remains unchanged.",
+  "supportedBy": [
+    "internal/host/agentexec/runner.go:433",
+    "internal/host/canonical_controller_execution.go:243"
+  ],
+  "limitation": "Generic output schema already requires mode. The experimental collaboration transport does not establish native provider structured-output enforcement.",
+  "noRuntimeSourceOrResponseChange": true
+}

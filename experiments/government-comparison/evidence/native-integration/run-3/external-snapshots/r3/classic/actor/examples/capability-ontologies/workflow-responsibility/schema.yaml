@@ -1,0 +1,14 @@
+apiVersion: responsibility.example.org/v1
+purpose: Records work ownership and workflow decision authority.
+kinds:
+  Role:
+    purpose: Names a workflow role and its authority.
+    properties:
+      name: {purpose: Gives the role a readable name., type: string, minCount: 1, maxCount: 1}
+      authority: {purpose: States the role's authority., type: enum, minCount: 1, maxCount: 1, values: [owner, approver, operator]}
+  WorkItem:
+    purpose: Assigns accountability and review participation.
+    properties:
+      title: {purpose: Names the work., type: string, minCount: 1, maxCount: 1}
+      accountable: {purpose: Identifies the accountable role., type: reference, minCount: 1, maxCount: 1, target: {apiVersion: responsibility.example.org/v1, kind: Role}}
+      reviewers: {purpose: Lists review roles., type: reference, minCount: 0, maxCount: unbounded, target: {apiVersion: responsibility.example.org/v1, kind: Role}}

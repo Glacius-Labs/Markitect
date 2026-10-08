@@ -1,0 +1,323 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Domain
+metadata:
+    name: software-architecture
+spec:
+    apiVersion: architecture.markitect.org/v1alpha1
+    kinds:
+        Aggregate:
+            required:
+                - summary
+                - module
+            properties:
+                module:
+                    type: ref
+                    refKind: Module
+                summary:
+                    type: string
+        Authorizer:
+            required:
+                - summary
+            properties:
+                summary:
+                    type: string
+        Common:
+            required:
+                - purpose
+                - owner
+            properties:
+                owner:
+                    type: ref
+                purpose:
+                    type: string
+        Core:
+            required:
+                - purpose
+            properties:
+                purpose:
+                    type: string
+        EventPublication:
+            required:
+                - summary
+            properties:
+                summary:
+                    type: string
+        Feature:
+            required:
+                - summary
+                - module
+            properties:
+                module:
+                    type: ref
+                    refKind: Module
+                summary:
+                    type: string
+        Handler:
+            required:
+                - summary
+            properties:
+                summary:
+                    type: string
+        Interface:
+            required:
+                - summary
+                - provider
+            properties:
+                provider:
+                    type: ref
+                    refKind: Module
+                summary:
+                    type: string
+        Mapper:
+            required:
+                - summary
+            properties:
+                summary:
+                    type: string
+        Module:
+            required:
+                - purpose
+                - product
+                - dependsOn
+            properties:
+                dependsOn:
+                    type: array
+                    items:
+                        type: ref
+                interfaces:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: Interface
+                product:
+                    type: ref
+                    refKind: Product
+                purpose:
+                    type: string
+        Product:
+            required:
+                - purpose
+            properties:
+                purpose:
+                    type: string
+        UseCase:
+            required:
+                - intent
+                - summary
+                - module
+                - handler
+            properties:
+                aggregates:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: Aggregate
+                authorizers:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: Authorizer
+                eventPublications:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: EventPublication
+                feature:
+                    type: ref
+                    refKind: Feature
+                handler:
+                    type: ref
+                    refKind: Handler
+                intent:
+                    type: string
+                    enum:
+                        - Command
+                        - Query
+                mappers:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: Mapper
+                module:
+                    type: ref
+                    refKind: Module
+                summary:
+                    type: string
+                validators:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: Validator
+        Validator:
+            required:
+                - summary
+            properties:
+                summary:
+                    type: string
+    relations:
+        belongsToModule:
+            description: A Feature has one named Module owner.
+            field: module
+            sourceKinds:
+                - Feature
+                - UseCase
+                - Aggregate
+            targetKinds:
+                - Module
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        belongsToProduct:
+            description: A Module names its Product owner.
+            field: product
+            sourceKinds:
+                - Module
+            targetKinds:
+                - Product
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        commonOwnedBy:
+            description: A shared Common concept names one stable Core or Module owner.
+            field: owner
+            sourceKinds:
+                - Common
+            targetKinds:
+                - Core
+                - Module
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        dependsOn:
+            description: Direct shared-boundary dependency; Module-to-Module edges are disallowed by policy.
+            field: dependsOn
+            sourceKinds:
+                - Module
+            targetKinds:
+                - Core
+                - Common
+                - Module
+            context: true
+            invalidate: true
+            acyclic: true
+        handledBy:
+            description: Each UseCase declares exactly one required Handler.
+            field: handler
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Handler
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        hasAuthorizer:
+            field: authorizers
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Authorizer
+            context: true
+            invalidate: true
+        hasMapper:
+            field: mappers
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Mapper
+            context: true
+            invalidate: true
+        hasValidator:
+            field: validators
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Validator
+            context: true
+            invalidate: true
+        providedBy:
+            description: An Interface names its publishing Module.
+            field: provider
+            sourceKinds:
+                - Interface
+            targetKinds:
+                - Module
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        publishesEvent:
+            field: eventPublications
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - EventPublication
+            context: true
+            invalidate: true
+        realizesFeature:
+            description: A UseCase may identify one Feature grouping.
+            field: feature
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Feature
+            minTargets: 0
+            maxTargets: 1
+            context: true
+            invalidate: true
+        touchesAggregate:
+            description: A UseCase declares the Aggregates it may operate on.
+            field: aggregates
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Aggregate
+            context: true
+            invalidate: true
+        usesInterfaces:
+            description: A Module consumes an explicitly modeled contract.
+            field: interfaces
+            sourceKinds:
+                - Module
+            targetKinds:
+                - Interface
+            context: true
+            invalidate: true
+            acyclic: true
+    constraints:
+        - name: module-dependencies-stay-at-shared-boundaries
+          description: Direct dependency declarations target only stable Core and Common resources.
+          select:
+            kind: Module
+          assert:
+            op: allowed-targets
+            relation: dependsOn
+            values:
+                - Core
+                - Common
+        - name: selected-command-labels-identify-commands
+          description: The opt-in validation cohort contains only UseCases whose intent is Command.
+          select:
+            kind: UseCase
+            labels:
+                validation: required
+          assert:
+            op: equal
+            field: intent
+            value: Command
+        - name: selected-feature-ownership-matches-module
+          description: The opt-in Feature cohort belongs to the same Module as its UseCase.
+          select:
+            kind: UseCase
+            labels:
+                feature-ownership: required
+          assert:
+            op: same-target
+            left:
+                - belongsToModule
+            right:
+                - realizesFeature
+                - belongsToModule

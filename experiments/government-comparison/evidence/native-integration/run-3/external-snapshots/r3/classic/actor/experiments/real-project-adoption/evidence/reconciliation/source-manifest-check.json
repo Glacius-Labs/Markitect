@@ -1,0 +1,10 @@
+{
+  "upstreamRepository": "https://github.com/kgrzybek/modular-monolith-with-ddd",
+  "upstreamCommit": "91c8ef24b4cb6ef558c95d8267fa07d68c7059f8",
+  "declaredFileCount": 646,
+  "checkedFileCount": 646,
+  "declaredBytes": 711461,
+  "checkedBytes": 711461.0,
+  "exact": true,
+  "mismatches": []
+}

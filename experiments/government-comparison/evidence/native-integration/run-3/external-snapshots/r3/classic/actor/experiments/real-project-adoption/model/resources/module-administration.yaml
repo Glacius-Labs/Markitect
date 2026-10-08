@@ -1,0 +1,16 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Module
+metadata:
+  name: administration
+  namespace: architecture
+spec:
+  purpose: Administration of members and review of meeting-group proposals.
+  dependsOn:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Core, name: core, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Interface, name: meetings-events, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Interface, name: registrations-events, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Interface, name: user-access-events, namespace: architecture}
+  projectFiles:
+    - src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj
+    - src/Modules/Administration/Domain/CompanyName.MyMeetings.Modules.Administration.Domain.csproj
+    - src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj

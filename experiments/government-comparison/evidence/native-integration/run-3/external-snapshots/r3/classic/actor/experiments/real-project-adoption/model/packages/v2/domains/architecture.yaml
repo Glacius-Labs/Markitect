@@ -1,0 +1,205 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Domain
+metadata:
+  name: mymeetings-architecture-v2
+spec:
+  apiVersion: architecture.mymeetings.example/v1alpha1
+  kinds:
+    Aggregate:
+      inputsField: sourceFiles
+      required: [summary, module]
+      properties:
+        module: {type: ref, refKind: Module}
+        sourceFiles: {type: array, items: {type: string}}
+        summary: {type: string}
+    Common:
+      inputsField: sourceFiles
+      required: [summary, owner]
+      properties:
+        owner: {type: ref, refKind: Core}
+        sourceFiles: {type: array, items: {type: string}}
+        summary: {type: string}
+    Core:
+      inputsField: projectFiles
+      required: [purpose]
+      properties:
+        projectFiles: {type: array, items: {type: string}}
+        purpose: {type: string}
+    Feature:
+      required: [summary, module]
+      properties:
+        documents: {type: array, items: {type: ref, refKind: Narrative}}
+        module: {type: ref, refKind: Module}
+        summary: {type: string}
+    Handler:
+      inputsField: sourceFiles
+      required: [summary]
+      properties:
+        common: {type: array, items: {type: ref, refKind: Common}}
+        sourceFiles: {type: array, items: {type: string}}
+        summary: {type: string}
+    Interface:
+      inputsField: sourceFiles
+      required: [summary, provider]
+      properties:
+        provider: {type: ref, refKind: Module}
+        sourceFiles: {type: array, items: {type: string}}
+        summary: {type: string}
+    Module:
+      inputsField: projectFiles
+      required: [purpose, dependsOn]
+      properties:
+        dependsOn: {type: array, items: {type: ref}}
+        projectFiles: {type: array, items: {type: string}}
+        purpose: {type: string}
+    Narrative:
+      inputsField: sourceFiles
+      required: [summary, owner]
+      properties:
+        owner: {type: ref, refKind: Module}
+        sourceFiles: {type: array, items: {type: string}}
+        summary: {type: string}
+    Product:
+      required: [purpose, components]
+      properties:
+        components: {type: array, items: {type: ref}}
+        purpose: {type: string}
+    UseCase:
+      inputsField: sourceFiles
+      required: [intent, summary, module, handler]
+      properties:
+        aggregates: {type: array, items: {type: ref, refKind: Aggregate}}
+        feature: {type: ref, refKind: Feature}
+        handler: {type: ref, refKind: Handler}
+        intent:
+          type: string
+          enum: [Command, Query]
+        module: {type: ref, refKind: Module}
+        sourceFiles: {type: array, items: {type: string}}
+        summary: {type: string}
+        validators: {type: array, items: {type: ref, refKind: Validator}}
+    Validator:
+      inputsField: sourceFiles
+      required: [summary]
+      properties:
+        sourceFiles: {type: array, items: {type: string}}
+        summary: {type: string}
+  relations:
+    belongsToModule:
+      description: Feature, Aggregate and UseCase identify their owning Module.
+      field: module
+      sourceKinds: [Aggregate, Feature, UseCase]
+      targetKinds: [Module]
+      minTargets: 1
+      maxTargets: 1
+      context: true
+      invalidate: true
+    commonOwnedByCore:
+      description: Shared application and domain contracts have explicit stable Core ownership.
+      field: owner
+      sourceKinds: [Common]
+      targetKinds: [Core]
+      minTargets: 1
+      maxTargets: 1
+      context: true
+      invalidate: true
+    dependsOn:
+      description: Declared direct project boundary dependencies target stable Core, explicit Interface contracts, or a Module for policy checking.
+      field: dependsOn
+      sourceKinds: [Module]
+      targetKinds: [Core, Interface, Module]
+      context: false
+      invalidate: true
+      acyclic: true
+    documents:
+      description: Human-owned decision or evidence documents relevant to a Feature.
+      field: documents
+      sourceKinds: [Feature]
+      targetKinds: [Narrative]
+      context: true
+      invalidate: true
+    hasHandler:
+      description: Every modeled UseCase owns exactly one Handler.
+      field: handler
+      sourceKinds: [UseCase]
+      targetKinds: [Handler]
+      minTargets: 1
+      maxTargets: 1
+      context: true
+      invalidate: true
+    hasValidator:
+      description: Optional command/query-specific validation implementation.
+      field: validators
+      sourceKinds: [UseCase]
+      targetKinds: [Validator]
+      context: true
+      invalidate: true
+    providedBy:
+      description: An Interface identifies its publishing Module.
+      field: provider
+      sourceKinds: [Interface]
+      targetKinds: [Module]
+      minTargets: 1
+      maxTargets: 1
+      context: true
+      invalidate: true
+    productComposes:
+      description: The Product composition root includes its Core and business Modules.
+      field: components
+      sourceKinds: [Product]
+      targetKinds: [Core, Module]
+      minTargets: 1
+      context: true
+      invalidate: true
+    usesCommon:
+      description: A UseCase Handler explicitly reuses a shared Core concept.
+      field: common
+      sourceKinds: [Handler]
+      targetKinds: [Common]
+      context: true
+      invalidate: true
+    usesFeature:
+      description: A UseCase may name its Feature grouping.
+      field: feature
+      sourceKinds: [UseCase]
+      targetKinds: [Feature]
+      maxTargets: 1
+      context: true
+      invalidate: true
+  constraints:
+    - name: module-dependencies-cross-only-through-explicit-boundaries
+      description: A Module's declared boundary dependencies cannot point directly at another Module.
+      select: {kind: Module}
+      assert:
+        op: allowed-targets
+        relation: dependsOn
+        values: [Core, Interface]
+    - name: selected-feature-owner-matches-usecase-module
+      description: The explicitly selected UseCase cohort must agree with the Module owner reached through its Feature.
+      select:
+        kind: UseCase
+        labels: {feature-ownership: required}
+      assert:
+        op: same-target
+        left: [belongsToModule]
+        right: [usesFeature, belongsToModule]
+
+    - name: selected-validation-cohort-is-command
+      description: Resources in the explicitly selected v2 validation cohort must be Commands.
+      select:
+        kind: UseCase
+        labels: {validation: required}
+      assert:
+        op: equal
+        field: intent
+        value: Command
+    - name: selected-commands-require-validator
+      description: Commands explicitly selected for the v2 validation cohort must have at least one Validator.
+      select:
+        kind: UseCase
+        labels: {validation: required}
+      assert:
+        op: count
+        scope: resource
+        relation: hasValidator
+        min: 1

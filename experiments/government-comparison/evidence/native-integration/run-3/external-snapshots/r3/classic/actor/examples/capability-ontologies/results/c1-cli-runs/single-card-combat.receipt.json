@@ -1,0 +1,67 @@
+{
+    "name":  "single-card-combat",
+    "action":  "canonical model",
+    "binary":  {
+                   "sourceCommit":  "216e101baa2021fb6bf091206b323407aa471b26",
+                   "sha256":  "ba0fe8b3b6bd1676091eaa492c58600a08429f2f6e3ff79d9d8cff2d142b30f9"
+               },
+    "argv":  [
+                 "markitect",
+                 "canonical",
+                 "--action",
+                 "model",
+                 "--repo",
+                 "\u003cisolated-trial-repository\u003e",
+                 "--revision",
+                 "08325243603c325f81c3e62269614462908e81af",
+                 "--config",
+                 "examples/capability-ontologies/canonical.yaml"
+             ],
+    "revision":  "08325243603c325f81c3e62269614462908e81af",
+    "repository":  "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\c1-cli-single-card-combat-33ff3e332ea049ff8c53dd4a175b6541",
+    "seedSourceCommit":  "769d95062cb060e5eb688768a85b200ff3130602",
+    "sourceDigest":  "b71aa49bcd09767b409e11360a59f6b82084a241416871e94eb7ba1dfc78f8c9",
+    "status":  "passed",
+    "exitCode":  0,
+    "model":  {
+                  "digest":  "sha256:86235d35961349a8b10ac7e12784581cfa9a8461c60f14888693ec1b47f8b30f",
+                  "schemaCount":  1,
+                  "definitionCount":  2,
+                  "edgeCount":  1,
+                  "edgesBlockSha256":  "f3d589dd56d828dcff8befaefb951ef6f155ae0f523ba8dbe5ae62ff9f30386b"
+              },
+    "expected":  {
+                     "status":  "passed",
+                     "exitCode":  0,
+                     "diagnostic":  "",
+                     "schemaCount":  1,
+                     "definitionCount":  2,
+                     "edgeCount":  1
+                 },
+    "expectationMatched":  true,
+    "diagnosticCodes":  [
+
+                        ],
+    "inputs":  [
+                   {
+                       "path":  "examples/capability-ontologies/canonical.yaml",
+                       "sha256":  "5564206d54cdbf9c3d6a2256a6c01da3d8c5ef7baf797d2a97ed49c3416e7342",
+                       "byteLength":  518
+                   }
+               ],
+    "stdout":  {
+                   "path":  "examples/capability-ontologies/results/c1-cli-runs/single-card-combat.stdout.log",
+                   "sha256":  "44dec22ab3ef5a416d3c067b71727cb4a8b55246bea7f5805e04b13dcd098024",
+                   "byteLength":  4482
+               },
+    "stderr":  {
+                   "path":  "examples/capability-ontologies/results/c1-cli-runs/single-card-combat.stderr.log",
+                   "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                   "byteLength":  0
+               },
+    "repositoryBundle":  {
+                             "path":  "examples/capability-ontologies/results/c1-cli-runs/single-card-combat.bundle",
+                             "sha256":  "f958e5f3329a1dc0283943e4410ff6d1bcf9b7af86f1dfe603021c0703554d87",
+                             "byteLength":  5963
+                         }
+}

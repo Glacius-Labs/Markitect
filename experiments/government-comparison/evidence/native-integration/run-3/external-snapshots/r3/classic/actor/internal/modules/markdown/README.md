@@ -1,0 +1,5 @@
+# Markdown projector
+
+`Render(TargetPath)` preserves the established exact-path candidate-byte API. `RenderProjection(Input)` derives the module-owned `index.md` beneath a validated target prefix. `Propose(Input)` owns this module's projection decision and the `index.md` page convention under the supplied target prefix. It renders unfamiliar selected Kinds from Core Schema, Definition, and each selected Markdown `ProjectionPolicy`.
+
+A complete inspected target inventory is required before a no-op. The proposal returns `work`, `no-op`, or `escalate` with stable reason codes; a current supplied verification binding is required to clear `EvidenceRefreshRequired`; an older materialization request digest alone does not make unchanged bytes stale. Unknown, retired, ambiguous, or incomplete ownership escalates. The module returns bytes but performs no writes or deletions. The Host owns path authorization, Plan/Apply/Verify, artifact provenance, and any claim that checks passed; a proposal does not claim semantic acceptance.

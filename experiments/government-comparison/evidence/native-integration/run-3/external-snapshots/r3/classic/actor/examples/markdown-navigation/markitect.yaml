@@ -1,0 +1,11 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: markdown-navigation
+spec:
+    targets:
+        - markdown
+        - claude
+    areas:
+        - name: general
+          path: docs/general

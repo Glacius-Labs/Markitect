@@ -1,0 +1,7 @@
+apiVersion: commerce.recursive-assurance/v1
+kind: BillingQuery
+metadata:
+  namespace: billing
+  name: sum-outstanding
+purpose: Sum nonnegative outstanding amounts, returning zero for empty input and rejecting overflow.
+spec: {}

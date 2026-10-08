@@ -1,0 +1,36 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: UseCase
+metadata:
+    name: create-order
+    namespace: engineering
+    labels:
+        feature-ownership: required
+        validation: required
+spec:
+    aggregates:
+        - kind: Aggregate
+          name: order
+          namespace: engineering
+    authorizers:
+        - kind: Authorizer
+          name: order-write
+          namespace: engineering
+    eventPublications:
+        - kind: EventPublication
+          name: order-placed
+          namespace: engineering
+    feature:
+        kind: Feature
+        name: order-lifecycle
+        namespace: engineering
+    handler:
+        kind: Handler
+        name: create-order-handler
+        namespace: engineering
+    intent: Command
+    module:
+        kind: Module
+        name: orders
+        namespace: engineering
+    summary: Accept an order after availability and authorization checks.
+    validators: []

@@ -1,0 +1,436 @@
+{
+  "evidenceType": "markitect-real-project-adoption-replay-setup",
+  "upstreamRepository": "https://github.com/kgrzybek/modular-monolith-with-ddd",
+  "upstreamCommit": "91c8ef24b4cb6ef558c95d8267fa07d68c7059f8",
+  "sourceManifestSha256": "5f3ba17fde2f6304b06e90516e54525b46142ea05dd161f772e3bd9f135cbfb8",
+  "baselineBranch": "codex/pilot-baseline",
+  "baselineCommit": "6e94b2aa597e763b41e6881a58ebefac903b9dca",
+  "adopterBranch": "codex/pilot-adopter",
+  "adopterStartingCommit": "6e94b2aa597e763b41e6881a58ebefac903b9dca",
+  "markitectVersion": "0.12.0",
+  "markitectExecutableSha256": "b03424560caa460322e3580785d6abc9dfbf2137df878e03ddedcf76b3a8fa47",
+  "packages": [
+    {
+      "version": "1.0.0",
+      "branch": "codex/adoption-constitution-v1",
+      "revision": "557ba8372fe5389546a20065c744a8e3a4dbec5e",
+      "contentFiles": [
+        {
+          "path": "areas/constitution/vertical-slice.workflow.yaml",
+          "bytes": 965,
+          "sha256": "c8c72dec999e1da72de529057184f26e2647f1cadbf17d07204e22559923f92e"
+        },
+        {
+          "path": "domains/architecture.yaml",
+          "bytes": 6281,
+          "sha256": "981a09fd459acbe361d49d2b729d91e823c70e2c196c355feb04c29f255d5455"
+        },
+        {
+          "path": "markitect-package.yaml",
+          "bytes": 320,
+          "sha256": "e40ef9e53a69d45fe5c406bdf575683453cbbf92a00762da7fe8d45b95e1296a"
+        }
+      ],
+      "archive": ".markitect/packages/mymeetings-architecture-1.0.0.zip",
+      "archiveBytes": 2614,
+      "archiveSha256": "0c7395055aac7f4c35afcff404481a77e2ce6475c863a435afc2586dd388b1cc"
+    },
+    {
+      "version": "2.0.0",
+      "branch": "codex/adoption-constitution-v2",
+      "revision": "20559b510506476954f7632c73613d1c766e0b4d",
+      "contentFiles": [
+        {
+          "path": "areas/constitution/vertical-slice.workflow.yaml",
+          "bytes": 965,
+          "sha256": "c8c72dec999e1da72de529057184f26e2647f1cadbf17d07204e22559923f92e"
+        },
+        {
+          "path": "domains/architecture.yaml",
+          "bytes": 6935,
+          "sha256": "ffe0ae8f6980b475ded8a6e8bbfe49b42375a895a9399c7fc036559bcd038465"
+        },
+        {
+          "path": "markitect-package.yaml",
+          "bytes": 320,
+          "sha256": "93ff8acf7374c4f58858866ad80213a3fef3501faee16dabcd136a049dc86238"
+        }
+      ],
+      "archive": ".markitect/packages/mymeetings-architecture-2.0.0.zip",
+      "archiveBytes": 2740,
+      "archiveSha256": "0ed97c9f0b21e10b5e2a0ff232bdb910bd468ac04f84441ae24d5b7cefb2b504"
+    }
+  ],
+  "adopterInputs": [
+    {
+      "path": "markitect.yaml",
+      "bytes": 1051,
+      "sha256": "e6a20d968317395d67baeda6577b2788e94ebc19efa2a35ffc0974cae97d6fb3"
+    },
+    {
+      "path": "context-run.yaml",
+      "bytes": 1732,
+      "sha256": "de031e5d0e7ea8cd40a2639706aeec6a02320131d662b4210fff85b53681f0a6"
+    },
+    {
+      "path": "work-items/copy-me-query-convention.md",
+      "bytes": 565,
+      "sha256": "8a7a329d9f7e80358155c32eb83a00b1cf0c8c004b3998a63e1ac8674cfc0f52"
+    },
+    {
+      "path": "scripts/check-module-project-references.ps1",
+      "bytes": 7712,
+      "sha256": "f5cd05dd73388805cdca41b1e47372cf2462462c191d9e54ae89e90451a3bae4"
+    },
+    {
+      "path": "scripts/project-map.json",
+      "bytes": 4605,
+      "sha256": "b7c94e9288d4a0456ce17e0b10d88b7928638a0acb3856fd5c8f45e516f1fb25"
+    }
+  ],
+  "resources": [
+    {
+      "path": "aggregate-meeting-comment.yaml",
+      "bytes": 463,
+      "sha256": "dbc3d7072bf2b0ce90673a1d5474f6c9a35677951c0272cbe2cdd8169c13f344"
+    },
+    {
+      "path": "aggregate-meeting-group.yaml",
+      "bytes": 459,
+      "sha256": "7237e6d6d58d06b31c34917d351d1c007e4c699bb9d4c87e64ff32e07434c18d"
+    },
+    {
+      "path": "aggregate-meeting-proposal.yaml",
+      "bytes": 496,
+      "sha256": "6d665dff3668c1f375a3742cc168a28024ff9f88fe60ff781e2ffcf8996b9093"
+    },
+    {
+      "path": "aggregate-meeting.yaml",
+      "bytes": 454,
+      "sha256": "3bda7498e19d18677aef69874ee020f0682019fd407b1622999e6ac871444eef"
+    },
+    {
+      "path": "aggregate-payer.yaml",
+      "bytes": 414,
+      "sha256": "d1b2f28734dcba1a3a162b1687c66de8b7b6f528e79089fdfb4828c51e91a507"
+    },
+    {
+      "path": "aggregate-user-registration.yaml",
+      "bytes": 472,
+      "sha256": "e60da1ef790ec6fb975c32ae07cd26a9a5f40e98f719241c7389eb7f1a5ed85f"
+    },
+    {
+      "path": "aggregate-user.yaml",
+      "bytes": 430,
+      "sha256": "01ef22a5b505db9fe8667d2affe6f5514c7f2826849a2ae58de6acd3d706a952"
+    },
+    {
+      "path": "common-aggregate-root-marker.yaml",
+      "bytes": 454,
+      "sha256": "19fd4418ffe9641051476f5e31d229dab6035694c94afdc71c22aaff6a94e06a"
+    },
+    {
+      "path": "common-sql-connection-factory.yaml",
+      "bytes": 467,
+      "sha256": "425a419c3a483f9c0873d626b611dc5daff60980ff944df923a0684656deb498"
+    },
+    {
+      "path": "common-unit-of-work.yaml",
+      "bytes": 435,
+      "sha256": "43fa2777f060e2d813ef39763b7fc7ccd5eb056ac51d4eac4072f08c61267092"
+    },
+    {
+      "path": "core.yaml",
+      "bytes": 514,
+      "sha256": "d7c062010500b488e14f470e6b22902a93288a2f0ce4a540d795ffbe27ab046c"
+    },
+    {
+      "path": "feature-authentication.yaml",
+      "bytes": 551,
+      "sha256": "1a315f8d73631cb7c533a7510df1090a40a195324567284acaba7ec0e3824793"
+    },
+    {
+      "path": "feature-group-proposals.yaml",
+      "bytes": 542,
+      "sha256": "cced0f41669df6a2a52ecd4f859737db71530618e583ca219bee2d0fe07cdaf4"
+    },
+    {
+      "path": "feature-meeting-attendance.yaml",
+      "bytes": 853,
+      "sha256": "0561d752aea2c5c82e2b8f18ce072089fd6530827d53d5a079526864192311aa"
+    },
+    {
+      "path": "feature-meeting-fees.yaml",
+      "bytes": 535,
+      "sha256": "862f97b78a6f6d40f65ba4c833001bc938c0eec0977c77ad7717e0387b52ffd1"
+    },
+    {
+      "path": "feature-meeting-groups.yaml",
+      "bytes": 680,
+      "sha256": "6c79cfbbb8b3e1bcd6daf0f9f817695dff7a3eaedc72088f23b6076c01d90968"
+    },
+    {
+      "path": "feature-meeting-lifecycle.yaml",
+      "bytes": 684,
+      "sha256": "4dea5fbbea6cb2fecb14c72292269b8e46ad0e0fc4161685749be9b70ad05c48"
+    },
+    {
+      "path": "feature-price-list.yaml",
+      "bytes": 509,
+      "sha256": "bc359ceb773b84b629f2329cffb144953e45cfd3650050386819c9713503fb9c"
+    },
+    {
+      "path": "feature-user-registration.yaml",
+      "bytes": 544,
+      "sha256": "e56438609a9cbe65a6bb0e4bd3f3b2e91835b12b4ecc716d1b27ec8476f02b4a"
+    },
+    {
+      "path": "handler-accept-proposal.yaml",
+      "bytes": 381,
+      "sha256": "caba3890f1cede5863a917b13322d6409de7b60155c193b3648a6514e3b775e4"
+    },
+    {
+      "path": "handler-add-meeting-attendee.yaml",
+      "bytes": 342,
+      "sha256": "0c53616c51fb164e96f6a574ab28003f6963b68b00967788ce6baaf3ceb0becb"
+    },
+    {
+      "path": "handler-authenticate.yaml",
+      "bytes": 325,
+      "sha256": "ce4ccd6ecb189018b61cf0170ced2d8f879ed0e4dd343085179f5259f0d9e208"
+    },
+    {
+      "path": "handler-cancel-meeting.yaml",
+      "bytes": 318,
+      "sha256": "396f911dff3d22236830c6fa760edcbf7a1863c1b3ffe2318916154990a30f6a"
+    },
+    {
+      "path": "handler-create-meeting.yaml",
+      "bytes": 340,
+      "sha256": "ea027eb529e9493ce7d2eec2a0f5827af6c7e6bd52e48a6f1c7af0bb74c630c9"
+    },
+    {
+      "path": "handler-create-price-list-item.yaml",
+      "bytes": 361,
+      "sha256": "c93d960887db705f661e2ef40c31ba50239e449a2506c03a52f8f4807e1859dd"
+    },
+    {
+      "path": "handler-get-meeting-attendees.yaml",
+      "bytes": 505,
+      "sha256": "fa33297271d78cc07e200edfa970fd6c3c4f72f39408cf7c1f8ea1539f1cbd39"
+    },
+    {
+      "path": "handler-get-meeting-fees.yaml",
+      "bytes": 332,
+      "sha256": "d84bba268d6c6076b2aa3ee6726ae00ba4488ff46e5844e570d6656ea639d99c"
+    },
+    {
+      "path": "handler-get-meeting-group-details.yaml",
+      "bytes": 349,
+      "sha256": "5f9fc74a0911ecadb0b70876b92a6a2262279d7d7304258c1f3bef25e4326aee"
+    },
+    {
+      "path": "handler-get-member.yaml",
+      "bytes": 317,
+      "sha256": "02706d1a20cb04bfd6a68b2beefb56e5d16dd6ade5feaea4532bf41d210939c9"
+    },
+    {
+      "path": "handler-propose-meeting-group.yaml",
+      "bytes": 364,
+      "sha256": "90ad95b422b2efeb1e618ffaa11bced281b7271c7878e84bf83085d7a89be686"
+    },
+    {
+      "path": "handler-register-new-user.yaml",
+      "bytes": 342,
+      "sha256": "c1154c29def643219bc255e9184bebcd4de043714503959afb56c5608933af87"
+    },
+    {
+      "path": "interface-administration-events.yaml",
+      "bytes": 550,
+      "sha256": "865bb89fd64d9f01bab5871fd2fda62900cf165888e813f09170b4ac9ac302ed"
+    },
+    {
+      "path": "interface-administration-module-api.yaml",
+      "bytes": 463,
+      "sha256": "7bb20be900a5c04347a67eec7ec6b1b8e4da2753d23c24dc95623e1fd03cf258"
+    },
+    {
+      "path": "interface-meetings-events.yaml",
+      "bytes": 674,
+      "sha256": "77b2130ecf5657e4a6e40ce1b698998c0675276b50ea1e6bd7dfe8d0519e8cf0"
+    },
+    {
+      "path": "interface-meetings-module-api.yaml",
+      "bytes": 433,
+      "sha256": "c323228dd2f87ec92d5b177dad5b796f599719c6d16cc8acf04c64c937098283"
+    },
+    {
+      "path": "interface-payments-events.yaml",
+      "bytes": 587,
+      "sha256": "e4c81a05cfe4c942e6cd4bab7decc30490fbf971af3de1581338a830e39a090a"
+    },
+    {
+      "path": "interface-payments-module-api.yaml",
+      "bytes": 433,
+      "sha256": "fbd85ddce6f0629089a97e534989355bd442bf4da0336a255dd4a5e99c387c33"
+    },
+    {
+      "path": "interface-registrations-events.yaml",
+      "bytes": 488,
+      "sha256": "4f188cb65316b7a0612270ddf8eca4b347c04676106e198978b27db5233e7d46"
+    },
+    {
+      "path": "interface-registrations-module-api.yaml",
+      "bytes": 458,
+      "sha256": "c2a247760ea7eb0882f80d936293998ed771c3bc40e93b281e1c4ae29970d954"
+    },
+    {
+      "path": "interface-user-access-events.yaml",
+      "bytes": 439,
+      "sha256": "4acf2aa3ff0a16aac301ae7b58d530f749f687f5097e9746f3fbe73f815cb90e"
+    },
+    {
+      "path": "interface-user-access-module-api.yaml",
+      "bytes": 445,
+      "sha256": "c2ec2903d0fce934b2e3eef2fa01ffa026059e21b50417e268ecabd5b2e17a36"
+    },
+    {
+      "path": "module-administration.yaml",
+      "bytes": 1202,
+      "sha256": "9f22dcb3c541268bf833e1bd51483d70eca873e324cf7ef6a5fbc3f49e4cea8c"
+    },
+    {
+      "path": "module-meetings.yaml",
+      "bytes": 1319,
+      "sha256": "9a4e2ab5611609fc6e713b8a0c874c42e76942fc7448b72256506c6e7477f75f"
+    },
+    {
+      "path": "module-payments.yaml",
+      "bytes": 1314,
+      "sha256": "f1baf2c0b825bdd79574c03c51792f34d893ad1070ec9a5a447de0d6bf5ef1b0"
+    },
+    {
+      "path": "module-registrations.yaml",
+      "bytes": 701,
+      "sha256": "4f880fd5a2854b8840d9638eaf368317a74861f80ebd2b1a3cea21ad79fbd8dd"
+    },
+    {
+      "path": "module-user-access.yaml",
+      "bytes": 852,
+      "sha256": "eca6b3a90a0c8d3229932971f25214b7c75e5aa279106531e5bd4d934adf6d63"
+    },
+    {
+      "path": "narrative-architecture-test-decision.yaml",
+      "bytes": 503,
+      "sha256": "da54a85673409c11d60d584394ba93fb2f7c54036eed5393942848154c08f449"
+    },
+    {
+      "path": "narrative-cqrs-read-model-decision.yaml",
+      "bytes": 490,
+      "sha256": "4ac9d7ba82287c9e3ec72d8540f32d0096e1d5f31ab4e02f8d4c5031321de989"
+    },
+    {
+      "path": "narrative-meeting-attendee-view.yaml",
+      "bytes": 507,
+      "sha256": "3c8ed59f138b6e6c05db819ef9be3fdf096267d70c694a360f678896f0907952"
+    },
+    {
+      "path": "narrative-module-event-boundary-decision.yaml",
+      "bytes": 510,
+      "sha256": "e47c58fa23325956f73f0b96fcd22c26fc98d11445f029cc7fdbde8f684022ce"
+    },
+    {
+      "path": "product-mymeetings.yaml",
+      "bytes": 1133,
+      "sha256": "2a59ad0a7bb0d62537dcad17c9b4fa2e9714c3e38ea3cdb186ff3986bc006aa1"
+    },
+    {
+      "path": "usecase-accept-proposal.yaml",
+      "bytes": 1073,
+      "sha256": "f607be096ffc27cc48d80eef6455d49a49a6327f12fb576b28f2f975b0418df3"
+    },
+    {
+      "path": "usecase-add-meeting-attendee.yaml",
+      "bytes": 1066,
+      "sha256": "64176c528b01f2c22cdb7737c459d1623a44fc9f934be556cd040a37997e6790"
+    },
+    {
+      "path": "usecase-authenticate.yaml",
+      "bytes": 1158,
+      "sha256": "02cf59d4f10b7c3d405dcfd12ce2708d16cf16c11fdc4f81199324f585dec9b9"
+    },
+    {
+      "path": "usecase-cancel-meeting.yaml",
+      "bytes": 1029,
+      "sha256": "94133b17624821827a147c42d043cfaf4de7d4f4b18e66488b7b8aed89f9e25a"
+    },
+    {
+      "path": "usecase-create-meeting.yaml",
+      "bytes": 1028,
+      "sha256": "b5076af83aed7ebdb1be498d7771237905ae8eceb1a70cc1e0c9628ec13aee5b"
+    },
+    {
+      "path": "usecase-create-price-list-item.yaml",
+      "bytes": 890,
+      "sha256": "28430f3beba8b71eaee45eff9fb285c8d8c42dcad9cfc19cbbcd861f0650f318"
+    },
+    {
+      "path": "usecase-get-meeting-attendees.yaml",
+      "bytes": 914,
+      "sha256": "cf1e7391ce6ebc8ae33f5e12ea7df632cc78b2305fc49ff97f9cc25b4c678dfd"
+    },
+    {
+      "path": "usecase-get-meeting-fees.yaml",
+      "bytes": 867,
+      "sha256": "e206e309866c65968dbb8e6970211f34f1fffe39b765127a164f53eff8fa1954"
+    },
+    {
+      "path": "usecase-get-meeting-group-details.yaml",
+      "bytes": 1049,
+      "sha256": "a6cea8fccc53bd354668e0d0588f9fd95934bb757849f4dbe52c2e48df1f2b6d"
+    },
+    {
+      "path": "usecase-get-member.yaml",
+      "bytes": 862,
+      "sha256": "e408f0ddbe2cd664adcb26a9a933f9b0abe64c015daa10912104801ed16c57d6"
+    },
+    {
+      "path": "usecase-propose-meeting-group.yaml",
+      "bytes": 1213,
+      "sha256": "e03f5dac870a2e8f81718f29f69fb7188d5a81cb8607a265c545287fbc5bc27d"
+    },
+    {
+      "path": "usecase-register-new-user.yaml",
+      "bytes": 1067,
+      "sha256": "53042f496a6846536e89e6519a536aa77ae8b66b09a7a47ed60d117f46e53392"
+    },
+    {
+      "path": "validator-authenticate.yaml",
+      "bytes": 320,
+      "sha256": "b8e336ca0adb96cf89de44a17176bf8e3cb04cd87206ec5c884197202f1dfd0e"
+    },
+    {
+      "path": "validator-propose-meeting-group.yaml",
+      "bytes": 354,
+      "sha256": "1f20e05989663313d00060ea149c4778c6c51c61a5b2806652b2ee7644decd52"
+    }
+  ],
+  "agentGuidance": {
+    "path": "architecture-review.skill.yaml",
+    "bytes": 1153,
+    "sha256": "e3d72b4a231b35f781acfaaf1958ffcf7434993f58a0f61852b82dac851a6ef3"
+  },
+  "projectPin": {
+    "package": "mymeetings-architecture",
+    "version": "1.0.0",
+    "archive": ".markitect/packages/mymeetings-architecture-1.0.0.zip",
+    "sha256": "0c7395055aac7f4c35afcff404481a77e2ce6475c863a435afc2586dd388b1cc"
+  },
+  "discovery": {
+    "taskCopied": "work-items/copy-me-query-convention.md",
+    "contextRunCopied": "context-run.yaml",
+    "candidateDecisionEvidenceCopied": false,
+    "automaticallyAdopted": false
+  },
+  "status": "setup-only; no agent run, human acceptance, or adoption is recorded"
+}

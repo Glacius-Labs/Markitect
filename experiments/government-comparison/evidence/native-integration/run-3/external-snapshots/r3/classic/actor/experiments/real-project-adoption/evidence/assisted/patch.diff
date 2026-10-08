@@ -1,0 +1,114 @@
+diff --git a/src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQuery.cs b/src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQuery.cs
+new file mode 100644
+index 0000000..3965f19
+--- /dev/null
++++ b/src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQuery.cs
+@@ -0,0 +1,14 @@
++﻿using CompanyName.MyMeetings.Modules.Meetings.Application.Contracts;
++
++namespace CompanyName.MyMeetings.Modules.Meetings.Application.Meetings.GetMeetingAttendeeCount
++{
++    public class GetMeetingAttendeeCountQuery : QueryBase<int>
++    {
++        public GetMeetingAttendeeCountQuery(Guid meetingId)
++        {
++            MeetingId = meetingId;
++        }
++
++        public Guid MeetingId { get; }
++    }
++}
+diff --git a/src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQueryHandler.cs b/src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQueryHandler.cs
+new file mode 100644
+index 0000000..8f27927
+--- /dev/null
++++ b/src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQueryHandler.cs
+@@ -0,0 +1,33 @@
++﻿using CompanyName.MyMeetings.BuildingBlocks.Application.Data;
++using CompanyName.MyMeetings.Modules.Meetings.Application.Configuration.Queries;
++using Dapper;
++
++namespace CompanyName.MyMeetings.Modules.Meetings.Application.Meetings.GetMeetingAttendeeCount
++{
++    internal class GetMeetingAttendeeCountQueryHandler : IQueryHandler<GetMeetingAttendeeCountQuery, int>
++    {
++        private readonly ISqlConnectionFactory _sqlConnectionFactory;
++
++        public GetMeetingAttendeeCountQueryHandler(ISqlConnectionFactory sqlConnectionFactory)
++        {
++            _sqlConnectionFactory = sqlConnectionFactory;
++        }
++
++        public async Task<int> Handle(GetMeetingAttendeeCountQuery query, CancellationToken cancellationToken)
++        {
++            var connection = _sqlConnectionFactory.GetOpenConnection();
++            const string sql = """
++                                SELECT COUNT(*)
++                                FROM [meetings].[v_MeetingAttendees] AS [MeetingAttendee]
++                                WHERE [MeetingAttendee].[MeetingId] = @MeetingId
++                                """;
++
++            return await connection.QuerySingleAsync<int>(
++                sql,
++                new
++                {
++                    query.MeetingId
++                });
++        }
++    }
++}
+diff --git a/resources/usecase-get-meeting-attendee-count.yaml b/resources/usecase-get-meeting-attendee-count.yaml
+new file mode 100644
+index 0000000..f441bd8
+--- /dev/null
++++ b/resources/usecase-get-meeting-attendee-count.yaml
+@@ -0,0 +1,29 @@
++apiVersion: architecture.mymeetings.example/v1alpha1
++kind: UseCase
++metadata:
++    name: get-meeting-attendee-count
++    namespace: architecture
++    labels:
++        feature-ownership: required
++spec:
++    aggregates: []
++    feature:
++        apiVersion: architecture.mymeetings.example/v1alpha1
++        kind: Feature
++        name: meeting-attendance
++        namespace: architecture
++    handler:
++        apiVersion: architecture.mymeetings.example/v1alpha1
++        kind: Handler
++        name: get-meeting-attendee-count
++        namespace: architecture
++    intent: Query
++    module:
++        apiVersion: architecture.mymeetings.example/v1alpha1
++        kind: Module
++        name: meetings
++        namespace: architecture
++    sourceFiles:
++        - src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQuery.cs
++    summary: Return the attendee row count for one Meeting using the SQL read model; guest numbers are fields on attendee rows.
++    validators: []
+diff --git a/resources/handler-get-meeting-attendee-count.yaml b/resources/handler-get-meeting-attendee-count.yaml
+new file mode 100644
+index 0000000..7bf7960
+--- /dev/null
++++ b/resources/handler-get-meeting-attendee-count.yaml
+@@ -0,0 +1,14 @@
++apiVersion: architecture.mymeetings.example/v1alpha1
++kind: Handler
++metadata:
++    name: get-meeting-attendee-count
++    namespace: architecture
++spec:
++    common:
++        - apiVersion: architecture.mymeetings.example/v1alpha1
++          kind: Common
++          name: sql-connection-factory
++          namespace: architecture
++    sourceFiles:
++        - src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQueryHandler.cs
++    summary: Count attendee rows from the SQL read model for a MeetingId.

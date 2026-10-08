@@ -1,0 +1,16 @@
+{"path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs", "bytes": 444, "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs", "bytes": 2036, "sha256": "996f50dd9cafe4df62d3ccc49f92be578fae5e851ffb8b8960b8a8284730d625", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/MeetingFeePaidIntegrationEventHandler.cs", "bytes": 935, "sha256": "d12614cbe8f0384d81381680003cfe312cb21d12ad206650c93542ba9d608ce3", "readType": "content"}
+{"path": "src/Modules/Payments/IntegrationEvents/MeetingFeePaidIntegrationEvent.cs", "bytes": 598, "sha256": "b1a08ce0c028af1272a83c427b60178be96c288dfc5978fd708c00c01372b47b", "readType": "content"}
+{"path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql", "bytes": 467, "sha256": "f45b41dfa11cac9b87b69e8ce780291be551b73170ec20e33a6fdbb2ff637e84", "readType": "content"}
+{"path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Tables/MeetingAttendees.sql", "bytes": 708, "sha256": "760d6074977f4b881a05d0a8366a0c7fd827a2540183844d556259a853f0dcfe", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/MarkMeetingAttendeeFeeAsPayedCommandHandler.cs", "bytes": 985, "sha256": "f71204f08f6ab396075f8679ef9154eed499980fb5e518c76bacfa56369021b5", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/MarkMeetingAttendeeFeeAsPayedCommand.cs", "bytes": 600, "sha256": "4bcc356e943f88b0c59cbf3b279c9be79841f0dcfe555af5dba568243f44dab1", "readType": "content"}
+{"path": "src/Modules/Meetings/Domain/Meetings/MeetingAttendee.cs", "bytes": 4794, "sha256": "1caa1c6027f7f461b3ce71fbed38f01c3e11c0c9f9df02ecf9e7870baf9d48d3", "readType": "content"}
+{"path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs", "bytes": 7248, "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3", "readType": "content"}
+{"path": "AGENTS.md", "bytes": 2666, "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2", "readType": "content"}
+{"path": "docs/architecture-decision-log/0009-use-2-layered-architectural-style-for-reads.md", "bytes": 1011, "sha256": "426c1b3a6f8c629a6224b2c99fa5216b346c03af5ae70446d6a86095cd871734", "readType": "content"}
+{"path": "docs/architecture-decision-log/0014-event-driven-communication-between-modules.md", "bytes": 2003, "sha256": "ad1f35a168f05d4f86018167a84a23b9f00be9f4ddbc8573926ca798ff85e22a", "readType": "content"}
+{"path": "docs/engineering-policy.md", "bytes": 377, "sha256": "3fad7de63b29ffd32b893956b88314d0e3471249af8dc774fcf4ff565e637296", "readType": "content"}
+{"path": "src/global.json", "bytes": 113, "sha256": "8dc87e6f68213f4444f20306d8057b48947550912e25a5b897702a51eea23d95", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj", "bytes": 642, "sha256": "2f0d3e0797c1fdf2c35bc4f61d1bce373dff83fac85236fb252895dd2cc61249", "readType": "content"}

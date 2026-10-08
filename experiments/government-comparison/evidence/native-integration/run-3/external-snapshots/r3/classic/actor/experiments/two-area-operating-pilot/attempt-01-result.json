@@ -1,0 +1,26 @@
+{
+  "schema": "markitect-two-area-attempt-result/v1",
+  "attempt": 1,
+  "sourceCommit": "74cbb7ca630e221b9b365e13e70165e9c7f59b6a",
+  "protocolDigest": "sha256:4428b90261dc232b9dc16aa29ee57bad420c28575ebf091a93aca4a581a07441",
+  "outcome": "rejected-before-apply-incomplete-fixture-contract",
+  "controllerStatus": "planned",
+  "controllerRunDigest": "sha256:73c8e9544fafd6b5dd0a8ffc7fb6257614bf025149ae2d85c8d166189a8d320a",
+  "actorCalls": 2,
+  "reason": "Required net10.0 project files were specified in the experiment contract and checks, but omitted from canonical ProjectionPolicy guidance supplied to Executors. Both actual candidate responses contain handler source only. Root rejected the candidate at the explicit Apply review boundary.",
+  "attribution": "Fixture specification/setup omission; this is not evidence that an actor ignored a supplied project-file requirement.",
+  "targetsWritten": false,
+  "recordStoreInitialized": false,
+  "verificationInvoked": false,
+  "holdoutInvoked": false,
+  "plannedCorrection": "A separate canonical attempt will add explicit buildable net10.0 library/project-file guidance to handler-dotnet ProjectionPolicy. Existing source, responses and result remain immutable; fresh actors will run the corrected input.",
+  "candidatePaths": {
+    "142a3cbf47443601252f897f06641c95": [
+      "src/Fulfillment/FulfillOrderHandler.cs"
+    ],
+    "8ea235eac25fcfd7e3a22d0f8e0ba741": [
+      "src/Orders/CreateOrderHandler.cs",
+      "src/Orders/SharedQuantityRange.cs"
+    ]
+  }
+}

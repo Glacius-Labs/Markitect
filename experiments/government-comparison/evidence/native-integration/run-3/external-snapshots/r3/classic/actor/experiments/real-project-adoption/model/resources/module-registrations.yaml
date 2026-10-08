@@ -1,0 +1,13 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Module
+metadata:
+  name: registrations
+  namespace: architecture
+spec:
+  purpose: Registration and confirmation of new users.
+  dependsOn:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Core, name: core, namespace: architecture}
+  projectFiles:
+    - src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj
+    - src/Modules/Registrations/Domain/CompanyName.MyMeetings.Modules.Registrations.Domain.csproj
+    - src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj

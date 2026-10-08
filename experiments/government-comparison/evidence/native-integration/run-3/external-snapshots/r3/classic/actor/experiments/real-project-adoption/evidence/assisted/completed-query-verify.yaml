@@ -1,0 +1,936 @@
+tool: Markitect
+version: 0.12.0
+toolDigest: sha256:b03424560caa460322e3580785d6abc9dfbf2137df878e03ddedcf76b3a8fa47
+revision: 058390f2ba6614f551f1a47cdd2088f9f15c7b92
+provisional: false
+digest: 06ec69c1cb4c446511c6ce650e50c5d485af0676d03ae7d0b4d4d1f9e76e98cb
+status: passed
+coverage: typed YAML graph and Markitect-owned outputs and all declared repository checks passed from one immutable Git snapshot; semantic review remains separate
+inventory:
+    - path: markitect.yaml
+      kind: Project
+      name: mymeetings-adoption-pilot
+      hash: sha256:e6a20d968317395d67baeda6577b2788e94ebc19efa2a35ffc0974cae97d6fb3
+    - path: markitect-package.yaml
+      kind: Package
+      name: mymeetings-architecture
+      package: mymeetings-architecture
+      hash: sha256:eae0ec6a6870b2becad3fb51780135b834d3ce176ded0e8516259765748160cc
+    - path: areas/constitution/vertical-slice.workflow.yaml
+      kind: Workflow
+      name: vertical-slice
+      namespace: constitution
+      package: mymeetings-architecture
+      hash: sha256:adfee2bbdc34f299c45dae48383c3f1c9a2a18b225ae0ac2c02792d9b273ef13
+    - path: agent-guidance/architecture-review.skill.yaml
+      kind: Skill
+      name: architecture-review
+      namespace: engineering
+      hash: sha256:e3d72b4a231b35f781acfaaf1958ffcf7434993f58a0f61852b82dac851a6ef3
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/aggregate-meeting-comment.yaml
+      kind: Aggregate
+      name: meeting-comment
+      namespace: architecture
+      hash: sha256:dbc3d7072bf2b0ce90673a1d5474f6c9a35677951c0272cbe2cdd8169c13f344
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/aggregate-meeting-group.yaml
+      kind: Aggregate
+      name: meeting-group
+      namespace: architecture
+      hash: sha256:7237e6d6d58d06b31c34917d351d1c007e4c699bb9d4c87e64ff32e07434c18d
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/aggregate-meeting-proposal.yaml
+      kind: Aggregate
+      name: meeting-proposal
+      namespace: architecture
+      hash: sha256:6d665dff3668c1f375a3742cc168a28024ff9f88fe60ff781e2ffcf8996b9093
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/aggregate-meeting.yaml
+      kind: Aggregate
+      name: meeting
+      namespace: architecture
+      hash: sha256:3bda7498e19d18677aef69874ee020f0682019fd407b1622999e6ac871444eef
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/aggregate-payer.yaml
+      kind: Aggregate
+      name: payer
+      namespace: architecture
+      hash: sha256:d1b2f28734dcba1a3a162b1687c66de8b7b6f528e79089fdfb4828c51e91a507
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/aggregate-user-registration.yaml
+      kind: Aggregate
+      name: user-registration
+      namespace: architecture
+      hash: sha256:e60da1ef790ec6fb975c32ae07cd26a9a5f40e98f719241c7389eb7f1a5ed85f
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/aggregate-user.yaml
+      kind: Aggregate
+      name: user
+      namespace: architecture
+      hash: sha256:01ef22a5b505db9fe8667d2affe6f5514c7f2826849a2ae58de6acd3d706a952
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/common-aggregate-root-marker.yaml
+      kind: Common
+      name: aggregate-root-marker
+      namespace: architecture
+      hash: sha256:19fd4418ffe9641051476f5e31d229dab6035694c94afdc71c22aaff6a94e06a
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/common-sql-connection-factory.yaml
+      kind: Common
+      name: sql-connection-factory
+      namespace: architecture
+      hash: sha256:425a419c3a483f9c0873d626b611dc5daff60980ff944df923a0684656deb498
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/common-unit-of-work.yaml
+      kind: Common
+      name: unit-of-work
+      namespace: architecture
+      hash: sha256:43fa2777f060e2d813ef39763b7fc7ccd5eb056ac51d4eac4072f08c61267092
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/core.yaml
+      kind: Core
+      name: core
+      namespace: architecture
+      hash: sha256:d7c062010500b488e14f470e6b22902a93288a2f0ce4a540d795ffbe27ab046c
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/feature-authentication.yaml
+      kind: Feature
+      name: authentication
+      namespace: architecture
+      hash: sha256:1a315f8d73631cb7c533a7510df1090a40a195324567284acaba7ec0e3824793
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/feature-group-proposals.yaml
+      kind: Feature
+      name: group-proposals
+      namespace: architecture
+      hash: sha256:cced0f41669df6a2a52ecd4f859737db71530618e583ca219bee2d0fe07cdaf4
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/feature-meeting-attendance.yaml
+      kind: Feature
+      name: meeting-attendance
+      namespace: architecture
+      hash: sha256:0561d752aea2c5c82e2b8f18ce072089fd6530827d53d5a079526864192311aa
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/feature-meeting-fees.yaml
+      kind: Feature
+      name: meeting-fees
+      namespace: architecture
+      hash: sha256:862f97b78a6f6d40f65ba4c833001bc938c0eec0977c77ad7717e0387b52ffd1
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/feature-meeting-groups.yaml
+      kind: Feature
+      name: meeting-groups
+      namespace: architecture
+      hash: sha256:6c79cfbbb8b3e1bcd6daf0f9f817695dff7a3eaedc72088f23b6076c01d90968
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/feature-meeting-lifecycle.yaml
+      kind: Feature
+      name: meeting-lifecycle
+      namespace: architecture
+      hash: sha256:4dea5fbbea6cb2fecb14c72292269b8e46ad0e0fc4161685749be9b70ad05c48
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/feature-price-list.yaml
+      kind: Feature
+      name: price-list
+      namespace: architecture
+      hash: sha256:bc359ceb773b84b629f2329cffb144953e45cfd3650050386819c9713503fb9c
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/feature-user-registration.yaml
+      kind: Feature
+      name: user-registration
+      namespace: architecture
+      hash: sha256:e56438609a9cbe65a6bb0e4bd3f3b2e91835b12b4ecc716d1b27ec8476f02b4a
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-accept-proposal.yaml
+      kind: Handler
+      name: accept-proposal
+      namespace: architecture
+      hash: sha256:caba3890f1cede5863a917b13322d6409de7b60155c193b3648a6514e3b775e4
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-add-meeting-attendee.yaml
+      kind: Handler
+      name: add-meeting-attendee
+      namespace: architecture
+      hash: sha256:0c53616c51fb164e96f6a574ab28003f6963b68b00967788ce6baaf3ceb0becb
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-authenticate.yaml
+      kind: Handler
+      name: authenticate
+      namespace: architecture
+      hash: sha256:ce4ccd6ecb189018b61cf0170ced2d8f879ed0e4dd343085179f5259f0d9e208
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-cancel-meeting.yaml
+      kind: Handler
+      name: cancel-meeting
+      namespace: architecture
+      hash: sha256:396f911dff3d22236830c6fa760edcbf7a1863c1b3ffe2318916154990a30f6a
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-create-meeting.yaml
+      kind: Handler
+      name: create-meeting
+      namespace: architecture
+      hash: sha256:ea027eb529e9493ce7d2eec2a0f5827af6c7e6bd52e48a6f1c7af0bb74c630c9
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-create-price-list-item.yaml
+      kind: Handler
+      name: create-price-list-item
+      namespace: architecture
+      hash: sha256:c93d960887db705f661e2ef40c31ba50239e449a2506c03a52f8f4807e1859dd
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-get-meeting-attendee-count.yaml
+      kind: Handler
+      name: get-meeting-attendee-count
+      namespace: architecture
+      hash: sha256:7888a6bdd34fc6041f48890e116eaa2cdcd6d41e9a1a867bc7cbac430897577b
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-get-meeting-attendees.yaml
+      kind: Handler
+      name: get-meeting-attendees
+      namespace: architecture
+      hash: sha256:fa33297271d78cc07e200edfa970fd6c3c4f72f39408cf7c1f8ea1539f1cbd39
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-get-meeting-fees.yaml
+      kind: Handler
+      name: get-meeting-fees
+      namespace: architecture
+      hash: sha256:d84bba268d6c6076b2aa3ee6726ae00ba4488ff46e5844e570d6656ea639d99c
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-get-meeting-group-details.yaml
+      kind: Handler
+      name: get-meeting-group-details
+      namespace: architecture
+      hash: sha256:5f9fc74a0911ecadb0b70876b92a6a2262279d7d7304258c1f3bef25e4326aee
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-get-member.yaml
+      kind: Handler
+      name: get-member
+      namespace: architecture
+      hash: sha256:02706d1a20cb04bfd6a68b2beefb56e5d16dd6ade5feaea4532bf41d210939c9
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-propose-meeting-group.yaml
+      kind: Handler
+      name: propose-meeting-group
+      namespace: architecture
+      hash: sha256:90ad95b422b2efeb1e618ffaa11bced281b7271c7878e84bf83085d7a89be686
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/handler-register-new-user.yaml
+      kind: Handler
+      name: register-new-user
+      namespace: architecture
+      hash: sha256:c1154c29def643219bc255e9184bebcd4de043714503959afb56c5608933af87
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/interface-administration-events.yaml
+      kind: Interface
+      name: administration-events
+      namespace: architecture
+      hash: sha256:865bb89fd64d9f01bab5871fd2fda62900cf165888e813f09170b4ac9ac302ed
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/interface-administration-module-api.yaml
+      kind: Interface
+      name: administration-module-api
+      namespace: architecture
+      hash: sha256:7bb20be900a5c04347a67eec7ec6b1b8e4da2753d23c24dc95623e1fd03cf258
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/interface-meetings-events.yaml
+      kind: Interface
+      name: meetings-events
+      namespace: architecture
+      hash: sha256:77b2130ecf5657e4a6e40ce1b698998c0675276b50ea1e6bd7dfe8d0519e8cf0
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/interface-meetings-module-api.yaml
+      kind: Interface
+      name: meetings-module-api
+      namespace: architecture
+      hash: sha256:c323228dd2f87ec92d5b177dad5b796f599719c6d16cc8acf04c64c937098283
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/interface-payments-events.yaml
+      kind: Interface
+      name: payments-events
+      namespace: architecture
+      hash: sha256:e4c81a05cfe4c942e6cd4bab7decc30490fbf971af3de1581338a830e39a090a
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/interface-payments-module-api.yaml
+      kind: Interface
+      name: payments-module-api
+      namespace: architecture
+      hash: sha256:fbd85ddce6f0629089a97e534989355bd442bf4da0336a255dd4a5e99c387c33
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/interface-registrations-events.yaml
+      kind: Interface
+      name: registrations-events
+      namespace: architecture
+      hash: sha256:4f188cb65316b7a0612270ddf8eca4b347c04676106e198978b27db5233e7d46
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/interface-registrations-module-api.yaml
+      kind: Interface
+      name: registrations-module-api
+      namespace: architecture
+      hash: sha256:c2a247760ea7eb0882f80d936293998ed771c3bc40e93b281e1c4ae29970d954
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/interface-user-access-events.yaml
+      kind: Interface
+      name: user-access-events
+      namespace: architecture
+      hash: sha256:4acf2aa3ff0a16aac301ae7b58d530f749f687f5097e9746f3fbe73f815cb90e
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/interface-user-access-module-api.yaml
+      kind: Interface
+      name: user-access-module-api
+      namespace: architecture
+      hash: sha256:c2ec2903d0fce934b2e3eef2fa01ffa026059e21b50417e268ecabd5b2e17a36
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/module-administration.yaml
+      kind: Module
+      name: administration
+      namespace: architecture
+      hash: sha256:9f22dcb3c541268bf833e1bd51483d70eca873e324cf7ef6a5fbc3f49e4cea8c
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/module-meetings.yaml
+      kind: Module
+      name: meetings
+      namespace: architecture
+      hash: sha256:9a4e2ab5611609fc6e713b8a0c874c42e76942fc7448b72256506c6e7477f75f
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/module-payments.yaml
+      kind: Module
+      name: payments
+      namespace: architecture
+      hash: sha256:f1baf2c0b825bdd79574c03c51792f34d893ad1070ec9a5a447de0d6bf5ef1b0
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/module-registrations.yaml
+      kind: Module
+      name: registrations
+      namespace: architecture
+      hash: sha256:4f880fd5a2854b8840d9638eaf368317a74861f80ebd2b1a3cea21ad79fbd8dd
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/module-user-access.yaml
+      kind: Module
+      name: user-access
+      namespace: architecture
+      hash: sha256:eca6b3a90a0c8d3229932971f25214b7c75e5aa279106531e5bd4d934adf6d63
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/narrative-architecture-test-decision.yaml
+      kind: Narrative
+      name: architecture-test-decision
+      namespace: architecture
+      hash: sha256:da54a85673409c11d60d584394ba93fb2f7c54036eed5393942848154c08f449
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/narrative-cqrs-read-model-decision.yaml
+      kind: Narrative
+      name: cqrs-read-model-decision
+      namespace: architecture
+      hash: sha256:4ac9d7ba82287c9e3ec72d8540f32d0096e1d5f31ab4e02f8d4c5031321de989
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/narrative-meeting-attendee-view.yaml
+      kind: Narrative
+      name: meeting-attendee-view
+      namespace: architecture
+      hash: sha256:3c8ed59f138b6e6c05db819ef9be3fdf096267d70c694a360f678896f0907952
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/narrative-module-event-boundary-decision.yaml
+      kind: Narrative
+      name: module-event-boundary-decision
+      namespace: architecture
+      hash: sha256:e47c58fa23325956f73f0b96fcd22c26fc98d11445f029cc7fdbde8f684022ce
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/product-mymeetings.yaml
+      kind: Product
+      name: mymeetings
+      namespace: architecture
+      hash: sha256:2a59ad0a7bb0d62537dcad17c9b4fa2e9714c3e38ea3cdb186ff3986bc006aa1
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-accept-proposal.yaml
+      kind: UseCase
+      name: accept-proposal
+      namespace: architecture
+      hash: sha256:f607be096ffc27cc48d80eef6455d49a49a6327f12fb576b28f2f975b0418df3
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-add-meeting-attendee.yaml
+      kind: UseCase
+      name: add-meeting-attendee
+      namespace: architecture
+      hash: sha256:64176c528b01f2c22cdb7737c459d1623a44fc9f934be556cd040a37997e6790
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-authenticate.yaml
+      kind: UseCase
+      name: authenticate
+      namespace: architecture
+      hash: sha256:02cf59d4f10b7c3d405dcfd12ce2708d16cf16c11fdc4f81199324f585dec9b9
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-cancel-meeting.yaml
+      kind: UseCase
+      name: cancel-meeting
+      namespace: architecture
+      hash: sha256:94133b17624821827a147c42d043cfaf4de7d4f4b18e66488b7b8aed89f9e25a
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-create-meeting.yaml
+      kind: UseCase
+      name: create-meeting
+      namespace: architecture
+      hash: sha256:b5076af83aed7ebdb1be498d7771237905ae8eceb1a70cc1e0c9628ec13aee5b
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-create-price-list-item.yaml
+      kind: UseCase
+      name: create-price-list-item
+      namespace: architecture
+      hash: sha256:28430f3beba8b71eaee45eff9fb285c8d8c42dcad9cfc19cbbcd861f0650f318
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-get-meeting-attendee-count.yaml
+      kind: UseCase
+      name: get-meeting-attendee-count
+      namespace: architecture
+      hash: sha256:91af040ed0d355dc0f1a0e8b4903b018c5fe39338a658bdbd6fb03196a90cbee
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-get-meeting-attendees.yaml
+      kind: UseCase
+      name: get-meeting-attendees
+      namespace: architecture
+      hash: sha256:cf1e7391ce6ebc8ae33f5e12ea7df632cc78b2305fc49ff97f9cc25b4c678dfd
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-get-meeting-fees.yaml
+      kind: UseCase
+      name: get-meeting-fees
+      namespace: architecture
+      hash: sha256:e206e309866c65968dbb8e6970211f34f1fffe39b765127a164f53eff8fa1954
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-get-meeting-group-details.yaml
+      kind: UseCase
+      name: get-meeting-group-details
+      namespace: architecture
+      hash: sha256:a6cea8fccc53bd354668e0d0588f9fd95934bb757849f4dbe52c2e48df1f2b6d
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-get-member.yaml
+      kind: UseCase
+      name: get-member
+      namespace: architecture
+      hash: sha256:e408f0ddbe2cd664adcb26a9a933f9b0abe64c015daa10912104801ed16c57d6
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-propose-meeting-group.yaml
+      kind: UseCase
+      name: propose-meeting-group
+      namespace: architecture
+      hash: sha256:e03f5dac870a2e8f81718f29f69fb7188d5a81cb8607a265c545287fbc5bc27d
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/usecase-register-new-user.yaml
+      kind: UseCase
+      name: register-new-user
+      namespace: architecture
+      hash: sha256:53042f496a6846536e89e6519a536aa77ae8b66b09a7a47ed60d117f46e53392
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/validator-authenticate.yaml
+      kind: Validator
+      name: authenticate
+      namespace: architecture
+      hash: sha256:b8e336ca0adb96cf89de44a17176bf8e3cb04cd87206ec5c884197202f1dfd0e
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      path: resources/validator-propose-meeting-group.yaml
+      kind: Validator
+      name: propose-meeting-group
+      namespace: architecture
+      hash: sha256:1f20e05989663313d00060ea149c4778c6c51c61a5b2806652b2ee7644decd52
+policyResults:
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: module-dependencies-cross-only-through-explicit-boundaries
+      subject: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      status: passed
+      constraintDigest: sha256:9a7a41ae99897dae2c5ae64e3067d6f1db761f6a7c52fe025c2f5195a167ad5d
+      subjectDigest: sha256:9b388436835c13c35980da7da9449b02982b7d9c8f1c0e5cf3b1cb15f6c3c772
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: module-dependencies-cross-only-through-explicit-boundaries
+      subject: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      status: passed
+      constraintDigest: sha256:9a7a41ae99897dae2c5ae64e3067d6f1db761f6a7c52fe025c2f5195a167ad5d
+      subjectDigest: sha256:ae333873ff4bfc0a1628abec11a40ad9099f7a4613e53e60b3f14e9092166c81
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: module-dependencies-cross-only-through-explicit-boundaries
+      subject: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      status: passed
+      constraintDigest: sha256:9a7a41ae99897dae2c5ae64e3067d6f1db761f6a7c52fe025c2f5195a167ad5d
+      subjectDigest: sha256:4eab371f02575c99cff4212ee07cfd5562095bfdf08aa234aa7d08d35051bdbe
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: module-dependencies-cross-only-through-explicit-boundaries
+      subject: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+      status: passed
+      constraintDigest: sha256:9a7a41ae99897dae2c5ae64e3067d6f1db761f6a7c52fe025c2f5195a167ad5d
+      subjectDigest: sha256:1a82ce6554dc9244a8f1c4d5413f9b46602338df06033056c3582c91a39eca82
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: module-dependencies-cross-only-through-explicit-boundaries
+      subject: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+      status: passed
+      constraintDigest: sha256:9a7a41ae99897dae2c5ae64e3067d6f1db761f6a7c52fe025c2f5195a167ad5d
+      subjectDigest: sha256:94b5357e1bf3fb58fff09d260b280803951bc9f4a0124c298ff415bfc4a51a7d
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:3d2f1eddeabc77adf088dfb88b1f5d5fe209f56ef66b9769838e932e4c5d4934
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-accept-proposal.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-accept-proposal.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-group-proposals.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:711da7cf7404f16f94e5dda4b4e26cb62265876009fa99d6ead8638d462e8f05
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-add-meeting-attendee.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-add-meeting-attendee.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-attendance.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:1f76abbff4665ce2e4a3e87920ade35a2976a419d9ce8112a41e45e2c1184c49
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-authenticate.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/authentication
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-authenticate.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/authentication
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-authentication.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:9c72c7484653a6136a247d7e07bf380287ba651d27f3cc1c26726cd702a439c6
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-cancel-meeting.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-cancel-meeting.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-lifecycle.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:b07077b00c44a87873e7b87bb011f642a10ebc0131b7a954fa170b299ffe442d
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-create-meeting.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-create-meeting.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-lifecycle.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-price-list-item
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:9cb58a110ea39a41864d50b0cc6079b6afb19afac87f530797ab880aa6d61ce1
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-price-list-item
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-create-price-list-item.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-price-list-item
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/price-list
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-create-price-list-item.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/price-list
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-price-list.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendee-count
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:24569e4a81d9e8c46d70bfbcb3bdd88afbc256f547846af2199a527630b9f5b0
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendee-count
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-attendee-count.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendee-count
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-attendee-count.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-attendance.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:4295211bdca989f6718e62707ee7caf832242ee47c5c332d18ac36f0e0bc607b
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-attendees.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-attendees.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-attendance.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-fees
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:611845a2cba145250bb66c4771fd1a9b285925e0f30a35d913f145a9d00b3f4e
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-fees
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-fees.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-fees
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-fees
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-fees.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-fees
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-fees.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:a8083df90f10eb5068dba946ba74d2903dab0abca4ecc7b2cb4ff24dbb598d0f
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-group-details.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-group-details.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-groups.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-member
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:3ed3fdb67509954ad814f1231ce2d831057ba6ec1f8141c68d01702e3d59a6cd
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-member
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-member.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-member
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-member.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-group-proposals.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:bfb0394c5076df5f87b4d7bcb3fed6d7cc0c2fd0564494f2c40562ff417b2213
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-propose-meeting-group.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-propose-meeting-group.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-groups.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:7358da91707e1d4f6ce3f8271775488b187338df2c8ef743626608f10b3c9495
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-register-new-user.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/user-registration
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-register-new-user.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/user-registration
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-user-registration.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+gates:
+    - name: module-project-references
+      tool: pwsh
+      exitCode: 0
+      milliseconds: 7536
+      output: "{\r\n  \"evidenceType\": \"evaluated-dotnet-project-references\",\r\n  \"evidenceScope\": \"Only explicitly mapped Module Application/Domain/IntegrationEvents projects and BuildingBlocks Application/Domain/Infrastructure.\",\r\n  \"upstreamCommit\": \"91c8ef24b4cb6ef558c95d8267fa07d68c7059f8\",\r\n  \"snapshotRevision\": null,\r\n  \"sourceManifestSha256\": \"81a25f9b3cfbe0086dcbcfb9f65f1cac0153e26a396df014393e988d655acfd0\",\r\n  \"configuration\": \"Debug\",\r\n  \"dotnetSdk\": \"8.0.418\",\r\n  \"evaluatedProjectCount\": 18,\r\n  \"projects\": [\r\n    {\r\n      \"id\": \"architecture.administration.application\",\r\n      \"resource\": \"architecture.administration\",\r\n      \"layer\": \"Application\",\r\n      \"path\": \"src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj\",\r\n      \"projectReferenceCount\": 5,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.user-access.application\",\r\n      \"resource\": \"architecture.user-access\",\r\n      \"layer\": \"Application\",\r\n      \"path\": \"src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj\",\r\n      \"projectReferenceCount\": 3,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.registrations.integration-events\",\r\n      \"resource\": \"architecture.registrations\",\r\n      \"layer\": \"IntegrationEvents\",\r\n      \"path\": \"src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj\",\r\n      \"projectReferenceCount\": 1,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.registrations.domain\",\r\n      \"resource\": \"architecture.registrations\",\r\n      \"layer\": \"Domain\",\r\n      \"path\": \"src/Modules/Registrations/Domain/CompanyName.MyMeetings.Modules.Registrations.Domain.csproj\",\r\n      \"projectReferenceCount\": 1,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.registrations.application\",\r\n      \"resource\": \"architecture.registrations\",\r\n      \"layer\": \"Application\",\r\n      \"path\": \"src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj\",\r\n      \"projectReferenceCount\": 3,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.payments.integration-events\",\r\n      \"resource\": \"architecture.payments\",\r\n      \"layer\": \"IntegrationEvents\",\r\n      \"path\": \"src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj\",\r\n      \"projectReferenceCount\": 1,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.payments.domain\",\r\n      \"resource\": \"architecture.payments\",\r\n      \"layer\": \"Domain\",\r\n      \"path\": \"src/Modules/Payments/Domain/CompanyName.MyMeetings.Modules.Payments.Domain.csproj\",\r\n      \"projectReferenceCount\": 1,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.payments.application\",\r\n      \"resource\": \"architecture.payments\",\r\n      \"layer\": \"Application\",\r\n      \"path\": \"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj\",\r\n      \"projectReferenceCount\": 6,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.meetings.integration-events\",\r\n      \"resource\": \"architecture.meetings\",\r\n      \"layer\": \"IntegrationEvents\",\r\n      \"path\": \"src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj\",\r\n      \"projectReferenceCount\": 1,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.meetings.domain\",\r\n      \"resource\": \"architecture.meetings\",\r\n      \"layer\": \"Domain\",\r\n      \"path\": \"src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj\",\r\n      \"projectReferenceCount\": 1,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.meetings.application\",\r\n      \"resource\": \"architecture.meetings\",\r\n      \"layer\": \"Application\",\r\n      \"path\": \"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj\",\r\n      \"projectReferenceCount\": 6,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.core.infrastructure\",\r\n      \"resource\": \"architecture.core\",\r\n      \"layer\": \"Infrastructure\",\r\n      \"path\": \"src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"projectReferenceCount\": 1,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.core.domain\",\r\n      \"resource\": \"architecture.core\",\r\n      \"layer\": \"Domain\",\r\n      \"path\": \"src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"projectReferenceCount\": 0,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.core.application\",\r\n      \"resource\": \"architecture.core\",\r\n      \"layer\": \"Application\",\r\n      \"path\": \"src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj\",\r\n      \"projectReferenceCount\": 1,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.administration.integration-events\",\r\n      \"resource\": \"architecture.administration\",\r\n      \"layer\": \"IntegrationEvents\",\r\n      \"path\": \"src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj\",\r\n      \"projectReferenceCount\": 1,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.administration.domain\",\r\n      \"resource\": \"architecture.administration\",\r\n      \"layer\": \"Domain\",\r\n      \"path\": \"src/Modules/Administration/Domain/CompanyName.MyMeetings.Modules.Administration.Domain.csproj\",\r\n      \"projectReferenceCount\": 1,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.user-access.domain\",\r\n      \"resource\": \"architecture.user-access\",\r\n      \"layer\": \"Domain\",\r\n      \"path\": \"src/Modules/UserAccess/Domain/CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj\",\r\n      \"projectReferenceCount\": 1,\r\n      \"controlInjectionApplied\": false\r\n    },\r\n    {\r\n      \"id\": \"architecture.user-access.integration-events\",\r\n      \"resource\": \"architecture.user-access\",\r\n      \"layer\": \"IntegrationEvents\",\r\n      \"path\": \"src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj\",\r\n      \"projectReferenceCount\": 1,\r\n      \"controlInjectionApplied\": false\r\n    }\r\n  ],\r\n  \"referenceEdgeCount\": 35,\r\n  \"edges\": [\r\n    {\r\n      \"source\": \"architecture.administration.application\",\r\n      \"sourceResource\": \"architecture.administration\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj\",\r\n      \"target\": \"architecture.meetings.integration-events\",\r\n      \"targetResource\": \"architecture.meetings\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\Meetings\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"cross-module reference targets the allowed IntegrationEvents contract layer\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.payments.application\",\r\n      \"sourceResource\": \"architecture.payments\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj\",\r\n      \"target\": \"architecture.registrations.integration-events\",\r\n      \"targetResource\": \"architecture.registrations\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\Registrations\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"cross-module reference targets the allowed IntegrationEvents contract layer\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.payments.application\",\r\n      \"sourceResource\": \"architecture.payments\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj\",\r\n      \"target\": \"architecture.user-access.integration-events\",\r\n      \"targetResource\": \"architecture.user-access\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\UserAccess\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"cross-module reference targets the allowed IntegrationEvents contract layer\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.payments.application\",\r\n      \"sourceResource\": \"architecture.payments\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj\",\r\n      \"target\": \"architecture.payments.domain\",\r\n      \"targetResource\": \"architecture.payments\",\r\n      \"targetLayer\": \"Domain\",\r\n      \"targetPath\": \"src/Modules/Payments/Domain/CompanyName.MyMeetings.Modules.Payments.Domain.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\Domain\\\\CompanyName.MyMeetings.Modules.Payments.Domain.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.payments.application\",\r\n      \"sourceResource\": \"architecture.payments\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj\",\r\n      \"target\": \"architecture.payments.integration-events\",\r\n      \"targetResource\": \"architecture.payments\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.payments.domain\",\r\n      \"sourceResource\": \"architecture.payments\",\r\n      \"sourceLayer\": \"Domain\",\r\n      \"sourcePath\": \"src/Modules/Payments/Domain/CompanyName.MyMeetings.Modules.Payments.Domain.csproj\",\r\n      \"target\": \"architecture.core.domain\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Domain\",\r\n      \"targetPath\": \"src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"evaluatedIdentity\": \"C:\\\\Users\\\\Consiliari\\\\AppData\\\\Local\\\\Temp\\\\markitect-verify-1720400794\\\\src\\\\BuildingBlocks\\\\Domain\\\\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.payments.integration-events\",\r\n      \"sourceResource\": \"architecture.payments\",\r\n      \"sourceLayer\": \"IntegrationEvents\",\r\n      \"sourcePath\": \"src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj\",\r\n      \"target\": \"architecture.core.infrastructure\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Infrastructure\",\r\n      \"targetPath\": \"src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"evaluatedIdentity\": \"C:\\\\Users\\\\Consiliari\\\\AppData\\\\Local\\\\Temp\\\\markitect-verify-1720400794\\\\src\\\\BuildingBlocks\\\\Infrastructure\\\\CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.payments.application\",\r\n      \"sourceResource\": \"architecture.payments\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj\",\r\n      \"target\": \"architecture.meetings.integration-events\",\r\n      \"targetResource\": \"architecture.meetings\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\Meetings\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"cross-module reference targets the allowed IntegrationEvents contract layer\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.registrations.application\",\r\n      \"sourceResource\": \"architecture.registrations\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj\",\r\n      \"target\": \"architecture.core.application\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Application\",\r\n      \"targetPath\": \"src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\..\\\\BuildingBlocks\\\\Application\\\\CompanyName.MyMeetings.BuildingBlocks.Application.csproj\",\r\n      \"definingProject\": \"src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.registrations.application\",\r\n      \"sourceResource\": \"architecture.registrations\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj\",\r\n      \"target\": \"architecture.registrations.integration-events\",\r\n      \"targetResource\": \"architecture.registrations\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.registrations.domain\",\r\n      \"sourceResource\": \"architecture.registrations\",\r\n      \"sourceLayer\": \"Domain\",\r\n      \"sourcePath\": \"src/Modules/Registrations/Domain/CompanyName.MyMeetings.Modules.Registrations.Domain.csproj\",\r\n      \"target\": \"architecture.core.domain\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Domain\",\r\n      \"targetPath\": \"src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"evaluatedIdentity\": \"C:\\\\Users\\\\Consiliari\\\\AppData\\\\Local\\\\Temp\\\\markitect-verify-1720400794\\\\src\\\\BuildingBlocks\\\\Domain\\\\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.registrations.integration-events\",\r\n      \"sourceResource\": \"architecture.registrations\",\r\n      \"sourceLayer\": \"IntegrationEvents\",\r\n      \"sourcePath\": \"src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj\",\r\n      \"target\": \"architecture.core.infrastructure\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Infrastructure\",\r\n      \"targetPath\": \"src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"evaluatedIdentity\": \"C:\\\\Users\\\\Consiliari\\\\AppData\\\\Local\\\\Temp\\\\markitect-verify-1720400794\\\\src\\\\BuildingBlocks\\\\Infrastructure\\\\CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.user-access.application\",\r\n      \"sourceResource\": \"architecture.user-access\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj\",\r\n      \"target\": \"architecture.meetings.integration-events\",\r\n      \"targetResource\": \"architecture.meetings\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\Meetings\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"cross-module reference targets the allowed IntegrationEvents contract layer\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.user-access.application\",\r\n      \"sourceResource\": \"architecture.user-access\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj\",\r\n      \"target\": \"architecture.user-access.domain\",\r\n      \"targetResource\": \"architecture.user-access\",\r\n      \"targetLayer\": \"Domain\",\r\n      \"targetPath\": \"src/Modules/UserAccess/Domain/CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\Domain\\\\CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.user-access.application\",\r\n      \"sourceResource\": \"architecture.user-access\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj\",\r\n      \"target\": \"architecture.user-access.integration-events\",\r\n      \"targetResource\": \"architecture.user-access\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.registrations.application\",\r\n      \"sourceResource\": \"architecture.registrations\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj\",\r\n      \"target\": \"architecture.registrations.domain\",\r\n      \"targetResource\": \"architecture.registrations\",\r\n      \"targetLayer\": \"Domain\",\r\n      \"targetPath\": \"src/Modules/Registrations/Domain/CompanyName.MyMeetings.Modules.Registrations.Domain.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\Domain\\\\CompanyName.MyMeetings.Modules.Registrations.Domain.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.user-access.domain\",\r\n      \"sourceResource\": \"architecture.user-access\",\r\n      \"sourceLayer\": \"Domain\",\r\n      \"sourcePath\": \"src/Modules/UserAccess/Domain/CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj\",\r\n      \"target\": \"architecture.core.domain\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Domain\",\r\n      \"targetPath\": \"src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"evaluatedIdentity\": \"C:\\\\Users\\\\Consiliari\\\\AppData\\\\Local\\\\Temp\\\\markitect-verify-1720400794\\\\src\\\\BuildingBlocks\\\\Domain\\\\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.payments.application\",\r\n      \"sourceResource\": \"architecture.payments\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj\",\r\n      \"target\": \"architecture.administration.integration-events\",\r\n      \"targetResource\": \"architecture.administration\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\Administration\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"cross-module reference targets the allowed IntegrationEvents contract layer\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.meetings.domain\",\r\n      \"sourceResource\": \"architecture.meetings\",\r\n      \"sourceLayer\": \"Domain\",\r\n      \"sourcePath\": \"src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj\",\r\n      \"target\": \"architecture.core.domain\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Domain\",\r\n      \"targetPath\": \"src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"evaluatedIdentity\": \"C:\\\\Users\\\\Consiliari\\\\AppData\\\\Local\\\\Temp\\\\markitect-verify-1720400794\\\\src\\\\BuildingBlocks\\\\Domain\\\\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.administration.application\",\r\n      \"sourceResource\": \"architecture.administration\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj\",\r\n      \"target\": \"architecture.registrations.integration-events\",\r\n      \"targetResource\": \"architecture.registrations\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\Registrations\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"cross-module reference targets the allowed IntegrationEvents contract layer\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.administration.application\",\r\n      \"sourceResource\": \"architecture.administration\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj\",\r\n      \"target\": \"architecture.user-access.integration-events\",\r\n      \"targetResource\": \"architecture.user-access\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\UserAccess\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"cross-module reference targets the allowed IntegrationEvents contract layer\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.administration.application\",\r\n      \"sourceResource\": \"architecture.administration\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj\",\r\n      \"target\": \"architecture.administration.domain\",\r\n      \"targetResource\": \"architecture.administration\",\r\n      \"targetLayer\": \"Domain\",\r\n      \"targetPath\": \"src/Modules/Administration/Domain/CompanyName.MyMeetings.Modules.Administration.Domain.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\Domain\\\\CompanyName.MyMeetings.Modules.Administration.Domain.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.administration.application\",\r\n      \"sourceResource\": \"architecture.administration\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj\",\r\n      \"target\": \"architecture.administration.integration-events\",\r\n      \"targetResource\": \"architecture.administration\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.administration.domain\",\r\n      \"sourceResource\": \"architecture.administration\",\r\n      \"sourceLayer\": \"Domain\",\r\n      \"sourcePath\": \"src/Modules/Administration/Domain/CompanyName.MyMeetings.Modules.Administration.Domain.csproj\",\r\n      \"target\": \"architecture.core.domain\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Domain\",\r\n      \"targetPath\": \"src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"evaluatedIdentity\": \"C:\\\\Users\\\\Consiliari\\\\AppData\\\\Local\\\\Temp\\\\markitect-verify-1720400794\\\\src\\\\BuildingBlocks\\\\Domain\\\\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.administration.integration-events\",\r\n      \"sourceResource\": \"architecture.administration\",\r\n      \"sourceLayer\": \"IntegrationEvents\",\r\n      \"sourcePath\": \"src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj\",\r\n      \"target\": \"architecture.core.infrastructure\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Infrastructure\",\r\n      \"targetPath\": \"src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"evaluatedIdentity\": \"C:\\\\Users\\\\Consiliari\\\\AppData\\\\Local\\\\Temp\\\\markitect-verify-1720400794\\\\src\\\\BuildingBlocks\\\\Infrastructure\\\\CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.meetings.integration-events\",\r\n      \"sourceResource\": \"architecture.meetings\",\r\n      \"sourceLayer\": \"IntegrationEvents\",\r\n      \"sourcePath\": \"src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj\",\r\n      \"target\": \"architecture.core.infrastructure\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Infrastructure\",\r\n      \"targetPath\": \"src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"evaluatedIdentity\": \"C:\\\\Users\\\\Consiliari\\\\AppData\\\\Local\\\\Temp\\\\markitect-verify-1720400794\\\\src\\\\BuildingBlocks\\\\Infrastructure\\\\CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.core.application\",\r\n      \"sourceResource\": \"architecture.core\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj\",\r\n      \"target\": \"architecture.core.domain\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Domain\",\r\n      \"targetPath\": \"src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"evaluatedIdentity\": \"C:\\\\Users\\\\Consiliari\\\\AppData\\\\Local\\\\Temp\\\\markitect-verify-1720400794\\\\src\\\\BuildingBlocks\\\\Domain\\\\CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.meetings.application\",\r\n      \"sourceResource\": \"architecture.meetings\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj\",\r\n      \"target\": \"architecture.administration.integration-events\",\r\n      \"targetResource\": \"architecture.administration\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\Administration\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"cross-module reference targets the allowed IntegrationEvents contract layer\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.meetings.application\",\r\n      \"sourceResource\": \"architecture.meetings\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj\",\r\n      \"target\": \"architecture.payments.integration-events\",\r\n      \"targetResource\": \"architecture.payments\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\Payments\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"cross-module reference targets the allowed IntegrationEvents contract layer\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.meetings.application\",\r\n      \"sourceResource\": \"architecture.meetings\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj\",\r\n      \"target\": \"architecture.registrations.integration-events\",\r\n      \"targetResource\": \"architecture.registrations\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\Registrations\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"cross-module reference targets the allowed IntegrationEvents contract layer\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.meetings.application\",\r\n      \"sourceResource\": \"architecture.meetings\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj\",\r\n      \"target\": \"architecture.user-access.integration-events\",\r\n      \"targetResource\": \"architecture.user-access\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\..\\\\UserAccess\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"cross-module reference targets the allowed IntegrationEvents contract layer\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.meetings.application\",\r\n      \"sourceResource\": \"architecture.meetings\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj\",\r\n      \"target\": \"architecture.meetings.domain\",\r\n      \"targetResource\": \"architecture.meetings\",\r\n      \"targetLayer\": \"Domain\",\r\n      \"targetPath\": \"src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\Domain\\\\CompanyName.MyMeetings.Modules.Meetings.Domain.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.meetings.application\",\r\n      \"sourceResource\": \"architecture.meetings\",\r\n      \"sourceLayer\": \"Application\",\r\n      \"sourcePath\": \"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj\",\r\n      \"target\": \"architecture.meetings.integration-events\",\r\n      \"targetResource\": \"architecture.meetings\",\r\n      \"targetLayer\": \"IntegrationEvents\",\r\n      \"targetPath\": \"src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj\",\r\n      \"evaluatedIdentity\": \"..\\\\IntegrationEvents\\\\CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.core.infrastructure\",\r\n      \"sourceResource\": \"architecture.core\",\r\n      \"sourceLayer\": \"Infrastructure\",\r\n      \"sourcePath\": \"src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"target\": \"architecture.core.application\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Application\",\r\n      \"targetPath\": \"src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj\",\r\n      \"evaluatedIdentity\": \"C:\\\\Users\\\\Consiliari\\\\AppData\\\\Local\\\\Temp\\\\markitect-verify-1720400794\\\\src\\\\BuildingBlocks\\\\Application\\\\CompanyName.MyMeetings.BuildingBlocks.Application.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    },\r\n    {\r\n      \"source\": \"architecture.user-access.integration-events\",\r\n      \"sourceResource\": \"architecture.user-access\",\r\n      \"sourceLayer\": \"IntegrationEvents\",\r\n      \"sourcePath\": \"src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj\",\r\n      \"target\": \"architecture.core.infrastructure\",\r\n      \"targetResource\": \"architecture.core\",\r\n      \"targetLayer\": \"Infrastructure\",\r\n      \"targetPath\": \"src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"evaluatedIdentity\": \"C:\\\\Users\\\\Consiliari\\\\AppData\\\\Local\\\\Temp\\\\markitect-verify-1720400794\\\\src\\\\BuildingBlocks\\\\Infrastructure\\\\CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"definingProject\": \"src/Directory.Build.targets\",\r\n      \"status\": \"allowed\",\r\n      \"explanation\": \"same owner or inward to Core\",\r\n      \"controlInjected\": false\r\n    }\r\n  ],\r\n  \"policy\": {\r\n    \"crossModuleTargetLayers\": [\r\n      \"IntegrationEvents\"\r\n    ],\r\n    \"coreMayReferenceModules\": false\r\n  },\r\n  \"findings\": [],\r\n  \"control\": {\r\n    \"enabled\": false,\r\n    \"injectedEdgeDetectedAndRejected\": false,\r\n    \"scratchTargetLocation\": null\r\n  },\r\n  \"inputs\": [\r\n    {\r\n      \"path\": \"scripts/check-module-project-references.ps1\",\r\n      \"sha256\": \"77e6b42d3c64958f4ec72b5556e71df949afe4706044349ec465a1f2d80fa3dd\"\r\n    },\r\n    {\r\n      \"path\": \"scripts/project-map.json\",\r\n      \"sha256\": \"b7c94e9288d4a0456ce17e0b10d88b7928638a0acb3856fd5c8f45e516f1fb25\"\r\n    },\r\n    {\r\n      \"path\": \"source-manifest.json\",\r\n      \"sha256\": \"81a25f9b3cfbe0086dcbcfb9f65f1cac0153e26a396df014393e988d655acfd0\"\r\n    },\r\n    {\r\n      \"path\": \"src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj\",\r\n      \"sha256\": \"4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd\"\r\n    },\r\n    {\r\n      \"path\": \"src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj\",\r\n      \"sha256\": \"3e1a9f612f8cfcc2e2a8b2ef085685f9f3d1a55c4b901e8d88af6ec37d283195\"\r\n    },\r\n    {\r\n      \"path\": \"src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj\",\r\n      \"sha256\": \"4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd\"\r\n    },\r\n    {\r\n      \"path\": \"src/Directory.Build.props\",\r\n      \"sha256\": \"fb9193db3e4f0ac6de47ed26f19b24bb4d9c6ccaf3ee34236101d780326dc631\"\r\n    },\r\n    {\r\n      \"path\": \"src/Directory.Build.targets\",\r\n      \"sha256\": \"7b99388eeafd7ad0e228e1fa107345aea1ab64ed96914c0a6ace75ddad5744d9\"\r\n    },\r\n    {\r\n      \"path\": \"src/Directory.Packages.props\",\r\n      \"sha256\": \"a9218b5c0ab7cc2c69b33285379ee29ca5aa3374e3bc5d68d1b92db40883a865\"\r\n    },\r\n    {\r\n      \"path\": \"src/global.json\",\r\n      \"sha256\": \"bd639b8287417d4fa392c5dea0f3c48163564151a7833513caf656a9860a3123\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj\",\r\n      \"sha256\": \"311c01581030948a791582a11b052a42037bbded762b5f1cd2a2d23c5b3ae291\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/Administration/Domain/CompanyName.MyMeetings.Modules.Administration.Domain.csproj\",\r\n      \"sha256\": \"04e4d9e751e5f8d5833592e05e79f847114c452e31a21cb5bc6f6808f10d88df\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj\",\r\n      \"sha256\": \"4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj\",\r\n      \"sha256\": \"f5c6a67a30c5cf7804cfbda1f1094ce6f3a26d4be15bfd56f010c0796ad834f2\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj\",\r\n      \"sha256\": \"8d654c44b7bebb6b31a9f2f606927f45b5072193adc4eef8cce3f3cf3b278df3\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj\",\r\n      \"sha256\": \"04e4d9e751e5f8d5833592e05e79f847114c452e31a21cb5bc6f6808f10d88df\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj\",\r\n      \"sha256\": \"c6fbee08cfc78dd918a0cf09de09aec6f928c33d2378f91e4391662ec4c59614\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/Payments/Domain/CompanyName.MyMeetings.Modules.Payments.Domain.csproj\",\r\n      \"sha256\": \"4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj\",\r\n      \"sha256\": \"04e4d9e751e5f8d5833592e05e79f847114c452e31a21cb5bc6f6808f10d88df\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj\",\r\n      \"sha256\": \"737635accbe260650ceaa7950675d0431b5b3877c706dabb449bab218c296d5a\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/Registrations/Domain/CompanyName.MyMeetings.Modules.Registrations.Domain.csproj\",\r\n      \"sha256\": \"04e4d9e751e5f8d5833592e05e79f847114c452e31a21cb5bc6f6808f10d88df\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj\",\r\n      \"sha256\": \"04e4d9e751e5f8d5833592e05e79f847114c452e31a21cb5bc6f6808f10d88df\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj\",\r\n      \"sha256\": \"1f6ab5098ed95184351460d7b464a3f2ce0d349615634d3c25802bcafa5dba3c\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/UserAccess/Domain/CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj\",\r\n      \"sha256\": \"04e4d9e751e5f8d5833592e05e79f847114c452e31a21cb5bc6f6808f10d88df\"\r\n    },\r\n    {\r\n      \"path\": \"src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj\",\r\n      \"sha256\": \"04e4d9e751e5f8d5833592e05e79f847114c452e31a21cb5bc6f6808f10d88df\"\r\n    }\r\n  ],\r\n  \"proves\": [\r\n    \"MSBuild evaluated ProjectReference items under the recorded revision, SDK, configuration, and hashed project/import inputs.\",\r\n    \"The listed edges were checked against the explicit owner and layer policy.\"\r\n  ],\r\n  \"doesNotProve\": [\r\n    \"Runtime DI, reflection, plugin loading, network calls, or other dependency mechanisms.\",\r\n    \"That IntegrationEvents contains only stable public contracts or that a referenced contract is semantically appropriate.\",\r\n    \"Behavior, business meaning, unlisted projects, or architecture outside the explicit map.\"\r\n  ]\r\n}\r\n"

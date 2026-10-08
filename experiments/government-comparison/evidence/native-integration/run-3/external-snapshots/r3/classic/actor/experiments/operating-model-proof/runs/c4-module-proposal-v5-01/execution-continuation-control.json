@@ -1,0 +1,22 @@
+{
+  "recordType": "execution-continuation-control",
+  "protocolEvent": false,
+  "basedOn": "runs/c4-control-freeze-v5-01/control-plan.json",
+  "failedNewRunId": "c4-execute-v5-01",
+  "executeRunId": "c4-module-proposal-v5-01",
+  "reason": "v5 driver phase contract uses the same runId established by successful propose; this invocation will continue the existing bound trial.",
+  "fixtureSubset": "b24fd775b3537302ba2ebece970c55ffdef5f7eb",
+  "runtimeSha256": "af2c31b099c2004ce3ed4792399c910eb24094fab077fea4fc5b2ae32a64cad2",
+  "cliSha256": "03c551536335ee580b870e703a6a40ef8777c5a8139042f8f0f7e8e7e88729aa",
+  "buildReceiptSha256": "6425f113b858f215ecc471a8075e8800f5422c581efb4e3f1dddcda5295c5a53",
+  "providerWrapperSha256": "7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57",
+  "scopeAndCheckBindingsUnchanged": true,
+  "expectedAction": "execute",
+  "expectedCohort": [
+    "billing-dotnet",
+    "orders-dotnet",
+    "product-markdown"
+  ],
+  "targetWritesExpected": 0,
+  "ownerAcceptance": "not claimed"
+}

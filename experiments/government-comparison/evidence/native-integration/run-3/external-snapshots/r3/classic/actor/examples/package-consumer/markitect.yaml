@@ -1,0 +1,17 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: package-consumer
+spec:
+    targets:
+        - markdown
+        - codex
+    areas:
+        - name: consumer
+          path: .markitect/areas/consumer
+    packages:
+        - name: review-guidance
+          version: 1.0.0
+          source: git:daf64b0a2fa01277805b38c50ffc586e87a85e5d
+          archive: .markitect/packages/review-guidance-1.0.0.zip
+          sha256: bb259b3e87fb6041777850c4137dc8c27458b2354acad56d7539b5fd00298961

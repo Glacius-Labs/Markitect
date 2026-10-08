@@ -1,0 +1,26 @@
+apiVersion: workflow.example.org/v1
+kind: Process
+metadata:
+  namespace: example
+  name: review-workflow-change
+purpose: Describe the project-owned review path for a workflow change.
+spec:
+  rule:
+    apiVersion: workflow.example.org/v1
+    kind: Rule
+    namespace: example
+    name: retain-source-authority
+  responsibility:
+    apiVersion: workflow.example.org/v1
+    kind: Responsibility
+    namespace: example
+    name: workflow-owner
+  gate:
+    apiVersion: workflow.example.org/v1
+    kind: Gate
+    namespace: example
+    name: source-review
+  sequence:
+    - Record the proposed workflow change in its canonical Definition.
+    - Ask the accountable workflow owner to review the source and its references.
+    - Update a provider representation only from the accepted canonical meaning and explicit policy.

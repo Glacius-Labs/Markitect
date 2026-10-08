@@ -1,0 +1,18 @@
+apiVersion: delivery.markitect.org/v1alpha1
+kind: Release
+metadata:
+    name: 0-10-0-candidate
+    namespace: engineering
+spec:
+    evidence:
+        - kind: ReleaseEvidence
+          name: unit-tests-8d7f3c1
+          namespace: engineering
+        - kind: ReleaseEvidence
+          name: policy-check-8d7f3c1
+          namespace: engineering
+    policy:
+        kind: ReleasePolicy
+        name: candidate
+        namespace: engineering
+    sourceRevision: 8d7f3c1

@@ -1,0 +1,91 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Domain
+metadata:
+    name: delivery-topology
+spec:
+    apiVersion: delivery.example.org/v1alpha1
+    kinds:
+        Deployment:
+            required:
+                - service
+                - environment
+                - purpose
+            properties:
+                environment:
+                    type: ref
+                    refKind: Environment
+                purpose:
+                    type: string
+                service:
+                    type: ref
+                    refKind: Service
+        Environment:
+            required:
+                - product
+                - purpose
+            properties:
+                product:
+                    type: ref
+                    refKind: Product
+                purpose:
+                    type: string
+        Product:
+            required:
+                - purpose
+            properties:
+                purpose:
+                    type: string
+        Service:
+            required:
+                - product
+                - purpose
+            properties:
+                product:
+                    type: ref
+                    refKind: Product
+                purpose:
+                    type: string
+    relations:
+        belongsToProduct:
+            description: Services and Environments independently name their Product owner.
+            field: product
+            sourceKinds:
+                - Service
+                - Environment
+            targetKinds:
+                - Product
+            minTargets: 1
+            maxTargets: 1
+        deploysService:
+            description: A Deployment names the Service being delivered.
+            field: service
+            sourceKinds:
+                - Deployment
+            targetKinds:
+                - Service
+            minTargets: 1
+            maxTargets: 1
+            context: true
+        deploysTo:
+            description: A Deployment names its target Environment.
+            field: environment
+            sourceKinds:
+                - Deployment
+            targetKinds:
+                - Environment
+            minTargets: 1
+            maxTargets: 1
+            context: true
+    constraints:
+        - name: deployment-service-and-environment-share-product
+          description: The selected Service and Environment must resolve to the same Product.
+          select:
+            kind: Deployment
+          assert:
+            op: same-target
+            left:
+                - deploysService
+                - belongsToProduct
+            right:
+                - deploysTo
+                - belongsToProduct

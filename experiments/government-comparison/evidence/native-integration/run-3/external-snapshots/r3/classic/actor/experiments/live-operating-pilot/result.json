@@ -1,0 +1,1368 @@
+{
+  "schema": "markitect-live-operating-pilot-result/v1",
+  "outcome": "bounded-repair-cycle-complete-after-explicit-source-corrections",
+  "interpretation": "Iterative engineering capability evidence across three frozen source attempts; not a first-pass success or one unchanged-source end-to-end run.",
+  "canonical": {
+    "baseline": "9dc9e68c182bccd408690f9f20300a75c68bd35a",
+    "changed": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+    "intentChange": "Accepted quantity range 1..20 to 1..10; repair retained changed canonical intent.",
+    "businessAreas": 1,
+    "projections": 2
+  },
+  "protocols": [
+    {
+      "path": "protocol-final.json",
+      "digest": "sha256:180907081b45bc6a39fec002ae202acdb749ad00b2eac0d3606aeab1532cfde0",
+      "sourceCommit": "73728a1bccc3a70ba9c799ceee76554fbe6fb5c3"
+    },
+    {
+      "path": "protocol-attempt-02.json",
+      "digest": "sha256:dfdbf4d76026798bb94697241559a95a6e4590e1bfde811c8ccced621a7e7b27",
+      "sourceCommit": "88eae46bdb799a5ff5fe093a0e220e847bc6de0a"
+    },
+    {
+      "path": "protocol-attempt-03.json",
+      "digest": "sha256:d94edd92838c91aad59da476db617f0fb929a084cd27b0e199390ff15edbe7ae",
+      "sourceCommit": "0567da8055e3895ea5d7ea760a4977bce867d4ae"
+    }
+  ],
+  "attempts": [
+    {
+      "attempt": "initial-frozen-protocol",
+      "outcome": "stopped-before-controlled-semantic-verification",
+      "sourceCommit": "73728a1bccc3a70ba9c799ceee76554fbe6fb5c3",
+      "baselineAudit": "complete",
+      "baselineBehaviorCalls": 120,
+      "baselineBehaviorFailures": 0,
+      "changedExecuteStatus": "escalated",
+      "changedExecuteDigest": "sha256:fba523541c10ddecc4fe241f346a955c6bdb30d3cfde4550e4fce876cc6abdb5",
+      "reason": "Genuine Executor returned changed C# only, omitted its existing owned project. Host blocked incomplete representation. Controlled mutation already recorded, but no Apply or semantic fault verification occurred.",
+      "escalations": [
+        {
+          "Code": "artifact.omitted-owner",
+          "Identity": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+          "Message": "candidate omits active owned artifact: src/Commerce/Commerce.csproj"
+        }
+      ],
+      "followup": "Fix missing explicit complete-owned-output context; predeclare continuation against actual retained state and new source. Do not alter original actor response or verdict."
+    },
+    {
+      "attempt": "02-continuation",
+      "sourceCommit": "88eae46bdb799a5ff5fe093a0e220e847bc6de0a",
+      "outcome": "stopped-before-repair-apply",
+      "changedMaterialization": "applied",
+      "validSemanticVerification": "failed as intended after one transport retry",
+      "negativeHoldout": {
+        "calls": 80,
+        "failedChecks": 10,
+        "onlyDefect": "quantity zero"
+      },
+      "repairContextExact": true,
+      "repairFindingsCount": 3,
+      "repairExecutorRun": "6b3f29b5b7d4b5af465321a9faf03929",
+      "repairExecutorOutcome": "invocation failure: role null; raw proposed repair never accepted/applied",
+      "retainedFaultyArtifacts": {
+        "src/Commerce/Commerce.csproj": "sha256:16a709894669b1d00ec3bc65fc8ba64e8942cddb1ed9d9d7ba65821bd169a76b",
+        "src/Commerce/CreateOrderHandler.cs": "sha256:d10d935b6bf206a3a2f21787e450287c8c3a32ec5ae9194bb9fd5c6d47f04fe5",
+        "docs/represented/index.md": "sha256:f8ead9e7858ee57d89b5419bc6b3bc3bd18cdddf8e050019600a871cbd8b5037"
+      },
+      "diagnosis": "Prompt names role as top-level envelope field but invocation contains request.role. Clarification is warranted; wording alone is not proven to have caused invalid envelopes.",
+      "followup": "New pinned prompt/runtime; retain actual state, reverify to establish current-runtime findings, one new semantic repair; do not stamp or edit old responses."
+    },
+    {
+      "attempt": "03-prompt-clarification",
+      "sourceCommit": "0567da8055e3895ea5d7ea760a4977bce867d4ae",
+      "outcome": "complete",
+      "transportRetries": 0,
+      "semanticRepairAttempts": 1,
+      "startingState": "Retained controlled-fault artifacts and existing ledger; no reset.",
+      "finalVerificationDigest": "sha256:829b0664c058111392d5b26feae7f3555b2e1b4019961334d0265ae0f2b328da",
+      "finalAuditDigest": "sha256:9806459d520dbbc6dd5b289fad51b4d53ec1882c84ffc89569c953abf06bf0a4"
+    }
+  ],
+  "runtime": {
+    "requestedModel": "gpt-6-luna",
+    "requestedReasoning": "high",
+    "actualActorCalls": 15,
+    "transport": "Experiment-only file queue and fresh fork_none collaboration agents; native Host agentexec protocol.",
+    "nativeCodexCliPreflight": "Rejected requested gpt-6-luna with ChatGPT authentication before model execution; no model substitution.",
+    "independence": "Fresh prompt/history per actor, supplied invocation only; no operating-system or filesystem isolation.",
+    "providerVersionAndUsage": "Unavailable; dispatch model metadata is orchestrator-declared, not provider attestation.",
+    "markdownImplementation": "Deterministic existing Markdown Projection Module; actual agents implement .NET and verify both scopes."
+  },
+  "corrections": [
+    {
+      "commit": "73728a1bccc3a70ba9c799ceee76554fbe6fb5c3",
+      "change": "Forward exact persisted repair IDs and semantic findings into actual Executor context, with stable camel-case wire fields.",
+      "includesPriorCommit": "212abf3543f1c68db908441df84d97cad0978bc7"
+    },
+    {
+      "commit": "88eae46bdb799a5ff5fe093a0e220e847bc6de0a",
+      "change": "Expose exact existing owned artifact paths and require complete output, including unchanged owned files."
+    },
+    {
+      "commit": "0567da8055e3895ea5d7ea760a4977bce867d4ae",
+      "change": "Clarify that response role is copied from invocation.request.role. Ambiguous wording was present but not proven to be the sole cause of malformed actor envelopes."
+    }
+  ],
+  "controlledFault": {
+    "kind": "Declared non-agent mutation of changed Executor response before staging",
+    "behavior": "For quantity zero, call Execute(1) then return true.",
+    "agentMistakeClaim": false,
+    "verifierResponsesMutated": false
+  },
+  "repair": {
+    "failedRecordId": "sha256:0b271b7540070652050b3f9668aa28407c1f9bc520a4618e33d04b248b3e97e0",
+    "failedResultId": "sha256:3f9769acd59c0cb9adc518689c049563b46616a6f2d6efe9c167a4e858d8655b",
+    "forwardedFindingsCount": 3,
+    "forwardedFindingsExactlyMatchPersistedResult": true,
+    "originalFailureRetainedInEvents": [
+      "00000000000000000014-d703acc89fc5cd49ea59b0457897d0d92277dc3f015f35f8407c6ff51ede554f.json"
+    ],
+    "reviewedRunDigest": "sha256:0f0dac190540f6dc2785cc2aa9843736d875e6d76406cf156dad002f32979645",
+    "evidenceRevision": "f14198e90f5b0299cb1b0c4aa7b5af8d236546e2",
+    "writtenPaths": [
+      "src/Commerce/CreateOrderHandler.cs"
+    ],
+    "preservedPaths": [
+      "src/Commerce/Commerce.csproj",
+      "docs/represented/index.md"
+    ],
+    "finalArtifactDigests": {
+      "src/Commerce/Commerce.csproj": "sha256:16a709894669b1d00ec3bc65fc8ba64e8942cddb1ed9d9d7ba65821bd169a76b",
+      "src/Commerce/CreateOrderHandler.cs": "sha256:2491fdd4a80c82ef3bc96e999b55d56cf4beb5303093666676a80fcb2d600c96",
+      "docs/represented/index.md": "sha256:f8ead9e7858ee57d89b5419bc6b3bc3bd18cdddf8e050019600a871cbd8b5037"
+    }
+  },
+  "finalAudit": {
+    "apiVersion": "markitect.canonical/controller-audit/v1alpha1",
+    "digest": "sha256:9806459d520dbbc6dd5b289fad51b4d53ec1882c84ffc89569c953abf06bf0a4",
+    "status": "complete",
+    "coverage": "declared canonical Projections and configured target roots; bounded current evidence",
+    "baseRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+    "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+    "configDigest": "sha256:fea33fa1dcd495d50e884cae98651dbe9f47bf8dc4191f51497537a7d00968a3",
+    "ledgerHead": "sha256:34f070ae6ba306392d1f0590f108b0fa93751904b88d67df2cdef5669e939616",
+    "ledgerSelectionDigest": "sha256:935cd70150a07328f229a3e0840340f6d62c2495b02bb0f7661cf371cf2200e6",
+    "proposalDigest": "sha256:97215d88cf4fae289ec20f13a31ff7bf8cbdc900a90b36294f8d7bf774c29148",
+    "planStatus": "planned",
+    "projections": [
+      {
+        "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+        "scopeIds": [
+          "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+          "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+          "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+        ],
+        "policyIds": [
+          "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"effect-axis-to-dotnet\"]",
+          "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"handler-to-dotnet\"]",
+          "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"use-case-to-dotnet\"]"
+        ],
+        "assuranceScopeIds": [
+          "leaf-dotnet"
+        ],
+        "activeRecordIds": [
+          "sha256:920b11349fdb2b00407a1194d118c2c9357606ce7404e0b691343054cf057b5a"
+        ],
+        "freshVerificationResultIds": [
+          "sha256:9cd0e7a4816eda1cc096c89f1fb6b1a818472da8d54442a279a2785523fa320e"
+        ],
+        "artifactPaths": [
+          "src/Commerce/Commerce.csproj",
+          "src/Commerce/CreateOrderHandler.cs"
+        ],
+        "checkIds": [
+          "canonical-projection-dotnet-build",
+          "independent-verifier-receipt"
+        ],
+        "status": "passed",
+        "outcome": "passed"
+      },
+      {
+        "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-markdown\"]",
+        "scopeIds": [
+          "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+          "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+          "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+        ],
+        "policyIds": [
+          "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"effect-axis-to-markdown\"]",
+          "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"handler-to-markdown\"]",
+          "[\"markitect.foundation/v1\",\"ProjectionPolicy\",\"commerce\",\"use-case-to-markdown\"]"
+        ],
+        "assuranceScopeIds": [
+          "parent-markdown"
+        ],
+        "activeRecordIds": [
+          "sha256:109572582f1ca15087809b9a2a757f12607626f3116ff1a34b57560fc2a820d9"
+        ],
+        "freshVerificationResultIds": [
+          "sha256:a6a62e7ae17be51de191eb5a868813c9d66a01884a8f7508fe5795f700de20c4"
+        ],
+        "artifactPaths": [
+          "docs/represented/index.md"
+        ],
+        "checkIds": [
+          "canonical-projection-dotnet-build",
+          "independent-verifier-receipt"
+        ],
+        "status": "passed",
+        "outcome": "passed"
+      }
+    ],
+    "exclusions": [],
+    "findings": [],
+    "nextSteps": []
+  },
+  "finalVerification": {
+    "digest": "sha256:829b0664c058111392d5b26feae7f3555b2e1b4019961334d0265ae0f2b328da",
+    "status": "passed",
+    "outcome": "passed",
+    "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+    "evidenceRevision": "f14198e90f5b0299cb1b0c4aa7b5af8d236546e2",
+    "configDigest": "sha256:fea33fa1dcd495d50e884cae98651dbe9f47bf8dc4191f51497537a7d00968a3",
+    "ledgerHead": "sha256:34f070ae6ba306392d1f0590f108b0fa93751904b88d67df2cdef5669e939616",
+    "ledgerSelectionDigest": "sha256:935cd70150a07328f229a3e0840340f6d62c2495b02bb0f7661cf371cf2200e6"
+  },
+  "finalVerificationResults": [
+    {
+      "id": "sha256:9cd0e7a4816eda1cc096c89f1fb6b1a818472da8d54442a279a2785523fa320e",
+      "recordId": "sha256:920b11349fdb2b00407a1194d118c2c9357606ce7404e0b691343054cf057b5a",
+      "revision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+      "modelDigest": "sha256:89afb4c4353b75b5f0953fa3fda04d4709f30b88ee1c997857b1cfa5393423d8",
+      "targetSnapshotDigest": "sha256:b026368242966ab3f81d128938e54156c3654d7a8fc0c1385323bf16b7511348",
+      "evidenceRevision": "f14198e90f5b0299cb1b0c4aa7b5af8d236546e2",
+      "evidenceSnapshotDigest": "sha256:58f206c116b32c35a0970260943eb46bc04db22e26bc85504a79f9275ce428b4",
+      "controllerConfigDigest": "sha256:fea33fa1dcd495d50e884cae98651dbe9f47bf8dc4191f51497537a7d00968a3",
+      "controllerVerifierInputDigest": "sha256:d597068da509730b49b765fec77a867990f10173942b851a8ad45b2c3de3355a",
+      "outcome": "passed"
+    },
+    {
+      "id": "sha256:a6a62e7ae17be51de191eb5a868813c9d66a01884a8f7508fe5795f700de20c4",
+      "recordId": "sha256:109572582f1ca15087809b9a2a757f12607626f3116ff1a34b57560fc2a820d9",
+      "revision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+      "modelDigest": "sha256:89afb4c4353b75b5f0953fa3fda04d4709f30b88ee1c997857b1cfa5393423d8",
+      "targetSnapshotDigest": "sha256:8c8a66a206be433f04aa85af34f5b4c214142292be433f82ec69cddb142d0f81",
+      "evidenceRevision": "f14198e90f5b0299cb1b0c4aa7b5af8d236546e2",
+      "evidenceSnapshotDigest": "sha256:6e44077e61b3e326db59b7639be2f45a0b8973cf88d632f92eda5a9c164ee754",
+      "controllerConfigDigest": "sha256:fea33fa1dcd495d50e884cae98651dbe9f47bf8dc4191f51497537a7d00968a3",
+      "controllerVerifierInputDigest": "sha256:5694bad4327f47fea715fe2394a10d67719e3aefe39e368906000cdc539f90b4",
+      "outcome": "passed"
+    }
+  ],
+  "holdouts": [
+    {
+      "phase": "baseline",
+      "runId": "191c97a21caa49f4b728b8da6b5fa908",
+      "receiptDigest": "sha256:062ed532040de10117192420aafdd18f1b2d7d4e4e495fe02369584f66e394ba",
+      "acceptance_status": "passed",
+      "max_quantity": 20,
+      "dotnet_version": "10.0.103",
+      "offline_restore": true,
+      "source_unchanged_before_vs_after": true,
+      "tested_source_tree_sha256": "b606eebbc983cda51f30adf4d8aeae265a0fd883f12ffde7c2d5c1b498e7ceb5",
+      "tested_source_sha256_manifest": {
+        "Commerce.csproj": {
+          "sha256": "3472fccce5613343d3b55f6c2bbc48cbfd3de01f9cf32fd8607b8ac3a7e26395",
+          "bytes": 205
+        },
+        "CreateOrderHandler.cs": {
+          "sha256": "a409a9e660c71a610fa1b45f177983ac513bcb4f130bc6cf4e3ff8052fdd69f4",
+          "bytes": 471
+        }
+      },
+      "restore_exit_code": 0,
+      "build_exit_code": 0,
+      "execution_exit_code": 0,
+      "behavior": {
+        "passed": true,
+        "maxQuantity": 20,
+        "testedQuantities": [
+          -2147483648,
+          -2147483647,
+          -2,
+          -1,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          2147483646,
+          2147483647
+        ],
+        "instanceCount": 3,
+        "callCount": 120,
+        "failedCheckCount": 0,
+        "errors": []
+      }
+    },
+    {
+      "phase": "controlled-fault",
+      "runId": "a496b80590be445696e0aa25fdb67797",
+      "receiptDigest": "sha256:bf2ab9dead218cd82bbe922eaec8d732146366822d2cd264cc0427df51078459",
+      "acceptance_status": "failed",
+      "max_quantity": 10,
+      "dotnet_version": "10.0.103",
+      "offline_restore": true,
+      "source_unchanged_before_vs_after": true,
+      "tested_source_tree_sha256": "8717dc019aad8958c4732223b39000e3045dd9d3a016d80fdc3a817be97a07e4",
+      "tested_source_sha256_manifest": {
+        "Commerce.csproj": {
+          "sha256": "16a709894669b1d00ec3bc65fc8ba64e8942cddb1ed9d9d7ba65821bd169a76b",
+          "bytes": 204
+        },
+        "CreateOrderHandler.cs": {
+          "sha256": "d10d935b6bf206a3a2f21787e450287c8c3a32ec5ae9194bb9fd5c6d47f04fe5",
+          "bytes": 527
+        }
+      },
+      "restore_exit_code": 0,
+      "build_exit_code": 0,
+      "execution_exit_code": 1,
+      "behavior": {
+        "passed": false,
+        "maxQuantity": 10,
+        "testedQuantities": [
+          -2147483648,
+          -2147483647,
+          -2,
+          -1,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          2147483646,
+          2147483647
+        ],
+        "instanceCount": 3,
+        "callCount": 80,
+        "failedCheckCount": 10,
+        "errors": [
+          "instance-forward: Execute(0) returned True; expected False.",
+          "instance-forward: Execute(0) invoked callback 1 times; expected 0.",
+          "instance-reverse: Execute(0) returned True; expected False.",
+          "instance-reverse: Execute(0) invoked callback 1 times; expected 0.",
+          "instance-repeated: Execute(0) returned True; expected False.",
+          "instance-repeated: Execute(0) invoked callback 1 times; expected 0.",
+          "instance-repeated: Execute(0) returned True; expected False.",
+          "instance-repeated: Execute(0) invoked callback 1 times; expected 0.",
+          "instance-repeated: Execute(0) returned True; expected False.",
+          "instance-repeated: Execute(0) invoked callback 1 times; expected 0."
+        ]
+      }
+    },
+    {
+      "phase": "repaired",
+      "runId": "5e7ea05eb9854881bfc89a18d6bf7044",
+      "receiptDigest": "sha256:ccdb90ae40a539eb937233dd31fb8dcef9375550ba4a25a8ca4e13906791b5e8",
+      "acceptance_status": "passed",
+      "max_quantity": 10,
+      "dotnet_version": "10.0.103",
+      "offline_restore": true,
+      "source_unchanged_before_vs_after": true,
+      "tested_source_tree_sha256": "1a545c71b626a514e4d008955b4d8beb6f99985881b2f0f40f723cebfaa7989f",
+      "tested_source_sha256_manifest": {
+        "Commerce.csproj": {
+          "sha256": "16a709894669b1d00ec3bc65fc8ba64e8942cddb1ed9d9d7ba65821bd169a76b",
+          "bytes": 204
+        },
+        "CreateOrderHandler.cs": {
+          "sha256": "2491fdd4a80c82ef3bc96e999b55d56cf4beb5303093666676a80fcb2d600c96",
+          "bytes": 476
+        }
+      },
+      "restore_exit_code": 0,
+      "build_exit_code": 0,
+      "execution_exit_code": 0,
+      "behavior": {
+        "passed": true,
+        "maxQuantity": 10,
+        "testedQuantities": [
+          -2147483648,
+          -2147483647,
+          -2,
+          -1,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          2147483646,
+          2147483647
+        ],
+        "instanceCount": 3,
+        "callCount": 80,
+        "failedCheckCount": 0,
+        "errors": []
+      }
+    }
+  ],
+  "actors": [
+    {
+      "runId": "8a141f5ee027e14763e645aa284e465b",
+      "role": "executor",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "sourceRevision": "9dc9e68c182bccd408690f9f20300a75c68bd35a",
+      "inputDigest": "sha256:20d7fd4d91190ab8f9a9c5b11985988dce6e31c74f0bb89abd86f6a127e19167",
+      "promptDigest": "sha256:0d3696834126b1512f37f3b326d2cd4374d7b8c4135b9e45b5de7ce327413e86",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_01",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "executor",
+      "reportedOutcome": "proposed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:3b1ad442aa17397f95c6e5ef3df05c2370716609f34c84f4e0ebec5139a17a6f",
+        "prompt.txt": "sha256:0d3696834126b1512f37f3b326d2cd4374d7b8c4135b9e45b5de7ce327413e86",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:3c99c6b317401fe42410ddfea9d3cc8f61c02d4e99cb55a9d3f921d9aa978cef",
+        "raw-response.json": "sha256:3c99c6b317401fe42410ddfea9d3cc8f61c02d4e99cb55a9d3f921d9aa978cef",
+        "normalized-response.json": "sha256:bc22c47b42f786e38e51fe4ac1315d7ffd486eab00007e3be38410af57396293",
+        "emitted-response.json": "sha256:bc22c47b42f786e38e51fe4ac1315d7ffd486eab00007e3be38410af57396293",
+        "control.json": "sha256:adc36c53a0ccb657afd49b4ede2dd819fefaa43fde964a97046bae196a8ced39"
+      },
+      "controlledMutation": "none"
+    },
+    {
+      "runId": "925f59f425f8d647db1781117477dba8",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "sourceRevision": "3d88fdd6baf3516475c5955b49d1388b8916f2a7",
+      "inputDigest": "sha256:015e314bc5602c36210b2f6847aba3cae2479d477fd4a33b4d361ea3ece84fe3",
+      "promptDigest": "sha256:2fefe507f1911f131e05fdec38ee94c55220c887ccd730999362df338a916615",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_02",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "verifier",
+      "reportedOutcome": "passed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:aafe121e7c33016bb88183a9c92344e10dd7c0a9985ddcb435232c8b385d026f",
+        "prompt.txt": "sha256:2fefe507f1911f131e05fdec38ee94c55220c887ccd730999362df338a916615",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:96f19fca8986d941e469daa1de5eb71bc2d1b62348678575afe3c9c4fe698b95",
+        "raw-response.json": "sha256:96f19fca8986d941e469daa1de5eb71bc2d1b62348678575afe3c9c4fe698b95",
+        "normalized-response.json": "sha256:5ccd5a0aac8b4ba51c9812848c69d42d4c99265b74f9b159c81082f5bc1f4cd3",
+        "emitted-response.json": "sha256:5ccd5a0aac8b4ba51c9812848c69d42d4c99265b74f9b159c81082f5bc1f4cd3",
+        "control.json": "sha256:d11ccb3b748dc4962657cc0ac60b29507ce0444d6887da43e2f044c5d4a79648"
+      },
+      "controlledMutation": "none"
+    },
+    {
+      "runId": "43485de73c79951bcda15ddc4258283e",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-markdown\"]",
+      "sourceRevision": "3d88fdd6baf3516475c5955b49d1388b8916f2a7",
+      "inputDigest": "sha256:6ef3f4b7461938d4fed4d005802d0b9876985c2f538565b97e82578074e6aaf2",
+      "promptDigest": "sha256:27fb74fc0d301f33c4155801543a121f1fc828ae4ba983a85be7a5241aaf9c9f",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_03",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "verifier",
+      "reportedOutcome": "passed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:15a73377d8762ebb2363317ca3600fd41883f29946c942b3ed2906995621b429",
+        "prompt.txt": "sha256:27fb74fc0d301f33c4155801543a121f1fc828ae4ba983a85be7a5241aaf9c9f",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:86229aac8ee84df7dd0833e60268ed8dc60b4bb34a4b1f61d572568f361a6437",
+        "raw-response.json": "sha256:86229aac8ee84df7dd0833e60268ed8dc60b4bb34a4b1f61d572568f361a6437",
+        "normalized-response.json": "sha256:694f39244b98f828a6a4e3184584425e7d1c10a2dfd085cb6f32174434f280d9",
+        "emitted-response.json": "sha256:694f39244b98f828a6a4e3184584425e7d1c10a2dfd085cb6f32174434f280d9",
+        "control.json": "sha256:674427dbc37ddf12ca6ac6c009b9162f101436ebe19848428558c3fb3b6f234f"
+      },
+      "controlledMutation": "none"
+    },
+    {
+      "runId": "c4610f0d3108d4ea2157dbfc61e27508",
+      "role": "executor",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+      "inputDigest": "sha256:9ce6afeed49eda52e13a4beb7d61099491047280676bb05aa0348afbd6c2723b",
+      "promptDigest": "sha256:0c3f914431910fe2dcbd1cf54ec6805109c78823130deaf410ab31a9ed881238",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_04",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "executor",
+      "reportedOutcome": "proposed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:0897c922a642b4e05abc6f7ddcac6df61c79647869a322ddc0827b52b47f6c0c",
+        "prompt.txt": "sha256:0c3f914431910fe2dcbd1cf54ec6805109c78823130deaf410ab31a9ed881238",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:7f6a88c4bf13201b1288b1057fb96fbe5b581d69b8251383566d200803394b03",
+        "raw-response.json": "sha256:7f6a88c4bf13201b1288b1057fb96fbe5b581d69b8251383566d200803394b03",
+        "normalized-response.json": "sha256:cdf70d768a26c6fb1c58f473da2449804851460d7ddfcf4e19511f6b6c024530",
+        "emitted-response.json": "sha256:34e41565a78f21515742b2ab56417b9f25bcec3e6f5d38394f2cd2571dd82414",
+        "control.json": "sha256:d30ddae59740d43ca20eec622993713054ff6fae82b24e1acf13b9a05d7c49a8"
+      },
+      "controlledMutation": "controlled-non-agent-mutation"
+    },
+    {
+      "runId": "397ad565127af98d132786a8940b0215",
+      "role": "executor",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+      "inputDigest": "sha256:7027bd45fee88bf92612cf13b3ca4d218304f88f8fbe8c50006e78bfe05c0c5b",
+      "promptDigest": "sha256:8c5acee74ee1eb84169b28ea21c6e77164f6637204c4b2cb36c5630df4557561",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_05",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "executor",
+      "reportedOutcome": "proposed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:ce4bb713c8073969199f69f110ec7c961e4b288a1edc3e91dad2c25e54416b45",
+        "prompt.txt": "sha256:8c5acee74ee1eb84169b28ea21c6e77164f6637204c4b2cb36c5630df4557561",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:6daa0ebd0e3630c86a56c48c32291c192c521133f333742cf5fa684abf69f1b0",
+        "raw-response.json": "sha256:6daa0ebd0e3630c86a56c48c32291c192c521133f333742cf5fa684abf69f1b0",
+        "normalized-response.json": "sha256:38acc8f34ceca4bb0571656281b806d8989716a1f7ceb32e549f3a113e800f08",
+        "emitted-response.json": "sha256:b17763bd0eb26bd9706d66b4896038e20397d9518529020e9832b486c36ba05d",
+        "control.json": "sha256:30a375aa5446c11e8b9d622f14caf5d8d78362b3557708da36fc775f78f90d69"
+      },
+      "controlledMutation": "controlled-non-agent-mutation"
+    },
+    {
+      "runId": "e97e7e373d52d40503a5116b47d2b4a2",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "sourceRevision": "32f4c37873550c896a2adce90d0358e9cda1f4dd",
+      "inputDigest": "sha256:dd001bd04adacd5fb01e3ed5b75dddf06b7c61d06085b5c1f883a1e63b7adee5",
+      "promptDigest": "sha256:8d7540f496502b5d8425ec5f00fbebab4948665fd4335afbe6371e604ce3aebb",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_06",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": null,
+      "reportedOutcome": "failed",
+      "bridgeEmittedResponse": false,
+      "files": {
+        "invocation.json": "sha256:5e84a7df0ab2f4cdcebcc5e38721ada2a4dec72d37c29ee8ee7c55165736f464",
+        "prompt.txt": "sha256:8d7540f496502b5d8425ec5f00fbebab4948665fd4335afbe6371e604ce3aebb",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:345f34bc3506a3649bade3d9709caea87b4f7a929f9058da0c36cb41389406ba",
+        "raw-response.json": "sha256:345f34bc3506a3649bade3d9709caea87b4f7a929f9058da0c36cb41389406ba",
+        "normalized-response.json": "sha256:0f5ad1911e7da87a7ecc44ee241aef328dba6b42e8a15d3a005a0a46c1a97f1d"
+      }
+    },
+    {
+      "runId": "98d2770cdc5761823c97511ee4cde0c6",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-markdown\"]",
+      "sourceRevision": "32f4c37873550c896a2adce90d0358e9cda1f4dd",
+      "inputDigest": "sha256:82b84502125a6ea35dfb635f2f85e7f433ab4c75d638b58fd09eac4a423280ea",
+      "promptDigest": "sha256:756dc7cdac30fe9931c27c41cbee0ad46d5ecc7fbc0368a83d9095deccc617e0",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_07",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "verifier",
+      "reportedOutcome": "failed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:51a53680ae195510da09c430c203d2d328f2d376f6d1134efea82a5d41264f5c",
+        "prompt.txt": "sha256:756dc7cdac30fe9931c27c41cbee0ad46d5ecc7fbc0368a83d9095deccc617e0",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:436d08eef7e18de5b8ff3a1f86a1efec4178315e311ca13870a3697ed2b06e50",
+        "raw-response.json": "sha256:436d08eef7e18de5b8ff3a1f86a1efec4178315e311ca13870a3697ed2b06e50",
+        "normalized-response.json": "sha256:a871b4070e39e18f42abe72e2d6a2cfef5ad0301f8b470afd6f9180855e9f946",
+        "emitted-response.json": "sha256:a871b4070e39e18f42abe72e2d6a2cfef5ad0301f8b470afd6f9180855e9f946",
+        "control.json": "sha256:7571903d883be951eef05fdbba2135f92e968196ac14c21cfdc91ee8660ac84c"
+      },
+      "controlledMutation": "none"
+    },
+    {
+      "runId": "50f3eb0f8039ca5dc5d247319dacac85",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "sourceRevision": "32f4c37873550c896a2adce90d0358e9cda1f4dd",
+      "inputDigest": "sha256:dd001bd04adacd5fb01e3ed5b75dddf06b7c61d06085b5c1f883a1e63b7adee5",
+      "promptDigest": "sha256:2a88b06be3bae7215d3ea38bca8e6d683cb97cd0947b2956c646e2f69aeb08d2",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_08",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "verifier",
+      "reportedOutcome": "failed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:36b16192acbd7a0da38b1fe0e6522e4a5d8494715a6307427e14e2a8319326c3",
+        "prompt.txt": "sha256:2a88b06be3bae7215d3ea38bca8e6d683cb97cd0947b2956c646e2f69aeb08d2",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:2a48282e7520d5eb1d9d5bcc38989f91c56b24d4698d6c8ed8da77b13c7ab8ab",
+        "raw-response.json": "sha256:2a48282e7520d5eb1d9d5bcc38989f91c56b24d4698d6c8ed8da77b13c7ab8ab",
+        "normalized-response.json": "sha256:28a1409585b22512a2c324a327e172c3602ceabf5606978adb83f192c5401ad1",
+        "emitted-response.json": "sha256:28a1409585b22512a2c324a327e172c3602ceabf5606978adb83f192c5401ad1",
+        "control.json": "sha256:ec629f0f7c70903838b8b16a8c38d9e7d1849125c234d0ae02561cc2ce4702a0"
+      },
+      "controlledMutation": "none"
+    },
+    {
+      "runId": "11cb38958d02463e0e76d4b4df1becca",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-markdown\"]",
+      "sourceRevision": "32f4c37873550c896a2adce90d0358e9cda1f4dd",
+      "inputDigest": "sha256:452adc08196dec5be13b9cd03f029e5800c0086cd6acf36a2b13eaf41d883408",
+      "promptDigest": "sha256:43b683f36f67d8f27533106f028a2c304c118f17a362b99594460dabc893ebd8",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_09",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "verifier",
+      "reportedOutcome": "failed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:b80844ffb39901a9a2d5d06dde64d45ad53137de4142de4d7a046e70f7b9d8b6",
+        "prompt.txt": "sha256:43b683f36f67d8f27533106f028a2c304c118f17a362b99594460dabc893ebd8",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:8cfa36ed592ce91b8ac659d42c0b254a8d1843cdc0664d73b251f56f958ded96",
+        "raw-response.json": "sha256:8cfa36ed592ce91b8ac659d42c0b254a8d1843cdc0664d73b251f56f958ded96",
+        "normalized-response.json": "sha256:84164a9b39ebba524bce0a45ecbdb69a4daa65d203819df68a11a7d32434d9ed",
+        "emitted-response.json": "sha256:84164a9b39ebba524bce0a45ecbdb69a4daa65d203819df68a11a7d32434d9ed",
+        "control.json": "sha256:9c6ba917aef1cca194953b8ce7d71726073e82ef0842a4ba3f5359a57122f425"
+      },
+      "controlledMutation": "none"
+    },
+    {
+      "runId": "6b3f29b5b7d4b5af465321a9faf03929",
+      "role": "executor",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+      "inputDigest": "sha256:5efdf2b18b528d1ebc97167df8a8febdd6fda010f9f6aa1d53153c8d40fc4d72",
+      "promptDigest": "sha256:eed4cfc31607031e1211560077702bcd8dc338af20a6012c3022690d31c6f513",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_10",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": null,
+      "reportedOutcome": "proposed",
+      "bridgeEmittedResponse": false,
+      "files": {
+        "invocation.json": "sha256:7065a2b3d7626976f0f52e1901960dd3a08cccf979b78d1983156b71ddaf10df",
+        "prompt.txt": "sha256:eed4cfc31607031e1211560077702bcd8dc338af20a6012c3022690d31c6f513",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:910655db898eb7810011371955898341c05cb249778d927f40733a14050f1cc0",
+        "raw-response.json": "sha256:910655db898eb7810011371955898341c05cb249778d927f40733a14050f1cc0",
+        "normalized-response.json": "sha256:944500c01dc3c7b9d3b28a3ed28eb9e2322ebd811cba11d4be654581be28656d"
+      }
+    },
+    {
+      "runId": "76c58c3a1cd9fa5d27a07a0da012d13c",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "sourceRevision": "32f4c37873550c896a2adce90d0358e9cda1f4dd",
+      "inputDigest": "sha256:dd001bd04adacd5fb01e3ed5b75dddf06b7c61d06085b5c1f883a1e63b7adee5",
+      "promptDigest": "sha256:2fa73e3c933d73dce0aea3e2c5ced4a8c1b7ff5156adc9fd7fca7d8be1dbae2e",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_11",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "verifier",
+      "reportedOutcome": "failed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:8f03cd24f12cc975aa330e7a70d4f4091522c7639213121920ca0244c6bf32bf",
+        "prompt.txt": "sha256:2fa73e3c933d73dce0aea3e2c5ced4a8c1b7ff5156adc9fd7fca7d8be1dbae2e",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:df9f1ce93a4f1bc15931855afed8919e3dbb887739b99143bad941496ba4f44e",
+        "raw-response.json": "sha256:df9f1ce93a4f1bc15931855afed8919e3dbb887739b99143bad941496ba4f44e",
+        "normalized-response.json": "sha256:50e613363649b6c89f2d7b9d0d3aabf40767bcc7b4057e72679f96bca47244fb",
+        "emitted-response.json": "sha256:50e613363649b6c89f2d7b9d0d3aabf40767bcc7b4057e72679f96bca47244fb",
+        "control.json": "sha256:990e9299a645606e5799016dd519cc682647944e62051535fa11e260f5d819d7"
+      },
+      "controlledMutation": "none"
+    },
+    {
+      "runId": "5507891a6ea2bbebb42657d6a285bebf",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-markdown\"]",
+      "sourceRevision": "32f4c37873550c896a2adce90d0358e9cda1f4dd",
+      "inputDigest": "sha256:4ced0c4d850f7633d3c0bf271f8d95fc3300b8ae817d24b5f2a2dc4a08161f53",
+      "promptDigest": "sha256:892cf160685bc2ba1095e6aa68e72e16854aef0adb801ff2687555f009a08d10",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_12",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "verifier",
+      "reportedOutcome": "failed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:7fa0123bbb9e6e452b64b109fd182f120ee23cbb2d9d1226f3757d1a76576b5f",
+        "prompt.txt": "sha256:892cf160685bc2ba1095e6aa68e72e16854aef0adb801ff2687555f009a08d10",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:fdd1ae3c255ecff38a7b6a4ac67cd59e7f2607fd2a4a5350cb34215ce7a593a9",
+        "raw-response.json": "sha256:fdd1ae3c255ecff38a7b6a4ac67cd59e7f2607fd2a4a5350cb34215ce7a593a9",
+        "normalized-response.json": "sha256:5f32feba5f24dae8e46fd9e85c056466da484ef6eb11a1623db223645e677078",
+        "emitted-response.json": "sha256:5f32feba5f24dae8e46fd9e85c056466da484ef6eb11a1623db223645e677078",
+        "control.json": "sha256:1bd6ae6982561c08ed3f4dadd7929db46d6a0774e21fcfdb42684e7ccf8afbf8"
+      },
+      "controlledMutation": "none"
+    },
+    {
+      "runId": "167505b769f0ddf045ce766af5060e16",
+      "role": "executor",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+      "inputDigest": "sha256:b3355f0183ed13c9ceed000413fc700ed09e95610aaa92fe41e0e0438a512bad",
+      "promptDigest": "sha256:195c076aa07d0e73f14488d66d6bb74ba46e88eecf6ff349cde332c164b1e2e7",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_13",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "executor",
+      "reportedOutcome": "proposed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:5812c3fbba47eefad17753315a2020a89b6851b2a7069467f8c2868cabb30641",
+        "prompt.txt": "sha256:195c076aa07d0e73f14488d66d6bb74ba46e88eecf6ff349cde332c164b1e2e7",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:d5adbb2375001f707c99d60e311779755e7557f6def5b0db5fcde501690725f6",
+        "raw-response.json": "sha256:d5adbb2375001f707c99d60e311779755e7557f6def5b0db5fcde501690725f6",
+        "normalized-response.json": "sha256:e1a4161fe89e55d5c65d698b2800f8cc346a306d856b3df2acff43242ea84bc8",
+        "emitted-response.json": "sha256:e1a4161fe89e55d5c65d698b2800f8cc346a306d856b3df2acff43242ea84bc8",
+        "control.json": "sha256:0ffd156a0264cadb525cd608229daaf0fcf307d091577f293680426915be0d93"
+      },
+      "controlledMutation": "none"
+    },
+    {
+      "runId": "98d30cde73b72cd9a0cc4c81c0ef0281",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "sourceRevision": "f14198e90f5b0299cb1b0c4aa7b5af8d236546e2",
+      "inputDigest": "sha256:d597068da509730b49b765fec77a867990f10173942b851a8ad45b2c3de3355a",
+      "promptDigest": "sha256:ece726eb2717f1abc1347d26eb7aae863f4c63756eb9afca358927287243723c",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_14",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "verifier",
+      "reportedOutcome": "passed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:4a70d61fd1b418ee7edd5508f61bafe003eeaeaabd9c69aacc82e73c79590eb5",
+        "prompt.txt": "sha256:ece726eb2717f1abc1347d26eb7aae863f4c63756eb9afca358927287243723c",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:0fee76edae1d45dd05b76c81e0ab3b4b87f3dfca5097be6ecb931e5acd1fc1ec",
+        "raw-response.json": "sha256:0fee76edae1d45dd05b76c81e0ab3b4b87f3dfca5097be6ecb931e5acd1fc1ec",
+        "normalized-response.json": "sha256:f4987a7a486f4e5cd6ebeb7d86ea27cfe48eb3f8d51e6c1de25fe6f445e81134",
+        "emitted-response.json": "sha256:f4987a7a486f4e5cd6ebeb7d86ea27cfe48eb3f8d51e6c1de25fe6f445e81134",
+        "control.json": "sha256:0e3a685a88ba95973f181629cc3120186ed9f6020adba1f3bd76ebd46b6c8415"
+      },
+      "controlledMutation": "none"
+    },
+    {
+      "runId": "11111d4b05e711da028f3fc4e161e442",
+      "role": "verifier",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-markdown\"]",
+      "sourceRevision": "f14198e90f5b0299cb1b0c4aa7b5af8d236546e2",
+      "inputDigest": "sha256:5694bad4327f47fea715fe2394a10d67719e3aefe39e368906000cdc539f90b4",
+      "promptDigest": "sha256:f11236328534bc1a9ead4e00ed5aed977a53314bfa23354b398580def09c25e3",
+      "modelConfigured": "gpt-6-luna",
+      "reasoningConfigured": "high",
+      "providerVersion": "unavailable",
+      "dispatch": {
+        "agentId": "/root/pilot_actor_15",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "reportedRole": "verifier",
+      "reportedOutcome": "passed",
+      "bridgeEmittedResponse": true,
+      "files": {
+        "invocation.json": "sha256:b8083a3ee86dbed3db96a6cf0530dc1ea10e6cc07e45beb376ff9b09e87f256e",
+        "prompt.txt": "sha256:f11236328534bc1a9ead4e00ed5aed977a53314bfa23354b398580def09c25e3",
+        "response-schema.json": "sha256:91e3548075e533ef41ca09b074b29f05fac72a823d93a3b17b2bc170bf187818",
+        "response.json": "sha256:340ec83ebf4004d258a9154a9c28416cce45c53191ae93a3a41742910b61dc03",
+        "raw-response.json": "sha256:340ec83ebf4004d258a9154a9c28416cce45c53191ae93a3a41742910b61dc03",
+        "normalized-response.json": "sha256:90d6bdab6062c864f2b50431f437eda95383b2c0c55b1bb8626f65ce80e96e44",
+        "emitted-response.json": "sha256:90d6bdab6062c864f2b50431f437eda95383b2c0c55b1bb8626f65ce80e96e44",
+        "control.json": "sha256:3ba7961219181fd615ce1f878a2cbbc31c07e352325bca2c069cff30a3c6d9a5"
+      },
+      "controlledMutation": "none"
+    }
+  ],
+  "steps": [
+    {
+      "label": "baseline-model",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T20:37:34.530Z",
+      "completedAt": "2026-10-06T20:37:34.715Z",
+      "elapsedMilliseconds": 184,
+      "stdoutBytes": 18667,
+      "stdoutSha256": "sha256:386a3f7485e39539ab9c7f54a51eab8332c11ee677e4ce7c9d822d8cd98b6f41",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {}
+    },
+    {
+      "label": "baseline-runtime-proposal",
+      "exitCode": 2,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T20:42:49.869Z",
+      "completedAt": "2026-10-06T20:42:49.984Z",
+      "elapsedMilliseconds": 113,
+      "stdoutBytes": 946,
+      "stdoutSha256": "sha256:69fa9c21754ab0e4beb84ade1ca0c3b4e699f4b1bf21dd0bad2ecd95c969b716",
+      "stderrBytes": 62,
+      "stderrSha256": "sha256:bbd8e15baca2efc8063c3a09bcab85c8e34e3d7734c594f3cb083a80355aa8f9",
+      "reported": {
+        "status": "",
+        "digest": ""
+      }
+    },
+    {
+      "label": "baseline-runtime-proposal-02",
+      "exitCode": 2,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T20:43:19.520Z",
+      "completedAt": "2026-10-06T20:43:21.198Z",
+      "elapsedMilliseconds": 1677,
+      "stdoutBytes": 5045,
+      "stdoutSha256": "sha256:4505859673fceaf6d7fc1c83249153921a330dd54049b51ad561e688d0b5c051",
+      "stderrBytes": 121,
+      "stderrSha256": "sha256:1352b70a3e7fb57405d644a2528222ef76e9d9a3e224a25447a429d7b64492b8",
+      "reported": {
+        "status": "",
+        "digest": ""
+      }
+    },
+    {
+      "label": "baseline-runtime-proposal-03",
+      "exitCode": 1,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T20:44:26.328Z",
+      "completedAt": "2026-10-06T20:44:28.162Z",
+      "elapsedMilliseconds": 1832,
+      "stdoutBytes": 37670,
+      "stdoutSha256": "sha256:b97a7c0fceff8bf62f7a7cdd1e0303aac1ca4b3014a82b9b260f88ff3a59dd7a",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "escalated",
+        "digest": "sha256:914c22414597a118463e700b6cfa6443ce366ffc51993443227d1c40353faea1"
+      }
+    },
+    {
+      "label": "baseline-execute",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T20:47:35.502Z",
+      "completedAt": "2026-10-06T20:49:15.040Z",
+      "elapsedMilliseconds": 99537,
+      "stdoutBytes": 57583,
+      "stdoutSha256": "sha256:562ea9a2606a182487e503ae1e190a270104c229cc869322eed8fe98d0632bec",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "planned",
+        "digest": "sha256:cc97152f544679f99ab169bade85a4553e3c5e4763687ec68910cfdb36225bb4"
+      }
+    },
+    {
+      "label": "baseline-apply",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T20:49:35.308Z",
+      "completedAt": "2026-10-06T20:49:44.361Z",
+      "elapsedMilliseconds": 9051,
+      "stdoutBytes": 6321,
+      "stdoutSha256": "sha256:85ba67580bfad352c66336662ac80254c8468626ec4f8070218ef07e94a0e079",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "materialized-unverified",
+        "evidenceRevision": "3d88fdd6baf3516475c5955b49d1388b8916f2a7",
+        "runDigest": "sha256:cc97152f544679f99ab169bade85a4553e3c5e4763687ec68910cfdb36225bb4",
+        "written": [
+          "docs/represented/index.md",
+          "src/Commerce/Commerce.csproj",
+          "src/Commerce/CreateOrderHandler.cs"
+        ]
+      }
+    },
+    {
+      "label": "baseline-verify",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T20:49:59.967Z",
+      "completedAt": "2026-10-06T20:53:16.269Z",
+      "elapsedMilliseconds": 196300,
+      "stdoutBytes": 21290,
+      "stdoutSha256": "sha256:4374d1ed4865765edcbb6ddd3b798764338a5acb16c7f8896d072e3fc269de0a",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "passed",
+        "outcome": "passed",
+        "digest": "sha256:ecd3fcf85c353e0d714c78c0b6f9e9019fe22471b989e1dd66a7e59ff29cb92d",
+        "sourceRevision": "9dc9e68c182bccd408690f9f20300a75c68bd35a",
+        "evidenceRevision": "3d88fdd6baf3516475c5955b49d1388b8916f2a7"
+      }
+    },
+    {
+      "label": "baseline-audit",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T20:53:33.705Z",
+      "completedAt": "2026-10-06T20:53:39.446Z",
+      "elapsedMilliseconds": 5740,
+      "stdoutBytes": 3520,
+      "stdoutSha256": "sha256:52c64f5acafb5d30154d737e746fe7d0fb2e17731be62e7fee87cf008a16dded",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "complete",
+        "digest": "sha256:5646787950ead25f9b586bd4f5792f3a1f3dc99ab75fb8932e19d926151532d8",
+        "sourceRevision": "9dc9e68c182bccd408690f9f20300a75c68bd35a"
+      }
+    },
+    {
+      "label": "changed-model",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T20:54:04.647Z",
+      "completedAt": "2026-10-06T20:54:04.823Z",
+      "elapsedMilliseconds": 174,
+      "stdoutBytes": 23332,
+      "stdoutSha256": "sha256:79ee16a309db181d0186bd220026bdaaa08cd41f61b3356696221ae8dab5afac",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {}
+    },
+    {
+      "label": "changed-impact",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T20:54:07.376Z",
+      "completedAt": "2026-10-06T20:54:07.691Z",
+      "elapsedMilliseconds": 313,
+      "stdoutBytes": 1909,
+      "stdoutSha256": "sha256:3f4536b3d225507d39796f57cf2ff5d146fb491692b32e75d66062c7e88a1806",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {}
+    },
+    {
+      "label": "changed-stale-audit",
+      "exitCode": 2,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T20:54:32.826Z",
+      "completedAt": "2026-10-06T20:54:36.315Z",
+      "elapsedMilliseconds": 3487,
+      "stdoutBytes": 5479,
+      "stdoutSha256": "sha256:46bda690b99092e9afa2d2ca3ced19bd5a40953df136d1c84cc8ae1a430a416f",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "incomplete",
+        "digest": "sha256:3523c608390d371ce0e393beaa915b18cf5260fad9ade3480e1ae9dc97c7b58a",
+        "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331"
+      }
+    },
+    {
+      "label": "changed-execute",
+      "exitCode": 1,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T20:54:39.508Z",
+      "completedAt": "2026-10-06T20:55:31.706Z",
+      "elapsedMilliseconds": 52196,
+      "stdoutBytes": 66676,
+      "stdoutSha256": "sha256:32921021038f0f09c2534ba1bca1e7073ab59120c6c1db9922aa02d971b784be",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "escalated",
+        "digest": "sha256:fba523541c10ddecc4fe241f346a955c6bdb30d3cfde4550e4fce876cc6abdb5"
+      }
+    },
+    {
+      "label": "changed-execute-02",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:03:33.544Z",
+      "completedAt": "2026-10-06T21:04:34.939Z",
+      "elapsedMilliseconds": 61393,
+      "stdoutBytes": 67426,
+      "stdoutSha256": "sha256:1bd19c8b6cc0d4e09d2fda5ed542e8485b7336c482de286ef5b0cbba2efe5167",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "planned",
+        "digest": "sha256:f7d406df27f9015860996ce03ae8aa98c7a4381462d0c285df50f85c973ef1b9"
+      }
+    },
+    {
+      "label": "changed-apply",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:05:16.347Z",
+      "completedAt": "2026-10-06T21:05:25.419Z",
+      "elapsedMilliseconds": 9071,
+      "stdoutBytes": 6520,
+      "stdoutSha256": "sha256:59da37e41c09f617bd6749196f5892a965ebad1b4a063fa576ef6d1a4f1cbd58",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "materialized-unverified",
+        "evidenceRevision": "32f4c37873550c896a2adce90d0358e9cda1f4dd",
+        "runDigest": "sha256:f7d406df27f9015860996ce03ae8aa98c7a4381462d0c285df50f85c973ef1b9",
+        "written": [
+          "docs/represented/index.md",
+          "src/Commerce/Commerce.csproj",
+          "src/Commerce/CreateOrderHandler.cs"
+        ]
+      }
+    },
+    {
+      "label": "changed-verify",
+      "exitCode": 1,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:05:29.850Z",
+      "completedAt": "2026-10-06T21:08:05.212Z",
+      "elapsedMilliseconds": 155360,
+      "stdoutBytes": 22571,
+      "stdoutSha256": "sha256:ca64e35ca3c9ec720c0e4a6c8c1f3d2dfc87b59c0a5b90ae9b13ea046f671807",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "failed",
+        "outcome": "failed",
+        "digest": "sha256:fedf91c830a26f15ef6ccad3369130a26124cf3afe7175f4a30ec9c8423c1823",
+        "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+        "evidenceRevision": "32f4c37873550c896a2adce90d0358e9cda1f4dd"
+      }
+    },
+    {
+      "label": "failed-audit",
+      "exitCode": 2,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:08:40.431Z",
+      "completedAt": "2026-10-06T21:08:46.692Z",
+      "elapsedMilliseconds": 6259,
+      "stdoutBytes": 5980,
+      "stdoutSha256": "sha256:0371dc5b0ff72e6c797a4bc71e35b0e9756da35bef78e502ef692a0605fdde57",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "incomplete",
+        "digest": "sha256:3377b2b1529da41225250dc98d5b5edf5327a5ebc814df1cd9a283b508550ae9",
+        "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331"
+      }
+    },
+    {
+      "label": "repair-propose",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:08:49.842Z",
+      "completedAt": "2026-10-06T21:08:53.361Z",
+      "elapsedMilliseconds": 3517,
+      "stdoutBytes": 39152,
+      "stdoutSha256": "sha256:5ef11b4ff87183fb2c2ba93c10e4c3ded18b105237d84de73304f053e3908584",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "planned",
+        "digest": "sha256:94a265b8b506a8cd2d53c3d9326e231a537a0e045bc467329a45c01e2675f6f9"
+      }
+    },
+    {
+      "label": "changed-verify-02",
+      "exitCode": 1,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:10:16.968Z",
+      "completedAt": "2026-10-06T21:14:11.019Z",
+      "elapsedMilliseconds": 234050,
+      "stdoutBytes": 27660,
+      "stdoutSha256": "sha256:20a9a648ec2a24b6590f496f263567c6875e76ab15dad660e158e72147cdec24",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "failed",
+        "outcome": "failed",
+        "digest": "sha256:f447266ccf71cf6fea337d47b18870a86b1f469f0759d5dc534158cd46672816",
+        "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+        "evidenceRevision": "32f4c37873550c896a2adce90d0358e9cda1f4dd"
+      }
+    },
+    {
+      "label": "repair-propose-02",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:14:34.741Z",
+      "completedAt": "2026-10-06T21:14:39.915Z",
+      "elapsedMilliseconds": 5172,
+      "stdoutBytes": 51446,
+      "stdoutSha256": "sha256:2618b0a12e6d07ae1cbc2706968fda9d944ac8a6f3a784833ef5cf0a35e8069b",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "planned",
+        "digest": "sha256:9cbb8196b41f6487127d1bf9afac0fb1f92be42389bddad3d78c661e4276f5f5"
+      }
+    },
+    {
+      "label": "semantic-failed-audit",
+      "exitCode": 2,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:14:52.966Z",
+      "completedAt": "2026-10-06T21:14:59.735Z",
+      "elapsedMilliseconds": 6768,
+      "stdoutBytes": 5977,
+      "stdoutSha256": "sha256:322075fd7f82af253abcefd402867908211434bad30341d585bb39a83ebe3424",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "incomplete",
+        "digest": "sha256:5024a8df8afe6f5b6b00b4dc0951b7003753c98dd1efb31af9a2639bdde4502f",
+        "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331"
+      }
+    },
+    {
+      "label": "repair-execute",
+      "exitCode": 2,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:15:02.743Z",
+      "completedAt": "2026-10-06T21:15:44.388Z",
+      "elapsedMilliseconds": 41643,
+      "stdoutBytes": 55756,
+      "stdoutSha256": "sha256:50a288ef65db6dc0e2548b8780334260d61fa0570bd1d0af9720940e067a3eac",
+      "stderrBytes": 23,
+      "stderrSha256": "sha256:67b2944b65106ea64c392608a653bc5a690979e5e4b8e2f90cf2c687ac64240e",
+      "reported": {
+        "status": "incomplete",
+        "digest": "sha256:81773ed79a2cb7706dd8b4a4fc93cb1655785badec61a3de0c3b78d8a19d3a22"
+      }
+    },
+    {
+      "label": "changed-verify-03",
+      "exitCode": 1,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:18:57.575Z",
+      "completedAt": "2026-10-06T21:22:59.209Z",
+      "elapsedMilliseconds": 241632,
+      "stdoutBytes": 28078,
+      "stdoutSha256": "sha256:7b8b892e8f1db7eb77ff954715703c53b6d3272ed5b5d331eaf61a16b2bebed6",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "failed",
+        "outcome": "failed",
+        "digest": "sha256:9ba593142eb9e72229eb7ee6540850a9cc0d6a6392753f232ecd85009614e20c",
+        "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+        "evidenceRevision": "32f4c37873550c896a2adce90d0358e9cda1f4dd"
+      }
+    },
+    {
+      "label": "repair-execute-03",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:23:15.991Z",
+      "completedAt": "2026-10-06T21:24:02.828Z",
+      "elapsedMilliseconds": 46835,
+      "stdoutBytes": 58176,
+      "stdoutSha256": "sha256:fcccc163a98b1774caacec38e3ccfe382e605f435bc4e71b41eaec8ebe1a5aca",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "planned",
+        "digest": "sha256:0f0dac190540f6dc2785cc2aa9843736d875e6d76406cf156dad002f32979645"
+      }
+    },
+    {
+      "label": "repair-apply",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:24:41.005Z",
+      "completedAt": "2026-10-06T21:24:50.558Z",
+      "elapsedMilliseconds": 9552,
+      "stdoutBytes": 4402,
+      "stdoutSha256": "sha256:5e36db4f0cf88f8e35b17bb0f4ecf3c957028c72387adbf93397007f56192a39",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "materialized-unverified",
+        "evidenceRevision": "f14198e90f5b0299cb1b0c4aa7b5af8d236546e2",
+        "runDigest": "sha256:0f0dac190540f6dc2785cc2aa9843736d875e6d76406cf156dad002f32979645",
+        "written": [
+          "src/Commerce/CreateOrderHandler.cs"
+        ]
+      }
+    },
+    {
+      "label": "repair-verify",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:24:55.046Z",
+      "completedAt": "2026-10-06T21:31:49.671Z",
+      "elapsedMilliseconds": 414623,
+      "stdoutBytes": 21129,
+      "stdoutSha256": "sha256:3387f635e607e84660c8f450c986b20ab61632214ef46418ea4339eeafd3a68b",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "passed",
+        "outcome": "passed",
+        "digest": "sha256:829b0664c058111392d5b26feae7f3555b2e1b4019961334d0265ae0f2b328da",
+        "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331",
+        "evidenceRevision": "f14198e90f5b0299cb1b0c4aa7b5af8d236546e2"
+      }
+    },
+    {
+      "label": "final-audit",
+      "exitCode": 0,
+      "timedOut": false,
+      "launchErrorType": null,
+      "startedAt": "2026-10-06T21:32:06.315Z",
+      "completedAt": "2026-10-06T21:32:14.170Z",
+      "elapsedMilliseconds": 7854,
+      "stdoutBytes": 3520,
+      "stdoutSha256": "sha256:c977d02fa28fbea47d701b92ca9a9cb3c668eb2613677cfb1db84c197fbcc44d",
+      "stderrBytes": 0,
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reported": {
+        "status": "complete",
+        "digest": "sha256:9806459d520dbbc6dd5b289fad51b4d53ec1882c84ffc89569c953abf06bf0a4",
+        "sourceRevision": "bd06f90c9afcc80f53f5c70d355b39266b6c4331"
+      }
+    }
+  ],
+  "evidenceStorage": "Public inputs and sanitized receipts committed here; raw invocations, responses, process logs and full ledger retained locally outside Git. Receipt hashes bind local evidence but do not make those private bytes independently downloadable.",
+  "sourceGateStatus": "Full integrated-candidate gates run separately after this receipt is committed. Pilot checks are not whole-source gates.",
+  "limitations": [
+    "One small synthetic business area; larger two-area/shared-rule workflow remains open.",
+    "Controlled defect tests detection and repair, not frequency of natural semantic mistakes.",
+    "Two malformed actor envelopes and an omitted owned file were real failed attempts and are retained.",
+    "No continuous scheduler, long-running recovery, statistical reliability, productivity comparison, production readiness or human acceptance claim.",
+    "Coordinator selected and reviewed exact Apply digests, managed actor dispatch and corrected source between attempts; this was not unattended product operation."
+  ],
+  "independentReview": {
+    "scope": "Captured live lifecycle and sanitized receipt compared with private evidence",
+    "outcome": "No blocking or material contradiction found",
+    "reviewerModelSelection": "gpt-6-luna high",
+    "limits": "Agent review, not human acceptance or provider attestation."
+  }
+}

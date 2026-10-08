@@ -1,0 +1,25 @@
+{
+  "schema": "markitect-sequence-freeze/v1",
+  "protocolDigest": "sha256:5ac553dda3586725666dc4277dbf4996fee12f9c8cfc6040dbe58c0dbeee3c2c",
+  "frozenAtUtc": "2026-10-06T23:48:56.870305+00:00",
+  "actorStartStatus": "no-live-sequence-actors-started",
+  "preparationCorrections": [
+    "Explicit whitespace-only, composition exception semantics, and staged intent-before-executor binding",
+    "Holdout v1 preserved; v2 builds separate libraries and treats IO text as advisory"
+  ],
+  "humanAttention": "unavailable",
+  "sourceStageBindings": "separate immutable records before each execution stage",
+  "bindings": {
+    "task1CanonicalBase": "9dac557171a82039370d76f66abcbf2152c46e5a",
+    "task1CanonicalHead": null,
+    "task2CanonicalHead": null,
+    "task3CanonicalHead": null,
+    "runtimeDigest": "sha256:042cf6286793a0ee2b18f48c4eb62bd8d70fac804a2334b9be0fc22f863ea44f",
+    "independentHoldoutDigest": "sha256:2ed57687f26eae41f555bd8ab4728fb83ad251d36062f089178ee364ac2b8ea7",
+    "startingBoundaryDigest": "sha256:695a2df5794ef9ea8e69993af8f3e8c8d0a378bd0827af156e14b59399aaf1a8",
+    "cliDigest": "sha256:17427bbaa65929bee1219b8f957f61d1f54f2ff6aa8ba775ffe5e06d982b1533",
+    "bridgeDigest": "sha256:b080a17fc1ee9f57b4bc65fe2262215d6e2146cec93849956b62b32f51c4327b",
+    "runnerDigest": "sha256:d08ad82ca5e47bd557fb6b6f8d45ef7aaa20f0e7bfa551f9766f9bc6ca887279",
+    "coordinatorDigest": "sha256:fff25900aafed6b78825634aa73515c9b004e89b502e6aa8d8b1aaee5a76d715"
+  }
+}

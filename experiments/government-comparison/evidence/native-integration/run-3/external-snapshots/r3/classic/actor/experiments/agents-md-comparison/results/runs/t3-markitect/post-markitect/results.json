@@ -1,0 +1,39 @@
+[
+  {
+    "name": "check",
+    "command": [
+      "<R3>\\workspaces\\t3-markitect\\checkout\\.tools\\markitect.exe",
+      "check",
+      "--repo",
+      "<R3>\\workspaces\\t3-markitect\\checkout"
+    ],
+    "exitCode": 0,
+    "stdoutSha256": "ae1ca50a4e9595cf276bd7e0bfe21b142767a82bfde2377cfd2bcaa82ffa63e6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "model",
+    "command": [
+      "<R3>\\workspaces\\t3-markitect\\checkout\\.tools\\markitect.exe",
+      "model",
+      "--repo",
+      "<R3>\\workspaces\\t3-markitect\\checkout"
+    ],
+    "exitCode": 0,
+    "stdoutSha256": "d88ec6d5229f4f3e296aec98d123275eaac692ccaa57f5b51256f39d580c2c73",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "render-check",
+    "command": [
+      "<R3>\\workspaces\\t3-markitect\\checkout\\.tools\\markitect.exe",
+      "render",
+      "--check",
+      "--repo",
+      "<R3>\\workspaces\\t3-markitect\\checkout"
+    ],
+    "exitCode": 0,
+    "stdoutSha256": "ae1ca50a4e9595cf276bd7e0bfe21b142767a82bfde2377cfd2bcaa82ffa63e6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

@@ -1,0 +1,14 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+    name: refund-triage
+    namespace: support
+spec:
+    text: |
+        Triage a delayed or damaged parcel refund request using the support policy and refund decision workflow.
+    uses:
+        - kind: Workflow
+          name: refund-review
+    needs:
+        - kind: Contract
+          name: refund-decision

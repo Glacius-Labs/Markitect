@@ -1,0 +1,17 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Module
+metadata:
+  name: meetings
+  namespace: architecture
+spec:
+  purpose: Meeting groups, meetings, attendance, comments and membership.
+  dependsOn:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Core, name: core, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Interface, name: administration-events, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Interface, name: payments-events, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Interface, name: registrations-events, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Interface, name: user-access-events, namespace: architecture}
+  projectFiles:
+    - src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj
+    - src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj
+    - src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj

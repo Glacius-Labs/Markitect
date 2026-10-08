@@ -1,0 +1,2 @@
+Synthetic change: replace the request timeout default from 30 seconds to 5 seconds.
+Observed signal: the synthetic canary has a higher timeout rate than the previous version.

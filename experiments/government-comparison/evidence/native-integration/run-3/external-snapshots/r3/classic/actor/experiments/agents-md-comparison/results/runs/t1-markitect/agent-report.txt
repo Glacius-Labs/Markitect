@@ -1,0 +1,5 @@
+Implemented `GetMeetingPeopleCount` in the trial checkout. Its handler runs the existing attendee query and sums one person per row plus that row’s guest count, treating null as zero. I also made `GuestsNumber` nullable and added the UseCase and Handler governance resources, linking the UseCase from the architecture-review skill.
+
+`git diff --check` passed. `markitect find` found both new resources. `markitect check` exited 1: generated documentation is missing for the new resources, and it reports drift in the domain document and architecture README. I left generated outputs untouched because `render --write` writes in an isolated worktree, outside the trial checkout constraint.
+
+The SDK selected from `src` is 8.0.418. The application build and required architecture test facade could not pass restore: feed access was blocked, producing NU1900 warning-as-error failures. No tests compiled or ran.

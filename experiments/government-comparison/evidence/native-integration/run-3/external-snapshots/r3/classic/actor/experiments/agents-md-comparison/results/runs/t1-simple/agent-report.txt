@@ -1,0 +1,10 @@
+Implemented `GetMeetingPeopleCountQuery` and its internal handler in the Meetings Application. The handler sums one person per row plus that row’s guest count, treating null guest counts as zero, from the same view and meeting filter used by `GetMeetingAttendees`. It returns an integer and adds no HTTP endpoint.
+
+The query follows the project’s immutable query and internal-handler conventions. No governance files needed changes. `.agent-input/context.yaml` and `.agent-input/impact.yaml` were absent.
+
+Checks and limits:
+
+- SDK: `8.0.418`, selected from `src/global.json`.
+- Application build and architecture test facade were attempted from `src`, but restore failed with `NU1900`: the configured NuGet feeds were unreachable. No-restore retries also failed on the existing vulnerability-data errors.
+- `git diff --check` passed.
+- Compilation, architecture-test results, and database execution remain unverified.

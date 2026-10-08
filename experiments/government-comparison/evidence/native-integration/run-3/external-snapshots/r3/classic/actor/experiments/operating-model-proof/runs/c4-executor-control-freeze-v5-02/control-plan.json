@@ -1,0 +1,63 @@
+{
+  "protocol": "operating-model-proof/v5",
+  "recordType": "pre-executor-control-freeze",
+  "status": "frozen",
+  "createdAtUtc": "2026-10-06T04:43:31.8153508Z",
+  "trial": "c4-module-proposal-v5-02",
+  "runId": "c4-module-proposal-v5-02",
+  "fixtureSubsetCommit": "b24fd775b3537302ba2ebece970c55ffdef5f7eb",
+  "branch": "codex/operating-model-c4-v5",
+  "sourceSha": "6a79b0d015801f3f37e42cacd049179cc795be42",
+  "runtimeSha256": "af2c31b099c2004ce3ed4792399c910eb24094fab077fea4fc5b2ae32a64cad2",
+  "providerWrapperSha256": "7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57",
+  "cliSha256": "03c551536335ee580b870e703a6a40ef8777c5a8139042f8f0f7e8e7e88729aa",
+  "proposalAttemptId": "04bb66aa10274a3695c8bfd2807ce960",
+  "proposalDigest": "sha256:4862af3e3336990012a73bb51b91b65792552978108be03227860af2c0bd1bdf",
+  "proposalInputDigest": "sha256:5193a22361597226aab6e063e25af7b493aac96e492b1955d5de5c3866693573",
+  "ledgerHead": "sha256:f77a624521ea48ebd4a7e9f13e5c57619bdee5d32ce7a66fdd4e655d64a8092e",
+  "ledgerSelectionDigest": "sha256:bbd0dafc21986b54a40a68b028f6166eb5ac6ba8916faf8e7b94125a090ed2d8",
+  "provider": {
+    "product": "Codex CLI",
+    "model": "gpt-5.5",
+    "version": "0.130.0",
+    "reasoning": "high"
+  },
+  "proposalCohort": [
+    {
+      "policy": "examples/operating-model/definitions/billing-dotnet.projection-policy.yaml",
+      "module": "operating-model-billing-dotnet@1.0.0",
+      "target": "src/Billing/",
+      "projection": "billing-dotnet"
+    },
+    {
+      "policy": "examples/operating-model/definitions/orders-dotnet.projection-policy.yaml",
+      "module": "operating-model-orders-dotnet@1.0.0",
+      "target": "src/Orders/",
+      "projection": "orders-dotnet"
+    },
+    {
+      "policies": [
+        "examples/operating-model/definitions/orders-markdown.projection-policy.yaml",
+        "examples/operating-model/definitions/billing-markdown.projection-policy.yaml",
+        "examples/operating-model/definitions/product-markdown.projection-policy.yaml"
+      ],
+      "module": "operating-model-markdown@1.0.0",
+      "target": "docs/represented/",
+      "projection": "product-markdown"
+    }
+  ],
+  "requestedAction": "execute",
+  "readOnlyCandidateGeneration": true,
+  "apply": false,
+  "targetWritesExpected": 0,
+  "fixedChecksAfterApply": [
+    "operating-model-orders",
+    "operating-model-billing",
+    "operating-model-composition",
+    "operating-model-documentation"
+  ],
+  "explicitCheckInputCount": 8,
+  "oldCandidateReuse": false,
+  "noAutoRepair": true,
+  "ownerAcceptance": "not claimed"
+}

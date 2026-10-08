@@ -1,0 +1,7 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Handler
+metadata:
+    name: check-availability-handler
+    namespace: engineering
+spec:
+    summary: Reads current stock availability.

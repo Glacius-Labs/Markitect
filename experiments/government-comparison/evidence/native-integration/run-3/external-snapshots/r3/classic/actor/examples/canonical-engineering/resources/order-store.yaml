@@ -1,0 +1,7 @@
+apiVersion: software.markitect.org/v1alpha1
+kind: Interface
+metadata:
+    name: order-store
+    namespace: engineering
+spec:
+    summary: Persist and retrieve order state.

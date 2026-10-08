@@ -1,0 +1,288 @@
+{
+  "protocol": "operating-model-proof/c8-auditall-readonly/v2",
+  "status": "propose-completed-planned",
+  "trial": "c8-orders-auditall-control-02",
+  "runId": "c8-orders-auditall-readonly-02",
+  "attemptId": "d0c66bf0b40b491a899733295ad4dae0",
+  "action": "propose",
+  "exitCode": 0,
+  "elapsedWallMilliseconds": 5603,
+  "write": false,
+  "providerCall": false,
+  "cliInvoked": true,
+  "executorInvoked": false,
+  "checksExecuted": 0,
+  "eventPath": "experiments/operating-model-proof/runs/c8-orders-auditall-readonly-02/events/propose-507ed581e4af4cc39e30fc04b765def1.json",
+  "eventSha256": "04d6973590080e79c13e0fc63896a60167cfe6226fc4b2e5bbbfa770cf3b1698",
+  "eventsJsonlPath": "experiments/operating-model-proof/runs/c8-orders-auditall-readonly-02/events.jsonl",
+  "eventsJsonlSha256": "04d6973590080e79c13e0fc63896a60167cfe6226fc4b2e5bbbfa770cf3b1698",
+  "bindingPath": "experiments/operating-model-proof/runs/c8-orders-auditall-readonly-02/binding.json",
+  "bindingSha256": "024338bef6f8c1a9c388ed83e96fbbf4e7f42dc568154236618a512dc59774db",
+  "rawOutput": {
+    "stdoutPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02\\staging\\c8-orders-auditall-readonly-02\\propose-d0c66bf0b40b491a899733295ad4dae0.stdout.json",
+    "stdoutBytes": 58637,
+    "stdoutSha256": "0f7c10f88c9f46a66772a07ebcd546af1fda33b4b38d79cda076a9b2d2b82583",
+    "stderrPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-02\\staging\\c8-orders-auditall-readonly-02\\propose-d0c66bf0b40b491a899733295ad4dae0.stderr",
+    "stderrBytes": 0,
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "report": {
+    "status": "planned",
+    "reportDigest": "sha256:7c8318c0a0ab40afcce275c7b79860e6da871342e9968dd9421bf2bf068a8adb",
+    "planDigest": "sha256:9a8c4c053f07f013c458cdeb2a67f7b7f23031667eb8ce89b61d186d6f459cac",
+    "proposalDigest": "sha256:7c8318c0a0ab40afcce275c7b79860e6da871342e9968dd9421bf2bf068a8adb",
+    "configDigest": "sha256:ed0067c78919827961b9c2cbc25f96c834a591a8c5238ff70e45888d84a45d08",
+    "inputDigest": "sha256:1d91092b0e1cee9b19700238d49ba13bc2dd0358e189244b1dde6f07d92623e3",
+    "sourceModelDigest": "sha256:821f5ce6a5ad473c65baac60bbd91a2f1fcf0e5ffab2977d18191e31b5da6c90",
+    "observedPathCount": 31,
+    "observedDigest": "sha256:1d91092b0e1cee9b19700238d49ba13bc2dd0358e189244b1dde6f07d92623e3",
+    "inputPathCount": 31,
+    "sourceScopePathCount": 20,
+    "sourceScopeDigest": "7ac58ff5f3a87bc88dd5b6677b30821810e37383650fea18d919058802721c50",
+    "dependencyEvidencePathCount": 0,
+    "observedPathGroups": {
+      "modelSources": 20,
+      "explicitCheckInputs": 8,
+      "targetInventoryEntries": 3
+    },
+    "observedPaths": [
+      "docs/represented/index.md",
+      "examples/operating-model/canonical-documentation-aligned.yaml",
+      "examples/operating-model/checks/Billing.Checks.csproj",
+      "examples/operating-model/checks/Billing.Program.cs",
+      "examples/operating-model/checks/Composition.Checks.csproj",
+      "examples/operating-model/checks/Composition.Program.cs",
+      "examples/operating-model/checks/Documentation.Checks.csproj",
+      "examples/operating-model/checks/Documentation.Program.cs",
+      "examples/operating-model/checks/Orders.Checks.csproj",
+      "examples/operating-model/checks/Orders.Program.cs",
+      "examples/operating-model/definitions/billing-dotnet.projection-policy.yaml",
+      "examples/operating-model/definitions/billing-markdown.projection-policy.yaml",
+      "examples/operating-model/definitions/billing.billing-query.yaml",
+      "examples/operating-model/definitions/billing.projection.yaml",
+      "examples/operating-model/definitions/orders-dotnet.projection-policy.yaml",
+      "examples/operating-model/definitions/orders-markdown.projection-policy.yaml",
+      "examples/operating-model/definitions/orders.order-rules.yaml",
+      "examples/operating-model/definitions/orders.projection.yaml",
+      "examples/operating-model/definitions/product-documentation-aligned.projection.yaml",
+      "examples/operating-model/definitions/product-markdown.projection-policy.yaml",
+      "examples/operating-model/definitions/product.composition.yaml",
+      "examples/operating-model/definitions/representation-policy-markdown.projection-policy.yaml",
+      "examples/operating-model/modules/billing-dotnet/module.yaml",
+      "examples/operating-model/modules/commerce/module.yaml",
+      "examples/operating-model/modules/commerce/schema.yaml",
+      "examples/operating-model/modules/foundation/module.yaml",
+      "examples/operating-model/modules/foundation/schema.yaml",
+      "examples/operating-model/modules/markdown/module.yaml",
+      "examples/operating-model/modules/orders-dotnet/module.yaml",
+      "src/Billing/BillingQuery.cs",
+      "src/Orders/OrderRules.cs"
+    ],
+    "modelSourcePaths": [
+      "examples/operating-model/canonical-documentation-aligned.yaml",
+      "examples/operating-model/definitions/billing-dotnet.projection-policy.yaml",
+      "examples/operating-model/definitions/billing-markdown.projection-policy.yaml",
+      "examples/operating-model/definitions/billing.billing-query.yaml",
+      "examples/operating-model/definitions/billing.projection.yaml",
+      "examples/operating-model/definitions/orders-dotnet.projection-policy.yaml",
+      "examples/operating-model/definitions/orders-markdown.projection-policy.yaml",
+      "examples/operating-model/definitions/orders.order-rules.yaml",
+      "examples/operating-model/definitions/orders.projection.yaml",
+      "examples/operating-model/definitions/product-documentation-aligned.projection.yaml",
+      "examples/operating-model/definitions/product-markdown.projection-policy.yaml",
+      "examples/operating-model/definitions/product.composition.yaml",
+      "examples/operating-model/definitions/representation-policy-markdown.projection-policy.yaml",
+      "examples/operating-model/modules/billing-dotnet/module.yaml",
+      "examples/operating-model/modules/commerce/module.yaml",
+      "examples/operating-model/modules/commerce/schema.yaml",
+      "examples/operating-model/modules/foundation/module.yaml",
+      "examples/operating-model/modules/foundation/schema.yaml",
+      "examples/operating-model/modules/markdown/module.yaml",
+      "examples/operating-model/modules/orders-dotnet/module.yaml"
+    ],
+    "explicitCheckInputPaths": [
+      "examples/operating-model/checks/Billing.Checks.csproj",
+      "examples/operating-model/checks/Billing.Program.cs",
+      "examples/operating-model/checks/Composition.Checks.csproj",
+      "examples/operating-model/checks/Composition.Program.cs",
+      "examples/operating-model/checks/Documentation.Checks.csproj",
+      "examples/operating-model/checks/Documentation.Program.cs",
+      "examples/operating-model/checks/Orders.Checks.csproj",
+      "examples/operating-model/checks/Orders.Program.cs"
+    ],
+    "targetInventory": [
+      {
+        "mode": "100644",
+        "bytes": 6592,
+        "path": "docs/represented/index.md"
+      },
+      {
+        "mode": "100644",
+        "bytes": 684,
+        "path": "src/Billing/BillingQuery.cs"
+      },
+      {
+        "mode": "100644",
+        "bytes": 474,
+        "path": "src/Orders/OrderRules.cs"
+      }
+    ]
+  },
+  "moduleDecisions": [
+    {
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"billing-dotnet\"]",
+      "targetDigests": {
+        "src/Billing/BillingQuery.cs": "sha256:e115deb66b51e651d97d6323ff31648e256b6fb64e9ac546e78474a0472ac4dc"
+      },
+      "reasonCount": 1,
+      "escalations": [],
+      "decision": "no-op",
+      "reasons": [
+        "evidence-refresh-required"
+      ]
+    },
+    {
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"orders-dotnet\"]",
+      "targetDigests": {
+        "src/Orders/OrderRules.cs": "sha256:5116feef3333a0b22203a6b0f127edaf9249c216b3a6d5e618017dd7b137c69b"
+      },
+      "reasonCount": 1,
+      "escalations": [],
+      "decision": "work",
+      "reasons": [
+        "projection-drift"
+      ]
+    },
+    {
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"product-markdown\"]",
+      "targetDigests": {
+        "docs/represented/index.md": "sha256:9d126d792f567a173988f3474563bfb46f79e9ff321056a4ee252a0635874ece"
+      },
+      "reasonCount": 1,
+      "escalations": [],
+      "decision": "no-op",
+      "reasons": [
+        "evidence-refresh-required"
+      ]
+    }
+  ],
+  "impact": {
+    "changedDefinitions": null,
+    "affectedDefinitions": null,
+    "scopeAffectedProjections": null,
+    "conservativeInvalidatedProjections": [
+      "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"billing-dotnet\"]",
+      "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"orders-dotnet\"]",
+      "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"product-markdown\"]"
+    ],
+    "conservativeCause": "all requests bind the complete model digest and fixed revision; a local semantic review set does not make old plans or records fresh"
+  },
+  "freshness": {
+    "evidenceRefreshRequired": [
+      "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"billing-dotnet\"]",
+      "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"product-markdown\"]"
+    ],
+    "unobservedProjections": null,
+    "unknownArtifacts": null,
+    "explicitExcludedArtifacts": [],
+    "planEscalations": null
+  },
+  "ledger": {
+    "head": "sha256:aa16eda8bfa59b785f46edec864de1c118fd6dbafb69ffe36a7a3cd7fb9b049b",
+    "selectionDigest": "sha256:f525bd7e06deebc496997018df11bc52b9e2431dc2d2baf551565cfe8d1da50b",
+    "eventsBefore": 7,
+    "filesBefore": 8,
+    "filesAfter": 8,
+    "filesAfterManifest": [
+      {
+        "bytes": 207,
+        "sha256": "014c546c61071a061117df67199bbea3aaed90e6d54235436aaaa1fcedbdde1b",
+        "path": "store.json"
+      },
+      {
+        "bytes": 1675,
+        "sha256": "30c83e4d85ae86c232e9e70cad254bc73889dbf08aed4f479648b4881c9b7b05",
+        "path": "events/00000000000000000001-39bba77860544b8d4828269aa20c581f2a4c2d6ff07121dc4d225f6177e242b7.json"
+      },
+      {
+        "bytes": 1663,
+        "sha256": "b5b4a365447fc5da423d548e9cda1d496ab9eea2397560c5f37f7407f499a562",
+        "path": "events/00000000000000000002-5a07e14f772785c5232255a15731da065f4c7b17c64909c3657aba2505561964.json"
+      },
+      {
+        "bytes": 2340,
+        "sha256": "dd7641ec0acfea7d26da0e26f1beb9656930253e3ebf2f0443a53306e041a057",
+        "path": "events/00000000000000000003-815df38faa23ead40aa8be808d81b55172011b6b94e026c2b768c4affb7d8fc5.json"
+      },
+      {
+        "bytes": 560,
+        "sha256": "8167970d3a6b1c18fac973cfd76cccec328c04ea45d5b71012a62faa268be703",
+        "path": "events/00000000000000000004-71b817a8ed465fe78ddbddc7bc59ee3b4ef8ca5b9c6e965da12410c1b682e925.json"
+      },
+      {
+        "bytes": 1844,
+        "sha256": "976ca8f72c1609d078ab60250143aa637f95b92854f40bcc9c7803d6fee54a44",
+        "path": "events/00000000000000000005-112f482e8d50aab708d622ef78491717a2391465df5d7b0bf2a7cbb648bc182c.json"
+      },
+      {
+        "bytes": 1664,
+        "sha256": "2580f9be89d9119d39c16ed2848859979357e9c677fd1b295ffc8f82819f2854",
+        "path": "events/00000000000000000006-fbae197da05e3cc4d3403258dd6e8c1b7f114c63099aa8d7717a30c33a222c50.json"
+      },
+      {
+        "bytes": 1663,
+        "sha256": "f3accc5a4f1647439c0a57017dd7e1176cf5baf55b27477247760504c0801de7",
+        "path": "events/00000000000000000007-aa16eda8bfa59b785f46edec864de1c118fd6dbafb69ffe36a7a3cd7fb9b049b.json"
+      }
+    ],
+    "unchanged": true,
+    "interpretation": "Historical records predate this runtime/cache provenance. Billing and Product returned no-op decisions carrying evidence-refresh-required; these are not PASS or fresh no-op claims."
+  },
+  "fixtureAfter": {
+    "head": "606c1d6f243ee351f04ff0e20ee1685ce5b7c780",
+    "tree": "bd974f076ea51d28b1fa1b96addf62ff37a3da28",
+    "clean": true,
+    "indexSha256": "1e49a2fe3a21355fd877617a1cbed41c8a9b0eba8de337dace728b99969c6234",
+    "targets": [
+      {
+        "bytes": 474,
+        "sha256": "5116feef3333a0b22203a6b0f127edaf9249c216b3a6d5e618017dd7b137c69b",
+        "path": "src/Orders/OrderRules.cs",
+        "gitBlob": "48ab603fdc826bdbfc492225a57b8fde9c695fde"
+      },
+      {
+        "bytes": 684,
+        "sha256": "e115deb66b51e651d97d6323ff31648e256b6fb64e9ac546e78474a0472ac4dc",
+        "path": "src/Billing/BillingQuery.cs",
+        "gitBlob": "06eb6a3869794902a19a71dce94affd7f8f1ea48"
+      },
+      {
+        "bytes": 6592,
+        "sha256": "9d126d792f567a173988f3474563bfb46f79e9ff321056a4ee252a0635874ece",
+        "path": "docs/represented/index.md",
+        "gitBlob": "382c25a6e4dfa6ebb8ea491946b7cc1ae7514a85"
+      }
+    ]
+  },
+  "runtime": {
+    "auditAll": true,
+    "sha256": "d6fd06de247af4adc2132bc28cfe992ac8bd02b0e429aa1ae8b4953006fadd7d",
+    "privateLogsCount": 0,
+    "externalStageCreated": true
+  },
+  "noClaims": [
+    "No provider call, Executor, or fixed-check process ran.",
+    "No Apply or Verify ran.",
+    "Orders work is a proposal decision, not an Executor candidate or accepted repair.",
+    "Billing and Product no-op decisions are not current PASS/noop evidence because both require evidence refresh and historical cache provenance is stale.",
+    "C8-02 auditAll=false discovery miss remains separate and unchanged.",
+    "This source-446 read-only output is historical evidence, not a final-candidate claim."
+  ],
+  "harnessAfter": {
+    "head": "b94f8fcfb64802d9b7f24c3415c37ad449c3d71b",
+    "branch": "codex/canonical-assurance-preflight",
+    "pendingChanges": [
+      "?? experiments/operating-model-proof/runs/c8-orders-auditall-readonly-02/"
+    ]
+  }
+}

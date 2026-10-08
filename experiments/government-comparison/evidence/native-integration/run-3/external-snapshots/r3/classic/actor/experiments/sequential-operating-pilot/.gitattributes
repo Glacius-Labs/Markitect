@@ -1,0 +1,5 @@
+canonical-source.bundle -text
+holdout/run_holdout.py -text whitespace=cr-at-eol,-blank-at-eof
+actor-response-instructions.template.txt -text whitespace=cr-at-eol
+target-samples/** -text
+target-samples/docs/represented/index.md whitespace=-blank-at-eol

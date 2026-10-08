@@ -1,0 +1,28 @@
+taskId: delayed-parcel-refund-window
+entry:
+  kind: Skill
+  namespace: support
+  name: refund-triage
+contextInputs:
+  - markitect.yaml
+  - .markitect/areas/shared/customer-data.rule.yaml
+  - .markitect/areas/support/refund-decision.contract.yaml
+  - .markitect/areas/support/refund-policy.text.yaml
+  - .markitect/areas/support/refund-review.workflow.yaml
+  - .markitect/areas/support/refund-specialist.agent.yaml
+  - .markitect/areas/support/refund-triage.skill.yaml
+expectedChangedPaths:
+  - .markitect/areas/support/refund-policy.text.yaml
+  - docs/markitect/support/refund-policy.text.md
+expectedAffectedResources:
+  - support/Agent/refund-specialist
+  - support/Skill/refund-triage
+  - support/Text/refund-policy
+  - support/Workflow/refund-review
+expectedUnaffectedResources:
+  - support/Contract/refund-decision
+  - shared/Rule/customer-data
+requiredPolicyPhrases:
+  - 30 days after delivery
+  - photograph of the damage
+  - support lead

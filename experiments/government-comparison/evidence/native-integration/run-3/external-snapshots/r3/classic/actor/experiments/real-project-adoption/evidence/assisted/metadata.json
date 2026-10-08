@@ -1,0 +1,27 @@
+{
+  "event": "complete",
+  "start_wallclock": "2026-10-03T05:17:29.9360826+02:00",
+  "end_wallclock": "2026-10-03T05:32:30.9847848+02:00",
+  "startSHA": "fd94a689aab857704c3a4a45ac2abe0fc0e3185c",
+  "finalHEAD": "fd94a689aab857704c3a4a45ac2abe0fc0e3185c",
+  "task": "Add GetMeetingAttendeeCount Query accepting MeetingId and returning only the count of attendee rows from GetMeetingAttendees semantics; guests are not separate records; no HTTP endpoint",
+  "changedFiles": [
+    "src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQuery.cs",
+    "src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQueryHandler.cs",
+    "resources/usecase-get-meeting-attendee-count.yaml",
+    "resources/handler-get-meeting-attendee-count.yaml"
+  ],
+  "build": "required command succeeded after public NuGet network access; 0 warnings, 0 errors",
+  "telemetry": {
+    "call_count": "unavailable",
+    "tokens": "unavailable",
+    "bytes_are_tokens": false
+  },
+  "context": {
+    "path": ".artifacts/adoption/evidence/assisted-setup/context-skill.yaml",
+    "sha256": "08ceffd5ad97c69d7cf31b2200b61cffd7faeee93cc3699bfd188299a7c0b1f1",
+    "architecture_rediscovery_needed": false,
+    "missing": false
+  },
+  "log_path": ".artifacts/adoption/evidence/assisted-final"
+}

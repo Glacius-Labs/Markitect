@@ -1,48 +1,107 @@
-# Native integration: R3 conditional native grant active; offline preflight in progress
+# Native integration R3 terminal: Government negative; Classic mechanics positive
 
-Current authorized task: `native-s1-contract-corrected-integration-20261008-r3`,
-starting from accepted clean offline package
-`f5cd8871b84f45541044110057b59f0bb1ca0804`. Proceed with narrow new-grant
-admission, real offline Grant/Classic bind_request checks, focused regressions,
-independent preflight review, clean source commit and immutable fresh-case freeze.
-Do not treat the initial wait instruction or the preceding offline closure as
-a stop of this active task after compaction.
+The existing grant `native-s1-contract-corrected-integration-20261008-r3`,
+amended before execution by `r3-a1`, has reached its terminal cases. No R3
+retry, Government Resume, new case, repair-and-run, or reuse of unused quota
+is authorized. This local delivery commit owns the terminal evidence package.
+The Scientist slot is released explicitly in this chat after evidence review;
+Overseer alone owns the canonical coordination state and its next assignment.
 
-TEMPORAL GATE: `C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination-state.json`
-initially assigned `fullSuiteSlot` to Worker. Overseer assigned Scientist this
-exact R3 key at `2026-10-08T00:20:56Z`, after Worker's explicit release at
-`2026-10-08T00:16:55.5233253Z`; root read and retained the live activation state
-separately from the issued grant snapshot. The slot condition is now satisfied,
-while source/tests/real binding/review/freeze prerequisites remain outstanding.
-No native start has been performed. Every later effect must revalidate the live
-Scientist slot and exact R3 key before reservation or delegate execution.
-Queue: Worker -> Scientist R3 -> Architect P1. If offline preparation completes
-before slot assignment, hand off exact clean preflight/readiness; the native
-package remains incomplete and requires no new general permission question.
+## Source, authority and freeze
 
-Finite additive allocation: Government +2 native starts/+6 wrapper attempts/
-+6 fixed deterministic delegates/300 reserved seconds; Classic +5/+6/+6/750.
-Products sequential, role parallelism <=2, native process deadline38s,
-controller windows38/180s,150 logical reserved session seconds/start including
-roles/cleanup. Overseer's pre-native amendment `r3-a1` at 00:30:59Z clarifies
-contiguous Government then Classic blocks: Government queue is its own entry
-checkpoint, then positive-only Resume; Classic Execute is its own entry
-checkpoint, then positive-only reviewed continuation. Their entry calls sum to
-two starts/300 seconds but create no shared temporal barrier. No quota changed.
-The amended envelope and Coordinator snapshot are retained separately from the
-initial issued grant and activation snapshots. First failure/missing
-prerequisite/deadline/quota stop closes that product without repair/relaunch.
-Preserve historical5starts/3wrappers/0delegates/750seconds additively; cumulative
-ceiling12starts/1800seconds. No inspect, new cases, real Actor/model/provider,
-metadata session, study cell, full product suite, product mutation or publication.
-Government04e225d and Classicc91363b/Runtime7dbd599 pins remain fixed; no P1.
+Accepted offline predecessor: `f5cd8871b84f45541044110057b59f0bb1ca0804`.
+Runtime admission source: `36ac50558eabcb44812b2c85d723c9da5b783e4c`.
+Final checkpoint driver: `0f24deb6534075922acdf35ccf8bfcd330cbf24a`.
+Independent preflight committed at `d17da61`; source/evidence were clean before
+freeze, and the final freeze was committed clean at
+`5795069128586977d1be66af6564846e2915c166` before any actual R3 start.
+Freeze SHA-256: `acd01a42a7a7b511188479e66222430b5d9d628a4661fe7d7c5ff0bf6f5190ba`.
+All 102 frozen input files were rechecked unchanged after both products ended.
 
-Owners: s1_adapter narrow budget/new grant/slot gate; tools_allocation_tests
-wrapper diagnostics/controller new-key admission; case_contracts unmocked
-offline Classic Grant/bind_request integration; independent_review preflight;
-root source snapshot/fresh cases/driver/freeze/commit and later bounded runs.
-All preparation effects are offline only; original native budget DB must not be
-opened for mutation until the actual separately gated start.
+R3-A1 envelope SHA: `b45a048923102feaa2040a769281cc2c258d66be09c2ce3561238b4b74c3f932`;
+Coordinator snapshot SHA: `29595284a6e4202129d9f014aee6e1fec545d19bdfe028411687d41ec6b8fa17`.
+Initial grant, slot activation and amended snapshots remain separate.
+Overseer assigned Scientist the exact R3 slot at `2026-10-08T00:20:56Z`, after
+Worker released it at `00:16:55.5233253Z`. Pre-native amendment `r3-a1` at
+`00:30:59Z` clarified contiguous Government then Classic blocks, each with its
+own positive entry checkpoint, without changing any quota. Actual starts
+revalidated the exact active live status, Scientist slot, grant key and timestamp.
+
+Government remains pinned to `04e225d5caee78c2a198607143863fca1e829750`;
+Classic held source remains `c91363b7ac4decbe87212ff0f588b5451581a152`, Runtime
+`7dbd599c81540c8203a1b7f83afbc335174f4f1f`. No P1 candidate was substituted.
+
+## Actual outcomes
+
+Government: one Queue, native OS return 0, native job/queue `incomplete`.
+One Executor wrapper and one deterministic delegate returned protocol-valid
+bytes, then the held native host rejected `candidateJson:null` as a nonempty
+`json.RawMessage`: `executor response contains verifier or inference output`.
+The missing evidence identity in the failed native run report is a separate,
+downstream normalization qualification. The product stopped at this first
+negative checkpoint; no Resume, repair, retry or extra native call followed.
+Read-only attribution is in `evidence/native-integration/run-3/government/failure-attribution.md`.
+
+Classic: all five native calls completed the declared mechanical flow:
+Execute `planned`, exact independent external review, Apply
+`materialized-unverified`, fresh Verify `passed`, Audit `complete` with no
+findings/next steps, then stale Apply `refused` with no second writes. The
+stale replay returned 2 as the expected refusal. Classic controller elapsed
+92.09 seconds within its 180-second window. Three fixed deterministic role
+slots ran: Executor Dotnet, Verifier Dotnet and Verifier Markdown.
+
+The structured external Execute review binds raw report SHA
+`4b746df3082120c05f7d0f2310ade6e37e6dbd2c950c4ccf2b14fb59ebcabf9f`
+and exact digest; approval SHA is
+`cbad08e1bf6038ef21224194190720137b140a809db49a6bb9e8228e80874ee3`.
+Its original human-readable narrative had shell-rendering errors and remains
+unchanged; a separate explicitly post-run erratum supplies the readable
+values/rationale. That erratum creates no new or retrospective execution authority.
+
+## Additive accounting and evidence
+
+| Boundary | Native starts | Wrapper attempts | Deterministic delegates | Reserved seconds |
+| --- | ---: | ---: | ---: | ---: |
+| Historical R1/R2 | 5 | 3 | 0 | 750 |
+| New R3 Government | 1 | 1 | 1 | 150 |
+| New R3 Classic | 5 | 3 | 3 | 750 |
+| Cumulative fixture history | 11 | 7 | 4 | 1650 |
+
+The unused Government Resume reservation is not available for another case.
+The original native-start database was appended, preserving all five prior row
+tuples and the R2 correction record. Historical role-ledger bytes remain
+unchanged; the historical Government controller remains in its original state.
+Government's actual outer product receipt is in `controller_runs` (zero
+`controller_processes` rows); Classic has five action rows. Count the Government
+outer receipt once and each Classic action once.
+
+`quota-and-ledger-summary.json` and `external-snapshot-manifest.json` retain the
+closed ledgers, raw product/wrapper/delegate receipts and 2303 verified original/
+copy pairs. The archive includes the fresh Classic fixture source tree. The
+150 seconds per native start is a logical reservation including role/cleanup
+allowance, not measured aggregate OS descendant time. Actual process times are
+retained separately; every native process stayed within the 38-second bound.
+
+No new real study Actor, model/provider run, metadata session or study cell was
+started. Historical known reported tokens remain 53331; their true total remains
+null. Unknown native/provider usage fields remain unknown. Explicit fixture
+zero-provider accounting does not convert those unknown fields to zero.
+
+Focused offline gates covered 38 selected tests across retained logs/checkpoints,
+including the real unmocked Grant/Classic bind_request/bootstrap chain. The
+initial wrong-module command error is retained alongside its corrected module
+run; amendment and checkpoint changes received targeted reruns. These are
+harness checks. No full product suite, product source change, push, PR, release
+or publication occurred. Independent preflight and post-run reviews are under
+`public/native-integration-r3-*-review.md`; delivery hashes are in the new
+`evidence/native-integration/run-3/delivery-validation.json`.
+
+Classic's result establishes bounded native deterministic integration mechanics.
+Government's result identifies a deterministic response-shape incompatibility.
+Neither establishes S1, real Actor capability, semantic quality, verifier
+independence in a study, economic benefit or human acceptance. No historical
+FAIL/INVALID/BLOCKED/NOT RUN result is rescored. Further source work or actual
+runs require the next explicit bounded Overseer assignment.
 
 ## Accepted R3 offline package
 

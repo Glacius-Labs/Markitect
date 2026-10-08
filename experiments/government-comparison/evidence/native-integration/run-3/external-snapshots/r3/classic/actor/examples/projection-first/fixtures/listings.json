@@ -1,0 +1,12 @@
+{
+  "cases": [
+    { "name": "empty", "items": [] },
+    { "name": "filter-sort-preserve", "items": [
+      { "id": "late", "status": "Open", "openedAt": "2026-01-03T12:00:00Z", "owner": "dispatch-team", "labels": ["renewal"], "note": "keep me" },
+      { "id": "closed", "status": "Closed", "openedAt": "2026-01-01T09:00:00Z", "owner": "dispatch-team" },
+      { "id": "tie-z", "status": "Open", "openedAt": "2026-01-02T09:00:00Z", "owner": "dispatch-team", "extra": { "priority": 2 } },
+      { "id": "tie-a", "status": "Open", "openedAt": "2026-01-02T09:00:00Z", "owner": "dispatch-team", "extra": { "priority": 1 } },
+      { "id": "early", "status": "Open", "openedAt": "2026-01-01T09:00:00Z", "owner": "dispatch-team" }
+    ] }
+  ]
+}

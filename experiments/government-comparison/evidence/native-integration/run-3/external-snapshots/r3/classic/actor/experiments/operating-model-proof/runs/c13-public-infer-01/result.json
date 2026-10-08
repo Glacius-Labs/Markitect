@@ -1,0 +1,197 @@
+{
+  "privateLog": {
+    "file": "external-run-staging/private-logs/095a41e03f263754169941178ea80ada.jsonl",
+    "sha256": "sha256:e5a70fa979148f671513df5c7d5d2602c97faa63d4de8adfdb2735658316de8b",
+    "contentsCommitted": false,
+    "bytes": 286892
+  },
+  "trial": "C13",
+  "isolatedInput": {
+    "repositoryWideCompletenessClaim": false,
+    "commit": "846c6ee3d763a6a0563c76adac54ef63f59ac608",
+    "trackedPathCount": 3,
+    "allSubsetBlobsByteEqualOriginalSource": true,
+    "unselectedPathsInSubset": 0,
+    "rootKind": "external immutable three-file subset",
+    "originalSourceSHA256BindingRecord": "external source-binding.json; sha256:7f03b95ea51a9086212b127dc4dae1260ad5d0d6bd583d83fe5b0158175bc86f",
+    "rootInExternalStaging": "external-run-staging/subset-source",
+    "repositoryIdentityDigest": "43263f0c370c876784fea6f19c18ebd55a905269c47c6512529da411b02683db",
+    "snapshotDigest": "ddea4d2c5926b8d14981c539909dab00056e9839c5661c7a5b38c99f5dbcd6c6"
+  },
+  "build": {
+    "goVersion": "go version go1.27.1 windows/amd64",
+    "cleanAfter": true,
+    "binaryDigest": "sha256:03c551536335ee580b870e703a6a40ef8777c5a8139042f8f0f7e8e7e88729aa",
+    "cliVersion": "0.13.0",
+    "sourceCommit": "6a79b0d015801f3f37e42cacd049179cc795be42",
+    "buildReceiptSHA256": "6425f113b858f215ecc471a8075e8800f5422c581efb4e3f1dddcda5295c5a53",
+    "cleanBefore": true
+  },
+  "output": {
+    "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "freezeSHA256": "341718efd81d640a2413ffabb2fee36c0ce8e4a91787762d951211940f010285",
+    "bytes": 9369,
+    "sha256": "fe71edd232fc233b881b1b672aa2bfa9920a9f7fcec37c8a580a07c07fcda483",
+    "externalSummarySHA256": "9e4f90ead8020ee2b3986d5f870e0db97065c018fa497d3424828bf0e42cc542",
+    "file": "external-run-staging/infer.stdout.json",
+    "stderrBytes": 0
+  },
+  "execution": {
+    "uncertaintySummary": [
+      "The selected sample cannot establish a preferred arrangement for future work.",
+      "The transition note disclaims an organization-wide rule.",
+      "Unselected fixture and repository content were not supplied."
+    ],
+    "candidateCount": 1,
+    "adopted": false,
+    "uncertaintyCount": 3,
+    "elapsedMilliseconds": 21283,
+    "frequencyClaimPresent": false,
+    "qualifiesIDs": [
+      "evidence-transition-qualifier"
+    ],
+    "status": "proposed",
+    "classification": "compromise",
+    "candidateRecordDigest": "a2414699d7e51ec0e04c7a623d947a8e8050497407c6f5944083ec8efb1653a0",
+    "supportIDs": [
+      "evidence-handler"
+    ],
+    "candidateDigest": "a2414699d7e51ec0e04c7a623d947a8e8050497407c6f5944083ec8efb1653a0",
+    "counterexampleIDs": [
+      "evidence-legacy-service"
+    ],
+    "ownerDecisionPresent": false,
+    "authenticatedReviewerPresent": false,
+    "stableID": "refund-use-case-folder-migration-compromise",
+    "cliExitCode": 0,
+    "confidence": {
+      "calibration": "uncalibrated model judgment",
+      "label": "medium"
+    }
+  },
+  "setupCorrection": {
+    "earlierPreviewLogSHA256": "654ee9a6eb97ece1b0f794f0d2bf5bd5beddb796e4be1221fd0ab1fd66d4fd31",
+    "correction": "An initial capture rooted at the full Markitect checkout was superseded after review found that a collapsed exclusion list did not substantiate repository-wide completeness. The sole inference input instead used the separate three-file subset commit above; the original public source revision remains recorded independently.",
+    "subsetPreviewLogSHA256": "21637f6444de35aed4a2087540f5fe8b60685b0362a24feb518801cbc613d810",
+    "earlierScopeSHA256": "fd86f88110b952773016786b6e93cfc99487607dd5836b8c0c994e5cb5c03631",
+    "earlierCaptureDigest": "e0ef8e5f190ffff8764516e7460ba8ecd4570b079f89f5d6f424d03badd9038d",
+    "earlierScopeConsumedByInference": false,
+    "earlierSelectionDigest": "4697a873433496a44158c76573362b00217eb4dc130ff69334c6df10edafbfc9",
+    "subsetCaptureLogSHA256": "5a888534fd009adacb65afce2dfab1d452a700f66ed1999744389fccedabf020",
+    "earlierCaptureLogSHA256": "505ef35df01016633a0775082479961fda60706f7947214c3f34c2502077e04a",
+    "earlierCollapsedExclusionEntryCount": 79,
+    "earlierHandoffDigest": "31c98ec7b9c669edda92b0a8f9d205239dcec5db5748f528cda0fb3c3d0f61a6"
+  },
+  "queue": {
+    "queueValidatedAgainstCapturedBytes": true,
+    "candidateCountBeforeInference": 0,
+    "queueFileSHA256": "e3da4d1eeec23bb13948c55987bba955cf996605df461d0b9a9e8d12a34e4eec",
+    "queueByteDigest": "e3da4d1eeec23bb13948c55987bba955cf996605df461d0b9a9e8d12a34e4eec"
+  },
+  "runtime": {
+    "pythonExecutableSHA256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+    "nativeCodexExecutableSHA256": "280cb1c4e3375d94dbdcba1a191f4f6adbf73c293be1e4f16c74b006662b9c54",
+    "adapterPath": "internal/tooling/codexrunner/runner.py",
+    "providerVersion": "0.130.0",
+    "runtimeConfigSHA256": "2a3f2891483106c0197944e6ecf6761b9d6d06ea601bd7284f5f7673cd8e8496",
+    "nativeCodexExecutableVersion": "codex-cli 0.130.0",
+    "adapterSHA256": "7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57",
+    "reasoningEffort": "high",
+    "configFingerprint": "sha256:ddc346abcba4c81b568fec1a906da65976f8ef2eba3db4fb1af723e9ecd1166d",
+    "model": "gpt-5.5",
+    "pythonVersion": "3.13.3",
+    "runnerID": "runner7806"
+  },
+  "apiVersion": "markitect.example.org/public-inference-run/v1alpha1",
+  "status": "partial",
+  "kind": "PublicInferenceRun",
+  "validation": {
+    "fixedBaseCheck": "passed",
+    "fullC13Remaining": [
+      "Owner review/decision and any adoption are absent.",
+      "The separate forward zero-churn proof was not run."
+    ],
+    "fixedBaseContext": "passed",
+    "validationLimitation": "The complete repository configured verify gate (including all Go tests) was not run for this evidence-only record.",
+    "managedArtifactCheck": {
+      "status": "failed",
+      "command": "go run ./cmd/markitect-check-artifacts --repo . --config markitect-artifacts.yaml",
+      "note": "The task scope prohibited registry edits; these findings remain unresolved.",
+      "findings": [
+        {
+          "path": "experiments/operating-model-proof/runs/c13-public-infer-01/result.json",
+          "code": "unmanaged",
+          "reason": "No declared owner or reasoned exclusion."
+        },
+        {
+          "path": "experiments/operating-model-proof/runs/c13-public-infer-01/result.md",
+          "code": "unmanaged",
+          "reason": "No declared owner or reasoned exclusion."
+        }
+      ],
+      "registryEdited": false
+    }
+  },
+  "receipt": {
+    "configDigest": "sha256:ddc346abcba4c81b568fec1a906da65976f8ef2eba3db4fb1af723e9ecd1166d",
+    "commandDigest": "sha256:92e7b3b2abd1bf11fd329eee7cf3533bf1674e1140c07b67d3c183f565292e50",
+    "wallTimeMilliseconds": 20607,
+    "runtimeFilesDigest": "sha256:11e73dfe8933af4f45b926655e8c70fd9ded8e2190f43f54d9174d9cd8d80487",
+    "outcome": "proposed",
+    "runID": "095a41e03f263754169941178ea80ada",
+    "usage": {
+      "outputTokens": 926,
+      "source": "provider-reported",
+      "cachedTokens": 13696,
+      "inputTokens": 17036
+    },
+    "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+    "inputDigest": "sha256:82ff9310685e62615171d4870925482fda8e679cebfb2d66cf1147a53da357f8",
+    "retryCount": 0,
+    "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+    "stdoutDigest": "sha256:620549ae519640d13c1742855f0b5419e7e203844b4d97c1b9fca3b7939f16be",
+    "privateLogDigest": "sha256:e5a70fa979148f671513df5c7d5d2602c97faa63d4de8adfdb2735658316de8b",
+    "providerVersionDigest": "sha256:912aed7dabd3fdefc6bbaebeabd12375c61ab80f177c7031cca3e7747199025b",
+    "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "providerVersion": "0.130.0",
+    "contextDigest": "sha256:51049cbed8b7c895db755f7c75e1b39f84983e32b1333294dbb2fa275daa3f62"
+  },
+  "source": {
+    "selectedPaths": [
+      {
+        "path": "examples/engineering-discovery/project-template/src/Refund/Handler.cs",
+        "evidenceID": "evidence-handler",
+        "stance": "supports",
+        "sourceDigest": "sha256:866c96bea0c386451160b4e1cd969cd79e89cb6b75a0c0333f9c68c9034ffb3a"
+      },
+      {
+        "path": "examples/engineering-discovery/project-template/src/Services/RefundService.cs",
+        "evidenceID": "evidence-legacy-service",
+        "stance": "counterexample",
+        "sourceDigest": "sha256:99dca160a7cd84b12c49f3324d331d0905f8840ee5f4965bc7580cce44d65724"
+      },
+      {
+        "path": "examples/engineering-discovery/project-template/docs/decisions/service-transition.md",
+        "evidenceID": "evidence-transition-qualifier",
+        "stance": "qualifies",
+        "sourceDigest": "sha256:757471d31c60d231ad1147a8d9c60651a092c4e00f1e56c99ab061aac281f12c"
+      }
+    ],
+    "originalPublicCommit": "6a79b0d015801f3f37e42cacd049179cc795be42",
+    "repository": "https://github.com/Glacius-Labs/Markitect"
+  },
+  "scope": {
+    "question": "What, if anything, does the selected sample suggest about organizing new refund behavior?",
+    "handoffByteDigest": "d67df7a27af1138b905f2c2b441981b472edca038fc176a7ff88c718ed700790",
+    "scopeFileSHA256": "a35d877f9d8c7dd4b6fa9a23ac59f255e74a422c45f60e119618ecf43622f781",
+    "handoffFileSHA256": "d67df7a27af1138b905f2c2b441981b472edca038fc176a7ff88c718ed700790",
+    "uninspectedCoverage": [
+      "Unselected fixture and repository content were not acquired or supplied."
+    ],
+    "handoffDigest": "f8d395c0dbaaea8edced1262b72fb95448e50d7a08222ca2464108c06fa37a86",
+    "subsetExclusionEntryCount": 0,
+    "selectionDigest": "63f7501c1f44c93d35d8e245dbd8ae743730e6582c9d9230ca52a5446ea27ee0",
+    "captureDigest": "5558be048719810d198dc6a683c1d361c63dd1a6a1a2a0dca579d1445a7192f8",
+    "handoffID": "public-refund-organization-trial-01"
+  }
+}

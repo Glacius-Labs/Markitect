@@ -1,0 +1,174 @@
+[
+  {
+    "runId": "t1-simple",
+    "trackedFiles": 648,
+    "canonicalResourceFiles": 0,
+    "domainPaths": [],
+    "packageArchives": [],
+    "agentsLines": 29,
+    "agentsBytes": 2666,
+    "compiledInputs": []
+  },
+  {
+    "runId": "t1-markitect",
+    "trackedFiles": 794,
+    "canonicalResourceFiles": 66,
+    "domainPaths": [],
+    "packageArchives": [
+      ".markitect/packages/mymeetings-architecture-1.0.0.zip",
+      ".markitect/packages/mymeetings-architecture-2.0.0.zip"
+    ],
+    "agentsLines": 0,
+    "agentsBytes": 0,
+    "compiledInputs": [
+      {
+        "command": [
+          "context",
+          "--repo",
+          "<R2>\\workspaces\\t1-markitect\\checkout",
+          "--revision",
+          "bf18931e8c49555a0b8fda8133d809767a70c96b",
+          "--namespace",
+          "engineering",
+          "--kind",
+          "Skill",
+          "--name",
+          "architecture-review"
+        ],
+        "expectedExitCode": 0,
+        "exitCode": 0,
+        "output": ".agent-input/context.yaml",
+        "sha256": "f981c49f768772cdd2a4f16da727b07d4987da257131f19fa6b398c1f19cf5b1",
+        "bytes": 53013,
+        "scope": {
+          "kind": "Skill",
+          "name": "architecture-review",
+          "namespace": "engineering"
+        }
+      }
+    ]
+  },
+  {
+    "runId": "t2-simple",
+    "trackedFiles": 648,
+    "canonicalResourceFiles": 0,
+    "domainPaths": [],
+    "packageArchives": [],
+    "agentsLines": 29,
+    "agentsBytes": 2666,
+    "compiledInputs": []
+  },
+  {
+    "runId": "t2-markitect",
+    "trackedFiles": 794,
+    "canonicalResourceFiles": 66,
+    "domainPaths": [],
+    "packageArchives": [
+      ".markitect/packages/mymeetings-architecture-1.0.0.zip",
+      ".markitect/packages/mymeetings-architecture-2.0.0.zip"
+    ],
+    "agentsLines": 0,
+    "agentsBytes": 0,
+    "compiledInputs": [
+      {
+        "command": [
+          "context",
+          "--repo",
+          "<R2>\\workspaces\\t2-markitect\\checkout",
+          "--revision",
+          "286bfa78c87f770a3c2c2208f2eaef4f96ecd969",
+          "--namespace",
+          "architecture",
+          "--kind",
+          "UseCase",
+          "--name",
+          "add-meeting-attendee",
+          "--api-version",
+          "architecture.mymeetings.example/v1alpha1",
+          "--analyze-policy-failures"
+        ],
+        "expectedExitCode": 1,
+        "exitCode": 1,
+        "output": ".agent-input/context.yaml",
+        "sha256": "379ab30da936b3d845d8b5c04686773ea39a843c5ad4487ef4ff550802c4cf5f",
+        "bytes": 43712,
+        "scope": {
+          "kind": "UseCase",
+          "name": "add-meeting-attendee",
+          "namespace": "architecture"
+        }
+      },
+      {
+        "command": [
+          "impact",
+          "--repo",
+          "<R2>\\workspaces\\t2-markitect\\checkout",
+          "--base",
+          "f2a71446ddf45feffdddfc4a6cbb4259b7c2a5d3",
+          "--revision",
+          "286bfa78c87f770a3c2c2208f2eaef4f96ecd969",
+          "--analyze-policy-failures"
+        ],
+        "expectedExitCode": 1,
+        "exitCode": 1,
+        "output": ".agent-input/impact.yaml",
+        "sha256": "98b3ba814fdfda422db4132ff2fdd73232a799f3cc370dde14d4c9d944424838",
+        "bytes": 18319,
+        "scope": {
+          "comparison": "reconstructed exact v1 to v2 pin trees"
+        }
+      }
+    ]
+  },
+  {
+    "runId": "t3-simple",
+    "trackedFiles": 648,
+    "canonicalResourceFiles": 0,
+    "domainPaths": [],
+    "packageArchives": [],
+    "agentsLines": 29,
+    "agentsBytes": 2666,
+    "compiledInputs": []
+  },
+  {
+    "runId": "t3-markitect",
+    "trackedFiles": 794,
+    "canonicalResourceFiles": 66,
+    "domainPaths": [],
+    "packageArchives": [
+      ".markitect/packages/mymeetings-architecture-1.0.0.zip",
+      ".markitect/packages/mymeetings-architecture-2.0.0.zip"
+    ],
+    "agentsLines": 0,
+    "agentsBytes": 0,
+    "compiledInputs": [
+      {
+        "command": [
+          "context",
+          "--repo",
+          "<R2>\\workspaces\\t3-markitect\\checkout",
+          "--revision",
+          "ba66728b9b87f6c38abc02ddba1c8d0fbc5ec8e3",
+          "--namespace",
+          "architecture",
+          "--kind",
+          "UseCase",
+          "--name",
+          "get-meeting-attendees",
+          "--api-version",
+          "architecture.mymeetings.example/v1alpha1"
+        ],
+        "expectedExitCode": 0,
+        "exitCode": 0,
+        "output": ".agent-input/context.yaml",
+        "sha256": "f54ed22266ec306803d293ec6ac95daa60824296718116b860224b873110efa8",
+        "bytes": 48434,
+        "scope": {
+          "kind": "UseCase",
+          "name": "get-meeting-attendees",
+          "namespace": "architecture"
+        }
+      }
+    ]
+  }
+]

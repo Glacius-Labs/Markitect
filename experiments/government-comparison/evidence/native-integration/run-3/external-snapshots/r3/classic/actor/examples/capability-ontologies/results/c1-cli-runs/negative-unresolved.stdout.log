@@ -1,0 +1,13 @@
+diagnostics:
+    - code: reference.unresolved
+      identity: '["delivery.example.org/v1","Rollout","payments","production-rollout"]'
+      property: deployment
+      message: reference target ["delivery.example.org/v1","Deployment","payments","missing"] is not defined
+      source:
+        path: examples/capability-ontologies/delivery/rollout.yaml
+        digest: sha256:d355caa535192e8ffcf35c21f0c071a35006b5119e860accbbdfd18e9ab4de88
+        line: 1
+provisional: false
+revision: cd69dca8edd4448eddd4e2624ea4d35af9bf4a7a
+sourceDigest: c4c00d9f797b67ecf01da20aa6715a67a2518c377ca48d51b93a8b3d568cfef6
+status: failed
