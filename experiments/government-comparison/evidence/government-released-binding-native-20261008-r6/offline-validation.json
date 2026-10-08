@@ -1,0 +1,31 @@
+{
+  "status": "passed",
+  "uniqueFocusedTests": 42,
+  "initialChecks": {
+    "r6Budget": 6,
+    "affectedR5Budget": 6,
+    "r6Chain": 10,
+    "producerAndCheckpoint": 20
+  },
+  "finalA1AffectedRecheck": {
+    "count": 32,
+    "modules": [
+      "test_government_released_binding",
+      "test_native_r6_checkpoint",
+      "test_native_r6_budget",
+      "test_native_r5_budget"
+    ],
+    "rawLog": "a1-focused-tests.log",
+    "reason": "Fixed R6 envelope/snapshot paths and hashes; driver now binds independent a1 addendum in actual-validation receipt and freeze."
+  },
+  "unchangedChainRecheck": false,
+  "syntaxFiles": 11,
+  "diffCheckPassed": true,
+  "actualCasePreparations": 0,
+  "actualAdmissionActions": 0,
+  "nativeStarts": 0,
+  "wrappers": 0,
+  "delegates": 0,
+  "scope": "Offline unit tests with temporary data; no actual experimental reservations/starts, no product/full suite.",
+  "history": "Original test logs preserve preparation failures/warnings. Earlier20checkpoint log is summary; final32 log includes raw20producer/checkpoint output. No historical result rescoring."
+}

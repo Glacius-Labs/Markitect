@@ -26,6 +26,24 @@ R4_DISPATCH_ID = "government-native-serialization-r4"
 R4_GRANT_KEY = "government-serialization-native-20261008-r4"
 R5_DISPATCH_ID = "government-native-scope-r5"
 R5_GRANT_KEY = "government-scope-native-20261008-r5"
+R6_DISPATCH_ID = "government-native-released-binding-r6"
+R6_GRANT_KEY = "government-released-binding-native-20261008-r6"
+
+
+def native_profile(request):
+    """Return the closed R5/R6 profile for this exact Request, if present."""
+    from government_native_profile import request_profile
+    return request_profile(request)
+
+
+def validate_profile_live_gate(validated_grant, fixture_profile):
+    """Call the profile-specific live gate while sharing its bridge path."""
+    budget = __import__("native_fixture_budget")
+    profile_gate = getattr(budget,
+                           f"validate_{fixture_profile.name}_entry_gate", None)
+    if profile_gate is not None:
+        return profile_gate(validated_grant)
+    return budget.validate_profile_entry_gate(validated_grant, fixture_profile)
 
 
 def digest(raw: bytes) -> str:
@@ -74,21 +92,13 @@ def validate_native_fixture_grant(request, captured, product_bound=None):
     }.get(request.get("dispatchId"))
     is_r4 = request.get("dispatchId") == R4_DISPATCH_ID
     r4_binding = request.get("nativeFixtureR4Grant")
-    is_r5 = request.get("dispatchId") == R5_DISPATCH_ID
-    r5_binding = request.get("nativeFixtureR5Grant")
+    fixture_profile = native_profile(request)
     if (is_r4 and (request.get("arm") != "government" or r4_binding is None or
                    request.get("nativeFixtureR3Grant") is not None or
                    request.get("nativeFixtureCorrection") is not None)):
         raise ValueError("R4 dispatch requires its separate Government R4 grant and cannot combine R2/R3 grants")
     if r4_binding is not None and not is_r4:
         raise ValueError("R4 grant is restricted to the exact Government R4 dispatch")
-    if (is_r5 and (request.get("arm") != "government" or r5_binding is None or
-                   request.get("nativeFixtureR4Grant") is not None or
-                   request.get("nativeFixtureR3Grant") is not None or
-                   request.get("nativeFixtureCorrection") is not None)):
-        raise ValueError("R5 dispatch requires its separate Government R5 grant and cannot combine earlier grants")
-    if r5_binding is not None and not is_r5:
-        raise ValueError("R5 grant is restricted to the exact Government R5 dispatch")
     if expected_r3_arm is not None and (
             request.get("arm") != expected_r3_arm or
             request.get("nativeFixtureR3Grant") is None or
@@ -198,25 +208,28 @@ def validate_native_fixture_grant(request, captured, product_bound=None):
                       maxNativeStarts=validated["maxNativeStarts"],
                       maxRoleParallel=validated["maxParallelRoles"],
                       maxRoleProcessSeconds=validated["maxRoleProcessSeconds"])
-    if is_r5:
-        from native_fixture_budget import validate_r5_grant_binding
-        validated = validate_r5_grant_binding(request, path, binding["sha256"])
-        if (not isinstance(validated, dict) or validated.get("grantKey") != R5_GRANT_KEY or
-                validated.get("grant", {}).get("key") != R5_GRANT_KEY or
+    if fixture_profile is not None:
+        from native_fixture_budget import validate_profile_grant_binding
+        validated = validate_profile_grant_binding(request, path, binding["sha256"], fixture_profile)
+        if (not isinstance(validated, dict) or validated.get("grantKey") != fixture_profile.key or
+                validated.get("grant", {}).get("key") != fixture_profile.key or
                 validated.get("product", {}).get("name") != "Government" or
                 validated.get("maxWrapperAttempts") != 6 or
                 validated.get("maxDeterministicDelegates") != 6 or
                 validated.get("maxNativeStarts") != 2 or
                 validated.get("maxParallelRoles") != 2 or
                 validated.get("maxNewReservedSessionSeconds") != 300 or
-                validated.get("maxRoleProcessSeconds") != 38):
-            raise ValueError("validated R5 bounds differ from the exact Government allocation")
-        result.update(r5Grant=validated, r5GrantKey=R5_GRANT_KEY,
-                      maxRoleStarts=validated["maxWrapperAttempts"],
-                      maxDeterministicDelegates=validated["maxDeterministicDelegates"],
-                      maxNativeStarts=validated["maxNativeStarts"],
-                      maxRoleParallel=validated["maxParallelRoles"],
-                      maxRoleProcessSeconds=validated["maxRoleProcessSeconds"])
+                validated.get("maxRoleProcessSeconds") != 38 or
+                validated.get("profileName") not in (None, fixture_profile.name) or
+                validated.get("dispatchId") not in (None, fixture_profile.dispatch_id)):
+            raise ValueError(f"validated {fixture_profile.name.upper()} bounds differ from its exact Government allocation")
+        result.update({f"{fixture_profile.name}Grant": validated,
+                       f"{fixture_profile.name}GrantKey": fixture_profile.key,
+                       "maxRoleStarts": validated["maxWrapperAttempts"],
+                       "maxDeterministicDelegates": validated["maxDeterministicDelegates"],
+                       "maxNativeStarts": validated["maxNativeStarts"],
+                       "maxRoleParallel": validated["maxParallelRoles"],
+                       "maxRoleProcessSeconds": validated["maxRoleProcessSeconds"]})
     return result
 
 
@@ -294,60 +307,59 @@ def validate_r4_delegate_authorization(request, authorization_raw, validated_gra
     return sorted(pinned_commands)
 
 
-def validate_r5_delegate_authorization(request, authorization_raw, validated_grant=None):
-    """Bind every R5 Government delegate to the grant's exact executable SHA."""
-    if (not isinstance(request, dict) or request.get("dispatchId") != R5_DISPATCH_ID or
-            request.get("arm") != "government" or request.get("nativeFixtureR5Grant") is None or
-            request.get("nativeFixtureR4Grant") is not None or
-            request.get("nativeFixtureR3Grant") is not None or
-            request.get("nativeFixtureCorrection") is not None):
-        raise ValueError("native R5 launch requires the exact Government-only additive grant")
+def validate_profile_delegate_authorization(request, authorization_raw, validated_grant=None,
+                                            fixture_profile=None):
+    """Bind a closed native profile's Government delegates to its executable pins."""
+    fixture_profile = fixture_profile or native_profile(request)
+    if fixture_profile is None or native_profile(request) != fixture_profile:
+        raise ValueError("native R5/R6 launch requires its exact Government-only profile grant")
+    label = fixture_profile.name.upper()
     if not isinstance(authorization_raw, bytes):
-        raise ValueError("R5 role authorization bytes are required")
+        raise ValueError(f"{label} role authorization bytes are required")
     product = request.get("product", {}).get("government", {})
     role_binding = product.get("roleAuthorization")
     if (not isinstance(role_binding, dict) or set(role_binding) != {"path", "sha256"} or
             not isinstance(role_binding.get("path"), str) or
             not _SHA.fullmatch(role_binding.get("sha256", ""))):
-        raise ValueError("native R5 role authorization binding is malformed")
+        raise ValueError(f"native {label} role authorization binding is malformed")
     auth_path = Path(role_binding["path"]).resolve(strict=True)
     if digest(authorization_raw) != role_binding["sha256"] or auth_path.read_bytes() != authorization_raw:
-        raise ValueError("R5 role authorization bytes differ from the current Request-bound file")
+        raise ValueError(f"{label} role authorization bytes differ from the current Request-bound file")
     released = any(isinstance(item, dict) and set(item) == {"path", "sha256"} and
                    isinstance(item.get("path"), str) and
                    Path(item["path"]).resolve(strict=True) == auth_path and
                    item.get("sha256") == role_binding["sha256"]
                    for item in request.get("releasedInputs", []))
     if not released:
-        raise ValueError("R5 role authorization must be a Request-bound released input")
-    authorization = _strict_json(authorization_raw, "R5 role authorization")
+        raise ValueError(f"{label} role authorization must be a Request-bound released input")
+    authorization = _strict_json(authorization_raw, f"{label} role authorization")
     if not isinstance(validated_grant, dict):
-        envelope_binding = request["nativeFixtureR5Grant"]
+        envelope_binding = request[fixture_profile.marker]
         envelope_path = Path(envelope_binding["path"]).resolve(strict=True)
         envelope_raw = next((Path(item["path"]).read_bytes() for item in request.get("releasedInputs", [])
                              if isinstance(item, dict) and item.get("path") and
                              Path(item["path"]).resolve(strict=True) == envelope_path and
                              item.get("sha256") == envelope_binding["sha256"]), None)
         if envelope_raw is None or digest(envelope_raw) != envelope_binding["sha256"]:
-            raise ValueError("R5 grant envelope is not the exact released Request input")
-        envelope = _strict_json(envelope_raw, "R5 grant envelope")
+            raise ValueError(f"{label} grant envelope is not the exact released Request input")
+        envelope = _strict_json(envelope_raw, f"{label} grant envelope")
         validated_grant = envelope.get("grant")
     grant_value = validated_grant.get("grant", validated_grant)
     expected_delegate = grant_value.get("product", {}).get("delegateSha256")
     if not isinstance(expected_delegate, str) or not _SHA.fullmatch(expected_delegate):
-        raise ValueError("native R5 deterministic delegate pin is malformed")
+        raise ValueError(f"native {label} deterministic delegate pin is malformed")
     python_pin = grant_value.get("python") if isinstance(grant_value, dict) else None
     if (not isinstance(python_pin, dict) or set(python_pin) != {"path", "sha256"} or
             not isinstance(python_pin.get("path"), str) or
             not Path(python_pin["path"]).is_absolute() or
             not _SHA.fullmatch(python_pin.get("sha256", ""))):
-        raise ValueError("native R5 grant Python pin is malformed")
+        raise ValueError(f"native {label} grant Python pin is malformed")
     python_path = Path(python_pin["path"]).resolve(strict=True)
     if digest(python_path.read_bytes()) != python_pin["sha256"]:
-        raise ValueError("native R5 grant Python executable differs from its pinned digest")
+        raise ValueError(f"native {label} grant Python executable differs from its pinned digest")
     slots = authorization.get("slots") if isinstance(authorization, dict) else None
     if not isinstance(slots, list) or not slots:
-        raise ValueError("native R5 role authorization must bind its deterministic delegates")
+        raise ValueError(f"native {label} role authorization must bind its deterministic delegates")
     pinned_commands = set()
     for slot in slots:
         delegate = slot.get("delegate") if isinstance(slot, dict) else None
@@ -358,24 +370,36 @@ def validate_r5_delegate_authorization(request, authorization_raw, validated_gra
                 not isinstance(delegate_argv, list) or len(delegate_argv) != 4 or
                 delegate_argv[0] != command or delegate_argv[2:] != ["--phase", phase] or
                 phase not in {"execute", "review", "vote"}):
-            raise ValueError("native R5 role authorization has an unbound interpreter/script delegate argv")
+            raise ValueError(f"native {label} role authorization has an unbound interpreter/script delegate argv")
         command_path = Path(command).resolve(strict=True)
         command_sha = digest(command_path.read_bytes())
         if command_path != python_path or command_sha != python_pin["sha256"]:
-            raise ValueError("native R5 delegate command differs from the grant's Python pin")
+            raise ValueError(f"native {label} delegate command differs from the grant's Python pin")
         if delegate.get("commandDigest") != "sha256:" + command_sha:
-            raise ValueError("native R5 delegate interpreter differs from its command digest")
+            raise ValueError(f"native {label} delegate interpreter differs from its command digest")
         script_path = Path(delegate_argv[1])
         if not script_path.is_absolute() or digest(script_path.read_bytes()) != expected_delegate:
-            raise ValueError("native R5 deterministic delegate script differs from the exact grant pin")
+            raise ValueError(f"native {label} deterministic delegate script differs from the exact grant pin")
         runtime_files = delegate.get("runtimeFiles")
         files = {str(Path(item.get("path", "")).resolve()): item.get("digest")
                  for item in runtime_files if isinstance(item, dict)} if isinstance(runtime_files, list) else {}
         if (files.get(str(command_path)) != "sha256:" + command_sha or
                 files.get(str(script_path.resolve())) != "sha256:" + expected_delegate):
-            raise ValueError("native R5 delegate interpreter/script are not both runtime-pinned")
+            raise ValueError(f"native {label} delegate interpreter/script are not both runtime-pinned")
         pinned_commands.add(str(script_path.resolve()))
     return sorted(pinned_commands)
+
+
+def validate_r5_delegate_authorization(request, authorization_raw, validated_grant=None):
+    from government_native_profile import profile
+    return validate_profile_delegate_authorization(
+        request, authorization_raw, validated_grant, profile("r5"))
+
+
+def validate_r6_delegate_authorization(request, authorization_raw, validated_grant=None):
+    from government_native_profile import profile
+    return validate_profile_delegate_authorization(
+        request, authorization_raw, validated_grant, profile("r6"))
 
 
 def validate_r4_entry_for_launch(request, captured, argv):
@@ -408,35 +432,44 @@ def validate_r4_entry_for_launch(request, captured, argv):
     return {"bounds": bounds, "entryGate": gate, "delegatePaths": pinned_commands}
 
 
-def validate_r5_entry_for_launch(request, captured, argv):
-    """Revalidate the exact R5 Request and executable pins at native Popen boundary."""
-    if (not isinstance(request, dict) or request.get("dispatchId") != R5_DISPATCH_ID or
-            request.get("arm") != "government" or request.get("nativeFixtureR5Grant") is None or
-            request.get("nativeFixtureR4Grant") is not None or
-            request.get("nativeFixtureR3Grant") is not None or
-            request.get("nativeFixtureCorrection") is not None):
-        raise ValueError("native R5 launch requires the exact Government-only additive grant")
+def validate_profile_entry_for_launch(request, captured, argv, fixture_profile=None):
+    """Revalidate one exact closed profile and its executable pins before Popen."""
+    fixture_profile = fixture_profile or native_profile(request)
+    if fixture_profile is None or native_profile(request) != fixture_profile:
+        raise ValueError("native R5/R6 launch requires its exact Government-only profile grant")
+    label = fixture_profile.name.upper()
     if not isinstance(argv, list) or not argv or not isinstance(argv[0], str):
-        raise ValueError("native R5 launch argv is malformed")
+        raise ValueError(f"native {label} launch argv is malformed")
     bounds = validate_native_fixture_grant(request, captured)
-    validated = bounds.get("r5Grant")
+    validated = bounds.get(f"{fixture_profile.name}Grant")
     if not isinstance(validated, dict):
-        raise ValueError("native R5 launch requires the exact validated additive grant")
+        raise ValueError(f"native {label} launch requires the exact validated additive grant")
     product = request.get("product", {}).get("government", {})
     auth_binding = product.get("roleAuthorization", {})
     auth_path = Path(auth_binding["path"]).resolve(strict=True)
     auth_raw = next((content for source, content in captured.items()
                      if Path(source).resolve() == auth_path), None)
     if auth_raw is None:
-        raise ValueError("native R5 role authorization is not the exact captured Request input")
-    pinned_commands = validate_r5_delegate_authorization(request, auth_raw, validated)
+        raise ValueError(f"native {label} role authorization is not the exact captured Request input")
+    pinned_commands = validate_profile_delegate_authorization(
+        request, auth_raw, validated, fixture_profile)
     executable = product.get("executable", {})
     expected_executable = executable.get("path") if isinstance(executable, dict) else None
     if (not isinstance(expected_executable, str) or not Path(expected_executable).is_absolute() or
             str(Path(argv[0]).resolve(strict=True)) != str(Path(expected_executable).resolve(strict=True))):
-        raise ValueError("native R5 launch argv differs from the Request-bound Government executable")
-    gate = __import__("native_fixture_budget").validate_r5_entry_gate(validated)
+        raise ValueError(f"native {label} launch argv differs from the Request-bound Government executable")
+    gate = validate_profile_live_gate(validated, fixture_profile)
     return {"bounds": bounds, "entryGate": gate, "delegatePaths": pinned_commands}
+
+
+def validate_r5_entry_for_launch(request, captured, argv):
+    from government_native_profile import profile
+    return validate_profile_entry_for_launch(request, captured, argv, profile("r5"))
+
+
+def validate_r6_entry_for_launch(request, captured, argv):
+    from government_native_profile import profile
+    return validate_profile_entry_for_launch(request, captured, argv, profile("r6"))
 
 
 class ControllerContext(NamedTuple):
@@ -578,9 +611,9 @@ def load_context(*, env=None, invocation_raw=None):
         if request.get("dispatchId") == R4_DISPATCH_ID:
             from native_fixture_budget import validate_r4_entry_gate
             validate_r4_entry_gate(fixture_bounds["r4Grant"])
-        if request.get("dispatchId") == R5_DISPATCH_ID:
-            from native_fixture_budget import validate_r5_entry_gate
-            validate_r5_entry_gate(fixture_bounds["r5Grant"])
+        fixture_profile = native_profile(request)
+        if fixture_profile is not None:
+            validate_profile_live_gate(fixture_bounds[f"{fixture_profile.name}Grant"], fixture_profile)
     product_binding = request.get("product", {}).get(request.get("arm"), {}).get("roleAuthorization")
     captured_authorization = next((content for source, content in captured.items()
                                    if Path(source).resolve() == authorization_path), None)

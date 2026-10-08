@@ -46,6 +46,75 @@ def validate_r5_terminal_deadline(request, controller_elapsed):
         raise ValueError("R5 controller deadline exceeded before positive result finalization")
 
 
+def validate_profile_terminal_deadline(request, controller_elapsed):
+    from government_native_profile import request_profile
+    fixture_profile = request_profile(request)
+    if (fixture_profile is not None and
+            float(controller_elapsed) > R5_CONTROLLER_DEADLINE_SECONDS):
+        raise ValueError(f"{fixture_profile.name.upper()} controller deadline exceeded before result finalization")
+
+
+def r6_completion_status(result_status, dispatch_phase, controller_status,
+                         controller_receipt_sha, controller_receipt_verified, process_verified,
+                         ledger_result_matches, controller_terminal, elapsed_seconds):
+    return ("completed" if result_status == "completed" and dispatch_phase == "finished" and
+            controller_status == "completed" and isinstance(controller_receipt_sha, str) and
+            len(controller_receipt_sha) == 64 and all(c in "0123456789abcdef" for c in controller_receipt_sha) and
+            controller_receipt_verified is True and process_verified is True and
+            ledger_result_matches is True and controller_terminal is True and
+            type(elapsed_seconds) in (int, float) and 0 <= elapsed_seconds <= R5_CONTROLLER_DEADLINE_SECONDS
+            else "incomplete")
+
+
+def write_r6_completion_receipt(request, raw, result_path, evidence, ledger,
+                                process_path, process_raw, process_verified):
+    """Bind terminal result/process/ledger receipts and measure after they are available."""
+    result_path = Path(result_path).resolve(strict=True)
+    result_raw = result_path.read_bytes()
+    result_value = json.loads(result_raw)
+    dispatch_row = ledger.dispatch_record(request["dispatchId"])
+    with ledger.transaction() as db:
+        controller_row = db.execute(
+            "SELECT status,receipt_sha256,end,process_receipt FROM controller_runs WHERE dispatch_id=?",
+            (request["dispatchId"],)).fetchone()
+    elapsed = ledger.controller_elapsed(request["dispatchId"])
+    phase = dispatch_row.get("phase") if isinstance(dispatch_row, dict) else None
+    terminal_receipt_sha = controller_row[1] if controller_row else None
+    controller_status = controller_row[0] if controller_row else None
+    ledger_result_matches = False
+    if isinstance(dispatch_row, dict) and isinstance(dispatch_row.get("result"), str):
+        try:
+            ledger_result_matches = (json.loads(dispatch_row["result"]) == result_value and
+                                     dispatch_row.get("request") == raw and
+                                     dispatch_row.get("execution_sha") == execution_sha(request))
+        except json.JSONDecodeError:
+            pass
+    controller_receipt_verified = False
+    if controller_row and isinstance(controller_row[3], str):
+        controller_receipt_verified = digest(controller_row[3].encode("utf-8")) == controller_row[1]
+    process_verified = (process_verified is True and isinstance(process_raw, bytes) and
+                        Path(process_path).is_file() and Path(process_path).read_bytes() == process_raw)
+    status = r6_completion_status(result_value.get("status"), phase, controller_status,
+                                  terminal_receipt_sha, controller_receipt_verified, process_verified,
+                                  ledger_result_matches, bool(controller_row and controller_row[2] is not None),
+                                  elapsed)
+    process_value = None
+    if process_verified and isinstance(process_raw, bytes) and Path(process_path).is_file():
+        process_value = {"path": str(Path(process_path).resolve()), "sha256": digest(process_raw)}
+    timing = {"dispatchId": request["dispatchId"], "requestSha256": digest(raw),
+              "elapsedSecondsAfterTerminalReceiptAvailable": elapsed,
+              "terminalResult": {"path": str(result_path), "sha256": digest(result_raw)},
+              "terminalControllerReceiptSha256": terminal_receipt_sha,
+              "nativeProcess": process_value, "status": status}
+    timing_path = Path(evidence) / "controller-completion.json"
+    timing_raw = (json.dumps(timing, sort_keys=True, indent=2) + "\n").encode()
+    with timing_path.open("xb") as stream:
+        stream.write(timing_raw)
+    if timing_path.read_bytes() != timing_raw:
+        raise ValueError("R6 completion timing receipt failed exact readback")
+    return timing
+
+
 def external(path, *, existing=False):
     path = Path(path)
     if not path.is_absolute():
@@ -70,7 +139,7 @@ def mechanical_pin():
 
 def runtime_pins():
     pins = {name: digest(Path(__file__).with_name(name).read_bytes()) for name in
-            ("dispatch.py", "adapter.py", "ledger.py", "process.py", "runner.py", "mechanical_actor.py", "identity_probe.py", "classic.py", "classic_integration.py", "government.py", "government_roles.py", "native_controller.py", "native_fixture_budget.py", "government-pin.json", "classic-pin.json", "measurement_profile.py", "context_allocation.py", "context_tools_allocation.py", "diagnostic_history.py")}
+            ("dispatch.py", "adapter.py", "ledger.py", "process.py", "runner.py", "mechanical_actor.py", "identity_probe.py", "classic.py", "classic_integration.py", "government.py", "government_roles.py", "native_controller.py", "native_fixture_budget.py", "government_native_profile.py", "government-pin.json", "classic-pin.json", "measurement_profile.py", "context_allocation.py", "context_tools_allocation.py", "diagnostic_history.py")}
     pins["harness.py"] = digest(Path(__file__).parents[1].joinpath("harness.py").read_bytes())
     pins["prepare.py"] = digest(Path(__file__).parents[1].joinpath("prepare.py").read_bytes())
     for name in FILES.values():
@@ -467,12 +536,15 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
     process_verified = False
     controller_finished = False
     def native_fixture_start_gate():
+        from government_native_profile import request_profile
+        fixture_profile = request_profile(request)
         if request.get("nativeFixtureR4Grant") is not None:
             fresh_request, fresh_captured = authority.validate(raw)
             native_controller.validate_r4_entry_for_launch(fresh_request, fresh_captured, argv)
-        if request.get("nativeFixtureR5Grant") is not None:
+        if fixture_profile is not None:
             fresh_request, fresh_captured = authority.validate(raw)
-            native_controller.validate_r5_entry_for_launch(fresh_request, fresh_captured, argv)
+            native_controller.validate_profile_entry_for_launch(
+                fresh_request, fresh_captured, argv, fixture_profile)
     try:
         native_fixture_start_gate()
         ledger.reserve_controller_dispatch(request["dispatchId"], execution_sha(request), raw, argv,
@@ -510,6 +582,9 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
             if request.get("nativeFixtureR5Grant") is not None and elapsed >= (
                     R5_CONTROLLER_DEADLINE_SECONDS - R5_CLEANUP_MARGIN_SECONDS):
                 reason = reason or "R5_controller_wall_deadline"
+            if request.get("nativeFixtureR6Grant") is not None and elapsed >= (
+                    R5_CONTROLLER_DEADLINE_SECONDS - R5_CLEANUP_MARGIN_SECONDS):
+                reason = reason or "R6_controller_wall_deadline"
             if elapsed >= min(request["wallSeconds"], authority.grant["maxSessionWallSeconds"]):
                 reason = reason or "controller_wall_deadline"
             if directory.joinpath("STOP").exists():
@@ -531,10 +606,10 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
         if wall <= 0:
             raise LimitReached("no shared wall-time remains for native controller launch")
         native_fixture_start_gate()
-        if request.get("nativeFixtureR5Grant") is not None:
+        if request.get("nativeFixtureR5Grant") is not None or request.get("nativeFixtureR6Grant") is not None:
             wall = r5_process_timeout(wall, ledger.controller_elapsed(request["dispatchId"]))
             if wall <= 0:
-                raise LimitReached("R5 controller deadline leaves no process time after cleanup reserve")
+                raise LimitReached("R5/R6 controller deadline leaves no process time after cleanup reserve")
         receipt = bounded(argv, request["actorRepository"], evidence / "process", wall,
                           env=controller_env, stop_path=evidence / "STOP", poll_stop=monitor)
         process_path = evidence / "process" / "process.json"
@@ -568,7 +643,7 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
             result["receipts"].append({"path": str(snapshot.resolve()), "sha256": item["sha256"],
                                        "kind": "released-input-snapshot"})
         elapsed_seconds = ledger.controller_elapsed(request["dispatchId"])
-        validate_r5_terminal_deadline(request, elapsed_seconds)
+        validate_profile_terminal_deadline(request, elapsed_seconds)
         result = ledger.finish_controller_dispatch(request["dispatchId"], result,
                   {"argv": argv, "cwd": request["actorRepository"], "process": process,
                    "processSha256": digest(process_raw), "bootstrapSha256": bootstrap_sha,
@@ -619,6 +694,10 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
             except (ValueError, OSError, KeyError):
                 result.setdefault("gaps", []).append("controller incomplete receipt could not be finalized")
     write_result(result_path, result)
+    if request.get("nativeFixtureR6Grant") is not None:
+        write_r6_completion_receipt(request, raw, result_path, evidence, ledger,
+                                   evidence / "process" / "process.json", process_raw,
+                                   process_verified)
     return result
 
 

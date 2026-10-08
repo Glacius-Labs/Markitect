@@ -1,0 +1,18 @@
+.......C:\Python313\Lib\ast.py:54: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x000002404B1E0B80>
+  return compile(source, filename, mode, flags,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+...
+----------------------------------------------------------------------
+Ran 10 tests in 0.148s
+
+OK
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 0.111s
+
+OK
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 0.117s
+
+OK

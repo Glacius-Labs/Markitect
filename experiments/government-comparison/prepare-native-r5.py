@@ -1,7 +1,7 @@
-"""Prepare one fresh public Government R5 fixture; never start product roles.
+"""Prepare one fresh public Government R5 or R6 fixture; never start product roles.
 
 The root coordinator must wait for the final runtime/source freeze and then run
-this script with --final-runtime-ready. It creates only the new external R5
+this script with --final-runtime-ready. It creates only the selected external
 Government subtree, a disposable Git repository, and static released inputs.
 It does not invoke Markitect, the role wrapper, the deterministic delegate, or
 any model/provider. Git is used only to author and bind the fixture baseline.
@@ -18,6 +18,7 @@ import time
 RUNTIME_ROOT = Path(__file__).resolve().parent / "runtime"
 sys.path.insert(0, str(RUNTIME_ROOT))
 import government_integration as gi
+from government_native_profile import profile
 
 
 EXTERNAL_ROOT = Path(
@@ -45,21 +46,22 @@ def _sha(path: Path) -> str:
 
 def _write_new(path: Path, raw: bytes) -> None:
     if path.exists() or path.is_symlink():
-        raise FileExistsError(f"refusing to overwrite R5 preparation output: {path}")
+        raise FileExistsError(f"refusing to overwrite Government preparation output: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(raw)
 
 
-def _validate_grant() -> dict:
-    if GRANT_PATH.is_symlink() or not GRANT_PATH.is_file():
-        raise FileNotFoundError(f"exact external R5 grant required at {GRANT_PATH}")
-    raw = GRANT_PATH.read_bytes()
-    if _sha(GRANT_PATH) != EXPECTED_GRANT_SHA256:
-        raise ValueError("external R5 grant SHA-256 differs from the parent binding")
+def _validate_grant(selected) -> dict:
+    grant_path = selected.envelope_path
+    if grant_path.is_symlink() or not grant_path.is_file():
+        raise FileNotFoundError(f"exact selected Government grant required at {grant_path}")
+    raw = grant_path.read_bytes()
+    if _sha(grant_path) != selected.envelope_sha:
+        raise ValueError("selected Government grant SHA-256 differs from the parent binding")
     envelope = json.loads(raw)
     grant = envelope.get("grant")
     expected_limits = {
-        "key": R5_SOURCE_KEY,
+        "key": selected.key,
         "maxFreshCases": 1,
         "maxNativeStarts": 2,
         "maxWrapperAttempts": 6,
@@ -74,20 +76,20 @@ def _validate_grant() -> dict:
         "metadataSessions": 0,
     }
     if not isinstance(grant, dict) or any(grant.get(key) != value for key, value in expected_limits.items()):
-        raise ValueError("external R5 grant is not the exact one-case Government allocation")
+        raise ValueError("selected Government grant is not the exact one-case Government allocation")
     expected_python = {"path": "C:/Python313/python.exe",
                        "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"}
     if (grant.get("python") != expected_python or
             Path(sys.executable).resolve() != Path(expected_python["path"]).resolve() or
             _sha(Path(sys.executable)) != expected_python["sha256"]):
-        raise ValueError("R5 preparation requires the exact existing Python313 binding")
+        raise ValueError("Government preparation requires the exact existing Python313 binding")
     product = grant.get("product", {})
     accepted = gi.government.PIN["accepted"]
     if (product.get("name") != "Government" or
             product.get("sourceSha") != accepted["sourceCommit"] or
             product.get("binarySha256") != accepted["binary"]["sha256"] or
             product.get("delegateSha256") != EXPECTED_DELEGATE_SHA256):
-        raise ValueError("R5 grant product/delegate pins differ from the held inputs")
+        raise ValueError("Government grant product/delegate pins differ from the held inputs")
     return envelope
 
 
@@ -113,18 +115,21 @@ def _historical_equivalence() -> dict:
     }
 
 
-def prepare() -> dict:
-    grant = _validate_grant()
+def prepare(profile_name="r5") -> dict:
+    selected = profile(profile_name)
+    output_root = selected.external_root / "government"
+    grant = _validate_grant(selected)
+    gi.TASK_ID = selected.task_id
     equivalence = _historical_equivalence()
     delegate_path = (gi.FIXTURE_ROOT / "deterministic_delegate.py").resolve(strict=True)
     if _sha(delegate_path) != EXPECTED_DELEGATE_SHA256:
-        raise ValueError("corrected R5 deterministic delegate bytes are not present")
+        raise ValueError("pinned deterministic delegate bytes are not present")
 
     # No historical fixture namespace is reused or modified.
-    if OUTPUT_ROOT.exists() or OUTPUT_ROOT.is_symlink():
-        raise FileExistsError(f"R5 Government output subtree already exists: {OUTPUT_ROOT}")
-    OUTPUT_ROOT.mkdir(parents=True)
-    actor = OUTPUT_ROOT / "actor"
+    if output_root.exists() or output_root.is_symlink():
+        raise FileExistsError(f"Government output subtree already exists: {output_root}")
+    output_root.mkdir(parents=True)
+    actor = output_root / "actor"
     initial = gi.create_disposable_repository(actor)
     if _sha(actor / "government.yaml") != EXPECTED_GOVERNMENT_CONFIG_SHA256:
         raise ValueError("fresh repository config differs from the historical Constitution input")
@@ -135,10 +140,10 @@ def prepare() -> dict:
     if bound["constitutionDigest"] != RETAINED_CONSTITUTION_DIGEST:
         raise AssertionError("fresh Order was not bound to the retained Constitution")
 
-    released = OUTPUT_ROOT / "released"
-    role_evidence = OUTPUT_ROOT / "role-evidence"
-    controller_evidence = OUTPUT_ROOT / "controller-evidence"
-    results = OUTPUT_ROOT / "results"
+    released = output_root / "released"
+    role_evidence = output_root / "role-evidence"
+    controller_evidence = output_root / "controller-evidence"
+    results = output_root / "results"
     queue_state = results / "queue-state"
     run_state = results / "run-state"
     temporary = results / "temporary"
@@ -149,12 +154,12 @@ def prepare() -> dict:
     runtime_path = released / "runtime.json"
     backlog_path = released / "backlog.json"
     diagnostics_path = released / "wrapper-diagnostics-config.json"
-    ledger_path = OUTPUT_ROOT / "fixture-ledger.sqlite"
+    ledger_path = output_root / "fixture-ledger.sqlite"
 
     correction = {
-        "path": str(GRANT_PATH.resolve(strict=True)),
-        "sha256": EXPECTED_GRANT_SHA256,
-        "sourceKey": R5_SOURCE_KEY,
+        "path": str(selected.envelope_path.resolve(strict=True)),
+        "sha256": selected.envelope_sha,
+        "sourceKey": selected.key,
     }
     diagnostic_config = {
         "arm": "government",
@@ -170,8 +175,8 @@ def prepare() -> dict:
     gi.MAX_ROLE_CALLS = 6
     gi.MAX_WALL_SECONDS = 38
     authorization = gi.build_role_authorization(
-        trial_id=R5_TRIAL_ID,
-        dispatch_id=R5_DISPATCH_ID,
+        trial_id=selected.key,
+        dispatch_id=selected.dispatch_id,
         request_path=request_path,
         ledger_path=ledger_path,
         runtime_path=runtime_path,
@@ -207,11 +212,14 @@ def prepare() -> dict:
         ])
         runtime_files = {item["path"]: item for item in slot["runtimeFiles"]}
         runtime_files[diagnostics_file["path"]] = diagnostics_file
+        profile_file = gi.runtime_file(RUNTIME_ROOT / "government_native_profile.py")
+        runtime_files[profile_file["path"]] = profile_file
         slot["runtimeFiles"] = [runtime_files[path] for path in sorted(runtime_files)]
     runtime_raw = gi.canonical_json(runtime) + b"\n"
     _write_new(runtime_path, runtime_raw)
 
-    backlog = gi.build_backlog(runtime_path=runtime_path, queue_state_directory=queue_state)
+    backlog = gi.build_backlog(runtime_path=runtime_path, queue_state_directory=queue_state,
+                               task_id=selected.task_id)
     backlog_raw = gi.canonical_json(backlog) + b"\n"
     _write_new(backlog_path, backlog_raw)
 
@@ -226,17 +234,17 @@ def prepare() -> dict:
         queue_state_directory=queue_state,
     )
     diagnostics_release = {"path": diagnostics_binding["path"], "sha256": diagnostics_binding["sha256"]}
-    r5_release = {"path": correction["path"], "sha256": correction["sha256"]}
-    released_inputs.extend([diagnostics_release, r5_release])
+    grant_release = {"path": correction["path"], "sha256": correction["sha256"]}
+    released_inputs.extend([diagnostics_release, grant_release])
 
     role_slots = gi.government.configured_roles(runtime)
     runtime_files = runtime["executor"]["runtimeFiles"]
     for item in runtime_files:
         if gi.runtime_file(item["path"]) != item:
-            raise ValueError("a runtime source changed while R5 preparation was frozen")
+            raise ValueError("a runtime source changed while Government preparation was frozen")
     manifest = {
         "apiVersion": "markitect.scientist-government-native-fixture-preparation/v1alpha1",
-        "fixtureId": "government-native-scope-r5",
+        "fixtureId": selected.dispatch_id,
         "actorRepository": str(actor.resolve()),
         "initialCommit": initial["baseCommit"],
         "baseCommit": bound["baseCommit"],
@@ -244,14 +252,14 @@ def prepare() -> dict:
         "constitutionDigest": RETAINED_CONSTITUTION_DIGEST,
         "orderSha256": bound["orderSha256"],
         "inputEquivalence": equivalence,
-        "trialId": R5_TRIAL_ID,
-        "dispatchId": R5_DISPATCH_ID,
+        "trialId": selected.key,
+        "dispatchId": selected.dispatch_id,
         "taskId": gi.TASK_ID,
         "roleAuthorization": {"path": str(authorization_path.resolve()), "sha256": _sha(authorization_path)},
         "diagnostics": {**diagnostics_binding, "correction": correction},
         "runtime": {"path": str(runtime_path.resolve()), "sha256": _sha(runtime_path)},
         "backlog": {"path": str(backlog_path.resolve()), "sha256": _sha(backlog_path)},
-        "nativeFixtureR5Grant": correction,
+        selected.marker: correction,
         "productGovernment": product,
         "releasedInputs": released_inputs,
         "roleSlots": [{"slotId": item["slotId"], "phase": item["phase"],
@@ -278,7 +286,7 @@ def prepare() -> dict:
         "productStartsDuringPreparation": 0,
         "outerRequest": "Root creates and freezes Request/Authority; request.json is intentionally not authored here.",
     }
-    manifest_path = OUTPUT_ROOT / "preparation-final.json"
+    manifest_path = output_root / "preparation-final.json"
     _write_new(manifest_path, gi.canonical_json(manifest) + b"\n")
     return {
         "preparationPath": str(manifest_path),
@@ -289,21 +297,22 @@ def prepare() -> dict:
         "runtimeSha256": _sha(runtime_path),
         "backlogSha256": _sha(backlog_path),
         "diagnosticsSha256": _sha(diagnostics_path),
-        "grantSha256": EXPECTED_GRANT_SHA256,
+        "grantSha256": selected.envelope_sha,
         "runtimeFileCount": len(runtime_files),
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--profile", choices=("r5", "r6"), default="r5")
     parser.add_argument(
         "--final-runtime-ready", action="store_true", required=True,
         help="explicit root signal: runtime/budget/diagnostic source closure is frozen",
     )
     args = parser.parse_args()
     if not args.final_runtime_ready:
-        parser.error("wait until Root confirms the final R5 runtime source freeze")
-    result = prepare()
+        parser.error("wait until Root confirms the final Government runtime source freeze")
+    result = prepare(args.profile)
     print(json.dumps(result, sort_keys=True, indent=2))
     return 0
 

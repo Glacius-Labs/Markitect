@@ -1,3 +1,24 @@
+# Active R6 Scientist checkpoint, 2026-10-08
+
+Authority: Overseer chat 01a11367-a781-7683-a20f-46e12614dcb4; existing grant
+`government-released-binding-native-20261008-r6`, original assignedUtc
+2026-10-08T02:27:56Z; additive r6-a1 clarification, no new quota.
+WIP: closed R5/R6 shared profile, preparation, budget, controller and driver
+changes over 165f35b3d2bd70fbcc49d54f52d479b88d54a6b7, not yet committed.
+Existing review and focused offline checks are in
+`evidence/government-released-binding-native-20261008-r6/`.
+r6-a1 counts one explicit actual admission action with durable claim/receipt;
+mandatory pure Authority.validate checks before Queue/conditional Resume stay
+in place for the identical frozen Request. Any negative check terminates.
+Consumed R6: zero actual case preparations/admissions/native starts/wrappers/
+delegates/reservations. History remains 12/10/7/1800; no usage reset.
+Next single step: close independent a1 metadata review, then commit reviewed
+source before the one static preparation/admission. Success alone permits
+freeze, one Queue and conditional same-case Resume. First actual failure stops
+without repair/retry. Finish with raw evidence, exact SHAs/counts, independent
+postreview and slot release, and report once directly to Overseer.
+The old handoff below is preserved byte-for-byte.
+
 # Government R4 terminal: native accepted, outer qualification incomplete
 
 The single `government-serialization-native-20261008-r4` case is closed.

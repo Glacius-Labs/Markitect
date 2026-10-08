@@ -1,0 +1,226 @@
+=== R6 focused budget suite ===
+test_constructor_reads_the_immutable_twelve_start_prefix (test_native_r6_budget.NativeR6BudgetTests.test_constructor_reads_the_immutable_twelve_start_prefix) ... ERROR
+test_live_gate_requires_frozen_grant_and_full_slot_equality (test_native_r6_budget.NativeR6BudgetTests.test_live_gate_requires_frozen_grant_and_full_slot_equality) ... ok
+test_old_r5_label_and_classic_cannot_consume_r6_profile (test_native_r6_budget.NativeR6BudgetTests.test_old_r5_label_and_classic_cannot_consume_r6_profile) ... ERROR
+test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof (test_native_r6_budget.NativeR6BudgetTests.test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof) ... ERROR
+test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds (test_native_r6_budget.NativeR6BudgetTests.test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds) ... ERROR
+test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task (test_native_r6_budget.NativeR6BudgetTests.test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task) ... FAIL
+
+======================================================================
+ERROR: test_constructor_reads_the_immutable_twelve_start_prefix (test_native_r6_budget.NativeR6BudgetTests.test_constructor_reads_the_immutable_twelve_start_prefix)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r6_budget.py", line 125, in test_constructor_reads_the_immutable_twelve_start_prefix
+    instance = self._budget(path)
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r6_budget.py", line 63, in _budget
+    return budget.FixtureBudget(
+           ~~~~~~~~~~~~~~~~~~~~^
+        path, budget.R3_BASE_GRANT_PATH, budget.R3_BASE_GRANT_SHA256,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        {"government": binary, "classic": str(classic)}, request=self.request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 864, in __init__
+    self._validate_profile_prior_history_readonly()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 1285, in _validate_profile_prior_history_readonly
+    self._validate_profile_rows(allocation, starts, corrections)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 1241, in _validate_profile_rows
+    raise ValueError(f"{profile.name.upper()} historical starts differ from the immutable twelve-row snapshot")
+ValueError: R6 historical starts differ from the immutable twelve-row snapshot
+
+======================================================================
+ERROR: test_old_r5_label_and_classic_cannot_consume_r6_profile (test_native_r6_budget.NativeR6BudgetTests.test_old_r5_label_and_classic_cannot_consume_r6_profile)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r6_budget.py", line 157, in test_old_r5_label_and_classic_cannot_consume_r6_profile
+    instance = self._budget(path)
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r6_budget.py", line 63, in _budget
+    return budget.FixtureBudget(
+           ~~~~~~~~~~~~~~~~~~~~^
+        path, budget.R3_BASE_GRANT_PATH, budget.R3_BASE_GRANT_SHA256,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        {"government": binary, "classic": str(classic)}, request=self.request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 864, in __init__
+    self._validate_profile_prior_history_readonly()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 1285, in _validate_profile_prior_history_readonly
+    self._validate_profile_rows(allocation, starts, corrections)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 1241, in _validate_profile_rows
+    raise ValueError(f"{profile.name.upper()} historical starts differ from the immutable twelve-row snapshot")
+ValueError: R6 historical starts differ from the immutable twelve-row snapshot
+
+======================================================================
+ERROR: test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof (test_native_r6_budget.NativeR6BudgetTests.test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r6_budget.py", line 135, in test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof
+    instance = self._budget(path)
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r6_budget.py", line 63, in _budget
+    return budget.FixtureBudget(
+           ~~~~~~~~~~~~~~~~~~~~^
+        path, budget.R3_BASE_GRANT_PATH, budget.R3_BASE_GRANT_SHA256,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        {"government": binary, "classic": str(classic)}, request=self.request)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 864, in __init__
+    self._validate_profile_prior_history_readonly()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 1285, in _validate_profile_prior_history_readonly
+    self._validate_profile_rows(allocation, starts, corrections)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 1241, in _validate_profile_rows
+    raise ValueError(f"{profile.name.upper()} historical starts differ from the immutable twelve-row snapshot")
+ValueError: R6 historical starts differ from the immutable twelve-row snapshot
+
+======================================================================
+ERROR: test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds (test_native_r6_budget.NativeR6BudgetTests.test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r6_budget.py", line 79, in test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds
+    self.assertEqual(admitted["maxActualInputValidations"], 1)
+                     ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'maxActualInputValidations'
+
+======================================================================
+FAIL: test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task (test_native_r6_budget.NativeR6BudgetTests.test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task)
+----------------------------------------------------------------------
+ValueError: R6 grant is restricted to the exact Government dispatch
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r6_budget.py", line 94, in test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task
+    with self.assertRaisesRegex(ValueError, "exact separate R5 or R6"):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "exact separate R5 or R6" does not match "R6 grant is restricted to the exact Government dispatch"
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.237s
+
+FAILED (failures=1, errors=4)
+=== R6 focused suite after history-prefix and normalized-bound fixes ===
+test_constructor_reads_the_immutable_twelve_start_prefix (test_native_r6_budget.NativeR6BudgetTests.test_constructor_reads_the_immutable_twelve_start_prefix) ... ok
+test_live_gate_requires_frozen_grant_and_full_slot_equality (test_native_r6_budget.NativeR6BudgetTests.test_live_gate_requires_frozen_grant_and_full_slot_equality) ... ok
+test_old_r5_label_and_classic_cannot_consume_r6_profile (test_native_r6_budget.NativeR6BudgetTests.test_old_r5_label_and_classic_cannot_consume_r6_profile) ... ok
+test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof (test_native_r6_budget.NativeR6BudgetTests.test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof) ... ERROR
+test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds (test_native_r6_budget.NativeR6BudgetTests.test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds) ... ok
+test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task (test_native_r6_budget.NativeR6BudgetTests.test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task) ... ok
+
+======================================================================
+ERROR: test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof (test_native_r6_budget.NativeR6BudgetTests.test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r6_budget.py", line 145, in test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof
+    instance.reserve("government", f"{self.profile.dispatch_id}/resume", argv)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 1509, in reserve
+    self._reserve_profile(product, label, argv)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 1312, in _reserve_profile
+    self._profile_validate_queue_success(queue_row)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 1154, in _profile_validate_queue_success
+    receipt = _strict_load(receipt_raw, f"{self.profile.name.upper()} Queue process receipt")
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 161, in _strict_load
+    raw = path if isinstance(path, bytes) else Path(path).read_bytes()
+                                               ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Python313\Lib\pathlib\_abc.py", line 625, in read_bytes
+    with self.open(mode='rb') as f:
+         ~~~~~~~~~^^^^^^^^^^^
+  File "C:\Python313\Lib\pathlib\_local.py", line 537, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 22] Invalid argument: '{"argv": ["C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe", "government", "--action", "queue"], "returnCode": 0, "status": "complete"}'
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.423s
+
+FAILED (errors=1)
+=== R6 suite after receipt parser correction ===
+test_constructor_reads_the_immutable_twelve_start_prefix (test_native_r6_budget.NativeR6BudgetTests.test_constructor_reads_the_immutable_twelve_start_prefix) ... ok
+test_live_gate_requires_frozen_grant_and_full_slot_equality (test_native_r6_budget.NativeR6BudgetTests.test_live_gate_requires_frozen_grant_and_full_slot_equality) ... ok
+test_old_r5_label_and_classic_cannot_consume_r6_profile (test_native_r6_budget.NativeR6BudgetTests.test_old_r5_label_and_classic_cannot_consume_r6_profile) ... ok
+test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof (test_native_r6_budget.NativeR6BudgetTests.test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof) ... ok
+test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds (test_native_r6_budget.NativeR6BudgetTests.test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds) ... ok
+test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task (test_native_r6_budget.NativeR6BudgetTests.test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.402s
+
+OK
+=== Shared-profile R5 regression ===
+test_fixture_budget_reads_exact_twelve_start_prefix_without_mutating_it (test_native_r5_budget.NativeR5BudgetTests.test_fixture_budget_reads_exact_twelve_start_prefix_without_mutating_it) ... ok
+test_live_slot_gate_requires_exact_owner_key_status_and_assignment_time (test_native_r5_budget.NativeR5BudgetTests.test_live_slot_gate_requires_exact_owner_key_status_and_assignment_time) ... ok
+test_queue_reservation_is_additive_and_resume_requires_complete_queue_proof (test_native_r5_budget.NativeR5BudgetTests.test_queue_reservation_is_additive_and_resume_requires_complete_queue_proof) ... ok
+test_released_r5_grant_binds_exact_source_product_delegate_python_and_limits (test_native_r5_budget.NativeR5BudgetTests.test_released_r5_grant_binds_exact_source_product_delegate_python_and_limits) ... ok
+test_request_dispatch_binding_and_closed_r4_grant_fail_closed (test_native_r5_budget.NativeR5BudgetTests.test_request_dispatch_binding_and_closed_r4_grant_fail_closed) ... FAIL
+test_wrong_product_and_label_do_not_consume_r5_allocation (test_native_r5_budget.NativeR5BudgetTests.test_wrong_product_and_label_do_not_consume_r5_allocation) ... ok
+
+======================================================================
+FAIL: test_request_dispatch_binding_and_closed_r4_grant_fail_closed (test_native_r5_budget.NativeR5BudgetTests.test_request_dispatch_binding_and_closed_r4_grant_fail_closed)
+----------------------------------------------------------------------
+ValueError: exact separate R5 or R6 Government Request profile required
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r5_budget.py", line 84, in test_request_dispatch_binding_and_closed_r4_grant_fail_closed
+    with self.assertRaisesRegex(ValueError, "closed correction, R3, or R4"):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "closed correction, R3, or R4" does not match "exact separate R5 or R6 Government Request profile required"
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.439s
+
+FAILED (failures=1)
+=== Shared-profile R5 regression after closed-binding diagnostic fix ===
+test_fixture_budget_reads_exact_twelve_start_prefix_without_mutating_it (test_native_r5_budget.NativeR5BudgetTests.test_fixture_budget_reads_exact_twelve_start_prefix_without_mutating_it) ... ok
+test_live_slot_gate_requires_exact_owner_key_status_and_assignment_time (test_native_r5_budget.NativeR5BudgetTests.test_live_slot_gate_requires_exact_owner_key_status_and_assignment_time) ... ok
+test_queue_reservation_is_additive_and_resume_requires_complete_queue_proof (test_native_r5_budget.NativeR5BudgetTests.test_queue_reservation_is_additive_and_resume_requires_complete_queue_proof) ... ok
+test_released_r5_grant_binds_exact_source_product_delegate_python_and_limits (test_native_r5_budget.NativeR5BudgetTests.test_released_r5_grant_binds_exact_source_product_delegate_python_and_limits) ... ok
+test_request_dispatch_binding_and_closed_r4_grant_fail_closed (test_native_r5_budget.NativeR5BudgetTests.test_request_dispatch_binding_and_closed_r4_grant_fail_closed) ... ok
+test_wrong_product_and_label_do_not_consume_r5_allocation (test_native_r5_budget.NativeR5BudgetTests.test_wrong_product_and_label_do_not_consume_r5_allocation) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.419s
+
+OK
+=== Final R6 budget suite ===
+test_constructor_reads_the_immutable_twelve_start_prefix (test_native_r6_budget.NativeR6BudgetTests.test_constructor_reads_the_immutable_twelve_start_prefix) ... ok
+test_live_gate_requires_frozen_grant_and_full_slot_equality (test_native_r6_budget.NativeR6BudgetTests.test_live_gate_requires_frozen_grant_and_full_slot_equality) ... ok
+test_old_r5_label_and_classic_cannot_consume_r6_profile (test_native_r6_budget.NativeR6BudgetTests.test_old_r5_label_and_classic_cannot_consume_r6_profile) ... ok
+test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof (test_native_r6_budget.NativeR6BudgetTests.test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof) ... ok
+test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds (test_native_r6_budget.NativeR6BudgetTests.test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds) ... ok
+test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task (test_native_r6_budget.NativeR6BudgetTests.test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.401s
+
+OK
+=== R6 focused budget suite after symlink binding guard ===
+test_constructor_reads_the_immutable_twelve_start_prefix (test_native_r6_budget.NativeR6BudgetTests.test_constructor_reads_the_immutable_twelve_start_prefix) ... ok
+test_live_gate_requires_frozen_grant_and_full_slot_equality (test_native_r6_budget.NativeR6BudgetTests.test_live_gate_requires_frozen_grant_and_full_slot_equality) ... ok
+test_old_r5_label_and_classic_cannot_consume_r6_profile (test_native_r6_budget.NativeR6BudgetTests.test_old_r5_label_and_classic_cannot_consume_r6_profile) ... ok
+test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof (test_native_r6_budget.NativeR6BudgetTests.test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof) ... ok
+test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds (test_native_r6_budget.NativeR6BudgetTests.test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds) ... ok
+test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task (test_native_r6_budget.NativeR6BudgetTests.test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.405s
+
+OK
+=== Shared-profile R5 regression after symlink binding guard ===
+test_fixture_budget_reads_exact_twelve_start_prefix_without_mutating_it (test_native_r5_budget.NativeR5BudgetTests.test_fixture_budget_reads_exact_twelve_start_prefix_without_mutating_it) ... ok
+test_live_slot_gate_requires_exact_owner_key_status_and_assignment_time (test_native_r5_budget.NativeR5BudgetTests.test_live_slot_gate_requires_exact_owner_key_status_and_assignment_time) ... ok
+test_queue_reservation_is_additive_and_resume_requires_complete_queue_proof (test_native_r5_budget.NativeR5BudgetTests.test_queue_reservation_is_additive_and_resume_requires_complete_queue_proof) ... ok
+test_released_r5_grant_binds_exact_source_product_delegate_python_and_limits (test_native_r5_budget.NativeR5BudgetTests.test_released_r5_grant_binds_exact_source_product_delegate_python_and_limits) ... ok
+test_request_dispatch_binding_and_closed_r4_grant_fail_closed (test_native_r5_budget.NativeR5BudgetTests.test_request_dispatch_binding_and_closed_r4_grant_fail_closed) ... ok
+test_wrong_product_and_label_do_not_consume_r5_allocation (test_native_r5_budget.NativeR5BudgetTests.test_wrong_product_and_label_do_not_consume_r5_allocation) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.410s
+
+OK

@@ -1,0 +1,6 @@
+R6 offline checkpoint and producer-consumer checks
+Command: python -m unittest test_government_released_binding test_native_r6_checkpoint -v
+Working directory: experiments/government-comparison/runtime
+Result: PASS, 20 tests, 0 failures, 0 errors
+Coverage: shared producer against real R5/R6 grant consumers; released-input negatives; R6 queue terminal/driver deadline predicates; Resume completion/readback deadline; one-shot claim closure; no Resume on incomplete Queue; evidence-only freeze delta.
+Scope: offline only. No preparation, actual input validation, freeze, fixture process, wrapper, delegate, or ledger access.
