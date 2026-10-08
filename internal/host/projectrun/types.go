@@ -11,6 +11,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
 
 type Project = projectwork.Project
@@ -96,43 +97,53 @@ type Limits struct {
 type Duration time.Duration
 
 type PlanRequest struct {
-	Goal         string    `json:"goal"`
-	Managers     []string  `json:"managers,omitempty"`
-	BaseRevision string    `json:"baseRevision,omitempty"`
-	ModelEdit    *Mutation `json:"modelEdit,omitempty"`
+	Goal         string   `json:"goal"`
+	Managers     []string `json:"managers,omitempty"`
+	BaseRevision string   `json:"baseRevision,omitempty"`
+	// SinceRevision is an optional older selected-project revision used only to
+	// derive change impact. The execution basis remains BaseRevision (or HEAD).
+	SinceRevision string    `json:"sinceRevision,omitempty"`
+	ModelEdit     *Mutation `json:"modelEdit,omitempty"`
 	// ExecuteAuthorized is set by an explicitly invoked write/run command. It
 	// represents the caller's existing authorization, not an agent decision.
 	ExecuteAuthorized bool `json:"executeAuthorized"`
 }
 
 type PlanRecord struct {
-	APIVersion           string            `json:"apiVersion"`
-	ID                   string            `json:"id"`
-	Status               string            `json:"status"`
-	Goal                 string            `json:"goal"`
-	ExecuteAuthorized    bool              `json:"executeAuthorized"`
-	Root                 string            `json:"-"`
-	BaseRevision         string            `json:"baseRevision"`
-	TargetBranch         string            `json:"targetBranch"`
-	TargetHead           string            `json:"targetHead"`
-	RepositoryDigest     string            `json:"repositoryDigest"`
-	BaseSnapshot         string            `json:"baseSnapshot"`
-	WorkingSnapshot      string            `json:"workingSnapshot"`
-	BaseProjectDigest    string            `json:"baseProjectDigest"`
-	WorkingProjectDigest string            `json:"workingProjectDigest"`
-	BaseModelDigest      string            `json:"baseModelDigest"`
-	ModelDigest          string            `json:"modelDigest"`
-	ReportDigest         string            `json:"reportDigest"`
-	RuntimeDigest        string            `json:"runtimeDigest"`
-	PlannedAt            time.Time         `json:"plannedAt"`
-	Managers             []ManagerTask     `json:"managers"`
-	Checks               []CheckPlan       `json:"checks"`
-	ModelEdit            *EditPlan         `json:"modelEdit,omitempty"`
-	InitialCandidateID   string            `json:"initialCandidateId"`
-	RuntimeAgents        map[string]string `json:"runtimeAgents"`
-	Findings             []string          `json:"findings,omitempty"`
-	Blockers             []string          `json:"blockers,omitempty"`
-	Digest               string            `json:"digest"`
+	APIVersion              string                     `json:"apiVersion"`
+	ID                      string                     `json:"id"`
+	Status                  string                     `json:"status"`
+	Goal                    string                     `json:"goal"`
+	ExecuteAuthorized       bool                       `json:"executeAuthorized"`
+	Root                    string                     `json:"-"`
+	BaseRevision            string                     `json:"baseRevision"`
+	ChangeBaseRevision      string                     `json:"changeBaseRevision,omitempty"`
+	ChangeBaseSnapshot      string                     `json:"changeBaseSnapshot,omitempty"`
+	ChangeBaseProjectDigest string                     `json:"changeBaseProjectDigest,omitempty"`
+	ChangeBaseModelDigest   string                     `json:"changeBaseModelDigest,omitempty"`
+	ChangeBaseReportDigest  string                     `json:"changeBaseReportDigest,omitempty"`
+	ChangeImpact            *projectmodel.ChangeImpact `json:"changeImpact,omitempty"`
+	ChangeImpactDigest      string                     `json:"changeImpactDigest,omitempty"`
+	TargetBranch            string                     `json:"targetBranch"`
+	TargetHead              string                     `json:"targetHead"`
+	RepositoryDigest        string                     `json:"repositoryDigest"`
+	BaseSnapshot            string                     `json:"baseSnapshot"`
+	WorkingSnapshot         string                     `json:"workingSnapshot"`
+	BaseProjectDigest       string                     `json:"baseProjectDigest"`
+	WorkingProjectDigest    string                     `json:"workingProjectDigest"`
+	BaseModelDigest         string                     `json:"baseModelDigest"`
+	ModelDigest             string                     `json:"modelDigest"`
+	ReportDigest            string                     `json:"reportDigest"`
+	RuntimeDigest           string                     `json:"runtimeDigest"`
+	PlannedAt               time.Time                  `json:"plannedAt"`
+	Managers                []ManagerTask              `json:"managers"`
+	Checks                  []CheckPlan                `json:"checks"`
+	ModelEdit               *EditPlan                  `json:"modelEdit,omitempty"`
+	InitialCandidateID      string                     `json:"initialCandidateId"`
+	RuntimeAgents           map[string]string          `json:"runtimeAgents"`
+	Findings                []string                   `json:"findings,omitempty"`
+	Blockers                []string                   `json:"blockers,omitempty"`
+	Digest                  string                     `json:"digest"`
 }
 
 type ManagerTask struct {

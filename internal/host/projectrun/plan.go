@@ -50,6 +50,22 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	if project == nil || project.Snapshot == nil {
 		return plan, fmt.Errorf("project frontend returned no fixed snapshot")
 	}
+	var changeBase *Project
+	var changeImpact *projectmodel.ChangeImpact
+	if strings.TrimSpace(request.SinceRevision) != "" {
+		changeBase, err = host.Load(root, request.SinceRevision)
+		if err != nil {
+			return plan, fmt.Errorf("load project change baseline %q: %w", request.SinceRevision, err)
+		}
+		if changeBase == nil || changeBase.Snapshot == nil {
+			return plan, fmt.Errorf("project frontend returned no change-baseline snapshot")
+		}
+		impact := projectmodel.Impact(changeBase.Report, project.Report)
+		if impact.Digest == "" || impact.BaseDigest != changeBase.Report.Digest || impact.CandidateDigest != project.Report.Digest {
+			return plan, fmt.Errorf("project change impact did not bind both selected reports")
+		}
+		changeImpact = &impact
+	}
 	if project.Snapshot.Provisional {
 		return plan, fmt.Errorf("project run requires a non-provisional snapshot")
 	}
@@ -124,7 +140,7 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	if err != nil {
 		return plan, err
 	}
-	managerTasks, selected, findings, err := planManagers(finalProject.Report, finalProject.Snapshot.Files, request, editPlan, runtime.Limits)
+	managerTasks, selected, findings, err := planManagers(finalProject.Report, finalProject.Snapshot.Files, request, editPlan, changeImpact, runtime.Limits)
 	if err != nil {
 		return plan, err
 	}
@@ -134,7 +150,11 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	if err := checkDepth(managerTasks, runtime.Limits.MaxDepth); err != nil {
 		return plan, err
 	}
-	checkPlans, checkFindings := planChecks(finalProject.Report, selected)
+	var forcedChecks []string
+	if changeImpact != nil {
+		forcedChecks = changeImpact.Checks
+	}
+	checkPlans, checkFindings := planChecksWithImpact(finalProject.Report, selected, forcedChecks)
 	findings = append(findings, checkFindings...)
 	checkPlans, executableFindings, executableErr := bindCheckExecutables(checkPlans, runtime)
 	if executableErr != nil {
@@ -196,6 +216,15 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 		Checks: checkPlans, ModelEdit: editPlan, InitialCandidateID: initialCandidate.ID,
 		RuntimeAgents: fingerprints, Findings: uniqueSorted(findings), Blockers: uniqueSorted(checkFindings),
 	}
+	if changeBase != nil {
+		plan.ChangeBaseRevision = changeBase.Revision
+		plan.ChangeBaseSnapshot = changeBase.Snapshot.Digest()
+		plan.ChangeBaseProjectDigest = changeBase.Digest
+		plan.ChangeBaseModelDigest = changeBase.Report.ModelDigest
+		plan.ChangeBaseReportDigest = changeBase.Report.Digest
+		plan.ChangeImpact = changeImpact
+		plan.ChangeImpactDigest = changeImpact.Digest
+	}
 	plan.Digest, err = planDigest(plan)
 	if err != nil {
 		return plan, err
@@ -228,7 +257,7 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	return plan, nil
 }
 
-func planManagers(report projectmodel.Report, baseFiles map[string][]byte, request PlanRequest, edit *EditPlan, limits Limits) ([]ManagerTask, map[string]bool, []string, error) {
+func planManagers(report projectmodel.Report, baseFiles map[string][]byte, request PlanRequest, edit *EditPlan, changeImpact *projectmodel.ChangeImpact, limits Limits) ([]ManagerTask, map[string]bool, []string, error) {
 	managerByID := make(map[string]projectmodel.Manager, len(report.Managers))
 	children := map[string][]string{}
 	for _, manager := range report.Managers {
@@ -245,14 +274,48 @@ func planManagers(report projectmodel.Report, baseFiles map[string][]byte, reque
 		}
 		targets[id] = true
 	}
-	if len(targets) == 0 && edit != nil {
-		for _, id := range edit.Impact.Managers {
-			if _, ok := managerByID[id]; ok {
-				targets[id] = true
+	findings := append([]string(nil), report.Unknown...)
+	includeImpactManagers := func(managerIDs []string, source string) bool {
+		unknownManager := false
+		for _, id := range managerIDs {
+			if _, ok := managerByID[id]; !ok {
+				unknownManager = true
+				findings = append(findings, source+" references a Manager absent from the current model: "+id)
+				continue
 			}
+			targets[id] = true
+		}
+		return unknownManager
+	}
+	broadImpact := false
+	if edit != nil {
+		broadImpact = includeImpactManagers(edit.Impact.Managers, "model edit impact") || broadImpact
+		if len(edit.Impact.Unknown) > 0 {
+			findings = append(findings, edit.Impact.Unknown...)
+			broadImpact = true
 		}
 	}
-	findings := append([]string(nil), report.Unknown...)
+	if changeImpact != nil {
+		broadImpact = includeImpactManagers(changeImpact.Managers, "since impact") || broadImpact
+		if len(changeImpact.Unknown) > 0 {
+			findings = append(findings, changeImpact.Unknown...)
+			broadImpact = true
+		}
+	}
+	if broadImpact {
+		for _, manager := range report.Managers {
+			targets[manager.ID] = true
+		}
+		findings = append(findings, "change impact has unresolved scope; all current Managers are included")
+	}
+	if len(targets) == 0 {
+		// A natural-language goal does not establish that any Manager is
+		// unaffected. Without explicit routing or a model delta, preserve the
+		// complete declared responsibility tree.
+		for _, manager := range report.Managers {
+			targets[manager.ID] = true
+		}
+	}
 	for _, artifact := range report.Artifacts {
 		if !artifact.Required {
 			continue
@@ -280,11 +343,6 @@ func planManagers(report projectmodel.Report, baseFiles map[string][]byte, reque
 		// an empty impact set.
 		for _, manager := range report.Managers {
 			targets[manager.ID] = true
-		}
-	}
-	if len(targets) == 0 {
-		for _, id := range children[""] {
-			targets[id] = true
 		}
 	}
 	selected := map[string]bool{}
@@ -358,6 +416,38 @@ func requireCleanSelectedBasis(fixed, working *Snapshot) error {
 	return nil
 }
 
+// validateChangeImpact re-derives the optional since-impact from both fixed
+// project revisions. Its digests are also covered by the persisted plan digest.
+func validateChangeImpact(host Host, root string, current *Project, plan PlanRecord) error {
+	if plan.ChangeImpact == nil {
+		if plan.ChangeBaseRevision != "" || plan.ChangeBaseSnapshot != "" || plan.ChangeBaseProjectDigest != "" ||
+			plan.ChangeBaseModelDigest != "" || plan.ChangeBaseReportDigest != "" || plan.ChangeImpactDigest != "" {
+			return ErrStale
+		}
+		return nil
+	}
+	if current == nil || current.Snapshot == nil || plan.ChangeBaseRevision == "" || plan.ChangeBaseSnapshot == "" ||
+		plan.ChangeBaseProjectDigest == "" || plan.ChangeBaseModelDigest == "" || plan.ChangeBaseReportDigest == "" ||
+		plan.ChangeImpactDigest == "" {
+		return ErrStale
+	}
+	baseline, err := host.Load(root, plan.ChangeBaseRevision)
+	if err != nil {
+		return fmt.Errorf("reload fixed change-impact baseline: %w", err)
+	}
+	if baseline == nil || baseline.Snapshot == nil || baseline.Revision != plan.ChangeBaseRevision ||
+		baseline.Snapshot.Digest() != plan.ChangeBaseSnapshot || baseline.Digest != plan.ChangeBaseProjectDigest ||
+		baseline.Report.ModelDigest != plan.ChangeBaseModelDigest || baseline.Report.Digest != plan.ChangeBaseReportDigest {
+		return ErrStale
+	}
+	impact := projectmodel.Impact(baseline.Report, current.Report)
+	if impact.BaseDigest != plan.ChangeBaseReportDigest || impact.CandidateDigest != current.Report.Digest ||
+		impact.Digest != plan.ChangeImpactDigest || impact.Digest != plan.ChangeImpact.Digest {
+		return ErrStale
+	}
+	return nil
+}
+
 func managerDepth(managers map[string]projectmodel.Manager, id string) int {
 	depth := 0
 	seen := map[string]bool{}
@@ -381,8 +471,15 @@ func checkDepth(tasks []ManagerTask, maximum int) error {
 }
 
 func planChecks(report projectmodel.Report, selected map[string]bool) ([]CheckPlan, []string) {
+	return planChecksWithImpact(report, selected, nil)
+}
+
+func planChecksWithImpact(report projectmodel.Report, selected map[string]bool, impactChecks []string) ([]CheckPlan, []string) {
 	required := map[string]bool{}
 	var findings []string
+	for _, id := range impactChecks {
+		required[id] = true
+	}
 	for _, artifact := range report.Artifacts {
 		if artifact.Required && selected[artifact.Owner] {
 			if len(artifact.Checks) == 0 {

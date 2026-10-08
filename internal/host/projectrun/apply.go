@@ -84,6 +84,9 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if base == nil || base.Snapshot == nil || base.Snapshot.Digest() != plan.BaseSnapshot || base.Digest != plan.BaseProjectDigest {
 		return out, ErrStale
 	}
+	if err := validateChangeImpact(host, root, base, plan); err != nil {
+		return out, err
+	}
 	working, err := host.Load(root, "")
 	if err != nil {
 		return out, err
@@ -185,6 +188,9 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if base.Snapshot == nil || base.Snapshot.Digest() != plan.BaseSnapshot || base.Digest != plan.BaseProjectDigest || base.Report.ModelDigest != plan.BaseModelDigest {
 		return out, ErrStale
 	}
+	if err := validateChangeImpact(host, root, base, plan); err != nil {
+		return out, err
+	}
 	if err := repositoryMatches(root, plan); err != nil {
 		return out, err
 	}
@@ -266,6 +272,13 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 			return ErrStale
 		}
 		if err := repositoryMatches(root, plan); err != nil {
+			return err
+		}
+		fixed, loadErr := host.Load(root, plan.BaseRevision)
+		if loadErr != nil {
+			return loadErr
+		}
+		if err := validateChangeImpact(host, root, fixed, plan); err != nil {
 			return err
 		}
 		currentRuntime, loadErr := LoadRuntime(root)
