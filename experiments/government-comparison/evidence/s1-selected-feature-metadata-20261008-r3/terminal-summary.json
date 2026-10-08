@@ -1,0 +1,177 @@
+{
+  "key": "s1-selected-feature-metadata-20261008-r3",
+  "status": "reported-config-and-requirements-observed",
+  "stopReason": null,
+  "sourceCommit": "78e90f3170a5409762645497e3bb93b76392f7f6",
+  "freezeCommit": "7cef46d3ba958b55dd0139b9e32de5b932b7abac",
+  "requestSha256": "542ec68d319549cd21b50e81f8f13105670a36c0fed7e182a768e2ab21068f68",
+  "freezeSha256": "01dd523fc0ada72be555f63dcc8a566333dea6dbd5d4b2709bd815fe39e0bd17",
+  "resultSha256": "22fe67cdf493e96bdab55a36506e2f43a82427c9a5963ad886f032607d1f67a4",
+  "configPrecheckStatus": "config-precheck-satisfied-awaiting-requirements",
+  "finalRequirementsResponseObserved": true,
+  "actualSentMethods": [
+    "initialize",
+    "initialized",
+    "config/read",
+    "configRequirements/read"
+  ],
+  "selectedEffectiveConfigFeatures": {
+    "scope": "eight-requested-fields-only",
+    "remainder": "not-evaluated",
+    "state": "present",
+    "selected": {
+      "apps": {
+        "state": "present",
+        "value": false
+      },
+      "goals": {
+        "state": "present",
+        "value": false
+      },
+      "hooks": {
+        "state": "present",
+        "value": false
+      },
+      "memories": {
+        "state": "present",
+        "value": false
+      },
+      "multi_agent": {
+        "state": "present",
+        "value": false
+      },
+      "plugins": {
+        "state": "present",
+        "value": false
+      },
+      "shell_tool": {
+        "state": "present",
+        "value": true
+      },
+      "unified_exec": {
+        "state": "present",
+        "value": true
+      }
+    }
+  },
+  "defaultPermissions": {
+    "state": "present",
+    "value": ":read-only"
+  },
+  "defaultOrigin": {
+    "state": "present",
+    "value": {
+      "type": "sessionFlags",
+      "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+      "selectedProfile": {
+        "state": "missing"
+      }
+    }
+  },
+  "requirementsObservation": {
+    "requirements": {
+      "state": "present",
+      "value": {
+        "allowedApprovalPolicies": {
+          "state": "null"
+        },
+        "allowedApprovalsReviewers": {
+          "state": "null"
+        },
+        "allowedSandboxModes": {
+          "state": "null"
+        },
+        "allowedWindowsSandboxImplementations": {
+          "state": "null"
+        },
+        "allowedLoginMethods": {
+          "state": "present",
+          "value": [
+            "chatgpt"
+          ]
+        },
+        "allowedWebSearchModes": {
+          "state": "null"
+        },
+        "defaultPermissions": {
+          "state": "null"
+        },
+        "allowedPermissionProfiles": {
+          "state": "null"
+        },
+        "featureRequirements": {
+          "scope": "schema-wide-boolean-map",
+          "state": "null",
+          "code": "requirement-features-null"
+        },
+        "network": {
+          "state": "null"
+        },
+        "modelProvider": {
+          "state": "null"
+        },
+        "modelProviders": {
+          "state": "null"
+        },
+        "models": {
+          "state": "null"
+        },
+        "application": {
+          "state": "null"
+        },
+        "additionalDeveloperInstructions": {
+          "state": "null"
+        }
+      }
+    }
+  },
+  "nativeReturnCode": 0,
+  "workerReturnCode": 0,
+  "outerReturnCode": 0,
+  "nativeSessionSeconds": 0.1339465999044478,
+  "cleanupSeconds": 0.01076809992082417,
+  "controllerSeconds": 2.392593900091015,
+  "jobCloseSeconds": 2.059992402791977e-05,
+  "outerThroughReceiptReadbackSeconds": 5.936614700010978,
+  "withinControllerBound": true,
+  "withinOuterBound": true,
+  "rawBytesDiscarded": {
+    "raw": 50145,
+    "stdout": 50145,
+    "stderr": 0
+  },
+  "notificationCount": 1,
+  "serverMethodEvents": [
+    {
+      "method": "remoteControl/status/changed",
+      "class": "RemoteControl/status/changedNotification",
+      "status": "disabled"
+    }
+  ],
+  "rawFramePayloadsPersisted": false,
+  "rawStderrPersisted": false,
+  "newReservations": 1,
+  "newPolicyTreeAttempts": 1,
+  "policyTreesBefore": 4,
+  "policyTreesAfter": 5,
+  "cliMetadataBefore": 6,
+  "newCliMetadataCalls": 0,
+  "cliMetadataAfter": 6,
+  "newActors": 0,
+  "newThreads": 0,
+  "newTurns": 0,
+  "newRequestedModelCalls": 0,
+  "newNativeProducts": 0,
+  "newProductWrappers": 0,
+  "newDelegates": 0,
+  "newStudyCells": 0,
+  "historicalActorStarts": 5,
+  "historicalKnownTokens": 53331,
+  "historicalTotalUsage": null,
+  "nativeInternalNetworkOrInference": null,
+  "sixStudyCells": "NOT RUN",
+  "remainingGrantClosed": true,
+  "automaticRetry": false,
+  "repairOrRelaunch": false,
+  "claimBoundary": "Only prospective reported selected effective config and actual requirements. No inline-key recognition, enforcement, active permission, real tools, serving identity, historical denial cause or S1 readiness. Per-feature origins not inferred from matching values."
+}

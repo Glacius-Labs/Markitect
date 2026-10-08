@@ -1,0 +1,31 @@
+{
+  "status": "read-only-preservation-and-receipt-validation-passed",
+  "baseSha": "7a30ea2a806e92c85aa20a281214fe2665b9b6d2",
+  "protectedHistoricalFiles": 3961,
+  "historicalPathBlobManifestSha256": "5f2b15969d17f071e25a6817aa27d9a519dd6a531e67931d114ea985788c24a5",
+  "historicalWorkingBytesUnchanged": true,
+  "historicalSourcePinsUnchanged": 15,
+  "historicalFreezeInputsUnchanged": 24,
+  "historicalLiveLedgersUnchanged": 5,
+  "historicalSchemaMembersUnchanged": 5,
+  "historicalExternalOriginalCopyPairsUnchanged": 7,
+  "newExternalOriginalCopyPairsVerified": 7,
+  "newSourcePinsUnchanged": 21,
+  "newFreezeInputsUnchanged": 30,
+  "sourceCommit": "78e90f3170a5409762645497e3bb93b76392f7f6",
+  "freezeCommit": "7cef46d3ba958b55dd0139b9e32de5b932b7abac",
+  "actualSentMethods": [
+    "initialize",
+    "initialized",
+    "config/read",
+    "configRequirements/read"
+  ],
+  "requirementsReadSent": true,
+  "publicCwdInventoryVerified": {
+    "README.txt": "85c25997e1ee463e2d78fab8443110b3ee5066217edce20f0358fc9c64a3a8ad"
+  },
+  "r2ExternalEvidenceStillEmpty": true,
+  "noPostrunTestsOrSourceChanges": true,
+  "allSixStudyCells": "NOT RUN",
+  "retries": 0
+}

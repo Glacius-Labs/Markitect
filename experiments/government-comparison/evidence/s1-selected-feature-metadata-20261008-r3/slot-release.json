@@ -1,0 +1,14 @@
+{
+  "key": "s1-selected-feature-metadata-20261008-r3",
+  "owner": "Scientist",
+  "releasedUtc": "2026-10-08T05:55:06.181517Z",
+  "reason": "First and only terminal reported-config-and-requirements-observed result; grant exhausted and closed",
+  "newMetadataStartAttempts": 1,
+  "policyTreesCumulative": 5,
+  "cliMetadataCallsCumulative": 6,
+  "remainingSessions": 0,
+  "remainingQuotaExpired": true,
+  "noAutomaticFurtherOperation": true,
+  "scientistSlotClaimReleased": true,
+  "canonicalSlotOwnedBy": "Overseer"
+}

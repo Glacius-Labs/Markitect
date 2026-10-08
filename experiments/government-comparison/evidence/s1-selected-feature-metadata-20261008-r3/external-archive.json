@@ -1,0 +1,48 @@
+{
+  "pairs": [
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-selected-feature-metadata-20261008-r3/controller-once.json",
+      "copy": "evidence/s1-selected-feature-metadata-20261008-r3/run-1/controller-once.json",
+      "sha256": "bddd0d7bac617fbbee4acf59a99125d4b665ad211767e73533d0e08a6c8dd0a0",
+      "bytes": 492
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-selected-feature-metadata-20261008-r3/controller-receipt.json",
+      "copy": "evidence/s1-selected-feature-metadata-20261008-r3/run-1/controller-receipt.json",
+      "sha256": "7ee14fbcd8e0cda2a04a4b5f5c1472f8fc4664d31997dd7cf7000c5a8ed607e9",
+      "bytes": 949
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-selected-feature-metadata-20261008-r3/job-assigned.json",
+      "copy": "evidence/s1-selected-feature-metadata-20261008-r3/run-1/job-assigned.json",
+      "sha256": "181af47dc91d650d686e023eaf42b8b145f0d558c45ab27870d4b0289191f475",
+      "bytes": 556
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-selected-feature-metadata-20261008-r3/outer-receipt.json",
+      "copy": "evidence/s1-selected-feature-metadata-20261008-r3/run-1/outer-receipt.json",
+      "sha256": "5108d4666dd796e41e1f0852a9fc0e67b293c8628292f05c1fb605c723129c26",
+      "bytes": 626
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-selected-feature-metadata-20261008-r3/reservation.json",
+      "copy": "evidence/s1-selected-feature-metadata-20261008-r3/run-1/reservation.json",
+      "sha256": "5f7eafa321c918c6986ebeb708ed892c527a1a11611ec4401ef60db569a6766f",
+      "bytes": 472
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-selected-feature-metadata-20261008-r3/sanitized-result.json",
+      "copy": "evidence/s1-selected-feature-metadata-20261008-r3/run-1/sanitized-result.json",
+      "sha256": "22fe67cdf493e96bdab55a36506e2f43a82427c9a5963ad886f032607d1f67a4",
+      "bytes": 18325
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-selected-feature-metadata-20261008-r3/started-once.json",
+      "copy": "evidence/s1-selected-feature-metadata-20261008-r3/run-1/started-once.json",
+      "sha256": "cab635b6d94fc2869f7c8f6127eed3443519e93574488bbb7f163e7b4f2a1baa",
+      "bytes": 492
+    }
+  ],
+  "rawPayloadArchive": false,
+  "onlySanitizedBoundedReceipts": true
+}

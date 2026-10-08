@@ -1,0 +1,11 @@
+{
+  "key": "s1-selected-feature-metadata-20261008-r3",
+  "reservedAtUnix": 1791438798.1369696,
+  "sourceCommit": "78e90f3170a5409762645497e3bb93b76392f7f6",
+  "freezeCommit": "7cef46d3ba958b55dd0139b9e32de5b932b7abac",
+  "requestSha256": "542ec68d319549cd21b50e81f8f13105670a36c0fed7e182a768e2ab21068f68",
+  "freezeSha256": "01dd523fc0ada72be555f63dcc8a566333dea6dbd5d4b2709bd815fe39e0bd17",
+  "maxTrees": 1,
+  "priorPolicyTrees": 4,
+  "cumulativeMaximum": 5
+}
