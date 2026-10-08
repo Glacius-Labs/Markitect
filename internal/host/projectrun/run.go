@@ -61,23 +61,23 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 	}
 	project, err := host.Load(root, plan.BaseRevision)
 	if err != nil {
-		return empty, fmt.Errorf("reload fixed plan base: %w", err)
+		return supersedeExisting(store, id, fmt.Errorf("reload fixed plan base: %w", err))
 	}
 	if project.Snapshot == nil || project.Snapshot.Digest() != plan.BaseSnapshot || project.Digest != plan.BaseProjectDigest || project.Report.ModelDigest != plan.BaseModelDigest {
-		return empty, ErrStale
+		return supersedeExisting(store, id, ErrStale)
 	}
 	working, err := host.Load(root, "")
 	if err != nil {
-		return empty, err
+		return supersedeExisting(store, id, err)
 	}
 	if working.Snapshot == nil || working.Snapshot.Digest() != plan.WorkingSnapshot || working.Digest != plan.WorkingProjectDigest {
-		return empty, ErrStale
+		return supersedeExisting(store, id, ErrStale)
 	}
 	if err := repositoryMatches(root, plan); err != nil {
-		return empty, err
+		return supersedeExisting(store, id, err)
 	}
 	if err := validateRuntimeBinding(invoker, runtime, plan); err != nil {
-		return empty, err
+		return supersedeExisting(store, id, err)
 	}
 	dir, err := store.runDir(id)
 	if err != nil {
@@ -98,7 +98,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			Mode: ModeControlledLocal, StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
 			BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot, ModelDigest: plan.ModelDigest,
 			RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers), Candidate: CandidateRef{ID: plan.InitialCandidateID,
-				Files: map[string]string{}, Integrated: false}}
+				Files: map[string]string{}, Integrated: false}, Revision: 1}
 		initial, err := store.readCandidate(dir, plan.InitialCandidateID)
 		if err != nil {
 			return empty, err
@@ -159,7 +159,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		return empty, fmt.Errorf("compile planned candidate model: %w", err)
 	}
 	if boundProject.Report.ModelDigest != plan.ModelDigest || boundProject.Report.Digest != plan.ReportDigest {
-		return empty, ErrStale
+		return supersedeExisting(store, id, ErrStale)
 	}
 	// Work is top-down: parent work scopes direct delegation before children run.
 	for i := range report.Tasks {
@@ -172,6 +172,9 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		}
 		if starts >= runtime.Limits.MaxStarts {
 			return blockRun(store, report, fmt.Errorf("runtime start limit %d exceeded", runtime.Limits.MaxStarts))
+		}
+		if bindErr := ensureWorkingBinding(host, root, plan); bindErr != nil {
+			return supersedeExisting(store, id, bindErr)
 		}
 		parentID := task.ParentTask
 		currentID := plan.InitialCandidateID
@@ -199,6 +202,9 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		proposal, invocation, err := invokeManager(ctx, host, invoker, root, runtime, plan, input, *task, "work", children, nil, nil, starts)
 		starts++
 		if err != nil {
+			if errors.Is(err, ErrStale) {
+				return supersedeExisting(store, id, err)
+			}
 			task.State = "uncertain"
 			_ = persistState(store, &report)
 			if ctx.Err() != nil {
@@ -262,7 +268,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			return failRun(store, report, err)
 		}
 		task.State, task.ReportID, task.CandidateID = "worked", invocation.ReportID, candidate.ID
-		task.WrittenPaths = sortedFileKeys(candidate.Files)
+		task.WrittenPaths = proposalPaths(proposal.Response.CandidateFiles)
 		task.Summary, task.Questions, task.Risks, task.Delegations, task.ReportStatus = parsed.Summary, parsed.Questions, parsed.Risks, parsed.Delegations, parsed.Status
 		report.Candidate = candidateRef(candidate, false)
 		if err := persistState(store, &report); err != nil {
@@ -288,6 +294,9 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if starts >= runtime.Limits.MaxStarts {
 			return blockRun(store, report, fmt.Errorf("runtime start limit %d exceeded", runtime.Limits.MaxStarts))
 		}
+		if bindErr := ensureWorkingBinding(host, root, plan); bindErr != nil {
+			return supersedeExisting(store, id, bindErr)
+		}
 		merged, conflicts, err := mergeChildCandidates(store, dir, report.Tasks, *task, children)
 		if err != nil {
 			return failRun(store, report, err)
@@ -304,6 +313,9 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		proposal, invocation, err := invokeManager(ctx, host, invoker, root, runtime, plan, input, *task, "integrate", children, conflicts, childSummaries, starts)
 		starts++
 		if err != nil {
+			if errors.Is(err, ErrStale) {
+				return supersedeExisting(store, id, err)
+			}
 			task.State = "uncertain"
 			_ = persistState(store, &report)
 			if ctx.Err() != nil {
@@ -350,7 +362,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		remainingQ = append(remainingQ, parsed.Questions...)
 		remainingR = append(remainingR, parsed.Risks...)
 		if len(remainingQ)+len(remainingR) > 0 {
-			if parsed.Status != "partial" || task.ParentTask == "" || parsed.EscalateTo != task.ParentTask {
+			if parsed.Status != "partial" || parsed.EscalateTo != escalationTarget(*task) {
 				return blockRun(store, report, fmt.Errorf("manager %s has unresolved obligations that did not escalate to its nearest parent", task.ManagerID))
 			}
 			if err := recordEscalation(&report, *task, TaskResponse{Summary: parsed.Summary, Questions: remainingQ, Risks: remainingR, EscalateTo: parsed.EscalateTo}); err != nil {
@@ -401,7 +413,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			return failRun(store, report, err)
 		}
 		task.State, task.IntegrationReportID, task.IntegrationCandidateID = "integrated", invocation.ReportID, resolved.ID
-		task.IntegratedPaths = sortedFileKeys(resolved.Files)
+		task.IntegratedPaths = changedCandidatePaths(merged, resolved)
 		task.Summary = parsed.Summary
 		report.Candidate = candidateRef(resolved, false)
 		if err := persistState(store, &report); err != nil {
@@ -788,6 +800,27 @@ func failRun(s *runStore, r RunReport, cause error) (RunReport, error) {
 	}
 	return r, cause
 }
+
+func supersedeExisting(store *runStore, id string, cause error) (RunReport, error) {
+	report, err := store.readLatestState(id)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return RunReport{}, cause
+		}
+		return RunReport{}, err
+	}
+	if report.Status == StatusApplied {
+		return report, cause
+	}
+	if report.Status != StatusSuperseded {
+		report.Status = StatusSuperseded
+		report.Findings = append(report.Findings, "bound project inputs, runtime or Git target changed: "+cause.Error())
+		if persistErr := persistState(store, &report); persistErr != nil {
+			return report, persistErr
+		}
+	}
+	return report, cause
+}
 func cloneTasks(input []ManagerTask) []ManagerTask {
 	out := append([]ManagerTask(nil), input...)
 	for i := range out {
@@ -889,6 +922,17 @@ func repositoryMatches(root string, plan PlanRecord) error {
 	return nil
 }
 
+func ensureWorkingBinding(host Host, root string, plan PlanRecord) error {
+	working, err := host.Load(root, "")
+	if err != nil {
+		return err
+	}
+	if working == nil || working.Snapshot == nil || working.Snapshot.Digest() != plan.WorkingSnapshot || working.Digest != plan.WorkingProjectDigest {
+		return ErrStale
+	}
+	return repositoryMatches(root, plan)
+}
+
 func mergeChildCandidates(store *runStore, dir string, tasks []ManagerTask, parent ManagerTask, children []string) (candidateData, []string, error) {
 	base, err := store.readCandidate(dir, parent.CandidateID)
 	if err != nil {
@@ -953,6 +997,35 @@ func mergeChildCandidates(store *runStore, dir string, tasks []ManagerTask, pare
 }
 func fileEqual(a, b File) bool {
 	return a.Path == b.Path && a.Mode == b.Mode && a.Delete == b.Delete && string(a.Content) == string(b.Content)
+}
+
+func proposalPaths(proposals []agentexec.CandidateFile) []string {
+	paths := make([]string, 0, len(proposals))
+	for _, proposal := range proposals {
+		paths = append(paths, proposal.Path)
+	}
+	sort.Strings(paths)
+	return paths
+}
+
+func changedCandidatePaths(before, after candidateData) []string {
+	set := map[string]bool{}
+	for path := range before.Files {
+		set[path] = true
+	}
+	for path := range after.Files {
+		set[path] = true
+	}
+	paths := make([]string, 0, len(set))
+	for path := range set {
+		old, oldOK := before.Files[path]
+		current, currentOK := after.Files[path]
+		if oldOK != currentOK || (oldOK && !fileEqual(old, current)) {
+			paths = append(paths, path)
+		}
+	}
+	sort.Strings(paths)
+	return paths
 }
 func findTask(tasks []ManagerTask, id string) *ManagerTask {
 	for i := range tasks {
@@ -1061,8 +1134,9 @@ func validateTaskOutcome(outcome string, response TaskResponse) error {
 	return nil
 }
 func recordEscalation(report *RunReport, task ManagerTask, response TaskResponse) error {
-	if task.ParentTask == "" || response.EscalateTo != task.ParentTask {
-		return fmt.Errorf("Manager %s may escalate only to its nearest parent %q", task.ManagerID, task.ParentTask)
+	target := escalationTarget(task)
+	if response.EscalateTo != target {
+		return fmt.Errorf("Manager %s may escalate only to its nearest empowered recipient %q", task.ManagerID, target)
 	}
 	parts := append(append([]string{}, response.Questions...), response.Risks...)
 	if len(parts) == 0 {
@@ -1072,8 +1146,15 @@ func recordEscalation(report *RunReport, task ManagerTask, response TaskResponse
 	if err != nil {
 		return err
 	}
-	report.Escalations = append(report.Escalations, Escalation{ID: id, FromManager: task.ManagerID, ToManager: task.ParentTask, Question: strings.Join(uniqueSorted(parts), "; "), AffectedTasks: []string{task.ID}, Status: "open"})
+	report.Escalations = append(report.Escalations, Escalation{ID: id, FromManager: task.ManagerID, ToManager: target, Question: strings.Join(uniqueSorted(parts), "; "), AffectedTasks: []string{task.ID}, Status: "open"})
 	return nil
+}
+
+func escalationTarget(task ManagerTask) string {
+	if task.ParentTask == "" {
+		return "user"
+	}
+	return task.ParentTask
 }
 func managerObligations(parent ManagerTask, tasks []ManagerTask, children []string) ([]string, []string, error) {
 	questions := append([]string(nil), parent.Questions...)
