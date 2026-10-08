@@ -961,3 +961,14 @@ NeuerOfflineauftrag s1-account-update-contract-offline-20261008: exakterarchivie
 Max1200sVorbereitung/zweiKorrekturbatches/dreiTestaufrufe/sechssynthetischeGruppen/zweiOfflineReviewer, NULLRuntime/Reservation/Turn/Tool/CLI/Web/Studienzellen,keinSlot. NachCallbackRootreview undnurdanach gegebenenfallsfrischerletzterActualgrant; keinautomatischerStart/Budgetnachschub.
 
 Offlineauftrag einmalig zugestellt, Tool bestätigt Zielchat; Assignmentcommit3b9e72e. Keine zusätzliche Runtime-/Laufquote; nächste Ereignisrückmeldung abwarten.
+
+
+### 2026-10-08 — Offline-Vertrag angenommen, letzter begrenzter Actualgrant
+
+Scientist sauber894046afecec35fc5c6733c911e7740c77659ed6 qualifiziert angenommen. Root32Payloads+Manifest/33reineAdditionen/186Pins+GitS/komplettekanonischeZuweisung/AccountschemaausArchiv geprüft; keineAbweichung. Root las Helper/Vorschlag/Reviews; unabhängigerRootreview/root/r4_terminal_acceptance ohnemateriellenBlocker. Schema-first explizitkompatibleMode-/Formbeobachtung,HandlingphasekeineArrivalchronologie;Connection-/AccountmetadatenkeinIdentitäts-/Authsuccessbeweis. GemischteTestbilanz5von6PASS+einFixturefehler, nurbetroffeneGruppe nachAssertion9zu8PASS, keinImplementationfix/keinbehaupteterGesamtgrünlauf. ZweiKorrekturbatches,1200sEnvelopeeingehalten,0Runtime. VerworfenesR2Actualeventweiterunknown,STOPhistorischunverändert.
+
+FrischerfinalerGrant s1-account-update-routing-read-20261008-r3 unter Scientist.evidence.accountUpdateRoutingReadGrant, neuer vollständiggebundenerSlot, remaining1/initialActual0. Blockconsumed1/reserved1/ordinal2, vorher14Bäume/7Actors→max15/8; unveränderte21:57:43ZDeadline/latest21:54:13Z. EinzigeinhaltlicheVariation ist exakteraccount/updatedTelemetrysidebranch mitunverändertemHelperhash1934b3...1745,28temSchema,Modechatgpt/2Keys/8Events/4096Params+Raw/2048Projection,keineAccount/AuthRPCoderModeänderung,keinebreiteAdmission. RealenR2Clientableiten stattOfflineFakeflagzuliveumdeuten; ursprünglicheGates/17Configs/Binary/CWD/Tool/Usage/Stop unverändert.
+
+Max1200sVorbereitung/zweiKorrekturen/dreiTestaufrufe/sechsneueClientRoute-/Cleanup-/Authoritygruppen/unabhängigerSource+Bindingreview,sauberesS/F/neueReservation/JobvorGO. Danach max1Baum/1Actor/1Turn/1Tool/1StopInterrupt,120sTurn/210sOuter/10000beobachteteTokens,nullRetries/keineStudienoderWrites/Builds. PaketbeendetneuenendlichenBlockauchbeiReadPASS; Root aktualisiertFähigkeits-/Aufwands-/NOTRUNBilanzundpausiertbeiweiterunbewiesenemS1. KeineimpliziteFolgequote.
+
+Unabhängiger Root-Autoritätsreview /root/g2_review_authority qualifiziert OK vor einmaligem R3-Dispatch. Reale R2-Clientbasis ist im accountRoutingContract exakt gebunden und im finalen Freeze zu übernehmen. Fensterrest1 bezeichnet ausschließlich den bereits zugeteilten finalen R3-Versuch, keine Folgequote. Source-/Bindingreview, Freeze und Reservation bleiben Bedingungen vor Ausführung. Keine Runtime oder Tests durch Rootreview.
