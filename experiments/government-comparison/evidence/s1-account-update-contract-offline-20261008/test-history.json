@@ -1,0 +1,41 @@
+{
+  "key": "s1-account-update-contract-offline-20261008",
+  "testInvocations": 2,
+  "maximumAffectedTestInvocations": 3,
+  "newUnittestGroups": 6,
+  "firstInvocation": {
+    "groups": 6,
+    "passed": 5,
+    "failed": 1,
+    "unittestSeconds": 0.478,
+    "wallSeconds": 0.7282493,
+    "sourceSha256": "7f0bb426d04f19e5e06cbbecf13330f63a70a6732e65eedaa4910fc67820d2b9",
+    "logSha256": "45e1a49facb37fa1ce40a28a387cf59c7e19b801c3b49233330850151a43abd8",
+    "failure": "Fixture expected observed9 after refused ninth event; helper correctly retained8"
+  },
+  "affectedInvocation": {
+    "groups": 1,
+    "passed": 1,
+    "failed": 0,
+    "unittestSeconds": 0.042,
+    "wallSeconds": 0.302458,
+    "sourceSha256": "06d1de91186934362244e8f2edd93aa215709c8c0bab227218a5af130bbe4094",
+    "logSha256": "45f3eb2ac1bf4ce144021dfdd4e731097e55f8d7bfca7a823f000f4d648f6d89",
+    "onlyPreviouslyFailedGroup": true
+  },
+  "onlyPostInitialChange": "One fixture assertion9 to8; no implementation change",
+  "combinedRelevantGroupsValidated": 6,
+  "singleSixGroupAllGreenInvocation": false,
+  "inProcessFakeSessions": 7,
+  "realNativeStarts": 0,
+  "runtimeReservations": 0,
+  "authorityConfigAndCwdMockedForSyntheticSession": true,
+  "metadataResponseSchemasMocked": [
+    "InitializeResponse",
+    "ConfigReadResponse",
+    "ConfigRequirementsReadResponse"
+  ],
+  "accountThreadTurnItemUsageSchemasReal": true,
+  "actualPipeOSProviderAndHistoricalPayloadQualified": false,
+  "oldSuitesRerun": false
+}

@@ -1,0 +1,31 @@
+{
+  "key": "s1-account-update-contract-offline-20261008",
+  "changedFunctionAST": [
+    "session",
+    "controller",
+    "consume"
+  ],
+  "unchangedAllOtherFunctionAST": true,
+  "byteIdenticalBasisSnapshots": [
+    "collector.py",
+    "thread_gate.py",
+    "protocol_failure.py",
+    "startup_observer.py",
+    "frozen-method-enums.json",
+    "profile.json",
+    "expected.json",
+    "authorization-grant.json",
+    "diagnostic-contract.json"
+  ],
+  "originalGeneralActorTerminalMapsUnchanged": true,
+  "original27SchemaPinsUnchanged": true,
+  "schemaMemberCount": 28,
+  "archiveSha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+  "accountSchemaSha256": "268dba6977cc3adcced751a97367772a1e201a199c14f454741d851fe8bbacb1",
+  "proposedRouteDefaultEnabled": false,
+  "sessionControllerAndMainDisabledByDefault": true,
+  "inputCapCoversActualRawEventAndCanonicalParams": true,
+  "nativeStarts": 0,
+  "runtimeReservations": 0,
+  "newRequestOrFreeze": false
+}

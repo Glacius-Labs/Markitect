@@ -1,0 +1,46 @@
+{
+  "key": "s1-account-update-contract-offline-20261008",
+  "firstActionUtc": "2026-10-08T20:35:01Z",
+  "preparationDeadlineUtc": "2026-10-08T20:55:01Z",
+  "recordedUtc": "2026-10-08T20:43:37.209355Z",
+  "correctionBatchesUsed": 2,
+  "maximumCorrectionBatches": 2,
+  "batchDefinition": "Pre-initial construction and static refinements form batch1; one post-failure fixture correction forms batch2",
+  "batches": [
+    {
+      "number": 1,
+      "beforeFirstInvocation": true,
+      "changes": [
+        "Cap actual raw notification as well as canonical params",
+        "Correct local preserved-basis receipt relative path construction",
+        "Complete deterministic pre-turn fixture and deepcopy/enum/interrupt coverage before first run"
+      ],
+      "localConstructionErrors": 1,
+      "sourceFixAfterTestFailure": false
+    },
+    {
+      "number": 2,
+      "afterFirstInvocation": true,
+      "changes": [
+        "Correct fixture count assertion9 to8 after refused ninth event"
+      ],
+      "implementationChanges": 0,
+      "affectedGroupsRerun": 1
+    }
+  ],
+  "provisionalPretestCountingClarification": "Earlier internal conservative planning grouped local construction/static edits separately before execution; final history records all edits and two tested correction batches without hiding the receipt-script failure.",
+  "testInvocations": 2,
+  "syntheticGroups": 6,
+  "offlineParticipants": 2,
+  "independentSourceReviewer": 1,
+  "realNativeStarts": 0,
+  "runtimeReservations": 0,
+  "actorReservations": 0,
+  "actualTurns": 0,
+  "actualTools": 0,
+  "cliMetadataCalls": 0,
+  "webCalls": 0,
+  "studyCells": 0,
+  "fullProductSuiteInvocations": 0,
+  "slotAssigned": false
+}

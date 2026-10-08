@@ -1,0 +1,20 @@
+test_compatible_mode_accepts_missing_null_and_valid_plan_as_observation_only (test_account_client.AccountUpdateOfflineTests.test_compatible_mode_accepts_missing_null_and_valid_plan_as_observation_only) ... ok
+test_eight_observations_raw_size_and_fixed_projection_caps (test_account_client.AccountUpdateOfflineTests.test_eight_observations_raw_size_and_fixed_projection_caps) ... FAIL
+test_enabled_exact_account_route_observes_compatible_notice_then_full_read (test_account_client.AccountUpdateOfflineTests.test_enabled_exact_account_route_observes_compatible_notice_then_full_read) ... ok
+test_negative_account_unknown_family_oversize_and_first_failure_cleanup (test_account_client.AccountUpdateOfflineTests.test_negative_account_unknown_family_oversize_and_first_failure_cleanup) ... ok
+test_route_requires_validated_thread_and_turn_and_is_disabled_by_default (test_account_client.AccountUpdateOfflineTests.test_route_requires_validated_thread_and_turn_and_is_disabled_by_default) ... ok
+test_schema_local_shape_and_incompatible_mode_negatives_are_distinct_and_latched (test_account_client.AccountUpdateOfflineTests.test_schema_local_shape_and_incompatible_mode_negatives_are_distinct_and_latched) ... ok
+
+======================================================================
+FAIL: test_eight_observations_raw_size_and_fixed_projection_caps (test_account_client.AccountUpdateOfflineTests.test_eight_observations_raw_size_and_fixed_projection_caps)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\s1-account-update-contract-offline-20261008\test_account_client.py", line 390, in test_eight_observations_raw_size_and_fixed_projection_caps
+    self.assertEqual(observer.snapshot()["observed"], 9)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 8 != 9
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.478s
+
+FAILED (failures=1)

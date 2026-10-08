@@ -1,0 +1,14 @@
+{
+  "key": "s1-account-update-contract-offline-20261008",
+  "combinedRelevantGroupsValidated": 6,
+  "testInvocations": 2,
+  "initialGroupsPassed": 5,
+  "initialGroupsFailed": 1,
+  "affectedGroupsPassed": 1,
+  "affectedGroupsFailed": 0,
+  "initialReceipt": "test-results-initial.json",
+  "affectedReceipt": "test-results-affected.json",
+  "singleSixGroupAllGreenInvocation": false,
+  "runtimeStarts": 0,
+  "reservations": 0
+}

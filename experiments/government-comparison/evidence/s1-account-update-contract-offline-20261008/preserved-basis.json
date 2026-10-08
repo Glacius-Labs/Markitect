@@ -1,0 +1,22 @@
+{
+  "key": "s1-account-update-contract-offline-20261008",
+  "baseSha": "247105c418557cf2e2765ce7a3f65293c644d2bc",
+  "oldR2SourcePinsVerified": 152,
+  "oldPacketMutations": 0,
+  "oldRequestSha256": "6b206fc49ade88ddfa679e0a8d652e082e1e852c7aa38f244d4d1b1c0f63ad40",
+  "oldFreezeSha256": "976f5e03dc5d9d18d9db295c127033d11ac6c0e7f48b5f01095c0e6eb0d482bc",
+  "externalRuntimeInputsReopened": false,
+  "privateOrDiscardedPayloadReads": 0,
+  "authFileReads": 0,
+  "schemaArchiveSha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+  "accountSchemaSha256": "268dba6977cc3adcced751a97367772a1e201a199c14f454741d851fe8bbacb1",
+  "constructionErrors": [
+    {
+      "type": "relative_to received relative path against absolute repo",
+      "stage": "offline preserved-basis receipt construction",
+      "sourceChanges": 0,
+      "runtimeStarts": 0,
+      "correctedBy": "absolute repo path construction"
+    }
+  ]
+}
