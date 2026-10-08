@@ -60,6 +60,9 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	if working == nil || working.Snapshot == nil {
 		return plan, fmt.Errorf("project runtime requires a selected working-input snapshot")
 	}
+	if err := requireCleanSelectedBasis(project.Snapshot, working.Snapshot); err != nil {
+		return plan, err
+	}
 	repository, err := source.IdentifyGit(root)
 	if err != nil {
 		return plan, fmt.Errorf("identify project repository: %w", err)
@@ -340,6 +343,16 @@ func planManagers(report projectmodel.Report, baseFiles map[string][]byte, reque
 		tasks = append(tasks, task)
 	}
 	return tasks, selected, findings, nil
+}
+
+func requireCleanSelectedBasis(fixed, working *Snapshot) error {
+	if fixed == nil || working == nil {
+		return fmt.Errorf("fixed and working selected snapshots are required")
+	}
+	if fixed.Digest() != working.Digest() {
+		return fmt.Errorf("selected project inputs differ from fixed base revision; commit accepted selected changes before planning")
+	}
+	return nil
 }
 
 func managerDepth(managers map[string]projectmodel.Manager, id string) int {
