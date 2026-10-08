@@ -1,0 +1,18 @@
+{
+  "key": "s1-thread-start-diagnostic-20261008-r2",
+  "preparedAtUtc": "2026-10-08T15:51:28.628780+00:00",
+  "externalRootAbsentBeforePreparation": true,
+  "externalRootCreatedExclusively": true,
+  "existingCwdFiles": {
+    "probe-input.txt": "9c9b152a51daf10dbc38765feec7b72c9d42587d6300c6cf7fcb8fd1e9ab29c5",
+    "README.md": "b986640bbeea4d174ff450cd27bb50d68697e78d8ad9fd0757fe3427b2904a59"
+  },
+  "unchangedReusedFiles": {
+    "stderr_collector.py": "a9a1213146acbf31791e966992507b976ee6d3753bf50b27ecf14e7c42261df4",
+    "diagnostic-contract.json": "0fb70bafd10b0d3de2883d1f4fcbf7cfd292a61e88a6ce524567a386e664a70c",
+    "thread_gate.py": "b48ce8b67e3a18ecab80a49d1eb3633f90443cc9524972e00a3ea7bdf27fa6cd",
+    "frozen-method-enums.json": "6553df9ac4a37d11402728992ed5e684ea379fbadeee790700867ae4542594cf"
+  },
+  "newSchemaMembers": 12,
+  "newDiagnosticInvocations": 0
+}

@@ -1,0 +1,12 @@
+test_broadened_error_info_shape_is_valid_but_error_notification_stays_terminal (__main__.NewSchemaConsumerCases.test_broadened_error_info_shape_is_valid_but_error_notification_stays_terminal) ... ok
+test_client_admission_rejects_new_methods_and_all_calls_after_thread_terminal (__main__.NewSchemaConsumerCases.test_client_admission_rejects_new_methods_and_all_calls_after_thread_terminal) ... ok
+test_each_identity_sandbox_and_thread_state_violation_stays_negative (__main__.NewSchemaConsumerCases.test_each_identity_sandbox_and_thread_state_violation_stays_negative) ... ok
+test_new_prediction_notification_is_schema_valid_but_terminal_to_narrow_gate (__main__.NewSchemaConsumerCases.test_new_prediction_notification_is_schema_valid_but_terminal_to_narrow_gate) ... ok
+test_new_schema_valid_identity_and_readonly_thread_response_passes_before_turn (__main__.NewSchemaConsumerCases.test_new_schema_valid_identity_and_readonly_thread_response_passes_before_turn) ... ok
+test_rpc_error_envelope_never_becomes_a_thread_response (__main__.NewSchemaConsumerCases.test_rpc_error_envelope_never_becomes_a_thread_response) ... ok
+test_thread_started_notification_requires_response_id_correlation (__main__.NewSchemaConsumerCases.test_thread_started_notification_requires_response_id_correlation) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.004s
+
+OK

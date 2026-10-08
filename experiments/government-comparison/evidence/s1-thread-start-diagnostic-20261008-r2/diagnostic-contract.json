@@ -1,0 +1,91 @@
+{
+  "contractVersion": 1,
+  "grantKey": "s1-thread-start-diagnostic-20261008-r1",
+  "baseSha": "befbd24d625c77f2f0ab1c36bb91e36b65473e9e",
+  "capture": {
+    "maxBytes": 16384,
+    "maxLines": 8,
+    "firstNonemptyByteIsTerminal": true,
+    "cleanupFragmentsMayCompleteExistingLines": true,
+    "rawBytesRetainedAfterFinish": false,
+    "partialLineClassification": false,
+    "postFinishFeed": "rejected"
+  },
+  "classification": {
+    "causeSignatures": [],
+    "causeInference": false,
+    "structuralOnly": true,
+    "acceptedSeverityTokens": {
+      "ERROR": "error",
+      "WARN": "warning",
+      "WARNING": "warning",
+      "INFO": "info",
+      "DEBUG": "debug",
+      "TRACE": "trace"
+    },
+    "optionalTimestamp": "strict UTC ISO form YYYY-MM-DDTHH:MM:SS[.1-9 digits]Z; calendar fields validated; value discarded",
+    "componentAllowlist": [
+      "codex_core",
+      "codex_protocol",
+      "codex_app_server",
+      "codex_cli",
+      "codex_tui"
+    ],
+    "componentEvidence": {
+      "source": "Pinned codex.exe literal-byte membership check only; not emitted-log proof",
+      "binarySha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916",
+      "present": {
+        "codex_core": true,
+        "codex_protocol": true,
+        "codex_app_server": true,
+        "codex_cli": true,
+        "codex_tui": true
+      }
+    },
+    "componentTokenShape": "immediately after severity; ASCII module path with optional trailing colon; only exact predeclared root retained",
+    "unknownComponent": "unknown",
+    "unknownCause": "unclassified",
+    "classificationCodes": [
+      "stderr.level.error",
+      "stderr.level.warning",
+      "stderr.level.info",
+      "stderr.level.debug",
+      "stderr.level.trace",
+      "stderr.structured.unclassified",
+      "stderr.unclassified",
+      "stderr.invalid_utf8",
+      "stderr.empty_line"
+    ],
+    "retainedFieldsPerLine": [
+      "line",
+      "code",
+      "severity",
+      "component"
+    ],
+    "forbiddenOutput": [
+      "source text",
+      "raw bytes",
+      "paths",
+      "URLs",
+      "identifiers",
+      "credentials",
+      "account details",
+      "hash-derived fingerprints"
+    ]
+  },
+  "receiptFields": [
+    "triggered",
+    "observedBytes",
+    "capturedBytes",
+    "discardedBytes",
+    "completeLines",
+    "classifiedLines",
+    "classificationCounts",
+    "captureCapped",
+    "lineCapReached",
+    "truncated",
+    "unterminatedFragment",
+    "utf8Invalid",
+    "rawTextRetained"
+  ]
+}
