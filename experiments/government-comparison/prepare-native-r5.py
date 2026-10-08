@@ -1,4 +1,4 @@
-"""Prepare one fresh public Government R5 or R6 fixture; never start product roles.
+"""Prepare one fresh public Government R5, R6 or R7 fixture; never start product roles.
 
 The root coordinator must wait for the final runtime/source freeze and then run
 this script with --final-runtime-ready. It creates only the selected external
@@ -75,6 +75,9 @@ def _validate_grant(selected) -> dict:
         "fullProductSuites": 0,
         "metadataSessions": 0,
     }
+    if selected.name in {"r6", "r7"}:
+        expected_limits["maxActualInputValidations"] = 1
+        expected_limits["maxFreshStaticCasePreparations"] = 1
     if not isinstance(grant, dict) or any(grant.get(key) != value for key, value in expected_limits.items()):
         raise ValueError("selected Government grant is not the exact one-case Government allocation")
     expected_python = {"path": "C:/Python313/python.exe",
@@ -170,8 +173,8 @@ def prepare(profile_name="r5") -> dict:
     _write_new(diagnostics_path, diagnostics_raw)
     diagnostics_binding = {"path": str(diagnostics_path.resolve()), "sha256": _sha(diagnostics_path)}
 
-    # The released R5 grant caps role calls at six. Reuse the helper's schema,
-    # with the R5 numerical cap and controller wall deadline before building.
+    # The selected successor grant caps role calls at six. Preserve the exact
+    # existing role-authorization schema and its finite controller wall limit.
     gi.MAX_ROLE_CALLS = 6
     gi.MAX_WALL_SECONDS = 38
     authorization = gi.build_role_authorization(
@@ -304,7 +307,7 @@ def prepare(profile_name="r5") -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--profile", choices=("r5", "r6"), default="r5")
+    parser.add_argument("--profile", choices=("r5", "r6", "r7"), default="r5")
     parser.add_argument(
         "--final-runtime-ready", action="store_true", required=True,
         help="explicit root signal: runtime/budget/diagnostic source closure is frozen",

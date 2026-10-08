@@ -41,11 +41,11 @@ EXTERNAL_HISTORY = EXTERNAL / "history-native-starts.sqlite"
 LIVE_HISTORY = LEGACY / "native-starts.sqlite"
 R1_GRANT_SHA = "b917f5a5eb99f0a607fd282a81acdf7b085e6a1dba14f89c8d0c32f349c82c3e"
 COORDINATION = Path(r"C:\Users\Consiliari\Glacius Labs\Markitect\docs\design\government\coordination-state.json")
-_R6_QUEUE_STARTED = None
+_PROFILE_QUEUE_STARTED = None
 
 
 def select_profile(name):
-    """Select one of the two closed Government case profiles for this CLI call."""
+    """Select one of the closed Government profiles for this CLI call."""
     global ACTIVE_PROFILE_NAME, ACTIVE_PROFILE, EXTERNAL, EVIDENCE
     global SUCCESSOR_GRANT, COORDINATOR_SNAPSHOT, HISTORY, EXTERNAL_HISTORY
     ACTIVE_PROFILE_NAME = name
@@ -84,7 +84,7 @@ def prepare():
     # one fresh child directory so its evidence writer cannot reuse old bytes.
     evidence = base / "controller-evidence" / "outer-run"
     if evidence.exists():
-        raise ValueError("R5 outer controller evidence must be a fresh absent directory")
+        raise ValueError(f"{selected.name.upper()} outer controller evidence must be a fresh absent directory")
     outer_results = base / "outer-results"
     outer_results.mkdir(exist_ok=False)
     card = write_new(released / "task-card.txt",
@@ -92,7 +92,7 @@ def prepare():
     mechanical = write_new(released / "mechanical_actor.py", (ROOT / "runtime/mechanical_actor.py").read_bytes())
     original = binding(SOURCE_GRANT)
     if original["sha256"] != R1_GRANT_SHA:
-        raise ValueError("R5 requires the exact immutable original R1 source grant")
+        raise ValueError(f"{selected.name.upper()} requires the exact immutable original R1 source grant")
     grants = fixture_grant_bindings(
         original, binding(SUCCESSOR_GRANT), binding(COORDINATOR_SNAPSHOT), selected.name)
     successor = grants[selected.marker]
@@ -164,9 +164,12 @@ def freeze():
              EVIDENCE / "host-success-contract.md", HISTORY, SOURCE_GRANT,
              Path("C:/Python313/python.exe"), ROOT / "public/resource-proposal.json",
              ROOT / "runtime/mechanical_actor.py", ROOT / "runtime/government_native_profile.py"}
+    if selected.name in {"r6", "r7"}:
+        paths.update({EVIDENCE / "actual-input-claim.json", EVIDENCE / "actual-input-validation.json"})
     if selected.name == "r6":
-        paths.update({EVIDENCE / "actual-input-claim.json", EVIDENCE / "actual-input-validation.json",
-                      EVIDENCE / "independent-preflight-a1-addendum.md"})
+        paths.add(EVIDENCE / "independent-preflight-a1-addendum.md")
+    if selected.name == "r7":
+        paths.add(EVIDENCE / "offline-r7-tests.log")
     paths.update((EXTERNAL / "government").rglob("*.json"))
     paths.update(ROOT / "runtime" / name for name in dispatch.runtime_pins()
                  if (ROOT / "runtime" / name).is_file())
@@ -185,7 +188,7 @@ def freeze():
               "runtimeSourceSha256": dispatch.runtime_pins(),
               "inputs": [binding(path) for path in sorted(paths, key=str)],
               "nativeStarts": 0, "semanticAcceptance": False, "humanAcceptance": False}
-    if selected.name == "r6":
+    if selected.name in {"r6", "r7"}:
         result["actualInputValidation"] = {
             "claim": binding(EVIDENCE / "actual-input-claim.json"),
             "receipt": binding(EVIDENCE / "actual-input-validation.json")}
@@ -214,7 +217,7 @@ def _capture_released_inputs(request):
         path = Path(item["path"]).resolve(strict=True)
         raw = path.read_bytes()
         if dispatch.digest(raw) != item["sha256"]:
-            raise ValueError("released input changed after successful R6 actual validation")
+            raise ValueError("released input changed after successful one-shot profile admission")
         captured[item["path"]] = raw
     return captured
 
@@ -257,20 +260,29 @@ def authority(*, validate_request=None):
 
 
 def _r6_validation_receipt_exists():
-    return ACTIVE_PROFILE.name == "r6" and (EVIDENCE / "actual-input-claim.json").exists()
+    return ACTIVE_PROFILE.name in {"r6", "r7"} and (EVIDENCE / "actual-input-claim.json").exists()
 
 
 def _r6_input_bindings(auth, request, captured, request_path):
     base = EXTERNAL / "government"
+    review_path = EVIDENCE / "independent-preflight-review.md"
+    if not review_path.is_file():
+        raise ValueError(f"{ACTIVE_PROFILE.name.upper()} independent preflight review is required before admission")
     paths = {Path(request_path), base / "authority.json", base / "grant.json", base / "protocol.json",
              SUCCESSOR_GRANT, COORDINATOR_SNAPSHOT, EXTERNAL_HISTORY, HISTORY, SOURCE_GRANT,
              Path("C:/Python313/python.exe"), ROOT / "prepare-native-r5.py",
              ROOT / "run-native-integration-r5.py", ROOT / "runtime/government_native_profile.py",
              ROOT / "runtime/mechanical_actor.py", ROOT / "public/resource-proposal.json",
-             EVIDENCE / "independent-preflight-review.md", EVIDENCE / "host-success-contract.md",
-             EVIDENCE / "independent-preflight-a1-addendum.md",
+             review_path,
              Path(request["product"]["government"]["executable"]["path"]),
              Path(government_integration.FIXTURE_ROOT / "deterministic_delegate.py")}
+    for contract_name in r6_required_success_contracts(ACTIVE_PROFILE.name):
+        contract_path = EVIDENCE / contract_name
+        if not contract_path.is_file():
+            raise ValueError(f"{ACTIVE_PROFILE.name.upper()} required success evidence is missing: {contract_path}")
+        paths.add(contract_path)
+    if ACTIVE_PROFILE.name == "r7":
+        paths.add(EVIDENCE / "offline-r7-tests.log")
     paths.update(ROOT / "runtime" / name for name in dispatch.runtime_pins()
                  if (ROOT / "runtime" / name).is_file())
     paths.add(ROOT / "runtime/government_integration.py")
@@ -283,14 +295,24 @@ def _r6_input_bindings(auth, request, captured, request_path):
         {path for path in paths if path.is_file() and ".git" not in path.parts}, key=str)]
 
 
+def r6_required_success_contracts(profile_name):
+    """Return the closed success-contract set required for an R6/R7 profile."""
+    if profile_name not in {"r6", "r7"}:
+        return ()
+    required = ["host-success-contract.md"]
+    if profile_name == "r6":
+        required.append("independent-preflight-a1-addendum.md")
+    return tuple(required)
+
+
 def _require_actual_validation_receipt():
     selected = ACTIVE_PROFILE
-    if selected.name != "r6":
-        raise ValueError("one-shot actual validation receipts apply only to R6")
+    if selected.name not in {"r6", "r7"}:
+        raise ValueError("one-shot actual admission receipts apply only to R6/R7")
     claim_path = EVIDENCE / "actual-input-claim.json"
     receipt_path = EVIDENCE / "actual-input-validation.json"
     if not claim_path.is_file() or not receipt_path.is_file():
-        raise ValueError("R6 one-shot actual input validation is missing")
+        raise ValueError(f"{selected.name.upper()} one-shot actual input validation is missing")
     claim = json.loads(claim_path.read_bytes())
     receipt = json.loads(receipt_path.read_bytes())
     if (claim.get("profile") != selected.name or claim.get("grantKey") != selected.key or
@@ -298,10 +320,10 @@ def _require_actual_validation_receipt():
             receipt.get("grantKey") != selected.key or
             receipt.get("sourceCommit") != claim.get("sourceCommit") or
             receipt.get("claimSha256") != binding(claim_path)["sha256"]):
-        raise ValueError("R6 actual input validation receipt is not a successful exact one-shot claim")
+        raise ValueError(f"{selected.name.upper()} actual input validation receipt is not a successful exact one-shot claim")
     source_commit = receipt.get("sourceCommit")
     if not isinstance(source_commit, str) or len(source_commit) != 40:
-        raise ValueError("R6 actual validation does not bind its clean source commit")
+        raise ValueError(f"{selected.name.upper()} actual validation does not bind its clean source commit")
     subprocess.check_call(["git", "merge-base", "--is-ancestor", source_commit, "HEAD"], cwd=ROOT)
     subprocess.check_call(["git", "merge-base", "--is-ancestor", selected.base_sha, source_commit], cwd=ROOT)
     auth, request, raw, captured, request_path = authority(validate_request=False)
@@ -312,14 +334,14 @@ def _require_actual_validation_receipt():
             receipt.get("profileEnvelope") != binding(SUCCESSOR_GRANT) or
             receipt.get("coordinatorSnapshot") != binding(COORDINATOR_SNAPSHOT) or
             receipt.get("runtimeSourceSha256") != dispatch.runtime_pins()):
-        raise ValueError("R6 actual validation receipt no longer binds its Request/Authority/source pins")
+        raise ValueError(f"{selected.name.upper()} actual validation receipt no longer binds its Request/Authority/source pins")
     expected = {item["path"]: item for item in receipt.get("preFreezeInputs", [])}
     for item in expected.values():
         if binding(item["path"]) != item:
-            raise ValueError("R6 pre-freeze actual validation input changed")
+            raise ValueError(f"{selected.name.upper()} pre-freeze actual validation input changed")
     required = _r6_input_bindings(auth, request, captured, request_path)
     if any(expected.get(item["path"]) != item for item in required):
-        raise ValueError("R6 actual validation receipt omits or differs from a required frozen input")
+        raise ValueError(f"{selected.name.upper()} actual validation receipt omits or differs from a required frozen input")
     return receipt
 
 
@@ -328,11 +350,11 @@ def _actual_r6_input_validation():
     claim_path = EVIDENCE / "actual-input-claim.json"
     receipt_path = EVIDENCE / "actual-input-validation.json"
     if not r6_validation_claim_available(claim_path.exists(), receipt_path.exists()):
-        raise ValueError("R6 actual input validation is one-shot; existing claim closes it")
+        raise ValueError(f"{selected.name.upper()} actual input validation is one-shot; existing claim closes it")
     status = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True).splitlines()
     allowed = f"experiments/government-comparison/evidence/{selected.evidence_directory.name}/"
     if any(not line[3:].replace("\\", "/").startswith(allowed) for line in status):
-        raise ValueError("R6 actual validation requires the reviewed clean source commit")
+        raise ValueError(f"{selected.name.upper()} actual validation requires the reviewed clean source commit")
     source_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     claim = write_new(claim_path, {"profile": selected.name, "grantKey": selected.key,
                                    "sourceCommit": source_commit, "claimedUtc": time.time()})
@@ -353,13 +375,13 @@ def _actual_r6_input_validation():
         if (request.get("dispatchId") != selected.dispatch_id or request.get(selected.marker) is None or
                 request.get("task", {}).get("id") != selected.task_id or
                 bound["backlogValue"]["limits"]["maxParallelism"] > 2):
-            raise ValueError("R6 Request identity or native role parallelism differs from its closed profile")
+            raise ValueError(f"{selected.name.upper()} Request identity or native role parallelism differs from its closed profile")
         ledger = _fixture_budget(request).preflight_snapshot()
         if ledger.get("entryGate", {}).get("ready") is not True:
-            raise ValueError("R6 live slot is not ready during actual input validation")
+            raise ValueError(f"{selected.name.upper()} live slot is not ready during actual input validation")
         rows = ledger.get("starts")
-        if not isinstance(rows, list) or len(rows) != 12:
-            raise ValueError("R6 actual validation requires the exact immutable 12-row historical ledger prefix")
+        if not isinstance(rows, list) or len(rows) != selected.history_starts:
+            raise ValueError(f"{selected.name.upper()} actual validation requires its exact immutable historical ledger prefix")
         bindings = _r6_input_bindings(auth, request, captured, request_path)
         receipt.update(status="passed", request=binding(request_path), requestSha256=dispatch.digest(raw),
                        authority=binding(EXTERNAL / "government/authority.json"),
@@ -379,7 +401,7 @@ def _actual_r6_input_validation():
 
 
 def validate():
-    if ACTIVE_PROFILE.name == "r6":
+    if ACTIVE_PROFILE.name in {"r6", "r7"}:
         return _actual_r6_input_validation()
     auth, request, raw, captured, _ = authority()
     validated = validate_r5_grant_binding(request, SOURCE_GRANT, dispatch.digest(SOURCE_GRANT.read_bytes()))
@@ -426,7 +448,7 @@ def require_freeze():
     allowed = f"experiments/government-comparison/evidence/{selected.evidence_directory.name}/"
     if any(not line[3:].replace("\\", "/").startswith(allowed) for line in changes):
         raise ValueError(f"{selected.name.upper()} source and non-profile evidence must remain clean")
-    if selected.name == "r6":
+    if selected.name in {"r6", "r7"}:
         _require_actual_validation_receipt()
     else:
         validate()
@@ -445,31 +467,34 @@ def require_freeze():
     if not isinstance(source_commit, str) or len(source_commit) != 40:
         raise ValueError(f"{selected.name.upper()} freeze lacks its exact source commit")
     subprocess.check_call(["git", "merge-base", "--is-ancestor", source_commit, "HEAD"], cwd=ROOT)
-    if selected.name == "r6":
+    if selected.name in {"r6", "r7"}:
         changed = subprocess.check_output(["git", "diff", "--name-only", source_commit, "HEAD"],
                                           cwd=ROOT, text=True).splitlines()
         if not r6_source_changes_confined(changed, EVIDENCE):
-            raise ValueError("R6 committed source changed outside its frozen evidence directory")
+            raise ValueError(f"{selected.name.upper()} committed source changed outside its frozen evidence directory")
     expected = {str(Path(item["path"]).resolve()): item for item in freeze.get("inputs", [])}
     required = [Path(__file__), ROOT / "prepare-native-r5.py", EVIDENCE / "independent-preflight-review.md",
-                EVIDENCE / "host-success-contract.md", SUCCESSOR_GRANT, COORDINATOR_SNAPSHOT,
+                SUCCESSOR_GRANT, COORDINATOR_SNAPSHOT,
                 EXTERNAL_HISTORY, HISTORY, SOURCE_GRANT, Path("C:/Python313/python.exe"),
                 ROOT / "public/resource-proposal.json", ROOT / "runtime/mechanical_actor.py"]
+    required += [EVIDENCE / name for name in r6_required_success_contracts(selected.name)]
+    if selected.name == "r7":
+        required.append(EVIDENCE / "offline-r7-tests.log")
     required += [EXTERNAL / "government" / name for name in
                  ("authority.json", "grant.json", "protocol.json", "released/request.json")]
     for path in required:
         if str(path.resolve(strict=True)) not in expected:
-            raise ValueError(f"required final R5 input is absent from the freeze: {path.name}")
+            raise ValueError(f"required final {selected.name.upper()} input is absent from the freeze: {path.name}")
     for item in expected.values():
         if binding(item["path"]) != item:
             raise ValueError(f"frozen {selected.name.upper()} input changed before native start")
-    if selected.name == "r6":
+    if selected.name in {"r6", "r7"}:
         validation = _require_actual_validation_receipt()
         receipt_bindings = freeze.get("actualInputValidation", {})
         if (receipt_bindings.get("claim") != binding(EVIDENCE / "actual-input-claim.json") or
                 receipt_bindings.get("receipt") != binding(EVIDENCE / "actual-input-validation.json") or
                 validation.get("status") != "passed"):
-            raise ValueError("R6 freeze does not bind the exact successful one-shot actual validation receipt")
+            raise ValueError(f"{selected.name.upper()} freeze does not bind the exact successful one-shot actual validation receipt")
 
 
 def _check_report_checks(report, runtime):
@@ -532,7 +557,7 @@ def _controller_elapsed(auth, request, process):
 
 
 def r6_queue_completion_is_positive(receipt, request_sha, process_binding,
-                                    driver_elapsed_seconds):
+                                    driver_elapsed_seconds, profile_name="r6"):
     """Pure predicate for the bridge's immutable terminal Queue receipt plus driver window."""
     if not isinstance(receipt, dict):
         return False
@@ -541,7 +566,7 @@ def r6_queue_completion_is_positive(receipt, request_sha, process_binding,
     controller_elapsed = receipt.get("elapsedSecondsAfterTerminalReceiptAvailable")
     controller_receipt_sha = receipt.get("terminalControllerReceiptSha256")
     return (receipt.get("status") == "completed" and
-            receipt.get("dispatchId") == native_profiles.R6.dispatch_id and
+            receipt.get("dispatchId") == native_profiles.profile(profile_name).dispatch_id and
             receipt.get("requestSha256") == request_sha and
             isinstance(terminal, dict) and isinstance(terminal.get("sha256"), str) and
             len(terminal["sha256"]) == 64 and
@@ -559,12 +584,14 @@ def r6_source_changes_confined(changed_paths, evidence_directory):
 
 
 def r6_resume_completion_is_positive(completion, process, result_status,
-                                    driver_elapsed_after_receipt_readback):
+                                    driver_elapsed_after_receipt_readback, profile_name=None):
     if not isinstance(completion, dict) or not isinstance(process, dict):
         return False
     elapsed = completion.get("elapsedSecondsAfterTerminalReceiptAvailable")
     wall = process.get("wallSeconds")
-    return (completion.get("profile") == "r6" and completion.get("status") == "completed" and
+    return (completion.get("profile") in {"r6", "r7"} and
+            (profile_name is None or completion.get("profile") == profile_name) and
+            completion.get("status") == "completed" and
             result_status == "completed" and process.get("returnCode") == 0 and
             process.get("stopReason") is None and type(wall) in (int, float) and 0 <= wall <= 38 and
             type(elapsed) in (int, float) and 0 <= elapsed <= 38 and
@@ -583,11 +610,11 @@ def _r6_queue_completion(auth, request, raw, process_path):
     result_raw = result_path.read_bytes()
     if receipt.get("terminalResult") != {"path": str(result_path.resolve()),
                                          "sha256": dispatch.digest(result_raw)}:
-        raise ValueError("R6 Queue completion receipt does not bind the exact outer terminal result")
-    driver_elapsed = time.monotonic() - _R6_QUEUE_STARTED
+        raise ValueError(f"{ACTIVE_PROFILE.name.upper()} Queue completion receipt does not bind the exact outer terminal result")
+    driver_elapsed = time.monotonic() - _PROFILE_QUEUE_STARTED
     if not r6_queue_completion_is_positive(receipt, dispatch.digest(raw),
-                                           process_binding, driver_elapsed):
-        raise ValueError("R6 Queue terminal/driver completion receipt is missing, late, or mismatched")
+                                           process_binding, driver_elapsed, ACTIVE_PROFILE.name):
+        raise ValueError(f"{ACTIVE_PROFILE.name.upper()} Queue terminal/driver completion receipt is missing, late, or mismatched")
     return {"path": str(receipt_path.resolve()), "sha256": dispatch.digest(receipt_raw),
             "receipt": receipt, "driverElapsedSeconds": driver_elapsed}
 
@@ -677,7 +704,7 @@ def require_positive_queue():
     auth, request, raw, _, _ = authority()
     evidence = Path(request["evidenceDirectory"])
     process = json.loads((evidence / "process/process.json").read_bytes())
-    if ACTIVE_PROFILE.name == "r6":
+    if ACTIVE_PROFILE.name in {"r6", "r7"}:
         checkpoint_path = EVIDENCE / "government/queue-driver-completion.json"
         driver_checkpoint = json.loads(checkpoint_path.read_bytes())
         bridge_path = evidence / "controller-completion.json"
@@ -691,11 +718,11 @@ def require_positive_queue():
                 driver_checkpoint.get("requestSha256") != dispatch.digest(raw) or
                 driver_checkpoint.get("process") != {"path": str(process_path.resolve()),
                                                        "sha256": dispatch.digest(process_raw)} or
-                driver_checkpoint.get("profile") != "r6" or
+                driver_checkpoint.get("profile") != ACTIVE_PROFILE.name or
                 not r6_queue_completion_is_positive(
                     bridge, dispatch.digest(raw), driver_checkpoint["process"],
-                    driver_checkpoint.get("driverElapsedSeconds"))):
-            raise ValueError("saved R6 Queue completion checkpoint is absent, changed, or nonpositive")
+                    driver_checkpoint.get("driverElapsedSeconds"), ACTIVE_PROFILE.name)):
+            raise ValueError(f"saved {ACTIVE_PROFILE.name.upper()} Queue completion checkpoint is absent, changed, or nonpositive")
         process["controllerElapsedSeconds"] = bridge["elapsedSecondsAfterTerminalReceiptAvailable"]
     else:
         process["controllerElapsedSeconds"] = _controller_elapsed(auth, request, process)
@@ -738,19 +765,19 @@ def government_queue():
     validated_grant = getattr(budget, selected.name)
     getattr(native_budget, f"validate_{selected.name}_entry_gate")(validated_grant)
     label = f"{selected.dispatch_id}/queue"
-    global _R6_QUEUE_STARTED
-    if selected.name == "r6":
-        _R6_QUEUE_STARTED = time.monotonic()
+    global _PROFILE_QUEUE_STARTED
+    if selected.name in {"r6", "r7"}:
+        _PROFILE_QUEUE_STARTED = time.monotonic()
     budget.reserve("government", label, argv)
     result = dispatch.dispatch(request_path, auth.result_directory / f"{selected.name}-queue.json", auth)
     process_path = Path(request["evidenceDirectory"]) / "process/process.json"
     if process_path.exists():
         budget.finish("government", label,
                       json.loads(process_path.read_bytes()))
-    if selected.name == "r6":
+    if selected.name in {"r6", "r7"}:
         completion = _r6_queue_completion(auth, request, raw, process_path)
         process_raw = process_path.read_bytes()
-        driver_checkpoint = {"profile": "r6", "dispatchId": selected.dispatch_id,
+        driver_checkpoint = {"profile": selected.name, "dispatchId": selected.dispatch_id,
                              "requestSha256": dispatch.digest(raw),
                              "process": {"path": str(process_path.resolve()),
                                          "sha256": dispatch.digest(process_raw)},
@@ -763,7 +790,7 @@ def government_queue():
     for index, item in enumerate(result.get("receipts", [])):
         content = Path(item["path"]).read_bytes()
         if dispatch.digest(content) != item["sha256"]:
-            raise ValueError("R5 Queue receipt changed before archival snapshot")
+            raise ValueError(f"{ACTIVE_PROFILE.name.upper()} Queue receipt changed before archival snapshot")
         saved = write_new(EVIDENCE / "government/queue-checkpoint" / str(index), content)
         snapshots.append({"original": item, "snapshot": saved})
     write_new(EVIDENCE / "government/queue-checkpoint.json", snapshots)
@@ -843,30 +870,31 @@ def government_resume():
                                     "sameBoundRunReport", "samePromotionReceipts",
                                     "samePromotionReadback")))
     resume_result = write_new(EVIDENCE / "government/resume-result.json", result)
-    if ACTIVE_PROFILE.name == "r6":
+    if ACTIVE_PROFILE.name in {"r6", "r7"}:
         if binding(resume_result["path"]) != resume_result:
-            raise ValueError("R6 Resume result failed exact pre-completion readback")
+            raise ValueError(f"{ACTIVE_PROFILE.name.upper()} Resume result failed exact pre-completion readback")
         elapsed_after_result_readback = time.monotonic() - controller_started
         result_path = Path(request["evidenceDirectory"]) / "resume-process/process.json"
         process_binding = binding(result_path)
-        result["completion"] = {"profile": "r6", "dispatchId": ACTIVE_PROFILE.dispatch_id,
+        result["completion"] = {"profile": ACTIVE_PROFILE.name, "dispatchId": ACTIVE_PROFILE.dispatch_id,
                                 "requestSha256": dispatch.digest(raw), "process": process_binding,
                                 "resumeResult": resume_result,
                                 "elapsedSecondsAfterTerminalReceiptAvailable": elapsed_after_result_readback,
                                 "status": "completed" if elapsed_after_result_readback <= 38 else "incomplete"}
         completion_binding = write_new(EVIDENCE / "government/resume-completion.json", result["completion"])
         if binding(completion_binding["path"]) != completion_binding:
-            raise ValueError("R6 Resume completion receipt failed exact readback")
+            raise ValueError(f"{ACTIVE_PROFILE.name.upper()} Resume completion receipt failed exact readback")
         elapsed_after_completion_readback = time.monotonic() - controller_started
         result["controllerElapsedSeconds"] = elapsed_after_result_readback
         result["completionReceiptAvailableElapsedSeconds"] = elapsed_after_completion_readback
         result["controllerDeadlineSatisfied"] = r6_resume_completion_is_positive(
-            result["completion"], process, translated.get("status"), elapsed_after_completion_readback)
+            result["completion"], process, translated.get("status"), elapsed_after_completion_readback,
+            ACTIVE_PROFILE.name)
         result["passed"] = result["passed"] and result["controllerDeadlineSatisfied"]
         result["completionReceipt"] = completion_binding
         result_path_binding = write_new(EVIDENCE / "government/resume-final-result.json", result)
         if binding(result_path_binding["path"]) != result_path_binding:
-            raise ValueError("R6 Resume final result failed exact readback")
+            raise ValueError(f"{ACTIVE_PROFILE.name.upper()} Resume final result failed exact readback")
     return result
 
 
@@ -882,10 +910,10 @@ def run_once():
         outcome["outerQueueStatus"] = queue_result.get("status")
         if queue_result.get("status") == "completed":
             outcome["positiveQueue"] = require_positive_queue()
-            if (selected.name == "r6" and not r6_resume_authorized(
+            if (selected.name in {"r6", "r7"} and not r6_resume_authorized(
                     queue_result.get("status"), outcome["positiveQueue"]["queue"].get("status"),
                     outcome["positiveQueue"]["translatedResult"].get("status"))):
-                raise ValueError("R6 Resume is not authorized by a fully positive native and outer Queue")
+                raise ValueError(f"{selected.name.upper()} Resume is not authorized by a fully positive native and outer Queue")
             resume = government_resume()
             outcome["resumePassed"] = resume["passed"]
             if resume["passed"]:
@@ -899,7 +927,7 @@ def run_once():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--profile", choices=("r5", "r6"), default="r5")
+    parser.add_argument("--profile", choices=("r5", "r6", "r7"), default="r5")
     parser.add_argument("action", choices=("prepare", "validate", "freeze", "run-once"))
     args = parser.parse_args()
     select_profile(args.profile)

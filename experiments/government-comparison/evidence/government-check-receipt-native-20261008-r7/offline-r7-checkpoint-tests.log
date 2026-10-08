@@ -1,0 +1,12 @@
+test_closed_r7_profile_and_thirteen_start_history_are_distinct (test_native_r7_checkpoint.NativeR7CheckpointTests.test_closed_r7_profile_and_thirteen_start_history_are_distinct) ... ok
+test_first_admission_claim_closes_any_retry (test_native_r7_checkpoint.NativeR7CheckpointTests.test_first_admission_claim_closes_any_retry) ... ok
+test_freeze_delta_is_confined_to_r7_evidence (test_native_r7_checkpoint.NativeR7CheckpointTests.test_freeze_delta_is_confined_to_r7_evidence) ... ok
+test_incomplete_outer_or_native_queue_never_authorizes_resume (test_native_r7_checkpoint.NativeR7CheckpointTests.test_incomplete_outer_or_native_queue_never_authorizes_resume) ... ok
+test_r7_queue_requires_bridge_and_driver_deadlines (test_native_r7_checkpoint.NativeR7CheckpointTests.test_r7_queue_requires_bridge_and_driver_deadlines) ... ok
+test_r7_resume_requires_receipt_readback_inside_38_seconds (test_native_r7_checkpoint.NativeR7CheckpointTests.test_r7_resume_requires_receipt_readback_inside_38_seconds) ... ok
+test_success_contract_requirements_keep_r6_addendum_out_of_r7 (test_native_r7_checkpoint.NativeR7CheckpointTests.test_success_contract_requirements_keep_r6_addendum_out_of_r7) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.000s
+
+OK

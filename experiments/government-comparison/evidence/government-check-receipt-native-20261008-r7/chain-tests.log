@@ -1,0 +1,23 @@
+.....F.
+======================================================================
+FAIL: test_entry_wrapper_rejects_wrong_profile_before_grant_binding (test_native_r7_chain.R7ProfileBridgeTests.test_entry_wrapper_rejects_wrong_profile_before_grant_binding)
+----------------------------------------------------------------------
+ValueError: exact separate R5, R6 or R7 Government Request profile required
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r7_chain.py", line 98, in test_entry_wrapper_rejects_wrong_profile_before_grant_binding
+    with self.assertRaisesRegex(ValueError, "Government-only profile grant"):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "Government-only profile grant" does not match "exact separate R5, R6 or R7 Government Request profile required"
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.096s
+
+FAILED (failures=1)
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.082s
+
+OK

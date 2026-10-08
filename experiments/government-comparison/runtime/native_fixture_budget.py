@@ -127,6 +127,18 @@ R5_BINARY_SHA256 = R4_BINARY_SHA256
 R5_DELEGATE_SHA256 = R4_DELEGATE_SHA256
 R5_PYTHON_PATH = r"C:\Python313\python.exe"
 R5_PYTHON_SHA256 = "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+R7_PRIOR_LABELS = R5_PRIOR_LABELS | {("government", "government-native-released-binding-r6/queue")}
+
+
+def _profile_prior_labels(profile):
+    return set(R7_PRIOR_LABELS if profile.name == "r7" else R5_PRIOR_LABELS)
+
+
+def _profile_cumulative(profile):
+    if profile.name == "r7":
+        return {"government": {"starts": 8, "seconds": 1200},
+                "classic": {"starts": 7, "seconds": 1050}}
+    return R5_CUMULATIVE
 
 
 def sha(path):
@@ -513,9 +525,18 @@ def validate_profile_grant_binding(request, original_grant_path, original_grant_
     """Validate one exact, closed Government successor profile without ledger writes."""
     if not isinstance(request, dict) or request.get("mode") != "mechanical":
         raise ValueError("profile provider-free allocation requires a mechanical Request")
-    selected = native_profile.request_profile(request)
-    if selected != profile or profile.name not in {"r5", "r6"}:
-        raise ValueError("exact separate R5 or R6 Government Request profile required")
+    try:
+        selected = native_profile.request_profile(request)
+    except ValueError as exc:
+        message = ("exact separate R5 or R6 Government Request profile required"
+                   if profile.name in {"r5", "r6"} else
+                   "exact separate R5, R6 or R7 Government Request profile required")
+        raise ValueError(message) from exc
+    if selected != profile or profile.name not in {"r5", "r6", "r7"}:
+        message = ("exact separate R5 or R6 Government Request profile required"
+                   if profile.name in {"r5", "r6"} else
+                   "exact separate R5, R6 or R7 Government Request profile required")
+        raise ValueError(message)
     original_path = Path(original_grant_path).resolve(strict=True)
     if (original_path != Path(R3_BASE_GRANT_PATH).resolve(strict=True) or
             original_grant_sha != R3_BASE_GRANT_SHA256 or sha(original_path) != R3_BASE_GRANT_SHA256):
@@ -554,9 +575,9 @@ def validate_profile_grant_binding(request, original_grant_path, original_grant_
     scientist = next((item for item in source.get("threads", [])
                       if isinstance(item, dict) and item.get("name") == "Scientist"), None)
     grant = document["grant"]
-    if profile.name == "r6" and (not isinstance(request.get("task"), dict) or
-                                  request["task"].get("id") != profile.task_id):
-        raise ValueError("R6 Request must bind the exact released task identity")
+    if profile.name in {"r6", "r7"} and (not isinstance(request.get("task"), dict) or
+                                             request["task"].get("id") != profile.task_id):
+        raise ValueError(f"{profile.name.upper()} Request must bind the exact released task identity")
     metadata_key = profile.pointer.rsplit(".", 1)[-1]
     if (not isinstance(scientist, dict) or scientist.get("evidence", {}).get(metadata_key) != grant or
             grant.get("key") != profile.key or grant.get("baseSha") != profile.base_sha):
@@ -593,16 +614,21 @@ def validate_profile_grant_binding(request, original_grant_path, original_grant_
         "maxDeterministicDelegates": 6, "maxParallelRoles": 2,
         "reservedSecondsPerNativeStart": 150, "maxNewReservedSessionSeconds": 300,
         "nativeProcessDeadlineSeconds": 38, "controllerWindowSeconds": 38,
-        "historicalConsumed": {"nativeStarts": 12, "wrapperAttempts": 10,
-                               "delegates": 7, "reservedSessionSeconds": 1800},
-        "cumulativeMaxNativeStarts": 14, "cumulativeMaxWrapperAttempts": 16,
-        "cumulativeMaxDelegates": 13, "cumulativeMaxReservedSessionSeconds": 2100,
+        "historicalConsumed": ({"nativeStarts": 13, "wrapperAttempts": 13,
+                                "delegates": 10, "reservedSessionSeconds": 1950}
+                               if profile.name == "r7" else
+                               {"nativeStarts": 12, "wrapperAttempts": 10,
+                                "delegates": 7, "reservedSessionSeconds": 1800}),
+        "cumulativeMaxNativeStarts": 15 if profile.name == "r7" else 14,
+        "cumulativeMaxWrapperAttempts": 19 if profile.name == "r7" else 16,
+        "cumulativeMaxDelegates": 16 if profile.name == "r7" else 13,
+        "cumulativeMaxReservedSessionSeconds": 2250 if profile.name == "r7" else 2100,
         "newModelProviderCalls": 0, "metadataSessions": 0, "studyCells": 0,
         "classicNativeStarts": 0, "fullProductSuites": 0,
         "historicalRealUsage": {"actorStarts": 5, "knownTokenSubtotal": 53331, "totalTokens": None},
         "sequence": ["one fresh Queue",
                      "only after complete positive native AND outer result, fresh actual checks, independent technical review, all required final assents and promotion: associated existing Resume/Replay verification"]}
-    if profile.name == "r6":
+    if profile.name in {"r6", "r7"}:
         expected_values["maxActualInputValidations"] = 1
         expected_values["maxFreshStaticCasePreparations"] = 1
     if any(grant.get(key) != value for key, value in expected_values.items()):
@@ -623,6 +649,7 @@ def validate_profile_grant_binding(request, original_grant_path, original_grant_
             "maxNewReservedSessionSeconds": grant["maxNewReservedSessionSeconds"],
             "nativeProcessDeadlineSeconds": grant["nativeProcessDeadlineSeconds"],
             "controllerWindowSeconds": grant["controllerWindowSeconds"],
+            "historicalConsumed": grant["historicalConsumed"],
             "cumulativeMaxNativeStarts": grant["cumulativeMaxNativeStarts"],
             "cumulativeMaxWrapperAttempts": grant["cumulativeMaxWrapperAttempts"],
             "cumulativeMaxDelegates": grant["cumulativeMaxDelegates"],
@@ -646,6 +673,13 @@ def validate_r6_grant_binding(request, original_grant_path, original_grant_sha):
         raise ValueError("R6 grant is restricted to the exact Government dispatch")
     return validate_profile_grant_binding(request, original_grant_path, original_grant_sha,
                                           native_profile.profile("r6"))
+
+
+def validate_r7_grant_binding(request, original_grant_path, original_grant_sha):
+    if not isinstance(request, dict) or request.get("dispatchId") != native_profile.R7.dispatch_id:
+        raise ValueError("R7 grant is restricted to the exact Government dispatch")
+    return validate_profile_grant_binding(request, original_grant_path, original_grant_sha,
+                                          native_profile.profile("r7"))
 
 def validate_profile_entry_gate(validated_grant, profile):
     """Require exact frozen/live grant and slot equality for a closed profile."""
@@ -695,6 +729,10 @@ def validate_r5_entry_gate(validated_grant):
 
 def validate_r6_entry_gate(validated_grant):
     return validate_profile_entry_gate(validated_grant, native_profile.profile("r6"))
+
+
+def validate_r7_entry_gate(validated_grant):
+    return validate_profile_entry_gate(validated_grant, native_profile.profile("r7"))
 
 def validate_r3_entry_gate(validated_grant):
     """Require a live, exact R3 full-suite assignment before any R3 consumption."""
@@ -841,6 +879,7 @@ class FixtureBudget:
         self.r4 = None
         self.r5 = None
         self.r6 = None
+        self.r7 = None
         self.profile = None
         self.profile_grant = None
         self.profile_request = None
@@ -853,6 +892,8 @@ class FixtureBudget:
             raise ValueError("exact R5 fixture grant is required for the Government scope R5 dispatch")
         if request is not None and request.get("dispatchId") == native_profile.R6.dispatch_id and request.get(native_profile.R6.marker) is None:
             raise ValueError("exact R6 fixture grant is required for the Government released-binding R6 dispatch")
+        if request is not None and request.get("dispatchId") == native_profile.R7.dispatch_id and request.get(native_profile.R7.marker) is None:
+            raise ValueError("exact R7 fixture grant is required for the Government check-receipt R7 dispatch")
         if request is not None and request.get("nativeFixtureCorrection") is not None:
             self.correction = self._validate_correction(request)
         if request is not None and request.get("nativeFixtureR4Grant") is not None:
@@ -884,6 +925,17 @@ class FixtureBudget:
                 raise ValueError("R6 Request cannot combine closed correction grants")
             if not self.path.is_file():
                 raise ValueError("R6 requires the existing immutable native-start history")
+            self._validate_profile_prior_history_readonly()
+            return
+        if request is not None and request.get("nativeFixtureR7Grant") is not None:
+            self.profile = native_profile.profile("r7")
+            self.r7 = validate_r7_grant_binding(request, self.grant_path, self.grant_sha)
+            self.profile_grant = self.r7
+            self.profile_request = self.r7_request = request
+            if self.correction is not None or request.get("nativeFixtureR3Grant") is not None:
+                raise ValueError("R7 Request cannot combine closed correction grants")
+            if not self.path.is_file():
+                raise ValueError("R7 requires the existing immutable native-start history")
             self._validate_profile_prior_history_readonly()
             return
         if request is not None and request.get("nativeFixtureR3Grant") is not None:
@@ -985,6 +1037,11 @@ class FixtureBudget:
             raise ValueError("R3 products must run sequentially in Government then Classic order")
         if len([row for row in new_rows if row[4] is None]) > 1:
             raise ValueError("R3 history exceeds maxParallel=1 native controller allocation")
+
+    @staticmethod
+    def _r7_identity(validated_grant):
+        return (native_profile.R7.key, validated_grant["sha256"],
+                validated_grant["sourceCoordinationSha256"], validated_grant["grant"]["baseSha"])
 
     @staticmethod
     def _r5_identity(validated_grant):
@@ -1250,19 +1307,20 @@ class FixtureBudget:
 
     def _validate_profile_rows(self, allocation, starts, corrections):
         profile = self.profile
-        labels = set(R5_PRIOR_LABELS)
+        labels = _profile_prior_labels(profile)
         queue_label, resume_label = f"{profile.dispatch_id}/queue", f"{profile.dispatch_id}/resume"
         profile_labels = {queue_label, resume_label}
         if allocation != [(self.grant_sha,)]:
             raise ValueError(f"{profile.name.upper()} must append to the original R1 native-start allocation")
         history_path = profile.history_path
-        if hashlib.sha256(history_path.read_bytes()).hexdigest() != R5_HISTORY_SHA256:
-            raise ValueError(f"immutable {profile.name.upper()} twelve-start history snapshot digest mismatch")
+        if hashlib.sha256(history_path.read_bytes()).hexdigest() != profile.history_sha:
+            raise ValueError(f"immutable {profile.name.upper()} historical-start snapshot digest mismatch")
         old_allocation, old_starts, old_corrections = _history_rows(history_path)
         old_rows = [row for row in starts if (row[0], row[1]) in labels]
         expected_old_rows = [row for row in old_starts if (row[0], row[1]) in labels]
-        if old_allocation != [(R3_BASE_GRANT_SHA256,)] or len(expected_old_rows) != 12 or old_rows != expected_old_rows:
-            raise ValueError(f"{profile.name.upper()} historical starts differ from the immutable twelve-row snapshot")
+        if (old_allocation != [(R3_BASE_GRANT_SHA256,)] or
+                len(expected_old_rows) != profile.history_starts or old_rows != expected_old_rows):
+            raise ValueError(f"{profile.name.upper()} historical starts differ from its immutable prefix")
         prior_corrections = [row for row in corrections if row[0] != profile.key]
         if prior_corrections != old_corrections:
             raise ValueError(f"{profile.name.upper()} must preserve all existing correction records exactly")
@@ -1278,11 +1336,12 @@ class FixtureBudget:
                 any(row[5] != PROCESS_SECONDS_RESERVED for row in new_rows)):
             raise ValueError(f"{profile.name.upper()} history exceeds its two-start/300-second allocation")
         total_rows = [*expected_old_rows, *new_rows]
-        if (len(total_rows) > 14 or sum(row[5] for row in total_rows) > 2100 or
-                sum(row[0] == "government" for row in total_rows) > 7 or
-                sum(row[5] for row in total_rows if row[0] == "government") > 1050 or
-                sum(row[0] == "classic" for row in total_rows) > 7 or
-                sum(row[5] for row in total_rows if row[0] == "classic") > 1050):
+        cumulative = _profile_cumulative(profile)
+        if (len(total_rows) > cumulative["government"]["starts"] + cumulative["classic"]["starts"] or
+                sum(row[5] for row in total_rows) > sum(item["seconds"] for item in cumulative.values()) or
+                any(sum(row[0] == product for row in total_rows) > limits["starts"] or
+                    sum(row[5] for row in total_rows if row[0] == product) > limits["seconds"]
+                    for product, limits in cumulative.items())):
             raise ValueError(f"{profile.name.upper()} history exceeds cumulative native-start/session ceilings")
         new_ordered = sorted(new_rows, key=lambda row: row[3])
         if [row[1] for row in new_ordered] not in ([], [queue_label], [queue_label, resume_label]):
@@ -1326,7 +1385,8 @@ class FixtureBudget:
             self._validate_profile_rows(allocation, starts, corrections)
             if db.execute("SELECT 1 FROM starts WHERE product=? AND label=?", (product, label)).fetchone():
                 raise ValueError(f"{profile.name.upper()} native start already claimed; no retry")
-            new_rows = [row for row in starts if (row[0], row[1]) not in R5_PRIOR_LABELS]
+            prior_labels = _profile_prior_labels(profile)
+            new_rows = [row for row in starts if (row[0], row[1]) not in prior_labels]
             expected_next = f"{profile.dispatch_id}/queue" if not new_rows else f"{profile.dispatch_id}/resume"
             if label != expected_next:
                 raise ValueError(f"{profile.name.upper()} permits one Queue followed only by its associated Resume")
@@ -1337,7 +1397,8 @@ class FixtureBudget:
                 self._profile_validate_queue_success(queue_row)
             count, seconds = db.execute("SELECT COUNT(*),COALESCE(SUM(reserved_seconds),0) "
                                         "FROM starts WHERE product='government'").fetchone()
-            if count >= R5_CUMULATIVE["government"]["starts"] or seconds + PROCESS_SECONDS_RESERVED > R5_CUMULATIVE["government"]["seconds"]:
+            cumulative = _profile_cumulative(profile)
+            if count >= cumulative["government"]["starts"] or seconds + PROCESS_SECONDS_RESERVED > cumulative["government"]["seconds"]:
                 raise ValueError(f"finite {profile.name.upper()} Government allocation exhausted")
             if db.execute("SELECT COUNT(*) FROM starts WHERE finished IS NULL").fetchone()[0] >= 1:
                 raise ValueError(f"{profile.name.upper()} native controller parallelism exhausted")
@@ -1383,8 +1444,8 @@ class FixtureBudget:
                 gate = {"ready": False, "reason": str(exc)}
             return {"allocationId": self.profile.key, "grantSha256": self.profile_grant["sha256"],
                     "sourceCoordinationSha256": self.profile_grant["sourceCoordinationSha256"],
-                    "cumulativeNativeStartCeiling": {key: value["starts"] for key, value in R5_CUMULATIVE.items()},
-                    "cumulativeReservedSessionSecondsCeiling": {key: value["seconds"] for key, value in R5_CUMULATIVE.items()},
+                    "cumulativeNativeStartCeiling": {key: value["starts"] for key, value in _profile_cumulative(self.profile).items()},
+                    "cumulativeReservedSessionSecondsCeiling": {key: value["seconds"] for key, value in _profile_cumulative(self.profile).items()},
                     "maxParallel": 1, "productsRunSequentially": True, "starts": rows,
                     "entryGate": gate, "deadlineSeconds": 38,
                     "reservedSecondsPerStart": PROCESS_SECONDS_RESERVED,
@@ -1489,7 +1550,7 @@ class FixtureBudget:
             raise ValueError("fixture allocation changed before start")
         if self.profile is not None:
             if native_profile.request_profile(self.profile_request) != self.profile:
-                raise ValueError("R5/R6 Request profile changed before start")
+                raise ValueError("R5/R6/R7 Request profile changed before start")
             self.profile_grant = validate_profile_grant_binding(
                 self.profile_request, self.grant_path, self.grant_sha, self.profile)
             if (sha(self.profile_grant["path"]) != self.profile_grant["sha256"] or
@@ -1498,8 +1559,10 @@ class FixtureBudget:
             validate_profile_entry_gate(self.profile_grant, self.profile)
             if self.profile.name == "r5":
                 self.r5 = self.profile_grant
-            else:
+            elif self.profile.name == "r6":
                 self.r6 = self.profile_grant
+            else:
+                self.r7 = self.profile_grant
         if self.r4 is not None:
             self.r4 = validate_r4_grant_binding(self.r4_request, self.grant_path, self.grant_sha)
             if (sha(self.r4["path"]) != self.r4["sha256"] or

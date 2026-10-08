@@ -1,0 +1,93 @@
+=== R7 focused budget suite ===
+test_budget_opens_exact_13_row_prefix_and_exposes_r7_grant (test_native_r7_budget.NativeR7BudgetTests.test_budget_opens_exact_13_row_prefix_and_exposes_r7_grant) ... ok
+test_live_entry_gate_requires_exact_frozen_grant_slot_key_and_time (test_native_r7_budget.NativeR7BudgetTests.test_live_entry_gate_requires_exact_frozen_grant_slot_key_and_time) ... ok
+test_r5_r6_labels_classic_and_wrong_r7_dispatch_cannot_consume (test_native_r7_budget.NativeR7BudgetTests.test_r5_r6_labels_classic_and_wrong_r7_dispatch_cannot_consume) ... ok
+test_r7_grant_binds_exact_profiles_task_products_python_and_quota_history (test_native_r7_budget.NativeR7BudgetTests.test_r7_grant_binds_exact_profiles_task_products_python_and_quota_history) ... ERROR
+test_r7_queue_append_is_additive_and_resume_requires_complete_queue_proof (test_native_r7_budget.NativeR7BudgetTests.test_r7_queue_append_is_additive_and_resume_requires_complete_queue_proof) ... ok
+test_r7_rejects_mixed_closed_profiles_wrong_dispatch_and_wrong_task (test_native_r7_budget.NativeR7BudgetTests.test_r7_rejects_mixed_closed_profiles_wrong_dispatch_and_wrong_task) ... ok
+
+======================================================================
+ERROR: test_r7_grant_binds_exact_profiles_task_products_python_and_quota_history (test_native_r7_budget.NativeR7BudgetTests.test_r7_grant_binds_exact_profiles_task_products_python_and_quota_history)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r7_budget.py", line 74, in test_r7_grant_binds_exact_profiles_task_products_python_and_quota_history
+    self.assertEqual(admitted["historicalConsumed"], {
+                     ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'historicalConsumed'
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.434s
+
+FAILED (errors=1)
+=== R7 focused suite after normalized history field ===
+test_budget_opens_exact_13_row_prefix_and_exposes_r7_grant (test_native_r7_budget.NativeR7BudgetTests.test_budget_opens_exact_13_row_prefix_and_exposes_r7_grant) ... ok
+test_live_entry_gate_requires_exact_frozen_grant_slot_key_and_time (test_native_r7_budget.NativeR7BudgetTests.test_live_entry_gate_requires_exact_frozen_grant_slot_key_and_time) ... ok
+test_r5_r6_labels_classic_and_wrong_r7_dispatch_cannot_consume (test_native_r7_budget.NativeR7BudgetTests.test_r5_r6_labels_classic_and_wrong_r7_dispatch_cannot_consume) ... ok
+test_r7_grant_binds_exact_profiles_task_products_python_and_quota_history (test_native_r7_budget.NativeR7BudgetTests.test_r7_grant_binds_exact_profiles_task_products_python_and_quota_history) ... ok
+test_r7_queue_append_is_additive_and_resume_requires_complete_queue_proof (test_native_r7_budget.NativeR7BudgetTests.test_r7_queue_append_is_additive_and_resume_requires_complete_queue_proof) ... ok
+test_r7_rejects_mixed_closed_profiles_wrong_dispatch_and_wrong_task (test_native_r7_budget.NativeR7BudgetTests.test_r7_rejects_mixed_closed_profiles_wrong_dispatch_and_wrong_task) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.443s
+
+OK
+=== Shared-profile R5 focused regression ===
+test_fixture_budget_reads_exact_twelve_start_prefix_without_mutating_it (test_native_r5_budget.NativeR5BudgetTests.test_fixture_budget_reads_exact_twelve_start_prefix_without_mutating_it) ... ok
+test_live_slot_gate_requires_exact_owner_key_status_and_assignment_time (test_native_r5_budget.NativeR5BudgetTests.test_live_slot_gate_requires_exact_owner_key_status_and_assignment_time) ... ok
+test_queue_reservation_is_additive_and_resume_requires_complete_queue_proof (test_native_r5_budget.NativeR5BudgetTests.test_queue_reservation_is_additive_and_resume_requires_complete_queue_proof) ... ok
+test_released_r5_grant_binds_exact_source_product_delegate_python_and_limits (test_native_r5_budget.NativeR5BudgetTests.test_released_r5_grant_binds_exact_source_product_delegate_python_and_limits) ... ok
+test_request_dispatch_binding_and_closed_r4_grant_fail_closed (test_native_r5_budget.NativeR5BudgetTests.test_request_dispatch_binding_and_closed_r4_grant_fail_closed) ... ok
+test_wrong_product_and_label_do_not_consume_r5_allocation (test_native_r5_budget.NativeR5BudgetTests.test_wrong_product_and_label_do_not_consume_r5_allocation) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.438s
+
+OK
+=== Shared-profile R6 focused regression ===
+test_constructor_reads_the_immutable_twelve_start_prefix (test_native_r6_budget.NativeR6BudgetTests.test_constructor_reads_the_immutable_twelve_start_prefix) ... ok
+test_live_gate_requires_frozen_grant_and_full_slot_equality (test_native_r6_budget.NativeR6BudgetTests.test_live_gate_requires_frozen_grant_and_full_slot_equality) ... ok
+test_old_r5_label_and_classic_cannot_consume_r6_profile (test_native_r6_budget.NativeR6BudgetTests.test_old_r5_label_and_classic_cannot_consume_r6_profile) ... ok
+test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof (test_native_r6_budget.NativeR6BudgetTests.test_queue_append_uses_r6_identity_and_resume_still_requires_full_positive_proof) ... ok
+test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds (test_native_r6_budget.NativeR6BudgetTests.test_r6_exact_profile_grant_pins_and_new_zero_extra_bounds) ... ok
+test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task (test_native_r6_budget.NativeR6BudgetTests.test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task) ... FAIL
+
+======================================================================
+FAIL: test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task (test_native_r6_budget.NativeR6BudgetTests.test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task)
+----------------------------------------------------------------------
+ValueError: exact separate R5, R6 or R7 Government Request profile required
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r6_budget.py", line 85, in test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task
+    with self.assertRaisesRegex(ValueError, "exact separate R5 or R6"):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "exact separate R5 or R6" does not match "exact separate R5, R6 or R7 Government Request profile required"
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.480s
+
+FAILED (failures=1)
+...........F......
+======================================================================
+FAIL: test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task (test_native_r6_budget.NativeR6BudgetTests.test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task)
+----------------------------------------------------------------------
+ValueError: exact separate R5, R6 or R7 Government Request profile required
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r6_budget.py", line 85, in test_r6_profile_rejects_r5_mixed_markers_wrong_dispatch_and_wrong_task
+    with self.assertRaisesRegex(ValueError, "exact separate R5 or R6"):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "exact separate R5 or R6" does not match "exact separate R5, R6 or R7 Government Request profile required"
+
+----------------------------------------------------------------------
+Ran 18 tests in 1.384s
+
+FAILED (failures=1)
+..................
+----------------------------------------------------------------------
+Ran 18 tests in 1.277s
+
+OK

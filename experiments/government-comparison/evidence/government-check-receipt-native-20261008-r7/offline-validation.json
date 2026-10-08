@@ -1,0 +1,89 @@
+{
+  "sourcePins": [
+    {
+      "path": "prepare-native-r5.py",
+      "sha256": "09966abe55947d89cdf18817082da976af12c0d65eb0431dc437ba16589feeb0"
+    },
+    {
+      "path": "run-native-integration-r5.py",
+      "sha256": "fa2b8d6565db65c84af0bfabb697850e29bdd7162e61346696327edc02b0cb74"
+    },
+    {
+      "path": "runtime/dispatch.py",
+      "sha256": "7b78d26e430ea8474ac1e6d7af286e965946a115c9328e828f8483c74da5f296"
+    },
+    {
+      "path": "runtime/government_native_profile.py",
+      "sha256": "399a568e0ccab6781b3ecff8d4a7cbe479b530b69e5e3239711d5cdcf94452a0"
+    },
+    {
+      "path": "runtime/government_roles.py",
+      "sha256": "743e1e0f3671f81913ca35e2b232662b9b51eaeba9783370d946fc42027dec90"
+    },
+    {
+      "path": "runtime/native_controller.py",
+      "sha256": "56fee7067ff606a5983456b0598eba01c3c073690dedeab1e7d845b21f8270d2"
+    },
+    {
+      "path": "runtime/native_fixture_budget.py",
+      "sha256": "1e9c05326759aa86a4cbb3498bde20b7aed0fce80f6c77eff17b1776ab2d4bd1"
+    },
+    {
+      "path": "runtime/test_government_check_receipts.py",
+      "sha256": "7fe4741364ef11db105fa122181a463f5672ba1fb0f78e951c6bc5170245af36"
+    },
+    {
+      "path": "runtime/test_government_released_binding.py",
+      "sha256": "d41897eda67628f0b899a7a5162a3e5f8a738db0e52a927bfbe0f30f4a8777ef"
+    },
+    {
+      "path": "runtime/test_native_r7_budget.py",
+      "sha256": "a2f09d49b94baf546bbad8c68a79b559a00aabfb23f738a338d2d0e13da9d77a"
+    },
+    {
+      "path": "runtime/test_native_r7_chain.py",
+      "sha256": "b46df09b953fede91918707fa40b8b1bc02c0c5357cb2a671d75800703163ce0"
+    },
+    {
+      "path": "runtime/test_native_r7_checkpoint.py",
+      "sha256": "9586295cd8738100001c6c4ef890547a5c5120af9c677d76a4895699b071a9a8"
+    },
+    {
+      "path": "runtime/test_native_r7_receipt_transition.py",
+      "sha256": "b647f23fabc778b09c8c5874eaddb9f6f434c59484f55c715b700172734681cd"
+    }
+  ],
+  "focusedFinalPassingRuns": [
+    {
+      "path": "budget-tests.log",
+      "tests": 18,
+      "sha256": "14b4dfdf3970d734f35926b1e96d47db87097e248e774aa998a050007f373cb4"
+    },
+    {
+      "path": "chain-tests.log",
+      "tests": 7,
+      "sha256": "01ac2e499b203009f2a3d9f76cb7346db90384324d1a49b1c55c5b7b3afc2058"
+    },
+    {
+      "path": "offline-r7-tests.log",
+      "tests": 13,
+      "sha256": "87ba2c1ad7f7bf7e700c63f3c8083556d0aeac854e35e2a43171508b96b7dcbb"
+    },
+    {
+      "path": "offline-r7-checkpoint-tests.log",
+      "tests": 7,
+      "sha256": "269ed278488b50315ff7f122b5b6a3b72580fcb8c2f955752b41a3683438e440"
+    },
+    {
+      "path": "receipt-transition-tests.log",
+      "tests": 3,
+      "sha256": "b11fbcf3232440c6126fa6884490e5b2ee4e8430813c24367ef6e6f22ba29d35"
+    }
+  ],
+  "syntaxFiles": 13,
+  "untouchedAcceptedSuitesRepeated": false,
+  "experimentalProcesses": 0,
+  "actualAdmissionActions": 0,
+  "usageEngineeringAndReview": "unknown",
+  "limitations": "Offline fixtures validate the boundary only; no native R7 outcome yet. Logs preserve earlier test failures and targeted correction."
+}

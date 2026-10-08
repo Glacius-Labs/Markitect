@@ -1,3 +1,20 @@
+# Active R7 checkpoint, 2026-10-08
+
+Authority: Overseer chat01a11367-a781-7683-a20f-46e12614dcb4; finite grant
+government-check-receipt-native-20261008-r7, assignedUtc2026-10-08T04:10:48Z.
+Base18c9f907863044972511fb2403bcdb4eced95810. Closed R7 profile prepared;
+budget/driver/bridge owners extend only existing shared paths; independent
+reviewer checks final preflight; Root owns real receipt-transition regression.
+Current experimental consumption0. History13native/13wrappers/10delegates/
+1950reserved; immutable13-row snapshot c0a91051... preserved.
+Next single step: finish changed-path offline checks and independent review,
+then clean sourcecommit before exactlyone fresh static preparation/admission.
+Only successful one-shot admission allows fresh committed freeze, one Queue,
+then conditional same-case terminal Resume. Any actual negative stops without
+repair/retry/restquota. Final raw evidence, counts, postreview, slotrelease and
+one direct Overseer callback required; then wait. Old closed cases stay closed.
+Earlier complete handoff history remains byte-for-byte below.
+
 # Completed offline receipt identity correction, 2026-10-08
 
 Package government-check-receipt-identity-offline-20261008: source9dbbb93,

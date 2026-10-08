@@ -118,6 +118,10 @@ class GovernmentCheckReceiptTests(SealedCheckInputs):
 
 class GovernmentResumeReceiptTransitionTests(SealedCheckInputs):
     """Call the actual pre-reservation helper and translator on relocated copies."""
+    profile_name = "r6"
+
+    def configure_test_request(self, request, base):
+        """Successor tests may rebind only their isolated fixture metadata."""
 
     def relocated_gate(self):
         temp = tempfile.TemporaryDirectory()
@@ -141,6 +145,7 @@ class GovernmentResumeReceiptTransitionTests(SealedCheckInputs):
         base = external / "government"
         request_path = base / "released/request.json"
         request = json.loads(request_path.read_bytes())
+        self.configure_test_request(request, base)
         auth_path = base / "released/role-auth.json"
         runtime_path = base / "released/runtime.json"
         runtime = json.loads(runtime_path.read_bytes())
@@ -158,6 +163,7 @@ class GovernmentResumeReceiptTransitionTests(SealedCheckInputs):
         request_path.write_bytes(encoded(request))
         queue_path = Path(request["evidenceDirectory"]) / "process/stdout.log"
         queue = relocate(json.loads(queue_path.read_bytes()))
+        queue["jobs"][0]["id"] = request["task"]["id"]
         report_path = Path(queue["jobs"][0]["reportPath"])
 
         def refresh_queue():
@@ -173,10 +179,11 @@ class GovernmentResumeReceiptTransitionTests(SealedCheckInputs):
                    if item["label"] == "government-native-released-binding-r6/queue")
         argv = relocate(json.loads(row["argv"]))
         receipt = relocate(json.loads(row["receipt"]))
-        queue_row = (row["product"], row["label"], json.dumps(argv), row["claimed"],
+        selected = profiles.profile(self.profile_name)
+        queue_row = (row["product"], f"{selected.dispatch_id}/queue", json.dumps(argv), row["claimed"],
                      row["finished"], row["reserved_seconds"], encoded(receipt))
         instance = object.__new__(budget.FixtureBudget)
-        instance.profile = profiles.R6
+        instance.profile = selected
         instance.profile_request = request
         return instance, queue_row, report_path, runtime_path, refresh_queue
 

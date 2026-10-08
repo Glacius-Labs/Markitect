@@ -1,0 +1,8 @@
+test_real_resume_consumer_rejects_wrong_native_tool_after_translation (test_native_r7_receipt_transition.NativeR7ReceiptTransitionTests.test_real_resume_consumer_rejects_wrong_native_tool_after_translation) ... ok
+test_real_resume_pre_reservation_consumer_accepts_relocated_r6_receipts (test_native_r7_receipt_transition.NativeR7ReceiptTransitionTests.test_real_resume_pre_reservation_consumer_accepts_relocated_r6_receipts) ... ok
+test_resume_consumer_keeps_runtime_and_report_digest_guards (test_native_r7_receipt_transition.NativeR7ReceiptTransitionTests.test_resume_consumer_keeps_runtime_and_report_digest_guards) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 1.112s
+
+OK

@@ -54,9 +54,9 @@ def validate_profile_terminal_deadline(request, controller_elapsed):
         raise ValueError(f"{fixture_profile.name.upper()} controller deadline exceeded before result finalization")
 
 
-def r6_completion_status(result_status, dispatch_phase, controller_status,
-                         controller_receipt_sha, controller_receipt_verified, process_verified,
-                         ledger_result_matches, controller_terminal, elapsed_seconds):
+def profile_completion_status(result_status, dispatch_phase, controller_status,
+                              controller_receipt_sha, controller_receipt_verified, process_verified,
+                              ledger_result_matches, controller_terminal, elapsed_seconds):
     return ("completed" if result_status == "completed" and dispatch_phase == "finished" and
             controller_status == "completed" and isinstance(controller_receipt_sha, str) and
             len(controller_receipt_sha) == 64 and all(c in "0123456789abcdef" for c in controller_receipt_sha) and
@@ -66,9 +66,22 @@ def r6_completion_status(result_status, dispatch_phase, controller_status,
             else "incomplete")
 
 
-def write_r6_completion_receipt(request, raw, result_path, evidence, ledger,
-                                process_path, process_raw, process_verified):
-    """Bind terminal result/process/ledger receipts and measure after they are available."""
+def r6_completion_status(result_status, dispatch_phase, controller_status,
+                         controller_receipt_sha, controller_receipt_verified, process_verified,
+                         ledger_result_matches, controller_terminal, elapsed_seconds):
+    return profile_completion_status(result_status, dispatch_phase, controller_status,
+                                     controller_receipt_sha, controller_receipt_verified,
+                                     process_verified, ledger_result_matches, controller_terminal,
+                                     elapsed_seconds)
+
+
+def write_profile_completion_receipt(request, raw, result_path, evidence, ledger,
+                                     process_path, process_raw, process_verified):
+    """Bind a closed profile's terminal result/process/ledger receipts after availability."""
+    from government_native_profile import request_profile
+    fixture_profile = request_profile(request)
+    if fixture_profile is None or fixture_profile.name not in {"r6", "r7"}:
+        raise ValueError("R6/R7 completion receipt requires its exact Government profile")
     result_path = Path(result_path).resolve(strict=True)
     result_raw = result_path.read_bytes()
     result_value = json.loads(result_raw)
@@ -94,10 +107,10 @@ def write_r6_completion_receipt(request, raw, result_path, evidence, ledger,
         controller_receipt_verified = digest(controller_row[3].encode("utf-8")) == controller_row[1]
     process_verified = (process_verified is True and isinstance(process_raw, bytes) and
                         Path(process_path).is_file() and Path(process_path).read_bytes() == process_raw)
-    status = r6_completion_status(result_value.get("status"), phase, controller_status,
-                                  terminal_receipt_sha, controller_receipt_verified, process_verified,
-                                  ledger_result_matches, bool(controller_row and controller_row[2] is not None),
-                                  elapsed)
+    status = profile_completion_status(result_value.get("status"), phase, controller_status,
+                                       terminal_receipt_sha, controller_receipt_verified, process_verified,
+                                       ledger_result_matches, bool(controller_row and controller_row[2] is not None),
+                                       elapsed)
     process_value = None
     if process_verified and isinstance(process_raw, bytes) and Path(process_path).is_file():
         process_value = {"path": str(Path(process_path).resolve()), "sha256": digest(process_raw)}
@@ -111,8 +124,20 @@ def write_r6_completion_receipt(request, raw, result_path, evidence, ledger,
     with timing_path.open("xb") as stream:
         stream.write(timing_raw)
     if timing_path.read_bytes() != timing_raw:
-        raise ValueError("R6 completion timing receipt failed exact readback")
+        raise ValueError(f"{fixture_profile.name.upper()} completion timing receipt failed exact readback")
     return timing
+
+
+def write_r6_completion_receipt(request, raw, result_path, evidence, ledger,
+                                process_path, process_raw, process_verified):
+    return write_profile_completion_receipt(request, raw, result_path, evidence, ledger,
+                                            process_path, process_raw, process_verified)
+
+
+def write_r7_completion_receipt(request, raw, result_path, evidence, ledger,
+                                process_path, process_raw, process_verified):
+    return write_profile_completion_receipt(request, raw, result_path, evidence, ledger,
+                                            process_path, process_raw, process_verified)
 
 
 def external(path, *, existing=False):
@@ -585,6 +610,9 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
             if request.get("nativeFixtureR6Grant") is not None and elapsed >= (
                     R5_CONTROLLER_DEADLINE_SECONDS - R5_CLEANUP_MARGIN_SECONDS):
                 reason = reason or "R6_controller_wall_deadline"
+            if request.get("nativeFixtureR7Grant") is not None and elapsed >= (
+                    R5_CONTROLLER_DEADLINE_SECONDS - R5_CLEANUP_MARGIN_SECONDS):
+                reason = reason or "R7_controller_wall_deadline"
             if elapsed >= min(request["wallSeconds"], authority.grant["maxSessionWallSeconds"]):
                 reason = reason or "controller_wall_deadline"
             if directory.joinpath("STOP").exists():
@@ -606,10 +634,11 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
         if wall <= 0:
             raise LimitReached("no shared wall-time remains for native controller launch")
         native_fixture_start_gate()
-        if request.get("nativeFixtureR5Grant") is not None or request.get("nativeFixtureR6Grant") is not None:
+        if any(request.get(marker) is not None for marker in
+               ("nativeFixtureR5Grant", "nativeFixtureR6Grant", "nativeFixtureR7Grant")):
             wall = r5_process_timeout(wall, ledger.controller_elapsed(request["dispatchId"]))
             if wall <= 0:
-                raise LimitReached("R5/R6 controller deadline leaves no process time after cleanup reserve")
+                raise LimitReached("R5/R6/R7 controller deadline leaves no process time after cleanup reserve")
         receipt = bounded(argv, request["actorRepository"], evidence / "process", wall,
                           env=controller_env, stop_path=evidence / "STOP", poll_stop=monitor)
         process_path = evidence / "process" / "process.json"
@@ -696,6 +725,10 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
     write_result(result_path, result)
     if request.get("nativeFixtureR6Grant") is not None:
         write_r6_completion_receipt(request, raw, result_path, evidence, ledger,
+                                   evidence / "process" / "process.json", process_raw,
+                                   process_verified)
+    if request.get("nativeFixtureR7Grant") is not None:
+        write_r7_completion_receipt(request, raw, result_path, evidence, ledger,
                                    evidence / "process" / "process.json", process_raw,
                                    process_verified)
     return result

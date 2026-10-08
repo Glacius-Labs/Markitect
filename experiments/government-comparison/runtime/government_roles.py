@@ -134,16 +134,17 @@ def start_native_diagnostics(argv):
         native_controller.validate_r4_delegate_authorization(request, role_raw, validated)
         max_starts = validated["maxWrapperAttempts"]
     elif correction["sourceKey"] in {"government-scope-native-20261008-r5",
-                                     "government-released-binding-native-20261008-r6"}:
+                                     "government-released-binding-native-20261008-r6",
+                                     "government-check-receipt-native-20261008-r7"}:
         request_path = request_path.resolve(strict=True)
         request = _strict_json(request_path.read_bytes(), "R5/R6 wrapper Request")
         from government_native_profile import profile, request_profile
         fixture_profile = request_profile(request)
         original = request.get("nativeFixtureGrant") if isinstance(request, dict) else None
-        if (fixture_profile not in {profile("r5"), profile("r6")} or
+        if (fixture_profile not in {profile("r5"), profile("r6"), profile("r7")} or
                 request.get(fixture_profile.marker) != correction or
                 not isinstance(original, dict) or set(original) != {"path", "sha256", "sourceKey"}):
-            raise ValueError("R5/R6 wrapper diagnostics must bind the exact Government Request and retain R1 provenance")
+            raise ValueError("R5/R6/R7 wrapper diagnostics must bind the exact Government Request and retain R1 provenance")
         from native_fixture_budget import validate_profile_grant_binding
         validated = validate_profile_grant_binding(request, original["path"], original["sha256"],
                                                    fixture_profile)
@@ -151,7 +152,7 @@ def start_native_diagnostics(argv):
                 validated.get("maxWrapperAttempts") != 6 or
                 validated.get("maxDeterministicDelegates") != 6 or
                 validated.get("maxNativeStarts") != 2):
-            raise ValueError("wrapper diagnostic grant differs from the exact R5/R6 role allocation")
+            raise ValueError("wrapper diagnostic grant differs from the exact R5/R6/R7 role allocation")
         role_binding = request.get("product", {}).get("government", {}).get("roleAuthorization", {})
         role_path = Path(role_binding.get("path", "")).resolve(strict=True)
         role_raw = role_path.read_bytes()
@@ -159,7 +160,7 @@ def start_native_diagnostics(argv):
                 not any(isinstance(item, dict) and item.get("path") and item.get("sha256") == role_binding["sha256"] and
                         Path(item["path"]).resolve(strict=True) == role_path
                         for item in request.get("releasedInputs", []))):
-            raise ValueError("R5/R6 role authorization must remain the exact released Request input")
+            raise ValueError("R5/R6/R7 role authorization must remain the exact released Request input")
         import native_controller
         native_controller.validate_profile_delegate_authorization(
             request, role_raw, validated, fixture_profile)
@@ -179,7 +180,8 @@ def start_native_diagnostics(argv):
             # Re-read the live activation/slot immediately before the durable claim.
             validate_r4_entry_gate(validated)
         elif correction["sourceKey"] in {"government-scope-native-20261008-r5",
-                                         "government-released-binding-native-20261008-r6"}:
+                                         "government-released-binding-native-20261008-r6",
+                                         "government-check-receipt-native-20261008-r7"}:
             # Re-read the exact profile activation/slot immediately before the durable claim.
             native_controller.validate_profile_live_gate(validated, fixture_profile)
         cursor = db.execute("INSERT INTO starts(config_sha,started) VALUES(?,?)", (expected, time.time()))
@@ -440,8 +442,9 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
     fixture_profile = native_controller.native_profile(request)
     if sum(value is not None for value in (r3_grant, r2_correction, r4_grant,
                                            request.get("nativeFixtureR5Grant"),
-                                           request.get("nativeFixtureR6Grant"))) > 1:
-        raise ValueError("R2, R3, R4, R5, and R6 additive grants cannot be combined")
+                                           request.get("nativeFixtureR6Grant"),
+                                           request.get("nativeFixtureR7Grant"))) > 1:
+        raise ValueError("R2, R3, R4, R5, R6, and R7 additive grants cannot be combined")
     if r4_grant is not None and (request.get("dispatchId") != "government-native-serialization-r4" or arm != "government"):
         raise ValueError("R4 grant is restricted to its exact Government dispatch")
     diagnostic_grant = (request.get(fixture_profile.marker) if fixture_profile is not None else

@@ -28,6 +28,8 @@ R5_DISPATCH_ID = "government-native-scope-r5"
 R5_GRANT_KEY = "government-scope-native-20261008-r5"
 R6_DISPATCH_ID = "government-native-released-binding-r6"
 R6_GRANT_KEY = "government-released-binding-native-20261008-r6"
+R7_DISPATCH_ID = "government-native-check-receipt-r7"
+R7_GRANT_KEY = "government-check-receipt-native-20261008-r7"
 
 
 def native_profile(request):
@@ -220,8 +222,8 @@ def validate_native_fixture_grant(request, captured, product_bound=None):
                 validated.get("maxParallelRoles") != 2 or
                 validated.get("maxNewReservedSessionSeconds") != 300 or
                 validated.get("maxRoleProcessSeconds") != 38 or
-                validated.get("profileName") not in (None, fixture_profile.name) or
-                validated.get("dispatchId") not in (None, fixture_profile.dispatch_id)):
+                validated.get("profileName") != fixture_profile.name or
+                validated.get("dispatchId") != fixture_profile.dispatch_id):
             raise ValueError(f"validated {fixture_profile.name.upper()} bounds differ from its exact Government allocation")
         result.update({f"{fixture_profile.name}Grant": validated,
                        f"{fixture_profile.name}GrantKey": fixture_profile.key,
@@ -312,7 +314,7 @@ def validate_profile_delegate_authorization(request, authorization_raw, validate
     """Bind a closed native profile's Government delegates to its executable pins."""
     fixture_profile = fixture_profile or native_profile(request)
     if fixture_profile is None or native_profile(request) != fixture_profile:
-        raise ValueError("native R5/R6 launch requires its exact Government-only profile grant")
+        raise ValueError("native R5/R6/R7 launch requires its exact Government-only profile grant")
     label = fixture_profile.name.upper()
     if not isinstance(authorization_raw, bytes):
         raise ValueError(f"{label} role authorization bytes are required")
@@ -402,6 +404,12 @@ def validate_r6_delegate_authorization(request, authorization_raw, validated_gra
         request, authorization_raw, validated_grant, profile("r6"))
 
 
+def validate_r7_delegate_authorization(request, authorization_raw, validated_grant=None):
+    from government_native_profile import profile
+    return validate_profile_delegate_authorization(
+        request, authorization_raw, validated_grant, profile("r7"))
+
+
 def validate_r4_entry_for_launch(request, captured, argv):
     """Revalidate the exact R4 request and all executable pins at the native Popen boundary."""
     if (not isinstance(request, dict) or request.get("dispatchId") != R4_DISPATCH_ID or
@@ -436,7 +444,7 @@ def validate_profile_entry_for_launch(request, captured, argv, fixture_profile=N
     """Revalidate one exact closed profile and its executable pins before Popen."""
     fixture_profile = fixture_profile or native_profile(request)
     if fixture_profile is None or native_profile(request) != fixture_profile:
-        raise ValueError("native R5/R6 launch requires its exact Government-only profile grant")
+        raise ValueError("native R5/R6/R7 launch requires its exact Government-only profile grant")
     label = fixture_profile.name.upper()
     if not isinstance(argv, list) or not argv or not isinstance(argv[0], str):
         raise ValueError(f"native {label} launch argv is malformed")
@@ -470,6 +478,11 @@ def validate_r5_entry_for_launch(request, captured, argv):
 def validate_r6_entry_for_launch(request, captured, argv):
     from government_native_profile import profile
     return validate_profile_entry_for_launch(request, captured, argv, profile("r6"))
+
+
+def validate_r7_entry_for_launch(request, captured, argv):
+    from government_native_profile import profile
+    return validate_profile_entry_for_launch(request, captured, argv, profile("r7"))
 
 
 class ControllerContext(NamedTuple):

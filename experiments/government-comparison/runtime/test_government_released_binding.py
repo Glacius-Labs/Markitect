@@ -67,7 +67,7 @@ class GovernmentReleasedBindingTests(unittest.TestCase):
         self.request = json.loads(sealed_bytes(
             SEALED / "raw-external/government/released/request.json",
             "20c2d21a49a4c0ac86f9e91e7681d607c9dd7c293ab3abfde96dcddf2c265d1f"))
-        if self.profile_name == "r6":
+        if self.profile_name in {"r6", "r7"}:
             self.request.pop("nativeFixtureR5Grant", None)
             self.request["dispatchId"] = self.profile.dispatch_id
             self.request["task"]["id"] = self.profile.task_id
@@ -152,6 +152,11 @@ class GovernmentReleasedBindingTests(unittest.TestCase):
 class GovernmentReleasedBindingR6Tests(GovernmentReleasedBindingTests):
     """Exercise the same production producer against the real closed R6 consumer."""
     profile_name = "r6"
+
+
+class GovernmentReleasedBindingR7Tests(GovernmentReleasedBindingTests):
+    """Exercise the same production producer against the real closed R7 consumer."""
+    profile_name = "r7"
 
 
 if __name__ == "__main__":
