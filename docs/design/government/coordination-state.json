@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T01:49:02Z",
+  "updatedUtc": "2026-10-08T01:51:27Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -2098,18 +2098,18 @@
       "name": "Oldschool",
       "threadId": "01a11928-cc8d-7580-9d29-f6557bb2cbd7",
       "hostId": "local",
-      "afterCursor": "d10992a0-2450-478c-aa5a-d9a57d563dd5:1",
+      "afterCursor": "d10992a0-2450-478c-aa5a-d9a57d563dd5:2",
       "lastObservedStatus": "idle",
       "activeTurn": null,
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "oldschool-baseline-preparation-20261008",
+      "assignedMilestone": "Hold after accepted case-independent baseline preparation; await bounded fresh-cell assignment.",
       "worktree": null,
       "candidateSha": null,
-      "acceptance": "No implementation or measured trial yet.",
+      "acceptance": "Methods brief read and accepted as preparation only; no empirically measured reference or verified study tool capability.",
       "baselinePreparationAssignment": {
         "key": "oldschool-baseline-preparation-20261008",
         "authorizedUtc": "2026-10-08T01:48:09Z",
-        "status": "sent once",
+        "status": "completed; preparation brief accepted",
         "prompt": "Der Nutzer hat dich im Overseer-Chat 01a11367-a781-7683-a20f-46e12614dcb4 ausdrücklich bereitgestellt: „Stelle auch sicher dass klassisches Agentic Coding in den Case Studies durch den Scientist berücksichtigt und gemessen wird als Refernezwert. Hierzu steht dir der Chat \"Oldschool\" zur Verfügung“. Dein eigener direkter Nutzerauftrag ist, auf Overseer zu warten; dies ist dein erster begrenzter Auftrag.\n\nDu vertrittst gutes klassisches Agentic Coding als Conventional-Referenz. Du bist ausführender Engineering-Eigentümer, nicht Autor gemeinsamer Aufgaben, Holdouts oder deiner endgültigen Bewertung. Scientist besitzt Versuchsaufbau und unabhängige Messung. In späteren freigegebenen Fällen sind normale Planung, verständliche Anforderungs-/Architekturdokumentation, gezielte Tests, Standardwerkzeuge, sinnvolle Subagenten und unabhängige Reviews unter demselben Gesamtbudget erlaubt. Kein Markitect oder Government im Referenzarm; du sollst eine starke faire Referenz liefern.\n\nAuftrag oldschool-baseline-preparation-20261008: Liefere einmalig hier im Chat einen kompakten, fallunabhängigen Arbeitsweisen-/Fähigkeitsbrief (höchstens etwa 600 Wörter). Beschreibe, wie du Nutzerabsicht/Annahmen festhältst, ein neues oder bestehendes Projekt erkundest, Änderungen begrenzt umsetzt, sinnvoll testest/reviewst, Drift/Regressionen behandelst und bei Kontextverlust fortsetzt. Benenne aus dem vorhandenen Sitzungskontext bekannte Werkzeuge und Mess-/Kontextgrenzen; ungeprüfte Fähigkeiten klar als ungeprüft lassen. Keine Testaufrufe oder zusätzlichen Diagnose-/Modell-/Providersitzungen, keine Subagenten für diesen kurzen Brief, keine Repositoryänderungen. Du hast noch keinen freigegebenen Studiencheckout. Dein gemeinsames cwd ist nicht dein Schreibbereich.\n\nLies für diesen Brief weder Studienfixtures/künftige Aufgaben/Oracle noch Implementierungen, Bewertungen oder Ergebnisse anderer Arme/Chats. Der vorhandene Chat bleibt die Anlaufstelle; Scientist muss je Studienzelle frische Actor-Kontexte und isolierte Checkouts sowie ein gleiches tatsächliches Tool-/Modell-/Ressourcenprofil festschreiben. Aus diesem Brief folgt kein Trialstart und kein empirischer Referenzwert.\n\nDer Nutzer hat im selben Overseer-Chat außerdem direkt verlangt: „lass die Agents sich zurückmelden ... Sonst sollen sie sich melden wenn sie fertig sind oder was brauchen.“ Zusammen mit deiner jetzigen ausdrücklichen Einbindung autorisiert das deine Abschluss-/Bedarfsmeldung an Overseer. Bei Bedarf ist die direkte Nutzernachricht dort mit read_thread nachlesbar. Sende den fertigen fallunabhängigen Brief einmalig mit send_message_to_thread an 01a11367-a781-7683-a20f-46e12614dcb4, hostId local, Ereignis oldschool-baseline-preparation-20261008. Keine reine Empfangsbestätigung, Meldeschleife oder periodischen Pings. Anschließend wartest du auf genau abgegrenzte Folgeaufträge; bestehende Studiengrants werden nicht benutzt.",
         "scope": "One case-independent chat brief, no study inputs, writes or experimental executions.",
         "exitCondition": "Brief and one direct completion/need callback, then wait.",
@@ -2122,11 +2122,36 @@
             }
           ],
           "isError": false
+        },
+        "acceptedUtc": "2026-10-08T01:50:55Z"
+      },
+      "evidence": {
+        "preparationBrief": {
+          "event": "oldschool-baseline-preparation-20261008",
+          "acceptedUtc": "2026-10-08T01:50:55Z",
+          "source": "Direct callback from Oldschool in Overseer chat",
+          "summary": {
+            "role": "Strong Conventional baseline; Scientist owns common tasks, holdouts and independent measurement; no Markitect/Government.",
+            "workflow": [
+              "Translate intent into observable behavior, acceptance criteria and bounded scope; document assumptions and decisions; ask material questions.",
+              "Inspect only assigned checkout, instructions, Git state, entry points, data flow, affected components and callers.",
+              "Implement complete bounded changes with clear responsibilities, validation and error handling; bounded independent subagents only when useful, counted in budget.",
+              "Choose risk-based regression/integration checks, meaningful real flow, independent review and final diff; bind evidence to actual tested candidate.",
+              "Compare changes with original intent, investigate reproducible failures, repeat affected checks after fixes, invalidate outdated evidence.",
+              "Resume from explicit goal/decisions/open scope/branch-SHA/WIP/checks/next step and verify against actual checkout."
+            ],
+            "capabilities": "PowerShell/Windows and supplied file/shell/subagent/chat interfaces known from session; concrete CLI, SDK, test runner, browser/provider usability in study checkout unverified.",
+            "reportedPreparationActivity": "Only read direct user callback authorization; no repository access, writes, tests, subagents or additional diagnostic/model/provider sessions reported.",
+            "limits": "Planning brief only; no empirical baseline, S1, semantic or human acceptance. Persistent owner chat contains preparation context; each trial needs fresh actor context and isolated checkout with matched actual model/tools/resources. Exact cost/token/time measurements unproven without instrumentation."
+          },
+          "independentRuntimeCheck": false,
+          "empiricalReference": false,
+          "studyStarted": false
         }
       }
     }
   ],
-  "nextAction": "Scientist finishes current offline scope fix, then binds Oldschool to public Conventional reference measurement plan. Oldschool prepares case-independent method/capability brief and reports once. Review callbacks before actual new bounded runs; Worker/Architect hold.",
+  "nextAction": "Scientist completes current offline scope correction and existing Oldschool public role/measurement binding using accepted methods brief. Oldschool holds. Review direct completion/need callbacks before any actual new bounded run.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -2511,7 +2536,8 @@
       "strongBaselineTools": "Normal planning, documentation, tests, general tools, subagents and independent reviews within same budget; no Markitect/Government.",
       "contextRule": "Fresh actual actor context and isolated checkout per cell; persistent owner chat is not fresh trial context.",
       "executionRule": "Exact shared model/reasoning/tool/permission/channel and finite resources before actual execution; no hidden App/CLI confound.",
-      "currentAuthorization": "Preparation only; no trial grant or empirical baseline values."
+      "currentAuthorization": "Preparation only; no trial grant or empirical baseline values.",
+      "preparationStatus": "Oldschool methods brief accepted; Scientist role/measurement binding pending; no empirical reference."
     }
   },
   "fullSuiteSlotHistory": [
@@ -2712,6 +2738,12 @@
         "candidateSha": "1ea3fc970797e01206e98d15e1951021b4ee5586",
         "processedUtc": "2026-10-08T01:42:34Z",
         "disposition": "Qualified incomplete closure verified; bounded offline follow-up authorized."
+      },
+      {
+        "event": "oldschool-baseline-preparation-20261008",
+        "sourceThreadId": "01a11928-cc8d-7580-9d29-f6557bb2cbd7",
+        "processedUtc": "2026-10-08T01:50:55Z",
+        "disposition": "Preparation brief accepted; public summary for already assigned Scientist binding; Oldschool hold."
       }
     ],
     "oldschoolAuthorization": {
@@ -2720,5 +2752,12 @@
       "threadId": "01a11928-cc8d-7580-9d29-f6557bb2cbd7",
       "targetThreadId": "01a11367-a781-7683-a20f-46e12614dcb4"
     }
+  },
+  "publicOldschoolHandoff": {
+    "event": "oldschool-baseline-preparation-20261008-public-handoff",
+    "targetThreadId": "01a1169c-3df6-7571-997d-48ab57365875",
+    "status": "sent once",
+    "prompt": "Öffentlicher Input zum bereits erteilten Paket scientist-oldschool-baseline-binding-20261008; kein zusätzlicher Arbeitsauftrag und keine Laufquote.\n\nOldschool hat oldschool-baseline-preparation-20261008 per direkter Rückmeldung abgeschlossen. Ich habe den fallunabhängigen Arbeitsweisenbrief als Vorbereitung angenommen. Er beschreibt:\n- beobachtbare Abnahmekriterien, begrenzten Umfang und explizite Annahmen/Entscheidungen;\n- gezielte Erkundung von Anweisungen, Git-Stand, Einstiegspunkten, Datenfluss und betroffenen Aufrufern;\n- vollständige begrenzte Änderungen, klare Verantwortlichkeiten, Validierung und Fehlerbehandlung;\n- risikobasierte Regression-/Integrationsprüfungen, sinnvolle unabhängige Reviews und SHA-gebundene Nachweise;\n- Driftabgleich gegen den ursprünglichen Auftrag, reproduzierbare Fehler und erneute betroffene Checks;\n- prüfbare Übergabe mit Ziel, Entscheidungen, SHA/WIP, Checks und nächstem Schritt statt Vertrauen auf bloße Zusammenfassung.\nSubagenten nur für sinnvolle unabhängige Arbeit; deren Aufwand zählt mit. Markitect/Government bleiben aus dem Arm ausgeschlossen. Gemeinsame Aufgaben, Oracle und endgültige Bewertung bleiben bei dir bzw. unabhängigen Bewertern.\n\nSeine konkreten Studienwerkzeuge und tatsächliche Toolfähigkeit sind ausdrücklich ungeprüft. Gemeldet sind keine Repositoryzugriffe, Änderungen, Tests, Subagenten oder zusätzlichen Diagnose-/Modellsitzungen in dieser Vorbereitung. Das ist eine Eigenmeldung, kein instrumentierter Nullverbrauchsnachweis. Der Brief liefert weder einen gemessenen Referenzwert noch S1 oder semantische Annahme. Exakte Usage-/Zeitwerte bleiben ohne Instrumentierung unbekannt.\n\nOldschool bestätigt ausdrücklich: Sein permanenter Eigentümerchat ist wegen Rollen-/Vorbereitungskontext kein frischer Studien-Actor. Die bereits vereinbarte frische Ausführung je Zelle und das gemeinsame tatsächliche Modell-/Tool-/Ressourcenprofil bleiben Voraussetzung. Nutze diese öffentliche Methodenbeschreibung in deinem bestehenden Einbindungs-/Messplan, nach Abschluss des laufenden Scope-Pakets. Keine neuen Kriterien/Gewichte oder zusätzliche Vorbereitung einer konkreten Aufgabe ableiten. Oldschool wartet jetzt auf einen späteren konkret freigegebenen Auftrag; keine reine Empfangsbestätigung nötig.",
+    "sentUtc": "2026-10-08T01:51:27Z"
   }
 }
