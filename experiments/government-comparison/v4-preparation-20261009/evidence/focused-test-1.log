@@ -1,0 +1,22 @@
+test_alias_traversal_and_allowlist (test_mechanics.DTOTests.test_alias_traversal_and_allowlist) ... ok
+test_atomic_publish_preserves_original_and_refuses_audited_root (test_mechanics.DTOTests.test_atomic_publish_preserves_original_and_refuses_audited_root) ... ok
+test_closed_json_and_opaque_inference_case (test_mechanics.DTOTests.test_closed_json_and_opaque_inference_case) ... ok
+test_missing_oversize_foreign_role_and_unknown (test_mechanics.DTOTests.test_missing_oversize_foreign_role_and_unknown) ... ok
+test_nonce_and_evidence_never_filled (test_mechanics.DTOTests.test_nonce_and_evidence_never_filled) ... ok
+test_usage_requires_real_receipt_shape (test_mechanics.DTOTests.test_usage_requires_real_receipt_shape) ... ok
+test_valid_bytes_and_modes_no_semantic_acceptance (test_mechanics.DTOTests.test_valid_bytes_and_modes_no_semantic_acceptance) ... ok
+test_actual_runner_minimum_and_interrupt_margin (test_mechanics.DeadlineTests.test_actual_runner_minimum_and_interrupt_margin) ... ok
+test_assessment_late_or_nonfinite_refused (test_mechanics.DeadlineTests.test_assessment_late_or_nonfinite_refused) ... ok
+test_implementation_cannot_consume_assessment_reserve (test_mechanics.DeadlineTests.test_implementation_cannot_consume_assessment_reserve) ... ok
+test_10013_and_missing_url_stop_without_retry (test_mechanics.TransportTests.test_10013_and_missing_url_stop_without_retry) ... ok
+test_own_stdout_url_and_owned_cleanup_no_process_launched (test_mechanics.TransportTests.test_own_stdout_url_and_owned_cleanup_no_process_launched) ... ok
+test_start_cap_and_expired_deadline_never_spawn (test_mechanics.TransportTests.test_start_cap_and_expired_deadline_never_spawn) ... ok
+test_atomic_case_detects_partial_effect (test_oracle_mechanics.OracleMechanics.test_atomic_case_detects_partial_effect) ... ok
+test_atomic_case_reaches_stock_rule_at_current_limit (test_oracle_mechanics.OracleMechanics.test_atomic_case_reaches_stock_rule_at_current_limit) ... ok
+test_checkpoint_roundtrip_keeps_equivalent_http_observations (test_oracle_mechanics.OracleMechanics.test_checkpoint_roundtrip_keeps_equivalent_http_observations) ... ok
+test_checkpoint_still_detects_changed_catalog (test_oracle_mechanics.OracleMechanics.test_checkpoint_still_detects_changed_catalog) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.260s
+
+OK

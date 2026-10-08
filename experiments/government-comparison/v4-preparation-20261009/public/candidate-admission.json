@@ -1,0 +1,31 @@
+{
+  "version": "v4-draft",
+  "status": "NOT ADMITTED; preparation only",
+  "design": {
+    "source": null,
+    "binarySha256": null,
+    "acceptedReadiness": false,
+    "publicRoleContract": null,
+    "actualCommonProfileSupport": null,
+    "gap": "Await exact clean accepted readiness handoff; no57fa+WIP substitution or source read."
+  },
+  "classicMain": {
+    "source": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+    "binarySha256": null,
+    "runtimeConfigSha256": null,
+    "modulePins": null,
+    "acceptedReadiness": false,
+    "publicWireProfile": "classic-main-agentexec-v1alpha1",
+    "actualNativeRoleSupport": null,
+    "gap": "Source contract inspected read-only; exact binary/runtime/config/modules and actual common-profile CLI/roles not admitted."
+  },
+  "conventional": {
+    "methodBriefSha256": "5b9dddff5d07d9cb1e6427c43e46f1259e9fb49fd030fc0a6e1e44b21e60aadc",
+    "actualNativeProfileHistorical": "gpt-6.1-sol/high inherited native collaboration worked in v3/posthoc",
+    "newRunnerConfigFreeze": null,
+    "acceptedReadiness": false,
+    "gap": "Freeze exact current native dispatcher/tools/config with other arms; no historical capability-loop rerun."
+  },
+  "heldV3ClassicUnchanged": "c91363b7ac4decbe87212ff0f588b5451581a152",
+  "mainOrReleaseDecision": false
+}

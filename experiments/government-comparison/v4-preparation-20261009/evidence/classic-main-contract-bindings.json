@@ -1,0 +1,32 @@
+{
+  "source": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+  "files": {
+    "internal/host/agentexec/types.go": {
+      "sha256": "3c2875d87473406831f28803beec71b19d17d8334e70befe41e6fb381f345ac4",
+      "gitBlob": "664a36e5984ae2a3360b733f50b40b3c18f41cbb"
+    },
+    "internal/host/agentexec/json.go": {
+      "sha256": "b6f7ee75a8bf007d0f1facfafc5b6a9ee72aaae270e641170aab53815d861104",
+      "gitBlob": "7b33564ce88a06e615e994187b7179f885cd2b46"
+    },
+    "internal/host/agentexec/runner.go": {
+      "sha256": "26d1713a3ffeacc87b03b7a5be6231375b39984dcd61f9e35753ae1dd2320e5b",
+      "gitBlob": "84893e927a96edd787152a769d5ae55b042e506a"
+    },
+    "internal/host/agentexec/README.md": {
+      "sha256": "80178c5b90bc63575aa3e1e4e8fe5b2e25da9394252bba8fec015db6fa049f46",
+      "gitBlob": "0fb39dd4d63372b63f9393ddd8317acf35af6335"
+    },
+    "docs/canonical-projections.md": {
+      "sha256": "85c6d006345870002445a4c64a1f71ac9031b1815c5c539d7e8236542913dccf",
+      "gitBlob": "a8a330cc9651e668fcd1a5ea650aef5ca9254403"
+    },
+    "docs/usage.md": {
+      "sha256": "978bc65456132c84f426c312dd2c586b67a88bcd600fa2c3938fc296f437cfc9",
+      "gitBlob": "20de7203868a28b245f33bf2a87445c18deadafe"
+    }
+  },
+  "readOnlySourceInspection": true,
+  "binaryExecuted": false,
+  "nativeRoleCapabilityEstablished": false
+}

@@ -1,0 +1,20 @@
+{
+  "version": "v4-draft",
+  "purpose": "Artifact-neutral proposed observations; freeze before additional trials",
+  "records": [
+    "released task/source digests and accepted intent revision",
+    "changed/required outputs with responsible owner and explicit uncovered/unknown items",
+    "current versus stale evidence and unresolved drift",
+    "actual interruptions/resumption/errors/review/apply decision",
+    "active human and coordinator interventions with reason/elapsed/unknowns"
+  ],
+  "conventionalDesignArtifactRequirement": false,
+  "methodSpecificEvidence": "Product models, records, role votes and CLI actions remain separately assessed only where actually supported/required by that arm",
+  "migrationReadinessAxes": [
+    "canonical model authority and maintenance",
+    "durable file ownership/coverage",
+    "usable run/resume/repair/verify/apply",
+    "Brownfield conflict resolution/selective adoption/evidence migration"
+  ],
+  "sharedApplicationRequirements": "Unchanged shared staged HTTP outcomes except explicit prospectiveTask5 replay clarification; new migration tasks need public equal-outcome review before study freeze."
+}

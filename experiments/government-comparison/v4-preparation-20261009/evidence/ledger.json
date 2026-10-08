@@ -1,0 +1,62 @@
+{
+  "key": "matched-design-classic-main-conventional-preparation-20261009",
+  "issuedUtc": "2026-10-08T23:09:35Z",
+  "notAfterUtc": "2026-10-08T23:39:35Z",
+  "firstObservedUtc": "2026-10-08T23:10:11Z",
+  "actualActors": 0,
+  "providerCalls": 0,
+  "appserverCalls": 0,
+  "fullTrials": 0,
+  "actualServerStarts": 0,
+  "correctionBatches": [
+    {
+      "batch": 1,
+      "utc": "2026-10-08T23:14:13.428998+00:00",
+      "scope": "Pre-test source review: reject explicit null foreign-role candidateJson, require audited publication roots, reject control/reserved path characters and non-finite/future task times. No product or old input changes."
+    },
+    {
+      "batch": 2,
+      "utc": "2026-10-08T23:18:22.674929+00:00",
+      "scope": "Prospective staged-check release removes unreleased inventory/restart/lifecycle/Greenfield alias text; condition/cutoff-specific public materialization outside actor tree. Old release/oracle/evidence unchanged."
+    }
+  ],
+  "focusedTestInvocations": [
+    {
+      "invocation": 1,
+      "reservedUtc": "2026-10-08T23:15:53.648776+00:00",
+      "kind": "focused offline mechanical tests only",
+      "actualActors": 0,
+      "actualServers": 0,
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedSeconds": 0.4870437999998103,
+      "finishedUtc": "2026-10-08T23:15:54.136209+00:00",
+      "logSha256": "d008f6c7703205399243a7a222afdebd26a83b0559f1e7e4c7c24a9edc8d76ed"
+    },
+    {
+      "invocation": 2,
+      "reservedUtc": "2026-10-08T23:18:41.864002+00:00",
+      "kind": "focused final DTO/transport/deadline/oracle/staged-release mechanics",
+      "actualActors": 0,
+      "actualServers": 0,
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedSeconds": 0.8368399999999383,
+      "finishedUtc": "2026-10-08T23:18:42.701222+00:00",
+      "logSha256": "5608c2e17d805c0bbeaf424b2d179a9cd98b0769ce56795449e5e61c8977661d"
+    }
+  ],
+  "usage": null,
+  "status": "closed-offline-draft-delivered-not-admitted",
+  "closedUtc": "2026-10-08T23:23:40.804931+00:00",
+  "elapsedFromGrantIssueSeconds": 845.804931,
+  "remainingCorrectionBatches": 0,
+  "remainingFocusedTestInvocations": 0,
+  "actualServers": 0,
+  "newProviderAPICalls": 0,
+  "newAppserverCalls": 0,
+  "newFullTrials": 0,
+  "parentProviderUsage": null,
+  "humanActiveSeconds": null,
+  "remainingActualTrialAllocation": 0
+}

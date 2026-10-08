@@ -1,0 +1,28 @@
+{
+  "access": "Scientist and independent evaluators only; never copied to implementation Actors",
+  "files": [
+    {
+      "path": "holdout-plan.json",
+      "sha256": "b29e61c8a753290e557cffc7fd6ab32c30e973835e79678ebf8865ee14e33ae9",
+      "bytes": 7007
+    },
+    {
+      "path": "holdout_checks.py",
+      "sha256": "dd276535cb7e47950da1174ba0549ad58a9d9a87c00ffe94ba9d80570cd28aea",
+      "bytes": 14722
+    },
+    {
+      "path": "task6-equivalence-plan.json",
+      "sha256": "50385660df977fe07ee76b5b67633c08ee18e03e79f4bf63fd385bd4e97d4e52",
+      "bytes": 816
+    },
+    {
+      "path": "test_oracle_mechanics.py",
+      "sha256": "ff55a23ae0bd0ed08143868cd7261790a0a6f21a3aea131a8d93ede1a0c47598",
+      "bytes": 2666
+    }
+  ],
+  "archiveSha256": "b125e404f723d6c91223762dafa4c7d612a3f234aeebbe7d707f64511d4f3030",
+  "sourceLocation": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\v4-preparation-20261009",
+  "publicPrivateBoundary": "Cooperative path scope, no OS confinement claim"
+}

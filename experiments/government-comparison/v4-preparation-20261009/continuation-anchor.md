@@ -1,0 +1,9 @@
+# Closed offline preparation continuation anchor
+
+Preparation is complete. Ledger is closed; no actual activation or remaining correction/test quota. The next step is commit/one closure callback and future independent admission under a separate grant. Historical preparation anchor follows.
+
+Grant matched-design-classic-main-conventional-preparation-20261009: issued 2026-10-08T23:09:35Z, ends23:39:35Z. Actual Actor/provider/appserver/server/full-trial quota is zero. No agents may be spawned for this preparation. Two ordinary correction batches and two focused test invocations have been consumed; both invocations passed (17 then19 pure mechanical tests). No further code correction/test loop is authorized by this grant.
+
+Current next step: preserve exact prospective private sources in a Scientist-only archive, verify hashes/unchanged original evidence without running tests or candidates, complete the small source/diff/admission handoff, cached diff check and commit, then one closure callback to Overseer01a11367-a781-7683-a20f-46e12614dcb4/local. There is no actual v4 freeze or execution allocation. Design source/binary/roles remain unadmitted/null. New Classic Main sourcea97cbd5 is prospective only; held v3c91363b and all old/posthoc outcomes remain immutable.
+
+Public DTO/release/deadline/owned-handle helper sources and test logs are under this packet. Private revised oracle/plan/tests/Task6 equivalence mapping are under experiments/government-comparison/.study-data/v4-preparation-20261009 and must never be sent to product implementers. Preparation fixtures prove mechanics only, not native role capability, application quality, OS isolation or model compatibility. Do not revert to an obsolete wait instruction after compaction; finish this authorized bounded handoff.

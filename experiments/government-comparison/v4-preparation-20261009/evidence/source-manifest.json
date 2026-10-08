@@ -1,0 +1,190 @@
+{
+  "version": "v4-preparation-draft",
+  "bindingKind": "exact working bytes; packet .gitattributes preserves bytes in Git",
+  "createdUtc": "2026-10-08T23:23:40.804931+00:00",
+  "sourceBaseline": "3e8515f7ca9b1a3a4a0f887884753b7efc87796a",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
+      "bytes": 8
+    },
+    {
+      "path": "continuation-anchor.md",
+      "sha256": "5a17e617fb624e60cb9b07df658ba41e9a84e20930ecd3e222f3965d92605667",
+      "bytes": 1802
+    },
+    {
+      "path": "evidence/authorization-grant.json",
+      "sha256": "cb7f9cfdb02b4a5e7504e1017c89b1c5f085483a8ca1eb2e0e8e7023b6e459cd",
+      "bytes": 2655
+    },
+    {
+      "path": "evidence/classic-main-contract-bindings.json",
+      "sha256": "9f4cb16ee03bcf1c2219913d545d660d7b0bbf9e377e839aea7bf5578d166ccd",
+      "bytes": 1352
+    },
+    {
+      "path": "evidence/focused-test-1.log",
+      "sha256": "d008f6c7703205399243a7a222afdebd26a83b0559f1e7e4c7c24a9edc8d76ed",
+      "bytes": 2393
+    },
+    {
+      "path": "evidence/focused-test-2.log",
+      "sha256": "5608c2e17d805c0bbeaf424b2d179a9cd98b0769ce56795449e5e61c8977661d",
+      "bytes": 2667
+    },
+    {
+      "path": "evidence/ledger.json",
+      "sha256": "f9c297019a94dcef9980bb1990471aa0374f7be03896c65f0752a602db243d30",
+      "bytes": 2409
+    },
+    {
+      "path": "evidence/private-archive-manifest.json",
+      "sha256": "d6cd6bab859c92f7a967a8899f62dc583e95b34f92f1cc70462be12e191dc518",
+      "bytes": 1105
+    },
+    {
+      "path": "evidence/private-preparation.zip",
+      "sha256": "b125e404f723d6c91223762dafa4c7d612a3f234aeebbe7d707f64511d4f3030",
+      "bytes": 8504
+    },
+    {
+      "path": "evidence/readonly-preservation-check.json",
+      "sha256": "af166ff557585fee91834533321a3325f745240e1012adf95c72d65a889cf429",
+      "bytes": 27572
+    },
+    {
+      "path": "evidence/source-lineage.json",
+      "sha256": "55d1ef567ebcba0a233f36caa8b6cd726d4d49c9d126ce3ce1e108726558e988",
+      "bytes": 11438
+    },
+    {
+      "path": "handoff.md",
+      "sha256": "c3721ac3e2ab3c21e49c7efbbacfdb49860371e435c69ad601ec11c287214337",
+      "bytes": 6193
+    },
+    {
+      "path": "protocol-draft.md",
+      "sha256": "b8d7abb528576968bfe063d20865630d24c20cb51fc35ad44d9967f2227bd83f",
+      "bytes": 11580
+    },
+    {
+      "path": "public/architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "bytes": 3296
+    },
+    {
+      "path": "public/brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "bytes": 3000
+    },
+    {
+      "path": "public/brownfield-provenance.md",
+      "sha256": "155f6f736adf4d48b71074f74a9221d9f8ac796a938b5b8b0650f741d59eb548",
+      "bytes": 5244
+    },
+    {
+      "path": "public/candidate-admission.json",
+      "sha256": "fc743e339885ac0cc25b3409c23a1497e075786730fd9f42f0b0cd64de33e856",
+      "bytes": 1322
+    },
+    {
+      "path": "public/checks.py",
+      "sha256": "783561065c3bc6c814aed3ba5c943710442dbbee4502ad7db6b58eed4dabeccf",
+      "bytes": 9151
+    },
+    {
+      "path": "public/common-outcome-record.json",
+      "sha256": "faf63ce63336e9df81646822181af74c995853482b838b254773a68b143f20ab",
+      "bytes": 1176
+    },
+    {
+      "path": "public/common-profile-proposal.json",
+      "sha256": "d153c97695ee95521331606ce413950df7c8c8f47f69c8441853fc3499883552",
+      "bytes": 1533
+    },
+    {
+      "path": "public/deadlines.py",
+      "sha256": "7e025a3e49625134abaad80036832746cb2b21f2e1bf976387f872ccb2437165",
+      "bytes": 1229
+    },
+    {
+      "path": "public/dto_preflight.py",
+      "sha256": "e6bba598c515925ce584342190b18f5fb7f4a67054e66e55d1c5572cb43e975d",
+      "bytes": 7883
+    },
+    {
+      "path": "public/holdout-procedure.md",
+      "sha256": "795fd4bac98559ea7c8a1c2066deaa3f198a50406ae0b2f9d68c34e67ab6ac7f",
+      "bytes": 3367
+    },
+    {
+      "path": "public/oldschool-workflow-brief-20261008.md",
+      "sha256": "5b9dddff5d07d9cb1e6427c43e46f1259e9fb49fd030fc0a6e1e44b21e60aadc",
+      "bytes": 2262
+    },
+    {
+      "path": "public/owned_transport.py",
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487",
+      "bytes": 3279
+    },
+    {
+      "path": "public/q1-intent-setup-v1.md",
+      "sha256": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e",
+      "bytes": 3620
+    },
+    {
+      "path": "public/release.py",
+      "sha256": "15df0312e5c1150e685a44a49d969766f20bf6194f7b0b48cf2a80605f23d291",
+      "bytes": 4716
+    },
+    {
+      "path": "public/rubric.json",
+      "sha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+      "bytes": 5369
+    },
+    {
+      "path": "public/task-requirement-map.json",
+      "sha256": "2a6473f03df9aace3c7222a61e0078d97aabdf3d9a3d908ea3f1c36b5962f53c",
+      "bytes": 3857
+    },
+    {
+      "path": "public/tasks/01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "bytes": 1189
+    },
+    {
+      "path": "public/tasks/02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "bytes": 1075
+    },
+    {
+      "path": "public/tasks/03-persist-state.md",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "bytes": 737
+    },
+    {
+      "path": "public/tasks/04-order-lifecycle.md",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+      "bytes": 1028
+    },
+    {
+      "path": "public/tasks/05-change-limit.md",
+      "sha256": "b68ccd173891692050c64101af47754f1213e745a63071653b30b8d9d6ccf17f",
+      "bytes": 1315
+    },
+    {
+      "path": "public/tasks/06-repair-regression.md",
+      "sha256": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a",
+      "bytes": 892
+    },
+    {
+      "path": "public/test_mechanics.py",
+      "sha256": "9ee8088e7e61932acf67a8fbae4d1a49b7e3999571f2feff7fbb637f060b6603",
+      "bytes": 8712
+    }
+  ],
+  "actualStudyFreeze": false,
+  "candidateAdmission": "pending; no source or model capability inferred from mechanical fixtures"
+}
