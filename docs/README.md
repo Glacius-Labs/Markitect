@@ -9,6 +9,7 @@
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Product principles and deferred design choices |
 | [Implementation plan](implementation-plan.md) | The Markitect roadmap |
+| [Project world planning](design/project-world/README.md) | User-directed plan for shared domain language, recursively owned responsibility areas, modules, namespaces, processes and management terminology; not implemented behavior |
 | [Government design package](design/government/README.md) | Current experimental Government design, source transition, comparative study and staged handoff plan; not implemented behavior |
 | [Government of Coding Agents assessment](design/government-of-coding-agents-assessment.md) | Deferred product decision and design proposal after the Architect foundation checkpoint; not implemented behavior |
 | [Architect and Government checkpoint](design/architect-government-checkpoint.md) | Final Architect candidate, exact-source gate evidence, reconciliation of prepared designs, and remaining product decisions |

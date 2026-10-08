@@ -1,0 +1,125 @@
+# Plan: vom Projektmodell zur verantworteten Umsetzung
+
+Stand: 8. Oktober 2026. Dies ist der Umsetzungsplan des [Planungspakets](README.md). Er beauftragt zunächst Planung und behauptet keine Produktimplementierung. Die [Root-Roadmap](../../implementation-plan.md) bleibt Besitzer des allgemeinen Quell- und Release-Status.
+
+## 1. Aktuelle Arbeitsgrenze
+
+Erledigt in diesem Planungsschritt: isolierter Worktree und Feature-Branch, Festhalten der Nutzerrichtung, Modellvorschlag, Terminologieabgrenzung, erste Umsetzungsschritte und Abnahmeszenarien. Produktcode, Schemas, Runtime, bestehende Releaseverträge und andere Worktrees bleiben in diesem Schritt unverändert.
+
+Die Planungsbasis `53be4b98ece0cd9e797530f18c29ec8ae683f3fd` enthält die bisherige Government-Diskussion. Die lokale Hauptlinienreferenz `a97cbd5ef3e0b22b9e6397501047a4e01dc90204` ist separat zu untersuchen. Der [Architect-Abgleich](../architect-government-checkpoint.md) bindet historische technische Belege an `1ea5c76f55526fc4d721e865885436153f48b497`; sie gelten nicht automatisch für die neue Planung oder andere SHAs.
+
+Vor der ersten Produktcodeänderung: technische Basis wählen, Änderungen und aktive Besitzer inventarisieren, dieses Planungspaket übertragen, tatsächliche Verträge an exakten Quellen nachlesen. Die bloße Existenz eines aktuellen Remote-Refs ist keine erneute CI- oder Runtime-Verifikation.
+
+## 2. Wiederverwendung und Lücken
+
+Die bestehende [Änderungslandkarte](../delegated-engineering-change-map.md) und der [Quellübergang](../government/source-transition.md) sind Herkunft für den ersten Abgleich, keine Belege neu ausgeführter Tests. Der folgende Hauptlinienabgleich wurde durch Lesen der angegebenen Dateien mit `git show a97cbd5ef3e0b22b9e6397501047a4e01dc90204:<Pfad>` unabhängig nachgeprüft.
+
+| Quelle an `a97cbd5ef3e0b22b9e6397501047a4e01dc90204` | Beobachtung und Grenze |
+|---|---|
+| `internal/core/types.go`, `internal/core/compile.go` | Schema, Kind, Property, Definition, vollständige Identität und explizite Referenzkanten existieren. Compile führt keine Policy oder I/O aus. Die Kanten besitzen keine automatische fachliche Traversierungssemantik. Verantwortungs-/Workflowregeln gehören in ausdrücklich dafür zuständige Prüfungen oberhalb des strukturellen Core. |
+| `examples/capability-ontologies/workflow-responsibility/schema.yaml` | Role und WorkItem mit genau einer accountable-Referenz sowie optionalen Reviewern sind ein struktureller Ausgangspunkt. Das Beispiel enthält noch keine rekursive Verantwortungsorganisation. |
+| `examples/canonical-projection/definitions/create-order.use-case.yaml` | Ein UseCase referenziert einen Handler. Definitionen von Order, Stornierung und Reservierung sowie ihre fachliche Prüfung entstehen dadurch nicht. |
+| `internal/host/authoring/model.go` | Der historische Area-Typ enthält Name, Path, Imports und Rules. Er ist nicht der neue rekursive Bereich mit einem Verantwortlichen; Namenskollision explizit auflösen. |
+| `docs/development/modules.md`, `docs/design/canonical-projection-reset.md` | Installierbare Module sind im heutigen Vertrag strikt schema- oder zielbezogene Fähigkeitspakete. Namespace ist Teil der DefinitionIdentity; beides schafft keine Managementhierarchie. Neue Modul-/Ownershipsyntax und Altverträge müssen bewusst zugeordnet werden. |
+
+Das ist ein begrenzter Quellabgleich, keine Vollständigkeitsprüfung aller Implementierungen oder erneute Gate-Ausführung. Der Produktcode der Planungsbasis wird damit nicht aufgewertet.
+
+| Mechanismus | Geplante Behandlung |
+|---|---|
+| Struktureller deterministischer Compiler, typisierte Referenzen und Provenienz | Behalten; neue Vokabulare über vorhandene Mechanismen prüfen, keinen NLP-Compiler voraussetzen |
+| Feste Quellen und konservative Folgenabschätzung | Behalten; Auswirkungen unterschiedlicher Beziehungstypen ausdrücklich definieren |
+| Akzeptierte Definitionen | Um klaren Begriffs-/Kontextvertrag und Verwendungen in Regeln/Use Cases ergänzen |
+| Bestehende Ziel- und Artefaktverträge | Von Verantwortungsbereichen und einmaligen Arbeitsaufträgen unterscheiden; Auftragsorganisation entkoppeln |
+| Lokale und Elternprüfung | Für Verantwortungsbereiche nutzbar machen, ohne Prüfpflichten durch Aggregation zu verlieren |
+| Pakete und technische Fähigkeiten | Versionierung und explizite Adoption beibehalten; Maintainer und lokale Verantwortlichkeit ergänzen |
+| Freie Notizen und Vorschläge | Leichten Weg zur bewussten Modellannahme entwickeln; unverbindliche Inhalte nicht aktivieren |
+| Dateiinventar und Nachweise | Viele-zu-viele Zuordnung, eindeutige Writer und sichtbare unbekannte Artefakte erhalten |
+
+## 3. Begriffsübergang
+
+„Projektion“ ist für das Zielprodukt zurückgezogen. Technische Altverträge benötigen eine semantische Zuordnung statt globaler Textersetzung:
+
+| Historischer Begriff / Vertrag | Zielbegriff nach tatsächlicher Bedeutung |
+|---|---|
+| `Projection` als dauerhafter Vertrag einer Darstellung | Zielvorgabe bzw. Realisierungsvertrag; endgültigen öffentlichen Namen am Beispiel entscheiden |
+| `Projection Module` als installierte Zielkompetenz | Umsetzungsfähigkeit bzw. Werkzeugmodul |
+| `ProjectionPolicy` | Regeln für eine bestimmte Realisierung; keine allgemeine Bereichsbefugnis |
+| Controller-Proposal / Run | Arbeitsplan / konkreter Durchlauf |
+| Projection-gebundener Assurance-Scope | Prüfung eines expliziten Verantwortungs- und Integrationsumfangs |
+| Materialisierte Dateien | Artefakte bzw. Realisierungen |
+
+Ein **Bereich** ersetzt keinen der Altverträge pauschal. Der Bereich verantwortet Ziele und Arbeit; der Realisierungsvertrag beschreibt, was entstehen bzw. erhalten bleiben soll. Die spätere Umstellung betrifft Dokumentation, Authoring, Schemas, CLI, Berichte, gespeicherte Records und Beispiele gemeinsam.
+
+Kompatibilität bestimmt nicht die Zielarchitektur. Trotzdem muss jede Änderung alter Konfigurationen oder gespeicherter Evidenz ausdrücklich migriert oder als neue inkompatible Version ausgewiesen werden. Unveränderliche Releases und historische Berichte werden nicht umgeschrieben. Unbekannte Pflichtabdeckung oder nicht migrierbare Nachweise bleiben sichtbar.
+
+## 4. Endliche Umsetzungsschritte
+
+### P0 — Modell am Beispiel präzisieren
+
+Lieferung: akzeptierter Minimalwortschatz, vollständiger Order-/Reservierungsfall, Entscheidungsprotokoll für die unten offenen Fragen und exakter technischer Basis-SHA.
+
+Endkriterium: Eine Person kann von einer freien Notiz zu akzeptierten Begriffen, Use Case, Verantwortung, konkretem Auftrag und überprüfter Realisierung navigieren. Ungeklärte Fachentscheidungen sind ausdrücklich offen. Öffentliche Begriffe haben jeweils eine Bedeutung.
+
+### P1 — Fachsprache und Ownership ausdrücken
+
+Lieferung: kleinstes kanonisches YAML-Beispiel für Konzepte, Kontext, Regeln, Use Cases, Bereiche, Namespaces, Module und Rollenauflösung; zugehörige Schemata und gezielte Compiler-/Hostdiagnostik.
+
+Endkriterium: Mehrdeutige Referenzen, fehlende Verantwortliche, zyklische Bereichseltern und widersprüchliche Eigentümerschaft werden deterministisch gemeldet. Ein tieferer Bereich benötigt keinen neuen Typ. Prosa erzeugt keine versteckten Referenzen. Vorhandene Kernverträge zuerst nutzen; erst belegte Lücken erweitern.
+
+### P2 — Organisation und Prozesse verbinden
+
+Lieferung: ausdrückliche Zuständigkeit, Delegation, Prozesse, deklarierte Workflow-Schritte und konkrete Aufträge; getrennte kanonische Definitionen und Laufzustände.
+
+Endkriterium: Ein Elternauftrag lässt sich über mehrere Unterbereiche bearbeiten; jeder Schritt hat gültige Zuständigkeit und begrenzte Befugnis. Ein gewöhnlicher Detailentscheid benötigt keine eigene Erlaubnisliste. Modellierungsrekursion wird von begrenzter Laufzeit getrennt.
+
+### P3 — Umsetzung und Prüfung nach Bereichen organisieren
+
+Lieferung: Artefaktzuordnung, Fähigkeitenauswahl, Kandidatenbildung, Writerkoordination, unabhängige lokale Prüfung und eigene Elternintegration.
+
+Endkriterium: Der Stornierungsfall verändert tatsächlich erforderliche Dateien; fehlende Bestandsfreigabe wird trotz erfolgreicher lokaler Order-Prüfung sichtbar. Modelländerung und Reparatur bei unverändertem Modell sind getrennt durchlaufbar. Zwei zuständige Bereiche schreiben nicht unkoordiniert denselben Pfad.
+
+### P4 — Produkteinstieg und Übergang abschließen
+
+Lieferung: README und Navigation entlang des Projekts, modellbasierter Einstieg, ausführbares Beispiel, umgestellte Authoring-Ressourcen, öffentliche Terminologie und expliziter Umgang mit alten Records/Konfigurationen.
+
+Endkriterium: Ein neues Projekt kann mit Ziel, Fachbegriffen und Use Case beginnen, ohne zuerst Skills, Agents oder eine Anbieterintegration zu konfigurieren. Der geplante Begriff ist aus aktiven öffentlichen Verträgen entfernt; historische Namen erscheinen nur in klaren Übergangs- bzw. Herkunftsabschnitten. Erforderliche Gates laufen am finalen Kandidaten; Release bleibt eigener Auftrag.
+
+## 5. Abnahmeszenarien
+
+Die folgenden Szenarien sind Anforderungen für spätere Implementierungsprüfungen. Sie wurden in diesem Planungsschritt nicht ausgeführt.
+
+| ID | Fall | Erwartung |
+|---|---|---|
+| A1 | Brainstorming enthält widersprüchliche Order-Definitionen | Exploration bleibt möglich; beide Vorschläge schaffen noch keine aktive Pflicht |
+| A2 | Order existiert in Verkauf und Einkauf | Kontextgebundene Referenzen lösen eindeutig auf; unklare Referenzen werden gemeldet |
+| A3 | Bedeutung von Reservierung wird geändert | Ausdrückliche Verbraucher, betroffene Realisierungen und ungültige Nachweise werden bestimmt; unbekannte Eingaben engen Impact nicht heimlich ein |
+| A4 | Ein definierter Begriff hat keinen ausführbaren Check | Struktur kann gültig sein; semantische Durchsetzung wird nicht als bestanden ausgegeben |
+| A5 | Bereich, Namespace oder Modul hat keinen Verantwortlichen | Akzeptierter operativer Vertrag ist ungültig bzw. unvollständig; keine stille Git-/Elterninferenz |
+| A6 | Ein Bereich wird mehrfach rekursiv unterteilt | Derselbe Vertrag gilt auf jeder Tiefe; Zyklen und zwei Eltern werden abgelehnt |
+| A7 | Ein Kind versucht eigene Befugnisse auszuweiten | Ausführung bzw. Übernahme wird verweigert; der geltende Elternrahmen bleibt maßgeblich |
+| A8 | Orders und Lagerbestand liefern lokal erfolgreiche Ergebnisse | Elternprüfung untersucht zusätzlich den vollständigen Ablauf und kann dennoch fehlschlagen |
+| A9 | Zwei Bereiche benötigen dieselbe Datei | Ein konkreter Writer oder ein expliziter Integrator koordiniert den Kandidaten |
+| A10 | Projekt übernimmt ein versioniertes Modul | Maintainer und lokale Adoption sind eindeutig verantwortet; Installation aktiviert keine neue Pflicht |
+| A11 | Prozess und konkreter Workflow werden geändert | Zuständigkeit, betroffene Abläufe und Nachweise sind getrennt nachvollziehbar |
+| A12 | Docker-Datei ist noch keinem Modellzweck zugeordnet | Als ungeklärt sichtbar; keine automatisch erfundene Absicht und kein automatisches Löschen |
+| A13 | Artefakt driftet bei unverändertem Soll | Reparaturauftrag entsteht ohne fingierte Modelländerung; neue Prüfung bindet tatsächliche Bytes |
+| A14 | Öffentlicher Altbegriff wird ersetzt | Alte Evidenz wird nicht stillschweigend neu gebunden; Versions-/Migrationsentscheidung ist prüfbar |
+
+## 6. Noch zu entscheidende Details
+
+- Minimale Typen: Reicht zunächst Konzept mit expliziten Beziehungen, oder brauchen Zustand und Übergang eigene Kinds? Am Order-Fall entscheiden.
+- Kontext: Namespace bleibt ein Namensscope mit verpflichtender Verantwortung. Vorgeschlagen ist eine ausdrückliche Deklaration bzw. ein kanonisches Register; ein fachlicher Kontext ist eine zusätzliche ausdrückliche Eigenschaft. Die endgültige Syntax und die Abbildung heutiger Namespace-Strings sind offen, nicht die Ownershippflicht.
+- Rollenauflösung: Referenz auf Person/Team/Rolle und ihr Entscheidungsverfahren; ein eindeutiger Verantwortungsbezug darf keine unklare Mehrheitsentscheidung verbergen.
+- Modulgrenze: Modellvokabular und Werkzeugpakete benötigen unterscheidbare Verträge. Ein gemeinsames Lieferformat ist eine spätere technische Entscheidung.
+- Prozessumfang: Für den ersten Durchlauf genügt ein bewusst begrenzter Workflow. Dauerqueue und unbeaufsichtigter Betrieb sind eigene Nachweise.
+- Detailprüfung: Welche Verpflichtungen werden deterministisch geprüft, welche semantisch beurteilt, welche zunächst nur beschrieben? Sichtbare Abdeckung statt pauschalem Enforcement.
+- Eigentümerwechsel und Bereichsumbau: Identität, historische Verantwortung, Delegation und Impact bei Verschiebung präzisieren.
+- Übergang: Neue öffentliche Syntax und eventuell inkompatible Version ausdrücklich wählen; vorhandene Namen bestimmen nicht das Zielmodell.
+
+Diese Punkte sind konkrete nächste Planungsarbeit. Sie blockieren weder den vorliegenden Entwurf noch verlangen sie eine pauschale neue Freigabe für gewöhnliche Planung.
+
+## 7. Validierung dieses Planungsschritts
+
+Für die Dokumentationsänderung: unabhängige Konzept- und Übergangsreviews, Synthese ihrer Befunde, lokale Prüfung der Markdown-Ziele und `git diff --check`. Keine Produkt-, Runtime-, CI- oder Produktivitätsprüfung wird daraus abgeleitet. Vor Produktcodeänderungen gelten die zum ausgewählten Quellstand passenden Contribution-Gates und zusätzliche fokussierte Prüfungen der Szenarien; keine schwere Vollsuite allein für diesen Plan.
+
+Durchgeführt am 8. Oktober 2026: zwei unabhängige Planungsreviews und eigener Quellabgleich. Die Rückmeldungen zur Trennung von Rollenverantwortung/Bereichszuordnung sowie zur expliziten Ownership deklarierter Namespaces wurden eingearbeitet. Fünf geänderte Markdown-Dateien enthalten 43 geprüfte lokale Linkziele, davon keines fehlend. Whitespaceprüfung erfolgt vor dem lokalen Planungscommit einschließlich neuer Dateien. Keine Produkt- oder Laufzeittests ausgeführt; A1–A14 bleiben geplante Abnahmeszenarien.

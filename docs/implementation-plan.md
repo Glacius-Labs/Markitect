@@ -35,6 +35,10 @@ Acceptance is structural: the new Project parses, resolves, and passes output ch
 
 This source version also adds an executable code-to-documentation example, fixes shared-writer path handling for Windows short/long names while retaining reparse rejection, keeps benchmark fixtures checked in CI, and bundles third-party notices accessible offline through `licenses`. The [authoring pilot](authoring-pilot.md) records actual measurements and the incomplete model comparison; it makes no savings claim.
 
+## Project model and recursive responsibility planning — 2026-10-08
+
+The user-directed [project world planning package](design/project-world/README.md) records the direction toward shared domain language, explicit concepts and use cases, recursively owned responsibility areas, modules and namespaces with accountable owners, and separate processes/workflows. It retires “projection” as the intended public product term while retaining an explicit transition map for historical contracts. Its [bounded plan](design/project-world/implementation-plan.md) owns the proposed phases and acceptance scenarios. This is planning on an isolated branch, not implemented behavior or a release claim. The package records its coordination-source base separately from the technical mainline to reconcile before code changes.
+
 ## Later product options
 
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
