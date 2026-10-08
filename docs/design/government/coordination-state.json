@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T23:30:57Z",
+  "updatedUtc": "2026-10-08T23:34:40Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -448,7 +448,7 @@
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac826613e308191ba6c42eb9f56eba7",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Run six real native-Codex exploratory case studies, independently evaluate and report intermediate data",
-      "latestProgress": "Offline v4 preparation reported clean c7d5510, 37 added files, 17 then19mechanicaltestsPASS, no new ActualActors/Trials; root evidence reconciliation active. Design and common executable profile not admitted.",
+      "latestProgress": "Runtime-binding package active. One original build failed because Scientist forced older baseGo; root verified raw ledger/log. One separate concrete existing-toolchain correction authorized; no actual Actor/trial starts.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
@@ -7201,6 +7201,52 @@
             "No fulltrial admission yet. Next actual block requires exact accepted Design candidate, one supported real common profile and independently reviewed finite freeze/review/trialbudget within existing8trial/2question ceiling."
           ],
           "usage": null
+        },
+        "v4ClassicMainRuntimeBindingDispatch": {
+          "recordedUtc": "2026-10-08T23:34:40Z",
+          "sentUtcApproximate": "2026-10-08T23:32:00Z",
+          "sentTimeApproximate": true,
+          "deliveryConfirmed": true,
+          "grantCommit": "1000d59",
+          "prompt": "Der Offline-Entwurf c7d55105 ist jetzt qualifiziert angenommen: Root hat 36 Arbeits-/Git-Bindungen, 115 unveränderte alte Belegdateien und sechs öffentliche Classic-Main-Quellbindungen geprüft; unabhängiges Review /root/g2_review_authority bestätigt die Grenze „Vorbereitung, noch keine Studienzulassung“. Die beiden mechanischen Testaufrufe und Korrekturbatches sind verbraucht.\n\nFühre nun genau das konkrete Folgepaket v4-classic-main-runtime-binding-20261009 aus. Der neue Grant ist im Root-Commit 1000d59 festgehalten: C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination-state.json -> Scientist.evidence.v4ClassicMainRuntimeBindingGrant. Ausgabe 2026-10-08T23:30:57Z, Ende 2026-10-09T00:10:57Z; höchstens 2400 Sekunden. Keine weitere pauschale Freigabe nötig.\n\nDieses Paket erlaubt KEINE neuen Actors/Subagents, Provider-, Codex-CLI-, Appserver- oder Anwendungsserveraufrufe und keine vollständigen Trials. Erlaubt sind ein Buildversuch für den exakt ausgewählten Classic Main a97cbd5 (höchstens 600 Sekunden, entfällt bei bereits nachgewiesener exakt gebundener Binary), höchstens vier gewöhnliche Classic-Metadaten-/Contextaufrufe bis je 60 Sekunden, zwei gezielte mechanische Testaufrufe und zwei gewöhnliche Korrekturbatches. Keine Vollsuite, Toolchaininstallation, Änderung globaler Einstellungen oder weitere Capabilitydiagnose.\n\nKonkretes Ergebnis in einem NEUEN additiven Paket:\n- Classic Main aus einem eigenen isolierten Checkout auf einem codex/-Branch exakt an Source, Binary, Module, vorhandene Runtime/Toolchain und lokale Konfiguration binden. Keine Änderungen in Root-, Architect-, Worker- oder Design-Produktquellen. Normales Wiederherstellen bereits gepinnter Abhängigkeiten bleibt innerhalb des Buildlimits.\n- Eine korrigierte Kopie des strukturellen DTO-Helpers: request.context entsprechend dem tatsächlichen Vertrag als opake semantische Nutzlast behandeln; Identitäts-/Protokollfelder, Rollen, Pfade und nur gelieferte Evidence-IDs bleiben streng. Keine bloße Parseräquivalenz behaupten.\n- Benutzbare Reservation-/Phasen-/Quota-/Candidate-Freeze-/Frist-/OwnPath-Prüfungen an den späteren nativen Aufrufgrenzen herstellen. Vor einem nativen Auftrag muss der Coordinator ein konkretes zulässiges, reserviertes Aktionsobjekt erhalten; Bewertung nur mit eingefrorenem Kandidaten und Zeitreserve. Eindeutige Zustandsverzeichnisse je Actor, serialisierte gemeinsame Zähler und konkrete Stop-/Receipt-Schnittstelle. Mockcallbacks in Tests klar als Mechanik markieren. Der echte native Timer, OS- und Providerstop sind damit noch nicht bewiesen.\n- Sämtliche tatsächlichen Classic-Auditwurzeln (Repo, context.workspace und weitere Runtime-/Invocation-Inputs) sowie Helper-, Output- und Logpfade eindeutig binden. Keine Auditgrenze enger machen, damit ein Helper funktioniert. Die weitergehenden gemeinsamen Hostrechte bleiben offen; gestufte Inputs sind keine OS-Isolation.\n- Design-Zulassung als konkrete Abbildung der fehlenden Verträge vorbereiten, ohne Designs WIP zu lesen oder einen Adapter blind zu bauen. Design arbeitet gerade an lokaler Review-/Repair-Schleife und gezielter Teilbaum-Rückgabe; ein sauberer Source-/Binary-Handoff steht aus.\n\nAlle 36 akzeptierten Vorbereitungsdateien, ihr Manifest/private ZIP und sämtliche alten Belege unverändert erhalten. Keine weiteren Oracleänderungen oder neuen gemeinsamen Anforderungen in diesem Paket. Task5-Vorversionsbinary aus derselben Zelle und unabhängige Task6-Äquivalenz bleiben erhalten. Gemeinsames tatsächlich unterstütztes Modell/Tools/Rechteprofil darf nicht durch einen stillen Luna/Sol- oder CLI-Wechsel ersetzt werden.\n\nLiefere den sauberen exakten Handoff mit tatsächlichen Befehlen, Hashes, Checks, verbrauchten Versuchen, Grenzen und den verbliebenen konkreten Admission-Punkten bis zum Grantende. Bei fehlendem Vertrag oder ausgeschöpfter Quote sauber stoppen und WIP erhalten. Danach keine weitere allgemeine Vorbereitungsschleife oder Beschäftigungsaufgabe: Auf den konkreten Design-Readiness-Handoff und den gemeinsamen geprüften Freeze samt endlichem Executiongrant zugehen. Weitere vollständige Trials bleiben innerhalb insgesamt maximal acht/maximal zwei Fragen; derzeit weiterhin keine Actual-Folgetrialquote. Nur Abschluss, materielle Blockade oder Entscheidungsbedarf direkt an Overseer melden, keine Empfangsbestätigung.",
+          "promptSha256": "1823f516ff79826be12ab4f7f9f2ffce56417a540efbb34acadf656e2ffc3555"
+        },
+        "v4ClassicBuildFailureObservation": {
+          "observedUtc": "2026-10-08T23:34:40Z",
+          "source": "Direct Scientist callback and root raw log/ledger read",
+          "originalGrantKey": "v4-classic-main-runtime-binding-20261009",
+          "buildAttemptsConsumed": 1,
+          "exitCode": 1,
+          "elapsedSeconds": 0.25303229999917676,
+          "reason": "Scientist override GOTOOLCHAIN=local selected baseGo1.24.1 instead of previously resolved existingGo1.27.1; operator configuration error, not product outcome",
+          "logSha256": "4cd84ef6d6dde9b5c2cad1669fc03ca67d03cabe3e86e0168c5747a08edc8d52",
+          "rawEvidence": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect/experiments/government-comparison/v4-runtime-binding-20261009/evidence/classic-build.log",
+          "originalAttemptPreserved": true,
+          "actualActors": 0
+        },
+        "v4ClassicExistingToolchainBuildCorrectionGrant": {
+          "key": "v4-classic-existing-toolchain-build-correction-20261009",
+          "issuedUtc": "2026-10-08T23:34:40Z",
+          "notAfterUtc": "2026-10-09T00:10:57Z",
+          "source": "New specific finite correction after direct Scientist callback and root-confirmed raw failure: wrong GOTOOLCHAIN=local selected existing older baseGo. Direct user authorizes ordinary technical work; no new trial/model authority.",
+          "status": "Authorized/not yet dispatched",
+          "buildAttemptsMax": 1,
+          "buildTimeoutSeconds": 600,
+          "newActors": 0,
+          "providerCalls": 0,
+          "codexCLICalls": 0,
+          "appserverCalls": 0,
+          "applicationServerStarts": 0,
+          "fullTrials": 0,
+          "sourceSha": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+          "conditions": [
+            "Keep original failed build and consumed1/1 original quota unchanged; log a separately reserved additional build before execution, no automatic refill.",
+            "Locate only the already available Go1.27.1 executable/cache, bind exact path/version/hash, and use that existing toolchain directly. No install/download/toolchain fallback/global configuration changes. GOTOOLCHAIN=local is suitable only when the selected binary itself is the required existingGo1.27.1.",
+            "One build only in the already owned isolated exact-source checkout, timeout min600s/remaining grantwall; ordinary pinned module restore allowed. Stop if required existing toolchain cannot be established or build fails.",
+            "No extra metadata/test/correction quotas, unchanged original deadline and all other original grant limits. Reuse already allowed four ordinary Markitect metadata/context calls only after exact binary binding.",
+            "No other diagnostics/preparation loop. Deliver runtime packet and concrete remaining Design/admission blockers; no actual study starts."
+          ],
+          "usage": null
         }
       },
       "classicHandoffReceived": true,
@@ -8409,7 +8455,7 @@
       }
     }
   ],
-  "nextAction": "Accept c7d5510 offline-only. Scientist receives one final bounded zeroActor runtime-binding packet for exact ClassicMain executable/dispatcher/DTO gates while Design closes own native manager-review/repair work. After readiness callback reconcile exact matched freeze/profile and executionbudget; no further generic diagnostics/preparation loops.",
+  "nextAction": "Scientist completes exact ClassicMain/dispatcher runtime binding with one separately recorded existingGo1.27.1 build correction, unchanged deadline; Design continues own loop/readiness work. Then exact matched freeze and finite actual executiongrant, no generic prep loop.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -8420,7 +8466,7 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T23:30:57Z",
+    "reviewedUtc": "2026-10-08T23:34:40Z",
     "evidenceLevel": "c7d5510 offline draft independently and hash-verified:36Git+workingbindings/115oldfiles/6Classiccontracts,17+19mechanicsPASS; no actual study advance. Design active in direct owner work; no clean ready candidate.",
     "coordinationActions": [
       "AddedDesignasfifthmonitoredcandidateandrequestedimmutableReadinesscallback",
@@ -8431,7 +8477,7 @@
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-08T19:51:14Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
-    "observationStatus": "New exact bounded zeroActor executable/dispatchbinding prep authorized while Design active; no study trialquota.",
+    "observationStatus": "Offline runtime-binding active; concrete operator toolchain error read from raw evidence and one separately recorded existing-toolchain correction, no deadline/test/Actor expansion.",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z"
   },
@@ -8628,11 +8674,11 @@
   },
   "fullSuiteSlot": {
     "owner": "Scientist",
-    "key": "native-codex-exploratory-v3-20261008",
-    "queue": [],
-    "status": "Active native-v3 actual study execution; Scientist owns bounded actor/product/check processes, max4 study actors including helpers and evaluation.",
-    "grantIssuedUtc": "2026-10-08T21:26:29Z",
-    "assignedUtc": "2026-10-08T21:26:29Z"
+    "key": "v4-classic-existing-toolchain-build-correction-20261009",
+    "assignedUtc": "2026-10-08T23:34:40Z",
+    "status": "Bounded ordinary exact-source ClassicMain build correction only; no suite/native Actors/provider/server/trials; deadline unchanged",
+    "notAfterUtc": "2026-10-09T00:10:57Z",
+    "queue": []
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -9255,6 +9301,16 @@
       "actualNewNativeTrees": 1,
       "actualNewActorReservations": 1,
       "finiteResumedBlockEnded": true
+    },
+    {
+      "owner": "Scientist",
+      "key": "native-codex-exploratory-v3-20261008",
+      "queue": [],
+      "status": "Active native-v3 actual study execution; Scientist owns bounded actor/product/check processes, max4 study actors including helpers and evaluation.",
+      "grantIssuedUtc": "2026-10-08T21:26:29Z",
+      "assignedUtc": "2026-10-08T21:26:29Z",
+      "closedObservedUtc": "2026-10-08T23:34:40Z",
+      "reason": "Stale slot description reconciled: original nativev3 closed; no remaining execution authority from it."
     }
   ],
   "smokeAttemptCountingDecision": {
