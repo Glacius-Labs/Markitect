@@ -1,0 +1,268 @@
+{
+  "cell": "classic-greenfield",
+  "archivedUtc": "2026-10-08T22:03:49.165644+00:00",
+  "entries": [
+    {
+      "path": "actor-state/context-create-order-current.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\context-create-order-current.stderr.txt"
+    },
+    {
+      "path": "actor-state/context-create-order-current.yaml",
+      "sha256": "23abe2580757693baf1f596410ef5a4f9c1b2e10a82920dce3510ede21e45298",
+      "size": 1813,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\context-create-order-current.yaml"
+    },
+    {
+      "path": "actor-state/context-create-order.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\context-create-order.stderr.txt"
+    },
+    {
+      "path": "actor-state/context-create-order.yaml",
+      "sha256": "cfe392313cb21ff461c088b0fe36ab62e8a9374b29ba0d7154a62a806525df6f",
+      "size": 1813,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\context-create-order.yaml"
+    },
+    {
+      "path": "actor-state/controller-execute-attempt-1.stderr.txt",
+      "sha256": "bcf9b6079c67825fa639d5c80a48658b1e2f4aa578bfb3c4b04977065cd4758f",
+      "size": 30,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-execute-attempt-1.stderr.txt"
+    },
+    {
+      "path": "actor-state/controller-execute-attempt-1.stdout.json",
+      "sha256": "96b10920fc24c471f8ba01bf561b53fa1c164efb3b16fa20adf77b6d4264df54",
+      "size": 32464,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-execute-attempt-1.stdout.json"
+    },
+    {
+      "path": "actor-state/controller-execute-attempt-2.stderr.txt",
+      "sha256": "5aba5ed4427e5fba0632a35d7eea6cd1e3127b3dbd7554906bff2e9971e88130",
+      "size": 51,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-execute-attempt-2.stderr.txt"
+    },
+    {
+      "path": "actor-state/controller-execute-attempt-2.stdout.json",
+      "sha256": "7ffd34fee298d2723ac94fa6540a063f5a5184ca549e05782819cd62582f687f",
+      "size": 33937,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-execute-attempt-2.stdout.json"
+    },
+    {
+      "path": "actor-state/controller-execute-process-attempt-1.json",
+      "sha256": "e7a5f07f33c70b64e3ffa088bdacbb69f838cff2e423cc72d8e9f4c714cee70c",
+      "size": 953,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-execute-process-attempt-1.json"
+    },
+    {
+      "path": "actor-state/controller-execute-process-attempt-2.json",
+      "sha256": "cfa81a67f2269b0796248141b71694b6fe3f1ca0a9c73ab8a0faa9faa9cec4d3",
+      "size": 1228,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-execute-process-attempt-2.json"
+    },
+    {
+      "path": "actor-state/controller-execute-process.json",
+      "sha256": "6908e85fbcb604c5eb704dc13635750fd2981730c9d0ae47441add687853b662",
+      "size": 954,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-execute-process.json"
+    },
+    {
+      "path": "actor-state/controller-execute.stderr.txt",
+      "sha256": "bcf9b6079c67825fa639d5c80a48658b1e2f4aa578bfb3c4b04977065cd4758f",
+      "size": 30,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-execute.stderr.txt"
+    },
+    {
+      "path": "actor-state/controller-execute.stdout.json",
+      "sha256": "96b10920fc24c471f8ba01bf561b53fa1c164efb3b16fa20adf77b6d4264df54",
+      "size": 32464,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-execute.stdout.json"
+    },
+    {
+      "path": "actor-state/controller-propose-attempt-2.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-propose-attempt-2.stderr.txt"
+    },
+    {
+      "path": "actor-state/controller-propose-attempt-2.stdout.json",
+      "sha256": "b98ec92c2ae558491eb034e0059447d3824155a33c7b08ea717663a36b19c21b",
+      "size": 30268,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-propose-attempt-2.stdout.json"
+    },
+    {
+      "path": "actor-state/controller-propose.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-propose.stderr.txt"
+    },
+    {
+      "path": "actor-state/controller-propose.stdout.json",
+      "sha256": "d2457ba84d8e73e929bc3be9967457382ec2d73f6d49b7314f73ebbb98f136e8",
+      "size": 28885,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-propose.stdout.json"
+    },
+    {
+      "path": "actor-state/controller-runtime.json",
+      "sha256": "8b1b10b665f07640f9440295b89ed076e8f026da86022bb020817262e2f4d4b5",
+      "size": 4269,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\controller-runtime.json"
+    },
+    {
+      "path": "actor-state/executor-0008/q1-intent-replay.md",
+      "sha256": "68b905fc06d44e3a5852a5d5b36818be97d714486b9f117fd57214c695855a47",
+      "size": 2218,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\executor-0008\\q1-intent-replay.md"
+    },
+    {
+      "path": "actor-state/executor-response-attempt-1.json",
+      "sha256": "b89eb7cfb9f203bf9ebc1d3dc5b0e7be6059d58a6ad40946944eae437191b798",
+      "size": 10474,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\executor-response-attempt-1.json"
+    },
+    {
+      "path": "actor-state/impact-after-mode-repair.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\impact-after-mode-repair.stderr.txt"
+    },
+    {
+      "path": "actor-state/impact-after-mode-repair.yaml",
+      "sha256": "1685ae0ac5dff611684305c2ebe5c7d41f87afea956761f085c6c1087434f647",
+      "size": 3091,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\impact-after-mode-repair.yaml"
+    },
+    {
+      "path": "actor-state/impact-task1.stderr.txt",
+      "sha256": "abd1bb07b0d3ddb54dd65cddaadf80e27a202c2dd4da6410f60b304789f62463",
+      "size": 89,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\impact-task1.stderr.txt"
+    },
+    {
+      "path": "actor-state/impact-task1.yaml",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\impact-task1.yaml"
+    },
+    {
+      "path": "actor-state/mailbox/66635d723c4888ea5f62c8b5d1fafe7f/invocation.json",
+      "sha256": "76bde0e83d22fbce6e790a7c9be8a3b31f2a5eabd078112eec852a6ccc323e5a",
+      "size": 9511,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\mailbox\\66635d723c4888ea5f62c8b5d1fafe7f\\invocation.json"
+    },
+    {
+      "path": "actor-state/mailbox/66635d723c4888ea5f62c8b5d1fafe7f/request.json",
+      "sha256": "ee63c22c14c1c304edc68b06cfb121b101beeeb9dad9e1e7d6a5fc1f63c701fe",
+      "size": 335,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\mailbox\\66635d723c4888ea5f62c8b5d1fafe7f\\request.json"
+    },
+    {
+      "path": "actor-state/mailbox/66635d723c4888ea5f62c8b5d1fafe7f/response.json",
+      "sha256": "9e05e5ca71bfde403a8e54babf43c4bf01a6784e04cd7fa0d682023363540956",
+      "size": 10245,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\mailbox\\66635d723c4888ea5f62c8b5d1fafe7f\\response.json"
+    },
+    {
+      "path": "actor-state/mailbox/66635d723c4888ea5f62c8b5d1fafe7f/transport-receipt.json",
+      "sha256": "2fb4e1f42e51c16b0c6fea385a42ab4e8092a62b83405abfb99578646f740e87",
+      "size": 544,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\mailbox\\66635d723c4888ea5f62c8b5d1fafe7f\\transport-receipt.json"
+    },
+    {
+      "path": "actor-state/mailbox/b3597172808e5c821399b921e1a104af/invocation.json",
+      "sha256": "09bcc4c0ecc471b937d2ab77034e21a250ed168fc252d3986578441a97d9d512",
+      "size": 9368,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\mailbox\\b3597172808e5c821399b921e1a104af\\invocation.json"
+    },
+    {
+      "path": "actor-state/mailbox/b3597172808e5c821399b921e1a104af/request.json",
+      "sha256": "1460d180b438a08c0d9eddb387f5afbb5cdbe3645a11ee54e571c3e4e6035a20",
+      "size": 335,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\mailbox\\b3597172808e5c821399b921e1a104af\\request.json"
+    },
+    {
+      "path": "actor-state/mailbox/b3597172808e5c821399b921e1a104af/response.json",
+      "sha256": "b89eb7cfb9f203bf9ebc1d3dc5b0e7be6059d58a6ad40946944eae437191b798",
+      "size": 10474,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\mailbox\\b3597172808e5c821399b921e1a104af\\response.json"
+    },
+    {
+      "path": "actor-state/mailbox/b3597172808e5c821399b921e1a104af/transport-receipt.json",
+      "sha256": "940ef4aa8da18b6cd13dc8fd799f5b7bbef29890675fbdb8b945751f413ef110",
+      "size": 544,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\mailbox\\b3597172808e5c821399b921e1a104af\\transport-receipt.json"
+    },
+    {
+      "path": "actor-state/model-helper-reference.md",
+      "sha256": "350afd598668b184fca14e34976b9795e3b8f4b1a9081d7b30e587a83b3f55b6",
+      "size": 3429,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\model-helper-reference.md"
+    },
+    {
+      "path": "actor-state/model-task1-current.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\model-task1-current.stderr.txt"
+    },
+    {
+      "path": "actor-state/model-task1-current.yaml",
+      "sha256": "3ed70dbf264a583495d404e9638bc2334541c698201b211372ec36b3b6b96937",
+      "size": 17176,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\model-task1-current.yaml"
+    },
+    {
+      "path": "actor-state/model-task1.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\model-task1.stderr.txt"
+    },
+    {
+      "path": "actor-state/model-task1.yaml",
+      "sha256": "05a500cb06294e5495d347d424007aa8573dda0c202767bd1e78b2d863d1dd63",
+      "size": 13609,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\model-task1.yaml"
+    },
+    {
+      "path": "actor-state/q1-intent-replay-activation-0012.md",
+      "sha256": "fed50b32ceca6bfd2a6ab04de42db8760390c2662ac16582e49e2f7dded8a55c",
+      "size": 1907,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\q1-intent-replay-activation-0012.md"
+    },
+    {
+      "path": "actor-state/q1-intent-replay.md",
+      "sha256": "69b51223a375893a25c6ca1c7ab99071a96df1e8a131b1ab06c3f6a1dd0d1a0d",
+      "size": 2905,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\q1-intent-replay.md"
+    },
+    {
+      "path": "actor-state/request-task1.json",
+      "sha256": "d269f13e2fe7a52c653ca7312f5f80dec86ff7cf48ce49fda4ca9391baa2e707",
+      "size": 845,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\request-task1.json"
+    },
+    {
+      "path": "actor-state/stage-1-result.json",
+      "sha256": "ecc20fec8df9fd76e1c8699888f60de02f851f2501261c3f9a549f54812bb208",
+      "size": 5813,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\stage-1-result.json"
+    },
+    {
+      "path": "actor-state/task-input-hashes.json",
+      "sha256": "193d65aba4e6d74a6544385455c3ee1147029debcbde59c10c16fdc0d8ec387a",
+      "size": 4579,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\task-input-hashes.json"
+    },
+    {
+      "path": "evaluation/final-evaluation.json",
+      "sha256": "67b998cb075c8728f34429e76dddc229a1a3bde26b0dc6d4d5b421abf09f4263",
+      "size": 10759,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\evaluation\\classic-greenfield\\state\\final-evaluation.json"
+    }
+  ],
+  "excluded": "bin,obj,.git and binary/databases; product binary bound separately in freeze",
+  "candidateBundleSha256": "f712b813ae721ed5670e13688b4aa244f65cee1ef70577723d7cc46e53738f77",
+  "evidenceZipSha256": "b5907636d0a56c3d097da7fb91889c7c75aca7ababb2da8017849d0bcb0ea651",
+  "immutableSource": "e00ec8c49cb4912aebf02cf6057965463f8ef8b4"
+}

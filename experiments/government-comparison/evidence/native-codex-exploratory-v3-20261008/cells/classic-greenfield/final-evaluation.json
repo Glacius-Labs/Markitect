@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "trialId": "classic-greenfield-v3-20261008",
+  "task": 1,
+  "cell": {"arm":"classic","condition":"greenfield"},
+  "evaluatedAtUtc": "2026-10-08T22:00:59Z",
+  "evaluator": "independent-final-evaluator",
+  "status": "incomplete",
+  "candidate": {
+    "frozenSha": "e00ec8c49cb4912aebf02cf6057965463f8ef8b4",
+    "repository": "evaluation/classic-greenfield/repo",
+    "gitState": "clean detached HEAD; rev-parse HEAD matched frozen SHA",
+    "implementationCandidate": false,
+    "acceptedServiceCandidate": null,
+    "verifiedAbsence": "The frozen Git tree contains canonical model/configuration, pinned modules, and check harness files only. It has no src/OrderService, .cs, .csproj, service binary, or accepted Executor output. Service checks cannot be run against this candidate."
+  },
+  "inputBinding": {
+    "publicBriefSha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+    "task1Sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+    "architectureSha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+    "publicChecksSha256": "fc96859ce7cc71426ed774f3ff5d88a45adcf016d2250c259287d1da628ac0cc",
+    "releaseManifestSha256": "1b6040f48a7a3bc6862d4229a530e4c3198d57c61905c2c1718b6911427a24b8",
+    "rubricSha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+    "holdoutProcedureSha256": "795fd4bac98559ea7c8a1c2066deaa3f198a50406ae0b2f9d68c34e67ab6ac7f",
+    "privateHoldoutPlanSha256": "c290bb53e93eace8f3a8b91e4e7d91d4fbc1799c6dd387bfe6fabc9608588a5",
+    "privateHoldoutRunnerSha256": "4fefc910a1c10eb1ca261fef1847920f432d2379de83ecc22d9e84a6eac392eb",
+    "supportQ1Sha256": "69b51223a375893a25c6ca1c7ab99071a96df1e8a131b1ab06c3f6a1dd0d1a0d",
+    "stageResultSha256": "ecc20fec8df9fd76e1c8699888f60de02f851f2501261c3f9a549f54812bb208",
+    "taskInputHashesSha256": "193d65aba4e6d74a6544385455c3ee1147029debcbde59c10c16fdc0d8ec387a"
+  },
+  "q1Intent": {
+    "assessment": "Strongly faithful to the released Task 1 intent. It names the brief, architecture, Task 1 card, and checks with matching digests and Task 1 cutoff; captures required routes, validation/status/error behavior, canonicalization, integer-cent pricing, SQLite persistence, fixed tool/package pins, and allowed implementation freedoms; marks case-sensitive SKU and malformed-input handling as assumptions and does not claim human acceptance.",
+    "limitations": "Replay says recorded before implementation and its timestamp predates source changes; no independent time-machine verification was available. No user response or acceptance is evidenced."
+  },
+  "resultQuality": {
+    "status": "unscorable_incomplete",
+    "dimensions": [
+      {"id":"functional_behavior","weight":30,"score":null,"status":"NOT RUN","reason":"No service implementation or runnable candidate exists."},
+      {"id":"state_and_data_integrity","weight":25,"score":null,"status":"NOT RUN","reason":"No service/database candidate exists; persistence, idempotency, and state effects were not exercised."},
+      {"id":"regression_and_compatibility","weight":20,"score":null,"status":"NOT RUN","reason":"Greenfield legacy alias is not applicable at Task 1; neighboring service behavior cannot be assessed without an implementation."},
+      {"id":"verification_quality","weight":15,"score":null,"status":"NOT RUN","reason":"Public fixed checks, restore/build, and independent behavioral checks were explicitly NOT RUN because Executor did not materialize a candidate."},
+      {"id":"maintainability_and_operability","weight":10,"score":null,"status":"unscorable","reason":"No service structure or run instructions were delivered; the proposed code is unapplied and cannot substantiate a product score."}
+    ],
+    "weightedScore": null,
+    "criticalBehaviorGate": "NOT EVALUATED",
+    "criticalCompatibilityGate": "NOT APPLICABLE for greenfield Task 1",
+    "staleEvidenceGate": "No stale or cross-cell result was used to claim product behavior.",
+    "unreleasedRequirementGate": "No evidence of actor access to private holdout material; private checks were evaluator-side only.",
+    "incompleteAtLimitGate": "FAILED: Task 1 ended incomplete/readiness_gap with no accepted service candidate. Missing product evidence is not treated as a pass or zero."
+  },
+  "methodConformance": {
+    "status": "scored_separately",
+    "dimensions": [
+      {"id":"input_and_snapshot_binding","weight":20,"score":4,"reason":"Q1 and staged model bind the released inputs/cutoff and candidate revisions; evaluator independently confirmed clean detached HEAD equals the frozen SHA."},
+      {"id":"requirement_coverage_and_change_control","weight":20,"score":3,"reason":"Authored case model and policies cover the released Task 1 contract, with no observed future-task steering; the product projection remains incomplete."},
+      {"id":"evidence_freshness_and_review","weight":25,"score":2,"reason":"Current model/context/impact and Executor request bind the frozen source, but there is no accepted candidate, Verifier, audit, build, restore, or public-check evidence."},
+      {"id":"failure_and_uncertainty_reporting","weight":15,"score":4,"reason":"Receipts and stage report accurately say incomplete/readiness_gap, keep application none, identify the Executor failure, mark downstream checks NOT RUN, and make no human-acceptance claim."},
+      {"id":"resource_and_intervention_accounting","weight":20,"score":2,"reason":"Two semantic repair rounds and two Executor attempts are recorded and the runtime receipt leaves provider usage null; full actual usage/activation accounting is unavailable here."}
+    ],
+    "weightedScore": 72.5,
+    "interpretation": "Method evidence indicates disciplined snapshot binding and candid failure reporting, with material limits in current-candidate verification and full resource accounting. This is not a product-quality score."
+  },
+  "nativeProductAndActorEvidence": {
+    "product": "Frozen Markitect Classic 0.14.1; support-reported executable SHA-256 2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4; pinned dotnet module digest sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c.",
+    "executorAttempt1": {"receiptPath":"support/classic-greenfield/state/mailbox/b3597172808e5c821399b921e1a104af/response.json","status":"incomplete","reportedError":"candidate mode is unsupported","application":"none"},
+    "executorAttempt2": {
+      "invocationSha256":"76bde0e83d22fbce6e790a7c9be8a3b31f2a5eabd078112eec852a6ccc323e5a",
+      "responseSha256":"9e05e5ca71bfde403a8e54babf43c4bf01a6784e04cd7fa0d682023363540956",
+      "transportReceiptSha256":"2fb4e1f42e51c16b0c6fea385a42ab4e8092a62b83405abfb99578646f740e87",
+      "cliReportSha256":"7ffd34fee298d2723ac94fa6540a063f5a5184ca549e05782819cd62582f687f",
+      "transport":"Genuine native role response transported successfully; transport receipt records matching response digest and usage null.",
+      "application":"CLI report is incomplete with stderr 'evidence reference was not supplied in the request'; response outcome proposed and contained two candidate files, but product did not accept/materialize them. Transport success and raw response hash do not establish application or product capability."
+    },
+    "usage": null,
+    "humanAcceptance": "not supplied"
+  },
+  "tests": [
+    {"name":"public Task 1 checks","status":"NOT RUN","reason":"No materialized service candidate; avoid meaningless service invocation."},
+    {"name":"build and restore","status":"NOT RUN","reason":"No accepted source project; no service executable."},
+    {"name":"private holdout","status":"NOT RUN","reason":"No frozen implementation candidate to score; no cases executed."}
+  ],
+  "infrastructureAndProtocolLimits": [
+    "Frozen Executor candidate-file boundary accepts only .cs and .csproj files under src; the needed project-wide global.json and NuGet.Config are outside that boundary, and a packages.lock.json would still require restore. This is recorded in the native proposal uncertainty, not inferred from product source.",
+    "Attempt 1 candidate mode was rejected; after a guidance repair using mode 0644, attempt 2 was transported but rejected by CLI for missing evidence reference. No further repair was available within the recorded two-round task cap.",
+    "This trial establishes a readiness/integration gap in the frozen task path, not that Classic is generally incapable of producing service code."
+  ],
+  "commandsAndObservedResults": [
+    {"command":"Get-ChildItem -Recurse -File evaluation/classic-greenfield/repo | Select-Object FullName,Length","result":"Only markitect.yaml, checks/public-checks.py, checks/run-public-checks.py, definitions/*.yaml, modules/*, src/global.json, and src/NuGet.Config; no src/OrderService."},
+    {"command":"git status --short --branch; git rev-parse HEAD; git status --porcelain=v1","result":"## HEAD (no branch); HEAD e00ec8c49cb4912aebf02cf6057965463f8ef8b4; final porcelain output empty."},
+    {"command":"Get-Content support/classic-greenfield/state/stage-1-result.json","result":"methodStatus incomplete; readiness readiness_gap; exactAcceptedCandidateCommit null; apply, verifier, audit, fixed public check, test/build all NOT RUN."},
+    {"command":"Get-Content support/classic-greenfield/state/mailbox/66635d723c4888ea5f62c8b5d1fafe7f/response.json; .../transport-receipt.json; Get-Content support/classic-greenfield/state/controller-execute-attempt-2.stdout.json; ...stderr.txt","result":"Native response outcome proposed; transport completed with matching response digest; CLI status incomplete; stderr evidence reference was not supplied in the request; application none."},
+    {"command":"Get-Content evaluation/classic-greenfield/inputs/private/holdout_checks.py","result":"Read-only inspection confirmed checks require a running service and clean frozen candidate; no holdout command invoked."}
+  ],
+  "criticalFindings": [
+    "No accepted implementation was produced. The main requested behavior and all relevant hard invariants remain untested.",
+    "The native actor proposal is real evidence of a role invocation, but proposal, successful transport, and candidate-file payload do not equal product application.",
+    "Do not interpret NOT RUN as product success, a zero quality score, a product failure, or evidence that hidden cases fail."
+  ],
+  "limitations": [
+    "No service behavior can be inferred from proposed-but-unapplied code.",
+    "Provider identity and usage remain unverified/null; time/bytes are not usage estimates.",
+    "No human acceptance, product superiority, or general Classic capability conclusion follows from this single incomplete Task 1 cell."
+  ]
+}

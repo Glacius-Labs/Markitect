@@ -1,0 +1,10 @@
+{
+  "trialId": "government-greenfield-v3-20261008",
+  "task": 1,
+  "frozenCommit": "00e4755797d59bc5713d1533b10598f323c29f12",
+  "evaluationRoot": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\evaluation\\government-greenfield",
+  "supportReadOnly": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield",
+  "publicCutoff": 1,
+  "privateDataWithheldFromImplementers": true,
+  "deadlineUtc": "2026-10-08T22:01:19.124976Z"
+}

@@ -1,0 +1,412 @@
+{
+  "cell": "government-greenfield",
+  "archivedUtc": "2026-10-08T22:03:49.286854+00:00",
+  "entries": [
+    {
+      "path": "actor-state/g5-queue-store-3/government-queue--9502a630cdfee6f55247dac31d0c1a7d/events.jsonl",
+      "sha256": "2f63405a1795871f05f633a1d63634566897607966fcb8504c8d3b1917cabca7",
+      "size": 28846,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-queue-store-3\\government-queue--9502a630cdfee6f55247dac31d0c1a7d\\events.jsonl"
+    },
+    {
+      "path": "actor-state/g5-queue-store-3/government-queue--9502a630cdfee6f55247dac31d0c1a7d/queue-report-00000001.json",
+      "sha256": "d584ec1f0e6e23a65f7660b64819b30f6e1fcba37c53d7c4d5dab72a5bf6f3cd",
+      "size": 1507,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-queue-store-3\\government-queue--9502a630cdfee6f55247dac31d0c1a7d\\queue-report-00000001.json"
+    },
+    {
+      "path": "actor-state/g5-queue-store-3/government-queue--9502a630cdfee6f55247dac31d0c1a7d/queue-report-00000002.json",
+      "sha256": "0991be27ef0a2f8d10349aea5a850b29f93beab65aea2d62b5163cce8428e986",
+      "size": 1500,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-queue-store-3\\government-queue--9502a630cdfee6f55247dac31d0c1a7d\\queue-report-00000002.json"
+    },
+    {
+      "path": "actor-state/g5-queue-store-3/government-queue--9502a630cdfee6f55247dac31d0c1a7d/queue-report-00000009.json",
+      "sha256": "0cabe1aa2986bac92672b13cfa8602b9d9703ac254fc2d266409ec5397fb73fd",
+      "size": 1983,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-queue-store-3\\government-queue--9502a630cdfee6f55247dac31d0c1a7d\\queue-report-00000009.json"
+    },
+    {
+      "path": "actor-state/g5-run-state-3/government-run--bc3bf35c0d4d2b0ff62a67d8fff90d75/actor-0001.json",
+      "sha256": "e7969c9931ba94b01e555eb22b1e8c403763dba02ca4ee7633c278dbc6a4d12f",
+      "size": 2164,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-run-state-3\\government-run--bc3bf35c0d4d2b0ff62a67d8fff90d75\\actor-0001.json"
+    },
+    {
+      "path": "actor-state/g5-run-state-3/government-run--bc3bf35c0d4d2b0ff62a67d8fff90d75/report.json",
+      "sha256": "98949567804a35749d75f48d0a05062e99577a1b4370ca5bbccf6612277189e5",
+      "size": 15909,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-run-state-3\\government-run--bc3bf35c0d4d2b0ff62a67d8fff90d75\\report.json"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/checkpoint.json",
+      "sha256": "360cfb238dddd4a49b365745b9f8496e0208b1472cb06051a5c21db361edf548",
+      "size": 373,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\checkpoint.json"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/executor-evidence.json",
+      "sha256": "ac81903026edf92bd8a0391aa41316abe575c981d5b8c4575ac22739ac08f47f",
+      "size": 3212,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\executor-evidence.json"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/global.json",
+      "sha256": "bd90a5ed872d5ba2cb208ef89804f937dcc39d72aca9cabdee1bf476db4b4cad",
+      "size": 66,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\global.json"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/government.yaml",
+      "sha256": "13923db9374449de58fb3e3320c796ee29d644b2df840d0213edde6c0120d13f",
+      "size": 16616,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\government.yaml"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/integration_check.py",
+      "sha256": "02fabb102496f7d3d38bbd04bc4fec5a7e93e544af810d04d7f43617c40dfec5",
+      "size": 1569,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\integration_check.py"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/NuGet.Config",
+      "sha256": "fd79b58c2e338869066ddcc13c4099c21ab5171632c16e7b0093aff80d0fe355",
+      "size": 218,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\NuGet.Config"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/order.yaml",
+      "sha256": "43f5aae8c9a0c297fa0b7aba07e9428ab6f99c878f1bf7b14a4bba87a8e8413d",
+      "size": 927,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\order.yaml"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/README.md",
+      "sha256": "8ad72d9c864b44ed550d20eba942db27948191c3b91605ef4b6cc0d57b321a00",
+      "size": 750,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\README.md"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/service.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\service.stderr.log"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/service.stdout.log",
+      "sha256": "85cfde8714c8a437bf5ee960d7219d4f32e554f578a9ec203018669247213e38",
+      "size": 11303,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\service.stdout.log"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/src/Orders.Api/Orders.Api.csproj",
+      "sha256": "8a996217d8610db1a0875b99f961fc5df24fd381911953e8967fcf25b6997928",
+      "size": 537,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\src\\Orders.Api\\Orders.Api.csproj"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/src/Orders.Api/packages.lock.json",
+      "sha256": "80949191d7388ec7b149d4cc85a70ccd213fd082d7aaa15d8d5e435f66bd42e0",
+      "size": 2295,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\src\\Orders.Api\\packages.lock.json"
+    },
+    {
+      "path": "actor-state/g5-temporary-3/government-candidate-1552076563/src/Orders.Api/Program.cs",
+      "sha256": "b961a9b3517fdd9f6c52dc205b037e28c3ddcb60d1648cbe650a7ded4cdf75b7",
+      "size": 8283,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\g5-temporary-3\\government-candidate-1552076563\\src\\Orders.Api\\Program.cs"
+    },
+    {
+      "path": "actor-state/inspect-committed-model.txt",
+      "sha256": "f96e4b7672bd44d283cfa85180e588ee7a42509bb26e671a1fa8314044681e03",
+      "size": 63450,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\inspect-committed-model.txt"
+    },
+    {
+      "path": "actor-state/inspect-setup-v2.txt",
+      "sha256": "5b37c839dcb69c2dc3edbaec3db1b6fdbe5504fad6425c4f20ff936491452e8d",
+      "size": 53936,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\inspect-setup-v2.txt"
+    },
+    {
+      "path": "actor-state/inspect-setup-v3.txt",
+      "sha256": "2d7ac459b1a9de593e398c3d097957f5c7bce43df284c9899afd1c8bf25556ad",
+      "size": 63458,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\inspect-setup-v3.txt"
+    },
+    {
+      "path": "actor-state/inspect-setup.txt",
+      "sha256": "64ab192aaac1d4e577c4afd34abb4e2bd8940375b58ab6b0d2f02df177f86cc0",
+      "size": 56199,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\inspect-setup.txt"
+    },
+    {
+      "path": "actor-state/mailbox/c9a1ba80e598a12081c92f4003611aec/invocation.json",
+      "sha256": "1ddff4f9bf5a5e4441ad9d532da6fd631164d562cff99c8c583de78ad5c81dfd",
+      "size": 46582,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\mailbox\\c9a1ba80e598a12081c92f4003611aec\\invocation.json"
+    },
+    {
+      "path": "actor-state/mailbox/c9a1ba80e598a12081c92f4003611aec/request.json",
+      "sha256": "6a850b72654cf9a2307f54b63f039639d029b87b962a954145f033a8894b83bf",
+      "size": 338,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\mailbox\\c9a1ba80e598a12081c92f4003611aec\\request.json"
+    },
+    {
+      "path": "actor-state/mailbox/c9a1ba80e598a12081c92f4003611aec/response.json",
+      "sha256": "0d10499132cbcdb8591899a1101bb76b15174c504c4cceb51c84123d7aead47d",
+      "size": 15163,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\mailbox\\c9a1ba80e598a12081c92f4003611aec\\response.json"
+    },
+    {
+      "path": "actor-state/mailbox/c9a1ba80e598a12081c92f4003611aec/transport-receipt.json",
+      "sha256": "786230f1d05f83b1bff244e2917c2acc2cbc537dc33f5309e6c07eacb3a7e863",
+      "size": 547,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\mailbox\\c9a1ba80e598a12081c92f4003611aec\\transport-receipt.json"
+    },
+    {
+      "path": "actor-state/model-helper-reference.md",
+      "sha256": "ff280857d1d3253232dd5931737a60e2b35e6a036269afd92e567f5cc6298d9f",
+      "size": 6146,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-reference.md"
+    },
+    {
+      "path": "actor-state/model-helper-scratch/government-schema.txt",
+      "sha256": "da90974485f34bfa5f8ecf905058a2837240c8c9c7523f37f195094b74b0e4f2",
+      "size": 9783,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-scratch\\government-schema.txt"
+    },
+    {
+      "path": "actor-state/model-helper-scratch/minimal-valid.yaml",
+      "sha256": "36270e21637c8270f60e9a0fb9db75b0d51be4eb2dd8ea899d3b2f28312d6dce",
+      "size": 1423,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-scratch\\minimal-valid.yaml"
+    },
+    {
+      "path": "actor-state/model-helper-scratch/root-apiVersion.yaml",
+      "sha256": "608b2512f94584f568d18b6c5a7e9770deb99daa2d652bbe29f35393a55fb66e",
+      "size": 111,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-scratch\\root-apiVersion.yaml"
+    },
+    {
+      "path": "actor-state/model-helper-scratch/root-kind.yaml",
+      "sha256": "bd341495ba3c492849d704327dd656dcd650134ced363debb2c2aab855df53d5",
+      "size": 134,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-scratch\\root-kind.yaml"
+    },
+    {
+      "path": "actor-state/model-helper-scratch/root-triple.yaml",
+      "sha256": "0e9b8a668bab5d3ade48d6f65ca7301a237d12a1d2825f57ab66eb5c81a5ead8",
+      "size": 186,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-scratch\\root-triple.yaml"
+    },
+    {
+      "path": "actor-state/model-helper-scratch/root-version.yaml",
+      "sha256": "6af824427072b636e555be380a8b974302714da6531ef97588a65022d7dab53f",
+      "size": 108,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-scratch\\root-version.yaml"
+    },
+    {
+      "path": "actor-state/model-helper-scratch/shape-probe.out",
+      "sha256": "a7584e3e5bc49903bdee3f6a489c7be51dad219e8f5a76e8c7eb81ebca461845",
+      "size": 509,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-scratch\\shape-probe.out"
+    },
+    {
+      "path": "actor-state/model-helper-scratch/shape-probe.yaml",
+      "sha256": "362468727af7e31edfe24dbbce7b3dc6a0448a1e58f1f23d265e31092704aad1",
+      "size": 350,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-scratch\\shape-probe.yaml"
+    },
+    {
+      "path": "actor-state/model-helper-scratch/spec-name.out",
+      "sha256": "9de4f2bd8668b74fd014e602fe710773b4e3ffd77bb39539b9d07b3858eba0e0",
+      "size": 677,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-scratch\\spec-name.out"
+    },
+    {
+      "path": "actor-state/model-helper-scratch/spec-name.yaml",
+      "sha256": "af5666f8de5982d6fa85b9c37660d424a95bed5f5dbe95d8ef8e29bd777b1197",
+      "size": 357,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-scratch\\spec-name.yaml"
+    },
+    {
+      "path": "actor-state/model-helper-scratch/wrapped-apiVersion.yaml",
+      "sha256": "1b6d45d866a09d052adb113ad6c7ea05b648e79eb16bebd13ab1087e02097317",
+      "size": 129,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-scratch\\wrapped-apiVersion.yaml"
+    },
+    {
+      "path": "actor-state/model-helper-scratch/wrapped-version.yaml",
+      "sha256": "619d8a8f1ac615ec3c82828ee8009c5c7eb2f3f4af35c435b172f10f40042d05",
+      "size": 126,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\model-helper-scratch\\wrapped-version.yaml"
+    },
+    {
+      "path": "actor-state/plan-committed-v2.txt",
+      "sha256": "3afe5b1d309dcf81343abb6ce09d2a17a2e6928999cd2ef087db83fe688bebea",
+      "size": 8975,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\plan-committed-v2.txt"
+    },
+    {
+      "path": "actor-state/plan-committed.txt",
+      "sha256": "f22bbd6b23ebcc9038ab0dcb4c2d65f7d51c80f7b9b7458c750d77ef28f8c19f",
+      "size": 9066,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\plan-committed.txt"
+    },
+    {
+      "path": "actor-state/plan-setup-v2.txt",
+      "sha256": "5b37c839dcb69c2dc3edbaec3db1b6fdbe5504fad6425c4f20ff936491452e8d",
+      "size": 53936,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\plan-setup-v2.txt"
+    },
+    {
+      "path": "actor-state/plan-setup-v3.txt",
+      "sha256": "ccb8955d9a9b3a5d5b79666e011ad583fbef135f5f8009fdcca35194b9ac98fc",
+      "size": 9074,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\plan-setup-v3.txt"
+    },
+    {
+      "path": "actor-state/plan-setup-v4.txt",
+      "sha256": "e162a5f2a7ea70646ed7ab95415e56d4e136333cf5fe5f6e5dbfd9dabec9678e",
+      "size": 8983,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\plan-setup-v4.txt"
+    },
+    {
+      "path": "actor-state/plan-setup.txt",
+      "sha256": "772381112d16a449e4d3a1bb9b0ce0f52cd8129a534ebef6a2741094732847ad",
+      "size": 8728,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\plan-setup.txt"
+    },
+    {
+      "path": "actor-state/preserved-untracked-publish_response.py",
+      "sha256": "627c07a26203ff0aa15f754c0639c9106b5a6d54e5f62449c0048c28e7e5de62",
+      "size": 4052,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\preserved-untracked-publish_response.py"
+    },
+    {
+      "path": "actor-state/q1/government-greenfield-task1.md",
+      "sha256": "6cd1b5db24890c1b3c0e1d9e74073213f043a09f58523da4c37a529fb8f6a392",
+      "size": 2493,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\q1\\government-greenfield-task1.md"
+    },
+    {
+      "path": "actor-state/q1-intent-task1.md",
+      "sha256": "95e990f8a6d6b47ea2b245afc6b4f348523d71b2dc72c3a10f609c4697062a4a",
+      "size": 4317,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\q1-intent-task1.md"
+    },
+    {
+      "path": "actor-state/queue-process-v2.json",
+      "sha256": "2f7f6c88d6a0ca96fc7844241963a293541cbc5813525a7d04d5004f7d3910d3",
+      "size": 907,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\queue-process-v2.json"
+    },
+    {
+      "path": "actor-state/queue-process-v3.json",
+      "sha256": "ccf092b1bffa5bc55cb9c5630a50c195bd9085eda085942abba7768391b79d9c",
+      "size": 817,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\queue-process-v3.json"
+    },
+    {
+      "path": "actor-state/queue-process.json",
+      "sha256": "df03e0c7ee88e1303ed8c368014ded323b28efd33929c99a7bf737062874348e",
+      "size": 898,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\queue-process.json"
+    },
+    {
+      "path": "actor-state/queue-start-v3.txt",
+      "sha256": "d7143dc7d30bfe16ee7ce80d0e35547eca24f9edc17ac973ec5a6927024b7502",
+      "size": 2044,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\queue-start-v3.txt"
+    },
+    {
+      "path": "actor-state/queue-stderr-v2.txt",
+      "sha256": "97317e4dfed7437c5f78d19c74a40141534849c149210d376d5e30673c47f50d",
+      "size": 120,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\queue-stderr-v2.txt"
+    },
+    {
+      "path": "actor-state/queue-stderr.txt",
+      "sha256": "c30f7dde40846d60ca744ecae1499824401396c8fe6e79587b28152a98c33e65",
+      "size": 244,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\queue-stderr.txt"
+    },
+    {
+      "path": "actor-state/queue-stdout-v2.txt",
+      "sha256": "188d796be6d36a546f641ade8104ab0af37248aaebfc27864f3f8121123ce195",
+      "size": 1329,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\queue-stdout-v2.txt"
+    },
+    {
+      "path": "actor-state/queue-stdout.txt",
+      "sha256": "92df9bf4714c7b091b20a30af64c64a8a94e73275fdc10d9fa5e805d46c4b236",
+      "size": 1328,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\queue-stdout.txt"
+    },
+    {
+      "path": "actor-state/request-task1.json",
+      "sha256": "4f3af45bcd4ff360d11a97309b165e3a1772e09bbccb968ec008935fe86b6feb",
+      "size": 854,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\request-task1.json"
+    },
+    {
+      "path": "actor-state/run-public-checks.py",
+      "sha256": "5ad49f3fc0cf69cfc9d781801901f900d41cfe4a9f4c491c44efa2b04ca89a18",
+      "size": 2737,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\run-public-checks.py"
+    },
+    {
+      "path": "actor-state/stage-1-result.json",
+      "sha256": "0a3b9a66c053072cdd723fcaea7cae7baaab7b5c3ac4f76613fbebeb230426ee",
+      "size": 10578,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\stage-1-result.json"
+    },
+    {
+      "path": "actor-state/task1-backlog-v2.json",
+      "sha256": "9425ea9c95e1c44201be9138cbc47b623e27583f8e1d705bc9eba0918a66a463",
+      "size": 641,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\task1-backlog-v2.json"
+    },
+    {
+      "path": "actor-state/task1-backlog-v3.json",
+      "sha256": "dbb1550b20e10c9054ec01e4453d36f463dcab2b21da0726be8ef51fd6435fbc",
+      "size": 641,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\task1-backlog-v3.json"
+    },
+    {
+      "path": "actor-state/task1-backlog.json",
+      "sha256": "7cbd117c26375015fefd722b18c69bea9b1cd4f4866e258364e587d6f73af990",
+      "size": 636,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\task1-backlog.json"
+    },
+    {
+      "path": "actor-state/task1-runtime-v2.json",
+      "sha256": "233ad00a7db3744a7d3b1b482dc4e1f5d544bc2e8551c0190e79317283d8d620",
+      "size": 6540,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\task1-runtime-v2.json"
+    },
+    {
+      "path": "actor-state/task1-runtime-v3.json",
+      "sha256": "79a4c06406171eda9ff888763d8a439676d8512109b663dec474bfcc33929292",
+      "size": 6532,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\task1-runtime-v3.json"
+    },
+    {
+      "path": "actor-state/task1-runtime.json",
+      "sha256": "9570017dc3685f0b078ab341b79502d62782d66427c041c685f753fbe37260d8",
+      "size": 6508,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\task1-runtime.json"
+    },
+    {
+      "path": "actor-state/untracked-helper-preservation.json",
+      "sha256": "2f3210564d9780d16122062288f7a1d784151226f774280eeb5a7c20746faf6b",
+      "size": 585,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-greenfield\\state\\untracked-helper-preservation.json"
+    }
+  ],
+  "excluded": "bin,obj,.git and binary/databases; product binary bound separately in freeze",
+  "candidateBundleSha256": "518062c8c800ba1b783a57026d940bab4f2d392aadef613c477f302fe25ec514",
+  "evidenceZipSha256": "5a3a0624fc56ae576360a6771c0d28ea7b1732c49debf42642fe4f1cb7595bc8",
+  "immutableSource": "00e4755797d59bc5713d1533b10598f323c29f12"
+}

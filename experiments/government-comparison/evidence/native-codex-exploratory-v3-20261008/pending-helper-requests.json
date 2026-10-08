@@ -1,0 +1,22 @@
+[
+  {
+    "utc": "2026-10-08T21:44:00.225934+00:00",
+    "trialId": "government-greenfield-v3-20261008",
+    "task": 1,
+    "role": "modeling-helper",
+    "status": "dispatched-counted",
+    "reason": "Four native actors allocated including Classic modeling helper; no uncounted helper start",
+    "request": "Accepted Core Definition identity YAML shape from own public docs/pinned CLI only",
+    "reservationId": "activation-0005",
+    "actor": "/root/v3_government_gf_model_helper"
+  },
+  {
+    "utc": "2026-10-08T21:46:23.117299+00:00",
+    "trialId": "conventional-greenfield-v3-20261008",
+    "task": 1,
+    "role": "public-independent-review",
+    "candidateSha": "663cbdfdfb49cd390bb87a9bd9b261b09a26e18b",
+    "status": "queued-not-started",
+    "request": "Readonly candidate vs own releasedbrief/architecture/task1/publicchecks; nofutureprivatefeedback"
+  }
+]

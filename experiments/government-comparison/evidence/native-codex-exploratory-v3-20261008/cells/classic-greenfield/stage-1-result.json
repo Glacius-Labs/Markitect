@@ -1,0 +1,126 @@
+{
+  "trialId": "classic-greenfield-v3-20261008",
+  "task": 1,
+  "methodStatus": "incomplete",
+  "readiness": "readiness_gap",
+  "humanAcceptance": "not supplied; no claim made",
+  "candidate": {
+    "repository": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\study\\cells\\classic-greenfield",
+    "branch": "codex/native-v3-classic-greenfield",
+    "baseCommit": "0416e366626d31933443ce2901d6a3696261db7b",
+    "sourceRevision": "e00ec8c49cb4912aebf02cf6057965463f8ef8b4",
+    "exactAcceptedCandidateCommit": null,
+    "reason": "No Executor candidate was accepted or materialized; sourceRevision is the committed canonical model/config, not a completed service candidate.",
+    "cleanAtFreeze": true
+  },
+  "q1IntentReplay": {
+    "path": "state/q1-intent-replay.md",
+    "recordedUtc": "2026-10-08T21:42:00Z",
+    "beforeImplementation": true
+  },
+  "inputHashes": "state/task-input-hashes.json",
+  "model": {
+    "authoredCaseCanonicalModel": true,
+    "currentModelDigest": "sha256:bf0d4562cd6b1600fd2bc6560b9f115b5fcd93c3387b101582dc4b7cdf3ad84b",
+    "pinnedModuleDigest": "sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c",
+    "frozenProduct": "Classic 0.14.1",
+    "productBinarySha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4"
+  },
+  "runtime": {
+    "file": "state/controller-runtime.json",
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "high",
+    "executionSurface": "native-collaboration-inherited",
+    "providerVersion": "native-collaboration/current-session",
+    "providerIdentityVerified": false,
+    "usage": null,
+    "runnerTimeoutSeconds": 590,
+    "serviceStartCommandConfigured": "dotnet run --no-launch-profile --no-restore",
+    "urlInput": "ASPNETCORE_URLS",
+    "databaseInput": "ORDERS_DB_PATH",
+    "runtimeTarget": "src/OrderService",
+    "exactSdkPin": "10.0.103",
+    "runtimePin": "10.0.3",
+    "exactPackages": [
+      "Microsoft.Data.Sqlite 10.0.3",
+      "SQLitePCLRaw.bundle_e_sqlite3 3.0.5",
+      "SQLitePCLRaw.core 3.0.5"
+    ],
+    "sqliteEnginePin": "3.53.4",
+    "restoreSource": "NuGet.org"
+  },
+  "semanticRepairRoundsUsed": 2,
+  "repairs": [
+    {
+      "round": 1,
+      "changeCommit": "77aef5356e3157eccd935b92d234c74ff1104ead",
+      "detail": "Added per-Kind ProjectionPolicy definitions after real controller-propose escalation for missing Handler and EffectAxis policies."
+    },
+    {
+      "round": 2,
+      "changeCommit": "e00ec8c49cb4912aebf02cf6057965463f8ef8b4",
+      "detail": "Updated guidance to use candidate file mode 0644 after genuine attempt 1 was rejected for unsupported 100644 mode."
+    }
+  ],
+  "nativeCli": {
+    "version": "0.14.1",
+    "model": "state/model-task1-current.yaml",
+    "context": "state/context-create-order-current.yaml",
+    "impact": "state/impact-after-mode-repair.yaml",
+    "proposal": "state/controller-propose-attempt-2.stdout.json",
+    "proposalStatus": "planned",
+    "apply": "NOT RUN",
+    "verifier": "NOT RUN; no accepted/materialized candidate",
+    "audit": "NOT RUN",
+    "fixedPublicCheck": "NOT RUN; Executor did not reach candidate materialization/check execution",
+    "testAndBuild": "NOT RUN"
+  },
+  "executorAttempts": [
+    {
+      "attempt": 1,
+      "sourceRevision": "77aef5356e3157eccd935b92d234c74ff1104ead",
+      "runId": "b3597172808e5c821399b921e1a104af",
+      "invocation": "state/mailbox/b3597172808e5c821399b921e1a104af/invocation.json",
+      "response": "state/mailbox/b3597172808e5c821399b921e1a104af/response.json",
+      "cliReport": "state/controller-execute-attempt-1.stdout.json",
+      "cliStderr": "state/controller-execute-attempt-1.stderr.txt",
+      "status": "incomplete",
+      "error": "candidate mode is unsupported",
+      "application": "none"
+    },
+    {
+      "attempt": 2,
+      "sourceRevision": "e00ec8c49cb4912aebf02cf6057965463f8ef8b4",
+      "runId": "66635d723c4888ea5f62c8b5d1fafe7f",
+      "invocation": "state/mailbox/66635d723c4888ea5f62c8b5d1fafe7f/invocation.json",
+      "invocationSha256": "76bde0e83d22fbce6e790a7c9be8a3b31f2a5eabd078112eec852a6ccc323e5a",
+      "response": "state/mailbox/66635d723c4888ea5f62c8b5d1fafe7f/response.json",
+      "responseSha256": "9e05e5ca71bfde403a8e54babf43c4bf01a6784e04cd7fa0d682023363540956",
+      "transportReceipt": "state/mailbox/66635d723c4888ea5f62c8b5d1fafe7f/transport-receipt.json",
+      "cliReport": "state/controller-execute-attempt-2.stdout.json",
+      "cliReportDigest": "sha256:ddbd6846a68b11641006be0e4bde0445d8b5e6027402c7d7712b75274b82c218",
+      "cliStderr": "state/controller-execute-attempt-2.stderr.txt",
+      "status": "incomplete",
+      "error": "evidence reference was not supplied in the request",
+      "completedUtc": "2026-10-08T21:56:55.331349Z",
+      "nativeSemanticFieldsSupplied": true,
+      "application": "none"
+    }
+  ],
+  "processReceipts": [
+    "state/controller-execute-process-attempt-1.json",
+    "state/controller-execute-process-attempt-2.json"
+  ],
+  "unresolved": [
+    "No Executor output accepted/materialized; independent Verifier and audit have no candidate to assess.",
+    "Fixed Task 1 public checks/build/restore/vulnerability check not run.",
+    "No service startup/address/database runtime observation.",
+    "The second genuine Executor failed with missing evidence-reference request data; do not infer product root cause or semantic correctness.",
+    "Task 2 through Task 6 NOT RUN.",
+    "Provider identity and usage unavailable.",
+    "Human acceptance absent."
+  ],
+  "scope": "Task 1 only; no later-task behavior claimed.",
+  "finalStatePath": "state/stage-1-result.json",
+  "finalResultWrittenUtc": "2026-10-08T21:58:21.1609012Z"
+}

@@ -1,0 +1,10 @@
+{
+  "trialId": "classic-greenfield-v3-20261008",
+  "task": 1,
+  "frozenCommit": "e00ec8c49cb4912aebf02cf6057965463f8ef8b4",
+  "evaluationRoot": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\evaluation\\classic-greenfield",
+  "supportReadOnly": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield",
+  "publicCutoff": 1,
+  "privateDataWithheldFromImplementers": true,
+  "deadlineUtc": "2026-10-08T22:01:19.105982Z"
+}

@@ -1,0 +1,41 @@
+{
+  "trialId": "conventional-greenfield-v3-20261008",
+  "task": 4,
+  "priorCandidate": "52a6e707184f6492a7cff2fca9c842261e74a45c",
+  "release": {
+    "schemaVersion": 1,
+    "throughTask": 4,
+    "condition": "greenfield",
+    "inputs": [
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-4\\01-create-order.md",
+        "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-4\\02-reserve-stock.md",
+        "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-4\\03-persist-state.md",
+        "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-4\\04-order-lifecycle.md",
+        "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-4\\architecture.md",
+        "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-4\\brief.md",
+        "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-4\\checks.py",
+        "sha256": "a73019281035b8b2d8a1011a0ca0058800ba82380dd0c256754a85f732b7b218"
+      }
+    ]
+  },
+  "scope": "Current Task4 only; prior independent public review passed; original boundaries/resources unchanged."
+}

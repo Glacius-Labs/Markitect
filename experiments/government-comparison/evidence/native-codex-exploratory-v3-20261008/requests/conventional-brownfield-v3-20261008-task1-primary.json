@@ -1,0 +1,11 @@
+{
+  "trialId": "conventional-brownfield-v3-20261008",
+  "task": 1,
+  "repository": "C:/Users/Consiliari/Documents/Scientist-Native-v3-20261008/study/cells/conventional-brownfield",
+  "support": "C:/Users/Consiliari/Documents/Scientist-Native-v3-20261008/support/conventional-brownfield",
+  "baseCommit": "5d21ef02cd9d5485c26bc4053a35c61ad33024c1",
+  "protocolCommit": "f3de2c0950493c7977611569d9c657ec5d39249f",
+  "protocolSha256": "78cd11a0578f8e708258d794de8235ca31dc1138b6ce0f79eb8446d7f11098ce",
+  "freezeSha256": "18fd3a2af9356fd83c9b73c9fdfd1b67976146565659366959ca3b415627a484",
+  "configurationSha256": "8ce69505dcbe7837d5601651a393a63363b9af4d93733af60e8cab179dff8156"
+}

@@ -1,0 +1,19 @@
+# Native v3 closed Greenfield cells
+
+Additive two-cell handoff within the authorized six-cell run, not its final synthesis. Protocol commit f3de2c0950493c7977611569d9c657ec5d39249f, protocol SHA256 78cd11a0578f8e708258d794de8235ca31dc1138b6ce0f79eb8446d7f11098ce and independently reviewed freeze SHA256 18fd3a2af9356fd83c9b73c9fdfd1b67976146565659366959ca3b415627a484 remain authoritative. Original149file pins rechecked unchanged at this handoff. Both cells have Tasks2-6 NOT RUN, no accepted service candidate, and null token/provider usage. They are closed without replacement; independently executable cells continue.
+
+## Classic Greenfield
+
+Clean model/setup commit e00ec8c49cb4912aebf02cf6057965463f8ef8b4; no service was materialized. Six counted native activations include primary, modeling helper, aborted Executor interpretation, counted Executor continuation, second fresh Executor and independent evaluator. Two genuine product Invocations/Responses were transported. The first failed unsupported candidate mode; the second failed an evidence reference absent from the supplied request. Both semantic repair rounds are consumed. No actual candidate build/public checks/native Verifier/completion audit ran. This is failed role/product integration, not proof that Classic cannot implement the service.
+
+The independent final evaluator completed before the task deadline and verified absence of a service project in the frozen tree. Product-quality dimensions are unscorable/NOT RUN; incomplete-at-limit gate fails. Its separate method assessment is retained as an evaluator judgment, not product quality or human acceptance. Stage and evaluation JSON, candidate Git bundle and byte-preserving evidence ZIP are under cells/classic-greenfield with hashes in archive-manifest.json.
+
+## Government Greenfield
+
+Clean model/order commit 00e4755797d59bc5713d1533b10598f323c29f12. Four counted native activations: primary, modeling helper, native Executor and interrupted independent evaluator. One genuine Executor response exists; scratch build/public checks do not prove application or promotion. G5 rejected the run with `agent execution input changed during invocation`. Unexpected untracked publish_response.py appeared in the source tree at response time; preserved with SHA256 627c07a26203ff0aa15f754c0639c9106b5a6d54e5f62449c0048c28e7e5de62, then exactly removed by the primary. Scientist did not create it. Product report does not identify the changed path; causal attribution remains uncertain. No final correctness/maintainability votes, promotion, product checks or acceptance occurred.
+
+Independent evaluator was admitted after candidate freeze but produced no result before deadline. Checkpoint22:01:17Z found no result; actual native interrupt_agent request22:01:19.873Z is0.748024 seconds after deadline22:01:19.124976Z. Tool reported prior status running. Strict deadline enforcement is not established for that boundary; OS/provider cancellation is unproved. Terminal ledger observation occurred later and is not the stop-request timestamp. No extra evaluation activation or trial. Stage JSON, candidate bundle and evidence ZIP are under cells/government-greenfield; final independent evaluation incomplete/NOT RUN. Evidence ZIP contains no completed evaluation report.
+
+## Interpretation and remaining work
+
+Cooperative host separation is not OS isolation. No observed private/future/foreign read reported; authorized own-state reads distinguished from prohibited memory/chat history. Dispatcher timing, role wire-format mistakes, audited input mutation, infrastructure gaps and product quality remain separate. All six actual cells have now started. Conventional and both Brownfield product cells continue under original caps. These incomplete outcomes support no superiority, economic, release or human-acceptance claim.

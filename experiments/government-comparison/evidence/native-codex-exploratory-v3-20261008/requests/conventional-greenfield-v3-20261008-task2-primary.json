@@ -1,0 +1,35 @@
+{
+  "trialId": "conventional-greenfield-v3-20261008",
+  "task": 2,
+  "repository": "C:/Users/Consiliari/Documents/Scientist-Native-v3-20261008/study/cells/conventional-greenfield",
+  "support": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield",
+  "priorCandidate": "663cbdfdfb49cd390bb87a9bd9b261b09a26e18b",
+  "release": {
+    "schemaVersion": 1,
+    "throughTask": 2,
+    "condition": "greenfield",
+    "inputs": [
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-2\\01-create-order.md",
+        "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-2\\02-reserve-stock.md",
+        "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-2\\architecture.md",
+        "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-2\\brief.md",
+        "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-2\\checks.py",
+        "sha256": "cd7a930f542ec2364609de1b0ad11ceb286d0219d113b57f17c8fbfc9554585b"
+      }
+    ]
+  },
+  "scope": "Current Task2 only; original boundaries/method/resources; independently public-reviewed stage1 passed. No hidden feedback."
+}
