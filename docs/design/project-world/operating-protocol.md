@@ -4,7 +4,7 @@ Status: Entwurf für die Planung. Dieses Dokument beschreibt ein gewünschtes Be
 
 ## 1. Kanonisches Shop-Beispiel
 
-Das konkrete Dateilayout und das zusammenhängende Modell des kleinen Shop-Monolithen haben genau einen Besitzer: den [Shop-Walkthrough](shop-walkthrough.md) und sein [Beispielprojekt](shop-example/README.md). Dort sind die Modellstruktur, Bereiche, Rollen und Fachbegriffe maßgeblich; dieses Laufzeitprotokoll dupliziert sie nicht. Das Beispiel ist ein Planungsartefakt und keine aktuelle CLI-Syntax.
+Die konkreten Identitäten des ersten Shop-Belegs besitzen der [Shop-Walkthrough](shop-walkthrough.md) und sein [Beispielprojekt](shop-example/README.md). Sie werden hier zur Erläuterung des Laufs verwendet und sind keine aktuelle CLI-Syntax. Für die inzwischen präzisierte Zielgliederung, `.markitect/` und Dateizuordnung gelten [fachliche Module](conceptual-modules.md) und [Projektvertrag](project-contract.md). Der erste Beleg ist vor Produktimplementierung darauf zu migrieren; dieses Protokoll führt keine zweite Modellstruktur ein.
 
 Für den Ablauf gilt: Orders und Bestand verwenden dieselbe Datenbanktransaktion. Eine bestätigte Order hält eine Reservierung. Die Beispieländerung erlaubt Stornierung vor Versand und gibt die Reservierung atomar sowie idempotent frei. Die fachlichen Identitäten und Eigentümer stehen im kanonischen Beispiel: `sales/cancel-before-shipped` gehört zu `orders-manager`; die bereichsübergreifende Regel `commerce/cancellation-releases-reservation` gehört zu `commerce-manager`.
 
@@ -38,6 +38,8 @@ Der Host entscheidet nicht, was ein fachlicher Begriff bedeutet, welche unmodell
 Jeder Auftrag bindet mindestens: `accepted_model_revision`, `source_snapshot`, `base_repository_commit`, Werkzeug-/Modellversionen, ausführbare Policy-Bindungen, Berechtigungsumfang und Laufgrenzen. Ein Lauf kann ältere akzeptierte Basisrevisionen sowie neuere, angenommene und darin verwendete Modell-Snapshots nachvollziehbar zusammenführen. Ändert sich eine Grundlage, werden betroffene Aufträge neu abgeglichen oder ausdrücklich auf eine neue Grundlage umgeplant; gültige unabhängige Aufträge dürfen fortbestehen. Ein Agent darf seine Auftragsgrundlage nicht stillschweigend wechseln.
 
 Impact wird konservativ ausgewertet. Explizite Kanten bestimmen bekannte Betroffene. Nicht inventarisierte, mehrdeutige oder nicht abbildbare Eingaben erscheinen als Lücke; sie werden nicht als „unbetroffen“ gewertet. Das Ergebnis ist eine nachvollziehbare Faktenliste für die Geschäftsführung, keine automatische fachliche Entscheidung.
+
+Akzeptierte Dateiverantwortung, Realisierungsbezüge und Artefakterwartungen werden dauerhaft als Modelleingaben gepflegt. Der Host verwendet einen daraus und aus dem konkreten Dateisnapshot wiederherstellten Dateiindex; ein Agentengedächtnis oder Cache ist nicht die kanonische Quelle. Geänderte Architektur-, Prozess- und Prüfpflichten durchlaufen denselben Annahme-/Impactvertrag wie Fachregeln. Bei gleichzeitigem Modell- und Dateikandidaten bleibt die gemeinsame Übernahmebindung erhalten; verworfene Kandidaten aktivieren keine Zuordnung im Zielrepository. Details besitzt der [Projektvertrag](project-contract.md).
 
 ## 4. Kontext und Nachrichtenverträge
 
@@ -114,7 +116,7 @@ Wiederholung derselben Nachricht mit gleicher Lauf- und Auftragskennung darf kei
 
 **Keine Umsetzung nötig:** Wenn gebundene Prüfungen zeigen, dass eine akzeptierte Änderung im Repository bereits korrekt umgesetzt ist, erstellt der Manager einen erfolgreichen `no-op`-Bericht mit Kandidatenbindung und Nachweisen. Es wird kein leerer Schreibauftrag simuliert. Die Integration prüft trotzdem, ob andere betroffene Bereiche noch Arbeit oder Nachweise schulden.
 
-**Drift bei unverändertem Modell:** Wenn der Sollstand unverändert ist, aber eine Realisierung fehlt oder abweicht, entsteht ein Reparaturauftrag auf derselben Modellrevision und einem frischen Repository-Snapshot. Impact wird erneut für die driftende Pflicht ausgewertet. Der Manager darf keine neue fachliche Regel erfinden, um die Abweichung zu rechtfertigen. Wird beim Reparieren eine echte Modelllücke gefunden, endet dieser Reparaturpfad an einem Vorschlag; eine Annahme und ein neuer Ausführungslauf folgen separat.
+**Drift bei unverändertem Modell:** Wenn der Sollstand unverändert ist, aber eine Realisierung fehlt oder abweicht, entsteht ein Reparaturauftrag auf derselben Modellrevision und einem frischen Repository-Snapshot. Impact wird erneut für die driftende Pflicht ausgewertet. Der Manager darf keine neue fachliche Regel erfinden, um die Abweichung zu rechtfertigen. Wird beim Reparieren eine echte Modelllücke gefunden, wird die davon abhängige Reparatur angehalten und ein Vorschlag erstellt. Nach befugter Annahme werden betroffene Aufträge ausdrücklich neu gebunden; ist der ursprüngliche Lauf noch geeignet, darf er weiterlaufen. Andernfalls beginnt ein neuer Lauf. Unabhängige gültige Arbeit wird nicht künstlich verworfen.
 
 Laufzeitrekursion ist begrenzt, obwohl Bereiche beliebig tief modelliert werden dürfen. Auftragstiefe, Agentenstarts, Kosten, Zeit, Parallelität und Wiederholungen haben deklarierte Grenzen. Bei ausgeschöpfter Grenze endet der Lauf mit Status und Wiederaufnahmepunkt statt still endlos weiterzudelegieren.
 

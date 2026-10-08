@@ -102,6 +102,8 @@ Wirklich gemeinsame Bedeutung wird einmal an einem bewusst gewählten Besitzer d
 
 Die bisher unter „Projektionen“ gebündelte Verbindung zu konkreten Dateien bleibt erforderlich. Im Zielmodell wird sie als **Dateizuordnung** ausgedrückt: Welcher Manager verantwortet eine Datei, welche Modellinhalte werden darin umgesetzt, beschrieben oder geprüft und welche Fähigkeiten werden für ihre Bearbeitung gebraucht? Dateizuordnung ist zunächst ein Vertragsvorschlag, kein vorhandenes neues Produktfeature.
 
+Der [Projektvertrag](project-contract.md) präzisiert die dauerhafte Speicherung dieser Beziehungen, den daraus erzeugten Dateiindex und die Anforderungen an Architektur, Arbeitsweise und erwartete Artefakte. Kanonische Zuordnung und abgeleiteter Index erhalten dort getrennte Verträge.
+
 Die fachliche Gliederung bleibt maßgeblich. Orders kann Backend, Frontend, Tests und Dokumentation gemeinsam verantworten. Diese technischen Rollen erzwingen keine neuen Manager oder getrennten Modellhierarchien. Benötigt ein Projekt tatsächlich eine eigene Frontendverantwortung, kann es diese ausdrücklich delegieren und die Integration beim gemeinsamen Manager belassen.
 
 ### Verantwortung und Bezug getrennt ausdrücken

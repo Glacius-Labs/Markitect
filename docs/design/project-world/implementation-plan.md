@@ -29,8 +29,8 @@ Das ist ein begrenzter Quellabgleich, keine Vollständigkeitsprüfung aller Impl
 | Struktureller deterministischer Compiler, typisierte Referenzen und Provenienz | Behalten; neue Vokabulare über vorhandene Mechanismen prüfen, keinen NLP-Compiler voraussetzen |
 | Feste Quellen und konservative Folgenabschätzung | Behalten; Auswirkungen unterschiedlicher Beziehungstypen ausdrücklich definieren |
 | Akzeptierte Definitionen | Um klaren Begriffs-/Kontextvertrag und Verwendungen in Regeln/Use Cases ergänzen |
-| Bestehende Ziel- und Artefaktverträge | Von Verantwortungsbereichen und einmaligen Arbeitsaufträgen unterscheiden; Auftragsorganisation entkoppeln |
-| Lokale und Elternprüfung | Für Verantwortungsbereiche nutzbar machen, ohne Prüfpflichten durch Aggregation zu verlieren |
+| Bestehende Ziel- und Artefaktverträge | Von rekursiven verantworteten Modulen und einmaligen Arbeitsaufträgen unterscheiden; Auftragsorganisation entkoppeln |
+| Lokale und Elternprüfung | Für die Modulhierarchie nutzbar machen, ohne Prüfpflichten durch Aggregation zu verlieren |
 | Pakete und technische Fähigkeiten | Versionierung und explizite Adoption beibehalten; Maintainer und lokale Verantwortlichkeit ergänzen |
 | Freie Notizen und Vorschläge | Leichten Weg zur bewussten Modellannahme entwickeln; unverbindliche Inhalte nicht aktivieren |
 | Dateiinventar und Nachweise | Viele-zu-viele Zuordnung, eindeutige Writer und sichtbare unbekannte Artefakte erhalten |
@@ -48,7 +48,7 @@ Das ist ein begrenzter Quellabgleich, keine Vollständigkeitsprüfung aller Impl
 | Projection-gebundener Assurance-Scope | Prüfung eines expliziten Verantwortungs- und Integrationsumfangs |
 | Materialisierte Dateien | Artefakte bzw. Realisierungen |
 
-Ein **Bereich** ersetzt keinen der Altverträge pauschal. Der Bereich verantwortet Ziele und Arbeit; der Realisierungsvertrag beschreibt, was entstehen bzw. erhalten bleiben soll. Die spätere Umstellung betrifft Dokumentation, Authoring, Schemas, CLI, Berichte, gespeicherte Records und Beispiele gemeinsam.
+Ein **verantwortetes Modul** ersetzt keinen der Altverträge pauschal. Der Manager verantwortet Ziele und Arbeit; der Realisierungsvertrag beschreibt, was entstehen bzw. erhalten bleiben soll. Der [Projektvertrag](project-contract.md) konkretisiert Architektur-/Arbeitsvorgaben, Artefakterwartungen und dauerhafte Dateizuordnung. Die spätere Umstellung betrifft Dokumentation, Authoring, Schemas, CLI, Berichte, gespeicherte Records und Beispiele gemeinsam.
 
 Kompatibilität bestimmt nicht die Zielarchitektur. Trotzdem muss jede Änderung alter Konfigurationen oder gespeicherter Evidenz ausdrücklich migriert oder als neue inkompatible Version ausgewiesen werden. Unveränderliche Releases und historische Berichte werden nicht umgeschrieben. Unbekannte Pflichtabdeckung oder nicht migrierbare Nachweise bleiben sichtbar.
 
@@ -62,23 +62,25 @@ Lieferung: akzeptierter Minimalwortschatz, vollständiger Order-/Reservierungsfa
 
 Endkriterium: Eine Person kann von einer freien Notiz zu akzeptierten Begriffen, Use Case, Verantwortung, konkretem Auftrag und überprüfter Realisierung navigieren. Ungeklärte Fachentscheidungen sind ausdrücklich offen. Öffentliche Begriffe haben jeweils eine Bedeutung.
 
-### P1 — Fachsprache und Ownership ausdrücken
+### P1 — Fachsprache, Projektvorgaben und Dateiabgleich ausdrücken
 
-Lieferung: kleinstes kanonisches YAML-Beispiel für Konzepte, Kontext, Regeln, Use Cases, rekursive verantwortete Module und Rollenauflösung; Namensraum und Verantwortung folgen der gemeinsamen Deklaration gemäß neuestem Zielstand. Dazu gehören Schemata und gezielte Compiler-/Hostdiagnostik.
+Lieferung: kleinstes kanonisches YAML-Beispiel für Konzepte, Kontext, Regeln, Use Cases, rekursive verantwortete Module und Rollenauflösung; Namensraum und Verantwortung folgen der gemeinsamen Deklaration gemäß neuestem Zielstand. Dazu gehören Architektur-/Arbeitsvorgaben, Artefakterwartungen und dauerhafte Viele-zu-viele-Dateizuordnungen, Schemata und gezielte Compiler-/Hostdiagnostik. Vor der Agentenlaufzeit werden aus festen Modelleingaben und einem Dateisnapshot ein reproduzierbarer Dateiindex, expliziter Impact und sichtbare Abdeckungslücken erzeugt. Pflicht, deklarierter Pfad und beobachtete Datei bleiben getrennt.
 
-Endkriterium: Mehrdeutige Referenzen, fehlende Verantwortliche, zyklische Bereichseltern und widersprüchliche Eigentümerschaft werden deterministisch gemeldet. Ein tieferer Bereich benötigt keinen neuen Typ. Prosa erzeugt keine versteckten Referenzen. Vorhandene Kernverträge zuerst nutzen; erst belegte Lücken erweitern.
+Endkriterium: Mehrdeutige Referenzen, fehlende Verantwortliche, zyklische Moduleltern und widersprüchliche Eigentümerschaft werden deterministisch gemeldet. Ein tieferes Modul benötigt keinen neuen Typ. Der Index lässt sich ohne Agentengedächtnis und nach Cacheverlust wiederherstellen. Neue, fehlende, verschobene oder gelöschte Dateien und unbekannte Abdeckung sind sichtbar. Prosa erzeugt keine versteckten Referenzen. Vorhandene Kernverträge zuerst nutzen; erst belegte Lücken erweitern.
 
-### P2 — Organisation und Prozesse verbinden
+### P2 — Einen begrenzten Ablauf vollständig nachweisen
 
-Lieferung: ausdrückliche Zuständigkeit, ein eigener spezialisierter AI-Agent je Geschäftsführer-/Managerrolle, getrennte Arbeitskontexte, Entscheidungsbefugnisse, Kontextzuschnitt pro Ebene, Delegations- und Reportingpfade, Prozesse, deklarierte Workflow-Schritte und konkrete Aufträge; getrennte kanonische Definitionen und Laufzustände.
+Lieferung: für genau den Shop-Stornierungsfall ausdrückliche Zuständigkeit, ein eigener spezialisierter AI-Agent je beteiligter Geschäftsführer-/Managerrolle, getrennte Arbeitskontexte, Entscheidungsbefugnisse, Delegations- und Reportingpfade, deklarierter Workflow und konkrete gebundene Aufträge; getrennte kanonische Definitionen und Laufzustände. Die Zuordnung und Impactfakten aus P1 bestimmen Arbeit, Writer und erforderliche Prüfungen. Noch kein allgemeiner Dauerbetrieb oder Ausbau aller Integrationen.
 
 Endkriterium: Eine Modelländerung wird entlang der betroffenen Managementpfade von oben nach unten konkretisiert; Berichte und Entscheidungen laufen nachvollziehbar zurück. Jeder Manager arbeitet als eigener AI-Agent mit funktionsspezifischem Kontext. Er muss die Kindkontexte nicht kennen; offene Integrationsfragen klärt er über gezielte Aufträge und Rückfragen. Gewöhnliche Entscheidungen werden innerhalb delegierter Befugnisse selbst getroffen. Konflikte steigen nur bis zur nächsten entscheidungsfähigen Ebene; der Nutzer erhält ausschließlich wichtige vorbehaltene oder durch keine Managementebene lösbare Fragen. Modellierungsrekursion wird von begrenzter Laufzeit getrennt.
 
-### P3 — Umsetzung und Prüfung nach Bereichen organisieren
+Pflichtcheckpoint vor P3: akzeptiertes Modell kompilieren → Dateiindex/Impact an festem Inventar erzeugen → zuständige Manager und eindeutigen Writer bestimmen → reale isolierte Änderung → erforderliche Tests und tatsächliche Elternintegration → einen kontrollierten Abbruch wiederaufnehmen → finalen Modell-/Dateikandidaten samt aktueller Dokumentation abgleichen. Fehlende Freigabe oder ein veralteter Nachweis muss den entsprechenden Abschluss verhindern. Ein bloßer Nachrichtenaustausch oder der private Belegprüfer erfüllt diesen Checkpoint nicht.
 
-Lieferung: Artefaktzuordnung, Fähigkeitenauswahl, Kandidatenbildung, Writerkoordination, aussagekräftige Kindberichte, unabhängige lokale Prüfung und aktive Kompatibilitätsprüfung und Integration durch jeden Elternmanager. Der [neueste Zuordnungsentwurf](conceptual-modules.md#modell-und-repositorydateien-zuordnen) trennt eindeutige Dateiverantwortung, fachliche Viele-zu-viele-Bezüge, konkrete Schreibaufträge und Nachweise. Ein ableitbarer Index verbindet Modellidentitäten und Repositorypfade in beide Richtungen; neue oder verschobene Dateien werden gegen einen gebundenen Kandidaten abgeglichen.
+### P3 — Bewiesenen Ablauf auf rekursive Module erweitern
 
-Endkriterium: Der Stornierungsfall verändert tatsächlich erforderliche Dateien; fehlende Bestandsfreigabe wird trotz erfolgreicher lokaler Order-Prüfung sichtbar. Modelländerung und Reparatur bei unverändertem Modell sind getrennt durchlaufbar. Zwei zuständige Bereiche schreiben nicht unkoordiniert denselben Pfad.
+Lieferung: Verallgemeinerung des in P2 tatsächlich nachgewiesenen Ablaufs für tiefere Module, verschiedene Artefaktrollen, gemeinsame Dateien, gezielte Wiederaufnahme und Reparatur bei unverändertem Soll. Fähigkeitenauswahl, Kandidatenbildung, Writerkoordination, Kindberichte und unabhängige Prüfungen bleiben an P1-Verträge gebunden; jeder Elternmanager integriert aktiv. Der [Zuordnungsentwurf](conceptual-modules.md#modell-und-repositorydateien-zuordnen) und [Projektvertrag](project-contract.md) bestimmen die Bedeutung. Keine breite Orchestrierungsplattform vor dem begrenzten Nachweis.
+
+Endkriterium: Der Stornierungsfall verändert tatsächlich erforderliche Dateien; fehlende Bestandsfreigabe wird trotz erfolgreicher lokaler Order-Prüfung sichtbar. Modelländerung und Reparatur bei unverändertem Modell sind getrennt durchlaufbar. Zwei Modulmanager bzw. ihre Ausführenden schreiben nicht unkoordiniert denselben Pfad.
 
 ### P4 — Produkteinstieg und Übergang abschließen
 
@@ -119,29 +121,29 @@ Die folgenden Szenarien sind Anforderungen für spätere Implementierungsprüfun
 | A2 | Order existiert in Verkauf und Einkauf | Kontextgebundene Referenzen lösen eindeutig auf; unklare Referenzen werden gemeldet |
 | A3 | Bedeutung von Reservierung wird geändert | Ausdrückliche Verbraucher, betroffene Realisierungen und ungültige Nachweise werden bestimmt; unbekannte Eingaben engen Impact nicht heimlich ein |
 | A4 | Ein definierter Begriff hat keinen ausführbaren Check | Struktur kann gültig sein; semantische Durchsetzung wird nicht als bestanden ausgegeben |
-| A5 | Bereich, Namespace oder Modul hat keinen Verantwortlichen | Akzeptierter operativer Vertrag ist ungültig bzw. unvollständig; keine stille Git-/Elterninferenz |
-| A6 | Ein Bereich wird mehrfach rekursiv unterteilt | Derselbe Vertrag gilt auf jeder Tiefe; Zyklen und zwei Eltern werden abgelehnt |
+| A5 | Ein deklariertes Modul hat keinen Manager | Vertrag ist unvollständig; Git-Identität oder Elternrolle reparieren die fehlende Deklaration nicht. Interne Ordner ohne eigene Moduldeklaration bleiben gemäß expliziter Konvention verantwortet |
+| A6 | Ein Modul wird mehrfach rekursiv unterteilt | Derselbe Modul-/Managervertrag gilt auf jeder Tiefe; Zyklen und zwei Eltern werden abgelehnt |
 | A7 | Ein Kind versucht eigene Befugnisse auszuweiten | Ausführung bzw. Übernahme wird verweigert; der geltende Elternrahmen bleibt maßgeblich |
-| A8 | Orders und Lagerbestand liefern lokal erfolgreiche Ergebnisse | Elternprüfung untersucht zusätzlich den vollständigen Ablauf und kann dennoch fehlschlagen |
-| A9 | Zwei Bereiche benötigen dieselbe Datei | Ein konkreter Writer oder ein expliziter Integrator koordiniert den Kandidaten |
+| A8 | Orders- und Inventory-Manager liefern lokal erfolgreiche Ergebnisse | Elternprüfung untersucht zusätzlich den vollständigen Ablauf und kann dennoch fehlschlagen |
+| A9 | Modellinhalte zweier Module benötigen dieselbe Datei | Dateiverantwortung bleibt eindeutig; ein konkreter Writer oder ein expliziter Integrator koordiniert den Kandidaten |
 | A10 | Projekt übernimmt ein versioniertes Modul | Maintainer und lokale Adoption sind eindeutig verantwortet; Installation aktiviert keine neue Pflicht |
 | A11 | Prozess und konkreter Workflow werden geändert | Zuständigkeit, betroffene Abläufe und Nachweise sind getrennt nachvollziehbar |
 | A12 | Docker-Datei ist noch keinem Modellzweck zugeordnet | Als ungeklärt sichtbar; keine automatisch erfundene Absicht und kein automatisches Löschen |
 | A13 | Artefakt driftet bei unverändertem Soll | Reparaturauftrag entsteht ohne fingierte Modelländerung; neue Prüfung bindet tatsächliche Bytes |
 | A14 | Öffentlicher Altbegriff wird ersetzt | Alte Evidenz wird nicht stillschweigend neu gebunden; Versions-/Migrationsentscheidung ist prüfbar |
-| A15 | Eine Änderung betrifft zwei tiefe Bereiche und einen gemeinsamen Vorfahren | Information und Aufträge folgen den betroffenen Pfaden von oben nach unten; jeder Manager übersetzt den Auftrag für seine Kinder |
+| A15 | Eine Änderung betrifft zwei tiefe Module und einen gemeinsamen Vorfahren | Information und Aufträge folgen den betroffenen Managerpfaden von oben nach unten; jeder Manager übersetzt den Auftrag für seine Kinder |
 | A16 | Ein Manager erhält seinen Arbeitskontext | Relevante Regeln, Schnittstellen und Befugnisse sind enthalten; Kindkontexte und deren interne Zusammenstellung muss er nicht kennen |
 | A17 | Zwei Kindberichte bestehen lokal, verlangen aber inkompatible Schnittstellen | Elternintegration erkennt den Konflikt; der Manager entscheidet innerhalb seiner Befugnis und delegiert die nötige Anpassung |
 | A18 | Ein Konflikt kann vom gemeinsamen Elternmanager entschieden werden | Er entscheidet und berichtet; keine unnötige Eskalation zur Geschäftsführung oder zum Nutzer |
-| A19 | Erst ein höherer Manager besitzt die erforderliche Befugnis | Eskalation folgt dem Elternpfad mit konkreter Frage, Fakten, Alternativen und Empfehlung; Entscheidung fließt nach unten zurück |
+| A19 | Erst ein höherer Manager besitzt die erforderliche Befugnis | Eskalation folgt dem Modulelternpfad mit konkreter Frage, Fakten, Alternativen und Empfehlung; Entscheidung fließt nach unten zurück |
 | A20 | Eine gewöhnliche Frage erreicht die umfassend befugte Geschäftsführung | Sie entscheidet selbst; ein dem Nutzer vorbehaltener Grundsatzkonflikt wird dagegen gezielt vorgelegt |
 | A21 | Ein Kind liefert veraltete Evidenz oder einen unvollständigen Bericht | Der Elternmanager kann den Gesamtauftrag nicht als erfolgreich abschließen; erneuter Abgleich oder fehlende Arbeit wird konkret benannt |
-| A22 | Geschäftsführung, Elternmanager und Kindmanager bearbeiten eine Änderung | Jede Rolle wird durch einen eigenen AI-Agenten mit eigenem Kontext ausgeübt; ein gemeinsamer Gesprächskontext mit Rollenetiketten genügt nicht |
-| A23 | Ein Kindbereich erweitert seine interne Zerlegung oder lädt mehr Fachdetails | Der Elternmanager kann über unveränderte Ergebnis-/Schnittstellenverträge weiterarbeiten; nur relevante Folgen, Berichte und konkrete Antworten gelangen nach oben |
+| A22 | Geschäftsführung, Elternmanager und Kindmanager bearbeiten eine Änderung | Jede Managerrolle der deklarierten Module wird durch einen eigenen AI-Agenten mit eigenem Kontext ausgeübt; ein gemeinsamer Gesprächskontext mit Rollenetiketten genügt nicht |
+| A23 | Ein Kindmodul erweitert interne Ordner oder lädt mehr Fachdetails | Der Elternmanager kann über unveränderte Ergebnis-/Schnittstellenverträge weiterarbeiten; interne Unterordner erzeugen keinen zusätzlichen Manager. Neue deklarierte Untermodule folgen dem bestehenden Modulvertrag |
 | A24 | Neuer Use Case verlangt unveränderte Bestandsdefinitionen | `requiresRealization` und `realizes` machen benötigte Umsetzung bzw. Prüfung sichtbar; unveränderte Quelle wird nicht mit Nichtbetroffenheit verwechselt |
 | A25 | Eine neue Regel verwendet unveränderte Architektur als Kontext | Bestehende Checks laufen; ein Plattformmanager erhält erst bei tatsächlich betroffenen Plattformpflichten Arbeit |
 | A26 | Nutzerauftrag umfasst Modellpflege und Umsetzung | Interne Annahme-/Startschritte bleiben gebunden, erfordern aber keine zusätzliche pauschale Rückfrage |
-| A27 | Umsetzung erzeugt neuen Pfad im delegierten Bereich | Writer, autorisierte Zuordnungsänderung und erneute finale Modell-/Artefaktprüfung bleiben nachvollziehbar |
+| A27 | Umsetzung erzeugt neuen Pfad im delegierten Modulumfang | Writer, autorisierte Zuordnungsänderung und erneute finale Modell-/Artefaktprüfung bleiben nachvollziehbar |
 | A28 | Nutzer beschreibt eine neue Regel im Gespräch | Strukturierte Modelländerung, verständliche fachliche Differenz und passende Prüferwartungen entstehen ohne manuelles YAML-Editing |
 | A29 | Neues Projekt wird angelegt | Alle Markitect-eigenen Dateien liegen unter `.markitect/`; kanonische Quellen sind versionierbar, lokale Arbeitsdaten werden ausdrücklich behandelt |
 | A30 | Nutzer ändert die lesbare Spezifikation | Änderung fließt über die kanonischen Modelleingaben und deren Prüfung; kein konkurrierender Besitzer derselben Aussage entsteht |
@@ -151,6 +153,15 @@ Die folgenden Szenarien sind Anforderungen für spätere Implementierungsprüfun
 | A34 | Implementierung erzeugt, verschiebt oder entfernt zugeordnete Dateien | Laufbestand und Zuordnungen werden abgeglichen; Aktualisierung wird validiert, finale Evidenz bindet den tatsächlich finalen Stand |
 | A35 | Ein Pfadmuster passt nach einer Änderung auf weitere Dateien | Gebundene Dateimenge wird aktualisiert; neue Dateien und unklare Verantwortung verschwinden nicht hinter einem alten Index |
 | A36 | Ein Modellinhalt wird in eine andere YAML-Datei aufgeteilt | Fachliche Dateibezüge hängen an der Modellidentität; eine echte Namespace-/Identitätsänderung wird ausdrücklich migriert |
+| A37 | Cache geht verloren oder Lauf bricht nach Impact vor Delegation ab | Index und Folgen werden aus gebundenen Quellen wiederhergestellt; vorhandener Auftragsstand wird abgeglichen, keine doppelte Delegation |
+| A38 | Ein Modell verlangt eine Dokumentation, aber noch kein Pfad ist bekannt | Pflicht und fehlende Realisierung bleiben sichtbar; Dateiinventar erzeugt nicht selbst die Anforderungen |
+| A39 | Ein Pflichtartefakt wird gelöscht, gegebenenfalls samt Dateibezug | Aktive Erwartung bleibt unerfüllt; fehlende Realisierung wird gemeldet, Zuordnungsentfernung senkt die Pflicht nicht ab |
+| A40 | Artefakt wird befugt ersetzt, umbenannt oder entfernt | Entscheidung über verbleibende Pflicht ist explizit; alte/neue Bezüge und Nachweise werden abgeglichen, keine automatische PASS-Übertragung |
+| A41 | Projektweite Architektur widerspricht lokaler Umsetzung | Geltender Scope und Ausnahmebefugnis sind auflösbar; formaler Verstoß bzw. semantischer Entscheidungsbedarf wird sichtbar |
+| A42 | Manager erweitert eigenen Zuständigkeitsvertrag | Aktive Befugnis begründet die Entscheidung; Erweiterung benötigt entsprechend befugten Vorfahren/Nutzer, keine Selbstautorisierung |
+| A43 | Ein laufender Auftrag ändert seine Prüfpflichten oder den Workflow | Befugte Annahme, erneuter Impact und ausdrückliche Neubindung vor Anwendung; kein stilles Absenken eigener Abschlusskriterien |
+| A44 | Schema, Paket, Policy, Host oder relevante Werkzeugkonfiguration ändern sich | Index-/Impact-/Nachweisbindung wird auf ihre konkreten Eingaben geprüft; unverändert erscheinende Dateien begründen keine pauschale Wiederverwendung |
+| A45 | Zusammengehöriger Modell-/Dateikandidat wird verworfen | Vorgeschlagene Zuordnung wird im Zielrepository nicht aktiv; Wiederaufnahme und spätere Übernahme behalten die gemeinsame Bindung |
 
 ## 6. Noch zu entscheidende Details
 
@@ -165,6 +176,8 @@ Die folgenden Szenarien sind Anforderungen für spätere Implementierungsprüfun
 - Detailprüfung: Welche Verpflichtungen werden deterministisch geprüft, welche semantisch beurteilt, welche zunächst nur beschrieben? Sichtbare Abdeckung statt pauschalem Enforcement.
 - Eigentümerwechsel und Bereichsumbau: Identität, historische Verantwortung, Delegation und Impact bei Verschiebung präzisieren.
 - Übergang: Neue öffentliche Syntax und eventuell inkompatible Version ausdrücklich wählen; vorhandene Namen bestimmen nicht das Zielmodell.
+- Dateiindex: Konkretes Ausgabeformat, Normalisierungsregeln und Bindungsdigests wählen; kanonische Zuordnung bleibt im Modell, Index ist vollständig wiederherstellbar. Keine offene Speicherwahl stellt diesen Produktvertrag infrage.
+- Projektvorgaben: Minimale Syntax für Geltungsbereich, befugte Ausnahme, Artefakterwartung und Anwendbarkeit festlegen. Architektur und Arbeitsweise benötigen denselben Referenz-/Impactvertrag wie Fachregeln.
 
 Diese Punkte sind konkrete nächste Planungsarbeit. Sie blockieren weder den vorliegenden Entwurf noch verlangen sie eine pauschale neue Freigabe für gewöhnliche Planung.
 
@@ -185,3 +198,23 @@ Durchgeführt für diese Ausarbeitung: unabhängiger Beispielreview mit anschlie
 Die weitere Nutzerpräzisierung legt `.markitect/` als Ablage aller Markitect-eigenen Dateien sowie Gespräch und lesbare Spezifikation als normalen Zugang fest. `manager.yaml` ist die empfohlene Benennung aus den beiden Nutzervorschlägen. A28–A31 beschreiben die geplante Bedienabnahme. Für diese Dokumentationsfortschreibung wurden 47 lokale Linkziele in fünf Dateien und Whitespace geprüft. Der ältere YAML-Beleg wurde weder migriert noch erneut ausgeführt; keine Produkt- oder Laufzeitprüfung wird daraus abgeleitet.
 
 Die anschließende Planung der Dateizuordnung ergänzt A32–A36: unterschiedliche technische Artefakte je Slice, Viele-zu-viele-Bezüge, eindeutige Dateiverantwortung, Pfadänderungen und gebundene Dateimengen. Zwanzig lokale Linkziele in drei geänderten Dokumenten und Whitespace wurden geprüft. Der Entwurf enthält keine implementierte Dateiauflösung und keine neue Produktprüfung.
+
+## 8. Konsistenzreview des zusammengeführten Plans
+
+Der erneute Review am 8. Oktober 2026 betrachtet das gesamte Planungspaket auf Konzepte, Dokumentübergänge und einen vollständigen Durchlauf. Zwei unabhängige Reviewagenten untersuchten Modellkonsistenz bzw. Compiler-/Zuordnungs-/Ausführungsgrenzen; die Befunde wurden anschließend am überarbeiteten Entwurf nachgeprüft. Es handelt sich um einen Designreview, keine menschliche Produktabnahme oder Validierung einer implementierten Laufzeit.
+
+| Befund | Eingearbeitete Korrektur |
+|---|---|
+| Alte Trennung von Bereich, Namespace und Modul stand teils noch als aktiver Zielvertrag | README, Zielmodell und aktive Abnahmeszenarien führen rekursive Module mit Manager; interne Ordner bleiben über die explizite Konvention verantwortet |
+| Änderung des eigenen Managervertrags könnte ihre Befugnis selbst begründen | Die aktive Revision bestimmt Entscheidungsrechte; eine Mandatserweiterung benötigt die vorher zuständige befugte Instanz |
+| Dauerhaftigkeit und Wiederherstellung des Dateiindex waren zu offen | Versionierte Zuordnungsquellen und reproduzierbare Ausgabe; exakte Inhalts-/Build-/Konfigurationsbindungen und Abgleich bei Wiederaufnahme |
+| Vorhandene Dateien beschrieben noch nicht alle benötigten Ergebnisse | Explizite Artefakterwartungen, Anwendbarkeit und Abschlusskriterien auch ohne bekannten Pfad |
+| Entfernung oder Umbenennung könnte Pflichten und Nachweise verlieren | Alte/neue Bezüge gemeinsam betrachten; aktive Pflicht bleibt bestehen, befugte Vertragsänderung und frische Nachweisbindung sind explizit |
+| Laufzeitausbau war vor vollständigem Datei-/Impactvertrag vorgesehen | P1 liefert Index, Impact und Erwartungen; P2 verlangt einen echten begrenzten Durchlauf; P3 erweitert erst danach |
+| Reparaturprotokoll verlangte teilweise pauschal einen neuen Lauf | Annahme und Neubindung betroffener Aufträge sind explizit; geeignete laufende Arbeit kann gültig fortgesetzt werden |
+
+Abgedeckte Zielthemen: gemeinsame Sprache und Fachverhalten; rekursive Verantwortung und getrennte AI-Kontexte; Architektur und nichtfunktionale Vorgaben; Prozesse und Workflow; erforderliche Artefakte; dauerhafte Zuordnung und Dateiindex; expliziter Impact; Kandidaten und Writer; unabhängige Prüfung und Elternintegration; Eskalation; Drift, Löschung, Umbenennung und Wiederaufnahme; lesbare Sichten und Versionsbindung; bewusste Adoption und Übergang alter Verträge. A1–A45 sind dazu geplante Produktszenarien und wurden nicht als Produktläufe ausgeführt.
+
+Offen bleiben vor Produktimplementierung: exakte technische Basis, finales Schema und öffentliche Namen, Namespace-/Pfadkonvention samt Migration des ersten Shop-Belegs, konkrete Bindungs-/Indexformate und Agenten-/Werkzeugintegration. Diese Punkte haben P0/P1 bzw. die begrenzte P2-Scheibe als zuständige Schritte. Der Plan verspricht keine automatische semantische Vollständigkeit oder allgemeinen Beweis beliebigen Codes.
+
+Dokumentationsprüfung dieser Fortschreibung: neun Markdown-Dateien mit 67 lokalen Linkzielen geprüft, kein fehlendes Ziel; Whitespaceprüfung vor lokalem Commit einschließlich des neuen Projektvertrags. Der ältere YAML-Beleg ist weiterhin als erste Iteration ausgewiesen und wurde in diesem reinen Designreview nicht erneut ausgeführt. Keine neuen Shop-Checks, Beispiel-Managerstarts, CI-Läufe oder Releases.

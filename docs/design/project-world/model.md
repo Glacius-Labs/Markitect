@@ -4,6 +4,8 @@ Status: Planungsentwurf. Die [festgehaltenen Richtungsentscheidungen](README.md)
 
 Der [Shop-Walkthrough](shop-walkthrough.md) und [konkrete Modellbeleg](shop-example/README.md) führen diesen Vertrag an einem kleinen System aus. Das [Laufzeitprotokoll](operating-protocol.md) konkretisiert seine Ausführung. Dieser allgemeine Entwurf definiert die Prinzipien; die Beispieldateien besitzen die konkreten Beispielidentitäten und ihre hypothetischen Fachentscheidungen.
 
+Für den aktuellen Zielstand ergänzen [fachliche Module](conceptual-modules.md) und [Projektvertrag](project-contract.md) diesen ersten Entwurf: verborgene Ablage, vertikale Gliederung, gemeinsame Managerdeklaration, Architektur-/Arbeitsvorgaben, Artefakterwartungen und dauerhaft gespeicherte Dateibezüge. Das ältere konkrete Shop-Beispiel ist noch zu migrieren.
+
 ## 1. Verständlicher Produkteinstieg
 
 Der Einstieg beginnt beim Projekt und seinem Zweck. Skills, Agents und anbieterspezifische Integrationen erscheinen bei den Werkzeugen zur Umsetzung. Das Produkt braucht fünf verbundene Sichten:
@@ -45,33 +47,29 @@ Es gibt getrennte Prüfungen mit jeweils ausgewiesenem Umfang:
 
 Für einen definierten Begriff ohne ausführbaren Check bleibt die Durchsetzung als solche offen. Das verhindert nicht seine Nutzung als präzise Vorgabe. Ein erfolgreicher Strukturcheck beweist weder fachliche Richtigkeit noch Einhaltung aller Regeln. Ein allgemeiner Solver oder die automatische Interpretation beliebiger Prosa gehört nicht zum ersten Umfang.
 
-## 3. Bereiche, Namespaces und Module
+## 3. Verantwortete Module und Namensräume
 
-**Fortgeführter Entwurf:** Die [neueste Gliederungsdiskussion](conceptual-modules.md) hält die Nutzerkorrektur fest: `area` ist kein geeigneter öffentlicher Name; die Ablage soll nach fachlichen Vertical Slices gegliedert werden. Die folgende getrennte Begriffstabelle ist der erste Entwurfsstand. Der neuere Vorschlag vereinigt die lokale Gliederung unter einem primären Modulbegriff; dessen endgültiger Name und Syntax sind noch offen.
+Die [neueste Gliederungsdiskussion](conceptual-modules.md) ersetzt die erste Trennung von Area, lokalem Modul und separat verantwortetem Namespace durch eine gemeinsame primäre Einheit. Deren Arbeitsname ist Modul; `area` bleibt ausschließlich Herkunft des älteren Belegs. Die endgültige Syntax ist noch offen.
 
 | Begriff | Vorgeschlagene Bedeutung | Verantwortung |
 |---|---|---|
-| Bereich | Dauerhafte Verantwortung für einen Teil des Projekts; kann weitere Bereiche enthalten | Genau ein verantwortlicher Rollenbezug, eigener Zweck, klarer Scope und Integrationspflicht |
-| Namespace | Stabiler Namensraum für Identitäten; optional ausdrücklich zu einem fachlichen Kontext erklärt | Genau ein verantwortlicher Rollenbezug und ein zuständiger Bereich |
-| Modul | Wiederverwendbare, versionierte Einheit für Modellvokabular, Prozesse, Checks oder Integrationen | Genau ein verantwortlicher Rollenbezug für die Moduldefinition; Adoption durch ein Projekt wird separat verantwortet |
+| Modul | Rekursive fachliche Einheit mit Zweck, öffentlichem Vertrag und Modellinhalten | Genau ein Manager, delegierter Umfang und Integrationspflicht |
+| Namespace | Namensscope aus der erklärten Modellpfadkonvention; nicht jede interne Untergliederung ist ein eigenes Modul | Verantwortung über den nächsten deklarierten Manager; kein zweites lokales Register |
+| Paket | Wiederverwendbare, versionierte Lieferung von Modellinhalten oder Fähigkeiten | Maintainer der Lieferung und separat verantwortete lokale Adoption |
 | Verantwortlicher | Dauerhafte Rolle mit auflösbarer Besetzung und definierten Befugnissen | Keine implizite Berechtigung durch Git-Identität, Installation oder Agentenstart |
-| Manager | Verantwortlicher eines Bereichs, dessen Funktion ein eigener spezialisierter AI-Agent ausübt: abstrahieren, entscheiden, delegieren, Berichte bewerten und integrieren | Eigener Arbeitskontext; innerhalb seines Bereichs und delegierter Befugnis entscheidungsfähig; behält die Gesamtverantwortung |
-| Geschäftsführer | Eigener AI-Agent in der Managerrolle des Projektwurzelbereichs | Umfassende Projektentscheidungen innerhalb des Nutzerauftrags; Nutzer bleibt oberste Instanz |
+| Manager | Verantwortlicher eines Moduls, dessen Funktion ein eigener spezialisierter AI-Agent ausübt: abstrahieren, entscheiden, delegieren, Berichte bewerten und integrieren | Eigener Arbeitskontext; innerhalb seines Auftrags und delegierter Befugnis entscheidungsfähig; behält die Gesamtverantwortung |
+| Geschäftsführer | Eigener AI-Agent in der Managerrolle des Projektwurzelmoduls | Umfassende Projektentscheidungen innerhalb des Nutzerauftrags; Nutzer bleibt oberste Instanz |
 | Arbeiter / ausführender Agent | Zeitlich begrenzte Instanz, die einen konkreten Auftrag bearbeitet | Handelt innerhalb des delegierten Auftrags und verändert keine eigenen Befugnisse |
 
-Ein Bereich ist weder ein Ordner noch ein Modul oder Namespace. Explizite Zuordnungen können häufige 1:1-Fälle bequem ausdrücken, ohne diese Gleichheit universell vorauszusetzen. Ein Modul kann mehrere Namespaces liefern; ein Bereich kann mehrere Namespaces und Module verantworten oder einsetzen.
+Die fachliche Ordnergliederung trägt Modellnamensräume. Eine Managerdeklaration eröffnet ein verantwortetes Modul; interne Ordner benötigen keinen zusätzlichen Manager. Die ausdrücklich gewählte Konvention ordnet ihre Inhalte dem nächsten deklarierten Manager zu. Davon getrennt werden konkrete Anwendungsdateien über Dateizuordnungen verantwortet: Ein Modellordner behauptet keine gleichnamige Quellcodezuständigkeit.
 
-Der Rollenbezug bezeichnet den einzigen Verantwortlichen der jeweiligen Einheit. Ihre Bereichszuordnung beschreibt den organisatorischen Ort und Delegationsweg; sie schafft keinen zweiten konkurrierenden Verantwortlichen. Der Bereich verantwortet seinerseits die Integration seines gesamten Umfangs.
-
-Um die gewünschte Namespace-Verantwortung ausdrücken zu können, schlägt dieser Plan eine explizite Namespace-Deklaration oder ein gleichwertiges kanonisches Register vor. Bestehende Namespace-Strings in Definitionen werden damit auf eine verantwortete Einheit abgebildet. Ein bloßes Namenslabel ist noch kein vollständiger Ownershipvertrag. Die genaue YAML-Form ist offen; die geforderte eindeutige Verantwortung ist es nicht.
-
-Ein wiederverwendbares Modul hat einen Herausgeber bzw. Maintainer. Das übernehmende Projekt benennt einen lokalen Verantwortlichen für Auswahl, Version, Anpassungen und Einsatz. Das sind unterschiedliche Verantwortungsgegenstände, nicht zwei konkurrierende Eigentümer derselben Definition. Installation aktiviert keine Regeln und delegiert keine Befugnisse. Projektlokale Erweiterungen erhalten einen eindeutigen Besitzer; sie ändern das gepinnte Ursprungsmodul nicht heimlich.
+Ein wiederverwendbares Paket hat einen Herausgeber bzw. Maintainer. Das übernehmende Projekt benennt einen lokalen Verantwortlichen für Auswahl, Version, Anpassungen und Einsatz. Das sind unterschiedliche Verantwortungsgegenstände, nicht zwei konkurrierende Eigentümer derselben Definition. Installation aktiviert keine Regeln und delegiert keine Befugnisse. Projektlokale Erweiterungen erhalten einen eindeutigen Besitzer; sie ändern das gepinnte Ursprungspaket nicht heimlich. Heutige technische Module werden erst im ausdrücklich geplanten Quellübergang auf diese Zielbegriffe abgebildet.
 
 „Verantwortlicher“ bezeichnet genau einen kanonischen Rollenbezug, nicht zwingend eine einzelne natürliche Person. Die Rolle kann durch eine Person oder ein Team besetzt sein; Entscheidungs- und Konfliktregeln müssen dann auflösbar bleiben. Dieselbe Rolle kann mehrere Einheiten verantworten. Das Projekt benennt seinen Root-Verantwortlichen ausdrücklich.
 
 ## 4. Rekursive Verantwortung
 
-Alle Ebenen verwenden denselben Bereichsvertrag. Der Entwurf verlangt keine feste Anzahl von Ebenen oder Sondertypen pro Tiefe:
+Alle Ebenen verwenden denselben Modul-/Managervertrag. „Bereich“ bezeichnet im folgenden erläuternden Text den verantworteten Umfang, keinen zusätzlichen Modelltyp. Der Entwurf verlangt keine feste Anzahl von Ebenen oder Sondertypen pro Tiefe:
 
 ```text
 Projekt
@@ -85,9 +83,9 @@ Projekt
 
 Pro Modellrevision gelten folgende vorgeschlagene Invarianten:
 
-1. Es gibt einen Projektwurzelbereich. Jeder weitere Bereich hat genau einen Elternbereich; die Elternbeziehung ist azyklisch.
-2. Jeder Bereich, jedes Modul und jeder Namespace benennt genau einen gültigen Verantwortlichen. Elternverantwortung ersetzt eine fehlende Angabe nicht stillschweigend; eine ausdrücklich gewählte gemeinsame Rolle ist erlaubt.
-3. Jeder akzeptierte Modellgegenstand besitzt genau einen kanonisch verantworteten Bereich. Weitere Beteiligung, Mitwirkung und Prüfung werden separat referenziert.
+1. Es gibt ein Projektwurzelmodul. Jedes weitere deklarierte Modul hat genau ein Elternmodul; die Elternbeziehung ist azyklisch.
+2. Jedes deklarierte Modul benennt genau einen gültigen Manager. Ein interner Ordner ohne eigene Moduldeklaration erhält Verantwortung gemäß der ausdrücklich geltenden Konvention des nächsten Managers; eine unvollständige Moduldeklaration wird dadurch nicht repariert.
+3. Jeder akzeptierte Modellgegenstand besitzt genau ein kanonisch verantwortetes Modul. Weitere Beteiligung, Mitwirkung und Prüfung werden separat referenziert.
 4. Unterbereiche übernehmen ausdrücklich delegierte Aufgaben und Befugnisse. Sie können keine zusätzliche Entscheidungsbefugnis aus ihrer Existenz ableiten.
 5. Ein Elternbereich bleibt für den Gesamtauftrag, die Schnittstellen seiner Kinder und die Integration verantwortlich. Erfolgreiche Einzelprüfungen ersetzen seine eigene Integrationsprüfung nicht.
 6. Fachliche Beziehungen dürfen Bereiche überqueren. Die Bereichshierarchie ersetzt den fachlichen Graphen nicht; betroffene gemeinsame Vorfahren koordinieren zusammengesetzte Änderungen.
@@ -180,6 +178,6 @@ Der folgende Fall ist eine hypothetische Modellierungsübung, keine eingeführte
 
 ## 9. Öffentliche Sprache
 
-Der neue Einstieg spricht von Projektmodell, Fachsprache, Bereichen, Verantwortlichen, Prozessen, Arbeitsaufträgen, Umsetzung und Nachweisen. Modul und Namespace erscheinen mit ihrer eigenen Bedeutung. Anbieterintegrationen sind optionale Werkzeuge.
+Der neue Einstieg spricht von Projektmodell, Fachsprache, verantworteten Modulen, Managern, Prozessen, Arbeitsaufträgen, Umsetzung und Nachweisen. Der Namespace beschreibt die Namensfacette der fachlichen Gliederung. Anbieterintegrationen sind optionale Werkzeuge.
 
 Für die Arbeit gelten die Verben: modellieren, prüfen, Folgen bestimmen, planen, delegieren, umsetzen, integrieren, verifizieren und übernehmen. Diese Vorschläge sind keine implementierten CLI-Kommandos. Die Managementanalogie verlangt keine Ministerien, Gerichte oder zusätzlichen Institutionen. Solche Mechanismen brauchen einen unabhängig begründeten Bedarf.
