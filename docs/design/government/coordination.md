@@ -749,3 +749,12 @@ Neuer Auftrag `s1-redacted-stderr-wiring-offline-20261008`: additive neue Client
 Root bestätigte unabhängig mit GitHub-PR-Zustand und git ls-remote: [PR86](https://github.com/Glacius-Labs/Markitect/pull/86) ist seit `2026-10-08T16:25:41Z` MERGED nach main. Remote-Main-SHA `560acdcd857829bb71dd55415d45b9fdef8d013a`, freigegebener PR-Head `6b0336dfbd85bef680adc46ee441ba907569fd72`. Beide Trees exakt `75b4502e75e213bd95b2a3d4ca1bb5124b1dbc05`; Featureworktree sauber. Gegen angenommenes4908 lediglich eine README-Zeile zur Git-Voraussetzung geändert. PR-Qualitychecks Ubuntu24.04 und Windows erfolgreich, Run37807261790. Post-Merge-CI37808700933 auf560acdcd noch in_progress; finaler Architect-Handoff und Slotfreigabe stehen aus. Kein neues Release oder Studienversionswechsel behauptet. PR ist am Overseer-Chat angehängt.
 
 Der reine Offline-Wiringauftrag wurde am `2026-10-08T16:30:40Z` genau einmal gesendet; Zustellung bestätigt. Keine neue Laufquote.
+
+
+### README und kanonische Produktdokumentation ausdrücklich ergänzen, 8. Oktober, 18:36 Europe/Berlin
+
+Direkter Nutzerauftrag: „Der Architect soll auch die Readme anpassen und die Doku, sodass sie aktuell ist“. Ergänzung `classic-main-documentation-addendum-20261008` im laufenden Architect-Eigentümerauftrag: betroffene README/Produktbegriffe/Architektur/Usage/Quickstart/Beispiele/Verifikation/Roadmap über Dokumentationskarte gegen aktuellen Classic-Main-Stand prüfen, konkrete veraltete oder widersprüchliche Stellen berichtigen. Quellstand, tatsächlich veröffentlichte CLI und geplante Fähigkeiten klar unterscheiden; Government experimentell und Methodenqualität weiter unbewiesen. Keine pauschale Komplettneufassung oder neue Features.
+
+Bisherige ausdrückliche Autorisierung für Featurepush/PR/regulären Merge nach Main gilt auch für erforderliche Dokumentations-Folge-PRs nach angemessenen Checks und unabhängigem Doc-/Bedienreview. Passende Dokumentations-/Link-/Schema-/Beispielprüfungen statt redundanter Produktvollsuite bei reiner Prosa. Kein neues Release oder Runtime-/Smokegrant. Architect meldet aktualisierte Dateien, gelöste Widersprüche, Prüfungen/Review und tatsächlichen Main-SHA beim Abschluss. Scientists Studienpins und Root-Koordinationsdateien bleiben außerhalb seiner Schreibgrenze.
+
+Dokumentationsergänzung am `2026-10-08T16:36:49Z` genau einmal an den aktiven Architect gesendet; Zustellung bestätigt.
