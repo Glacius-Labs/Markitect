@@ -248,6 +248,26 @@ def government_resume():
     return result
 
 
+def require_positive_classic_checkpoint(capture):
+    """Stop before another native effect unless this exact capture is positive."""
+    action = capture.get("action")
+    if action not in classic_integration.EXPECTED_STATUSES:
+        raise ValueError("unknown Classic prerequisite checkpoint")
+    receipt_path = Path(capture["processPath"])
+    receipt_raw = receipt_path.read_bytes()
+    if dispatch.digest(receipt_raw) != capture.get("processSha256"):
+        raise ValueError("Classic checkpoint process receipt changed")
+    receipt = json.loads(receipt_raw)
+    report = json.loads(Path(capture["stdoutPath"]).read_bytes())
+    if (capture.get("returnCode") != 0 or receipt.get("returnCode") != 0 or
+            receipt.get("stopReason") is not None or receipt.get("timedOut") is not False or
+            not isinstance(report, dict) or
+            report.get("status") != classic_integration.EXPECTED_STATUSES[action]):
+        raise ValueError("Classic checkpoint failed; stop R3 product without later actions")
+    if action == "audit" and (report.get("findings") or report.get("nextSteps")):
+        raise ValueError("Classic Audit has findings; stale Apply replay is not authorized")
+
+
 def classic_flow():
     require_freeze()
     validate("classic")
@@ -257,8 +277,7 @@ def classic_flow():
     session = native_controller.begin_classic_controller(request_path, a)
     try:
         execute = native_controller.run_classic_step(session, "execute", fixture_budget=b)
-        if execute.get("returnCode") != 0:
-            raise RuntimeError("Classic Execute failed; stop R3 case without later actions")
+        require_positive_classic_checkpoint(execute)
         print(json.dumps({"awaitingExactExecuteReview": execute,
                       "reviewPath": str(EXTERNAL / "classic/execute-review.json")}), flush=True)
     # Keep the same active controller Request/runtime across independent review.
@@ -272,8 +291,8 @@ def classic_flow():
         for action in ("apply", "verify", "audit", "apply-replay"):
             capture = native_controller.run_classic_step(session, action, fixture_budget=b,
                 external_review=review if action in {"apply", "apply-replay"} else None)
-            if action != "apply-replay" and capture.get("returnCode") != 0:
-                break
+            if action != "apply-replay":
+                require_positive_classic_checkpoint(capture)
     finally:
         result = native_controller.finalize_classic_controller(session)
         write_new(EVIDENCE / "classic/flow-result.json", result)

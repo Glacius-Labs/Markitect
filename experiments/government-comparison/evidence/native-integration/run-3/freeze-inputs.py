@@ -19,7 +19,7 @@ for name in dispatch.runtime_pins():
     paths.add((ROOT/name if name.startswith('public/') or name in {'harness.py','prepare.py'}
                else ROOT/'runtime'/name).resolve())
 for path in (ROOT/'runtime').glob('test_*integration.py'):paths.add(path)
-for name in ('test_native_controller.py','test_native_fixture_budget.py','test_native_role_diagnostics.py','test_native_r3_diagnostics.py','test_r3_classic_preflight.py','test_native_adapter_contracts.py','test_government.py','test_government_roles.py','test_dispatch.py'):
+for name in ('test_native_controller.py','test_native_fixture_budget.py','test_native_role_diagnostics.py','test_native_r3_diagnostics.py','test_native_r3_checkpoints.py','test_r3_classic_preflight.py','test_native_adapter_contracts.py','test_government.py','test_government_roles.py','test_dispatch.py'):
     paths.add(ROOT/'runtime'/name)
 paths.add(d.EXTERNAL/'coordinator-slot-activation-snapshot.json')
 paths.add(d.LEGACY/'released-native-grant.json')
