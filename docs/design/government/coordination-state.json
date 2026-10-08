@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T23:05:22Z",
+  "updatedUtc": "2026-10-08T23:09:35Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -439,20 +439,16 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:47",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:51",
       "lastObservedStatus": "active",
       "activeTurn": {
-        "id": "01a11db7-3793-70e1-ae10-c047ece8ca0e",
-        "status": "inProgress",
-        "error": null,
-        "startedAt": 1791499909,
-        "completedAt": null,
-        "durationMs": null
+        "id": "01a11dc0-f23a-7310-ae38-0ea5893ef1d4",
+        "status": "inProgress"
       },
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac81ffd21b081918f2daa592ced6c37",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac821eb23e08191a1564d3f79f00b32",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Run six real native-Codex exploratory case studies, independently evaluate and report intermediate data",
-      "latestProgress": "Both supplemental Actors actually completed; clean candidate restores/builds. Own assigned ports62581/62582 return10013; public runtime/restart and seven holdouts NOT RUN. Scientist closes additive packet and base report; no runtime quality acceptance.",
+      "latestProgress": "Dynamic-portactualruntimecompleted:45publicassertions/3restartassertionsandoldordercompatibilityPASS;5holdoutgroupsPASS,1restartcomparisonfailed/unresolved,1existingatomicityvectorinapplicableNOTRUN. Candidateunchanged,12ownserverstartsreportedstopped. Scientistsealsandqualifiesrawreport, thenboundedprospectivecomparisonprep.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
@@ -7024,6 +7020,57 @@
           "remainingActivations": 0,
           "runtimeAssertionsResult": "Pending, no passyet",
           "usage": null
+        },
+        "nativeV3EphemeralPreliminaryOutcome": {
+          "observedUtc": "2026-10-08T23:09:35Z",
+          "reportSha256": "b3ab710cd1ac0e818affbca0ec83cda28ae32262083cd1bb77054b3dd2faf5aa",
+          "runtimeActorFinishedUtc": "2026-10-08T23:06:00.498635+00:00",
+          "elapsedFromReservationSeconds": 120.67193698883057,
+          "candidateSha": "d1e271b8472cc55565696b976a87ff968a4e8c7a",
+          "publicAssertionsPassed": 45,
+          "publicRestartAssertionsPassed": 3,
+          "oldSevenUnitOrderCompatibility": "PASS:prioractualDB/order plusmatchingretry/read/cancel/neworderlimit onbothcurrentroutes",
+          "holdoutGroupsPassed": 5,
+          "holdoutRestartGroup": "FAILEDafterphasecomparison; additionaldiagnosticseparate/no retroactivepass",
+          "holdoutAtomicityGroup": "Inapplicable/NOTRUN:existingvectorcontradictsTask5limit,originalpreserved",
+          "serverStarts": 12,
+          "ownedHandlesReportedStopped": true,
+          "rootLogHashesChecked": 25,
+          "hashMismatches": 0,
+          "status": "Rawruntime/loghashobservation;seal/independentfinalacceptancepending",
+          "task6": "NOTRUN",
+          "originalV3OutcomeUnchanged": true,
+          "usage": null
+        },
+        "matchedDesignClassicMainPreparationGrant": {
+          "key": "matched-design-classic-main-conventional-preparation-20261009",
+          "issuedUtc": "2026-10-08T23:09:35Z",
+          "notAfterUtc": "2026-10-08T23:39:35Z",
+          "scope": "Aftersealingephemeralresult, boundedofflineprospectivev4comparisonpreparation. ConcretepublicDTO/owned-port0transport/taskassessmentreserve/nativeprofile/candidateadmission andrequirementtraceedoraclecorrectiondraft, noactualActors/provider/fulltrialstarts.",
+          "maxPreparationSeconds": 1800,
+          "actualActorActivations": 0,
+          "newFullTrials": 0,
+          "newProviderOrAppserverCalls": 0,
+          "ordinaryCorrectionBatchesMax": 2,
+          "focusedMechanicalTestInvocationsMax": 2,
+          "productChangesAllowed": false,
+          "oldEvidenceMutationAllowed": false,
+          "sharedQuestion": "DoesDesignimproveusability/resultquality/model-filefidelity/drift/supervisionovercurrentClassicMainandstrongConventionalunderidenticalactualconfiguration?",
+          "prospectiveClassicSource": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+          "oldStudyClassicUnchanged": "c91363b7ac4decbe87212ff0f588b5451581a152",
+          "DesignAdmission": "Exactcleanreadinesshandoffrequired; current57faWIPnotStudyFreeze. Preparecandidate-independentcontractsnow; do not freeze/substituteunreadyDesign.",
+          "proposedCells": "Design,ClassicMain,Conventional eachGreenfield/Brownfield=6proposedof8overallremaining;no actualallocationyet;remaining2unallocated.",
+          "boundaries": [
+            "Sealallold/posthocoriginals; no runtime diagnostic/retry/repairafterephemeralsingleActorexhausted.",
+            "Useonlypublicproductcontracts/readiness; never sendprivateoracle/foreignresults toimplementers.",
+            "OrdinaryexternalstructuralDTOhelpermayvalidateidentityecho/mode/path/evidenceRefs/counts butnotinventsemantics/evidence/votes orsimulateproductcapability.",
+            "Current-cutoffatomicityandrestartcomparisondefectsrequireprospectiverequirementmapping/review; oldassertions/resultsnotedited/rescored.",
+            "Ownprocesshandles/dynamicports/noforeigninventories; cooperativehostlimits remain; allroles/reviews/failurescountinequalfinitebudget.",
+            "Reserveactualassessmenttime; commonprofilemustbegenuinelysupportedbyallarms, noLuna/Solconfound ornewcapabilitydiagnosisloop.",
+            "Commonoutcomequalityseparatefrommethodconformity, fourDesignmigrationcriteriaareprospectivereadiness/migrationnotConventionalDesignfeaturemandates.",
+            "NoMain/releaseornewsourcefeatures fromScientist; explicitprospectiveClassicMainpinchangesonlynewv4candidate,neveroldv3.",
+            "Finishdraft/separatechecks/hashhandoff/callbackwithinbound; actual6cellsrequiresseparatelyreviewedfreezeandfiniteexecutiongrant onceDesignready. Noautomatictrialrefill."
+          ]
         }
       },
       "classicHandoffReceived": true,
@@ -8236,7 +8283,7 @@
       }
     }
   ],
-  "nextAction": "Scientist seal prior two-Actorpartialposthoc, then exactlyonefresh dynamicport unchangedcandidate runtimeassessment within separatelyrecordedgrant; finish baseclosure/futurematchedplan. Design fixes own native integration findings and sends exact readiness candidate. No additional fulltrial or mainreplacement.",
+  "nextAction": "Scientist seals actualephemeralruntime45+3public/compat/5holdouts, preserves1failed+1inapplicable, then bounded1800s zeroActor prospectiveDesign/ClassicMain/Conventional protocol prep. Design completes own direct native tests/readiness. No further actualquota/fulltrials until concrete matched freeze+grant.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -8247,7 +8294,7 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T23:05:22Z",
+    "reviewedUtc": "2026-10-08T23:09:35Z",
     "evidenceLevel": "Sealedcc8bpartialposthocacceptedwith150bindings/179ZIP/28oldfilesand30unchangedreservations;twoActorbuilds,zerocurrentHTTP/holdouts. FreshoneActoractualcheckdispatchedafterindependentreview, notyetstartverified. Designnativeintegrationblockersreported.",
     "coordinationActions": [
       "AddedDesignasfifthmonitoredcandidateandrequestedimmutableReadinesscallback",
@@ -8258,7 +8305,7 @@
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-08T19:51:14Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
-    "observationStatus": "OneactualdynamicportActorverifiedrunning; zero remainingcallquota. Waitcompletioncallback; DesignownLunaworkactive.",
+    "observationStatus": "Actualruntimeportissue resolved. Preliminary45+3public/compat+5holdoutsPASS;1failedcomparison/1inapplicableNOTRUN, no winner. ActiveScientistsealing; boundedofflinefollowupauthorized.",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z"
   },
@@ -9330,6 +9377,12 @@
         "Compatibility, migration/rollback and regressions against current ClassicMain as well as held studyClassic; no silent candidate substitution"
       ],
       "testBudget": "Included in max8additional full research trials/max2focused questions; no new full trial authorized by monitoring request or posthoc2Actor grant"
+    },
+    "prospectiveStudyClassicMain": {
+      "source": "NewestuserasksDesigncanreplaceClassicMain",
+      "selectedUtc": "2026-10-08T23:09:35Z",
+      "sha": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+      "scope": "Explicitfuturev4comparisonpin,currentmaintarget; no retroactivev3versionreplacement"
     }
   },
   "resourceProfileHistory": [
