@@ -45,7 +45,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if err != nil {
 		return out, err
 	}
-	if run.Status != StatusIntegrated && run.Status != StatusVerified {
+	if run.Status != StatusIntegrated {
 		return out, fmt.Errorf("run must be integrated before verification (status %s)", run.Status)
 	}
 	runtime, err := LoadRuntime(root)
@@ -57,7 +57,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	}
 	deadline := run.StartedAt.Add(time.Duration(runtime.Limits.MaxDuration))
 	if !time.Now().Before(deadline) {
-		return out, fmt.Errorf("total runtime duration limit exceeded before verification")
+		return out, failVerificationBudget(s, &run, fmt.Errorf("total runtime duration limit exceeded before verification"))
 	}
 	boundedCtx, cancel := context.WithDeadline(ctx, deadline)
 	defer cancel()
@@ -83,6 +83,13 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if candidate.ID != run.Candidate.ID {
 		return out, fmt.Errorf("candidate identity mismatch")
 	}
+	hasPriorAttempt, err := persistedVerificationAttempt(dir, runID, candidate.ID)
+	if err != nil {
+		return out, err
+	}
+	if hasPriorAttempt {
+		return out, failVerificationBudget(s, &run, fmt.Errorf("verification attempt already exists for candidate %s", candidate.ID))
+	}
 	compiled, err := projectForCandidate(host, root, base.Snapshot, candidate)
 	if err != nil {
 		return out, err
@@ -96,8 +103,14 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if len(plan.Checks) == 0 {
 		return out, fmt.Errorf("no independent project checks are declared; verification cannot close successfully")
 	}
-	if len(run.Invocations)+len(plan.Checks)+boolInt(runtime.Verifier != nil) > runtime.Limits.MaxStarts {
-		return out, fmt.Errorf("verification processes would exceed maxStarts")
+	if err := validateCheckExecutables(plan); err != nil {
+		return out, err
+	}
+	if len(run.Invocations)+len(run.Checks)+len(plan.Checks)+boolInt(runtime.Verifier != nil) > runtime.Limits.MaxStarts {
+		return out, failVerificationBudget(s, &run, fmt.Errorf("verification processes would exceed maxStarts"))
+	}
+	if totalCost(run.Invocations) > runtime.Limits.MaxCostMicros {
+		return out, failVerificationBudget(s, &run, fmt.Errorf("run has already exceeded maxCostMicros before verification"))
 	}
 	verifyDir := filepath.Join(dir, "verification", candidate.ID)
 	if err := ensureDirectory(filepath.Dir(verifyDir)); err != nil {
@@ -109,57 +122,98 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	}
 	defer os.RemoveAll(verifyDir)
 	out = VerifyReport{APIVersion: APIVersion, RunID: runID, CandidateID: candidate.ID, CandidateHash: candidate.Digest, Status: "failed", VerifiedAt: time.Now().UTC(), Checks: []CheckResult{}}
+	// This durable marker reserves the single verification attempt before any
+	// external process starts. A crash after this point cannot replay checks or
+	// the verifier and obtain another resource budget.
+	run.Status = "verifying"
+	if err := persistState(s, &run); err != nil {
+		return out, fmt.Errorf("persist verification start: %w", err)
+	}
+	fail := func(cause error) (VerifyReport, error) {
+		out.Status = "failed"
+		out.Digest, err = verificationDigest(out)
+		run.Status = StatusFailed
+		stateErr := persistState(s, &run)
+		reportErr := persistVerify(s, dir, out)
+		return out, errors.Join(cause, err, stateErr, reportErr)
+	}
 	for _, check := range plan.Checks {
 		if err := ctx.Err(); err != nil {
-			return out, err
+			return fail(err)
 		}
 		if err := freshBindings(host, invoker, root, plan, runtime); err != nil {
-			return out, err
+			return fail(err)
 		}
 		config, ok := runtime.Agents[check.Owner]
 		if !ok {
-			return out, fmt.Errorf("check %s owner %s has no runtime environment policy", check.ID, check.Owner)
+			return fail(fmt.Errorf("check %s owner %s has no runtime environment policy", check.ID, check.Owner))
 		}
-		result := runCheck(ctx, verifyDir, check, config, runtime.Limits.MaxDuration)
+		checkStartIndex := -1
+		result := runCheck(ctx, verifyDir, check, config, runtime.Limits.MaxDuration, func(started CheckResult) error {
+			started.CandidateID = candidate.ID
+			started.Outcome = "started"
+			run.Checks = append(run.Checks, started)
+			checkStartIndex = len(run.Checks) - 1
+			return persistState(s, &run)
+		})
+		result.CandidateID = candidate.ID
 		out.Checks = append(out.Checks, result)
-		if check.Required && result.Outcome != "passed" {
-			out.Status = "failed"
-			_ = persistVerify(s, dir, out)
-			return out, fmt.Errorf("required check %s did not pass: %s", check.ID, result.Error)
+		if checkStartIndex < 0 {
+			run.Checks = append(run.Checks, result)
+		} else {
+			run.Checks[checkStartIndex] = result
 		}
+		if err := persistState(s, &run); err != nil {
+			return out, fmt.Errorf("persist check result %s: %w", check.ID, err)
+		}
+		if check.Required && result.Outcome != "passed" {
+			return fail(fmt.Errorf("required check %s did not pass: %s", check.ID, result.Error))
+		}
+	}
+	if err := validateCheckExecutables(plan); err != nil {
+		return fail(err)
 	}
 	if runtime.Verifier != nil {
 		if invoker == nil {
-			return out, fmt.Errorf("configured verifier requires an agent invoker")
+			return fail(fmt.Errorf("configured verifier requires an agent invoker"))
 		}
-		verifier, invocation, err := runVerifier(ctx, invoker, root, plan, runtime, compiled, candidate, out.Checks)
-		if err != nil {
-			out.Status = "failed"
-			_ = persistVerify(s, dir, out)
-			return out, err
+		verifierStartIndex := -1
+		verifier, invocation, err := runVerifier(ctx, invoker, root, plan, runtime, compiled, candidate, out.Checks, func(started InvocationLog) error {
+			started.Outcome = "started"
+			run.Invocations = append(run.Invocations, started)
+			verifierStartIndex = len(run.Invocations) - 1
+			return persistState(s, &run)
+		})
+		if verifierStartIndex >= 0 {
+			run.Invocations[verifierStartIndex] = invocation
+			if persistErr := persistState(s, &run); persistErr != nil {
+				return out, fmt.Errorf("persist verifier attempt: %w", persistErr)
+			}
 		}
 		out.Verifier = verifier
-		run.Invocations = append(run.Invocations, invocation)
+		if pinErr := validateCheckExecutables(plan); pinErr != nil {
+			return fail(pinErr)
+		}
+		if err != nil {
+			return fail(err)
+		}
 		if totalCost(run.Invocations) > runtime.Limits.MaxCostMicros {
-			out.Status = "failed"
-			_ = persistVerify(s, dir, out)
-			return out, fmt.Errorf("estimated cost limit exceeded during verification")
+			return fail(fmt.Errorf("estimated cost limit exceeded during verification"))
 		}
 	}
 	if err := freshBindings(host, invoker, root, plan, runtime); err != nil {
-		return out, err
+		return fail(err)
+	}
+	if err := validateCheckExecutables(plan); err != nil {
+		return fail(err)
 	}
 	out.Status = "verified"
-	out.Digest, err = digest(struct {
-		RunID, CandidateID, CandidateHash, Status string
-		Checks                                    []CheckResult
-		Verifier                                  *VerifierReport
-	}{out.RunID, out.CandidateID, out.CandidateHash, out.Status, out.Checks, out.Verifier})
+	out.Digest, err = verificationDigest(out)
 	if err != nil {
 		return out, err
 	}
 	if err := persistVerify(s, dir, out); err != nil {
-		return out, err
+		return fail(err)
 	}
 	run.Status = StatusVerified
 	run.Checks = append([]CheckResult(nil), out.Checks...)
@@ -270,7 +324,7 @@ func (b *boundedBuffer) Write(p []byte) (int, error) {
 	return n, nil
 }
 
-func runCheck(parent context.Context, dir string, check CheckPlan, agent Agent, maximum Duration) CheckResult {
+func runCheck(parent context.Context, dir string, check CheckPlan, agent Agent, maximum Duration, onStart func(CheckResult) error) CheckResult {
 	out := CheckResult{ID: check.ID, Command: append([]string(nil), check.Command...), ExecutablePath: check.ExecutablePath, ExecutableDigest: check.ExecutableDigest, StartedAt: time.Now().UTC(), Outcome: "failed"}
 	if check.ExecutablePath == "" || check.ExecutableDigest == "" {
 		out.Error = "check executable was not pinned at plan time"
@@ -295,6 +349,12 @@ func runCheck(parent context.Context, dir string, check CheckPlan, agent Agent, 
 	stderr.max = maxCheckOutputBytes
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+	if onStart != nil {
+		if err := onStart(out); err != nil {
+			out.Error = "could not persist check start"
+			return out
+		}
+	}
 	err := cmd.Run()
 	out.Duration = time.Since(out.StartedAt).String()
 	out.Stdout = stdout.buf.String()
@@ -353,7 +413,7 @@ func explicitEnvironment(names []string) []string {
 }
 func runtimeOSNeedsSystemRoot(names []string) bool { return false }
 
-func runVerifier(ctx context.Context, invoker Invoker, root string, plan PlanRecord, runtime Runtime, project *Project, candidate candidateData, checkResults []CheckResult) (*VerifierReport, InvocationLog, error) {
+func runVerifier(ctx context.Context, invoker Invoker, root string, plan PlanRecord, runtime Runtime, project *Project, candidate candidateData, checkResults []CheckResult, onStart func(InvocationLog) error) (*VerifierReport, InvocationLog, error) {
 	var log InvocationLog
 	config, err := runtime.Verifier.AgentConfig()
 	if err != nil {
@@ -398,25 +458,35 @@ func runVerifier(ctx context.Context, invoker Invoker, root string, plan PlanRec
 			config.Timeout = remaining
 		}
 	}
+	log = InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: inputDigest, Outcome: "started"}
+	if onStart != nil {
+		if err := onStart(log); err != nil {
+			return nil, log, fmt.Errorf("persist verifier start: %w", err)
+		}
+	}
 	result, err := invoker.Run(ctx, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
+	usageCost, costKnown := estimateCost(result.Receipt.Usage, runtime.Verifier.Pricing)
+	log = InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: inputDigest, Receipt: result.Receipt, ReportID: result.Receipt.RunID, Outcome: result.Receipt.Outcome, CostMicros: usageCost}
+	if log.Outcome == "" {
+		log.Outcome = agentexec.OutcomeIncomplete
+	}
+	verifierReport := &VerifierReport{Role: agentexec.RoleVerifier, InputDigest: result.Receipt.InputDigest, Receipt: result.Receipt, Outcome: result.Response.Outcome, Observations: append([]agentexec.Observation(nil), result.Response.VerifierObservations...)}
 	if err != nil {
-		return nil, log, err
+		return verifierReport, log, err
 	}
 	if result.Response.Role != agentexec.RoleVerifier || result.Response.Outcome != agentexec.OutcomePassed || result.Receipt.Outcome != agentexec.OutcomePassed {
-		return nil, log, fmt.Errorf("independent verifier did not pass")
+		return verifierReport, log, fmt.Errorf("independent verifier did not pass")
 	}
 	if err := validateVerifierCoverage(result.Response.VerifierObservations, subjects, refs, result.Response.EvidenceRefs); err != nil {
-		return nil, log, err
+		return verifierReport, log, err
 	}
 	if result.Receipt.InputDigest == "" {
-		return nil, log, fmt.Errorf("verifier receipt omitted bound input digest")
+		return verifierReport, log, fmt.Errorf("verifier receipt omitted bound input digest")
 	}
-	usageCost, known := estimateCost(result.Receipt.Usage, runtime.Verifier.Pricing)
-	if !known {
-		return nil, log, fmt.Errorf("verifier usage is missing; bounded cost cannot be asserted")
+	if !costKnown {
+		return verifierReport, log, fmt.Errorf("verifier usage is missing; bounded cost cannot be asserted")
 	}
-	log = InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: inputDigest, Receipt: result.Receipt, ReportID: result.Receipt.RunID, Outcome: result.Receipt.Outcome, CostMicros: usageCost}
-	return &VerifierReport{Role: agentexec.RoleVerifier, InputDigest: result.Receipt.InputDigest, Receipt: result.Receipt, Outcome: result.Response.Outcome, Observations: append([]agentexec.Observation(nil), result.Response.VerifierObservations...)}, log, nil
+	return verifierReport, log, nil
 }
 
 func validateVerifierCoverage(observations []agentexec.Observation, subjects, refs, evidenceRefs []string) error {
@@ -522,6 +592,53 @@ func persistVerify(s *runStore, dir string, report VerifyReport) error {
 	}
 	name := filepath.Join(dir, "verification", id+".json")
 	return writeImmutableJSON(name, report)
+}
+
+func persistedVerificationAttempt(dir, runID, candidateID string) (bool, error) {
+	verificationDir := filepath.Join(dir, "verification")
+	entries, err := os.ReadDir(verificationDir)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("inspect prior verification records: %w", err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		if !strings.HasSuffix(entry.Name(), ".json") {
+			return false, fmt.Errorf("unknown verification record %q", entry.Name())
+		}
+		path := filepath.Join(verificationDir, entry.Name())
+		info, err := os.Lstat(path)
+		if err != nil || !info.Mode().IsRegular() {
+			return false, fmt.Errorf("verification record %q is not a regular file", entry.Name())
+		}
+		var report VerifyReport
+		if err := readJSON(path, &report); err != nil {
+			return false, fmt.Errorf("read prior verification record %q: %w", entry.Name(), err)
+		}
+		if report.APIVersion != APIVersion || report.RunID != runID || report.CandidateID == "" {
+			return false, fmt.Errorf("prior verification record %q has invalid identity", entry.Name())
+		}
+		if report.Digest != "" {
+			computed, err := verificationDigest(report)
+			if err != nil || computed != report.Digest {
+				return false, fmt.Errorf("prior verification record %q has an invalid digest", entry.Name())
+			}
+		}
+		if report.CandidateID == candidateID {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func failVerificationBudget(store *runStore, run *RunReport, cause error) error {
+	run.Status = StatusFailed
+	run.Findings = append(run.Findings, cause.Error())
+	return errors.Join(cause, persistState(store, run))
 }
 
 func boolInt(value bool) int {
