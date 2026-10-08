@@ -1,0 +1,37 @@
+{
+  "trialId": "conventional-brownfield-v3-20261008",
+  "task": 2,
+  "priorCandidate": "e76b88cef7bf01d4cb2e324d62cc6372b952c700",
+  "release": {
+    "schemaVersion": 1,
+    "throughTask": 2,
+    "condition": "brownfield",
+    "inputs": [
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\inputs\\stage-2\\01-create-order.md",
+        "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\inputs\\stage-2\\02-reserve-stock.md",
+        "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\inputs\\stage-2\\architecture.md",
+        "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\inputs\\stage-2\\brief.md",
+        "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\inputs\\stage-2\\brownfield-provenance.md",
+        "sha256": "155f6f736adf4d48b71074f74a9221d9f8ac796a938b5b8b0650f741d59eb548"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\inputs\\stage-2\\checks.py",
+        "sha256": "cd7a930f542ec2364609de1b0ad11ceb286d0219d113b57f17c8fbfc9554585b"
+      }
+    ]
+  },
+  "scope": "Current Task2 only; Task1 public repair/re-review passed; original boundaries unchanged."
+}

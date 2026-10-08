@@ -1,0 +1,157 @@
+{
+  "cell": "conventional-brownfield-v3-20261008",
+  "archivedUtc": "2026-10-08T22:15:56.725056+00:00",
+  "status": "contaminated_stopped",
+  "headCommit": "e76b88cef7bf01d4cb2e324d62cc6372b952c700",
+  "porcelainV2": "1 .M N... 100644 100644 100644 d6a3ccae9cb667d976639b4c87044dd0f3427bae d6a3ccae9cb667d976639b4c87044dd0f3427bae src/Orders.Api/OrdersStore.cs\n1 .M N... 100644 100644 100644 637374ba41765e827f682fcbf108731d3e0e1ec4 637374ba41765e827f682fcbf108731d3e0e1ec4 src/Orders.Api/Program.cs\n",
+  "worktreeClean": false,
+  "worktreeFiles": [
+    {
+      "path": ".gitignore",
+      "sha256": "efae82d4d6b36a52d802384d6971e0a873befb8c2e133c58acf2ae4de98a0518",
+      "size": 55
+    },
+    {
+      "path": "NuGet.Config",
+      "sha256": "f545a7e2ea14ac53cdfb91217cae67b8ff14275313f6298f9a3331d205b6c948",
+      "size": 217
+    },
+    {
+      "path": "README.md",
+      "sha256": "04ffeba33fdc219fc92982d5f45b56d70f2c122c004a4219f7220be2894f1798",
+      "size": 1286
+    },
+    {
+      "path": "global.json",
+      "sha256": "5314e0a63f1dc01db433dc0044bb19713cfcf9876fb7df34e506c6d4dbffbe68",
+      "size": 105
+    },
+    {
+      "path": "src/Orders.Api/Contracts.cs",
+      "sha256": "f9b870445c06316adac19e34d8839b7fa7c4402a3924dc830a701a532195fc86",
+      "size": 994
+    },
+    {
+      "path": "src/Orders.Api/Orders.Api.csproj",
+      "sha256": "f6c0660dc1975c2fab5a3c6df428ccf9fab814e1d4b84dd581c87cff77b3bb49",
+      "size": 634
+    },
+    {
+      "path": "src/Orders.Api/OrdersStore.cs",
+      "sha256": "a07ffc1c5b94577559efacd6e87ab74befce2591d686f5f059b0e853db57f183",
+      "size": 9153
+    },
+    {
+      "path": "src/Orders.Api/Program.cs",
+      "sha256": "89e31f51784225458a12c2ce2e95b3166f981bccd61428cd726c96a1079b860e",
+      "size": 2065
+    },
+    {
+      "path": "src/Orders.Api/Properties/launchSettings.json",
+      "sha256": "db86e574ed9384df0c8de11f1b6a5214f4612bc2287089f03676857638e6e3da",
+      "size": 639
+    },
+    {
+      "path": "src/Orders.Api/appsettings.Development.json",
+      "sha256": "73f95f9e0ceb205fc1c4dc50c07697fcfa29d7087868c2aef1d504cb38c771ec",
+      "size": 127
+    },
+    {
+      "path": "src/Orders.Api/appsettings.json",
+      "sha256": "200332b434757a0054a3d356c91cde01f2c48712be8aa2bcb0f3e973619f06e3",
+      "size": 151
+    },
+    {
+      "path": "src/Orders.Api/packages.lock.json",
+      "sha256": "80949191d7388ec7b149d4cc85a70ccd213fd082d7aaa15d8d5e435f66bd42e0",
+      "size": 2295
+    }
+  ],
+  "supportFiles": [
+    {
+      "path": "malformed-quantity-regression.py",
+      "sha256": "5f2194d5523ad38a6bde0babd3a02980c892683575b2c9a9c98763b1a11873ed",
+      "size": 875,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\malformed-quantity-regression.py"
+    },
+    {
+      "path": "public-re-review-task1-checkpoint.json",
+      "sha256": "263315314eccf6a244290c34dad05aa7b0bdf80c1da0ab19ccc58c309f3b293b",
+      "size": 369,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\public-re-review-task1-checkpoint.json"
+    },
+    {
+      "path": "public-re-review-task1.json",
+      "sha256": "a808c2b1940b3b6b69fffb9c95843bbf425428630200d59b05cefaa102b4f6ef",
+      "size": 3904,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\public-re-review-task1.json"
+    },
+    {
+      "path": "public-review-task1-checkpoint.json",
+      "sha256": "67b67c4d3ce810ddd9d29b8c48658a6c8de9994faa9fdf10f0fd0b222f36f740",
+      "size": 369,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\public-review-task1-checkpoint.json"
+    },
+    {
+      "path": "public-review-task1.json",
+      "sha256": "195e55589a3f6fd451cb65d71bb51d57d954afd94c97fa613f34782a82f15216",
+      "size": 4914,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\public-review-task1.json"
+    },
+    {
+      "path": "q1-intent-task-1.md",
+      "sha256": "b53b90e98b113dadb316ef69e1645cb345dc177c6a2fa2452a86e0a41f5ce0c6",
+      "size": 3978,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\q1-intent-task-1.md"
+    },
+    {
+      "path": "q1-intent-task-2.md",
+      "sha256": "dc41f4c1b2be5331cbad38101f2e095c9805c4939ae82aceaef730edbae28bea",
+      "size": 3375,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\q1-intent-task-2.md"
+    },
+    {
+      "path": "repair-1-checkpoint.json",
+      "sha256": "6bddd7537d5633ad86b8fd60616a7dc31f4c6d49b5660e259ecb60838623af48",
+      "size": 369,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\repair-1-checkpoint.json"
+    },
+    {
+      "path": "stage-1-repair-1-result.json",
+      "sha256": "295f940950540ff3e9d3d6991b34d67325e8ec502e6e5765fcd1925ea08c3ed6",
+      "size": 3078,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\stage-1-repair-1-result.json"
+    },
+    {
+      "path": "stage-1-result.json",
+      "sha256": "487ce700ab529e63fe602d1dbb6744e0551eaba3e1e22014da61fe1e872cb636",
+      "size": 4832,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\stage-1-result.json"
+    },
+    {
+      "path": "task-1-checkpoint.json",
+      "sha256": "f03f479aea04ce39c055051062ab2364e4c3186e70ed4875c1af7ede29bc6612",
+      "size": 369,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\task-1-checkpoint.json"
+    },
+    {
+      "path": "task-2-checkpoint.json",
+      "sha256": "a6f9e255c588febd5ac0f1ca32d2a155aff25653ac05ffd4c996146abb8217e3",
+      "size": 453,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\task-2-checkpoint.json"
+    }
+  ],
+  "artifacts": {
+    "base-or-final-committed.bundle": "d99533b903606cbfcf3a3a93f889ab1b688b74ba98e388577ca08f3faeaaa72f",
+    "contamination.json": "f2d6a6aa4aab9ea428562baf57ba66a77e1a59fa3e47f543ab8d1867b4525cd0",
+    "diff.zip": "148ba776bd5c2b085df27c1c5356f9b7d0fe8f6c8f217848b3557bbb1113a83e",
+    "evidence.zip": "3dc0c5632c760e5497cfc47aafe3341eb348940c92705a2abbe8cdc5e24fa6b4",
+    "worktree.zip": "3cbf6cc8e68d852602e69c061fdaaf990eceffdc789d8c2e0a23ce539256eed7"
+  },
+  "note": "Dirty Actor source preserved as dirty worktree+patch, not Scientist implementation/accepted candidate. Ignored binaries/databases excluded; no source reset or new evaluator.",
+  "uncommittedPatch": {
+    "member": "diff.zip/uncommitted.patch",
+    "sha256": "e81c15b92a443bee4c2e3b4d5ca60f03dc56ea4efef60e8551d685a3267a761e",
+    "size": 5028
+  }
+}

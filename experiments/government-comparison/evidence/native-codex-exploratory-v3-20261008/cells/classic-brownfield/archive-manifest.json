@@ -1,0 +1,526 @@
+{
+  "cell": "classic-brownfield-v3-20261008",
+  "archivedUtc": "2026-10-08T22:15:56.934833+00:00",
+  "status": "contaminated_stopped",
+  "headCommit": "88e4d0a2fe13b68f9acdd55ec36417dce730d7ff",
+  "porcelainV2": "",
+  "worktreeClean": true,
+  "worktreeFiles": [
+    {
+      "path": ".gitignore",
+      "sha256": "efae82d4d6b36a52d802384d6971e0a873befb8c2e133c58acf2ae4de98a0518",
+      "size": 55
+    },
+    {
+      "path": ".markitect/canonical/canonical.yaml",
+      "sha256": "5ea323e91566efe1bc9978ad4e488c2a11e4b4c57e378dbaaaf8d51a54411d7e",
+      "size": 2192
+    },
+    {
+      "path": ".markitect/canonical/definitions/behavior-policy.yaml",
+      "sha256": "d550980f79cf0a1d19c0a1f79879806a9e4421fc40657bdcebd2db79488e584c",
+      "size": 483
+    },
+    {
+      "path": ".markitect/canonical/definitions/component-policy.yaml",
+      "sha256": "e5a0bb3477ddf57414d7b57c0c6202490e3bf96041fcad8732ee3c0b0832f9ca",
+      "size": 489
+    },
+    {
+      "path": ".markitect/canonical/definitions/contracts.yaml",
+      "sha256": "73f5ae8defcea870de46d09457f921ea94829c8222b265a0dcb4ad3e12a60cc4",
+      "size": 306
+    },
+    {
+      "path": ".markitect/canonical/definitions/create-order.yaml",
+      "sha256": "ab5f7cc0575f994481f3cda809148daed451a0830d6cb03ff13b813bdbb99769",
+      "size": 719
+    },
+    {
+      "path": ".markitect/canonical/definitions/get-order.yaml",
+      "sha256": "7720a85d1305ccfa2ca7dc9181bb0b8ddeb676fea662af2a926f0561b7c8b7c1",
+      "size": 462
+    },
+    {
+      "path": ".markitect/canonical/definitions/http-wiring.yaml",
+      "sha256": "1c8782f29919418105b5fe7a80f0a72f7b0732ca1d462cc4d61b61a7143ccfb1",
+      "size": 353
+    },
+    {
+      "path": ".markitect/canonical/definitions/idempotency.yaml",
+      "sha256": "3a228a9c11f577a1d306e650ecc91140c501e31d673812c50f36c5be4a033222",
+      "size": 493
+    },
+    {
+      "path": ".markitect/canonical/definitions/legacy-create-order.yaml",
+      "sha256": "bf878c4f1f858e6004face05e616827b210950a6977ab6931fbd008e451b0d60",
+      "size": 473
+    },
+    {
+      "path": ".markitect/canonical/definitions/order-store.yaml",
+      "sha256": "68fb1d083b1fa921c66b9dabd7d2f7046c5cd2f75114ba037a72830b766fba11",
+      "size": 385
+    },
+    {
+      "path": ".markitect/canonical/definitions/policy.yaml",
+      "sha256": "bd3d9c14b4f0886011bd9017a6069cf41558e651b56cc9e7d7836b27f64361ce",
+      "size": 542
+    },
+    {
+      "path": ".markitect/canonical/definitions/projection.yaml",
+      "sha256": "e399362e880a3f9d202d19b9125e05349e9e86752d734057bfa0add90d72ec67",
+      "size": 1822
+    },
+    {
+      "path": ".markitect/canonical/definitions/route-policy.yaml",
+      "sha256": "98dd06899caa8f55cb4048246b799f3451689c32c2431b59c5ff6f4024ff6bc4",
+      "size": 462
+    },
+    {
+      "path": ".markitect/canonical/definitions/service.yaml",
+      "sha256": "06300a0909c19afa9e74975b33af8be7ebeaf4e5d81a33ba0ba7dd991deffba0",
+      "size": 758
+    },
+    {
+      "path": ".markitect/canonical/definitions/storage-projection.yaml",
+      "sha256": "e1e8df7b3d6e45d725a93c5280ef0333be94de3e0652f572c5ef63c6f529ab28",
+      "size": 844
+    },
+    {
+      "path": ".markitect/canonical/modules/dotnet/module.yaml",
+      "sha256": "d067323b2e84e30dd82e49e72a6f985a70189f37ce5892e62856055f8addb0e1",
+      "size": 681
+    },
+    {
+      "path": ".markitect/canonical/modules/foundation/module.yaml",
+      "sha256": "074d9275cb728f11030eccabb6db6d5b4215bb5152596b7efd29f67cf12790d6",
+      "size": 276
+    },
+    {
+      "path": ".markitect/canonical/modules/foundation/schema.yaml",
+      "sha256": "a06850f14a9e9cbea29881058f764493606200f430ac2334d121f605f0e643e2",
+      "size": 2822
+    },
+    {
+      "path": ".markitect/canonical/modules/schema/module.yaml",
+      "sha256": "a415e957ddc3cfd34639dce585060b298faa5370aa02af9bfd6717cc59baff2e",
+      "size": 262
+    },
+    {
+      "path": ".markitect/canonical/modules/schema/schema.yaml",
+      "sha256": "c3dce04276dfb3199053029777fc9b77816565ed1d8d9772bd03454518e41339",
+      "size": 2272
+    },
+    {
+      "path": "NuGet.Config",
+      "sha256": "f545a7e2ea14ac53cdfb91217cae67b8ff14275313f6298f9a3331d205b6c948",
+      "size": 217
+    },
+    {
+      "path": "README.md",
+      "sha256": "04ffeba33fdc219fc92982d5f45b56d70f2c122c004a4219f7220be2894f1798",
+      "size": 1286
+    },
+    {
+      "path": "global.json",
+      "sha256": "5314e0a63f1dc01db433dc0044bb19713cfcf9876fb7df34e506c6d4dbffbe68",
+      "size": 105
+    },
+    {
+      "path": "src/Orders.Api/Contracts.cs",
+      "sha256": "be7e031523eab597c325e9ad9c46a4e807a872e80574cf67c31cef79ebc59cf6",
+      "size": 965
+    },
+    {
+      "path": "src/Orders.Api/Orders.Api.csproj",
+      "sha256": "f6c0660dc1975c2fab5a3c6df428ccf9fab814e1d4b84dd581c87cff77b3bb49",
+      "size": 634
+    },
+    {
+      "path": "src/Orders.Api/OrdersStore.cs",
+      "sha256": "7dae3446081f0a8102e94dd109ded53a314d7689ad978646c199e7905a7ce59a",
+      "size": 7152
+    },
+    {
+      "path": "src/Orders.Api/Program.cs",
+      "sha256": "712324836674195b5796daad7dccf25f34ece92577caf03023f2faecf998727a",
+      "size": 2041
+    },
+    {
+      "path": "src/Orders.Api/Properties/launchSettings.json",
+      "sha256": "db86e574ed9384df0c8de11f1b6a5214f4612bc2287089f03676857638e6e3da",
+      "size": 639
+    },
+    {
+      "path": "src/Orders.Api/appsettings.Development.json",
+      "sha256": "73f95f9e0ceb205fc1c4dc50c07697fcfa29d7087868c2aef1d504cb38c771ec",
+      "size": 127
+    },
+    {
+      "path": "src/Orders.Api/appsettings.json",
+      "sha256": "200332b434757a0054a3d356c91cde01f2c48712be8aa2bcb0f3e973619f06e3",
+      "size": 151
+    },
+    {
+      "path": "src/Orders.Api/packages.lock.json",
+      "sha256": "80949191d7388ec7b149d4cc85a70ccd213fd082d7aaa15d8d5e435f66bd42e0",
+      "size": 2295
+    },
+    {
+      "path": "study/inputs/task1-checks.py",
+      "sha256": "ca3316b3240ddce368544ad3449f2f5314483930589d0677462fac6f0ec556ed",
+      "size": 4948
+    }
+  ],
+  "supportFiles": [
+    {
+      "path": "canonical/canonical.yaml",
+      "sha256": "bdc3fb78494f1300dd3c7416457df74eb72f4b83d95d081c366e1780706615c8",
+      "size": 985,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\canonical\\canonical.yaml"
+    },
+    {
+      "path": "canonical/definitions/create-order.yaml",
+      "sha256": "c6640d41c4c73f9bf44b9ec720fff41e5ad2c1fa857dd2fc420d44715bac7d71",
+      "size": 525,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\canonical\\definitions\\create-order.yaml"
+    },
+    {
+      "path": "canonical/definitions/get-order.yaml",
+      "sha256": "307f7414e63b7e06104793209fda695112d31c79463509cd9c01567e6e756ab7",
+      "size": 283,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\canonical\\definitions\\get-order.yaml"
+    },
+    {
+      "path": "canonical/definitions/idempotency.yaml",
+      "sha256": "e18d860fb497b83243fdfe552126d437b83ab42f676e21a205b60efc9525c1ff",
+      "size": 291,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\canonical\\definitions\\idempotency.yaml"
+    },
+    {
+      "path": "canonical/definitions/legacy-create-order.yaml",
+      "sha256": "e89f4499a226e990213f6f9e3ba79a7ff0136fcfd8263460f6766789fe548a56",
+      "size": 294,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\canonical\\definitions\\legacy-create-order.yaml"
+    },
+    {
+      "path": "canonical/definitions/policy.yaml",
+      "sha256": "bd6d92aa552ca7d4644836e3dcc7f1b22b5c5ff9fdc5d80e7ae20caf37138348",
+      "size": 451,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\canonical\\definitions\\policy.yaml"
+    },
+    {
+      "path": "canonical/definitions/projection.yaml",
+      "sha256": "eef2b92df6e7d3aa085a24c4973663573d8bdcb1b278f6bf72b2011ceb57c73b",
+      "size": 978,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\canonical\\definitions\\projection.yaml"
+    },
+    {
+      "path": "canonical/definitions/service.yaml",
+      "sha256": "7d1e2ecda612e2d29e76bd4df3a9c43e57aafd669778c307f0562f4b03f6959b",
+      "size": 327,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\canonical\\definitions\\service.yaml"
+    },
+    {
+      "path": "canonical/modules/dotnet/module.yaml",
+      "sha256": "58d9811afc478847a7f9411331b1b98021404a6e639356d0f92bdea98280b270",
+      "size": 682,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\canonical\\modules\\dotnet\\module.yaml"
+    },
+    {
+      "path": "canonical/modules/dotnet/projection-policy-placeholder.yaml",
+      "sha256": "3195668497a8f7e62909f937b6236f0a3deeed8358d36e4820f6e820580b0b88",
+      "size": 157,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\canonical\\modules\\dotnet\\projection-policy-placeholder.yaml"
+    },
+    {
+      "path": "canonical/modules/schema/module.yaml",
+      "sha256": "def425d7ffc2fabdf04fe7a2329244a4ad095535343fbfb8475a5822ccf252f3",
+      "size": 263,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\canonical\\modules\\schema\\module.yaml"
+    },
+    {
+      "path": "canonical/modules/schema/schema.yaml",
+      "sha256": "24a89a2125ea3fd36b6d9301ab0cb363359a333cd4e2da61993810a6e313a745",
+      "size": 1565,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\canonical\\modules\\schema\\schema.yaml"
+    },
+    {
+      "path": "controller/records.json/events/00000000000000000001-52363474d425c049217398b7244cb294369e19a0e08db1ce5c21a93a59458241.json",
+      "sha256": "ac5a6b49a54b12da8c10dba0d16de09cd8752f968138216ad01b919631c9874d",
+      "size": 2586,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\controller\\records.json\\events\\00000000000000000001-52363474d425c049217398b7244cb294369e19a0e08db1ce5c21a93a59458241.json"
+    },
+    {
+      "path": "controller/records.json/events/00000000000000000002-be1e6d4f8d9b02d6a825fd16c5db37f32b72cc8d34bc0658515eb99b5e26e3cf.json",
+      "sha256": "1d83dd5bc755a579fae5f97f9a842ece6023c03700c0c48f3feefb1f1f90df00",
+      "size": 412,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\controller\\records.json\\events\\00000000000000000002-be1e6d4f8d9b02d6a825fd16c5db37f32b72cc8d34bc0658515eb99b5e26e3cf.json"
+    },
+    {
+      "path": "controller/records.json/store.json",
+      "sha256": "25457a19e936aab8143f473a6aa6da960ce632ea877f66b48a5eb2275b54f87e",
+      "size": 207,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\controller\\records.json\\store.json"
+    },
+    {
+      "path": "controller/runtime.json",
+      "sha256": "8d6bd992ca7f597a0c7970ff790cce2b993f31a4db43094ae329ec78c42562c2",
+      "size": 4436,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\controller\\runtime.json"
+    },
+    {
+      "path": "controller/selection-order-service-dotnet.json",
+      "sha256": "4d78d0689121bfa0779f39307dea19e11622ab5cfef3e05ec66f1ecc84e1d1e4",
+      "size": 173,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\controller\\selection-order-service-dotnet.json"
+    },
+    {
+      "path": "controller/selection-order-storage-dotnet.json",
+      "sha256": "19fd115c6ebfaf4f1539e0e56bfa33bc25d278d66a15ce709c168d76bb847e27",
+      "size": 177,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\controller\\selection-order-storage-dotnet.json"
+    },
+    {
+      "path": "controller/service-session.json",
+      "sha256": "7ee0408d9e794eb1bf38ea2106f08dce33e2fa66947ef57257d61f1b8a3b2692",
+      "size": 268,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\controller\\service-session.json"
+    },
+    {
+      "path": "q1-intent-replay-task1.md",
+      "sha256": "506edc547ec7b1c1a73542a2c4f787dce927db115999fd49649aada35bdeff4d",
+      "size": 3854,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\q1-intent-replay-task1.md"
+    },
+    {
+      "path": "receipts/adopt-order-service-dotnet.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\adopt-order-service-dotnet.stderr.txt"
+    },
+    {
+      "path": "receipts/adopt-order-service-dotnet.stdout.txt",
+      "sha256": "4efefab6173e47d17f5b9f1a6ca209c1d6c6fd8824fcc50d8910215613704b09",
+      "size": 4628,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\adopt-order-service-dotnet.stdout.txt"
+    },
+    {
+      "path": "receipts/adopt-order-storage-after-ledger.stderr.txt",
+      "sha256": "63719bafe961867ae06c2b09d7ac6f267b36d5a8023b65192c1583e28ac67707",
+      "size": 90,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\adopt-order-storage-after-ledger.stderr.txt"
+    },
+    {
+      "path": "receipts/adopt-order-storage-after-ledger.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\adopt-order-storage-after-ledger.stdout.txt"
+    },
+    {
+      "path": "receipts/adopt-order-storage-dotnet.stderr.txt",
+      "sha256": "eed357a61c6345a31bded539ca03ce6bec1203dc6f1d97b726e8b098a2210406",
+      "size": 106,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\adopt-order-storage-dotnet.stderr.txt"
+    },
+    {
+      "path": "receipts/adopt-order-storage-dotnet.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\adopt-order-storage-dotnet.stdout.txt"
+    },
+    {
+      "path": "receipts/adopt-plan-order-service-dotnet.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\adopt-plan-order-service-dotnet.stderr.txt"
+    },
+    {
+      "path": "receipts/adopt-plan-order-service-dotnet.stdout.json",
+      "sha256": "e333d9a070a76c7de0965ea1b9d288c2788993287a6af1b40c1cf5e4be25c350",
+      "size": 5006,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\adopt-plan-order-service-dotnet.stdout.json"
+    },
+    {
+      "path": "receipts/adopt-plan-order-storage-after-ledger.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\adopt-plan-order-storage-after-ledger.stderr.txt"
+    },
+    {
+      "path": "receipts/adopt-plan-order-storage-after-ledger.stdout.txt",
+      "sha256": "0ce0c256235d174df8a0efb73443be57506f074ad9c2045b9a3d41bb9c6235cb",
+      "size": 4561,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\adopt-plan-order-storage-after-ledger.stdout.txt"
+    },
+    {
+      "path": "receipts/adopt-plan-order-storage-dotnet.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\adopt-plan-order-storage-dotnet.stderr.txt"
+    },
+    {
+      "path": "receipts/adopt-plan-order-storage-dotnet.stdout.json",
+      "sha256": "97c32a386770117170905800404bdbc68c25da4d1dc293c8f14e8d156e081cdb",
+      "size": 4343,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\adopt-plan-order-storage-dotnet.stdout.json"
+    },
+    {
+      "path": "receipts/canonical-cli-fixed.json",
+      "sha256": "2ad237bdb9fed941944923f44ec1c96f36a59bb0cf14cf831001dfeade6e7904",
+      "size": 2634,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\canonical-cli-fixed.json"
+    },
+    {
+      "path": "receipts/canonical-cli.json",
+      "sha256": "ecfe3ba9e094b29680cfeeccbba04a410e4eabaa60b92ec7333f8f091078e4a6",
+      "size": 2598,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\canonical-cli.json"
+    },
+    {
+      "path": "receipts/canonical-model-after-policies.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\canonical-model-after-policies.stderr.txt"
+    },
+    {
+      "path": "receipts/canonical-model-after-policies.stdout.txt",
+      "sha256": "6255696c816ba5d2326f53850f582047261dc15b3943647d30f779d018442dc0",
+      "size": 29832,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\canonical-model-after-policies.stdout.txt"
+    },
+    {
+      "path": "receipts/context-create-order-fixed.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\context-create-order-fixed.stderr.txt"
+    },
+    {
+      "path": "receipts/context-create-order-fixed.stdout.txt",
+      "sha256": "a4cd3d6c12133c8e587b3b7a224b7b439ea5be0dca40e27ec5f70a10d627793e",
+      "size": 2801,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\context-create-order-fixed.stdout.txt"
+    },
+    {
+      "path": "receipts/context-create-order.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\context-create-order.stderr.txt"
+    },
+    {
+      "path": "receipts/context-create-order.stdout.txt",
+      "sha256": "4d1a649cdbdae16015e2bb032749b8c7a5011ae36d589cb048ce86fc14d81efb",
+      "size": 2801,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\context-create-order.stdout.txt"
+    },
+    {
+      "path": "receipts/controller-propose-after-policy.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\controller-propose-after-policy.stderr.txt"
+    },
+    {
+      "path": "receipts/controller-propose-after-policy.stdout.json",
+      "sha256": "ad9d42c14ad6a3bc20a413c2b148b2cdeaba82c10672bcd8afad93d4c5f48a24",
+      "size": 77088,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\controller-propose-after-policy.stdout.json"
+    },
+    {
+      "path": "receipts/controller-propose-brownfield.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\controller-propose-brownfield.stderr.txt"
+    },
+    {
+      "path": "receipts/controller-propose-brownfield.stdout.json",
+      "sha256": "c18e3a34d12a8846eae5fcd787ed7e164810ced56d1adf08b5929a725ca78422",
+      "size": 43304,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\controller-propose-brownfield.stdout.json"
+    },
+    {
+      "path": "receipts/controller-propose-retry.stderr.txt",
+      "sha256": "9605ca24d9f4f53f9fe2e06c0eab0d925ca486702217a148e29dddc1e3b988c0",
+      "size": 207,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\controller-propose-retry.stderr.txt"
+    },
+    {
+      "path": "receipts/controller-propose-retry.stdout.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\controller-propose-retry.stdout.json"
+    },
+    {
+      "path": "receipts/controller-propose.stderr.txt",
+      "sha256": "9a63e9a98dde7d2887ab07997b2e151c1540f30023e96302dafd466f3a6c0eec",
+      "size": 120,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\controller-propose.stderr.txt"
+    },
+    {
+      "path": "receipts/controller-propose.stdout.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\controller-propose.stdout.json"
+    },
+    {
+      "path": "receipts/dotnet-build.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\dotnet-build.stderr.txt"
+    },
+    {
+      "path": "receipts/dotnet-build.stdout.txt",
+      "sha256": "ba65699bb6a579f1ac7d1140b0d3afb19fc8a2ff10a5f751e6f9720ad7385d1b",
+      "size": 237,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\dotnet-build.stdout.txt"
+    },
+    {
+      "path": "receipts/impact-same-revision.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\impact-same-revision.stderr.txt"
+    },
+    {
+      "path": "receipts/impact-same-revision.stdout.txt",
+      "sha256": "f41cc8d32916e85669037aae6f173109c682493ae1d6d593bab6a367df5bde8e",
+      "size": 594,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\impact-same-revision.stdout.txt"
+    },
+    {
+      "path": "receipts/model-fixed.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\model-fixed.stderr.txt"
+    },
+    {
+      "path": "receipts/model-fixed.stdout.txt",
+      "sha256": "b56014213e57344a0e7ae140e1d937eb89ab2dabc885f7e850ae3eac601ab835",
+      "size": 23516,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\model-fixed.stdout.txt"
+    },
+    {
+      "path": "receipts/model.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\model.stderr.txt"
+    },
+    {
+      "path": "receipts/model.stdout.txt",
+      "sha256": "0f90922d1f09e7cb4ead7ad14e503b193cc743820f398c861dc963cfa0959b4b",
+      "size": 23522,
+      "source": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-brownfield\\state\\receipts\\model.stdout.txt"
+    }
+  ],
+  "artifacts": {
+    "base-or-final-committed.bundle": "45757688ba5475ce8addfa63670b6ecc092a56669a49ae894d236779b82ebe5e",
+    "contamination.json": "8dec57533c136ae10bdf5fe961b8f708b4202e0441c9cf728cff5b01103bc32a",
+    "diff.zip": "abb240b47ef886accf5e62caf516c5c1ef0a290f99fa61f35a72a3221da67edf",
+    "evidence.zip": "03b5bbb255a52ac524c99b4bf1e24ee310dbf86c8f0bfa8e1467b4cd0d3ee8ed",
+    "worktree.zip": "5c5b1fdde95662a6e99df34921510523696757648cc5741fec365be406254ba1"
+  },
+  "note": "Dirty Actor source preserved as dirty worktree+patch, not Scientist implementation/accepted candidate. Ignored binaries/databases excluded; no source reset or new evaluator.",
+  "uncommittedPatch": {
+    "member": "diff.zip/uncommitted.patch",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  }
+}

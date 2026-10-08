@@ -1,0 +1,22 @@
+{
+  "source": "Native Actor stop reports received by Scientist; metadata observation times are not exact original exposure times",
+  "decision": {
+    "task": 1,
+    "reason": "Foreign cell listener process path observed during local port recovery; no termination reported.",
+    "scope": "Cooperative boundary breach; no replacement or further cell work. Material semantic steering not established for path-only metadata."
+  },
+  "acceptedFinalCandidate": null,
+  "additionalTrialAuthorized": false,
+  "independentFinalEvaluation": "NOT RUN; contaminated cell was not resumed",
+  "priorTaskSnapshots": {
+    "1": {
+      "startedUtc": "2026-10-08T22:02:13.358517+00:00",
+      "startedMonotonic": 26037.2196532,
+      "deadlineUtc": "2026-10-08T22:22:13.358517+00:00",
+      "status": "contaminated",
+      "outcome": "contaminated_stopped",
+      "stoppedObservedUtc": "2026-10-08T22:14:15.874003+00:00"
+    }
+  },
+  "actorReports": "Read owner process path on occupied local port5187; identified foreign cell, did not terminate it; model through88e4d0a2fe13b68f9acdd55ec36417dce730d7ff; no native Executor/Verifier Invocation."
+}

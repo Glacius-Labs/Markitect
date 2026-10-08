@@ -1,0 +1,22 @@
+{
+  "source": "Native Actor stop reports received by Scientist; metadata observation times are not exact original exposure times",
+  "decision": {
+    "task": 1,
+    "reason": "collaboration.list_agents exposed unrelated Conventional/Classic task summaries; Actor read them and stopped.",
+    "scope": "Cooperative boundary breach; no replacement or further cell work. Material semantic steering not established for path-only metadata."
+  },
+  "acceptedFinalCandidate": null,
+  "additionalTrialAuthorized": false,
+  "independentFinalEvaluation": "NOT RUN; contaminated cell was not resumed",
+  "priorTaskSnapshots": {
+    "1": {
+      "startedUtc": "2026-10-08T22:03:10.728662+00:00",
+      "startedMonotonic": 26094.5898302,
+      "deadlineUtc": "2026-10-08T22:23:10.728662+00:00",
+      "status": "contaminated",
+      "outcome": "contaminated_stopped",
+      "stoppedObservedUtc": "2026-10-08T22:14:15.874260+00:00"
+    }
+  },
+  "actorReports": "collaboration.list_agents returned unrelated Conventional/Classic summaries, Actor read and stopped; reported ownedG5PID45184 terminated; native Executor still active was interrupted by Scientist."
+}

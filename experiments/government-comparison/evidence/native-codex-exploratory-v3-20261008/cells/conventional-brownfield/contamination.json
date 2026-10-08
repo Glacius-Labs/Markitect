@@ -1,0 +1,32 @@
+{
+  "source": "Native Actor stop reports received by Scientist; metadata observation times are not exact original exposure times",
+  "decision": {
+    "task": 2,
+    "reason": "Foreign Classic-Brownfield executable path observed through process command line; no code/data interaction reported.",
+    "scope": "Cooperative boundary breach; no replacement or further cell work. Material semantic steering not established for path-only metadata."
+  },
+  "acceptedFinalCandidate": null,
+  "additionalTrialAuthorized": false,
+  "independentFinalEvaluation": "NOT RUN; contaminated cell was not resumed",
+  "priorTaskSnapshots": {
+    "1": {
+      "startedUtc": "2026-10-08T22:00:02.839447+00:00",
+      "startedMonotonic": 25906.7005958,
+      "deadlineUtc": "2026-10-08T22:20:02.839447+00:00",
+      "status": "closed",
+      "outcome": "passed",
+      "candidateSha": "e76b88cef7bf01d4cb2e324d62cc6372b952c700",
+      "frozenUtc": "2026-10-08T22:09:03.395768+00:00",
+      "endedMonotonic": 26447.256881
+    },
+    "2": {
+      "startedUtc": "2026-10-08T22:09:26.374045+00:00",
+      "startedMonotonic": 26470.2351669,
+      "deadlineUtc": "2026-10-08T22:29:26.374045+00:00",
+      "status": "contaminated",
+      "outcome": "contaminated_stopped",
+      "stoppedObservedUtc": "2026-10-08T22:14:15.873673+00:00"
+    }
+  },
+  "actorReports": "Read PID44980 command line identifying classic-brownfield Orders.Api.dll while checking owned processes; no foreign data/contact/interaction reported. Task2 changes uncommitted, verification claimed before exposure."
+}

@@ -339,13 +339,14 @@
       "reservedUtc": "2026-10-08T22:02:13.358517+00:00",
       "reservedMonotonic": 26037.2196669,
       "actorId": "/root/v3_classic_brownfield",
-      "status": "running",
+      "status": "interrupted",
       "usage": null,
       "deadlineUtc": "2026-10-08T22:22:13.358517+00:00",
       "remainingTaskActivations": 11,
       "promptPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\requests\\classic-brownfield-v3-20261008-task1-primary.json",
       "promptSha256": "cb0516f9f0c5bd153bee48cb3415860d4e80c2ae4fac575b8a8515bce29e5451",
-      "observedUtc": "2026-10-08T22:03:10.629436+00:00"
+      "observedUtc": "2026-10-08T22:14:15.844370+00:00",
+      "endedMonotonic": 26759.7054791
     },
     {
       "reservationId": "activation-0018",
@@ -389,13 +390,14 @@
       "reservedUtc": "2026-10-08T22:03:10.728662+00:00",
       "reservedMonotonic": 26094.5898487,
       "actorId": "/root/v3_government_brownfield",
-      "status": "running",
+      "status": "interrupted",
       "usage": null,
       "deadlineUtc": "2026-10-08T22:23:10.728662+00:00",
       "remainingTaskActivations": 11,
       "promptPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\requests\\government-brownfield-v3-20261008-task1-primary.json",
       "promptSha256": "0061a92677206365856f2c55ed90442e9056c6c37ce7c33dca328dc05d4aa8a1",
-      "observedUtc": "2026-10-08T22:03:49.093948+00:00"
+      "observedUtc": "2026-10-08T22:14:15.852474+00:00",
+      "endedMonotonic": 26759.7135817
     },
     {
       "reservationId": "activation-0021",
@@ -405,13 +407,16 @@
       "reservedUtc": "2026-10-08T22:04:39.496180+00:00",
       "reservedMonotonic": 26183.3573318,
       "actorId": "/root/v3_conventional_greenfield",
-      "status": "running",
+      "status": "completed",
       "usage": null,
       "deadlineUtc": "2026-10-08T22:24:39.496180+00:00",
       "remainingTaskActivations": 11,
       "promptPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\requests\\conventional-greenfield-v3-20261008-task4-primary.json",
       "promptSha256": "76498c63af454b8401300481e4162459b4dbf7d31e025c932c70462096f75098",
-      "observedUtc": "2026-10-08T22:05:19.257046+00:00"
+      "observedUtc": "2026-10-08T22:08:27.198615+00:00",
+      "endedMonotonic": 26411.0597252,
+      "resultPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\state\\stage-4-result.json",
+      "resultSha256": "68ec74905ccce49b8fa4a1a0c3cc77c70cb8eb3d9659f2ad75cc56662888106d"
     },
     {
       "reservationId": "activation-0022",
@@ -421,13 +426,119 @@
       "reservedUtc": "2026-10-08T22:05:34.133588+00:00",
       "reservedMonotonic": 26237.9947262,
       "actorId": "/root/v3_conventional_brownfield",
-      "status": "running",
+      "status": "completed",
       "usage": null,
       "deadlineUtc": "2026-10-08T22:20:02.839447+00:00",
       "remainingTaskActivations": 9,
       "promptPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\public-review-task1.json",
       "promptSha256": "195e55589a3f6fd451cb65d71bb51d57d954afd94c97fa613f34782a82f15216",
-      "observedUtc": "2026-10-08T22:05:59.355307+00:00"
+      "observedUtc": "2026-10-08T22:07:25.668767+00:00",
+      "endedMonotonic": 26349.5298795,
+      "resultPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\stage-1-repair-1-result.json",
+      "resultSha256": "295f940950540ff3e9d3d6991b34d67325e8ec502e6e5765fcd1925ea08c3ed6"
+    },
+    {
+      "reservationId": "activation-0023",
+      "trialId": "conventional-brownfield-v3-20261008",
+      "task": 1,
+      "role": "public-independent-re-review",
+      "reservedUtc": "2026-10-08T22:07:25.676227+00:00",
+      "reservedMonotonic": 26349.5373708,
+      "actorId": "/root/v3_conventional_bf_public_review_1",
+      "status": "completed",
+      "usage": null,
+      "deadlineUtc": "2026-10-08T22:20:02.839447+00:00",
+      "remainingTaskActivations": 8,
+      "promptPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\stage-1-repair-1-result.json",
+      "promptSha256": "295f940950540ff3e9d3d6991b34d67325e8ec502e6e5765fcd1925ea08c3ed6",
+      "observedUtc": "2026-10-08T22:09:03.325942+00:00",
+      "endedMonotonic": 26447.1870542,
+      "resultPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-brownfield\\state\\public-re-review-task1.json",
+      "resultSha256": "a808c2b1940b3b6b69fffb9c95843bbf425428630200d59b05cefaa102b4f6ef"
+    },
+    {
+      "reservationId": "activation-0024",
+      "trialId": "conventional-greenfield-v3-20261008",
+      "task": 4,
+      "role": "public-independent-review",
+      "reservedUtc": "2026-10-08T22:08:27.206495+00:00",
+      "reservedMonotonic": 26411.0676336,
+      "actorId": "/root/v3_conventional_gf_public_review_4",
+      "status": "completed",
+      "usage": null,
+      "deadlineUtc": "2026-10-08T22:24:39.496180+00:00",
+      "remainingTaskActivations": 10,
+      "observedUtc": "2026-10-08T22:10:39.365456+00:00",
+      "endedMonotonic": 26543.2265697,
+      "resultPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\state\\public-review-task4.json",
+      "resultSha256": "9c0cc8afe403ab8bc4d073baec4e99e5029e0b989982740f69485dbe3ba9755c"
+    },
+    {
+      "reservationId": "activation-0025",
+      "trialId": "conventional-brownfield-v3-20261008",
+      "task": 2,
+      "role": "primary-followup",
+      "reservedUtc": "2026-10-08T22:09:26.374045+00:00",
+      "reservedMonotonic": 26470.2351872,
+      "actorId": "/root/v3_conventional_brownfield",
+      "status": "interrupted",
+      "usage": null,
+      "deadlineUtc": "2026-10-08T22:29:26.374045+00:00",
+      "remainingTaskActivations": 11,
+      "promptPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\requests\\conventional-brownfield-v3-20261008-task2-primary.json",
+      "promptSha256": "8dfc5a2e5ab21f8a6828fb1c327fe6e1331e98b37736b888731ada881e172fb7",
+      "observedUtc": "2026-10-08T22:14:15.859629+00:00",
+      "endedMonotonic": 26759.7207364
+    },
+    {
+      "reservationId": "activation-0026",
+      "trialId": "government-brownfield-v3-20261008",
+      "task": 1,
+      "role": "native-executor",
+      "reservedUtc": "2026-10-08T22:10:54.837298+00:00",
+      "reservedMonotonic": 26558.6984548,
+      "actorId": "/root/v3_government_bf_executor_1",
+      "status": "interrupted",
+      "usage": null,
+      "deadlineUtc": "2026-10-08T22:23:10.728662+00:00",
+      "remainingTaskActivations": 10,
+      "promptPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\government-brownfield\\state\\mailbox\\0fc124ea0fdf2af432771eb1289bbc6b\\invocation.json",
+      "promptSha256": "c701f94ff84fff8554f424fdce83552db8f79b22b968f8ab2381e026eb94936d",
+      "observedUtc": "2026-10-08T22:14:15.866610+00:00",
+      "endedMonotonic": 26759.727718
+    },
+    {
+      "reservationId": "activation-0027",
+      "trialId": "conventional-greenfield-v3-20261008",
+      "task": 5,
+      "role": "primary-followup",
+      "reservedUtc": "2026-10-08T22:15:08.316849+00:00",
+      "reservedMonotonic": 26812.1779905,
+      "actorId": "/root/v3_conventional_greenfield",
+      "status": "completed",
+      "usage": null,
+      "deadlineUtc": "2026-10-08T22:35:08.316849+00:00",
+      "remainingTaskActivations": 11,
+      "promptPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\requests\\conventional-greenfield-v3-20261008-task5-primary.json",
+      "promptSha256": "7fe7990406a9a11505b86fae6b78bf88c2104964c097f54de062fdac7137b11e",
+      "observedUtc": "2026-10-08T22:17:25.584325+00:00",
+      "endedMonotonic": 26949.445434,
+      "resultPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\state\\stage-5-result.json",
+      "resultSha256": "4e1264f3a3e57a64e3205f65ad9c4b42b2d936e43f6d8cfeed52007d30e0a70d"
+    },
+    {
+      "reservationId": "activation-0028",
+      "trialId": "conventional-greenfield-v3-20261008",
+      "task": 5,
+      "role": "public-independent-review",
+      "reservedUtc": "2026-10-08T22:17:25.592674+00:00",
+      "reservedMonotonic": 26949.4538139,
+      "actorId": "/root/v3_conventional_gf_public_review_5",
+      "status": "running",
+      "usage": null,
+      "deadlineUtc": "2026-10-08T22:35:08.316849+00:00",
+      "remainingTaskActivations": 10,
+      "observedUtc": "2026-10-08T22:17:51.050791+00:00"
     }
   ],
   "cells": [
@@ -479,6 +590,16 @@
           "startedUtc": "2026-10-08T22:04:39.496180+00:00",
           "startedMonotonic": 26183.3573043,
           "deadlineUtc": "2026-10-08T22:24:39.496180+00:00",
+          "status": "closed",
+          "outcome": "passed",
+          "candidateSha": "baacb07fba54fcfce9244a6089ef93f037d01bc3",
+          "frozenUtc": "2026-10-08T22:10:39.422979+00:00",
+          "endedMonotonic": 26543.2840909
+        },
+        "5": {
+          "startedUtc": "2026-10-08T22:15:08.316849+00:00",
+          "startedMonotonic": 26812.1779703,
+          "deadlineUtc": "2026-10-08T22:35:08.316849+00:00",
           "status": "running"
         }
       }
@@ -559,15 +680,38 @@
       "startedUtc": "2026-10-08T22:00:02.839447+00:00",
       "deadlineUtc": "2026-10-09T00:00:02.839447+00:00",
       "startedMonotonic": 25906.7005879,
-      "status": "running",
+      "status": "contaminated",
       "tasks": {
         "1": {
           "startedUtc": "2026-10-08T22:00:02.839447+00:00",
           "startedMonotonic": 25906.7005958,
           "deadlineUtc": "2026-10-08T22:20:02.839447+00:00",
-          "status": "running"
+          "status": "closed",
+          "outcome": "passed",
+          "candidateSha": "e76b88cef7bf01d4cb2e324d62cc6372b952c700",
+          "frozenUtc": "2026-10-08T22:09:03.395768+00:00",
+          "endedMonotonic": 26447.256881
+        },
+        "2": {
+          "startedUtc": "2026-10-08T22:09:26.374045+00:00",
+          "startedMonotonic": 26470.2351669,
+          "deadlineUtc": "2026-10-08T22:29:26.374045+00:00",
+          "status": "contaminated",
+          "outcome": "contaminated_stopped",
+          "stoppedObservedUtc": "2026-10-08T22:14:15.873673+00:00"
         }
-      }
+      },
+      "outcome": "contaminated_stopped",
+      "closedUtc": "2026-10-08T22:14:15.873665+00:00",
+      "contamination": {
+        "task": 2,
+        "reason": "Foreign Classic-Brownfield executable path observed through process command line; no code/data interaction reported.",
+        "scope": "Cooperative boundary breach; no replacement or further cell work. Material semantic steering not established for path-only metadata."
+      },
+      "archiveManifestPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\conventional-brownfield\\archive-manifest.json",
+      "archiveManifestSha256": "9777b0262fe1890f7b1095c6342f37907e6cbb76bb7f1f1e52f28ac47fde5758",
+      "actualActorActivationsKnown": 5,
+      "noReplacement": true
     },
     {
       "trialId": "classic-brownfield-v3-20261008",
@@ -581,15 +725,28 @@
       "startedUtc": "2026-10-08T22:02:13.358517+00:00",
       "deadlineUtc": "2026-10-09T00:02:13.358517+00:00",
       "startedMonotonic": 26037.2196473,
-      "status": "running",
+      "status": "contaminated",
       "tasks": {
         "1": {
           "startedUtc": "2026-10-08T22:02:13.358517+00:00",
           "startedMonotonic": 26037.2196532,
           "deadlineUtc": "2026-10-08T22:22:13.358517+00:00",
-          "status": "running"
+          "status": "contaminated",
+          "outcome": "contaminated_stopped",
+          "stoppedObservedUtc": "2026-10-08T22:14:15.874003+00:00"
         }
-      }
+      },
+      "outcome": "contaminated_stopped",
+      "closedUtc": "2026-10-08T22:14:15.873998+00:00",
+      "contamination": {
+        "task": 1,
+        "reason": "Foreign cell listener process path observed during local port recovery; no termination reported.",
+        "scope": "Cooperative boundary breach; no replacement or further cell work. Material semantic steering not established for path-only metadata."
+      },
+      "archiveManifestPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\classic-brownfield\\archive-manifest.json",
+      "archiveManifestSha256": "18ba3e89fa2c3e04f2ba755af58fa74801be5332a7ab8125ae0d1222af12aba1",
+      "actualActorActivationsKnown": 1,
+      "noReplacement": true
     },
     {
       "trialId": "government-brownfield-v3-20261008",
@@ -603,15 +760,28 @@
       "startedUtc": "2026-10-08T22:03:10.728662+00:00",
       "deadlineUtc": "2026-10-09T00:03:10.728662+00:00",
       "startedMonotonic": 26094.5898183,
-      "status": "running",
+      "status": "contaminated",
       "tasks": {
         "1": {
           "startedUtc": "2026-10-08T22:03:10.728662+00:00",
           "startedMonotonic": 26094.5898302,
           "deadlineUtc": "2026-10-08T22:23:10.728662+00:00",
-          "status": "running"
+          "status": "contaminated",
+          "outcome": "contaminated_stopped",
+          "stoppedObservedUtc": "2026-10-08T22:14:15.874260+00:00"
         }
-      }
+      },
+      "outcome": "contaminated_stopped",
+      "closedUtc": "2026-10-08T22:14:15.874255+00:00",
+      "contamination": {
+        "task": 1,
+        "reason": "collaboration.list_agents exposed unrelated Conventional/Classic task summaries; Actor read them and stopped.",
+        "scope": "Cooperative boundary breach; no replacement or further cell work. Material semantic steering not established for path-only metadata."
+      },
+      "archiveManifestPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\government-brownfield\\archive-manifest.json",
+      "archiveManifestSha256": "1e3cd2634619eafba80409907264822db2abcddee12b0b9051b97bcf90243967",
+      "actualActorActivationsKnown": 2,
+      "noReplacement": true
     }
   ],
   "correctionBatches": 2,

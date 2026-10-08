@@ -1,0 +1,11 @@
+{
+  "observedUtc": "2026-10-08T22:16:20.310800+00:00",
+  "scope": "Scientist read-only ownership inventory after Actor stops",
+  "query": "Win32_Process names dotnet.exe/Orders.Api.exe/markitect.exe with exact three Brownfield case path substrings; separately knownPID44980/45184",
+  "matchingCasePathProcesses": [],
+  "knownPidsPresent": [],
+  "governmentNativeExecutorInterruptRequested": true,
+  "governmentPrimaryReportedPid45184Terminated": true,
+  "newGlobalKillIssued": false,
+  "limits": "No provider/OS cancellation guarantee; paths absent do not prove absence of anonymous relative-path children. No foreign process was terminated based only on a busy port."
+}

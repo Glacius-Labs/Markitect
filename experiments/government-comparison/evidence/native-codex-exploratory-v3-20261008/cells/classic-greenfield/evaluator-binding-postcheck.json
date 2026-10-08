@@ -1,0 +1,113 @@
+{
+  "scope": "Read-only hash verification of independent report; original immutable report retained",
+  "checks": [
+    {
+      "field": "publicBriefSha256",
+      "reported": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "actual": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "matches": true,
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\evaluation\\classic-greenfield\\inputs\\current\\brief.md",
+      "reportedLength": 64,
+      "actualLength": 64
+    },
+    {
+      "field": "task1Sha256",
+      "reported": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "actual": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "matches": true,
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\evaluation\\classic-greenfield\\inputs\\current\\01-create-order.md",
+      "reportedLength": 64,
+      "actualLength": 64
+    },
+    {
+      "field": "architectureSha256",
+      "reported": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "actual": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "matches": true,
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\evaluation\\classic-greenfield\\inputs\\current\\architecture.md",
+      "reportedLength": 64,
+      "actualLength": 64
+    },
+    {
+      "field": "publicChecksSha256",
+      "reported": "fc96859ce7cc71426ed774f3ff5d88a45adcf016d2250c259287d1da628ac0cc",
+      "actual": "fc96859ce7cc71426ed774f3ff5d88a45adcf016d2250c259287d1da628ac0cc",
+      "matches": true,
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\evaluation\\classic-greenfield\\inputs\\current\\checks.py",
+      "reportedLength": 64,
+      "actualLength": 64
+    },
+    {
+      "field": "releaseManifestSha256",
+      "reported": "1b6040f48a7a3bc6862d4229a530e4c3198d57c61905c2c1718b6911427a24b8",
+      "actual": "1b6040f48a7a3bc6862d4229a530e4c3198d57c61905c2c1718b6911427a24b8",
+      "matches": true,
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\evaluation\\classic-greenfield\\inputs\\current\\release.json",
+      "reportedLength": 64,
+      "actualLength": 64
+    },
+    {
+      "field": "rubricSha256",
+      "reported": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+      "actual": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+      "matches": true,
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\evaluation\\classic-greenfield\\inputs\\rubric.json",
+      "reportedLength": 64,
+      "actualLength": 64
+    },
+    {
+      "field": "holdoutProcedureSha256",
+      "reported": "795fd4bac98559ea7c8a1c2066deaa3f198a50406ae0b2f9d68c34e67ab6ac7f",
+      "actual": "795fd4bac98559ea7c8a1c2066deaa3f198a50406ae0b2f9d68c34e67ab6ac7f",
+      "matches": true,
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\evaluation\\classic-greenfield\\inputs\\holdout-procedure.md",
+      "reportedLength": 64,
+      "actualLength": 64
+    },
+    {
+      "field": "privateHoldoutPlanSha256",
+      "reported": "c290bb53e93eace8f3a8b91e4e7d91d4fbc1799c6dd387bfe6fabc9608588a5",
+      "actual": "c290bb53e93eace8f3a8b91e4e7d91d4fbc1799c6dd387bfef6fabc9608588a5",
+      "matches": false,
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\evaluation\\classic-greenfield\\inputs\\private\\holdout-plan.json",
+      "reportedLength": 63,
+      "actualLength": 64
+    },
+    {
+      "field": "privateHoldoutRunnerSha256",
+      "reported": "4fefc910a1c10eb1ca261fef1847920f432d2379de83ecc22d9e84a6eac392eb",
+      "actual": "4fefc910a1c10eb1ca261fef1847920f432d2379de83ecc22d9e84a6eac392eb",
+      "matches": true,
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\evaluation\\classic-greenfield\\inputs\\private\\holdout_checks.py",
+      "reportedLength": 64,
+      "actualLength": 64
+    },
+    {
+      "field": "supportQ1Sha256",
+      "reported": "69b51223a375893a25c6ca1c7ab99071a96df1e8a131b1ab06c3f6a1dd0d1a0d",
+      "actual": "69b51223a375893a25c6ca1c7ab99071a96df1e8a131b1ab06c3f6a1dd0d1a0d",
+      "matches": true,
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\q1-intent-replay.md",
+      "reportedLength": 64,
+      "actualLength": 64
+    },
+    {
+      "field": "stageResultSha256",
+      "reported": "ecc20fec8df9fd76e1c8699888f60de02f851f2501261c3f9a549f54812bb208",
+      "actual": "ecc20fec8df9fd76e1c8699888f60de02f851f2501261c3f9a549f54812bb208",
+      "matches": true,
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\stage-1-result.json",
+      "reportedLength": 64,
+      "actualLength": 64
+    },
+    {
+      "field": "taskInputHashesSha256",
+      "reported": "193d65aba4e6d74a6544385455c3ee1147029debcbde59c10c16fdc0d8ec387a",
+      "actual": "193d65aba4e6d74a6544385455c3ee1147029debcbde59c10c16fdc0d8ec387a",
+      "matches": true,
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\classic-greenfield\\state\\task-input-hashes.json",
+      "reportedLength": 64,
+      "actualLength": 64
+    }
+  ]
+}

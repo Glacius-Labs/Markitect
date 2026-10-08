@@ -1,0 +1,45 @@
+{
+  "trialId": "conventional-greenfield-v3-20261008",
+  "task": 5,
+  "priorCandidate": "baacb07fba54fcfce9244a6089ef93f037d01bc3",
+  "release": {
+    "schemaVersion": 1,
+    "throughTask": 5,
+    "condition": "greenfield",
+    "inputs": [
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-5\\01-create-order.md",
+        "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-5\\02-reserve-stock.md",
+        "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-5\\03-persist-state.md",
+        "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-5\\04-order-lifecycle.md",
+        "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-5\\05-change-limit.md",
+        "sha256": "8ae2fca3229f9c4ceb9f618da68eabe02f08071b1d51075af715139a8f5d2ae4"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-5\\architecture.md",
+        "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-5\\brief.md",
+        "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\support\\conventional-greenfield\\inputs\\stage-5\\checks.py",
+        "sha256": "1c05a2985f262ddf3d18e2fe0be4750e20c7a61a2921b5062655b3595d0be51b"
+      }
+    ]
+  },
+  "scope": "Current Task5 only; prior public review passed; original resources/boundaries unchanged."
+}
