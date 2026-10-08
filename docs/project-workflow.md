@@ -55,12 +55,38 @@ markitect project discover --repo . --request .markitect/drafts/discovery-reques
 markitect project distill --discovery .markitect/drafts/discovery.json --report .markitect/drafts/distillation.json --repo . --output .markitect/drafts/validated-distillation.json
 # Optional one-call generation, after setup and committing the runtime:
 markitect project distill --repo . --discovery .markitect/drafts/discovery.json --generate --write --output .markitect/drafts/distillation.json --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET
+markitect project resolve --repo TARGET_REPO --source-repo SOURCE_REPO --revision TARGET_COMMIT --discovery .markitect/drafts/discovery.json --report .markitect/drafts/distillation.json --input .markitect/drafts/owner-choices.json --output .markitect/drafts/resolution.json
 markitect project adopt --repo . --source-repo . --revision TARGET_COMMIT --discovery .markitect/drafts/discovery.json --report .markitect/drafts/distillation.json --resolution .markitect/drafts/resolution.json --output .markitect/drafts/adoption-plan.json
 # Review the exact plan JSON and its digest, then:
 markitect project adopt --repo . --source-repo . --revision TARGET_COMMIT --discovery .markitect/drafts/discovery.json --report .markitect/drafts/distillation.json --resolution .markitect/drafts/resolution.json --plan .markitect/drafts/adoption-plan.json --expect REVIEWED_PLAN_DIGEST --write
 ```
 
-The request, report, and resolution are explicit transports, not implicit guesses from the working directory. Generated distillation preserves a separate execution receipt and cost estimate; caller-supplied prices are only budget weights, never a guaranteed bill ceiling. Its claims and questions remain proposals. The declared method or actor is a record claim, not authenticated provenance or owner acceptance; the resolution stays unauthenticated. Deferred scopes contribute no model files; changing any bound source, proposal, resolution, or target basis makes the plan stale. These operations write Markitect-owned files only.
+The request, report, owner choices, and resolution are explicit transports, not implicit guesses from the working directory. `resolve` accepts only `actor`, `authorityClaim`, `decisionReference`, `questions`, and `scopes`; it derives the target basis, schema/build digests, proposal/discovery bindings, and `authenticated:false` from the active source and target. Every scope needs an explicit `adopt` or `defer` choice with a reason; each adopted scope's questions need answers. The resolution is an unauthenticated decision record, not proof of identity or automatic acceptance. Review its digest before using it in `adopt`. Generated distillation preserves a separate execution receipt and cost estimate; caller-supplied prices are only budget weights, never a guaranteed bill ceiling. Its claims and questions remain proposals. Deferred scopes contribute no model files; changing any bound source, proposal, resolution, or target basis makes the plan stale. These operations write Markitect-owned files only.
+
+Example `owner-choices.json` (replace IDs with those in the validated report):
+
+```json
+{
+  "actor": "user",
+  "authorityClaim": "The project owner selected the cancellation scope for adoption review",
+  "decisionReference": "shop-decision-17",
+  "questions": [
+    {
+      "questionId": "cancellation-timing",
+      "scopeId": "orders",
+      "disposition": "answer",
+      "answer": "Cancellation is allowed only before shipment",
+      "reason": "The owner confirmed the current business rule"
+    }
+  ],
+  "scopes": [
+    {"scopeId": "orders", "status": "adopt", "reason": "The owner selected Orders"},
+    {"scopeId": "inventory", "status": "defer", "reason": "Inventory requires a separate review"}
+  ]
+}
+```
+
+The `resolve` command writes only the resolution transport under the source repository's `.markitect/drafts/` (or prints it to stdout). It does not write target model/runtime files, invoke a provider, or accept the model proposal.
 
 ## Everyday conversational work
 
