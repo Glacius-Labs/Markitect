@@ -86,6 +86,9 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 		return plan, err
 	}
 	if request.ModelEdit != nil {
+		if err := validateModelEditPaths(*request.ModelEdit); err != nil {
+			return plan, err
+		}
 		candidate, editErr := host.PlanEdit(project, *request.ModelEdit)
 		if editErr != nil {
 			return plan, fmt.Errorf("validate requested model edit: %w", editErr)
@@ -473,6 +476,15 @@ func modelEditCandidate(plan *EditPlan, base *Snapshot) (candidateData, error) {
 		data.Files[change.Path] = File{Path: change.Path, Mode: mode, Content: []byte(change.Content), Delete: change.Delete}
 	}
 	return data, nil
+}
+
+func validateModelEditPaths(mutation Mutation) error {
+	for _, change := range mutation.Files {
+		if !safeRepoPath(change.Path) || !strings.HasPrefix(change.Path, ".markitect/model/") {
+			return fmt.Errorf("projectrun ModelEdit path %q must remain within .markitect/model; edit runtime configuration before planning", change.Path)
+		}
+	}
+	return nil
 }
 
 func planDigestID(value string) string {
