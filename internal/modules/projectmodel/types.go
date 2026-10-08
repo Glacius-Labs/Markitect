@@ -21,6 +21,7 @@ type Manager struct {
 	ID           string   `json:"id"`
 	Name         string   `json:"name"`
 	Namespace    string   `json:"namespace"`
+	Purpose      string   `json:"purpose"`
 	Parent       string   `json:"parent,omitempty"`
 	Owns         []string `json:"owns"`
 	Instructions string   `json:"instructions,omitempty"`
