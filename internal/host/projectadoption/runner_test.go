@@ -38,6 +38,10 @@ func TestDistillationExecutorHelper(t *testing.T) {
 	if err := json.Unmarshal(requestContext["targetContext"], &targetContext); err != nil || targetContext.RootManagerID == "" || targetContext.Digest == "" {
 		os.Exit(35)
 	}
+	var evidenceLines []EvidenceLine
+	if err := json.Unmarshal(requestContext["evidenceLines"], &evidenceLines); err != nil || len(evidenceLines) != 2 || evidenceLines[0].EvidenceID != "implementation" || evidenceLines[0].LineNumber != 1 || evidenceLines[0].Text != "package orders" || evidenceLines[0].LineEnding != "\n" || evidenceLines[1].LineNumber != 2 || evidenceLines[1].Text != "func Cancel() {}" {
+		os.Exit(37)
+	}
 	var prompt struct {
 		Instructions string `json:"instructions"`
 	}
@@ -52,7 +56,7 @@ func TestDistillationExecutorHelper(t *testing.T) {
 		os.Exit(36)
 	}
 	artifact := invocation.Request.Artifacts[0]
-	if artifact.Path != "evidence/implementation.txt" || string(artifact.Content) != "package orders\nfunc Cancel() {}\n" {
+	if artifact.Path != "evidence/implementation.txt" || string(artifact.Content) != "package orders\nfunc Cancel() {}\n" || artifact.Digest != "sha256:"+digestBytes([]byte("package orders\nfunc Cancel() {}\n")) {
 		os.Exit(34)
 	}
 	claim := DistillationDraftClaim{ID: "implementation-observation", ScopeID: "orders", Kind: "observation", Method: "static-source",
@@ -332,6 +336,37 @@ func TestNewPrivateLogDirectoryIsUniqueAndUncreated(t *testing.T) {
 		if _, err := os.Lstat(candidate); !os.IsNotExist(err) {
 			t.Errorf("private log directory must be an uncreated leaf, path=%q error=%v", candidate, err)
 		}
+	}
+}
+
+func TestSelectedEvidenceLineGuidePreservesLineEndingsAndBounds(t *testing.T) {
+	lines, err := selectedEvidenceLineGuide([]Evidence{
+		{ID: "windows", Content: "first\r\nsecond\n"},
+		{ID: "eof", Content: "last"},
+		{ID: "empty", Content: ""},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []EvidenceLine{
+		{EvidenceID: "windows", LineNumber: 1, Text: "first", LineEnding: "\r\n"},
+		{EvidenceID: "windows", LineNumber: 2, Text: "second", LineEnding: "\n"},
+		{EvidenceID: "eof", LineNumber: 1, Text: "last", LineEnding: ""},
+		{EvidenceID: "empty", LineNumber: 1, Text: "", LineEnding: ""},
+	}
+	if len(lines) != len(want) {
+		t.Fatalf("line count = %d, want %d: %#v", len(lines), len(want), lines)
+	}
+	for i := range want {
+		if lines[i] != want[i] {
+			t.Errorf("line %d = %#v, want %#v", i, lines[i], want[i])
+		}
+	}
+	if _, err := selectedEvidenceLineGuide([]Evidence{{ID: "large", Content: strings.Repeat("x", maxDistillationEvidenceBytes+1)}}); err == nil {
+		t.Fatal("evidence beyond the byte bound was accepted")
+	}
+	if _, err := selectedEvidenceLineGuide([]Evidence{{ID: "many-lines", Content: strings.Repeat("\n", maxDistillationEvidenceLines+1)}}); err == nil {
+		t.Fatal("evidence beyond the line-count bound was accepted")
 	}
 }
 

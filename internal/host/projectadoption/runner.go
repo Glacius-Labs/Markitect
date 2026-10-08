@@ -19,13 +19,16 @@ import (
 )
 
 const (
-	distillationRunnerVersion = "markitect.example.org/project-distillation-runner/v1alpha1"
-	maxDistillationTimeout    = 10 * time.Minute
-	maxDistillationStdout     = 4 << 20
-	maxDistillationStderr     = 1 << 20
-	maxDistillationArtifacts  = 128
-	maxDistillationCostMicros = int64(1_000_000_000_000)
-	microsPerMillionTokens    = int64(1_000_000)
+	distillationRunnerVersion     = "markitect.example.org/project-distillation-runner/v1alpha1"
+	maxDistillationTimeout        = 10 * time.Minute
+	maxDistillationStdout         = 4 << 20
+	maxDistillationStderr         = 1 << 20
+	maxDistillationArtifacts      = 128
+	maxDistillationEvidenceBytes  = 4 << 20
+	maxDistillationEvidenceLines  = 50_000
+	maxDistillationLineGuideBytes = 4 << 20
+	maxDistillationCostMicros     = int64(1_000_000_000_000)
+	microsPerMillionTokens        = int64(1_000_000)
 )
 
 // DistillationRunOptions bounds one agent call. Prices are caller-supplied
@@ -85,6 +88,15 @@ type DistillationDraftScope struct {
 	OwnerCandidate string   `json:"ownerCandidate"`
 }
 
+// EvidenceLine is a source-data line address. Text excludes the original line
+// terminator, which is preserved exactly in LineEnding for CRLF/LF sources.
+type EvidenceLine struct {
+	EvidenceID string `json:"evidenceId"`
+	LineNumber int    `json:"lineNumber"`
+	Text       string `json:"text"`
+	LineEnding string `json:"lineEnding"`
+}
+
 // DistillationReceipt preserves the real runner receipt and explicit cost
 // estimate used to accept this generated proposal.
 type DistillationReceipt struct {
@@ -112,6 +124,7 @@ type distillationRequestContext struct {
 	Selected        []SelectedPath            `json:"selected"`
 	Exclusions      []PathReason              `json:"exclusions"`
 	Unselected      []PathReason              `json:"unselected"`
+	EvidenceLines   []EvidenceLine            `json:"evidenceLines"`
 	Schema          any                       `json:"schema"`
 	ResponseSchema  json.RawMessage           `json:"responseSchema"`
 	TargetContext   DistillationTargetContext `json:"targetContext"`
@@ -138,6 +151,10 @@ func GenerateDistillation(ctx context.Context, sourceRoot string, discovery Disc
 	if len(discovery.Evidence) > maxDistillationArtifacts {
 		return empty, receipt, fmt.Errorf("distillation supports at most %d selected evidence files per invocation", maxDistillationArtifacts)
 	}
+	evidenceLines, err := selectedEvidenceLineGuide(discovery.Evidence)
+	if err != nil {
+		return empty, receipt, fmt.Errorf("prepare bounded selected-evidence line guide: %w", err)
+	}
 	if _, err := RefreshDiscovery(sourceRoot, discovery); err != nil {
 		return empty, receipt, fmt.Errorf("refresh fixed discovery before invocation: %w", err)
 	}
@@ -158,15 +175,16 @@ func GenerateDistillation(ctx context.Context, sourceRoot string, discovery Disc
 		})
 	}
 	contextData := distillationRequestContext{
-		Instructions: `Analyze only the supplied fixed Discovery evidence artifacts and project-model schema. targetContext is accepted target guidance, not source evidence; use it only for compatible placement under existing Manager identities/namespaces and to avoid conflicts with public contracts. Produce a proposal only; do not adopt it or modify source. Distinguish static source observations, documented intent, submitted runtime records, and synthesis hypotheses. Never infer behavior from filenames. Do not present runtime records as authenticated execution or claim human acceptance.\n\n` +
+		Instructions: `Analyze only the supplied fixed Discovery evidence artifacts and project-model schema. evidenceLines is source-data guidance containing evidenceId, one-based lineNumber, exact line text without line-number prefixes, and the original lineEnding; it supplements but never replaces the unchanged selected blob artifacts. Cite exact excerpts from the selected blob without adding evidence IDs or line numbers to excerpt text; preserve exact source line-ending bytes when spanning lines, and use inclusive one-based bounds. targetContext is accepted target guidance, not source evidence; use it only for compatible placement under existing Manager identities/namespaces and to avoid conflicts with public contracts. Produce a proposal only; do not adopt it or modify source. Distinguish static source observations, documented intent, submitted runtime records, and synthesis hypotheses. Never infer behavior from filenames. Do not present runtime records as authenticated execution or claim human acceptance.\n\n` +
 			`IDs must match ^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$: 1-64 lowercase ASCII letters/digits with only internal hyphens. IDs are local identifiers; use simple scope IDs such as orders, never namespaces such as commerce.sales.orders. Every claim, question, and contradiction scopeId must name a declared local scope. Root scope proposals MUST have parentId = ""; every non-root scope's parentId must name another declared scope ID, and parent relationships must be acyclic. Every proposed scope must contain at least one grounded claim assigned to it and at least one model-proposal file; do not create organizational/container scopes without grounded claims. Existing target Managers are guidance only and do not need mirrored as adoption scopes. Each claimIds entry must name a declared claim assigned to that same scope. Every scope claimIds list must include its assigned claims. Proposal file scopeId must name a declared scope. Every claim and term occurrence must cite a selected evidence ID copied exactly from Discovery; each excerpt must be exact contiguous text with inclusive one-based line bounds. Terms must cite occurrences whose excerpt contains the exact term. Questions must cite same-scope claims and provide at least two distinct alternatives. Contradictions must point to a same-scope question whose claimIds include every conflicting claim.\n\n` +
 			`Claim kind/method pairs are exactly: observation/static-source (runtimeObservationJson is the empty string); documented-intent/documentation (runtimeObservationJson is the empty string); submitted-runtime-record/submitted-record (runtimeObservationJson is required strict JSON copied from selected runtime-record evidence and the claim must cite that record); hypothesis/synthesis (runtimeObservationJson is the empty string). Do not use kind runtime-observation or combine other pairs. For a submitted record, runtimeObservationJson must contain exactly evidenceId, recordSourceRevision, sourceRelation, command, exitCode, runnerDigest, and inputs; copy record fields exactly and set sourceRelation to same-discovery-commit only when its revision equals the Discovery commit, otherwise historical. Never fabricate runtime metadata for other claim kinds. Return every required property including empty arrays and empty optional-string values, only the closed reportJson object described by responseSchema. Model proposal files must use declared local scope IDs and canonical .markitect/model YAML paths.`,
 		DiscoveryDigest: discovery.Digest, Purpose: discovery.Purpose,
 		Review: discovery.Review, ScopeRoots: append([]string{}, discovery.ScopeRoots...),
-		Selected:   append([]SelectedPath{}, discovery.Selected...),
-		Exclusions: append([]PathReason{}, discovery.Exclusions...),
-		Unselected: append([]PathReason{}, discovery.Unselected...),
-		Schema:     projectmodel.Schema(), ResponseSchema: distillationDraftJSONSchema(),
+		Selected:      append([]SelectedPath{}, discovery.Selected...),
+		Exclusions:    append([]PathReason{}, discovery.Exclusions...),
+		Unselected:    append([]PathReason{}, discovery.Unselected...),
+		EvidenceLines: evidenceLines,
+		Schema:        projectmodel.Schema(), ResponseSchema: distillationDraftJSONSchema(),
 		TargetContext: options.TargetContext,
 	}
 	contextJSON, err := json.Marshal(contextData)
@@ -352,6 +370,60 @@ func newPrivateLogDirectory(parent string) (string, error) {
 		}
 	}
 	return "", errors.New("could not allocate an unused private log path")
+}
+
+func selectedEvidenceLineGuide(evidence []Evidence) ([]EvidenceLine, error) {
+	lines := make([]EvidenceLine, 0)
+	totalBytes := 0
+	appendLine := func(id string, number int, text, ending string) error {
+		if len(lines) >= maxDistillationEvidenceLines {
+			return fmt.Errorf("selected evidence exceeds the %d-line guide limit", maxDistillationEvidenceLines)
+		}
+		lines = append(lines, EvidenceLine{EvidenceID: id, LineNumber: number, Text: text, LineEnding: ending})
+		return nil
+	}
+	for _, item := range evidence {
+		if len(item.Content) > maxDistillationEvidenceBytes-totalBytes {
+			return nil, fmt.Errorf("selected evidence exceeds the %d-byte line-guide limit", maxDistillationEvidenceBytes)
+		}
+		totalBytes += len(item.Content)
+		content := item.Content
+		if content == "" {
+			if err := appendLine(item.ID, 1, "", ""); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		lineNumber := 1
+		start := 0
+		for start < len(content) {
+			newline := strings.IndexByte(content[start:], '\n')
+			if newline < 0 {
+				if err := appendLine(item.ID, lineNumber, content[start:], ""); err != nil {
+					return nil, err
+				}
+				break
+			}
+			end := start + newline
+			text, ending := content[start:end], "\n"
+			if strings.HasSuffix(text, "\r") {
+				text, ending = strings.TrimSuffix(text, "\r"), "\r\n"
+			}
+			if err := appendLine(item.ID, lineNumber, text, ending); err != nil {
+				return nil, err
+			}
+			lineNumber++
+			start = end + 1
+		}
+	}
+	encoded, err := json.Marshal(lines)
+	if err != nil {
+		return nil, fmt.Errorf("encode evidence line guide: %w", err)
+	}
+	if len(encoded) > maxDistillationLineGuideBytes {
+		return nil, fmt.Errorf("selected evidence line guide exceeds the %d-byte encoded bound", maxDistillationLineGuideBytes)
+	}
+	return lines, nil
 }
 
 func resolveExistingPrefix(absolute string) (string, error) {
