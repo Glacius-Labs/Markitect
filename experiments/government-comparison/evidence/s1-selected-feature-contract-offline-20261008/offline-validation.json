@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "suite": "test_selected_feature_contract",
+  "testsRun": 10,
+  "runner": "C:/Python313/python.exe -m unittest -v test_selected_feature_contract",
+  "performedBy": "/root/r5_budget",
+  "sourcePins": {
+    "runtime/selected_feature_contract.py": "985ff1d8f8870de4ac697e030c2abeb543d1bc3e74f475968c5e1097be865550",
+    "tests/test_selected_feature_contract.py": "5c027d643a404c527f534c3d44b7a37d166a188ee71f801ae5ead45661329e49",
+    "evidence/s1-selected-feature-contract-offline-20261008/focused-tests.log": "7d3d5d29c39c658a09d4852a5843e03883f1948f22292b67e17e0cf8aa0504ba"
+  },
+  "rootInspectionUtc": "2026-10-08T05:19:56.636580+00:00",
+  "actualConsumerPath": "Raw synthetic result -> real sanitize_config_read/sanitize_requirements -> real assess; parsers not mocked, no hand-built positive states",
+  "selectedFieldNegativeVariants": "Every one of8keys tested missing/null/string/integer/oppositeBoolean (40subcases)",
+  "additionalCases": "Unselected extras and origins/top+layers, container/missing/null/type/size, typed known/unknown nonbool requirements, uninterpreted booleans including oldFLAGS-only name, known conflict precedence, duplicateJSON/warning/origin gates, unchanged real insufficient receipt",
+  "newExperimentalCalls": 0,
+  "newMetadataTrees": 0,
+  "newActors": 0,
+  "ledgerWrites": 0,
+  "fullProductSuites": 0,
+  "rootReranUnchangedSuite": false
+}

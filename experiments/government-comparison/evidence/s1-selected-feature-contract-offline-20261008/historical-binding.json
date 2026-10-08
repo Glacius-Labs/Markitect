@@ -1,0 +1,18 @@
+{
+  "baseCommit": "f4bea6dd9b92d72d828751d9a05411c86edd66fa",
+  "allPreviouslyTrackedPackageFilesProtected": 3931,
+  "pathBlobListingSha256": "331e7dc77839f04a545e24bef775d8495720b78e78cbd8e1d8e3250086adcd1f",
+  "listingRecipe": "git ls-tree -r -z BASE -- experiments/government-comparison; each decoded path + TAB + blob + LF in tree order",
+  "historicalTerminalStatus": "INSUFFICIENT; unchanged",
+  "historicalPolicyTrees": 4,
+  "historicalCliMetadataCalls": 6,
+  "historicalActors": 5,
+  "knownHistoricalActorTokens": 53331,
+  "historicalTokenTotal": null,
+  "nativeProductHistory": [
+    15,
+    16,
+    13,
+    2250
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "key": "s1-selected-feature-contract-offline-20261008",
+  "status": "OFFLINE CONTRACT CORRECTED; NO RUNTIME CLEARANCE",
+  "baseCommit": "f4bea6dd9b92d72d828751d9a05411c86edd66fa",
+  "codeFiles": [
+    "runtime/selected_feature_contract.py",
+    "tests/test_selected_feature_contract.py"
+  ],
+  "testsPassed": 10,
+  "selectedFieldNegativeSubcases": 40,
+  "actualConsumerPaths": true,
+  "mockedParsers": false,
+  "configFeatureRemainder": "not evaluated; not published; not claimed valid",
+  "managedRequirements": "whole-map boolean typing; any uninterpreted name unresolved/insufficient; known conflict blocking",
+  "historicalRealResult": "INSUFFICIENT; preserved, not rescored; actual discarded raw trigger unknown",
+  "realStatus": "S1 open, all six study cells NOT RUN",
+  "newConsumption": {
+    "actualCasePreparations": 0,
+    "admissions": 0,
+    "freezes": 0,
+    "cliCalls": 0,
+    "appServerTrees": 0,
+    "metadataReads": 0,
+    "actors": 0,
+    "modelProviderCalls": 0,
+    "productStarts": 0,
+    "studyCells": 0,
+    "ledgerWrites": 0,
+    "fullProductSuites": 0
+  },
+  "unchangedHistory": {
+    "policyTrees": 4,
+    "cliMetadataCalls": 6,
+    "actors": 5,
+    "knownActorTokens": 53331,
+    "totalTokens": null,
+    "nativeProductStarts": 15,
+    "productWrappers": 16,
+    "deterministicDelegates": 13,
+    "reservedNativeSeconds": 2250
+  },
+  "scopeBoundary": "Later real candidate integration and invocation require new finite authority after acceptance; none follows automatically. No old client/profile/driver or product change. No P1/push/publication.",
+  "slot": "No slot claimed",
+  "completion": "One final callback, then wait"
+}

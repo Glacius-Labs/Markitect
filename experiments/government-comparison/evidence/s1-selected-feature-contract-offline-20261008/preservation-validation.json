@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "baseCommit": "f4bea6dd9b92d72d828751d9a05411c86edd66fa",
+  "verifiedUtc": "2026-10-08T05:21:39.680462+00:00",
+  "previousTrackedPackageFilesByteUnchanged": 3931,
+  "preservedHistoricalSourcePins": 15,
+  "preservedHistoricalFreezeInputs": 24,
+  "liveLedgersByteUnchanged": 5,
+  "externalSanitizedPairsByteUnchanged": 7,
+  "allExistingTrackedFilesUnmodified": true,
+  "historicalTerminalResult": "INSUFFICIENT; unchanged",
+  "newReportLinksResolved": 1,
+  "independentReviewSourceAndTestHashesMatch": true,
+  "offlineTests": 10,
+  "noUnchangedTestsRepeatedByRoot": true,
+  "newExperimentalStarts": 0,
+  "newActualPreparationAdmissionFreeze": 0,
+  "newLedgerWrites": 0,
+  "newFullProductTests": 0
+}

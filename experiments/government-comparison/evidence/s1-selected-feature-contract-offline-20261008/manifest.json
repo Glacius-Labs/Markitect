@@ -1,0 +1,70 @@
+{
+  "key": "s1-selected-feature-contract-offline-20261008",
+  "baseCommit": "f4bea6dd9b92d72d828751d9a05411c86edd66fa",
+  "status": "offline contract corrected; no runtime clearance or grant",
+  "experimentalStarts": 0,
+  "historicalResult": "INSUFFICIENT; unchanged",
+  "independentReviewSha256": "e08265e8be842854663d9fefc428309e8bd3b0630ec28dd04a1367268443b883",
+  "entries": [
+    {
+      "path": "evidence/s1-selected-feature-contract-offline-20261008/authority-reference.json",
+      "sha256": "c78a61a5e3cfcc73d1a50dd1414bcd5f0f534ac3be9c8b7fd979d91c5cdba883",
+      "bytes": 7285
+    },
+    {
+      "path": "evidence/s1-selected-feature-contract-offline-20261008/focused-tests.log",
+      "sha256": "7d3d5d29c39c658a09d4852a5843e03883f1948f22292b67e17e0cf8aa0504ba",
+      "bytes": 2210
+    },
+    {
+      "path": "evidence/s1-selected-feature-contract-offline-20261008/handoff.md",
+      "sha256": "235d1654a5463b9f245494d4d0e36d876978762c0ebe365a7bf53f9474f0c350",
+      "bytes": 1748
+    },
+    {
+      "path": "evidence/s1-selected-feature-contract-offline-20261008/historical-binding.json",
+      "sha256": "9a9f0fbbac7763516b11e82a69cb8f2ac07383ca903d32e43e06402e2b68ae9b",
+      "bytes": 646
+    },
+    {
+      "path": "evidence/s1-selected-feature-contract-offline-20261008/independent-review.md",
+      "sha256": "e08265e8be842854663d9fefc428309e8bd3b0630ec28dd04a1367268443b883",
+      "bytes": 3196
+    },
+    {
+      "path": "evidence/s1-selected-feature-contract-offline-20261008/offline-validation.json",
+      "sha256": "2705759b27d165f2a36e864120b733368ce530259936499d0a699e683b734709",
+      "bytes": 1421
+    },
+    {
+      "path": "evidence/s1-selected-feature-contract-offline-20261008/preservation-validation.json",
+      "sha256": "d1337035514330b13e02aa816dab86e21e7f031127ff7429ca5dd5368a331081",
+      "bytes": 743
+    },
+    {
+      "path": "evidence/s1-selected-feature-contract-offline-20261008/source-evidence.json",
+      "sha256": "adcc6347fa42cd05ee421175f6ba69ba5cb791d98e8b37c67a85b575c0bff08a",
+      "bytes": 1316
+    },
+    {
+      "path": "evidence/s1-selected-feature-contract-offline-20261008/terminal-summary.json",
+      "sha256": "df6c0bb7179fe78366cdc014af2197021920d1697a157296ea7ae1e66d52e223",
+      "bytes": 1705
+    },
+    {
+      "path": "public/s1-selected-feature-contract-offline-20261008.md",
+      "sha256": "c75472312c7117b63640375d0e14775504c4e189d8fa2f44bc0f007b236cc4b3",
+      "bytes": 3734
+    },
+    {
+      "path": "runtime/selected_feature_contract.py",
+      "sha256": "985ff1d8f8870de4ac697e030c2abeb543d1bc3e74f475968c5e1097be865550",
+      "bytes": 9417
+    },
+    {
+      "path": "tests/test_selected_feature_contract.py",
+      "sha256": "5c027d643a404c527f534c3d44b7a37d166a188ee71f801ae5ead45661329e49",
+      "bytes": 12194
+    }
+  ]
+}

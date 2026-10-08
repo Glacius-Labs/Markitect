@@ -1,0 +1,29 @@
+{
+  "pinnedSchemaArchive": "experiments/government-comparison/evidence/policy-compatibility/run-1/protocol-schema.zip",
+  "archiveSha256": "cd24042eec4696f6b73368cfc6ce930726f3e10c28bae63cdbd1b2f502ff1d97",
+  "configSchema": {
+    "member": "v2/ConfigReadResponse.json",
+    "sha256": "4ec77e1a3eed746037149799c3b6bb8fe7b4b593e5930fc9f410e6282de9df50",
+    "featuresTyped": false,
+    "configAdditionalProperties": true
+  },
+  "requirementsSchema": {
+    "member": "v2/ConfigRequirementsReadResponse.json",
+    "sha256": "23133727e5dac0fcd77ca0db8bb47f4bef7c3e880b96846aec612d1dedba7e5b",
+    "featureRequirements": {
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  },
+  "preservedParser": {
+    "path": "evidence/s1-common-runner-policy-metadata-20261008/client.py",
+    "sha256": "8b6a2032dce5468c730885906f030fcfbed3cb4f23b010e95f90592a38b0fdfb"
+  },
+  "knownScope": "Only eight requested config switches interpreted. Every other managed featureRequirement is uninterpreted, including three extra names in the preserved sanitizer FLAGS. That FLAGS list is not a schema name enum.",
+  "historicalCause": "Unknown. No raw feature map retained; synthetic inputs never reconstructed historical truth."
+}
