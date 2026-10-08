@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T20:34:50Z",
+  "updatedUtc": "2026-10-08T20:35:11Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -435,10 +435,10 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:28",
-      "lastObservedStatus": "idle",
-      "activeTurn": null,
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac7f70b42c0819193d64778c888caa2",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:29",
+      "lastObservedStatus": "active",
+      "activeTurn": "01a11d39-d667-7e11-ac4b-5b022e3b2c9b",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac7fe70cbf88191821d80ff53a2b12c",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Offline pinned account-update metadata contract; no runtime admission until fresh independent acceptance/grant",
       "latestProgress": "Final thread-only mechanics accepted, final grant closed, S1 and6 cells NOT RUN. Finite synthesis saved; observation PAUSED, no pending assignment.",
@@ -449,9 +449,10 @@
       "lastAssignment": {
         "key": "s1-account-update-contract-offline-20261008",
         "authorizedUtc": "2026-10-08T20:34:50Z",
-        "status": "Authorized offline-only, pending once-only dispatch",
+        "status": "Dispatched once; offline-only schema/classifier and disabled exact-route proposal",
         "scope": "Pinned public account/updated schema classifier and exact disabled client routing proposal; never qualify discarded actual payload or change general live admission.",
-        "assignmentPointer": "threads[name=Scientist].evidence.accountUpdateContractOfflineAssignment"
+        "assignmentPointer": "threads[name=Scientist].evidence.accountUpdateContractOfflineAssignment",
+        "sentUtc": "2026-10-08T20:35:11Z"
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -5848,6 +5849,14 @@
           "claimBoundary": "Source/schema/synthetic behavior and a prospective proposal only. Actual discarded payload/authMode/planType/account state/cause unknown; historical STOP unchanged. No S1/read/tool/provider/OS/quality proof.",
           "stopRule": "First authority/private/immutable binding blocker terminal; ordinary local source/test mistakes only within envelope. No live repair/relaunch or automatic second actual attempt.",
           "exitCondition": "Clean source SHA, exact source/schema/evidence hashes and independent bounded source review; report synthetic cases/corrections/time and unchanged old pins; one callback to Overseer. Next actual call requires Root acceptance and separate final fresh grant within same resumed block/deadline."
+        },
+        "accountUpdateContractOfflineDispatch": {
+          "key": "s1-account-update-contract-offline-20261008",
+          "sentUtc": "2026-10-08T20:35:11Z",
+          "delivery": "send_message_to_thread returned matching Scientist threadId without error",
+          "assignmentCommit": "3b9e72e",
+          "actualRuntimeAuthorized": 0,
+          "repeatDispatchPermitted": false
         }
       },
       "classicHandoffReceived": true,
