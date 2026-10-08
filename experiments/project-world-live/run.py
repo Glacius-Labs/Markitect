@@ -45,7 +45,7 @@ def main() -> None:
         git('commit', '-m', 'Freeze baseline Shop example')
         setup_args = ['--tool-root', str(frozen), '--provider', 'codex', '--model', args.model,
                       '--effort', 'high', '--input-micros-per-million', '20000000',
-                      '--output-micros-per-million', '100000000', '--max-cost-micros', '5000000']
+                      '--output-micros-per-million', '100000000', '--max-cost-micros', '10000000']
         invoke(tool, root, output, 'doctor', '--tool-root', str(frozen), '--provider', 'codex')
         preview = invoke(tool, root, output, 'setup', *setup_args)
         invoke(tool, root, output, 'setup', *setup_args, '--expect', preview['editPlan']['digest'], '--write')

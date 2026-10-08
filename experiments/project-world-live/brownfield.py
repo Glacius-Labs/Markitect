@@ -54,7 +54,7 @@ def main() -> None:
                     ('inventory-source', 'src/shop/inventory/reservations.py', 'code'),
                     ('legacy-guide', 'docs/legacy-cancellation.md', 'documentation')]
         request = {'apiVersion': 'markitect.example.org/project-discovery/v1alpha1', 'id': 'shop-brownfield-example',
-                   'purpose': 'Distill Orders and Inventory as separate scope proposals. Preserve the disagreement between legacy packing documentation and confirmed-only source as a blocking owner question. Propose additive Statements with unique imported- names under existing Manager namespaces; preserve accepted target contracts.',
+                   'purpose': 'Use exactly two peer adoption scopes with local IDs orders and inventory, both with parentId empty. Each scope needs its own grounded claims and at least one additive model file. Do not introduce shop, sales or other organizational container scopes; the accepted target already supplies Managers. Preserve the disagreement between legacy packing documentation and confirmed-only source as a blocking owner question. Propose additive Statements with unique imported- names under existing Manager namespaces; preserve accepted target contracts.',
                    'review': 'Finite example discovery only. Review terminology and static intent; no runtime record was selected. Owner decides adoption per scope.',
                    'commit': head, 'scopeRoots': ['src/shop', 'docs'],
                    'selected': [{'id': identity, 'path': path, 'basis': basis, 'reason': 'Explicit input for the bounded cancellation/reservation contradiction exercise.'} for identity, path, basis in selected],

@@ -2100,3 +2100,5 @@ spec:
       owner: project-world-live-validation
     - path: internal/host/projectcli/distill_basis_test.go
       owner: project-world-implementation
+    - path: internal/host/projectcli/schema_test.go
+      owner: project-world-implementation
