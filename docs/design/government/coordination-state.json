@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T20:55:26Z",
+  "updatedUtc": "2026-10-08T21:17:42Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -8,12 +8,12 @@
   "sourceBaseline": "1ea5c76f55526fc4d721e865885436153f48b497",
   "automation": {
     "id": "jev-nach-markitect-grundmodell-untersuchen",
-    "status": "ACTIVE",
+    "status": "PAUSED",
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-08T20:08:54Z",
-    "verification": "automation_update returned ACTIVE; exact saved TOML status ACTIVE, 2h cadence and root target verified; fresh resumption mandate included.",
+    "lastVerifiedUtc": "2026-10-08T21:17:14Z",
+    "verification": "automation_update returned PAUSED; exact saved TOML independently verified PAUSED, unchanged name/prompt/root target/two-hour cadence.",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
     "latestMandateUpdatedUtc": "2026-10-08T01:37:45Z",
     "reportOnMeaningfulChange": true,
@@ -26,8 +26,8 @@
     ],
     "classicMainMandateUpdatedUtc": "2026-10-08T16:08:57Z",
     "classicMainMandateVerified": true,
-    "pausedUtc": "2026-10-08T19:51:14Z",
-    "pauseReason": "Finite diagnosis block closed; synthesis, six NOT RUN cells and limits recorded. No repeat polling or new grants.",
+    "pausedUtc": "2026-10-08T21:17:14Z",
+    "pauseReason": "Final resumed two-actual-attempt window closed after R3; S1/read/write/build unproved, all six cells NOT RUN. Evidence/effort synthesis supplemented; no new grant or routine polling.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
     "resumedUtc": "2026-10-08T20:00:26Z",
     "promptSha256": "310ccb57b77bd4f5f6b5bf0af96fda2a3cd43073256539b9c88a77e0c28775ee"
@@ -435,26 +435,29 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:30",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:31",
       "lastObservedStatus": "idle",
       "activeTurn": null,
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac8018e86e4819190a9b59c13e57bcf",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac80766d6808191bd10e585e0fc6218",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Final prospective account-update routing read attempt; full S1 and six study cells remain unproved/NOT RUN",
-      "latestProgress": "Offline classifier/proposal894046a accepted with independent review and preserved mixed test history; zero new runtime in offline package. R2 remains STOP. Fresh final R3 grant pending once-only dispatch; cumulative actual history14 trees/7 Actor reservations, total usage unknown.",
+      "assignedMilestone": "Finite resumed readiness block closed; full S1 unproved and six cells NOT RUN; no pending assignment",
+      "latestProgress": "Final R3 accepted: account telemetry routed, command/CWD mismatch stopped one observed native command item; no completed read/turn/usage. Cumulative15 trees/8 Actor reservations, total usage unknown. Final block closed and observation PAUSED; no further assignment or runtime allocation.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "894046afecec35fc5c6733c911e7740c77659ed6",
+      "candidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
       "acceptance": "R7 bounded native+outer Queue and terminal Resume mechanics accepted; S1 real common Actor/tools and study cells remain open.",
       "lastAssignment": {
         "key": "s1-account-update-routing-read-20261008-r3",
         "authorizedUtc": "2026-10-08T20:51:31Z",
-        "status": "Dispatched once; tool confirmed target Scientist chat. Conditional final one actual attempt; awaiting terminal callback.",
+        "status": "Closed; terminal evidence independently accepted, final resumed block ended, no remaining runtime authority.",
         "grantPointer": "threads[name=Scientist].evidence.accountUpdateRoutingReadGrant",
         "scope": "Test only prospective exact account/updated compatible-metadata route on same real public-read Actor path; no write/build/study calls.",
         "sentUtc": "2026-10-08T20:55:26Z",
         "grantCommit": "fdbd2c9",
-        "deliveryConfirmed": true
+        "deliveryConfirmed": true,
+        "completedSha": "7d6964331f542462b4a29db3819f60c75083e3be",
+        "acceptedUtc": "2026-10-08T21:17:14Z",
+        "remainingRuntimeAllocation": 0
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -6207,6 +6210,221 @@
           "qualification": "R2 real-client basis is exact in nested accountRoutingContract and must be carried into final freeze. remainingConsideredActualAttempts1 is allocated final R3 only, not extra post-R3 quota.",
           "historicalUsagePreserved": true,
           "noNewRuntime": true
+        },
+        "accountUpdateRoutingReadR3Acceptance": {
+          "key": "s1-account-update-routing-read-20261008-r3",
+          "status": "STOPPED at exact command/CWD admission boundary; public read NOT ESTABLISHED; final resumed block ENDED",
+          "stopReason": "command-or-cwd-mismatch",
+          "firstProtocolFailure": {
+            "version": 1,
+            "phase": "thread",
+            "stage": "notification-gate",
+            "envelopeCategory": "notification",
+            "method": {
+              "category": "listed",
+              "name": "item/started"
+            },
+            "exceptionClass": "ValueError",
+            "refusalCode": "unknown"
+          },
+          "firstFailureMeaning": "First latched item/started notification failure has fixed unknown refusalCode; unchanged collector separately reports command-or-cwd-mismatch. No rejected command or CWD payload recovered; cannot distinguish which field mismatched or infer tool execution/completion.",
+          "collectorSecondaryStopReason": "command-or-cwd-mismatch",
+          "baseSha": "894046afecec35fc5c6733c911e7740c77659ed6",
+          "actualRuntimeBasisSha": "247105c418557cf2e2765ce7a3f65293c644d2bc",
+          "preliminarySourceCommitSuperseded": "87bf8e777b3adcdfd2a16f13e5c55652b77fd93a",
+          "sourceCommit": "d5997d6392ae3f6397bd45a21e3ed4946b1b768c",
+          "freezeCommit": "158fa0249f5bd368e858f605417b33b48f59884b",
+          "requestSha256": "6c8c15827f790ae47b971b738ed355a94a91a446d5e7915ddc84b536dc815f73",
+          "freezeSha256": "8953d04f970d87ccc0a5c26381def7cc28f5c761209214ce081cbb71f9e83ebe",
+          "sourcePinsAgainstS": 217,
+          "freezePins": 232,
+          "mismatches": 0,
+          "sourceChangesAfterS": 0,
+          "threadResponseValidated": true,
+          "threadStartedCorrelated": true,
+          "turnStartRequested": true,
+          "turnStartResponseValidated": true,
+          "actualTurnStartRequests": 1,
+          "observedNativeCommandItems": 1,
+          "commandCompletionEventObserved": false,
+          "sentinelReadEstablished": false,
+          "finalJsonEstablished": false,
+          "completedTurnEstablished": false,
+          "clientSubstituteToolRequests": 0,
+          "ownedInterruptRequests": 1,
+          "interruptResponseEnvelopeValidated": true,
+          "providerCancellationConfirmed": false,
+          "usageSeen": false,
+          "currentUsage": null,
+          "actualProviderRequests": null,
+          "actualProviderRetries": null,
+          "providerBillingStopped": null,
+          "modelIdentity": {
+            "requested": "gpt-6.1-sol",
+            "threadReported": "gpt-6.1-sol",
+            "providerRequested": "openai",
+            "providerThreadReported": "openai",
+            "servingModel": null
+          },
+          "reportedReadOnlyNeverEphemeralGatesPassed": true,
+          "osIsolationEstablished": false,
+          "accountStatusObservation": {
+            "version": 1,
+            "scope": "connection-account",
+            "observed": 1,
+            "limitReached": false,
+            "terminal": false,
+            "dispositionCounts": {
+              "observation-only": 1,
+              "terminal-reject": 0
+            },
+            "refusalCounts": {
+              "schema-invalid": 0,
+              "validator-failure": 0,
+              "local-size": 0,
+              "local-shape": 0,
+              "mode-not-explicitly-compatible": 0,
+              "observation-limit": 0,
+              "terminal-latched": 0
+            },
+            "firstClassification": {
+              "version": 1,
+              "scope": "connection-account",
+              "hypotheticalDisposition": "observation-only",
+              "refusalCode": null
+            },
+            "telemetryOnly": true,
+            "ownThreadOrAccountIdentityEstablished": false
+          },
+          "accountMeaning": "One schema-valid locally compatible account telemetry observation routed observation-only; no account/thread ownership, authentication success, actual account/auth/plan values, or physical arrival chronology established.",
+          "startupStatusObservation": {
+            "version": 1,
+            "observed": 4,
+            "limitReached": false,
+            "statusCounts": {
+              "starting": 2,
+              "ready": 2,
+              "failed": 0,
+              "cancelled": 0,
+              "unknown": 0
+            },
+            "scopeCounts": {
+              "app": 0,
+              "own-thread": 4,
+              "foreign-thread": 0,
+              "missing": 0,
+              "unresolved-thread": 0,
+              "invalid": 0
+            },
+            "dispositionCounts": {
+              "observation-only": 4,
+              "terminal-reject": 0
+            },
+            "firstClassification": {
+              "refusalVersion": 1,
+              "hypotheticalDisposition": "observation-only",
+              "status": "starting",
+              "scope": "own-thread",
+              "refusalCode": null
+            },
+            "routingRuleVersion": 1,
+            "telemetryOnly": true
+          },
+          "startupMeaning": "Four own-thread telemetry observations starting2/ready2; no global MCP health or task readiness inference.",
+          "nativeReturnCode": 0,
+          "workerReturnCode": 1,
+          "outerReturnCode": 1,
+          "nativeSessionSeconds": 6.613156499999604,
+          "cleanupSeconds": 0.02086050000070827,
+          "controllerSeconds": 20.269650000002002,
+          "outerThroughReceiptReadbackSeconds": 39.45124130000113,
+          "controllerAndOuterBoundsRespected": true,
+          "firstActionUtc": "2026-10-08T20:55:22Z",
+          "reservationUtc": "2026-10-08T21:09:15.356380Z",
+          "nativePopenRequestedUtc": "2026-10-08T21:09:35.502912+00:00",
+          "nativePopenReturnedUtc": "2026-10-08T21:09:35.509362+00:00",
+          "nativePopenTimestampMeaning": "UTC observations around Popen, not exact OS creation or readiness time",
+          "terminalUtc": "2026-10-08T21:09:42.086974Z",
+          "preparationToReservationSeconds": 833.35638,
+          "preparationToPopenRequestSeconds": 853.502912,
+          "preparationToTerminalSeconds": 860.086974,
+          "preparationEnvelopeRespected": true,
+          "latestStartAndDeadlineRespected": true,
+          "correctionBatchesUsed": 2,
+          "testInvocations": 2,
+          "newUnittestGroups": 6,
+          "syntheticSessionInvocations": 8,
+          "testFailures": 0,
+          "initialSixGroupUnittestSeconds": 0.321,
+          "affectedAuthorityGroupUnittestSeconds": 0.001,
+          "allSixFinalFileSingleInvocationClaimed": false,
+          "offlineParticipants": 2,
+          "actualNewNativeTrees": 1,
+          "actualNewActorReservations": 1,
+          "actualNewDiagnosticReservations": 0,
+          "nativeTreesCumulative": 15,
+          "actorReservationsCumulative": 8,
+          "historicalActorReservations": 7,
+          "historicalCliMetadataCalls": 8,
+          "additionalCliMetadataCallsWebStudyCellsRetries": 0,
+          "knownHistoricalTokens": 53331,
+          "totalCurrentAndHistoricalTokens": null,
+          "nativeHistoricalVector": [
+            15,
+            16,
+            13,
+            2250
+          ],
+          "stderrObservedBytes": 490,
+          "stderrCompleteLines": 2,
+          "privateOwnExactFileRemovedBytesMetadataOnly": 683,
+          "privateContentReadsParsesHashes": 0,
+          "privateDirectoryEmpty": true,
+          "approvedMetadataFilesArchived": 8,
+          "grantClosed": true,
+          "remainingRuntimeAllocation": 0,
+          "slotReleaseSha256": "3ec0c6e301257fe1caec9101af3d929e7fb14d1af99c6afeaef7a0a57c7b9612",
+          "finalAttemptInResumedBlock": true,
+          "resumedBlockEnded": true,
+          "s1Established": false,
+          "readWriteBuildEstablished": [
+            false,
+            false,
+            false
+          ],
+          "sixStudyCells": [
+            "NOT RUN",
+            "NOT RUN",
+            "NOT RUN",
+            "NOT RUN",
+            "NOT RUN",
+            "NOT RUN"
+          ],
+          "localSlotReleaseRecorded": true,
+          "canonicalSlotReleasePendingOverseerAcceptance": false,
+          "canonicalCoordinationUnmodifiedByScientist": true,
+          "summaryUtc": "2026-10-08T21:10:53.986354Z",
+          "nextBoundary": "Finite resumed block ends here. No further read/write/build, diagnosis, repair, study or runtime allocation. Await Overseer synthesis and pause decision; full S1 is unproved.",
+          "acceptedUtc": "2026-10-08T21:17:14Z",
+          "sha": "7d6964331f542462b4a29db3819f60c75083e3be",
+          "cleanRootVerified": true,
+          "payloadsHashSizeGitChecked": 46,
+          "terminalManifestSha256": "8e97409fcaf91d868a60804977e05eb0669dcde69811626c68d16d4e9b8014e8",
+          "pureAdditionsChecked": 47,
+          "sourcePinsRootHashAndGitSChecked": 217,
+          "freezePinsRootHashChecked": 232,
+          "requestFreezeGitFChecked": true,
+          "externalMetadataPairsRootChecked": 8,
+          "ownPrivateDirectoryRootMetadataOnlyEmpty": true,
+          "publicCwdIdentityTwoHashesRootVerified": true,
+          "completeCanonicalGrantEqual": true,
+          "independentRootReviewer": "/root/r4_terminal_acceptance",
+          "independentRootReview": "Qualified OK, no material evidence gap; first item/started fixed unknown code and collector command-or-cwd-mismatch refer to reduction of same observed item, not two independently established causes. No completion/read/usage; no more authority.",
+          "canonicalSlotReleaseAccepted": true,
+          "sourceReviewRead": true,
+          "bindingReviewRead": true,
+          "postReviewRead": true,
+          "rootRuntimeTestsStarted": 0
         }
       },
       "classicHandoffReceived": true,
@@ -6598,6 +6816,19 @@
           "scope": "Pinned public account/updated schema classifier and exact disabled client routing proposal; never qualify discarded actual payload or change general live admission.",
           "assignmentPointer": "threads[name=Scientist].evidence.accountUpdateContractOfflineAssignment",
           "sentUtc": "2026-10-08T20:35:11Z"
+        },
+        {
+          "key": "s1-account-update-routing-read-20261008-r3",
+          "authorizedUtc": "2026-10-08T20:51:31Z",
+          "status": "Closed; terminal evidence independently accepted, final resumed block ended, no remaining runtime authority.",
+          "grantPointer": "threads[name=Scientist].evidence.accountUpdateRoutingReadGrant",
+          "scope": "Test only prospective exact account/updated compatible-metadata route on same real public-read Actor path; no write/build/study calls.",
+          "sentUtc": "2026-10-08T20:55:26Z",
+          "grantCommit": "fdbd2c9",
+          "deliveryConfirmed": true,
+          "completedSha": "7d6964331f542462b4a29db3819f60c75083e3be",
+          "acceptedUtc": "2026-10-08T21:17:14Z",
+          "remainingRuntimeAllocation": 0
         }
       ],
       "offlineAdapterContractAssignment": {
@@ -6829,8 +7060,8 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "2a29b9c8-23e7-440f-a2cf-f0a33806c326:7",
-      "lastObservedStatus": "idle",
+      "afterCursor": "2a29b9c8-23e7-440f-a2cf-f0a33806c326:8",
+      "lastObservedStatus": "notLoaded",
       "activeTurn": null,
       "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac7d037342887d28bf56ff1149e71a4",
       "initialAssignmentDispatched": true,
@@ -7364,7 +7595,7 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Scientist integrates exact accepted account metadata route, reviews/binds/freezes and conditionally executes final one read attempt. No studies, writes/build or automatic next runtime. Preserve old artifacts/unknown usage.",
+  "nextAction": "No pending assignment or runtime grant. Finite resumed block closed; evidence and synthesis preserved, observation PAUSED. Full S1/read/write/build unproved and all six comparison cells NOT RUN. Any further research requires a fresh explicit finite mandate, common protocol/resources and preserved counters; no closed-grant reuse.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -7375,19 +7606,20 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T20:54:50Z",
-    "evidenceLevel": "Root verified clean offline Git T/S,32 payloads plus manifest,186 source pins and complete assignment/schema archive binding; independent Root source/evidence review qualified OK. No new actual execution or Root tests.",
+    "reviewedUtc": "2026-10-08T21:17:14Z",
+    "evidenceLevel": "Root clean Git46 payloads+manifest/217 source pins+GitS/232 freeze hashes/8 external receipts/complete grant/GitF/CWD native identity and two hashes; no mismatches. Independent Root terminal review qualified OK; no Root tests/runtime.",
     "coordinationActions": [
-      "Accept offline exact account/updated classifier and disabled routing proposal",
-      "Preserve R2 STOP and unknown actual payload/usage",
-      "Issue final conditional R3 read grant within existing resumed two-attempt window",
-      "Keep full S1 unproved and all six cells NOT RUN"
+      "Accept final R3 STOP and exact account telemetry observation with explicit limits",
+      "Accept local slot release and close resumed window consumed2/reserved0/rest0",
+      "Append dated capability/effort/NOT RUN synthesis preserving historical report",
+      "Pause two-hour automation and verify saved TOML; no continuation grant"
     ],
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-08T19:51:14Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
-    "observationStatus": "ACTIVE under directly resumed finite readiness window; close after final R3 package",
-    "researchComparisonCompleted": false
+    "observationStatus": "PAUSED verified",
+    "researchComparisonCompleted": false,
+    "synthesisSupplementedUtc": "2026-10-08T21:17:14Z"
   },
   "publicAdapterHandoff": {
     "version": "1.1",
@@ -7581,12 +7813,13 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": "Scientist",
-    "key": "s1-account-update-routing-read-20261008-r3",
+    "owner": null,
+    "key": null,
     "queue": [],
-    "status": "Assigned to final prospective account-update routing read attempt.",
-    "grantIssuedUtc": "2026-10-08T20:51:31Z",
-    "assignedUtc": "2026-10-08T20:51:31Z"
+    "status": "Free; final resumed block closed, no pending runtime allocation.",
+    "releasedKey": "s1-account-update-routing-read-20261008-r3",
+    "releasedUtc": "2026-10-08T21:10:53.986354Z",
+    "releaseAcceptedUtc": "2026-10-08T21:17:14Z"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -7807,8 +8040,8 @@
         "source": "Direct user Mache weiter after final report and pause",
         "deadlineUtc": "2026-10-08T21:57:43Z",
         "maxConsideredActualReadinessAttempts": 2,
-        "reservedActualAttempts": 1,
-        "consumedActualAttempts": 1,
+        "reservedActualAttempts": 0,
+        "consumedActualAttempts": 2,
         "eachNeedsFreshGrant": true,
         "grantKeys": [
           "s1-resumed-read-tool-20261008-r1",
@@ -7825,11 +8058,17 @@
             "closurePointer": "threads[name=Scientist].evidence.resumedReadToolR1Closure"
           }
         ],
-        "activeGrantKey": "s1-account-update-routing-read-20261008-r3",
-        "remainingConsideredActualAttempts": 1,
-        "latestAcceptedActualSha": "247105c418557cf2e2765ce7a3f65293c644d2bc",
+        "activeGrantKey": null,
+        "remainingConsideredActualAttempts": 0,
+        "latestAcceptedActualSha": "7d6964331f542462b4a29db3819f60c75083e3be",
         "finalActualGrantKey": "s1-account-update-routing-read-20261008-r3",
-        "exitAfterFinalPackage": "Close this finite resumed block and update synthesis; pause if full S1 unproven, no automatic runtime refill."
+        "exitAfterFinalPackage": "Close this finite resumed block and update synthesis; pause if full S1 unproven, no automatic runtime refill.",
+        "status": "CLOSED after final R3; S1 unproved, no study cells run",
+        "closedUtc": "2026-10-08T21:17:14Z",
+        "remainingRuntimeAuthority": 0,
+        "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
+        "synthesisSection": "Nachtrag: wiederaufgenommener Block abgeschlossen",
+        "automaticFurtherGrant": false
       }
     ]
   },
@@ -8124,6 +8363,24 @@
       "releaseSha256": "588ca9c1add7f1a9d804f7db15801f3b16a364a6e468f0ac965b5dec821e0f98",
       "actualNewNativeTrees": 1,
       "actualNewActorReservations": 1
+    },
+    {
+      "event": "Scientist final R3 terminal release accepted",
+      "acceptedUtc": "2026-10-08T21:17:14Z",
+      "priorSlot": {
+        "owner": "Scientist",
+        "key": "s1-account-update-routing-read-20261008-r3",
+        "queue": [],
+        "status": "Assigned to final prospective account-update routing read attempt.",
+        "grantIssuedUtc": "2026-10-08T20:51:31Z",
+        "assignedUtc": "2026-10-08T20:51:31Z"
+      },
+      "releasedUtc": "2026-10-08T21:10:53.986354Z",
+      "key": "s1-account-update-routing-read-20261008-r3",
+      "releaseSha256": "3ec0c6e301257fe1caec9101af3d929e7fb14d1af99c6afeaef7a0a57c7b9612",
+      "actualNewNativeTrees": 1,
+      "actualNewActorReservations": 1,
+      "finiteResumedBlockEnded": true
     }
   ],
   "smokeAttemptCountingDecision": {
@@ -8168,6 +8425,15 @@
       "intervalMinutes": 120,
       "runtimeGrantKey": "s1-resumed-read-tool-20261008-r1",
       "routineReports": false
+    },
+    {
+      "event": "Final resumed block terminal accepted and observation paused",
+      "verifiedUtc": "2026-10-08T21:17:14Z",
+      "status": "PAUSED",
+      "intervalMinutes": 120,
+      "runtimeGrantKey": "s1-account-update-routing-read-20261008-r3",
+      "remainingRuntimeAuthority": 0,
+      "synthesisPath": "docs/design/government/assessment-2026-10-08.md"
     }
   ],
   "communicationPolicy": {
@@ -8279,6 +8545,15 @@
         "candidateSha": "165f35b3d2bd70fbcc49d54f52d479b88d54a6b7",
         "processedUtc": "2026-10-08T02:27:56Z",
         "disposition": "Qualified offline acceptance after artifacts and independent code review; one fresh finite R6 grant with separate identity and reused execution path."
+      },
+      {
+        "event": "Scientist final R3 terminal callback accepted",
+        "acceptedUtc": "2026-10-08T21:17:14Z",
+        "sourceThreadId": "01a1169c-3df6-7571-997d-48ab57365875",
+        "key": "s1-account-update-routing-read-20261008-r3",
+        "sha": "7d6964331f542462b4a29db3819f60c75083e3be",
+        "onceOnlyTerminal": true,
+        "newAssignment": false
       }
     ],
     "oldschoolAuthorization": {
