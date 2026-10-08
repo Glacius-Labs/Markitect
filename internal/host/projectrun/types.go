@@ -254,12 +254,13 @@ type VerifierReport struct {
 }
 
 type ApplyRequest struct {
-	RunID            string `json:"runId"`
-	PlanID           string `json:"planId"`
-	CandidateID      string `json:"candidateId"`
-	TargetBranch     string `json:"targetBranch"`
-	ExpectedHead     string `json:"expectedHead"`
-	ExpectedWorktree string `json:"expectedWorktree"`
+	RunID                      string `json:"runId"`
+	PlanID                     string `json:"planId"`
+	CandidateID                string `json:"candidateId"`
+	ExpectedVerificationDigest string `json:"expectedVerificationDigest"`
+	TargetBranch               string `json:"targetBranch"`
+	ExpectedHead               string `json:"expectedHead"`
+	ExpectedWorktree           string `json:"expectedWorktree"`
 }
 
 type ApplyReport struct {

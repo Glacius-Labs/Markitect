@@ -101,14 +101,17 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if err != nil {
 		return out, err
 	}
-	if base.Snapshot == nil || base.Snapshot.Digest() != plan.BaseSnapshot || base.Report.ModelDigest != plan.BaseModelDigest {
+	if base.Snapshot == nil || base.Snapshot.Digest() != plan.BaseSnapshot || base.Digest != plan.BaseProjectDigest || base.Report.ModelDigest != plan.BaseModelDigest {
 		return out, ErrStale
+	}
+	if err := repositoryMatches(root, plan); err != nil {
+		return out, err
 	}
 	working, err := host.Load(root, "")
 	if err != nil {
 		return out, err
 	}
-	if working.Snapshot == nil || working.Snapshot.Digest() != plan.WorkingSnapshot {
+	if working.Snapshot == nil || working.Snapshot.Digest() != plan.WorkingSnapshot || working.Digest != plan.WorkingProjectDigest {
 		return out, ErrStale
 	}
 	dir, _ := s.runDir(request.RunID)
@@ -120,7 +123,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if err != nil {
 		return out, err
 	}
-	if verify.Status != "verified" || verify.CandidateID != candidate.ID || verify.CandidateHash != candidate.Digest {
+	if verify.Status != "verified" || verify.CandidateID != candidate.ID || verify.CandidateHash != candidate.Digest || request.ExpectedVerificationDigest == "" || verify.Digest != request.ExpectedVerificationDigest {
 		return out, fmt.Errorf("candidate lacks matching successful verification")
 	}
 	compiled, err := projectForCandidate(host, root, base.Snapshot, candidate)
@@ -137,8 +140,8 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if len(paths) == 0 {
 		return out, fmt.Errorf("candidate has no changes to apply")
 	}
-	if request.TargetBranch == "" || request.ExpectedHead == "" || request.ExpectedWorktree == "" {
-		return out, fmt.Errorf("apply requires exact target branch, HEAD and working-file digest")
+	if request.TargetBranch == "" || request.ExpectedHead == "" || request.ExpectedWorktree == "" || request.ExpectedVerificationDigest == "" {
+		return out, fmt.Errorf("apply requires exact verification digest, target branch, HEAD and working-file digest")
 	}
 	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
 	if err != nil {
@@ -169,8 +172,11 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		if loadErr != nil {
 			return loadErr
 		}
-		if fresh.Snapshot == nil || fresh.Snapshot.Digest() != plan.WorkingSnapshot {
+		if fresh.Snapshot == nil || fresh.Snapshot.Digest() != plan.WorkingSnapshot || fresh.Digest != plan.WorkingProjectDigest {
 			return ErrStale
+		}
+		if err := repositoryMatches(root, plan); err != nil {
+			return err
 		}
 		currentRuntime, loadErr := LoadRuntime(root)
 		if loadErr != nil {
@@ -201,7 +207,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		if loadErr != nil {
 			return loadErr
 		}
-		if latestVerify.Status != "verified" || latestVerify.CandidateHash != candidate.Digest {
+		if latestVerify.Status != "verified" || latestVerify.CandidateHash != candidate.Digest || latestVerify.Digest != request.ExpectedVerificationDigest {
 			return ErrStale
 		}
 		return nil
