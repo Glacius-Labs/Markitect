@@ -1,0 +1,11 @@
+{
+  "ASPNETCORE_URLS": "http://127.0.0.1:0",
+  "URLSource": "only own stdout Now listening on",
+  "maxOwnStarts": 12,
+  "noRetryOn10013OrMissingURL": true,
+  "ownHandlesOnly": true,
+  "noInventory": true,
+  "noSourceOrAssertionChanges": true,
+  "maxActorSeconds": 600,
+  "OSIsolation": false
+}

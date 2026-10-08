@@ -1,0 +1,10 @@
+{
+  "key": "native-v3-conventional-gf-ephemeral-validation-20261009",
+  "issuedUtc": "2026-10-08T23:01:56Z",
+  "notAfterUtc": "2026-10-08T23:21:56Z",
+  "preparationActors": 0,
+  "activations": [],
+  "usage": null,
+  "originalOutcome": "incomplete-at-limit/coordinator-interruption",
+  "task6": "NOT RUN"
+}

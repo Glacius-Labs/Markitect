@@ -1,0 +1,43 @@
+{
+  "key": "native-v3-conventional-gf-ephemeral-validation-20261009",
+  "issuedUtc": "2026-10-08T23:01:56Z",
+  "notAfterUtc": "2026-10-08T23:21:56Z",
+  "source": "Latest direct user instruction Scientist soll derweil die tests durchfuehren und weiter arbeiten; actual two fixed-port10013 findings plus independent Rootreview. New finite explicit allocation, not automatic refill or original deadline extension.",
+  "status": "One new actual posthoc runtime assessment authorized, dispatch pending",
+  "priorSupplementKey": "native-v3-conventional-gf-posthoc-validation-20261009",
+  "priorActualActivationsConsumed": 2,
+  "priorRemainingActivations": 0,
+  "actualActorActivationsMax": 1,
+  "initialActualActorActivations": 0,
+  "remainingAtIssue": 1,
+  "preparationMaxSeconds": 300,
+  "preparationActorActivations": 0,
+  "maximumOverallWallSeconds": 1200,
+  "perActorWallSeconds": 600,
+  "maxConcurrentActors": 1,
+  "maxOwnedServerStartsIncludingPriorAndRestarts": 12,
+  "candidateSha": "d1e271b8472cc55565696b976a87ff968a4e8c7a",
+  "candidateTree": "a07ff00a3d3182521d202c618410f9c0520ea85f",
+  "additionalFullTrials": 0,
+  "repairsAllowed": 0,
+  "task6Allowed": false,
+  "testScope": "Fresh independent runtime assessment of unchanged ConventionalGF Tasks1-5 repair: public checks, prior accepted7unitorder retry compatibility on both routes and existing applicable declared-requirement holdouts. Own prior Task4snapshot may be exported read-only solely to create compatibility DB. No product/source/assertion repair or new requirement.",
+  "authorityConditions": [
+    "Seal previous2Actorpartial packet first; preserve ledgerprestartsnapshot/freeze and reports; two exhausted reservations never reused.",
+    "Before actual Actor freeze own clean candidatecopy, Tasks1-5/publicchecks/rubric/evaluator metadata hashes and inherited native profile with dynamic-porttransport policy; fresh fork_turns=none, no childActors.",
+    "Start only own bounded server processes with ASPNETCORE_URLS=http://127.0.0.1:0; obtain actual URL only from ownstdout. Never use listener/process/thread/agent/global inventory or foreign-file reads/owner lookup/kills.",
+    "Own child handles/PIDs only; cleanup in finally and outer600sActorlimit. Serverstartsincludingrestarts<=12, no background leftovers; if native processcreation unavailable stop affected test.",
+    "If direct dynamic Kestrelbind also returns10013 or cannot yield an own URL, stop and closeNOTRUN; no alternateport search, fallback/retry or further actual quota.",
+    "Existing current assertions may receive own discovered baseURL through an external ordinary transportwrapper; no semantic changes to assertions, source, productDTOs or privateoracle. Readiness transportadaptation and exacthashes frozen beforeActor.",
+    "Reconcile contradictory public oracle-applicability descriptions without disclosing private content; any existing assertion that contradicts declaredTask1-5 requirement is explicitly inapplicable/NOTRUN, never silently fixed or countedaspass. No new/changed private test in this supplemental run.",
+    "One independent Actor may run publicchecks then existing applicableprivateholdouts after candidatealreadyfrozen. Results released only aftercandidatefreeze; no implementationfeedbackrepair.",
+    "Count failedlaunches as sole activation; original incomplete-at-limit/0030unstarted/Task6NOTRUN unchanged; all results posthoc, no methodcomparison or economics claim.",
+    "Use inherited common native profile nooverride; actual servingidentity/tokens/cost unknownremainnull; no providerAPI/purchases/globalconfig/policychanges.",
+    "After soleActor and cleanup, seal exact results/commands/build/runtime/checkapplicability, originalversussupplemental effort, publicbaseclosure and prospectiveDesign/Classic/Conventionalmatchedplan. No new fulltrial starts without separategrant."
+  ],
+  "review": {
+    "reviewer": "/root/g2_handoff_evidence",
+    "result": "Qualified feasible new single dynamic-port attempt; port-specificfailurehypothesis notgenerallistenpermissionguarantee. BothpriorActorsused; publicoracleconsistency mustbeclarified. No privatecontents/tests/runtime read byreviewer."
+  },
+  "usage": null
+}
