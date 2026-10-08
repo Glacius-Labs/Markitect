@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T23:59:51Z",
+  "updatedUtc": "2026-10-08T00:16:38Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,13 +22,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:60",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:62",
       "lastObservedStatus": "active",
       "activeTurn": "01a118bd-3faf-7723-98c1-6bbf2e27a4c3",
       "lastAssistantMessageId": "msg_0a7785839df196a4016ac6dc7a0d788191a7c30503835d14bf",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
-      "latestProgress": "Der nächste Versuch erreichte den ersten Rollenstart und scheiterte am Beispieladapter: Beim Kürzen fehlten Felder des vollständigen Aufrufprotokolls, die dessen strikter Decoder dann ablehnte. Das wird mit einer gezielten Protokollregression korrigiert. Bisher verbraucht: 1 mutierender Controllerstart, 1 Rollenstart, kein vollständiger Durchlauf und rund 22 Sekunden Smoke-Laufzeit. Weitere Schritte bleiben innerhalb derselben Gesamtgrenzen; die bisherigen Belege bleiben erhalten.",
+      "latestProgress": "Reported check, impact, go vet and isolated example tests green; final full verify in progress; heavy slot retained.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "04e225d5caee78c2a198607143863fca1e829750",
@@ -308,22 +308,23 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:91",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:93",
       "lastObservedStatus": "active",
-      "activeTurn": "01a118c6-0f9c-70b0-bb4b-7728297fffa5",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6dca3ebd0819195591a3571b14f93",
+      "activeTurn": "01a118dd-a444-7463-9cfb-7a49e9499964",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6e0b1bb348191a290edf9f2d3369d",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Offline exact native/adapter contract repair, focused regression and independent review; no new live grant.",
-      "latestProgress": "Der gezielte Gate-Lauf ist mit 18/18 Tests grün; auch die eingefrorene sechs-Rollen-Prüfung wurde nochmals erfolgreich ausgeführt. Die alten R1/R2-Belege sind bytegleich zum akzeptierten Stand, der native Ledger unverändert. Jetzt folgen der unabhängige Review und der lokale Abschlusscommit. Die nächste native Allocation bleibt ein Vorschlag.",
+      "latestProgress": "Ich bereite den neuen R3-Grant zunächst ausschließlich offline vor: enge Zulassung, echte Grant- und Classic-Bindung, Regressionen, Review und Freeze. Native Starts bleiben gesperrt, bis Overseer den Prüfslot in coordination-state.json ausdrücklich Scientist für R3 zuweist. Ich halte Auftrag und Eintrittsbedingung im Handoff fest.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "419775ab0ea5f421655ab3c8bd97e286ffbb6e0a",
-      "acceptance": "Accepted negative R2 evidence with review timing erratum and Government process-table gap; not positive integration or S1.",
+      "candidateSha": "f5cd8871b84f45541044110057b59f0bb1ca0804",
+      "acceptance": "Qualified offline R3 contract repair accepted; no native success or S1.",
       "lastAssignment": {
-        "key": "s1-offline-adapter-contract-repair-r3-preparation",
-        "sentUtc": "2026-10-07T23:42:18Z",
-        "scope": "Clean focused fixes, exact-source offline contract regressions, independent review, small next-run proposal. No live execution before separate grant.",
-        "status": "Active"
+        "key": "native-s1-contract-corrected-integration-20261008-r3",
+        "authorizedUtc": "2026-10-08T00:15:34Z",
+        "status": "Dispatched once; active offline preparation confirmed; no native execution before explicit shared-slot assignment",
+        "scope": "Narrow preflight then conditional native R3; shared slot required before actual starts.",
+        "sentUtc": "2026-10-08T00:15:41Z"
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -1157,6 +1158,66 @@
           "nextNativeProposal": "Still proposed only; no execution authority.",
           "status": "Active; reports18/18targeted gates and six-role offline chain passed; independent review and final source commit pending.",
           "historicalEvidence": "Reported R1/R2 bytes and native ledger unchanged; not reverified by root this turn."
+        },
+        "offlineAdapterContractAcceptance": {
+          "acceptedUtc": "2026-10-08T00:15:34Z",
+          "sha": "f5cd8871b84f45541044110057b59f0bb1ca0804",
+          "clean": true,
+          "rootChangedFilesCheckedAgainstGit": 21,
+          "independentManifestHashesChecked": 20,
+          "hashMismatches": 0,
+          "deliveryValidationSha256": "b0acb7bbba4352e493326c63b0d217522c37c2fdf7bfa70e5a149d2ef40238fe",
+          "handoffSha256": "f10cd392b8995e0acbc1b3247b9ac9ecae45e43b0602835fcfac5f83dc94bc1d",
+          "independentRootReview": "/root/s1_dispatch_acceptance",
+          "reportedTests": "18 focused plus 2 cross-role tests; six roles success/failure offline. Tests not rerun by Overseer.",
+          "qualification": "Grant admission and Classic bind_request partly patched; delegates mocked. Classic source-derived vectors are not archived R2 raw invocations. No S1 or native success.",
+          "historicalEvidence": "R2 errata is additive: final five rows at c5769c0c204cfbc5d17d95320c8b2288b746aa785c16796ce0d7ab433b58fbf5. Government outer process receipt/result retained; zero controller_processes rows expected there. Future common collector must include outer process and deduplicate Classic.",
+          "newActualStarts": 0
+        },
+        "contractCorrectedNativeIntegrationGrant": {
+          "key": "native-s1-contract-corrected-integration-20261008-r3",
+          "authorizedUtc": "2026-10-08T00:15:34Z",
+          "status": "Dispatched once; active offline preparation confirmed; no native execution before explicit shared-slot assignment",
+          "baseSha": "f5cd8871b84f45541044110057b59f0bb1ca0804",
+          "prompt": "Overseer nimmt dein Offline-Paket auf sauberem f5cd8871b84f45541044110057b59f0bb1ca0804 qualifiziert an. Root hat 21 geänderte Dateien gegen Git geprüft; unabhängiges Review bestätigt die gebundenen 20 Manifestdateien, Command-/Scope-Korrekturen und Grenzen der 18 fokussierten Tests plus Offline-Rollenkette. Native Grant-Zulassung und Classic bind_request waren darin teilweise gepatcht, Delegates gemockt; das ist noch kein nativer Erfolg oder S1. Die R2-Errata und der äußere Government-Prozessbeleg sind angenommen; eine spätere gemeinsame Auswertung muss ihn einschließen und Classic nicht doppelt zählen. Historische Dateien bleiben unverändert.\n\nNächster einzelner Grant: native-s1-contract-corrected-integration-20261008-r3, jetzt in coordination-state.json dokumentiert. Nur die bereits vorgeschlagene deterministische native Integrationsmechanik an Government 04e225d5caee78c2a198607143863fca1e829750 und Classic c91363b7ac4decbe87212ff0f588b5451581a152 / Runtime 7dbd599c81540c8203a1b7f83afbc335174f4f1f. P1-Folgestände nicht übernehmen.\n\nVor jeder tatsächlichen Ausführung: den bisherigen geschlossenen R2-Key in der Zulassung nicht wiederverwenden, sondern den neuen konkreten Grant eng zulassen und die echte Grant-/bind_request-Kette offline prüfen; keine allgemeinen Freigaben oder Lockerungen. Korrigierte Quelle sauber committen, passende Regressionen und unabhängiges gezieltes Vorabreview, danach neue Fälle, Quelle, Konfiguration, Pins, Grant, frischen Coordinator-Snapshot und getrennt unveränderliches Vorabreview einfrieren. Historische 5 native Starts, 3 Wrapperversuche, 0 Delegates und 750 reservierte Sessionsekunden bleiben additiv gebunden; unbekannte echte Usage bleibt unbekannt.\n\nZusätzlich höchstens Government 2 native Starts / 6 Wrapperversuche / 6 deterministische Delegates / 300 reservierte Sessionsekunden: genau eine Queue und nur bei positivem Ergebnis ihr Resume-/Replaynachweis, kein inspect. Classic höchstens 5 native Starts / 6 Wrapperversuche / 6 deterministische Delegates / 750 reservierte Sekunden: Execute, gebundenes externes Review und guarded Apply, frisches Verify, Audit, stale-Apply-Replay, jeweils nur mit erfüllten Vorgängern. Ein auditierbarer externer Review ersetzt keine unabhängige semantische Studienbewertung. Alle erforderlichen finalen Government-Ressortzustimmungen bleiben nötig.\n\nZusammen höchstens 7 neue native Starts und 1050 reservierte Sekunden; mit Historie maximal 12 Starts / 1800 reservierte Sekunden. Produkte sequentiell, Rollenparallelität höchstens 2. Harte native Prozessfrist 38 Sekunden, Controllerfenster Government 38 / Classic 180 Sekunden und 150 logische reservierte Sessionsekunden pro Start einschließlich Rollen/Cleanup bleiben wie im geprüften Vorschlag. Reservierte Sekunden sind keine gemessene Summe beliebiger OS-Kinder; tatsächliche Belege separat sammeln. Erster Checkpoint ist genau die erste Queue und das erste Execute (höchstens 2 Starts/300 Sekunden). Beim ersten Fehler, fehlender Voraussetzung oder Quoten-/Zeitstopp endet das betreffende Produkt ohne Reparatur und weiteren Start in diesem Grant; der andere separat begrenzte Fall darf bei erfülltem Preflight laufen. Folgeoperationen sind nur bei positivem eigenen Checkpoint zugelassen. Keine Wiederholungen, neuen Fälle oder automatische Restquotennutzung.\n\nZeitliche Eintrittsbedingung: Worker besitzt aktuell den schweren Prüfslot. Jetzt ausschließlich offline Preflight/Fix/Freeze vorbereiten. Native Ausführung erst, wenn Overseer in coordination-state.json fullSuiteSlot ausdrücklich Scientist für diesen R3-Grant zuweist. Die Queue ist Worker -> Scientist R3 -> Architect P1-Abschluss. Fehlt die Freigabe nach Vorbereitung, melde konkreten sauberen Preflightstand und Bereitschaft; das Paket ist dann nicht abgeschlossen. Nicht mit der historischen Initial-Wartemeldung enden. Keine volle Produkttestsuite.\n\nKeine neue reale Actor-/Modell-/Provider-/Metadatensitzung, Studienzelle, Käufe, Produktänderungen, Policyumgehung oder Publikation. Danach sauberer Handoff mit echten Ergebnissen, allen verbrauchten Starts/Wrappern/Delegates, additivem Ledger und unabhängiger Nachprüfung. Bei erneutem Fehlschlag nur begrenzte lesende Fehlerzuordnung und erhaltene Belege, kein neuer Lauf. Auftrag und Gate im Handoff dauerhaft festhalten.",
+          "government": {
+            "maxNativeStarts": 2,
+            "maxWrapperAttempts": 6,
+            "maxDeterministicDelegates": 6,
+            "maxReservedSessionSeconds": 300
+          },
+          "classic": {
+            "maxNativeStarts": 5,
+            "maxWrapperAttempts": 6,
+            "maxDeterministicDelegates": 6,
+            "maxReservedSessionSeconds": 750
+          },
+          "maxNewNativeStarts": 7,
+          "maxNewReservedSessionSeconds": 1050,
+          "historicalConsumed": {
+            "nativeStarts": 5,
+            "wrapperAttempts": 3,
+            "delegates": 0,
+            "reservedSessionSeconds": 750
+          },
+          "cumulativeMaxNativeStarts": 12,
+          "cumulativeMaxReservedSessionSeconds": 1800,
+          "maxParallelRoles": 2,
+          "productsSequential": true,
+          "nativeProcessDeadlineSeconds": 38,
+          "controllerWindowsSeconds": {
+            "government": 38,
+            "classic": 180
+          },
+          "reservedSecondsPerNativeStart": 150,
+          "firstCheckpoint": "One Government queue and one Classic Execute, max two starts/300 reserved seconds; each product must succeed before its later operations.",
+          "stop": "First failure/missing prerequisite/time or quota stop closes that product without retry or repair-and-run. Other bounded product may run if preflight valid.",
+          "newModelProviderCalls": 0,
+          "metadataSessions": 0,
+          "studyCells": 0,
+          "nativeEntryGate": "Clean source; narrow new grant admission plus real bind_request offline checks; independent review; immutable freeze and new cases; fullSuiteSlot explicitly assigned to Scientist for this grant.",
+          "remainingHistoricalTokens": null,
+          "sentUtc": "2026-10-08T00:15:41Z"
         }
       },
       "classicHandoffReceived": true,
@@ -1220,12 +1281,18 @@
           "key": "corrected-native-integration-r2",
           "scope": "Narrow Scientist harness fixes, clean source/regressions/independent review/freeze, then one corrected bounded native case per pinned product under native-s1-corrected-integration-20261008-r2. No real model/metadata/study calls or product edits.",
           "activeConfirmed": true
+        },
+        {
+          "key": "native-s1-contract-corrected-integration-20261008-r3",
+          "sentUtc": "2026-10-08T00:15:41Z",
+          "status": "Sent once; active confirmed",
+          "promptRecord": "evidence.contractCorrectedNativeIntegrationGrant"
         }
       ],
       "offlineAdapterContractAssignment": {
         "key": "s1-offline-adapter-contract-repair-r3-preparation",
         "authorizedUtc": "2026-10-07T23:42:17Z",
-        "status": "Dispatched once and active; offline boundary explicitly acknowledged",
+        "status": "Completed; qualified offline acceptance",
         "baseSha": "419775ab0ea5f421655ab3c8bd97e286ffbb6e0a",
         "prompt": "R2 ist auf sauberem 419775ab0ea5f421655ab3c8bd97e286ffbb6e0a als negativer Nachweis mit benannten Restgrenzen angenommen, nicht als S1-Readiness. Overseer hat143geänderte Dateien gegen Commit-Blobs verglichen; unabhängiges Root-Review bestätigt82Freeze-Eingaben/86Archive sowie additive5native Starts,3Wrapper,0Delegates,750reservierteSekunden. Alte Fälle bleiben erhalten. R2 ist geschlossen; ungenutzte Zahlenquote erlaubt keinen Nachstart.\n\nNächstes begrenztes Paket: s1-offline-adapter-contract-repair-r3-preparation. Nur Scientist-Versuchshülle in deinem bestehenden Worktree weiterentwickeln, keine Produktänderung, Metadatensitzung, native Produkt-/Controller-/Queue-Ausführung, Delegate-/Modell-/Providerstart oder Studienzelle. Dieser Auftrag erteilt ausdrücklich keine neue Laufquote. Normale fokussierte lokale Quell-/Vertragstests und unabhängige Reviews sind erlaubt; keine komplette Produkttestsuite. Jüngste direkte Nutzeranweisung erlaubt Worker und Architect parallele isolierte Folgestände; deine eingefrorenen Produktpins04e225d und c913/v0.14.1 bleiben unverändert.\n\n1. Government: Stelle aus den echten eingefrorenen Slotdaten den einen konsistenten, explizit gebundenen Executable-/argv-Vertrag her. Der bestätigte Fehler ist argv[0] != delegate.get('command') bei fehlendem delegate.command, während wrapper.command und delegate.argv[0] vorhanden sind. Wähle nach Vertragsabgleich den minimalen korrekten Zuschnitt; nicht blind das Check entfernen oder ungebundene Kommandos zulassen.\n2. Classic: Gleiche den tatsächlichen nativen Invocation-Vertrag des gepinnten Produktstands mit ROLE_SLOTS, Projektion, Subject/Scope und freigegebenem Request ab. Verwende vorhandene gespeicherte rohe Invocationdaten, soweit tatsächlich erhalten, und den exakten Produzenten/Serializer im gepinnten Quellstand. Fehlt eine rohe Invocation, benenne das ausdrücklich und belege die Struktur aus Quelle/DTO statt sie rückwirkend zu erfinden. Korrigiere die Brücke; fehlende/abweichende Identität bleibt abgewiesen, keine geratenen Identitäten und keine Lockerung der Befugnisgrenzen.\n3. Fokussierte Offline-Regressionskette für ALLE tatsächlich konfigurierten Rollentypen beider Produkte: vorhandene native Form -> Bootstrap/Autorisierung -> Rollenauflösung -> Command/argv -> geplante Delegate-Zulassung und Ergebnis-/Fehlerübersetzung. Pure Test-Doubles oder Testspeicher sind als Mechanik zu kennzeichnen; keine echten Delegates oder Produktionsbuchungen starten. Der Originalfehler muss vor der Korrektur reproduzierbar sein, die korrigierte reale Form muss die entsprechenden Wächter passieren, gezielte Identitäts-/Befehlsabweichungen müssen weiter scheitern. Nicht bloß dieselbe erfundene Eingabe in Builder und Test bestätigen. Frühere Regressionen nur soweit betroffen erneut ausführen.\n4. Korrigiere die Aussage zum R2-Government-Nachreview über eine neue gebundene Errata-Datei: Text nennt4Ledgerzeilen, zitiert aber c5769... vom finalen5Zeilenstand. Historischen Review/Freeze/Logs nicht verändern. Die neue Government-Controllerbuchung ist terminal und hat Prozessbelege in Receipt/Result, aber0controller_processes-Zeilen: dokumentiere anhand des aktuellen Collectors, ob das den gemeinsamen Metrikvertrag erfüllt oder ein Restbefund ist. Falls für die spätere Auswertung zwingend erforderlich, schließe nur den zukünftigen engen Verbuchungspfad ohne doppelte Zählung; historische Datensätze bleiben unverändert.\nLiefere einen sauberen lokalen Quellcommit, konkrete Änderungen, Testbelege, unabhängiges gezieltes Review, exakte Pins, dokumentierte offene Fähigkeitslücken und den kleinsten ausführbaren nächsten nativen Plan samt erforderlicher endlicher Zusatzquote. Kein neuer universeller Runner/Grant-/Logging-Unterbau, keine Studienmethodik- oder Fixtureinhaltsänderung, keine Policyumgehung, Veröffentlichung oder historische Reparatur. Nach diesem Offline-Paket anhalten; Overseer prüft es vor jeder neuen tatsächlichen Zuteilung. Halte den aktiven Auftrag/Fortsetzungsstand dauerhaft in deinem Handoff fest, damit Kontextkomprimierung nicht zur initialen Wartemeldung zurücksetzt.",
         "nativeStarts": 0,
@@ -1240,19 +1307,19 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:41",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:43",
       "lastObservedStatus": "active",
-      "activeTurn": "01a118b2-2f03-7980-9dd8-47464472252b",
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6dc737b7487d2bf8c5de0e0a13bd3",
+      "activeTurn": "01a118dd-a645-7b51-9f42-ebecddb95e25",
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6e0ae811487d2a6cecca1f20efff5",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
-      "latestProgress": "Die Fortsetzung hat bestanden: Die neue Regel ist durch die unabhängigen .NET-Prüfungen verifiziert, der Audit ist vollständig. Insgesamt wurden 11 von 12 nativen Starts genutzt. Die zwei ursprünglichen Skriptläufe bleiben als unvollständig dokumentiert; ein vollständiger Lauf des korrigierten Skripts steht noch aus.",
+      "latestProgress": "Der Zwischenstand ist angenommen. Ich bereite jetzt genau einen getrennt dokumentierten Abschlusslauf vor. Der native Lauf und die schwere finale Quellprüfung warten auf die ausdrückliche Slot-Zuweisung; die bisherigen Fehlversuche und ihre Bilanz bleiben unverändert.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
       "transferredDesignCommit": null,
-      "candidateSha": "8927704c5bc2c83601d36eb2ff99ae8332c7b406",
+      "candidateSha": "fbb2deab8d85be74a77874a705229a0a1ea1fee4",
       "runtimeSourceSha": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
       "releaseVersion": "v0.14.1",
-      "acceptance": "Local Windows integration scope accepted at 8927704; hosted Windows/Linux CI and Linux stress remain pending, held v0.14.1/c913 unchanged",
+      "acceptance": "Qualified CLASSIC-P1 intermediate checkpoint accepted; uninterrupted corrected script and final full suite still open; held study version unchanged.",
       "evidence": {
         "packet": ".artifacts/classic-readiness/v0.14.1-r1/",
         "hashesChecked": 113,
@@ -1294,14 +1361,33 @@
               "Linux-specific fixture regression count100"
             ]
           }
+        },
+        "classicP1IntermediateAcceptance": {
+          "acceptedUtc": "2026-10-08T00:15:34Z",
+          "sha": "fbb2deab8d85be74a77874a705229a0a1ea1fee4",
+          "clean": true,
+          "rootChangedFilesCheckedAgainstGit": 14,
+          "independentManifestHashesChecked": 1220,
+          "hashMismatches": 0,
+          "handoffSha256": "9ac99f2a06fc7daee2eaa72083c98ccc8db11719afba6f34fc638fab8213114b",
+          "manifestSha256": "05134098cc37eb8a0fb72dc410273efed2fbb0ea9e17fee66967137dda42afda",
+          "independentRootReview": "/root/g2_handoff_evidence",
+          "qualification": "Two incomplete full script runs; saved-Apply continuation separately passed Verify/Audit. Seven focused tests at11967c2 with unchanged helper/test sources to fbb2dea and listed source gates passed. No full corrected script replay, final full Go suite, hosted platform or release readiness. Deterministic doubles only.",
+          "oldSmokeConsumed": {
+            "fullAttempts": 2,
+            "nativeMutatingStarts": 11,
+            "deterministicRoleReservations": 9,
+            "outerWallSeconds": 196.744
+          },
+          "oldSmokeStatus": "Closed; noFurtherRunsAuthorized, unused numeric room not authority"
         }
       },
       "lastAssignment": {
-        "key": "classic-usable-model-p1",
-        "sentUtc": "2026-10-07T23:28:13Z",
-        "status": "Active; not completed",
-        "scope": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
-        "baseSha": "8927704c5bc2c83601d36eb2ff99ae8332c7b406"
+        "key": "classic-p1-corrected-replay-20261008-r1",
+        "authorizedUtc": "2026-10-08T00:15:34Z",
+        "status": "Dispatched once; active offline preparation confirmed; no native execution before explicit shared-slot assignment",
+        "scope": "One corrected full example replay and required final gates; shared slot required.",
+        "sentUtc": "2026-10-08T00:15:41Z"
       },
       "heldCandidateSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
       "followupWorktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
@@ -1337,11 +1423,38 @@
           "sentUtc": "2026-10-07T15:59:02Z",
           "key": "classic-example-final-source-gates",
           "scope": "Finish pending local gates; optional selective generic timeout budget port from 028c137 if needed, no Government feature import; <=1800s and actual progress; no new features/publication/held-candidate replacement."
+        },
+        {
+          "key": "classic-p1-corrected-replay-20261008-r1",
+          "sentUtc": "2026-10-08T00:15:41Z",
+          "status": "Sent once; active confirmed",
+          "promptRecord": "classicP1ClosureAssignment"
         }
-      ]
+      ],
+      "classicP1ClosureAssignment": {
+        "key": "classic-p1-corrected-replay-20261008-r1",
+        "authorizedUtc": "2026-10-08T00:15:34Z",
+        "status": "Dispatched once; active offline preparation confirmed; no native execution before explicit shared-slot assignment",
+        "baseSha": "fbb2deab8d85be74a77874a705229a0a1ea1fee4",
+        "prompt": "Overseer nimmt CLASSIC-P1 fbb2deab8d85be74a77874a705229a0a1ea1fee4 als qualifizierten Zwischenstand an. Root hat die 14 geänderten Dateien gegen Git geprüft; unabhängiges Review hat alle 1220 Manifestdateien ohne Abweichung geprüft. Beide vollständigen Skriptversuche bleiben incomplete; die erfolgreiche saved-Apply-Fortsetzung ist ein separater Nachweis. Sie beweist noch keinen vollständigen korrigierten Skriptdurchlauf. Fokus- und Quellprüfungen sind belegt; volle finale Go-Suite sowie gehostete Plattform-/Releasegates bleiben offen. Keine Studie oder semantische Autonomie belegt.\n\nGenau ein begrenzter Abschlussauftrag: classic-p1-corrected-replay-20261008-r1. Der bisherige P1-Smoke-Grant ist geschlossen bei 2 vollen Versuchen, 11 nativen mutierenden Starts, 9 deterministischen Rollenreservierungen und 196.744 Sekunden äußerer Laufzeit. Nichts zurücksetzen oder dessen ungenutzte Quote wiederverwenden. Ein frischer, getrennt eingefrorener Folgegrant erlaubt zusätzlich genau EINEN ununterbrochenen Aufruf des auf fbb2dea korrigierten öffentlichen Beispielskripts an einem frischen Fall: höchstens 6 native mutierende Starts, 6 deterministische Rollenreservierungen, Parallelität 1, 1800 Sekunden äußere Gesamtfrist einschließlich Aufräumen, alle Prozesse endlich begrenzt, kein Retry. Das bindet Basis- und Änderungszyklus jeweils Execute/Apply/Verify; lesende Schritte bleiben Bestandteil dieses einen endlich begrenzten Skriptlaufs. Kumulativ also höchstens 3 volle Versuche, 17 native Starts und 15 Rollen; neue tatsächliche Laufzeit getrennt zur historischen addieren.\n\nVorab Quelle, Skript, Runtime, Eingaben, Grenzen und separaten Grant unveränderlich binden und den gezielten unabhängigen Reviewbeleg erhalten. Keine neue Produktfunktion und keine rückwirkende Reparatur der zwei alten Versuche. Auf Fehler oder fehlende Voraussetzung sofort ohne neuen Versuch schließen und mit konkreter Diagnose liefern. Der erfolgreiche saved-Apply-Fall macht genau diese Wiederholung fachlich sinnvoll.\n\nZeitliche Eintrittsbedingung: Worker hat weiterhin den schweren Prüfslot; danach ist Scientist R3 vorgemerkt, danach dein CLASSIC-P1-Abschluss. Jetzt offline vorbereiten. Nativer Smoke und erforderliche finale schwere Quellgates erst, wenn Overseer in coordination-state.json fullSuiteSlot ausdrücklich Architect für diesen Abschluss zuweist. Nicht parallel zu Scientists zeitgebundenen nativen Fällen starten. Einmal die tatsächlich erforderliche finale Go-Suite/festen Projektgates am unveränderlichen finalen Quellstand durchführen; bereits gültige unveränderte fokussierte Prüfungen nicht ohne Anlass wiederholen. Gehostete Windows/Linux- und Release-Lücken ehrlich offenlassen, keine neue Veröffentlichung oder Main-Übernahme.\n\nNach diesem einen Replay und den verfügbaren erforderlichen Gates sauberer Folge-SHA mit Belegpaket, tatsächlicher additiver Bilanz, unabhängiger Abschlussprüfung und verständlichem versionierten Bedienweg. Falls noch auf Slot wartend, konkreten vorbereiteten Stand berichten, nicht als Paketabschluss ausgeben. Gefrorener Studienkandidat c91363b/v0.14.1 bleibt unverändert, keine Studienfixtures/Methodik oder Government-/SAT-/Jev-Arbeit. Keine Modell-/Provideraufrufe, Käufe oder zusätzliche Folgepakete.",
+        "maxFullAttempts": 1,
+        "maxNativeMutatingStarts": 6,
+        "maxDeterministicRoleReservations": 6,
+        "maxParallelProcesses": 1,
+        "maxOuterWallSeconds": 1800,
+        "retries": 0,
+        "cumulativeMaxFullAttempts": 3,
+        "cumulativeMaxNativeStarts": 17,
+        "cumulativeMaxRoles": 15,
+        "newModelProviderCalls": 0,
+        "studyCells": 0,
+        "nativeEntryGate": "Immutable source/input/runtime/grant freeze, independent preflight review, fullSuiteSlot explicitly assigned to Architect for this closure.",
+        "sourceGates": "Required final exact-source gates/full Go suite once after slot assignment; no redundant valid focused tests or release claim.",
+        "sentUtc": "2026-10-08T00:15:41Z"
+      }
     }
   ],
-  "nextAction": "Await Scientist offline R3 independent review and clean completion, then verify exact source/evidence before any native grant. Worker fixes own example protocol within P1 limits and retains heavy slot. Architect has reported11/12native starts; complete script replay still unproven, no automatic refill.",
+  "nextAction": "Await Worker final verify result and explicit heavy-slot release, verify completion evidence, then assign slot to Scientist R3 if preflight ready; Architect closure follows. Both successor packages dispatched/active offline. No new real model calls or study cells.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -1351,10 +1464,12 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T23:59:51Z",
-    "evidenceLevel": "All three active in joint compact snapshot. New progress and counters are owner reports, not root-accepted completion. No tests/processes repeated.",
+    "reviewedUtc": "2026-10-08T00:16:38Z",
+    "evidenceLevel": "Scientist R3 offline and Architect P1 intermediate independently reviewed, clean SHA and files verified; Worker final verify is reported active. No tests/processes repeated by root.",
     "coordinationActions": [
-      "Saved progress/cursors and explicitly retained P1 ceilings and Scientist zero live quota. No repeated assignments or new allocations."
+      "Qualified offline R3 and Classic P1 intermediate acceptance.",
+      "Recorded two distinct finite conditional successor grants; execution waits for explicit shared-slot reassignment.",
+      "Both successor messages sent once at00:15:41Z; active acknowledgments expressly preserve offline-only preparation until shared-slot assignment."
     ],
     "userDecisionRequired": false
   },
@@ -1552,7 +1667,7 @@
   "fullSuiteSlot": {
     "owner": "Worker",
     "assignedUtc": "2026-10-07T23:43:19Z",
-    "scope": "GOV-P1 final exact-source required gates once after focused checks/review. Native Scientist R2 closed; Scientist R3 offline only. Architect defers only heavy full suite until release; independent work continues.",
+    "scope": "Worker GOV-P1 final exact-source verify; Scientist R3 and Architect P1 successor grants queued with explicit runtime entry gate. Independent offline preparation may proceed.",
     "releaseCondition": "Worker reports exact final gate outcome and releases slot in own chat; no redundant suite without source changes/findings.",
     "notificationStatus": "Sent once to Worker and Architect after reservation; no new work or quota",
     "notifications": [
@@ -1565,6 +1680,18 @@
         "recipient": "Architect",
         "key": "classic-p1-defer-heavy-slot",
         "sentUtc": "2026-10-07T23:43:20Z"
+      }
+    ],
+    "queue": [
+      {
+        "owner": "Scientist",
+        "key": "native-s1-contract-corrected-integration-20261008-r3",
+        "status": "Wait for Worker release and root slot assignment; offline preflight allowed"
+      },
+      {
+        "owner": "Architect",
+        "key": "classic-p1-corrected-replay-20261008-r1",
+        "status": "Wait for Scientist native completion/release and root slot assignment; offline preflight allowed"
       }
     ]
   },
