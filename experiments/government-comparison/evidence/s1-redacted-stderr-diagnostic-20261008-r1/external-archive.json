@@ -1,0 +1,30 @@
+{
+  "key": "s1-redacted-stderr-diagnostic-20261008-r1",
+  "archivedAtUtc": "2026-10-08T16:59:56.782581+00:00",
+  "externalRoot": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-redacted-stderr-diagnostic-20261008-r1",
+  "allowlistOnly": [
+    "reservation.json",
+    "output-root-created.json",
+    "started-once.json",
+    "job-assigned.json",
+    "controller-once.json",
+    "sanitized-result.json",
+    "controller-receipt.json",
+    "outer-receipt.json"
+  ],
+  "metadataArtifacts": {
+    "run-1/reservation.json": "f3602c13e584e9f019715600732fe9bb8548f7fc1a5a546de35d140750fe1bba",
+    "run-1/output-root-created.json": "80b1cb41504083dd56260fa9e02b63d992c6ec476c1a5ce3919192491fe5f186",
+    "run-1/started-once.json": "441680f379481febf8c10c75f21b6528e00434536be4c358899918e9feddfa7c",
+    "run-1/job-assigned.json": "88de7afea8c7dabf3f12f2dbc31c74b42d7307033f877d1a1f6b873c37e9889b",
+    "run-1/controller-once.json": "0bf658ce4a43ead3f15d4c941b679459a6a2cb2569a8228d5ea5872a3407bbb7",
+    "run-1/sanitized-result.json": "fba8da602f5458918b8afac1439dcdd5c12aae14fa345fbbc47226fe30eeb01d",
+    "run-1/controller-receipt.json": "d1c6735b10f1768bed54a68b329b1616e3ba47fa584567a50d4793e11ec86f5a",
+    "run-1/outer-receipt.json": "1b572735e663241c86e33a8445950c2211bb266ab556f31648d7daf1a2a45c8c"
+  },
+  "privateExcerptArchived": false,
+  "privateExcerptContentHashComputed": false,
+  "privateExcerptRemoved": true,
+  "privateDirectoryRetainedEmpty": true,
+  "meaning": "Only explicit metadata receipts copied. No directory-wide/private traversal archive; sanitized excerpt persists only in authorized task/model history."
+}

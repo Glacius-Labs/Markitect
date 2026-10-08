@@ -1,0 +1,23 @@
+{
+  "key": "s1-redacted-stderr-diagnostic-20261008-r1",
+  "grantIssuedUtc": "2026-10-08T16:47:18Z",
+  "slotAssignedUtc": "2026-10-08T16:52:42Z",
+  "requestSha256": "b2822e0d59043080f8e6ddd329dd433a125135559d6d76240d6dd251d9dc41be",
+  "freezeSha256": "c7ef4d58aa0be825d59eca6e34c01ce982ee8736136866203406b5680c8b7dfc",
+  "reservationSha256": "f3602c13e584e9f019715600732fe9bb8548f7fc1a5a546de35d140750fe1bba",
+  "sourceCommit": "4f091251a6be9c57597ef4628474ad6bbd7610b3",
+  "freezeCommit": "f4b038d43d5269d39fa8087bbf11eeeb1f3c8cc4",
+  "workerReturnCode": 1,
+  "stopReason": null,
+  "controllerSeconds": 2.6091639999995095,
+  "jobCloseSeconds": 1.9799999790848233e-05,
+  "processTreeControl": "windows-job-kill-on-close",
+  "deadlineSeconds": 50,
+  "controllerLimitSeconds": 65,
+  "outerLimitSeconds": 80,
+  "rawLogsPersisted": false,
+  "automaticRetries": 0,
+  "terminalResultPresent": true,
+  "terminalResultSha256": "fba8da602f5458918b8afac1439dcdd5c12aae14fa345fbbc47226fe30eeb01d",
+  "withinControllerBound": true
+}

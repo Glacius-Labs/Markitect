@@ -1,0 +1,614 @@
+{
+  "key": "s1-redacted-stderr-diagnostic-20261008-r1",
+  "status": "stopped",
+  "stopReason": "server-stderr-activity",
+  "grantIssuedUtc": "2026-10-08T16:47:18Z",
+  "slotAssignedUtc": "2026-10-08T16:52:42Z",
+  "requestSha256": "b2822e0d59043080f8e6ddd329dd433a125135559d6d76240d6dd251d9dc41be",
+  "freezeSha256": "c7ef4d58aa0be825d59eca6e34c01ce982ee8736136866203406b5680c8b7dfc",
+  "reservationSha256": "f3602c13e584e9f019715600732fe9bb8548f7fc1a5a546de35d140750fe1bba",
+  "sourceCommit": "4f091251a6be9c57597ef4628474ad6bbd7610b3",
+  "freezeCommit": "f4b038d43d5269d39fa8087bbf11eeeb1f3c8cc4",
+  "sentRpc": [
+    {
+      "method": "initialize",
+      "id": 0,
+      "writeCompleted": true
+    },
+    {
+      "method": "initialized",
+      "id": null,
+      "writeCompleted": true
+    },
+    {
+      "method": "config/read",
+      "id": 1,
+      "writeCompleted": true
+    },
+    {
+      "method": "configRequirements/read",
+      "id": 2,
+      "writeCompleted": true
+    },
+    {
+      "method": "thread/start",
+      "id": 3,
+      "writeCompleted": true
+    }
+  ],
+  "metadataObservations": [
+    {
+      "id": 0,
+      "method": "initialize",
+      "responseEnvelopeValidated": true,
+      "sanitizedResult": {
+        "handshakeAcknowledged": true
+      }
+    },
+    {
+      "id": 1,
+      "method": "config/read",
+      "responseEnvelopeValidated": true,
+      "sanitizedResult": {
+        "config": {
+          "approval_policy": {
+            "state": "present",
+            "value": "never"
+          },
+          "approvals_reviewer": {
+            "state": "null"
+          },
+          "sandbox_mode": {
+            "state": "null"
+          },
+          "model": {
+            "state": "present",
+            "value": "gpt-6.1-sol"
+          },
+          "model_provider": {
+            "state": "present",
+            "value": "openai"
+          },
+          "model_reasoning_effort": {
+            "state": "present",
+            "value": "high"
+          },
+          "default_permissions": {
+            "state": "present",
+            "value": ":read-only"
+          },
+          "permissions": {
+            "state": "null"
+          },
+          "features": {
+            "scope": "eight-requested-fields-only",
+            "remainder": "not-evaluated",
+            "state": "present",
+            "selected": {
+              "apps": {
+                "state": "present",
+                "value": false
+              },
+              "goals": {
+                "state": "present",
+                "value": false
+              },
+              "hooks": {
+                "state": "present",
+                "value": false
+              },
+              "memories": {
+                "state": "present",
+                "value": false
+              },
+              "multi_agent": {
+                "state": "present",
+                "value": false
+              },
+              "plugins": {
+                "state": "present",
+                "value": false
+              },
+              "shell_tool": {
+                "state": "present",
+                "value": true
+              },
+              "unified_exec": {
+                "state": "present",
+                "value": true
+              }
+            }
+          },
+          "windows": {
+            "state": "present",
+            "value": {
+              "sandbox": {
+                "state": "present",
+                "value": "elevated"
+              }
+            }
+          }
+        },
+        "origins": {
+          "approval_policy": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "approvals_reviewer": {
+            "state": "missing"
+          },
+          "default_permissions": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features": {
+            "state": "missing"
+          },
+          "features.apps": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.goals": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.hooks": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.memories": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.multi_agent": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.plugins": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.shell_tool": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.unified_exec": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "model": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "model_provider": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "model_reasoning_effort": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "permissions": {
+            "state": "missing"
+          },
+          "sandbox_mode": {
+            "state": "missing"
+          },
+          "windows": {
+            "state": "missing"
+          }
+        },
+        "layers": {
+          "state": "present",
+          "value": [
+            {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              },
+              "config": {
+                "approval_policy": {
+                  "state": "present",
+                  "value": "never"
+                },
+                "approvals_reviewer": {
+                  "state": "missing"
+                },
+                "sandbox_mode": {
+                  "state": "missing"
+                },
+                "model": {
+                  "state": "present",
+                  "value": "gpt-6.1-sol"
+                },
+                "model_provider": {
+                  "state": "present",
+                  "value": "openai"
+                },
+                "model_reasoning_effort": {
+                  "state": "present",
+                  "value": "high"
+                },
+                "default_permissions": {
+                  "state": "present",
+                  "value": ":read-only"
+                },
+                "permissions": {
+                  "state": "missing"
+                },
+                "features": {
+                  "scope": "eight-requested-fields-only",
+                  "remainder": "not-evaluated",
+                  "state": "present",
+                  "selected": {
+                    "apps": {
+                      "state": "present",
+                      "value": false
+                    },
+                    "goals": {
+                      "state": "present",
+                      "value": false
+                    },
+                    "hooks": {
+                      "state": "present",
+                      "value": false
+                    },
+                    "memories": {
+                      "state": "present",
+                      "value": false
+                    },
+                    "multi_agent": {
+                      "state": "present",
+                      "value": false
+                    },
+                    "plugins": {
+                      "state": "present",
+                      "value": false
+                    },
+                    "shell_tool": {
+                      "state": "present",
+                      "value": true
+                    },
+                    "unified_exec": {
+                      "state": "present",
+                      "value": true
+                    }
+                  }
+                },
+                "windows": {
+                  "state": "missing"
+                }
+              }
+            },
+            {
+              "type": "user",
+              "versionDigest": "sha256:612456f84eeeb78086b312c2ec82ce52f53bbffcbbbfdfed06ad0a8bdc81cdbf",
+              "selectedProfile": {
+                "state": "null"
+              },
+              "config": {
+                "approval_policy": {
+                  "state": "missing"
+                },
+                "approvals_reviewer": {
+                  "state": "missing"
+                },
+                "sandbox_mode": {
+                  "state": "missing"
+                },
+                "model": {
+                  "state": "present",
+                  "value": "gpt-6.1-sol"
+                },
+                "model_provider": {
+                  "state": "missing"
+                },
+                "model_reasoning_effort": {
+                  "state": "present",
+                  "value": "high"
+                },
+                "default_permissions": {
+                  "state": "missing"
+                },
+                "permissions": {
+                  "state": "missing"
+                },
+                "features": {
+                  "scope": "eight-requested-fields-only",
+                  "remainder": "not-evaluated",
+                  "state": "present",
+                  "selected": {
+                    "apps": {
+                      "state": "missing",
+                      "code": "config-feature-field-missing"
+                    },
+                    "goals": {
+                      "state": "missing",
+                      "code": "config-feature-field-missing"
+                    },
+                    "hooks": {
+                      "state": "missing",
+                      "code": "config-feature-field-missing"
+                    },
+                    "memories": {
+                      "state": "present",
+                      "value": true
+                    },
+                    "multi_agent": {
+                      "state": "missing",
+                      "code": "config-feature-field-missing"
+                    },
+                    "plugins": {
+                      "state": "missing",
+                      "code": "config-feature-field-missing"
+                    },
+                    "shell_tool": {
+                      "state": "missing",
+                      "code": "config-feature-field-missing"
+                    },
+                    "unified_exec": {
+                      "state": "missing",
+                      "code": "config-feature-field-missing"
+                    }
+                  }
+                },
+                "windows": {
+                  "state": "present",
+                  "value": {
+                    "sandbox": {
+                      "state": "present",
+                      "value": "elevated"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "system",
+              "versionDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+              "selectedProfile": {
+                "state": "missing"
+              },
+              "config": {
+                "approval_policy": {
+                  "state": "missing"
+                },
+                "approvals_reviewer": {
+                  "state": "missing"
+                },
+                "sandbox_mode": {
+                  "state": "missing"
+                },
+                "model": {
+                  "state": "missing"
+                },
+                "model_provider": {
+                  "state": "missing"
+                },
+                "model_reasoning_effort": {
+                  "state": "missing"
+                },
+                "default_permissions": {
+                  "state": "missing"
+                },
+                "permissions": {
+                  "state": "missing"
+                },
+                "features": {
+                  "scope": "eight-requested-fields-only",
+                  "remainder": "not-evaluated",
+                  "state": "missing",
+                  "code": "config-features-container-missing"
+                },
+                "windows": {
+                  "state": "missing"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "method": "configRequirements/read",
+      "responseEnvelopeValidated": true,
+      "sanitizedResult": {
+        "requirements": {
+          "state": "present",
+          "value": {
+            "allowedApprovalPolicies": {
+              "state": "null"
+            },
+            "allowedApprovalsReviewers": {
+              "state": "null"
+            },
+            "allowedSandboxModes": {
+              "state": "null"
+            },
+            "allowedWindowsSandboxImplementations": {
+              "state": "null"
+            },
+            "allowedLoginMethods": {
+              "state": "present",
+              "value": [
+                "chatgpt"
+              ]
+            },
+            "allowedWebSearchModes": {
+              "state": "null"
+            },
+            "defaultPermissions": {
+              "state": "null"
+            },
+            "allowedPermissionProfiles": {
+              "state": "null"
+            },
+            "featureRequirements": {
+              "scope": "schema-wide-boolean-map",
+              "state": "null",
+              "code": "requirement-features-null"
+            },
+            "network": {
+              "state": "null"
+            },
+            "modelProvider": {
+              "state": "null"
+            },
+            "modelProviders": {
+              "state": "null"
+            },
+            "models": {
+              "state": "null"
+            },
+            "application": {
+              "state": "null"
+            },
+            "additionalDeveloperInstructions": {
+              "state": "null"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "configPrecheckStatus": "config-precheck-satisfied-awaiting-requirements",
+  "metadataFinalStatus": "reported-config-and-requirements-observed",
+  "threadBoundary": {
+    "responseValidated": false,
+    "threadId": null,
+    "threadStartedNotificationCorrelated": false,
+    "threadClosedNotificationCorrelated": false,
+    "pendingLifecycleCount": 0,
+    "reportedPermissionObservation": null,
+    "turnsRequested": 0,
+    "toolsRequested": 0
+  },
+  "stderrDiagnostic": {
+    "triggered": true,
+    "observedBytes": 765,
+    "selectedInputBytes": 765,
+    "completeLines": 4,
+    "includedLines": 4,
+    "dropped": [],
+    "byteCapReached": false,
+    "lineCapReached": false,
+    "inputTruncated": false,
+    "incompleteLineDropped": false,
+    "outputTruncated": false,
+    "rawTextPersisted": false,
+    "contentFingerprintsPersisted": false,
+    "redactionGuarantee": "known-patterns-only",
+    "excerptStatus": "written-private"
+  },
+  "eventCounts": {
+    "remoteControl/status/changed": 1
+  },
+  "notificationCount": 1,
+  "nativeProcessStarted": true,
+  "nativePid": 24956,
+  "nativeReturnCode": 0,
+  "terminalAtUnix": 1791478711.804355,
+  "nativeSessionWallSeconds": 0.33789860000069893,
+  "cleanupSeconds": 0.06937500000003638,
+  "phaseTimes": {
+    "metadataSeconds": 0.23043170000073587
+  },
+  "rawBytesDiscarded": {
+    "raw": 50985,
+    "stdout": 50220,
+    "stderr": 765
+  },
+  "rawFramePayloadsPersisted": false,
+  "rawStderrPersisted": false,
+  "turnStartRequests": 0,
+  "taskToolRequests": 0,
+  "interruptRequests": 0,
+  "actorTaskReservations": 0,
+  "providerRequests": null,
+  "providerRetries": null,
+  "usage": null,
+  "servingModel": null,
+  "providerBillingStopped": null,
+  "automaticRetries": 0,
+  "meaning": "Only prospective safe thread-start diagnostics; no task, tools, OS enforcement, historical cause or general S1."
+}

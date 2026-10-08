@@ -1,0 +1,19 @@
+{
+  "key": "s1-redacted-stderr-diagnostic-20261008-r1",
+  "owner": "Scientist",
+  "grantIssuedUtc": "2026-10-08T16:47:18Z",
+  "assignedUtc": "2026-10-08T16:52:42Z",
+  "releasedUtc": "2026-10-08T17:03:49.256587+00:00",
+  "status": "Released after terminal redacted diagnostic; no residual quota",
+  "explicitRelease": true,
+  "remainingGrantClosed": true,
+  "diagnosticReservationsConsumed": 1,
+  "newAppServerTreesConsumed": 1,
+  "cumulativeAppServerTrees": 8,
+  "newActorTaskReservations": 0,
+  "newTurnsToolsRetries": 0,
+  "privateOwnedFileRemoved": true,
+  "independentPostreviewSha256": "40603aa80d0524590e1efa1b459861bf01c7a487aa331f71f1914f09b5699437",
+  "canonicalSlotOwner": "Overseer updates canonical coordination; this artifact returns only Scientist exact bound slot.",
+  "nextOperationAuthorized": false
+}

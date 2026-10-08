@@ -1,0 +1,11 @@
+{
+  "checkedUtc": "2026-10-08T17:00:29.4183321Z",
+  "requestedPids": [
+    24956,
+    41400,
+    40320
+  ],
+  "presentCount": 0,
+  "present": [],
+  "meaning": "Read-only exact PID observation only; no exhaustive descendant or provider/billing proof."
+}

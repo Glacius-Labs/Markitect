@@ -1,0 +1,112 @@
+{
+  "key": "s1-redacted-stderr-diagnostic-20261008-r1",
+  "grantIssuedUtc": "2026-10-08T16:47:18Z",
+  "slotAssignedUtc": "2026-10-08T16:52:42Z",
+  "sourceCommit": "4f091251a6be9c57597ef4628474ad6bbd7610b3",
+  "freezeCommit": "f4b038d43d5269d39fa8087bbf11eeeb1f3c8cc4",
+  "status": "STOPPED BEFORE TURN",
+  "stopReason": "server-stderr-activity",
+  "actualAttempts": 1,
+  "nativeAppServerTrees": 1,
+  "diagnosticReservations": 1,
+  "actorTaskReservations": 0,
+  "threadStartWritten": 1,
+  "threadResponseValidated": false,
+  "actualThreadCreation": "unknown",
+  "turns": 0,
+  "tools": 0,
+  "cliMetadataCalls": 0,
+  "products": 0,
+  "studyCells": 0,
+  "retries": 0,
+  "metadataFinalStatus": "reported-config-and-requirements-observed",
+  "nativeReturnCode": 0,
+  "workerReturnCode": 1,
+  "outerReturnCode": 1,
+  "timesSeconds": {
+    "metadata": 0.23043170000073587,
+    "native": 0.33789860000069893,
+    "cleanup": 0.06937500000003638,
+    "controller": 2.6091639999995095,
+    "outerThroughReceiptReadback": 5.95066769999994,
+    "toolCommandWall": 6.0507332
+  },
+  "stderrMetadata": {
+    "triggered": true,
+    "observedBytes": 765,
+    "selectedInputBytes": 765,
+    "completeLines": 4,
+    "includedLines": 4,
+    "dropped": [],
+    "byteCapReached": false,
+    "lineCapReached": false,
+    "inputTruncated": false,
+    "incompleteLineDropped": false,
+    "outputTruncated": false,
+    "rawTextPersisted": false,
+    "contentFingerprintsPersisted": false,
+    "redactionGuarantee": "known-patterns-only",
+    "excerptStatus": "written-private"
+  },
+  "reportedCategories": [
+    {
+      "line": 1,
+      "category": "reported_runtime",
+      "uncertainty": "Reported message category only; no verified root cause or historical attribution."
+    },
+    {
+      "line": 2,
+      "category": "reported_transport",
+      "uncertainty": "Reported message category only; occurrence during cleanup is possible; not proof of initiating failure."
+    },
+    {
+      "line": 3,
+      "category": "reported_transport",
+      "uncertainty": "Reported message category only; occurrence during cleanup is possible; not proof of initiating failure."
+    },
+    {
+      "line": 4,
+      "category": "reported_transport",
+      "uncertainty": "Reported message category only; occurrence during cleanup is possible; not proof of initiating failure."
+    }
+  ],
+  "privateRead": {
+    "statusRequired": "written-private",
+    "exactOwnPathAndNonlinkFileVerified": true,
+    "strictJsonValidated": true,
+    "bytes": 1400,
+    "maxBytes": 2048,
+    "targetedSanitizedToolReads": 1,
+    "rawRead": false,
+    "contentHashComputed": false,
+    "privateTextArchivedOrCommitted": false,
+    "exactOwnedFileRemoved": true,
+    "sanitizedTextRemainsInTaskModelHistory": true,
+    "residual": "Known-pattern redaction only; unknown secret forms and same-user/ACL isolation not proven."
+  },
+  "history": {
+    "previousAppServerTrees": 7,
+    "cumulativeAppServerTrees": 8,
+    "cumulativeMaximum": 8,
+    "actorReservationsUnchanged": 6,
+    "historicalModelActorAttemptsUnchanged": 5,
+    "cliMetadataCallsUnchanged": 8,
+    "knownTokensUnchanged": 53331,
+    "totalTokens": "unknown",
+    "historicalNativeCountersUnchanged": [
+      15,
+      16,
+      13,
+      2250
+    ]
+  },
+  "providerRequests": null,
+  "providerRetries": null,
+  "servingModel": null,
+  "providerBillingStopped": null,
+  "remainingGrantClosed": true,
+  "followOnOperationAuthorized": false,
+  "classicStudyPin": "c91363b7ac4decbe87212ff0f588b5451581a152 / v0.14.1",
+  "allSixStudyCells": "NOT RUN",
+  "claimBoundary": "Current reported metadata/thread-start stop plus sanitized reported-message category/line/uncertainty only; no historical R2 cause, verified root cause, OS/serving/billing/S1/quality/acceptance proof."
+}

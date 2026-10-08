@@ -1,0 +1,17 @@
+{
+  "key": "s1-redacted-stderr-diagnostic-20261008-r1",
+  "reservedAtUnix": 1791478708.1068132,
+  "grantIssuedUtc": "2026-10-08T16:47:18Z",
+  "slotAssignedUtc": "2026-10-08T16:52:42Z",
+  "sourceCommit": "4f091251a6be9c57597ef4628474ad6bbd7610b3",
+  "freezeCommit": "f4b038d43d5269d39fa8087bbf11eeeb1f3c8cc4",
+  "requestSha256": "b2822e0d59043080f8e6ddd329dd433a125135559d6d76240d6dd251d9dc41be",
+  "freezeSha256": "c7ef4d58aa0be825d59eca6e34c01ce982ee8736136866203406b5680c8b7dfc",
+  "maxTrees": 1,
+  "maxDiagnosticReservations": 1,
+  "maxActorTaskReservations": 0,
+  "priorAppServerTrees": 7,
+  "priorActorReservations": 6,
+  "priorCliMetadataCalls": 8,
+  "cumulativeAppServerMaximum": 8
+}

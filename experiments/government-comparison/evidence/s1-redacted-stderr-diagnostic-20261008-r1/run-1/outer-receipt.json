@@ -1,0 +1,17 @@
+{
+  "key": "s1-redacted-stderr-diagnostic-20261008-r1",
+  "outerReturnCode": 1,
+  "stopReason": null,
+  "outerThroughReceiptReadbackSeconds": 5.95066769999994,
+  "withinOuterBound": true,
+  "controllerReceiptSha256": "d1c6735b10f1768bed54a68b329b1616e3ba47fa584567a50d4793e11ec86f5a",
+  "sanitizedResultSha256": "fba8da602f5458918b8afac1439dcdd5c12aae14fa345fbbc47226fe30eeb01d",
+  "terminalResultPresent": true,
+  "status": "stopped",
+  "nativeStartAttemptRecorded": true,
+  "diagnosticReservations": 1,
+  "actorTaskReservations": 0,
+  "nativeProviderRequests": null,
+  "nativeProviderRetries": null,
+  "remainingGrantClosed": true
+}
