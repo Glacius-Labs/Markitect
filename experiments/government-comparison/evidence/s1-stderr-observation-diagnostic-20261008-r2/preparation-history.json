@@ -1,0 +1,176 @@
+{
+  "key": "s1-stderr-observation-diagnostic-20261008-r2",
+  "startedUtc": "2026-10-08T17:32:43Z",
+  "deadlineUtc": "2026-10-08T17:52:43Z",
+  "identifiedR1Error": "Whitespace-sensitive no-op replacement assertion before any derivative write; R1 terminal evidence preserved at5f66346.",
+  "identifiedCorrection": "Removed that no-op anchor entirely; meaningful replacements require old != new and existing anchors.",
+  "r2ConstructionAttempts": 1,
+  "r2ConstructionSuccessful": true,
+  "offlineRepairIterations": 2,
+  "maxOfflineRepairIterations": 2,
+  "affectedTestInvocations": 2,
+  "maxAffectedTestInvocations": 3,
+  "ordinaryFailureHistory": [
+    {
+      "stage": "preseal-independent-source-review",
+      "recordedUtc": "2026-10-08T17:35:09.192424+00:00",
+      "finding": "Added eager native poll would introduce a second behavior change beyond passive stderr.",
+      "correction": "Removed eager poll; existing stdout EOF/native cleanup/deadline terminal lifecycle remains unchanged.",
+      "testsExecutedBeforeCorrection": 0
+    },
+    {
+      "stage": "initial-six-synthetic-tests",
+      "exitCode": 1,
+      "log": "focused-tests.log",
+      "recordedUtc": "2026-10-08T17:38:03.459267+00:00",
+      "correction": "Only failed binding test corrected: validate_live_authority returns assignedUtc string, not a tuple. Test agent confirms other five methods unchanged from originally reviewed source; stale-freeze expansion was limited to this same failed method before seal.",
+      "sourceBindingLimit": "Initial test file was extended by its author near execution boundary; no exact initial executed source hash is claimed. Failed method rerun below binds final source."
+    }
+  ],
+  "runtimeStarts": 0,
+  "diagnosticReservations": 0,
+  "meaningfulEditAnchors": [
+    {
+      "oldAnchorSha256": "55864bb8eb3ba6cc2c6ccaf61de71a4bf68f8df1e8cbf9b2db830965be77ac18",
+      "occurrences": 2
+    },
+    {
+      "oldAnchorSha256": "491c95c4c486a8b1e6dce986b9750a164104ac9bf5e26226479cd0b7746b98a9",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "a04e3c5e39bffbef1773b86e6b7d297adab48b652780dcf39ad9542b026cabe3",
+      "occurrences": 2
+    },
+    {
+      "oldAnchorSha256": "d17c56bdad79b2436ad43c0f988ba47b1b0973916078089e86dd3b1d2878fbe6",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "963b904ef93e1dd2f28e03cddeea2a20f90d145c554d62c5f0b578e7026f80de",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "1ef95fe2d198b0224e74704e816d9ea8256dff909d699539425163fb427ef498",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "84b209d069896508fac647b293e9c116fbf5b9f903e7b3b03bd4e5314f96bbb8",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "a58ebdf839e02fd30efa693cce15d383b373aaa4961031766d4556203510b331",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "e37eccdcf14ab11ab3faa440e868284528ee1274de1289637fa4c5dee4772aad",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "35e8c538b906dfeb1102067839d0dd86c2a966de7eb28abb889849a776e151a3",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "c40f3684fedb3f69fdc1eb4759a668e2de008639da82eeffc14d50648a72c2cd",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "c6dc5bc1d53d12d1c00899c5b6d001f99ca90d13e6e6671799a18253f263ec58",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "9ac80c79906d6d11683741eadb5c692e518cd3007ad7f4f59d0e91dcadd7ece7",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "290c312ebc9f5214eca95f1f80959f105949584c05a4b64061f45a61d035a2e1",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "7f1958f5e52994e42f23c226c524ae8e28cc060568de7585b57604d16d3db5f2",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "686ac38d62e85bd20b7ece298437e8691133af3cdbcb8e0d23fff33a57ef373d",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "2c33bc3284d3bb219a315e4a2fa4bcd0060aba2b78da0a6cac3c4910acec73c2",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "5ce0e17affcdbf8c5e88701b4aa9f6700eaea2aad58f911e11903494ec882811",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "4d824c58e979db47fac503712ad37f9082f5c128cb523429fa9e987d264a02dd",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "7aba7032b8fbc588c3148eec9e43816f7fd5f542c117835bae51001762d89696",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "450ecd43c5e6cf39f4816a746c83d8a5b727a280fdc4c6485ef69120ca553f2e",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "270648156e442f0828aa2e3c64469aa4b56f333044d71e3bcd89e779a118a96c",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "e1aa4e40a27626e3f6f5fc3f1ee04ed508f4dc7cb5324324382691997f6f8aa2",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "5fe36982270fe4f7a3f21a11032dd371ed57c6a601af6af35a04f77bfe60b7e6",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "7ffb53a29dbff17f91d2b8ea7401b570ab1885e5851aa0229ff5e958510fe849",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "b586abd04219d0e7a9c118aafd40a7800cd9ba200b9a41c04816ccc44386f99b",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "bd53d7c715455cf43b2ee94cb33bc9aea0738cf0e6c91529c6db82976d0e899b",
+      "occurrences": 3
+    },
+    {
+      "oldAnchorSha256": "9c6717386bb6175d24d40cfbea60dac8f30fc67c61b3a74f90af7fc60fe13825",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "a936bf8e541587265e7b8056eb1164b00e86709e32816c3adfafa19585ba25b4",
+      "occurrences": 1
+    },
+    {
+      "oldAnchorSha256": "b909f3e5d689dc124846ee54a14184cc5ec007705c342fc68be0148b26bb9b0c",
+      "occurrences": 1
+    }
+  ],
+  "initialTestResult": {
+    "exitCode": 1,
+    "wallSeconds": 0.23846229999981006,
+    "recordedUtc": "2026-10-08T17:38:03.459252+00:00",
+    "log": "focused-tests.log",
+    "invocation": [
+      "-m",
+      "unittest",
+      "-v",
+      "test_bindings"
+    ]
+  },
+  "repairedTestSourceSha256": "8badec3b33c18019a134f93cf310050421c267276dd26abd99ed5e9e38a5c56a",
+  "targetedRerunResult": {
+    "exitCode": 0,
+    "wallSeconds": 0.20484679999935906,
+    "recordedUtc": "2026-10-08T17:38:47.101582+00:00",
+    "log": "focused-binding-rerun.log",
+    "case": "test_bindings.PassiveStderrDiagnosticCases.test_authority_slot_and_request_freeze_identity_reject_stale_bindings",
+    "sourceSha256": "8badec3b33c18019a134f93cf310050421c267276dd26abd99ed5e9e38a5c56a"
+  },
+  "preparationTestsPassed": true
+}

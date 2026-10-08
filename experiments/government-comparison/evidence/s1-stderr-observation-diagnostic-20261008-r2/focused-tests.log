@@ -1,0 +1,20 @@
+test_authority_slot_and_request_freeze_identity_reject_stale_bindings (test_bindings.PassiveStderrDiagnosticCases.test_authority_slot_and_request_freeze_identity_reject_stale_bindings) ... ERROR
+test_capture_caps_redaction_fragmentation_and_passive_event_precede_lock (test_bindings.PassiveStderrDiagnosticCases.test_capture_caps_redaction_fragmentation_and_passive_event_precede_lock) ... ok
+test_cleanup_writes_once_only_after_native_and_pumps_are_quiescent (test_bindings.PassiveStderrDiagnosticCases.test_cleanup_writes_once_only_after_native_and_pumps_are_quiescent) ... ok
+test_passive_capture_allows_fake_thread_reply_then_stops_before_turn (test_bindings.PassiveStderrDiagnosticCases.test_passive_capture_allows_fake_thread_reply_then_stops_before_turn) ... ok
+test_structured_rpc_schema_notification_auth_and_config_errors_remain_terminal (test_bindings.PassiveStderrDiagnosticCases.test_structured_rpc_schema_notification_auth_and_config_errors_remain_terminal) ... ok
+test_total_stderr_ceiling_is_passive_below_and_terminal_at_16384 (test_bindings.PassiveStderrDiagnosticCases.test_total_stderr_ceiling_is_passive_below_and_terminal_at_16384) ... ok
+
+======================================================================
+ERROR: test_authority_slot_and_request_freeze_identity_reject_stale_bindings (test_bindings.PassiveStderrDiagnosticCases.test_authority_slot_and_request_freeze_identity_reject_stale_bindings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\s1-stderr-observation-diagnostic-20261008-r2\test_bindings.py", line 188, in test_authority_slot_and_request_freeze_identity_reject_stale_bindings
+    later_grant, assigned = client.validate_live_authority(copy.deepcopy(self.grant), slot, self.grant)
+    ^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 2)
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.026s
+
+FAILED (errors=1)

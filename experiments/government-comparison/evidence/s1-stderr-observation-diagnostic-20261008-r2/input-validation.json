@@ -1,0 +1,25 @@
+{
+  "key": "s1-stderr-observation-diagnostic-20261008-r2",
+  "checkedUtc": "2026-10-08T17:35:37.649785+00:00",
+  "grantIssuedUtc": "2026-10-08T17:31:23Z",
+  "slotAssignedUtc": "2026-10-08T17:31:23Z",
+  "completeLiveGrantSemanticEquality": true,
+  "exactActiveSlot": true,
+  "binarySha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "schemaArchiveSha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+  "schemaMembersVerified": 12,
+  "publicInputFilesVerified": 2,
+  "historicalLedgerPinsVerified": 5,
+  "externalRootAbsent": true,
+  "profileConfigPairs": 17,
+  "methods": [
+    "initialize",
+    "initialized",
+    "config/read",
+    "configRequirements/read",
+    "thread/start"
+  ],
+  "nativeStarts": 0,
+  "diagnosticReservations": 0,
+  "meaning": "Read-only actual pre-reservation input validation; no execution entrypoint or synthetic test invocation."
+}

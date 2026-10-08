@@ -1,0 +1,21 @@
+{
+  "key": "s1-stderr-observation-diagnostic-20261008-r2",
+  "issuedUtc": "2026-10-08T17:31:23Z",
+  "capture": {
+    "maxInputBytes": 1024,
+    "maxCompletePhysicalLines": 4,
+    "maxOutputBytes": 2048,
+    "firstNonemptyByteTerminal": false,
+    "continuationOnlyCleanup": false,
+    "privateExcerptRelativePath": "private-redacted-stderr/redacted-stderr.json",
+    "onceOnlyAfterNativeExitAndAllPumpsQuiescentAndOpenDeadline": true,
+    "maxObservedStderrBytes": 16384
+  },
+  "collectorPath": "experiments/government-comparison/evidence/s1-redacted-stderr-offline-20261008/redacted_stderr.py",
+  "collectorSha256": "d92f79b0d14abd2c5851bea2162813c5f93b396e4d19fc927389bc8b6557ef6d",
+  "normalReceipts": "Metadata only; no excerpt text or excerpt content fingerprint.",
+  "privateRead": "Only actual written-private, exact owned nonlink file, valid bounded JSON <=2048 bytes; report category/line/uncertainty only; remove only owned exact file at closure.",
+  "partialWrite": "Never read; remove exact partial only with proven own creation; preserve foreign files; no recursive deletion.",
+  "residual": "Unknown secret forms and sanitized task/model history retention remain possible. No secrecy/root cause/OS/billing/S1 proof.",
+  "observation": "Capture event is passive and separate from fatal stderr ceiling. Unchanged accepted collector is fed cleanup=True by wrapper for bounded fragments. Strict structured protocol/config/auth/schema/notification errors, native end, resources/deadlines remain terminal. No text allowlist."
+}

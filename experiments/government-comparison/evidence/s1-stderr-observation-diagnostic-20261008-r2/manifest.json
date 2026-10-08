@@ -1,0 +1,77 @@
+{
+  "key": "s1-stderr-observation-diagnostic-20261008-r2",
+  "baseSha": "5f66346d6c602d573777fcd1522d006a6a6faefb",
+  "phase": "reviewed-source-preparation-only",
+  "files": {
+    "authorization-grant.json": {
+      "bytes": 8526,
+      "sha256": "cf988b417c3ac6c0bc227c28f4a9306dd555627a9375e424c3f2a7cb5ed729da"
+    },
+    "client.py": {
+      "bytes": 37566,
+      "sha256": "70fd65b3c0ced08dd638676fe52dad9ff1f3fd2a56399e84605643245950f3b5"
+    },
+    "diagnostic-contract.json": {
+      "bytes": 1536,
+      "sha256": "c16a7be1096bba49acb97e02b5b5d0d5ad0d9753bcc578505c2e8b7dbb8deb27"
+    },
+    "focused-binding-rerun.log": {
+      "bytes": 289,
+      "sha256": "71857cb4aed58538045c4c557dca0cdd8506da93d27b44d78b20f42c7c2ef1aa"
+    },
+    "focused-tests.log": {
+      "bytes": 2091,
+      "sha256": "c3c0dde6ff1c0b7867ce7727f6d7a56ecccd27fccf256291caa5bce070382a7f"
+    },
+    "frozen-method-enums.json": {
+      "bytes": 23235,
+      "sha256": "831728c4ce8c1913d25eff43229c93b81c0f5d802f93eb3b057333c4048e2220"
+    },
+    "input-validation.json": {
+      "bytes": 910,
+      "sha256": "d987b73dcca70760860687169d25ca9328d1d554d17426d0e3edebe8b5cf2db7"
+    },
+    "offline-validation.json": {
+      "bytes": 2193,
+      "sha256": "3d5b36abcd8949b17496f76e77dd8c5e7761f9bbac4237dde358e50076247a51"
+    },
+    "preflight-review.md": {
+      "bytes": 3616,
+      "sha256": "44f819abfa0763c5ae4b32ab2ed1f81beedf2a62a15b87f7e879bd1571170bfc"
+    },
+    "preparation-history.json": {
+      "bytes": 6451,
+      "sha256": "cbeeec2a46c90acde13b81928028af20fb022fa34c0e6cfbfe95af3f735b1c39"
+    },
+    "preparation.md": {
+      "bytes": 3181,
+      "sha256": "d19266800216233c4742bf50674dae80765c149e4074ec97f43f3ca41495af10"
+    },
+    "profile.json": {
+      "bytes": 2967,
+      "sha256": "b8ccffb43d7248c8082ad23abad7cb71c8bb03d21bf36fe7d296dea3a7dbe72c"
+    },
+    "run_once.py": {
+      "bytes": 3347,
+      "sha256": "a2f53477c0eca6f394568270ce536afdc213ba484f187f9301b257fc98f9ecd0"
+    },
+    "schema-contract.json": {
+      "bytes": 2544,
+      "sha256": "c4bf557d17426f4c9a6c61e97353b8361469169e067e1f911fdfc7488d369270"
+    },
+    "test_bindings.py": {
+      "bytes": 16025,
+      "sha256": "8badec3b33c18019a134f93cf310050421c267276dd26abd99ed5e9e38a5c56a"
+    },
+    "thread_gate.py": {
+      "bytes": 4470,
+      "sha256": "b48ce8b67e3a18ecab80a49d1eb3633f90443cc9524972e00a3ea7bdf27fa6cd"
+    }
+  },
+  "payloadFiles": 16,
+  "runtimeStarts": 0,
+  "diagnosticReservations": 0,
+  "requestCreated": false,
+  "finalFreezeCreated": false,
+  "privateExcerptIncluded": false
+}

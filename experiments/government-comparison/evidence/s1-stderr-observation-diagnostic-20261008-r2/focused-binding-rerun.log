@@ -1,0 +1,6 @@
+test_authority_slot_and_request_freeze_identity_reject_stale_bindings (test_bindings.PassiveStderrDiagnosticCases.test_authority_slot_and_request_freeze_identity_reject_stale_bindings) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.002s
+
+OK
