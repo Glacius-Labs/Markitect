@@ -176,13 +176,17 @@ func documentText(project *Project) string {
 	if len(observed) == 0 {
 		out.WriteString("No files were supplied by the selected inventory roots. This does not mean that the repository contains no files.\n\n")
 	} else {
-		out.WriteString("| Path | Observation | Responsible Manager | Class |\n|---|---|---|---|\n")
+		out.WriteString("| Path | Observation | Responsible Manager | Class | Coverage |\n|---|---|---|---|---|\n")
 		for _, file := range observed {
 			observation := "not present"
 			if file.Exists {
 				observation = "present"
 			}
-			fmt.Fprintf(&out, "| %s | %s | %s | %s |\n", sourceLink(file.Path), observation, inline(file.Owner), inline(file.Class))
+			coverage := "unmodeled: no Artifact path declared"
+			if len(file.Artifacts) > 0 {
+				coverage = "linked to an expected Artifact"
+			}
+			fmt.Fprintf(&out, "| %s | %s | %s | %s | %s |\n", sourceLink(file.Path), observation, inline(file.Owner), inline(file.Class), coverage)
 		}
 		out.WriteString("\n")
 	}
@@ -205,7 +209,7 @@ func documentText(project *Project) string {
 
 	out.WriteString("## Coverage and findings\n\n")
 	if len(project.Report.Unknown) == 0 {
-		out.WriteString("No unknown coverage items were reported by the selected inventory analysis.\n\n")
+		out.WriteString("No unowned inventory paths were reported. Per-file Artifact coverage is shown above.\n\n")
 	} else {
 		for _, unknown := range project.Report.Unknown {
 			fmt.Fprintf(&out, "- Unknown: %s\n", inline(unknown))
