@@ -1,0 +1,105 @@
+{
+  "key": "s1-thread-start-diagnostic-20261008-r1",
+  "status": "PREPARATION BLOCKED BEFORE RESERVATION",
+  "baseCommit": "befbd24d625c77f2f0ab1c36bb91e36b65473e9e",
+  "sourceCommit": "7e9271f0dbc81d202c92cf627999723cc750c6ad",
+  "freezeCommit": null,
+  "recordedAtUtc": "2026-10-08T15:12:22.367044+00:00",
+  "payloadCount": 23,
+  "selfExcluded": true,
+  "files": {
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/authority-binding.json": {
+      "sha256": "86144d8b2c64bcf8579361b8e75a6b5d4c809cfcf7a4d0f5d5d2713e4ed5ecf9",
+      "bytes": 1319
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/authorization-grant.json": {
+      "sha256": "1d712e742f93697506b7de034d031652f33b02ceae57e4d1596ad4ace18f24cc",
+      "bytes": 11478
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/client.py": {
+      "sha256": "ae2101af0b052bc53002bbcad30cc9259b2f0eb672099f5ffab85c8446532b06",
+      "bytes": 27404
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/current-handoff.md": {
+      "sha256": "05d55912a37d7ca88a3c5f8b86038eba37d18cec0f53aef5f09860e9b2691ca2",
+      "bytes": 3283
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/diagnostic-contract.json": {
+      "sha256": "0fb70bafd10b0d3de2883d1f4fcbf7cfd292a61e88a6ce524567a386e664a70c",
+      "bytes": 2494
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/focused-tests.log": {
+      "sha256": "bcd8518209995016deec536502ca72a44df1c396fd8e38334dea71b6db9b89d6",
+      "bytes": 8716
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/frozen-method-enums.json": {
+      "sha256": "6553df9ac4a37d11402728992ed5e684ea379fbadeee790700867ae4542594cf",
+      "bytes": 24134
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/historical-bindings.json": {
+      "sha256": "4f018be08357dab73482b31d01b0ba170b379b7696950af06b864491dec7e9ba",
+      "bytes": 1846
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/input-binding.json": {
+      "sha256": "5b4d2032eb6ef8c649bd2429b4e0052a65866bfe095eb3e75e5ae36b83d854bb",
+      "bytes": 637
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/offline-validation.json": {
+      "sha256": "0627a7234ead573316c4e20bed2bc83f46513fd77c68f53a2161fabaac5094da",
+      "bytes": 2433
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/postreview.md": {
+      "sha256": "68f51650a042e00004dc4505cae24f650062de9495e528f6acc938aff3e83a3c",
+      "bytes": 5418
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/preflight-review.md": {
+      "sha256": "1ade11ebe6e45e0bd221fab692c7c08ce81410ca57b309ccf3faa3b547096881",
+      "bytes": 5887
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/preservation-validation.json": {
+      "sha256": "c4c08ae6c693980f3cc93be158a7c2850dab51639118045fb69995716ba5480b",
+      "bytes": 6772
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/profile.json": {
+      "sha256": "b2765de4b63224c929d55c2467d026a96a3b7d52667845c8eee916f0013ca459",
+      "bytes": 2877
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/run_once.py": {
+      "sha256": "32bdfcc84fc25dba6d1a4fa289745674780134ee580fab9ae12b239f788fe3f3",
+      "bytes": 3103
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/schema-contract.json": {
+      "sha256": "b642953d3c663ad02df91c258b051bc5415f376c7b7e0612dcaf84a9c98c6332",
+      "bytes": 2476
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/slot-release.json": {
+      "sha256": "3dd93f4da2a0dd59dba21b4b057a56274d84bd02b954b5274804d8c0f001c376",
+      "bytes": 646
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/stderr_collector.py": {
+      "sha256": "a9a1213146acbf31791e966992507b976ee6d3753bf50b27ecf14e7c42261df4",
+      "bytes": 8221
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/terminal-handoff.md": {
+      "sha256": "9f06d3491002a1351e1f8209c32820b93722a4250bf67a9a40a4d1f00ad6a66f",
+      "bytes": 4064
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/terminal-summary.json": {
+      "sha256": "0064fece1af3ba00494b4b1b3f778e3a909839c41e3289c4c66bdd7f50b6647d",
+      "bytes": 2698
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/test_client.py": {
+      "sha256": "f3f00803145ae1951157518bdacae728bda87d3be5e23f158b1ba671bc3a18bc",
+      "bytes": 11820
+    },
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/thread_gate.py": {
+      "sha256": "b48ce8b67e3a18ecab80a49d1eb3633f90443cc9524972e00a3ea7bdf27fa6cd",
+      "bytes": 4470
+    },
+    "experiments/government-comparison/public/s1-thread-start-diagnostic-20261008-r1.md": {
+      "sha256": "93c272d71f79b172ed29954f6982788847c360822b0741bf96bd35c9c6837c62",
+      "bytes": 2148
+    }
+  },
+  "meaning": "Immutable closure payload list; no runtime receipts exist, mandatory pinned executable absent before request/freeze/reservation; historical files unchanged and local slot released pending Overseer canonical update."
+}

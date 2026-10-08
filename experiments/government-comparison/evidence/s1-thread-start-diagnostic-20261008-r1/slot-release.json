@@ -1,0 +1,17 @@
+{
+  "key": "s1-thread-start-diagnostic-20261008-r1",
+  "owner": "Scientist",
+  "releasedAtUtc": "2026-10-08T15:08:27.466196+00:00",
+  "status": "Explicitly released after first concrete preparation blocker; grant closed",
+  "reason": "required-pinned-executable-absent",
+  "newDiagnosticReservationsConsumed": 0,
+  "newActorTaskReservationsConsumed": 0,
+  "newAppServerTreesConsumed": 0,
+  "threadStartRequestsWritten": 0,
+  "turnStartRequestsWritten": 0,
+  "remainingNewReservations": 0,
+  "remainingAppServerTrees": 0,
+  "residualBudgetExpired": true,
+  "noAutomaticFollowup": true,
+  "overseerOwnsCanonicalSlotUpdate": true
+}
