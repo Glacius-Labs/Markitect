@@ -30,5 +30,6 @@
   "preparationToReservationSeconds": 429.239971,
   "preparationToNativeSessionBoundarySeconds": 437.235004,
   "preparationToTerminalSeconds": 437.561433,
-  "closureArtifactsPreparedUtc": "2026-10-08T19:08:53.935847+00:00"
+  "closureArtifactsPreparedUtc": "2026-10-08T19:08:53.935847+00:00",
+  "postreviewDocumentationClarification": "Clarified four field comparisons vs separate permission gates, and zero extra CLI version/schema commands vs the five actual authorized app-server methods; no source/test/runtime change"
 }
