@@ -1,0 +1,9 @@
+# Independent authority-preflight review
+
+I confirmed the canonical grant and slot conflict recorded in this terminal closure. The grant is labeled conditionally authorized for one new tree and Actor reservation and says a new runtime is reserved, while also recording zero remaining authority and one already-actual new tree plus one already-actual new Actor reservation before this package took any action. The captured readiness window says zero attempts consumed and one reserved. The closure’s work history records no new reservation or process start. These statements cannot be reconciled by treating the one-unit allocations as unused.
+
+The slot is keyed to this grant and marked Assigned, but it has no fresh `grantIssuedUtc` or `assignedUtc` fields and retains the prior release timestamps. The existing accepted live-authority binding requires the fresh grant/assignment pair; the exact slot cannot satisfy that binding. I found no basis to substitute the grant issue time for a missing assignment time or clear the prior release markers. The missing resumption-history record provides no additional transition evidence.
+
+This is therefore a terminal preparation authority blocker under the grant’s first-blocker stop rule. No source changes, profile, request, or freeze were created; no external output root, runtime reservation, native process, Actor, thread, turn, or tool was started; no tests or CLI metadata calls were run; and canonical coordination was not mutated. Historical totals remain 13 app-server trees and 6 Actor reservations. Local closure records zero remaining allocation and local release, with canonical slot acceptance still pending Overseer.
+
+The captured findings accurately preserve both contradictions and the no-action boundary. I found no basis to normalize the authority fields or weaken the existing binding gate. Any later attempt requires a fresh, unambiguous canonical grant-and-slot transition.

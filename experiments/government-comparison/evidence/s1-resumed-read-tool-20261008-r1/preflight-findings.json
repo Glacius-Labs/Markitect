@@ -1,0 +1,50 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r1",
+  "status": "TERMINAL PREPARATION AUTHORITY BLOCKER",
+  "firstActionUtc": "2026-10-08T19:59:39Z",
+  "recordedUtc": "2026-10-08T20:01:06.650786+00:00",
+  "baseSha": "8676817608239451b8a5ad17ebc46482e2ed59f4",
+  "findings": [
+    {
+      "code": "contradictory-current-authority",
+      "observed": {
+        "status": "AUTHORIZED conditionally for one fresh read-tool readiness attempt after source/binding review and freeze; no old grant reused.",
+        "maxNewAppServerTrees": 1,
+        "maxNewActorReservations": 1,
+        "newRuntimeReserved": 1,
+        "remainingAuthority": 0,
+        "actualNewAppServerTrees": 1,
+        "actualNewActorReservations": 1,
+        "actualTurnStarts": 0
+      },
+      "meaning": "Fresh positive allocation coexists with zero remaining authority and outcomes equal to the full tree/Actor caps before any action in this package. Scientist cannot silently reset or reinterpret these fields."
+    },
+    {
+      "code": "fresh-slot-activation-not-bindable",
+      "observed": {
+        "owner": "Scientist",
+        "key": "s1-resumed-read-tool-20261008-r1",
+        "queue": [],
+        "status": "Assigned to prospective resumed read-tool readiness attempt.",
+        "releasedUtc": "2026-10-08T19:43:51.923481Z",
+        "releaseVerifiedUtc": "2026-10-08T19:48:30Z"
+      },
+      "missing": [
+        "grantIssuedUtc",
+        "assignedUtc"
+      ],
+      "meaning": "Assigned key/status coexist with previous release timestamps; existing accepted live-authority gate requires issued/assigned binding. No replacement or weakening performed."
+    }
+  ],
+  "independentPreflightReview": "diagnostic_review independently confirmed both blockers",
+  "scope": "Authority preparation only; no client/schema/profile/request/freeze construction, no inputs/private data inspected",
+  "sourceImplementationChanges": 0,
+  "requestFreezeConstructed": false,
+  "externalRootCreated": false,
+  "newRuntimeReservations": 0,
+  "actualNativeStarts": 0,
+  "actualNewActorReservations": 0,
+  "actualThreadsTurnsTools": 0,
+  "newCliMetadataWebStudyCalls": 0,
+  "canonicalCoordinationMutated": false
+}

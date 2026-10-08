@@ -1,0 +1,17 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r1",
+  "grantIssuedUtc": "2026-10-08T19:58:49Z",
+  "releasedUtc": "2026-10-08T20:01:06.650786+00:00",
+  "releaseReason": "First terminal preparation authority blocker; no reservation/native/Actor/thread/turn/tool; no local correction or relaunch",
+  "grantLocallyClosed": true,
+  "remainingLocalAllocation": 0,
+  "localSlotReleaseRecorded": true,
+  "canonicalSlotAcceptancePendingOverseer": true,
+  "canonicalCoordinationMutatedByScientist": false,
+  "actualNewNativeTrees": 0,
+  "actualNewActorReservations": 0,
+  "newRuntimeReservations": 0,
+  "actualNativeTreesCumulative": 13,
+  "historicalActorReservations": 6,
+  "noAutomaticRetryOrFallback": true
+}

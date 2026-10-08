@@ -1,0 +1,20 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r1",
+  "firstActionUtc": "2026-10-08T19:59:39Z",
+  "terminalPreparationBlockerRecordedUtc": "2026-10-08T20:01:06.650786+00:00",
+  "preparationSecondsThroughBlocker": 87.650786,
+  "preparationMaximumSeconds": 1800,
+  "testInvocations": 0,
+  "syntheticCases": 0,
+  "sourceTestCorrectionBatches": 0,
+  "independentOfflineReviewers": 1,
+  "nativeOrModelProcessesStarted": 0,
+  "externalRootsCreated": 0,
+  "newReservations": 0,
+  "cliMetadataCalls": 0,
+  "webCalls": 0,
+  "privateOrHoldoutReads": 0,
+  "sourceChangesAfterAcceptedBase": 0,
+  "canonicalMutations": 0,
+  "oldGrantOrWindowReused": false
+}
