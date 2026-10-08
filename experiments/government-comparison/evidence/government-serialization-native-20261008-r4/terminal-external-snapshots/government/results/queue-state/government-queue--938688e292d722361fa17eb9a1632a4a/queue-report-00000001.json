@@ -1,0 +1,57 @@
+{
+  "apiVersion": "markitect.government-queue/v1alpha1",
+  "queueId": "government-queue--938688e292d722361fa17eb9a1632a4a",
+  "queueDirectory": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-serialization-20261008-r4\\government\\results\\queue-state\\government-queue--938688e292d722361fa17eb9a1632a4a",
+  "status": "queued",
+  "nextStep": "run finite backlog",
+  "backlogDigest": "28261e8515fb6702d5d532aafec11dda0c16ff52e58776441b167887b3ffe36a",
+  "limits": {
+    "actorStarts": 3,
+    "maxRepairs": 0,
+    "maxWallTimeSeconds": 38,
+    "maxParallelism": 2
+  },
+  "actorStarts": 0,
+  "repairs": 0,
+  "inFlightActors": 0,
+  "peakParallelism": 0,
+  "reservedWallTimeSeconds": 0,
+  "elapsedWallTimeSeconds": 0,
+  "usage": {
+    "inputTokens": {
+      "known": false,
+      "total": 0,
+      "unknown": false
+    },
+    "outputTokens": {
+      "known": false,
+      "total": 0,
+      "unknown": false
+    },
+    "cachedTokens": {
+      "known": false,
+      "total": 0,
+      "unknown": false
+    },
+    "toolCalls": {
+      "known": false,
+      "total": 0,
+      "unknown": false
+    },
+    "observedActorWallTimeMilliseconds": {
+      "known": false,
+      "total": 0,
+      "unknown": false
+    }
+  },
+  "jobs": [
+    {
+      "id": "positive-overflow-release",
+      "state": "queued",
+      "nextStep": "await dependencies"
+    }
+  ],
+  "journalSequence": 1,
+  "journalDigest": "970bafda1c17626101da79024055b163e5d6416bb40854b4111c9410601a7976",
+  "startedAt": "2026-10-08T01:28:32.2350998Z"
+}

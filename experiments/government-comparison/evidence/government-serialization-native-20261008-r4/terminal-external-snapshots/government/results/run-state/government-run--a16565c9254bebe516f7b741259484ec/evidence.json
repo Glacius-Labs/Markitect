@@ -1,0 +1,11 @@
+{
+  "id": "sha256:3054f95272df3f20e9616f12a5c14d984abe0b642525ef93a30d86daab6d499f",
+  "materialCandidateId": "sha256:5c6a321f816e5b77e9b1e11647663693bdf05159ef8d8a6fe55645e54daea9ff",
+  "round": 1,
+  "resultDigests": [
+    "sha256:44f6979e2723496bdce6f6ff10c5cc78dad0602796a01eab449b4061fdc3c962",
+    "sha256:899de930b066c37fe8dbe9b9abaf13847befe826cdb3602be1d4c747d65c7086",
+    "sha256:e145675c2327e5e0859bd8484336aac19b46ccbf348a46bc8b6f80aa28ecf045"
+  ],
+  "reportDigests": null
+}

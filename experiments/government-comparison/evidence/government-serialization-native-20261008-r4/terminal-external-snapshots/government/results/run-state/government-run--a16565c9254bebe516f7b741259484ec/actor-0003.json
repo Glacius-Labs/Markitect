@@ -1,0 +1,53 @@
+{
+  "sequence": 3,
+  "startedAt": "2026-10-08T01:28:41.5677908Z",
+  "finishedAt": "2026-10-08T01:28:41.9885091Z",
+  "phase": "vote",
+  "slotId": "positive-ressort-correctness",
+  "scopes": [
+    "[\"markitect.government/v1alpha1\",\"Ressort\",\"inventory\",\"correctness\"]"
+  ],
+  "result": {
+    "Response": {
+      "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+      "runId": "fb36d997f224e1225f5d8f2dc3f19709",
+      "nonce": "0ce2f75a9b2cf04b2fde5795d97d3798",
+      "role": "verifier",
+      "inputDigest": "sha256:a5562af2da0315dd3b00a2bd0a38b30302b0a59306607806437cca93f619b4d7",
+      "outcome": "passed",
+      "candidateFiles": [],
+      "evidenceRefs": [
+        "[\"markitect.government/v1alpha1\",\"Constitution\",\"inventory\",\"active\"]",
+        "[\"markitect.government/v1alpha1\",\"Ressort\",\"inventory\",\"correctness\"]",
+        "inventory/reservation.go",
+        "inventory/reservation_test.go"
+      ],
+      "verifierObservations": [
+        {
+          "subject": "government-vote",
+          "outcome": "passed",
+          "detail": "{\"evidenceId\":\"sha256:3054f95272df3f20e9616f12a5c14d984abe0b642525ef93a30d86daab6d499f\",\"materialCandidateId\":\"sha256:5c6a321f816e5b77e9b1e11647663693bdf05159ef8d8a6fe55645e54daea9ff\",\"outcome\":\"assent\",\"reason\":\"Deterministic fixture checked the bound overflow implementation and focused test; this is process-mechanics evidence only.\",\"round\":1}"
+        }
+      ],
+      "uncertainty": []
+    },
+    "Receipt": {
+      "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+      "runId": "fb36d997f224e1225f5d8f2dc3f19709",
+      "inputDigest": "sha256:a5562af2da0315dd3b00a2bd0a38b30302b0a59306607806437cca93f619b4d7",
+      "contextDigest": "sha256:aa66c0eaae7ed3c224fe50ebbec33a57e070e4de2d4c43d76da3d15ee3b4d24b",
+      "configDigest": "sha256:4c1d12804a8fb46a94286ddf914f435fad36995988a752c511afacfab146302b",
+      "commandDigest": "sha256:95071bf4809e8c5a49454b7b129c5f65dbb9d097e515708f651f0b7768215c21",
+      "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+      "runtimeFilesDigest": "sha256:6648328cadd3fa3ffd5d245ec093918311fccc08231fce25b66d22a68c9d05e5",
+      "providerVersion": "python-fixed-role-response-v1",
+      "providerVersionDigest": "sha256:724397c0b5615e3a70af28508cd6b20e6857a6b1340d6e352d8c7b71c6cc1621",
+      "stdoutDigest": "sha256:5fdcd9e4de2f012fca9b637ad8ec485c81e800cb1d725d933f3e7c3ed5978044",
+      "stderrDigest": "sha256:2d9adcd4b32a2f826e417d253a50eed0be46ff9e1051b36c9370cd06a4fd6599",
+      "privateLogDigest": "",
+      "outcome": "passed",
+      "wallTimeMilliseconds": 408,
+      "retryCount": 0
+    }
+  }
+}

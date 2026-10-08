@@ -1,0 +1,32 @@
+{
+  "argv": [
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+    "government",
+    "--repo",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-serialization-20261008-r4\\government\\actor",
+    "--action",
+    "queue",
+    "--backlog",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-serialization-20261008-r4\\government\\released\\backlog.json",
+    "--write"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-serialization-20261008-r4\\government\\actor",
+  "returnCode": 0,
+  "wallSeconds": 12.622417000005953,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-serialization-20261008-r4\\government\\controller-evidence\\process\\stdout.log",
+      "sha256": "04126b6c459759ebf9ef08303d5d1f1c64a5450583fbed8e1a28be7cac5ac8c4",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-serialization-20261008-r4\\government\\controller-evidence\\process\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    }
+  ]
+}

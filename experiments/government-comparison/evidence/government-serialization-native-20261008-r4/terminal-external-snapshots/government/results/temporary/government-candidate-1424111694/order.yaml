@@ -1,0 +1,10 @@
+apiVersion: markitect.government-order/v1alpha1
+kind: Order
+purpose: Prevent reservation release from overflowing available inventory.
+activeConstitution: sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93
+action: implement
+subjects:
+  - apiVersion: markitect.government-example/v1alpha1
+    kind: Requirement
+    namespace: inventory
+    name: safe-release

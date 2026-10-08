@@ -1,3 +1,48 @@
+# Government R4 terminal: native accepted, outer qualification incomplete
+
+The single `government-serialization-native-20261008-r4` case is closed.
+`run-native-integration-r4.py run-once` was called exactly once from clean freeze
+commit `1b21c32b4a8988393922a7d3cdecc512cc174cdd`; reviewed source commit
+`90a5c77d2cc7cd8103f74c83997e4d35ab838d21`, freeze SHA-256
+`00ca0ccb3f6acc0027caa47b3818b6d2e21959b1a947ec102f5e6077d80ffaad`.
+All 51 frozen inputs remained unchanged after the terminal case.
+
+Native Queue: exit 0, status complete, job accepted-scoped; native run report
+accepted-scoped/complete, fresh inventory-overflow check passed, three accepted
+role responses, bound evidence/positive final vote/decision and promoted ref.
+These are bounded deterministic fixture mechanics. The native process took
+12.622417 seconds; measured delegate process wall times sum to 0.4287114 seconds
+and are distinct from native wrapper observations and reservations.
+
+Outer Result and R4 remain **incomplete**. The unchanged adapter rejects the
+planned integration-review scope: native scopes use full JSON identity tuples
+(e.g. `["markitect.government/v1alpha1","Area","inventory","root"]`), while
+`government.py` compares the planned Area to `inventory/root`. The passing
+native review is present; the outer representation/binding requirement did not
+pass. Preserve both facts. No source repair, rescore, Resume, retry, new case or
+residual quota use is authorized under this now-closed case.
+
+Actual new consumption: 1 native start, 3 wrapper attempts, 3 deterministic
+delegates, 150 reserved session seconds. Cumulative: 12 native /10 wrappers /
+7 delegates /1800 reserved seconds. Peak native roles 1 (ceiling 2). Original
+11 ledger rows are byte/value-preserved in the additive ledger and snapshots;
+the current original ledger digest advances, as explicitly expected for R4.
+Real history remains 5 Actorstarts, 53331 known tokens, total unknown. No new
+models, provider, metadata, study cell, Classic or full-suite run.
+
+Canonical R4 evidence is `evidence/government-serialization-native-20261008-r4/`:
+terminal-result.json, terminal-summary.json, 86 terminal raw original/copy pairs,
+strict preflight review, immutable freeze and independent post-run review.
+The terminal negative qualification is final. Remaining S1 gaps include exact
+native identity-format fidelity in the outer adapter, the unrun Resume/readback,
+real-Actor/tool capability and semantic/human acceptance. Any future source work
+or execution needs a new scoped Overseer assignment; no automatic diagnosis loop.
+
+Independent postreview is complete; Scientist explicitly released the slot in
+slot-release.json. Finish only any missing terminal manifest/byte-preservation
+check and clean local commit. No more experimental processes. The prior preflight and all earlier
+handoffs below remain preserved verbatim.
+
 # Government R4: finite native case preflight
 
 Grant `government-serialization-native-20261008-r4`, accepted source base
