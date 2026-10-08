@@ -212,7 +212,7 @@ func runAction(opts options, out io.Writer) error {
 			if err != nil {
 				return err
 			}
-			if workingProject.Digest != fixedProject.Digest {
+			if workingProject.Snapshot == nil || fixedProject.Snapshot == nil || workingProject.Snapshot.Digest() != fixedProject.Snapshot.Digest() {
 				return errors.New("selected project inputs differ from committed HEAD; commit accepted model, runtime, inventory, or selection changes before generated distillation")
 			}
 			runtimeConfig, err := projectrun.LoadRuntime(opts.repo)
