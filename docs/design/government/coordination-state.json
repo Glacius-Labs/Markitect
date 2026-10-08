@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T23:57:05Z",
+  "updatedUtc": "2026-10-08T23:58:37Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -447,12 +447,12 @@
       },
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac82d0780e08191b9e0d414ccdba79c",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Run six real native-Codex exploratory case studies, independently evaluate and report intermediate data",
-      "latestProgress": "Clean ed9c5b3 closure reported: exactClassicMainbuildPASS/3metadataPASS/32then42mechanicsPASS, correctionbatches3/2deviation; no Actors/Trials. Root reconciliation/review pending.",
+      "assignedMilestone": "One independent prospective oracle/outcome source review, then exact clean Design handoff and commonfreeze for bounded matched comparisons",
+      "latestProgress": "ed9c5b3 qualifiedaccepted: exactMainbinary/3CLIreadchecks/42mechanics verified;3/2deviation and DTOadvisoryerratum. One finite independentcommonoracle review dispatched; no actualcells. Design activeWIP.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
-      "acceptance": "R7 bounded native+outer Queue and terminal Resume mechanics accepted; S1 real common Actor/tools and study cells remain open.",
+      "candidateSha": "ed9c5b33434219c64a39366b7d1b1cd30fc64884",
+      "acceptance": "Current public preparation qualified accepted after root/independent review; DTOhelper advisory only and3/2correctiondeviation retained. No matchedstudyadmission; historicalactualv3/posthoc preserved.",
       "lastAssignment": {
         "key": "native-codex-exploratory-v3-20261008",
         "authorizedUtc": "2026-10-08T21:26:29Z",
@@ -7200,7 +7200,10 @@
             "Deliver exact clean source/config/binary/helper/test hashes, actual commands/failures/limits and remaining Design/admission items by deadline; then hold for clean Design callback or concrete review finding, not another generic preparation package.",
             "No fulltrial admission yet. Next actual block requires exact accepted Design candidate, one supported real common profile and independently reviewed finite freeze/review/trialbudget within existing8trial/2question ceiling."
           ],
-          "usage": null
+          "usage": null,
+          "status": "Closed/qualifiedofflineaccepted with correction3/2deviation and DTOadvisoryerratum; no remainingauthority",
+          "closedObservedUtc": "2026-10-08T23:58:37Z",
+          "remainingAllQuotas": 0
         },
         "v4ClassicMainRuntimeBindingDispatch": {
           "recordedUtc": "2026-10-08T23:34:40Z",
@@ -7230,7 +7233,7 @@
           "issuedUtc": "2026-10-08T23:34:40Z",
           "notAfterUtc": "2026-10-09T00:10:57Z",
           "source": "New specific finite correction after direct Scientist callback and root-confirmed raw failure: wrong GOTOOLCHAIN=local selected existing older baseGo. Direct user authorizes ordinary technical work; no new trial/model authority.",
-          "status": "Dispatched once; awaiting separately reserved existing-toolchain attempt",
+          "status": "Closed/consumed1 successful existing-toolchainbuild; no remainingauthority",
           "buildAttemptsMax": 1,
           "buildTimeoutSeconds": 600,
           "newActors": 0,
@@ -7247,7 +7250,9 @@
             "No extra metadata/test/correction quotas, unchanged original deadline and all other original grant limits. Reuse already allowed four ordinary Markitect metadata/context calls only after exact binary binding.",
             "No other diagnostics/preparation loop. Deliver runtime packet and concrete remaining Design/admission blockers; no actual study starts."
           ],
-          "usage": null
+          "usage": null,
+          "closedObservedUtc": "2026-10-08T23:58:37Z",
+          "remainingBuildAttempts": 0
         },
         "v4ClassicExistingToolchainBuildCorrectionDispatch": {
           "recordedUtc": "2026-10-08T23:35:28Z",
@@ -7296,7 +7301,7 @@
             "At deadline or first terminal result close with no retries/newquota; preserve all old37/115/264bindings, runtimebindingpacket and privatebundle. No blanket restart or waiting for Root approval within already authorized single review.",
             "This grant does not admit any cell or allocate fulltrials. After review hold for exact clean Design callback/jointfreeze or concrete materialfinding; no generic preparation/diagnostic loop."
           ],
-          "status": "Authorized/not yet dispatched",
+          "status": "Dispatched once; one fresh independent reviewer authorized, no actual cells",
           "usage": null
         },
         "v4ClassicMainRuntimeBindingRootVerification": {
@@ -7327,6 +7332,52 @@
           "dispatchConfigSha256": "447c1df2141a1de5dc46be40a991d8e08b2c127759e9ae35daf8190440f8bd75",
           "independentPublicAuthorityReview": "pending /root/g2_review_authority",
           "notStudyAdmission": true
+        },
+        "v4ProspectiveOracleOutcomeReviewDispatch": {
+          "recordedUtc": "2026-10-08T23:58:37Z",
+          "deliveryConfirmed": true,
+          "grantCommit": "7a085e8",
+          "prompt": "Dein Abschluss ed9c5b33434219c64a39366b7d1b1cd30fc64884 ist geprüft: Root bestätigt den sauberen Stand,37 reine Additionen,36 Manifest-/Gitbindungen plus Manifest,37 alte Vorbereitungsdateien/115 alte Belege,32 Classic-Quell-/Git-/ZIPbindungen,12 Auditquellauszüge und die Binary-/Go-Hashes. Unabhängiger Rootreview /root/g2_review_authority nimmt das Paket qualifiziert als Offline-/CLI-Bindung an, NICHT als Studienzulassung. 32/42 mechanische Tests bleiben solche. Die 3/2-Korrekturabweichung bleibt erhalten. ledger.closedUtc23:49:40Z ist ein früher/staler Abschlusszeitpunkt vor Archivcharge3 um23:52:20Z; späterer Manifest-/Commitstand belegt die aktuelle Schließung, keine rückwirkende Autorität.\n\nMaterieller öffentlicher Reviewbefund für den SPÄTEREN gemeinsamen Freeze: Unser vorheriger Zuschnitt opaque request.context war zu weit. Main strictDecode/rejectProtocolKeyAliases prüft Protokoll-Key-Aliase dort rekursiv; nur candidateJson ist ausgenommen. Die Pythonkopie prüft außerdem nicht alle Contextgrößen/Artifact-Byte-/Digestinvarianten. inputDigest-Präfix/Response-Echo stimmen. Root entscheidet für den nächsten Freeze den kleinen Weg: Helper nur beratende strukturelle Vorprüfung, tatsächlicher Produktparser und gebundene echte Invocation/Receipt bleiben maßgeblich. Keine Vertragsäquivalenz behaupten. AuditedRoots und konservatives externes Repo-Pfadverbot ebenfalls getrennt ausweisen. KEINE Code-/Helperkorrektur oder erneute Tests dafür in dem folgenden Auftrag.\n\nGenau ein weiterer KONKRETER unabhängiger Bewertungsreview kann während Designs Arbeit abgeschlossen werden: v4-prospective-oracle-outcome-independent-review-20261009, in Rootcommit7a085e8 dokumentiert. Canonical C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination-state.json -> Scientist.evidence.v4ProspectiveOracleOutcomeReviewGrant. Issued2026-10-08T23:57:05Z, Ende2026-10-09T00:12:05Z; maximal900s Gesamt, genau EIN frisch vorreservierter Reviewer fork_turns=none maximal600s, maximal1parallel, keine Overrides/ChildActors/Folgeaktivierung/Retry. Ein fehlgeschlagener Start verbraucht die eine Aktivierung. Dies ist separat gezählter gemeinsamer Vorbereitungsreview, kein Produkt-Actor oder Volltrial und keine automatische Nachfüllung alter Grants.\n\nDer Reviewer bekommt ausschließlich die eingefrorenen öffentlichen v4-Karten1-6, Requirementsmap, öffentlichen Checks/Rubrik/neutrale Outcomes und den unveränderten prospektiven privaten Bewertungsbestand aus c7d5510, ZIPsha b125e404f723d6c91223762dafa4c7d612a3f234aeebbe7d707f64511d4f3030. Keine alten Armresultate, Design-WIP, fremden Chat-/Memory-/Agenten-/Prozessdaten. Konkret READONLY prüfen: jede Holdoutpflicht nur aus erklärten aktuell freigegebenen Anforderungen; die prospektiven Atomicity-/Restart-Korrekturen; Task5 Altauftragreplay aus derselben Task4-Binary/selben Datenbank mit geändertem Neulimit; unabhängige Task6-Mutationsäquivalenzregel; gemeinsame Ergebnisbewertung ohne Design-Artefaktpflicht für Conventional, Methodenkonformität/Migration separat.\n\nKeine Programmausführung/Tests/Builds/Server/CodexCLI/Appserver/ProviderAPI, keine Oracle-/Fixture-/Produkt-/Helperänderung und keine weitere Plattform. Reviewer nur Quellprüfung; bei Befund nicht selbst reparieren. Privater Vollbericht nur in eigener Scientist-Bewertungsevidenz. Root-/öffentlicher Callback enthält nur Urteil, erklärte Requirement-IDs, exakt geprüfte Hashes, konkrete Sperren/Anwendbarkeitsmetadaten und tatsächlichen Aufwand/Verbrauch, KEINE privaten Testvektoren, Sollimplementierung oder Oracleinhalte. Von Implementierern fernhalten.\n\nVor Aktivierung aktuelle Reservation und endliche Deadline dokumentieren; gemeinsamem Setup-Aufwand zuordnen, kein Gratisreview eines Arms. Tatsächliche Serving-/Token-/Kosten-/Menschenwerte unbekannt lassen. Alte37/115/264Pins, ed9Runtimepaket und private Originalbytes erhalten. Ersten terminalen Review oder Fristende sauber schließen und genau einmal direkt an Overseer melden. Danach konkreten Design-Handoff/gemeinsamen Freeze oder materiellen Reviewbefund abwarten; KEINE weitere allgemeine Vorbereitungs-/Capabilitydiagnose und keine vollständigen Trials aus diesem Grant. Keine Empfangsbestätigung.",
+          "promptSha256": "76812ccbd4d0b2082c104da7417fc069114127e6c0a5c2480859fa2e541bdac6"
+        },
+        "v4ClassicMainRuntimeBindingAcceptance": {
+          "acceptedUtc": "2026-10-08T23:58:37Z",
+          "sha": "ed9c5b33434219c64a39366b7d1b1cd30fc64884",
+          "status": "Qualified offline/CLI/sourcebinarybinding acceptance only; comparison NOT ADMITTED",
+          "rootVerificationPointer": "v4ClassicMainRuntimeBindingRootVerification",
+          "independentReviewAgent": "/root/g2_review_authority",
+          "independentReviewResult": "Qualified preparation; material DTOsource mismatch so helper advisory only; no native runtime/profile/cell/timer/cancellation proof",
+          "sourceLinesRootConfirmed": "ClassicMain a97cbd5 internal/host/agentexec/json.go:17-43,51-108,233-260",
+          "dtoErratum": "Earlier Root/grant opaque-context assumption was too broad: strictDecode aliases recurse into request.context; onlycandidateJson exempt. Python also omits size/artifactbyte/digest normalization invariants. Prefix/echo only correct, not fullparser-equivalence. Product parser/generatedinvocation/receipt authoritative. No new helperfix/tests authorized.",
+          "actualAuditRoots": "Empty optionalInputRoots for inspected sourcecallers; conservative external repo/outputban separate, no productsnapshot/OSisolation claim",
+          "remainingAdmission": [
+            "Clean acceptedDesignsource/binary/publicinvocation/output/Apply/evidencecontract",
+            "Actualcommonmodel/reasoning/tools/rights/runtime config and explicit owncellcheckout prompts",
+            "Authoritativeproductparsing and advisory-onlyDTOlabel in prospectivefreeze",
+            "Realcoordinator nativeboundary/stopdue/interruptreceipts while explicitlycooperative",
+            "Privateprospectiveoracle/equivalence/outcome independentreview",
+            "Sharedfreeze review/repair/humanattention/global8trial2questionallocation and one dispatcherroot"
+          ],
+          "correctionBudgetDeviation": {
+            "actual": 3,
+            "limit": 2,
+            "scope": "Third archivalfilename correction after helperbatches",
+            "retroactiveAuthority": false,
+            "extraTestOrScoreCredit": false
+          },
+          "chronologyQualification": "ledger.closedUtc23:49:40Z is initial/staleclosure predating archivalbatch3 at23:52:20Z; finalmanifest/cleancommit23:52:48Z show currentevidenceseal, all actualrecordedcommandsbefore00:10:57Z; no fourthcorrection granted",
+          "originalBuildsConsumed": 1,
+          "separateCorrectionBuildsConsumed": 1,
+          "metadataCallsConsumed": 3,
+          "metadataRemainderClosed": 0,
+          "testInvocationsConsumed": 2,
+          "testCounts": [
+            32,
+            42
+          ],
+          "newActualActors": 0,
+          "newFullTrials": 0,
+          "usage": null
         }
       },
       "classicHandoffReceived": true,
@@ -7956,7 +8007,14 @@
         "runtimeAllowance": 0,
         "sentUtc": "2026-10-08T16:30:40Z",
         "prompt": "Neuer begrenzter Offlineauftrag s1-redacted-stderr-wiring-offline-20261008 auf sauberem 3f91eeefaad0191d76af3363a9165f1fe719f78c. Standalone-Paket qualifiziert angenommen: Root prüfte sechs Payloads+Manifest gegen Hash/Git, sieben Additionen und unveränderte alte Blobs; unabhängiger Root-Quellreview bestätigt Capture/Stop/Redaktion/Writer, keine wesentliche Offline-Sperre. Zwölf unterschiedliche synthetische Methoden sind dokumentiert, die spätere Härtung lief nur in betroffenen Fällen. Kein Live-Wiring oder tatsächlicher Diagnosenachweis wird daraus abgeleitet.\n\nSchließe nun ausschließlich die konkrete Consumerlücke: neue additive Clientkopie bzw. schmaler Consumerpfad auf Basis des versiegelten R2-Clients, der den angenommenen neuen Collector tatsächlich an den vorhandenen stderr-Pump, dasselbe stderr_seen/RPC-Admission-Event, endliches Cleanup und getrennte Dateiausgabe anschließt. Alte R2-Client-/Collectorbytes und alle früheren Pakete unverändert halten. Kein weiterer Parser-/Privacy-/Runnerrahmen und keine Wiederholung der unveränderten Collector-Suite.\n\nWesentliche Wiringbedingungen:\n- stop_event des Collectors ist exakt dasselbe stderr_seen, das RPC-Admission prüft; unverzügliches Pump-Signal vor Admissionlock erhalten. Keine neue RPC nach beobachtetem Stop zulassen; bereits zuvor zugelassener in-flight Write bleibt als bestehende Racegrenze ehrlich sichtbar.\n- Nur Cleanup-Fortsetzungen mit cleanup=True; keine weitere aktive RPC/Turn/Tool/Interrupt/Retry. Neue Datei genau einmal und nur bei tatsächlich ausgelöstem stderr-Stop, abgeschlossenem endlichem Cleanup und quieszenten Pumps/native Prozess. Bei fehlender Quieszenz keinen Auszug schreiben und feste Grenze melden. Standalone-Writer selbst beweist diesen Lifecycle nicht, deshalb im echten Consumer sicherstellen.\n- Neue private Auszugs-Unterdirectory und Name für späteren Grant im Plan konkret festlegen; außerhalb Repo, frisch/leer/exklusiv. Nicht jetzt reale Meldung erfassen. Nur Metadaten in normalen Receipts/Archiv/Callback; keinen Auszugstext oder seinen Inhaltshash dort einbetten. Gezielter bereinigter Toolread in Scientist/Overseer und Taskhistorien-Retention bleiben der angenommene Vertrag.\n- Gleiche übrige RPC-/Schema-/Metadaten-/Policy-/ID-/Job-/Authoritygrenzen und reine thread/start-vor-Turn-Bedeutung beibehalten. Live-Grant-/Slotprüfung nicht mit Testwerten abschwächen. Etwaige künftige neue Key-/Quell-/Request-/Freeze-Bindungen als noch unauthorisierten vorbereiteten Plan behandeln; keine alte verbrauchte Reservation verwenden.\n\nVier bis sechs gezielte synthetische Consumerfälle am tatsächlichen neuen Clientpfad reichen: gleiches Stop-Event sperrt nächste RPC; fragmentierte Cleanupzeile; sichere lesbare Textdatei bei textfreiem Receipt; sensible ganze Zeile weg; ohne Trigger oder ohne fertiges Cleanup keine Datei; exklusive/beschränkte Ausgabe und zero Turn/Tool Writes. Fake streams/process lifecycle verwenden, keine echten Prozesse/Kandidaten/CLI/App-Server/Provider/Produkte. Nur betroffene Offlineprüfungen, ein enger unabhängiger Wiring-/Ergebnisreview, sauberer Quellencommit, tatsächlich verwendete Pins/Dateien/Checks und eine terminale Rückmeldung. Keine Sessionreservation, kein tatsächlicher Sessionfreeze und keine neue Laufquote.\n\nArchitect hat weiterhin den schweren Slot. Öffentlich inzwischen nachgewiesen: PR https://github.com/Glacius-Labs/Markitect/pull/86 ist nach main gemergt, Remote-main 560acdcd857829bb71dd55415d45b9fdef8d013a; Main-CI läuft noch. Diese Produktweiterentwicklung ersetzt NICHT deinen gefrorenen Classic c91363b7ac4decbe87212ff0f588b5451581a152/v0.14.1 oder Studieninputs. Keine privaten oder fremden Zellergebnisse werden weitergereicht. Nach diesem Offlinepaket warten: erst späterer frischer endlicher Runtimegrant und freier ausdrücklich zugewiesener Slot könnten einen einzigen wirklichen Diagnoseversuch erlauben. Keine Empfangsbestätigung."
-      }
+      },
+      "acceptanceHistory": [
+        {
+          "previousAcceptance": "R7 bounded native+outer Queue and terminal Resume mechanics accepted; S1 real common Actor/tools and study cells remain open.",
+          "previousCandidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
+          "supersededUtc": "2026-10-08T23:58:37Z"
+        }
+      ]
     },
     {
       "name": "Architect",
@@ -8546,8 +8604,8 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T23:34:40Z",
-    "evidenceLevel": "c7d5510 offline draft independently and hash-verified:36Git+workingbindings/115oldfiles/6Classiccontracts,17+19mechanicsPASS; no actual study advance. Design active in direct owner work; no clean ready candidate.",
+    "reviewedUtc": "2026-10-08T23:58:37Z",
+    "evidenceLevel": "Root exacthash/Git/archive/source confirmation plus independentreadonlyauthorityreview. ed9c5b3 offline/CLIqualified,42mechanics;DTOconformancewithdrawn;3/2deviationexplicit. No new productActor/fulltrial.",
     "coordinationActions": [
       "Acceptedc7d5510offlinepreparationafterexacthash/Git/publicsource/independentreviewreconciliation",
       "DispatchedfinalboundedClassicMainruntimebinding1000d59once",
@@ -8557,7 +8615,7 @@
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-08T19:51:14Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
-    "observationStatus": "Offline runtime-binding active; concrete operator toolchain error read from raw evidence and one separately recorded existing-toolchain correction, no deadline/test/Actor expansion.",
+    "observationStatus": "One concrete independentprospectiveoracle/outcomereview dispatched while Design active, exact finite newgrant; awaiting concrete Design readiness then matchedfreeze.",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z",
     "latestQuietFallback": {
@@ -8761,12 +8819,11 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": "Scientist",
-    "key": "v4-classic-existing-toolchain-build-correction-20261009",
-    "assignedUtc": "2026-10-08T23:34:40Z",
-    "status": "Bounded ordinary exact-source ClassicMain build correction only; no suite/native Actors/provider/server/trials; deadline unchanged",
-    "notAfterUtc": "2026-10-09T00:10:57Z",
-    "queue": []
+    "owner": null,
+    "key": null,
+    "status": "Free; no actual product suite/build/trial authority allocated",
+    "queue": [],
+    "releasedUtc": "2026-10-08T23:58:37Z"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -9399,6 +9456,16 @@
       "assignedUtc": "2026-10-08T21:26:29Z",
       "closedObservedUtc": "2026-10-08T23:34:40Z",
       "reason": "Stale slot description reconciled: original nativev3 closed; no remaining execution authority from it."
+    },
+    {
+      "owner": "Scientist",
+      "key": "v4-classic-existing-toolchain-build-correction-20261009",
+      "assignedUtc": "2026-10-08T23:34:40Z",
+      "status": "Bounded ordinary exact-source ClassicMain build correction only; no suite/native Actors/provider/server/trials; deadline unchanged",
+      "notAfterUtc": "2026-10-09T00:10:57Z",
+      "queue": [],
+      "closedObservedUtc": "2026-10-08T23:58:37Z",
+      "reason": "Build/runtimebinding blocks closed; qualified accepted, no furtherexecutionauthority. Oracle review is separate commonpreparatory modelreview, no build/testslot."
     }
   ],
   "smokeAttemptCountingDecision": {
@@ -9762,7 +9829,11 @@
       "experimentalActors": 0,
       "testsBuildsProviderNativeExecutions": 0,
       "scope": "Public ed9c5b3 runtimebinding/sourcecontract, source/pin/timeline/deviation and actual admissionboundary; no privateoracle; no writes/tests",
-      "usage": null
+      "usage": null,
+      "status": "Completed",
+      "completedObservedUtc": "2026-10-08T23:58:37Z",
+      "actualActivations": 1,
+      "result": "Qualifiedofflineonly; concrete DTOcontext/parser mismatch and staleclosedUtc qualification; sourcebindingsplausible; no admission"
     }
   ]
 }
