@@ -184,6 +184,37 @@ class CodexRunnerTests(unittest.TestCase):
             runner.model_config_args({"model_reasoning_effort": "high"}),
             ["--config", 'model_reasoning_effort="high"'],
         )
+        self.assertEqual(runner.model_config_args({}), [])
+        for effort in ("minimal", "low", "medium", "high", "xhigh"):
+            with self.subTest(effort=effort):
+                self.assertEqual(len(runner.model_config_args({"model_reasoning_effort": effort})), 2)
+
+    def test_codex_model_options_cannot_override_execution_protections(self) -> None:
+        disallowed = [
+            {"sandbox_mode": "danger-full-access"},
+            {"approval_policy": "never"},
+            {"shell_environment_policy": {"inherit": "all"}},
+            {"features.plugins": True},
+            {"model": "other-model"},
+            {"model_reasoning_effort": "unbounded"},
+            {"model_reasoning_effort": ["high"]},
+        ]
+        for model_options in disallowed:
+            with self.subTest(model_options=model_options), tempfile.TemporaryDirectory() as directory:
+                cwd = Path(directory)
+                args = argparse.Namespace(
+                    codex_executable="codex.exe",
+                    codex_script=None,
+                    codex_version="0.130.0",
+                    model="gpt-6-luna",
+                    timeout_seconds=10,
+                )
+                with patch.object(runner, "resolve_codex") as resolve, patch.object(runner.subprocess, "Popen") as spawn:
+                    with self.assertRaises(runner.AdapterError):
+                        runner.launch_codex(invocation(), args, model_options, cwd, cwd / "events.jsonl")
+                    resolve.assert_not_called()
+                    spawn.assert_not_called()
+                self.assertEqual(list(cwd.iterdir()), [])
 
     def test_inference_candidate_uses_closed_string_transport_and_is_parsed(self) -> None:
         self.assertEqual(runner.RESPONSE_SCHEMA["properties"]["candidateJson"]["type"], ["string", "null"])
@@ -320,6 +351,7 @@ class CodexRunnerTests(unittest.TestCase):
             self.assertEqual(response["reportJson"], {"status": "complete", "summary": "done"})
             argv = captured["argv"]
             self.assertIn("--ignore-user-config", argv)
+            self.assertIn("--ignore-rules", argv)
             self.assertIn("--ephemeral", argv)
             self.assertIn("--json", argv)
             self.assertIn("--sandbox", argv)
