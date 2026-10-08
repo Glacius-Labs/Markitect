@@ -293,3 +293,70 @@ func TestProjectRunRepairRejectsStaleRunBeforeManagerInvocation(t *testing.T) {
 		t.Fatalf("stale repair did not supersede without starting a round: %+v", state)
 	}
 }
+
+func TestProjectRunRepairCannotVerifyNewIDForUnchangedFailedSnapshot(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	setupE2EProcess(t, "repair-check-no-change")
+	updateE2ERuntime(t, root, func(runtime *Runtime) {
+		runtime.Limits.MaxRetries = 1
+		runtime.Limits.MaxStarts = 11
+	})
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Test unchanged failed snapshot repair rejection.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	initial, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err != nil || initial.Status != StatusIntegrated {
+		t.Fatalf("initial run did not integrate: status=%s err=%v", initial.Status, err)
+	}
+	failedVerification, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err == nil || failedVerification.Status != "failed" {
+		t.Fatalf("fixture did not fail its first required check: report=%+v err=%v", failedVerification, err)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err := store.runDir(plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	base, err := host.Load(root, plan.BaseRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldCandidate, err := store.readCandidate(dir, initial.Candidate.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldSnapshot, err := snapshotWithCandidate(base.Snapshot, oldCandidate)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repaired, repairErr := Repair(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if repairErr == nil || !strings.Contains(repairErr.Error(), "unchanged failed candidate cannot be verified again") || repaired.Status != StatusFailed {
+		t.Fatalf("unchanged candidate was treated as repaired: status=%s err=%v", repaired.Status, repairErr)
+	}
+	if repaired.Candidate.ID == initial.Candidate.ID {
+		t.Fatal("fixture did not allocate a distinct candidate ID for its no-change repair")
+	}
+	newCandidate, err := store.readCandidate(dir, repaired.Candidate.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	newSnapshot, err := snapshotWithCandidate(base.Snapshot, newCandidate)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if oldSnapshot.Digest() != newSnapshot.Digest() {
+		t.Fatalf("no-change fixture changed snapshot bytes unexpectedly: old=%s new=%s", oldSnapshot.Digest(), newSnapshot.Digest())
+	}
+	if _, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID); err == nil || !strings.Contains(err.Error(), "must be integrated") {
+		t.Fatalf("new candidate ID bypassed failed verification: %v", err)
+	}
+	if _, err := latestVerification(dir, repaired.Candidate.ID); err == nil {
+		t.Fatal("no verification report should exist for unchanged repair candidate")
+	}
+}

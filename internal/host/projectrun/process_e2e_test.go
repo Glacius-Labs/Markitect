@@ -122,7 +122,7 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 				processExit(2, "unexpected work manager "+contextPayload.Manager.Manager.ID)
 			}
 			files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: content}}
-			if os.Getenv(e2eBehaviorEnv) == "repair-check-fail" && contextPayload.RepairRound == 0 && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") {
+			if (os.Getenv(e2eBehaviorEnv) == "repair-check-fail" && contextPayload.RepairRound == 0 || os.Getenv(e2eBehaviorEnv) == "repair-check-no-change") && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") {
 				files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: "orders implementation v1\n"}}
 			}
 			if os.Getenv(e2eBehaviorEnv) == "repair-foreign-first" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
