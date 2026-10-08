@@ -67,6 +67,15 @@ spec:
             - -count=1
             - -timeout=30m
           timeoutSeconds: 1800
+        - name: claude-protocol
+          run:
+            - python
+            - -B
+            - -m
+            - unittest
+            - discover
+            - -s
+            - internal/tooling/clauderunner
     adapters:
         - name: engineering-representations
           type: local-projection
