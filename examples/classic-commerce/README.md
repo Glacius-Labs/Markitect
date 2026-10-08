@@ -12,6 +12,18 @@ The canonical UseCase requires positive integer quantity, non-negative decimal u
 
 .NET is required only for this opt-in example. It is not a new prerequisite for the general Markitect CLI or Go test suite. The model/config/checks and runtime digest must be frozen anew if the SDK, fixed inputs or candidate changes.
 
+## Obtain the example source
+
+The published v0.14.1 binary and this source fixture have separate identities. The v0.14.1 release-tag checkout used by the stable quickstart does not contain this example. From a new directory, obtain the integrated Classic source and pin the reviewed commit:
+
+```sh
+git clone --branch main https://github.com/Glacius-Labs/Markitect.git markitect-classic-source
+cd markitect-classic-source
+git checkout --detach 560acdcd857829bb71dd55415d45b9fdef8d013a
+```
+
+These Git commands work in PowerShell and Bash. Stop if any command fails, and run the recipes below from this checkout's root. Keep the verified native binary outside the checkout and preserve the clean source. The helper creates its own disposable feature-branch repository; it does not write to this detached source checkout. A different reviewed source revision needs its own evidence; the pinned replay results are not automatically inherited.
+
 ## Author intent and change it later
 
 The [intent-change walkthrough](intent-change.md) maps a concrete owner request to canonical Definitions, projection policies, output files and an independent probe. It explains accepting a fixed model before implementation and changing the minimum quantity from one to two afterward. The canonical model records what applies, without a brainstorming or permissions lifecycle.
@@ -169,7 +181,7 @@ if ($audit.status -ne 'complete') { throw 'Audit did not account for declared sc
 
 Each fixed-check invocation creates a new `classic-commerce-check-*` directory beneath `MARKITECT_CLASSIC_COMMERCE_EVIDENCE_DIR` (or system Temp), retaining exact restore/build/probe commands, raw streams, candidate hashes, actual SDK selection and `result.json`. `bin`/`obj` and CLI home/package caches are external, so the source and generated target roots stay clean apart from reviewed projected files. Preserve failed and timed-out runs; do not rescore them or silently substitute SDKs/providers.
 
-The independent authored console probe is separate from candidate code and tests known obligations. The protocol Verifier is a deterministic test double that echoes required coverage; it does not supply independent semantic judgment. Build plus a few behavior cases prove only that this particular materialization met the declared checks. No real provider, continuous runtime, study adapter, resume facility, economic benefit or owner acceptance is established. Other Markitect users do not need .NET unless they select checks that require it.
+The independent authored console probe is separate from candidate code and tests known obligations. The protocol Verifier is a deterministic test double that echoes required coverage; it does not supply independent semantic judgment. Build plus a few behavior cases prove only that this particular materialization met the declared checks. No real provider, continuous runtime, study adapter, general task/session resume facility, economic benefit or owner acceptance is established. The saved-Apply handoff above supports only fresh verification of that exact materialization in a new process; it is not a general resume engine. Other Markitect users do not need .NET unless they select checks that require it.
 
 The earlier [canonical projection binding example](../canonical-projection/binding-notes.md) is a structural/binding slice with incomplete Markdown policy selection; its initial escalation remains deliberate rather than being weakened. Use this complete example for a fresh end-to-end operator exercise.
 

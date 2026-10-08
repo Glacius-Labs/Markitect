@@ -1,5 +1,7 @@
 # Documentation
 
+Start with the vision for Classic, the active product line on `main`, and the roadmap for integrated source versus published release status. Use Usage for the installed CLI contract and the complete Classic example for the separate source-checkout walkthrough. Government remains a separate experiment.
+
 | Document | Owns |
 |---|---|
 | [Product vision](vision.md) | Quality and intent-fidelity thesis, canonical authority, human/agent responsibilities and benefit hypothesis |
@@ -17,7 +19,7 @@
 | [Engineering constitution](engineering-constitution.md) | Kernel invariants, selected canonical intent, projection/evidence boundaries, policy analysis and human adoption authority |
 | [Complete Classic Commerce example](../examples/classic-commerce/README.md) | Self-contained canonical alpha walkthrough, opt-in real .NET build, independent behavior check and negative control |
 | [Classic Commerce intent change](../examples/classic-commerce/intent-change.md) | Owner request to canonical intent, file/check mapping and later minimum-quantity change |
-| [Classic Commerce validation](validation/classic-commerce-entrypoint.md) | Exact-source Windows compiler smoke, meaningful negative control and integration-gate boundaries |
+| [Classic Commerce validation](validation/classic-commerce-entrypoint.md) | Exact-source Windows compiler smoke, negative control, main integration and remaining release/platform boundaries |
 | [Canonical projection usage](canonical-projections.md) | Experimental alpha inspection, reconcile planning, Executor tools, guarded Apply and immutable verification |
 | [Canonical reset validation](validation/canonical-projection-reset.md) | Migration evidence, narrow gates, negative candidates and unresolved assurance pressure |
 | [Canonical projection reset](design/canonical-projection-reset.md) | Accepted minimal structural Core, strict Schema/Projection Module split, explicit binding and unified Executor/Verifier direction |
@@ -52,6 +54,6 @@
 
 The [roadmap](implementation-plan.md) owns current source status and planned work, including [Astra finding disposition and the Coordinator handoff checkpoint](implementation-plan.md#astra-assessment-disposition-and-next-method-checkpoint). v0.14.1 is published and verified; v0.13.0, v0.12.0 and v0.11.0 remain immutable historical evidence. v0.10.0 remains the historical baseline for the generic canonical engineering model. Published releases remain immutable; source changes do not update an installed release.
 
-[The current capability checkpoint](validation/proof-capability-checkpoint-2026-10-06.md) separates implemented mechanisms from actual trials, negative findings, and remaining gates. The [historical protocol-v1 proof program](research/proof-program.md) and its [matrix](research/capability-matrix.md) preserve the earlier full-acquisition stop; the later capability-before-proof steer resumes implementation and fresh trials without rescoring those records.
+[The dated capability checkpoint](validation/proof-capability-checkpoint-2026-10-06.md) separates implemented mechanisms from actual trials, negative findings, and remaining gates. The [historical protocol-v1 proof program](research/proof-program.md) and its [matrix](research/capability-matrix.md) preserve the earlier full-acquisition stop; the later capability-before-proof steer resumes implementation and fresh trials without rescoring those records.
 
 [Research direction inputs](research/README.md) preserve owner-supplied hypotheses separately from current contracts and results.
