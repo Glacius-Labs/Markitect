@@ -1,6 +1,7 @@
 package host
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -167,7 +168,7 @@ func TestGuardedWriteReportsPartialCompletion(t *testing.T) {
 	result, err := applyGuardedWrite(root, capture, []GuardedWriteChange{
 		{Path: "a.txt", Bytes: []byte("new a\n"), Mode: 0644},
 		{Path: "z.txt", Bytes: []byte("new z\n"), Mode: 0644},
-	}, func(path string) error {
+	}, nil, func(path string) error {
 		if path == "z.txt" {
 			return os.WriteFile(filepath.Join(root, path), []byte("concurrent z\n"), 0644)
 		}
@@ -182,4 +183,76 @@ func TestGuardedWriteReportsPartialCompletion(t *testing.T) {
 	if string(mustRead(t, filepath.Join(root, "a.txt"))) != "new a\n" || string(mustRead(t, filepath.Join(root, "z.txt"))) != "concurrent z\n" {
 		t.Fatal("partial completion report does not match actual filesystem state")
 	}
+}
+
+func TestGuardedWriteCheckedRunsReadOnlyPreconditionUnderLock(t *testing.T) {
+	root := installTestRepo(t, "feature/guarded")
+	capture, err := CaptureGuardedWrite(root, []string{"README.md", "generated.txt"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "new-entry.md"), []byte("new inventory member\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	result, err := ApplyGuardedWriteChecked(root, capture, []GuardedWriteChange{{Path: "generated.txt", Bytes: []byte("generated\n"), Mode: 0644}}, func() error {
+		if _, err := os.Stat(filepath.Join(root, ".artifacts", "markitect", "write.lock")); err != nil {
+			return errors.New("precondition did not run under the shared write lock")
+		}
+		entries, err := os.ReadDir(root)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			if entry.Name() == "new-entry.md" {
+				return errors.New("inventory membership changed since review")
+			}
+		}
+		return nil
+	})
+	if err == nil || !strings.Contains(err.Error(), "inventory membership changed") {
+		t.Fatalf("ApplyGuardedWriteChecked error = %v, want stale-inventory refusal", err)
+	}
+	if len(result.CompletedPaths) != 0 {
+		t.Fatalf("failed precondition reported completed paths: %v", result.CompletedPaths)
+	}
+	if _, err := os.Lstat(filepath.Join(root, "generated.txt")); !os.IsNotExist(err) {
+		t.Fatalf("write ran despite stale inventory: %v", err)
+	}
+}
+
+func TestGuardedWriteCheckedRechecksCaptureAndSelectedBytesAfterCallback(t *testing.T) {
+	t.Run("capture mutation", func(t *testing.T) {
+		root := installTestRepo(t, "feature/guarded")
+		capture, err := CaptureGuardedWrite(root, []string{"README.md"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		result, err := ApplyGuardedWriteChecked(root, capture, []GuardedWriteChange{{Path: "README.md", Bytes: []byte("must not write\n"), Mode: 0644}}, func() error {
+			capture.Files["README.md"] = GuardedWriteFile{Exists: false}
+			return nil
+		})
+		if err == nil || !strings.Contains(err.Error(), "capture changed during precondition") {
+			t.Fatalf("ApplyGuardedWriteChecked error = %v, want capture-tampering refusal", err)
+		}
+		if len(result.CompletedPaths) != 0 || string(mustRead(t, filepath.Join(root, "README.md"))) != "test consumer\n" {
+			t.Fatalf("changed capture applied a write: result=%+v", result)
+		}
+	})
+
+	t.Run("selected bytes changed", func(t *testing.T) {
+		root := installTestRepo(t, "feature/guarded")
+		capture, err := CaptureGuardedWrite(root, []string{"README.md"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		result, err := ApplyGuardedWriteChecked(root, capture, []GuardedWriteChange{{Path: "README.md", Bytes: []byte("must not overwrite\n"), Mode: 0644}}, func() error {
+			return os.WriteFile(filepath.Join(root, "README.md"), []byte("callback side effect\n"), 0644)
+		})
+		if err == nil || !strings.Contains(err.Error(), "changed during precondition validation") {
+			t.Fatalf("ApplyGuardedWriteChecked error = %v, want selected-byte recheck refusal", err)
+		}
+		if len(result.CompletedPaths) != 0 || string(mustRead(t, filepath.Join(root, "README.md"))) != "callback side effect\n" {
+			t.Fatalf("selected-byte callback side effect was overwritten: result=%+v", result)
+		}
+	})
 }

@@ -108,10 +108,18 @@ func CaptureGuardedWrite(root string, selectedPaths []string) (*GuardedWriteCapt
 // then rechecks repository identity, branch, HEAD and captured bytes before
 // the first mutation and before each changed path.
 func ApplyGuardedWrite(root string, capture *GuardedWriteCapture, changes []GuardedWriteChange) (GuardedWriteResult, error) {
-	return applyGuardedWrite(root, capture, changes, nil)
+	return applyGuardedWrite(root, capture, changes, nil, nil)
 }
 
-func applyGuardedWrite(root string, capture *GuardedWriteCapture, changes []GuardedWriteChange, beforeTarget func(string) error) (GuardedWriteResult, error) {
+// ApplyGuardedWriteChecked is ApplyGuardedWrite with an additional caller-owned
+// read-only precondition. The callback runs under the shared writer lock after
+// Host rechecks Git identity and captured file state, and before any target is
+// changed. Host then rechecks those bindings again before the first mutation.
+func ApplyGuardedWriteChecked(root string, capture *GuardedWriteCapture, changes []GuardedWriteChange, validate func() error) (GuardedWriteResult, error) {
+	return applyGuardedWrite(root, capture, changes, validate, nil)
+}
+
+func applyGuardedWrite(root string, capture *GuardedWriteCapture, changes []GuardedWriteChange, validate func() error, beforeTarget func(string) error) (GuardedWriteResult, error) {
 	result := GuardedWriteResult{CompletedPaths: []string{}}
 	if capture == nil || capture.rootIdentity == nil || len(capture.seal) == 0 {
 		return result, errors.New("guarded apply requires an intact Host capture")
@@ -161,6 +169,27 @@ func applyGuardedWrite(root string, capture *GuardedWriteCapture, changes []Guar
 	}
 	if err := compareGuardedFiles(writer, capture.Files); err != nil {
 		return result, fmt.Errorf("selected file changed while acquiring the writer lock: %w", err)
+	}
+	if validate != nil {
+		if err := validate(); err != nil {
+			return result, fmt.Errorf("guarded write precondition failed: %w", err)
+		}
+		seal, err := guardedCaptureSeal(capture)
+		if err != nil || seal != capture.seal {
+			return result, errors.New("guarded write capture changed during precondition validation")
+		}
+		if err := writer.checkIdentity(); err != nil {
+			return result, err
+		}
+		if !os.SameFile(capture.rootIdentity, writer.identity) {
+			return result, errors.New("guarded apply root identity changed during precondition validation")
+		}
+		if err := ensureGuardedGitState(root, capture.Identity, capture.Branch, capture.Head); err != nil {
+			return result, err
+		}
+		if err := compareGuardedFiles(writer, capture.Files); err != nil {
+			return result, fmt.Errorf("selected file changed during precondition validation: %w", err)
+		}
 	}
 	expectedFiles := cloneGuardedWriteFiles(capture.Files)
 	for _, change := range normalizedChanges {
@@ -260,6 +289,7 @@ func normalizeGuardedChanges(changes []GuardedWriteChange, selected map[string]G
 		if change.Mode.Perm() == 0 || change.Mode&^fs.FileMode(0777) != 0 {
 			return nil, fmt.Errorf("guarded write requires permission bits from 0001 through 0777: %s", change.Path)
 		}
+		change.Bytes = append([]byte(nil), change.Bytes...)
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].Path < result[j].Path })
 	for i := 1; i < len(result); i++ {
