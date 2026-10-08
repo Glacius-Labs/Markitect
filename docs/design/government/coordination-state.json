@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T21:43:02Z",
+  "updatedUtc": "2026-10-08T22:11:31Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -435,13 +435,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:42",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:43",
       "lastObservedStatus": "active",
       "activeTurn": "01a11d6a-0c62-76a2-8f2c-c82fbe60b8ab",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac80dd33dc08191aee7700d8169f86e",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac814786bc881919052c3c45e2f89ad",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Run six real native-Codex exploratory case studies, independently evaluate and report intermediate data",
-      "latestProgress": "Actual Conventional Greenfield primary started under native-v3; matched six-cell execution continues. Root checked frozen pins, source SHA, initial branches and reservation/Actor binding. No cell results yet.",
+      "latestProgress": "All six actual native cells started. Classic/Government Greenfield closed incomplete at Task1; Root verified archived evidence with independent review. Four other cells continue; Conventional stage passes are reported, not final independent quality results.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
@@ -6566,11 +6566,62 @@
           "scope": "Common study preparation before Scientist native grant execution; no private holdout content read or shared."
         },
         "nativeCaseStudiesV3Progress": {
-          "observedUtc": "2026-10-08T21:43:02Z",
-          "source": "Direct first-cell callback, compact native thread snapshot, on-disk ledger and Root hash/Git checks",
-          "status": "Actual first study cell started; preparation complete; remaining five cells authorized within existing finite grant. No result/winner established.",
-          "actualFirstStudyCellStartEstablished": true,
-          "actualCompletedCells": 0
+          "observedUtc": "2026-10-08T22:11:31Z",
+          "actualStartedCells": 6,
+          "actualClosedCells": 2,
+          "actualCompletedFullTrials": 0,
+          "source": "Direct callback; durable six primary Actor bindings; immutable two-cell archives checked; current ledger is live WIP",
+          "cellProgress": [
+            {
+              "trialId": "conventional-greenfield-v3-20261008",
+              "status": "running",
+              "taskStatus": {
+                "1": "passed",
+                "2": "passed",
+                "3": "passed",
+                "4": "passed"
+              }
+            },
+            {
+              "trialId": "classic-greenfield-v3-20261008",
+              "status": "closed",
+              "taskStatus": {
+                "1": "incomplete"
+              }
+            },
+            {
+              "trialId": "government-greenfield-v3-20261008",
+              "status": "closed",
+              "taskStatus": {
+                "1": "incomplete"
+              }
+            },
+            {
+              "trialId": "conventional-brownfield-v3-20261008",
+              "status": "running",
+              "taskStatus": {
+                "1": "passed",
+                "2": "running"
+              }
+            },
+            {
+              "trialId": "classic-brownfield-v3-20261008",
+              "status": "running",
+              "taskStatus": {
+                "1": "running"
+              }
+            },
+            {
+              "trialId": "government-brownfield-v3-20261008",
+              "status": "running",
+              "taskStatus": {
+                "1": "running"
+              }
+            }
+          ],
+          "observedNativeTrialReservations": 26,
+          "observedActiveOrReservedTrialActors": 4,
+          "usage": null
         },
         "nativeCaseStudiesV3StartAcceptance": {
           "reviewedUtc": "2026-10-08T21:43:02Z",
@@ -6658,6 +6709,55 @@
           ],
           "rootRuntimeOrTestCalls": 0,
           "nextAction": "Scientist continues six staged actual trials under existing grant without additional blanket go; actual product invocations/responses/votes must be retained. Material gap in one method does not halt other workable cells."
+        },
+        "nativeV3ClosedGreenfieldAcceptance": {
+          "reviewedUtc": "2026-10-08T22:11:31Z",
+          "handoffCommit": "26f0675f98b60c15ee17f2537e0cbb744a97abee",
+          "handoffSha256": "7aca2c644c0b5aa5356fbb53e888f5e870655096d528bd76879c993f82b8e540",
+          "acceptance": "Qualified incomplete/readiness_gap closure; no product-quality or method-superiority claim",
+          "rootFrozenSourcePinsChecked": 149,
+          "rootFrozenPinMismatches": 0,
+          "gitBoundClosedFiles": 8,
+          "classicZipMembersAndOriginalsMatched": 43,
+          "governmentZipMembersAndOriginalsMatched": 67,
+          "archiveOrOriginalMismatches": 0,
+          "candidateBundleHeadsVerified": true,
+          "classicModelSetupSha": "e00ec8c49cb4912aebf02cf6057965463f8ef8b4",
+          "governmentModelOrderSha": "00e4755797d59bc5713d1533b10598f323c29f12",
+          "classicManifestSha256": "c8129f753ca15f09d260a58ef974b68f9575d90911bce727b67c09416e4f8c00",
+          "governmentManifestSha256": "094bd1e40143622e4ba149fb6679a4b95964373eae4d27d28d325f541255ad96",
+          "classicNativeActivations": 6,
+          "classicRealExecutorInvocations": 2,
+          "classicIndependentEvaluation": "Completed; product quality unscorable/NOT RUN; privateHoldoutPlanSha256 transcription is63 chars, independently checked actual64-char digest; additive postcheck still WIP outside handoff commit",
+          "classicFrozenTrackedFiles": 17,
+          "classicFrozenServiceSourceFiles": 0,
+          "governmentNativeActivations": 4,
+          "governmentRealExecutorInvocations": 1,
+          "governmentIndependentEvaluation": "Incomplete; no final report; original task deadline exceeded before native stop request by0.748024s",
+          "governmentInterruptAfterDeadlineSeconds": 0.748024,
+          "governmentUnexpectedHelperSha256": "627c07a26203ff0aa15f754c0639c9106b5a6d54e5f62449c0048c28e7e5de62",
+          "governmentUnexpectedHelperBytes": 4052,
+          "governmentUnexpectedHelperCreatedUtc": "2026-10-08T21:55:08.3817623Z",
+          "governmentHelperOrigin": "Not established by preservation/ZIP; Overseer did not create it in this chat; no attribution accepted",
+          "governmentInputMutationCause": "Product reports input changed but no changed path; helper causal link unknown",
+          "acceptedServiceCandidateSha": null,
+          "tasks2to6": "NOT RUN in both closed cells",
+          "independentRootReviewer": "/root/g2_handoff_evidence",
+          "independentRootReview": "Qualified closure; no semantic inability/economic/quality comparison; deadline/cancellation and provenance limits retained",
+          "rootCoordinationReviewEffort": "One bounded read-only reviewer activation plus Root metadata/hash/Git/ZIP checks, separately outside trial Actor ledger; reviewer time/token usage uninstrumented/unknown",
+          "rootProductOrTestLaunches": 0,
+          "evidenceWorktreeStatus": "Handoff commit exists; ongoing ledger/dispatch/callback changes and additive postcheck are WIP, not a current fully clean worktree"
+        },
+        "nativeV3ClosedGreenfieldErrataAssignment": {
+          "key": "native-v3-closed-greenfield-additive-errata-20261009",
+          "sentUtc": "2026-10-08T22:11:31Z",
+          "deliveryConfirmed": true,
+          "scope": "Bind already-created evaluator hash postcheck and accurate unknown helper provenance in next ordinary evidence handoff; continue original four active cells unchanged",
+          "additionalActorActivations": 0,
+          "additionalTrials": 0,
+          "additionalEvaluationActivations": 0,
+          "prompt": "Qualifizierte Annahme der beiden geschlossenen Greenfield-Versuche, kein Methodenvergleich: Root hat Handoff26f0675/Hash,149 ursprüngliche Freeze-Pins,8 archivierte Git-Dateien,43+67 ZIP-Mitglieder samt Originalbytes, Bundle-SHAs/Heads und Classic-Frozen-Tree ohne Service-Dateien geprüft; unabhängiger Root-Paketreview bestätigt Integration/Dispatcher-/Readinessgrenzen. Laufende vier Zellen werden im unveränderten Grant fortgeführt, keine neue Freigabe- oder Wiederholungsschleife.\n\nNächster enger Dokumentationsschritt beim ohnehin nötigen nächsten Handoff, ohne zusätzliche Actor-/Eval-/Trialaktivierung: Dein neues evaluator-binding-postcheck.json ist noch außerhalb26f0675. Root bestätigt privateHoldoutPlanSha256 im unveränderten Classic-Originalreport ist63Zeichen statt tatsächlicher64 (actual c290bb53e93eace8f3a8b91e4e7d91d4fbc1799c6dd387bfef6fabc9608588a5). Erhalte Originalreport/ZIP bytegleich und binde den bereits erstellten Postcheck als additive Errata in den nächsten sauberen Evidenzcommit; dies qualifiziert die Berichtbindung, kein rückwirkender neuer Evaluatorlauf. Fehlender Service ist unabhängig aus Frozen-Tree/Bündel bestätigt, Qualität bleibt unscorable/NOT RUN.\n\nFür publish_response.py belegen Preservation/ZIP Hash,4052Bytes und Auftreten21:55:08.3817623Z, aber weder Urheber noch konkreten vom Produkt beanstandeten Pfad. Verwende ohne belastbare Herkunft bitte nur unerwartete untracked Hilfsdatei statt Root-/Overseer-Hilfsdatei; dieser Overseer hat sie nicht angelegt. Root-Paketreview bestätigt Kausalität unbekannt. Falls ein vorhandener bereits erhaltener Dispatch-/Toolbeleg die Entstehung eindeutig zeigt, nur dokumentieren, keine neue Untersuchung/Ausführung oder Hilfe an laufende Actors. Verspäteten Gov-Interrupt0.748024s und fehlende unabhängige Endbewertung erhalten. Keine Ergebnisse/fremden Inputs an laufende Actors weitergeben, kein stiller Produktfix oder Ersatzlauf. Rückmeldung erst bei nächstem Zellabschluss/materialem Bedarf wie vereinbart.",
+          "promptSha256": "8a8c8860ec53641399cdbe63910e4cf7f3bde1e4693e411b51d7ef88de2769db"
         }
       },
       "classicHandoffReceived": true,
@@ -7828,7 +7928,7 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Await event callbacks from actual native-v3 cells; Scientist executes all six staged cases within existing finite quotas. Check finished candidates/metrics and independent evaluations before synthesis. No further custom appserver diagnosis; no extra trials or quota refill.",
+  "nextAction": "Scientist continues remaining four native-v3 cells within existing grant; retain immutable failed Greenfield attempts and additive binding/provenance errata at next handoff. Await meaningful callbacks; no replacements, extra trials, product fixes or blanket go.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -7839,17 +7939,18 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T21:43:02Z",
-    "evidenceLevel": "Root read independent protocol/freeze reviews; rechecked149 frozen source/input pins+115 support pins, configuration/protocol/freeze hashes, six base/feature-branch identities and first durable actual Actor reservation/binding; no mismatches, no Root tests/runtime.",
+    "reviewedUtc": "2026-10-08T22:11:31Z",
+    "evidenceLevel": "Two closed actual Greenfield attempts:149 source pins,8 Git-bound files,43+67 ZIP entries with original bytes, archive/bundle pins/Heads and Classic no-service frozen tree checked. Independent Root packet review qualified OK. Additive evaluation-hash typo and unknown helper provenance recorded; no Root tests/runtime.",
     "coordinationActions": [
-      "Accepted prospective native-v3 common preparation and first actual Conventional Greenfield start",
-      "Retained single already-delivered six-cell grant; no repeated order or extra quota",
-      "Await meaningful completion/blocker callbacks; two-hour fallback remains active"
+      "Accepted two actual incomplete Greenfield closures with explicit caveats",
+      "Verified six actual primary Actor bindings",
+      "Sent one zero-runtime additive errata request; active cells continue unchanged",
+      "Preserved unknown usage and Government0.748024s stop overrun/missing evaluation"
     ],
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-08T19:51:14Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
-    "observationStatus": "Actual native six-cell study execution active; no outcome data yet",
+    "observationStatus": "Six actual cells started; two incomplete closures, four running; no final method comparison",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z"
   },
