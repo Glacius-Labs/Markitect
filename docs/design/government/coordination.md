@@ -797,3 +797,13 @@ Nächster begrenzter Auftrag `s1-actionable-stderr-diagnosis-offline-20261008` n
 Main-Doku-CI37813053841: Ubuntu bereits success, Windows noch in_progress am Prüfzeitpunkt. Architect arbeitet im bestehenden Abschlussauftrag weiter, keine Zusatznachricht.
 
 Offline-Erklärungsauftrag am `2026-10-08T17:07:20Z` genau einmal gesendet, Zustellung bestätigt. Keine zusätzliche Laufquote.
+
+### WARN als Auslöser der Clientregel erkannt; statischen Fehlerpfad prüfen, 8. Oktober, 19:12 Europe/Berlin
+
+Root nahm sauberen `ca7ef94063eddce2abce90a5b2ad6c72cfcde2d3` als qualifizierte Offlineerklärung an: exakt zwei additive Markdown-Dateien gegen Git/Hash geprüft, unabhängigen Plausibilitätsreview gelesen. Scientists zulässige Paraphrase der früher einmal gelesenen ersten Zeile meldet WARN: PowerShell wird von der Shell-Snapshot-Funktion nicht unterstützt. Root hat den entfernten Auszug nicht gelesen oder rekonstruiert; die genaue Bedeutung bleibt berichtete Beobachtung. Unsere eigene Terminalregel für jedes stderr-Byte erklärt den Clientstop bereits auf dieser Warnung. Kein fataler nativer Fehler, keine tatsächlich erfolgreiche Initialisierung und keine historische R2-Ursache daraus ableitbar. Race zwischen zugelassenem Schreiben/Signal sowie späteren Transportmeldungen und Cleanup ausdrücklich unaufgelöst. Keine Policy-/OS-/Identitätsänderung, keine neue Ausführung.
+
+Enger Folgeauftrag `s1-shell-snapshot-static-trace-20261008`: zuerst genaue Binary-/Version-/Upstream-Provenienz, dann statischer PowerShell-Snapshot-Zweig und unmittelbarer Threadinitialisierungsaufrufer. Hypothese optional abgefangener Fehler versus propagierter Initialisierungsabbruch, jeweils nur im tatsächlich gebundenen Quellstand. Fehlende Quellbindung bleibt offen, aktuelle fremde Version ersetzt sie nicht. Höchstens acht lesende öffentliche Quellenrequests/vier MiB Material, vier Quelldateien plus zwei Provenienzrecords und zwei Ergebnis-/Review-Markdown-Dateien; kein Clone/Build/Test/CLI/App-Server/Actor/Providerstart, keine Config-/Flagänderung oder Ersatzexperiment. Eine unabhängige enge Prüfung, sauberer SHA und eine terminale Rückmeldung. Slot frei; Laufquote null, historische acht Bäume bleiben verbraucht.
+
+Root las ergänzend aktuelle offizielle App-Server-Dokumentation unter https://learn.chatgpt.com/docs/app-server (OpenAI Docs): sie ersetzt keine versionsgebundene native Quellprovenienz. Keine dortigen allgemeinen Provider-/Konfigurationsbeispiele als neue Laufautorisierung übernommen.
+
+Statischer Quellauftrag am `2026-10-08T17:13:13Z` genau einmal gesendet; Zustellung bestätigt, keine neue Laufquote.
