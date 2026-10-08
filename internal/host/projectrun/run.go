@@ -118,14 +118,17 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if report.Status == StatusVerified || report.Status == StatusApplied {
 			return report, nil
 		}
-		if resume && report.Status != StatusInterrupted {
-			return report, fmt.Errorf("run status %s cannot be resumed", report.Status)
-		}
 		if report.Status == StatusSuperseded {
 			return report, ErrStale
 		}
+		if resume && report.Status != StatusInterrupted && report.Status != StatusRunning {
+			return report, fmt.Errorf("run status %s cannot be resumed", report.Status)
+		}
 		for _, task := range report.Tasks {
 			if task.State == "invoking" || task.State == "integrating" || task.State == "uncertain" {
+				if current := findTask(report.Tasks, task.ManagerID); current != nil {
+					current.State = "uncertain"
+				}
 				report.Status = StatusBlocked
 				report.Findings = append(report.Findings, "prior process outcome is uncertain for "+task.ManagerID+"; it will not be replayed automatically")
 				if err := persistState(store, &report); err != nil {
