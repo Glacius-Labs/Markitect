@@ -433,6 +433,48 @@ func (w *writeRoot) Lstat(name string) (os.FileInfo, error) {
 	return info, nil
 }
 
+// RemoveRegular removes one regular file through its pinned parent directory.
+// It refuses directories, links and reparse points, and reports a published
+// removal if the named parent changes after the mutation.
+func (w *writeRoot) RemoveRegular(name string) error {
+	if err := w.checkPath(name); err != nil {
+		return err
+	}
+	parentName, leaf := splitWritePath(name)
+	parent, closeParent, err := w.openDirectory(parentName, false, 0)
+	if err != nil {
+		return err
+	}
+	defer closeParent(parent)
+	info, err := parent.Lstat(leaf)
+	if err != nil {
+		return err
+	}
+	if isReparsePoint(info) || !info.Mode().IsRegular() {
+		return fmt.Errorf("refusing to remove non-regular file or reparse point %s", name)
+	}
+	if err := w.checkIdentity(); err != nil {
+		return err
+	}
+	if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
+		return err
+	}
+	current, err := parent.Lstat(leaf)
+	if err != nil {
+		return err
+	}
+	if isReparsePoint(current) || !current.Mode().IsRegular() || !os.SameFile(info, current) {
+		return fmt.Errorf("output file changed before removal: %s", name)
+	}
+	if err := parent.Remove(leaf); err != nil {
+		return err
+	}
+	if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
+		return &publishedWriteError{Path: name, Cause: err}
+	}
+	return nil
+}
+
 func (w *writeRoot) AtomicWrite(name string, data []byte, mode os.FileMode) error {
 	return w.atomicWriteWithHooks(name, data, mode, nil, nil)
 }
