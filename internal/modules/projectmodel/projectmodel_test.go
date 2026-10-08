@@ -107,6 +107,29 @@ func TestImpactDecisionOnlyDeltaRoutesFullDeclaredReview(t *testing.T) {
 	}
 }
 
+func TestManagerPurposeIsProjectedAndRoutesScopedImpact(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	base := Analyze(model, files)
+	definitions := copyDefinitions(model.Definitions)
+	for i := range definitions {
+		if definitions[i].Kind == managerKind && definitions[i].Metadata.Namespace == "orders" {
+			definitions[i].Purpose = "Orders owns fulfilment and cancellation behavior."
+		}
+	}
+	candidate, diagnostics := core.Compile(model.Schemas, definitions, "manager-purpose-change")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile manager purpose change: %+v", diagnostics)
+	}
+	impact := Impact(base, Analyze(candidate, files))
+	ordersID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}).Key()
+	if !contains(impact.ChangedDefinitions, ordersID) || !contains(impact.Managers, ordersID) || !contains(impact.Managers, rootManagerKey()) {
+		t.Fatalf("Manager purpose change did not route its owner and ancestor: changed=%v managers=%v", impact.ChangedDefinitions, impact.Managers)
+	}
+	if len(impact.Unknown) != 0 {
+		t.Fatalf("Manager purpose change incorrectly fell back to unknown full scope: managers=%v files=%v unknown=%v", impact.Managers, impact.Files, impact.Unknown)
+	}
+}
+
 func TestAnalyzeTracksManyToManyFileMeaningAndDeterministicDigest(t *testing.T) {
 	model, files := fixture(t, true, true, true)
 	definitions := append([]core.Definition(nil), model.Definitions...)
@@ -366,6 +389,9 @@ func TestContextIncludesDirectPublicContractsAndExcludesSiblingInternals(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
+	if ctx.Manager.Purpose != "Orders manager." {
+		t.Fatalf("manager's own purpose is missing from its context: %+v", ctx.Manager)
+	}
 	if len(ctx.Statements) != 1 || ctx.Statements[0].Namespace != "orders" {
 		t.Fatalf("manager received unrelated statements: %+v", ctx.Statements)
 	}
@@ -389,6 +415,9 @@ func TestContextIncludesDirectPublicContractsAndExcludesSiblingInternals(t *test
 		t.Fatal(err)
 	}
 	for _, child := range rootContext.Children {
+		if child.Purpose == "" {
+			t.Fatalf("child purpose is missing from parent context: %+v", child)
+		}
 		if child.Instructions != "" {
 			t.Fatalf("child-local instructions leaked to parent context: %+v", child)
 		}
@@ -396,6 +425,10 @@ func TestContextIncludesDirectPublicContractsAndExcludesSiblingInternals(t *test
 	if _, err = Context(r, "missing"); err != ErrManagerNotFound {
 		t.Fatalf("missing manager error=%v", err)
 	}
+}
+
+func rootManagerKey() string {
+	return (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Name: "root"}).Key()
 }
 
 func hasFinding(findings []Finding, code string) bool {
