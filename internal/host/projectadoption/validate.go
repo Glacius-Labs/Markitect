@@ -1,6 +1,7 @@
 package projectadoption
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"path"
@@ -67,7 +68,7 @@ func ValidateDistillation(discovery Discovery, report Distillation) error {
 		if err := uniqueNonemptyFolded(claim.Uncertainty); err != nil {
 			return fmt.Errorf("claim %q uncertainty: %w", claim.ID, err)
 		}
-		if err := validateClaimEvidence(claim, evidenceByID); err != nil {
+		if err := validateClaimEvidence(claim, evidenceByID, discovery.Commit); err != nil {
 			return fmt.Errorf("claim %q: %w", claim.ID, err)
 		}
 		claims[claim.ID] = claim
@@ -128,6 +129,15 @@ func ValidateDistillation(discovery Discovery, report Distillation) error {
 		if err := validateClaimIDs(contradiction.ClaimIDs, claims, contradiction.ScopeID, true); err != nil {
 			return fmt.Errorf("contradiction %q: %w", contradiction.ID, err)
 		}
+		questionClaims := make(map[string]bool, len(question.ClaimIDs))
+		for _, id := range question.ClaimIDs {
+			questionClaims[id] = true
+		}
+		for _, id := range contradiction.ClaimIDs {
+			if !questionClaims[id] {
+				return fmt.Errorf("contradiction %q clarification question %q does not cover conflicting claim %q", contradiction.ID, question.ID, id)
+			}
+		}
 		kinds := map[string]bool{}
 		for _, id := range contradiction.ClaimIDs {
 			kinds[claims[id].Kind] = true
@@ -154,7 +164,7 @@ func ValidateDistillation(discovery Discovery, report Distillation) error {
 	return nil
 }
 
-func validateClaimEvidence(claim Claim, evidence map[string]Evidence) error {
+func validateClaimEvidence(claim Claim, evidence map[string]Evidence, discoveryCommit string) error {
 	if len(claim.Evidence) == 0 {
 		return errors.New("claim has no selected evidence references")
 	}
@@ -168,8 +178,10 @@ func validateClaimEvidence(claim Claim, evidence map[string]Evidence) error {
 			return errors.New("documented intent requires documentation method")
 		}
 	case "runtime-observation":
-		if claim.Method != "runtime-evidence" || claim.Runtime == nil {
-			return errors.New("runtime observation requires runtime-evidence method")
+		return errors.New("runtime evidence must be labelled submitted-runtime-record; execution is not verified")
+	case "submitted-runtime-record":
+		if claim.Method != "submitted-record" || claim.Runtime == nil {
+			return errors.New("submitted runtime record requires submitted-record method")
 		}
 	case "hypothesis":
 		if claim.Method != "synthesis" || claim.Runtime != nil {
@@ -195,27 +207,138 @@ func validateClaimEvidence(claim Claim, evidence map[string]Evidence) error {
 			if item.Basis != "code" && item.Basis != "configuration" && item.Basis != "test" {
 				return fmt.Errorf("static observation cites incompatible evidence basis %q", item.Basis)
 			}
-		case "runtime-observation":
+		case "submitted-runtime-record":
 			if item.Basis != "runtime-record" {
 				return fmt.Errorf("runtime observation cites non-runtime evidence %q", item.ID)
 			}
 		}
 	}
-	if claim.Kind == "runtime-observation" {
-		if !validDigest(claim.Runtime.RunnerDigest) || strings.TrimSpace(claim.Runtime.EvidenceID) == "" || len(claim.Runtime.Command) == 0 || claim.Runtime.ExitCode == nil {
-			return errors.New("runtime observation requires selected evidence, literal command, and runner digest")
-		}
-		var runtimeExcerpt string
+	if claim.Kind == "submitted-runtime-record" {
+		cited := false
 		for _, reference := range claim.Evidence {
 			if reference.EvidenceID == claim.Runtime.EvidenceID {
-				runtimeExcerpt = reference.Excerpt
+				cited = true
+				break
 			}
 		}
-		if runtimeExcerpt == "" || !strings.Contains(runtimeExcerpt, strings.Join(claim.Runtime.Command, " ")) || !strings.Contains(runtimeExcerpt, fmt.Sprintf("%d", *claim.Runtime.ExitCode)) || !strings.Contains(runtimeExcerpt, claim.Runtime.RunnerDigest) {
-			return errors.New("runtime evidence excerpt must bind the command, exit code, and runner digest")
+		if !cited {
+			return errors.New("claim must cite the submitted runtime record it describes")
+		}
+		item, ok := evidence[claim.Runtime.EvidenceID]
+		if !ok {
+			return errors.New("submitted runtime record evidence is not in the fixed discovery")
+		}
+		if err := validateSubmittedRuntimeRecord(*claim.Runtime, item, evidence, discoveryCommit); err != nil {
+			return err
 		}
 	}
 	return nil
+}
+
+type submittedRuntimeRecord struct {
+	APIVersion           string         `json:"apiVersion"`
+	RecordSourceRevision string         `json:"recordSourceRevision"`
+	Command              []string       `json:"command"`
+	ExitCode             *int           `json:"exitCode"`
+	RunnerDigest         string         `json:"runnerDigest"`
+	Inputs               []RuntimeInput `json:"inputs"`
+}
+
+func validateSubmittedRuntimeRecord(runtime RuntimeObservation, evidence Evidence, selected map[string]Evidence, discoveryCommit string) error {
+	if runtime.EvidenceID != evidence.ID || runtime.RecordSourceRevision == "" || runtime.SourceRelation == "" || runtime.Command == nil || runtime.ExitCode == nil || runtime.Inputs == nil {
+		return errors.New("submitted runtime record requires explicit revision, relation, argv, exit code, and input list")
+	}
+	if !validFullCommit(runtime.RecordSourceRevision) || !validDigest(runtime.RunnerDigest) || len(runtime.Command) == 0 || len(runtime.Inputs) == 0 {
+		return errors.New("submitted runtime record requires full source revision, runner digest, argv, and inputs")
+	}
+	record := submittedRuntimeRecord{}
+	if err := decodeClosedJSON([]byte(evidence.Content), &record); err != nil {
+		return fmt.Errorf("parse strict submitted runtime record: %w", err)
+	}
+	if record.APIVersion != RuntimeRecordVersion || record.ExitCode == nil || record.Inputs == nil || record.RecordSourceRevision != runtime.RecordSourceRevision || *record.ExitCode != *runtime.ExitCode || record.RunnerDigest != runtime.RunnerDigest || !sameArgv(record.Command, runtime.Command) || !sameRuntimeInputs(record.Inputs, runtime.Inputs) {
+		return errors.New("runtime claim fields must exactly match the selected structured record")
+	}
+	for _, arg := range record.Command {
+		if arg == "" || strings.TrimSpace(arg) != arg || strings.ContainsRune(arg, '\x00') {
+			return errors.New("submitted runtime record argv must contain literal nonempty arguments")
+		}
+	}
+	relation := "historical"
+	if record.RecordSourceRevision == discoveryCommit {
+		relation = "same-discovery-commit"
+	}
+	if runtime.SourceRelation != relation {
+		return errors.New("runtime source relation does not match discovery commit; historical evidence cannot be presented as current")
+	}
+	seenInputs := map[string]bool{}
+	currentSourceInput := false
+	for _, input := range record.Inputs {
+		if err := validateRepoPath(input.Path); err != nil || !validDigest(input.Digest) {
+			return fmt.Errorf("invalid submitted runtime input %q", input.Path)
+		}
+		key := strings.ToLower(input.Path)
+		if seenInputs[key] {
+			return fmt.Errorf("submitted runtime record repeats input %q", input.Path)
+		}
+		seenInputs[key] = true
+		if record.RecordSourceRevision == discoveryCommit {
+			current, ok := selectedEvidenceByPath(selected, input.Path)
+			if !ok {
+				return fmt.Errorf("same-commit runtime input %q is not in selected discovery", input.Path)
+			}
+			if current.Digest != input.Digest {
+				return fmt.Errorf("same-commit runtime input %q digest differs from selected discovery", input.Path)
+			}
+			if current.Basis == "code" || current.Basis == "configuration" || current.Basis == "test" {
+				currentSourceInput = true
+			}
+		}
+	}
+	if record.RecordSourceRevision == discoveryCommit && !currentSourceInput {
+		return errors.New("same-commit runtime record must name at least one selected code, configuration, or test input")
+	}
+	return nil
+}
+
+func selectedEvidenceByPath(selected map[string]Evidence, name string) (Evidence, bool) {
+	for _, item := range selected {
+		if item.Path == name {
+			return item, true
+		}
+	}
+	return Evidence{}, false
+}
+
+func validFullCommit(value string) bool {
+	if len(value) != 40 && len(value) != 64 || value != strings.ToLower(value) {
+		return false
+	}
+	_, err := hex.DecodeString(value)
+	return err == nil
+}
+
+func sameArgv(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if left[i] != right[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func sameRuntimeInputs(left, right []RuntimeInput) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if left[i] != right[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func validateExcerpt(evidence Evidence, evidenceID string, start, end int, excerpt string) error {
