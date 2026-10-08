@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T23:09:35Z",
+  "updatedUtc": "2026-10-08T23:12:39Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12,7 +12,7 @@
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-08T23:04:38Z",
+    "lastVerifiedUtc": "2026-10-08T23:12:39Z",
     "verification": "automation_update returnedACTIVE; savedTOML checkedACTIVE/2h/rootTarget/exact5chatprompt; eventcallbacks and quietunchanged policy preserved",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
     "latestMandateUpdatedUtc": "2026-10-08T22:54:35Z",
@@ -31,9 +31,9 @@
     "pauseReason": "Final resumed two-actual-attempt window closed after R3; S1/read/write/build unproved, all six cells NOT RUN. Evidence/effort synthesis supplemented; no new grant or routine polling.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
     "resumedUtc": "2026-10-08T21:28:26Z",
-    "promptSha256": "57aa0a1fa0d5ad09136cb57af62ad0dc8fa8964bd3ee0363b965e2ca9e33a0ff",
+    "promptSha256": "c0cae26e52400407cc4683c78093eb93efd22f96aa4fd1e03946cd51c2227080",
     "name": "Markitect: Vergleich und fünf Arbeitschats koordinieren",
-    "currentGrantContext": "Posthoc2consumed/partialcc8b; freshoneActor dynamicport grant08f2ff2 until23:21:56Z, nootheractualquote",
+    "currentGrantContext": "Actualsingleephemeralclosed/qualified;bounded1800s zeroActor matched preparation active; exactcurrentgrantconditions authoritativeincanonicalstate, no fulltrial starts",
     "exactSavedTomlVerified": true
   },
   "threads": [
@@ -439,16 +439,16 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:51",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:52",
       "lastObservedStatus": "active",
       "activeTurn": {
-        "id": "01a11dc0-f23a-7310-ae38-0ea5893ef1d4",
+        "id": "01a11dc7-f196-7483-8dc8-723dd2e04104",
         "status": "inProgress"
       },
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac821eb23e08191a1564d3f79f00b32",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac8230572a08191be7b168404cefbf3",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Run six real native-Codex exploratory case studies, independently evaluate and report intermediate data",
-      "latestProgress": "Dynamic-portactualruntimecompleted:45publicassertions/3restartassertionsandoldordercompatibilityPASS;5holdoutgroupsPASS,1restartcomparisonfailed/unresolved,1existingatomicityvectorinapplicableNOTRUN. Candidateunchanged,12ownserverstartsreportedstopped. Scientistsealsandqualifiesrawreport, thenboundedprospectivecomparisonprep.",
+      "latestProgress": "Actual posthoc runtime qualified accepted; currently bounded prospective comparison preparation. ClassicMain contract allows0644/0755/0600 and request-supplied evidenceIDs; Design adapter admission explicit, no new trial execution.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
@@ -6917,7 +6917,7 @@
           "issuedUtc": "2026-10-08T23:01:56Z",
           "notAfterUtc": "2026-10-08T23:21:56Z",
           "source": "Latest direct user instruction Scientist soll derweil die tests durchfuehren und weiter arbeiten; actual two fixed-port10013 findings plus independent Rootreview. New finite explicit allocation, not automatic refill or original deadline extension.",
-          "status": "One new actual posthoc runtime assessment authorized, dispatch pending",
+          "status": "Closed/consumed1; qualified actual runtime evidence accepted with explicit diagnostic scope deviation and unresolved oracle cases",
           "priorSupplementKey": "native-v3-conventional-gf-posthoc-validation-20261009",
           "priorActualActivationsConsumed": 2,
           "priorRemainingActivations": 0,
@@ -6962,7 +6962,7 @@
           "prompt": "Dein sauberer Abschluss cc8b8d63 ist angekommen; die zwei realen Port10013-Befunde und beide Buildnachweise sind unabhängig nachgeprüft. Root hat nach diesem konkreten Befund einen NEUEN getrennten engen Grant dokumentiert und committed: 08f2ff2, canonical C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination-state.json -> Scientist.evidence.nativeV3EphemeralValidationGrant, key native-v3-conventional-gf-ephemeral-validation-20261009. Issued2026-10-08T23:01:56Z, Ende23:21:56Z. Die alten2Actors sind verbraucht; keine Reservierung wiederverwenden, kein Original-v3-Pass oder Fristverlängerung.\n\nBitte direkt ausführen: Nach maximal300sVorbereitung ohnePrepActors genau1 NEUER frischer fork_turns=none unabhängigerActor max600s/max1parallel am unveränderten sauberen d1e271b/treea07ff00. Freeze eigene Kopie/Tasks1-5/Publicchecks/Rubrik/anwendbare bestehende Evaluatorinputs/nativeProfil und dynamischenTransport vorAktivierung, neueReservation vorSpawn. Keine weitere Genehmigungsrunde nötig. Dieser eine Actor prüft öffentliches aktuelles Task1-5-Verhalten, echte Altauftrag7unit-Retrykompatibilität auf beiden Routen und bestehende anwendbare unabhängige Holdouts, soweit real ausführbar; keinerlei Reparatur/Task6/neuer vollständigerTrial. Max12eigeneServerstartsinkl.Restarts im600sActorfenster.\n\nWesentliche konkrete Korrektur der Ausführungsumgebung: eigene Kestrel-Prozesse direkt mit ASPNETCORE_URLS=http://127.0.0.1:0 starten, tatsächliche URL ausschließlich aus eigenem Serverstdout übernehmen. Nur eigene Childhandles/PIDs, endlich/beendetinfinally; keine globale Prozess-/Port-/Agenten-/Threadinventur, Ownerlookup/Fremdpfade/Fremdkill oder weitereModelActors. Bei erneutem10013/keiner eigenenURL sofort NOTRUN/Stop, kein Portsearch/Fallback/Retry. Ein gewöhnlicher externer Transportwrapper darf eigenenBaseURL an bestehendeAssertions reichen, keine semantischeAssertion-/Produktänderung. Der vorherige Task4Stand darf ausschließlich readonly exportiert für tatsächliche alteDB-Kompatibilität genutzt werden.\n\nDeine additive Oracleerrata ist berücksichtigt: widersprüchliche öffentliche Anwendbarkeitsbeschreibungen mit engem öffentlichen Nachweis klären, private Inhalte nicht weitergeben. Bestehende assertions, die erklärteTask1-5Anforderungen verletzen, ausdrücklich inapplicable/NOTRUN, nicht heimlich fixen oder Pass behaupten. Für den späteren v4-Vergleich eine prospektive Korrektur einfrieren; hier keine Oracle-/Source-Reparatur oder Neuscore alterBelege. Kandidat ist vor öffentlichen UND privaten Resultaten eingefroren, kein Feedbackrepair.\n\nNach actualStart inhaltlicher Callback, dann Ergebnis/Blocker und exakterHandoff; inheritedProfil ohneOverrides, Usage/Servingunknownnull. Originalincomplete/Task6NOTRUN bleibt, Supplementalresultate separat. Danach Basisbericht/folgende gematchte Planung einschließlich Design fortführen; derzeitKEINE weiteren Volltrials freigegeben. Design entwickeltparallel, saubererReadinesspin steht noch aus. Rootreview der öffentlichenDocs liefert vier prospektive Migrationsfragen (kanonischeModellautorität/Pflege, dauerhafteFileOwnership/Deckung, nutzbaresRunResumeRepairVerifyApply, BrownfieldConflictResolveSelectiveAdoption), in evaluation.md ergänzt; keine rückwirkendneue gemeinsameRubrik oderConventionalDesignpflicht. Kein pauschales Warten nach Komprimierung: aktivenFortsetzungsanker mit exaktRestquote/Deadline/nextStep halten.",
           "promptSha256": "71b1b2210f5f9bef04725d1a2d25fc5fdebe27c0febb55537ab87c9fe49a449d",
           "actualStartVerified": true,
-          "status": "ActualsinglefreshActorstartedafterreservation;root64bindings/candidate/transportchecked, runtimeoutcomepending"
+          "status": "Deliveredonce;actualActorandsealedqualifiedclosureaccepted"
         },
         "nativeV3PosthocValidationAcceptance": {
           "acceptedUtc": "2026-10-08T23:04:38Z",
@@ -7071,6 +7071,55 @@
             "NoMain/releaseornewsourcefeatures fromScientist; explicitprospectiveClassicMainpinchangesonlynewv4candidate,neveroldv3.",
             "Finishdraft/separatechecks/hashhandoff/callbackwithinbound; actual6cellsrequiresseparatelyreviewedfreezeandfiniteexecutiongrant onceDesignready. Noautomatictrialrefill."
           ]
+        },
+        "nativeV3EphemeralValidationAcceptance": {
+          "acceptedUtc": "2026-10-08T23:12:39Z",
+          "sourceSha": "3e8515f7ca9b1a3a4a0f887884753b7efc87796a",
+          "cleanObservedBeforePreparation": true,
+          "status": "Qualified actual posthoc runtime evidence; original incomplete unchanged, two oracle cases unresolved/inapplicable and unplanned diagnostic receives no credit",
+          "candidateSha": "d1e271b8472cc55565696b976a87ff968a4e8c7a",
+          "candidateTree": "a07ff00a3d3182521d202c618410f9c0520ea85f",
+          "rootVerifiedFreezeBindings": 64,
+          "rootVerifiedPriorSupplementFiles": 16,
+          "rootVerifiedArchiveMembers": 135,
+          "rootVerifiedLogBindings": 25,
+          "reportedInputBindingEntriesReviewed": 10,
+          "archiveSha256": "ef7bb802b5f5c3040150d10a9046e2052fc78fbf2d36430cbb113cb4b7c7609e",
+          "manifestSha256": "331dc95e2d75af44c26e3ac5cb3fb09e9ccd60862fb69997269170596082ddcf",
+          "handoffSha256": "3ab33d82470bcf45dc47cd94ab35732aca033fc60cdf9a9cfd6b724013a22484",
+          "actorReportSha256": "b3ab710cd1ac0e818affbca0ec83cda28ae32262083cd1bb77054b3dd2faf5aa",
+          "publicChecksPassedActual": 46,
+          "publicCountErratum": "Raw immutable Actor report says45; root read actual46-entry passed log and additive operatorerrata. Original report untouched.",
+          "publicRestartChecksPassed": 3,
+          "oldOrderCompatibility": "Actual prior Task4binary accepts7unit order; currentbinary reads/retriesbothroutes/conflicts/cancelonce/newlimitpass. Assertion script/result/serverlogs archived; missingdedicatedcompatibilitystdout explicitlynotreconstructed.",
+          "privateHoldouts": "5passedgroups; restartbefore2PASS/afterFAILEDafter1assertion, scientist identifies JSONlist-vs-tuple comparisondefect, notretropass; atomicityinapplicableNOTRUN atcurrentTask5cutoff",
+          "scopeDeviation": "12thownserverstart was unplanned observational restartdiagnostic outside frozenexisting-assertionsequence. Conservatively deviation/no accepted test or score credit, no retrospective authorization. Original failed holdout remains failed; no repair/source/oracle mutation.",
+          "actors": 1,
+          "maxConcurrent": 1,
+          "remainingActors": 0,
+          "ownServerStarts": 12,
+          "ownHandleStopReceipts": 12,
+          "preparationSeconds": 123.826698,
+          "actorReportSeconds": 120.671937,
+          "conservativeActorObservationSeconds": 168.036498,
+          "sealSecondsFromIssue": 383.275429,
+          "unknowns": [
+            "OS/providerstopguarantees",
+            "providerusage",
+            "servingidentity",
+            "cost",
+            "activehumanduration"
+          ],
+          "task6": "NOTRUN",
+          "comparativeQualityOrMethodWinner": false
+        },
+        "matchedDesignClassicMainPreparationDispatch": {
+          "sentUtc": "2026-10-08T23:10:05Z",
+          "deliveryConfirmed": true,
+          "grantCommit": "a5f8477",
+          "prompt": "Dein Abschluss3e8515f7 ist eingetroffen; Root hat bereits den tatsächlichen dynamischen Serverstart,25Loghashes und gebundene Rohresultate gelesen.46/45Erratum und die12.Start-Diagnose ausdrücklichalsAbweichung/ohneTestcredit beibehalten; OriginalRestartFAILED undAtomicityinapplicable bleiben. KeinweitererActualaufruf ausdiesenGrants.\n\nNächster konkreter begrenzter Auftrag ist bereitscommitted a5f8477: matched-design-classic-main-conventional-preparation-20261009, vollständig in C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination-state.json -> Scientist.evidence.matchedDesignClassicMainPreparationGrant. Issue23:09:35Z, Ende23:39:35Z am8OktUTC. Max1800s, ZEROActor-/Provider-/Appserver-/vollständigeTrialstarts, höchstens2gewöhnlicheKorrekturbatches+2gezieltemechanischeTestaufrufe, keineProduktarbeit/altenEvidenzänderungen.\n\nBereite jetzt die konkreteprospektiveVergleichsversionvor, währendDesignseineaktuellenIntegrationsbefundebehebt: publicDTO/Identity/allowedMode/paths/suppliedEvidenceRefs-Preflight alsgewöhnlicherexternerMechanikhelper, OwnHandle+Kestrel0Transport, tatsächlicheRunner-/Task-/Rollenfristen samtindependentAssessmentreserve, gleichestatsächlichesnativeProfil undklärbareCandidateAdmission. Anforderungen/Task1-6Mappung/Holdout-Anwendbarkeit/RestartSerializationkorrektur prospektiv undRequirementgebunden, Originaleunverändert undnichtrescoren. KeineSimulationfehlenderProduktfähigkeiten/erfundeneVotes/Evidence. VorbereitungsnachweisealsMechanik,keineStudienzellenkennzeichnen. QuelltestsaufkonkreteDTO/Transport/Mappingrisikenbeschränken; keineVollsuitenoderweiterenCapability-Mikrodiagnosen. FehlendennativenCLI-/Tool-/ModellsupportalskonkreteAdmissionlückebenennen, nichtschweigendApp/CLI/Modellwechseln.\n\nExpliziteprospektiveVersionsentscheidungvonOverseer fürNEUESv4: ClassicMaina97cbd5ef3e0b22b9e6397501047a4e01dc90204 istderaktuelleHauptversions-/Ablösungsvergleich. DasalteStudyClassicc91363b/v0.14.1 undallesv3bleibenunverändert; derneueMainpinistkeinrückwirkenderErsatz. DesignnurmitgenauemsauberenangenommenenReadinessSource/Binary/Role-/Toolcontract,nicht57fa+WIPstillfreezen. Du kannstjetztCandidate-unabhängigeöffentlicheVerträge/Protokoll/Admissionvorbereiten, ohneaufWIPzuzugreifenoderscheinbarfertigenDesignpinzuerfinden.\n\nVorschlag6gematchteZellen: Design,ClassicMain,starkeConventional jeweilsGreenfield/Brownfield, innerhalbinsgesamtmax8weitererTrials/max2Fragen,restliche2unzugeteilt. GemeinsameOutcomeQualitätseparatvonMethodenkonformität, keineDesignartefaktpflichtfürConventional; Ownership/Modellpflege/Drift/Aufsicht/MigrationuntergemeinsamdeklariertenOutcomes. ActualModel/Tool/Resourcesmüssenidentischundrealnutzbarsein, deinaktuellLuna/SolConfoundhinweisbleibt. KeinMain-/Releaseentscheid undnochKEINEActual-Folgetrialquote; nachdeinemkonkretenmechanischgeprüftenDraft plusDesignreadinesspinfolgtunabhängigerFreezecheckundfrischerendlicherExecutiongrantohnepauschaleNutzerrückfrage.\n\nLiefereinnerhalbFensterexaktenkleinenSource-/Diff-/Checks-/Remaining-AdmitHandoffmitCallback, keinACK, keinFortsetzungsverlustbeiKompaktion. Keine neuenAgentsfürdieseOfflinevorbereitung; unabhängigeActualFreezeReviewsgibt es erstuntereinemseparatgezähltenVolltrialblock.",
+          "promptSha256": "a36688416438261656128be336cd98eaeee4f2b8aac5d8cd2ef813fd4a283080",
+          "status": "Active preparation verified; no actual new study/Actor grant"
         }
       },
       "classicHandoffReceived": true,
@@ -8294,8 +8343,8 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T23:09:35Z",
-    "evidenceLevel": "Sealedcc8bpartialposthocacceptedwith150bindings/179ZIP/28oldfilesand30unchangedreservations;twoActorbuilds,zerocurrentHTTP/holdouts. FreshoneActoractualcheckdispatchedafterindependentreview, notyetstartverified. Designnativeintegrationblockersreported.",
+    "reviewedUtc": "2026-10-08T23:12:39Z",
+    "evidenceLevel": "Actual ConventionsGF posthoc46public/3restart/oldordercompatibility/5holdoutgroups passed, onefailedharnesscase/oneinapplicable and unplanneddiagnostic retained. Root64bindings/135ZIP/25logs/16oldfiles verified; no comparativewinner. Scientist nowactivein boundedzeroActorpreparation; Designstillneedsreadinesshandoff.",
     "coordinationActions": [
       "AddedDesignasfifthmonitoredcandidateandrequestedimmutableReadinesscallback",
       "ResumedScientistwithfresh2Actorposthoctestgrantafterreportedcompaction-inducedidle; noolddeadlineextension",
@@ -8305,7 +8354,7 @@
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-08T19:51:14Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
-    "observationStatus": "Actualruntimeportissue resolved. Preliminary45+3public/compat+5holdoutsPASS;1failedcomparison/1inapplicableNOTRUN, no winner. ActiveScientistsealing; boundedofflinefollowupauthorized.",
+    "observationStatus": "Eventcallbacksand2hfallbackactive; no further actualstudyquota; prepare6matchedfuturecellswithin8totalcap.",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z"
   },
