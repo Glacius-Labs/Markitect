@@ -2,6 +2,8 @@
 
 Dieses Verzeichnis enthält einen vollständigen **Designbeleg**, keine lauffähige Shop-Anwendung und kein vom heutigen Markitect akzeptiertes Projektformat. `designVersion: project-world/0.1` kennzeichnet die vorgeschlagene Syntax. Die Dateien können als YAML gelesen und ihre expliziten Beziehungen überprüft werden; daraus entsteht kein Nachweis einer bereits implementierten Agentenlaufzeit.
 
+Dieser Beleg bewahrt die erste Entwurfsiteration. Die [neueste Gliederungs- und Bedienplanung](../conceptual-modules.md) verortet alle Markitect-eigenen Dateien unter `.markitect/`, verbindet Namensraum und Verantwortung in fachlichen Slices und empfiehlt `manager.yaml`. Die Belegdateien und ihr Prüfer sind noch nicht auf dieses Zielformat migriert.
+
 Der [Walkthrough](../shop-walkthrough.md) erklärt Dateistruktur, Modell, Alltag und den Start der Umsetzung. Das [Laufzeitprotokoll](../operating-protocol.md) beschreibt Nachrichten, Kandidaten und Wiederaufnahme.
 
 ## Dateien

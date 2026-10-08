@@ -58,13 +58,13 @@ Die [konkrete Bedien- und Modellbeschreibung](shop-walkthrough.md), der [vollst�
 
 ### P0 — Modell am Beispiel präzisieren
 
-Lieferung: akzeptierter Minimalwortschatz, vollständiger Order-/Reservierungsfall, Entscheidungsprotokoll für die unten offenen Fragen und exakter technischer Basis-SHA.
+Lieferung: akzeptierter Minimalwortschatz, vollständiger Order-/Reservierungsfall, Entscheidungsprotokoll für die unten offenen Fragen und exakter technischer Basis-SHA. Den vorhandenen Shop-Beleg und seinen Prüfer auf die aktuelle Slice-Struktur unter `.markitect/` migrieren; bis dahin bleibt er ausdrücklich erste Iteration.
 
 Endkriterium: Eine Person kann von einer freien Notiz zu akzeptierten Begriffen, Use Case, Verantwortung, konkretem Auftrag und überprüfter Realisierung navigieren. Ungeklärte Fachentscheidungen sind ausdrücklich offen. Öffentliche Begriffe haben jeweils eine Bedeutung.
 
 ### P1 — Fachsprache und Ownership ausdrücken
 
-Lieferung: kleinstes kanonisches YAML-Beispiel für Konzepte, Kontext, Regeln, Use Cases, Bereiche, Namespaces, Module und Rollenauflösung; zugehörige Schemata und gezielte Compiler-/Hostdiagnostik.
+Lieferung: kleinstes kanonisches YAML-Beispiel für Konzepte, Kontext, Regeln, Use Cases, rekursive verantwortete Module und Rollenauflösung; Namensraum und Verantwortung folgen der gemeinsamen Deklaration gemäß neuestem Zielstand. Dazu gehören Schemata und gezielte Compiler-/Hostdiagnostik.
 
 Endkriterium: Mehrdeutige Referenzen, fehlende Verantwortliche, zyklische Bereichseltern und widersprüchliche Eigentümerschaft werden deterministisch gemeldet. Ein tieferer Bereich benötigt keinen neuen Typ. Prosa erzeugt keine versteckten Referenzen. Vorhandene Kernverträge zuerst nutzen; erst belegte Lücken erweitern.
 
@@ -82,9 +82,11 @@ Endkriterium: Der Stornierungsfall verändert tatsächlich erforderliche Dateien
 
 ### P4 — Produkteinstieg und Übergang abschließen
 
-Lieferung: README und Navigation entlang des Projekts, modellbasierter Einstieg, ausführbares Beispiel, umgestellte Authoring-Ressourcen, öffentliche Terminologie und expliziter Umgang mit alten Records/Konfigurationen.
+Lieferung: README und Navigation entlang des Projekts, Gespräch als Einstieg, erzeugte lesbare Spezifikation mit fachlicher Änderungsansicht, ausführbares Beispiel, umgestellte Authoring-Ressourcen, öffentliche Terminologie und expliziter Umgang mit alten Records/Konfigurationen. Der [neueste Zielstand](conceptual-modules.md) besitzt die Ablage unter `.markitect/`, die Slice-Struktur und die vorgeschlagene `manager.yaml`-Deklaration. Modellquellen und erforderliche Konfiguration werden versioniert; lokale Arbeitsdaten und abgeleitete Sichten erhalten eine explizite Ablage-/Exportpolitik.
 
 Endkriterium: Ein neues Projekt kann mit Ziel, Fachbegriffen und Use Case beginnen, ohne zuerst Skills, Agents oder eine Anbieterintegration zu konfigurieren. Der geplante Begriff ist aus aktiven öffentlichen Verträgen entfernt; historische Namen erscheinen nur in klaren Übergangs- bzw. Herkunftsabschnitten. Erforderliche Gates laufen am finalen Kandidaten; Release bleibt eigener Auftrag.
+
+Ein Nutzer kann eine fachliche Änderung im Gespräch entwickeln, ihre Bedeutung und Auswirkungen prüfen und die bereits beauftragte Umsetzung starten lassen, ohne YAML zu lesen oder manuell zu bearbeiten. Lesbare Sichten zeigen ihren Modellstand und führen Änderungen auf die kanonischen Quellen zurück. Das Modell ist die primäre Arbeitsoberfläche; nachvollziehbare Realisierung und Prüfung bleiben sichtbar.
 
 ## 5. Abnahmeszenarien
 
@@ -140,11 +142,15 @@ Die folgenden Szenarien sind Anforderungen für spätere Implementierungsprüfun
 | A25 | Eine neue Regel verwendet unveränderte Architektur als Kontext | Bestehende Checks laufen; ein Plattformmanager erhält erst bei tatsächlich betroffenen Plattformpflichten Arbeit |
 | A26 | Nutzerauftrag umfasst Modellpflege und Umsetzung | Interne Annahme-/Startschritte bleiben gebunden, erfordern aber keine zusätzliche pauschale Rückfrage |
 | A27 | Umsetzung erzeugt neuen Pfad im delegierten Bereich | Writer, autorisierte Zuordnungsänderung und erneute finale Modell-/Artefaktprüfung bleiben nachvollziehbar |
+| A28 | Nutzer beschreibt eine neue Regel im Gespräch | Strukturierte Modelländerung, verständliche fachliche Differenz und passende Prüferwartungen entstehen ohne manuelles YAML-Editing |
+| A29 | Neues Projekt wird angelegt | Alle Markitect-eigenen Dateien liegen unter `.markitect/`; kanonische Quellen sind versionierbar, lokale Arbeitsdaten werden ausdrücklich behandelt |
+| A30 | Nutzer ändert die lesbare Spezifikation | Änderung fließt über die kanonischen Modelleingaben und deren Prüfung; kein konkurrierender Besitzer derselben Aussage entsteht |
+| A31 | Modell wurde geändert, lesbare Sicht oder Prüfung ist älter | Gebundener Stand und fehlende Aktualität sind sichtbar; ein gültiges Modell wird nicht mit nachgewiesener Umsetzung gleichgesetzt |
 
 ## 6. Noch zu entscheidende Details
 
 - Minimale Typen: Der Designbeleg unterscheidet Konzept und Zustand. Im tatsächlichen Schema gemeinsamen Term-Kind oder getrennte typisierte Referenzfelder wählen; das Beispiel beweist keine polymorphe Core-Referenz.
-- Kontext: Namespace bleibt ein Namensscope mit verpflichtender Verantwortung. Vorgeschlagen ist eine ausdrückliche Deklaration bzw. ein kanonisches Register; ein fachlicher Kontext ist eine zusätzliche ausdrückliche Eigenschaft. Die endgültige Syntax und die Abbildung heutiger Namespace-Strings sind offen, nicht die Ownershippflicht.
+- Kontext: Nach aktueller Nutzerpräzisierung tragen fachliche Ordner und eine gemeinsame Deklaration Namensraum und Verantwortung, statt paralleler lokaler Register. `manager.yaml` ist die empfohlene, noch offene Benennung. Die endgültige Syntax, Pfad-/Identitätsmigration und die Abbildung heutiger Namespace-Strings sind offen, nicht die Ownershippflicht.
 - Rollenauflösung: Referenz auf Person/Team/Rolle und ihr Entscheidungsverfahren; ein eindeutiger Verantwortungsbezug darf keine unklare Mehrheitsentscheidung verbergen.
 - Managervertrag: Minimalformat für Kontextpaket, delegierten Ergebnisauftrag, Kindbericht, Integrationsurteil und entscheidungsfähige Eskalation; auf jeder Ebene gleichartig, fachlich unterschiedlich gefüllt.
 - Agentenlebenszyklus: Eigener Agent je Manager ist festgelegt; Laufzeit, Fortsetzung und gespeicherter Rollenstand sind noch zu konkretisieren. Eltern dürfen daraus keine Abhängigkeit vom internen Kontext ihrer Kinder erhalten.
@@ -170,3 +176,5 @@ Die weitere direkte Nutzerpräzisierung legt einen eigenen spezialisierten AI-Ag
 Der ausgearbeitete Shop-Beleg enthält beide Modellstände, fünf Managerrollen und konkrete Beispielartefaktpfade. Der lokale Belegprüfer untersucht Referenzen, Ownership, Bereichsbaum, Kontextvorgaben und den Deltafall. A24–A27 ergänzen die geplante Produktabnahme. Ein erfolgreicher Beleglauf ist keine Ausführung von P1–P4 und keine Prüfung der Beispielanwendung.
 
 Durchgeführt für diese Ausarbeitung: unabhängiger Beispielreview mit anschließendem Nachreview; die Befunde zu expliziter Pflichtabdeckung, neuem Realisierungsbedarf bei unveränderten Begriffen, Writergrenzen, Core-Referenzabbildung und späteren Zuordnungsänderungen wurden eingearbeitet. Der Belegprüfer besteht für 39 Baseline-/44 Zieldefinitionen, fünf Managerrollen und 17 deklarierte Artefaktpfade; er bestätigt fünf neue und fünf geänderte Definitionen einschließlich Realisierungs-/Prüfzuordnung. Sieben Markdown-Dateien mit 51 lokalen Linkzielen bestehen die Zielprüfung. Whitespaceprüfung wird einschließlich aller neuen Dateien vor dem lokalen Commit ausgeführt. Null Shop-Prüfungen, null Beispiel-Managerstarts und kein Deployment; die zur Planung eingesetzten Reviewagenten sind davon getrennt.
+
+Die weitere Nutzerpräzisierung legt `.markitect/` als Ablage aller Markitect-eigenen Dateien sowie Gespräch und lesbare Spezifikation als normalen Zugang fest. `manager.yaml` ist die empfohlene Benennung aus den beiden Nutzervorschlägen. A28–A31 beschreiben die geplante Bedienabnahme. Für diese Dokumentationsfortschreibung wurden 47 lokale Linkziele in fünf Dateien und Whitespace geprüft. Der ältere YAML-Beleg wurde weder migriert noch erneut ausgeführt; keine Produkt- oder Laufzeitprüfung wird daraus abgeleitet.

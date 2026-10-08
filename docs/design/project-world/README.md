@@ -20,13 +20,15 @@ Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücke
 8. **Manager als Abstraktions- und Entscheidungsebene:** Jeder Bereichsmanager bündelt ausschließlich den relevanten Kontext, delegiert Ziele und Entscheidungsspielraum, erhält Berichte und verantwortet die Integration. Die Hierarchie ist der Ablauf für Änderungen und Entscheidungen, nicht nur eine Beschreibung von Zuständigkeiten.
 9. **Geschäftsführung und subsidiäre Eskalation:** Der Geschäftsführer an der Wurzel besitzt umfassende Entscheidungsbefugnis im vom Nutzer übertragenen Projektauftrag. Bereichsmanager entscheiden Routinefragen innerhalb ihrer Zuständigkeit selbst. Ein ungelöster Konflikt steigt nur bis zum nächsten Vorfahren mit ausreichender Zuständigkeit und Befugnis. Der Nutzer bleibt oberste Instanz für wichtige, ausdrücklich vorbehaltene oder durch keine delegierte Ebene entscheidbare Fragen.
 10. **Ein eigener AI-Agent pro Manager:** Jede Managerrolle einschließlich Geschäftsführung wird durch einen eigenen, auf ihre Funktion spezialisierten AI-Agenten ausgeübt. Jeder hat seinen eigenen Arbeitskontext. Eltern benötigen weder die vollständigen Kontexte ihrer Kinder noch Kenntnis darüber, welche internen Details dort geladen sind. Zusammenarbeit erfolgt über Aufträge, Berichte, Schnittstellen und konkrete Rückfragen.
+11. **Fachliche Gliederung und verborgene Werkzeugablage:** Zusammengehörige Konzepte, Verhalten, Regeln und Prüferwartungen liegen gemeinsam in rekursiven Slices statt in globalen Typordnern. Alle Markitect-eigenen Dateien liegen unter `.markitect/`. Die kombinierte Einheit aus Modul, Namensraum und Verantwortung sowie `manager.yaml` als deren Deklaration sind die aktuellen Benennungsvorschläge.
+12. **Modellpflege als Hauptarbeit:** Der normale Nutzer entwickelt die Spezifikation im Gespräch mit einem AI-Agenten und liest erzeugte Dokumentation und verständliche fachliche Änderungen. YAML ist das interne, versionierbare Speicherformat. Das gewünschte Verhalten zu modellieren wird zur primären Form des Programmierens; Umsetzung, Integration und belastbare Prüfung bleiben ausdrückliche Aufgaben.
 
 ## Dokumente und Eigentümerschaft
 
 | Dokument | Verantworteter Inhalt |
 |---|---|
 | [Zielmodell](model.md) | Begriffe, vorgeschlagene Verträge, Verantwortungsregeln und durchgehendes Order-Beispiel |
-| [Fachliche Module und Vertical Slices](conceptual-modules.md) | Neueste Gliederungsdiskussion: fachliche Slices, gemeinsamer Modulbegriff als Vorschlag und ausdrückliche Verträge über Grenzen; Shop-Beleg noch im ersten Zuschnitt |
+| [Fachliche Module und Vertical Slices](conceptual-modules.md) | Neuester Zielstand: `.markitect/`, Managerdeklaration, fachliche Slices, Verträge über Grenzen und modellzentrierte Bedienung; Shop-Beleg noch im ersten Zuschnitt |
 | [Umsetzungsplan](implementation-plan.md) | Quellabgleich, endliche Schritte, Abnahmeszenarien und offene Entscheidungen |
 | [Shop-Walkthrough](shop-walkthrough.md) | Konkrete Antworten zu Dateistruktur, Modell, Änderungen und Start der Umsetzung |
 | [Shop-Modellbeleg](shop-example/README.md) | Vollständige vorgeschlagene YAML-Dateien, Vorher-/Nachher-Stand und lokaler Belegprüfer |

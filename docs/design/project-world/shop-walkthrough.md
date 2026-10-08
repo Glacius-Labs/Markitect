@@ -2,6 +2,8 @@
 
 Status: ausgearbeiteter Zielentwurf. Die folgenden Dateien, Bedienaktionen und Agentenabläufe sind ein Vorschlag für das künftige Produkt. Das [konkrete YAML-Beispiel](shop-example/README.md) ist ein lokal prüfbarer Designbeleg, keine implementierte Shop-Anwendung und kein aktueller CLI-Vertrag. Dieser Walkthrough beantwortet die fünf Benutzerfragen; das [Laufzeitprotokoll](operating-protocol.md) besitzt die detaillierten Ausführungsverträge.
 
+Fortschreibung: Die nachfolgende Dateistruktur und die getrennten Area-/Namespace-/Moduldefinitionen zeigen die erste Iteration. Der [neueste Zielstand](conceptual-modules.md) führt Markitect-eigene Dateien unter `.markitect/` zusammen, gliedert nach fachlichen Slices und empfiehlt `manager.yaml` als gemeinsame Deklaration. Der Nutzer arbeitet über Gespräch und lesbare Spezifikation. Dieser Walkthrough ist noch nicht vollständig darauf migriert.
+
 ## 1. Welches Softwaresystem bauen wir?
 
 `Shop` ist eine kleine Anwendung mit HTTP-API und einer relationalen Datenbank. Kunden können eine Order anlegen; dafür wird vorhandener Bestand reserviert. Das System wird um Stornierung vor Versand erweitert. Zahlung, Retoure, mehrere Lager und verteilte Dienste gehören nicht zum Beispiel.
