@@ -1,0 +1,19 @@
+{
+  "classification": "Read-only native contract example; no translation or requalification of historical R4",
+  "plannedIntegrationReviews": [
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Area",
+      "name": "root",
+      "namespace": "inventory"
+    }
+  ],
+  "reviewActorScopes": [
+    [
+      "[\"markitect.government/v1alpha1\",\"Area\",\"inventory\",\"root\"]",
+      "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]"
+    ]
+  ],
+  "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\government-serialization-native-20261008-r4\\terminal-external-snapshots\\government\\results\\run-state\\government-run--a16565c9254bebe516f7b741259484ec\\report.json",
+  "sourceSha256": "448e2c5d48ec703e0a2ac3a008ee8e3f3e5508991e0d32f05d1b8dc92e8e8fd2"
+}

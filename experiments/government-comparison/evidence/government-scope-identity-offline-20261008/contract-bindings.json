@@ -1,0 +1,29 @@
+{
+  "files": [
+    {
+      "path": "internal/core/types.go",
+      "sha256": "04f1f3ebd8b6cff5c22af549fbe1e3d1451b296df4afa12613e2cedf3a24410f"
+    },
+    {
+      "path": "internal/core/compile.go",
+      "sha256": "849f797e50a4c69758a87b43fa1fff2575d75ee0f9ed3fe4a5764c0db6b8096e"
+    },
+    {
+      "path": "internal/host/government/execution/run.go",
+      "sha256": "4bf98260f508108aed6e7e01639d336fc1553fac5d3fee641588589a582d68f1"
+    },
+    {
+      "path": "internal/host/government/execution/actors.go",
+      "sha256": "f56851a1c72bb8a4668d6dc723509f1f99503d5af36d557dbf42cad7162422b7"
+    },
+    {
+      "path": "internal/host/government/plan.go",
+      "sha256": "9a3231bbad502f837ac28a2ac90cbc9b522d9084f6f3157031ec1831f0466088"
+    },
+    {
+      "path": "internal/host/government/bindings.go",
+      "sha256": "3435ee5a95080237f47f0b3dcd8b8dce6b45c176f86aec66baa7f0aab32c7f92"
+    }
+  ],
+  "sourceCommit": "04e225d5caee78c2a198607143863fca1e829750"
+}

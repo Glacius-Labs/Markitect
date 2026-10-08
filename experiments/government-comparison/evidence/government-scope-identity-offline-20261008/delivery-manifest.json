@@ -1,0 +1,95 @@
+{
+  "baseCommit": "1ea3fc970797e01206e98d15e1951021b4ee5586",
+  "experimentalConsumption": {
+    "controllerStarts": 0,
+    "delegates": 0,
+    "fullProductSuites": 0,
+    "metadataSessions": 0,
+    "modelProviderCalls": 0,
+    "nativeStarts": 0,
+    "realActorStarts": 0,
+    "reservedSessionSeconds": 0,
+    "studyCells": 0,
+    "wrappers": 0
+  },
+  "files": [
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/contract-bindings.json",
+      "sha256": "110dcad0040514e806a518a4bbd45f9bff0225794a4836c8cb740f82bd9f4b5f"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/focused-tests-1.log",
+      "sha256": "c197fb49da41209dde45a69593b11e3e4ac319c31377ee1dcf0ae90f1ef4e92f"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/focused-tests-2.log",
+      "sha256": "ae4dab924ff54b3a5c63cf088aacfbd7afe393c1a84496f548a8603459d26a60"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/handoff.md",
+      "sha256": "7de7ed51d3053cea96fc592633ad2c24fb62550e8e8f65ee85686dc6b10ec993"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/historical-bindings.json",
+      "sha256": "260eda6204e80ed9585ca13ecb0b74e2d453cd30c52b6539a2d25daa2c443918"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/independent-review.md",
+      "sha256": "c75a7f54b3610010df99022a982be5ee35ae5c9c8252d8ee6b293220fdb2c014"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/native-contract-example.json",
+      "sha256": "88cf9b58e82e38aaba3ad72bdf75c63aee0e34f25df21d88277d4f9b857ad745"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/offline-checks.json",
+      "sha256": "d726d73b85898b63b1901060097dab3f4e1b3fa3a5771c692f30aba1d4af7b56"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/pinned-contract/internal/core/compile.go",
+      "sha256": "849f797e50a4c69758a87b43fa1fff2575d75ee0f9ed3fe4a5764c0db6b8096e"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/pinned-contract/internal/core/types.go",
+      "sha256": "04f1f3ebd8b6cff5c22af549fbe1e3d1451b296df4afa12613e2cedf3a24410f"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/pinned-contract/internal/host/government/bindings.go",
+      "sha256": "3435ee5a95080237f47f0b3dcd8b8dce6b45c176f86aec66baa7f0aab32c7f92"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/pinned-contract/internal/host/government/execution/actors.go",
+      "sha256": "f56851a1c72bb8a4668d6dc723509f1f99503d5af36d557dbf42cad7162422b7"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/pinned-contract/internal/host/government/execution/run.go",
+      "sha256": "4bf98260f508108aed6e7e01639d336fc1553fac5d3fee641588589a582d68f1"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/pinned-contract/internal/host/government/plan.go",
+      "sha256": "9a3231bbad502f837ac28a2ac90cbc9b522d9084f6f3157031ec1831f0466088"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-identity-offline-20261008/source-diff.patch",
+      "sha256": "6c4f16a82a1973a0898f34a9d2597648b373adfe0846352c8122c8bdb2b3c74a"
+    },
+    {
+      "path": "experiments/government-comparison/runtime/government.py",
+      "sha256": "531c4819d5a258280478d4b5f808602a326ed7e2eea157200e00d6ddd56e9fb1"
+    },
+    {
+      "path": "experiments/government-comparison/runtime/test_government.py",
+      "sha256": "f63a85036435c6c0fb63421a84330c86b48ceb911988aa2167b498d214b96f49"
+    },
+    {
+      "path": "experiments/government-comparison/runtime/test_government_scope_identity.py",
+      "sha256": "c390822efbad3f82750bf42b99e7c34ad323e0e9831d1b9caa9dd4d16cc6e33c"
+    }
+  ],
+  "historicalFilesUnchanged": 3282,
+  "outcome": "offline correction validated; independent review passed",
+  "package": "government-scope-identity-offline-20261008",
+  "r4Outcome": "incomplete; closed; not rescored",
+  "s1Complete": false,
+  "sourceCommit": "bb64f4999f826ca2d07e9cad7b576d905ff58755"
+}

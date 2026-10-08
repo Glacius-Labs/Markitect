@@ -1,0 +1,59 @@
+{
+  "baseCommit": "1ea3fc970797e01206e98d15e1951021b4ee5586",
+  "classification": "offline contract correction; no historical rescore",
+  "closedReviewFinding": "Full identity syntax now follows pinned core compile.go:915-949. Added matching-invalid-both-sides regression; final focused rerun29passed.",
+  "experimentalConsumption": {
+    "controllerStarts": 0,
+    "delegates": 0,
+    "fullProductSuites": 0,
+    "metadataSessions": 0,
+    "modelProviderCalls": 0,
+    "nativeStarts": 0,
+    "realActorStarts": 0,
+    "reservedSessionSeconds": 0,
+    "studyCells": 0,
+    "wrappers": 0
+  },
+  "focusedTests": {
+    "count": 29,
+    "errors": 0,
+    "failures": 0,
+    "modules": [
+      "test_government",
+      "test_government_scope_identity"
+    ],
+    "run": "focused-tests-2.log",
+    "subprocessPopen": "denied for complete test suite"
+  },
+  "historicalConsumption": {
+    "actualTotalUsage": null,
+    "deterministicDelegates": 7,
+    "knownReportedTokens": 53331,
+    "nativeStarts": 12,
+    "realActorStarts": 5,
+    "reservedSessionSeconds": 1800,
+    "wrappers": 10
+  },
+  "historicalFilesByteIdentical": 3282,
+  "humanAcceptance": false,
+  "nativeLedger": {
+    "expectedR4Sha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\native-starts.sqlite",
+    "sha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705"
+  },
+  "package": "government-scope-identity-offline-20261008",
+  "preparationDeviation": "One read-only git-show targeted nonexistent internal/host/government/decision.go and exited128 before any source edit or test; corrected to actual bindings.go. No experimental process or execution retry. Initial subdirectory-relative historical path lookup returned zero files; caught by count inspection and replaced with repository-root Git lookup and per-file blob verification.",
+  "priorFocusedRun": {
+    "count": 28,
+    "run": "focused-tests-1.log",
+    "status": "passed before independent syntax-validation finding; not final candidate evidence"
+  },
+  "python": {
+    "path": "C:/Python313/python.exe",
+    "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+  },
+  "r4Qualification": "incomplete; closed; no Resume or rescore",
+  "s1Complete": false,
+  "semanticAcceptance": false,
+  "sourceCommit": "bb64f4999f826ca2d07e9cad7b576d905ff58755"
+}
