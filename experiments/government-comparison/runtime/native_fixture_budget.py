@@ -771,8 +771,21 @@ def _validate_r4_fresh_check_receipts(expected_checks, observed_checks):
     """Match configured lowercase definitions to Go encoding/json GateResult fields."""
     if not isinstance(expected_checks, list) or not expected_checks or not isinstance(observed_checks, list):
         raise ValueError("R4 accepted run report lacks fresh configured checks")
-    expected = {(item.get("name"), item.get("tool")) for item in expected_checks
-                if isinstance(item, dict)}
+    expected = set()
+    for item in expected_checks:
+        if not isinstance(item, dict) or not isinstance(item.get("name"), str) or not item["name"]:
+            raise ValueError("R4 configured fresh check name/run is malformed")
+        command = item.get("run")
+        if (not isinstance(command, list) or not command or
+                any(not isinstance(arg, str) or "\x00" in arg for arg in command) or
+                not command[0] or any(char.isspace() or char in "/\\" for char in command[0])):
+            raise ValueError("R4 configured fresh check name/run is malformed")
+        # Pinned host verifyCommands sets GateResult.Tool to Check.Run[0].
+        expected.add((item["name"], command[0]))
+    if any(not isinstance(item, dict) or
+           any(not isinstance(item.get(key), str) or not item[key] for key in ("Name", "Tool"))
+           for item in observed_checks):
+        raise ValueError("R4 fresh checks differ from the exact configured check names/tools")
     observed = [(item.get("Name"), item.get("Tool")) for item in observed_checks
                 if isinstance(item, dict)]
     if (not expected or len(expected) != len(expected_checks) or

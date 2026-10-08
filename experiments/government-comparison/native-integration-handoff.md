@@ -1,3 +1,15 @@
+# Active offline check receipt identity correction, 2026-10-08
+
+Overseer assignment government-check-receipt-identity-offline-20261008, base
+130fcd85c866e7643cdb7f5bcb844c8ccd2ec311. Correct only the Resume budget
+consumer to derive GateResult.Tool from Check.Run[0] per Government04e225d.
+Root owns source/tests; existing independent reviewer owns bounded contract
+and final review. Next: focused offline sealed-R6-copy regressions, then clean
+source/evidence handoff and one completion callback. Zero new actual preparation,
+admission, freeze, experimental process or liveledger mutation is authorized.
+R6 remains terminal INCOMPLETE; its pinned runtime source changes, so its old
+freeze cannot be reused. Earlier handoff content remains byte-for-byte below.
+
 # R6 terminal checkpoint, 2026-10-08
 
 R6 is closed incomplete: native and outer Queue positive, conditional Resume

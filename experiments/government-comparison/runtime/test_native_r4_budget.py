@@ -99,7 +99,8 @@ class NativeR4BudgetTests(unittest.TestCase):
     def test_r4_fresh_check_receipts_match_go_json_gate_result_fields_and_bounds(self):
         # Runtime check definitions use lower-case JSON tags; Go GateResult has yaml-only tags,
         # so encoding/json emits the exported field names below.
-        definitions = [{"name": "unit", "tool": "go"}, {"name": "policy", "tool": "go"}]
+        definitions = [{"name": "unit", "run": ["go", "test", "./unit"]},
+                       {"name": "policy", "run": ["go", "test", "./policy"]}]
         native_gate_results = [
             {"Name": "unit", "Tool": "go", "ExitCode": 0, "Milliseconds": 12,
              "TimeoutMilliseconds": 1000},
