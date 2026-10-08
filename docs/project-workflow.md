@@ -2,6 +2,8 @@
 
 `markitect project` is the project-owned entry point for explicit managers, statements, expected artifacts, checks, and bounded implementation work. It complements the existing Project/Domain commands; the historical top-level `init` and the `prepare` / `copy-me` evidence-capture flow remain available with their existing meanings.
 
+An AI author can inspect the active project-model contract with `markitect project schema`; this read-only command needs no repository or Markitect source checkout and emits the exact schema used by project validation.
+
 ## Choose the executable
 
 The published CLI and a source candidate are different tools. Install or upgrade the released CLI only through the documented versioned, verified release bundle. Until this project workflow is released, run it from the exact Markitect source checkout being evaluated:
