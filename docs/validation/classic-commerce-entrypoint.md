@@ -55,6 +55,8 @@ No general autonomous engineering reliability, provider quality, economic benefi
 
 ## Intent-change follow-up, 2026-10-08
 
+This subsection preserves the initial checkpoint before the separately authorized corrected replay. Its open replay and suite statements are historical; the later [corrected replay](#corrected-uninterrupted-replay-2026-10-08) records the subsequent outcome.
+
 The [owner-intent walkthrough](../../examples/classic-commerce/intent-change.md) closes two public-entry gaps: mapping a concrete request to reviewed canonical intent and explicit check/file owners, and following a later accepted business-rule change through the existing native controller. The example changes minimum order quantity from one to two. Its .NET policy now refers business behavior to the UseCase purpose rather than maintaining another quantity rule. No Core, production Host, provider, scheduler or acceptance lifecycle was added.
 
 | Input or result | Exact identity |
@@ -87,3 +89,30 @@ The cumulative development allocation is closed: two full attempts, eleven nativ
 The local source checks passed: fixed check/context/impact and canonical model/context at `3a30e20`; managed-artifact accounting, configured Module checks, schema, formatting, vet, build, module verification and architecture imports. The first standalone Module invocation omitted required `--hooks`/`--pipelines`; that diagnostic remains preserved, and the corrected declared argv passed. The seven-test correction is source-bound to `11967c2`. A new complete Go suite and hosted Windows/Linux CI were not run for this example/documentation follow-up; the shared heavy slot belongs to Worker. The earlier exact-base `8927704` full-suite evidence is not relabeled as a new-candidate result.
 
 The native initial-to-change journey is demonstrated with the explicit saved-Apply continuation. **The corrected public script has not completed an uninterrupted replay.** Keep that replay and release/platform gates open for a separately bounded next allocation. This checkpoint does not establish real-agent quality, authenticated owner acceptance, complete repository semantics, comparative benefit or stable release support.
+
+## Corrected uninterrupted replay, 2026-10-08
+
+A fresh separate grant `classic-p1-corrected-replay-20261008-r2` allowed exactly one unchanged public-script invocation after the shared slot was explicitly assigned to Architect. The preceding r1 grant was closed in offline preflight with zero usage because its six-start allowance omitted the refused stale Apply. All eleven r2 preflight files, the trusted clean source, 30 fixture files, published runtime, flags and fresh external output were frozen and independently reviewed before activation. No provider/model actor, source-script edit or retry was introduced.
+
+| Input or observed result | Exact identity |
+|---|---|
+| Replayed public source / final heavy-gate source | `fbb2deab8d85be74a77874a705229a0a1ea1fee4` |
+| Runtime | Published v0.14.1 Windows amd64; source `7dbd599c81540c8203a1b7f83afbc335174f4f1f` |
+| Runtime SHA-256 | `2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4` |
+| r2 preflight manifest SHA-256 | `59e417ceec06612556ff2b1257dde22d035dcd46c6ac7853f03413976084d47a` |
+| Initial fixture source / materialized evidence | `d318cbc5367a372ba95a04e6ed3c792e025cd5b5` / `8383c640e8d4dedbf93579347edc6eec0e71d2b8` |
+| Accepted minimum-two fixture source | `47f487ebdb8d0a82b9399a57966b01beb44b1efd` |
+| Accepted two-file diff SHA-256 | `a877d9f581a5cc11d9eb53d0acfae20915d3b64d0cba722275c8f62752b4258e` |
+| Complete public-script receipt SHA-256 | `8713d590e4b9285f0ed0f37b0090bce61f61f1055ea07e01cc761b2bc6cbae56` |
+| Outer supervisor receipt SHA-256 | `54f3b2b4b079bb3ff3acfb1d1839a67219a895e18cda3b4c1a2117ea475aa47c` |
+| New attempt usage | 1 invocation; 7 native starts; 6 deterministic role reservations; maximum one active command; 95.629 seconds including outer supervision |
+
+The original public script completed both cycles without interruption. Initial Execute/Apply/Verify passed, and Audit was complete. After the exact purpose/probe change from minimum one to two, impact/reconcile exposed affected work and old assurance became stale. The saved old Apply was refused at the exact source-binding boundary with exit 2; HEAD/index/worktree, all four target bytes and ledger bytes stayed unchanged. This refused process counts as a controller start. Fresh Execute/Apply/Verify then passed and Audit was complete. Apply wrote exactly handler and Markdown; project and EffectAxis bytes remained unchanged while all four reviewed targets were checked.
+
+Both assurance scopes in each cycle ran real offline SDK/restore/build and independent finite behavior probes: four actual .NET check receipts. The four synthetic protocol Verifier responses and two deterministic Executor responses remain test doubles. Generated runtime hashes and reuse of the same record store are bound in the raw trial receipts; changing executor mode did not reset historical evidence.
+
+The operative r2 limits were seven starts, six roles, parallelism one and 1800 seconds including cleanup. The unchanged public helper reports its broader internal 12/24/2 limits; these are not the authority for the stricter r2 grant. The one-shot external supervisor enforced its deadline and refusal of a second invocation. Cumulative actual smoke usage is **three full attempts, eighteen native starts, fifteen roles and 292.373 seconds**: the historical 196.744 seconds plus 95.629 seconds. Original incomplete receipts and the separate continuation remain byte-identical; the closed r1 grant consumed zero. No further run is authorized by unused time.
+
+One fresh fixed-source Project verification at `fbb2deab8d85be74a77874a705229a0a1ea1fee4` passed: architecture imports, managed artifacts, configured Module checks and the complete `go test ./... -count=1 -timeout=30m` gate. The Go suite took 530.802 seconds; the outer source-gate invocation took 666.022 seconds, separately from smoke usage. The raw report is non-provisional, exits 0 and binds the exact tested SHA. Source HEAD, index and worktree stayed unchanged and clean. No second full suite or unchanged focused test run followed.
+
+The final source follow-up changes only README, example guidance, roadmap and this validation report. Its own fixed-source structure/accounting checks are separately bound in the versioned handoff; the full suite above is attributed only to the exact source actually exercised. Hosted Windows/Linux and release/package gates remain open. This closes the finite corrected-script replay gap, not autonomous semantic engineering quality, comparative benefit, authenticated human acceptance or stable release support.

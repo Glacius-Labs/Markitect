@@ -121,7 +121,7 @@ For the canonical alpha, start with a concrete request and review the intended r
 
 The [intent-change walkthrough](examples/classic-commerce/intent-change.md) follows one rule from `UseCase.purpose` through selected .NET and Markdown policies to a handler, readable documentation and an independent behavior probe. It then changes the minimum order quantity from one to two, exposes stale evidence, refuses reuse of the old Apply candidate, and requests fresh verification. Model acceptance and review of exact materialization bytes are separate decisions.
 
-This walkthrough is an unreleased source example using the published v0.14.1 **experimental alpha** CLI. Its fixed actor demonstrates protocol mechanics; it does not translate arbitrary requests, establish semantic acceptance or run an autonomous team. The [example README](examples/classic-commerce/README.md) gives prerequisites and commands.
+This walkthrough is an unreleased source example using the published v0.14.1 **experimental alpha** CLI. A [source-bound Windows replay](docs/validation/classic-commerce-entrypoint.md#corrected-uninterrupted-replay-2026-10-08) completed the initial and changed-intent cycles with real finite .NET checks; this is bounded example evidence. Its fixed actor demonstrates protocol mechanics; it does not translate arbitrary requests, establish semantic acceptance or run an autonomous team. The [example README](examples/classic-commerce/README.md) gives prerequisites and commands.
 
 <a id="the-current-workflow"></a>
 
