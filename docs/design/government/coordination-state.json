@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T20:08:54Z",
+  "updatedUtc": "2026-10-08T20:09:11Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -449,9 +449,10 @@
       "lastAssignment": {
         "key": "s1-resumed-read-tool-20261008-r2",
         "authorizedUtc": "2026-10-08T20:04:57Z",
-        "status": "Independent authority review passed; ready for once-only dispatch",
+        "status": "Dispatched once; conditional single read-tool attempt pending preparation/freeze/review",
         "grantPointer": "threads[name=Scientist].evidence.resumedReadToolR2Grant",
-        "scope": "Same one real readonly model/native tool ability probe; separate fresh authority and slot; no actual reuse."
+        "scope": "Same one real readonly model/native tool ability probe; separate fresh authority and slot; no actual reuse.",
+        "sentUtc": "2026-10-08T20:09:11Z"
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -5632,6 +5633,13 @@
           "reviewedGrantSha256": "2ad1b53d8a0eb25233a9b1d20a2717da483a5e261fb92c24c4e8c149aefbfd90",
           "initialConcern": "Reviewer referenced superseded first-stderr-byte terminal contract. Re-review on latest accepted8676817 and prospective structured-error clarification resolved concern.",
           "finalFindings": "Normative pinned current stderrContract unchanged; structured errors terminal. Fresh slot key/issued/assigned match, no release fields; remaining1/initial actual0;13->max14trees,6->max7Actors; window0consumed/1reserved/max2; same .162.0-alpha.2, deadlines120/195/210 and prep1800 consistent. No runtime/tests/source changes by reviewer; unknown provider counts/total usage and retrospective token threshold preserved."
+        },
+        "resumedReadToolR2Dispatch": {
+          "key": "s1-resumed-read-tool-20261008-r2",
+          "sentUtc": "2026-10-08T20:09:11Z",
+          "delivery": "send_message_to_thread returned matching Scientist threadId without error",
+          "grantCommit": "3e5dd89",
+          "repeatDispatchPermitted": false
         }
       },
       "classicHandoffReceived": true,
@@ -6773,7 +6781,7 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Independent authority review of fresh r2; then once-only dispatch. Actual history remains13/6; old r1 closed without start, no studies authorized.",
+  "nextAction": "Scientist R2 prepares under reviewed fresh authority and may execute exactly one read-tool attempt after source/freeze/binding review and new reservation. Handle terminal callback; no duplicate dispatch or automatic next grant. No study starts yet.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
