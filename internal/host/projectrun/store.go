@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
 
 type runStore struct {
@@ -39,31 +40,38 @@ type File struct {
 
 func planDigest(plan PlanRecord) (string, error) {
 	return digest(struct {
-		APIVersion           string            `json:"apiVersion"`
-		ID                   string            `json:"id"`
-		Status               string            `json:"status"`
-		Goal                 string            `json:"goal"`
-		ExecuteAuthorized    bool              `json:"executeAuthorized"`
-		BaseRevision         string            `json:"baseRevision"`
-		TargetBranch         string            `json:"targetBranch"`
-		TargetHead           string            `json:"targetHead"`
-		RepositoryDigest     string            `json:"repositoryDigest"`
-		BaseSnapshot         string            `json:"baseSnapshot"`
-		WorkingSnapshot      string            `json:"workingSnapshot"`
-		BaseProjectDigest    string            `json:"baseProjectDigest"`
-		WorkingProjectDigest string            `json:"workingProjectDigest"`
-		BaseModelDigest      string            `json:"baseModelDigest"`
-		ModelDigest          string            `json:"modelDigest"`
-		ReportDigest         string            `json:"reportDigest"`
-		RuntimeDigest        string            `json:"runtimeDigest"`
-		Managers             []ManagerTask     `json:"managers"`
-		Checks               []CheckPlan       `json:"checks"`
-		ModelEdit            *EditPlan         `json:"modelEdit,omitempty"`
-		InitialCandidateID   string            `json:"initialCandidateId"`
-		RuntimeAgents        map[string]string `json:"runtimeAgents"`
-		Findings             []string          `json:"findings,omitempty"`
-		Blockers             []string          `json:"blockers,omitempty"`
-	}{plan.APIVersion, plan.ID, plan.Status, plan.Goal, plan.ExecuteAuthorized, plan.BaseRevision, plan.TargetBranch, plan.TargetHead, plan.RepositoryDigest, plan.BaseSnapshot, plan.WorkingSnapshot, plan.BaseProjectDigest, plan.WorkingProjectDigest, plan.BaseModelDigest, plan.ModelDigest, plan.ReportDigest, plan.RuntimeDigest, plan.Managers, plan.Checks, plan.ModelEdit, plan.InitialCandidateID, plan.RuntimeAgents, plan.Findings, plan.Blockers})
+		APIVersion              string                     `json:"apiVersion"`
+		ID                      string                     `json:"id"`
+		Status                  string                     `json:"status"`
+		Goal                    string                     `json:"goal"`
+		ExecuteAuthorized       bool                       `json:"executeAuthorized"`
+		BaseRevision            string                     `json:"baseRevision"`
+		ChangeBaseRevision      string                     `json:"changeBaseRevision,omitempty"`
+		ChangeBaseSnapshot      string                     `json:"changeBaseSnapshot,omitempty"`
+		ChangeBaseProjectDigest string                     `json:"changeBaseProjectDigest,omitempty"`
+		ChangeBaseModelDigest   string                     `json:"changeBaseModelDigest,omitempty"`
+		ChangeBaseReportDigest  string                     `json:"changeBaseReportDigest,omitempty"`
+		ChangeImpact            *projectmodel.ChangeImpact `json:"changeImpact,omitempty"`
+		ChangeImpactDigest      string                     `json:"changeImpactDigest,omitempty"`
+		TargetBranch            string                     `json:"targetBranch"`
+		TargetHead              string                     `json:"targetHead"`
+		RepositoryDigest        string                     `json:"repositoryDigest"`
+		BaseSnapshot            string                     `json:"baseSnapshot"`
+		WorkingSnapshot         string                     `json:"workingSnapshot"`
+		BaseProjectDigest       string                     `json:"baseProjectDigest"`
+		WorkingProjectDigest    string                     `json:"workingProjectDigest"`
+		BaseModelDigest         string                     `json:"baseModelDigest"`
+		ModelDigest             string                     `json:"modelDigest"`
+		ReportDigest            string                     `json:"reportDigest"`
+		RuntimeDigest           string                     `json:"runtimeDigest"`
+		Managers                []ManagerTask              `json:"managers"`
+		Checks                  []CheckPlan                `json:"checks"`
+		ModelEdit               *EditPlan                  `json:"modelEdit,omitempty"`
+		InitialCandidateID      string                     `json:"initialCandidateId"`
+		RuntimeAgents           map[string]string          `json:"runtimeAgents"`
+		Findings                []string                   `json:"findings,omitempty"`
+		Blockers                []string                   `json:"blockers,omitempty"`
+	}{plan.APIVersion, plan.ID, plan.Status, plan.Goal, plan.ExecuteAuthorized, plan.BaseRevision, plan.ChangeBaseRevision, plan.ChangeBaseSnapshot, plan.ChangeBaseProjectDigest, plan.ChangeBaseModelDigest, plan.ChangeBaseReportDigest, plan.ChangeImpact, plan.ChangeImpactDigest, plan.TargetBranch, plan.TargetHead, plan.RepositoryDigest, plan.BaseSnapshot, plan.WorkingSnapshot, plan.BaseProjectDigest, plan.WorkingProjectDigest, plan.BaseModelDigest, plan.ModelDigest, plan.ReportDigest, plan.RuntimeDigest, plan.Managers, plan.Checks, plan.ModelEdit, plan.InitialCandidateID, plan.RuntimeAgents, plan.Findings, plan.Blockers})
 }
 
 func newID() (string, error) {

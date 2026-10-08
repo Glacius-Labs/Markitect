@@ -72,6 +72,9 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if base.Snapshot == nil || base.Snapshot.Digest() != plan.BaseSnapshot || base.Digest != plan.BaseProjectDigest || base.Report.ModelDigest != plan.BaseModelDigest {
 		return out, ErrStale
 	}
+	if err := validateChangeImpact(host, root, base, plan); err != nil {
+		return out, err
+	}
 	if err := repositoryMatches(root, plan); err != nil {
 		return out, err
 	}
