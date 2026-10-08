@@ -85,6 +85,7 @@ type Response struct {
 	EvidenceRefs         []string        `json:"evidenceRefs"`
 	VerifierObservations []Observation   `json:"verifierObservations"`
 	CandidateJSON        json.RawMessage `json:"candidateJson,omitempty"`
+	ReportJSON           json.RawMessage `json:"reportJson,omitempty"`
 	Uncertainty          []string        `json:"uncertainty"`
 	Usage                *Usage          `json:"usage,omitempty"`
 }
