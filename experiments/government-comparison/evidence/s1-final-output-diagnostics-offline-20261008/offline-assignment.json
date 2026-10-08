@@ -1,0 +1,27 @@
+{
+  "key": "s1-final-output-diagnostics-offline-20261008",
+  "authorityPointer": "threads[name=Scientist].evidence.finalOutputDiagnosticsOfflineAssignment",
+  "baseSha": "900b9e7eccda27276272b97cd8c0b14c117b1cc6",
+  "firstActionUtc": "2026-10-08T18:42:39Z",
+  "deadlineUtc": "2026-10-08T19:02:39Z",
+  "maxPreparationSeconds": 1200,
+  "maxRepairIterations": 2,
+  "maxTestInvocations": 3,
+  "maxNewCases": 6,
+  "maxActualRuntimeStarts": 0,
+  "readinessWindow": {
+    "key": "s1-readiness-final-window-20261008",
+    "authorizedUtc": "2026-10-08T18:42:00Z",
+    "deadlineUtc": "2026-10-08T20:42:00Z",
+    "basis": "Overseer narrows remaining readiness diagnosis under direct finite research mandate; no automatic runtime authorization.",
+    "maxFurtherActualReadinessAttempts": 2,
+    "consumedFurtherActualAttempts": 0,
+    "reservedFurtherActualAttempts": 0,
+    "priorActualAppServerTrees": 11,
+    "grantKeys": [],
+    "eachAttemptRequiresFreshConcreteGrant": true,
+    "zeroRuntimeAuthorizedByThisWindow": true,
+    "exitCondition": "If S1 is still unproven at two further actual attempts or deadline, stop this diagnosis block, synthesize actual mechanics/product evidence, effort and NOT RUN comparisons; pause observation under finite-block user instruction. If S1 passes, continue separately frozen and granted six base trials.",
+    "noPolicyBypassNoPurchases": true
+  }
+}

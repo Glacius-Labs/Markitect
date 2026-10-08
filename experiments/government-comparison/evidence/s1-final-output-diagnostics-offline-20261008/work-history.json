@@ -1,0 +1,37 @@
+{
+  "firstActionUtc": "2026-10-08T18:42:39Z",
+  "offlineDeadlineUtc": "2026-10-08T19:02:39Z",
+  "sourceOrTestCorrectionIterations": 1,
+  "maxSourceOrTestCorrectionIterations": 2,
+  "corrections": [
+    {
+      "iteration": 1,
+      "when": "pre-test; before invocation1",
+      "scope": "test fixture only",
+      "reason": "keep exactly six scenarios; minimize imported prior source; avoid accidental historical-cause suggestion; assert preserved stop decision",
+      "changes": [
+        "Removed three helper subTest variants from schema-invalid case; schema-invalid real mocked-session case retained",
+        "Use current derivative pinned Protocol directly instead of importing older R2 client",
+        "Use arbitrary synthetic-unlisted-method, not a potentially suggestive public-looking method string",
+        "Assert unchanged unexpected-final-output stopReason after valid Thread response"
+      ],
+      "sourceOrHelperChange": false
+    }
+  ],
+  "testInvocations": 1,
+  "maxTestInvocations": 3,
+  "testFailures": 0,
+  "sourceValidationFailures": 0,
+  "productSourceCorrections": 0,
+  "documentationRefinements": [
+    "Clarified actual nested indent2 JSON bound350 bytes, standalone328/default300; no source changes"
+  ],
+  "scopeDisclosure": "Test author broad rg source search also matched prior sanitized R2 run-summary lines containing the public remoteControl/status/changed method name. No private excerpt/raw frame/transcript was read or recovered, no discarded-frame identity inferred; author disclosed and root recorded this scope slip.",
+  "runtimeQuota": 0,
+  "nativeRuntimeStarts": 0,
+  "reservations": 0,
+  "cliMetadataCalls": 0,
+  "webRequests": 0,
+  "studyCellsRun": 0,
+  "oldArtifactsModified": 0
+}

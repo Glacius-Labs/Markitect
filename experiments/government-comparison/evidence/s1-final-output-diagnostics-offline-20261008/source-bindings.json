@@ -1,0 +1,78 @@
+{
+  "baseSha": "900b9e7eccda27276272b97cd8c0b14c117b1cc6",
+  "sources": {
+    "client.py": {
+      "sha256": "6fb1fe4f0b51a5a0150b990c86b3657579ce6a6dae15d5028d47bde94771a2e0",
+      "bytes": 43682
+    },
+    "protocol_failure.py": {
+      "sha256": "776365db287479a23be67a4e22ac083f54ce881fa1452337d0e281529adcb38f",
+      "bytes": 6000
+    },
+    "thread_gate.py": {
+      "sha256": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de",
+      "bytes": 5852
+    },
+    "schema-contract.json": {
+      "sha256": "c4bf557d17426f4c9a6c61e97353b8361469169e067e1f911fdfc7488d369270",
+      "bytes": 2544
+    },
+    "frozen-method-enums.json": {
+      "sha256": "831728c4ce8c1913d25eff43229c93b81c0f5d802f93eb3b057333c4048e2220",
+      "bytes": 23235
+    },
+    "profile.json": {
+      "sha256": "d7f6de005778ac4e3915dee99c9c479c318f19ddcacbf89f1c9c53500b6eda6c",
+      "bytes": 2961
+    },
+    "test_protocol_failure.py": {
+      "sha256": "6f7abbfac479711abeb48d0353360c5666e61c318e3ef2d6de5816b46e5cc121",
+      "bytes": 14685
+    }
+  },
+  "unchangedCopiedInputs": [
+    "thread_gate.py",
+    "schema-contract.json",
+    "frozen-method-enums.json",
+    "profile.json"
+  ],
+  "catalogMemberCount": 94,
+  "refusalCodeVersion": 1,
+  "diagnosticMaxJsonBytes": 2048,
+  "runnableAuthority": false,
+  "runtimeEntrypoint": "SystemExit(2); request/grant/freeze/reservation absent",
+  "preservedSourceInputs": {
+    "experiments/government-comparison/evidence/s1-native-cwd-diagnostic-20261008-r1/client.py": {
+      "sha256": "b111ce67e202ff73c7f9e8d8b279e7b04ba02f0034ec1eeae57f3baf5401782f",
+      "bytes": 41833
+    },
+    "experiments/government-comparison/evidence/s1-native-cwd-diagnostic-20261008-r1/thread_gate.py": {
+      "sha256": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de",
+      "bytes": 5852
+    },
+    "experiments/government-comparison/evidence/policy-read-disabled-status/run-1/classified-client.py": {
+      "sha256": "95c8486ad8962e14ad0c2da2989adcf154fa28f51d19c1fe983c532d1a885926",
+      "bytes": 33584
+    },
+    "experiments/government-comparison/evidence/s1-common-runner-read-tool-20261008-r1/protocol.py": {
+      "sha256": "ebd087657febf63846904d83a75bc226a5412458418d20abe024ed267febb822",
+      "bytes": 6035
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/generated-schemas.zip": {
+      "sha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+      "bytes": 645474
+    },
+    "experiments/government-comparison/evidence/s1-redacted-stderr-offline-20261008/redacted_stderr.py": {
+      "sha256": "d92f79b0d14abd2c5851bea2162813c5f93b396e4d19fc927389bc8b6557ef6d",
+      "bytes": 10440
+    },
+    "experiments/government-comparison/runtime/selected_feature_contract.py": {
+      "sha256": "985ff1d8f8870de4ac697e030c2abeb543d1bc3e74f475968c5e1097be865550",
+      "bytes": 9417
+    },
+    "experiments/government-comparison/runtime/process.py": {
+      "sha256": "d0cedb71d57be87095d9af119d9769fb0c3d311e1af073cba81f6337743c78ae",
+      "bytes": 7348
+    }
+  }
+}

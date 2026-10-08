@@ -1,0 +1,19 @@
+{
+  "invocation": 1,
+  "command": [
+    "C:/Python313/python.exe",
+    "-B",
+    "-m",
+    "unittest",
+    "-v",
+    "test_protocol_failure.py"
+  ],
+  "startedUtc": "2026-10-08T18:51:05.786678+00:00",
+  "finishedUtc": "2026-10-08T18:51:06.032429+00:00",
+  "commandWallSeconds": 0.24528359999931126,
+  "returnCode": 0,
+  "newTestMethods": 6,
+  "priorSuitesRun": 0,
+  "nativeRuntimeStarts": 0,
+  "Popen": "mocked in all session fixtures; real processes forbidden by setUp guard"
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "static AST/source binding validation; no test execution or runtime",
+  "cleanupByteEquivalentAfterRemovingAddedReceiptField": true,
+  "allRequireCallsAndLiteralArgumentsPreserved": true,
+  "copiedGateSchemaCatalogProfileByteIdentical": true,
+  "publicCatalogExactMembers": 94,
+  "refusalCodesStaticLiteralMembers": 28,
+  "refusalCodeVersion": 1,
+  "maxDiagnosticJsonBytes": 2048,
+  "historicalFrameIdentification": null,
+  "actualNativeRuntimeStarts": 0,
+  "conservativeMaxDefaultJsonBytes": 300,
+  "conservativeMaxDiagnosticJsonBytes": 350,
+  "conservativeStandaloneIndentedBytes": 328,
+  "catalogAndLabelsAscii": true
+}

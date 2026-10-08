@@ -1,0 +1,11 @@
+test_first_cleanup_failure_survives_later_errors_while_drain_continues (test_protocol_failure.FirstProtocolFailureTests.test_first_cleanup_failure_survives_later_errors_while_drain_continues) ... ok
+test_known_forbidden_notification_has_fixed_method_and_refusal_metadata (test_protocol_failure.FirstProtocolFailureTests.test_known_forbidden_notification_has_fixed_method_and_refusal_metadata) ... ok
+test_schema_invalid_thread_is_recorded_at_unchanged_response_schema_gate (test_protocol_failure.FirstProtocolFailureTests.test_schema_invalid_thread_is_recorded_at_unchanged_response_schema_gate) ... ok
+test_unknown_values_and_exception_classes_never_escape_and_snapshot_isolated (test_protocol_failure.FirstProtocolFailureTests.test_unknown_values_and_exception_classes_never_escape_and_snapshot_isolated) ... ok
+test_unsolicited_response_uses_response_envelope_stage_without_identifier (test_protocol_failure.FirstProtocolFailureTests.test_unsolicited_response_uses_response_envelope_stage_without_identifier) ... ok
+test_valid_thread_then_forbidden_error_is_recorded_during_final_cleanup (test_protocol_failure.FirstProtocolFailureTests.test_valid_thread_then_forbidden_error_is_recorded_during_final_cleanup) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.038s
+
+OK
