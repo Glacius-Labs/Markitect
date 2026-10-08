@@ -98,7 +98,7 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 		return RunResult{}, err
 	}
 
-	cfg, executable, runtimeBefore, runtimeDigest, executableDigest, configDigest, err := fingerprintConfig(cfg)
+	cfg, executable, runtimeBefore, runtimeDigest, executableDigest, configDigest, childEnvironment, environmentDigest, err := fingerprintConfig(cfg, os.Environ())
 	if err != nil {
 		return RunResult{}, err
 	}
@@ -158,7 +158,7 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 	cmd.Dir = runDir
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
-	cmd.Env = setEnvironment(os.Environ(), "MARKITECT_AGENT_PRIVATE_LOG", privateLogPath)
+	cmd.Env = setEnvironment(childEnvironment, "MARKITECT_AGENT_PRIVATE_LOG", privateLogPath)
 	configJSON, _ := json.Marshal(struct {
 		Model           string          `json:"model"`
 		ModelOptions    json.RawMessage `json:"modelOptions"`
@@ -179,6 +179,7 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 		CommandDigest:         commandDigest,
 		ExecutableDigest:      executableDigest,
 		RuntimeFilesDigest:    runtimeDigest,
+		EnvironmentDigest:     environmentDigest,
 		ProviderVersion:       cfg.ProviderVersion,
 		ProviderVersionDigest: digest([]byte(cfg.ProviderVersion)),
 		StdoutDigest:          digest(stdout.buffer.Bytes()),
@@ -242,45 +243,93 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 // It resolves and hashes the configured executable and every declared runtime file
 // without invoking the external runner.
 func Fingerprint(input Config) (string, error) {
-	_, _, _, _, _, value, err := fingerprintConfig(input)
+	_, _, _, _, _, value, _, _, err := fingerprintConfig(input, os.Environ())
 	return value, err
 }
 
-func fingerprintConfig(input Config) (Config, string, []runtimeState, string, string, string, error) {
+func fingerprintConfig(input Config, inheritedEnvironment []string) (Config, string, []runtimeState, string, string, string, []string, string, error) {
 	cfg, err := normalizeConfig(input)
 	if err != nil {
-		return Config{}, "", nil, "", "", "", err
+		return Config{}, "", nil, "", "", "", nil, "", err
+	}
+	childEnvironment, environmentDigest, err := resolveEnvironment(cfg.EnvironmentAllowlist, inheritedEnvironment)
+	if err != nil {
+		return Config{}, "", nil, "", "", "", nil, "", err
 	}
 	executable, err := exec.LookPath(cfg.Command)
 	if err != nil {
-		return Config{}, "", nil, "", "", "", errors.New("configured runner command is unavailable")
+		return Config{}, "", nil, "", "", "", nil, "", errors.New("configured runner command is unavailable")
 	}
 	executable, err = filepath.EvalSymlinks(executable)
 	if err != nil {
-		return Config{}, "", nil, "", "", "", errors.New("configured runner command could not be resolved")
+		return Config{}, "", nil, "", "", "", nil, "", errors.New("configured runner command could not be resolved")
 	}
 	executable, err = filepath.Abs(executable)
 	if err != nil {
-		return Config{}, "", nil, "", "", "", errors.New("configured runner command path is invalid")
+		return Config{}, "", nil, "", "", "", nil, "", errors.New("configured runner command path is invalid")
 	}
 	if isShellExecutable(executable) {
-		return Config{}, "", nil, "", "", "", errors.New("runner command must be a direct executable, not a shell")
+		return Config{}, "", nil, "", "", "", nil, "", errors.New("runner command must be a direct executable, not a shell")
 	}
 	executableBytes, err := readBoundedFile(executable, 256<<20)
 	if err != nil {
-		return Config{}, "", nil, "", "", "", errors.New("configured runner executable could not be fingerprinted")
+		return Config{}, "", nil, "", "", "", nil, "", errors.New("configured runner executable could not be fingerprinted")
 	}
 	executableDigest := digest(executableBytes)
 	runtimeBefore, runtimeDigest, err := snapshotRuntimeFiles(cfg.RuntimeFiles)
 	if err != nil {
-		return Config{}, "", nil, "", "", "", err
+		return Config{}, "", nil, "", "", "", nil, "", err
 	}
 	configBytes, err := json.Marshal(cfg)
 	if err != nil {
-		return Config{}, "", nil, "", "", "", err
+		return Config{}, "", nil, "", "", "", nil, "", err
 	}
-	configDigest := digest(append(append([]byte(nil), configBytes...), []byte("executable:"+executableDigest+"runtime:"+runtimeDigest)...))
-	return cfg, executable, runtimeBefore, runtimeDigest, executableDigest, configDigest, nil
+	configDigest := digest(append(append([]byte(nil), configBytes...), []byte("executable:"+executableDigest+"runtime:"+runtimeDigest+"environment:"+environmentDigest)...))
+	return cfg, executable, runtimeBefore, runtimeDigest, executableDigest, configDigest, childEnvironment, environmentDigest, nil
+}
+
+func resolveEnvironment(allowlist *[]string, inherited []string) ([]string, string, error) {
+	if allowlist == nil {
+		child := append([]string(nil), inherited...)
+		return child, digestEnvironment(child), nil
+	}
+	selected := make([]string, 0, len(*allowlist))
+	for _, wanted := range *allowlist {
+		found := false
+		for _, entry := range inherited {
+			key, _, ok := strings.Cut(entry, "=")
+			if ok && environmentKeyEqual(key, wanted) {
+				selected = append(selected, entry)
+				found = true
+				break
+			}
+		}
+		if !found {
+			// An allowlisted but unset name contributes no value. Presence is
+			// still bound by the digest, and no ambient value is synthesized.
+			continue
+		}
+	}
+	return selected, digestEnvironment(selected), nil
+}
+
+func digestEnvironment(values []string) string {
+	canonical := make([]string, 0, len(values))
+	for _, item := range values {
+		key, _, ok := strings.Cut(item, "=")
+		if ok && !strings.EqualFold(key, "MARKITECT_AGENT_PRIVATE_LOG") && !strings.EqualFold(key, "MARKITECT_AGENT_CONFIG_JSON") {
+			canonical = append(canonical, item)
+		}
+	}
+	encoded, _ := json.Marshal(canonical)
+	return digest(encoded)
+}
+
+func environmentKeyEqual(left, right string) bool {
+	if runtime.GOOS == "windows" {
+		return strings.EqualFold(left, right)
+	}
+	return left == right
 }
 
 func setEnvironment(values []string, key string, value string) []string {
@@ -335,6 +384,31 @@ func normalizeConfig(input Config) (Config, error) {
 		return Config{}, err
 	}
 	cfg.Args = append([]string(nil), cfg.Args...)
+	if cfg.EnvironmentAllowlist != nil {
+		names := append([]string(nil), (*cfg.EnvironmentAllowlist)...)
+		seenNames := make(map[string]struct{}, len(names))
+		for _, name := range names {
+			if name == "" || strings.ContainsAny(name, "=\x00") || strings.TrimSpace(name) != name {
+				return Config{}, errors.New("environment allowlist contains an invalid name")
+			}
+			for i, r := range name {
+				valid := r == '_' || (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (i > 0 && r >= '0' && r <= '9')
+				if !valid {
+					return Config{}, errors.New("environment allowlist contains an invalid name")
+				}
+			}
+			key := name
+			if runtime.GOOS == "windows" {
+				key = strings.ToUpper(key)
+			}
+			if _, exists := seenNames[key]; exists {
+				return Config{}, errors.New("environment allowlist contains a duplicate name")
+			}
+			seenNames[key] = struct{}{}
+		}
+		sort.Strings(names)
+		cfg.EnvironmentAllowlist = &names
+	}
 	if len(cfg.RuntimeFiles) > maxRuntimeFiles {
 		return Config{}, errors.New("runtimeFiles exceed the configured count bound")
 	}

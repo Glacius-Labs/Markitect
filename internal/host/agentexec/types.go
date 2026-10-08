@@ -101,10 +101,15 @@ type Config struct {
 	Model           string          `json:"model"`
 	ModelOptions    json.RawMessage `json:"modelOptions"`
 	ProviderVersion string          `json:"providerVersion"`
-	Timeout         time.Duration   `json:"timeout"`
-	MaxStdoutBytes  int             `json:"maxStdoutBytes"`
-	MaxStderrBytes  int             `json:"maxStderrBytes"`
-	RuntimeFiles    []RuntimeFile   `json:"runtimeFiles"`
+	// EnvironmentAllowlist selects caller environment names passed to the child.
+	// nil preserves the historical inherit-all behavior; a non-nil empty slice
+	// passes no caller variables. Internal MARKITECT_AGENT_* values are added by
+	// agentexec after this selection.
+	EnvironmentAllowlist *[]string     `json:"environmentAllowlist,omitempty"`
+	Timeout              time.Duration `json:"timeout"`
+	MaxStdoutBytes       int           `json:"maxStdoutBytes"`
+	MaxStderrBytes       int           `json:"maxStderrBytes"`
+	RuntimeFiles         []RuntimeFile `json:"runtimeFiles"`
 }
 
 type RunOptions struct {
@@ -122,6 +127,7 @@ type Receipt struct {
 	CommandDigest         string `json:"commandDigest"`
 	ExecutableDigest      string `json:"executableDigest"`
 	RuntimeFilesDigest    string `json:"runtimeFilesDigest"`
+	EnvironmentDigest     string `json:"environmentDigest"`
 	ProviderVersion       string `json:"providerVersion"`
 	ProviderVersionDigest string `json:"providerVersionDigest"`
 	StdoutDigest          string `json:"stdoutDigest"`
