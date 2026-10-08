@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T16:05:20Z",
+  "updatedUtc": "2026-10-08T16:08:57Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -23,7 +23,9 @@
       "01a1169c-3df6-7571-997d-48ab57365875",
       "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "01a11928-cc8d-7580-9d29-f6557bb2cbd7"
-    ]
+    ],
+    "classicMainMandateUpdatedUtc": "2026-10-08T16:08:57Z",
+    "classicMainMandateVerified": true
   },
   "threads": [
     {
@@ -428,10 +430,10 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:9",
-      "lastObservedStatus": "idle",
-      "activeTurn": null,
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac7be2183308191b829077ebe9df991",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:10",
+      "lastObservedStatus": "active",
+      "activeTurn": "01a11c43-11a1-7a12-8464-277aa102f9a7",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac7bfa2f4048191bf3c3ad4498db249",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "One bounded thread/start diagnostic, zero turns or tools.",
       "latestProgress": "R2 independently closed before turn; offline useful-error observability plan authorized.",
@@ -3848,13 +3850,13 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "2a29b9c8-23e7-440f-a2cf-f0a33806c326:1",
-      "lastObservedStatus": "notLoaded",
-      "activeTurn": null,
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6efac545887d2b532e3903d762cbc",
+      "afterCursor": "2a29b9c8-23e7-440f-a2cf-f0a33806c326:2",
+      "lastObservedStatus": "active",
+      "activeTurn": "01a11c46-6062-77e2-a635-f085de740120",
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac7c023dbb887d289858cb338dc7cf5",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "CLASSIC-P1 completed; retained for concrete later product findings, no arbitrary follow-on assigned.",
-      "latestProgress": "Abgeschlossen. Die README ist aktualisiert; der saubere lokale Stand ist 4908bd2. Vollständiger Replay und alle vier Projektgates einschließlich frischer Go-Suite bestanden — exakt an fbb2dea. Der anschließende Dokumentationsstand hat eigene Prüfungen und unabhängiges Review bestanden. Additive Smoke-Bilanz: 3 Versuche, 18 Starts, 15 Rollen, 292,373 Sekunden. Alte Fehlversuche bleiben erhalten. Das geprüfte Übergabepaket enthält die vollständigen Belege. Der Prüfslot ist freigegeben. Gehostete CI- und Releasegates bleiben offen.",
+      "assignedMilestone": "Classic main integration authorized; main product line, frozen study retained",
+      "latestProgress": "Active: checking Classic against current remote base/open PRs; README/examples integration; held study preserved.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
       "transferredDesignCommit": null,
       "candidateSha": "4908bd2cb25fbc8a231717c099e049da8546703a",
@@ -4065,11 +4067,18 @@
         }
       },
       "lastAssignment": {
-        "key": "classic-p1-corrected-replay-20261008-r2",
-        "authorizedUtc": "2026-10-08T00:22:06Z",
-        "status": "Completed and qualified accepted; runtime authority closed. Hold for concrete findings.",
-        "scope": "Correct counted seven-start public script replay, one attempt plus required final gates; shared slot required.",
-        "sentUtc": "2026-10-08T00:22:06Z"
+        "key": "classic-main-integration-20261008",
+        "authorizedUtc": "2026-10-08T16:07:25Z",
+        "status": "Sent once; active integration confirmed",
+        "baseSha": "4908bd2cb25fbc8a231717c099e049da8546703a",
+        "destination": "https://github.com/Glacius-Labs/Markitect.git refs/heads/main",
+        "sourceAuthority": "Direct user 8 Oct: continue Classic while Scientist works, bring version to main and retain as main version",
+        "scope": "Classic integration, required corrections/README/gates, independent review, feature push/PR and regular merge after checks; no new release authority",
+        "heldStudySha": "c91363b7ac4decbe87212ff0f588b5451581a152",
+        "newModelProviderCalls": 0,
+        "newNativeSmokeAllowance": 0,
+        "sentUtc": "2026-10-08T16:08:57Z",
+        "prompt": "Direkter neuer Nutzerauftrag an Overseer vom 8. Oktober 2026: „Während der Scientist arbeitet könntest du den Architect weiter an der Classic Version arbeiten lassen und wir bringen die Version nach main und halten es als die Hauptversion“.\n\nDamit ist der bisherige allgemeine Classic-Hold aufgehoben. Classic ist die gewählte Hauptentwicklungslinie des Produkts. Du bist Eigentümer des nächsten begrenzten Pakets classic-main-integration-20261008: Führe den angenommenen Classic-Folgestand zur geprüften Übernahme nach origin/main in https://github.com/Glacius-Labs/Markitect.git. Der Nutzer autorisiert dafür ausdrücklich die nötigen Featurebranch-Pushes, PR-Erstellung/-Aktualisierung und den Merge nach main, sobald die vorgeschriebenen Checks und unabhängigen Reviews positiv sind. Keine erneute pauschale Rückfrage vor diesen autorisierten Schritten. Branchschutz/Prüfregeln respektieren, keine Umgehung, kein Force-Push oder Löschen fremder Arbeit. Jede erstellte PR über attach_artifact an deinen Chat hängen.\n\nAusgangslage: lokal angenommenes CLASSIC-P1 auf sauberem 4908bd2cb25fbc8a231717c099e049da8546703a im Worktree C:/Users/Consiliari/.codex/worktrees/classic-p1-intent-change/Markitect. Voller Replay und vier Quellgates bestanden an fbb2deab8d85be74a77874a705229a0a1ea1fee4; der vier-Markdown-Nachfolger wurde separat geprüft. Gehostete Windows-/Ubuntu-/Linux- und Integrations-/Releasegrenzen nicht als erledigt erben. Prüfe aktuelle Remotezustände, offene PRs und deine jüngsten direkten Nutzeraufträge, bevor du Änderungen integrierst. Geeigneten bestehenden Featureworktree wiederverwenden oder getrennten codex/-Integrationsbranch auf aktueller Produktbasis verwenden; kein Zurücksetzen von WIP oder Root-Designbranch als Produktbasis. Konflikte fachlich lösen und nötige Regressionen prüfen.\n\nArbeitsumfang dieses Pakets: Classic stabil zur Hauptversion auf main bringen, einschließlich vorhandener öffentlicher Bedienbeispiele, README, erforderlicher Kompatibilitäts-/Integrationskorrekturen und bestehender verbindlicher Gates. Priorisiere echte Integrations-, Bedien- oder Releasebefunde; keine große neue Featureplattform und keine Beschäftigungsarbeit. Halte Aussagen und kopierbaren Bedienweg mit dem tatsächlich integrierten Stand konsistent. Kanonisches Modell, konservative Invalidierung, feste Snapshots und explizite Annahme-/Apply-Grenzen erhalten. Government, Jev/SAT, private Scientist-Daten, Studienfixtures und Vergleichsbewertung gehören nicht in dieses Paket.\n\nWichtig: Scientists eingefrorener Classic-Studienkandidat c91363b7ac4decbe87212ff0f588b5451581a152 / Runtime v0.14.1 mit Quelle 7dbd599c81540c8203a1b7f83afbc335174f4f1f bleibt unverändert samt gehaltenem Worktree und Belegen. Main darf weiterentwickelt werden; es wird dadurch keine Studienversion still ersetzt. Main-Übernahme ist eine Produktentscheidung, kein Nachweis eines gemessenen Methodensiegers.\n\nNormale Implementierung, gezielte risikobasierte Tests, unabhängige Reviews und erforderliche lokale/gehostete Integrationschecks sind autorisiert. Keine redundanten unveränderten Vollsuiten. Der aktuell freie schwere Prüfslot wird dir für dieses Paket zugewiesen; Scientist bearbeitet nur seinen Offline-Diagnoseplan und braucht vor weiteren tatsächlichen Runneraufrufen ohnehin einen neuen Grant. Schwere lokale Quellgates sequenziell, endlich begrenzt und gemäß vorhandenen Projektbudgets; nach Paketabschluss ausdrücklich Slot freigeben. Alte geschlossene Smoke-/Rollen-/Modellgrants nicht wiederverwenden: neue reale Modell-/Provider- oder native Produkt-/Rollen-Smokes benötigen weiterhin einen konkreten separaten Grant. Keine Käufe, globale Policyänderungen oder zusätzliche kostenpflichtige Verpflichtungen. Neue Release-Veröffentlichung ist durch diesen Auftrag nicht zusätzlich autorisiert; bereits direkt autorisierte Release-Aufgaben behalten ihren belegten Umfang.\n\nNach positiver Review-/Checklage PR regulär nach main mergen und den tatsächlichen Remote-main-SHA sowie Check-SHAs nach dem Merge lesen. Falls ein nicht selbst lösbarer Blocker bleibt, genau diesen mit konkreter Entscheidung melden. Liefere einmalig terminale Rückmeldung mit PR-Link, tatsächlichem Merge-/Remote-main-SHA, sauberem lokalen Stand, Dateien/Verhalten, Checks, unabhängigem Review, offenen Releasegrenzen und Slotfreigabe an Overseer 01a11367-a781-7683-a20f-46e12614dcb4 auf Host local. Nutzerautorisierung für Rückmeldungen besteht. Danach dieses Paket beenden; keine Empfangsbestätigungs- oder Pollingschleife. Koordination liegt in C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination.md und coordination-state.json."
       },
       "heldCandidateSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
       "followupWorktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
@@ -4118,6 +4127,13 @@
           "sentUtc": "2026-10-08T00:22:06Z",
           "status": "Sent once; active confirmed",
           "promptRecord": "classicP1ClosureAssignment"
+        },
+        {
+          "key": "classic-p1-corrected-replay-20261008-r2",
+          "authorizedUtc": "2026-10-08T00:22:06Z",
+          "status": "Completed and qualified accepted; runtime authority closed. Hold for concrete findings.",
+          "scope": "Correct counted seven-start public script replay, one attempt plus required final gates; shared slot required.",
+          "sentUtc": "2026-10-08T00:22:06Z"
         }
       ],
       "classicP1ClosureAssignment": {
@@ -4172,7 +4188,21 @@
             "outerWallSeconds": 0
           }
         }
-      ]
+      ],
+      "classicMainIntegrationAssignment": {
+        "key": "classic-main-integration-20261008",
+        "authorizedUtc": "2026-10-08T16:07:25Z",
+        "status": "Sent once; active integration confirmed",
+        "baseSha": "4908bd2cb25fbc8a231717c099e049da8546703a",
+        "destination": "https://github.com/Glacius-Labs/Markitect.git refs/heads/main",
+        "sourceAuthority": "Direct user 8 Oct: continue Classic while Scientist works, bring version to main and retain as main version",
+        "scope": "Classic integration, required corrections/README/gates, independent review, feature push/PR and regular merge after checks; no new release authority",
+        "heldStudySha": "c91363b7ac4decbe87212ff0f588b5451581a152",
+        "newModelProviderCalls": 0,
+        "newNativeSmokeAllowance": 0,
+        "sentUtc": "2026-10-08T16:08:57Z",
+        "prompt": "Direkter neuer Nutzerauftrag an Overseer vom 8. Oktober 2026: „Während der Scientist arbeitet könntest du den Architect weiter an der Classic Version arbeiten lassen und wir bringen die Version nach main und halten es als die Hauptversion“.\n\nDamit ist der bisherige allgemeine Classic-Hold aufgehoben. Classic ist die gewählte Hauptentwicklungslinie des Produkts. Du bist Eigentümer des nächsten begrenzten Pakets classic-main-integration-20261008: Führe den angenommenen Classic-Folgestand zur geprüften Übernahme nach origin/main in https://github.com/Glacius-Labs/Markitect.git. Der Nutzer autorisiert dafür ausdrücklich die nötigen Featurebranch-Pushes, PR-Erstellung/-Aktualisierung und den Merge nach main, sobald die vorgeschriebenen Checks und unabhängigen Reviews positiv sind. Keine erneute pauschale Rückfrage vor diesen autorisierten Schritten. Branchschutz/Prüfregeln respektieren, keine Umgehung, kein Force-Push oder Löschen fremder Arbeit. Jede erstellte PR über attach_artifact an deinen Chat hängen.\n\nAusgangslage: lokal angenommenes CLASSIC-P1 auf sauberem 4908bd2cb25fbc8a231717c099e049da8546703a im Worktree C:/Users/Consiliari/.codex/worktrees/classic-p1-intent-change/Markitect. Voller Replay und vier Quellgates bestanden an fbb2deab8d85be74a77874a705229a0a1ea1fee4; der vier-Markdown-Nachfolger wurde separat geprüft. Gehostete Windows-/Ubuntu-/Linux- und Integrations-/Releasegrenzen nicht als erledigt erben. Prüfe aktuelle Remotezustände, offene PRs und deine jüngsten direkten Nutzeraufträge, bevor du Änderungen integrierst. Geeigneten bestehenden Featureworktree wiederverwenden oder getrennten codex/-Integrationsbranch auf aktueller Produktbasis verwenden; kein Zurücksetzen von WIP oder Root-Designbranch als Produktbasis. Konflikte fachlich lösen und nötige Regressionen prüfen.\n\nArbeitsumfang dieses Pakets: Classic stabil zur Hauptversion auf main bringen, einschließlich vorhandener öffentlicher Bedienbeispiele, README, erforderlicher Kompatibilitäts-/Integrationskorrekturen und bestehender verbindlicher Gates. Priorisiere echte Integrations-, Bedien- oder Releasebefunde; keine große neue Featureplattform und keine Beschäftigungsarbeit. Halte Aussagen und kopierbaren Bedienweg mit dem tatsächlich integrierten Stand konsistent. Kanonisches Modell, konservative Invalidierung, feste Snapshots und explizite Annahme-/Apply-Grenzen erhalten. Government, Jev/SAT, private Scientist-Daten, Studienfixtures und Vergleichsbewertung gehören nicht in dieses Paket.\n\nWichtig: Scientists eingefrorener Classic-Studienkandidat c91363b7ac4decbe87212ff0f588b5451581a152 / Runtime v0.14.1 mit Quelle 7dbd599c81540c8203a1b7f83afbc335174f4f1f bleibt unverändert samt gehaltenem Worktree und Belegen. Main darf weiterentwickelt werden; es wird dadurch keine Studienversion still ersetzt. Main-Übernahme ist eine Produktentscheidung, kein Nachweis eines gemessenen Methodensiegers.\n\nNormale Implementierung, gezielte risikobasierte Tests, unabhängige Reviews und erforderliche lokale/gehostete Integrationschecks sind autorisiert. Keine redundanten unveränderten Vollsuiten. Der aktuell freie schwere Prüfslot wird dir für dieses Paket zugewiesen; Scientist bearbeitet nur seinen Offline-Diagnoseplan und braucht vor weiteren tatsächlichen Runneraufrufen ohnehin einen neuen Grant. Schwere lokale Quellgates sequenziell, endlich begrenzt und gemäß vorhandenen Projektbudgets; nach Paketabschluss ausdrücklich Slot freigeben. Alte geschlossene Smoke-/Rollen-/Modellgrants nicht wiederverwenden: neue reale Modell-/Provider- oder native Produkt-/Rollen-Smokes benötigen weiterhin einen konkreten separaten Grant. Keine Käufe, globale Policyänderungen oder zusätzliche kostenpflichtige Verpflichtungen. Neue Release-Veröffentlichung ist durch diesen Auftrag nicht zusätzlich autorisiert; bereits direkt autorisierte Release-Aufgaben behalten ihren belegten Umfang.\n\nNach positiver Review-/Checklage PR regulär nach main mergen und den tatsächlichen Remote-main-SHA sowie Check-SHAs nach dem Merge lesen. Falls ein nicht selbst lösbarer Blocker bleibt, genau diesen mit konkreter Entscheidung melden. Liefere einmalig terminale Rückmeldung mit PR-Link, tatsächlichem Merge-/Remote-main-SHA, sauberem lokalen Stand, Dateien/Verhalten, Checks, unabhängigem Review, offenen Releasegrenzen und Slotfreigabe an Overseer 01a11367-a781-7683-a20f-46e12614dcb4 auf Host local. Nutzerautorisierung für Rückmeldungen besteht. Danach dieses Paket beenden; keine Empfangsbestätigungs- oder Pollingschleife. Koordination liegt in C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination.md und coordination-state.json."
+      }
     },
     {
       "name": "Oldschool",
@@ -4232,14 +4262,15 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Dispatch one offline observability plan; no additional actual process until separately accepted contract and fresh finite grant.",
+  "nextAction": "Architect integrates Classic to main; Scientist completes existing offline diagnostic plan; independent research holds remain unchanged.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
     "newExternalPurchases": false,
     "liveStudy": "Closed pending complete S1, actual runner ability, native adapters, exact tool/model/config pins, common accounting and coordinator live protocol freeze. G1-G5 accepted on04e225d; no comparative cells yet.",
     "jev": "Deferred; no extra investigation started",
-    "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
+    "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md.",
+    "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
     "reviewedUtc": "2026-10-08T16:04:19Z",
@@ -4442,10 +4473,12 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": null,
-    "key": null,
-    "status": "Free; offline diagnosis planning has zero execution authority",
-    "queue": []
+    "owner": "Architect",
+    "key": "classic-main-integration-20261008",
+    "assignedUtc": "2026-10-08T16:07:25Z",
+    "status": "Assigned for required sequential finite Classic integration gates; Scientist offline only",
+    "queue": [],
+    "releaseCondition": "Terminal main integration or concrete blocker callback, explicit release; no new provider/native smoke allowance"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -4920,5 +4953,20 @@
     "prompt": "Öffentlicher Input zum bereits erteilten Paket scientist-oldschool-baseline-binding-20261008; kein zusätzlicher Arbeitsauftrag und keine Laufquote.\n\nOldschool hat oldschool-baseline-preparation-20261008 per direkter Rückmeldung abgeschlossen. Ich habe den fallunabhängigen Arbeitsweisenbrief als Vorbereitung angenommen. Er beschreibt:\n- beobachtbare Abnahmekriterien, begrenzten Umfang und explizite Annahmen/Entscheidungen;\n- gezielte Erkundung von Anweisungen, Git-Stand, Einstiegspunkten, Datenfluss und betroffenen Aufrufern;\n- vollständige begrenzte Änderungen, klare Verantwortlichkeiten, Validierung und Fehlerbehandlung;\n- risikobasierte Regression-/Integrationsprüfungen, sinnvolle unabhängige Reviews und SHA-gebundene Nachweise;\n- Driftabgleich gegen den ursprünglichen Auftrag, reproduzierbare Fehler und erneute betroffene Checks;\n- prüfbare Übergabe mit Ziel, Entscheidungen, SHA/WIP, Checks und nächstem Schritt statt Vertrauen auf bloße Zusammenfassung.\nSubagenten nur für sinnvolle unabhängige Arbeit; deren Aufwand zählt mit. Markitect/Government bleiben aus dem Arm ausgeschlossen. Gemeinsame Aufgaben, Oracle und endgültige Bewertung bleiben bei dir bzw. unabhängigen Bewertern.\n\nSeine konkreten Studienwerkzeuge und tatsächliche Toolfähigkeit sind ausdrücklich ungeprüft. Gemeldet sind keine Repositoryzugriffe, Änderungen, Tests, Subagenten oder zusätzlichen Diagnose-/Modellsitzungen in dieser Vorbereitung. Das ist eine Eigenmeldung, kein instrumentierter Nullverbrauchsnachweis. Der Brief liefert weder einen gemessenen Referenzwert noch S1 oder semantische Annahme. Exakte Usage-/Zeitwerte bleiben ohne Instrumentierung unbekannt.\n\nOldschool bestätigt ausdrücklich: Sein permanenter Eigentümerchat ist wegen Rollen-/Vorbereitungskontext kein frischer Studien-Actor. Die bereits vereinbarte frische Ausführung je Zelle und das gemeinsame tatsächliche Modell-/Tool-/Ressourcenprofil bleiben Voraussetzung. Nutze diese öffentliche Methodenbeschreibung in deinem bestehenden Einbindungs-/Messplan, nach Abschluss des laufenden Scope-Pakets. Keine neuen Kriterien/Gewichte oder zusätzliche Vorbereitung einer konkreten Aufgabe ableiten. Oldschool wartet jetzt auf einen späteren konkret freigegebenen Auftrag; keine reine Empfangsbestätigung nötig.",
     "sentUtc": "2026-10-08T01:51:27Z"
   },
-  "lastHeartbeatCheckUtc": "2026-10-08T14:59:04Z"
+  "lastHeartbeatCheckUtc": "2026-10-08T14:59:04Z",
+  "productDirection": {
+    "decidedUtc": "2026-10-08T16:07:25Z",
+    "source": "Direct user instruction in Overseer",
+    "primaryLine": "Classic/Architect",
+    "mainIntegrationAuthorized": true,
+    "destination": "https://github.com/Glacius-Labs/Markitect.git refs/heads/main",
+    "measuredMethodWinner": false,
+    "governmentStatus": "Experimental separate line; no main integration",
+    "frozenStudiesUnchanged": true,
+    "scientistPublicNotice": {
+      "sentUtc": "2026-10-08T16:08:57Z",
+      "sentOnce": true,
+      "scope": "Existing offline task continues; frozen Classic unchanged; Architect heavy slot; no extra runtime authority"
+    }
+  }
 }
