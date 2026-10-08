@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T04:13:46Z",
+  "updatedUtc": "2026-10-08T04:38:00Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -428,24 +428,30 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:116",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:118",
       "lastObservedStatus": "active",
-      "activeTurn": "01a119b6-fb58-73a0-8c98-b8064ed719f6",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac71854ef748191b1ec6e6a6a403c35",
+      "activeTurn": {
+        "id": "01a119cd-4bbb-7142-8460-fb231e04752f",
+        "status": "inProgress",
+        "error": null,
+        "startedAt": 1791434247,
+        "completedAt": null,
+        "durationMs": null
+      },
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac71e0fd13881918465143b24ae298f",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "government-check-receipt-native-20261008-r7",
-      "latestProgress": "R7 active: Scientist confirms new closed profile in shared chain, changed offline checks and independent preflight before once-only actual preparation/admission. No R7 runtime result yet.",
+      "assignedMilestone": "s1-common-runner-readiness-plan-20261008",
+      "latestProgress": "Für die Konfigurations- und Berechtigungsfrage nutze ich die OpenAI-Docs-Anleitung. Dabei trenne ich heutige Dokumentation von den archivierten Belegen des gepinnten Clients 0.160.1; heutige Profile erklären die früheren Ablehnungen nicht rückwirkend.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "18c9f907863044972511fb2403bcdb4eced95810",
-      "acceptance": "Qualified offline check-receipt contract correction accepted; actual Resume and S1 remain unproven.",
+      "candidateSha": "91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1",
+      "acceptance": "R7 bounded native+outer Queue and terminal Resume mechanics accepted; S1 real common Actor/tools and study cells remain open.",
       "lastAssignment": {
-        "key": "government-check-receipt-native-20261008-r7",
-        "authorizedUtc": "2026-10-08T04:10:48Z",
-        "status": "Sent once; conditional bounded R7 after independent preflight",
-        "scope": "One fresh finite Government Queue and strictly conditional associated Resume after corrected receipt consumer; no model/study grant.",
-        "sentUtc": "2026-10-08T04:13:04Z",
-        "activeConfirmed": true
+        "key": "s1-common-runner-readiness-plan-20261008",
+        "authorizedUtc": "2026-10-08T04:31:41Z",
+        "status": "Dispatched; awaiting bounded documentation/readiness completion callback.",
+        "scope": "Update source/evidence-bound S1 matrix; consolidate known real-runner policy barrier and one finite source-supported next-operation proposal, common to three arms. Documentation/read-only work only.",
+        "sentUtc": "2026-10-08T04:37:27Z"
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -2075,7 +2081,7 @@
           },
           "key": "government-check-receipt-native-20261008-r7",
           "authorizedUtc": "2026-10-08T04:10:48Z",
-          "status": "Active; Scientist slot assigned; execute only after offline preflight.",
+          "status": "Closed BOUNDED MECHANICS PASSED; terminal Queue+Resume/readback only, unused quota expired.",
           "baseSha": "18c9f907863044972511fb2403bcdb4eced95810",
           "prompt": "Overseer nimmt government-check-receipt-identity-offline-20261008 auf sauberem 18c9f907863044972511fb2403bcdb4eced95810 an, Quelle 9dbbb93eea895947f800b1354fe056ac5b4f08d8. Root bestätigte 13 Payloads plus Manifest gegen Git/Hashes, 3711 geschützte Altdateien, den erhaltenen Handoff-Suffix, 92 R6-Original/Kopie-Paare, unveränderten Liveledger und beide gepinnten nativen Quellkopien. Der gelesene Erstlauf meldet 13/13 gezielte Tests; Root wiederholte keine. Zusätzlicher unabhängiger Root-Review bestätigt echten Verbraucher/Translator ohne Mock, unveränderte strikte Bindungen und keinen wesentlichen Befund. Die Korrektur ist offline angenommen; Resume/S1 sind noch nicht nachgewiesen. R6 bleibt INCOMPLETE, R5 NOT ADMITTED, R4 incomplete, sämtliche Restquoten geschlossen.\n\nGenau ein neuer endlicher Grant government-check-receipt-native-20261008-r7 ist jetzt in threads[name=Scientist].evidence.governmentCheckReceiptNativeGrant dokumentiert. Der freie schwere Slot ist dir für R7 mit assignedUtc 2026-10-08T04:10:48Z ausdrücklich zugewiesen. Government bleibt auf Quelle04e225d5caee78c2a198607143863fca1e829750 / Binary12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f / Delegatee8b8e5087f994a975efc2228301cf7f51dee9de4d64b77077a0941db7a8e98b9 / vorhandenem Python313-Pin. Classic/P1-Stände bleiben unberührt.\n\nNutze die bestehende geteilte prepare/validate/freeze/run-once-Kette mit einem möglichst kleinen ausdrücklich geschlossenen R7-Profil. Keine vollständige Treiberkopie, generische neue Runnerplattform oder Produktänderung. Neuer Key, eigene Task-/Dispatchidentitäten, Marker und Request-/Authority-/Protocol-/Envelope-/Coordinator-/Quellbindungen; alte R5/R6-Profile und Belege dürfen nicht auf R7 umgedeutet werden. Nur betroffene Offline-Profil-/Zulassungsregressionen, Syntax und unabhängiger enger Vorabreview. Der jetzt geschlossene konkrete Checkübergang muss unter dem neuen Profil weiter die echte produktive Verbraucherfunktion nutzen; keine bekannten Vertragslücken durch Mocks überdecken. Bereits unverändert bestandene Suiten nicht erneut vollständig laufen lassen.\n\nDanach sauberer Quellcommit, genau eine frische statische Fall-/Requestvorbereitung und genau eine tatsächliche ausdrückliche Admission-/validate-Aktion samt dauerhaftem Attempt/Receipt. Wie für R6-a1 zählt die eine Admissionaktion; verpflichtende reine Authority.validate(raw)-Wiedervalidierungen desselben unveränderten eingefrorenen Requests unmittelbar vor Queue/Resume sind keine neuen Admissionversuche, bleiben aber strikt erhalten. Sie erzeugen/reparieren selbst keine Eingaben und reservieren/starten nichts. Jeder negative Befund stoppt terminal, kein zweiter Admissionversuch. Nur bei erfolgreicher Admission einen frischen unveränderlichen Freeze mit finalem Coordinatorstand nach dieser Nachricht herstellen. Der alte R6-Freeze ist unbrauchbar für korrigierte Bytes und wird weder wiederverwendet noch neu bewertet.\n\nGenau eine neue native Queue. Nur nach vollständig positivem nativen UND äußeren Abschluss mit echten frischen Checks, unveränderten vollständigen Identitäts-/Scope-/Kandidaten-/Evidenz-/Mandats-/Rundenbindungen, unabhängigem technischem Review, expliziter finaler Zustimmung jedes ausgewählten Ressorts und Promotion genau die bestehende zugehörige Resume-/Replayprüfung. Ein Prozess-Exit0 genügt nicht. Kein zusätzlicher künstlicher Unterbrechungsfall, keine zweite Queue.\n\nGrenzen für R7: ein Fall, eine tatsächliche Admissionaktion, höchstens zwei native Starts, sechs Wrapperversuche einschließlich Fehlern, sechs deterministische Delegates, Rollenparallelität höchstens zwei. Je nativem Start150 reservierte Sekunden, insgesamt höchstens300neu. Native Prozess- und Controllerfrist jeweils38Sekunden einschließlich Cleanup; tatsächliche Abschlusszeit nach verfügbarer terminaler Receipt und Cleanup getrennt messen. Fehlender/zu später Abschluss ist nicht positiv. Historie13native/13wrapper/10delegates/1950reserved bleibt, kumulative Obergrenzen15/19/16/2250. Historische fünf reale Actorstarts, bekannte Tokens53331 und unbekannte Gesamtusage unverändert; Engineering-/Reviewusage nur als gemessen angeben, sonst unbekannt.\n\nAktiver exakter Livegrant und ausdrücklich passende Scientist/R7-Slot-Zuweisungszeit sowie alle eingefrorenen Pins sind vor Reservierung und jedem Start Pflicht. Kein automatischer Rückgriff auf alte Grants. Erste tatsächliche Ablehnung, fehlende Voraussetzung, negatives/unvollständiges Ergebnis oder Frist-/Quotenstopp beendet den Fall. Kein Reparatur/Nachstart, Retry, neuer Fall oder Restquotennutzung; kein automatischer weiterer Diagnoseblock. Nach positivem Queue+Resume ebenfalls terminal beenden.\n\nNull neue reale Actor-/Modell-/Provider-/Metadatensitzungen, Studienzellen, Classic-Wiederholungen, volle Produktsuiten, P1-Übernahmen, Produktreparaturen oder Veröffentlichung. Deterministische Rollen bleiben Mechaniknachweis; sechs Basiszellen und echte gemeinsame Toolfähigkeit sind weiterhin offen.\n\nAktuellen kurzen R7-Fortsetzungsanker im Handoff pflegen und alte Geschichte erhalten. Abschluss mit tatsächlichem sauberem SHA, endlichen Rohbelegen, neuer/kumulativer Bilanz, unverändertem historischen Ledgerpräfix, unabhängigem Nachreview und ausdrücklicher Slotfreigabe. Neue Blockade sofort konkret melden; ansonsten bis zu dieser endlichen Übergabe weiterarbeiten. Genau eine direkte Abschluss-/Bedarfsmeldung an Overseer gemäß Nutzerautorisierung, keine Empfangsbestätigung oder Meldeschleife.",
           "maxActualInputValidations": 1,
@@ -2086,7 +2092,114 @@
           "slotAssignedUtc": "2026-10-08T04:10:48Z",
           "remainingQuotaReusable": false,
           "admissionCounterDefinition": "Exactly one explicit actual admission/validate action for the one fresh Request with durable attempt/receipt. Mandatory pure Authority.validate(raw) rechecks of that same unchanged frozen Request immediately before Queue/Resume do not count as new admission attempts; no side effects or gate weakening, any negative stops.",
-          "sentUtc": "2026-10-08T04:13:04Z"
+          "sentUtc": "2026-10-08T04:13:04Z",
+          "closedUtc": "2026-10-08T04:31:41Z",
+          "actualConsumption": {
+            "freshStaticCasePreparations": 1,
+            "actualAdmissionActions": 1,
+            "runOnceInvocations": 1,
+            "nativeStarts": 2,
+            "wrapperAttempts": 3,
+            "deterministicDelegates": 3,
+            "reservedSessionSeconds": 300,
+            "realActorStarts": 0,
+            "providerCalls": 0,
+            "metadataSessions": 0,
+            "studyCells": 0,
+            "classicNativeStarts": 0,
+            "fullProductSuites": 0
+          }
+        },
+        "governmentCheckReceiptNativeAcceptance": {
+          "head": "91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1",
+          "clean": true,
+          "manifestPlusPayload": 177,
+          "manifestSha256": "dd41eaeba6d3356fc0f6a5b7cec2e70cd476515b751cdf5ecb5c82f2a65dea24",
+          "historicalFiles": 3715,
+          "handoffSuffix": true,
+          "frozenInputs": 55,
+          "finalSourcePins": 13,
+          "r7ExternalPairs": 93,
+          "r6ExternalPairs": 92,
+          "oldRowsUnchanged": true,
+          "starts": [
+            13,
+            15
+          ],
+          "corrections": [
+            4,
+            5
+          ],
+          "allocations": [
+            1,
+            1
+          ],
+          "terminalLiveLedgerSha256": "fefbca4d88a253034a7f18d305ad227ad71c109d25668fcbae15961f23ceeba3",
+          "mismatches": 0,
+          "testsRerun": false,
+          "acceptedUtc": "2026-10-08T04:31:41Z",
+          "candidateSha": "91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1",
+          "sourceSha": "225a34e8443363475d815ad42bd847448bfc1335",
+          "baseSha": "18c9f907863044972511fb2403bcdb4eced95810",
+          "actualInputCommit": "84ce9cfef83dc6f560fc1cda7c23fc3f3004c062",
+          "freezeCommit": "dad9d0dae29ade7de1329b76c8ccfca1bd0642ab",
+          "freezeSha256": "3d6e1fca5095a3119aa487449f2f719e4afb871236bb29669d033a0e55873df2",
+          "requestSha256": "11ccf1cd8c1a9d33e0660d61dfbe396cae79c6370cc96c5e1f8ff81832c1b151",
+          "independentPostreviewSha256": "45903754791e4f9b40b05613b9fb37e84973998565cae1fc9f1d2569040a7318",
+          "rootIndependentReviewer": "/root/r4_terminal_acceptance",
+          "rootReview": "No material blocker. Native and outer Queue positive; bound technical check/review/assent/decision/promotion; terminal Resume same objects and role count3->3. Closed additive R7 profile preserves pins and exact selection. Review ran no tests/processes.",
+          "actualResult": "BOUNDED MECHANICS PASSED: native and outer Queue completed; associated terminal Resume/idempotent readback passed.",
+          "resumeBoundary": "Queue was already complete with nextStep none and zero in-flight actors. This does not demonstrate interrupted recovery or autonomous continuation.",
+          "newConsumption": {
+            "freshStaticCasePreparations": 1,
+            "actualAdmissionActions": 1,
+            "runOnceInvocations": 1,
+            "nativeStarts": 2,
+            "wrapperAttempts": 3,
+            "deterministicDelegates": 3,
+            "reservedSessionSeconds": 300,
+            "realActorStarts": 0,
+            "providerCalls": 0,
+            "metadataSessions": 0,
+            "studyCells": 0,
+            "classicNativeStarts": 0,
+            "fullProductSuites": 0
+          },
+          "cumulativeConsumption": {
+            "nativeStarts": 15,
+            "wrapperAttempts": 16,
+            "deterministicDelegates": 13,
+            "reservedSessionSeconds": 2250,
+            "realActorStarts": 5,
+            "knownTokenSubtotal": 53331,
+            "totalTokens": null
+          },
+          "queueCandidateCommit": "9e659bb0c1f7a22d6e4cf36ba3c2980289ccc6fe",
+          "queueCandidateTree": "6bc4205465453852eb67cd03b42de6349f2fb634",
+          "freshCheck": {
+            "name": "inventory-overflow",
+            "tool": "go",
+            "exitCode": 0,
+            "milliseconds": 1786,
+            "timeoutMilliseconds": 30000
+          },
+          "roleStartsBeforeResume": 3,
+          "roleStartsAfterResume": 3,
+          "timing": {
+            "queueNativeSeconds": 6.242453300044872,
+            "queueBridgeAfterTerminalReceiptSeconds": 6.406213760375977,
+            "queueDriverAfterReadbackSeconds": 6.666939500020817,
+            "resumeNativeSeconds": 0.49891379999462515,
+            "resumeResultReadbackSeconds": 0.6795120999449864,
+            "resumeCompletionReceiptReadbackSeconds": 0.6891238000243902,
+            "eachBelow38Seconds": true,
+            "delegateProcessSecondsSum": 0.5648371001007035,
+            "nativeRoleReportedMilliseconds": 1737,
+            "peakParallelism": 1
+          },
+          "recordedFocusedChecks": "48 final passing test executions across five focused logs (18+7+13+7+3); overlap not reported as 48 unique tests. Earlier assertion failures and focused corrections retained. Syntax13/diff passed. Root reran no tests.",
+          "explicitSlotReleaseUtc": "2026-10-08T04:25:10.373410+00:00",
+          "claimBoundary": "Deterministic protocol roles plus actual Go check only. S1/common real tool capability/semantic quality/human acceptance remain open; all six study cells NOT RUN. No comparison with Classic timing because cases/steps differ; historical failures and unknown usage retained."
         }
       },
       "classicHandoffReceived": true,
@@ -2220,10 +2333,18 @@
         {
           "key": "government-check-receipt-native-20261008-r7",
           "authorizedUtc": "2026-10-08T04:10:48Z",
-          "status": "Sent once; conditional bounded R7 after independent preflight",
+          "status": "Closed BOUNDED MECHANICS PASSED; terminal Queue+Resume/readback only, unused quota expired.",
           "scope": "One fresh finite Government Queue and strictly conditional associated Resume after corrected receipt consumer; no model/study grant.",
           "promptRecord": "evidence.governmentCheckReceiptNativeGrant",
-          "sentUtc": "2026-10-08T04:13:04Z"
+          "sentUtc": "2026-10-08T04:13:04Z",
+          "acceptedUtc": "2026-10-08T04:31:41Z"
+        },
+        {
+          "key": "s1-common-runner-readiness-plan-20261008",
+          "authorizedUtc": "2026-10-08T04:31:41Z",
+          "status": "Dispatched; awaiting bounded documentation/readiness completion callback.",
+          "scope": "Update source/evidence-bound S1 matrix; consolidate known real-runner policy barrier and one finite source-supported next-operation proposal, common to three arms. Documentation/read-only work only.",
+          "sentUtc": "2026-10-08T04:37:27Z"
         }
       ],
       "offlineAdapterContractAssignment": {
@@ -2346,6 +2467,27 @@
         "sentUtc": "2026-10-08T03:58:52Z",
         "activeConfirmed": true,
         "acceptedUtc": "2026-10-08T04:10:48Z"
+      },
+      "commonRunnerReadinessPlanAssignment": {
+        "key": "s1-common-runner-readiness-plan-20261008",
+        "authorizedUtc": "2026-10-08T04:31:41Z",
+        "status": "Dispatched; no experimental execution authorized.",
+        "baseSha": "91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1",
+        "prompt": "R7 ist auf sauberem 91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1 als BOUNDED MECHANICS PASSED angenommen. Root hat Hashes, Git-Blobs, Freeze, historische Belege und Ledger unabhängig geprüft; ein zusätzlicher Review bestätigt Queue, gebundene Checks, technische Prüfung, finale Ressortzustimmung und Promotion. Resume hielt die Rollenanzahl bei 3. Die Queue war vorher bereits vollständig: Das belegt terminale Idempotenz und Readback, keine Wiederaufnahme abgebrochener Agentenarbeit. R7 ist geschlossen, Restquote verfallen, deine Slotfreigabe vom 08.10.2026 um 04:25:10.373410 UTC angenommen. Kumulativ: 15 native Starts, 16 Wrapper, 13 deterministische Delegates und 2250 reservierte Sekunden. Historisch fünf reale Actors, 53331 bekannte Tokens, Gesamtverbrauch unbekannt.\n\nNächster begrenzter Auftrag: s1-common-runner-readiness-plan-20261008. Nur Quellen-/Belegabgleich und öffentliche Readiness-/Ausführungsplanung im Scientist-Checkout; keine experimentelle Ausführung oder Quotenauffüllung. Ziel ist der gemeinsame reale Actor-/Toolpfad für Conventional/Oldschool, Classic und Government.\n\n1. Aktualisiere die öffentliche S1-Matrix und das aktuelle Handoff anhand des angenommenen Classic-R3-Lebenszyklus (cd537ac, Quelle 9b7ee8a) und Government R7. public/s1-adapter-mechanics.md enthält überholte Angaben zur fehlenden Bootstrap-/Wrapperintegration. Erhalte datierte Altbelege. Trenne native Produktfähigkeit, gemeinsame Wrapper-/Ledgerintegration, deterministische Fixtures, tatsächliche Provider-/Toolfähigkeit und semantische Annahme. Benenne genau, welche Pfade nur nativeFixture-Profile zulassen und welche minimale Brücke für echte Actors fehlt; implementiere sie jetzt nicht. Alle sechs Studienzellen bleiben NOT RUN.\n\n2. Konsolidiere die bestehende Runnerblockade ohne Wiederholung: Der fünfte reale Actor konnte beide freigegebenen Dateien wegen zweier CreateProcess-policy-Ablehnungen nicht lesen, trotz Exit 0. Sechs CLI-Metadatencalls und drei app-server-Metadatensitzungen sind verbraucht. Die letzte app-server-Konfiguration beweist nicht die effektive Konfiguration des früheren exec mit ignore-user-config/ignore-rules; die Ursache bleibt unbekannt. Keine abgewiesenen Befehle nachspielen, keine Shellwechsel zur Umgehung, keine Abschaltung von Schutzparametern, globale Policyänderung oder Installation.\n\n3. Liefere EINE empfohlene nächste Operation mit einem klaren neuen Erkenntnisgewinn. Nutze vorhandene gepinnte 0.160.1-Hilfe, Schemas, Client-/Quellbelege und bei Bedarf offizielle Dokumentation. Root hat https://learn.chatgpt.com/docs/permissions und https://learn.chatgpt.com/docs/config-file/config-basic gelesen: Dort beschriebene Profile beweisen nicht die historische Wirkung im gepinnten exec. Ein sinnvoller neuer prospektiver Runnerpfad muss klar vom historischen Befund getrennt und für alle drei Arme gleich sein; managed/system constraints bleiben erhalten. Jetzt kein Profil anwenden.\n\nDer Vorschlag nennt exakte Binary, Quellen, Tools, gewünschtes Modell und Reasoning, bekannte und unbekannte Rechte, Inputs/Pfade sowie belegbare Konfigurationspräzedenz. Unbekannten Zugriff nicht als erlaubt erklären. Falls zuerst eine Metadatenoperation nötig ist: genaue argv/RPCs, sanitisiertes Ergebnisschema und die neue gegenüber bisherigen Reads beantwortbare Frage. Falls bereits eine reale Session begründet vorbereitet werden kann: genau ein frischer Kontext, isolierter Checkout, öffentliche fallunabhängige Aufgabe, Erfolgs-/Abbruchkriterien, harte Prozess-/Session-/Parallelitätsgrenzen und messbare Usage einschließlich unbekannter Restgrößen. Kein allgemeiner Diagnosezyklus oder Harnessneubau. Keine Zusatzhilfe oder versteckten Einschränkungen eines Arms. Lesen beweist noch kein Schreiben, Build oder Test.\n\nGewünschte/angebotene Modellidentität und tatsächlich beobachtbare Serving-/Providerdaten unterscheiden; keine unerreichbaren Metadaten als scheinbar erfüllbare Voraussetzung setzen. Historische unbekannte Gesamtnutzung bleibt unbekannt. Jede spätere experimentelle Invocation braucht einen neuen endlichen Overseer-Grant. Dieser Auftrag ist KEIN Laufgrant.\n\nErlaubt sind lokale Datei-/Quellen-/Git-Leseoperationen und offizielles Dokumentationslesen sowie die nötigen öffentlichen Dokumentationsänderungen. Null neue tatsächliche Fallvorbereitungen, Admissionaktionen, Freezes, native Starts, Codex-CLI-/app-server-/Metadaten-/Modell-/Provider-/Controller-/Wrapper-/Delegate-/Studienstarts, Liveledgeränderungen oder vollständige Tests. Keine Produktänderung oder P1-Übernahme.\n\nLiefere einen engen unabhängigen Readiness-/Methodenreview, sauberen Dokumentationsabschluss und genau eine direkte Abschluss-/Bedarfsmeldung an Overseer. Keine Produkttests für Dokumentation. Höchstens eine begründete Alternative. Wenn Autorität technisch nicht belegbar ist, benenne die konkrete fehlende Tatsache und zuständige Grenze statt pauschal neue Nutzerfreigabe anzufordern. Worker, Architect und Oldschool bleiben verfügbar; keine neuen Implementierungsaufträge aus diesem Paket.",
+        "scope": "Update source/evidence-bound S1 matrix; consolidate known real-runner policy barrier and one finite source-supported next-operation proposal, common to three arms. Documentation/read-only work only.",
+        "maxNewActualCases": 0,
+        "maxNewAdmissions": 0,
+        "maxNewNativeStarts": 0,
+        "maxNewWrappers": 0,
+        "maxNewDelegates": 0,
+        "maxNewRealActors": 0,
+        "maxNewModelProviderCalls": 0,
+        "maxNewMetadataSessions": 0,
+        "maxNewStudyCells": 0,
+        "fullProductSuites": 0,
+        "liveLedgerWrites": 0,
+        "exitCondition": "Clean public readiness reconciliation and independently reviewed exact next operation with meaningful evidence gain; no execution or historical rescoring.",
+        "sentUtc": "2026-10-08T04:37:27Z"
       }
     },
     {
@@ -2736,7 +2878,7 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Await fresh R7 direct terminal/need callback; no real Actor/model/study grant. Exact slot and preflight/freeze required; quiet two-hour fallback.",
+  "nextAction": "Await Scientist common-runner readiness plan and independent review via direct callback. No execution grant; other owners held; quiet two-hour fallback.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -2746,12 +2888,12 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T04:10:48Z",
-    "evidenceLevel": "Exact clean source, 14 hash/Git-bound files, 3711 protected historical blobs, 92 external pairs, native source copies, ledger readback, test log and two independent source reviews. Root reran no tests.",
+    "reviewedUtc": "2026-10-08T04:31:41Z",
+    "evidenceLevel": "Root exact hashes/Git/freeze/history/readonly ledger plus independent raw semantic receipt/code review. No repeated tests or experimental execution.",
     "coordinationActions": [
-      "Accepted narrow offline receipt correction.",
-      "Authorized exactly one fresh bounded R7 case and allocated free slot; closed grants preserved.",
-      "Other owners held; no model or study grant."
+      "Accepted bounded R7 Queue and terminal Resume/readback, with interruption-recovery limitation.",
+      "Closed grant and released slot; preserved all old failures/usage.",
+      "Authorized one public S1/current runner readiness reconciliation and next-operation proposal, zero execution."
     ],
     "userDecisionRequired": false
   },
@@ -2947,10 +3089,11 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": "Scientist",
-    "key": "government-check-receipt-native-20261008-r7",
-    "status": "Explicitly assigned for one bounded R7 case after independent offline preflight and successful one-shot admission.",
-    "assignedUtc": "2026-10-08T04:10:48Z",
+    "owner": null,
+    "key": null,
+    "status": "Free after explicit R7 terminal release; next readiness planning has no runtime slot.",
+    "releasedUtc": "2026-10-08T04:25:10.373410+00:00",
+    "releaseVerifiedUtc": "2026-10-08T04:31:41Z",
     "queue": []
   },
   "contextSmokePreparation": {
@@ -3231,10 +3374,12 @@
     {
       "owner": "Scientist",
       "key": "government-check-receipt-native-20261008-r7",
-      "status": "Explicitly assigned for one bounded R7 case after independent offline preflight and successful one-shot admission.",
+      "status": "Terminal R7 complete; released, no residual quota reuse.",
       "assignedUtc": "2026-10-08T04:10:48Z",
       "queue": [],
-      "releaseCondition": "Terminal R7 case with receipts and explicit release, or failed preflight with explicit release; no residual quota reuse."
+      "releaseCondition": "Terminal R7 case with receipts and explicit release, or failed preflight with explicit release; no residual quota reuse.",
+      "releasedUtc": "2026-10-08T04:25:10.373410+00:00",
+      "releaseVerifiedUtc": "2026-10-08T04:31:41Z"
     }
   ],
   "smokeAttemptCountingDecision": {
