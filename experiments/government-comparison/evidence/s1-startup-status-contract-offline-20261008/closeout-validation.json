@@ -1,0 +1,15 @@
+{
+  "key": "s1-startup-status-contract-offline-20261008",
+  "sourceCommit": "1049b41f7dd502b972b6fd37777376841bb4ad74",
+  "sourceWasCleanBeforeSeal": true,
+  "sourcePinsAgainstSourceCommit": 15,
+  "schemaMembersVerified": 13,
+  "mismatches": [],
+  "oldRuntimePacketsAndAdmissionUnchanged": true,
+  "methodRemainsUnadmitted": true,
+  "runtimeReservationSlotAllocation": 0,
+  "sealedUtc": "2026-10-08T19:27:46.381591+00:00",
+  "firstActionToSealSeconds": 692.381591,
+  "within1200Seconds": true,
+  "sourceChangesAfterS": 0
+}
