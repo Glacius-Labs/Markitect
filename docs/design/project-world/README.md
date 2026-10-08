@@ -17,6 +17,8 @@ Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücke
 5. **Begriffswechsel:** „Projektion“ wird als öffentlicher Zielbegriff aufgegeben. Er wird nicht pauschal durch „Bereich“ ersetzt. Verantwortung, Zielvorgabe, Arbeitsauftrag, Fähigkeit und Artefakt bekommen jeweils ihren eigenen Begriff. Bestehende technische Namen werden ausschließlich in der Übergangsplanung bezeichnet.
 6. **Vom Entwurf zur Verbindlichkeit:** Brainstorming bleibt frei und kann unvollständig oder widersprüchlich sein. Akzeptierte Modellinhalte sind davon erkennbar getrennt. Nicht jede Notiz benötigt einen formalen Vorgang.
 7. **Gewünschter Arbeitsablauf:** Projekt aufbauen, Modell entwickeln oder ändern, betroffene Arbeit ableiten, delegiert umsetzen, unabhängig prüfen und das Repository erneut mit dem Soll abgleichen. Reparaturen bei unverändertem Soll bleiben möglich.
+8. **Manager als Abstraktions- und Entscheidungsebene:** Jeder Bereichsmanager bündelt ausschließlich den relevanten Kontext, delegiert Ziele und Entscheidungsspielraum, erhält Berichte und verantwortet die Integration. Die Hierarchie ist der Ablauf für Änderungen und Entscheidungen, nicht nur eine Beschreibung von Zuständigkeiten.
+9. **Geschäftsführung und subsidiäre Eskalation:** Der Geschäftsführer an der Wurzel besitzt umfassende Entscheidungsbefugnis im vom Nutzer übertragenen Projektauftrag. Bereichsmanager entscheiden Routinefragen innerhalb ihrer Zuständigkeit selbst. Ein ungelöster Konflikt steigt nur bis zum nächsten Vorfahren mit ausreichender Zuständigkeit und Befugnis. Der Nutzer bleibt oberste Instanz für wichtige, ausdrücklich vorbehaltene oder durch keine delegierte Ebene entscheidbare Fragen.
 
 ## Dokumente und Eigentümerschaft
 

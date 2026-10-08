@@ -68,13 +68,13 @@ Endkriterium: Mehrdeutige Referenzen, fehlende Verantwortliche, zyklische Bereic
 
 ### P2 — Organisation und Prozesse verbinden
 
-Lieferung: ausdrückliche Zuständigkeit, Delegation, Prozesse, deklarierte Workflow-Schritte und konkrete Aufträge; getrennte kanonische Definitionen und Laufzustände.
+Lieferung: ausdrückliche Zuständigkeit, Geschäftsführer-/Managerrollen, Entscheidungsbefugnisse, Kontextzuschnitt pro Ebene, Delegations- und Reportingpfade, Prozesse, deklarierte Workflow-Schritte und konkrete Aufträge; getrennte kanonische Definitionen und Laufzustände.
 
-Endkriterium: Ein Elternauftrag lässt sich über mehrere Unterbereiche bearbeiten; jeder Schritt hat gültige Zuständigkeit und begrenzte Befugnis. Ein gewöhnlicher Detailentscheid benötigt keine eigene Erlaubnisliste. Modellierungsrekursion wird von begrenzter Laufzeit getrennt.
+Endkriterium: Eine Modelländerung wird entlang der betroffenen Managementpfade von oben nach unten konkretisiert; Berichte und Entscheidungen laufen nachvollziehbar zurück. Manager erhalten nur den für Verantwortung und Entscheidung relevanten Kontext und können erforderliche Details gezielt anfordern. Gewöhnliche Entscheidungen werden innerhalb delegierter Befugnisse selbst getroffen. Konflikte steigen nur bis zur nächsten entscheidungsfähigen Ebene; der Nutzer erhält ausschließlich wichtige vorbehaltene oder durch keine Managementebene lösbare Fragen. Modellierungsrekursion wird von begrenzter Laufzeit getrennt.
 
 ### P3 — Umsetzung und Prüfung nach Bereichen organisieren
 
-Lieferung: Artefaktzuordnung, Fähigkeitenauswahl, Kandidatenbildung, Writerkoordination, unabhängige lokale Prüfung und eigene Elternintegration.
+Lieferung: Artefaktzuordnung, Fähigkeitenauswahl, Kandidatenbildung, Writerkoordination, aussagekräftige Kindberichte, unabhängige lokale Prüfung und aktive Kompatibilitätsprüfung und Integration durch jeden Elternmanager.
 
 Endkriterium: Der Stornierungsfall verändert tatsächlich erforderliche Dateien; fehlende Bestandsfreigabe wird trotz erfolgreicher lokaler Order-Prüfung sichtbar. Modelländerung und Reparatur bei unverändertem Modell sind getrennt durchlaufbar. Zwei zuständige Bereiche schreiben nicht unkoordiniert denselben Pfad.
 
@@ -104,12 +104,21 @@ Die folgenden Szenarien sind Anforderungen für spätere Implementierungsprüfun
 | A12 | Docker-Datei ist noch keinem Modellzweck zugeordnet | Als ungeklärt sichtbar; keine automatisch erfundene Absicht und kein automatisches Löschen |
 | A13 | Artefakt driftet bei unverändertem Soll | Reparaturauftrag entsteht ohne fingierte Modelländerung; neue Prüfung bindet tatsächliche Bytes |
 | A14 | Öffentlicher Altbegriff wird ersetzt | Alte Evidenz wird nicht stillschweigend neu gebunden; Versions-/Migrationsentscheidung ist prüfbar |
+| A15 | Eine Änderung betrifft zwei tiefe Bereiche und einen gemeinsamen Vorfahren | Information und Aufträge folgen den betroffenen Pfaden von oben nach unten; jeder Manager übersetzt den Auftrag für seine Kinder |
+| A16 | Ein Manager erhält seinen Arbeitskontext | Relevante Regeln, Schnittstellen und Befugnisse sind enthalten; fremde interne Details werden nicht pauschal geladen, nötige Details bleiben gezielt abrufbar |
+| A17 | Zwei Kindberichte bestehen lokal, verlangen aber inkompatible Schnittstellen | Elternintegration erkennt den Konflikt; der Manager entscheidet innerhalb seiner Befugnis und delegiert die nötige Anpassung |
+| A18 | Ein Konflikt kann vom gemeinsamen Elternmanager entschieden werden | Er entscheidet und berichtet; keine unnötige Eskalation zur Geschäftsführung oder zum Nutzer |
+| A19 | Erst ein höherer Manager besitzt die erforderliche Befugnis | Eskalation folgt dem Elternpfad mit konkreter Frage, Fakten, Alternativen und Empfehlung; Entscheidung fließt nach unten zurück |
+| A20 | Eine gewöhnliche Frage erreicht die umfassend befugte Geschäftsführung | Sie entscheidet selbst; ein dem Nutzer vorbehaltener Grundsatzkonflikt wird dagegen gezielt vorgelegt |
+| A21 | Ein Kind liefert veraltete Evidenz oder einen unvollständigen Bericht | Der Elternmanager kann den Gesamtauftrag nicht als erfolgreich abschließen; erneuter Abgleich oder fehlende Arbeit wird konkret benannt |
 
 ## 6. Noch zu entscheidende Details
 
 - Minimale Typen: Reicht zunächst Konzept mit expliziten Beziehungen, oder brauchen Zustand und Übergang eigene Kinds? Am Order-Fall entscheiden.
 - Kontext: Namespace bleibt ein Namensscope mit verpflichtender Verantwortung. Vorgeschlagen ist eine ausdrückliche Deklaration bzw. ein kanonisches Register; ein fachlicher Kontext ist eine zusätzliche ausdrückliche Eigenschaft. Die endgültige Syntax und die Abbildung heutiger Namespace-Strings sind offen, nicht die Ownershippflicht.
 - Rollenauflösung: Referenz auf Person/Team/Rolle und ihr Entscheidungsverfahren; ein eindeutiger Verantwortungsbezug darf keine unklare Mehrheitsentscheidung verbergen.
+- Managervertrag: Minimalformat für Kontextpaket, delegierten Ergebnisauftrag, Kindbericht, Integrationsurteil und entscheidungsfähige Eskalation; auf jeder Ebene gleichartig, fachlich unterschiedlich gefüllt.
+- Entscheidungsrahmen: Welche Entscheidungen sind pro Bereich delegiert und welche wichtigen Fragen ausdrücklich dem Nutzer vorbehalten? Breite Routineautonomie ist der Default des Zielmodells; konkrete Projektgrenzen bleiben explizit.
 - Modulgrenze: Modellvokabular und Werkzeugpakete benötigen unterscheidbare Verträge. Ein gemeinsames Lieferformat ist eine spätere technische Entscheidung.
 - Prozessumfang: Für den ersten Durchlauf genügt ein bewusst begrenzter Workflow. Dauerqueue und unbeaufsichtigter Betrieb sind eigene Nachweise.
 - Detailprüfung: Welche Verpflichtungen werden deterministisch geprüft, welche semantisch beurteilt, welche zunächst nur beschrieben? Sichtbare Abdeckung statt pauschalem Enforcement.
@@ -122,4 +131,6 @@ Diese Punkte sind konkrete nächste Planungsarbeit. Sie blockieren weder den vor
 
 Für die Dokumentationsänderung: unabhängige Konzept- und Übergangsreviews, Synthese ihrer Befunde, lokale Prüfung der Markdown-Ziele und `git diff --check`. Keine Produkt-, Runtime-, CI- oder Produktivitätsprüfung wird daraus abgeleitet. Vor Produktcodeänderungen gelten die zum ausgewählten Quellstand passenden Contribution-Gates und zusätzliche fokussierte Prüfungen der Szenarien; keine schwere Vollsuite allein für diesen Plan.
 
-Durchgeführt am 8. Oktober 2026: zwei unabhängige Planungsreviews und eigener Quellabgleich. Die Rückmeldungen zur Trennung von Rollenverantwortung/Bereichszuordnung sowie zur expliziten Ownership deklarierter Namespaces wurden eingearbeitet. Fünf geänderte Markdown-Dateien enthalten 43 geprüfte lokale Linkziele, davon keines fehlend. Whitespaceprüfung erfolgt vor dem lokalen Planungscommit einschließlich neuer Dateien. Keine Produkt- oder Laufzeittests ausgeführt; A1–A14 bleiben geplante Abnahmeszenarien.
+Durchgeführt am 8. Oktober 2026 für den ersten Planungscommit `e325bcb`: zwei unabhängige Planungsreviews und eigener Quellabgleich. Die Rückmeldungen zur Trennung von Rollenverantwortung/Bereichszuordnung sowie zur expliziten Ownership deklarierter Namespaces wurden eingearbeitet. Fünf geänderte Markdown-Dateien enthalten 43 geprüfte lokale Linkziele, davon keines fehlend. Whitespaceprüfung bestanden. Keine Produkt- oder Laufzeittests ausgeführt; A1–A14 waren geplante Abnahmeszenarien.
+
+Die anschließende direkte Nutzerpräzisierung ergänzt den Manager als Abstraktions-, Delegations-, Reporting-, Integrations- und Entscheidungspunkt sowie den Top-down-/Bottom-up-Ablauf und Eskalation zur nächsten befugten Ebene. A15–A21 sind zusätzliche geplante Szenarien, keine ausgeführten Tests. Für diese reine Dokumentationspräzisierung bestanden erneut die Whitespaceprüfung und die Prüfung aller zwölf lokalen Linkziele in den drei geänderten Dateien. Es wurden keine Produkt- oder Laufzeittests ausgeführt.

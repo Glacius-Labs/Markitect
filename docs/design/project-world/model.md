@@ -51,6 +51,8 @@ Für einen definierten Begriff ohne ausführbaren Check bleibt die Durchsetzung 
 | Namespace | Stabiler Namensraum für Identitäten; optional ausdrücklich zu einem fachlichen Kontext erklärt | Genau ein verantwortlicher Rollenbezug und ein zuständiger Bereich |
 | Modul | Wiederverwendbare, versionierte Einheit für Modellvokabular, Prozesse, Checks oder Integrationen | Genau ein verantwortlicher Rollenbezug für die Moduldefinition; Adoption durch ein Projekt wird separat verantwortet |
 | Verantwortlicher | Dauerhafte Rolle mit auflösbarer Besetzung und definierten Befugnissen | Keine implizite Berechtigung durch Git-Identität, Installation oder Agentenstart |
+| Manager | Verantwortlicher eines Bereichs, der Kontext abstrahiert, entscheidet, delegiert, Berichte bewertet und Ergebnisse integriert | Innerhalb seines Bereichs und delegierter Befugnis entscheidungsfähig; behält die Gesamtverantwortung |
+| Geschäftsführer | Manager des Projektwurzelbereichs | Umfassende Projektentscheidungen innerhalb des Nutzerauftrags; Nutzer bleibt oberste Instanz |
 | Arbeiter / ausführender Agent | Zeitlich begrenzte Instanz, die einen konkreten Auftrag bearbeitet | Handelt innerhalb des delegierten Auftrags und verändert keine eigenen Befugnisse |
 
 Ein Bereich ist weder ein Ordner noch ein Modul oder Namespace. Explizite Zuordnungen können häufige 1:1-Fälle bequem ausdrücken, ohne diese Gleichheit universell vorauszusetzen. Ein Modul kann mehrere Namespaces liefern; ein Bereich kann mehrere Namespaces und Module verantworten oder einsetzen.
@@ -89,6 +91,42 @@ Pro Modellrevision gelten folgende vorgeschlagene Invarianten:
 
 Beliebige Modellierungstiefe bedeutet keine unbegrenzte Laufzeitrekursion. Aufträge benötigen weiterhin explizite Zeit-, Ressourcen- und Parallelitätsgrenzen, nachvollziehbare Abbrüche und Wiederaufnahme. Ein Blatt kann durch einen Menschen, einen Agenten oder ein deterministisches Werkzeug umgesetzt werden; Managementrollen müssen nicht künstlich vervielfacht werden.
 
+### 4.1 Manager als Abstraktionsgrenze
+
+Die Managementhierarchie trägt die Änderungsbearbeitung. Jeder Manager ist zugleich Abstraktionsebene, Delegationspunkt, Reportingpunkt, Integrationspunkt und Entscheider für seinen Bereich. Ein Manager ist damit mehr als ein Verteiler von Nachrichten. Dauerhafte Rolle und kurzlebige Agenteninstanz bleiben getrennt: Ein frischer Managerlauf übernimmt den gebundenen Auftrag und relevanten bisherigen Stand der Rolle.
+
+Der Geschäftsführer an der Wurzel darf alle Projektentscheidungen treffen, die der Nutzer in den Projektauftrag übertragen hat. Darunter besitzen Manager ausreichenden Spielraum, um gewöhnliche Fach-, Architektur- und Umsetzungsfragen ihres Bereichs selbst zu regeln. Die konkrete Delegation beschreibt Ziele, Grenzen und vorbehaltene Entscheidungen; sie soll keine Mikro-Erlaubnisliste jeder möglichen technischen Handlung sein. Ein Manager kann auch Modelländerungen entscheiden, wenn diese Entscheidungsklasse in seinem Auftrag liegt. Der Nutzer bleibt oberste Instanz und kann Entscheidungen vorbehalten, Delegation ändern und Ziele neu setzen.
+
+Ein Manager kennt den für seine Verantwortung relevanten Ausschnitt: Ziele und Regeln seines Bereichs, betroffene Änderungen, Schnittstellen und Verpflichtungen zu anderen Bereichen, eigene Entscheidungsbefugnisse sowie die nötigen Berichte und Nachweise. Er bekommt nicht automatisch das gesamte Repository oder sämtliche internen Details aller Nachkommen. Der Elternmanager arbeitet mit zugesicherten Ergebnissen, Schnittstellen, Risiken und offenen Punkten seiner Kinder. Er kann bei Integrationsbedarf gezielt weitere Details anfordern. Abstraktion darf Konflikte, Unsicherheit oder fehlende Prüfungen nicht verbergen.
+
+Alle entscheidungsrelevanten Vorgaben müssen im Kontext verfügbar sein, auch wenn sie außerhalb des eigenen Bereichs definiert sind. „Nur relevante Informationen“ bedeutet gezielte Auswahl mit Herkunft, nicht die Ausblendung einer bereichsübergreifenden Pflicht.
+
+### 4.2 Änderung nach unten, Ergebnisse nach oben
+
+Der gewünschte Ablauf für eine akzeptierte Modelländerung lautet:
+
+1. **Änderung binden und Folgen bestimmen:** Struktureller Compiler und explizite Impact-Auswertung bestimmen betroffene Definitionen, Realisierungen, Prüfungen und verantwortliche Bereiche an festen Versionen. Die technische Berechnung liefert Fakten und offene Lücken; sie trifft keine fachliche Managemententscheidung und behauptet bei unmodellierten Eingaben keine vollständige Abdeckung.
+2. **Managementpfade bilden:** Aus den betroffenen Bereichen entstehen die nötigen Pfade von der Geschäftsführung nach unten. Gemeinsame Vorfahren erhalten die für Routing und Integration erforderliche Zusammenfassung. Unbetroffene Geschwister erhalten keinen künstlichen Arbeitsauftrag.
+3. **Auftrag pro Ebene übersetzen:** Der jeweilige Manager versteht die Änderung für seinen Bereich, benennt Ergebnis, geltende Regeln, betroffene Schnittstellen, Spielraum und Erfolgskriterien und delegiert passende Teilaufträge an seine unmittelbar betroffenen Kinder.
+4. **Rekursiv weiter delegieren:** Jeder Kindmanager verfährt genauso, bis konkrete ausführbare Aufgaben bei Arbeitern oder Werkzeugen liegen. Er wählt benötigte Fähigkeiten; Technologie erzeugt keine eigene Hierarchieebene.
+5. **Umsetzen und lokal prüfen:** Ausführende Instanzen bearbeiten ihren gebundenen Umfang und liefern tatsächliche Artefakte, Prüfungen, verbleibende Fragen und Konflikte. Eigenbericht und unabhängige Prüfung bleiben unterscheidbar.
+6. **Berichte nach oben liefern:** Jeder Kindbereich berichtet Ergebnis, Kandidatenbindung, relevante Schnittstellenänderungen, Nachweise, Risiken und offenen Entscheidungsbedarf. Auch Fehler, Blockade und Nichtbetroffenheit werden erkennbar berichtet. Der Elternmanager benötigt die für sein Urteil nötige Zusammenfassung und Zugriff auf die zugehörigen Details.
+7. **Auf jeder Ebene integrieren:** Ein Manager fügt die Ergebnisse seiner Kinder zu einem gemeinsamen Kandidaten zusammen, prüft ihre gegenseitige Kompatibilität und seine eigenen übergreifenden Pflichten. Zwei erfolgreiche Einzelberichte ergeben nicht automatisch einen erfolgreichen Gesamtauftrag. Fehlende oder widersprüchliche Kindnachweise bleiben offen.
+8. **Entscheiden, korrigieren oder eskalieren:** Lösbare Probleme werden auf dieser Ebene entschieden und gezielt erneut nach unten gegeben. Ein Entscheidungsproblem außerhalb der eigenen Zuständigkeit oder Befugnis wird mit begrenztem Kontext nach oben gegeben. Eine dadurch beschlossene Modelländerung löst eine neue gebundene Folgenabschätzung aus.
+9. **Gesamtergebnis abschließen:** Die Geschäftsführung verantwortet den integrierten Projektumfang und berichtet an den Nutzer in der gewünschten Verdichtung. Der vereinbarte Übernahmeprozess entscheidet über den geprüften Kandidaten. Ein normaler Abschlussbericht ist keine Bitte um eine zusätzliche Routineentscheidung des Nutzers.
+
+Alle Teilaufträge und zusammengeführten Nachweise müssen auf ein konsistentes akzeptiertes Soll und einen nachvollziehbaren Kandidatenstand bezogen sein. Abweichende Modellversionen oder veraltete Kindkandidaten können nicht durch bloßes Zusammenfassen ihrer Berichte integriert werden. Der Manager veranlasst den erforderlichen erneuten Abgleich.
+
+### 4.3 Konflikte auf der niedrigsten befugten Ebene entscheiden
+
+Ein Manager löst Routinefragen und Konflikte innerhalb seines Bereichs selbst. Wenn zwei Geschwisterbereiche betroffen sind, liegt die erste gemeinsame Entscheidung beim nächstgelegenen gemeinsamen Vorfahren. Reicht dessen Befugnis nicht aus, steigt der Konflikt auf dem Elternpfad weiter bis zu einem Manager, der sowohl den benötigten Umfang als auch die Entscheidungsklasse verantwortet. Der Nutzer wird erreicht, wenn auch die Geschäftsführung nicht entscheiden darf oder kann beziehungsweise die Frage ausdrücklich dem Nutzer vorbehalten ist.
+
+Ein Eskalationsbericht enthält die konkrete Frage, betroffene Ziele und Schnittstellen, relevante Fakten und Unsicherheiten, tragfähige Alternativen mit Folgen, die Empfehlung des Managers und den Grund, warum er die Entscheidung nicht selbst treffen kann. Der empfangende Manager erhält entscheidungsfähigen Kontext statt eines ungefilterten Gesprächsverlaufs. Seine Entscheidung wird mit Geltungsbereich und Begründung nach unten weitergegeben.
+
+Das Projekt legt fest, welche wichtigen Ziel-, Umfangs-, Kosten- oder Grundsatzfragen der Nutzer behalten will. Ein hoher Dateiumfang, eine neue Implementierungsdetailfrage oder ein fehlgeschlagener Test allein erzwingen keine Nutzerrückfrage. Eine technische Geschäftsführung darf innerhalb ihrer übertragenen Befugnisse auch weitreichend entscheiden. Die Hierarchie wird nicht durch einen zwingenden Ausschuss-, Ministeriums- oder Einstimmigkeitsmechanismus ersetzt.
+
+Während eine Entscheidung offen ist, bleibt die davon abhängige Arbeit erkennbar offen. Unabhängige Arbeit kann fortgesetzt werden. Wiederholte Weiterdelegation ohne Entscheidung oder Fortschritt muss als solche sichtbar werden und innerhalb der Laufgrenzen einen konkreten Entscheidungsbedarf erzeugen.
+
 ## 5. Organisation, Prozesse und Workflows
 
 Die Organisation beschreibt Zuständigkeit und Entscheidung. Ein Prozess beschreibt den wiederholbaren Weg zu einem Ergebnis einschließlich Pflichten und Entscheidungspunkten. Ein Workflow konkretisiert einen solchen Ablauf mit Schritten, Eingaben, Ausgaben, Fähigkeiten und Übergängen. Ob er bereits ausführbar ist, wird ausdrücklich angegeben; eine Checkliste ist noch keine durchgesetzte Laufzeitsteuerung.
@@ -126,8 +164,8 @@ Der folgende Fall ist eine hypothetische Modellierungsübung, keine eingeführte
 3. Der Use Case `sales/cancel-order` referenziert die Konzepte und eine akzeptierte Freigaberegel. Voraussetzungen und zeitliche Garantien werden entschieden; ihre genaue Ausprägung bleibt in diesem Plan offen.
 4. Der Bereich Bestellabwicklung verantwortet den Use Case; Lagerbestand verantwortet die Reservierungsregel. Der gemeinsame Elternbereich Handel übernimmt die Integrationspflicht. Die Kontexte müssen nicht exakt der Managementhierarchie entsprechen.
 5. Eine Änderung an der Bedeutung von Reservierung betrifft die ausdrücklich verwendenden Regeln, Use Cases und Realisierungen. Eine bisherige Prüfung wird nur bei unveränderten gebundenen Eingaben wiederverwendbar; bloße Begriffsnähe reicht weder für eine Abhängigkeit noch für einen Ausschluss aus dem Impact.
-6. Ein Auftrag bindet das akzeptierte Soll, verteilt konkrete Arbeit und erzeugt einen Kandidaten mit Implementierung, Tests und Dokumentation. Technische Werkzeuge werden nach Bedarf verwendet.
-7. Getrennte lokale Prüfungen und eine eigene Prüfung des vollständigen Stornierungsablaufs untersuchen denselben gebundenen Kandidaten. Ein fehlender Freigabenachweis bleibt sichtbar.
+6. Die Änderung wird auf dem Managementpfad Geschäftsführer → Handel → Bestellabwicklung und Lagerbestand weitergegeben. Jeder Manager erhält die für seine Ebene relevanten Vorgaben und delegiert bis zu konkreten Umsetzungs- und Prüfaufträgen. Die Arbeiter liefern Implementierung, Tests, Dokumentation und Berichte zurück.
+7. Der Manager von Handel integriert beide Kindkandidaten und prüft den vollständigen Stornierungsablauf. Wenn Bestellabwicklung sofortige Freigabe erwartet, Lagerbestand aber verzögert freigibt, entscheidet er den Schnittstellenkonflikt innerhalb seiner Befugnis und delegiert die Anpassungen erneut. Berührt die Lösung einen ihm nicht übertragenen Geschäftsgrundsatz, eskaliert er an die Geschäftsführung; erst eine dort nicht entscheidbare oder dem Nutzer vorbehaltene Grundsatzfrage erreicht den Nutzer. Ein fehlender Freigabenachweis bleibt sichtbar.
 8. Eine fachlich korrekte bestehende Implementierung kann erhalten bleiben. Bei Drift werden ihre Artefakte repariert; der Auftrag erfindet keine Modelländerung, um eine fehlerhafte Implementierung zu legitimieren.
 
 ## 9. Öffentliche Sprache
