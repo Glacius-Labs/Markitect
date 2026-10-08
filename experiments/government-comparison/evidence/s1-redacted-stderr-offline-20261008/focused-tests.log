@@ -1,0 +1,33 @@
+Attempt 1: FAIL; one fixture error in chunk-boundary case because continuation fragments were not marked cleanup-only.
+Correction: marked post-trigger fragments cleanup=True; no collector/source change.
+Attempt 2 follows below.
+Command: C:/Python313/python.exe -m unittest -v test_redacted_stderr
+Result: PASS
+Tests: 11
+Elapsed seconds: 0.2
+Scope: focused offline synthetic tests only; no CLI or app-server execution
+test_url_email_absolute_and_known_paths_are_redacted (test_redacted_stderr.RedactedStderrTests.test_url_email_absolute_and_known_paths_are_redacted) ... ok
+test_structured_json_suppression_and_redaction_failure_fail_closed (test_redacted_stderr.RedactedStderrTests.test_structured_json_suppression_and_redaction_failure_fail_closed) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.001s
+
+OK
+Follow-up elapsed seconds: 0.259
+Follow-up exit code: 0
+test_credential_patterns_are_suppressed_as_whole_lines (test_redacted_stderr.RedactedStderrTests.test_credential_patterns_are_suppressed_as_whole_lines) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK
+Credential-label follow-up elapsed seconds: 0.24
+Credential-label follow-up exit code: 0
+test_structured_json_suppression_and_redaction_failure_fail_closed (test_redacted_stderr.RedactedStderrTests.test_structured_json_suppression_and_redaction_failure_fail_closed) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK
+Prefixed-JSON follow-up elapsed seconds: 0.25
+Prefixed-JSON follow-up exit code: 0

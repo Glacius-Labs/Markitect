@@ -1,0 +1,19 @@
+{
+  "key": "s1-redacted-stderr-offline-20261008",
+  "baseSha": "c179b4107520492aa5f9b980c3767f4a4feaa86b",
+  "status": "offline-implementation-reviewed",
+  "manifestExcludesItself": true,
+  "payloadFiles": {
+    "experiments/government-comparison/evidence/s1-redacted-stderr-offline-20261008/contract.md": "9f98aa1818cad3a476cbfb64c4c446f42323c251c806497de555a751bb933e8f",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-offline-20261008/focused-tests.log": "894977684f1c28df3fd6bd32db40aafa1d5f429bea572e70bc422cd65c342d31",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-offline-20261008/offline-validation.json": "47926d966521ee971664c11a8e522579de89ccf112cf2a1794ec410813434765",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-offline-20261008/redacted_stderr.py": "d92f79b0d14abd2c5851bea2162813c5f93b396e4d19fc927389bc8b6557ef6d",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-offline-20261008/source-result-review.md": "bf4184173d6fc1e2ffe8fe6e23660be431cb1de6671fbc0715b7860c5d64ec2f",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-offline-20261008/test_redacted_stderr.py": "a7af376d4ad922076627967fac30e63e9391a6d618c2af32667d38657f549603"
+  },
+  "payloadCount": 6,
+  "actualRuntimeStarts": 0,
+  "newRuntimeAllocation": 0,
+  "realStderrCaptured": false,
+  "boundary": "Source and synthetic evidence only; no actual excerpt, raw stderr, session freeze or runtime authorization."
+}

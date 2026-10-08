@@ -1,0 +1,64 @@
+{
+  "key": "s1-redacted-stderr-offline-20261008",
+  "baseSha": "c179b4107520492aa5f9b980c3767f4a4feaa86b",
+  "recordedUtc": "2026-10-08T16:21:53.612312+00:00",
+  "scope": "Synthetic bounded capture/terminal/redaction/output/file-writer tests only",
+  "executionHistory": [
+    {
+      "tests": 11,
+      "result": "one fixture error",
+      "reason": "Continuation feed fragments omitted cleanup=True; corrected test only"
+    },
+    {
+      "tests": 11,
+      "passed": 11,
+      "unittestSeconds": 0.009,
+      "outerSeconds": 0.2,
+      "exitCode": 0
+    },
+    {
+      "tests": 2,
+      "passed": 2,
+      "unittestSeconds": 0.001,
+      "outerSeconds": 0.259,
+      "exitCode": 0,
+      "scope": "Changed path regression plus new malformed/escaped structured-line and redactor-failure regression only"
+    },
+    {
+      "tests": 1,
+      "passed": 1,
+      "unittestSeconds": 0.001,
+      "outerSeconds": 0.24,
+      "exitCode": 0,
+      "scope": "Only credential-pattern method after known private/signing key label correction; three added synthetic JSON label subtests"
+    },
+    {
+      "tests": 1,
+      "passed": 1,
+      "unittestSeconds": 0.001,
+      "outerSeconds": 0.25,
+      "exitCode": 0,
+      "scope": "Only structured-line method after prefixed-JSON/encoded-character correction; four added isolated synthetic regressions"
+    }
+  ],
+  "distinctTestCases": 12,
+  "unchangedCasesRepeatedAfterHardening": false,
+  "finalSourceHashes": {
+    "redacted_stderr.py": "d92f79b0d14abd2c5851bea2162813c5f93b396e4d19fc927389bc8b6557ef6d",
+    "test_redacted_stderr.py": "a7af376d4ad922076627967fac30e63e9391a6d618c2af32667d38657f549603",
+    "contract.md": "9f98aa1818cad3a476cbfb64c4c446f42323c251c806497de555a751bb933e8f"
+  },
+  "focusedLogSha256": "894977684f1c28df3fd6bd32db40aafa1d5f429bea572e70bc422cd65c342d31",
+  "rootRepeatedTests": false,
+  "staticAstParse": "passed",
+  "realStderrCaptured": false,
+  "runtimeStarts": 0,
+  "cliMetadataCalls": 0,
+  "providerCalls": 0,
+  "newRuntimeAllocation": 0,
+  "oldTrackedFilesModified": 0,
+  "oldR2CollectorAndClientByteIdentical": true,
+  "frozenStudyInputsModified": 0,
+  "productSuites": 0,
+  "claimBoundary": "Offline implementation evidence only; no runtime transport/permission/tool capability, actual diagnosis, secrecy guarantee, or provider/billing proof"
+}
