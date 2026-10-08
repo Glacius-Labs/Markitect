@@ -1,0 +1,11 @@
+# Closed continuation anchor
+
+Update: Actor completed report23:06:00.498635Z and all12 own server handles have stopped receipts. Evidence sealed23:08:19.275429Z. Quota exhausted: zero activations, zero server starts remaining. See handoff.md/final-readonly-validation.json/operator-errata.md. Next step is the one-time verified closure callback, then await a new concrete grant or accepted Design readiness evidence; do not restart this closed supplement. The former active anchor below is retained as historical scheduling evidence.
+
+Grant: native-v3-conventional-gf-ephemeral-validation-20261009, issued 2026-10-08T23:01:56Z, outer end 23:21:56Z. Exactly one new activation was reserved before actual spawn at 23:03:59.826698Z and is running as /root/ephemeral_v3_independent_runtime. Its hard deadline is 23:13:59.826698Z; target cleanup/report by 23:12:00Z. Remaining activation quota: zero. No followup turn, helper, replacement or additional full trial is authorized.
+
+Next Scientist step: collect OWN C:/Users/Consiliari/Documents/Scientist-Native-v3-20261008/ephemeral-20261009/state/report.json and owned-server-starts.json, then verify actual candidate/input bindings, applicability and cleanup, archive exact bytes and report. If still running close to the deadline, request interruption before the cap, preserve the exact request time and inspect only recorded own child handles; do not use global inventory. Do not return to the obsolete generic wait instruction after compaction.
+
+Frozen source03fc86a / freezecommitc1e081e; freeze SHA2568d6a769414d85b9a68efd2c01c300b1eb14b30c4cc97bdfd9948891c82b45ece, 64 bindings. Candidate d1e271b8472cc55565696b976a87ff968a4e8c7a/treea07ff00a3d3182521d202c618410f9c0520ea85f. Dynamic transport exclusively own Kestrel stdout URL from 127.0.0.1:0; <=12 starts and finally cleanup. On10013/missingURL: stop, no retry/search/fallback. No source/assertion/oracle repair or Task6. All earlier outcomes and exhausted grants remain separate and unchanged.
+
+Actual-start callback already sent once to Overseer01a11367-a781-7683-a20f-46e12614dcb4/local. Next callback only verified closure/material need. No actual future full-trial quota; await a clean accepted Design readiness pin before prospective matched admission.

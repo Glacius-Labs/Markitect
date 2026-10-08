@@ -3,8 +3,38 @@
   "issuedUtc": "2026-10-08T23:01:56Z",
   "notAfterUtc": "2026-10-08T23:21:56Z",
   "preparationActors": 0,
-  "activations": [],
+  "activations": [
+    {
+      "id": "ephemeral-01",
+      "reservedUtc": "2026-10-08T23:03:59.826698+00:00",
+      "deadlineUtc": "2026-10-08T23:13:59.826698+00:00",
+      "status": "completed",
+      "actor": "/root/ephemeral_v3_independent_runtime",
+      "usage": null,
+      "promptSha256": "b5b44e756ec5c7c49315d44d2b778f002a75c1c0848d1630706717b052de510c",
+      "observedUtc": "2026-10-08T23:06:47.863196+00:00",
+      "resultPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\state\\report.json",
+      "resultSha256": "b3ab710cd1ac0e818affbca0ec83cda28ae32262083cd1bb77054b3dd2faf5aa"
+    }
+  ],
   "usage": null,
   "originalOutcome": "incomplete-at-limit/coordinator-interruption",
-  "task6": "NOT RUN"
+  "task6": "NOT RUN",
+  "preparationElapsedFromIssueSeconds": 123.826698,
+  "status": "closed",
+  "outcome": "partial_posthoc_runtime_evidence_with_oracle_failures_and_diagnostic_scope_deviation",
+  "closedUtc": "2026-10-08T23:08:19.275429+00:00",
+  "actualActivations": 1,
+  "remainingActivations": 0,
+  "maxObservedConcurrent": 1,
+  "ownServerStarts": 12,
+  "ownedStoppedReceipts": 12,
+  "reportedActorSeconds": 120.67193698883057,
+  "reservationToCompletionObservationSeconds": 168.036498,
+  "elapsedFromIssueToSealSeconds": 383.275429,
+  "providerRequests": null,
+  "servingModel": null,
+  "tokens": null,
+  "cost": null,
+  "humanInterventionSeconds": null
 }

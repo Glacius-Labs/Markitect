@@ -1,0 +1,696 @@
+{
+  "checkedUtc": "2026-10-08T23:08:19.275429+00:00",
+  "freezeBindings": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-ephemeral-validation-20261009\\actor-prompt.txt",
+      "sha256": "b5b44e756ec5c7c49315d44d2b778f002a75c1c0848d1630706717b052de510c",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-ephemeral-validation-20261009\\authorization-grant.json",
+      "sha256": "3bebf64e31c8726cb1b09dc7f02f323e51eeacd84196058dc6990130caad4c81",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-ephemeral-validation-20261009\\candidate.bundle",
+      "sha256": "3a7c43c274f32b302505b9e15647354b81d973bb951a221b259f6e6fbaa56f10",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-ephemeral-validation-20261009\\ledger.json",
+      "sha256": "6b01d02ba10f2c6d2ae43639c60e9ce7ef0d248a51eb830b22a6e382f7842f1f",
+      "kind": "initial ledger Git blob",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-ephemeral-validation-20261009\\native-configuration.json",
+      "sha256": "55b7b3599cbf62712bbc21c98f19441990ada45ea66237b7d092d667d66763e7",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-ephemeral-validation-20261009\\owned_transport.py",
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-ephemeral-validation-20261009\\transport-policy.json",
+      "sha256": "968b903af777041c923839c75ce6b2b68a9b369353c48c05c0e913beef790b84",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\owned_transport.py",
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\public-applicability-note.md",
+      "sha256": "0ba23e5f51eda2b81182ddd54dd36f2430603fd81894fccbe482d76321dfd344",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\public\\architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\public\\brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\public\\holdout-procedure.md",
+      "sha256": "795fd4bac98559ea7c8a1c2066deaa3f198a50406ae0b2f9d68c34e67ab6ac7f",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\public\\rubric.json",
+      "sha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-1\\01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-1\\architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-1\\brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-1\\checks.py",
+      "sha256": "fc96859ce7cc71426ed774f3ff5d88a45adcf016d2250c259287d1da628ac0cc",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-1\\release.json",
+      "sha256": "f452c506fbde78b1779c44dd8d0485d1f7f32dae0302bdbd2eb27d3a7dea602d",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-2\\01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-2\\02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-2\\architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-2\\brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-2\\checks.py",
+      "sha256": "cd7a930f542ec2364609de1b0ad11ceb286d0219d113b57f17c8fbfc9554585b",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-2\\release.json",
+      "sha256": "d321258db973977b1eb4cc9f3411ec595abb52129dd248d04a1aafba47258b5a",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-3\\01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-3\\02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-3\\03-persist-state.md",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-3\\architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-3\\brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-3\\checks.py",
+      "sha256": "da8370546b56ec1ff61a5dd37b641ce16b0ff9dba0df681dcc939d3562d1d3ea",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-3\\release.json",
+      "sha256": "9f1720a623c45c29aa69e4ed1de6e42e525fb57a6f0f5835d1b2014fffaa3eda",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-4\\01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-4\\02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-4\\03-persist-state.md",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-4\\04-order-lifecycle.md",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-4\\architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-4\\brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-4\\checks.py",
+      "sha256": "a73019281035b8b2d8a1011a0ca0058800ba82380dd0c256754a85f732b7b218",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-4\\release.json",
+      "sha256": "340be4d0b6365fd475c4792be88e38400284e3f59a0e21d32e00e73d5bc4760d",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-5\\01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-5\\02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-5\\03-persist-state.md",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-5\\04-order-lifecycle.md",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-5\\05-change-limit.md",
+      "sha256": "8ae2fca3229f9c4ceb9f618da68eabe02f08071b1d51075af715139a8f5d2ae4",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-5\\architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-5\\brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-5\\checks.py",
+      "sha256": "1c05a2985f262ddf3d18e2fe0be4750e20c7a61a2921b5062655b3595d0be51b",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\stage-5\\release.json",
+      "sha256": "517293e786b9cca8726d12c90040a643e785c177121daca34c94c609b2a2ab2e",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\public\\tasks\\01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\public\\tasks\\02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\public\\tasks\\03-persist-state.md",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\public\\tasks\\04-order-lifecycle.md",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\public\\tasks\\05-change-limit.md",
+      "sha256": "8ae2fca3229f9c4ceb9f618da68eabe02f08071b1d51075af715139a8f5d2ae4",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\oracle\\private\\holdout-plan.json",
+      "sha256": "c290bb53e93eace8f3a8b91e4e7d91d4fbc1799c6dd387bfef6fabc9608588a5",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\oracle\\private\\holdout_checks.py",
+      "sha256": "4fefc910a1c10eb1ca261fef1847920f432d2379de83ecc22d9e84a6eac392eb",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\oracle\\public\\architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\oracle\\public\\brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\oracle\\public\\holdout-procedure.md",
+      "sha256": "795fd4bac98559ea7c8a1c2066deaa3f198a50406ae0b2f9d68c34e67ab6ac7f",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\oracle\\public\\rubric.json",
+      "sha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\oracle\\public\\tasks\\01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\oracle\\public\\tasks\\02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\oracle\\public\\tasks\\03-persist-state.md",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\oracle\\public\\tasks\\04-order-lifecycle.md",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+      "kind": "immutable file",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\ephemeral-20261009\\inputs\\oracle\\public\\tasks\\05-change-limit.md",
+      "sha256": "8ae2fca3229f9c4ceb9f618da68eabe02f08071b1d51075af715139a8f5d2ae4",
+      "kind": "immutable file",
+      "matches": true
+    }
+  ],
+  "reportInputBindings": [
+    {
+      "field": "stage5ReleaseSha256",
+      "sha256": "517293e786b9cca8726d12c90040a643e785c177121daca34c94c609b2a2ab2e",
+      "matches": true
+    },
+    {
+      "field": "stage5ChecksSha256",
+      "sha256": "1c05a2985f262ddf3d18e2fe0be4750e20c7a61a2921b5062655b3595d0be51b",
+      "matches": true
+    },
+    {
+      "field": "publicBriefSha256",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "matches": true
+    },
+    {
+      "field": "publicArchitectureSha256",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "matches": true
+    },
+    {
+      "field": "holdoutPlanDigest",
+      "sha256": "c290bb53e93eace8f3a8b91e4e7d91d4fbc1799c6dd387bfef6fabc9608588a5",
+      "matches": true
+    },
+    {
+      "field": "01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "matches": true
+    },
+    {
+      "field": "02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "matches": true
+    },
+    {
+      "field": "03-persist-state.md",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "matches": true
+    },
+    {
+      "field": "04-order-lifecycle.md",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+      "matches": true
+    },
+    {
+      "field": "05-change-limit.md",
+      "sha256": "8ae2fca3229f9c4ceb9f618da68eabe02f08071b1d51075af715139a8f5d2ae4",
+      "matches": true
+    }
+  ],
+  "logBindings": [
+    {
+      "path": "build.log",
+      "sha256": "8ab249b834b505326f842caae06546826674050744a6e7f294239e5fe9bff982",
+      "matches": true
+    },
+    {
+      "path": "compat-current.server.log",
+      "sha256": "a49a68f0f8c6e5b6d3283fa4a4a69ac5227348dacbca2cdd777dca79616c74ff",
+      "matches": true
+    },
+    {
+      "path": "compat-prior.server.log",
+      "sha256": "597a1f5bb58482bf795f3d3037e70dff0a05feeeaa7d8ca188fb4025c042550d",
+      "matches": true
+    },
+    {
+      "path": "idempotent-concurrency.log",
+      "sha256": "67b24bed2bcded3f7cce97e69d27cafa14f4a8e358fd2e8b79b45327ce7d752d",
+      "matches": true
+    },
+    {
+      "path": "idempotent-concurrency.server.log",
+      "sha256": "69eebf8ca1b772ca4b5b5a8c444ee938bd82fd7881d4b3e4de00c75855cf9688",
+      "matches": true
+    },
+    {
+      "path": "order-normalization.log",
+      "sha256": "43f51e6ca0276a25f1b948ead5a57e2df85b00a17ca7270ee83a6e60e712c770",
+      "matches": true
+    },
+    {
+      "path": "order-normalization.server.log",
+      "sha256": "a974ebb1c2c1115e85138576264d0def5c642ee2530fb5ca8e81e10ab1a35cbc",
+      "matches": true
+    },
+    {
+      "path": "previous-build.log",
+      "sha256": "b8b670046bd778b443188771fa53057a14e5d88e4d1ecaa0cca8f105d97417c2",
+      "matches": true
+    },
+    {
+      "path": "previous-restore.log",
+      "sha256": "385ff92b811613dd4dfad4d30c6ccc5e05fdb32f5f93e38063d55702c2b01f8f",
+      "matches": true
+    },
+    {
+      "path": "public-after-restart.checks.log",
+      "sha256": "e5e2dbae8656f5690e6f9b457319665ececb073ceb6baf48eda5fd03b0e058d7",
+      "matches": true
+    },
+    {
+      "path": "public-after-restart.server.log",
+      "sha256": "2d548ef78415bc6bb046305edaea3f37109e695d2f884b15da0b70b88da51bfd",
+      "matches": true
+    },
+    {
+      "path": "public-before-restart.checks.log",
+      "sha256": "7ac0c0f8e28eaf2964eb9762c7b7223d29287df6da08a7d0a4da865b933c3773",
+      "matches": true
+    },
+    {
+      "path": "public-before-restart.server.log",
+      "sha256": "ed63f922ac81d66d160c9b25e88973a74ea9c4e596e30fbdb7e8f99e3cb995f8",
+      "matches": true
+    },
+    {
+      "path": "restart-after.log",
+      "sha256": "f4f358daec3be6da4bd641d7725bfb7f872fe7d1e8e1dbe4addeca2aad8a0f83",
+      "matches": true
+    },
+    {
+      "path": "restart-after.server.log",
+      "sha256": "c5cb800f37c02bc49d39342760fbce5b191ed8462cd5d4dd484d9bdcff849d06",
+      "matches": true
+    },
+    {
+      "path": "restart-before.log",
+      "sha256": "fc98753a1ef121ed04ee23e7808b11c40daa69c889473c3f8227c6433767f38f",
+      "matches": true
+    },
+    {
+      "path": "restart-before.server.log",
+      "sha256": "4a4f969ea20af441c2d49506919faf3e8745cac7ee40b71ea1cdc94b1eeaed2d",
+      "matches": true
+    },
+    {
+      "path": "restart-diagnostic.server.log",
+      "sha256": "bcf7dbb372a3d963c0fdc3a26a8377f55f705474c863b3dc969f95bb8974cbe0",
+      "matches": true
+    },
+    {
+      "path": "restore.log",
+      "sha256": "ecd3c0bcf54f523e490591d06f8417d34dde9f446094cf9316b92686fdd200a1",
+      "matches": true
+    },
+    {
+      "path": "rule-change-entrypoint-parity.log",
+      "sha256": "2c4bae81f43b5d7517566374c1d5d8b1af3b295982a90d95a7775b240d88cfe4",
+      "matches": true
+    },
+    {
+      "path": "rule-change-entrypoint-parity.server.log",
+      "sha256": "ecb4a77918c62c64cbbe23463ef6ba84de6edd96c4910339b42042a099edfcb2",
+      "matches": true
+    },
+    {
+      "path": "terminal-transition-ordering.log",
+      "sha256": "f6d45e558403ae3ade9dcc24bd58faeeb678b81256a0a68991f25553060f8944",
+      "matches": true
+    },
+    {
+      "path": "terminal-transition-ordering.server.log",
+      "sha256": "8d1d1819adabdee010419d26929be7ddf3dabb36515f3afb7ebaddd118fbd3ac",
+      "matches": true
+    },
+    {
+      "path": "validation-boundaries.log",
+      "sha256": "02597a95d6437cc6aa195f88eb38a0b03c1759fb0bb8b601716f7a0dc9a35a32",
+      "matches": true
+    },
+    {
+      "path": "validation-boundaries.server.log",
+      "sha256": "30af81dae686e8ef0942bebf141aa34d08bba4274d5e3a7db0eeb39ae72e8fe0",
+      "matches": true
+    }
+  ],
+  "originalFreezeChecks": 264,
+  "old30ReservationObjectsUnchanged": true,
+  "priorSupplementFilesRetained": [
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/archive-manifest.json",
+      "sha256": "52e7147328a959d5699b24e7557776454c2b3167b41492a760ae5cf4f79cb779"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/authorization-grant.json",
+      "sha256": "0107fe1474fcfe6a45fb5764c01ddecd53702c484bed0e2b9b65da2aaa894f2c"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/control.py",
+      "sha256": "13b372c63cab33ee3defb6df2777d9c1bb675cdc667558490416e1eed780c942"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/evaluator-boundaries-errata.md",
+      "sha256": "3b1230e930bd2b73d52b2a2dad827fe4930c3f77ef5d2327150faf2c7df6c852"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/evidence.zip",
+      "sha256": "3bfc5e1bd45a887df4b5b30c75093f8189e9fee21ca13c2089ea149bac298f5c"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/final-readonly-validation.json",
+      "sha256": "b75f86c69facc53d73f26f5e5794a3f58675f0457336acd68568c269f3f0c424"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/freeze.json",
+      "sha256": "44854023d5918756b78d059bf663dd91cf12a8aaa47ca888a9accb66c26c8862"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/handoff.md",
+      "sha256": "5372b9379cf217b9d2b75cfc45096646564fb2530458154d09ae59071c2abd33"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/independent-evaluation-prompt.txt",
+      "sha256": "7e9b0b482d1b68ffdcfca7b0aa53f42e492811cb7611be2f934719bac0f8368f"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/ledger.json",
+      "sha256": "cb57b66cc0379e613081fb9d9de26b13bcd775fe6d3c61f7b768f16b32abc7ca"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/native-call-receipts.json",
+      "sha256": "60e8968867b8d5c60f58d8c5fc823bba4c66481d29df3fd23a32ef0ca8daac6b"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/native-configuration.json",
+      "sha256": "82b38caee76f38c157dd8454853520d586c22a40edb25b8a28e0c2c3f9a79e81"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/original-ledger-at-reconciliation.json",
+      "sha256": "f5a728c3b8ef5d9159d7f2d91d79f1da4ace3d33d58e9ea69fb9c32164d0cee8"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/preliminary-readonly-validation.json",
+      "sha256": "ededb9ee6f06623531f1c4e898e15bf90020267464232b82f6839d42c1be4f4c"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/public-review-prompt.txt",
+      "sha256": "0f23e650e8b770d46a17dcd7ea213b109b276ad15c08d55234da294cb5c7d2f1"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/seal.py",
+      "sha256": "c479dde85c0a50d2aa65122e0d10b849f09acb3c3bb350a9250037d226441822"
+    }
+  ],
+  "candidateClean": true,
+  "publicChecksActualCount": 46,
+  "publicRestartCount": 3,
+  "passedHoldouts": [
+    {
+      "case": "order-normalization",
+      "status": "passed",
+      "assertionCount": 5
+    },
+    {
+      "case": "validation-boundaries",
+      "status": "passed",
+      "assertionCount": 4
+    },
+    {
+      "case": "idempotent-concurrency",
+      "status": "passed",
+      "assertionCount": 10
+    },
+    {
+      "case": "terminal-transition-ordering",
+      "status": "passed",
+      "assertionCount": 14
+    },
+    {
+      "case": "rule-change-entrypoint-parity",
+      "status": "passed",
+      "assertionCount": 7
+    }
+  ],
+  "restartBefore": {
+    "assertionCount": 2,
+    "candidateCommit": "d1e271b8472cc55565696b976a87ff968a4e8c7a",
+    "caseDigest": "c290bb53e93eace8f3a8b91e4e7d91d4fbc1799c6dd387bfef6fabc9608588a5",
+    "condition": "greenfield",
+    "schemaVersion": 1,
+    "sourceDigests": [
+      "c290bb53e93eace8f3a8b91e4e7d91d4fbc1799c6dd387bfef6fabc9608588a5",
+      "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53"
+    ],
+    "status": "passed",
+    "throughTask": 5
+  },
+  "restartAfter": {
+    "assertionCount": 1,
+    "candidateCommit": "d1e271b8472cc55565696b976a87ff968a4e8c7a",
+    "caseDigest": "c290bb53e93eace8f3a8b91e4e7d91d4fbc1799c6dd387bfef6fabc9608588a5",
+    "condition": "greenfield",
+    "failureClass": "AssertionError",
+    "schemaVersion": 1,
+    "status": "failed",
+    "throughTask": 5
+  },
+  "atomicStock": "inapplicable/NOT RUN",
+  "diagnostic": "unplanned observational start12; no accepted test/score credit; see operator-errata.md",
+  "serverStarts": 12,
+  "stoppedOwnHandleReceipts": 12,
+  "preReservedFreshActor": true,
+  "archiveMembersVerified": 135
+}
