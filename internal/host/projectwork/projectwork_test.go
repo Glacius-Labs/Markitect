@@ -43,6 +43,16 @@ func TestInitPreviewAndGuardedWriteCreateOnlyMarkitectFiles(t *testing.T) {
 	if len(project.Report.Managers) != 1 || project.Report.Managers[0].Namespace != "" || len(project.Report.Statements) != 0 {
 		t.Fatalf("Init invented domain definitions: %+v", project.Report)
 	}
+	document, err := Document(project, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(document, "does not establish that repository code") {
+		t.Fatal("generated document omitted the code-conformance limitation")
+	}
+	if _, err := os.Stat(filepath.Join(root, ".artifacts")); !os.IsNotExist(err) {
+		t.Fatalf("project initialization or document write created legacy Host state: %v", err)
+	}
 }
 
 func TestLoadSelectsConfiguredInventoryAndExcludesCache(t *testing.T) {
@@ -140,6 +150,89 @@ func TestFixedHEADPlanCanApplyOnlyWhileWorkingInputsMatch(t *testing.T) {
 	}
 	if !strings.Contains(string(got), "Fixed revision edit.") {
 		t.Fatalf("fixed revision plan was not applied: %s", got)
+	}
+}
+
+func TestUserCanSelectNewInventoryThroughReviewedManifestEdit(t *testing.T) {
+	root := testGitRoot(t)
+	if _, err := Init(root, "New project", true); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, root, "src/entry.go", "package src\n")
+	project, err := Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	config := strings.Replace(projectConfig(initManagerPath), "name: Fixture", "name: New project", 1)
+	mutation := Mutation{APIVersion: APIVersion, BaseDigest: project.Digest, Actor: HumanActor, Goal: "Select the source inventory", Files: []FileChange{{Path: ManifestPath, Content: config}}}
+	plan, err := PlanEdit(project, mutation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Report.Files) != 1 || plan.Report.Files[0].Path != "src/entry.go" {
+		t.Fatalf("candidate report did not bind newly selected inventory: %+v", plan.Report.Files)
+	}
+	writeFile(t, root, "src/entry.go", "package src // changed after preview\n")
+	if _, err := ApplyEdit(root, plan, project.Digest); err == nil {
+		t.Fatalf("changed newly selected file should stale its plan: %v", err)
+	}
+	project, err = Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err = PlanEdit(project, mutation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, root, "src/added.go", "package src\n")
+	if _, err := ApplyEdit(root, plan, project.Digest); err == nil {
+		t.Fatalf("new member of selected inventory should stale its plan: %v", err)
+	}
+	project, err = Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	mutation.BaseDigest = project.Digest
+	plan, err = PlanEdit(project, mutation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ApplyEdit(root, plan, project.Digest); err != nil {
+		t.Fatal(err)
+	}
+	updated, err := Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(updated.Report.Files) != 2 || updated.Report.Files[0].Path != "src/added.go" || updated.Report.Files[1].Path != "src/entry.go" {
+		t.Fatalf("selected inventory was not installed: %+v", updated.Report.Files)
+	}
+}
+
+func TestNonRootManagerCannotChangeInventoryScope(t *testing.T) {
+	root, _ := testProject(t)
+	childPath := ".markitect/model/orders/manager.yaml"
+	child := "apiVersion: " + APIVersion + "\nkind: Manager\nmetadata:\n  name: orders\n  namespace: orders\npurpose: Owns order responsibilities.\nspec:\n  parent:\n    apiVersion: " + APIVersion + "\n    kind: Manager\n    namespace: \"\"\n    name: project-owner\n  owns: [src/]\n"
+	writeFile(t, root, childPath, child)
+	config := strings.Replace(projectConfig(".markitect/model/manager.yaml", ".markitect/model/statement.yaml", childPath), "inventoryRoots:\n  - src\n", "inventoryRoots:\n  - src\n", 1)
+	writeFile(t, root, ManifestPath, config)
+	project, err := Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var childID string
+	for _, manager := range project.Report.Managers {
+		if manager.Namespace == "orders" {
+			childID = manager.ID
+		}
+	}
+	if childID == "" {
+		t.Fatalf("child Manager missing from report: %+v", project.Report.Managers)
+	}
+	changedScope := strings.Replace(config, "inventoryRoots:\n  - src\n", "inventoryRoots:\n  - docs\n", 1)
+	_, err = PlanEdit(project, Mutation{APIVersion: APIVersion, BaseDigest: project.Digest, Actor: childID, Goal: "Change inventory boundary", Files: []FileChange{{Path: ManifestPath, Content: changedScope}}})
+	if err == nil || !strings.Contains(err.Error(), "active root Manager") {
+		t.Fatalf("non-root Manager inventory scope error = %v", err)
 	}
 }
 
