@@ -2,6 +2,8 @@
 
 Status: Planungsentwurf. Die [festgehaltenen Richtungsentscheidungen](README.md) bestimmen die Richtung. Die folgenden Modelltypen sind Vorschläge, keine vorhandenen YAML-Kinds oder CLI-Befehle. Maschinenrelevante Beziehungen sollen später in kanonischem YAML stehen; Markdown erläutert sie und schafft keine impliziten Graphabhängigkeiten.
 
+Der [Shop-Walkthrough](shop-walkthrough.md) und [konkrete Modellbeleg](shop-example/README.md) führen diesen Vertrag an einem kleinen System aus. Das [Laufzeitprotokoll](operating-protocol.md) konkretisiert seine Ausführung. Dieser allgemeine Entwurf definiert die Prinzipien; die Beispieldateien besitzen die konkreten Beispielidentitäten und ihre hypothetischen Fachentscheidungen.
+
 ## 1. Verständlicher Produkteinstieg
 
 Der Einstieg beginnt beim Projekt und seinem Zweck. Skills, Agents und anbieterspezifische Integrationen erscheinen bei den Werkzeugen zur Umsetzung. Das Produkt braucht fünf verbundene Sichten:

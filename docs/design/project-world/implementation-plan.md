@@ -54,6 +54,8 @@ Kompatibilität bestimmt nicht die Zielarchitektur. Trotzdem muss jede Änderung
 
 ## 4. Endliche Umsetzungsschritte
 
+Die [konkrete Bedien- und Modellbeschreibung](shop-walkthrough.md), der [vollständige Modellbeleg](shop-example/README.md) und das [Laufzeitprotokoll](operating-protocol.md) liefern jetzt den ersten durchgehenden Entwurf für P0. Die Formate sind ausdrücklich privat vorgeschlagene Designsyntax. P1–P4 sind damit weder implementiert noch technisch abgenommen.
+
 ### P0 — Modell am Beispiel präzisieren
 
 Lieferung: akzeptierter Minimalwortschatz, vollständiger Order-/Reservierungsfall, Entscheidungsprotokoll für die unten offenen Fragen und exakter technischer Basis-SHA.
@@ -86,6 +88,27 @@ Endkriterium: Ein neues Projekt kann mit Ziel, Fachbegriffen und Use Case beginn
 
 ## 5. Abnahmeszenarien
 
+### Technische Abbildung des ausgearbeiteten Beispiels
+
+Arbeitsentscheidungen: lokales Modellverzeichnis mit expliziter Dateiauswahl; fünf Managerrollen; verantwortete Namespace-/Moduldeklarationen; ein Monolith mit gemeinsamer Datenbanktransaktion; getrennte Fachdefinitionen und Runtimekonfiguration; getrennte Agentenaufträge und pro Ebene integrierte Kandidaten. Der private Belegprüfer validiert ausschließlich die innere Konsistenz dieses Beispiels.
+
+| Beispielvertrag | Konkrete Umsetzungslücke |
+|---|---|
+| `designVersion`, `resources`, kurze IDs | Neue Authoring-/Schemaentscheidung oberhalb des Core. Kein heutiges CLI-Format und keine zweite kanonische IR. Quelle eindeutig auf vollständige versionierte Core-Identitäten abbilden. |
+| Concept/State und gemischte Referenzlisten | Der heutige Core-Referenzvertrag benennt je Property genau einen Ziel-Kind. Vor P1 gemeinsamen Term-Kind mit Kategorie oder getrennte typisierte Felder für Konzepte, Zustände und Regeln wählen. Kein vorhandenes Union-Referenzfeature behaupten. |
+| Owner/Area/Module/Namespace | Auflösbare Rollen und konkrete Kardinalitäten; spezifische Hostprüfungen für Parent-Zyklen und delegierte Befugnisse oberhalb struktureller Core-Referenzen. |
+| Beziehungseffekte | Kontext, Impact, Pflichtabdeckung und Routing ausdrücklich unterscheiden. `uses` liefert Kontext/Änderungsbezug; `requiresRealization` verlangt Umsetzung bzw. Nachweis, `realizes` verbindet mit Artefaktgruppen. Ownership-/Namespacekanten aktivieren nicht alle Gegenstände derselben Organisation. |
+| Neue Pflicht nutzt unveränderte Definitionen | Vorhandene Realisierung und Checks auf die neue Verpflichtung beziehen; beim Shop kann Inventararbeit entstehen, obwohl seine Fachdefinitionen unverändert bleiben. |
+| Artefaktzuordnung | Kanonischen Bereich und gewünschte Zuordnung von konkretem Writer und beobachteten Bytes trennen. Neue Pfade zunächst im Laufbericht erfassen, autorisierte Zuordnungsänderung validieren/annehmen, Impact neu bestimmen und betroffene Checks am final gebundenen Stand ausführen. |
+| Eigener Manager-Agent je Rolle | Hostinvocation, rollenbezogener gespeicherter Stand, getrennte Kontextauswahl und typisierte Nachrichten; kein geteilter Gesprächsverlauf unter Rollenetiketten. |
+| Delegation und Integration | Auftragsbaum unabhängig vom bisherigen Ziel-/Prüfscope; isolierte Kindkandidaten, eindeutige Writer und eigener Integrationskandidat pro Elternauftrag. |
+| Modellannahme und Start | Zwei gebundene Zustandsübergänge, die in einem bereits autorisierten Nutzerauftrag zusammen ausgeführt werden dürfen; keine zusätzliche manuelle Routinefreigabe ableiten. |
+| Modellrevision während des Laufs | Betroffene Aufträge neu binden; unabhängige Arbeit nur nach nachvollziehbarer Gültigkeitsprüfung wiederverwenden. Finale Evidenz bindet tatsächlich finalen Modell-/Artefaktstand. |
+
+Diese Tabelle bestätigt keinen bereits vorhandenen Decoder oder Runner. Vor Kernänderungen oder Recordmigrationen müssen Ausdrucksbedarf und betroffene Verbraucher gegen die exakt gewählte technische Basis geprüft werden.
+
+### Geplante Produktfälle
+
 Die folgenden Szenarien sind Anforderungen für spätere Implementierungsprüfungen. Sie wurden in diesem Planungsschritt nicht ausgeführt.
 
 | ID | Fall | Erwartung |
@@ -113,10 +136,14 @@ Die folgenden Szenarien sind Anforderungen für spätere Implementierungsprüfun
 | A21 | Ein Kind liefert veraltete Evidenz oder einen unvollständigen Bericht | Der Elternmanager kann den Gesamtauftrag nicht als erfolgreich abschließen; erneuter Abgleich oder fehlende Arbeit wird konkret benannt |
 | A22 | Geschäftsführung, Elternmanager und Kindmanager bearbeiten eine Änderung | Jede Rolle wird durch einen eigenen AI-Agenten mit eigenem Kontext ausgeübt; ein gemeinsamer Gesprächskontext mit Rollenetiketten genügt nicht |
 | A23 | Ein Kindbereich erweitert seine interne Zerlegung oder lädt mehr Fachdetails | Der Elternmanager kann über unveränderte Ergebnis-/Schnittstellenverträge weiterarbeiten; nur relevante Folgen, Berichte und konkrete Antworten gelangen nach oben |
+| A24 | Neuer Use Case verlangt unveränderte Bestandsdefinitionen | `requiresRealization` und `realizes` machen benötigte Umsetzung bzw. Prüfung sichtbar; unveränderte Quelle wird nicht mit Nichtbetroffenheit verwechselt |
+| A25 | Eine neue Regel verwendet unveränderte Architektur als Kontext | Bestehende Checks laufen; ein Plattformmanager erhält erst bei tatsächlich betroffenen Plattformpflichten Arbeit |
+| A26 | Nutzerauftrag umfasst Modellpflege und Umsetzung | Interne Annahme-/Startschritte bleiben gebunden, erfordern aber keine zusätzliche pauschale Rückfrage |
+| A27 | Umsetzung erzeugt neuen Pfad im delegierten Bereich | Writer, autorisierte Zuordnungsänderung und erneute finale Modell-/Artefaktprüfung bleiben nachvollziehbar |
 
 ## 6. Noch zu entscheidende Details
 
-- Minimale Typen: Reicht zunächst Konzept mit expliziten Beziehungen, oder brauchen Zustand und Übergang eigene Kinds? Am Order-Fall entscheiden.
+- Minimale Typen: Der Designbeleg unterscheidet Konzept und Zustand. Im tatsächlichen Schema gemeinsamen Term-Kind oder getrennte typisierte Referenzfelder wählen; das Beispiel beweist keine polymorphe Core-Referenz.
 - Kontext: Namespace bleibt ein Namensscope mit verpflichtender Verantwortung. Vorgeschlagen ist eine ausdrückliche Deklaration bzw. ein kanonisches Register; ein fachlicher Kontext ist eine zusätzliche ausdrückliche Eigenschaft. Die endgültige Syntax und die Abbildung heutiger Namespace-Strings sind offen, nicht die Ownershippflicht.
 - Rollenauflösung: Referenz auf Person/Team/Rolle und ihr Entscheidungsverfahren; ein eindeutiger Verantwortungsbezug darf keine unklare Mehrheitsentscheidung verbergen.
 - Managervertrag: Minimalformat für Kontextpaket, delegierten Ergebnisauftrag, Kindbericht, Integrationsurteil und entscheidungsfähige Eskalation; auf jeder Ebene gleichartig, fachlich unterschiedlich gefüllt.
@@ -139,3 +166,7 @@ Durchgeführt am 8. Oktober 2026 für den ersten Planungscommit `e325bcb`: zwei 
 Die anschließende direkte Nutzerpräzisierung ergänzt den Manager als Abstraktions-, Delegations-, Reporting-, Integrations- und Entscheidungspunkt sowie den Top-down-/Bottom-up-Ablauf und Eskalation zur nächsten befugten Ebene. A15–A21 sind zusätzliche geplante Szenarien, keine ausgeführten Tests. Für diese reine Dokumentationspräzisierung bestanden erneut die Whitespaceprüfung und die Prüfung aller zwölf lokalen Linkziele in den drei geänderten Dateien. Es wurden keine Produkt- oder Laufzeittests ausgeführt.
 
 Die weitere direkte Nutzerpräzisierung legt einen eigenen spezialisierten AI-Agenten pro Manager und unabhängige Arbeitskontexte fest. A16 wird präzisiert, A22–A23 ergänzen die geplante Abnahme. Eine Prüfung dieser Dokumentationsänderung belegt noch keinen tatsächlichen Multi-Agentenbetrieb.
+
+Der ausgearbeitete Shop-Beleg enthält beide Modellstände, fünf Managerrollen und konkrete Beispielartefaktpfade. Der lokale Belegprüfer untersucht Referenzen, Ownership, Bereichsbaum, Kontextvorgaben und den Deltafall. A24–A27 ergänzen die geplante Produktabnahme. Ein erfolgreicher Beleglauf ist keine Ausführung von P1–P4 und keine Prüfung der Beispielanwendung.
+
+Durchgeführt für diese Ausarbeitung: unabhängiger Beispielreview mit anschließendem Nachreview; die Befunde zu expliziter Pflichtabdeckung, neuem Realisierungsbedarf bei unveränderten Begriffen, Writergrenzen, Core-Referenzabbildung und späteren Zuordnungsänderungen wurden eingearbeitet. Der Belegprüfer besteht für 39 Baseline-/44 Zieldefinitionen, fünf Managerrollen und 17 deklarierte Artefaktpfade; er bestätigt fünf neue und fünf geänderte Definitionen einschließlich Realisierungs-/Prüfzuordnung. Sieben Markdown-Dateien mit 51 lokalen Linkzielen bestehen die Zielprüfung. Whitespaceprüfung wird einschließlich aller neuen Dateien vor dem lokalen Commit ausgeführt. Null Shop-Prüfungen, null Beispiel-Managerstarts und kein Deployment; die zur Planung eingesetzten Reviewagenten sind davon getrennt.

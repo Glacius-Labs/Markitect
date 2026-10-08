@@ -1,0 +1,17 @@
+# Vorgeschlagenes Designformat; keine aktuelle Markitect-CLI-Konfiguration.
+designVersion: project-world/0.1
+kind: Project
+id: shop
+purpose: Bestellungen annehmen und ihren reservierten Bestand konsistent verwalten.
+owner: ceo
+rootArea: shop
+modelFiles:
+  - model/organization.yaml
+  - model/modules.yaml
+  - model/sales.yaml
+  - model/inventory.yaml
+  - model/commerce.yaml
+  - model/engineering.yaml
+  - model/realization.yaml
+runtimeFile: markitect.runtime.yaml
+executionProcess: engineering/model-change

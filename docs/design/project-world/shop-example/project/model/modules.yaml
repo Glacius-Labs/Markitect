@@ -1,0 +1,10 @@
+designVersion: project-world/0.1
+resources:
+  - {kind: Namespace, id: sales, owner: orders-manager, area: orders, purpose: Fachbegriffe der Verkaufsbestellung eindeutig benennen.}
+  - {kind: Namespace, id: inventory-language, owner: inventory-manager, area: inventory, purpose: Fachbegriffe des Bestands eindeutig benennen.}
+  - {kind: Namespace, id: commerce-language, owner: commerce-manager, area: commerce, purpose: Bereichsübergreifende Handelsverträge benennen.}
+  - {kind: Namespace, id: engineering-language, owner: ceo, area: shop, purpose: Architektur und Entwicklungsabläufe benennen.}
+  - {kind: Module, id: sales-domain, owner: orders-manager, area: orders, purpose: Bestellvokabular gemeinsam versionieren., revision: workspace, namespace: sales, contentFiles: [model/sales.yaml]}
+  - {kind: Module, id: inventory-domain, owner: inventory-manager, area: inventory, purpose: Bestandsvokabular gemeinsam versionieren., revision: workspace, namespace: inventory-language, contentFiles: [model/inventory.yaml]}
+  - {kind: Module, id: commerce-domain, owner: commerce-manager, area: commerce, purpose: Zusammenspiel beider Fachbereiche versionieren., revision: workspace, namespace: commerce-language, contentFiles: [model/commerce.yaml]}
+  - {kind: Module, id: engineering-model, owner: ceo, area: shop, purpose: Projektweite Architektur und Verfahren versionieren., revision: workspace, namespace: engineering-language, contentFiles: [model/engineering.yaml]}

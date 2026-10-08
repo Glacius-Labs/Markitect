@@ -27,6 +27,9 @@ Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücke
 |---|---|
 | [Zielmodell](model.md) | Begriffe, vorgeschlagene Verträge, Verantwortungsregeln und durchgehendes Order-Beispiel |
 | [Umsetzungsplan](implementation-plan.md) | Quellabgleich, endliche Schritte, Abnahmeszenarien und offene Entscheidungen |
+| [Shop-Walkthrough](shop-walkthrough.md) | Konkrete Antworten zu Dateistruktur, Modell, Änderungen und Start der Umsetzung |
+| [Shop-Modellbeleg](shop-example/README.md) | Vollständige vorgeschlagene YAML-Dateien, Vorher-/Nachher-Stand und lokaler Belegprüfer |
+| [Laufzeitprotokoll](operating-protocol.md) | Kontextpakete, Nachrichten, Kandidaten, Delegation, Integration, Eskalation und Wiederaufnahme |
 
 Dieses Paket ist der Besitzer dieser neuen Planung. Es ändert keine veröffentlichten Verträge. Die bestehende [Architektur](../../architecture.md) beschreibt ihren jeweiligen Quellstand; die [Roadmap](../../implementation-plan.md) verweist auf die neue Planung. Der [Government-Entwurf](../government/README.md) und der [Architect-Abgleich](../architect-government-checkpoint.md) liefern Vorarbeit. Deren zusätzliche Institutionen werden hier nicht automatisch übernommen.
 
