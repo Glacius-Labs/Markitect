@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T01:53:30Z",
+  "updatedUtc": "2026-10-08T02:01:52Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -428,16 +428,16 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:107",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:108",
       "lastObservedStatus": "idle",
       "activeTurn": null,
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6f1dd5a38819193153ca9263e2559",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6f80279808191a20780c75cc30ddc",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Existing scientist-oldschool-baseline-binding-20261008 public documentation/measurement binding in progress",
-      "latestProgress": "R4 ist terminal und bleibt incomplete; Resume wurde nicht gestartet. Die native Queue meldet zwar complete und der Job accepted-scoped, doch die äußere Prüfung weist den Bericht wegen eines fehlenden Nachweises für einen geplanten Review-Scope zurück. Ich sichere jetzt Rohbelege und Verbrauch für den unabhängigen Nachreview. Es gibt keine Reparatur oder Wiederholung.",
+      "assignedMilestone": "government-scope-native-20261008-r5",
+      "latestProgress": "Public Oldschool baseline plan accepted at clean 1d3f125. Exactly one bounded R5 Queue and conditional Resume assigned and sent once; await direct completion/need callback. S1 and six actual study cells remain open.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "962bcd12ca3a940517f457a9fd89d44cf5d7c0d3",
+      "candidateSha": "1d3f125d374822755936b039ff14b0fdd69e9f5f",
       "acceptance": "Qualified scope identity offline correction accepted; actual native translation/resume and S1 remain unproven.",
       "lastAssignment": {
         "key": "government-serialization-native-20261008-r4",
@@ -1633,6 +1633,80 @@
           "nativeOrS1Success": false,
           "r4Requalified": false,
           "realUsageTotal": null
+        },
+        "oldschoolBaselineBindingAcceptance": {
+          "candidateSha": "1d3f125d374822755936b039ff14b0fdd69e9f5f",
+          "baseSha": "962bcd12ca3a940517f457a9fd89d44cf5d7c0d3",
+          "acceptedUtc": "2026-10-08T02:00:58Z",
+          "worktreeCleanVerified": true,
+          "manifestPath": "experiments/government-comparison/evidence/scientist-oldschool-baseline-binding-20261008/delivery-manifest.json",
+          "manifestSha256": "24a2d1e2512fd483f6ef226e40da91d85d434584f6d0b90074a4aa0ec780536b",
+          "payloadFiles": 29,
+          "manifestPlusPayloadFilesHashAndGitChecked": 30,
+          "hashMismatches": 0,
+          "unchangedCommonInputsChecked": 20,
+          "canonicalRootSourceSha": "93c3580fc8e63f403f33b909118cdd7d3601627c",
+          "canonicalSectionExactChecked": true,
+          "nativeLedgerSha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+          "independentMethodsReviewSha256": "bb27ab6d0234e327875d1544f1547cf4ea01590b6b909664253c7f8232cb8d8d",
+          "reviewFinding": "PASS; no material methodological finding; original independent methods review and public plan read by Overseer",
+          "staticCheck": "PASS recorded; read, not rerun",
+          "claimBoundary": "Public matched Conventional/Oldschool baseline design only. Six NOT RUN cells; no empirical reference, actual capability/isolation/metering or S1 acceptance. No new experimental consumption; ledger unchanged."
+        },
+        "governmentScopeNativeGrant": {
+          "key": "government-scope-native-20261008-r5",
+          "authorizedUtc": "2026-10-08T02:00:58Z",
+          "status": "Active; Scientist slot assigned; execute only after offline preflight.",
+          "baseSha": "1d3f125d374822755936b039ff14b0fdd69e9f5f",
+          "prompt": "Overseer hat scientist-oldschool-baseline-binding-20261008 auf sauberem 1d3f125d374822755936b039ff14b0fdd69e9f5f angenommen: 29 Manifest-Nutzlasten plus Manifest gegen SHA256 und Git geprüft; alle 20 gemeinsamen Eingaben unverändert gegen 962bcd12, kanonische Oldschool-Ergänzung exakt an Root 93c3580f gebunden, native Ledgerbytes unverändert. Statische Prüfung und unabhängiger Methodenreview gelesen, keine offenen wesentlichen Befunde. Sechs Zellen bleiben NOT RUN; weder Oldschools Brief noch technische Fixtures sind empirische Referenzwerte. Die getrennte Offline-Scope-Korrektur bleibt angenommen. R4 bleibt geschlossen incomplete und wird nicht nachträglich umbewertet.\n\nGenau ein neuer endlicher Auftrag/Grant: government-scope-native-20261008-r5. Ausgangsbasis ist dieser saubere Scientist-Commit, Government bleibt auf 04e225d5caee78c2a198607143863fca1e829750 samt Binary 12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f und deterministischem Delegate e8b8e5087f994a975efc2228301cf7f51dee9de4d64b77077a0941db7a8e98b9. Keine P1-Übernahme. Zweck ist ausschließlich der tatsächliche Ende-zu-Ende-Nachweis des bereits korrigierten vollständigen Scope-Vertrags und der zugehörigen bestehenden Wiederaufnahme.\n\nVor Ausführung nur den engen R5-Zulassungs-/Treiberpfad ergänzen, seine direkt betroffenen Offline-Negativtests und unabhängigen Vorabreview abschließen, sauberen Quellcommit und frischen unveränderlichen Freeze festhalten. Produkt-/Binary-/Delegate-/Python-/Request-/Quellpins, aktiver Grant und passender ausdrücklicher Slotbesitz/Zuweisungszeit müssen unmittelbar vor jeder Reservierung und jedem Start stimmen. Der neue Grant liegt unter threads[name=Scientist].evidence.governmentScopeNativeGrant. Alte Zulassungen bleiben geschlossen; keine generische Lockerung oder Umschreibung versiegelter Historie. Vorhandene angenommene Scope-Tests nicht ohne Änderung erneut breit ausführen. Python bleibt auf der vorhandenen geprüften Python313-Bindung.\n\nSequenz nach positivem Preflight: genau EINE frische native Government Queue. Nur wenn sowohl der native Ablauf als auch die äußere Versuchsanbindung vollständig positiv sind, anschließend genau die zugehörige bestehende Resume-/Replayprüfung desselben Falls. Vorab die vollständigen Erfolgskriterien binden: Queue/Job/Result-Status, verlustfreie volle Identitäten, frische tatsächliche Checks, unabhängiges technisches Review mit erforderlicher Scope-Abdeckung, Kandidat/Receipt/Evidenz/Runde/Mandat, explizite finale Zustimmung jedes ausgewählten Ressorts und Promotion. OS-Exit 0 oder nur native complete genügen nicht. Keine künstliche zusätzliche Unterbrechung.\n\nNeue Höchstgrenzen: ein frischer Fall, zwei native Starts, sechs Wrapperversuche einschließlich Fehlschlägen, sechs deterministische Delegates, höchstens zwei parallele Rollen. Je Start 150 reservierte Sessionsekunden, höchstens 300 neu; harte native Prozess- und Controllerfrist jeweils 38 Sekunden einschließlich kontrolliertem Cleanup. Historie bleibt zwölf native Starts, zehn Wrapper, sieben Delegates, 1800 reservierte Sekunden; kumulative Obergrenzen somit 14/16/13/2100. Tatsächliche Laufzeiten separat messen. Fünf historische reale Actorstarts, 53331 bekannte Tokens und unbekannte Gesamtusage erhalten.\n\nBei erstem negativem/unvollständigem Ergebnis, fehlender Voraussetzung, Zeit- oder Quotengrenze terminal stoppen und schließen. Kein Retry, keine Reparatur mit Nachstart, kein weiterer Fall, keine Nutzung ungenutzter R4/R5-Restquote. Null Classic-Wiederholungen, reale Actor-/Modell-/Provider-/Metadatensitzungen, Studienzellen oder vollständige Produktsuiten; keine Produktreparatur, neue allgemeine Infrastruktur, globale Konfigurationsänderung oder Veröffentlichung. Deterministische Rollen und echte lokale Checks bleiben ausdrücklich Mechaniknachweise, keine semantische Agentenbewertung.\n\nOverseer weist dir den aktuell freien schweren Slot jetzt für genau diesen R5-Grant zu; status und slotAssignedUtc stehen in der Koordinationsakte. Nach erfülltem unabhängig geprüftem Offline-Preflight darfst du den begrenzten Fall ausführen, ohne zusätzlichen Zwischenauftrag. Binde dazu den endgültigen Coordinator-Snapshot nach dieser einmaligen Nachricht und dessen aktuelle Zuweisung. Die Befugnis erfordert weiterhin jeden genannten Wächter.\n\nAbschluss: sauberer lokaler Handoff mit unveränderten alten Belegen, tatsächlicher neuer Verbrauchsbilanz und erhaltenem Ledger-Präfix, Rohberichten, unabhängiger Nachprüfung, genauem Ergebnis der äußeren UND nativen Kette und verbleibender S1-/realer Toolfähigkeitslücke. Slot ausdrücklich freigeben. Melde nur den neuen Abschluss oder eine echte Blockade einmal direkt an Overseer gemäß direkt autorisierter Rückmelderegel. Keine automatische weitere Diagnosekaskade.",
+          "product": {
+            "name": "Government",
+            "sourceSha": "04e225d5caee78c2a198607143863fca1e829750",
+            "binarySha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f",
+            "delegateSha256": "e8b8e5087f994a975efc2228301cf7f51dee9de4d64b77077a0941db7a8e98b9"
+          },
+          "python": {
+            "path": "C:/Python313/python.exe",
+            "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+          },
+          "maxFreshCases": 1,
+          "maxNativeStarts": 2,
+          "maxWrapperAttempts": 6,
+          "maxDeterministicDelegates": 6,
+          "maxParallelRoles": 2,
+          "reservedSecondsPerNativeStart": 150,
+          "maxNewReservedSessionSeconds": 300,
+          "nativeProcessDeadlineSeconds": 38,
+          "controllerWindowSeconds": 38,
+          "historicalConsumed": {
+            "nativeStarts": 12,
+            "wrapperAttempts": 10,
+            "delegates": 7,
+            "reservedSessionSeconds": 1800
+          },
+          "cumulativeMaxNativeStarts": 14,
+          "cumulativeMaxWrapperAttempts": 16,
+          "cumulativeMaxDelegates": 13,
+          "cumulativeMaxReservedSessionSeconds": 2100,
+          "sequence": [
+            "one fresh Queue",
+            "only after complete positive native AND outer result, fresh actual checks, independent technical review, all required final assents and promotion: associated existing Resume/Replay verification"
+          ],
+          "stop": "First failed/incomplete/missing prerequisite/time or quota stop terminates case; no repair-and-run, retry, new case or residual quota reuse.",
+          "nativeEntryGate": "Clean source, exact live active grant, immutable source/binary/delegate/Python/request and coordinator freeze, independent preflight review, explicit Scientist/R5 slot with matching slotAssignedUtc immediately before each reserve/start.",
+          "newModelProviderCalls": 0,
+          "metadataSessions": 0,
+          "studyCells": 0,
+          "classicNativeStarts": 0,
+          "fullProductSuites": 0,
+          "historicalRealUsage": {
+            "actorStarts": 5,
+            "knownTokenSubtotal": 53331,
+            "totalTokens": null
+          },
+          "slotAssignedUtc": "2026-10-08T02:00:58Z",
+          "remainingQuotaReusable": false,
+          "sentUtc": "2026-10-08T02:01:52Z"
         }
       },
       "classicHandoffReceived": true,
@@ -1716,6 +1790,13 @@
           "status": "Completed and qualified accepted; zero experimental runtime starts.",
           "scope": "Exact Government Executor response serializer correction and byte-level offline contract regression, independent narrow review and clean handoff. No runtime grant.",
           "sentUtc": "2026-10-08T00:55:43Z"
+        },
+        {
+          "key": "government-scope-native-20261008-r5",
+          "authorizedUtc": "2026-10-08T02:00:58Z",
+          "status": "Sent once; conditional bounded execution authorized after independent offline preflight.",
+          "promptRecord": "evidence.governmentScopeNativeGrant",
+          "sentUtc": "2026-10-08T02:01:52Z"
         }
       ],
       "offlineAdapterContractAssignment": {
@@ -1777,7 +1858,7 @@
       "oldschoolBaselineBindingAssignment": {
         "key": "scientist-oldschool-baseline-binding-20261008",
         "authorizedUtc": "2026-10-08T01:48:09Z",
-        "status": "sent once",
+        "status": "Completed; public baseline plan accepted; no empirical result.",
         "prompt": "Direkte neue Nutzeranweisung in Overseer: „Stelle auch sicher dass klassisches Agentic Coding in den Case Studies durch den Scientist berücksichtigt und gemessen wird als Refernezwert. Hierzu steht dir der Chat \"Oldschool\" zur Verfügung“.\n\nOldschool ist der vorhandene lokale Chat 01a11928-cc8d-7580-9d29-f6557bb2cbd7. Er ist jetzt Engineering-Eigentümer der starken Conventional-Referenz. Du behältst gemeinsame Aufgaben, Versuchshülle, Metriken und getrennte unabhängige Bewertung. Die bisherigen drei Arme und sechs Basiszellen bleiben: Conventional/Oldschool, Classic, Government jeweils Greenfield/Brownfield. Ein reiner Classic-Government-Vergleich genügt nicht. Gute Planung, normale Absichts-/Architekturdokumentation, Architektur-/Regressionstests, Subagenten und unabhängige Reviews bleiben für Conventional erlaubt; kein Markitect/Government, keine künstlich schwache Referenz.\n\nErgänzung scientist-oldschool-baseline-binding-20261008 für deinen nächsten öffentlichen Studien-Setupstand: Schließe zuerst die laufende government-scope-identity-offline-20261008 im bestehenden Umfang ab. Ergänze danach einen schmalen öffentlichen Einbindungs-/Messplan zu Oldschool und binde dessen Rolle ausdrücklich an die vorhandene 3x2-Matrix, gemeinsame Anforderungen/Setup-Pflichten, unveränderte Outcome-Kriterien/Gewichte und gemeinsames endliches Ressourcenprofil. Berichte später je Ausgangslage absolute Qualität/Fehler/Drift/Änderungsqualität, Setup-/Pflege-/Koordinationsaufwand, Lauf-/Agenten-/menschliche Zeit, tatsächlich verfügbare Token-/Kostenwerte und Aufsicht; zeige Classic/Government jeweils gegenüber dieser gemessenen Conventional-Referenz. Unbekannte Werte bleiben null; keine Fixture-Ergebnisse oder reine Planungsbriefe als Referenzwert.\n\nDie aktuelle kanonische Ergänzung steht in C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/evaluation.md im Abschnitt zur Oldschool-Referenz; deine lokale ältere Designkopie ist hierfür nicht maßgeblich. Oldschool erhält jetzt nur einen fallunabhängigen Arbeitsweisenbrief-Auftrag und keine Studienaufgaben; dessen Ergebnis reicht Overseer öffentlich weiter. Keine privaten Holdouts, fremden Ergebnisse oder zukünftigen Taskkarten an ihn. Er darf weder seine eigenen Endnoten noch das gemeinsame Oracle verfassen.\n\nDer dauerhafte Chat darf nicht als geteilter Gedächtniskontext mehrerer unabhängiger Zellen dienen: Vor realen Läufen echte frische Actor-Kontexte je Zelle, isolierte Zielcheckouts, exaktes verfügbares Modell/Reasoning/Tools/Berechtigungen und messbare Grenzen binden. Überprüfe dabei konzeptionell auch die App-gegen-CLI-Verzerrung: Oldschool nicht mit anderen Werkzeugen oder ungemessener Hilfe gegen einen beschränkten Classic-/Government-Runner vergleichen. Ein anderer Ausführungskanal wäre ein neuer gemeinsamer Protokollstand, keine Schutzregelumgehung. Keine zusätzlichen praktischen Runner-/Tool-/Metadatenproben aus diesem Auftrag. Vorbereitung darf nicht heimlich fallbezogen trainieren; alle tatsächlichen Hilfen/Unteragenten zählen später im jeweiligen Arm.\n\nDieser Auftrag ist ausschließlich öffentlicher Setup-/Dokumentationsabgleich plus fokussierte statische Konsistenzprüfung und bei fachlichem Bedarf ein enger unabhängiger Methodenreview. Null neue native Controller-, Wrapper-, Delegate-, Actor-/Modell-/Provider-/Metadatensitzungen, Studienzellen oder vollständige Testsuiten. Vorhandene Quoten/Stops/Pins bleiben. Ein neuer sauberer Dokumentationsstand und klar benannte Voraussetzungen genügen; keine zusätzliche Experimentplattform. Melde den Abschluss dieses Pakets einmal direkt an Overseer gemäß Rückmeldevertrag.",
         "predecessor": "government-scope-identity-offline-20261008",
         "scope": "Public role/protocol/measurement binding after existing scope correction; no new experimental runs.",
@@ -1791,7 +1872,8 @@
             }
           ],
           "isError": false
-        }
+        },
+        "acceptedUtc": "2026-10-08T02:00:58Z"
       }
     },
     {
@@ -2181,7 +2263,7 @@
       }
     }
   ],
-  "nextAction": "Await direct Scientist completion of existing Oldschool baseline-binding docs; verify source-bound public protocol and independent review before selecting a new finite native end-to-end grant. Accepted identity fix at962bcd12; no unused grant reusable. Oldschool/Worker/Architect hold.",
+  "nextAction": "Await Scientist direct terminal R5 completion/need callback, then verify actual native AND outer results, source/ledger evidence and independent review before any new package. No real Actor or study grant. Worker/Architect/Oldschool hold; quiet two-hour fallback.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -2392,11 +2474,10 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": null,
-    "key": null,
-    "status": "Free after verified terminal R4 and explicit Scientist release. Offline follow-up has no experimental execution allowance.",
-    "releasedUtc": "2026-10-08T01:31:55.705453+00:00",
-    "releaseVerifiedUtc": "2026-10-08T01:42:34Z",
+    "owner": "Scientist",
+    "key": "government-scope-native-20261008-r5",
+    "status": "Explicitly assigned for one bounded R5 case after independent offline preflight; no other experimental work.",
+    "assignedUtc": "2026-10-08T02:00:58Z",
     "queue": []
   },
   "contextSmokePreparation": {
@@ -2781,6 +2862,13 @@
         "processedUtc": "2026-10-08T01:53:30Z",
         "candidateSha": "962bcd12ca3a940517f457a9fd89d44cf5d7c0d3",
         "disposition": "Qualified offline acceptance after artifact and independent code review; no new run grant. Existing Oldschool docs continue."
+      },
+      {
+        "event": "scientist-oldschool-baseline-binding-20261008",
+        "sourceThreadId": "01a1169c-3df6-7571-997d-48ab57365875",
+        "candidateSha": "1d3f125d374822755936b039ff14b0fdd69e9f5f",
+        "processedUtc": "2026-10-08T02:00:58Z",
+        "disposition": "Public protocol accepted after 30-file hash/Git and 20-common-input verification; one new conditional R5 mechanical grant."
       }
     ],
     "oldschoolAuthorization": {
