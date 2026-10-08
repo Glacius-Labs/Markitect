@@ -1,0 +1,36 @@
+{
+  "schemaArchive": "experiments/government-comparison/evidence/policy-compatibility/run-1/protocol-schema.zip",
+  "schemaArchiveSha256": "cd24042eec4696f6b73368cfc6ce930726f3e10c28bae63cdbd1b2f502ff1d97",
+  "memberSha256": {
+    "ServerNotification.json": "28a42039eee1c3f45c92b6cf07111bacf6de2716f4d3365ff53ad65507fef00c",
+    "v1/InitializeParams.json": "b55124e7c0f36a1789396daa5578217a92be67f053903696236686e59f6f212e",
+    "v1/InitializeResponse.json": "62ad689c2cb6379913c1d72749cfd8de5089d35760214123518eb92eef11acc9",
+    "v2/ConfigReadParams.json": "257c54a423b47c1d209ff1076765a1564d82322fd5161670fd489a2874de1bac",
+    "v2/ConfigReadResponse.json": "4ec77e1a3eed746037149799c3b6bb8fe7b4b593e5930fc9f410e6282de9df50",
+    "v2/ConfigRequirementsReadResponse.json": "23133727e5dac0fcd77ca0db8bb47f4bef7c3e880b96846aec612d1dedba7e5b",
+    "v2/ErrorNotification.json": "ae1f4d6e0bb794211f28dc67b11885a1a0e0f8a198c6114b2ed27372f60a227c",
+    "v2/ThreadClosedNotification.json": "d504cceb70e3397ad684924b08d3bff328a927be02ef4e3d482a18e27bab73de",
+    "v2/ThreadStartParams.json": "80a40a7fac15b4bf70efb7f893fb353acc0a0d30c68f54aee4f01923deca85de",
+    "v2/ThreadStartResponse.json": "92f5ddc37717b922de1dc0b0405e9a6d463f370554e2091610c6e595bc2616d4",
+    "v2/ThreadStartedNotification.json": "f4c4acf11b4a71d72c19678583df1b5639561434b5156b12657951cda25cf0d1",
+    "v2/ThreadStatusChangedNotification.json": "26f3c60c1b73f7fa2d31c74429cdc36f8746c76c33e3d314b3fb61d3661f05f6"
+  },
+  "requestSchemas": {
+    "initialize": "v1/InitializeParams.json",
+    "config/read": "v2/ConfigReadParams.json",
+    "thread/start": "v2/ThreadStartParams.json"
+  },
+  "responseSchemas": {
+    "initialize": "v1/InitializeResponse.json",
+    "config/read": "v2/ConfigReadResponse.json",
+    "configRequirements/read": "v2/ConfigRequirementsReadResponse.json",
+    "thread/start": "v2/ThreadStartResponse.json"
+  },
+  "notifications": {
+    "thread/closed": "v2/ThreadClosedNotification.json",
+    "thread/started": "v2/ThreadStartedNotification.json",
+    "thread/status/changed": "v2/ThreadStatusChangedNotification.json"
+  },
+  "stopPolicy": "All turn/item/usage/error/warning/auth/approval/server requests and unlisted methods stop. Remote disabled only via unchanged pinned existing classifier. Thread closed permitted only after validated own response.",
+  "scope": "Thread-start-only, no turn/input/tool/interrupt RPC. Schema shapes primary pinned0.160.1; no OS enforcement claim."
+}

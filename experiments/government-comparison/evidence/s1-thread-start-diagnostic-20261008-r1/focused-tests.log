@@ -1,0 +1,83 @@
+test_capture_stops_at_exact_16kib_ceiling_and_marks_discarded_fragment (test_client.StderrCaptureTests.test_capture_stops_at_exact_16kib_ceiling_and_marks_discarded_fragment) ... ok
+test_empty_stderr_does_not_trigger_and_feed_after_finish_is_rejected (test_client.StderrCaptureTests.test_empty_stderr_does_not_trigger_and_feed_after_finish_is_rejected) ... ok
+test_fixed_capture_bounds_cannot_be_loosened (test_client.StderrCaptureTests.test_fixed_capture_bounds_cannot_be_loosened) ... ok
+test_invalid_utf8_and_unterminated_partial_utf8_are_never_exposed (test_client.StderrCaptureTests.test_invalid_utf8_and_unterminated_partial_utf8_are_never_exposed) ... ok
+test_only_eight_complete_lines_are_classified_and_later_bytes_are_discarded (test_client.StderrCaptureTests.test_only_eight_complete_lines_are_classified_and_later_bytes_are_discarded) ... ok
+test_split_chunks_reassemble_one_known_structural_line_without_retaining_text (test_client.StderrCaptureTests.test_split_chunks_reassemble_one_known_structural_line_without_retaining_text) ... ok
+test_unknown_and_malformed_lines_are_unclassified_and_redacted (test_client.StderrCaptureTests.test_unknown_and_malformed_lines_are_unclassified_and_redacted) ... ok
+test_valid_multibyte_utf8_split_across_feeds_is_classified_only_when_complete (test_client.StderrCaptureTests.test_valid_multibyte_utf8_split_across_feeds_is_classified_only_when_complete) ... ok
+test_cleanup_fragment_feed_stays_terminal_and_cannot_resume_rpc_sequence (test_client.TerminalAdmissionTests.test_cleanup_fragment_feed_stays_terminal_and_cannot_resume_rpc_sequence) ... ok
+test_first_warning_stderr_triggers_stop_before_next_rpc (test_client.TerminalAdmissionTests.test_first_warning_stderr_triggers_stop_before_next_rpc) ... ok
+test_rpc_gate_rejects_every_call_after_thread_response_and_never_admits_turn (test_client.TerminalAdmissionTests.test_rpc_gate_rejects_every_call_after_thread_response_and_never_admits_turn) ... ok
+test_conflicting_early_thread_id_is_rejected_after_valid_response (test_client.ThreadGateTests.test_conflicting_early_thread_id_is_rejected_after_valid_response) ... ERROR
+test_existing_turn_in_thread_response_is_rejected (test_client.ThreadGateTests.test_existing_turn_in_thread_response_is_rejected) ... ERROR
+test_valid_schema_bound_thread_response_finishes_before_any_turn (test_client.ThreadGateTests.test_valid_schema_bound_thread_response_finishes_before_any_turn) ... ERROR
+
+======================================================================
+ERROR: test_conflicting_early_thread_id_is_rejected_after_valid_response (test_client.ThreadGateTests.test_conflicting_early_thread_id_is_rejected_after_valid_response)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\s1-thread-start-diagnostic-20261008-r1\test_client.py", line 207, in test_conflicting_early_thread_id_is_rejected_after_valid_response
+    gate = make_gate()
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\s1-thread-start-diagnostic-20261008-r1\test_client.py", line 49, in make_gate
+    protocol = protocol_module.Protocol(client_module.SCHEMA, CONTRACT)
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\s1-common-runner-read-tool-20261008-r1\protocol.py", line 39, in __init__
+    require(hashlib.sha256(archive.read_bytes()).hexdigest() == contract["schemaArchiveSha256"], "protocol-archive-pin-mismatch")
+                                                                ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'schemaArchiveSha256'
+
+======================================================================
+ERROR: test_existing_turn_in_thread_response_is_rejected (test_client.ThreadGateTests.test_existing_turn_in_thread_response_is_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\s1-thread-start-diagnostic-20261008-r1\test_client.py", line 213, in test_existing_turn_in_thread_response_is_rejected
+    gate = make_gate()
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\s1-thread-start-diagnostic-20261008-r1\test_client.py", line 49, in make_gate
+    protocol = protocol_module.Protocol(client_module.SCHEMA, CONTRACT)
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\s1-common-runner-read-tool-20261008-r1\protocol.py", line 39, in __init__
+    require(hashlib.sha256(archive.read_bytes()).hexdigest() == contract["schemaArchiveSha256"], "protocol-archive-pin-mismatch")
+                                                                ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'schemaArchiveSha256'
+
+======================================================================
+ERROR: test_valid_schema_bound_thread_response_finishes_before_any_turn (test_client.ThreadGateTests.test_valid_schema_bound_thread_response_finishes_before_any_turn)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\s1-thread-start-diagnostic-20261008-r1\test_client.py", line 196, in test_valid_schema_bound_thread_response_finishes_before_any_turn
+    gate = make_gate()
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\s1-thread-start-diagnostic-20261008-r1\test_client.py", line 49, in make_gate
+    protocol = protocol_module.Protocol(client_module.SCHEMA, CONTRACT)
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\s1-common-runner-read-tool-20261008-r1\protocol.py", line 39, in __init__
+    require(hashlib.sha256(archive.read_bytes()).hexdigest() == contract["schemaArchiveSha256"], "protocol-archive-pin-mismatch")
+                                                                ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'schemaArchiveSha256'
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.021s
+
+FAILED (errors=3)
+
+=== TARGETED THREAD-GATE FIXTURE FOLLOW-UP ===
+test_conflicting_early_thread_id_is_rejected_after_valid_response (test_client.ThreadGateTests.test_conflicting_early_thread_id_is_rejected_after_valid_response) ... ok
+test_existing_turn_in_thread_response_is_rejected (test_client.ThreadGateTests.test_existing_turn_in_thread_response_is_rejected) ... ok
+test_valid_schema_bound_thread_response_finishes_before_any_turn (test_client.ThreadGateTests.test_valid_schema_bound_thread_response_finishes_before_any_turn) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.033s
+
+OK
+
+=== RUN HISTORY NOTE ===
+Initial full focused run: 11 passed, 3 ThreadGate setup errors because the fixture passed diagnostic-contract instead of schema-contract; no assertions exposed an implementation failure. Corrected fixture only; targeted ThreadGate rerun: 3/3 passed. All 14 distinct test cases pass across these runs. No subprocess, app-server, native command, Actor, or model call was started. Source hashes: client 41EBC2551402B52761BD9C44D8FE54F41790587BD4E908C5C5560FCCDCC48BDF; collector A9A1213146ACBF31791E966992507B976EE6D3753BF50B27ECF14E7C42261DF4; thread_gate B48CE8B67E3A18ECAB80A49D1EB3633F90443CC9524972E00A3EA7BDF27FA6CD.
+
+=== TARGETED CLEANUP-ONLY STDERR FRAGMENT FOLLOW-UP ===
+test_cleanup_fragment_feed_stays_terminal_and_cannot_resume_rpc_sequence (test_client.TerminalAdmissionTests.test_cleanup_fragment_feed_stays_terminal_and_cannot_resume_rpc_sequence) ... ok
+test_second_stderr_chunk_before_cleanup_is_rejected_without_capture (test_client.TerminalAdmissionTests.test_second_stderr_chunk_before_cleanup_is_rejected_without_capture) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK
+
+=== CLEANUP-ONLY FOLLOW-UP ===
+Targeted cleanup-only stderr tests: 2/2 passed. Verified client SHA-256: 6FB39F72B0B7E8A305AD42F1B0ABFB4A39CE701D8D68D76FA5DD8BC6788D2D3C. Test source SHA-256 at this run: F3F00803145AE1951157518BDACAE728BDA87D3BE5E23F158B1BA671BC3A18BC. No process or native operation started.

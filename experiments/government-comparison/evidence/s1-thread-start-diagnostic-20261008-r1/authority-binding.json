@@ -1,0 +1,13 @@
+{
+  "key": "s1-thread-start-diagnostic-20261008-r1",
+  "observedAtUtc": "2026-10-08T15:06:12.984909+00:00",
+  "copiedAuthorizationSha256": "1d712e742f93697506b7de034d031652f33b02ceae57e4d1596ad4ace18f24cc",
+  "recordedPreparationCoordinationSha256": "0d1001b7284a1157addd36666f9850192ae992460c685abbff14eacfa448a4c5",
+  "currentCoordinationSha256": "3f5efd1d15ec8bdf1db5b89a4bb927a7dbcf795e2baa14066b3d1a55059ba14d",
+  "currentCoordinationMdSha256": "4aff26155b5c052bd884080d64b33246e72170ef3a9d0b7ac2c7b42a5bd28ec3",
+  "grantObjectEqual": true,
+  "slotObjectEqual": true,
+  "reconciliation": "Whole-file digests are different snapshots. The earlier recorded preparation digest is preserved as observed, not relabeled as current. Direct byte-decoded JSON comparisons confirm that the current exact Scientist grant and fullSuiteSlot still equal the copied authorization. The immutable copied grant is frozen; live authority and slot are rechecked by the pinned client before reservation/controller and before launch. The mutable whole canonical file is not a freeze input, so unrelated coordination edits cannot redefine or invalidate this grant silently. No historical stderr cause or runtime success inferred.",
+  "wholeCanonicalFileFreezeInput": false,
+  "noReservationOrDiagnosticInvocationYet": true
+}

@@ -1,0 +1,46 @@
+{
+  "key": "s1-thread-start-diagnostic-20261008-r1",
+  "recordedUtc": "2026-10-08T14:56:39.726953+00:00",
+  "scope": "Only changed synthetic stderr/admission/thread-boundary tests; no unchanged31-case R1/full product suite",
+  "executionHistory": [
+    {
+      "cases": 14,
+      "passed": 11,
+      "fixtureErrors": 3,
+      "durationSeconds": 0.021,
+      "reason": "ThreadGate fixture used diagnostic-contract rather than schema-contract"
+    },
+    {
+      "cases": 3,
+      "passed": 3,
+      "durationSeconds": 0.033,
+      "reason": "Corrected fixture, targeted ThreadGate-only follow-up"
+    },
+    {
+      "cases": 2,
+      "passed": 2,
+      "durationSeconds": 0.0,
+      "reason": "Changed cleanup-only fragment helper and new outside-cleanup rejection"
+    }
+  ],
+  "distinctFinalTestCases": 15,
+  "finalCodeHashes": {
+    "client.py": "ae2101af0b052bc53002bbcad30cc9259b2f0eb672099f5ffab85c8446532b06",
+    "run_once.py": "32bdfcc84fc25dba6d1a4fa289745674780134ee580fab9ae12b239f788fe3f3",
+    "thread_gate.py": "b48ce8b67e3a18ecab80a49d1eb3633f90443cc9524972e00a3ea7bdf27fa6cd",
+    "stderr_collector.py": "a9a1213146acbf31791e966992507b976ee6d3753bf50b27ecf14e7c42261df4",
+    "diagnostic-contract.json": "0fb70bafd10b0d3de2883d1f4fcbf7cfd292a61e88a6ce524567a386e664a70c",
+    "test_client.py": "f3f00803145ae1951157518bdacae728bda87d3be5e23f158b1ba671bc3a18bc",
+    "profile.json": "b2765de4b63224c929d55c2467d026a96a3b7d52667845c8eee916f0013ca459",
+    "schema-contract.json": "b642953d3c663ad02df91c258b051bc5415f376c7b7e0612dcaf84a9c98c6332"
+  },
+  "logSha256": "bcd8518209995016deec536502ca72a44df1c396fd8e38334dea71b6db9b89d6",
+  "lastExecutedClientSha256": "6fb39f72b0b7e8a305ad42f1b0abfb4a39ce701d8d68d76fa5dd8bc6788d2d3c",
+  "postTestSourceDifference": "Only transport stop event moved to immediately after nonempty stderr read return, before lock acquisition; pure tested helpers/collector/thread gate unchanged. Independently static-reviewed observation/in-flight-write boundary; unchanged cases not repeated.",
+  "realPinnedSchemaUsed": true,
+  "processStarts": 0,
+  "ledgerWrites": 0,
+  "rootRepeatedTests": false,
+  "purePreparationCheck": "12 pinned schema members and outgoing templates constructed/validated; exact profile grant matched and existing public two files unchanged",
+  "limits": "Synthetic contract evidence only, not actual stderr cause, thread/model/tool capability or OS enforcement"
+}

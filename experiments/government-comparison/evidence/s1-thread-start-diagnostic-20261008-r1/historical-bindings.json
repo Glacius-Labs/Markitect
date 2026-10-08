@@ -1,0 +1,41 @@
+{
+  "baseSha": "befbd24d625c77f2f0ab1c36bb91e36b65473e9e",
+  "protectedTrackedPackageFiles": 4029,
+  "pathBlobManifestEncoding": "repo-relative path TAB Git blob LF, git ls-tree order",
+  "pathBlobManifestSha256": "940f12db40aca1a4333db9a23926d7238023ff216b8d32d4d645adbfc60130fb",
+  "workingBytesUnchangedAtPreparation": true,
+  "liveLedgerPinsReadOnly": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\actual-runner-authorized-starts.sqlite",
+      "sha256": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite",
+      "sha256": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-20261007\\dispatch.sqlite",
+      "sha256": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\dispatch.sqlite",
+      "sha256": "c4af6de468bd93a7373c56295075771da7981d5d541bcf2261e20556ec31bb89"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\native-starts.sqlite",
+      "sha256": "fefbca4d88a253034a7f18d305ad227ad71c109d25668fcbae15961f23ceeba3"
+    }
+  ],
+  "appServerTreesBefore": 6,
+  "actorReservationsBefore": 6,
+  "knownHistoricalActorTokens": 53331,
+  "historicalTotalUsage": null,
+  "cliMetadataCalls": 6,
+  "nativeHistory": {
+    "starts": 15,
+    "wrappers": 16,
+    "delegates": 13,
+    "reservedSeconds": 2250
+  },
+  "allSixStudyCells": "NOT RUN"
+}
