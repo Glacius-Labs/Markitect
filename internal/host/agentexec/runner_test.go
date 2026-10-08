@@ -125,6 +125,22 @@ func TestAgentexecHelperProcess(t *testing.T) {
 		VerifierObservations: []Observation{},
 		Uncertainty:          []string{},
 	}
+	if mode == "report-json" {
+		response.ReportJSON = json.RawMessage(`{"status":"complete","summary":"task ended"}`)
+	}
+	if mode == "report-only" {
+		response.CandidateFiles = []CandidateFile{}
+		response.ReportJSON = json.RawMessage(`{"status":"complete","summary":"no file changes"}`)
+	}
+	if mode == "empty-proposed" {
+		response.CandidateFiles = []CandidateFile{}
+	}
+	if mode == "bad-report-json" {
+		response.ReportJSON = json.RawMessage(`[]`)
+	}
+	if mode == "wrong-role-report-json" {
+		response.ReportJSON = json.RawMessage(`{"status":"complete"}`)
+	}
 	if mode == "bad-evidence" {
 		response.EvidenceRefs = []string{"README.md"}
 	}
@@ -229,6 +245,48 @@ func TestRunBindsIndependentRolesAndDigests(t *testing.T) {
 	}
 	if inferResult.Response.CandidateJSON == nil || len(inferResult.Response.CandidateFiles) != 0 {
 		t.Fatalf("unexpected inference result: %#v", inferResult.Response)
+	}
+}
+
+func TestExecutorAcceptsOptionalTypedReportJSON(t *testing.T) {
+	result, err := runHelper(t, "report-json", "", testRequest(RoleExecutor), testConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Response.CandidateFiles) != 1 || string(result.Response.ReportJSON) != `{"status":"complete","summary":"task ended"}` {
+		t.Fatalf("executor did not retain candidate files and task report independently: %#v", result.Response)
+	}
+	legacy, err := runHelper(t, "", "", testRequest(RoleExecutor), testConfig())
+	if err != nil {
+		t.Fatalf("legacy executor response without reportJson was rejected: %v", err)
+	}
+	if len(legacy.Response.ReportJSON) != 0 {
+		t.Fatalf("legacy executor unexpectedly gained a task report: %#v", legacy.Response)
+	}
+}
+
+func TestExecutorMayProposeReportWithoutCandidateFiles(t *testing.T) {
+	result, err := runHelper(t, "report-only", "", testRequest(RoleExecutor), testConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Response.CandidateFiles) != 0 || len(result.Response.ReportJSON) == 0 {
+		t.Fatalf("report-only proposal was not preserved: %#v", result.Response)
+	}
+	if _, err := runHelper(t, "empty-proposed", "", testRequest(RoleExecutor), testConfig()); err == nil {
+		t.Fatal("proposed executor response with neither files nor reportJson was accepted")
+	}
+}
+
+func TestReportJSONRejectsWrongRoleAndMalformedValues(t *testing.T) {
+	if _, err := runHelper(t, "bad-report-json", "", testRequest(RoleExecutor), testConfig()); err == nil {
+		t.Fatal("non-object reportJson was accepted")
+	}
+	if _, err := runHelper(t, "wrong-role-report-json", "", testRequest(RoleVerifier), testConfig()); err == nil {
+		t.Fatal("verifier reportJson was accepted")
+	}
+	if _, err := runHelper(t, "wrong-role-report-json", "", testRequest(RoleInfer), testConfig()); err == nil {
+		t.Fatal("inference reportJson was accepted")
 	}
 }
 

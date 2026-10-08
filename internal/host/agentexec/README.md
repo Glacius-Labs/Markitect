@@ -14,7 +14,7 @@ The receipt binds the recorded configuration and hashes the actual command execu
 
 `Fingerprint` returns the same normalized configuration digest recorded in a run receipt without starting the configured process. It binds normalized command and arguments, explicit model/provider options, the resolved executable bytes, and every declared runtime file's path, mode, and digest. A Host can compare this identity while preparing a saved plan and again before a later operation without invoking another agent.
 
-Executor responses can propose candidate files. Verifier responses cannot include candidate files or inference JSON and must provide observations for a pass or failure. Inference can return proposal JSON only. A verifier call is a separate process with a separate request; callers must construct its context explicitly and supply any candidate bytes as artifacts. The package performs no automatic live writes.
+Executor responses can propose candidate files or an optional typed task report in `reportJson`; a proposed response must contain at least one of those. `reportJson` must be one bounded canonical JSON object and is rejected for Verifier and inference roles. A caller that declares a task-specific `context.responseSchema` remains responsible for checking that object against its exact task contract. `candidateJson` remains inference-only. Verifier responses cannot include candidate files or inference JSON and must provide observations for a pass or failure. A verifier call is a separate process with a separate request; callers must construct its context explicitly and supply any candidate bytes as artifacts. The package performs no automatic live writes.
 
 ## Codex adapter
 
