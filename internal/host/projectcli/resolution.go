@@ -57,6 +57,9 @@ func buildResolution(discovery projectadoption.Discovery, report projectadoption
 	if target == nil || target.Snapshot == nil || target.Provisional || target.Revision == "" {
 		return result, errors.New("resolution requires a committed fixed target project")
 	}
+	if err := projectadoption.ValidateDistillationTarget(report, target); err != nil {
+		return result, fmt.Errorf("distillation target binding does not match the fixed target project: %w", err)
+	}
 	actorValid := choices.Actor == projectwork.HumanActor
 	for _, manager := range target.Report.Managers {
 		if manager.ID == choices.Actor {

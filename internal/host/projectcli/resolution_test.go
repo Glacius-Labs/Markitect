@@ -38,6 +38,10 @@ func TestResolveCLIHostBindsExactTargetAndWritesOnlyResolutionRecord(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
+	targetContext, err := projectadoption.TargetContextForProject(target)
+	if err != nil {
+		t.Fatal(err)
+	}
 	beforeDigest := target.Digest
 	modelPath := filepath.Join(repo, filepath.FromSlash(".markitect/model/commerce/sales/orders/cancellation.yaml"))
 	request := projectadoption.DiscoveryRequest{
@@ -61,6 +65,7 @@ func TestResolveCLIHostBindsExactTargetAndWritesOnlyResolutionRecord(t *testing.
 	}
 	report := projectadoption.Distillation{
 		APIVersion: projectadoption.DistillationVersion, DiscoveryDigest: discovery.Digest, Method: "human-review", SchemaDigest: schemaDigest,
+		TargetBasis: target.Digest, TargetRevision: target.Revision, TargetContextDigest: targetContext.Digest,
 		Claims: []projectadoption.Claim{{
 			ID: "documented-cancellation", ScopeID: "orders", Kind: "documented-intent", Method: "documentation",
 			Statement:   "The selected documentation defines when cancellation is allowed.",
@@ -139,6 +144,33 @@ func TestResolveCLIHostBindsExactTargetAndWritesOnlyResolutionRecord(t *testing.
 	}
 	if _, err := os.Stat(filepath.Join(drafts, "should-not-exist.json")); !os.IsNotExist(err) {
 		t.Fatalf("invalid choices emitted a resolution record: %v", err)
+	}
+
+	wrongTargetReport := report
+	wrongTargetReport.TargetBasis = strings.Repeat("0", 64)
+	projectadoption.SealDistillation(&wrongTargetReport)
+	wrongTargetBytes, err := projectadoption.EncodeDistillation(wrongTargetReport)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(drafts, "wrong-target-report.json"), wrongTargetBytes, 0644); err != nil {
+		t.Fatal(err)
+	}
+	wrongTargetArgs := append([]string(nil), args...)
+	for index := range wrongTargetArgs {
+		if wrongTargetArgs[index] == ".markitect/drafts/report.json" {
+			wrongTargetArgs[index] = ".markitect/drafts/wrong-target-report.json"
+		}
+		if wrongTargetArgs[index] == ".markitect/drafts/resolution.json" {
+			wrongTargetArgs[index] = ".markitect/drafts/wrong-target-resolution.json"
+		}
+	}
+	wrongTargetErr := new(bytes.Buffer)
+	if code := Run(wrongTargetArgs, new(bytes.Buffer), wrongTargetErr); code == 0 || !strings.Contains(wrongTargetErr.String(), "distillation target binding does not match") {
+		t.Fatalf("resolve accepted a report grounded in another target: code=%d stderr=%s", code, wrongTargetErr.String())
+	}
+	if _, err := os.Stat(filepath.Join(drafts, "wrong-target-resolution.json")); !os.IsNotExist(err) {
+		t.Fatalf("mismatched target report emitted a resolution: %v", err)
 	}
 	var outputRecord map[string]string
 	if err := json.Unmarshal(output.Bytes(), &outputRecord); err != nil || outputRecord["path"] != ".markitect/drafts/resolution.json" {
