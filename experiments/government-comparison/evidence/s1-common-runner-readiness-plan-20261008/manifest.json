@@ -1,0 +1,64 @@
+{
+  "key": "s1-common-runner-readiness-plan-20261008",
+  "baseCommit": "91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1",
+  "kind": "documentation-only; no execution grant",
+  "experimentalConsumption": 0,
+  "independentReviewSha256": "f02aface550b1f44ba9938fa518b1fe7962807ea3689a7b7e64bc5c6515c2630",
+  "entries": [
+    {
+      "path": "evidence/s1-common-runner-readiness-plan-20261008/authority-reference.json",
+      "sha256": "f86e43e7c38fdd10e54d4c419f66af820dfbbe0d12c399013d9ecfe2640008f4",
+      "bytes": 951
+    },
+    {
+      "path": "evidence/s1-common-runner-readiness-plan-20261008/documentation-validation.json",
+      "sha256": "790228c0a06deb05c6d3c01952ebdc86f8364bc17d601f12a7df2769c642a021",
+      "bytes": 979
+    },
+    {
+      "path": "evidence/s1-common-runner-readiness-plan-20261008/handoff.md",
+      "sha256": "6a26b3af79376a5d89f11bb9a042144cdafd8a574ab2759861e69f2d5b1c27d4",
+      "bytes": 2754
+    },
+    {
+      "path": "evidence/s1-common-runner-readiness-plan-20261008/historical-bindings.json",
+      "sha256": "67d09ec72b6789659cc31b608866d51d2a6dbd1fc3d736ae7a05ed62d20dff8e",
+      "bytes": 802321
+    },
+    {
+      "path": "evidence/s1-common-runner-readiness-plan-20261008/historical-public/s1-adapter-mechanics-before-20261008.md",
+      "sha256": "d44a4543da32e49546bcf44b93a6a00972cf9d3c18b1e03b9aa103d7e07b1c18",
+      "bytes": 9354
+    },
+    {
+      "path": "evidence/s1-common-runner-readiness-plan-20261008/independent-review.md",
+      "sha256": "f02aface550b1f44ba9938fa518b1fe7962807ea3689a7b7e64bc5c6515c2630",
+      "bytes": 3722
+    },
+    {
+      "path": "evidence/s1-common-runner-readiness-plan-20261008/source-evidence.json",
+      "sha256": "30ccadf14b3e94e1b76d2eedcae77152395cd643797e9919c49947cd27f73c2c",
+      "bytes": 14329
+    },
+    {
+      "path": "evidence/s1-common-runner-readiness-plan-20261008/terminal-summary.json",
+      "sha256": "2c2a5003677ef3c3cdd4de8f6b713cd89efae5b1bb460445b6016123de136bd0",
+      "bytes": 2173
+    },
+    {
+      "path": "native-integration-handoff.md",
+      "sha256": "2e5794e7314ff4ad55467b58342408d4a60054e7271822fc5a57ccc34c438595",
+      "bytes": 37276
+    },
+    {
+      "path": "public/s1-adapter-mechanics.md",
+      "sha256": "5243e9b9d02258570a5c7771c1db8868619464caa6e01697a36edfced6b20c83",
+      "bytes": 10024
+    },
+    {
+      "path": "public/s1-common-runner-readiness-plan-20261008.md",
+      "sha256": "2e1f395692fb145a0dd51b7bb4ee494b338448b476c107e6ddad8babca43bcd2",
+      "bytes": 16964
+    }
+  ]
+}

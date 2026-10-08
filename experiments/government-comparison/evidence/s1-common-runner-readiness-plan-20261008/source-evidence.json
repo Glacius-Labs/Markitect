@@ -1,0 +1,419 @@
+{
+  "baseCommit": "91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1",
+  "historicalCommits": {
+    "cd537ac": "cd537ac11765097cb46e9326f295d74059e827a3",
+    "9b7ee8a": "9b7ee8a1d2ba0a19ea3a717635afca22b1bd51df",
+    "91bb8cf": "91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1"
+  },
+  "sourceFiles": [
+    {
+      "path": "runtime/dispatch.py",
+      "sha256": "7b78d26e430ea8474ac1e6d7af286e965946a115c9328e828f8483c74da5f296",
+      "gitBlobAtBase": "0612f64090c017b5dfe26d768d9200dbda774864",
+      "sourceReferences": [
+        {
+          "symbol": "Authority",
+          "line": 192
+        },
+        {
+          "symbol": "dispatch",
+          "line": 425
+        },
+        {
+          "symbol": "dispatch_government",
+          "line": 507
+        }
+      ]
+    },
+    {
+      "path": "runtime/native_controller.py",
+      "sha256": "56fee7067ff606a5983456b0598eba01c3c073690dedeab1e7d845b21f8270d2",
+      "gitBlobAtBase": "68d8067454a71d60f56c4f289eae42413c20ab8d",
+      "sourceReferences": [
+        {
+          "symbol": "validate_native_fixture_grant",
+          "line": 87
+        },
+        {
+          "symbol": "write_bundle",
+          "line": 503
+        },
+        {
+          "symbol": "load_context",
+          "line": 563
+        },
+        {
+          "symbol": "begin_classic_controller",
+          "line": 661
+        },
+        {
+          "symbol": "run_classic_step",
+          "line": 764
+        },
+        {
+          "symbol": "finalize_classic_controller",
+          "line": 862
+        }
+      ]
+    },
+    {
+      "path": "runtime/government_roles.py",
+      "sha256": "743e1e0f3671f81913ca35e2b232662b9b51eaeba9783370d946fc42027dec90",
+      "gitBlobAtBase": "a564bc0e6f683f70e2311903e449f79adb2aac01",
+      "sourceReferences": [
+        {
+          "symbol": "preflight_authorization",
+          "line": 541
+        },
+        {
+          "symbol": "run_role",
+          "line": 792
+        },
+        {
+          "symbol": "main",
+          "line": 957
+        }
+      ]
+    },
+    {
+      "path": "runtime/classic_integration.py",
+      "sha256": "ace20174055c28a41d582430abe370bc4ccad4957eb0ca40183fed880a736fbd",
+      "gitBlobAtBase": "0eee7660bb2849fb82a0b03b814c47c458e4e4f3",
+      "sourceReferences": [
+        {
+          "symbol": "bind_request",
+          "line": 67
+        },
+        {
+          "symbol": "resolve_role",
+          "line": 194
+        }
+      ]
+    },
+    {
+      "path": "runtime/government.py",
+      "sha256": "531c4819d5a258280478d4b5f808602a326ed7e2eea157200e00d6ddd56e9fb1",
+      "gitBlobAtBase": "a45e727ebe8a9507d9428e9131e81823c516f493",
+      "sourceReferences": []
+    },
+    {
+      "path": "runtime/government_native_profile.py",
+      "sha256": "399a568e0ccab6781b3ecff8d4a7cbe479b530b69e5e3239711d5cdcf94452a0",
+      "gitBlobAtBase": "56863238a73c808a75a0ce7fc34665ce2c00be04",
+      "sourceReferences": []
+    },
+    {
+      "path": "runtime/native_fixture_budget.py",
+      "sha256": "1e9c05326759aa86a4cbb3498bde20b7aed0fce80f6c77eff17b1776ab2d4bd1",
+      "gitBlobAtBase": "d865a4079250ee94d66477404681af3ae6d11445",
+      "sourceReferences": []
+    },
+    {
+      "path": "runtime/ledger.py",
+      "sha256": "d4e3aa98ea8486cc3821a658e93c823794750856e27e48cb96fdcb216f6afe8f",
+      "gitBlobAtBase": "9ae97d567b4ff9a831e781afe1b79a78c639cd32",
+      "sourceReferences": []
+    },
+    {
+      "path": "runtime/runner.py",
+      "sha256": "9f8031a2c26c484cf3be92fef3bebafa8469096048989a3bbe76262a9d595e8a",
+      "gitBlobAtBase": "38ceea98f6e4260bdfa1bcf0e0a33c0fc0e5a21b",
+      "sourceReferences": [
+        {
+          "symbol": "prospective_argv",
+          "line": 58
+        },
+        {
+          "symbol": "require_provider_ready",
+          "line": 80
+        }
+      ]
+    },
+    {
+      "path": "runtime/runner-pin.json",
+      "sha256": "9cc0fac01278560a6d3ab6cd0220c01dbed694ae7691e0f1c907301a5d34561d",
+      "gitBlobAtBase": "8e5b0709da257a8e3908e0af1a56573e4e1cb654"
+    },
+    {
+      "path": "runtime/process.py",
+      "sha256": "d0cedb71d57be87095d9af119d9769fb0c3d311e1af073cba81f6337743c78ae",
+      "gitBlobAtBase": "b1fe45b045e4fce81461ad19f5f35690b0c207d6",
+      "sourceReferences": []
+    },
+    {
+      "path": "runtime/measurement_profile.py",
+      "sha256": "c64713c178164a94b96ad90064f33227f625eb04ea6061818c4e15fff057f69c",
+      "gitBlobAtBase": "b46b7b396cee11eedfefc2a0773b59c5fa806c41",
+      "sourceReferences": []
+    },
+    {
+      "path": "public/measurement-profile-v2.json",
+      "sha256": "670572616658318a7498c13e16265707f4293c472072abb072f629505c402e2f",
+      "gitBlobAtBase": "b561afc087352b2c39e27f28caaffdc0e94fd62c"
+    },
+    {
+      "path": "public/oldschool-baseline-binding-v1.json",
+      "sha256": "0e7499f2496452ef887fce9c37c9aa8cff2cd7427192e89b4b58f1fe2a49066f",
+      "gitBlobAtBase": "8e7ef3b1399173c1380dff049f3a91823b1a43c9"
+    },
+    {
+      "path": "evidence/policy-read-disabled-status/run-1/classified-client.py",
+      "sha256": "95c8486ad8962e14ad0c2da2989adcf154fa28f51d19c1fe983c532d1a885926",
+      "gitBlobAtBase": "daa2393a67d5f9556870e32e32d230de64c1e6c0",
+      "sourceReferences": [
+        {
+          "symbol": "config",
+          "line": 288
+        },
+        {
+          "symbol": "requirements",
+          "line": 330
+        },
+        {
+          "symbol": "sanitize",
+          "line": 351
+        }
+      ]
+    }
+  ],
+  "existingEvidence": [
+    {
+      "path": "evidence/native-integration/run-3/classic/flow-result.json",
+      "sha256": "fa6df583cec68973a66161f598263d969abce59365a497bba74deddac686730a"
+    },
+    {
+      "path": "evidence/native-integration/run-3/quota-and-ledger-summary.json",
+      "sha256": "9a59e3fcf3a9ee39564d83cde4115b3ec92c5caf9e46fde7ce2e586affc0ee66"
+    },
+    {
+      "path": "evidence/native-integration/run-3/delivery-validation.json",
+      "sha256": "a4d0775b88ca4312443aef2d43167fe1018a0fde1b65b17f4c41bf8e80658559"
+    },
+    {
+      "path": "evidence/government-check-receipt-native-20261008-r7/terminal-summary.json",
+      "sha256": "26ff40c37f103f604d12d56eee5c7833944032dfac5de7f443ed84e30d4a7513"
+    },
+    {
+      "path": "evidence/government-check-receipt-native-20261008-r7/manifest.json",
+      "sha256": "dd41eaeba6d3356fc0f6a5b7cec2e70cd476515b751cdf5ecb5c82f2a65dea24"
+    },
+    {
+      "path": "evidence/government-check-receipt-native-20261008-r7/government/resume-final-result.json",
+      "sha256": "719f875b3a897e73fdd0dae7e54fdb24b3a6f42aed960269cb506b87a9cc7b67"
+    },
+    {
+      "path": "evidence/context-tools-live/run-1/observation.json",
+      "sha256": "ad982efe9040ea0ff2480630cd3845a3d105318e29ea7f4301551d348c0ae89a"
+    },
+    {
+      "path": "evidence/context-tools-live/run-1/tool-attempts.json",
+      "sha256": "5a16edea566646b62e273f3f486c5082779b03e8fb2de2f977eaa076f0d69fc5"
+    },
+    {
+      "path": "evidence/context-tools-live/run-1/raw/process/process.json",
+      "sha256": "d12d22c2178d144ad45613ffb5ebdd38fec4bda5c062873c492d19addf1c78aa"
+    },
+    {
+      "path": "evidence/policy-read-disabled-status/run-1/sanitized-result.json",
+      "sha256": "6a6ef142c7e6e3293ce8789e5b342e54643615898cccb6e7dff433b149cf4b61"
+    },
+    {
+      "path": "evidence/policy-read-disabled-status/run-1/request.json",
+      "sha256": "eaeaa66ecc1f4ba1620997324cfc83d2df181da6114523e1d63b92f1cc69ccbe"
+    },
+    {
+      "path": "evidence/policy-compatibility/run-1/03-app-server-help.json",
+      "sha256": "c76ba72a413b9b72de2e12a673fa823378859b0f00184197109478548d01cc16"
+    },
+    {
+      "path": "evidence/policy-compatibility/run-1/protocol-schema.zip",
+      "sha256": "cd24042eec4696f6b73368cfc6ce930726f3e10c28bae63cdbd1b2f502ff1d97"
+    }
+  ],
+  "pinnedSchemaArchive": "evidence\\policy-compatibility\\run-1\\protocol-schema.zip",
+  "schemaMembers": [
+    {
+      "member": "v2/ConfigReadParams.json",
+      "sha256": "257c54a423b47c1d209ff1076765a1564d82322fd5161670fd489a2874de1bac",
+      "topLevelProperties": [
+        "cwd",
+        "includeLayers"
+      ]
+    },
+    {
+      "member": "v2/ConfigReadResponse.json",
+      "sha256": "4ec77e1a3eed746037149799c3b6bb8fe7b4b593e5930fc9f410e6282de9df50",
+      "topLevelProperties": [
+        "config",
+        "layers",
+        "origins"
+      ],
+      "configAdditionalProperties": true,
+      "configTypedProperties": [
+        "analytics",
+        "approval_policy",
+        "approvals_reviewer",
+        "apps",
+        "browser_use",
+        "compact_prompt",
+        "computer_use",
+        "desktop",
+        "developer_instructions",
+        "forced_chatgpt_workspace_id",
+        "forced_login_method",
+        "instructions",
+        "model",
+        "model_auto_compact_token_limit",
+        "model_auto_compact_token_limit_scope",
+        "model_context_window",
+        "model_provider",
+        "model_reasoning_effort",
+        "model_reasoning_summary",
+        "model_verbosity",
+        "review_model",
+        "sandbox_mode",
+        "sandbox_workspace_write",
+        "service_tier",
+        "tools",
+        "web_search"
+      ]
+    },
+    {
+      "member": "v2/ConfigRequirementsReadResponse.json",
+      "sha256": "23133727e5dac0fcd77ca0db8bb47f4bef7c3e880b96846aec612d1dedba7e5b",
+      "topLevelProperties": [
+        "requirements"
+      ],
+      "typedRequirementProperties": [
+        "additionalDeveloperInstructions",
+        "allowAppshots",
+        "allowBrowserAndComputerUse",
+        "allowLoginShell",
+        "allowManagedHooksOnly",
+        "allowRemoteControl",
+        "allowedApprovalPolicies",
+        "allowedApprovalsReviewers",
+        "allowedLoginMethods",
+        "allowedPermissionProfiles",
+        "allowedSandboxModes",
+        "allowedWebSearchModes",
+        "allowedWindowsSandboxImplementations",
+        "application",
+        "autoReview",
+        "browserUse",
+        "chatgptBaseUrl",
+        "checkForUpdateOnStartup",
+        "cliAuthCredentialsStore",
+        "computerUse",
+        "defaultPermissions",
+        "enforceResidency",
+        "featureRequirements",
+        "feedback",
+        "hooks",
+        "inAppBrowser",
+        "logDir",
+        "modelCatalogJson",
+        "modelProvider",
+        "modelProviders",
+        "models",
+        "network",
+        "sqliteHome"
+      ]
+    },
+    {
+      "member": "v2/ThreadStartParams.json",
+      "sha256": "80a40a7fac15b4bf70efb7f893fb353acc0a0d30c68f54aee4f01923deca85de",
+      "topLevelProperties": [
+        "allowProviderModelFallback",
+        "approvalPolicy",
+        "approvalsReviewer",
+        "baseInstructions",
+        "config",
+        "cwd",
+        "daybreakEnabled",
+        "developerInstructions",
+        "dynamicTools",
+        "environments",
+        "ephemeral",
+        "experimentalRawEvents",
+        "historyMode",
+        "mockExperimentalField",
+        "model",
+        "modelProvider",
+        "multiAgentMode",
+        "permissions",
+        "personality",
+        "projectId",
+        "runtimeWorkspaceRoots",
+        "sandbox",
+        "selectedCapabilityRoots",
+        "serviceName",
+        "serviceTier",
+        "sessionStartSource",
+        "threadSource"
+      ]
+    },
+    {
+      "member": "v2/ThreadStartResponse.json",
+      "sha256": "92f5ddc37717b922de1dc0b0405e9a6d463f370554e2091610c6e595bc2616d4",
+      "topLevelProperties": [
+        "activePermissionProfile",
+        "approvalPolicy",
+        "approvalsReviewer",
+        "cwd",
+        "disabledPluginIds",
+        "instructionSources",
+        "model",
+        "modelProvider",
+        "multiAgentMode",
+        "reasoningEffort",
+        "runtimeWorkspaceRoots",
+        "sandbox",
+        "serviceTier",
+        "thread"
+      ]
+    }
+  ],
+  "liveLedgerPinsReadOnly": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\actual-runner-authorized-starts.sqlite",
+      "sha256": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite",
+      "sha256": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-20261007\\dispatch.sqlite",
+      "sha256": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\dispatch.sqlite",
+      "sha256": "c4af6de468bd93a7373c56295075771da7981d5d541bcf2261e20556ec31bb89"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\native-starts.sqlite",
+      "sha256": "fefbca4d88a253034a7f18d305ad227ad71c109d25668fcbae15961f23ceeba3"
+    }
+  ],
+  "futureCwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-common-runner-prospective-20261008\\actor",
+  "futureCwdPrepared": false,
+  "noRuntimeSourceChanged": true,
+  "officialSourcesRead": [
+    {
+      "url": "https://learn.chatgpt.com/docs/permissions",
+      "scope": "Current docs; not pinned implementation/historical effect"
+    },
+    {
+      "url": "https://learn.chatgpt.com/docs/config-file/config-basic",
+      "scope": "Current documented precedence; observed pinned origins separately retained"
+    }
+  ],
+  "factsCorrectedDuringReadOnlyReview": [
+    "Old sanitizer already handles config/default_permissions and permissions; requirements allowlists/defaults. Missing fields do not prove deliberate omission; absence/null/invalid not distinguished.",
+    "Classic normal dispatcher is readiness_gap despite accepted separate R3 fixture controller.",
+    "R7 Resume is terminal idempotency/readback, not interrupted Agent recovery."
+  ],
+  "experimentalInvocations": 0,
+  "productTestsRun": 0
+}

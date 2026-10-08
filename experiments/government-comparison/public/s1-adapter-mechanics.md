@@ -1,93 +1,98 @@
-# S1 adapter mechanics and remaining readiness gaps
+# S1 adapter mechanics and common-runner readiness
 
-This work implements pure Request binding, queue/resume argv planning, and
-Result/receipt translation against the public v1.2 contract and the accepted
-Government G5 handoff at source `04e225d5caee78c2a198607143863fca1e829750`.
-The acceptance provenance is Overseer thread
-`01a11367-a781-7683-a20f-46e12614dcb4`, recorded separately from the handoff's
-stale pending-Overseer status. The exact handoff and binary digests, accepted
-source identity, acceptance provenance, and prior provisional pin are recorded
-in `runtime/government-pin.json`. This does not enable dispatch or establish
-product quality or autonomy.
+Current source/evidence reconciliation: **2026-10-08**, based on accepted
+Classic R3 delivery `cd537ac11765097cb46e9326f295d74059e827a3` (harness source
+`9b7ee8a1d2ba0a19ea3a717635afca22b1bd51df`) and Government R7 delivery
+`91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1`. **S1 remains open. All six study
+cells are NOT RUN.** This document grants no execution.
 
-`runtime/government.py` treats `Request.product.government` as the explicit
-product-specific pin/input envelope. It binds the handoff and executable
-digests; binds the Government YAML and one Order to paths and bytes inside the
-exact Actor repository; binds runtime and backlog files as external
-`releasedInputs`; and requires the backlog to name only the current task. It
-checks backlog actor-start, repair, wall-time and parallelism bounds against
-the common task limits. The configured runner slots are listed for review.
-Queue and resume plans use the documented exact argv. Plans remain
-`dispatchable: false`.
+The earlier matrix's statements that the wrapper CLI was disabled, an acyclic
+Authority bootstrap was absent, and neither native arm was wired are superseded
+by the bounded fixture evidence below. Its exact prior bytes are retained in
+[the dated historical copy](../evidence/s1-common-runner-readiness-plan-20261008/historical-public/s1-adapter-mechanics-before-20261008.md).
+Older [runner readiness](runner-readiness.md), [dispatch](s1-dispatch.md), and
+[classified metadata handoff](../classified-policy-s1-handoff.md) describe their
+own dated checkpoints; their exhausted allocations and raw evidence are unchanged.
+The [current common-runner plan](s1-common-runner-readiness-plan-20261008.md)
+owns the proposed next operation and its remaining authority boundary.
 
-The mapping is an adapter-local interpretation of the existing `product` field;
-it does not change the public Request schema:
+## Evidence matrix
 
-```json
-"product": {
-  "government": {
-    "handoff": {"path": "ABS_HANDOFF_JSON", "sha256": "..."},
-    "executable": {"path": "ABS_MARKITECT", "sha256": "...", "sourceCommit": "FULL_SOURCE_COMMIT"},
-    "projectConfig": {"path": "government.yaml", "sha256": "..."},
-    "order": {"path": "orders/task.yaml", "sha256": "..."},
-    "runtime": {"path": "ABS_RUNTIME_JSON", "sha256": "..."},
-    "backlog": {"path": "ABS_BACKLOG_JSON", "sha256": "..."},
-    "queueStateDirectory": "ABS_QUEUE_STATE_ROOT"
-  }
-}
-```
+| Boundary | Conventional / Oldschool | Classic | Government |
+|---|---|---|---|
+| Native product capability | Ordinary engineering tools and the [Oldschool method](oldschool-baseline-binding-v1.md) are the reference; no Markitect-specific artifact is required. The permanent Oldschool chat is an engineering owner, not a fresh trial Actor. | Held study source `c91363b7ac4decbe87212ff0f588b5451581a152`; published v0.14.1 binary/runtime source `7dbd599c81540c8203a1b7f83afbc335174f4f1f`, binary SHA `2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4`. No later P1 adoption. | Accepted G5 source `04e225d5caee78c2a198607143863fca1e829750`, binary SHA `12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f`. Native queue, roles, review/vote, decision and promotion interfaces exist. |
+| Shared wrapper / Authority / ledger | Common `harness` → `adapter` → `dispatch.Authority` → `Ledger` / bounded process infrastructure exists. The real CLI route is narrowly limited to setup/context-access with a separate approved grant. A common general coding-task path is still absent. | Acyclic controller bootstrap and CLI role middleware are implemented. Native controller and nested role reservations are distinct, with exact scope, pin, invocation and source-grant bindings. These paths currently admit mechanical `nativeFixture*` allocations, not real model delegates. | The same bootstrap and ledger path is implemented. Static RunnerSpec pins avoid the runtime / outer-Request digest cycle. CLI middleware loads the outer Authority from the bootstrap, reserves each unique role before its delegate, and retains process/role receipts. Its native admission is mechanical fixture-only. |
+| Actual deterministic integration | Synthetic harness infrastructure and prior public sentinel diagnostics are neither a Conventional study cell nor a measured Oldschool reference. | R3: Execute `planned`; exact independent external review; Apply `materialized-unverified`; fresh Verify `passed`; Audit `complete` without findings or next steps; stale Apply `refused`, exit 2, without second writes. Five native calls, three fixed roles; outer controller completed. | R7: native AND outer Queue completed; run `accepted-scoped` / `complete`; real fresh `inventory-overflow` Go check exited 0; configured technical review, final Ressort assent, decision and promotion were bound. The associated terminal Resume/Replay completed with the same queue, report, candidate/evidence/decision and promotion, and no new roles. |
+| Recovery meaning | No real coding-work interruption/recovery proof. | The stale Apply refusal demonstrates a guard against reapplying an obsolete plan. It is not an interrupted real Actor recovery trial. | R7 resumed a queue that was already complete. It proves terminal idempotency and readback, not continuation of interrupted Agent work. Earlier R4/R6 incomplete results remain incomplete. |
+| Actual provider / general tools | The common runner has produced responses, but the fifth real Actor failed both authorized file reads at CreateProcess policy admission despite process exit 0. No successful common real coding path is established. | Deterministic Python role delegates exercise the protocol, not Codex/ChatGPT access, writing, build/test tools or engineering judgment. | Deterministic Python executor/reviewer/voter delegates exercise the protocol, not independent model review, real tool access or engineering judgment. The real Go check is a native product check, not an Actor's build/test action. |
+| Semantic and human acceptance | No measured reference value or comparative difference. | No real-task engineering-quality or human-acceptance result. | No real-task engineering-quality or human-acceptance result; `accepted-scoped` is a native state, not independent acceptance. |
 
-The handoff, runtime and backlog bindings must also appear in `releasedInputs`;
-the project config and Order are bound within `actorRepository`. This helper
-does not itself prove Git cleanliness or verify `baseCommit`; those remain
-common harness preconditions.
+[Classic R3 flow](../evidence/native-integration/run-3/classic/flow-result.json)
+and its [additive accounting](../evidence/native-integration/run-3/quota-and-ledger-summary.json)
+retain the original results, including the expected stale replay refusal.
+[Government R7 summary](../evidence/government-check-receipt-native-20261008-r7/terminal-summary.json),
+[Resume readback](../evidence/government-check-receipt-native-20261008-r7/government/resume-final-result.json),
+and [independent post-review](../evidence/government-check-receipt-native-20261008-r7/independent-postreview.md)
+retain the completed fixture evidence. Accepted delivery/source identifiers above
+refer to harness evidence; they do not replace either product's pinned source.
 
-For a recorded queue result, the translator receives the exact Request file
-bytes, verifies they decode to the Request object, and computes `requestSha256`
-from those bytes. It verifies the G5 queue API,
-queue/backlog identity, the stdout record against its immutable numbered queue
-report, every run-report path and digest under the exact runtime `stateDirectory`
-run-id directory (the native run directory is a sibling of the queue directory),
-and the event-log receipt. It checks
-actor Response/Receipt identity against configured role slots; checks votes
-against the selected cabinet, prior mandate, candidate, evidence and round;
-and checks the decision's vote set before recording role/vote/promotion receipt
-kinds. Product-local accepted states remain attached to their raw report;
-`candidateCommit` stays null. `completed` means only that the queue process
-completed with native status `complete` and no in-flight Actor. Exit zero with
-native `blocked` stays `blocked`; other nonterminal states remain `incomplete`.
-Provider requests, provider turns and inference are null. Token totals are
-reported only when both native input/output counters are explicitly known;
-cached tokens are not added.
+## Implemented bindings and closed launch paths
 
-| Capability | Current adapter mechanics | Remaining S1 evidence or blocker |
-|---|---|---|
-| Government source and binary | The accepted G5 source, handoff SHA-256 and binary SHA-256 are pinned; `bind_request` rejects a Request that substitutes a different source, handoff, or executable. The earlier `ce021ce…` candidate and its handoff/binary digests remain recorded as superseded provisional history. | Use the accepted pin for preparation. Native dispatch still requires the remaining S1 setup and common-ledger gates. |
-| Request inputs | The helper binds executable, handoff, project config, Order, runtime, backlog, queue state and digests. It accepts one task with no dependency jobs and checks native actor, repair, wall and parallel limits against common task limits. | Freeze an accepted product-specific Request mapping and actual project inputs at the later S1 setup checkpoint. |
-| Queue and resume | Review plans emit exactly `markitect government --repo ABS --action queue --backlog ABS --write` and `markitect government --repo ABS --action resume --backlog ABS --queue ABS --write`; no command is started. | Accepted pin, operator authorization, exact setup smoke and bounded process/receipt storage. |
-| Native result and roles | Queue stdout, immutable queue report, run reports, configured actor slots, votes, decision, promotion and event log can be translated into digest-bound v1.2 receipts. Run reports and promotion files are checked beneath the exact native `stateDirectory/runId`. | These schemas are observed at accepted G5 `v1alpha1`. Independent task/candidate acceptance remains outside this translator. |
-| Per-role wrapper and common trial ledger | G5 `agentexec` documents a versioned JSON Invocation on stdin, response identity echoes, configured wrapper commands, and `runtimeFiles` digests. Importable `runtime/government_roles.py` validates that wire shape, the exact outer Request through an already validated `dispatch.Authority`, operator authorization, configured role/phase and delegate file pins. In one ledger transaction it checks the bound Coordinator grant ceiling and cumulative reported tokens for the current dispatch (its outer booking plus its nested role attempts) against the grant's retrospective threshold, then reserves one unique invocation before a bounded delegate call; the timeout is capped by remaining outer-request, grant, role-authorization, trial and task deadlines. It returns response bytes unchanged and preserves unknown request/turn usage as unknown. | This is a library helper only: its CLI entrypoint is deliberately disabled. Dynamic Request/Grant/Protocol paths and digests cannot be pinned in `RunnerSpec` without creating a runtime/outer-Request/grant digest cycle. The native configuration must stay limited to static script and role-authorization pins; an acyclic outer Authority bootstrap, native queue/top-level wiring, and integration test remain open. The helper treats `inputDigest` as the native opaque `sha256:` identity and requires exact response echo; it does not reimplement Go Request canonicalization. G5 does not supply provider request/turn counts; a provider may report no usage, and an individual call may overshoot this per-dispatch retrospective token threshold before the next call is blocked. Common ledger trial/task token caps remain cumulative across dispatches. The current outer dispatch reservation is also recorded as an Actor attempt, so native integration must resolve that orchestrator/Actor accounting mismatch before claiming role-session totals. |
-| Resume/recovery | The planner binds resume to the exact queue directory and backlog; the translator rejects a different queue identity and retains queue/run/event receipts. An invocation identity cannot be launched twice after its ledger reservation. | Native queue interruption/recovery has not been joined to the shared ledger or exercised end-to-end; an interrupted role reservation remains consumed and blocks replay. |
-| Classic | Existing `runtime/classic.py` owns documented native argv construction and bounded subprocess capture; `runtime/classic-pin.json` holds the study candidate `c91363b7ac4decbe87212ff0f588b5451581a152` / v0.14.1. The new stdin-JSON wrapper boundary is provider-neutral and could serve a configured Classic role if its runtime supplies the same pinned contract. | Classic role middleware is not wired or integration-tested. `dispatch.py` still returns `readiness_gap` for Classic stateful dispatch. The held pin is unchanged; do not replace it with later local `8927704`. |
+`government.bind_request` binds accepted handoff/binary/source, Government YAML
+and Order inside the exact Actor repository, and released runtime/backlog bytes.
+Queue and resume argv construction remains a pure planning operation until the
+separately authorized controller launches it. `government.translate_queue_result`
+checks exact Request bytes, immutable queue reports, run-id/path/digests, configured
+roles, full four-field scope identities, cabinet/mandates, candidate/evidence/round,
+votes, decision and promotion receipts. The corrected fresh-check consumer binds
+native `GateResult.Tool` to valid configured `Check.run[0]`, with exact names/count,
+zero exit and elapsed/timeout checks. Neither translator supplies independent
+semantic acceptance.
 
-The importable wrapper's focused tests construct a real `dispatch.Authority` and
-real temporary Ledger from synthetic grant/protocol files, then use a synthetic
-delegate only. They cover source-shaped
-Invocation digests, slot/phase authorization, pre-effect reservation, duplicate
-replay rejection, unchanged response forwarding, and provider-reported token
-accounting. They do not establish native queue wiring, provider behavior,
-independent quality, or human acceptance. The wrapper CLI remains disabled
-because an acyclic Authority bootstrap does not yet exist. The current outer
-dispatch reservation consumes one Actor attempt before nested roles; native
-controller wiring must reconcile that conservative placeholder booking before
-reporting nested Actor totals. `dispatch.py` keeps both native stateful arms
-closed pending that bootstrap and an integration proof for the actual native
-runner.
+`dispatch.dispatch` routes Government to `dispatch_government`, which requires
+mechanical fixture authority; Classic still returns `readiness_gap` there. The
+accepted Classic R3 driver explicitly calls `begin_classic_controller`,
+`run_classic_step` and `finalize_classic_controller` outside that regular route. `native_controller.validate_native_fixture_grant`, bootstrap
+loading and delegate admission bind the allowed original fixture authorization,
+fixed Python/delegate hashes, exact configured scope/role, and successor profile.
+Government's closed R5/R6/R7 selectors additionally require their own exact
+`nativeFixtureR5Grant` / `nativeFixtureR6Grant` / `nativeFixtureR7Grant` and dispatch
+identity; older correction/R3/R4 gates retain their separate grant identities.
+They are not generic permission to launch new cases. All consumed native grants
+are closed; changing a Request's mode, delegate command or profile cannot admit a
+real Actor. Source function references and hashes are retained in the new plan's
+[source evidence](../evidence/s1-common-runner-readiness-plan-20261008/source-evidence.json).
 
-Focused deterministic tests cover accepted-pin binding, request/input binding,
-queue and resume argv, role/vote/promotion receipt mapping, status handling
-despite exit zero, unknown usage, path/digest rejection, and the synthetic
-role-wrapper boundary. They use temporary JSON and files; they start no product
-process, native Actor, study cell, or provider. The adapter remains gated before
-native queue dispatch until the remaining S1 inputs and end-to-end integration
-are validated.
+The minimal missing bridge is a separately reviewed real delegate path: convert
+one bound native Invocation into one fresh common Actor context, translate its
+actual response into the required native schema, preserve exact pins and unique
+pre-launch reservations, and attach actual events, tools and usage to the same
+trial/task ledger. Conventional needs the equivalent ordinary task/review path
+through that common runner. This must retain independent reviewers and product
+mutation gates, rather than inserting a live command into fixture authorization.
+No such implementation is part of this documentation package.
+
+## Remaining common readiness
+
+The failed fifth Actor and the three consumed policy-read sessions are
+[consolidated in the plan](s1-common-runner-readiness-plan-20261008.md#historical-runner-barrier).
+The last app-server read included user configuration and omitted exec-only
+ignore-user-config/ignore-rules controls. Its reported configuration does not
+explain the earlier exec's effective policy. The cause of both denials is unknown.
+Reading alone would not demonstrate writing, builds or tests.
+
+The adopted [measurement profile v2](measurement-profile-v2.md) retains unknown
+provider requests/internal retries as unknown and tokens as retrospective. A
+finished attempt with unknown tokens still blocks subsequent admission; exhausted
+history cannot be reset by a new path, database or trial identity. Native controller
+bookings and nested Actor attempts are separate. The fixture ledgers prove those
+mechanics, not complete real-descendant accounting or hard in-flight token caps.
+
+Before any study cell: one common verified real runner/tool boundary for all
+three arms, source-bound real delegate integration, equal context and access,
+finite authority/accounting, released setup/task inputs, and independent private
+assessment/task-equivalence remain required. Desired `gpt-6.1-sol/high`, prior
+model-list advertisement, and observable serving/provider identity are distinct.
+Unavailable serving metadata remains null; it is not an impossible prerequisite
+or a model self-report. No product tests or experimental invocation were run for
+this reconciliation. S1 and all six cells remain open / NOT RUN.

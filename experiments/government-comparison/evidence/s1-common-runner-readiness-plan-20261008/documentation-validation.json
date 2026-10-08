@@ -1,0 +1,31 @@
+{
+  "status": "passed",
+  "kind": "documentation-only verification; not product tests or experimental readiness clearance",
+  "baseCommit": "91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1",
+  "verifiedUtc": "2026-10-08T04:48:44.603292+00:00",
+  "protectedPackageFiles": 3890,
+  "originalHandoffSuffixPreserved": true,
+  "historicalMatrixBytesPreserved": true,
+  "sourceHashes": 15,
+  "existingEvidenceHashes": 13,
+  "schemaMemberHashes": 5,
+  "liveLedgersUnchanged": 5,
+  "futureCwdAbsent": true,
+  "relativeLinksResolved": 21,
+  "plannedConfigPairs": 17,
+  "plannedMessages": [
+    "initialize",
+    "initialized",
+    "config/read",
+    "configRequirements/read"
+  ],
+  "jsonBlocksParsed": true,
+  "diffCheckPassed": true,
+  "experimentalInvocations": 0,
+  "productTestsRun": 0,
+  "ledgerWrites": 0,
+  "newCasePreparations": 0,
+  "allSixStudyCells": "NOT RUN",
+  "handoffPrefixBytes": 2755,
+  "finalReadabilityAndFunctionNameCorrectionChecked": true
+}

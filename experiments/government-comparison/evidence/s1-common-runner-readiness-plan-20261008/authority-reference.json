@@ -1,0 +1,15 @@
+{
+  "key": "s1-common-runner-readiness-plan-20261008",
+  "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "sourceCoordinationPath": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\coordination-state.json",
+  "sourceCoordinationSha256": "999da0a0a00b360b51c7062491652a71524bd567d8323eded5edbb6b0c8dd40a",
+  "assignment": {
+    "key": "s1-common-runner-readiness-plan-20261008",
+    "authorizedUtc": "2026-10-08T04:31:41Z",
+    "status": "Dispatched; awaiting bounded documentation/readiness completion callback.",
+    "scope": "Update source/evidence-bound S1 matrix; consolidate known real-runner policy barrier and one finite source-supported next-operation proposal, common to three arms. Documentation/read-only work only.",
+    "sentUtc": "2026-10-08T04:37:27Z"
+  },
+  "recordedEvidence": {},
+  "scope": "Documentation/read-only only; zero experimental invocations; this is not a run grant."
+}
