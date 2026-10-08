@@ -16,6 +16,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
@@ -251,7 +252,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if parsed.Status == "no-op" && len(proposal.Response.CandidateFiles) > 0 {
 			return failRun(store, report, fmt.Errorf("manager %s claimed no-op while proposing files", task.ManagerID))
 		}
-		candidate, err := applyProposal(current, proposal.Response.CandidateFiles, input.Report, *task, "work", nil, runtime.Limits)
+		candidate, err := applyProposal(current, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "work", nil, runtime.Limits)
 		if err != nil {
 			return failRun(store, report, err)
 		}
@@ -338,7 +339,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if parsed.Status == "blocked" || parsed.Status == "failed" || parsed.Status == "no-op" {
 			return blockRun(store, report, fmt.Errorf("manager %s integration is %s: %s", task.ManagerID, parsed.Status, parsed.Summary))
 		}
-		resolved, err := applyProposal(merged, proposal.Response.CandidateFiles, input.Report, *task, "integrate", conflicts, runtime.Limits)
+		resolved, err := applyProposal(merged, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "integrate", conflicts, runtime.Limits)
 		if err != nil {
 			return failRun(store, report, err)
 		}
@@ -622,7 +623,7 @@ func scopedArtifacts(project *Project, task ManagerTask, agent Agent, limits Lim
 	return out, nil
 }
 
-func applyProposal(base candidateData, proposals []agentexec.CandidateFile, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits Limits) (candidateData, error) {
+func applyProposal(base candidateData, proposals []agentexec.CandidateFile, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits Limits) (candidateData, error) {
 	files := map[string]File{}
 	for p, f := range base.Files {
 		f.Content = append([]byte(nil), f.Content...)
@@ -644,8 +645,8 @@ func applyProposal(base candidateData, proposals []agentexec.CandidateFile, repo
 			return candidateData{}, fmt.Errorf("duplicate proposal path %s", p.Path)
 		}
 		seen[strings.ToLower(p.Path)] = true
-		if forbiddenRuntimePath(p.Path) {
-			return candidateData{}, fmt.Errorf("proposal may not write protected path %s", p.Path)
+		if forbiddenRuntimePath(p.Path) || !projectPathAllowed(config, p.Path) {
+			return candidateData{}, fmt.Errorf("proposal path %s is outside selected inventory or enters Markitect control-plane state", p.Path)
 		}
 		owner, known := ownerForPath(report, p.Path)
 		if !known || (owner != task.ManagerID && !conflictSet[p.Path]) {
@@ -671,7 +672,30 @@ func applyProposal(base candidateData, proposals []agentexec.CandidateFile, repo
 
 func forbiddenRuntimePath(path string) bool {
 	lower := strings.ToLower(path)
-	return lower == ".markitect/project.yaml" || lower == ".markitect/runtime.yaml" || strings.HasPrefix(lower, ".markitect/runs/") || strings.HasPrefix(lower, ".markitect/views/") || strings.HasPrefix(lower, ".markitect/cache/") || strings.HasPrefix(lower, ".markitect/model/")
+	return lower == ".markitect" || strings.HasPrefix(lower, ".markitect/")
+}
+
+func projectPathAllowed(config projectwork.Config, path string) bool {
+	if !safeRepoPath(path) || strings.HasPrefix(strings.ToLower(path), ".markitect/") {
+		return false
+	}
+	inInventory := false
+	for _, root := range config.InventoryRoots {
+		root = strings.TrimSuffix(root, "/")
+		if root != "" && (path == root || strings.HasPrefix(path, root+"/")) {
+			inInventory = true
+			break
+		}
+	}
+	if !inInventory {
+		return false
+	}
+	for _, exclusion := range config.Exclusions {
+		if pathWithin(path, exclusion.Path) {
+			return false
+		}
+	}
+	return true
 }
 func ownedPath(owns []string, path string) bool {
 	for _, own := range owns {
