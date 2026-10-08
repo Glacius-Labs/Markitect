@@ -1,0 +1,28 @@
+{
+  "key": "s1-runner-rebinding-metadata-20261008-r1",
+  "sourceCommit": "e67bcbe55dc266b02ce669106e44459580d19c9f",
+  "sourceFiles": {
+    "experiments/government-comparison/evidence/policy-compatibility/run-1/protocol-schema.zip": "cd24042eec4696f6b73368cfc6ce930726f3e10c28bae63cdbd1b2f502ff1d97",
+    "experiments/government-comparison/evidence/s1-common-runner-read-tool-20261008-r1/protocol.py": "ebd087657febf63846904d83a75bc226a5412458418d20abe024ed267febb822",
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/authorization.json": "4ade0a4a9818ceaeda581a74840b333228aace12fb891fc6358f6d925cb72677",
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/current-handoff.md": "ce6a765ab7780e6155ffc8816b2d5fb715089288cbcb9c5c87730a337ce3510b",
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/preparation.json": "96cd945f1c9e52fad9ead64bb6fc1927261c4fb8b4699d8196dee6d36403e3ad",
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/recorder.py": "7f8cefcd3f894c9b18695db4756b9423d02f9032db97513b1a457862e128e9d9",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/client.py": "ae2101af0b052bc53002bbcad30cc9259b2f0eb672099f5ffab85c8446532b06",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/frozen-method-enums.json": "6553df9ac4a37d11402728992ed5e684ea379fbadeee790700867ae4542594cf",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/profile.json": "b2765de4b63224c929d55c2467d026a96a3b7d52667845c8eee916f0013ca459",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/schema-contract.json": "b642953d3c663ad02df91c258b051bc5415f376c7b7e0612dcaf84a9c98c6332",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r1/thread_gate.py": "b48ce8b67e3a18ecab80a49d1eb3633f90443cc9524972e00a3ea7bdf27fa6cd",
+    "experiments/government-comparison/runtime/process.py": "d0cedb71d57be87095d9af119d9769fb0c3d311e1af073cba81f6337743c78ae",
+    "experiments/government-comparison/runtime/selected_feature_contract.py": "985ff1d8f8870de4ac697e030c2abeb543d1bc3e74f475968c5e1097be865550"
+  },
+  "interpreterPath": "C:/Python313/python.exe",
+  "interpreterSha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+  "boundAtUtc": "2026-10-08T15:35:02.254442+00:00",
+  "initialOutputState": "Root observed absent before exclusive preparation; only byte-exact preparation.json currently present",
+  "metadataInvocationLimit": 2,
+  "overallExecutionAndReadbackSeconds": 45,
+  "maxCleanupSeconds": 5,
+  "actualCodexStartsBeforeBinding": 0,
+  "tests": 0
+}
