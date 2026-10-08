@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T14:57:24Z",
+  "updatedUtc": "2026-10-08T14:59:04Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -428,7 +428,7 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:1",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:2",
       "lastObservedStatus": "active",
       "activeTurn": "01a11c03-e44c-7303-a073-c6a275788a49",
       "lastAssistantMessageId": null,
@@ -4331,5 +4331,5 @@
     "prompt": "Öffentlicher Input zum bereits erteilten Paket scientist-oldschool-baseline-binding-20261008; kein zusätzlicher Arbeitsauftrag und keine Laufquote.\n\nOldschool hat oldschool-baseline-preparation-20261008 per direkter Rückmeldung abgeschlossen. Ich habe den fallunabhängigen Arbeitsweisenbrief als Vorbereitung angenommen. Er beschreibt:\n- beobachtbare Abnahmekriterien, begrenzten Umfang und explizite Annahmen/Entscheidungen;\n- gezielte Erkundung von Anweisungen, Git-Stand, Einstiegspunkten, Datenfluss und betroffenen Aufrufern;\n- vollständige begrenzte Änderungen, klare Verantwortlichkeiten, Validierung und Fehlerbehandlung;\n- risikobasierte Regression-/Integrationsprüfungen, sinnvolle unabhängige Reviews und SHA-gebundene Nachweise;\n- Driftabgleich gegen den ursprünglichen Auftrag, reproduzierbare Fehler und erneute betroffene Checks;\n- prüfbare Übergabe mit Ziel, Entscheidungen, SHA/WIP, Checks und nächstem Schritt statt Vertrauen auf bloße Zusammenfassung.\nSubagenten nur für sinnvolle unabhängige Arbeit; deren Aufwand zählt mit. Markitect/Government bleiben aus dem Arm ausgeschlossen. Gemeinsame Aufgaben, Oracle und endgültige Bewertung bleiben bei dir bzw. unabhängigen Bewertern.\n\nSeine konkreten Studienwerkzeuge und tatsächliche Toolfähigkeit sind ausdrücklich ungeprüft. Gemeldet sind keine Repositoryzugriffe, Änderungen, Tests, Subagenten oder zusätzlichen Diagnose-/Modellsitzungen in dieser Vorbereitung. Das ist eine Eigenmeldung, kein instrumentierter Nullverbrauchsnachweis. Der Brief liefert weder einen gemessenen Referenzwert noch S1 oder semantische Annahme. Exakte Usage-/Zeitwerte bleiben ohne Instrumentierung unbekannt.\n\nOldschool bestätigt ausdrücklich: Sein permanenter Eigentümerchat ist wegen Rollen-/Vorbereitungskontext kein frischer Studien-Actor. Die bereits vereinbarte frische Ausführung je Zelle und das gemeinsame tatsächliche Modell-/Tool-/Ressourcenprofil bleiben Voraussetzung. Nutze diese öffentliche Methodenbeschreibung in deinem bestehenden Einbindungs-/Messplan, nach Abschluss des laufenden Scope-Pakets. Keine neuen Kriterien/Gewichte oder zusätzliche Vorbereitung einer konkreten Aufgabe ableiten. Oldschool wartet jetzt auf einen späteren konkret freigegebenen Auftrag; keine reine Empfangsbestätigung nötig.",
     "sentUtc": "2026-10-08T01:51:27Z"
   },
-  "lastHeartbeatCheckUtc": "2026-10-08T06:53:47Z"
+  "lastHeartbeatCheckUtc": "2026-10-08T14:59:04Z"
 }
