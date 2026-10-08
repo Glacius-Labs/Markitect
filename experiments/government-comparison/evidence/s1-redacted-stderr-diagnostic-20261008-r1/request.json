@@ -1,0 +1,38 @@
+{
+  "key": "s1-redacted-stderr-diagnostic-20261008-r1",
+  "grantIssuedUtc": "2026-10-08T16:47:18Z",
+  "slotAssignedUtc": "2026-10-08T16:52:42Z",
+  "sourceCommit": "4f091251a6be9c57597ef4628474ad6bbd7610b3",
+  "profileSha256": "aed4b6f57326a664342f5d989493117551715337a0e8d8fc666d3c5e7d8e6b6e",
+  "authorizationGrantSha256": "894ae2c792f7840fcd0ef7fc69d6a2da1d6ad1e77e4778992cdab30987dd1905",
+  "sourceFiles": {
+    "experiments/government-comparison/evidence/policy-read-disabled-status/run-1/classified-client.py": "95c8486ad8962e14ad0c2da2989adcf154fa28f51d19c1fe983c532d1a885926",
+    "experiments/government-comparison/evidence/s1-common-runner-read-tool-20261008-r1/profile.json": "6a1d9c043758563d59b576c0a2c526e375f6bc819002768a535333b7cb1a128c",
+    "experiments/government-comparison/evidence/s1-common-runner-read-tool-20261008-r1/protocol.py": "ebd087657febf63846904d83a75bc226a5412458418d20abe024ed267febb822",
+    "experiments/government-comparison/evidence/s1-common-runner-readiness-plan-20261008/source-evidence.json": "30ccadf14b3e94e1b76d2eedcae77152395cd643797e9919c49947cd27f73c2c",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/authorization-grant.json": "894ae2c792f7840fcd0ef7fc69d6a2da1d6ad1e77e4778992cdab30987dd1905",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/client.py": "70bf48d517274eb95df2741d737cc3efbbde38938ce1d23ff1062a5f55f4832b",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/diagnostic-contract.json": "b01f58965acc80908c7ed52c81b4fa9abe73eb8a73f213272dff2c6c90750771",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/focused-tests.log": "d0db283f665aa60b717011439ea92cf9e1d93c3ec0a87f785443ecc061dfc80a",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/frozen-method-enums.json": "831728c4ce8c1913d25eff43229c93b81c0f5d802f93eb3b057333c4048e2220",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/manifest.json": "b1926324b3b757fde70e86632f843db31897a84a94b63d279ef4fed908670cd1",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/offline-validation.json": "6eb1c933daea9d7ad882362667e27a524af63d335fd2c9257bbbceca2e35168b",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/preflight-review.md": "4a0e3d04906c6378b54ebc081895d103abb9cfd4cc9b5ef363dd0c3ecbc20134",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/preparation.md": "92d8a302baeb29568a0d7638867d37d14470a9962684284dab0b483952eee2c5",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/profile.json": "aed4b6f57326a664342f5d989493117551715337a0e8d8fc666d3c5e7d8e6b6e",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/run_once.py": "14fa7ecf2c75cd0bdf212f19cf4d16a8ce8d52b57a59e88ecf628f2418861619",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/schema-contract.json": "c4bf557d17426f4c9a6c61e97353b8361469169e067e1f911fdfc7488d369270",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/test_bindings.py": "65adbbd26ab14d711ec5709fee5ec5d51381a0f159a6bed03e0a5ea19563d956",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/thread_gate.py": "b48ce8b67e3a18ecab80a49d1eb3633f90443cc9524972e00a3ea7bdf27fa6cd",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-offline-20261008/redacted_stderr.py": "d92f79b0d14abd2c5851bea2162813c5f93b396e4d19fc927389bc8b6557ef6d",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-wiring-offline-20261008/client.py": "ac665dc546e7e333fcaf0e97e011e22b606d8809df2e47d23fdddb351d3e1dc8",
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/generated-schemas.zip": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+    "experiments/government-comparison/runtime/process.py": "d0cedb71d57be87095d9af119d9769fb0c3d311e1af073cba81f6337743c78ae",
+    "experiments/government-comparison/runtime/selected_feature_contract.py": "985ff1d8f8870de4ac697e030c2abeb543d1bc3e74f475968c5e1097be865550"
+  },
+  "interpreter": {
+    "path": "C:\\Python313\\python.exe",
+    "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+  },
+  "claimBoundary": "Fresh one thread-start diagnostic; no turns/tools/Actor task reservation; private excerpt is never a source input or archived artifact."
+}
