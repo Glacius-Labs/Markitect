@@ -1,0 +1,14 @@
+{
+  "key": "s1-runner-rebinding-metadata-20261008-r1",
+  "owner": "Scientist",
+  "releasedAtUtc": "2026-10-08T15:39:33.690152+00:00",
+  "reason": "Both permitted CLI metadata outputs observed; no further runtime allocation",
+  "newCliMetadataInvocationsConsumed": 2,
+  "cliMetadataCumulative": 8,
+  "newActorReservations": 0,
+  "newAppServerSessions": 0,
+  "remainingCliCalls": 0,
+  "remainingGrantClosed": true,
+  "overseerOwnsCanonicalSlotUpdate": true,
+  "automaticFollowup": false
+}

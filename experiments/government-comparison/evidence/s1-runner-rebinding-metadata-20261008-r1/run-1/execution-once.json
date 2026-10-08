@@ -1,0 +1,9 @@
+{
+  "key": "s1-runner-rebinding-metadata-20261008-r1",
+  "startedAtUnix": 1791473849.6848564,
+  "sourceCommit": "e67bcbe55dc266b02ce669106e44459580d19c9f",
+  "bindingCommit": "6c22203a6635fc7cfff7e9639d7d0cbdf2507176",
+  "bindingSha256": "0ed6493b1abb9c6307dfad747c89ff853cac796755f4231c0bf29ec119fcb29a",
+  "maxCliInvocations": 2,
+  "actorReservations": 0
+}

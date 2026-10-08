@@ -1,0 +1,68 @@
+{
+  "key": "s1-runner-rebinding-metadata-20261008-r1",
+  "receiptPairs": [
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-runner-rebinding-metadata-next\\controller-receipt.json",
+      "copy": "evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/controller-receipt.json",
+      "sha256": "6c8a00f238b66d9fd97694c3138055c5689e0bfefbd41a43d8ccf444291d559a",
+      "bytes": 317
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-runner-rebinding-metadata-next\\execution-once.json",
+      "copy": "evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/execution-once.json",
+      "sha256": "4aaf9d42c33e53035ec294279f9c7ba327b8838c89c6714662c3e78fbec060f0",
+      "bytes": 368
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-runner-rebinding-metadata-next\\invocation-1.json",
+      "copy": "evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/invocation-1.json",
+      "sha256": "3027f541ab68423860ae2acad0e4ad4e95de60c930a83c445c76346ca2bbb0dd",
+      "bytes": 382
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-runner-rebinding-metadata-next\\invocation-2.json",
+      "copy": "evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/invocation-2.json",
+      "sha256": "7fd944bd93223d1ac25e51a73eac0b82445e3422ea8feccb1772c269bc06d41b",
+      "bytes": 546
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-runner-rebinding-metadata-next\\job-assigned.json",
+      "copy": "evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/job-assigned.json",
+      "sha256": "93087c628629530585777284092672cdfe5620731e5b693ae9e95a3a1ead14ba",
+      "bytes": 221
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-runner-rebinding-metadata-next\\outer-receipt.json",
+      "copy": "evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/outer-receipt.json",
+      "sha256": "df72c6575ddb111c3e3a39182bf76f18b0ea566227719cbba28951ce87901da3",
+      "bytes": 404
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-runner-rebinding-metadata-next\\preparation.json",
+      "copy": "evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/preparation.json",
+      "sha256": "96cd945f1c9e52fad9ead64bb6fc1927261c4fb8b4699d8196dee6d36403e3ad",
+      "bytes": 709
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-runner-rebinding-metadata-next\\result-1.json",
+      "copy": "evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/result-1.json",
+      "sha256": "22e97b96c943981be15d5d41c44aa346063e46a2ed7c95dac9087080d81c6bc5",
+      "bytes": 1085
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-runner-rebinding-metadata-next\\result-2.json",
+      "copy": "evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/result-2.json",
+      "sha256": "e5577cc97904a7199840c5a60d6db9297e83d257796da4d3c2a1aba1d6b61fde",
+      "bytes": 1233
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-runner-rebinding-metadata-next\\worker-result.json",
+      "copy": "evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/worker-result.json",
+      "sha256": "dba44c0c22fce7f376a15a14e716b8f9bfdb06d39259977f546e85caa66b4d16",
+      "bytes": 2850
+    }
+  ],
+  "schemaFilePairsVerified": 447,
+  "schemaArchiveSha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+  "rawLogsArchived": false
+}

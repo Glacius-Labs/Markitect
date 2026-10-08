@@ -1,0 +1,11 @@
+{
+  "key": "s1-runner-rebinding-metadata-20261008-r1",
+  "workerReturnCode": 0,
+  "stopReason": null,
+  "controllerSeconds": 1.305608900000152,
+  "cleanupSeconds": 2.8000000384054147e-05,
+  "jobKillOnClose": true,
+  "overallLimitSeconds": 45,
+  "remainingAllocationClosed": true,
+  "automaticRetries": 0
+}

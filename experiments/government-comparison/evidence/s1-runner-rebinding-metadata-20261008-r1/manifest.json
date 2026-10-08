@@ -1,0 +1,108 @@
+{
+  "key": "s1-runner-rebinding-metadata-20261008-r1",
+  "baseCommit": "2e1d41bd120eda4b83336c3b5ad9fdaf4dda72f2",
+  "sourceCommit": "e67bcbe55dc266b02ce669106e44459580d19c9f",
+  "bindingCommit": "6c22203a6635fc7cfff7e9639d7d0cbdf2507176",
+  "status": "METADATA OBSERVED; SCHEMA CHANGED; RUNTIME UNPROVEN",
+  "payloadCount": 24,
+  "selfExcluded": true,
+  "recordedAtUtc": "2026-10-08T15:44:19.140892+00:00",
+  "files": {
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/authorization.json": {
+      "sha256": "4ade0a4a9818ceaeda581a74840b333228aace12fb891fc6358f6d925cb72677",
+      "bytes": 9530
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/binding.json": {
+      "sha256": "0ed6493b1abb9c6307dfad747c89ff853cac796755f4231c0bf29ec119fcb29a",
+      "bytes": 2824
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/current-handoff.md": {
+      "sha256": "ce6a765ab7780e6155ffc8816b2d5fb715089288cbcb9c5c87730a337ce3510b",
+      "bytes": 1922
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/external-archive.json": {
+      "sha256": "a87f0f51d2c81d7bc19cf44157d9437b497acb1f5d12ecfbf5c37c23a1888842",
+      "bytes": 3638
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/generated-schemas.zip": {
+      "sha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+      "bytes": 645474
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/postreview.md": {
+      "sha256": "5e1148cf972df329ee75477b07d1e6d28fdd27f07926cd92049e26519ee84d08",
+      "bytes": 4766
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/preflight-review.md": {
+      "sha256": "ea02ca491123c7ef3abf47b6d5d174e5e7b2e6c200d6216e02cb6d9a3fe57596",
+      "bytes": 6222
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/preparation.json": {
+      "sha256": "96cd945f1c9e52fad9ead64bb6fc1927261c4fb8b4699d8196dee6d36403e3ad",
+      "bytes": 709
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/recorder.py": {
+      "sha256": "7f8cefcd3f894c9b18695db4756b9423d02f9032db97513b1a457862e128e9d9",
+      "bytes": 13324
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/controller-receipt.json": {
+      "sha256": "6c8a00f238b66d9fd97694c3138055c5689e0bfefbd41a43d8ccf444291d559a",
+      "bytes": 317
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/execution-once.json": {
+      "sha256": "4aaf9d42c33e53035ec294279f9c7ba327b8838c89c6714662c3e78fbec060f0",
+      "bytes": 368
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/invocation-1.json": {
+      "sha256": "3027f541ab68423860ae2acad0e4ad4e95de60c930a83c445c76346ca2bbb0dd",
+      "bytes": 382
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/invocation-2.json": {
+      "sha256": "7fd944bd93223d1ac25e51a73eac0b82445e3422ea8feccb1772c269bc06d41b",
+      "bytes": 546
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/job-assigned.json": {
+      "sha256": "93087c628629530585777284092672cdfe5620731e5b693ae9e95a3a1ead14ba",
+      "bytes": 221
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/outer-receipt.json": {
+      "sha256": "df72c6575ddb111c3e3a39182bf76f18b0ea566227719cbba28951ce87901da3",
+      "bytes": 404
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/preparation.json": {
+      "sha256": "96cd945f1c9e52fad9ead64bb6fc1927261c4fb8b4699d8196dee6d36403e3ad",
+      "bytes": 709
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/result-1.json": {
+      "sha256": "22e97b96c943981be15d5d41c44aa346063e46a2ed7c95dac9087080d81c6bc5",
+      "bytes": 1085
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/result-2.json": {
+      "sha256": "e5577cc97904a7199840c5a60d6db9297e83d257796da4d3c2a1aba1d6b61fde",
+      "bytes": 1233
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/run-1/worker-result.json": {
+      "sha256": "dba44c0c22fce7f376a15a14e716b8f9bfdb06d39259977f546e85caa66b4d16",
+      "bytes": 2850
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/schema-diff.json": {
+      "sha256": "1dfdff8f0438aeaea167ab000834b3c6e05180a261821ff3728735050e131976",
+      "bytes": 13352
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/schema-manifest.json": {
+      "sha256": "7981fab65cebc143175d59c2663823fec9868aedc9962f74c030f8a5e5538f33",
+      "bytes": 71073
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/slot-release.json": {
+      "sha256": "565e840c76985ea518cdd4e14e3e7f0f8f54580f348c90cb2b779441b74b0629",
+      "bytes": 501
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/terminal-summary.json": {
+      "sha256": "55775544c7d97e925506c5ed4869db5771856e4ce4e1b63217c4db60edd6a81b",
+      "bytes": 5296
+    },
+    "experiments/government-comparison/public/s1-runner-rebinding-metadata-20261008-r1.md": {
+      "sha256": "3a41792103e060c91e9cdb1308a481778810989c0d01f034a69b570e2aea8ed4",
+      "bytes": 6228
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "key": "s1-runner-rebinding-metadata-20261008-r1",
+  "index": 1,
+  "argv": [
+    "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/9691020b546a15b2/codex.exe",
+    "--version"
+  ],
+  "beforeSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "recordedAtUnix": 1791473849.9830768,
+  "startAttemptReserved": true,
+  "metadataOnly": true
+}

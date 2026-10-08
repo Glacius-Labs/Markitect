@@ -1,0 +1,9 @@
+{
+  "key": "s1-runner-rebinding-metadata-20261008-r1",
+  "executionAndReadbackSeconds": 1.3195943999999145,
+  "within45Seconds": true,
+  "controllerReceiptSha256": "6c8a00f238b66d9fd97694c3138055c5689e0bfefbd41a43d8ccf444291d559a",
+  "workerResultSha256": "dba44c0c22fce7f376a15a14e716b8f9bfdb06d39259977f546e85caa66b4d16",
+  "status": "metadata-observed",
+  "remainingAllocationClosed": true
+}

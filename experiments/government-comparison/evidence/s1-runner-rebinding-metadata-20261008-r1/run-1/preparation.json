@@ -1,0 +1,14 @@
+{
+  "key": "s1-runner-rebinding-metadata-20261008-r1",
+  "observedAbsentBeforePreparationAtUtc": "2026-10-08T15:31:09.756345+00:00",
+  "externalRootAbsentBeforePreparation": true,
+  "externalRootCreatedExclusively": true,
+  "publicCwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-common-runner-read-tool-20261008-r1\\actor",
+  "expectedFiles": {
+    "probe-input.txt": "9c9b152a51daf10dbc38765feec7b72c9d42587d6300c6cf7fcb8fd1e9ab29c5",
+    "README.md": "b986640bbeea4d174ff450cd27bb50d68697e78d8ad9fd0757fe3427b2904a59"
+  },
+  "preparationAtUtc": "2026-10-08T15:31:10.021534+00:00",
+  "binarySha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "codexInvocations": 0
+}

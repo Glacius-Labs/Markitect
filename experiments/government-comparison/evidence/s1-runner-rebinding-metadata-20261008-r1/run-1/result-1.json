@@ -1,0 +1,36 @@
+{
+  "key": "s1-runner-rebinding-metadata-20261008-r1",
+  "index": 1,
+  "argv": [
+    "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/9691020b546a15b2/codex.exe",
+    "--version"
+  ],
+  "nativeProcessStarted": true,
+  "nativePid": 34208,
+  "nativeReturnCode": 0,
+  "stopReason": null,
+  "beforeSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "afterSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "versionLine": "codex-cli 0.162.0-alpha.2",
+  "wallSeconds": 0.22526620000007824,
+  "phaseLimitSeconds": 5,
+  "cleanupSeconds": 0.19197299999996176,
+  "observedBytes": {
+    "stdout": 26,
+    "stderr": 0
+  },
+  "versionCaptureBytesMaximum": 256,
+  "stdoutBytesOvershoot": 0,
+  "stderrBytesOvershoot": 0,
+  "stderrRawPersisted": false,
+  "stdoutRawPersisted": false,
+  "schemaTreeMaximumObserved": {
+    "files": 0,
+    "bytes": 0
+  },
+  "schemaBytesOvershoot": 0,
+  "schemaFilesOvershoot": 0,
+  "monitorIsHardDiskQuota": false,
+  "nativeInternalActivity": null,
+  "automaticRetries": 0
+}

@@ -1,0 +1,350 @@
+{
+  "key": "s1-runner-rebinding-metadata-20261008-r1",
+  "method": "Read-only JSON/byte/schema-node/ref/method-literal inspection; existing parser not executed or modified; no tests. Local reference closure covers reachable #/definitions types; unsupported references explicitly unresolved. Method sets extracted syntactically from method const/enum properties, not runtime observation.",
+  "oldArchiveSha256": "cd24042eec4696f6b73368cfc6ce930726f3e10c28bae63cdbd1b2f502ff1d97",
+  "newArchiveSha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+  "sourceBindingSha256": "0ed6493b1abb9c6307dfad747c89ff853cac796755f4231c0bf29ec119fcb29a",
+  "comparisons": [
+    {
+      "member": "ServerNotification.json",
+      "status": "changed",
+      "oldSha256": "28a42039eee1c3f45c92b6cf07111bacf6de2716f4d3365ff53ad65507fef00c",
+      "newSha256": "c0d2c87f78054a8b21f42f9a32256e9412603a85d7151671e914493f84739e7a",
+      "jsonObjectEqual": false,
+      "topPropertiesAdded": [],
+      "topPropertiesRemoved": [],
+      "topPropertiesChanged": [],
+      "requiredAdded": [],
+      "requiredRemoved": [],
+      "reachableDefinitionsOld": 222,
+      "reachableDefinitionsNew": 224,
+      "reachableDefinitionsAdded": [
+        "ThreadPredictionResult",
+        "ThreadPredictionUpdatedNotification"
+      ],
+      "reachableDefinitionsRemoved": [],
+      "reachableDefinitionsChanged": [
+        "CodexErrorInfo",
+        "McpServerOauthLoginCompletedNotification"
+      ],
+      "unresolvedOldRefs": [],
+      "unresolvedNewRefs": [],
+      "unsupportedCurrentKeywordsForExistingParser": [],
+      "unsupportedCurrentRefFormsForExistingParser": []
+    },
+    {
+      "member": "v1/InitializeParams.json",
+      "status": "equal",
+      "oldSha256": "b55124e7c0f36a1789396daa5578217a92be67f053903696236686e59f6f212e",
+      "newSha256": "b55124e7c0f36a1789396daa5578217a92be67f053903696236686e59f6f212e",
+      "jsonObjectEqual": true,
+      "topPropertiesAdded": [],
+      "topPropertiesRemoved": [],
+      "topPropertiesChanged": [],
+      "requiredAdded": [],
+      "requiredRemoved": [],
+      "reachableDefinitionsOld": 2,
+      "reachableDefinitionsNew": 2,
+      "reachableDefinitionsAdded": [],
+      "reachableDefinitionsRemoved": [],
+      "reachableDefinitionsChanged": [],
+      "unresolvedOldRefs": [],
+      "unresolvedNewRefs": [],
+      "unsupportedCurrentKeywordsForExistingParser": [],
+      "unsupportedCurrentRefFormsForExistingParser": []
+    },
+    {
+      "member": "v1/InitializeResponse.json",
+      "status": "equal",
+      "oldSha256": "62ad689c2cb6379913c1d72749cfd8de5089d35760214123518eb92eef11acc9",
+      "newSha256": "62ad689c2cb6379913c1d72749cfd8de5089d35760214123518eb92eef11acc9",
+      "jsonObjectEqual": true,
+      "topPropertiesAdded": [],
+      "topPropertiesRemoved": [],
+      "topPropertiesChanged": [],
+      "requiredAdded": [],
+      "requiredRemoved": [],
+      "reachableDefinitionsOld": 1,
+      "reachableDefinitionsNew": 1,
+      "reachableDefinitionsAdded": [],
+      "reachableDefinitionsRemoved": [],
+      "reachableDefinitionsChanged": [],
+      "unresolvedOldRefs": [],
+      "unresolvedNewRefs": [],
+      "unsupportedCurrentKeywordsForExistingParser": [],
+      "unsupportedCurrentRefFormsForExistingParser": []
+    },
+    {
+      "member": "v2/ConfigReadParams.json",
+      "status": "equal",
+      "oldSha256": "257c54a423b47c1d209ff1076765a1564d82322fd5161670fd489a2874de1bac",
+      "newSha256": "257c54a423b47c1d209ff1076765a1564d82322fd5161670fd489a2874de1bac",
+      "jsonObjectEqual": true,
+      "topPropertiesAdded": [],
+      "topPropertiesRemoved": [],
+      "topPropertiesChanged": [],
+      "requiredAdded": [],
+      "requiredRemoved": [],
+      "reachableDefinitionsOld": 0,
+      "reachableDefinitionsNew": 0,
+      "reachableDefinitionsAdded": [],
+      "reachableDefinitionsRemoved": [],
+      "reachableDefinitionsChanged": [],
+      "unresolvedOldRefs": [],
+      "unresolvedNewRefs": [],
+      "unsupportedCurrentKeywordsForExistingParser": [],
+      "unsupportedCurrentRefFormsForExistingParser": []
+    },
+    {
+      "member": "v2/ConfigReadResponse.json",
+      "status": "equal",
+      "oldSha256": "4ec77e1a3eed746037149799c3b6bb8fe7b4b593e5930fc9f410e6282de9df50",
+      "newSha256": "4ec77e1a3eed746037149799c3b6bb8fe7b4b593e5930fc9f410e6282de9df50",
+      "jsonObjectEqual": true,
+      "topPropertiesAdded": [],
+      "topPropertiesRemoved": [],
+      "topPropertiesChanged": [],
+      "requiredAdded": [],
+      "requiredRemoved": [],
+      "reachableDefinitionsOld": 31,
+      "reachableDefinitionsNew": 31,
+      "reachableDefinitionsAdded": [],
+      "reachableDefinitionsRemoved": [],
+      "reachableDefinitionsChanged": [],
+      "unresolvedOldRefs": [],
+      "unresolvedNewRefs": [],
+      "unsupportedCurrentKeywordsForExistingParser": [],
+      "unsupportedCurrentRefFormsForExistingParser": []
+    },
+    {
+      "member": "v2/ConfigRequirementsReadResponse.json",
+      "status": "equal",
+      "oldSha256": "23133727e5dac0fcd77ca0db8bb47f4bef7c3e880b96846aec612d1dedba7e5b",
+      "newSha256": "23133727e5dac0fcd77ca0db8bb47f4bef7c3e880b96846aec612d1dedba7e5b",
+      "jsonObjectEqual": true,
+      "topPropertiesAdded": [],
+      "topPropertiesRemoved": [],
+      "topPropertiesChanged": [],
+      "requiredAdded": [],
+      "requiredRemoved": [],
+      "reachableDefinitionsOld": 31,
+      "reachableDefinitionsNew": 31,
+      "reachableDefinitionsAdded": [],
+      "reachableDefinitionsRemoved": [],
+      "reachableDefinitionsChanged": [],
+      "unresolvedOldRefs": [],
+      "unresolvedNewRefs": [],
+      "unsupportedCurrentKeywordsForExistingParser": [],
+      "unsupportedCurrentRefFormsForExistingParser": []
+    },
+    {
+      "member": "v2/ErrorNotification.json",
+      "status": "changed",
+      "oldSha256": "ae1f4d6e0bb794211f28dc67b11885a1a0e0f8a198c6114b2ed27372f60a227c",
+      "newSha256": "eb702b074f6f8d6a7236e095b57fb24d69db183d3dc3ffab1954e65c2ead9e6d",
+      "jsonObjectEqual": false,
+      "topPropertiesAdded": [],
+      "topPropertiesRemoved": [],
+      "topPropertiesChanged": [],
+      "requiredAdded": [],
+      "requiredRemoved": [],
+      "reachableDefinitionsOld": 5,
+      "reachableDefinitionsNew": 5,
+      "reachableDefinitionsAdded": [],
+      "reachableDefinitionsRemoved": [],
+      "reachableDefinitionsChanged": [
+        "CodexErrorInfo"
+      ],
+      "unresolvedOldRefs": [],
+      "unresolvedNewRefs": [],
+      "unsupportedCurrentKeywordsForExistingParser": [],
+      "unsupportedCurrentRefFormsForExistingParser": []
+    },
+    {
+      "member": "v2/ThreadClosedNotification.json",
+      "status": "equal",
+      "oldSha256": "d504cceb70e3397ad684924b08d3bff328a927be02ef4e3d482a18e27bab73de",
+      "newSha256": "d504cceb70e3397ad684924b08d3bff328a927be02ef4e3d482a18e27bab73de",
+      "jsonObjectEqual": true,
+      "topPropertiesAdded": [],
+      "topPropertiesRemoved": [],
+      "topPropertiesChanged": [],
+      "requiredAdded": [],
+      "requiredRemoved": [],
+      "reachableDefinitionsOld": 0,
+      "reachableDefinitionsNew": 0,
+      "reachableDefinitionsAdded": [],
+      "reachableDefinitionsRemoved": [],
+      "reachableDefinitionsChanged": [],
+      "unresolvedOldRefs": [],
+      "unresolvedNewRefs": [],
+      "unsupportedCurrentKeywordsForExistingParser": [],
+      "unsupportedCurrentRefFormsForExistingParser": []
+    },
+    {
+      "member": "v2/ThreadStartParams.json",
+      "status": "equal",
+      "oldSha256": "80a40a7fac15b4bf70efb7f893fb353acc0a0d30c68f54aee4f01923deca85de",
+      "newSha256": "80a40a7fac15b4bf70efb7f893fb353acc0a0d30c68f54aee4f01923deca85de",
+      "jsonObjectEqual": true,
+      "topPropertiesAdded": [],
+      "topPropertiesRemoved": [],
+      "topPropertiesChanged": [],
+      "requiredAdded": [],
+      "requiredRemoved": [],
+      "reachableDefinitionsOld": 15,
+      "reachableDefinitionsNew": 15,
+      "reachableDefinitionsAdded": [],
+      "reachableDefinitionsRemoved": [],
+      "reachableDefinitionsChanged": [],
+      "unresolvedOldRefs": [],
+      "unresolvedNewRefs": [],
+      "unsupportedCurrentKeywordsForExistingParser": [],
+      "unsupportedCurrentRefFormsForExistingParser": []
+    },
+    {
+      "member": "v2/ThreadStartResponse.json",
+      "status": "changed",
+      "oldSha256": "92f5ddc37717b922de1dc0b0405e9a6d463f370554e2091610c6e595bc2616d4",
+      "newSha256": "bcb709ddaed237632beda448e79621d3fbfcc449fee661221088fa16d8b55914",
+      "jsonObjectEqual": false,
+      "topPropertiesAdded": [],
+      "topPropertiesRemoved": [],
+      "topPropertiesChanged": [],
+      "requiredAdded": [],
+      "requiredRemoved": [],
+      "reachableDefinitionsOld": 65,
+      "reachableDefinitionsNew": 65,
+      "reachableDefinitionsAdded": [],
+      "reachableDefinitionsRemoved": [],
+      "reachableDefinitionsChanged": [
+        "CodexErrorInfo"
+      ],
+      "unresolvedOldRefs": [],
+      "unresolvedNewRefs": [],
+      "unsupportedCurrentKeywordsForExistingParser": [],
+      "unsupportedCurrentRefFormsForExistingParser": []
+    },
+    {
+      "member": "v2/ThreadStartedNotification.json",
+      "status": "changed",
+      "oldSha256": "f4c4acf11b4a71d72c19678583df1b5639561434b5156b12657951cda25cf0d1",
+      "newSha256": "734203a310c40ed3bc1d3cba96a82eb062fbcfcab3f27ee3e950ff455b4973a1",
+      "jsonObjectEqual": false,
+      "topPropertiesAdded": [],
+      "topPropertiesRemoved": [],
+      "topPropertiesChanged": [],
+      "requiredAdded": [],
+      "requiredRemoved": [],
+      "reachableDefinitionsOld": 59,
+      "reachableDefinitionsNew": 59,
+      "reachableDefinitionsAdded": [],
+      "reachableDefinitionsRemoved": [],
+      "reachableDefinitionsChanged": [
+        "CodexErrorInfo"
+      ],
+      "unresolvedOldRefs": [],
+      "unresolvedNewRefs": [],
+      "unsupportedCurrentKeywordsForExistingParser": [],
+      "unsupportedCurrentRefFormsForExistingParser": []
+    },
+    {
+      "member": "v2/ThreadStatusChangedNotification.json",
+      "status": "equal",
+      "oldSha256": "26f3c60c1b73f7fa2d31c74429cdc36f8746c76c33e3d314b3fb61d3661f05f6",
+      "newSha256": "26f3c60c1b73f7fa2d31c74429cdc36f8746c76c33e3d314b3fb61d3661f05f6",
+      "jsonObjectEqual": true,
+      "topPropertiesAdded": [],
+      "topPropertiesRemoved": [],
+      "topPropertiesChanged": [],
+      "requiredAdded": [],
+      "requiredRemoved": [],
+      "reachableDefinitionsOld": 2,
+      "reachableDefinitionsNew": 2,
+      "reachableDefinitionsAdded": [],
+      "reachableDefinitionsRemoved": [],
+      "reachableDefinitionsChanged": [],
+      "unresolvedOldRefs": [],
+      "unresolvedNewRefs": [],
+      "unsupportedCurrentKeywordsForExistingParser": [],
+      "unsupportedCurrentRefFormsForExistingParser": []
+    }
+  ],
+  "methodEnumComparisons": [
+    {
+      "member": "ClientRequest.json",
+      "oldCount": 167,
+      "newCount": 170,
+      "added": [
+        "account/bedrock/checkGovCloudRequirements",
+        "thread/attachmentOwner/list",
+        "thread/prediction/request"
+      ],
+      "removed": [],
+      "literalMethodSetsEqual": false
+    },
+    {
+      "member": "ClientNotification.json",
+      "oldCount": 1,
+      "newCount": 1,
+      "added": [],
+      "removed": [],
+      "literalMethodSetsEqual": true
+    },
+    {
+      "member": "ServerRequest.json",
+      "oldCount": 11,
+      "newCount": 11,
+      "added": [],
+      "removed": [],
+      "literalMethodSetsEqual": true
+    },
+    {
+      "member": "ServerNotification.json",
+      "oldCount": 83,
+      "newCount": 84,
+      "added": [
+        "thread/prediction/updated"
+      ],
+      "removed": [],
+      "literalMethodSetsEqual": false
+    }
+  ],
+  "counts": {
+    "equal": 8,
+    "changed": 4,
+    "unresolved": 0
+  },
+  "rpcCompatibility": "unproven",
+  "profileConfigurationCompatibility": "unproven:17 argv pairs not executed",
+  "stderrStructureAllowlistCompatibility": "unproven: no stderr observed",
+  "parserRuntimeCompatibility": "unproven:static keyword/reference coverage only",
+  "nativeInternalActivity": null,
+  "concreteDefinitionChanges": {
+    "CodexErrorInfo": {
+      "oldUnion": "oneOf",
+      "newUnion": "anyOf",
+      "newFallbackTypes": [
+        "string",
+        "object"
+      ],
+      "implication": "Broader accepted error shape; existing fixed schema pin is not identical. No runtime compatibility inferred."
+    },
+    "McpServerOauthLoginCompletedNotification": {
+      "newOptionalProperty": "loginId",
+      "newPropertyType": [
+        "string",
+        "null"
+      ],
+      "implication": "ServerNotification union changes, this notification remains outside allowed thread-start-only notification scope."
+    },
+    "ServerNotification": {
+      "newVariant": "thread/prediction/updated",
+      "newDefinitions": [
+        "ThreadPredictionResult",
+        "ThreadPredictionUpdatedNotification"
+      ],
+      "implication": "New notification remains unlisted/terminal under preserved old allowlist; no runtime observation."
+    }
+  }
+}
