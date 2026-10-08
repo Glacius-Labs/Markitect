@@ -1,0 +1,46 @@
+{
+  "key": "s1-thread-response-fields-diagnostic-20261008-r1",
+  "startedUtc": "2026-10-08T18:07:22Z",
+  "deadlineUtc": "2026-10-08T18:27:22Z",
+  "offlineRepairIterations": 2,
+  "affectedTestInvocations": 1,
+  "failureHistory": [
+    {
+      "stage": "preseal-static-derivation-check",
+      "finding": "Analysis assertion expected validate_pre_reservation AST to change, but its new preparation identity is a module constant and function AST correctly stayed unchanged.",
+      "correction": "Corrected expected changed-function list to six; no production source or test change.",
+      "affectedTestInvocationsAdded": 0
+    },
+    {
+      "stage": "pre-execution-synthetic-fixture-construction",
+      "finding": "Test author reported a fixture ordering issue during initial drafting.",
+      "correction": "Fake stdout releases a response only after matching synthetic RPC write; no native process or test invocation occurred before correction.",
+      "testInvocationsBeforeCorrection": 0
+    }
+  ],
+  "nativeStarts": 0,
+  "diagnosticReservations": 0,
+  "testInvocations": [
+    {
+      "invocation": 1,
+      "command": "python -m unittest test_integration -v",
+      "exitCode": 0,
+      "wallSeconds": 0.2636351000001014,
+      "recordedUtc": "2026-10-08T18:11:41.204047+00:00",
+      "sourceSha256": {
+        "client.py": "ea6dcf748f8004c87fef98c555381190f6add1869775e236d46572efb5e70a83",
+        "thread_gate.py": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de",
+        "run_once.py": "65b9e7c499b94cc4ad0e2a52b9f4dc8c6cc16957d1e9dbe50fdb5ee720a02f59",
+        "test_integration.py": "5461aa0fe2ecdb928c3fdf5d3ec488b0c34e26e0f5954796ff985e5e6cd19a26"
+      },
+      "log": "focused-tests.log",
+      "sourceBytesUnchangedThroughInvocation": true
+    }
+  ],
+  "closureFormatting": {
+    "stage": "mandatory-staged-diff-check",
+    "initialExitCode": 2,
+    "finding": "Extra blank line at EOF in independent review Markdown.",
+    "correction": "Removed trailing blank line only; no production/test change or additional test invocation."
+  }
+}

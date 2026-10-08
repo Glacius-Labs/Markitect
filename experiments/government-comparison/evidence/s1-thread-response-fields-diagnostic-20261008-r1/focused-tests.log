@@ -1,0 +1,11 @@
+test_field_comparison_is_copy_isolated_and_original_finish_stays_separate (test_integration.ThreadResponseFieldIntegrationTests.test_field_comparison_is_copy_isolated_and_original_finish_stays_separate) ... ok
+test_fresh_grant_slot_and_request_freeze_bindings_are_exact (test_integration.ThreadResponseFieldIntegrationTests.test_fresh_grant_slot_and_request_freeze_bindings_are_exact) ... ok
+test_mismatch_flows_through_mocked_session_cleanup_into_additive_receipt (test_integration.ThreadResponseFieldIntegrationTests.test_mismatch_flows_through_mocked_session_cleanup_into_additive_receipt) ... ok
+test_mismatch_stops_before_turn_start_and_preserves_rpc_order_gate (test_integration.ThreadResponseFieldIntegrationTests.test_mismatch_stops_before_turn_start_and_preserves_rpc_order_gate) ... ok
+test_original_thread_boundary_fields_remain_unchanged_on_comparison_failure (test_integration.ThreadResponseFieldIntegrationTests.test_original_thread_boundary_fields_remain_unchanged_on_comparison_failure) ... ok
+test_schema_rejection_precedes_field_comparison_even_after_cleanup (test_integration.ThreadResponseFieldIntegrationTests.test_schema_rejection_precedes_field_comparison_even_after_cleanup) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.045s
+
+OK

@@ -1,0 +1,28 @@
+{
+  "key": "s1-thread-response-fields-diagnostic-20261008-r1",
+  "binaryAndSchemaCurrentHashesVerified": true,
+  "priorFrozenInputsVerifiedUnchanged": 37,
+  "publicCwdFilesVerified": 2,
+  "externalRootAbsent": true,
+  "schemaContractCopiedByteIdentical": true,
+  "gateAstUnchangedMethods": [
+    "finish",
+    "_thread",
+    "accept_notification",
+    "_apply"
+  ],
+  "acceptResponseOnlyMetadataAssignmentAdded": true,
+  "acceptedHelperAstUnchanged": true,
+  "newNativeStarts": 0,
+  "newReservations": 0,
+  "archivedSchemaMembersCurrentHashVerified": 12,
+  "clientChangedFunctions": [
+    "validate_profile",
+    "live_authority",
+    "validate_capture_bindings",
+    "validate_bound_inputs",
+    "load_request",
+    "session"
+  ],
+  "clientOtherTopLevelFunctionsAstUnchanged": 30
+}

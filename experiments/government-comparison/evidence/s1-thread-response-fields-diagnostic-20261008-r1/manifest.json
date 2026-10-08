@@ -1,0 +1,76 @@
+{
+  "key": "s1-thread-response-fields-diagnostic-20261008-r1",
+  "baseSha": "8e47593b2a81fbc85b28aaee8e9fc902746da92e",
+  "phase": "reviewed-source-preparation-only",
+  "sealedUtc": "2026-10-08T18:13:26.058215+00:00",
+  "files": {
+    "authorization-grant.json": {
+      "bytes": 9106,
+      "sha256": "ac39fcca672123ed37e53fd8f76c1ed1391b46b584e006cc54c6eea76e22b8fb"
+    },
+    "client.py": {
+      "bytes": 38426,
+      "sha256": "ea6dcf748f8004c87fef98c555381190f6add1869775e236d46572efb5e70a83"
+    },
+    "diagnostic-contract.json": {
+      "bytes": 2261,
+      "sha256": "e17d72976882a215ad800300e42b47fe84852efa0d412fa30b741fe25251f635"
+    },
+    "focused-tests.log": {
+      "bytes": 1315,
+      "sha256": "0edee702b07cc5135531589f10f919509660350d761d7a1546e9a8b289600669"
+    },
+    "frozen-method-enums.json": {
+      "bytes": 23235,
+      "sha256": "831728c4ce8c1913d25eff43229c93b81c0f5d802f93eb3b057333c4048e2220"
+    },
+    "input-validation.json": {
+      "bytes": 783,
+      "sha256": "508297f656024a97b8e0e11d10735cbba47d55af69056b236a156aeedbb105c1"
+    },
+    "offline-validation.json": {
+      "bytes": 959,
+      "sha256": "4f53834215fe2afcfd873509e0a70f7a52ac953949d029793fe0a102f412a6d2"
+    },
+    "preflight-review.md": {
+      "bytes": 4214,
+      "sha256": "a8692dba707a83866b6b2e34d6e251efc14cc2a6e5a416d6e1e798cab634de97"
+    },
+    "preparation-history.json": {
+      "bytes": 2074,
+      "sha256": "e986ad68828957d11a5b29f62507636eb535d250b39f4a65fb8176623c2299fc"
+    },
+    "preparation.md": {
+      "bytes": 2492,
+      "sha256": "43a3a9571c939438920b207ddcf773417e39ca58473faebbdbfc5b96f3f1fd6d"
+    },
+    "profile.json": {
+      "bytes": 2979,
+      "sha256": "b26c39a7e1adc972088728a48aabf21334e0c4f5ed3ee3353accca5b92b14dc8"
+    },
+    "run_once.py": {
+      "bytes": 3348,
+      "sha256": "65b9e7c499b94cc4ad0e2a52b9f4dc8c6cc16957d1e9dbe50fdb5ee720a02f59"
+    },
+    "schema-contract.json": {
+      "bytes": 2544,
+      "sha256": "c4bf557d17426f4c9a6c61e97353b8361469169e067e1f911fdfc7488d369270"
+    },
+    "test_integration.py": {
+      "bytes": 14012,
+      "sha256": "5461aa0fe2ecdb928c3fdf5d3ec488b0c34e26e0f5954796ff985e5e6cd19a26"
+    },
+    "thread_gate.py": {
+      "bytes": 5852,
+      "sha256": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de"
+    }
+  },
+  "payloadFiles": 15,
+  "ignoredPythonCacheFilesExcluded": 3,
+  "runtimeStarts": 0,
+  "diagnosticReservations": 0,
+  "requestCreated": false,
+  "finalFreezeCreated": false,
+  "privateExcerptIncluded": false,
+  "comparisonContainsActualValuesOrFingerprints": false
+}
