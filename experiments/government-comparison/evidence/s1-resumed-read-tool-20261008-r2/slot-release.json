@@ -1,0 +1,19 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "grantIssuedUtc": "2026-10-08T20:04:57Z",
+  "releasedUtc": "2026-10-08T20:27:50.528452Z",
+  "releaseReason": "Single real public-read attempt terminal; native/worker/owned Job cleanup complete; no repair/retry/fallback",
+  "grantClosed": true,
+  "remainingAppServerTrees": 0,
+  "remainingActorReservations": 0,
+  "actualNewNativeTrees": 1,
+  "actualNewActorReservations": 1,
+  "actualNativeTreesCumulative": 14,
+  "actorReservationsCumulative": 7,
+  "readinessAttemptOrdinal": 1,
+  "automaticFurtherGrant": false,
+  "privateDirectoryEmpty": true,
+  "localSlotReleaseRecorded": true,
+  "canonicalSlotReleasePendingOverseerAcceptance": true,
+  "canonicalCoordinationUnmodifiedByScientist": true
+}

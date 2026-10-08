@@ -1,0 +1,21 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "reservedAtUnix": 1791491159.891372,
+  "grantIssuedUtc": "2026-10-08T20:04:57Z",
+  "slotAssignedUtc": "2026-10-08T20:04:57Z",
+  "sourceCommit": "71bc90d6e112d5d9c38d23f35c54285a263b8ac8",
+  "freezeCommit": "df67b943e0f97634696b6710ef4934a63c165937",
+  "requestSha256": "6b206fc49ade88ddfa679e0a8d652e082e1e852c7aa38f244d4d1b1c0f63ad40",
+  "freezeSha256": "976f5e03dc5d9d18d9db295c127033d11ac6c0e7f48b5f01095c0e6eb0d482bc",
+  "readinessWindowKey": "s1-resumed-readiness-window-20261008",
+  "notAfterUtc": "2026-10-08T21:57:43Z",
+  "latestActualStartUtc": "2026-10-08T21:54:13Z",
+  "readinessAttemptOrdinal": 1,
+  "maxTrees": 1,
+  "maxDiagnosticReservations": 0,
+  "maxActorTaskReservations": 1,
+  "priorAppServerTrees": 13,
+  "priorActorReservations": 6,
+  "priorCliMetadataCalls": 8,
+  "cumulativeAppServerMaximum": 14
+}

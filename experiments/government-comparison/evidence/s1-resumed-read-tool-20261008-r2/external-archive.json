@@ -1,0 +1,38 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "scope": "Exactly eight approved bounded metadata receipts; no private excerpt or raw stream",
+  "files": {
+    "output-root-created.json": {
+      "sha256": "b654b9046b8d099bd0aab116ae1e68351025f75bf7e8f748f486a278aa6d98e4",
+      "bytes": 213
+    },
+    "reservation.json": {
+      "sha256": "93ab7f9553435799f5864ace16e827912d903fc807564a8cd5fcd5458fad906a",
+      "bytes": 891
+    },
+    "controller-once.json": {
+      "sha256": "6d951e412d1bd23ec4f3176f479226cffbaa9364cbac2dbb720112d28c57294b",
+      "bytes": 575
+    },
+    "job-assigned.json": {
+      "sha256": "b8edce9a3509492a4de9b9fe874301711d8571404f0cd33676084c1fa0d23a16",
+      "bytes": 639
+    },
+    "started-once.json": {
+      "sha256": "8132330c17b4ddca6edd7eb9020a43d24699aa957f4fd94b527a4b664ad1a158",
+      "bytes": 574
+    },
+    "sanitized-result.json": {
+      "sha256": "b9b1b040f30b3753fd06095b6095087d46099a78f752050bf0531600d3ec368f",
+      "bytes": 23929
+    },
+    "controller-receipt.json": {
+      "sha256": "61c773072da0a1ceead266b2bd7a69688a28ca1d5d03db59a5bc6fd7ae70746f",
+      "bytes": 1037
+    },
+    "outer-receipt.json": {
+      "sha256": "6ed9cc13b9a0abe7e7baa8df29799ef1d953d47eb3c9b7962dcdc37830c9e9f8",
+      "bytes": 644
+    }
+  }
+}

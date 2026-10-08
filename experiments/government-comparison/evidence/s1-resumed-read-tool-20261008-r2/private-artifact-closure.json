@@ -1,0 +1,12 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "ownExactRelativeFile": "private-redacted-stderr/redacted-stderr.json",
+  "afterOwnedNativeWorkerCleanup": true,
+  "bytesRemovedFromMetadataOnly": 922,
+  "contentReads": 0,
+  "contentParses": 0,
+  "contentHashes": 0,
+  "exactFileUnlinked": true,
+  "privateDirectoryEmpty": true,
+  "noHistoricalPrivateRecovery": true
+}

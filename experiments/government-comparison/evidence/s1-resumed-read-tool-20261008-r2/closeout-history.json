@@ -1,0 +1,16 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "oneNativeAttempt": true,
+  "firstResultTerminal": true,
+  "postStartSourceRepairs": 0,
+  "retries": 0,
+  "fallbacks": 0,
+  "schemaAdmissionChangesAfterFreeze": 0,
+  "privateRecoveryAttempts": 0,
+  "additionalTestsAfterActual": 0,
+  "independentSourceAndBindingReviewsPassed": true,
+  "postreviewPending": false,
+  "canonicalMutationByScientist": false,
+  "independentPostreviewCompleted": true,
+  "postreviewSha256": "14405ef613b1142e14fd9b672caeed15c3f031d4c270202e4bad27ed73f3c925"
+}

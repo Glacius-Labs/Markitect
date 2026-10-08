@@ -1,0 +1,23 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "grantIssuedUtc": "2026-10-08T20:04:57Z",
+  "slotAssignedUtc": "2026-10-08T20:04:57Z",
+  "requestSha256": "6b206fc49ade88ddfa679e0a8d652e082e1e852c7aa38f244d4d1b1c0f63ad40",
+  "freezeSha256": "976f5e03dc5d9d18d9db295c127033d11ac6c0e7f48b5f01095c0e6eb0d482bc",
+  "reservationSha256": "93ab7f9553435799f5864ace16e827912d903fc807564a8cd5fcd5458fad906a",
+  "sourceCommit": "71bc90d6e112d5d9c38d23f35c54285a263b8ac8",
+  "freezeCommit": "df67b943e0f97634696b6710ef4934a63c165937",
+  "workerReturnCode": 1,
+  "stopReason": null,
+  "controllerSeconds": 10.461136900001293,
+  "jobCloseSeconds": 2.3299999156733975e-05,
+  "processTreeControl": "windows-job-kill-on-close",
+  "deadlineSeconds": 180,
+  "controllerLimitSeconds": 195,
+  "outerLimitSeconds": 210,
+  "rawLogsPersisted": false,
+  "automaticRetries": 0,
+  "terminalResultPresent": true,
+  "terminalResultSha256": "b9b1b040f30b3753fd06095b6095087d46099a78f752050bf0531600d3ec368f",
+  "withinControllerBound": true
+}
