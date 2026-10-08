@@ -246,12 +246,33 @@ func runAction(opts options, out io.Writer) error {
 			if err != nil {
 				return err
 			}
+			receiptPath, err := derivedReceiptPath(opts.output)
+			if err != nil {
+				return err
+			}
+			if err := preflightRecordDestinations(opts.repo, opts.output, receiptPath); err != nil {
+				return err
+			}
 			report, receipt, err := projectadoption.GenerateDistillation(ctx, opts.repo, discovery, agentConfig, projectadoption.DistillationRunOptions{
 				MaxTimeout: agentConfig.Timeout, MaxStdoutBytes: agentConfig.MaxStdoutBytes, MaxStderrBytes: agentConfig.MaxStderrBytes,
 				MaxCostMicros: prices.maxCost, InputPriceMicrosPerMillion: prices.input, OutputPriceMicrosPerMillion: prices.output,
 				TargetContext: targetContext,
 			})
 			if err != nil {
+				if receipt.Execution.RunID != "" {
+					receiptBytes, marshalErr := json.Marshal(receipt)
+					if marshalErr != nil {
+						return errors.New("generated distillation was rejected after invocation; execution receipt could not be encoded")
+					}
+					digests, writeErr := writeRecords(opts.repo, map[string][]byte{receiptPath: receiptBytes})
+					if writeErr != nil {
+						return fmt.Errorf("generated distillation was rejected after invocation; execution receipt could not be persisted: %w", writeErr)
+					}
+					if err := writeJSON(out, map[string]string{"status": "rejected", "receiptPath": receiptPath, "receiptDigest": digests[receiptPath]}); err != nil {
+						return err
+					}
+					return &projectOutcomeError{code: 1, message: "agent-assisted distillation was rejected after invocation; report was not created; see execution receipt"}
+				}
 				return err
 			}
 			encoded, err := projectadoption.EncodeDistillation(report)
@@ -259,10 +280,6 @@ func runAction(opts options, out io.Writer) error {
 				return err
 			}
 			receiptBytes, err := json.Marshal(receipt)
-			if err != nil {
-				return err
-			}
-			receiptPath, err := derivedReceiptPath(opts.output)
 			if err != nil {
 				return err
 			}
