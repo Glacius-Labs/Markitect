@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T01:30:01Z",
+  "updatedUtc": "2026-10-08T01:34:22Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -420,7 +420,7 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:105",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:106",
       "lastObservedStatus": "active",
       "activeTurn": "01a11911-884b-7d03-9baf-138e29226a9d",
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6f1dd5a38819193153ca9263e2559",
@@ -2442,5 +2442,14 @@
     "decidedUtc": "2026-10-08T00:25:46Z",
     "scope": "All new finite smoke grants; applies conservative common interpretation to historical P1 reporting without changing old records or authorizing excess retrospectively.",
     "rule": "A whole helper/script invocation counts as an attempt even when failed/incomplete. A native launch counts even when rejected. Pure offline preflight that never invoked the helper has zero full attempts. Actual starts, committed reservations, configured capacity and completed successful walkthroughs are distinct."
+  },
+  "statusQueryObservation": {
+    "checkedUtc": "2026-10-08T01:34:22Z",
+    "request": "User asks progress, data and Classic versus Government mechanisms.",
+    "worker": "Unchanged accepted qualified GOV-P1 839dc4; hold.",
+    "architect": "Unchanged accepted qualified CLASSIC-P1 4908bd2, replay and full source checks bound to fbb2dea; hold.",
+    "scientist": "Active terminal R4 closure; draft handoff and terminal-summary read. Native queue reports complete/accepted-scoped, outer adapter incomplete due to JSON identity tuple versus inventory/root review-scope comparison. Draft attribution and consumption not yet accepted as a clean independently reviewed terminal delivery. No resume or retry.",
+    "study": "0 of 6 matched baseline trials; no comparative quality, autonomy or economic winner established.",
+    "actions": "No new assignment or resource grant; existing nextAction unchanged."
   }
 }
