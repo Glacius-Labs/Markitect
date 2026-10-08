@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T21:17:42Z",
+  "updatedUtc": "2026-10-08T21:26:29Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -440,24 +440,18 @@
       "activeTurn": null,
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac80766d6808191bd10e585e0fc6218",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Finite resumed readiness block closed; full S1 unproved and six cells NOT RUN; no pending assignment",
-      "latestProgress": "Final R3 accepted: account telemetry routed, command/CWD mismatch stopped one observed native command item; no completed read/turn/usage. Cumulative15 trees/8 Actor reservations, total usage unknown. Final block closed and observation PAUSED; no further assignment or runtime allocation.",
+      "assignedMilestone": "Run six real native-Codex exploratory case studies, independently evaluate and report intermediate data",
+      "latestProgress": "New direct user mandate replaces preparation-only stop for a separate matched native pilot. Historical attempts preserved; new actual trial grant issued, pending dispatch.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
       "acceptance": "R7 bounded native+outer Queue and terminal Resume mechanics accepted; S1 real common Actor/tools and study cells remain open.",
       "lastAssignment": {
-        "key": "s1-account-update-routing-read-20261008-r3",
-        "authorizedUtc": "2026-10-08T20:51:31Z",
-        "status": "Closed; terminal evidence independently accepted, final resumed block ended, no remaining runtime authority.",
-        "grantPointer": "threads[name=Scientist].evidence.accountUpdateRoutingReadGrant",
-        "scope": "Test only prospective exact account/updated compatible-metadata route on same real public-read Actor path; no write/build/study calls.",
-        "sentUtc": "2026-10-08T20:55:26Z",
-        "grantCommit": "fdbd2c9",
-        "deliveryConfirmed": true,
-        "completedSha": "7d6964331f542462b4a29db3819f60c75083e3be",
-        "acceptedUtc": "2026-10-08T21:17:14Z",
-        "remainingRuntimeAllocation": 0
+        "key": "native-codex-exploratory-v3-20261008",
+        "authorizedUtc": "2026-10-08T21:26:29Z",
+        "status": "Authorized actual six-cell native pilot; pending once-only dispatch",
+        "grantPointer": "threads[name=Scientist].evidence.nativeCaseStudiesV3Grant",
+        "scope": "AUTHORIZED common finite preparation plus six actual base trials after prospective independent freeze verification; no further Root go needed."
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -6425,6 +6419,135 @@
           "bindingReviewRead": true,
           "postReviewRead": true,
           "rootRuntimeTestsStarted": 0
+        },
+        "nativeCaseStudiesV3Grant": {
+          "key": "native-codex-exploratory-v3-20261008",
+          "issuedUtc": "2026-10-08T21:26:29Z",
+          "sourceAuthority": "Direct human user: Sorge dafuer, dass die Case Studies laufen. Das kann doch nicht so schwer sein. New explicit execution mandate, not reuse of old diagnostic grants.",
+          "ownerThreadId": "01a1169c-3df6-7571-997d-48ab57365875",
+          "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+          "baseScientistSha": "7d6964331f542462b4a29db3819f60c75083e3be",
+          "protocolVersion": "native-codex-exploratory-v3",
+          "canonicalEvaluationPath": "docs/design/government/evaluation.md",
+          "canonicalEvaluationSha256": "c23910258a99aac8377cb2682dec99cfe55b47c0e9ad8cb512a18423cfd4b2eb",
+          "status": "AUTHORIZED common finite preparation plus six actual base trials after prospective independent freeze verification; no further Root go needed.",
+          "executionSurface": "Existing native collaboration tools controlled by Scientist; spawn_agent fork_turns=none per fresh cell. Same parent/native inherited model-reasoning/tool/permission configuration for all actors; record actual configuration provenance and unknown serving identity. No old appserver collector or new direct provider API.",
+          "productPins": {
+            "studyClassicSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
+            "classicRuntimeSourceSha": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+            "classicBinarySha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4",
+            "governmentStudySha": "04e225d5caee78c2a198607143863fca1e829750",
+            "governmentBinarySha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f",
+            "mainHeldSeparate": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+            "nativePinFiles": "Use and freeze existing runtime/classic-pin.json and government-pin.json; no silent candidate rebuild/repair/substitution."
+          },
+          "startSnapshots": {
+            "greenfield": "0416e366626d31933443ce2901d6a3696261db7b",
+            "brownfield": "5d21ef02cd9d5485c26bc4053a35c61ad33024c1",
+            "preparationFreezeSha256": "d7b2e38078be60a43eae827a0b7446835c14f0ef47c6e57aa444ced9cd511b9a"
+          },
+          "inputs": "Existing public brief/architecture/q1/tasks01-06/staged release.py checks/rubric, existing frozen private oracle held by independent evaluator. Preserve task content/rubric; only current card and released checks reach Actor. Oldschool public methods brief defines strong conventional engineering. No prebuilt solution/model/future cards/private paths/other results.",
+          "preparation": {
+            "maxWallSeconds": 1800,
+            "maxOrdinaryAdapterCorrectionBatches": 2,
+            "maxAffectedTestInvocations": 2,
+            "maxNewCommonNativeAgentActivations": 3,
+            "maxCommonCapabilityAgentActivations": 1,
+            "maxCapabilityAgentSeconds": 180,
+            "otherPreparationActors": "At most two bounded independent public-protocol/binding reviewers, no implementation assistance or private results. Root two read-only preparatory reviews already performed and recorded separately as common study setup.",
+            "capabilityScope": "One fresh native agent in own disposable scratch: actual public read, local file write, local build/check using existing .NET10 toolchain; benign dummy cross-directory access probe rather than private oracle content. No old microdiagnostic chain.",
+            "deliverable": "Small direct Coordinator dispatcher/ledger and optional necessary bounded public Request/Result/file mailbox bridge; not new appserver/SDK/test platform. Independent freeze check, source/public input/role/config/cell/budget pins, then start real trial immediately.",
+            "accounting": "Common preparation elapsed/agent calls/unknown usage recorded separately; all arm-specific model/module/mandate/adapter setup charged to corresponding trial. No free Owner implementation help."
+          },
+          "cells": [
+            {
+              "trialId": "conventional-greenfield-v3-20261008",
+              "arm": "conventional",
+              "condition": "greenfield",
+              "maxActorActivations": 72,
+              "initialActorActivationsConsumed": 0,
+              "remainingActorActivations": 72,
+              "maxTrialWallSeconds": 7200,
+              "initialStatus": "not_started"
+            },
+            {
+              "trialId": "classic-greenfield-v3-20261008",
+              "arm": "classic",
+              "condition": "greenfield",
+              "maxActorActivations": 72,
+              "initialActorActivationsConsumed": 0,
+              "remainingActorActivations": 72,
+              "maxTrialWallSeconds": 7200,
+              "initialStatus": "not_started"
+            },
+            {
+              "trialId": "government-greenfield-v3-20261008",
+              "arm": "government",
+              "condition": "greenfield",
+              "maxActorActivations": 72,
+              "initialActorActivationsConsumed": 0,
+              "remainingActorActivations": 72,
+              "maxTrialWallSeconds": 7200,
+              "initialStatus": "not_started"
+            },
+            {
+              "trialId": "conventional-brownfield-v3-20261008",
+              "arm": "conventional",
+              "condition": "brownfield",
+              "maxActorActivations": 72,
+              "initialActorActivationsConsumed": 0,
+              "remainingActorActivations": 72,
+              "maxTrialWallSeconds": 7200,
+              "initialStatus": "not_started"
+            },
+            {
+              "trialId": "classic-brownfield-v3-20261008",
+              "arm": "classic",
+              "condition": "brownfield",
+              "maxActorActivations": 72,
+              "initialActorActivationsConsumed": 0,
+              "remainingActorActivations": 72,
+              "maxTrialWallSeconds": 7200,
+              "initialStatus": "not_started"
+            },
+            {
+              "trialId": "government-brownfield-v3-20261008",
+              "arm": "government",
+              "condition": "brownfield",
+              "maxActorActivations": 72,
+              "initialActorActivationsConsumed": 0,
+              "remainingActorActivations": 72,
+              "maxTrialWallSeconds": 7200,
+              "initialStatus": "not_started"
+            }
+          ],
+          "maxActualTrials": 6,
+          "maxTotalTrialActorActivations": 432,
+          "maxParallelStudyActorsIncludingHelpersAndReviewers": 4,
+          "taskWallSeconds": 1200,
+          "taskActorActivations": 12,
+          "trialWallSeconds": 7200,
+          "trialActorActivations": 72,
+          "maxSemanticRepairRoundsPerTask": 2,
+          "trialActiveHumanSeconds": 600,
+          "actorCounting": "Before every spawn_agent or starting followup_task reserve one activation to exact cell/task; failed/rejected/terminated starts, setup/model-upkeep/helpers/votes/reviews/independent evaluation all count. Same cell primary may receive staged followups; no reuse across cells. Pure status reads and completed-result delivery do not count. Only Scientist launches Actors/helpers; descendants request explicit reserved helper slots, no unaccounted direct spawn.",
+          "deadlineEnforcement": "Freeze UTC/monotonic start/deadline per task/cell and overall; pre-admission checks and bounded running checkpoints, interrupt own active agents and stop owned processes on cap/deadline. No OS/provider cancellation enforcement claimed beyond observed native capability. Running children/CLI calls need bounded shell/process controls and terminal receipts.",
+          "notAfterUtc": "2026-10-09T15:26:29Z",
+          "extraTrialsAuthorized": 0,
+          "additionalAppServerDiagnosticsAuthorized": 0,
+          "newProviderApiIntegrationsAuthorized": 0,
+          "usagePolicy": "Native actor activations and actual timing primary finite resources. Record available raw token/input/output/cache/usage receipts only; absent values remain null and do not block next otherwise-authorized activation in this NEW profile. No cost/compute superiority claim with unknown usage, no estimates from bytes/time, no hard-token/provider-request cap claim. Existing account limits apply.",
+          "historicalAccounting": "Old grants/windows remain closed. Historical15appserver trees/8Actor reservations/8CLI metadata/53331known tokens plus unknown total/nativevector15/16/13/2250 preserved; NEW native collaboration activations kept separate with zero initial new activations, not reset historical usage.",
+          "isolation": "Six fresh separate Git repos/worktrees/branches from frozen starts; Actors fork_turns=none and no owner-chat history. Same native tools share host rights: cooperative study, OS isolation unproved. Check boundary with dummy files, keep real oracle/future cards/other-cell outcomes outside Actor input trees; no real private read probe. Observed leak invalidates cell with no free replacement.",
+          "methodIntegrity": "Real pinned Classic/Government CLI/model/controller/mechanisms when measured, genuine native role execution and explicit final selected-ressort votes. No fixtures/fabricated decisions/manual Scientist implementation to pass a method. A concrete product/adapter gap marks affected task/trial incomplete/readiness_gap; independently executable cells proceed. Common quality, method conformity and infra limitations separately scored.",
+          "independentEvaluation": "Fresh evaluator contexts separate from implementers/role reviewers; frozen candidates/stage snapshots and declared requirements only. No private feedback repairs within same trial; evaluator calls/time charged within same common cell envelope. Preserve actual candidate SHA/check outputs/artifact hashes/limits/interventions.",
+          "allowedWrites": "Scientist study harness/public protocol/evidence and six isolated experiment repos only. Root design/coordination only. Product candidate sources unchanged; no main/push/release authority added.",
+          "newPurchases": false,
+          "globalConfigurationChanges": false,
+          "policyBypass": false,
+          "automaticRefill": false,
+          "callbacks": "One in-content callback when first actual cell starts with trial/actor/repo/base/protocol/config/time identities, then each completed cell or material blocker/required decision. No ACK or routine poll loops.",
+          "exitCondition": "Finish six finite base trials and independent exploratory intermediate analysis under this one grant. Product-specific incompleteness does not stop other cells. No endless capability diagnostics or stop after preparation-only report; actual cells must be attempted on usable native path. At block end deliver data, limitations and next at most two evidence-selected questions; no extra trial authority in this grant."
         }
       },
       "classicHandoffReceived": true,
@@ -7595,7 +7718,7 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "No pending assignment or runtime grant. Finite resumed block closed; evidence and synthesis preserved, observation PAUSED. Full S1/read/write/build unproved and all six comparison cells NOT RUN. Any further research requires a fresh explicit finite mandate, common protocol/resources and preserved counters; no closed-grant reuse.",
+  "nextAction": "Scientist independently freezes native-v3 protocol/config/inputs/role/budget bindings, uses at most one bounded common native capability call, and starts/finishes six real case trials. Concrete method gaps recorded; other cells continue. No new custom appserver diagnoses or old grant reuse.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -7606,18 +7729,18 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T21:17:14Z",
+    "reviewedUtc": "2026-10-08T21:26:29Z",
     "evidenceLevel": "Root clean Git46 payloads+manifest/217 source pins+GitS/232 freeze hashes/8 external receipts/complete grant/GitF/CWD native identity and two hashes; no mismatches. Independent Root terminal review qualified OK; no Root tests/runtime.",
     "coordinationActions": [
-      "Accept final R3 STOP and exact account telemetry observation with explicit limits",
-      "Accept local slot release and close resumed window consumed2/reserved0/rest0",
-      "Append dated capability/effort/NOT RUN synthesis preserving historical report",
-      "Pause two-hour automation and verify saved TOML; no continuation grant"
+      "New human execution mandate accepted",
+      "Native direct dispatcher protocol and finite six-cell grant issued prospectively",
+      "Historical diagnosis outcomes/unknown costs preserved",
+      "Independent public preflight reviews accepted; no private holdouts passed to implementers"
     ],
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-08T19:51:14Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
-    "observationStatus": "PAUSED verified",
+    "observationStatus": "Resuming under new direct actual-case-study mandate; event callbacks and2h fallback",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z"
   },
@@ -7813,13 +7936,12 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": null,
-    "key": null,
+    "owner": "Scientist",
+    "key": "native-codex-exploratory-v3-20261008",
     "queue": [],
-    "status": "Free; final resumed block closed, no pending runtime allocation.",
-    "releasedKey": "s1-account-update-routing-read-20261008-r3",
-    "releasedUtc": "2026-10-08T21:10:53.986354Z",
-    "releaseAcceptedUtc": "2026-10-08T21:17:14Z"
+    "status": "Reserved for native pilot common preparation and bounded own product/check processes; max4 study actors, no concurrent redundant product suites.",
+    "grantIssuedUtc": "2026-10-08T21:26:29Z",
+    "assignedUtc": "2026-10-08T21:26:29Z"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -8070,7 +8192,22 @@
         "synthesisSection": "Nachtrag: wiederaufgenommener Block abgeschlossen",
         "automaticFurtherGrant": false
       }
-    ]
+    ],
+    "nativeCaseStudyExecution": {
+      "authorizedUtc": "2026-10-08T21:26:29Z",
+      "source": "Direct human instruction to make case studies run",
+      "grantKey": "native-codex-exploratory-v3-20261008",
+      "status": "New finite actual six-cell block authorized",
+      "oldWindowsClosed": true,
+      "noAppServerS1DependencyForNativeV3": true,
+      "cells": 6,
+      "additionalTrials": 0,
+      "independentRootPreflightReviews": [
+        "/root/g2_review_authority",
+        "/root/g2_handoff_evidence"
+      ],
+      "reviewFindings": "Native fresh actors + new matched protocol permitted. Existing v0.1 permits honest cooperative holdout boundary; no OS isolation proof. Actual missing bridge is study adapter work, not more appserver diagnosis. Same frozen product methods and independent outcomes required."
+    }
   },
   "fullSuiteSlotHistory": [
     {
@@ -8607,5 +8744,73 @@
       "noFullResearchSuccessClaim": true,
       "resumption": "New explicit finite research mandate, preserved counters/unknowns, fresh protocol/ability review and concrete grant; no reuse of closed grants."
     }
+  },
+  "resourceProfileHistory": [
+    {
+      "archivedUtc": "2026-10-08T21:26:29Z",
+      "reason": "Separate prospecive native v3 pilot under new direct user execution mandate; previous Appserver profile preserved.",
+      "profile": {
+        "selectedUtc": "2026-10-07T15:00:51Z",
+        "source": "Scientist e4278c50ddc84daee3858e24c89e6cf5777b5dfe experiments/government-comparison/public/resource-proposal.json",
+        "status": "observed-native-usage-v2 mechanically accepted; native integration/S1/final live-study freeze pending",
+        "taskWallSeconds": 1200,
+        "trialWallSeconds": 7200,
+        "taskActorCalls": 12,
+        "trialActorCalls": 72,
+        "taskProviderTurns": null,
+        "trialProviderTurns": null,
+        "taskProviderTokens": 120000,
+        "trialProviderTokens": 720000,
+        "maxParallelActors": 4,
+        "maxTransportRetriesPerCall": null,
+        "maxSemanticRepairRoundsPerTask": 2,
+        "trialActiveHumanSeconds": 600,
+        "newPurchases": false,
+        "liveStudyApproved": false,
+        "scope": "One exploratory trial per six cells only after all readiness gates and final coordinator freeze; all setup, descendants, reviews, failures and model upkeep count",
+        "updatedUtc": "2026-10-07T18:09:29Z",
+        "maxWrapperRetries": 0,
+        "providerCountPolicy": "Internal requests/retries unknown/null, never proxy with Agent turns. Legacy80/480/1unsupported; pinned unchanged transport defaults permitted inside finite process wall.",
+        "tokenPolicy": "Raw input/output totals, retrospective threshold/overshoot explicit; unknown tokens block later admission.",
+        "ledgerPolicy": "Profile transition preserves cumulative counters, attempts, unknowns and stops; no reset or new identity to refill.",
+        "previousSelectedProfile": {
+          "selectedUtc": "2026-10-07T15:00:51Z",
+          "source": "Scientist e4278c50ddc84daee3858e24c89e6cf5777b5dfe experiments/government-comparison/public/resource-proposal.json",
+          "status": "Ceilings selected; enforcement and live protocol freeze pending",
+          "taskWallSeconds": 1200,
+          "trialWallSeconds": 7200,
+          "taskActorCalls": 12,
+          "trialActorCalls": 72,
+          "taskProviderTurns": 80,
+          "trialProviderTurns": 480,
+          "taskProviderTokens": 120000,
+          "trialProviderTokens": 720000,
+          "maxParallelActors": 4,
+          "maxTransportRetriesPerCall": 1,
+          "maxSemanticRepairRoundsPerTask": 2,
+          "trialActiveHumanSeconds": 600,
+          "newPurchases": false,
+          "liveStudyApproved": false,
+          "scope": "One exploratory trial per six cells only after all readiness gates and final coordinator freeze; all setup, descendants, reviews, failures and model upkeep count"
+        },
+        "correctionSource": "Scientist021bdd7 public/s1-profile-correction-proposal.md; Overseer19:31 decision",
+        "measurementProfileId": "observed-native-usage-v2",
+        "measurementProfileSha256": "354c021a25adfbdd84d9768e5d51396e5b89dfc8be3e06de91d2c59eb9e9b51a"
+      }
+    }
+  ],
+  "nativeCaseStudyResourceProfile": {
+    "id": "native-codex-exploratory-v3",
+    "grantKey": "native-codex-exploratory-v3-20261008",
+    "taskWallSeconds": 1200,
+    "trialWallSeconds": 7200,
+    "taskActorActivations": 12,
+    "trialActorActivations": 72,
+    "maxParallelActors": 4,
+    "trialActiveHumanSeconds": 600,
+    "unknownUsageAdmission": "Allowed only inside separately finite actor/time quotas; unknown stays null, costs/compute comparisons limited.",
+    "liveStudyApproved": true,
+    "issuedUtc": "2026-10-08T21:26:29Z",
+    "notAfterUtc": "2026-10-09T15:26:29Z"
   }
 }
