@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T03:59:26Z",
+  "updatedUtc": "2026-10-08T04:13:46Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -428,23 +428,24 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:114",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:116",
       "lastObservedStatus": "active",
-      "activeTurn": "01a119a9-f99b-7f41-af47-816349b3db00",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac714fc46d08191b6ed20ffbf667679",
+      "activeTurn": "01a119b6-fb58-73a0-8c98-b8064ed719f6",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac71854ef748191b1ec6e6a6a403c35",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "government-check-receipt-identity-offline-20261008",
-      "latestProgress": "Offline receipt/config consumer correction active; Scientist confirms exact source contract, focused regression and independent review, no new execution or ledger change.",
+      "assignedMilestone": "government-check-receipt-native-20261008-r7",
+      "latestProgress": "R7 active: Scientist confirms new closed profile in shared chain, changed offline checks and independent preflight before once-only actual preparation/admission. No R7 runtime result yet.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "130fcd85c866e7643cdb7f5bcb844c8ccd2ec311",
-      "acceptance": "Qualified R6 terminal evidence accepted; native and outer Queue positive, R6 INCOMPLETE; no S1.",
+      "candidateSha": "18c9f907863044972511fb2403bcdb4eced95810",
+      "acceptance": "Qualified offline check-receipt contract correction accepted; actual Resume and S1 remain unproven.",
       "lastAssignment": {
-        "key": "government-check-receipt-identity-offline-20261008",
-        "authorizedUtc": "2026-10-08T03:56:48Z",
-        "status": "Sent once; delivery confirmed",
-        "scope": "Minimal native configured run[0] to GateResult.Tool identity correction at actual Resume admission consumer, isolated producer/consumer regressions and independent review.",
-        "sentUtc": "2026-10-08T03:58:52Z"
+        "key": "government-check-receipt-native-20261008-r7",
+        "authorizedUtc": "2026-10-08T04:10:48Z",
+        "status": "Sent once; conditional bounded R7 after independent preflight",
+        "scope": "One fresh finite Government Queue and strictly conditional associated Resume after corrected receipt consumer; no model/study grant.",
+        "sentUtc": "2026-10-08T04:13:04Z",
+        "activeConfirmed": true
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -2001,6 +2002,91 @@
           "explicitSlotReleaseUtc": "2026-10-08T03:48:44.689868+00:00",
           "claimBoundary": "Deterministic mechanics with real finite Go check and fixed protocol roles only. No native Resume, S1, semantic/AI quality, comparative outcome or human acceptance. Engineering/review usage unknown; six study cells still NOT RUN.",
           "preparationDisclosures": "Read-only evidence-preparation path and JSON BLOB serialization mistakes preserved; no experimental retry."
+        },
+        "governmentCheckReceiptOfflineAcceptance": {
+          "head": "18c9f907863044972511fb2403bcdb4eced95810",
+          "clean": true,
+          "manifestPlusPayload": 14,
+          "manifestSha256": "369909871d551c9631ed63f0c551823571b882c4bb4298a6866b895747fb9e73",
+          "protectedFiles": 3711,
+          "priorHandoffSuffixPreserved": true,
+          "externalPairs": 92,
+          "ledgerSha256": "c0a91051a16f5d2d3a7754789c2ad02b67b6b2f57f32ac4bd16562700b8fcf1a",
+          "pinnedNativeSources": 2,
+          "mismatches": 0,
+          "testsRerun": false,
+          "acceptedUtc": "2026-10-08T04:10:48Z",
+          "candidateSha": "18c9f907863044972511fb2403bcdb4eced95810",
+          "sourceSha": "9dbbb93eea895947f800b1354fe056ac5b4f08d8",
+          "baseSha": "130fcd85c866e7643cdb7f5bcb844c8ccd2ec311",
+          "independentReviewSha256": "db824adc65df423aeb1083caec41c1e2ee0697ca0bee953e511725a1b7ee7bc2",
+          "recordedFocusedTests": 13,
+          "focusedLogSha256": "4cd084af3497d67fc0eebc369d4e5eae8dbf56dc52284756d626fd3afc492c66",
+          "rootIndependentReviewer": "/root/r4_terminal_acceptance",
+          "rootReview": "No material blocker; expected identity matches native Check.Run[0]. Tests exercise real shared Resume consumer and real translator with isolated sealed-form copies; strict identity/count/duplicates/exit/timing/runtime/report/receipt/candidate/assent guards retained. No tests rerun.",
+          "claimBoundary": "Offline contract correction only; R6 INCOMPLETE, old freeze invalidated by corrected runtime consumer, no native Resume/S1/semantic/human claim.",
+          "newExperimentalConsumption": 0,
+          "rootVerificationCorrection": "Initial readonly preservation lookup used repository-relative paths instead of package-relative paths; corrected before acceptance, all checks passed. No source or experimental mutation."
+        },
+        "governmentCheckReceiptNativeGrant": {
+          "product": {
+            "name": "Government",
+            "sourceSha": "04e225d5caee78c2a198607143863fca1e829750",
+            "binarySha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f",
+            "delegateSha256": "e8b8e5087f994a975efc2228301cf7f51dee9de4d64b77077a0941db7a8e98b9"
+          },
+          "python": {
+            "path": "C:/Python313/python.exe",
+            "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+          },
+          "maxFreshCases": 1,
+          "maxNativeStarts": 2,
+          "maxWrapperAttempts": 6,
+          "maxDeterministicDelegates": 6,
+          "maxParallelRoles": 2,
+          "reservedSecondsPerNativeStart": 150,
+          "maxNewReservedSessionSeconds": 300,
+          "nativeProcessDeadlineSeconds": 38,
+          "controllerWindowSeconds": 38,
+          "historicalConsumed": {
+            "nativeStarts": 13,
+            "wrapperAttempts": 13,
+            "delegates": 10,
+            "reservedSessionSeconds": 1950
+          },
+          "cumulativeMaxNativeStarts": 15,
+          "cumulativeMaxWrapperAttempts": 19,
+          "cumulativeMaxDelegates": 16,
+          "cumulativeMaxReservedSessionSeconds": 2250,
+          "sequence": [
+            "one fresh Queue",
+            "only after complete positive native AND outer result, fresh actual checks, independent technical review, all required final assents and promotion: associated existing Resume/Replay verification"
+          ],
+          "stop": "First failed/incomplete/missing prerequisite/time or quota stop terminates case; no repair-and-run, retry, new case or residual quota reuse.",
+          "newModelProviderCalls": 0,
+          "metadataSessions": 0,
+          "studyCells": 0,
+          "classicNativeStarts": 0,
+          "fullProductSuites": 0,
+          "historicalRealUsage": {
+            "actorStarts": 5,
+            "knownTokenSubtotal": 53331,
+            "totalTokens": null
+          },
+          "key": "government-check-receipt-native-20261008-r7",
+          "authorizedUtc": "2026-10-08T04:10:48Z",
+          "status": "Active; Scientist slot assigned; execute only after offline preflight.",
+          "baseSha": "18c9f907863044972511fb2403bcdb4eced95810",
+          "prompt": "Overseer nimmt government-check-receipt-identity-offline-20261008 auf sauberem 18c9f907863044972511fb2403bcdb4eced95810 an, Quelle 9dbbb93eea895947f800b1354fe056ac5b4f08d8. Root bestätigte 13 Payloads plus Manifest gegen Git/Hashes, 3711 geschützte Altdateien, den erhaltenen Handoff-Suffix, 92 R6-Original/Kopie-Paare, unveränderten Liveledger und beide gepinnten nativen Quellkopien. Der gelesene Erstlauf meldet 13/13 gezielte Tests; Root wiederholte keine. Zusätzlicher unabhängiger Root-Review bestätigt echten Verbraucher/Translator ohne Mock, unveränderte strikte Bindungen und keinen wesentlichen Befund. Die Korrektur ist offline angenommen; Resume/S1 sind noch nicht nachgewiesen. R6 bleibt INCOMPLETE, R5 NOT ADMITTED, R4 incomplete, sämtliche Restquoten geschlossen.\n\nGenau ein neuer endlicher Grant government-check-receipt-native-20261008-r7 ist jetzt in threads[name=Scientist].evidence.governmentCheckReceiptNativeGrant dokumentiert. Der freie schwere Slot ist dir für R7 mit assignedUtc 2026-10-08T04:10:48Z ausdrücklich zugewiesen. Government bleibt auf Quelle04e225d5caee78c2a198607143863fca1e829750 / Binary12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f / Delegatee8b8e5087f994a975efc2228301cf7f51dee9de4d64b77077a0941db7a8e98b9 / vorhandenem Python313-Pin. Classic/P1-Stände bleiben unberührt.\n\nNutze die bestehende geteilte prepare/validate/freeze/run-once-Kette mit einem möglichst kleinen ausdrücklich geschlossenen R7-Profil. Keine vollständige Treiberkopie, generische neue Runnerplattform oder Produktänderung. Neuer Key, eigene Task-/Dispatchidentitäten, Marker und Request-/Authority-/Protocol-/Envelope-/Coordinator-/Quellbindungen; alte R5/R6-Profile und Belege dürfen nicht auf R7 umgedeutet werden. Nur betroffene Offline-Profil-/Zulassungsregressionen, Syntax und unabhängiger enger Vorabreview. Der jetzt geschlossene konkrete Checkübergang muss unter dem neuen Profil weiter die echte produktive Verbraucherfunktion nutzen; keine bekannten Vertragslücken durch Mocks überdecken. Bereits unverändert bestandene Suiten nicht erneut vollständig laufen lassen.\n\nDanach sauberer Quellcommit, genau eine frische statische Fall-/Requestvorbereitung und genau eine tatsächliche ausdrückliche Admission-/validate-Aktion samt dauerhaftem Attempt/Receipt. Wie für R6-a1 zählt die eine Admissionaktion; verpflichtende reine Authority.validate(raw)-Wiedervalidierungen desselben unveränderten eingefrorenen Requests unmittelbar vor Queue/Resume sind keine neuen Admissionversuche, bleiben aber strikt erhalten. Sie erzeugen/reparieren selbst keine Eingaben und reservieren/starten nichts. Jeder negative Befund stoppt terminal, kein zweiter Admissionversuch. Nur bei erfolgreicher Admission einen frischen unveränderlichen Freeze mit finalem Coordinatorstand nach dieser Nachricht herstellen. Der alte R6-Freeze ist unbrauchbar für korrigierte Bytes und wird weder wiederverwendet noch neu bewertet.\n\nGenau eine neue native Queue. Nur nach vollständig positivem nativen UND äußeren Abschluss mit echten frischen Checks, unveränderten vollständigen Identitäts-/Scope-/Kandidaten-/Evidenz-/Mandats-/Rundenbindungen, unabhängigem technischem Review, expliziter finaler Zustimmung jedes ausgewählten Ressorts und Promotion genau die bestehende zugehörige Resume-/Replayprüfung. Ein Prozess-Exit0 genügt nicht. Kein zusätzlicher künstlicher Unterbrechungsfall, keine zweite Queue.\n\nGrenzen für R7: ein Fall, eine tatsächliche Admissionaktion, höchstens zwei native Starts, sechs Wrapperversuche einschließlich Fehlern, sechs deterministische Delegates, Rollenparallelität höchstens zwei. Je nativem Start150 reservierte Sekunden, insgesamt höchstens300neu. Native Prozess- und Controllerfrist jeweils38Sekunden einschließlich Cleanup; tatsächliche Abschlusszeit nach verfügbarer terminaler Receipt und Cleanup getrennt messen. Fehlender/zu später Abschluss ist nicht positiv. Historie13native/13wrapper/10delegates/1950reserved bleibt, kumulative Obergrenzen15/19/16/2250. Historische fünf reale Actorstarts, bekannte Tokens53331 und unbekannte Gesamtusage unverändert; Engineering-/Reviewusage nur als gemessen angeben, sonst unbekannt.\n\nAktiver exakter Livegrant und ausdrücklich passende Scientist/R7-Slot-Zuweisungszeit sowie alle eingefrorenen Pins sind vor Reservierung und jedem Start Pflicht. Kein automatischer Rückgriff auf alte Grants. Erste tatsächliche Ablehnung, fehlende Voraussetzung, negatives/unvollständiges Ergebnis oder Frist-/Quotenstopp beendet den Fall. Kein Reparatur/Nachstart, Retry, neuer Fall oder Restquotennutzung; kein automatischer weiterer Diagnoseblock. Nach positivem Queue+Resume ebenfalls terminal beenden.\n\nNull neue reale Actor-/Modell-/Provider-/Metadatensitzungen, Studienzellen, Classic-Wiederholungen, volle Produktsuiten, P1-Übernahmen, Produktreparaturen oder Veröffentlichung. Deterministische Rollen bleiben Mechaniknachweis; sechs Basiszellen und echte gemeinsame Toolfähigkeit sind weiterhin offen.\n\nAktuellen kurzen R7-Fortsetzungsanker im Handoff pflegen und alte Geschichte erhalten. Abschluss mit tatsächlichem sauberem SHA, endlichen Rohbelegen, neuer/kumulativer Bilanz, unverändertem historischen Ledgerpräfix, unabhängigem Nachreview und ausdrücklicher Slotfreigabe. Neue Blockade sofort konkret melden; ansonsten bis zu dieser endlichen Übergabe weiterarbeiten. Genau eine direkte Abschluss-/Bedarfsmeldung an Overseer gemäß Nutzerautorisierung, keine Empfangsbestätigung oder Meldeschleife.",
+          "maxActualInputValidations": 1,
+          "maxFreshStaticCasePreparations": 1,
+          "nativeEntryGate": "Clean narrow successor profile, focused changed-path tests and independent preflight review, one successful actual admission action, fresh immutable pins/freeze, live exact R7 grant and explicitly assigned Scientist/R7 slot/time before every reservation/start. Closed R6/R5/R4 cannot admit.",
+          "implementationBoundary": "Minimal closed R7 profile in existing shared driver; no copied runner/general platform. Exact config run[0]/GateResult.Tool consumer contract; other strict native and outer acceptance gates unchanged.",
+          "timingEvidenceBoundary": "Measure actual completion after terminal receipt availability plus cleanup, not only pre-finalization timestamp. Missing/late completion is nonpositive; no broad watchdog redesign.",
+          "slotAssignedUtc": "2026-10-08T04:10:48Z",
+          "remainingQuotaReusable": false,
+          "admissionCounterDefinition": "Exactly one explicit actual admission/validate action for the one fresh Request with durable attempt/receipt. Mandatory pure Authority.validate(raw) rechecks of that same unchanged frozen Request immediately before Queue/Resume do not count as new admission attempts; no side effects or gate weakening, any negative stops.",
+          "sentUtc": "2026-10-08T04:13:04Z"
         }
       },
       "classicHandoffReceived": true,
@@ -2127,8 +2213,17 @@
           "key": "government-check-receipt-identity-offline-20261008",
           "authorizedUtc": "2026-10-08T03:56:48Z",
           "sentUtc": "2026-10-08T03:58:52Z",
-          "status": "Sent once; delivery confirmed",
-          "scope": "Minimal native configured run[0] to GateResult.Tool identity correction at actual Resume admission consumer, isolated producer/consumer regressions and independent review."
+          "status": "Completed and qualified offline acceptance; no experimental execution",
+          "scope": "Minimal native configured run[0] to GateResult.Tool identity correction at actual Resume admission consumer, isolated producer/consumer regressions and independent review.",
+          "acceptedUtc": "2026-10-08T04:10:48Z"
+        },
+        {
+          "key": "government-check-receipt-native-20261008-r7",
+          "authorizedUtc": "2026-10-08T04:10:48Z",
+          "status": "Sent once; conditional bounded R7 after independent preflight",
+          "scope": "One fresh finite Government Queue and strictly conditional associated Resume after corrected receipt consumer; no model/study grant.",
+          "promptRecord": "evidence.governmentCheckReceiptNativeGrant",
+          "sentUtc": "2026-10-08T04:13:04Z"
         }
       ],
       "offlineAdapterContractAssignment": {
@@ -2232,7 +2327,7 @@
       "governmentCheckReceiptOfflineAssignment": {
         "key": "government-check-receipt-identity-offline-20261008",
         "authorizedUtc": "2026-10-08T03:56:48Z",
-        "status": "Sent once; delivery confirmed",
+        "status": "Completed and qualified offline acceptance; no experimental execution",
         "baseSha": "130fcd85c866e7643cdb7f5bcb844c8ccd2ec311",
         "prompt": "Overseer nimmt deinen sauberen R6-Abschluss 130fcd85c866e7643cdb7f5bcb844c8ccd2ec311 qualifiziert an: native UND äußere Queue positiv; der gesamte Fall bleibt endgültig INCOMPLETE, weil Resume vor Reservierung und Prozessstart abgewiesen wurde. Root bestätigte 170 Manifest-/Payloaddateien gegen Hash/Git, 55 Freeze-Eingaben, 92 externe Original/Kopie-Paare, 3544 unveränderte historische Dateien plus den erhaltenen Handoff-Suffix sowie alle alten SQLite-Zeilen und genau eine neue Queue-Zeile. Unabhängiger Root-Code-/Vertragsreview bestätigt die Ursache. R6 ist geschlossen, alle Restquoten verfallen. Deine ausdrückliche Slotfreigabe vom 08.10.03:48:44.689868Z ist angenommen, der Slot ist frei. Kumulativ 13 native Starts / 13 Wrapper / 10 deterministische Delegates / 1950 reservierte Sekunden; fünf historische reale Actorstarts, 53331 bekannte Tokens und unbekannter Gesamtverbrauch bleiben erhalten. Kein S1-/Studienabschluss.\n\nGenau ein neuer OFFLINE-Auftrag: government-check-receipt-identity-offline-20261008, ausgehend vom genannten sauberen Stand. Korrigiere minimal den tatsächlichen Resume-Zulassungsverbraucher _validate_r4_fresh_check_receipts in runtime/native_fixture_budget.py. Die eingefrorene Konfiguration enthält name und run:[\"go\",\"test\",\"./inventory\",\"-count=1\"], kein tool. Die gepinnte native Quelle 04e225d übernimmt für GateResult.Tool genau Check.Run[0]. Der Verbraucher erwartet fälschlich item.get(\"tool\"). Leite die erwartete Werkzeugidentität aus dem gültigen nichtleeren run-Array gemäß genau diesem Quellvertrag ab. Keine neue alternative Grammatik oder pauschaler toleranter Fallback. Exakte Namens-/Werkzeugmenge, Anzahl, Duplikatschutz, Exit-/Zeitprüfung und sämtliche Runtime-/Report-/Receipt-/Kandidaten-/Evidenz-/Scope-/Review-/finalen Ressortbindungen bleiben erhalten. Prüfe nur die direkt betroffenen benachbarten Verbraucher; keine Plattform oder neue Treiberkopie.\n\nRegressionen sollen die echte produktive Verbraucherfunktion mit den tatsächlichen versiegelten R6-Konfigurations- und GateResult-Formen durchlaufen, einschließlich des Aufrufübergangs zum Resume-Gate soweit rein offline möglich. Den betroffenen Verbraucher nicht durch Mock ersetzen. Positive Zuordnung und aussagekräftige negative Varianten für falschen Namen/Werkzeug, fehlende/zusätzliche/doppelte Checks, nichtnull Exit, ungültige Eingabeform und ungültige/überschrittene Zeitgrenzen. Verwende isolierte Testkopien; alte Rohbelege bleiben unverändert und werden nicht neu bewertet. Nur betroffene fokussierte Tests und unabhängiger enger Review, keine redundante Produktsuite. Vorhandene erfolgreiche Nachbarprüfungen nicht ohne relevante Änderung wiederholen.\n\nNull neue tatsächliche Fallvorbereitungen, Admissionaktionen, Freeze- oder Laufversuche, native/Controller-/Wrapper-/Delegate-/Modell-/Provider-/Metadatenstarts, Studienzellen oder Änderungen am Liveledger. Lokale Python-Regressionen, Quell-/Dateiarbeit und Git sind zulässige Offline-Entwicklung, keine experimentelle Laufquote. Produktpins einschließlich Government 04e225d und Classic c91363b bleiben unverändert. Keine Produktreparatur oder P1-Übernahme.\n\nAbschluss: sauberer kleiner Quellcommit und Delivery-SHA, Quelldiff, fokussierte Prüfnachweise, unabhängiger Review, Grenzen und additive Verbrauchsbilanz. Ergänze im aktiven Handoff oben einen kurzen aktuellen Fortsetzungsanker und bewahre die ältere Geschichte. Der korrigierte Consumer ist in R6 runtimeFiles gepinnt: Änderungen daran machen den alten Freeze unpassend. R6 daher nicht mit geänderten Bytes replayen oder als erfolgreich umdeuten. Eine spätere frische endliche Ausführung kann erst nach Abnahme und eigenem Grant folgen; jetzt keine neue Laufprofilentwicklung oder Vorbereitung.\n\nArbeite bis zu dieser begrenzten Übergabe weiter und melde Abschluss oder konkrete Blockade genau einmal direkt an Overseer gemäß Nutzerautorisierung. Keine reine Empfangsbestätigung oder Meldeschleife.",
         "scope": "Minimal native configured run[0] to GateResult.Tool identity correction at actual Resume admission consumer, isolated producer/consumer regressions and independent review.",
@@ -2249,7 +2344,8 @@
         "fullProductSuites": 0,
         "exitCondition": "Clean source-bound small correction, actual consumer regression and independent review, preserved sealed R6/raw/history/ledger, once-only callback.",
         "sentUtc": "2026-10-08T03:58:52Z",
-        "activeConfirmed": true
+        "activeConfirmed": true,
+        "acceptedUtc": "2026-10-08T04:10:48Z"
       }
     },
     {
@@ -2640,7 +2736,7 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Await Scientist direct offline check-receipt correction completion or need callback; no experimental runtime/model/study grant. Others hold; quiet two-hour fallback.",
+  "nextAction": "Await fresh R7 direct terminal/need callback; no real Actor/model/study grant. Exact slot and preflight/freeze required; quiet two-hour fallback.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -2650,12 +2746,12 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T03:56:48Z",
-    "evidenceLevel": "Root source/hash/Git/freeze/archive/readonly ledger verification plus independent narrow native contract review; no tests or experimental runs repeated.",
+    "reviewedUtc": "2026-10-08T04:10:48Z",
+    "evidenceLevel": "Exact clean source, 14 hash/Git-bound files, 3711 protected historical blobs, 92 external pairs, native source copies, ledger readback, test log and two independent source reviews. Root reran no tests.",
     "coordinationActions": [
-      "Accept qualified positive Queue and terminal INCOMPLETE R6.",
-      "Close R6 residual quota, verify explicit slot release.",
-      "Authorize exactly one narrow offline receipt/config correction; other owners held."
+      "Accepted narrow offline receipt correction.",
+      "Authorized exactly one fresh bounded R7 case and allocated free slot; closed grants preserved.",
+      "Other owners held; no model or study grant."
     ],
     "userDecisionRequired": false
   },
@@ -2851,11 +2947,10 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": null,
-    "key": null,
-    "status": "Free after explicit R6 terminal release; offline correction needs no runtime slot.",
-    "releasedUtc": "2026-10-08T03:48:44.689868+00:00",
-    "releaseVerifiedUtc": "2026-10-08T03:56:48Z",
+    "owner": "Scientist",
+    "key": "government-check-receipt-native-20261008-r7",
+    "status": "Explicitly assigned for one bounded R7 case after independent offline preflight and successful one-shot admission.",
+    "assignedUtc": "2026-10-08T04:10:48Z",
     "queue": []
   },
   "contextSmokePreparation": {
@@ -3132,6 +3227,14 @@
       "queue": [],
       "releasedUtc": "2026-10-08T03:48:44.689868+00:00",
       "releaseVerifiedUtc": "2026-10-08T03:56:48Z"
+    },
+    {
+      "owner": "Scientist",
+      "key": "government-check-receipt-native-20261008-r7",
+      "status": "Explicitly assigned for one bounded R7 case after independent offline preflight and successful one-shot admission.",
+      "assignedUtc": "2026-10-08T04:10:48Z",
+      "queue": [],
+      "releaseCondition": "Terminal R7 case with receipts and explicit release, or failed preflight with explicit release; no residual quota reuse."
     }
   ],
   "smokeAttemptCountingDecision": {
