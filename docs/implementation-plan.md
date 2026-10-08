@@ -258,6 +258,15 @@ The published patch corrects copied resource prose whose relative links broke wh
 
 ## Later product options
 
+### Knowledge graph and Markdown authoring assessment
+
+Recorded from the owner discussion on 2026-10-08 for later assessment on the active Classic product line. These are open product questions, not an adopted model expansion or format migration.
+
+- **Knowledge-graph goal.** Assess Markitect as a versioned, typed knowledge graph for project-selected engineering intent, requirements, decisions, procedures and their explicit relationships. Reconcile this goal with the existing [vision](vision.md), [operating methodology](operating-methodology.md) and opaque artifact boundary before proposing changes. Identify concrete knowledge questions and missing modelling capabilities, including whether claims, supporting evidence, scope, provenance and acceptance need explicit representation. Compare the current model with RDF/SHACL, SKOS and OWL where those questions justify them; distinguish structural validation, logical inference and natural-language semantic review. Preserve explicit dependencies, deterministic checks, fixed-snapshot evidence and human acceptance boundaries. A richer vocabulary alone is not evidence of product benefit.
+- **Markdown with YAML frontmatter.** Evaluate Markdown prose with typed YAML frontmatter as a canonical authoring alternative to current YAML resources with embedded prose. Compare readability, authoring and review effort, tooling, strict parsing, identity/reference handling, source-relative links, context and impact, and projection fidelity on identical representative content. Define compatibility, migration and one canonical owner per resource before implementation. Existing ordinary Markdown inputs and generated Markdown views are distinct from this proposal; prose links must not become inferred graph dependencies.
+
+Exit: record a source-grounded comparison, representative authoring results, costs and limitations, and an explicit owner decision to retain, extend or replace the relevant model/authoring contract. This backlog entry changes no supported syntax, Core semantics, release commitment or acceptance claim.
+
 Current source adds a neutral [onboarding exercise](onboarding.md), its replay in Windows CI, and structural fixture checks on both supported platforms. [WinGet distribution](winget.md) records the submitted v0.5.0 portable manifests and local installation/upgrade checks; submission is distinct from publication in Microsoft's catalog. The [MCP evaluation](mcp-evaluation.md) records the concluded bounded assessment, the decision to keep MCP experimental, and the deferred second-client criterion. The MCP prototype remains experimental and is excluded from published CLI binaries.
 
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
