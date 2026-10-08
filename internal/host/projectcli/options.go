@@ -10,6 +10,10 @@ import (
 type options struct {
 	action, repo, revision, base  string
 	name, manager, goal           string
+	provider, model, effort       string
+	toolRoot, providerExecutable  string
+	inputMicros, outputMicros     string
+	maxCost, since                string
 	sourceRepo                    string
 	input, request                string
 	output                        string
@@ -17,7 +21,7 @@ type options struct {
 	plan, run, candidate          string
 	expect, branch, head, tree    string
 	managers                      []string
-	write, help                   bool
+	write, help, generate         bool
 }
 
 type actionSpec struct {
@@ -36,14 +40,16 @@ var actionSpecs = map[string]actionSpec{
 	"document": {usage: "document --repo PATH [--revision COMMIT] [--write]", flags: []string{"repo", "revision", "write"}, required: []string{"repo"}, write: true},
 	"edit":     {usage: "edit --repo PATH --input MUTATION.json [--revision COMMIT] [--expect PLAN_DIGEST --write]", flags: []string{"repo", "revision", "input", "expect", "write"}, required: []string{"repo", "input"}, write: true},
 	"discover": {usage: "discover --repo PATH --request DISCOVERY-REQUEST.json [--output DISCOVERY.json]", flags: []string{"repo", "request", "output"}, required: []string{"repo", "request"}},
-	"distill":  {usage: "distill --repo PATH --discovery DISCOVERY.json --report DISTILLATION.json [--output VALIDATED-DISTILLATION.json]", flags: []string{"repo", "discovery", "report", "output"}, required: []string{"repo", "discovery", "report"}},
+	"distill":  {usage: "distill --repo PATH --discovery DISCOVERY.json --report DISTILLATION.json [--output VALIDATED-DISTILLATION.json] | distill --repo PATH --discovery DISCOVERY.json --generate --write --output DISTILLATION.json --input-micros-per-million N --output-micros-per-million N --max-cost-micros N", flags: []string{"repo", "discovery", "report", "output", "generate", "write", "input-micros-per-million", "output-micros-per-million", "max-cost-micros"}, required: []string{"repo", "discovery"}, write: true},
 	"adopt":    {usage: "adopt --repo TARGET --source-repo SOURCE --revision TARGET_COMMIT --discovery DISCOVERY.json --report DISTILLATION.json --resolution RESOLUTION.json [--output PLAN.json] [--plan PLAN.json --expect PLAN_DIGEST --write]", flags: []string{"repo", "source-repo", "revision", "discovery", "report", "resolution", "plan", "output", "expect", "write"}, required: []string{"repo", "source-repo", "revision", "discovery", "report", "resolution"}, write: true},
-	"plan":     {usage: "plan --repo PATH --goal TEXT [--manager ID ...] [--revision COMMIT] [--write]", flags: []string{"repo", "goal", "manager", "revision", "write"}, required: []string{"repo", "goal"}, write: true},
+	"plan":     {usage: "plan --repo PATH --goal TEXT [--manager ID ...] [--revision COMMIT] [--since OLD_COMMIT] [--write]", flags: []string{"repo", "goal", "manager", "revision", "since", "write"}, required: []string{"repo", "goal"}, write: true},
 	"run":      {usage: "run --repo PATH --plan PLAN_ID --write", flags: []string{"repo", "plan", "write"}, required: []string{"repo", "plan", "write"}, write: true},
 	"resume":   {usage: "resume --repo PATH --run RUN_ID --write", flags: []string{"repo", "run", "write"}, required: []string{"repo", "run", "write"}, write: true},
 	"status":   {usage: "status --repo PATH --run RUN_ID", flags: []string{"repo", "run"}, required: []string{"repo", "run"}},
 	"verify":   {usage: "verify --repo PATH --run RUN_ID --write", flags: []string{"repo", "run", "write"}, required: []string{"repo", "run", "write"}, write: true},
 	"apply":    {usage: "apply --repo PATH --plan PLAN_ID --run RUN_ID --candidate ID [--branch BRANCH --head COMMIT --worktree DIGEST --expect VERIFY_DIGEST --write]", flags: []string{"repo", "plan", "run", "candidate", "branch", "head", "worktree", "expect", "write"}, required: []string{"repo", "plan", "run", "candidate"}, write: true},
+	"setup":    {usage: "setup --repo PATH --tool-root MARKITECT_SOURCE --provider codex|claude --model MODEL [--effort high] --input-micros-per-million N --output-micros-per-million N --max-cost-micros N [--provider-executable PATH] [--expect EDIT_DIGEST --write]", flags: []string{"repo", "tool-root", "provider", "model", "effort", "provider-executable", "input-micros-per-million", "output-micros-per-million", "max-cost-micros", "expect", "write"}, required: []string{"repo", "tool-root", "provider", "model", "input-micros-per-million", "output-micros-per-million", "max-cost-micros"}, write: true},
+	"doctor":   {usage: "doctor --repo PATH --tool-root MARKITECT_SOURCE --provider codex|claude [--provider-executable PATH]", flags: []string{"repo", "tool-root", "provider", "provider-executable"}, required: []string{"repo", "tool-root", "provider"}},
 }
 
 func parse(args []string, errout io.Writer) (options, bool, error) {
@@ -69,7 +75,7 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	values := map[string]*string{}
 	for _, name := range spec.flags {
 		switch name {
-		case "write":
+		case "write", "generate":
 			continue
 		case "manager":
 			continue
@@ -84,6 +90,10 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	write := false
 	if contains(spec.flags, "write") {
 		fs.BoolVar(&write, "write", false, "apply the already-authorized, reviewed operation")
+	}
+	generate := false
+	if contains(spec.flags, "generate") {
+		fs.BoolVar(&generate, "generate", false, "generate one agent-assisted report using the configured runtime")
 	}
 	help := false
 	fs.BoolVar(&help, "help", false, "show action usage")
@@ -106,6 +116,9 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	seen := map[string]bool{}
 	fs.Visit(func(f *flag.Flag) { seen[f.Name] = true })
 	for _, required := range spec.required {
+		if action == "distill" && required == "report" && generate {
+			continue
+		}
 		if required == "write" {
 			if !write {
 				return options{}, false, fmt.Errorf("project %s requires --write", action)
@@ -122,8 +135,36 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 			return options{}, false, fmt.Errorf("project %s requires --%s", action, required)
 		}
 	}
+	if action == "distill" {
+		if generate {
+			if !write {
+				return options{}, false, errors.New("project distill --generate requires --write to invoke the configured agent")
+			}
+			if *values["report"] != "" {
+				return options{}, false, errors.New("project distill --generate cannot be combined with --report")
+			}
+			for _, name := range []string{"output", "input-micros-per-million", "output-micros-per-million", "max-cost-micros"} {
+				if !seen[name] || *values[name] == "" {
+					return options{}, false, fmt.Errorf("project distill --generate requires --%s", name)
+				}
+			}
+		} else {
+			if write {
+				return options{}, false, errors.New("project distill --write is valid only with --generate")
+			}
+			if *values["report"] == "" {
+				return options{}, false, errors.New("project distill requires --report unless --generate is used")
+			}
+		}
+	}
 	if (action == "edit" || action == "adopt") && write && *values["expect"] == "" {
 		return options{}, false, fmt.Errorf("project %s --write requires --expect with the reviewed plan digest", action)
+	}
+	if action == "setup" && write && *values["expect"] == "" {
+		return options{}, false, errors.New("project setup --write requires --expect with the exact runtime edit plan digest")
+	}
+	if action == "setup" && !write && seen["expect"] {
+		return options{}, false, errors.New("project setup --expect is valid only together with --write")
 	}
 	if action == "adopt" && write && *values["plan"] == "" {
 		return options{}, false, errors.New("project adopt --write requires --plan with the exact reviewed adoption plan")
@@ -140,7 +181,7 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 			}
 		}
 	}
-	o := options{action: action, write: write, managers: append([]string(nil), managers...)}
+	o := options{action: action, write: write, generate: generate, managers: append([]string(nil), managers...)}
 	if len(managers) > 0 {
 		o.manager = managers[0]
 	}
@@ -155,6 +196,15 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	assign("base", &o.base)
 	assign("name", &o.name)
 	assign("goal", &o.goal)
+	assign("provider", &o.provider)
+	assign("model", &o.model)
+	assign("effort", &o.effort)
+	assign("tool-root", &o.toolRoot)
+	assign("provider-executable", &o.providerExecutable)
+	assign("input-micros-per-million", &o.inputMicros)
+	assign("output-micros-per-million", &o.outputMicros)
+	assign("max-cost-micros", &o.maxCost)
+	assign("since", &o.since)
 	assign("input", &o.input)
 	assign("request", &o.request)
 	assign("output", &o.output)

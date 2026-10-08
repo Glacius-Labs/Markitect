@@ -1,0 +1,434 @@
+// Package projectsetup builds a deterministic, project-local agent runtime
+// proposal. It discovers and fingerprints tools but never starts an agent.
+package projectsetup
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"regexp"
+	"runtime"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectrun"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
+	"go.yaml.in/yaml/v3"
+)
+
+const (
+	DefaultTimeout       = 5 * time.Minute
+	DefaultMaxStdout     = 4 << 20
+	DefaultMaxStderr     = 1 << 20
+	DefaultMaxDepth      = 8
+	DefaultMaxStarts     = 24
+	DefaultMaxRunTime    = 45 * time.Minute
+	DefaultMaxFileBytes  = 1 << 20
+	DefaultMaxTotalBytes = 8 << 20
+)
+
+type Options struct {
+	Provider               string
+	Model                  string
+	Effort                 string
+	ToolRoot               string
+	ProviderExecutable     string
+	InputMicrosPerMillion  int64
+	OutputMicrosPerMillion int64
+	MaxCostMicros          int64
+}
+
+type Tool struct {
+	Path    string `json:"path"`
+	Version string `json:"version"`
+	Digest  string `json:"digest"`
+	Mode    string `json:"mode"`
+}
+
+type Discovery struct {
+	Provider           string `json:"provider"`
+	ProviderBinary     Tool   `json:"providerBinary"`
+	Python             Tool   `json:"python"`
+	Adapter            Tool   `json:"adapter"`
+	Authentication     string `json:"authentication"`
+	AuthenticationNote string `json:"authenticationNote"`
+}
+
+type Preview struct {
+	APIVersion   string               `json:"apiVersion"`
+	Discovery    Discovery            `json:"discovery"`
+	PricingBasis string               `json:"pricingBasis"`
+	Mutation     projectwork.Mutation `json:"mutation"`
+	EditPlan     projectwork.EditPlan `json:"editPlan"`
+}
+
+type Check struct {
+	Name   string `json:"name"`
+	Status string `json:"status"`
+	Detail string `json:"detail,omitempty"`
+}
+
+type DoctorReport struct {
+	APIVersion     string  `json:"apiVersion"`
+	Provider       string  `json:"provider"`
+	Authentication string  `json:"authentication"`
+	Checks         []Check `json:"checks"`
+}
+
+var versionPattern = regexp.MustCompile(`(?i)(?:^|[^0-9])v?([0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?)`)
+
+func PreviewEdit(project *projectwork.Project, options Options) (Preview, error) {
+	var result Preview
+	if project == nil {
+		return result, errors.New("active project is required")
+	}
+	discovery, err := Discover(options)
+	if err != nil {
+		return result, err
+	}
+	runtimeConfig, err := BuildRuntime(project, options, discovery)
+	if err != nil {
+		return result, err
+	}
+	content, err := yaml.Marshal(runtimeConfig)
+	if err != nil {
+		return result, fmt.Errorf("encode runtime proposal: %w", err)
+	}
+	mutation := projectwork.Mutation{
+		APIVersion: projectwork.APIVersion,
+		BaseDigest: project.Digest,
+		Actor:      projectwork.HumanActor,
+		Goal:       "Configure the project-local agent runtime from explicitly selected local tools",
+		Files:      []projectwork.FileChange{{Path: projectwork.RuntimePath, Content: string(content)}},
+	}
+	plan, err := projectwork.PlanEdit(project, mutation)
+	if err != nil {
+		return result, fmt.Errorf("validate runtime edit proposal: %w", err)
+	}
+	return Preview{
+		APIVersion:   "markitect.example.org/project-setup/v1alpha1",
+		Discovery:    discovery,
+		PricingBasis: "Caller-supplied budget estimate; not a provider price quote, invoice, or hard billing cap.",
+		Mutation:     mutation, EditPlan: plan,
+	}, nil
+}
+
+func BuildRuntime(project *projectwork.Project, options Options, found Discovery) (projectrun.Runtime, error) {
+	var config projectrun.Runtime
+	if project == nil || len(project.Report.Managers) == 0 {
+		return config, errors.New("active project must contain at least one Manager")
+	}
+	if options.Provider != "codex" && options.Provider != "claude" {
+		return config, errors.New("provider must be codex or claude")
+	}
+	if strings.TrimSpace(options.Model) == "" || options.Model != strings.TrimSpace(options.Model) {
+		return config, errors.New("model must be nonempty and have no surrounding whitespace")
+	}
+	if options.Effort == "" {
+		options.Effort = "high"
+	}
+	if options.Effort != "high" {
+		return config, errors.New("setup currently supports only --effort high")
+	}
+	if options.InputMicrosPerMillion < 0 || options.OutputMicrosPerMillion < 0 ||
+		(options.InputMicrosPerMillion == 0 && options.OutputMicrosPerMillion == 0) || options.MaxCostMicros <= 0 {
+		return config, errors.New("explicit nonnegative input/output rates and a positive max-cost-micros budget are required")
+	}
+	if found.Provider != options.Provider || found.ProviderBinary.Path == "" || found.Python.Path == "" || found.Adapter.Path == "" {
+		return config, errors.New("tool discovery does not match the selected provider")
+	}
+	args := []string{found.Adapter.Path, "--model", options.Model}
+	modelOptions := map[string]string{}
+	if options.Provider == "codex" {
+		args = append(args, "--codex-executable", found.ProviderBinary.Path, "--codex-version", found.ProviderBinary.Version)
+		modelOptions["model_reasoning_effort"] = options.Effort
+	} else {
+		args = append(args, "--claude-executable", found.ProviderBinary.Path, "--claude-version", found.ProviderBinary.Version)
+		modelOptions["effort"] = options.Effort
+	}
+	files := []agentexec.RuntimeFile{runtimeFile(found.Python), runtimeFile(found.Adapter), runtimeFile(found.ProviderBinary)}
+	environment := []string{"PATH", "TEMP", "TMP"}
+	if runtime.GOOS == "windows" {
+		environment = append(environment, "SystemRoot")
+	}
+	pricing := projectrun.Pricing{InputMicrosPerMillion: options.InputMicrosPerMillion, OutputMicrosPerMillion: options.OutputMicrosPerMillion}
+	agents := make(map[string]projectrun.Agent, len(project.Report.Managers))
+	for _, manager := range project.Report.Managers {
+		if manager.ID == "" {
+			return config, errors.New("active project has a Manager with an empty ID")
+		}
+		agents[manager.ID] = projectrun.Agent{
+			Command: found.Python.Path, Args: append([]string(nil), args...), Model: options.Model,
+			ModelOptions: modelOptions, ProviderVersion: found.ProviderBinary.Version,
+			Timeout: projectrun.Duration(DefaultTimeout), MaxStdoutBytes: DefaultMaxStdout, MaxStderrBytes: DefaultMaxStderr,
+			RuntimeFiles: append([]agentexec.RuntimeFile(nil), files...), Environment: append([]string(nil), environment...), Pricing: pricing,
+		}
+	}
+	config = projectrun.Runtime{
+		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal, RequireIsolation: false,
+		Agents: agents,
+		Limits: projectrun.Limits{
+			MaxDepth: DefaultMaxDepth, MaxStarts: DefaultMaxStarts, MaxRetries: 0, MaxParallel: 1,
+			MaxDuration: projectrun.Duration(DefaultMaxRunTime), MaxCostMicros: options.MaxCostMicros,
+			MaxCandidateFileBytes: DefaultMaxFileBytes, MaxCandidateBytes: DefaultMaxTotalBytes,
+		},
+	}
+	if err := projectrun.ValidateRuntime(config); err != nil {
+		return projectrun.Runtime{}, fmt.Errorf("validate generated runtime: %w", err)
+	}
+	for _, agent := range agents {
+		agentConfig, err := agent.AgentConfig()
+		if err != nil {
+			return projectrun.Runtime{}, err
+		}
+		if _, err := agentexec.Fingerprint(agentConfig); err != nil {
+			return projectrun.Runtime{}, fmt.Errorf("validate selected runtime fingerprints: %w", err)
+		}
+	}
+	return config, nil
+}
+
+// Doctor performs local prerequisite checks without reading provider
+// credentials or invoking login/status commands.
+func Doctor(project *projectwork.Project, options Options) (DoctorReport, error) {
+	result := DoctorReport{APIVersion: "markitect.example.org/project-doctor/v1alpha1", Provider: options.Provider, Authentication: "not-verified"}
+	if project == nil {
+		return result, errors.New("active project is required")
+	}
+	discovery, err := Discover(options)
+	if err != nil {
+		return result, err
+	}
+	result.Checks = append(result.Checks,
+		Check{Name: "provider-native-binary", Status: "available", Detail: discovery.ProviderBinary.Path + " (" + discovery.ProviderBinary.Version + ")"},
+		Check{Name: "python", Status: "available", Detail: discovery.Python.Path + " (" + discovery.Python.Version + ")"},
+		Check{Name: "adapter", Status: "pinned", Detail: discovery.Adapter.Path + " " + discovery.Adapter.Digest},
+		Check{Name: "provider-authentication", Status: "not-verified", Detail: "No login-status probe or credential/config read was performed."},
+	)
+	for _, check := range project.Report.Checks {
+		if len(check.Command) == 0 {
+			result.Checks = append(result.Checks, Check{Name: "declared-check:" + check.ID, Status: "missing", Detail: "check has no executable argv"})
+			continue
+		}
+		if _, err := exec.LookPath(check.Command[0]); err != nil {
+			result.Checks = append(result.Checks, Check{Name: "declared-check:" + check.ID, Status: "missing", Detail: "declared check executable is not on PATH: " + check.Command[0]})
+		} else {
+			result.Checks = append(result.Checks, Check{Name: "declared-check:" + check.ID, Status: "available", Detail: check.Command[0]})
+		}
+	}
+	branchCmd := exec.Command("git", "-C", project.Root, "branch", "--show-current")
+	branch, branchErr := branchCmd.Output()
+	if branchErr != nil || strings.TrimSpace(string(branch)) == "" {
+		result.Checks = append(result.Checks, Check{Name: "feature-branch", Status: "blocked", Detail: "repository is not on a named branch"})
+	} else if strings.EqualFold(strings.TrimSpace(string(branch)), "main") || strings.EqualFold(strings.TrimSpace(string(branch)), "master") {
+		result.Checks = append(result.Checks, Check{Name: "feature-branch", Status: "blocked", Detail: "select a non-protected feature branch before applying edits"})
+	} else {
+		result.Checks = append(result.Checks, Check{Name: "feature-branch", Status: "ready", Detail: strings.TrimSpace(string(branch))})
+	}
+	sort.Slice(result.Checks, func(i, j int) bool { return result.Checks[i].Name < result.Checks[j].Name })
+	return result, nil
+}
+
+func runtimeFile(tool Tool) agentexec.RuntimeFile {
+	return agentexec.RuntimeFile{Path: tool.Path, Mode: tool.Mode, Digest: tool.Digest}
+}
+
+// Discover identifies direct native executables and exact source adapters. It
+// invokes only --version; it never checks login state or reads provider config.
+func Discover(options Options) (Discovery, error) {
+	var result Discovery
+	if options.Provider != "codex" && options.Provider != "claude" {
+		return result, errors.New("provider must be codex or claude")
+	}
+	if strings.TrimSpace(options.ToolRoot) == "" {
+		return result, errors.New("--tool-root must identify the exact Markitect source checkout")
+	}
+	root, err := filepath.Abs(options.ToolRoot)
+	if err != nil {
+		return result, fmt.Errorf("resolve tool root: %w", err)
+	}
+	rootInfo, err := os.Lstat(root)
+	if err != nil || !rootInfo.IsDir() || rootInfo.Mode()&fs.ModeSymlink != 0 {
+		return result, errors.New("--tool-root must be a real directory")
+	}
+	goMod := filepath.Join(root, "go.mod")
+	if info, err := os.Lstat(goMod); err != nil || !info.Mode().IsRegular() || info.Mode()&fs.ModeSymlink != 0 {
+		return result, errors.New("--tool-root must contain Markitect go.mod")
+	}
+	adapterName := "internal/tooling/" + options.Provider + "runner/runner.py"
+	adapterPath := filepath.Join(root, filepath.FromSlash(adapterName))
+	adapter, err := inspectFile(adapterPath)
+	if err != nil {
+		return result, fmt.Errorf("inspect selected %s adapter: %w", options.Provider, err)
+	}
+	pythonName := "python3"
+	if runtime.GOOS == "windows" {
+		pythonName = "python.exe"
+	}
+	pythonPath, err := exec.LookPath(pythonName)
+	if err != nil {
+		return result, errors.New("Python executable was not found; install Python and ensure python.exe/python3 is on PATH")
+	}
+	pythonPath, err = filepath.EvalSymlinks(pythonPath)
+	if err != nil {
+		return result, errors.New("Python executable could not be resolved to its native file")
+	}
+	pythonTool, err := inspectFile(pythonPath)
+	if err != nil || isCommandShim(pythonTool.Path) {
+		return result, errors.New("Python must resolve to a direct native executable, not a command/script shim")
+	}
+	providerPath := options.ProviderExecutable
+	if providerPath == "" {
+		providerPath = discoverProvider(options.Provider)
+	}
+	providerTool, err := inspectFile(providerPath)
+	if err != nil {
+		return result, fmt.Errorf("native %s executable not found; pass --provider-executable with its absolute path: %w", options.Provider, err)
+	}
+	if isCommandShim(providerTool.Path) {
+		return result, errors.New("provider executable must be a direct native executable; .ps1/.cmd/.bat and script shims are not accepted")
+	}
+	providerTool.Version, err = version(providerTool.Path)
+	if err != nil {
+		return result, fmt.Errorf("read selected provider version: %w", err)
+	}
+	pythonTool.Version, err = version(pythonTool.Path)
+	if err != nil {
+		return result, fmt.Errorf("read selected Python version: %w", err)
+	}
+	result = Discovery{
+		Provider: options.Provider, ProviderBinary: providerTool, Python: pythonTool, Adapter: adapter,
+		Authentication:     "not-verified",
+		AuthenticationNote: "Markitect does not read credentials or probe provider login status; use the provider's existing OS-default sign-in.",
+	}
+	return result, nil
+}
+
+func inspectFile(raw string) (Tool, error) {
+	var result Tool
+	if raw == "" || !filepath.IsAbs(raw) {
+		return result, errors.New("path must be absolute")
+	}
+	info, err := os.Lstat(raw)
+	if err != nil {
+		return result, err
+	}
+	if !info.Mode().IsRegular() || info.Mode()&fs.ModeSymlink != 0 {
+		return result, errors.New("path must be a regular non-symlink file")
+	}
+	if info.Size() <= 0 || info.Size() > 256<<20 {
+		return result, errors.New("file size is outside the supported 1..256 MiB bound")
+	}
+	path, err := filepath.EvalSymlinks(raw)
+	if err != nil {
+		return result, err
+	}
+	path, err = filepath.Abs(path)
+	if err != nil {
+		return result, err
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return result, err
+	}
+	if len(data) > 256<<20 {
+		return result, errors.New("file exceeds the runtime asset size bound")
+	}
+	sum := sha256.Sum256(data)
+	mode := "0644"
+	if info.Mode().Perm()&0111 != 0 {
+		mode = fmt.Sprintf("%04o", info.Mode().Perm())
+	} else if runtime.GOOS != "windows" && strings.HasSuffix(strings.ToLower(path), ".py") {
+		mode = fmt.Sprintf("%04o", info.Mode().Perm())
+	}
+	return Tool{Path: path, Digest: "sha256:" + hex.EncodeToString(sum[:]), Mode: mode}, nil
+}
+
+func isCommandShim(path string) bool {
+	ext := strings.ToLower(filepath.Ext(path))
+	if runtime.GOOS == "windows" {
+		return ext != ".exe" && ext != ".com"
+	}
+	if ext == ".cmd" || ext == ".bat" || ext == ".ps1" || ext == ".sh" {
+		return true
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return true
+	}
+	defer file.Close()
+	var prefix [2]byte
+	_, _ = file.Read(prefix[:])
+	return prefix == [2]byte{'#', '!'}
+}
+
+func discoverProvider(provider string) string {
+	if runtime.GOOS == "windows" && provider == "codex" {
+		if appData := os.Getenv("APPDATA"); appData != "" {
+			candidate := filepath.Join(appData, "npm", "node_modules", "@openai", "codex", "node_modules", "@openai", "codex-win32-x64", "vendor", "x86_64-pc-windows-msvc", "codex", "codex.exe")
+			if _, err := os.Stat(candidate); err == nil {
+				return candidate
+			}
+		}
+	}
+	name := provider
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	if found, err := exec.LookPath(name); err == nil {
+		return found
+	}
+	return ""
+}
+
+func version(path string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	command := exec.CommandContext(ctx, path, "--version")
+	command.Env = []string{}
+	output := &boundedVersionOutput{cancel: cancel}
+	command.Stdout = output
+	command.Stderr = io.Discard
+	err := command.Run()
+	if err != nil || output.overflow {
+		return "", errors.New("selected executable did not return a bounded version response")
+	}
+	match := versionPattern.FindSubmatch(output.bytes)
+	if len(match) != 2 {
+		return "", errors.New("selected executable version response did not contain a semantic version")
+	}
+	return string(match[1]), nil
+}
+
+type boundedVersionOutput struct {
+	bytes    []byte
+	cancel   context.CancelFunc
+	overflow bool
+}
+
+func (output *boundedVersionOutput) Write(data []byte) (int, error) {
+	const limit = 8 << 10
+	remaining := limit - len(output.bytes)
+	if remaining <= 0 {
+		output.overflow = true
+		output.cancel()
+		return 0, errors.New("version output exceeded bound")
+	}
+	if len(data) > remaining {
+		output.bytes = append(output.bytes, data[:remaining]...)
+		output.overflow = true
+		output.cancel()
+		return remaining, errors.New("version output exceeded bound")
+	}
+	output.bytes = append(output.bytes, data...)
+	return len(data), nil
+}

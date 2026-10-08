@@ -8,9 +8,12 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/projectadoption"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectrun"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectsetup"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
@@ -43,7 +46,7 @@ func Run(args []string, out, errout io.Writer) int {
 
 func runAction(opts options, out io.Writer) error {
 	ctx := context.Background()
-	if opts.action == "run" || opts.action == "resume" || opts.action == "verify" {
+	if opts.action == "run" || opts.action == "resume" || opts.action == "verify" || (opts.action == "distill" && opts.generate) {
 		bounded, stop := signal.NotifyContext(ctx, os.Interrupt)
 		defer stop()
 		ctx = bounded
@@ -55,6 +58,46 @@ func runAction(opts options, out io.Writer) error {
 			return err
 		}
 		return writeJSON(out, plan)
+	case "setup", "doctor":
+		project, err := projectwork.Load(opts.repo, "")
+		if err != nil {
+			return err
+		}
+		if opts.action == "doctor" {
+			setupOptions := projectsetup.Options{Provider: opts.provider, ToolRoot: opts.toolRoot, ProviderExecutable: opts.providerExecutable}
+			report, err := projectsetup.Doctor(project, setupOptions)
+			if err != nil {
+				return err
+			}
+			if err := writeJSON(out, report); err != nil {
+				return err
+			}
+			for _, check := range report.Checks {
+				if check.Status == "blocked" || check.Status == "missing" {
+					return &projectOutcomeError{code: 1, message: "one or more local prerequisites need attention"}
+				}
+			}
+			return nil
+		}
+		setupOptions, err := setupOptions(opts)
+		if err != nil {
+			return err
+		}
+		preview, err := projectsetup.PreviewEdit(project, setupOptions)
+		if err != nil {
+			return err
+		}
+		if opts.write {
+			if opts.expect != preview.EditPlan.Digest {
+				return fmt.Errorf("--expect does not match the exact runtime edit plan digest %s", preview.EditPlan.Digest)
+			}
+			applied, err := projectwork.ApplyEdit(opts.repo, preview.EditPlan, preview.EditPlan.BaseDigest)
+			if err != nil {
+				return err
+			}
+			preview.EditPlan = applied
+		}
+		return writeJSON(out, preview)
 	case "check", "index", "context", "document", "edit":
 		project, err := projectwork.Load(opts.repo, opts.revision)
 		if err != nil {
@@ -152,6 +195,61 @@ func runAction(opts options, out io.Writer) error {
 		if err != nil {
 			return err
 		}
+		if opts.generate {
+			project, err := projectwork.Load(opts.repo, "")
+			if err != nil {
+				return err
+			}
+			runtimeConfig, err := projectrun.LoadRuntime(opts.repo)
+			if err != nil {
+				return err
+			}
+			rootManager := ""
+			for _, manager := range project.Report.Managers {
+				if manager.Parent == "" && manager.Namespace == "" {
+					if rootManager != "" {
+						return errors.New("project has multiple root Managers")
+					}
+					rootManager = manager.ID
+				}
+			}
+			agent, ok := runtimeConfig.Agents[rootManager]
+			if rootManager == "" || !ok {
+				return errors.New("configured runtime has no agent mapped to the active root Manager")
+			}
+			agentConfig, err := agent.AgentConfig()
+			if err != nil {
+				return err
+			}
+			prices, err := parsePositiveRates(opts.inputMicros, opts.outputMicros, opts.maxCost)
+			if err != nil {
+				return err
+			}
+			report, receipt, err := projectadoption.GenerateDistillation(ctx, opts.repo, discovery, agentConfig, projectadoption.DistillationRunOptions{
+				MaxTimeout: agentConfig.Timeout, MaxStdoutBytes: agentConfig.MaxStdoutBytes, MaxStderrBytes: agentConfig.MaxStderrBytes,
+				MaxCostMicros: prices.maxCost, InputPriceMicrosPerMillion: prices.input, OutputPriceMicrosPerMillion: prices.output,
+			})
+			if err != nil {
+				return err
+			}
+			encoded, err := projectadoption.EncodeDistillation(report)
+			if err != nil {
+				return err
+			}
+			receiptBytes, err := json.Marshal(receipt)
+			if err != nil {
+				return err
+			}
+			receiptPath, err := derivedReceiptPath(opts.output)
+			if err != nil {
+				return err
+			}
+			digests, err := writeRecords(opts.repo, map[string][]byte{opts.output: encoded, receiptPath: receiptBytes})
+			if err != nil {
+				return err
+			}
+			return writeJSON(out, map[string]string{"reportPath": opts.output, "reportDigest": digests[opts.output], "receiptPath": receiptPath, "receiptDigest": digests[receiptPath]})
+		}
 		reportBytes, err := readRecord(opts.repo, opts.report)
 		if err != nil {
 			return err
@@ -226,7 +324,7 @@ func runAction(opts options, out io.Writer) error {
 		}
 		return emitRecord(opts.sourceRepo, opts.output, encoded, out)
 	case "plan":
-		request := projectrun.PlanRequest{Goal: opts.goal, Managers: append([]string(nil), opts.managers...), BaseRevision: opts.revision, ExecuteAuthorized: opts.write}
+		request := projectrun.PlanRequest{Goal: opts.goal, Managers: append([]string(nil), opts.managers...), BaseRevision: opts.revision, SinceRevision: opts.since, ExecuteAuthorized: opts.write}
 		plan, err := projectrun.Plan(projectRunHost(), opts.repo, opts.revision, request)
 		if err != nil {
 			return err
@@ -295,6 +393,57 @@ func projectRunHost() projectrun.Host {
 	}
 }
 
+func setupOptions(opts options) (projectsetup.Options, error) {
+	rates, err := parsePositiveRates(opts.inputMicros, opts.outputMicros, opts.maxCost)
+	if err != nil {
+		return projectsetup.Options{}, err
+	}
+	return projectsetup.Options{
+		Provider: opts.provider, Model: opts.model, Effort: opts.effort, ToolRoot: opts.toolRoot,
+		ProviderExecutable: opts.providerExecutable, InputMicrosPerMillion: rates.input,
+		OutputMicrosPerMillion: rates.output, MaxCostMicros: rates.maxCost,
+	}, nil
+}
+
+type rateOptions struct{ input, output, maxCost int64 }
+
+func parsePositiveRates(inputText, outputText, maxText string) (rateOptions, error) {
+	var result rateOptions
+	values := []struct {
+		name string
+		text string
+		dest *int64
+	}{
+		{"input-micros-per-million", inputText, &result.input},
+		{"output-micros-per-million", outputText, &result.output},
+		{"max-cost-micros", maxText, &result.maxCost},
+	}
+	for _, value := range values {
+		parsed, err := strconv.ParseInt(value.text, 10, 64)
+		if err != nil || parsed < 0 {
+			return result, fmt.Errorf("--%s must be a nonnegative integer", value.name)
+		}
+		*value.dest = parsed
+	}
+	if result.input == 0 && result.output == 0 {
+		return result, errors.New("at least one input/output price rate must be positive")
+	}
+	if result.maxCost <= 0 || result.maxCost > 1_000_000_000_000 {
+		return result, errors.New("--max-cost-micros must be between 1 and 1000000000000")
+	}
+	if result.input > 1_000_000_000_000 || result.output > 1_000_000_000_000 {
+		return result, errors.New("price rates must not exceed 1000000000000 micros per million tokens")
+	}
+	return result, nil
+}
+
+func derivedReceiptPath(output string) (string, error) {
+	if !strings.HasPrefix(output, ".markitect/drafts/") || !strings.HasSuffix(output, ".json") {
+		return "", errors.New("generated distillation --output must be an explicit .json path under .markitect/drafts/")
+	}
+	return strings.TrimSuffix(output, ".json") + ".receipt.json", nil
+}
+
 type projectOutcomeError struct {
 	code    int
 	message string
@@ -311,7 +460,7 @@ func writeJSON(out io.Writer, value any) error {
 
 func printUsage(out io.Writer, action string) {
 	if action == "" {
-		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: init check index context impact document edit discover distill adopt plan run resume status verify apply\n")
+		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: init check index context impact document edit discover distill adopt setup doctor plan run resume status verify apply\n")
 		return
 	}
 	if spec, ok := actionSpecs[action]; ok {

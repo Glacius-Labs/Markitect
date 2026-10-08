@@ -46,3 +46,30 @@ func TestWriteRecordCreatesOnlyAbsentMarkitectRecord(t *testing.T) {
 		t.Fatalf("readRecord = %q, err=%v", got, err)
 	}
 }
+
+func TestWriteRecordsCreatesRelatedReportAndReceiptWithoutPartialOverwrite(t *testing.T) {
+	repo := copyProjectWorld(t)
+	reportPath := ".markitect/drafts/report.json"
+	receiptPath := ".markitect/drafts/report.receipt.json"
+	records := map[string][]byte{reportPath: []byte(`{"report":true}`), receiptPath: []byte(`{"receipt":true}`)}
+	digests, err := writeRecords(repo, records)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for path, want := range records {
+		got, err := os.ReadFile(filepath.Join(repo, filepath.FromSlash(path)))
+		if err != nil || !bytes.Equal(got, want) || digests[path] == "" {
+			t.Fatalf("record %s = %q digest=%q err=%v", path, got, digests[path], err)
+		}
+	}
+	collisionRepo := copyProjectWorld(t)
+	if _, err := writeRecord(collisionRepo, receiptPath, []byte(`{"existing":true}`)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := writeRecords(collisionRepo, records); err == nil {
+		t.Fatal("grouped write overwrote an existing receipt")
+	}
+	if _, err := os.Stat(filepath.Join(collisionRepo, filepath.FromSlash(reportPath))); !os.IsNotExist(err) {
+		t.Fatalf("report was partially written despite a receipt collision: %v", err)
+	}
+}
