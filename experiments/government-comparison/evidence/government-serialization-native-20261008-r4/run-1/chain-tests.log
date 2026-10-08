@@ -1,0 +1,15 @@
+test_delegate_change_stops_before_live_gate (test_native_r4_chain.R4LaunchAdmissionTests.test_delegate_change_stops_before_live_gate) ... ok
+test_early_diagnostics_parser_precedes_main_hook (test_native_r4_chain.R4LaunchAdmissionTests.test_early_diagnostics_parser_precedes_main_hook) ... ok
+test_exact_request_binary_delegate_and_live_gate_pass (test_native_r4_chain.R4LaunchAdmissionTests.test_exact_request_binary_delegate_and_live_gate_pass) ... ok
+test_interpreter_change_stops_before_live_gate (test_native_r4_chain.R4LaunchAdmissionTests.test_interpreter_change_stops_before_live_gate) ... ok
+test_live_revocation_stops_exact_launch_gate (test_native_r4_chain.R4LaunchAdmissionTests.test_live_revocation_stops_exact_launch_gate) ... ok
+test_native_executable_must_match_request_pin (test_native_r4_chain.R4LaunchAdmissionTests.test_native_executable_must_match_request_pin) ... ok
+test_r2_or_r3_combination_is_rejected_before_binding (test_native_r4_chain.R4LaunchAdmissionTests.test_r2_or_r3_combination_is_rejected_before_binding) ... ok
+test_role_authorization_file_must_still_match_captured_bytes (test_native_r4_chain.R4LaunchAdmissionTests.test_role_authorization_file_must_still_match_captured_bytes) ... ok
+test_role_authorization_must_be_captured_and_pinned (test_native_r4_chain.R4LaunchAdmissionTests.test_role_authorization_must_be_captured_and_pinned) ... ok
+test_wrong_dispatch_is_rejected (test_native_r4_chain.R4LaunchAdmissionTests.test_wrong_dispatch_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.122s
+
+OK

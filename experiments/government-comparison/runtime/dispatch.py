@@ -451,7 +451,12 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
     process_receipts = []
     process_verified = False
     controller_finished = False
+    def r4_start_gate():
+        if request.get("nativeFixtureR4Grant") is not None:
+            fresh_request, fresh_captured = authority.validate(raw)
+            native_controller.validate_r4_entry_for_launch(fresh_request, fresh_captured, argv)
     try:
+        r4_start_gate()
         ledger.reserve_controller_dispatch(request["dispatchId"], execution_sha(request), raw, argv,
                                            request["task"]["id"], request["purpose"],
                                            authority.grant["maxActorSessions"])
@@ -504,6 +509,7 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
                    remaining / 3.0, max(0.0, float(authority.grant["expiresAt"]) - time.time()))
         if wall <= 0:
             raise LimitReached("no shared wall-time remains for native controller launch")
+        r4_start_gate()
         receipt = bounded(argv, request["actorRepository"], evidence / "process", wall,
                           env=controller_env, stop_path=evidence / "STOP", poll_stop=monitor)
         process_path = evidence / "process" / "process.json"

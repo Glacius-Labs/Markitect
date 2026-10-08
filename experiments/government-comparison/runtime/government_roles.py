@@ -17,6 +17,20 @@ import sys
 import time
 
 
+def _strict_json(raw: bytes, label: str):
+    def object_pairs(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"{label} contains duplicate JSON keys")
+            result[key] = value
+        return result
+    try:
+        return json.loads(raw, object_pairs_hook=object_pairs)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"{label} is not valid JSON") from exc
+
+
 def start_native_diagnostics(argv):
     """Retain bounded wrapper output before dependent imports or bootstrap checks.
 
@@ -89,6 +103,36 @@ def start_native_diagnostics(argv):
                 validated.get("maxRoleStarts") != 6 or validated.get("maxDeterministicDelegates") != 6):
             raise ValueError("wrapper diagnostic grant differs from the exact R3 role allocation")
         max_starts = validated["maxRoleStarts"]
+    elif correction["sourceKey"] == "government-serialization-native-20261008-r4":
+        request_path = request_path.resolve(strict=True)
+        request = _strict_json(request_path.read_bytes(), "R4 wrapper Request")
+        r4_binding = request.get("nativeFixtureR4Grant") if isinstance(request, dict) else None
+        original = request.get("nativeFixtureGrant") if isinstance(request, dict) else None
+        if (request.get("dispatchId") != "government-native-serialization-r4" or
+                request.get("arm") != "government" or
+                request.get("nativeFixtureR3Grant") is not None or
+                request.get("nativeFixtureCorrection") is not None or
+                r4_binding != correction or
+                not isinstance(original, dict) or set(original) != {"path", "sha256", "sourceKey"}):
+            raise ValueError("R4 wrapper diagnostics must bind the exact Government Request and retain R1 provenance")
+        from native_fixture_budget import validate_r4_grant_binding, validate_r4_entry_gate
+        validated = validate_r4_grant_binding(request, original["path"], original["sha256"])
+        if (validated.get("grantKey") != correction["sourceKey"] or
+                validated.get("maxWrapperAttempts") != 6 or
+                validated.get("maxDeterministicDelegates") != 6 or
+                validated.get("maxNativeStarts") != 2):
+            raise ValueError("wrapper diagnostic grant differs from the exact R4 allocation")
+        role_binding = request.get("product", {}).get("government", {}).get("roleAuthorization", {})
+        role_path = Path(role_binding.get("path", "")).resolve(strict=True)
+        role_raw = role_path.read_bytes()
+        if (role_binding.get("sha256") != hashlib.sha256(role_raw).hexdigest() or
+                not any(isinstance(item, dict) and item.get("path") and item.get("sha256") == role_binding["sha256"] and
+                        Path(item["path"]).resolve(strict=True) == role_path
+                        for item in request.get("releasedInputs", []))):
+            raise ValueError("R4 role authorization must remain the exact released Request input")
+        import native_controller
+        native_controller.validate_r4_delegate_authorization(request, role_raw, validated)
+        max_starts = validated["maxWrapperAttempts"]
     else:
         raise ValueError("wrapper diagnostic grant key is not authorized")
     directory = config_path.parent / "wrapper-diagnostics"
@@ -100,6 +144,9 @@ def start_native_diagnostics(argv):
         rows = db.execute("SELECT config_sha FROM starts").fetchall()
         if len(rows) >= max_starts or any(row[0] != expected for row in rows):
             raise ValueError("corrected wrapper invocation cap exhausted or configuration changed")
+        if correction["sourceKey"] == "government-serialization-native-20261008-r4":
+            # Re-read the live activation/slot immediately before the durable claim.
+            validate_r4_entry_gate(validated)
         cursor = db.execute("INSERT INTO starts(config_sha,started) VALUES(?,?)", (expected, time.time()))
         invocation = cursor.lastrowid
         db.commit()
@@ -188,20 +235,6 @@ def _native_mode(path: Path) -> str:
     if os.name == "nt":
         return "0644" if mode & stat.S_IWUSR else "0444"
     return f"{mode:04o}"
-
-
-def _strict_json(raw: bytes, label: str):
-    def object_pairs(pairs):
-        result = {}
-        for key, value in pairs:
-            if key in result:
-                raise ValueError(f"{label} contains duplicate JSON keys")
-            result[key] = value
-        return result
-    try:
-        return json.loads(raw, object_pairs_hook=object_pairs)
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ValueError(f"{label} is not valid JSON") from exc
 
 
 def parse_invocation(raw: bytes) -> dict:
@@ -368,9 +401,12 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
     diagnostics = auth.get("diagnostics")
     r3_grant = request.get("nativeFixtureR3Grant")
     r2_correction = request.get("nativeFixtureCorrection")
-    if r3_grant is not None and r2_correction is not None:
-        raise ValueError("an R3 Request cannot reuse the R2 correction binding")
-    diagnostic_grant = r3_grant if r3_grant is not None else r2_correction
+    r4_grant = request.get("nativeFixtureR4Grant")
+    if sum(value is not None for value in (r3_grant, r2_correction, r4_grant)) > 1:
+        raise ValueError("R2, R3, and R4 additive grants cannot be combined")
+    if r4_grant is not None and (request.get("dispatchId") != "government-native-serialization-r4" or arm != "government"):
+        raise ValueError("R4 grant is restricted to its exact Government dispatch")
+    diagnostic_grant = r4_grant if r4_grant is not None else (r3_grant if r3_grant is not None else r2_correction)
     if diagnostic_grant is not None:
         if not isinstance(diagnostics, dict) or set(diagnostics) != {"path", "sha256"}:
             raise ValueError("corrected role requires released diagnostic configuration")
@@ -783,6 +819,19 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
             raise ValueError("R3 role call requires the exact validated additive grant before reservation")
         from native_fixture_budget import validate_r3_entry_gate
         validate_r3_entry_gate(validated_r3)
+    r4_binding = request.get("nativeFixtureR4Grant")
+    if r4_binding is not None:
+        validated_r4 = fixture_bounds.get("r4Grant") if isinstance(fixture_bounds, dict) else None
+        if (request.get("dispatchId") != "government-native-serialization-r4" or
+                request.get("arm") != "government" or
+                request.get("nativeFixtureR3Grant") is not None or
+                request.get("nativeFixtureCorrection") is not None or
+                not isinstance(validated_r4, dict) or
+                validated_r4.get("grantKey") != r4_binding.get("sourceKey")):
+            raise ValueError("R4 role call requires the exact separate Government grant before reservation")
+        from native_fixture_budget import validate_r4_entry_gate
+        validate_r4_entry_gate(validated_r4)
+        native_controller.validate_r4_delegate_authorization(request, authorization_raw, validated_r4)
     reserved_id, attempt_id = _reserve(ledger, auth, invocation, invocation_sha,
                                        authorization_sha256, role_slot, evidence_path,
                                        authority.grant["retrospectiveTokenThreshold"],
@@ -793,6 +842,12 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
     if reserved_id != call_id:
         raise AssertionError("internal role invocation identity mismatch")
     evidence_parent.mkdir(parents=True, exist_ok=True)
+    if r4_binding is not None:
+        # The reservation may have taken time; revocation immediately before
+        # process creation still stops the delegate without a retry.
+        from native_fixture_budget import validate_r4_entry_gate
+        validate_r4_entry_gate(validated_r4)
+        native_controller.validate_r4_delegate_authorization(request, authorization_raw, validated_r4)
     environment = native_controller.strip_bootstrap_environment(os.environ)
     result = bounded(argv, str(Path(cwd or os.getcwd()).resolve()), evidence_path,
                      effective_timeout, stdin=invocation_raw, env=environment,
@@ -850,7 +905,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     invocation_raw = sys.stdin.buffer.read()
     context = native_controller.load_context(invocation_raw=invocation_raw)
-    diagnostic_grant = (context.request.get("nativeFixtureR3Grant") or
+    diagnostic_grant = (context.request.get("nativeFixtureR4Grant") or
+                        context.request.get("nativeFixtureR3Grant") or
                         context.request.get("nativeFixtureCorrection"))
     if diagnostic_grant is not None:
         if (_NATIVE_DIAGNOSTICS is None or
@@ -863,6 +919,16 @@ def main(argv: list[str] | None = None) -> int:
         validated = bounds.get("r3Grant") if isinstance(bounds, dict) else None
         if not isinstance(validated, dict) or validated.get("grantKey") != diagnostic_grant.get("sourceKey"):
             raise ValueError("wrapper requires the exact validated R3 fixture grant before delegation")
+    if context.request.get("nativeFixtureR4Grant") is not None:
+        bounds = context.native_fixture_bounds
+        validated = bounds.get("r4Grant") if isinstance(bounds, dict) else None
+        if (context.request.get("dispatchId") != "government-native-serialization-r4" or
+                context.request.get("arm") != "government" or
+                not isinstance(validated, dict) or
+                validated.get("grantKey") != diagnostic_grant.get("sourceKey")):
+            raise ValueError("wrapper requires the exact validated R4 grant before delegation")
+        from native_fixture_budget import validate_r4_entry_gate
+        validate_r4_entry_gate(validated)
     if (Path(args.authorization).resolve(strict=True) != context.authorization_path or
             args.authorization_sha256 != context.authorization_sha256):
         raise ValueError("wrapper argv differs from the digest-bound controller authorization")

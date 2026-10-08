@@ -22,6 +22,8 @@ MAX_BOOTSTRAP_BYTES = 1024 * 1024
 _SHA = re.compile(r"^[0-9a-f]{64}$")
 NATIVE_FIXTURE_GRANT_KEY = "native-s1-integration-fixtures-20261008"
 NATIVE_FIXTURE_SOURCE_THREAD = "01a11367-a781-7683-a20f-46e12614dcb4"
+R4_DISPATCH_ID = "government-native-serialization-r4"
+R4_GRANT_KEY = "government-serialization-native-20261008-r4"
 
 
 def digest(raw: bytes) -> str:
@@ -68,6 +70,14 @@ def validate_native_fixture_grant(request, captured, product_bound=None):
         "government-native-contract-corrected-r3": "government",
         "classic-native-contract-corrected-r3": "classic",
     }.get(request.get("dispatchId"))
+    is_r4 = request.get("dispatchId") == R4_DISPATCH_ID
+    r4_binding = request.get("nativeFixtureR4Grant")
+    if (is_r4 and (request.get("arm") != "government" or r4_binding is None or
+                   request.get("nativeFixtureR3Grant") is not None or
+                   request.get("nativeFixtureCorrection") is not None)):
+        raise ValueError("R4 dispatch requires its separate Government R4 grant and cannot combine R2/R3 grants")
+    if r4_binding is not None and not is_r4:
+        raise ValueError("R4 grant is restricted to the exact Government R4 dispatch")
     if expected_r3_arm is not None and (
             request.get("arm") != expected_r3_arm or
             request.get("nativeFixtureR3Grant") is None or
@@ -158,7 +168,130 @@ def validate_native_fixture_grant(request, captured, product_bound=None):
                       maxNativeStarts=validated["maxNativeStarts"],
                       maxReservedSessionSeconds=validated["maxReservedSessionSeconds"],
                       r3Grant=validated)
+    if is_r4:
+        from native_fixture_budget import validate_r4_grant_binding
+        validated = validate_r4_grant_binding(request, path, binding["sha256"])
+        if (not isinstance(validated, dict) or validated.get("grantKey") != R4_GRANT_KEY or
+                validated.get("grant", {}).get("key") != R4_GRANT_KEY or
+                validated.get("product", {}).get("name") != "Government" or
+                validated.get("maxWrapperAttempts") != 6 or
+                validated.get("maxDeterministicDelegates") != 6 or
+                validated.get("maxNativeStarts") != 2 or
+                validated.get("maxParallelRoles") != 2 or
+                validated.get("maxNewReservedSessionSeconds") != 300 or
+                validated.get("maxRoleProcessSeconds") != 38):
+            raise ValueError("validated R4 bounds differ from the exact Government allocation")
+        result.update(r4Grant=validated, r4GrantKey=R4_GRANT_KEY,
+                      maxRoleStarts=validated["maxWrapperAttempts"],
+                      maxDeterministicDelegates=validated["maxDeterministicDelegates"],
+                      maxNativeStarts=validated["maxNativeStarts"],
+                      maxRoleParallel=validated["maxParallelRoles"],
+                      maxRoleProcessSeconds=validated["maxRoleProcessSeconds"])
     return result
+
+
+def validate_r4_delegate_authorization(request, authorization_raw, validated_grant=None):
+    """Bind every configured Government delegate to the grant's exact executable SHA."""
+    if (not isinstance(request, dict) or request.get("dispatchId") != R4_DISPATCH_ID or
+            request.get("arm") != "government" or request.get("nativeFixtureR4Grant") is None or
+            request.get("nativeFixtureR3Grant") is not None or
+            request.get("nativeFixtureCorrection") is not None):
+        raise ValueError("native R4 launch requires the exact Government-only additive grant")
+    if not isinstance(authorization_raw, bytes):
+        raise ValueError("R4 role authorization bytes are required")
+    product = request.get("product", {}).get("government", {})
+    role_binding = product.get("roleAuthorization")
+    if (not isinstance(role_binding, dict) or set(role_binding) != {"path", "sha256"} or
+            not isinstance(role_binding.get("path"), str) or
+            not _SHA.fullmatch(role_binding.get("sha256", ""))):
+        raise ValueError("native R4 role authorization binding is malformed")
+    auth_path = Path(role_binding["path"]).resolve(strict=True)
+    if (digest(authorization_raw) != role_binding["sha256"] or
+            auth_path.read_bytes() != authorization_raw):
+        raise ValueError("R4 role authorization bytes differ from the current Request-bound file")
+    released = any(isinstance(item, dict) and set(item) == {"path", "sha256"} and
+                   isinstance(item.get("path"), str) and
+                   Path(item["path"]).resolve(strict=True) == auth_path and
+                   item.get("sha256") == role_binding["sha256"]
+                   for item in request.get("releasedInputs", []))
+    if not released:
+        raise ValueError("R4 role authorization must be a Request-bound released input")
+    authorization = _strict_json(authorization_raw, "R4 role authorization")
+    if not isinstance(validated_grant, dict):
+        envelope_binding = request["nativeFixtureR4Grant"]
+        envelope_path = Path(envelope_binding["path"]).resolve(strict=True)
+        envelope_raw = next((Path(item["path"]).read_bytes() for item in request.get("releasedInputs", [])
+                             if isinstance(item, dict) and item.get("path") and
+                             Path(item["path"]).resolve(strict=True) == envelope_path and
+                             item.get("sha256") == envelope_binding["sha256"]), None)
+        if envelope_raw is None or digest(envelope_raw) != envelope_binding["sha256"]:
+            raise ValueError("R4 grant envelope is not the exact released Request input")
+        envelope = _strict_json(envelope_raw, "R4 grant envelope")
+        validated_grant = envelope.get("grant")
+    grant_value = (validated_grant.get("grant", validated_grant)
+                   if isinstance(validated_grant, dict) else None)
+    expected_delegate = grant_value.get("product", {}).get("delegateSha256") if isinstance(grant_value, dict) else None
+    if not isinstance(expected_delegate, str) or not _SHA.fullmatch(expected_delegate):
+        raise ValueError("native R4 deterministic delegate pin is malformed")
+    slots = authorization.get("slots") if isinstance(authorization, dict) else None
+    if not isinstance(slots, list) or not slots:
+        raise ValueError("native R4 role authorization must bind its deterministic delegates")
+    pinned_commands = set()
+    for slot in slots:
+        delegate = slot.get("delegate") if isinstance(slot, dict) else None
+        command = delegate.get("command") if isinstance(delegate, dict) else None
+        delegate_argv = delegate.get("argv") if isinstance(delegate, dict) else None
+        phase = slot.get("phase") if isinstance(slot, dict) else None
+        if (not isinstance(command, str) or not Path(command).is_absolute() or
+                not isinstance(delegate_argv, list) or len(delegate_argv) != 4 or
+                delegate_argv[0] != command or delegate_argv[2:] != ["--phase", phase] or
+                phase not in {"execute", "review", "vote"}):
+            raise ValueError("native R4 role authorization has an unbound interpreter/script delegate argv")
+        command_path = Path(command).resolve(strict=True)
+        command_sha = digest(command_path.read_bytes())
+        if delegate.get("commandDigest") != "sha256:" + command_sha:
+            raise ValueError("native R4 delegate interpreter differs from its command digest")
+        script_path = Path(delegate_argv[1])
+        if not script_path.is_absolute() or digest(script_path.read_bytes()) != expected_delegate:
+            raise ValueError("native R4 deterministic delegate script differs from the exact grant pin")
+        runtime_files = delegate.get("runtimeFiles")
+        files = {str(Path(item.get("path", "")).resolve()): item.get("digest")
+                 for item in runtime_files if isinstance(item, dict)} if isinstance(runtime_files, list) else {}
+        if (files.get(str(command_path)) != "sha256:" + command_sha or
+                files.get(str(script_path.resolve())) != "sha256:" + expected_delegate):
+            raise ValueError("native R4 delegate interpreter/script are not both runtime-pinned")
+        pinned_commands.add(str(script_path.resolve()))
+    return sorted(pinned_commands)
+
+
+def validate_r4_entry_for_launch(request, captured, argv):
+    """Revalidate the exact R4 request and all executable pins at the native Popen boundary."""
+    if (not isinstance(request, dict) or request.get("dispatchId") != R4_DISPATCH_ID or
+            request.get("arm") != "government" or request.get("nativeFixtureR4Grant") is None or
+            request.get("nativeFixtureR3Grant") is not None or
+            request.get("nativeFixtureCorrection") is not None):
+        raise ValueError("native R4 launch requires the exact Government-only additive grant")
+    if not isinstance(argv, list) or not argv or not isinstance(argv[0], str):
+        raise ValueError("native R4 launch argv is malformed")
+    bounds = validate_native_fixture_grant(request, captured)
+    validated = bounds.get("r4Grant")
+    if not isinstance(validated, dict):
+        raise ValueError("native R4 launch requires the exact validated additive grant")
+    product = request.get("product", {}).get("government", {})
+    auth_binding = product.get("roleAuthorization", {})
+    auth_path = Path(auth_binding["path"]).resolve(strict=True)
+    auth_raw = next((content for source, content in captured.items()
+                     if Path(source).resolve() == auth_path), None)
+    if auth_raw is None:
+        raise ValueError("native R4 role authorization is not the exact captured Request input")
+    pinned_commands = validate_r4_delegate_authorization(request, auth_raw, validated)
+    executable = product.get("executable", {})
+    expected_executable = executable.get("path") if isinstance(executable, dict) else None
+    if (not isinstance(expected_executable, str) or not Path(expected_executable).is_absolute() or
+            str(Path(argv[0]).resolve(strict=True)) != str(Path(expected_executable).resolve(strict=True))):
+        raise ValueError("native R4 launch argv differs from the Request-bound Government executable")
+    gate = __import__("native_fixture_budget").validate_r4_entry_gate(validated)
+    return {"bounds": bounds, "entryGate": gate, "delegatePaths": pinned_commands}
 
 
 class ControllerContext(NamedTuple):
@@ -297,6 +430,9 @@ def load_context(*, env=None, invocation_raw=None):
     fixture_bounds = None
     if request.get("nativeFixtureGrant") is not None:
         fixture_bounds = validate_native_fixture_grant(request, captured, product_bound)
+        if request.get("dispatchId") == R4_DISPATCH_ID:
+            from native_fixture_budget import validate_r4_entry_gate
+            validate_r4_entry_gate(fixture_bounds["r4Grant"])
     product_binding = request.get("product", {}).get(request.get("arm"), {}).get("roleAuthorization")
     captured_authorization = next((content for source, content in captured.items()
                                    if Path(source).resolve() == authorization_path), None)

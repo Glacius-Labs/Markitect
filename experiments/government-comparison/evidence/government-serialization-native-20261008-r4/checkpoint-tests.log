@@ -1,0 +1,7 @@
+test_positive_report_requires_vote_identity_review_and_promotion (runtime.test_native_r4_checkpoint.NativeR4CheckpointTests.test_positive_report_requires_vote_identity_review_and_promotion) ... ok
+test_zero_exit_cannot_admit_incomplete_queue_or_failed_check (runtime.test_native_r4_checkpoint.NativeR4CheckpointTests.test_zero_exit_cannot_admit_incomplete_queue_or_failed_check) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK

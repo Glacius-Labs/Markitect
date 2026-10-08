@@ -1,3 +1,55 @@
+# Government R4: finite native case preflight
+
+Grant `government-serialization-native-20261008-r4`, accepted source base
+`a0bf4e48230b22fe7e1d5f1b80c7b56a0ffb6c76`. Work is restricted to the exact
+Government 04e225d source, accepted binary 12241f3 and corrected e8b8e50 delegate.
+Classic and P1 successors are excluded. The canonical Overseer coordinator still
+owns fullSuiteSlot and all activation decisions; Scientist must not edit it.
+
+New evidence: `evidence/government-serialization-native-20261008-r4/`.
+External case: `C:/Users/Consiliari/Documents/Scientist-Probes/native-government-serialization-20261008-r4/`.
+Fresh fixture preparation is offline Git/file authoring only. Runtime binding
+work is in native_fixture_budget.py, native_controller.py, government_roles.py
+and the narrow dispatch pre-reservation/pre-launch hooks. New prepare/run drivers
+have no Classic execution route. Historical artifacts remain immutable; old
+source bytes remain reachable at accepted commits.
+
+Authorized future sequence: one Queue, then only if complete with fresh checks,
+explicit passing planned independent technical reviews, bound positive final
+votes from every selected Ressort, and durable exact promotion, one terminal
+Resume/Replay readback. Exit 0 alone cannot authorize that second start. First
+failed/incomplete/missing prerequisite/time/quota stop closes the one case;
+no retry, repair-and-run, new case, artificial interruption or residual reuse.
+A durable exclusive case latch prevents rerunning this driver's execution.
+
+Prerequisites before ANY native use: focused affected offline checks, actual
+Request/Authority/preflight validation, independent final review, clean source
+commit and byte-bound fresh freeze with coordinator snapshot. Then an immediate
+live check must find Scientist, exact R4 key, exact active status and matching
+slot assignedUtc/grant slotAssignedUtc. Revocation must reject before reservation
+and again before native/role process creation. Overseer activated Scientist/R4
+at 2026-10-08T01:20:39Z; the exact activation snapshot is separately frozen.
+
+Grant ceilings: 2 native starts, 6 wrapper attempts including failures, 6 delegate
+processes, role parallelism 2, 150 reserved session seconds per start/300 new;
+hard native/controller deadline 38 seconds. Reservations and measured process
+wall times must be reported separately. Historical totals remain 11 native /7
+wrappers /4 delegates /1650 reserved seconds; cumulative ceilings 13/13/10/1950.
+Real history remains 5 Actorstarts, 53331 known tokens, total unknown. No new
+model/provider/metadata/study cells, full suite, product repair or publication.
+
+Current state: fresh fixture and actual offline admission are complete; final
+focused gates passed 7 budget /10 chain /2 parent checks. The final independent
+review is in the new evidence area. Source/freeze commit binding is recorded in
+preflight-freeze.json; finish only any missing review/commit/freeze prerequisite
+before execution. Zero new experimental starts at this preflight checkpoint.
+All earlier offline corrections, initial generated inputs and admission failure
+remain retained; they are not native retries. After a final valid live gate, no
+further user Go is required; run only `run-native-integration-r4.py run-once` once. Keep
+raw evidence, run independent postreview, report actual additive usage and the
+remaining S1 gap, commit cleanly and explicitly release the slot. No automatic
+diagnosis cascade. The completed prior handoff below is preserved verbatim.
+
 # Government response correction: offline package
 
 Current explicit task: `government-executor-response-offline-20261008`, accepted

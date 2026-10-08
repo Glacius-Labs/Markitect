@@ -1,0 +1,12 @@
+test_r4_binding_rejects_wrong_dispatch_closed_grant_and_changed_product_pins (test_native_r4_budget.NativeR4BudgetTests.test_r4_binding_rejects_wrong_dispatch_closed_grant_and_changed_product_pins) ... ok
+test_r4_budget_requires_actual_translated_acceptance_before_resume (test_native_r4_budget.NativeR4BudgetTests.test_r4_budget_requires_actual_translated_acceptance_before_resume) ... ok
+test_r4_entry_gate_requires_exact_live_status_owner_key_and_activation_time (test_native_r4_budget.NativeR4BudgetTests.test_r4_entry_gate_requires_exact_live_status_owner_key_and_activation_time) ... ok
+test_r4_fresh_check_receipts_match_go_json_gate_result_fields_and_bounds (test_native_r4_budget.NativeR4BudgetTests.test_r4_fresh_check_receipts_match_go_json_gate_result_fields_and_bounds) ... ok
+test_r4_request_without_r4_binding_fails_closed_at_budget_construction (test_native_r4_budget.NativeR4BudgetTests.test_r4_request_without_r4_binding_fails_closed_at_budget_construction) ... ok
+test_r4_resume_requires_successful_completed_queue_process_receipt (test_native_r4_budget.NativeR4BudgetTests.test_r4_resume_requires_successful_completed_queue_process_receipt) ... ok
+test_real_r4_grant_binds_exact_source_product_delegate_and_request (test_native_r4_budget.NativeR4BudgetTests.test_real_r4_grant_binds_exact_source_product_delegate_and_request) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.492s
+
+OK

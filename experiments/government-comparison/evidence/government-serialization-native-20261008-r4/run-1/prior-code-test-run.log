@@ -1,0 +1,7 @@
+Prior-code focused offline test record (before R4 interpreter/script-pin correction)
+Command: python -m unittest test_native_r4_chain -v
+Working directory: experiments/government-comparison/runtime
+Observed result: Ran 6 tests in 0.042s; OK
+Tests: delegate change, exact request/binary/delegate/live gate, native executable pin, R2/R3 exclusion, captured role authorization, dispatch exclusivity.
+Scope: pure filesystem/unit tests only; no application server, native product, wrapper, deterministic delegate, model, or provider process started.
+Source binding: prior source content was superseded by the current uncommitted files; this is retained only as the earlier run record, not evidence for the corrected source snapshot.

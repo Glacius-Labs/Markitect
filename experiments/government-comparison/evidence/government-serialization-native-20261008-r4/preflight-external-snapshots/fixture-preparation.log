@@ -1,0 +1,12 @@
+{
+  "actorRepository": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-serialization-20261008-r4\\government\\actor",
+  "backlogSha256": "28261e8515fb6702d5d532aafec11dda0c16ff52e58776441b167887b3ffe36a",
+  "baseCommit": "991b9a5dd416a9c0f5ce4581a20f54514d211ebe",
+  "diagnosticsSha256": "daefc0a769a75a8f218d9eb8bf66bf49b07842c072a6995f01214ead6980d01b",
+  "grantSha256": "e4991c497c1ce086ee9a8bd7708409a6ec3e0de8bd114104eaef319df018e03c",
+  "preparationPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-serialization-20261008-r4\\government\\preparation-final.json",
+  "preparationSha256": "a2c90c8ce6a2945b0e75a64b6a9b99069f3c0f37c16672846d0558bc7bdaade8",
+  "roleAuthorizationSha256": "e7a4f9eb3adb3a16476e1623cbd170a0e107e2d96ec4325c6e5e1adc245962ee",
+  "runtimeFileCount": 18,
+  "runtimeSha256": "e7555caca9cb10b6a1ed369bbec62b4ebf2a087ae207c2802da86d34170ca10c"
+}
