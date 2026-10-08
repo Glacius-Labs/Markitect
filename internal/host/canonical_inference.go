@@ -2,6 +2,8 @@ package host
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,8 +27,10 @@ type BrownfieldInferenceInput struct {
 	QueueBytes   []byte
 }
 
-// BrownfieldInferenceOptions names only private runtime locations. They must
-// be existing directories outside every repository named by the handoff.
+// BrownfieldInferenceOptions names private runtime locations. TempParent must
+// be an existing directory. PrivateLogDirectory is an existing container; each
+// invocation selects a unique absent child so agentexec can create it with the
+// platform's required private access controls.
 type BrownfieldInferenceOptions struct {
 	TempParent          string
 	PrivateLogDirectory string
@@ -130,6 +134,11 @@ func RunBrownfieldInference(ctx context.Context, input BrownfieldInferenceInput,
 	if err := capture.ValidateHandoff(handoff, input.Blobs); err != nil {
 		return BrownfieldInferenceResult{}, fmt.Errorf("validate brownfield handoff: %w", err)
 	}
+	privateLogDirectory, err := newInferencePrivateLogDirectory(options.PrivateLogDirectory)
+	if err != nil {
+		return BrownfieldInferenceResult{}, err
+	}
+	options.PrivateLogDirectory = privateLogDirectory
 	if err := validateInferenceRuntimeDirectories(options, handoff); err != nil {
 		return BrownfieldInferenceResult{}, err
 	}
@@ -325,7 +334,7 @@ func validateInferenceRuntimeDirectories(options BrownfieldInferenceOptions, han
 	if err != nil {
 		return err
 	}
-	logs, err := resolve(options.PrivateLogDirectory)
+	logs, err := resolvePrivateLogTarget(options.PrivateLogDirectory)
 	if err != nil {
 		return err
 	}
@@ -344,6 +353,95 @@ func validateInferenceRuntimeDirectories(options BrownfieldInferenceOptions, han
 		}
 	}
 	return nil
+}
+
+func newInferencePrivateLogDirectory(container string) (string, error) {
+	if container == "" {
+		return "", errors.New("inference requires an explicit private log directory container")
+	}
+	absolute, err := filepath.Abs(container)
+	if err != nil {
+		return "", fmt.Errorf("resolve private log directory container: %w", err)
+	}
+	resolved, err := filepath.EvalSymlinks(filepath.Clean(absolute))
+	if err != nil {
+		return "", fmt.Errorf("private log directory container must already exist: %w", err)
+	}
+	info, err := os.Stat(resolved)
+	if err != nil || !info.IsDir() {
+		return "", errors.New("private log directory container must be an existing directory")
+	}
+	for attempt := 0; attempt < 8; attempt++ {
+		var random [16]byte
+		if _, err := rand.Read(random[:]); err != nil {
+			return "", fmt.Errorf("select private inference log directory: %w", err)
+		}
+		candidate := filepath.Join(resolved, "inference-"+hex.EncodeToString(random[:]))
+		if _, err := os.Lstat(candidate); os.IsNotExist(err) {
+			return candidate, nil
+		} else if err != nil {
+			return "", fmt.Errorf("inspect private inference log candidate: %w", err)
+		}
+	}
+	return "", errors.New("could not select an unused private inference log directory")
+}
+
+// resolvePrivateLogTarget returns both the requested path and its canonical
+// prospective path. The final directory may be absent: agentexec creates that
+// leaf with the platform's private access controls before it can receive logs.
+func resolvePrivateLogTarget(value string) ([]string, error) {
+	if value == "" {
+		return nil, errors.New("private log directory is required")
+	}
+	absolute, err := filepath.Abs(filepath.Clean(value))
+	if err != nil {
+		return nil, err
+	}
+	info, err := os.Lstat(absolute)
+	if err == nil {
+		if !info.IsDir() {
+			return nil, fmt.Errorf("private log target must be a directory: %s", value)
+		}
+		resolved, err := filepath.EvalSymlinks(absolute)
+		if err != nil {
+			return nil, err
+		}
+		resolvedInfo, err := os.Stat(resolved)
+		if err != nil || !resolvedInfo.IsDir() {
+			return nil, fmt.Errorf("private log target must resolve to a directory: %s", value)
+		}
+		return []string{normalizeOverlapPath(absolute), normalizeOverlapPath(resolved)}, nil
+	}
+	if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("inspect private log target: %w", err)
+	}
+	parent := filepath.Dir(absolute)
+	for {
+		if _, err := os.Lstat(parent); err == nil {
+			break
+		} else if !os.IsNotExist(err) {
+			return nil, fmt.Errorf("inspect private log target parent: %w", err)
+		}
+		next := filepath.Dir(parent)
+		if next == parent {
+			return nil, errors.New("private log target parent could not be resolved")
+		}
+		parent = next
+	}
+	resolvedParent, err := filepath.EvalSymlinks(parent)
+	if err != nil {
+		return nil, fmt.Errorf("resolve private log target parent: %w", err)
+	}
+	parentInfo, err := os.Stat(resolvedParent)
+	if err != nil || !parentInfo.IsDir() {
+		return nil, errors.New("private log target parent must resolve to a directory")
+	}
+	relative, err := filepath.Rel(parent, absolute)
+	if err != nil || relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		return nil, errors.New("private log target path is invalid")
+	}
+	prospective := filepath.Join(resolvedParent, relative)
+	return []string{normalizeOverlapPath(absolute), normalizeOverlapPath(prospective)}, nil
 }
 
 func normalizeOverlapPath(value string) string {
