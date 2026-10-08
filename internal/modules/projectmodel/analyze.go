@@ -29,7 +29,7 @@ func Analyze(model core.Model, inventory []File) Report {
 		spec := d.Spec
 		parent := refID(spec["parent"])
 		owns := stringsFrom(spec["owns"])
-		r.Managers = append(r.Managers, Manager{ID: d.Identity().Key(), Name: d.Metadata.Name, Namespace: d.Metadata.Namespace, Parent: parent, Owns: owns, Instructions: stringValue(spec["instructions"])})
+		r.Managers = append(r.Managers, Manager{ID: d.Identity().Key(), Name: d.Metadata.Name, Namespace: d.Metadata.Namespace, Purpose: d.Purpose, Parent: parent, Owns: owns, Instructions: stringValue(spec["instructions"])})
 	}
 	sort.Slice(r.Managers, func(i, j int) bool { return r.Managers[i].ID < r.Managers[j].ID })
 	managerByID := map[string]Manager{}
