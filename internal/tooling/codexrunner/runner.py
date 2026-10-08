@@ -20,6 +20,7 @@ MAX_INVOCATION_BYTES = 32 * 1024 * 1024
 MAX_LOG_BYTES = 16 * 1024 * 1024
 MAX_ARTIFACT_BYTES = 8 * 1024 * 1024
 MAX_TASK_RESPONSE_SCHEMA_BYTES = 12 * 1024
+CODEX_REASONING_EFFORTS = {"minimal", "low", "medium", "high", "xhigh"}
 RESPONSE_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -537,16 +538,22 @@ def normalize_codex_response(response: Any, invocation: dict[str, Any]) -> dict[
 
 
 def model_config_args(options: dict[str, Any]) -> list[str]:
-    output: list[str] = []
-    for key in sorted(options):
-        if not isinstance(key, str) or not key or not all(ch.isalnum() or ch in "_.-" for ch in key):
-            raise AdapterError("model option key is invalid")
-        value = options[key]
-        if isinstance(value, dict) or value is None:
-            raise AdapterError("model option value is unsupported")
-        encoded = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
-        output.extend(["--config", f"{key}={encoded}"])
-    return output
+    if not isinstance(options, dict):
+        raise AdapterError("modelOptions must be a JSON object")
+    unsupported = set(options) - {"model_reasoning_effort"}
+    if unsupported:
+        # These values are passed to Codex's general configuration parser. An
+        # open-ended map could override the adapter's sandbox and other
+        # execution protections, so only this non-security model setting is
+        # exposed through the project runner contract.
+        raise AdapterError("unsupported Codex model option")
+    if not options:
+        return []
+    effort = options["model_reasoning_effort"]
+    if not isinstance(effort, str) or effort not in CODEX_REASONING_EFFORTS:
+        raise AdapterError("model_reasoning_effort is not supported")
+    encoded = json.dumps(effort, ensure_ascii=False, separators=(",", ":"))
+    return ["--config", f"model_reasoning_effort={encoded}"]
 
 
 def launch_codex(
@@ -558,6 +565,7 @@ def launch_codex(
 ) -> dict[str, Any]:
     # Validate and construct the complete prompt before starting any provider
     # process or creating a log/schema file.
+    config_args = model_config_args(model_options)
     prompt = make_prompt(invocation).encode("utf-8")
     response_schema = provider_response_schema(invocation)
     prefix = resolve_codex(args.codex_executable, args.codex_script)
@@ -571,8 +579,9 @@ def launch_codex(
         "exec",
         "--ignore-user-config",
         "--model", args.model,
-        *model_config_args(model_options),
+        *config_args,
         "--sandbox", "read-only",
+        "--ignore-rules",
         "--ephemeral",
         "--json",
         "--skip-git-repo-check",
