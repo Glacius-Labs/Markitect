@@ -1,0 +1,15 @@
+{
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "closedUtc": "2026-10-08T19:42:57.478580+00:00",
+  "exactOwnRelativeFile": "private-redacted-stderr/redacted-stderr.json",
+  "removedBytesMetadataOnly": 638,
+  "contentReads": 0,
+  "contentParses": 0,
+  "contentHashes": 0,
+  "nativeExited": true,
+  "workerTerminal": true,
+  "controllerJobClosed": true,
+  "outerTerminal": true,
+  "privateDirectoryEmpty": true,
+  "removalMethod": "Exact non-reparse own path unlinked after metadata-only terminal/scope checks; no content inspection"
+}

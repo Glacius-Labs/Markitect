@@ -1,0 +1,22 @@
+{
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "grantIssuedUtc": "2026-10-08T19:31:16Z",
+  "releasedUtc": "2026-10-08T19:43:51.923481+00:00",
+  "releaseReason": "Final terminal thread-only attempt complete; owned Job/native/worker lifecycle ended, diagnosis block ends; no retry/residual",
+  "grantClosed": true,
+  "remainingAppServerTrees": 0,
+  "remainingDiagnosticReservations": 0,
+  "actualNewNativeTrees": 1,
+  "diagnosticReservationsConsumed": 1,
+  "actualNativeTreesCumulative": 13,
+  "readinessAttemptOrdinal": 2,
+  "maxFurtherActualAttemptsConsideredAfterThis": 0,
+  "automaticFurtherGrant": false,
+  "canonicalCoordinationMutationByScientist": false,
+  "fullSuiteSlotReleasedByScientist": true,
+  "privateDirectoryEmpty": true,
+  "diagnosisBlockClosed": true,
+  "localSlotReleaseRecorded": true,
+  "canonicalSlotReleasePendingOverseerAcceptance": true,
+  "canonicalCoordinationUnmodifiedByScientist": true
+}

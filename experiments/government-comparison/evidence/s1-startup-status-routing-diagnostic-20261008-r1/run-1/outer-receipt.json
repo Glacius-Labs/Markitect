@@ -1,0 +1,17 @@
+{
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "outerReturnCode": 0,
+  "stopReason": null,
+  "outerThroughReceiptReadbackSeconds": 19.67962350000016,
+  "withinOuterBound": true,
+  "controllerReceiptSha256": "62c788c61b81ab381b3bea183ef5977834ce175aaff610f94b478bc41f0b586e",
+  "sanitizedResultSha256": "f2929967136917d66b11187fbb3f11b1527d71bf8826ea5ce73668054101dc67",
+  "terminalResultPresent": true,
+  "status": "thread-response-observed",
+  "nativeStartAttemptRecorded": true,
+  "diagnosticReservations": 1,
+  "actorTaskReservations": 0,
+  "nativeProviderRequests": null,
+  "nativeProviderRetries": null,
+  "remainingGrantClosed": true
+}

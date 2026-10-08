@@ -1,0 +1,42 @@
+{
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "externalDirectory": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-startup-status-routing-diagnostic-20261008-r1",
+  "copiedApprovedMetadataFiles": {
+    "output-root-created.json": {
+      "sha256": "084a04bbeee3267bfd09e7f27b4a3a4f766fe62d8f2f19ad57dace570c8893de",
+      "bytes": 229
+    },
+    "reservation.json": {
+      "sha256": "37df308511c7bfcd5b9c79685bda244630c7c9a16d38c26c634fd244958e454e",
+      "bytes": 906
+    },
+    "controller-once.json": {
+      "sha256": "7f8584e699364e7d4ffd6ce775a73587b52e0cc7149880d68c20268a9e57af34",
+      "bytes": 590
+    },
+    "job-assigned.json": {
+      "sha256": "62160e4b341b12324e3c59d3a6b3093d4ebfcf09cd379075e8a15cb3c0d293fa",
+      "bytes": 655
+    },
+    "started-once.json": {
+      "sha256": "214bb807f0a68bfe4ae7baeffd4c7daaedd51d949f6b92b1a82382502ff0b8e6",
+      "bytes": 591
+    },
+    "sanitized-result.json": {
+      "sha256": "f2929967136917d66b11187fbb3f11b1527d71bf8826ea5ce73668054101dc67",
+      "bytes": 21858
+    },
+    "controller-receipt.json": {
+      "sha256": "62c788c61b81ab381b3bea183ef5977834ce175aaff610f94b478bc41f0b586e",
+      "bytes": 1048
+    },
+    "outer-receipt.json": {
+      "sha256": "f2810b6c01cd1e44566e6b1c7629c0bd2fa1a6f77463523f9af360cc2d0aa719",
+      "bytes": 677
+    }
+  },
+  "rawOrPrivateArtifactsCopied": false,
+  "privateExcerptContentReadParsedHashed": false,
+  "privateDirectoryEmpty": true,
+  "archivedUtc": "2026-10-08T19:42:57.508576+00:00"
+}

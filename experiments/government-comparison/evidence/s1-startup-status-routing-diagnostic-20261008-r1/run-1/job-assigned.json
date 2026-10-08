@@ -1,0 +1,13 @@
+{
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "grantIssuedUtc": "2026-10-08T19:31:16Z",
+  "slotAssignedUtc": "2026-10-08T19:31:16Z",
+  "requestSha256": "c190ce2a86b556f3f9516a95132439c1be94f4c36ce01ab8b76ef50f85d6c55d",
+  "freezeSha256": "fcdc577171fe79e4e5dde3576397b4f0ff473f44c8e0c288c02e44c70ee25235",
+  "reservationSha256": "37df308511c7bfcd5b9c79685bda244630c7c9a16d38c26c634fd244958e454e",
+  "sourceCommit": "a7e49bbdf285f651163469599a44f51730065847",
+  "freezeCommit": "5a7cdb87b03830ea7fc3ef59b4a011b63e5aa0f3",
+  "controllerPid": 39252,
+  "workerPid": 14984,
+  "processTreeControl": "windows-job-kill-on-close"
+}

@@ -1,0 +1,32 @@
+{
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "checkedUtc": "2026-10-08T19:43:51.923481+00:00",
+  "sourcePinsAgainstS": 121,
+  "freezePins": 135,
+  "sourceChangesAfterS": 0,
+  "requestFreezeCommittedAtF": true,
+  "receiptBindingMismatches": 0,
+  "approvedExternalArchivePairs": 8,
+  "strictThreadResponseAndFieldComparisonPassed": true,
+  "threadOnlyLifecycleOverallPassed": true,
+  "explicitThreadClosedNotificationObserved": false,
+  "firstProtocolFailure": null,
+  "startupStatusObservationJsonBytes": 532,
+  "startupProjectionStaticUpperBound": 602,
+  "startupProjectionMaximumBytes": 2048,
+  "startupProjectionFixedShapeAndCategories": true,
+  "nativeWorkerOuterReturnCodes": [
+    0,
+    0,
+    0
+  ],
+  "distinctControllerWorkerNativePids": true,
+  "WindowsJobBeforeGOByUnchangedReviewedControllerAndJobReceipt": true,
+  "readinessLatestStartDeadlineAndPreparationBoundRespected": true,
+  "privateContentReadsParsesHashes": 0,
+  "privateDirectoryEmpty": true,
+  "actualNewNativeTrees": 1,
+  "diagnosticReservations": 1,
+  "nativeTreesCumulative": 13,
+  "actualNewActorTurnsToolsCliMetadataWebStudiesRetries": 0
+}

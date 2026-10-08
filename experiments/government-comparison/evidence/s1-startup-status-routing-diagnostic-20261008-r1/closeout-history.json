@@ -1,0 +1,22 @@
+{
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "firstActionUtc": "2026-10-08T19:32:02+00:00",
+  "recordedUtc": "2026-10-08T19:43:51.923481+00:00",
+  "testInvocations": 1,
+  "testCaseGroups": 6,
+  "fakeSessionInvocations": 15,
+  "testFailures": 0,
+  "ordinaryPresealCorrectionBatches": 1,
+  "sourceImplementationCorrections": 0,
+  "bindingConstructionRefinements": 1,
+  "reviewReadingCorrections": 1,
+  "actualNativeInvocations": 1,
+  "runtimeRetries": 0,
+  "sourceChangesAfterS": 0,
+  "privateContentReadsParsesHashes": 0,
+  "remainingRuntimeAllocation": 0,
+  "independentPostreviewPending": false,
+  "independentPostreviewSha256": "80fd98578e79cfe90c2650246fe520339f478ae0e6da12bec15cb5d0d148e5c7",
+  "closeoutStatusClarifications": 1,
+  "canonicalSlotAcceptancePending": true
+}
