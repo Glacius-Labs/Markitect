@@ -1,0 +1,42 @@
+{
+  "key": "s1-native-cwd-diagnostic-20261008-r1",
+  "copiedApprovedMetadataFiles": {
+    "controller-once.json": {
+      "bytes": 578,
+      "sha256": "6a3db733d3266c4ae5f123631f8dfb4dba55224a32d29b630b7adc13db64344e"
+    },
+    "controller-receipt.json": {
+      "bytes": 1036,
+      "sha256": "f98ce14973c30344e6c88a1d6e0ca3ed42a1e1e6a27617bae5515ea88f50ea20"
+    },
+    "job-assigned.json": {
+      "bytes": 643,
+      "sha256": "11bff56f2a1fd0c53d9349427571cde76bc7a610cdfb668f4e035b7069ed2817"
+    },
+    "outer-receipt.json": {
+      "bytes": 649,
+      "sha256": "28204ea6523eee1eddcd04dc6eb398b175622fd3187a2fc9c45c53584735edbf"
+    },
+    "output-root-created.json": {
+      "bytes": 216,
+      "sha256": "b9a70ad449a1deb319eeb6c3a8afc327ade1453822dc4c20322501a8a26ef5ae"
+    },
+    "reservation.json": {
+      "bytes": 704,
+      "sha256": "e6dcb6b13f12c4129493f3a92964db232410e7b2e8a579499d82c17d05e87238"
+    },
+    "sanitized-result.json": {
+      "bytes": 20914,
+      "sha256": "7e9ecf57f54572348d60f7e8dc5c1efb51787fb1829162c7698cbc705bf79e74"
+    },
+    "started-once.json": {
+      "bytes": 577,
+      "sha256": "8359c0756130b1e45a786084e094f2273de023f97a9ef276b9a66167c4d88e06"
+    }
+  },
+  "fileCount": 8,
+  "privateFilesCopied": 0,
+  "rawFilesCopied": 0,
+  "actualComparisonScalarValuesOrFingerprintsCopied": false,
+  "exactOwnedPrivateFileRemovedWithoutContentRead": true
+}

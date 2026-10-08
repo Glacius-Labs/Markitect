@@ -1,0 +1,11 @@
+{
+  "key": "s1-native-cwd-diagnostic-20261008-r1",
+  "grantIssuedUtc": "2026-10-08T18:23:59Z",
+  "slotAssignedUtc": "2026-10-08T18:23:59Z",
+  "requestSha256": "4d6656c8d11f44981ea018baa2e534a61e7a069c5856f2b7841d8e4de8badb21",
+  "freezeSha256": "cd95d9ed2d19299bde9f9a50efeb32fdd2c68394d38bb291d8774e781ea55001",
+  "reservationSha256": "e6dcb6b13f12c4129493f3a92964db232410e7b2e8a579499d82c17d05e87238",
+  "sourceCommit": "1dc09ba4830b36dffe8c46bddb0346f3e34bacb6",
+  "freezeCommit": "f1a6696399322b6edf9a958b8f3a378a92d28e73",
+  "startedAtUnix": 1791484328.260072
+}

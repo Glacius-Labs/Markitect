@@ -1,0 +1,71 @@
+{
+  "key": "s1-native-cwd-diagnostic-20261008-r1",
+  "status": "STOPPED BEFORE TURN: strict thread response passed; unexpected final output during cleanup",
+  "stopReason": "unexpected-final-output",
+  "sourceCommit": "1dc09ba4830b36dffe8c46bddb0346f3e34bacb6",
+  "freezeCommit": "f1a6696399322b6edf9a958b8f3a378a92d28e73",
+  "requestSha256": "4d6656c8d11f44981ea018baa2e534a61e7a069c5856f2b7841d8e4de8badb21",
+  "freezeSha256": "cd95d9ed2d19299bde9f9a50efeb32fdd2c68394d38bb291d8774e781ea55001",
+  "sanitizedResultSha256": "7e9ecf57f54572348d60f7e8dc5c1efb51787fb1829162c7698cbc705bf79e74",
+  "fieldComparison": {
+    "comparisons": [
+      {
+        "field": "cwd",
+        "expectedType": "string",
+        "actualType": "string",
+        "equal": true
+      },
+      {
+        "field": "model",
+        "expectedType": "string",
+        "actualType": "string",
+        "equal": true
+      },
+      {
+        "field": "modelProvider",
+        "expectedType": "string",
+        "actualType": "string",
+        "equal": true
+      },
+      {
+        "field": "approvalPolicy",
+        "expectedType": "string",
+        "actualType": "string",
+        "equal": true
+      }
+    ],
+    "cwdLexicallyEquivalent": true
+  },
+  "nativeInputIdentityHypothesisSupportedThisAttempt": true,
+  "interpretation": "Native requested spelling of the same verified public directory passed all four exact comparisons and full thread-start response gates. Overall attempt still stopped in final structured-output handling. The final frame and inner reason were discarded, so its method/cause is unknown; no raw recovery or guess. This is not general normalization, historical R2 cause or full lifecycle success.",
+  "fullyValidatedThreadStartResponse": true,
+  "overallAttemptSuccessful": false,
+  "strictNoTurnBoundaryPreserved": true,
+  "startedNotificationCorrelated": true,
+  "nativeTreesThisAttempt": 1,
+  "diagnosticReservationsThisAttempt": 1,
+  "nativeTreesCumulative": 11,
+  "actorReservationsHistorical": 6,
+  "actorModelAttemptsHistorical": 5,
+  "cliMetadataHistorical": 8,
+  "knownTokensHistorical": 53331,
+  "totalAndCurrentTokens": null,
+  "historicalNativeUsage": [
+    15,
+    16,
+    13,
+    2250
+  ],
+  "turnsToolsStudyCells": 0,
+  "syntheticCasesPassed": 6,
+  "testInvocations": 1,
+  "presealCorrections": 0,
+  "failedTestInvocations": 0,
+  "privateContentReadOrHashed": false,
+  "grantClosed": true,
+  "remaining": 0,
+  "automaticFollowOn": false,
+  "resourceRecord": "postrun-validation.json",
+  "claimBoundary": "This prospective thread-response Gate passed; terminal lifecycle did not. No S1/tools/actual serving model/OS/billing/method quality or old R2 cause proof.",
+  "closeoutDocumentationClarification": "Independent review terminology clarified to historical native usage, without assigning product-count meaning; no source/test change or invocation."
+}

@@ -1,0 +1,17 @@
+{
+  "key": "s1-native-cwd-diagnostic-20261008-r1",
+  "reservedAtUnix": 1791484326.204353,
+  "grantIssuedUtc": "2026-10-08T18:23:59Z",
+  "slotAssignedUtc": "2026-10-08T18:23:59Z",
+  "sourceCommit": "1dc09ba4830b36dffe8c46bddb0346f3e34bacb6",
+  "freezeCommit": "f1a6696399322b6edf9a958b8f3a378a92d28e73",
+  "requestSha256": "4d6656c8d11f44981ea018baa2e534a61e7a069c5856f2b7841d8e4de8badb21",
+  "freezeSha256": "cd95d9ed2d19299bde9f9a50efeb32fdd2c68394d38bb291d8774e781ea55001",
+  "maxTrees": 1,
+  "maxDiagnosticReservations": 1,
+  "maxActorTaskReservations": 0,
+  "priorAppServerTrees": 10,
+  "priorActorReservations": 6,
+  "priorCliMetadataCalls": 8,
+  "cumulativeAppServerMaximum": 11
+}

@@ -1,0 +1,19 @@
+{
+  "key": "s1-native-cwd-diagnostic-20261008-r1",
+  "grantIssuedUtc": "2026-10-08T18:23:59Z",
+  "slotAssignedUtc": "2026-10-08T18:23:59Z",
+  "releasedUtc": "2026-10-08T18:35:19.026556+00:00",
+  "owner": "Scientist",
+  "status": "RELEASED; grant closed with zero remaining",
+  "actualNativeTrees": 1,
+  "diagnosticReservations": 1,
+  "actualActorTaskReservations": 0,
+  "remainingNativeTrees": 0,
+  "remainingReservations": 0,
+  "nativeExited": true,
+  "workerExited": true,
+  "controllerJobClosed": true,
+  "futureHeavyLocalWorkPlanned": false,
+  "noAutomaticFollowOn": true,
+  "canonicalCoordinationOwner": "Overseer; explicit release reported here without editing canonical coordination."
+}

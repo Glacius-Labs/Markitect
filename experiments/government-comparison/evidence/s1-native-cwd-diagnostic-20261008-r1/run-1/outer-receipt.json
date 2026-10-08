@@ -1,0 +1,17 @@
+{
+  "key": "s1-native-cwd-diagnostic-20261008-r1",
+  "outerReturnCode": 1,
+  "stopReason": null,
+  "outerThroughReceiptReadbackSeconds": 10.972207699998762,
+  "withinOuterBound": true,
+  "controllerReceiptSha256": "f98ce14973c30344e6c88a1d6e0ca3ed42a1e1e6a27617bae5515ea88f50ea20",
+  "sanitizedResultSha256": "7e9ecf57f54572348d60f7e8dc5c1efb51787fb1829162c7698cbc705bf79e74",
+  "terminalResultPresent": true,
+  "status": "stopped",
+  "nativeStartAttemptRecorded": true,
+  "diagnosticReservations": 1,
+  "actorTaskReservations": 0,
+  "nativeProviderRequests": null,
+  "nativeProviderRetries": null,
+  "remainingGrantClosed": true
+}
