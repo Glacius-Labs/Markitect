@@ -189,3 +189,26 @@ func ValidateTargetContext(target DistillationTargetContext) error {
 	}
 	return nil
 }
+
+// ValidateDistillationTarget checks an optional Distillation target binding
+// against the exact fixed target Project. Older non-agent reports may omit
+// all target fields; agent-generated reports are target-bound by validation.
+func ValidateDistillationTarget(report Distillation, target *projectwork.Project) error {
+	if report.TargetBasis == "" && report.TargetRevision == "" && report.TargetContextDigest == "" {
+		if report.Method == "agent-assisted" {
+			return errors.New("agent-assisted distillation must bind its fixed target project and context")
+		}
+		return nil
+	}
+	if !validDigest(report.TargetBasis) || !validFullCommit(report.TargetRevision) || !validDigest(report.TargetContextDigest) {
+		return errors.New("target-bound distillation must bind a project digest, full revision, and target-context digest together")
+	}
+	targetContext, err := TargetContextForProject(target)
+	if err != nil {
+		return fmt.Errorf("validate fixed target context: %w", err)
+	}
+	if report.TargetBasis != targetContext.ProjectDigest || report.TargetRevision != targetContext.Revision || report.TargetContextDigest != targetContext.Digest {
+		return errors.New("distillation target basis, revision, or context differs from the loaded fixed target project")
+	}
+	return nil
+}
