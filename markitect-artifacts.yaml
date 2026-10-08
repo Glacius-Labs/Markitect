@@ -2108,3 +2108,5 @@ spec:
       owner: project-world-implementation
     - path: internal/host/projectcli/repair_test.go
       owner: project-world-implementation
+    - path: internal/host/projectcli/distill_receipt_test.go
+      owner: project-world-implementation
