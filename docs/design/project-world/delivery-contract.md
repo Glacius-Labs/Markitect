@@ -51,7 +51,7 @@ Alle Implementierenden verwenden Luna mit Reasoning High und isolierte Worktrees
 | Host-Frontend | `internal/host/projectwork/` | striktes Laden, Init, Modellproposal, Snapshotbindung, Sichten und sichere zugehörige Writes |
 | Ausführung | `internal/host/projectrun/` | persistenter Auftragsbaum, getrennte Agentenaufrufe über agentexec, Kandidat, Prüfung, Apply und Resume |
 | Brownfield | `internal/host/projectadoption/` | exakte Discovery, belegte Vorschläge/Fragen, gebundene Resolution und Modellübernahme ohne Codewrites |
-| Claude-/Isolationsadapter | `internal/tooling/clauderunner/` und neuer begrenzter Containerlauncher | geprüfter Vorschlagsadapter, keine permissive Ersatzinvocation; reine Protokolltests von echten Providerläufen getrennt |
+| Claude-/Ausführungsgrenze | `internal/tooling/clauderunner/` und koordinierte Host-/agentexec-Anpassungen | geprüfter Vorschlagsadapter und explizite lokale Ausführungsgrenze, keine permissive Ersatzinvocation; reine Protokolltests von echten Providerläufen getrennt |
 | Bedienung und Beispiele | `internal/host/projectcli/`, `examples/project-world/`, `docs/project-workflow.md` | vollständige neue Befehle und ausführbares Shopbeispiel, Installation/Adoption/Alltagsarbeit nachvollziehbar |
 
 Der Modulvertrag benutzt `core.Model` als Eingabe. Der gemeinsame abgeleitete Report enthält Manager, Statements, Artefakterwartungen, Checks, konkrete Dateieinträge, Befunde und Digests. Öffentliche reine Funktionen sind `Schema() core.Schema`, `Analyze(core.Model, []File) Report`, `Impact(Report, Report) ChangeImpact` und `Context(Report, managerID) (ManagerContext, error)`. IDs bleiben vollständige `core.DefinitionIdentity.Key()`-Werte; lesbare Namen sind Darstellung, keine zweite Identität.
@@ -67,3 +67,9 @@ Host stellt `Load(root, revision) (*Project, error)` mit Model, Report, unverän
 5. Fokussierte Paketsuites, unabhängiger Gesamtdiffreview und die normalen Contribution-Gates am integrierten Kandidaten. OS-Isolation und tatsächliche Codex-/Claude-Modellläufe erhalten eigene Evidenzzeilen.
 
 Ein bestandener Protokolltest ist keine Produktivitätsmessung, OS-Sicherheitszertifizierung oder menschliche Annahme. Während der Integration werden Befunde behoben; das Team beendet seine Arbeit nicht bei API-Stubs oder bloßen Plänen.
+
+## Tatsächlicher Stand der Ausführungsgrenze
+
+Dieser Sourcekandidat implementiert den im [Agentenarbeitsweg](adoption-and-agent-boundary.md) vorgesehenen ersten Modus `controlled-local`. Er kontrolliert ausgewählte Eingaben, begrenzte Vorschläge, Managerzuordnung, Prüfungen und den Apply-Weg. Repositoryanweisungen und Providerflags können einem Prozess mit gewöhnlichen Nutzerrechten keine wirksame OS-Schreibgrenze geben.
+
+Der zunächst erwogene Containerlauncher wurde in diesem Kandidaten nicht umgesetzt. `isolated` blockiert deshalb ausdrücklich; es gibt keinen Rückfall auf lokale volle Rechte. Ein gepinnter und geprüfter Container-/VM-Launcher mit getrennt berechtigtem Applybroker, geschützten Credentials und nachgewiesener Egressgrenze bleibt eine eigene offene Implementierung. Ebenso fehlen Live-Codex-/Claude-Läufe und eine autonome Gesprächsoberfläche im Markitect-CLI. Der [Prüfbericht](../../validation/project-world-delivery.md) trennt die tatsächlich ausgeführten Sourcegates von diesen offenen Nachweisen.

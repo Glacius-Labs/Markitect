@@ -16,7 +16,27 @@ The source-alpha CLI exposes `project init/check/index/context/impact/document/e
 
 ## Validation record
 
-Final integrated source gates are pending while the independent real-process lifecycle test is integrated. Focused model, frontend, adoption, provider, CLI and runtime checks have passed during implementation; those earlier runs do not stand in for the final source gates.
+The final implementation source is `950332a9bc621153e70372f5f97a28b3365644c4`, checked locally on Windows with Go 1.27.1. The subsequent report and plan correction are prose-only changes; they do not acquire a new full-suite result from this run.
+
+| Gate | Tested source | Result |
+|---|---|---|
+| `go test ./... -count=1 -timeout=30m` | `950332a` | PASS, 52 packages with tests, including the architecture import gate and historical compatibility suites |
+| `go vet ./...`, `go mod verify`, native CLI build | `950332a` | PASS |
+| Schema freshness, root format, fixed root `check` and engineering-change `context`, impact from the recorded base | `950332a` | PASS |
+| Managed-artifact accounting and configured hooks/pipelines | `950332a` | PASS; one pipeline and six declared check references |
+| Contribution examples: eight checks, five formats, four models and two contexts | `c57a1de8068a0006e8bfd44da98dfc91e9b1bb40` | PASS; these example inputs are unchanged by the final compatibility fixes |
+| Codex and Claude adapter protocol suites | `c57a1de` | PASS, 20 Codex and 6 Claude tests; deterministic protocol tests, no provider inference |
+| Native initialization and Shop walkthrough | `c57a1de` | PASS, described below; this is evidence from that candidate binary |
+
+The integrated `projectrun` tests use the real `agentexec` subprocess transport. They exercise separate manager invocations, delegation and integration, interruption and resume without replay, literal check execution, stale-apply rejection and successful guarded Apply. Negative subprocess cases cover foreign paths, stale response nonces, out-of-scope proposals and failed integration. The full suite also includes fixed-commit Brownfield discovery, contradictory evidence and clarification, deferred-scope exclusion, reviewed runtime setup and refusal to plan over uncommitted selected inputs.
+
+The native CLI walkthrough initialized a fresh unborn feature branch: preview created no files and write created only Markitect-owned files. A separate committed Shop copy passed `project check/index/context/document` and all seven Python/SQLite behavior tests. An exact-digest model edit was previewed, applied and committed, then impact reported one changed definition, eight affected Statements, six Managers, five files and one check, with no unknown scope. These finite fixture results establish the demonstrated flow, not arbitrary project completeness.
+
+The earlier full run at `c57a1de` failed in legacy controller/inference tests. The final source restores the historical nil-environment-allowlist fingerprint while retaining actual environment receipts; explicit allowlists in the new project path still bind their effective values. Legacy inference now chooses an absent private log leaf beneath its configured container so `agentexec` can create the required ACL without weakening checks or altering container permissions. Those regressions pass in the final full run. Two earlier coordinator-interrupted runs are not counted as passing evidence.
+
+An independent final documentation review found the overstated container-launcher plan entry, which was corrected to match the implemented boundary. The final prose candidate is checked separately with fixed `check/context/impact`, artifact/module accounting, local document links and `git diff --check`. This report records standalone gates; it is not a new whole-Project `verify` receipt.
+
+Local raw logs are retained outside repository inputs under `%TEMP%/markitect-project-world-validation/`, including `integrated-full-tests.log`, `failed-c57a1de-full-tests.log` and the `final-*.log` files. They are local evidence, not published CI artifacts.
 
 ## Remaining boundaries
 
