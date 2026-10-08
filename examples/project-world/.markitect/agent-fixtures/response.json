@@ -8,6 +8,16 @@
   "candidateFiles": [],
   "evidenceRefs": ["tests/test_cancellation.py"],
   "verifierObservations": [],
-  "candidateJson": {"summary": "No source edits in this protocol-only fixture."},
+  "reportJson": {
+    "status": "complete",
+    "summary": "Protocol-only fixture; no source edits are proposed.",
+    "delegations": [],
+    "integrated": false,
+    "questions": [],
+    "risks": [],
+    "resolvedQuestions": [],
+    "resolvedRisks": [],
+    "escalateTo": ""
+  },
   "uncertainty": ["This fixture was not produced by an agent process." ]
 }

@@ -23,6 +23,9 @@ func TestParseProjectActionsAndClosedFlags(t *testing.T) {
 		{"run needs write", []string{"run", "--repo", ".", "--plan", "p1"}, "", "requires --write"},
 		{"edit apply needs reviewed digest", []string{"edit", "--repo", ".", "--input", "proposal.json", "--write"}, "", "requires --expect"},
 		{"apply requires verified digest", []string{"apply", "--repo", ".", "--plan", "p1", "--run", "r1", "--candidate", "c1", "--branch", "feature/x", "--head", "a", "--worktree", "b", "--write"}, "", "requires --expect"},
+		{"apply preview is read only", []string{"apply", "--repo", ".", "--plan", "p1", "--run", "r1", "--candidate", "c1"}, "apply", ""},
+		{"apply write accepts exact preflight", []string{"apply", "--repo", ".", "--plan", "p1", "--run", "r1", "--candidate", "c1", "--branch", "feature/x", "--head", "abc", "--worktree", "sha256:tree", "--expect", "sha256:verify", "--write"}, "apply", ""},
+		{"apply write requires preflight", []string{"apply", "--repo", ".", "--plan", "p1", "--run", "r1", "--candidate", "c1", "--expect", "verify", "--write"}, "", "from the read-only preflight"},
 		{"help is available", []string{"init", "--help"}, "", ""},
 		{"adoption record output", []string{"adopt", "--repo", ".", "--source-repo", ".", "--revision", strings.Repeat("a", 40), "--discovery", ".markitect/drafts/d.json", "--report", ".markitect/drafts/r.json", "--resolution", ".markitect/drafts/resolution.json", "--output", ".markitect/drafts/plan.json"}, "adopt", ""},
 	}
@@ -69,5 +72,13 @@ func TestParseProjectHelp(t *testing.T) {
 	_, help, err := parse([]string{"project", "--help"}, nil)
 	if err != nil || !help {
 		t.Fatalf("project help = %v, err=%v", help, err)
+	}
+	_, help, err = parse([]string{"--help"}, nil)
+	if err != nil || !help {
+		t.Fatalf("top-level project help = %v, err=%v", help, err)
+	}
+	out := new(strings.Builder)
+	if code := Run([]string{"--help"}, out, new(strings.Builder)); code != 0 || !strings.Contains(out.String(), "markitect project") {
+		t.Fatalf("top-level project help code=%d output=%q", code, out.String())
 	}
 }

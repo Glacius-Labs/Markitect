@@ -26,9 +26,11 @@ markitect project document --repo .
 
 The initialization owns only `.markitect/`: the project manifest, empty runtime placeholder, root manager, generated readable view, and local ignore rules. It does not configure an agent. The view is generated from the selected model and is safe to read or edit as a proposal, but the selected YAML model remains the compiled source of meaning.
 
+For execution, ask the existing host-side agent to propose the project runtime through the same closed `project edit` mutation. A user or root Manager can review and set `.markitect/runtime.yaml`; Markitect validates its bounded command, manager mapping, environment-name allowlist, model/provider labels, and finite limits. The runtime stores no provider secrets and never changes the host's provider/editor/plugin/account setup. If no runner has been selected, the runtime placeholder is intentionally empty and `project plan` reports that execution is not configured.
+
 For an existing repository, adoption begins from a full fixed source commit and an explicit list of regular-file paths, reasons, exclusions, and scope roots in a JSON request. Discovery emits a bound record; P1 `distill` validates a supplied report and starts no provider; `adopt` shows the selected model proposal before a separate guarded write:
 
-First initialize the target repository and commit that scaffold on its feature branch. Adoption binds its proposal to a committed target project basis; it does not infer an uncommitted or provisional model as the destination. If the repository is already a Markitect project, use its existing committed project basis.
+First initialize the target repository and commit that scaffold on its feature branch. If adoption should inventory the existing code, have the user or root Manager propose the desired inventory roots and exclusions through `project edit`, review/apply that exact edit, and commit it too. Adoption binds its model-only proposal to a committed target project basis; it does not infer an uncommitted or provisional model, nor silently broaden selected inventory. If the repository is already a Markitect project, use its existing committed project basis.
 
 ```powershell
 markitect project discover --repo . --request .markitect/drafts/discovery-request.json --output .markitect/drafts/discovery.json
@@ -57,10 +59,11 @@ markitect project plan --repo . --goal "Cancel confirmed orders and release thei
 markitect project run --repo . --plan PLAN_ID --write
 markitect project status --repo . --run RUN_ID
 markitect project verify --repo . --run RUN_ID --write
-markitect project apply --repo . --plan PLAN_ID --run RUN_ID --candidate CANDIDATE_ID --branch feature/cancel-order --head EXPECTED_HEAD --worktree EXPECTED_TREE_DIGEST --expect VERIFIED_RUN_DIGEST --write
+markitect project apply --repo . --plan PLAN_ID --run RUN_ID --candidate CANDIDATE_ID
+markitect project apply --repo . --plan PLAN_ID --run RUN_ID --candidate CANDIDATE_ID --branch TARGET_BRANCH --head TARGET_HEAD --worktree TARGET_TREE_DIGEST --expect VERIFICATION_DIGEST --write
 ```
 
-The precise plan and candidate identifiers come from Markitect's JSON reports. Each manager receives its own scoped context; child work is integrated into a candidate before independent declared checks run. `resume` reconciles persisted work without repeating completed invocations. A plan never invokes an agent, and an agent response cannot grant authority. `--write` on run/resume/verify exposes the existing user-authorized operation; it is not a second approval prompt. `apply --write` is distinct because it is guarded against the exact plan, run, candidate, branch, head, tree, and fresh verification.
+The read-only apply preflight prints the exact verification digest, target branch, HEAD, and working-tree digest for the named candidate. Pass those same values to the following `--write`; if any binding changes, Apply rejects the write. The precise plan and candidate identifiers come from Markitect's JSON reports. Each manager receives its own scoped context; child work is integrated into a candidate before independent declared checks run. `resume` reconciles persisted work without repeating completed invocations. A plan never invokes an agent, and an agent response cannot grant authority. `--write` on run/resume/verify exposes the existing user-authorized operation; it is not a second approval prompt. `apply --write` is guarded against the exact plan, run, candidate, branch, head, tree, and fresh verification.
 
 Conversational integration requires a supported host/runtime to make the structured Markitect calls. The protocol example under `examples/project-world/.markitect/agent-fixtures/` is only a fixture; it is not proof of a provider call, verified agent setup, operating-system isolation, or agent compliance. Repository instructions can make the workflow discoverable but cannot technically prevent an agent with ordinary write access from bypassing it. Use the reported execution mode and its evidence, and keep human acceptance separate from structural checks.
 

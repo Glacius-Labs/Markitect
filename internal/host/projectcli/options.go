@@ -43,10 +43,13 @@ var actionSpecs = map[string]actionSpec{
 	"resume":   {usage: "resume --repo PATH --run RUN_ID --write", flags: []string{"repo", "run", "write"}, required: []string{"repo", "run", "write"}, write: true},
 	"status":   {usage: "status --repo PATH --run RUN_ID", flags: []string{"repo", "run"}, required: []string{"repo", "run"}},
 	"verify":   {usage: "verify --repo PATH --run RUN_ID --write", flags: []string{"repo", "run", "write"}, required: []string{"repo", "run", "write"}, write: true},
-	"apply":    {usage: "apply --repo PATH --plan PLAN_ID --run RUN_ID --candidate ID --branch BRANCH --head COMMIT --worktree DIGEST --write", flags: []string{"repo", "plan", "run", "candidate", "branch", "head", "worktree", "expect", "write"}, required: []string{"repo", "plan", "run", "candidate", "branch", "head", "worktree", "write"}, write: true},
+	"apply":    {usage: "apply --repo PATH --plan PLAN_ID --run RUN_ID --candidate ID [--branch BRANCH --head COMMIT --worktree DIGEST --expect VERIFY_DIGEST --write]", flags: []string{"repo", "plan", "run", "candidate", "branch", "head", "worktree", "expect", "write"}, required: []string{"repo", "plan", "run", "candidate"}, write: true},
 }
 
 func parse(args []string, errout io.Writer) (options, bool, error) {
+	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
+		return options{}, true, nil
+	}
 	if len(args) > 0 && args[0] == "project" {
 		args = args[1:]
 		if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
@@ -126,7 +129,16 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 		return options{}, false, errors.New("project adopt --write requires --plan with the exact reviewed adoption plan")
 	}
 	if action == "apply" && *values["expect"] == "" {
-		return options{}, false, errors.New("project apply requires --expect with the verified run digest")
+		if write {
+			return options{}, false, errors.New("project apply --write requires --expect with the exact verification digest")
+		}
+	}
+	if action == "apply" && write {
+		for _, required := range []string{"branch", "head", "worktree"} {
+			if !seen[required] || *values[required] == "" {
+				return options{}, false, fmt.Errorf("project apply --write requires --%s from the read-only preflight", required)
+			}
+		}
 	}
 	o := options{action: action, write: write, managers: append([]string(nil), managers...)}
 	if len(managers) > 0 {

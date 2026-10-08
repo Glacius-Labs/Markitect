@@ -13,6 +13,8 @@ spec:
       name: cancel-order
     - namespace: commerce.sales.orders
       name: cancel-before-shipped
+    - namespace: commerce.sales.orders
+      name: requires-active-reservation
   paths:
     - src/shop/orders/
     - src/shop/commerce/cancellation.py

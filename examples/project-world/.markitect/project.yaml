@@ -12,6 +12,7 @@ modelFiles:
   - .markitect/model/commerce/sales/orders/cancel-before-shipped.yaml
   - .markitect/model/commerce/sales/orders/manager.yaml
   - .markitect/model/commerce/sales/orders/order.yaml
+  - .markitect/model/commerce/sales/orders/requires-active-reservation.yaml
   - .markitect/model/commerce/manager.yaml
   - .markitect/model/engineering/checks.yaml
   - .markitect/model/engineering/manager.yaml

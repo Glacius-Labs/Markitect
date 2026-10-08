@@ -1,12 +1,14 @@
 package projectcli
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/projectadoption"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
@@ -215,10 +217,74 @@ func runAction(opts options, out io.Writer) error {
 			return err
 		}
 		return emitRecord(opts.sourceRepo, opts.output, encoded, out)
+	case "plan":
+		request := projectrun.PlanRequest{Goal: opts.goal, Managers: append([]string(nil), opts.managers...), BaseRevision: opts.revision, ExecuteAuthorized: opts.write}
+		plan, err := projectrun.Plan(projectRunHost(), opts.repo, opts.revision, request)
+		if err != nil {
+			return err
+		}
+		return writeJSON(out, plan)
+	case "run":
+		report, err := projectrun.Run(context.Background(), projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.plan)
+		if err != nil {
+			return err
+		}
+		return writeJSON(out, report)
+	case "resume":
+		report, err := projectrun.Resume(context.Background(), projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.run)
+		if err != nil {
+			return err
+		}
+		return writeJSON(out, report)
+	case "status":
+		report, err := projectrun.Status(opts.repo, opts.run)
+		if err != nil {
+			return err
+		}
+		return writeJSON(out, report)
+	case "verify":
+		report, err := projectrun.Verify(context.Background(), projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.run)
+		if err != nil {
+			return err
+		}
+		return writeJSON(out, report)
+	case "apply":
+		host := projectRunHost()
+		if !opts.write {
+			preflight, err := projectrun.PreflightApply(host, opts.repo, opts.run, opts.candidate)
+			if err != nil {
+				return err
+			}
+			if preflight.PlanID != opts.plan {
+				return fmt.Errorf("requested plan does not match the verified run")
+			}
+			return writeJSON(out, preflight)
+		}
+		report, err := projectrun.Apply(host, projectrun.ProcessInvoker{}, opts.repo, projectrun.ApplyRequest{
+			RunID: opts.run, PlanID: opts.plan, CandidateID: opts.candidate,
+			TargetBranch: opts.branch, ExpectedHead: opts.head, ExpectedWorktree: opts.tree,
+			ExpectedVerificationDigest: opts.expect,
+		})
+		if err != nil {
+			return err
+		}
+		if report.Status != projectrun.StatusApplied {
+			return &projectOutcomeError{code: 1, message: "project apply status is " + report.Status}
+		}
+		return writeJSON(out, report)
 	default:
-		return errors.New("action requires its coordinated execution or adoption service, which is not wired in this package build")
+		return errors.New("action requires a project service that is not wired in this package build")
 	}
 	return fmt.Errorf("unsupported project action %q", opts.action)
+}
+
+func projectRunHost() projectrun.Host {
+	return projectrun.Host{
+		Load:         projectwork.Load,
+		FromSnapshot: projectwork.FromSnapshot,
+		PlanEdit:     projectwork.PlanEdit,
+		ApplyEdit:    projectwork.ApplyEdit,
+	}
 }
 
 type projectOutcomeError struct {

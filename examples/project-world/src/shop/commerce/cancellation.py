@@ -6,6 +6,10 @@ from shop.inventory.reservations import release_for_order
 from shop.orders.order import InvalidTransition, set_status, status
 
 
+class ReservationInvariantError(RuntimeError):
+    """Raised when a confirmed order lacks exactly one active reservation."""
+
+
 def cancel_order(connection: sqlite3.Connection, order_id: str) -> bool:
     """Cancel a confirmed order and release its reservation atomically.
 
@@ -21,7 +25,11 @@ def cancel_order(connection: sqlite3.Connection, order_id: str) -> bool:
         if current != "confirmed":
             raise InvalidTransition(f"cannot cancel order in {current!r} state")
         set_status(connection, order_id, "cancelled")
-        release_for_order(connection, order_id)
+        released = release_for_order(connection, order_id)
+        if released != 1:
+            raise ReservationInvariantError(
+                f"expected exactly one active reservation for {order_id}, released {released}"
+            )
         connection.commit()
         return True
     except Exception:
