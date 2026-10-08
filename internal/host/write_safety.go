@@ -580,7 +580,31 @@ func (w *writeRoot) atomicWriteWithHooks(name string, data []byte, mode os.FileM
 }
 
 func (w *writeRoot) LockWriter() (func(), error) {
-	parent, closeParent, err := w.openDirectory(".artifacts/markitect", true, 0755)
+	lockDirectory := ".artifacts/markitect"
+	manifest, err := w.Lstat(".markitect/project.yaml")
+	if err == nil {
+		if isReparsePoint(manifest) || !manifest.Mode().IsRegular() {
+			return nil, errors.New("project manifest must be a regular file before selecting its writer lock")
+		}
+		lockDirectory = ".markitect"
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("inspect project manifest before selecting writer lock: %w", err)
+	}
+	return w.lockWriterAt(lockDirectory, "write.lock")
+}
+
+// lockWriterAt acquires the shared write lock at an explicit project-relative
+// directory. It uses the same pinned-root and parent-identity checks as the
+// compatibility LockWriter path.
+func (w *writeRoot) lockWriterAt(lockDirectory, leaf string) (func(), error) {
+	if err := validateWritePath(lockDirectory); err != nil {
+		return nil, fmt.Errorf("unsafe writer lock directory: %w", err)
+	}
+	if err := validateWritePath(leaf); err != nil || strings.Contains(leaf, "/") {
+		return nil, fmt.Errorf("unsafe writer lock filename %q", leaf)
+	}
+	lockPath := lockDirectory + "/" + leaf
+	parent, closeParent, err := w.openDirectory(lockDirectory, true, 0755)
 	if err != nil {
 		return nil, err
 	}
@@ -588,7 +612,7 @@ func (w *writeRoot) LockWriter() (func(), error) {
 		_ = closeParent(parent)
 		return nil, err
 	}
-	lock, err := parent.OpenFile("write.lock", os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	lock, err := parent.OpenFile(leaf, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
 		_ = closeParent(parent)
 		return nil, fmt.Errorf("renderer lock is already present: %w", err)
@@ -597,19 +621,19 @@ func (w *writeRoot) LockWriter() (func(), error) {
 	if err != nil {
 		_ = lock.Close()
 		_ = closeParent(parent)
-		return nil, &publishedWriteError{Path: ".artifacts/markitect/write.lock", Cause: err}
+		return nil, &publishedWriteError{Path: lockPath, Cause: err}
 	}
-	if err := w.checkNamedDirectoryIdentity(".artifacts/markitect", parent); err != nil {
+	if err := w.checkNamedDirectoryIdentity(lockDirectory, parent); err != nil {
 		_ = lock.Close()
 		_ = closeParent(parent)
-		return nil, &publishedWriteError{Path: ".artifacts/markitect/write.lock", Cause: err}
+		return nil, &publishedWriteError{Path: lockPath, Cause: err}
 	}
 	var releaseOnce sync.Once
 	return func() {
 		releaseOnce.Do(func() {
-			if w.checkIdentity() == nil && w.checkNamedDirectoryIdentity(".artifacts/markitect", parent) == nil {
-				if current, err := parent.Lstat("write.lock"); err == nil && !isReparsePoint(current) && os.SameFile(lockInfo, current) {
-					_ = parent.Remove("write.lock")
+			if w.checkIdentity() == nil && w.checkNamedDirectoryIdentity(lockDirectory, parent) == nil {
+				if current, err := parent.Lstat(leaf); err == nil && !isReparsePoint(current) && os.SameFile(lockInfo, current) {
+					_ = parent.Remove(leaf)
 				}
 			}
 			_ = lock.Close()
