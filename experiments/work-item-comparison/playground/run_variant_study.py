@@ -15,6 +15,7 @@ import time
 from adapters.contract import validate_descriptor, validate_result
 from adapters.loader import load_adapter
 import lifecycle
+import workspace_policy
 
 
 ROOT = Path(__file__).resolve().parent
@@ -32,6 +33,66 @@ def now():
 
 def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def _workspace_manifest(root):
+    """Hash the captured candidate bytes, excluding any Git metadata."""
+    root = Path(root)
+    return {path.relative_to(root).as_posix(): digest(path)
+            for path in sorted(root.rglob("*"))
+            if path.is_file() and ".git" not in path.relative_to(root).parts}
+
+
+def _capture_initial_public_workspace(repo, audit):
+    """Bind a stable copy of the prepared workspace before native readiness/actor work."""
+    repo, audit = Path(repo), Path(audit)
+    target = audit / "initial-public"
+    binding_path = audit / "initial-public-binding.json"
+    if target.exists() or binding_path.exists():
+        raise ValueError("initial public workspace capture already exists")
+
+    def files(root):
+        result = {}
+        for path in sorted(root.rglob("*")):
+            relative = path.relative_to(root)
+            if relative.parts and relative.parts[0] == ".git":
+                continue
+            if path.is_symlink():
+                raise ValueError("prepared workspace contains a symlink")
+            if path.is_file():
+                result[relative.as_posix()] = digest(path)
+            elif not path.is_dir():
+                raise ValueError("prepared workspace contains a non-regular entry")
+        return result
+
+    before = files(repo)
+    if not before:
+        raise ValueError("prepared public workspace is empty")
+    target.mkdir()
+    for relative in before:
+        source = repo / Path(relative)
+        destination = target / Path(relative)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        source_bytes = source.read_bytes()
+        if hashlib.sha256(source_bytes).hexdigest() != before[relative]:
+            raise ValueError("prepared workspace changed while starting the initial public capture")
+        destination.write_bytes(source_bytes)
+    captured = files(target)
+    after = files(repo)
+    if captured != before or after != before:
+        raise ValueError("prepared workspace changed during initial public capture")
+    binding = {"schema": 1, "kind": "prepared_public_workspace", "sourceRepo": str(repo.resolve()),
+               "capturedAt": now().isoformat(), "fileManifest": before}
+    binding["fileManifestSha256"] = hashlib.sha256(
+        (json.dumps(before, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")).hexdigest()
+    save(binding_path, binding)
+    return binding
+
+
+def _all_public_checks_pass(assessment):
+    findings = assessment.get("findings") if isinstance(assessment, dict) else None
+    return (isinstance(findings, list) and bool(findings) and
+            all(isinstance(item, dict) and item.get("status") == "PASS" for item in findings))
 
 
 def save(path, value):
@@ -233,9 +294,17 @@ def _capture_known_block(repo, audit, stage, reason):
 def execute(plan, choice, destination, executable, source, overall_expiry):
     case = choice["case"]
     method = choice["method"]
+    completion_target = plan.get("completionTarget", "main_merge")
+    if completion_target not in {"main_merge", "workspace_snapshot"}:
+        raise ValueError("completionTarget must be main_merge or workspace_snapshot")
     begun = now()
     expires = min(begun + timedelta(seconds=plan["jobWallSeconds"]), overall_expiry)
-    actor_expires = expires - timedelta(seconds=plan.get("captureAssessmentReserveSeconds", 900))
+    if completion_target == "workspace_snapshot":
+        final_reserve = plan.get("freshFinalSeconds", 2700) + plan.get("captureReserveSeconds", 900)
+        actor_limit = begun + timedelta(seconds=plan.get("implementationSeconds", 10800))
+        actor_expires = min(actor_limit, expires - timedelta(seconds=final_reserve))
+    else:
+        actor_expires = expires - timedelta(seconds=plan.get("captureAssessmentReserveSeconds", 900))
     case_root = destination / case
     case_root.mkdir()
     repo, audit = case_root / "repo", case_root / "audit"
@@ -246,6 +315,7 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
                "runtimeRequested": variant.get("backend"), "entrance": "versioned adapter",
                "environment": "host-native", "referenceEquivalence": "unverified"}
     result = {"case": case, "method": method, "backend": backend, "sourceCommit": source,
+              "completionTarget": completion_target,
               "startedAt": begun.isoformat(), "jobExpiresAt": expires.isoformat(), "stations": [],
               "status": "preparing", "humanAcceptance": "not established", "transportParity": "unverified"}
     save(case_root / "trajectory-result.json", result)
@@ -257,7 +327,8 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
             ROOT / "public", repo, audit, case=case, method=method, profile=profile,
             pins={"playgroundSourceCommit": source},
             authorization={"execution_authorized": True, "actualOrderRef": plan["id"],
-                           "scope": "direct user adapter delivery; no prior grant reuse"})
+                           "scope": "direct user adapter delivery; no prior grant reuse"},
+            completion_target=completion_target)
         prepared = True
 
         sources = set(_source_files(plan["sourceRoots"]))
@@ -311,6 +382,7 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
             setup_source_root = str((ROOT / setup_source_root).resolve())
         limits = plan.get("limits", {})
         context = {"schema": 1, "method": method, "case": case, "station": "S1",
+                   "completionTarget": completion_target,
                    "repoPath": str(repo), "auditPath": str(audit),
                    "setupStartedAt": begun.isoformat(), "profile": {
                        "model": variant.get("model"), "effort": variant.get("effort"),
@@ -354,8 +426,14 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
             save(audit / "trajectory-result.json", result)
             return result
 
-        git(repo, "checkout", "codex/backlog")
-        git(repo, "merge", "--ff-only", "main")
+        initial_public_binding = None
+        if completion_target == "workspace_snapshot":
+            initial_public_binding = _capture_initial_public_workspace(repo, audit)
+            result["initialPublicWorkspaceBindingSha256"] = digest(audit / "initial-public-binding.json")
+
+        if completion_target == "main_merge":
+            git(repo, "checkout", "codex/backlog")
+            git(repo, "merge", "--ff-only", "main")
         try:
             readiness = checked_call(adapter, "ensure-runtime")
         except Exception as exc:
@@ -365,6 +443,9 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
         save(audit / "adapter-runtime-readiness.json", readiness)
         save(audit / "study-setup-binding.json", {
             "sourceCommit": source, "setupCommit": git(repo, "rev-parse", "main"),
+            "completionTarget": completion_target,
+            "initialPublicWorkspaceBindingSha256": (digest(audit / "initial-public-binding.json")
+                                                     if initial_public_binding is not None else None),
             "setupStartedAt": begun.isoformat(), "setupEndedAt": now().isoformat(),
             "jobExpiresAt": expires.isoformat(), "actorExpiresAt": actor_expires.isoformat(),
             "configSha256": digest(config_path), "manifestSha256": digest(manifest_path),
@@ -388,6 +469,8 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
 
         result.update(status="running", runtimeReadiness=readiness)
         prompt = (ROOT / "public/task-prompt.txt").read_text(encoding="utf-8")
+        if completion_target == "workspace_snapshot":
+            prompt = workspace_policy.render("task-prompt.txt", prompt)
         parent = None
         main_before_station = git(repo, "rev-parse", "main")
         for number in range(1, 5):
@@ -406,9 +489,40 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
                 break
 
             captured = lifecycle.snapshot(repo, audit)
-            assessment = CHECKER.assess(audit / f"snapshot-{stage}" / "immutable-main", case, number)
+            snapshot_root = audit / f"snapshot-{stage}"
+            if completion_target == "workspace_snapshot":
+                candidate_info = captured.get("assessmentCandidate")
+                if (captured.get("completionTarget") != completion_target or
+                        not isinstance(candidate_info, dict) or
+                        candidate_info.get("kind") != "workspace_snapshot" or
+                        not isinstance(candidate_info.get("manifest"), dict) or
+                        not candidate_info.get("manifest")):
+                    raise ValueError("workspace snapshot is missing its bound nonempty assessment candidate")
+                candidate_rel = Path(candidate_info.get("path", ""))
+                if candidate_rel.is_absolute() or ".." in candidate_rel.parts:
+                    raise ValueError("workspace snapshot candidate path escapes its capture")
+                candidate = (snapshot_root / candidate_rel).resolve()
+                if snapshot_root.resolve() not in candidate.parents:
+                    raise ValueError("workspace snapshot candidate path escapes its capture")
+                candidate_manifest = _workspace_manifest(candidate)
+                if candidate_manifest != candidate_info["manifest"]:
+                    raise ValueError("workspace snapshot candidate bytes differ from its bound manifest")
+                assessment_path = candidate
+            else:
+                assessment_path = snapshot_root / "immutable-main"
+                candidate_info = {"kind": "main_merge", "path": "immutable-main",
+                                  "manifest": captured.get("immutableMain", {}).get("rawGitManifest", {})}
+                if captured.get("completionTarget", "main_merge") != "main_merge":
+                    raise ValueError("snapshot completion target differs from the frozen plan")
+            assessment = CHECKER.assess(assessment_path, case, number)
             save(audit / f"assessment-{stage}.json", assessment)
+            candidate_stable = True
+            if completion_target == "workspace_snapshot":
+                candidate_stable = _workspace_manifest(assessment_path) == candidate_info["manifest"]
             row = {"station": stage, "nativeState": status["state"],
+                   "completionTarget": completion_target,
+                   "assessmentCandidate": candidate_info,
+                   "assessmentCandidateUnchangedAfterPublicChecks": candidate_stable,
                    "mainCommit": captured["immutableMain"]["commit"], "publicChecks": assessment,
                    "snapshotBindingSha256": digest(audit / f"snapshot-{stage}" / "binding.json"),
                    "runtimeFailure": _runtime_error(status)}
@@ -424,12 +538,21 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
                 lifecycle.freeze(repo, audit, reason="terminal adapter/runtime failure; no automatic replay")
                 result["status"] = "runtime_failed"
                 break
-            if not (integration["mainAdvanced"] and integration["mainRefStableAfterCapture"] and
-                    integration["selectedHeadIntegratedInMain"] and
-                    integration["worktreeAndIndexCleanExceptControllerStationDelta"]):
-                lifecycle.freeze(repo, audit, reason="station did not produce a clean integrated main advancement")
+            integration_complete = (integration["mainAdvanced"] and integration["mainRefStableAfterCapture"] and
+                                    integration["selectedHeadIntegratedInMain"] and
+                                    integration["worktreeAndIndexCleanExceptControllerStationDelta"])
+            snapshot_complete = (candidate_info.get("kind") == "workspace_snapshot" and
+                                 bool(candidate_info.get("manifest")) and
+                                 candidate_stable and
+                                 _all_public_checks_pass(assessment))
+            if not (snapshot_complete if completion_target == "workspace_snapshot" else integration_complete):
+                lifecycle.freeze(repo, audit, reason=("workspace snapshot lacked a stable candidate or complete public checks"
+                                                       if completion_target == "workspace_snapshot" else
+                                                       "station did not produce a clean integrated main advancement"))
                 result.update(status="station_incomplete", stopStudy=True,
-                              reason="native completion is not proof of integrated clean work")
+                              reason=("workspace snapshot is missing stable candidate bytes or public checks did not all pass"
+                                      if completion_target == "workspace_snapshot" else
+                                      "native completion is not proof of integrated clean work"))
                 break
             ownership.update(active=False, disposition="terminal completed station")
             parent = status["runId"]
@@ -438,15 +561,31 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
                 lifecycle.advance(repo, audit)
             else:
                 frozen = lifecycle.freeze(repo, audit, reason="four declared stations completed; independent final assessment follows")
-                result.update(status="trajectory_completed", finalMainCommit=frozen["immutableMain"]["commit"],
-                              finalMainPath=str(audit / "final-freeze" / "immutable-main"))
+                if completion_target == "workspace_snapshot":
+                    frozen_candidate = frozen.get("assessmentCandidate")
+                    if (frozen.get("completionTarget") != completion_target or
+                            not isinstance(frozen_candidate, dict) or not frozen_candidate.get("manifest")):
+                        raise ValueError("final workspace freeze lacks a bound assessment candidate")
+                    final_candidate = (audit / "final-freeze" / frozen_candidate["path"]).resolve()
+                    if _workspace_manifest(final_candidate) != frozen_candidate["manifest"]:
+                        raise ValueError("final workspace candidate differs from its bound manifest")
+                    result.update(status="trajectory_completed", completionTarget=completion_target,
+                                  assessmentCandidate=frozen_candidate,
+                                  finalCandidatePath=str(final_candidate))
+                else:
+                    result.update(status="trajectory_completed", finalMainCommit=frozen["immutableMain"]["commit"],
+                                  finalMainPath=str(audit / "final-freeze" / "immutable-main"))
 
         _close(adapter, audit, result, ownership_unresolved=ownership["active"])
         if result.get("status") == "trajectory_completed" and result.get("closeDisposition", {}).get("state") == "closed":
             try:
                 import final_assessor
+                assessor_expires = min(expires, now() + timedelta(
+                    seconds=plan.get("freshFinalSeconds", 5400) if completion_target == "workspace_snapshot" else 5400))
                 final_result = final_assessor.assess(
-                    plan, choice, executable, Path(result["finalMainPath"]), audit, expires)
+                    plan, choice, executable,
+                    Path(result.get("finalCandidatePath", result.get("finalMainPath"))), audit, assessor_expires,
+                    completion_target=completion_target)
             except Exception as exc:
                 final_result = {"state": "uncertain", "reason": f"{type(exc).__name__}: {exc}",
                                 "replay": "forbidden"}
@@ -454,6 +593,12 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
             if final_result.get("state") != "completed":
                 result.update(status="final_assessment_unresolved", stopStudy=True,
                               reason="independent final assessment did not complete with a report")
+            elif (completion_target == "workspace_snapshot" and
+                  (final_result.get("candidateFilesUnchanged") is not True or
+                   final_result.get("frozenInitialPublicRequirementsUnchanged") is not True or
+                   final_result.get("initialPublicWorkspaceBindingUnchanged") is not True)):
+                result.update(status="final_assessment_unresolved", stopStudy=True,
+                              reason="candidate or frozen initial requirements changed during final assessment")
     except Exception as exc:
         result.update(status="controller_error", reason=f"{type(exc).__name__}: {exc}",
                       outcome="preserved without replay")
@@ -477,14 +622,32 @@ def _validate_plan(plan):
     trajectories = plan.get("trajectories")
     if not isinstance(trajectories, list) or not 1 <= len(trajectories) <= 2:
         raise ValueError("study plan must contain one or two finite trajectories")
+    completion_target = plan.get("completionTarget", "main_merge")
+    if completion_target not in {"main_merge", "workspace_snapshot"}:
+        raise ValueError("completionTarget must be main_merge or workspace_snapshot")
+    expected_overall = 14400 if completion_target == "workspace_snapshot" else 28800
     if (plan.get("jobWallSeconds") != 14400 or plan.get("turnWallSeconds") != 5400 or
-            plan.get("overallWallSeconds") != 28800 or plan.get("startAllowance") != 256 or
+            plan.get("overallWallSeconds") != expected_overall or plan.get("startAllowance") != 256 or
             plan.get("outerTurnsPerTrajectory") != 4):
-        raise ValueError("study plan must bind the authorized four-hour/eight-hour/256-start limits")
+        limits = "four-hour/256-start" if completion_target == "workspace_snapshot" else "four-hour/eight-hour/256-start"
+        raise ValueError(f"study plan must bind the authorized {limits} limits")
+    if completion_target == "workspace_snapshot":
+        if (plan.get("implementationSeconds") != 10800 or plan.get("freshFinalSeconds") != 2700 or
+                plan.get("captureAssessmentReserveSeconds") != 900):
+            raise ValueError("workspace snapshot plan must bind the 3h/45m/15m implementation and assessment reserves")
+        for key in ("absoluteEndUtc", "lastStartUtc"):
+            value = plan.get(key)
+            if not isinstance(value, str):
+                raise ValueError(f"workspace snapshot plan must bind {key}")
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                raise ValueError(f"workspace snapshot {key} must include a UTC offset")
     if not isinstance(plan.get("sourceRoots"), list) or not plan["sourceRoots"]:
         raise ValueError("study plan must declare common sourceRoots for execution pins")
     if not isinstance(plan.get("sourceFiles", []), list):
         raise ValueError("study plan sourceFiles must be a list of relative file paths")
+    if plan.get("completionTarget", "main_merge") not in {"main_merge", "workspace_snapshot"}:
+        raise ValueError("completionTarget must be main_merge or workspace_snapshot")
     if not isinstance(plan.get("executableVersion"), str) or not plan["executableVersion"].strip():
         raise ValueError("study plan must bind the native executable version")
     for choice in trajectories:
@@ -521,11 +684,18 @@ def main(argv=None):
         raise ValueError("native executable path must exist before starting the study")
     from delivery_binding import verify
     authority_bytes = verify(plan, executable)
+    from delivery_binding import reserve
+    reserve(plan, destination)
     destination.mkdir(parents=True)
     (destination / "delivery-order.json").write_bytes(authority_bytes)
     source = git(ROOT, "rev-parse", "HEAD")
     started = now()
     overall = started + timedelta(seconds=plan["overallWallSeconds"])
+    if plan.get("completionTarget", "main_merge") == "workspace_snapshot":
+        absolute_end = datetime.fromisoformat(plan["absoluteEndUtc"].replace("Z", "+00:00"))
+        if absolute_end.tzinfo is None:
+            raise ValueError("workspace absoluteEndUtc must include a UTC offset")
+        overall = min(overall, absolute_end.astimezone(timezone.utc))
     save(destination / "study-binding.json", {
         "plan": plan, "planSha256": digest(args.plan), "sourceCommit": source,
         "controllerSha256": digest(__file__), "executable": str(executable),

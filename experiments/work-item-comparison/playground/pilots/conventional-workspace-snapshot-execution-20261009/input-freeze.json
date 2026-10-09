@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "completionTarget": "workspace_snapshot",
+  "functionalInputPins": {
+    "public/cases/readinglog/app.py": "b66a2417b532e993710e5436864c3d58c3ebeb1d3dfab05fa1ef13f76c00dfd4",
+    "public/cases/readinglog/BACKLOG.md": "8536d87d6c6d74bbf5c131e4598a33d70ebf7c70cfc7803d0b87201975e04a5f",
+    "public/cases/readinglog/README.md": "ace63419db3d77338a91ffd14634c0516979e87df2bc177bc5bfceffd487b573",
+    "public/cases/readinglog/STATIONS.json": "180166b424693f6c8d0a4bc502b356b5786367cc23302be4b6a1a9737f361aac",
+    "public/cases/readinglog/tests/test_baseline.py": "6a10ef1af13cc01f7e040796aacb8ecfbd5a619522fbfcebe81f40c646b4e6ab",
+    "public/common/checks/acceptance.py": "903ec954d2fb7c5df78b21c24ef3f8d830d22c7334597a21950f6c4c82940dfb"
+  },
+  "mechanicalPolicyRendering": {
+    "public\\common\\AGENTS.md": {
+      "sourceSha256": "da401c3bfa8c22a531e649bd48b7e83521125550c8bc3cfd1fd319565d803de1",
+      "renderedSha256": "acc52b4cda3b507c6a1bf51a6c5c7b3124053ade03804d2a2cf597ae3855bdda"
+    },
+    "public\\common\\QUALITY.md": {
+      "sourceSha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+      "renderedSha256": "71de79d12a33b5daf31fc34270ba57e312bf0593a7ed094c6b27db41419d49f6"
+    },
+    "public\\conventional\\AGENTS.fragment.md": {
+      "sourceSha256": "95830acc6e4e84906973ab72ae4a92d2c65215dcce6f57267f233c4fa60106bf",
+      "renderedSha256": "7ff4fa86909fbc9be2c2952190767d2f1788bcccccc807a5967e3b59fedc0bba"
+    },
+    "public\\task-prompt.txt": {
+      "sourceSha256": "1778daaf830c1f745ca1d72f09caf19f0ee3cdb5cdea4135409d68806aed82ee",
+      "renderedSha256": "f8e4f492c391d84e00f20827be2f990817ebd9a1a4853e5c5c09bd550ceb702f"
+    }
+  },
+  "policyScope": "Only branch/commit/merge requirement and frozen-main assessment clauses transformed; all functional README/backlog/station/check inputs unchanged. Same target/inputs required for later matched Markitect.",
+  "discardPolicy": "Fresh owned repository disposable after confirmed runtime closure and retained evidence; no deletion of historical or uncertain repos."
+}

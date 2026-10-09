@@ -1,0 +1,1 @@
+Hier liegt das Backlog. Implementiere die Arbeit, halte die Projektregeln ein und prüfe die Ergebnisse. Der Controller sichert an jeder Stationsgrenze einen unveränderlichen Snapshot des tatsächlichen Arbeitsbereichs; ein Git-Merge ist nicht erforderlich.

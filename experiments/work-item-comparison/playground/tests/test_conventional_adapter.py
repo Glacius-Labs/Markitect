@@ -207,7 +207,7 @@ class ConventionalAdapterTests(unittest.TestCase):
             returncode = 0
 
             def communicate(self, timeout):
-                return b"PLAYGROUND_WRITE_READ_OK\r\nPLAYGROUND_REPO_GIT_WRITE_OK\r\nPLAYGROUND_SANDBOX_PROBE_OK\r\n", b""
+                return b"PLAYGROUND_WRITE_READ_OK\r\nPLAYGROUND_REPO_GIT_READ_OK\r\nPLAYGROUND_SANDBOX_PROBE_OK\r\n", b""
 
             def poll(self):
                 return self.returncode
@@ -227,11 +227,14 @@ class ConventionalAdapterTests(unittest.TestCase):
         argv = popen.call_args.args[0]
         self.assertEqual(argv[1:7], ["-c", 'windows.sandbox="mxc"', "sandbox",
                                      "--include-managed-config", "--permission-profile", ":workspace"])
-        self.assertIn("rev-parse --absolute-git-dir", " ".join(argv))
-        self.assertIn(".git", result["gitMetadataProbePath"])
+        self.assertIn("git -C", " ".join(argv))
+        self.assertIn("status --porcelain", " ".join(argv))
+        self.assertIsNone(result["gitMetadataReady"])
+        self.assertEqual(result["directMetadataWriteProbe"], "not performed")
+        self.assertNotIn("metadata readiness", " ".join(argv))
+        self.assertNotIn("playground-runtime-probe-", " ".join(argv).split("git -C",1)[1])
         self.assertNotIn("git init --quiet", " ".join(argv))
-        self.assertIn("GetFullPath", " ".join(argv))
-        self.assertIn("PLAYGROUND_REPO_GIT_WRITE_BLOCKED", " ".join(argv))
+        self.assertNotIn("PLAYGROUND_REPO_GIT_WRITE_BLOCKED", " ".join(argv))
         check = next((self.audit / "adapter-runtime-checks").glob("check-*/receipt.json"))
         stored = json.loads(check.read_text(encoding="utf-8"))
         self.assertEqual(stored["state"], "finished")
@@ -256,6 +259,17 @@ class ConventionalAdapterTests(unittest.TestCase):
         self.assertEqual(result["state"],"ready")
         self.assertIn("conditional",result["runtime"]["gitMergeReadiness"])
         self.assertFalse(result["runtime"]["actualGitApprovalObserved"])
+
+    def test_workspace_readiness_requires_no_git_metadata_write_or_broker(self):
+        self.config["backend"]="codex-app-server"
+        self.config["order"]={"runtimeChecksAuthorized":True}
+        self.adapter._setup_context={"completionTarget":"workspace_snapshot"}
+        basic={"sandboxReady":True,"writeReadReady":True,"gitMetadataReady":None}
+        with patch.object(self.adapter,"_probe_app_server",return_value={"protocolReady":True}), patch.object(self.adapter,"_probe_native_sandbox",return_value=basic):
+            result=self.adapter.ensure_runtime()
+        self.assertEqual(result["state"],"ready")
+        self.assertEqual(result["runtime"]["gitMergeReadiness"],"not required for workspace_snapshot")
+        self.assertFalse(result["runtime"]["scopedGitApprovalConfigured"])
 
     def test_lifecycle_facade_maps_service_without_task_scoring(self):
         started = self.adapter.start("ordinary prompt")

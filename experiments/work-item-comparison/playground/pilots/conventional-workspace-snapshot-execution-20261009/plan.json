@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "id": "conventional-workspace-snapshot-execution-20261009",
+  "execution_authorized": true,
+  "authority": {
+    "directUserTurn": "01a1225a-b646-7262-ba7a-4219ee6bfdf9",
+    "verifiedRootOrderSha256": "58cf8d06944223b77f51062bfa48ecb224bee9e5f5651abec18597dff1664d63",
+    "orderPath": "C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/conventional-workspace-snapshot-execution-v2-20261009.json",
+    "scope": "new prospective v2; one fresh workspace-snapshot case; old orders closed"
+  },
+  "profileId": "codex-luna-high",
+  "jobWallSeconds": 14400,
+  "turnWallSeconds": 5400,
+  "overallWallSeconds": 14400,
+  "startAllowance": 256,
+  "executableVersion": "codex-cli 0.162.0-alpha.2",
+  "sourceRoots": [
+    "adapters",
+    "conventional"
+  ],
+  "trajectories": [
+    {
+      "case": "readinglog",
+      "method": "Conventional",
+      "factory": "conventional.adapter:ConventionalAdapter",
+      "manifestSourceRoots": [
+        "conventional"
+      ],
+      "setupSourceRoot": "public/conventional",
+      "config": {
+        "backend": "codex-app-server",
+        "model": "gpt-6-luna",
+        "effort": "high",
+        "runtimeOptions": {
+          "sandbox": "workspace-write",
+          "approvalPolicy": "never",
+          "memoryEnabled": false,
+          "nativeHelperModel": "gpt-6-luna",
+          "nativeHelperEffort": "high",
+          "windowsSandbox": "mxc",
+          "nativeMaxConcurrentAgents": 3,
+          "allowLoginShell": false
+        }
+      }
+    }
+  ],
+  "providerFreeChecks": {
+    "maximum": 2,
+    "alreadyConsumed": 0,
+    "perTrajectoryMaximum": 2,
+    "nativeModelCanaries": 0
+  },
+  "limits": {
+    "concurrency": 4,
+    "depth": 2,
+    "depthNativeEnforcement": "unsupported/unknown; cooperative profile bound",
+    "totalStarts": "observed including helpers/failed/final; no hard native global counter",
+    "roleWallSeconds": 5400,
+    "nativeConcurrentThreads": "3 spawned threads plus main = total4; official cap excludes main",
+    "maxConcurrentAgents": 4,
+    "maxDepth": 2
+  },
+  "authSource": "existing native current-user authentication; secret values not inspected or copied",
+  "nativeRuntime": "child-local MXC; managed restrictions; no global changes",
+  "comparison": "Conventional functional readiness for separately declared workspace_snapshot target; no paired or transport winner",
+  "evaluation": "actual byte-bound worktree snapshots each station; all public checks required before next station; fresh readonly AppServer final on frozen workspace, not main/merge credit",
+  "secondCondition": "no second trajectory or retry under this order",
+  "outerTurnsPerTrajectory": 4,
+  "sourceFiles": [
+    "conventional_wrapper.py",
+    "playground_adapter.py",
+    "final_assessor.py",
+    "delivery_binding.py",
+    "workspace_policy.py"
+  ],
+  "requestTimeoutSeconds": 600,
+  "maxRuntimeStartupChecks": 2,
+  "captureAssessmentReserveSeconds": 900,
+  "executableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "completionTarget": "workspace_snapshot",
+  "implementationSeconds": 10800,
+  "freshFinalSeconds": 2700,
+  "absoluteEndUtc": "2026-10-10T04:31:08Z",
+  "lastStartUtc": "2026-10-10T00:31:08Z",
+  "destination": "C:/Users/Consiliari/Documents/Conventional-Workspace-Snapshot-Study-20261009",
+  "executionLedgerPath": "C:/Users/Consiliari/Documents/Conventional-Workspace-Snapshot-Execution-20261009.reservation.json"
+}

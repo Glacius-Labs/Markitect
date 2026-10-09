@@ -136,6 +136,9 @@ class ConventionalAdapter:
             run_id = (repo / ".study/run-id").read_text(encoding="ascii").strip()
             if run.get("method") != "Conventional" or run.get("runId") != run_id:
                 raise ValueError("repo is not a matching lifecycle.prepare Conventional checkout")
+            completion_target = context.get("completionTarget", "main_merge")
+            if completion_target not in {"main_merge", "workspace_snapshot"} or run.get("completionTarget", "main_merge") != completion_target:
+                raise ValueError("setup completion target differs from the prepared run")
             source_root = Path(context.get("setupSourceRoot", self._source_root / "public" / "conventional")).resolve()
             fragment = source_root / "AGENTS.fragment.md"
             if not fragment.is_file():
@@ -153,6 +156,9 @@ class ConventionalAdapter:
             agents_path = repo / "AGENTS.md"
             marker = "<!-- playground-adapter:conventional:v1 -->"
             fragment_text = fragment.read_text(encoding="utf-8").rstrip()
+            if completion_target == "workspace_snapshot":
+                from workspace_policy import render
+                fragment_text = render("AGENTS.fragment.md", fragment_text)
             current_agents = agents_path.read_text(encoding="utf-8") if agents_path.exists() else ""
             if marker in current_agents:
                 receipt_path = audit / "adapter-setup.json"
@@ -169,6 +175,7 @@ class ConventionalAdapter:
                 raise ValueError("refusing to install setup over a dirty prepared checkout")
             runtime_options = self._config.get("runtimeOptions") or {}
             profile_doc = {"schema": 1, "method": "Conventional", "model": model, "effort": effort,
+                           "completionTarget": completion_target,
                            "nativeBackend": backend, "nativeHelperModel": runtime_options.get("nativeHelperModel", model),
                            "nativeHelperEffort": runtime_options.get("nativeHelperEffort", effort),
                            "sandbox": runtime_options.get("sandbox"),
@@ -252,13 +259,15 @@ class ConventionalAdapter:
                 protocol.get("protocolReady") is True if backend == "codex-app-server"
                 else bool(version and version.get("versionReady")))
             git_verified=sandbox.get("gitMetadataReady") is True
+            workspace_target=(self._setup_context or {}).get("completionTarget") == "workspace_snapshot"
             broker_configured=(backend=="codex-app-server" and (spec.get("runtimeOptions") or {}).get("scopedGitApproval") is True and (spec.get("runtimeOptions") or {}).get("approvalPolicy")=="on-request")
             observed = {"backend": backend, "version": version, **protocol, **sandbox,
-                        "gitMergeReadiness":"verified metadata write" if git_verified else "conditional; real native approval not observed" if broker_configured else "blocked protected metadata",
+                        "completionTarget": "workspace_snapshot" if workspace_target else "main_merge",
+                        "gitMergeReadiness":"not required for workspace_snapshot" if workspace_target else "verified metadata write" if git_verified else "conditional; real native approval not observed" if broker_configured else "blocked protected metadata",
                         "actualGitApprovalObserved":False,"scopedGitApprovalConfigured":broker_configured,
                         "toolReady": ready, "nativeTurnStarted": False,
                         "ownedProcessScope": "direct-child-only"}
-            ready=ready and (git_verified or broker_configured)
+            ready=ready and (workspace_target or git_verified or broker_configured)
             return _envelope("ready" if ready else "blocked", runtime=observed,
                              observations=[self._observation("runtime.ready" if ready else "runtime.blocked", observed)])
         except Exception as exc:
@@ -382,13 +391,11 @@ class ConventionalAdapter:
         token = uuid.uuid4().hex
         probe_name = ".playground-runtime-probe-" + token + ".txt"
         probe_path = repo / probe_name
-        metadata_probe = repo / ".git" / ("playground-runtime-probe-" + token + ".tmp")
         payload = "playground-runtime-probe:" + token
         # PowerShell is passed as an argv item to Codex's native sandbox command;
         # user input and shell text are not interpolated into this script.
         escaped_repo = str(repo).replace("'", "''")
         escaped_probe = str(probe_path).replace("'", "''")
-        escaped_metadata = str(metadata_probe).replace("'", "''")
         script = (
             "$ErrorActionPreference='Stop';"
             f"$p='{escaped_probe}';"
@@ -397,16 +404,7 @@ class ConventionalAdapter:
             "Write-Output 'PLAYGROUND_WRITE_READ_OK';"
             f"git -C '{escaped_repo}' status --porcelain *> $null;"
             "if($LASTEXITCODE -ne 0){exit 42};"
-            f"$m='{escaped_metadata}';"
-            f"$expectedGit=[IO.Path]::GetFullPath((Join-Path '{escaped_repo}' '.git'));"
-            f"$actualGit=(git -C '{escaped_repo}' rev-parse --absolute-git-dir);"
-            "if($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($actualGit) -ne $expectedGit){exit 50};"
-            "if(([IO.Path]::GetDirectoryName($m)) -ne $expectedGit -or "
-            f"[IO.Path]::GetFileName($m) -ne 'playground-runtime-probe-{token}.tmp'){{exit 51}};"
-            "try{[IO.File]::WriteAllText($m,'owned metadata readiness');"
-            "if([IO.File]::ReadAllText($m) -ne 'owned metadata readiness'){exit 52};"
-            "Remove-Item -LiteralPath $m -Force;Write-Output 'PLAYGROUND_REPO_GIT_WRITE_OK'}"
-            "catch{Write-Output 'PLAYGROUND_REPO_GIT_WRITE_BLOCKED'};"
+            "Write-Output 'PLAYGROUND_REPO_GIT_READ_OK';"
             "Remove-Item -LiteralPath $p -Force;"
             "Write-Output 'PLAYGROUND_SANDBOX_PROBE_OK';"
         )
@@ -439,10 +437,10 @@ class ConventionalAdapter:
                              "processTerminalConfirmed": proc.poll() is not None,
                              "sandboxReady": return_code == 0 and "PLAYGROUND_SANDBOX_PROBE_OK" in stdout,
                              "writeReadReady": return_code == 0 and "PLAYGROUND_WRITE_READ_OK" in stdout,
-                             "gitCommandReady": return_code == 0 and "PLAYGROUND_REPO_GIT_WRITE_OK" in stdout,
-                             "gitMetadataReady": return_code == 0 and "PLAYGROUND_REPO_GIT_WRITE_OK" in stdout,
-                             "gitMetadataProbePath":str(metadata_probe),
-                             "gitReadinessScope":"exact prepared repository metadata; no branch/index/main mutation"})
+                             "gitCommandReady": return_code == 0 and "PLAYGROUND_REPO_GIT_READ_OK" in stdout,
+                             "gitMetadataReady": None,
+                             "directMetadataWriteProbe": "not performed",
+                             "gitReadinessScope":"read-only Git CLI in prepared repository; writes require actual scoped native approval"})
         except (OSError, subprocess.SubprocessError) as exc:
             observed.update({"dispatchOccurred": "pid" in observed,
                              "disposition": "unknown-after-launch" if "pid" in observed else "known-not-dispatched",
@@ -456,11 +454,6 @@ class ConventionalAdapter:
                     probe_path.unlink(missing_ok=True)
             except OSError as exc:
                 observed["cleanupError"] = type(exc).__name__
-            try:
-                if metadata_probe.parent.resolve()==(repo/".git").resolve() and (repo/".git").is_dir() and not (repo/".git").is_symlink():
-                    metadata_probe.unlink(missing_ok=True)
-            except OSError as exc:
-                observed["metadataCleanupError"]=type(exc).__name__
             self._finish_runtime_check(receipt, observed,
                                        release=observed["processTerminalConfirmed"])
         return observed

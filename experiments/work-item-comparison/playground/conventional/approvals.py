@@ -35,6 +35,44 @@ def _is_reparse_point(metadata: os.stat_result) -> bool:
     return bool(getattr(metadata, "st_file_attributes", 0) & reparse_attribute)
 
 
+def _valid_available_decision(value: Any) -> bool:
+    """Recognize the protocol's decision variants without selecting them."""
+    if type(value) is str:
+        return value in {"accept", "acceptForSession", "decline", "cancel"}
+    if not isinstance(value, dict) or len(value) != 1:
+        return False
+    if set(value) == {"acceptWithExecpolicyAmendment"}:
+        amendment = value["acceptWithExecpolicyAmendment"]
+        return (isinstance(amendment, dict) and set(amendment) == {"execpolicy_amendment"}
+                and isinstance(amendment["execpolicy_amendment"], list)
+                and all(type(part) is str for part in amendment["execpolicy_amendment"]))
+    if set(value) == {"applyNetworkPolicyAmendment"}:
+        amendment = value["applyNetworkPolicyAmendment"]
+        if not isinstance(amendment, dict) or set(amendment) != {"network_policy_amendment"}:
+            return False
+        network = amendment["network_policy_amendment"]
+        return (isinstance(network, dict) and set(network) == {"host", "action"}
+                and type(network["host"]) is str
+                and type(network["action"]) is str and network["action"] in {"allow", "deny"})
+    return False
+
+
+def _valid_execpolicy_amendment(value: Any) -> bool:
+    return isinstance(value, list) and all(type(part) is str for part in value)
+
+
+def _valid_network_policy_amendments(value: Any) -> bool:
+    if not isinstance(value, list):
+        return False
+    for amendment in value:
+        if (not isinstance(amendment, dict) or set(amendment) != {"host", "action"}
+                or type(amendment["host"]) is not str
+                or type(amendment["action"]) is not str
+                or amendment["action"] not in {"allow", "deny"}):
+            return False
+    return True
+
+
 def _owned_repo_config_is_inert(repo_path: str) -> bool:
     """Accept only a regular .git/config containing known inert settings.
 
@@ -339,7 +377,7 @@ class ScopedGitApprovalBroker:
                 or started_item.get("threadId") != self.thread_id
                 or started_item.get("turnId") != self.turn_id):
             return ApprovalDecision("decline", "item id does not match the observed command item")
-        if (params.get("kind") != "command"
+        if (params.get("kind", "command") != "command"
                 or type(params.get("startedAtMs")) is not int or params["startedAtMs"] < 0):
             return ApprovalDecision("decline", "unsupported approval kind or missing start timestamp")
         if params.get("environmentId") is not None:
@@ -356,22 +394,23 @@ class ScopedGitApprovalBroker:
         if params.get("approvalId") is not None and (
                 not isinstance(params.get("approvalId"), str) or not params["approvalId"]):
             return ApprovalDecision("decline", "invalid approval id")
-        if (params.get("networkApprovalContext") is not None
-                or params.get("proposedExecpolicyAmendment") is not None
-                or params.get("proposedNetworkPolicyAmendments") is not None
-                or params.get("additionalPermissions") is not None):
-            return ApprovalDecision("decline", "request includes network, permission, or policy escalation")
-        # The current App Server schema makes availableDecisions optional.
-        # If supplied, accept only a well-formed set that offers one-time
-        # accept; other offered choices never change the selected decision.
-        decisions = params.get("availableDecisions")
-        if decisions is not None and (
-                not isinstance(decisions, list)
-                or any(type(decision) is not str for decision in decisions)
-                or "accept" not in decisions
-                or any(decision not in {"accept", "acceptForSession", "decline", "cancel"}
-                       for decision in decisions)):
-            return ApprovalDecision("decline", "request includes malformed or unsupported available decisions")
+        if params.get("networkApprovalContext") is not None or params.get("additionalPermissions") is not None:
+            return ApprovalDecision("decline", "request includes network context or additional permissions")
+        proposed_execpolicy = params.get("proposedExecpolicyAmendment")
+        if proposed_execpolicy is not None and not _valid_execpolicy_amendment(proposed_execpolicy):
+            return ApprovalDecision("decline", "request includes a malformed execpolicy proposal")
+        proposed_network = params.get("proposedNetworkPolicyAmendments")
+        if proposed_network is not None and not _valid_network_policy_amendments(proposed_network):
+            return ApprovalDecision("decline", "request includes malformed network policy proposals")
+        # availableDecisions is optional. If present, it must be a valid list
+        # and explicitly offer literal one-time accept. Session-wide and policy
+        # amendment options may be listed, but are never selected here.
+        if "availableDecisions" in params:
+            decisions = params["availableDecisions"]
+            if (not isinstance(decisions, list)
+                    or any(not _valid_available_decision(decision) for decision in decisions)
+                    or "accept" not in decisions):
+                return ApprovalDecision("decline", "request includes malformed decisions or no literal one-time accept")
 
         if not _owned_repo_config_is_inert(self.repo_path):
             return ApprovalDecision("decline", "owned repository Git config is missing, non-regular, or outside the inert allowlist")

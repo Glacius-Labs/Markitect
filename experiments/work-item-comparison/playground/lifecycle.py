@@ -20,10 +20,13 @@ import time
 import uuid
 from typing import Any
 
+import workspace_policy
+
 
 SCHEMA = 1
 CASES = ("roombook", "readinglog")
 WAVE_SIZES = (1, 3, 7, 1)
+COMPLETION_TARGETS = ("main_merge", "workspace_snapshot")
 
 
 class LifecycleError(RuntimeError):
@@ -186,7 +189,8 @@ def _station_record(station: int, plan: list[list[str]], previous: str | None = 
 
 def prepare(seed_root: Path, repo: Path, audit: Path, *, case: str,
             method: str, profile: dict[str, Any], pins: dict[str, Any] | None = None,
-            authorization: dict[str, Any] | None = None) -> dict[str, Any]:
+            authorization: dict[str, Any] | None = None,
+            completion_target: str = "main_merge") -> dict[str, Any]:
     """Create one clean, isolated case checkout and a separate audit directory."""
     if repo.is_symlink() or audit.is_symlink():
         raise LifecycleError("repository and audit destinations cannot be symlinks")
@@ -198,6 +202,8 @@ def prepare(seed_root: Path, repo: Path, audit: Path, *, case: str,
         raise LifecycleError(f"unsupported public case: {case}")
     if not method.strip():
         raise LifecycleError("method must be a non-empty label")
+    if completion_target not in COMPLETION_TARGETS:
+        raise LifecycleError(f"unsupported completion target: {completion_target!r}")
     if profile is None or not isinstance(profile, dict):
         raise LifecycleError("profile must be an object")
     if repo.exists() or repo.is_symlink():
@@ -240,6 +246,15 @@ def prepare(seed_root: Path, repo: Path, audit: Path, *, case: str,
             rel = source.relative_to(source_root)
             destination = repo / rel
             destination.parent.mkdir(parents=True, exist_ok=True)
+            if completion_target == "workspace_snapshot":
+                policy_name: str | None = None
+                if source_root == common and rel.as_posix() in {"AGENTS.md", "QUALITY.md"}:
+                    policy_name = rel.as_posix()
+                if policy_name is not None:
+                    original = source.read_text(encoding="utf-8")
+                    destination.write_text(workspace_policy.render(policy_name, original),
+                                           encoding="utf-8", newline="\n")
+                    continue
             shutil.copyfile(source, destination)
 
     # The first stage is part of the immutable seed commit. Keep LF bytes stable
@@ -265,6 +280,7 @@ def prepare(seed_root: Path, repo: Path, audit: Path, *, case: str,
         "auditPath": str(audit),
         "case": case,
         "method": method,
+        "completionTarget": completion_target,
         "profile": profile,
         "pins": pins or {},
         "authorization": authorization if authorization is not None else {
@@ -300,6 +316,14 @@ def _load_run(audit: Path, repo: Path | None = None) -> dict[str, Any]:
         if marker.is_symlink() or not marker.is_file() or marker.read_text(encoding="ascii").strip() != run.get("runId"):
             raise LifecycleError("repository run identity does not match audit metadata")
     return run
+
+
+def _completion_target(run: dict[str, Any]) -> str:
+    """Read the bound target, preserving compatibility for older run records."""
+    target = run.get("completionTarget", "main_merge")
+    if target not in COMPLETION_TARGETS:
+        raise LifecycleError(f"run metadata has an invalid completion target: {target!r}")
+    return target
 
 
 def _save_run(audit: Path, run: dict[str, Any]) -> None:
@@ -474,6 +498,7 @@ def _capture(repo: Path, audit: Path, *, final: bool, reason: str | None = None)
             "station": station,
             "items": list(plan[number - 1]),
             "method": run.get("method"),
+            "completionTarget": _completion_target(run),
             "profile": run.get("profile"),
             "pins": run.get("pins"),
             "authorization": run.get("authorization"),
@@ -498,6 +523,12 @@ def _capture(repo: Path, audit: Path, *, final: bool, reason: str | None = None)
             "bundleSha256": _sha(bundle.read_bytes()),
             "assessment": {"status": "pending"},
         }
+        if record["completionTarget"] == "workspace_snapshot":
+            record["assessmentCandidate"] = {
+                "kind": "workspace_snapshot",
+                "path": "worktree",
+                "manifest": raw_worktree,
+            }
         _write_new(staging / "snapshot.json", _json_bytes(record))
         record["snapshotSha256"] = _sha((staging / "snapshot.json").read_bytes())
         _write_new(staging / "binding.json", _json_bytes({"snapshotSha256": record["snapshotSha256"]}))
@@ -534,31 +565,77 @@ def advance(repo: Path, audit: Path) -> dict[str, Any]:
     if number >= 4:
         raise LifecycleError("S4 is the final station; it cannot advance")
     _verify_snapshots(audit, case, number)
+    completion_target = _completion_target(run)
     frozen = audit / f"snapshot-S{number}" / "binding.json"
     binding = _load_json(frozen)
+    snapshot_record = _load_json(audit / f"snapshot-S{number}" / "snapshot.json")
     record_path = repo / ".study" / "station.json"
     if record_path.is_symlink():
         raise LifecycleError("station declaration cannot be a symlink")
-    _git_check(repo, "diff", "--cached", "--quiet")
+    previous_manifest = snapshot_record.get("rawWorktreeManifest")
+    if completion_target == "workspace_snapshot":
+        if not isinstance(previous_manifest, dict):
+            raise LifecycleError("previous workspace snapshot has no valid raw worktree manifest")
+        current_manifest = _manifest(repo, exclude_git=True)
+        if current_manifest != previous_manifest:
+            raise LifecycleError("workspace changed after its station snapshot; refusing to advance")
+    else:
+        _git_check(repo, "diff", "--cached", "--quiet")
     current = _load_json(record_path)
     old_bytes = record_path.read_bytes()
     updated = _station_record(number + 1, plan, binding.get("snapshotSha256"))
     new_bytes = _json_bytes(updated)
+    expected_after_manifest = None
+    if completion_target == "workspace_snapshot":
+        expected_after_manifest = dict(previous_manifest)
+        expected_after_manifest[".study/station.json"] = _sha(new_bytes)
     transition_dir = audit / "transitions"
     transition_path = transition_dir / f"S{number}-to-S{number + 1}.json"
     if transition_dir.is_symlink() or transition_path.exists() or transition_path.is_symlink():
         raise LifecycleError(f"transition already exists: {transition_path}")
     transition_dir.mkdir(exist_ok=True)
     transition_temp = transition_dir / f".{transition_path.name}.{uuid.uuid4().hex}.tmp"
-    _write_new(transition_temp, _json_bytes({
+    transition_record = {
         "from": current, "to": updated,
         "oldBytesSha256": _sha(old_bytes), "newBytesSha256": _sha(new_bytes),
         "actorDelta": "left_uncommitted", "committedByPlayground": False,
+        "completionTarget": completion_target,
+        "workspaceSnapshotSha256": binding.get("snapshotSha256") if completion_target == "workspace_snapshot" else None,
         "recordedAt": _utc(),
-    }))
-    station_temp = record_path.with_name(f"station.json.{uuid.uuid4().hex}.tmp")
+    }
+    _write_new(transition_temp, _json_bytes(transition_record))
+    station_temp = record_path.parent / f"station.json.{uuid.uuid4().hex}.tmp"
     _write_new(station_temp, new_bytes)
+    if completion_target == "workspace_snapshot":
+        expected_during_transition = dict(previous_manifest)
+        expected_during_transition[station_temp.relative_to(repo).as_posix()] = _sha(new_bytes)
+        if _manifest(repo, exclude_git=True) != expected_during_transition:
+            station_temp.unlink()
+            transition_temp.unlink()
+            raise LifecycleError("workspace changed while preparing station advance; refusing to advance")
     os.replace(station_temp, record_path)
+    if expected_after_manifest is not None:
+        observed_after_manifest = _manifest(repo, exclude_git=True)
+        if observed_after_manifest != expected_after_manifest:
+            marker_rolled_back = False
+            if record_path.read_bytes() == new_bytes:
+                rollback_temp = record_path.parent / f"station.json.rollback.{uuid.uuid4().hex}.tmp"
+                _write_new(rollback_temp, old_bytes)
+                os.replace(rollback_temp, record_path)
+                marker_rolled_back = record_path.read_bytes() == old_bytes
+            transition_record["advanceVerification"] = {
+                "status": "failed",
+                "expectedManifest": expected_after_manifest,
+                "observedManifest": observed_after_manifest,
+                "stationMarkerRolledBack": marker_rolled_back,
+            }
+            transition_temp.write_bytes(_json_bytes(transition_record))
+            os.replace(transition_temp, transition_path)
+            raise LifecycleError("workspace changed during station advance; station marker rollback attempted")
+    transition_record["advanceVerification"] = {
+        "status": "verified" if expected_after_manifest is not None else "not_applicable",
+    }
+    transition_temp.write_bytes(_json_bytes(transition_record))
     os.replace(transition_temp, transition_path)
     return updated
 

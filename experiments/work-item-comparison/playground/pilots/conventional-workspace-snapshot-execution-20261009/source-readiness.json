@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "scope": "Provider-free source, plan, policy and input validation before actual; not a study result",
+  "completionTarget": "workspace_snapshot",
+  "rootOrderSha256": "58cf8d06944223b77f51062bfa48ecb224bee9e5f5651abec18597dff1664d63",
+  "sourceFilePins": {
+    "conventional/adapter.py": "f0497e1dac02c8caeb20ff73aca54ca2254a5fc8e1ac27efe470c45042aff0bf",
+    "conventional/approvals.py": "ccda28a22960be8058ee945e79ee0f80abaa52ce4e67a5453e98c6372fd37fff",
+    "delivery_binding.py": "825b906224720bdb2c1f1bd51b654ad92a9cf66f01bea15fdaf3eac270ff2199",
+    "final_assessor.py": "75648a534074f73a734894b09e257e599d528bbd9eeaa1847374e2136530c387",
+    "lifecycle.py": "e16911693de21fb216ab04a66c360df10dec7e25d097e7e07132182af4fe181e",
+    "run_variant_study.py": "ec82c1c94edf1cc6417d0658653b0e10d8be0a077816b9f7690d4c39855a7924",
+    "workspace_policy.py": "91249cdb295036ba5e94c4969a0812aacea2da8acf4f6339aad5986e46472b1d"
+  },
+  "planSha256": "c8463f6513d39b1470415d3a6dad27fd5aac0db809cdee9c80389a185528b672",
+  "inputFreezeSha256": "5cc7826c03db9b911a580514191abb21a0caa719952cbf97f50829ee2577c060",
+  "pythonSyntax": {
+    "files": 36,
+    "status": "PASS"
+  },
+  "planAndAuthorityFileOnly": "PASS; real exact executable and Root v2 bytes; no native dispatch or reservation",
+  "functionalInputPins": 6,
+  "checks": {
+    "conventional_adapter": {
+      "passed": 13
+    },
+    "delivery_binding": {
+      "passed": 6
+    },
+    "workspace_snapshot_lifecycle": {
+      "passed": 6
+    },
+    "legacy_lifecycle": {
+      "passed": 13
+    },
+    "conventional_approvals": {
+      "passed": 19,
+      "skipped": 1,
+      "skipReason": "existing Windows symlink privilege fixture"
+    },
+    "final_assessor": {
+      "passed": 5
+    },
+    "controller": {
+      "passed": 11,
+      "seconds": 112.529,
+      "nativeCalls": 0
+    }
+  },
+  "independentReview": {
+    "status": "no remaining material launch blocker in reviewed provenance paths",
+    "reviewedFix": "Initial public copy and binding precedes runtime readiness and all actor starts; final validates source, supplement and actual workspace after assessment",
+    "nativeCalls": 0,
+    "reviewer": "/root/independent_review"
+  },
+  "nativeStartsAtFreeze": 0,
+  "humanAcceptance": "not established",
+  "pairedComparison": "NOT RUN"
+}

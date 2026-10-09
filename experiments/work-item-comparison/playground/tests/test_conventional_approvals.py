@@ -115,9 +115,18 @@ class ScopedGitApprovalTests(unittest.TestCase):
             {"cwd": str(self.repo.parent)}, {"networkApprovalContext": {"host": "example.test"}},
             {"additionalPermissions": {"fileSystem": {"write": ["/"]}}},
             {"proposedExecpolicyAmendment": {"execpolicy_amendment": ["git"]}},
+            {"proposedExecpolicyAmendment": "git status"},
+            {"proposedNetworkPolicyAmendments": [{"host": "example.test", "action": []}]},
             {"availableDecisions": ["acceptForSession", "decline"]},
+            {"availableDecisions": [{"acceptWithExecpolicyAmendment": {
+                "execpolicy_amendment": ["git", "status"]}}]},
+            {"availableDecisions": None},
+            {"availableDecisions": ["decline", "cancel"]},
             {"availableDecisions": {"accept": True}},
             {"availableDecisions": ["accept", {"acceptWithExecpolicyAmendment": {}}]},
+            {"availableDecisions": ["accept", {"applyNetworkPolicyAmendment": {
+                "network_policy_amendment": {"host": "example.test", "action": []}}}]},
+            {"kind": None}, {"kind": "writeStdin"},
             {"futurePermission": True}, {"startedAtMs": "10"},
         )
         for override in cases:
@@ -126,12 +135,49 @@ class ScopedGitApprovalTests(unittest.TestCase):
                 self.assertEqual("decline", broker.decide(self.request(**override), self.item).decision)
 
     def test_one_time_accept_is_allowed_when_other_choices_are_also_offered(self) -> None:
-        for decisions in (None, ["accept", "acceptForSession", "decline", "cancel"]):
+        amendment = {"acceptWithExecpolicyAmendment": {"execpolicy_amendment": ["git", "-C", "repo"]}}
+        network = {"applyNetworkPolicyAmendment": {
+            "network_policy_amendment": {"host": "example.test", "action": "allow"}}}
+        for decisions in (None, ["accept", "acceptForSession", "decline", "cancel", amendment, network]):
             broker = ScopedGitApprovalBroker(str(self.repo), "thread-owned", "turn-owned", self.shell)
             request = self.request() if decisions is None else self.request(availableDecisions=decisions)
             if decisions is None:
                 request["params"].pop("availableDecisions")
             self.assertEqual("accept", broker.decide(request, self.item).decision)
+
+    def test_valid_policy_proposals_are_ignored_when_literal_accept_is_available(self) -> None:
+        decisions = [
+            "accept",
+            {"acceptWithExecpolicyAmendment": {"execpolicy_amendment": ["git", "status"]}},
+            {"applyNetworkPolicyAmendment": {
+                "network_policy_amendment": {"host": "example.test", "action": "allow"}}},
+            "decline",
+            "cancel",
+        ]
+        request = self.request(
+            proposedExecpolicyAmendment=["git", "-c", "core.hooksPath=/dev/null"],
+            proposedNetworkPolicyAmendments=[
+                {"host": "example.test", "action": "allow"},
+                {"host": "blocked.example.test", "action": "deny"},
+            ],
+            availableDecisions=decisions,
+        )
+        decision = self.broker.decide(request, self.item)
+        self.assertEqual("accept", decision.decision)
+        self.assertEqual((self.shell["gitExecutable"], "-c", "core.hooksPath=/dev/null", "-c",
+                          "core.fsmonitor=false", "add", "--", "src/file.py"), decision.action)
+        self.assertEqual({"decision", "reason", "action"}, set(decision.__dict__))
+
+    def test_omitted_approval_kind_defaults_to_command_but_explicit_invalid_does_not(self) -> None:
+        request = self.request()
+        request["params"].pop("kind")
+        broker = ScopedGitApprovalBroker(str(self.repo), "thread-owned", "turn-owned", self.shell)
+        self.assertEqual("accept", broker.decide(request, self.item).decision)
+
+        for invalid in (None, "writeStdin", "future-kind"):
+            request = self.request(kind=invalid)
+            broker = ScopedGitApprovalBroker(str(self.repo), "thread-owned", "turn-owned", self.shell)
+            self.assertEqual("decline", broker.decide(request, self.item).decision)
 
     def test_protected_branch_creation_and_windows_shell_wrappers_decline(self) -> None:
         for command in (self.git("branch main"), self.git("switch -c main"), self.git("checkout -b main"),
@@ -476,7 +522,11 @@ for line in sys.stdin:
         send({"id":"request-1","method":"item/commandExecution/requestApproval","params":{
             "kind":"command","threadId":"thread-owned","turnId":"turn-owned","itemId":"item-1",
             "startedAtMs":10,"command":item["command"],"cwd":item["cwd"],
-            "availableDecisions":["accept","decline","cancel"]}})
+            "proposedExecpolicyAmendment":["git","status"],
+            "proposedNetworkPolicyAmendments":[{"host":"example.test","action":"allow"}],
+            "availableDecisions":["accept",{"acceptWithExecpolicyAmendment":{"execpolicy_amendment":["git"]}},
+                {"applyNetworkPolicyAmendment":{"network_policy_amendment":{"host":"example.test","action":"allow"}}},
+                "decline","cancel"]}})
     elif message.get("id") == "request-1":
         assert message == {"id":"request-1","result":{"decision":"accept"}}, message
         send({"method":"turn/completed","params":{"threadId":"thread-owned","turn":{"id":"turn-owned","status":"completed"}}})
