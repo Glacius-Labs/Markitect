@@ -23,3 +23,9 @@ If product inner roles support only Codex/Luna, a matched Sonnet-Markitect cell 
 ## Ownership and callbacks
 
 Preparation dispatched once to Scientist `01a1169c-3df6-7571-997d-48ab57365875/local`; first compact snapshot confirms active and working on separated runtime profiles with actual execution disabled. Scientist reports one material completion/blocker/decision to Root under direct human authority, with private remote/source and focused evidence. No ACK/polling loop. Case Study execution still needs a later stable product binding and a fresh finite execution instruction.
+
+## Completed first preparation pass
+
+Root verified clean exact private checkpoint `955fc85e8ab365962ed54786e8ed81ee52e239d0` on research-backup/codex/government-scientist, 53 new Working/RawGit byte bindings, 32 source/destination provenance bindings (30 unchanged historical copies), four tested source hashes and the exact technical log. Existing recorded offline suite passed 18 tests in 51.609s; Root reran none. Original luna-nest inputs/evidence/grants/outcomes have an empty baseline diff. Runtime execution remains explicitly disabled.
+
+The new entrypoint is Scientist's experiments/work-item-comparison/README.md leading to playground/README.md. It supplies current public cases/backlogs, pure Git/file prepare/snapshot/advance/freeze mechanics, separate runtime profiles and independent assessment templates. No provider launcher or product feature implementation was added. Initial model proposals remain unvalidated owner-migration inputs, not a ready product installation. Source/offline preparation is accepted with these limits; actual runtime/method/human acceptance is not established. Scientist holds after this finite first pass. Only public case/model/common input paths were shared with Product Integration, no private history/evaluation/candidate evidence.

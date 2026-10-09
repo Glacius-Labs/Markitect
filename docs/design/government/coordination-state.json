@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T17:34:10Z",
+  "updatedUtc": "2026-10-09T17:42:23Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -485,18 +485,18 @@
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
       "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:140",
-      "lastObservedStatus": "active: fresh Playground preparation only; historical actual trials remain closed",
+      "lastObservedStatus": "Preparation completed by material callback; actual clean private checkpoint independently verified. Hold, no Actual allocation.",
       "activeTurn": {
         "id": "01a11f01-0b15-7a32-a818-2185b97f07ef",
         "status": "inProgress"
       },
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac854c570f48191a595d544b5898fd6",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Current simplified Playground/offline mechanics + separate Luna/Claude Sonnet runtime profiles; zero Actual quota",
+      "assignedMilestone": "None after first refinement; later exact stable product/runtime binding, no additional tests or actual starts now",
       "latestProgress": "Exact PRIVATEdc34459d document backup Root verified; current actor-free finite task closed, no new Actual or evaluation authority.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "429c52d8a37fa60ca4393a3501a495128b4d2e88",
+      "candidateSha": "955fc85e8ab365962ed54786e8ed81ee52e239d0",
       "acceptance": "Current public preparation qualified accepted after root/independent review; DTOhelper advisory only and3/2correctiondeviation retained. No matchedstudyadmission; historicalactualv3/posthoc preserved.",
       "lastAssignment": {
         "key": "luna-work-item-case-study-nest-preparation-20261009",
@@ -16155,7 +16155,7 @@
     "recordedUtc": "2026-10-09T17:18:44Z",
     "scientist": {
       "authority": "Direct user now requests prepare/tidy/refine Case Study Playground while product workers finish; earlier stop lifted for preparation only",
-      "status": "DISPATCHED_ACTIVE_PREPARATION_ONLY",
+      "status": "COMPLETED_PRIVATE_CHECKPOINT_ROOT_QUALIFIED_HOLD",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
       "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:140",
@@ -16169,7 +16169,30 @@
       "automaticRefill": false,
       "historicalScoringChangesAuthorized": false,
       "privateRemote": "https://github.com/TheGlacius/markitect-research-backup.git",
-      "notification": "One material callback under direct user coordination; no polling/ACK loops"
+      "notification": "One material callback under direct user coordination; no polling/ACK loops",
+      "completion": {
+        "verifiedUtc": "2026-10-09T17:42:23Z",
+        "status": "QUALIFIED_OFFLINE_PREPARATION_ACCEPTED_HOLD_NO_ACTUALS",
+        "sourceSha": "955fc85e8ab365962ed54786e8ed81ee52e239d0",
+        "cleanExactPrivateRemoteVerified": true,
+        "files": 53,
+        "rootGitWorkingByteBindings": 53,
+        "provenanceBindingsVerified": 32,
+        "unchangedHistoricalSourceCopies": 30,
+        "testSourceBindingsVerified": 4,
+        "testLogHashVerified": true,
+        "ownerReportedChecks": "18/18 offline fixtures passed,51.609s;13 real temporaryGit lifecycle fixtures+5 mocked launcher/output fixtures",
+        "rootChecks": "Existing hash/log/source/provenance bindings read-only, oldluna-nestdiff empty, no rerun/build/providerCalls",
+        "entrypoint": "experiments/work-item-comparison/README.md",
+        "executionDisabledIndependentlyChecked": true,
+        "oldTrialsCandidatesGrantsOutcomesUnchanged": true,
+        "stillOpen": "Stable integrated Main/binary/module/schema/config/skill/view/businessmodel pins and actual matched runtime/model/tool/rights/budget bindings",
+        "nativeProviderSupport": "Sonnet pair explicitly blocked if genuine inner roles remain Codex/Luna; no covert mixed provider/harness adapter",
+        "publicInterfaceSentToIntegration": "Only public initial-model/case/common inputs allowed; private history/assessment/evidence excluded",
+        "newActualGrant": 0,
+        "automaticRefill": false,
+        "next": "Hold after completed first preparation; later actual stable binding and finite human instruction required"
+      }
     },
     "claude": {
       "checkedUtc": "2026-10-09T17:14:13Z",
