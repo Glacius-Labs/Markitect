@@ -1790,3 +1790,14 @@ Root verified exact public ebe51470 with evidence/test WIP; local receipt Exit1/
 ### 2026-10-09T20:31:08Z - three handoffs and younger user snapshot simplification
 
 Root verified ScientistPRIVATE4392129/17testedSourcebindings and415ZIP/external payloads, independent SourceReader confirms stopgates with two concrete broker schema traps sentonce; old CLIlock remainsuncertain/quarantined, no shared new-audit interferenceproved. KGcleanpublic4a77dc9a targeted/reviewed closure and threebyteexacthistoricalFailedlogs verified; no fullPASS/newtasks, awaitacceptedMain. Integrationpublicfc6/ledger boundA01window20:26–00:26; ownerRun4sexit2stale beforeproviders/native0, concrete diagnosisalreadyactive, noRootretry. Latest actual Scientist humanturn01a1225a asks disposable repos/run/evaluation/snapshots and Conventional until worksorblocked. Root records ONEnew prospective AppServer workspace-snapshot trajectory4h/90minroles/256allrequests/2startupchecks; old2case/6checkorderclosed. Freeze snapshot target and ordinary inputs coherently beforeActual; mainmerge historicalseparate, no fakePASS or semanticScientistmerge. No extra genericCapabilityphase, newRootgrant explicitlyindependent fromoldallocation; oldCLIlockretained/noOSisolationclaim. MainandKGscopesunchanged.
+
+
+### Prospective unstarted completion-target reconciliation
+
+Scientist proposes preserving normal Git-CLI integration after removing unnecessary direct .git probe; user had proposed snapshots or Git-CLI alternative. Before any new Actual Root revision2 permits explicit frozen git_integrated_main or workspace_snapshot, exactly one chosen prospectively, never silent mid-run fallback. Same ONE4hAppServertrajectory/alllimits/deadlines, no extra quota; original unstarted order/hash preserved and superseded. Git broker when active gets concrete schema fixes; readiness conditional until actual request/decision/terminal command. No generic capability phase.
+
+### A01 fingerprint source finding and prospective dispatch reconciliation
+
+Integration reports the pre-provider stale rejection comes from different fingerprint builders in Plan and the native CLI invoker. Root read confirms raw agentexec fingerprints in Plan versus native adapter/options/Host-helper fingerprints in TransportInvoker. Minimal correction and a provider-free normal Plan-to-CLI regression are underway; the stale guard remains, the original lease is unchanged, and no native actor success is claimed. Environment casing is not a confirmed cause.
+
+The unstarted Conventional revision 2 was dispatched once, with the original one-trajectory allocation and deadlines unchanged. Its explicit Git-integrated-main or workspace-snapshot completion target must be chosen and frozen before Actual; no silent fallback or additional trial is authorized.

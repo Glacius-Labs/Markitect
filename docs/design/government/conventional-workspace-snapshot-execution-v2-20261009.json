@@ -1,0 +1,49 @@
+{
+  "id": "conventional-workspace-snapshot-execution-20261009",
+  "issuedUtc": "2026-10-09T20:31:08Z",
+  "authority": {
+    "thread": "01a1169c-3df6-7571-997d-48ab57365875",
+    "directUserTurn": "01a1225a-b646-7262-ba7a-4219ee6bfdf9",
+    "verifiedByRoot": true
+  },
+  "objective": "One complete normal Conventional AppServer trajectory with immutable workspace capture and independent assessment; prospective completion target chosen explicitly before Actual",
+  "completionTarget": "Choose exactly one before Actual: git_integrated_main preserves ordinary Git-CLI merge workflow; workspace_snapshot is the user-proposed simpler alternative. Never silently switch mid-run.",
+  "sourceBeforeStart": "Clean exact private source/input/config freeze, relevant controller snapshot-target regressions and review; no new general capability phase",
+  "publicInputs": "Freeze chosen completion target with ordinary prompt/backlog/rules/assessment before Actual. Keep Git branch/merge requirements for git_integrated_main; coherently remove only those mechanical clauses for workspace_snapshot. Preserve functional tasks; future matched Markitect gets same target.",
+  "runtime": "Existing pinned Codex AppServer gpt-6-luna/high and child-local MXC/workspace-write; optional scoped on-request broker only if actual requested Git actions require it. No mandatory Git metadata probe, no automatic CLI fallback.",
+  "limits": {
+    "freshTrajectories": 1,
+    "jobWallSeconds": 14400,
+    "implementationSeconds": 10800,
+    "freshFinalSeconds": 2700,
+    "captureReserveSeconds": 900,
+    "roleTurnSeconds": 5400,
+    "totalStartRequests": 256,
+    "maxConcurrent": 4,
+    "depthCooperative": 2,
+    "providerFreeStartupChecks": 2,
+    "startupCheckSeconds": 600,
+    "nativeCanaries": 0,
+    "lastStartUtc": "2026-10-10T00:31:08Z",
+    "absoluteEndUtc": "2026-10-10T04:31:08Z"
+  },
+  "start": "After clean freeze and binding, start without another blanket approval request; report actual source/executable/config/grant/own repo/session receipt",
+  "controller": "Native completed is not task completion. Verify declared frozen target before advancing: clean newly integrated main for git_integrated_main, actual immutable modified workspace for workspace_snapshot. Error/cancel/uncertain stops before further stage/case. No Scientist semantic merge or coaching.",
+  "oldUncertainCli": "Keep original session/audit/lock quarantined, no replay or retroactive terminal claim; fresh independent AppServer repo/audit. No concrete child interference established; cooperative boundary and unknown host effects disclosed.",
+  "assessment": "Fresh readonly LunaHigh final against declared requirements and frozen workspace; raw usage/time/setup/interventions and rule violations separate; unknown serving/costs retained; not a paired method result or merge-proof",
+  "stop": "Repeated unchanged tool blocker or unresolved ownership in the new run terminal; no second trajectory/retry/refill under this order",
+  "notAuthorized": [
+    "Global security/config changes",
+    "Sandbox disable",
+    "Installs/new providers/purchases",
+    "Markitect simulation/actuals",
+    "Private evaluator feedback to implementer",
+    "Deleting old worktrees/evidence",
+    "Automatic disposal of uncertain old repo",
+    "Main gate expansion"
+  ],
+  "revision": 2,
+  "previousUnstartedOrderSha256": "63f40dc886db7ad9a277bd8bf2606f087966ae9642c2922b4d46e38a0a26eb8b",
+  "limitsUnchanged": true,
+  "amendmentAuthority": "Prospective reconciliation of verified direct human suggestion and Scientist proposed normal Git-CLI integration; no actual under previous order observed, no extra trajectory or time"
+}

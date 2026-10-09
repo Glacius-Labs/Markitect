@@ -16278,10 +16278,12 @@
       "knownStartsMax": 256,
       "optionalA02A03": "DEFERRED_NO_AUTOSTART",
       "latestOwnerOutcome": "RunPID37764 20:27:03Z to20:27:07Z exit2 projectrun stale before providers; no report/states/owned role workspace/journal observed; native0",
-      "diagnosis": "Owner existing bounded source/context stale-comparison investigation, no modifications/retry/actors yet",
+      "diagnosis": "Owner reports Plan binds agentexec.Fingerprint while native CLI Run checks TransportInvoker.Fingerprint including AppServer options and Host helper spec; Root source read confirms the two distinct builders. Minimal shared fingerprint correction and provider-free NativePlan-to-CLI regression delegated; no stale-check weakening, new actors or lease extension.",
       "proof": "NOT_ESTABLISHED",
       "mainCIReview": "Still required at final PR head",
-      "newRootGrant": false
+      "newRootGrant": false,
+      "sourceReadQualification": "Root independently read plan.go raw fingerprint calls and transport_invoker.go native adapter/optionsWithHelperSpec route; exact rebuilt fix and runtime success pending.",
+      "environmentCasingCause": "NOT_CONFIRMED"
     }
   },
   "playgroundAndClaudePreparation20261009": {
@@ -17157,7 +17159,7 @@
       "verifiedByRoot": true
     },
     "objective": "One complete normal Conventional AppServer trajectory and fresh independent assessment on immutable workspace snapshots; user proposed disposable repositories instead of mandatory Git integration",
-    "completionTarget": "workspace_snapshot, prospective separate target; old main/merge results remain unchanged",
+    "completionTarget": "Choose exactly one before Actual: git_integrated_main preserves ordinary Git-CLI merge workflow; workspace_snapshot is the user-proposed simpler alternative. Never silently switch mid-run.",
     "sourceBeforeStart": "Clean exact private source/input/config freeze, relevant controller snapshot-target regressions and review; no new general capability phase",
     "publicInputs": "Freeze ordinary prompt/backlog/rules/assessment and declared snapshot completion before Actual; remove mechanical branch/merge requirement coherently for this target, preserve functional tasks and other rules; same target for later matched Markitect",
     "runtime": "Existing pinned Codex AppServer gpt-6-luna/high and child-local MXC/workspace-write; optional scoped on-request broker only if actual requested Git actions require it. No mandatory Git metadata probe, no automatic CLI fallback.",
@@ -17192,10 +17194,17 @@
       "Automatic disposal of uncertain old repo",
       "Main gate expansion"
     ],
-    "grantPath": "docs/design/government/conventional-workspace-snapshot-execution-20261009.json",
-    "grantSha256": "63f40dc886db7ad9a277bd8bf2606f087966ae9642c2922b4d46e38a0a26eb8b",
-    "status": "NEW_HUMAN_AUTHORIZED_PROSPECTIVE_DELIVERY; SOURCE_TARGET_FREEZE_PENDING",
+    "grantPath": "docs/design/government/conventional-workspace-snapshot-execution-v2-20261009.json",
+    "grantSha256": "58cf8d06944223b77f51062bfa48ecb224bee9e5f5651abec18597dff1664d63",
+    "status": "SOURCE_TARGET_FREEZE_PENDING_ONE_FRESH_TRAJECTORY",
     "actualStartsObserved": 0,
-    "dispatch": "SENT_ONCE_TO_SCIENTIST_LOCAL"
+    "dispatch": "SENT_ONCE_V2",
+    "initialUnstartedOrder": {
+      "grantPath": "docs/design/government/conventional-workspace-snapshot-execution-20261009.json",
+      "grantSha256": "63f40dc886db7ad9a277bd8bf2606f087966ae9642c2922b4d46e38a0a26eb8b",
+      "status": "SUPERSEDED_PROSPECTIVELY_NO_ACTUAL_OBSERVED"
+    },
+    "revision": 2,
+    "limitsUnchanged": true
   }
 }
