@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T23:59:54Z",
+  "updatedUtc": "2026-10-09T00:15:34Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12,7 +12,7 @@
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-08T23:59:54Z",
+    "lastVerifiedUtc": "2026-10-09T00:15:34Z",
     "verification": "automation_update confirmedACTIVE; savedTOML exactprompt/2h/rootTarget verified; callbacksfiveowners/quietunchanged preserved",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
     "latestMandateUpdatedUtc": "2026-10-08T22:54:35Z",
@@ -31,9 +31,9 @@
     "pauseReason": "Final resumed two-actual-attempt window closed after R3; S1/read/write/build unproved, all six cells NOT RUN. Evidence/effort synthesis supplemented; no new grant or routine polling.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
     "resumedUtc": "2026-10-08T21:28:26Z",
-    "promptSha256": "29cc9750991cb2fe05595ed550694159fd2b115e1e1d9191db5a3402f8bdaa1b",
+    "promptSha256": "1cbe7c22ae6a2427825f2ce846483934e3caa0ddea630b69717960d51972644d",
     "name": "Markitect: Vergleich und fünf Arbeitschats koordinieren",
-    "currentGrantContext": "ed9c5b3 preparation qualifiedclosed; one finite fresh independentprospectiveoracle/outcomereview active, no productActors/fulltrials. Exact grant statuses canonical. Design ready pin pending.",
+    "currentGrantContext": "OracleReviewe378closedNOTREADY, no trial/repairgrant; directuser Gitbackupactive with privacy-separatedremotes; Designreadinessongoing",
     "exactSavedTomlVerified": true
   },
   "threads": [
@@ -41,9 +41,12 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "021842db-4338-41c4-887e-a41be4678e53:1",
-      "lastObservedStatus": "notLoaded",
-      "activeTurn": null,
+      "afterCursor": "021842db-4338-41c4-887e-a41be4678e53:2",
+      "lastObservedStatus": "active",
+      "activeTurn": {
+        "id": "01a11dff-2aa8-7670-8008-c0de5a47b978",
+        "status": "inProgress"
+      },
       "lastAssistantMessageId": "msg_0a7785839df196a4016ac6f3fa072c819194583b51e8c10e00",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
@@ -357,6 +360,22 @@
           "accounting": "4attempts,3failed,1passed;5native,10actualroles,16committedreservations,65.129s,peak1. Conservative2attemptcapdeviation preserved; no globally mechanical enforcement proven.",
           "executionChange": "No new execution/tests/source change; no evidence overwritten.",
           "scope": "Evidence-only closure; technical qualification and former independent root review remain, no model/human/provider/Linux/release inference."
+        },
+        "remoteBackupAcceptance": {
+          "verifiedUtc": "2026-10-09T00:15:34Z",
+          "remote": "https://github.com/Glacius-Labs/Markitect.git",
+          "refs": {
+            "codex/government-p1": "839dc4e3f6078aa051e08c50c2b958150ca45f49",
+            "codex/government-worker": "04e225d5caee78c2a198607143863fca1e829750"
+          },
+          "reportedHistoryScan": {
+            "commits": 20,
+            "blobVersions": 227,
+            "noDetectedSecretOrPrivateData": true
+          },
+          "workerClean": true,
+          "p1WorktreeAbsentNotClaimedClean": true,
+          "noProductOrStudyChanges": true
         }
       },
       "lastResearchContext": {
@@ -439,19 +458,19 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:56",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:58",
       "lastObservedStatus": "active",
       "activeTurn": {
-        "id": "01a11df3-8e01-7ff0-b50d-bbb68eb3b311",
+        "id": "01a11dff-3079-7f90-85bf-7a3ddd75e287",
         "status": "inProgress"
       },
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac82dfe4a2c8191b20010125493979e",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac831c4aeec8191ad63e8a9a0d1bb19",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "One independent prospective oracle/outcome source review, then exact clean Design handoff and commonfreeze for bounded matched comparisons",
-      "latestProgress": "ed9c5b3 qualified offline/CLIaccepted, DTOadvisoryerratum/3of2deviation preserved. New independent prospectiveoracle/outcomereview preparation active, freshreviewer reservation pending; no productActor/fulltrials.",
+      "latestProgress": "PrivateGitbackup active under directhuman instruction: fullScientistbranch, ownheldcellGitbundles/WIP and externalprivateevidence inventory. No newresearch runtime/repair granted.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "ed9c5b33434219c64a39366b7d1b1cd30fc64884",
+      "candidateSha": "e378ae8144f054e6ff957bb08ee3e6120ca4f955",
       "acceptance": "Current public preparation qualified accepted after root/independent review; DTOhelper advisory only and3/2correctiondeviation retained. No matchedstudyadmission; historicalactualv3/posthoc preserved.",
       "lastAssignment": {
         "key": "native-codex-exploratory-v3-20261008",
@@ -7301,8 +7320,10 @@
             "At deadline or first terminal result close with no retries/newquota; preserve all old37/115/264bindings, runtimebindingpacket and privatebundle. No blanket restart or waiting for Root approval within already authorized single review.",
             "This grant does not admit any cell or allocate fulltrials. After review hold for exact clean Design callback/jointfreeze or concrete materialfinding; no generic preparation/diagnostic loop."
           ],
-          "status": "Dispatched once; one fresh independent reviewer authorized, no actual cells",
-          "usage": null
+          "status": "Closed/consumed1 independentreview, NOTREADY; qualifiedpublicmetadataaccepted",
+          "usage": null,
+          "remainingReviewerActivations": 0,
+          "closedObservedUtc": "2026-10-09T00:13:56Z"
         },
         "v4ClassicMainRuntimeBindingRootVerification": {
           "verifiedUtc": "2026-10-08T23:57:05Z",
@@ -7379,6 +7400,33 @@
           "newActualActors": 0,
           "newFullTrials": 0,
           "usage": null
+        },
+        "v4ProspectiveOracleOutcomeReviewAcceptance": {
+          "acceptedUtc": "2026-10-09T00:13:56Z",
+          "sourceSha": "e378ae8144f054e6ff957bb08ee3e6120ca4f955",
+          "rootPublicWorkingGitBindings": 10,
+          "reportedReviewedSourceCounts": {
+            "public": 14,
+            "private": 4
+          },
+          "independentSourceVerdict": "NOT READY prospective scoring, NOT ADMITTED",
+          "publicDeclaredBlockers": [
+            "current-limit-and-compatibility: priorTask4 acceptedorder compatibility/parity missing",
+            "verification_quality: distinguish product/evaluation/infrastructure/NOTRUN"
+          ],
+          "publicCoverageGaps": [
+            "validated-order",
+            "durable-lifecycle"
+          ],
+          "privateAssertionsNotReadByRoot": true,
+          "newReviewActivationsConsumed": 1,
+          "newProductActors": 0,
+          "newFullTrials": 0,
+          "noRepair": true,
+          "finalHandoffSha256": "03172c2a389526da18e80bd9e398031298d3aee43c1dd11c5546fd86a7baf335",
+          "safeSummarySha256": "a58d57d6ee85b9e863381e08c56db8ec845a52e7c2bbe03641562bae46ab3ff1",
+          "qualifiedStaticReviewOnly": true,
+          "nextConcreteResearchStep": "After Gitbackup, a bounded correction of declared evaluationcoverage/attribution findings, no new commonrequirements or productfixes; Designhandoff/profile stillrequired."
         }
       },
       "classicHandoffReceived": true,
@@ -8021,10 +8069,13 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "2a29b9c8-23e7-440f-a2cf-f0a33806c326:8",
-      "lastObservedStatus": "notLoaded",
-      "activeTurn": null,
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac7d037342887d28bf56ff1149e71a4",
+      "afterCursor": "2a29b9c8-23e7-440f-a2cf-f0a33806c326:9",
+      "lastObservedStatus": "idle",
+      "activeTurn": {
+        "id": "01a11dff-2e70-7402-9159-5d747fa0a1e8",
+        "status": "completed"
+      },
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac83173193487d2918c31e566ef8854",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Classic main integration and documentation complete; hold pending concrete product finding or new direct task.",
       "latestProgress": "Final main a97cbd5 and clean local reviewed head698e54f have identical tree; all four exact-SHA hosted runs passed,44-payload handoff independently verified. No required work remains; published CLIv0.14.1 and frozen study unchanged.",
@@ -8308,6 +8359,23 @@
             }
           },
           "qualification": "No final owner callback/slot release yet; postmerge CI and release distinct. Study pin unchanged."
+        },
+        "remoteBackupReported": {
+          "reportedUtc": "2026-10-09T00:13:56Z",
+          "publicRemote": "https://github.com/Glacius-Labs/Markitect.git",
+          "refs": {
+            "codex/classic-readiness-v0141": "c91363b7ac4decbe87212ff0f588b5451581a152",
+            "codex/classic-public-example": "8927704c5bc2c83601d36eb2ff99ae8332c7b406",
+            "codex/classic-main-documentation": "698e54fb3b65e73ae03e545997f7e9822e730b69",
+            "codex/classic-p1-intent-change": "6b0336dfbd85bef680adc46ee441ba907569fd72",
+            "codex/standard-operating-model": "c26aa905ec8eb1cf11049198c70d243dfba07881"
+          },
+          "allCommitsAlreadyReachableFromMain": true,
+          "newRefsOnly": 2,
+          "rootRemoteVerification": {
+            "verifiedUtc": "2026-10-09T00:15:34Z",
+            "allFiveExact": true
+          }
         }
       },
       "lastAssignment": {
@@ -8561,15 +8629,15 @@
       "hostId": "local",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect",
       "lastObservedStatus": "active",
-      "candidateSha": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
-      "candidateStatus": "Previous clean reported handoff; current7-file WIP for native Luna High/appCLI streaming pinning; not a frozen test candidate",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:7",
-      "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac82d1e0c008191aab9e0b43b401539",
+      "candidateSha": "4ea88971c2e6122019c4c557cd80bfebf93df14a",
+      "candidateStatus": "Publicremoteprovisionalcheckpoint, nativeReadiness running, no acceptedstudyfreeze",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:9",
+      "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac831c872848191b28ade4ec5df0af9",
       "assignedMilestone": "Continue latest direct user-authorized native Luna High Shop verification; then immutable test-readiness handoff/callback",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
       "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
       "acceptance": "Not yet independently accepted; development/native test reports only",
-      "latestProgress": "Owner reports fullsource suite and31repositorygatesPASS; independentcodeReview found reworkleafstatus/noopwrite issues plus delegatingmanagerselection under repair; active WIP, no cleanreadinesspin. Root has not rerun checks.",
+      "latestProgress": "Remote4ea8897 verified, provisionalcheckpointclean reported. NativeShopreview found terminalcancelOrderreactivation and sentownerImplementerrepair; independentreadinessclosure stillpending, not a matchedtrial.",
       "evidence": {
         "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
         "observedBranch": "codex/model-driven-delivery",
@@ -8577,7 +8645,16 @@
         "reportedSourceFullSuiteSha": "510efe6",
         "reportedPriorSourceHandoffSha": "57fa01c",
         "heldStudyVersion": null,
-        "mainPromotionAuthorized": false
+        "mainPromotionAuthorized": false,
+        "remoteBackupAcceptance": {
+          "verifiedUtc": "2026-10-09T00:15:34Z",
+          "remote": "https://github.com/Glacius-Labs/Markitect.git",
+          "ref": "refs/heads/codex/model-driven-delivery",
+          "sha": "4ea88971c2e6122019c4c557cd80bfebf93df14a",
+          "reportedClean": true,
+          "reportedScannedBlobVersions": 423,
+          "status": "Provisionalcoherentproductcheckpoint only; ownernativeLunaShop/reviewrepair ongoing, NOTReadinessFreeze"
+        }
       },
       "lastAssignment": {
         "key": "design-readiness-callback-and-classic-replacement-candidate-20261009",
@@ -8594,7 +8671,7 @@
       }
     }
   ],
-  "nextAction": "Finish Root publicruntimebinding review and Scientist one independent prospective common oracle/outcome review while Design closes its own repair/native tests. Then exactcleanDesignhandoff+jointfreeze+finiteActualgrant within8trials/2questions. No further genericprep/diagnostics.",
+  "nextAction": "Complete directuser remote backups first: publicproduct/coordination branches and privateScientistfullhistory/ownheldWIP, verifyexactremoteSHAs. Then handle specificindependentoraclecoverage findings and cleanDesignreadiness within boundedresearch. No new trialgrant.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -9838,5 +9915,78 @@
       "actualActivations": 1,
       "result": "Qualifiedofflineonly; concrete DTOcontext/parser mismatch and staleclosedUtc qualification; sourcebindingsplausible; no admission"
     }
-  ]
+  ],
+  "remoteBackup": {
+    "authorizedBy": "Direct human instruction: Sorge auch dafuer dass die branches und Staende jeweils gepushed sind und nicht nur lokal sind",
+    "recordedUtc": "2026-10-09T00:13:56Z",
+    "scope": "Five coordinated chats current/held branch refs and owned WIP checkpoints; no force, Mainmerge, release or additional study execution",
+    "publicRemote": "https://github.com/Glacius-Labs/Markitect.git",
+    "publicVisibilityVerified": "PUBLIC",
+    "privateStudyBackup": {
+      "url": "https://github.com/TheGlacius/markitect-research-backup.git",
+      "createdThisTurn": true,
+      "privacyVerified": true,
+      "actionsEnabled": false,
+      "remoteName": "research-backup",
+      "originUnchanged": true,
+      "reason": "Scientist tracked history includes private evaluation sources/ZIP; full branch must not be published to shared PUBLIC origin. Private remote preserves exact commits without rewriting history."
+    },
+    "root": {
+      "branch": "codex/government-assessment",
+      "verifiedPublicSha": "5c8b3494d4d79f4a5fbe564ddba4928bd1ea36b2",
+      "upstream": "origin/codex/government-assessment",
+      "status": "Pushed/ls-remote exact; final coordination checkpoint tofollow"
+    },
+    "ownerDispatches": [
+      {
+        "name": "Worker",
+        "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
+        "deliveryConfirmed": true,
+        "prompt": "Neuer direkter Nutzerauftrag in Overseer: „Sorge auch dafür dass die branches und Stände jeweils gepushed sind und nicht nur lokal sind“. Bitte als gewöhnliche Git-Sicherung ausführen, keine Produktänderung/Tests/Studienquote. Prüfe die öffentlichen Government-Branches codex/government-worker (gehaltener04e225d5) und codex/government-p1 (angenommener839dc4e3) samt tatsächlich aktuellem SHA und noch nicht veröffentlichten Commitdateien auf private Bewertungsdaten/Secrets, dann beide ohneForce/ohneMainmerge mit Upstream nach https://github.com/Glacius-Labs/Markitect.git pushen und tatsächliche refs/heads/SHA perls-remote bestätigen. Die früheren Worktreepfadep1 scheinen entfernt; vorhandene Ref/Objekte im gemeinsamen Git sind vorhanden, kein Reset/Restore nötig. WIP/alteBelege erhalten. Bei sensiblen Inhalten nicht öffentlich pushen, nur konkrete sichere Metadaten anOverseer; privates Sicherungsziel wird zentral geprüft. KeineAktivierungs-/Runtime-/Productquote daraus. Genau eine Abschluss-/Blockerrückmeldung mit RemoteURL/Ref/SHA und localHEAD/DirtyStatus, keinACK."
+      },
+      {
+        "name": "Architect",
+        "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
+        "deliveryConfirmed": true,
+        "prompt": "Neuer direkter Nutzerauftrag: alle beteiligten Branches/Stände sollen remote gesichert sein. Bitte tatsächliche Classic-Hauptlinie und eigene relevanten gehaltenen Stände prüfen, keine neue Produktarbeit/Tests/Release/Studie daraus. Remote main ist inzwischen5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e laut frischemls-remote, dein früher akzeptierterMainpin a97cbd5 und gefrorenerStudienClassicc913 bleiben historischePins. Respectiere jüngere direkteAufträge. refs codex/classic-main-documentation698e54f undclassic-p1-intent-change6b0336d sind schonremoteidentisch. Prüfe/pushe fehlende öffentliche relevante gehalteneClassicrefs (insbesonderecodex/classic-readiness-v0141c913 undfallsnochbenötigtclassic-public-example8927704) nachorigin ohneForce/Mainmerge. Scan neueHistory auf private/Secretfiles. Nur öffentlich geeigneteDaten; privates Ziel kannRootbereitstellen. LokaleWorktreesnichtresetten/aufräumen, keinenStudienpinersetzen. RemoteRef/SHA,aktuellerMainbefund und sauber/dirty einmal direktanOverseer melden; keineACKs."
+      },
+      {
+        "name": "Design",
+        "threadId": "01a11c80-37aa-7fe0-9586-35d916ce6561",
+        "deliveryConfirmed": true,
+        "prompt": "Direkter zusätzlicher Nutzerauftrag: Branches und Arbeitsstände sollen gepushed sein, nicht nurlokal. Bitte deine laufende direktbeauftragteArbeit fortsetzen und am nächsten konsistentenCheckpoint codex/model-driven-delivery ohneForce/ohneMainmerge nach https://github.com/Glacius-Labs/Markitect.git pushen, Upstreamsetzen und remoteSHAperls-remoteprüfen. Root sieht aktuellenHEADcb5827f690415ec05823282b8c8f4b236f734d61 und6WIPdateien; nichtfremdcommitten/wegwerfen. Die aktuellen eigenenWIPänderungen bitte als ausdrücklich vorläufigenCheckpoint sichern, sobald zusammenhängend; das ist keinReadiness-Freeze/erfolgreicherTrial/Mainübernahme. VorPush neueCommitHistoryaufSecret/privateBewertungsinhalteprüfen; eigene öffentliche Produkt-/Test-/Dokuarbeit normalpushen, privateDaten nichtinsöffentlicheRepo. Bei eigenen relevantenNebenbranches sicherstellen,dassderenCommitsremoteerreichbarsind oderTeil diesesHeads; keine pauschaleVeröffentlichungfremderWorktrees. Keine zusätzlichenVollsuiten/RuntimeversuchealleinfürGitbackup. Bei fertigemPush remoteRef/SHA+Checkpointstatus einmalanOverseermelden,parallel ursprünglichenAuftragweiterführen; keineACK."
+      },
+      {
+        "name": "Scientist",
+        "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
+        "deliveryConfirmed": true,
+        "prompt": "Neuer direkter Nutzerauftrag: Branches/Stände auchremote sichern. Deinen geradegemeldetenReviewabschluss e378ae8 prügeRootalsnächstes; darauskeineTests/Oraclefixes/Actorsableiten. WICHTIG: GitHubGlacius-Labs/MarkitectistPUBLIC, deshalb codex/government-scientist samtprivaterHistory/OracleZIPNICHTblindnachoriginpushen. Bitte nurread-onlyklassifizieren: hat dieserBranchprivateHoldout-/Oracle-/Review-/CredentialdateninderHistory, welcheanderenbestehendenprivatenRemoteswärengeeignet, gibt esrelevantegehalteneZellrefs/externisolierteGitheadsfürdenRemoteBackup. KeinePrivatinhalteimCallback, nurHashes/Dateiklassen/Refnamen. RootprüftgeradeeinprivatesSicherungsziel,danacheinexakter gewöhnlicherPushauftrag; aktuellequotenbleibengeschlossen. AlleWIP/privateEvidenzbewahren. KeinePublikations-/Sanitisierungs-/Historyrewriteplattformbauen,keinForce,keinPublicPushprivaterDaten. Einmal konkreteRemoteBackupmetadatenmelden,keinACK."
+      }
+    ],
+    "scientistPrivatePushDispatch": {
+      "deliveryConfirmed": true,
+      "prompt": "Der private Sicherungsweg ist jetzt konkret vorhanden: https://github.com/TheGlacius/markitect-research-backup.git, Root hat GitHubvisibilityPRIVATE verifiziert und GitHubActions auf diesem reinen Backuprepo deaktiviert (keine unnoetigen CI/Releasejobs). Im gemeinsamen Git ist der zusätzliche Remote research-backup eingerichtet; origin bleibt unverändert https://github.com/Glacius-Labs/Markitect.git/PUBLIC.\n\nFühre nach deiner read-only Datenschutzklassifikation die gewöhnliche Git-Sicherung aus, direkt vom neuen Nutzerauftrag autorisiert: codex/government-scientist samt vollständiger vorhandener privater Studienhistory ohneForce nach research-backup pushen und Upstream auf diesen privaten Remote setzen. VorPush keine Credentials/Secrets veröffentlichen, GitHub-Pushschutz nicht umgehen; private Holdout-/Oracle-/Reviewdaten sind gerade der Grund für dieses private Ziel. Private Inhalte nie nach öffentlichemorigin. Kein Sanitisieren/Historyrewrite nötig, alle originalen SHAs/Belege erhalten.\n\nSichere auch deine relevanten eigenen gehaltenen Studien-/Kandidatenrefs aus isolierten Gitcheckouts am selben privaten Ziel, sofern sie nicht bereits durch gepushte History/Archive erreichbar sind. Erhaltenes eigenes uncommittetes WIP nötigenfalls als eindeutig vorläufigen Backup-Checkpoint auf separatem codex/-Backupbranch sichern, ohne den eingefrorenen OriginalHEAD/die Studienresultate umzuschreiben. Keine fremden Worktrees, keine pauschalen --all/--mirror-Pushes, kein Mainmerge/Release, keine Tests/ModelActors/Oracleänderungen. Reiner Git-/Archivbackup ist keine Studienausführung und benötigt keine neue Runtimequote.\n\nEinmaliger Handoff mit RemoteRef/exaktem remoteSHA und zugeordnetem lokalem Original-/CheckpointSHA, sauber/dirty und eventuell bewusst lokalen ausgeschlossenen Credentials/Artefaktklassen; keine privaten Testinhalte im Callback. Wenn Pushschutz oder Rechte konkret blockieren, Befund melden statt umgehen. Der gerade geschlossene OracleReviewgrant bleibt verbraucht; konkrete spätere Forschungsschritte koordiniertRoot separat. KeinACK."
+    },
+    "oldschool": "No separate productbranch/checkout; accepted publicworkflowbrief is retained in Scientist history and will be covered by private remote backup. No invented productversion or new trial.",
+    "mainObserved": {
+      "sha": "5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e",
+      "parent": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+      "change": "Documentation knowledgegraph/frontmatter options PR88; frozen study/productcandidate pins unchanged"
+    },
+    "status": "All relevant publicproductrefs and priorRootcheckpoint verifiedremote; privateScientisthistory/evidence push active",
+    "publicRefsRootVerified": {
+      "verifiedUtc": "2026-10-09T00:15:34Z",
+      "remote": "https://github.com/Glacius-Labs/Markitect.git",
+      "refs": {
+        "codex/classic-main-documentation": "698e54fb3b65e73ae03e545997f7e9822e730b69",
+        "codex/classic-p1-intent-change": "6b0336dfbd85bef680adc46ee441ba907569fd72",
+        "codex/classic-public-example": "8927704c5bc2c83601d36eb2ff99ae8332c7b406",
+        "codex/classic-readiness-v0141": "c91363b7ac4decbe87212ff0f588b5451581a152",
+        "codex/government-p1": "839dc4e3f6078aa051e08c50c2b958150ca45f49",
+        "codex/government-worker": "04e225d5caee78c2a198607143863fca1e829750",
+        "codex/model-driven-delivery": "4ea88971c2e6122019c4c557cd80bfebf93df14a",
+        "codex/standard-operating-model": "c26aa905ec8eb1cf11049198c70d243dfba07881"
+      }
+    }
+  }
 }
