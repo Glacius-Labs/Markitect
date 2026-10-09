@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T05:17:06Z",
+  "updatedUtc": "2026-10-09T05:24:08Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -476,7 +476,7 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:101",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:102",
       "lastObservedStatus": "active",
       "activeTurn": {
         "id": "01a11f01-0b15-7a32-a818-2185b97f07ef",
@@ -9284,10 +9284,10 @@
           "supersededUtc": "2026-10-08T23:58:37Z"
         }
       ],
-      "lastObservedUtc": "2026-10-09T05:17:06Z",
+      "lastObservedUtc": "2026-10-09T05:24:08Z",
       "futureAutomaticAuthorityFromOldGrants": 0,
       "lastObservedTurnId": "01a11f15-575f-7451-8735-7501ca5952a1",
-      "lastObservedPublicProgress": "Activation received; setup planned after05:25Z; exact bindings preflight active, no actual start receipt",
+      "lastObservedPublicProgress": "Exact activation bindings confirmed; existing accountmaterial available without content/provider probe; ordinarysetup after05:25Z, first measurednativeentry waits for actual previous DesignGojob termination",
       "earlyConventionalExecutionAssignment": {
         "issuedUtc": "2026-10-09T04:42:43Z",
         "status": "SENT ONCE; tool accepted",
@@ -9363,6 +9363,12 @@
         "sentUtc": "2026-10-09T05:16:35Z",
         "toolAccepted": true,
         "prompt": "Root nimmt deinen finalen Handoff6578c0c96bd9504d4230ba1b8ce408b54fae742a an: sauber und exakt PRIVATEremote. Eine zusätzliche mechanische Charge PASS: alle8 bestehenden Nest-Fixtures, ursprünglicher Brownfield-Basistest und reinePSAST,19.3809522s. Root hat17 additive Working/RawGit-Dateien,16Payloadhashes und81 unveränderte Originalworkingbytes selbst geprüft; öffentliche48+vorbereitete76Bindings bereits geprüft. Alte2FAIL-Chargen,2Pretest-MetadataStops und qualifizierterReadonlyreview bleiben erhalten. Der enge Mechanicalgrant ist geschlossen/verbraucht; keine weitere allgemeine Test-/Review-/Capabilityphase.\n\nDer bereits reservierte einzelne Actual ist JETZT konkret aktiviert, unabhängig von Design:\nRootreceipt C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-root-activation-20261009.json\nSHA256 871f27cef06cd9aa8bad5243a2db505b2205899f2eb59144340b24124262d1d4\nAUSFÜHRBARE Wrappergrantdatei C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-enabled-execution-grant-20261009.json\nSHA256 109e2752b175105b30e7056993a8a75af806c688847e6b5d5cecb37c92696c4c\nOriginalconditionalGrant bleibt bytegleich. Sourceevidence6578c0c / executableSource429c52d / exactseed71acaae / preparedHEAD128006c / Nativeexe280cb1c4 / configff07b59d bleiben versiegelt. Root hat nativeConfigurationReviewed und freshContextConfirmed aufgrund der tatsächlichen geprüften Bindungen gesetzt, keine Credentials-/Providerfunktion als schon bewiesen behauptet.\n\nDesign führt seine bereits beginnenden schweren lokalen Gates bis05:25:00Z(07:25Berlin) aus. Ab05:25Z gewöhnliches vorhandenes autorisiertes Accountsetup in eigenem Nativehome, maximal900s separat. Keine neue Installation/Käufe/APIintegration, Secrets weder ausgeben noch in Logs/Git aufnehmen. Keine Canary-/Providerprobe und keine neue allgemeine capabilitydiagnose. Danach unmittelbar die echte Roombook/Conventional-Trajektorie mit deinem geprüften public/nest.py drive und dieser aktivierten Wrappergrant starten. Der erste tatsächliche native Fallaufruf ist die reale Fähigkeitsbeobachtung. Vor dem Start muss das gesamte900+7200sFenster weiterhin innerhalb09:12:43Z passen; keine Fristverlängerung.\n\nGenau1Vollstart; max7200s gesamteZellwand,5400Implementation/1200 unabhängigeFinalbewertung/600Capture, max8äußereImplementationentries inklusiveResumes/Fehlstarts/Repairs und1Finalassessmententry, normale interneTeamarbeit im gemeinsamenConcurrency4/depth2. Alle realen Implementierer/Helper/Assessoren LunaHigh. Feste1/3/7/1Stationen und gemeinsame öffentlicheRules/Checks, gewöhnlicher kurzerBacklogauftrag. Keine adaptive Scientist-Coachhilfe/semantischePrompterrolle/Codekorrektur. Reale Git-/Team-/Auth-/Servingbeobachtungen ehrlich erfassen; fehlendeTokens/Kostenunknown sind kein funktionalesStartgate. Root zählt1Start erst mit echtemStartreceipt, Autorisierung allein ist0Actuals.\n\nLogge Setupstart/Setupende, exakte Invocation/ownPID/State/Startreceipt und aktiveStufe; nativeHome frisch, eigenesRepo, kein fremderCase-/Memory-/Chatinput oder globales Prozessinventar. Einmal echten Startreceipt kurz an Root melden, danach selbstständig bis Abschluss/konkretemBlocker und unabhängiger eingefrorener Bewertung fortsetzen, kein ACK/Warteprompt. Es gibt keine weitereActualquote für andereZellen.\n\nWenn reale Case-/Prüferprobleme auftauchen, dokumentiere konkret und schärfe den Rahmen prospektiv. Seeds/Anforderungen/Rules/Budget/wesentlicheHilfen ändern beideArme auf derselben neuenFassung; Originaltrial bleibt alsPilot/Teilbefund erhalten und zählt im max6Block. Fehlerhaften Prüfer darfst du am unverändertenCandidate getrennt posthoc korrigieren, keine alteOutcomeumschreibung. Konkrete Source-/Grantmechanikblockade terminal melden statt neue unautorisierteSchleife. PrivateEvidence nur privatpushen, Produktreferenzcode nicht an Design liefern."
+      },
+      "hostOverrunCoordination": {
+        "sentUtc": "2026-10-09T05:24:08Z",
+        "toolAccepted": true,
+        "prompt": "Konkrete Timingkorrektur zur bereits aktivierten Conventional-Zelle, keine Änderung an Quelle/Grant/Budget: Design meldet seinen vorher begonnenen vollständigen Go-Gateprozess unified-exec session33006 noch aktiv (Start ca05:12Z, eigener Log %TEMP%/markitect-native-workflow-20261009/ab306-full-go-test.log). Er könnte etwas über05:25Z laufen. Dein normales Accountsetup darf wie geplant ab05:25Z beginnen; den ersten tatsächlich gemessenen nativen Fallaufruf erst nach dessen tatsächlichem Ende ausführen, damit wir dieselbe Hostlast nicht unbemerkt als Methodenzeit messen. Setup-/externeHostwartezeit getrennt erfassen; der bestehende900sSetup- und09:12:43Z-Endrahmen bleibt, keine Verlängerung. Keine weiteren Designreadiness-Abhängigkeiten. Ich lasse Design genau das Ende seines eigenen Prozesses melden; keine globale Prozesssuche, keine erneute Nest-/Capabilityprüfung oder neue Freigabefrage. Wenn das konkrete Hostwarten deinen bestehenden Setuprahmen tatsächlich zu überschreiten droht, melde diesen engen Timingblocker statt den Messlauf überlappend zu starten.",
+        "actualQuotaAdded": 0
       }
     },
     {
@@ -10024,8 +10030,8 @@
       "worktree": "C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect",
       "lastObservedStatus": "active",
       "candidateSha": "11f080815722089d84869fef536b94cae9321e74",
-      "candidateStatus": "Publicremoteprovisionalcheckpoint, nativeReadiness running, no acceptedstudyfreeze",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:20",
+      "candidateStatus": "Readiness open; new actual Manager invocation/child-report bridge in progress, prior reported ab306 pin not accepted as current studyfreeze",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:21",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac852a43fa08191a8d8e593c901cb96",
       "assignedMilestone": "Held bounded source7d/doc11f candidate and exact private recovery; no new source/runtime/study assignment",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
@@ -10280,7 +10286,7 @@
         "id": "01a11e93-9e21-70d3-a0ff-149803f831a8",
         "status": "inProgress"
       },
-      "lastObservedUtc": "2026-10-09T05:17:06Z",
+      "lastObservedUtc": "2026-10-09T05:24:08Z",
       "currentDirectWorkObservation": "Owner running later direct product cleanup/reconcile work with independent inventory findings; prior accepted source7d001579/doc11f0808 remain historical frozen readiness. No new research allocation from Root.",
       "assignmentHistory": [
         {
@@ -10294,7 +10300,7 @@
       ],
       "futureAutomaticAuthorityFromOldGrants": 0,
       "lastObservedTurnId": "01a11e93-9e21-70d3-a0ff-149803f831a8",
-      "lastObservedPublicProgress": "Whole-source gates found stale changed-CI checksum and duplicate Brownfield suborders that could skip an open item; owner repairing; native proof needs separatehost window",
+      "lastObservedPublicProgress": "New functional readinessgap: iterativeBrownfield has durableLedger but not genuineperManagerinvocations or finaldirectchildreports; owner closing bridge usingexistingagentexec/runtime; existingGo33006 stillnonterminal",
       "nextAuthorizedAssignment": {
         "key": "design-product-regression-suite-20261009",
         "authorizedUtc": "2026-10-09T04:30:28Z",
@@ -10325,7 +10331,22 @@
         "ownerReportedTargetedChecks": "Guided Work Item, semantic model history Apply, bounded Brownfield context/adoption",
         "ownerReportedWholeSourceGates": "Starting",
         "ownerReportedNativeProofStarts": 0,
-        "rootAcceptedReadiness": false
+        "rootAcceptedReadiness": false,
+        "latestReadinessGap": {
+          "recordedUtc": "2026-10-09T05:24:08Z",
+          "source": "Design direct callback and exact own log tail read byRoot",
+          "existingUnifiedExecSession": 33006,
+          "existingGateStartedUtcApprox": "2026-10-09T05:12:00Z",
+          "ownLog": "%TEMP%/markitect-native-workflow-20261009/ab306-full-go-test.log",
+          "observedLog": "Successful package lines through projectonboarding; no terminalexit observed, no fullPASSclaim",
+          "status": "Existing finite gate may overrun05:25Z; no new heavyjobs",
+          "scientistOrdinarySetupAllowedFromUtc": "2026-10-09T05:25:00Z",
+          "measuredNativeStartRequires": "Actual existing gate termination receipt; no Design product readiness dependence",
+          "externalHostWaitCountedSeparately": true,
+          "noGrantExtensionOrRefill": true,
+          "actualStarted": 0,
+          "functionalGap": "Manager native invocation and finaldirectchildreports missing from iterativeBrownfield"
+        }
       },
       "earlyConventionalInterface": {
         "issuedUtc": "2026-10-09T04:42:43Z",
@@ -10341,10 +10362,16 @@
         "prompt": "Konkretes Hostfenster auf deine Anfrage: Deine lokalen vollständigen Go-/Build-/Source-Gates dürfen jetzt bis einschließlich 2026-10-09T05:25:00Z (07:25 Europe/Berlin) laufen. Dein sauberer Featurepin ab306e4f71c59883d73b3e257c6e05033c3f55cc ist als gemeldeter Meilenstein aufgenommen; tatsächliche Abschlusschecks und Readiness bleiben bis deinem Handoff ungeprüft. Falls ein schon gestarteter eigener Gateprozess die Grenze überschreitet, melde genau seinen eigenen Handle und Abschlusszeit, keinen globalen Prozessscan.\n\nAb05:25Z erhält Scientist den Host für das jetzt aktivierte Conventional-Setup und die gemessene Zelle (max900s Setup+7200s Zellwand). In diesem Messfenster keine neuen schweren lokalen Gesamtsuiten und keine native Luna-Produktproofs auf demselben Host/Account. Deinen existierenden3/7200/128Proofgrant unverändert halten; kein Verbrauch ohne tatsächlichen Aufruf. Entwickle währenddessen leicht an Dokumentation, Testabdeckung/Testsuite und Integration weiter; dein eigenes Folgepaket design-product-regression-suite-20261009 bleibt nach sauberem Handoff ausdrücklich aktiv, keine Wartebeschäftigung. Hosted CI außerhalb dieses Hosts kann normal laufen. Ich löse den schweren/nativen Slot nach tatsächlichem Ende der Messung wieder frei; keine pauschale Uhrzeit als Freigabe ableiten.\n\nConventional wartet nicht auf deine Readiness. Studiestand und private Fall-/Lösungs-/Bewertungsdaten bleiben getrennt; keine zusätzlichen Studienaufgaben für dich. Melde nur fertigen exakten Source/Binary/Config/Check/Reviewhandoff oder eine materielle Timingblockade, keine ACK.",
         "heavyGateEndUtc": "2026-10-09T05:25:00Z",
         "noPrivateStudyInputs": true
+      },
+      "hostOverrunCoordination": {
+        "sentUtc": "2026-10-09T05:24:08Z",
+        "toolAccepted": true,
+        "prompt": "Dein konkreter Brownfield-Bridgebefund ist aufgenommen: dauerhafteLedgermechanik allein genügt nicht für echteManagerinvocations/Childreports. Schließe ihn mit vorhandeneragentexec/runtime und gezieltenRegressionen im Produkt, deine angefragte Source-/RuntimeReadiness bleibt bis exaktemHandoff offen. Conventional bleibt produktunabhängig und ist konkret aktiviert.\n\nZum bestehenden Go-Test session33006: Beende/reconcile genau diesen eigenen bereitslaufenden endlichen Gatejob und melde tatsächliches Ende/Exit/Logbindung unmittelbar einmal. Falls er05:25Z überschreitet, ist nur dieser schonlaufende Job als dokumentierte kurze Timingkorrektur betroffen; keine neue Gesamtsuite oder nativeProof in Scientists Messfenster. Scientist kann gewöhnlichesAccountsetup ab05:25Z beginnen, hält seinen ersten gemessenenNativeentry aber bis zum tatsächlichen Ende dieses Jobs zurück. Keine globaleProzessinventur, keine neueProjektquote/automatischeFristverlängerung. Falls deine vorhandene harteJobfrist oder konkreter Prozessfehler weiteresLaufen sinnlos macht, eigenenProzess geordnet beenden undTeilergebnis ehrlich alsSTOP/FAIL sichern; kein stiller Green-GateClaim. LeichteImplementierung/Doku/Regression-suiteAufbau undoffhostCI laufen normal weiter. Melde nur Ende diesesJobs oder materiellen eigenenBlocker, keineACK.",
+        "actualQuotaAdded": 0
       }
     }
   ],
-  "nextAction": "Dispatch exact activated Conventional grant once; Scientist ordinary existing-account setup after05:25Z then actual Roombook drive+independent assessment without Design wait. Design10min heavy local gate slot05:15-05:25Z; preserve exact study inputs, no further generic probe/qualification phase.",
+  "nextAction": "Scientist normal accountsetup after05:25Z then measuredConventional actual after existingDesignGo33006 termination; exact prior activation/budget/09:12:43Z end unchanged. Design sends actual exitreceipt and closes real Brownfieldruntimebridge on product; no Design readiness wait forConventional, no new heavy/nativemodeloverlap.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -10589,7 +10616,21 @@
     "scientistSetupNotBeforeUtc": "2026-10-09T05:25:00Z",
     "scientistMeasuredCellMaxWallSeconds": 7200,
     "purpose": "Design requested concrete short local gate slot; native Design proofs/heavy host work deferred during measured Conventional execution; light development/docs and own tests continue",
-    "noPrivateCaseResultsToDesign": true
+    "noPrivateCaseResultsToDesign": true,
+    "timingCorrection": {
+      "recordedUtc": "2026-10-09T05:24:08Z",
+      "source": "Design direct callback and exact own log tail read byRoot",
+      "existingUnifiedExecSession": 33006,
+      "existingGateStartedUtcApprox": "2026-10-09T05:12:00Z",
+      "ownLog": "%TEMP%/markitect-native-workflow-20261009/ab306-full-go-test.log",
+      "observedLog": "Successful package lines through projectonboarding; no terminalexit observed, no fullPASSclaim",
+      "status": "Existing finite gate may overrun05:25Z; no new heavyjobs",
+      "scientistOrdinarySetupAllowedFromUtc": "2026-10-09T05:25:00Z",
+      "measuredNativeStartRequires": "Actual existing gate termination receipt; no Design product readiness dependence",
+      "externalHostWaitCountedSeparately": true,
+      "noGrantExtensionOrRefill": true,
+      "actualStarted": 0
+    }
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
