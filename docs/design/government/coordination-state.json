@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T22:30:17.953368Z",
+  "updatedUtc": "2026-10-09T22:31:24.572434Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17779,6 +17779,22 @@
     "inference": "Do not discard AppServer on this evidence: same transport has genuine successful ordinary tools/helpers. First align minimal supported runtime startup; keep necessary ownership/model/review/Apply boundaries, remove only demonstrated unnecessary runner layers. Success of Snapshot does not prove Git metadata access.",
     "next": "Owner technical source/runtime handoff to Root, then sanitized launch facts to Integration if additive; final actual needed to verify new Markitect startup",
     "privateCasesDisclosedToIntegration": false,
-    "newActualQuotaForScientist": false
+    "newActualQuotaForScientist": false,
+    "integrationSimplificationFindingOwnerReported": {
+      "existingTransport": "One owned stdio AppServer child; minimal process-local -c windows.sandbox=mxc before existing subcommand, no new controller/RPC/readback/canary layer",
+      "necessaryProductBoundaries": [
+        "Canonical model",
+        "Owned Git candidate",
+        "Native turn journal/process guard",
+        "Strict response and harvest",
+        "CAS/guarded Apply",
+        "Original-turn recovery without replay",
+        "Helper reservations when configured"
+      ],
+      "testHarness": "A01 PowerShell scripts are acceptance harness, not product runtime prerequisite",
+      "possibleLaterSimplification": "Per-role version subprocess may be redundant with pre-turn returned cliVersion; preserve deliberate failfast value before changing",
+      "ambientMCP": "Ambient user MCP startup is not Markitect prerequisite; no global configuration change or unproved causal claim",
+      "currentNext": "Existing typed optional config/CLI/MCP/setup/fingerprint/requested receipt targeted checks/review, then fresh ordinary stable0.162 MXC A01. Effective backend remains unknown absent provider evidence."
+    }
   }
 }
