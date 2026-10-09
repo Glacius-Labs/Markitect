@@ -1,8 +1,8 @@
 schema: markitect-product-backlog/v1
 mandate_date: '2026-10-09'
 goal: Usable and validated Markitect with normal independent agent work, CLI/MCP/App Server, clean source/docs, and regular Main integration.
-owner: Designer
-owner_thread: 01a11c80-37aa-7fe0-9586-35d916ce6561
+owner: Product Integration handoff pending
+owner_thread: null
 coordinator_thread: 01a11367-a781-7683-a20f-46e12614dcb4
 case_studies: stopped_until_new_user_instruction
 main_merge: authorized_after_positive_readiness_and_required_gates
@@ -24,71 +24,71 @@ native_acceptance:
 items:
   - id: P01
     title: Close current native and compatibility-removal checkpoint
-    status: in_progress
+    status: done
     depends_on: []
     owner: Designer
     document: P01-current-checkpoint.md
-    evidence: []
+    evidence: [source-handoff-20261009.md, ../../validation/project-native-work-2026-10-09.md]
   - id: P02
     title: Shared operations, workspace delta and invocation contracts
-    status: blocked
+    status: done
     depends_on: [P01]
     owner: Designer
     document: P02-shared-contracts.md
-    evidence: []
+    evidence: [source-handoff-20261009.md, P02-shared-contracts.md]
   - id: P03
     title: Real Git candidate workspaces and full change operations
-    status: blocked
+    status: ready_for_assignment
     depends_on: [P02]
-    owner: Designer or assigned workspace subagent
+    owner: fresh-chat handoff pending
     document: P03-workspaces.md
     evidence: []
   - id: P04
     title: Native Codex App Server execution adapter
-    status: blocked
+    status: ready_for_assignment
     depends_on: [P02]
-    owner: Designer or assigned App Server subagent
+    owner: fresh-chat handoff pending
     document: P04-app-server.md
     evidence: []
   - id: P05
     title: Product MCP adapter over shared Host operations
-    status: blocked
+    status: ready_for_assignment
     depends_on: [P02]
-    owner: Designer or assigned MCP subagent
+    owner: fresh-chat handoff pending
     document: P05-mcp.md
     evidence: []
   - id: P06
     title: Real independent Managers, helpers and reviewers
     status: blocked
     depends_on: [P03, P04]
-    owner: Designer
+    owner: fresh-chat handoff pending
     document: P06-agent-lifecycle.md
     evidence: []
   - id: P07
     title: Normal autonomous Work Item workflow and installed guidance
     status: blocked
     depends_on: [P03, P04, P05, P06]
-    owner: Designer
+    owner: fresh-chat handoff pending
     document: P07-user-workflow.md
     evidence: []
   - id: P08
     title: Consolidated documentation and clean src repository layout
     status: blocked
     depends_on: [P03, P04, P05, P06, P07]
-    owner: Designer
+    owner: fresh-chat handoff pending
     document: P08-repository.md
     evidence: []
   - id: P09
     title: Maintained regression suite and actual product acceptance
     status: blocked
     depends_on: [P07, P08]
-    owner: Designer
+    owner: fresh-chat handoff pending
     document: P09-readiness.md
     evidence: []
   - id: P10
     title: Reviewed regular PR integration into Main
     status: blocked
     depends_on: [P01, P02, P03, P04, P05, P06, P07, P08, P09]
-    owner: Designer
+    owner: fresh-chat handoff pending
     document: P10-main.md
     evidence: []
