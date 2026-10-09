@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T17:55:51Z",
+  "updatedUtc": "2026-10-09T17:57:30Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16207,10 +16207,29 @@
       "latestDirectUserFollowup": {
         "observedUtc": "2026-10-09T17:55:51Z",
         "turnId": "01a121ca-1c2f-7b60-a332-4017f394781e",
-        "status": "ACTIVE_PREPARATION_ONLY",
+        "status": "COMPLETED_SOURCE_ONLY_HOLD",
         "scope": "User directly requests normal Codex CLI user-flow research question and explicit transport/context/tools/rights/session differences; source contract revision ongoing",
         "previousPreparationCheckpointPreserved": true,
         "actualGrant": 0
+      },
+      "cliUserReferenceCompletion": {
+        "verifiedUtc": "2026-10-09T17:57:30Z",
+        "sourceSha": "4d1f494a8742ac6e2233087b8a9ff4e01eff9787",
+        "cleanExactPrivateRemoteVerified": true,
+        "deltaFiles": 10,
+        "workingRawGitBindingsVerified": 10,
+        "contractSha256": "69de58ae2934755356a8255b2b5b124e79fd5feb29ee66ec54ed05977071b04e",
+        "freezeAssessmentContractBindingsVerified": true,
+        "executionAuthorized": false,
+        "historicalLunaNestDiffEmpty": true,
+        "scope": "Source-only prospective normal CLI user-flow contract; same outer transport per pair, genuine method mechanisms, context/tools/rights/continuity differences and total setup/model/upkeep/repair burden visible",
+        "ownerReported": "JSON/links/whitespace/source checks positive; unchanged mechanics/test sources, no redundant suite rerun",
+        "rootVerified": "Clean SHA/private remote/ten Git-byte bindings/contract hash/freeze-report binding/disabled execution/historical diff; no runtime trials",
+        "status": "QUALIFIED_PREPARATION_COMPLETED_HOLD",
+        "actualCalls": 0,
+        "newGrant": false,
+        "mainGate": false,
+        "integrationNotifiedOnce": true
       }
     },
     "claude": {
