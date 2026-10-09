@@ -2452,6 +2452,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectworkspace/git_reopen.go
       owner: project-world-implementation
+    - path: src/internal/host/projectworkspace/git_identity_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectworkspace/git_reopen_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectonboarding/newnative_workflow_test.go

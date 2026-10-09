@@ -38,20 +38,34 @@ gate_history:
     deferred_jobs: [A02, A03]
     automatic_deferred_start: false
     consumed_jobs_at_revision: 0
+runtime_amendments:
+  - id: product-a01-workspace-profile-amendment-20261009
+    authority: direct_user_mandate_via_coordinator
+    authority_record_sha256: 426b04f870aa7fc5bcf7bdcbce088270d7ed77b9b30bf7a8ae096c146c9a8e7e
+    writer_profile: ':workspace'
+    assessment_scope: readonly_preserved
+    approval_policy: on-request_unchanged
+    managed_policy: enforced_unchanged
+    global_config_changes: false
+    new_jobs: 0
+    new_quota: 0
+    original_deadline_utc: '2026-10-10T00:26:23Z'
+    condition: Resolve or safely stop preserved Handle and bind fresh exact inputs before one ordinary continuation
+    original_declined_turn_replay: false
 jobs:
   - id: A01
     purpose: Combined normal Main smoke with setup Work Item parallel Managers fresh helper independent review Verify guarded Apply and original-turn workspace recovery
     original_purpose: App Server real authenticated fresh-context tool execution
     main_gate: required
-    status: reserved
+    status: repairing_for_authorized_continuation
     source:
-      revision: fc6d09a234572c344279a342416475e788435f1f
-      binary_sha256: cfeb36912da0bbe95f910ef5e79de9f0bbb58ed515e93071838cbb21fb10b50f
+      revision: 5b65b46534ce040f5aab1058776c0cd4443bc3ad
+      binary_sha256: 261d7cdf8953dfb3b6c7f6603e2974c402ba902b9f1f21568e4950058affd2a2
       owned_project_revision: acfbb7a39b79cfa4f2507039e3e6801d88a4fc57
     config:
-      runtime_digest: sha256:d10a4d73636ca223f854ef2969dbc7a7299dc3f80a65be7ec0041cbcfa4da3b6
-      plan_id: fcca72abe1abc505de2d0321adfdab3a
-      plan_digest: sha256:8b4bbf654450b4d04e3a4c2b313fd4d56ba805b089d3b26cef6f32006d663034
+      runtime_digest: sha256:fee36c39a3ae90d89fce53aaf2e7367975f461ef8909fba48fc9940c660540c7
+      plan_id: 9c1892e3311926ca6320898042bb04ec
+      plan_digest: sha256:81cd937e4e69d4653b551b9c860faa6b178aa81ec461d6aa9b2abeb8fba4a08b
       provider_version: codex-cli 0.162.0
       provider_sha256: dce685d569526ef4712fa82d20ff20e1309baad5fcd34215e1126698f611242f
       model: gpt-6-luna
@@ -62,10 +76,13 @@ jobs:
       observed_accounting: lower_bound
     start_utc: '2026-10-09T20:26:23Z'
     deadline_utc: '2026-10-10T00:26:23.000Z'
-    role_start_requests: 0
+    role_start_requests: 1
+    role_accounting: observed_lower_bound_partial
     cli_attempts:
       - source_revision: fc6d09a234572c344279a342416475e788435f1f
+        binary_sha256: cfeb36912da0bbe95f910ef5e79de9f0bbb58ed515e93071838cbb21fb10b50f
         plan_id: fcca72abe1abc505de2d0321adfdab3a
+        plan_digest: sha256:8b4bbf654450b4d04e3a4c2b313fd4d56ba805b089d3b26cef6f32006d663034
         start_utc: '2026-10-09T20:27:03.4574198Z'
         end_utc: '2026-10-09T20:27:07.7103709Z'
         exit_code: 2
@@ -75,6 +92,31 @@ jobs:
         run_state_created: false
         observer_id: f5656e3366e544a488883bbe2ad47b80
         cause: Plan used transport-neutral fingerprints while native Run required protocol options and stable helper tool fingerprints
+      - source_revision: 5b65b46534ce040f5aab1058776c0cd4443bc3ad
+        binary_sha256: 261d7cdf8953dfb3b6c7f6603e2974c402ba902b9f1f21568e4950058affd2a2
+        plan_id: 9c1892e3311926ca6320898042bb04ec
+        plan_digest: sha256:81cd937e4e69d4653b551b9c860faa6b178aa81ec461d6aa9b2abeb8fba4a08b
+        start_utc: '2026-10-09T20:57:10.9280636Z'
+        end_utc: '2026-10-09T20:58:10.8420325Z'
+        exit_code: 2
+        outcome: native_file_change_requires_user_decision
+        role_start_requests: 1
+        host_helper_start_requests: 0
+        run_state_created: true
+        observer_id: 8fea8ed8ac4543ad872610cff2d38da1
+        native_invocation_id: f956732481f5dcafce226538c8bd95df
+        thread_id: 01a12274-e69c-74d2-ba90-734399862d7b
+        turn_id: 01a12274-ea38-78b2-9384-04acbf98429e
+        terminal_state: interrupted
+        effective_permission_profile: ':read-only'
+        decision_request: item/fileChange/requestApproval
+        workspace_handle_id: 4ed0e39ea01a092574332d3008d77f2b
+        additional_error: project workspace handle does not match request
+        harvest_cause: Git-reported Windows packaged LocalCache alias differs from trusted AppData Local path under string equality
+        provider_free_reopen: stopped_before_harvest_no_actor_or_cleanup
+        original_handles_preserved: true
+        recovery_boundary_observed: false
+        acceptance: not_passed
     evidence: []
   - id: A02
     purpose: Independent parallel Managers, native helper and independent review
