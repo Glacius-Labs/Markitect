@@ -511,7 +511,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 							}
 							refreshStarts()
 						}
-						if spent > runtime.Limits.MaxCostMicros {
+						if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
 							return blockRun(store, report, fmt.Errorf("estimated cost limit exceeded"))
 						}
 						parseErr := func() error {
@@ -634,7 +634,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 							report.Reviews = append(report.Reviews, review)
 						}
 						spent = totalCost(report.Invocations)
-						if spent > runtime.Limits.MaxCostMicros {
+						if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
 							return blockRun(store, report, fmt.Errorf("estimated cost limit exceeded during review"))
 						}
 						if err := persistState(store, &report); err != nil {
@@ -769,7 +769,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 					report.Invocations = append(report.Invocations, invocation)
 				}
 				spent = totalCost(report.Invocations)
-				if spent > runtime.Limits.MaxCostMicros {
+				if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
 					return blockRun(store, report, fmt.Errorf("estimated cost limit exceeded"))
 				}
 				refreshStarts()
@@ -919,7 +919,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 						report.Reviews = append(report.Reviews, review)
 					}
 					spent = totalCost(report.Invocations)
-					if spent > runtime.Limits.MaxCostMicros {
+					if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
 						return blockRun(store, report, fmt.Errorf("estimated cost limit exceeded during integration review"))
 					}
 					if err := persistState(store, &report); err != nil {
@@ -1022,7 +1022,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 					report.Reviews = append(report.Reviews, review)
 				}
 				spent = totalCost(report.Invocations)
-				if spent > runtime.Limits.MaxCostMicros {
+				if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
 					return blockRun(store, report, fmt.Errorf("estimated cost limit exceeded during final review"))
 				}
 				if err := persistState(store, &report); err != nil {
@@ -1276,13 +1276,13 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 		if result.Receipt.RunID == "" {
 			return
 		}
-		cost, known := estimateCost(result.Receipt.Usage, configAgent.Pricing)
+		cost, known, overflow := estimateCostDetailed(result.Receipt.Usage, configAgent.Pricing)
 		if !known {
 			cost = 0
 		}
 		log = InvocationLog{TaskID: task.ID, Role: agentexec.RoleExecutor, Phase: phase,
 			InputDigest: result.Receipt.InputDigest, Receipt: result.Receipt, ReportID: result.Receipt.RunID,
-			Outcome: result.Receipt.Outcome, CostMicros: cost, CostKnown: known}
+			Outcome: result.Receipt.Outcome, CostMicros: cost, CostKnown: known, CostOverflow: overflow}
 	}()
 	config, err := configAgent.AgentConfig()
 	if err != nil {
@@ -1418,7 +1418,10 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	if plan.RuntimeAgents[task.ManagerID] != configFingerprint {
 		return result, log, ErrStale
 	}
-	_, known := estimateCost(result.Receipt.Usage, configAgent.Pricing)
+	_, known, overflow := estimateCostDetailed(result.Receipt.Usage, configAgent.Pricing)
+	if overflow {
+		return result, log, fmt.Errorf("agent cost estimate exceeds the supported int64 range")
+	}
 	if !known && config.Transport != TransportCodexAppServer {
 		return result, log, fmt.Errorf("agent usage is missing; bounded cost cannot be asserted")
 	}
@@ -1523,13 +1526,13 @@ func appendInvocationReceipt(report *RunReport, invocation InvocationLog) bool {
 }
 
 func invocationLogForResult(task ManagerTask, phase string, result agentexec.RunResult, pricing Pricing) InvocationLog {
-	cost, known := estimateCost(result.Receipt.Usage, pricing)
+	cost, known, overflow := estimateCostDetailed(result.Receipt.Usage, pricing)
 	if !known {
 		cost = 0
 	}
 	return InvocationLog{TaskID: task.ID, Role: agentexec.RoleExecutor, Phase: phase,
 		InputDigest: result.Receipt.InputDigest, Receipt: result.Receipt, ReportID: result.Receipt.RunID,
-		Outcome: result.Receipt.Outcome, CostMicros: cost, CostKnown: known}
+		Outcome: result.Receipt.Outcome, CostMicros: cost, CostKnown: known, CostOverflow: overflow}
 }
 
 func upsertRecoveredInvocation(report *RunReport, invocation InvocationLog) {
@@ -2187,6 +2190,21 @@ func totalCost(logs []InvocationLog) int64 {
 	return sum
 }
 
+func knownCostOverflow(logs []InvocationLog) bool {
+	var sum int64
+	for _, log := range logs {
+		if log.CostOverflow || log.CostMicros < 0 || sum > math.MaxInt64-log.CostMicros {
+			return true
+		}
+		sum += log.CostMicros
+	}
+	return false
+}
+
+func costExceedsLimit(logs []InvocationLog, limit int64) bool {
+	return knownCostOverflow(logs) || totalCost(logs) > limit
+}
+
 func addCost(current, next int64) int64 {
 	if current < 0 || next < 0 || current > math.MaxInt64-next {
 		return math.MaxInt64
@@ -2194,21 +2212,26 @@ func addCost(current, next int64) int64 {
 	return current + next
 }
 func estimateCost(usage *agentexec.Usage, p Pricing) (int64, bool) {
+	cost, known, _ := estimateCostDetailed(usage, p)
+	return cost, known
+}
+
+func estimateCostDetailed(usage *agentexec.Usage, p Pricing) (int64, bool, bool) {
 	if usage == nil || usage.InputTokens == nil || usage.OutputTokens == nil {
-		return 0, false
+		return 0, false, false
 	}
 	in := *usage.InputTokens
 	out := *usage.OutputTokens
 	if in < 0 || out < 0 {
-		return 0, false
+		return 0, false, false
 	}
 	value := new(big.Int).Mul(big.NewInt(in), big.NewInt(p.InputMicrosPerMillion))
 	value.Add(value, new(big.Int).Mul(big.NewInt(out), big.NewInt(p.OutputMicrosPerMillion)))
 	value.Div(value, big.NewInt(1_000_000))
 	if !value.IsInt64() {
-		return math.MaxInt64, false
+		return math.MaxInt64, true, true
 	}
-	return value.Int64(), true
+	return value.Int64(), true, false
 }
 func rawContentDigest(content []byte) string {
 	sum := sha256.Sum256(content)

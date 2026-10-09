@@ -163,7 +163,7 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 		return fmt.Errorf("targeted work for %s exhausted the cumulative review round limit", managerID)
 	}
 	for round := reviewRoundBase + 1; round <= runtime.Review.MaxRounds; round++ {
-		if err := ensureRemaining(ctx, runtime, *starts, *spent, "targeted manager work"); err != nil {
+		if err := ensureRemaining(ctx, runtime, *starts, *spent, report.Invocations, "targeted manager work"); err != nil {
 			return err
 		}
 		input, err := projectForCandidate(host, root, base.Snapshot, current)
@@ -188,7 +188,7 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 		}
 		report.Invocations = append(report.Invocations, invocation)
 		*spent = totalCost(report.Invocations)
-		if *spent > runtime.Limits.MaxCostMicros {
+		if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
 			return fmt.Errorf("estimated cost limit exceeded during targeted work")
 		}
 		parsed, err := decodeTaskResponse(proposal.Response.ReportJSON, "work", children)
@@ -252,13 +252,13 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 		if err := persistState(store, report); err != nil {
 			return err
 		}
-		if err := ensureRemaining(ctx, runtime, *starts, *spent, "targeted reviewer"); err != nil {
+		if err := ensureRemaining(ctx, runtime, *starts, *spent, report.Invocations, "targeted reviewer"); err != nil {
 			return err
 		}
 		review, _, err := recordReview(ctx, host, invoker, root, store, report, plan, runtime, candidateProject, *task, "work", round, candidate)
 		*starts++
 		*spent = totalCost(report.Invocations)
-		if *spent > runtime.Limits.MaxCostMicros {
+		if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
 			return fmt.Errorf("estimated cost limit exceeded during targeted review")
 		}
 		if err != nil {
@@ -315,7 +315,7 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 		return nil, err
 	}
 	childReports := buildChildSummaries(store, dir, report.Tasks, report.Reviews, children)
-	if err := ensureRemaining(ctx, runtime, *starts, *spent, "targeted integration"); err != nil {
+	if err := ensureRemaining(ctx, runtime, *starts, *spent, report.Invocations, "targeted integration"); err != nil {
 		return nil, err
 	}
 	task.State, task.RepairPhase = "integrating", "integrate"
@@ -340,7 +340,7 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 	}
 	report.Invocations = append(report.Invocations, invocation)
 	*spent = totalCost(report.Invocations)
-	if *spent > runtime.Limits.MaxCostMicros {
+	if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
 		return nil, fmt.Errorf("estimated cost limit exceeded during targeted integration")
 	}
 	parsed, err := decodeTaskResponse(proposal.Response.ReportJSON, "integrate", children)
@@ -435,13 +435,13 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 	if err := persistState(store, report); err != nil {
 		return nil, err
 	}
-	if err := ensureRemaining(ctx, runtime, *starts, *spent, "targeted integration reviewer"); err != nil {
+	if err := ensureRemaining(ctx, runtime, *starts, *spent, report.Invocations, "targeted integration reviewer"); err != nil {
 		return nil, err
 	}
 	review, _, err := recordReview(ctx, host, invoker, root, store, report, plan, runtime, compiled, *task, "integrate", reviewRound, candidate)
 	*starts++
 	*spent = totalCost(report.Invocations)
-	if *spent > runtime.Limits.MaxCostMicros {
+	if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
 		return nil, fmt.Errorf("estimated cost limit exceeded during targeted integration review")
 	}
 	if err != nil {
@@ -502,14 +502,14 @@ func recordReview(ctx context.Context, host Host, invoker Invoker, root string, 
 	return review, invocation, err
 }
 
-func ensureRemaining(ctx context.Context, runtime Runtime, starts int, spent int64, stage string) error {
+func ensureRemaining(ctx context.Context, runtime Runtime, starts int, spent int64, invocations []InvocationLog, stage string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 	if starts >= runtime.Limits.MaxStarts {
 		return fmt.Errorf("runtime start limit reached before %s", stage)
 	}
-	if spent >= runtime.Limits.MaxCostMicros {
+	if knownCostOverflow(invocations) || spent >= runtime.Limits.MaxCostMicros {
 		return fmt.Errorf("estimated cost limit reached before %s", stage)
 	}
 	return nil

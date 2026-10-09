@@ -100,7 +100,7 @@ func TestPreviewAndApplyCodexAndClaude(t *testing.T) {
 		}
 	}
 	content, err := os.ReadFile(filepath.Join(root, workflowPath))
-	if err != nil || !bytes.Contains(content, []byte("ordinary language")) || !bytes.Contains(content, []byte("ordinary repository write access")) {
+	if err != nil || !bytes.Contains(content, []byte("ordinary Work Item")) || !bytes.Contains(content, []byte("ordinary repository write access")) {
 		t.Fatalf("canonical workflow content missing required guidance: %v", err)
 	}
 }
@@ -126,7 +126,7 @@ func TestPreviewMergesNativeFilesWithoutChangingBytesOutsideManagedBlock(t *test
 	if !strings.HasPrefix(merged, prefix) || !strings.HasSuffix(merged, suffix) {
 		t.Fatalf("preview changed bytes outside managed block:\n%s", merged)
 	}
-	if strings.Contains(merged, "old generated text") || !strings.Contains(merged, "local operation skill") {
+	if strings.Contains(merged, "old generated text") || !strings.Contains(merged, "markitect-implement") {
 		t.Fatalf("preview did not replace only the managed block:\n%s", merged)
 	}
 	if _, err := Apply(root, plan, plan.Digest); err != nil {

@@ -11,7 +11,7 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-const bindingFixtureRoot = "../../../examples/canonical-projection"
+const bindingFixtureRoot = "../../../../examples/canonical-projection"
 
 func TestProjectionBindingHasRuntimeJSONAndYAMLShape(t *testing.T) {
 	want := ProjectionBinding{

@@ -136,7 +136,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if roleBudget.Accounting().ObservedTotal+len(run.Checks)+newStarts > runtime.Limits.MaxStarts {
 		return out, failVerificationBudget(s, &run, fmt.Errorf("verification processes would exceed maxStarts"))
 	}
-	if totalCost(run.Invocations) > runtime.Limits.MaxCostMicros {
+	if costExceedsLimit(run.Invocations, runtime.Limits.MaxCostMicros) {
 		return out, failVerificationBudget(s, &run, fmt.Errorf("run has already exceeded maxCostMicros before verification"))
 	}
 	verifyDir := filepath.Join(dir, "verification", candidate.ID)
@@ -246,7 +246,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 		if err != nil {
 			return fail(err)
 		}
-		if totalCost(run.Invocations) > runtime.Limits.MaxCostMicros {
+		if costExceedsLimit(run.Invocations, runtime.Limits.MaxCostMicros) {
 			return fail(fmt.Errorf("estimated cost limit exceeded during verification"))
 		}
 	}
@@ -260,7 +260,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 		out.VerificationScope, out.ManagerVerification = "full", &full
 		for _, manager := range full.Managers {
 			if manager.Receipt != nil {
-				run.Invocations = append(run.Invocations, InvocationLog{TaskID: manager.ManagerID, Role: "manager-verifier", Phase: "full-verify", InputDigest: manager.InputDigest, Receipt: *manager.Receipt, ReportID: manager.Receipt.RunID, Outcome: manager.Status, CostMicros: manager.CostMicros, CostKnown: manager.CostKnown})
+				run.Invocations = append(run.Invocations, InvocationLog{TaskID: manager.ManagerID, Role: "manager-verifier", Phase: "full-verify", InputDigest: manager.InputDigest, Receipt: *manager.Receipt, ReportID: manager.Receipt.RunID, Outcome: manager.Status, CostMicros: manager.CostMicros, CostKnown: manager.CostKnown, CostOverflow: manager.CostOverflow})
 			}
 		}
 		if persistErr := persistState(s, &run); persistErr != nil {
@@ -547,8 +547,8 @@ func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, p
 	if err == nil && result.Delta != nil && len(result.Delta.Changes) != 0 {
 		err = fmt.Errorf("read-only verifier changed its owned workspace")
 	}
-	usageCost, costKnown := estimateCost(result.Receipt.Usage, runtime.Verifier.Pricing)
-	log = InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: inputDigest, Receipt: result.Receipt, ReportID: result.Receipt.RunID, Outcome: result.Receipt.Outcome, CostMicros: usageCost, CostKnown: costKnown}
+	usageCost, costKnown, costOverflow := estimateCostDetailed(result.Receipt.Usage, runtime.Verifier.Pricing)
+	log = InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: inputDigest, Receipt: result.Receipt, ReportID: result.Receipt.RunID, Outcome: result.Receipt.Outcome, CostMicros: usageCost, CostKnown: costKnown, CostOverflow: costOverflow}
 	if log.Outcome == "" {
 		log.Outcome = agentexec.OutcomeIncomplete
 	}
@@ -564,6 +564,9 @@ func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, p
 	}
 	if result.Receipt.InputDigest == "" {
 		return verifierReport, log, fmt.Errorf("verifier receipt omitted bound input digest")
+	}
+	if costOverflow {
+		return verifierReport, log, fmt.Errorf("verifier cost estimate exceeds the supported int64 range")
 	}
 	if !costKnown && config.Transport != TransportCodexAppServer {
 		return verifierReport, log, fmt.Errorf("verifier usage is missing; bounded cost cannot be asserted")

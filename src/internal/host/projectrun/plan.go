@@ -1,14 +1,18 @@
 package projectrun
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
@@ -90,7 +94,7 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	if working == nil || working.Snapshot == nil {
 		return plan, fmt.Errorf("project runtime requires a selected working-input snapshot")
 	}
-	if err := requireCleanSelectedBasis(project.Snapshot, working.Snapshot); err != nil {
+	if err := requireCleanSelectedBasisAtRevision(root, project.Revision, project.Snapshot, working.Snapshot); err != nil {
 		return plan, err
 	}
 	repository, err := source.IdentifyGit(root)
@@ -621,9 +625,71 @@ func requireCleanSelectedBasis(fixed, working *Snapshot) error {
 		return fmt.Errorf("fixed and working selected snapshots are required")
 	}
 	if fixed.Digest() != working.Digest() {
-		return fmt.Errorf("selected project inputs differ from fixed base revision; commit accepted selected changes before planning")
+		return selectedBasisChangedError()
 	}
 	return nil
+}
+
+func requireCleanSelectedBasisAtRevision(root, revision string, fixed, working *Snapshot) error {
+	if fixed == nil || working == nil {
+		return fmt.Errorf("fixed and working selected snapshots are required")
+	}
+	if fixed.Digest() == working.Digest() {
+		return nil
+	}
+	changes := snapshot.Compare(fixed, working)
+	if len(changes.Added) != 0 || len(changes.Removed) != 0 {
+		return selectedBasisChangedError()
+	}
+	// Compare changed bytes through Git's clean filters. On Windows, a normal
+	// core.autocrlf checkout has CRLF worktree bytes while the fixed Git tree
+	// contains LF; those bytes are the same selected source after Git's normal
+	// conversion. Git still reports substantive edits as differences.
+	const maxPathspecArgumentBytes = 16 * 1024
+	for start := 0; start < len(changes.Modified); {
+		args := []string{"diff", "--no-ext-diff", "--quiet", revision, "--"}
+		size := 0
+		end := start
+		for end < len(changes.Modified) {
+			pathspec := ":(literal)" + changes.Modified[end]
+			if end > start && size+len(pathspec) > maxPathspecArgumentBytes {
+				break
+			}
+			args = append(args, pathspec)
+			size += len(pathspec)
+			end++
+		}
+		if end == start {
+			return fmt.Errorf("selected path exceeds Git comparison argument limit")
+		}
+		flagArgs := append([]string{"ls-files", "-v", "-z", "--"}, args[5:]...)
+		flags, err := source.GitOutput(root, flagArgs...)
+		if err != nil {
+			return fmt.Errorf("inspect selected path index flags: %w", err)
+		}
+		for _, record := range bytes.Split(flags, []byte{0}) {
+			if len(record) < 3 || record[1] != ' ' {
+				continue
+			}
+			tag := record[0]
+			if (tag >= 'a' && tag <= 'z') || tag == 'S' {
+				return fmt.Errorf("selected project input %q has an assume-unchanged or skip-worktree Git index flag; clear the flag before planning", string(record[2:]))
+			}
+		}
+		if _, err := source.GitOutput(root, args...); err != nil {
+			var exitErr *exec.ExitError
+			if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+				return selectedBasisChangedError()
+			}
+			return fmt.Errorf("compare selected project inputs with Git's clean filters: %w", err)
+		}
+		start = end
+	}
+	return nil
+}
+
+func selectedBasisChangedError() error {
+	return fmt.Errorf("selected project inputs differ from fixed base revision; commit accepted selected changes before planning")
 }
 
 // validateChangeImpact re-derives the optional since-impact from both fixed

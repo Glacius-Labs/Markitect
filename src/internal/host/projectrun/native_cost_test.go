@@ -2,6 +2,7 @@ package projectrun
 
 import (
 	"context"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
@@ -25,6 +26,17 @@ func (i *fullVerifyUnknownUsageInvoker) Run(ctx context.Context, config agentexe
 
 type fullVerifyPartialLifecycleInvoker struct {
 	*fullVerifyNativeWorkspaceInvoker
+}
+
+type fullVerifyOverflowUsageInvoker struct {
+	*fullVerifyNativeWorkspaceInvoker
+}
+
+func (i *fullVerifyOverflowUsageInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	result, err := i.fullVerifyNativeWorkspaceInvoker.Run(ctx, config, request, options)
+	usage := &agentexec.Usage{Source: "provider-reported", InputTokens: int64Ptr(2_000_000), OutputTokens: int64Ptr(0)}
+	result.Receipt.Usage, result.Response.Usage = usage, usage
+	return result, err
 }
 
 func (i *fullVerifyPartialLifecycleInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
@@ -142,5 +154,50 @@ func TestCostAccountingDistinguishesPartialFromUnknown(t *testing.T) {
 	known, unknown := runCostCounts(report)
 	if got := costAccountingFromCounts(known, unknown); got != CostAccountingPartial {
 		t.Fatalf("known root plus unpriced native helper accounting = %q, want partial", got)
+	}
+}
+
+func TestEstimateCostSaturatesKnownArithmeticOverflow(t *testing.T) {
+	usage := &agentexec.Usage{InputTokens: int64Ptr(2_000_000), OutputTokens: int64Ptr(0)}
+	cost, known, overflow := estimateCostDetailed(usage, Pricing{InputMicrosPerMillion: math.MaxInt64, OutputMicrosPerMillion: 1})
+	if !known || !overflow || cost != math.MaxInt64 {
+		t.Fatalf("complete usage overflow = (%d, %t, %t), want (MaxInt64, true, true)", cost, known, overflow)
+	}
+	exactMaxCost, exactKnown, exactOverflow := estimateCostDetailed(
+		&agentexec.Usage{InputTokens: int64Ptr(1_000_000), OutputTokens: int64Ptr(0)},
+		Pricing{InputMicrosPerMillion: math.MaxInt64, OutputMicrosPerMillion: 0})
+	if !exactKnown || exactOverflow || exactMaxCost != math.MaxInt64 {
+		t.Fatalf("representable MaxInt64 estimate = (%d, %t, %t), want (MaxInt64, true, false)", exactMaxCost, exactKnown, exactOverflow)
+	}
+}
+
+func TestNativeFullVerificationStopsOnKnownEstimateOverflow(t *testing.T) {
+	root, project, runtime, host, baseInvoker := nativeFullVerifyCostFixture(t)
+	invoker := &fullVerifyOverflowUsageInvoker{fullVerifyNativeWorkspaceInvoker: baseInvoker}
+	runtime.Limits.MaxCostMicros = math.MaxInt64
+	for id, agent := range runtime.Review.Agents {
+		agent.Pricing = Pricing{InputMicrosPerMillion: math.MaxInt64, OutputMicrosPerMillion: 1}
+		runtime.Review.Agents[id] = agent
+	}
+	report, err := FullVerifyProject(context.Background(), host, invoker, root, project, runtime,
+		FullVerifyBinding{ExpectedSnapshot: project.Snapshot.Digest()})
+	if err == nil || report.Status != "incomplete" || report.CostMicros != math.MaxInt64 {
+		t.Fatalf("unrepresentable known estimate did not trip cost limit: status=%q cost=%d err=%v", report.Status, report.CostMicros, err)
+	}
+	if len(report.Managers) < 2 || !report.Managers[0].CostKnown || report.Managers[0].CostMicros != math.MaxInt64 || report.Managers[1].Receipt != nil {
+		t.Fatalf("overflow was treated as missing telemetry or later Manager ran: %+v", report.Managers)
+	}
+}
+
+func TestKnownCostAggregateOverflowExceedsMaxInt64Limit(t *testing.T) {
+	logs := []InvocationLog{{CostKnown: true, CostMicros: math.MaxInt64}, {CostKnown: true, CostMicros: 1}}
+	if got := totalCost(logs); got != math.MaxInt64 {
+		t.Fatalf("saturated aggregate = %d, want MaxInt64", got)
+	}
+	if !knownCostOverflow(logs) || !costExceedsLimit(logs, math.MaxInt64) {
+		t.Fatal("aggregate overflow was allowed through an exact MaxInt64 cost cap")
+	}
+	if costExceedsLimit([]InvocationLog{{CostKnown: true, CostMicros: math.MaxInt64}}, math.MaxInt64) {
+		t.Fatal("representable exact MaxInt64 estimate incorrectly overflowed its cap")
 	}
 }

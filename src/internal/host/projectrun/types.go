@@ -327,6 +327,7 @@ type ReviewRecord struct {
 	Receipt         agentexec.Receipt `json:"receipt"`
 	CostMicros      int64             `json:"costMicros"`
 	CostKnown       bool              `json:"costKnown"`
+	CostOverflow    bool              `json:"costOverflow,omitempty"`
 	At              time.Time         `json:"at"`
 }
 
@@ -373,15 +374,16 @@ type CandidateRef struct {
 }
 
 type InvocationLog struct {
-	TaskID      string            `json:"taskId"`
-	Role        string            `json:"role"`
-	Phase       string            `json:"phase"`
-	InputDigest string            `json:"inputDigest"`
-	Receipt     agentexec.Receipt `json:"receipt"`
-	ReportID    string            `json:"reportId"`
-	Outcome     string            `json:"outcome"`
-	CostMicros  int64             `json:"costMicros"`
-	CostKnown   bool              `json:"costKnown"`
+	TaskID       string            `json:"taskId"`
+	Role         string            `json:"role"`
+	Phase        string            `json:"phase"`
+	InputDigest  string            `json:"inputDigest"`
+	Receipt      agentexec.Receipt `json:"receipt"`
+	ReportID     string            `json:"reportId"`
+	Outcome      string            `json:"outcome"`
+	CostMicros   int64             `json:"costMicros"`
+	CostKnown    bool              `json:"costKnown"`
+	CostOverflow bool              `json:"costOverflow,omitempty"`
 }
 
 type CheckResult struct {

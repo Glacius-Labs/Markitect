@@ -85,6 +85,7 @@ type FullManagerAssessment struct {
 	Receipt         *agentexec.Receipt   `json:"receipt,omitempty"`
 	CostMicros      int64                `json:"costMicros,omitempty"`
 	CostKnown       bool                 `json:"costKnown"`
+	CostOverflow    bool                 `json:"costOverflow,omitempty"`
 	Error           string               `json:"error,omitempty"`
 }
 
@@ -349,8 +350,8 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 			out.Starts++
 		} // A failed or interrupted external attempt still consumes a start.
 		if attempted {
-			cost, usageKnown := estimateCost(row.Receipt.Usage, runtime.Review.Agents[row.ManagerID].Pricing)
-			row.CostMicros, row.CostKnown = cost, usageKnown
+			cost, usageKnown, overflow := estimateCostDetailed(row.Receipt.Usage, runtime.Review.Agents[row.ManagerID].Pricing)
+			row.CostMicros, row.CostKnown, row.CostOverflow = cost, usageKnown, overflow
 			known, unknown := costCounts([]InvocationLog{{CostKnown: usageKnown, Receipt: *row.Receipt}})
 			knownCostInvocations += known
 			unknownCostInvocations += unknown
@@ -361,6 +362,14 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 				row.Status, row.Error = "incomplete", "snapshot, runtime, or briefing binding changed during audit"
 				out.Error = ErrStale.Error()
 				markRemainingFullRows(out.Managers, i+1, "not started after stale verification binding")
+				break
+			}
+			if row.CostOverflow {
+				_ = addFullKnownCost(&out.CostMicros, row.CostMicros)
+				out.CostMicros = math.MaxInt64
+				row.Status, row.Error = "incomplete", "known cost estimate exceeds the supported int64 range"
+				out.Error = "full verification exceeded the cumulative cost limit"
+				markRemainingFullRows(out.Managers, i+1, "not started after cost estimate overflow")
 				break
 			}
 		}

@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
@@ -47,6 +49,101 @@ func TestPlanRequiresWorkingSelectedInputsEqualFixedRevision(t *testing.T) {
 	if err := requireCleanSelectedBasis(fixed, working); err != nil {
 		t.Fatalf("matching selected snapshots rejected: %v", err)
 	}
+}
+
+func TestSelectedBasisAcceptsOperationalStateAndGitNormalizedCheckout(t *testing.T) {
+	root := makeFullVerifyFixture(t)
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	manifest, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := strings.Replace(string(manifest), "name: Process fixture\n", "name: Process fixture\nworkflowMode: guided\n", 1)
+	if updated == string(manifest) {
+		t.Fatal("could not enable guided workflow in fixture")
+	}
+	writeE2E(t, root, projectwork.ManifestPath, updated)
+	gitE2E(t, root, "add", projectwork.ManifestPath)
+	gitE2E(t, root, "commit", "-m", "enable guided workflow")
+	writeE2E(t, root, ".gitattributes", "binary.dat -text\n")
+	if err := os.WriteFile(filepath.Join(root, "binary.dat"), []byte("binary\ncontent\x00"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitE2E(t, root, "add", ".gitattributes", "binary.dat")
+	gitE2E(t, root, "commit", "-m", "record a path that disables text normalization")
+	gitE2E(t, root, "config", "core.autocrlf", "true")
+	readmePath := filepath.Join(root, "README.md")
+	readmeBytes, err := os.ReadFile(readmePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(readmePath, bytes.ReplaceAll(readmeBytes, []byte("\n"), []byte("\r\n")), 0644); err != nil {
+		t.Fatal(err)
+	}
+	revision := identityHead(t, root)
+	fixed, err := projectwork.Load(root, revision)
+	if err != nil {
+		t.Fatalf("load fixed project: %v", err)
+	}
+	if _, err := projectbriefing.EnsureAcceptedHistory(root, revision); err != nil {
+		t.Fatalf("update accepted-history cursor: %v", err)
+	}
+	explorationPath := filepath.Join(root, ".markitect", "state", "explorations", "fixture.json")
+	if err := os.MkdirAll(filepath.Dir(explorationPath), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(explorationPath, []byte("operational exploration state\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	working, err := projectwork.Load(root, "")
+	if err != nil {
+		t.Fatalf("load working project after operational updates: %v", err)
+	}
+	if fixed.Snapshot.Digest() == working.Snapshot.Digest() {
+		t.Fatal("fixture did not produce a normal Git-clean CRLF working checkout")
+	}
+	if err := requireCleanSelectedBasisAtRevision(root, revision, fixed.Snapshot, working.Snapshot); err != nil {
+		t.Fatalf("normal Git-clean checkout and operational state should not stale selected inputs: %v", err)
+	}
+	for _, path := range []string{".markitect/state/briefings/history.json", ".markitect/state/explorations/fixture.json"} {
+		if _, included := working.Snapshot.Files[path]; included {
+			t.Fatalf("registered operational state %q leaked into selected project snapshot", path)
+		}
+	}
+
+	binaryPath := filepath.Join(root, "binary.dat")
+	binaryBytes, err := os.ReadFile(binaryPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(binaryPath, bytes.ReplaceAll(binaryBytes, []byte("\n"), []byte("\r\n")), 0644); err != nil {
+		t.Fatal(err)
+	}
+	changedBinary, err := projectwork.Load(root, "")
+	if err != nil {
+		t.Fatalf("load project after -text source edit: %v", err)
+	}
+	if err := requireCleanSelectedBasisAtRevision(root, revision, fixed.Snapshot, changedBinary.Snapshot); err == nil || !strings.Contains(err.Error(), "commit accepted selected changes") {
+		t.Fatalf("Git -text content change must remain blocked, got %v", err)
+	}
+
+	readme := filepath.Join(root, "README.md")
+	content, err := os.ReadFile(readme)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gitE2E(t, root, "update-index", "--assume-unchanged", "README.md")
+	if err := os.WriteFile(readme, append(content, []byte("manual source change\r\n")...), 0644); err != nil {
+		t.Fatal(err)
+	}
+	dirty, err := projectwork.Load(root, "")
+	if err != nil {
+		t.Fatalf("load project after substantive source edit: %v", err)
+	}
+	if err := requireCleanSelectedBasisAtRevision(root, revision, fixed.Snapshot, dirty.Snapshot); err == nil || !strings.Contains(err.Error(), "assume-unchanged or skip-worktree") {
+		t.Fatalf("substantive selected source change hidden by Git's assume-unchanged flag should remain blocked, got %v", err)
+	}
+	gitE2E(t, root, "update-index", "--no-assume-unchanged", "README.md")
 }
 
 func TestPlanSinceUsesOldComparisonAndCurrentHeadExecutionBase(t *testing.T) {
@@ -116,6 +213,33 @@ func TestPlanWithoutRoutingSelectsAllManagers(t *testing.T) {
 	}
 	if len(plan.Managers) != len(project.Report.Managers) {
 		t.Fatalf("goal-only request selected %d of %d declared managers", len(plan.Managers), len(project.Report.Managers))
+	}
+}
+
+func TestGuidedPlanCapturesAcceptedHistoryWithoutStalingSelectedBasis(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	manifest, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := strings.Replace(string(manifest), "name: Process fixture\n", "name: Process fixture\nworkflowMode: guided\n", 1)
+	if updated == string(manifest) {
+		t.Fatal("could not enable guided workflow in fixture")
+	}
+	writeE2E(t, root, projectwork.ManifestPath, updated)
+	gitE2E(t, root, "add", projectwork.ManifestPath)
+	gitE2E(t, root, "commit", "-m", "enable guided workflow")
+	revision := identityHead(t, root)
+	plan, err := Plan(projectworkHost(), root, revision, PlanRequest{Goal: "Improve the bounded project behavior."})
+	if err != nil {
+		t.Fatalf("guided plan after accepted-history reconciliation: %v", err)
+	}
+	if plan.Status != StatusPlanned || plan.BaseRevision != revision || plan.WorkingSnapshot == "" {
+		t.Fatalf("guided plan did not retain its fixed and raw working bindings: %+v", plan)
+	}
+	if _, err := os.Stat(filepath.Join(root, ".markitect", "state", "briefings", "history.json")); err != nil {
+		t.Fatalf("guided planning did not persist accepted-history cursor: %v", err)
 	}
 }
 
