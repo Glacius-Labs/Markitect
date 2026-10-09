@@ -31,8 +31,9 @@ func TestParseProjectActionsAndClosedFlags(t *testing.T) {
 		{"apply write accepts exact preflight", []string{"apply", "--repo", ".", "--plan", "p1", "--run", "r1", "--candidate", "c1", "--branch", "feature/x", "--head", "abc", "--worktree", "sha256:tree", "--expect", "sha256:verify", "--write"}, "apply", ""},
 		{"apply write requires preflight", []string{"apply", "--repo", ".", "--plan", "p1", "--run", "r1", "--candidate", "c1", "--expect", "verify", "--write"}, "", "from the read-only preflight"},
 		{"help is available", []string{"init", "--help"}, "", ""},
-		{"setup preview", []string{"setup", "--repo", ".", "--tool-root", "C:\\src\\Markitect", "--provider", "codex", "--model", "m", "--input-micros-per-million", "5", "--output-micros-per-million", "10", "--max-cost-micros", "1000"}, "setup", ""},
-		{"setup native profile", []string{"setup", "--repo", ".", "--tool-root", "C:\\src\\Markitect", "--provider", "codex", "--model", "gpt-6-luna", "--effort", "high", "--execution-mode", "native-work", "--codex-profile", "luna-high", "--input-micros-per-million", "5", "--output-micros-per-million", "10", "--max-cost-micros", "1000"}, "setup", ""},
+		{"setup native profile", []string{"setup", "--repo", ".", "--tool-root", "C:\\src\\Markitect", "--provider", "codex", "--model", "gpt-6-luna", "--effort", "high", "--codex-profile", "luna-high", "--input-micros-per-million", "5", "--output-micros-per-million", "10", "--max-cost-micros", "1000"}, "setup", ""},
+		{"setup native default", []string{"setup", "--repo", ".", "--tool-root", "C:\\src\\Markitect", "--provider", "codex", "--model", "gpt-6-luna", "--effort", "high", "--input-micros-per-million", "5", "--output-micros-per-million", "10", "--max-cost-micros", "1000"}, "setup", ""},
+		{"setup removed execution mode flag", []string{"setup", "--repo", ".", "--tool-root", "C:\\src\\Markitect", "--provider", "codex", "--model", "gpt-6-luna", "--execution-mode", "proposal-only", "--input-micros-per-million", "5", "--output-micros-per-million", "10", "--max-cost-micros", "1000"}, "", "flag provided but not defined"},
 		{"setup write requires exact digest", []string{"setup", "--repo", ".", "--tool-root", "src", "--provider", "codex", "--model", "m", "--input-micros-per-million", "5", "--output-micros-per-million", "10", "--max-cost-micros", "1000", "--write"}, "", "requires --expect"},
 		{"distill generation requires write", []string{"distill", "--repo", ".", "--discovery", ".markitect/drafts/d.json", "--generate", "--output", ".markitect/drafts/report.json", "--input-micros-per-million", "5", "--output-micros-per-million", "10", "--max-cost-micros", "1000"}, "", "requires --write"},
 		{"distill generation accepted", []string{"distill", "--repo", ".", "--discovery", ".markitect/drafts/d.json", "--generate", "--write", "--output", ".markitect/drafts/report.json", "--input-micros-per-million", "5", "--output-micros-per-million", "10", "--max-cost-micros", "1000"}, "distill", ""},
@@ -68,21 +69,21 @@ func TestParseProjectActionsAndClosedFlags(t *testing.T) {
 func TestParseSetupNativeOptions(t *testing.T) {
 	parsed, help, err := parse([]string{
 		"setup", "--repo", ".", "--tool-root", `C:\src\Markitect`, "--provider", "codex",
-		"--model", "gpt-6-luna", "--effort", "high", "--execution-mode", "native-work", "--codex-profile", "luna-high",
+		"--model", "gpt-6-luna", "--effort", "high", "--codex-profile", "luna-high",
 		"--input-micros-per-million", "5", "--output-micros-per-million", "10", "--max-cost-micros", "1000",
 	}, io.Discard)
 	if err != nil || help {
 		t.Fatalf("parse setup native options: help=%t err=%v", help, err)
 	}
-	if parsed.executionMode != "native-work" || parsed.codexProfile != "luna-high" {
-		t.Fatalf("native setup options = executionMode %q, codexProfile %q", parsed.executionMode, parsed.codexProfile)
+	if parsed.codexProfile != "luna-high" {
+		t.Fatalf("native setup profile = %q", parsed.codexProfile)
 	}
 	setup, err := setupOptions(parsed)
 	if err != nil {
 		t.Fatalf("map CLI setup options: %v", err)
 	}
-	if setup.ExecutionMode != "native-work" || setup.CodexProfile != "luna-high" {
-		t.Fatalf("mapped setup options = executionMode %q, codexProfile %q", setup.ExecutionMode, setup.CodexProfile)
+	if setup.CodexProfile != "luna-high" {
+		t.Fatalf("mapped setup profile = %q", setup.CodexProfile)
 	}
 }
 

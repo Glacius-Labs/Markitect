@@ -107,7 +107,7 @@ func buildNativeWorkspace(root, revision string, project *Project, agent Agent) 
 			return nil, fmt.Errorf("native instruction %s escaped the project root", path)
 		}
 		runtimeMode := protocolMode(fixedMode)
-		if runtimeMode == "" || !hasNativeRuntimePin(agent.RuntimeFiles, absolute, runtimeMode, digestBytes(fixedBytes)) {
+		if runtimeMode == "" || !hasNativeRuntimePin(agent.RuntimeFiles, absolute, runtimeMode, "sha256:"+digestBytes(fixedBytes)) {
 			return nil, fmt.Errorf("native instruction %s is missing its exact absolute RuntimeFiles pin", path)
 		}
 		artifacts = append(artifacts, agentexec.Artifact{Path: path, Mode: fixedMode, Digest: digestBytes(fixedBytes), Content: append([]byte(nil), fixedBytes...)})

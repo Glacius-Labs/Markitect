@@ -36,7 +36,7 @@ func nativeWorkspaceFixture(t *testing.T) (string, string, *Project, Agent) {
 	agent := Agent{
 		WorkspaceMode:    "scoped",
 		InstructionPaths: []string{path},
-		RuntimeFiles:     []agentexec.RuntimeFile{{Path: pinnedPath, Mode: "0644", Digest: digestBytes(content)}},
+		RuntimeFiles:     []agentexec.RuntimeFile{{Path: pinnedPath, Mode: "0644", Digest: "sha256:" + digestBytes(content)}},
 	}
 	return root, revision, project, agent
 }

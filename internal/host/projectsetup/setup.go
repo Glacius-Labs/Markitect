@@ -42,7 +42,6 @@ type Options struct {
 	Provider               string
 	Model                  string
 	Effort                 string
-	ExecutionMode          string
 	CodexProfile           string
 	ToolRoot               string
 	ProviderExecutable     string
@@ -96,6 +95,10 @@ func PreviewEdit(project *projectwork.Project, options Options) (Preview, error)
 	if project == nil {
 		return result, errors.New("active project is required")
 	}
+	options, err := normalizeOptions(options)
+	if err != nil {
+		return result, err
+	}
 	discovery, err := Discover(options)
 	if err != nil {
 		return result, err
@@ -132,8 +135,12 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 	if project == nil || len(project.Report.Managers) == 0 {
 		return config, errors.New("active project must contain at least one Manager")
 	}
-	if options.Provider != "codex" && options.Provider != "claude" {
-		return config, errors.New("provider must be codex or claude")
+	if options.Provider != "codex" {
+		return config, errors.New("project setup currently supports native Codex only")
+	}
+	options, err := normalizeOptions(options)
+	if err != nil {
+		return config, err
 	}
 	if strings.TrimSpace(options.Model) == "" || options.Model != strings.TrimSpace(options.Model) {
 		return config, errors.New("model must be nonempty and have no surrounding whitespace")
@@ -144,27 +151,14 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 	if options.Effort != "high" {
 		return config, errors.New("setup currently supports only --effort high")
 	}
-	if options.ExecutionMode == "" {
-		options.ExecutionMode = "proposal-only"
+	if options.CodexProfile != "luna-high" || options.Model != "gpt-6-luna" || options.Effort != "high" {
+		return config, errors.New("native Codex setup requires --codex-profile luna-high with model gpt-6-luna and effort high")
 	}
-	if options.ExecutionMode != "proposal-only" && options.ExecutionMode != "native-work" {
-		return config, errors.New("--execution-mode must be proposal-only or native-work")
+	if found.ProviderBinary.Version != "0.162.0" {
+		return config, errors.New("native Codex setup requires Codex CLI 0.162.0")
 	}
-	if options.ExecutionMode == "native-work" {
-		if options.Provider != "codex" {
-			return config, errors.New("native-work setup currently supports only the Codex provider")
-		}
-		if options.CodexProfile != "luna-high" || options.Model != "gpt-6-luna" || options.Effort != "high" {
-			return config, errors.New("native-work requires --codex-profile luna-high with model gpt-6-luna and effort high")
-		}
-		if found.ProviderBinary.Version != "0.162.0" {
-			return config, errors.New("native-work requires Codex CLI 0.162.0")
-		}
-		if found.NativeWork.Path == "" {
-			return config, errors.New("native-work helper source is missing from the selected Markitect tool root")
-		}
-	} else if options.CodexProfile != "" {
-		return config, errors.New("--codex-profile is supported only with --execution-mode native-work")
+	if found.NativeWork.Path == "" {
+		return config, errors.New("native-work helper source is missing from the selected Markitect tool root")
 	}
 	if options.InputMicrosPerMillion < 0 || options.OutputMicrosPerMillion < 0 ||
 		(options.InputMicrosPerMillion == 0 && options.OutputMicrosPerMillion == 0) || options.MaxCostMicros <= 0 {
@@ -175,42 +169,33 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 	}
 	args := []string{found.Adapter.Path, "--model", options.Model}
 	modelOptions := map[string]string{}
-	if options.Provider == "codex" {
-		args = append(args, "--codex-executable", found.ProviderBinary.Path, "--codex-version", found.ProviderBinary.Version)
-		modelOptions["model_reasoning_effort"] = options.Effort
-	} else {
-		args = append(args, "--claude-executable", found.ProviderBinary.Path, "--claude-version", found.ProviderBinary.Version)
-		modelOptions["effort"] = options.Effort
-	}
+	args = append(args, "--codex-executable", found.ProviderBinary.Path, "--codex-version", found.ProviderBinary.Version)
+	modelOptions["model_reasoning_effort"] = options.Effort
 	files := []agentexec.RuntimeFile{runtimeFile(found.Python), runtimeFile(found.Adapter), runtimeFile(found.ProviderBinary)}
 	workerArgs := append([]string(nil), args...)
 	workerFiles := append([]agentexec.RuntimeFile(nil), files...)
 	instructionPaths := []string(nil)
-	if options.ExecutionMode == "native-work" {
-		workerArgs = append(workerArgs, "--execution-mode", "native-work", "--codex-profile", options.CodexProfile, "--native-helper-limit", "0")
-		var instructionFiles []agentexec.RuntimeFile
-		var instructionErr error
-		instructionPaths, instructionFiles, instructionErr = nativeInstructionFiles(project, options.Provider)
-		if instructionErr != nil {
-			return config, instructionErr
-		}
-		if len(instructionPaths) == 0 {
-			return config, errors.New("native-work requires existing generated Codex project instructions; run project onboard first")
-		}
-		workerFiles = append(workerFiles, runtimeFile(found.NativeWork))
-		workerFiles = append(workerFiles, instructionFiles...)
+	workerArgs = append(workerArgs, "--execution-mode", "native-work", "--codex-profile", options.CodexProfile, "--native-helper-limit", "0")
+	var instructionFiles []agentexec.RuntimeFile
+	var instructionErr error
+	instructionPaths, instructionFiles, instructionErr = nativeInstructionFiles(project, options.Provider)
+	if instructionErr != nil {
+		return config, instructionErr
 	}
+	if len(instructionPaths) == 0 {
+		return config, errors.New("native-work requires existing generated Codex project instructions; run project onboard first")
+	}
+	workerFiles = append(workerFiles, runtimeFile(found.NativeWork))
+	workerFiles = append(workerFiles, instructionFiles...)
 	environment := []string{"PATH", "TEMP", "TMP"}
 	if runtime.GOOS == "windows" {
 		environment = append(environment, "SystemRoot")
 	}
 	workerEnvironment := append([]string(nil), environment...)
-	if options.ExecutionMode == "native-work" {
-		if runtime.GOOS == "windows" {
-			workerEnvironment = append(workerEnvironment, "USERPROFILE", "APPDATA", "LOCALAPPDATA")
-		} else {
-			workerEnvironment = append(workerEnvironment, "HOME")
-		}
+	if runtime.GOOS == "windows" {
+		workerEnvironment = append(workerEnvironment, "USERPROFILE", "APPDATA", "LOCALAPPDATA")
+	} else {
+		workerEnvironment = append(workerEnvironment, "HOME")
 	}
 	pricing := projectrun.Pricing{InputMicrosPerMillion: options.InputMicrosPerMillion, OutputMicrosPerMillion: options.OutputMicrosPerMillion}
 	agents := make(map[string]projectrun.Agent, len(project.Report.Managers))
@@ -221,10 +206,8 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		}
 		worker := selectedAgent(found, workerArgs, options.Model, modelOptions, workerFiles, workerEnvironment, pricing)
 		reviewer := selectedAgent(found, args, options.Model, modelOptions, files, environment, pricing)
-		if options.ExecutionMode == "native-work" {
-			worker.WorkspaceMode = "scoped"
-			worker.InstructionPaths = append([]string(nil), instructionPaths...)
-		}
+		worker.WorkspaceMode = "scoped"
+		worker.InstructionPaths = append([]string(nil), instructionPaths...)
 		agents[manager.ID] = worker
 		reviewAgents[manager.ID] = reviewer
 	}
@@ -255,6 +238,19 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		}
 	}
 	return config, nil
+}
+
+func normalizeOptions(options Options) (Options, error) {
+	if options.Provider != "codex" {
+		return options, errors.New("project setup currently supports native Codex only")
+	}
+	if options.CodexProfile == "" {
+		options.CodexProfile = "luna-high"
+	}
+	if options.CodexProfile != "luna-high" {
+		return options, errors.New("--codex-profile currently supports only luna-high")
+	}
+	return options, nil
 }
 
 func selectedAgent(found Discovery, args []string, model string, modelOptions map[string]string, files []agentexec.RuntimeFile, environment []string, pricing projectrun.Pricing) projectrun.Agent {
@@ -413,17 +409,12 @@ func Discover(options Options) (Discovery, error) {
 		return result, fmt.Errorf("inspect selected %s adapter: %w", options.Provider, err)
 	}
 	var nativeWork Tool
-	if options.ExecutionMode == "native-work" {
-		if options.Provider != "codex" {
-			return result, errors.New("native-work setup currently supports only the Codex provider")
-		}
+	if options.Provider == "codex" {
 		nativeWorkPath := filepath.Join(root, "internal", "tooling", "codexrunner", "native_work.py")
 		nativeWork, err = inspectFile(nativeWorkPath)
 		if err != nil {
 			return result, fmt.Errorf("inspect native-work helper source: %w", err)
 		}
-	} else if options.ExecutionMode != "" && options.ExecutionMode != "proposal-only" {
-		return result, errors.New("--execution-mode must be proposal-only or native-work")
 	}
 	pythonName := "python3"
 	if runtime.GOOS == "windows" {
