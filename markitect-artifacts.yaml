@@ -350,6 +350,8 @@ spec:
       owner: canonical-core-implementation
     - path: internal/core/compile_test.go
       owner: canonical-core-implementation
+    - path: internal/core/identity_test.go
+      owner: canonical-core-implementation
     - path: internal/core/README.md
       owner: canonical-core-implementation
     - path: internal/core/snapshot/snapshot.go
@@ -2162,6 +2164,10 @@ spec:
     - path: internal/host/projectbriefing/store.go
       owner: project-world-implementation
     - path: internal/host/projectbriefing/briefing_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectbriefing/identity_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/identity_history_test.go
       owner: project-world-implementation
     - path: examples/project-world/.markitect/model/commerce/sales/artifacts.yaml
       owner: project-world-implementation
