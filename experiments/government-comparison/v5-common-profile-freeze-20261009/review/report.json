@@ -1,0 +1,109 @@
+{
+  "reviewId": "v5-design-common-profile-freeze-20261009-independent-readonly-review",
+  "verdict": "APPROVE QUALIFIED NOT ADMITTED",
+  "scope": "Preparation research review of the sealed v5 proposal only; not a product Actor, runtime-admission canary, or execution authorization.",
+  "reviewWindow": {
+    "startNotBeforeUtc": "2026-10-09T03:08:16.488602Z",
+    "startBasis": "The freeze timestamp is the earliest possible start; the exact reviewer dispatch timestamp was not exposed.",
+    "endUtc": "2026-10-09T03:10:34Z",
+    "absoluteStopUtc": "2026-10-09T03:12:20Z"
+  },
+  "hashVerification": {
+    "sourceCommit": "9c8a46fd3918dc7a5647d09eb054de83f245ea2f",
+    "sealCommit": "8432ba41f9e9c22c671746d2eb4e83c8520f9345",
+    "sealParentMatchesSource": true,
+    "freezeManifestEntries": 26,
+    "workingBytesAndSha256MatchManifest": true,
+    "rawArchiveSha256": "8d1837e0f959d91190aebc3edfb76448dc4f2c9f9eddf7d7d359ab05dcbf5339",
+    "rawArchiveMatchesFreeze": true,
+    "sealedGitBlobEntriesChecked": 25,
+    "sealedGitBlobMismatches": 0,
+    "workingOnlyManifestEntry": "evidence/study-input-bindings.json has no sealed Git blob id; its working bytes/hash are covered by the frozen manifest and raw archive hash."
+  },
+  "findings": [
+    {
+      "class": "admission-blocker",
+      "finding": "The common profile is correctly NOT ADMITTED. The existing Design adapter's literal argv enables read-only sandboxing, ignores user configuration/rules, and disables plugins, shell_tool, and unified_exec. The collector treats observed tool-call items as tool use and returns incomplete; the adapter removes model-authored usage and attaches only collector events. Reusing that restricted workflow for strong Conventional would withhold its normal repository inspection/edit/build/test/debug/helper tools, while native full-tool use for Design has no established per-call provider input/output telemetry. No equivalent protected full-tool/telemetry path is evidenced, and weakening security or waiving the confound is not an acceptable inference from these pins.",
+      "references": [
+        "binding/common-profile-proposal.json:87-106",
+        "binding/command-plan.json:3-30,59-109",
+        "public-source/internal/tooling/codexrunner/runner.py:871-888,972-993"
+      ]
+    },
+    {
+      "class": "admission-blocker",
+      "finding": "The distinction between historical R12 receipts and actual true Verifier evidence is correct. R12 records 16 calls (6 work, 7 review, 3 integration) with historical token totals; those roles do not establish a true Verifier call. ProjectRun requires input and output usage to bound work, review, and any configured true Verifier cost, and verifier acceptance also requires coverage of required subjects/evidence. Generic optional usage or synthetic mapping cannot satisfy this.",
+      "references": [
+        "evidence/design-metadata-summary.json:30-37",
+        "binding/common-profile-proposal.json:108-151",
+        "public-source/internal/host/projectrun/run.go:1116-1119",
+        "public-source/internal/host/projectrun/review.go:124-130",
+        "public-source/internal/host/projectrun/verify.go:453-459,476-497"
+      ]
+    },
+    {
+      "class": "qualified-support",
+      "finding": "The typed role and DTO claims are supported: Manager task/integration uses executor plus projectrun-task/v1 and TaskResponse; the independent Reviewer uses executor plus projectrun-review/v1 with candidate scope and a typed report, not the Manager transcript; true Verifier is a separate verifier role and request. Host response/coverage validation remains authoritative. The offline pass covers synthetic serialization/mapping only and explicitly did not run Host Go validators.",
+      "references": [
+        "binding/common-profile-proposal.json:125-165",
+        "evidence/offline-check-receipt.json:1-16",
+        "evidence/offline-check.stdout.json:1",
+        "public-source/internal/host/projectrun/review.go:80-110,124-135",
+        "public-source/internal/host/projectrun/verify.go:453-459,486-497",
+        "public-source/internal/host/agentexec/runner.go:459-515"
+      ]
+    },
+    {
+      "class": "qualified-support",
+      "finding": "The Classic assessment is narrowly scoped and matches the copied selected-module source: markitect-dotnet both rejects extensions beyond .cs/.csproj and declares those extensions for its task. That supports incompatibility of this selected module/model/task with required JSON, lock, config, and docs; it does not establish a product-wide Markitect limitation.",
+      "references": [
+        "binding/source-assessment.json:3-8",
+        "proposal.md:15",
+        "public-source/classic/dotnet.go:112-116",
+        "public-source/classic/proposal.go:460-466"
+      ]
+    },
+    {
+      "class": "qualified-support",
+      "finding": "The proposed actor-cap alternative is prospective, finite, and unallocated. It retains the original 7,200-second cell and 1,200-second task walls and 840-second implementation cutoff; the 144-cell/24-task activation caps are justified as capacity room by the historical 16-call flow, not as a universal Design minimum or evidence the six-stage task fits. Two follow-up slots stay unallocated. Attempt accounting, no refill, pair concurrency, setup/review costs, and the 300-second assessment minimum are stated. This is a proposal only, not a grant.",
+      "references": [
+        "evidence/root-grant.json:34-41",
+        "proposal.md:17",
+        "binding/common-profile-proposal.json:176-238"
+      ]
+    },
+    {
+      "class": "qualified-support",
+      "finding": "Staging retains the same public input hashes and private evaluation hashes only, unchanged declared requirements, an empty Greenfield tree, and the pinned Brownfield start. Task 5 is gated on its own actual Task 4 predecessor; Task 6 requires both paired Task 5 passes/freezes and separate equivalence review. No prebuilt solution/model or future/private evaluation content is included in the declared actor inputs. These are prospective bindings, not evidence that a cell ran or passed.",
+      "references": [
+        "evidence/study-input-bindings.json:2-30,100-130",
+        "binding/common-profile-proposal.json:240-248",
+        "proposal.md:19"
+      ]
+    }
+  ],
+  "limitations": [
+    "The candidate executable, Python, provider executable, adapter, source, and metadata digests are read pins; no claim is made that the pinned binaries were executed or that the serving model/account availability is currently known.",
+    "Historical R12 usage is preserved metadata evidence only. No new provider usage, serving model, or cost is known. The historical weighted accounting units are not price or economic evidence.",
+    "The single offline mechanical check passed in 0.0830383 seconds with synthetic-only inputs. It provides no product readiness, runtime equivalence, actual telemetry, or semantic/evaluation evidence.",
+    "Exact Brownfield predecessor and Task 6 equivalence are declared future gates; this review did not inspect prior cell outputs or private evaluator contents."
+  ],
+  "blockers": [
+    "No admitted common, legitimately protected full-tool profile with equal actually available tool rights and real per-call input/output telemetry is established.",
+    "The native full-tool path does not establish ProjectRun-compatible provider-reported per-call input/output usage; the existing restricted adapter cannot be broadened without changing protections and refuses tool events.",
+    "No true Verifier usage receipt is evidenced by the 16 historical R12 roles or the synthetic check."
+  ],
+  "additionalUnsupportedAdmissionClaims": [],
+  "testsNotRun": true,
+  "runtimeNotRun": true,
+  "productBuildsOrSuitesNotRun": true,
+  "scopeAndSafety": {
+    "readOnly": true,
+    "childrenOrFollowups": 0,
+    "testsOrOfflineCheckReruns": 0,
+    "providerCliAppserverOrProductCalls": 0,
+    "foreignShopOrPrivateEvaluationContentsOpened": false,
+    "frozenSourcesModified": false,
+    "onlyReviewReportWritten": true
+  }
+}

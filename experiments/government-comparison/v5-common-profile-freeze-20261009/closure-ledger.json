@@ -1,0 +1,228 @@
+{
+  "package": "v5-design-common-profile-freeze-20261009",
+  "status": "TERMINAL NOT ADMITTED",
+  "closedUtc": "2026-10-09T03:15:19.1528474+00:00",
+  "grantNotAfterUtc": "2026-10-09T03:23:42Z",
+  "sourceCommit": "9c8a46fd3918dc7a5647d09eb054de83f245ea2f",
+  "sealCommit": "8432ba41f9e9c22c671746d2eb4e83c8520f9345",
+  "frozenDataIntegrity": {
+    "verificationType": "Post-review bytes and hashes only; no contract check rerun",
+    "entries": [
+      {
+        "path": "binding/command-plan.json",
+        "sha256": "9d9b635eec2fe29900cb43fc1e0e51712fa3027490514409edf73c9cbc1ffda3",
+        "bytes": 3552,
+        "matches": true
+      },
+      {
+        "path": "binding/common-profile-proposal.json",
+        "sha256": "7d487a0831f88f8703cc80fab14573d33141f5cfcd9f477ff7541ff3f50e6580",
+        "bytes": 13874,
+        "matches": true
+      },
+      {
+        "path": "binding/offline_contract_check.py",
+        "sha256": "e6db419e04ab6c0993b9494ec6f7d3cff411f3145f6590a56176a6d2a38346c8",
+        "bytes": 6546,
+        "matches": true
+      },
+      {
+        "path": "binding/source-assessment.json",
+        "sha256": "24325b31e8123f43000b7e58daa808e9a41d1ed76edaf1a448d40b1558525e44",
+        "bytes": 1514,
+        "matches": true
+      },
+      {
+        "path": "evidence/design-metadata-summary.json",
+        "sha256": "c96781df611d5f65013019fc90957118f16b6f005b487b8a42a726caee29eacf",
+        "bytes": 2928,
+        "matches": true
+      },
+      {
+        "path": "evidence/offline-check-receipt.json",
+        "sha256": "e15c400038d732c2ccd072c479453fad6afceff99691c59beb7ce2497064d5a7",
+        "bytes": 572,
+        "matches": true
+      },
+      {
+        "path": "evidence/offline-check.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "matches": true
+      },
+      {
+        "path": "evidence/offline-check.stdout.json",
+        "sha256": "90fbefebb804e380e7d89c9f48193bea3f9040ae0817331cf9f7d05640685ae1",
+        "bytes": 765,
+        "matches": true
+      },
+      {
+        "path": "evidence/public-source-bindings.json",
+        "sha256": "7781acc656d978b5e5d53399152890b62dc55460a7dd28940a11a46f32a03a98",
+        "bytes": 3845,
+        "matches": true
+      },
+      {
+        "path": "evidence/root-grant.json",
+        "sha256": "980431cecb5d1d4ee7630f4d1bca5c0469f60ebd4ee1667abafa65646e4553b1",
+        "bytes": 6571,
+        "matches": true
+      },
+      {
+        "path": "evidence/study-input-bindings.json",
+        "sha256": "7f49a7c9f442d9aa21496cff00b3b54d5275f1598b12fb71f613cb3c5463edbb",
+        "bytes": 6727,
+        "matches": true
+      },
+      {
+        "path": "proposal.md",
+        "sha256": "9f15623e824687349008795aaca669496978591c09d0e1050dde6c4d31acb4df",
+        "bytes": 6121,
+        "matches": true
+      },
+      {
+        "path": "public-source/classic/dotnet.go",
+        "sha256": "331f44e452645253278c666d49ee4f61e466cd02640c0d40df0b76173e2be186",
+        "bytes": 5108,
+        "matches": true
+      },
+      {
+        "path": "public-source/classic/proposal.go",
+        "sha256": "bd523a35779a968fd3a7ad17a96fbaf722041c3c05c5bb7de553f04f9ccf2197",
+        "bytes": 19780,
+        "matches": true
+      },
+      {
+        "path": "public-source/docs/project-workflow.md",
+        "sha256": "d212852da496897bf53869cc6ae4cd478b381edcb33d7d9a7cc263b23a3b518b",
+        "bytes": 21911,
+        "matches": true
+      },
+      {
+        "path": "public-source/internal/host/agentexec/process_windows.go",
+        "sha256": "d703c475828a77bc460089cfd2d121bc8a001b10feedd66bff8591fb330ce23b",
+        "bytes": 5251,
+        "matches": true
+      },
+      {
+        "path": "public-source/internal/host/agentexec/runner.go",
+        "sha256": "8fbf9f1cee4ffdf52be5b63a69022a602ac3e252005d4f2aed390359bcaa90b9",
+        "bytes": 36052,
+        "matches": true
+      },
+      {
+        "path": "public-source/internal/host/agentexec/types.go",
+        "sha256": "c9b1d583611e1ca63cac5ad30a12e959d3d0f00e3a249501c39a1034ff14151f",
+        "bytes": 5590,
+        "matches": true
+      },
+      {
+        "path": "public-source/internal/host/projectrun/config.go",
+        "sha256": "f7c124db136ea65e82ac35dd0a3376741af0cf7f8ce10595da4c8a06fc63ede0",
+        "bytes": 9348,
+        "matches": true
+      },
+      {
+        "path": "public-source/internal/host/projectrun/invoker.go",
+        "sha256": "ec55c5ec2c059d4c9f9d573224f8898cdc867a2606e76ccaa7ab835d9bb1c83e",
+        "bytes": 624,
+        "matches": true
+      },
+      {
+        "path": "public-source/internal/host/projectrun/protocol.go",
+        "sha256": "51baa2bec10468e5f117388a3be9f98b51e4cee8c74268932dfe3d0c20c1ece0",
+        "bytes": 9949,
+        "matches": true
+      },
+      {
+        "path": "public-source/internal/host/projectrun/review.go",
+        "sha256": "8611a8f4893fe88abd1028f183e7f5cabcb7b644a022deaaab3acd1834657062",
+        "bytes": 25688,
+        "matches": true
+      },
+      {
+        "path": "public-source/internal/host/projectrun/run.go",
+        "sha256": "63d78289770d71fbfc1b21f39d6d7843f40c65b7d295da79f0bf6606c4ec603d",
+        "bytes": 88503,
+        "matches": true
+      },
+      {
+        "path": "public-source/internal/host/projectrun/types.go",
+        "sha256": "f83d4307665bbf30dfbfc9a594de44896120439b37b1160eb6b4d3ce74eda6bb",
+        "bytes": 20063,
+        "matches": true
+      },
+      {
+        "path": "public-source/internal/host/projectrun/verify.go",
+        "sha256": "30f536c436a316f1849761985d421fa6f3247f10e6c5f0385050451e2172df15",
+        "bytes": 21532,
+        "matches": true
+      },
+      {
+        "path": "public-source/internal/tooling/codexrunner/runner.py",
+        "sha256": "477b4895567d386abf4d3e7105e14d9cee939df97d34183f67f20a23256f6c67",
+        "bytes": 56540,
+        "matches": true
+      }
+    ],
+    "rawArchiveSha256": "8d1837e0f959d91190aebc3edfb76448dc4f2c9f9eddf7d7d359ab05dcbf5339",
+    "v4TrackedFilesUnchanged": true
+  },
+  "review": {
+    "actor": "/root/v5_common_profile_freeze_review",
+    "nativeFinalReceived": true,
+    "verdict": "APPROVE QUALIFIED NOT ADMITTED",
+    "reportSha256": "76a38813ed5b28878493ed096ccf0bb081403ef9bbf8cfc971efaa96264432bd",
+    "reservedUtc": "2026-10-09T03:09:05.7141901Z",
+    "reportDeclaredEndUtc": "2026-10-09T03:10:34Z",
+    "finalReceiptObservedByUtc": "2026-10-09T03:13:42.9625031Z",
+    "timingQualification": "Report declares completion before stop due/deadline. Exact native dispatch and native terminal timestamps were not exposed; receipt observed after compaction does not prove exact native wall duration. No timeout extension, followup or retry was authorized or used.",
+    "profile": "inherited gpt-6.1-sol/high, fork_turns=none, no overrides",
+    "promptSha256": "a72038ed28bcd5cfd57dee49c50f30ee23a0d50251a0b270e9ab29579d44f37a",
+    "promptProofLimit": "Pre-tool literal hash recorded; encrypted persisted message plaintext equality not independently established",
+    "actualInputTokens": null,
+    "actualOutputTokens": null,
+    "actualCost": null
+  },
+  "counters": {
+    "bindingBatches": 1,
+    "offlineMechanicalChecks": 1,
+    "offlineCheckWallSeconds": 0.0830383,
+    "offlineCheckExitCode": 0,
+    "sharedReviewReservations": 1,
+    "nativePreparationReviewActivations": 1,
+    "reviewFollowups": 0,
+    "reviewChildren": 0,
+    "actualProductActors": 0,
+    "actualProductProviderCalls": 0,
+    "codexCliCalls": 0,
+    "appserverCalls": 0,
+    "productRuntimeInvocations": 0,
+    "productBuilds": 0,
+    "productSuites": 0,
+    "fullTrials": 0
+  },
+  "limits": {
+    "nativeResearchReviewIsSeparateFromProductCallCount": true,
+    "currentGrantUnusedRuntimeQuota": 0,
+    "newTrialsAllocated": 0,
+    "remainingFollowupSlotsUnallocated": 6,
+    "proposedDesignConventionalGfBfCells": 4,
+    "additionalSlotsUnallocated": 2,
+    "commonTimeSecondsCell": 7200,
+    "commonTimeSecondsTask": 1200,
+    "prospectiveActivationCapCell": 144,
+    "prospectiveActivationCapTask": 24,
+    "wallFeasibilityEstablished": false,
+    "historicalWeightedCostIsPrice": false
+  },
+  "verdictBasis": [
+    "Existing Design adapter has real collector-derived usage but disables normal provider tool operations and refuses tool-call events. Applying it to strong Conventional would weaken the comparator.",
+    "Native full-tool research transport has no established ProjectRun-compatible real provider per-call input/output telemetry. Generic optional usage or synthetic values are insufficient.",
+    "Historical R12 16 calls are work/review/integration only and do not evidence a real true-Verifier call.",
+    "Classic selected markitect-dotnet module/task .cs/.csproj limitation is not a global product limit. No existing full-task alternative has been established."
+  ],
+  "next": "Root must choose an explicit lawful bounded common-profile execution if one exists, or synthesize the unresolved limit. No automatic successive preparation/canary/runtime/reviewer loop.",
+  "privateEvidenceBoundary": "No foreign Shop solution/archive or private evaluation contents read or supplied to reviewer; only own shared input hashes and declarations. No product source changes.",
+  "callback": "One new terminal event to authorized Overseer/local after exact private remote SHA verification; delivery receipt kept outside tracked frozen package."
+}

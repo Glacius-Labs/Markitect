@@ -1,0 +1,22 @@
+{
+  "reservedBeforeNativeTool": true,
+  "reservedUtc": "2026-10-09T03:09:05.7141901+00:00",
+  "deadlineUtc": "2026-10-09T03:12:30.0000000+00:00",
+  "maxWallSeconds": 240,
+  "forkTurns": "none",
+  "overrides": null,
+  "intendedActor": "/root/v5_common_profile_freeze_review",
+  "promptSha256": "a72038ed28bcd5cfd57dee49c50f30ee23a0d50251a0b270e9ab29579d44f37a",
+  "sealedSource": "9c8a46fd3918dc7a5647d09eb054de83f245ea2f",
+  "sealHead": "8432ba4",
+  "profile": {
+    "timestamp": "2026-10-09T02:56:13.094Z",
+    "model": "gpt-6.1-sol",
+    "reasoning": "high",
+    "approval": "never",
+    "filesystem": "danger-full-access"
+  },
+  "promptProofLimit": "Prepared exact literal pretool hash; encrypted persisted message plaintext equality not independentlyverified",
+  "productActors": 0,
+  "nativePreparationReviewer": 1
+}
