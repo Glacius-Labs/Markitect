@@ -504,7 +504,7 @@ func runVerifier(ctx context.Context, invoker Invoker, root string, plan PlanRec
 			return nil, log, fmt.Errorf("persist verifier start: %w", err)
 		}
 	}
-	result, err := invoker.Run(ctx, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
+	result, err := invokeAgent(ctx, invoker, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
 	usageCost, costKnown := estimateCost(result.Receipt.Usage, runtime.Verifier.Pricing)
 	log = InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: inputDigest, Receipt: result.Receipt, ReportID: result.Receipt.RunID, Outcome: result.Receipt.Outcome, CostMicros: usageCost}
 	if log.Outcome == "" {

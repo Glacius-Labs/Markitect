@@ -2344,3 +2344,5 @@ spec:
       owner: bounded-agent-execution-host
     - path: internal/host/agentexec/lifecycle.go
       owner: bounded-agent-execution-host
+    - path: internal/host/projectrun/invoker_test.go
+      owner: project-world-implementation

@@ -994,7 +994,7 @@ func resetTaskForRepair(task *ManagerTask) {
 }
 
 func boundedFeedbackText(value string, maximum int) string {
-	value = strings.ToValidUTF8(value, "�")
+	value = strings.ToValidUTF8(value, "ï¿½")
 	if maximum < 0 || len(value) <= maximum {
 		return value
 	}
@@ -1135,7 +1135,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	scopeIDs := append([]string{task.ManagerID}, task.Artifacts...)
 	request := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: project.Revision, ModelDigest: project.Report.ModelDigest,
 		ModulePin: project.Report.Digest, ProjectionID: project.Report.Digest, ScopeIDs: uniqueSorted(scopeIDs), PolicyIDs: append([]string(nil), task.Checks...), Context: contextJSON, Artifacts: artifacts}
-	result, err = invoker.Run(ctx, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
+	result, err = invokeAgent(ctx, invoker, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
 	if err != nil {
 		return result, log, err
 	}
@@ -1232,7 +1232,7 @@ func boundedRepairDiagnostic(err error) string {
 	if err == nil {
 		return ""
 	}
-	message := strings.ToValidUTF8(strings.TrimSpace(err.Error()), "�")
+	message := strings.ToValidUTF8(strings.TrimSpace(err.Error()), "ï¿½")
 	runes := []rune(message)
 	for len(message) > 2048 && len(runes) > 0 {
 		runes = runes[:len(runes)-1]

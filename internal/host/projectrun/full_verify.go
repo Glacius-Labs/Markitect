@@ -659,7 +659,7 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 	if err != nil {
 		return row, err
 	}
-	result, invokeErr := invoker.Run(ctx, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
+	result, invokeErr := invokeAgent(ctx, invoker, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
 	row.Receipt = &result.Receipt
 	if invokeErr != nil {
 		return row, invokeErr
