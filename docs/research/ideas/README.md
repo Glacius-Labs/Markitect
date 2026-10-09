@@ -25,6 +25,8 @@ The five linked ideas below came together in one user contribution. They are a s
 
 **Motivation paraphrase supplied with the referral (not original wording):** transferred decisions should align with project goals and earlier reasoned user decisions; conflicts should escalate in proportion to their importance; managers should be able to raise problems found during implementation; local configuration and priorities matter. The original user wording is preserved separately in each entry below.
 
+Marketing relayed the same five suggestions in chat `01a12220-9cbb-7432-8762-3c4c4b8db9de` on 2026-10-09, with the same direct user-source attribution. This is a linked cross-chat referral, not a second idea source or an adopted marketing claim. Its clarification that a precedent store would not itself prove a learning AI is retained as a boundary when discussing IDEA-20261009-009.
+
 ## Sources and status
 
 The seed entries below come from the user's product statement in the original Markitect discussion, Codex chat `01a121f1-b948-7050-ae5d-9921b99db9c0`. The principal source is turn `01a12217-533b-7633-a10d-d1cd82859e4f`, user message `01a12217-53aa-7733-985c-7b5cd63b92cf`, dated 2026-10-09. One later clarification is in turn `01a12204-e5ab-74a0-ad2d-820b2c6c6006`, user message `01a12204-e60f-78c0-adee-2cf16f2f6b8d`. The decision and Government proposals are from turn `01a1224c-b070-76c0-8cd9-ad32b16b3e3b`, user message `01a1224c-b0ba-7bf2-ad59-feaa68c260e7`.
@@ -34,6 +36,14 @@ The conversation's shared source summary also appears in the Ideas chat setup pr
 ### Incoming Historian findings
 
 Historian is an authorized source for relevant findings from Markitect history and subsequent work. Its local Codex thread is `01a12232-2c5e-7ea3-adb5-12eac55d6847` (Luna/XHigh); its daily continuation is scheduled for 09:00 Europe/Berlin. Record each substantive finding here with the Historian fund ID and the underlying source reference, while keeping it marked as a finding rather than a product decision. The setup notice arrived from the original product discussion chat `01a121f1-b948-7050-ae5d-9921b99db9c0` on 2026-10-09; it contained no finding ID or substantive new idea, so no idea entry was created from it.
+
+#### HIST-MARKITECT-20261009-FORMAT-001 — Historical representation framing (source reconciliation)
+
+- **Finding source:** Historian thread `01a12232-2c5e-7ea3-adb5-12eac55d6847`, received 2026-10-09. Historian identifies this as reconciliation of prior user statements, not a new idea.
+- **Underlying sources:** Chat `01a11d05-adbf-7082-b693-caebbfb83a2a`, user message `01a11ed2-56ee-71c1-a545-29cca0b23454` (rejection of “structures engineering knowledge and makes it usable as Markdown” framing); same chat, user message `01a11ed4-5510-7023-b01b-d4ba3ad6234d` (Markdown in the name tied to common AI-agent context and answer formats); Design chat `01a11c80-37aa-7fe0-9586-35d916ce6561`, user message `01a11f78-979a-7e30-9627-b31c280ef5ac` (Markdown Front Matter discarded).
+- **Distinctions reported:** The user rejected the broad Markdown framing and discarded Markdown Front Matter. A typed model/YAML source with Markdown projections was only a possible direction. YAML versus OWL/knowledge graph remained open in the cited history.
+- **Status and limits:** Historical source reconciliation, not a new proposal or decision in this chat. Do not infer that the possible YAML direction was adopted or that the representation question is now settled.
+- **Relationship:** IDEA-20261009-001 (canonical source of intent); this finding adds provenance and framing boundaries without changing that idea's status.
 
 ### IDEA-20261009-001 — One canonical model as the maintained source of intent
 
@@ -132,7 +142,7 @@ Historian is an authorized source for relevant findings from Markitect history a
 - **Idea:** Keep project-specific user decisions and their reasons as precedents that a later decision-maker can consult when interpreting rules.
 - **Assumptions:** Decisions and reasons can be captured with enough context to tell when a precedent applies; interpretation remains open to new circumstances.
 - **Hoped-for effect (motivation paraphrase):** Decisions delegated to agents stay aligned with earlier reasoned user decisions.
-- **Open questions:** What constitutes a precedent, how is applicability determined, how are conflicting or superseded precedents handled, and when must the user decide again?
+- **Open questions:** What constitutes a precedent, how is applicability determined, how are conflicting or superseded precedents handled, and when must the user decide again? A precedent store would provide references; it does not by itself demonstrate that an AI learns.
 - **Relationships:** IDEA-20261009-008, 010; broader context in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
 - **Status:** Noted; questions open.
 
