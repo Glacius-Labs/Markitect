@@ -267,18 +267,11 @@ renewal_policy:
     terminal_status: failed_not_passed
     root_turn_observed: true
     native_invocation_id: b7d7dfee9be8d39757734043c9f84d36
-    native_session_id: 01a122d7-3dfe-7c41-a6cf-178de5a0523c
-    native_turn_id: 01a122d7-40a8-7ab2-a1c8-03c204b92ae9
-    workspace_id: c9520cace3d9a67d8ab688b5c75c94ef
     workspace_normalized_changes: 0
     attempt_usage_input_tokens: 146970
     attempt_usage_output_tokens: 837
     attempt_usage_cached_input_tokens: 98560
     attempt_estimated_cost_micros: 148644
-    cumulative_known_role_start_requests: 5
-    cumulative_known_provider_starts: 4
-    cumulative_estimated_cost_micros: 898953
-    cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
   next_batch:
     status: simplified_a01_authorized_pins_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
