@@ -195,7 +195,7 @@ native_acceptance:
     readonly_dotnet_26_binding_role_start_requests: 0
     readonly_dotnet_26_binding_provider_starts: 0
     native_actual_started: true
-  latest_actual:
+  attempt_6:
     batch_id: a01-simple-0f42a50b1880428ba81817600190b31e
     attempt_number: 6
     native_run_number: 5
@@ -232,16 +232,52 @@ native_acceptance:
     cumulative_known_provider_starts: 5
     cumulative_estimated_cost_micros: 1698251
     cost_accounting: partial_observed_lower_bound_not_invoice
+  latest_actual:
+    batch_id: a01-schema-88b220bfea92462189b14ec6f759f110
+    attempt_number: 7
+    native_run_number: 6
+    status: failed_not_passed
+    source_revision: 73103156264a6eaf919f2bc8e358dbf8da2f53e1
+    binary_sha256: f0f3f7a0a2a00a714b11216a0b445f93dbc2b34d52665d6d2a6d988987fe270d
+    plan_id: b237b401952dae06b44d8dcba2d7a504
+    plan_sha256: 7ce7d66d32b4209e9befa8a08f7d6ca0b67aeb84a020513b43d1b1e6d58a82cc
+    runtime_sha256: b4b801fd3e5328e64bb13e3c70f559b612c551a5eef77ab6c8f6bf7253540377
+    readiness_sha256: 06553881f090ddaf08cf06148907d7f30d36ccf11849c897533c854b3c67853a
+    observer_id: 75b14b97d0a14ce399837f5129ce3771
+    observer_record_sha256: ab4952e3d4fae8ec3e4b8b6b71125891f49cb4b2f57487e7b88d67aa81d328fb
+    terminal_utc: '2026-10-09T23:51:03.0520100Z'
+    observer_exit_code: 2
+    observer_boundary_observed: false
+    root_manager_report: complete
+    root_candidate: README.md
+    root_native_turn: completed
+    sibling_source_and_docs_delegations_recorded: true
+    reviewer_state: interrupted_incomplete
+    helper_reservation_state: failed_before_native_child_start
+    failure: helper_scope_guard_rejected_tests_test_greeting_py_outside_parent_manager_allowed_paths
+    role_start_api_requests: 3
+    native_provider_starts: 2
+    failed_helper_reservation_requests: 1
+    helper_native_child_starts: 0
+    workspace_no_apply_or_reviewed_changes: true
+    input_tokens: 559125
+    output_tokens: 5234
+    cached_input_tokens: 468992
+    attempt_estimated_cost_micros: 569593
+    cumulative_known_role_start_requests: 9
+    cumulative_known_provider_starts: 7
+    cumulative_estimated_cost_micros: 2267844
+    cost_accounting: partial_observed_lower_bound_not_invoice
   next_batch:
-    status: concrete_output_contract_fix_in_progress
+    status: helper_scope_fix_in_progress
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
     new_batch_pins: none
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
-    no_seventh_actual_claimed: true
+    no_eighth_actual_claimed: true
     owner_repair_in_progress: true
-    repair: bind_candidate_file_to_pinned_turn_start_output_schema_existing_report_json_and_host_harvest
+    repair: correct_helper_scope_calculation_without_widening_permissions
     next_shared_native_defaults: { memories: false, login: false }
     intended_profile:
       fresh_native_roles: workspace_permission
@@ -258,7 +294,7 @@ native_acceptance:
     source_worktree_clean: true
     source_pushed: true
     technical_fix_validation_is_not_native_acceptance: true
-  current_source_checkpoint:
+  source_checkpoint_e7dc5a67_pre_attempt_7:
     latest_committed_source_revision_prefix: e7dc5a67
     latest_actual_source_revision: a9580036eb96ae0d9872897bb57af97b4d9a7b56
     latest_actual_binary_sha256: c6be48ca9da501a71ec89287653d3dd3b2d465375a42eba79f11b5af0a835e72
@@ -271,6 +307,13 @@ native_acceptance:
     clean_frozen_binary_for_e7dc5a67: pending
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
+  current_source_checkpoint:
+    source_revision_used_for_latest_attempt: 73103156264a6eaf919f2bc8e358dbf8da2f53e1
+    binary_sha256: f0f3f7a0a2a00a714b11216a0b445f93dbc2b34d52665d6d2a6d988987fe270d
+    strict_markitect_check_at_source: passed
+    canonical_format_artifact_module_schema_modverify_gates: passed
+    native_acceptance: failed_not_passed
+    next_helper_scope_fix_source_revision: not_yet_pinned
   prior_batch_history:
     revision: generous-native-limits-20261009
     max_role_wall_seconds: 3600
