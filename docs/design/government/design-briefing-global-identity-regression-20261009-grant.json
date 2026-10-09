@@ -1,0 +1,33 @@
+{
+  "key": "design-briefing-global-identity-regression-20261009",
+  "issuedUtc": "2026-10-09T11:11:39Z",
+  "notAfterUtc": "2026-10-09T12:11:39Z",
+  "maxActiveSeconds": 3600,
+  "ownerThread": "01a11c80-37aa-7fe0-9586-35d916ce6561",
+  "rootThread": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "sourceAuthority": "Continuing direct human full Design implementation, stable usability, current docs and own regression coverage; concrete public source/UI blocker after closed finite study. No research restart or historical candidate repair.",
+  "sourceBaseline": "bcd614a3bfcd335e0ca18850993742057103c092",
+  "publicObservedError": "validate briefing store: briefing bundle is invalid: incomplete definition identity",
+  "publicSourceFinding": {
+    "host": "internal/host/projectbriefing/store.go validateEvent rejects DefinitionID.Namespace==empty",
+    "core": "internal/core/compile.go validNamespace allows empty namespace",
+    "status": "Root readonly source-confirmed inconsistency, attribution to complete actual causal chain not yet reproduced"
+  },
+  "scope": "Resolve exact global/default namespace identity contract across briefing Build/Generate/Save/Load/history/readiness and existing legal definitions. Regression positive global and named namespace events including accepted model change/store reload/resume; retain malformed identity/digest/provenance/event/reference rejection. Verify no canonical bypass/history tampering/fake approval. Fix only concrete related code/native documentation/example findings; preserve old measured candidate/source/archives.",
+  "maxBuilds": 1,
+  "maxTargetedMechanicalTestBatches": 2,
+  "maxNewReadonlySourceReviewers": 1,
+  "sourceReviewerModel": "gpt-6-luna",
+  "sourceReviewerReasoning": "high",
+  "sourceReviewerForkTurns": "none",
+  "sourceReviewerMaxSeconds": 600,
+  "allowedChecks": "Ordinary source/unit/deterministic fresh fixture integration, including genuine non-provider briefing/readiness CLI checks where needed; fake test delegates labeled mechanical, no semantic/autonomous readiness claim. No redundant full suite until exact change justifies required gates.",
+  "maxProviderCallsNativeActorProductProofsStudyTrials": 0,
+  "originalProductProofJobsRemainClosed": 3,
+  "originalStudyActualsRemainClosed": 6,
+  "noPrivateStudyInputsOrEvaluation": "Only public error/source contract is supplied; never read Scientist history/evidence/private cases or ask trial actor for private final feedback. Use own fresh generic fixture independently.",
+  "hostMeasuredCellReleasedAfterKnownTerminal": true,
+  "comprehensive10800sSuiteStillUnactivated": true,
+  "mainCondition": "Regular PR89 source gates+independent review+usable normal workflow evidence required. Current source CI PASS does not prove successful autonomous delivery; no automatic merge or release from this repair.",
+  "handoff": "Exact clean source/publicRemote SHA, focused positive/negative checks, independently reviewed delta, exact binary/runtime/installation if changed, own known limitations and required next usability proof. Report once; no ACK/occupation/followup loop."
+}

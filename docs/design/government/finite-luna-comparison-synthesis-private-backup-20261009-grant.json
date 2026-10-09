@@ -1,0 +1,29 @@
+{
+  "key": "finite-luna-comparison-synthesis-private-backup-20261009",
+  "issuedUtc": "2026-10-09T11:20:57Z",
+  "notAfterUtc": "2026-10-09T11:30:57Z",
+  "maxActiveSeconds": 600,
+  "ownerThread": "01a1169c-3df6-7571-997d-48ab57365875",
+  "rootThread": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "authority": "Existing direct human relevant-states-remote-backup and finite-study synthesis mandate; mechanical exact-document backup only",
+  "scope": "Copy two exact Root Documents artifacts unchanged into own PRIVATE research history; ordinary allowlisted git commit/push/reconcile exact remote and file hashes. No semantic synthesis rewrite, new evaluation, source/runner/product changes, tests/builds/reviewer/provider/model/transport/actual execution. Preserve original terminal evidence/candidates. Report once exact remote ref/SHA/file hashes or real blocker, no ACK.",
+  "inputs": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect-Luna-Case-Study-Synthesis-20261009.md",
+      "sha256": "db883b2ffd3a266b599942d2f626e1ce3ef5e31472f7ed5bfb3f56bc63cb8ff6"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect-Luna-Case-Study-Synthesis-20261009.binding.json",
+      "sha256": "4e53c1dff59703024893283ddc78a88c655dac1cba1db94d2c1a0f37e8829970"
+    }
+  ],
+  "destinationRemote": "https://github.com/TheGlacius/markitect-research-backup.git",
+  "destinationRef": "refs/heads/codex/government-scientist",
+  "maxNewModelActorsReviewersProductProofsTrialsTestsBuildsTransportProbes": 0,
+  "maxActualFullStartsOverall": 6,
+  "actualFullStartsConsumed": 6,
+  "newActualQuote": 0,
+  "noPublicOriginPushPrivateContent": true,
+  "noForceAllMirrorProtectionBypass": true,
+  "stopOnFailureNoAutomaticRetryPhase": true
+}
