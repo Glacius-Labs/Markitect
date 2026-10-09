@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T17:18:44Z",
+  "updatedUtc": "2026-10-09T17:21:12Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16183,7 +16183,17 @@
       "checksAndReview": "Owner-reported focused tests/vet/architecture/check/impact and independent fixes; Root read handoff and verified source/remote, no rerun",
       "acceptance": "Module checkpoint available for Integration, P05 composition/coverage/parity/runtime still open",
       "knownCoverageGap": "check-artifacts passes existing inventory but new five paths not yet accounted",
-      "actualJobs": 0
+      "actualJobs": 0,
+      "diagnosticCorrection": {
+        "sha": "15e199783bc0c8a725cba15236e8c59c62ea4d36",
+        "verifiedUtc": "2026-10-09T17:21:12Z",
+        "rootVerified": "Clean local exact SHA, exact public remote, two-file tools.go/mcp_test.go delta; no Root tests/native calls",
+        "ownerReported": "Focused tests/vet and independent bounded review passed; safe sentinel classifications and operation-specific recovery; no invented runId",
+        "integrationInstruction": "One correction commit atop prior P05; composition-owned safe PublicErrorMapper for known typed fields; no raw error/providerstderr/credentials/localpaths, shape bounds do not prove semantic safety",
+        "status": "SOURCE_CHECKPOINT_FOR_INTEGRATION_NOT_NATIVE_ACCEPTANCE",
+        "newScopeGrant": false,
+        "nativeCalls": 0
+      }
     },
     "integration": {
       "verifiedRemoteCheckpoint": "bb79936fb7676cf91c553510bc469fefd5f19f60",
