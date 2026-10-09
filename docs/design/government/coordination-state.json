@@ -16395,6 +16395,21 @@
         "newLeaseQuota": false,
         "fullSuite": "Owner reports active; vet/artifacts/fixedcanonical9schemasPASS",
         "publicCheckpointOwnerConfirmed": "f2e5c05bd80b0f118aac554ab45b5292b082bee9"
+      },
+      "controlledCloseAndRuntimeEdit": {
+        "ownerReported": "One exact provider-free original workspace Close after independent ownership/quiescence and zero-delta recheck. Original journal closed, receipt preserved, no cached result/replay.",
+        "cleanupRecordSha256": "ab006dd264799fdcbd4b9b847bce33963901eb4803b6e631c3f8a2e7ac03dae9",
+        "privateProjectCommitOwnerBound": "45f4ffc3dc69789e2b65275f8c8e1bfce89ae857",
+        "runtimeDigestOwnerBound": "382b8c8b08b0c97c9396e9a2ccafe6dc3fe68befb16bc2a219701fbcde94f966",
+        "profiles": "3workspace Managers,3readonly Reviewers,1readonly Verifier",
+        "remainingKnownStarts": 255,
+        "guardedEdit": "Owner reports preview and exact digest write/commit positive, structure/allotherpins/limits unchanged",
+        "sourceSha": "f2e5c05bd80b0f118aac554ab45b5292b082bee9",
+        "next": "Fresh normal readiness/ack/Plan binding pending; no newActual yet",
+        "rootQualification": "Owner lifecycle/runtime callback, exact private cleanup/runtime artifact independent verification pending full handoff",
+        "newActualStarts": 0,
+        "leaseEndUnchanged": "2026-10-10T00:26:23Z",
+        "wholeSuite": "RUNNING_OWNER_SESSION19479"
       }
     }
   },
