@@ -1,0 +1,69 @@
+{
+  "scope": "New correction package payloads, excluding this manifest",
+  "files": {
+    "activation-proposal.json": {
+      "sha256": "e16660f60d59954ac403f6188ae6187b28ca46ba560036955e4464d78af4995b",
+      "bytes": 1123
+    },
+    "batch-reservation.json": {
+      "sha256": "f36c21c33b879f01269246824038dc16a9ca7c2ec9eef6c18313ad02df99cc0a",
+      "bytes": 521
+    },
+    "bindings.json": {
+      "sha256": "0222304902e26e5ace6c08c5826c052215160254f6616b2933e15510074c53c9",
+      "bytes": 5510
+    },
+    "continuation-anchor.json": {
+      "sha256": "85f95c7b6a63a0177a8e893157f0a7a64edbbf4382682378af8a872bb3634fd5",
+      "bytes": 486
+    },
+    "fix-grant.json": {
+      "sha256": "53da947ddc53f8b177e39fd3eff21d54ba8864d629aa9d31adb96a3a128f77cf",
+      "bytes": 2056
+    },
+    "HANDOFF.md": {
+      "sha256": "cb002ba3a8b401b72312961f61903841d58d35f8fcbe83e2f06ff98c98ab41d2",
+      "bytes": 3907
+    },
+    "mechanical-receipt.json": {
+      "sha256": "18105671c6bb5990cf3203a0756493e261161e9b9adde5762a8944c376996d95",
+      "bytes": 711
+    },
+    "mechanical.stderr.txt": {
+      "sha256": "28435025f672c5d4ef4d37e536b7b7c6cd066bf14604c119d876b0c383849dc9",
+      "bytes": 2208
+    },
+    "mechanical.stdout.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "metadata-receipt.json": {
+      "sha256": "b720398c289a6897e02ca76bd6ac3909fa61eab39293aceb6465f000003c7671",
+      "bytes": 328
+    },
+    "original-file-preservation.json": {
+      "sha256": "5862a7676cc2c0e2d8888a31fbd31510f994743508da02cd18d720aa6f9f4e2f",
+      "bytes": 60532
+    },
+    "prepare-and-validate-once.py": {
+      "sha256": "a45de7bc21f229aaf0b6941996c0d2bcdaa0b701b456d757d9027637edae8178",
+      "bytes": 7844
+    },
+    "resume-help.stderr.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "resume-help.stdout.txt": {
+      "sha256": "186d8922e15809b2072de0fcd943d47ce1745e9ab112b651f3e4e722a17fa969",
+      "bytes": 3183
+    },
+    "source-delta.patch": {
+      "sha256": "9879613658968eb342396d64525129ad9d08e714db548532029a3665758626a6",
+      "bytes": 2535
+    },
+    "trial-reservation.json": {
+      "sha256": "728482a9c43e44568697a4b20edc0f8dc8a3fd851d922ab178f13fdac84ce431",
+      "bytes": 1761
+    }
+  }
+}

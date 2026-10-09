@@ -121,7 +121,7 @@ def cell(case, arm, seed_repo, target, state_dir):
 
 def command(executable, repo, last_message, session_id=None, assessment=False):
     # Normal project/user configuration, rules and tools remain active. No output DTO.
-    cmd = [str(executable), "exec"]
+    cmd = [str(executable), "exec", "--sandbox", "workspace-write"]
     if session_id:
         cmd += ["resume", session_id]
     else:

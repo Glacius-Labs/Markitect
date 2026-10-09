@@ -1,0 +1,14 @@
+{
+  "grantId": "conventional-explicit-workspace-entry-fix-20261009",
+  "reservedUtc": "2026-10-09T06:09:02.574967+00:00",
+  "batch": 1,
+  "maxWallSeconds": 180,
+  "scope": "Existing eight fixtures plus one initial/resume/assessment argv regression",
+  "sourceHashes": {
+    "tests/test_nest.py": "9057ca2f225fc88d1a2cfa10a3959a699a7a8a68de77f98ae7cd0bfcdb66d3f9",
+    "public/nest.py": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635"
+  },
+  "modelCalls": 0,
+  "reviewerCalls": 0,
+  "actualStarts": 0
+}

@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+    "exec",
+    "resume",
+    "--help"
+  ],
+  "startedUtc": "2026-10-09T06:09:02.534046+00:00",
+  "endedUtc": "2026-10-09T06:09:02.574485+00:00",
+  "wallSeconds": 0.0404562999974587,
+  "exitCode": 0,
+  "modelCalls": 0
+}

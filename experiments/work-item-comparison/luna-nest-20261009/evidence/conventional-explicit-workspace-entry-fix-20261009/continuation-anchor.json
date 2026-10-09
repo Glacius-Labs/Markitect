@@ -1,0 +1,13 @@
+{
+  "status": "PREPARED / actual disabled / await Overseer activation",
+  "grantId": "conventional-explicit-workspace-entry-fix-20261009",
+  "newActualStarts": 0,
+  "oldGlobalStarts": 2,
+  "mechanicalBatches": 1,
+  "newModelActors": 0,
+  "newReviewerActors": 0,
+  "sourceBasis": "7cd94977274fc6ea86e469ba6b849c3e92f09154",
+  "absoluteActualEndUtc": "2026-10-09T09:12:43Z",
+  "mustHaveFull7200SecondsBeforeStart": true,
+  "completionCallback": "pending once after private commit/push"
+}

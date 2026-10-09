@@ -1,0 +1,22 @@
+{
+  "executionAuthorized": false,
+  "grantId": "conventional-roombook-explicit-workspace-trial-20261009",
+  "cell": "roombook/conventional",
+  "model": "gpt-6-luna",
+  "reasoning": "high",
+  "preparedCommit": "181a16de508f1fcbcc74622ffa09441613e6bddd",
+  "executableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "nativeHome": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\homes\\roombook-conventional-explicit-workspace",
+  "nativeHomeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+  "nativeConfigurationReviewed": false,
+  "freshContextConfirmed": false,
+  "maxCellWallSeconds": 7200,
+  "maxImplementationSessions": 8,
+  "notAfterUtc": "2026-10-09T09:12:43Z",
+  "markitectReadinessReceipt": null,
+  "normalEntry": "Corrected nest.py drive with explicit normal --sandbox workspace-write; Root exact activation required",
+  "sourceBasis": "7cd94977274fc6ea86e469ba6b849c3e92f09154",
+  "setupMaxWallSeconds": 900,
+  "oldOriginalGrantReused": false,
+  "runnerSha256": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635"
+}

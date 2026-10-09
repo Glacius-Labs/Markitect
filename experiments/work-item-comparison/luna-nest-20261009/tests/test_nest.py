@@ -107,7 +107,19 @@ class Mechanics(unittest.TestCase):
         nest.write(self.grant, grant)
         with self.assertRaisesRegex(ValueError, "grant changed"):
             nest.run(self.state, self.grant, sys.executable)
-        self.assertEqual(nest.command("codex", self.repo, "last", "fixture-own")[1:3], ["exec", "resume"])
+        self.assertEqual(nest.command("codex", self.repo, "last", "fixture-own")[1:5],
+                         ["exec", "--sandbox", "workspace-write", "resume"])
+
+    def test_normal_workspace_selector_for_initial_resume_and_assessment(self):
+        common = ["--model", "gpt-6-luna", "--config", 'model_reasoning_effort="high"',
+                  "--json", "--output-last-message", "last", "-"]
+        for name, session, assessment in (("initial", None, False),
+                                          ("resume", "fixture-own", False),
+                                          ("assessment", None, True)):
+            with self.subTest(entry=name):
+                target = ["resume", session] if session else ["--cd", str(self.repo)]
+                self.assertEqual(nest.command("codex", self.repo, "last", session, assessment),
+                                 ["codex", "exec", "--sandbox", "workspace-write"] + target + common)
 
     def test_snapshot_retains_dirty_separate_from_main_and_no_replay(self):
         (self.repo / "unfinished.txt").write_text("retained", encoding="utf-8")
