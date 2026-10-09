@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T05:24:08Z",
+  "updatedUtc": "2026-10-09T05:24:53Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -37,8 +37,8 @@
     "scenarioFrameworkUpdatedUtc": "2026-10-09T04:25:49Z",
     "ownDesignSuiteMandateUpdatedUtc": "2026-10-09T04:31:41Z",
     "earlyConventionalMandateUpdatedUtc": "2026-10-09T04:45:30Z",
-    "currentPromptSha256": "b2249dba0c3663e2f2dde85142c0b3a8daffb7b0f16d9c897c8cb14db54afef5",
-    "lastUpdatedUtc": "2026-10-09T05:16:35Z",
+    "currentPromptSha256": "d8c66acf25d3f3dca2a8036cc1d4d7fc9934b6aebe3326e909d1fa66e0f5a40e",
+    "lastUpdatedUtc": "2026-10-09T05:24:53Z",
     "currentPurpose": "Two-hour quiet callback fallback: Design main/product tests and independent early Conventional Luna case study"
   },
   "threads": [
