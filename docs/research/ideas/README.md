@@ -27,6 +27,8 @@ The five linked ideas below came together in one user contribution. They are a s
 
 Marketing relayed the same five suggestions in chat `01a12220-9cbb-7432-8762-3c4c4b8db9de` on 2026-10-09, with the same direct user-source attribution. This is a linked cross-chat referral, not a second idea source or an adopted marketing claim. Its clarification that a precedent store would not itself prove a learning AI is retained as a boundary when discussing IDEA-20261009-009.
 
+Concepts recorded the same direct user contribution as `USER-20261009-03` in `docs/design/concepts/decision-framework-ideas-20261009.md` in its own worktree. This is a cross-chat reference to the same five ideas, not a duplicate entry here. Concepts clarifies the “learning mechanism” as a referencable collection of reasoned user decisions, with neither model training nor automatic rule changes implied. It also identifies continued validity after context changes, local versus higher-level guidance, the severity scale and unnecessary escalation as open questions; these nuances are reflected in IDEA-20261009-009 through -012.
+
 ## Sources and status
 
 The seed entries below come from the user's product statement in the original Markitect discussion, Codex chat `01a121f1-b948-7050-ae5d-9921b99db9c0`. The principal source is turn `01a12217-533b-7633-a10d-d1cd82859e4f`, user message `01a12217-53aa-7733-985c-7b5cd63b92cf`, dated 2026-10-09. One later clarification is in turn `01a12204-e5ab-74a0-ad2d-820b2c6c6006`, user message `01a12204-e60f-78c0-adee-2cf16f2f6b8d`. The decision and Government proposals are from turn `01a1224c-b070-76c0-8cd9-ad32b16b3e3b`, user message `01a1224c-b0ba-7bf2-ad59-feaa68c260e7`.
