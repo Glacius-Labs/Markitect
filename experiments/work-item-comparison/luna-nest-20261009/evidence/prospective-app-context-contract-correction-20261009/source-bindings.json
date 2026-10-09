@@ -3,8 +3,8 @@
   "utc": "2026-10-09T07:29:32.584504+00:00",
   "scope": "Public prospective context instructions and execution-only dispatch documentation",
   "sourceBindings": {
-    "public/app-entry.md": "f310f94780d87c445cd2359409dbaaaa91ff56670c20630434f94b3bad3860f5",
-    "public/oldschool-app-dispatch.md": "23496e6dc045e066b370771d5d294bf62dd8355ecc549bf71c0ea96dfae0c0b9",
+    "public/app-entry.md": "63dff8fddec0562fd7929e9d09b49443e8a42c21d4d3ce787518aed437e09655",
+    "public/oldschool-app-dispatch.md": "be8e2a003c561ad7e9d0cad809ea365e2c1b8535b7dbbf42f2954ede931d3751",
     "public/app_ledger.py": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20",
     "public/nest.py": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635",
     "public/evaluation/assessor-prompt.txt": "7eec156128339344121c1040c3f6b76f1cc5545c239eb99b6462420163a72741",
@@ -20,5 +20,7 @@
   "unallocatedWithinMax6": 2,
   "oldEvidenceRescored": false,
   "futureActualGrantRequired": true,
-  "actualContextAndRuntime": "NOT RUN; origin categories/serving/cleanup attestation require actual own receipts"
+  "actualContextAndRuntime": "NOT RUN; origin categories/serving/cleanup attestation require actual own receipts",
+  "rootFinalSteering": "Conventional needs own common/input/App-owner freeze and separate finite Root grant; no Design-readiness prerequisite; temporary running Proof2 host binding only.",
+  "utcFinalSteering": "2026-10-09T07:30:13.946772+00:00"
 }
