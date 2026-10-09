@@ -89,7 +89,7 @@ native_acceptance:
     cumulative_known_estimated_cost_micros: 750309
     cumulative_cost_accounting: partial_estimate_not_invoice
     reviewer_status: closed_exact_seven_scalar_fix
-  latest_actual:
+  attempt_5:
     batch_id: a01-mxc-2d3a3d367b954e52be48ef8b86fc3fb3
     status: failed_not_passed
     execution_started: true
@@ -195,12 +195,54 @@ native_acceptance:
     readonly_dotnet_26_binding_role_start_requests: 0
     readonly_dotnet_26_binding_provider_starts: 0
     native_actual_started: true
+  latest_actual:
+    batch_id: a01-simple-0f42a50b1880428ba81817600190b31e
+    attempt_number: 6
+    native_run_number: 5
+    status: failed_not_passed
+    source_revision: a9580036eb96ae0d9872897bb57af97b4d9a7b56
+    binary_sha256: c6be48ca9da501a71ec89287653d3dd3b2d465375a42eba79f11b5af0a835e72
+    owned_project_revision: eaa11e9969db66e6c1a5cd80949cfb757074ce54
+    normal_plan_id: d346ab983955539ab3216d236c7a1f32
+    normal_plan_sha256: a5eaa8da233c6669ac7cce9c74ef514da829fff443ab4fbd865129f2019d163f
+    runtime_sha256: e8e615a1fac6e4e05d07bcad90c46368ce96c75edbf1937d999a6a34430eb089
+    readiness_sha256: 16d76c53836c4f5e3b941274fd66fe73cc1a42953fa71ff8499fd751b0c19502
+    private_record_sha256: ee141da4395cce3765265dd7095318350f5ffe00893108694da0110de9ac68c6
+    observer_id: b8d0a9dba2ce46809e3f0026de379f31
+    terminal_utc: '2026-10-09T23:33:58.984539Z'
+    observer_exit_code: 2
+    observer_boundary_observed: false
+    native_root_completed: true
+    native_run_id: eaf35f26bb3f4fa36a1cc4a1e3223d70
+    native_session_id: 01a12303-0289-7031-a755-28ee779cdd89
+    native_turn_id: 01a12303-056d-7160-9963-ed35ac511b16
+    workspace_id: 1f5d9a11b070b02b83702d847b1f8ed1
+    workspace_closed_with_scoped_readme_delta: true
+    requested_backend: mxc
+    effective_backend: unknown
+    tools_and_scoped_readme_edit_passed: true
+    failure: candidate_file_wire_dto_invalid_digest_and_base64_copied_from_input_artifact
+    helper_or_manager_overlap: false
+    review_verify_apply_recovery_observed: false
+    input_tokens: 784028
+    output_tokens: 7635
+    cached_input_tokens: 718336
+    attempt_estimated_cost_micros: 799298
+    cumulative_known_role_start_requests: 6
+    cumulative_known_provider_starts: 5
+    cumulative_estimated_cost_micros: 1698251
+    cost_accounting: partial_observed_lower_bound_not_invoice
   next_batch:
-    status: simplified_a01_authorized_pins_pending
+    status: concrete_output_contract_fix_in_progress
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
     new_batch_pins: none
-    execution_requires_current_readiness_and_exact_batch_pins: true
+    execution_requires_fresh_readiness_and_exact_batch_pins: true
+    failed_batch_replay_or_retry: false
+    no_seventh_actual_claimed: true
+    owner_repair_in_progress: true
+    repair: bind_candidate_file_to_pinned_turn_start_output_schema_existing_report_json_and_host_harvest
+    next_shared_native_defaults: { memories: false, login: false }
     intended_profile:
       fresh_native_roles: workspace_permission
       windows_backend: mxc
@@ -210,29 +252,25 @@ native_acceptance:
       scratch_workspace: fresh_owned_os_temp
       hidden_dotnet_binding_gate: false
       harness_or_canary: false
-  current_source_checkpoint:
+  prior_source_checkpoint_01de5b30:
     primary_source_revision: 01de5b3003aa17a9f20e79204e9bd3d01b4b962b
+    binary_sha256: ff9eeec9f012083ebdca05ca5be179e57172e5249baee469818be7e137a1533f
     source_worktree_clean: true
     source_pushed: true
-    vcs_modified: false
-    binary_sha256: ff9eeec9f012083ebdca05ca5be179e57172e5249baee469818be7e137a1533f
-    incorporated_source_fixes: [15e955fa, 792dd760, 9fda7a33, 01de5b30]
-    independent_environment_and_approval_reviews: closed
-    isolated_agentexec_setup_mcp_checks: passed
-    isolated_codex_appserver_seconds: 71.730
-    isolated_project_workspace_seconds: 81.414
-    nullable_fix_focused_test_seconds: 43.940
-    nullable_fix_vet: passed
-    whole_build_and_vet: passed
-    fixed_canonical_schema_format_artifact_module_modverify_checks: passed
-    artifact_findings: 0
-    primary_go_tree_matches_isolated_revision_prefix: ea1dbd
-    project_run_full_suite: interrupted_not_validation
-    runtime_readiness_plan_pins: none_for_current_source
     technical_fix_validation_is_not_native_acceptance: true
-    direct_human_hold_lifted: true
-    simplified_a01_authorized: true
-    current_batch_pins: none
+  current_source_checkpoint:
+    latest_committed_source_revision_prefix: e7dc5a67
+    latest_actual_source_revision: a9580036eb96ae0d9872897bb57af97b4d9a7b56
+    latest_actual_binary_sha256: c6be48ca9da501a71ec89287653d3dd3b2d465375a42eba79f11b5af0a835e72
+    latest_canonical_format_artifact_module_schema_modverify_gates: passed
+    latest_strict_markitect_document_check: passed
+    output_schema_review: closed
+    agentexec_setup_project_workspace_full_checks: passed_73_of_76
+    latest_mode_focused_check_seconds: 0.565
+    build_and_vet: passed
+    clean_frozen_binary_for_e7dc5a67: pending
+    native_acceptance: not_passed
+    source_or_runtime_pins_for_next_attempt: none
   prior_batch_history:
     revision: generous-native-limits-20261009
     max_role_wall_seconds: 3600
