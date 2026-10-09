@@ -1,0 +1,88 @@
+{
+  "event": "Third actual genuine native start",
+  "grantId": "conventional-roombook-explicit-workspace-trial-20261009",
+  "acceptedSourceSha": "76a63bdeb0e740241db20ddbd08d4547154acd84",
+  "driverSession": 86030,
+  "driverPid": 45348,
+  "supervisorPid": 48504,
+  "newFullStarts": 1,
+  "globalFullStarts": 3,
+  "ownNativePid": 43816,
+  "nativeStartedUtc": "2026-10-09T06:16:39.445083+00:00",
+  "cellStartedUtc": "2026-10-09T06:16:39.232785+00:00",
+  "cellDeadlineUtc": "2026-10-09T08:16:39.232785+00:00",
+  "argv": [
+    "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+    "exec",
+    "--sandbox",
+    "workspace-write",
+    "--cd",
+    "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-explicit-workspace",
+    "--model",
+    "gpt-6-luna",
+    "--config",
+    "model_reasoning_effort=\"high\"",
+    "--json",
+    "--output-last-message",
+    "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-explicit-workspace\\session-01\\last-message.txt",
+    "-"
+  ],
+  "requestedSandbox": "workspace-write",
+  "requestedModel": "gpt-6-luna",
+  "requestedReasoning": "high",
+  "observedNativeContexts": [
+    {
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      }
+    },
+    {
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      }
+    },
+    {
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      }
+    }
+  ],
+  "firstEntryResult": {
+    "sessionId": "01a11f4e-7bcb-7782-9db7-523a23bead85",
+    "completedTurns": [
+      {
+        "usage": {
+          "input_tokens": 72406,
+          "cached_input_tokens": 51200,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 775,
+          "reasoning_output_tokens": 349
+        },
+        "event": {
+          "type": "turn.completed",
+          "usage": {
+            "input_tokens": 72406,
+            "cached_input_tokens": 51200,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 775,
+            "reasoning_output_tokens": 349
+          }
+        }
+      }
+    ],
+    "errors": [],
+    "invalidLines": 0
+  },
+  "servingModel": null,
+  "cost": null,
+  "meaning": "Actual request context and completed entry receipts; not serving attestation or engineering success"
+}
