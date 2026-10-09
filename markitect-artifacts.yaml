@@ -2420,6 +2420,8 @@ spec:
       owner: bounded-agent-execution-host
     - path: src/internal/host/codexappserver/process.go
       owner: bounded-agent-execution-host
+    - path: src/internal/host/codexappserver/process_args_test.go
+      owner: bounded-agent-execution-host
     - path: src/internal/host/codexappserver/process_linux.go
       owner: bounded-agent-execution-host
     - path: src/internal/host/codexappserver/process_other.go
