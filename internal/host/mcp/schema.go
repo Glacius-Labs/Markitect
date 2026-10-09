@@ -15,6 +15,11 @@ import (
 
 // Schemas derive from the DTOs actually decoded, avoiding a second operation contract.
 func schema(t reflect.Type) map[string]any {
+	// RawMessage emits its underlying JSON value, unlike ordinary []byte's
+	// base64 string. The shared service owns validation of this embedded value.
+	if t == reflect.TypeFor[json.RawMessage]() {
+		return map[string]any{}
+	}
 	if t == reflect.TypeFor[projectrun.Duration]() || t == reflect.TypeFor[[]byte]() {
 		return map[string]any{"type": "string"}
 	}

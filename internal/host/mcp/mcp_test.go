@@ -269,6 +269,49 @@ func TestUnsignedOutputSchema(t *testing.T) {
 	}
 }
 
+func TestRawMessageJSONValueAndByteBase64Schemas(t *testing.T) {
+	type dto struct {
+		Options json.RawMessage `json:"options"`
+		Bytes   []byte          `json:"bytes"`
+	}
+	for _, value := range []string{`{"model":"fixture","settings":{"rights":true}}`, `["fixture",1]`, `"fixture"`, `42`, `true`, `null`} {
+		original := dto{Options: json.RawMessage(value), Bytes: []byte{0, 255, 1}}
+		raw, err := json.Marshal(original)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var decoded dto
+		if err := decodeTyped(raw, schema(reflect.TypeFor[dto]()), &decoded); err != nil {
+			t.Fatalf("RawMessage %s rejected: %v", value, err)
+		}
+		if !bytes.Equal(decoded.Options, original.Options) || !bytes.Equal(decoded.Bytes, original.Bytes) {
+			t.Fatalf("value changed: %+v", decoded)
+		}
+		var output any
+		d := json.NewDecoder(bytes.NewReader(raw))
+		d.UseNumber()
+		if err := d.Decode(&output); err != nil {
+			t.Fatal(err)
+		}
+		if err := validate(output, schema(reflect.TypeFor[dto]())); err != nil {
+			t.Fatalf("encoded output schema mismatch: %v", err)
+		}
+		if !bytes.Contains(raw, []byte(`"bytes":"AP8B"`)) {
+			t.Fatalf("byte encoding changed: %s", raw)
+		}
+	}
+	if schema(reflect.TypeFor[[]byte]())["type"] != "string" {
+		t.Fatal("byte schema changed")
+	}
+	if len(schema(reflect.TypeFor[json.RawMessage]())) != 0 {
+		t.Fatal("RawMessage is not a JSON-value schema")
+	}
+	var bad dto
+	if err := decodeTyped([]byte(`{"options":{},"bytes":[0,255,1]}`), schema(reflect.TypeFor[dto]()), &bad); err == nil {
+		t.Fatal("array accepted for base64 bytes")
+	}
+}
+
 func TestSafeHostClassificationAndOperationRecovery(t *testing.T) {
 	for _, tc := range []struct {
 		err  error
