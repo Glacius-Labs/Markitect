@@ -71,7 +71,7 @@
   "newFullTrialSlots": 0,
   "newNativeCellReservations": 0,
   "newSetupModelCalls": 0,
-  "status": "START AUTHORIZED; actual cell start remains unobserved until Scientist records first real activation",
+  "status": "START AUTHORIZED and dispatched; fresh actualScientistturnactive, firstactualcellactivationstillunobserved",
   "conditions": [
     "Start now in this concrete grant: ConventionalGF then ClassicMainGF. No further generic preparation/readiness canaries. Exact existing24public stagedinputs/rubric/private5evaluation/source/roleDTObriefing bound by frozenhashes. No repairs to frozenharness/protocol/evaluator under executiongrant.",
     "Before each cell require full7200s remaining until05:32:04Z and record actualstart/end/deadline; first cell may end earlier, second only when fullownwindowfits. No truncating budgets for comparison, extension/refill/replacement/newBF/Design/Govcells. If second cannotadmit reportNOTRUN.",
@@ -83,5 +83,8 @@
     "OwnPort0/stdout/PID/Popenhandles passed explicitly; no list_agents/globalprocessinventory/discoveryofforeignowners. Eachfile/shellcall exactowncwd, boundedwaits<=60s/stop_due/interruptonlyownIDs/finallyownservices; no OSproviderterminationguarantee.",
     "Freeze candidate beforeindependentassessment, preserve rawfailed/error/incomplete/contaminatedresults separately; unknown serving/tokens/cost/humanTime remainnull withoutreceipts. Caseexecution/roleconformance/outputquality distinct. Setup3Main/5reservation/4activations plus separateRootcoordreviews remainsharedoverhead,notfree orcellresults.",
     "At actualstart/materialblocker/terminalcompletion callbackonce toRoot with safeactualevidence, noACKloops. Aftereachcell cleanprivatecheckpoint/verifiedresearch-backupSHA; no privatevectors/foreigncellresults toimplementers. Continueconcreteactivegrant aftercompaction; atpairterminal provide bounded absolute/reference-relative outcomes/effort/errors/limits. No purchases/APIintegration/policybypass/mainreleasechange."
-  ]
+  ],
+  "sentUtc": "2026-10-09T01:40:36Z",
+  "grantCommit": "46b640b",
+  "deliveryConfirmed": true
 }
