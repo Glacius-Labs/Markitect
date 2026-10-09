@@ -5,16 +5,19 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"go.yaml.in/yaml/v3"
 )
 
 func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
@@ -92,7 +95,7 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 	}
 }
 
-func TestBuildRuntimeDefaultsCodexToNativeLunaHighAndBindsInstructions(t *testing.T) {
+func TestBuildRuntimeDefaultsNativeModelAndBindsInstructions(t *testing.T) {
 	root := t.TempDir()
 	writeNativeInstructions(t, root)
 	provider := testTool(t, root, "codex.exe", true)
@@ -223,18 +226,17 @@ func TestDiscoverProviderUsesCurrentWindowsCodexVendorPath(t *testing.T) {
 	}
 }
 
-func TestBuildRuntimeRejectsUnsupportedNativeProfiles(t *testing.T) {
+func TestBuildRuntimeRejectsUnsupportedNativeModelEffortAndProvider(t *testing.T) {
 	root := t.TempDir()
 	provider := testTool(t, root, "codex.exe", true)
 	provider.Version = "codex-cli 0.162.0"
 	project := &projectwork.Project{Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
 	found := Discovery{Provider: "codex", ProviderBinary: provider}
-	base := Options{Provider: "codex", Model: "gpt-6-luna", Effort: "high", CodexProfile: "luna-high", InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1, MaxCostMicros: 2}
+	base := Options{Provider: "codex", Model: "gpt-6-luna", Effort: "high", InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1, MaxCostMicros: 2}
 	cases := []struct {
 		name   string
 		change func(*Options, *Discovery)
 	}{
-		{"unsupported profile", func(o *Options, _ *Discovery) { o.CodexProfile = "other" }},
 		{"different model", func(o *Options, _ *Discovery) { o.Model = "gpt-6-sol" }},
 		{"different effort", func(o *Options, _ *Discovery) { o.Effort = "medium" }},
 		{"different CLI version", func(_ *Options, d *Discovery) { d.ProviderBinary.Version = "0.161.0" }},
@@ -251,6 +253,152 @@ func TestBuildRuntimeRejectsUnsupportedNativeProfiles(t *testing.T) {
 				t.Fatal("unsupported native setup was accepted")
 			}
 		})
+	}
+}
+
+func TestBuildRuntimeExplicitCodexProfileIsWriterOnlyAndPreviewIsDigestGuarded(t *testing.T) {
+	project := setupProjectFixture(t)
+	provider := testTool(t, t.TempDir(), providerName(), true)
+	provider.Version = "codex-cli 0.162.0"
+	options := Options{
+		Provider: "codex", Model: "gpt-6-luna", Effort: "high", CodexProfile: ":workspace",
+		InputMicrosPerMillion: 7, OutputMicrosPerMillion: 11, MaxCostMicros: 5000,
+	}
+	discoveryCalls := 0
+	preview, err := previewEditWithDiscovery(project, options, func(got Options) (Discovery, error) {
+		discoveryCalls++
+		if got.CodexProfile != ":workspace" {
+			t.Fatalf("explicit Codex profile was lost before discovery: %+v", got)
+		}
+		return Discovery{Provider: "codex", ProviderBinary: provider}, nil
+	})
+	if err != nil {
+		t.Fatalf("preview runtime edit without starting an actor: %v", err)
+	}
+	if discoveryCalls != 1 || preview.EditPlan.Digest == "" || len(preview.Mutation.Files) != 1 || preview.Mutation.Files[0].Path != projectwork.RuntimePath {
+		t.Fatalf("preview is not a single digest-bound runtime edit: calls=%d preview=%+v", discoveryCalls, preview)
+	}
+	var runtimeConfig projectrun.Runtime
+	if err := yaml.Unmarshal([]byte(preview.Mutation.Files[0].Content), &runtimeConfig); err != nil {
+		t.Fatalf("decode proposed runtime: %v", err)
+	}
+	if err := projectrun.ValidateRuntime(runtimeConfig); err != nil {
+		t.Fatalf("proposed runtime is invalid: %v", err)
+	}
+	if runtimeConfig.Review == nil || len(runtimeConfig.Agents) != 1 || len(runtimeConfig.Review.Agents) != 1 {
+		t.Fatalf("runtime lost Manager or separate Review binding: %+v", runtimeConfig)
+	}
+	managerID := project.Report.Managers[0].ID
+	manager := runtimeConfig.Agents[managerID]
+	reviewer := runtimeConfig.Review.Agents[managerID]
+	if manager.AppServer == nil || reviewer.AppServer == nil {
+		t.Fatalf("runtime YAML omitted App Server settings: %s", preview.Mutation.Files[0].Content)
+	}
+	if manager.AppServer.PermissionProfile != ":workspace" || reviewer.AppServer.PermissionProfile != ":read-only" {
+		t.Fatalf("explicit writer profile must not widen the independent reviewer: manager=%+v reviewer=%+v", manager.AppServer, reviewer.AppServer)
+	}
+	assertSameNativePins(t, manager, reviewer, provider, options)
+
+	if _, err := projectwork.ApplyEdit(project.Root, preview.EditPlan, "sha256:stale"); err == nil || !strings.Contains(err.Error(), "expected digest") {
+		t.Fatalf("stale setup edit digest was not rejected: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(project.Root, filepath.FromSlash(projectwork.RuntimePath))); !os.IsNotExist(err) {
+		t.Fatalf("rejected preview changed runtime file: stat error=%v", err)
+	}
+	if _, err := projectwork.ApplyEdit(project.Root, preview.EditPlan, preview.EditPlan.BaseDigest); err != nil {
+		t.Fatalf("apply exact reviewed setup digest: %v", err)
+	}
+	written, err := os.ReadFile(filepath.Join(project.Root, filepath.FromSlash(projectwork.RuntimePath)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var applied projectrun.Runtime
+	if err := yaml.Unmarshal(written, &applied); err != nil || applied.Agents[managerID].AppServer.PermissionProfile != ":workspace" || applied.Review.Agents[managerID].AppServer.PermissionProfile != ":read-only" {
+		t.Fatalf("guarded write did not preserve role profiles: runtime=%+v err=%v", applied, err)
+	}
+}
+
+func TestBuildRuntimeOmittedProfileInheritsForEveryRoleAndMalformedProfileFailsConfigValidation(t *testing.T) {
+	root := t.TempDir()
+	writeNativeInstructions(t, root)
+	provider := testTool(t, root, providerName(), true)
+	provider.Version = "codex-cli 0.162.0"
+	project := &projectwork.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
+	found := Discovery{Provider: "codex", ProviderBinary: provider}
+	base := Options{Provider: "codex", Model: "gpt-6-luna", Effort: "high", InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1, MaxCostMicros: 2}
+	config, err := BuildRuntime(project, base, found)
+	if err != nil {
+		t.Fatalf("default setup: %v", err)
+	}
+	managerID := project.Report.Managers[0].ID
+	if config.Agents[managerID].AppServer.PermissionProfile != "" || config.Review.Agents[managerID].AppServer.PermissionProfile != "" {
+		t.Fatalf("omitting --codex-profile must preserve inherited settings for all roles: manager=%+v reviewer=%+v", config.Agents[managerID].AppServer, config.Review.Agents[managerID].AppServer)
+	}
+	base.CodexProfile = string([]byte{0xff})
+	if _, err := BuildRuntime(project, base, found); err == nil || !strings.Contains(err.Error(), "valid UTF-8") {
+		t.Fatalf("malformed profile did not fail native App Server config validation: %v", err)
+	}
+}
+
+func setupProjectFixture(t *testing.T) *projectwork.Project {
+	t.Helper()
+	root := t.TempDir()
+	manifest := []byte("apiVersion: project.markitect.example.org/v1alpha1\nname: setup-test\nmodelFiles:\n  - .markitect/model/manager.yaml\ninventoryRoots: []\nexclusions: []\n")
+	manager := []byte("apiVersion: project.markitect.example.org/v1alpha1\nkind: Manager\nmetadata:\n  name: root\n  namespace: \"\"\npurpose: Own the setup test project.\nspec:\n  owns:\n    - .\n  instructions: Implement only the requested bounded changes.\n")
+	s := &snapshot.Snapshot{Files: map[string][]byte{
+		projectwork.ManifestPath:        manifest,
+		".markitect/model/manager.yaml": manager,
+	}, Modes: map[string]string{
+		projectwork.ManifestPath:        snapshot.RegularMode,
+		".markitect/model/manager.yaml": snapshot.RegularMode,
+	}}
+	for path, content := range s.Files {
+		absolute := filepath.Join(root, filepath.FromSlash(path))
+		if err := os.MkdirAll(filepath.Dir(absolute), 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(absolute, content, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeNativeInstructions(t, root)
+	runSetupGit(t, root, "init", "-b", "setup-test")
+	runSetupGit(t, root, "config", "user.email", "setup-test@example.test")
+	runSetupGit(t, root, "config", "user.name", "Setup Test")
+	runSetupGit(t, root, "add", ".")
+	runSetupGit(t, root, "commit", "-m", "setup fixture")
+	project, err := projectwork.Load(root, "")
+	if err != nil {
+		t.Fatalf("load setup fixture project: %v", err)
+	}
+	return project
+}
+
+func runSetupGit(t *testing.T, root string, args ...string) {
+	t.Helper()
+	command := exec.Command("git", append([]string{"-C", root}, args...)...)
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, output)
+	}
+}
+
+func providerName() string {
+	if runtime.GOOS == "windows" {
+		return "codex.exe"
+	}
+	return "codex"
+}
+
+func assertSameNativePins(t *testing.T, manager, reviewer projectrun.Agent, provider Tool, options Options) {
+	t.Helper()
+	if manager.Command != provider.Path || reviewer.Command != provider.Path || len(manager.Args) != 0 || len(reviewer.Args) != 0 || manager.Transport != projectrun.TransportCodexAppServer || reviewer.Transport != projectrun.TransportCodexAppServer {
+		t.Fatalf("permission profile altered native process selection: manager=%+v reviewer=%+v", manager, reviewer)
+	}
+	if manager.Model != options.Model || reviewer.Model != options.Model || manager.ProviderVersion != provider.Version || reviewer.ProviderVersion != provider.Version || manager.AppServer.ReasoningEffort != options.Effort || reviewer.AppServer.ReasoningEffort != options.Effort {
+		t.Fatalf("permission profile altered model/version/effort pins: manager=%+v reviewer=%+v", manager, reviewer)
+	}
+	if !reflect.DeepEqual(manager.InstructionPaths, reviewer.InstructionPaths) || !reflect.DeepEqual(manager.RuntimeFiles, reviewer.RuntimeFiles) || !reflect.DeepEqual(manager.Pricing, reviewer.Pricing) || manager.AppServer.Helpers != reviewer.AppServer.Helpers || manager.AppServer.MaxEventBytes != reviewer.AppServer.MaxEventBytes {
+		t.Fatalf("role-specific permissions changed pinned instructions, provider, pricing or bounded helpers: manager=%+v reviewer=%+v", manager, reviewer)
 	}
 }
 
