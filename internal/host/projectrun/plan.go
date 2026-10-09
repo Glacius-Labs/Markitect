@@ -485,6 +485,68 @@ func planManagers(report projectmodel.Report, baseFiles map[string][]byte, reque
 			targets[manager.ID] = true
 		}
 	}
+	// Typed cross-Manager Statement references are explicit work dependencies.
+	// Include each referenced owner and the ancestors needed to route and
+	// integrate its work before freezing the selected task tree. Prose does not
+	// add edges or broaden this selection.
+	queue := make([]string, 0, len(targets))
+	for id := range targets {
+		queue = append(queue, id)
+	}
+	sort.Strings(queue)
+	statementByID := make(map[string]projectmodel.Statement, len(report.Statements))
+	statementsByOwner := make(map[string][]projectmodel.Statement)
+	for _, statement := range report.Statements {
+		statementByID[statement.ID] = statement
+		statementsByOwner[statement.Owner] = append(statementsByOwner[statement.Owner], statement)
+	}
+	for owner := range statementsByOwner {
+		sort.Slice(statementsByOwner[owner], func(i, j int) bool {
+			return statementsByOwner[owner][i].ID < statementsByOwner[owner][j].ID
+		})
+	}
+	processedManagers := map[string]bool{}
+	for len(queue) > 0 {
+		id := queue[0]
+		queue = queue[1:]
+		if processedManagers[id] {
+			continue
+		}
+		manager, exists := managerByID[id]
+		if !exists {
+			return nil, nil, nil, fmt.Errorf("selected Manager %q was not found", id)
+		}
+		processedManagers[id] = true
+		if manager.Parent != "" && !targets[manager.Parent] {
+			if _, parentExists := managerByID[manager.Parent]; !parentExists {
+				return nil, nil, nil, fmt.Errorf("Manager %s has missing parent %s", id, manager.Parent)
+			}
+			targets[manager.Parent] = true
+			queue = append(queue, manager.Parent)
+		}
+		for _, statement := range statementsByOwner[id] {
+			for _, relation := range []struct {
+				name string
+				ids  []string
+			}{{"requires", statement.Requires}, {"uses", statement.Uses}} {
+				refs := append([]string(nil), relation.ids...)
+				sort.Strings(refs)
+				for _, ref := range refs {
+					target, found := statementByID[ref]
+					if !found {
+						return nil, nil, nil, fmt.Errorf("selected Manager %s statement %s %s missing statement %s", id, statement.ID, relation.name, ref)
+					}
+					if _, ownerExists := managerByID[target.Owner]; !ownerExists {
+						return nil, nil, nil, fmt.Errorf("selected Manager %s statement %s %s statement %s with missing owner %s", id, statement.ID, relation.name, ref, target.Owner)
+					}
+					if !targets[target.Owner] {
+						targets[target.Owner] = true
+						queue = append(queue, target.Owner)
+					}
+				}
+			}
+		}
+	}
 	selected := map[string]bool{}
 	for id := range targets {
 		for current := id; current != ""; current = managerByID[current].Parent {
@@ -496,6 +558,14 @@ func planManagers(report projectmodel.Report, baseFiles map[string][]byte, reque
 	}
 	if len(selected) == 0 {
 		return nil, nil, nil, fmt.Errorf("project model contains no runnable managers")
+	}
+	selectedTasks := make([]ManagerTask, 0, len(selected))
+	for id := range selected {
+		manager := managerByID[id]
+		selectedTasks = append(selectedTasks, ManagerTask{ManagerID: id, ParentTask: manager.Parent})
+	}
+	if _, err := managerDependencies(report, selectedTasks); err != nil {
+		return nil, nil, nil, err
 	}
 	rootCount := 0
 	for _, id := range children[""] {
