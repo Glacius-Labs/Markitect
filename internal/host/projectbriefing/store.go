@@ -171,8 +171,8 @@ func validateEvent(bundle Bundle, event Event) error {
 	if event.ID == "" || len(event.Digest) != 64 || event.ID != "model-change-"+event.Digest[:24] || !fullHexDigest(event.Digest) {
 		return fmt.Errorf("%w: invalid event ID or digest", ErrInvalidBundle)
 	}
-	if event.DefinitionID.APIVersion == "" || event.DefinitionID.Kind == "" || event.DefinitionID.Namespace == "" || event.DefinitionID.Name == "" {
-		return fmt.Errorf("%w: incomplete definition identity", ErrInvalidBundle)
+	if !event.DefinitionID.Valid() {
+		return fmt.Errorf("%w: invalid definition identity", ErrInvalidBundle)
 	}
 	if event.Provenance != bundle.Provenance || event.Category == "" || event.Severity == "" {
 		return fmt.Errorf("%w: event provenance or notification fields do not match", ErrInvalidBundle)

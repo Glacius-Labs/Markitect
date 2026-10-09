@@ -41,6 +41,10 @@ type DefinitionIdentity struct {
 	Name       string `json:"name" yaml:"name"`
 }
 
+// Valid reports whether the identity follows the compiler's structural grammar.
+// An empty Namespace denotes the global namespace; the other fields are required.
+func (i DefinitionIdentity) Valid() bool { return validateDefinitionIdentity(i) }
+
 // Key returns an unambiguous, deterministic representation suitable for map
 // keys and graph endpoints. JSON string escaping keeps user text from colliding.
 func (i DefinitionIdentity) Key() string {
