@@ -84,6 +84,20 @@ class CancellationTests(unittest.TestCase):
         self.assertEqual(status(self.connection, "order-1"), "shipped")
         self.assertEqual(status_for_order(self.connection, "order-1"), "active")
 
+    def test_set_status_cannot_cancel_shipped_order_or_change_reservation(self) -> None:
+        self.connection.execute("UPDATE orders SET status = 'shipped' WHERE id = 'order-1'")
+        with self.assertRaises(InvalidTransition):
+            set_status(self.connection, "order-1", "cancelled")
+        self.assertEqual(status(self.connection, "order-1"), "shipped")
+        self.assertEqual(
+            self.connection.execute("SELECT quantity, status FROM reservations WHERE order_id = 'order-1'").fetchone(),
+            (3, "active"),
+        )
+        self.assertEqual(
+            self.connection.execute("SELECT COALESCE(SUM(quantity), 0) FROM reservations WHERE status = 'active'").fetchone()[0],
+            3,
+        )
+
     def test_release_failure_rolls_back_the_order_change(self) -> None:
         with patch("shop.commerce.cancellation.release_for_order", side_effect=RuntimeError("injected")):
             with self.assertRaisesRegex(RuntimeError, "injected"):

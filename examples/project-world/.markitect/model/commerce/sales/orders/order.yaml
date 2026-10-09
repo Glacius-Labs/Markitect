@@ -6,7 +6,7 @@ metadata:
 purpose: Defines the stable identity and lifecycle of a customer order.
 spec:
   category: concept
-  description: An order has an identity, confirmed or shipped state, and a cancellation terminal state.
+  description: An order has an identity, confirmed or shipped state, and a cancellation terminal state. Shipment is terminal; a shipped order stays shipped.
   public: true
   uses: []
   requires: []

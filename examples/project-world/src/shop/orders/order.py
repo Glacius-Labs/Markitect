@@ -23,8 +23,9 @@ def set_status(connection: sqlite3.Connection, order_id: str, value: str) -> Non
           AND ? IN ('confirmed', 'shipped', 'cancelled')
           AND status IN ('confirmed', 'shipped', 'cancelled')
           AND (status <> 'cancelled' OR ? = 'cancelled')
+          AND (status <> 'shipped' OR ? = 'shipped')
         """,
-        (value, order_id, value, value),
+        (value, order_id, value, value, value),
     )
     if cursor.rowcount != 1:
         row = connection.execute("SELECT status FROM orders WHERE id = ?", (order_id,)).fetchone()
