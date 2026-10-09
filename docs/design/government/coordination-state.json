@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T15:44:34Z",
+  "updatedUtc": "2026-10-09T15:47:04Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -15625,7 +15625,7 @@
       "evidence": "C:/Users/Consiliari/AppData/Local/Temp/codex-native-helper-check-20261009/summary.json",
       "limitation": "CLI configuration proof only; JSON stream omitted spawn event; own rollout contains actual spawn call and return."
     },
-    "ownerCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:43",
+    "ownerCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:44",
     "compatibilityRetentionRequired": false
   },
   "projectCapabilitySkillsRequest": {
@@ -15716,5 +15716,22 @@
       "freshness": "Audit snapshot, not an accepted freeze"
     },
     "interfaceDirection": "CLI remains usable local interface; prospective thin MCP for invoking Markitect and App Server for controlling fresh Codex Managers. Recommendation only, no new implementation grant."
+  },
+  "designerReadinessObservation": {
+    "observedUtc": "2026-10-09T15:47:04Z",
+    "publicHead": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+    "requiredLinuxWindowsCI": "SUCCESS on public head; PR89 still draft",
+    "localHead": "9f1891d3",
+    "localWorktree": "docs/project-workflow.md and internal/tooling/codexrunner/README.md modified",
+    "localDelta": "Native working implementation, ten operation skills, failed receipt persistence, instruction pins, native-only project setup; not yet covered by public CI",
+    "ownerReportedProof": "First CLI invocation blocked before agent start by absolute check command in test model. Owner correcting known model error inside original bounded proof; no model invoked at latest callback.",
+    "rootVerified": "Read-only Git/PR/remote/source record and own compact callback; no new tests or actual model calls",
+    "limits": [
+      "candidate tree has no Git history",
+      "deletions and binary deltas unsupported",
+      "native helper accounting unsupported and helpers disabled; Host-declared Managers remain"
+    ],
+    "mainRecommendation": "Finish current simplification/native package, push coherent source, exact-head required CI and independent review, positive real ordinary delivery including actionable repair and guarded Apply. No additional research phase or interface migration required.",
+    "newExecutionAuthority": false
   }
 }
