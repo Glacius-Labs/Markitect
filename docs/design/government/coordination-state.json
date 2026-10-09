@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T17:10:51Z",
+  "updatedUtc": "2026-10-09T17:18:44Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -484,15 +484,15 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:139",
-      "lastObservedStatus": "idle; stopped by direct user, owner confirmation returned",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:140",
+      "lastObservedStatus": "active: fresh Playground preparation only; historical actual trials remain closed",
       "activeTurn": {
         "id": "01a11f01-0b15-7a32-a818-2185b97f07ef",
         "status": "inProgress"
       },
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac854c570f48191a595d544b5898fd6",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Finite actual block closed; exact private document backup only, no further evaluation or Actuals",
+      "assignedMilestone": "Current simplified Playground/offline mechanics + separate Luna/Claude Sonnet runtime profiles; zero Actual quota",
       "latestProgress": "Exact PRIVATEdc34459d document backup Root verified; current actor-free finite task closed, no new Actual or evaluation authority.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
@@ -10045,7 +10045,25 @@
           "remainingGrantAuthority": false
         }
       },
-      "continuationAuthority": "REVOKED_BY_DIRECT_USER_STOP"
+      "continuationAuthority": "REVOKED_BY_DIRECT_USER_STOP",
+      "currentPreparation": {
+        "authority": "Direct user now requests prepare/tidy/refine Case Study Playground while product workers finish; earlier stop lifted for preparation only",
+        "status": "DISPATCHED_ACTIVE_PREPARATION_ONLY",
+        "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
+        "hostId": "local",
+        "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:140",
+        "turnId": "01a121a8-816d-7850-8a64-9d33c0408151",
+        "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
+        "observedCleanSource": "dc34459dfef9d31f3832fc0dafc14e6851b2f7ab",
+        "document": "docs/design/playground-refinement-20261009.md",
+        "scope": "Current entrypoint/tasklist/offline mechanics/public seeds/profile bindings; normal identical outer backlog instruction and own native method setup; history preserved",
+        "actualTrialGrant": 0,
+        "actualModelProviderProbesAuthorized": false,
+        "automaticRefill": false,
+        "historicalScoringChangesAuthorized": false,
+        "privateRemote": "https://github.com/TheGlacius/markitect-research-backup.git",
+        "notification": "One material callback under direct user coordination; no polling/ACK loops"
+      }
     },
     {
       "name": "Architect",
@@ -16070,5 +16088,149 @@
       "securityOrToolsDisablingAuthorized": false,
       "otherSourceWorkBlocked": false
     }
+  },
+  "playgroundAndClaudePreparation20261009": {
+    "recordedUtc": "2026-10-09T17:18:44Z",
+    "scientist": {
+      "authority": "Direct user now requests prepare/tidy/refine Case Study Playground while product workers finish; earlier stop lifted for preparation only",
+      "status": "DISPATCHED_ACTIVE_PREPARATION_ONLY",
+      "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
+      "hostId": "local",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:140",
+      "turnId": "01a121a8-816d-7850-8a64-9d33c0408151",
+      "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
+      "observedCleanSource": "dc34459dfef9d31f3832fc0dafc14e6851b2f7ab",
+      "document": "docs/design/playground-refinement-20261009.md",
+      "scope": "Current entrypoint/tasklist/offline mechanics/public seeds/profile bindings; normal identical outer backlog instruction and own native method setup; history preserved",
+      "actualTrialGrant": 0,
+      "actualModelProviderProbesAuthorized": false,
+      "automaticRefill": false,
+      "historicalScoringChangesAuthorized": false,
+      "privateRemote": "https://github.com/TheGlacius/markitect-research-backup.git",
+      "notification": "One material callback under direct user coordination; no polling/ACK loops"
+    },
+    "claude": {
+      "checkedUtc": "2026-10-09T17:14:13Z",
+      "path": "C:/Users/Consiliari/.local/bin/claude.exe",
+      "version": "2.1.295",
+      "updateCommand": "claude update",
+      "updateOutcome": "UP_TO_DATE_LATEST_2.1.295",
+      "auth": {
+        "loggedIn": true,
+        "authMethod": "claude.ai",
+        "apiProvider": "firstParty",
+        "subscriptionType": "max"
+      },
+      "observedUserConfig": {
+        "effortLevel": "xhigh",
+        "autoUpdatesChannel": "latest",
+        "defaultPermissionMode": "auto",
+        "sonnetEnvOverride": false,
+        "modelEnvOverride": false,
+        "alternateProviderEnv": false
+      },
+      "userConfigChanged": false,
+      "secretsReadOrPublished": false,
+      "modelRequestCount": 0,
+      "plannedSelection": "--model sonnet; pin actual model/profile/CLI before later actual trials",
+      "officialDocumentation": "https://code.claude.com/docs/en/model-config",
+      "documentedCurrentAlias": "Sonnet 5.5 on Anthropic; account execution/serving not tested",
+      "comparison": "Separate Luna/Codex and Sonnet/Claude runtime strata; same settings within method pair; no covert mixed inner roles or fallback"
+    },
+    "knowledgeGraph": {
+      "authority": "Verified direct user request in KG topic chat; YAML KG expansion plus separate RDF evaluate-then-decide plan; no new Main gate",
+      "status": "KG01_ACTIVE_KG02_KG03_DISJOINT_PATH_CONFIRMED",
+      "threadId": "01a12178-5797-7c41-8acc-8e8231084c79",
+      "hostId": "local",
+      "afterCursor": "67fe9212-ff51-49b6-b0fb-948f5db1b4db:2",
+      "turnId": "01a121ab-3ea0-70b0-9274-e3d5981e7d3e",
+      "worktree": "C:/Users/Consiliari/.codex/worktrees/product-knowledge-graph/Markitect",
+      "branch": "codex/knowledge-graph",
+      "cleanBase": "1495e1be7b0046711531fa42c8407fba67b8e814",
+      "rootRemoteBaseVerified": true,
+      "modelCompilerDiffFrom36c20eaEmpty": true,
+      "planDocument": "docs/design/research/knowledge-graph-implementation-20261009.md",
+      "workItems": [
+        "KG01",
+        "KG02",
+        "KG03",
+        "KG04",
+        "KG05",
+        "KG06",
+        "KG07",
+        "RF01",
+        "RF02",
+        "RF03",
+        "RF04",
+        "RF05",
+        "RF06"
+      ],
+      "initialAuthority": "KG01 bounded 12-question source matrix, independent LunaHigh developer review; then KG02 and read-only KG03 pure new module files",
+      "exclusiveNewPath": "internal/modules/projectknowledge",
+      "pathConfirmedByIntegration": true,
+      "imports": "Core and generic libraries only; no Host/sibling imports; neutral facts DTOs",
+      "reserved": "Core/schema/identity/shared/Host mappings/MCP/CLI/skills/go.mod/source-moves Integration only; source rebase after P08",
+      "notGranted": "RDF engines/installations/canonical migration/actual experiments/studies/Mainmerge/release",
+      "historicalR02ResearchPreserved": true,
+      "callback": "Human explicitly authorizes response and coordination Root and Integration"
+    },
+    "mcp": {
+      "ownerThread": "01a121a0-bee0-7621-943c-c45ea125bf7e",
+      "branch": "codex/product-mcp-20261009",
+      "cleanAndExactRemoteVerified": "ad9a159ea90c89d1b7282ff6b399342728cc036b",
+      "implementationSha": "e0f727520ccfc2b10b9f613235967ff0b220b7c9",
+      "sourceDelta": "4new internal/host/mcp files plus own handoff only",
+      "checksAndReview": "Owner-reported focused tests/vet/architecture/check/impact and independent fixes; Root read handoff and verified source/remote, no rerun",
+      "acceptance": "Module checkpoint available for Integration, P05 composition/coverage/parity/runtime still open",
+      "knownCoverageGap": "check-artifacts passes existing inventory but new five paths not yet accounted",
+      "actualJobs": 0
+    },
+    "integration": {
+      "verifiedRemoteCheckpoint": "bb79936fb7676cf91c553510bc469fefd5f19f60",
+      "branch": "codex/product-integration-20261009",
+      "ownerReported": "Shared typed services and focused tests/review, delta file-dir correction; P05 commits integrated locally8cacb732 and composition/parity ongoing",
+      "rootVerified": "Exact remote checkpoint and source delta; local current integrated8cacb not independently frozen",
+      "helperProposal": "Real App Server dynamicTool markitect_start_helper with Host prelaunch durable reservation; native spawn remains available/observed and total cooperative, no hard guarantee",
+      "proposalStatus": "Source/protocol verification and independent review pending before existing actual job; no additional grant",
+      "mainMerged": false,
+      "release": false
+    }
+  },
+  "knowledgeGraphFollowup20261009": {
+    "authority": "Verified direct user request in KG topic chat; YAML KG expansion plus separate RDF evaluate-then-decide plan; no new Main gate",
+    "status": "KG01_ACTIVE_KG02_KG03_DISJOINT_PATH_CONFIRMED",
+    "threadId": "01a12178-5797-7c41-8acc-8e8231084c79",
+    "hostId": "local",
+    "afterCursor": "67fe9212-ff51-49b6-b0fb-948f5db1b4db:2",
+    "turnId": "01a121ab-3ea0-70b0-9274-e3d5981e7d3e",
+    "worktree": "C:/Users/Consiliari/.codex/worktrees/product-knowledge-graph/Markitect",
+    "branch": "codex/knowledge-graph",
+    "cleanBase": "1495e1be7b0046711531fa42c8407fba67b8e814",
+    "rootRemoteBaseVerified": true,
+    "modelCompilerDiffFrom36c20eaEmpty": true,
+    "planDocument": "docs/design/research/knowledge-graph-implementation-20261009.md",
+    "workItems": [
+      "KG01",
+      "KG02",
+      "KG03",
+      "KG04",
+      "KG05",
+      "KG06",
+      "KG07",
+      "RF01",
+      "RF02",
+      "RF03",
+      "RF04",
+      "RF05",
+      "RF06"
+    ],
+    "initialAuthority": "KG01 bounded 12-question source matrix, independent LunaHigh developer review; then KG02 and read-only KG03 pure new module files",
+    "exclusiveNewPath": "internal/modules/projectknowledge",
+    "pathConfirmedByIntegration": true,
+    "imports": "Core and generic libraries only; no Host/sibling imports; neutral facts DTOs",
+    "reserved": "Core/schema/identity/shared/Host mappings/MCP/CLI/skills/go.mod/source-moves Integration only; source rebase after P08",
+    "notGranted": "RDF engines/installations/canonical migration/actual experiments/studies/Mainmerge/release",
+    "historicalR02ResearchPreserved": true,
+    "callback": "Human explicitly authorizes response and coordination Root and Integration"
   }
 }

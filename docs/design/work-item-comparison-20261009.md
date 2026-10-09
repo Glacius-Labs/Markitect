@@ -2,6 +2,8 @@
 
 Stand: 9. Oktober 2026. Direkter Nutzerauftrag im Overseer-Chat. Dieses Dokument ersetzt für zukünftige Arbeit die frühere Classic-Hauptlinienentscheidung und den Vergleich Classic/Government/Conventional. Historische Quellen, Versuche, Fehler, Kostenunknowns und Abschlussberichte bleiben unverändert.
 
+Aktuelle Ergänzung nach Studienstop: Scientist darf gemäß neuem direktem Auftrag den Playground vorbereiten, vereinfachen und aufräumen, ohne Actuals oder alte Grants zu reaktivieren. [Der konkrete Vorbereitungsauftrag](playground-refinement-20261009.md) ergänzt getrennte Codex/Luna-High- und Claude-Code/Latest-Sonnet-Profile. Die frühere allgemeine Luna-only-Festlegung bleibt für historische Versuche erhalten; neue gematchte Paare werden jeweils innerhalb derselben Runtime geplant. Stabile Produktbindung und spätere konkrete Ausführungsanweisung bleiben offen.
+
 ## Produktauftrag an Design
 
 Design ist Eigentümer der künftigen Markitect-Hauptlinie. Die aktuellen angenommenen Designdokumente werden vollständig durchimplementiert und praktisch geprüft. Besonders verbindlich sind `project-world/model-first-user-workflow.md`, `adoption-and-agent-boundary.md`, `operation-scopes-and-model-briefings.md` und ihre aktuellen Ergänzungen. Neue Government-Verfeinerungen im Repository werden auf sinnvolle Angliederung geprüft; daraus entsteht kein zusätzlicher eigenständiger Government-Versuchsarm.
