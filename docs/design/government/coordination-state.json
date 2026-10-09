@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T23:31:24.855566Z",
+  "updatedUtc": "2026-10-09T23:40:38.707142Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "COMMON_NATIVE_STARTUP_IMPLEMENTED_NORMAL_SETUP_PASS_REAL_RUN_PENDING",
+    "status": "ORDINARY_NATIVE_TOOL_WORK_SUCCEEDED_OWNER_REPORTED_STRUCTURED_RESPONSE_FIX_IN_PROGRESS",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -17895,6 +17895,23 @@
       "noNewActorsYet": true,
       "acceptance": "Realrun/helper/parallel/review/Verify/Apply/originalRecovery pending",
       "operatorFinding": "Canonicaldocs check caught duplicate native_session_id in oldledger; owner fixes ordinarydocscheck without new rootapproval or capabilitygate"
+    },
+    "firstSimplifiedActual": {
+      "batch": "a01-simple-0f42a50b1880428ba81817600190b31e",
+      "source": "a9580036eb96ae0d9872897bb57af97b4d9a7b56",
+      "binary": "c6be48ca9da501a71ec89287653d3dd3b2d465375a42eba79f11b5af0a835e72",
+      "plan": "d346ab983955539ab3216d236c7a1f32",
+      "nativeRun": "eaf35f26bb3f4fa36a1cc4a1e3223d70",
+      "nativeSession": "01a12303-0289-7031-a755-28ee779cdd89",
+      "nativeTurn": "01a12303-056d-7160-9963-ed35ac511b16",
+      "ownerReportedSuccess": "Genuine rootturn completed, ordinary MXCPowerShell commands executed and two scopedREADMEedits succeeded withoutprompt; former platformdirectoryerror and genericfiledenial resolved in actual",
+      "remainingFailure": "Closed wire decoder correctly rejects inputArtifact digest/base64 extrafields copied into CandidateFile path/mode/plaincontent response",
+      "actualWorkspace": "Closed with1READMEdelta; no Apply/helper/parallel/review/recovery",
+      "rootVerified": "Currentlocalc782/sourceWIP optionalturn.outputSchema and Host-managedreport candidateFilesempty instruction present; exact raw actualreceipt not independently read this event",
+      "knownCumulative": "6requests/5native starts/1698251partialcallerestimate NOTinvoice",
+      "next": "Supported turn/start.outputSchema with existingtypedreport; real native filesystemdelta authoritative, no inlinefilebyte/hash duplication forreport, explicithelperCandidateFileshape; relevantwirechecks/review thenfreshnormalA01, no replay/canary/newapproval",
+      "publicRemoteObserved": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
+      "fullProductAcceptance": false
     }
   }
 }
