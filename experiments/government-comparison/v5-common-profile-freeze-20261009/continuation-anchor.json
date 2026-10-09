@@ -1,0 +1,18 @@
+{
+  "grant": "v5-design-common-profile-freeze-20261009",
+  "notAfterUtc": "2026-10-09T03:23:42Z",
+  "actualStartObservedUtc": "2026-10-09T04:57:55.8618234+02:00",
+  "status": "SEALING BEFORE ONE FRESH READONLY REVIEW",
+  "bindingBatchesUsed": 1,
+  "mechanicalChecksUsed": 1,
+  "sharedReviewerReservationsUsed": 0,
+  "reviewerActivations": 0,
+  "productActors": 0,
+  "providerCalls": 0,
+  "codexCliCalls": 0,
+  "appserverCalls": 0,
+  "productProcesses": 0,
+  "builds": 0,
+  "fullTrials": 0,
+  "next": "Commit exact proposal/source/config/commands/input hashes; create immutable freeze manifest; reserve reviewer1 before native tool, inheritnooverride/forknone <=240s nochildren/followups/tests/runtime. Then closure/privatepush/remoteverify/callbackonce, no extra implementation."
+}

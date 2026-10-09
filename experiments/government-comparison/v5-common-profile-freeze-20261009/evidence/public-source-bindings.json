@@ -1,0 +1,89 @@
+[
+  {
+    "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+    "path": "internal/tooling/codexrunner/runner.py",
+    "sha256": "477b4895567d386abf4d3e7105e14d9cee939df97d34183f67f20a23256f6c67",
+    "gitBlob": "8bf04e340758dfb453a3e7facc2e8b9e90eaf0db"
+  },
+  {
+    "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+    "path": "internal/host/projectrun/protocol.go",
+    "sha256": "51baa2bec10468e5f117388a3be9f98b51e4cee8c74268932dfe3d0c20c1ece0",
+    "gitBlob": "cfb9a79c95915a4182f905923f47d0c10578b3e9"
+  },
+  {
+    "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+    "path": "internal/host/projectrun/config.go",
+    "sha256": "f7c124db136ea65e82ac35dd0a3376741af0cf7f8ce10595da4c8a06fc63ede0",
+    "gitBlob": "5606a5a7c265e488862e1fb14d3e3d046367b508"
+  },
+  {
+    "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+    "path": "internal/host/projectrun/invoker.go",
+    "sha256": "ec55c5ec2c059d4c9f9d573224f8898cdc867a2606e76ccaa7ab835d9bb1c83e",
+    "gitBlob": "7b555c53e39bbe8926d68d3f26e13a57d73cdbba"
+  },
+  {
+    "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+    "path": "internal/host/projectrun/review.go",
+    "sha256": "8611a8f4893fe88abd1028f183e7f5cabcb7b644a022deaaab3acd1834657062",
+    "gitBlob": "f41db5e59ca2a405dd5f180e20db38ac84c54800"
+  },
+  {
+    "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+    "path": "internal/host/projectrun/verify.go",
+    "sha256": "30f536c436a316f1849761985d421fa6f3247f10e6c5f0385050451e2172df15",
+    "gitBlob": "68250630a5ece533f2381a3a2c86e66f1602f531"
+  },
+  {
+    "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+    "path": "internal/host/projectrun/types.go",
+    "sha256": "f83d4307665bbf30dfbfc9a594de44896120439b37b1160eb6b4d3ce74eda6bb",
+    "gitBlob": "fbe9526f976e4b4cdbf2f94325fa7110251a5bb1"
+  },
+  {
+    "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+    "path": "internal/host/agentexec/types.go",
+    "sha256": "c9b1d583611e1ca63cac5ad30a12e959d3d0f00e3a249501c39a1034ff14151f",
+    "gitBlob": "5382d256c21cc23eb4a6b1b120b547a39f3ad7c6"
+  },
+  {
+    "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+    "path": "internal/host/agentexec/runner.go",
+    "sha256": "8fbf9f1cee4ffdf52be5b63a69022a602ac3e252005d4f2aed390359bcaa90b9",
+    "gitBlob": "d164a47fed3dc19a3a2ec4103fb7b75c840deb13"
+  },
+  {
+    "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+    "path": "internal/host/agentexec/process_windows.go",
+    "sha256": "d703c475828a77bc460089cfd2d121bc8a001b10feedd66bff8591fb330ce23b",
+    "gitBlob": "0e4a64d94786a4509d43ccbe00d05690a41d63e3"
+  },
+  {
+    "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+    "path": "docs/project-workflow.md",
+    "sha256": "d212852da496897bf53869cc6ae4cd478b381edcb33d7d9a7cc263b23a3b518b",
+    "gitBlob": "b75927f4ce5e46ce913dffa11f4047b3f9f9601f"
+  },
+  {
+    "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+    "path": "internal/host/projectrun/run.go",
+    "copy": "public-source/internal/host/projectrun/run.go",
+    "sha256": "63d78289770d71fbfc1b21f39d6d7843f40c65b7d295da79f0bf6606c4ec603d",
+    "gitBlob": "04595019a62cfcc39cafb2e04020e9e584ab3fb1"
+  },
+  {
+    "source": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+    "path": "internal/modules/dotnet/dotnet.go",
+    "copy": "public-source/classic/dotnet.go",
+    "sha256": "331f44e452645253278c666d49ee4f61e466cd02640c0d40df0b76173e2be186",
+    "gitBlob": "fd8047c6211bf2a3013292bfc8c4bc4cdb335edd"
+  },
+  {
+    "source": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+    "path": "internal/modules/dotnet/proposal.go",
+    "copy": "public-source/classic/proposal.go",
+    "sha256": "bd523a35779a968fd3a7ad17a96fbaf722041c3c05c5bb7de553f04f9ccf2197",
+    "gitBlob": "ce2539be44348c3ec51a9db5e19dff753958e27a"
+  }
+]

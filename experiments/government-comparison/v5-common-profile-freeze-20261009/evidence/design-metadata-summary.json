@@ -1,0 +1,69 @@
+{
+  "bindingsMetadataSha256": "b8f660412a4ec2e5f8d585cb846d58d8fd38df2f845b5f6e6b9089a8cd2d53b6",
+  "handoffMetadataSha256": "7d744e5dda34b84b239ec0c167093ccb3f02b6df68b56d24c8b3a422b3105024",
+  "allowedInputPaths": [
+    "C:\\Users\\Consiliari\\Documents\\Markitect-Design-Readiness-20261009-0220\\checkpoint\\bindings-r12.json",
+    "C:\\Users\\Consiliari\\Documents\\Markitect-Design-Readiness-20261009-0220\\checkpoint\\HANDOFF.md"
+  ],
+  "source": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+  "runtimeOriginalSha256": "98e365f96295e4d801c1b17bfd05798050f7c6ac65550765330a485a325c11fe",
+  "agentProfileEntries": 12,
+  "roleCounts": {
+    "manager": 6,
+    "reviewer": 6
+  },
+  "actualReceiptConfigDigests": {
+    "sha256:da6798a55a393475a6566ab1ee9dd08c9654724aaaac6c5e3819f83ac9c76f07": 16
+  },
+  "runtimeLimits": {
+    "maxDepth": 8,
+    "maxStarts": 24,
+    "maxRetries": 1,
+    "maxParallel": 1,
+    "maxDuration": "45m0s",
+    "maxCostMicros": 10000000,
+    "maxCandidateFileBytes": 1048576,
+    "maxCandidateBytes": 8388608
+  },
+  "reviewMaxRounds": 3,
+  "reviewMaxManagerRounds": 2,
+  "historicalFlowDeclaredByHandoff": {
+    "calls": 16,
+    "work": 6,
+    "review": 7,
+    "integration": 3,
+    "inputTokens": 304223,
+    "outputTokens": 15626,
+    "scope": "R12 historical public case only; no source/code/candidate result copied, no actual true Verifier call demonstrated by these 16 roles"
+  },
+  "currentByteVerification": [
+    {
+      "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-worker-review-20261009\\markitect-worker-review-r12.exe",
+      "sha256": "6a62669f68a493ce32b91ebfde0c47c34b610c3cfea31820d495d19cb489171c",
+      "expectedSha256": "6a62669f68a493ce32b91ebfde0c47c34b610c3cfea31820d495d19cb489171c",
+      "matches": true,
+      "executed": false
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+      "sha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+      "expectedSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+      "matches": true,
+      "executed": false
+    },
+    {
+      "path": "C:\\Python313\\python.exe",
+      "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+      "expectedSha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+      "matches": true,
+      "executed": false
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-worker-review-20261009\\shop-7d00157\\tools-0b8d19f8160542e7bfd5b4fd02cc5321\\internal\\tooling\\codexrunner\\runner.py",
+      "sha256": "477b4895567d386abf4d3e7105e14d9cee939df97d34183f67f20a23256f6c67",
+      "expectedSha256": "477b4895567d386abf4d3e7105e14d9cee939df97d34183f67f20a23256f6c67",
+      "matches": true,
+      "executed": false
+    }
+  ]
+}

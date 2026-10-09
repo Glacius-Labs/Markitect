@@ -1,0 +1,252 @@
+{
+  "grant": "v5-design-common-profile-freeze-20261009",
+  "status": "NOT ADMITTED",
+  "candidateModel": "gpt-6-luna",
+  "candidateReasoning": "high",
+  "modelSwitchStatus": "Prospective only; no work actor instantiated, no silent v4 rescore",
+  "designSource": "7d001579373acc7fdff4dbe5e720812415f06c3b",
+  "designDocHead": "11f080815722089d84869fef536b94cae9321e74",
+  "existingDesignHostBinary": {
+    "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-worker-review-20261009\\markitect-worker-review-r12.exe",
+    "sha256": "6a62669f68a493ce32b91ebfde0c47c34b610c3cfea31820d495d19cb489171c"
+  },
+  "existingAdapter": {
+    "command": "C:\\Python313\\python.exe",
+    "args": [
+      "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-worker-review-20261009\\shop-7d00157\\tools-0b8d19f8160542e7bfd5b4fd02cc5321\\internal\\tooling\\codexrunner\\runner.py",
+      "--model",
+      "gpt-6-luna",
+      "--codex-executable",
+      "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+      "--codex-version",
+      "0.162.0-alpha.2"
+    ],
+    "model": "gpt-6-luna",
+    "modelOptions": {
+      "model_reasoning_effort": "high"
+    },
+    "providerVersion": "0.162.0-alpha.2",
+    "runtimeFiles": [
+      {
+        "path": "C:\\Python313\\python.exe",
+        "mode": "0644",
+        "digest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-worker-review-20261009\\shop-7d00157\\tools-0b8d19f8160542e7bfd5b4fd02cc5321\\internal\\tooling\\codexrunner\\runner.py",
+        "mode": "0644",
+        "digest": "sha256:477b4895567d386abf4d3e7105e14d9cee939df97d34183f67f20a23256f6c67"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+        "mode": "0644",
+        "digest": "sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+      }
+    ],
+    "environmentNames": [
+      "PATH",
+      "TEMP",
+      "TMP",
+      "SystemRoot"
+    ],
+    "outerTimeoutSeconds": 300,
+    "adapterInternalDefaultTimeoutSeconds": 570,
+    "stdoutMaxBytes": 4194304,
+    "stderrMaxBytes": 1048576,
+    "timeoutLimit": "Outer Host300s/own process-tree cleanup bounds longer adapter570s; do not claim direct adapter launch is equivalent",
+    "wireAPIVersion": "markitect.example.org/agent-execution/v1alpha1"
+  },
+  "actualProviderArgvTemplate": [
+    "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+    "exec",
+    "--ignore-user-config",
+    "--model",
+    "gpt-6-luna",
+    "--config",
+    "model_reasoning_effort=\"high\"",
+    "--sandbox",
+    "read-only",
+    "--ignore-rules",
+    "--ephemeral",
+    "--json",
+    "--skip-git-repo-check",
+    "--disable",
+    "plugins",
+    "--disable",
+    "shell_tool",
+    "--disable",
+    "unified_exec",
+    "--output-schema",
+    "{OWN_EMPTY_WORKDIR}/codex-response.schema.json",
+    "--output-last-message",
+    "{OWN_EMPTY_WORKDIR}/codex-response.json",
+    "--cd",
+    "{OWN_EMPTY_WORKDIR}",
+    "-"
+  ],
+  "protections": {
+    "keepAllExistingFlags": true,
+    "disablementAuthorized": false,
+    "toolEventsCauseIncomplete": true,
+    "userConfig": "ignored by existing adapter",
+    "repositoryRules": "ignored by existing adapter; accepted scoped model is explicit context, not arbitrary inherited AGENTS",
+    "environment": "PATH,TEMP,TMP,SystemRoot allowlisted by Host; never export values or account files",
+    "osIsolationClaim": false,
+    "windowsLifetime": "Host public process_windows.go creates kill-on-close JobObject; prepare is a no-op and child is attached after Start, before prompt forwarding. Not a suspended pre-exec guarantee, not OS isolation; no fresh lifecycle execution proof in this grant.",
+    "providerAuthSource": "Existing R12 authenticated executable only; no account/auth file read, no new API key"
+  },
+  "commonToolProfile": {
+    "verdict": "NOT VERIFIED / NOT ADMITTED",
+    "designObserved": "Host-supplied artifacts and typed work/review responses; provider tools disabled; Host runs declared checks/Apply",
+    "strongConventionalRequired": "Own plans/docs, repository inspection/editing, real build/tests/debugging, useful helpers and independent reviews within equal caps",
+    "sameRestrictedAdapterForConventional": "Rejected: would deliberately weaken normal Conventional tool workflow",
+    "nativeConventionalForDesign": "Not established: native bridge has no actual per-call provider-reported input/output tokens; generic optional usage cannot satisfy ProjectRun cost gate",
+    "enablingToolsInExistingDesignAdapter": "Forbidden protection change and actual adapter rejects tool events; not a config-only legal binding",
+    "methodVersusConfound": "Typed Manager/Reviewer/model upkeep and Host Apply are method behavior; differing provider shell/edit/network/plugin rights is a confound, not waived as method effect",
+    "exactMissingStep": "An existing legitimately protected full-tool Conventional transport and Design-compatible transport with equal actually available tool rights and real per-call input/output telemetry must be established under a separately explicit execution decision. Current grant cannot establish this by zero runtime calls or by disabling existing protections; Root must choose a lawful concrete execution plan or synthesize unresolved non-admission, no automatic preparation loop"
+  },
+  "usage": {
+    "source": "Real turn.completed provider event collector ONLY; model-authored usage removed before actual collector telemetry attachment",
+    "inputField": "input_tokens -> inputTokens",
+    "outputField": "output_tokens -> outputTokens",
+    "cachedField": "cached_input_tokens -> cachedTokens",
+    "requiredFor": "ProjectRun work/integrate/review and configured true Verifier all require both input and output counts; missing/partial usage fails bounded cost, never substitute zero",
+    "r12HistoricalScope": "16 receipts for6work/7review/3integrate; true Verifier role not demonstrated by that flow",
+    "syntheticCheck": "Mechanical mapping only, no real token receipt",
+    "servingModel": null,
+    "newActualTokens": null,
+    "newActualCost": null,
+    "estimatedAccountingWeights": {
+      "inputMicrosPerMillion": 20000000,
+      "outputMicrosPerMillion": 100000000,
+      "actualPriceClaim": false
+    }
+  },
+  "roleMapping": [
+    {
+      "hostRole": "Manager work",
+      "wireRole": "executor",
+      "contextKind": "projectrun-task/v1",
+      "phase": "work",
+      "typed": "TaskResponse"
+    },
+    {
+      "hostRole": "Manager integration/rework",
+      "wireRole": "executor",
+      "contextKind": "projectrun-task/v1",
+      "phase": "integrate",
+      "typed": "TaskResponse"
+    },
+    {
+      "hostRole": "independent leaf/parent edit Reviewer",
+      "wireRole": "executor",
+      "contextKind": "projectrun-review/v1",
+      "typed": "reportJson {status,summary,findings}, candidateFiles=[], no transcript/no mutation"
+    },
+    {
+      "hostRole": "true Verifier",
+      "wireRole": "verifier",
+      "contextKind": "requiredSubjects/checkResults candidate binding",
+      "typed": "passing observation and allowed evidenceRefs per required subject, no candidate writes"
+    }
+  ],
+  "outerDTO": {
+    "closed": true,
+    "echo": [
+      "apiVersion",
+      "runId",
+      "nonce",
+      "inputDigest",
+      "role"
+    ],
+    "artifactContent": "base64 bytes in Invocation, UTF8 strings in Response",
+    "providerTypedJSON": "candidateJson/reportJson strings or null normalized by exact adapter; Host receives typed JSON object, not string",
+    "evidenceRefs": "Exact supplied scopeIds/policyIds/artifacts.path only; adapter short aliases decoded only in outer evidenceRefs",
+    "authority": "Actual Host validators own phase, direct-child, obligation, reviewer grounding and verifier coverage; offline Python serialization check does not execute those Go validators"
+  },
+  "commonDatabaseEnvBinding": {
+    "variables": [
+      "ORDER_DB_PATH",
+      "ORDERS_DB"
+    ],
+    "value": "Same explicit own absolute per-case SQLite path; BF inherited selector remains usable",
+    "listener": "ASPNETCORE_URLS=http://127.0.0.1:0; own stdout yields URL; no broad port/process discovery",
+    "mechanism": "Operational own launcher environment binding only; unchanged frozen owned_transport and evaluators, no model/code prebuilt"
+  },
+  "cellProposal": {
+    "allocatedNow": 0,
+    "remainingFollowupCeiling": 6,
+    "proposed": [
+      {
+        "id": "v5-design-greenfield-01",
+        "method": "Design",
+        "condition": "Greenfield"
+      },
+      {
+        "id": "v5-conventional-greenfield-01",
+        "method": "Strong Conventional",
+        "condition": "Greenfield"
+      },
+      {
+        "id": "v5-design-brownfield-01",
+        "method": "Design",
+        "condition": "Brownfield"
+      },
+      {
+        "id": "v5-conventional-brownfield-01",
+        "method": "Strong Conventional",
+        "condition": "Brownfield"
+      }
+    ],
+    "unallocated": 2,
+    "classic": "Not proposed: selected a97cbd5 markitect-dotnet source only accepts.cs/.csproj while full app includes JSON/lock/config/docs; no existing complete lawful alternative established. This is selected module/model/task incompatibility, not a global Markitect file limit",
+    "questions": "Existing at most two selected research questions only; quality/intent and effort/autonomy under equal staged requirements. No third migration study"
+  },
+  "resources": {
+    "baseline": {
+      "cellWallSeconds": 7200,
+      "cellActivations": 72,
+      "taskWallSeconds": 1200,
+      "taskActivations": 12
+    },
+    "singleCommonAlternative": {
+      "cellWallSeconds": 7200,
+      "cellActivations": 144,
+      "taskWallSeconds": 1200,
+      "taskActivations": 24,
+      "justification": "Existing R12 flow16 model calls already exceeds12 before model authorship/independent evaluation/true Verifier.24 is one finite shared cap for all methods, not a claim every Design task requires16 or will fit time",
+      "wallFeasibility": "NOT DEMONSTRATED for this six-stage workload; retained840s implementationstop, not a hidden extension"
+    },
+    "implementationEndsTaskSeconds": 840,
+    "minimumAssessmentAdmissionSeconds": 300,
+    "endReserveSeconds": 30,
+    "interruptMarginSeconds": 10,
+    "semanticRepairsPerTaskMax": 2,
+    "maxConcurrentActorsPerCell": 4,
+    "maxConcurrentPrimaryCells": 2,
+    "activeHumanSecondsPerCellMax": 600,
+    "ownServicesPerActorMax": 12,
+    "invocationTimeoutSecondsMax": 300,
+    "candidateFileBytesMax": 1048576,
+    "candidateBytesMax": 8388608,
+    "reviewMaxRounds": 3,
+    "managerReworkMaxRounds": 2,
+    "allAttemptsCharge": "Charge before each actual native/provider call incl author/setup/role/helper/reviewer/repair/failure; retries consume same caps, no reuse/refill, model maintenance not free",
+    "costCeilingEstimatedUnitsPerCell": 60000000,
+    "costUnitsMeaning": "Six task allocations up to10M historical weighted units each, one finite common cell bound; no price/economic claim. Missing actual usage -> no bounded cost admission",
+    "reservationModel": "Outer per-task24/cell144 ledger subtracts already used author/helper/evaluator reservations before materializing Design runtime.maxStarts; source runtime cannot replenish prior outer usage. Run/Verify cumulative cost/duration/start counts remain binding; limits materialized before new plan",
+    "parallelPolicy": "At most one matched condition pair concurrently, equal available four Actor slots per cell; R12 observed maxParallel1, prospective Design4 source-configurable but not live-verified. No selected grants issued"
+  },
+  "staging": {
+    "publicInputsFrozen": "Same24 public v4 bytes /5 private evaluation hashes, no semantic changes or rubric edits",
+    "greenfieldStart": "0416e366626d31933443ce2901d6a3696261db7b empty; no prebuilt canonical model/app/lock/setup",
+    "brownfieldStart": "Original pinned study Brownfield start retained, bind exact start commit/tree from original evidence before execution; no new fixture",
+    "intent": "Q1 reflection before actor implementation/model upkeep; no human acceptance invented",
+    "release": "Unchanged release.py current cutoff only; no future/private/foreign data to implementers; per-stage candidate freeze before independent declared-requirement evaluation",
+    "task5": "Actual own Task4 executable and accepted prior-limit order created beforeTask5 release, sameDB three-phase continuity with independent trace validation",
+    "task6": "Matched condition pair synchronizes after each ownTask5 independently PASS/freeze; separate private mutation/equivalence review before same generic repair card. Charge shared equivalence reservation to both affected task/cell caps while actual global call counted once; waits consume original trial wall and no deadline extension. If full task budget/prerequisites unavailable => NOT RUN",
+    "brownfieldGaps": "Selected-root purpose-built fixture, not real customer legacy; preserve /legacy/orders and existing env selectors. Actor owns discovery/modeling, no accepted model supplied"
+  },
+  "commandsAuthorization": "PLAN ONLY, none runnable as common admitted comparison; hashes/bindings do not grant execution. No old R12 plan/run/accepted-model IDs reused",
+  "freezeDisposition": "NOT ADMITTED: common strong full-tool/telemetry/protection profile unresolved. Typed DTO mapping and existing executable pins can be sealed without fabricating equivalence."
+}

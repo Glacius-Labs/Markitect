@@ -1,0 +1,17 @@
+{
+  "reservationBeforeTool": true,
+  "command": "C:/Python313/python.exe",
+  "args": [
+    "-B",
+    "experiments/government-comparison/v5-common-profile-freeze-20261009/binding/offline_contract_check.py"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect",
+  "startUtc": "2026-10-09T03:04:53.1458917+00:00",
+  "endUtc": "2026-10-09T03:04:53.2289300+00:00",
+  "wallSeconds": 0.0830383,
+  "maxWallSeconds": 120,
+  "exitCode": 0,
+  "syntheticOnly": true,
+  "providerOrProductRuntimeCalls": 0,
+  "retryAllowed": false
+}

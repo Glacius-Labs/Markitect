@@ -1,0 +1,110 @@
+{
+  "status": "NOT ADMITTED; instruction templates only, zero runtime calls",
+  "existingDesignAdapter": {
+    "command": "C:\\Python313\\python.exe",
+    "args": [
+      "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-worker-review-20261009\\shop-7d00157\\tools-0b8d19f8160542e7bfd5b4fd02cc5321\\internal\\tooling\\codexrunner\\runner.py",
+      "--model",
+      "gpt-6-luna",
+      "--codex-executable",
+      "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+      "--codex-version",
+      "0.162.0-alpha.2"
+    ],
+    "cwd": "{OWN_EMPTY_TEMP_ROLE_WORKDIR}",
+    "stdin": "actual bounded Invocation JSON followed by EOF",
+    "environmentNames": [
+      "PATH",
+      "TEMP",
+      "TMP",
+      "SystemRoot",
+      "MARKITECT_AGENT_CONFIG_JSON",
+      "MARKITECT_AGENT_PRIVATE_LOG"
+    ],
+    "configJSON": {
+      "model": "gpt-6-luna",
+      "modelOptions": {
+        "model_reasoning_effort": "high"
+      },
+      "providerVersion": "0.162.0-alpha.2"
+    }
+  },
+  "designHostSequence": [
+    [
+      "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-worker-review-20261009\\markitect-worker-review-r12.exe",
+      "project",
+      "schema"
+    ],
+    [
+      "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-worker-review-20261009\\markitect-worker-review-r12.exe",
+      "project",
+      "plan",
+      "--repo",
+      "{OWN_REPO}",
+      "--goal",
+      "{CURRENT_RELEASED_TASK}",
+      "--since",
+      "{OWN_PREVIOUS_COMMIT}",
+      "--write"
+    ],
+    [
+      "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-worker-review-20261009\\markitect-worker-review-r12.exe",
+      "project",
+      "run",
+      "--repo",
+      "{OWN_REPO}",
+      "--plan",
+      "{ACTUAL_FRESH_PLAN_ID}",
+      "--write"
+    ],
+    [
+      "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-worker-review-20261009\\markitect-worker-review-r12.exe",
+      "project",
+      "verify",
+      "--repo",
+      "{OWN_REPO}",
+      "--run",
+      "{ACTUAL_OWN_RUN_ID}",
+      "--write"
+    ],
+    [
+      "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-worker-review-20261009\\markitect-worker-review-r12.exe",
+      "project",
+      "apply",
+      "--repo",
+      "{OWN_REPO}",
+      "--plan",
+      "{ACTUAL_FRESH_PLAN_ID}",
+      "--run",
+      "{ACTUAL_OWN_RUN_ID}",
+      "--candidate",
+      "{ACTUAL_OWN_CANDIDATE_ID}"
+    ],
+    [
+      "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-worker-review-20261009\\markitect-worker-review-r12.exe",
+      "project",
+      "apply",
+      "--repo",
+      "{OWN_REPO}",
+      "--plan",
+      "{ACTUAL_FRESH_PLAN_ID}",
+      "--run",
+      "{ACTUAL_OWN_RUN_ID}",
+      "--candidate",
+      "{ACTUAL_OWN_CANDIDATE_ID}",
+      "--branch",
+      "{ACTUAL_BRANCH}",
+      "--head",
+      "{ACTUAL_HEAD}",
+      "--worktree",
+      "{PREFLIGHT_TREE}",
+      "--expect",
+      "{ACTUAL_VERIFICATION_DIGEST}",
+      "--write"
+    ]
+  ],
+  "modelAuthoring": "Actor only, exact schema and source before freshplan, no accepted model/tasksolution prepared here",
+  "conventionalCommand": null,
+  "conventionalMissing": "No existing admitted strong full-tool and matched telemetry/protection command; do not replace with disabled-tool adapter",
+  "executionNeeds": "Root must explicitly select lawful common transport/tool rights and a concrete bounded execution grant or conclude unresolved. No auto canary/preparation/runtime step."
+}
