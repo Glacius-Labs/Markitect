@@ -16867,10 +16867,12 @@
   },
   "windowsRuntimeReadOnlyDiagnosis20261009": {
     "agent": "/root/windows_runtime_setup_diagnosis",
-    "status": "ACTIVE",
+    "status": "CLOSED_READ_ONLY_FINDINGS_HANDED_TO_SCIENTIST_OWNER",
     "scope": "Existing known runtime/config/logs and official docs only, distinguish packagedalpha versus Windows workspace-write setup; no edits/tests/models/installs/policy changes/global inventories",
     "nativeProductCalls": 0,
-    "integrationNotifiedPublicInterfaceOnly": true
+    "integrationNotifiedPublicInterfaceOnly": true,
+    "result": "Packagedalpha runtime and elevated Windows setting observed; documented MXC path is a hypothesis, not confirmed cause; no edits/probes/model calls",
+    "next": "Scientist owns diagnosis under younger direct implementation mandate, no duplicate Root runtime experiments"
   },
   "playgroundVariantAdapterEvaluation20261009": {
     "verifiedUtc": "2026-10-09T19:21:13Z",
@@ -16892,5 +16894,53 @@
     "mainGateAdded": false,
     "newOrderSent": false,
     "priorPilotEvidenceUnchanged": true
+  },
+  "conventionalVariantAdapterDelivery20261009": {
+    "id": "conventional-variant-adapter-delivery-20261009",
+    "issuedUtc": "2026-10-09T19:26:46Z",
+    "authority": {
+      "thread": "01a1169c-3df6-7571-997d-48ab57365875",
+      "directUserTurn": "01a12221-192d-7d60-b8e4-45ad999b649e",
+      "verifiedByRoot": true
+    },
+    "scope": "Implement versioned adapter contract and Conventional mapping, repair concrete local runtime blocker and complete normal Conventional project work with independent evaluation; Markitect mapping later",
+    "development": "Private Scientist branch; disjoint subagents allowed; focused tests10m/package30m/suite60m/outer90m; no added general preparation phases",
+    "runtimeDiagnostics": {
+      "maxProviderFreeStartupChecks": 6,
+      "perCheckTimeoutSeconds": 600,
+      "nativeModelCanaries": 0,
+      "allowed": "Existing native CLI/help/logs and child-local documented sandbox configuration preserving safeguards; record exact executable/config and process ownership"
+    },
+    "freshConventionalTrajectories": {
+      "maximum": 2,
+      "perTrajectorySeconds": 14400,
+      "aggregateSeconds": 28800,
+      "roleTurnTimeoutSeconds": 5400,
+      "totalStartRequestsMaximum": 256,
+      "countIncludes": "Failed requests, main actors, native helpers and fresh independent final assessors across both trajectories",
+      "concurrency": 4,
+      "depth": 2,
+      "first": "Fresh normal Conventional case through all declared stations; no Markitect dependency",
+      "second": "Only after specific first-run defect or a completed first case, fresh source/config/input-bound followup; never replay or repeat unchanged runtime failure"
+    },
+    "startCondition": "Coherent clean privately backed-up source, relevant mechanical checks, exact existing executable/config/public inputs/setup and own session binding; report actual start receipt, no separate blanket approval phase",
+    "evaluation": "Shared declared requirements and rules, immutable setup/station/final captures; independent fresh final assessor sees declared inputs and final candidate only; setup/repairs/interventions/time/raw usage separate, unknown costs retained",
+    "stopCondition": "Same unchanged native setup failure or unresolved owned process/turn exposure is terminal; report concrete blocker before additional actual execution. No automatic resource refill.",
+    "notAuthorized": [
+      "Old grant reuse",
+      "Global config/security policy changes",
+      "Sandbox disabling as diagnostic fix",
+      "Installation/purchases/new provider integration",
+      "Product code imports or Markitect simulation",
+      "Private assessment exposure to implementers",
+      "Main gate expansion",
+      "Automatic Markitect actual runs"
+    ],
+    "priorEvidence": "All failed pilots and receipts preserved; development tests are not study or method superiority evidence",
+    "grantPath": "docs/design/government/conventional-variant-adapter-delivery-20261009.json",
+    "grantSha256": "e6c2b11ce4758d9c315d6babb01612f43ebef23e492da018424cb92732f08d73",
+    "status": "AUTHORIZED_IMPLEMENTATION_AND_FRESH_FINITE_EXECUTION",
+    "actualStartsObserved": 0,
+    "dispatch": "SENT_ONCE_TO_SCIENTIST_LOCAL"
   }
 }
