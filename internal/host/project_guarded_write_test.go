@@ -51,6 +51,24 @@ func TestGuardedWriteCapturesAndAppliesCreateReplaceAndDelete(t *testing.T) {
 	}
 }
 
+func TestGuardedWriteRejectsDifferentRepositoryRoot(t *testing.T) {
+	root := installTestRepo(t, "feature/guarded")
+	other := installTestRepo(t, "feature/guarded")
+	capture, err := CaptureGuardedWrite(root, []string{"new.txt"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := ApplyGuardedWrite(other, capture, []GuardedWriteChange{{Path: "new.txt", Bytes: []byte("must not write\n"), Mode: 0644}})
+	if err == nil || !strings.Contains(err.Error(), "root differs") || len(result.CompletedPaths) != 0 {
+		t.Fatalf("different-root result=%+v error=%v", result, err)
+	}
+	for _, path := range []string{root, other} {
+		if _, err := os.Lstat(filepath.Join(path, "new.txt")); !os.IsNotExist(err) {
+			t.Fatalf("different-root attempt changed %s: %v", path, err)
+		}
+	}
+}
+
 func TestGuardedWriteCreatesBelowMissingMarkitectDirectories(t *testing.T) {
 	root := installTestRepo(t, "feature/guarded")
 	capture, err := CaptureGuardedWrite(root, []string{".markitect/drafts/new.json"})

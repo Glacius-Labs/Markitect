@@ -135,7 +135,18 @@ func applyGuardedWrite(root string, capture *GuardedWriteCapture, changes []Guar
 	if err != nil {
 		return result, err
 	}
-	if !samePathSpelling(rootAbs, capture.Root) {
+	// Git canonicalizes the captured root, while Windows callers may retain
+	// an equivalent 8.3 or extended-prefix spelling. Normalize both spellings;
+	// the opened-directory identity and reparse checks below remain required.
+	rootSpelling, err := canonicalPathSpelling(rootAbs)
+	if err != nil {
+		return result, fmt.Errorf("canonicalize guarded apply root spelling: %w", err)
+	}
+	capturedSpelling, err := canonicalPathSpelling(capture.Root)
+	if err != nil {
+		return result, fmt.Errorf("canonicalize captured repository root spelling: %w", err)
+	}
+	if !samePathSpelling(rootSpelling, capturedSpelling) {
 		return result, errors.New("guarded apply root differs from captured repository root")
 	}
 	normalizedChanges, err := normalizeGuardedChanges(changes, capture.Files)

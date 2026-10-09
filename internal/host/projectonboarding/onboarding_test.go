@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -427,7 +428,10 @@ func TestModelFirstWorkflowCoversShortWorkItemsReadinessAndBrownfieldAdoption(t 
 		"otherwise stop and report the exact blocked action",
 		"Do not bypass the Run/Review/Apply lifecycle by writing implementation files directly",
 		"Resume the same exploration when the ordinary required action has completed",
-		"markitect project edit --repo PATH --input MUTATION.json",
+		"markitect project edit --repo PATH --input .markitect/drafts/project-model-mutation.json",
+		"Every --request, --output, and --input record path must be a normalized repository-relative slash path",
+		"Discovery request/output and project edit inputs are rooted in --repo",
+		"Brownfield stage inputs and its durable session are rooted in --source-repo when supplied, otherwise --repo",
 		"never impersonate user or a human",
 		"Ask the contributor only when material intent or authority is outside the delegation",
 		"reverse-model it iteratively",
@@ -446,7 +450,7 @@ func TestModelFirstWorkflowCoversShortWorkItemsReadinessAndBrownfieldAdoption(t 
 		"An omitted root pool retains legacy broad routing",
 		"explicit-empty marker",
 		"parent receives each direct child's exact final report",
-		"begin input is a bare ReverseIterationRequest",
+		"begin record contains a bare ReverseIterationRequest",
 		"previewDigest",
 		"requestContractDigest",
 		"fails closed and is not automatically replayable",
@@ -468,6 +472,26 @@ func TestModelFirstWorkflowCoversShortWorkItemsReadinessAndBrownfieldAdoption(t 
 		if !strings.Contains(workflow, required) {
 			t.Errorf("shared workflow is missing required guidance %q", required)
 		}
+	}
+	commandRecordPaths := 0
+	for _, line := range strings.Split(workflow, "\n") {
+		if !strings.HasPrefix(strings.TrimSpace(line), "markitect project ") {
+			continue
+		}
+		args := strings.Fields(line)
+		for i := 0; i < len(args)-1; i++ {
+			if args[i] != "--input" && args[i] != "--request" && args[i] != "--output" {
+				continue
+			}
+			recordPath := args[i+1]
+			commandRecordPaths++
+			if strings.ContainsAny(recordPath, "\\:\x00") || strings.HasPrefix(recordPath, "/") || path.Clean(recordPath) != recordPath || !strings.HasSuffix(recordPath, ".json") || (!strings.HasPrefix(recordPath, ".markitect/drafts/") && !strings.HasPrefix(recordPath, ".markitect/runs/")) {
+				t.Errorf("generated command uses invalid record path %q", recordPath)
+			}
+		}
+	}
+	if commandRecordPaths < 13 {
+		t.Errorf("validated only %d generated JSON record arguments, want at least 13", commandRecordPaths)
 	}
 }
 
