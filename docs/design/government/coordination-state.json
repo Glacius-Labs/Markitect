@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T18:30:57Z",
+  "updatedUtc": "2026-10-09T18:33:00Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16194,7 +16194,7 @@
     "recordedUtc": "2026-10-09T17:18:44Z",
     "scientist": {
       "authority": "Direct user now requests prepare/tidy/refine Case Study Playground while product workers finish; earlier stop lifted for preparation only",
-      "status": "COMPLETED_PRIVATE_CHECKPOINT_ROOT_QUALIFIED_HOLD",
+      "status": "ACTIVE_NEW_DIRECT_HUMAN_CONVENTIONAL_PILOT_OLD_MATCHED_STUDIES_STOPPED",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
       "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:140",
@@ -16564,5 +16564,57 @@
     "releaseAuthorized": false,
     "kgCurrentMainIntegration": false,
     "originalEvidencePreserved": true
+  },
+  "conventionalWrapperRuntimePilot20261009": {
+    "id": "conventional-wrapper-runtime-pilot-20261009",
+    "issuedUtc": "2026-10-09T18:33:00Z",
+    "authority": "Verified direct human request in Scientist turn01a121ed-a3e6-7133-94b7-e454cd23d724: test Conventional wrapper suite while Markitect developed",
+    "ownerThread": "01a1169c-3df6-7571-997d-48ab57365875",
+    "privateSourceBase": "df6db9cc846378769efc9b8596b2a9736efe0425",
+    "sourceAndActualConfigFreezeOwnerRequiredBeforeDispatch": true,
+    "maxFreshProjectStarts": 2,
+    "trajectories": [
+      {
+        "case": "Roombook",
+        "initialState": "Greenfield",
+        "backend": "native Codex CLI"
+      },
+      {
+        "case": "Readinglog",
+        "initialState": "Brownfield",
+        "backend": "native Codex App Server"
+      }
+    ],
+    "stationWorkItems": [
+      1,
+      3,
+      7,
+      1
+    ],
+    "maxTrajectoryWallSeconds": 14400,
+    "maxAggregateWallSeconds": 28800,
+    "maxRoleTurnSeconds": 5400,
+    "maxTotalStartRequests": 256,
+    "model": "gpt-6-luna",
+    "reasoningEffort": "high",
+    "usageEnforcementVsObservedMustBeExplicit": true,
+    "consumedFreshStartsAtIssuance": 0,
+    "oldGrantsReusable": false,
+    "automaticRefill": false,
+    "markitectCellsAuthorized": false,
+    "mainGate": false,
+    "caseTransportComparison": "Confounded two-case pilot, not matched transport or Markitect comparison",
+    "noBlindReplayAfterUncertainDispatch": true,
+    "privateBackupOnly": true,
+    "mainIntegrationDoesNotWait": true,
+    "hostLoadMustBeRecorded": true,
+    "requiredSetup": "Existing installed executable/profile/tool/write/helper bindings, exact own stdio process/session ownership, fresh context plus normal session continuation",
+    "completion": "Functional/rule/rename/restart outcomes and real time/usage/unknowns; preserve failures and changes prospected; report source/handles/consumption/evidence",
+    "status": "DISPATCHED_CONDITIONAL_ON_OWN_CONCRETE_SETUP_SOURCE_BINDING",
+    "grantDocument": "docs/design/government/conventional-wrapper-runtime-pilot-20261009.json",
+    "ownerMessageSentOnce": true,
+    "integrationNoMainDependencyNoticeSentOnce": true,
+    "actualStartReceiptPending": true,
+    "reportedInstalledVersion": "0.162.0-alpha.2_READONLY_OWNER_OBSERVED"
   }
 }

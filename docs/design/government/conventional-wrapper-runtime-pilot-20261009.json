@@ -1,0 +1,46 @@
+{
+  "id": "conventional-wrapper-runtime-pilot-20261009",
+  "issuedUtc": "2026-10-09T18:33:00Z",
+  "authority": "Verified direct human request in Scientist turn01a121ed-a3e6-7133-94b7-e454cd23d724: test Conventional wrapper suite while Markitect developed",
+  "ownerThread": "01a1169c-3df6-7571-997d-48ab57365875",
+  "privateSourceBase": "df6db9cc846378769efc9b8596b2a9736efe0425",
+  "sourceAndActualConfigFreezeOwnerRequiredBeforeDispatch": true,
+  "maxFreshProjectStarts": 2,
+  "trajectories": [
+    {
+      "case": "Roombook",
+      "initialState": "Greenfield",
+      "backend": "native Codex CLI"
+    },
+    {
+      "case": "Readinglog",
+      "initialState": "Brownfield",
+      "backend": "native Codex App Server"
+    }
+  ],
+  "stationWorkItems": [
+    1,
+    3,
+    7,
+    1
+  ],
+  "maxTrajectoryWallSeconds": 14400,
+  "maxAggregateWallSeconds": 28800,
+  "maxRoleTurnSeconds": 5400,
+  "maxTotalStartRequests": 256,
+  "model": "gpt-6-luna",
+  "reasoningEffort": "high",
+  "usageEnforcementVsObservedMustBeExplicit": true,
+  "consumedFreshStartsAtIssuance": 0,
+  "oldGrantsReusable": false,
+  "automaticRefill": false,
+  "markitectCellsAuthorized": false,
+  "mainGate": false,
+  "caseTransportComparison": "Confounded two-case pilot, not matched transport or Markitect comparison",
+  "noBlindReplayAfterUncertainDispatch": true,
+  "privateBackupOnly": true,
+  "mainIntegrationDoesNotWait": true,
+  "hostLoadMustBeRecorded": true,
+  "requiredSetup": "Existing installed executable/profile/tool/write/helper bindings, exact own stdio process/session ownership, fresh context plus normal session continuation",
+  "completion": "Functional/rule/rename/restart outcomes and real time/usage/unknowns; preserve failures and changes prospected; report source/handles/consumption/evidence"
+}
