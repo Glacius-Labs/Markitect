@@ -1,0 +1,16 @@
+# Runtime strata and open bindings
+
+| Stratum | Prospective selection | Observed now | Still required before actual work |
+|---|---|---|---|
+| Codex Luna High | `gpt-6-luna`, reasoning `high` for all executing/review roles | Selected design profile only; no runtime call in preparation | CLI/App transport/version/config pins, genuine installed Markitect binding and native tools/helpers, effective model/effort and actual receipts |
+| Claude Code Latest Sonnet | `--model sonnet --effort xhigh`; pin effective full ID before the pair | Root reported CLI 2.1.295, latest channel/current update check, authenticated first-party claude.ai Max, user effortLevel=xhigh and permission mode auto; no model/provider overrides reported | Effective serving ID/effort/caps/fallbacks/role overrides, exact binary/config/tool permissions, genuine Markitect Claude inner-role support |
+
+These are two separate strata. Compare Conventional versus Markitect within each, with identical selected model, effort, provider, ordinary tools, rights and available finite resources. Do not infer method effects from Sonnet versus Luna. Native provider orchestration may differ across strata; record it. No fallback or helper model switch may silently become a same-model observation.
+
+The [official Claude model configuration](https://code.claude.com/docs/en/model-config), read 2026-10-09, documents `sonnet` as a changing latest alias; the Anthropic table currently names Sonnet 5.5. `--effort` selects a session level. User `effortLevel=xhigh` is configuration metadata, not observed effective effort: model-specific defaults, caps and role frontmatter can affect it; JSON/background caps may be silent. A future explicit `--effort xhigh` avoids relying on the old user default, but does not prove serving behavior. Keep effective values null until observed. No additional CLI, account or provider diagnosis was performed here.
+
+The metadata is an availability lead, not a functional test. Secret credentials, account tokens and raw user configuration are not public profile inputs. Do not change global configuration, permissions or authentication. Use explicit pair-local settings in the later owner-reviewed installation; capture safe hashes and requested/observed settings.
+
+Markitect support must be supplied by the stable product owner. If its genuine inner managers bind only Codex/Luna, the Claude Markitect pair is `blocked_by_provider_support`. The harness adds no Claude product adapter and cannot mix a Claude outer actor with Luna inner execution to claim a matched Claude pair.
+
+Resource limits are future freeze inputs, not inherited 72-start/4-helper/depth-two grants. Specify equal time/start/concurrency/depth/tool rights within each pair, how each is enforced, what is only observed after dispatch, and remaining unknowns. Preserve ordinary tooling; missing hard counters require honest limits, not counterfeit receipts. Missing native token/cost/active-time data remains unknown and is not itself a start barrier.

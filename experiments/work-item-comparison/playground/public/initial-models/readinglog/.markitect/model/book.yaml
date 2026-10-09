@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: book
+  namespace: ""
+purpose: "book for readinglog"
+spec:
+  category: concept
+  description: "A book record has normalized case-sensitive unique id, title, author, positive integer pages and unread or finished status, with stable stored JSON shape."
+  public: true
+  uses: []
+  requires: []

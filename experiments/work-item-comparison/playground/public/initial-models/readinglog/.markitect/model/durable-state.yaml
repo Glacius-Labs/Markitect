@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: durable-state
+  namespace: ""
+purpose: "durable-state for readinglog"
+spec:
+  category: rule
+  description: "Successful mutation atomically replaces UTF-8 JSON. Missing DB is empty. Invalid input, duplicates or malformed data fail without altering stored bytes. Preserve existing stored records and later-process durability; no multiwriter guarantee."
+  public: true
+  uses: []
+  requires: []

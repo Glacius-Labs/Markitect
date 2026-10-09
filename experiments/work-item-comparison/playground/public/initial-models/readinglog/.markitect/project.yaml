@@ -1,0 +1,16 @@
+apiVersion: project.markitect.example.org/v1alpha1
+name: readinglog
+coverageMode: full
+documentPath: docs/markitect/project.md
+modelFiles:
+  - .markitect/model/manager.yaml
+  - .markitect/model/book.yaml
+  - .markitect/model/reading-contract.yaml
+  - .markitect/model/durable-state.yaml
+  - .markitect/model/delivery-rules.yaml
+  - .markitect/model/implementation.yaml
+  - .markitect/model/documentation.yaml
+  - .markitect/model/tests.yaml
+  - .markitect/model/checks.yaml
+inventoryRoots: []
+exclusions: []

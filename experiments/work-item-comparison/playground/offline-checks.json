@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "kind": "offline_preparation_fixtures",
+  "startedUtc": "2026-10-09T17:36:49.784667+00:00",
+  "finishedUtc": "2026-10-09T17:37:41.618601+00:00",
+  "command": [
+    "C:\\Python313\\python.exe",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments\\work-item-comparison\\playground\\tests",
+    "-v"
+  ],
+  "exitCode": 0,
+  "sourceFileSha256": {
+    "experiments/work-item-comparison/playground/lifecycle.py": "7861df8b0ffb3f8e0bb698a3bae9691a3eff23b3ec1dc1d4f145825d0f41d0b2",
+    "experiments/work-item-comparison/playground/tests/test_lifecycle.py": "adf193d7ffbd4e531e79ce8f3c228b9b4a18639ec666a9e85596f084bb56d889",
+    "experiments/work-item-comparison/playground/tests/test_acceptance_reporting.py": "28da8e0dc69d36b7dc3c0a3f52ed01150d06374f2846d08b7225ec8a1159ef05",
+    "experiments/work-item-comparison/playground/public/common/checks/acceptance.py": "903ec954d2fb7c5df78b21c24ef3f8d830d22c7334597a21950f6c4c82940dfb"
+  },
+  "logSha256": "1baf8e8f6f19f9012e3a1eac5e164582af7a9f34ea27abb5403eb75f4f0d8be5",
+  "logEncoding": "UTF-8; CRLF normalized to LF for the new technical test log",
+  "caseApplicationsExecuted": false,
+  "productExecutions": 0,
+  "providerTests": 0,
+  "studyActorsStarted": 0,
+  "developerReviewsSeparate": true,
+  "humanAcceptance": "not established"
+}

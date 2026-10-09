@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: reservation
+  namespace: ""
+purpose: "reservation for roombook"
+spec:
+  category: concept
+  description: "A reservation has a monotonic never-reused integer identity, normalized case-sensitive room, UTC minute start/end, nonempty title and active or canceled status."
+  public: true
+  uses: []
+  requires: []

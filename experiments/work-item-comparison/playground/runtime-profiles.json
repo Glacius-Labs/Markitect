@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "execution_authorized": false,
+  "providerLauncher": false,
+  "profiles": [
+    {
+      "id": "codex-luna-high",
+      "runtime": "Codex",
+      "modelRequested": "gpt-6-luna",
+      "effortRequested": "high",
+      "providerRequested": "OpenAI",
+      "modelEffective": null,
+      "effortEffective": null,
+      "executableVersion": null,
+      "executableSha256": null,
+      "transport": null,
+      "toolsAndRights": null,
+      "nativeHelpers": null,
+      "productInnerProviderSupport": "unbound",
+      "status": "preparation_only"
+    },
+    {
+      "id": "claude-latest-sonnet",
+      "runtime": "Claude Code",
+      "modelRequested": "sonnet",
+      "effortRequested": "xhigh",
+      "providerRequested": "Anthropic first-party claude.ai",
+      "prospectiveSelectionArgs": [
+        "--model",
+        "sonnet",
+        "--effort",
+        "xhigh"
+      ],
+      "documentedAliasAsOf": "2026-10-09",
+      "documentedAlias": "Sonnet 5.5",
+      "documentation": "https://code.claude.com/docs/en/model-config",
+      "modelEffective": null,
+      "effortEffective": null,
+      "executableVersionReportedByRoot": "2.1.295",
+      "executableSha256": null,
+      "rootMetadata": {
+        "updateChannel": "latest",
+        "reportedUpdateStatus": "current",
+        "authReported": "loggedIn firstParty claude.ai Max",
+        "userEffortReported": "xhigh",
+        "permissionModeReported": "auto",
+        "modelOverridesReported": false,
+        "alternateProviderEnvironmentReported": false,
+        "functionalCallProven": false
+      },
+      "toolsAndRights": null,
+      "nativeHelpers": null,
+      "productInnerProviderSupport": "unbound",
+      "unsupportedPairStatus": "blocked_by_provider_support",
+      "status": "preparation_only"
+    }
+  ]
+}

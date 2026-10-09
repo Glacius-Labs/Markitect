@@ -1,0 +1,23 @@
+test_error_response_cannot_mutate_database (test_acceptance_reporting.ReportingTests.test_error_response_cannot_mutate_database) ... ok
+test_exit_and_stderr_are_reported_before_json_parse (test_acceptance_reporting.ReportingTests.test_exit_and_stderr_are_reported_before_json_parse) ... ok
+test_missing_entrypoint_is_one_failure_with_unexecuted_checks (test_acceptance_reporting.ReportingTests.test_missing_entrypoint_is_one_failure_with_unexecuted_checks) ... ok
+test_success_exit_with_invalid_json_is_output_failure (test_acceptance_reporting.ReportingTests.test_success_exit_with_invalid_json_is_output_failure) ... ok
+test_unavailable_python_process_is_evaluation_error (test_acceptance_reporting.ReportingTests.test_unavailable_python_process_is_evaluation_error) ... ok
+test_actor_branch_main_and_detached_head_are_capturable (test_lifecycle.LifecycleTests.test_actor_branch_main_and_detached_head_are_capturable) ... ok
+test_actual_public_seed_is_copied_flat_without_running_case_code (test_lifecycle.LifecycleTests.test_actual_public_seed_is_copied_flat_without_running_case_code) ... ok
+test_advance_preserves_unstaged_actor_work_and_never_commits (test_lifecycle.LifecycleTests.test_advance_preserves_unstaged_actor_work_and_never_commits) ... ok
+test_advance_refuses_staged_index_without_touching_it (test_lifecycle.LifecycleTests.test_advance_refuses_staged_index_without_touching_it) ... ok
+test_advance_rejects_mutated_snapshot_copy (test_lifecycle.LifecycleTests.test_advance_rejects_mutated_snapshot_copy) ... ok
+test_advance_requires_snapshot_and_preserves_prior_snapshot (test_lifecycle.LifecycleTests.test_advance_requires_snapshot_and_preserves_prior_snapshot) ... ok
+test_authorization_and_execution_metadata_are_preserved_as_external_input (test_lifecycle.LifecycleTests.test_authorization_and_execution_metadata_are_preserved_as_external_input) ... ok
+test_capture_detects_mid_copy_change_and_preserves_partial_evidence (test_lifecycle.LifecycleTests.test_capture_detects_mid_copy_change_and_preserves_partial_evidence) ... ok
+test_early_blocked_freeze_needs_reason_and_closes_transitions (test_lifecycle.LifecycleTests.test_early_blocked_freeze_needs_reason_and_closes_transitions) ... ok
+test_four_stage_declarations_and_final_freeze_are_fixed (test_lifecycle.LifecycleTests.test_four_stage_declarations_and_final_freeze_are_fixed) ... ok
+test_lf_git_bytes_and_dirty_unfinished_work_are_captured_raw (test_lifecycle.LifecycleTests.test_lf_git_bytes_and_dirty_unfinished_work_are_captured_raw) ... ok
+test_prepare_does_not_overwrite_and_records_execution_disabled (test_lifecycle.LifecycleTests.test_prepare_does_not_overwrite_and_records_execution_disabled) ... ok
+test_wrong_repo_or_audit_binding_is_rejected (test_lifecycle.LifecycleTests.test_wrong_repo_or_audit_binding_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 51.609s
+
+OK

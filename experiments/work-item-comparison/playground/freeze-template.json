@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "status": "DRAFT_DISABLED",
+  "execution_authorized": false,
+  "actualOrderRef": null,
+  "pairId": null,
+  "case": null,
+  "runtimeProfileId": null,
+  "playgroundSourceCommit": null,
+  "sharedSourceManifestSha256": null,
+  "sharedRequirementsSha256": null,
+  "stationPlanSha256": null,
+  "prompt": "Hier liegt das Backlog. Implementiere die Arbeit, halte die Projektregeln ein, prüfe die Ergebnisse und merge die fertigen Änderungen nach main.",
+  "stationRelease": "fixed S1/S2/S3/S4 1/3/7/1; all requirements public",
+  "assessmentSourceCommit": null,
+  "setup": {
+    "Conventional": {
+      "seedCommit": null,
+      "setupMainCommit": null,
+      "setupFileManifest": null,
+      "ordinaryInstructionsManifest": null,
+      "setupInterval": null
+    },
+    "Markitect": {
+      "seedCommit": null,
+      "setupMainCommit": null,
+      "setupFileManifest": null,
+      "setupInterval": null,
+      "initialModelPreparationInterval": null,
+      "productSourceCommit": null,
+      "productMainBinding": null,
+      "binarySha256": null,
+      "modulesAndSchemaPins": null,
+      "runtimeConfigSha256": null,
+      "skillsAndGeneratedViewsManifest": null,
+      "businessModelManifest": null,
+      "proposalMigrationReceipt": null,
+      "ownerSetupReceipt": null,
+      "genuineInnerProviderSupport": "unbound"
+    }
+  },
+  "pairedRuntime": {
+    "provider": null,
+    "modelRequested": null,
+    "effortRequested": null,
+    "modelEffective": null,
+    "effortEffective": null,
+    "executableVersion": null,
+    "executableSha256": null,
+    "transport": null,
+    "configurationManifest": null,
+    "toolsAndRights": null,
+    "roleOverridesAndFallbacks": null,
+    "nativeHelpers": null,
+    "globalConfigChanges": false
+  },
+  "equalLimits": {
+    "wallTimeSeconds": null,
+    "executingStarts": null,
+    "maxConcurrency": null,
+    "maxDepth": null,
+    "scopeIncludesSetup": null,
+    "enforcementEvidence": null,
+    "postDispatchObservations": null,
+    "cooperativeLimits": null,
+    "unknowns": []
+  },
+  "measurement": {
+    "setup": "separate",
+    "wallIntervals": [],
+    "agentActiveIntervals": null,
+    "manualInterventions": [],
+    "humanActiveSeconds": null,
+    "nativeUsageReceipts": [],
+    "tokens": null,
+    "cost": null,
+    "priceBasis": null
+  },
+  "terminal": {
+    "reason": null,
+    "lastReleasedStation": null,
+    "mainCommit": null,
+    "mainTree": null,
+    "rawGitManifest": null,
+    "rawWorktreeManifest": null,
+    "unfinishedBranchRefs": null,
+    "snapshotBinding": null,
+    "checks": [],
+    "teamEvidence": [],
+    "humanAcceptance": "not established"
+  },
+  "openBindings": [
+    "stable integrated product and genuine installation",
+    "effective runtime model/effort/rights per role",
+    "Claude product inner-provider support",
+    "finite separately authorized actual order"
+  ]
+}

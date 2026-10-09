@@ -1,0 +1,33 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: documentation
+  namespace: ""
+purpose: "Owns documentation representations of the accepted public contract"
+spec:
+  role: documentation
+  realizes:
+    - namespace: ""
+      name: reservation
+    - namespace: ""
+      name: booking-contract
+    - namespace: ""
+      name: durable-state
+  paths:
+    - "README.md"
+    - "BACKLOG.md"
+    - "STATIONS.json"
+    - "QUALITY.md"
+    - "AGENTS.md"
+    - ".gitignore"
+    - ".codex/"
+    - ".study/"
+    - "WORKLOG.md"
+    - "PROGRESS.md"
+    - "TEAMWORK.md"
+    - ".work/"
+  checks:
+    - namespace: ""
+      name: project-tests
+  required: false
+  reason: "Expected realizations, not proof of implementation or genuine installation; validate at the owner setup boundary."

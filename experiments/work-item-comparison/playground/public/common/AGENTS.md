@@ -1,0 +1,13 @@
+# Project rules
+
+Read README.md, BACKLOG.md, STATIONS.json and QUALITY.md. `.study/station.json` declares the released wave; all requirements are public from the beginning. Implement the released work and its dependencies, check the results, merge finished work to this isolated main, then return at the station boundary. The controller retains a snapshot and releases the next fixed wave. Never push or change another project.
+
+Choose implementation, decomposition, tools and review yourself. Use ordinary project history, shell, tests and native subagents within the installed pair-local runtime profile and finite resources. All executing/reviewing roles must retain that profile's model, effort, provider, tools and rights. Record any actual override/fallback or unavailable telemetry. Shared host rights are not OS isolation; private assessments, other method arms and old case solutions/results are not project inputs. Do not inspect credentials, change global settings or invent unavailable measurements.
+
+Work on feature branches, preserve existing behavior, add meaningful risk-based tests, diagnose and repair ordinary failures, and rerun affected checks. A failed command, product error or ambiguity answerable from this project is not automatically a stop. Keep code, tests and readable documentation consistent; no predetermined architecture is required. Merge checked work to main and verify the integrated result. Before every commit run `git diff --cached --check` immediately. Preserve work from other agents and check conflict resolutions.
+
+Keep a concise WORKLOG.md or PROGRESS.md recording items, assumptions, branch/commits, check commands/results/logs, failures/repairs, reviews, merged/open work, model/doc upkeep if applicable and the next step. Reconcile that record with actual Git/files/checks after context changes. Handoff explains completed/open items and genuine blockers in ordinary prose; no response schema or semantic dispatcher protocol is required. At finite end retain unfinished changes and report them honestly.
+
+S3 requires at least two executing agents working on independent groups with overlapping intervals and integrated contributions. Choose native planning, prompts, roles and branches yourself. Keep TEAMWORK.md with actual identities, requested/observed model and effort where available, intervals, contribution and merge SHAs, reviews/conflicts and native receipts. Planning a team or merely requesting a helper does not prove one; report missing support or unknown observation honestly.
+
+Technical checks and generated method artifacts do not establish human acceptance. No external publication is part of this task.

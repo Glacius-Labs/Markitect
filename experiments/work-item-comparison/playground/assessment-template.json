@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "pairId": null,
+  "case": null,
+  "method": null,
+  "runtimeProfileId": null,
+  "mainCommit": null,
+  "mainTree": null,
+  "lastReleasedStation": null,
+  "stationResults": [],
+  "findings": [],
+  "dimensions": {
+    "functionAndRules": "unknown",
+    "regressionAndDurableState": "unknown",
+    "consistency": "unknown",
+    "codeQuality": "unknown",
+    "changeability": "unknown",
+    "testsAndDocs": "unknown",
+    "drift": "unknown",
+    "continuation": "unknown"
+  },
+  "findingShape": {
+    "rule": null,
+    "severity": null,
+    "scope": null,
+    "status": "unknown",
+    "checkCommand": null,
+    "exitCode": null,
+    "sourceCommit": null,
+    "evidence": [],
+    "detectedBy": null,
+    "repairCommit": null,
+    "remaining": null,
+    "falseAlarm": null
+  },
+  "team": {
+    "executingStarts": null,
+    "overlapSeconds": null,
+    "contributionCommits": [],
+    "mergeCommits": [],
+    "nativeReceipts": []
+  },
+  "rename": {
+    "activeRepresentations": [],
+    "compatibleExceptions": [],
+    "prechangeDataChecks": [],
+    "modelAndViews": "not applicable for Conventional; unknown for Markitect"
+  },
+  "methodConformance": "unknown",
+  "effort": {
+    "setup": null,
+    "initialModelPreparation": null,
+    "modelUpkeep": null,
+    "implementation": null,
+    "checks": null,
+    "failuresAndRepair": null,
+    "review": null,
+    "merge": null,
+    "contextResume": null,
+    "oversight": null,
+    "wallIntervals": [],
+    "agentActiveIntervals": null,
+    "manualInterventions": [],
+    "humanActiveSeconds": null,
+    "nativeReceipts": [],
+    "tokens": null,
+    "cost": null,
+    "priceBasis": null
+  },
+  "runtimeObserved": {
+    "model": null,
+    "effort": null,
+    "provider": null,
+    "fallbacks": [],
+    "limitsEnforced": [],
+    "cooperativeLimits": [],
+    "unknowns": []
+  },
+  "humanAcceptance": "not established",
+  "limitations": [
+    "finite public checks plus independent public-spec review",
+    "one longitudinal case, dependent station observations",
+    "shared host is not OS isolation"
+  ]
+}
