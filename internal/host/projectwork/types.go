@@ -5,6 +5,7 @@ package projectwork
 import (
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
 
@@ -18,6 +19,8 @@ type Exclusion struct {
 }
 
 type Config struct {
+	DocumentPath   string      `json:"documentPath,omitempty" yaml:"documentPath,omitempty"`
+	CoverageMode   string      `json:"coverageMode,omitempty" yaml:"coverageMode,omitempty"`
 	APIVersion     string      `json:"apiVersion" yaml:"apiVersion"`
 	Name           string      `json:"name" yaml:"name"`
 	ModelFiles     []string    `json:"modelFiles" yaml:"modelFiles"`
@@ -26,14 +29,15 @@ type Config struct {
 }
 
 type Project struct {
-	Root        string              `json:"-"`
-	Revision    string              `json:"revision"`
-	Provisional bool                `json:"provisional"`
-	Digest      string              `json:"digest"`
-	Config      Config              `json:"config"`
-	Model       core.Model          `json:"model"`
-	Report      projectmodel.Report `json:"report"`
-	Snapshot    *snapshot.Snapshot  `json:"-"`
+	Coverage    *projectcoverage.Report `json:"coverage,omitempty"`
+	Root        string                  `json:"-"`
+	Revision    string                  `json:"revision"`
+	Provisional bool                    `json:"provisional"`
+	Digest      string                  `json:"digest"`
+	Config      Config                  `json:"config"`
+	Model       core.Model              `json:"model"`
+	Report      projectmodel.Report     `json:"report"`
+	Snapshot    *snapshot.Snapshot      `json:"-"`
 }
 
 type FileChange struct {

@@ -12,7 +12,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
 
-func TestInitPreviewAndGuardedWriteCreateOnlyMarkitectFiles(t *testing.T) {
+func TestInitPreviewAndGuardedWriteCreateControlPlaneAndDocumentation(t *testing.T) {
 	root := testGitRoot(t)
 	preview, err := Init(root, "New project", false)
 	if err != nil {
@@ -22,7 +22,7 @@ func TestInitPreviewAndGuardedWriteCreateOnlyMarkitectFiles(t *testing.T) {
 		t.Fatalf("preview planned %d files, want 5", len(preview.Files))
 	}
 	for _, file := range preview.Files {
-		if !strings.HasPrefix(file.Path, ".markitect/") {
+		if !strings.HasPrefix(file.Path, ".markitect/") && file.Path != DefaultDocumentPath {
 			t.Fatalf("Init planned a path outside .markitect: %s", file.Path)
 		}
 		if _, err := os.Lstat(filepath.Join(root, filepath.FromSlash(file.Path))); !os.IsNotExist(err) {
@@ -180,6 +180,7 @@ func TestUserCanSelectNewInventoryThroughReviewedManifestEdit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	mutation.BaseDigest = project.Digest
 	plan, err = PlanEdit(project, mutation)
 	if err != nil {
 		t.Fatal(err)
@@ -282,6 +283,31 @@ func TestConfigRejectsCaseAliasedScopesAndReservedRuntimeRoots(t *testing.T) {
 	wrongCase := []byte("ApiVersion: " + APIVersion + "\nname: Fixture\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
 	if _, err := DecodeConfig(wrongCase); err == nil {
 		t.Fatal("incorrectly cased YAML field should be rejected")
+	}
+}
+
+func TestConfigRejectsDocumentControlPathCollisionsAndLinksFromCustomPath(t *testing.T) {
+	for _, destination := range []string{
+		"../outside.md",
+		"AGENTS.md",
+		"CLAUDE.md",
+		".markitect/runtime.yaml",
+		".markitect/ignore.yaml",
+		".markitect/workflows/model-first.md",
+		".agents/skills/markitect-model-first/SKILL.md",
+		".claude/skills/markitect-model-first/SKILL.md",
+	} {
+		data := []byte("apiVersion: " + APIVersion + "\nname: Fixture\ndocumentPath: " + destination + "\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
+		if _, err := DecodeConfig(data); err == nil {
+			t.Errorf("documentPath %q should be rejected", destination)
+		}
+	}
+	config, err := DecodeConfig([]byte("apiVersion: " + APIVersion + "\nname: Fixture\ndocumentPath: docs/generated/overview.md\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := sourceLinkAt(DocumentPath(config), "src/feature/file.go"), "[src/feature/file.go](../../src/feature/file.go)"; got != want {
+		t.Fatalf("custom document source link = %q, want %q", got, want)
 	}
 }
 

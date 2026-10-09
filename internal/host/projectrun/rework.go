@@ -198,7 +198,7 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 		if parsed.Status == "no-op" && len(proposal.Response.CandidateFiles) > 0 {
 			return fmt.Errorf("targeted work response for %s claimed no-op while proposing files", managerID)
 		}
-		candidate, err := applyProposal(current, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "work", nil, runtime.Limits)
+		candidate, err := applyProposal(current, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "work", nil, runtime.Limits, input.Snapshot)
 		if err != nil {
 			return err
 		}
@@ -365,7 +365,7 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 	} else if parsed.Status != "complete" || parsed.EscalateTo != "" {
 		return nil, fmt.Errorf("manager %s reintegration is not complete after resolving obligations", task.ManagerID)
 	}
-	candidate, err := applyProposal(merged, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "integrate", conflicts, runtime.Limits)
+	candidate, err := applyProposal(merged, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "integrate", conflicts, runtime.Limits, input.Snapshot)
 	if err != nil {
 		return nil, err
 	}

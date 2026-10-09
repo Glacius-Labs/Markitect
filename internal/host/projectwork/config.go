@@ -54,6 +54,22 @@ func DecodeConfig(data []byte) (Config, error) {
 	if strings.TrimSpace(config.Name) == "" || config.Name != strings.TrimSpace(config.Name) {
 		return Config{}, fmt.Errorf("project config name must be nonempty and have no surrounding whitespace")
 	}
+	if config.CoverageMode != "" && config.CoverageMode != "selected" && config.CoverageMode != "full" {
+		return Config{}, fmt.Errorf("coverageMode must be selected or full")
+	}
+	if config.DocumentPath != "" {
+		if err := validateRepoPath(config.DocumentPath); err != nil {
+			return Config{}, fmt.Errorf("documentPath: %w", err)
+		}
+		if !strings.HasSuffix(config.DocumentPath, ".md") || strings.HasPrefix(config.DocumentPath, ".markitect/model/") || config.DocumentPath == ManifestPath || config.DocumentPath == RuntimePath {
+			return Config{}, fmt.Errorf("documentPath must be a Markdown output outside canonical model inputs")
+		}
+		registered := config
+		registered.DocumentPath = ""
+		if IsToolPath(registered, config.DocumentPath) && !pathWithin(config.DocumentPath, ".markitect/views") {
+			return Config{}, fmt.Errorf("documentPath %q collides with a registered Markitect control or onboarding path", config.DocumentPath)
+		}
+	}
 	if len(config.ModelFiles) == 0 {
 		return Config{}, fmt.Errorf("project config must select at least one model file")
 	}
@@ -148,7 +164,7 @@ func validateExactPaths(field string, values []string, _ bool) error {
 
 func validateProjectYAMLFields(document *yaml.Node) error {
 	root := document.Content[0]
-	if err := exactYAMLFields(root, map[string]bool{"apiVersion": true, "name": true, "modelFiles": true, "inventoryRoots": true, "exclusions": true}); err != nil {
+	if err := exactYAMLFields(root, map[string]bool{"apiVersion": true, "name": true, "modelFiles": true, "inventoryRoots": true, "exclusions": true, "documentPath": true, "coverageMode": true}); err != nil {
 		return err
 	}
 	for i, exclusionList := range root.Content {

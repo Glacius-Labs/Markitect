@@ -10,6 +10,9 @@ import (
 // loadConfiguredInventory reads only regular paths enumerated beneath the
 // manifest's explicit inventory roots, after applying its exclusions.
 func loadConfiguredInventory(root, revision string, provisional bool, config Config) (*snapshot.Snapshot, error) {
+	if config.CoverageMode == "full" {
+		return loadFullCoverageSnapshot(root, revision, provisional, config)
+	}
 	selected := &snapshot.Snapshot{ID: revision, Provisional: provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
 	if len(config.InventoryRoots) == 0 {
 		return selected, nil

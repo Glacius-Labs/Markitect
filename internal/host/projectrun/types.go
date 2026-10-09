@@ -53,13 +53,14 @@ var (
 // resource ceilings. The configured mode is descriptive; only a verified
 // host-controlled launcher can establish isolated execution.
 type Runtime struct {
-	APIVersion       string           `json:"apiVersion" yaml:"apiVersion"`
-	Mode             string           `json:"mode" yaml:"mode"`
-	RequireIsolation bool             `json:"requireIsolation" yaml:"requireIsolation"`
-	Agents           map[string]Agent `json:"agents" yaml:"agents"`
-	Verifier         *Agent           `json:"verifier,omitempty" yaml:"verifier,omitempty"`
-	Review           *ReviewConfig    `json:"review,omitempty" yaml:"review,omitempty"`
-	Limits           Limits           `json:"limits" yaml:"limits"`
+	APIVersion       string            `json:"apiVersion" yaml:"apiVersion"`
+	Mode             string            `json:"mode" yaml:"mode"`
+	RequireIsolation bool              `json:"requireIsolation" yaml:"requireIsolation"`
+	Agents           map[string]Agent  `json:"agents" yaml:"agents"`
+	Verifier         *Agent            `json:"verifier,omitempty" yaml:"verifier,omitempty"`
+	Review           *ReviewConfig     `json:"review,omitempty" yaml:"review,omitempty"`
+	Strictness       *StrictnessConfig `json:"strictness,omitempty" yaml:"strictness,omitempty"`
+	Limits           Limits            `json:"limits" yaml:"limits"`
 }
 
 // ReviewConfig enables an independent bounded reviewer for each active
@@ -107,6 +108,7 @@ type Limits struct {
 type Duration time.Duration
 
 type PlanRequest struct {
+	Operation    string   `json:"operation,omitempty"`
 	Goal         string   `json:"goal"`
 	Managers     []string `json:"managers,omitempty"`
 	BaseRevision string   `json:"baseRevision,omitempty"`
@@ -120,40 +122,43 @@ type PlanRequest struct {
 }
 
 type PlanRecord struct {
-	APIVersion              string                     `json:"apiVersion"`
-	ID                      string                     `json:"id"`
-	Status                  string                     `json:"status"`
-	Goal                    string                     `json:"goal"`
-	ExecuteAuthorized       bool                       `json:"executeAuthorized"`
-	Root                    string                     `json:"-"`
-	BaseRevision            string                     `json:"baseRevision"`
-	ChangeBaseRevision      string                     `json:"changeBaseRevision,omitempty"`
-	ChangeBaseSnapshot      string                     `json:"changeBaseSnapshot,omitempty"`
-	ChangeBaseProjectDigest string                     `json:"changeBaseProjectDigest,omitempty"`
-	ChangeBaseModelDigest   string                     `json:"changeBaseModelDigest,omitempty"`
-	ChangeBaseReportDigest  string                     `json:"changeBaseReportDigest,omitempty"`
-	ChangeImpact            *projectmodel.ChangeImpact `json:"changeImpact,omitempty"`
-	ChangeImpactDigest      string                     `json:"changeImpactDigest,omitempty"`
-	TargetBranch            string                     `json:"targetBranch"`
-	TargetHead              string                     `json:"targetHead"`
-	RepositoryDigest        string                     `json:"repositoryDigest"`
-	BaseSnapshot            string                     `json:"baseSnapshot"`
-	WorkingSnapshot         string                     `json:"workingSnapshot"`
-	BaseProjectDigest       string                     `json:"baseProjectDigest"`
-	WorkingProjectDigest    string                     `json:"workingProjectDigest"`
-	BaseModelDigest         string                     `json:"baseModelDigest"`
-	ModelDigest             string                     `json:"modelDigest"`
-	ReportDigest            string                     `json:"reportDigest"`
-	RuntimeDigest           string                     `json:"runtimeDigest"`
-	PlannedAt               time.Time                  `json:"plannedAt"`
-	Managers                []ManagerTask              `json:"managers"`
-	Checks                  []CheckPlan                `json:"checks"`
-	ModelEdit               *EditPlan                  `json:"modelEdit,omitempty"`
-	InitialCandidateID      string                     `json:"initialCandidateId"`
-	RuntimeAgents           map[string]string          `json:"runtimeAgents"`
-	Findings                []string                   `json:"findings,omitempty"`
-	Blockers                []string                   `json:"blockers,omitempty"`
-	Digest                  string                     `json:"digest"`
+	BriefingDigests         map[string]string            `json:"briefingDigests,omitempty"`
+	Strictness              map[string]StrictnessProfile `json:"strictness,omitempty"`
+	Operation               string                       `json:"operation,omitempty"`
+	APIVersion              string                       `json:"apiVersion"`
+	ID                      string                       `json:"id"`
+	Status                  string                       `json:"status"`
+	Goal                    string                       `json:"goal"`
+	ExecuteAuthorized       bool                         `json:"executeAuthorized"`
+	Root                    string                       `json:"-"`
+	BaseRevision            string                       `json:"baseRevision"`
+	ChangeBaseRevision      string                       `json:"changeBaseRevision,omitempty"`
+	ChangeBaseSnapshot      string                       `json:"changeBaseSnapshot,omitempty"`
+	ChangeBaseProjectDigest string                       `json:"changeBaseProjectDigest,omitempty"`
+	ChangeBaseModelDigest   string                       `json:"changeBaseModelDigest,omitempty"`
+	ChangeBaseReportDigest  string                       `json:"changeBaseReportDigest,omitempty"`
+	ChangeImpact            *projectmodel.ChangeImpact   `json:"changeImpact,omitempty"`
+	ChangeImpactDigest      string                       `json:"changeImpactDigest,omitempty"`
+	TargetBranch            string                       `json:"targetBranch"`
+	TargetHead              string                       `json:"targetHead"`
+	RepositoryDigest        string                       `json:"repositoryDigest"`
+	BaseSnapshot            string                       `json:"baseSnapshot"`
+	WorkingSnapshot         string                       `json:"workingSnapshot"`
+	BaseProjectDigest       string                       `json:"baseProjectDigest"`
+	WorkingProjectDigest    string                       `json:"workingProjectDigest"`
+	BaseModelDigest         string                       `json:"baseModelDigest"`
+	ModelDigest             string                       `json:"modelDigest"`
+	ReportDigest            string                       `json:"reportDigest"`
+	RuntimeDigest           string                       `json:"runtimeDigest"`
+	PlannedAt               time.Time                    `json:"plannedAt"`
+	Managers                []ManagerTask                `json:"managers"`
+	Checks                  []CheckPlan                  `json:"checks"`
+	ModelEdit               *EditPlan                    `json:"modelEdit,omitempty"`
+	InitialCandidateID      string                       `json:"initialCandidateId"`
+	RuntimeAgents           map[string]string            `json:"runtimeAgents"`
+	Findings                []string                     `json:"findings,omitempty"`
+	Blockers                []string                     `json:"blockers,omitempty"`
+	Digest                  string                       `json:"digest"`
 }
 
 type ManagerTask struct {
@@ -217,6 +222,7 @@ type CheckPlan struct {
 }
 
 type RunReport struct {
+	Operation               string               `json:"operation,omitempty"`
 	APIVersion              string               `json:"apiVersion"`
 	ID                      string               `json:"id"`
 	PlanID                  string               `json:"planId"`
@@ -357,15 +363,17 @@ type StatusReport struct {
 }
 
 type VerifyReport struct {
-	APIVersion    string          `json:"apiVersion"`
-	RunID         string          `json:"runId"`
-	CandidateID   string          `json:"candidateId"`
-	CandidateHash string          `json:"candidateHash"`
-	Status        string          `json:"status"`
-	Checks        []CheckResult   `json:"checks"`
-	Verifier      *VerifierReport `json:"verifier,omitempty"`
-	VerifiedAt    time.Time       `json:"verifiedAt"`
-	Digest        string          `json:"digest"`
+	VerificationScope   string            `json:"verificationScope,omitempty"`
+	ManagerVerification *FullVerifyReport `json:"managerVerification,omitempty"`
+	APIVersion          string            `json:"apiVersion"`
+	RunID               string            `json:"runId"`
+	CandidateID         string            `json:"candidateId"`
+	CandidateHash       string            `json:"candidateHash"`
+	Status              string            `json:"status"`
+	Checks              []CheckResult     `json:"checks"`
+	Verifier            *VerifierReport   `json:"verifier,omitempty"`
+	VerifiedAt          time.Time         `json:"verifiedAt"`
+	Digest              string            `json:"digest"`
 }
 
 type VerifierReport struct {

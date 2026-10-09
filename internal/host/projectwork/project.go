@@ -15,6 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	hostwrite "github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/host/canonical"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
@@ -23,9 +24,62 @@ import (
 // tree inventory is acquired as metadata first, then its exact file list is
 // captured through Infrastructure's selected-snapshot API.
 func Load(root, revision string) (*Project, error) {
-	var manifest *snapshot.Snapshot
+	// Full coverage observes the entire repository independently of the legacy
+	// selected inventory roots. The fixed-revision path never consults the live
+	// worktree when constructing its snapshot semantics.
+	var fullUniverse *projectcoverage.Universe
+	var fullOptions projectcoverage.Options
+	var expectedManifest []byte
 	var err error
 	if revision == "" {
+		// The manifest determines exact canonical model paths and optional view
+		// output ownership, so read it before building the full registry.
+		manifestCapture, captureErr := source.ObserveSelectedWorking(root, []string{ManifestPath})
+		if captureErr != nil {
+			return nil, captureErr
+		}
+		if len(manifestCapture.MissingPaths) != 0 {
+			return nil, fmt.Errorf("project manifest %q is missing", ManifestPath)
+		}
+		config, decodeErr := DecodeConfig(manifestCapture.Snapshot.Files[ManifestPath])
+		if decodeErr != nil {
+			return nil, fmt.Errorf("%s: %w", ManifestPath, decodeErr)
+		}
+		fullOptions = coverageOptions(config)
+		expectedManifest = append([]byte(nil), manifestCapture.Snapshot.Files[ManifestPath]...)
+		if config.CoverageMode == "full" {
+			fullUniverse, err = projectcoverage.ObserveWorking(root, fullOptions)
+			if err != nil {
+				return nil, fmt.Errorf("observe full repository coverage: %w", err)
+			}
+		}
+	} else {
+		manifestCapture, captureErr := source.LoadSelected(root, revision, []string{ManifestPath})
+		if captureErr != nil {
+			return nil, captureErr
+		}
+		config, decodeErr := DecodeConfig(manifestCapture.Snapshot.Files[ManifestPath])
+		if decodeErr != nil {
+			return nil, fmt.Errorf("%s: %w", ManifestPath, decodeErr)
+		}
+		fullOptions = coverageOptions(config)
+		expectedManifest = append([]byte(nil), manifestCapture.Snapshot.Files[ManifestPath]...)
+		if config.CoverageMode == "full" {
+			fullUniverse, err = projectcoverage.ObserveRevision(root, manifestCapture.Snapshot.ID, fullOptions)
+			if err != nil {
+				return nil, fmt.Errorf("observe fixed revision coverage: %w", err)
+			}
+		}
+	}
+	var manifest *snapshot.Snapshot
+	var configBytes []byte
+	// err is shared with the optional coverage observation above.
+	if fullUniverse != nil {
+		manifest = fullUniverse.Snapshot
+		if manifest == nil || !bytes.Equal(manifest.Files[ManifestPath], expectedManifest) {
+			return nil, fmt.Errorf("project manifest changed while acquiring the full repository snapshot")
+		}
+	} else if revision == "" {
 		observed, observeErr := source.ObserveSelectedWorking(root, []string{ManifestPath})
 		if observeErr != nil {
 			return nil, observeErr
@@ -41,14 +95,17 @@ func Load(root, revision string) (*Project, error) {
 		}
 		manifest = selected.Snapshot
 	}
-	configBytes := manifest.Files[ManifestPath]
+	configBytes = manifest.Files[ManifestPath]
 	config, err := DecodeConfig(configBytes)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ManifestPath, err)
 	}
 	paths := append([]string{ManifestPath, RuntimePath}, config.ModelFiles...)
+	if config.CoverageMode == "full" {
+		paths = append(paths, fullSnapshotPaths(fullUniverse)...)
+	}
 	var inventoryMetadata *source.WorkingRootInventory
-	if revision == "" && len(config.InventoryRoots) > 0 {
+	if config.CoverageMode != "full" && revision == "" && len(config.InventoryRoots) > 0 {
 		inventoryMetadata, err = source.InventoryWorkingRoots(root, config.InventoryRoots)
 		if err != nil {
 			return nil, fmt.Errorf("inventory selected project roots: %w", err)
@@ -58,7 +115,7 @@ func Load(root, revision string) (*Project, error) {
 				paths = append(paths, entry.Path)
 			}
 		}
-	} else if revision != "" && len(config.InventoryRoots) > 0 {
+	} else if config.CoverageMode != "full" && revision != "" && len(config.InventoryRoots) > 0 {
 		fixedMetadata, inventoryErr := source.InventoryRevisionRoots(root, manifest.ID, config.InventoryRoots)
 		if inventoryErr != nil {
 			return nil, fmt.Errorf("inventory fixed project revision: %w", inventoryErr)
@@ -71,7 +128,12 @@ func Load(root, revision string) (*Project, error) {
 	}
 	paths = uniqueSorted(paths)
 	var selected *snapshot.Snapshot
-	if revision == "" {
+	if fullUniverse != nil {
+		selected = fullUniverse.Snapshot
+		if selected == nil || !bytes.Equal(selected.Files[ManifestPath], expectedManifest) {
+			return nil, fmt.Errorf("project manifest changed while acquiring the full repository snapshot")
+		}
+	} else if revision == "" {
 		observed, observeErr := source.ObserveSelectedWorking(root, paths)
 		if observeErr != nil {
 			return nil, observeErr
@@ -94,7 +156,7 @@ func Load(root, revision string) (*Project, error) {
 		selected = observed.Snapshot
 	} else {
 		var inventoryMetadata *source.RevisionRootInventory
-		if len(config.InventoryRoots) > 0 {
+		if config.CoverageMode != "full" && len(config.InventoryRoots) > 0 {
 			inventoryMetadata, err = source.InventoryRevisionRoots(root, manifest.ID, config.InventoryRoots)
 			if err != nil {
 				return nil, fmt.Errorf("inventory fixed project revision: %w", err)
@@ -115,6 +177,18 @@ func Load(root, revision string) (*Project, error) {
 	project, err := FromSnapshot(root, selected)
 	if err != nil {
 		return nil, err
+	}
+	if fullUniverse != nil {
+		coverage, coverageErr := projectcoverage.Classify(projectcoverage.Request{Universe: fullUniverse, Model: project.Report,
+			Options: fullOptions, LegacyRoots: config.InventoryRoots, LegacyExclusions: legacyExclusions(config.Exclusions)})
+		if coverageErr != nil {
+			return nil, fmt.Errorf("classify full repository coverage: %w", coverageErr)
+		}
+		project.Coverage = &coverage
+		project.Digest, err = digestProject(project)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return project, nil
 }
@@ -179,7 +253,10 @@ func FromSnapshot(root string, s *snapshot.Snapshot) (*Project, error) {
 	}
 	var inventory []projectmodel.File
 	for file, data := range s.Files {
-		if !inInventoryRoots(config, file) || excludedPath(config, file) || strings.HasPrefix(file, ".markitect/") || file == ManifestPath || file == RuntimePath {
+		selectedInventory := config.CoverageMode != "full" && inInventoryRoots(config, file) && !excludedPath(config, file) && !strings.HasPrefix(file, ".markitect/") && file != ManifestPath && file != RuntimePath
+		fullInventory := config.CoverageMode == "full" && !coverageToolOwned(config, file) && !coverageCanonicalModel(config, file)
+		fullToolInput := config.CoverageMode == "full" && coverageToolOwned(config, file)
+		if !(selectedInventory || fullInventory || fullToolInput) {
 			continue
 		}
 		mode := s.Modes[file]
@@ -188,8 +265,10 @@ func FromSnapshot(root string, s *snapshot.Snapshot) (*Project, error) {
 		}
 		files[file] = append([]byte(nil), data...)
 		modes[file] = mode
-		digest := sha256.Sum256(data)
-		inventory = append(inventory, projectmodel.File{Path: file, Mode: mode, Digest: hex.EncodeToString(digest[:])})
+		if selectedInventory || fullInventory {
+			digest := sha256.Sum256(data)
+			inventory = append(inventory, projectmodel.File{Path: file, Mode: mode, Digest: hex.EncodeToString(digest[:])})
+		}
 	}
 	sort.Slice(inventory, func(i, j int) bool { return inventory[i].Path < inventory[j].Path })
 	model, diagnostics := core.Compile([]core.Schema{projectmodel.Schema()}, definitions, s.ID)
@@ -199,6 +278,19 @@ func FromSnapshot(root string, s *snapshot.Snapshot) (*Project, error) {
 	report := projectmodel.Analyze(model, inventory)
 	selected := &snapshot.Snapshot{ID: s.ID, Provisional: s.Provisional, Files: files, Modes: modes}
 	project := &Project{Root: rootAbs, Revision: s.ID, Provisional: s.Provisional, Config: config, Model: model, Report: report, Snapshot: selected}
+	if config.CoverageMode == "full" {
+		options := coverageOptions(config)
+		universe, universeErr := projectcoverage.FromSnapshot(s, options)
+		if universeErr != nil {
+			return nil, fmt.Errorf("build candidate coverage universe: %w", universeErr)
+		}
+		coverage, coverageErr := projectcoverage.Classify(projectcoverage.Request{Universe: universe, Model: report, Options: options,
+			LegacyRoots: config.InventoryRoots, LegacyExclusions: legacyExclusions(config.Exclusions)})
+		if coverageErr != nil {
+			return nil, fmt.Errorf("classify candidate repository snapshot: %w", coverageErr)
+		}
+		project.Coverage = &coverage
+	}
 	project.Digest, err = digestProject(project)
 	if err != nil {
 		return nil, err
@@ -227,6 +319,9 @@ func digestProject(project *Project) (string, error) {
 	write("model", modelBytes)
 	reportBytes, _ := json.Marshal(project.Report)
 	write("report", reportBytes)
+	if project.Coverage != nil {
+		write("coverage", []byte(project.Coverage.Digest))
+	}
 	toolBuildDigest, err := hostwrite.ToolBuildDigest()
 	if err != nil {
 		return "", fmt.Errorf("identify running Markitect build: %w", err)

@@ -20,6 +20,14 @@ import (
 func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, error) {
 	var plan PlanRecord
 	var err error
+	operation, err := NormalizeOperation(request.Operation)
+	if err != nil {
+		return plan, err
+	}
+	request.Operation = operation
+	if operation != OperationApply && (len(request.Managers) > 0 || strings.TrimSpace(request.SinceRevision) != "" || request.ModelEdit != nil) {
+		return plan, fmt.Errorf("%s does not accept manager, since-revision, or model-edit narrowing; prepare and accept any model changes separately", operation)
+	}
 	if host.Load == nil || host.FromSnapshot == nil || host.PlanEdit == nil {
 		return plan, fmt.Errorf("project Host frontend is incomplete")
 	}
@@ -136,6 +144,43 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	if !startableReport(finalProject.Report) || hasErrorFinding(finalProject.Report.Findings) {
 		return plan, fmt.Errorf("candidate model analysis did not succeed")
 	}
+	fullCoverage := finalProject.Config.CoverageMode == "full"
+	if fullCoverage && request.ModelEdit != nil {
+		return plan, fmt.Errorf("full coverage requires accepting and committing the model separately before implementation; draft model edits are not an accepted execution basis")
+	}
+	if fullCoverage {
+		for _, basis := range []*Project{project, working, finalProject} {
+			if basis.Coverage == nil || !basis.Coverage.Accounted {
+				return plan, fmt.Errorf("whole-repository coverage is unaccounted; classify unknown paths before planning implementation")
+			}
+		}
+	}
+	if operation != OperationApply && !fullCoverage {
+		return plan, fmt.Errorf("%s requires project coverageMode full", operation)
+	}
+	briefingDigests := map[string]string{}
+	if request.ModelEdit == nil {
+		briefingDigests, err = briefingBindings(root, project)
+		if err != nil {
+			return plan, err
+		}
+	} else {
+		// A proposed, not-yet-accepted model has no valid accepted briefing
+		// history. Keep the draft plan explicitly unbound until it is committed.
+		for _, manager := range finalProject.Report.Managers {
+			briefingDigests[manager.ID] = ""
+		}
+	}
+	if changeBase != nil && fullCoverage && request.ModelEdit == nil && changeBase.Report.ModelDigest != project.Report.ModelDigest {
+		for _, manager := range project.Report.Managers {
+			if briefingDigests[manager.ID] == "" {
+				return plan, fmt.Errorf("full coverage after a semantic model change requires an accepted briefing for Manager %s", manager.ID)
+			}
+		}
+	}
+	if err := validateStrictnessManagers(runtime.Strictness, finalProject.Report.Managers); err != nil {
+		return plan, err
+	}
 	id, err := newID()
 	if err != nil {
 		return plan, err
@@ -143,6 +188,23 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	managerTasks, selected, findings, err := planManagers(finalProject.Report, finalProject.Snapshot.Files, request, editPlan, changeImpact, runtime.Limits)
 	if err != nil {
 		return plan, err
+	}
+	strictness := make(map[string]StrictnessProfile, len(managerTasks))
+	profileManagers := make([]string, 0, len(managerTasks))
+	for _, task := range managerTasks {
+		profileManagers = append(profileManagers, task.ManagerID)
+	}
+	if fullCoverage {
+		for _, manager := range finalProject.Report.Managers {
+			profileManagers = append(profileManagers, manager.ID)
+		}
+	}
+	for _, managerID := range uniqueSorted(profileManagers) {
+		profile, profileErr := ResolveStrictness(runtime, managerID)
+		if profileErr != nil {
+			return plan, fmt.Errorf("resolve strictness for Manager %s: %w", managerID, profileErr)
+		}
+		strictness[managerID] = profile
 	}
 	if len(managerTasks) == 0 {
 		return plan, fmt.Errorf("plan has no responsible Manager")
@@ -154,7 +216,14 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	if changeImpact != nil {
 		forcedChecks = changeImpact.Checks
 	}
-	checkPlans, checkFindings := planChecksWithImpact(finalProject.Report, selected, forcedChecks)
+	checkSelection := selected
+	if fullCoverage {
+		checkSelection = make(map[string]bool, len(finalProject.Report.Managers))
+		for _, manager := range finalProject.Report.Managers {
+			checkSelection[manager.ID] = true
+		}
+	}
+	checkPlans, checkFindings := planChecksWithImpact(finalProject.Report, checkSelection, forcedChecks)
 	findings = append(findings, checkFindings...)
 	checkPlans, executableFindings, executableErr := bindCheckExecutables(checkPlans, runtime)
 	if executableErr != nil {
@@ -162,7 +231,23 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	}
 	findings = append(findings, executableFindings...)
 	checkFindings = append(checkFindings, executableFindings...)
-	minimumStarts := len(managerTasks)*2 + len(checkPlans)
+	minimumStarts := len(managerTasks) + len(checkPlans)
+	for _, task := range managerTasks {
+		if len(activeChildren(managerTasks, task.ManagerID)) > 0 {
+			minimumStarts++
+		}
+	}
+	if fullCoverage {
+		minimumStarts += len(finalProject.Report.Managers)
+		if runtime.Review == nil {
+			return plan, fmt.Errorf("full coverage requires a configured reviewer for every Manager")
+		}
+		for _, manager := range finalProject.Report.Managers {
+			if _, ok := runtime.Review.Agents[manager.ID]; !ok {
+				return plan, fmt.Errorf("full coverage has no configured reviewer for Manager %s", manager.ID)
+			}
+		}
+	}
 	if runtime.Verifier != nil {
 		minimumStarts++
 	}
@@ -228,6 +313,13 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 			}
 		}
 	}
+	if fullCoverage {
+		for _, manager := range finalProject.Report.Managers {
+			if _, ok := fingerprints["$reviewer:"+manager.ID]; !ok {
+				return plan, fmt.Errorf("runtime reviewer for full-coverage Manager %s is not fingerprinted", manager.ID)
+			}
+		}
+	}
 	runtimeDigest, err := digest(struct {
 		Runtime      Runtime           `json:"runtime"`
 		Fingerprints map[string]string `json:"fingerprints"`
@@ -236,14 +328,14 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 		return plan, err
 	}
 	plan = PlanRecord{
-		APIVersion: APIVersion, ID: id, Status: StatusPlanned, Goal: request.Goal,
+		APIVersion: APIVersion, ID: id, Status: StatusPlanned, Operation: operation, Goal: request.Goal,
 		ExecuteAuthorized: request.ExecuteAuthorized, Root: root,
 		BaseRevision: project.Revision, TargetBranch: targetBranch, TargetHead: targetHead, BaseSnapshot: project.Snapshot.Digest(),
 		WorkingSnapshot:  working.Snapshot.Digest(),
 		RepositoryDigest: repository.Digest, BaseProjectDigest: project.Digest, WorkingProjectDigest: working.Digest,
 		BaseModelDigest: project.Report.ModelDigest,
 		ModelDigest:     finalProject.Report.ModelDigest, ReportDigest: finalProject.Report.Digest,
-		RuntimeDigest: runtimeDigest, PlannedAt: time.Now().UTC(), Managers: managerTasks,
+		RuntimeDigest: runtimeDigest, PlannedAt: time.Now().UTC(), Managers: managerTasks, Strictness: strictness, BriefingDigests: briefingDigests,
 		Checks: checkPlans, ModelEdit: editPlan, InitialCandidateID: initialCandidate.ID,
 		RuntimeAgents: fingerprints, Findings: uniqueSorted(findings), Blockers: uniqueSorted(checkFindings),
 	}
@@ -289,6 +381,13 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 }
 
 func planManagers(report projectmodel.Report, baseFiles map[string][]byte, request PlanRequest, edit *EditPlan, changeImpact *projectmodel.ChangeImpact, limits Limits) ([]ManagerTask, map[string]bool, []string, error) {
+	operation, err := NormalizeOperation(request.Operation)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if operation != OperationApply && (len(request.Managers) > 0 || changeImpact != nil || edit != nil || request.ModelEdit != nil || strings.TrimSpace(request.SinceRevision) != "") {
+		return nil, nil, nil, fmt.Errorf("%s requires full Manager selection without change-impact or model-edit narrowing", operation)
+	}
 	managerByID := make(map[string]projectmodel.Manager, len(report.Managers))
 	children := map[string][]string{}
 	for _, manager := range report.Managers {
@@ -339,7 +438,11 @@ func planManagers(report projectmodel.Report, baseFiles map[string][]byte, reque
 		}
 		findings = append(findings, "change impact has unresolved scope; all current Managers are included")
 	}
-	if len(targets) == 0 {
+	if operation == OperationCleanup || operation == OperationReconcile {
+		for _, manager := range report.Managers {
+			targets[manager.ID] = true
+		}
+	} else if len(targets) == 0 {
 		// A natural-language goal does not establish that any Manager is
 		// unaffected. Without explicit routing or a model delta, preserve the
 		// complete declared responsibility tree.

@@ -10,3 +10,4 @@ spec:
     name: sales
   owns:
     - src/shop/orders/
+    - docs/cancellation.md

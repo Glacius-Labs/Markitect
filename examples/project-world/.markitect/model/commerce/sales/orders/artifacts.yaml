@@ -17,8 +17,6 @@ spec:
       name: requires-active-reservation
   paths:
     - src/shop/orders/
-    - src/shop/commerce/cancellation.py
-    - tests/test_cancellation.py
     - docs/cancellation.md
   checks:
     - namespace: engineering

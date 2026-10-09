@@ -150,6 +150,9 @@ spec:
     - internal/host/projectwork
     - internal/host/projectadoption
     - internal/host/projectsetup
+    - internal/host/projectcoverage
+    - internal/host/projectbriefing
+    - internal/host/projectonboarding
     - internal/tooling/clauderunner
     - internal/host/project_guarded_write.go
     - internal/host/project_guarded_write_test.go
@@ -162,6 +165,7 @@ spec:
     - examples/project-world
     - experiments/project-world-live
     - docs/project-workflow.md
+    - docs/project-operations.md
     - internal/host/cli/project_dispatch_test.go
     - docs/validation/project-world-delivery.md
   tooling:
@@ -1912,6 +1916,10 @@ spec:
       owner: project-world-implementation
     - path: internal/host/projectwork/config.go
       owner: project-world-implementation
+    - path: internal/host/projectwork/coverage.go
+      owner: project-world-implementation
+    - path: internal/host/projectwork/coverage_test.go
+      owner: project-world-implementation
     - path: internal/host/projectwork/document.go
       owner: project-world-implementation
     - path: internal/host/projectwork/init.go
@@ -1952,11 +1960,13 @@ spec:
       owner: project-world-implementation
     - path: docs/project-workflow.md
       owner: project-world-implementation
+    - path: docs/project-operations.md
+      owner: project-world-implementation
     - path: examples/project-world/.markitect/.gitignore
       owner: project-world-implementation
-    - path: examples/project-world/.markitect/agent-fixtures/invocation.json
+    - path: examples/project-world/tests/agent-fixtures/invocation.json
       owner: project-world-implementation
-    - path: examples/project-world/.markitect/agent-fixtures/response.json
+    - path: examples/project-world/tests/agent-fixtures/response.json
       owner: project-world-implementation
     - path: examples/project-world/.markitect/model/commerce/architecture.yaml
       owner: project-world-implementation
@@ -2032,6 +2042,10 @@ spec:
       owner: project-world-implementation
     - path: internal/host/projectcli/run.go
       owner: project-world-implementation
+    - path: internal/host/projectcli/operations.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/operations_cli_test.go
+      owner: project-world-implementation
     - path: internal/host/projectrun/apply.go
       owner: project-world-implementation
     - path: internal/host/projectrun/checks.go
@@ -2072,6 +2086,26 @@ spec:
       owner: project-world-implementation
     - path: internal/host/projectrun/verify.go
       owner: project-world-implementation
+    - path: internal/host/projectrun/briefing_context.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/full_verify.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/full_verify_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/full_apply_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/operation.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/operation_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/candidate_document.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/candidate_policy_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/operations_e2e_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/review_briefing_test.go
+      owner: project-world-implementation
     - path: examples/project-world/.markitect/model/commerce/sales/orders/requires-active-reservation.yaml
       owner: project-world-implementation
     - path: internal/host/projectrun/git_binding.go
@@ -2105,6 +2139,40 @@ spec:
     - path: internal/host/projectsetup/setup.go
       owner: project-world-implementation
     - path: internal/host/projectsetup/setup_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectcoverage/types.go
+      owner: project-world-implementation
+    - path: internal/host/projectcoverage/ignore.go
+      owner: project-world-implementation
+    - path: internal/host/projectcoverage/coverage.go
+      owner: project-world-implementation
+    - path: internal/host/projectcoverage/coverage_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectcoverage/census.go
+      owner: project-world-implementation
+    - path: internal/host/projectbriefing/briefing.go
+      owner: project-world-implementation
+    - path: internal/host/projectbriefing/store.go
+      owner: project-world-implementation
+    - path: internal/host/projectbriefing/briefing_test.go
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/artifacts.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/integration.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/engineering/artifacts.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/project-artifacts.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/project-overview.yaml
+      owner: project-world-implementation
+    - path: internal/host/projectonboarding/onboarding.go
+      owner: project-world-implementation
+    - path: internal/host/projectonboarding/render.go
+      owner: project-world-implementation
+    - path: internal/host/projectonboarding/onboarding_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectonboarding/init_test.go
       owner: project-world-implementation
     - path: experiments/project-world-live/run.py
       owner: project-world-live-validation

@@ -1,0 +1,19 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: project-tests-and-agent-protocol-fixtures
+  namespace: engineering
+purpose: Maintains the runnable fixture tests and the non-live agent protocol examples.
+spec:
+  role: verification
+  realizes:
+    - namespace: engineering
+      name: change-delivery
+  paths:
+    - tests/
+    - tests/agent-fixtures/
+  checks:
+    - namespace: engineering
+      name: cancellation-tests
+  required: true
+  reason: Tests are executable fixture evidence; protocol fixtures are static examples only.

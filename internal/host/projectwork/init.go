@@ -26,6 +26,8 @@ func Init(root, name string, write bool) (InitPlan, error) {
 	config := map[string]any{
 		"apiVersion":     APIVersion,
 		"name":           name,
+		"coverageMode":   "full",
+		"documentPath":   DefaultDocumentPath,
 		"modelFiles":     []string{initManagerPath},
 		"inventoryRoots": []string{},
 		"exclusions":     []any{},
@@ -60,7 +62,7 @@ func Init(root, name string, write bool) (InitPlan, error) {
 	if err != nil {
 		return InitPlan{}, fmt.Errorf("validate initial project model: %w", err)
 	}
-	files = append(files, FileChange{Path: ViewPath, Content: documentText(project)})
+	files = append(files, FileChange{Path: DocumentPath(project.Config), Content: documentText(project)})
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
 	plan := InitPlan{APIVersion: APIVersion, Name: name, Files: files}
 	plan.Digest, err = initPlanDigest(plan)

@@ -103,6 +103,9 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if compiled.Report.ModelDigest != plan.ModelDigest || hasErrorFinding(compiled.Report.Findings) {
 		return out, fmt.Errorf("integrated candidate has invalid project model")
 	}
+	if err := validateFinalCandidate(host, root, base.Snapshot, candidate, plan); err != nil {
+		return out, err
+	}
 	if err := requireFreshReviews(host, root, s, dir, base, candidate, plan, runtime, run); err != nil {
 		return out, err
 	}
@@ -130,7 +133,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 		return out, err
 	}
 	defer os.RemoveAll(verifyDir)
-	out = VerifyReport{APIVersion: APIVersion, RunID: runID, CandidateID: candidate.ID, CandidateHash: candidate.Digest, Status: "failed", VerifiedAt: time.Now().UTC(), Checks: []CheckResult{}}
+	out = VerifyReport{APIVersion: APIVersion, VerificationScope: "planned", RunID: runID, CandidateID: candidate.ID, CandidateHash: candidate.Digest, Status: "failed", VerifiedAt: time.Now().UTC(), Checks: []CheckResult{}}
 	// This durable marker reserves the single verification attempt before any
 	// external process starts. A crash after this point cannot replay checks or
 	// the verifier and obtain another resource budget.
@@ -210,6 +213,27 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 			return fail(fmt.Errorf("estimated cost limit exceeded during verification"))
 		}
 	}
+	if compiled.Config.CoverageMode == "full" {
+		full, auditErr := FullVerifyProject(ctx, host, invoker, root, compiled, runtime, FullVerifyBinding{
+			ExpectedSnapshot: compiled.Snapshot.Digest(), ExpectedBriefings: plan.BriefingDigests, CheckCandidateID: candidate.ID,
+			StartedAt: run.StartedAt, PriorStarts: len(run.Invocations) + len(run.Checks), PriorCostMicros: totalCost(run.Invocations), PreverifiedChecks: out.Checks,
+		})
+		out.VerificationScope, out.ManagerVerification = "full", &full
+		for _, manager := range full.Managers {
+			if manager.Receipt != nil {
+				run.Invocations = append(run.Invocations, InvocationLog{TaskID: manager.ManagerID, Role: "manager-verifier", Phase: "full-verify", InputDigest: manager.InputDigest, Receipt: *manager.Receipt, ReportID: manager.Receipt.RunID, Outcome: manager.Status, CostMicros: manager.CostMicros})
+			}
+		}
+		if persistErr := persistState(s, &run); persistErr != nil {
+			return fail(persistErr)
+		}
+		if auditErr != nil {
+			return fail(auditErr)
+		}
+		if full.Status != "passed" {
+			return fail(fmt.Errorf("full Manager verification did not pass: %s", full.Status))
+		}
+	}
 	if err := freshBindings(host, invoker, root, plan, runtime); err != nil {
 		return fail(err)
 	}
@@ -225,7 +249,8 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 		return fail(err)
 	}
 	run.Status = StatusVerified
-	run.Checks = append([]CheckResult(nil), out.Checks...)
+	// Keep checks from earlier failed candidates in the cumulative attempt
+	// ledger. The VerifyReport above contains this candidate's checks only.
 	if err := persistState(s, &run); err != nil {
 		return out, err
 	}
@@ -546,6 +571,15 @@ func freshBindings(host Host, invoker Invoker, root string, plan PlanRecord, run
 	}
 	if fresh.Snapshot.Digest() != plan.WorkingSnapshot || fresh.Digest != plan.WorkingProjectDigest {
 		return ErrStale
+	}
+	for _, manager := range fresh.Report.Managers {
+		briefing, err := managerBriefing(root, fresh.Report.ModelDigest, manager.ID, fresh.Revision)
+		if err != nil {
+			return err
+		}
+		if briefing.Digest != plan.BriefingDigests[manager.ID] {
+			return ErrStale
+		}
 	}
 	if err := repositoryMatches(root, plan); err != nil {
 		return err

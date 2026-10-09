@@ -1,0 +1,20 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: cancellation-integration
+  namespace: commerce.sales
+purpose: Maps the Sales package and cross-slice operation to its integration contract.
+spec:
+  role: implementation
+  realizes:
+    - namespace: commerce.sales
+      name: cancellation-integration
+  paths:
+    - src/shop/__init__.py
+    - src/shop/commerce/__init__.py
+    - src/shop/commerce/cancellation.py
+  checks:
+    - namespace: engineering
+      name: cancellation-tests
+  required: true
+  reason: The package boundary and transaction coordinator are the concrete Sales integration point.

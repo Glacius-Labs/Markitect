@@ -10,3 +10,4 @@ spec:
     name: commerce
   owns:
     - src/shop/
+    - docs/cancellation.md

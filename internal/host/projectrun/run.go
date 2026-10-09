@@ -107,7 +107,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if len(plan.Blockers) > 0 {
 			return empty, fmt.Errorf("plan has blocking obligations: %s", strings.Join(plan.Blockers, "; "))
 		}
-		report = RunReport{APIVersion: APIVersion, ID: id, PlanID: id, Status: StatusRunning,
+		report = RunReport{APIVersion: APIVersion, Operation: plan.Operation, ID: id, PlanID: id, Status: StatusRunning,
 			Mode: ModeControlledLocal, StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
 			BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot, ModelDigest: plan.ModelDigest,
 			RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers), Candidate: CandidateRef{ID: plan.InitialCandidateID,
@@ -308,7 +308,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 						return fmt.Errorf("manager %s claimed no-op while proposing files", task.ManagerID)
 					}
 					var applyErr error
-					candidate, applyErr = applyProposal(current, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "work", nil, runtime.Limits)
+					candidate, applyErr = applyProposal(current, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "work", nil, runtime.Limits, input.Snapshot)
 					return applyErr
 				}()
 				if parseErr == nil {
@@ -528,7 +528,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				if parsed.EscalateTo != "" && parsed.EscalateTo != escalationTarget(*task) {
 					return fmt.Errorf("Manager %s may escalate only to its nearest empowered recipient %q", task.ManagerID, escalationTarget(*task))
 				}
-				candidate, candidateErr := applyProposal(merged, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "integrate", conflicts, runtime.Limits)
+				candidate, candidateErr := applyProposal(merged, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "integrate", conflicts, runtime.Limits, input.Snapshot)
 				if candidateErr != nil {
 					return candidateErr
 				}
@@ -821,6 +821,10 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 	if err := validateReportClosure(report); err != nil {
 		return blockRun(store, report, err)
 	}
+	finalCandidate, err = completeCandidateDocument(host, root, store, dir, project.Snapshot, finalCandidate)
+	if err != nil {
+		return blockRun(store, report, err)
+	}
 	if err := validateFinalCandidate(host, root, project.Snapshot, finalCandidate, plan); err != nil {
 		return blockRun(store, report, err)
 	}
@@ -1040,11 +1044,29 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	if err != nil {
 		return result, log, err
 	}
-	writePaths := allowedWritePaths(project.Config, project.Report, task, phase, conflicts)
+	ignoredPaths, err := ignoredWritePaths(project.Config, project.Snapshot)
+	if err != nil {
+		return result, log, err
+	}
+	writePaths := allowedWritePaths(project.Config, project.Report, task, phase, conflicts, project.Snapshot)
 	artifactRelations, foreignOwnership := suppliedArtifactOwnership(project.Report, artifacts, task.ManagerID, writePaths)
 	responsibilities := activeResponsibilities(project.Report, plan.Managers)
+	briefing := BriefingContext{}
+	if plan.ModelEdit == nil {
+		briefing, err = managerBriefing(root, project.Report.ModelDigest, task.ManagerID, project.Revision)
+		if err != nil {
+			return result, log, err
+		}
+	}
+	if briefing.Digest != plan.BriefingDigests[task.ManagerID] {
+		return result, log, ErrStale
+	}
 	ctxPayload := struct {
 		Kind                   string                      `json:"kind"`
+		Operation              string                      `json:"operation"`
+		OperationGuidance      string                      `json:"operationGuidance"`
+		Strictness             StrictnessProfile           `json:"strictness"`
+		Briefing               BriefingContext             `json:"briefing"`
 		Phase                  string                      `json:"phase"`
 		PhaseGuidance          string                      `json:"phaseGuidance"`
 		EscalationTarget       string                      `json:"escalationTarget"`
@@ -1054,6 +1076,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 		RepairRound            int                         `json:"repairRound,omitempty"`
 		RepairChecks           []RepairCheckFeedback       `json:"repairChecks,omitempty"`
 		AllowedWritePaths      []string                    `json:"allowedWritePaths"`
+		ExcludedWritePaths     []string                    `json:"excludedWritePaths"`
 		ArtifactRelations      []artifactPathRelation      `json:"artifactRelations"`
 		ForeignOwnership       []foreignOwnershipMetadata  `json:"foreignOwnership"`
 		ActiveResponsibilities []activeResponsibility      `json:"activeResponsibilities"`
@@ -1065,7 +1088,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 		ConflictPaths          []string                    `json:"conflictPaths,omitempty"`
 		CandidateDigest        string                      `json:"candidateDigest"`
 		ResponseSchema         json.RawMessage             `json:"responseSchema"`
-	}{Kind: "projectrun-task/v1", Phase: phase, PhaseGuidance: managerPhaseGuidance(phase, repairRound), EscalationTarget: escalationTarget(task), GlobalGoal: plan.Goal, OwnTask: task.Goal, RepairDiagnostic: repairDiagnostic,
+	}{Kind: "projectrun-task/v1", Operation: plan.Operation, OperationGuidance: OperationGuidance(plan.Operation), Strictness: plan.Strictness[task.ManagerID], Briefing: briefing, Phase: phase, PhaseGuidance: managerPhaseGuidance(phase, repairRound) + " ExcludedWritePaths are explicit deny scopes and override every allowedWritePaths scope; never propose changes within them.", EscalationTarget: escalationTarget(task), GlobalGoal: plan.Goal, OwnTask: task.Goal, RepairDiagnostic: repairDiagnostic, ExcludedWritePaths: ignoredPaths,
 		RepairRound: repairRound, RepairChecks: repairChecks,
 		AllowedWritePaths: writePaths, ArtifactRelations: artifactRelations, ForeignOwnership: foreignOwnership, ActiveResponsibilities: responsibilities,
 		Manager: managerContext, DirectChildren: activeChildrenFromContext(managerContext),
@@ -1269,7 +1292,15 @@ func activeResponsibilities(report projectmodel.Report, tasks []ManagerTask) []a
 	return out
 }
 
-func allowedWritePaths(config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflicts []string) []string {
+func allowedWritePaths(config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflicts []string, inputs ...*Snapshot) []string {
+	var input *Snapshot
+	if len(inputs) > 0 {
+		input = inputs[0]
+	}
+	ignored, err := ignoredWritePaths(config, input)
+	if err != nil {
+		return []string{}
+	}
 	paths := map[string]bool{}
 	for _, file := range report.Files {
 		if file.Owner == task.ManagerID && projectPathAllowed(config, file.Path) {
@@ -1305,7 +1336,9 @@ func allowedWritePaths(config projectwork.Config, report projectmodel.Report, ta
 	}
 	out := make([]string, 0, len(paths))
 	for path := range paths {
-		out = append(out, path)
+		if !pathIgnored(ignored, path) {
+			out = append(out, path)
+		}
 	}
 	sort.Strings(out)
 	return out
@@ -1462,7 +1495,15 @@ func scopedArtifacts(project *Project, task ManagerTask, agent Agent, limits Lim
 	return out, nil
 }
 
-func applyProposal(base candidateData, proposals []agentexec.CandidateFile, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits Limits) (candidateData, error) {
+func applyProposal(base candidateData, proposals []agentexec.CandidateFile, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits Limits, inputs ...*Snapshot) (candidateData, error) {
+	var input *Snapshot
+	if len(inputs) > 0 {
+		input = inputs[0]
+	}
+	ignored, err := ignoredWritePaths(config, input)
+	if err != nil {
+		return candidateData{}, err
+	}
 	files := map[string]File{}
 	for p, f := range base.Files {
 		f.Content = append([]byte(nil), f.Content...)
@@ -1486,6 +1527,9 @@ func applyProposal(base candidateData, proposals []agentexec.CandidateFile, conf
 		seen[strings.ToLower(p.Path)] = true
 		if forbiddenRuntimePath(p.Path) || !projectPathAllowed(config, p.Path) {
 			return candidateData{}, fmt.Errorf("proposal path %s is outside selected inventory or enters Markitect control-plane state", p.Path)
+		}
+		if pathIgnored(ignored, p.Path) {
+			return candidateData{}, fmt.Errorf("proposal path %s is explicitly ignored", p.Path)
 		}
 		owner, known := ownerForPath(report, p.Path)
 		if !known || (owner != task.ManagerID && !conflictSet[p.Path]) {
@@ -1515,8 +1559,11 @@ func forbiddenRuntimePath(path string) bool {
 }
 
 func projectPathAllowed(config projectwork.Config, path string) bool {
-	if !safeRepoPath(path) || strings.HasPrefix(strings.ToLower(path), ".markitect/") {
+	if !safeRepoPath(path) || strings.HasPrefix(strings.ToLower(path), ".markitect/") || projectwork.IsToolPath(config, path) || projectwork.IsCanonicalModelPath(config, path) {
 		return false
+	}
+	if config.CoverageMode == "full" {
+		return true
 	}
 	inInventory := false
 	for _, root := range config.InventoryRoots {
@@ -2043,13 +2090,13 @@ func validateFinalCandidate(host Host, root string, base *Snapshot, c candidateD
 	if hasErrorFinding(compiled.Report.Findings) {
 		return fmt.Errorf("integrated candidate has structural error findings")
 	}
-	for _, task := range plan.Managers {
-		_ = task
+	if err := requireFullCoverage(compiled); err != nil {
+		return err
 	}
-	for _, check := range plan.Checks {
-		_ = check
+	if err := validateIgnoredCandidatePaths(base, c, compiled.Config); err != nil {
+		return err
 	}
-	return nil
+	return validateCandidateDocument(compiled)
 }
 
 func validateTaskOutcome(outcome string, response TaskResponse) error {

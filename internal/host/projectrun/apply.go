@@ -11,6 +11,8 @@ import (
 	"time"
 
 	hostwrite "github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 )
 
 // ApplyPaths returns the exact candidate delta paths for CLI preflight and
@@ -90,6 +92,22 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if err := validateChangeImpact(host, root, base, plan); err != nil {
 		return out, err
 	}
+	compiled, err := projectForCandidate(host, root, base.Snapshot, candidate)
+	if err != nil {
+		return out, err
+	}
+	if err := validateFinalCandidate(host, root, base.Snapshot, candidate, plan); err != nil {
+		return out, err
+	}
+	if compiled.Config.CoverageMode == "full" {
+		briefings, briefingErr := briefingBindings(root, compiled)
+		if briefingErr != nil {
+			return out, briefingErr
+		}
+		if err := validateFullApplyVerification(plan, candidate, compiled, verification, briefings); err != nil {
+			return out, err
+		}
+	}
 	runtimeConfig, err := LoadRuntime(root)
 	if err != nil {
 		return out, err
@@ -108,10 +126,14 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 		return out, err
 	}
 	paths := candidateDeltaPaths(base.Snapshot, candidate)
-	if len(paths) == 0 {
+	if len(paths) == 0 && plan.Operation != OperationCleanup && plan.Operation != OperationReconcile {
 		return out, fmt.Errorf("candidate has no changes to apply")
 	}
-	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
+	capturePaths := append([]string(nil), paths...)
+	if len(capturePaths) == 0 {
+		capturePaths = []string{projectwork.ManifestPath}
+	}
+	capture, err := hostwrite.CaptureGuardedWrite(root, capturePaths)
 	if err != nil {
 		return out, err
 	}
@@ -233,8 +255,17 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if err != nil {
 		return out, err
 	}
-	if compiled.Report.ModelDigest != plan.ModelDigest || hasErrorFinding(compiled.Report.Findings) {
-		return out, fmt.Errorf("candidate project model changed since plan")
+	if err := validateFinalCandidate(host, root, base.Snapshot, candidate, plan); err != nil {
+		return out, err
+	}
+	if compiled.Config.CoverageMode == "full" {
+		briefings, briefingErr := briefingBindings(root, compiled)
+		if briefingErr != nil {
+			return out, briefingErr
+		}
+		if err := validateFullApplyVerification(plan, candidate, compiled, verify, briefings); err != nil {
+			return out, err
+		}
 	}
 	if err := requireFreshReviews(host, root, s, dir, base, candidate, plan, runtime, run); err != nil {
 		return out, err
@@ -243,7 +274,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		return out, err
 	}
 	paths := candidateDeltaPaths(base.Snapshot, candidate)
-	if len(paths) == 0 {
+	if len(paths) == 0 && plan.Operation != OperationCleanup && plan.Operation != OperationReconcile {
 		return out, fmt.Errorf("candidate has no changes to apply")
 	}
 	if request.TargetBranch == "" || request.ExpectedHead == "" || request.ExpectedWorktree == "" || request.ExpectedVerificationDigest == "" {
@@ -252,7 +283,11 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if request.TargetBranch != plan.TargetBranch || request.ExpectedHead != plan.TargetHead {
 		return out, fmt.Errorf("apply target branch or HEAD differs from the bound plan")
 	}
-	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
+	capturePaths := append([]string(nil), paths...)
+	if len(capturePaths) == 0 {
+		capturePaths = []string{projectwork.ManifestPath}
+	}
+	capture, err := hostwrite.CaptureGuardedWrite(root, capturePaths)
 	if err != nil {
 		return out, err
 	}
@@ -332,6 +367,30 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		if latestVerify.Status != "verified" || latestVerify.RunID != request.RunID || latestVerify.CandidateHash != candidate.Digest || latestVerify.Digest != request.ExpectedVerificationDigest {
 			return ErrStale
 		}
+		fixedBase, loadErr := host.Load(root, plan.BaseRevision)
+		if loadErr != nil {
+			return loadErr
+		}
+		freshCandidate, loadErr := s.readCandidate(dir, request.CandidateID)
+		if loadErr != nil {
+			return loadErr
+		}
+		freshCompiled, loadErr := projectForCandidate(host, root, fixedBase.Snapshot, freshCandidate)
+		if loadErr != nil {
+			return loadErr
+		}
+		if loadErr = validateFinalCandidate(host, root, fixedBase.Snapshot, freshCandidate, plan); loadErr != nil {
+			return loadErr
+		}
+		if freshCompiled.Config.CoverageMode == "full" {
+			currentBriefings, bindingErr := briefingBindings(root, freshCompiled)
+			if bindingErr != nil {
+				return bindingErr
+			}
+			if bindingErr = validateFullApplyVerification(plan, freshCandidate, freshCompiled, latestVerify, currentBriefings); bindingErr != nil {
+				return bindingErr
+			}
+		}
 		return nil
 	}
 	result, applyErr := hostwrite.ApplyGuardedWriteChecked(capture.Root, capture, changes, validate)
@@ -361,6 +420,115 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		return out, fmt.Errorf("files applied; apply report journal failed: %w", err)
 	}
 	return out, nil
+}
+
+// validateFullApplyVerification ensures a full-coverage candidate is still
+// bound to the exact model, repository snapshot, runtime, checks, and accepted
+// Manager briefing context that passed Full Verify.
+func validateFullApplyVerification(plan PlanRecord, candidate candidateData, compiled *Project, verification VerifyReport, currentBriefings map[string]string) error {
+	if compiled == nil || compiled.Snapshot == nil || compiled.Config.CoverageMode != "full" {
+		return fmt.Errorf("full coverage candidate is not conforming")
+	}
+	if err := requireFullCoverage(compiled); err != nil {
+		return err
+	}
+	if verification.VerificationScope != "full" || verification.ManagerVerification == nil {
+		return fmt.Errorf("full coverage candidate requires full Manager verification")
+	}
+	full := verification.ManagerVerification
+	if full.APIVersion != APIVersion || full.Status != "passed" {
+		return fmt.Errorf("full Manager verification did not pass")
+	}
+	computedDigest, err := FullVerifyReportDigest(*full)
+	if err != nil || full.Digest == "" || computedDigest != full.Digest {
+		return fmt.Errorf("full Manager verification report digest mismatch")
+	}
+	if full.CandidateID != candidate.ID || full.SnapshotDigest != compiled.Snapshot.Digest() ||
+		full.ProjectDigest != compiled.Digest || full.ModelDigest != compiled.Report.ModelDigest ||
+		full.ReportDigest != compiled.Report.Digest || full.CoverageDigest != compiled.Coverage.Digest ||
+		full.RuntimeDigest != plan.RuntimeDigest || full.ModelDigest != plan.ModelDigest {
+		return fmt.Errorf("full Manager verification is bound to different candidate inputs")
+	}
+	if !stringMapsEqual(full.BriefingDigests, plan.BriefingDigests) || !stringMapsEqual(full.BriefingDigests, currentBriefings) {
+		return fmt.Errorf("Manager briefing context changed since full verification")
+	}
+	managerIDs := map[string]bool{}
+	for _, manager := range compiled.Report.Managers {
+		if manager.ID == "" || managerIDs[manager.ID] {
+			return fmt.Errorf("compiled project has duplicate or empty Manager IDs")
+		}
+		managerIDs[manager.ID] = true
+	}
+	if len(managerIDs) == 0 || len(full.Managers) != len(managerIDs) {
+		return fmt.Errorf("full Manager verification does not cover every declared Manager")
+	}
+	seenManagers := map[string]bool{}
+	seenReceipts := map[string]bool{}
+	for _, row := range full.Managers {
+		if !managerIDs[row.ManagerID] || seenManagers[row.ManagerID] || row.Status != "passed" || row.ScopeDigest == "" || row.InputDigest == "" || row.Receipt == nil || row.Receipt.APIVersion != agentexec.APIVersion || row.Receipt.RunID == "" || seenReceipts[row.Receipt.RunID] || row.Receipt.Outcome != agentexec.OutcomeProposed || row.Receipt.InputDigest != row.InputDigest {
+			return fmt.Errorf("full Manager verification has a missing, duplicate, or unbound Manager receipt")
+		}
+		seenManagers[row.ManagerID] = true
+		seenReceipts[row.Receipt.RunID] = true
+	}
+	if len(seenManagers) != len(managerIDs) {
+		return fmt.Errorf("full Manager verification omits a declared Manager")
+	}
+	if len(full.Checks) != len(plan.Checks) || len(verification.Checks) != len(plan.Checks) {
+		return fmt.Errorf("full Manager verification does not cover every planned check")
+	}
+	planned := make(map[string]CheckPlan, len(plan.Checks))
+	for _, check := range plan.Checks {
+		if check.ID == "" || planned[check.ID].ID != "" {
+			return fmt.Errorf("plan has duplicate or empty check IDs")
+		}
+		planned[check.ID] = check
+	}
+	seenChecks := map[string]bool{}
+	for _, check := range full.Checks {
+		want, ok := planned[check.ID]
+		if !ok || seenChecks[check.ID] || check.CandidateID != candidate.ID || check.Outcome != "passed" || check.ExitCode != 0 || check.ExecutablePath != want.ExecutablePath || check.ExecutableDigest != want.ExecutableDigest || !stringSlicesEqual(check.Command, want.Command) {
+			return fmt.Errorf("full Manager verification contains a missing, failed, or unbound check")
+		}
+		seenChecks[check.ID] = true
+	}
+	fullChecks := make(map[string]CheckResult, len(full.Checks))
+	for _, check := range full.Checks {
+		fullChecks[check.ID] = check
+	}
+	outerChecks := map[string]bool{}
+	for _, check := range verification.Checks {
+		fullCheck, ok := fullChecks[check.ID]
+		if !ok || !seenChecks[check.ID] || outerChecks[check.ID] || check.CandidateID != candidate.ID || check.Outcome != "passed" || check.ExitCode != 0 || check.ExecutablePath != fullCheck.ExecutablePath || check.ExecutableDigest != fullCheck.ExecutableDigest || !stringSlicesEqual(check.Command, fullCheck.Command) {
+			return fmt.Errorf("verification checks do not match the full Manager report")
+		}
+		outerChecks[check.ID] = true
+	}
+	return nil
+}
+
+func stringSlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func stringMapsEqual(a, b map[string]string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for key, value := range a {
+		if other, ok := b[key]; !ok || other != value {
+			return false
+		}
+	}
+	return true
 }
 
 func loadApplyInputs(host Host, root, runID string) (PlanRecord, RunReport, candidateData, *Snapshot, error) {
@@ -512,9 +680,11 @@ func latestVerification(dir, candidateID string) (VerifyReport, error) {
 func verificationDigest(report VerifyReport) (string, error) {
 	return digest(struct {
 		RunID, CandidateID, CandidateHash, Status string
+		VerificationScope                         string
+		ManagerVerification                       *FullVerifyReport
 		Checks                                    []CheckResult
 		Verifier                                  *VerifierReport
-	}{report.RunID, report.CandidateID, report.CandidateHash, report.Status, report.Checks, report.Verifier})
+	}{report.RunID, report.CandidateID, report.CandidateHash, report.Status, report.VerificationScope, report.ManagerVerification, report.Checks, report.Verifier})
 }
 func persistApply(s *runStore, dir string, report ApplyReport) error {
 	if err := ensureDirectory(filepath.Join(dir, "apply")); err != nil {

@@ -107,6 +107,9 @@ func LoadRuntime(root string) (Runtime, error) {
 // ValidateRuntime checks configuration shape and finite bounds independently
 // of the project model. Executable identity is checked later by Fingerprint.
 func ValidateRuntime(config Runtime) error {
+	if err := ValidateStrictness(config.Strictness); err != nil {
+		return err
+	}
 	if config.APIVersion != APIVersion {
 		return fmt.Errorf("runtime apiVersion must be %q", APIVersion)
 	}

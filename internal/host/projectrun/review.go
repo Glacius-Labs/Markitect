@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
 
@@ -30,6 +31,33 @@ type reviewFileRef struct {
 	Mode      string   `json:"mode"`
 	Digest    string   `json:"digest"`
 	Grounding []string `json:"grounding"`
+}
+
+type reviewerScopedModel struct {
+	Statements []projectmodel.Statement `json:"statements"`
+	Contracts  []projectmodel.Statement `json:"contracts"`
+	Artifacts  []projectmodel.Artifact  `json:"artifacts"`
+	OwnedPaths []string                 `json:"ownedPaths"`
+}
+
+type reviewerContext struct {
+	Kind              string                      `json:"kind"`
+	Operation         string                      `json:"operation"`
+	OperationGuidance string                      `json:"operationGuidance"`
+	Strictness        StrictnessProfile           `json:"strictness"`
+	Briefing          BriefingContext             `json:"briefing"`
+	RunGoal           string                      `json:"runGoal"`
+	ManagerID         string                      `json:"managerId"`
+	OwnTask           string                      `json:"ownTask"`
+	Phase             string                      `json:"phase"`
+	Round             int                         `json:"round"`
+	CandidateID       string                      `json:"candidateId"`
+	CandidateDigest   string                      `json:"candidateDigest"`
+	ChangedPaths      []string                    `json:"changedPaths"`
+	AcceptedModel     projectmodel.ManagerContext `json:"acceptedModel"`
+	ScopedModel       reviewerScopedModel         `json:"scopedModel"`
+	CandidateFiles    []reviewFileRef             `json:"candidateFiles"`
+	ResponseSchema    json.RawMessage             `json:"responseSchema"`
 }
 
 // invokeReviewer supplies only the original goal, accepted scoped model and
@@ -67,35 +95,17 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	if err != nil {
 		return record, log, err
 	}
+	briefing, err := reviewerBriefing(root, plan, project, task.ManagerID)
+	if err != nil {
+		return record, log, err
+	}
 	fileRefs := reviewFileReferences(project.Report, accepted, files)
 	responseSchema := reviewResponseSchema()
-	contextJSON, err := json.Marshal(struct {
-		Kind            string                      `json:"kind"`
-		RunGoal         string                      `json:"runGoal"`
-		ManagerID       string                      `json:"managerId"`
-		OwnTask         string                      `json:"ownTask"`
-		Phase           string                      `json:"phase"`
-		Round           int                         `json:"round"`
-		CandidateID     string                      `json:"candidateId"`
-		CandidateDigest string                      `json:"candidateDigest"`
-		ChangedPaths    []string                    `json:"changedPaths"`
-		AcceptedModel   projectmodel.ManagerContext `json:"acceptedModel"`
-		ScopedModel     struct {
-			Statements []projectmodel.Statement `json:"statements"`
-			Contracts  []projectmodel.Statement `json:"contracts"`
-			Artifacts  []projectmodel.Artifact  `json:"artifacts"`
-			OwnedPaths []string                 `json:"ownedPaths"`
-		} `json:"scopedModel"`
-		CandidateFiles []reviewFileRef `json:"candidateFiles"`
-		ResponseSchema json.RawMessage `json:"responseSchema"`
-	}{Kind: "projectrun-review/v1", RunGoal: plan.Goal, ManagerID: task.ManagerID, OwnTask: task.Goal, Phase: phase, Round: round,
+	contextJSON, err := json.Marshal(reviewerContext{Kind: "projectrun-review/v1", Operation: plan.Operation,
+		OperationGuidance: OperationGuidance(plan.Operation), Strictness: plan.Strictness[task.ManagerID], Briefing: briefing,
+		RunGoal: plan.Goal, ManagerID: task.ManagerID, OwnTask: task.Goal, Phase: phase, Round: round,
 		CandidateID: candidate.ID, CandidateDigest: candidate.Digest, ChangedPaths: unionPaths(task.WrittenPaths, task.IntegratedPaths), AcceptedModel: accepted,
-		ScopedModel: struct {
-			Statements []projectmodel.Statement `json:"statements"`
-			Contracts  []projectmodel.Statement `json:"contracts"`
-			Artifacts  []projectmodel.Artifact  `json:"artifacts"`
-			OwnedPaths []string                 `json:"ownedPaths"`
-		}{Statements: append([]projectmodel.Statement(nil), accepted.Statements...), Contracts: append([]projectmodel.Statement(nil), accepted.Contracts...), Artifacts: append([]projectmodel.Artifact(nil), accepted.Artifacts...), OwnedPaths: reviewScopePaths(files)},
+		ScopedModel:    reviewerScopedModel{Statements: append([]projectmodel.Statement(nil), accepted.Statements...), Contracts: append([]projectmodel.Statement(nil), accepted.Contracts...), Artifacts: append([]projectmodel.Artifact(nil), accepted.Artifacts...), OwnedPaths: reviewScopePaths(files)},
 		CandidateFiles: fileRefs, ResponseSchema: responseSchema})
 	if err != nil {
 		return record, log, err
@@ -153,6 +163,25 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	return record, log, nil
 }
 
+// reviewerBriefing binds accepted change context to the plan. A draft ModelEdit
+// has not been accepted, so it must not inherit history from the target model.
+func reviewerBriefing(root string, plan PlanRecord, project *Project, managerID string) (BriefingContext, error) {
+	if plan.ModelEdit != nil {
+		if plan.BriefingDigests[managerID] != "" {
+			return BriefingContext{}, ErrStale
+		}
+		return BriefingContext{Briefings: []projectbriefing.Briefing{}, Events: []projectbriefing.Event{}}, nil
+	}
+	briefing, err := managerBriefing(root, project.Report.ModelDigest, managerID, project.Revision)
+	if err != nil {
+		return BriefingContext{}, err
+	}
+	if briefing.Digest != plan.BriefingDigests[managerID] {
+		return BriefingContext{}, ErrStale
+	}
+	return briefing, nil
+}
+
 func validateReviewerResponse(response agentexec.Response, receipt agentexec.Receipt, expectedDigest string) (reviewResponse, error) {
 	if response.Role != agentexec.RoleExecutor || response.InputDigest != expectedDigest || receipt.InputDigest != expectedDigest {
 		return reviewResponse{}, fmt.Errorf("reviewer response is not bound to the exact request")
@@ -193,17 +222,20 @@ func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phas
 	}
 	fileRefs := reviewFileReferences(project.Report, accepted, files)
 	return digest(struct {
-		Kind          string                      `json:"kind"`
-		RunGoal       string                      `json:"runGoal"`
-		ManagerID     string                      `json:"managerId"`
-		OwnTask       string                      `json:"ownTask"`
-		Phase         string                      `json:"phase"`
-		AcceptedModel projectmodel.ManagerContext `json:"acceptedModel"`
-		Checks        []string                    `json:"checks"`
-		ChangedPaths  []string                    `json:"changedPaths"`
-		Files         []agentexec.Artifact        `json:"files"`
-		FileRefs      []reviewFileRef             `json:"fileRefs"`
-	}{"projectrun-review/v1", plan.Goal, task.ManagerID, task.Goal, phase, accepted, append([]string(nil), task.Checks...), unionPaths(task.WrittenPaths, task.IntegratedPaths), files, fileRefs})
+		Kind           string                      `json:"kind"`
+		Operation      string                      `json:"operation"`
+		Strictness     StrictnessProfile           `json:"strictness"`
+		BriefingDigest string                      `json:"briefingDigest"`
+		RunGoal        string                      `json:"runGoal"`
+		ManagerID      string                      `json:"managerId"`
+		OwnTask        string                      `json:"ownTask"`
+		Phase          string                      `json:"phase"`
+		AcceptedModel  projectmodel.ManagerContext `json:"acceptedModel"`
+		Checks         []string                    `json:"checks"`
+		ChangedPaths   []string                    `json:"changedPaths"`
+		Files          []agentexec.Artifact        `json:"files"`
+		FileRefs       []reviewFileRef             `json:"fileRefs"`
+	}{"projectrun-review/v1", plan.Operation, plan.Strictness[task.ManagerID], plan.BriefingDigests[task.ManagerID], plan.Goal, task.ManagerID, task.Goal, phase, accepted, append([]string(nil), task.Checks...), unionPaths(task.WrittenPaths, task.IntegratedPaths), files, fileRefs})
 }
 
 func scopedReviewModel(report projectmodel.Report, managerID string, tasks []ManagerTask, files []agentexec.Artifact) (projectmodel.ManagerContext, error) {

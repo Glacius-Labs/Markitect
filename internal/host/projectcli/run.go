@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/projectadoption"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectsetup"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
@@ -55,6 +56,22 @@ func runAction(opts options, out io.Writer) error {
 		ctx = bounded
 	}
 	switch opts.action {
+	case "brief", "briefings", "dismiss":
+		return runBriefing(opts, out)
+	case "onboard":
+		return runOnboarding(opts, out)
+	case "coverage":
+		coverage, err := projectwork.Coverage(opts.repo, opts.revision)
+		if err != nil {
+			return err
+		}
+		if err := writeJSON(out, coverage); err != nil {
+			return err
+		}
+		if !coverage.Conforming {
+			return &projectOutcomeError{code: 1, message: "whole-repository coverage is not conforming"}
+		}
+		return nil
 	case "schema":
 		return writeJSON(out, projectmodel.Schema())
 	case "init":
@@ -111,17 +128,21 @@ func runAction(opts options, out io.Writer) error {
 		switch opts.action {
 		case "check":
 			if err := writeJSON(out, struct {
-				ProjectDigest string                 `json:"projectDigest"`
-				Revision      string                 `json:"revision"`
-				Provisional   bool                   `json:"provisional"`
-				Status        string                 `json:"status"`
-				Findings      []projectmodel.Finding `json:"findings"`
-				Unknown       []string               `json:"unknown"`
-			}{project.Digest, project.Revision, project.Provisional, project.Report.Status, project.Report.Findings, project.Report.Unknown}); err != nil {
+				ProjectDigest string                  `json:"projectDigest"`
+				Revision      string                  `json:"revision"`
+				Provisional   bool                    `json:"provisional"`
+				Status        string                  `json:"status"`
+				Findings      []projectmodel.Finding  `json:"findings"`
+				Unknown       []string                `json:"unknown"`
+				Coverage      *projectcoverage.Report `json:"coverage,omitempty"`
+			}{project.Digest, project.Revision, project.Provisional, project.Report.Status, project.Report.Findings, project.Report.Unknown, project.Coverage}); err != nil {
 				return err
 			}
 			if project.Report.Status != "succeeded" {
 				return &projectOutcomeError{code: 1, message: "project report is " + project.Report.Status}
+			}
+			if project.Config.CoverageMode == "full" && (project.Coverage == nil || !project.Coverage.Conforming) {
+				return &projectOutcomeError{code: 1, message: "whole-repository coverage is not conforming; inspect project coverage"}
 			}
 			return nil
 		case "index":
@@ -409,8 +430,12 @@ func runAction(opts options, out io.Writer) error {
 			return err
 		}
 		return emitRecord(opts.sourceRepo, opts.output, encoded, out)
-	case "plan":
-		request := projectrun.PlanRequest{Goal: opts.goal, Managers: append([]string(nil), opts.managers...), BaseRevision: opts.revision, SinceRevision: opts.since, ExecuteAuthorized: opts.write}
+	case "plan", "cleanup", "reconcile":
+		operation := opts.operation
+		if opts.action != "plan" {
+			operation = opts.action
+		}
+		request := projectrun.PlanRequest{Operation: operation, Goal: opts.goal, Managers: append([]string(nil), opts.managers...), BaseRevision: opts.revision, SinceRevision: opts.since, ExecuteAuthorized: opts.write}
 		plan, err := projectrun.Plan(projectRunHost(), opts.repo, opts.revision, request)
 		if err != nil {
 			return err
@@ -448,11 +473,37 @@ func runAction(opts options, out io.Writer) error {
 		}
 		return writeJSON(out, report)
 	case "verify":
+		if opts.revision != "" {
+			report, err := projectrun.FullVerify(ctx, projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, projectrun.FullVerifyRequest{Revision: opts.revision, Write: opts.write})
+			if report.APIVersion != "" {
+				if writeErr := writeJSON(out, report); writeErr != nil {
+					return writeErr
+				}
+			}
+			if err != nil {
+				if report.Digest != "" && report.Status != "passed" {
+					return &projectOutcomeError{code: 1, message: err.Error()}
+				}
+				return err
+			}
+			if report.Status != "passed" {
+				return &projectOutcomeError{code: 1, message: "full verification is " + report.Status}
+			}
+			return nil
+		}
 		report, err := projectrun.Verify(ctx, projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.run)
+		if report.APIVersion != "" {
+			if writeErr := writeJSON(out, report); writeErr != nil {
+				return writeErr
+			}
+		}
 		if err != nil {
+			if report.Digest != "" {
+				return &projectOutcomeError{code: 1, message: err.Error()}
+			}
 			return err
 		}
-		return writeJSON(out, report)
+		return nil
 	case "apply":
 		host := projectRunHost()
 		if !opts.write {
@@ -563,7 +614,7 @@ func writeJSON(out io.Writer, value any) error {
 
 func printUsage(out io.Writer, action string) {
 	if action == "" {
-		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: schema init check index context impact document edit discover distill resolve adopt setup doctor plan run resume repair status verify apply\n")
+		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: schema init onboard check index coverage context impact document edit brief briefings dismiss discover distill resolve adopt setup doctor plan cleanup reconcile run resume repair status verify apply\n")
 		return
 	}
 	if spec, ok := actionSpecs[action]; ok {

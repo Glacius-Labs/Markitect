@@ -5,6 +5,7 @@ Start with the vision for Classic, the active product line on `main`, and the ro
 | Document | Owns |
 |---|---|
 | [Managed project workflow](project-workflow.md) | Source-alpha installation, model edits, selected Brownfield adoption, manager execution and verification boundaries |
+| [Managed project operations](project-operations.md) | Current unreleased source contract for repository coverage, full verification, cleanup/reconcile, model briefs, and native onboarding |
 | [Managed project validation](validation/project-world-delivery.md) | Local source evidence, real-process fixture coverage and remaining provider/isolation/release boundaries |
 | [Project world](design/project-world/README.md) | User-authorized design and implementation contracts for recursively managed project models, file responsibilities, Brownfield adoption and controlled agent work |
 | [Product vision](vision.md) | Quality and intent-fidelity thesis, canonical authority, human/agent responsibilities and benefit hypothesis |

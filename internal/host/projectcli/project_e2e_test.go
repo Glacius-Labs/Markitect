@@ -23,7 +23,7 @@ func TestProjectAgentFixtureMatchesClosedWorkResponseContract(t *testing.T) {
 	if !ok {
 		t.Fatal("test caller path unavailable")
 	}
-	fixtures := filepath.Join(filepath.Dir(file), "..", "..", "..", "examples", "project-world", ".markitect", "agent-fixtures")
+	fixtures := filepath.Join(filepath.Dir(file), "..", "..", "..", "examples", "project-world", "tests", "agent-fixtures")
 	invocationBytes, err := os.ReadFile(filepath.Join(fixtures, "invocation.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -77,7 +77,7 @@ func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 	if initial.Report.Status != "succeeded" {
 		t.Fatalf("fixture model status = %q, findings=%+v, unknown=%v", initial.Report.Status, initial.Report.Findings, initial.Report.Unknown)
 	}
-	if len(initial.Report.Managers) != 6 || len(initial.Report.Artifacts) != 2 || len(initial.Report.Checks) != 1 {
+	if len(initial.Report.Managers) != 6 || len(initial.Report.Artifacts) != 5 || len(initial.Report.Checks) != 1 {
 		t.Fatalf("fixture report counts = managers:%d artifacts:%d checks:%d", len(initial.Report.Managers), len(initial.Report.Artifacts), len(initial.Report.Checks))
 	}
 
@@ -95,9 +95,13 @@ func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 	if code := Run([]string{"project", "document", "--repo", repo, "--write"}, &documentOut, &documentErr); code != 0 {
 		t.Fatalf("project document --write exit=%d stderr=%s", code, documentErr.String())
 	}
-	view, err := os.ReadFile(filepath.Join(repo, ".markitect", "views", "project.md"))
+	view, err := os.ReadFile(filepath.Join(repo, "docs", "markitect", "project.md"))
 	if err != nil || !bytes.Contains(view, []byte("cancel-before-shipped")) {
 		t.Fatalf("generated project view omitted selected model: err=%v", err)
+	}
+	editBasis, err := projectwork.Load(repo, "")
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	manager := ""
@@ -124,7 +128,7 @@ func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 	}
 	mutation := projectwork.Mutation{
 		APIVersion: projectwork.APIVersion,
-		BaseDigest: initial.Digest,
+		BaseDigest: editBasis.Digest,
 		Actor:      projectwork.HumanActor,
 		Goal:       "Clarify the cancellation transition",
 		Files: []projectwork.FileChange{{
@@ -132,7 +136,7 @@ func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 			Content: strings.Replace(string(content), "Cancellation is valid only while the order is confirmed; a shipped order cannot be cancelled.", "Cancellation is valid only before shipment; shipped orders remain unchanged.", 1),
 		}},
 	}
-	plan, err := projectwork.PlanEdit(initial, mutation)
+	plan, err := projectwork.PlanEdit(editBasis, mutation)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -233,7 +237,7 @@ func TestProjectRuntimeSetupUsesReviewedEditWithoutHandEditing(t *testing.T) {
 	}
 }
 
-func TestProjectInitCreatesOnlyMarkitectFilesOnUnbornFeatureBranch(t *testing.T) {
+func TestProjectInitCreatesControlPlaneAndReadableDocumentationOnUnbornFeatureBranch(t *testing.T) {
 	repo := t.TempDir()
 	runGit(t, repo, "init", "--initial-branch=feature-init")
 	var out, errout bytes.Buffer
@@ -252,7 +256,7 @@ func TestProjectInitCreatesOnlyMarkitectFilesOnUnbornFeatureBranch(t *testing.T)
 		".markitect/project.yaml",
 		".markitect/runtime.yaml",
 		".markitect/model/manager.yaml",
-		".markitect/views/project.md",
+		"docs/markitect/project.md",
 		".markitect/.gitignore",
 	} {
 		info, err := os.Stat(filepath.Join(repo, filepath.FromSlash(path)))
@@ -268,8 +272,8 @@ func TestProjectInitCreatesOnlyMarkitectFilesOnUnbornFeatureBranch(t *testing.T)
 		t.Fatal(err)
 	}
 	for _, entry := range entries {
-		if entry.Name() != ".git" && entry.Name() != ".markitect" {
-			t.Fatalf("init wrote outside .markitect: %s", entry.Name())
+		if entry.Name() != ".git" && entry.Name() != ".markitect" && entry.Name() != "docs" {
+			t.Fatalf("init wrote outside its control plane and documentation destination: %s", entry.Name())
 		}
 	}
 }
