@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T17:28:18Z",
+  "updatedUtc": "2026-10-09T17:30:31Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16086,7 +16086,8 @@
       "additionalGrant": false,
       "starts": 0,
       "securityOrToolsDisablingAuthorized": false,
-      "otherSourceWorkBlocked": false
+      "otherSourceWorkBlocked": false,
+      "latestSourceCorrection": "Final P04 source/schema validation proves concurrency config only; depth is observation not enforced. Earlier report remains historical."
     },
     "workspaceModuleHandoff": {
       "verifiedUtc": "2026-10-09T17:26:44Z",
@@ -16107,6 +16108,29 @@
       ],
       "integrationInstruction": "Take implementation and doc only on existing contract correction; register nine paths, wire real candidate consumption and durable recovery; concrete bugs to moduleowner",
       "acceptance": "QUALIFIED_SOURCE_MODULE_HANDOFF_FOR_INTEGRATION_NOT_FINAL_PRODUCT_RUNTIME",
+      "nativeStarts": 0,
+      "newGrant": false,
+      "mainMerge": false,
+      "release": false
+    },
+    "appServerModuleHandoff": {
+      "verifiedUtc": "2026-10-09T17:30:31Z",
+      "threadId": "01a121a0-b660-7403-93c5-a0fc53501177",
+      "branch": "codex/product-app-server-20261009",
+      "cleanAndExactPublicRemoteSha": "a48cfa6482131fba24f68c7beb2d6f1728b3065d",
+      "implementationSha": "ac6a04d4b1b2912b84b4e7d9fb4dd848762352bc",
+      "rootVerified": "Actual clean local/full public remote and 13 new packagefiles plus own handoff only; fixed handoff/API/checks/protocol limits read, no Root tests/nativecalls",
+      "ownerReported": "NewAdapter Run/Fingerprint, owned workspace/full tools, fresh per-role process/thread/turn, BeforeStart/OnHandle/OnEvent/dynamicTools reservation seams, no turn replay recovery, focused tests/vet and two bounded reviews",
+      "correctedProtocolBoundary": "Only concurrent-child config proven; agents.max_depth NOT proven/sent. Total/depth partial postobserved; previous owner depth configuration assumption superseded, not erased.",
+      "limits": [
+        "14 canonical paths pending accounting",
+        "Hosted topic CI NOT RUN; race NOT RUN CGO disabled",
+        "Loaded instruction bytes unknown despite current file observation",
+        "Shared10minute invocation cap preserved",
+        "Host recovery adoption/harvest/private event journals/accounting and native acceptance still integration-owned"
+      ],
+      "handoff": "docs/work-items/product-readiness/P04-adapter-handoff-20261009.md",
+      "acceptance": "QUALIFIED_SOURCE_MODULE_READY_FOR_WIRING_NOT_NATIVE_PRODUCT_ACCEPTANCE",
       "nativeStarts": 0,
       "newGrant": false,
       "mainMerge": false,
