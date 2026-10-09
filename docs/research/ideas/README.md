@@ -25,6 +25,12 @@ This is an owner-facing collection of product thoughts and questions, not a prod
 | IDEA-20261009-017 | Explore gamification | Noted; meaning open | 013, 016 |
 | IDEA-20261009-018 | Cockpit with a conversational personal access agent | Noted; authority and views open | 013, 014, 016 |
 
+## Evaluation records
+
+| ID | Title | Status | Related |
+|---|---|---|---|
+| EVAL-20261009-001 | Commission Government functional-ideas evaluation | Commissioned; setup in progress at source snapshot | IDEA-20261009-008–012 |
+
 ### Group: Projektspezifische Entscheidungen und Government
 
 The five linked ideas below came together in one user contribution. They are a set of proposals for later examination, not accepted contracts, implementation assignments, roadmap priorities or study instructions. Their broader setting also relates to the user's earlier Government discussion in chat `01a121f1-b948-7050-ae5d-9921b99db9c0`, turn `01a12241-8b52-7010-ac05-edbebd3c80d3`; that relation does not establish that the proposed mechanisms are part of the existing Government implementation.
@@ -44,6 +50,15 @@ These future-use ideas expand on the user's Government/president framing in chat
 **Official-source check, 2026-10-09:** The U.S. Intelligence Community describes the President's Daily Brief as a classified, daily, all-source intelligence digest about national security threats, global unrest and related information for presidential decision-making; it is not described as a comprehensive general activity report ([official PDB description](https://www.intelligence.gov/how-the-ic-works)). Kubernetes is a platform for managing containerized workloads and services with declarative configuration and automation ([Kubernetes overview](https://kubernetes.io/docs/concepts/overview/)). etcd is a consistent distributed key-value store used mainly as a separate coordination service in distributed systems ([etcd FAQ](https://etcd.io/docs/v3.7/faq/)). These are distinct technical roles; this source check establishes no Markitect need or architecture choice.
 
 **Additional assistant hypothesis relayed from the product discussion (not user wording or a decision):** the same evidence-bound events might feed briefings, history, observability and visualization; gamification might make verified progress visible. Keep this as a discussion hypothesis until examined. “Verified progress” and shared event sourcing were not specified by the user.
+
+### EVAL-20261009-001 — Commission Government functional-ideas evaluation
+
+- **Record type:** User-authorized evaluation commission, not an idea, accepted Government design or evaluation result.
+- **Direct source:** Markitect product chat `01a121f1-b948-7050-ae5d-9921b99db9c0`, user turn `01a1225f-e23f-7562-9f90-f9b46ac8c30d`, message `01a1225f-e288-7b01-9394-a8e482aaed6f`, 2026-10-09. The user said the large Markitect vision includes a cockpit, personal AI and an autonomous project organization, and requested a Government evaluator to assess the functional ideas assuming a working small Markitect scope.
+- **Commission details relayed from the product chat:** Government Evaluator is to use Sol/XHigh and evaluation subagents up to High; organize the ideas, assess compatibility with management, identify risks and subproblems, examine solution options, and report a reasoned feasibility view. Document in its own worktree. Cockpit, UI and gamification are excluded. No product implementation or new studies are commissioned.
+- **Fixed source boundary at dispatch:** branch `codex/product-integration-20261009`, SHA `fc6d09a234572c344279a342416475e788435f1f`; do not use stale `main` as the evaluation basis. This source pin does not prove an actual base acceptance: the user explicitly said the evaluation does not replace that acceptance.
+- **Scope links:** Especially IDEA-20261009-008 through -012 and the broader Government discussion in turn `01a12241-8b52-7010-ac05-edbebd3c80d3`. The cockpit and other operation/observability ideas remain separately recorded and outside the named exclusions/scope unless the evaluator's instruction specifies otherwise.
+- **Status:** Commissioned; evaluator chat/worktree was still being set up in the source snapshot. No findings or feasibility conclusion are recorded here. The evaluation assumes a functioning small-scope Markitect for purposes of reasoning; it is not evidence that the assumption has passed real base acceptance.
 
 Concepts cross-referenced these same user ideas as `USER-20261009-04` through `USER-20261009-06` in its worktree: `concepts/operational-overview-ideas-20261009.md`, `concepts/operational-overview-source-check-20261009.md`, `concepts/personal-agent-cockpit-20261009.md`, and its central Concept note. These references add no separate product decision. Concepts' provisional cockpit interpretation is that an agent may share model/decision/evidence references, act only within delegated change authority, and surface unresolved material decisions; a chat request alone grants no new authority. Concepts deliberately left API, technology and protocol details unplanned.
 
