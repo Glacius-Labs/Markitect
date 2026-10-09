@@ -1427,3 +1427,10 @@ Root immutable receipt and enabled fifth grant bind public envelope/payload, exa
 
 
 Fifth enabled actual dispatched once directly to Oldschool, fixed measurement to Scientist; captured after send 2026-10-09 07:58:21 UTC. Actual pending, no manufactured start/quality. Public fall-independent DesignApp proof contract sent once, no extra product quota. Automation ACTIVE/2h exact TOMLverified with accepted fresh2eee96a/Rootenabled; callbacks/events remain primary. PublicDesignremote f20202d and main5be48ce exact checked, CI37901398364 LinuxPASS/Windowsinprogress, no overallPASS/mainpromotion.
+
+
+### 2026-10-09T08:04:56Z - fifth actual native App start verified
+
+Own Oldschool native spawn receipt066ca2f/ownLedger reservation1 verified, exact own handle. Reservation clock07:59:40.609082Z distinct from observed native toolstart08:00:43.456946Z; exact modelstart/serving/usage/costunknown. Scientist6Git/5payload startcheckpoint5042969 clean/exact PRIVATE checked after one transient combined-head/clean read condition failed; cause not independently established, originals untouched, no trialfailure implied. Global5started/max6, one remaining unallocated.
+
+Fixed S1/S2/S3/Impl end08:22:10/08:44:40/09:07:10/09:29:40.609082Z, Final09:49:40.609082Z/closure09:59:40.609082Z under Root10:11:17Z. No completion/quality verdict. Start receipt relayed once to Scientist; real measured hosthold once to Design, light code/docs/CI continue. Agent callbacks primary, quiet2h heartbeat current/verified.

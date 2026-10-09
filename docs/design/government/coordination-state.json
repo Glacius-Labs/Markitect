@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T08:00:21Z",
+  "updatedUtc": "2026-10-09T08:04:56Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -37,10 +37,10 @@
     "scenarioFrameworkUpdatedUtc": "2026-10-09T04:25:49Z",
     "ownDesignSuiteMandateUpdatedUtc": "2026-10-09T04:31:41Z",
     "earlyConventionalMandateUpdatedUtc": "2026-10-09T04:45:30Z",
-    "currentPromptSha256": "9f0ff1fcc47a14419f792ecc62cb41ac7b90cb66dc2ce1d261fda74da6445844",
-    "lastUpdatedUtc": "2026-10-09T08:00:21Z",
+    "currentPromptSha256": "227729b4c7c09ca1c28f161663f032cbc7d821421e379dbeef35f45ab5017d90",
+    "lastUpdatedUtc": "2026-10-09T08:04:56Z",
     "currentPurpose": "Two-hour quiet callback fallback: Design main/product tests and independent early Conventional Luna case study",
-    "verifiedUtc": "2026-10-09T08:00:21Z",
+    "verifiedUtc": "2026-10-09T08:04:56Z",
     "rrule": "FREQ=HOURLY;INTERVAL=2"
   },
   "threads": [
@@ -487,7 +487,7 @@
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac854c570f48191a595d544b5898fd6",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "conventional-roombook-current-native-trial-20261009",
-      "latestProgress": "Fresh Conventional input prepared and accepted; actual fifth Root-enabled, pending Oldschool start; Scientist fixed measurement owner.",
+      "latestProgress": "Fixed fifth measurement started, startcheckpoint5042969 exact private and6Git/5payload Rootverified; no own Actorstart or quality verdict.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "429c52d8a37fa60ca4393a3501a495128b4d2e88",
@@ -9599,7 +9599,10 @@
         "sentUtcObservedAfter": "2026-10-09 07:58:21 UTC",
         "prompt": "Dein frischer Handoff2eee96a ist Root-geprüft und angenommen:20Working/RawGit-Dateien/19Payloadhashes/neunOriginalinputs/tree8cea62c2/seed71acaae/prepared88d7233/S1/leererLedger; keine Tests/Actors/zusätzlicher Review. Rootaktivierung07:56:48Z, immutable enabledGrant C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/oldschool-roombook-fifth-enabled-grant-20261009.json SHA256eec26e29db63c59b00f255fcab2728853fb34acbae42954980885ffe0c225134; receipt70395fb88f349ea5ef59b3f749dfc6246da8666f351b2296f3065f0b4084912f. Oldschool hat den Actual-Auftrag jetzt direkt erhalten; er reserviert/spawnt echten frischen LunaHigh-App-Actor. Keine weiteren Startbarrieren/Proben/Reviewfenster/Designwait.\nDu übernimmst ausschließlich die bereits eingefrorenen festen Stationen/Snapshot/Messung/Freeze und genau einen frischen neutralen Final innerhalb derselben7200cell/5400impl/1200Final/600capture/max72Gesamtstarts/8outer/2station/4concurrent/depth2/absolute10:11:17Z. Keine semantischen Zusatzprompts, kein Produkt-/Casecodefix. Nach tatsächlichem Startcallback übernimmt die zurückgegebene own clock alle Phasen, nicht erfundene Startzeit. Ich leite Oldschools reine Completion-/Lifecyclereceipts weiter; nötige nächste feste Station/Continuation/Stop an Root melden, keine Bewertung/Casehilfe an Oldschool. Eigene feste Automatik/Statusabfrage nur bestehendescompletionmetadata+ledger, normale Toolschutzregeln; keine globale Agenten-/Prozessinventur. ActualpayloadUTF8-PROMPT/Continuation sind korrekt; envelope originalPrompt-Metadaten-Mojibake bleibt als historischer Metadatenbefund ausdrücklich im Rootreceipt, wird nicht als Laufprompt verwendet.\nNoch keine Quality aus Start, actualcontext/Serving/Tokens/Kostenunknown soweit unbelegt. Öffentliche aktuelle Lifecycle-Sicherung/sauber private Receipt-Checkpoints beibehalten; endgültige unabhängige Bewertung separat. Design native/schwere eigene Hostarbeit während actualZelle gehalten; leichte Code/Doku/CI weiter. Keine ACK, feste Messung eigenständig fortführen.",
         "newActualQuota": 0,
-        "enabledGrant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\oldschool-roombook-fifth-enabled-grant-20261009.json"
+        "enabledGrant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\oldschool-roombook-fifth-enabled-grant-20261009.json",
+        "startRelayToolAccepted": true,
+        "startReceiptSha256": "066ca2f9d025be05b5614cec37e96e48162fe96fc03c643004f167bf0ee3ac0e",
+        "status": "Active fixed stations and fresh neutral Final, no semantic coaching"
       }
     },
     {
@@ -10120,7 +10123,7 @@
       "name": "Oldschool",
       "threadId": "01a11928-cc8d-7580-9d29-f6557bb2cbd7",
       "hostId": "local",
-      "afterCursor": "5600487e-cdb2-4e37-96f6-759aef4307d4:5",
+      "afterCursor": "5600487e-cdb2-4e37-96f6-759aef4307d4:7",
       "lastObservedStatus": "active",
       "activeTurn": null,
       "initialAssignmentDispatched": true,
@@ -10269,7 +10272,7 @@
         "prompt": "Du bist vom Nutzer als Conventional-Ausführungseigentümer bereitgestellt. Jetzt ein enges öffentliches Offline-Handoffpaket, KEIN Trialstart: prospective-app-context-contract-correction-20261009, Rootgrant C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/prospective-app-context-contract-correction-20261009.json SHA549bd9fa83de6a702cde51daadbdacd880e6ecb489a0ac16df750f4c8de189e7, Ende07:31:47Z/max900s abRootissue. Deine vorhandene fallunabhängige Arbeit beibehalten. Öffentlicher Scientist-Appvertrag: C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect/experiments/work-item-comparison/luna-nest-20261009/public/app-entry.md und public/app_ledger.py, dazu aktueller Rootvertrag docs/design/work-item-comparison-20261009.md letzterKontextabschnitt. Nur diese öffentlichen Dateien lesen, keine privaten Nachbarordner/Casekandidaten/anderenZellergebnisse/Holdouts/Chat/Memorydateien. Scientist präzisiert denselben Vertrag parallel, besitzt dessenSource; nicht gleichzeitig dort schreiben.\n\nPrüfe ausschließlich die praktische execution-only Übergabe: eigener öffentlicher Case/State/aktuellesBacklog/festeStation/finiterRootgrant → reservierter realer fresh Appspawn(fork_turns=none/gpt-6-luna/high) → nurOwnhandles/Ledger/festerNextStation-Auftrag/zeitgebundenerStop. Du wirst nach separatem neuenRootgrant die Conventional-Ausführung übernehmen, Scientist hält Aufgaben/Stationsfreigaben/Messung/neutraleBewertung. Kein zusätzlicher Prompter, kein Markitect und keine semantische Scientist-Nachhilfe. Gute normalePlanung/Tests/Subagenten/Review innerhalb derselben gemessenen Ressourcen bleiben frei.\n\nGemeinsame System/Developer/Tool/Workspaceinstruktionen und allgemeine App-Memoryhinweise ohne fremdeFalllösungen/privateBewertung sowie eigeneFortsetzungshistory erlaubt. Konkrete fremdeFall-/Kandidateninhalte/privateEvaluationsdaten bleiben ausgeschlossen; passive memory/history-Bezeichnung allein kein Inhaltsnachweis. CaptureKategorien stattprivatemText, keine erfundeneSanitization/OSisolation. DieseFassung giltprospektivfürbeideArme.\n\nNull neueActors/Provider/Helper/Assessoren/Trials/Tests/Builds/Installationen/CLIprobes/neueReviewer, keine neueHarnessimplementierung. Kurzer eigener öffentlicher Handoff in deinem Documents/Markitect-Oldschool-Nest-20261009 mit konkreten schon vorhandenenToolschritten/benötigtenBindings/etwaigempraktischemBlocker; Scientist-Dateieigentum respektieren. Normale Datei-/Gitmetadaten zulässig. Keine Falllösung/Produkversion/privateFallhilfe. Einmal Abschluss/Blocker anOverseer/local, keineACK. Sourcepflege im Scientist-privateRepo übernimmtScientist; öffentlicheHandoffdaten darfRootweiterreichen.",
         "sourceOwnership": "Readonly Scientist public files; own Documents contribution only"
       },
-      "latestProgress": "New bounded public execution-only App ownership handoff sent, no actual trial quota or private case inputs",
+      "latestProgress": "Actual fifth native own App actor started; reservation1 and exact own handle; fixed completion/lifecycle callbacks pending.",
       "prospectiveAppExecutionHandoffAcceptance": {
         "completedUtc": "2026-10-09T07:22:58Z",
         "document": "C:/Users/Consiliari/Documents/Markitect-Oldschool-Nest-20261009/app-execution-handoff-20261009.md",
@@ -10291,7 +10294,8 @@
         "toolAccepted": true,
         "sentUtcObservedAfter": "2026-10-09 07:58:21 UTC",
         "prompt": "Jetzt genau den einen neuen fünften Conventional-Roombook-App-Lauf ausführen. Root hat den frischen Handoff2eee96a statisch geprüft und immutable aktiviert; keine weitere Capability-/Review-/Testphase und keine Designreadiness-Wartebedingung.\nENABLED_GRANT: C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/oldschool-roombook-fifth-enabled-grant-20261009.json\nSHA256: eec26e29db63c59b00f255fcab2728853fb34acbae42954980885ffe0c225134\nRootreceipt: oldschool-roombook-fifth-root-activation-20261009.json SHA25670395fb88f349ea5ef59b3f749dfc6246da8666f351b2296f3065f0b4084912f.\nÖffentliches eigenes Envelope: C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect/experiments/work-item-comparison/luna-nest-20261009/evidence/oldschool-roombook-fresh-input-preparation-20261009/public-owner-envelope.json SHA256f6aa5f6886d4110bcf52dc215a10af06bbf9a8adc6a9519b1c72c19af4c254d6. Nur dieses explizit öffentliche Envelope und die dort exakt benannten öffentlichen Einstieg-/Payload-/Tooldateien lesen, keine angrenzende History/Evidence oder private Bewertung.\nCASE_REPO C:/Users/Consiliari/Documents/Luna-Work-Item-Nests-20261009/cells/roombook-conventional-oldschool-app\nCASE_STATE C:/Users/Consiliari/Documents/Luna-Work-Item-Nests-20261009/state/roombook-conventional-oldschool-app\nPrepared88d7233bc14bc962e7ef471af0faaf3c4824351b/tree8cea62c20a64d4571017818c7e73855b1ead5676; frisch sauber, S1, leerer Ledger. PublicSource2037bfa, öffentliche app_ledger.py/nest.py unverändert; Python C:/Python313/python.exe -B.\nVor echtem Start Grant-/Inputbindung/Uhr nur statisch prüfen, dann einmal bestehenden app_ledger.reserve(CASE_STATE, ENABLED_GRANT, \"implementation\") und direkt native collaboration.spawn_agent mit den vorhandenen fünf Feldern aus disabled-native-primary-call.json desselben Envelopeordners. Keine Python-Collaboration-API/cwd-Argumente. Der Dateiname disabled bezeichnet archivierte Vorbereitung; echte Autorität ist der oben genannte enabledGrant. Semantischer Normalauftrag im tatsächlichen UTF8-Payload korrekt; envelope originalPrompt-Metadaten haben historisches Mojibake und werden nicht für den Auftrag verwendet. Message nur um exakten enabledGrantpfad/hash, eigene Reservation/parent und zurückgegebene entryDeadline ergänzen, kein Lösungs-/Methodenprompt. Eigene Handles/Request/Result/Zeiten/angefordertes LunaHigh/actual unknowns im bestehenden Ledger erfassen; helperdepth2 vor tatsächlicher Aktivierung reservieren.\nMax1Vollstart, Ende10:11:17Z, volle7200s muss vor erster Reservation verbleiben; cell7200/impl5400/final1200/capture600,8outer/2station/72alleStarts/4concurrent/depth2. Vier alte Versuche/Restquoten geschlossen, kein automatischer Retry/Refill/CLI-Wechsel. Nur eigene Handles/Jobs, harte Stop/Cleanupfristen, keine globale Inventur. Contextcontract aus angenommenem öffentlichen Einstieg: allgemeines normales Setup und eigene Geschichte erlaubt; konkrete fremde Lösung/private Bewertung terminal, Unklarheiten ehrlich, kein unnötiger Kontextdiagnoseactor. Schutzregeln aktiv.\nMelde tatsächlichen Start mit eigenem Handle/Reservation/clock/deadlines und öffentlichem Startreceipt einmal an Root; noch kein Qualitätscredit. Danach nur feste eigene öffentliche Completion-/Lifecycle-Meldungen pro Station/terminaler Blocker an Root, damit Scientist snapshots/advance/freeze/freshneutralFinal übernehmen kann. Keine semantische Hilfe vom Scientist oder von Root. Normale Implementierung/Planung/Tests/Subagenten/Reviews wählt dein gemessener Actor selbst, ohne Markitect. Folgeaktivierungen nur aus demselben eigenen Handle mit der öffentlichen festen Continuation und vorheriger Reservation; Root liefert nur mechanisch freigegebene Station/Frist, keine Codeprüfung. Kein ACK, beginne jetzt.",
-        "status": "Active normal initial checks, Invocationreceipt pending"
+        "status": "ACTUAL START VERIFIED, running",
+        "startReceiptSha256": "066ca2f9d025be05b5614cec37e96e48162fe96fc03c643004f167bf0ee3ac0e"
       }
     },
     {
@@ -10712,10 +10716,11 @@
         "remainingOriginalProductJobs": 1
       },
       "measurementHostDeferral": {
-        "issuedUtc": "2026-10-09T06:51:42Z",
+        "issuedUtc": "2026-10-09T08:04:56Z",
         "sentOnce": true,
-        "status": "No new native/heavy proof during measured App case; light product work and hosted CI continue",
-        "authority": "Existing host coordination, no new product or proof quota"
+        "status": "Actual fifth Conventional active; no native/heavy own job until genuine owned terminal cleanup, light productwork/CI allowed",
+        "authority": "Existing host coordination, no new product or proof quota",
+        "newActualQuota": 0
       },
       "lastCRLFFinding": {
         "ownerReported": "CRLF SKILL frontmatter repeat installation would duplicate YAML header",
@@ -10807,7 +10812,7 @@
       }
     }
   ],
-  "nextAction": "Oldschool exact fifth enabled native App start now, Scientist fixed station/snapshot/fresh Final; no extra review/capability/Design wait. Design remaining normal entry/accounting plan and targeted product work, native host coordination only.",
+  "nextAction": "Respond only to real fixed station/terminal callbacks: Scientist snapshot/advance/freeze/fresh neutral Final; Oldschool own fixed normal continuation. No semantic code review/coaching. Design remaining normal native entry/accounting plan and light productwork; own proof host released only after known terminal cleanup.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -11045,13 +11050,20 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "status": "FIFTH CONVENTIONAL ENABLED, ACTUAL START PENDING",
-    "owner": "Oldschool execution, Scientist measurement",
+    "status": "ACTIVE FIFTH CONVENTIONAL MEASURED CELL",
+    "owner": "Oldschool implementation / Scientist fixed measurement and Final",
     "assignedUtc": "2026-10-09T07:56:48Z",
     "previousOwnPidAbsent": 50664,
     "noNewNativeDesignRunUntilExplicitBoundedHostCoordination": true,
     "nextMeasuredOwner": "Oldschool after exact fresh source/input activation",
-    "designReadinessIsNotPrerequisite": true
+    "designReadinessIsNotPrerequisite": true,
+    "reservedCellClockUtc": "2026-10-09T07:59:40.609082+00:00",
+    "ownHandle": "/root/app_conventional_oldschool_roombook_primary",
+    "implementationEndUtc": "2026-10-09T09:29:40.609082+00:00",
+    "assessmentEndUtc": "2026-10-09T09:49:40.609082+00:00",
+    "cellEndUtc": "2026-10-09T09:59:40.609082+00:00",
+    "exactModelStartUnknown": true,
+    "designNativeHeavyWorkHeld": true
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -11486,7 +11498,7 @@
           "acceptedSeedsOrActuals": "Prepared seeds accepted; no actual start receipt yet"
         }
       },
-      "actualStarted": 4,
+      "actualStarted": 5,
       "earlyConventionalExecution": {
         "authorizedUtc": "2026-10-09T04:42:43Z",
         "status": "CLOSED TERMINAL EXECUTIONBLOCKED,1actualstart preserved",
@@ -11749,7 +11761,7 @@
         "rootRerunTestsOrActors": 0
       },
       "fifthOldschoolExecution": {
-        "status": "ENABLED actual once dispatched to Oldschool, actual Invocationreceipt pending",
+        "status": "ACTUAL NATIVE APP SPAWN VERIFIED, implementation/quality pending",
         "issuedUtc": "2026-10-09T07:46:17Z",
         "preparationNotAfterUtc": "2026-10-09T07:56:17Z",
         "preparationGrant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\oldschool-roombook-fresh-input-preparation-grant-20261009.json",
@@ -11758,9 +11770,9 @@
         "trialReservationSha256": "87b0e93625fd4ae6b3d44908e3607732c9259d67042f53ea4374b6a2617afcba",
         "absoluteTrialNotAfterUtc": "2026-10-09T10:11:17Z",
         "actualExecutionAuthorized": true,
-        "actualStarted": 0,
+        "actualStarted": 1,
         "designReadinessDependency": false,
-        "globalActualStartsUsed": 4,
+        "globalActualStartsUsed": 5,
         "globalActualStartsAllocated": 5,
         "globalMax": 6,
         "oneRemainingUnallocatedForMatchedDesign": true,
@@ -11778,7 +11790,32 @@
         "preparationToolAccepted": true,
         "executionToolAccepted": true,
         "measurementToolAccepted": true,
-        "actualDispatchObservedAfterUtc": "2026-10-09 07:58:21 UTC"
+        "actualDispatchObservedAfterUtc": "2026-10-09 07:58:21 UTC",
+        "startReceipt": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app\\oldschool-start-receipt.json",
+        "startReceiptSha256": "066ca2f9d025be05b5614cec37e96e48162fe96fc03c643004f167bf0ee3ac0e",
+        "ownHandle": "/root/app_conventional_oldschool_roombook_primary",
+        "primaryReservation": 1,
+        "reservationCellClockUtc": "2026-10-09T07:59:40.609082+00:00",
+        "nativeToolStartObservedUtc": "2026-10-09T08:00:43.456946+00:00",
+        "exactModelStartUtc": null,
+        "entryDeadlineUtc": "2026-10-09T08:22:10.609082+00:00",
+        "implementationDeadlineUtc": "2026-10-09T09:29:40.609082+00:00",
+        "assessmentEndUtc": "2026-10-09T09:49:40.609082+00:00",
+        "cellEndUtc": "2026-10-09T09:59:40.609082+00:00",
+        "rootStartReceiptAndOwnLedgerVerified": true,
+        "requestedProfile": {
+          "model": "gpt-6-luna",
+          "reasoning_effort": "high",
+          "fork_turns": "none"
+        },
+        "servingUsageCosts": "unknown",
+        "startCheckpointSha": "5042969a8dcece4413186c2ba3899f45d1cccd60",
+        "rootStartCheckpointGitBindings": 6,
+        "rootStartCheckpointPayloadHashes": 5,
+        "rootStartCheckpointExactPrivateRemoteVerified": true,
+        "qualityCredit": false,
+        "rootStaticStartCheckpointReadAttempts": 2,
+        "firstCombinedHeadCleanReadCondition": "Failed during active archive; reason not independently established. Later exact pin/head/remote/clean and six WorkingRawGit/five payload bindings verified; no trial stop or evidence reset."
       }
     }
   },
