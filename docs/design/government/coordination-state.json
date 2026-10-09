@@ -16500,6 +16500,32 @@
         "wholeSuite": "New c701 full suite active, packages reported positive so far; no wholePASS inferred",
         "mainAcceptance": false,
         "newRootOrder": false
+      },
+      "renewedBatchInvalidResponse": {
+        "ownerReportedBatchPrefix": "cb2519",
+        "sourceSha": "c701a28908d379a4a6093caf03c0d88bef9f083a",
+        "ownerBinaryPrefix": "058e",
+        "ownerProjectPrefix": "012c6",
+        "ownerPlanPrefix": "efe301",
+        "ownerReported26Bindings": "positive",
+        "startUtc": "2026-10-09T22:15:27Z",
+        "terminalUtc": "2026-10-09T22:16:05Z",
+        "rootInvocationPrefix": "583c98a",
+        "nativeRoot": "completed with requested/effective :workspace ownerreported",
+        "productOutcome": "external runner returned an invalid response, before children/integrationboundary",
+        "proof": "No helper/overlap/review/Verify/Apply/recovery",
+        "batchKnownRequests": 1,
+        "cumulativeKnownRequests": 4,
+        "cumulativeKnownProviderStarts": 3,
+        "callerEstimateKnownPartialMicros": 750309,
+        "latestBatchEstimateKnownPartialMicros": 348642,
+        "costQualification": "Caller estimated partiallowerbound, not invoice or proven total",
+        "batchDeadlineUtc": "2026-10-10T02:14:58Z",
+        "diagnosis": "Bounded independent readonly exactOutput/Decoder investigation active; concrete correction before further execution, no blind retry",
+        "fullSuite": "c701 ongoing ownerreported",
+        "resourceAuthority": "renewable-execution-budget-20261010, no blanket permission per diagnosed fix/renewal",
+        "rootQualification": "Actual metadata ownercallback; full raw output/decoder diagnosis/ledger handoff pending",
+        "mainAcceptance": false
       }
     }
   },
@@ -17661,5 +17687,22 @@
     "knowledgeGraphSeparate": true,
     "integrationDispatch": "SENT_ONCE",
     "scientistDispatch": "SENT_ONCE"
+  },
+  "markitectStudyAdapterSourcePreparation20261010": {
+    "sourceSha": "5530a7e67eb53ecc0689161e7507545e20bb085c",
+    "exactCleanLocalPrivateRemoteRootVerified": true,
+    "fixedProductSha": "c701a28908d379a4a6093caf03c0d88bef9f083a",
+    "sourceContractSha256": "806baebcb1613e69477ce32f304c3b107cee1413ce80d57df3e4e2be0996a15b",
+    "rootVerified": "All18 immutable product Gitblob SHA256 pins checked, source-contract/normal ingress/ownership/candidate boundary read; no native calls/tests repeated",
+    "inboundMCP": "markitect project mcp --repo PATH, composed10base+15registration tools",
+    "outboundP04": "Independent product-to-Codex roles, distinct from inbound tool server",
+    "adapterActuals": 0,
+    "ordinaryIngress": "Normal outer actor/backlog prompt with genuine product installation/guidance/tools; no Scientist-authored semantic model/ack/directDeliver shortcut. Final common candidate delivered target bytes after guardedApply.",
+    "scopeOwners": "Integration generic product/interfaces/installation/authority workflow. Scientist public case fixture/inputs/method/assessment, ordinary own operator/actor installation; not move studies to implementer.",
+    "versionAlignmentFinding": "Conventional outer0.162.0-alpha.2 versus currently observed Markitect inner0.162.0 stable real difference; source requirement not proved hardcoded capability restriction. Align genuine config before matched trials or disclose configuration comparison, no isolatedmethodclaim.",
+    "publicInterfaceCoordination": "Sentonce to Integration/Scientist without private casejudgments",
+    "readyProductBinaryCaseBinding": "PENDING_FUNCTIONAL_HANDOFF",
+    "newQuotaOrActor": "NONE",
+    "conventionalClosed": "UNCHANGED_ACCEPTED"
   }
 }
