@@ -1,0 +1,138 @@
+{
+  "executionAuthorized": false,
+  "acceptedPublicSource": "2037bfa65e7e05ee004921d282893d4a6c8e899a",
+  "case": "roombook",
+  "arm": "conventional",
+  "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-oldschool-app",
+  "stateDir": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app",
+  "stateFile": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app\\state.json",
+  "ledgerFile": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app\\app-ledger.json",
+  "preparedCommit": "88d7233bc14bc962e7ef471af0faaf3c4824351b",
+  "preparedTree": "8cea62c20a64d4571017818c7e73855b1ead5676",
+  "seedCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+  "initialMainCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+  "branch": "work/backlog",
+  "stationIndex": 0,
+  "station": {
+    "id": "S1",
+    "items": [
+      "R01"
+    ],
+    "requiresTeam": false
+  },
+  "inputFiles": {
+    ".codex/config.toml": {
+      "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+      "bytes": 281
+    },
+    ".gitignore": {
+      "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+      "bytes": 36
+    },
+    ".study/station.json": {
+      "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+      "bytes": 70
+    },
+    "AGENTS.md": {
+      "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+      "bytes": 5411
+    },
+    "BACKLOG.md": {
+      "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+      "bytes": 2566
+    },
+    "checks/acceptance.py": {
+      "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+      "bytes": 7554
+    },
+    "QUALITY.md": {
+      "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+      "bytes": 2687
+    },
+    "README.md": {
+      "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+      "bytes": 2276
+    },
+    "STATIONS.json": {
+      "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+      "bytes": 595
+    }
+  },
+  "stateSha256": "8cb92103377087a7be288189ff505b9e9227ccaa3ad95f23fd83aff4b57703be",
+  "emptyLedgerSha256": "f8ce063588b8e918aaaaa12a61da1443697a89bd4fd6aaa245b9d69a48b0d409",
+  "sourceHashes": {
+    "app-entry.md": "63dff8fddec0562fd7929e9d09b49443e8a42c21d4d3ce787518aed437e09655",
+    "oldschool-app-dispatch.md": "be8e2a003c561ad7e9d0cad809ea365e2c1b8535b7dbbf42f2954ede931d3751",
+    "app_ledger.py": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20",
+    "nest.py": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635",
+    "evaluation/assessor-prompt.txt": "7eec156128339344121c1040c3f6b76f1cc5545c239eb99b6462420163a72741",
+    "native/config.toml": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "conventional/AGENTS.fragment.md": "13defc09103507b30c8d131ffc27cdccfeef5fed1261b51924725916bfa8e9dc"
+  },
+  "python": "C:/Python313/python.exe",
+  "modulePath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\work-item-comparison\\luna-nest-20261009\\public",
+  "pythonMode": "-B; existing file-only preparation/accounting/snapshot APIs; no CLI/model launcher",
+  "originalPrompt": "Hier liegt das Backlog. Implementiere die Arbeit, halte die Projektregeln ein, prÃ¼fe die Ergebnisse und merge die fertigen Ã„nderungen nach main.",
+  "originalContinue": "Setze denselben Backlog-Auftrag aus dem vorhandenen Projektstand fort. Halte die Projektregeln ein, prÃ¼fe die Ergebnisse und merge fertige Ã„nderungen nach main. Dokumentiere einen echten Blocker, falls du nicht fortsetzen kannst.",
+  "promptSha256": "cc4389f0f822251442bd0f7bafe40b2f357ac45c270ab3afc23b0a879806f591",
+  "continueSha256": "ad379aef3481487ed9366a7d854813fff1ed2979ebd49fcf9b1cbcf5970b6d99",
+  "neutralFinalPromptSha256": "7eec156128339344121c1040c3f6b76f1cc5545c239eb99b6462420163a72741",
+  "toolContract": {
+    "spawn_agent": [
+      "task_name",
+      "fork_turns",
+      "model",
+      "reasoning_effort",
+      "message"
+    ],
+    "followup_task": [
+      "target",
+      "message"
+    ],
+    "cwdParameter": false,
+    "ownHandlesOnly": true
+  },
+  "prospectiveContextContract": "accepted app-entry and public Oldschool dispatch unchanged; actual inherited context/runtime NOT RUN",
+  "profile": {
+    "model": "gpt-6-luna",
+    "reasoning": "high",
+    "fork_turns": "none",
+    "normalAppProtectionsUnchanged": true,
+    "caseConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "resourceEnvelope": "7200s cell/5400 implementation/1200 final/600 capture; 8outer/2station/72total/4concurrent/depth2"
+  },
+  "owners": {
+    "execution": "Oldschool",
+    "fixedStationsSnapshotsMeasurementNeutralFinal": "Scientist",
+    "activation": "Root"
+  },
+  "globalStarts": {
+    "started": 4,
+    "allocated": 5,
+    "maximum": 6
+  },
+  "disabledReservationSha256": "87b0e93625fd4ae6b3d44908e3607732c9259d67042f53ea4374b6a2617afcba",
+  "disabledReservationEndUtc": "2026-10-09T10:11:17Z",
+  "requiredFutureGrantFields": [
+    "executionAuthorized=true",
+    "repo exact state repo string",
+    "preparedCommit",
+    "model=gpt-6-luna",
+    "reasoning=high",
+    "notAfterUtc",
+    "immutable SHA256"
+  ],
+  "noDesignReadinessDependency": true,
+  "newModelsActorsHelpersAssessorsTrialsTestsBuildsInstallsCliProbesReviewers": 0,
+  "homeAccountCreatedOrRead": false,
+  "createdUtc": "2026-10-09T07:52:47.504318+00:00",
+  "activationPayloadBindings": [
+    "Exact enabled grant path/hash from Root",
+    "Own primary reservation number and returned deadlineUtc before native spawn",
+    "Same own active parent reservation supplied to every helper"
+  ],
+  "helperAccountingCalls": {
+    "reserve": "app_ledger.reserve(CASE_STATE, ENABLED_GRANT, \"helper\", depth=2, parent=OWN_ACTIVE_PRIMARY_RESERVATION)",
+    "record": "app_ledger.record(CASE_STATE, OWN_RESERVATION, STATUS, handle=OWN_HANDLE, receipt=OWN_RECEIPT)"
+  }
+}
