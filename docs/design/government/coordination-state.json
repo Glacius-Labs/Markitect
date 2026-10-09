@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T18:33:00Z",
+  "updatedUtc": "2026-10-09T18:40:28Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16188,6 +16188,23 @@
       "mainMerged": false,
       "release": false,
       "next": "Owner finishes active bounded fixes and publishes coherent own checkpoint; no repeat task or ACK needed"
+    },
+    "integratedNativeWorkflowCheckpoint": {
+      "verifiedUtc": "2026-10-09T18:40:28Z",
+      "cleanExactLocalPublicRemoteSha": "5fd90fe9b9aac4a600caef4125ccd2486c566153",
+      "rootVerified": "Clean exact HEAD/public remote, committed P09/P10/ledger current gate and deferred statuses; no Root tests/build/models",
+      "ownerReported": "P03/P04/P05 integrated; P06/P07 native workspaces/private journals/exact-request recovery/failed-child ledger/real Host-helper/parallel work/dependencies/full readonly assessments/Brownfield/25 MCPtools/source-free installedsetup wired",
+      "ownerChecks": "Total build and focused regressions/schema/bootstrap/modules/accounting PASS; prior projectrun suite FAILED1064.767s unsafe process fixture before persist, guard correct; focused corrected27.8sPASS; setup/adoption combined CANCELLED no result",
+      "independentReview": "Owner-reported3 findings fixed: reworkbaseline/updatedRecoveryReceipt/savedCheckPins; not Root native acceptance",
+      "currentMainGate": "CombinedA01 required, A02/A03deferred, 4h/12h/256limits unchanged",
+      "P08": "Nine inventoried branding paths removed/doc map consolidated owner-reported; physical src move next, no KG imports",
+      "nativeSmokeRuntimeOwnerReported": "Chosen existing npm native codex-cli0.162.0, sha256dce685d569526ef4712fa82d20ff20e1309baad5fcd34215e1126698f611242f; final actual pin required",
+      "nativeJobs": 0,
+      "nativeStartRequests": 0,
+      "fullSuitePlatformPass": false,
+      "mainMerged": false,
+      "release": false,
+      "next": "Active P08 moves then final gates/review and source/config-bound finite combined A01 reservation; no repeat task/ACK"
     }
   },
   "playgroundAndClaudePreparation20261009": {
@@ -16555,7 +16572,7 @@
     ],
     "queueOwner": "01a121a0-0417-71c1-9e4b-be742f8c1146",
     "queueUpdateDispatchedOnce": true,
-    "queuePublicationVerified": false,
+    "queuePublicationVerified": true,
     "A01": "prospective combined-main-smoke",
     "A02A03": "deferred_not_main_gate_no_automatic_start",
     "totalAllocationUnchanged": true,
@@ -16563,7 +16580,8 @@
     "caseStudiesEnabled": false,
     "releaseAuthorized": false,
     "kgCurrentMainIntegration": false,
-    "originalEvidencePreserved": true
+    "originalEvidencePreserved": true,
+    "queueSourceSha": "5fd90fe9b9aac4a600caef4125ccd2486c566153"
   },
   "conventionalWrapperRuntimePilot20261009": {
     "id": "conventional-wrapper-runtime-pilot-20261009",
