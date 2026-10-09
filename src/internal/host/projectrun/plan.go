@@ -14,6 +14,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
@@ -283,7 +284,7 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 		if configErr != nil {
 			return plan, fmt.Errorf("invalid runtime agent %s: %w", id, configErr)
 		}
-		fingerprint, fingerprintErr := agentexec.Fingerprint(config)
+		fingerprint, fingerprintErr := planRuntimeFingerprint(config)
 		if fingerprintErr != nil {
 			return plan, fmt.Errorf("fingerprint runtime agent %s: %w", id, fingerprintErr)
 		}
@@ -299,7 +300,7 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 		if configErr != nil {
 			return plan, fmt.Errorf("invalid runtime verifier: %w", configErr)
 		}
-		fingerprint, fingerprintErr := agentexec.Fingerprint(config)
+		fingerprint, fingerprintErr := planRuntimeFingerprint(config)
 		if fingerprintErr != nil {
 			return plan, fmt.Errorf("fingerprint runtime verifier: %w", fingerprintErr)
 		}
@@ -311,7 +312,7 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 			if configErr != nil {
 				return plan, fmt.Errorf("invalid runtime reviewer %s: %w", managerID, configErr)
 			}
-			fingerprint, fingerprintErr := agentexec.Fingerprint(config)
+			fingerprint, fingerprintErr := planRuntimeFingerprint(config)
 			if fingerprintErr != nil {
 				return plan, fmt.Errorf("fingerprint runtime reviewer %s: %w", managerID, fingerprintErr)
 			}
@@ -388,6 +389,18 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 		return plan, err
 	}
 	return plan, nil
+}
+
+// planRuntimeFingerprint mirrors the default CLI invoker used by Project Run.
+// Process agents retain the existing transport-neutral fingerprint contract;
+// native agents additionally bind the App Server protocol and stable Host
+// helper tool specification advertised by NewTransportInvoker's default
+// options. Per-run callbacks and journal paths are intentionally not included.
+func planRuntimeFingerprint(config agentexec.Config) (string, error) {
+	if config.Transport == TransportCodexAppServer {
+		return NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+	}
+	return agentexec.Fingerprint(config)
 }
 
 func planManagers(report projectmodel.Report, baseFiles map[string][]byte, request PlanRequest, edit *EditPlan, changeImpact *projectmodel.ChangeImpact, limits Limits) ([]ManagerTask, map[string]bool, []string, error) {

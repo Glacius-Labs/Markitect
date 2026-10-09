@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 )
 
@@ -27,8 +28,8 @@ func (i *resumeReviewInvoker) Run(_ context.Context, _ agentexec.Config, request
 	i.request = request
 	return agentexec.RunResult{}, errors.New("fixture has no provider")
 }
-func (i *resumeReviewInvoker) Fingerprint(agentexec.Config) (string, error) {
-	return "review-fingerprint", nil
+func (i *resumeReviewInvoker) Fingerprint(config agentexec.Config) (string, error) {
+	return NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
 }
 
 func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *testing.T) {
@@ -39,7 +40,7 @@ func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *tes
 		native := workspaceBridgeAgent(t, root)
 		native.Command = base.Command
 		native.Model = base.Model
-		native.ProviderVersion = "0.162.0"
+		native.ProviderVersion = codexappserver.SupportedProviderVersion
 		native.Timeout = base.Timeout
 		native.MaxStdoutBytes = base.MaxStdoutBytes
 		native.MaxStderrBytes = base.MaxStderrBytes
