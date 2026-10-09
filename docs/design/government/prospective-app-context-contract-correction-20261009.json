@@ -1,0 +1,37 @@
+{
+  "grantId": "prospective-app-context-contract-correction-20261009",
+  "issuedUtc": "2026-10-09T07:16:47Z",
+  "notAfterUtc": "2026-10-09T07:31:47Z",
+  "maxPreparationWallSeconds": 900,
+  "authority": "Existing direct human simplified matched case-study mandate and fresh App/LunaHigh choice; ordinary prospective framework correction, no trial retry authority",
+  "owners": [
+    "Scientist",
+    "Oldschool"
+  ],
+  "scope": "Correct only public App context/admission instructions and execution-only public-owner handoff. Existing seed/workitem/rules/rubric/resources/app-ledger behavior unchanged. Source contract and static bindings, no general capability phase.",
+  "maxActualFullTrialStarts": 0,
+  "maxActorHelperAssessorOrProviderCalls": 0,
+  "maxTestsBuildsInstallsOrCliProbes": 0,
+  "maxNewReviewActors": 0,
+  "noAutomaticRefillOrOldGrantReuse": true,
+  "oldPartialRunPreserved": true,
+  "futureUnallocatedStartsRemainingWithinGlobalMax6": 2,
+  "requiresSeparateFreshRootActualGrant": true,
+  "commonContextContract": {
+    "allowed": [
+      "Common system/developer/tool/workspace instructions inherent to native App entry",
+      "General cross-project memory/setup hints that contain no foreign case solution or private evaluation material",
+      "Current own task and legitimate own station continuation history",
+      "Declared public requirements/rubric and ordinary installed variant instructions"
+    ],
+    "forbidden": [
+      "Foreign case candidate/solution/code or private implementation-specific history",
+      "Private holdouts/evaluation vectors/judgments/semantic evaluator feedback",
+      "Deliberate reads of other case/chat/memory sources by measured actors"
+    ],
+    "unknownOrigins": "Capture categories/provenance without private text; nonspecific memory/history label is not proof of forbidden case data. Concrete known forbidden exposure remains terminal; unresolved case-specific exposure reported separately, never silently declared clean.",
+    "noSanitizerOrOSIsolationClaim": true,
+    "freshPrimaryAssessorHelpers": "fork_turns=none, gpt-6-luna/high, ordinary protections remain",
+    "publicExecutionOwner": "Prefer actual Conventional dispatch from Oldschool, which has received no private case evaluation or candidate; Scientist keeps fixed stations/measurement and neutral assessment. No semantic prompter, no extra help or calls."
+  }
+}

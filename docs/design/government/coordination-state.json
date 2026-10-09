@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T07:01:38Z",
+  "updatedUtc": "2026-10-09T07:20:48Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -29,7 +29,7 @@
     "pauseReason": "Explicit finite-block terminal instruction: final evidence synthesis verified, no evidenced equal fulltool/realusage admission. Stop researchloop with honest incomplete comparison, no automatic capability/prep/refill. Separate younger direct Design productwork unaffected.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
     "resumedUtc": "2026-10-09T04:10:08Z",
-    "promptSha256": "134355f449964e6ee45366797f1bfb2cbf7f6873723abacf7dcd6fbc26814960",
+    "promptSha256": "411efe3fb69c99cff9b71401eb3fe927fc77212ceaba0f83de9cedde43d869b6",
     "name": "Markitect: Produktabschluss und Luna-Case-Studies",
     "currentGrantContext": "Human-selected App/LunaHigh preparation ends06:47:20Z,0Actuals. Fourth same-input start conditional under09:12:43Z. Prior3CLIstarts terminal. Existing Design proof hardend06:52:40Z; no general Design wait.",
     "exactSavedTomlVerified": true,
@@ -40,7 +40,7 @@
     "currentPromptSha256": "32591dfcfb505db5542a39758c13695fa08b325afd6ca7a1558dd3f93bd0609f",
     "lastUpdatedUtc": "2026-10-09T06:40:19Z",
     "currentPurpose": "Two-hour quiet callback fallback: Design main/product tests and independent early Conventional Luna case study",
-    "verifiedUtc": "2026-10-09T06:58:31Z",
+    "verifiedUtc": "2026-10-09T07:20:48Z",
     "rrule": "FREQ=HOURLY;INTERVAL=2"
   },
   "threads": [
@@ -478,7 +478,7 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:123",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:125",
       "lastObservedStatus": "idle",
       "activeTurn": {
         "id": "01a11f01-0b15-7a32-a818-2185b97f07ef",
@@ -487,7 +487,7 @@
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac854c570f48191a595d544b5898fd6",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "conventional-roombook-current-native-trial-20261009",
-      "latestProgress": "Scientist reports station1 merged to isolated ownmain and publicchecks PASS; recording immutable station and advancing unchanged station2. Independent final outcome pending, Root has not scored code.",
+      "latestProgress": "Fourth cell closed after S1 reported implementation/merge; context declaration unknown origins, S2-S4/final NOT RUN; all rest closed, exact terminal source2543ebd verified.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "429c52d8a37fa60ca4393a3501a495128b4d2e88",
@@ -9508,7 +9508,7 @@
       },
       "appNativeActivation": {
         "issuedUtc": "2026-10-09T06:51:42Z",
-        "status": "ACTUAL STARTED",
+        "status": "CLOSED TERMINAL",
         "sourceSha": "eace743e2bb70caf89305b597424d3b124e10178",
         "receipt": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-app-native-root-activation-20261009.json",
         "receiptSha256": "7a9de488e85d6caf09167978937552988ac58a8ebeb4e3cb1b9c445d6c353d80",
@@ -9558,6 +9558,21 @@
         "proofActualStartDoesNotImplyCompletedImplementation": true,
         "sourceTrackedCleanAtVerification": true,
         "untrackedGeneratedCacheObservedAfterCleanSnapshot": "public/__pycache__; no tracked source change, no deletion or test rerun"
+      },
+      "prospectiveContextCorrectionAssignment": {
+        "issuedUtc": "2026-10-09T07:16:47Z",
+        "notAfterUtc": "2026-10-09T07:31:47Z",
+        "grant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\prospective-app-context-contract-correction-20261009.json",
+        "grantSha256": "549bd9fa83de6a702cde51daadbdacd880e6ecb489a0ac16df750f4c8de189e7",
+        "status": "SENT ONCE to Scientist and Oldschool",
+        "actualQuota": 0,
+        "modelProbeQuota": 0,
+        "testsBuildsQuota": 0,
+        "maxGlobalActualStartsStill": 6,
+        "unallocatedStarts": 2,
+        "sentUtc": "2026-10-09T07:18:18Z",
+        "toolAccepted": true,
+        "prompt": "Terminal2543ebd4 ist Root-geprüft: sauber/exakte PRIVATE Remote,124changed WorkingRawGit/128Payloadhashes, eigeneUnterstrukturcompleted,2outer/0helper-inner-final und alle alten Reste geschlossen. Teil-S1 erhalten, kein nachträglicher Clean-/Methodencredit; finale Bewertung NOT RUN ausdrücklich mitführen. Die Hostbindung ist deshalb an Designs bestehenden eigenen Praxisjob2 freigegeben; keine fremden Produktbelege für deine Bewertung.\n\nKonkrete prospektive Eigentümerentscheidung: Unsere pauschale Memory-/Parenthistory-Grenze war zu grob. Erlaubt sind gemeinsame System/Developer/Tool/Workspaceinstruktionen, allgemeine App-Memory-/Setuphinweise OHNE fremde Falllösungen/private Bewertung sowie legitime eigene Stationsfortsetzung. Verboten bleiben konkrete fremde Fallkandidaten/-code/private Implementierungshinweise, Holdouts/Bewertungsvektoren/Urteile/semantische Bewertungsnachhilfe und gezieltes Lesen fremder Case/Chat/Memoryquellen. Ein generisches history/memory-Label ist kein eigenständiger Inhaltsbeweis. Konkrete bekannte verbotene Exposition bleibt terminal, ungeklärte fallbezogene Exposition ehrlich unklar; kein Sanitizer/OSisolation behaupten. Diese neue Fassung gilt für BEIDE zukünftigen Arme und rescored den alten Lauf nicht.\n\nEinmaliger eng begrenzter Auftrag prospective-app-context-contract-correction-20261009: C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/prospective-app-context-contract-correction-20261009.json SHA549bd9fa83de6a702cde51daadbdacd880e6ecb489a0ac16df750f4c8de189e7, Ende07:31:47Z/max900s. Aktueller gemeinsamer Vertrag docs/design/work-item-comparison-20261009.md, neuer letzter Kontextabschnitt. Ändere nur öffentliche App-Eintritts-/Kontextinstruktionen und öffentlichen execution-only Eigentümerhandoff an Oldschool. Vorhandene SourceController/Seeds/Inputs/WorkItems/Regeln/Rubrik/Ressourcen unverändert, keine allgemeine Runnerplattform/Capabilityphase. Null Actor/Helper/Assessor/Provider/Trial/Tests/Builds/Installationen/CodexCLI-/Metadataprobes/neueReviewer. Normale Git-/Dateibindungen und kohärenter PRIVATER Source/Evidenzpush erlauben den Handoff. Keine Kandidaten-/Oraclereparatur und kein AI-Prompter.\n\nDer vom Nutzer bereitgestellte Oldschool-Chat wird zum tatsächlichen Conventional-Ausführungseigentümer mit ausschließlich öffentlichen eigenen Fall/Stations/Resourcebindings; er erhielt keine privaten Fallbewertungen/-kandidaten. Du behältst öffentlicheAufgaben/festeStationsfreigaben/Messung/neutralenFinalvertrag. Öffentlichen manuellen Appvertrag so konkret machen, dass die schon vorhandenen nativen tools+eigenesLedger genutzt werden können, ohne zusätzlichenHilfsactor oderSemanticPrompter. Oldschool hat den gleichen Null-Actual-Auftrag von Root; ihm keine privaten Ergebnisse/Holdouts/fremden Lösungen schicken. Falls eine neue technische API notwendig wäre, ehrlich NICHTmachen, vorhandene direkteToolorchestrierung verwenden.\n\nVier Vollstarts weiterhin verbraucht, insgesamtmax6/zwei weitere Plätze unallocated. Diese Korrektur gibt KEINE fünfteTrialquote/Refill/Fristverlängerung; neuer exakter Ausführungsgrant erst nach Source/Commonfreeze und Designreadiness für das passende Paar. Handoff einmal sauber/pushed mit geändertemöffentlichemSource/Hashes/Abgrenzung/ungeklärtenContextgrenzen und praktischemOldschoolDispatchvertrag; keine ACK oder zusätzliche Diagnosephase. Eigenes Arbeitsprojekt/aktuelle öffentlicheInputs/gebundener Auftrag bleibt Fortsetzungsanker bei Kontextkürzung."
       }
     },
     {
@@ -10210,7 +10225,24 @@
       "futureAutomaticAuthorityFromOldGrants": 0,
       "lastObservedUtc": "2026-10-09T04:18:16Z",
       "lastObservedTurnId": "01a11ed8-2226-7121-8b1a-b79d0500340a",
-      "lastObservedPublicProgress": "Ich lege den Conventional-Nest-Beitrag im vorgegebenen separaten Verzeichnis an. Dafür lese ich die gemeinsame Designvorgabe und nutze den Skill openai-docs für die nativen Codex-Schnittstellen; Actor- und Studienstarts bleiben ausgesetzt."
+      "lastObservedPublicProgress": "Ich lege den Conventional-Nest-Beitrag im vorgegebenen separaten Verzeichnis an. Dafür lese ich die gemeinsame Designvorgabe und nutze den Skill openai-docs für die nativen Codex-Schnittstellen; Actor- und Studienstarts bleiben ausgesetzt.",
+      "prospectiveAppExecutionHandoffAssignment": {
+        "issuedUtc": "2026-10-09T07:16:47Z",
+        "notAfterUtc": "2026-10-09T07:31:47Z",
+        "grant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\prospective-app-context-contract-correction-20261009.json",
+        "grantSha256": "549bd9fa83de6a702cde51daadbdacd880e6ecb489a0ac16df750f4c8de189e7",
+        "status": "SENT ONCE to Scientist and Oldschool",
+        "actualQuota": 0,
+        "modelProbeQuota": 0,
+        "testsBuildsQuota": 0,
+        "maxGlobalActualStartsStill": 6,
+        "unallocatedStarts": 2,
+        "sentUtc": "2026-10-09T07:18:18Z",
+        "toolAccepted": true,
+        "prompt": "Du bist vom Nutzer als Conventional-Ausführungseigentümer bereitgestellt. Jetzt ein enges öffentliches Offline-Handoffpaket, KEIN Trialstart: prospective-app-context-contract-correction-20261009, Rootgrant C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/prospective-app-context-contract-correction-20261009.json SHA549bd9fa83de6a702cde51daadbdacd880e6ecb489a0ac16df750f4c8de189e7, Ende07:31:47Z/max900s abRootissue. Deine vorhandene fallunabhängige Arbeit beibehalten. Öffentlicher Scientist-Appvertrag: C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect/experiments/work-item-comparison/luna-nest-20261009/public/app-entry.md und public/app_ledger.py, dazu aktueller Rootvertrag docs/design/work-item-comparison-20261009.md letzterKontextabschnitt. Nur diese öffentlichen Dateien lesen, keine privaten Nachbarordner/Casekandidaten/anderenZellergebnisse/Holdouts/Chat/Memorydateien. Scientist präzisiert denselben Vertrag parallel, besitzt dessenSource; nicht gleichzeitig dort schreiben.\n\nPrüfe ausschließlich die praktische execution-only Übergabe: eigener öffentlicher Case/State/aktuellesBacklog/festeStation/finiterRootgrant → reservierter realer fresh Appspawn(fork_turns=none/gpt-6-luna/high) → nurOwnhandles/Ledger/festerNextStation-Auftrag/zeitgebundenerStop. Du wirst nach separatem neuenRootgrant die Conventional-Ausführung übernehmen, Scientist hält Aufgaben/Stationsfreigaben/Messung/neutraleBewertung. Kein zusätzlicher Prompter, kein Markitect und keine semantische Scientist-Nachhilfe. Gute normalePlanung/Tests/Subagenten/Review innerhalb derselben gemessenen Ressourcen bleiben frei.\n\nGemeinsame System/Developer/Tool/Workspaceinstruktionen und allgemeine App-Memoryhinweise ohne fremdeFalllösungen/privateBewertung sowie eigeneFortsetzungshistory erlaubt. Konkrete fremdeFall-/Kandidateninhalte/privateEvaluationsdaten bleiben ausgeschlossen; passive memory/history-Bezeichnung allein kein Inhaltsnachweis. CaptureKategorien stattprivatemText, keine erfundeneSanitization/OSisolation. DieseFassung giltprospektivfürbeideArme.\n\nNull neueActors/Provider/Helper/Assessoren/Trials/Tests/Builds/Installationen/CLIprobes/neueReviewer, keine neueHarnessimplementierung. Kurzer eigener öffentlicher Handoff in deinem Documents/Markitect-Oldschool-Nest-20261009 mit konkreten schon vorhandenenToolschritten/benötigtenBindings/etwaigempraktischemBlocker; Scientist-Dateieigentum respektieren. Normale Datei-/Gitmetadaten zulässig. Keine Falllösung/Produkversion/privateFallhilfe. Einmal Abschluss/Blocker anOverseer/local, keineACK. Sourcepflege im Scientist-privateRepo übernimmtScientist; öffentlicheHandoffdaten darfRootweiterreichen.",
+        "sourceOwnership": "Readonly Scientist public files; own Documents contribution only"
+      },
+      "latestProgress": "New bounded public execution-only App ownership handoff sent, no actual trial quota or private case inputs"
     },
     {
       "name": "Design",
@@ -10220,13 +10252,13 @@
       "lastObservedStatus": "idle",
       "candidateSha": "11f080815722089d84869fef536b94cae9321e74",
       "candidateStatus": "Readiness open; new actual Manager invocation/child-report bridge in progress, prior reported ab306 pin not accepted as current studyfreeze",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:29",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:30",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac852a43fa08191a8d8e593c901cb96",
       "assignedMilestone": "Held bounded source7d/doc11f candidate and exact private recovery; no new source/runtime/study assignment",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
       "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
       "acceptance": "Qualified bounded testable delivery candidate. No full workflow readiness, matched study admission, semantic generality, human acceptance, main replacement or release.",
-      "latestProgress": "Public source62ed2f78 remote verified, CRLF/delegation/instrumentation targetedtests and review ownerreported PASS; completeCI/runtime product proof pending, proof2 prepared/unstarted pending measuredhost release.",
+      "latestProgress": "7915bd40 pure two-document canonical-format decision direct human verified; YAML canonical, Markdown view, Skillfrontmatter retained. Source/pushed/binary checked; native proof2 ready, no Readiness/Main credit.",
       "evidence": {
         "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
         "observedBranch": "codex/model-driven-delivery",
@@ -10579,12 +10611,12 @@
         "extraProofQuota": 0
       },
       "currentPublicCheckpoint": {
-        "sha": "62ed2f786523723ff306dbb6da461bf23da701c2",
+        "sha": "7915bd404b57125a6491df728b3fd22c2af72c5c",
         "remote": "https://github.com/Glacius-Labs/Markitect.git",
         "ref": "refs/heads/codex/model-first-operations",
         "rootExactRemoteVerified": true,
         "hostedRun": 37895886625,
-        "hostedStatus": "ownerreported inprogress",
+        "hostedStatus": "Not queried for new source",
         "acceptedReadiness": false
       },
       "hostSlotReleasedUtc": "2026-10-09T06:21:01Z",
@@ -10633,10 +10665,36 @@
         "status": "Narrow source regression work, own proof2 remains unstarted",
         "globalGitConfigChanged": false,
         "sourceFixNotYetAccepted": true
+      },
+      "canonicalAuthoringDecision": {
+        "directUserTurn": "01a11f78-9714-78c0-b842-1de0b58bf034",
+        "directUserText": "Markdown Front Matter können wir verwerfen",
+        "sourceSha": "7915bd404b57125a6491df728b3fd22c2af72c5c",
+        "rootExactPublicRemoteAndTwoDocBindingsVerified": true,
+        "canonical": "Typed YAML",
+        "readableView": "Generated Markdown",
+        "requiredSkillFrontmatter": "Still supported",
+        "knowledgeGraphAssessment": "Open",
+        "productReadinessNotAccepted": true
+      },
+      "nextPreparedProductProof": {
+        "slot": 2,
+        "sourceSha": "7915bd404b57125a6491df728b3fd22c2af72c5c",
+        "binarySha256": "ef6828e56caa30a24d04d0d5c29fa8a47fbdd7656db342301d10b0918fd12c4f",
+        "rootBinaryHashVerified": true,
+        "targetUnchanged": "cf002251b0f7f672ca14dd7c7ef1214e4dd0a40c",
+        "status": "HOST RELEASE DISPATCHED ONCE; actual start not yet observed",
+        "noNewQuota": true,
+        "maxOuterNativeWallSeconds": 1200,
+        "maxInnerNativeWallSeconds": 1200,
+        "cumulativeExistingQuote": "3jobs/7200active nativeSeconds/128outerStarts; prior1outer/0inner/174.607623s preserved",
+        "sentUtc": "2026-10-09T07:18:18Z",
+        "toolAccepted": true,
+        "prompt": "Der gemessene Scientist-Hostslot ist beendet; die eigene Actor-Unterstruktur ist terminal und es bestehen keine bekannten offenen eigenen Shelljobs. Ab jetzt ist der Host für deinen bereits vorbereiteten Produkt-Slot2 frei. Ich habe die direkte neue Nutzerentscheidung in deinem Chat und den reinen Zwei-Doku-Delta7915bd404b57125a6491df728b3fd22c2af72c5c, exakte öffentliche RemoteRef und named BinarySHA ef6828e56caa30a24d04d0d5c29fa8a47fbdd7656db342301d10b0918fd12c4f selbst geprüft. YAML kanonisch, Markdown Ansicht, erforderliches Skillfrontmatter erhalten, Knowledge-Graph-Prüfung offen. Kein Readiness/Maincredit.\n\nFühre jetzt genau deinen vorhandenen, ungestarteten und gepinnten normalen Shop-Work-Item-Praxislauf2 aus. Vor Start eigeneSource/Targetcf002251/Runtimes/Args/Prompt/Gate/Ledger/OrdinaryLunaHigh-Bindungen erneut statisch prüfen, dann echte native Ausführung, bestehende normale Policies/verwalteteRequirements. Deine angekündigten max1200s äußere+1200s innere native Sekunden und Cleanup einhalten, harte endliche Lauf-/Cleanupfrist und eigeneHandles nennen. Originalgesamtquote bleibt3Jobs/7200aktiveNativeSekunden/128äußereStarts inklusive Fehlversuchen; bisher1outer/0inner/174.607623s zählt weiter. Kein neuer Grant/keine Nachfüllung/keine zusätzlichen Rollen aus dieser Hostfreigabe. Keine globalenInventuren/Kills oder Studieninputs. Scientist macht derzeit ausschließlich leichte Offline-Vertragsarbeit, keine neue Messzelle.\n\nMelde nur echten Start mit eigenenHandle/Hardend und danach materiellenBefund/terminalenHandoff einmal; keine ACK. Deine bestehenden Produkt-/Doku-/Readiness-/Review-/CI-/regulärenMainaufgaben weiterführen. Nach sauberem angenommenem Studienhandoff aktiviert sich der vorhandene getrennte Regression-suite-Folgeauftrag; kein stiller Studienpinwechsel."
       }
     }
   ],
-  "nextAction": "Scientist independently executes staged Conventional work and fresh final assessment; await only material callback, no repeated orders/polling. Design continues narrow CRLF/product/light suite work and hosted CI; resume existing own native proof after measured host released.",
+  "nextAction": "Dispatch existing prepared Design proof2 host release, and one bounded no-actual prospective context-contract correction to Scientist/Oldschool; no automatic fifth trial, no historical rescoring, retain all private evidence.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -10874,45 +10932,12 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "assignedUtc": "2026-10-09T06:51:42Z",
-    "status": "SCIENTIST APP ACTUAL ACTIVE; LIGHT DESIGN WORK CONTINUES",
-    "designHeavyStartUtc": "2026-10-09T05:15:00Z",
-    "designHeavyEndUtc": "2026-10-09T05:25:00Z",
-    "scientistSetupNotBeforeUtc": "2026-10-09T05:25:00Z",
-    "scientistMeasuredCellMaxWallSeconds": 7200,
-    "purpose": "Avoid heavy/native same-host overlap with real measured App case; Design continues light work and hosted CI",
-    "noPrivateCaseResultsToDesign": true,
-    "timingCorrection": {
-      "recordedUtc": "2026-10-09T05:24:08Z",
-      "source": "Design direct callback and exact own log tail read byRoot",
-      "existingUnifiedExecSession": 33006,
-      "existingGateStartedUtcApprox": "2026-10-09T05:12:00Z",
-      "ownLog": "%TEMP%/markitect-native-workflow-20261009/ab306-full-go-test.log",
-      "observedLog": "Successful package lines through projectonboarding; no terminalexit observed, no fullPASSclaim",
-      "status": "CLOSED previousjob terminalFAIL; hostreleased",
-      "scientistOrdinarySetupAllowedFromUtc": "2026-10-09T05:25:00Z",
-      "measuredNativeStartRequires": "Actual existing gate termination receipt; no Design product readiness dependence",
-      "externalHostWaitCountedSeparately": true,
-      "noGrantExtensionOrRefill": true,
-      "actualStarted": 0,
-      "ownerReportedCompletedUtc": "2026-10-09T05:28:40Z",
-      "ownerReportedExitCode": 1,
-      "namedLogSha256": "e88757934093fb7e92ac0e91f5a8767edf8caeac23cb7315781c25dda9a1da3d",
-      "releaseReceipt": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-host-slot-release-20261009.json",
-      "releaseReceiptSha256": "5f6bebe5fd05424226898937e937b2960ac4683b2bea5e58409bac989d23b9a6"
-    },
-    "owner": "Scientist",
-    "releasedUtc": "2026-10-09T06:21:01Z",
-    "ownDesignProofPid": 25732,
-    "ownDesignExecSession": 13309,
-    "ownDesignProofHardEndUtc": "2026-10-09T06:52:40Z",
-    "nextMeasuredAppStartCondition": "Root exact activation complete; start immediately, no Design readiness dependency",
-    "externalHostWaitCountedSeparately": true,
-    "releasedDesignProofUtc": "2026-10-09T06:35:40.1195Z",
-    "actualOwnHandle": "/root/app_conventional_roombook_primary",
-    "cellDeadlineUtc": "2026-10-09T08:53:40.468196+00:00",
-    "actualStartObserved": true,
-    "nextDesignNativeSlot": "After own measured cell terminal callback and handle cleanup, no overlap"
+    "owner": "Design",
+    "assignedUtc": "2026-10-09T07:16:47Z",
+    "status": "MEASURED SCIENTIST CELL CLOSED; EXISTING PREPARED DESIGN PROOF2 HOST RELEASED",
+    "sourceSha": "7915bd404b57125a6491df728b3fd22c2af72c5c",
+    "noNewQuoteOrDeadlineExtension": true,
+    "scientistMode": "Only bounded offline context-contract correction, no actors/heavy checks"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -11260,9 +11285,9 @@
     "newWorkItemComparison": {
       "key": "luna-native-work-item-comparison-20261009",
       "authorizedUtc": "2026-10-09T04:07:10Z",
-      "status": "Conventional fresh App actor genuinely running, all old three terminal CLI starts preserved; functional outcome pending",
+      "status": "Fourth App cell terminal after S1 context declaration; prospective common-context contract correction, no new actual quota",
       "document": "docs/design/work-item-comparison-20261009.md",
-      "documentSha256": "2f76bfd4a21bc9f28a6cdc671952de3a547d3e27df2fd43ce6853735be24edcf",
+      "documentSha256": "181337e3cedb7c7c68c3d2b8c542a319b199450939d2517ec35bbfba26214838",
       "arms": [
         "Strong Conventional Agentic Coding",
         "New Markitect from Design"
@@ -11510,7 +11535,7 @@
       "appNativeSwitch": {
         "authorizedUtc": "2026-10-09T06:32:20Z",
         "humanChoice": "Direct human answer: fresh Codex-App agents with Luna High for both variants",
-        "status": "ACTUAL STARTED",
+        "status": "CLOSED BLOCKED, PARTIAL S1, no final verdict",
         "preparationGrant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-app-entry-preparation-grant-20261009.json",
         "preparationGrantSha256": "f31ba9eeeb6a74f3e64d6feb54150a54e059f41b69ca7b7f0537c5a6df3dce30",
         "preparationNotAfterUtc": "2026-10-09T06:47:20Z",
@@ -11524,7 +11549,7 @@
         "acceptedSourceSha": "eace743e2bb70caf89305b597424d3b124e10178",
         "activation": {
           "issuedUtc": "2026-10-09T06:51:42Z",
-          "status": "ACTUAL STARTED",
+          "status": "CLOSED TERMINAL",
           "sourceSha": "eace743e2bb70caf89305b597424d3b124e10178",
           "receipt": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-app-native-root-activation-20261009.json",
           "receiptSha256": "7a9de488e85d6caf09167978937552988ac58a8ebeb4e3cb1b9c445d6c353d80",
@@ -11573,7 +11598,37 @@
           "newActualFullStarts": 1,
           "oldThreeTerminalStartsRetained": true,
           "proofActualStartDoesNotImplyCompletedImplementation": true
+        },
+        "terminalSourceSha": "2543ebd4f3a01cf69e78580b19ee8a8ec4f6672a",
+        "terminalRootVerification": {
+          "verifiedUtc": "2026-10-09T07:16:47Z",
+          "cleanExactPrivateRemote": true,
+          "changedWorkingRawGitFiles": 124,
+          "payloadHashes": 128,
+          "knownOwnHandleCompleted": true,
+          "outerEntries": 2,
+          "helperInnerFinalStarts": 0,
+          "S1": "Ownerreported actual merge/4unit+6publicchecks PASS, initial exact exposure unknown",
+          "S2": "Released NOT IMPLEMENTED",
+          "S3S4": "NOT RUN",
+          "independentFinal": "NOT RUN explicit omission",
+          "contextEvidence": "Actor declaration, no raw inherited private text retained; origins/onset unknown",
+          "oldUnusedRestClosed": true
         }
+      },
+      "prospectiveContextCorrection": {
+        "issuedUtc": "2026-10-09T07:16:47Z",
+        "notAfterUtc": "2026-10-09T07:31:47Z",
+        "grant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\prospective-app-context-contract-correction-20261009.json",
+        "grantSha256": "549bd9fa83de6a702cde51daadbdacd880e6ecb489a0ac16df750f4c8de189e7",
+        "status": "SENT ONCE to Scientist and Oldschool",
+        "actualQuota": 0,
+        "modelProbeQuota": 0,
+        "testsBuildsQuota": 0,
+        "maxGlobalActualStartsStill": 6,
+        "unallocatedStarts": 2,
+        "sentUtc": "2026-10-09T07:18:18Z",
+        "toolAccepted": true
       }
     }
   },
@@ -11923,6 +11978,47 @@
       "purpose": "Finish current source gates and complete new fullworkflow/productmain package; Scientist preparation only focused mechanical checks",
       "noRedundantParallelProductSuites": true,
       "assignedUtc": "2026-10-09T04:07:10Z"
+    },
+    {
+      "assignedUtc": "2026-10-09T06:51:42Z",
+      "status": "SCIENTIST APP ACTUAL ACTIVE; LIGHT DESIGN WORK CONTINUES",
+      "designHeavyStartUtc": "2026-10-09T05:15:00Z",
+      "designHeavyEndUtc": "2026-10-09T05:25:00Z",
+      "scientistSetupNotBeforeUtc": "2026-10-09T05:25:00Z",
+      "scientistMeasuredCellMaxWallSeconds": 7200,
+      "purpose": "Avoid heavy/native same-host overlap with real measured App case; Design continues light work and hosted CI",
+      "noPrivateCaseResultsToDesign": true,
+      "timingCorrection": {
+        "recordedUtc": "2026-10-09T05:24:08Z",
+        "source": "Design direct callback and exact own log tail read byRoot",
+        "existingUnifiedExecSession": 33006,
+        "existingGateStartedUtcApprox": "2026-10-09T05:12:00Z",
+        "ownLog": "%TEMP%/markitect-native-workflow-20261009/ab306-full-go-test.log",
+        "observedLog": "Successful package lines through projectonboarding; no terminalexit observed, no fullPASSclaim",
+        "status": "CLOSED previousjob terminalFAIL; hostreleased",
+        "scientistOrdinarySetupAllowedFromUtc": "2026-10-09T05:25:00Z",
+        "measuredNativeStartRequires": "Actual existing gate termination receipt; no Design product readiness dependence",
+        "externalHostWaitCountedSeparately": true,
+        "noGrantExtensionOrRefill": true,
+        "actualStarted": 0,
+        "ownerReportedCompletedUtc": "2026-10-09T05:28:40Z",
+        "ownerReportedExitCode": 1,
+        "namedLogSha256": "e88757934093fb7e92ac0e91f5a8767edf8caeac23cb7315781c25dda9a1da3d",
+        "releaseReceipt": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-host-slot-release-20261009.json",
+        "releaseReceiptSha256": "5f6bebe5fd05424226898937e937b2960ac4683b2bea5e58409bac989d23b9a6"
+      },
+      "owner": "Scientist",
+      "releasedUtc": "2026-10-09T06:21:01Z",
+      "ownDesignProofPid": 25732,
+      "ownDesignExecSession": 13309,
+      "ownDesignProofHardEndUtc": "2026-10-09T06:52:40Z",
+      "nextMeasuredAppStartCondition": "Root exact activation complete; start immediately, no Design readiness dependency",
+      "externalHostWaitCountedSeparately": true,
+      "releasedDesignProofUtc": "2026-10-09T06:35:40.1195Z",
+      "actualOwnHandle": "/root/app_conventional_roombook_primary",
+      "cellDeadlineUtc": "2026-10-09T08:53:40.468196+00:00",
+      "actualStartObserved": true,
+      "nextDesignNativeSlot": "After own measured cell terminal callback and handle cleanup, no overlap"
     }
   ],
   "smokeAttemptCountingDecision": {
