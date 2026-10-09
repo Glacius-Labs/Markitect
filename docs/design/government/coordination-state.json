@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T22:33:31.531954Z",
+  "updatedUtc": "2026-10-09T22:48:43.624307Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16577,6 +16577,22 @@
         "publicRemoteObserved": "c701a28908d379a4a6093caf03c0d88bef9f083a",
         "newSourcePush": "Pending later coherent checkpoint; do not claim98e already remote",
         "actualA01Pass": false
+      },
+      "mxcActualUserDecisionStop": {
+        "source": "f14746cc2aab9a134a81fc0420b94fa323456e56",
+        "rootVerified": "LocalHEAD/publicremote exact; docs/backlog/ledger WIP; source client.go181-187 unconditionally rejects all server request IDs except item/tool/call",
+        "ownerReportedActual": "22:44:42.0379922Z-22:45:22.7199061Z, sourcef147/bin2bef/project669/Plancdf99/26bindingspositive; ErrApprovalRequired beforeboundary",
+        "nativeThread": "01a122d7-3dfe-7c41-a6cf-178de5a0523c",
+        "nativeTurn": "01a122d7-40a8-7ab2-a1c8-03c204b92ae9",
+        "rootRun": "b7d7dfee9be8d39757734043c9f84d36",
+        "requested": "workspace+mxc",
+        "effective": "workspace; backendunknown",
+        "knownCumulative": "5requests/4providerroots/898953partialcallerestimate, NOT invoice",
+        "exactServerRequest": "Owner independent readonly diagnosis active; method/paths/authority not yet Root verified",
+        "windowsRemedy": "NOT_YET_PROVED: different request stop is not ordinary-shell success proof",
+        "rootCoordination": "Sent source-derived missing request handling finding once; classify exact request and honor genuine preauthorized scope with minimal typed handling, no blanketaccept/policybypass/fabricatedvotes; out-of-scope protected/auth/input remain denied/escalated",
+        "newActualReplay": "NONE; actual interrupted no replay or blindretry",
+        "mainAcceptance": false
       }
     }
   },
