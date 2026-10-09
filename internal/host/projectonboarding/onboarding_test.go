@@ -165,6 +165,60 @@ func TestPreviewMergesNativeFilesWithoutChangingBytesOutsideManagedBlock(t *test
 	}
 }
 
+func TestPreviewMergesCRLFSkillFrontmatterForBothProvidersIdempotently(t *testing.T) {
+	root, project := onboardingRepo(t)
+	frontmatter := "---\r\nname: local-skill\r\ndescription: preserve these bytes\r\n---\r\n# Local skill\r\n"
+	suffix := "\r\n## Local instructions\r\nPreserve this too.\r\n"
+	original := frontmatter + beginMarker + "\r\nold generated text\r\n" + endMarker + suffix
+	paths := []string{
+		".agents/skills/markitect-model-first/SKILL.md",
+		".claude/skills/markitect-model-first/SKILL.md",
+	}
+	for _, path := range paths {
+		fullPath := filepath.Join(root, filepath.FromSlash(path))
+		if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(fullPath, []byte(original), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	options := defaultOptions(Claude, Codex)
+	plan, err := Preview(root, project.Report.ModelDigest, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range paths {
+		merged := fileFor(t, plan, path).Content
+		if !strings.HasPrefix(merged, frontmatter) || !strings.HasSuffix(merged, suffix) {
+			t.Errorf("%s did not preserve CRLF frontmatter and local bytes", path)
+		}
+		if strings.Count(merged, "---\r\n") != 2 || strings.Contains(merged, "old generated text") || !strings.Contains(merged, "When a short Work Item") {
+			t.Errorf("%s has duplicate frontmatter or incorrect managed content", path)
+		}
+	}
+	if _, err := Apply(root, plan, plan.Digest); err != nil {
+		t.Fatal(err)
+	}
+	second, err := Preview(root, project.Report.ModelDigest, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range paths {
+		if got := fileFor(t, second, path); got.Action != "unchanged" {
+			t.Errorf("second preview action for %s = %q, want unchanged", path, got.Action)
+		}
+	}
+}
+
+func TestCRLFSkillFrontmatterRejectsMalformedClosingDelimiter(t *testing.T) {
+	_, err := mergeFile(".agents/skills/example/SKILL.md", "---\r\nname: local\r\nbody without closing delimiter\r\n", "---\nname: generated\n---\n"+beginMarker+"\nmanaged\n"+endMarker)
+	if err == nil || !strings.Contains(err.Error(), "malformed YAML frontmatter") {
+		t.Fatalf("mergeFile error = %v, want malformed frontmatter refusal", err)
+	}
+}
+
 func TestMalformedManagedBlockRefusesPreviewWithoutWriting(t *testing.T) {
 	root, project := onboardingRepo(t)
 	original := "# Existing\n" + beginMarker + "\nunterminated\n"

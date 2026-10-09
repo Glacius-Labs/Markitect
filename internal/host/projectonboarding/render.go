@@ -256,17 +256,19 @@ func mergeFile(filePath, existing, desired string) (string, error) {
 			return "", fmt.Errorf("generated skill has no valid managed block")
 		}
 		frontmatter := desired[:start]
-		if !strings.HasPrefix(frontmatter, "---\n") || !strings.Contains(frontmatter[len("---\n"):], "\n---\n") {
+		if !hasYAMLFrontmatter(frontmatter) {
 			return "", fmt.Errorf("generated skill has no valid YAML frontmatter")
 		}
 		block := desired[start : end+len(endMarker)]
 		if existing == "" {
 			return desired, nil
 		}
-		if strings.HasPrefix(existing, "---\n") {
-			if !strings.Contains(existing[len("---\n"):], "\n---\n") {
+		if hasFrontmatterOpening(existing) {
+			if !hasYAMLFrontmatter(existing) {
 				return "", fmt.Errorf("existing skill has malformed YAML frontmatter")
 			}
+		} else if strings.HasPrefix(existing, "---") {
+			return "", fmt.Errorf("existing skill has malformed YAML frontmatter")
 		} else {
 			// Keep existing native skill bytes intact and add the frontmatter
 			// required for discovery ahead of them before managing our block.
@@ -275,4 +277,24 @@ func mergeFile(filePath, existing, desired string) (string, error) {
 		return mergeManaged(existing, block)
 	}
 	return mergeManaged(existing, desired)
+}
+
+func hasFrontmatterOpening(content string) bool {
+	return strings.HasPrefix(content, "---\n") || strings.HasPrefix(content, "---\r\n")
+}
+
+func hasYAMLFrontmatter(content string) bool {
+	openingLength := 0
+	switch {
+	case strings.HasPrefix(content, "---\n"):
+		openingLength = len("---\n")
+	case strings.HasPrefix(content, "---\r\n"):
+		openingLength = len("---\r\n")
+	default:
+		return false
+	}
+	body := content[openingLength:]
+	return strings.HasPrefix(body, "---\n") || strings.HasPrefix(body, "---\r\n") ||
+		strings.Contains(body, "\n---\n") || strings.Contains(body, "\n---\r\n") ||
+		strings.HasSuffix(body, "\n---") || strings.HasSuffix(body, "\r\n---")
 }
