@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -82,6 +83,55 @@ func TestAppServerRuntimeConfigProducesTransportFingerprint(t *testing.T) {
 	}
 	if decoded.Agents["commerce"].AppServer == nil || decoded.Agents["commerce"].AppServer.Helpers != agent.AppServer.Helpers {
 		t.Fatalf("App Server settings did not round trip: %#v", decoded.Agents["commerce"])
+	}
+}
+
+func TestWindowsSandboxBackendFlowsThroughRuntimeAndFingerprint(t *testing.T) {
+	config := validRuntime()
+	worker := appServerAgent(t)
+	config.Agents["commerce"] = worker
+	if err := ValidateRuntime(config); err != nil {
+		t.Fatalf("omitted backend should remain valid: %v", err)
+	}
+	baseShared, err := worker.AgentConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	baseFingerprint, err := agentexec.Fingerprint(baseShared)
+	if err != nil {
+		t.Fatal(err)
+	}
+	worker.AppServer.WindowsSandboxBackend = codexappserver.WindowsSandboxBackendMXC
+	config.Agents["commerce"] = worker
+	if err := ValidateRuntime(config); err != nil {
+		t.Fatalf("mxc runtime should validate: %v", err)
+	}
+	mxcShared, err := worker.AgentConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var encoded AppServerSettings
+	if err := json.Unmarshal(mxcShared.TransportConfig, &encoded); err != nil || encoded.WindowsSandboxBackend != codexappserver.WindowsSandboxBackendMXC {
+		t.Fatalf("mxc setting did not flow into explicit transport config: %+v err=%v", encoded, err)
+	}
+	mxcFingerprint, err := agentexec.Fingerprint(mxcShared)
+	if err != nil || baseFingerprint == mxcFingerprint {
+		t.Fatalf("mxc setting did not change runtime fingerprint: base=%s mxc=%s err=%v", baseFingerprint, mxcFingerprint, err)
+	}
+	runtimeYAML, err := yaml.Marshal(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded Runtime
+	decoder := yaml.NewDecoder(strings.NewReader(string(runtimeYAML)))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&decoded); err != nil || decoded.Agents["commerce"].AppServer.WindowsSandboxBackend != codexappserver.WindowsSandboxBackendMXC {
+		t.Fatalf("strict runtime YAML round trip lost the explicit backend: backend=%q err=%v", decoded.Agents["commerce"].AppServer.WindowsSandboxBackend, err)
+	}
+	worker.AppServer.WindowsSandboxBackend = "other"
+	config.Agents["commerce"] = worker
+	if err := ValidateRuntime(config); err == nil || !strings.Contains(err.Error(), "supported value is mxc") {
+		t.Fatalf("unsupported backend was accepted: %v", err)
 	}
 }
 

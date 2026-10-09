@@ -245,6 +245,7 @@ func validateAgentTransport(managerID string, agent Agent) error {
 		adapterConfig := codexappserver.Config{
 			Command: agent.Command, ProviderVersion: agent.ProviderVersion, Model: agent.Model,
 			ReasoningEffort: settings.ReasoningEffort, PermissionProfile: settings.PermissionProfile,
+			WindowsSandboxBackend: settings.WindowsSandboxBackend,
 			Helpers: codexappserver.HelperPolicy{Enabled: settings.Helpers.Enabled, MaxStartRequests: settings.Helpers.MaxStartRequests, MaxDepth: settings.Helpers.MaxDepth},
 			Timeout: time.Duration(agent.Timeout), MaxEventBytes: settings.MaxEventBytes,
 		}

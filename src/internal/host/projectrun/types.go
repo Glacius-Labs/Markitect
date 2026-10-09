@@ -10,6 +10,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
@@ -100,10 +101,11 @@ const (
 // AppServerSettings explicitly selects the native Codex transport contract.
 // Workspace authority remains in Agent.WorkspaceMode and the project model.
 type AppServerSettings struct {
-	ReasoningEffort   string           `json:"reasoningEffort" yaml:"reasoningEffort"`
-	PermissionProfile string           `json:"permissionProfile,omitempty" yaml:"permissionProfile,omitempty"`
-	Helpers           AppServerHelpers `json:"helpers" yaml:"helpers"`
-	MaxEventBytes     int64            `json:"maxEventBytes" yaml:"maxEventBytes"`
+	ReasoningEffort       string                              `json:"reasoningEffort" yaml:"reasoningEffort"`
+	PermissionProfile     string                              `json:"permissionProfile,omitempty" yaml:"permissionProfile,omitempty"`
+	WindowsSandboxBackend codexappserver.WindowsSandboxBackend `json:"windowsSandboxBackend,omitempty" yaml:"windowsSandboxBackend,omitempty"`
+	Helpers               AppServerHelpers                    `json:"helpers" yaml:"helpers"`
+	MaxEventBytes         int64                               `json:"maxEventBytes" yaml:"maxEventBytes"`
 }
 
 type AppServerHelpers struct {

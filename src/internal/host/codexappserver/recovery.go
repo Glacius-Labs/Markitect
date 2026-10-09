@@ -41,7 +41,7 @@ func (a *Adapter) Recover(parent context.Context, cfg agentexec.Config, h Recove
 	s := &session{a: a, ctx: ctx, h: h, output: map[string]string{}, children: map[string]int{}, spawns: map[string]int{}, outputLimit: cfg.MaxStdoutBytes, toolCalls: map[string]bool{}}
 	s.sessions = map[string]string{}
 	s.receivers = map[string]int{}
-	s.life = &agentexec.Lifecycle{Provider: "codex-app-server", SessionID: h.SessionID, TurnID: h.TurnID, State: "unknown", Accounting: "partial", Requested: agentexec.SessionSettings{Model: a.config.Model, ReasoningEffort: a.config.ReasoningEffort, CWD: h.Workspace.CWD, PermissionProfile: a.config.PermissionProfile}}
+	s.life = &agentexec.Lifecycle{Provider: "codex-app-server", SessionID: h.SessionID, TurnID: h.TurnID, State: "unknown", Accounting: "partial", Requested: agentexec.SessionSettings{Model: a.config.Model, ReasoningEffort: a.config.ReasoningEffort, CWD: h.Workspace.CWD, PermissionProfile: a.config.PermissionProfile, WindowsSandboxBackend: string(a.config.WindowsSandboxBackend)}}
 	// This is the original trusted attempt, not a newly requested role start.
 	// Keep it unknown until the exact saved turn supplies a terminal observation.
 	s.life.StartRequests = []agentexec.RoleStartRequest{{RequestID: h.Invocation.RunID, SessionID: h.SessionID, Role: h.Invocation.Request.Role, Model: a.config.Model, ReasoningEffort: a.config.ReasoningEffort, State: "unknown"}}

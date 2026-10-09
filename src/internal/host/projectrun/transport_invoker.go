@@ -422,6 +422,7 @@ func (i *TransportInvoker) appServerAdapterWithOptions(config agentexec.Config, 
 	adapterConfig := codexappserver.Config{
 		Command: config.Command, ProviderVersion: config.ProviderVersion, Model: config.Model,
 		ReasoningEffort: settings.ReasoningEffort, PermissionProfile: settings.PermissionProfile,
+		WindowsSandboxBackend: settings.WindowsSandboxBackend,
 		Helpers: codexappserver.HelperPolicy{
 			Enabled: settings.Helpers.Enabled, MaxStartRequests: settings.Helpers.MaxStartRequests, MaxDepth: settings.Helpers.MaxDepth,
 		},

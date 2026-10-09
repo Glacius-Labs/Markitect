@@ -12,6 +12,7 @@ type options struct {
 	name, manager, goal                                                 string
 	provider, model, effort                                             string
 	codexProfile                                                        string
+	windowsSandboxBackend                                               string
 	providerExecutable                                                  string
 	inputMicros, outputMicros                                           string
 	maxCost, since                                                      string
@@ -67,7 +68,7 @@ var actionSpecs = map[string]actionSpec{
 	"dismiss":    {usage: "dismiss --repo PATH --event ID --manager ID --expect STATE_DIGEST --write", flags: []string{"repo", "event", "manager", "expect", "write"}, required: []string{"repo", "event", "manager", "expect", "write"}, write: true},
 	"onboard":    {usage: "onboard --repo PATH --provider codex|claude|both [--document-path PATH] [--expect PLAN_DIGEST --write]", flags: []string{"repo", "provider", "document-path", "expect", "write"}, required: []string{"repo", "provider"}, write: true},
 	"apply":      {usage: "apply --repo PATH --plan PLAN_ID --run RUN_ID --candidate ID [--branch BRANCH --head COMMIT --worktree DIGEST --expect VERIFY_DIGEST --write]", flags: []string{"repo", "plan", "run", "candidate", "branch", "head", "worktree", "expect", "write"}, required: []string{"repo", "plan", "run", "candidate"}, write: true},
-	"setup":      {usage: "setup --repo PATH --provider codex --model gpt-6-luna [--effort high] [--codex-profile PROFILE] --input-micros-per-million N --output-micros-per-million N --max-cost-micros N [--provider-executable PATH] [--expect EDIT_DIGEST --write] (native Codex App Server; permission profile inherits unless explicitly selected)", flags: []string{"repo", "provider", "model", "effort", "codex-profile", "provider-executable", "input-micros-per-million", "output-micros-per-million", "max-cost-micros", "expect", "write"}, required: []string{"repo", "provider", "model", "input-micros-per-million", "output-micros-per-million", "max-cost-micros"}, write: true},
+	"setup":      {usage: "setup --repo PATH --provider codex --model gpt-6-luna [--effort high] [--codex-profile PROFILE] [--windows-sandbox-backend mxc] --input-micros-per-million N --output-micros-per-million N --max-cost-micros N [--provider-executable PATH] [--expect EDIT_DIGEST --write] (native Codex App Server; Windows MXC backend is optional and process-local)", flags: []string{"repo", "provider", "model", "effort", "codex-profile", "windows-sandbox-backend", "provider-executable", "input-micros-per-million", "output-micros-per-million", "max-cost-micros", "expect", "write"}, required: []string{"repo", "provider", "model", "input-micros-per-million", "output-micros-per-million", "max-cost-micros"}, write: true},
 	"doctor":     {usage: "doctor --repo PATH --provider codex|claude [--provider-executable PATH]", flags: []string{"repo", "provider", "provider-executable"}, required: []string{"repo", "provider"}},
 	"resolve":    {usage: "resolve --repo TARGET --source-repo SOURCE --revision TARGET_COMMIT --discovery DISCOVERY.json --report DISTILLATION.json --input CHOICES.json [--output RESOLUTION.json]", flags: []string{"repo", "source-repo", "revision", "discovery", "report", "input", "output"}, required: []string{"repo", "source-repo", "revision", "discovery", "report", "input"}},
 }
@@ -240,6 +241,7 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	assign("model", &o.model)
 	assign("effort", &o.effort)
 	assign("codex-profile", &o.codexProfile)
+	assign("windows-sandbox-backend", &o.windowsSandboxBackend)
 	assign("provider-executable", &o.providerExecutable)
 	assign("input-micros-per-million", &o.inputMicros)
 	assign("output-micros-per-million", &o.outputMicros)

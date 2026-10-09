@@ -14,6 +14,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
@@ -52,7 +53,7 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 		if agent.Command != provider.Path || len(agent.Args) != 0 || agent.Transport != projectrun.TransportCodexAppServer || agent.Model != "gpt-6-luna" || agent.ProviderVersion != provider.Version {
 			t.Fatalf("unexpected mapping for %s: %#v", id, agent)
 		}
-		if agent.WorkspaceMode != "git" || agent.AppServer == nil || agent.AppServer.ReasoningEffort != "high" || agent.AppServer.PermissionProfile != "" || !agent.AppServer.Helpers.Enabled {
+		if agent.WorkspaceMode != "git" || agent.AppServer == nil || agent.AppServer.ReasoningEffort != "high" || agent.AppServer.PermissionProfile != "" || agent.AppServer.WindowsSandboxBackend != "" || !agent.AppServer.Helpers.Enabled {
 			t.Fatalf("default setup must select the typed native Codex App Server worker: %#v", agent)
 		}
 		if agent.ModelOptions != nil || agent.AppServer.Helpers.MaxStartRequests != DefaultMaxHelperStarts || agent.AppServer.Helpers.MaxDepth != 1 || agent.AppServer.MaxEventBytes != DefaultMaxEventBytes {
@@ -70,6 +71,9 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 		}
 		if reviewer.ModelOptions != nil || reviewer.AppServer == nil || reviewer.AppServer.PermissionProfile != "" || reviewer.Model != agent.Model || reviewer.ProviderVersion != agent.ProviderVersion {
 			t.Fatalf("reviewer model profile for %s differs from worker profile", id)
+		}
+		if reviewer.AppServer.WindowsSandboxBackend != "" {
+			t.Fatalf("omitted sandbox backend must preserve default reviewer settings for %s: %#v", id, reviewer.AppServer)
 		}
 		if containsName(reviewer.Environment, "CODEX_HOME") {
 			t.Fatal("runtime must use the existing OS-default Codex profile, not override CODEX_HOME")
@@ -92,6 +96,42 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 	}
 	if err := projectrun.ValidateRuntime(config); err != nil {
 		t.Fatalf("generated runtime is invalid: %v", err)
+	}
+}
+
+func TestBuildRuntimeExplicitWindowsMXCLeavesPermissionProfilesAlone(t *testing.T) {
+	root := t.TempDir()
+	writeNativeInstructions(t, root)
+	provider := testTool(t, root, "codex.exe", true)
+	provider.Version = "codex-cli 0.162.0"
+	project := &projectwork.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
+	options := Options{Provider: "codex", Model: "gpt-6-luna", Effort: "high", CodexProfile: ":workspace",
+		WindowsSandboxBackend: codexappserver.WindowsSandboxBackendMXC,
+		InputMicrosPerMillion: 1, OutputMicrosPerMillion: 2, MaxCostMicros: 10}
+	config, err := BuildRuntime(project, options, Discovery{Provider: "codex", ProviderBinary: provider})
+	if runtime.GOOS != "windows" {
+		if err == nil || !strings.Contains(err.Error(), "supported only on Windows") {
+			t.Fatalf("non-Windows setup accepted MXC: config=%#v err=%v", config, err)
+		}
+		return
+	}
+	if err != nil {
+		t.Fatalf("Windows setup rejected explicit MXC: %v", err)
+	}
+	worker := config.Agents["root"]
+	reviewer := config.Review.Agents["root"]
+	if worker.AppServer.WindowsSandboxBackend != codexappserver.WindowsSandboxBackendMXC || reviewer.AppServer.WindowsSandboxBackend != codexappserver.WindowsSandboxBackendMXC {
+		t.Fatalf("explicit backend not applied consistently: worker=%+v reviewer=%+v", worker.AppServer, reviewer.AppServer)
+	}
+	if worker.AppServer.PermissionProfile != ":workspace" || reviewer.AppServer.PermissionProfile != ":read-only" {
+		t.Fatalf("backend option changed permissions: worker=%+v reviewer=%+v", worker.AppServer, reviewer.AppServer)
+	}
+}
+
+func TestNormalizeOptionsRejectsUnsupportedWindowsSandboxBackend(t *testing.T) {
+	_, err := normalizeOptions(Options{Provider: "codex", WindowsSandboxBackend: "unsafe"})
+	if err == nil || !strings.Contains(err.Error(), "supported value is mxc") {
+		t.Fatalf("unsupported Windows sandbox backend was accepted: %v", err)
 	}
 }
 

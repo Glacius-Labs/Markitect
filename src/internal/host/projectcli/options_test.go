@@ -70,6 +70,7 @@ func TestParseSetupNativeOptions(t *testing.T) {
 	parsed, help, err := parse([]string{
 		"setup", "--repo", ".", "--provider", "codex",
 		"--model", "gpt-6-luna", "--effort", "high", "--codex-profile", "explicit-profile",
+		"--windows-sandbox-backend", "mxc",
 		"--input-micros-per-million", "5", "--output-micros-per-million", "10", "--max-cost-micros", "1000",
 	}, io.Discard)
 	if err != nil || help {
@@ -84,6 +85,9 @@ func TestParseSetupNativeOptions(t *testing.T) {
 	}
 	if setup.CodexProfile != "explicit-profile" {
 		t.Fatalf("mapped setup profile = %q", setup.CodexProfile)
+	}
+	if setup.WindowsSandboxBackend != "mxc" {
+		t.Fatalf("mapped Windows sandbox backend = %q", setup.WindowsSandboxBackend)
 	}
 }
 

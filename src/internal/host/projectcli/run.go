@@ -560,6 +560,7 @@ func setupOptions(opts options) (projectsetup.Options, error) {
 	}
 	return projectsetup.Options{
 		Provider: opts.provider, Model: opts.model, Effort: opts.effort, CodexProfile: opts.codexProfile,
+		WindowsSandboxBackend: codexappserver.WindowsSandboxBackend(opts.windowsSandboxBackend),
 		ProviderExecutable: opts.providerExecutable, InputMicrosPerMillion: rates.input,
 		OutputMicrosPerMillion: rates.output, MaxCostMicros: rates.maxCost,
 	}, nil

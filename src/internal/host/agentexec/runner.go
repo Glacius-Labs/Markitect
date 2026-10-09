@@ -486,6 +486,7 @@ func validateCodexAppServerTransportConfig(data json.RawMessage) error {
 	var config struct {
 		ReasoningEffort   string `json:"reasoningEffort"`
 		PermissionProfile string `json:"permissionProfile,omitempty"`
+		WindowsSandboxBackend string `json:"windowsSandboxBackend,omitempty"`
 		Helpers           struct {
 			Enabled          bool `json:"enabled"`
 			MaxStartRequests int  `json:"maxStartRequests"`
@@ -504,6 +505,9 @@ func validateCodexAppServerTransportConfig(data json.RawMessage) error {
 	}
 	if strings.TrimSpace(config.ReasoningEffort) == "" || config.MaxEventBytes <= 0 {
 		return errors.New("codex-app-server transportConfig requires reasoningEffort and a positive maxEventBytes")
+	}
+	if config.WindowsSandboxBackend != "" && config.WindowsSandboxBackend != "mxc" {
+		return errors.New("codex-app-server transportConfig has an unsupported Windows sandbox backend")
 	}
 	if config.Helpers.MaxStartRequests < 0 || config.Helpers.MaxDepth < 0 ||
 		(config.Helpers.Enabled && (config.Helpers.MaxStartRequests == 0 || config.Helpers.MaxDepth == 0)) ||

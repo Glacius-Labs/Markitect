@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -273,6 +274,29 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 	}
 	if parsed.Outcome != agentexec.OutcomeProposed || len(parsed.ReportJSON) == 0 || len(parsed.VerifierObservations) != 0 {
 		t.Fatalf("corrected response contract was not preserved: outcome=%q report=%s observations=%#v", parsed.Outcome, parsed.ReportJSON, parsed.VerifierObservations)
+	}
+}
+
+func TestRequestedWindowsSandboxBackendReceipt(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("the mxc backend is Windows-only")
+	}
+	base, shared, request, options := fixture(t, "success", Options{})
+	config := base.config
+	config.WindowsSandboxBackend = "mxc"
+	adapter, err := NewAdapter(config, base.options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := adapter.Run(context.Background(), shared, request, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := result.Receipt.Lifecycle.Requested.WindowsSandboxBackend; got != "mxc" {
+		t.Fatalf("requested backend = %q, want mxc", got)
+	}
+	if result.Receipt.Lifecycle.Effective != nil && result.Receipt.Lifecycle.Effective.WindowsSandboxBackend != "" {
+		t.Fatalf("adapter inferred an effective backend without authoritative readback: %#v", result.Receipt.Lifecycle.Effective)
 	}
 }
 

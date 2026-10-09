@@ -183,7 +183,7 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 	s := &session{a: a, ctx: ctx, h: RecoveryHandle{Protocol: protocolIdentity, Fingerprint: fp, Invocation: inv, Workspace: *opts.Workspace}, output: map[string]string{}, children: map[string]int{}, spawns: map[string]int{}, outputLimit: cfg.MaxStdoutBytes, toolCalls: map[string]bool{}}
 	s.sessions = map[string]string{}
 	s.receivers = map[string]int{}
-	s.life = &agentexec.Lifecycle{Provider: "codex-app-server", State: "unknown", Accounting: "partial", Requested: agentexec.SessionSettings{Model: a.config.Model, ReasoningEffort: a.config.ReasoningEffort, PermissionProfile: a.config.PermissionProfile, CWD: opts.Workspace.CWD, InstructionDigest: digest(wire)}}
+	s.life = &agentexec.Lifecycle{Provider: "codex-app-server", State: "unknown", Accounting: "partial", Requested: agentexec.SessionSettings{Model: a.config.Model, ReasoningEffort: a.config.ReasoningEffort, PermissionProfile: a.config.PermissionProfile, WindowsSandboxBackend: string(a.config.WindowsSandboxBackend), CWD: opts.Workspace.CWD, InstructionDigest: digest(wire)}}
 	result.Receipt = agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: inv.RunID, InputDigest: inv.InputDigest, ContextDigest: digest(req.Context), ConfigDigest: fp, ProviderVersion: a.config.ProviderVersion, ProviderVersionDigest: digest([]byte(a.config.ProviderVersion)), Lifecycle: s.life, Outcome: agentexec.OutcomeIncomplete}
 	defer func() {
 		result.Receipt.WallTimeMilliseconds = time.Since(start).Milliseconds()
