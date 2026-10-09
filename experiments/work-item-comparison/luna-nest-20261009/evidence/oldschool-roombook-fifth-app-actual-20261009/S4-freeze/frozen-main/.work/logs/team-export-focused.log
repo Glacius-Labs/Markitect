@@ -1,0 +1,11 @@
+test_csv_escapes_commas_and_embedded_newlines_and_preserves_order (__main__.CsvExportTests.test_csv_escapes_commas_and_embedded_newlines_and_preserves_order) ... ok
+test_database_destination_alias_is_rejected_before_truncation (__main__.CsvExportTests.test_database_destination_alias_is_rejected_before_truncation) ... ok
+test_empty_export_writes_header_and_returns_zero (__main__.CsvExportTests.test_empty_export_writes_header_and_returns_zero) ... ok
+test_export_keeps_canceled_history_and_does_not_change_database_bytes (__main__.CsvExportTests.test_export_keeps_canceled_history_and_does_not_change_database_bytes) ... ok
+test_hard_link_alias_is_rejected_when_supported (__main__.CsvExportTests.test_hard_link_alias_is_rejected_when_supported) ... ok
+test_output_failure_is_reported_clearly (__main__.CsvExportTests.test_output_failure_is_reported_clearly) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.018s
+
+OK

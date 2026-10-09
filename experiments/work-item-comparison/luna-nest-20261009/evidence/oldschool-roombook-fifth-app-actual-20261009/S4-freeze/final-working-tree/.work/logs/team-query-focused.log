@@ -1,0 +1,9 @@
+test_filtering_and_unfiltered_results_preserve_input_order (tests.test_query_group.ReservationQueryTests.test_filtering_and_unfiltered_results_preserve_input_order) ... ok
+test_invalid_status_fails_clearly_even_for_empty_input (tests.test_query_group.ReservationQueryTests.test_invalid_status_fails_clearly_even_for_empty_input) ... ok
+test_status_and_trimmed_room_filters_compose (tests.test_query_group.ReservationQueryTests.test_status_and_trimmed_room_filters_compose) ... ok
+test_unknown_or_case_mismatched_room_returns_no_records (tests.test_query_group.ReservationQueryTests.test_unknown_or_case_mismatched_room_returns_no_records) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.000s
+
+OK

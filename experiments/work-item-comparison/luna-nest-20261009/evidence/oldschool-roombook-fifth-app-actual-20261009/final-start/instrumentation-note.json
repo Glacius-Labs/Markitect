@@ -1,0 +1,7 @@
+{
+  "utc": "2026-10-09T08:30:45.540763+00:00",
+  "error": "Post-freeze baseline inventory received str instead of Path; local measurement argument corrected",
+  "candidateOrPublicSourceChanged": false,
+  "repeatSnapshotFreeze": false,
+  "actorStartsOrReservationsBeforeCorrection": 0
+}

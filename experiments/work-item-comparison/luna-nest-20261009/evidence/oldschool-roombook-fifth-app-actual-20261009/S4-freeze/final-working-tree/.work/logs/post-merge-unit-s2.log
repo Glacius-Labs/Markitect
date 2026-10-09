@@ -1,0 +1,12 @@
+test_cancel_is_idempotent_preserves_history_and_frees_interval (test_cli.BookingCliTests.test_cancel_is_idempotent_preserves_history_and_frees_interval) ... ok
+test_half_open_intervals_and_other_rooms (test_cli.BookingCliTests.test_half_open_intervals_and_other_rooms) ... ok
+test_list_sorts_by_start_then_id (test_cli.BookingCliTests.test_list_sorts_by_start_then_id) ... ok
+test_malformed_database_is_not_overwritten (test_cli.BookingCliTests.test_malformed_database_is_not_overwritten) ... ok
+test_normalizes_and_persists_between_processes (test_cli.BookingCliTests.test_normalizes_and_persists_between_processes) ... ok
+test_overlaps_and_invalid_values_preserve_bytes_and_id_sequence (test_cli.BookingCliTests.test_overlaps_and_invalid_values_preserve_bytes_and_id_sequence) ... ok
+test_summary_counts_only_active_exact_minutes_in_lexical_order (test_cli.BookingCliTests.test_summary_counts_only_active_exact_minutes_in_lexical_order) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 2.041s
+
+OK

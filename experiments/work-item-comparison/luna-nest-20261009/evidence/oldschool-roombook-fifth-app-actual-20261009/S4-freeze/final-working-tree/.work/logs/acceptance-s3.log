@@ -1,0 +1,55 @@
+{
+  "case": "roombook",
+  "station": 3,
+  "findings": [
+    {
+      "check": "empty",
+      "status": "PASS"
+    },
+    {
+      "check": "create-normalize-and-restart",
+      "status": "PASS"
+    },
+    {
+      "check": "overlap-no-mutation",
+      "status": "PASS"
+    },
+    {
+      "check": "adjacent-interval",
+      "status": "PASS"
+    },
+    {
+      "check": "invalid-calendar",
+      "status": "PASS"
+    },
+    {
+      "check": "cancel-idempotence",
+      "status": "PASS"
+    },
+    {
+      "check": "cancel-frees-room-and-no-id-reuse",
+      "status": "PASS"
+    },
+    {
+      "check": "active-report",
+      "status": "PASS"
+    },
+    {
+      "check": "status-room-filter",
+      "status": "PASS"
+    },
+    {
+      "check": "unknown-room-report",
+      "status": "PASS"
+    },
+    {
+      "check": "export-quotes-history-no-db-mutation",
+      "status": "PASS"
+    },
+    {
+      "check": "malformed-db-preserved",
+      "status": "PASS"
+    }
+  ],
+  "limitation": "Finite public checks; assessor must add meaningful cases and semantic review. Cascading failures retain individual evidence."
+}
