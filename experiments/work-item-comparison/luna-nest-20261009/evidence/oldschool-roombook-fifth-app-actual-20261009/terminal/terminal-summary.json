@@ -1,0 +1,91 @@
+{
+  "status": "CLOSED: fifth actual fullstart completed with four fixed stations and fresh independent final",
+  "closedUtc": "2026-10-09T08:38:53.238608+00:00",
+  "sourcePin": "2037bfa65e7e05ee004921d282893d4a6c8e899a",
+  "preparedCommit": "88d7233bc14bc962e7ef471af0faaf3c4824351b",
+  "preparedTree": "8cea62c20a64d4571017818c7e73855b1ead5676",
+  "seedCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+  "finalMainCommit": "539659cddb7c086894d089e67dadacb8d8d1fd9a",
+  "finalHeadCommit": "539659cddb7c086894d089e67dadacb8d8d1fd9a",
+  "unfinishedWorkingTree": "Only known external .study/station.json retained byte-exact; not repaired or merged by Scientist",
+  "globalFullStarts": {
+    "consumed": 5,
+    "maximum": 6,
+    "unallocated": 1,
+    "oldFourClosedNotRescored": true
+  },
+  "measuredEntries": {
+    "outerImplementation": 4,
+    "helpers": 3,
+    "independentFinal": 1,
+    "total": 8,
+    "sharedMaximum": 72,
+    "observerLedgerMaximumActive": 4,
+    "depthMaximum": 2,
+    "cooperativeNotHardEnforcement": true
+  },
+  "clock": {
+    "firstReservationUtc": "2026-10-09T07:59:40.609082+00:00",
+    "implementationDeadlineUtc": "2026-10-09T09:29:40.609082Z",
+    "finalReservationUtc": "2026-10-09T08:30:45.541365+00:00",
+    "actualFinalDeadlineUtc": "2026-10-09T08:50:45.541365+00:00",
+    "globalFinalPhaseEndUtc": "2026-10-09T09:49:40.609082Z",
+    "cellEndUtc": "2026-10-09T09:59:40.609082Z",
+    "rootAbsoluteEndUtc": "2026-10-09T10:11:17Z",
+    "captureWithin600sAfterOwnTerminalRequired": true,
+    "exactProviderModelStartEndUtc": null,
+    "finalReceiptRecordedUtc": "2026-10-09T08:38:53.195334+00:00",
+    "nativeFinalMessageReceivedBeforeUtc": "2026-10-09T08:36:09.0034718Z",
+    "exactNativeFinalMessageTimestamp": null,
+    "captureDeadlineConservativeUtc": "2026-10-09T08:45:00Z"
+  },
+  "candidateIntegrity": {
+    "allFiveCheckoutsUnchanged": true,
+    "allFiveHeadsUnchanged": true,
+    "allFiveCheckoutsClean": true,
+    "workingBytesAndHistoryRetained": true
+  },
+  "independentTechnicalResult": {
+    "S1": {
+      "acceptance": 6,
+      "unit": 5,
+      "ownCli": "PASS"
+    },
+    "S2": {
+      "acceptance": 9,
+      "unit": 7,
+      "ownCli": "PASS"
+    },
+    "S3": {
+      "acceptance": 12,
+      "unit": 24,
+      "ownCli": "PASS"
+    },
+    "S4": {
+      "acceptance": 13,
+      "unit": 25,
+      "ownCli": "PASS"
+    },
+    "renameStorageCompatibility": "PASS in own assessment",
+    "knownOpenProductFindings": "None found in assessed scope; not exhaustive proof",
+    "contributionIntegration": "Six documented blobs and merge ancestry checked by independent assessor",
+    "nativeTemporalTeamOverlap": "unknown to independent assessor; Scientist recorded four active cooperative ledger entries as separate measurement",
+    "assessorHarnessErrors": "Two false assumptions corrected; complete rerun exit0; no candidate changes",
+    "humanAcceptance": "NOT PERFORMED",
+    "methodWinner": "NOT INFERRED"
+  },
+  "unknowns": {
+    "servingModel": null,
+    "tokens": null,
+    "cost": null,
+    "higherInstructionContextIsolation": "Not attested; generic allowed setup context is not forbidden content; own source claims only, no private context probe",
+    "transitiveProcessProviderContainment": "Not independently attested; no known pending own jobs or unknown-stop"
+  },
+  "instrumentationBoundaries": [
+    "One post-freeze inventory str/Path argument corrected before final reservation, no source/candidate mutation or extra call",
+    "Original owner envelope originalPrompt/Continue metadata mojibake is historical; correct UTF8 actual prompt files bound separately in Root activation receipt",
+    "Assessor wording no native model/tool calls does not mean zero actual models/tools; one actual native final and shell/file/Git evaluation are recorded"
+  ],
+  "noFurtherImplementationOrTrialActivation": true,
+  "finalReportSha256": "2bad8474c0a6ff5a30f08f37199341c6c85de8ed2726eaba21087a70b41f4e6b"
+}

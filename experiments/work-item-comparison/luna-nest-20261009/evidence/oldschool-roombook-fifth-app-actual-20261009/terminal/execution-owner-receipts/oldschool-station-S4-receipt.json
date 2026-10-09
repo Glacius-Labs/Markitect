@@ -1,0 +1,95 @@
+{
+  "event": "oldschool-public-station-S4-returned-implementation-finished-20261009",
+  "observedUtc": "2026-10-09T08:29:20.259057+00:00",
+  "reservation": 7,
+  "ownHandle": "/root/app_conventional_oldschool_roombook_primary",
+  "nativeLifecycle": "FINAL_ANSWER received; turn returned",
+  "completion": {
+    "station": "S4",
+    "status": "complete",
+    "completedWorkItemIds": [
+      "R12"
+    ],
+    "remainingIssues": []
+  },
+  "mainSha": "539659cddb7c086894d089e67dadacb8d8d1fd9a",
+  "gitStatus": "M .study/station.json",
+  "actorReportedFeatureCommit": "c1dbc33",
+  "actorReportedMergeCommit": "1cc7b37acd20905add3defd2d4c910d8d08547a0",
+  "actorReportedUnitTests": 25,
+  "actorReportedAcceptanceChecks": 13,
+  "actorReportedExitCodes": [
+    0,
+    0
+  ],
+  "actorReportedLogs": [
+    ".work/logs/post-merge-unit-s4.log",
+    ".work/logs/post-merge-acceptance-s4.log"
+  ],
+  "actorReportedBacklog": "R01-R12 complete; no implementation work open",
+  "checksIndependentlyRerunByOwner": false,
+  "independentQualityCredit": false,
+  "humanAcceptance": false,
+  "ownJobs": "No pending own shell handle or detached job reported; native turn end alone does not prove universal cancellation",
+  "ownEntries": [
+    {
+      "reservation": 1,
+      "kind": "implementation",
+      "depth": 1,
+      "parent": null,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary"
+    },
+    {
+      "reservation": 2,
+      "kind": "implementation",
+      "depth": 1,
+      "parent": null,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary"
+    },
+    {
+      "reservation": 3,
+      "kind": "implementation",
+      "depth": 1,
+      "parent": null,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary"
+    },
+    {
+      "reservation": 4,
+      "kind": "helper",
+      "depth": 2,
+      "parent": 3,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary/query_group"
+    },
+    {
+      "reservation": 5,
+      "kind": "helper",
+      "depth": 2,
+      "parent": 3,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary/export_group"
+    },
+    {
+      "reservation": 6,
+      "kind": "helper",
+      "depth": 2,
+      "parent": 3,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary/summary_group"
+    },
+    {
+      "reservation": 7,
+      "kind": "implementation",
+      "depth": 1,
+      "parent": null,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary"
+    }
+  ],
+  "activeOrUnknownOwnImplementationEntries": [],
+  "outerImplementationEntries": 4,
+  "helperEntries": 3
+}

@@ -1,0 +1,30 @@
+Bewerte ausschließlich die gesicherten Projektstationen, ohne Implementierung/Reparaturen/Commits. Lies README.md, BACKLOG.md, STATIONS.json, QUALITY.md. Prüfe je Zustand nur bis dahin freigegebene Requirements; spätere Anforderungen sind kein früher Fehler. Prüfe Funktion/Regression/öffentliche Regeln/Konsistenz/Codequalität/Änderbarkeit/Doku/Drift/Wiederaufnahme mit eigenen sinnvollen CLI-Tests in temporären Dateien. Keine Kandidatenänderungen, Implementierertranskripte, andere Zellen, alten Studien/Lösungen/Chats/Memory. Nur Luna High. Beurteile actual TEAMWORK.md/Projektbelege hinsichtlich echter Agentenüberlappung und integrierten Beiträgen; angeforderte Parallelität separat, fehlende Nativebelege unknown. Prüfe die finale Umbenennung semantisch über aktive Interfaces/Verhalten/Code/Tests/Doku/Config sowie Markitect-Modell/Ansichten. Historie und deklarierte kompatible Aliasse sind keine pauschalen Fehler. Pro bekanntem Regelbefund Regel/Schwere/Scope/erkannt/repariert/verbleibend/Fehlalarm/nicht prüfbar erfassen. Qualität und Methodenkonformität, Produkt- und Bewertungsfehler, PASS/FAIL/NOT RUN/unknown trennen. Normaler lesbarer Bericht mit SHA-/Datei-/Befehlsbindungen und echten Ergebnissen; kein Gesamtgewinner, keine erfundenen Tokens/Kosten/menschliche Abnahme. Mehrere Stationen sind ein Projektverlauf.
+
+
+Gesicherte öffentliche eigene Zustände (Station, main SHA, Checkout):
+[
+  {
+    "station": "S1",
+    "mainCommit": "370b996d1e2ff5f7025a30eb0904c7367702257a",
+    "evaluationRepo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app\\stations\\S1\\main"
+  },
+  {
+    "station": "S2",
+    "mainCommit": "c705f94dafb9a091473e5a90522c3f870640b097",
+    "evaluationRepo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app\\stations\\S2\\main"
+  },
+  {
+    "station": "S3",
+    "mainCommit": "cf05cb152e4943207a70fa60cb0b25bb6f63e363",
+    "evaluationRepo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app\\stations\\S3\\main"
+  },
+  {
+    "station": "S4",
+    "mainCommit": "539659cddb7c086894d089e67dadacb8d8d1fd9a",
+    "evaluationRepo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app\\stations\\S4\\main"
+  }
+]
+Final: C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-conventional-oldschool-app\evaluation\repo
+
+Ausführungsbindungen: gpt-6-luna/high/fork_turns=none; normale App-Tools/Schutzregeln. Eigene Assessmentreservation8, DeadlineUTC 2026-10-09T08:50:45.541365+00:00. Kein Zugriff auf Implementierertranscripts, andere Zellen oder frühere/private Bewertungen. Gemeinsame System/Developer/Tool/Workspaceinstruktionen und allgemeine Setup-/Memoryhinweise ohne fremde Falllösung/private Bewertung sind erlaubt; konkrete verbotene Fall-/Bewertungsinhalte terminal, ungeklärte fallspezifische Exposition uncertain, keine Sanitization-/OS-Isolationsbehauptung. Keine fremden Quellen lesen oder Diagnoseakteure starten. Halte die eingefrorenen Kandidaten bytegleich; Tests/temporäre Daten ausschließlich außerhalb der Kandidaten, Python -B verwenden. Nur eigene öffentliche Snapshotregeln; keine Produkt-/Casecode-Reparaturen.
+Schreibe den normalen lesbaren Ergebnisbericht außerhalb der Kandidaten nach C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-conventional-oldschool-app\assessment\final-report.md und tatsächliche Befehls-/Testlogs in C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-conventional-oldschool-app\assessment\logs. Liefere im Schlussresultat deine bekannten eigenen Jobs/Stopzustände sowie tatsächliche Kontext-/Profil-/Serving-/Usageunknowns ohne private Inhalte. Alle optionalen Helper zählen: gemeinsamer max72/fourconcurrent/depth2; gleiche LunaHigh/forknone, vor jedem nativen Aufruf app_ledger.reserve(CASE_STATE, ENABLED_GRANT, "assessment-helper", depth=2, parent=8), danach record eigenes Handle/Status/Receipt. Bestehende file-only Module: C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public; Python C:/Python313/python.exe -B; CASE_STATE C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-conventional-oldschool-app; ENABLED_GRANT C:\Users\Consiliari\Glacius Labs\Markitect\docs\design\government\oldschool-roombook-fifth-enabled-grant-20261009.json; SHA256 eec26e29db63c59b00f255fcab2728853fb34acbae42954980885ffe0c225134. Nur Accounting APIs benutzen; keine semantischen Implementierungsreceipts aus dem Ledger lesen. Kein zusätzlicher outer Final und kein Fristreset.

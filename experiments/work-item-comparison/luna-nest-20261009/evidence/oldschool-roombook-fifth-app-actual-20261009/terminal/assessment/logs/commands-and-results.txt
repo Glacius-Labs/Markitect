@@ -1,0 +1,18 @@
+Assessment harness: C:\Python313\python.exe -B C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-conventional-oldschool-app\assessment\cli_assessment.py
+Result: exit 0; S1 common PASS; S2 common + S2 behavior PASS; S3 common + S2 + S3 PASS; S4 common + S2 + S3 + rename/storage compatibility PASS. Log: logs\independent-cli.txt. Temp databases/CSV files were created under OS temp outside all candidate checkouts.
+
+For each station, executed from its evaluationRepo:
+S1 SHA 370b996d1e2ff5f7025a30eb0904c7367702257a
+  C:\Python313\python.exe -B checks/acceptance.py --repo . --case roombook --station 1 ; exit 0, 6/6 PASS; logs\acceptance-S1.txt
+  C:\Python313\python.exe -B -m unittest discover -s tests -v ; exit 0, 5 tests; logs\unit-S1.txt
+S2 SHA c705f94dafb9a091473e5a90522c3f870640b097
+  C:\Python313\python.exe -B checks/acceptance.py --repo . --case roombook --station 2 ; exit 0, 9/9 PASS; logs\acceptance-S2.txt
+  C:\Python313\python.exe -B -m unittest discover -s tests -v ; exit 0, 7 tests; logs\unit-S2.txt
+S3 SHA cf05cb152e4943207a70fa60cb0b25bb6f63e363
+  C:\Python313\python.exe -B checks/acceptance.py --repo . --case roombook --station 3 ; exit 0, 12/12 PASS; logs\acceptance-S3.txt
+  C:\Python313\python.exe -B -m unittest discover -s tests -v ; exit 0, 24 tests; logs\unit-S3.txt
+S4 SHA 539659cddb7c086894d089e67dadacb8d8d1fd9a
+  C:\Python313\python.exe -B checks/acceptance.py --repo . --case roombook --station 4 ; exit 0, 13/13 PASS; logs\acceptance-S4.txt
+  C:\Python313\python.exe -B -m unittest discover -s tests -v ; exit 0, 25 tests; logs\unit-S4.txt
+
+All four `git status --short --branch` checks were clean detached snapshots. TEAMWORK contribution blob IDs equal the corresponding paths at S3 feature commit 4e1fcca7ec6134fb54984a0f382e155801d8cc41; feature commit is ancestor of S3 merge 1073832a50d802cccbe5a4155c911897d90df4d1, which is ancestor of final evidence commit cf05cb152e4943207a70fa60cb0b25bb6f63e363. Six documented blobs and both ancestry checks verified. See logs\team-blob-bindings.txt.

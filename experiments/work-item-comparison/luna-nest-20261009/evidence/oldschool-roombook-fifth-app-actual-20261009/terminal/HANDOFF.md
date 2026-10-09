@@ -1,0 +1,9 @@
+# Fifth App trial terminal handoff
+
+Four fixed stations completed and were retained without Scientist code repairs. The independent fresh Luna High final returned and all five immutable assessment checkouts have identical before/after file inventories and HEADs, with clean Git status. Shared ledger is closed: four outer implementation entries, three helpers, one independent final, eight total; no assessment helper. Old four trials remain closed; fifth fullstart consumed, one of six remains unallocated.
+
+Independent staged acceptance/unit and meaningful CLI cases passed: S1 6/5, S2 9/7, S3 12/24, S4 13/25. Contribution blobs and merge ancestry were verified. Native temporal team overlap remains unknown in independent assessment; the separately retained Scientist metadata observation records four active cooperative ledger entries. No overall method winner, exhaustive correctness or human acceptance is inferred. Two assessor harness expectation errors were corrected and the rerun exited0; candidates stayed unchanged.
+
+Actual final/native lifecycle, commands, logs, before/after inventories, original neutral prompt, resource receipts and report are retained under terminal/assessment. Actual serving, tokens, cost, higher context isolation and provider containment remain unproved; no pending known own jobs/unknown-stop. The assay statement no native model/tool calls refers only to no additional native starts; one native assessment and logged shell/file/Git work did occur. The old envelope metadata encoding defect and local post-freeze measurement argument correction are recorded separately from product findings.
+
+Use terminal-summary.json and closed-ledger/state for exact bounded clocks and ownership. Private judgments stay Scientist/Root-side; public release/lifecycle alone goes to execution or product owners. No retry, refill, further implementation or activation is authorized.

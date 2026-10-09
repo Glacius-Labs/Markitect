@@ -1,0 +1,21 @@
+{
+  "event": "Actual own independent final FINAL_ANSWER received in Scientist collaboration mailbox",
+  "handle": "/root/oldschool_roombook_fifth_independent_final",
+  "reservation": 8,
+  "status": "returned",
+  "modelEndExactUtc": null,
+  "helpersStartedByAssessor": 0,
+  "servingModel": null,
+  "usage": null,
+  "cost": null,
+  "candidateBytesAndHeadsUnchanged": true,
+  "allFiveAssessmentCheckoutsClean": true,
+  "finalReportSha256": "2bad8474c0a6ff5a30f08f37199341c6c85de8ed2726eaba21087a70b41f4e6b",
+  "knownJobs": "No pending known owned job; finite assessment commands logged exit0 and own final returned. Transitive OS/provider cancellation not independently attested.",
+  "assessorResults": "All four staged acceptance/unit suites and additional meaningful CLI cases PASS; team contribution integration evidenced; actual temporal native overlap unknown; two corrected own harness false alarms; no human acceptance",
+  "statementBoundary": "Assessor says no native model/tool calls; interpret only as no additional native actor/provider starts. This recorded native assessment invocation and logged shell/file/Git work did occur.",
+  "receiptRecordedUtc": "2026-10-09T08:38:53.195334+00:00",
+  "nativeFinalMessageReceivedBeforeUtc": "2026-10-09T08:36:09.0034718Z",
+  "exactNativeFinalMessageTimestamp": null,
+  "captureDeadlineConservativeUtc": "2026-10-09T08:45:00Z"
+}

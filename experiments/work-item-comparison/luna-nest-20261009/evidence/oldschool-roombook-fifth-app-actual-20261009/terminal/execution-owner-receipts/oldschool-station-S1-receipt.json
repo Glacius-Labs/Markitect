@@ -1,0 +1,37 @@
+{
+  "event": "oldschool-public-station-S1-returned-20261009",
+  "observedUtc": "2026-10-09T08:05:07.930540+00:00",
+  "reservation": 1,
+  "ownHandle": "/root/app_conventional_oldschool_roombook_primary",
+  "nativeLifecycle": "FINAL_ANSWER received; turn returned",
+  "completion": {
+    "station": "S1",
+    "status": "complete",
+    "completedWorkItemIds": [
+      "R01"
+    ],
+    "remainingIssues": []
+  },
+  "mainSha": "370b996d1e2ff5f7025a30eb0904c7367702257a",
+  "gitStatus": "",
+  "actorReceipt": {
+    "result": "S1 R01 implemented, committed, merged into isolated main",
+    "featureCommit": "bedccfa",
+    "mergeCommit": "a765087e31b81e8f09dfbd784bd9edc78e9933ed",
+    "latestMainSha": "370b996d1e2ff5f7025a30eb0904c7367702257a",
+    "unitTests": "PASS, 5 tests",
+    "publicAcceptance": "PASS, 6 checks",
+    "helpersStarted": 0,
+    "humanAcceptance": "not performed",
+    "actor": "primary implementation /root/app_conventional_oldschool_roombook_primary",
+    "model": "gpt-6-luna",
+    "reasoning": "high",
+    "forkTurns": "none",
+    "exposure": "own public case inputs only; no foreign case/chat/private evaluation materials read"
+  },
+  "activeOrUnknownOwnLedgerEntries": [],
+  "accountingNote": "Actor had already recorded returned at 08:03:33.130357Z; later owner duplicate record was rejected Entry already terminal. No ledger override or extra activation.",
+  "ownJobs": "Returned actor reported completed checks and clean repository; no pending shell handle or detached job reported. Native turn end is not universal cancellation proof.",
+  "checksIndependentlyRerunByOwner": false,
+  "independentQualityCredit": false
+}

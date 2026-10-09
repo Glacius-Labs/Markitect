@@ -1,0 +1,42 @@
+{
+  "event": "oldschool-public-station-S2-returned-20261009",
+  "observedUtc": "2026-10-09T08:12:15.598712+00:00",
+  "reservation": 2,
+  "ownHandle": "/root/app_conventional_oldschool_roombook_primary",
+  "nativeLifecycle": "FINAL_ANSWER received; turn returned",
+  "completion": {
+    "station": "S2",
+    "status": "complete",
+    "completedWorkItemIds": [
+      "R02",
+      "R03",
+      "R04"
+    ],
+    "remainingIssues": []
+  },
+  "mainSha": "c705f94dafb9a091473e5a90522c3f870640b097",
+  "gitStatus": "M .study/station.json",
+  "actorReceipt": {
+    "result": "S2 R02-R04 implemented, committed, merged into isolated main",
+    "featureCommit": "b3f21c2",
+    "mergeCommit": "7b3f7821f42e86e90cb4d166a60cff174bdb910a",
+    "latestMainSha": "c705f94dafb9a091473e5a90522c3f870640b097",
+    "unitTests": "PASS, 7 tests",
+    "publicAcceptance": "PASS, 9 checks",
+    "helpersStarted": 0,
+    "humanAcceptance": "not performed",
+    "actor": "primary implementation continuation /root/app_conventional_oldschool_roombook_primary",
+    "model": "gpt-6-luna",
+    "reasoning": "high",
+    "forkTurns": "own context",
+    "exposure": "own public case inputs and own S1 history only; no foreign case/chat/private evaluation materials read",
+    "dispatcherStationFile": "S2 release change preserved as an unstaged external modification"
+  },
+  "currentStationIndexAtReceipt": 2,
+  "snapshotCountAtReceipt": 2,
+  "activeOrUnknownOwnLedgerEntries": [],
+  "accountingNote": "First metadata assertion compared S2 marker to mutable current station; Scientist had already advanced to S3/snapshotCount2. Bound this receipt to reservation2.stationIndex1 instead. No state or ledger override, no extra activation.",
+  "ownJobs": "No pending own shell handle or detached job reported; turn end alone does not prove universal cancellation",
+  "checksIndependentlyRerunByOwner": false,
+  "independentQualityCredit": false
+}

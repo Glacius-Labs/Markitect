@@ -1,0 +1,40 @@
+# Roombook Conventional: unabhängige Bewertung der vier Stationen
+
+Bewertet wurden die eingefrorenen Checkouts S1–S4 jeweils auf dem gebundenen Main-SHA. Die öffentliche Freigabe aus `STATIONS.json` steuert den Umfang: S1 nur R01, S2 R02–R04, S3 R05–R11, S4 R12. Spätere Anforderungen wurden nicht als frühere Fehler gewertet. Kandidaten blieben unverändert; eigene CLI-Testdaten lagen in temporären Verzeichnissen außerhalb der Checkouts. Die gebundenen Dateien, Quellen-Hashes, Befehle und Logs liegen unter `assessment/logs/`.
+
+## Stationsergebnisse
+
+| Station / Stand | Freigegebener Umfang | Funktion und Regeln | Regression / Zustand | Dokumentation / Änderbarkeit | Checks |
+|---|---|---|---|---|---|
+| S1 `370b996d1e2ff5f7025a30eb0904c7367702257a` | R01 | PASS: Buchung, normalisierte Felder, UTC-Minuten, halb-offene Konfliktregel, getrennte Räume und stabile ID | PASS: Sortierung nach Start/ID, neue Prozessinstanz liest persistierte Daten, Konflikt/ungültige Eingabe belassen DB-Bytes unverändert | PASS: README beschreibt nur die S1-Oberfläche und erklärt Dauerhaftigkeit und Ein-Schreiber-Grenze; kompakte Standardbibliothek-CLI | Acceptance 6/6, Unit 5; eigene CLI-Grenzfälle PASS |
+| S2 `c705f94dafb9a091473e5a90522c3f870640b097` | R02–R04 | PASS: idempotente Stornierung, Historie, Intervallfreigabe und aktive Summen mit exakten Minuten/lexikalischer Ordnung | PASS: wiederholtes Cancel und fehlende ID; Bytes bei Fehler und erneutem Cancel stabil | PASS: Run-, Fehler-, Daten- und Limitationsdoku ergänzt; einfache Ein-Datei-Implementierung bleibt nachvollziehbar | Acceptance 9/9, Unit 7; eigene CLI-Grenzfälle PASS |
+| S3 `cf05cb152e4943207a70fa60cb0b25bb6f63e363` | R05–R11 | PASS: Status-/Raumfilter, CSV-Escaping und Historie, gefilterte Summen | PASS: Sortierung und Zusammensetzung über Prozessgrenzen; Export verändert DB nicht; Destination-Fehler als JSON/Exit 2 | PASS: Query, Export und Summary in kleine Helper zerlegt; CLI, README und Regressionstests integriert | Acceptance 12/12, Unit 24; eigene CLI-Grenzfälle PASS |
+| S4 `539659cddb7c086894d089e67dadacb8d8d1fd9a` | R12 | PASS: Default `bookings`, `list --legacy` mit gleichem Datensatz und Filtern; Befehle und Recordfelder bleiben erhalten | PASS: vor S4 erzeugte `reservations`-JSON-Daten werden ohne Rewrite gelesen; nach Mutation bleibt das Storage-Format kompatibel | PASS: aktive In-Memory-Begriffe, CLI, Tests und README verwenden booking; README erklärt den Alias und die Raw-Storage-Kompatibilität | Acceptance 13/13, Unit 25; eigene CLI-Grenzfälle PASS |
+
+Für alle vier Stände bestanden die jeweils freigegebenen Acceptance- und Unit-Suites. Die eigenen Prozesse prüften zusätzlich leere/read-only Reads, unzulässige Zeitzonen-Offsets und Kalenderdaten, Überlappung ohne Mutation, angrenzende Zeitfenster, Raum-Fallunterscheidung, stabile Sortierung und Prozesspersistenz. S2+ prüfte Stornierung/ID-Erhalt/Summen; S3+ zusätzlich Status-/Raumfilter, CSV inklusive Komma und Zeilenumbruch, Export ohne DB-Mutation, unbekannten Raum und fehlgeschlagenen Export; S4 prüfte einen expliziten vor-S4-Datensatz, beide Antwort-Envelopes, kombinierte Filter, bytegleichen Read-only-Zugriff, Mutation und ID-Fortschreibung. Die vollständigen Befehle und Exitcodes sind in `logs/commands-and-results.txt`; Einzelresultate stehen in `logs/acceptance-S*.txt`, `logs/unit-S*.txt` und `logs/independent-cli.txt`.
+
+## Rename, Drift und Qualität
+
+Die S4-Umbenennung ist semantisch konsistent. Aktive CLI-Ausgabe und interne State-Form heißen `bookings`; die Loader-/Writer-Übersetzung erhält das ausdrücklich kompatible rohe `reservations`-Storagefeld. Die Legacy-Antwort ist nur über `--legacy` erreichbar. Tests decken beide Interfaces auf vorbestehenden Daten, Filterkomposition, unveränderte Reads und spätere Mutationen ab. Die verbleibenden Begriffe in Backlog und Projektgeschichte beschreiben frühere Anforderungen oder Historie; sie sind nach R12 keine aktiven Interface-Fehler. Für Conventional ist kein Markitect-Modell oder dessen Views erforderlich.
+
+S1/S2 implementieren den kleinen CLI-Vertrag direkt; S3 abstrahiert gruppierte Arbeiten in begrenzte Module und S4 hält deren Verträge zusammen. Die Qualitätsprüfung fand auf den freigegebenen Pfaden keine Funktions-, Konsistenz-, Dokumentations- oder Änderbarkeitsfehler. Unabhängige gleichzeitige Writer sind ausdrücklich außerhalb des Vertrags und werden nicht als Fehler gewertet. Es gibt keine offenen bekannten Produktbefunde.
+
+## Methodenkonformität und Teamnachweis
+
+Git enthält die berichteten S3-Feature- und No-FF-Merge-Commits; die sechs in `TEAMWORK.md` genannten Blob-IDs stimmen exakt mit Query-/Export-/Summary-Modulen und deren Gruppentests im S3-Feature-Commit überein. Feature- und Merge-Commit sind Vorfahren des finalen S3-Evidenz-SHA. Das belegt getrennte Beiträge und ihre Integration. `TEAMWORK.md` nennt drei Helfer, getrennte Gruppen und einen berichteten gemeinsamen Ausführungszeitraum von 08:14:33 bis 08:14:45 UTC; als angeforderte Parallelität sind drei Helpergruppen dokumentiert. Die tatsächliche Ausführung und zeitliche Überlappung sind durch die hier zulässigen öffentlichen Projektbelege jedoch nicht unabhängig mit nativen Tool-Receipts bestätigt. Diese Beobachtung bleibt **unknown**, nicht PASS oder FAIL. Einzelheiten stehen in `logs/team-blob-bindings.txt`.
+
+Die vier eingefrorenen Checkouts waren bei der Prüfung sauber und detached auf den übergebenen SHAs. Die Worklogs/Progress-Anker enthalten Feature-/Merge-SHAs, Checks, frühere Testkorrekturen und nächste Schritte; die Stufen bleiben nachvollziehbar. Die S4-Übergabe erklärt ausdrücklich, dass die Freigabe erreicht ist. Das ist technische Evidenz, keine menschliche Abnahme; menschliche Abnahme wurde nicht durchgeführt.
+
+## Regelbefunde und Bewertungsfehler
+
+| Befund | Regel / Schwere / Scope | Erkannt | Repariert | Verbleibend | Fehlalarm | Nicht prüfbar |
+|---|---|---|---|---|---|---|
+| T1 | S3 erfordert mindestens zwei tatsächlich ausführende, überlappende Agenten mit unabhängigen Beiträgen und Integration; Methodenkriterium, S3 | Drei Rollen/Intervalle und sechs Beiträge in TEAMWORK/Git gefunden; Beiträge mit Blob- und Merge-SHA gebunden | Nicht zutreffend | Keine Integrationslücke bekannt; tatsächliche Native-Ausführung/Überlappung bleibt unbelegt im zulässigen Belegsatz | Nein | Native Starts und genaue tatsächliche Ausführung; daher Teamüberlappung insgesamt unknown |
+| A1 | Bewertungsprotokoll muss falsche Prüferwartungen von Produktfehlern trennen; Assessment, nur eigener Test-Harness | Erste Testfassung erwartete die stornierte CSV-Zeile am falschen Index; eine weitere nahm die S3-Antwortform auch für S4 an | Ja, Assertion an Start/ID-Sortierung und stationenspezifische Envelope angepasst; vollständiger Lauf anschließend exit 0 | Keine | Ja, beide waren Harness-Fehlalarme, keine Kandidatenfehler | Nein |
+| U1 | Usage-/Serving-Angaben müssen belegt sein; methodischer Messpunkt über alle Stationen | Keine unabhängigen Serving-, Token- oder Kostenbelege im eigenen Assessment-Aufruf | Nicht zutreffend | Tatsächliche Serving-Identität, Token, Kosten und native Produkt-Receipts unknown | Nein | Ja |
+
+Es wurde kein Gesamtsieger abgeleitet. Vier Stationen sind ein einzelner longitudinaler Projektverlauf und keine unabhängigen Wiederholungen. Die bekannten Resultate sind technische CLI-/Suite-Evidenz; menschliche Abnahme, tatsächliche Provider-Nutzung und Kosten bleiben getrennte, nicht belegte Größen.
+
+## Eigener Lauf und Grenzen
+
+Die zugewiesene Ausführungskonfiguration war gpt-6-luna/high mit `fork_turns=none`; die tatsächliche Serving-Identität wurde nicht unabhängig beobachtet. Es wurden keine nativen Agents durch dieses Assessment gestartet, keine nativen Modell-/Tool-Aufrufe ausgeführt und keine Kandidatendatei verändert. Meine bekannten Arbeiten waren Quellen-/Git-Prüfung, vier Stationen Acceptance und Unit, eigene CLI-Fälle und Berichtserstellung. Eigene Kontext-/Token-Verbrauchsmetadaten, Provider-Billing und Kosten sind unknown. Die beiden eigenen Harness-Fehlstarts und ihre Korrektur sind offen protokolliert.
