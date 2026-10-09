@@ -133,8 +133,8 @@ func ValidateRuntime(config Runtime) error {
 		if strings.TrimSpace(agent.Model) == "" || strings.TrimSpace(agent.ProviderVersion) == "" {
 			return fmt.Errorf("runtime agent %q must declare model and providerVersion", managerID)
 		}
-		if agent.Timeout <= 0 || agent.Timeout > Duration(10*time.Minute) || agent.MaxStdoutBytes <= 0 || agent.MaxStderrBytes <= 0 {
-			return fmt.Errorf("runtime agent %q must declare positive timeout (at most 10m) and output limits", managerID)
+		if agent.Timeout <= 0 || agent.Timeout > Duration(time.Hour) || agent.MaxStdoutBytes <= 0 || agent.MaxStderrBytes <= 0 {
+			return fmt.Errorf("runtime agent %q must declare positive timeout (at most 60m) and output limits", managerID)
 		}
 		if agent.ModelOptions != nil {
 			if _, err := json.Marshal(agent.ModelOptions); err != nil {
@@ -174,7 +174,7 @@ func ValidateRuntime(config Runtime) error {
 				return fmt.Errorf("runtime agent %q has an invalid or duplicate environment variable name %q", managerID, name)
 			}
 			upper := strings.ToUpper(name)
-			standardNativeHome := agent.WorkspaceMode == "scoped" && (upper == "HOME" || upper == "USERPROFILE" || upper == "APPDATA" || upper == "LOCALAPPDATA")
+			standardNativeHome := (agent.WorkspaceMode == "scoped" || (agent.WorkspaceMode == "git" && agent.Transport == TransportCodexAppServer)) && (upper == "HOME" || upper == "USERPROFILE" || upper == "APPDATA" || upper == "LOCALAPPDATA")
 			if forbiddenEnvironmentNames[upper] && !standardNativeHome {
 				return fmt.Errorf("runtime agent %q may not inherit environment variable %q", managerID, name)
 			}
@@ -282,8 +282,8 @@ func ReadOnlyAgent(config Runtime, managerID string) (Agent, error) {
 		return Agent{}, fmt.Errorf("native Manager %q requires a configured read-only assessment binding", managerID)
 	}
 	assessment, ok := config.Review.Agents[managerID]
-	if !ok || assessment.WorkspaceMode != "" || len(assessment.InstructionPaths) != 0 {
-		return Agent{}, fmt.Errorf("native Manager %q requires an unscoped read-only assessment binding", managerID)
+	if !ok || ((assessment.WorkspaceMode != "" || len(assessment.InstructionPaths) != 0) && !supportsReadOnlyGitWorkspace(assessment)) {
+		return Agent{}, fmt.Errorf("native Manager %q requires a separate read-only assessment binding", managerID)
 	}
 	return assessment, nil
 }

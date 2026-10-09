@@ -48,7 +48,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if err != nil {
 		return out, err
 	}
-	if run.Status != StatusIntegrated {
+	if run.Status != StatusIntegrated && run.Status != StatusVerifying && run.Status != StatusFailed {
 		return out, fmt.Errorf("run must be integrated before verification (status %s)", run.Status)
 	}
 	if err := validateReportClosure(run); err != nil {
@@ -57,6 +57,10 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	runtime, err := LoadRuntime(root)
 	if err != nil {
 		return out, err
+	}
+	recoverVerifier := pendingNativeVerifier(run, runtime)
+	if run.Status != StatusIntegrated && !recoverVerifier {
+		return out, fmt.Errorf("verification has no exact pending native verifier to recover")
 	}
 	if runtime.Mode != ModeControlledLocal {
 		return out, fmt.Errorf("verification mode is unsupported")
@@ -96,7 +100,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if err != nil {
 		return out, err
 	}
-	if hasPriorAttempt {
+	if hasPriorAttempt && !recoverVerifier {
 		return out, failVerificationBudget(s, &run, fmt.Errorf("verification attempt already exists for candidate %s", candidate.ID))
 	}
 	compiled, err := projectForCandidate(host, root, base.Snapshot, candidate)
@@ -121,7 +125,15 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if err := validateCheckExecutables(plan); err != nil {
 		return out, err
 	}
-	if len(run.Invocations)+len(run.Checks)+len(plan.Checks)+boolInt(runtime.Verifier != nil) > runtime.Limits.MaxStarts {
+	invoker, roleBudget, err := bindRunHelperBudget(invoker, host, runtime.Limits, s, &run)
+	if err != nil {
+		return out, err
+	}
+	newStarts := len(plan.Checks) + boolInt(runtime.Verifier != nil)
+	if recoverVerifier {
+		newStarts = 0
+	}
+	if roleBudget.Accounting().ObservedTotal+len(run.Checks)+newStarts > runtime.Limits.MaxStarts {
 		return out, failVerificationBudget(s, &run, fmt.Errorf("verification processes would exceed maxStarts"))
 	}
 	if totalCost(run.Invocations) > runtime.Limits.MaxCostMicros {
@@ -152,7 +164,18 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 		reportErr := persistVerify(s, dir, out)
 		return out, errors.Join(cause, err, stateErr, reportErr)
 	}
+	if recoverVerifier {
+		priorChecks, checkErr := savedVerificationChecks(run, plan, candidate.ID)
+		if checkErr != nil {
+			return fail(checkErr)
+		}
+		out.Checks = priorChecks
+		ctx = requireNativeRecovery(ctx)
+	}
 	for _, check := range plan.Checks {
+		if recoverVerifier {
+			break
+		}
 		if err := ctx.Err(); err != nil {
 			return fail(err)
 		}
@@ -199,8 +222,19 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 			verifierStartIndex = len(run.Invocations) - 1
 			return persistState(s, &run)
 		})
+		if recoverVerifier {
+			for i := len(run.Invocations) - 1; i >= 0; i-- {
+				if run.Invocations[i].Role == agentexec.RoleVerifier && run.Invocations[i].Phase == "verify" && run.Invocations[i].InputDigest == invocation.InputDigest {
+					verifierStartIndex = i
+					break
+				}
+			}
+			if verifierStartIndex < 0 {
+				return fail(fmt.Errorf("original verifier reservation does not match recovered request"))
+			}
+		}
 		if verifierStartIndex >= 0 {
-			run.Invocations[verifierStartIndex] = invocation
+			run.Invocations[verifierStartIndex] = retainOriginalReceipt(run.Invocations[verifierStartIndex], invocation)
 			if persistErr := persistState(s, &run); persistErr != nil {
 				return out, fmt.Errorf("persist verifier attempt: %w", persistErr)
 			}
@@ -219,7 +253,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if compiled.Config.CoverageMode == "full" {
 		full, auditErr := FullVerifyProject(ctx, host, invoker, root, compiled, runtime, FullVerifyBinding{
 			ExpectedSnapshot: compiled.Snapshot.Digest(), ExpectedBriefings: plan.BriefingDigests, CheckCandidateID: candidate.ID,
-			StartedAt: run.StartedAt, PriorStarts: len(run.Invocations) + len(run.Checks), PriorCostMicros: totalCost(run.Invocations), PreverifiedChecks: out.Checks,
+			StartedAt: run.StartedAt, PriorStarts: roleBudget.Accounting().ObservedTotal + len(run.Checks), PriorCostMicros: totalCost(run.Invocations), PreverifiedChecks: out.Checks,
 		})
 		out.VerificationScope, out.ManagerVerification = "full", &full
 		for _, manager := range full.Managers {
@@ -499,12 +533,15 @@ func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, p
 		}
 	}
 	log = InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: inputDigest, Outcome: "started"}
-	if onStart != nil {
-		if err := onStart(log); err != nil {
-			return nil, log, fmt.Errorf("persist verifier start: %w", err)
+	result, recovered, err := recoverInvocationOnResume(ctx, host, invoker, root, "verifier-"+candidate.ID, config, runtime.Limits, request)
+	if !recovered && err == nil {
+		if onStart != nil {
+			if err := onStart(log); err != nil {
+				return nil, log, fmt.Errorf("persist verifier start: %w", err)
+			}
 		}
+		result, err = invokeProjectAgent(ctx, host, invoker, root, project, *runtime.Verifier, "verifier-"+candidate.ID, nil, nil, runtime.Limits, config, request)
 	}
-	result, err := invokeProjectAgent(ctx, host, invoker, root, project, *runtime.Verifier, "verifier", nil, nil, runtime.Limits, config, request)
 	if err == nil && result.Delta != nil && len(result.Delta.Changes) != 0 {
 		err = fmt.Errorf("read-only verifier changed its owned workspace")
 	}

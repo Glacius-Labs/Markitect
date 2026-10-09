@@ -2,6 +2,7 @@ package codexappserver
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -38,5 +39,17 @@ func TestConfigurationIsExplicitAndBounded(t *testing.T) {
 	cfg.Helpers = HelperPolicy{Enabled: true, MaxStartRequests: 2, MaxDepth: 1}
 	if _, err := cfg.Digest(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestNativeAdapterAcceptsSixtyMinuteRoleTimeoutAndRejectsLonger(t *testing.T) {
+	cfg := Config{Command: filepath.Join(t.TempDir(), "codex.exe"), ProviderVersion: SupportedProviderVersion,
+		Model: "gpt-6-luna", ReasoningEffort: "high", Timeout: time.Hour, MaxEventBytes: 1 << 20}
+	if _, err := NewAdapter(cfg, Options{}); err != nil {
+		t.Fatalf("sixty-minute native role timeout should be accepted: %v", err)
+	}
+	cfg.Timeout = time.Hour + time.Nanosecond
+	if _, err := NewAdapter(cfg, Options{}); err == nil || !strings.Contains(err.Error(), "exceeds supported bounds") {
+		t.Fatalf("native role timeout above sixty minutes should be rejected clearly: %v", err)
 	}
 }

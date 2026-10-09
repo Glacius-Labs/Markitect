@@ -3,16 +3,19 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"math"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectworkspace"
 )
 
 const (
@@ -218,6 +221,116 @@ func TestFullVerifyProjectAuditsComposedCandidateBytesWithoutReopeningBaseRevisi
 		t.Fatalf("candidate verification did not bind to composed bytes: %+v", report)
 	}
 	assertFileContents(t, root, "src/orders/implementation.txt", "orders implementation v1\n")
+}
+
+type fullVerifyNativeWorkspaceInvoker struct {
+	root          string
+	called        bool
+	workspace     projectworkspace.Handle
+	roleTimeout   time.Duration
+	requestDigest string
+}
+
+func (i *fullVerifyNativeWorkspaceInvoker) Run(_ context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	i.called = true
+	i.roleTimeout = config.Timeout
+	if options.Workspace == nil {
+		return agentexec.RunResult{}, errors.New("native assessment received no owned workspace")
+	}
+	i.workspace = *options.Workspace
+	if sameWorkspacePath(i.workspace.CWD, i.root) {
+		return agentexec.RunResult{}, errors.New("native assessment received the adopting checkout as CWD")
+	}
+	journalBytes, err := os.ReadFile(filepath.Join(i.root, ".markitect", "runs", "private", "workspaces", i.workspace.ID+".json"))
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	var journal workspaceJournal
+	if err := json.Unmarshal(journalBytes, &journal); err != nil {
+		return agentexec.RunResult{}, err
+	}
+	if len(journal.Request.AllowedPaths) != 0 {
+		return agentexec.RunResult{}, errors.New("read-only assessment workspace has writable paths")
+	}
+	var payload struct {
+		RequiredSubjects []string `json:"requiredSubjects"`
+	}
+	if err := json.Unmarshal(request.Context, &payload); err != nil {
+		return agentexec.RunResult{}, err
+	}
+	assessments := make([]FullAssessment, 0, len(payload.RequiredSubjects))
+	for _, subject := range payload.RequiredSubjects {
+		assessments = append(assessments, FullAssessment{Subject: subject, Outcome: "pass", Detail: "fixed audit subject inspected"})
+	}
+	report, err := json.Marshal(fullAuditResponse{Status: "pass", Summary: "native read-only workspace inspected", Assessments: assessments, Findings: []string{}, Counterexamples: []FullCounterexample{}})
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	inputDigest, err := digest(request)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	i.requestDigest = inputDigest
+	usage := &agentexec.Usage{Source: "provider-reported", InputTokens: int64Ptr(10), OutputTokens: int64Ptr(5)}
+	response := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: "full-verify-native-run", Nonce: "full-verify-native-nonce",
+		Role: request.Role, InputDigest: inputDigest, Outcome: agentexec.OutcomeProposed, CandidateFiles: []agentexec.CandidateFile{},
+		EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, ReportJSON: report, Uncertainty: []string{}, Usage: usage}
+	receipt := terminalWorkspaceReceipt("full-verify-native-run")
+	receipt.InputDigest = inputDigest
+	receipt.Outcome = agentexec.OutcomeProposed
+	receipt.Usage = usage
+	return agentexec.RunResult{Response: response, Receipt: receipt}, nil
+}
+
+func (*fullVerifyNativeWorkspaceInvoker) Fingerprint(agentexec.Config) (string, error) {
+	return "native-fixture-fingerprint", nil
+}
+
+func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	configureWorkspaceBridgeInstructions(t, root)
+	revision := identityHead(t, root)
+	project, err := projectwork.Load(root, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	managerID := project.Report.Managers[0].ID
+	assessmentAgent := workspaceBridgeAgent(t, root)
+	assessmentAgent.Command = filepath.Join(t.TempDir(), "codex-app-server")
+	assessmentAgent.Model = "gpt-6-luna"
+	assessmentAgent.ProviderVersion = "codex-cli 0.162.0"
+	assessmentAgent.AppServer = &AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
+	assessmentAgent.Timeout = Duration(time.Hour)
+	assessmentAgent.MaxStdoutBytes = 1 << 20
+	assessmentAgent.MaxStderrBytes = 1 << 20
+	assessmentAgent.Pricing = Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
+	runtime := Runtime{Agents: map[string]Agent{managerID: assessmentAgent}, Review: &ReviewConfig{Agents: map[string]Agent{managerID: assessmentAgent}},
+		Limits: Limits{MaxDepth: 1, MaxStarts: 256, MaxParallel: 2, MaxDuration: Duration(4 * time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
+	invoker := &fullVerifyNativeWorkspaceInvoker{root: root}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	row, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
+		managerID, StrictnessProfile{}, BriefingContext{}, nil, nil, false)
+	if err != nil {
+		t.Fatalf("native Manager audit failed: row=%+v err=%v", row, err)
+	}
+	if !invoker.called || invoker.roleTimeout != time.Hour || invoker.requestDigest != row.InputDigest {
+		t.Fatalf("native audit did not preserve the role configuration and request binding: called=%t timeout=%s digest=%q row=%+v", invoker.called, invoker.roleTimeout, invoker.requestDigest, row)
+	}
+	if row.Status != "passed" || row.Receipt == nil || row.Receipt.RunID != "full-verify-native-run" || row.Receipt.InputDigest != row.InputDigest {
+		t.Fatalf("native audit report did not preserve terminal receipt and validated status: %+v", row)
+	}
+	if _, err := os.Stat(invoker.workspace.CWD); !os.IsNotExist(err) {
+		t.Fatalf("terminal read-only workspace was not closed: %v", err)
+	}
+	journal := readWorkspaceJournal(t, root, invoker.workspace.ID)
+	if journal.State != "closed" || journal.Delta == nil || len(journal.Delta.Changes) != 0 || journal.Receipt.RunID != "full-verify-native-run" {
+		t.Fatalf("read-only workspace journal did not retain empty harvested evidence and receipt: %+v", journal)
+	}
 }
 
 func TestFullVerifyStopsWhenUsageCannotBoundCumulativeCost(t *testing.T) {

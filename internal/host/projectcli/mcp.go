@@ -8,7 +8,6 @@ import (
 
 	"errors"
 	"github.com/Glacius-Labs/Markitect/internal/host/mcp"
-	"github.com/Glacius-Labs/Markitect/internal/host/projectadoption"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectexplore"
@@ -64,7 +63,7 @@ func projectMCP(root string, o projectapp.Operations) (*mcp.Server, error) {
 		return o.Brownfield(projectapp.BrownfieldOperation{Root: root, SourceRoot: r.SourceRoot, Revision: r.Revision, SessionID: r.SessionID, Action: r.Action, Input: r.Input, Write: r.Write, ExpectedDigest: r.ExpectedDigest})
 	})
 	mcp.Register(server, "project_brownfield_run", "Preview or execute an existing Brownfield Manager stage with durable attempt identity and cancellation.", true, func(ctx context.Context, r mcpBrownfieldRunInput) (projectapp.BrownfieldManagerRunOutput, error) {
-		return o.BrownfieldRun(ctx, projectapp.BrownfieldRunOperation{Root: root, SourceRoot: r.SourceRoot, SessionID: r.SessionID, Request: r.Request, Write: r.Write, ExpectedDigest: r.ExpectedDigest}, projectadoption.AgentExecManagerRunInvoker{})
+		return o.BrownfieldRun(ctx, projectapp.BrownfieldRunOperation{Root: root, SourceRoot: r.SourceRoot, SessionID: r.SessionID, Request: r.Request, Write: r.Write, ExpectedDigest: r.ExpectedDigest}, o.Invoker)
 	})
 	mcp.Register(server, "project_init", "Preview or create the canonical project control plane on a normal feature branch.", true, func(ctx context.Context, r mcpInitInput) (projectwork.InitPlan, error) {
 		return o.Init(projectapp.InitOperation{Root: root, Name: r.Name, Write: r.Write})

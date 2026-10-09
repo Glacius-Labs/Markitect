@@ -54,7 +54,7 @@ func NewAdapter(cfg Config, options Options) (*Adapter, error) {
 	if cfg.ProviderVersion != SupportedProviderVersion {
 		return nil, errors.New("unsupported App Server provider/protocol version")
 	}
-	if cfg.Timeout > 30*time.Minute || cfg.MaxEventBytes > 256<<20 {
+	if cfg.Timeout > time.Hour || cfg.MaxEventBytes > 256<<20 {
 		return nil, errors.New("App Server time/event budget exceeds supported bounds")
 	}
 	if err := options.validateTools(cfg.Timeout); err != nil {
@@ -402,7 +402,7 @@ func (s *session) interrupt() {
 	if s.h.ThreadID == "" || s.h.TurnID == "" {
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	// Send interrupt without waiting for a possibly lost prior RPC reply.
 	s.c.nextID++

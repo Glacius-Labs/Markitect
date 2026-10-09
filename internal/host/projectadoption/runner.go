@@ -20,7 +20,7 @@ import (
 
 const (
 	distillationRunnerVersion     = "markitect.example.org/project-distillation-runner/v1alpha1"
-	maxDistillationTimeout        = 10 * time.Minute
+	maxDistillationTimeout        = time.Hour
 	maxDistillationStdout         = 4 << 20
 	maxDistillationStderr         = 1 << 20
 	maxDistillationArtifacts      = 128

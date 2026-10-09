@@ -216,10 +216,16 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 		result.Receipt = receipt
 		return result, ErrOutputTooLarge
 	}
-	if errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) ||
-		errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled) {
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		result.Receipt = receipt
-		return result, errors.New("external runner timed out or was cancelled")
+		if errors.Is(parent.Err(), context.DeadlineExceeded) {
+			return result, fmt.Errorf("external runner stopped because the enclosing job deadline expired: %w", context.DeadlineExceeded)
+		}
+		return result, fmt.Errorf("external runner exceeded its configured role timeout of %s: %w", cfg.Timeout, context.DeadlineExceeded)
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled) {
+		result.Receipt = receipt
+		return result, fmt.Errorf("external runner was cancelled by its caller: %w", context.Canceled)
 	}
 	if err != nil {
 		receipt.Outcome = OutcomeFailed
@@ -400,8 +406,8 @@ func normalizeConfig(input Config) (Config, error) {
 	default:
 		return Config{}, fmt.Errorf("unsupported agent transport %q", cfg.Transport)
 	}
-	if cfg.Timeout <= 0 || cfg.Timeout > 10*time.Minute {
-		return Config{}, errors.New("runner timeout must be at most ten minutes")
+	if cfg.Timeout <= 0 || cfg.Timeout > time.Hour {
+		return Config{}, errors.New("runner timeout must be positive and at most sixty minutes")
 	}
 	if cfg.MaxStdoutBytes <= 0 || cfg.MaxStdoutBytes > maxOutputBound ||
 		cfg.MaxStderrBytes <= 0 || cfg.MaxStderrBytes > maxOutputBound {

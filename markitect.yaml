@@ -65,8 +65,8 @@ spec:
             - test
             - ./...
             - -count=1
-            - -timeout=30m
-          timeoutSeconds: 1800
+            - -timeout=60m
+          timeoutSeconds: 5400
         - name: claude-protocol
           run:
             - python

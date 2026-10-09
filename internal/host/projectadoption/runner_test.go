@@ -499,4 +499,19 @@ func testDistillationOptions(t *testing.T, target DistillationTargetContext) Dis
 	}
 }
 
+func TestDistillationRunnerAcceptsSixtyMinuteRoleTimeoutAndRejectsLonger(t *testing.T) {
+	root := t.TempDir()
+	config := testDistillationConfig(t)
+	config.Timeout = time.Hour
+	options := testDistillationOptions(t, DistillationTargetContext{})
+	options.MaxTimeout = time.Hour
+	if err := validateDistillationRunnerOptions(root, config, options); err != nil {
+		t.Fatalf("sixty-minute distillation role timeout should be accepted: %v", err)
+	}
+	options.MaxTimeout = time.Hour + time.Nanosecond
+	if err := validateDistillationRunnerOptions(root, config, options); err == nil || !strings.Contains(err.Error(), "explicit maximum of 1h0m0s") {
+		t.Fatalf("explicit role timeout maximum above sixty minutes should be rejected clearly: %v", err)
+	}
+}
+
 func int64Pointer(value int64) *int64 { return &value }

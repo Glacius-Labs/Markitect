@@ -30,7 +30,7 @@ func TestProjectWorldNativeCLIWorkflow(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 	binary := filepath.Join(t.TempDir(), executableName("markitect"))
 	build := exec.CommandContext(ctx, "go", "build", "-o", binary, "./cmd/markitect")
@@ -310,7 +310,7 @@ func gitSmoke(t *testing.T, root string, args ...string) {
 
 func cliSmoke(t *testing.T, binary, root string, args ...string) (stdout []byte, stderr string, code int) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 	commandArgs := []string{"project", args[0], "--repo", root}
 	commandArgs = append(commandArgs, args[1:]...)

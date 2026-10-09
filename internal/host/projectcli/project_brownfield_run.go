@@ -33,7 +33,7 @@ func runBrownfieldManagerStage(opts options, out io.Writer, invoker projectadopt
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
-	output, runErr := (projectapp.Operations{}).BrownfieldRun(ctx, projectapp.BrownfieldRunOperation{Root: opts.repo, SourceRoot: sourceRoot, Revision: opts.revision, SessionID: opts.sessionID, Write: opts.write, ExpectedDigest: opts.expect, Request: request}, invoker)
+	output, runErr := projectOperations().BrownfieldRun(ctx, projectapp.BrownfieldRunOperation{Root: opts.repo, SourceRoot: sourceRoot, Revision: opts.revision, SessionID: opts.sessionID, Write: opts.write, ExpectedDigest: opts.expect, Request: request}, invoker)
 
 	if runErr != nil {
 		if output.Attempt == nil {

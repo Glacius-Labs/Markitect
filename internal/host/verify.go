@@ -63,7 +63,7 @@ type verifyCommand struct {
 
 // VerifyRepository runs only checks explicitly declared on the Project from
 // the same immutable snapshot used by the graph. Checks default to 10 minutes;
-// an explicit timeoutSeconds may select 1 through 1800 seconds per check.
+// an explicit timeoutSeconds may select 1 through 5400 seconds per check.
 // An absent checks list is incomplete repository evidence;
 // callers may still use graph-only validation.
 func VerifyRepository(p *Project) ([]GateResult, error) {

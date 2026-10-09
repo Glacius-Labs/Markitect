@@ -70,7 +70,7 @@ func selectedEnvironment(allowlist *[]string) []string {
 	return out
 }
 func verifyVersion(ctx context.Context, cfg Config, env []string) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, cfg.Command, "--version")
 	cmd.Env = env
@@ -137,7 +137,7 @@ func (p *processConnection) Close() error {
 		_ = p.out.Close()
 		select {
 		case <-p.done:
-		case <-time.After(3 * time.Second):
+		case <-time.After(30 * time.Second):
 			p.err = errors.Join(p.err, errors.New("App Server process cleanup uncertain"))
 		}
 	})

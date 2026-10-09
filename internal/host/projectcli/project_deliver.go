@@ -16,7 +16,7 @@ func runDeliver(opts options, out io.Writer) error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
-	report, deliverErr := projectrun.Deliver(ctx, projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, projectrun.DeliverRequest{
+	report, deliverErr := projectrun.Deliver(ctx, projectRunHost(), projectRunInvoker(), opts.repo, projectrun.DeliverRequest{
 		ExplorationID: opts.explorationID, ScopeID: opts.scope, RunID: opts.run, ExecuteAuthorized: opts.write,
 	})
 	if err := writeJSON(out, report); err != nil {

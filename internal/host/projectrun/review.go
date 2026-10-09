@@ -125,12 +125,15 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 		return record, log, err
 	}
 	log = InvocationLog{TaskID: task.ID, Role: "reviewer", Phase: "review", InputDigest: inputDigest, Outcome: "started"}
-	if onStart != nil {
-		if err := onStart(log); err != nil {
-			return record, log, fmt.Errorf("persist reviewer start: %w", err)
+	result, recovered, invokeErr := recoverInvocationOnResume(ctx, host, invoker, root, fmt.Sprintf("%s-review-%s-%d", task.ID, phase, round), config, runtime.Limits, request)
+	if !recovered && invokeErr == nil {
+		if onStart != nil {
+			if err := onStart(log); err != nil {
+				return record, log, fmt.Errorf("persist reviewer start: %w", err)
+			}
 		}
+		result, invokeErr = invokeProjectAgent(ctx, host, invoker, root, project, agent, fmt.Sprintf("%s-review-%s-%d", task.ID, phase, round), nil, nil, runtime.Limits, config, request)
 	}
-	result, invokeErr := invokeProjectAgent(ctx, host, invoker, root, project, agent, task.ID+"-review", nil, nil, runtime.Limits, config, request)
 	if invokeErr == nil && result.Delta != nil && len(result.Delta.Changes) != 0 {
 		invokeErr = fmt.Errorf("read-only reviewer changed its owned workspace")
 	}

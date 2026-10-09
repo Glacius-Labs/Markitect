@@ -12,7 +12,7 @@ import (
 
 func runBrownfield(opts options, out io.Writer) error {
 	if opts.brownfieldAction == "run" {
-		return runBrownfieldManagerStage(opts, out, projectadoption.AgentExecManagerRunInvoker{})
+		return runBrownfieldManagerStage(opts, out, projectRunInvoker())
 	}
 	operation := projectapp.BrownfieldOperation{Root: opts.repo, SourceRoot: opts.sourceRepo, Revision: opts.revision, SessionID: opts.sessionID, Action: opts.brownfieldAction, Write: opts.write, ExpectedDigest: opts.expect}
 	var target any

@@ -26,7 +26,7 @@ func TestPackageIsDeterministicAndContainsOnlyReleaseSources(t *testing.T) {
 		t.Fatal("packaging the same source twice changed output")
 	}
 	entries := archiveEntries(t, first)
-	want := []string{"LICENSE", "README.md", "cmd/markitect/main.go", "go.mod", "go.sum", "internal/host/embedded/project.yaml", "internal/core/model.go", "internal/host/authoring/format/schema.go", "internal/tooling/release/package.go", "internal/tooling/release/package_test.go", "schema/manifest.yaml"}
+	want := []string{"LICENSE", "README.md", "go.mod", "go.sum", "schema/manifest.yaml", "src/cmd/markitect/main.go", "src/internal/host/embedded/project.yaml", "src/internal/core/model.go", "src/internal/host/authoring/format/schema.go", "src/internal/tooling/release/package.go", "src/internal/tooling/release/package_test.go"}
 	sort.Strings(want)
 	if strings.Join(entries, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("unexpected package contents:\n%v\nwant:\n%v", entries, want)
@@ -50,6 +50,10 @@ func TestPackageIncludesEmbeddedAuthoringProjectAndResourcesOnly(t *testing.T) {
 		t.Fatal("cannot locate release test source")
 	}
 	moduleRoot := filepath.Clean(filepath.Join(filepath.Dir(testFile), "..", "..", ".."))
+	prefix, err := sourceLayoutPrefix(moduleRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
 	archive, _, err := Package(moduleRoot, "1.0.0")
 	if err != nil {
 		t.Fatal(err)
@@ -67,17 +71,17 @@ func TestPackageIncludesEmbeddedAuthoringProjectAndResourcesOnly(t *testing.T) {
 		t.Fatal("source archive omitted or changed the root license")
 	}
 	want := []string{
-		"internal/host/embedded/resources/rule-canonical-ownership.yaml",
-		"internal/host/embedded/resources/skill-authoring.yaml",
-		"internal/host/embedded/resources/text-resource-modelling.yaml",
-		"internal/host/embedded/resources/workflow-authoring-change.yaml",
-		"internal/host/embedded/resources/workflow-constitution-change.yaml",
-		"internal/host/embedded/resources/workflow-engineering-discovery.yaml",
-		"internal/host/embedded/resources/workflow-markitect-first-change.yaml",
+		prefix + "internal/host/embedded/resources/rule-canonical-ownership.yaml",
+		prefix + "internal/host/embedded/resources/skill-authoring.yaml",
+		prefix + "internal/host/embedded/resources/text-resource-modelling.yaml",
+		prefix + "internal/host/embedded/resources/workflow-authoring-change.yaml",
+		prefix + "internal/host/embedded/resources/workflow-constitution-change.yaml",
+		prefix + "internal/host/embedded/resources/workflow-engineering-discovery.yaml",
+		prefix + "internal/host/embedded/resources/workflow-markitect-first-change.yaml",
 	}
 	var got []string
 	for name := range contents {
-		if strings.HasPrefix(name, "internal/host/embedded/resources/") {
+		if strings.HasPrefix(name, prefix+"internal/host/embedded/resources/") {
 			got = append(got, name)
 		}
 	}
@@ -85,7 +89,7 @@ func TestPackageIncludesEmbeddedAuthoringProjectAndResourcesOnly(t *testing.T) {
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("bundled authoring resources in source archive = %v, want %v", got, want)
 	}
-	projectPath := "internal/host/embedded/project.yaml"
+	projectPath := prefix + "internal/host/embedded/project.yaml"
 	projectData, err := os.ReadFile(filepath.Join(moduleRoot, filepath.FromSlash(projectPath)))
 	if err != nil {
 		t.Fatal(err)
@@ -97,7 +101,7 @@ func TestPackageIncludesEmbeddedAuthoringProjectAndResourcesOnly(t *testing.T) {
 	if !bytes.Equal(contents[projectPath], projectData) {
 		t.Fatal("archive omitted or changed the embedded authoring Project")
 	}
-	if _, included := contents["internal/host/embedded/notes.yaml"]; included {
+	if _, included := contents[prefix+"internal/host/embedded/notes.yaml"]; included {
 		t.Fatal("unrelated YAML under internal/authoring was packaged")
 	}
 	for _, name := range want {
@@ -113,7 +117,7 @@ func TestPackageIncludesEmbeddedAuthoringProjectAndResourcesOnly(t *testing.T) {
 			t.Errorf("archive content differs from embedded resource source %s", name)
 		}
 	}
-	if _, included := contents["internal/host/embedded/testdata/not-embedded.yaml"]; included {
+	if _, included := contents[prefix+"internal/host/embedded/testdata/not-embedded.yaml"]; included {
 		t.Fatal("unrelated YAML under internal was packaged")
 	}
 }
@@ -124,7 +128,7 @@ func TestPackageChangesWhenIncludedSourceChanges(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(root, "tools", "markitect", "internal", "core", "model.go")
+	path := filepath.Join(root, "tools", "markitect", "src", "internal", "core", "model.go")
 	if err := os.WriteFile(path, []byte("package core\n// changed\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -149,11 +153,11 @@ func TestPackageNormalizesTextLineEndingsForReproducibleArchive(t *testing.T) {
 		"go.sum",
 		"LICENSE",
 		"README.md",
-		"cmd/markitect/main.go",
-		"internal/core/model.go",
-		"internal/host/authoring/format/schema.go",
-		"internal/tooling/release/package.go",
-		"internal/tooling/release/package_test.go",
+		"src/cmd/markitect/main.go",
+		"src/internal/core/model.go",
+		"src/internal/host/authoring/format/schema.go",
+		"src/internal/tooling/release/package.go",
+		"src/internal/tooling/release/package_test.go",
 		"schema/manifest.yaml",
 	} {
 		full := filepath.Join(moduleDir, filepath.FromSlash(relative))
@@ -175,7 +179,7 @@ func TestPackageNormalizesTextLineEndingsForReproducibleArchive(t *testing.T) {
 		t.Fatal("CRLF checkout changed the canonical source archive or lock")
 	}
 	entries := archiveContents(t, crlfArchive)
-	if got, want := string(entries["internal/core/model.go"]), "package core\n"; got != want {
+	if got, want := string(entries["src/internal/core/model.go"]), "package core\n"; got != want {
 		t.Fatalf("normalized source = %q, want %q", got, want)
 	}
 }
@@ -186,7 +190,7 @@ func TestPackageRejectsSymlinksInSourceTree(t *testing.T) {
 	if err := os.WriteFile(external, []byte("package outside\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	link := filepath.Join(root, "tools", "markitect", "cmd", "markitect", "linked.go")
+	link := filepath.Join(root, "tools", "markitect", "src", "cmd", "markitect", "linked.go")
 	if err := os.Symlink(external, link); err != nil {
 		t.Skipf("symlink creation unavailable: %v", err)
 	}

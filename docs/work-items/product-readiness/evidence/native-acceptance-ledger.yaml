@@ -1,5 +1,25 @@
 schema: markitect-product-acceptance-ledger/v1
 grant_id: product-readiness-native-acceptance-20261009
+limits_revision: generous-native-limits-20261009
+main_gate_revision: combined-normal-smoke-20261009
+current_limits:
+  max_jobs: 3
+  max_job_wall_seconds: 14400
+  max_total_wall_seconds: 43200
+  max_total_role_start_requests: 256
+  max_role_wall_seconds: 3600
+allocation_history:
+  - revision: initial-product-readiness-20261009
+    max_job_wall_seconds: 1800
+    max_total_wall_seconds: 5400
+    max_total_role_start_requests: 64
+    consumed_jobs_at_revision: 0
+    consumed_role_start_requests_at_revision: 0
+  - revision: generous-native-limits-20261009
+    authority: direct_user_revision_via_coordinator
+    prospective: true
+    consumed_jobs_at_revision: 0
+    consumed_role_start_requests_at_revision: 0
 prior_closed_proof:
   source_fix: 9f1891d36da90231d34f5cf7fc2fc25437d6a83a
   status: closed_pre_provider
@@ -8,9 +28,21 @@ prior_closed_proof:
   lease_start_utc: '2026-10-09T15:36:10Z'
   lease_end_utc: '2026-10-09T15:46:10Z'
   reusable: false
+gate_history:
+  - revision: initial-product-readiness-20261009
+    main_required_jobs: [A01, A02, A03]
+    consumed_jobs_at_revision: 0
+  - revision: combined-normal-smoke-20261009
+    authority: direct_user_correction_via_coordinator
+    main_required_jobs: [A01]
+    deferred_jobs: [A02, A03]
+    automatic_deferred_start: false
+    consumed_jobs_at_revision: 0
 jobs:
   - id: A01
-    purpose: App Server real authenticated fresh-context tool execution
+    purpose: Combined normal Main smoke with setup Work Item parallel Managers fresh helper independent review Verify guarded Apply and original-turn workspace recovery
+    original_purpose: App Server real authenticated fresh-context tool execution
+    main_gate: required
     status: not_started
     source: null
     config: null
@@ -20,7 +52,8 @@ jobs:
     evidence: []
   - id: A02
     purpose: Independent parallel Managers, native helper and independent review
-    status: not_started
+    main_gate: deferred_not_main_gate
+    status: deferred_not_main_gate
     source: null
     config: null
     start_utc: null
@@ -29,7 +62,8 @@ jobs:
     evidence: []
   - id: A03
     purpose: Ordinary delivery, diagnostic repair, consistent changes, Verify Apply and recovery
-    status: not_started
+    main_gate: deferred_not_main_gate
+    status: deferred_not_main_gate
     source: null
     config: null
     start_utc: null

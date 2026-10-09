@@ -611,6 +611,9 @@ func TestRunRecordsFailureTimeoutAndOutputLimitWithoutRetry(t *testing.T) {
 		if err == nil || result.Receipt.Outcome != OutcomeIncomplete || result.Receipt.RetryCount != 0 {
 			t.Fatalf("expected incomplete timeout receipt, result=%#v err=%v", result, err)
 		}
+		if !strings.Contains(err.Error(), "configured role timeout") || !errors.Is(err, context.DeadlineExceeded) {
+			t.Fatalf("timeout should identify the role deadline while retaining the sentinel: %v", err)
+		}
 	})
 	t.Run("overlimit", func(t *testing.T) {
 		config := testConfig()
@@ -620,6 +623,18 @@ func TestRunRecordsFailureTimeoutAndOutputLimitWithoutRetry(t *testing.T) {
 			t.Fatalf("expected bounded output failure, result=%#v err=%v", result, err)
 		}
 	})
+}
+
+func TestNormalizeConfigAcceptsSixtyMinuteRoleTimeoutAndRejectsLonger(t *testing.T) {
+	config := testConfig()
+	config.Timeout = time.Hour
+	if _, err := normalizeConfig(config); err != nil {
+		t.Fatalf("sixty-minute role timeout should be accepted: %v", err)
+	}
+	config.Timeout = time.Hour + time.Nanosecond
+	if _, err := normalizeConfig(config); err == nil || !strings.Contains(err.Error(), "at most sixty minutes") {
+		t.Fatalf("role timeout above sixty minutes should be rejected clearly: %v", err)
+	}
 }
 
 func TestRunStopsDescendantProcessesOnTimeoutOverflowAndNormalExit(t *testing.T) {
@@ -641,7 +656,7 @@ func TestRunStopsDescendantProcessesOnTimeoutOverflowAndNormalExit(t *testing.T)
 			result, err := Run(context.Background(), config, testRequest(RoleExecutor), opts)
 			switch mode {
 			case "spawn-child-timeout":
-				if err == nil || err.Error() != "external runner timed out or was cancelled" || result.Receipt.Outcome != OutcomeIncomplete {
+				if err == nil || !strings.Contains(err.Error(), "configured role timeout") || !errors.Is(err, context.DeadlineExceeded) || result.Receipt.Outcome != OutcomeIncomplete {
 					t.Fatalf("expected incomplete timeout, result=%#v err=%v", result, err)
 				}
 			case "spawn-child-overflow":

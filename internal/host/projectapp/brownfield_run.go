@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectworkspace"
+	"path/filepath"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
@@ -101,8 +103,11 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 		// On a preview, --expect is an optional current-session precondition.
 		expectedSessionDigest = operation.ExpectedDigest
 	}
-	preview, err := projectadoption.PreviewManagerStage(sourceRoot, operation.Root, operation.SessionID, request.IterationID,
-		request.Phase, request.AgentManagerID, expectedSessionDigest, request.RetryOfAttemptID, config, limits)
+	if selectedAgent.Transport == projectrun.TransportCodexAppServer {
+		invoker = brownfieldReadOnlyInvoker{underlying: invoker, service: o.Host.Workspaces, sourceRoot: sourceRoot, privateLogs: filepath.Join(operation.Root, ".markitect", "runs", "private"), limits: runtime.Limits}
+	}
+	preview, err := projectadoption.PreviewManagerStageWithInvoker(sourceRoot, operation.Root, operation.SessionID, request.IterationID,
+		request.Phase, request.AgentManagerID, expectedSessionDigest, request.RetryOfAttemptID, config, limits, invoker)
 	if err != nil {
 		return BrownfieldManagerRunOutput{}, err
 	}
@@ -124,4 +129,21 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 			Execution: result.Execution, ExecutionDigest: result.ExecutionDigest, LedgerDigest: result.LedgerDigest}
 	}
 	return output, runErr
+}
+
+// The Brownfield source and target model are independently bound. Native
+// assessment reads an owned source Git workspace and cannot write any path.
+type brownfieldReadOnlyInvoker struct {
+	underlying  projectadoption.ManagerRunInvoker
+	service     projectworkspace.Service
+	sourceRoot  string
+	privateLogs string
+	limits      projectrun.Limits
+}
+
+func (i brownfieldReadOnlyInvoker) Fingerprint(config agentexec.Config) (string, error) {
+	return i.underlying.Fingerprint(config)
+}
+func (i brownfieldReadOnlyInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	return projectrun.RunReadOnlyRepository(ctx, i.service, i.underlying, i.sourceRoot, i.privateLogs, config, request, i.limits)
 }

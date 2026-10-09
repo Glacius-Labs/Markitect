@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectadoption"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectcoverage"
@@ -94,7 +95,7 @@ func runAction(opts options, out io.Writer) error {
 	case "setup", "doctor":
 		operations := projectapp.Operations{}
 		if opts.action == "doctor" {
-			report, err := operations.Doctor(projectapp.DoctorOperation{Root: opts.repo, Options: projectsetup.Options{Provider: opts.provider, ToolRoot: opts.toolRoot, ProviderExecutable: opts.providerExecutable}})
+			report, err := operations.Doctor(projectapp.DoctorOperation{Root: opts.repo, Options: projectsetup.Options{Provider: opts.provider, ProviderExecutable: opts.providerExecutable}})
 			if err != nil {
 				return err
 			}
@@ -443,13 +444,13 @@ func runAction(opts options, out io.Writer) error {
 		}
 		return writeJSON(out, plan)
 	case "run":
-		report, err := projectrun.Run(ctx, projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.plan)
+		report, err := projectrun.Run(ctx, projectRunHost(), projectRunInvoker(), opts.repo, opts.plan)
 		if err != nil {
 			return err
 		}
 		return writeJSON(out, report)
 	case "resume":
-		report, err := projectrun.Resume(ctx, projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.run)
+		report, err := projectrun.Resume(ctx, projectRunHost(), projectRunInvoker(), opts.repo, opts.run)
 		if err != nil {
 			return err
 		}
@@ -462,7 +463,7 @@ func runAction(opts options, out io.Writer) error {
 			}
 			return writeJSON(out, report)
 		}
-		report, err := projectrun.Repair(ctx, projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.run)
+		report, err := projectrun.Repair(ctx, projectRunHost(), projectRunInvoker(), opts.repo, opts.run)
 		if err != nil {
 			return err
 		}
@@ -475,7 +476,7 @@ func runAction(opts options, out io.Writer) error {
 		return writeJSON(out, report)
 	case "verify":
 		if opts.revision != "" {
-			report, err := projectrun.FullVerify(ctx, projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, projectrun.FullVerifyRequest{Revision: opts.revision, Write: opts.write})
+			report, err := projectrun.FullVerify(ctx, projectRunHost(), projectRunInvoker(), opts.repo, projectrun.FullVerifyRequest{Revision: opts.revision, Write: opts.write})
 			if report.APIVersion != "" {
 				if writeErr := writeJSON(out, report); writeErr != nil {
 					return writeErr
@@ -492,7 +493,7 @@ func runAction(opts options, out io.Writer) error {
 			}
 			return nil
 		}
-		report, err := projectrun.Verify(ctx, projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.run)
+		report, err := projectrun.Verify(ctx, projectRunHost(), projectRunInvoker(), opts.repo, opts.run)
 		if report.APIVersion != "" {
 			if writeErr := writeJSON(out, report); writeErr != nil {
 				return writeErr
@@ -517,7 +518,7 @@ func runAction(opts options, out io.Writer) error {
 			}
 			return writeJSON(out, preflight)
 		}
-		report, err := projectrun.Apply(host, projectrun.ProcessInvoker{}, opts.repo, projectrun.ApplyRequest{
+		report, err := projectrun.Apply(host, projectRunInvoker(), opts.repo, projectrun.ApplyRequest{
 			RunID: opts.run, PlanID: opts.plan, CandidateID: opts.candidate,
 			TargetBranch: opts.branch, ExpectedHead: opts.head, ExpectedWorktree: opts.tree,
 			ExpectedVerificationDigest: opts.expect,
@@ -540,11 +541,16 @@ func projectRunHost() projectrun.Host {
 		FromSnapshot: projectwork.FromSnapshot,
 		PlanEdit:     projectwork.PlanEdit,
 		ApplyEdit:    projectwork.ApplyEdit,
+		Workspaces:   projectrun.NewLocalWorkspaceService(),
 	}
 }
 
+func projectRunInvoker() projectrun.Invoker {
+	return projectrun.NewTransportInvoker(codexappserver.Options{})
+}
+
 func projectOperations() projectapp.Operations {
-	return projectapp.Operations{Host: projectRunHost(), Invoker: projectrun.ProcessInvoker{}}
+	return projectapp.Operations{Host: projectRunHost(), Invoker: projectRunInvoker()}
 }
 
 func setupOptions(opts options) (projectsetup.Options, error) {
@@ -553,7 +559,7 @@ func setupOptions(opts options) (projectsetup.Options, error) {
 		return projectsetup.Options{}, err
 	}
 	return projectsetup.Options{
-		Provider: opts.provider, Model: opts.model, Effort: opts.effort, CodexProfile: opts.codexProfile, ToolRoot: opts.toolRoot,
+		Provider: opts.provider, Model: opts.model, Effort: opts.effort, CodexProfile: opts.codexProfile,
 		ProviderExecutable: opts.providerExecutable, InputMicrosPerMillion: rates.input,
 		OutputMicrosPerMillion: rates.output, MaxCostMicros: rates.maxCost,
 	}, nil

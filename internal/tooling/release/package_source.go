@@ -18,7 +18,11 @@ func collect(moduleDir string) ([]sourceFile, error) {
 			return nil, err
 		}
 	}
-	for _, tree := range []string{"cmd", "internal"} {
+	prefix, err := sourceLayoutPrefix(moduleDir)
+	if err != nil {
+		return nil, err
+	}
+	for _, tree := range []string{prefix + "cmd", prefix + "internal"} {
 		root := filepath.Join(moduleDir, filepath.FromSlash(tree))
 		if err := requireRealDirectory(root); err != nil {
 			return nil, fmt.Errorf("required source tree %s: %w", tree, err)
@@ -71,11 +75,42 @@ func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
 		}
 		ext := strings.ToLower(filepath.Ext(entry.Name()))
 		embeddedResource := embeddedAuthoringSource(rel)
-		if ext != ".go" && !embeddedResource && rel != embeddedNoticesPath {
+		if ext != ".go" && !embeddedResource && !embeddedNotices(rel) {
 			return nil
 		}
 		return appendRegularFile(moduleDir, rel, files, true)
 	})
+}
+
+// sourceLayoutPrefix selects the one supported source tree layout. The flat
+// layout remains readable for previously pinned source packages; new source
+// packages preserve the repository's src/ directory in the archive.
+func sourceLayoutPrefix(moduleDir string) (string, error) {
+	newCommand := pathExists(filepath.Join(moduleDir, "src", "cmd"))
+	newInternal := pathExists(filepath.Join(moduleDir, "src", "internal"))
+	oldCommand := pathExists(filepath.Join(moduleDir, "cmd"))
+	oldInternal := pathExists(filepath.Join(moduleDir, "internal"))
+	if newCommand || newInternal {
+		if !newCommand || !newInternal || oldCommand || oldInternal {
+			return "", fmt.Errorf("Markitect source must use exactly one complete cmd/internal layout")
+		}
+		if err := requireRealDirectory(filepath.Join(moduleDir, "src", "cmd")); err != nil {
+			return "", fmt.Errorf("required source tree src/cmd: %w", err)
+		}
+		if err := requireRealDirectory(filepath.Join(moduleDir, "src", "internal")); err != nil {
+			return "", fmt.Errorf("required source tree src/internal: %w", err)
+		}
+		return "src/", nil
+	}
+	if !oldCommand || !oldInternal {
+		return "", fmt.Errorf("Markitect source is missing a complete cmd/internal layout")
+	}
+	return "", nil
+}
+
+func pathExists(name string) bool {
+	_, err := os.Lstat(name)
+	return err == nil
 }
 
 func walkSchemaTree(moduleDir, start string, files *[]sourceFile) error {
@@ -159,4 +194,8 @@ func requireRealDirectory(dir string) error {
 		return fmt.Errorf("must be a real directory")
 	}
 	return nil
+}
+
+func embeddedNotices(name string) bool {
+	return name == embeddedNoticesPath || name == legacyEmbeddedNoticesPath
 }

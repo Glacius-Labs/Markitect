@@ -2,6 +2,7 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - docs/history/implementation-plan-before-product-integration-20261009.md
     - internal/host/mcp
     - internal/host/projectworkspace
     - internal/host/projectapp
@@ -2400,4 +2401,104 @@ spec:
     - path: internal/host/projectworkspace/git_hardening_test.go
       owner: project-world-implementation
     - path: internal/host/projectworkspace/git_recovery_test.go
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P03-workspaces-handoff-20261009.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P04-adapter-handoff-20261009.md
+      owner: project-world-implementation
+    - path: internal/host/projectrun/transport_config_test.go
+      owner: project-world-implementation
+    - path: internal/host/codexappserver/adapter_test.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/client.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/client_test.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/events.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/evidence.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/process.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/process_linux.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/process_other.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/process_tree.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/process_windows.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/recovery.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/session.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/tools.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/projectrun/local_workspaces.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/local_workspaces_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/transport_invoker.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/transport_invoker_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/workspace_bridge.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/workspace_bridge_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/workspace_delta.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/workspace_delta_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectworkspace/git_reopen.go
+      owner: project-world-implementation
+    - path: internal/host/projectworkspace/git_reopen_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectonboarding/newnative_workflow_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/coordinator.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/coordinator_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/native_journal.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/native_journal_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/read_only_repository.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/read_only_repository_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/start_accounting.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/start_accounting_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/workspace_recovery.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/helper.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/helper_budget_binding.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/helpers_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/resume_invocation.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/resume_review.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/resume_review_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/resume_verifier.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/role_budget.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/role_budget_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/workspace_recovery_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/resume_verifier_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/resume_invocation_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/resume_native_e2e_test.go
+      owner: project-world-implementation
+    - path: docs/history/implementation-plan-before-product-integration-20261009.md
       owner: project-world-implementation

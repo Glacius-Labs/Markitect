@@ -1,126 +1,39 @@
-# Managed project operations in the source candidate
+# Project operations
 
-The managed `project` workflow described here is an unreleased source capability. It is not part of the published v0.14.1 CLI. Use a matching Markitect source checkout for these commands; the stable release and its Project/Domain contract remain unchanged. The [managed project workflow](project-workflow.md) covers setup and guarded Apply; this page records the available source operations and separates them from pending final local gates and provider/human evidence.
+This page is the current operational reference for the model-first `markitect project` source workflow. It is not in the published v0.14.1 CLI. Build/use a candidate from the matching Markitect source checkout; commands and MCP tools below do not change that release pin.
 
-## Explore, readiness and composed delivery
+## MCP server and tool groups
 
-The source CLI persists a named-scope Explore record, computes fixed-basis readiness, and can record a structure acknowledgement bound to the exact repository/model/runtime/Manager/artifact/check selection. These commands do not start an agent. An acknowledgement stores caller-supplied actor, authority, decision reference and RFC3339 time; it does not authenticate a human. New projects use `workflowMode: guided` and `acceptancePolicy: committed-model`; the committed canonical model is the accepted repository specification for that revision, while a commit or digest does not prove human review.
+Start the repository-local stdio server with `markitect project mcp --repo ABSOLUTE_PROJECT_ROOT`. The server fixes Host authority to that root at startup. MCP schemas are typed and closed; write operations enforce the exact authorization, preview digest, compare-and-swap, or durable-identity rules declared by their schemas. Consult `tools/list` for the exact current schema.
 
-```text
-markitect project explore --repo . --input RECORD.json [--expect PLAN_DIGEST --write]
-markitect project readiness --repo . --exploration ID --scope ID
-markitect project readiness --repo . --exploration ID --scope ID --acknowledge-structure --actor ACTOR --authority TEXT --decision-ref REF --acknowledged-at RFC3339 --expect DIGEST --write
-markitect project deliver --repo . --exploration ID --scope ID --write
-markitect project deliver --repo . --exploration ID --scope ID --run RUN_ID --write
-```
+The composed project server exposes these operation groups:
 
-`deliver` requires an explicitly ready scope, creates one bound plan and advances that durable run through Manager execution, integration, full Verify, Apply preflight and guarded Apply. Passing its run ID resumes the same proof; it does not create a replacement plan. Preview outputs and bindings remain review inputs before write authorization. These operations are currently present in source; final local gates for the integrated worktree remain pending confirmation at a fixed SHA. No provider run or human product acceptance is implied.
+- **Inspect:** `project_index`, `project_check`, `project_context`, `project_impact`, `project_coverage`, `project_status`.
+- **Work Item and model:** `project_explore`, `project_readiness`, `project_edit`, `project_plan`, `project_deliver`.
+- **Execution lifecycle:** `project_run`, `project_resume`, `project_repair`, `project_verify`, `project_full_verify`, `project_preflight`, `project_apply`.
+- **Brownfield:** `project_brownfield`, `project_brownfield_run`.
+- **Setup and views:** `project_init`, `project_onboard`, `project_setup`, `project_doctor`, `project_document`.
 
-## Structured Brownfield sessions
+Read-only inspection does not start a role. Setup and doctor inspect local prerequisites; project operations start inner roles only when explicitly invoked through an authorized run/delivery path. The outer client is not itself an inner Manager.
 
-Brownfield sessions persist selected discovery, per-scope status, Manager proposals/integration, explicit resolutions and model-only adoption records. Manual writes compare against the current session digest; Manager-run writes confirm a preview digest that also binds selected context, revisions, runtime fingerprint, and budget. Source and target revisions remain fixed. Stages accept closed JSON inputs and do not perform natural-language interviews or authenticate owner approval.
+## Ordinary Work Item
 
-```text
-markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action start --revision TARGET_COMMIT --input START.json [--expect DIGEST --write]
-markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action begin --session ID --input BEGIN.json --expect SESSION_DIGEST --write
-markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action context --session ID --input CONTEXT.json
-markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action run --session ID --input RUN.json
-markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action run --session ID --input RUN.json --expect PREVIEW_DIGEST --write
-markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action propose --session ID --input PROPOSAL.json --expect SESSION_DIGEST --write
-markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action integrate --session ID --input INTEGRATION.json --expect SESSION_DIGEST --write
-markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action resolve --session ID --input RESOLUTION.json --expect SESSION_DIGEST --write
-markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action plan --session ID --input PLAN.json
-markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action apply-adoption --session ID --input APPLY.json --expect SESSION_DIGEST --write
-markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action resume --session ID
-```
+Follow [Project workflow](project-workflow.md): inspect, record a typed exploration, edit canonical model only when needed, check and establish readiness, then deliver or use the staged lifecycle. A preview is not a write. For any preview/write pair, use the digest returned by that operation and do not reconstruct it. `project_deliver` requires the existing caller's explicit execution authorization and advances the same durable run through Verify, preflight, and guarded Apply. The staged tools preserve each plan/run/candidate/verification identity; use the returned bindings.
 
-The staged loop binds Manager work explicitly. `begin` takes a bare `ReverseIterationRequest`; the input contains manager ID, evidence IDs, purpose, review, and optional parent/superseded iteration IDs. The read-only `context` action takes `{"iterationId":"ITERATION_ID"}` for proposal context or `{"iterationId":"ITERATION_ID","phase":"integrate"}` for bounded parent context. Proposal context contains selected source evidence, the actual responsible Manager (including a parent-proposed Manager when present), and accepted or proposed public neighbor contracts. Integration context adds completed direct-child reports, public contracts, and bound digests. Neither context includes the full session or readiness report.
+`project_check` returns structural findings and coverage. An error result remains an error; it is not converted into a successful empty result. `project_coverage` reports nonconforming coverage as a failed operation while returning its report. Resolve those diagnostics before planning or readiness.
 
-The normal Manager runner is `--brownfield-action run`. Its closed JSON input is `{"iterationId":"ITERATION_ID","phase":"propose","agentManagerId":"ACCEPTED_RUNTIME_MANAGER_ID"}`; use phase `integrate` for parent integration. The runtime mapping names an accepted Manager or configured accepted ancestor allowed to execute the proposed responsibility; the iteration's Manager remains the actual work identity. Each Manager phase is a separate invocation with bounded, phase-specific context. Without `--write`, `run` is a no-call preview and returns `previewDigest` plus the current `sessionDigest`. For one execution, pass that exact `previewDigest` via `--expect` and add `--write`. The digest binds the session, stage, selected context, source/target, runtime fingerprint, and budget; the service rechecks these under the session execution lock before recording the attempt and calling the provider. Results expose only the validated Manager proposal or integration, durable attempt status/receipt, and resulting session digest, never the whole session or raw logs.
+## CLI, setup and current roots
 
-The parent proposes direct child responsibilities explicitly. Begin a separate iteration for every adopted child, with its parent iteration ID, then repeat context and `run` for its proposal; continue recursively. A parent can integrate only when every direct child has proposed and every non-leaf child has integrated. The integration context contains the completed reports/contracts/digests needed to bind that work. There are no automatic retries: `retryOfAttemptId` is optional and valid only for the latest known failed attempt with a final receipt; it remains subject to configured `MaxRetries` and cumulative starts, duration, and cost. An uncertain attempt is not replayable. Manual `propose`/`integrate` remain provider-free compatibility stages; `iterate` remains a convenience action.
+The CLI exposes matching operations for shell use. Read the candidate's `markitect project --help` for exact flags; the MCP operation schemas are the preferred contract for outer agents. `--repo` is the project authority root. For an MCP server, pass an absolute path so its selected root is explicit.
 
-`resolve` input contains the iteration ID and a `Resolution`; an authorized owner or a Manager within authority delegated by the Work Item may record the decision and set a scope to `modeled` or `transitional`. Ask the contributor only when the decision is outside delegated authority, materially unresolved, or repository policy requires human review. The recorded actor/authority/provenance is a caller assertion, not human identity authentication. Only actual guarded adoption sets a scope to `adopted`.
+`project init`, `project onboard`, `project edit`, `project explore`, `project readiness`, `project brownfield`, `project setup`, `project document`, and `project apply` have preview/write or guarded-write semantics as defined by their operation. Do not apply a stale plan. Onboarding writes only repository-local guidance and skills; it does not register MCP, configure global accounts, or authenticate a provider. Setup supports the native Codex App Server runtime and requires explicit budget weights/limits; configured cost is an estimate, not billing enforcement. `project_doctor` does not start roles.
 
-`plan` is a read-only preview. To apply, `APPLY.json` contains `{"iterationId":"ITERATION_ID","expectedPlanDigest":"PLAN_DIGEST"}` copied from that preview. The caller also supplies `--expect` with the prior session digest and `--write`. Host recomputes the exact target-bound plan and current schema/build bindings, applies only the planned model-file edits through the guarded writer, and records the internally produced receipt under session compare-and-swap. `record-adoption` is explicitly rejected because a caller-supplied receipt is not trusted. If the model changes, session readiness remains false until the adopted model is committed and accepted under policy, both fixed source and target bases are current, and current full-repository coverage is conforming. Readiness considers only the active, unsuperseded iteration tree; old ledger history is retained but does not gate the new active tree. If source Apply succeeds but recording its session receipt fails, inspect both target model and session ledger before any retry; the CLI deliberately refuses to rerun automatically. A full Verify/Apply acceptance path after Brownfield model adoption remains distinct and requires current evidence.
+## Candidate workspaces and recovery
 
-### Brownfield evidence and run recovery
+Native work executes in an owned candidate workspace. The bridge binds each candidate to the fixed accepted source, repository identity, overlay, task, and candidate delta. The source working tree is preserved as the service baseline; the fixed accepted project snapshot supplies only the candidate overlay. Apply rechecks freshness and writes only the reviewed delta through guarded Host operations.
 
-For every begin request, `evidenceIds` are the Manager's raw source and citation authority. The required, disjoint `delegationEvidenceIds` array grants only permission to assign evidence IDs to children; `[]` authorizes no child evidence. Missing pools are rejected, including ambiguous stored sessions. Context exposes delegated entries as ID/path/basis/digest metadata, never raw content. Selected Discovery inventory metadata establishes neither behavior nor delegation authority. Child requests copy the exact own/delegation arrays assigned by the parent proposal, bounded to its declared pools. Non-leaf parents integrate direct-child final reports, citations, contracts and digests; descendant citations travel in a non-leaf final report without exposing raw child source.
+A run's observed root and known owned child starts must be terminal before the Host harvests/closes their workspace. Adapter lifecycle accounting remains **partial**: the report records durable Host starts and observed nested starts separately, and observed nested totals are a lower bound. It does not claim an exhaustive child census or proof that no unobserved process exists. Workspace lifecycle evidence is cooperative; it is not OS isolation.
 
-Session-stage responses expose a safe overview of fixed bases, scope status, iteration identities, and digests rather than raw source/private report bodies. Resume and plan also intentionally retain typed readiness questions and conflict diagnostics for the outer coordinator to route and decide blockers; these diagnostics contain no source/report bodies. Context and Manager-run results are scoped to that Manager; the inner request receives only its bounded Manager context (selected own content and authorized metadata) and, for integration, completed direct-child reports, never the full session or readiness. Plan returns the full AdoptionPlan for review before model-only Apply. The per-session process lock is released by the operating system when its owner exits. Ambiguous ledger publication and unknown attempt cost or terminal outcome fail closed; inspect the session overview and run journal instead of replaying or deleting lock files. requestContractDigest binds stable schema and instructions while excluding cumulative remaining-budget counters that may advance after priced work; previewDigest continues to bind the current ledger/budget and must be refreshed before retry.
+On interruption, inspect `project_status` and the private durable run/journal. Resume or repair the same run only when the durable state identifies a known safe continuation. Unknown native outcomes are not replayed. Recovery inspects the exact saved provider configuration and already dispatched thread/session/turn; it never starts a new role or resubmits the turn. If ownership, bindings, or terminal state cannot be established, the candidate and journal remain preserved for inspection.
 
-## Repository census and readable documentation
-
-New projects default to `coverageMode: full` and generate the readable model document at `docs/markitect/project.md`. The destination is selected in `.markitect/project.yaml` as `documentPath`. Existing manifests that omit it keep the legacy `.markitect/views/project.md` destination until explicitly changed.
-
-Full mode observes the repository file universe and classifies each in-scope path as a model source, declared realization, Markitect-owned tool file, or an explicit ignore. `.markitect/ignore.yaml` uses a closed `RepositoryIgnore` schema with exact repository-relative file paths or trailing-slash directory prefixes and a required reason:
-
-```yaml
-apiVersion: project.markitect.example.org/repository-ignore/v1alpha1
-kind: RepositoryIgnore
-entries:
-  - path: generated/vendor/
-    reason: Produced by the external dependency build and reviewed separately
-```
-
-Patterns, negation, overlapping entries, `.git` metadata, and `.markitect/` are not accepted as ordinary ignore entries. An ignored path still has an explicit visible classification; ignore entries cannot remove an active required realization. `coverage` returns the `Accounted` and `Conforming` results plus path classifications. `check`, `plan`, and full verification consume the selected coverage contract; a complete census does not prove that source semantics match the model.
-
-`project document --repo .` renders the configured readable view to standard output. Use `--write` to update the project-owned destination from the current model. Generated documentation has one owner and is not a substitute for separately owned project documents.
-
-In full-coverage runs, the Host regenerates this configured document from the integrated final candidate model, includes the resulting bytes in that candidate, and checks that the same final snapshot contains the exact generated document. Missing or stale generated content prevents closure. This keeps the readable view synchronized with the model actually being verified and applied.
-
-## Full verification and whole-model operations
-
-With `coverageMode: full`, a run-based `verify` includes the full Manager assessment in addition to its declared checks. A standalone fixed-revision verification needs no prior implementation run:
-
-```powershell
-markitect project verify --repo . --revision COMMIT --write
-```
-
-It assesses every active Manager bottom-up against one immutable repository snapshot, supplies parent Managers with their public child contracts and integration results, and runs all declared checks against that same snapshot. Mandatory rules and checks remain in force at every strictness level. The report separates machine checks and Manager evidence; it does not establish semantic truth or human acceptance.
-
-`cleanup` and `reconcile` create plans for the whole Manager tree. Cleanup may improve implementations while preserving the accepted model. Reconcile seeks missing or divergent realizations against the whole model, including areas absent from the original change impact. Both allow a reasoned no-op for a conforming area. They create a plan only; the existing `run`, `verify`, and guarded `apply` operations perform and close the work:
-
-```powershell
-markitect project reconcile --repo . --goal "Bring every Manager realization into line with the accepted model" --write
-markitect project run --repo . --plan PLAN_ID --write
-markitect project verify --repo . --run RUN_ID --write
-```
-
-Cleanup uses the same sequence with `project cleanup`. If the desired behavior or authority must change, edit and accept the canonical model separately first. A technical remapping with unchanged semantics must also be an explicit model edit. Neither operation silently broadens or rewrites the accepted world model.
-
-Strictness is configured in `.markitect/runtime.yaml`. It can request additional evidence and counterexamples globally and add Manager-specific requirements. Manager profiles combine with the global defaults; they do not lower mandatory rules, omit required checks, or change the accepted model.
-
-## Model-change briefs
-
-An accepted model change can be recorded against exact committed before/after revisions. Preview the deterministic brief first, then persist it against the current briefing-store digest:
-
-```powershell
-markitect project brief --repo . --since BASE_COMMIT --revision MODEL_COMMIT --provenance DECISION_REFERENCE
-markitect project brief --repo . --since BASE_COMMIT --revision MODEL_COMMIT --provenance DECISION_REFERENCE --expect STATE_DIGEST --write
-markitect project briefings --repo . --manager MANAGER_ID
-```
-
-The bundle identifies changed declarations, impact, provenance supplied by the caller, and Manager-specific briefings with public neighbor contracts. It compares the model; it does not infer meaning from prose. The provenance reference is a caller declaration, not authenticated identity. Dismissing an event changes its visibility only; it does not resolve a question, remove a Manager obligation, or convert failed evidence to a pass. Full-coverage model-edit plans reject draft model changes; accept and commit the model separately. Plan-bound scoped briefs are included in Manager, Reviewer, and full-Verify contexts, and fresh bindings plus Apply reject changed briefing history. An existing briefing store with a new model digest blocks work until the new change is briefed. The source now has `EnsureAcceptedHistory`, which bootstraps a committed baseline and scans complete first-parent history to append committed semantic model transitions and reversions; guided Explore, Plan and Full Verify invoke it. The initial model is a baseline and code-only commits do not fabricate model changes. Successful `project deliver` records immutable resolution evidence only after full Manager Verify and guarded Apply on the bound candidate; this does not authenticate a human or turn dismissal into resolution. The operation requires complete, unambiguous Git ancestry, and its integrated local gates remain pending current fixed-SHA confirmation.
-
-An empty Definition namespace denotes the global namespace, including the initial project-owner Manager. Briefing events and persisted history use the compiler's same structural identity grammar: API version, Kind and name remain required, while a named namespace must be a valid identifier. Model files still follow their namespace directories. This does not change decision provenance, event or bundle digests, source regeneration, history ancestry, or readiness acknowledgement requirements.
-
-## Contributor onboarding
-
-After project initialization, preview native instructions for the contributors' chosen agents. The write repeats the same preview and requires its exact digest:
-
-```powershell
-markitect project onboard --repo . --provider both
-markitect project onboard --repo . --provider both --expect PLAN_DIGEST --write
-```
-
-Onboarding installs a shared `.markitect/workflows/model-first.md`, managed instruction blocks in `AGENTS.md` and/or `CLAUDE.md`, and provider-native skill files under `.agents/skills/` and/or `.claude/skills/`. Existing content outside the marked blocks is preserved; malformed or conflicting managed blocks fail before writing. The configured document destination is included in the workflow. Onboarding does not change global agent settings, read credentials, authenticate providers, or start a provider.
-
-Native instructions route agents toward conversational Explore and the model/impact/plan/run/verify/apply workflow. They are ordinary repository files; an agent or contributor with write access can bypass them. Guarded Apply and configured repository checks enforce only their declared boundaries and do not provide an operating-system sandbox.
-
-## Implementation and evidence status
-
-The [9 October validation record](validation/project-operations-2026-10-09.md) binds local gates and the public Shop smoke to their actual source revisions, including the retained failed first suite and its fixture correction.
-
-Current source includes deterministic subprocess fixtures for Run/Verify/guarded Apply, durable Explore and Readiness, structured Brownfield sessions/context, and composed delivery. These fixtures establish protocol behavior only. The final integrated local gates remain pending confirmation at an immutable source SHA. Real Codex/Claude provider runs remain NOT RUN here, and neither fixtures nor source availability establish semantic correctness, complete product acceptance, human approval, or productivity gains. Historical validation reports retain their tested SHAs and outcomes; they are not rewritten as evidence for this worktree. See the [native work-item delivery checklist](design/project-world/native-work-item-delivery.md) for remaining user-journey gates.
+The prospective native acceptance limits are 60 minutes per role, four hours per job, and 256 role-start requests. They are grant/test bounds in the readiness backlog, not universal defaults, a cost guarantee, or completed acceptance. Real authenticated native acceptance is **NOT RUN**. Source-level and scripted tests remain separate from product acceptance. See the [readiness backlog](work-items/product-readiness/backlog.yaml), [integration progress](work-items/product-readiness/integration-progress-20261009.md), and dated validation linked from the [documentation map](README.md).

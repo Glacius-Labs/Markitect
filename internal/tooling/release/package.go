@@ -65,7 +65,8 @@ type sourceFile struct {
 	data []byte
 }
 
-const embeddedNoticesPath = "internal/tooling/licenses/notices.md"
+const embeddedNoticesPath = "src/internal/tooling/licenses/notices.md"
+const legacyEmbeddedNoticesPath = "internal/tooling/licenses/notices.md"
 
 func validVersion(version string) bool {
 	if strings.HasPrefix(version, "v") {

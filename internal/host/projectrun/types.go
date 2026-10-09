@@ -255,30 +255,45 @@ type CheckPlan struct {
 }
 
 type RunReport struct {
-	Operation               string               `json:"operation,omitempty"`
-	APIVersion              string               `json:"apiVersion"`
-	ID                      string               `json:"id"`
-	PlanID                  string               `json:"planId"`
-	Status                  string               `json:"status"`
-	Mode                    string               `json:"mode"`
-	StartedAt               time.Time            `json:"startedAt"`
-	UpdatedAt               time.Time            `json:"updatedAt"`
-	BaseRevision            string               `json:"baseRevision"`
-	BaseSnapshot            string               `json:"baseSnapshot"`
-	ModelDigest             string               `json:"modelDigest"`
-	RuntimeDigest           string               `json:"runtimeDigest"`
-	Candidate               CandidateRef         `json:"candidate"`
-	Tasks                   []ManagerTask        `json:"tasks"`
-	Invocations             []InvocationLog      `json:"invocations"`
-	Checks                  []CheckResult        `json:"checks"`
-	Findings                []string             `json:"findings,omitempty"`
-	Escalations             []Escalation         `json:"escalations,omitempty"`
-	RepairRounds            []RepairRound        `json:"repairRounds,omitempty"`
-	Reviews                 []ReviewRecord       `json:"reviews,omitempty"`
-	ManagerReworkRounds     []ManagerReworkRound `json:"managerReworkRounds,omitempty"`
-	ActiveRepairCandidateID string               `json:"activeRepairCandidateId,omitempty"`
-	Revision                uint64               `json:"revision"`
-	Digest                  string               `json:"digest"`
+	Operation               string                 `json:"operation,omitempty"`
+	APIVersion              string                 `json:"apiVersion"`
+	ID                      string                 `json:"id"`
+	PlanID                  string                 `json:"planId"`
+	Status                  string                 `json:"status"`
+	Mode                    string                 `json:"mode"`
+	StartedAt               time.Time              `json:"startedAt"`
+	UpdatedAt               time.Time              `json:"updatedAt"`
+	BaseRevision            string                 `json:"baseRevision"`
+	BaseSnapshot            string                 `json:"baseSnapshot"`
+	ModelDigest             string                 `json:"modelDigest"`
+	RuntimeDigest           string                 `json:"runtimeDigest"`
+	Candidate               CandidateRef           `json:"candidate"`
+	Tasks                   []ManagerTask          `json:"tasks"`
+	Invocations             []InvocationLog        `json:"invocations"`
+	RoleStartReservations   []RoleStartReservation `json:"roleStartReservations,omitempty"`
+	Checks                  []CheckResult          `json:"checks"`
+	Findings                []string               `json:"findings,omitempty"`
+	Escalations             []Escalation           `json:"escalations,omitempty"`
+	RepairRounds            []RepairRound          `json:"repairRounds,omitempty"`
+	Reviews                 []ReviewRecord         `json:"reviews,omitempty"`
+	ManagerReworkRounds     []ManagerReworkRound   `json:"managerReworkRounds,omitempty"`
+	ActiveRepairCandidateID string                 `json:"activeRepairCandidateId,omitempty"`
+	Revision                uint64                 `json:"revision"`
+	Digest                  string                 `json:"digest"`
+}
+
+// RoleStartReservation is Host-owned quota evidence. Helper protocol roots
+// attach to the Host request and do not consume another role-start slot.
+type RoleStartReservation struct {
+	Key               string                     `json:"key"`
+	Kind              string                     `json:"kind"` // root or helper
+	TaskID            string                     `json:"taskId,omitempty"`
+	ManagerID         string                     `json:"managerId,omitempty"`
+	Phase             string                     `json:"phase,omitempty"`
+	ParentRunID       string                     `json:"parentRunId,omitempty"`
+	Request           agentexec.RoleStartRequest `json:"request"`
+	ProtocolRequestID string                     `json:"protocolRequestId,omitempty"`
+	RecordedAt        time.Time                  `json:"recordedAt"`
 }
 
 type ManagerReworkRound struct {
@@ -453,8 +468,8 @@ type ApplyPreflight struct {
 // Host is the function bundle for the selected project frontend. It composes
 // directly from projectwork's APIs without introducing a dependency cycle.
 type Host struct {
-	// Workspaces is the optional owned Git workspace seam. Current orchestration
-	// does not invoke it; P03/P06 must wire prepare, harvest and cleanup explicitly.
+	// Workspaces owns native Git candidate preparation, observation and cleanup.
+	// Unknown execution preserves the original workspace for exact-turn recovery.
 	Workspaces   projectworkspace.Service
 	Load         func(root, revision string) (*Project, error)
 	FromSnapshot func(root string, source *Snapshot) (*Project, error)

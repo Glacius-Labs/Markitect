@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -377,15 +376,20 @@ func TestProjectRunProcessEndToEndResumeVerifyApply(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	interrupting := &cancelAfterSuccessfulProcess{cancel: cancel}
-	first, runErr := Run(ctx, host, interrupting, root, plan.ID)
+	// Stop at the durable pre-dispatch boundary. Cancelling inside ProcessInvoker
+	// would leave a task marked invoking before Run has committed the completed
+	// result, which must remain uncertain and non-replayable.
 	cancel()
+	first, runErr := Run(ctx, host, ProcessInvoker{}, root, plan.ID)
 	if runErr == nil || first.Status != StatusInterrupted {
 		diagnostic, _ := os.ReadFile(logPath)
-		t.Fatalf("Run should interrupt after two completed subprocesses; status=%s err=%v; process log=%s", first.Status, runErr, diagnostic)
+		t.Fatalf("Run should interrupt before dispatch at a durable boundary; status=%s err=%v; process log=%s", first.Status, runErr, diagnostic)
 	}
-	if len(first.Invocations) != 2 {
-		t.Fatalf("first run recorded %d invocations, want root work plus one completed child", len(first.Invocations))
+	if len(first.Invocations) != 0 {
+		t.Fatalf("pre-dispatch interruption recorded %d invocations, want none", len(first.Invocations))
+	}
+	if !hasNoActiveManagerActions(first.Tasks) {
+		t.Fatalf("interrupted report does not preserve a safe pre-dispatch boundary: %+v", first.Tasks)
 	}
 	resumed, err := Resume(context.Background(), host, ProcessInvoker{}, root, plan.ID)
 	if err != nil {
@@ -1388,21 +1392,15 @@ func anyStringSlice(value any) []string {
 	return result
 }
 
-type cancelAfterSuccessfulProcess struct {
-	cancel context.CancelFunc
-	calls  atomic.Int32
-}
-
-func (i *cancelAfterSuccessfulProcess) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
-	result, err := (ProcessInvoker{}).Run(ctx, config, request, options)
-	if err == nil && i.calls.Add(1) == 2 {
-		i.cancel()
+func hasNoActiveManagerActions(tasks []ManagerTask) bool {
+	for _, task := range tasks {
+		switch task.State {
+		case "planned", "pending", "queued", "delegated", "integrated-child", "worked", "integrated", "complete":
+		default:
+			return false
+		}
 	}
-	return result, err
-}
-
-func (i *cancelAfterSuccessfulProcess) Fingerprint(config agentexec.Config) (string, error) {
-	return (ProcessInvoker{}).Fingerprint(config)
+	return len(tasks) > 0
 }
 
 func appendE2ELog(path string, value any) error {

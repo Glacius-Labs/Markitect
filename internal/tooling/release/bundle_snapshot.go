@@ -35,9 +35,9 @@ func snapshotModuleFiles(snapshot *snapshot.Snapshot) (map[string][]byte, error)
 			return nil, fmt.Errorf("unsafe source snapshot path %q: %w", name, err)
 		}
 		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md" || relative == "LICENSE"
-		if strings.HasPrefix(relative, "cmd/") || strings.HasPrefix(relative, "internal/") {
+		if sourceTreePath(relative) {
 			ext := strings.ToLower(path.Ext(relative))
-			include = ext == ".go" || (relative == embeddedNoticesPath || relative == "internal/licenses/notices.md") || embeddedAuthoringSource(relative)
+			include = ext == ".go" || embeddedNotices(relative) || relative == "internal/licenses/notices.md" || relative == "src/internal/licenses/notices.md" || embeddedAuthoringSource(relative)
 		}
 		if strings.HasPrefix(relative, "schema/") {
 			ext := strings.ToLower(path.Ext(relative))
@@ -72,8 +72,8 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 		}
 		ext := strings.ToLower(path.Ext(name))
 		include := name == "README.md" || name == "LICENSE"
-		if strings.HasPrefix(name, "cmd/") || strings.HasPrefix(name, "internal/") {
-			include = ext == ".go" || (name == embeddedNoticesPath || name == "internal/licenses/notices.md") || embeddedAuthoringSource(name)
+		if sourceTreePath(name) {
+			include = ext == ".go" || embeddedNotices(name) || name == "internal/licenses/notices.md" || name == "src/internal/licenses/notices.md" || embeddedAuthoringSource(name)
 		}
 		if strings.HasPrefix(name, "schema/") {
 			include = ext == ".json" || ext == ".yaml" || ext == ".yml" || ext == ".md"
@@ -101,6 +101,7 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 }
 
 func embeddedAuthoringSource(name string) bool {
+	name = strings.TrimPrefix(name, "src/")
 	if name == "internal/host/embedded/project.yaml" || name == "internal/authoring/project.yaml" {
 		return true
 	}
@@ -108,19 +109,27 @@ func embeddedAuthoringSource(name string) bool {
 	return (strings.HasPrefix(name, "internal/host/embedded/resources/") || strings.HasPrefix(name, "internal/authoring/resources/")) && (ext == ".yaml" || ext == ".yml")
 }
 
+func sourceTreePath(name string) bool {
+	return strings.HasPrefix(name, "cmd/") || strings.HasPrefix(name, "internal/") || strings.HasPrefix(name, "src/cmd/") || strings.HasPrefix(name, "src/internal/")
+}
+
 func validateSnapshotModuleLayout(files []sourceFile) error {
 	present := make(map[string]bool, len(files))
 	for _, file := range files {
 		present[file.name] = true
 	}
-	for _, name := range []string{"go.mod", "go.sum", "LICENSE", "cmd/markitect/main.go"} {
+	commandEntry, internalPrefix, err := moduleLayoutFiles(present)
+	if err != nil {
+		return err
+	}
+	for _, name := range []string{"go.mod", "go.sum", "LICENSE", commandEntry} {
 		if !present[name] {
 			return fmt.Errorf("fixed source snapshot is missing required module file %s", name)
 		}
 	}
 	internalFound := false
 	for name := range present {
-		if strings.HasPrefix(name, "internal/") {
+		if strings.HasPrefix(name, internalPrefix) {
 			internalFound = true
 			break
 		}
@@ -155,6 +164,27 @@ func validateSnapshotModuleLayout(files []sourceFile) error {
 	return fmt.Errorf("fixed source snapshot go.mod must declare module %s", sourceRepository)
 }
 
+func moduleLayoutFiles(present map[string]bool) (commandEntry, internalPrefix string, err error) {
+	newCommand := present["src/cmd/markitect/main.go"]
+	newInternal := false
+	oldCommand := present["cmd/markitect/main.go"]
+	oldInternal := false
+	for name := range present {
+		newInternal = newInternal || strings.HasPrefix(name, "src/internal/")
+		oldInternal = oldInternal || strings.HasPrefix(name, "internal/")
+	}
+	if newCommand || newInternal {
+		if !newCommand || !newInternal || oldCommand || oldInternal {
+			return "", "", errors.New("fixed source snapshot must contain exactly one complete cmd/internal layout")
+		}
+		return "src/cmd/markitect/main.go", "src/internal/", nil
+	}
+	if !oldCommand || !oldInternal {
+		return "", "", errors.New("fixed source snapshot is missing a complete cmd/internal source tree")
+	}
+	return "cmd/markitect/main.go", "internal/", nil
+}
+
 func snapshotText(snapshot *snapshot.Snapshot, name string) ([]byte, error) {
 	data, ok := snapshot.Files[name]
 	if !ok {
@@ -175,12 +205,18 @@ func snapshotRegularFile(snapshot *snapshot.Snapshot, name string) bool {
 }
 
 func validateSourceVersion(snapshot *snapshot.Snapshot, version string) error {
-	sourcePath := "internal/host/cli/version.go"
+	sourcePath := "src/internal/host/cli/version.go"
 	declarationToken := token.VAR
 	// Historical immutable source distributions have their version in the
 	// executable entrypoint. Compatibility is confined to release tooling.
 	if _, exists := snapshot.Files[sourcePath]; !exists {
-		sourcePath = "cmd/markitect/main.go"
+		sourcePath = "internal/host/cli/version.go"
+		if _, exists := snapshot.Files[sourcePath]; !exists {
+			sourcePath = "src/cmd/markitect/main.go"
+			if _, exists := snapshot.Files[sourcePath]; !exists {
+				sourcePath = "cmd/markitect/main.go"
+			}
+		}
 		declarationToken = token.VAR
 	}
 	data, err := snapshotText(snapshot, sourcePath)

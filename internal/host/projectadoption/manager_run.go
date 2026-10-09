@@ -26,7 +26,7 @@ const (
 	managerRunRuntimePath    = ".markitect/runtime.yaml"
 	managerRunMaxEvents      = 4096
 	managerRunMaxLedger      = 32 << 20
-	managerRunMaxTimeout     = 10 * time.Minute
+	managerRunMaxTimeout     = time.Hour
 	managerRunMaxDuration    = 24 * time.Hour
 	managerRunMaxCost        = int64(1_000_000_000_000)
 )
@@ -195,6 +195,15 @@ type managerRunRequestContext struct {
 // preview; either becomes part of the preview binding when supplied.
 func PreviewManagerStage(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits) (ManagerRunPreview, error) {
 	return buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, AgentExecManagerRunInvoker{})
+}
+
+// PreviewManagerStageWithInvoker binds preview to the same explicitly selected
+// transport fingerprint used by guarded execution. It never invokes a role.
+func PreviewManagerStageWithInvoker(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker ManagerRunInvoker) (ManagerRunPreview, error) {
+	if invoker == nil {
+		return ManagerRunPreview{}, errors.New("manager preview requires an invoker")
+	}
+	return buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, invoker)
 }
 
 // RunManagerStage repeats preview construction under a per-session execution

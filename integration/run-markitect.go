@@ -54,9 +54,10 @@ type archiveFile struct {
 }
 
 type sourceArchive struct {
-	data  []byte
-	files []archiveFile
-	dirs  map[string]bool
+	data         []byte
+	files        []archiveFile
+	dirs         map[string]bool
+	sourcePrefix string
 }
 
 type builderFunc func(goPath string, args []string, dir string, env []string) error
@@ -529,13 +530,24 @@ func validateModuleLayout(a *sourceArchive) error {
 	for _, f := range a.files {
 		files[f.name] = true
 	}
+	newLayout := a.dirs["src/cmd"] || a.dirs["src/internal"] || files["src/cmd/markitect/main.go"]
+	if newLayout {
+		if a.dirs["cmd"] || a.dirs["internal"] || files["cmd/markitect/main.go"] {
+			return errors.New("source archive mixes legacy and src/ module layouts")
+		}
+		a.sourcePrefix = "src/"
+	}
 	requiredDirs := []string{"cmd", "cmd/markitect", "internal"}
+	if a.sourcePrefix != "" {
+		requiredDirs = []string{"src", "src/cmd", "src/cmd/markitect", "src/internal"}
+	}
 	for _, d := range requiredDirs {
 		if !a.dirs[d] {
 			return fmt.Errorf("source archive is not a canonical Markitect Go module: missing directory %s", d)
 		}
 	}
-	if !files["go.mod"] || !files["cmd/markitect/main.go"] {
+	commandEntry := a.sourcePrefix + "cmd/markitect/main.go"
+	if !files["go.mod"] || !files[commandEntry] {
 		return errors.New("source archive is not a canonical Markitect Go module: missing go.mod or command entry point")
 	}
 	return nil
@@ -1049,7 +1061,7 @@ func buildOrReuse(root string, m manifest, archive *sourceArchive, goPath string
 	if err := os.Remove(tempName); err != nil {
 		return "", err
 	}
-	args := []string{"build", "-buildvcs=false", "-trimpath", "-ldflags", "-X main.version=" + m.version + " -X github.com/Glacius-Labs/Markitect/internal/host/cli.version=" + m.version, "-o", tempName, "./cmd/markitect"}
+	args := []string{"build", "-buildvcs=false", "-trimpath", "-ldflags", "-X main.version=" + m.version + " -X github.com/Glacius-Labs/Markitect/" + archive.sourcePrefix + "internal/host/cli.version=" + m.version, "-o", tempName, "./" + archive.sourcePrefix + "cmd/markitect"}
 	if err := builder(goPath, args, sourceDir, buildEnv); err != nil {
 		return "", fmt.Errorf("build pinned Markitect source: %w", err)
 	}

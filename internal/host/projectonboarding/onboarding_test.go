@@ -651,94 +651,29 @@ func TestModelFirstWorkflowCoversShortWorkItemsReadinessAndBrownfieldAdoption(t 
 	}
 	workflow := fileFor(t, Plan{Files: files}, workflowPath).Content
 	for _, required := range []string{
-		"The model-first selector in this repository is .markitect/project.yaml",
-		"markitect project schema",
-		"markitect project index --repo PATH",
-		"Index returns the selected model and full Manager identities",
-		"An empty initial model is a starting point",
-		"top-level markitect init authors the historical Project/Domain format",
-		"Do not create markitect.yaml or .markitect/areas/ as a substitute",
-		"short Work Item, issue, bug, idea",
-		"explicit decision ledger",
-		"recover durable state",
-		"compute its readiness from the current fixed project snapshot",
-		"obtain the review or acknowledgement required by repository policy",
-		"responsible Manager may review and acknowledge",
-		"policy explicitly requires human review",
-		"project-model tool classification only marks canonical model paths",
-		"own Manager ID in the mutation actor field",
-		"Explore CRUD path stores ModelAccepted:false",
-		"current committed HEAD is the accepted repository specification",
-		"committing a noncanonical draft file does not change the accepted model",
-		"Do not implement a scope until its canonical model is accepted and current policy readiness is resolved",
-		"If the native workspace denies a required model write or Git commit",
-		"otherwise stop and report the exact blocked action",
-		"Do not bypass the Run/Review/Apply lifecycle by writing implementation files directly",
-		"Resume the same exploration when the ordinary required action has completed",
-		"markitect project edit --repo PATH --input .markitect/drafts/project-model-mutation.json",
-		"Every --request, --output, and --input record path must be a normalized repository-relative slash path",
-		"Discovery request/output and project edit inputs are rooted in --repo",
-		"Brownfield stage inputs and its durable session are rooted in --source-repo when supplied, otherwise --repo",
-		"never impersonate user or a human",
-		"Ask the contributor only when material intent or authority is outside the delegation",
-		"reverse-model it iteratively",
-		"explicit transient scopes",
-		"Keep the initial adoption model-only",
-		"Brownfield Work Item",
-		"brownfield-action start",
-		"brownfield-action begin",
-		"brownfield-action context",
-		"brownfield-action run",
-		"phase\":\"propose",
-		"phase integrate",
-		"Each Manager is a distinct invocation",
-		"delegationEvidenceIDs",
-		"its context exposes them as metadata (ID, path, basis, and digest)",
-		"An omitted root pool retains legacy broad routing",
-		"explicit-empty marker",
-		"parent receives each direct child's exact final report",
-		"begin record contains a bare ReverseIterationRequest",
-		"previewDigest",
-		"requestContractDigest",
-		"fails closed and is not automatically replayable",
-		"process exits",
-		"latest known failed attempt",
-		"authorized owner or delegated Manager review the ledger",
-		"repository policy requires a human decision",
-		"brownfield-action resolve",
-		"brownfield-action apply-adoption",
-		"do not authenticate a human",
-		"cleanup as a separate operation",
-		"bounded goal against the selected accepted revision",
-		"leaf Managers implement their files",
-		"independent reviewer assesses the exact scoped candidate bytes",
-		"first successful Apply",
-		"resume the existing persisted run",
-		"do not replay completed Manager work",
+		"The selected project is .markitect/project.yaml",
+		"ordinary Work Item",
+		"project_explore",
+		"project_readiness",
+		"project_edit",
+		"project_brownfield",
+		"project_brownfield_run",
+		"project_deliver",
+		"project_status",
+		"committed-model policy",
+		"Initial adoption never changes application source",
+		"Apply does not merge, publish, or deploy",
+		"Technical checks, semantic evidence, and human acceptance are distinct",
+		"ordinary repository write access",
 	} {
 		if !strings.Contains(workflow, required) {
 			t.Errorf("shared workflow is missing required guidance %q", required)
 		}
 	}
-	commandRecordPaths := 0
-	for _, line := range strings.Split(workflow, "\n") {
-		if !strings.HasPrefix(strings.TrimSpace(line), "markitect project ") {
-			continue
+	for _, obsolete := range []string{"Use the native CLI stages below", "brownfield-action start", "markitect project deliver --repo", "--execution-mode native-work", "helperLimit"} {
+		if strings.Contains(workflow, obsolete) {
+			t.Errorf("shared workflow retains obsolete CLI/worker guidance %q", obsolete)
 		}
-		args := strings.Fields(line)
-		for i := 0; i < len(args)-1; i++ {
-			if args[i] != "--input" && args[i] != "--request" && args[i] != "--output" {
-				continue
-			}
-			recordPath := args[i+1]
-			commandRecordPaths++
-			if strings.ContainsAny(recordPath, "\\:\x00") || strings.HasPrefix(recordPath, "/") || path.Clean(recordPath) != recordPath || !strings.HasSuffix(recordPath, ".json") || (!strings.HasPrefix(recordPath, ".markitect/drafts/") && !strings.HasPrefix(recordPath, ".markitect/runs/")) {
-				t.Errorf("generated command uses invalid record path %q", recordPath)
-			}
-		}
-	}
-	if commandRecordPaths < 13 {
-		t.Errorf("validated only %d generated JSON record arguments, want at least 13", commandRecordPaths)
 	}
 }
 
@@ -753,7 +688,7 @@ func TestRenderedExploreRecordDecodesAndCreatesBoundPreview(t *testing.T) {
 	}
 	workflow := fileFor(t, Plan{Files: files}, workflowPath).Content
 	fence := strings.Repeat(string(rune(96)), 3)
-	marker := "Minimal new exploration input:\n\n" + fence + "json\n"
+	marker := "Minimal new exploration input record (pass as record to project_explore):\n\n" + fence + "json\n"
 	start := strings.Index(workflow, marker)
 	if start < 0 {
 		t.Fatal("shared workflow is missing its minimal Explore JSON example")
@@ -804,19 +739,11 @@ func TestRenderedExploreRecordDecodesAndCreatesBoundPreview(t *testing.T) {
 		t.Fatalf("CreatePreview did not bind the new active record: %#v", preview)
 	}
 	for _, required := range []string{
-		"markitect project explore --repo PATH --input .markitect/drafts/work-item.json",
-		"--acknowledged-at RFC3339_TIME",
-		"Generate one explicit UTC RFC3339 --acknowledged-at value and reuse that exact value",
-		"Use the returned writePlan.digest for WRITE_PLAN_DIGEST",
-		"an authorized Manager may assert its own delegated authority",
-		"never claim that assertion is a human acknowledgement",
-		"The Host reconciles committed accepted-model history automatically",
-		"markitect project briefings --repo PATH --manager MANAGER_ID",
-		"Do not invent or manually aggregate a model delta that the accepted-history mechanism already supplies",
-		"explicitly preserve the already authorized time, start/retry, and cost limits",
-		"never accept a refresh that silently resets those bounds",
-		"integrated work advances through verification and Apply",
-		"an already applied run recovers the exploration completion",
+		"project_explore and write:false",
+		"write:true and expectedDigest",
+		"returned writePlan.digest",
+		"Minimal new exploration input record",
+		"Technical checks, semantic evidence, and human acceptance are distinct",
 	} {
 		if !strings.Contains(workflow, required) {
 			t.Errorf("shared workflow is missing usable lifecycle guidance %q", required)
@@ -841,9 +768,24 @@ func TestNativeProviderEntriesRouteOrdinaryWorkToOperationSkills(t *testing.T) {
 				t.Errorf("%s does not route to %s", path, operation)
 			}
 		}
-		if !strings.Contains(content, "For ordinary work") || !strings.Contains(content, "relevant operation skill") {
+		if !strings.Contains(content, "ordinary issue, bug, feature, or backlog Work Item") || !strings.Contains(content, "Markitect MCP as the outer project-operation interface") {
 			t.Errorf("%s does not route ordinary work to operation skills", path)
 		}
+	}
+	codex := fileFor(t, Plan{Files: files}, "AGENTS.md").Content
+	claude := fileFor(t, Plan{Files: files}, "CLAUDE.md").Content
+	for _, required := range []string{"codex mcp add markitect", "Codex CLI 0.162.0 App Server", "gpt-6-luna", "at `high`"} {
+		if !strings.Contains(codex, required) {
+			t.Errorf("Codex entrypoint lacks supported outer/inner client guidance %q", required)
+		}
+	}
+	for _, required := range []string{"Claude Code 2.1.295", "claude mcp add --transport stdio markitect", "Claude Code is not used as an inner worker", "Codex CLI 0.162.0 App Server"} {
+		if !strings.Contains(claude, required) {
+			t.Errorf("Claude entrypoint lacks supported outer/inner client guidance %q", required)
+		}
+	}
+	if strings.Contains(claude, "--execution-mode native-work") || strings.Contains(claude, "helperLimit") {
+		t.Fatal("Claude entrypoint contains obsolete Codex exec mode or helper guidance")
 	}
 	for _, path := range staleSkillPaths([]Provider{Codex, Claude}) {
 		for _, file := range files {

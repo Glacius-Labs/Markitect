@@ -26,16 +26,19 @@ import (
 )
 
 const (
-	DefaultTimeout                = 5 * time.Minute
-	DefaultMaxStdout              = 4 << 20
-	DefaultMaxStderr              = 1 << 20
-	DefaultMaxDepth               = 8
-	DefaultMaxStarts              = 24
-	DefaultMaxRunTime             = 45 * time.Minute
-	DefaultMaxFileBytes           = 1 << 20
-	DefaultMaxTotalBytes          = 8 << 20
-	DefaultReviewMaxRounds        = 3
-	DefaultReviewMaxManagerRounds = 2
+	DefaultTimeout                      = time.Hour
+	DefaultMaxStdout                    = 4 << 20
+	DefaultMaxStderr                    = 1 << 20
+	DefaultMaxDepth                     = 8
+	DefaultMaxStarts                    = 256
+	DefaultMaxParallel                  = 2
+	DefaultMaxHelperStarts              = 8
+	DefaultMaxEventBytes          int64 = 16 << 20
+	DefaultMaxRunTime                   = 4 * time.Hour
+	DefaultMaxFileBytes                 = 1 << 20
+	DefaultMaxTotalBytes                = 8 << 20
+	DefaultReviewMaxRounds              = 3
+	DefaultReviewMaxManagerRounds       = 2
 )
 
 type Options struct {
@@ -43,7 +46,6 @@ type Options struct {
 	Model                  string `json:"model"`
 	Effort                 string `json:"effort"`
 	CodexProfile           string `json:"codexProfile"`
-	ToolRoot               string `json:"toolRoot"`
 	ProviderExecutable     string `json:"providerExecutable"`
 	InputMicrosPerMillion  int64  `json:"inputMicrosPerMillion"`
 	OutputMicrosPerMillion int64  `json:"outputMicrosPerMillion"`
@@ -60,9 +62,6 @@ type Tool struct {
 type Discovery struct {
 	Provider           string `json:"provider"`
 	ProviderBinary     Tool   `json:"providerBinary"`
-	Python             Tool   `json:"python"`
-	Adapter            Tool   `json:"adapter"`
-	NativeWork         Tool   `json:"nativeWork,omitempty"`
 	Authentication     string `json:"authentication"`
 	AuthenticationNote string `json:"authenticationNote"`
 }
@@ -136,7 +135,7 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		return config, errors.New("active project must contain at least one Manager")
 	}
 	if options.Provider != "codex" {
-		return config, errors.New("project setup currently supports native Codex only")
+		return config, errors.New("project setup currently supports the native Codex App Server only; other providers are unsupported")
 	}
 	options, err := normalizeOptions(options)
 	if err != nil {
@@ -152,50 +151,31 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		return config, errors.New("setup currently supports only --effort high")
 	}
 	if options.CodexProfile != "luna-high" || options.Model != "gpt-6-luna" || options.Effort != "high" {
-		return config, errors.New("native Codex setup requires --codex-profile luna-high with model gpt-6-luna and effort high")
+		return config, errors.New("native Codex App Server setup requires the luna-high model preset with model gpt-6-luna and effort high")
 	}
-	if found.ProviderBinary.Version != "0.162.0" {
+	if found.ProviderBinary.Version != "codex-cli 0.162.0" {
 		return config, errors.New("native Codex setup requires Codex CLI 0.162.0")
-	}
-	if found.NativeWork.Path == "" {
-		return config, errors.New("native-work helper source is missing from the selected Markitect tool root")
 	}
 	if options.InputMicrosPerMillion < 0 || options.OutputMicrosPerMillion < 0 ||
 		(options.InputMicrosPerMillion == 0 && options.OutputMicrosPerMillion == 0) || options.MaxCostMicros <= 0 {
 		return config, errors.New("explicit nonnegative input/output rates and a positive max-cost-micros budget are required")
 	}
-	if found.Provider != options.Provider || found.ProviderBinary.Path == "" || found.Python.Path == "" || found.Adapter.Path == "" {
+	if found.Provider != options.Provider || found.ProviderBinary.Path == "" || !filepath.IsAbs(found.ProviderBinary.Path) {
 		return config, errors.New("tool discovery does not match the selected provider")
 	}
-	args := []string{found.Adapter.Path, "--model", options.Model}
-	modelOptions := map[string]string{}
-	args = append(args, "--codex-executable", found.ProviderBinary.Path, "--codex-version", found.ProviderBinary.Version)
-	modelOptions["model_reasoning_effort"] = options.Effort
-	files := []agentexec.RuntimeFile{runtimeFile(found.Python), runtimeFile(found.Adapter), runtimeFile(found.ProviderBinary)}
-	workerArgs := append([]string(nil), args...)
-	workerFiles := append([]agentexec.RuntimeFile(nil), files...)
-	instructionPaths := []string(nil)
-	workerArgs = append(workerArgs, "--codex-profile", options.CodexProfile, "--native-helper-limit", "0")
-	var instructionFiles []agentexec.RuntimeFile
-	var instructionErr error
-	instructionPaths, instructionFiles, instructionErr = nativeInstructionFiles(project, options.Provider)
+	instructionPaths, instructionFiles, instructionErr := nativeInstructionFiles(project, options.Provider)
 	if instructionErr != nil {
 		return config, instructionErr
 	}
 	if len(instructionPaths) == 0 {
-		return config, errors.New("native-work requires existing generated Codex project instructions; run project onboard first")
+		return config, errors.New("native Codex setup requires existing generated Codex project instructions; run project onboard first")
 	}
-	workerFiles = append(workerFiles, runtimeFile(found.NativeWork))
-	workerFiles = append(workerFiles, instructionFiles...)
+	runtimeFiles := append([]agentexec.RuntimeFile{runtimeFile(found.ProviderBinary)}, instructionFiles...)
 	environment := []string{"PATH", "TEMP", "TMP"}
 	if runtime.GOOS == "windows" {
-		environment = append(environment, "SystemRoot")
-	}
-	workerEnvironment := append([]string(nil), environment...)
-	if runtime.GOOS == "windows" {
-		workerEnvironment = append(workerEnvironment, "USERPROFILE", "APPDATA", "LOCALAPPDATA")
+		environment = append(environment, "SystemRoot", "USERPROFILE", "APPDATA", "LOCALAPPDATA")
 	} else {
-		workerEnvironment = append(workerEnvironment, "HOME")
+		environment = append(environment, "HOME")
 	}
 	pricing := projectrun.Pricing{InputMicrosPerMillion: options.InputMicrosPerMillion, OutputMicrosPerMillion: options.OutputMicrosPerMillion}
 	agents := make(map[string]projectrun.Agent, len(project.Report.Managers))
@@ -204,10 +184,12 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		if manager.ID == "" {
 			return config, errors.New("active project has a Manager with an empty ID")
 		}
-		worker := selectedAgent(found, workerArgs, options.Model, modelOptions, workerFiles, workerEnvironment, pricing)
-		reviewer := selectedAgent(found, args, options.Model, modelOptions, files, environment, pricing)
-		worker.WorkspaceMode = "scoped"
+		worker := selectedAgent(found, options.Model, options.Effort, runtimeFiles, environment, pricing)
+		reviewer := selectedAgent(found, options.Model, options.Effort, runtimeFiles, environment, pricing)
+		worker.WorkspaceMode = "git"
 		worker.InstructionPaths = append([]string(nil), instructionPaths...)
+		reviewer.WorkspaceMode = "git"
+		reviewer.InstructionPaths = append([]string(nil), instructionPaths...)
 		agents[manager.ID] = worker
 		reviewAgents[manager.ID] = reviewer
 	}
@@ -218,7 +200,7 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 			Agents: reviewAgents, MaxRounds: DefaultReviewMaxRounds, MaxManagerRounds: DefaultReviewMaxManagerRounds,
 		},
 		Limits: projectrun.Limits{
-			MaxDepth: DefaultMaxDepth, MaxStarts: DefaultMaxStarts, MaxRetries: 1, MaxParallel: 1,
+			MaxDepth: DefaultMaxDepth, MaxStarts: DefaultMaxStarts, MaxRetries: 1, MaxParallel: DefaultMaxParallel,
 			MaxDuration: projectrun.Duration(DefaultMaxRunTime), MaxCostMicros: options.MaxCostMicros,
 			MaxCandidateFileBytes: DefaultMaxFileBytes, MaxCandidateBytes: DefaultMaxTotalBytes,
 		},
@@ -253,14 +235,16 @@ func normalizeOptions(options Options) (Options, error) {
 	return options, nil
 }
 
-func selectedAgent(found Discovery, args []string, model string, modelOptions map[string]string, files []agentexec.RuntimeFile, environment []string, pricing projectrun.Pricing) projectrun.Agent {
-	options := make(map[string]string, len(modelOptions))
-	for key, value := range modelOptions {
-		options[key] = value
-	}
+func selectedAgent(found Discovery, model, effort string, files []agentexec.RuntimeFile, environment []string, pricing projectrun.Pricing) projectrun.Agent {
 	return projectrun.Agent{
-		Command: found.Python.Path, Args: append([]string(nil), args...), Model: model,
-		ModelOptions: options, ProviderVersion: found.ProviderBinary.Version,
+		Command: found.ProviderBinary.Path, Transport: projectrun.TransportCodexAppServer,
+		AppServer: &projectrun.AppServerSettings{
+			ReasoningEffort: effort,
+			// Empty PermissionProfile preserves the user's existing Codex boundary.
+			Helpers:       projectrun.AppServerHelpers{Enabled: true, MaxStartRequests: DefaultMaxHelperStarts, MaxDepth: 1},
+			MaxEventBytes: DefaultMaxEventBytes,
+		},
+		Model: model, ProviderVersion: found.ProviderBinary.Version,
 		Timeout: projectrun.Duration(DefaultTimeout), MaxStdoutBytes: DefaultMaxStdout, MaxStderrBytes: DefaultMaxStderr,
 		RuntimeFiles: append([]agentexec.RuntimeFile(nil), files...), Environment: append([]string(nil), environment...), Pricing: pricing,
 	}
@@ -278,9 +262,7 @@ func Doctor(project *projectwork.Project, options Options) (DoctorReport, error)
 		return result, err
 	}
 	result.Checks = append(result.Checks,
-		Check{Name: "provider-native-binary", Status: "available", Detail: discovery.ProviderBinary.Path + " (" + discovery.ProviderBinary.Version + ")"},
-		Check{Name: "python", Status: "available", Detail: discovery.Python.Path + " (" + discovery.Python.Version + ")"},
-		Check{Name: "adapter", Status: "pinned", Detail: discovery.Adapter.Path + " " + discovery.Adapter.Digest},
+		Check{Name: "codex-app-server", Status: "available", Detail: discovery.ProviderBinary.Path + " (" + discovery.ProviderBinary.Version + ")"},
 		Check{Name: "provider-authentication", Status: "not-verified", Detail: "No login-status probe or credential/config read was performed."},
 	)
 	for _, check := range project.Report.Checks {
@@ -316,10 +298,10 @@ func runtimeFile(tool Tool) agentexec.RuntimeFile {
 // invocation contract; runtime pins bind their exact absolute bytes and modes.
 func nativeInstructionFiles(project *projectwork.Project, provider string) ([]string, []agentexec.RuntimeFile, error) {
 	if project == nil || project.Root == "" {
-		return nil, nil, errors.New("native-work instructions require an active project root")
+		return nil, nil, errors.New("native Codex instructions require an active project root")
 	}
 	if provider != "codex" {
-		return nil, nil, errors.New("native-work instructions currently support only Codex")
+		return nil, nil, errors.New("native Codex instructions currently support only Codex")
 	}
 	root, err := filepath.Abs(project.Root)
 	if err != nil {
@@ -380,57 +362,19 @@ func nativeInstructionFiles(project *projectwork.Project, provider string) ([]st
 	return paths, files, nil
 }
 
-// Discover identifies direct native executables and exact source adapters. It
-// invokes only --version; it never checks login state or reads provider config.
+// Discover identifies the direct native Codex executable. It invokes only
+// --version; it never checks login state or reads provider config.
 func Discover(options Options) (Discovery, error) {
+	return discoverWithVersion(options, version)
+}
+
+// discoverWithVersion keeps executable discovery separately testable from
+// running a provider command. The compiled native App Server has no
+// source-file dependency and does not require or inspect a Markitect checkout.
+func discoverWithVersion(options Options, readVersion func(string) (string, error)) (Discovery, error) {
 	var result Discovery
-	if options.Provider != "codex" && options.Provider != "claude" {
-		return result, errors.New("provider must be codex or claude")
-	}
-	if strings.TrimSpace(options.ToolRoot) == "" {
-		return result, errors.New("--tool-root must identify the exact Markitect source checkout")
-	}
-	root, err := filepath.Abs(options.ToolRoot)
-	if err != nil {
-		return result, fmt.Errorf("resolve tool root: %w", err)
-	}
-	rootInfo, err := os.Lstat(root)
-	if err != nil || !rootInfo.IsDir() || rootInfo.Mode()&fs.ModeSymlink != 0 {
-		return result, errors.New("--tool-root must be a real directory")
-	}
-	goMod := filepath.Join(root, "go.mod")
-	if info, err := os.Lstat(goMod); err != nil || !info.Mode().IsRegular() || info.Mode()&fs.ModeSymlink != 0 {
-		return result, errors.New("--tool-root must contain Markitect go.mod")
-	}
-	adapterName := "internal/tooling/" + options.Provider + "runner/runner.py"
-	adapterPath := filepath.Join(root, filepath.FromSlash(adapterName))
-	adapter, err := inspectFile(adapterPath)
-	if err != nil {
-		return result, fmt.Errorf("inspect selected %s adapter: %w", options.Provider, err)
-	}
-	var nativeWork Tool
-	if options.Provider == "codex" {
-		nativeWorkPath := filepath.Join(root, "internal", "tooling", "codexrunner", "native_work.py")
-		nativeWork, err = inspectFile(nativeWorkPath)
-		if err != nil {
-			return result, fmt.Errorf("inspect native-work helper source: %w", err)
-		}
-	}
-	pythonName := "python3"
-	if runtime.GOOS == "windows" {
-		pythonName = "python.exe"
-	}
-	pythonPath, err := exec.LookPath(pythonName)
-	if err != nil {
-		return result, errors.New("Python executable was not found; install Python and ensure python.exe/python3 is on PATH")
-	}
-	pythonPath, err = filepath.EvalSymlinks(pythonPath)
-	if err != nil {
-		return result, errors.New("Python executable could not be resolved to its native file")
-	}
-	pythonTool, err := inspectFile(pythonPath)
-	if err != nil || isCommandShim(pythonTool.Path) {
-		return result, errors.New("Python must resolve to a direct native executable, not a command/script shim")
+	if options.Provider != "codex" {
+		return result, errors.New("native runtime discovery currently supports Codex App Server only; other providers are unsupported")
 	}
 	providerPath := options.ProviderExecutable
 	if providerPath == "" {
@@ -443,16 +387,15 @@ func Discover(options Options) (Discovery, error) {
 	if isCommandShim(providerTool.Path) {
 		return result, errors.New("provider executable must be a direct native executable; .ps1/.cmd/.bat and script shims are not accepted")
 	}
-	providerTool.Version, err = version(providerTool.Path)
+	providerTool.Version, err = readVersion(providerTool.Path)
 	if err != nil {
 		return result, fmt.Errorf("read selected provider version: %w", err)
 	}
-	pythonTool.Version, err = version(pythonTool.Path)
-	if err != nil {
-		return result, fmt.Errorf("read selected Python version: %w", err)
+	if options.Provider == "codex" {
+		providerTool.Version = "codex-cli " + providerTool.Version
 	}
 	result = Discovery{
-		Provider: options.Provider, ProviderBinary: providerTool, Python: pythonTool, Adapter: adapter, NativeWork: nativeWork,
+		Provider: options.Provider, ProviderBinary: providerTool,
 		Authentication:     "not-verified",
 		AuthenticationNote: "Markitect does not read credentials or probe provider login status; use the provider's existing OS-default sign-in.",
 	}
@@ -551,7 +494,7 @@ func discoverProvider(provider string) string {
 }
 
 func version(path string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	command := exec.CommandContext(ctx, path, "--version")
 	command.Env = []string{}

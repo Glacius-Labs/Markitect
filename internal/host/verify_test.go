@@ -65,16 +65,21 @@ func TestVerifyUsesEachCheckTimeoutAndRecordsEffectiveBound(t *testing.T) {
 	if len(results) != 2 || results[0].ExitCode != 0 || results[0].TimeoutMilliseconds != 1000 || results[1].ExitCode != -1 || results[1].TimeoutMilliseconds != 50 || !errors.As(err, &verifyErr) || verifyErr.Kind != "timeout" || verifyErr.Gate != "fallback" || !strings.Contains(err.Error(), "50ms execution limit") {
 		t.Fatalf("configured/fallback bounds or incomplete timeout classification changed: results=%#v error=%v", results, err)
 	}
-	maximum := 1800
+	maximum := 5400
 	checks[0].TimeoutSeconds = &maximum
 	commands, err := planVerifyCommands(checks)
-	if err != nil || commands[0].timeout != 30*time.Minute || commands[1].timeout != 0 || verifyDefaultTime != 10*time.Minute {
+	if err != nil || commands[0].timeout != 90*time.Minute || commands[1].timeout != 0 || verifyDefaultTime != 10*time.Minute {
 		t.Fatalf("explicit maximum or unchanged default lost: %#v error=%v", commands, err)
+	}
+	maximum++
+	checks[0].TimeoutSeconds = &maximum
+	if _, err := planVerifyCommands(checks); err == nil || !strings.Contains(err.Error(), "between 1 and 5400") {
+		t.Fatalf("timeout above the configured maximum was accepted: %v", err)
 	}
 }
 
 func TestCheckCopiesAndDigestsPreserveTimeoutWithoutAliasing(t *testing.T) {
-	seconds := 1800
+	seconds := 5400
 	checks := []authoring.Check{{Name: "test", Run: []string{"go", "test"}, TimeoutSeconds: &seconds}}
 	cloned := cloneAuthoringChecks(checks)
 	selected := selectedAuthoringChecks([]string{"test"}, checks)
@@ -82,7 +87,7 @@ func TestCheckCopiesAndDigestsPreserveTimeoutWithoutAliasing(t *testing.T) {
 	seconds = 1
 	checks[0].Run[1] = "version"
 	for _, copied := range [][]authoring.Check{cloned, selected} {
-		if *copied[0].TimeoutSeconds != 1800 || copied[0].Run[1] != "test" || projectionConfigDigest("request", copied) != before {
+		if *copied[0].TimeoutSeconds != 5400 || copied[0].Run[1] != "test" || projectionConfigDigest("request", copied) != before {
 			t.Fatalf("check copy lost or aliased timeout/argv: %#v", copied)
 		}
 	}

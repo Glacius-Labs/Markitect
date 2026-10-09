@@ -10,10 +10,15 @@ release_publication: not_authorized
 native_acceptance:
   grant_id: product-readiness-native-acceptance-20261009
   status: conditional_on_item_readiness
+  limits_revision: generous-native-limits-20261009
+  main_gate_revision: combined-normal-smoke-20261009
+  main_required_jobs: [A01]
+  deferred_not_main_gate_jobs: [A02, A03]
+  max_role_wall_seconds: 3600
   max_jobs: 3
-  max_job_wall_seconds: 1800
-  max_total_wall_seconds: 5400
-  max_total_role_start_requests: 64
+  max_job_wall_seconds: 14400
+  max_total_wall_seconds: 43200
+  max_total_role_start_requests: 256
   consumed_jobs: 0
   consumed_role_start_requests: 0
   model: gpt-6-luna
@@ -45,7 +50,7 @@ items:
     branch: codex/product-workspaces-20261009
     base: 1495e1be7b0046711531fa42c8407fba67b8e814
     document: P03-workspaces.md
-    evidence: []
+    evidence: [P03-workspaces-handoff-20261009.md, integration-progress-20261009.md]
   - id: P04
     title: Native Codex App Server execution adapter
     status: in_progress
@@ -55,7 +60,7 @@ items:
     branch: codex/product-app-server-20261009
     base: 1495e1be7b0046711531fa42c8407fba67b8e814
     document: P04-app-server.md
-    evidence: []
+    evidence: [P04-adapter-handoff-20261009.md, integration-progress-20261009.md]
   - id: P05
     title: Product MCP adapter over shared Host operations
     status: in_progress
@@ -65,27 +70,27 @@ items:
     branch: codex/product-mcp-20261009
     base: 1495e1be7b0046711531fa42c8407fba67b8e814
     document: P05-mcp.md
-    evidence: []
+    evidence: [P05-mcp-handoff-20261009.md, integration-progress-20261009.md]
   - id: P06
     title: Real independent Managers, helpers and reviewers
-    status: blocked
+    status: in_progress
     depends_on: [P03, P04]
     owner: Product Integration
     owner_thread: 01a121a0-0417-71c1-9e4b-be742f8c1146
     branch: codex/product-integration-20261009
     base: 1495e1be7b0046711531fa42c8407fba67b8e814
     document: P06-agent-lifecycle.md
-    evidence: []
+    evidence: [integration-progress-20261009.md]
   - id: P07
     title: Normal autonomous Work Item workflow and installed guidance
-    status: blocked
+    status: in_progress
     depends_on: [P03, P04, P05, P06]
     owner: Product Integration
     owner_thread: 01a121a0-0417-71c1-9e4b-be742f8c1146
     branch: codex/product-integration-20261009
     base: 1495e1be7b0046711531fa42c8407fba67b8e814
     document: P07-user-workflow.md
-    evidence: []
+    evidence: [integration-progress-20261009.md]
   - id: P08
     title: Consolidated documentation and clean src repository layout
     status: blocked
@@ -97,7 +102,7 @@ items:
     document: P08-repository.md
     evidence: []
   - id: P09
-    title: Maintained regression suite and actual product acceptance
+    title: Required regression/platform gates and combined normal A01 smoke
     status: blocked
     depends_on: [P07, P08]
     owner: Product Integration

@@ -20,18 +20,15 @@ import (
 func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 	root := t.TempDir()
 	writeNativeInstructions(t, root)
-	python := executableTool(t)
-	adapter := testTool(t, root, "runner.py", false)
 	provider := testTool(t, root, "codex.exe", true)
-	provider.Version = "0.162.0"
+	provider.Version = "codex-cli 0.162.0"
 	project := &projectwork.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{
 		{ID: "root-manager", Namespace: ""},
 		{ID: "orders-manager", Namespace: "commerce.orders", Parent: "root-manager"},
 		{ID: "inventory-manager", Namespace: "commerce.inventory", Parent: "root-manager"},
 	}}}
-	nativeWork := testTool(t, root, "native_work.py", false)
 	options := Options{Provider: "codex", Model: "gpt-6-luna", Effort: "high", InputMicrosPerMillion: 7, OutputMicrosPerMillion: 11, MaxCostMicros: 5000}
-	config, err := BuildRuntime(project, options, Discovery{Provider: "codex", ProviderBinary: provider, Python: python, Adapter: adapter, NativeWork: nativeWork})
+	config, err := BuildRuntime(project, options, Discovery{Provider: "codex", ProviderBinary: provider})
 	if err != nil {
 		t.Fatalf("BuildRuntime: %v", err)
 	}
@@ -49,35 +46,42 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 		if !ok {
 			t.Fatalf("missing runtime mapping for %s", id)
 		}
-		if agent.Command != python.Path || agent.Model != "gpt-6-luna" || agent.ProviderVersion != provider.Version {
+		if agent.Command != provider.Path || len(agent.Args) != 0 || agent.Transport != projectrun.TransportCodexAppServer || agent.Model != "gpt-6-luna" || agent.ProviderVersion != provider.Version {
 			t.Fatalf("unexpected mapping for %s: %#v", id, agent)
 		}
-		if agent.WorkspaceMode != "scoped" || !containsArgs(agent.Args, "--codex-profile", "luna-high") {
-			t.Fatalf("default setup must select the supported native Codex worker: %#v", agent)
+		if agent.WorkspaceMode != "git" || agent.AppServer == nil || agent.AppServer.ReasoningEffort != "high" || agent.AppServer.PermissionProfile != "" || !agent.AppServer.Helpers.Enabled {
+			t.Fatalf("default setup must select the typed native Codex App Server worker: %#v", agent)
 		}
-		if agent.ModelOptions.(map[string]string)["model_reasoning_effort"] != "high" {
-			t.Fatalf("Codex effort option missing for %s: %#v", id, agent.ModelOptions)
+		if agent.ModelOptions != nil || agent.AppServer.Helpers.MaxStartRequests != DefaultMaxHelperStarts || agent.AppServer.Helpers.MaxDepth != 1 || agent.AppServer.MaxEventBytes != DefaultMaxEventBytes {
+			t.Fatalf("native settings must be explicit, bounded, and leave account permissions inherited: %#v", agent.AppServer)
 		}
-		if len(agent.RuntimeFiles) != 6 {
-			t.Fatalf("runtime file pins for %s = %d, want Python, Codex, adapters, and instructions", id, len(agent.RuntimeFiles))
+		if len(agent.RuntimeFiles) != 3 {
+			t.Fatalf("runtime file pins for %s = %d, want Codex and both instructions", id, len(agent.RuntimeFiles))
 		}
 		reviewer, ok := config.Review.Agents[id]
 		if !ok {
 			t.Fatalf("missing reviewer mapping for %s", id)
 		}
-		if reviewer.WorkspaceMode != "" || len(reviewer.RuntimeFiles) != 3 || containsArgs(reviewer.Args, "--native-helper-limit") || containsArgs(reviewer.Args, "--codex-profile") {
-			t.Fatalf("reviewer config for %s must retain the read-only transport: %#v", id, reviewer)
+		if reviewer.WorkspaceMode != "git" || reviewer.Transport != projectrun.TransportCodexAppServer || len(reviewer.InstructionPaths) != len(agent.InstructionPaths) || len(reviewer.RuntimeFiles) != len(agent.RuntimeFiles) || reviewer.Command != provider.Path {
+			t.Fatalf("reviewer config for %s must use a fresh native read-only workspace with pinned instructions: %#v", id, reviewer)
 		}
-		if !reflect.DeepEqual(reviewer.ModelOptions, agent.ModelOptions) || reviewer.Model != agent.Model || reviewer.ProviderVersion != agent.ProviderVersion {
+		if reviewer.ModelOptions != nil || reviewer.AppServer == nil || reviewer.AppServer.PermissionProfile != "" || reviewer.Model != agent.Model || reviewer.ProviderVersion != agent.ProviderVersion {
 			t.Fatalf("reviewer model profile for %s differs from worker profile", id)
 		}
-		for _, file := range reviewer.Environment {
-			if strings.EqualFold(file, "HOME") || strings.EqualFold(file, "CODEX_HOME") || strings.EqualFold(file, "USERPROFILE") || strings.EqualFold(file, "APPDATA") {
-				t.Fatalf("read-only reviewer allowlist includes account variable %q", file)
+		if containsName(reviewer.Environment, "CODEX_HOME") {
+			t.Fatal("runtime must use the existing OS-default Codex profile, not override CODEX_HOME")
+		}
+		if runtime.GOOS == "windows" {
+			for _, name := range []string{"USERPROFILE", "APPDATA", "LOCALAPPDATA"} {
+				if !containsName(reviewer.Environment, name) {
+					t.Fatalf("native reviewer allowlist omits OS-default profile variable %s: %#v", name, reviewer.Environment)
+				}
 			}
+		} else if !containsName(reviewer.Environment, "HOME") {
+			t.Fatalf("native reviewer allowlist omits OS-default HOME: %#v", reviewer.Environment)
 		}
 	}
-	if config.Mode != "controlled-local" || config.RequireIsolation || config.Limits.MaxRetries != 1 || config.Limits.MaxParallel != 1 || config.Limits.MaxCostMicros != 5000 {
+	if config.Mode != "controlled-local" || config.RequireIsolation || config.Limits.MaxRetries != 1 || config.Limits.MaxParallel != 2 || config.Limits.MaxStarts != DefaultMaxStarts || config.Limits.MaxDuration != projectrun.Duration(DefaultMaxRunTime) || config.Limits.MaxCostMicros != 5000 {
 		t.Fatalf("unsafe or unexpected limits: %#v", config)
 	}
 	if config.Limits.MaxDuration <= 0 || config.Limits.MaxCostMicros <= 0 {
@@ -92,16 +96,13 @@ func TestBuildRuntimeDefaultsCodexToNativeLunaHighAndBindsInstructions(t *testin
 	root := t.TempDir()
 	writeNativeInstructions(t, root)
 	provider := testTool(t, root, "codex.exe", true)
-	provider.Version = "0.162.0"
+	provider.Version = "codex-cli 0.162.0"
 	project := &projectwork.Project{
 		Root:   root,
 		Config: projectwork.Config{},
 		Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}, {ID: "orders", Parent: "root"}}},
 	}
-	found := Discovery{
-		Provider: "codex", ProviderBinary: provider, Python: executableTool(t),
-		Adapter: testTool(t, root, "runner.py", false), NativeWork: testTool(t, root, "native_work.py", false),
-	}
+	found := Discovery{Provider: "codex", ProviderBinary: provider}
 	options := Options{
 		Provider: "codex", Model: "gpt-6-luna", Effort: "high",
 		InputMicrosPerMillion: 7, OutputMicrosPerMillion: 11, MaxCostMicros: 5000,
@@ -115,26 +116,21 @@ func TestBuildRuntimeDefaultsCodexToNativeLunaHighAndBindsInstructions(t *testin
 	}
 	for _, id := range []string{"root", "orders"} {
 		agent := config.Agents[id]
-		if agent.WorkspaceMode != "scoped" {
+		if agent.WorkspaceMode != "git" {
 			t.Fatalf("workspace mode for %s = %q", id, agent.WorkspaceMode)
 		}
 		wantPaths := []string{".agents/skills/markitect-implement/SKILL.md", "AGENTS.md"}
 		if !reflect.DeepEqual(agent.InstructionPaths, wantPaths) {
 			t.Fatalf("instruction paths for %s = %#v, want %#v", id, agent.InstructionPaths, wantPaths)
 		}
-		joinedArgs := strings.Join(agent.Args, " ")
-		for _, pair := range [][2]string{{"--codex-profile", "luna-high"}, {"--native-helper-limit", "0"}} {
-			if !containsArgs(agent.Args, pair[0], pair[1]) {
-				t.Fatalf("native adapter args for %s lack %q %q: %s", id, pair[0], pair[1], joinedArgs)
-			}
+		if agent.Transport != projectrun.TransportCodexAppServer || len(agent.Args) != 0 || agent.Command != provider.Path || agent.ModelOptions != nil {
+			t.Fatalf("manager must use the selected native executable directly with no wrapper arguments/options: %#v", agent)
 		}
-		if len(agent.RuntimeFiles) != 6 {
-			t.Fatalf("runtime pins for %s = %d, want Python, Codex, both adapter files, and two instructions: %#v", id, len(agent.RuntimeFiles), agent.RuntimeFiles)
+		if len(agent.RuntimeFiles) != 3 {
+			t.Fatalf("runtime pins for %s = %d, want Codex and two instructions: %#v", id, len(agent.RuntimeFiles), agent.RuntimeFiles)
 		}
-		for _, tool := range []Tool{found.Python, found.ProviderBinary, found.Adapter, found.NativeWork} {
-			if !hasRuntimePin(agent.RuntimeFiles, tool) {
-				t.Fatalf("native runtime does not pin selected tool %s: %#v", tool.Path, agent.RuntimeFiles)
-			}
+		if !hasRuntimePin(agent.RuntimeFiles, found.ProviderBinary) {
+			t.Fatalf("native runtime does not pin selected Codex executable %s: %#v", provider.Path, agent.RuntimeFiles)
 		}
 		for _, path := range agent.InstructionPaths {
 			absolute := filepath.Join(root, filepath.FromSlash(path))
@@ -148,60 +144,22 @@ func TestBuildRuntimeDefaultsCodexToNativeLunaHighAndBindsInstructions(t *testin
 				t.Fatalf("instruction %s lacks its absolute mode/digest runtime pin: %#v", path, agent.RuntimeFiles)
 			}
 		}
-		if got := agent.ModelOptions.(map[string]string)["model_reasoning_effort"]; got != "high" {
-			t.Fatalf("native model effort = %q", got)
-		}
-		for _, name := range []string{"CODEX_HOME"} {
-			for _, allowed := range agent.Environment {
-				if strings.EqualFold(allowed, name) {
-					t.Fatalf("native environment allowlist includes nonstandard override %q", allowed)
-				}
-			}
-		}
-		if runtime.GOOS == "windows" {
-			for _, name := range []string{"USERPROFILE", "APPDATA", "LOCALAPPDATA"} {
-				if !containsName(agent.Environment, name) {
-					t.Fatalf("native environment allowlist omits Windows home variable %s: %#v", name, agent.Environment)
-				}
-			}
-		} else if !containsName(agent.Environment, "HOME") {
-			t.Fatalf("native environment allowlist omits HOME: %#v", agent.Environment)
+		if agent.AppServer == nil || agent.AppServer.ReasoningEffort != "high" || agent.AppServer.PermissionProfile != "" {
+			t.Fatalf("native model effort/inherited permissions = %#v", agent.AppServer)
 		}
 		reviewer := config.Review.Agents[id]
-		if reviewer.WorkspaceMode != "" || len(reviewer.RuntimeFiles) != 3 || containsArgs(reviewer.Args, "--native-helper-limit") || containsArgs(reviewer.Args, "--codex-profile") {
-			t.Fatalf("reviewer config should retain read-only transport: %#v", reviewer)
+		if reviewer.WorkspaceMode != "git" || len(reviewer.RuntimeFiles) != 3 || !reflect.DeepEqual(reviewer.InstructionPaths, agent.InstructionPaths) {
+			t.Fatalf("reviewer config should use its own read-only Git workspace with the same instruction pins: %#v", reviewer)
 		}
 	}
-}
-
-func containsArgs(args []string, expected ...string) bool {
-	if len(expected) == 0 || len(args) < len(expected) {
-		return false
-	}
-	for start := 0; start+len(expected) <= len(args); start++ {
-		match := true
-		for offset := range expected {
-			if args[start+offset] != expected[offset] {
-				match = false
-				break
-			}
-		}
-		if match {
-			return true
-		}
-	}
-	return false
 }
 
 func TestBuildRuntimeDefaultNativeRequiresExistingCodexInstructions(t *testing.T) {
 	root := t.TempDir()
 	provider := testTool(t, root, "codex.exe", true)
-	provider.Version = "0.162.0"
+	provider.Version = "codex-cli 0.162.0"
 	project := &projectwork.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
-	found := Discovery{
-		Provider: "codex", ProviderBinary: provider, Python: executableTool(t),
-		Adapter: testTool(t, root, "runner.py", false), NativeWork: testTool(t, root, "native_work.py", false),
-	}
+	found := Discovery{Provider: "codex", ProviderBinary: provider}
 	_, err := BuildRuntime(project, Options{
 		Provider: "codex", Model: "gpt-6-luna", Effort: "high",
 		InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1, MaxCostMicros: 2,
@@ -268,9 +226,9 @@ func TestDiscoverProviderUsesCurrentWindowsCodexVendorPath(t *testing.T) {
 func TestBuildRuntimeRejectsUnsupportedNativeProfiles(t *testing.T) {
 	root := t.TempDir()
 	provider := testTool(t, root, "codex.exe", true)
-	provider.Version = "0.162.0"
+	provider.Version = "codex-cli 0.162.0"
 	project := &projectwork.Project{Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
-	found := Discovery{Provider: "codex", ProviderBinary: provider, Python: executableTool(t), Adapter: testTool(t, root, "runner.py", false), NativeWork: testTool(t, root, "native_work.py", false)}
+	found := Discovery{Provider: "codex", ProviderBinary: provider}
 	base := Options{Provider: "codex", Model: "gpt-6-luna", Effort: "high", CodexProfile: "luna-high", InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1, MaxCostMicros: 2}
 	cases := []struct {
 		name   string
@@ -281,7 +239,7 @@ func TestBuildRuntimeRejectsUnsupportedNativeProfiles(t *testing.T) {
 		{"different effort", func(o *Options, _ *Discovery) { o.Effort = "medium" }},
 		{"different CLI version", func(_ *Options, d *Discovery) { d.ProviderBinary.Version = "0.161.0" }},
 		{"default must not substitute model", func(o *Options, _ *Discovery) { o.CodexProfile = ""; o.Model = "gpt-6-sol" }},
-		{"missing helper source", func(_ *Options, d *Discovery) { d.NativeWork = Tool{} }},
+		{"unsupported provider version", func(_ *Options, d *Discovery) { d.ProviderBinary.Version = "codex-cli 0.163.0" }},
 		{"Claude native mode", func(o *Options, d *Discovery) { o.Provider = "claude"; d.Provider = "claude" }},
 	}
 	for _, test := range cases {
@@ -298,11 +256,11 @@ func TestBuildRuntimeRejectsUnsupportedNativeProfiles(t *testing.T) {
 
 func TestBuildRuntimeRejectsNonCodexSetup(t *testing.T) {
 	project := &projectwork.Project{Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
-	found := Discovery{Provider: "claude", ProviderBinary: Tool{Path: filepath.Join(t.TempDir(), "provider"), Version: "1.0.0", Digest: "sha256:" + strings.Repeat("a", 64), Mode: "0644"}, Python: Tool{Path: filepath.Join(t.TempDir(), "python"), Version: "3.13.0", Digest: "sha256:" + strings.Repeat("b", 64), Mode: "0644"}, Adapter: Tool{Path: filepath.Join(t.TempDir(), "runner.py"), Digest: "sha256:" + strings.Repeat("c", 64), Mode: "0644"}}
+	found := Discovery{Provider: "claude", ProviderBinary: Tool{Path: filepath.Join(t.TempDir(), "provider"), Version: "claude 2.1.295", Digest: "sha256:" + strings.Repeat("a", 64), Mode: "0644"}}
 	if _, err := BuildRuntime(project, Options{Provider: "custom", Model: "m", InputMicrosPerMillion: 1, MaxCostMicros: 1}, found); err == nil {
 		t.Fatal("unsupported provider was accepted")
 	}
-	if _, err := BuildRuntime(project, Options{Provider: "claude"}, found); err == nil || !strings.Contains(err.Error(), "native Codex only") {
+	if _, err := BuildRuntime(project, Options{Provider: "claude"}, found); err == nil || !strings.Contains(err.Error(), "native Codex App Server only") {
 		t.Fatalf("Claude setup error = %v", err)
 	}
 }
@@ -314,8 +272,42 @@ func TestDiscoverRejectsCommandShimAndParsesOnlyVersion(t *testing.T) {
 	if match := versionPattern.FindStringSubmatch("codex-cli 0.130.0\n"); len(match) != 2 || match[1] != "0.130.0" {
 		t.Fatalf("version parse = %#v", match)
 	}
-	if _, err := Discover(Options{Provider: "codex"}); err == nil || !strings.Contains(err.Error(), "--tool-root") {
-		t.Fatalf("missing source root error = %v", err)
+	if _, err := Discover(Options{Provider: "claude"}); err == nil || !strings.Contains(err.Error(), "Codex App Server only") {
+		t.Fatalf("unsupported provider discovery error = %v", err)
+	}
+}
+
+func TestDiscoverInstalledCodexDoesNotRequireMarkitectCheckoutOrLegacyHelpers(t *testing.T) {
+	installedDir := t.TempDir()
+	providerName := "codex"
+	if runtime.GOOS == "windows" {
+		providerName += ".exe"
+	}
+	provider := testTool(t, installedDir, providerName, true)
+	versionCalls := 0
+	var probedPath string
+	discovery, err := discoverWithVersion(Options{
+		Provider: "codex", ProviderExecutable: provider.Path,
+	}, func(path string) (string, error) {
+		versionCalls++
+		probedPath = path
+		return "0.162.0", nil
+	})
+	if err != nil {
+		t.Fatalf("installed binary discovery without a source checkout: %v", err)
+	}
+	if versionCalls != 1 || discovery.ProviderBinary.Path != probedPath || discovery.ProviderBinary.Version != "codex-cli 0.162.0" {
+		t.Fatalf("installed native binary was not pinned by path and version: calls=%d discovery=%+v", versionCalls, discovery)
+	}
+	if discovery.Authentication != "not-verified" || !strings.Contains(discovery.AuthenticationNote, "does not read credentials") {
+		t.Fatalf("discovery must leave existing sign-in untouched and unverified: %+v", discovery)
+	}
+	entries, err := os.ReadDir(installedDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].Name() != providerName {
+		t.Fatalf("installed runtime discovery depended on source helpers: entries=%v", entries)
 	}
 }
 
@@ -402,38 +394,10 @@ func testTool(t *testing.T, root, name string, executable bool) Tool {
 	}
 	sum := sha256.Sum256(content)
 	version := ""
-	if strings.Contains(name, "python") {
-		version = "3.13.0"
-	} else if strings.Contains(name, "codex") {
+	if strings.Contains(name, "codex") {
 		version = "0.130.0"
 	}
 	return Tool{Path: resolved, Version: version, Digest: "sha256:" + hex.EncodeToString(sum[:]), Mode: actualMode}
 }
 
 func modeOctal(mode os.FileMode) string { return fmt.Sprintf("%04o", mode) }
-
-func executableTool(t *testing.T) Tool {
-	t.Helper()
-	path, err := os.Executable()
-	if err != nil {
-		t.Fatal(err)
-	}
-	path, err = filepath.Abs(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	content, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	info, err := os.Stat(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	mode := "0644"
-	if runtime.GOOS != "windows" {
-		mode = modeOctal(info.Mode().Perm())
-	}
-	sum := sha256.Sum256(content)
-	return Tool{Path: path, Version: "3.13.0", Digest: "sha256:" + hex.EncodeToString(sum[:]), Mode: mode}
-}

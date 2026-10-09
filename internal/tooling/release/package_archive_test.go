@@ -54,7 +54,7 @@ func TestSafeArchivePathRejectsTraversalAndWindowsSpecialPaths(t *testing.T) {
 			t.Errorf("accepted unsafe path %q", candidate)
 		}
 	}
-	for _, candidate := range []string{"go.mod", "cmd/markitect/main.go", "schema/manifest.yaml"} {
+	for _, candidate := range []string{"go.mod", "src/cmd/markitect/main.go", "schema/manifest.yaml"} {
 		if err := safeArchivePath(candidate); err != nil {
 			t.Errorf("rejected valid path %q: %v", candidate, err)
 		}

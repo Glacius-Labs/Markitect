@@ -32,7 +32,7 @@ $env:PATH = "$toolBin;$env:PATH"
 markitect project --help
 ```
 
-Keep the source checkout: local runtime setup fingerprints its Codex or Claude adapter. Start your native coding agent from a shell where this executable is on `PATH`. Local AI execution also requires Python, a supported native provider executable and your existing provider account. See [executable selection and setup](docs/project-workflow.md#choose-the-executable) for source invocation, Linux use and explicit tool selection.
+Keep the source checkout for development. The current runtime is configured through `project setup`; the outer coding client connects to the repository-local Markitect MCP server. Manager and reviewer execution uses the supported Codex App Server runtime. No Python install or global client configuration is required. See [Provider adapters](docs/provider-adapters.md) for client connection and execution boundaries.
 
 ## Start a model-first project
 
@@ -52,13 +52,13 @@ Review the onboarding preview and apply it with the returned digest:
 markitect project onboard --repo . --provider codex --expect ONBOARDING_PLAN_DIGEST --write
 ```
 
-Choose `claude` or `both` for those contributors. Onboarding installs real native entrypoints and discoverable skills, preserves existing content and leads every contributor to the shared model-first workflow. It changes no global account or provider settings.
+Choose `claude` or `both` for those contributors. Onboarding previews repository-local entrypoints and discoverable skills, preserves custom content, and leads contributors to the shared model-first workflow. It does not register MCP or change global account/provider settings. Connect the selected outer client using [Provider adapters](docs/provider-adapters.md).
 
 Now give your agent an ordinary request, for example:
 
 > Build a small shop where creating an order reserves stock and cancelling it restores the reserved stock exactly once. Include tests and explain the project through its generated documentation.
 
-The installed workflow leads the agent through exploration, explicit decisions, model editing, runtime setup, named-scope readiness and delivery. You decide material questions about behavior and architecture, review the proposed first-scope structure, and supply the execution model and resource budget. You do not need to author YAML or learn every CLI transport. The [project guide](docs/project-workflow.md) documents the commands for agents and developers; the [Shop example](examples/project-world/README.md) provides a runnable model and finite tests.
+The installed workflow routes ordinary Work Items through Markitect MCP: inspect the selected model and repository, record scope and acceptance in a typed exploration, update canonical intent when needed, check readiness, then continue the same durable operation through execution, verification and guarded Apply. MCP is fixed to the selected repository root; previewed writes use returned digests and compare-and-swap. Materially unresolved decisions remain visible for the owner. The [project guide](docs/project-workflow.md) is the current operating source; [Project operations](docs/project-operations.md) records exact tool and CLI boundaries. The [Shop example](examples/project-world/README.md) provides a runnable model and finite tests.
 
 ## What the repository contains
 
@@ -82,7 +82,7 @@ tests/                           modeled tests
 docs/markitect/project.md         generated readable model view
 ```
 
-The paths under `src/` and `tests/` are choices made by the project, not imposed language conventions. The model tree follows conceptual slices. Each file has one accountable owner and explicit relationships to the concepts or rules it realizes; a shared file can realize several concepts. Managers receive their own relevant information and public neighbor contracts. Parents receive child results for integration, not private transcripts.
+Application paths are choices made by each project, not imposed language conventions. The model tree follows conceptual slices. Each file has one accountable owner and explicit relationships to the concepts or rules it realizes; a shared file can realize several concepts. Managers receive bounded context and public neighbor contracts. Parents receive child results for integration, not private transcripts.
 
 ## Change, verify and recover
 
@@ -90,15 +90,15 @@ Start an intent change in the model. Review its readable view and commit the acc
 
 Implementation follows impact through the responsible Managers and their ancestors. Leaf implementers and independent reviewers iterate within finite limits; parent Managers integrate direct-child results and can request bounded rework. Final verification evaluates all permanent Manager responsibilities and declared checks against one immutable candidate. Full repository coverage must account for ordinary files, explicit ignores and known tool files; an unknown file cannot silently disappear.
 
-`project deliver` advances a ready named scope through the existing Plan/Run/Verify/Apply lifecycle. Only successful guarded Apply completes it. Interrupted work uses the same exploration and run IDs; completed work is retained, failed attempts consume the same resource budget, and changed inputs invalidate stale evidence. [Operations](docs/project-operations.md) explains standalone Verify, Cleanup, Reconcile, briefings and recovery.
+The MCP-led workflow advances a ready named scope through planning, Manager work/integration, verification, preflight and guarded Apply. Only successful guarded Apply records technical completion; it does not mean the Work Item was semantically accepted. Interrupted work resumes the same durable IDs; unknown outcomes are inspected, never replayed blindly. [Operations](docs/project-operations.md) documents recovery and exact interfaces.
 
-For an existing repository, begin with fixed-source discovery and iterative reverse modeling. Separate observed code behavior from documented intent and future decisions. Managers produce bounded proposals; parent Managers integrate direct-child results. Explicit owner resolutions precede model-only adoption. Commit that accepted model before a separate cleanup or implementation request. Unresolved or transitional areas remain visible and cannot count as conforming. See the [Brownfield workflow](docs/project-workflow.md#start-or-adopt-a-project).
+For an existing repository, begin with fixed-source discovery and iterative reverse modeling. Separate observed code behavior from documented intent and future decisions. Managers produce bounded proposals; parent Managers integrate direct-child results. Explicit owner resolutions precede model-only adoption. Commit that accepted model before a separate cleanup or implementation request. Unresolved or transitional areas remain visible and cannot count as conforming. See the [Brownfield workflow](docs/project-workflow.md#existing-repositories).
 
 Native instructions guide cooperation; they do not prevent a process with ordinary filesystem permissions from editing files directly. Guarded Apply, checks and repository policy enforce their stated boundaries. Commits, digests and decision references bind evidence but do not authenticate human approval.
 
 ## Status and compatibility
 
-The [roadmap](docs/implementation-plan.md) records source status. [Source validation](docs/validation/project-world-delivery.md), [operations validation](docs/validation/project-operations-2026-10-09.md), [native-delivery validation](docs/validation/project-native-delivery-2026-10-09.md) and the [delivery checklist](docs/design/project-world/native-work-item-delivery.md) distinguish deterministic checks, real provider runs, remaining gaps and acceptance. Readiness, lower cost and superiority over conventional agentic coding must be demonstrated separately.
+The [roadmap](docs/implementation-plan.md) and dated integration backlog record source status. P07 implementation is in progress; real authenticated native acceptance is **NOT RUN**. Source checks and scripted fixtures are not product acceptance, semantic correctness, human approval, or productivity evidence. The documentation map links dated records with their exact SHAs and evidence boundaries.
 
 Earlier Project/Domain and canonical Projection contracts, released examples and historical research are preserved. Existing projects need an explicit migration; the new model is not a silent reinterpretation of old files. Use the [compatibility reference](docs/usage.md#legacy-projectdomain-cli-compatibility) and [distribution guide](integration/README.md) to maintain a released installation.
 

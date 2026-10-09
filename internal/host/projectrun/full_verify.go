@@ -583,13 +583,15 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 	if err != nil {
 		return row, err
 	}
-	if deadline, ok := ctx.Deadline(); ok {
-		remaining := time.Until(deadline)
-		if remaining <= 0 {
-			return row, context.DeadlineExceeded
-		}
-		if remaining < config.Timeout {
-			config.Timeout = remaining
+	if manager.Transport != TransportCodexAppServer {
+		if deadline, ok := ctx.Deadline(); ok {
+			remaining := time.Until(deadline)
+			if remaining <= 0 {
+				return row, context.DeadlineExceeded
+			}
+			if remaining < config.Timeout {
+				config.Timeout = remaining
+			}
 		}
 	}
 	modelContext, err := projectmodel.Context(project.Report, managerID)
@@ -659,7 +661,18 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 	if err != nil {
 		return row, err
 	}
-	result, invokeErr := invokeAgent(ctx, invoker, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
+	var result agentexec.RunResult
+	var invokeErr error
+	if manager.Transport == TransportCodexAppServer {
+		taskID, err := readOnlyRepositoryTaskID(request)
+		if err != nil {
+			return row, fmt.Errorf("allocate unique full-verification workspace task: %w", err)
+		}
+		taskID = "full-verify-assessment-" + strings.TrimPrefix(taskID, "readonly-")
+		result, invokeErr = invokeProjectAgent(ctx, host, invoker, root, project, manager, taskID, []string{}, nil, runtime.Limits, config, request)
+	} else {
+		result, invokeErr = invokeAgent(ctx, invoker, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
+	}
 	row.Receipt = &result.Receipt
 	if invokeErr != nil {
 		return row, invokeErr

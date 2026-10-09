@@ -29,6 +29,7 @@ type workspaceJournal struct {
 	State         string                    `json:"state"`
 	Receipt       agentexec.Receipt         `json:"receipt"`
 	Delta         *projectworkspace.Delta   `json:"delta,omitempty"`
+	CachedResult  *agentexec.RunResult      `json:"cachedResult,omitempty"`
 }
 
 // invokeProjectAgent owns workspace preparation and observation. A model cannot
@@ -39,6 +40,12 @@ func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root st
 	if agent.Transport != TransportCodexAppServer {
 		return invokeAgent(ctx, invoker, cfg, req, opts)
 	}
+	absRoot, rootErr := filepath.Abs(root)
+	if rootErr != nil {
+		return agentexec.RunResult{}, rootErr
+	}
+	root = filepath.Clean(absRoot)
+	opts.PrivateLogDirectory = filepath.Join(root, ".markitect", "runs", "private")
 	if agent.WorkspaceMode != "git" || project == nil || project.Snapshot == nil || host.Load == nil {
 		return agentexec.RunResult{}, errors.New("native App Server invocation requires an explicit owned Git workspace")
 	}
@@ -99,6 +106,10 @@ func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root st
 				result.Delta = &normalized
 				journal.Delta = &normalized
 				journal.State = "harvested"
+				if invokeErr == nil {
+					cached := result
+					journal.CachedResult = &cached
+				}
 			}
 		}
 		invokeErr = errors.Join(invokeErr, harvestErr)

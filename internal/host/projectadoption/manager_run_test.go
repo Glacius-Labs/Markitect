@@ -615,4 +615,18 @@ func managerRunTestLimits() ManagerRunLimits {
 		MaxStdoutBytes: 2 << 20, MaxStderrBytes: 128 << 10, TempParent: os.TempDir()}
 }
 
+func TestManagerRunLimitsAcceptProductDefaultStartsAndFourHourJob(t *testing.T) {
+	root := t.TempDir()
+	config := managerRunTestConfig(t, filepath.Join(t.TempDir(), "counter"))
+	config.Timeout = time.Hour
+	limits := managerRunTestLimits()
+	limits.MaxStarts = 256
+	limits.MaxDuration = 4 * time.Hour
+	limits.MaxTimeout = time.Hour
+	limits.PrivateLogDirectory = os.TempDir()
+	if err := validateManagerRunLimits(root, config, limits); err != nil {
+		t.Fatalf("product default manager bounds should validate without starting an agent: %v", err)
+	}
+}
+
 func ptrManagerRunLimits(value ManagerRunLimits) *ManagerRunLimits { return &value }

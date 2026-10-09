@@ -39,7 +39,7 @@ func (o Options) validateTools(timeout time.Duration) error {
 		}
 		return nil
 	}
-	if len(o.DynamicTools) > 16 || o.HandleToolCall == nil || o.MaxToolCalls < 1 || o.MaxToolCalls > 64 || o.ToolTimeout <= 0 || o.ToolTimeout > timeout {
+	if len(o.DynamicTools) > 16 || o.HandleToolCall == nil || o.MaxToolCalls < 1 || o.MaxToolCalls > 256 || o.ToolTimeout <= 0 || o.ToolTimeout > timeout {
 		return errors.New("dynamic tools require bounded specs, handler, call count and timeout")
 	}
 	seen := map[string]bool{}
