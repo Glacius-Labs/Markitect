@@ -4,7 +4,7 @@
 
 Keep `proposal-only` as the default project runtime for compatibility. Add an explicit, opt-in `native-work` mode for Manager executors using the real Codex CLI 0.162.0 with `gpt-6-luna`, `high` reasoning, and the `luna-high` profile. Native setup requires the project's Codex onboarding to be present before setup. It uses the caller's normal profile, authentication and rules; it does not rewrite global configuration or claim OS isolation.
 
-The outer conversational model author remains responsible for the user interaction and initiating project operations. Markitect schedules each model-declared Manager exactly once. The native Codex process is that bounded Manager worker, running in its own fresh candidate workspace; it is not an outer-author substitute and cannot schedule another Manager. Its normal file, shell, test and Git tools are available within that workspace under the caller's local permissions.
+The outer conversational model author remains responsible for the user interaction and initiating project operations. Markitect schedules each model-declared Manager exactly once. The native Codex process is that bounded Manager worker, running in its own fresh candidate workspace; it is not an outer-author substitute and cannot schedule another Manager. Its normal file, shell and test tools are available within that workspace under the caller's local permissions. The candidate is a scoped file tree without Git metadata; repository history, Git status and ordinary repository diffs are not available there. The outer project agent retains repository Git work. A candidate Git repository or scoped history view requires a separate workspace contract.
 
 ## Instruction and candidate boundary
 

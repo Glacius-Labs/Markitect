@@ -268,10 +268,16 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				proposal, invocation, invokeErr = invokeManager(ctx, host, invoker, root, runtime, plan, input, *task, "work", children, nil, nil, task.RepairDiagnostic, repairRound, repairChecks, starts)
 				starts++
 				if invokeErr != nil {
-					if errors.Is(invokeErr, ErrStale) {
-						return supersedeExisting(store, id, invokeErr)
+					if appendInvocationReceipt(&report, invocation) {
+						spent = totalCost(report.Invocations)
 					}
 					task.State = "uncertain"
+					if errors.Is(invokeErr, ErrStale) {
+						if err := persistState(store, &report); err != nil {
+							return empty, err
+						}
+						return supersedeExisting(store, id, invokeErr)
+					}
 					_ = persistState(store, &report)
 					if ctx.Err() != nil {
 						return interruptRun(store, report, ctx.Err())
@@ -501,10 +507,16 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			proposal, invocation, invokeErr = invokeManager(ctx, host, invoker, root, runtime, plan, input, *task, "integrate", children, conflicts, childSummaries, task.RepairDiagnostic, repairRound, repairChecks, starts)
 			starts++
 			if invokeErr != nil {
-				if errors.Is(invokeErr, ErrStale) {
-					return supersedeExisting(store, id, invokeErr)
+				if appendInvocationReceipt(&report, invocation) {
+					spent = totalCost(report.Invocations)
 				}
 				task.State = "uncertain"
+				if errors.Is(invokeErr, ErrStale) {
+					if err := persistState(store, &report); err != nil {
+						return empty, err
+					}
+					return supersedeExisting(store, id, invokeErr)
+				}
 				_ = persistState(store, &report)
 				if ctx.Err() != nil {
 					return interruptRun(store, report, ctx.Err())
@@ -1008,13 +1020,23 @@ func sameStrings(left, right []string) bool {
 	return true
 }
 
-func invokeManager(ctx context.Context, host Host, invoker Invoker, root string, runtime Runtime, plan PlanRecord, project *Project, task ManagerTask, phase string, activeChildIDs, conflicts []string, childReports []childReport, repairDiagnostic string, repairRound int, repairChecks []RepairCheckFeedback, start int) (agentexec.RunResult, InvocationLog, error) {
-	var result agentexec.RunResult
-	var log InvocationLog
+func invokeManager(ctx context.Context, host Host, invoker Invoker, root string, runtime Runtime, plan PlanRecord, project *Project, task ManagerTask, phase string, activeChildIDs, conflicts []string, childReports []childReport, repairDiagnostic string, repairRound int, repairChecks []RepairCheckFeedback, start int) (result agentexec.RunResult, log InvocationLog, returnErr error) {
 	configAgent, ok := runtime.Agents[task.ManagerID]
 	if !ok {
 		return result, log, fmt.Errorf("no configured agent for manager %s", task.ManagerID)
 	}
+	defer func() {
+		if result.Receipt.RunID == "" {
+			return
+		}
+		cost, known := estimateCost(result.Receipt.Usage, configAgent.Pricing)
+		if !known {
+			cost = 0
+		}
+		log = InvocationLog{TaskID: task.ID, Role: agentexec.RoleExecutor, Phase: phase,
+			InputDigest: result.Receipt.InputDigest, Receipt: result.Receipt, ReportID: result.Receipt.RunID,
+			Outcome: result.Receipt.Outcome, CostMicros: cost}
+	}()
 	config, err := configAgent.AgentConfig()
 	if err != nil {
 		return result, log, err
@@ -1145,12 +1167,19 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	if plan.RuntimeAgents[task.ManagerID] != configFingerprint {
 		return result, log, ErrStale
 	}
-	cost, known := estimateCost(result.Receipt.Usage, configAgent.Pricing)
+	_, known := estimateCost(result.Receipt.Usage, configAgent.Pricing)
 	if !known {
 		return result, log, fmt.Errorf("agent usage is missing; bounded cost cannot be asserted")
 	}
-	log = InvocationLog{TaskID: task.ID, Role: agentexec.RoleExecutor, Phase: phase, InputDigest: result.Receipt.InputDigest, Receipt: result.Receipt, ReportID: result.Receipt.RunID, Outcome: result.Receipt.Outcome, CostMicros: cost}
 	return result, log, nil
+}
+
+func appendInvocationReceipt(report *RunReport, invocation InvocationLog) bool {
+	if report == nil || invocation.Receipt.RunID == "" {
+		return false
+	}
+	report.Invocations = append(report.Invocations, invocation)
+	return true
 }
 
 // executorOutcomeError includes only exact adapter-owned public diagnostics.

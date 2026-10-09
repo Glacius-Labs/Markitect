@@ -179,6 +179,9 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 		proposal, invocation, invokeErr := invokeManager(ctx, host, invoker, root, runtime, plan, input, *task, "work", children, nil, nil, task.RepairDiagnostic, 0, nil, *starts)
 		*starts++
 		if invokeErr != nil {
+			if appendInvocationReceipt(report, invocation) {
+				*spent = totalCost(report.Invocations)
+			}
 			task.State = "uncertain"
 			_ = persistState(store, report)
 			return fmt.Errorf("targeted work for %s: %w", managerID, invokeErr)
@@ -328,6 +331,9 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 	proposal, invocation, err := invokeManager(ctx, host, invoker, root, runtime, plan, input, *task, "integrate", children, conflicts, childReports, diagnostic, 0, nil, *starts)
 	*starts++
 	if err != nil {
+		if appendInvocationReceipt(report, invocation) {
+			*spent = totalCost(report.Invocations)
+		}
 		task.State = "uncertain"
 		_ = persistState(store, report)
 		return nil, err
