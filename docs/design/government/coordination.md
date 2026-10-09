@@ -1827,3 +1827,9 @@ Conventional S4 recorded PASS13/FAIL0, its29 frozen file bindings and snapshot h
 ### Fresh independent final evaluator scratch limitation
 
 Scientist reports the read-only Windows MXC assessor cannot create temporary DBs/clean temporary directories for full tests. These remain EVALUATION_ERROR, separate from product failures. Current final continues with readonly source/AST and in-memory/query checks; no retry/new actor, source/candidate/spec edits or sandbox disabling. Canonical controller checks PASS5/8/11/13 remain. Exact final/candidate preservation receipts are pending; full functional/semantic final is not yet established. A later prospective evaluator setup should keep candidate/requirements readonly and supply a separate owned writable disposable scratch root. Environment limitation is not a method verdict.
+
+### Conventional terminal v2 and explicit finite final-only supplement
+
+Original v2 is terminal trajectory_completed at21:06:45Z, with all four public stations positive and no native retry. Root read final result unchanged flags and verified29 final-candidate files bound by snapshot ae098dd7. Original independent report974baf41 remains environment-limited:19reported temporary-write errors, not reliable totalPASS. No source defect or method winner inferred. Original allowance consumed/closed; private archive handoff pending.
+
+Under the direct user complete Conventional execution/evaluation mandate Root issues one separate final-only scratch supplement, explicit onefreshLunaHigh assessor, no implementation/new case/helpers, bounded2hsource prep/90minfinal/30mincapture within absolute01:08:16Z. Exact unchanged candidate and original public rules; separate writable evaluator scratch, candidate/requirements semantic hashes unchanged. Preserve original errors, additive new report only, no hidden quota reuse/automatic retry. Source/config/inputs binding before start, no further general capability phase.

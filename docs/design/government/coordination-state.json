@@ -17253,7 +17253,7 @@
     ],
     "grantPath": "docs/design/government/conventional-workspace-snapshot-execution-v2-20261009.json",
     "grantSha256": "58cf8d06944223b77f51062bfa48ecb224bee9e5f5651abec18597dff1664d63",
-    "status": "FOUR_STATIONS_PUBLIC_PASS_FROZEN_INDEPENDENT_FINAL_RUNNING",
+    "status": "TERMINAL_TRAJECTORY_COMPLETED_PUBLIC_PASS_FINAL_ENVIRONMENT_LIMITED",
     "actualStartsObserved": 1,
     "dispatch": "SENT_ONCE_V2",
     "initialUnstartedOrder": {
@@ -17330,6 +17330,50 @@
       "newActorRetryAuthorized": false,
       "sourceActualBindings": "UNCHANGED",
       "methodConclusion": "No method advantage/failure inference from evaluator environment"
+    },
+    "terminal": {
+      "endedUtc": "2026-10-09T21:06:45.718581Z",
+      "rootVerified": "Study-results complete/one trajectory_completed; final29manifest file hashes verified; final result bytes and three unchanged flags read. Original source pinned.",
+      "finalSnapshotSha256": "ae098dd7713a5bc8f7c33cee456c3cea3677f2ecd91a48e3e2d52ffd693729c6",
+      "finalResultSha256": "974baf41f0c1eac48c987a5bf0d3d3514be663eab84566e0370ffcd84b20c363",
+      "candidateFilesUnchanged": true,
+      "frozenInitialPublicRequirementsUnchanged": true,
+      "initialPublicWorkspaceBindingUnchanged": true,
+      "ownerFinal": "No reliable totalPASS;19execution errors from readonly temp/DB writes; four query/AST/in-memory checks positive, no definite source defect found. Assessor team unknown; separate observed native helper receipts preserved.",
+      "v2CaseAllowanceConsumed": 1,
+      "v2StartupChecksConsumed": 2,
+      "v2Reusable": false,
+      "privateBackupTerminal": "PENDING_OWNER_CAPTURE",
+      "mainOrPairedMethodResult": false
+    }
+  },
+  "conventionalFrozenCandidateScratchAssessmentSupplement20261009": {
+    "grantPath": "docs/design/government/conventional-frozen-candidate-scratch-assessment-supplement-20261009.json",
+    "grantSha256": "22d7d1297fa59b1e48391b5464bb0163d98a403ff195e5e867c05c7f67017485",
+    "issuedUtc": "2026-10-09T21:08:16Z",
+    "status": "PREPARATION_BINDING_PENDING_ONE_FINAL_ONLY",
+    "dispatch": "SENT_ONCE",
+    "limits": {
+      "sourcePreparationSeconds": 7200,
+      "freshAssessorStarts": 1,
+      "assessorRoleSeconds": 5400,
+      "captureSeconds": 1800,
+      "providerFreeChecks": 2,
+      "providerFreeCheckSeconds": 600,
+      "nativeCanaries": 0,
+      "implementationStarts": 0,
+      "newCaseStarts": 0,
+      "helpers": 0,
+      "overallAbsoluteEndUtc": "2026-10-10T01:08:16Z"
+    },
+    "originalOrderRemainsClosed": true,
+    "actualStartsObserved": 0,
+    "candidate": {
+      "actualSource": "6adcfdb09b3dd579468e43c1b6b0c10fb363a11a",
+      "snapshotPath": "C:/Users/Consiliari/Documents/Conventional-Workspace-Snapshot-Study-20261009/readinglog/audit/final-freeze/snapshot.json",
+      "snapshotSha256": "ae098dd7713a5bc8f7c33cee456c3cea3677f2ecd91a48e3e2d52ffd693729c6",
+      "originalAssessmentResultSha256": "974baf41f0c1eac48c987a5bf0d3d3514be663eab84566e0370ffcd84b20c363",
+      "requirements": "Original pre-actor frozen public requirements and evaluation rules, no new retrospective criteria"
     }
   }
 }
