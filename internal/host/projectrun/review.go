@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -81,7 +80,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 		if remaining <= 0 {
 			return record, log, context.DeadlineExceeded
 		}
-		if remaining < config.Timeout {
+		if remaining < config.Timeout && config.Transport == "" {
 			config.Timeout = remaining
 		}
 	}
@@ -131,7 +130,10 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 			return record, log, fmt.Errorf("persist reviewer start: %w", err)
 		}
 	}
-	result, invokeErr := invokeAgent(ctx, invoker, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
+	result, invokeErr := invokeProjectAgent(ctx, host, invoker, root, project, agent, task.ID+"-review", nil, nil, runtime.Limits, config, request)
+	if invokeErr == nil && result.Delta != nil && len(result.Delta.Changes) != 0 {
+		invokeErr = fmt.Errorf("read-only reviewer changed its owned workspace")
+	}
 	log = InvocationLog{TaskID: task.ID, Role: "reviewer", Phase: "review", InputDigest: inputDigest,
 		Receipt: result.Receipt, ReportID: result.Receipt.RunID, Outcome: result.Receipt.Outcome}
 	if usageCost, known := estimateCost(result.Receipt.Usage, agent.Pricing); known {

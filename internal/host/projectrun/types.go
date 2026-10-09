@@ -77,6 +77,8 @@ type ReviewConfig struct {
 type Agent struct {
 	Command          string                  `json:"command" yaml:"command"`
 	Args             []string                `json:"args" yaml:"args"`
+	Transport        string                  `json:"transport,omitempty" yaml:"transport,omitempty"`
+	AppServer        *AppServerSettings      `json:"appServer,omitempty" yaml:"appServer,omitempty"`
 	Model            string                  `json:"model" yaml:"model"`
 	ModelOptions     any                     `json:"modelOptions,omitempty" yaml:"modelOptions"`
 	ProviderVersion  string                  `json:"providerVersion" yaml:"providerVersion"`
@@ -88,6 +90,26 @@ type Agent struct {
 	RuntimeFiles     []agentexec.RuntimeFile `json:"runtimeFiles" yaml:"runtimeFiles"`
 	Environment      []string                `json:"environment,omitempty" yaml:"environment,omitempty"`
 	Pricing          Pricing                 `json:"pricing" yaml:"pricing"`
+}
+
+const (
+	TransportProcess        = ""
+	TransportCodexAppServer = "codex-app-server"
+)
+
+// AppServerSettings explicitly selects the native Codex transport contract.
+// Workspace authority remains in Agent.WorkspaceMode and the project model.
+type AppServerSettings struct {
+	ReasoningEffort   string           `json:"reasoningEffort" yaml:"reasoningEffort"`
+	PermissionProfile string           `json:"permissionProfile,omitempty" yaml:"permissionProfile,omitempty"`
+	Helpers           AppServerHelpers `json:"helpers" yaml:"helpers"`
+	MaxEventBytes     int64            `json:"maxEventBytes" yaml:"maxEventBytes"`
+}
+
+type AppServerHelpers struct {
+	Enabled          bool `json:"enabled" yaml:"enabled"`
+	MaxStartRequests int  `json:"maxStartRequests" yaml:"maxStartRequests"`
+	MaxDepth         int  `json:"maxDepth" yaml:"maxDepth"`
 }
 
 // Pricing is an explicit estimate used to enforce the configured run budget.

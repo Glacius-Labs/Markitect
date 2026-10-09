@@ -34,7 +34,7 @@ func buildNativeWorkspace(root, revision string, project *Project, agent Agent) 
 	if agent.WorkspaceMode == "" {
 		return nil, nil
 	}
-	if agent.WorkspaceMode != "scoped" {
+	if agent.WorkspaceMode != "scoped" && agent.WorkspaceMode != "git" {
 		return nil, fmt.Errorf("unsupported native workspace mode %q", agent.WorkspaceMode)
 	}
 	if project == nil || project.Snapshot == nil {

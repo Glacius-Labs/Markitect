@@ -193,7 +193,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 			return fail(fmt.Errorf("configured verifier requires an agent invoker"))
 		}
 		verifierStartIndex := -1
-		verifier, invocation, err := runVerifier(ctx, invoker, root, plan, runtime, compiled, candidate, out.Checks, func(started InvocationLog) error {
+		verifier, invocation, err := runVerifier(ctx, host, invoker, root, plan, runtime, compiled, candidate, out.Checks, func(started InvocationLog) error {
 			started.Outcome = "started"
 			run.Invocations = append(run.Invocations, started)
 			verifierStartIndex = len(run.Invocations) - 1
@@ -453,7 +453,7 @@ func explicitEnvironment(names []string) []string {
 }
 func runtimeOSNeedsSystemRoot(names []string) bool { return false }
 
-func runVerifier(ctx context.Context, invoker Invoker, root string, plan PlanRecord, runtime Runtime, project *Project, candidate candidateData, checkResults []CheckResult, onStart func(InvocationLog) error) (*VerifierReport, InvocationLog, error) {
+func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime Runtime, project *Project, candidate candidateData, checkResults []CheckResult, onStart func(InvocationLog) error) (*VerifierReport, InvocationLog, error) {
 	var log InvocationLog
 	config, err := runtime.Verifier.AgentConfig()
 	if err != nil {
@@ -494,7 +494,7 @@ func runVerifier(ctx context.Context, invoker Invoker, root string, plan PlanRec
 		if remaining <= 0 {
 			return nil, log, context.DeadlineExceeded
 		}
-		if remaining < config.Timeout {
+		if remaining < config.Timeout && config.Transport == "" {
 			config.Timeout = remaining
 		}
 	}
@@ -504,7 +504,10 @@ func runVerifier(ctx context.Context, invoker Invoker, root string, plan PlanRec
 			return nil, log, fmt.Errorf("persist verifier start: %w", err)
 		}
 	}
-	result, err := invokeAgent(ctx, invoker, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
+	result, err := invokeProjectAgent(ctx, host, invoker, root, project, *runtime.Verifier, "verifier", nil, nil, runtime.Limits, config, request)
+	if err == nil && result.Delta != nil && len(result.Delta.Changes) != 0 {
+		err = fmt.Errorf("read-only verifier changed its owned workspace")
+	}
 	usageCost, costKnown := estimateCost(result.Receipt.Usage, runtime.Verifier.Pricing)
 	log = InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: inputDigest, Receipt: result.Receipt, ReportID: result.Receipt.RunID, Outcome: result.Receipt.Outcome, CostMicros: usageCost}
 	if log.Outcome == "" {

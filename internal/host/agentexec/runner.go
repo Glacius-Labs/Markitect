@@ -76,6 +76,9 @@ type runtimeState struct {
 }
 
 func run(parent context.Context, cfg Config, request Request, opts RunOptions) (RunResult, error) {
+	if cfg.Transport != "" {
+		return RunResult{}, fmt.Errorf("agentexec process runner cannot execute transport %q; route through its configured Invoker", cfg.Transport)
+	}
 	if opts.Workspace != nil {
 		return RunResult{}, errors.New("process adapter does not support an owned Git workspace")
 	}
@@ -359,6 +362,7 @@ func setEnvironment(values []string, key string, value string) []string {
 }
 func normalizeConfig(input Config) (Config, error) {
 	cfg := input
+	var err error
 	if strings.TrimSpace(cfg.Command) == "" || strings.ContainsRune(cfg.Command, 0) {
 		return Config{}, errors.New("runner command is required")
 	}
@@ -370,6 +374,31 @@ func normalizeConfig(input Config) (Config, error) {
 	}
 	if cfg.WorkspaceMode != "" && cfg.WorkspaceMode != "scoped" {
 		return Config{}, errors.New("workspaceMode must be empty or scoped")
+	}
+	switch cfg.Transport {
+	case "":
+		if len(cfg.TransportConfig) != 0 {
+			return Config{}, errors.New("transportConfig requires an explicit transport")
+		}
+	case "codex-app-server":
+		if len(cfg.ModelOptions) != 0 {
+			return Config{}, errors.New("codex-app-server transport requires empty modelOptions")
+		}
+		if cfg.WorkspaceMode != "" {
+			return Config{}, errors.New("codex-app-server transport requires empty agentexec workspaceMode")
+		}
+		if len(cfg.TransportConfig) == 0 {
+			return Config{}, errors.New("codex-app-server transport requires explicit transportConfig")
+		}
+		cfg.TransportConfig, err = canonicalObject(cfg.TransportConfig, "transportConfig", 64<<10)
+		if err != nil {
+			return Config{}, err
+		}
+		if err := validateCodexAppServerTransportConfig(cfg.TransportConfig); err != nil {
+			return Config{}, err
+		}
+	default:
+		return Config{}, fmt.Errorf("unsupported agent transport %q", cfg.Transport)
 	}
 	if cfg.Timeout <= 0 || cfg.Timeout > 10*time.Minute {
 		return Config{}, errors.New("runner timeout must be at most ten minutes")
@@ -386,7 +415,6 @@ func normalizeConfig(input Config) (Config, error) {
 	if len(cfg.ModelOptions) == 0 {
 		cfg.ModelOptions = json.RawMessage("{}")
 	}
-	var err error
 	cfg.ModelOptions, err = canonicalObject(cfg.ModelOptions, "modelOptions", 64<<10)
 	if err != nil {
 		return Config{}, err
@@ -446,6 +474,37 @@ func normalizeConfig(input Config) (Config, error) {
 		}
 	}
 	return cfg, nil
+}
+
+func validateCodexAppServerTransportConfig(data json.RawMessage) error {
+	var config struct {
+		ReasoningEffort   string `json:"reasoningEffort"`
+		PermissionProfile string `json:"permissionProfile,omitempty"`
+		Helpers           struct {
+			Enabled          bool `json:"enabled"`
+			MaxStartRequests int  `json:"maxStartRequests"`
+			MaxDepth         int  `json:"maxDepth"`
+		} `json:"helpers"`
+		MaxEventBytes int64 `json:"maxEventBytes"`
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&config); err != nil {
+		return fmt.Errorf("invalid codex-app-server transportConfig: %w", err)
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		return errors.New("codex-app-server transportConfig must contain exactly one object")
+	}
+	if strings.TrimSpace(config.ReasoningEffort) == "" || config.MaxEventBytes <= 0 {
+		return errors.New("codex-app-server transportConfig requires reasoningEffort and a positive maxEventBytes")
+	}
+	if config.Helpers.MaxStartRequests < 0 || config.Helpers.MaxDepth < 0 ||
+		(config.Helpers.Enabled && (config.Helpers.MaxStartRequests == 0 || config.Helpers.MaxDepth == 0)) ||
+		(!config.Helpers.Enabled && (config.Helpers.MaxStartRequests != 0 || config.Helpers.MaxDepth != 0)) {
+		return errors.New("codex-app-server transportConfig helper policy must be disabled or finitely bounded")
+	}
+	return nil
 }
 
 func validateResponse(response Response, req Request, invocation Invocation, workspaceMode string) error {

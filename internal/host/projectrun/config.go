@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/host/codexappserver"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -140,15 +141,24 @@ func ValidateRuntime(config Runtime) error {
 				return fmt.Errorf("runtime agent %q modelOptions must be JSON-compatible: %w", managerID, err)
 			}
 		}
-		if agent.WorkspaceMode != "" && agent.WorkspaceMode != "scoped" {
+		if err := validateAgentTransport(managerID, agent); err != nil {
+			return err
+		}
+		if agent.WorkspaceMode != "" && agent.WorkspaceMode != "scoped" && agent.WorkspaceMode != "git" {
 			return fmt.Errorf("runtime agent %q has unsupported workspaceMode %q", managerID, agent.WorkspaceMode)
+		}
+		if agent.WorkspaceMode == "git" && agent.Transport != TransportCodexAppServer {
+			return fmt.Errorf("runtime agent %q workspaceMode git requires transport %q", managerID, TransportCodexAppServer)
+		}
+		if agent.Transport == TransportCodexAppServer && agent.WorkspaceMode == "scoped" {
+			return fmt.Errorf("runtime agent %q native App Server transport requires workspaceMode git or an empty workspaceMode", managerID)
 		}
 		if agent.WorkspaceMode == "" && len(agent.InstructionPaths) != 0 {
 			return fmt.Errorf("runtime agent %q instructionPaths require scoped workspaceMode", managerID)
 		}
-		if agent.WorkspaceMode == "scoped" {
+		if agent.WorkspaceMode == "scoped" || agent.WorkspaceMode == "git" {
 			if len(agent.InstructionPaths) == 0 || len(agent.InstructionPaths) > maxNativeInstructionFiles {
-				return fmt.Errorf("runtime agent %q scoped workspace requires 1..%d instructionPaths", managerID, maxNativeInstructionFiles)
+				return fmt.Errorf("runtime agent %q workspace requires 1..%d instructionPaths", managerID, maxNativeInstructionFiles)
 			}
 			if err := validatePortablePaths(agent.InstructionPaths); err != nil {
 				return fmt.Errorf("runtime agent %q instructionPaths: %w", managerID, err)
@@ -177,7 +187,7 @@ func ValidateRuntime(config Runtime) error {
 		}
 	}
 	if config.Verifier != nil {
-		if config.Verifier.WorkspaceMode != "" {
+		if config.Verifier.WorkspaceMode != "" && !supportsReadOnlyGitWorkspace(*config.Verifier) {
 			return fmt.Errorf("native workspace mode is supported only for Manager executors, not runtime verifier")
 		}
 		if _, err := config.Verifier.AgentConfig(); err != nil {
@@ -190,7 +200,7 @@ func ValidateRuntime(config Runtime) error {
 			return fmt.Errorf("runtime review must declare reviewer agents and rounds within 1..3")
 		}
 		for managerID, agent := range config.Review.Agents {
-			if agent.WorkspaceMode != "" {
+			if agent.WorkspaceMode != "" && !supportsReadOnlyGitWorkspace(agent) {
 				return fmt.Errorf("native workspace mode is supported only for Manager executors, not reviewer %q", managerID)
 			}
 			if strings.TrimSpace(managerID) == "" {
@@ -212,6 +222,45 @@ func ValidateRuntime(config Runtime) error {
 	return nil
 }
 
+func validateAgentTransport(managerID string, agent Agent) error {
+	switch agent.Transport {
+	case TransportProcess:
+		if agent.AppServer != nil {
+			return fmt.Errorf("runtime agent %q appServer settings require transport %q", managerID, TransportCodexAppServer)
+		}
+	case TransportCodexAppServer:
+		if agent.AppServer == nil {
+			return fmt.Errorf("runtime agent %q transport %q requires explicit appServer settings", managerID, TransportCodexAppServer)
+		}
+		if !filepath.IsAbs(agent.Command) {
+			return fmt.Errorf("runtime agent %q App Server command must be an absolute executable path", managerID)
+		}
+		if len(agent.Args) != 0 {
+			return fmt.Errorf("runtime agent %q App Server transport does not accept command arguments", managerID)
+		}
+		if agent.ModelOptions != nil {
+			return fmt.Errorf("runtime agent %q App Server transport does not accept modelOptions", managerID)
+		}
+		settings := agent.AppServer
+		adapterConfig := codexappserver.Config{
+			Command: agent.Command, ProviderVersion: agent.ProviderVersion, Model: agent.Model,
+			ReasoningEffort: settings.ReasoningEffort, PermissionProfile: settings.PermissionProfile,
+			Helpers: codexappserver.HelperPolicy{Enabled: settings.Helpers.Enabled, MaxStartRequests: settings.Helpers.MaxStartRequests, MaxDepth: settings.Helpers.MaxDepth},
+			Timeout: time.Duration(agent.Timeout), MaxEventBytes: settings.MaxEventBytes,
+		}
+		if err := adapterConfig.Validate(); err != nil {
+			return fmt.Errorf("runtime agent %q appServer settings: %w", managerID, err)
+		}
+	default:
+		return fmt.Errorf("runtime agent %q has unsupported transport %q", managerID, agent.Transport)
+	}
+	return nil
+}
+
+func supportsReadOnlyGitWorkspace(agent Agent) bool {
+	return agent.Transport == TransportCodexAppServer && agent.WorkspaceMode == "git" && len(agent.InstructionPaths) > 0
+}
+
 // ReadOnlyAgent selects the explicit transport for a Manager assessment or
 // Brownfield model proposal. Native Manager bindings stay exclusive to scoped
 // implementation tasks; their separately configured review binding serves a
@@ -226,7 +275,7 @@ func ReadOnlyAgent(config Runtime, managerID string) (Agent, error) {
 		// native workspace. This is a current transport contract.
 		return manager, nil
 	}
-	if manager.WorkspaceMode != "scoped" {
+	if manager.WorkspaceMode != "scoped" && manager.WorkspaceMode != "git" {
 		return Agent{}, fmt.Errorf("Manager %q has unsupported workspace mode %q", managerID, manager.WorkspaceMode)
 	}
 	if config.Review == nil {
@@ -258,11 +307,26 @@ func (a Agent) AgentConfig() (agentexec.Config, error) {
 	}
 	env := append([]string{}, a.Environment...)
 	sort.Strings(env)
+	var transportConfig json.RawMessage
+	if a.Transport == TransportCodexAppServer {
+		encoded, err := json.Marshal(a.AppServer)
+		if err != nil {
+			return agentexec.Config{}, fmt.Errorf("encode App Server settings: %w", err)
+		}
+		transportConfig = encoded
+	}
+	workspaceMode := a.WorkspaceMode
+	if workspaceMode == "git" {
+		// The native adapter binds Git worktree semantics from the source runtime
+		// config. Its shared agentexec fingerprint remains transport-neutral.
+		workspaceMode = ""
+	}
 	return agentexec.Config{
 		Command: a.Command, Args: append([]string(nil), a.Args...), Model: a.Model,
-		ModelOptions: modelOptions, ProviderVersion: a.ProviderVersion,
-		WorkspaceMode: a.WorkspaceMode,
-		Timeout:       time.Duration(a.Timeout), MaxStdoutBytes: a.MaxStdoutBytes,
+		ModelOptions: modelOptions, ProviderVersion: a.ProviderVersion, Transport: a.Transport,
+		TransportConfig: transportConfig,
+		WorkspaceMode:   workspaceMode,
+		Timeout:         time.Duration(a.Timeout), MaxStdoutBytes: a.MaxStdoutBytes,
 		MaxStderrBytes: a.MaxStderrBytes, RuntimeFiles: append([]agentexec.RuntimeFile(nil), a.RuntimeFiles...),
 		EnvironmentAllowlist: &env,
 	}, nil

@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -313,11 +312,11 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 					if parsed.EscalateTo != "" && parsed.EscalateTo != escalationTarget(*task) {
 						return fmt.Errorf("Manager %s may escalate only to its nearest empowered recipient %q", task.ManagerID, escalationTarget(*task))
 					}
-					if parsed.Status == "no-op" && len(proposal.Response.CandidateFiles) > 0 {
+					if parsed.Status == "no-op" && (len(proposal.Response.CandidateFiles) > 0 || (proposal.Delta != nil && len(proposal.Delta.Changes) > 0)) {
 						return fmt.Errorf("manager %s claimed no-op while proposing files", task.ManagerID)
 					}
 					var applyErr error
-					candidate, applyErr = applyProposal(current, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "work", nil, runtime.Limits, input.Snapshot)
+					candidate, applyErr = applyAgentCandidate(current, proposal, input.Config, input.Report, *task, "work", nil, runtime.Limits, input.Snapshot)
 					return applyErr
 				}()
 				if parseErr == nil {
@@ -543,7 +542,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				if parsed.EscalateTo != "" && parsed.EscalateTo != escalationTarget(*task) {
 					return fmt.Errorf("Manager %s may escalate only to its nearest empowered recipient %q", task.ManagerID, escalationTarget(*task))
 				}
-				candidate, candidateErr := applyProposal(merged, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "integrate", conflicts, runtime.Limits, input.Snapshot)
+				candidate, candidateErr := applyAgentCandidate(merged, proposal, input.Config, input.Report, *task, "integrate", conflicts, runtime.Limits, input.Snapshot)
 				if candidateErr != nil {
 					return candidateErr
 				}
@@ -1046,7 +1045,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 		if remaining <= 0 {
 			return result, log, context.DeadlineExceeded
 		}
-		if remaining < config.Timeout {
+		if remaining < config.Timeout && config.Transport == "" {
 			config.Timeout = remaining
 		}
 	}
@@ -1135,7 +1134,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	scopeIDs := append([]string{task.ManagerID}, task.Artifacts...)
 	request := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: project.Revision, ModelDigest: project.Report.ModelDigest,
 		ModulePin: project.Report.Digest, ProjectionID: project.Report.Digest, ScopeIDs: uniqueSorted(scopeIDs), PolicyIDs: append([]string(nil), task.Checks...), Context: contextJSON, Artifacts: artifacts}
-	result, err = invokeAgent(ctx, invoker, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
+	result, err = invokeProjectAgent(ctx, host, invoker, root, project, configAgent, task.ID+"-"+phase, writePaths, ignoredPaths, runtime.Limits, config, request)
 	if err != nil {
 		return result, log, err
 	}

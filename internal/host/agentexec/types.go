@@ -116,6 +116,8 @@ type RuntimeFile struct {
 type Config struct {
 	Command         string          `json:"command"`
 	Args            []string        `json:"args"`
+	Transport       string          `json:"transport,omitempty"`
+	TransportConfig json.RawMessage `json:"transportConfig,omitempty"`
 	Model           string          `json:"model"`
 	ModelOptions    json.RawMessage `json:"modelOptions"`
 	ProviderVersion string          `json:"providerVersion"`
