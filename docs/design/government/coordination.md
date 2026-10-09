@@ -1386,3 +1386,10 @@ Design own job1 closed06:35:40.1195Z,1outer/0inner/174.607623s, no Apply; Root i
 
 
 Enabled App grant sent exactly once06:52:12Z. First before-call reservation06:53:40Z observed; this is not a native actor start receipt. Automation saved and exact prompt/ACTIVE/2h/Root target checked06:54:19Z. Owner Design proof2 explicitly unstarted; exact remote781181e and hostedCI37895459198 in-progress verified. New owner-reported CRLF-SKILL-frontmatter issue is narrow product work, no Scientist-readiness wait.
+
+
+### 2026-10-09T06:58:31Z - genuine fresh App actor started
+
+Scientist callback plus Root independently checked clean exact PRIVATE remote2a4e15f and six additive Working/RawGit start evidence files. Native collaboration ownhandle /root/app_conventional_roombook_primary reported running by06:54:46.705327Z, first before-call reservation06:53:40.468196Z; exact model start time unknown. Fullstart4of6 now genuinely consumed, three prior terminal CLI attempts retained. Own cell ends08:53:40Z, implementation08:23:40Z, independent final08:43:40Z, under original09:12:43Z. Actual inherited context/usage/serving/cost and functional result pending. Scientist proceeds without further gate or Design wait; measured host reserved while Design continues light work/hosted CI. No repeat owner ACK or new quote.
+
+Scientist now reports first station completed/merged on its own isolated main and public checks PASS, proceeding to station2; Root records this as owner-reported functional progress, no independent quality score. Startcheckpoint tracked bytes remain unchanged, one generated Python cache appeared after the earlier clean metadata snapshot. Design latest62ed2f78 exact public remote verified, owner-targeted tests/reviews PASS, full CI/nativeproof pending; proof2 unstarted until measurement host release. CursorsScientist122/Design29.
