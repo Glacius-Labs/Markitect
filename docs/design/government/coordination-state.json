@@ -16565,13 +16565,31 @@
       "rootVerified": "Clean worktree, exact HEAD and public remote ref; committed owned backlog and validation report read; no tests or actual calls repeated",
       "sourceScope": "Independent YAML identity/decision/impact, scoped graph and validated evidence, shared services plus CLI/MCP queries and native guidance/example",
       "ownerReported": "Component tests/vet/accounting positive and independent model/Host findings closed; provider-free example journey positive on earlier working binary",
-      "qualification": "Final source-bound binary journey pending after review fixes; full fixed-source Verify running, no PASS assumed",
-      "fullVerify": "RUNNING_OWNER_REPORTED_60MIN_TEST_90MIN_OUTER",
+      "qualification": "Source-bound provider-free CLI/MCP journey on d360 recorded; repaired full Verify pending, no provider/actor/Main acceptance",
+      "fullVerify": "FAILED_D360EC01_TWO_TEST_FIXTURES; REPAIRED_EBE51470_FULL_REPLAY_RUNNING",
       "mainIntegrationExcluded": true,
       "acceptedMainSha": null,
       "next": "Owner finishes already active Verify and final source-bound handoff; later exact accepted main into KG, resolve conflicts, regressions/review, then separate evaluation",
       "newOrderSent": false,
-      "studiesOrReleaseAuthorized": false
+      "studiesOrReleaseAuthorized": false,
+      "repairAndEvidence": {
+        "verifiedUtc": "2026-10-09T19:41:43Z",
+        "cleanExactLocalPublicRemoteSha": "ebe5147025c8d1f5bf40c4dc30b14509c0e5d6e3",
+        "rootVerified": "Clean exact HEAD/public ref, two test-file diffs plus owned docs/evidence/artifact manifest only; production source unchanged from d360",
+        "originalVerify": {
+          "source": "d360ec0199d4333271fd6ec6c66227a2da4aca83",
+          "exitCode": 1,
+          "elapsedMilliseconds": 1748072,
+          "timeout": false,
+          "logSha256": "08d096b27385fc97c2ba61053e573758196c54ff3e10c1c086b3863c297b129c",
+          "workingRawGitEqual": true
+        },
+        "repair": "Explicit empty child delegation list; privacy negative now targets genuinely private artifact and separately asserts public-contract owner identity has no properties/purpose/source",
+        "ownerReported": "Targeted Brownfield42.376s and Knowledge PASS, full new source Verify running60m, no PASS assumed",
+        "providerFreeJourney": "Committed exact d360/binaryac709206 receipt reports project coverage and six CLI actions plus stdio MCP six tools with same graph digest PASS, provider calls0; Root read receipt, did not rerun",
+        "acceptedMainSha": null,
+        "newOrderSent": false
+      }
     }
   },
   "callbackHandlingAudit20261009": {
