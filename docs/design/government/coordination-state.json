@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T22:26:59.167957Z",
+  "updatedUtc": "2026-10-09T22:28:51.024986Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16554,7 +16554,29 @@
           "foreignProcessesKilled": false,
           "globalSecurityChanged": false
         },
-        "correctionProgress": "Owner reports isolated canonical prompt fix/focused tests PASS; independent review running. Child-local MXC correction pending pinned stable0.162 support check and typed config/fingerprint/readiness/effective receipts. No new actual yet."
+        "correctionProgress": "Prompt fix integrated98e after c701 whole suitePASS; necessary optional typed child-local MXC config/fingerprint/requested receipt in progress. Owner verified installed0.162 support; effectivebackend unknown, omission unchanged/failclosed/no fallback. Fresh cleanbinary/normalPlan/finitebatch before nextActual, no redundant unchanged-package whole suite."
+      },
+      "c701FullSuiteClosure": {
+        "ownerReported": "Fresh go test ./... -count=1 PASS, closed 2026-10-09T22:27:26Z",
+        "source": "c701a28908d379a4a6093caf03c0d88bef9f083a",
+        "durationsSeconds": {
+          "projectrun": 1807.896,
+          "projectworkspace": 206.511,
+          "projectcli": 781.736,
+          "codexappserver": 33.644
+        },
+        "rootVerified": "Read owner committed progress record at e1deeb05; original raw full-suite log not independently re-executed/read in this closure",
+        "otherChecks": "Build/vet/schema/format/modules/fixedcanonical PASS ownerreported",
+        "mainAcceptance": false
+      },
+      "integratedNativePromptContractFix": {
+        "source": "98e9318af6851a69c5183b3937d4a494cf1a816e",
+        "isolatedSource": "d664f96d1fe0de395404a1e818361f450a27331d",
+        "rootVerified": "Read actual integrated diff: two AppServer source/test files; role-specific enum/typed observations/reportJson/taskstatus mapping; strict decoder unchanged; local HEAD exact, clean worktree observed",
+        "checks": "Ownerfocused31.892s/agentexec17.551s/vetPASS/independent reviewclosed",
+        "publicRemoteObserved": "c701a28908d379a4a6093caf03c0d88bef9f083a",
+        "newSourcePush": "Pending later coherent checkpoint; do not claim98e already remote",
+        "actualA01Pass": false
       }
     }
   },
