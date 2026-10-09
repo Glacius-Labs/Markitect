@@ -16223,10 +16223,29 @@
       "cleanExactLocalPublicRemoteSha": "dae4b4a570faa8561ff0c62b186fc51fed9fb6f3",
       "rootVerified": "Clean local/public ref and src/cmd, src/internal, src/harness with root go.mod preserved; source report read previously",
       "ownerReported": "Focused regressions/build/vet/schema/module/architecture positive and independent findings closed; final full suite running on unchanged source",
-      "fullSuite": "RUNNING_OWNER_REPORTED_60MIN_TEST_90MIN_OUTER",
+      "fullSuite": "RUNNING_WITH_REPORTED_FAILURES_NOT_PASS",
       "actualProductJobs": 0,
       "mainMerged": false,
-      "kgImported": false
+      "kgImported": false,
+      "failureCallback": {
+        "observedUtc": "2026-10-09T19:34:01Z",
+        "rootVerified": "Original integration checkout remains clean at exact public dae4b4a5; fixes not yet accepted as published source",
+        "ownerReportedFailures": [
+          "Moved canonical fixture path",
+          "Old onboarding text assertions"
+        ],
+        "ownerReportedRepairs": "Targeted fixes/checks in separate fix checkout; original running suite source unchanged",
+        "preProviderA01Finding": "Clean Windows CRLF working bytes differ from LF raw Git bytes at plan binding",
+        "correctedHypothesis": "Original history-cursor diagnosis false; retained as superseded, not causal finding",
+        "proposedFix": "Git-normalized equality with raw working freshness binding preserved; dirty, -text and assume-unchanged negative cases owner-reported PASS",
+        "review": "Owner-reported independent CRLF-path review positive, not Root source acceptance",
+        "remainingFix": "MaxInt64 cost overflow being closed",
+        "actualJobs": 0,
+        "actualRoleStarts": 0,
+        "next": "Finish existing fixed run, publish coherent fix source and required checks/review; source/runtime-bound A01 start plan before first actual",
+        "newOrderSent": false,
+        "fullSuiteRestartedByRoot": false
+      }
     }
   },
   "playgroundAndClaudePreparation20261009": {
