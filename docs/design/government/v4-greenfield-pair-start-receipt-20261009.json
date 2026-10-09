@@ -1,0 +1,87 @@
+{
+  "key": "v4-greenfield-pair-root-start-receipt-20261009",
+  "issuedUtc": "2026-10-09T01:38:56Z",
+  "authority": "Explicit Root start receipt under existing v4-native-main-bridge-and-first-matched-pair-20261009 grant59414d1; no new full-trial slots, no additional cell quota, no deadline extension.",
+  "acceptedHandoffSha": "d1be70415f05c79a8af3e064ab8ea0d70ec3e706",
+  "frozenScientistSource": "48845595368188c46d56f1a909f8fecd43ff7fe7",
+  "commonFreezeSHA256": "3d9e7a7c0e34ff87160dafc379c2dd780a6f9039e91c37cdc90214d6730305eb",
+  "independentReviewSHA256": "4cbd105aadd9fddff612277f849154b8b18985a691b0c86c39531e796163b1f8",
+  "roleDtoBriefingSHA256": "eb324def4d1f6b06e9fcb7c13bac82bd5a13ce1e570ff80db80c218f6bcfc144",
+  "rootVerification": {
+    "cleanExactPrivateRemote": true,
+    "manifestWorkingFinalGitFreezeGitBindings": 31,
+    "publicInputHashes": 24,
+    "privateEvaluationHashesOnly": 5,
+    "hashMismatches": 0,
+    "actualCanaryRawSourceMatches": 18,
+    "archiveMembersAndBindings": 32,
+    "archiveSHA256": "bf87ef5cd085bbce33fb7396df7518b7a2c999bbdae0eb83e1796bd88ae1b307",
+    "oldTrackedModified": 0,
+    "postReviewChanges": "Nine additive closure/review/archive/handoff files only; frozen source unchanged",
+    "privateVectorContentsOpened": false,
+    "actualCanaryMainExit": 0,
+    "actualExecutorReceiptOutcome": "proposed",
+    "controllerStatus": "planned",
+    "actualResponseIdentityInputConfigStdoutBindingVerified": true,
+    "applyOrVerifyAcceptanceClaimed": false,
+    "promptProofLimit": "Prepared literal3113-byte instruction hash and actor/reservation binding present; persisted tool message encrypted, independent plaintext-to-tool equality unavailable. Metadata comparison exception retained, no decryption claim."
+  },
+  "classicSource": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+  "classicBinarySHA256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+  "profile": {
+    "model": "gpt-6.1-sol",
+    "reasoning": "high",
+    "inheritLatestScientistParent": true,
+    "overridesAllowed": false,
+    "approvalPolicy": "never",
+    "filesystem": "danger-full-access",
+    "servingModel": null
+  },
+  "orderedCells": [
+    {
+      "id": "v4-conventional-greenfield-01",
+      "method": "Conventional/Oldschool",
+      "condition": "Greenfield",
+      "order": 1
+    },
+    {
+      "id": "v4-classic-main-greenfield-01",
+      "method": "ClassicMain",
+      "condition": "Greenfield",
+      "order": 2
+    }
+  ],
+  "greenfieldStartSha": "0416e366626d31933443ce2901d6a3696261db7b",
+  "originalAbsoluteEndUtc": "2026-10-09T05:32:04Z",
+  "perCell": {
+    "trialWallSeconds": 7200,
+    "trialActorActivationReservationsMax": 72,
+    "taskWallSeconds": 1200,
+    "taskActorActivationReservationsMax": 12,
+    "semanticRepairsPerTaskMax": 2,
+    "activeHumanSecondsMax": 600,
+    "maxActorsIncludingHelpers": 4,
+    "maxParallelPrimaryCells": 1,
+    "ownedServiceStartsPerActorMax": 12,
+    "implementationPhaseEndsAtTaskSeconds": 840,
+    "minimumAssessmentAdmissionSeconds": 300,
+    "assessmentEndsBeforeTaskEndSeconds": 30,
+    "interruptMarginSeconds": 10
+  },
+  "newFullTrialSlots": 0,
+  "newNativeCellReservations": 0,
+  "newSetupModelCalls": 0,
+  "status": "START AUTHORIZED; actual cell start remains unobserved until Scientist records first real activation",
+  "conditions": [
+    "Start now in this concrete grant: ConventionalGF then ClassicMainGF. No further generic preparation/readiness canaries. Exact existing24public stagedinputs/rubric/private5evaluation/source/roleDTObriefing bound by frozenhashes. No repairs to frozenharness/protocol/evaluator under executiongrant.",
+    "Before each cell require full7200s remaining until05:32:04Z and record actualstart/end/deadline; first cell may end earlier, second only when fullownwindowfits. No truncating budgets for comparison, extension/refill/replacement/newBF/Design/Govcells. If second cannotadmit reportNOTRUN.",
+    "Scientist sole dispatcher, reserves each primary/role/helper/reviewer/repair/failedstart BEFORE tool; all count12pertask/72percell/max4includinghelpers. Freshfork_turns=none/inheritedgpt6.1high nooverrides, checklatest ownparentmetadata atactualactivation; every exactoutboundprompt archived beforetool with honest encryptedmessageprooflimit.",
+    "Fresh ownisolatedrepo atstatedGreenfieldpin, freshmailbox/runtime/policy/log/state paths, exactfrozenbridge/launcher/Python. Runtime path and deadline materialization only fromdeclaredfrozenprofile, no canarycandidate/oldmailbox/foreigncell/chats/memory/privateinputs toimplementers. Sharedhostcooperative, realforeignexposureinvalidateshonestly.",
+    "Conventional follows strongOldschoolworkflow: goodplans/docs/tests/tools/subagents/reviews withinidenticalbudget, noMarkitect/Gov. Classic uses actualcanonical-model mechanism and real nativeMainroles/propose/execute/explicitApply/verify; no Scientistsemanticauthoring/responseediting/conventionalbypass disguised asClassic.",
+    "All domainimplementation/modelupkeep/semanticrepair byactualcellActors withinphasebudgets; Scientist operationalrelease/collection/evaluation only. Preserve840simplementationstop and >=300sassessmentplus30sendreserve; no extraunmeasuredimplementation/inventedapprovals/PASS.",
+    "Real Task4predecessorbinary/acceptedoldorder/sameDB compatibility forTask5. Task6mutation/equivalence onlyafterownTask5freeze, independentassessor declaredinvariants withinexistingtask/cellquota; no extrahiddenrequirement/copiedfirstcellsolution.",
+    "OwnPort0/stdout/PID/Popenhandles passed explicitly; no list_agents/globalprocessinventory/discoveryofforeignowners. Eachfile/shellcall exactowncwd, boundedwaits<=60s/stop_due/interruptonlyownIDs/finallyownservices; no OSproviderterminationguarantee.",
+    "Freeze candidate beforeindependentassessment, preserve rawfailed/error/incomplete/contaminatedresults separately; unknown serving/tokens/cost/humanTime remainnull withoutreceipts. Caseexecution/roleconformance/outputquality distinct. Setup3Main/5reservation/4activations plus separateRootcoordreviews remainsharedoverhead,notfree orcellresults.",
+    "At actualstart/materialblocker/terminalcompletion callbackonce toRoot with safeactualevidence, noACKloops. Aftereachcell cleanprivatecheckpoint/verifiedresearch-backupSHA; no privatevectors/foreigncellresults toimplementers. Continueconcreteactivegrant aftercompaction; atpairterminal provide bounded absolute/reference-relative outcomes/effort/errors/limits. No purchases/APIintegration/policybypass/mainreleasechange."
+  ]
+}
