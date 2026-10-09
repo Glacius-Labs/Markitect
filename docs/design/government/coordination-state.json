@@ -17422,13 +17422,14 @@
         "qualification": "Observed direct-child terminal scope only; full OS descendant containment/global instruction byte snapshot unknown"
       },
       "mainOrPairedMethodResult": false
-    }
+    },
+    "finalOutcome": "QUALIFIED_TECHNICAL_ENDPOINT_PASS_AFTER_SEPARATELY_ORDERED_FINAL_ONLY_SUPPLEMENT; ORIGINAL_V2_ERROR_REPORT_UNCHANGED"
   },
   "conventionalFrozenCandidateScratchAssessmentSupplement20261009": {
     "grantPath": "docs/design/government/conventional-frozen-candidate-scratch-assessment-supplement-20261009.json",
     "grantSha256": "22d7d1297fa59b1e48391b5464bb0163d98a403ff195e5e867c05c7f67017485",
     "issuedUtc": "2026-10-09T21:08:16Z",
-    "status": "TECHNICAL_ENDPOINT_PASS_REPORT_ROOT_READ_CLOSURE_REVIEW_BACKUP_PENDING",
+    "status": "CLOSED_QUALIFIED_TECHNICAL_ENDPOINT_PASS_EXACT_PRIVATE_BACKUP_VERIFIED",
     "dispatch": "SENT_ONCE",
     "limits": {
       "sourcePreparationSeconds": 7200,
@@ -17520,11 +17521,28 @@
       "supplementArchiveOwnerReported": {
         "entries": 53,
         "sha256": "7d9de3421186cf6ff44974fb9b32517314cba0daf5853974def17e57dd9acabd",
-        "rootVerified": "PENDING_PRIVATE_TERMINAL_HANDOFF"
+        "rootVerified": "Exact private terminal source/raw ZIP and53 payloads verified"
       },
-      "closureReview": "PENDING_OWNER",
+      "closureReview": "CLOSED_MATCHES_QUALIFIED",
       "newActualNeeded": false,
       "originalReadonly19ErrorsPreserved": true
+    },
+    "finalHandoff": {
+      "exactCleanLocalPrivateRemoteShaRootVerified": "f54827311e439607f7edb8890b5c83aaea18df5d",
+      "rootVerified": "Clean HEAD/private remote, final handoff/closure/review read, all53 supplemental ZIP payload hashes and exactentryset/WorkingRawGit checked; original585 ZIP hash unchanged. Original snapshot/report findings already checked.",
+      "supplementArchiveSha256": "7d9de3421186cf6ff44974fb9b32517314cba0daf5853974def17e57dd9acabd",
+      "supplementArchiveEntries": 53,
+      "independentClosureReview": "Evidence matches; inherited failed plugin command hook qualified separately",
+      "technicalResult": "PASS fixed final Readinglog workspace_snapshot public functionality/regression/source-doc consistency; tests24/public13/additionaldeclaredbehavior5 positive",
+      "originalReadonly19Errors": "UNCHANGED_PRESERVED",
+      "resources": "One extra final only/startupcheck1/assessor1, no implementation/newcase/helper/canary/CLI/retry; native slot closed",
+      "inheritedHook": "Owner archived failed command StopHook5original+1supplement. No extra modelturn from command hook; no hook-free claim or global plugin/config edits.",
+      "teamHistory": "Scientist separately verifies raw original helper overlap; final assessor lacks raw history and honestly reports UNKNOWN. Not forwarded to implementers.",
+      "costAndLimits": "Actual usage receipts retained; effective helper identity, globalcontextbytes, total attribution/costs/native hardcaps/complete descendants unknown",
+      "humanAcceptance": false,
+      "pairedMethodComparison": "NOT_RUN",
+      "next": "No further Actual for this candidate. Future genuine Markitect adapter/trial only after accepted working interface/runtime and fresh matched finite grant; same functional inputs/target/evaluation/resources/context differences explicit.",
+      "newGrant": false
     }
   }
 }
