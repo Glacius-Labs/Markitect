@@ -17272,6 +17272,35 @@
       "nativeModelClock": "UNKNOWN",
       "oldUncertainCli": "UNCHANGED_QUARANTINED",
       "newGrant": false
+    },
+    "stationProgress": {
+      "rootVerified": "Read stored assessment-S1/S2/S3 findings: PASS5/8/11, no failures; verified all frozen workspace manifest bytes:13/16/26 files respectively (55 bindings). No checks rerun or live candidate edits.",
+      "publicChecks": [
+        {
+          "station": "S1",
+          "pass": 5,
+          "fail": 0
+        },
+        {
+          "station": "S2",
+          "pass": 8,
+          "fail": 0
+        },
+        {
+          "station": "S3",
+          "pass": 11,
+          "fail": 0
+        }
+      ],
+      "snapshotFileBindingsVerified": 55,
+      "teamOverlap": "Owner reports three distinct native helpers query/export/summary with overlapping intervals20:58:22.754Z–20:59:54.778Z; not independently fully attested by Root yet",
+      "ownerReportedSelfRepair": "Actor repaired own workspace-local TEMP/TMP test issue, no Scientist semantic coaching/candidate edits reported",
+      "ownerReportedS4Run": "e07578a6-e1db-44f5-89a9-f1f25e9c60b1",
+      "S4": "RUNNING_OWNER_REPORTED",
+      "freshIndependentFinal": "NOT_RUN_PENDING_S4_FREEZE",
+      "qualityConclusion": "Positive finite public checks only; semantic quality/rule consistency/final outcome pending",
+      "pairedComparison": "NOT_RUN",
+      "newOrder": false
     }
   }
 }
