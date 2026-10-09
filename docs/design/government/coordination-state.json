@@ -17404,7 +17404,7 @@
     "grantPath": "docs/design/government/conventional-frozen-candidate-scratch-assessment-supplement-20261009.json",
     "grantSha256": "22d7d1297fa59b1e48391b5464bb0163d98a403ff195e5e867c05c7f67017485",
     "issuedUtc": "2026-10-09T21:08:16Z",
-    "status": "NATIVE_FINAL_COMPLETED_PRESERVED_REPORT_REVIEW_HANDOFF_PENDING",
+    "status": "TECHNICAL_ENDPOINT_PASS_REPORT_ROOT_READ_CLOSURE_REVIEW_BACKUP_PENDING",
     "dispatch": "SENT_ONCE",
     "limits": {
       "sourcePreparationSeconds": 7200,
@@ -17468,6 +17468,39 @@
       "remainingNativeStarts": 0,
       "retryAuthorized": false,
       "privateTerminalBackup": "PENDING_OWNER_HANDOFF"
+    },
+    "scientificReport": {
+      "sha256": "0159dc890935078d1a75259e9d4d4cfc9b1ee3fb100e87d011cd3385adf40601",
+      "rootVerified": "Read exact preserved report plus final unchanged original/copy/spec/preparation/nohelpers flags; no tests repeated",
+      "endpointExistingTests": {
+        "pass": 24,
+        "fail": 0,
+        "errors": 0
+      },
+      "frozenOriginalPublicS4": {
+        "pass": 13,
+        "fail": 0
+      },
+      "additionalDeclaredBehaviorBoundaryProbes": {
+        "pass": 5,
+        "fail": 0,
+        "qualification": "Assessor-authored supplementary declared public behavior probes, not pre-Actual holdouts or retrospective new rubric"
+      },
+      "productDefectsObserved": "NONE_IN_EXERCISED_CASES",
+      "assessorOwnExecutionErrors": "Relative repo path missed app.py and draft probe undefined helper; assessor fixed its own invocation/probe only, errors retained separately",
+      "quality": "Assessor positive functional/regression/compatibility/docs/small-project code inspection; no broad long-term architecture assurance",
+      "historicalStationsAndTeam": "Not supplied to independent assessor; original station snapshots/public checks and separately observed native receipts retained by Scientist/Root, not fabricated into assessor evidence",
+      "humanAcceptance": false,
+      "pairedMethodComparison": "NOT_RUN",
+      "usage": "Owner native78.74524s; no total-compute/cost inference",
+      "supplementArchiveOwnerReported": {
+        "entries": 53,
+        "sha256": "7d9de3421186cf6ff44974fb9b32517314cba0daf5853974def17e57dd9acabd",
+        "rootVerified": "PENDING_PRIVATE_TERMINAL_HANDOFF"
+      },
+      "closureReview": "PENDING_OWNER",
+      "newActualNeeded": false,
+      "originalReadonly19ErrorsPreserved": true
     }
   }
 }
