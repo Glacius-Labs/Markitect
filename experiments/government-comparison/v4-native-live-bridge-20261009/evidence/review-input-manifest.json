@@ -1,0 +1,202 @@
+{
+  "entries": [
+    {
+      "path": "common-freeze.json",
+      "bytes": 9957,
+      "sha256": "1a0b4be2bb7b8bb7d152404a3df177bf6d8bea52bc5c728bd06c07addcb62a99"
+    },
+    {
+      "path": "continuation-anchor.md",
+      "bytes": 1011,
+      "sha256": "a5705fb7e57663ca2dfd9f4eaa59a9b379bfded96ec443892ff3654dc2d7b751"
+    },
+    {
+      "path": "evidence\\authorization-grant.json",
+      "bytes": 9668,
+      "sha256": "6d4d129040c6001856ba7e622c394212ef65f31a3f0c4e0c882188db7498815b"
+    },
+    {
+      "path": "evidence\\canary-result.json",
+      "bytes": 975,
+      "sha256": "f58bdf69dff577e294072bfe4ab9fce03157323955edf7666114cfff48702a49"
+    },
+    {
+      "path": "evidence\\guardian-start.json",
+      "bytes": 85,
+      "sha256": "70ca6cb90ca1c003f245c962c75319cdc5b29014a1358020391a55047dc4b0ef"
+    },
+    {
+      "path": "evidence\\ledger.json",
+      "bytes": 2286,
+      "sha256": "17474a46c18626c89bb9a6567e1206af3d811365c1400b6f7c1e083b98d71d87"
+    },
+    {
+      "path": "evidence\\native-profile-binding.json",
+      "bytes": 475,
+      "sha256": "22d30b655a7f059291065c861ee8e6c4a3a41a0433bb93a63103db117a00a667"
+    },
+    {
+      "path": "evidence\\pre-canary-pin.json",
+      "bytes": 3431,
+      "sha256": "4a636142eb320c312f905dec160db5d87d3e44a8f95c22e080a871207cca05df"
+    },
+    {
+      "path": "evidence\\profile-before-canary.json",
+      "bytes": 201,
+      "sha256": "6d0cafd97837b2e9449d023a83cd25e2beb4ffdec8603af9c88cc3dfa506d1ae"
+    },
+    {
+      "path": "evidence\\transport-test-1.stderr.log",
+      "bytes": 109,
+      "sha256": "7289dcae7b3fc0ad9a4478f39f965c42a3c6be1fc9b05aa9462ef7a8e80cc84a"
+    },
+    {
+      "path": "evidence\\transport-test-1.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence\\canary\\main.stderr.log",
+      "bytes": 94,
+      "sha256": "77ffd3b8ab3db3d24b68e655903a24a7862979db5cc13b6e3b8c9a09b2444aa1"
+    },
+    {
+      "path": "evidence\\canary\\main.stdout.json",
+      "bytes": 5433,
+      "sha256": "30694537d66d27db4291a106dd84273ebad4fba752155fbdc98e53f256e6d465"
+    },
+    {
+      "path": "evidence\\canary\\policy.json",
+      "bytes": 151,
+      "sha256": "c662ba70b57d3463dfe9fd4d59a8bdfe2e0653e0e2813159d24675e75234f38d"
+    },
+    {
+      "path": "evidence\\canary\\process-receipt.json",
+      "bytes": 946,
+      "sha256": "e0925517f77833fd371fb2419a1dfd9da9b3c8b693f23312cabe53f88c1d9aca"
+    },
+    {
+      "path": "evidence\\canary\\process-spec.json",
+      "bytes": 912,
+      "sha256": "bc5ef8f2a8525cf71e2eafbc46835f28202d23e048a9c492456ea80496239c7f"
+    },
+    {
+      "path": "evidence\\canary\\runtime.json",
+      "bytes": 3407,
+      "sha256": "f4c55953c426d0f6c4de3b69a15c85bda81b3a959eb76ee3982d03991050ce39"
+    },
+    {
+      "path": "evidence\\canary\\source-bindings.json",
+      "bytes": 5713,
+      "sha256": "0d1a8df9ee7c097860e6e00ea172d10d3f27325a621cc9ca633716de29d71d95"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\binding-notes.md",
+      "bytes": 4077,
+      "sha256": "56a37899200ebe4d0ca829eeb1f0d44edafba54ff017c9473a0e2ed5517f0511"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\canary.yaml",
+      "bytes": 1975,
+      "sha256": "00654eddcce822e3aaaa23c0b79ac8c84e104f21a925bb1b6d695820d6198dbf"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\canonical.yaml",
+      "bytes": 2225,
+      "sha256": "dfe363d8ecd304333ec061a7563034c2f1c73fc9ddfdcf7fcdbbc47d6be2f9e6"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\definitions\\commerce.markdown-projection.yaml",
+      "bytes": 706,
+      "sha256": "4e7f2bcbc78936e4ce8eaa570e46a10e594c5e8a2b63dde78567858159072760"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\definitions\\commerce.projection.yaml",
+      "bytes": 1091,
+      "sha256": "74ee6f2ea2690017ef0bd5636f1faba564917b72e33e4a2c3360b13d86e09962"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\definitions\\create-order.effect-axis.yaml",
+      "bytes": 225,
+      "sha256": "581648c57dd2fffdac622e1b44d9c7c951e7b68119ef2d8403a16662eb83bb9e"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\definitions\\create-order.handler.yaml",
+      "bytes": 189,
+      "sha256": "72c556e9504d13aeed165dacc3923ce0c28ea46ded1be76fe0dbea3b7b3f539f"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\definitions\\create-order.projection-policy.yaml",
+      "bytes": 438,
+      "sha256": "db31cfc61942e619bcf3a91445e164181bb74df929875bda173e0cc86e8963c0"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\definitions\\create-order.use-case.yaml",
+      "bytes": 282,
+      "sha256": "a7378a24a0dc7e93ba7f477a2e5e9d9b610406899f770777d9b81ae774829ca3"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\definitions\\effect-axis.projection-policy.yaml",
+      "bytes": 447,
+      "sha256": "4c8730a36075feaa9d7e7aaab647bd56aa8239f56be4542ea7be98bccffee3cf"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\definitions\\handler.projection-policy.yaml",
+      "bytes": 427,
+      "sha256": "5e71e214134895ec5d02856e9d6d049f9cbf7eb89f5f892b4b68873e235a64a9"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\evidence\\check.go",
+      "bytes": 1371,
+      "sha256": "22da5d8081ed35fdfb30f0e8f5f009efb50bb8a278a9db36225c9005d572c49e"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\modules\\commerce\\module.yaml",
+      "bytes": 282,
+      "sha256": "d24a2a70c48291bcd94b15ae7d785ccca69f450f6606265cfd7fd96e29cfc0f7"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\modules\\commerce\\schema.yaml",
+      "bytes": 872,
+      "sha256": "645f78a7668f72970ddab47508a97280c19b9f9ca97bc79554d8d2022dd1eb02"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\modules\\dotnet\\module.yaml",
+      "bytes": 664,
+      "sha256": "97e79a16e88f81babb7303994907135c273fa45ccc98e65ced86f1494b181023"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\modules\\foundation\\module.yaml",
+      "bytes": 276,
+      "sha256": "074d9275cb728f11030eccabb6db6d5b4215bb5152596b7efd29f67cf12790d6"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\modules\\foundation\\schema.yaml",
+      "bytes": 2822,
+      "sha256": "a06850f14a9e9cbea29881058f764493606200f430ac2334d121f605f0e643e2"
+    },
+    {
+      "path": "evidence\\canary\\source\\examples\\canonical-projection\\modules\\markdown\\module.yaml",
+      "bytes": 698,
+      "sha256": "02472764536ba55ef0378f70dd25dcf1d404d31bc828ee8e3ce50f00bffd5a47"
+    },
+    {
+      "path": "helpers\\live_bridge.py",
+      "bytes": 4414,
+      "sha256": "b2a87582a1668fae26596c9521f038c596c5c40110899e2b4d70da55575ad33b"
+    },
+    {
+      "path": "helpers\\run_owned_main.py",
+      "bytes": 1533,
+      "sha256": "63010204f09f5264d9e3bfb311663810841b6ecf870ce02633d5b52aaaca10c3"
+    },
+    {
+      "path": "helpers\\test_transport.py",
+      "bytes": 3368,
+      "sha256": "b21baa64a085813e682347f59b73c529cb0bff0de3a281f5cbf3dfd1d54c0449"
+    }
+  ],
+  "frozenUtc": "2026-10-09T01:12:23.0916362Z",
+  "noFurtherCorrectionsTests": true,
+  "reviewScope": "Only frozen new sources/public canary receipts/common profile and hash lists; no private vectors or foreign cell results"
+}

@@ -1,0 +1,209 @@
+{
+  "actualCells": [
+    {
+      "id": "v4-conventional-greenfield-01",
+      "method": "Conventional/Oldschool",
+      "condition": "Greenfield",
+      "order": 1
+    },
+    {
+      "id": "v4-classic-main-greenfield-01",
+      "method": "ClassicMain",
+      "condition": "Greenfield",
+      "order": 2
+    }
+  ],
+  "noPostReviewRepairsOrTests": true,
+  "previousCommonProposal": "8c1bfcb59342fe41c85ff010e4decad09a28ca4a4415a769b55261ae5e35e956",
+  "nativeActivations": 0,
+  "tokens": null,
+  "sharedBudget": {
+    "absoluteDeadlineUtc": "2026-10-09T01:27:04Z",
+    "maxWallSeconds": 1500,
+    "correctionBatchesMax": 2,
+    "focusedOfflineTransportTestsMax": 2,
+    "offlineTestTimeoutSeconds": 120,
+    "newProductBuilds": 0,
+    "liveCanaryRoleInvocationsMax": 1,
+    "liveCanaryNativeActorsMax": 1,
+    "liveCanaryActorWallSecondsMax": 300,
+    "liveCanaryProductProcessWallSecondsMax": 360,
+    "independentFreezeReviewersMax": 1,
+    "freezeReviewerWallSecondsMax": 240,
+    "allSharedModelActivationsMax": 2
+  },
+  "privateEvaluationHashes": [
+    {
+      "sha256": "dd276535cb7e47950da1174ba0549ad58a9d9a87c00ffe94ba9d80570cd28aea",
+      "path": "experiments\\government-comparison\\.study-data\\v4-receipt-repair-20261009\\base_checks.py"
+    },
+    {
+      "sha256": "b32cf2496f7888766d529f5228a1f0c3524d702dff3baeb481c9c783597e2e5a",
+      "path": "experiments\\government-comparison\\.study-data\\v4-receipt-repair-20261009\\holdout_checks.py"
+    },
+    {
+      "sha256": "b3662d4c5447b9ff8365bd2070ac7029cfb78d8e6393dc058b7891c01eb52ffa",
+      "path": "experiments\\government-comparison\\.study-data\\v4-receipt-repair-20261009\\holdout-plan.json"
+    },
+    {
+      "sha256": "50385660df977fe07ee76b5b67633c08ee18e03e79f4bf63fd385bd4e97d4e52",
+      "path": "experiments\\government-comparison\\.study-data\\v4-receipt-repair-20261009\\task6-equivalence-plan.json"
+    },
+    {
+      "sha256": "f17a0212c080c033ec96df175b5539a93c616434e1bcbe10cf573f00d5c3999d",
+      "path": "experiments\\government-comparison\\.study-data\\v4-receipt-repair-20261009\\test_oracle_mechanics.py"
+    }
+  ],
+  "mainSource": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+  "publicInputs": [
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/architecture.md",
+      "gitBlob": "d3cd12c78d6c787c5b4ea47c896281670c1f1e81",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/brief.md",
+      "gitBlob": "5393186e5e631594acdaa787bdc62d3ddf70ad87",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/brownfield-provenance.md",
+      "gitBlob": "ae6a3f1eea31792b0864d9a1d678e4a4808a9927",
+      "sha256": "155f6f736adf4d48b71074f74a9221d9f8ac796a938b5b8b0650f741d59eb548"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/candidate-admission.json",
+      "gitBlob": "0134a1df3f3350625bb790371cbc6f37fac018a1",
+      "sha256": "fc743e339885ac0cc25b3409c23a1497e075786730fd9f42f0b0cd64de33e856"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/checks.py",
+      "gitBlob": "be2a8bdac43556a4ffd10c9fafb3cca95ecab921",
+      "sha256": "783561065c3bc6c814aed3ba5c943710442dbbee4502ad7db6b58eed4dabeccf"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/common-outcome-record.json",
+      "gitBlob": "dfeeeeb075ee947aec38df0a01c94e6581872cbf",
+      "sha256": "faf63ce63336e9df81646822181af74c995853482b838b254773a68b143f20ab"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/common-profile-proposal.json",
+      "gitBlob": "57f26730124543b1197badf6f425d9511b5eedc5",
+      "sha256": "d153c97695ee95521331606ce413950df7c8c8f47f69c8441853fc3499883552"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/deadlines.py",
+      "gitBlob": "61917a4621f9a21f3855d85dbeee4434460873c9",
+      "sha256": "7e025a3e49625134abaad80036832746cb2b21f2e1bf976387f872ccb2437165"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/dto_preflight.py",
+      "gitBlob": "99d75f4a8cd09eb82b488b9c98031efeed4a9e0d",
+      "sha256": "e6bba598c515925ce584342190b18f5fb7f4a67054e66e55d1c5572cb43e975d"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/holdout-procedure.md",
+      "gitBlob": "ce98143b74a0aa56e58b138a5348d20a77a6238a",
+      "sha256": "28f2169bc7fce3ccf586aa2527fef359a9709aa4eb87b9cb7feb6aff41309f9b"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/oldschool-workflow-brief-20261008.md",
+      "gitBlob": "8eeb2c0fcb713889652637dc2ddde1e361961614",
+      "sha256": "5b9dddff5d07d9cb1e6427c43e46f1259e9fb49fd030fc0a6e1e44b21e60aadc"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/operator-evidence-contract.md",
+      "gitBlob": "188175489ec75951f72df445a455a9ef58136e2e",
+      "sha256": "cf230d578bacbb22d32743fecbc87d079eb03644ce8aabe8cdcd8296d03c49cb"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/owned_transport.py",
+      "gitBlob": "a3b14da65985fbc9b65f413d51de89dea71d8de3",
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/q1-intent-setup-v1.md",
+      "gitBlob": "ea9e27fcce836eb4c1e1f35a71fbebea17837864",
+      "sha256": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/release.py",
+      "gitBlob": "34be86afb7f3e34f4869c09187168dd3f9389296",
+      "sha256": "15df0312e5c1150e685a44a49d969766f20bf6194f7b0b48cf2a80605f23d291"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/rubric.json",
+      "gitBlob": "14267e70421d9095d893ea1fb312a260f396a3b9",
+      "sha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/task-requirement-map.json",
+      "gitBlob": "d79387e51aeda200a96eed2714c444ff55a3eb98",
+      "sha256": "2a6473f03df9aace3c7222a61e0078d97aabdf3d9a3d908ea3f1c36b5962f53c"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/tasks/01-create-order.md",
+      "gitBlob": "817f8861d98306942224ac72dcbcd14e0aa86e19",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/tasks/02-reserve-stock.md",
+      "gitBlob": "ebe0a572dea1bb0543c0b341695694ad3f00bb3f",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/tasks/03-persist-state.md",
+      "gitBlob": "5b6c0132dfca5735d621a6c3f3af20478f65d081",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/tasks/04-order-lifecycle.md",
+      "gitBlob": "73fb8787a5f9ead2c68151a7606ae27ba701d39b",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/tasks/05-change-limit.md",
+      "gitBlob": "2726b90081b4e8060838c492aa971651e32b086e",
+      "sha256": "b68ccd173891692050c64101af47754f1213e745a63071653b30b8d9d6ccf17f"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/tasks/06-repair-regression.md",
+      "gitBlob": "fdaf1cd6542739f5d2739b004379d85ebe07d591",
+      "sha256": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/public/test_mechanics.py",
+      "gitBlob": "0c944ce961139b13cde0315846fb81637829326a",
+      "sha256": "9ee8088e7e61932acf67a8fbae4d1a49b7e3999571f2feff7fbb637f060b6603"
+    }
+  ],
+  "mainBinarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+  "servingModel": null,
+  "canaryResult": "evidence/canary-result.json",
+  "actualCellsStarted": 0,
+  "profileEvidence": "evidence/profile-before-canary.json",
+  "boundary": "Cooperative shared-host path scope only; no Actor exposure test or OS isolation proof",
+  "cost": null,
+  "humanTime": null,
+  "resources": {
+    "trialWallSeconds": 7200,
+    "trialActorActivationReservationsMax": 72,
+    "taskWallSeconds": 1200,
+    "taskActorActivationReservationsMax": 12,
+    "semanticRepairsPerTaskMax": 2,
+    "activeHumanSecondsMax": 600,
+    "maxActorsIncludingHelpers": 4,
+    "maxParallelPrimaryCells": 1,
+    "ownedServiceStartsPerActorMax": 12,
+    "implementationPhaseEndsAtTaskSeconds": 840,
+    "minimumAssessmentAdmissionSeconds": 300,
+    "assessmentEndsBeforeTaskEndSeconds": 30,
+    "interruptMarginSeconds": 10
+  },
+  "baseline": "323ea7c050a7a92aa220d7282b06e66a977b417e",
+  "status": "NOT EXECUTABLE: sole live canary failed before normalized Invocation",
+  "rootStartReceipt": null,
+  "literalRuntimePin": "evidence/pre-canary-pin.json",
+  "nativeReservations": 2,
+  "frozenUtc": "2026-10-09T01:12:22.9654529Z"
+}

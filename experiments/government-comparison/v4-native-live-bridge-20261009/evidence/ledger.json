@@ -1,0 +1,72 @@
+{
+  "grant": "v4-native-main-bridge-and-first-matched-pair-20261009",
+  "issuedUtc": "2026-10-09T01:02:04Z",
+  "setupDeadlineUtc": "2026-10-09T01:27:04Z",
+  "overallDeadlineUtc": "2026-10-09T05:32:04Z",
+  "baseline": "323ea7c050a7a92aa220d7282b06e66a977b417e",
+  "correctionBatches": [
+    {
+      "reservedUtc": "2026-10-09T03:06:16.9167345+02:00",
+      "number": 1,
+      "purpose": "Minimal live stdin/stdout mailbox bridge, parent bounded own process controller and offline transport fixtures"
+    }
+  ],
+  "testReservations": [
+    {
+      "command": "C:/Python313/python.exe -B test_transport.py",
+      "number": 1,
+      "maxSeconds": 120,
+      "scope": "Pure offline transport fixtures only",
+      "status": "terminal",
+      "reservedUtc": "2026-10-09T03:08:16.2485633+02:00",
+      "exitCode": 0,
+      "elapsedSeconds": 0.4765392
+    }
+  ],
+  "canaryReservations": [
+    {
+      "roleMaxSeconds": 360,
+      "processSpec": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\canary-state\\process-spec.json",
+      "productStarts": 1,
+      "status": "terminal-block-before-role-no-retry",
+      "reservedUtc": "2026-10-09T01:11:15.4375302Z",
+      "nativeActorReservations": 1,
+      "actorMaxSeconds": 300,
+      "role": "executor",
+      "actualNativeActorsStarted": 0,
+      "actualBridgeStartsObserved": 0
+    }
+  ],
+  "reviewReservations": [
+    {
+      "overrides": null,
+      "number": 1,
+      "forkTurns": "none",
+      "reservedUtc": "2026-10-09T01:12:21.4210221Z",
+      "purpose": "Read-only exact frozen source and terminal negative canary/common bindings review",
+      "maxSeconds": 240,
+      "status": "reserved"
+    }
+  ],
+  "cellReservations": [
+    {
+      "id": "v4-conventional-greenfield-01",
+      "method": "Conventional/Oldschool",
+      "condition": "Greenfield",
+      "order": 1
+    },
+    {
+      "id": "v4-classic-main-greenfield-01",
+      "method": "ClassicMain",
+      "condition": "Greenfield",
+      "order": 2
+    }
+  ],
+  "fullCellsStarted": 0,
+  "rootStartReceipt": null,
+  "status": "CANARY TERMINAL BLOCK; FINAL REVIEW RESERVED; NO STUDY START",
+  "servingModel": null,
+  "tokens": null,
+  "cost": null,
+  "humanOversight": null
+}

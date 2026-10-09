@@ -1,0 +1,110 @@
+[
+  {
+    "path": "examples/canonical-projection/binding-notes.md",
+    "rawWorkingGitHash": "3518b7d11e3c9431133674e450df5d36b7784d94",
+    "committedGitBlob": "3518b7d11e3c9431133674e450df5d36b7784d94",
+    "workingSha256": "56a37899200ebe4d0ca829eeb1f0d44edafba54ff017c9473a0e2ed5517f0511"
+  },
+  {
+    "path": "examples/canonical-projection/canary.yaml",
+    "rawWorkingGitHash": "6997d391ed50173854548110aa7ea1bcc009333c",
+    "committedGitBlob": "5ccd447249c719f07c95ecc56d62cec605eb9d66",
+    "workingSha256": "00654eddcce822e3aaaa23c0b79ac8c84e104f21a925bb1b6d695820d6198dbf"
+  },
+  {
+    "path": "examples/canonical-projection/canonical.yaml",
+    "rawWorkingGitHash": "9d0be781bcd94a2d2d9baa16542843a6aa624c35",
+    "committedGitBlob": "9d0be781bcd94a2d2d9baa16542843a6aa624c35",
+    "workingSha256": "dfe363d8ecd304333ec061a7563034c2f1c73fc9ddfdcf7fcdbbc47d6be2f9e6"
+  },
+  {
+    "path": "examples/canonical-projection/definitions/commerce.markdown-projection.yaml",
+    "rawWorkingGitHash": "2809a6c25a8897ac4e76db2f7909b18da5edd641",
+    "committedGitBlob": "2809a6c25a8897ac4e76db2f7909b18da5edd641",
+    "workingSha256": "4e7f2bcbc78936e4ce8eaa570e46a10e594c5e8a2b63dde78567858159072760"
+  },
+  {
+    "path": "examples/canonical-projection/definitions/commerce.projection.yaml",
+    "rawWorkingGitHash": "a4d3dfb7be2fbc051e136ea79c75c5fd91c74903",
+    "committedGitBlob": "a4d3dfb7be2fbc051e136ea79c75c5fd91c74903",
+    "workingSha256": "74ee6f2ea2690017ef0bd5636f1faba564917b72e33e4a2c3360b13d86e09962"
+  },
+  {
+    "path": "examples/canonical-projection/definitions/create-order.effect-axis.yaml",
+    "rawWorkingGitHash": "17ca7befcd5da9b344284cab8701e002855f76ef",
+    "committedGitBlob": "17ca7befcd5da9b344284cab8701e002855f76ef",
+    "workingSha256": "581648c57dd2fffdac622e1b44d9c7c951e7b68119ef2d8403a16662eb83bb9e"
+  },
+  {
+    "path": "examples/canonical-projection/definitions/create-order.handler.yaml",
+    "rawWorkingGitHash": "bce68fc41637de8e01d72e65fd0d01eecb9da42e",
+    "committedGitBlob": "bce68fc41637de8e01d72e65fd0d01eecb9da42e",
+    "workingSha256": "72c556e9504d13aeed165dacc3923ce0c28ea46ded1be76fe0dbea3b7b3f539f"
+  },
+  {
+    "path": "examples/canonical-projection/definitions/create-order.projection-policy.yaml",
+    "rawWorkingGitHash": "689e7d93a2ee15dd3cae30c044054ef63b18e62c",
+    "committedGitBlob": "689e7d93a2ee15dd3cae30c044054ef63b18e62c",
+    "workingSha256": "db31cfc61942e619bcf3a91445e164181bb74df929875bda173e0cc86e8963c0"
+  },
+  {
+    "path": "examples/canonical-projection/definitions/create-order.use-case.yaml",
+    "rawWorkingGitHash": "e92d6e8a65306c89b3bf0a3e0566432677b616f1",
+    "committedGitBlob": "e92d6e8a65306c89b3bf0a3e0566432677b616f1",
+    "workingSha256": "a7378a24a0dc7e93ba7f477a2e5e9d9b610406899f770777d9b81ae774829ca3"
+  },
+  {
+    "path": "examples/canonical-projection/definitions/effect-axis.projection-policy.yaml",
+    "rawWorkingGitHash": "ca93c1989333837c2fd2eba86543b1758b09ef07",
+    "committedGitBlob": "ca93c1989333837c2fd2eba86543b1758b09ef07",
+    "workingSha256": "4c8730a36075feaa9d7e7aaab647bd56aa8239f56be4542ea7be98bccffee3cf"
+  },
+  {
+    "path": "examples/canonical-projection/definitions/handler.projection-policy.yaml",
+    "rawWorkingGitHash": "3a4f635c911567496c17e31ad50fd5636f547178",
+    "committedGitBlob": "3a4f635c911567496c17e31ad50fd5636f547178",
+    "workingSha256": "5e71e214134895ec5d02856e9d6d049f9cbf7eb89f5f892b4b68873e235a64a9"
+  },
+  {
+    "path": "examples/canonical-projection/evidence/check.go",
+    "rawWorkingGitHash": "6fcef1874c69adb672274a831868d865068bd696",
+    "committedGitBlob": "6fcef1874c69adb672274a831868d865068bd696",
+    "workingSha256": "22da5d8081ed35fdfb30f0e8f5f009efb50bb8a278a9db36225c9005d572c49e"
+  },
+  {
+    "path": "examples/canonical-projection/modules/commerce/module.yaml",
+    "rawWorkingGitHash": "467d16ad3bbbbc59985d5057ce6da86d58c5b323",
+    "committedGitBlob": "467d16ad3bbbbc59985d5057ce6da86d58c5b323",
+    "workingSha256": "d24a2a70c48291bcd94b15ae7d785ccca69f450f6606265cfd7fd96e29cfc0f7"
+  },
+  {
+    "path": "examples/canonical-projection/modules/commerce/schema.yaml",
+    "rawWorkingGitHash": "93b8f8965240de26fafc56b8a3646176c32bd57c",
+    "committedGitBlob": "93b8f8965240de26fafc56b8a3646176c32bd57c",
+    "workingSha256": "645f78a7668f72970ddab47508a97280c19b9f9ca97bc79554d8d2022dd1eb02"
+  },
+  {
+    "path": "examples/canonical-projection/modules/dotnet/module.yaml",
+    "rawWorkingGitHash": "e0196139794172e639656bf1d544eecfc72d3381",
+    "committedGitBlob": "e0196139794172e639656bf1d544eecfc72d3381",
+    "workingSha256": "97e79a16e88f81babb7303994907135c273fa45ccc98e65ced86f1494b181023"
+  },
+  {
+    "path": "examples/canonical-projection/modules/foundation/module.yaml",
+    "rawWorkingGitHash": "c9ad2323ccd4c61c55bd94e97bfa43425ea1212d",
+    "committedGitBlob": "c9ad2323ccd4c61c55bd94e97bfa43425ea1212d",
+    "workingSha256": "074d9275cb728f11030eccabb6db6d5b4215bb5152596b7efd29f67cf12790d6"
+  },
+  {
+    "path": "examples/canonical-projection/modules/foundation/schema.yaml",
+    "rawWorkingGitHash": "649a6df84eeb4131944c270b61b5439bf7778685",
+    "committedGitBlob": "649a6df84eeb4131944c270b61b5439bf7778685",
+    "workingSha256": "a06850f14a9e9cbea29881058f764493606200f430ac2334d121f605f0e643e2"
+  },
+  {
+    "path": "examples/canonical-projection/modules/markdown/module.yaml",
+    "rawWorkingGitHash": "c40f5e86c1d9ac13b063460c9b5fee711fd010d5",
+    "committedGitBlob": "c40f5e86c1d9ac13b063460c9b5fee711fd010d5",
+    "workingSha256": "02472764536ba55ef0378f70dd25dcf1d404d31bc828ee8e3ce50f00bffd5a47"
+  }
+]

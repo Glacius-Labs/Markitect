@@ -1,0 +1,76 @@
+{
+  "recordStore": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\canary-state\\records",
+  "privateLogs": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\canary-state\\logs",
+  "assuranceScopes": [],
+  "referenceDepth": 1,
+  "verifier": {
+    "timeoutSeconds": 360,
+    "model": "gpt-6.1-sol",
+    "maxStdoutBytes": 1048576,
+    "args": [
+      "-B",
+      "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\v4-native-live-bridge-20261009\\helpers\\live_bridge.py",
+      "--mailbox",
+      "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\canary-state\\mailbox",
+      "--policy",
+      "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\canary-state\\policy.json"
+    ],
+    "runtimeFiles": [
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\v4-native-live-bridge-20261009\\helpers\\live_bridge.py",
+        "mode": "0644",
+        "digest": "sha256:b2a87582a1668fae26596c9521f038c596c5c40110899e2b4d70da55575ad33b"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\canary-state\\policy.json",
+        "mode": "0644",
+        "digest": "sha256:c662ba70b57d3463dfe9fd4d59a8bdfe2e0653e0e2813159d24675e75234f38d"
+      }
+    ],
+    "maxStderrBytes": 1048576,
+    "providerVersion": "native-codex-collaboration-inherited-parent",
+    "command": "C:\\Python313\\python.exe",
+    "modelOptions": {
+      "transport": "Scientist-dispatched-native-tool",
+      "servingModel": "unobserved",
+      "reasoning": "high"
+    }
+  },
+  "checkInputs": [],
+  "apiVersion": "markitect.canonical/controller/v1alpha1",
+  "executor": {
+    "timeoutSeconds": 360,
+    "model": "gpt-6.1-sol",
+    "maxStdoutBytes": 1048576,
+    "args": [
+      "-B",
+      "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\v4-native-live-bridge-20261009\\helpers\\live_bridge.py",
+      "--mailbox",
+      "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\canary-state\\mailbox",
+      "--policy",
+      "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\canary-state\\policy.json"
+    ],
+    "runtimeFiles": [
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\v4-native-live-bridge-20261009\\helpers\\live_bridge.py",
+        "mode": "0644",
+        "digest": "sha256:b2a87582a1668fae26596c9521f038c596c5c40110899e2b4d70da55575ad33b"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\canary-state\\policy.json",
+        "mode": "0644",
+        "digest": "sha256:c662ba70b57d3463dfe9fd4d59a8bdfe2e0653e0e2813159d24675e75234f38d"
+      }
+    ],
+    "maxStderrBytes": 1048576,
+    "providerVersion": "native-codex-collaboration-inherited-parent",
+    "command": "C:\\Python313\\python.exe",
+    "modelOptions": {
+      "transport": "Scientist-dispatched-native-tool",
+      "servingModel": "unobserved",
+      "reasoning": "high"
+    }
+  },
+  "auditAll": false,
+  "assuranceRoots": []
+}

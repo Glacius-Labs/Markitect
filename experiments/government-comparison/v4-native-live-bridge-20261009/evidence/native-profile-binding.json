@@ -1,0 +1,13 @@
+{
+  "ownThreadId": "01a1169c-3df6-7571-997d-48ab57365875",
+  "turnId": "01a11e31-0564-76f2-9ea5-aa1a0cdcc7e7",
+  "metadataTimestamp": "2026-10-09T01:04:51.616Z",
+  "model": "gpt-6.1-sol",
+  "reasoning": "high",
+  "approval": "never",
+  "filesystem": "danger-full-access",
+  "metadataLineSha256": "b110f877be6856f3e6389c03b899cf0d1f07a4f654224cdc61979c77848e8805",
+  "servingModel": null,
+  "inheritWithoutOverrides": true,
+  "rawConversationNotExported": true
+}

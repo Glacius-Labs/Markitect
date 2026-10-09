@@ -1,0 +1,20 @@
+{
+  "executorBridgeStartsObserved": 0,
+  "status": "NOT READY",
+  "sourceBinding": {
+    "path": "examples/canonical-projection/canary.yaml",
+    "rawWorkingGitHash": "6997d391ed50173854548110aa7ea1bcc009333c",
+    "committedGitBlob": "5ccd447249c719f07c95ecc56d62cec605eb9d66",
+    "workingSha256": "00654eddcce822e3aaaa23c0b79ac8c84e104f21a925bb1b6d695820d6198dbf"
+  },
+  "actualResponseForwarded": 0,
+  "noRetry": true,
+  "rawError": "canonical source \"examples/canonical-projection/canary.yaml\" changed since its fixed revision",
+  "actualNativeActorsStarted": 0,
+  "productStarts": 1,
+  "productExitCode": 2,
+  "actualMainExecutorReceipts": 0,
+  "errorPhase": "Main fixed-revision source freshness before agentexec",
+  "actualInvocationsPublished": 0,
+  "interpretation": "Working-byte Git hash differs from committed blob under line-ending normalization; exact Main error proves fixed-source mismatch, no live transport or study quality proof."
+}

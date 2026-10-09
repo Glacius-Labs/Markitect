@@ -1,0 +1,9 @@
+{
+  "maxRequests": 1,
+  "maxResponseBytes": 1048576,
+  "bridgeSeconds": 330,
+  "notAfterEpoch": 1791509224,
+  "roles": [
+    "executor"
+  ]
+}

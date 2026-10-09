@@ -1,0 +1,107 @@
+{
+  "apiVersion": "markitect.canonical/controller/v1alpha1",
+  "digest": "",
+  "status": "",
+  "configPath": "examples/canonical-projection/canary.yaml",
+  "proposal": {
+    "apiVersion": "markitect.canonical/controller/v1alpha1",
+    "digest": "",
+    "status": "",
+    "configDigest": "sha256:dc19258ae3f38fecbe32d15ff22fc64e9995c4108373b41031f62d72258ae2bc",
+    "ledgerHead": "",
+    "ledgerSelectionDigest": "",
+    "plan": {
+      "apiVersion": "markitect.canonical/scoped-reconcile/v1alpha1",
+      "digest": "",
+      "status": "planned",
+      "baseRevision": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+      "revision": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+      "modelDigest": "sha256:19663761bf34278ebac9fef0bb1917b2e7a3ce2e734d8cf40d5a6e86470f5e36",
+      "sourceScope": {
+        "repository": {
+          "Root": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\public-canary\\repo",
+          "GitDir": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\public-canary\\repo\\.git",
+          "CommonDir": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\public-canary\\repo\\.git",
+          "ObjectFormat": "sha1",
+          "Digest": "d8b2ca593009b6dbde8d9a8f64e1f00c2c215e0e0b3d92f2de94307cb2556d55"
+        },
+        "fullCommit": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+        "paths": [
+          "examples/canonical-projection/canary.yaml",
+          "examples/canonical-projection/definitions/commerce.projection.yaml",
+          "examples/canonical-projection/definitions/create-order.effect-axis.yaml",
+          "examples/canonical-projection/definitions/create-order.handler.yaml",
+          "examples/canonical-projection/definitions/create-order.projection-policy.yaml",
+          "examples/canonical-projection/definitions/create-order.use-case.yaml",
+          "examples/canonical-projection/definitions/effect-axis.projection-policy.yaml",
+          "examples/canonical-projection/definitions/handler.projection-policy.yaml",
+          "examples/canonical-projection/modules/commerce/module.yaml",
+          "examples/canonical-projection/modules/commerce/schema.yaml",
+          "examples/canonical-projection/modules/dotnet/module.yaml",
+          "examples/canonical-projection/modules/foundation/module.yaml",
+          "examples/canonical-projection/modules/foundation/schema.yaml",
+          "examples/canonical-projection/modules/markdown/module.yaml"
+        ],
+        "digest": "b3780fb38251a6ddb56d878971333ac1ddd8c7fbc5deeba27585ad9adc031225"
+      },
+      "observedPaths": [
+        "examples/canonical-projection/canary.yaml",
+        "examples/canonical-projection/definitions/commerce.projection.yaml",
+        "examples/canonical-projection/definitions/create-order.effect-axis.yaml",
+        "examples/canonical-projection/definitions/create-order.handler.yaml",
+        "examples/canonical-projection/definitions/create-order.projection-policy.yaml",
+        "examples/canonical-projection/definitions/create-order.use-case.yaml",
+        "examples/canonical-projection/definitions/effect-axis.projection-policy.yaml",
+        "examples/canonical-projection/definitions/handler.projection-policy.yaml",
+        "examples/canonical-projection/modules/commerce/module.yaml",
+        "examples/canonical-projection/modules/commerce/schema.yaml",
+        "examples/canonical-projection/modules/dotnet/module.yaml",
+        "examples/canonical-projection/modules/foundation/module.yaml",
+        "examples/canonical-projection/modules/foundation/schema.yaml",
+        "examples/canonical-projection/modules/markdown/module.yaml"
+      ],
+      "observedDigest": "sha256:e1303a359f84d102665d752b960652a1fd83b201f86d093bc05aae48af3fd89d",
+      "inventory": {
+        "identity": {
+          "Root": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\public-canary\\repo",
+          "GitDir": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\public-canary\\repo\\.git",
+          "CommonDir": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-native-live-bridge-20261009\\public-canary\\repo\\.git",
+          "ObjectFormat": "sha1",
+          "Digest": "d8b2ca593009b6dbde8d9a8f64e1f00c2c215e0e0b3d92f2de94307cb2556d55"
+        },
+        "prefixes": [
+          "src"
+        ],
+        "entries": [],
+        "missingPrefixes": [
+          "src"
+        ],
+        "metadataDigest": "sha256:a0b60dcc6d715b531e450b29ab3568a4fa1c44fde42fceec706b0b3f159c230b"
+      },
+      "impact": {
+        "baseRevision": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+        "candidateRevision": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+        "changedDefinitions": null,
+        "affectedDefinitions": null,
+        "definitionCauses": {},
+        "scopeAffectedProjections": null,
+        "conservativeInvalidatedProjections": null
+      },
+      "proposals": null,
+      "unobservedProjections": null,
+      "evidenceRefreshRequired": null,
+      "unknownArtifacts": null,
+      "explicitExcludedArtifacts": [],
+      "escalations": null
+    },
+    "inputPaths": null,
+    "dependencyEvidencePaths": null,
+    "inputDigest": ""
+  },
+  "executorDigest": "",
+  "verifierDigest": "",
+  "hostExecutableDigest": "",
+  "toolVersion": "0.14.1",
+  "toolDigest": "sha256:0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+  "work": []
+}
