@@ -42,8 +42,8 @@ The normal contributor gives their existing Codex or Claude agent a short work i
 
 This map states where a contract is implemented and tested. Actual execution status is recorded in [native-delivery validation](../../validation/project-native-delivery-2026-10-09.md), including failed attempts and checks that have not run on the final candidate.
 
-## Separate authoring assessments
+## Knowledge graph and canonical authoring
 
-The roadmap's [knowledge-graph and Markdown-frontmatter questions](../../implementation-plan.md#knowledge-graph-and-markdown-authoring-assessment) remain deferred assessments. This delivery package retains YAML resources as the sole canonical typed model and generated Markdown as the readable view. It does not add RDF/SHACL/SKOS/OWL inference or migrate canonical resources into Markdown. The requested semantic-question analysis and same-content authoring comparison have not been completed; this is not a rejection based on a completed experiment.
+The roadmap's [knowledge-graph assessment](../../implementation-plan.md#knowledge-graph-assessment-and-authoring-decision) remains deferred; its semantic-question analysis has not been completed, and this package adds no RDF/SHACL/SKOS/OWL inference. On 2026-10-09 the owner discarded Markdown with YAML frontmatter as an alternative canonical model format. YAML resources remain the sole canonical typed model, and generated Markdown remains the readable view. The authoring comparison and format migration are closed without claiming an experimental result. Required frontmatter in native Codex/Claude skills remains part of provider discovery and is outside this canonical-format decision.
 
 Historical evidence remains attached to its tested source revision. Passing protocol fixtures proves deterministic mechanics; provider usability, semantic correctness, human acceptance and comparative economic benefit are separate claims. No release is authorized by the main-promotion mandate.
