@@ -77,14 +77,6 @@ func capabilitySkills() []capability {
 	}
 }
 
-func legacyRouterDescription() string {
-	return "Compatibility router for Markitect project work; select the matching init, extract, design, suggest, configure, implement, cleanup, verify, apply, or check skill without loading the full workflow."
-}
-
-func legacyRouterBody() string {
-	return "Choose the operation skill that matches the work. Ordinary requests to implement a Work Item start with `markitect-implement`, which chains required operations autonomously. Use `markitect-init` for setup, `markitect-extract` for Brownfield adoption, `markitect-design` for intent changes, `markitect-suggest` for proposal-only recommendations, `markitect-configure` for existing project/runtime settings, `markitect-cleanup` for behavior-preserving refactoring, `markitect-verify` for realization assessment, `markitect-apply` for an already verified candidate, and `markitect-check` for structural diagnostics."
-}
-
 func recoveryReference() string {
 	return `# Recover persisted work
 

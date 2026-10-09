@@ -516,12 +516,12 @@ func TestManagerIntegrationRequestCarriesChildReportWithoutUnassignedEvidence(t 
 	}
 	rootID := session.TargetContext.RootManagerID
 	session, err = BeginReverseIteration(root, target, session, ReverseIterationRequest{ID: "root-pass", ManagerID: rootID,
-		EvidenceIDs: []string{"orders-doc"}, Purpose: "Propose order structure", Review: "root-review"})
+		EvidenceIDs: []string{"orders-doc"}, DelegationEvidenceIDs: []string{"orders-code"}, Purpose: "Propose order structure", Review: "root-review"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	rootIteration, _ := findIteration(session, "root-pass")
-	childManager := ProposedManager{ID: "orders-manager", Name: "Orders Manager", Purpose: "Model order implementation", ParentID: rootID, EvidenceIDs: []string{"orders-code"}}
+	childManager := ProposedManager{ID: "orders-manager", Name: "Orders Manager", Purpose: "Model order implementation", ParentID: rootID, EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}}
 	rootProposal := ManagerProposal{ManagerID: rootID, EvidenceIDs: []string{"orders-doc"}, Hierarchy: []ProposedManager{childManager},
 		PublicContracts: []ManagerPublicContract{}, Report: sessionReport(discovery, "orders-doc", "orders", "Orders are managed by the order module.", "Documented order intent.")}
 	session, err = RecordManagerProposal(session, rootIteration.ID, rootProposal)
@@ -529,7 +529,7 @@ func TestManagerIntegrationRequestCarriesChildReportWithoutUnassignedEvidence(t 
 		t.Fatal(err)
 	}
 	session, err = BeginReverseIteration(root, target, session, ReverseIterationRequest{ID: "orders-pass", ParentIterationID: "root-pass", ManagerID: childManager.ID,
-		EvidenceIDs: childManager.EvidenceIDs, Purpose: childManager.Purpose, Review: "child-review"})
+		EvidenceIDs: childManager.EvidenceIDs, DelegationEvidenceIDs: []string{}, Purpose: childManager.Purpose, Review: "child-review"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -584,7 +584,7 @@ func managerRunFixture(t *testing.T) (string, string, BrownfieldSession, string)
 		t.Fatal(err)
 	}
 	session, err = BeginReverseIteration(root, target, session, ReverseIterationRequest{ID: "root-pass", ManagerID: session.TargetContext.RootManagerID,
-		EvidenceIDs: []string{"implementation"}, Purpose: "Map selected source behavior", Review: "review-1"})
+		EvidenceIDs: []string{"implementation"}, DelegationEvidenceIDs: []string{}, Purpose: "Map selected source behavior", Review: "review-1"})
 	if err != nil {
 		t.Fatal(err)
 	}

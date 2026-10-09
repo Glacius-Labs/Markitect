@@ -101,6 +101,30 @@ def is_projectrun_full_verify(invocation: dict[str, Any]) -> bool:
     )
 
 
+def is_projectrun_manager_task(invocation: dict[str, Any]) -> bool:
+    request = invocation.get("request")
+    context = request.get("context") if isinstance(request, dict) else None
+    return (
+        isinstance(request, dict)
+        and request.get("role") == "executor"
+        and isinstance(context, dict)
+        and context.get("kind") == "projectrun-task/v1"
+    )
+
+
+def requires_native_workspace(invocation: dict[str, Any]) -> bool:
+    request = invocation.get("request")
+    context = request.get("context") if isinstance(request, dict) else None
+    return (
+        isinstance(request, dict)
+        and isinstance(context, dict)
+        and (
+            "nativeWorkspace" in context
+            or (request.get("role") == "executor" and context.get("kind") == "projectrun-task/v1")
+        )
+    )
+
+
 def task_response_schema(invocation: dict[str, Any]) -> dict[str, Any] | None:
     request = invocation["request"]
     if request["role"] != "executor":
@@ -522,8 +546,9 @@ def verifier_observation_contract(request: dict[str, Any]) -> str:
     )
 
 
-def make_prompt(invocation: dict[str, Any], native_mode: bool = False) -> str:
+def make_prompt(invocation: dict[str, Any]) -> str:
     request = invocation["request"]
+    native_mode = requires_native_workspace(invocation)
     evidence_aliases = evidence_ref_aliases(invocation)
     verifier_evidence_aliases = list(evidence_aliases)
     alias_map = json.dumps(list(evidence_aliases.items()), ensure_ascii=False, separators=(",", ":"))
@@ -993,9 +1018,9 @@ def launch_codex(
     cwd: Path,
     log_path: Path,
 ) -> dict[str, Any]:
-    native_mode = getattr(args, "execution_mode", "proposal-only") == "native-work"
+    native_mode = requires_native_workspace(invocation)
     if native_mode:
-        # Proposal-only retains its original, independently pinned runner.
+        # Manager tasks always use the scoped native workspace contract.
         import native_work
     native_helper_limit = getattr(args, "native_helper_limit", 0)
     codex_profile = getattr(args, "codex_profile", "")
@@ -1018,7 +1043,7 @@ def launch_codex(
         except native_work.NativeWorkError as exc:
             raise AdapterError(str(exc)) from exc
         cli_cwd = prepared.root
-    prompt = make_prompt(invocation, native_mode=native_mode).encode("utf-8")
+    prompt = make_prompt(invocation).encode("utf-8")
     response_schema = provider_response_schema(invocation)
     prefix = resolve_codex(args.codex_executable, args.codex_script)
     check_version(prefix, args.codex_version)
@@ -1185,7 +1210,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--codex-script", default="")
     parser.add_argument("--codex-version", required=True)
     parser.add_argument("--timeout-seconds", type=int, default=570)
-    parser.add_argument("--execution-mode", choices=("proposal-only", "native-work"), default="proposal-only")
     parser.add_argument("--codex-profile", default="")
     parser.add_argument("--native-helper-limit", type=int, default=0)
     args = parser.parse_args(argv)

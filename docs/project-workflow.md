@@ -1,10 +1,10 @@
 # Project workflow
 
-`markitect project` is the primary model-first project workflow: owners maintain one recursively managed project model under `.markitect/`, Managers own conceptual slices and their artifact responsibilities, and agents implement bounded work against that model. The old top-level Project/Domain commands remain versioned compatibility behavior for existing repositories; they are not a second recommended workflow, and their files are not silently converted.
+`markitect project` is the primary model-first project workflow: owners maintain one recursively managed project model under `.markitect/`, Managers own conceptual slices and their artifact responsibilities, and agents implement bounded work against that model. The structural compiler, schema and rendering tools also serve Markitect's own engineering resources. Versioned release records describe their actual historical behavior; compatibility alone is not a retention requirement.
 
 An AI author can inspect the active project-model contract with `markitect project schema`; this read-only command needs no repository or Markitect source checkout and emits the exact schema used by project validation.
 
-The installed native entrypoints identify `.markitect/project.yaml` as the selector for the active YAML model and policy. Inspect `markitect project index --repo PATH` for its current Manager identities and `markitect project check --repo PATH` for structure and coverage before preparing a guarded `project edit`. The empty initialized root is a starting point: the responsible Manager defines the task's concepts, artifact ownership and checks within delegated authority. New model-first initialization uses `markitect project init`; top-level `markitect init` still creates the historical Project/Domain format and cannot establish this selected model.
+The installed native entrypoints identify `.markitect/project.yaml` as the selector for the active YAML model and policy. Inspect `markitect project index --repo PATH` for its current Manager identities and `markitect project check --repo PATH` for structure and coverage before preparing a guarded `project edit`. The empty initialized root is a starting point: the responsible Manager defines the task's concepts, artifact ownership and checks within delegated authority. New projects use `markitect project init`. The obsolete top-level initializer has been removed.
 
 The current source provides guided project initialization, native onboarding, durable one-scope Explore records, scoped readiness evaluation and digest-bound structure acknowledgements, model editing, configurable readable documentation, full repository classification, Manager execution, integration, verification, guarded Apply and recovery. New projects use `workflowMode: guided` and `acceptancePolicy: committed-model`; legacy manifests with empty fields remain readable. Guided plans bind an exploration and named scope. Explore/readiness do not start an agent or authenticate the person whose decision reference is recorded. The mandated ordinary-contributor journey and its completion gates are captured in the [native work-item delivery checklist](design/project-world/native-work-item-delivery.md); that design checklist is a plan, so its gates remain distinct from what source and runtime evidence currently establish.
 
@@ -24,7 +24,7 @@ project brownfield --repo TARGET [--source-repo SOURCE] --brownfield-action star
 
 JSON transport records passed as `--input`, `--request` or `--output` must use normalized repository-relative slash paths ending in `.json` under `.markitect/drafts/` or `.markitect/runs/`. Absolute paths, backslashes and root-level JSON names are rejected. Explore, project edit and Discovery records are rooted in `--repo`. Brownfield stage inputs and its durable session are rooted in `--source-repo` when supplied, otherwise `--repo`; `--repo` remains the target project/runtime root. The agent creates the required records in that selected repository from current command outputs and decisions.
 
-The staged session actions separate assignment (`begin`), Manager proposal, parent integration, owner resolution, adoption planning and guarded application. `propose` and `integrate` remain provider-free manual compatibility stages. For the normal agent workflow, `run` defaults to a no-call preview and accepts closed JSON such as `{"iterationId":"ITERATION_ID","phase":"propose","agentManagerId":"ACCEPTED_RUNTIME_MANAGER_ID"}`. The runtime mapping identifies an accepted Manager or configured accepted ancestor that can execute the proposed responsibility; the iteration Manager remains the actual work identity. Each Manager phase is a distinct bounded invocation with its own context and durable attempt. To execute exactly that preview, pass its returned `previewDigest` as `--expect` and add `--write`; a changed session, source, target, Manager assignment, runtime configuration, or budget makes the preview stale. The result returns the Manager artifact and attempt receipt/status, not the complete session. There is no automatic retry: `retryOfAttemptId` may name only the latest known failed, receipted attempt, subject to configured retry and cumulative time/start/cost bounds; an uncertain attempt cannot be replayed.
+The staged session actions separate assignment (`begin`), Manager proposal, parent integration, owner resolution, adoption planning and guarded application. `propose` and `integrate` accept explicit provider-free reports for independently supplied evidence; they do not run an agent. For the normal agent workflow, `run` defaults to a no-call preview and accepts closed JSON such as `{"iterationId":"ITERATION_ID","phase":"propose","agentManagerId":"ACCEPTED_RUNTIME_MANAGER_ID"}`. The runtime mapping identifies an accepted Manager or configured accepted ancestor that can execute the proposed responsibility; the iteration Manager remains the actual work identity. Each Manager phase is a distinct bounded invocation with its own context and durable attempt. To execute exactly that preview, pass its returned `previewDigest` as `--expect` and add `--write`; a changed session, source, target, Manager assignment, runtime configuration, or budget makes the preview stale. The result returns the Manager artifact and attempt receipt/status, not the complete session. There is no automatic retry: `retryOfAttemptId` may name only the latest known failed, receipted attempt, subject to configured retry and cumulative time/start/cost bounds; an uncertain attempt cannot be replayed.
 
 Begin with a root iteration. Read its `context`, run its `propose` phase, and let its proposal assign direct child Managers and evidence explicitly. For each adopted child, create a separate child iteration with its parent iteration ID and repeat context and `run` with phase `propose`; recurse through the proposed tree. A parent may integrate only after every direct child has proposed and each non-leaf child has integrated. Retrieve the bounded parent context with `context` input `{"iterationId":"PARENT_ITERATION_ID","phase":"integrate"}`; it includes completed direct-child reports, contracts, and bound digests. Run the parent's `integrate` phase only after reviewing that context. Do not hand-compose Manager proposals or integrations in the ordinary workflow when the Manager runner is available.
 
@@ -36,7 +36,7 @@ The subsequent [operation scope and model briefing direction](design/project-wor
 
 ### Brownfield evidence and Manager delegation
 
-For begin, own evidenceIds are the only raw source files supplied to that Manager and should support its claim citations. Root delegationEvidenceIds is an optional, disjoint metadata-only pool from which it may assign children. Set this pool explicitly for every new root: [] authorizes no child evidence; omission preserves legacy broad routing across selected Discovery evidence. The root also sees the selected Discovery inventory as metadata (IDs, paths, bases, and digests); metadata is not behavioral evidence or delegation authority. A child copies both exact evidence arrays from its parent proposal; Host binds those arrays and persists an explicit-empty marker. Non-leaf parent integration receives each direct child final report, citations, public contracts, and digests. A non-leaf child's final report is its completed integration and forwards descendant citations, so parent does not need raw child source.
+For each begin request, `evidenceIds` are the only raw source files supplied to that Manager and support its claim citations. `delegationEvidenceIds` is a required, disjoint metadata-only pool from which it may assign children. `[]` authorizes no child evidence; missing pools are rejected, including ambiguous stored sessions. Selected Discovery inventory is metadata (IDs, paths, bases and digests), not behavioral evidence or delegation authority. A child copies both exact arrays assigned by its parent proposal within the parent's declared pools. Non-leaf integration receives direct-child final reports, citations, public contracts and digests; descendant citations travel in a child's integration report without exposing raw child source.
 
 Minimal root BEGIN.json shape; begin consumes the request directly:
 
@@ -46,7 +46,7 @@ Stage outputs are bounded for review. Session fields expose a safe overview of f
 
 ## Choose the executable
 
-The current project workflow is in source; it is not included in the published v0.14.1 CLI. Install that release only through the documented versioned, verified bundle when maintaining a legacy Project/Domain repository. To use current `project` commands, build a candidate binary from the exact Markitect source checkout being evaluated or use `go -C MARKITECT_SOURCE_ROOT run ./cmd/markitect`.
+The current project workflow is in source; it is not included in the published v0.14.1 CLI. The documented versioned, verified bundle is evidence of that historical release; it is not an installation of current project commands. To use current `project` commands, build a candidate binary from the exact Markitect source checkout being evaluated or use `go -C MARKITECT_SOURCE_ROOT run ./cmd/markitect`.
 
 ```powershell
 go -C C:\src\Markitect run ./cmd/markitect project init --repo C:\src\my-project --name my-project
@@ -66,46 +66,38 @@ markitect project index --repo .
 markitect project document --repo .
 ```
 
-Initialization creates the project manifest, runtime placeholder, root Manager and local ignore rules under `.markitect/`, plus the generated readable view at `docs/markitect/project.md`. New manifests declare `workflowMode: guided` and `acceptancePolicy: committed-model`; older manifests without those fields remain valid compatibility inputs. The selected YAML model is the source of meaning; the generated view is not editable authority. `project onboard` previews and installs native agent guidance; `project setup` configures bounded local execution.
+Initialization creates the project manifest, runtime placeholder, root Manager and local ignore rules under `.markitect/`, plus the readable view at `docs/markitect/project.md`. New manifests use `workflowMode: guided`, `acceptancePolicy: committed-model` and full repository coverage. YAML owns meaning; generated Markdown is the readable view.
 
-Set up a local runner without writing YAML by hand. `setup` discovers a direct native provider executable, Python, and the adapter under the explicitly named Markitect source root; it invokes only `--version`, pins their paths and digests, and builds one mapping per active Manager. Codex discovery rejects npm `.cmd`/PowerShell wrappers and looks for its vendored native executable; use `--provider-executable` if discovery cannot find it. The provider account and supported host/CLI must already exist. Markitect never reads credentials or probes login status, so the report says authentication is `not-verified`.
+Install the selected provider's native guidance before configuring execution. Preview `project onboard`, inspect its exact writes and conflicts, then apply the same digest:
 
-Preview the ordinary runtime edit first. Supply the model and pricing weights chosen by the caller's budget policy; these estimate accepted usage and do not represent a provider quote, invoice, or hard billing cap:
+```powershell
+markitect project onboard --repo . --provider codex
+markitect project onboard --repo . --provider codex --expect ONBOARDING_DIGEST --write
+```
+
+Codex receives `AGENTS.md` and ten skills under `.agents/skills/markitect-{init,extract,design,implement,cleanup,verify,apply,check,suggest,configure}/`; Claude receives `CLAUDE.md` and the same operation names under `.claude/skills/`. Skills have discoverable provider metadata and local supporting references. Entrypoints route directly to operations. Implement chains the needed design/check/verify/apply work within the task's authority; suggestions alone remain proposals. Existing user prose and unrelated skills are preserved. Onboarding can remove a wholly known obsolete Markitect router; customized same-name files cause an explicit conflict.
+
+### Native Codex work
+
+`project setup` configures the supported native Codex Manager workflow. It requires the existing account, actual Codex CLI 0.162.0, `gpt-6-luna`, `high` effort, the `luna-high` profile and installed Codex project guidance. Claude Manager execution is not currently supported by setup; Claude instruction installation and tool diagnostics remain separate useful operations. No execution-mode selector or proposal-only Manager fallback remains.
+
+Setup discovers the direct native executable, Python and adapter under the explicitly named Markitect source root; it runs only version discovery and pins paths, modes and digests. Npm shell wrappers are rejected; discovery resolves the vendored executable, or the caller supplies `--provider-executable`. Credentials are not read and authentication remains `not-verified` until actual provider work. Supply explicit input/output budget weights and a maximum cost estimate; these are local accounting weights, not a price quote, invoice or hard billing cap.
 
 ```powershell
 markitect project doctor --repo . --tool-root C:\src\Markitect --provider codex
-markitect project setup --repo . --tool-root C:\src\Markitect --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET
-```
-
-Review `discovery`, `mutation`, and `editPlan` in the JSON preview, including every pinned executable and its version/digest. Then pass the exact `editPlan.digest` back to the same command:
-
-```powershell
-markitect project setup --repo . --tool-root C:\src\Markitect --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET --expect EDIT_PLAN_DIGEST --write
-markitect project check --repo .
-git add .markitect/runtime.yaml
-git commit -m "Configure project-local Markitect runtime"
-```
-
-`setup` runs no agent and changes no global provider, editor, hook, plugin, MCP, or account configuration. `doctor` checks tool/version availability, declared-check executable names on `PATH`, and whether the repository is on a named feature branch; it does not establish account authentication. The runtime uses `controlled-local`, a finite depth/start/time/output/candidate budget and a caller-supplied cost estimate. It allows one bounded retry for known invalid proposals or model-compiler diagnostics; uncertain provider/transport outcomes, blocked work, and stale state are not retried. Retry counts and accepted token usage appear in the run receipt; cost weights remain estimates, not an invoice cap. It does not claim OS isolation. Once selected model and runtime inputs are accepted, commit them before `project plan`; planning compares fixed `HEAD` to the optional `--since` baseline while executing against the current committed project.
-
-### Opt-in native Codex work
-
-The ordinary setup above remains `proposal-only`. To give Manager workers native file, shell, test and Git tools, initialize the project and complete `project onboard` first; onboarding must have written the Codex `AGENTS.md`/skill guidance and any selected references. Then preview the native runtime configuration:
-
-```powershell
-markitect project setup --repo . --tool-root C:\src\Markitect --provider codex --model gpt-6-luna --effort high --execution-mode native-work --codex-profile luna-high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET
-```
-
-Native setup currently binds the real Codex CLI 0.162.0 and `gpt-6-luna` at `high` effort. It uses the caller's normal Codex profile, authentication and rules. It requires the existing generated instructions; exact onboarding-owned `ToolPaths` are pinned by absolute path, mode and digest and rechecked against the accepted project snapshot at each invocation. The Manager's model-declared work remains scheduled once by Markitect; an inner native worker is not the outer conversational model author and may not start a nested Manager. A fresh scoped candidate workspace receives only the bounded Manager inputs and selected instructions. Local tool access uses caller permissions and is not OS isolation.
-
-Review the preview and apply its exact digest through the same command before committing `.markitect/runtime.yaml`:
-
-```powershell
-markitect project setup --repo . --tool-root C:\src\Markitect --provider codex --model gpt-6-luna --effort high --execution-mode native-work --codex-profile luna-high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET --expect EDIT_PLAN_DIGEST --write
+markitect project setup --repo . --tool-root C:\src\Markitect --provider codex --model gpt-6-luna --effort high --codex-profile luna-high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET
+# Inspect discovery, mutation and editPlan, then use the exact editPlan.digest:
+markitect project setup --repo . --tool-root C:\src\Markitect --provider codex --model gpt-6-luna --effort high --codex-profile luna-high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET --expect EDIT_PLAN_DIGEST --write
 markitect project check --repo .
 ```
 
-The adopting checkout is unchanged during execution: candidate files are checked against ownership, allowed paths, control-plane exclusions and the fixed source. Host freshness, required checks and separate read-only reviews still gate the existing reviewed Verify/guarded Apply path. The receipt includes a typed native-work record and reported workspace delta; workspace manifests are adapter claims bound to response stdout, not a Host-reconstructed full filesystem inventory. Deletes and binary outputs are unsupported. Native helper agents remain disabled: Codex CLI JSONL does not expose complete helper lifecycle accounting, so a nonzero helper limit fails before launch. The `helperStarts: 0` receipt marker describes configuration, not an operating-system-wide process count. Reviews remain proposals, not human acceptance. See the [native-work design decision](design/project-world/native-codex-work.md) and [dated validation record](validation/project-native-work-2026-10-09.md); the latter reports only the outcomes and limits it actually records.
+Commit the initialized model, generated instructions and runtime before `project plan`. Runtime instruction pins must match both the fixed accepted revision and current bytes. If onboarding or guidance changes, regenerate the setup preview and pins, accept the guarded edit, then commit the coherent model/instructions/runtime together. Planning uses fixed `HEAD` and the optional `--since` baseline.
+
+Each Manager receives bounded model/artifact inputs and exact pinned instructions in a fresh candidate file tree with ordinary file, shell and test tools. Model-declared Managers are scheduled once by Host. The inner worker is responsible for its candidate; the outer conversational agent owns canonical editing and repository Git operations. Candidate trees currently contain no Git metadata/history. Native tool access follows existing profile, account and rules with caller permissions; this is controlled local operation, not OS isolation. Setup changes no global provider, editor, hook, plugin, MCP or account configuration.
+
+Candidate collection checks actual changes against ownership, allowed paths, immutable instructions, control-plane exclusions and fixed source. The adopting checkout is written only by guarded Apply after freshness checks, required checks and separate read-only reviews. Typed native receipts bind changed paths and a recomputed delta digest; full workspace digests remain adapter claims bound to stdout. Deletion and binary deltas are unsupported. Native helpers are disabled because current CLI JSONL lacks complete lifecycle accounting; a nonzero helper limit fails before launch. `helperStarts: 0` describes that configuration, not a census of operating-system processes.
+
+Runtime limits bound depth, starts, time, output, candidates and estimated cost. One bounded retry can address known invalid proposals or actionable compiler diagnostics; uncertain provider/transport outcomes and stale state are not blindly retried. The [native-work contract](design/project-world/native-codex-work.md) and [dated validation](validation/project-native-work-2026-10-09.md) separate source checks, actual provider evidence and remaining limits. Reviews remain evidence, not human acceptance.
 
 For an existing repository, adoption begins from a full fixed source commit and an explicit list of regular-file paths, reasons, exclusions, and scope roots in a JSON request. Discovery emits a bound record. P1 `distill --report` validates a supplied report and starts no provider. If you deliberately want one agent-assisted proposal, first configure and commit the runtime, then use `distill --generate --write`; it runs the root Manager's configured agent once on the selected frozen evidence, requires caller-supplied pricing/budget weights and provider-reported usage, and writes a proposal plus a separate receipt under `.markitect/drafts/`. The report is still unverified model input, not an acceptance. `adopt` shows the selected model proposal before a separate guarded write:
 
@@ -215,3 +207,5 @@ python -B -m unittest discover -s tests -v
 ```
 
 The cancellation operation rejects shipped orders, is idempotent for an already cancelled order, releases the reservation in the same transaction, and rolls back when release fails. The tests establish those finite cases only; they do not prove production database behavior, complete requirements, agent compliance, or a productivity gain. The empty runtime file intentionally leaves agent/provider setup to the project owner.
+
+Native candidate trees contain no Git metadata or repository history. Repository Git operations belong to the outer project agent; a scoped candidate Git/history view remains unimplemented.

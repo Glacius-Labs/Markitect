@@ -204,11 +204,48 @@ class NativeWorkspaceTests(unittest.TestCase):
             with self.assertRaisesRegex(native_work.NativeWorkError, "scan size bound"):
                 native_work.harvest(prepared, [], tool_calls=0)
 
+    def test_posix_mode_classifier_rejects_widening_inputs(self) -> None:
+        for mode_bits, label in ((0o700, "0700"), (0o640, "0640"), (0o4755, "4755")):
+            with self.subTest(mode=label), tempfile.TemporaryDirectory() as temporary:
+                with self.assertRaisesRegex(native_work.NativeWorkError, f"unsupported POSIX mode {label}"):
+                    native_work._posix_mode(mode_bits, "src/main.py")
+        for mode_bits, expected in ((0o600, "0600"), (0o644, "0644"), (0o755, "0755")):
+            with self.subTest(mode=expected):
+                self.assertEqual(native_work._posix_mode(mode_bits, "src/main.py"), expected)
+
+    def test_unchanged_private_input_is_allowed_but_private_delta_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            value = task_invocation()
+            value["request"]["artifacts"][0] = item("src/main.py", b"def value():\n    return 1\n", "0600")
+            root = Path(temporary) / "candidate"
+            prepared = prepare(root, value)
+            self.assertEqual(native_work.harvest(prepared, [], tool_calls=0)[0], [])
+            target = root / "src" / "main.py"
+            target.write_text("def value():\n    return 2\n", encoding="utf-8")
+            target.chmod(0o600)
+            with self.assertRaisesRegex(native_work.SafeDeltaRejected, "unsupported repository mode 0600") as caught:
+                native_work.harvest(prepared, [], tool_calls=1)
+            self.assertEqual(caught.exception.native_work["changedPaths"], ["src/main.py"])
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "candidate"
+            prepared = prepare(root)
+            target = root / "src" / "private.py"
+            target.write_text("secret = True\n", encoding="utf-8")
+            private_content = b"secret = True\n"
+            final = native_work._read_candidate(prepared)
+            final["src/private.py"] = native_work.FileRecord(
+                "src/private.py", "0600", private_content, native_work._digest(private_content)
+            )
+            with self.assertRaisesRegex(native_work.SafeDeltaRejected, "unsupported repository mode 0600"):
+                with patch.object(native_work, "_read_candidate", return_value=final):
+                    native_work.harvest(prepared, [], tool_calls=1)
+
 
 class NativeRunnerTests(unittest.TestCase):
     def test_prompt_and_cli_enable_native_file_shell_and_test_work_without_helper_launch(self) -> None:
         value = task_invocation()
-        prompt = runner.make_prompt(value, native_mode=True)
+        prompt = runner.make_prompt(value)
         self.assertIn("fresh scoped candidate workspace", prompt)
         self.assertIn("available shell", prompt)
         self.assertIn("run relevant tests", prompt)
@@ -217,7 +254,7 @@ class NativeRunnerTests(unittest.TestCase):
         self.assertIn("source repository", prompt)
 
         args = argparse.Namespace(
-            execution_mode="native-work", native_helper_limit=0, codex_profile="luna-high",
+            native_helper_limit=0, codex_profile="luna-high",
             model="gpt-6-luna", codex_executable="codex", codex_script="", codex_version="0.162.0",
             timeout_seconds=20,
         )
@@ -268,10 +305,10 @@ class NativeRunnerTests(unittest.TestCase):
             self.assertEqual(result["nativeWork"]["helperAccounting"], "disabled")
             self.assertNotIn("toolCalls", result["usage"])
 
-    def test_helpers_fail_before_provider_and_legacy_prompt_keeps_proposal_boundary(self) -> None:
+    def test_helpers_fail_before_provider_and_native_selection_comes_from_task_context(self) -> None:
         value = task_invocation()
         args = argparse.Namespace(
-            execution_mode="native-work", native_helper_limit=1, codex_profile="luna-high",
+            native_helper_limit=1, codex_profile="luna-high",
             model="gpt-6-luna", codex_executable="codex", codex_script="", codex_version="0.162.0",
             timeout_seconds=20,
         )
@@ -280,9 +317,90 @@ class NativeRunnerTests(unittest.TestCase):
                 with self.assertRaisesRegex(runner.AdapterError, "lifecycle and resource accounting"):
                     runner.launch_codex(value, args, {"model_reasoning_effort": "high"}, Path(temporary), Path(temporary) / "log")
                 spawn.assert_not_called()
-        legacy = runner.make_prompt(value)
-        self.assertIn("stateless proposal step", legacy)
-        self.assertIn("do not invoke tools", legacy)
+        self.assertTrue(runner.is_projectrun_manager_task(value))
+
+    def test_task_context_with_missing_inconsistent_or_unsupported_manifest_fails_before_launch(self) -> None:
+        args = argparse.Namespace(
+            native_helper_limit=0, codex_profile="luna-high", model="gpt-6-luna",
+            codex_executable="codex", codex_script="", codex_version="0.162.0", timeout_seconds=20,
+        )
+        cases = [
+            ("missing manifest", lambda context: context.pop("nativeWorkspace"), "requires a valid Host nativeWorkspace"),
+            ("wrong api", lambda context: context["nativeWorkspace"].update(apiVersion="wrong/v1"), "unsupported or malformed"),
+            ("unsupported phase", lambda context: context.update(phase="verify"), "requires a work, integrate, or repair phase"),
+            ("inconsistent task context", lambda context: context.update(kind="projectrun-review/v1"), "supported only for projectrun Manager executor tasks"),
+        ]
+        for label, mutate, message in cases:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
+                value = task_invocation()
+                mutate(value["request"]["context"])
+                with patch.object(runner, "resolve_codex") as resolve, patch.object(runner.subprocess, "Popen") as spawn:
+                    with self.assertRaisesRegex(runner.AdapterError, message):
+                        runner.launch_codex(value, args, {"model_reasoning_effort": "high"}, Path(temporary), Path(temporary) / "log")
+                    resolve.assert_not_called()
+                    spawn.assert_not_called()
+
+    def test_inference_context_keeps_the_read_only_cli_route(self) -> None:
+        value = task_invocation()
+        value["request"]["role"] = "infer"
+        value["request"]["context"] = {"prompt": "Infer the closed candidate."}
+        value["request"]["artifacts"] = []
+        response = {
+            "apiVersion": value["apiVersion"], "runId": value["runId"], "nonce": value["nonce"],
+            "role": "infer", "inputDigest": value["inputDigest"], "outcome": "proposed",
+            "candidateFiles": [], "candidateJson": "{}", "reportJson": None,
+            "evidenceRefs": [], "verifierObservations": [], "uncertainty": [],
+        }
+        argv_seen: list[str] = []
+
+        class FakeProcess:
+            def __init__(self, argv, cwd, **kwargs):
+                nonlocal argv_seen
+                argv_seen = argv
+                output_path = Path(argv[argv.index("--output-last-message") + 1])
+                output_path.write_text(json.dumps(response), encoding="utf-8")
+                self.stdin = io.BytesIO()
+                self.stdout = io.BytesIO(b"")
+                self.stderr = io.BytesIO()
+
+            def wait(self, timeout=None):
+                return 0
+
+            def terminate(self):
+                return None
+
+            def kill(self):
+                return None
+
+        args = argparse.Namespace(
+            native_helper_limit=0, model="gpt-6-luna", codex_executable="codex", codex_script="",
+            codex_version="0.162.0", timeout_seconds=20,
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            with patch.object(runner, "resolve_codex", return_value=["codex"]), patch.object(runner, "check_version"), patch.object(runner.subprocess, "Popen", FakeProcess):
+                result = runner.launch_codex(value, args, {"model_reasoning_effort": "high"}, root, root / "events.jsonl")
+        self.assertIn("read-only", argv_seen)
+        self.assertIn("--ephemeral", argv_seen)
+        self.assertNotIn("--profile", argv_seen)
+        self.assertNotIn("nativeWork", result)
+        self.assertEqual(result["candidateJson"], {})
+
+    def test_native_workspace_marker_on_non_manager_roles_fails_before_cli_resolution(self) -> None:
+        args = argparse.Namespace(
+            native_helper_limit=0, codex_profile="luna-high", model="gpt-6-luna",
+            codex_executable="codex", codex_script="", codex_version="0.162.0", timeout_seconds=20,
+        )
+        for role, kind in (("verifier", "projectrun-review/v1"), ("infer", "inference/v1")):
+            with self.subTest(role=role), tempfile.TemporaryDirectory() as temporary:
+                value = task_invocation()
+                value["request"]["role"] = role
+                value["request"]["context"]["kind"] = kind
+                with patch.object(runner, "resolve_codex") as resolve, patch.object(runner.subprocess, "Popen") as spawn:
+                    with self.assertRaisesRegex(runner.AdapterError, "only for projectrun Manager executor tasks"):
+                        runner.launch_codex(value, args, {"model_reasoning_effort": "high"}, Path(temporary), Path(temporary) / "log")
+                    resolve.assert_not_called()
+                    spawn.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -1,15 +1,15 @@
 # Using Markitect
 
-This page is the detailed reference for the published v0.14.1 Project/Domain CLI and its versioned compatibility contracts. It is not the recommended path for new model-first projects. Start with the [model-first project workflow](project-workflow.md); it documents the current `markitect project` source surface, its source-versus-release distinction, implemented commands and planned journey stages. The project model in a committed revision is the accepted repository specification Markitect uses for that revision; a draft is a proposal, and a commit or digest does not authenticate human approval.
+This page describes the Project/Domain engineering-resource compiler and historical versioned CLI contracts. Explicit source additions and removals are labelled below; published releases retain their actual immutable bytes. It is not the recommended path for new model-first projects. Start with the [model-first project workflow](project-workflow.md); it documents the current `markitect project` source surface, its source-versus-release distinction, implemented commands and planned journey stages. The project model in a committed revision is the accepted repository specification Markitect uses for that revision; a draft is a proposal, and a commit or digest does not authenticate human approval.
 
-The published [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1) preserves Project/Domain behavior and bundles a separate canonical Projection alpha. New projects should not start with these legacy contracts. Existing repositories retain them until an explicit migration; source changes do not update the installed binary. The [roadmap](implementation-plan.md) owns exact release and evidence status.
+The published [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1) preserves Project/Domain behavior and bundles a separate canonical Projection alpha. New projects should not start with these legacy contracts. Current source does not promise executable backwards compatibility. Source changes do not update an installed binary. The [roadmap](implementation-plan.md) owns exact release and evidence status.
 
 <a id="legacy-projectdomain-cli-compatibility"></a>
-## Legacy Project/Domain CLI compatibility
+## Structural and historical Project/Domain CLI reference
 
-The command and schema reference below describes the immutable v0.14.1 Project/Domain interface and older release histories. It remains useful to maintain existing repositories and to preserve compatibility, but it is not a second active product workflow. Do not combine `markitect.yaml` / `.markitect/areas/` resources with the current `.markitect/project.yaml` / `.markitect/model/` project model. No automatic conversion is implied; migration is an explicit project-owned activity with reviewed meaning and ownership.
+The compiler, check, schema, render and artifact-accounting commands serve Markitect's own canonical engineering resources. Versioned histories preserve what older releases shipped; historical age alone is not a reason to retain a function. Do not combine `markitect.yaml` / `.markitect/areas/` resources with the current `.markitect/project.yaml` / `.markitect/model/` project model. No automatic conversion is implied; migration is an explicit project-owned activity with reviewed meaning and ownership.
 
-The experimental canonical Projection preview bundled with v0.14.1 is another preserved compatibility contract. The [historical Commerce example](../examples/classic-commerce/README.md#obtain-the-example-source) covers its initial intent, materialization, later rule change and fresh verification. Its example files come from a separate pinned source checkout; the native runtime remains v0.14.1.
+The experimental canonical Projection preview bundled with v0.14.1 is a historical release capability. The [historical Commerce example](../examples/classic-commerce/README.md#obtain-the-example-source) covers its initial intent, materialization, later rule change and fresh verification. Its example files come from a separate pinned source checkout; the native runtime remains v0.14.1.
 
 <a id="canonical-brownfield-adoption-unreleased-source"></a>
 ### Canonical brownfield adoption (experimental alpha)
@@ -435,23 +435,7 @@ Apply requires the same `--base` and `--revision` as the saved proposal and rech
 
 ## Initialize a project
 
-For an existing repository that has no `markitect.yaml`, `init` previews a minimal Project and one area README:
-
-```powershell
-markitect init --repo . --name project-name --namespace owner
-```
-
-The preview shows the exact `markitect.yaml` content and both file paths. Initialization does not choose checks, rules, resources, output targets, packages, templates, or edits to root documentation. The selected area path must not already exist. Preview is read-only and can run outside Git.
-
-Without `--path`, the area is `.markitect/areas/owner` (using the selected namespace). The plan creates only `markitect.yaml` and `.markitect/areas/owner/README.md`, plus their required directories. Existing layouts remain supported: use `--path docs/ai` or another supported repository-relative path to select a different area. Earlier versions required `--path`; existing explicit invocations continue to select the same area.
-
-After reviewing the plan, `--write` recomputes it and validates the prospective Project with the normal parser, graph, and output checks before exclusive file creation:
-
-```powershell
-markitect init --repo . --name project-name --namespace owner --write
-```
-
-Writing requires a named non-protected Git branch and the shared write lock. In a Git checkout, `--repo` must name the Git worktree root; preview also works outside Git. The repository root must exist; names and the area path must be safe, and initialization rejects aliases, excluded or unsafe paths, existing configuration or area content, and deleted or staged tracked targets. Only `markitect.yaml` and the selected area's `README.md` are created; the selected area directory must be absent and is created exclusively. The result lists `written` files and `createdDirectories`, including on a partial failure. Inspect those paths and the recovery instructions before retrying; no cleanup is automatic, and a directory may have acquired other content. This is not a multi-file transaction. Structural validation can pass with no Project checks. `verify` remains incomplete until the project owner declares real checks and commits the candidate.
+Current source uses `markitect project init`; see the [model-first workflow](project-workflow.md#start-or-adopt-a-project). The top-level initializer has been removed from current source. Versioned release histories retain the commands they actually shipped.
 
 ## Declare verification commands
 
@@ -474,7 +458,6 @@ For project-owned Codex, Claude, and shared entrypoints, declare `spec.targets` 
 | Command | Purpose |
 |---|---|
 | `check` | Validate Domain definitions, YAML resources, relations, constraints, declared file inputs, managed outputs, and explicitly configured documentation routers. |
-| `init` | Preview a minimal project plan; `--write` creates only its Project file and one area README. |
 | `verify` | Check an immutable revision and run the Project's declared commands. |
 | `inventory` | List Markdown candidates and typed resources; it does not infer dependencies. |
 | `find` | Search valid resources by literal text and exact optional filters. |

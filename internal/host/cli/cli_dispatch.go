@@ -23,9 +23,6 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 		}
 		return 0
 	}
-	if command == "init" {
-		return runInit(o.root, o.name, o.namespace, o.areaPath, o.write, emit, fail)
-	}
 	if command == "bundle" {
 		return runBundle(o.root, o.revision, o.output, emit, fail)
 	}

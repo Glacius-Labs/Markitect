@@ -949,6 +949,9 @@ class CodexRunnerTests(unittest.TestCase):
                  patch.object(runner.subprocess, "Popen", FakeProcess):
                 response = runner.launch_codex(value, args, {}, cwd, cwd / "private.jsonl")
             argv = captured["argv"]
+            self.assertEqual(argv[argv.index("--sandbox") + 1], "read-only")
+            self.assertIn("--ephemeral", argv)
+            self.assertNotIn("--profile", argv)
             response_schema = json.loads(Path(argv[argv.index("--output-schema") + 1]).read_text(encoding="utf-8"))
             self.assertEqual(response_schema["properties"]["reportJson"]["type"], ["string", "null"])
             self.assertEqual(

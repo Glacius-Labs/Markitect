@@ -46,19 +46,16 @@ func TestDelegationPoolsAreExplicitAndContextMetadataCarriesNoContent(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !boundedRoot.Iterations[0].DelegationEvidenceExplicit {
-		t.Fatal("an explicitly empty root pool must be distinguished from a legacy omitted pool")
-	}
-	unmarkedEmpty := cloneSession(boundedRoot)
-	unmarkedEmpty.Iterations[0].DelegationEvidenceIDs = []string{}
-	unmarkedEmpty.Iterations[0].DelegationEvidenceExplicit = false
-	sealSession(&unmarkedEmpty)
-	if err := ValidateBrownfieldSession(unmarkedEmpty); err == nil {
-		t.Fatal("an explicit empty pool without its durable marker must not be serializable")
+	if _, err := BeginReverseIteration(root, target, session, ReverseIterationRequest{ID: "missing-pool", ManagerID: rootManager,
+		EvidenceIDs: []string{"root-evidence"}, Purpose: "Must fail closed", Review: "missing-pool-review"}); err == nil {
+		t.Fatal("a missing delegation pool must fail closed instead of expanding to all Discovery evidence")
 	}
 	encodedBounded, err := EncodeBrownfieldSession(boundedRoot)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !strings.Contains(string(encodedBounded), `"delegationEvidenceIds": []`) || strings.Contains(string(encodedBounded), "delegationEvidenceExplicit") {
+		t.Fatalf("the closed ledger must store an explicit empty pool without compatibility marker bookkeeping: %s", encodedBounded)
 	}
 	decodedBounded, err := DecodeBrownfieldSession(encodedBounded)
 	if err != nil {
@@ -72,8 +69,21 @@ func TestDelegationPoolsAreExplicitAndContextMetadataCarriesNoContent(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
+	var legacyShape map[string]any
+	if err := json.Unmarshal(encodedBounded, &legacyShape); err != nil {
+		t.Fatal(err)
+	}
+	iterations := legacyShape["iterations"].([]any)
+	delete(iterations[0].(map[string]any), "delegationEvidenceIds")
+	legacyBytes, err := json.Marshal(legacyShape)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeBrownfieldSession(legacyBytes); err == nil {
+		t.Fatal("an ambiguous historical iteration without an explicit delegation pool must fail closed")
+	}
 	for name, candidate := range map[string]BrownfieldSession{"decode": decodedBounded, "write-load": loadedBounded} {
-		outside := ProposedManager{ID: "unauthorized-child", Name: "Unauthorized child", Purpose: "Inspect unauthorized evidence", ParentID: rootManager, EvidenceIDs: []string{"child-evidence"}}
+		outside := ProposedManager{ID: "unauthorized-child", Name: "Unauthorized child", Purpose: "Inspect unauthorized evidence", ParentID: rootManager, EvidenceIDs: []string{"child-evidence"}, DelegationEvidenceIDs: []string{}}
 		outsideProposal := ManagerProposal{ManagerID: rootManager, EvidenceIDs: []string{"root-evidence"}, Hierarchy: []ProposedManager{outside}, PublicContracts: []ManagerPublicContract{},
 			Report: sessionReport(discovery, "root-evidence", "root", "func Root() {}", "The root source defines the root behavior.")}
 		if _, err := RecordManagerProposal(candidate, "bounded-root", outsideProposal); err == nil {
@@ -155,10 +165,10 @@ func TestDelegationPoolsAreExplicitAndContextMetadataCarriesNoContent(t *testing
 		t.Fatalf("non-root context must include own raw content and only its authorized delegation metadata: %+v", childContext)
 	}
 	if _, err := BeginReverseIteration(root, target, rootIteration, ReverseIterationRequest{ID: "child-mismatch", ParentIterationID: "root", ManagerID: child.ID,
-		EvidenceIDs: []string{"child-evidence"}, Purpose: child.Purpose, Review: "child-review"}); err == nil {
+		EvidenceIDs: []string{"child-evidence"}, DelegationEvidenceIDs: []string{}, Purpose: child.Purpose, Review: "child-review"}); err == nil {
 		t.Fatal("child iteration must match the parent's exact delegation pool")
 	}
-	grandchild := ProposedManager{ID: "leaf-manager", Name: "Leaf manager", Purpose: "Inspect leaf code", ParentID: child.ID, EvidenceIDs: []string{"leaf-evidence"}}
+	grandchild := ProposedManager{ID: "leaf-manager", Name: "Leaf manager", Purpose: "Inspect leaf code", ParentID: child.ID, EvidenceIDs: []string{"leaf-evidence"}, DelegationEvidenceIDs: []string{}}
 	childReport := sessionReport(discovery, "child-evidence", "child", "func Child() {}", "The child source defines child behavior.")
 	childProposal := ManagerProposal{ManagerID: child.ID, EvidenceIDs: []string{"child-evidence"}, Hierarchy: []ProposedManager{grandchild}, PublicContracts: []ManagerPublicContract{}, Report: childReport}
 	childIteration, err = RecordManagerProposal(childIteration, "child", childProposal)
@@ -166,7 +176,7 @@ func TestDelegationPoolsAreExplicitAndContextMetadataCarriesNoContent(t *testing
 		t.Fatalf("non-root child should delegate only from its own and authorized pools: %v", err)
 	}
 	leafIteration, err := BeginReverseIteration(root, target, childIteration, ReverseIterationRequest{ID: "leaf", ParentIterationID: "child", ManagerID: grandchild.ID,
-		EvidenceIDs: []string{"leaf-evidence"}, Purpose: grandchild.Purpose, Review: "leaf-review"})
+		EvidenceIDs: []string{"leaf-evidence"}, DelegationEvidenceIDs: []string{}, Purpose: grandchild.Purpose, Review: "leaf-review"})
 	if err != nil {
 		t.Fatalf("grandchild should receive the exact parent assignment: %v", err)
 	}

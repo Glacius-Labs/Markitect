@@ -47,7 +47,7 @@ func TestBrownfieldSessionPersistsAndResumesWithoutReplayingStages(t *testing.T)
 	if loaded.Digest != session.Digest || len(loaded.Iterations) != 0 {
 		t.Fatal("recovered session changed its initial bases or replayed work")
 	}
-	iterated, err := BeginReverseIteration(root, target, loaded, ReverseIterationRequest{ID: "root-pass", ManagerID: loaded.TargetContext.RootManagerID, EvidenceIDs: []string{"orders-source"}, Purpose: "Propose observed hierarchy", Review: "review-2"})
+	iterated, err := BeginReverseIteration(root, target, loaded, ReverseIterationRequest{ID: "root-pass", ManagerID: loaded.TargetContext.RootManagerID, EvidenceIDs: []string{"orders-source"}, DelegationEvidenceIDs: []string{}, Purpose: "Propose observed hierarchy", Review: "review-2"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +105,7 @@ func TestReverseIterationRejectsStaleSourceAndTarget(t *testing.T) {
 	}
 	otherTarget.Digest = "sha256:" + "aabbcc"
 	if _, err := BeginReverseIteration(root, otherTarget, session, ReverseIterationRequest{ID: "root-pass", ManagerID: session.TargetContext.RootManagerID,
-		EvidenceIDs: []string{"source"}, Purpose: "Propose a source hierarchy", Review: "review-2"}); err == nil {
+		EvidenceIDs: []string{"source"}, DelegationEvidenceIDs: []string{}, Purpose: "Propose a source hierarchy", Review: "review-2"}); err == nil {
 		t.Fatal("reverse iteration must reject a target digest changed after session start")
 	}
 }
@@ -181,9 +181,9 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 	if err != nil {
 		t.Fatal(err)
 	}
-	childManager := ProposedManager{ID: "orders-manager", Name: "Orders Manager", Purpose: "Reverse model order implementation.", ParentID: session.TargetContext.RootManagerID, EvidenceIDs: []string{"orders-code"}}
+	childManager := ProposedManager{ID: "orders-manager", Name: "Orders Manager", Purpose: "Reverse model order implementation.", ParentID: session.TargetContext.RootManagerID, EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}}
 	rootIteration, err := BeginReverseIteration(root, target, session, ReverseIterationRequest{ID: "root", ManagerID: session.TargetContext.RootManagerID,
-		EvidenceIDs: []string{"orders-doc"}, Purpose: "Propose source hierarchy", Review: "root-review"})
+		EvidenceIDs: []string{"orders-doc"}, DelegationEvidenceIDs: []string{"orders-code"}, Purpose: "Propose source hierarchy", Review: "root-review"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,12 +195,12 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 		t.Fatal(err)
 	}
 	childIteration, err := BeginReverseIteration(root, target, rootIteration, ReverseIterationRequest{ID: "orders-manager", ParentIterationID: "root", ManagerID: childManager.ID,
-		EvidenceIDs: []string{"orders-code"}, Purpose: "Inspect order implementation", Review: "orders-review"})
+		EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}, Purpose: "Inspect order implementation", Review: "orders-review"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := BeginReverseIteration(root, target, childIteration, ReverseIterationRequest{ID: "orders-manager-second", ParentIterationID: "root", ManagerID: childManager.ID,
-		EvidenceIDs: []string{"orders-code"}, Purpose: "Retry order inspection", Review: "orders-review-2"}); err == nil {
+		EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}, Purpose: "Retry order inspection", Review: "orders-review-2"}); err == nil {
 		t.Fatal("a parent cannot open duplicate child iterations for the same Manager")
 	}
 	duplicateStored := cloneSession(childIteration)
@@ -244,10 +244,10 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 		Occurrences: []TermOccurrence{{EvidenceID: "orders-code", StartLine: 2, EndLine: 2, Excerpt: "func Order() {}"}}, Synonyms: []string{}, Ambiguities: []string{}}}
 	SealDistillation(&childReport)
 	publicOrderContract := ManagerPublicContract{Contract: DistillationTargetContract{ID: "orders.accept-order", Name: "accept-order", Namespace: "orders", Owner: childManager.ID, Category: "use-case", Description: "Accept a valid order.", Uses: []string{}, Requires: []string{}}, ClaimIDs: []string{"orders-claim"}}
-	submanager := ProposedManager{ID: "orders-submanager", Name: "Orders Submanager", Purpose: "Inspect order implementation details.", ParentID: childManager.ID, EvidenceIDs: []string{"orders-code"}}
+	submanager := ProposedManager{ID: "orders-submanager", Name: "Orders Submanager", Purpose: "Inspect order implementation details.", ParentID: childManager.ID, EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}}
 	childProposal := ManagerProposal{ManagerID: childManager.ID, EvidenceIDs: []string{"orders-code"}, Hierarchy: []ProposedManager{submanager}, PublicContracts: []ManagerPublicContract{publicOrderContract}, Report: childReport}
 	delegationAttempt := childProposal
-	delegationAttempt.Hierarchy = []ProposedManager{{ID: "orders-submanager", Name: "Orders Submanager", Purpose: "Inspect assigned implementation.", ParentID: childManager.ID, EvidenceIDs: []string{"orders-doc"}}}
+	delegationAttempt.Hierarchy = []ProposedManager{{ID: "orders-submanager", Name: "Orders Submanager", Purpose: "Inspect assigned implementation.", ParentID: childManager.ID, EvidenceIDs: []string{"orders-doc"}, DelegationEvidenceIDs: []string{}}}
 	if _, err := RecordManagerProposal(childIteration, "orders-manager", delegationAttempt); err == nil {
 		t.Fatal("a non-root Manager cannot delegate evidence outside its exact parent assignment")
 	}
@@ -275,7 +275,7 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 		t.Fatal("parent integration context cannot be built before its non-leaf child completes integration")
 	}
 	grandchildIteration, err := BeginReverseIteration(root, target, childIteration, ReverseIterationRequest{ID: "orders-submanager", ParentIterationID: "orders-manager", ManagerID: submanager.ID,
-		EvidenceIDs: []string{"orders-code"}, Purpose: "Inspect order implementation details", Review: "submanager-review"})
+		EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}, Purpose: "Inspect order implementation details", Review: "submanager-review"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -374,7 +374,7 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 		t.Fatal("a transitional scope cannot be made ready by a conforming coverage input")
 	}
 	repeatedRoot, err := BeginReverseIteration(root, target, childIteration, ReverseIterationRequest{ID: "root-refine", SupersedesIterationID: "root", ManagerID: session.TargetContext.RootManagerID,
-		EvidenceIDs: []string{"orders-doc"}, Purpose: "Revisit integrated source model", Review: "root-review-2"})
+		EvidenceIDs: []string{"orders-doc"}, DelegationEvidenceIDs: []string{}, Purpose: "Revisit integrated source model", Review: "root-review-2"})
 	if err != nil {
 		t.Fatalf("root Manager should be able to repeat reverse inference after integrating its prior tree: %v", err)
 	}
@@ -480,17 +480,17 @@ func TestAcceptedManagerTreeRequiresParentAssignmentAndIntegratesRecursively(t *
 	if accepted.ID == "" {
 		t.Fatalf("accepted child Manager missing: %+v", session.TargetContext.Managers)
 	}
-	rootIteration, err := BeginReverseIteration(root, target, session, ReverseIterationRequest{ID: "root", ManagerID: session.TargetContext.RootManagerID, EvidenceIDs: []string{"orders-doc"}, Purpose: "Propose Manager hierarchy", Review: "root-review"})
+	rootIteration, err := BeginReverseIteration(root, target, session, ReverseIterationRequest{ID: "root", ManagerID: session.TargetContext.RootManagerID, EvidenceIDs: []string{"orders-doc"}, DelegationEvidenceIDs: []string{"orders-code"}, Purpose: "Propose Manager hierarchy", Review: "root-review"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	rootReport := sessionReport(discovery, "orders-doc", "orders", "Orders are managed by the order module.", "The order module is responsible for order management.")
-	rootProposal := ManagerProposal{ManagerID: session.TargetContext.RootManagerID, EvidenceIDs: []string{"orders-doc"}, Hierarchy: []ProposedManager{{ID: accepted.ID, Name: accepted.Name, Purpose: accepted.Purpose, ParentID: session.TargetContext.RootManagerID, EvidenceIDs: []string{"orders-code"}}}, PublicContracts: []ManagerPublicContract{}, Report: rootReport}
+	rootProposal := ManagerProposal{ManagerID: session.TargetContext.RootManagerID, EvidenceIDs: []string{"orders-doc"}, Hierarchy: []ProposedManager{{ID: accepted.ID, Name: accepted.Name, Purpose: accepted.Purpose, ParentID: session.TargetContext.RootManagerID, EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}}}, PublicContracts: []ManagerPublicContract{}, Report: rootReport}
 	rootIteration, err = RecordManagerProposal(rootIteration, "root", rootProposal)
 	if err != nil {
 		t.Fatal(err)
 	}
-	childIteration, err := BeginReverseIteration(root, target, rootIteration, ReverseIterationRequest{ID: "orders", ParentIterationID: "root", ManagerID: accepted.ID, EvidenceIDs: []string{"orders-code"}, Purpose: "Inspect order implementation", Review: "orders-review"})
+	childIteration, err := BeginReverseIteration(root, target, rootIteration, ReverseIterationRequest{ID: "orders", ParentIterationID: "root", ManagerID: accepted.ID, EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}, Purpose: "Inspect order implementation", Review: "orders-review"})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -439,8 +439,6 @@ func TestConfigRejectsDocumentControlPathCollisionsAndLinksFromCustomPath(t *tes
 		".markitect/runtime.yaml",
 		".markitect/ignore.yaml",
 		".markitect/workflows/model-first.md",
-		".agents/skills/markitect-model-first/SKILL.md",
-		".claude/skills/markitect-model-first/SKILL.md",
 	} {
 		data := []byte("apiVersion: " + APIVersion + "\nname: Fixture\ndocumentPath: " + destination + "\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
 		if _, err := DecodeConfig(data); err == nil {
@@ -453,6 +451,18 @@ func TestConfigRejectsDocumentControlPathCollisionsAndLinksFromCustomPath(t *tes
 	}
 	if got, want := sourceLinkAt(DocumentPath(config), "src/feature/file.go"), "[src/feature/file.go](../../src/feature/file.go)"; got != want {
 		t.Fatalf("custom document source link = %q, want %q", got, want)
+	}
+}
+
+func TestConfigDoesNotReserveRemovedRouterDocumentPath(t *testing.T) {
+	for _, destination := range []string{
+		".agents/skills/markitect-model-first/SKILL.md",
+		".claude/skills/markitect-model-first/SKILL.md",
+	} {
+		data := []byte("apiVersion: " + APIVersion + "\nname: Fixture\ndocumentPath: " + destination + "\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
+		if _, err := DecodeConfig(data); err != nil {
+			t.Errorf("removed router path %q remains reserved: %v", destination, err)
+		}
 	}
 }
 

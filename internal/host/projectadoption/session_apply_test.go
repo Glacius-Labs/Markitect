@@ -56,7 +56,7 @@ func TestApplyAndRecordSessionAdoptionRequiresReviewedPlanAndRecordsGuardedResul
 	}
 	iterationID := "root-pass"
 	session, err = BeginReverseIteration(root, target, session, ReverseIterationRequest{ID: iterationID, ManagerID: session.TargetContext.RootManagerID,
-		EvidenceIDs: []string{"orders-source"}, Purpose: "Propose observed order model", Review: "model-review"})
+		EvidenceIDs: []string{"orders-source"}, DelegationEvidenceIDs: []string{}, Purpose: "Propose observed order model", Review: "model-review"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +148,7 @@ func TestApplyAndRecordSessionAdoptionRequiresReviewedPlanAndRecordsGuardedResul
 		t.Fatalf("committed target readiness must use its current coverage report: readiness=%+v coverage=%+v", readiness, acceptedTarget.Coverage)
 	}
 	refined, err := BeginReverseIteration(root, target, resumed, ReverseIterationRequest{ID: "root-refine", SupersedesIterationID: iterationID, ManagerID: resumed.TargetContext.RootManagerID,
-		EvidenceIDs: []string{"orders-source"}, Purpose: "Revisit the accepted order model", Review: "refinement-review"})
+		EvidenceIDs: []string{"orders-source"}, DelegationEvidenceIDs: []string{}, Purpose: "Revisit the accepted order model", Review: "refinement-review"})
 	if err != nil {
 		t.Fatal(err)
 	}

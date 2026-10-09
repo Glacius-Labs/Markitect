@@ -175,7 +175,7 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 	workerArgs := append([]string(nil), args...)
 	workerFiles := append([]agentexec.RuntimeFile(nil), files...)
 	instructionPaths := []string(nil)
-	workerArgs = append(workerArgs, "--execution-mode", "native-work", "--codex-profile", options.CodexProfile, "--native-helper-limit", "0")
+	workerArgs = append(workerArgs, "--codex-profile", options.CodexProfile, "--native-helper-limit", "0")
 	var instructionFiles []agentexec.RuntimeFile
 	var instructionErr error
 	instructionPaths, instructionFiles, instructionErr = nativeInstructionFiles(project, options.Provider)

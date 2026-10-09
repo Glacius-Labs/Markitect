@@ -2,7 +2,7 @@
 
 Markitect's primary product workflow is the recursively managed project model in `.markitect/`: owners define accepted intent, Managers own slices and artifacts, and agents implement and verify within those responsibilities. Start with the [model-first workflow](project-workflow.md), its [executable Shop example](../examples/project-world/README.md), the [vision](vision.md), and the [roadmap](implementation-plan.md) for the distinction between source behavior, published releases and planned work.
 
-The published v0.14.1 binary retains the earlier Project/Domain CLI and canonical Projection alpha as compatibility contracts; it does not contain the current `markitect project` source workflow. The [legacy CLI usage reference](usage.md#legacy-projectdomain-cli-compatibility) and historical examples remain available. Existing projects are not silently migrated. The release install instructions and evidence remain pinned to their actual versions; a source change does not publish a release. Human approval is not authenticated by model provenance, a commit, a digest or a passing check, and agent instructions are not an OS sandbox.
+The published v0.14.1 binary contains earlier Project/Domain commands and the canonical Projection alpha; it does not contain the current `markitect project` workflow. Current compiler/schema/rendering mechanisms remain useful for Markitect's own engineering resources, while functions retained solely for compatibility are removed. Historical release installs and evidence stay pinned to their actual versions. Source changes do not publish a release, and commits, digests or checks do not authenticate human approval.
 
 | Document | Owns |
 |---|---|
@@ -11,19 +11,20 @@ The published v0.14.1 binary retains the earlier Project/Domain CLI and canonica
 | [Project world design](design/project-world/README.md) | Accepted project-model direction, recursive Managers, responsibilities, controlled work, and planned workflow acceptance |
 | [Executable Shop project](../examples/project-world/README.md) | Current model-first example and finite behavior tests |
 | [Project workflow validation](validation/project-world-delivery.md) | Dated source/Shop evidence, actual provider-run boundary and remaining limits |
+| [Native Codex and skills validation](validation/project-native-work-2026-10-09.md) | Supported native runtime, ten operational skills, compatibility cleanup, focused checks and retained pre-provider failures |
 | [Project operations validation](validation/project-operations-2026-10-09.md) | Fixed-source gates, public Shop smoke, retained failures and remaining boundaries |
 | [Product vision](vision.md) | Quality and intent-fidelity thesis, canonical authority, human/agent responsibilities and benefit hypothesis |
 | [Operating methodology](operating-methodology.md) | Ontology-driven reconciliation, recursive Executor/Verifier process, implementation freedom and usable-method target |
 | [Standard operating model](design/standard-operating-model.md) | Reusable coordination, projection coverage, independent review and declared-scope closure |
 | [Markitect-first](markitect-first.md) | Canonical change-protocol entrypoint, desired-intent ordering and declared artifact accounting |
-| [Legacy CLI usage and compatibility](usage.md#legacy-projectdomain-cli-compatibility) | Published v0.14.1 Project/Domain syntax and older versioned contracts; not the new-project path |
+| [Structural and historical CLI reference](usage.md#legacy-projectdomain-cli-compatibility) | Engineering-resource compiler commands and published version histories; new projects use project init |
 | [Repository layout](repository-layout.md) | Recommended control-plane organization, ownership zones, and layout compatibility |
 | [Content packages](content-packages.md) | Direct offline package pins, exports, archive creation, and package boundaries |
 | [Project artifact inputs](documentation.md) | Explicit ordinary-file inputs in context and impact, including source code |
 | [Documentation routers](documentation-routers.md) | Optional local navigation checks and placement guidance |
 | [Provider adapters](provider-adapters.md) | Explicit Codex, Claude, and shared entrypoints and strict inventory |
 | [Factual consistency](consistency.md) | Opt-in sourced functional assertions and their limits |
-| [Architecture](architecture.md) | Current model-first Host workflow, fixed-snapshot evidence boundary, and preserved legacy runtime contracts |
+| [Architecture](architecture.md) | Current model-first Host workflow, structural compiler boundaries and fixed-snapshot evidence |
 | [Engineering constitution](engineering-constitution.md) | Kernel invariants, selected canonical intent, projection/evidence boundaries, policy analysis and human adoption authority |
 | [Historical Commerce Projection example](../examples/classic-commerce/README.md) | Preserved canonical alpha walkthrough, opt-in real .NET build, independent behavior check and negative control |
 | [Historical Commerce intent change](../examples/classic-commerce/intent-change.md) | Earlier request-to-Projection walkthrough and its exact-source evidence |
@@ -60,7 +61,7 @@ The published v0.14.1 binary retains the earlier Project/Domain CLI and canonica
 | [Source release assessment](release-assessment.md) | General technical findings from source-distribution work |
 | [Production assessment](production-assessment.md) | Dated release evidence and source-level assessment |
 
-The [roadmap](implementation-plan.md) owns current source status and planned work, including [Astra finding disposition and the Coordinator handoff checkpoint](implementation-plan.md#astra-assessment-disposition-and-next-method-checkpoint). The model-first source workflow and its acceptance gaps are distinct from the published v0.14.1 compatibility binary. v0.13.0, v0.12.0, v0.11.0 and v0.10.0 remain immutable historical evidence. Source changes do not update an installed release.
+The [roadmap](implementation-plan.md) owns current source status and planned work, including [Astra finding disposition and the Coordinator handoff checkpoint](implementation-plan.md#astra-assessment-disposition-and-next-method-checkpoint). The model-first source workflow and its acceptance gaps are distinct from the published v0.14.1 binary. v0.13.0, v0.12.0, v0.11.0 and v0.10.0 remain immutable historical evidence. Source changes do not update an installed release.
 
 [The dated capability checkpoint](validation/proof-capability-checkpoint-2026-10-06.md) separates implemented mechanisms from actual trials, negative findings, and remaining gates. The [historical protocol-v1 proof program](research/proof-program.md) and its [matrix](research/capability-matrix.md) preserve the earlier full-acquisition stop; the later capability-before-proof steer resumes implementation and fresh trials without rescoring those records.
 

@@ -18,9 +18,6 @@ spec:
     - internal/host/canonical_controller_lease_windows_test.go
     - internal/host/canonical_controller_lease_linux_test.go
     - internal/host/canonical_controller_lease_test.go
-    - internal/host/init_test.go
-    - internal/host/init_write.go
-    - internal/host/init.go
     - docs/design/host-write-identity.md
     - internal/host/format.go
     - internal/host/install.go
@@ -172,6 +169,8 @@ spec:
     - docs/validation/project-native-work-2026-10-09.md
     - docs/design/project-native-codex-work-20261009.md
     - docs/design/project-capability-skills-20261009.md
+    - docs/design/project-simplification-and-api-direction-20261009.md
+    - internal/host/shared_helpers.go
     - docs/validation/project-operations-2026-10-09.md
     - internal/host/projectexplore
     - examples/project_world_workflow_test.go
@@ -1681,12 +1680,6 @@ spec:
       owner: host-write-identity
     - path: internal/host/recordstore/rooted.go
       owner: canonical-record-store
-    - path: internal/host/init.go
-      owner: host-write-identity
-    - path: internal/host/init_write.go
-      owner: host-write-identity
-    - path: internal/host/init_test.go
-      owner: host-write-identity
     - path: internal/host/canonical_controller_lease_test.go
       owner: controller-lease-identity
     - path: internal/host/canonical_controller_lease_linux_test.go
@@ -2299,3 +2292,7 @@ spec:
       owner: project-world-implementation
     - path: docs/validation/project-native-work-2026-10-09.md
       owner: project-world-validation
+    - path: internal/host/shared_helpers.go
+      owner: host-write-identity
+    - path: docs/design/project-simplification-and-api-direction-20261009.md
+      owner: project-world-implementation

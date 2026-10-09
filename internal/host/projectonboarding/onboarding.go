@@ -37,7 +37,7 @@ type Options struct {
 
 type FileChange struct {
 	Path    string `json:"path"`
-	Action  string `json:"action"` // create, update, or unchanged
+	Action  string `json:"action"` // create, update, delete, or unchanged
 	Content string `json:"content"`
 }
 
@@ -99,10 +99,17 @@ func Preview(root, modelDigest string, options Options) (Plan, error) {
 			return plan, fmt.Errorf("documentation destination %q conflicts with a native onboarding output", options.DocumentationPath)
 		}
 	}
-	paths := make([]string, len(files))
-	for i := range files {
-		paths[i] = files[i].Path
+	legacyPaths := staleSkillPaths(providers)
+	for _, legacyPath := range legacyPaths {
+		if strings.EqualFold(legacyPath, options.DocumentationPath) {
+			return plan, fmt.Errorf("documentation destination %q conflicts with a legacy skill migration target", options.DocumentationPath)
+		}
 	}
+	paths := make([]string, 0, len(files)+len(providers))
+	for i := range files {
+		paths = append(paths, files[i].Path)
+	}
+	paths = append(paths, legacyPaths...)
 	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
 	if err != nil {
 		return plan, fmt.Errorf("capture onboarding targets: %w", err)
@@ -110,7 +117,7 @@ func Preview(root, modelDigest string, options Options) (Plan, error) {
 	plan = Plan{
 		APIVersion: APIVersion, RepositoryRoot: capture.Identity.Root, ModelDigest: project.Report.ModelDigest,
 		ProjectDigest: project.Digest, Branch: capture.Branch,
-		Head: capture.Head, Options: options, Targets: make([]TargetBasis, 0, len(files)),
+		Head: capture.Head, Options: options, Targets: make([]TargetBasis, 0, len(paths)),
 		Files: files,
 	}
 	for _, file := range files {
@@ -137,6 +144,21 @@ func Preview(root, modelDigest string, options Options) (Plan, error) {
 			plan.Files[indexFile(plan.Files, file.Path)].Action = "create"
 		}
 	}
+	for _, legacyPath := range legacyPaths {
+		observed := capture.Files[legacyPath]
+		basis := TargetBasis{Path: legacyPath, Exists: observed.Exists}
+		if observed.Exists {
+			basis.ContentHash = contentHash(observed.Bytes)
+			basis.Mode = fmt.Sprintf("%04o", observed.Mode.Perm())
+			if !isPreviouslyGeneratedRouter(observed.Bytes) {
+				return Plan{}, fmt.Errorf("legacy skill path %s conflicts with custom or mixed content; preserving it", legacyPath)
+			}
+			plan.Files = append(plan.Files, FileChange{Path: legacyPath, Action: "delete"})
+		}
+		plan.Targets = append(plan.Targets, basis)
+	}
+	sort.Slice(plan.Files, func(i, j int) bool { return plan.Files[i].Path < plan.Files[j].Path })
+	sort.Slice(plan.Targets, func(i, j int) bool { return plan.Targets[i].Path < plan.Targets[j].Path })
 	plan.Digest, err = digestPlan(plan)
 	if err != nil {
 		return Plan{}, err
@@ -158,9 +180,9 @@ func Apply(root string, plan Plan, expectDigest string) (Plan, error) {
 	if current.Digest != expectDigest {
 		return plan, errors.New("onboarding preview is stale; create a fresh preview")
 	}
-	paths := make([]string, len(current.Files))
-	for i, file := range current.Files {
-		paths[i] = file.Path
+	paths := make([]string, len(current.Targets))
+	for i, target := range current.Targets {
+		paths[i] = target.Path
 	}
 	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
 	if err != nil {
@@ -178,6 +200,10 @@ func Apply(root string, plan Plan, expectDigest string) (Plan, error) {
 	changes := make([]hostwrite.GuardedWriteChange, 0, len(current.Files))
 	for _, file := range current.Files {
 		if file.Action == "unchanged" {
+			continue
+		}
+		if file.Action == "delete" {
+			changes = append(changes, hostwrite.GuardedWriteChange{Path: file.Path, Delete: true})
 			continue
 		}
 		mode := fs.FileMode(0644)
@@ -257,4 +283,34 @@ func indexFile(files []FileChange, target string) int {
 		}
 	}
 	panic("onboarding target missing from rendered files")
+}
+
+// staleSkillPaths selects only the two exact files emitted by the former
+// compatibility router. They remain guarded migration targets, not generated
+// outputs or registered native skill paths.
+func staleSkillPaths(providers []Provider) []string {
+	paths := make([]string, 0, len(providers))
+	for _, provider := range providers {
+		switch provider {
+		case Codex:
+			paths = append(paths, ".agents/skills/markitect-model-first/SKILL.md")
+		case Claude:
+			paths = append(paths, ".claude/skills/markitect-model-first/SKILL.md")
+		}
+	}
+	return paths
+}
+
+// isPreviouslyGeneratedRouter permits deletion only when the entire file is
+// the exact old Markitect output. Normalizing CRLF allows Windows checkout
+// translation while still rejecting any extra user bytes or metadata.
+func isPreviouslyGeneratedRouter(data []byte) bool {
+	normalized := strings.ReplaceAll(string(data), "\r\n", "\n")
+	return normalized == previouslyGeneratedRouter()
+}
+
+func previouslyGeneratedRouter() string {
+	const description = "Compatibility router for Markitect project work; select the matching init, extract, design, suggest, configure, implement, cleanup, verify, apply, or check skill without loading the full workflow."
+	const body = "Choose the operation skill that matches the work. Ordinary requests to implement a Work Item start with `markitect-implement`, which chains required operations autonomously. Use `markitect-init` for setup, `markitect-extract` for Brownfield adoption, `markitect-design` for intent changes, `markitect-suggest` for proposal-only recommendations, `markitect-configure` for existing project/runtime settings, `markitect-cleanup` for behavior-preserving refactoring, `markitect-verify` for realization assessment, `markitect-apply` for an already verified candidate, and `markitect-check` for structural diagnostics."
+	return fmt.Sprintf("---\nname: markitect-model-first\ndescription: %q\n---\n\n%s\n", description, managedBlock(body))
 }

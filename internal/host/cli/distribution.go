@@ -19,11 +19,10 @@ func printUsage(out io.Writer) {
 	fmt.Fprintln(out, "  project                     Model, delegate, verify and apply managed project work (source alpha)")
 	fmt.Fprintln(out, "New model-first projects use .markitect/project.yaml and 'markitect project init'.")
 	fmt.Fprintln(out, "Inspect their model contract with 'markitect project schema'.")
-	fmt.Fprintln(out, "Top-level 'markitect init' creates the historical Project/Domain format.")
 	fmt.Fprintln(out, "  check, verify, inventory    Validate a project and its repository gates")
 	fmt.Fprintln(out, "  model, context, impact, find, explain, review    Inspect fixed semantic inputs")
 	fmt.Fprintln(out, "  canonical                                    Inspect, plan, apply, verify, adopt and control canonical projections (alpha)")
-	fmt.Fprintln(out, "  init, authoring, render, format, reconcile, projection    Author and reconcile projections")
+	fmt.Fprintln(out, "  authoring, render, format, reconcile, projection    Author and reconcile projections")
 	fmt.Fprintln(out, "  prepare, copy-me             Capture selected evidence and validate proposals (source)")
 	fmt.Fprintln(out, "  pack                         Build an offline content package")
 	fmt.Fprintln(out, "  bundle, install, package, schema, version, licenses")
@@ -63,8 +62,6 @@ func commandFlags(command string) (map[string]bool, bool) {
 		names = []string{"repo", "revision", "output"}
 	case "install":
 		names = []string{"repo", "bundle", "sha256", "write"}
-	case "init":
-		names = []string{"repo", "name", "namespace", "path", "write"}
 	case "prepare":
 		names = []string{"scope", "output", "expect", "write"}
 	case "copy-me":

@@ -52,7 +52,7 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 		if agent.Command != python.Path || agent.Model != "gpt-6-luna" || agent.ProviderVersion != provider.Version {
 			t.Fatalf("unexpected mapping for %s: %#v", id, agent)
 		}
-		if agent.WorkspaceMode != "scoped" || !strings.Contains(strings.Join(agent.Args, " "), "--execution-mode native-work") || !strings.Contains(strings.Join(agent.Args, " "), "--codex-profile luna-high") {
+		if agent.WorkspaceMode != "scoped" || !containsArgs(agent.Args, "--codex-profile", "luna-high") {
 			t.Fatalf("default setup must select the supported native Codex worker: %#v", agent)
 		}
 		if agent.ModelOptions.(map[string]string)["model_reasoning_effort"] != "high" {
@@ -65,7 +65,7 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 		if !ok {
 			t.Fatalf("missing reviewer mapping for %s", id)
 		}
-		if reviewer.WorkspaceMode != "" || len(reviewer.RuntimeFiles) != 3 || strings.Contains(strings.Join(reviewer.Args, " "), "--execution-mode native-work") {
+		if reviewer.WorkspaceMode != "" || len(reviewer.RuntimeFiles) != 3 || containsArgs(reviewer.Args, "--native-helper-limit") || containsArgs(reviewer.Args, "--codex-profile") {
 			t.Fatalf("reviewer config for %s must retain the read-only transport: %#v", id, reviewer)
 		}
 		if !reflect.DeepEqual(reviewer.ModelOptions, agent.ModelOptions) || reviewer.Model != agent.Model || reviewer.ProviderVersion != agent.ProviderVersion {
@@ -118,14 +118,14 @@ func TestBuildRuntimeDefaultsCodexToNativeLunaHighAndBindsInstructions(t *testin
 		if agent.WorkspaceMode != "scoped" {
 			t.Fatalf("workspace mode for %s = %q", id, agent.WorkspaceMode)
 		}
-		wantPaths := []string{".agents/skills/markitect-model-first/SKILL.md", "AGENTS.md"}
+		wantPaths := []string{".agents/skills/markitect-implement/SKILL.md", "AGENTS.md"}
 		if !reflect.DeepEqual(agent.InstructionPaths, wantPaths) {
 			t.Fatalf("instruction paths for %s = %#v, want %#v", id, agent.InstructionPaths, wantPaths)
 		}
 		joinedArgs := strings.Join(agent.Args, " ")
-		for _, arg := range []string{"--execution-mode native-work", "--codex-profile luna-high", "--native-helper-limit 0"} {
-			if !strings.Contains(joinedArgs, arg) {
-				t.Fatalf("native adapter args for %s lack %q: %s", id, arg, joinedArgs)
+		for _, pair := range [][2]string{{"--codex-profile", "luna-high"}, {"--native-helper-limit", "0"}} {
+			if !containsArgs(agent.Args, pair[0], pair[1]) {
+				t.Fatalf("native adapter args for %s lack %q %q: %s", id, pair[0], pair[1], joinedArgs)
 			}
 		}
 		if len(agent.RuntimeFiles) != 6 {
@@ -168,10 +168,29 @@ func TestBuildRuntimeDefaultsCodexToNativeLunaHighAndBindsInstructions(t *testin
 			t.Fatalf("native environment allowlist omits HOME: %#v", agent.Environment)
 		}
 		reviewer := config.Review.Agents[id]
-		if reviewer.WorkspaceMode != "" || len(reviewer.RuntimeFiles) != 3 || strings.Contains(strings.Join(reviewer.Args, " "), "native-work") {
+		if reviewer.WorkspaceMode != "" || len(reviewer.RuntimeFiles) != 3 || containsArgs(reviewer.Args, "--native-helper-limit") || containsArgs(reviewer.Args, "--codex-profile") {
 			t.Fatalf("reviewer config should retain read-only transport: %#v", reviewer)
 		}
 	}
+}
+
+func containsArgs(args []string, expected ...string) bool {
+	if len(expected) == 0 || len(args) < len(expected) {
+		return false
+	}
+	for start := 0; start+len(expected) <= len(args); start++ {
+		match := true
+		for offset := range expected {
+			if args[start+offset] != expected[offset] {
+				match = false
+				break
+			}
+		}
+		if match {
+			return true
+		}
+	}
+	return false
 }
 
 func TestBuildRuntimeDefaultNativeRequiresExistingCodexInstructions(t *testing.T) {
@@ -196,9 +215,9 @@ func writeNativeInstructions(t *testing.T, root string) {
 	t.Helper()
 	for path, content := range map[string]string{
 		"AGENTS.md": "# Project agent instructions\n",
-		".agents/skills/markitect-model-first/SKILL.md": "# Model-first project skill\n",
+		".agents/skills/markitect-implement/SKILL.md": "# Generated implementation skill\n",
 		"CLAUDE.md": "# Claude guidance is not selected for Codex\n",
-		".claude/skills/markitect-model-first/SKILL.md": "# Claude skill is not selected for Codex\n",
+		".claude/skills/markitect-implement/SKILL.md": "# Claude skill is not selected for Codex\n",
 	} {
 		absolute := filepath.Join(root, filepath.FromSlash(path))
 		if err := os.MkdirAll(filepath.Dir(absolute), 0700); err != nil {

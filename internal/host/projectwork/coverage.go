@@ -87,8 +87,6 @@ func ToolPaths(config Config) []projectcoverage.ToolPath {
 		{Selector: ".markitect/workflows/model-first.md", Owner: "projectwork"},
 		{Selector: "AGENTS.md", Owner: "project-onboarding"},
 		{Selector: "CLAUDE.md", Owner: "project-onboarding"},
-		{Selector: ".agents/skills/markitect-model-first/SKILL.md", Owner: "project-onboarding"},
-		{Selector: ".claude/skills/markitect-model-first/SKILL.md", Owner: "project-onboarding"},
 	}
 	for _, provider := range []string{"codex", "claude"} {
 		for _, path := range NativeSkillPaths(provider) {
@@ -121,7 +119,7 @@ func NativeSkillPaths(provider string) []string {
 	default:
 		return nil
 	}
-	paths := []string{base + "markitect-model-first/SKILL.md", base + "markitect-implement/references/recovery.md"}
+	paths := []string{base + "markitect-implement/references/recovery.md"}
 	for _, name := range NativeSkillNames() {
 		paths = append(paths, base+name+"/SKILL.md", base+name+"/references/operating-guide.md")
 	}

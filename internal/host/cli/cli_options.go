@@ -24,7 +24,6 @@ type commandOptions struct {
 	kind                  string
 	name                  string
 	namespace             string
-	areaPath              string
 	packageName           string
 	query                 string
 	write                 bool
@@ -63,8 +62,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	base := fs.String("base", "", "base revision for impact, canonical verification or adoption")
 	kind := fs.String("kind", "", "context entry kind")
 	name := fs.String("name", "", "resource or project name")
-	namespace := fs.String("namespace", "", "resource namespace (initial area name for init)")
-	areaPath := fs.String("path", "", "new ownership area path (init; defaults to .markitect/areas/<namespace>)")
+	namespace := fs.String("namespace", "", "resource namespace")
 	packageName := fs.String("package", "", "exact content package identity (omitted: local entry)")
 	query := fs.String("query", "", "literal search text (find)")
 	write := fs.Bool("write", false, "explicitly write planned files (prepare: reviewed external capture)")
@@ -179,8 +177,8 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	canonicalDurableAdoptionApply := command == "canonical" && *action == "adopt" && *runtime != ""
 	canonicalControllerApply := command == "canonical" && (*action == "controller-apply" || *action == "controller-refresh-apply")
 	canonicalControllerVerify := command == "canonical" && *action == "controller-verify"
-	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init" && command != "reconcile" && command != "prepare" && command != "projection" && !canonicalApply && !canonicalDurableAdoptionApply && !canonicalControllerApply && !canonicalControllerVerify) || (*revision != "" && !canonicalApply && !canonicalDurableAdoptionApply && !canonicalControllerApply && !canonicalControllerVerify) || *check || ((command == "reconcile" || command == "projection" || command == "canonical") && *action != "apply" && !canonicalDurableAdoptionApply && !canonicalControllerApply && !canonicalControllerVerify)) {
-		fmt.Fprintln(errout, "--write supports render, format, schema, install, init, reconcile/projection apply, canonical apply/controller-apply/controller-verify, durable canonical adoption, or prepare external capture")
+	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "reconcile" && command != "prepare" && command != "projection" && !canonicalApply && !canonicalDurableAdoptionApply && !canonicalControllerApply && !canonicalControllerVerify) || (*revision != "" && !canonicalApply && !canonicalDurableAdoptionApply && !canonicalControllerApply && !canonicalControllerVerify) || *check || ((command == "reconcile" || command == "projection" || command == "canonical") && *action != "apply" && !canonicalDurableAdoptionApply && !canonicalControllerApply && !canonicalControllerVerify)) {
+		fmt.Fprintln(errout, "--write supports render, format, schema, install, reconcile/projection apply, canonical apply/controller-apply/controller-verify, durable canonical adoption, or prepare external capture")
 		return commandOptions{}, 2, true
 	}
 	if command == "projection" {
@@ -412,7 +410,6 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		kind:                  *kind,
 		name:                  *name,
 		namespace:             *namespace,
-		areaPath:              *areaPath,
 		packageName:           *packageName,
 		query:                 *query,
 		write:                 *write,

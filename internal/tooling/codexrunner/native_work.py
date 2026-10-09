@@ -249,6 +249,12 @@ def _reparse(st: os.stat_result) -> bool:
     return bool(getattr(st, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400))
 
 
+def _posix_mode(mode_bits: int, path: str) -> str:
+    if mode_bits not in {0o600, 0o644, 0o755}:
+        raise NativeWorkError(f"native-work candidate has unsupported POSIX mode {mode_bits:04o}: {path}")
+    return f"{mode_bits:04o}"
+
+
 def _read_candidate(workspace: PreparedWorkspace) -> dict[str, FileRecord]:
     files: dict[str, FileRecord] = {}
     folded: dict[str, str] = {}
@@ -277,13 +283,17 @@ def _read_candidate(workspace: PreparedWorkspace) -> dict[str, FileRecord]:
             if st.st_size > MAX_BYTES or total > MAX_INPUT_BYTES + MAX_BYTES:
                 raise NativeWorkError("native-work candidate exceeds the scan size bound")
             mode_bits = stat.S_IMODE(st.st_mode)
-            mode = "0755" if mode_bits & 0o111 else "0600" if mode_bits == 0o600 else "0644"
             original = workspace.initial.get(normalized)
-            if os.name == "nt" and original is not None:
+            if os.name == "nt":
                 # Windows chmod/stat does not preserve POSIX execute bits.
-                # Keep the Host-supplied mode for existing files; new files use
-                # the only portable mode currently observable in this workspace.
-                mode = original.mode
+                # Keep Host-supplied modes for existing files. New files use
+                # the documented non-executable mode; Windows has no reliable
+                # portable observation for the executable bit.
+                mode = original.mode if original is not None else "0644"
+            else:
+                # 0600 is a deliberate supported private-file mode from the
+                # request/candidate contract, not a normalization fallback.
+                mode = _posix_mode(mode_bits, normalized)
             files[normalized] = FileRecord(normalized, mode, raw, _digest(raw))
             if len(files) > MAX_INPUT_FILES + MAX_FILES + 1:
                 raise NativeWorkError("native-work candidate exceeds the total scan file bound")
@@ -334,6 +344,8 @@ def harvest(workspace: PreparedWorkspace, declared_files: Any, tool_calls: int) 
     for path, current in final.items():
         original = workspace.initial.get(path)
         if original is None or current.content != original.content or current.mode != original.mode:
+            if current.mode == "0600":
+                reasons.append(f"native-work candidate uses unsupported repository mode 0600: {path}")
             try:
                 _authorize(workspace, path)
             except NativeWorkError as exc:

@@ -101,13 +101,6 @@ func BuildManagerReverseContext(session BrownfieldSession, iterationID string) (
 	for _, id := range iteration.DelegationEvidenceIDs {
 		delegated[id] = true
 	}
-	if iteration.ParentIterationID == "" && !delegationPoolExplicit(iteration.DelegationEvidenceIDs, iteration.DelegationEvidenceExplicit) {
-		for _, evidence := range session.Source.Evidence {
-			if !selected[evidence.ID] {
-				delegated[evidence.ID] = true
-			}
-		}
-	}
 	for _, evidence := range session.Source.Evidence {
 		classification := evidenceClassification(evidence.Basis)
 		if selected[evidence.ID] {
@@ -255,7 +248,6 @@ func BeginReverseIteration(sourceRoot string, target *projectwork.Project, sessi
 	if !validID(request.ID) || strings.TrimSpace(request.ManagerID) == "" || strings.TrimSpace(request.Purpose) == "" || strings.TrimSpace(request.Review) == "" {
 		return BrownfieldSession{}, errors.New("reverse iteration requires stable ID, accepted Manager, purpose, and review reference")
 	}
-	request.DelegationEvidenceExplicit = delegationPoolExplicit(request.DelegationEvidenceIDs, request.DelegationEvidenceExplicit)
 	if _, err := sortedUniqueStrings(request.EvidenceIDs); err != nil || len(request.EvidenceIDs) == 0 {
 		return BrownfieldSession{}, errors.New("reverse iteration requires unique selected evidence IDs")
 	}
@@ -295,10 +287,10 @@ func BeginReverseIteration(sourceRoot string, target *projectwork.Project, sessi
 			return BrownfieldSession{}, errors.New("child reverse iteration requires a parent Manager proposal that established its responsibility")
 		}
 		assignment, proposed := proposedManager(parent, request.ManagerID)
-		if !proposed || assignment.ParentID != parent.ManagerID || !sameStrings(assignment.EvidenceIDs, request.EvidenceIDs) || !sameDelegationPool(assignment.DelegationEvidenceIDs, assignment.DelegationEvidenceExplicit, request.DelegationEvidenceIDs, request.DelegationEvidenceExplicit) {
+		if !proposed || assignment.ParentID != parent.ManagerID || !sameStrings(assignment.EvidenceIDs, request.EvidenceIDs) || !sameStrings(assignment.DelegationEvidenceIDs, request.DelegationEvidenceIDs) {
 			return BrownfieldSession{}, errors.New("child Manager and exact evidence assignment must be explicitly listed by its parent")
 		}
-		available := iterationAvailableEvidence(parent, session.Source)
+		available := iterationAvailableEvidence(parent)
 		for _, id := range append(append([]string(nil), request.EvidenceIDs...), request.DelegationEvidenceIDs...) {
 			if !available[id] {
 				return BrownfieldSession{}, fmt.Errorf("child Manager evidence %q is outside the parent's own and delegated evidence", id)
@@ -321,12 +313,13 @@ func BeginReverseIteration(sourceRoot string, target *projectwork.Project, sessi
 		}
 	}
 	request.EvidenceIDs, _ = sortedUniqueStrings(request.EvidenceIDs)
-	if request.DelegationEvidenceIDs != nil {
-		request.DelegationEvidenceIDs, _ = sortedUniqueStrings(request.DelegationEvidenceIDs)
+	request.DelegationEvidenceIDs, _ = sortedUniqueStrings(request.DelegationEvidenceIDs)
+	if request.DelegationEvidenceIDs == nil {
+		request.DelegationEvidenceIDs = []string{}
 	}
 	result := cloneSession(session)
 	result.Iterations = append(result.Iterations, ReverseIteration{ID: request.ID, ParentIterationID: request.ParentIterationID, SupersedesIterationID: request.SupersedesIterationID, ManagerID: request.ManagerID,
-		EvidenceIDs: request.EvidenceIDs, DelegationEvidenceIDs: request.DelegationEvidenceIDs, DelegationEvidenceExplicit: request.DelegationEvidenceExplicit,
+		EvidenceIDs: request.EvidenceIDs, DelegationEvidenceIDs: request.DelegationEvidenceIDs,
 		Purpose: request.Purpose, Review: request.Review, TargetContextDigest: session.TargetContext.Digest})
 	sealSession(&result)
 	return result, nil
@@ -346,9 +339,6 @@ func RecordManagerProposal(session BrownfieldSession, iterationID string, propos
 	iteration := result.Iterations[index]
 	if iteration.Proposal != nil {
 		return BrownfieldSession{}, errors.New("Manager proposal is immutable once recorded")
-	}
-	for index := range proposal.Hierarchy {
-		proposal.Hierarchy[index].DelegationEvidenceExplicit = delegationPoolExplicit(proposal.Hierarchy[index].DelegationEvidenceIDs, proposal.Hierarchy[index].DelegationEvidenceExplicit)
 	}
 	if err := validateManagerProposal(proposal, iteration, session); err != nil {
 		return BrownfieldSession{}, err
@@ -538,14 +528,11 @@ func validateManagerProposal(proposal ManagerProposal, iteration ReverseIteratio
 		if strings.TrimSpace(child.ID) == "" || seenManagers[strings.ToLower(child.ID)] || strings.TrimSpace(child.Name) == "" || strings.TrimSpace(child.Purpose) == "" || child.ParentID != proposal.ManagerID || child.EvidenceIDs == nil || len(child.EvidenceIDs) == 0 {
 			return fmt.Errorf("invalid proposed child Manager %q", child.ID)
 		}
-		if child.DelegationEvidenceIDs != nil && !child.DelegationEvidenceExplicit {
-			return fmt.Errorf("proposed Manager %q delegation pool must preserve its explicit-empty marker", child.ID)
-		}
 		seenManagers[strings.ToLower(child.ID)] = true
 		if err := validateEvidencePools(child.EvidenceIDs, child.DelegationEvidenceIDs, session.Source); err != nil {
 			return fmt.Errorf("proposed Manager %q: %w", child.ID, err)
 		}
-		available := iterationAvailableEvidence(iteration, session.Source)
+		available := iterationAvailableEvidence(iteration)
 		for _, evidenceID := range append(append([]string(nil), child.EvidenceIDs...), child.DelegationEvidenceIDs...) {
 			if !available[evidenceID] {
 				return fmt.Errorf("proposed Manager %q assignment exceeds its parent own and delegation evidence: evidence %q is not authorized", child.ID, evidenceID)
@@ -771,7 +758,7 @@ func validateEvidencePools(own, delegation []string, discovery Discovery) error 
 		return err
 	}
 	if delegation == nil {
-		return nil
+		return errors.New("delegation evidence IDs must be an explicit list, which may be empty")
 	}
 	if _, err := sortedUniqueStrings(delegation); err != nil {
 		return fmt.Errorf("delegation evidence IDs: %w", err)
@@ -791,7 +778,7 @@ func validateEvidencePools(own, delegation []string, discovery Discovery) error 
 	return nil
 }
 
-func iterationAvailableEvidence(iteration ReverseIteration, discovery Discovery) map[string]bool {
+func iterationAvailableEvidence(iteration ReverseIteration) map[string]bool {
 	available := make(map[string]bool, len(iteration.EvidenceIDs)+len(iteration.DelegationEvidenceIDs))
 	for _, id := range iteration.EvidenceIDs {
 		available[id] = true
@@ -799,23 +786,7 @@ func iterationAvailableEvidence(iteration ReverseIteration, discovery Discovery)
 	for _, id := range iteration.DelegationEvidenceIDs {
 		available[id] = true
 	}
-	// Root iterations created before explicit delegation pools retain the
-	// original repository-wide routing authority. New root requests can bound
-	// future assignments by supplying a non-nil pool.
-	if iteration.ParentIterationID == "" && !delegationPoolExplicit(iteration.DelegationEvidenceIDs, iteration.DelegationEvidenceExplicit) {
-		for _, evidence := range discovery.Evidence {
-			available[evidence.ID] = true
-		}
-	}
 	return available
-}
-
-func delegationPoolExplicit(ids []string, explicit bool) bool {
-	return explicit || ids != nil
-}
-
-func sameDelegationPool(left []string, leftExplicit bool, right []string, rightExplicit bool) bool {
-	return delegationPoolExplicit(left, leftExplicit) == delegationPoolExplicit(right, rightExplicit) && sameStrings(left, right)
 }
 
 func evidenceClassification(basis string) string {

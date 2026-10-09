@@ -73,8 +73,11 @@ func TestPreviewAndApplyCodexAndClaude(t *testing.T) {
 	if plan.Digest == "" || plan.Options.DocumentationPath != "docs/markitect/project.md" {
 		t.Fatalf("plan did not bind digest and configured documentation path: %+v", plan)
 	}
-	if len(plan.Files) != 47 {
-		t.Fatalf("plan has %d files, want one shared workflow, two entrypoints, ten skills and guides per provider plus compatibility routers and recovery references", len(plan.Files))
+	if len(plan.Files) != 45 {
+		t.Fatalf("plan has %d files, want one shared workflow, two entrypoints, ten skills and guides per provider plus recovery references", len(plan.Files))
+	}
+	if len(plan.Targets) != 47 {
+		t.Fatalf("plan guards %d targets, want generated outputs plus two optional legacy migration paths", len(plan.Targets))
 	}
 	for _, file := range plan.Files {
 		if file.Action != "create" {
@@ -91,24 +94,9 @@ func TestPreviewAndApplyCodexAndClaude(t *testing.T) {
 	if len(written.Written) != len(plan.Files) {
 		t.Fatalf("written %d paths, want %d", len(written.Written), len(plan.Files))
 	}
-	for _, skillPath := range []string{".agents/skills/markitect-model-first/SKILL.md", ".claude/skills/markitect-model-first/SKILL.md"} {
-		skill, readErr := os.ReadFile(filepath.Join(root, filepath.FromSlash(skillPath)))
-		if readErr != nil {
-			t.Fatalf("read installed skill %s: %v", skillPath, readErr)
-		}
-		parts := strings.SplitN(string(skill), "---\n", 3)
-		if len(parts) != 3 || parts[0] != "" {
-			t.Fatalf("installed skill %s has malformed frontmatter", skillPath)
-		}
-		var metadata struct {
-			Name        string `yaml:"name"`
-			Description string `yaml:"description"`
-		}
-		if err := yaml.Unmarshal([]byte(parts[1]), &metadata); err != nil || metadata.Name != "markitect-model-first" || metadata.Description == "" {
-			t.Fatalf("installed skill %s has invalid frontmatter: metadata=%+v err=%v", skillPath, metadata, err)
-		}
-		if !strings.Contains(parts[2], beginMarker) || !strings.Contains(parts[2], "markitect-init") || strings.Contains(parts[2], "the workflow covers") {
-			t.Fatalf("installed compatibility router %s is not short and discoverable", skillPath)
+	for _, skillPath := range staleSkillPaths([]Provider{Codex, Claude}) {
+		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(skillPath))); !os.IsNotExist(err) {
+			t.Fatalf("obsolete router %s was installed (stat err %v)", skillPath, err)
 		}
 	}
 	content, err := os.ReadFile(filepath.Join(root, workflowPath))
@@ -162,21 +150,15 @@ func TestPreviewMergesNativeFilesWithoutChangingBytesOutsideManagedBlock(t *test
 	}
 }
 
-func TestPreviewMergesCRLFSkillFrontmatterForBothProvidersIdempotently(t *testing.T) {
+func TestPreviewDeletesOnlyExactManagedLegacyRouterAndIsIdempotent(t *testing.T) {
 	root, project := onboardingRepo(t)
-	frontmatter := "---\r\nname: markitect-model-first\r\ndescription: " + legacyFullSkillDescription + "\r\nmetadata: local-value\r\n---\r\n# Local skill\r\n"
-	suffix := "\r\n## Local instructions\r\nPreserve this too.\r\n"
-	original := frontmatter + beginMarker + "\r\nold generated text\r\n" + endMarker + suffix
-	paths := []string{
-		".agents/skills/markitect-model-first/SKILL.md",
-		".claude/skills/markitect-model-first/SKILL.md",
-	}
+	paths := staleSkillPaths([]Provider{Codex, Claude})
 	for _, path := range paths {
 		fullPath := filepath.Join(root, filepath.FromSlash(path))
 		if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(fullPath, []byte(original), 0644); err != nil {
+		if err := os.WriteFile(fullPath, []byte(previouslyGeneratedRouter()), 0644); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -187,12 +169,13 @@ func TestPreviewMergesCRLFSkillFrontmatterForBothProvidersIdempotently(t *testin
 		t.Fatal(err)
 	}
 	for _, path := range paths {
-		merged := fileFor(t, plan, path).Content
-		if !strings.HasPrefix(merged, "---\r\nname: markitect-model-first\r\ndescription: "+legacyRouterDescription()+"\r\nmetadata: local-value\r\n---\r\n# Local skill\r\n") || !strings.HasSuffix(merged, suffix) {
-			t.Errorf("%s did not migrate known metadata while preserving custom frontmatter and local bytes", path)
+		if got := fileFor(t, plan, path); got.Action != "delete" || got.Content != "" {
+			t.Errorf("legacy target %s = %+v, want a guarded deletion", path, got)
 		}
-		if strings.Count(merged, "---\r\n") != 2 || strings.Contains(merged, "old generated text") || !strings.Contains(merged, "markitect-extract") {
-			t.Errorf("%s has duplicate frontmatter or incorrect managed content", path)
+	}
+	for _, target := range plan.Targets {
+		if strings.Contains(target.Path, "markitect-model-first") && (!target.Exists || target.ContentHash == "") {
+			t.Errorf("legacy deletion target was not bound to observed bytes: %+v", target)
 		}
 	}
 	if _, err := Apply(root, plan, plan.Digest); err != nil {
@@ -203,9 +186,112 @@ func TestPreviewMergesCRLFSkillFrontmatterForBothProvidersIdempotently(t *testin
 		t.Fatal(err)
 	}
 	for _, path := range paths {
-		if got := fileFor(t, second, path); got.Action != "unchanged" {
-			t.Errorf("second preview action for %s = %q, want unchanged", path, got.Action)
+		fullPath := filepath.Join(root, filepath.FromSlash(path))
+		if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
+			t.Errorf("legacy router %s remains after migration (stat err %v)", path, err)
 		}
+		for _, file := range second.Files {
+			if file.Path == path {
+				t.Errorf("second preview regenerated obsolete path %s", path)
+			}
+		}
+	}
+	for _, file := range second.Files {
+		if file.Action != "unchanged" {
+			t.Errorf("second preview action for %s = %q, want unchanged", file.Path, file.Action)
+		}
+	}
+}
+
+func TestPreviewPreservesCustomizedLegacyRouterAsConflict(t *testing.T) {
+	root, project := onboardingRepo(t)
+	path := staleSkillPaths([]Provider{Codex})[0]
+	fullPath := filepath.Join(root, filepath.FromSlash(path))
+	if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+		t.Fatal(err)
+	}
+	original := previouslyGeneratedRouter() + "\n## Local instructions\nKeep me.\n"
+	if err := os.WriteFile(fullPath, []byte(original), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Preview(root, project.Report.ModelDigest, defaultOptions(Codex)); err == nil || !strings.Contains(err.Error(), "custom or mixed content") {
+		t.Fatalf("customized same-name router was not rejected explicitly: %v", err)
+	}
+	actual, err := os.ReadFile(fullPath)
+	if err != nil || string(actual) != original {
+		t.Fatalf("customized router changed after conflict: err=%v content=%q", err, actual)
+	}
+}
+
+func TestPreviewProtectsConfiguredDocumentAtLegacySkillPath(t *testing.T) {
+	for _, test := range []struct {
+		provider Provider
+		path     string
+	}{
+		{provider: Codex, path: ".agents/skills/markitect-model-first/SKILL.md"},
+		{provider: Claude, path: ".claude/skills/markitect-model-first/SKILL.md"},
+	} {
+		t.Run(string(test.provider), func(t *testing.T) {
+			root, _ := onboardingRepo(t)
+			manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+			manifest, err := os.ReadFile(manifestPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			updated := strings.Replace(string(manifest), "documentPath: "+projectwork.DefaultDocumentPath, "documentPath: "+test.path, 1)
+			if updated == string(manifest) {
+				t.Fatal("fixture did not contain its default documentPath")
+			}
+			if err := os.WriteFile(manifestPath, []byte(updated), 0644); err != nil {
+				t.Fatal(err)
+			}
+			target := filepath.Join(root, filepath.FromSlash(test.path))
+			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+				t.Fatal(err)
+			}
+			original := previouslyGeneratedRouter()
+			if err := os.WriteFile(target, []byte(original), 0644); err != nil {
+				t.Fatal(err)
+			}
+			project, err := projectwork.Load(root, "")
+			if err != nil {
+				t.Fatalf("load configured document collision fixture: %v", err)
+			}
+			if _, err := Preview(root, project.Report.ModelDigest, defaultOptions(test.provider)); err == nil || !strings.Contains(err.Error(), "legacy skill migration target") {
+				t.Fatalf("Preview did not reject configured document/migration overlap: %v", err)
+			}
+			actual, err := os.ReadFile(target)
+			if err != nil || string(actual) != original {
+				t.Fatalf("configured project document changed during rejected onboarding: err=%v", err)
+			}
+		})
+	}
+}
+
+func TestApplyRejectsChangedLegacyRouterAfterPreview(t *testing.T) {
+	root, project := onboardingRepo(t)
+	path := staleSkillPaths([]Provider{Codex})[0]
+	fullPath := filepath.Join(root, filepath.FromSlash(path))
+	if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(fullPath, []byte(previouslyGeneratedRouter()), 0644); err != nil {
+		t.Fatal(err)
+	}
+	plan, err := Preview(root, project.Report.ModelDigest, defaultOptions(Codex))
+	if err != nil {
+		t.Fatal(err)
+	}
+	changed := previouslyGeneratedRouter() + "\nlocal bytes\n"
+	if err := os.WriteFile(fullPath, []byte(changed), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Apply(root, plan, plan.Digest); err == nil {
+		t.Fatal("Apply removed legacy path changed after preview")
+	}
+	actual, err := os.ReadFile(fullPath)
+	if err != nil || string(actual) != changed {
+		t.Fatalf("stale deletion changed custom bytes: err=%v content=%q", err, actual)
 	}
 }
 
@@ -418,7 +504,7 @@ func TestGeneratedSkillsHaveDiscoverableFrontmatterAndInstalledReferences(t *tes
 		t.Fatal(err)
 	}
 	plan := Plan{Files: files}
-	wantNames := []string{"markitect-init", "markitect-extract", "markitect-design", "markitect-suggest", "markitect-configure", "markitect-implement", "markitect-cleanup", "markitect-verify", "markitect-apply", "markitect-check", "markitect-model-first"}
+	wantNames := []string{"markitect-init", "markitect-extract", "markitect-design", "markitect-suggest", "markitect-configure", "markitect-implement", "markitect-cleanup", "markitect-verify", "markitect-apply", "markitect-check"}
 	for _, providerRoot := range []string{".agents/skills", ".claude/skills"} {
 		for _, name := range wantNames {
 			skillPath := providerRoot + "/" + name + "/SKILL.md"
@@ -436,15 +522,6 @@ func TestGeneratedSkillsHaveDiscoverableFrontmatterAndInstalledReferences(t *tes
 			}
 			if metadata.Name != name || metadata.Description == "" {
 				t.Fatalf("%s has incomplete skill metadata: %+v", skillPath, metadata)
-			}
-			if name == "markitect-model-first" {
-				if providerRoot == ".claude/skills" {
-					codexPath := strings.Replace(skillPath, ".claude/skills", ".agents/skills", 1)
-					if content != fileFor(t, plan, codexPath).Content {
-						t.Errorf("provider skill content differs for %s", name)
-					}
-				}
-				continue
 			}
 			guidePath := providerRoot + "/" + name + "/references/operating-guide.md"
 			guide := fileFor(t, plan, guidePath).Content
@@ -764,14 +841,15 @@ func TestNativeProviderEntriesRouteOrdinaryWorkToOperationSkills(t *testing.T) {
 				t.Errorf("%s does not route to %s", path, operation)
 			}
 		}
-		if !strings.Contains(content, "For ordinary work") || !strings.Contains(content, "local operation skill") {
+		if !strings.Contains(content, "For ordinary work") || !strings.Contains(content, "relevant operation skill") {
 			t.Errorf("%s does not route ordinary work to operation skills", path)
 		}
 	}
-	for _, path := range []string{".agents/skills/markitect-model-first/SKILL.md", ".claude/skills/markitect-model-first/SKILL.md"} {
-		content := fileFor(t, Plan{Files: files}, path).Content
-		if !strings.Contains(content, "Compatibility router for Markitect project work") || !strings.Contains(content, "markitect-init") || !strings.Contains(content, "markitect-suggest") || !strings.Contains(content, "markitect-configure") || !strings.Contains(content, "markitect-implement") {
-			t.Errorf("%s is not a short compatibility router", path)
+	for _, path := range staleSkillPaths([]Provider{Codex, Claude}) {
+		for _, file := range files {
+			if file.Path == path {
+				t.Errorf("root routing still generates obsolete compatibility skill %s", path)
+			}
 		}
 	}
 }

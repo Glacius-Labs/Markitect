@@ -22,7 +22,7 @@ Editorial quality assessment of the generated entry + referenced workflow (not a
 
 ## Proposed product structure
 
-The user's later clarification supersedes the original six broad capability groups. Use eight operational skills, named after the concrete work the agent should perform. Preserve markitect-model-first only as a short compatibility router. Root entrypoints identify the selected project model, route to the appropriate skills and state essential shared boundaries without repeating manuals.
+The user's later clarification supersedes the original six broad capability groups. Use eight operational skills, named after the concrete work the agent should perform, with suggest/configure grouping delegated below. The latest direct user decision withdraws the old markitect-model-first compatibility router requirement: remove it if its only purpose is supporting the old entry. Root entrypoints identify the selected project model, route directly to the appropriate skills and state essential shared boundaries without repeating manuals.
 
 | Skill | Trigger and outcome |
 | --- | --- |
@@ -53,7 +53,7 @@ Generate Codex skills in the supported repository-local .agents/skills layout an
 
 Outer project agents may make delegated canonical changes through the guarded model-edit workflow. Inner Manager workers operate on their declared candidate responsibility; native helpers are ordinary scoped helpers, not duplicate Host-scheduled Managers. Do not teach implementation workers to bypass ownership, mutate the control plane or write adopting sources before guarded Apply. Instructions must match the real working mode and describe unsupported behavior honestly.
 
-Preserve user-written entrypoint prose and unrelated skill files. Onboarding updates must remain previewed, digest-bound, idempotent and stale-safe. Migrate known Markitect-owned skill metadata along with bodies so outdated catchall descriptions do not remain. Treat conflicting unmanaged same-name skills or ambiguous ownership explicitly; do not overwrite them based only on the name. Keep the old router usable without two competing full workflows. References must resolve from the actual installed skill directory, including on Windows/CRLF.
+Preserve user-written entrypoint prose and unrelated skill files. Onboarding updates must remain previewed, digest-bound, idempotent and stale-safe. Remove known Markitect-owned obsolete router assets and update maintained skill metadata along with bodies so outdated catchall descriptions do not remain. Treat conflicting unmanaged same-name skills or ambiguous ownership explicitly; do not overwrite them based only on the name. Maintain one current workflow without a compatibility-only router. References must resolve from the actual installed skill directory, including on Windows/CRLF.
 
 ## Verification and handoff
 

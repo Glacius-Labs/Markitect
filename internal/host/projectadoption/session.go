@@ -60,15 +60,14 @@ type SessionConflict struct {
 }
 
 type ReverseIterationRequest struct {
-	ID                         string   `json:"id"`
-	ParentIterationID          string   `json:"parentIterationId,omitempty"`
-	SupersedesIterationID      string   `json:"supersedesIterationId,omitempty"`
-	ManagerID                  string   `json:"managerId"`
-	EvidenceIDs                []string `json:"evidenceIds"`
-	DelegationEvidenceIDs      []string `json:"delegationEvidenceIds,omitempty"`
-	DelegationEvidenceExplicit bool     `json:"delegationEvidenceExplicit,omitempty"`
-	Purpose                    string   `json:"purpose"`
-	Review                     string   `json:"review"`
+	ID                    string   `json:"id"`
+	ParentIterationID     string   `json:"parentIterationId,omitempty"`
+	SupersedesIterationID string   `json:"supersedesIterationId,omitempty"`
+	ManagerID             string   `json:"managerId"`
+	EvidenceIDs           []string `json:"evidenceIds"`
+	DelegationEvidenceIDs []string `json:"delegationEvidenceIds"`
+	Purpose               string   `json:"purpose"`
+	Review                string   `json:"review"`
 }
 
 type ManagerProposal struct {
@@ -84,13 +83,12 @@ type ManagerProposal struct {
 // Manager. Its evidence IDs are an explicit future assignment, not an
 // automatic ownership inference.
 type ProposedManager struct {
-	ID                         string   `json:"id"`
-	Name                       string   `json:"name"`
-	Purpose                    string   `json:"purpose"`
-	ParentID                   string   `json:"parentId"`
-	EvidenceIDs                []string `json:"evidenceIds"`
-	DelegationEvidenceIDs      []string `json:"delegationEvidenceIds,omitempty"`
-	DelegationEvidenceExplicit bool     `json:"delegationEvidenceExplicit,omitempty"`
+	ID                    string   `json:"id"`
+	Name                  string   `json:"name"`
+	Purpose               string   `json:"purpose"`
+	ParentID              string   `json:"parentId"`
+	EvidenceIDs           []string `json:"evidenceIds"`
+	DelegationEvidenceIDs []string `json:"delegationEvidenceIds"`
 }
 
 type ManagerIntegration struct {
@@ -118,19 +116,18 @@ type ManagerPublicContract struct {
 }
 
 type ReverseIteration struct {
-	ID                         string              `json:"id"`
-	ParentIterationID          string              `json:"parentIterationId,omitempty"`
-	SupersedesIterationID      string              `json:"supersedesIterationId,omitempty"`
-	ManagerID                  string              `json:"managerId"`
-	EvidenceIDs                []string            `json:"evidenceIds"`
-	DelegationEvidenceIDs      []string            `json:"delegationEvidenceIds,omitempty"`
-	DelegationEvidenceExplicit bool                `json:"delegationEvidenceExplicit,omitempty"`
-	Purpose                    string              `json:"purpose"`
-	Review                     string              `json:"review"`
-	TargetContextDigest        string              `json:"targetContextDigest"`
-	Proposal                   *ManagerProposal    `json:"proposal,omitempty"`
-	Integration                *ManagerIntegration `json:"integration,omitempty"`
-	Resolution                 *Resolution         `json:"resolution,omitempty"`
+	ID                    string              `json:"id"`
+	ParentIterationID     string              `json:"parentIterationId,omitempty"`
+	SupersedesIterationID string              `json:"supersedesIterationId,omitempty"`
+	ManagerID             string              `json:"managerId"`
+	EvidenceIDs           []string            `json:"evidenceIds"`
+	DelegationEvidenceIDs []string            `json:"delegationEvidenceIds"`
+	Purpose               string              `json:"purpose"`
+	Review                string              `json:"review"`
+	TargetContextDigest   string              `json:"targetContextDigest"`
+	Proposal              *ManagerProposal    `json:"proposal,omitempty"`
+	Integration           *ManagerIntegration `json:"integration,omitempty"`
+	Resolution            *Resolution         `json:"resolution,omitempty"`
 }
 
 type SessionAdoption struct {
@@ -217,9 +214,6 @@ func ValidateBrownfieldSession(session BrownfieldSession) error {
 		if !validID(iteration.ID) || seen[iteration.ID] || strings.TrimSpace(iteration.ManagerID) == "" || strings.TrimSpace(iteration.Purpose) == "" || strings.TrimSpace(iteration.Review) == "" || iteration.TargetContextDigest != session.TargetContext.Digest || iteration.EvidenceIDs == nil || len(iteration.EvidenceIDs) == 0 {
 			return fmt.Errorf("invalid or duplicate reverse iteration %q", iteration.ID)
 		}
-		if iteration.DelegationEvidenceIDs != nil && !iteration.DelegationEvidenceExplicit {
-			return fmt.Errorf("iteration %q delegation pool must preserve its explicit-empty marker", iteration.ID)
-		}
 		seen[iteration.ID] = true
 		if iteration.ParentIterationID != "" {
 			childKey := iteration.ParentIterationID + "\x00" + iteration.ManagerID
@@ -235,7 +229,7 @@ func ValidateBrownfieldSession(session BrownfieldSession) error {
 			}
 			parent, _ := findIteration(session, iteration.ParentIterationID)
 			assignment, exists := proposedManager(parent, iteration.ManagerID)
-			if !exists || assignment.ParentID != parent.ManagerID || !sameStrings(assignment.EvidenceIDs, iteration.EvidenceIDs) || !sameDelegationPool(assignment.DelegationEvidenceIDs, assignment.DelegationEvidenceExplicit, iteration.DelegationEvidenceIDs, iteration.DelegationEvidenceExplicit) {
+			if !exists || assignment.ParentID != parent.ManagerID || !sameStrings(assignment.EvidenceIDs, iteration.EvidenceIDs) || !sameStrings(assignment.DelegationEvidenceIDs, iteration.DelegationEvidenceIDs) {
 				return fmt.Errorf("iteration %q Manager was not proposed by its parent", iteration.ID)
 			}
 			if accepted, isAccepted := targetManager(session.TargetContext, iteration.ManagerID); isAccepted {
