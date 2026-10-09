@@ -16262,6 +16262,26 @@
         "next": "Already promised clean published final source/config/binary/plan/lease before first Actual; final required suite/platform/review remain unproved",
         "newOrderSent": false
       }
+    },
+    "A01ReservedStartPlan20261009": {
+      "verifiedUtc": "2026-10-09T20:27:55Z",
+      "publicSourceSha": "fc6d09a234572c344279a342416475e788435f1f",
+      "rootVerified": "Exact HEAD/public remote and reserved ledger read; later ledger WIP is accounting, no binary/plan bytes independently located yet",
+      "binarySha256OwnerBound": "cfeb36912da0bbe95f910ef5e79de9f0bbb58ed515e93071838cbb21fb10b50f",
+      "nativeExeSha256OwnerBound": "dce685d569526ef4712fa82d20ff20e1309baad5fcd34215e1126698f611242f",
+      "planId": "fcca72abe1abc505de2d0321adfdab3a",
+      "planDigest": "sha256:8b4bbf654450b4d04e3a4c2b313fd4d56ba805b089d3b26cef6f32006d663034",
+      "projectSha": "acfbb7a39b79cfa4f2507039e3e6801d88a4fc57",
+      "startUtc": "2026-10-09T20:26:23Z",
+      "absoluteEndUtc": "2026-10-10T00:26:23.000Z",
+      "roleLimitSeconds": 3600,
+      "knownStartsMax": 256,
+      "optionalA02A03": "DEFERRED_NO_AUTOSTART",
+      "latestOwnerOutcome": "RunPID37764 20:27:03Z to20:27:07Z exit2 projectrun stale before providers; no report/states/owned role workspace/journal observed; native0",
+      "diagnosis": "Owner existing bounded source/context stale-comparison investigation, no modifications/retry/actors yet",
+      "proof": "NOT_ESTABLISHED",
+      "mainCIReview": "Still required at final PR head",
+      "newRootGrant": false
     }
   },
   "playgroundAndClaudePreparation20261009": {
@@ -16452,7 +16472,7 @@
   },
   "knowledgeGraphFollowup20261009": {
     "authority": "Verified direct user request in KG topic chat; YAML KG expansion plus separate RDF evaluate-then-decide plan; no new Main gate",
-    "status": "INDEPENDENT_KG04_TO_KG07_SOURCE_PUSHED_FIXED_VERIFY_RUNNING",
+    "status": "KG07_TARGETED_VALIDATED_REVIEWED_WAITING_EXACT_ACCEPTED_MAIN",
     "threadId": "01a12178-5797-7c41-8acc-8e8231084c79",
     "hostId": "local",
     "afterCursor": "67fe9212-ff51-49b6-b0fb-948f5db1b4db:3",
@@ -16625,6 +16645,17 @@
         "rootTestsOrModelsRepeated": false,
         "mainMergeOrAcceptance": false
       }
+    },
+    "finalContinuationHandoff": {
+      "verifiedUtc": "2026-10-09T20:27:55Z",
+      "cleanExactPublicRemoteSha": "4a77dc9abeacc7c6494e67d225609f8633022f7b",
+      "productionSha": "d360ec0199d4333271fd6ec6c66227a2da4aca83",
+      "rootVerified": "Clean HEAD/public ref, final handoff and test/evidence-only delta from ebe; three archived raw logs Working/RawGit equal",
+      "ownerReported": "Final15min fixture targeted217.099sPASS and independent review; earlier30min diagnostic249.050s separate; actual ebe CLI/MCP six queries positive with0providers",
+      "fullVerify": "Historical d360 and ebe FAILED preserved, no completePASS; combined new Main-to-KG candidate will receive fresh full gate",
+      "acceptedMainSha": null,
+      "next": "Exact accepted Main then Main into KG, conflicts/regeneration/combined gate/review/separate evaluation",
+      "newOrder": false
     }
   },
   "callbackHandlingAudit20261009": {
@@ -17011,7 +17042,7 @@
     "priorEvidence": "All failed pilots and receipts preserved; development tests are not study or method superiority evidence",
     "grantPath": "docs/design/government/conventional-variant-adapter-delivery-20261009.json",
     "grantSha256": "e6c2b11ce4758d9c315d6babb01612f43ebef23e492da018424cb92732f08d73",
-    "status": "ACTUALS_DISABLED_ALLOCATION_EXHAUSTED_GREEENFIELD_TURN_UNCERTAIN",
+    "status": "CLOSED_SOURCE_CORRECTION_VERIFIED_OLD_CLI_QUARANTINED",
     "actualStartsObserved": 3,
     "dispatch": "SENT_ONCE_TO_SCIENTIST_LOCAL",
     "latestPreparationCallback": {
@@ -17100,6 +17131,71 @@
         "newCalls": "Owner reports no further actual/startup calls; provider-free repairs and private archive in progress",
         "rootNewOrderSent": false
       }
+    },
+    "sourceClosureHandoff": {
+      "verifiedUtc": "2026-10-09T20:27:55Z",
+      "cleanExactPrivateRemoteSha": "4392129bc8c27f9ee758a228d0aaa8938d1e040d",
+      "testedSourceBindingsWorkingRawGit": 17,
+      "rawArchiveSha256": "7cebdbdbfd5cb8d0d8217fd7c474d3fb38459f3da481a3105b31ea8fc9b2a7c9",
+      "rawGitArchiveEqual": true,
+      "individualZipAndOriginalPayloadsVerified": 415,
+      "ownerReportedTests": "81PASS/1Windows symlink privilegeSKIP",
+      "rootTestsRepeated": false,
+      "rootIndependentSourceReview": "Controller stop and merge gates fixed; old own CLI lock can remain quarantined for separate fresh AppServer repo; native broker effect NOT_RUN",
+      "twoSourceSchemaCompatibilityFindings": "Optional kind default command and valid availableDecisions object alternatives may be unnecessarily denied, targeted fixes requested once before active broker use",
+      "closedOriginalAllocation": "2cases/6startupchecks/3parentstarts, no new calls authorized by that old order",
+      "evidence": "Private handoff/corrective-validation/closure/manifest/observation ZIP; no full Conventional result",
+      "newHumanSteering": "Latest user independently proposes workspace snapshots and Conventional until works or blocked; separately recorded new finite order, no old refill"
     }
+  },
+  "conventionalWorkspaceSnapshotExecution20261009": {
+    "id": "conventional-workspace-snapshot-execution-20261009",
+    "issuedUtc": "2026-10-09T20:31:08Z",
+    "authority": {
+      "thread": "01a1169c-3df6-7571-997d-48ab57365875",
+      "directUserTurn": "01a1225a-b646-7262-ba7a-4219ee6bfdf9",
+      "verifiedByRoot": true
+    },
+    "objective": "One complete normal Conventional AppServer trajectory and fresh independent assessment on immutable workspace snapshots; user proposed disposable repositories instead of mandatory Git integration",
+    "completionTarget": "workspace_snapshot, prospective separate target; old main/merge results remain unchanged",
+    "sourceBeforeStart": "Clean exact private source/input/config freeze, relevant controller snapshot-target regressions and review; no new general capability phase",
+    "publicInputs": "Freeze ordinary prompt/backlog/rules/assessment and declared snapshot completion before Actual; remove mechanical branch/merge requirement coherently for this target, preserve functional tasks and other rules; same target for later matched Markitect",
+    "runtime": "Existing pinned Codex AppServer gpt-6-luna/high and child-local MXC/workspace-write; optional scoped on-request broker only if actual requested Git actions require it. No mandatory Git metadata probe, no automatic CLI fallback.",
+    "limits": {
+      "freshTrajectories": 1,
+      "jobWallSeconds": 14400,
+      "implementationSeconds": 10800,
+      "freshFinalSeconds": 2700,
+      "captureReserveSeconds": 900,
+      "roleTurnSeconds": 5400,
+      "totalStartRequests": 256,
+      "maxConcurrent": 4,
+      "depthCooperative": 2,
+      "providerFreeStartupChecks": 2,
+      "startupCheckSeconds": 600,
+      "nativeCanaries": 0,
+      "lastStartUtc": "2026-10-10T00:31:08Z",
+      "absoluteEndUtc": "2026-10-10T04:31:08Z"
+    },
+    "start": "After clean freeze and binding, start without another blanket approval request; report actual source/executable/config/grant/own repo/session receipt",
+    "controller": "Do not advance on completed alone; capture actual current workspace and satisfy declared station completion. Error/cancel/uncertain stops before further stage/trajectory. No provider-semantic coaching or Scientist merge.",
+    "oldUncertainCli": "Keep original session/audit/lock quarantined, no replay or retroactive terminal claim; fresh independent AppServer repo/audit. No concrete child interference established; cooperative boundary and unknown host effects disclosed.",
+    "assessment": "Fresh readonly LunaHigh final against declared requirements and frozen workspace; raw usage/time/setup/interventions and rule violations separate; unknown serving/costs retained; not a paired method result or merge-proof",
+    "stop": "Repeated unchanged tool blocker or unresolved ownership in the new run terminal; no second trajectory/retry/refill under this order",
+    "notAuthorized": [
+      "Global security/config changes",
+      "Sandbox disable",
+      "Installs/new providers/purchases",
+      "Markitect simulation/actuals",
+      "Private evaluator feedback to implementer",
+      "Deleting old worktrees/evidence",
+      "Automatic disposal of uncertain old repo",
+      "Main gate expansion"
+    ],
+    "grantPath": "docs/design/government/conventional-workspace-snapshot-execution-20261009.json",
+    "grantSha256": "63f40dc886db7ad9a277bd8bf2606f087966ae9642c2922b4d46e38a0a26eb8b",
+    "status": "NEW_HUMAN_AUTHORIZED_PROSPECTIVE_DELIVERY; SOURCE_TARGET_FREEZE_PENDING",
+    "actualStartsObserved": 0,
+    "dispatch": "SENT_ONCE_TO_SCIENTIST_LOCAL"
   }
 }

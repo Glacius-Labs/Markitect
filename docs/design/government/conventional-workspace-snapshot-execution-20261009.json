@@ -1,0 +1,45 @@
+{
+  "id": "conventional-workspace-snapshot-execution-20261009",
+  "issuedUtc": "2026-10-09T20:31:08Z",
+  "authority": {
+    "thread": "01a1169c-3df6-7571-997d-48ab57365875",
+    "directUserTurn": "01a1225a-b646-7262-ba7a-4219ee6bfdf9",
+    "verifiedByRoot": true
+  },
+  "objective": "One complete normal Conventional AppServer trajectory and fresh independent assessment on immutable workspace snapshots; user proposed disposable repositories instead of mandatory Git integration",
+  "completionTarget": "workspace_snapshot, prospective separate target; old main/merge results remain unchanged",
+  "sourceBeforeStart": "Clean exact private source/input/config freeze, relevant controller snapshot-target regressions and review; no new general capability phase",
+  "publicInputs": "Freeze ordinary prompt/backlog/rules/assessment and declared snapshot completion before Actual; remove mechanical branch/merge requirement coherently for this target, preserve functional tasks and other rules; same target for later matched Markitect",
+  "runtime": "Existing pinned Codex AppServer gpt-6-luna/high and child-local MXC/workspace-write; optional scoped on-request broker only if actual requested Git actions require it. No mandatory Git metadata probe, no automatic CLI fallback.",
+  "limits": {
+    "freshTrajectories": 1,
+    "jobWallSeconds": 14400,
+    "implementationSeconds": 10800,
+    "freshFinalSeconds": 2700,
+    "captureReserveSeconds": 900,
+    "roleTurnSeconds": 5400,
+    "totalStartRequests": 256,
+    "maxConcurrent": 4,
+    "depthCooperative": 2,
+    "providerFreeStartupChecks": 2,
+    "startupCheckSeconds": 600,
+    "nativeCanaries": 0,
+    "lastStartUtc": "2026-10-10T00:31:08Z",
+    "absoluteEndUtc": "2026-10-10T04:31:08Z"
+  },
+  "start": "After clean freeze and binding, start without another blanket approval request; report actual source/executable/config/grant/own repo/session receipt",
+  "controller": "Do not advance on completed alone; capture actual current workspace and satisfy declared station completion. Error/cancel/uncertain stops before further stage/trajectory. No provider-semantic coaching or Scientist merge.",
+  "oldUncertainCli": "Keep original session/audit/lock quarantined, no replay or retroactive terminal claim; fresh independent AppServer repo/audit. No concrete child interference established; cooperative boundary and unknown host effects disclosed.",
+  "assessment": "Fresh readonly LunaHigh final against declared requirements and frozen workspace; raw usage/time/setup/interventions and rule violations separate; unknown serving/costs retained; not a paired method result or merge-proof",
+  "stop": "Repeated unchanged tool blocker or unresolved ownership in the new run terminal; no second trajectory/retry/refill under this order",
+  "notAuthorized": [
+    "Global security/config changes",
+    "Sandbox disable",
+    "Installs/new providers/purchases",
+    "Markitect simulation/actuals",
+    "Private evaluator feedback to implementer",
+    "Deleting old worktrees/evidence",
+    "Automatic disposal of uncertain old repo",
+    "Main gate expansion"
+  ]
+}
