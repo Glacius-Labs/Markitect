@@ -15,6 +15,7 @@ from pathlib import Path
 import threading
 import time
 import uuid
+from .backends import validate_runtime_options
 
 
 ACTIVE = {"starting", "running"}
@@ -23,7 +24,7 @@ RESULT_STATES = RESUMABLE | {"uncertain", "needs_input"}
 CONFIG_KEYS = {"schema", "execution_authorized", "actualOrderPath", "backend",
                "command", "filePins", "cwd", "audit", "model", "effort",
                "timeoutSeconds", "requestTimeoutSeconds", "threadOptions",
-               "turnOptions", "runtimeBinding"}
+               "turnOptions", "runtimeBinding", "runtimeOptions"}
 
 
 def _now():
@@ -154,6 +155,8 @@ class Service:
         for key in ("model", "effort"):
             if not isinstance(self.config.get(key), str) or not self.config[key].strip():
                 raise ValueError(key + " must be explicit")
+        runtime_options = validate_runtime_options(self.config.get("runtimeOptions"),
+                                                   self.config["model"], self.config["effort"])
         _positive(self.config.get("timeoutSeconds"), "timeoutSeconds")
         _positive(self.config.get("requestTimeoutSeconds"), "requestTimeoutSeconds")
         order_path = _absolute(self.config.get("actualOrderPath"), "actualOrderPath")
@@ -191,6 +194,7 @@ class Service:
                 raise ValueError("immutable execution binding changed: " + filename)
         spec = dict(self.config)
         spec["cwd"] = str(repo)
+        spec["runtimeOptions"] = runtime_options
         spec["timeoutSeconds"] = min(spec["timeoutSeconds"], remaining)
         spec["requestTimeoutSeconds"] = min(spec["requestTimeoutSeconds"], remaining)
         return store, spec, order, binding
@@ -252,6 +256,7 @@ class Service:
                            "requestedEffort": spec["effort"], "cwd": spec["cwd"],
                            "timeoutSeconds": spec["timeoutSeconds"], "createdAt": _time(),
                            "runtimeBinding": spec.get("runtimeBinding"),
+                           "runtimeOptions": spec.get("runtimeOptions"),
                            "command": spec["command"], "filePins": spec["filePins"],
                            "preparedRunSha256": _digest((store.parent / "run.json").read_bytes()),
                            "stationControlSha256": _digest((Path(spec["cwd"]) / ".study/station.json").read_bytes())}
@@ -327,7 +332,8 @@ class Service:
             result = runner(spec, prompt, parent.get("nativeSessionId") if parent else None, emit, cancel)
             if not isinstance(result, dict) or result.get("state") not in RESULT_STATES:
                 raise RuntimeError("backend returned no valid lifecycle result")
-            _new(folder / "result.json", _bytes(result))
+            result_record = {**result, "runtimeOptions": spec.get("runtimeOptions")}
+            _new(folder / "result.json", _bytes(result_record))
             status.update({key: result.get(key) for key in ("state", "nativeSessionId", "nativeTurnId", "usage", "usageScope", "detail", "ownedProcessScope")})
         except Exception as exc:
             # After durable intent, an exception cannot establish absence of execution.

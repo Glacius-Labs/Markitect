@@ -37,7 +37,10 @@ class ServiceTests(unittest.TestCase):
                        "command": [exe], "filePins": {exe: hashlib.sha256(Path(exe).read_bytes()).hexdigest()},
                        "cwd": str(self.repo), "audit": str(self.audit), "model": "offline-no-model",
                        "effort": "high", "timeoutSeconds": 5400, "requestTimeoutSeconds": 600,
-                       "runtimeBinding": {"fixtureOnly": True}}
+                       "runtimeBinding": {"fixtureOnly": True},
+                       "runtimeOptions": {"sandbox": "workspace-write", "approvalPolicy": "never",
+                                          "memoryEnabled": False, "nativeHelperModel": "offline-no-model",
+                                          "nativeHelperEffort": "high"}}
         source = Path(__file__).resolve().parents[1]
         for relative in ("conventional/service.py", "conventional/backends.py", "conventional/mcp.py", "conventional_wrapper.py"):
             path = source / relative
@@ -86,11 +89,42 @@ class ServiceTests(unittest.TestCase):
         self.assertIsNone(second["usage"])
         self.assertEqual("not established", second["humanAcceptance"])
         self.assertEqual({"fixtureOnly": True}, second["runtimeBinding"])
+        self.assertEqual(self.config["runtimeOptions"], second["runtimeOptions"])
         with self.assertRaisesRegex(ValueError, "already continued"):
             service.resume(first["runId"], "replay forbidden")
         folder = self.audit / "conventional-execution" / second["runId"]
-        self.assertEqual("next released work", json.loads((folder / "request.json").read_bytes())["prompt"])
+        request = json.loads((folder / "request.json").read_bytes())
+        self.assertEqual("next released work", request["prompt"])
+        self.assertEqual(self.config["runtimeOptions"], request["runtimeOptions"])
+        self.assertEqual(self.config["runtimeOptions"],
+                         json.loads((folder / "result.json").read_bytes())["runtimeOptions"])
         self.assertEqual(1, json.loads((folder / "events.jsonl").read_bytes())["sequence"])
+
+    def test_runtime_options_are_validated_before_dispatch(self):
+        invalid = [
+            {"sandbox": "danger-full-access", "approvalPolicy": "never", "memoryEnabled": False},
+            {"sandbox": "workspace-write", "approvalPolicy": "never", "memoryEnabled": "false"},
+            {"sandbox": "workspace-write", "approvalPolicy": "never", "memoryEnabled": False,
+             "permissionBypass": True},
+            {"sandbox": "workspace-write", "approvalPolicy": "never", "memoryEnabled": False,
+             "nativeHelperModel": "other-model"},
+        ]
+        for options in invalid:
+            with self.subTest(options=options):
+                self.config["runtimeOptions"] = options
+                self.persist()
+                with self.assertRaises(ValueError):
+                    self.service().start("work")
+        self.assertEqual([], self.calls)
+
+    def test_legacy_configuration_without_runtime_options_remains_valid(self):
+        self.config.pop("runtimeOptions")
+        self.persist()
+        service = self.service()
+        result = service.wait(service.start("legacy config")["runId"])
+        self.assertEqual("completed", result["state"])
+        self.assertIsNone(result["runtimeOptions"])
+        self.assertIsNone(self.calls[0][0]["runtimeOptions"])
 
     def test_unknown_dispatch_blocks_replay_and_fresh_starts(self):
         def unknown(*args):

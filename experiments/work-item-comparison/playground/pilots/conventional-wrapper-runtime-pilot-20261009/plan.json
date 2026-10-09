@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "id": "conventional-wrapper-runtime-pilot-20261009",
+  "execution_authorized": true,
+  "authority": {
+    "source": "Direct human request in Scientist chat, verified by Overseer",
+    "userRequest": "Ausserdem könntest du deine Suite bereits mit deinem Wrapper für Conventional testen solange an Markitect noch gearbeitet wird",
+    "scope": "fresh Conventional-only wrapper/suite pilots; old grants and Markitect trials remain closed",
+    "boundedOrder": "Overseer verified direct user and fixed at most two new trajectories, 4h each including capture/assessment, 8h total, 256 starts including helpers/final/failed attempts"
+  },
+  "model": "gpt-6-luna",
+  "effort": "high",
+  "jobWallSeconds": 14400,
+  "turnWallSeconds": 5400,
+  "overallWallSeconds": 28800,
+  "startAllowance": 256,
+  "outerTurnsPerTrajectory": 4,
+  "trajectories": [
+    {"case": "roombook", "backend": "codex-cli"},
+    {"case": "readinglog", "backend": "codex-app-server"}
+  ],
+  "stations": "existing public S1/S2/S3/S4 1/3/7/1; same user request; own native session continued",
+  "runtimeOptions": {
+    "sandbox": "workspace-write",
+    "approvalPolicy": "never",
+    "memoryEnabled": false,
+    "nativeHelperModel": "gpt-6-luna",
+    "nativeHelperEffort": "high"
+  },
+  "serverMode": "wrapper starts its own stdio App Server; no external endpoint; Markitect owns its product installation",
+  "generalConfigChanged": false,
+  "nativeLimits": "native default concurrent-thread setting observed as 12; scope/enforcement unproved; helper start requests post-dispatch/cooperative; no invented hard depth/start counter",
+  "noReplay": "uncertain dispatch/owned turn blocks continuation; preserve source and raw receipts; no automatic refill",
+  "assessment": "finite public checks on immutable main each station plus independent public-spec source/boundary review within job",
+  "evaluatorRepair": false,
+  "transportComparison": "NOT A FAIR CLI-vs-AppServer COMPARISON: case and backend confounded",
+  "methodComparison": "NOT RUN; no Markitect cell, productivity winner, economic proof or human acceptance",
+  "sharedHostLimit": "concurrent product/developer work can affect observed wall time; no compute benchmark claim",
+  "privateEvidenceOnly": true
+}

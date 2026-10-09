@@ -14,7 +14,12 @@ import unittest
 
 PLAYGROUND = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PLAYGROUND))
-from conventional.backends import BackendSpecError, run  # noqa: E402
+from conventional.backends import BackendSpecError, run, validate_runtime_options  # noqa: E402
+
+
+RUNTIME_OPTIONS = {"sandbox": "workspace-write", "approvalPolicy": "never",
+                   "memoryEnabled": False, "nativeHelperModel": "fixture-model",
+                   "nativeHelperEffort": "high"}
 
 
 class ConventionalBackendTests(unittest.TestCase):
@@ -45,12 +50,12 @@ import json, sys
 args = sys.argv[1:]
 prompt = sys.stdin.read()
 thread_id = args[args.index("resume") + 1] if "resume" in args else "fresh-thread"
-print(json.dumps({"type":"fixture.args","resume":"resume" in args,"model":"fixture-model" in args,"prompt":prompt}), flush=True)
+print(json.dumps({"type":"fixture.args","resume":"resume" in args,"model":"fixture-model" in args,"prompt":prompt,"args":args}), flush=True)
 print(json.dumps({"type":"thread.started","thread_id":thread_id}), flush=True)
 print(json.dumps({"type":"turn.completed","turn_id":"turn-1","usage":{"input_tokens":3}}), flush=True)
 print("fixture diagnostic", file=sys.stderr, flush=True)
 ''')
-        result = run(self.spec("codex-cli", command), "do the backlog", None,
+        result = run(self.spec("codex-cli", command, runtimeOptions=RUNTIME_OPTIONS), "do the backlog", None,
                      self.emit, threading.Event())
         self.assertEqual("completed", result["state"], (result, self.events))
         self.assertEqual("fresh-thread", result["nativeSessionId"])
@@ -61,11 +66,15 @@ print("fixture diagnostic", file=sys.stderr, flush=True)
         self.assertEqual("do the backlog", args_event["prompt"])
         self.assertTrue(args_event["model"])
         self.assertFalse(args_event["resume"])
+        for fragment in ('sandbox_mode="workspace-write"', 'approval_policy="never"',
+                         "features.memories=false", 'agents.default_subagent_model="fixture-model"',
+                         'agents.default_subagent_reasoning_effort="high"'):
+            self.assertIn(fragment, args_event["args"])
         self.assertTrue(any(e["stream"] == "stderr" and e["raw"].rstrip("\r\n") == "fixture diagnostic"
                             for e in self.events))
 
         self.events.clear()
-        result = run(self.spec("codex-cli", command), "continue", "fresh-thread",
+        result = run(self.spec("codex-cli", command, runtimeOptions=RUNTIME_OPTIONS), "continue", "fresh-thread",
                      self.emit, threading.Event())
         self.assertEqual("completed", result["state"], (result, self.events))
         self.assertEqual("fresh-thread", result["nativeSessionId"])
@@ -75,6 +84,7 @@ print("fixture diagnostic", file=sys.stderr, flush=True)
                           if e.get("parsed", {}).get("type") == "fixture.args")
         self.assertEqual("continue", args_event["prompt"])
         self.assertTrue(args_event["resume"])
+        self.assertIn("sandbox_mode=\"workspace-write\"", args_event["args"])
 
     def test_cli_resume_mismatched_thread_is_uncertain(self) -> None:
         command = self.fixture(r'''
@@ -196,13 +206,16 @@ for line in sys.stdin:
         command = self.fixture(r'''
 import json, sys
 def send(x): print(json.dumps(x), flush=True)
+assert sys.argv[1:] == ['-c', 'sandbox_mode="workspace-write"', '-c', 'approval_policy="never"', '-c', 'features.memories=false', '-c', 'agents.default_subagent_model="fixture-model"', '-c', 'agents.default_subagent_reasoning_effort="high"', 'app-server']
 for line in sys.stdin:
     m = json.loads(line); method=m.get("method")
     if method == "initialize": send({"id":m["id"],"result":{}})
     elif method == "initialized": pass
     elif method == "thread/start":
         assert m["params"]["cwd"] == __import__("os").getcwd()
-        send({"id":m["id"],"result":{"thread":{"id":"thread-A"}}})
+        assert m["params"]["sandbox"] == "workspaceWrite"
+        assert m["params"]["approvalPolicy"] == "never"
+        send({"id":m["id"],"result":{"thread":{"id":"thread-A","model":"fixture-model","reasoningEffort":"high","modelProvider":"fixture-provider","cwd":__import__("os").getcwd(),"sandbox":"workspaceWrite","approvalPolicy":"never","instructionSources":["AGENTS.md"]}}})
         send({"method":"thread/tokenUsage/updated","params":{"threadId":"thread-A","tokenUsage":{"input_tokens":7}}})
     elif method == "turn/start":
         send({"method":"turn/completed","params":{"threadId":"thread-A","turn":{"id":"wrong","status":"completed"}}})
@@ -210,13 +223,16 @@ for line in sys.stdin:
         send({"method":"turn/completed","params":{"threadId":"thread-A","turn":{"id":"turn-A","status":"completed"}}})
         break
 ''')
-        result = run(self.spec("codex-app-server", command), "ordinary prompt", None,
+        result = run(self.spec("codex-app-server", command, runtimeOptions=RUNTIME_OPTIONS), "ordinary prompt", None,
                      self.emit, threading.Event())
         self.assertEqual("completed", result["state"])
         self.assertEqual("thread-A", result["nativeSessionId"])
         self.assertEqual("turn-A", result["nativeTurnId"])
         self.assertEqual({"input_tokens": 7}, result["usage"], (result, self.events))
         self.assertEqual("native-reported; aggregate scope unknown", result["usageScope"])
+        binding = next(e["parsed"] for e in self.events if e["stream"] == "runtime-binding")
+        self.assertEqual("fixture-provider", binding["reported"]["modelProvider"])
+        self.assertEqual(["AGENTS.md"], binding["reported"]["instructionSources"])
         calls = [e["parsed"] for e in self.events if e["stream"] == "client" and e.get("parsed", {}).get("method")]
         self.assertEqual(["initialize", "initialized", "thread/start", "turn/start"],
                          [m["method"] for m in calls])
@@ -367,6 +383,19 @@ for line in sys.stdin:
         with self.assertRaises(BackendSpecError):
             run(self.spec("codex-cli", command, effort='high"; arbitrary=true'), "prompt", None,
                 self.emit, threading.Event())
+
+    def test_runtime_options_are_closed_typed_and_model_paired(self) -> None:
+        self.assertEqual(RUNTIME_OPTIONS, validate_runtime_options(RUNTIME_OPTIONS, "fixture-model", "high"))
+        invalid = [
+            {**RUNTIME_OPTIONS, "permissionBypass": True},
+            {**RUNTIME_OPTIONS, "memoryEnabled": "false"},
+            {**RUNTIME_OPTIONS, "sandbox": "danger-full-access"},
+            {**RUNTIME_OPTIONS, "nativeHelperModel": "another-model"},
+            {**RUNTIME_OPTIONS, "nativeHelperEffort": "low"},
+        ]
+        for options in invalid:
+            with self.subTest(options=options), self.assertRaises(BackendSpecError):
+                validate_runtime_options(options, "fixture-model", "high")
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "scope": "offline Conventional wrapper fixtures only; local scripted processes and injected services; no installed runtime, provider, Markitect product or study actor",
+  "scope": "offline fixtures only; typed runtime setup correction and pilot controller syntax; no native implementing actor",
   "command": [
-    "C:\\Python313\\python.exe",
+    "C:/Python313/python.exe",
     "-B",
     "-m",
     "unittest",
@@ -13,25 +13,27 @@
     "test_conventional*.py",
     "-v"
   ],
-  "startedAt": "2026-10-09T18:25:08.536717+00:00",
-  "endedAt": "2026-10-09T18:25:14.653697+00:00",
-  "durationSeconds": 6.117,
+  "startedAt": "2026-10-09T18:46:32.596449+00:00",
+  "endedAt": "2026-10-09T18:46:40.071056+00:00",
+  "durationSeconds": 7.475,
   "exitCode": 0,
   "testedSourcesSha256": {
     "experiments/work-item-comparison/playground/conventional/__init__.py": "d5113c22eef217fce313aad32623c5b3dbd97c47f739c298ab118e951fc1b798",
-    "experiments/work-item-comparison/playground/conventional/backends.py": "3a679fb6e7c95cb86bbfbde59a1f9e21040c06c37d3053ae35b072dfbdfd786d",
+    "experiments/work-item-comparison/playground/conventional/backends.py": "f2f86edfa749e8af0f1e629ebab01b94c2d82ab67f2c9fc0a7dc1a61bfa2600d",
     "experiments/work-item-comparison/playground/conventional/mcp.py": "247d68696cfa7c52265c7d6e978a8b0726750e82b1f9b1321b8cf12eb8e4c2b9",
-    "experiments/work-item-comparison/playground/conventional/service.py": "76aaf6e155b937b1980b83986cff90505cd7754898148311bb47e564b1ef518e",
+    "experiments/work-item-comparison/playground/conventional/service.py": "713d191f1b6f4a4d4fa8f47dfe54db4caed628907e961e7bca77975004e4cc2f",
     "experiments/work-item-comparison/playground/conventional_wrapper.py": "f24759f673e10965751ee718bf6022a219788ea22e0e6bf15c749e40cf6db5c2",
-    "experiments/work-item-comparison/playground/tests/test_conventional_backends.py": "ed6811389a0adbf1a24961ac5f3aaf95205f7f7a76148b301fea82a4d51ba1b6",
+    "experiments/work-item-comparison/playground/run_conventional_pilot.py": "0b63033b8c2675d4dc689a2a4883f4a9c80ef0c6d40f9e7c40fd4dcb8e94ab5d",
+    "experiments/work-item-comparison/playground/tests/test_conventional_backends.py": "6fd6b374150ead2cff94964fb89a49029da5d5c07ed2ef6deeb8515880bcb724",
     "experiments/work-item-comparison/playground/tests/test_conventional_integration.py": "18da293f36d398ac87a5eac5fe8f292a42c5f47f0c51541092c5a3fb3e46a45a",
     "experiments/work-item-comparison/playground/tests/test_conventional_mcp.py": "f8c8e5dc27dbd24bece13354f3ad2882bce19f68fa7e0f419009e33c567020ab",
-    "experiments/work-item-comparison/playground/tests/test_conventional_service.py": "30e1462996cb6b54a57c3ca6c79edb6ae7690cb053b81b486211cb39f9c787e8"
+    "experiments/work-item-comparison/playground/tests/test_conventional_service.py": "e2aa35c6ea49246e6f368db87b6c1757fb4fc4cd4425b26cb9a7749ba438c4d7"
   },
   "sourcesUnchangedDuringCheck": true,
-  "logSha256": "ef9ea309e784f37b6e4b2602b527d6b704c3ddf8c4b9a2775329886c35297d81",
-  "capturedTechnicalLogSha256": "d48e01f5a25a0cc3650b8d4d32c9eb808ba8f414acf8f51f8ecc1e8be2525d04",
-  "logNormalization": "CRLF to LF for technical unittest output only; native wire receipts remain byte preserving",
-  "actualExecutionAuthorized": false,
-  "nativeRuntimeTested": false
+  "logSha256": "73a6cc01c822b676ef8cb184cc63722b14b255f5e8f2c4123d73047d52a755c2",
+  "capturedTechnicalLogSha256": "e3c108a1c0975cee1a0602fc4a2e3a596f240c8042e74b51ecfa5c9ce27df5bd",
+  "logNormalization": "CRLF to LF technical log only; native receipts byte preserving",
+  "previousCheckpoint": "df6db9cc846378769efc9b8596b2a9736efe0425",
+  "nativeRuntimeTested": false,
+  "specificPilotAuthority": "pilots/conventional-wrapper-runtime-pilot-20261009/plan.json; generic example disabled"
 }

@@ -1,7 +1,6 @@
 # Conventional execution wrapper
 
-Source preparation only. Both examples are disabled. No Codex, model, provider or
-installed App Server was invoked to validate this wrapper. Offline fixtures use
+The initial checkpoint was source preparation only. Both generic examples remain disabled; a younger direct human order permits the separately bound two-trajectory Conventional pilot in ../pilots/conventional-wrapper-runtime-pilot-20261009/plan.json. The initial checkpoint invoked no Codex, model, provider or installed App Server. Later actual evidence is recorded separately from those fixtures. Offline fixtures use
 scripted local processes; they cannot prove runtime availability, useful agentic
 coding, CLI behavioral equivalence, cost, or human acceptance.
 
@@ -79,8 +78,7 @@ and SHA-256 `filePins` including the executable, wrapper CLI/service/MCP/backend
 source and any launcher/fixture files. The complete pair freeze still owns case,
 setup, evaluator, effective runtime, tools/rights and business-input bindings;
 this guard is not complete freeze verification.
-No shell command construction, auth probe, alternate provider key, global setting
-change, helper-disabling instruction or automatic sandbox bypass is used. Native
+Typed runtimeOptions now bind explicit sandbox/approval settings, optional child-local memory activation and matching helper model/effort. See ../setup-contract.md. No shell command construction, auth credential inspection, alternate provider key, global setting change, helper-disabling instruction or automatic sandbox bypass is used. Native
 approval/user-input requests require a human-capable path; unsupported requests
 are preserved rather than automatically accepted. Requested model/effort are not
 proof of effective serving. Raw protocol can contain sensitive workspace data;

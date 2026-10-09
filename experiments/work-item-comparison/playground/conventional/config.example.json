@@ -22,5 +22,12 @@
     "permissionsAndApprovals": null,
     "nativeHelperBehavior": null,
     "referenceEquivalence": "unverified"
+  },
+  "runtimeOptions": {
+    "sandbox": "workspace-write",
+    "approvalPolicy": "never",
+    "memoryEnabled": false,
+    "nativeHelperModel": "gpt-6-luna",
+    "nativeHelperEffort": "high"
   }
 }

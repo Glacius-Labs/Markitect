@@ -3,23 +3,23 @@
 Source preparation on 2026-10-09, following the direct user's request to include
 Conventional control paths alongside Markitect MCP/App Server work. Scope is the
 Scientist's private research checkout, not a product integration or runtime release.
-No actual study allowance was opened.
+The original source checkpoint `df6db9cc846378769efc9b8596b2a9736efe0425` opened no actual allowance. The younger direct user instruction and verified finite order now authorize only the two Conventional pilot trajectories in the separate plan; generic examples remain disabled.
 
 ## Focused result
 
-**41/41 PASS**, `6.117s` driver wall time, exit 0.
-The exact command, UTC interval, nine tested source byte hashes and technical log
+**44/44 PASS**, `7.475s` driver wall time, exit 0. The prior 41-fixture result remains in the original checkpoint.
+The exact command, UTC interval, tested source byte hashes and the syntax-checked pilot controller hash and technical log
 hash are in [offline-checks.json](offline-checks.json); output is retained in
 [offline-checks.log](offline-checks.log). Source hashes did not change during the check.
 The technical unittest log is normalized from CRLF to LF for Git; the captured
 pre-normalization hash is retained in the record. Native wire bytes are unchanged.
-Technical log SHA-256: `ef9ea309e784f37b6e4b2602b527d6b704c3ddf8c4b9a2775329886c35297d81`.
+Technical log SHA-256: `73a6cc01c822b676ef8cb184cc63722b14b255f5e8f2c4123d73047d52a755c2`.
 
 ```powershell
 C:/Python313/python.exe -B -m unittest discover -s experiments/work-item-comparison/playground/tests -p test_conventional*.py -v
 ```
 
-Seventeen backend fixtures exercise scripted local Python children; ten service
+Eighteen backend fixtures exercise scripted local Python children; twelve service
 fixtures inject callbacks; nine MCP protocol fixtures use injected services; five
 composition fixtures cover MCP → service → each backend, CLI waiting/Unicode,
 disabled stdio, and version-specific legacy MCP results. These are developer
@@ -66,5 +66,6 @@ Lifecycle Git/file mechanics, public inputs and historical Luna Nest are unchang
 their previous 18 checks were not repeated. The new study-contract SHA is bound in
 current freeze and assessment templates. No old evidence was rescored or replaced.
 
-The files are source-prepared and offline-checked. Actual execution, transport
-parity, method effects, economic benefit and human acceptance are **NOT RUN**.
+The files are source-prepared and offline-checked. The finite pilot is separately authorized; native results are recorded separately. Transport parity, Markitect method effects, economic benefit and human acceptance remain unestablished.
+
+Runtime setup checks cover typed workspace-write/approval/memory/helper overrides, rejection before dispatch, and legacy configs. Pilot approval=never and memories=false are declared deviations from an ordinary interactive CLI session. Owned stdio needs no external daemon. The controller reserves 15 minutes within each four-hour job for capture/assessment and uses a shared eight-hour deadline. An operator MCP observation error is recorded while the same native controller continues; unresolved ownership blocks the next trajectory.

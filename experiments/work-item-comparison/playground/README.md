@@ -1,6 +1,6 @@
 # Current Playground
 
-Preparation baseline: `dc34459dfef9d31f3832fc0dafc14e6851b2f7ab`, 2026-10-09. This additive folder replaces the old Luna Nest entrypoint for future preparation. No case is running. Actual starts require a stable integrated product binding and a separate finite human order; old grants remain closed.
+Preparation baseline: `dc34459dfef9d31f3832fc0dafc14e6851b2f7ab`, 2026-10-09. This additive folder replaces the old Luna Nest entrypoint for future preparation. A younger direct human order permits the separate Conventional-only wrapper pilot. Its exact finite scope is in pilots/conventional-wrapper-runtime-pilot-20261009/plan.json. Paired method starts still require the genuine product binding and a finite order; old grants remain closed.
 
 Compare a strong ordinary Conventional workflow with new Markitect main. Each method receives the same public case, staged requirements, runtime resources and independent assessment within its runtime stratum. Product installation, initial canonical business model, generated instructions/Skills and provider wiring belong to Markitect setup. The harness owns file/Git snapshots and measurement bookkeeping.
 
@@ -8,6 +8,7 @@ The primary question is the benefit and burden of each method in ordinary Codex 
 
 | Entry | Purpose |
 |---|---|
+| [Setup contract](setup-contract.md) | Product/runtime ownership, owned stdio vs endpoint, pinned write/approval settings |
 | [Study contract](study-contract.md) | Ordinary CLI user question, fair treatment, validity and interpretation |
 | [Preparation work items](WORK-ITEMS.md) | Small current list and open bindings |
 | [Workflow](workflow.md) | Prepare, ordinary work, station boundary, freeze, assess |

@@ -19,13 +19,75 @@ from typing import Any, Callable
 
 
 Emit = Callable[[dict[str, Any]], None]
+RUNTIME_OPTION_KEYS = {"sandbox", "approvalPolicy", "memoryEnabled",
+                       "nativeHelperModel", "nativeHelperEffort"}
 
 
 class BackendSpecError(ValueError):
     """The frozen backend specification is incomplete or unsafe to use."""
 
 
-def _validate(spec: dict[str, Any], prompt: str, resume_id: str | None) -> tuple[str, list[str], str, str, str, float, float]:
+def validate_runtime_options(options: Any, model: str, effort: str) -> dict[str, Any] | None:
+    """Validate the closed, optional ordinary-runtime policy binding."""
+    if options is None:
+        return None
+    if not isinstance(options, dict) or set(options) - RUNTIME_OPTION_KEYS:
+        raise BackendSpecError("runtimeOptions contains unknown fields")
+    required = {"sandbox", "approvalPolicy", "memoryEnabled"}
+    if not required <= set(options):
+        raise BackendSpecError("runtimeOptions requires sandbox, approvalPolicy, and memoryEnabled")
+    if not isinstance(options["sandbox"], str) or options["sandbox"] not in {"read-only", "workspace-write"}:
+        raise BackendSpecError("runtimeOptions.sandbox must be read-only or workspace-write")
+    if not isinstance(options["approvalPolicy"], str) or options["approvalPolicy"] not in {"never", "on-request"}:
+        raise BackendSpecError("runtimeOptions.approvalPolicy must be never or on-request")
+    if type(options["memoryEnabled"]) is not bool:
+        raise BackendSpecError("runtimeOptions.memoryEnabled must be a boolean")
+    if "nativeHelperModel" in options:
+        if not isinstance(options["nativeHelperModel"], str) or options["nativeHelperModel"] != model:
+            raise BackendSpecError("runtimeOptions.nativeHelperModel must equal the run model")
+    if "nativeHelperEffort" in options:
+        if not isinstance(options["nativeHelperEffort"], str) or options["nativeHelperEffort"] != effort:
+            raise BackendSpecError("runtimeOptions.nativeHelperEffort must equal the run effort")
+    return dict(options)
+
+
+def _runtime_config_args(options: dict[str, Any] | None, model: str, effort: str) -> list[str]:
+    if options is None:
+        return []
+    settings = [
+        ("sandbox_mode", json.dumps(options["sandbox"])),
+        ("approval_policy", json.dumps(options["approvalPolicy"])),
+        ("features.memories", "true" if options["memoryEnabled"] else "false"),
+    ]
+    if "nativeHelperModel" in options:
+        settings.append(("agents.default_subagent_model", json.dumps(model)))
+    if "nativeHelperEffort" in options:
+        settings.append(("agents.default_subagent_reasoning_effort", json.dumps(effort)))
+    result: list[str] = []
+    for key, value in settings:
+        result.extend(["-c", f"{key}={value}"])
+    return result
+
+
+def _launch_event(emit: Emit, backend: str, proc: subprocess.Popen[bytes], cwd: str, stdio: str) -> None:
+    metadata = {"kind": "native-launch", "backend": backend, "pid": proc.pid,
+                "stdio": stdio, "cwd": cwd, "ownedProcessScope": "direct-child-only"}
+    _emit(emit, backend, "launch", json.dumps(metadata, ensure_ascii=False, sort_keys=True), metadata)
+
+
+def _runtime_binding_event(emit: Emit, session: str, thread_result: dict[str, Any]) -> None:
+    thread = thread_result.get("thread") if isinstance(thread_result.get("thread"), dict) else thread_result
+    fields = ("model", "reasoningEffort", "modelProvider", "cwd", "sandbox",
+              "approvalPolicy", "instructionSources")
+    reported = {field: thread[field] if field in thread else thread_result[field]
+                for field in fields if field in thread or field in thread_result}
+    metadata = {"kind": "native-runtime-binding", "nativeSessionId": session,
+                "reported": reported, "claimScope": "native-reported fields only"}
+    _emit(emit, "codex-app-server", "runtime-binding",
+          json.dumps(metadata, ensure_ascii=False, sort_keys=True), metadata)
+
+
+def _validate(spec: dict[str, Any], prompt: str, resume_id: str | None) -> tuple[str, list[str], str, str, str, float, float, dict[str, Any] | None]:
     if not isinstance(spec, dict):
         raise BackendSpecError("spec must be an object")
     backend = spec.get("backend")
@@ -46,13 +108,14 @@ def _validate(spec: dict[str, Any], prompt: str, resume_id: str | None) -> tuple
         raise BackendSpecError("model and effort must be non-empty strings")
     if effort not in {"none", "minimal", "low", "medium", "high", "xhigh"}:
         raise BackendSpecError("effort must be one of none, minimal, low, medium, high, xhigh")
+    runtime_options = validate_runtime_options(spec.get("runtimeOptions"), model, effort)
     if not isinstance(prompt, str) or not prompt:
         raise BackendSpecError("prompt must be a non-empty string")
     if resume_id is not None and (not isinstance(resume_id, str) or not resume_id.strip()):
         raise BackendSpecError("resume_id must be a non-empty string when supplied")
     timeout = _positive_finite(spec.get("timeoutSeconds"), "timeoutSeconds")
     request_timeout = _positive_finite(spec.get("requestTimeoutSeconds", 300), "requestTimeoutSeconds")
-    return backend, command, cwd, model, effort, timeout, request_timeout
+    return backend, command, cwd, model, effort, timeout, request_timeout, runtime_options
 
 
 def _positive_finite(value: Any, name: str) -> float:
@@ -212,28 +275,31 @@ def run(spec: dict[str, Any], prompt: str, resume_id: str | None,
     No retries are performed. The returned state describes the transport/run
     outcome only; callers must assess captured workspace state independently.
     """
-    backend, command, cwd, model, effort, timeout, request_timeout = _validate(spec, prompt, resume_id)
+    backend, command, cwd, model, effort, timeout, request_timeout, runtime_options = _validate(spec, prompt, resume_id)
     if not callable(emit) or not callable(getattr(cancel, "is_set", None)):
         raise BackendSpecError("emit must be callable and cancel must be a threading.Event")
     if backend == "codex-cli":
-        return _run_cli(command, cwd, model, effort, timeout, prompt, resume_id, emit, cancel)
-    return _run_app_server(spec, command, cwd, model, effort, timeout, request_timeout,
+        return _run_cli(command, cwd, model, effort, timeout, prompt, resume_id, runtime_options, emit, cancel)
+    return _run_app_server(spec, command, cwd, model, effort, timeout, request_timeout, runtime_options,
                            prompt, resume_id, emit, cancel)
 
 
 def _run_cli(command: list[str], cwd: str, model: str, effort: str, timeout: float,
-             prompt: str, resume_id: str | None, emit: Emit,
+             prompt: str, resume_id: str | None, runtime_options: dict[str, Any] | None, emit: Emit,
              cancel: threading.Event) -> dict[str, Any]:
     args = list(command)
     args.extend(["exec"])
     if resume_id is not None:
         args.extend(["resume", resume_id])
-    args.extend(["--json", "--model", model, "-c", f'model_reasoning_effort="{effort}"', "-"])
+    args.extend(["--json", "--model", model, "-c", f'model_reasoning_effort="{effort}"'])
+    args.extend(_runtime_config_args(runtime_options, model, effort))
+    args.append("-")
     try:
         proc = subprocess.Popen(args, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, bufsize=0)
     except OSError as exc:
         return _result("failed", resume_id, None, None, f"could not start Codex CLI: {exc}")
+    _launch_event(emit, "codex-cli", proc, cwd, "stdin/stdout/stderr JSONL")
     deadline = time.monotonic() + timeout
     try:
         assert proc.stdin is not None
@@ -409,7 +475,7 @@ def _rpc(proc: subprocess.Popen[bytes], request_id: int, method: str, params: di
 
 
 def _run_app_server(spec: dict[str, Any], command: list[str], cwd: str, model: str, effort: str,
-                    timeout: float, request_timeout: float, prompt: str,
+                    timeout: float, request_timeout: float, runtime_options: dict[str, Any] | None, prompt: str,
                     resume_id: str | None, emit: Emit,
                     cancel: threading.Event) -> dict[str, Any]:
     # Keep ordinary runtime defaults until individual permission options have
@@ -420,12 +486,13 @@ def _run_app_server(spec: dict[str, Any], command: list[str], cwd: str, model: s
         raise BackendSpecError("threadOptions must be empty until permission choices are frozen and reviewed")
     if not isinstance(turn_options, dict) or turn_options:
         raise BackendSpecError("turnOptions must be empty; turn identity and instructions are runtime-owned")
-    args = [*command, "app-server"]
+    args = [*command, *_runtime_config_args(runtime_options, model, effort), "app-server"]
     try:
         proc = subprocess.Popen(args, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, bufsize=0)
     except OSError as exc:
         return _result("failed", resume_id, None, None, f"could not start App Server: {exc}")
+    _launch_event(emit, "codex-app-server", proc, cwd, "stdin/stdout/stderr JSONL")
 
     messages: queue.Queue[tuple[str, Any]] = queue.Queue()
 
@@ -549,6 +616,11 @@ def _run_app_server(spec: dict[str, Any], command: list[str], cwd: str, model: s
                     method_name = "thread/resume" if resume_id else "thread/start"
                     params = dict(thread_options)
                     params.update({"cwd": cwd, "model": model})
+                    if runtime_options is not None:
+                        params["sandbox"] = {"read-only": "readOnly",
+                                              "workspace-write": "workspaceWrite"}[runtime_options["sandbox"]]
+                        params["approvalPolicy"] = {"never": "never",
+                                                     "on-request": "onRequest"}[runtime_options["approvalPolicy"]]
                     if resume_id:
                         params["threadId"] = resume_id
                     request_id = next_id
@@ -566,10 +638,13 @@ def _run_app_server(spec: dict[str, Any], command: list[str], cwd: str, model: s
                     if not session:
                         _terminate(proc)
                         return _result("failed", None, None, usage, "App Server thread response omitted its native thread id")
+                    _runtime_binding_event(emit, session, result)
+                    params = {"cwd": cwd, "model": model}
                     request_id = next_id
                     next_id += 1
-                    _rpc(proc, request_id, "turn/start", {"threadId": session, "input": [{"type": "text", "text": prompt}],
-                         "model": model, "effort": effort}, emit)
+                    params.update({"threadId": session, "input": [{"type": "text", "text": prompt}],
+                                   "model": model, "effort": effort})
+                    _rpc(proc, request_id, "turn/start", params, emit)
                     pending[request_id] = ("turn-start", time.monotonic() + request_timeout)
                     phase, phase_id = "turn-start", request_id
                 elif completed_phase == "turn-start":
