@@ -144,7 +144,7 @@ Historian is an authorized source for relevant findings from Markitect history a
 - **Idea:** Keep project-specific user decisions and their reasons as precedents that a later decision-maker can consult when interpreting rules.
 - **Assumptions:** Decisions and reasons can be captured with enough context to tell when a precedent applies; interpretation remains open to new circumstances.
 - **Hoped-for effect (motivation paraphrase):** Decisions delegated to agents stay aligned with earlier reasoned user decisions.
-- **Open questions:** What constitutes a precedent, how is applicability determined, how are conflicting or superseded precedents handled, and when must the user decide again? A precedent store would provide references; it does not by itself demonstrate that an AI learns.
+- **Open questions:** What constitutes a precedent, how is applicability determined, how do context changes affect its validity, how are conflicting or superseded precedents handled, and when must the user decide again? A precedent store would provide references; it does not by itself demonstrate that an AI learns or change rules automatically.
 - **Relationships:** IDEA-20261009-008, 010; broader context in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
 - **Status:** Noted; questions open.
 
@@ -156,7 +156,7 @@ Historian is an authorized source for relevant findings from Markitect history a
 - **Idea:** Distinguish the severity of a disagreement and allow escalation to higher review levels where appropriate.
 - **Assumptions:** Disputes can be classified meaningfully; review levels have clear authority and the escalation path does not add needless friction.
 - **Hoped-for effect (motivation paraphrase):** Conflicts are escalated in proportion to their importance.
-- **Open questions:** Who or what assigns severity? What triggers escalation, what decisions may each level make, and how are urgent or misclassified cases handled?
+- **Open questions:** Who or what assigns severity? What triggers escalation, what decisions may each level make, and how are urgent or misclassified cases handled without causing unnecessary escalation?
 - **Relationships:** IDEA-20261009-009, 011, 012; broader context in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
 - **Status:** Noted; questions open.
 
@@ -180,6 +180,6 @@ Historian is an authorized source for relevant findings from Markitect history a
 - **Idea:** Support configuration at every level and interpret decisions in their local priorities, goals and importance.
 - **Assumptions:** Local configuration can be reconciled with higher-level constraints; the system can make inherited and overridden settings legible.
 - **Hoped-for effect (motivation paraphrase):** Delegated decisions account for project-specific and local goals.
-- **Open questions:** Which settings may be local, who controls them, how do conflicts with higher-level priorities resolve, and how are local exceptions surfaced?
+- **Open questions:** Which settings may be local, who controls them, how are local priorities reconciled with higher-level guidance, and how are conflicts and local exceptions surfaced?
 - **Relationships:** IDEA-20261009-008, 010, 011; broader context in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
 - **Status:** Noted; questions open.
