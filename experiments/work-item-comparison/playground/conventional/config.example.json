@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "execution_authorized": false,
+  "actualOrderPath": null,
+  "backend": "codex-cli",
+  "command": null,
+  "filePins": null,
+  "cwd": null,
+  "audit": null,
+  "model": "gpt-6-luna",
+  "effort": "high",
+  "timeoutSeconds": 5400,
+  "requestTimeoutSeconds": 600,
+  "threadOptions": {},
+  "turnOptions": {},
+  "runtimeBinding": {
+    "executableVersion": null,
+    "effectiveModel": null,
+    "effectiveEffort": null,
+    "configurationManifestSha256": null,
+    "instructionsSkillsToolsManifestSha256": null,
+    "permissionsAndApprovals": null,
+    "nativeHelperBehavior": null,
+    "referenceEquivalence": "unverified"
+  }
+}

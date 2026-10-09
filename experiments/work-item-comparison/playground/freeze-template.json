@@ -65,6 +65,15 @@
       "equivalenceStatus": "unverified",
       "declaredDifferences": [],
       "evidence": []
+    },
+    "outerControl": {
+      "entrance": null,
+      "nativeBackend": null,
+      "wrapperSourceManifestSha256": null,
+      "wrapperConfigSha256": null,
+      "wrapperOrderSha256": null,
+      "executionAuditBinding": null,
+      "operatorMcpInstalledInActor": false
     }
   },
   "equalLimits": {
@@ -110,7 +119,7 @@
     "Claude product inner-provider support",
     "finite separately authorized actual order"
   ],
-  "studyContractSha256": "69de58ae2934755356a8255b2b5b124e79fd5feb29ee66ec54ed05977071b04e",
+  "studyContractSha256": "63efed76bdc060818136444f4927e45db62f7a50315c3dd04951fb2c1f996899",
   "researchQuestion": "Observed benefit and burden of Markitect versus strong Conventional agentic coding in ordinary Codex CLI use",
   "studyDesign": {
     "primaryRuntime": "codex-luna-high",
@@ -124,6 +133,14 @@
     "allowedUserInterventions": null,
     "endRule": null,
     "hiddenRequirementsAllowed": false,
-    "transportIsTreatment": false
+    "transportIsTreatment": false,
+    "optionalTransportStudy": {
+      "status": "not ordered",
+      "question": null,
+      "fixedMethodCaseRuntime": null,
+      "selectedRoutes": [],
+      "finiteOrderRef": null,
+      "interpretation": "separate control-route effects; no automatic factorial expansion"
+    }
   }
 }

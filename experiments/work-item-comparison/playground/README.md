@@ -19,9 +19,10 @@ The primary question is the benefit and burden of each method in ordinary Codex 
 | [Initial model proposals](public/initial-models/README.md) | Legacy public business inputs for owner migration, not a ready installation |
 | [Assessment](assessment.md) and [report template](assessment-template.json) | Functional evidence, method conformance and effort separately |
 | [Offline mechanics](lifecycle.py) and [validation](validation.md) | Source-local Git/file checks, no provider launcher |
+| [Conventional wrapper](conventional/README.md) | Common lifecycle via CLI/MCP; native CLI/App Server backends, disabled and offline-verified only |
 | [Archive](archive-index.md), [provenance](provenance.json) | Historic files untouched; reused public source blob bindings |
 
-Both cases have 12 work items in 1/3/7/1 waves: one item; several dependent items; many independent groups with actual overlapping team work and integration; one compatible domain rename. These are two longitudinal scenarios, not 24 independent replications. Use four future method pairs (two cases within each runtime), subject to provider support; no factorial expansion.
+Both cases have 12 work items in 1/3/7/1 waves: one item; several dependent items; many independent groups with actual overlapping team work and integration; one compatible domain rename. These are two longitudinal scenarios, not 24 independent replications. Use four future method pairs (two cases within each runtime), subject to provider support; no automatic factorial expansion. The optional Conventional control routes have their own later finite comparison scope.
 
 The normal prompt after setup is the same for both methods:
 
@@ -35,4 +36,4 @@ Run only the preparation protocol fixtures in this pass:
 C:/Python313/python.exe -B -m unittest discover -s experiments/work-item-comparison/playground/tests -v
 ```
 
-These fixtures exercise Git/file mechanics and stub process reporting. They do not run Markitect, an implementing study actor, Codex, Claude or a provider. The prospective lifecycle commands are documented in [workflow](workflow.md); the script contains no model dispatcher.
+These fixtures exercise Git/file mechanics, stub process reporting and local scripted transport processes. They do not run Markitect, an implementing study actor, installed Codex/Claude/App Server or a provider. The prospective lifecycle commands are documented in [workflow](workflow.md); lifecycle.py contains no model dispatcher. The optional Conventional wrapper is a separate, disabled launcher source; its own focused evidence is in [wrapper validation](conventional/validation.md).

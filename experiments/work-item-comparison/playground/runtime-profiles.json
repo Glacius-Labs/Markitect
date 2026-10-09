@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "execution_authorized": false,
-  "providerLauncher": false,
+  "providerLauncher": true,
   "profiles": [
     {
       "id": "codex-luna-high",
@@ -35,7 +35,21 @@
         "equivalenceStatus": "unverified",
         "mustMatchWithinPair": true,
         "declaredDifferences": [],
-        "evidence": []
+        "evidence": [],
+        "preparedWrapper": {
+          "entrances": [
+            "CLI",
+            "MCP stdio"
+          ],
+          "nativeBackends": [
+            "codex-cli",
+            "codex-app-server"
+          ],
+          "configuration": "conventional/config.example.json",
+          "execution_authorized": false,
+          "nativeRuntimeTested": false,
+          "actorReceivesControllerMcp": false
+        }
       }
     },
     {
@@ -90,5 +104,6 @@
         "evidence": []
       }
     }
-  ]
+  ],
+  "launcherActivation": "optional Conventional wrapper source prepared; checked-in configuration and actual execution disabled"
 }
