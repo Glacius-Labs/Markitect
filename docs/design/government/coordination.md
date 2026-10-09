@@ -1282,3 +1282,8 @@ Direkter Nutzerauftrag: Design prüft konkrete Korrektheitsrisiken schon vor dem
 Bedingter Folgeauftrag design-product-regression-suite-20261009: nach angenommener sauberer benutzbarer Übergabe automatisch aktivieren, erster zusammenhängender Abdeckungsdurchgang maximal10800s aktive Paketarbeit, endliche Repo-Timeouts. Vorhandene Luna-Produktproofquote unverändert, kein zusätzlicher Actual-/Nativegrant. Getrennter Featurestand; Studienpins bleiben unverändert. Öffentliche Produktbefunde und schwere Hostjobs koordinieren, keine privaten Studieninputs oder ungemessene Hilfestellung. Aktueller Design-Snapshot Cursor18 und9cea10cf mit WIP sind noch kein Abschluss.
 
 Design-Folgeauftrag und öffentliche Scientist-Pin-/Lastschnittstelle einmal um04:30:28Z zugestellt, Toolannahme bestätigt. Automation ACTIVE/2h mit exakt gespeicherter neuer Folgeanweisung geprüft. Keine zusätzliche Native-/Studienquote; aktuelle aktive Produktarbeit ist noch WIP.
+
+
+### 2026-10-09 06:34 Europe/Berlin - direkter kurzer Zwischenstand
+
+Beide Chats aktiv, neue Cursors Scientist97/Design19. Design meldet schrittweise Brownfield-Rückmodellierung mit Konflikten und offenen Bereichen; als Nächstes zusammenhängender Nutzerablauf und echte Luna-High-Proofs. Scientist meldet festen Stationsdispatcher, gesicherte Zustände, getrennte Befundbewertung und zwei Anfangsmodelle; native Installation/Modellvalidierung bleibt Produktaufgabe. Root prüfte nur Git-/Chatmetadaten: Design9cea10cf und Scientist-Nest noch WIP, öffentliche Designref2fd297ce/Main5be48ce unverändert. Keine neuen gematchten Actuals oder finalen Handoffs angenommen; keine Wiederholungsaufträge.
