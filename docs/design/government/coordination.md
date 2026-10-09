@@ -1985,3 +1985,9 @@ Strictdecoder rejects copied inputArtifact digest/base64 extras in CandidateFile
 ### Native structured response accepted; genuine review in progress
 
 Owner freshsource73103156/binf0f3/normalPlanb237/batcha01-schema-88b220 starts actual7/native6; rootManagercompleted with acceptedREADMEcandidate andgenuine source/docsdelegations. PreviouscandidateDTO failure overcomeinactual; freshreviewerinvoking. Readiness/Planready/vet/strictcanonicalpositive, no manualstartgate. Batchdeadline03:49:34.1234471Z, renewableauthorityunchanged. Exactrawactual notindependentlyreadthisevent; helper/parallel/Verify/Apply/originalRecovery/Mainsuccess notclaimed. No repeatedorder/Rootgrant; ownercontinuesnormalworkflow.
+
+### Reviewer scope mistake must receive ordinary recoverable tool feedback
+
+Actual7 terminal23:51:03Z ownerreported: genuine rootwork accepted/READMEcandidate/twodelegations, freshreviewerwronglyrequestshelperauthortestsoutsideparent scope. Guardcorrectlydenies, parentinterrupts/runfailed; source/docsqueued/noVerifyApplyRecovery. Normalremote731Rootverified.
+
+Root read helper.go234–280/545–573: safely rejected request returns harderror viafailRequest andinterruptsparent. Sent boundedadditivefinding tocurrentfix: return actual unsuccessfultoolfeedback to sameboundagent for durablyrecorded safe predispatch rejection, preserving scope/counters; identity/replay/workspace/persistence/terminationuncertainty remains terminal. Clearreviewphase/scope/ownScratch, no widening otherManagerownership or newrightsframework. Agent should adapt to ordinary tool errors like compilerfeedback. Existingownerreviewfix/normalfreshcontinuation authorized; noRootgrant/probe/replay.

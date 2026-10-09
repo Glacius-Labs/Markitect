@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T23:51:08.082651Z",
+  "updatedUtc": "2026-10-09T23:53:40.314369Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "REAL_NATIVE_MANAGER_OUTPUT_ACCEPTED_REVIEW_IN_PROGRESS",
+    "status": "ROOT_OUTPUT_SUCCESS_FRESH_REVIEW_TERMINAL_SCOPE_DENIAL_RECOVERABLE_TOOL_FEEDBACK_FIX_UNDERWAY",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -17924,7 +17924,19 @@
       "ownerChecks": "NormalReadiness/Planready, exactheadvet/strictcanonicalPASS; no manualstartgate",
       "evidenceScope": "Reported genuineprogress; exactrawactual receipts not independentlyreadthisevent. Helper/parallel/Verify/Apply/originalRecovery and fullMainacceptance unproved",
       "executionAuthority": "Directhuman simplify+renewablebudget, ownercontinuesautonomously/noextraRootgrant",
-      "sourcePublicationCoordination": "Root clean731 local/public01de verified; owner asked once to normalpush coherentpublicsource under standingbackupauthority without interruptingActual/privatepublication/extraapproval."
+      "sourcePublicationCoordination": "Root clean731 local/public01de verified; owner asked once to normalpush coherentpublicsource under standingbackupauthority without interruptingActual/privatepublication/extraapproval.",
+      "terminal": {
+        "ownerReportedEndUtc": "2026-10-09T23:51:03Z",
+        "result": "RootworkDTOaccepted/READMEcandidate/source-docsdelegationsreal; freshreviewerwronglyaskedHosthelpertoauthor tests/test_greeting.py fromoverallgoal outsidecurrentparentScope. Guarddeniedchild, reviewerinterrupted/runfailed. Source/docsstillqueued/noVerifyApplyRecovery.",
+        "newAttemptEstimatedMicros": 569593,
+        "noReplayOrScopeWidening": true
+      }
+    },
+    "sourcePublicationCoordination": "Root independently verified publicremote73103156264a6eaf919f2bc8e358dbf8da2f53e1; normalbackupcomplete",
+    "recoverableHelperDenialFinding": {
+      "rootVerified": "helper.go234–280/545–573 validates before dispatch then failRequest returns error. Toolerror propagates to parentturninterrupt, so agent cannot adapt to a safe ordinary rejection.",
+      "coordination": "One additive sourcefinding sent to existingownerreviewerfix: return genuine unsuccessful ToolResult to sameboundagent for safely denied predispatch requests with durable clean reservation; guardandcountsunchanged, uncertainidentity/workspace/persistence/replayremainterminal. Clearreviewrole/scope/Scratch, no newrightsframework/testownership widening.",
+      "status": "Ownerreviewerprompt/wiringrepair+boundedrawdiagnosis underway; no extraRootgrant/subsystem/newprobe"
     }
   }
 }
