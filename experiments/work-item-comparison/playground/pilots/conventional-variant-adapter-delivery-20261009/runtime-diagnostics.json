@@ -1,0 +1,46 @@
+{
+  "grantId": "conventional-variant-adapter-delivery-20261009",
+  "maxProviderFreeStartupChecks": 6,
+  "checks": [
+    {
+      "number": 1,
+      "argv": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+        "sandbox",
+        "windows",
+        "--help"
+      ],
+      "exitCode": 1,
+      "stderr": "windows sandbox failed: helper_unknown_error: setup refresh had errors",
+      "claim": "help interpreted as sandbox command; no model dispatch; no successful native tool startup"
+    },
+    {
+      "number": 2,
+      "argv": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+        "-c",
+        "windows.sandbox=\"mxc\"",
+        "sandbox",
+        "--include-managed-config",
+        "--permission-profile",
+        ":workspace",
+        "--",
+        "cmd.exe",
+        "/d",
+        "/c",
+        "echo",
+        "MXC_OK"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Adapter-Runtime-20261009-diagnostics",
+      "pid": 55956,
+      "exitCode": 0,
+      "startedAt": "2026-10-09T19:29:16.558436+00:00",
+      "endedAt": "2026-10-09T19:29:16.748858+00:00",
+      "stdoutSha256": "9d9fed79a92f2b3d51a1012116d16151f29f49e4ec0cfcc375693500402c21fb",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "modelDispatch": false,
+      "configurationChanges": "child-local explicit MXC; includes managed config; workspace profile; no global write"
+    }
+  ],
+  "executableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+}

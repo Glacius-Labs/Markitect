@@ -14,7 +14,7 @@ import unittest
 
 PLAYGROUND = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PLAYGROUND))
-from conventional.backends import BackendSpecError, run, validate_runtime_options  # noqa: E402
+from conventional.backends import BackendSpecError, _runtime_config_args, run, validate_runtime_options  # noqa: E402
 
 
 RUNTIME_OPTIONS = {"sandbox": "workspace-write", "approvalPolicy": "never",
@@ -392,10 +392,22 @@ for line in sys.stdin:
             {**RUNTIME_OPTIONS, "sandbox": "danger-full-access"},
             {**RUNTIME_OPTIONS, "nativeHelperModel": "another-model"},
             {**RUNTIME_OPTIONS, "nativeHelperEffort": "low"},
+            {**RUNTIME_OPTIONS, "windowsSandbox": "none"},
+            {**RUNTIME_OPTIONS, "nativeMaxConcurrentAgents": True},
+            {**RUNTIME_OPTIONS, "nativeMaxConcurrentAgents": 0},
         ]
         for options in invalid:
             with self.subTest(options=options), self.assertRaises(BackendSpecError):
                 validate_runtime_options(options, "fixture-model", "high")
+
+    def test_typed_windows_runtime_overrides_are_child_local_arguments(self) -> None:
+        options = {**RUNTIME_OPTIONS, "windowsSandbox": "mxc", "nativeMaxConcurrentAgents": 4}
+        args = _runtime_config_args(options, "fixture-model", "high")
+        self.assertIn("-c", args)
+        self.assertIn('windows.sandbox="mxc"', args)
+        self.assertIn("agents.max_concurrent_threads_per_session=4", args)
+        self.assertEqual(args[-4:], ["-c", 'windows.sandbox="mxc"', "-c",
+                                     "agents.max_concurrent_threads_per_session=4"])
 
 
 if __name__ == "__main__":

@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "factory": "conventional.adapter:ConventionalAdapter",
+  "configPath": "C:/absolute/path/to/a/separately-authorized/conventional-config.json",
+  "sourcePins": {
+    "C:/absolute/path/to/playground/conventional/__init__.py": "REPLACE_WITH_SHA256",
+    "C:/absolute/path/to/playground/conventional/adapter.py": "REPLACE_WITH_SHA256",
+    "C:/absolute/path/to/playground/conventional/service.py": "REPLACE_WITH_SHA256",
+    "C:/absolute/path/to/playground/conventional/backends.py": "REPLACE_WITH_SHA256",
+    "C:/absolute/path/to/playground/conventional/mcp.py": "REPLACE_WITH_SHA256",
+    "C:/absolute/path/to/playground/conventional_wrapper.py": "REPLACE_WITH_SHA256"
+  }
+}

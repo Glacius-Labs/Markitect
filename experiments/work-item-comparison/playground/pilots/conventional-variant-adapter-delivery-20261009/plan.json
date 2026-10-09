@@ -1,0 +1,100 @@
+{
+  "schema": 1,
+  "id": "conventional-variant-adapter-delivery-20261009",
+  "execution_authorized": true,
+  "authority": {
+    "directUserTurn": "01a12221-192d-7d60-b8e4-45ad999b649e",
+    "verifiedRootOrderSha256": "e6c2b11ce4758d9c315d6babb01612f43ebef23e492da018424cb92732f08d73",
+    "scope": "new finite delivery; old grants closed",
+    "orderPath": "C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/conventional-variant-adapter-delivery-20261009.json"
+  },
+  "profileId": "codex-luna-high",
+  "jobWallSeconds": 14400,
+  "turnWallSeconds": 5400,
+  "overallWallSeconds": 28800,
+  "startAllowance": 256,
+  "executableVersion": "codex-cli 0.162.0-alpha.2",
+  "sourceRoots": [
+    "adapters",
+    "conventional"
+  ],
+  "trajectories": [
+    {
+      "case": "readinglog",
+      "method": "Conventional",
+      "factory": "conventional.adapter:ConventionalAdapter",
+      "manifestSourceRoots": [
+        "conventional"
+      ],
+      "setupSourceRoot": "public/conventional",
+      "config": {
+        "backend": "codex-app-server",
+        "model": "gpt-6-luna",
+        "effort": "high",
+        "runtimeOptions": {
+          "sandbox": "workspace-write",
+          "approvalPolicy": "never",
+          "memoryEnabled": false,
+          "nativeHelperModel": "gpt-6-luna",
+          "nativeHelperEffort": "high",
+          "windowsSandbox": "mxc",
+          "nativeMaxConcurrentAgents": 3
+        }
+      }
+    },
+    {
+      "case": "roombook",
+      "method": "Conventional",
+      "factory": "conventional.adapter:ConventionalAdapter",
+      "manifestSourceRoots": [
+        "conventional"
+      ],
+      "setupSourceRoot": "public/conventional",
+      "config": {
+        "backend": "codex-cli",
+        "model": "gpt-6-luna",
+        "effort": "high",
+        "runtimeOptions": {
+          "sandbox": "workspace-write",
+          "approvalPolicy": "never",
+          "memoryEnabled": false,
+          "nativeHelperModel": "gpt-6-luna",
+          "nativeHelperEffort": "high",
+          "windowsSandbox": "mxc",
+          "nativeMaxConcurrentAgents": 3
+        }
+      }
+    }
+  ],
+  "providerFreeChecks": {
+    "maximum": 6,
+    "alreadyConsumed": 2,
+    "remainingAtSourceFreeze": 4,
+    "perTrajectoryMaximum": 2,
+    "nativeModelCanaries": 0
+  },
+  "limits": {
+    "concurrency": 4,
+    "depth": 2,
+    "depthNativeEnforcement": "unsupported/unknown; cooperative profile bound",
+    "totalStarts": "observed including helpers/failed/final; no hard native global counter",
+    "roleWallSeconds": 5400,
+    "nativeConcurrentThreads": "3 spawned threads plus main = total4; official cap excludes main"
+  },
+  "authSource": "existing native current-user authentication; secret values not inspected or copied",
+  "nativeRuntime": "child-local MXC; managed restrictions; no global changes",
+  "comparison": "case/backend confounded; Conventional functional readiness, not transport/method superiority",
+  "evaluation": "immutable main each station, public checks and fresh independent final public-spec actor",
+  "secondCondition": "completed first case or concretely corrected first defect; never unchanged failure replay",
+  "outerTurnsPerTrajectory": 4,
+  "sourceFiles": [
+    "conventional_wrapper.py",
+    "playground_adapter.py",
+    "final_assessor.py",
+    "delivery_binding.py"
+  ],
+  "requestTimeoutSeconds": 600,
+  "maxRuntimeStartupChecks": 2,
+  "captureAssessmentReserveSeconds": 900,
+  "executableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+}

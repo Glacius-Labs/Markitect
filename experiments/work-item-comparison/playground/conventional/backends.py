@@ -20,7 +20,8 @@ from typing import Any, Callable
 
 Emit = Callable[[dict[str, Any]], None]
 RUNTIME_OPTION_KEYS = {"sandbox", "approvalPolicy", "memoryEnabled",
-                       "nativeHelperModel", "nativeHelperEffort"}
+                       "nativeHelperModel", "nativeHelperEffort", "windowsSandbox",
+                       "nativeMaxConcurrentAgents"}
 
 
 class BackendSpecError(ValueError):
@@ -42,6 +43,12 @@ def validate_runtime_options(options: Any, model: str, effort: str) -> dict[str,
         raise BackendSpecError("runtimeOptions.approvalPolicy must be never or on-request")
     if type(options["memoryEnabled"]) is not bool:
         raise BackendSpecError("runtimeOptions.memoryEnabled must be a boolean")
+    if "windowsSandbox" in options and options["windowsSandbox"] not in {"mxc", "elevated"}:
+        raise BackendSpecError("runtimeOptions.windowsSandbox must be mxc or elevated")
+    if "nativeMaxConcurrentAgents" in options:
+        value = options["nativeMaxConcurrentAgents"]
+        if type(value) is not int or value < 1 or value > 64:
+            raise BackendSpecError("runtimeOptions.nativeMaxConcurrentAgents must be an integer from 1 through 64")
     if "nativeHelperModel" in options:
         if not isinstance(options["nativeHelperModel"], str) or options["nativeHelperModel"] != model:
             raise BackendSpecError("runtimeOptions.nativeHelperModel must equal the run model")
@@ -63,6 +70,10 @@ def _runtime_config_args(options: dict[str, Any] | None, model: str, effort: str
         settings.append(("agents.default_subagent_model", json.dumps(model)))
     if "nativeHelperEffort" in options:
         settings.append(("agents.default_subagent_reasoning_effort", json.dumps(effort)))
+    if "windowsSandbox" in options:
+        settings.append(("windows.sandbox", json.dumps(options["windowsSandbox"])))
+    if "nativeMaxConcurrentAgents" in options:
+        settings.append(("agents.max_concurrent_threads_per_session", str(options["nativeMaxConcurrentAgents"])))
     result: list[str] = []
     for key, value in settings:
         result.extend(["-c", f"{key}={value}"])

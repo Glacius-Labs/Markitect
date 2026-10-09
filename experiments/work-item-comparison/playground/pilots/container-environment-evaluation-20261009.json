@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "recordType": "playground_environment_assessment",
+  "id": "container-environment-evaluation-20261009",
+  "researchedAt": "2026-10-09",
+  "scope": "Read-only assessment of an optional Linux-container environment for future Playground variants.",
+  "recommendation": {
+    "current": "Keep host-native Windows CLI as the active Conventional environment while resolving the observed native sandbox startup issue. Do not change the current pilot environment mid-study.",
+    "future": "Add an optional, separately identified Linux-container environment stratum after adapter contract integration. First run a bounded provider-free readiness check and measure setup/cold-start cost; authorize a model trajectory only after that check.",
+    "rationale": [
+      "Inference: Linux Codex CLI inside a Linux container uses the Linux sandbox path rather than native Windows sandboxing, which could avoid a Windows-specific failure. It changes OS, shell, filesystem, process and helper behavior, so it cannot establish that the Windows failure is fixed.",
+      "Docker Desktop on Windows still depends on Windows plus WSL2 or a VM backend, and adds engine, image, mount, resource and lifecycle setup.",
+      "Codex ChatGPT-account authentication has official headless/container routes. API-key or Agents API migration is not required."
+    ]
+  },
+  "findings": {
+    "codexAuthentication": {
+      "status": "officially documented",
+      "facts": [
+        "For headless/remote CLI, Codex recommends beta device-code auth when enabled in account/workspace settings.",
+        "Official fallback: authenticate where a browser is available and copy ~/.codex/auth.json into the container.",
+        "auth.json contains access tokens and must be treated like a password. OS credential-store auth may not support this file-copy fallback; file-based storage is an explicit setting.",
+        "API keys are recommended by the guide as the default for automation, but ChatGPT login is explicitly supported."
+      ],
+      "implications": [
+        "Prefer device-code login if enabled, otherwise deliberately use file-based auth cache; do not mount the full host home or .codex directory.",
+        "Exclude credentials from Git, logs, snapshots and evidence manifests. Record method/readiness only.",
+        "Specify how refreshed auth state is persisted or discarded without exposing token values."
+      ],
+      "sources": [
+        "https://learn.chatgpt.com/docs/auth"
+      ]
+    },
+    "codexSandbox": {
+      "status": "officially documented",
+      "facts": [
+        "Codex uses native Windows sandbox from PowerShell and Linux sandbox implementation from WSL2.",
+        "Linux/WSL2 sandbox uses bubblewrap when available or a bundled helper requiring unprivileged user-namespace support."
+      ],
+      "inference": "A Linux Codex CLI in a Linux container may avoid the native Windows sandbox path, but nested namespace restrictions may prevent Linux sandbox startup. Verify with the chosen backend; do not disable sandboxing or broaden host policy.",
+      "sources": [
+        "https://learn.chatgpt.com/docs/sandboxing"
+      ]
+    },
+    "windowsDocker": {
+      "status": "officially documented",
+      "facts": [
+        "Docker Desktop uses WSL2 by default for Linux containers; other VM backends depend on install/edition.",
+        "Docker Desktop needs Windows virtualization/WSL prerequisites and remains hosted by Windows.",
+        "Docker recommends storing bind-mounted Linux source in the Linux filesystem for performance and file-change events; Windows filesystem mounts can be slower."
+      ],
+      "sources": [
+        "https://docs.docker.com/desktop/features/wsl/",
+        "https://docs.docker.com/desktop/features/wsl/best-practices/",
+        "https://docs.docker.com/desktop/setup/install/windows-install/"
+      ]
+    },
+    "claudeCode": {
+      "status": "officially documented",
+      "facts": [
+        "Claude Code supports Dev Containers and browser authentication inside them.",
+        "Browser callback may not reach the container; documented fallback is manually entering the displayed code.",
+        "Container home is discarded on rebuild by default. Persisting auth requires a named volume plus CLAUDE_CONFIG_DIR because account/config data also resides in a separate file.",
+        "Dev Container Feature installs latest and auto-updates by default; pinning requires explicit version install and disabling updates."
+      ],
+      "sources": [
+        "https://code.claude.com/docs/en/devcontainer",
+        "https://code.claude.com/docs/en/iam"
+      ]
+    }
+  },
+  "studyDesign": {
+    "environmentIsSeparateFactor": true,
+    "doNotPoolWithHostNativeWindows": true,
+    "bindPerRun": [
+      "image digest and architecture",
+      "Docker Desktop/backend and WSL version",
+      "Codex/Claude versions and binary digests",
+      "model, effort, helper settings, sandbox and approval rights",
+      "auth method, never credential values",
+      "workspace mount, network, CPU/memory limits",
+      "image acquisition/build and environment startup time"
+    ],
+    "lifecycle": [
+      "Use disposable per-run container/workspace; do not mount host home, SSH material, or broad credential directories.",
+      "Keep auth outside tracked/evidence paths, restrict access, and define refresh-state retention/cleanup.",
+      "Adapter must account for container, CLI, app-server and owned helper startup and shutdown."
+    ],
+    "firstCheck": "Provider-free readiness only: engine available, pinned image ready, expected CLI version available, sandbox starts under container restrictions, public workspace mount works, and auth readiness route is available without exposing credentials. Measure wall time; stop on concrete failure."
+  },
+  "limitations": {
+    "localDockerAvailabilityChecked": false,
+    "localWslAvailabilityChecked": false,
+    "containerStarted": false,
+    "authenticationAttempted": false,
+    "nativeModelCalls": 0,
+    "setupCostsMeasured": false,
+    "note": "Documentation review only; runtime behavior on this Windows installation remains unverified."
+  },
+  "correction": {
+    "priorClaim": "Initial read-only assessment incorrectly said no authoritative Codex ChatGPT-account container-auth route had been found, suggesting API-key/Agents API might be necessary.",
+    "correctedFinding": "That was wrong. The official Codex auth page explicitly documents device-code auth for headless use and copying auth.json into Docker. Auth remains a security/lifecycle concern, not a reason to exclude containers or switch providers.",
+    "source": "https://learn.chatgpt.com/docs/auth"
+  }
+}

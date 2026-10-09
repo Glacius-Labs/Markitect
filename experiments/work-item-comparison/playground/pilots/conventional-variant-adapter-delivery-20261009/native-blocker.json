@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "observedAt": "2026-10-09",
+  "code": "helper_unknown_error",
+  "message": "setup refresh had errors",
+  "currentDailyLog": "C:/Users/Consiliari/.codex/.sandbox/sandbox.2026-10-09.log",
+  "observedCause": "Windows OS error32 file in use prevents legacy sandbox read/execute ACL refresh on cua_node node_repl.exe; canonical sandbox.log was stale",
+  "resolutionCandidate": "documented explicit child-local MXC; first protected command passed",
+  "globalChanges": false,
+  "foreignProcessesTouched": false,
+  "remainingNativeReadiness": "full isolated workspace write/read/Git check before model"
+}

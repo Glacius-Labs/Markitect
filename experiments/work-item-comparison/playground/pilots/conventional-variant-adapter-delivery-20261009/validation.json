@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "observedAt": "2026-10-09T19:50:55.539643+00:00",
+  "scope": "provider-free focused adapter/runtime/controller checks; no native model calls",
+  "groups": {
+    "adapterContract": 9,
+    "conventionalAdapter": 10,
+    "backend": 19,
+    "service": 15,
+    "operatorMcp": 9,
+    "nativeScriptedIntegration": 5,
+    "stationController": 6,
+    "finalAssessor": 2,
+    "deliveryBinding": 2
+  },
+  "finalOutcome": "all affected groups passed; controller latest main authority mock fixed and affected test rerun",
+  "repairs": [
+    {
+      "failure": "PermissionError reading status.json under Windows concurrent atomic replacement",
+      "originalSuite": "58 tests, one failure; independent integration reproduced",
+      "fix": "status-only read retries bounded2seconds; integration5/5 and service15/15 pass"
+    },
+    {
+      "failure": "new order verification invalidated offline main fixture",
+      "fix": "mock only admission in that process-free fixture; actual delivery binding unchanged, affected fixture plus authority2/2 passed"
+    }
+  ],
+  "sourcePins": {
+    "experiments\\work-item-comparison\\playground\\adapters\\contract.py": "83750aebbf48044fbf4ea12910a35b07f97e53554a69c4f9754f8be290407aa4",
+    "experiments\\work-item-comparison\\playground\\adapters\\loader.py": "81d40e8867188f657c5d5e0bb20dca3ed54017f4c0ed512a01ebf5de58d78b7e",
+    "experiments\\work-item-comparison\\playground\\adapters\\__init__.py": "bf7769a6a95f50c7f8494772291d364bb26c98aef869d92c53c016c1e232f4f3",
+    "experiments\\work-item-comparison\\playground\\conventional\\adapter.py": "a0eb2ed2ab822702b01d471cd63975c9f71c467192c9e13f44be2b27c78bc52b",
+    "experiments\\work-item-comparison\\playground\\conventional\\backends.py": "9c80f0754d08ce77f5077b7c9a1d27866097d6b9989389d1a6aaef8baf927f7a",
+    "experiments\\work-item-comparison\\playground\\conventional\\mcp.py": "247d68696cfa7c52265c7d6e978a8b0726750e82b1f9b1321b8cf12eb8e4c2b9",
+    "experiments\\work-item-comparison\\playground\\conventional\\service.py": "3042480d6de6dc15d5976be0778193927d78bfacf2bad825a7fbb39248c8183a",
+    "experiments\\work-item-comparison\\playground\\conventional\\__init__.py": "d5113c22eef217fce313aad32623c5b3dbd97c47f739c298ab118e951fc1b798",
+    "experiments\\work-item-comparison\\playground\\run_variant_study.py": "477ccad1c190dbb6dcd8a92e5fd042a95b7206deb0e0faeb4b065a2400c26d69",
+    "experiments\\work-item-comparison\\playground\\final_assessor.py": "2c7f81ef6a5b2cf11d9ce24f03e69335df73fd2e39dc4126f05b510ea4c223c0",
+    "experiments\\work-item-comparison\\playground\\delivery_binding.py": "085fdb763881ba9c42ed72b43551b8f10a4bbcfb3fa365c363f79762ef022cc3",
+    "experiments\\work-item-comparison\\playground\\playground_adapter.py": "f9d39cb1bf24098fbcb7b2c6700bd9b43f8dcfa06cf1b85590386aebac290c50"
+  },
+  "nativeStarts": 0,
+  "nativeStartupChecksConsumed": 2,
+  "studyEvidence": "NOT RUN at source freeze",
+  "unchangedHistoricLifecycleFixtures": "not required for adapter change; old pilot fixtures inadvertently included in broad conventional suite once, preserved no native calls"
+}

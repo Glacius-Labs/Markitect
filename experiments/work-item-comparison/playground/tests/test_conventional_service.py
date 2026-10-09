@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from conventional.service import Service
+import conventional.service as service_module
 
 
 def write(path, data):
@@ -227,6 +228,39 @@ class ServiceTests(unittest.TestCase):
             self.service().start("overlap")
         service.cancel(first["runId"])
         service.wait(first["runId"])
+
+    def test_status_read_retries_transient_windows_permission_error(self):
+        with patch.object(Path, "read_text",
+                          side_effect=[PermissionError("sharing violation"), '{"state":"running"}']) as read:
+            result = service_module._read(Path(self.audit) / "status.json")
+        self.assertEqual(result, {"state": "running"})
+        self.assertEqual(read.call_count, 2)
+
+    def test_status_read_permission_retry_is_bounded_at_two_seconds(self):
+        ticks = [0.0]
+        calls = [0]
+
+        def denied(*args, **kwargs):
+            calls[0] += 1
+            raise PermissionError("sharing violation")
+
+        def fake_sleep(seconds):
+            ticks[0] += seconds
+
+        with patch.object(Path, "read_text", side_effect=denied), \
+                patch.object(service_module.time, "monotonic", side_effect=lambda: ticks[0]), \
+                patch.object(service_module.time, "sleep", side_effect=fake_sleep):
+            with self.assertRaises(PermissionError):
+                service_module._read(Path(self.audit) / "status.json")
+        self.assertGreaterEqual(ticks[0], 2.0)
+        self.assertLessEqual(ticks[0], 2.01)
+        self.assertGreater(calls[0], 1)
+
+    def test_non_status_read_permission_error_is_not_retried(self):
+        with patch.object(Path, "read_text", side_effect=PermissionError("denied")) as read:
+            with self.assertRaises(PermissionError):
+                service_module._read(Path(self.audit) / "config.json")
+        self.assertEqual(read.call_count, 1)
 
 
 if __name__ == "__main__":

@@ -28,6 +28,8 @@
     "approvalPolicy": "never",
     "memoryEnabled": false,
     "nativeHelperModel": "gpt-6-luna",
-    "nativeHelperEffort": "high"
+    "nativeHelperEffort": "high",
+    "windowsSandbox": "mxc",
+    "nativeMaxConcurrentAgents": 4
   }
 }

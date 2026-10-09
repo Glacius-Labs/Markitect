@@ -44,7 +44,23 @@ def _bytes(value):
 
 
 def _read(path):
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    path = Path(path)
+    deadline = None
+    while True:
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except PermissionError:
+            # Windows may briefly deny readers while another local controller
+            # atomically replaces status.json. Retry only this read; never replay
+            # a native operation or hide other file/JSON failures.
+            if path.name != "status.json":
+                raise
+            if deadline is None:
+                deadline = time.monotonic() + 2
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise
+            time.sleep(min(0.01, remaining))
 
 
 def _new(path, data):
