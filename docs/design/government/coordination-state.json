@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T22:28:51.024986Z",
+  "updatedUtc": "2026-10-09T22:30:17.953368Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17755,5 +17755,30 @@
     "readyProductBinaryCaseBinding": "PENDING_FUNCTIONAL_HANDOFF",
     "newQuotaOrActor": "NONE",
     "conventionalClosed": "UNCHANGED_ACCEPTED"
+  },
+  "scientistWindowsRuntimeReuse20261010": {
+    "authority": "Direct human: use Scientist successful Windows setup and reconsider prolonged approach",
+    "status": "SOURCE_COMPARISON_DONE_OWNER_TECHNICAL_HANDOFF_IN_PROGRESS",
+    "scientistDispatch": "SENT_ONCE: source-only sanitized technical handoff, no new run/installation/private case data",
+    "integrationDispatch": "SENT_ONCE: minimal demonstrated startup, concrete MXC correction, reconsider unnecessary runner complexity; no unchanged retry loop",
+    "rootVerifiedSource": {
+      "scientistFile": "experiments/work-item-comparison/playground/conventional/backends.py",
+      "launch": "Own stdio codex app-server, child-local -c windows.sandbox=\"mxc\"; thread/start cwd/model/sandbox/approvalPolicy; turn/start fresh own thread/cwd/model/effort",
+      "productFiles": [
+        "src/internal/host/codexappserver/process.go",
+        "src/internal/host/codexappserver/session.go"
+      ],
+      "productObserved": "codex app-server --listen stdio://, explicit :workspace profile now; source observed backend option not yet wired at read",
+      "sameProviderTransport": true
+    },
+    "realDifferences": [
+      "Scientist existing0.162.0-alpha.2 versus product stable0.162.0",
+      "Scientist workspace-write approvalnever and workspace_snapshot target versus Markitect scoped Git workspaces/approvalon-request/guardedApply",
+      "Scientist child-local MXC versus product inherited default at failed actual"
+    ],
+    "inference": "Do not discard AppServer on this evidence: same transport has genuine successful ordinary tools/helpers. First align minimal supported runtime startup; keep necessary ownership/model/review/Apply boundaries, remove only demonstrated unnecessary runner layers. Success of Snapshot does not prove Git metadata access.",
+    "next": "Owner technical source/runtime handoff to Root, then sanitized launch facts to Integration if additive; final actual needed to verify new Markitect startup",
+    "privateCasesDisclosedToIntegration": false,
+    "newActualQuotaForScientist": false
   }
 }
