@@ -18,6 +18,11 @@ This is an owner-facing collection of product thoughts and questions, not a prod
 | IDEA-20261009-010 | Proportionate dispute severity and higher review levels | Noted; open questions | 009, 011, 012 |
 | IDEA-20261009-011 | Managers can raise implementation cases for adjudication | Noted; open questions | 003, 010, 012 |
 | IDEA-20261009-012 | Configurable local priorities at every level | Noted; open questions | 008, 010, 011 |
+| IDEA-20261009-013 | Regular briefings on important organizational activity | Noted; scope open | 011, 014 |
+| IDEA-20261009-014 | Monitoring, logs and deliberate data collection | Noted; open questions | 013, 015 |
+| IDEA-20261009-015 | Examine Kubernetes or etcd suitability later | Noted; technology undecided | 014 |
+| IDEA-20261009-016 | Visualize the governed project “realm” | Noted; meaning open | 013, 014 |
+| IDEA-20261009-017 | Explore gamification | Noted; meaning open | 013, 016 |
 
 ### Group: Projektspezifische Entscheidungen und Government
 
@@ -28,6 +33,16 @@ The five linked ideas below came together in one user contribution. They are a s
 Marketing relayed the same five suggestions in chat `01a12220-9cbb-7432-8762-3c4c4b8db9de` on 2026-10-09, with the same direct user-source attribution. This is a linked cross-chat referral, not a second idea source or an adopted marketing claim. Its clarification that a precedent store would not itself prove a learning AI is retained as a boundary when discussing IDEA-20261009-009.
 
 Concepts recorded the same direct user contribution as `USER-20261009-03` in `docs/design/concepts/decision-framework-ideas-20261009.md` in its own worktree. This is a cross-chat reference to the same five ideas, not a duplicate entry here. Concepts clarifies the “learning mechanism” as a referencable collection of reasoned user decisions, with neither model training nor automatic rule changes implied. It also identifies continued validity after context changes, local versus higher-level guidance, the severity scale and unnecessary escalation as open questions; these nuances are reflected in IDEA-20261009-009 through -012.
+
+### Group: Government operation and observability
+
+These future-use ideas expand on the user's Government/president framing in chat `01a121f1-b948-7050-ae5d-9921b99db9c0`, turn `01a12241-8b52-7010-ac05-edbebd3c80d3`, and the follow-up in turn `01a12251-905c-7892-ac64-6e228252e644`, user message `01a12251-9095-7762-8d34-7490be6e6ef5`. They concern a use experience for a future state where Markitect/Government is assumed complete. They are not architecture decisions, implementation assignments or new studies. Fine planning remains deferred until current work packages are complete, case-study results are available, and a stable product version exists.
+
+**Motivation paraphrase supplied with the referral (not original wording):** maintain an overview of an autonomous organization and make its activity visible and traceable. The user's exact wording is retained in each entry. The U.S. presidential-briefing comparison is an analogy for a broader Markitect product idea, not a statement that the real briefing covers all organizational activity. Kubernetes and etcd are candidates to investigate, not a selected stack.
+
+**Official-source check, 2026-10-09:** The U.S. Intelligence Community describes the President's Daily Brief as a classified, daily, all-source intelligence digest about national security threats, global unrest and related information for presidential decision-making; it is not described as a comprehensive general activity report ([official PDB description](https://www.intelligence.gov/how-the-ic-works)). Kubernetes is a platform for managing containerized workloads and services with declarative configuration and automation ([Kubernetes overview](https://kubernetes.io/docs/concepts/overview/)). etcd is a consistent distributed key-value store used mainly as a separate coordination service in distributed systems ([etcd FAQ](https://etcd.io/docs/v3.7/faq/)). These are distinct technical roles; this source check establishes no Markitect need or architecture choice.
+
+**Additional assistant hypothesis relayed from the product discussion (not user wording or a decision):** the same evidence-bound events might feed briefings, history, observability and visualization; gamification might make verified progress visible. Keep this as a discussion hypothesis until examined. “Verified progress” and shared event sourcing were not specified by the user.
 
 ## Sources and status
 
@@ -183,3 +198,63 @@ Historian is an authorized source for relevant findings from Markitect history a
 - **Open questions:** Which settings may be local, who controls them, how are local priorities reconciled with higher-level guidance, and how are conflicts and local exceptions surfaced?
 - **Relationships:** IDEA-20261009-008, 010, 011; broader context in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
 - **Status:** Noted; questions open.
+
+### IDEA-20261009-013 — Regular briefings on important organizational activity
+
+- **Group:** Government operation and observability.
+- **Source wording (user):** “der Präsident [bekommt] täglich eine Art Briefing [...], in dem alles wichtige was passiert ist zusammengefasst wird sodass er einen Überblick darüber hat was aktuell passiert.”
+- **Problem:** A person overseeing delegated work needs an overview without following every routine action directly.
+- **Idea:** Explore a regular briefing that summarizes important activity and gives the owner a current overview of the organization.
+- **Assumptions:** Important events can be distinguished from routine activity; a concise briefing can link its summary to underlying records.
+- **Hoped-for effect (motivation paraphrase):** Keep an overview of an autonomous organization and make its work visible and traceable.
+- **Open questions:** What counts as important? What belongs in daily versus event-triggered updates? How are uncertainty, unresolved cases and source links presented? The official description of the real PDB is intelligence focused; which elements, if any, usefully transfer to a general Markitect briefing?
+- **Relationships:** IDEA-20261009-011, 014, 016; earlier user Government framing in turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
+- **Status:** Noted for possible future use; scope open and planning deferred.
+
+### IDEA-20261009-014 — Monitoring, logs and deliberate data collection
+
+- **Group:** Government operation and observability.
+- **Source wording (user):** “Gedanken über Monitoring, Protokolle, und generelles Erheben von Daten”.
+- **Problem:** Delegated organizational activity needs to be observable enough to understand what is happening and support useful briefings or review.
+- **Idea:** Consider what monitoring, logs and other data collection a future Markitect/Government experience would need.
+- **Assumptions:** The information collected can be tied to meaningful activity and decisions; collection and retention have clear purpose and limits.
+- **Hoped-for effect (motivation paraphrase):** Make organizational activity visible and traceable while preserving an overview.
+- **Open questions:** Which signals serve operations, accountability or decision-making? What must be retained, who can see it, and how are privacy, noise and storage costs bounded?
+- **Relationships:** IDEA-20261009-013, 015, 016; earlier Government framing in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
+- **Status:** Noted for possible future use; no telemetry or logging design chosen.
+
+### IDEA-20261009-015 — Examine Kubernetes or etcd suitability later
+
+- **Group:** Government operation and observability.
+- **Source wording (user):** “Hier wäre Kubernetes oder zumindest etcd jeweils eine Idee die man sich überlegen könnte.”
+- **Problem:** The eventual operation of a more autonomous organization may raise infrastructure or coordination needs that warrant examination.
+- **Idea:** At a later point, investigate whether Kubernetes or etcd is suitable to any identified need.
+- **Assumptions:** A concrete need can first be stated and compared with simpler alternatives; these candidates may serve different purposes and are not interchangeable by default.
+- **Hoped-for effect (motivation paraphrase):** Support visible, traceable operation if a later, completed product demonstrates that such infrastructure is needed.
+- **Open questions:** What requirement would motivate either candidate? What simpler options exist? What are the operational, reliability and maintenance costs? Kubernetes manages containerized workloads/services; etcd is a distributed key-value coordination service, so their distinct roles need to be compared against a concrete need. No stack choice is made here.
+- **Relationships:** IDEA-20261009-014. No implementation or technology evaluation is started by recording this suggestion.
+- **Status:** Noted as a future investigation candidate; technology undecided and planning deferred.
+
+### IDEA-20261009-016 — Visualize the governed project “realm”
+
+- **Group:** Government operation and observability.
+- **Source wording (user):** “Auch eventuell Visualisierung über das eigene \"Reich\" [...] wären interessant”.
+- **Problem:** Textual records alone may not provide an immediately understandable overview of a large delegated organization.
+- **Idea:** Explore a visualization of the user's “realm” in the Government metaphor.
+- **Assumptions:** A visual representation could make some useful relationships, status or activity easier to understand; the intended view is not yet specified.
+- **Hoped-for effect (motivation paraphrase):** Improve overview and make the organization's work visible.
+- **Open questions:** What is the “realm” meant to show: roles, responsibilities, activity, decisions, dependencies, health, or something else? Which users need the view, and what should it help them decide?
+- **Relationships:** IDEA-20261009-013, 014, 017; earlier Government framing in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
+- **Status:** Noted for possible future use; meaning open and planning deferred.
+
+### IDEA-20261009-017 — Explore gamification
+
+- **Group:** Government operation and observability.
+- **Source wording (user):** “Gamification wären interessant”.
+- **Problem:** The user has raised gamification as a potentially interesting aspect of a future use experience; no specific problem or mechanic was stated.
+- **Idea:** Keep gamification as a possibility to examine later, without assuming a particular mechanic or purpose.
+- **Assumptions:** None established. Any claim that gamification would improve engagement, quality or work visibility would need to be explored rather than presumed.
+- **Hoped-for effect:** Not specified by the user. The group's overview/visibility motivation is a separate supplied paraphrase, not an attributed gamification benefit.
+- **Open questions:** What would be gamified, for whom, and toward what desired behavior? How could perverse incentives, superficial metrics or competition be avoided?
+- **Relationships:** IDEA-20261009-013, 016.
+- **Status:** Noted as an open future idea; meaning open and planning deferred.
