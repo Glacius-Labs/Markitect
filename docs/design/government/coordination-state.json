@@ -16992,7 +16992,7 @@
     "priorEvidence": "All failed pilots and receipts preserved; development tests are not study or method superiority evidence",
     "grantPath": "docs/design/government/conventional-variant-adapter-delivery-20261009.json",
     "grantSha256": "e6c2b11ce4758d9c315d6babb01612f43ebef23e492da018424cb92732f08d73",
-    "status": "ACTUAL_ALLOCATION_EXHAUSTED_CONTROLLER_VIOLATION_OWNED_ROOOMBOOK_UNCERTAIN",
+    "status": "ACTUALS_DISABLED_ALLOCATION_EXHAUSTED_GREEENFIELD_TURN_UNCERTAIN",
     "actualStartsObserved": 3,
     "dispatch": "SENT_ONCE_TO_SCIENTIST_LOCAL",
     "latestPreparationCallback": {
@@ -17065,7 +17065,22 @@
       "officialSources": [
         "https://learn.chatgpt.com/docs/agent-approvals-security",
         "https://learn.chatgpt.com/docs/app-server"
-      ]
+      ],
+      "latestOwnedClosure": {
+        "verifiedUtc": "2026-10-09T19:58:40Z",
+        "controller": "Owner reports session87753 endedExit1",
+        "readinglog": "Root confirms S2cancelled and final-freeze exists; owner reports nativecancel ack",
+        "roombook": "Root confirms uncertain status and no final-freeze; native turn found in exact own journal",
+        "nativeSessionId": "01a1223b-1aa5-7c03-8ee3-7c62b700277d",
+        "nativeTurnId": "01a1223b-1d61-7423-ae02-704e374421fa",
+        "journalPath": "C:/Users/Consiliari/.codex/sessions/2026/10/09/rollout-2026-10-09T21-54-21-01a1223b-1aa5-7c03-8ee3-7c62b700277d.jsonl",
+        "journalSha256": "1e0c7aa462c5eee7a6a4b7c0951dda8e723d7a641a166d2b317d36e8a5c2166e",
+        "rootObservedJournal": "One task_started at19:54:22.386Z, no task_aborted/task_complete/task_completed event at capture",
+        "ownerObservedProcesses": "AppServerPIDs52908/48644 absent; formerCLI54936 reused by python and untouched; exact native Codex process absent does not attest original turn terminal",
+        "locks": "Own Greenfield active lock preserved, no immutable freeze/close or replay",
+        "newCalls": "Owner reports no further actual/startup calls; provider-free repairs and private archive in progress",
+        "rootNewOrderSent": false
+      }
     }
   }
 }
