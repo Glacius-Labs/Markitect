@@ -97,6 +97,11 @@ def review_invocation() -> dict:
     return value
 
 
+def provider_refs(value: dict, canonical_refs: list[str]) -> list[str]:
+    alias_by_ref = {ref: alias for alias, ref in runner.evidence_ref_aliases(value).items()}
+    return [alias_by_ref[ref] for ref in canonical_refs]
+
+
 class CodexRunnerTests(unittest.TestCase):
     def test_strict_json_rejects_duplicate_keys_at_any_depth(self) -> None:
         with self.assertRaises(runner.AdapterError):
@@ -106,6 +111,12 @@ class CodexRunnerTests(unittest.TestCase):
         value = invocation()
         value["request"]["transcript"] = "executor private conversation"
         with self.assertRaises(runner.AdapterError):
+            runner.validate_invocation(value)
+
+    def test_invocation_bounds_scope_and_policy_reference_counts(self) -> None:
+        value = invocation()
+        value["request"]["scopeIds"] = [f"scope/{index}" for index in range(129)]
+        with self.assertRaisesRegex(runner.AdapterError, "limited to 128"):
             runner.validate_invocation(value)
 
     def test_artifact_bytes_are_verified(self) -> None:
@@ -183,9 +194,9 @@ class CodexRunnerTests(unittest.TestCase):
         for instruction in (
             "Copy apiVersion, runId, nonce, and inputDigest exactly from the invocation envelope into the response; copy role exactly from invocation.request.role",
             "Always include candidateFiles, evidenceRefs, verifierObservations, and uncertainty as arrays",
-            "exact strings supplied in request.scopeIds, request.policyIds, or request.artifacts[].path",
-            "Do not use digests, hashes, labels, paraphrases, or derived values as evidence references",
-            "Do not duplicate references; list them in lexicographic order",
+            "Emit only alias strings from this mapping in evidenceRefs; never emit a canonical request reference in this field",
+            "Do not use digests, hashes, labels, paraphrases, or derived values",
+            "Do not duplicate aliases; list them in lexicographic order",
             "exactly one verifierObservations entry for each supplied scopeIds and policyIds value",
             "using that exact value as subject",
             "incomplete or escalated",
@@ -211,11 +222,13 @@ class CodexRunnerTests(unittest.TestCase):
             "scope/z",
             "source/file.cs",
         ]
-        encoded_refs = json.dumps(expected_refs, ensure_ascii=False, separators=(",", ":"))
-        self.assertIn("evidenceRefs must equal the complete sorted unique union", prompt)
-        self.assertIn("including fixed-check input artifact paths", prompt)
-        self.assertIn("The exact required list is " + encoded_refs, prompt)
-        self.assertIn("Listing a reference is protocol bookkeeping", prompt)
+        self.assertEqual(list(runner.evidence_ref_aliases(value).values()), expected_refs)
+        aliases = runner.evidence_ref_aliases(value)
+        encoded_refs = json.dumps(list(aliases), ensure_ascii=False, separators=(",", ":"))
+        self.assertIn("evidenceRefs must equal the complete alias list exactly once", prompt)
+        self.assertIn("including aliases for fixed-check input artifact paths", prompt)
+        self.assertIn("The exact required alias list is " + encoded_refs, prompt)
+        self.assertIn("Listing an alias is protocol bookkeeping", prompt)
 
     def test_typed_observation_subjects_preserve_separate_evidence_references(self) -> None:
         value = invocation("verifier")
@@ -230,7 +243,7 @@ class CodexRunnerTests(unittest.TestCase):
         self.assertIn("Overall passed requires exactly one passed observation per subject", prompt)
         self.assertIn("Failed, incomplete, or escalated may retain a partial set", prompt)
         self.assertIn("Never place these typed observation identities in evidenceRefs", prompt)
-        self.assertIn('The exact required list is ["scope/example"]', prompt)
+        self.assertIn('The exact required alias list is ["evidence-000000-000000"]', prompt)
         self.assertNotIn("using that exact value as subject", prompt)
 
     def test_invalid_typed_subjects_refuse_before_provider_or_workspace_writes(self) -> None:
@@ -253,8 +266,8 @@ class CodexRunnerTests(unittest.TestCase):
         for role in ("executor", "infer"):
             with self.subTest(role=role):
                 prompt = runner.make_prompt(invocation(role))
-                self.assertIn("include only relevant exact references", prompt)
-                self.assertNotIn("evidenceRefs must equal the complete sorted unique union", prompt)
+                self.assertIn("include only aliases for relevant supplied", prompt)
+                self.assertNotIn("evidenceRefs must equal the complete alias list exactly once", prompt)
 
     def test_role_instructions_list_role_specific_outcomes(self) -> None:
         expected = {
@@ -308,13 +321,13 @@ class CodexRunnerTests(unittest.TestCase):
     def test_inference_candidate_uses_closed_string_transport_and_is_parsed(self) -> None:
         self.assertEqual(runner.RESPONSE_SCHEMA["properties"]["candidateJson"]["type"], ["string", "null"])
         self.assertIn("candidateJson", runner.RESPONSE_SCHEMA["required"])
-        response = runner.normalize_codex_response({"candidateJson": '{"proposal":{"value":1}}', "reportJson": None}, invocation("infer"))
+        response = runner.normalize_codex_response({"candidateJson": '{"proposal":{"value":1}}', "reportJson": None, "evidenceRefs": []}, invocation("infer"))
         self.assertEqual(response["candidateJson"], {"proposal": {"value": 1}})
-        self.assertNotIn("candidateJson", runner.normalize_codex_response({"candidateJson": None, "reportJson": None}, invocation()))
+        self.assertNotIn("candidateJson", runner.normalize_codex_response({"candidateJson": None, "reportJson": None, "evidenceRefs": []}, invocation()))
         with self.assertRaises(runner.AdapterError):
-            runner.normalize_codex_response({"candidateJson": "[]", "reportJson": None}, invocation("infer"))
+            runner.normalize_codex_response({"candidateJson": "[]", "reportJson": None, "evidenceRefs": []}, invocation("infer"))
         with self.assertRaises(runner.AdapterError):
-            runner.normalize_codex_response({"candidateJson": '{"x":1}', "reportJson": None}, invocation("executor"))
+            runner.normalize_codex_response({"candidateJson": '{"x":1}', "reportJson": None, "evidenceRefs": []}, invocation("executor"))
 
     def test_task_report_schema_is_closed_required_and_parsed_from_string(self) -> None:
         value = invocation()
@@ -327,12 +340,13 @@ class CodexRunnerTests(unittest.TestCase):
         normalized = runner.normalize_codex_response({
             "candidateJson": None,
             "reportJson": '{"status":"complete","summary":"done"}',
+            "evidenceRefs": [],
         }, value)
         self.assertEqual(normalized["reportJson"], {"status": "complete", "summary": "done"})
         with self.assertRaises(runner.AdapterError):
-            runner.normalize_codex_response({"candidateJson": None, "reportJson": '{"status":"complete","summary":""}'}, value)
+            runner.normalize_codex_response({"candidateJson": None, "reportJson": '{"status":"complete","summary":""}', "evidenceRefs": []}, value)
         legacy = invocation("executor")
-        self.assertNotIn("reportJson", runner.normalize_codex_response({"candidateJson": None, "reportJson": None}, legacy))
+        self.assertNotIn("reportJson", runner.normalize_codex_response({"candidateJson": None, "reportJson": None, "evidenceRefs": []}, legacy))
 
     def test_provider_response_schema_binds_all_invocation_identity_fields(self) -> None:
         value = invocation("verifier")
@@ -367,7 +381,9 @@ class CodexRunnerTests(unittest.TestCase):
         schema = runner.provider_response_schema(value)
 
         evidence = schema["properties"]["evidenceRefs"]
-        self.assertEqual(evidence["items"]["enum"], ["policy/review", "scope/a", "scope/z", "src/check.py"])
+        aliases = runner.evidence_ref_aliases(value)
+        self.assertEqual(list(aliases.values()), ["policy/review", "scope/a", "scope/z", "src/check.py"])
+        self.assertEqual(evidence["items"]["enum"], list(aliases))
         self.assertNotIn("maxItems", evidence)
         self.assertEqual(runner.RESPONSE_SCHEMA, original_schema)
 
@@ -400,20 +416,118 @@ class CodexRunnerTests(unittest.TestCase):
         }]
         schema = runner.provider_response_schema(value)
 
-        self.assertEqual(
-            schema["properties"]["evidenceRefs"]["items"]["enum"],
-            ["policy/review", "scope/a", "scope/z", "src/check.py"],
-        )
+        aliases = runner.evidence_ref_aliases(value)
+        self.assertEqual(list(aliases.values()), ["policy/review", "scope/a", "scope/z", "src/check.py"])
+        self.assertEqual(schema["properties"]["evidenceRefs"]["items"]["enum"], list(aliases))
         prompt = runner.make_prompt(value)
-        self.assertIn("evidenceRefs must equal the complete sorted unique union", prompt)
-        self.assertIn('["policy/review","scope/a","scope/z","src/check.py"]', prompt)
+        self.assertIn("evidenceRefs must equal the complete alias list exactly once", prompt)
+        self.assertIn("The exact required alias list is " + json.dumps(list(aliases), separators=(",", ":")), prompt)
 
         empty_verifier = invocation("verifier")
         empty_verifier["request"]["scopeIds"] = []
         empty_verifier["request"]["policyIds"] = []
         verifier_prompt = runner.make_prompt(empty_verifier)
-        self.assertIn("evidenceRefs must equal the complete sorted unique union", verifier_prompt)
-        self.assertIn("exact required list is []", verifier_prompt)
+        self.assertIn("evidenceRefs must equal the complete alias list exactly once", verifier_prompt)
+        self.assertIn("exact required alias list is []", verifier_prompt)
+
+    def test_verifier_combined_evidence_union_respects_host_response_bound(self) -> None:
+        value = invocation("verifier")
+        value["request"]["scopeIds"] = [f"scope/{index:03d}" for index in range(64)]
+        value["request"]["policyIds"] = [f"policy/{index:03d}" for index in range(64)]
+        value["request"]["artifacts"] = [{"path": "scope/000"}]
+        aliases = runner.evidence_ref_aliases(value)
+        self.assertEqual(len(aliases), 128)
+        self.assertEqual(len(runner.provider_response_schema(value)["properties"]["evidenceRefs"]["items"]["enum"]), 128)
+
+        value["request"]["artifacts"] = [{"path": "artifact/unique"}]
+        with self.assertRaisesRegex(runner.AdapterError, "limited to 128 unique"):
+            runner.evidence_ref_aliases(value)
+        with self.assertRaisesRegex(runner.AdapterError, "limited to 128 unique"):
+            runner.make_prompt(value)
+
+    def test_evidence_aliases_are_collision_free_and_normalize_only_outer_refs(self) -> None:
+        value = invocation("verifier")
+        canonical_json_id = '["project.markitect.example.org/v1alpha1","Manager","commerce.sales","sales"]'
+        value["request"]["scopeIds"] = [canonical_json_id, "evidence-000000-000000", "scope/example"]
+        aliases = runner.evidence_ref_aliases(value)
+        self.assertEqual(list(aliases.values()), [canonical_json_id, "evidence-000000-000000", "scope/example"])
+        self.assertTrue(set(aliases).isdisjoint(aliases.values()))
+        self.assertTrue(all(alias.startswith("evidence-000001-") for alias in aliases))
+        provider_enum = runner.provider_response_schema(value)["properties"]["evidenceRefs"]["items"]["enum"]
+        self.assertEqual(provider_enum, list(aliases))
+        self.assertTrue(all(len(alias) < 32 for alias in provider_enum))
+        self.assertNotIn(canonical_json_id, provider_enum)
+        prompt = runner.make_prompt(value)
+        self.assertIn("transport-encoded field", prompt)
+        self.assertIn(json.dumps(list(aliases.items()), separators=(",", ":")), prompt)
+
+        wire_aliases = list(reversed(list(aliases)))
+        response = {
+            "candidateJson": None,
+            "reportJson": None,
+            "outcome": "incomplete",
+            "candidateFiles": [],
+            "evidenceRefs": wire_aliases,
+            "verifierObservations": [{"subject": "scope:scope/example", "outcome": "incomplete", "detail": "pending"}],
+            "uncertainty": ["not enough evidence"],
+        }
+        normalized = runner.normalize_codex_response(response, value)
+        self.assertEqual(normalized["evidenceRefs"], [aliases[alias] for alias in wire_aliases])
+        self.assertIn(canonical_json_id, normalized["evidenceRefs"])
+        self.assertEqual(normalized["verifierObservations"][0]["subject"], "scope:scope/example")
+        with self.assertRaises(runner.AdapterError):
+            runner.normalize_codex_response({
+                "candidateJson": None, "reportJson": None, "evidenceRefs": ["evidence-000000-000000"],
+            }, value)
+
+        review = review_invocation()
+        report = {
+            "status": "fail", "summary": "A grounded mismatch.",
+            "findings": [{
+                "path": "src/check.py", "expectation": "Reject invalid input.",
+                "grounding": "statement:goal-1",
+            }],
+        }
+        review_response = {
+            "candidateJson": None, "reportJson": json.dumps(report), "outcome": "proposed",
+            "candidateFiles": [], "evidenceRefs": provider_refs(review, ["src/check.py"]),
+            "verifierObservations": [], "uncertainty": [],
+        }
+        review_normalized = runner.normalize_codex_response(review_response, review)
+        self.assertEqual(review_normalized["evidenceRefs"], ["src/check.py"])
+        self.assertEqual(review_normalized["reportJson"]["findings"][0]["grounding"], "statement:goal-1")
+
+    def test_evidence_alias_normalizer_rejects_unknown_duplicate_malformed_and_empty_refs(self) -> None:
+        value = invocation()
+        valid_alias = next(iter(runner.evidence_ref_aliases(value)))
+        base = {
+            "candidateJson": None, "reportJson": None, "outcome": "incomplete",
+            "candidateFiles": [], "verifierObservations": [], "uncertainty": [],
+        }
+        invalid_values = [
+            ["unknown-alias"],
+            ["scope/example"],
+            [valid_alias, valid_alias],
+            [1],
+            None,
+        ]
+        for refs in invalid_values:
+            with self.subTest(refs=refs):
+                response = {**base, "evidenceRefs": refs}
+                with self.assertRaises(runner.AdapterError):
+                    runner.normalize_codex_response(response, value)
+        response = dict(base)
+        with self.assertRaises(runner.AdapterError):
+            runner.normalize_codex_response(response, value)
+
+        empty = invocation()
+        empty["request"]["scopeIds"] = []
+        empty["request"]["policyIds"] = []
+        response = {**base, "evidenceRefs": []}
+        self.assertEqual(runner.normalize_codex_response(response, empty)["evidenceRefs"], [])
+        response = {**base, "evidenceRefs": ["evidence-000000-000000"]}
+        with self.assertRaises(runner.AdapterError):
+            runner.normalize_codex_response(response, empty)
 
     def test_typed_read_only_reviewer_report_preserves_semantic_failure_and_uncertainty(self) -> None:
         value = review_invocation()
@@ -442,6 +556,7 @@ class CodexRunnerTests(unittest.TestCase):
             }),
             "outcome": "proposed",
             "candidateFiles": [], "verifierObservations": [],
+            "evidenceRefs": [],
         }, value)
         self.assertEqual(failed["outcome"], "proposed")
         self.assertEqual(failed["reportJson"]["status"], "fail")
@@ -450,6 +565,7 @@ class CodexRunnerTests(unittest.TestCase):
         uncertain = runner.normalize_codex_response({
             "candidateJson": None, "reportJson": None, "outcome": "incomplete",
             "candidateFiles": [], "verifierObservations": [],
+            "evidenceRefs": [],
             "uncertainty": ["The scoped bytes are insufficient to assess the requirement."],
         }, value)
         self.assertEqual(uncertain["outcome"], "incomplete")
@@ -466,6 +582,7 @@ class CodexRunnerTests(unittest.TestCase):
                     "path": "src/check.py", "expectation": "pass", "grounding": "statement:goal-1",
                 }]}),
                 "outcome": "proposed", "candidateFiles": [], "verifierObservations": [],
+                "evidenceRefs": [],
             }, value)
         with self.assertRaisesRegex(runner.AdapterError, "candidate writes"):
             runner.normalize_codex_response({
@@ -474,7 +591,7 @@ class CodexRunnerTests(unittest.TestCase):
                     "path": "src/check.py", "expectation": "pass", "grounding": "statement:goal-1",
                 }]}),
                 "outcome": "proposed", "candidateFiles": [{"path": "rewrite.py", "mode": "0644", "content": "x"}],
-                "verifierObservations": [],
+                "verifierObservations": [], "evidenceRefs": [],
             }, value)
 
         legacy = invocation("verifier")
@@ -483,7 +600,7 @@ class CodexRunnerTests(unittest.TestCase):
         legacy_prompt = runner.make_prompt(legacy)
         self.assertIn("Always set reportJson to null for this role/request", legacy_prompt)
         self.assertIn("exactly one verifierObservations entry", legacy_prompt)
-        self.assertNotIn("reportJson", runner.normalize_codex_response({"candidateJson": None, "reportJson": None}, legacy))
+        self.assertNotIn("reportJson", runner.normalize_codex_response({"candidateJson": None, "reportJson": None, "evidenceRefs": []}, legacy))
 
     def test_codex_launch_transmits_typed_review_schema_and_read_only_report(self) -> None:
         value = review_invocation()
@@ -513,7 +630,7 @@ class CodexRunnerTests(unittest.TestCase):
                     "apiVersion": value["apiVersion"], "runId": value["runId"], "nonce": value["nonce"],
                     "role": "executor", "inputDigest": value["inputDigest"], "outcome": "proposed",
                     "candidateFiles": [], "candidateJson": None, "reportJson": report_json,
-                    "evidenceRefs": ["scope/example", "src/check.py"], "verifierObservations": [], "uncertainty": [],
+                    "evidenceRefs": provider_refs(value, ["scope/example", "src/check.py"]), "verifierObservations": [], "uncertainty": [],
                 }), encoding="utf-8")
 
             def wait(self, timeout=None):
@@ -538,6 +655,10 @@ class CodexRunnerTests(unittest.TestCase):
             argv = captured["argv"]
             response_schema = json.loads(Path(argv[argv.index("--output-schema") + 1]).read_text(encoding="utf-8"))
             self.assertEqual(response_schema["properties"]["reportJson"]["type"], ["string", "null"])
+            self.assertEqual(
+                response_schema["properties"]["evidenceRefs"]["items"]["enum"],
+                list(runner.evidence_ref_aliases(value)),
+            )
             self.assertEqual(bytes(captured["stdin"].submitted), runner.make_prompt(value).encode("utf-8"))
             self.assertEqual(response["outcome"], "proposed")
             self.assertEqual(response["reportJson"], {"status": "pass", "summary": "The scoped candidate satisfies the goal.", "findings": []})

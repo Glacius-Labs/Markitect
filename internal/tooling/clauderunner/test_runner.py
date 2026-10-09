@@ -95,6 +95,11 @@ def review_invocation() -> dict:
     return value
 
 
+def provider_refs(value: dict, canonical_refs: list[str]) -> list[str]:
+    alias_by_ref = {ref: alias for alias, ref in runner.evidence_ref_aliases(value).items()}
+    return [alias_by_ref[ref] for ref in canonical_refs]
+
+
 class ClaudeRunnerTests(unittest.TestCase):
     def test_strict_json_rejects_duplicate_keys(self) -> None:
         with self.assertRaises(runner.AdapterError):
@@ -104,6 +109,12 @@ class ClaudeRunnerTests(unittest.TestCase):
         value = invocation()
         value["request"]["transcript"] = "private"
         with self.assertRaises(runner.AdapterError):
+            runner.validate_invocation(value)
+
+    def test_invocation_bounds_scope_and_policy_reference_counts(self) -> None:
+        value = invocation()
+        value["request"]["scopeIds"] = [f"scope/{index}" for index in range(129)]
+        with self.assertRaisesRegex(runner.AdapterError, "limited to 128"):
             runner.validate_invocation(value)
 
     def test_prompt_renders_verified_unicode_source_without_changing_invocation_binding(self) -> None:
@@ -250,7 +261,7 @@ class ClaudeRunnerTests(unittest.TestCase):
             "apiVersion": value["apiVersion"], "runId": value["runId"], "nonce": value["nonce"],
             "role": "executor", "inputDigest": value["inputDigest"], "outcome": "proposed",
             "candidateFiles": [], "candidateJson": None, "reportJson": report_json,
-            "evidenceRefs": ["scope/example", "src/check.py"], "verifierObservations": [], "uncertainty": [],
+            "evidenceRefs": provider_refs(value, ["scope/example", "src/check.py"]), "verifierObservations": [], "uncertainty": [],
         }
         captured = {}
 
@@ -288,6 +299,10 @@ class ClaudeRunnerTests(unittest.TestCase):
             argv = captured["argv"]
             response_schema = json.loads(argv[argv.index("--json-schema") + 1])
             self.assertEqual(response_schema["properties"]["reportJson"]["type"], ["string", "null"])
+            self.assertEqual(
+                response_schema["properties"]["evidenceRefs"]["items"]["enum"],
+                list(runner.evidence_ref_aliases(value)),
+            )
             self.assertEqual(captured["prompt"], runner.make_prompt(value).encode("utf-8") + b"\n")
             self.assertEqual(response["outcome"], "proposed")
             self.assertEqual(response["reportJson"], {"status": "pass", "summary": "The scoped candidate satisfies the goal.", "findings": []})
@@ -329,7 +344,9 @@ class ClaudeRunnerTests(unittest.TestCase):
         schema = runner.provider_response_schema(value)
 
         evidence = schema["properties"]["evidenceRefs"]
-        self.assertEqual(evidence["items"]["enum"], ["policy/review", "scope/a", "scope/z", "src/check.py"])
+        aliases = runner.evidence_ref_aliases(value)
+        self.assertEqual(list(aliases.values()), ["policy/review", "scope/a", "scope/z", "src/check.py"])
+        self.assertEqual(evidence["items"]["enum"], list(aliases))
         self.assertNotIn("maxItems", evidence)
         self.assertEqual(runner.RESPONSE_SCHEMA, original_schema)
 
@@ -362,20 +379,116 @@ class ClaudeRunnerTests(unittest.TestCase):
         }]
         schema = runner.provider_response_schema(value)
 
-        self.assertEqual(
-            schema["properties"]["evidenceRefs"]["items"]["enum"],
-            ["policy/review", "scope/a", "scope/z", "src/check.py"],
-        )
+        aliases = runner.evidence_ref_aliases(value)
+        self.assertEqual(list(aliases.values()), ["policy/review", "scope/a", "scope/z", "src/check.py"])
+        self.assertEqual(schema["properties"]["evidenceRefs"]["items"]["enum"], list(aliases))
         prompt = runner.make_prompt(value)
-        self.assertIn("evidenceRefs must equal the complete sorted unique union", prompt)
-        self.assertIn('["policy/review","scope/a","scope/z","src/check.py"]', prompt)
+        self.assertIn("evidenceRefs must equal the complete alias list exactly once", prompt)
+        self.assertIn("The exact required alias list is " + json.dumps(list(aliases), separators=(",", ":")), prompt)
 
         empty_verifier = invocation("verifier")
         empty_verifier["request"]["scopeIds"] = []
         empty_verifier["request"]["policyIds"] = []
         verifier_prompt = runner.make_prompt(empty_verifier)
-        self.assertIn("evidenceRefs must equal the complete sorted unique union", verifier_prompt)
-        self.assertIn("exact required list is []", verifier_prompt)
+        self.assertIn("evidenceRefs must equal the complete alias list exactly once", verifier_prompt)
+        self.assertIn("exact required alias list is []", verifier_prompt)
+
+    def test_verifier_combined_evidence_union_respects_host_response_bound(self) -> None:
+        value = invocation("verifier")
+        value["request"]["scopeIds"] = [f"scope/{index:03d}" for index in range(64)]
+        value["request"]["policyIds"] = [f"policy/{index:03d}" for index in range(64)]
+        value["request"]["artifacts"] = [{"path": "scope/000"}]
+        aliases = runner.evidence_ref_aliases(value)
+        self.assertEqual(len(aliases), 128)
+        self.assertEqual(len(runner.provider_response_schema(value)["properties"]["evidenceRefs"]["items"]["enum"]), 128)
+
+        value["request"]["artifacts"] = [{"path": "artifact/unique"}]
+        with self.assertRaisesRegex(runner.AdapterError, "limited to 128 unique"):
+            runner.evidence_ref_aliases(value)
+        with self.assertRaisesRegex(runner.AdapterError, "limited to 128 unique"):
+            runner.make_prompt(value)
+
+    def test_evidence_aliases_are_collision_free_and_normalize_only_outer_refs(self) -> None:
+        value = invocation("verifier")
+        canonical_json_id = '["project.markitect.example.org/v1alpha1","Manager","commerce.sales","sales"]'
+        value["request"]["scopeIds"] = [canonical_json_id, "evidence-000000-000000", "scope/example"]
+        aliases = runner.evidence_ref_aliases(value)
+        self.assertEqual(list(aliases.values()), [canonical_json_id, "evidence-000000-000000", "scope/example"])
+        self.assertTrue(set(aliases).isdisjoint(aliases.values()))
+        self.assertTrue(all(alias.startswith("evidence-000001-") for alias in aliases))
+        provider_enum = runner.provider_response_schema(value)["properties"]["evidenceRefs"]["items"]["enum"]
+        self.assertEqual(provider_enum, list(aliases))
+        self.assertTrue(all(len(alias) < 32 for alias in provider_enum))
+        self.assertNotIn(canonical_json_id, provider_enum)
+        prompt = runner.make_prompt(value)
+        self.assertIn("transport-encoded field", prompt)
+        self.assertIn(json.dumps(list(aliases.items()), separators=(",", ":")), prompt)
+
+        wire_aliases = list(reversed(list(aliases)))
+        response = {
+            "candidateJson": None,
+            "reportJson": None,
+            "outcome": "incomplete",
+            "candidateFiles": [],
+            "evidenceRefs": wire_aliases,
+            "verifierObservations": [{"subject": "scope:scope/example", "outcome": "incomplete", "detail": "pending"}],
+            "uncertainty": ["not enough evidence"],
+        }
+        normalized = runner.normalize_claude_response({"structured_output": response}, value)
+        self.assertEqual(normalized["evidenceRefs"], [aliases[alias] for alias in wire_aliases])
+        self.assertIn(canonical_json_id, normalized["evidenceRefs"])
+        self.assertEqual(normalized["verifierObservations"][0]["subject"], "scope:scope/example")
+
+        review = review_invocation()
+        report = {
+            "status": "fail", "summary": "A grounded mismatch.",
+            "findings": [{
+                "path": "src/check.py", "expectation": "Reject invalid input.",
+                "grounding": "statement:goal-1",
+            }],
+        }
+        review_response = {
+            "candidateJson": None, "reportJson": json.dumps(report), "outcome": "proposed",
+            "candidateFiles": [], "evidenceRefs": provider_refs(review, ["src/check.py"]),
+            "verifierObservations": [], "uncertainty": [],
+        }
+        review_normalized = runner.normalize_claude_response({"structured_output": review_response}, review)
+        self.assertEqual(review_normalized["evidenceRefs"], ["src/check.py"])
+        self.assertEqual(review_normalized["reportJson"]["findings"][0]["grounding"], "statement:goal-1")
+
+    def test_evidence_alias_normalizer_rejects_unknown_duplicate_malformed_and_empty_refs(self) -> None:
+        value = invocation()
+        valid_alias = next(iter(runner.evidence_ref_aliases(value)))
+        base = {
+            "candidateJson": None, "reportJson": None, "outcome": "incomplete",
+            "candidateFiles": [], "verifierObservations": [], "uncertainty": [],
+        }
+        invalid_values = [
+            ["unknown-alias"],
+            ["scope/example"],
+            [valid_alias, valid_alias],
+            [1],
+        ]
+        for refs in invalid_values:
+            with self.subTest(refs=refs):
+                response = {**base, "evidenceRefs": refs}
+                with self.assertRaises(runner.AdapterError):
+                    runner.normalize_claude_response({"structured_output": response}, value)
+        response = dict(base)
+        with self.assertRaises(runner.AdapterError):
+            runner.normalize_claude_response({"structured_output": response}, value)
+
+        empty = invocation()
+        empty["request"]["scopeIds"] = []
+        empty["request"]["policyIds"] = []
+        response = {**base, "evidenceRefs": []}
+        self.assertEqual(
+            runner.normalize_claude_response({"structured_output": response}, empty)["evidenceRefs"],
+            [],
+        )
+        response = {**base, "evidenceRefs": ["evidence-000000-000000"]}
+        with self.assertRaises(runner.AdapterError):
+            runner.normalize_claude_response({"structured_output": response}, empty)
 
     def test_version_requires_restricted_mode_minimum_and_exact_match(self) -> None:
         with self.assertRaises(runner.AdapterError):
@@ -397,7 +510,7 @@ class ClaudeRunnerTests(unittest.TestCase):
             "candidateFiles": [{"path": "candidate.txt", "mode": "0644", "content": "candidate"}],
             "candidateJson": None,
             "reportJson": None,
-            "evidenceRefs": ["scope/example"],
+            "evidenceRefs": provider_refs(value, ["scope/example"]),
             "verifierObservations": [],
             "uncertainty": [],
         }

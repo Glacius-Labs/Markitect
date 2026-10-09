@@ -141,28 +141,55 @@ def task_response_schema(invocation: dict[str, Any]) -> dict[str, Any] | None:
     return schema
 
 
-def provider_response_schema(invocation: dict[str, Any]) -> dict[str, Any]:
-    schema = json.loads(json.dumps(RESPONSE_SCHEMA))
-    task_response_schema(invocation)
+def evidence_ref_aliases(invocation: dict[str, Any]) -> dict[str, str]:
     request = invocation.get("request")
     if not isinstance(request, dict):
         raise AdapterError("request evidence inputs are malformed")
     supplied_refs: set[str] = set()
     for field in ("scopeIds", "policyIds"):
         values = request.get(field)
-        if not isinstance(values, list) or any(not isinstance(value, str) or not value for value in values):
+        if not isinstance(values, list) or len(values) > 128 or any(not isinstance(value, str) or not value for value in values):
             raise AdapterError("request evidence inputs are malformed")
         supplied_refs.update(values)
     artifacts = request.get("artifacts")
-    if not isinstance(artifacts, list):
+    if not isinstance(artifacts, list) or len(artifacts) > 128:
         raise AdapterError("request evidence inputs are malformed")
     for artifact in artifacts:
         if not isinstance(artifact, dict) or not isinstance(artifact.get("path"), str) or not artifact["path"]:
             raise AdapterError("request evidence inputs are malformed")
         supplied_refs.add(artifact["path"])
+    if request.get("role") == "verifier" and len(supplied_refs) > 128:
+        raise AdapterError("verifier evidence references are limited to 128 unique values")
+    refs = sorted(supplied_refs)
+    # At most len(refs) namespace generations can collide: each canonical
+    # reference can equal at most one generated alias across these generations.
+    for generation in range(len(refs) + 1):
+        prefix = f"evidence-{generation:06d}-"
+        aliases = [f"{prefix}{index:06d}" for index in range(len(refs))]
+        if set(aliases).isdisjoint(supplied_refs):
+            return dict(zip(aliases, refs))
+    raise AdapterError("could not construct a collision-free evidence alias namespace")
+
+
+def decode_evidence_ref_aliases(response: dict[str, Any], invocation: dict[str, Any]) -> None:
+    aliases = evidence_ref_aliases(invocation)
+    values = response.get("evidenceRefs")
+    if not isinstance(values, list) or any(not isinstance(value, str) for value in values):
+        raise AdapterError("evidenceRefs must be an array of provider aliases")
+    if len(values) != len(set(values)):
+        raise AdapterError("evidenceRefs contain a duplicate provider alias")
+    if any(value not in aliases for value in values):
+        raise AdapterError("evidenceRefs contain an unknown provider alias")
+    response["evidenceRefs"] = [aliases[value] for value in values]
+
+
+def provider_response_schema(invocation: dict[str, Any]) -> dict[str, Any]:
+    schema = json.loads(json.dumps(RESPONSE_SCHEMA))
+    task_response_schema(invocation)
     evidence_schema = schema["properties"]["evidenceRefs"]
-    if supplied_refs:
-        evidence_schema["items"]["enum"] = sorted(supplied_refs)
+    aliases = evidence_ref_aliases(invocation)
+    if aliases:
+        evidence_schema["items"]["enum"] = list(aliases)
     bound_values = {
         "apiVersion": invocation["apiVersion"],
         "runId": invocation["runId"],
@@ -207,6 +234,9 @@ def validate_invocation(value: Any) -> dict[str, Any]:
         raise AdapterError("unsupported role")
     if not isinstance(request["context"], dict) or not isinstance(request["artifacts"], list):
         raise AdapterError("context and artifact inputs have invalid shapes")
+    for field in ("scopeIds", "policyIds"):
+        if not isinstance(request[field], list) or len(request[field]) > 128:
+            raise AdapterError("scopeIds and policyIds are limited to 128 entries")
     if len(json.dumps(request["context"], ensure_ascii=False, separators=(",", ":")).encode("utf-8")) > 8 * 1024 * 1024 or len(request["artifacts"]) > 128:
         raise AdapterError("request exceeds an adapter input bound")
     artifact_total = 0
@@ -364,26 +394,22 @@ def verifier_observation_contract(request: dict[str, Any]) -> str:
 
 def make_prompt(invocation: dict[str, Any]) -> str:
     request = invocation["request"]
-    verifier_evidence_refs = sorted({
-        *request["scopeIds"],
-        *request["policyIds"],
-        *(artifact["path"] for artifact in request["artifacts"]),
-    })
+    evidence_aliases = evidence_ref_aliases(invocation)
+    verifier_evidence_aliases = list(evidence_aliases)
+    alias_map = json.dumps(list(evidence_aliases.items()), ensure_ascii=False, separators=(",", ":"))
     if request["role"] == "verifier":
         evidence_role_contract = (
-            "- For a verifier response, evidenceRefs must equal the complete sorted unique union of every supplied scopeId, "
-            "policyId, and artifact path. Include every value exactly once, including fixed-check input artifact paths. "
-            "The exact required list is "
-            + json.dumps(verifier_evidence_refs, ensure_ascii=False, separators=(",", ":"))
-            + ". Treat each item as an opaque reference string. Listing a reference is protocol bookkeeping; it does not by itself "
+            "- For a verifier response, evidenceRefs must equal the complete alias list exactly once, including aliases for "
+            "fixed-check input artifact paths. The exact required alias list is "
+            + json.dumps(verifier_evidence_aliases, ensure_ascii=False, separators=(",", ":"))
+            + ". Listing an alias is protocol bookkeeping; it does not by itself "
             "show that the item was inspected or that it supports a conclusion.\n"
         )
     else:
         evidence_role_contract = (
-            "- For executor and inference responses, include only relevant exact references from the supplied scopeIds, policyIds, "
-            "or artifact paths.\n"
+            "- For executor and inference responses, include only aliases for relevant supplied scopeIds, policyIds, or artifact paths.\n"
         )
-    if not verifier_evidence_refs:
+    if not evidence_aliases:
         evidence_role_contract += "- No evidence references were supplied; evidenceRefs must be an empty array.\n"
     report_contract = ""
     report_schema = task_response_schema(invocation)
@@ -422,8 +448,11 @@ def make_prompt(invocation: dict[str, Any]) -> str:
         "- Copy apiVersion, runId, nonce, and inputDigest exactly from the invocation envelope into the response; copy role exactly from invocation.request.role.\n"
         "- Always include candidateFiles, evidenceRefs, verifierObservations, and uncertainty as arrays, using empty arrays when there are no entries.\n"
         "- Always include reportJson. Follow the typed report contract below when present; otherwise set it to null.\n"
-        "- evidenceRefs may contain only exact strings supplied in request.scopeIds, request.policyIds, or request.artifacts[].path. "
-        "Do not use digests, hashes, labels, paraphrases, or derived values as evidence references. Do not duplicate references; list them in lexicographic order.\n"
+        "- evidenceRefs is a transport-encoded field. Its exact alias-to-reference mapping is "
+        + alias_map
+        + ". Emit only alias strings from this mapping in evidenceRefs; never emit a canonical request reference in this field. "
+        "This encoding applies only to outer evidenceRefs; all other fields keep their original values. Do not use digests, hashes, "
+        "labels, paraphrases, or derived values. Do not duplicate aliases; list them in lexicographic order.\n"
         + evidence_role_contract
         + report_contract
         + (verifier_observation_contract(request) if request["role"] == "verifier" else "")
@@ -653,6 +682,7 @@ def validate_report_value(value: Any, schema: dict[str, Any], depth: int = 0) ->
 def normalize_codex_response(response: Any, invocation: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(response, dict) or "candidateJson" not in response or "reportJson" not in response:
         raise AdapterError("Codex final response does not match the closed response shape")
+    decode_evidence_ref_aliases(response, invocation)
     candidate_text = response["candidateJson"]
     review_context = invocation["request"].get("context")
     is_typed_review = (
