@@ -1,0 +1,38 @@
+{
+  "id": "product-a01-helper-inventory-alias-correction-20261009",
+  "issuedUtc": "2026-10-09T21:41:16Z",
+  "amends": "product-readiness-native-acceptance-20261009/A01",
+  "authority": "Direct human stable usable Markitect/Main goal with normal independent Managers/helpers and existing finite A01 execution mandate; explicit one further correction-bound continuation",
+  "originalAttempts": "Preserve stale pre-provider, inherited-readonly decline, and explicit-workspace helper-reservation failure; no old-turn replay",
+  "finding": "Writer :workspace effective; actual Hosthelper request reserved then failed before provider in sourceInventory Git top-level lexical comparison under Windows packaged alias",
+  "sourceWork": "Correct trusted Git-reported physical directory identity in inventory and inspect related source/parent/helper Git-boundary call sites as one bounded concrete bug cluster. Preserve lexical containment, symlink/Close ownership, HEAD/base, non-toplevel and external-repository guards. Windows fallback only with proved same existing directory identity, not string normalization/bypass. Add positive packaged-alias and negative boundary regressions with independent source review. No generic transport probe.",
+  "beforeActual": [
+    "Preserve exact own interrupted parent/failed-helper request/receipt/workspace evidence; reconcile owned lifecycle and zero-or-explicit delta, safe exact own cleanup only",
+    "Clean fixed source/binary, own project HEAD/runtime remaining starts/readiness/normal Plan/observer bindings all match",
+    "Native :workspace writer/helpers and readonly reviewers/Verifier; on-request/managed restriction unchanged"
+  ],
+  "execution": "Exactly one further ordinary A01 continuation after the above concrete bindings within original lease, no new blanket approval needed; fresh genuine run/turn rather than replay. Expected real helper, parallel managers, independent review/verifier, guarded Apply and genuine original-turn recovery. If another material failure occurs, terminal report without automatic retry.",
+  "limits": {
+    "originalLeaseStartUtc": "2026-10-09T20:26:23Z",
+    "absoluteEndUtc": "2026-10-10T00:26:23Z",
+    "originalTotalRoleStartRequests": 256,
+    "knownRequestsConsumedLowerBound": 3,
+    "maximumRemainingKnownRequests": 253,
+    "maxRoleSeconds": 3600,
+    "newJobs": 0,
+    "newQuota": 0,
+    "automaticRetry": false
+  },
+  "accounting": "Known previous root starts2/provider, failedHelperReservation1/no provider, known requests3 lowerbound/partial. Retain every request/unknown/repair/review time; no reset or cost-efficiency claim.",
+  "notAuthorized": [
+    "Global security changes",
+    "Sandbox disable",
+    "ManagedPolicy bypass",
+    "Automatic approval of blocked/external writes",
+    "A02/A03 start",
+    "Provider installations/canaries",
+    "Deleting unknown/foreign workspaces",
+    "Release",
+    "Main merge before required exact gates"
+  ]
+}

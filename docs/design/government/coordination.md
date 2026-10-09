@@ -1877,3 +1877,9 @@ Root verified clean exact privatef5482731, final handoff/closure/review,53 suppl
 ### Explicit-profile A01 continuation bound and starting
 
 Owner reports privateHEAD45f4ffc3/normalPlan7ff16084 digestc6651d25/runtime382b8c8b/sourcef2e5 binary3f1368ec with positive readiness and matched24execution input fields. A preparatory overly strict whole-plan digest check was corrected: readonly preview intentionally has different ID/digest and executeAuthorizedfalse; no actors/providerturns in this preparation. Exact private byte handoff pending Root verification. One authorized ordinary continuation now starts, oldturn not replayed, remainingknown255 and original00:26:23Z end unchanged. Actual first-turn/observer receipt pending, no success or Main acceptance claimed.
+
+### Actual Hosthelper request exposed second Git alias boundary; one bounded corrective continuation
+
+Owner explicit writer :workspace worked. NewRootturn21:39:01–21:39:33Z was interrupted after a genuine reserved Hosthelper request failed before provider at parent baseline inventory. Root source read confirms sourceInventory still uses string samePath for Git top-level versus resolvedroot. Known cumulative requests3 (two providerRootstarts andonefailedhelper reservation), partial lowerbound; no helperprovider/overlap/review/Verify/Apply/recovery. All failed evidence kept.
+
+Root gives one explicit correction-bound continuation within existing original end00:26:23Z/256total, remainingknown253 and no newjobs/quota. Fix concrete related Git-reported alias call sites together, retain containment/HEAD/ownership/symlink/negative guards, targeted provider-free regressions and independentreview, preserve/reconcile exact interrupted own lifecycle/delta/cleanup, then fresh fixedsource/binary/runtime/readiness/normalPlan. No blind old-turn replay/autoretry/generalprobe. Another material failure terminal report before any further disposition.

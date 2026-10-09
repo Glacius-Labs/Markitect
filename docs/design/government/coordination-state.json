@@ -16427,6 +16427,32 @@
         "rootQualification": "Public source already remote verified; exact private binary/readiness/24field comparison owner-reported until archive handoff",
         "newGrant": false,
         "mainAcceptance": false
+      },
+      "explicitWorkspaceHelperFailure": {
+        "ownerReportedObserver": "b5f9ae72304a466aaf39c4a5b115419c",
+        "startUtc": "2026-10-09T21:38:55Z",
+        "rootTurnUtc": "2026-10-09T21:39:01Z to21:39:33Z",
+        "effectiveProfile": ":workspace owner-confirmed",
+        "helper": "One Hosthelper request/reservation, pre-provider failed capture parent workspace baseline: repository root must be top level",
+        "rootSourceVerified": "sourceInventory in git_inventory.go compares EvalSymlinks(root) to Git --show-toplevel with samePath; helper.go catches baseline inventory error before dispatch",
+        "rootTurn": "interrupted owner-confirmed",
+        "knownRequestsCumulative": 3,
+        "knownRootProviderStarts": 2,
+        "knownHelperProviderStarts": 0,
+        "accounting": "partial/lowerbound",
+        "proof": "No overlap/review/Verify/Apply/recovery",
+        "oldPlan": "Consumed, binary change requires fresh exact project/runtime/Plan binding",
+        "next": "Specific bounded source/owned cleanup correction, no new actor under investigation"
+      },
+      "helperAliasCorrectionDisposition": {
+        "grantPath": "docs/design/government/product-a01-helper-inventory-alias-correction-20261009.json",
+        "sha256": "2ee4a4b3e861207f2727b4d1cc786b54b6d9449d2a8ecc332cd1af6ace57f391",
+        "dispatch": "SENT_ONCE",
+        "oneFurtherContinuation": true,
+        "originalEnd": "2026-10-10T00:26:23Z",
+        "knownRemainingMax": 253,
+        "newJobsQuota": false,
+        "mainAcceptance": false
       }
     }
   },
