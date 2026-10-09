@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T18:50:58Z",
+  "updatedUtc": "2026-10-09T18:53:53Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16205,6 +16205,18 @@
       "mainMerged": false,
       "release": false,
       "next": "Active P08 moves then final gates/review and source/config-bound finite combined A01 reservation; no repeat task/ACK"
+    },
+    "p08LatestOwnerProgress": {
+      "reportedUtc": "2026-10-09T18:53:53Z",
+      "sourceCheckpoint": "5fd90fe9b9aac4a600caef4125ccd2486c566153",
+      "physicalLayout": "Local src/cmd,src/internal,src/harness,fixturedataexamples,root go.mod/go.sum; not yet clean frozen new source",
+      "checks": "Owner reports moved build/vet/schema/canonical/module/focused paths PASS; no final fullsuite/platformPASS",
+      "independentFinding": "Successful terminal native receipts with unknown Usage rejected in run/review/verify; bounded correction active keeping cost unknown",
+      "next": "After usage correction final fullsuite, exact-source LinuxWindows CI/review/combinedA01",
+      "actualJobs": 0,
+      "actualRoles": 0,
+      "mainMerged": false,
+      "release": false
     }
   },
   "playgroundAndClaudePreparation20261009": {
@@ -16628,7 +16640,7 @@
     "hostLoadMustBeRecorded": true,
     "requiredSetup": "Existing installed executable/profile/tool/write/helper bindings, exact own stdio process/session ownership, fresh context plus normal session continuation",
     "completion": "Functional/rule/rename/restart outcomes and real time/usage/unknowns; preserve failures and changes prospected; report source/handles/consumption/evidence",
-    "status": "ROOOMBOOK_S1_TERMINAL_RUNTIME_SETUP_FAILURE_CONTROLLER_CAPTURE_FIX_ACTIVE_BF_UNUSED",
+    "status": "ORIGINAL_TWO_PILOTS_TERMINAL_FINISHED_REVIEWS_PENDING_ONE_EXPLICIT_ENUM_CORRECTION_ALLOWED",
     "grantDocument": "docs/design/government/conventional-wrapper-runtime-pilot-20261009.json",
     "ownerMessageSentOnce": true,
     "integrationNoMainDependencyNoticeSentOnce": true,
@@ -16713,6 +16725,56 @@
       "originalOverallDeadlineUnchanged": true,
       "newGrant": false,
       "next": "Owner source-only capture regression/additive snapshot and freeze; prospectively observed global config separate from executable/source admission pins before already authorized BF start"
+    },
+    "secondTerminalObservation": {
+      "verifiedUtc": "2026-10-09T18:53:53Z",
+      "sourceCheckpointCleanPrivateRemote": "03f2b502fa4509e0eff036e40ce474a23ba2e6b5",
+      "wrapperRunId": "43e16b3c-cbc0-4311-8523-f20f1ff9e488",
+      "state": "failed",
+      "updatedAt": "2026-10-09T18:52:05.600016+00:00",
+      "controllerEndedAt": "2026-10-09T18:52:05.728089+00:00",
+      "ownedPid": 38736,
+      "ownedPidAbsentRootVerified": true,
+      "nativeSessionTurnUsage": null,
+      "turnCaptureSha256": "b728deb60403a7a715f97f73e259f742125058361929d69690f2bc3585172f56",
+      "statusSha256": "8c4d6d50d04eaeffe3a25ef4bd8d37f6998d4e2a60d7607a45d938ea3ec5bfdf",
+      "rawEventsSha256": "b8a49dc84e8d1792e8fd930f470d2fd312a139471ef526caf0e6a9282d158efb",
+      "rawEventCount": 7,
+      "rootVerifiedNativeError": "thread/start sandboxworkspaceWrite rejected -32600, expectedread-only/workspace-write/danger-full-access; initialize succeeds pre-model",
+      "workingDeltaRead": "backends.py and test_conventional_backends.py remove erroneous camelcase mapping; source not frozen yet",
+      "snapshotAssessmentOwnerReported": "3baselinePASS/2newFAIL; S2-S4NOTRUN, fresh2Finalassessors running on separate immutable mains",
+      "knownOuterPilotRequests": 2,
+      "finalRequestsOwnerReported": 2,
+      "totalNativeHelperRequests": "UNKNOWN_UNDER_RECEIPT_REVIEW",
+      "oldResultsUnchanged": true,
+      "productMainDependency": false
     }
+  },
+  "conventionalAppServerEnumCorrectionPilot20261009": {
+    "id": "conventional-appserver-enum-correction-pilot-20261009",
+    "issuedUtc": "2026-10-09T18:53:53Z",
+    "authority": "Direct human Conventional wrapper Suite test, specific one-time Root correction after independently proved pre-model protocol bug",
+    "status": "ISSUED_CONDITIONAL_ON_CLEAN_PRIVATE_SOURCE_AND_FOCUSED_FIXTURE_CHECK",
+    "maxAdditionalFreshTrajectories": 1,
+    "case": "Readinglog Brownfield",
+    "backend": "owned stdio Codex App Server",
+    "originalPublicInputSeedRequired": true,
+    "oldRunReplayAllowed": false,
+    "oldAssessmentsOrSolutionsActorInputAllowed": false,
+    "maxWallSeconds": 14400,
+    "roleTurnMaxSeconds": 5400,
+    "maxStartRequests": 64,
+    "usesExistingAggregate256Remainder": true,
+    "overallDeadlineUtc": "2026-10-10T02:47:35.240574+00:00",
+    "fullFourHourRemainingWindowAtStartRequired": true,
+    "model": "gpt-6-luna",
+    "effort": "high",
+    "oldPilotUsageNotReset": true,
+    "failureThenTerminalNoAutomaticRetry": true,
+    "globalSettingsInstallationPolicyChanges": false,
+    "mainGate": false,
+    "newCaseStudyMethodComparison": false,
+    "ownerDispatchedOnce": true,
+    "startReceiptPending": true
   }
 }
