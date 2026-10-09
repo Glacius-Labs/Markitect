@@ -16370,6 +16370,22 @@
         "condition": "No private mutation or actor until original Handle safe resolution and exact new binding; no replay",
         "rootSourceAcceptance": "PENDING_COMPLETE_HANDOFF",
         "leaseEndUnchanged": "2026-10-10T00:26:23Z"
+      },
+      "windowsAliasRepairHandoff": {
+        "localSourceShaRootVerified": "f2e5c05bd80b0f118aac554ab45b5292b082bee9",
+        "integratedFixSha": "7ee98276",
+        "isolatedFixSha": "fab1ebf965a376f1d3e4675c938c30099c10612a",
+        "rootVerified": "Exact local HEAD and source delta limited to git_reopen.go and alias/negative regression file; public remote remains5b65 at check. Native/runtime ownership evidence owner-reported pending final handoff.",
+        "publicRemoteAtCheck": "5b65b46534ce040f5aab1058776c0cd4443bc3ad",
+        "ownerReportedChecks": "Independent fix review closed, integrated projectworkspace PASS58.970s, old exact Handle Reopen/Harvest/Normalize0changes provider-free. No Close.",
+        "binarySha256OwnerBound": "3f1368ec846dfd7609a0bf6c65b29383e66a8969565620f1cf6b82d21ba2e2a1",
+        "newWholeSuite": "RUNNING_OWNER_SESSION19479",
+        "otherGates": "RUNNING_OWNER_SESSION87661",
+        "remainingCondition": "Lifecycle ownership/quiescence review pending; proposed runtime mutation outside repo only; exact source/runtime/plan binding before ordinary continuation",
+        "actualStartsNew": 0,
+        "oldTurnReplay": false,
+        "mainAcceptance": false,
+        "newGrant": false
       }
     }
   },

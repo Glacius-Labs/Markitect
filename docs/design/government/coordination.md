@@ -1853,3 +1853,7 @@ Integration reports setup fix3e9800cf integrated/reviewed, workspace directory i
 ### Supplemental scratch final executed and native-terminal
 
 Root read own external binding for exact a95f9e0a/plan61b7c537/executable3553cd6e. Exactly1provider-free scratch/outside-root control check readyExit0; one fresh LunaHigh assessor started21:23:08Z owner-reported and native result nowcompleted21:24:26Z Root-read. Original candidate/spec/binding and semantic copies/preparation unchanged flags true, nohelpersObserved. Preserved scientific report has not yet been reviewed or handed off; native completion is not a total quality verdict. Supplemental native slot consumed, no retry. Private terminal archive/review pending from owner; original19errors retained.
+
+### Narrow Windows alias fix integrated; original workspace recovered provider-free
+
+Root verified localf2e5c05 and fix7ee98276 scope in Git reopen plus regression. Public remote still5b65 at check, new clean checkpoint push remains owner delivery obligation. Owner reports independent review and full projectworkspace PASS58.970s, original exact preserved Handle Reopen/Harvest/Normalize0changes, no Close. Lifecycle ownership/quiescence review pending, new fullsuite and source gates active; no new actor, old-turn replay or Main acceptance. Runtime mutation staged outside repo only. Original lease unchanged.
