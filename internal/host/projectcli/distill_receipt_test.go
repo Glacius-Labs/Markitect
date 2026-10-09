@@ -53,7 +53,7 @@ func TestGeneratedDistillationPersistsOnlyReceiptWhenProposalIsRejected(t *testi
 	if err := json.Unmarshal(receiptBytes, &receipt); err != nil {
 		t.Fatalf("decode execution receipt: %v", err)
 	}
-	if receipt.Execution.RunID == "" || receipt.EstimatedCostMicros <= 0 {
+	if receipt.Execution.RunID == "" || receipt.EstimatedCostMicros <= 0 || receipt.RunnerIdentity != "agentexec/fixture-readonly/1/receipt-readonly-test" {
 		t.Fatalf("persisted receipt lacks execution/cost accounting: %+v", receipt)
 	}
 	if _, err := os.Stat(filepath.Join(repo, filepath.FromSlash(".markitect/drafts/distillation.json"))); !os.IsNotExist(err) {
@@ -145,6 +145,23 @@ func TestConcurrentGeneratedDistillationsPreserveBothUniqueReceipts(t *testing.T
 	}
 }
 
+func TestGeneratedDistillationRejectsNativeManagerWithoutReadOnlyBindingBeforeProvider(t *testing.T) {
+	repo, args := prepareGeneratedDistillationFixtureWithReview(t, false)
+	marker := filepath.Join(t.TempDir(), "provider-called")
+	t.Setenv(distillHelperEnv, "1")
+	t.Setenv(distillCalledEnv, marker)
+	var out, errout bytes.Buffer
+	if code := Run(args, &out, &errout); code == 0 || !strings.Contains(errout.String(), "requires a configured read-only assessment binding") {
+		t.Fatalf("distillation without read-only binding exit=%d stderr=%s stdout=%s", code, errout.String(), out.String())
+	}
+	if _, err := os.Stat(marker); !os.IsNotExist(err) {
+		t.Fatalf("provider ran without a read-only binding: %v", err)
+	}
+	if records := findDistillationReceiptPaths(t, repo); len(records) != 0 {
+		t.Fatalf("missing read-only binding wrote receipts: %v", records)
+	}
+}
+
 func TestProjectCLIDistillationHelperProcess(t *testing.T) {
 	if os.Getenv(distillHelperEnv) != "1" {
 		return
@@ -195,6 +212,10 @@ func TestProjectCLIDistillationHelperProcess(t *testing.T) {
 }
 
 func prepareGeneratedDistillationFixture(t *testing.T) (string, []string) {
+	return prepareGeneratedDistillationFixtureWithReview(t, true)
+}
+
+func prepareGeneratedDistillationFixtureWithReview(t *testing.T, withReview bool) (string, []string) {
 	t.Helper()
 	repo := copyProjectWorld(t)
 	initial, err := projectwork.Load(repo, "")
@@ -215,21 +236,32 @@ func prepareGeneratedDistillationFixture(t *testing.T) (string, []string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	agent := projectrun.Agent{
+	readOnlyAgent := projectrun.Agent{
 		Command: executable, Args: []string{"-test.run=TestProjectCLIDistillationHelperProcess"},
-		Model: "receipt-test", ProviderVersion: "fixture/1", Timeout: projectrun.Duration(20 * time.Second),
+		Model: "receipt-readonly-test", ProviderVersion: "fixture-readonly/1", Timeout: projectrun.Duration(20 * time.Second),
 		MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20,
 		Environment: []string{distillHelperEnv, distillCalledEnv, distillBarrierEnv},
 		Pricing:     projectrun.Pricing{InputMicrosPerMillion: 2, OutputMicrosPerMillion: 4},
 	}
+	nativeAgent := readOnlyAgent
+	nativeAgent.Model = "native-manager-must-not-run"
+	nativeAgent.Args = []string{"-invalid-native-manager-transport"}
+	nativeAgent.Environment = []string{}
+	nativeAgent.WorkspaceMode = "scoped"
+	nativeAgent.InstructionPaths = []string{"AGENTS.md"}
 	runtimeConfig := projectrun.Runtime{
 		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal,
-		Agents: map[string]projectrun.Agent{rootManager: agent},
+		Agents: map[string]projectrun.Agent{rootManager: nativeAgent},
 		Limits: projectrun.Limits{
 			MaxDepth: 2, MaxStarts: 24, MaxRetries: 0, MaxParallel: 1,
 			MaxDuration: projectrun.Duration(2 * time.Minute), MaxCostMicros: 100000,
 			MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 1 << 20,
 		},
+	}
+	if withReview {
+		runtimeConfig.Review = &projectrun.ReviewConfig{
+			Agents: map[string]projectrun.Agent{rootManager: readOnlyAgent}, MaxRounds: 1, MaxManagerRounds: 1,
+		}
 	}
 	runtimeBytes, err := yaml.Marshal(runtimeConfig)
 	if err != nil {

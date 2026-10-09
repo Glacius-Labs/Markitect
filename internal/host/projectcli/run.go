@@ -267,9 +267,12 @@ func runAction(opts options, out io.Writer) error {
 					rootManager = manager.ID
 				}
 			}
-			agent, ok := runtimeConfig.Agents[rootManager]
-			if rootManager == "" || !ok {
-				return errors.New("configured runtime has no agent mapped to the active root Manager")
+			if rootManager == "" {
+				return errors.New("project has no active root Manager")
+			}
+			agent, err := projectrun.ReadOnlyAgent(runtimeConfig, rootManager)
+			if err != nil {
+				return fmt.Errorf("select read-only distillation binding for the active root Manager: %w", err)
 			}
 			agentConfig, err := agent.AgentConfig()
 			if err != nil {

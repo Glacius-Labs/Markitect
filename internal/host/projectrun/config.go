@@ -212,6 +212,33 @@ func ValidateRuntime(config Runtime) error {
 	return nil
 }
 
+// ReadOnlyAgent selects the explicit transport for a Manager assessment or
+// Brownfield model proposal. Native Manager bindings stay exclusive to scoped
+// implementation tasks; their separately configured review binding serves a
+// fresh read-only invocation, not a reused reviewer conversation.
+func ReadOnlyAgent(config Runtime, managerID string) (Agent, error) {
+	manager, ok := config.Agents[managerID]
+	if !ok || strings.TrimSpace(managerID) == "" {
+		return Agent{}, fmt.Errorf("runtime has no agent mapped to Manager %q", managerID)
+	}
+	if manager.WorkspaceMode == "" {
+		// Explicit custom adapters can perform context-only work without a
+		// native workspace. This is a current transport contract.
+		return manager, nil
+	}
+	if manager.WorkspaceMode != "scoped" {
+		return Agent{}, fmt.Errorf("Manager %q has unsupported workspace mode %q", managerID, manager.WorkspaceMode)
+	}
+	if config.Review == nil {
+		return Agent{}, fmt.Errorf("native Manager %q requires a configured read-only assessment binding", managerID)
+	}
+	assessment, ok := config.Review.Agents[managerID]
+	if !ok || assessment.WorkspaceMode != "" || len(assessment.InstructionPaths) != 0 {
+		return Agent{}, fmt.Errorf("native Manager %q requires an unscoped read-only assessment binding", managerID)
+	}
+	return assessment, nil
+}
+
 // AgentConfig builds the explicit subprocess config for one manager. The
 // configured environment contains names only; agentexec resolves values.
 func (a Agent) AgentConfig() (agentexec.Config, error) {

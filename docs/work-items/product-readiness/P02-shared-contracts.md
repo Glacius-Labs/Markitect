@@ -1,0 +1,7 @@
+# P02 — Shared concrete contracts
+
+Establish the minimal real interfaces required to implement three independent workstreams. Existing `internal/host/projectrun` owns Plan/Run/Resume/Repair/Review/Verify/PreflightApply/Apply and durable state. `projectrun.Invoker` is the concrete provider seam; CLI routing is in `projectcli`. Reuse these current useful responsibilities. Extract a narrow application facade only where MCP would otherwise duplicate logic or invoke a CLI subprocess.
+
+Define operation requests/results, explicit repo/base/run/candidate identity, shared response validation, owned delta semantics (add/modify/delete/rename, modes and binary artifacts), workspace/history selection, and real agent lifecycle/config/receipt fields. Do not hide App Server sessions/configuration in generic subprocess arguments. Keep provider specifics at the adapter boundary, core independent of providers, and ordinary workflow authorization usable without repeated human approval.
+
+Acceptance: compiling concrete seams and focused contract tests; named ownership for MCP, App Server and workspace paths; Designer reserves shared wiring/types/dependencies. Record decisions and current code paths in this item. No generic provider framework or long speculative protocol redesign. When contracts are usable, dispatch independent subagents rather than serializing unrelated adapter work. Future P08 source moves happen after integration, not while every stream edits the same paths.

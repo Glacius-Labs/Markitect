@@ -1,0 +1,7 @@
+# P10 — Main integration and final handoff
+
+After P01–P09 meet their acceptance criteria, update the existing PR89 title/body around the final product and validation, push coherent feature commits and finish required hosted checks and independent review. Attach the existing PR to the Designer task. Regular feature push, PR update and merge into `Glacius-Labs/Markitect` Main are directly authorized by the latest user mandate. Respect branch protection; no Force, bypass, stale-head merge or automatic release/tag/package publication.
+
+Acceptance: actual PR/head/check identities, normal merge outcome and exact remote Main SHA; clean checkout build/install/onboarding and small appropriate post-merge verification where needed. Verify Main contains the accepted product source and current README/docs. Report any hosted/environment failure separately from product correctness. Keep original branches/pins/evidence recoverable, do not rewrite old study candidates, and do not restore retired Classic/Government or Case Studies.
+
+Mark the queue done only after remote integration and source-bound evidence. Send Root one final concise completion with source/remote/check/review/runtime evidence, current installation/normal use commands and genuine limits. A merge is not a release or a proof of productivity superiority. Root then reports product readiness and the concrete Main identity to the user; Case Studies remain a later separate decision.

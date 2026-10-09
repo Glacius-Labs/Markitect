@@ -75,9 +75,9 @@ func runBrownfieldManagerStage(opts options, out io.Writer, invoker projectadopt
 	if err != nil {
 		return fmt.Errorf("load target project runtime: %w", err)
 	}
-	selectedAgent, ok := runtime.Agents[request.AgentManagerID]
-	if !ok {
-		return fmt.Errorf("target runtime has no agent mapping for explicitly selected Manager %q", request.AgentManagerID)
+	selectedAgent, err := projectrun.ReadOnlyAgent(runtime, request.AgentManagerID)
+	if err != nil {
+		return fmt.Errorf("select read-only Brownfield binding for explicitly selected Manager %q: %w", request.AgentManagerID, err)
 	}
 	config, err := selectedAgent.AgentConfig()
 	if err != nil {

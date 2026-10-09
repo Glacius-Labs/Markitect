@@ -1,0 +1,7 @@
+# P05 — Product MCP adapter
+
+Implement a supported local MCP surface for Codex/Claude and other normal MCP clients calling Markitect. This is Agent→Markitect, not a replacement for Codex App Server. The read-only experiment in `experiments/mcp-pilot` is not a product readiness implementation. Reference: https://modelcontextprotocol.io/specification/2025-11-25/server/tools.
+
+Expose the necessary current setup/discovery/model/check/planning/run/status/resume/repair/verify/preflight/apply capabilities over shared Host services. Use structured closed schemas/results and actionable diagnostics. Long work returns durable handles and supports status/cancellation/recovery. Preserve current fixed base/ownership/freshness/required-review semantics. Authorized ordinary implementation can chain mutations and Apply without requiring a human to type each stage; suggestions and assessment alone do not authorize unrelated writes.
+
+Acceptance: supported handshake, tool discovery/calls, structured results/errors, clear read/mutation distinctions; parity with CLI on the same actual operations and fixture; wrong repo/base/run, unknown input, missing/stale digest, incomplete review and concurrent change negatives. No CLI subprocess parsing or duplicate workflow engine. Generated init/configure guidance installs usable local provider configuration without rewriting unrelated personal config or credentials. Keep stdio/local integration simple; do not add REST/auth/daemon machinery without a real current consumer.

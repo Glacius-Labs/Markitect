@@ -2,6 +2,7 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - docs/work-items/product-readiness
     - docs/validation/classic-commerce-entrypoint.md
     - examples/classic-commerce
     - internal/host/canonical_controller_apply_receipt.go
@@ -2284,15 +2285,37 @@ spec:
       owner: codex-runner-tooling
     - path: internal/tooling/codexrunner/test_native_work.py
       owner: codex-runner-tooling
-    - path: docs/design/project-native-codex-work-20261009.md
-      owner: project-world-implementation
-    - path: docs/design/project-capability-skills-20261009.md
-      owner: project-world-implementation
     - path: docs/design/project-world/native-codex-work.md
       owner: project-world-implementation
     - path: docs/validation/project-native-work-2026-10-09.md
       owner: project-world-validation
     - path: internal/host/shared_helpers.go
       owner: host-write-identity
-    - path: docs/design/project-simplification-and-api-direction-20261009.md
+    - path: docs/work-items/product-readiness/P01-current-checkpoint.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P02-shared-contracts.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P03-workspaces.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P04-app-server.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P05-mcp.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P06-agent-lifecycle.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P07-user-workflow.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P08-repository.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P09-readiness.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P10-main.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/fresh-chat-handoff.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/R01-jev.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/R02-knowledge-graph.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/R03-agent-guidance.md
       owner: project-world-implementation

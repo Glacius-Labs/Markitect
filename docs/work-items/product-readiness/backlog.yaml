@@ -1,0 +1,94 @@
+schema: markitect-product-backlog/v1
+mandate_date: '2026-10-09'
+goal: Usable and validated Markitect with normal independent agent work, CLI/MCP/App Server, clean source/docs, and regular Main integration.
+owner: Designer
+owner_thread: 01a11c80-37aa-7fe0-9586-35d916ce6561
+coordinator_thread: 01a11367-a781-7683-a20f-46e12614dcb4
+case_studies: stopped_until_new_user_instruction
+main_merge: authorized_after_positive_readiness_and_required_gates
+release_publication: not_authorized
+native_acceptance:
+  grant_id: product-readiness-native-acceptance-20261009
+  status: conditional_on_item_readiness
+  max_jobs: 3
+  max_job_wall_seconds: 1800
+  max_total_wall_seconds: 5400
+  max_total_role_start_requests: 64
+  consumed_jobs: 0
+  consumed_role_start_requests: 0
+  model: gpt-6-luna
+  reasoning_effort: high
+  prior_closed_grants_reusable: false
+  automatic_refill: false
+  ledger: evidence/native-acceptance-ledger.yaml
+items:
+  - id: P01
+    title: Close current native and compatibility-removal checkpoint
+    status: in_progress
+    depends_on: []
+    owner: Designer
+    document: P01-current-checkpoint.md
+    evidence: []
+  - id: P02
+    title: Shared operations, workspace delta and invocation contracts
+    status: blocked
+    depends_on: [P01]
+    owner: Designer
+    document: P02-shared-contracts.md
+    evidence: []
+  - id: P03
+    title: Real Git candidate workspaces and full change operations
+    status: blocked
+    depends_on: [P02]
+    owner: Designer or assigned workspace subagent
+    document: P03-workspaces.md
+    evidence: []
+  - id: P04
+    title: Native Codex App Server execution adapter
+    status: blocked
+    depends_on: [P02]
+    owner: Designer or assigned App Server subagent
+    document: P04-app-server.md
+    evidence: []
+  - id: P05
+    title: Product MCP adapter over shared Host operations
+    status: blocked
+    depends_on: [P02]
+    owner: Designer or assigned MCP subagent
+    document: P05-mcp.md
+    evidence: []
+  - id: P06
+    title: Real independent Managers, helpers and reviewers
+    status: blocked
+    depends_on: [P03, P04]
+    owner: Designer
+    document: P06-agent-lifecycle.md
+    evidence: []
+  - id: P07
+    title: Normal autonomous Work Item workflow and installed guidance
+    status: blocked
+    depends_on: [P03, P04, P05, P06]
+    owner: Designer
+    document: P07-user-workflow.md
+    evidence: []
+  - id: P08
+    title: Consolidated documentation and clean src repository layout
+    status: blocked
+    depends_on: [P03, P04, P05, P06, P07]
+    owner: Designer
+    document: P08-repository.md
+    evidence: []
+  - id: P09
+    title: Maintained regression suite and actual product acceptance
+    status: blocked
+    depends_on: [P07, P08]
+    owner: Designer
+    document: P09-readiness.md
+    evidence: []
+  - id: P10
+    title: Reviewed regular PR integration into Main
+    status: blocked
+    depends_on: [P01, P02, P03, P04, P05, P06, P07, P08, P09]
+    owner: Designer
+    document: P10-main.md
+    evidence: []

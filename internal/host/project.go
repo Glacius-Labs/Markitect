@@ -49,7 +49,7 @@ func Parse(snap *snapshot.Snapshot) (*Project, error) {
 	p := &Project{Snapshot: snap, PackageFiles: map[string]map[string][]byte{}}
 	data, ok := snap.Files["markitect.yaml"]
 	if !ok {
-		return nil, fmt.Errorf("markitect.yaml is missing from the selected source; use inventory to inspect existing Markdown and init to preview a new Project with an explicit area")
+		return nil, fmt.Errorf("markitect.yaml is missing from the selected engineering-resource source; managed projects use project init and project check")
 	}
 	config, err := authoring.Parse("markitect.yaml", data)
 	if err != nil {

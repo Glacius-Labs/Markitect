@@ -1,0 +1,38 @@
+schema: markitect-product-acceptance-ledger/v1
+grant_id: product-readiness-native-acceptance-20261009
+prior_closed_proof:
+  source_fix: 9f1891d36da90231d34f5cf7fc2fc25437d6a83a
+  status: closed_pre_provider
+  cli_attempts: 2
+  provider_starts: 0
+  lease_start_utc: '2026-10-09T15:36:10Z'
+  lease_end_utc: '2026-10-09T15:46:10Z'
+  reusable: false
+jobs:
+  - id: A01
+    purpose: App Server real authenticated fresh-context tool execution
+    status: not_started
+    source: null
+    config: null
+    start_utc: null
+    deadline_utc: null
+    role_start_requests: 0
+    evidence: []
+  - id: A02
+    purpose: Independent parallel Managers, native helper and independent review
+    status: not_started
+    source: null
+    config: null
+    start_utc: null
+    deadline_utc: null
+    role_start_requests: 0
+    evidence: []
+  - id: A03
+    purpose: Ordinary delivery, diagnostic repair, consistent changes, Verify Apply and recovery
+    status: not_started
+    source: null
+    config: null
+    start_utc: null
+    deadline_utc: null
+    role_start_requests: 0
+    evidence: []

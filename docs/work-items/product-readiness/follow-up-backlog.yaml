@@ -1,0 +1,29 @@
+schema: markitect-research-backlog/v1
+mandate_date: '2026-10-09'
+goal: Evaluate optional mechanisms independently while finishing a stable usable product baseline.
+coordinator: Overseer
+main_gate_dependencies: []
+product_implementation_authority: not_granted_by_research_items
+case_studies: stopped
+items:
+  - id: R01
+    title: Evaluate Jev strongly typed AI for concrete Markitect uses
+    status: readonly_research_dispatched
+    document: R01-jev.md
+    owner: Markitect Jev evaluieren
+    thread_id: 01a12178-516b-78c0-8ebb-47da32643984
+    evidence: []
+  - id: R02
+    title: Assess canonical model as a full knowledge graph
+    status: readonly_research_dispatched
+    document: R02-knowledge-graph.md
+    owner: Markitect Knowledge Graph bewerten
+    thread_id: 01a12178-5797-7c41-8acc-8e8231084c79
+    evidence: []
+  - id: R03
+    title: Evaluate provider-native Rules, Workflows and Agents alongside skills
+    status: readonly_research_dispatched
+    document: R03-agent-guidance.md
+    owner: Markitect Rules Workflows und Agents
+    thread_id: 01a12178-64de-7d41-aa82-11b8fb202786
+    evidence: []

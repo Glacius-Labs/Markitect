@@ -291,7 +291,7 @@ func TestBrownfieldManagerRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.
 	}
 	managerID := session.TargetContext.RootManagerID
 	session, err = projectadoption.BeginReverseIteration(repo, target, session, projectadoption.ReverseIterationRequest{
-		ID: "manager-run-root", ManagerID: managerID, EvidenceIDs: []string{"cancellation-doc"},
+		ID: "manager-run-root", ManagerID: managerID, EvidenceIDs: []string{"cancellation-doc"}, DelegationEvidenceIDs: []string{},
 		Purpose: "Model selected cancellation behavior", Review: "manager-run-review",
 	})
 	if err != nil {
@@ -304,13 +304,21 @@ func TestBrownfieldManagerRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
+	nativeManager := projectrun.Agent{
+		Command: executable, Args: []string{"NATIVE_MANAGER_ARGUMENT_SENTINEL"}, Model: "native-manager-model", ModelOptions: map[string]any{"secret": "NATIVE_MANAGER_OPTION_SENTINEL"},
+		ProviderVersion: "native-manager-provider-v1", WorkspaceMode: "scoped", InstructionPaths: []string{"AGENTS.md"},
+		Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
+		RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectrun.Pricing{InputMicrosPerMillion: 10, OutputMicrosPerMillion: 20},
+	}
+	readOnlyAgent := projectrun.Agent{
+		Command: executable, Args: []string{"READONLY_ARGUMENT_SENTINEL"}, Model: "readonly-review-model", ModelOptions: map[string]any{"review": "READONLY_OPTION_SENTINEL"},
+		ProviderVersion: "readonly-review-provider-v1", Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
+		RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectrun.Pricing{InputMicrosPerMillion: 40, OutputMicrosPerMillion: 80},
+	}
 	runtime := projectrun.Runtime{
 		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal,
-		Agents: map[string]projectrun.Agent{managerID: {
-			Command: executable, Args: []string{"PRIVATE_ARGUMENT_SENTINEL"}, Model: "PRIVATE_MODEL_SENTINEL", ModelOptions: map[string]any{"secret": "PRIVATE_OPTION_SENTINEL"},
-			ProviderVersion: "fixture-provider-v1", Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
-			RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectrun.Pricing{InputMicrosPerMillion: 10, OutputMicrosPerMillion: 20},
-		}},
+		Agents: map[string]projectrun.Agent{managerID: nativeManager},
+		Review: &projectrun.ReviewConfig{Agents: map[string]projectrun.Agent{managerID: readOnlyAgent}, MaxRounds: 1, MaxManagerRounds: 1},
 		Limits: projectrun.Limits{MaxDepth: 4, MaxStarts: 8, MaxRetries: 1, MaxParallel: 1, MaxDuration: projectrun.Duration(5 * time.Minute),
 			MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 8 << 20},
 	}
@@ -342,7 +350,7 @@ func TestBrownfieldManagerRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.
 		t.Fatal(err)
 	}
 	session, err = projectadoption.BeginReverseIteration(repo, target, session, projectadoption.ReverseIterationRequest{
-		ID: "manager-run-root", ManagerID: managerID, EvidenceIDs: []string{"cancellation-doc"},
+		ID: "manager-run-root", ManagerID: managerID, EvidenceIDs: []string{"cancellation-doc"}, DelegationEvidenceIDs: []string{},
 		Purpose: "Model selected cancellation behavior", Review: "manager-run-review-final",
 	})
 	if err != nil {
@@ -371,7 +379,11 @@ func TestBrownfieldManagerRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.
 	if preview.Status != "preview" || preview.SessionDigest != session.Digest || preview.Preview == nil || preview.PreviewDigest == "" || preview.Preview.PreviewDigest != preview.PreviewDigest || preview.Attempt != nil {
 		t.Fatalf("unexpected Brownfield manager-run preview: %+v", preview)
 	}
-	for _, secret := range []string{"PRIVATE_ARGUMENT_SENTINEL", "PRIVATE_OPTION_SENTINEL", "cancellation-doc"} {
+	if preview.Preview.Model != readOnlyAgent.Model || preview.Preview.ProviderVersion != readOnlyAgent.ProviderVersion ||
+		preview.Preview.InputPriceMicrosPerMillion != readOnlyAgent.Pricing.InputMicrosPerMillion || preview.Preview.OutputPriceMicrosPerMillion != readOnlyAgent.Pricing.OutputMicrosPerMillion {
+		t.Fatalf("Brownfield preview did not bind the explicit read-only assessment runtime: %+v", preview.Preview)
+	}
+	for _, secret := range []string{"NATIVE_MANAGER_ARGUMENT_SENTINEL", "NATIVE_MANAGER_OPTION_SENTINEL", "READONLY_ARGUMENT_SENTINEL", "READONLY_OPTION_SENTINEL", "cancellation-doc"} {
 		if strings.Contains(out.String(), secret) {
 			t.Fatalf("manager-run preview exposed private runtime or evidence content %q: %s", secret, out.String())
 		}
@@ -383,17 +395,42 @@ func TestBrownfieldManagerRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.
 	if err == nil || !strings.Contains(err.Error(), "does not match") || invoker.runCalls != 0 || staleOut.Len() != 0 {
 		t.Fatalf("stale manager-run preview was not rejected before invocation: err=%v calls=%d output=%s", err, invoker.runCalls, staleOut.String())
 	}
+	var freshPreviewOut bytes.Buffer
+	if err := runBrownfieldManagerStage(options{repo: repo, sourceRepo: repo, sessionID: discovery.ID, input: inputPath}, &freshPreviewOut, &countingManagerInvoker{}); err != nil {
+		t.Fatalf("refresh exact manager-run preview: %v", err)
+	}
+	if err := json.Unmarshal(freshPreviewOut.Bytes(), &preview); err != nil || preview.Preview == nil {
+		t.Fatalf("decode refreshed manager-run preview: %v %s", err, freshPreviewOut.String())
+	}
+	invoker = &countingManagerInvoker{}
+	err = runBrownfieldManagerStage(options{repo: repo, sourceRepo: repo, sessionID: discovery.ID, input: inputPath, write: true, expect: preview.PreviewDigest}, new(bytes.Buffer), invoker)
+	if err == nil || invoker.runCalls != 1 {
+		t.Fatalf("typed Brownfield invocation did not reach the mock assessment binding: err=%v calls=%d", err, invoker.runCalls)
+	}
+	if invoker.lastConfig.Model != readOnlyAgent.Model || len(invoker.lastConfig.Args) != 1 || invoker.lastConfig.Args[0] != "READONLY_ARGUMENT_SENTINEL" {
+		t.Fatalf("Brownfield invocation used the native Manager binding: %#v", invoker.lastConfig)
+	}
+	var requestContext map[string]any
+	if err := json.Unmarshal(invoker.lastRequest.Context, &requestContext); err != nil || requestContext["kind"] != "projectadoption-manager-proposal/v1" || requestContext["phase"] != "propose" {
+		t.Fatalf("typed Brownfield context did not reach the read-only binding: context=%s err=%v", invoker.lastRequest.Context, err)
+	}
 }
 
-type countingManagerInvoker struct{ runCalls int }
+type countingManagerInvoker struct {
+	runCalls    int
+	lastConfig  agentexec.Config
+	lastRequest agentexec.Request
+}
 
-func (i *countingManagerInvoker) Run(context.Context, agentexec.Config, agentexec.Request, agentexec.RunOptions) (agentexec.RunResult, error) {
+func (i *countingManagerInvoker) Run(_ context.Context, config agentexec.Config, request agentexec.Request, _ agentexec.RunOptions) (agentexec.RunResult, error) {
 	i.runCalls++
+	i.lastConfig = config
+	i.lastRequest = request
 	return agentexec.RunResult{}, nil
 }
 
-func (*countingManagerInvoker) Fingerprint(agentexec.Config) (string, error) {
-	return "test-fingerprint", nil
+func (*countingManagerInvoker) Fingerprint(config agentexec.Config) (string, error) {
+	return agentexec.Fingerprint(config)
 }
 
 func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.T) {

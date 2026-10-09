@@ -160,3 +160,34 @@ func TestLoadRuntimeRejectsSymlinkedConfig(t *testing.T) {
 		t.Fatalf("expected symlink rejection, got %v", err)
 	}
 }
+
+func TestReadOnlyAgentKeepsNativeWorkAndAssessmentBindingsSeparate(t *testing.T) {
+	config := validRuntime()
+	custom, err := ReadOnlyAgent(config, "commerce")
+	if err != nil || custom.Command != "fake-agent" || custom.WorkspaceMode != "" {
+		t.Fatalf("explicit context-only custom adapter unavailable: %#v %v", custom, err)
+	}
+	native := config.Agents["commerce"]
+	native.WorkspaceMode = "scoped"
+	native.InstructionPaths = []string{"AGENTS.md"}
+	native.Command = "native-manager"
+	config.Agents["commerce"] = native
+	if _, err := ReadOnlyAgent(config, "commerce"); err == nil {
+		t.Fatal("native work silently used for a read-only assessment")
+	}
+	config.Review = &ReviewConfig{Agents: map[string]Agent{"commerce": custom}}
+	assessment, err := ReadOnlyAgent(config, "commerce")
+	if err != nil || assessment.Command != "fake-agent" || assessment.WorkspaceMode != "" {
+		t.Fatalf("explicit read-only binding not selected: %#v %v", assessment, err)
+	}
+	if config.Agents["commerce"].Command != "native-manager" || config.Agents["commerce"].WorkspaceMode != "scoped" {
+		t.Fatal("assessment selection mutated native work binding")
+	}
+	config.Review.Agents["commerce"] = native
+	if _, err := ReadOnlyAgent(config, "commerce"); err == nil {
+		t.Fatal("native assessment binding accepted")
+	}
+	if _, err := ReadOnlyAgent(config, "unknown"); err == nil {
+		t.Fatal("unknown Manager gained an assessment binding")
+	}
+}

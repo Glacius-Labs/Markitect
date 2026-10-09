@@ -1,0 +1,7 @@
+# R03 — Rules, Workflows and Agents alongside skills
+
+Evaluate the provider-native mechanisms that actually exist for the user's installed/current Claude and Codex clients. Do not invent symmetric directories/features when only one provider supports them. Begin with official sources and the current generated onboarding/skills, then map each useful mechanism to a distinct user need.
+
+Distinguish always-relevant rules, task-discovered skills, resumable workflow guidance, named agent roles/configuration, real executable tools and Markitect-hosted Manager/reviewer identity. Provider guidance does not itself execute or isolate a Manager. Identify useful init/design/check/implement/review/verify/apply/recovery routing and concrete examples where additional assets improve ordinary prompting, context load, independence or error repair. Compare against simply improving the existing skills/entrypoints.
+
+Deliver a concise capability matrix per provider/version with source citations; proposed canonical ownership/generator/install/update strategy; custom-content preservation; discovery/context/trust tests; duplication/conflict risks; recommended minimal asset set and optional next Work Items. Existing generated guidance required for normal usable setup stays in P07; this research does not add an unbounded Main gate. No global config changes, product edits, installations, model calls or studies. A fresh research chat reports once to Overseer; implementation is a separate chosen decision.
