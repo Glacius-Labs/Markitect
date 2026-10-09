@@ -334,6 +334,29 @@ class CodexRunnerTests(unittest.TestCase):
         legacy = invocation("executor")
         self.assertNotIn("reportJson", runner.normalize_codex_response({"candidateJson": None, "reportJson": None}, legacy))
 
+    def test_provider_response_schema_binds_all_invocation_identity_fields(self) -> None:
+        value = invocation("verifier")
+        value["runId"] = "1" * 32
+        value["nonce"] = "2" * 32
+        value["inputDigest"] = "sha256:" + "3" * 64
+        self.assertIs(runner.validate_invocation(value), value)
+        original_schema = json.loads(json.dumps(runner.RESPONSE_SCHEMA))
+
+        schema = runner.provider_response_schema(value)
+
+        expected = {
+            "apiVersion": value["apiVersion"],
+            "runId": value["runId"],
+            "nonce": value["nonce"],
+            "inputDigest": value["inputDigest"],
+            "role": value["request"]["role"],
+        }
+        for field, exact_value in expected.items():
+            with self.subTest(field=field):
+                self.assertEqual(schema["properties"][field]["enum"], [exact_value])
+                self.assertNotIn("mismatched-value", schema["properties"][field]["enum"])
+        self.assertEqual(runner.RESPONSE_SCHEMA, original_schema)
+
     def test_typed_read_only_reviewer_report_preserves_semantic_failure_and_uncertainty(self) -> None:
         value = review_invocation()
         prompt = runner.make_prompt(value)

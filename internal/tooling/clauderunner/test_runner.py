@@ -296,6 +296,29 @@ class ClaudeRunnerTests(unittest.TestCase):
         with self.assertRaises(runner.AdapterError):
             runner.normalize_claude_response({"structured_output": response}, value)
 
+    def test_provider_response_schema_binds_all_invocation_identity_fields(self) -> None:
+        value = invocation("verifier")
+        value["runId"] = "1" * 32
+        value["nonce"] = "2" * 32
+        value["inputDigest"] = "sha256:" + "3" * 64
+        self.assertIs(runner.validate_invocation(value), value)
+        original_schema = json.loads(json.dumps(runner.RESPONSE_SCHEMA))
+
+        schema = runner.provider_response_schema(value)
+
+        expected = {
+            "apiVersion": value["apiVersion"],
+            "runId": value["runId"],
+            "nonce": value["nonce"],
+            "inputDigest": value["inputDigest"],
+            "role": value["request"]["role"],
+        }
+        for field, exact_value in expected.items():
+            with self.subTest(field=field):
+                self.assertEqual(schema["properties"][field]["enum"], [exact_value])
+                self.assertNotIn("mismatched-value", schema["properties"][field]["enum"])
+        self.assertEqual(runner.RESPONSE_SCHEMA, original_schema)
+
     def test_version_requires_restricted_mode_minimum_and_exact_match(self) -> None:
         with self.assertRaises(runner.AdapterError):
             runner.check_version(["claude"], "2.1.247")

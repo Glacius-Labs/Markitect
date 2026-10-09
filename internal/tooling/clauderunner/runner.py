@@ -137,6 +137,15 @@ def task_response_schema(invocation: dict[str, Any]) -> dict[str, Any] | None:
 def provider_response_schema(invocation: dict[str, Any]) -> dict[str, Any]:
     schema = json.loads(json.dumps(RESPONSE_SCHEMA))
     task_response_schema(invocation)
+    bound_values = {
+        "apiVersion": invocation["apiVersion"],
+        "runId": invocation["runId"],
+        "nonce": invocation["nonce"],
+        "inputDigest": invocation["inputDigest"],
+        "role": invocation["request"]["role"],
+    }
+    for field, value in bound_values.items():
+        schema["properties"][field]["enum"] = [value]
     return schema
 
 
