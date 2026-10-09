@@ -1287,3 +1287,12 @@ Design-Folgeauftrag und öffentliche Scientist-Pin-/Lastschnittstelle einmal um0
 ### 2026-10-09 06:34 Europe/Berlin - direkter kurzer Zwischenstand
 
 Beide Chats aktiv, neue Cursors Scientist97/Design19. Design meldet schrittweise Brownfield-Rückmodellierung mit Konflikten und offenen Bereichen; als Nächstes zusammenhängender Nutzerablauf und echte Luna-High-Proofs. Scientist meldet festen Stationsdispatcher, gesicherte Zustände, getrennte Befundbewertung und zwei Anfangsmodelle; native Installation/Modellvalidierung bleibt Produktaufgabe. Root prüfte nur Git-/Chatmetadaten: Design9cea10cf und Scientist-Nest noch WIP, öffentliche Designref2fd297ce/Main5be48ce unverändert. Keine neuen gematchten Actuals oder finalen Handoffs angenommen; keine Wiederholungsaufträge.
+
+
+### 2026-10-09 06:41 Europe/Berlin - Conventional früher starten und Rahmen anhand Befunden schärfen
+
+Direkter Nutzerauftrag: Scientist evaluiert Conventional sobald sein eigener Einstieg fertig ist, ohne auf Design zu warten. Eine konkrete Roombook/Conventional-Greenfield-Zelle ist frisch reserviert:1Volltrialstart,900sSetup+7200sZellwand,8Implementation-Aufrufe+1finalerAssessment-Entry,alleLunaHigh,finiteTeamgrenzen; genaue absolute Frist/Bindings im neuen Grant. Ein Start braucht den tatsächlich abgeschlossenen Nestreview/Checks/Source-/Profilhandoff und Rootaktivierungsreceipt, keinen neuen Nutzer-Go und keine Designreadiness. Aktuell1Reviewreservation/1mechanischeCharge verbraucht, finales Paket noch in Arbeit;0Actuals gestartet. Alte Grants/Restplätze bleiben geschlossen.
+
+Reale Rahmen-/Harnessprobleme darf Scientist prospektiv konkret korrigieren; keine semantische Implementiererhilfe. Wesentliche Änderungen verlangen beide Varianten unter derselben neuen Fassung, OriginalConventional bleibt als Pilot/Teilbefund und verbrauchterStart erhalten. Kein rückwirkendes Scoring oder automatischer neuerTrial/Refill. Öffentliche Designschnittstelle getrennt, keine fremden Lösungen/Privatbewertungen.
+
+Fruehstartauftrag und oeffentliche Designschnittstelle einmal um04:42:43Z zugestellt. Neuer Grant endet absolut09:12:43Z; exakte Aktivierung noch ausstehend,1Start reserviert/0gestartet. Automation ACTIVE/2h und neue konkrete Instruktionen exakt geprueft; keine zusaetzliche allgemeine Phase oder alte Grantwiederverwendung.
