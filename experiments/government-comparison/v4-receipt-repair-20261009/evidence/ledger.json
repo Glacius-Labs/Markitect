@@ -1,0 +1,35 @@
+{
+  "grant": "v4-receipt-binding-repair-and-executable-freeze-20261009",
+  "issuedUtc": "2026-10-09T00:45:00Z",
+  "deadlineUtc": "2026-10-09T01:00:00Z",
+  "baseline": "a8c2ee5c94334e310d800e0597a9cf786f575e31",
+  "previousSourceFreeze": "51b17efecd6c6c56128022642ae30f8fd0c03cec",
+  "correctionReservation": {
+    "purpose": "Normalize only fixture database path to already required resolved-path receipt contract; criteria/evaluator unchanged",
+    "reservedUtc": "2026-10-09T00:47:33.0892781Z",
+    "max": 1,
+    "number": 1
+  },
+  "testReservations": [
+    {
+      "number": 1,
+      "maxSeconds": 120,
+      "command": "C:/Python313/python.exe -B test_oracle_mechanics.py",
+      "reservedUtc": "2026-10-09T00:47:57.647079Z",
+      "status": "terminal",
+      "scope": "Pure offline in-memory fixtures only, no product or network",
+      "exitCode": 0,
+      "elapsedSeconds": 0.2988988
+    }
+  ],
+  "reviewReservations": [],
+  "fullTrials": 0,
+  "productActors": 0,
+  "status": "ACTIVE",
+  "measurements": {
+    "cost": null,
+    "tokens": null,
+    "humanOversight": null,
+    "servingModel": null
+  }
+}

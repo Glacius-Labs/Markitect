@@ -1,0 +1,160 @@
+{
+  "version": "v4-receipt-repair-common-freeze-proposal",
+  "status": "NOT EXECUTABLE: Main native runtime and actual parent-chat profile remain unbound",
+  "actualTrialAllocation": 0,
+  "proposedCells": [
+    {
+      "order": 1,
+      "method": "Conventional/Oldschool",
+      "condition": "Greenfield"
+    },
+    {
+      "order": 2,
+      "method": "ClassicMain",
+      "condition": "Greenfield"
+    },
+    {
+      "order": 3,
+      "method": "ClassicMain",
+      "condition": "Brownfield"
+    },
+    {
+      "order": 4,
+      "method": "Conventional/Oldschool",
+      "condition": "Brownfield"
+    },
+    {
+      "order": 5,
+      "method": "Design",
+      "condition": "Greenfield",
+      "requiresOwnCleanHandoff": true
+    },
+    {
+      "order": 6,
+      "method": "Design",
+      "condition": "Brownfield",
+      "requiresOwnCleanHandoff": true
+    }
+  ],
+  "designBlocksFirstFour": false,
+  "globalTrialCeiling": 8,
+  "maxResearchQuestions": 2,
+  "classicMain": {
+    "source": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+    "tree": "5912f8d850c3a8013b3509d07eee2d621e856fb1",
+    "binary": "C:/Users/Consiliari/Documents/Scientist-v4-runtime-binding-20261009/runtime/markitect.exe",
+    "binarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+    "inspectionConfig": "examples/canonical-projection/canonical.yaml",
+    "inspectionConfigSha256": "dfe363d8ecd304333ec061a7563034c2f1c73fc9ddfdcf7fcdbbc47d6be2f9e6",
+    "modulePinsSource": "v4-runtime-binding-20261009/evidence/classic-main-binding.json",
+    "actualRoleRunnerCommand": null,
+    "actualRoleRunnerConfigSha256": null,
+    "metadataCallsDoNotProveRoleInvocation": true
+  },
+  "model": {
+    "targetModel": "gpt-6.1-sol",
+    "targetReasoning": "high",
+    "targetSource": "Unchanged v4-preparation common-profile-proposal.json",
+    "globalConfiguredDefaultModel": "gpt-6.1-sol",
+    "globalConfiguredDefaultReasoning": "medium",
+    "globalConfigSource": "C:/Users/Consiliari/.codex/config.toml model lines2-3; read-only allowlisted fields",
+    "globalDefaultsAreNotCurrentChatSettings": true,
+    "actualNativeParentModel": null,
+    "actualNativeParentReasoning": null,
+    "spawnOverridesAllowed": false,
+    "servingModel": null
+  },
+  "rights": {
+    "approvalPolicy": "never",
+    "filesystem": "danger-full-access",
+    "networkEnabled": true,
+    "nativeTools": "Same parent tool availability inherited by all native actors; exact available metadata names in native-tool-metadata.json",
+    "actorPolicy": "Shell/file/patch tools and shared public inputs. Every helper/reviewer is requested from Scientist and charged before native dispatch. No provider API/CodexCLI/Appserver fallback.",
+    "boundary": "Cooperative path scope on shared host, no OS access isolation claim. Actual tool visibility/exposure must be recorded; contamination remains contamination."
+  },
+  "resources": {
+    "taskWallSeconds": 1200,
+    "taskActivations": 12,
+    "semanticRepairsPerTask": 2,
+    "trialWallSeconds": 7200,
+    "trialActivations": 72,
+    "maxConcurrentActorsIncludingHelpers": 4,
+    "maxConcurrentPrimaryCells": 1,
+    "activeHumanSecondsPerTrial": 600,
+    "ownedServiceStartsPerActor": 12,
+    "implementationEndsAtTaskSeconds": 840,
+    "minimumAssessmentAdmissionSeconds": 300,
+    "assessmentEndsBeforeTaskEndSeconds": 30,
+    "interruptMarginSeconds": 10,
+    "allFailedStartsSetupRolesVotesReviewsAndRepairsCount": true,
+    "commonFreezeReviewActualAllocation": null
+  },
+  "dispatch": {
+    "tool": "collaboration.spawn_agent",
+    "forkTurns": "none",
+    "modelAndReasoningOverrides": null,
+    "onlyScientist": true,
+    "helper": "v4-runtime-binding-20261009/helpers/native_boundary.py:prepare_spawn",
+    "sequence": "One shared gate state: reserve, check before_native and mayExecute immediately before actual tool, exact toolArguments, record_start actual Actor/tool/candidate receipts, stop_due before interruption margin.",
+    "actualMainRuntimeBridge": null,
+    "existingDispatchConfig": "v4-runtime-binding-20261009/dispatch-config.json",
+    "existingExecutionAllowed": false,
+    "existingAllocatedCells": [],
+    "existingMaxActivations": 0,
+    "noOldGrantReused": true,
+    "stop": "collaboration.interrupt_agent only own reserved actors; owned_transport.Server uses its own Popen handle, bounded terminate/wait then kill/wait in finally. No OS/provider/native timer guarantee."
+  },
+  "checkout": {
+    "futureOwnedRoot": "C:/Users/Consiliari/Documents/Scientist-v4-matched-actuals",
+    "createdNow": false,
+    "layout": "cells/<method>-<condition>/repo; external state/<cell> and runtime/<cell>",
+    "greenfieldStartSha": "0416e366626d31933443ce2901d6a3696261db7b",
+    "brownfieldStartSha": "5d21ef02cd9d5485c26bc4053a35c61ad33024c1",
+    "freshActorsAndCheckouts": true,
+    "privateEvaluatorOutsideActorStage": true
+  },
+  "portAndDatabase": {
+    "transport": "v4-runtime-binding-20261009/helpers/owned_transport.py",
+    "bind": "ASPNETCORE_URLS=http://127.0.0.1:0",
+    "discover": "Only own stdout Now listening URL; no guessed port, bind failure is charged, no unreserved retry",
+    "database": "ORDER_DB_PATH exact own absolute DB; Task3/4 restart and Task4->5 compatibility use same true lineage/path with independently checked operator receipts"
+  },
+  "stack": {
+    "sdk": "10.0.103",
+    "runtime": "10.0.3",
+    "MicrosoftDataSqlite": "10.0.3",
+    "SQLitePCLRaw": "3.0.5",
+    "SQLiteEngine": "3.53.4",
+    "source": "Unchanged public architecture and dated existing receipts; no runtime invocation in this grant",
+    "dotnetExecutable": "C:/Program Files/dotnet/dotnet.exe",
+    "binaryBindingSource": "evidence/existing-binding-facts.json"
+  },
+  "publicAndEvaluationFreeze": {
+    "publicSource": "public/ copied byte-identically from accepted coverage correction; exact list in evidence/existing-binding-facts.json",
+    "evaluator": "Unchanged private evaluator/plan plus one fixture-only path representation repair; freeze manifest before delta review",
+    "rubricUnchanged": true,
+    "methodConformanceAndDesignMigrationSeparate": true,
+    "conventionalDesignArtifactDuty": false,
+    "oldResultsNotRescored": true,
+    "testCountsAreNotQuality": true
+  },
+  "laterDesign": {
+    "sameFrozenPublicInputsEvaluationAndResourceRules": true,
+    "requiresMatchingActualModelToolRightsRuntimeProfile": true,
+    "baselineResultsAndPrivateHoldoutsNeverGivenToDesign": true,
+    "onlyItsPairRequiresCleanSourceBinaryRoleHandoff": true,
+    "noExtraCellAllocation": true
+  },
+  "preciseRemainingBindings": [
+    "Main selected agent runtime command/config and files digest that reaches the same native dispatcher through real Main request/parser/receipt path; canonical metadata fixture has no such runtime binding.",
+    "Root/host evidence of actual native parent-chat model/reasoning matching the chosen common profile; global TOML medium is not proof of current chat high. No silent substitution.",
+    "Root acceptance of exact common freeze and finite actual-cell/shared-review budget, with fresh per-cell reservations. Actual allocation remains zero."
+  ],
+  "authority": "Actual product parser, invocation and receipt govern; Python DTO preflight remains advisory. No speculative adapter or new capability diagnostics.",
+  "measurements": {
+    "servingModel": null,
+    "tokens": null,
+    "cost": null,
+    "humanOversight": null
+  }
+}

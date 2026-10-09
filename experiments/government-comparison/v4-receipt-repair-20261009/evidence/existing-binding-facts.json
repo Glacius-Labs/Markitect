@@ -1,0 +1,128 @@
+{
+  "artifacts": [
+    {
+      "path": "experiments/government-comparison/v4-runtime-binding-20261009/dispatch-config.json",
+      "sha256": "447c1df2141a1de5dc46be40a991d8e08b2c127759e9ae35daf8190440f8bd75"
+    },
+    {
+      "path": "experiments/government-comparison/v4-runtime-binding-20261009/candidate-admission.json",
+      "sha256": "799f13d502e1687a36f62d4f42492971dc61a38540a9bd3f6e46eace6e092c81"
+    },
+    {
+      "path": "experiments/government-comparison/v4-runtime-binding-20261009/helpers/native_boundary.py",
+      "sha256": "470fd1f7d3dadeb20e53af1762ccd683805b6bc8d5a951b1f2c44a3f1b617122"
+    },
+    {
+      "path": "experiments/government-comparison/v4-runtime-binding-20261009/helpers/dispatch_gate.py",
+      "sha256": "7d1cf2a8813e0d447923dd62a7621bddcef9029aa00a283c22f405adadbe704e"
+    },
+    {
+      "path": "experiments/government-comparison/v4-runtime-binding-20261009/helpers/deadlines.py",
+      "sha256": "7e025a3e49625134abaad80036832746cb2b21f2e1bf976387f872ccb2437165"
+    },
+    {
+      "path": "experiments/government-comparison/v4-runtime-binding-20261009/helpers/owned_transport.py",
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487"
+    }
+  ],
+  "publicPins": [
+    {
+      "path": "public/architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700"
+    },
+    {
+      "path": "public/brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8"
+    },
+    {
+      "path": "public/brownfield-provenance.md",
+      "sha256": "155f6f736adf4d48b71074f74a9221d9f8ac796a938b5b8b0650f741d59eb548"
+    },
+    {
+      "path": "public/candidate-admission.json",
+      "sha256": "fc743e339885ac0cc25b3409c23a1497e075786730fd9f42f0b0cd64de33e856"
+    },
+    {
+      "path": "public/checks.py",
+      "sha256": "783561065c3bc6c814aed3ba5c943710442dbbee4502ad7db6b58eed4dabeccf"
+    },
+    {
+      "path": "public/common-outcome-record.json",
+      "sha256": "faf63ce63336e9df81646822181af74c995853482b838b254773a68b143f20ab"
+    },
+    {
+      "path": "public/common-profile-proposal.json",
+      "sha256": "d153c97695ee95521331606ce413950df7c8c8f47f69c8441853fc3499883552"
+    },
+    {
+      "path": "public/deadlines.py",
+      "sha256": "7e025a3e49625134abaad80036832746cb2b21f2e1bf976387f872ccb2437165"
+    },
+    {
+      "path": "public/dto_preflight.py",
+      "sha256": "e6bba598c515925ce584342190b18f5fb7f4a67054e66e55d1c5572cb43e975d"
+    },
+    {
+      "path": "public/holdout-procedure.md",
+      "sha256": "28f2169bc7fce3ccf586aa2527fef359a9709aa4eb87b9cb7feb6aff41309f9b"
+    },
+    {
+      "path": "public/oldschool-workflow-brief-20261008.md",
+      "sha256": "5b9dddff5d07d9cb1e6427c43e46f1259e9fb49fd030fc0a6e1e44b21e60aadc"
+    },
+    {
+      "path": "public/operator-evidence-contract.md",
+      "sha256": "cf230d578bacbb22d32743fecbc87d079eb03644ce8aabe8cdcd8296d03c49cb"
+    },
+    {
+      "path": "public/owned_transport.py",
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487"
+    },
+    {
+      "path": "public/q1-intent-setup-v1.md",
+      "sha256": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e"
+    },
+    {
+      "path": "public/release.py",
+      "sha256": "15df0312e5c1150e685a44a49d969766f20bf6194f7b0b48cf2a80605f23d291"
+    },
+    {
+      "path": "public/rubric.json",
+      "sha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37"
+    },
+    {
+      "path": "public/task-requirement-map.json",
+      "sha256": "2a6473f03df9aace3c7222a61e0078d97aabdf3d9a3d908ea3f1c36b5962f53c"
+    },
+    {
+      "path": "public/tasks/01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9"
+    },
+    {
+      "path": "public/tasks/02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6"
+    },
+    {
+      "path": "public/tasks/03-persist-state.md",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53"
+    },
+    {
+      "path": "public/tasks/04-order-lifecycle.md",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0"
+    },
+    {
+      "path": "public/tasks/05-change-limit.md",
+      "sha256": "b68ccd173891692050c64101af47754f1213e745a63071653b30b8d9d6ccf17f"
+    },
+    {
+      "path": "public/tasks/06-repair-regression.md",
+      "sha256": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a"
+    },
+    {
+      "path": "public/test_mechanics.py",
+      "sha256": "9ee8088e7e61932acf67a8fbae4d1a49b7e3999571f2feff7fbb637f060b6603"
+    }
+  ],
+  "mainBinarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+  "dotnetBinarySha256": "37c8f27cf35c5c59d942f7513496c3be68ba3018ed1b2220a31f5e5035df07ba"
+}

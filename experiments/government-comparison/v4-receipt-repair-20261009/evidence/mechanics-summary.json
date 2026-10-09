@@ -1,0 +1,19 @@
+{
+  "testsRun": 26,
+  "exitCode": 0,
+  "processesConsumed": 1,
+  "processesMax": 1,
+  "scope": "Pure offline evaluator fixtures only, not product quality",
+  "rawLogs": [
+    {
+      "file": "test.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "test.stderr.log",
+      "sha256": "72713be38257f690459f48e270e30b7b4e4e323edaf416aa46d1d0530f3ad2f3"
+    }
+  ],
+  "sourceCorrectionsConsumed": 1,
+  "sourceCorrectionsMax": 1
+}

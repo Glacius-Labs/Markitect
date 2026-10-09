@@ -1,0 +1,5 @@
+{
+  "path": "private-source.zip",
+  "sha256": "4471ed7c7b37b63f717a3d31394bea5dbb045bc01cc767085c52b66e587a8e32",
+  "scope": "Only new private source and fixture receipts; no repeated full old archive"
+}

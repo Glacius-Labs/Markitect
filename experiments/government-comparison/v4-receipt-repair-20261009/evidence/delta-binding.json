@@ -1,0 +1,40 @@
+{
+  "scope": "One fixture-only path representation repair; evaluator and plans byte equal",
+  "priorSourceCommit": "51b17efecd6c6c56128022642ae30f8fd0c03cec",
+  "baselineClosure": "a8c2ee5c94334e310d800e0597a9cf786f575e31",
+  "files": [
+    {
+      "byteEqual": true,
+      "correctedSha256": "dd276535cb7e47950da1174ba0549ad58a9d9a87c00ffe94ba9d80570cd28aea",
+      "file": "base_checks.py",
+      "baselineSha256": "dd276535cb7e47950da1174ba0549ad58a9d9a87c00ffe94ba9d80570cd28aea"
+    },
+    {
+      "byteEqual": true,
+      "correctedSha256": "b32cf2496f7888766d529f5228a1f0c3524d702dff3baeb481c9c783597e2e5a",
+      "file": "holdout_checks.py",
+      "baselineSha256": "b32cf2496f7888766d529f5228a1f0c3524d702dff3baeb481c9c783597e2e5a"
+    },
+    {
+      "byteEqual": true,
+      "correctedSha256": "b3662d4c5447b9ff8365bd2070ac7029cfb78d8e6393dc058b7891c01eb52ffa",
+      "file": "holdout-plan.json",
+      "baselineSha256": "b3662d4c5447b9ff8365bd2070ac7029cfb78d8e6393dc058b7891c01eb52ffa"
+    },
+    {
+      "byteEqual": true,
+      "correctedSha256": "50385660df977fe07ee76b5b67633c08ee18e03e79f4bf63fd385bd4e97d4e52",
+      "file": "task6-equivalence-plan.json",
+      "baselineSha256": "50385660df977fe07ee76b5b67633c08ee18e03e79f4bf63fd385bd4e97d4e52"
+    },
+    {
+      "byteEqual": false,
+      "correctedSha256": "f17a0212c080c033ec96df175b5539a93c616434e1bcbe10cf573f00d5c3999d",
+      "file": "test_oracle_mechanics.py",
+      "baselineSha256": "8e986e160902c1c689d67e99cc8bb1dbf7fc6f5240eb557223ee21c81993f10f"
+    }
+  ],
+  "publicCriteriaByteEqual": true,
+  "priorFailureRemainsUnchanged": true,
+  "profileGenerationBookkeepingFailure": "Initial PowerShell array expression produced one joined path before any profile file was written; preserved as metadata here. Normal data collection used explicit filename array. No test or Actor retry occurred."
+}
