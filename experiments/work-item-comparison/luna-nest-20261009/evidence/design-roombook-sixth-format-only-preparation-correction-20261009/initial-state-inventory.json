@@ -1,0 +1,42 @@
+[
+  {
+    "path": "app-ledger.json",
+    "sha256": "f8ce063588b8e918aaaaa12a61da1443697a89bd4fd6aaa245b9d69a48b0d409",
+    "bytes": 251
+  },
+  {
+    "path": "inner-binding.json",
+    "sha256": "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed",
+    "bytes": 2394
+  },
+  {
+    "path": "runtime-assets/app_ledger.py",
+    "sha256": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20",
+    "bytes": 7339
+  },
+  {
+    "path": "runtime-assets/inner_runtime_budget.py",
+    "sha256": "a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d",
+    "bytes": 12623
+  },
+  {
+    "path": "runtime-assets/markitect.exe",
+    "sha256": "abf877849379900cf2f1cf6c19f3d5d1e67a134592ac810cedc437191e9a5f29",
+    "bytes": 16947200
+  },
+  {
+    "path": "runtime-assets/nest.py",
+    "sha256": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635",
+    "bytes": 27108
+  },
+  {
+    "path": "runtime-assets/runner.py",
+    "sha256": "1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6",
+    "bytes": 64805
+  },
+  {
+    "path": "state.json",
+    "sha256": "98a48a6debdad76f2534bffe14e1768c360b6baa5994593859b20929ba75e051",
+    "bytes": 1415
+  }
+]

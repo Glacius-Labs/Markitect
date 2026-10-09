@@ -1,0 +1,191 @@
+{
+  "status": "clean prepared main; DISABLED pending separate Root admission",
+  "startedUtc": "2026-10-09T10:34:12.251831+00:00",
+  "closedUtc": "2026-10-09T10:34:14.002118+00:00",
+  "grantEndUtc": "2026-10-09T10:39:10Z",
+  "sourceBaseline": "55807bc750364714674f861691f198feb3ecba3f",
+  "preparedCommit": "ffcf65173c030e8718ab7098c8b461dfe03b0395",
+  "preparedTree": "f158d5274e98faf59217d23caa4afe92e09ca3da",
+  "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+  "stateDir": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native",
+  "station": "S1",
+  "stationIndex": 0,
+  "ledgerEntries": 0,
+  "ledgerStartedUtc": null,
+  "bindingAuthorized": false,
+  "parentHandle": null,
+  "parentReservation": null,
+  "grantPathInDisabledBinding": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\design-roombook-sixth-actual-reservation-20261009-grant.json",
+  "bindingSha256": "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed",
+  "runtimeSha256": "38bae9af3b7f6d353e5ef4b06e9f57e1d01d2ae985ac6871067a310b9455471e",
+  "wrapperSha256": "a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d",
+  "adapterSha256": "1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6",
+  "binarySha256": "abf877849379900cf2f1cf6c19f3d5d1e67a134592ac810cedc437191e9a5f29",
+  "requestedModel": "gpt-6-luna",
+  "reasoning": "high",
+  "servingModel": null,
+  "tokens": null,
+  "cost": null,
+  "humanTime": null,
+  "actorsReviewersTestsBuildsProductProviderTransportCalls": 0,
+  "mechanicalCorrectionBatches": 1,
+  "topLevelLocalBatchesIncludingClosurePlanned": 4,
+  "rawGitWorkingCaseBindings": 27,
+  "nestedGitSubcommands": [
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exitCode": 0,
+      "stdout": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+        "branch",
+        "--show-current"
+      ],
+      "exitCode": 0,
+      "stdout": "codex/design-roombook-prepared\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+        "add",
+        "."
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+        "-c",
+        "user.name=Study Seed",
+        "-c",
+        "user.email=study@example.invalid",
+        "commit",
+        "-m",
+        "Prepare original Roombook model and disabled genuine runtime with format-only disposition"
+      ],
+      "exitCode": 0,
+      "stdout": "[codex/design-roombook-prepared ffcf651] Prepare original Roombook model and disabled genuine runtime with format-only disposition\n 21 files changed, 604 insertions(+)\n create mode 100644 .agents/skills/markitect-model-first/SKILL.md\n create mode 100644 .claude/skills/markitect-model-first/SKILL.md\n create mode 100644 .codex/config.toml\n create mode 100644 .markitect/.gitignore\n create mode 100644 .markitect/model/booking-contract.yaml\n create mode 100644 .markitect/model/checks.yaml\n create mode 100644 .markitect/model/delivery-rules.yaml\n create mode 100644 .markitect/model/documentation.yaml\n create mode 100644 .markitect/model/durable-state.yaml\n create mode 100644 .markitect/model/implementation.yaml\n create mode 100644 .markitect/model/manager.yaml\n create mode 100644 .markitect/model/reservation.yaml\n create mode 100644 .markitect/model/tests.yaml\n create mode 100644 .markitect/project.yaml\n create mode 100644 .markitect/runtime.yaml\n create mode 100644 .markitect/workflows/model-first.md\n create mode 100644 .study/station.json\n create mode 100644 CLAUDE.md\n create mode 100644 TOOLCHAIN.md\n create mode 100644 docs/markitect/project.md\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exitCode": 0,
+      "stdout": "ffcf65173c030e8718ab7098c8b461dfe03b0395\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+        "rev-parse",
+        "HEAD^{tree}"
+      ],
+      "exitCode": 0,
+      "stdout": "f158d5274e98faf59217d23caa4afe92e09ca3da\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+        "branch",
+        "-f",
+        "main",
+        "ffcf65173c030e8718ab7098c8b461dfe03b0395"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+        "checkout",
+        "main"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Switched to branch 'main'\n"
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+        "status",
+        "--porcelain"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+        "bundle",
+        "create",
+        "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\work-item-comparison\\luna-nest-20261009\\evidence\\design-roombook-sixth-format-only-preparation-correction-20261009\\prepared-case.bundle",
+        "--all"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "rawGitCaseBlobReads": 27,
+  "knownOwnJobs": "All Git subprocesses terminal; no actors/product/provider jobs created.",
+  "priorPreparationCostSecondsThroughCallback": 635,
+  "oldOwnerSetupSecondsSeparatelyRetained": 1385.854584,
+  "freshFormatCostSecondsThroughFreeze": 184.012318,
+  "limits": [
+    "Format-only genuine generated-view delta retained; ten canonical model bytes untouched.",
+    "No runtime YAML/adapter compatibility product execution or tests.",
+    "Final wrapper pipe-drain exceptional path remains NOT RUN/not exact-final independent review.",
+    "No native full-delivery readiness/main/human acceptance established.",
+    "Separate immutable Root enabled grant/full7200s and actual own parent binding required.",
+    "Cooperative shared72/four/depth2, original5400/1200/600; no OS/hard-global/escaped-provider containment."
+  ]
+}

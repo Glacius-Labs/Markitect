@@ -1,0 +1,245 @@
+--- before/.markitect/runtime.yaml
++++ after/.markitect/runtime.yaml
+@@ -1,121 +1,121 @@
+-apiVersion: markitect.example.org/project-run/v1alpha1
+-mode: controlled-local
+-requireIsolation: false
+-agents:
+-    '["project.markitect.example.org/v1alpha1","Manager","","roombook"]':
+-        command: C:\Python313\python.exe
+-        args:
+-            - "-B"
+-            - "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py"
+-            - "--binding"
+-            - "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\inner-binding.json"
+-            - "--binding-sha256"
+-            - "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed"
+-            - "--"
+-            - "C:\\Python313\\python.exe"
+-            - C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\runner.py
+-            - --model
+-            - gpt-6-luna
+-            - --codex-executable
+-            - C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
+-            - --codex-version
+-            - 0.162.0-alpha.2
+-        model: gpt-6-luna
+-        modelOptions:
+-            model_reasoning_effort: high
+-        providerVersion: 0.162.0-alpha.2
+-        timeout: 5m0s
+-        maxStdoutBytes: 4194304
+-        maxStderrBytes: 1048576
+-        runtimeFiles:
+-            - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py"
+-              mode: "0644"
+-              digest: sha256:a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d
+-            - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\app_ledger.py"
+-              mode: "0644"
+-              digest: sha256:3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20
+-            - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\nest.py"
+-              mode: "0644"
+-              digest: sha256:45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635
+-            - path: C:\Python313\python.exe
+-              mode: "0644"
+-              digest: sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125
+-            - path: C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\runner.py
+-              mode: "0644"
+-              digest: sha256:1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6
+-            - path: C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
+-              mode: "0644"
+-              digest: sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68
+-        environment:
+-            - PATH
+-            - TEMP
+-            - TMP
+-            - SystemRoot
+-        pricing:
+-            inputMicrosPerMillion: 100000
+-            outputMicrosPerMillion: 500000
+-review:
+-    agents:
+-        '["project.markitect.example.org/v1alpha1","Manager","","roombook"]':
+-            command: C:\Python313\python.exe
+-            args:
+-                - "-B"
+-                - "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py"
+-                - "--binding"
+-                - "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\inner-binding.json"
+-                - "--binding-sha256"
+-                - "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed"
+-                - "--"
+-                - "C:\\Python313\\python.exe"
+-                - C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\runner.py
+-                - --model
+-                - gpt-6-luna
+-                - --codex-executable
+-                - C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
+-                - --codex-version
+-                - 0.162.0-alpha.2
+-            model: gpt-6-luna
+-            modelOptions:
+-                model_reasoning_effort: high
+-            providerVersion: 0.162.0-alpha.2
+-            timeout: 5m0s
+-            maxStdoutBytes: 4194304
+-            maxStderrBytes: 1048576
+-            runtimeFiles:
+-                - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py"
+-                  mode: "0644"
+-                  digest: sha256:a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d
+-                - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\app_ledger.py"
+-                  mode: "0644"
+-                  digest: sha256:3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20
+-                - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\nest.py"
+-                  mode: "0644"
+-                  digest: sha256:45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635
+-                - path: C:\Python313\python.exe
+-                  mode: "0644"
+-                  digest: sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125
+-                - path: C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\runner.py
+-                  mode: "0644"
+-                  digest: sha256:1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6
+-                - path: C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
+-                  mode: "0644"
+-                  digest: sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68
+-            environment:
+-                - PATH
+-                - TEMP
+-                - TMP
+-                - SystemRoot
+-            pricing:
+-                inputMicrosPerMillion: 100000
+-                outputMicrosPerMillion: 500000
+-    maxRounds: 3
+-    maxManagerRounds: 2
+-limits:
+-    maxDepth: 2
+-    maxStarts: 24
+-    maxRetries: 1
+-    maxParallel: 1
+-    maxDuration: 20m0s
+-    maxCostMicros: 3000000
+-    maxCandidateFileBytes: 1048576
+-    maxCandidateBytes: 8388608
++apiVersion: markitect.example.org/project-run/v1alpha1
++mode: controlled-local
++requireIsolation: false
++agents:
++    '["project.markitect.example.org/v1alpha1","Manager","","roombook"]':
++        command: C:\Python313\python.exe
++        args:
++            - "-B"
++            - "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py"
++            - "--binding"
++            - "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\inner-binding.json"
++            - "--binding-sha256"
++            - "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed"
++            - "--"
++            - "C:\\Python313\\python.exe"
++            - C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\runner.py
++            - --model
++            - gpt-6-luna
++            - --codex-executable
++            - C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
++            - --codex-version
++            - 0.162.0-alpha.2
++        model: gpt-6-luna
++        modelOptions:
++            model_reasoning_effort: high
++        providerVersion: 0.162.0-alpha.2
++        timeout: 5m0s
++        maxStdoutBytes: 4194304
++        maxStderrBytes: 1048576
++        runtimeFiles:
++            - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py"
++              mode: "0644"
++              digest: sha256:a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d
++            - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\app_ledger.py"
++              mode: "0644"
++              digest: sha256:3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20
++            - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\nest.py"
++              mode: "0644"
++              digest: sha256:45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635
++            - path: C:\Python313\python.exe
++              mode: "0644"
++              digest: sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125
++            - path: C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\runner.py
++              mode: "0644"
++              digest: sha256:1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6
++            - path: C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
++              mode: "0644"
++              digest: sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68
++        environment:
++            - PATH
++            - TEMP
++            - TMP
++            - SystemRoot
++        pricing:
++            inputMicrosPerMillion: 100000
++            outputMicrosPerMillion: 500000
++review:
++    agents:
++        '["project.markitect.example.org/v1alpha1","Manager","","roombook"]':
++            command: C:\Python313\python.exe
++            args:
++                - "-B"
++                - "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py"
++                - "--binding"
++                - "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\inner-binding.json"
++                - "--binding-sha256"
++                - "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed"
++                - "--"
++                - "C:\\Python313\\python.exe"
++                - C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\runner.py
++                - --model
++                - gpt-6-luna
++                - --codex-executable
++                - C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
++                - --codex-version
++                - 0.162.0-alpha.2
++            model: gpt-6-luna
++            modelOptions:
++                model_reasoning_effort: high
++            providerVersion: 0.162.0-alpha.2
++            timeout: 5m0s
++            maxStdoutBytes: 4194304
++            maxStderrBytes: 1048576
++            runtimeFiles:
++                - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py"
++                  mode: "0644"
++                  digest: sha256:a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d
++                - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\app_ledger.py"
++                  mode: "0644"
++                  digest: sha256:3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20
++                - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\nest.py"
++                  mode: "0644"
++                  digest: sha256:45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635
++                - path: C:\Python313\python.exe
++                  mode: "0644"
++                  digest: sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125
++                - path: C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\runner.py
++                  mode: "0644"
++                  digest: sha256:1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6
++                - path: C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
++                  mode: "0644"
++                  digest: sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68
++            environment:
++                - PATH
++                - TEMP
++                - TMP
++                - SystemRoot
++            pricing:
++                inputMicrosPerMillion: 100000
++                outputMicrosPerMillion: 500000
++    maxRounds: 3
++    maxManagerRounds: 2
++limits:
++    maxDepth: 2
++    maxStarts: 24
++    maxRetries: 1
++    maxParallel: 1
++    maxDuration: 20m0s
++    maxCostMicros: 3000000
++    maxCandidateFileBytes: 1048576
++    maxCandidateBytes: 8388608

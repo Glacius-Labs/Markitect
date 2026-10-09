@@ -1,0 +1,11 @@
+{
+  "status": "prepared",
+  "startedUtc": null,
+  "grantSha256": null,
+  "implementationClosed": false,
+  "entries": [],
+  "usage": null,
+  "servingModel": null,
+  "cost": null,
+  "enforcement": "Cooperative native-tool reservations; not a sandbox"
+}

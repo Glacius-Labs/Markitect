@@ -1,0 +1,47 @@
+[
+  {
+    "path": ".codex/config.toml",
+    "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "bytes": 281
+  },
+  {
+    "path": ".gitignore",
+    "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "bytes": 36
+  },
+  {
+    "path": ".study/station.json",
+    "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+    "bytes": 70
+  },
+  {
+    "path": "AGENTS.md",
+    "sha256": "fff473528e6290171b64b1cb2f8b16f7d18a0e8f556e22b354cbfb3222cfd8a7",
+    "bytes": 2540
+  },
+  {
+    "path": "BACKLOG.md",
+    "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "bytes": 2566
+  },
+  {
+    "path": "checks/acceptance.py",
+    "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "bytes": 7554
+  },
+  {
+    "path": "QUALITY.md",
+    "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "bytes": 2687
+  },
+  {
+    "path": "README.md",
+    "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "bytes": 2276
+  },
+  {
+    "path": "STATIONS.json",
+    "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "bytes": 595
+  }
+]

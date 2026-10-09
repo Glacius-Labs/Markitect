@@ -1,0 +1,64 @@
+{
+  "case": "roombook",
+  "arm": "markitect",
+  "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+  "stateDir": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native",
+  "seedCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+  "preparedCommit": "ffcf65173c030e8718ab7098c8b461dfe03b0395",
+  "preparedTree": "f158d5274e98faf59217d23caa4afe92e09ca3da",
+  "createdUtc": "2026-10-09T10:34:12.879678+00:00",
+  "status": "prepared",
+  "sessions": [],
+  "interventions": [],
+  "productReadiness": null,
+  "initialSetup": [],
+  "trialGrant": null,
+  "sessionId": null,
+  "deadlineUtc": null,
+  "implementationDeadlineUtc": null,
+  "evaluationDeadlineUtc": null,
+  "tokens": null,
+  "cost": null,
+  "servingModel": null,
+  "stationIndex": 0,
+  "stations": [
+    {
+      "id": "S1",
+      "items": [
+        "R01"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S2",
+      "items": [
+        "R02",
+        "R03",
+        "R04"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S3",
+      "items": [
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11"
+      ],
+      "requiresTeam": true
+    },
+    {
+      "id": "S4",
+      "items": [
+        "R12"
+      ],
+      "requiresTeam": false
+    }
+  ],
+  "snapshots": [],
+  "freeze": null
+}

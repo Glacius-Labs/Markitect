@@ -1,0 +1,20 @@
+--- before/docs/markitect/project.md
++++ after/docs/markitect/project.md
+@@ -2,7 +2,7 @@
+ 
+ # roombook
+ 
+-Model digest: sha256:6417f793d498ac85c8d20cead61bf32c6f4416f146e3395210235afeedc7bc0b  
++Model digest: sha256:6417f793d498ac85c8d20cead61bf32c6f4416f146e3395210235afeedc7bc0b
+ Report status: incomplete
+ 
+ The structural model compiled from the explicitly selected Definition files. This view does not establish that repository code, tests, or prose conform to the model. Declared checks are not evidence that they ran.
+@@ -12,7 +12,7 @@
+ ### roombook
+ 
+ - Identity: ["project.markitect.example.org/v1alpha1","Manager","","roombook"]
+-- Namespace: 
++- Namespace:
+ - Purpose: Room reservation CLI with durable local state
+ - Delegated paths: .
+ - Instructions: Use the genuine installed model-first workflow, maintain explicit model changes for new work and preserve public requirements. Decide ordinary implementation details yourself.

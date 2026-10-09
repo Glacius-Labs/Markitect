@@ -1,0 +1,51 @@
+[
+  {
+    "path": ".markitect/runtime.yaml",
+    "beforeSha256": "8c1c22a414968706f381d11fce8e0e92d90000449a4ed9b4964237364750727b",
+    "afterSha256": "38bae9af3b7f6d353e5ef4b06e9f57e1d01d2ae985ac6871067a310b9455471e",
+    "nonWhitespaceContentPreserved": true,
+    "commonPrefixPreserved": true
+  },
+  {
+    "path": "TOOLCHAIN.md",
+    "beforeSha256": "c8659f0e8fa39e6bbe725521795c6d2447e70b8bfaa3ddf6bd03435c8c1dddae",
+    "afterSha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77",
+    "nonWhitespaceContentPreserved": true,
+    "commonPrefixPreserved": true
+  },
+  {
+    "path": ".agents/skills/markitect-model-first/SKILL.md",
+    "beforeSha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df",
+    "afterSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "nonWhitespaceContentPreserved": true,
+    "commonPrefixPreserved": true
+  },
+  {
+    "path": ".claude/skills/markitect-model-first/SKILL.md",
+    "beforeSha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df",
+    "afterSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "nonWhitespaceContentPreserved": true,
+    "commonPrefixPreserved": true
+  },
+  {
+    "path": "CLAUDE.md",
+    "beforeSha256": "0d75a4a8247dd8cc59a1125a2265ad555c9bbe7f3aa057bba97637483da2c321",
+    "afterSha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05",
+    "nonWhitespaceContentPreserved": true,
+    "commonPrefixPreserved": true
+  },
+  {
+    "path": "docs/markitect/project.md",
+    "beforeSha256": "03d99e7b2a498c7a205ab6b1162a832bff246a58804e09f47bb981e65aca23ca",
+    "afterSha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb",
+    "nonWhitespaceContentPreserved": true,
+    "commonPrefixPreserved": true
+  },
+  {
+    "path": "AGENTS.md",
+    "beforeSha256": "ac48151f5d0cebcd47232ba59a2a1e1ba55cfe135883c21fd187833a5c4a1071",
+    "afterSha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6",
+    "nonWhitespaceContentPreserved": true,
+    "commonPrefixPreserved": true
+  }
+]

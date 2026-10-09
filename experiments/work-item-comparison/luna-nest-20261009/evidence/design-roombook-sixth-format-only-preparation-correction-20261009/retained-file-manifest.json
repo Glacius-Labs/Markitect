@@ -1,0 +1,337 @@
+[
+  {
+    "path": ".gitattributes",
+    "bytes": 8,
+    "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da"
+  },
+  {
+    "path": "activation-plan.md",
+    "bytes": 3761,
+    "sha256": "066949eee918c9501d646a402c3b09f08853219631f9d024fde9733f276e1ec1"
+  },
+  {
+    "path": "after/.agents/skills/markitect-model-first/SKILL.md",
+    "bytes": 967,
+    "sha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17"
+  },
+  {
+    "path": "after/.claude/skills/markitect-model-first/SKILL.md",
+    "bytes": 967,
+    "sha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17"
+  },
+  {
+    "path": "after/.markitect/runtime.yaml",
+    "bytes": 6398,
+    "sha256": "38bae9af3b7f6d353e5ef4b06e9f57e1d01d2ae985ac6871067a310b9455471e"
+  },
+  {
+    "path": "after/AGENTS.md",
+    "bytes": 3328,
+    "sha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6"
+  },
+  {
+    "path": "after/CLAUDE.md",
+    "bytes": 787,
+    "sha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05"
+  },
+  {
+    "path": "after/docs/markitect/project.md",
+    "bytes": 8367,
+    "sha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb"
+  },
+  {
+    "path": "after/TOOLCHAIN.md",
+    "bytes": 982,
+    "sha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77"
+  },
+  {
+    "path": "before/.agents/skills/markitect-model-first/SKILL.md",
+    "bytes": 968,
+    "sha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df"
+  },
+  {
+    "path": "before/.claude/skills/markitect-model-first/SKILL.md",
+    "bytes": 968,
+    "sha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df"
+  },
+  {
+    "path": "before/.markitect/runtime.yaml",
+    "bytes": 6519,
+    "sha256": "8c1c22a414968706f381d11fce8e0e92d90000449a4ed9b4964237364750727b"
+  },
+  {
+    "path": "before/AGENTS.md",
+    "bytes": 3329,
+    "sha256": "ac48151f5d0cebcd47232ba59a2a1e1ba55cfe135883c21fd187833a5c4a1071"
+  },
+  {
+    "path": "before/CLAUDE.md",
+    "bytes": 788,
+    "sha256": "0d75a4a8247dd8cc59a1125a2265ad555c9bbe7f3aa057bba97637483da2c321"
+  },
+  {
+    "path": "before/docs/markitect/project.md",
+    "bytes": 8370,
+    "sha256": "03d99e7b2a498c7a205ab6b1162a832bff246a58804e09f47bb981e65aca23ca"
+  },
+  {
+    "path": "before/TOOLCHAIN.md",
+    "bytes": 991,
+    "sha256": "c8659f0e8fa39e6bbe725521795c6d2447e70b8bfaa3ddf6bd03435c8c1dddae"
+  },
+  {
+    "path": "common-nine-inputs.json",
+    "bytes": 1287,
+    "sha256": "6cc169fcdd71c442715187beda536a3a630c67261609ec2d790bd84090aed157"
+  },
+  {
+    "path": "format-and-freeze.py",
+    "bytes": 9856,
+    "sha256": "b6d7daa1a5482ba8648cde448540f4526d50866d3205d4d785ecc024b256a732"
+  },
+  {
+    "path": "format-deltas/.agents/skills/markitect-model-first/SKILL.md.diff",
+    "bytes": 851,
+    "sha256": "4f98c00803aa6d7999af2880b80a180bc6190bc196822c6fe0187681258394c9"
+  },
+  {
+    "path": "format-deltas/.claude/skills/markitect-model-first/SKILL.md.diff",
+    "bytes": 851,
+    "sha256": "fa0d2f3d02125e948dcd8c32509c806eafa9b21d03dbae2f95df5f7b8c2ba304"
+  },
+  {
+    "path": "format-deltas/.markitect/runtime.yaml.diff",
+    "bytes": 13248,
+    "sha256": "3d9f5e9ab828624671de5a6da9c37764dc664af6638885cbfa416ad9f0c1618f"
+  },
+  {
+    "path": "format-deltas/AGENTS.md.diff",
+    "bytes": 851,
+    "sha256": "a7b94588bec8ddc797e9db6cc160e414f9aedba85940bdee181754dccc4a4df2"
+  },
+  {
+    "path": "format-deltas/CLAUDE.md.diff",
+    "bytes": 849,
+    "sha256": "1652bde423a95df5c39f9d396a10681d4c30f45c86d46447f864262496c98c09"
+  },
+  {
+    "path": "format-deltas/docs/markitect/project.md.diff",
+    "bytes": 941,
+    "sha256": "a939b69ea0cf323dccd4a8abb674f1b97b68c089ce5bfeaf20535cd240c45012"
+  },
+  {
+    "path": "format-deltas/TOOLCHAIN.md.diff",
+    "bytes": 2054,
+    "sha256": "4e5c60fd464dd642e8302f6527042aff43b34c244332ebbd7cecf7a52e86a7fb"
+  },
+  {
+    "path": "format-provenance.json",
+    "bytes": 2110,
+    "sha256": "4636ccbee0b39bd5a5fb3d54db2db7da4356203fe9dcefc148028badbd32a1be"
+  },
+  {
+    "path": "grant.json",
+    "bytes": 2198,
+    "sha256": "48c1d7f93bafb131c5ced1d4db6ab7176aac93e6016443ba38bd0686c687c7dc"
+  },
+  {
+    "path": "initial-state-files/app-ledger.json",
+    "bytes": 251,
+    "sha256": "f8ce063588b8e918aaaaa12a61da1443697a89bd4fd6aaa245b9d69a48b0d409"
+  },
+  {
+    "path": "initial-state-files/inner-binding.json",
+    "bytes": 2394,
+    "sha256": "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed"
+  },
+  {
+    "path": "initial-state-files/runtime-assets/app_ledger.py",
+    "bytes": 7339,
+    "sha256": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20"
+  },
+  {
+    "path": "initial-state-files/runtime-assets/inner_runtime_budget.py",
+    "bytes": 12623,
+    "sha256": "a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d"
+  },
+  {
+    "path": "initial-state-files/runtime-assets/markitect.exe",
+    "bytes": 16947200,
+    "sha256": "abf877849379900cf2f1cf6c19f3d5d1e67a134592ac810cedc437191e9a5f29"
+  },
+  {
+    "path": "initial-state-files/runtime-assets/nest.py",
+    "bytes": 27108,
+    "sha256": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635"
+  },
+  {
+    "path": "initial-state-files/runtime-assets/runner.py",
+    "bytes": 64805,
+    "sha256": "1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6"
+  },
+  {
+    "path": "initial-state-files/state.json",
+    "bytes": 1415,
+    "sha256": "98a48a6debdad76f2534bffe14e1768c360b6baa5994593859b20929ba75e051"
+  },
+  {
+    "path": "initial-state-inventory.json",
+    "bytes": 1192,
+    "sha256": "a8d118c0b1d20e0773aaeda32fc9ad094ada36241858d92d5d23b8d0f00c02bf"
+  },
+  {
+    "path": "model-migration-provenance.json",
+    "bytes": 5401,
+    "sha256": "08d012acd459949e9c1ccd2ca597f1a26b81f088d7ef92e691ca332e947f3a56"
+  },
+  {
+    "path": "prepared-case-files/.agents/skills/markitect-model-first/SKILL.md",
+    "bytes": 967,
+    "sha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17"
+  },
+  {
+    "path": "prepared-case-files/.claude/skills/markitect-model-first/SKILL.md",
+    "bytes": 967,
+    "sha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17"
+  },
+  {
+    "path": "prepared-case-files/.codex/config.toml",
+    "bytes": 281,
+    "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b"
+  },
+  {
+    "path": "prepared-case-files/.gitignore",
+    "bytes": 36,
+    "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9"
+  },
+  {
+    "path": "prepared-case-files/.markitect/.gitignore",
+    "bytes": 23,
+    "sha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce"
+  },
+  {
+    "path": "prepared-case-files/.markitect/model/booking-contract.yaml",
+    "bytes": 479,
+    "sha256": "e9f088cbdd1183d2c7266709896abcf96b7dac97b6e48e039828bc94eccc4316"
+  },
+  {
+    "path": "prepared-case-files/.markitect/model/checks.yaml",
+    "bytes": 513,
+    "sha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a"
+  },
+  {
+    "path": "prepared-case-files/.markitect/model/delivery-rules.yaml",
+    "bytes": 512,
+    "sha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8"
+  },
+  {
+    "path": "prepared-case-files/.markitect/model/documentation.yaml",
+    "bytes": 801,
+    "sha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b"
+  },
+  {
+    "path": "prepared-case-files/.markitect/model/durable-state.yaml",
+    "bytes": 467,
+    "sha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65"
+  },
+  {
+    "path": "prepared-case-files/.markitect/model/implementation.yaml",
+    "bytes": 597,
+    "sha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc"
+  },
+  {
+    "path": "prepared-case-files/.markitect/model/manager.yaml",
+    "bytes": 377,
+    "sha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31"
+  },
+  {
+    "path": "prepared-case-files/.markitect/model/reservation.yaml",
+    "bytes": 394,
+    "sha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425"
+  },
+  {
+    "path": "prepared-case-files/.markitect/model/tests.yaml",
+    "bytes": 584,
+    "sha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb"
+  },
+  {
+    "path": "prepared-case-files/.markitect/project.yaml",
+    "bytes": 568,
+    "sha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098"
+  },
+  {
+    "path": "prepared-case-files/.markitect/runtime.yaml",
+    "bytes": 6398,
+    "sha256": "38bae9af3b7f6d353e5ef4b06e9f57e1d01d2ae985ac6871067a310b9455471e"
+  },
+  {
+    "path": "prepared-case-files/.markitect/workflows/model-first.md",
+    "bytes": 24524,
+    "sha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e"
+  },
+  {
+    "path": "prepared-case-files/.study/station.json",
+    "bytes": 70,
+    "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a"
+  },
+  {
+    "path": "prepared-case-files/AGENTS.md",
+    "bytes": 3328,
+    "sha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6"
+  },
+  {
+    "path": "prepared-case-files/BACKLOG.md",
+    "bytes": 2566,
+    "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540"
+  },
+  {
+    "path": "prepared-case-files/checks/acceptance.py",
+    "bytes": 7554,
+    "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3"
+  },
+  {
+    "path": "prepared-case-files/CLAUDE.md",
+    "bytes": 787,
+    "sha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05"
+  },
+  {
+    "path": "prepared-case-files/docs/markitect/project.md",
+    "bytes": 8367,
+    "sha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb"
+  },
+  {
+    "path": "prepared-case-files/QUALITY.md",
+    "bytes": 2687,
+    "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc"
+  },
+  {
+    "path": "prepared-case-files/README.md",
+    "bytes": 2276,
+    "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d"
+  },
+  {
+    "path": "prepared-case-files/STATIONS.json",
+    "bytes": 595,
+    "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183"
+  },
+  {
+    "path": "prepared-case-files/TOOLCHAIN.md",
+    "bytes": 982,
+    "sha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77"
+  },
+  {
+    "path": "prepared-case-inventory.json",
+    "bytes": 4010,
+    "sha256": "fc280e93628d4796bc864daf67b48caacc5434648b93fa13744e233837f11f64"
+  },
+  {
+    "path": "prepared-case.bundle",
+    "bytes": 25621,
+    "sha256": "b0f7dcd2b4ba9c21f6f8f0c3ece548572f2fdbc35763b6a0d6bd27ed61488864"
+  },
+  {
+    "path": "terminal.json",
+    "bytes": 7543,
+    "sha256": "a74c19099c62999edaa1c0fb91016a85485d927616b92fcabcc040e11ca41820"
+  }
+]
