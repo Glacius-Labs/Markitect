@@ -50,7 +50,7 @@ func (i *nativeResumeFixtureInvoker) Run(_ context.Context, config agentexec.Con
 		CandidateFiles: []agentexec.CandidateFile{{Path: "src/project-owner.txt", Mode: "0644", Content: retryBytes}},
 		EvidenceRefs:   []string{}, VerifierObservations: []agentexec.Observation{}, ReportJSON: reportJSON, Uncertainty: []string{},
 		Usage: &agentexec.Usage{Source: "provider-reported", InputTokens: &tokensIn, OutputTokens: &tokensOut}}
-	fingerprint, err := agentexec.Fingerprint(config)
+	fingerprint, err := NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
@@ -62,7 +62,7 @@ func (i *nativeResumeFixtureInvoker) Run(_ context.Context, config agentexec.Con
 }
 
 func (*nativeResumeFixtureInvoker) Fingerprint(config agentexec.Config) (string, error) {
-	return agentexec.Fingerprint(config)
+	return NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
 }
 
 func (i *nativeResumeFixtureInvoker) Recover(_ context.Context, config agentexec.Config, handle codexappserver.RecoveryHandle, options agentexec.RunOptions) (agentexec.RunResult, error) {
@@ -235,6 +235,7 @@ func seedNativeRun(t *testing.T, phase string, reviewRework bool) nativeResumeRu
 		}
 		agent := runtime.Agents[managerID]
 		native := appServerAgent(t)
+		native.ProviderVersion = codexappserver.SupportedProviderVersion
 		native.Pricing = agent.Pricing
 		native.Environment = append([]string(nil), agent.Environment...)
 		instructionPath, err := filepath.Abs(filepath.Join(root, "AGENTS.md"))
@@ -414,7 +415,7 @@ func seedNativeRun(t *testing.T, phase string, reviewRework bool) nativeResumeRu
 		}
 	}
 
-	fingerprint, err := agentexec.Fingerprint(config)
+	fingerprint, err := NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
 	if err != nil {
 		t.Fatal(err)
 	}

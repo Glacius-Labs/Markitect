@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -52,6 +53,102 @@ func TestTransportInvokerRoutesFingerprintByTransportWithoutStartingAnything(t *
 	if withHostOptions.appServerOptions.BeforeStart == nil || withHostOptions.appServerOptions.OnHandle == nil ||
 		withHostOptions.appServerOptions.OnEvent == nil || len(withHostOptions.appServerOptions.DynamicTools) != 1 {
 		t.Fatal("constructor did not retain Host-provided App Server options")
+	}
+}
+
+func TestPlanRuntimeFingerprintsMatchDefaultNativeCLIInvokerForEveryRole(t *testing.T) {
+	for _, helpersEnabled := range []bool{false, true} {
+		t.Run(map[bool]string{false: "helpers-disabled", true: "helpers-enabled"}[helpersEnabled], func(t *testing.T) {
+			root := makeProjectRunFixture(t)
+			writeE2E(t, root, "AGENTS.md", "Pinned instructions for native project-run fingerprint coverage.\n")
+			gitE2E(t, root, "add", "AGENTS.md")
+			gitE2E(t, root, "commit", "-m", "add pinned native instructions")
+			instructionPath, err := filepath.Abs(filepath.Join(root, "AGENTS.md"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			instructionBytes, err := os.ReadFile(instructionPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			updateE2ERuntime(t, root, func(runtime *Runtime) {
+				for managerID, agent := range runtime.Agents {
+					native := appServerAgent(t)
+					native.ProviderVersion = codexappserver.SupportedProviderVersion
+					native.Pricing = agent.Pricing
+					native.Environment = append([]string(nil), agent.Environment...)
+					if helpersEnabled {
+						native.AppServer.Helpers = AppServerHelpers{Enabled: true, MaxStartRequests: 2, MaxDepth: 1}
+					} else {
+						native.AppServer.Helpers = AppServerHelpers{}
+					}
+					native.RuntimeFiles = []agentexec.RuntimeFile{{Path: instructionPath, Mode: "0644", Digest: "sha256:" + digestBytes(instructionBytes)}}
+					runtime.Agents[managerID] = native
+				}
+				reviewers := map[string]Agent{}
+				for managerID, manager := range runtime.Agents {
+					reviewer := manager
+					reviewer.WorkspaceMode, reviewer.InstructionPaths, reviewer.RuntimeFiles = "", nil, nil
+					reviewers[managerID] = reviewer
+				}
+				runtime.Review = &ReviewConfig{Agents: reviewers, MaxRounds: 1, MaxManagerRounds: 1}
+				verifier := runtime.Agents[e2eManagerID("", "project-owner")]
+				verifier.WorkspaceMode, verifier.InstructionPaths, verifier.RuntimeFiles = "", nil, nil
+				runtime.Verifier = &verifier
+			})
+
+			plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Check the default native transport binding."})
+			if err != nil {
+				t.Fatalf("Plan: %v", err)
+			}
+			runtime, err := LoadRuntime(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			invoker := NewTransportInvoker(codexappserver.Options{})
+			gotDigest, err := runtimeDigestWithInvoker(invoker, runtime)
+			if err != nil || gotDigest != plan.RuntimeDigest {
+				t.Fatalf("planned runtime digest does not match default CLI invoker: got %q want %q err=%v", gotDigest, plan.RuntimeDigest, err)
+			}
+			for _, role := range []struct {
+				name  string
+				agent Agent
+				key   string
+			}{
+				{name: "manager", agent: runtime.Agents[e2eManagerID("", "project-owner")], key: e2eManagerID("", "project-owner")},
+				{name: "reviewer", agent: runtime.Review.Agents[e2eManagerID("", "project-owner")], key: "$reviewer:" + e2eManagerID("", "project-owner")},
+				{name: "verifier", agent: *runtime.Verifier, key: "$verifier"},
+			} {
+				config, err := role.agent.AgentConfig()
+				if err != nil {
+					t.Fatalf("%s AgentConfig: %v", role.name, err)
+				}
+				want, err := invoker.Fingerprint(config)
+				if err != nil || plan.RuntimeAgents[role.key] != want {
+					t.Fatalf("%s fingerprint mismatch: got %q want %q err=%v", role.name, plan.RuntimeAgents[role.key], want, err)
+				}
+			}
+
+			customOptions := codexappserver.Options{
+				DynamicTools: []codexappserver.DynamicTool{{Type: "function", Name: "custom_host_tool", InputSchema: json.RawMessage(`{"type":"object"}`)}},
+				HandleToolCall: func(context.Context, codexappserver.ToolCall) (codexappserver.ToolResult, error) {
+					return codexappserver.ToolResult{}, nil
+				},
+				MaxToolCalls: 1, ToolTimeout: time.Second,
+			}
+			if drifted, err := runtimeDigestWithInvoker(NewTransportInvoker(customOptions), runtime); err != nil || drifted == plan.RuntimeDigest {
+				t.Fatalf("custom App Server options drift did not stale the plan: got %q want != %q err=%v", drifted, plan.RuntimeDigest, err)
+			}
+			driftedRuntime := runtime
+			driftedRuntime.Agents = make(map[string]Agent, len(runtime.Agents))
+			for managerID, manager := range runtime.Agents {
+				manager.Environment = append(append([]string(nil), manager.Environment...), "MARKITECT_FINGERPRINT_DRIFT")
+				driftedRuntime.Agents[managerID] = manager
+			}
+			if drifted, err := runtimeDigestWithInvoker(invoker, driftedRuntime); err != nil || drifted == plan.RuntimeDigest {
+				t.Fatalf("native environment drift did not stale the plan: got %q want != %q err=%v", drifted, plan.RuntimeDigest, err)
+			}
+		})
 	}
 }
 
