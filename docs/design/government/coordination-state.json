@@ -17159,7 +17159,7 @@
       "verifiedByRoot": true
     },
     "objective": "One complete normal Conventional AppServer trajectory and fresh independent assessment on immutable workspace snapshots; user proposed disposable repositories instead of mandatory Git integration",
-    "completionTarget": "Choose exactly one before Actual: git_integrated_main preserves ordinary Git-CLI merge workflow; workspace_snapshot is the user-proposed simpler alternative. Never silently switch mid-run.",
+    "completionTarget": "workspace_snapshot",
     "sourceBeforeStart": "Clean exact private source/input/config freeze, relevant controller snapshot-target regressions and review; no new general capability phase",
     "publicInputs": "Freeze ordinary prompt/backlog/rules/assessment and declared snapshot completion before Actual; remove mechanical branch/merge requirement coherently for this target, preserve functional tasks and other rules; same target for later matched Markitect",
     "runtime": "Existing pinned Codex AppServer gpt-6-luna/high and child-local MXC/workspace-write; optional scoped on-request broker only if actual requested Git actions require it. No mandatory Git metadata probe, no automatic CLI fallback.",
@@ -17196,8 +17196,8 @@
     ],
     "grantPath": "docs/design/government/conventional-workspace-snapshot-execution-v2-20261009.json",
     "grantSha256": "58cf8d06944223b77f51062bfa48ecb224bee9e5f5651abec18597dff1664d63",
-    "status": "SOURCE_TARGET_FREEZE_PENDING_ONE_FRESH_TRAJECTORY",
-    "actualStartsObserved": 0,
+    "status": "RUNNING_ONE_FRESH_APP_SERVER_TRAJECTORY",
+    "actualStartsObserved": 1,
     "dispatch": "SENT_ONCE_V2",
     "initialUnstartedOrder": {
       "grantPath": "docs/design/government/conventional-workspace-snapshot-execution-20261009.json",
@@ -17205,6 +17205,28 @@
       "status": "SUPERSEDED_PROSPECTIVELY_NO_ACTUAL_OBSERVED"
     },
     "revision": 2,
-    "limitsUnchanged": true
+    "limitsUnchanged": true,
+    "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:145",
+    "sourceFreeze": {
+      "sourceSha": "6adcfdb09b3dd579468e43c1b6b0c10fb363a11a",
+      "rootVerified": "Clean HEAD and exact PRIVATE research-backup remote; 19 source/input/plan/rendered-policy Working/RawGit byte and hash bindings checked; no tests repeated",
+      "planSha256": "c8463f6513d39b1470415d3a6dad27fd5aac0db809cdee9c80389a185528b672",
+      "ownerChecks": "73 focused provider-free tests PASS, one Windows symlink skip; independent reviewed launch paths reported positive",
+      "qualityResult": "PENDING_NOT_PAIRED"
+    },
+    "actualStart": {
+      "rootVerified": "External reservation canonical JSON hash matches frozen plan; study-binding exact source/plan/executable/start and running status read",
+      "startedUtc": "2026-10-09T20:54:30.008259Z",
+      "expiresUtc": "2026-10-10T00:54:30.008259Z",
+      "case": "readinglog",
+      "executableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+      "ownerReportedStartupChecks": 2,
+      "ownerReportedRunId": "6b588275-43c3-493b-b11c-69ccee1b2c11",
+      "ownerReportedThreadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "ownerReportedTurnId": "01a12272-3fed-7740-a15a-5ecdab36e792",
+      "nativeModelClock": "UNKNOWN",
+      "oldUncertainCli": "UNCHANGED_QUARANTINED",
+      "newGrant": false
+    }
   }
 }
