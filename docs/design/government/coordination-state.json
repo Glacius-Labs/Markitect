@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T15:09:22Z",
+  "updatedUtc": "2026-10-09T15:12:21Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -15631,7 +15631,7 @@
     "status": "DISPATCHED_TO_ACTIVE_DESIGN_PACKAGE",
     "authority": "Direct latest user request to improve project-native skills/CLAUDE.md/AGENTS.md with several capability skills",
     "document": "docs/design/project-capability-skills-20261009.md",
-    "documentSha256": "02abd1ca4fe208499bea32ffb4557733cf9a75e9b635030fe9c61d53c1528da0",
+    "documentSha256": "e521779e8a0c5641af9ad731bf771b35b12cf3ba3fe38b65fcef2a1d219a783b",
     "ownerThread": "01a11c80-37aa-7fe0-9586-35d916ce6561",
     "sentUtc": "2026-10-09T15:00:01Z",
     "capabilities": [
@@ -15659,7 +15659,13 @@
       "markitect-audit",
       "markitect-recover"
     ],
-    "latestUserSteering": "Operational skills named for concrete work, replacing the original six broad topics; an ordinary Work Item still runs end-to-end without user stage prompting",
-    "latestSteeringSentUtc": "2026-10-09T15:09:22Z"
+    "latestUserSteering": "User accepts operational direction; Designer decides standalone suggest/configure vs incorporation into design/init and justifies final grouping",
+    "latestSteeringSentUtc": "2026-10-09T15:12:21Z",
+    "optionalCapabilities": [
+      "markitect-suggest",
+      "markitect-configure"
+    ],
+    "finalGroupingDecisionOwner": "Designer, explicitly delegated by latest direct user",
+    "fixedSkillCountRequired": false
   }
 }

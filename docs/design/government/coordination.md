@@ -1575,3 +1575,8 @@ The user requested improving installed Markitect Skills, CLAUDE.md and AGENTS.md
 ### 2026-10-09T15:09:22Z - latest user operational skill clarification
 
 The user proposed init/cleanup/verify/apply/extract/design/check and implement rather than the initial broad topics. Root revised the concrete capability brief and sent this steering once to active Design: eight operational skills, with setup in init, model editing/planning in design, assessment/reconcile in verify and durable recovery in ongoing implementation/cleanup/application. Structural check, actual realization verify and guarded candidate Apply have distinct outcomes. An ordinary authorized Work Item still chains the needed steps automatically; skill decomposition introduces no manual stage prompting or new approvals. Current native-working priority and original proof/stop boundaries remain unchanged. Root edits only design/coordination; product implementation and focused checks remain with Design.
+
+
+### 2026-10-09T15:12:21Z - optional suggest/configure, final choice delegated to Designer
+
+User accepted operational skills and proposed suggest for model-improvement proposals and configure for supported settings. The user expressly delegated the final grouping to Designer. Root appended the brief and sent this instruction once; eight proposed operations are not an immutable count. Suggestions remain proposals unless change is authorized, configuration respects existing task/budget boundaries. Designer may add separate skills or route to design/init and explains its choice in the completed handoff. Other stops and proof limits remain unchanged; no polling or ACK request.
