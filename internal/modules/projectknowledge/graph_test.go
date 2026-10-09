@@ -254,6 +254,71 @@ func TestCycleFanoutAndResultBound(t *testing.T) {
 	if !complete.Complete || len(complete.Results) != 4 {
 		t.Fatalf("cycle traversal failed to terminate with one witness per node: %+v", complete)
 	}
+	bi, err := i.Walk(WalkRequest{Start: "a", Bidirectional: true, MaxDepth: 4, MaxSteps: 1, MaxResults: 4})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bi.Complete || bi.Reason != "step_limit" {
+		t.Fatalf("bidirectional cyclic walk did not report its step bound: %+v", bi)
+	}
+	if _, err := i.Walk(WalkRequest{Start: "a", Reverse: true, Bidirectional: true, MaxDepth: 4, MaxSteps: 20, MaxResults: 4}); err == nil {
+		t.Fatal("reverse and bidirectional were accepted together")
+	}
+}
+
+func TestBidirectionalDiamondUsesStableShortestWitness(t *testing.T) {
+	m := testModel(t, "rev-1", "cancel.yaml")
+	facts := ProjectFacts{SnapshotDigest: "snapshot", Digest: "diamond", Facts: []Fact{{ID: "root", Kind: "Fact", State: FactKnown}, {ID: "branch:a", Kind: "Fact", State: FactKnown}, {ID: "branch:b", Kind: "Fact", State: FactKnown}, {ID: "target", Kind: "Fact", State: FactKnown}}, Relations: []Relation{
+		{From: "root", To: "branch:b", Property: "to"}, {From: "root", To: "branch:a", Property: "to"}, {From: "branch:b", To: "target", Property: "to"}, {From: "branch:a", To: "target", Property: "to"},
+	}}
+	scope := Scope{ID: "diamond", Nodes: []NodeSelection{{ID: "root"}, {ID: "branch:a"}, {ID: "branch:b"}, {ID: "target"}}, Edges: []EdgeKey{{From: "root", To: "branch:b", Property: "to"}, {From: "root", To: "branch:a", Property: "to"}, {From: "branch:b", To: "target", Property: "to"}, {From: "branch:a", To: "target", Property: "to"}}}
+	i := build(t, m, facts, scope)
+	q := WalkRequest{Start: "root", Bidirectional: true, MaxDepth: 3, MaxSteps: 20, MaxResults: 10}
+	first, err := i.Walk(q)
+	if err != nil {
+		t.Fatal(err)
+	}
+	forwardRequest := q
+	forwardRequest.Bidirectional = false
+	forward, err := i.Walk(forwardRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	explicitFalse := forwardRequest
+	explicitFalse.Bidirectional = false
+	forwardAgain, err := i.Walk(explicitFalse)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if forward.QueryDigest != forwardAgain.QueryDigest || forward.QueryDigest == first.QueryDigest {
+		t.Fatal("bidirectional query binding is not opt-in and digest-distinct")
+	}
+	facts.Facts[0], facts.Facts[3] = facts.Facts[3], facts.Facts[0]
+	facts.Relations[0], facts.Relations[3] = facts.Relations[3], facts.Relations[0]
+	scope.Nodes[0], scope.Nodes[3] = scope.Nodes[3], scope.Nodes[0]
+	scope.Edges[0], scope.Edges[3] = scope.Edges[3], scope.Edges[0]
+	i2 := build(t, m, facts, scope)
+	second, err := i2.Walk(q)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Binding.GraphDigest != second.Binding.GraphDigest {
+		t.Fatal("reordered diamond input changed selected graph digest")
+	}
+	a, _ := json.Marshal(first)
+	b, _ := json.Marshal(second)
+	if string(a) != string(b) {
+		t.Fatalf("diamond witness ordering is unstable:\n%s\n%s", a, b)
+	}
+	for _, witness := range first.Results {
+		if witness.Node == "target" {
+			if len(witness.Path) != 2 || witness.Path[0].From != "root" || witness.Path[0].To != "branch:a" || witness.Path[1].From != "branch:a" {
+				t.Fatalf("unexpected deterministic shortest witness: %+v", witness)
+			}
+			return
+		}
+	}
+	t.Fatal("target witness missing")
 }
 
 func TestLargeStarAndInputCapsAreBoundedAndDeterministic(t *testing.T) {
@@ -388,6 +453,19 @@ func TestSyntheticShopCancellationOwnershipArtifactAndCheckNavigation(t *testing
 	walk(artifact, false, check, 1)
 	walk(file, false, release, 2) // file membership -> artifact realization -> release
 	walk(release, true, file, 2)
+	combined, err := i.Walk(WalkRequest{Start: release, Bidirectional: true, MaxDepth: 5, MaxSteps: 100, MaxResults: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, witness := range combined.Results {
+		if witness.Node == check {
+			if len(witness.Path) != 2 || witness.Path[0].From != artifact || witness.Path[0].To != release || witness.Path[1].From != artifact || witness.Path[1].To != check {
+				t.Fatalf("mixed-direction witness did not preserve original edge orientation: %+v", witness)
+			}
+			return
+		}
+	}
+	t.Fatal("bidirectional release←Artifact→Check witness missing")
 }
 
 func TestDecisionProjectionRetainsReasonAndTypesReferencesAsEdges(t *testing.T) {

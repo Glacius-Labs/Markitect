@@ -2,6 +2,8 @@
 // views from the structural Core model. It performs no I/O or provider calls.
 package projectmodel
 
+import "github.com/Glacius-Labs/Markitect/internal/core"
+
 const APIVersion = "project.markitect.example.org/v1alpha1"
 
 type File struct {
@@ -61,6 +63,40 @@ type Check struct {
 	Limitation string   `json:"limitation"`
 }
 
+// Decision is an explicit, source-bound decision record projected from the
+// project model. Actor is the recorded Manager identity; it is not an
+// authenticated identity claim.
+type Decision struct {
+	ID         string      `json:"id"`
+	Name       string      `json:"name"`
+	Namespace  string      `json:"namespace"`
+	Owner      string      `json:"owner"`
+	Subject    string      `json:"subject"`
+	Actor      string      `json:"actor"`
+	Decision   string      `json:"decision"`
+	Reason     string      `json:"reason"`
+	Supersedes string      `json:"supersedes,omitempty"`
+	Public     bool        `json:"public"`
+	Source     core.Source `json:"source"`
+}
+
+// IdentityChange declares a historical Statement identity and an explicit
+// transition claim. Previous is historical data, not a live Core reference;
+// the declaration does not establish that the old definition existed.
+type IdentityChange struct {
+	ID        string                  `json:"id"`
+	Name      string                  `json:"name"`
+	Namespace string                  `json:"namespace"`
+	Owner     string                  `json:"owner"`
+	Operation string                  `json:"operation"`
+	Previous  core.DefinitionIdentity `json:"previous"`
+	Subject   string                  `json:"subject,omitempty"`
+	Actor     string                  `json:"actor"`
+	Reason    string                  `json:"reason"`
+	Public    bool                    `json:"public"`
+	Source    core.Source             `json:"source"`
+}
+
 type FileEntry struct {
 	Path       string   `json:"path"`
 	Digest     string   `json:"digest,omitempty"`
@@ -74,18 +110,20 @@ type FileEntry struct {
 }
 
 type Report struct {
-	APIVersion      string      `json:"apiVersion"`
-	ModelDigest     string      `json:"modelDigest"`
-	InventoryDigest string      `json:"inventoryDigest"`
-	Digest          string      `json:"digest"`
-	Status          string      `json:"status"`
-	Managers        []Manager   `json:"managers"`
-	Statements      []Statement `json:"statements"`
-	Artifacts       []Artifact  `json:"artifacts"`
-	Checks          []Check     `json:"checks"`
-	Files           []FileEntry `json:"files"`
-	Findings        []Finding   `json:"findings"`
-	Unknown         []string    `json:"unknown"`
+	APIVersion      string           `json:"apiVersion"`
+	ModelDigest     string           `json:"modelDigest"`
+	InventoryDigest string           `json:"inventoryDigest"`
+	Digest          string           `json:"digest"`
+	Status          string           `json:"status"`
+	Managers        []Manager        `json:"managers"`
+	Statements      []Statement      `json:"statements"`
+	Decisions       []Decision       `json:"decisions"`
+	IdentityChanges []IdentityChange `json:"identityChanges"`
+	Artifacts       []Artifact       `json:"artifacts"`
+	Checks          []Check          `json:"checks"`
+	Files           []FileEntry      `json:"files"`
+	Findings        []Finding        `json:"findings"`
+	Unknown         []string         `json:"unknown"`
 }
 
 type ChangeImpact struct {
@@ -103,11 +141,13 @@ type ChangeImpact struct {
 }
 
 type ManagerContext struct {
-	Manager    Manager     `json:"manager"`
-	Statements []Statement `json:"statements"`
-	Contracts  []Statement `json:"contracts"`
-	Artifacts  []Artifact  `json:"artifacts"`
-	Checks     []Check     `json:"checks"`
-	Children   []Manager   `json:"children"`
-	Findings   []Finding   `json:"findings"`
+	Manager         Manager          `json:"manager"`
+	Statements      []Statement      `json:"statements"`
+	Contracts       []Statement      `json:"contracts"`
+	Decisions       []Decision       `json:"decisions"`
+	IdentityChanges []IdentityChange `json:"identityChanges"`
+	Artifacts       []Artifact       `json:"artifacts"`
+	Checks          []Check          `json:"checks"`
+	Children        []Manager        `json:"children"`
+	Findings        []Finding        `json:"findings"`
 }

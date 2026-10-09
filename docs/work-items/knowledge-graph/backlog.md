@@ -15,7 +15,7 @@ items:
   - {id: KG02, status: complete, scope: pure index}
   - {id: KG03, status: complete, scope: pure bounded navigation}
   - id: KG04
-    status: in_progress
+    status: complete_reviewed
     scope: First-class Decisions and explicit Statement identity changes; closed YAML schema and conservative impact.
     owner: model subagent
     files: internal/modules/projectmodel
@@ -30,12 +30,12 @@ items:
     owner: evidence subagent
     files: internal/host/knowledgeevidence
   - id: KG06
-    status: ready_after_service_seam
+    status: in_progress
     scope: Shared projectapp operations plus CLI and MCP graph tools; canonical guidance and executable examples.
     owner: parent and transport subagent
     files: [internal/host/projectapp, internal/host/projectcli, internal/host/knowledgeprotocol, docs]
   - id: KG07
-    status: ready_after_features
+    status: in_progress
     scope: Twelve-question regression, normal provider-free user journey, privacy negatives, honest code/source/config/evidence handoff.
     owner: parent and independent Reader
   - id: KG07-M
@@ -46,3 +46,8 @@ items:
     status: deferred
     scope: Separate justified fit evaluation; no canonical migration, installation, purchase or study implied.
 ```
+
+
+## Completed source slices
+
+KG04 focused tests and vet passed. An independent Luna High reader found a private foreign Decision subject leak and missing Impact routing to the subject owner. Both fixes and targeted regressions passed the reader recheck. KG03 adds explicit bounded bidirectional witnesses so Statement -> Artifact -> Check can be explained even when typed edges face different directions; original edge orientations stay visible. The existing failed full Verify is preserved. Whole variant gates and accepted Main reconciliation remain pending.

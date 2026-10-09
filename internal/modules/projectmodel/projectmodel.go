@@ -3,11 +3,12 @@ package projectmodel
 import "github.com/Glacius-Labs/Markitect/internal/core"
 
 const (
-	managerKind   = "Manager"
-	statementKind = "Statement"
-	artifactKind  = "Artifact"
-	checkKind     = "Check"
-	decisionKind  = "Decision"
+	managerKind        = "Manager"
+	statementKind      = "Statement"
+	artifactKind       = "Artifact"
+	checkKind          = "Check"
+	decisionKind       = "Decision"
+	identityChangeKind = "IdentityChange"
 )
 
 // Schema returns the closed structural contract for project-world definitions.
@@ -16,6 +17,7 @@ func Schema() core.Schema {
 	statementRef := &core.KindIdentity{APIVersion: api, Kind: statementKind}
 	managerRef := &core.KindIdentity{APIVersion: api, Kind: managerKind}
 	checkRef := &core.KindIdentity{APIVersion: api, Kind: checkKind}
+	decisionRef := &core.KindIdentity{APIVersion: api, Kind: decisionKind}
 	str := func(purpose string, min, max int) core.Property {
 		return core.Property{Purpose: purpose, Type: core.TypeString, MinCount: min, MaxCount: max}
 	}
@@ -57,10 +59,25 @@ func Schema() core.Schema {
 				"limitation": str("What the check does not establish.", 0, 1),
 			}},
 			decisionKind: {Purpose: "An explicit decision about a project statement by a manager.", Properties: map[string]core.Property{
-				"subject":  ref("Statement this decision addresses.", statementRef, 1, 1),
-				"decision": str("Decision text.", 1, 1),
-				"reason":   str("Reason for the decision.", 1, 1),
-				"actor":    ref("Manager recorded as the decision actor.", managerRef, 1, 1),
+				"subject":    ref("Statement this decision addresses.", statementRef, 1, 1),
+				"decision":   str("Decision text.", 1, 1),
+				"reason":     str("Reason for the decision.", 1, 1),
+				"actor":      ref("Manager recorded as the decision actor; this does not authenticate a person.", managerRef, 1, 1),
+				"supersedes": ref("Decision explicitly superseded by this decision.", decisionRef, 0, 1),
+				"public":     boolean,
+			}},
+			identityChangeKind: {Purpose: "An explicit historical Statement identity transition claim; previous is historical identity data, not a live reference.", Properties: map[string]core.Property{
+				"operation": enum("Declared identity operation.", "renamed", "replaced", "retired"),
+				"previous": {Purpose: "Full historical Statement identity. This closed object is not resolved against current definitions.", Type: core.TypeObject, MinCount: 1, MaxCount: 1, Properties: map[string]core.Property{
+					"apiVersion": str("Historical identity API version.", 1, 1),
+					"kind":       str("Historical identity kind; must be Statement.", 1, 1),
+					"namespace":  str("Historical identity namespace; empty denotes the global namespace.", 1, 1),
+					"name":       str("Historical identity name.", 1, 1),
+				}},
+				"subject":      ref("Current Statement explicitly associated with a rename or replacement; absent for retirement.", statementRef, 0, 1),
+				"reason":       str("Reason for declaring this identity change.", 1, 1),
+				"actorManager": ref("Manager recorded as the actor; this does not authenticate a person.", managerRef, 1, 1),
+				"public":       boolean,
 			}},
 		},
 	}

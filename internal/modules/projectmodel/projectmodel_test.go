@@ -51,7 +51,7 @@ func fixture(t *testing.T, includeArtifact bool, artifactRequired bool, includeF
 
 func TestSchemaUsesTypedFullIdentityReferences(t *testing.T) {
 	s := Schema()
-	if s.APIVersion != APIVersion || len(s.Kinds) != 5 {
+	if s.APIVersion != APIVersion || len(s.Kinds) != 6 {
 		t.Fatalf("unexpected schema: %#v", s)
 	}
 	parent := s.Kinds[managerKind].Properties["parent"]
@@ -480,4 +480,225 @@ func TestAnalyzeExplicitlyReportsUnknownInventory(t *testing.T) {
 	if r.Status != "incomplete" || len(r.Unknown) != 1 || r.Unknown[0] != "loose.txt" {
 		t.Fatalf("unknown inventory hidden: status=%s unknown=%v", r.Status, r.Unknown)
 	}
+}
+
+func TestDecisionAndIdentityChangeAreProjectedAndRouteConcreteImpact(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	base := Analyze(model, files)
+	defs := copyDefinitions(model.Definitions)
+	order := core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "orders", Name: "cancel-order"}
+	actor := core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}
+	oldDecision := core.DefinitionIdentity{APIVersion: APIVersion, Kind: decisionKind, Namespace: "orders", Name: "accept-cancellation-v1"}
+	newDecision := core.DefinitionIdentity{APIVersion: APIVersion, Kind: decisionKind, Namespace: "orders", Name: "accept-cancellation-v2"}
+	decision := func(i core.DefinitionIdentity, spec map[string]any) core.Definition {
+		return core.Definition{APIVersion: APIVersion, Kind: decisionKind, Metadata: core.Metadata{Namespace: i.Namespace, Name: i.Name}, Purpose: "Record cancellation policy decision.", Spec: spec, Source: core.Source{Path: ".markitect/decisions.yaml", Line: 17}}
+	}
+	defs = append(defs,
+		decision(oldDecision, map[string]any{"subject": refValue(order), "decision": "Accept cancellation before shipment.", "reason": "Preserve inventory consistency.", "actor": refValue(actor)}),
+		decision(newDecision, map[string]any{"subject": refValue(order), "decision": "Accept cancellation before shipment.", "reason": "Clarify the existing rule.", "actor": refValue(actor), "supersedes": refValue(oldDecision), "public": true}),
+		core.Definition{APIVersion: APIVersion, Kind: identityChangeKind, Metadata: core.Metadata{Namespace: "orders", Name: "cancel-order-rename"}, Purpose: "Record an explicit historical identity claim.", Spec: map[string]any{"operation": "renamed", "previous": historicalIdentity(APIVersion, statementKind, "orders", "cancel-order-v0"), "subject": refValue(order), "reason": "The Statement was renamed during model cleanup.", "actorManager": refValue(actor)}, Source: core.Source{Path: ".markitect/decisions.yaml", Line: 17}})
+	candidateModel, diagnostics := core.Compile(model.Schemas, defs, "decision-and-identity-change")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile additive records: %+v", diagnostics)
+	}
+	candidate := Analyze(candidateModel, files)
+	if candidate.Status != "succeeded" || len(candidate.Decisions) != 2 || len(candidate.IdentityChanges) != 1 {
+		t.Fatalf("records were not projected cleanly: status=%s decisions=%+v changes=%+v findings=%+v", candidate.Status, candidate.Decisions, candidate.IdentityChanges, candidate.Findings)
+	}
+	if candidate.Decisions[0].Public || !candidate.Decisions[1].Public || candidate.Decisions[1].Supersedes != oldDecision.Key() || candidate.Decisions[1].Source.Path != ".markitect/decisions.yaml" {
+		t.Fatalf("decision defaults, edge or provenance lost: %+v", candidate.Decisions)
+	}
+	change := candidate.IdentityChanges[0]
+	if change.Previous.Name != "cancel-order-v0" || change.Subject != order.Key() || change.Actor != actor.Key() || change.Source.Line != 17 {
+		t.Fatalf("identity change fields or provenance lost: %+v", change)
+	}
+	impact := Impact(base, candidate)
+	if len(impact.Unknown) != 0 || !contains(impact.ChangedDefinitions, newDecision.Key()) || !contains(impact.ChangedDefinitions, change.ID) || !contains(impact.AffectedStatements, order.Key()) || !contains(impact.Files, "src/orders/cancel.go") || !contains(impact.Managers, actor.Key()) {
+		t.Fatalf("real record delta did not route concrete scope: %+v", impact)
+	}
+	ctx, err := Context(candidate, actor.Key())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ctx.Decisions) != 2 || len(ctx.IdentityChanges) != 1 {
+		t.Fatalf("Manager context omitted owned records: decisions=%+v changes=%+v", ctx.Decisions, ctx.IdentityChanges)
+	}
+	removed := candidate
+	removed.Decisions = append([]Decision(nil), candidate.Decisions...)
+	for i, d := range removed.Decisions {
+		if d.ID == oldDecision.Key() {
+			removed.Decisions = append(removed.Decisions[:i], removed.Decisions[i+1:]...)
+			break
+		}
+	}
+	removed.IdentityChanges = nil
+	removed.ModelDigest = "sha256:removed-records"
+	removedImpact := Impact(candidate, removed)
+	oldIdentity := core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "orders", Name: "cancel-order-v0"}
+	if len(removedImpact.Unknown) != 0 || !contains(removedImpact.ChangedDefinitions, oldDecision.Key()) || !contains(removedImpact.ChangedDefinitions, change.ID) || !contains(removedImpact.AffectedStatements, oldIdentity.Key()) || !contains(removedImpact.AffectedStatements, order.Key()) || !contains(removedImpact.Files, "src/orders/cancel.go") {
+		t.Fatalf("removed decision/history obligations were omitted: %+v", removedImpact)
+	}
+}
+
+func TestManagerContextFiltersPrivateForeignRecordsAndReferences(t *testing.T) {
+	model, files := fixture(t, false, false, false)
+	r := Analyze(model, files)
+	publicSubject := core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "inventory", Name: "release-reservation"}.Key()
+	privateDecision := core.DefinitionIdentity{APIVersion: APIVersion, Kind: decisionKind, Namespace: "inventory", Name: "private-record"}.Key()
+	r.Decisions = append(r.Decisions,
+		Decision{ID: privateDecision, Owner: "foreign-manager", Subject: publicSubject, Public: false},
+		Decision{ID: "foreign-public", Owner: "foreign-manager", Subject: publicSubject, Supersedes: privateDecision, Public: true},
+		Decision{ID: "own", Owner: (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}).Key(), Subject: (core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "orders", Name: "cancel-order"}).Key()},
+		Decision{ID: "own-hidden-subject", Owner: (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}).Key(), Subject: "private-subject"},
+	)
+	r.IdentityChanges = append(r.IdentityChanges,
+		IdentityChange{ID: "foreign-private-change", Owner: "foreign-manager", Subject: publicSubject, Public: false},
+		IdentityChange{ID: "foreign-public-change", Owner: "foreign-manager", Subject: publicSubject, Public: true},
+	)
+	ordersOwner := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}).Key()
+	ctx, err := Context(r, ordersOwner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ctx.Decisions) != 3 || !contains([]string{ctx.Decisions[0].ID, ctx.Decisions[1].ID, ctx.Decisions[2].ID}, "foreign-public") || !contains([]string{ctx.Decisions[0].ID, ctx.Decisions[1].ID, ctx.Decisions[2].ID}, "own") {
+		t.Fatalf("Context leaked or omitted a foreign Decision: %+v", ctx.Decisions)
+	}
+	for _, d := range ctx.Decisions {
+		if d.ID == "own-hidden-subject" && d.Subject != "" {
+			t.Fatalf("Context exposed an unavailable Decision subject: %+v", d)
+		}
+		if d.ID == "foreign-public" && d.Supersedes != "" {
+			t.Fatalf("Context exposed a private supersedes edge: %+v", d)
+		}
+	}
+	if len(ctx.IdentityChanges) != 1 || ctx.IdentityChanges[0].ID != "foreign-public-change" {
+		t.Fatalf("Context leaked or omitted a foreign IdentityChange: %+v", ctx.IdentityChanges)
+	}
+}
+
+func TestImpactRoutesSubjectOwnerForRootOwnedRecordsAddedAndRemoved(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	base := Analyze(model, files)
+	defs := copyDefinitions(model.Definitions)
+	root := core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Name: "root"}
+	contract := core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "inventory", Name: "release-reservation"}
+	decision := core.DefinitionIdentity{APIVersion: APIVersion, Kind: decisionKind, Name: "inventory-contract-decision"}
+	change := core.DefinitionIdentity{APIVersion: APIVersion, Kind: identityChangeKind, Name: "inventory-contract-history"}
+	defs = append(defs,
+		core.Definition{APIVersion: APIVersion, Kind: decisionKind, Metadata: core.Metadata{Name: decision.Name}, Purpose: "Record the project-level contract decision.", Spec: map[string]any{"subject": refValue(contract), "decision": "Keep the reservation contract stable.", "reason": "Consumers rely on this behavior.", "actor": refValue(root)}},
+		core.Definition{APIVersion: APIVersion, Kind: identityChangeKind, Metadata: core.Metadata{Name: change.Name}, Purpose: "Record the project-level identity transition.", Spec: map[string]any{"operation": "replaced", "previous": historicalIdentity(APIVersion, statementKind, "inventory", "reservation-v0"), "subject": refValue(contract), "reason": "The contract identity was clarified.", "actorManager": refValue(root)}})
+	candidateModel, diagnostics := core.Compile(model.Schemas, defs, "root-owned-records")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile root-owned records: %+v", diagnostics)
+	}
+	candidate := Analyze(candidateModel, files)
+	if candidate.Status != "succeeded" {
+		t.Fatalf("root-owned public references should be valid: %+v", candidate.Findings)
+	}
+	assertRoutesSubjectOwner := func(name string, impact ChangeImpact) {
+		t.Helper()
+		inventory := core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "inventory", Name: "inventory"}.Key()
+		if len(impact.Unknown) != 0 || !contains(impact.Managers, root.Key()) || !contains(impact.Managers, inventory) || !contains(impact.AffectedStatements, contract.Key()) || !contains(impact.Files, "src/inventory/release.go") {
+			t.Fatalf("%s did not route the referenced subject owner: managers=%v statements=%v files=%v unknown=%v", name, impact.Managers, impact.AffectedStatements, impact.Files, impact.Unknown)
+		}
+	}
+	assertRoutesSubjectOwner("added root-owned records", Impact(base, candidate))
+	assertRoutesSubjectOwner("removed root-owned records", Impact(candidate, base))
+}
+
+func TestIdentityChangeValidationReportsInvalidHistoricalIdentityScopeAndCycle(t *testing.T) {
+	model, files := fixture(t, false, false, false)
+	defs := copyDefinitions(model.Definitions)
+	order := core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "orders", Name: "cancel-order"}
+	ordersManager := core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}
+	defs = append(defs, core.Definition{APIVersion: APIVersion, Kind: identityChangeKind, Metadata: core.Metadata{Namespace: "orders", Name: "bad-previous"}, Purpose: "Invalid historical identity test.", Spec: map[string]any{"operation": "renamed", "previous": historicalIdentity(APIVersion, "OtherKind", "orders", "old"), "subject": refValue(order), "reason": "test", "actorManager": refValue(ordersManager)}})
+	bad, diagnostics := core.Compile(model.Schemas, defs, "invalid-previous")
+	if len(diagnostics) != 0 {
+		t.Fatalf("Core should accept structurally typed historical values: %+v", diagnostics)
+	}
+	r := Analyze(bad, files)
+	if !finding(r, "identity-change.previous-invalid") {
+		t.Fatalf("invalid previous identity was not diagnosed: %+v", r.Findings)
+	}
+	activeDefs := copyDefinitions(model.Definitions)
+	activeDefs = append(activeDefs, core.Definition{APIVersion: APIVersion, Kind: identityChangeKind, Metadata: core.Metadata{Namespace: "orders", Name: "retired-active"}, Purpose: "Retirement requires a historical identity.", Spec: map[string]any{"operation": "retired", "previous": historicalIdentity(APIVersion, statementKind, "orders", "cancel-order"), "reason": "test", "actorManager": refValue(core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Name: "root"})}})
+	activeModel, diagnostics := core.Compile(model.Schemas, activeDefs, "retired-active")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile active retirement: %+v", diagnostics)
+	}
+	activeReport := Analyze(activeModel, files)
+	if !finding(activeReport, "identity-change.previous-still-active") {
+		t.Fatalf("active retired identity was not diagnosed: %+v", activeReport.Findings)
+	}
+	if finding(activeReport, "identity-change.actor-out-of-scope") {
+		t.Fatalf("ancestor Manager actor should be within scope: %+v", activeReport.Findings)
+	}
+
+	foreignDefs := copyDefinitions(model.Definitions)
+	for i := range foreignDefs {
+		if foreignDefs[i].Kind == statementKind && foreignDefs[i].Metadata.Namespace == "inventory" {
+			foreignDefs[i].Spec["public"] = false
+		}
+	}
+	foreignDefs = append(foreignDefs, core.Definition{APIVersion: APIVersion, Kind: identityChangeKind, Metadata: core.Metadata{Namespace: "orders", Name: "foreign-private-subject"}, Purpose: "Private foreign subject and out-of-scope actor test.", Spec: map[string]any{"operation": "replaced", "previous": historicalIdentity(APIVersion, statementKind, "orders", "old-cancellation"), "subject": refValue(core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "inventory", Name: "release-reservation"}), "reason": "test", "actorManager": refValue(core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "inventory", Name: "inventory"})}})
+	foreignModel, diagnostics := core.Compile(model.Schemas, foreignDefs, "private-foreign-subject")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile private foreign subject case: %+v", diagnostics)
+	}
+	foreignReport := Analyze(foreignModel, files)
+	foreignChangeID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: identityChangeKind, Namespace: "orders", Name: "foreign-private-subject"}).Key()
+	if !findingSubject(foreignReport, "reference.private-cross-manager", foreignChangeID) || !finding(foreignReport, "identity-change.actor-out-of-scope") {
+		t.Fatalf("private foreign subject or sibling Manager actor scope was accepted: %+v", foreignReport.Findings)
+	}
+
+	missingSubjectDefs := copyDefinitions(model.Definitions)
+	missingSubjectDefs = append(missingSubjectDefs, core.Definition{APIVersion: APIVersion, Kind: identityChangeKind, Metadata: core.Metadata{Namespace: "orders", Name: "rename-without-subject"}, Purpose: "A rename names its current target.", Spec: map[string]any{"operation": "renamed", "previous": historicalIdentity(APIVersion, statementKind, "orders", "old-name"), "reason": "test", "actorManager": refValue(core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"})}})
+	missingSubject, diagnostics := core.Compile(model.Schemas, missingSubjectDefs, "missing-identity-subject")
+	if len(diagnostics) != 0 {
+		t.Fatalf("Core should permit semantic subject validation in the projection: %+v", diagnostics)
+	}
+	if r := Analyze(missingSubject, files); !finding(r, "identity-change.subject-required") {
+		t.Fatalf("missing rename target was not diagnosed: %+v", r.Findings)
+	}
+
+	cycleDefs := copyDefinitions(model.Definitions)
+	for _, name := range []string{"old-a", "old-b"} {
+		cycleDefs = append(cycleDefs, core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "orders", Name: name}, Purpose: "Statement retained for replacement history.", Spec: map[string]any{"category": "concept", "description": "Historical replacement target."}})
+	}
+	for _, pair := range [][2]string{{"old-a", "old-b"}, {"old-b", "old-a"}} {
+		cycleDefs = append(cycleDefs, core.Definition{APIVersion: APIVersion, Kind: identityChangeKind, Metadata: core.Metadata{Namespace: "orders", Name: "replace-" + pair[0]}, Purpose: "Create identity cycle.", Spec: map[string]any{"operation": "replaced", "previous": historicalIdentity(APIVersion, statementKind, "orders", pair[0]), "subject": refValue(core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "orders", Name: pair[1]}), "reason": "test", "actorManager": refValue(ordersManager)}})
+	}
+	cyclic, diagnostics := core.Compile(model.Schemas, cycleDefs, "identity-cycle")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile replacement cycle: %+v", diagnostics)
+	}
+	if r := Analyze(cyclic, files); !finding(r, "identity-change.cycle") {
+		t.Fatalf("identity cycle was not diagnosed: %+v", r.Findings)
+	}
+}
+
+func refValue(identity core.DefinitionIdentity) map[string]any {
+	return map[string]any{"apiVersion": identity.APIVersion, "kind": identity.Kind, "namespace": identity.Namespace, "name": identity.Name}
+}
+
+func historicalIdentity(apiVersion, kind, namespace, name string) map[string]any {
+	return map[string]any{"apiVersion": apiVersion, "kind": kind, "namespace": namespace, "name": name}
+}
+
+func finding(report Report, code string) bool {
+	for _, value := range report.Findings {
+		if value.Code == code {
+			return true
+		}
+	}
+	return false
+}
+
+func findingSubject(report Report, code, subject string) bool {
+	for _, value := range report.Findings {
+		if value.Code == code && value.Subject == subject {
+			return true
+		}
+	}
+	return false
 }

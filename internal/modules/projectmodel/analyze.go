@@ -78,6 +78,28 @@ func Analyze(model core.Model, inventory []File) Report {
 	for _, c := range r.Checks {
 		checkByID[c.ID] = c
 	}
+	for _, d := range idx.byKind[decisionKind] {
+		id := d.Identity().Key()
+		owner := nearestManager(d.Metadata.Namespace, r.Managers)
+		if owner == "" {
+			addFinding(&r, "ownership.decision-unmanaged", id, "Decision has no Manager at or above its namespace.", "error")
+		}
+		r.Decisions = append(r.Decisions, Decision{ID: id, Name: d.Metadata.Name, Namespace: d.Metadata.Namespace, Owner: owner, Subject: refID(d.Spec["subject"]), Actor: refID(d.Spec["actor"]), Decision: stringValue(d.Spec["decision"]), Reason: stringValue(d.Spec["reason"]), Supersedes: refID(d.Spec["supersedes"]), Public: boolValue(d.Spec["public"]), Source: d.Source})
+	}
+	sort.Slice(r.Decisions, func(i, j int) bool { return r.Decisions[i].ID < r.Decisions[j].ID })
+	decisionByID := map[string]Decision{}
+	for _, d := range r.Decisions {
+		decisionByID[d.ID] = d
+	}
+	for _, d := range idx.byKind[identityChangeKind] {
+		id := d.Identity().Key()
+		owner := nearestManager(d.Metadata.Namespace, r.Managers)
+		if owner == "" {
+			addFinding(&r, "ownership.identity-change-unmanaged", id, "IdentityChange has no Manager at or above its namespace.", "error")
+		}
+		r.IdentityChanges = append(r.IdentityChanges, IdentityChange{ID: id, Name: d.Metadata.Name, Namespace: d.Metadata.Namespace, Owner: owner, Operation: stringValue(d.Spec["operation"]), Previous: definitionIdentity(d.Spec["previous"]), Subject: refID(d.Spec["subject"]), Actor: refID(d.Spec["actorManager"]), Reason: stringValue(d.Spec["reason"]), Public: boolValue(d.Spec["public"]), Source: d.Source})
+	}
+	sort.Slice(r.IdentityChanges, func(i, j int) bool { return r.IdentityChanges[i].ID < r.IdentityChanges[j].ID })
 
 	validateManagerTree(&r, managerByID)
 	validateOwnershipSelectors(&r)
@@ -121,14 +143,8 @@ func Analyze(model core.Model, inventory []File) Report {
 			}
 		}
 	}
-	for _, d := range idx.byKind[decisionKind] {
-		if _, ok := statementByID[refID(d.Spec["subject"])]; !ok {
-			addFinding(&r, "reference.decision-subject-missing", d.Identity().Key(), "Decision refers to a missing Statement.", "error")
-		}
-		if _, ok := managerByID[refID(d.Spec["actor"])]; !ok {
-			addFinding(&r, "reference.decision-actor-missing", d.Identity().Key(), "Decision actor is not a declared Manager.", "error")
-		}
-	}
+	validateDecisions(&r, managerByID, statementByID, decisionByID)
+	validateIdentityChanges(&r, managerByID, statementByID)
 
 	fileByPath := map[string]FileEntry{}
 	casePaths := map[string]string{}
@@ -261,18 +277,165 @@ func Analyze(model core.Model, inventory []File) Report {
 		API, Model, Inventory, Status string
 		Managers                      []Manager
 		Statements                    []Statement
+		Decisions                     []Decision
+		IdentityChanges               []IdentityChange
 		Artifacts                     []Artifact
 		Checks                        []Check
 		Files                         []FileEntry
 		Findings                      []Finding
 		Unknown                       []string
-	}{r.APIVersion, r.ModelDigest, r.InventoryDigest, r.Status, r.Managers, r.Statements, r.Artifacts, r.Checks, r.Files, r.Findings, r.Unknown})
+	}{r.APIVersion, r.ModelDigest, r.InventoryDigest, r.Status, r.Managers, r.Statements, r.Decisions, r.IdentityChanges, r.Artifacts, r.Checks, r.Files, r.Findings, r.Unknown})
 	return r
 }
 
 func addFinding(r *Report, code, subject, message, severity string) {
 	r.Findings = append(r.Findings, Finding{Code: code, Subject: subject, Message: message, Severity: severity})
 }
+
+func validateDecisions(r *Report, managers map[string]Manager, statements map[string]Statement, decisions map[string]Decision) {
+	supersededBy := map[string]string{}
+	for _, d := range r.Decisions {
+		if _, ok := statements[d.Subject]; !ok {
+			addFinding(r, "reference.decision-subject-missing", d.ID, "Decision refers to a missing Statement.", "error")
+		} else if target := statements[d.Subject]; target.Owner != d.Owner && !target.Public {
+			addFinding(r, "reference.private-cross-manager", d.ID, "Decision crosses a Manager boundary to a private Statement.", "error")
+		}
+		if _, ok := managers[d.Actor]; !ok {
+			addFinding(r, "reference.decision-actor-missing", d.ID, "Decision actor is not a declared Manager.", "error")
+		} else if d.Owner != "" && !managerInScope(d.Actor, d.Owner, managers) {
+			addFinding(r, "decision.actor-out-of-scope", d.ID, "Recorded Decision actor Manager is outside the responsible Manager's scope.", "error")
+		}
+		if d.Supersedes == "" {
+			continue
+		}
+		old, ok := decisions[d.Supersedes]
+		if !ok {
+			addFinding(r, "reference.decision-supersedes-missing", d.ID, "Decision supersedes a missing Decision.", "error")
+			continue
+		}
+		if old.Subject != d.Subject {
+			addFinding(r, "decision.supersedes-subject-mismatch", d.ID, "A Decision may supersede only a Decision about the same Statement.", "error")
+		}
+		if old.Owner != d.Owner && !old.Public {
+			addFinding(r, "reference.private-cross-manager", d.ID, "Decision refers across a Manager boundary to a private superseded Decision.", "error")
+		}
+		if prior, exists := supersededBy[old.ID]; exists && prior != d.ID {
+			addFinding(r, "decision.supersedes-ambiguous", d.ID, "A Decision is superseded by more than one Decision.", "error")
+		} else {
+			supersededBy[old.ID] = d.ID
+		}
+	}
+	state := map[string]uint8{}
+	var visit func(string, []string)
+	visit = func(id string, stack []string) {
+		if state[id] == 2 {
+			return
+		}
+		if state[id] == 1 {
+			addFinding(r, "decision.supersedes-cycle", id, "Decision supersession contains a cycle.", "error")
+			return
+		}
+		state[id] = 1
+		if d, ok := decisions[id]; ok && d.Supersedes != "" {
+			visit(d.Supersedes, append(stack, id))
+		}
+		state[id] = 2
+	}
+	for id := range decisions {
+		visit(id, nil)
+	}
+}
+
+func validateIdentityChanges(r *Report, managers map[string]Manager, statements map[string]Statement) {
+	previousOwner := map[string]string{}
+	subjectOwner := map[string]string{}
+	transition := map[string]string{}
+	for _, c := range r.IdentityChanges {
+		prev := c.Previous
+		if !prev.Valid() || prev.Kind != statementKind {
+			addFinding(r, "identity-change.previous-invalid", c.ID, "Previous must be a valid full historical Statement identity.", "error")
+		}
+		if prev.Valid() && prev.Kind == statementKind {
+			if prior, exists := previousOwner[prev.Key()]; exists && prior != c.ID {
+				addFinding(r, "identity-change.previous-ambiguous", c.ID, "A historical Statement identity may be declared by only one IdentityChange.", "error")
+			} else {
+				previousOwner[prev.Key()] = c.ID
+			}
+			if _, active := statements[prev.Key()]; active && (c.Operation == "renamed" || c.Operation == "retired") {
+				addFinding(r, "identity-change.previous-still-active", c.ID, "A renamed or retired historical identity is still an active Statement.", "error")
+			}
+		}
+		if _, ok := managers[c.Actor]; !ok {
+			addFinding(r, "reference.identity-change-actor-missing", c.ID, "IdentityChange actorManager is not a declared Manager.", "error")
+		} else if c.Owner != "" && !managerInScope(c.Actor, c.Owner, managers) {
+			addFinding(r, "identity-change.actor-out-of-scope", c.ID, "Recorded IdentityChange actorManager is outside the responsible Manager's scope.", "error")
+		}
+		if c.Operation == "retired" {
+			if c.Subject != "" {
+				addFinding(r, "identity-change.retired-subject", c.ID, "A retired identity must not declare a current Statement subject.", "error")
+			}
+			continue
+		}
+		if c.Operation != "renamed" && c.Operation != "replaced" {
+			continue
+		}
+		if c.Subject == "" {
+			addFinding(r, "identity-change.subject-required", c.ID, "Renamed and replaced identities require an explicit current Statement subject.", "error")
+			continue
+		}
+		target, ok := statements[c.Subject]
+		if !ok {
+			addFinding(r, "reference.identity-change-subject-missing", c.ID, "IdentityChange refers to a missing current Statement.", "error")
+		} else if target.Owner != c.Owner && !target.Public {
+			addFinding(r, "reference.private-cross-manager", c.ID, "IdentityChange crosses a Manager boundary to a private Statement.", "error")
+		}
+		if prev.Valid() && prev.Key() == c.Subject {
+			addFinding(r, "identity-change.self-change", c.ID, "Previous historical identity cannot equal the current Statement subject.", "error")
+		}
+		if prior, exists := subjectOwner[c.Subject]; exists && prior != c.ID {
+			addFinding(r, "identity-change.subject-ambiguous", c.ID, "A current Statement may be the subject of only one identity transition.", "error")
+		} else {
+			subjectOwner[c.Subject] = c.ID
+		}
+		if prev.Valid() && prev.Kind == statementKind {
+			transition[prev.Key()] = c.Subject
+		}
+	}
+	state := map[string]uint8{}
+	var visit func(string)
+	visit = func(id string) {
+		if state[id] == 2 {
+			return
+		}
+		if state[id] == 1 {
+			if changeID := previousOwner[id]; changeID != "" {
+				addFinding(r, "identity-change.cycle", changeID, "IdentityChange transitions contain a cycle.", "error")
+			}
+			return
+		}
+		state[id] = 1
+		if next := transition[id]; next != "" {
+			visit(next)
+		}
+		state[id] = 2
+	}
+	for id := range transition {
+		visit(id)
+	}
+}
+
+func managerInScope(actor, owner string, managers map[string]Manager) bool {
+	seen := map[string]bool{}
+	for owner != "" && !seen[owner] {
+		if owner == actor {
+			return true
+		}
+		seen[owner] = true
+		owner = managers[owner].Parent
+	}
+	return false
+}
+
 func stringValue(v any) string { s, _ := v.(string); return s }
 func boolValue(v any) bool     { b, _ := v.(bool); return b }
 func stringsFrom(v any) []string {
@@ -314,6 +477,18 @@ func refID(v any) string {
 	ns, _ := m["namespace"].(string)
 	name, _ := m["name"].(string)
 	return (core.DefinitionIdentity{APIVersion: api, Kind: kind, Namespace: ns, Name: name}).Key()
+}
+
+func definitionIdentity(v any) core.DefinitionIdentity {
+	m, ok := v.(map[string]any)
+	if !ok {
+		return core.DefinitionIdentity{}
+	}
+	api, _ := m["apiVersion"].(string)
+	kind, _ := m["kind"].(string)
+	ns, _ := m["namespace"].(string)
+	name, _ := m["name"].(string)
+	return core.DefinitionIdentity{APIVersion: api, Kind: kind, Namespace: ns, Name: name}
 }
 func refIDs(v any) []string {
 	if one := refID(v); one != "" {
