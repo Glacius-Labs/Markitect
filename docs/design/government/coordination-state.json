@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T18:58:10Z",
+  "updatedUtc": "2026-10-09T19:03:28Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16640,7 +16640,7 @@
     "hostLoadMustBeRecorded": true,
     "requiredSetup": "Existing installed executable/profile/tool/write/helper bindings, exact own stdio process/session ownership, fresh context plus normal session continuation",
     "completion": "Functional/rule/rename/restart outcomes and real time/usage/unknowns; preserve failures and changes prospected; report source/handles/consumption/evidence",
-    "status": "ORIGINAL_TWO_PILOTS_TERMINAL_FINISHED_REVIEWS_PENDING_ONE_EXPLICIT_ENUM_CORRECTION_ALLOWED",
+    "status": "CLOSED_ORIGINAL_AND_EXPLICIT_CORRECTION_RUNTIME_BLOCKED_NO_METHOD_CONCLUSION",
     "grantDocument": "docs/design/government/conventional-wrapper-runtime-pilot-20261009.json",
     "ownerMessageSentOnce": true,
     "integrationNoMainDependencyNoticeSentOnce": true,
@@ -16748,13 +16748,43 @@
       "totalNativeHelperRequests": "UNKNOWN_UNDER_RECEIPT_REVIEW",
       "oldResultsUnchanged": true,
       "productMainDependency": false
+    },
+    "finalCompletion": {
+      "verifiedUtc": "2026-10-09T19:03:28Z",
+      "cleanExactPrivateSourceSha": "f056d39a5236f28a6474f011c314d4007277ce87",
+      "report": "experiments/work-item-comparison/playground/pilots/conventional-pilot-results-20261009.md/json",
+      "originalArchiveSha256": "ad1af0162757093b3bd930f7ec822bfe6c0f3ccbee83bdfa0347ca926514dc40",
+      "originalArchiveFiles": 167,
+      "correctionArchiveSha256": "685d4f245b377417aa33960696cc65acbf0b6ef6f50cd0ebce4b72ff7d38d106",
+      "correctionArchiveFiles": 86,
+      "rootVerified": "Clean exact private remote, report, both archive/rawGit bytes/253 manifest payload+external hashes,13offline source hashes and log; no rerun",
+      "correctionThreadId": "01a12207-2c3a-7d62-8f02-6a3eab95b164",
+      "correctionTurnId": "01a12207-2d33-76b0-a534-ffed6dcf9943",
+      "knownNativeHelpers": [
+        "01a12207-802e-7451-b365-ecceb2dea3fe",
+        "01a12207-87f3-7550-a297-96fc3a5c42aa"
+      ],
+      "helperOverlap": "Owner receipt-backed report intervals18:57:59→18:58:13 and18:58:01→18:58:26Z; both complete",
+      "allMainUnchangedFromSetup": true,
+      "correctionFinalMain": "5f3ef4684d4c6647c879e841fbd512eec1e4728d",
+      "caseResults": "GF app absent/functional checksNOTRUN; BF original and corrected3inheritedPASS2newFAIL; S2-S4NOTRUN",
+      "interpretation": "Runtime tools blocked; no method, transport, productivity/economic or human acceptance conclusion",
+      "startRequestsKnownLowerBound": 7,
+      "outerRequests": 3,
+      "observedNativeHelperRequests": 2,
+      "originalFinalReviews": 2,
+      "originalCLIHelperStartCorrection": "Empty-receiver wait is not proof of additional helper start, previous owner attempt wording qualified",
+      "hardTotalCountAndBilling": "UNKNOWN",
+      "lifecycle": "Owner reports three exact own PIDs absent, active locks released, known helpers terminal; no universal descendant guarantee",
+      "newActuals": false,
+      "next": "No further native action on closed original/correction orders; separate bounded read-only Windows setup diagnosis only"
     }
   },
   "conventionalAppServerEnumCorrectionPilot20261009": {
     "id": "conventional-appserver-enum-correction-pilot-20261009",
     "issuedUtc": "2026-10-09T18:53:53Z",
     "authority": "Direct human Conventional wrapper Suite test, specific one-time Root correction after independently proved pre-model protocol bug",
-    "status": "CORRECTION_BF_WRAPPER_RUNNING_NATIVE_THREAD_TURN_PENDING",
+    "status": "CLOSED_RUNTIME_TOOL_SETUP_BLOCKED",
     "maxAdditionalFreshTrajectories": 1,
     "case": "Readinglog Brownfield",
     "backend": "owned stdio Codex App Server",
@@ -16806,6 +16836,15 @@
       "oldOriginalFailedRunsPreserved": true,
       "mainDependency": false,
       "newQuota": false
-    }
+    },
+    "additionalFreshTrajectoriesConsumed": 1,
+    "newTrialsAllowed": false
+  },
+  "windowsRuntimeReadOnlyDiagnosis20261009": {
+    "agent": "/root/windows_runtime_setup_diagnosis",
+    "status": "ACTIVE",
+    "scope": "Existing known runtime/config/logs and official docs only, distinguish packagedalpha versus Windows workspace-write setup; no edits/tests/models/installs/policy changes/global inventories",
+    "nativeProductCalls": 0,
+    "integrationNotifiedPublicInterfaceOnly": true
   }
 }
