@@ -221,6 +221,61 @@ func fixture(t *testing.T, mode string, options Options) (*Adapter, agentexec.Co
 	return a, shared, req, opts
 }
 
+func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
+	request := agentexec.Request{
+		Role:           agentexec.RoleExecutor,
+		SourceRevision: strings.Repeat("a", 40),
+		ModelDigest:    "sha256:" + strings.Repeat("b", 64),
+		ModulePin:      "test@1",
+		ProjectionID:   "test",
+		ScopeIDs:       []string{"manager"},
+		PolicyIDs:      []string{},
+		Context:        json.RawMessage(`{"kind":"projectrun-task/v1","phase":"work","responseSchema":{"type":"object","additionalProperties":false}}`),
+		Artifacts:      []agentexec.Artifact{},
+	}
+	inv, wire, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prompt := nativeTurnPrompt(inv, wire)
+	for _, required := range []string{
+		"candidateFiles, evidenceRefs, verifierObservations, and uncertainty as JSON arrays",
+		"object with exactly subject, outcome, and detail string fields",
+		"observation outcome must be passed, failed, incomplete, or escalated",
+		"outer outcome must be one of proposed, failed, incomplete, or escalated",
+		"reportJson as a JSON object matching request.context.responseSchema exactly",
+		"reportJson.status is a task status (complete, partial, blocked, failed, or no-op)",
+		"If reportJson.escalateTo is empty, outer outcome is proposed",
+		"if escalateTo is nonempty, outer outcome is escalated",
+		"Never copy reportJson.status into outer outcome",
+	} {
+		if !strings.Contains(prompt, required) {
+			t.Errorf("native prompt omits contract clause %q", required)
+		}
+	}
+
+	// This is the captured failure shape: the task's "blocked" status was used
+	// as an outer executor outcome, observations were strings, and reportJson
+	// was omitted. Keep rejecting it at the shared closed decoder.
+	malformed := []byte(fmt.Sprintf(`{"apiVersion":%q,"runId":%q,"nonce":%q,"role":%q,"inputDigest":%q,"outcome":"blocked","candidateFiles":[],"evidenceRefs":[],"verifierObservations":["could not inspect"],"uncertainty":["workspace was not verified"]}`,
+		inv.APIVersion, inv.RunID, inv.Nonce, request.Role, inv.InputDigest))
+	if _, err := agentexec.DecodeResponse(malformed, inv, ""); err == nil {
+		t.Fatal("captured malformed executor response passed the strict decoder")
+	}
+
+	// A blocked TaskResponse remains a typed report status. The outer executor
+	// outcome is proposed because the report does not request escalation.
+	corrected := []byte(fmt.Sprintf(`{"apiVersion":%q,"runId":%q,"nonce":%q,"role":%q,"inputDigest":%q,"outcome":"proposed","candidateFiles":[],"evidenceRefs":[],"verifierObservations":[],"reportJson":{"status":"blocked","summary":"workspace command setup failed before process start","delegations":[],"reworkRequests":[],"integrated":false,"questions":["Can workspace command setup be restored?"],"risks":[],"resolvedQuestions":[],"resolvedRisks":[],"escalateTo":""},"uncertainty":["Workspace contents were not independently verified."]}`,
+		inv.APIVersion, inv.RunID, inv.Nonce, request.Role, inv.InputDigest))
+	parsed, err := agentexec.DecodeResponse(corrected, inv, "")
+	if err != nil {
+		t.Fatalf("typed blocked task report with valid executor outcome was rejected: %v", err)
+	}
+	if parsed.Outcome != agentexec.OutcomeProposed || len(parsed.ReportJSON) == 0 || len(parsed.VerifierObservations) != 0 {
+		t.Fatalf("corrected response contract was not preserved: outcome=%q report=%s observations=%#v", parsed.Outcome, parsed.ReportJSON, parsed.VerifierObservations)
+	}
+}
+
 func TestAdapterLifecycle(t *testing.T) {
 	for _, mode := range []string{"success", "different-session", "failed", "interrupted", "helper", "malformed-response", "malformed-wire", "transport-loss", "model-mismatch", "request-failure", "version", "event-limit", "approval"} {
 		t.Run(mode, func(t *testing.T) {

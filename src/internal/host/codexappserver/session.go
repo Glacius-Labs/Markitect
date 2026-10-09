@@ -271,7 +271,7 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 	var begun struct {
 		Turn turn `json:"turn"`
 	}
-	prompt := "Implement/assess the supplied Host invocation in this real workspace using ordinary project tools and guidance. Return exactly one JSON agent-execution Response bound to apiVersion, runId, nonce, inputDigest and request role. Do not invent lifecycle, workspace delta, or evidence. Response fields: apiVersion, runId, nonce, role, inputDigest, outcome, candidateFiles, evidenceRefs, verifierObservations, uncertainty; optional candidateJson/reportJson/usage. Invocation:\n" + string(wire)
+	prompt := nativeTurnPrompt(inv, wire)
 	if err = s.c.call(ctx, "turn/start", map[string]any{"threadId": s.h.ThreadID, "input": []any{map[string]any{"type": "text", "text": prompt}}, "model": a.config.Model, "effort": a.config.ReasoningEffort, "cwd": opts.Workspace.CWD}, &begun); err != nil {
 		s.interrupt()
 		return result, err
@@ -312,6 +312,36 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 		return result, agentexec.ErrInputChanged
 	}
 	return result, nil
+}
+
+func nativeTurnPrompt(inv agentexec.Invocation, wire []byte) string {
+	contract := "Wire response contract:\n" +
+		"- Return exactly one JSON object and no surrounding Markdown. Copy apiVersion, runId, nonce, inputDigest, and role exactly from this invocation. Do not invent lifecycle, workspace delta, or evidence.\n" +
+		"- Always include candidateFiles, evidenceRefs, verifierObservations, and uncertainty as JSON arrays, including empty arrays when there are no entries. Each verifierObservations entry is an object with exactly subject, outcome, and detail string fields; observation outcome must be passed, failed, incomplete, or escalated. Never use strings in place of observation objects.\n" +
+		"- Do not include nativeWork; the Host owns that metadata. Include usage only when provider-reported telemetry is available.\n"
+	switch inv.Request.Role {
+	case agentexec.RoleExecutor:
+		contract += "- For executor responses, outer outcome must be one of proposed, failed, incomplete, or escalated. Never use a task report status such as blocked, complete, or partial as the outer outcome. verifierObservations must be an empty array; omit candidateJson.\n"
+		var context struct {
+			Kind           string          `json:"kind"`
+			ResponseSchema json.RawMessage `json:"responseSchema"`
+		}
+		if json.Unmarshal(inv.Request.Context, &context) == nil && len(context.ResponseSchema) > 0 {
+			contract += "- Include reportJson as a JSON object matching request.context.responseSchema exactly; do not encode the object as a string. Return every required property and use arrays for every declared array field.\n"
+		} else {
+			contract += "- Omit reportJson unless this invocation supplies request.context.responseSchema. A proposed response needs candidateFiles or reportJson.\n"
+		}
+		if context.Kind == "projectrun-task/v1" {
+			contract += "- For projectrun-task/v1, reportJson.status is a task status (complete, partial, blocked, failed, or no-op) and is separate from outer outcome. If reportJson.escalateTo is empty, outer outcome is proposed; if escalateTo is nonempty, outer outcome is escalated. Never copy reportJson.status into outer outcome. Follow the task phase and typed response schema; preserve unresolved questions and risks.\n"
+		}
+	case agentexec.RoleVerifier:
+		contract += "- For verifier responses, outer outcome must be one of passed, failed, incomplete, or escalated. candidateFiles must be empty; omit candidateJson and reportJson. A passed or failed result requires concrete verifierObservations as objects with subject, outcome, and detail.\n"
+	case agentexec.RoleInfer:
+		contract += "- For inference responses, outer outcome must be one of proposed, failed, incomplete, or escalated. candidateFiles and verifierObservations must be empty; omit reportJson. A proposed result requires candidateJson as a JSON object.\n"
+	default:
+		contract += "- The request role is unsupported; return incomplete with empty arrays and explain the limitation in uncertainty.\n"
+	}
+	return "Implement/assess the supplied Host invocation in this real workspace using ordinary project tools and guidance.\n" + contract + "\nInvocation:\n" + string(wire)
 }
 
 func (s *session) save() error {
