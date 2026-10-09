@@ -16464,6 +16464,27 @@
         "fullSuite": "Original f2e5 whole suite still running with production/testsunchanged",
         "next": "Exact fixed integrated source/actual-path fixture/review/build/bindings then one authorized original-lease continuation",
         "newDisposition": false
+      },
+      "isolatedHelperAliasFix": {
+        "commitSha": "2034a7939f6d97049622b5bb12fce9cc3e6c6d2b",
+        "rootVerified": "Commit scope and git_inventory source diff read; primaryf2e5 integration/source/binary pending old pinned suite completion",
+        "ownerReported": "Independent review closed, full projectworkspace package PASS92.214s; actual default storage packaged alias ParentChild Prepare/Inspect/Harvest/Reopen/Close0delta positive, nested/distinct base/file alias negative checks positive",
+        "sourceFreeze": "Primaryf2e5 unchanged until running source-bound fullsuite ends; no result claimed yet",
+        "remainingKnownRequestsPlanned": 253,
+        "callerEstimateCapPlanned": {
+          "originalMicros": 10000000,
+          "knownEstimatedConsumedMicros": 401667,
+          "knownComponentsMicros": [
+            147859,
+            253808
+          ],
+          "remainingMicros": 9598333,
+          "qualification": "Owner-reported caller-rate estimated allowance and partial lowerbound; not invoice/real total costs or efficiency claim; rates/profiles unchanged"
+        },
+        "actorStartsSinceFailure": 0,
+        "next": "Integrate after original pinned suite result, rebuild/exact source/project/runtime/readiness/Plan bindings then one previously authorized original-lease continuation",
+        "originalDeadlineUnchanged": "2026-10-10T00:26:23Z",
+        "newOrderOrRefill": false
       }
     }
   },
