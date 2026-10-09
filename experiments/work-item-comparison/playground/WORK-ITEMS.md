@@ -18,4 +18,3 @@ This list owns Playground preparation only. Product P03–P10 remain with Produc
 Conventional may receive ordinary project instructions and a native provider entrypoint referencing the same shared rules. It has no Markitect model obligation. Markitect's additional generated instructions and model are its method installation; keep their setup/upkeep cost and substantive coverage visible. Do not improve common business requirements for one arm during setup.
 
 Claude Markitect support is unresolved. If stable genuine inner managers only support Codex/Luna, record `blocked_by_provider_support` for the Claude method pair. Do not substitute a Luna inner manager, write a study Claude adapter, or present a cross-provider result as a method comparison. Continue useful source preparation without extra capability probes.
-
