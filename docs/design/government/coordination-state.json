@@ -16410,6 +16410,23 @@
         "newActualStarts": 0,
         "leaseEndUnchanged": "2026-10-10T00:26:23Z",
         "wholeSuite": "RUNNING_OWNER_SESSION19479"
+      },
+      "finalContinuationBinding": {
+        "ownerReportedPrivateHead": "45f4ffc3dc69789e2b65275f8c8e1bfce89ae857",
+        "planId": "7ff160846acd58ea5a065ff19e74ac78",
+        "planDigest": "c6651d258080870b8133fec0306e9461ff08553db0b1e5bfe4e76b60d85e0c77",
+        "runtimeDigest": "382b8c8b08b0c97c9396e9a2ccafe6dc3fe68befb16bc2a219701fbcde94f966",
+        "sourceSha": "f2e5c05bd80b0f118aac554ab45b5292b082bee9",
+        "binarySha256OwnerBound": "3f1368ec846dfd7609a0bf6c65b29383e66a8969565620f1cf6b82d21ba2e2a1",
+        "readiness": "Owner reports positive/noBlockers e05231 prefix, exact full receipt pending",
+        "providerFreePreview": "Owner reports24bound execution fields match. Preview executeAuthorized=false and distinct ID/digest intentionally differs; original overly strict preparatory whole digest assertion retained as operator error, no actors.",
+        "actualDisposition": "Owner now starts single authorized ordinary continuation; first actual observer/turn receipt pending",
+        "originalLeaseEnd": "2026-10-10T00:26:23Z",
+        "remainingKnownStarts": 255,
+        "oldReplay": false,
+        "rootQualification": "Public source already remote verified; exact private binary/readiness/24field comparison owner-reported until archive handoff",
+        "newGrant": false,
+        "mainAcceptance": false
       }
     }
   },
