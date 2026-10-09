@@ -1,0 +1,6 @@
+{
+  "station": "S1",
+  "status": "complete",
+  "completedWorkItems": ["R01"],
+  "remainingIssues": []
+}

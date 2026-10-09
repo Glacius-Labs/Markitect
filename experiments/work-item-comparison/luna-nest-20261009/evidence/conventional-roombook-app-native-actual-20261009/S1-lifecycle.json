@@ -1,0 +1,95 @@
+{
+  "reportedFeatureCommit": "669e1f9",
+  "reportedMergeCommit": "dfab46cef37a24da7229428b11eec84ec1374be2",
+  "reportedFinalCommit": "af06bd9bb9e160853d3238fb1a1e0b9ab1fa138f",
+  "reportedChecks": {
+    "unittest": "Exit0 /4tests",
+    "publicS1Acceptance": "Exit0 /6PASS"
+  },
+  "mechanicalSnapshot": {
+    "stationIndex": 0,
+    "station": "S1",
+    "mainCommit": "af06bd9bb9e160853d3238fb1a1e0b9ab1fa138f",
+    "headCommit": "af06bd9bb9e160853d3238fb1a1e0b9ab1fa138f",
+    "dirtyStatus": "",
+    "evaluationRepo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-app-native\\stations\\S1\\main",
+    "rawFiles": {
+      ".codex/config.toml": {
+        "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+        "bytes": 281
+      },
+      ".gitignore": {
+        "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+        "bytes": 36
+      },
+      ".study/completion.json": {
+        "sha256": "daac550db683e60c7f0543123bcdc72c7485eb4e9ed114239372e2f3b31dfce4",
+        "bytes": 104
+      },
+      ".study/station.json": {
+        "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+        "bytes": 70
+      },
+      ".work/logs/s1-main-public-acceptance.log": {
+        "sha256": "88d79e18bd339e853041ee06c6fac1e0b68f5f6e652a169b36ec2a81164c287c",
+        "bytes": 642
+      },
+      ".work/logs/s1-main-unittest.log": {
+        "sha256": "3ae87b0a290713ed69a14b79d8484bef33ab4e9a7a5317ee6f908caed7b49eba",
+        "bytes": 610
+      },
+      ".work/logs/s1-public-acceptance.log": {
+        "sha256": "88d79e18bd339e853041ee06c6fac1e0b68f5f6e652a169b36ec2a81164c287c",
+        "bytes": 642
+      },
+      ".work/logs/s1-unittest.log": {
+        "sha256": "a4b81a3684f5cd56d7131e8e9f39dcec4b5846a4788a17d721519e332d01a8bc",
+        "bytes": 610
+      },
+      "AGENTS.md": {
+        "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+        "bytes": 5411
+      },
+      "app.py": {
+        "sha256": "3541fd2f014249c8b3987fc8ce507dad7f7c677381f4080cf2786ef20315e46b",
+        "bytes": 5638
+      },
+      "BACKLOG.md": {
+        "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+        "bytes": 2566
+      },
+      "checks/acceptance.py": {
+        "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+        "bytes": 7554
+      },
+      "PROGRESS.md": {
+        "sha256": "c277bd1817eb66ca896108ab83ccf0f317a4a05e83ae20345cacc9d2a7ecc5f2",
+        "bytes": 878
+      },
+      "QUALITY.md": {
+        "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+        "bytes": 2687
+      },
+      "README.md": {
+        "sha256": "cc4b7abaeca6b9d811078bbf227821e701c7f1f8be808c8e3bf9591d4c6282fb",
+        "bytes": 1767
+      },
+      "STATIONS.json": {
+        "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+        "bytes": 595
+      },
+      "tests/test_app.py": {
+        "sha256": "3f7bd58c3e1b9070ffe37a1da39b492b247e5560e53aefcc16f1502536722129",
+        "bytes": 3495
+      },
+      "WORKLOG.md": {
+        "sha256": "8c5232a77d3f35d10cd1a592637ed0c8bbf349a470657e5584ba5f785d5c4bac",
+        "bytes": 2426
+      }
+    },
+    "bundleSha256": "f11df0a18381e780a7d899a20bfed53faee4f44aa48134f839503e523eb675e4",
+    "utc": "2026-10-09T06:59:09.155688+00:00"
+  },
+  "meaning": "Implementer report plus fixed snapshot; independent assessment pending",
+  "actualContextReceipt": "Not delivered; unknown, not assumed absent"
+}

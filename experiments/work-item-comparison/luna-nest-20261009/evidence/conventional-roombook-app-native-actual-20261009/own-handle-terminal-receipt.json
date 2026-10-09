@@ -1,0 +1,14 @@
+{
+  "tool": "collaboration.list_agents",
+  "pathPrefix": "/root/app_conventional_roombook_primary",
+  "observedUtc": "2026-10-09T07:04:51.241408+00:00",
+  "ownNodes": [
+    {
+      "handle": "/root/app_conventional_roombook_primary",
+      "status": "completed"
+    }
+  ],
+  "knownExecutingHelpers": 0,
+  "scope": "Only own App-primary subtree; no global agents/process inventory",
+  "processStopProof": "No known pending own shell session/process reported; native completion is not provider cancellation attestation"
+}

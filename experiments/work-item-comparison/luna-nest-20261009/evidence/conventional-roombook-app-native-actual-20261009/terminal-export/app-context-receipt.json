@@ -1,0 +1,33 @@
+{
+  "taskHandle": "/root/app_conventional_roombook_primary",
+  "reservation": 2,
+  "inheritedWorkingDirectory": "A separate Markitect workspace was named in host context; exact path omitted",
+  "operatedWorkingDirectory": "The explicitly named Roombook cell; exact path omitted",
+  "instructionProvenance": [
+    "User supplied task and scope instructions",
+    "Cell AGENTS.md was read in the preceding turn",
+    "Parent follow-up message for this continuation"
+  ],
+  "toolsObservedUsed": [
+    "PowerShell shell execution",
+    "file patching",
+    "UTC clock",
+    "native collaboration message"
+  ],
+  "toolScope": "Additional app, browser, connector, and collaboration capabilities were visible; full effective scope is unknown. They were not used for this continuation.",
+  "foreignExposure": {
+    "inheritedContextIncludedPriorParentTaskHistory": true,
+    "inheritedContextIncludedMemorySummaryWithCrossProjectNotes": true,
+    "detailsCopied": false,
+    "newForeignFilesRead": false
+  },
+  "continuationReads": [
+    "Current cell station and completion metadata",
+    "Current cell git status and recent history",
+    "Explicitly permitted case-local app ledger"
+  ],
+  "servingModel": "unknown",
+  "tokenUsage": "unknown",
+  "cost": "unknown",
+  "terminalReason": "Parent required terminal reporting when private parent history, memory, or foreign case context was already visible in inherited context; prior task history and a cross-project memory summary were visible."
+}

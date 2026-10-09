@@ -1,0 +1,7 @@
+{
+  "status": "NOT RUN",
+  "appFinalActorsStarted": 0,
+  "reason": "Known reported private inherited-context exposure ends this App entry. No independent clean fresh-assessor context established by the available fork-none mechanism; do not launch another exposure/capability probe.",
+  "unusedFinalEntryClosed": true,
+  "qualityVerdict": null
+}
