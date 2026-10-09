@@ -1,0 +1,26 @@
+{
+  "receiptId": "conventional-roombook-host-slot-release-20261009",
+  "issuedUtc": "2026-10-09T05:29:59Z",
+  "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "previousJobOwner": "Design",
+  "previousJobSession": 33006,
+  "ownerReportedCompletedUtc": "2026-10-09T05:28:40Z",
+  "ownerReportedClosed": true,
+  "ownerReportedExitCode": 1,
+  "rootObservedNamedLog": "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\markitect-native-workflow-20261009\\ab306-full-go-test.log",
+  "namedLogSha256": "e88757934093fb7e92ac0e91f5a8767edf8caeac23cb7315781c25dda9a1da3d",
+  "rootObservedTerminal": "FAIL, projectrun891.875s,3failedtestnames",
+  "failedTests": [
+    "TestDismissedAcceptedModelEventStillLoadsForManagerContext",
+    "TestReviewerContextCarriesOperationStrictnessAndAcceptedBriefing",
+    "TestDraftModelEditReviewerDoesNotLoadUnacceptedBriefingHistory"
+  ],
+  "exitCodeIndependentlyProbed": false,
+  "hostReleasedFor": "Already activated one ConventionalRoombook actual",
+  "executionGrant": "docs/design/government/conventional-roombook-enabled-execution-grant-20261009.json",
+  "noNewActualQuotaOrDeadlineExtension": true,
+  "absoluteNotAfterUtc": "2026-10-09T09:12:43Z",
+  "noDesignReadinessDependency": true,
+  "noHeavyDesignOrNativeProofOverlapUntilMeasuredCellEnds": true,
+  "actualStartedReceiptPending": true
+}

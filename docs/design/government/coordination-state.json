@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T05:25:42Z",
+  "updatedUtc": "2026-10-09T05:31:15Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -37,8 +37,8 @@
     "scenarioFrameworkUpdatedUtc": "2026-10-09T04:25:49Z",
     "ownDesignSuiteMandateUpdatedUtc": "2026-10-09T04:31:41Z",
     "earlyConventionalMandateUpdatedUtc": "2026-10-09T04:45:30Z",
-    "currentPromptSha256": "d8c66acf25d3f3dca2a8036cc1d4d7fc9934b6aebe3326e909d1fa66e0f5a40e",
-    "lastUpdatedUtc": "2026-10-09T05:24:53Z",
+    "currentPromptSha256": "194536a46efa56ef394e570c5185855511b746cd12fc95ee22f345eec0988180",
+    "lastUpdatedUtc": "2026-10-09T05:31:15Z",
     "currentPurpose": "Two-hour quiet callback fallback: Design main/product tests and independent early Conventional Luna case study"
   },
   "threads": [
@@ -476,7 +476,7 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:103",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:104",
       "lastObservedStatus": "active",
       "activeTurn": {
         "id": "01a11f01-0b15-7a32-a818-2185b97f07ef",
@@ -9284,10 +9284,10 @@
           "supersededUtc": "2026-10-08T23:58:37Z"
         }
       ],
-      "lastObservedUtc": "2026-10-09T05:25:42Z",
+      "lastObservedUtc": "2026-10-09T05:31:15Z",
       "futureAutomaticAuthorityFromOldGrants": 0,
       "lastObservedTurnId": "01a11f15-575f-7451-8735-7501ca5952a1",
-      "lastObservedPublicProgress": "Exact activation bindings confirmed; existing accountmaterial available without content/provider probe; ordinarysetup after05:25Z, first measurednativeentry waits for actual previous DesignGojob termination",
+      "lastObservedPublicProgress": "Ordinaryexistingaccountmaterial provisioned in freshhome, no secretoutput/Git; provider unprobed untilactual. Hostrelease delivered; actualstartreceipt pending, setup deadline05:40:37Z ownerreported.",
       "earlyConventionalExecutionAssignment": {
         "issuedUtc": "2026-10-09T04:42:43Z",
         "status": "SENT ONCE; tool accepted",
@@ -9350,7 +9350,7 @@
       },
       "earlyConventionalActivation": {
         "issuedUtc": "2026-10-09T05:13:26Z",
-        "status": "SENT ONCE, executable authorization active; actual start receipt pending",
+        "status": "ACTIVATED, normalaccountsetup reported ready and measuredhost released; actualstartreceipt pending",
         "receipt": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-root-activation-20261009.json",
         "receiptSha256": "871f27cef06cd9aa8bad5243a2db505b2205899f2eb59144340b24124262d1d4",
         "executionGrant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-enabled-execution-grant-20261009.json",
@@ -9368,6 +9368,12 @@
         "sentUtc": "2026-10-09T05:24:08Z",
         "toolAccepted": true,
         "prompt": "Konkrete Timingkorrektur zur bereits aktivierten Conventional-Zelle, keine Änderung an Quelle/Grant/Budget: Design meldet seinen vorher begonnenen vollständigen Go-Gateprozess unified-exec session33006 noch aktiv (Start ca05:12Z, eigener Log %TEMP%/markitect-native-workflow-20261009/ab306-full-go-test.log). Er könnte etwas über05:25Z laufen. Dein normales Accountsetup darf wie geplant ab05:25Z beginnen; den ersten tatsächlich gemessenen nativen Fallaufruf erst nach dessen tatsächlichem Ende ausführen, damit wir dieselbe Hostlast nicht unbemerkt als Methodenzeit messen. Setup-/externeHostwartezeit getrennt erfassen; der bestehende900sSetup- und09:12:43Z-Endrahmen bleibt, keine Verlängerung. Keine weiteren Designreadiness-Abhängigkeiten. Ich lasse Design genau das Ende seines eigenen Prozesses melden; keine globale Prozesssuche, keine erneute Nest-/Capabilityprüfung oder neue Freigabefrage. Wenn das konkrete Hostwarten deinen bestehenden Setuprahmen tatsächlich zu überschreiten droht, melde diesen engen Timingblocker statt den Messlauf überlappend zu starten.",
+        "actualQuotaAdded": 0
+      },
+      "measuredHostReleaseDispatch": {
+        "sentUtc": "2026-10-09T05:31:15Z",
+        "toolAccepted": true,
+        "prompt": "Messfenster JETZT frei: Design meldet seinen bestehenden Go-Gatejob session33006 abgeschlossen/geschlossen05:28:40Z,exit1. Root hat den exakten eigenen Log selbst gelesen/hashgebunden: terminalFAIL,projectrun891.875s,3fehlerhafteBriefingfixtures. Das ist kein grünesDesign-Gate; für Conventional irrelevant. Konkreter Hostfreigabereceipt C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/conventional-roombook-host-slot-release-20261009.json SHA2565f6bebe5fd05424226898937e937b2960ac4683b2bea5e58409bac989d23b9a6.\n\nSetze die bereits aktivierte Roombook/Conventional-Zelle SOFORT fort: gewöhnlichesAccountsetup abschließen, dann echter ersterNativeentry mit bestehendem enabledGrant/publicnest drive. Keine weitere Designwartezeit, kein neuerReview/Test/Canary/Capabilityblock und keine zusätzliche Freigabefrage. Original0Actuals bis echterStartreceipt, genau1reservierterStart, unveränderteLunaHigh/7200sZellwand/8Impl+1Assessment/Concurrency4Depth2/Setup900s/Ende09:12:43Z. ExterneHostwartezeit bis05:28:40 getrennt; nur tatsächlichgemesseneZellzeit beginnt bei echterInvocation. AlleSource/Input/Exe/Configbindungen beibehalten. Melde einmal echtenStartreceipt mitownPID/State/start/due, danach selbstständigImplementierung+unabhängigeBewertung bisAbschluss/konkretemBlocker. KeineACK.",
         "actualQuotaAdded": 0
       }
     },
@@ -10031,7 +10037,7 @@
       "lastObservedStatus": "active",
       "candidateSha": "11f080815722089d84869fef536b94cae9321e74",
       "candidateStatus": "Readiness open; new actual Manager invocation/child-report bridge in progress, prior reported ab306 pin not accepted as current studyfreeze",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:22",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:23",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac852a43fa08191a8d8e593c901cb96",
       "assignedMilestone": "Held bounded source7d/doc11f candidate and exact private recovery; no new source/runtime/study assignment",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
@@ -10286,7 +10292,7 @@
         "id": "01a11e93-9e21-70d3-a0ff-149803f831a8",
         "status": "inProgress"
       },
-      "lastObservedUtc": "2026-10-09T05:25:42Z",
+      "lastObservedUtc": "2026-10-09T05:31:15Z",
       "currentDirectWorkObservation": "Owner running later direct product cleanup/reconcile work with independent inventory findings; prior accepted source7d001579/doc11f0808 remain historical frozen readiness. No new research allocation from Root.",
       "assignmentHistory": [
         {
@@ -10346,6 +10352,19 @@
           "noGrantExtensionOrRefill": true,
           "actualStarted": 0,
           "functionalGap": "Manager native invocation and finaldirectchildreports missing from iterativeBrownfield"
+        },
+        "wholeSourceGateResult": {
+          "ownerReportedSourceSha": "ab306e4f71c59883d73b3e257c6e05033c3f55cc",
+          "completedUtc": "2026-10-09T05:28:40Z",
+          "ownerReportedExitCode": 1,
+          "rootLogTerminalVerified": true,
+          "failedTests": [
+            "TestDismissedAcceptedModelEventStillLoadsForManagerContext",
+            "TestReviewerContextCarriesOperationStrictnessAndAcceptedBriefing",
+            "TestDraftModelEditReviewerDoesNotLoadUnacceptedBriefingHistory"
+          ],
+          "nativeProviderStarts": 0,
+          "status": "FAIL retained, owner fixes concrete history/briefing integration using lightweightwork andhostedCI"
         }
       },
       "earlyConventionalInterface": {
@@ -10371,7 +10390,7 @@
       }
     }
   ],
-  "nextAction": "Scientist normal accountsetup after05:25Z then measuredConventional actual after existingDesignGo33006 termination; exact prior activation/budget/09:12:43Z end unchanged. Design sends actual exitreceipt and closes real Brownfieldruntimebridge on product; no Design readiness wait forConventional, no new heavy/nativemodeloverlap.",
+  "nextAction": "Notify Scientist hostrelease immediately, ordinarysetup then actualRoombook drive under existingactivatedgrant; no further Design/test/capabilitywait. Awaitactualstartreceipt and finalindependentassessment. Design concreteBrownfieldbridge/historyfixes plusoffhostCI/lightwork, no heavy/nativeoverlap.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -10610,12 +10629,12 @@
   },
   "fullSuiteSlot": {
     "assignedUtc": "2026-10-09T05:13:26Z",
-    "status": "TIMED DESIGN GATES THEN CONVENTIONAL MEASUREMENT",
+    "status": "CONVENTIONAL SETUP AND MEASUREMENT RELEASED",
     "designHeavyStartUtc": "2026-10-09T05:15:00Z",
     "designHeavyEndUtc": "2026-10-09T05:25:00Z",
     "scientistSetupNotBeforeUtc": "2026-10-09T05:25:00Z",
     "scientistMeasuredCellMaxWallSeconds": 7200,
-    "purpose": "Design requested concrete short local gate slot; native Design proofs/heavy host work deferred during measured Conventional execution; light development/docs and own tests continue",
+    "purpose": "One activated Conventional Roombook actual including independent finalassessment; prior DesignGo completedFAIL, transienthostwaitclosed; Designlightwork/offhostCI only",
     "noPrivateCaseResultsToDesign": true,
     "timingCorrection": {
       "recordedUtc": "2026-10-09T05:24:08Z",
@@ -10624,13 +10643,20 @@
       "existingGateStartedUtcApprox": "2026-10-09T05:12:00Z",
       "ownLog": "%TEMP%/markitect-native-workflow-20261009/ab306-full-go-test.log",
       "observedLog": "Successful package lines through projectonboarding; no terminalexit observed, no fullPASSclaim",
-      "status": "Existing finite gate may overrun05:25Z; no new heavyjobs",
+      "status": "CLOSED previousjob terminalFAIL; hostreleased",
       "scientistOrdinarySetupAllowedFromUtc": "2026-10-09T05:25:00Z",
       "measuredNativeStartRequires": "Actual existing gate termination receipt; no Design product readiness dependence",
       "externalHostWaitCountedSeparately": true,
       "noGrantExtensionOrRefill": true,
-      "actualStarted": 0
-    }
+      "actualStarted": 0,
+      "ownerReportedCompletedUtc": "2026-10-09T05:28:40Z",
+      "ownerReportedExitCode": 1,
+      "namedLogSha256": "e88757934093fb7e92ac0e91f5a8767edf8caeac23cb7315781c25dda9a1da3d",
+      "releaseReceipt": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-host-slot-release-20261009.json",
+      "releaseReceiptSha256": "5f6bebe5fd05424226898937e937b2960ac4683b2bea5e58409bac989d23b9a6"
+    },
+    "owner": "Scientist",
+    "releasedUtc": "2026-10-09T05:29:59Z"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -11068,7 +11094,7 @@
       "actualStarted": 0,
       "earlyConventionalExecution": {
         "authorizedUtc": "2026-10-09T04:42:43Z",
-        "status": "ACTIVATED AND DISPATCHED ONCE; setup notbefore05:25Z, actual start receipt pending",
+        "status": "ACTIVATED, normalaccountsetup reported ready and measuredhost released; actualstartreceipt pending",
         "grant": "docs/design/government/conventional-roombook-early-start-grant-20261009.json",
         "grantSha256": "3fc88587d81a7c1e995a578d6816dc6efe36f19ab4ba3d24e3363f437131e518",
         "absoluteNotAfterUtc": "2026-10-09T09:12:43Z",
@@ -11082,7 +11108,7 @@
         "mechanicalGate": "PASS exact final evidence6578c0c; old failed attempts retained",
         "activation": {
           "issuedUtc": "2026-10-09T05:13:26Z",
-          "status": "ACTIVATED, dispatch pending; actualStarted false",
+          "status": "ACTIVATED, normalaccountsetup reported ready and measuredhost released; actualstartreceipt pending",
           "receipt": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-root-activation-20261009.json",
           "receiptSha256": "871f27cef06cd9aa8bad5243a2db505b2205899f2eb59144340b24124262d1d4",
           "executionGrant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-enabled-execution-grant-20261009.json",
