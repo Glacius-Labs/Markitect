@@ -1,0 +1,93 @@
+{
+  "event": "oldschool-public-station-S3-returned-20261009",
+  "observedUtc": "2026-10-09T08:19:19.780538+00:00",
+  "reservation": 3,
+  "ownHandle": "/root/app_conventional_oldschool_roombook_primary",
+  "nativeLifecycle": "FINAL_ANSWER received; turn returned",
+  "completion": {
+    "station": "S3",
+    "status": "complete",
+    "completedWorkItemIds": [
+      "R05",
+      "R06",
+      "R07",
+      "R08",
+      "R09",
+      "R10",
+      "R11"
+    ],
+    "remainingIssues": []
+  },
+  "mainSha": "cf05cb152e4943207a70fa60cb0b25bb6f63e363",
+  "gitStatus": "M .study/station.json",
+  "actorReportedFeatureCommit": "4e1fcca7ec6134fb54984a0f382e155801d8cc41",
+  "actorReportedMergeCommit": "1073832a50d802cccbe5a4155c911897d90df4d1",
+  "actorReportedUnitTests": 24,
+  "actorReportedAcceptanceChecks": 12,
+  "actorReportedExitCodes": [
+    0,
+    0
+  ],
+  "actorReportedLogs": [
+    ".work/logs/post-merge-unit-s3.log",
+    ".work/logs/post-merge-acceptance-s3.log"
+  ],
+  "actorReportedTeamOverlap": "08:14:33-08:14:45 UTC; not independently inspected by owner",
+  "teamEvidencePath": "TEAMWORK.md",
+  "checksIndependentlyRerunByOwner": false,
+  "independentQualityCredit": false,
+  "ownJobs": "No pending own shell handle or detached job reported; turn end alone does not prove universal cancellation",
+  "currentStationIndexAtReceipt": 2,
+  "snapshotCountAtReceipt": 2,
+  "ownEntries": [
+    {
+      "reservation": 1,
+      "kind": "implementation",
+      "depth": 1,
+      "parent": null,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary"
+    },
+    {
+      "reservation": 2,
+      "kind": "implementation",
+      "depth": 1,
+      "parent": null,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary"
+    },
+    {
+      "reservation": 3,
+      "kind": "implementation",
+      "depth": 1,
+      "parent": null,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary"
+    },
+    {
+      "reservation": 4,
+      "kind": "helper",
+      "depth": 2,
+      "parent": 3,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary/query_group"
+    },
+    {
+      "reservation": 5,
+      "kind": "helper",
+      "depth": 2,
+      "parent": 3,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary/export_group"
+    },
+    {
+      "reservation": 6,
+      "kind": "helper",
+      "depth": 2,
+      "parent": 3,
+      "status": "returned",
+      "handle": "/root/app_conventional_oldschool_roombook_primary/summary_group"
+    }
+  ],
+  "activeOrUnknownOwnLedgerEntries": []
+}
