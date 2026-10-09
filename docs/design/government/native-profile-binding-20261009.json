@@ -1,0 +1,18 @@
+{
+  "schema": "markitect.overseer-native-profile-binding/v1",
+  "verifiedUtc": "2026-10-09T01:02:04Z",
+  "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
+  "host": "local",
+  "turnId": "01a11e1f-f6fa-7763-8e71-9af3187ef2f4",
+  "turnContextTimestamp": "2026-10-09T00:46:13.810Z",
+  "model": "gpt-6.1-sol",
+  "effort": "high",
+  "approvalPolicy": "never",
+  "sandboxType": "danger-full-access",
+  "evidenceKind": "Allowlisted fields from persisted own Scientist turn_context, not global TOML defaults",
+  "sourceMetadataLineSha256": "739ae34112a24dbea421e4498dad3bd1b8d165ab5f47683d88805bd665eb83e7",
+  "sharedServingModel": null,
+  "usage": null,
+  "limits": "Confirms configured historical parent turn, not backend serving identity/current future turns/child execution. Recheck latest own turn metadata before actual dispatch; inherit without overrides. Raw transcript/developer instructions/private study material are not part of this receipt or actor inputs.",
+  "officialContext": "https://learn.chatgpt.com/docs/config-file/config-reference"
+}
