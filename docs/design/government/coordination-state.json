@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T16:09:16Z",
+  "updatedUtc": "2026-10-09T16:23:58Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12097,7 +12097,7 @@
       "continuationAuthority": "Latest direct user request, docs/design/project-native-codex-work-20261009.md; previous work remains stopped"
     }
   ],
-  "nextAction": "Designer executes durable product-readiness P01-P10 queue, integrating true Git/tools/change operations/independent Managers/helpers/review, MCP and Codex App Server, clean src/docs, tests and regular Main merge after positive gates. Other owners, Case Studies and release publication remain stopped.",
+  "nextAction": "Designer finishes P01/P02 coherent source/contract/queue handoff; Root then assigns fresh integration and workspace/App Server/MCP implementation chats on a verified common base. R01-R03 separate read-only research is active and not a Main gate. Cases/releases remain stopped; no additional product acceptance quota.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -15625,7 +15625,7 @@
       "evidence": "C:/Users/Consiliari/AppData/Local/Temp/codex-native-helper-check-20261009/summary.json",
       "limitation": "CLI configuration proof only; JSON stream omitted spawn event; own rollout contains actual spawn call and return."
     },
-    "ownerCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:45",
+    "ownerCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:46",
     "compatibilityRetentionRequired": false,
     "productProofClosure": {
       "status": "CLOSED_PRE_PROVIDER_OWNER_REPORTED",
@@ -15823,6 +15823,62 @@
       "sourceChecksAndDeveloperSubagents": "Separately necessary ordinary implementation/review work under explicit user mandate, not product or study evidence"
     },
     "notification": "Material completion/blocker/decision callback once to Root/local; continue eligible work without ACK loops/repeated human permission. No interrupt or reset of active WIP.",
-    "firstStep": "P01 closes existing compatibility/native WIP; no concurrent Root product edits."
+    "firstStep": "P01 closes existing compatibility/native WIP; no concurrent Root product edits.",
+    "latestOwnershipSteering": "User wants fresh chats rather than multi-day Designer owning every topic. Designer default limited to P01/P02 handoff; fresh integration/implementation owners for P03-P10 after verified base.",
+    "latestOwnershipDocument": "docs/design/fresh-product-chats-20261009.md"
+  },
+  "freshProductChatsDecision": {
+    "recordedUtc": "2026-10-09T16:23:58Z",
+    "authority": "Direct latest user: add three research topics and use separate fresh chats/parallel work to protect long-lived Designer and reach stable product.",
+    "sourcePin": "18eabf96ece65825d8cd9a72c7c03692caf59157",
+    "sourceStatus": "Actual committed Designer source, later WIP excluded; not claimed accepted Main baseline.",
+    "backlog": "docs/work-items/product-readiness/follow-up-backlog.yaml",
+    "handoff": "docs/work-items/product-readiness/fresh-chat-handoff.md",
+    "newFileHashes": {
+      "follow-up-backlog.yaml": "3743db2d86e26ee2e440c43a4753ab31a1a927b8dcd78bdea77694c10740361f",
+      "R01-jev.md": "47dc2c6a39e3c3691bcc53661c48b39382a16c3b5339fcdfd55cdeadeee442a5",
+      "R02-knowledge-graph.md": "8f6468e95773676d20a66e027fa7c1f27876a1bbacbd433bc6bdc712fc575408",
+      "R03-agent-guidance.md": "4d7433ef4bba15ea27a14c6b4ae93358600cd6d122018755c811fb9beb737300",
+      "fresh-chat-handoff.md": "5b368483608f896b24a5cb5849c81e3961d5bf17fb3dc74cc39f21020bac8b55"
+    },
+    "mainGateResearchDependencies": [],
+    "researchImplementationAuthorized": false,
+    "researchSourceBuildsModelsInstallationsStudiesAuthorized": false,
+    "designerScope": "P01 completion and concrete P02 contracts/clean pushed handoff, no reset; avoid long chat implementing every P03-P10 or research topic.",
+    "freshImplementationChats": "Not yet created: await verified coherent P02 source/contracts; then fresh integration owner plus bounded workspace/App Server/MCP workers in distinct feature worktrees.",
+    "nativeAcceptanceQuotaChange": 0,
+    "threadDispatches": [
+      {
+        "item": "R01",
+        "title": "Markitect Jev evaluieren",
+        "threadId": "01a12178-516b-78c0-8ebb-47da32643984",
+        "hostId": "local",
+        "cursor": "b68b5871-0195-4a64-887c-27d585284ad3:1",
+        "observedStatus": "active",
+        "scope": "read-only primary-source capability/fit/license/maintenance assessment, no product changes"
+      },
+      {
+        "item": "R02",
+        "title": "Markitect Knowledge Graph bewerten",
+        "threadId": "01a12178-5797-7c41-8acc-8e8231084c79",
+        "hostId": "local",
+        "cursor": "67fe9212-ff51-49b6-b0fb-948f5db1b4db:1",
+        "observedStatus": "active",
+        "scope": "read-only actual canonical graph/traceability gaps/useful minimum target"
+      },
+      {
+        "item": "R03",
+        "title": "Markitect Rules Workflows und Agents",
+        "threadId": "01a12178-64de-7d41-aa82-11b8fb202786",
+        "hostId": "local",
+        "cursor": "bfe53924-c588-4a05-81d4-09708059f9d5:1",
+        "observedStatus": "active",
+        "scope": "read-only actual provider-native capability matrix/minimal asset ownership and install strategy"
+      }
+    ],
+    "creationMode": "User-owned local project chats, no model override; no shared product writes.",
+    "verification": "New follow-up YAML parsed, three refs checked; one compact wait confirms all three started. Research observations not final findings.",
+    "designerMessage": "Sent once: finish current P01/P02 and push queues/handoff, optional themes in fresh research chats, no extra Main gate or study.",
+    "notification": "Each fresh chat explicitly authorized to send one material completion/blocker to Root/local; no ACK or routine polling."
   }
 }
