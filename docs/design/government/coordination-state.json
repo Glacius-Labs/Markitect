@@ -16992,8 +16992,8 @@
     "priorEvidence": "All failed pilots and receipts preserved; development tests are not study or method superiority evidence",
     "grantPath": "docs/design/government/conventional-variant-adapter-delivery-20261009.json",
     "grantSha256": "e6c2b11ce4758d9c315d6babb01612f43ebef23e492da018424cb92732f08d73",
-    "status": "FRESH_READINGLOG_TRAJECTORY_STARTED_FIRST_NATIVE_TURN_OBSERVED",
-    "actualStartsObserved": 1,
+    "status": "ACTUAL_ALLOCATION_EXHAUSTED_CONTROLLER_VIOLATION_OWNED_ROOOMBOOK_UNCERTAIN",
+    "actualStartsObserved": 3,
     "dispatch": "SENT_ONCE_TO_SCIENTIST_LOCAL",
     "latestPreparationCallback": {
       "observedUtc": "2026-10-09T19:50:05Z",
@@ -17038,6 +17038,34 @@
       "costs": "UNKNOWN",
       "newOrderOrRefill": false,
       "mainDependency": false
+    },
+    "trajectorySlotsConsumed": 2,
+    "runtimeStartupChecksConsumed": 6,
+    "actualStartQuotaRemaining": 0,
+    "closureAndRepair": {
+      "observedUtc": "2026-10-09T19:55:06Z",
+      "rootVerified": "Own status files: ReadinglogS1completed/S2cancelled; Roombook9fd3a351uncertain with native session01a1223b-1aa5 and no turnID. No all-process closure assumed",
+      "ownerReportedFunctionalResult": "MXC shell/code/test works; B01 code implemented with workspace public checks positive but branch/ref denied at protected real .git and main unchanged",
+      "causeBoundary": "Official .git workspace-write protection directly verified; separate from prior legacy Windows ACL startup failure",
+      "controllerFailure": "Native turncompleted advanced S2 before required Git merge; stopStudy did not cover runtime_failed/cancelled and unintended Roombook started",
+      "violation": "Second trajectory condition unmet; original cancelled/running/error receipts and unmerged candidate preserved, no trial-success credit",
+      "ownedRuns": [
+        "2d58bb61-ad72-4e61-98ec-a8a711f58dfd",
+        "b4c7e299-8f20-424f-a5dc-58632da8e207",
+        "9fd3a351-0c58-4436-ba39-9e91f3dd0613"
+      ],
+      "execution": "No further model/trajectory/startup probe under exhausted order; confirm owned last process/turn only, never replay or touch foreign processes",
+      "sourceRepairAuthorized": "Provider-free controller terminal/merge transition guards, genuine repo Git readiness, small typed child-local on-request per-command broker for human-authorized owned-repo branch/add/commit/merge with identity/path validation; no broad/session/security/global changes",
+      "reviewAndTests": "Real request schema positive/negative provider-free fixtures and clean private source/test/review/closure handoff next",
+      "independentFinal": "Readonly, no write approvals; no semantic Scientist merge/coaching",
+      "futureActuals": "Need separate concrete Root order on corrected source; not automatically refilled",
+      "scientistInstructionSentOnce": true,
+      "publicRuntimeBoundaryForwardedToIntegrationOnce": true,
+      "mainGateExpanded": false,
+      "officialSources": [
+        "https://learn.chatgpt.com/docs/agent-approvals-security",
+        "https://learn.chatgpt.com/docs/app-server"
+      ]
     }
   }
 }
