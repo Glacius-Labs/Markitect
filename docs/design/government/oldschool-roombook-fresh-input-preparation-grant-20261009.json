@@ -1,0 +1,19 @@
+{
+  "grantId": "oldschool-roombook-fresh-input-preparation-20261009",
+  "issuedUtc": "2026-10-09T07:46:17Z",
+  "notAfterUtc": "2026-10-09T07:56:17Z",
+  "maxPreparationWallSeconds": 600,
+  "ownerThread": "01a1169c-3df6-7571-997d-48ab57365875",
+  "acceptedPublicSource": "2037bfa65e7e05ee004921d282893d4a6c8e899a",
+  "scope": "Only fresh same original nine-input Roombook Conventional checkout/state and initially empty App ledger with existing preparation functions, plus exact public Oldschool input/owner/prospective-common-profile envelope. No new source/platform or semantic repair.",
+  "repo": "C:/Users/Consiliari/Documents/Luna-Work-Item-Nests-20261009/cells/roombook-conventional-oldschool-app",
+  "stateDir": "C:/Users/Consiliari/Documents/Luna-Work-Item-Nests-20261009/state/roombook-conventional-oldschool-app",
+  "originalSeedCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+  "originalPreparedTree": "8cea62c20a64d4571017818c7e73855b1ead5676",
+  "maxNewModelActorsHelpersAssessorsProvidersActuals": 0,
+  "maxTestsBuildsInstallsCodexCliProbesOrNewReviewActors": 0,
+  "gitAndStaticBindingsAllowed": true,
+  "noOldCandidateStateHomeAccountOrEvidenceReuse": true,
+  "noGeneralCapabilityPhase": true,
+  "noNativeCallsBeforeRootActivation": true
+}

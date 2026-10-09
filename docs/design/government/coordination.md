@@ -1408,3 +1408,22 @@ Measured host is released for Design existing prepared job2 under unchanged orig
 Existing Design job2 host release and exact zero-actual public context correction dispatched once07:18:18Z to respective owners, tools accepted. Oldschool latest direct role remains wait-for-Overseer/Conventional; supplied its actual public contractpaths, no private case results. Automation exact current prompt/ACTIVE/2h/Root target checked. No fifth trial or further helper grant.
 
 Design productjob2 genuinely started07:19:45.5633537Z/session93725/PID50664; Root read exactly this named process start07:19:45.5697807Z, no global inventory. Active outer end07:39:45Z, supervisor margin plus<=15s cleanup, cumulative2outer/0inner at start and prior174.607623s retained. Root exact hostedRun37897059091/head7915bd inprogress checked; native outcome/remaining Windows gates pending. Scientist/Oldschool zero-actual contract correction proceeds light/offline. Automation current source/timing/ACTIVE/2h verified.
+
+
+### 2026-10-09T07:46:17Z - accepted narrow public handoff and one fifth Conventional reservation
+
+Root accepted clean exact PRIVATE2037bfa,8changed Working/RawGit files and5payloadhashes, only public context/manual-owner documents and additive evidence. Oldschool contribution hash8a9db19 verified/read and same bytes archived; no runtime/trial/test/reviewer credit. Context correction source completed before original07:31:47Z, no old deadline extension.
+
+Design job2 terminal07:25:06Z,320.8679863s/1outer/0inner, cumulative2jobs/2outer/0inner/495.4756093s,1originaljob remains. Owner reports .git/index.lock CLI permission rejection and direct-code bypass of Run/Review/Apply; no AcceptedModel/Apply/autonomous readiness. Root specificPID50664 absent checked07:31:46Z. No method victory from this execution failure and no fake Git helper or policy bypass.
+
+Existing user Conventional early-start remains. Exactly one fifth conditional App allocation inside max6 is now separately reserved; four old starts retained/closed, sixth unallocated for matched Design. Fresh600s original-nine-input checkout/state/static public envelope preparation,0models/actors/tests/builds/CLIprobes/reviewers; no new capability framework. Separate fresh immutable actual end 2026-10-09T10:11:17Z applies only to the new fifth reservation, not old grants. Oldschool actual execution awaits exact fresh binding/Root enabled grant/full7200s, not Designreadiness. Original seeds/tree/requirements/rules/rubric/resources unchanged.
+
+
+### 2026-10-09T07:56:48Z - fifth Conventional fresh exact native activation
+
+Scientist preparation2eee96a clean/exact PRIVATE verified:20 additive Working/RawGit bindings,19 payloadhashes, original nine inputs/tree8cea62c2/seed71acaae, fresh prepared88d7233, S1 and empty ledger. Existing public source2037bfa unchanged. No tests, actors, builds, diagnostics or new reviewer. Actual UTF8 native message/fixed continuation are correct; metadata source-constant mojibake is advisory and disclosed, no source rewrite.
+
+Root immutable receipt and enabled fifth grant bind public envelope/payload, exact state repo string/preparedCommit/LunaHigh/resources/end10:11:17Z; full7200s remains. Oldschool execution and Scientist fixed measurement/neutral final, no Design readiness dependency. Four old starts stay closed; fifth invocation still pending, sixth unallocated. Public fall-independent normal App proof contract sent to Design, no additional product job/quote.
+
+
+Fifth enabled actual dispatched once directly to Oldschool, fixed measurement to Scientist; captured after send 2026-10-09 07:58:21 UTC. Actual pending, no manufactured start/quality. Public fall-independent DesignApp proof contract sent once, no extra product quota. Automation ACTIVE/2h exact TOMLverified with accepted fresh2eee96a/Rootenabled; callbacks/events remain primary. PublicDesignremote f20202d and main5be48ce exact checked, CI37901398364 LinuxPASS/Windowsinprogress, no overallPASS/mainpromotion.
