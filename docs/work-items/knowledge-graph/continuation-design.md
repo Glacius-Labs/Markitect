@@ -1,0 +1,27 @@
+# Independent KG continuation
+
+This is the canonical local implementation contract for the user's newly authorized independent KG variant, continuing from `0a56d1cea65b53aec0152f2de30f8d1fa28600fd`. It supersedes the old Integration-only restrictions in the historical finite-slice handoff. Work stays on this branch/worktree; it does not write to Product Integration or enter P01–P10/PR89. Root will provide the actual accepted Main SHA; this branch then merges that SHA, resolves conflicts and reruns relevant gates before delivery. No KG-to-Main merge, release, native proof or study is implied.
+
+## Intent
+
+YAML remains the sole canonical project model. The graph is a derived, rebuildable read-only view of declarations, explicit history claims and selected authoritative records. It preserves exact Core identity, source/provenance, existing Context privacy and conservative Impact. It does not infer business meaning from files or prose, replace execution DAG semantics, fabricate evidence or authenticate acceptance.
+
+KG04 projects Decisions into Report/Context/Impact and adds only demonstrated continuity vocabulary. A first-class `IdentityChange` declares a former full Statement identity (structured historical identity, not a live unresolved Core reference), operation renamed/replaced/retired, reason and recorded Manager actor; renamed/replaced have an explicit current Statement subject, retired has none. Core continues to reject unresolved live references. Historical existence and conceptual equivalence are separate from this caller's declaration. Decision supersession references retained Decisions explicitly. All new relationships preserve source provenance; private foreign subjects remain protected and actor metadata is not consent.
+
+KG05-S maps existing model/report facts in Host to the pure index. Queries select either a named Manager view or an explicitly requested project view. Manager selection starts from existing Context; own data, direct public contracts and allowed child metadata are preserved. Core reference literals are stripped; node allowlists alone are insufficient, so fields and edges are selected separately. Foreign private nodes, relations, record bodies, source paths, counts and error identifiers must not appear. Unknown input coverage remains explicit. Query results bind revision/provisional status, model/snapshot/project/facts, graph/query version and scope.
+
+KG05-E reads existing validated record loaders only for explicit run/exploration/history selections. Current, stale, historical, partial and unknown are compared against actual model/source bindings, not timestamps or PASS text alone. Missing chains remain unknown. Record digests and source bytes are preserved; graph nodes are not a second ledger. Manager views expose only the owned scoped record facts and safe shared binding metadata. No raw prompts/review bodies or foreign candidate paths are exposed. Querying old model data with live operational records identifies the separate captured record source and historical/stale binding; it does not silently treat a live ledger as part of the Git snapshot.
+
+KG06 exposes a single shared read-only operation for graph, relations, explain, trace, history and coverage through both CLI and MCP. Transport validates explicit scope and finite query limits. Use simple ordinary commands, machine bindings and witness explanations. New services do not start providers or mutate ledgers. Canonical contributor guidance documents when to ask ownership/impact/evidence questions without introducing another workflow engine.
+
+KG07 covers all twelve questions with concrete provider-free fixtures and a normal CLI/MCP journey, including missing/partial records, removed edges, explicit rename, private scope, contradictory supplied claims and stale bindings. Real product proof remains separately proposed if needed. New schemas/views/artifact ownership are regenerated or reconciled from their canonical owners. The preserved failed `08b273f6` Verify remains immutable. Necessary test fixture/guidance/timeout repairs are made in this variant and get fresh evidence; no prior failure becomes PASS retroactively.
+
+## Ownership and parallel seams
+
+- Model subagent owns only `internal/modules/projectmodel/**`; returns exact additive DTO/schema changes and tests.
+- Scope/service subagent owns only new `internal/host/projectgraph/**`; composes Core, ProjectModel and pure projectknowledge. It must not import the evidence package until the explicit seam is reviewed.
+- Evidence subagent owns only new `internal/host/knowledgeevidence/**`; returns neutral `projectknowledge.ProjectFacts` plus capture/binding/completeness metadata through typed input; receives explicit scope and allowed definition/file IDs.
+- Parent owns projectapp composition, CLI wiring, schema/views, artifact declarations, canonical documentation/guidance, backlog and coordination. A transport subagent may receive a disjoint MCP package after the shared seam is fixed.
+- Fresh independent Reader reviews features and the integrated candidate. Meaningful findings are repaired and reread finitely.
+
+No dynamic registry, graph database or general reasoning framework is needed. RDF/SPARQL fit remains a separate bounded question. Development time allowances are focused 10, packages 30, full suite 60 and outer at least 90 minutes; increase for concrete justified workloads. Do not abort/restart healthy work merely to apply a new limit. A failed check is retained and diagnosed before retry.
