@@ -569,6 +569,8 @@ class CodexRunnerTests(unittest.TestCase):
             {"approval_policy": "never"},
             {"shell_environment_policy": {"inherit": "all"}},
             {"features.plugins": True},
+            {"ignore_rules": True},
+            {"ignore_user_config": True},
             {"model": "other-model"},
             {"model_reasoning_effort": "unbounded"},
             {"model_reasoning_effort": ["high"]},
@@ -1234,24 +1236,26 @@ class CodexRunnerTests(unittest.TestCase):
             cwd = Path(directory)
             log_path = cwd / "events.jsonl"
             args = argparse.Namespace(
-                codex_executable="node.exe",
-                codex_script="codex.js",
-                codex_version="0.130.0",
-                model="gpt-5.5",
+                codex_executable="codex.exe",
+                codex_script=None,
+                codex_version="0.162.0-alpha.2",
+                model="gpt-6-luna",
                 timeout_seconds=10,
             )
-            with patch.object(runner, "resolve_codex", return_value=["node.exe", "codex.js"]), \
+            with patch.object(runner, "resolve_codex", return_value=["codex.exe"]), \
                  patch.object(runner, "check_version"), \
                  patch.object(runner.subprocess, "Popen", side_effect=FakeProcess):
                 response = runner.launch_codex(value, args, {"model_reasoning_effort":"high"}, cwd, log_path)
             self.assertEqual(response["reportJson"], {"status": "complete", "summary": "done"})
             argv = captured["argv"]
-            self.assertIn("--ignore-user-config", argv)
-            self.assertIn("--ignore-rules", argv)
+            self.assertEqual(argv[:2], ["codex.exe", "exec"])
+            self.assertNotIn("--ignore-user-config", argv)
+            self.assertNotIn("--ignore-rules", argv)
+            self.assertEqual(argv[argv.index("--model") + 1], "gpt-6-luna")
+            self.assertEqual(argv[argv.index("--config") + 1], 'model_reasoning_effort="high"')
             self.assertIn("--ephemeral", argv)
             self.assertIn("--json", argv)
-            self.assertIn("--sandbox", argv)
-            self.assertIn("read-only", argv)
+            self.assertEqual(argv[argv.index("--sandbox") + 1], "read-only")
             self.assertIn("--disable", argv)
             disabled_features = [argv[index + 1] for index, value in enumerate(argv[:-1]) if value == "--disable"]
             self.assertEqual(disabled_features, ["plugins", "shell_tool", "unified_exec", "multi_agent"])

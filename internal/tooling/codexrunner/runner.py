@@ -984,11 +984,9 @@ def launch_codex(
     argv = [
         *prefix,
         "exec",
-        "--ignore-user-config",
         "--model", args.model,
         *config_args,
         "--sandbox", "read-only",
-        "--ignore-rules",
         "--ephemeral",
         "--json",
         "--skip-git-repo-check",
