@@ -20,6 +20,10 @@ The seed entries below come from the user's product statement in the original Ma
 
 The conversation's shared source summary also appears in the Ideas chat setup prompt. It is a summary, not a substitute for the user's wording above. No idea in this index is a product decision, accepted requirement, demonstrated benefit or roadmap commitment.
 
+### Incoming Historian findings
+
+Historian is an authorized source for relevant findings from Markitect history and subsequent work. Its local Codex thread is `01a12232-2c5e-7ea3-adb5-12eac55d6847` (Luna/XHigh); its daily continuation is scheduled for 09:00 Europe/Berlin. Record each substantive finding here with the Historian fund ID and the underlying source reference, while keeping it marked as a finding rather than a product decision. The setup notice arrived from the original product discussion chat `01a121f1-b948-7050-ae5d-9921b99db9c0` on 2026-10-09; it contained no finding ID or substantive new idea, so no idea entry was created from it.
+
 ### IDEA-20261009-001 — One canonical model as the maintained source of intent
 
 - **Source wording (user):** “Markitect versucht das anzugehen durch ein kanonisches Modell, eine Wahrheit, ein Weltbild. Dieses gilt und die Realität bzw das Projekt bzw das Repository soll es widerspiegeln.”
