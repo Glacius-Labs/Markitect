@@ -46,4 +46,6 @@ Alle sieben wurden explizit mit `gpt-6-sol`, `reasoning_effort: high` und `fork_
 
 ## Evidenzsprache
 
+Der anschließende direkte Nutzerauftrag verlangt die vollständige Konzeptausarbeitung und spätere Umsetzungsplanung. Diese nächste Entwurfsfassung besitzt der eigene Bereich [Government-Konzept](../../design/government-concept/README.md). Die Evaluation hier bleibt ihre datierte Quellen- und Begründungsbasis; der neue Plan startet weder Implementation noch Versuche.
+
 **Nutzeridee** bezeichnet direkte Gedanken mit offenem Status. **Befund** bezeichnet gelesenen Code oder einen dokumentierten Vertrag am festen SHA; beides wird unterschieden. **Vorschlag/Bewertung** ist unsere Schlussfolgerung. **Hypothese** bezeichnet erwartete Wirkung, insbesondere Entscheidungsqualität, weniger Aufsicht und Kosten. Es wurden keine Produktimplementierung, Tests, Case Studies, realen Government-/Markitect-Produktläufe, Veröffentlichung oder Eingriffe in die laufende Integration gestartet.
