@@ -1,0 +1,93 @@
+{
+  "issuedUtc": "2026-10-09T06:51:42Z",
+  "owner": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "decision": "ACTIVATE one fourth fresh App Conventional Roombook cell, no Design readiness dependence",
+  "acceptedSourceSha": "eace743e2bb70caf89305b597424d3b124e10178",
+  "sourceCleanExactPrivateRemoteVerified": true,
+  "sourceCommittedUtc": "2026-10-09T08:46:35+02:00",
+  "preparationCompletedBeforeOriginalDeadline": true,
+  "changedWorkingRawGitFilesVerified": 17,
+  "payloadHashesVerified": 13,
+  "nineInputBytesAndRawGitTreeUnchanged": true,
+  "bindingManifestSha256": "2ce18a36b24e52123618fb303018d1950ab43df9679bb81f1390856ae4eda451",
+  "proposalSha256": "5ffd93a7ed84d6ade4d1c12dc0739fa863cbee2cde0c4751ff52ab700538184c",
+  "reservationSha256": "f8624ce3384b211586b71036f47ca9bf7bfa399a0011e618ee3b264187fc4643",
+  "exactNativeCallSha256": "cc6195b9c5a2a65030581c761eebdcd58f4659be6e0599542d3c17c313cf49e6",
+  "sourceHashes": {
+    "public/app_ledger.py": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20",
+    "public/app-entry.md": "168c974a9ece21834117dabc53dcff7a2c9ef868cf58b5b555a0ccda0a584859",
+    "tests/test_app_ledger.py": "b0594fcea5d32fc62d8f793e8259c9222c58cc759d90c966b242d33fc4901fee"
+  },
+  "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-app-native",
+  "stateDir": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-app-native",
+  "preparedCommit": "ce2a0f4421d2615f90d5bfe8d43cebb74a8e2a56",
+  "preparedTree": "8cea62c20a64d4571017818c7e73855b1ead5676",
+  "seedCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+  "inputHashes": {
+    ".codex/config.toml": {
+      "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+      "bytes": 281
+    },
+    ".gitignore": {
+      "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+      "bytes": 36
+    },
+    ".study/station.json": {
+      "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+      "bytes": 70
+    },
+    "AGENTS.md": {
+      "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+      "bytes": 5411
+    },
+    "BACKLOG.md": {
+      "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+      "bytes": 2566
+    },
+    "checks/acceptance.py": {
+      "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+      "bytes": 7554
+    },
+    "QUALITY.md": {
+      "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+      "bytes": 2687
+    },
+    "README.md": {
+      "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+      "bytes": 2276
+    },
+    "STATIONS.json": {
+      "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+      "bytes": 595
+    }
+  },
+  "mechanicalChecks": {
+    "tests": 4,
+    "status": "PASS",
+    "processWallSeconds": 0.3923879,
+    "rootReruns": 0,
+    "newReviewActors": 0
+  },
+  "hostRelease": {
+    "ownerReportedEndedUtc": "2026-10-09T06:35:40.1195Z",
+    "specificPid": 25732,
+    "rootSpecificPidAbsentCheckedUtc": "2026-10-09T06:45:15Z",
+    "heavyAndNativeDesignWorkDeferredDuringMeasurement": true
+  },
+  "profile": {
+    "tool": "collaboration.spawn_agent",
+    "model": "gpt-6-luna",
+    "reasoning": "high",
+    "freshForkTurns": "none",
+    "cwdArgument": false
+  },
+  "actualInheritedInstructionsCwdToolsExposure": "Not yet observed; fork none is not system/developer/workspace sanitization or OS isolation",
+  "resourceEnforcement": "Cooperative ledger, no proven platform hard enforcement",
+  "globalActualStartsUsedBeforeActivation": 3,
+  "globalActualStartsAllocated": 4,
+  "globalMaxActualStarts": 6,
+  "tokensServingCost": "unknown; no functional gate",
+  "actualStartObserved": false,
+  "noFurtherCapabilityTestsReviewersOrCanaries": true,
+  "noAutomaticRetryRefillOrDeadlineExtension": true
+}

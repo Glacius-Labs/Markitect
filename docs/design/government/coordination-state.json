@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T06:42:19Z",
+  "updatedUtc": "2026-10-09T06:55:05Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -29,7 +29,7 @@
     "pauseReason": "Explicit finite-block terminal instruction: final evidence synthesis verified, no evidenced equal fulltool/realusage admission. Stop researchloop with honest incomplete comparison, no automatic capability/prep/refill. Separate younger direct Design productwork unaffected.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
     "resumedUtc": "2026-10-09T04:10:08Z",
-    "promptSha256": "bff68eda12cd4d58f111bded1d249f0f1c986c028bf86ccc54ef0c5df4ee0c18",
+    "promptSha256": "069722bf79f9dbe0c4ca5526cbd5f0ce25417287684c6e6cb55d9783a0497d12",
     "name": "Markitect: Produktabschluss und Luna-Case-Studies",
     "currentGrantContext": "Human-selected App/LunaHigh preparation ends06:47:20Z,0Actuals. Fourth same-input start conditional under09:12:43Z. Prior3CLIstarts terminal. Existing Design proof hardend06:52:40Z; no general Design wait.",
     "exactSavedTomlVerified": true,
@@ -39,7 +39,9 @@
     "earlyConventionalMandateUpdatedUtc": "2026-10-09T04:45:30Z",
     "currentPromptSha256": "32591dfcfb505db5542a39758c13695fa08b325afd6ca7a1558dd3f93bd0609f",
     "lastUpdatedUtc": "2026-10-09T06:40:19Z",
-    "currentPurpose": "Two-hour quiet callback fallback: Design main/product tests and independent early Conventional Luna case study"
+    "currentPurpose": "Two-hour quiet callback fallback: Design main/product tests and independent early Conventional Luna case study",
+    "verifiedUtc": "2026-10-09T06:54:19Z",
+    "rrule": "FREQ=HOURLY;INTERVAL=2"
   },
   "threads": [
     {
@@ -476,7 +478,7 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:117",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:120",
       "lastObservedStatus": "idle",
       "activeTurn": {
         "id": "01a11f01-0b15-7a32-a818-2185b97f07ef",
@@ -485,7 +487,7 @@
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac854c570f48191a595d544b5898fd6",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "conventional-roombook-current-native-trial-20261009",
-      "latestProgress": "v4pairterminalprivatefa20ff3 accepted; freshv5profilefreezeactive02:56:13Z, no CLI/provider/productActor run, exactabsoluteend03:23:42Z.",
+      "latestProgress": "Clean private App preparation eace743 accepted; exact fourth enabled grant sent once06:52:12Z, first before-call reservation observed06:53:40Z, no actual ownhandle receipt yet",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "429c52d8a37fa60ca4393a3501a495128b4d2e88",
@@ -9503,6 +9505,28 @@
         "hardEndUtc": "2026-10-09T06:52:40Z",
         "condition": "Exact existing job end only; no general Design readiness dependency",
         "noNewQuota": true
+      },
+      "appNativeActivation": {
+        "issuedUtc": "2026-10-09T06:51:42Z",
+        "status": "ENABLED, actualstart not yet observed",
+        "sourceSha": "eace743e2bb70caf89305b597424d3b124e10178",
+        "receipt": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-app-native-root-activation-20261009.json",
+        "receiptSha256": "7a9de488e85d6caf09167978937552988ac58a8ebeb4e3cb1b9c445d6c353d80",
+        "executionGrant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-app-native-enabled-grant-20261009.json",
+        "executionGrantSha256": "7bf98f040105484ae3db85fd2a8cef7f013d856a66d55d491045d9af367e68c7",
+        "absoluteNotAfterUtc": "2026-10-09T09:12:43Z",
+        "actualAllocated": 1,
+        "actualStarted": 0,
+        "verification": {
+          "gitFiles": 17,
+          "payloadHashes": 13,
+          "inputFiles": 9,
+          "mechanicalTestsPass": 4,
+          "rootTestReruns": 0
+        },
+        "sentUtc": "2026-10-09T06:52:12Z",
+        "toolAccepted": true,
+        "sentPrompt": "Die konkrete App-Vorbereitung ist angenommen und die vierte frische Conventional/Roombook-Zelle ist jetzt AKTIVIERT. Root hat den tatsächlich finalen sauberen privaten SHA eace743e2bb70caf89305b597424d3b124e10178 samt exakter RemoteRef geprüft: 17 additive Working/RawGit-Dateibindungen, 13 Payloadhashes, neun unveränderte Ausgangsdateien/tree und vier mechanische PASS-Tests. Der kleine Vorbereitungssource wurde vor 06:47:20Z abgeschlossen; keine Fristverlängerung. Keine weitere Capability-/Reviewer-/Canary-/Testphase und kein Design-Warten.\n\nLies und binde genau C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/conventional-roombook-app-native-enabled-grant-20261009.json, SHA256 7bf98f040105484ae3db85fd2a8cef7f013d856a66d55d491045d9af367e68c7. Rootaktivierung: conventional-roombook-app-native-root-activation-20261009.json, SHA256 7a9de488e85d6caf09167978937552988ac58a8ebeb4e3cb1b9c445d6c353d80. Exakter sauberer App-Projektstand ce2a0f4421d2615f90d5bfe8d43cebb74a8e2a56/tree8cea62c2, eigene Zelle Documents/Luna-Work-Item-Nests-20261009/cells/roombook-conventional-app-native, eigener State daneben. Native direkte collaboration.spawn_agent, fork_turns=none, model=gpt-6-luna, reasoning_effort=high, kein erfundenes cwd-Argument; eigener vorgebundener kurzer Backlogauftrag plus öffentliche eigene Ressourcen/Projektbindungen. Jetzt einmal reservieren und unmittelbar real starten. Vor dem ersten Start vollständige7200s Rest gegen unverändertes absolutes Ende09:12:43Z prüfen; Ressourcen bleiben7200cell/5400impl/1200final/600capture,8outer/2proStation/1Final/72Gesamtstarts/4concurrent/depth2, inklusive Helfer, echte inner roles und Assessors. Drei terminale alte Vollstarts zählen weiter; kein Refill/Transportretry.\n\nDesignjob1 ist tatsächlich beendet06:35:40.1195Z, genau PID25732 Root-abwesend geprüft. Design hat Slot2 ausdrücklich noch nicht gestartet und verschiebt neue schwere/native Hostarbeit bis zum Ende der Messzelle; leichte Produktarbeit/gehosteteCI bleiben erlaubt. Kein weiteres Host-/Designreadiness-Warten. Halte tatsächlichen Start/Tool-/Kontext/Ownhandle-Receipt fest, melde echten ersten Actorstart einmal; keine reine ACK. Normale App-Policies bleiben, private tatsächliche Fremdexposition ehrlich terminal, keine system/developer/context-Sanitization behaupten. Missing token/serving/cost ist unknown, kein funktionaler Startblocker. Danach selbstständig alle vorgesehenen Stationen/feste Fortsetzung/Ownhandle-Zeitstop, unverändertes Freeze und einen frischen unabhängigen finalen LunaHigh-Assessment abarbeiten, ohne semantisches Coaching oder Produktreparatur. Bei materiellem Blocker/Abschluss einmal melden und private Belege kohärent sichern."
       }
     },
     {
@@ -10165,13 +10189,13 @@
       "lastObservedStatus": "active",
       "candidateSha": "11f080815722089d84869fef536b94cae9321e74",
       "candidateStatus": "Readiness open; new actual Manager invocation/child-report bridge in progress, prior reported ab306 pin not accepted as current studyfreeze",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:26",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:28",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac852a43fa08191a8d8e593c901cb96",
       "assignedMilestone": "Held bounded source7d/doc11f candidate and exact private recovery; no new source/runtime/study assignment",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
       "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
       "acceptance": "Qualified bounded testable delivery candidate. No full workflow readiness, matched study admission, semantic generality, human acceptance, main replacement or release.",
-      "latestProgress": "Private e12eadbe exact remote/39Gitbindings/3215archiveoriginals verified. Public source unchanged. SolHighbridge typed DTO/usage compatibility NOT VERIFIED; Design rejects missing input/output usage.",
+      "latestProgress": "Owner reports followup781181e with targeted58.192s PASS and independent review; remote/readiness not yet accepted; proof2 planned, measurement host deferred",
       "evidence": {
         "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
         "observedBranch": "codex/model-driven-delivery",
@@ -10524,16 +10548,13 @@
         "extraProofQuota": 0
       },
       "currentPublicCheckpoint": {
-        "observedUtc": "2026-10-09T06:32:20Z",
-        "sourceSha": "74a4446080c500a55551cdd018897225b211d771",
-        "branch": "codex/model-first-operations",
-        "pullRequest": "https://github.com/Glacius-Labs/Markitect/pull/89",
-        "remoteVerified": true,
-        "ciRun": 37892759401,
-        "ciStatus": "in_progress",
-        "ownerReportedIndependentReview": "No remaining Manager context/recovery gap; ACL bounds finding corrected",
-        "rootAcceptedReadiness": false,
-        "nativeProofsStarted": 0
+        "sha": "781181e273b4f55c1a0c899cf37138668c467afc",
+        "remote": "https://github.com/Glacius-Labs/Markitect.git",
+        "ref": "refs/heads/codex/model-first-operations",
+        "rootExactRemoteVerified": true,
+        "hostedRun": 37895459198,
+        "hostedStatus": "in_progress",
+        "acceptedReadiness": false
       },
       "hostSlotReleasedUtc": "2026-10-09T06:21:01Z",
       "hostReleaseAndPublicRuntimeInterface": "All measured Scientist processes ended. Existing Design product proof3/7200/128 and required finite gates released; appCLI explicit selector still read-only public runtime finding shared. No private case data or new product quote.",
@@ -10558,11 +10579,33 @@
         "ordinaryRuntimeProfileOwnerReported": "windows.sandbox=unelevated, workspace-write, managed requirements active",
         "ownerReportedActualTools": "Own actor reads project files and uses Explore",
         "openOwnProofFindings": "Fixed readiness revision and runtime file pin mismatch being investigated",
-        "rootIndependentlyVerifiedProof": false
+        "rootIndependentlyVerifiedProof": false,
+        "status": "FIRST JOB TERMINAL, no Apply/productsuccess",
+        "endedUtc": "2026-10-09T06:35:40.1195Z",
+        "ownerReportedOuterStarts": 1,
+        "ownerReportedInnerStarts": 0,
+        "ownerReportedWallSeconds": 174.607623,
+        "rootSpecificPidAbsent": true,
+        "terminalFindings": [
+          "Supervisor serialization changed gate config; Host correctly rejected",
+          "Unnecessary human modelowner request for ordinary delegated Shop work"
+        ]
+      },
+      "measurementHostDeferral": {
+        "issuedUtc": "2026-10-09T06:51:42Z",
+        "sentOnce": true,
+        "status": "No new native/heavy proof during measured App case; light product work and hosted CI continue",
+        "authority": "Existing host coordination, no new product or proof quota"
+      },
+      "lastCRLFFinding": {
+        "ownerReported": "CRLF SKILL frontmatter repeat installation would duplicate YAML header",
+        "status": "Narrow source regression work, own proof2 remains unstarted",
+        "globalGitConfigChanged": false,
+        "sourceFixNotYetAccepted": true
       }
     }
   ],
-  "nextAction": "Send the exact small App-entry preparation once. On concrete handoff verify source/unchanged public inputs/real app tool contract, then activate the single fourth Conventional cell directly. Preserve3closed CLI starts and old quotas; both future comparison arms use same prospective App/LunaHigh frame.",
+  "nextAction": "Send exact App enabled grant once, Scientist directly executes fresh Luna High Conventional independent of Design; record genuine own actor/start/context receipts and independent final outcome, no additional preparatory phase",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -10800,13 +10843,13 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "assignedUtc": "2026-10-09T06:14:26Z",
-    "status": "ONE EXISTING DESIGN PROOF; SCIENTIST LIGHT APP PREP",
+    "assignedUtc": "2026-10-09T06:51:42Z",
+    "status": "SCIENTIST APP MEASUREMENT RESERVED; DESIGN PROOF1 TERMINAL",
     "designHeavyStartUtc": "2026-10-09T05:15:00Z",
     "designHeavyEndUtc": "2026-10-09T05:25:00Z",
     "scientistSetupNotBeforeUtc": "2026-10-09T05:25:00Z",
     "scientistMeasuredCellMaxWallSeconds": 7200,
-    "purpose": "Design may finish normal proof/gates within existing quote. Coordinate any already-started own heavy job with next actual App cell; Design readiness never gates Conventional.",
+    "purpose": "Avoid heavy/native same-host overlap with real measured App case; Design continues light work and hosted CI",
     "noPrivateCaseResultsToDesign": true,
     "timingCorrection": {
       "recordedUtc": "2026-10-09T05:24:08Z",
@@ -10832,8 +10875,9 @@
     "ownDesignProofPid": 25732,
     "ownDesignExecSession": 13309,
     "ownDesignProofHardEndUtc": "2026-10-09T06:52:40Z",
-    "nextMeasuredAppStartCondition": "Actual existing own Design proof end, no product-readiness wait or additional global search",
-    "externalHostWaitCountedSeparately": true
+    "nextMeasuredAppStartCondition": "Root exact activation complete; start immediately, no Design readiness dependency",
+    "externalHostWaitCountedSeparately": true,
+    "releasedDesignProofUtc": "2026-10-09T06:35:40.1195Z"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -11181,7 +11225,7 @@
     "newWorkItemComparison": {
       "key": "luna-native-work-item-comparison-20261009",
       "authorizedUtc": "2026-10-09T04:07:10Z",
-      "status": "Human selected fresh App agents; third CLI attempt terminal and verified, one fourth same-input App trial conditional",
+      "status": "Fourth App Conventional fullstart enabled after exact small entry verification; prior three terminal CLI starts preserved",
       "document": "docs/design/work-item-comparison-20261009.md",
       "documentSha256": "2f76bfd4a21bc9f28a6cdc671952de3a547d3e27df2fd43ce6853735be24edcf",
       "arms": [
@@ -11431,17 +11475,41 @@
       "appNativeSwitch": {
         "authorizedUtc": "2026-10-09T06:32:20Z",
         "humanChoice": "Direct human answer: fresh Codex-App agents with Luna High for both variants",
-        "status": "SENT ONCE; small App entry preparation active",
+        "status": "PREPARATION CLOSED PASS; ACTUAL ENABLED",
         "preparationGrant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-app-entry-preparation-grant-20261009.json",
         "preparationGrantSha256": "f31ba9eeeb6a74f3e64d6feb54150a54e059f41b69ca7b7f0537c5a6df3dce30",
         "preparationNotAfterUtc": "2026-10-09T06:47:20Z",
         "trialReservation": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-app-native-trial-reservation-20261009.json",
         "trialReservationSha256": "f8624ce3384b211586b71036f47ca9bf7bfa399a0011e618ee3b264187fc4643",
-        "actualExecutionAuthorized": false,
+        "actualExecutionAuthorized": true,
         "newActualsStarted": 0,
         "noDesignDependency": true,
         "sentUtc": "2026-10-09T06:33:36Z",
-        "toolAccepted": true
+        "toolAccepted": true,
+        "acceptedSourceSha": "eace743e2bb70caf89305b597424d3b124e10178",
+        "activation": {
+          "issuedUtc": "2026-10-09T06:51:42Z",
+          "status": "ENABLED, actualstart not yet observed",
+          "sourceSha": "eace743e2bb70caf89305b597424d3b124e10178",
+          "receipt": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-app-native-root-activation-20261009.json",
+          "receiptSha256": "7a9de488e85d6caf09167978937552988ac58a8ebeb4e3cb1b9c445d6c353d80",
+          "executionGrant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-app-native-enabled-grant-20261009.json",
+          "executionGrantSha256": "7bf98f040105484ae3db85fd2a8cef7f013d856a66d55d491045d9af367e68c7",
+          "absoluteNotAfterUtc": "2026-10-09T09:12:43Z",
+          "actualAllocated": 1,
+          "actualStarted": 0,
+          "verification": {
+            "gitFiles": 17,
+            "payloadHashes": 13,
+            "inputFiles": 9,
+            "mechanicalTestsPass": 4,
+            "rootTestReruns": 0
+          },
+          "sentUtc": "2026-10-09T06:52:12Z",
+          "toolAccepted": true
+        },
+        "firstBeforeCallReservationObservedUtc": "2026-10-09T06:53:40.468196+00:00",
+        "nativeActorStartStillRequiresOwnHandleReceipt": true
       }
     }
   },

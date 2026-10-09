@@ -1376,3 +1376,13 @@ Design74a44460 exact public remote and hosted run37892759401 in progress verifie
 
 
 App preparation and public Design interface sent once06:33:36Z, tools accepted. Existing own Design proof began06:32:45Z/session13309/PID25732/hardend06:52:40Z, quote1job/1outer/0inner owner-reported so far. Owner reports actual read/write under normal unelevated Windows sandbox with managed requirements; Root has not independently checked this proof or established cause of older failures. Human App choice remains unchanged, no automatic CLI retry. Scientist receives only public timing/runtime interface; App prep deadline unchanged06:47:20Z, actual measurement waits only for this own existing process end. Automation exact ACTIVE/2h/current grants/Root target checked.
+
+
+### 2026-10-09T06:51:42Z - fresh App Conventional execution enabled
+
+Root accepted clean exact privateeace743,17additive Working/RawGit files,13payloadhashes and nine unchanged original input files/tree. Four narrow mechanical checks PASS; no Root reruns, additional reviewer or capability phase. Preparation source committed before original06:47:20Z end; closure acceptance does not extend that grant. Direct human App/LunaHigh choice is enacted through one immutable Root activation and enabled fourth-start wrapper under original09:12:43Z deadline/full7200s/8outer+1final/72total/4concurrent/depth2. Three terminal CLI starts remain counted; missing serving/token/cost receipts and cooperative context boundaries remain unknown. Authorization is not observed execution.
+
+Design own job1 closed06:35:40.1195Z,1outer/0inner/174.607623s, no Apply; Root independently checked exactPID25732 absent. Two concrete product/instrumentation findings remain owner work. LinuxCI74a44460 completed successfully; Windows Go suite passed with downstream gates still pending at last verification. Owner followup781181e is reported, not yet independently accepted/readiness. Design light product work and hosted CI continue; proof2/heavy native work deferred only for measured App host slot. No Design-readiness wait.
+
+
+Enabled App grant sent exactly once06:52:12Z. First before-call reservation06:53:40Z observed; this is not a native actor start receipt. Automation saved and exact prompt/ACTIVE/2h/Root target checked06:54:19Z. Owner Design proof2 explicitly unstarted; exact remote781181e and hostedCI37895459198 in-progress verified. New owner-reported CRLF-SKILL-frontmatter issue is narrow product work, no Scientist-readiness wait.
