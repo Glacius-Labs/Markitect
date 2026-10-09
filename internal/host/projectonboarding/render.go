@@ -92,7 +92,16 @@ The project documentation destination is %q. Keep it readable and derived from t
 
 Before implementation, select a first usable scope and compute its readiness from the current fixed project snapshot: structural validity, scoped ownership and dependencies, required artifacts, configured checks, blocking open decisions, and known evidence gaps. Report what is ready and what remains open; readiness is scoped planning evidence, not proof of implementation correctness. Show the proposed file structure, required artifacts, Managers, and checks, and obtain the review or acknowledgement required by repository policy. When the Work Item delegates ordinary implementation and structure decisions within its scope, the responsible Manager may review and acknowledge using its own actor, delegated authority, and task provenance; never present that assertion as the contributor's acknowledgement or as identity authentication. Ask the contributor only when material intent or authority remains undecided, or policy explicitly requires human review.
 
-Only the canonical model owner and repository policy can accept a model change. A saved proposal or draft is not accepted, and committing a draft by itself does not make it accepted. Satisfy the repository's required review and policy checks, then bind implementation planning to the resulting committed model revision. Do not implement a scope while its blocking decisions or model acceptance remain unresolved.
+The active project model expresses canonical ownership through Manager IDs and namespaces; the project-model tool classification only marks canonical model paths in the repository inventory and is not a human owner or separate approval identity. When this Work Item delegates a routine model decision, the responsible active Manager may author its bounded canonical change with its own Manager ID in the mutation actor field. The Host checks that actor against active namespace ownership and parent authority. Root-only controls remain guarded: inventory/scope and acceptance-policy changes require the active root Manager or explicit user actor; runtime changes require root or user; a Manager cannot silently remove or weaken a required Artifact. Use the real authorized Manager ID and task provenance, never impersonate user or a human.
+
+For the default committed-model policy, a valid selected canonical model at the current committed HEAD is the accepted repository specification. The edit preview, an unapplied model proposal, or an exploration record is not acceptance; committing a noncanonical draft file does not change the accepted model. The Explore CRUD path stores ModelAccepted:false, while computed readiness establishes acceptance only when the model is non-provisional, committed at current HEAD, and governed by committed-model policy. A human approval is not required unless the repository policy or this Work Item explicitly requires it.
+
+Have the responsible Manager prepare a closed mutation with the current Project baseDigest, its actor ID, a bounded goal, and exact canonical model file contents. Preview it, inspect the structural report and impact, and apply only that returned plan digest:
+
+    markitect project edit --repo PATH --input MUTATION.json
+    markitect project edit --repo PATH --input MUTATION.json --expect EDIT_PLAN_DIGEST --write
+
+After applying a delegated model change, run the repository's required policy checks/review and commit the selected canonical model on the task branch. Under committed-model, that committed canonical revision is the accepted specification; it is not a claim that a human approved it. Use the committed revision for readiness and implementation. Ask the contributor only when material intent or authority is outside the delegation, or repository policy explicitly requires their review.
 
 ### Durable exploration records and commands
 
@@ -168,11 +177,11 @@ These repository instructions help the selected agent follow the workflow. They 
 }
 
 func codexEntry() string {
-	return "For a short Work Item, issue, bug, idea, or change request, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, acknowledge computed readiness and the proposed first-scope structure, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Resume persisted work without replaying completed work."
+	return "For a short Work Item, issue, bug, idea, or change request, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, satisfy the repository's actual readiness review and acknowledgement policy using your own authorized actor, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Ask only for material intent or authority outside the Work Item's delegation, or review the repository policy explicitly reserves for a human. Resume persisted work without replaying completed work."
 }
 
 func claudeEntry() string {
-	return "For a short Work Item, issue, bug, idea, or change request, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, acknowledge computed readiness and the proposed first-scope structure, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Resume persisted work without replaying completed work."
+	return "For a short Work Item, issue, bug, idea, or change request, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, satisfy the repository's actual readiness review and acknowledgement policy using your own authorized actor, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Ask only for material intent or authority outside the Work Item's delegation, or review the repository policy explicitly reserves for a human. Resume persisted work without replaying completed work."
 }
 
 func skillDescription() string {
