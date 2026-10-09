@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T22:52:33.919400Z",
+  "updatedUtc": "2026-10-09T23:01:57.245871Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16607,8 +16607,11 @@
           "rootVerified": "projectrun/config.go309-332 always converts Environment slice to nonnil &env; omission becomes empty env. Thus existing adapter nil-inheritance cannot be selected through normal project runtime.",
           "ownerPinnedLookupFinding": "Pinned0.162 source locates exact MXC platform error in known-folder ProgramFiles/ProgramFilesX86/ProgramData lookup; owncore Windowsenv contains names excluded by configured allowlist",
           "correction": "Minimal explicit native inherited-environment mode through ordinary runtime/setup, private fingerprint/receipt digest only; preserve deliberate explicitname list and declared check existing selection semantics",
-          "status": "Owner implementing targeted source/config repair; no new actual/current A01 still FAILED",
-          "otherAuthority": "No sandbox/profile/global changes; scoped candidate-file approval repair separate"
+          "status": "INHERITED_MODE_INTEGRATED_REVIEWED_PENDING_SCOPED_APPROVAL_AND_ACTUAL",
+          "otherAuthority": "No sandbox/profile/global changes; scoped candidate-file approval repair separate",
+          "integratedSource": "15e955fa811ea918e3510d15557303834e1f41ce",
+          "rootVerifiedIntegratedDiff": "Read exact projectrun/config.go, agentexec/runner.go and projectsetup/setup.go: closed inherit setting native/ownedGit only; AgentConfig nilallowlist carries inherited env; setup selects inherit; effective inherited digest binds existing fingerprint and receipts; selected-name policy preserved for declared checks. LocalWT clean observed; remote still f147 at check, new source not yet claimed remote.",
+          "ownerChecks": "Independentreviewclosed; focused agentexec/projectrun/setup/MCP/full affected smallerpackages+vetPASS. Extra giantProjectRun invocation intentionallystopped, NOTPASS. Scopedfileapprovalfinishing, no newActual."
         }
       }
     }

@@ -1955,3 +1955,7 @@ Root read process.go57–71: existingnilallowlist preservesordinary os.Environ()
 ### Normal project runtime cannot yet select supported inherited environment
 
 Root source read config.go309–332 confirms projectrun.AgentConfig always creates nonnil &env; omitted Environment means empty childenvironment, not adapter-supported nilinheritance. This is product configuration plumbing, not missing userWindows setup. Owner pinned0.162 source traces platformdirectory error to knownfolder ProgramFiles/ProgramFilesX86/ProgramData lookup and excluded core Windowsenvironment. Minimal explicit native inheritedmode through ordinaryruntime/setup now implementing, privatelyfingerprinted/receipt-bound, preserving existing deliberate lists and declaredcheck environment policy. No sandbox/profile/globalchange; candidateapprovalrepair separate, no actualsuccess yet.
+
+### Native inherited environment integrated and source verified
+
+Root read exact15e955fa config/runner/setup diff: appServer.environmentMode=inherit onlynative/ownedGit; normalsetup selects it; inheritedeffectivevalues bind existingfingerprint/receipt hashes without rawvalue disclosure; explicitlists and declaredchecks retain selected-name semantics. LocalWTclean observed, remote stillf147 atcheck; do notclaim15e pushed yet. Owner independentreviewclosed and relevant focused/smallerpackage/vet checkspositive; extra giantProjectRun run explicitlystopped, notclaimedPASS. Candidateapprovalrepairfinishing; no new providerturn or A01/Maincredit.
