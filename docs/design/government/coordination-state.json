@@ -16340,6 +16340,15 @@
         "leaseEndUnchanged": "2026-10-10T00:26:23Z",
         "newQuota": false,
         "dispatch": "SENT_ONCE"
+      },
+      "setupProfileWiringFinding": {
+        "sourceSha": "5b65b46534ce040f5aab1058776c0cd4443bc3ad",
+        "rootVerified": "projectsetup setup.go accepts only old luna-high model preset and defaults omitted CodexProfile to it; native PermissionProfile left empty. Tests explicitly expect empty writer/reviewer profiles. Existing public CLI profile contract does not reach requested native permission profile.",
+        "ownerCorrection": "Isolated native_setup minimal existing CodexProfile/CLI/MCP mapping fix, explicit writer/helper profile, readonly reviewer, omitted profile inherits, Luna/high model separately supported. Independent services_review underway.",
+        "nativeStatus": "No new actor or permission change applied to original private project yet",
+        "workspaceFinding": "Owner reports persisted Handle/request/OwnerRecord match; generic error arose during Harvest state-check, exact transient predicate not logged. Bounded provider-free original Reopen/Harvest ownership/quiescence/delta validation pending; no causal claim or blind continuation.",
+        "amendmentRemains": "Explicit existing writer workspace profile only within original lease after provider-free binding/ownership resolution; no new quota/global change",
+        "sourceAcceptance": "PENDING_NEW_FIXED_SOURCE_REVIEW_TEST_HANDOFF"
       }
     }
   },
