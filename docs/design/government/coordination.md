@@ -1765,3 +1765,8 @@ Owner reports original dae4 Go run terminal Exit1/about31min/projectrun1799.562s
 ### 2026-10-09T19:50:05Z - concrete Windows lock and protected MXC startup observed
 
 Root read private diagnostics/plan and verified active Scientist WIP, no final freeze or model start. Current daily sandbox log confirms OS error32/node_repl/ACL-refresh matches; older unnumbered log was stale for this diagnosis. Recorded provider-free checks2/6: legacy fail, child-local MXC with managed config/workspace profile PID55956 exit0; no policy/global change/foreign process touch. Full read/write/Git readiness and normal trajectory still pending; command startup not agent-quality proof. Readinglog AppServer then Roombook CLI stays within current finite delivery, case/transport confounding explicit. General runtime fact forwarded once to Integration only, stable product binary independent. No Docker/WSL/auth changes/refill/new actual order.
+
+
+### 2026-10-09T19:52:23Z - fresh Conventional Readinglog start bound to private source
+
+Root verified clean exact PRIVATE0a1e6963,16working/15RawGit sourcepins and current root grant hash. Fresh Readinglog AppServer trajectory at19:51:37Z, own externalstudy/controller87753, original overallend03:51:37Z. Owned initialize+protected MXC write/read/Git readiness positive; provider-freechecks4/6,2remain. Run2d58bb61 initiallyaccepted/running; laterS1statuscompleted with native thread01a12238-b3c1/turn01a12238-b5e5 observed. That is a real first turn, not completed four-station trajectory or quality assessment. LunaHigh requested, serving/completehelpercount/costunknown. Fresh readonly final disabledhelpers ownerconfigured. Existing finiteordercontinues without duplicate prompt, refill or Main dependency.

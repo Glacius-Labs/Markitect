@@ -16992,8 +16992,8 @@
     "priorEvidence": "All failed pilots and receipts preserved; development tests are not study or method superiority evidence",
     "grantPath": "docs/design/government/conventional-variant-adapter-delivery-20261009.json",
     "grantSha256": "e6c2b11ce4758d9c315d6babb01612f43ebef23e492da018424cb92732f08d73",
-    "status": "AUTHORIZED_IMPLEMENTATION_AND_FRESH_FINITE_EXECUTION",
-    "actualStartsObserved": 0,
+    "status": "FRESH_READINGLOG_TRAJECTORY_STARTED_FIRST_NATIVE_TURN_OBSERVED",
+    "actualStartsObserved": 1,
     "dispatch": "SENT_ONCE_TO_SCIENTIST_LOCAL",
     "latestPreparationCallback": {
       "observedUtc": "2026-10-09T19:50:05Z",
@@ -17011,6 +17011,33 @@
       "containerPlan": "Future separate environment evaluation only; no Docker/WSL/auth action",
       "publicRuntimeFactForwardedToIntegrationOnce": true,
       "newGrantOrRefill": false
+    },
+    "firstTrajectoryStartReceipt": {
+      "verifiedUtc": "2026-10-09T19:52:23Z",
+      "cleanExactLocalPrivateRemoteSha": "0a1e6963f9fa86d5c0affdcfa9061f928feebe74",
+      "externalStudyRoot": "C:/Users/Consiliari/Documents/Conventional-Variant-Adapter-Study-20261009-2000",
+      "rootVerified": "Clean private HEAD/remote, root grant hash,16 working filepins including executable and15 raw Git source bindings, runtime/readiness/start/status receipts read",
+      "startedAt": "2026-10-09T19:51:37.353662+00:00",
+      "overallExpiresAt": "2026-10-10T03:51:37.353662+00:00",
+      "case": "readinglog",
+      "backend": "codex-app-server",
+      "runId": "2d58bb61-ad72-4e61-98ec-a8a711f58dfd",
+      "controllerSessionOwnerReported": 87753,
+      "initialObservedStatus": "accepted/running with native IDs pending",
+      "laterFirstStationStatusObserved": "completed with actual native session/turn IDs; not full trajectory completion or assessment",
+      "nativeSessionId": "01a12238-b3c1-7530-b988-d502ff28aaba",
+      "nativeTurnId": "01a12238-b5e5-7072-ba58-2345059b1db2",
+      "requestedModel": "gpt-6-luna",
+      "requestedReasoning": "high",
+      "effectiveServing": "NOT_YET_ATTESTED",
+      "runtime": "Owned AppServer initialize and protected child-local MXC write/read/Git probe readiness receipts positive, own sandboxPID25536 exit0",
+      "providerFreeChecksConsumed": 4,
+      "providerFreeChecksRemaining": 2,
+      "nativeHelperCap": "3 spawned plus primary,4total; depth and complete totals cooperative/unknown",
+      "resultQuality": "PENDING_FOUR_STATIONS_AND_FRESH_FINAL",
+      "costs": "UNKNOWN",
+      "newOrderOrRefill": false,
+      "mainDependency": false
     }
   }
 }
