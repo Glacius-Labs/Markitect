@@ -175,6 +175,37 @@ func TestPathCollisionDiagnosticIsDeterministic(t *testing.T) {
 	}
 }
 
+func TestDeltaAllowsExplicitFileDirectoryReplacements(t *testing.T) {
+	r := testRequest(t)
+	h := testHandle(r)
+	cases := []struct {
+		name    string
+		changes []Change
+	}{
+		{
+			name: "delete file then add descendant",
+			changes: []Change{
+				{Kind: ChangeDelete, Path: "src/node"},
+				{Kind: ChangeAdd, Path: "src/node/child.go", Mode: "100644", Content: []byte("child")},
+			},
+		},
+		{
+			name: "delete descendants then add file",
+			changes: []Change{
+				{Kind: ChangeDelete, Path: "src/node/child.go"},
+				{Kind: ChangeAdd, Path: "src/node", Mode: "100644", Content: []byte("file")},
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if _, err := NormalizeDelta(r, h, tc.changes, testLimits); err != nil {
+				t.Fatalf("explicit file/directory replacement was rejected: %v", err)
+			}
+		})
+	}
+}
+
 func TestRequestRejectsCaseAliasedScopesAndRequiresFullBindings(t *testing.T) {
 	r := testRequest(t)
 	r.AllowedPaths = []string{"src/", "SRC"}
