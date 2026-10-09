@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T11:25:27Z",
+  "updatedUtc": "2026-10-09T12:02:03Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -10738,16 +10738,16 @@
       "threadId": "01a11c80-37aa-7fe0-9586-35d916ce6561",
       "hostId": "local",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect",
-      "lastObservedStatus": "active",
-      "candidateSha": "bcd614a3bfcd335e0ca18850993742057103c092",
-      "candidateStatus": "Clean exact public source policy correction, readonly source review/targeted checks qualified; native full lifecycle unproven, replacement CI pending and assets unactivated",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:34",
+      "lastObservedStatus": "returned source-regression handoff; bounded hosted gate/private recovery dispatched",
+      "candidateSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+      "candidateStatus": "CLOSED / QUALIFIED SOURCE IDENTITY REGRESSION ACCEPTED, FINAL WINDOWS CI AND NATIVE USABILITY OPEN",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:35",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac852a43fa08191a8d8e593c901cb96",
-      "assignedMilestone": "Existing complete product/docs/main mandate; concrete global-identity source roundtrip regression, no extra native proof",
+      "assignedMilestone": "Existing product/docs/main mandate; exact final Windows gate and own private handoff recovery only, no new native test",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
       "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
       "acceptance": "Qualified bounded testable delivery candidate. No full workflow readiness, matched study admission, semantic generality, human acceptance, main replacement or release.",
-      "latestProgress": "Measured host hold lifted after actual primary/final closed. Public source inconsistency assigned once. Own generic correction/tests/source review and exact public handoff pending; private study judgments withheld.",
+      "latestProgress": "Public source identity fix and 19 original ZIP bindings verified, final Linux CI Pass/Windows pending. Both failed local batches preserved; one build pinneded3, one reviewer/two source turns. Owned exact recovery pending; native workflow/main acceptance open.",
       "evidence": {
         "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
         "observedBranch": "codex/model-driven-delivery",
@@ -10996,7 +10996,7 @@
         "id": "01a11e93-9e21-70d3-a0ff-149803f831a8",
         "status": "inProgress"
       },
-      "lastObservedUtc": "2026-10-09T05:31:15Z",
+      "lastObservedUtc": "2026-10-09T12:02:03Z",
       "currentDirectWorkObservation": "Owner running later direct product cleanup/reconcile work with independent inventory findings; prior accepted source7d001579/doc11f0808 remain historical frozen readiness. No new research allocation from Root.",
       "assignmentHistory": [
         {
@@ -11047,6 +11047,38 @@
           "hostHoldLifted": true,
           "oldProductProofsClosed": true,
           "studyActualsClosed": true
+        },
+        {
+          "key": "design-identity-hosted-gate-and-recovery-20261009",
+          "issuedUtc": "2026-10-09T11:59:06Z",
+          "notAfterUtc": "2026-10-09T12:14:06Z",
+          "maxActiveSeconds": 900,
+          "ownerThread": "01a11c80-37aa-7fe0-9586-35d916ce6561",
+          "authority": "Continuing direct user pushed relevant states, mandatory source gates and version-bound Design/main handoff; exact existing hosted run and own sealed artifact backup only",
+          "sourceSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+          "buildSourceSha": "ed3bc9102cbf2d2b5082ce6350acc7b9ffaf24bb",
+          "hostedRunId": 37925341863,
+          "publicSourceRef": "refs/heads/codex/model-first-operations",
+          "scope": "Observe the already-running exact hosted CI to terminal with bounded ordinary gh watch/read; do not trigger another run. Preserve sealed handoff and failed local batches. Allowlisted owned original/current Handoffs/ZIPs/build/review/runtime/CI/delivery receipts and Root public-source integrity verification into one coherent PRIVATE recovery checkpoint; manifest exact bytes/remoteRef/SHA. No semantic product/test/doc modifications or additional checks/builds/models/reviewers/proofs/trials. If CI still running at end report pending, not Pass. Any concrete new gate failure report exact scope/source without automatic fix or rerun. Product actual-normal-workflow acceptance remains separate from CI/source repair.",
+          "evidenceDirectory": "C:/Users/Consiliari/AppData/Local/Temp/markitect-briefing-global-identity-20261009",
+          "rootReadonlyIntegrityReceipt": "C:/Users/Consiliari/Documents/Markitect-Overseer-Briefing-Identity-Root-Verification-20261009.json",
+          "privateDestination": "https://github.com/TheGlacius/markitect-research-backup.git",
+          "privateBackupRef": "refs/heads/codex/backup-design-briefing-identity-20261009",
+          "useOwnIsolatedRecoveryCheckout": true,
+          "ordinaryFileArchiveGitNetworkReadsOnly": true,
+          "maxNewBuildsLocalTestsCIStartsProviderNativeProductStudyCallsSourceReviewers": 0,
+          "originalThreeProductProofsAndSixStudyActualsRemainClosed": true,
+          "comprehensive10800sSuiteActivated": false,
+          "noMainMergeReleaseForceProtectionBypass": true,
+          "noScientistPrivateSourcesOrCasesOrAuthGlobalCaches": true,
+          "publishedSourceCleanAndPushedUnchanged": true,
+          "exactOneCallbackTerminalOrPendingAtDeadlineNoACK": true,
+          "historicalPinsAndEvidenceNeverRewrite": true,
+          "file": "docs/design/government/design-identity-hosted-gate-and-recovery-20261009-grant.json",
+          "sha256": "35f68c6e139c99b02320fa900cb10a08ba511d2ec1abecd35b8839ac0f3d3aec",
+          "status": "SENT ONCE / FINAL EXACT HOSTED GATE AND PRIVATE RECOVERY ACTIVE",
+          "sentOnceUtcApprox": "2026-10-09T11:59:35Z",
+          "toolAccepted": true
         }
       ],
       "futureAutomaticAuthorityFromOldGrants": 0,
@@ -11655,16 +11687,299 @@
         "handoff": "Exact clean source/publicRemote SHA, focused positive/negative checks, independently reviewed delta, exact binary/runtime/installation if changed, own known limitations and required next usability proof. Report once; no ACK/occupation/followup loop.",
         "file": "docs/design/government/design-briefing-global-identity-regression-20261009-grant.json",
         "sha256": "9e6470ff7f2444cad190954de41d07b40759dbf10e83bf9270bd0c787d7f2fb7",
-        "status": "SENT ONCE / CONCRETE PUBLIC SOURCE REGRESSION ACTIVE",
+        "status": "CLOSED / QUALIFIED SOURCE IDENTITY REGRESSION ACCEPTED, FINAL WINDOWS CI AND NATIVE USABILITY OPEN",
         "sentOnceUtc": "2026-10-09T11:11:39Z",
         "toolAccepted": true,
         "hostHoldLifted": true,
         "oldProductProofsClosed": true,
-        "studyActualsClosed": true
-      }
+        "studyActualsClosed": true,
+        "terminalAcceptance": {
+          "status": "CLOSED / QUALIFIED SOURCE IDENTITY REGRESSION ACCEPTED, FINAL WINDOWS CI AND NATIVE USABILITY OPEN",
+          "verifiedUtc": "2026-10-09T12:02:03Z",
+          "sourceSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+          "productionAndBuildSourceSha": "ed3bc9102cbf2d2b5082ce6350acc7b9ffaf24bb",
+          "baselineStudySourcePreserved": "bcd614a3bfcd335e0ca18850993742057103c092",
+          "rootSourceCleanExactPublicRemoteVerified": true,
+          "rootSourceWorkingRawGitBindings": 8,
+          "rootArchiveOriginalPayloadBindings": 19,
+          "handoffSha256": "28b5ab47180e208993fd937d658f2a3c509667bcbe389e10faf8f42ad1a3417f",
+          "archiveSha256": "8527c8d391c893b695100d56832f6291702872964698126f11830cd9d5944bfd",
+          "previousEd3HandoffArchiveUnchangedHashVerified": true,
+          "binarySha256": "a1f304de6a08321e5307b57e8016bb6c5b8b40a9f5f5442da353c8139a6b557b",
+          "binaryNotRelabeledAsLaterMetadataBuild": true,
+          "metadataFollowupOnly": [
+            "markitect-artifacts.yaml",
+            "docs/validation/project-native-delivery-2026-10-09.md"
+          ],
+          "newExistingOwnerClaims": 3,
+          "exclusionsOrValidationWeakeningsAdded": false,
+          "sourceFix": "Host validates DefinitionIdentity.Valid using unchanged Core grammar; valid global namespace accepted, other malformed identities rejected; existing event/digest/provenance/reference/hash/history guards unchanged",
+          "rootSourceReviewDisposition": "Actual Core TypeReference normalizes apiVersion/kind from schema target at621-663; independent reviewer later shorthand objection rejected by public source, no production finding",
+          "ownerGenericReproduction": "Root read preserved local failurelog matching ordinary project readiness incomplete identity; source-contained generic fixture, no private study material",
+          "localTestBatches": [
+            {
+              "number": 1,
+              "status": "FAILED - original global error plus new fixture defects"
+            },
+            {
+              "number": 2,
+              "status": "FAILED - new test compile/schema/hierarchy defects; corrected but not locally rerun"
+            }
+          ],
+          "hostedLinuxGoSuiteOnEd3": "PASS, then ownership gate failed on three undeclared new tests; old failure preserved",
+          "exactFinalHostedCI": {
+            "verifiedUtc": "2026-10-09T12:00:15.691498+00:00",
+            "headSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+            "status": "in_progress",
+            "conclusion": "",
+            "jobs": [
+              {
+                "name": "Quality (windows-latest)",
+                "status": "in_progress",
+                "conclusion": "",
+                "activeSteps": [
+                  "Test"
+                ]
+              },
+              {
+                "name": "Quality (ubuntu-24.04)",
+                "status": "completed",
+                "conclusion": "success",
+                "activeSteps": []
+              }
+            ]
+          },
+          "entireFinalHostedCI": "PENDING; Linux complete SUCCESS/Windows in Test, no aggregate Pass",
+          "ownerBuilds": 1,
+          "ownerTargetedMechanicalBatches": 2,
+          "freshSourceReviewers": 1,
+          "sourceReviewTurns": 2,
+          "wholeSourceReviewSeconds": 375.76,
+          "reviewerOwnChecksExecuted": 0,
+          "originalSourceReviewRequestBytes": "opaque preserved session data, no reconstructed server prompt attestation",
+          "productProviderNativeActorStudyCalls": 0,
+          "rootNewProductRunnerSourceChangesTestsModels": 0,
+          "runtimeUnchanged": true,
+          "rootCurrentRuntimePinsVerified": 6,
+          "normalRuntimeInstalledOrActivated": false,
+          "sealedUtc": "2026-10-09T11:45:32.608379Z",
+          "deliveryClosedUtc": "2026-10-09T11:55:16.3689387Z",
+          "issueToDeliveryConservativeSeconds": 2617.3689387,
+          "originalGrantNotAfterUtc": "2026-10-09T12:11:39Z",
+          "oldProductProofsClosed": 3,
+          "oldStudyActualsClosed": 6,
+          "newActualQuote": 0,
+          "comprehensive10800sSuiteActivated": false,
+          "fullNativeRunReviewVerifyApplyUsabilityProven": false,
+          "humanAcceptance": null,
+          "mainMerged": false,
+          "releasePublished": false,
+          "oldMeasuredResultsNotReevaluated": true
+        }
+      },
+      "latestBriefingIdentityRegressionHandoff": {
+        "status": "CLOSED / QUALIFIED SOURCE IDENTITY REGRESSION ACCEPTED, FINAL WINDOWS CI AND NATIVE USABILITY OPEN",
+        "verifiedUtc": "2026-10-09T12:02:03Z",
+        "sourceSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+        "productionAndBuildSourceSha": "ed3bc9102cbf2d2b5082ce6350acc7b9ffaf24bb",
+        "baselineStudySourcePreserved": "bcd614a3bfcd335e0ca18850993742057103c092",
+        "rootSourceCleanExactPublicRemoteVerified": true,
+        "rootSourceWorkingRawGitBindings": 8,
+        "rootArchiveOriginalPayloadBindings": 19,
+        "handoffSha256": "28b5ab47180e208993fd937d658f2a3c509667bcbe389e10faf8f42ad1a3417f",
+        "archiveSha256": "8527c8d391c893b695100d56832f6291702872964698126f11830cd9d5944bfd",
+        "previousEd3HandoffArchiveUnchangedHashVerified": true,
+        "binarySha256": "a1f304de6a08321e5307b57e8016bb6c5b8b40a9f5f5442da353c8139a6b557b",
+        "binaryNotRelabeledAsLaterMetadataBuild": true,
+        "metadataFollowupOnly": [
+          "markitect-artifacts.yaml",
+          "docs/validation/project-native-delivery-2026-10-09.md"
+        ],
+        "newExistingOwnerClaims": 3,
+        "exclusionsOrValidationWeakeningsAdded": false,
+        "sourceFix": "Host validates DefinitionIdentity.Valid using unchanged Core grammar; valid global namespace accepted, other malformed identities rejected; existing event/digest/provenance/reference/hash/history guards unchanged",
+        "rootSourceReviewDisposition": "Actual Core TypeReference normalizes apiVersion/kind from schema target at621-663; independent reviewer later shorthand objection rejected by public source, no production finding",
+        "ownerGenericReproduction": "Root read preserved local failurelog matching ordinary project readiness incomplete identity; source-contained generic fixture, no private study material",
+        "localTestBatches": [
+          {
+            "number": 1,
+            "status": "FAILED - original global error plus new fixture defects"
+          },
+          {
+            "number": 2,
+            "status": "FAILED - new test compile/schema/hierarchy defects; corrected but not locally rerun"
+          }
+        ],
+        "hostedLinuxGoSuiteOnEd3": "PASS, then ownership gate failed on three undeclared new tests; old failure preserved",
+        "exactFinalHostedCI": {
+          "verifiedUtc": "2026-10-09T12:00:15.691498+00:00",
+          "headSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+          "status": "in_progress",
+          "conclusion": "",
+          "jobs": [
+            {
+              "name": "Quality (windows-latest)",
+              "status": "in_progress",
+              "conclusion": "",
+              "activeSteps": [
+                "Test"
+              ]
+            },
+            {
+              "name": "Quality (ubuntu-24.04)",
+              "status": "completed",
+              "conclusion": "success",
+              "activeSteps": []
+            }
+          ]
+        },
+        "entireFinalHostedCI": "PENDING; Linux complete SUCCESS/Windows in Test, no aggregate Pass",
+        "ownerBuilds": 1,
+        "ownerTargetedMechanicalBatches": 2,
+        "freshSourceReviewers": 1,
+        "sourceReviewTurns": 2,
+        "wholeSourceReviewSeconds": 375.76,
+        "reviewerOwnChecksExecuted": 0,
+        "originalSourceReviewRequestBytes": "opaque preserved session data, no reconstructed server prompt attestation",
+        "productProviderNativeActorStudyCalls": 0,
+        "rootNewProductRunnerSourceChangesTestsModels": 0,
+        "runtimeUnchanged": true,
+        "rootCurrentRuntimePinsVerified": 6,
+        "normalRuntimeInstalledOrActivated": false,
+        "sealedUtc": "2026-10-09T11:45:32.608379Z",
+        "deliveryClosedUtc": "2026-10-09T11:55:16.3689387Z",
+        "issueToDeliveryConservativeSeconds": 2617.3689387,
+        "originalGrantNotAfterUtc": "2026-10-09T12:11:39Z",
+        "oldProductProofsClosed": 3,
+        "oldStudyActualsClosed": 6,
+        "newActualQuote": 0,
+        "comprehensive10800sSuiteActivated": false,
+        "fullNativeRunReviewVerifyApplyUsabilityProven": false,
+        "humanAcceptance": null,
+        "mainMerged": false,
+        "releasePublished": false,
+        "oldMeasuredResultsNotReevaluated": true
+      },
+      "identityHostedGateAndRecoveryAssignment": {
+        "key": "design-identity-hosted-gate-and-recovery-20261009",
+        "issuedUtc": "2026-10-09T11:59:06Z",
+        "notAfterUtc": "2026-10-09T12:14:06Z",
+        "maxActiveSeconds": 900,
+        "ownerThread": "01a11c80-37aa-7fe0-9586-35d916ce6561",
+        "authority": "Continuing direct user pushed relevant states, mandatory source gates and version-bound Design/main handoff; exact existing hosted run and own sealed artifact backup only",
+        "sourceSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+        "buildSourceSha": "ed3bc9102cbf2d2b5082ce6350acc7b9ffaf24bb",
+        "hostedRunId": 37925341863,
+        "publicSourceRef": "refs/heads/codex/model-first-operations",
+        "scope": "Observe the already-running exact hosted CI to terminal with bounded ordinary gh watch/read; do not trigger another run. Preserve sealed handoff and failed local batches. Allowlisted owned original/current Handoffs/ZIPs/build/review/runtime/CI/delivery receipts and Root public-source integrity verification into one coherent PRIVATE recovery checkpoint; manifest exact bytes/remoteRef/SHA. No semantic product/test/doc modifications or additional checks/builds/models/reviewers/proofs/trials. If CI still running at end report pending, not Pass. Any concrete new gate failure report exact scope/source without automatic fix or rerun. Product actual-normal-workflow acceptance remains separate from CI/source repair.",
+        "evidenceDirectory": "C:/Users/Consiliari/AppData/Local/Temp/markitect-briefing-global-identity-20261009",
+        "rootReadonlyIntegrityReceipt": "C:/Users/Consiliari/Documents/Markitect-Overseer-Briefing-Identity-Root-Verification-20261009.json",
+        "privateDestination": "https://github.com/TheGlacius/markitect-research-backup.git",
+        "privateBackupRef": "refs/heads/codex/backup-design-briefing-identity-20261009",
+        "useOwnIsolatedRecoveryCheckout": true,
+        "ordinaryFileArchiveGitNetworkReadsOnly": true,
+        "maxNewBuildsLocalTestsCIStartsProviderNativeProductStudyCallsSourceReviewers": 0,
+        "originalThreeProductProofsAndSixStudyActualsRemainClosed": true,
+        "comprehensive10800sSuiteActivated": false,
+        "noMainMergeReleaseForceProtectionBypass": true,
+        "noScientistPrivateSourcesOrCasesOrAuthGlobalCaches": true,
+        "publishedSourceCleanAndPushedUnchanged": true,
+        "exactOneCallbackTerminalOrPendingAtDeadlineNoACK": true,
+        "historicalPinsAndEvidenceNeverRewrite": true,
+        "file": "docs/design/government/design-identity-hosted-gate-and-recovery-20261009-grant.json",
+        "sha256": "35f68c6e139c99b02320fa900cb10a08ba511d2ec1abecd35b8839ac0f3d3aec",
+        "status": "SENT ONCE / FINAL EXACT HOSTED GATE AND PRIVATE RECOVERY ACTIVE",
+        "sentOnceUtcApprox": "2026-10-09T11:59:35Z",
+        "toolAccepted": true
+      },
+      "acceptanceHistory": [
+        {
+          "status": "CLOSED / QUALIFIED SOURCE IDENTITY REGRESSION ACCEPTED, FINAL WINDOWS CI AND NATIVE USABILITY OPEN",
+          "verifiedUtc": "2026-10-09T12:02:03Z",
+          "sourceSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+          "productionAndBuildSourceSha": "ed3bc9102cbf2d2b5082ce6350acc7b9ffaf24bb",
+          "baselineStudySourcePreserved": "bcd614a3bfcd335e0ca18850993742057103c092",
+          "rootSourceCleanExactPublicRemoteVerified": true,
+          "rootSourceWorkingRawGitBindings": 8,
+          "rootArchiveOriginalPayloadBindings": 19,
+          "handoffSha256": "28b5ab47180e208993fd937d658f2a3c509667bcbe389e10faf8f42ad1a3417f",
+          "archiveSha256": "8527c8d391c893b695100d56832f6291702872964698126f11830cd9d5944bfd",
+          "previousEd3HandoffArchiveUnchangedHashVerified": true,
+          "binarySha256": "a1f304de6a08321e5307b57e8016bb6c5b8b40a9f5f5442da353c8139a6b557b",
+          "binaryNotRelabeledAsLaterMetadataBuild": true,
+          "metadataFollowupOnly": [
+            "markitect-artifacts.yaml",
+            "docs/validation/project-native-delivery-2026-10-09.md"
+          ],
+          "newExistingOwnerClaims": 3,
+          "exclusionsOrValidationWeakeningsAdded": false,
+          "sourceFix": "Host validates DefinitionIdentity.Valid using unchanged Core grammar; valid global namespace accepted, other malformed identities rejected; existing event/digest/provenance/reference/hash/history guards unchanged",
+          "rootSourceReviewDisposition": "Actual Core TypeReference normalizes apiVersion/kind from schema target at621-663; independent reviewer later shorthand objection rejected by public source, no production finding",
+          "ownerGenericReproduction": "Root read preserved local failurelog matching ordinary project readiness incomplete identity; source-contained generic fixture, no private study material",
+          "localTestBatches": [
+            {
+              "number": 1,
+              "status": "FAILED - original global error plus new fixture defects"
+            },
+            {
+              "number": 2,
+              "status": "FAILED - new test compile/schema/hierarchy defects; corrected but not locally rerun"
+            }
+          ],
+          "hostedLinuxGoSuiteOnEd3": "PASS, then ownership gate failed on three undeclared new tests; old failure preserved",
+          "exactFinalHostedCI": {
+            "verifiedUtc": "2026-10-09T12:00:15.691498+00:00",
+            "headSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+            "status": "in_progress",
+            "conclusion": "",
+            "jobs": [
+              {
+                "name": "Quality (windows-latest)",
+                "status": "in_progress",
+                "conclusion": "",
+                "activeSteps": [
+                  "Test"
+                ]
+              },
+              {
+                "name": "Quality (ubuntu-24.04)",
+                "status": "completed",
+                "conclusion": "success",
+                "activeSteps": []
+              }
+            ]
+          },
+          "entireFinalHostedCI": "PENDING; Linux complete SUCCESS/Windows in Test, no aggregate Pass",
+          "ownerBuilds": 1,
+          "ownerTargetedMechanicalBatches": 2,
+          "freshSourceReviewers": 1,
+          "sourceReviewTurns": 2,
+          "wholeSourceReviewSeconds": 375.76,
+          "reviewerOwnChecksExecuted": 0,
+          "originalSourceReviewRequestBytes": "opaque preserved session data, no reconstructed server prompt attestation",
+          "productProviderNativeActorStudyCalls": 0,
+          "rootNewProductRunnerSourceChangesTestsModels": 0,
+          "runtimeUnchanged": true,
+          "rootCurrentRuntimePinsVerified": 6,
+          "normalRuntimeInstalledOrActivated": false,
+          "sealedUtc": "2026-10-09T11:45:32.608379Z",
+          "deliveryClosedUtc": "2026-10-09T11:55:16.3689387Z",
+          "issueToDeliveryConservativeSeconds": 2617.3689387,
+          "originalGrantNotAfterUtc": "2026-10-09T12:11:39Z",
+          "oldProductProofsClosed": 3,
+          "oldStudyActualsClosed": 6,
+          "newActualQuote": 0,
+          "comprehensive10800sSuiteActivated": false,
+          "fullNativeRunReviewVerifyApplyUsabilityProven": false,
+          "humanAcceptance": null,
+          "mainMerged": false,
+          "releasePublished": false,
+          "oldMeasuredResultsNotReevaluated": true
+        }
+      ]
     }
   ],
-  "nextAction": "Finite synthesis delivered privately and byte-identical exact private backup dc34459d accepted; no more study monitoring/Actuals/Canaries/refill. Await only concrete Designer source-regression/product completion callback under existing authorized mandate, verify exact source/check/review/usability before normal PR89/main integration. Comprehensive suite conditional unactivated; no new product proof quota or release.",
+  "nextAction": "Receive one terminal/pending callback for exact existing CI37925341863 and private Design identity recovery under900s/end12:14:06Z; verify remote/source/manifest/gates. No new source/test/build/native proof/study from this package. Normal autonomous workflow proof remains separate and unresolved, Main stays5be48ce/PR89 Draft until usable acceptance; finite study remains closed and automation paused.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -11675,95 +11990,94 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-09T11:23:42Z",
-    "sixthTerminalAcceptance": {
-      "status": "CLOSED / QUALIFIED PRIVATE TERMINAL EVIDENCE ACCEPTED; NO FURTHER ACTUALS",
-      "verifiedUtc": "2026-10-09T11:23:42Z",
-      "sourceSha": "57c862ad6ea887cf71b12e27d0fdb34a9ca09bb8",
-      "rootCleanExactPrivateRemoteVerified": true,
-      "rootWorkingRawGitPayloadBindings": 183,
-      "terminalSummarySha256": "544ef2b683390ba09d5e92147172b07acbf3a3618db3746d587c8abaced961b5",
-      "retainedManifestSha256": "8c1b319f2bf76459c28a5786f27965a4465b0246a67954f59502d5460b6ca50f",
-      "independentFinalSha256": "f97ba9b7a9efa58395f28b47fb9d5b9f778434ee2d5019108c6f3336b31923a9",
-      "closedLedgerSha256": "62cbeecc7038b26a07adb20396643d089c24f9570927f8b33bc551484446f834",
-      "closedStateSha256": "5b6281b070b8ab0e8931820319ac4e5458e4d4069a24303e11d8e829cb0e850d",
-      "snapshotDiagnosticsSha256": "0f58502f20ccf4a25f4ee6e2313002028bdcfb671aba88c06b519e32a5599878",
-      "measuredProductSource": "bcd614a3bfcd335e0ca18850993742057103c092",
-      "firstReservationUtc": "2026-10-09T10:41:22.133399Z",
-      "ledgerClosedUtc": "2026-10-09T10:59:50.085837Z",
-      "captureClosedUtc": "2026-10-09T11:03:06.933021Z",
-      "wallThroughCaptureSeconds": 1304.799622,
-      "wallNotComputeOrHumanTime": true,
-      "outerImplementationStarts": 1,
-      "freshNeutralFinalStarts": 1,
-      "helpers": 0,
-      "innerLedgerEntries": 0,
-      "allTwoEntriesReturnedClosed": true,
-      "knownOwnJobsTerminalOwnerReportedAndLedgerChecked": true,
-      "universalProcessProviderContainmentAttested": false,
-      "frozenMain": "ffcf65173c030e8718ab7098c8b461dfe03b0395",
-      "frozenMainTree": "f158d5274e98faf59217d23caa4afe92e09ca3da",
-      "featureHead": "8fe3df7e8f5c74173071793a8e399a364c2c5e4e",
-      "featureNotMerged": true,
-      "rawPreparedBindings": 54,
-      "exactWorkingRawGitBindings": 50,
-      "workingCRLFOnlyDifferences": 4,
-      "bothAssessmentCheckoutsUnchangedBeforeAfter": true,
-      "originalCaptureAssertionFailureRetained": true,
-      "postFreezeMutableRuntimeDirtyReason": "Own Final-parent/terminal-disabled resource metadata only; frozen candidate unaffected",
-      "rawActorCliOutputs": "Not separately exported; copied own messages/state/worklog retained; actual transcript/tool outputs not reconstructed or rerun",
-      "productReportedError": "project briefings/readiness: briefing bundle is invalid: incomplete definition identity",
-      "productRootReadonlyFinding": "Public store validates nonempty Namespace while public core validNamespace permits empty Namespace; source inconsistency verified, full actual causation not reproduced by Root",
-      "resultJudgmentsAndCaseCodePrivate": true,
-      "privateFinalFeedbackNotSentToDesignOrOldschool": true,
-      "finalWrapperExceptionPath": "NOT RUN/not exact-final independent review; genuine inner adapter compatibility not reached",
-      "unknowns": [
-        "serving model",
-        "provider tokens",
-        "billed cost",
-        "exact provider model clocks",
-        "human active supervision time",
-        "human acceptance"
+    "reviewedUtc": "2026-10-09T12:02:03Z",
+    "designIdentitySourceRegression": {
+      "status": "CLOSED / QUALIFIED SOURCE IDENTITY REGRESSION ACCEPTED, FINAL WINDOWS CI AND NATIVE USABILITY OPEN",
+      "verifiedUtc": "2026-10-09T12:02:03Z",
+      "sourceSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+      "productionAndBuildSourceSha": "ed3bc9102cbf2d2b5082ce6350acc7b9ffaf24bb",
+      "baselineStudySourcePreserved": "bcd614a3bfcd335e0ca18850993742057103c092",
+      "rootSourceCleanExactPublicRemoteVerified": true,
+      "rootSourceWorkingRawGitBindings": 8,
+      "rootArchiveOriginalPayloadBindings": 19,
+      "handoffSha256": "28b5ab47180e208993fd937d658f2a3c509667bcbe389e10faf8f42ad1a3417f",
+      "archiveSha256": "8527c8d391c893b695100d56832f6291702872964698126f11830cd9d5944bfd",
+      "previousEd3HandoffArchiveUnchangedHashVerified": true,
+      "binarySha256": "a1f304de6a08321e5307b57e8016bb6c5b8b40a9f5f5442da353c8139a6b557b",
+      "binaryNotRelabeledAsLaterMetadataBuild": true,
+      "metadataFollowupOnly": [
+        "markitect-artifacts.yaml",
+        "docs/validation/project-native-delivery-2026-10-09.md"
       ],
-      "rootReadErrata": [
-        "Candidate unchanged verification is a list, corrected Root object assumption after hash verification without source/test/actor change",
-        "Root initially looked for handoff JSON instead of retained text, corrected own read",
-        "Root source path/glob assumptions corrected by actual rg/file reads; no product reproduction or test credit"
+      "newExistingOwnerClaims": 3,
+      "exclusionsOrValidationWeakeningsAdded": false,
+      "sourceFix": "Host validates DefinitionIdentity.Valid using unchanged Core grammar; valid global namespace accepted, other malformed identities rejected; existing event/digest/provenance/reference/hash/history guards unchanged",
+      "rootSourceReviewDisposition": "Actual Core TypeReference normalizes apiVersion/kind from schema target at621-663; independent reviewer later shorthand objection rejected by public source, no production finding",
+      "ownerGenericReproduction": "Root read preserved local failurelog matching ordinary project readiness incomplete identity; source-contained generic fixture, no private study material",
+      "localTestBatches": [
+        {
+          "number": 1,
+          "status": "FAILED - original global error plus new fixture defects"
+        },
+        {
+          "number": 2,
+          "status": "FAILED - new test compile/schema/hierarchy defects; corrected but not locally rerun"
+        }
       ],
-      "rootNewProductRunnerChangesTestsModelsReviewers": 0,
-      "oldFailedAttemptsOriginalHashesAndUnknownsPreserved": true,
-      "noMethodOrEfficiencyWinnerFromEnvironmentOrIncompleteOutcome": true
+      "hostedLinuxGoSuiteOnEd3": "PASS, then ownership gate failed on three undeclared new tests; old failure preserved",
+      "exactFinalHostedCI": {
+        "verifiedUtc": "2026-10-09T12:00:15.691498+00:00",
+        "headSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+        "status": "in_progress",
+        "conclusion": "",
+        "jobs": [
+          {
+            "name": "Quality (windows-latest)",
+            "status": "in_progress",
+            "conclusion": "",
+            "activeSteps": [
+              "Test"
+            ]
+          },
+          {
+            "name": "Quality (ubuntu-24.04)",
+            "status": "completed",
+            "conclusion": "success",
+            "activeSteps": []
+          }
+        ]
+      },
+      "entireFinalHostedCI": "PENDING; Linux complete SUCCESS/Windows in Test, no aggregate Pass",
+      "ownerBuilds": 1,
+      "ownerTargetedMechanicalBatches": 2,
+      "freshSourceReviewers": 1,
+      "sourceReviewTurns": 2,
+      "wholeSourceReviewSeconds": 375.76,
+      "reviewerOwnChecksExecuted": 0,
+      "originalSourceReviewRequestBytes": "opaque preserved session data, no reconstructed server prompt attestation",
+      "productProviderNativeActorStudyCalls": 0,
+      "rootNewProductRunnerSourceChangesTestsModels": 0,
+      "runtimeUnchanged": true,
+      "rootCurrentRuntimePinsVerified": 6,
+      "normalRuntimeInstalledOrActivated": false,
+      "sealedUtc": "2026-10-09T11:45:32.608379Z",
+      "deliveryClosedUtc": "2026-10-09T11:55:16.3689387Z",
+      "issueToDeliveryConservativeSeconds": 2617.3689387,
+      "originalGrantNotAfterUtc": "2026-10-09T12:11:39Z",
+      "oldProductProofsClosed": 3,
+      "oldStudyActualsClosed": 6,
+      "newActualQuote": 0,
+      "comprehensive10800sSuiteActivated": false,
+      "fullNativeRunReviewVerifyApplyUsabilityProven": false,
+      "humanAcceptance": null,
+      "mainMerged": false,
+      "releasePublished": false,
+      "oldMeasuredResultsNotReevaluated": true
     },
-    "globalStartedAndClosed": 6,
-    "remainingTrialSlots": 0,
-    "privateSynthesisSha256": "db883b2ffd3a266b599942d2f626e1ce3ef5e31472f7ed5bfb3f56bc63cb8ff6",
-    "publicProductRegressionGrantSha256": "9e6470ff7f2444cad190954de41d07b40759dbf10e83bf9270bd0c787d7f2fb7",
-    "sourceHostedCINativeReadinessSeparate": true,
-    "rootProductRunnerChangesOrTests": 0,
-    "studyPauseVerified": true,
-    "privateSynthesisBackupAcceptance": {
-      "status": "CLOSED / EXACT PRIVATE SYNTHESIS BACKUP ROOT VERIFIED",
-      "verifiedUtc": "2026-10-09T11:25:27Z",
-      "ownerReportedVerifiedUtc": "2026-10-09T11:23:00.906879Z",
-      "privateSourceSha": "dc34459dfef9d31f3832fc0dafc14e6851b2f7ab",
-      "privateRef": "refs/heads/codex/government-scientist",
-      "privateRemote": "https://github.com/TheGlacius/markitect-research-backup.git",
-      "rootCleanExactRemoteVerified": true,
-      "additiveGitFiles": 4,
-      "workingRawGitBindings": 4,
-      "exactRootOriginalDocumentBindings": 2,
-      "documentSha256": "db883b2ffd3a266b599942d2f626e1ce3ef5e31472f7ed5bfb3f56bc63cb8ff6",
-      "bindingSha256": "4e53c1dff59703024893283ddc78a88c655dac1cba1db94d2c1a0f37e8829970",
-      "newModelsReviewersTestsBuildsProductProviderTrials": 0,
-      "semanticsNotIndependentlyReevaluated": true,
-      "original57cAndEarlierCandidatesPreserved": true,
-      "remainingGrantAuthority": false
-    },
-    "latestPublicRefsRootVerified": {
-      "verifiedUtc": "2026-10-09T11:25:27Z",
-      "refs/heads/main": "5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e",
-      "refs/heads/codex/model-first-operations": "bcd614a3bfcd335e0ca18850993742057103c092"
-    }
+    "nextConcreteOwnerTask": "design-identity-hosted-gate-and-recovery-20261009",
+    "studyBlockClosedAndObservationPaused": true,
+    "privateScientistStatesUntouched": true,
+    "noFurtherNativeOrStudyPermission": true
   },
   "publicAdapterHandoff": {
     "version": "1.1",
@@ -14770,6 +15084,12 @@
       "semanticsNotIndependentlyReevaluated": true,
       "original57cAndEarlierCandidatesPreserved": true,
       "remainingGrantAuthority": false
+    },
+    "latestPublicDesignSourceVerified": {
+      "verifiedUtc": "2026-10-09T12:02:03Z",
+      "sourceSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+      "ref": "refs/heads/codex/model-first-operations",
+      "privateOwnedHandoffRecoveryPending": true
     }
   },
   "designMainPromotionMandate": {
@@ -14852,12 +15172,127 @@
       "handoff": "Exact clean source/publicRemote SHA, focused positive/negative checks, independently reviewed delta, exact binary/runtime/installation if changed, own known limitations and required next usability proof. Report once; no ACK/occupation/followup loop.",
       "file": "docs/design/government/design-briefing-global-identity-regression-20261009-grant.json",
       "sha256": "9e6470ff7f2444cad190954de41d07b40759dbf10e83bf9270bd0c787d7f2fb7",
-      "status": "SENT ONCE / CONCRETE PUBLIC SOURCE REGRESSION ACTIVE",
+      "status": "CLOSED / QUALIFIED SOURCE IDENTITY REGRESSION ACCEPTED, FINAL WINDOWS CI AND NATIVE USABILITY OPEN",
       "sentOnceUtc": "2026-10-09T11:11:39Z",
       "toolAccepted": true,
       "hostHoldLifted": true,
       "oldProductProofsClosed": true,
-      "studyActualsClosed": true
+      "studyActualsClosed": true,
+      "terminalAcceptance": {
+        "status": "CLOSED / QUALIFIED SOURCE IDENTITY REGRESSION ACCEPTED, FINAL WINDOWS CI AND NATIVE USABILITY OPEN",
+        "verifiedUtc": "2026-10-09T12:02:03Z",
+        "sourceSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+        "productionAndBuildSourceSha": "ed3bc9102cbf2d2b5082ce6350acc7b9ffaf24bb",
+        "baselineStudySourcePreserved": "bcd614a3bfcd335e0ca18850993742057103c092",
+        "rootSourceCleanExactPublicRemoteVerified": true,
+        "rootSourceWorkingRawGitBindings": 8,
+        "rootArchiveOriginalPayloadBindings": 19,
+        "handoffSha256": "28b5ab47180e208993fd937d658f2a3c509667bcbe389e10faf8f42ad1a3417f",
+        "archiveSha256": "8527c8d391c893b695100d56832f6291702872964698126f11830cd9d5944bfd",
+        "previousEd3HandoffArchiveUnchangedHashVerified": true,
+        "binarySha256": "a1f304de6a08321e5307b57e8016bb6c5b8b40a9f5f5442da353c8139a6b557b",
+        "binaryNotRelabeledAsLaterMetadataBuild": true,
+        "metadataFollowupOnly": [
+          "markitect-artifacts.yaml",
+          "docs/validation/project-native-delivery-2026-10-09.md"
+        ],
+        "newExistingOwnerClaims": 3,
+        "exclusionsOrValidationWeakeningsAdded": false,
+        "sourceFix": "Host validates DefinitionIdentity.Valid using unchanged Core grammar; valid global namespace accepted, other malformed identities rejected; existing event/digest/provenance/reference/hash/history guards unchanged",
+        "rootSourceReviewDisposition": "Actual Core TypeReference normalizes apiVersion/kind from schema target at621-663; independent reviewer later shorthand objection rejected by public source, no production finding",
+        "ownerGenericReproduction": "Root read preserved local failurelog matching ordinary project readiness incomplete identity; source-contained generic fixture, no private study material",
+        "localTestBatches": [
+          {
+            "number": 1,
+            "status": "FAILED - original global error plus new fixture defects"
+          },
+          {
+            "number": 2,
+            "status": "FAILED - new test compile/schema/hierarchy defects; corrected but not locally rerun"
+          }
+        ],
+        "hostedLinuxGoSuiteOnEd3": "PASS, then ownership gate failed on three undeclared new tests; old failure preserved",
+        "exactFinalHostedCI": {
+          "verifiedUtc": "2026-10-09T12:00:15.691498+00:00",
+          "headSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+          "status": "in_progress",
+          "conclusion": "",
+          "jobs": [
+            {
+              "name": "Quality (windows-latest)",
+              "status": "in_progress",
+              "conclusion": "",
+              "activeSteps": [
+                "Test"
+              ]
+            },
+            {
+              "name": "Quality (ubuntu-24.04)",
+              "status": "completed",
+              "conclusion": "success",
+              "activeSteps": []
+            }
+          ]
+        },
+        "entireFinalHostedCI": "PENDING; Linux complete SUCCESS/Windows in Test, no aggregate Pass",
+        "ownerBuilds": 1,
+        "ownerTargetedMechanicalBatches": 2,
+        "freshSourceReviewers": 1,
+        "sourceReviewTurns": 2,
+        "wholeSourceReviewSeconds": 375.76,
+        "reviewerOwnChecksExecuted": 0,
+        "originalSourceReviewRequestBytes": "opaque preserved session data, no reconstructed server prompt attestation",
+        "productProviderNativeActorStudyCalls": 0,
+        "rootNewProductRunnerSourceChangesTestsModels": 0,
+        "runtimeUnchanged": true,
+        "rootCurrentRuntimePinsVerified": 6,
+        "normalRuntimeInstalledOrActivated": false,
+        "sealedUtc": "2026-10-09T11:45:32.608379Z",
+        "deliveryClosedUtc": "2026-10-09T11:55:16.3689387Z",
+        "issueToDeliveryConservativeSeconds": 2617.3689387,
+        "originalGrantNotAfterUtc": "2026-10-09T12:11:39Z",
+        "oldProductProofsClosed": 3,
+        "oldStudyActualsClosed": 6,
+        "newActualQuote": 0,
+        "comprehensive10800sSuiteActivated": false,
+        "fullNativeRunReviewVerifyApplyUsabilityProven": false,
+        "humanAcceptance": null,
+        "mainMerged": false,
+        "releasePublished": false,
+        "oldMeasuredResultsNotReevaluated": true
+      }
+    },
+    "currentHostedGateAndRecovery": {
+      "key": "design-identity-hosted-gate-and-recovery-20261009",
+      "issuedUtc": "2026-10-09T11:59:06Z",
+      "notAfterUtc": "2026-10-09T12:14:06Z",
+      "maxActiveSeconds": 900,
+      "ownerThread": "01a11c80-37aa-7fe0-9586-35d916ce6561",
+      "authority": "Continuing direct user pushed relevant states, mandatory source gates and version-bound Design/main handoff; exact existing hosted run and own sealed artifact backup only",
+      "sourceSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+      "buildSourceSha": "ed3bc9102cbf2d2b5082ce6350acc7b9ffaf24bb",
+      "hostedRunId": 37925341863,
+      "publicSourceRef": "refs/heads/codex/model-first-operations",
+      "scope": "Observe the already-running exact hosted CI to terminal with bounded ordinary gh watch/read; do not trigger another run. Preserve sealed handoff and failed local batches. Allowlisted owned original/current Handoffs/ZIPs/build/review/runtime/CI/delivery receipts and Root public-source integrity verification into one coherent PRIVATE recovery checkpoint; manifest exact bytes/remoteRef/SHA. No semantic product/test/doc modifications or additional checks/builds/models/reviewers/proofs/trials. If CI still running at end report pending, not Pass. Any concrete new gate failure report exact scope/source without automatic fix or rerun. Product actual-normal-workflow acceptance remains separate from CI/source repair.",
+      "evidenceDirectory": "C:/Users/Consiliari/AppData/Local/Temp/markitect-briefing-global-identity-20261009",
+      "rootReadonlyIntegrityReceipt": "C:/Users/Consiliari/Documents/Markitect-Overseer-Briefing-Identity-Root-Verification-20261009.json",
+      "privateDestination": "https://github.com/TheGlacius/markitect-research-backup.git",
+      "privateBackupRef": "refs/heads/codex/backup-design-briefing-identity-20261009",
+      "useOwnIsolatedRecoveryCheckout": true,
+      "ordinaryFileArchiveGitNetworkReadsOnly": true,
+      "maxNewBuildsLocalTestsCIStartsProviderNativeProductStudyCallsSourceReviewers": 0,
+      "originalThreeProductProofsAndSixStudyActualsRemainClosed": true,
+      "comprehensive10800sSuiteActivated": false,
+      "noMainMergeReleaseForceProtectionBypass": true,
+      "noScientistPrivateSourcesOrCasesOrAuthGlobalCaches": true,
+      "publishedSourceCleanAndPushedUnchanged": true,
+      "exactOneCallbackTerminalOrPendingAtDeadlineNoACK": true,
+      "historicalPinsAndEvidenceNeverRewrite": true,
+      "file": "docs/design/government/design-identity-hosted-gate-and-recovery-20261009-grant.json",
+      "sha256": "35f68c6e139c99b02320fa900cb10a08ba511d2ec1abecd35b8839ac0f3d3aec",
+      "status": "SENT ONCE / FINAL EXACT HOSTED GATE AND PRIVATE RECOVERY ACTIVE",
+      "sentOnceUtcApprox": "2026-10-09T11:59:35Z",
+      "toolAccepted": true
     }
   }
 }
