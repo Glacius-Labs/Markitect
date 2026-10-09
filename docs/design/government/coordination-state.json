@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T04:07:10Z",
+  "updatedUtc": "2026-10-09T04:10:08Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -8,33 +8,32 @@
   "sourceBaseline": "1ea5c76f55526fc4d721e865885436153f48b497",
   "automation": {
     "id": "jev-nach-markitect-grundmodell-untersuchen",
-    "status": "PAUSED",
+    "status": "ACTIVE",
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-09T03:34:02Z",
-    "verification": "automation_update PAUSED; saved TOML exact prompt/status/2h/Root binding verified",
+    "lastVerifiedUtc": "2026-10-09T04:10:08Z",
+    "verification": "automation_update ACTIVE; exact saved TOML prompt/status/2h/Root target verified, quiet callbacks preserved",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
     "latestMandateUpdatedUtc": "2026-10-08T22:54:35Z",
     "reportOnMeaningfulChange": true,
     "mode": "event-driven callbacks with two-hour fallback",
     "coordinatedThreadIds": [
-      "01a1169b-9357-7df3-a8f6-f913557c782a",
+      "01a11c80-37aa-7fe0-9586-35d916ce6561",
       "01a1169c-3df6-7571-997d-48ab57365875",
-      "01a111ec-a913-7830-91b0-925d0a1dd1b2",
-      "01a11928-cc8d-7580-9d29-f6557bb2cbd7",
-      "01a11c80-37aa-7fe0-9586-35d916ce6561"
+      "01a11928-cc8d-7580-9d29-f6557bb2cbd7"
     ],
     "classicMainMandateUpdatedUtc": "2026-10-08T16:08:57Z",
     "classicMainMandateVerified": true,
     "pausedUtc": "2026-10-09T03:34:02Z",
     "pauseReason": "Explicit finite-block terminal instruction: final evidence synthesis verified, no evidenced equal fulltool/realusage admission. Stop researchloop with honest incomplete comparison, no automatic capability/prep/refill. Separate younger direct Design productwork unaffected.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
-    "resumedUtc": "2026-10-08T21:28:26Z",
-    "promptSha256": "d1df677c9a5f63fdbe2ea18d1e122ae7852b7bba1219294e4088ed0f54f14f68",
-    "name": "Markitect: Vergleich und fünf Arbeitschats koordinieren",
-    "currentGrantContext": "All actual/preparation/synthesis grants closed, remainingauthority0; sixunusedunallocated. Researchobserverpaused; no automatic newstudycells/diagnoses.",
-    "exactSavedTomlVerified": true
+    "resumedUtc": "2026-10-09T04:10:08Z",
+    "promptSha256": "3d7cad31641bcd7c647454e7da9a100eb138dc2ea141548ce0871bdfc4a6ec72",
+    "name": "Markitect: Produktabschluss und Luna-Case-Studies",
+    "currentGrantContext": "Design productproof3jobs/7200nativeSeconds/128outerStartsLunaHigh; Scientistprep90min2mechanicalbatches/1LunaReadonlyResearchReviewer/zeroActuals; Oldschool45minzeroActors; alloldActualrestclosed; newmax6trialsunallocated",
+    "exactSavedTomlVerified": true,
+    "resumeReason": "New detailed direct user mandate9Oct: Design fullworkflow/docs/main and simple LunaConventional/newMarkitect nest. Historical researchpause remains correct for oldblock."
   },
   "threads": [
     {
@@ -42,7 +41,7 @@
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
       "afterCursor": "021842db-4338-41c4-887e-a41be4678e53:2",
-      "lastObservedStatus": "active",
+      "lastObservedStatus": "archived",
       "activeTurn": {
         "id": "01a11dff-2aa8-7670-8008-c0de5a47b978",
         "status": "inProgress"
@@ -61,9 +60,11 @@
         "sourceAuthority": "Direct detailed user mandate9Oct2026 in Overseer chat; supersedes prior paused research/ClassicMain choice for future work",
         "document": "docs/design/work-item-comparison-20261009.md",
         "scope": "No further standalone Government comparisons/expansion from oldgrant; optional future integration belongs Design",
-        "status": "ISSUED NOT YET DISPATCHED",
+        "status": "NOT DELIVERED: Worker already archived; remains retired, no unarchive/retry",
         "maxPreparationWallSecondsFromDispatch": null,
-        "actualStudyQuota": 0
+        "actualStudyQuota": 0,
+        "sentUtc": "2026-10-09T04:07:24Z",
+        "toolAccepted": false
       },
       "evidence": {
         "summary": ".artifacts/government-g1/budget-final-summary.json",
@@ -469,8 +470,8 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:92",
-      "lastObservedStatus": "idle",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:93",
+      "lastObservedStatus": "active",
       "activeTurn": {
         "id": "01a11e96-f8ee-7631-887e-f9561fc4297a",
         "status": "completed"
@@ -489,14 +490,23 @@
         "sourceAuthority": "Direct detailed user mandate9Oct2026 in Overseer chat; supersedes prior paused research/ClassicMain choice for future work",
         "document": "docs/design/work-item-comparison-20261009.md",
         "scope": "Simple two-arm normal-workitem nest/seeds/backlog/evaluation/metrics, no actuals or product capability substitution",
-        "status": "ISSUED NOT YET DISPATCHED",
+        "status": "SENT ONCE; active work or retirement instruction, no repeated order",
         "maxPreparationWallSecondsFromDispatch": 5400,
         "actualStudyQuota": 0,
         "limits": {
           "mechanicalCheckBatchesMax": 2,
-          "freshReadonlyReviewersMax": 1,
-          "reviewerModel": "gpt-6-luna/high",
-          "newProductActorsProviderCliAppserverBuildsFullTrials": 0
+          "freshReadonlyResearchReviewersMax": 1,
+          "researchReviewerModel": "gpt-6-luna/high",
+          "executingProductCaseActors": 0,
+          "providerSessionsAppserverProbesProductBuildsFullTrials": 0,
+          "nonModelCliMetadataAllowed": true
+        },
+        "sentUtc": "2026-10-09T04:07:22Z",
+        "toolAccepted": true,
+        "notAfterUtc": "2026-10-09T05:37:22Z",
+        "metadataClarification": {
+          "sentOnceUtcApprox": "2026-10-09T04:10:08Z",
+          "scope": "Ordinary non-model CLI --help/--version allowed. No executing product/case Actor/provider session/Appserver probe. Scientist exactly one independent readonly LunaHigh researchReviewer within original90min, Oldschool zerochildren/tests. No extension/refill."
         }
       },
       "evidence": {
@@ -9240,8 +9250,10 @@
           "supersededUtc": "2026-10-08T23:58:37Z"
         }
       ],
-      "lastObservedUtc": "2026-10-09T03:34:02Z",
-      "futureAutomaticAuthorityFromOldGrants": 0
+      "lastObservedUtc": "2026-10-09T04:10:08Z",
+      "futureAutomaticAuthorityFromOldGrants": 0,
+      "lastObservedTurnId": "01a11ed8-2004-7f50-93c7-7e11b968c380",
+      "lastObservedPublicProgress": "Für den geplanten Codex-Einstieg verwende ich die OpenAI-Docs-Skill. Dabei bleiben Luna High und die normalen Projektwerkzeuge erhalten; fehlende Token- oder Kostenreceipts werden als unbekannt erfasst und verhindern keine funktionale Bewertung."
     },
     {
       "name": "Architect",
@@ -9562,9 +9574,11 @@
         "sourceAuthority": "Direct detailed user mandate9Oct2026 in Overseer chat; supersedes prior paused research/ClassicMain choice for future work",
         "document": "docs/design/work-item-comparison-20261009.md",
         "scope": "Retire active oldClassic line, preserve branches/worktrees/evidence, no new implementation/study work",
-        "status": "ISSUED NOT YET DISPATCHED",
+        "status": "SENT ONCE; active work or retirement instruction, no repeated order",
         "maxPreparationWallSecondsFromDispatch": null,
-        "actualStudyQuota": 0
+        "actualStudyQuota": 0,
+        "sentUtc": "2026-10-09T04:07:23Z",
+        "toolAccepted": true
       },
       "heldCandidateSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
       "followupWorktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
@@ -9759,8 +9773,8 @@
       "name": "Oldschool",
       "threadId": "01a11928-cc8d-7580-9d29-f6557bb2cbd7",
       "hostId": "local",
-      "afterCursor": "5600487e-cdb2-4e37-96f6-759aef4307d4:1",
-      "lastObservedStatus": "notLoaded",
+      "afterCursor": "5600487e-cdb2-4e37-96f6-759aef4307d4:2",
+      "lastObservedStatus": "active",
       "activeTurn": null,
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Hold after accepted case-independent baseline preparation; await bounded fresh-cell assignment.",
@@ -9817,11 +9831,21 @@
         "sourceAuthority": "Direct detailed user mandate9Oct2026 in Overseer chat; supersedes prior paused research/ClassicMain choice for future work",
         "document": "docs/design/work-item-comparison-20261009.md",
         "scope": "Fall-independent strong Conventional native nest/AGENTS/continuation/closure contribution, no actuals",
-        "status": "ISSUED NOT YET DISPATCHED",
+        "status": "SENT ONCE; active work or retirement instruction, no repeated order",
         "maxPreparationWallSecondsFromDispatch": 2700,
-        "actualStudyQuota": 0
+        "actualStudyQuota": 0,
+        "sentUtc": "2026-10-09T04:07:23Z",
+        "toolAccepted": true,
+        "notAfterUtc": "2026-10-09T04:52:23Z",
+        "metadataClarification": {
+          "sentOnceUtcApprox": "2026-10-09T04:10:08Z",
+          "scope": "Ordinary non-model CLI --help/--version allowed. No executing product/case Actor/provider session/Appserver probe. Scientist exactly one independent readonly LunaHigh researchReviewer within original90min, Oldschool zerochildren/tests. No extension/refill."
+        }
       },
-      "futureAutomaticAuthorityFromOldGrants": 0
+      "futureAutomaticAuthorityFromOldGrants": 0,
+      "lastObservedUtc": "2026-10-09T04:10:08Z",
+      "lastObservedTurnId": "01a11ed8-2226-7121-8b1a-b79d0500340a",
+      "lastObservedPublicProgress": "Ich lege den Conventional-Nest-Beitrag im vorgegebenen separaten Verzeichnis an. Dafür lese ich die gemeinsame Designvorgabe und nutze den Skill openai-docs für die nativen Codex-Schnittstellen; Actor- und Studienstarts bleiben ausgesetzt."
     },
     {
       "name": "Design",
@@ -9831,7 +9855,7 @@
       "lastObservedStatus": "active",
       "candidateSha": "11f080815722089d84869fef536b94cae9321e74",
       "candidateStatus": "Publicremoteprovisionalcheckpoint, nativeReadiness running, no acceptedstudyfreeze",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:16",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:17",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac852a43fa08191a8d8e593c901cb96",
       "assignedMilestone": "Held bounded source7d/doc11f candidate and exact private recovery; no new source/runtime/study assignment",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
@@ -10066,7 +10090,7 @@
         "sourceAuthority": "Direct detailed user mandate9Oct2026 in Overseer chat; supersedes prior paused research/ClassicMain choice for future work",
         "document": "docs/design/work-item-comparison-20261009.md",
         "scope": "Full accepted design implementation and native userworkflow, stable product validation, replacement README/docs, main promotion; smallest autonomous workitem entry productowned",
-        "status": "ISSUED NOT YET DISPATCHED",
+        "status": "SENT ONCE; active work or retirement instruction, no repeated order",
         "maxPreparationWallSecondsFromDispatch": null,
         "actualStudyQuota": 0,
         "nativeProductProofLimits": {
@@ -10077,13 +10101,15 @@
           "reasoning": "high",
           "noAutomaticRefill": true,
           "buildsSourceChecksSeparateFiniteRepoTimeouts": true
-        }
+        },
+        "sentUtc": "2026-10-09T04:07:22Z",
+        "toolAccepted": true
       },
       "activeTurn": {
         "id": "01a11e76-c579-7ab1-997a-3cfe2e836cb8",
         "status": "completed"
       },
-      "lastObservedUtc": "2026-10-09T03:31:00Z",
+      "lastObservedUtc": "2026-10-09T04:10:08Z",
       "currentDirectWorkObservation": "Owner running later direct product cleanup/reconcile work with independent inventory findings; prior accepted source7d001579/doc11f0808 remain historical frozen readiness. No new research allocation from Root.",
       "assignmentHistory": [
         {
@@ -10095,10 +10121,12 @@
           "deliveryConfirmed": true
         }
       ],
-      "futureAutomaticAuthorityFromOldGrants": 0
+      "futureAutomaticAuthorityFromOldGrants": 0,
+      "lastObservedTurnId": "01a11e93-9e21-70d3-a0ff-149803f831a8",
+      "lastObservedPublicProgress": "Der Prüfbericht hält jetzt die 56 bestandenen Go-Pakete, 63 Adapter-Protokolltests und 12 Shop-Tests mit ihren tatsächlichen Quellständen fest. Die abschließende Artefaktprüfung hat noch einen fehlenden Registereintrag für den neuen Bericht gefunden; der genaue Pfad ist ergänzt. Es fehlen nur noch Dokumentationsreview und Push."
     }
   ],
-  "nextAction": "Dispatch new Design/Scientist/Oldschool mandates once; notify Architect/Worker of retired lines; resume quiet2h coordination for newmandate, preserve alloldclosed evidence. Scientist prepares simple nest; Design completes product/docs/main. No actual study allocation until concrete readiness.",
+  "nextAction": "Await once-only owner progress/terminal callbacks. Design completes current operations then remaining required product workflow, documentation/main and minimal autonomous WorkItem capability. Scientist/Oldschool prepare simple nests under current finite windows; relay public baseline contribution after actual receipt. No Actual study allocation yet; Root may grant concrete finite pair once seeds/nativeentry/Luna/budget ready. Worker archived, no unarchive. No repeated orders or routine reports.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -10109,7 +10137,7 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-09T04:07:10Z",
+    "reviewedUtc": "2026-10-09T04:10:08Z",
     "evidenceLevel": "Terminal Scientist3250da0 clean/private exact/6newWorkingGit+55retainedWorkingGit+originalTask1hash verified; final public source recipe review and scope qualifications addressed",
     "coordinationActions": [
       "Accepted terminal documentary synthesis without rerun or privateOracle decoding",
@@ -10120,7 +10148,7 @@
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-09T03:34:02Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-09.md",
-    "observationStatus": "New direct user mandate supersedes prior researchpause for futurework; owner dispatches pending",
+    "observationStatus": "New direct mandate dispatched; Design/Scientist/Oldschool active, oldClassicretirement sent, Worker archived. New quiet2h observer ACTIVE, zeroActuals allocated.",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z",
     "latestQuietFallback": {
@@ -10682,7 +10710,7 @@
       "authorizedUtc": "2026-10-09T04:07:10Z",
       "status": "NEW DIRECT MANDATE, PREPARATION ONLY",
       "document": "docs/design/work-item-comparison-20261009.md",
-      "documentSha256": "a78237d9cb8740338a922ada89913040f1341af7ad8314c7d85e02db230f7a1b",
+      "documentSha256": "afd191659ee4f045ba06b91c9901b9d1e305e427b5d7c92359aae0d4b9d5419e",
       "arms": [
         "Strong Conventional Agentic Coding",
         "New Markitect from Design"
