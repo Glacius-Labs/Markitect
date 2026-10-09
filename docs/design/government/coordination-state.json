@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T17:30:31Z",
+  "updatedUtc": "2026-10-09T17:34:10Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16111,7 +16111,21 @@
       "nativeStarts": 0,
       "newGrant": false,
       "mainMerge": false,
-      "release": false
+      "release": false,
+      "recoveryFollowup": {
+        "sourceSha": "a1d3a61f4d0b343d5d91cda5063a8a86faa43f46",
+        "cleanAndExactPublicRemoteSha": "4840bac0ac96a13e224f353bf926d6779ef3101e",
+        "rootVerifiedUtc": "2026-10-09T17:34:10Z",
+        "rootVerified": "Clean actual HEAD/public remote; only owned git_service/two new reopen files/handoff delta, exact API/limits handoff read",
+        "implementation": "Explicit ReopenCandidate validates original owner marker outside CWD, request/handle/scope/source-WIP/parent overlay/BaseDigest/Git identity; no output rewrite/agent replay",
+        "authority": "trusted Host journal proves original thread AND turn terminal and reconciled children; model/parent completion alone insufficient; active/unknown/partial child refuses intact",
+        "priorGapStatus": "Historical automatic adoption absent retained; new explicit journal-confirmed source seam added, full transport recovery acceptance still open",
+        "checks": "Owner-reported focused70.130s/0.359s tests/vet/check and bounded review PASS; Root no redundant rerun",
+        "next": "Integration two new artifact paths/wiring and actual recovery validation; no extra grant",
+        "nativeStarts": 0,
+        "mainMerge": false,
+        "release": false
+      }
     },
     "appServerModuleHandoff": {
       "verifiedUtc": "2026-10-09T17:30:31Z",
