@@ -71,4 +71,6 @@ Native instructions route agents toward conversational Explore and the model/imp
 
 ## Implementation and evidence status
 
+The [9 October validation record](validation/project-operations-2026-10-09.md) binds local gates and the public Shop smoke to their actual source revisions, including the retained failed first suite and its fixture correction.
+
 The source includes deterministic subprocess fixtures for the integrated Run/Verify/guarded-Apply lifecycle; those fixtures test Host protocol mechanics, not real Codex or Claude provider runs (NOT RUN), semantic correctness, complete product acceptance, or productivity gains. Focused onboarding Go tests pass for initialization on a named unborn feature branch, preview and guarded Apply without a commit, a second idempotent preview/write, preservation of pre-existing native instruction bytes, and onboarding the legacy hidden documentation destination without changing its manifest. These test Host writes, not live native providers. Explore drafts, durable open-decision/readiness state, and iterative Brownfield return to the model are still planned. Those gaps remain visible in the [model-first design](design/project-world/model-first-user-workflow.md) and [implementation plan](design/project-world/implementation-plan.md).

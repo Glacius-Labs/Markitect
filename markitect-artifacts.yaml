@@ -168,6 +168,7 @@ spec:
     - docs/project-operations.md
     - internal/host/cli/project_dispatch_test.go
     - docs/validation/project-world-delivery.md
+    - docs/validation/project-operations-2026-10-09.md
   tooling:
     - path: docs/validation/classic-commerce-entrypoint.md
       owner: classic-commerce-public-example-validation
@@ -2127,6 +2128,8 @@ spec:
     - path: internal/host/projectwork/runtime_edit_test.go
       owner: project-world-implementation
     - path: docs/validation/project-world-delivery.md
+      owner: project-world-validation
+    - path: docs/validation/project-operations-2026-10-09.md
       owner: project-world-validation
     - path: internal/host/projectrun/process_e2e_test.go
       owner: project-world-implementation
