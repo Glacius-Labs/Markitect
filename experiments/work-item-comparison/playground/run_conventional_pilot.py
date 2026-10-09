@@ -72,8 +72,6 @@ def setup(case, backend, destination, plan, executable, version, source_sha, ove
     sources += [ROOT / "conventional_wrapper.py", Path(__file__).resolve(), ROOT / "lifecycle.py",
                 ROOT / "public/common/checks/acceptance.py", executable]
     user_config = Path("C:/Users/Consiliari/.codex/config.toml")
-    if user_config.exists():
-        sources.append(user_config)
     options = {"sandbox": "workspace-write", "approvalPolicy": "never", "memoryEnabled": False,
                "nativeHelperModel": plan["model"], "nativeHelperEffort": plan["effort"]}
     config = {"schema": 1, "execution_authorized": True, "actualOrderPath": str(order_path),
@@ -84,6 +82,7 @@ def setup(case, backend, destination, plan, executable, version, source_sha, ove
               "runtimeBinding": {"executableVersion": version, "sourceCommit": source_sha,
                    "userConfigSha256": digest(user_config) if user_config.exists() else None,
                    "effectiveModel": None, "effectiveEffort": None, "configurationChanges": "child-local overrides only",
+                   "userConfigBindingPolicy": "observed full-file hash; mutable UI config is not an admission pin; inherited/effective loaded values unknown",
                    "serverManagement": "owned_stdio" if backend == "codex-app-server" else "native_exec",
                    "externalEndpointRequired": False, "sharedHost": True, "referenceEquivalence": "unverified"}}
     save(config_path, config)
@@ -194,7 +193,7 @@ def trajectory(case, backend, destination, plan, executable, version, source_sha
         turn = run_turn(config,audit,parent,expiry,stage)
         if "runId" in turn:
             result["startAccounting"]["outerAttempts"] += 1
-        lifecycle.record_execution(audit,{"station":stage,"wrapperState":turn["state"],"wrapperRunId":turn.get("runId"),
+        lifecycle.record_execution(audit,metadata={"station":stage,"wrapperState":turn["state"],"wrapperRunId":turn.get("runId"),
                                          "nativeSessionId":turn.get("nativeSessionId"),"nativeTurnId":turn.get("nativeTurnId")})
         if turn["state"] in {"uncertain","needs_input"}:
             # Never snapshot changing source as complete or replay an unresolved native turn.

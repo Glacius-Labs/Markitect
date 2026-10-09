@@ -52,3 +52,5 @@ documents CLI permissions. These interface documents do not establish runtime
 equivalence or scientific results. [The finite pilot plan](pilots/conventional-wrapper-runtime-pilot-20261009/plan.json)
 is a newer Conventional-only order; it does not reopen old attempts or require
 Markitect to finish first. Paired method comparisons remain unbound.
+
+The first native pilot exposed mutable user-config drift and a Windows shell setup failure. Original bindings remain untouched. For the still-unused second trajectory, explicit child-local model/effort/rights/memory/helper settings are pinned in the exact config; the full user-config hash is an observation, not an admission pin. Inherited settings and actual loaded config remain unverified. This is a prospective correction, not ordinary CLI parity or a change to old evidence.

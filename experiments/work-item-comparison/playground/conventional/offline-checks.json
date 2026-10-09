@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "scope": "offline fixtures only; typed runtime setup correction and pilot controller syntax; no native implementing actor",
+  "scope": "46 provider-free fixtures including four-station lifecycle integration and nonfatal MCP observer failure; no native implementing actor",
   "command": [
     "C:/Python313/python.exe",
     "-B",
@@ -13,27 +13,29 @@
     "test_conventional*.py",
     "-v"
   ],
-  "startedAt": "2026-10-09T18:46:32.596449+00:00",
-  "endedAt": "2026-10-09T18:46:40.071056+00:00",
-  "durationSeconds": 7.475,
+  "startedAt": "2026-10-09T18:50:53.625620+00:00",
+  "endedAt": "2026-10-09T18:51:13.327048+00:00",
+  "durationSeconds": 19.701,
   "exitCode": 0,
   "testedSourcesSha256": {
+    "experiments/work-item-comparison/playground/continue_conventional_pilot.py": "b4287a751f6869284f50fa8e2c06e5c72c089a26a6f300fa7b6c319a9735b4aa",
     "experiments/work-item-comparison/playground/conventional/__init__.py": "d5113c22eef217fce313aad32623c5b3dbd97c47f739c298ab118e951fc1b798",
     "experiments/work-item-comparison/playground/conventional/backends.py": "f2f86edfa749e8af0f1e629ebab01b94c2d82ab67f2c9fc0a7dc1a61bfa2600d",
     "experiments/work-item-comparison/playground/conventional/mcp.py": "247d68696cfa7c52265c7d6e978a8b0726750e82b1f9b1321b8cf12eb8e4c2b9",
     "experiments/work-item-comparison/playground/conventional/service.py": "713d191f1b6f4a4d4fa8f47dfe54db4caed628907e961e7bca77975004e4cc2f",
     "experiments/work-item-comparison/playground/conventional_wrapper.py": "f24759f673e10965751ee718bf6022a219788ea22e0e6bf15c749e40cf6db5c2",
-    "experiments/work-item-comparison/playground/run_conventional_pilot.py": "0b63033b8c2675d4dc689a2a4883f4a9c80ef0c6d40f9e7c40fd4dcb8e94ab5d",
+    "experiments/work-item-comparison/playground/run_conventional_pilot.py": "20b1a23a702cea0d36797e48d09ba44acb76abfac68fb5dce536646cc4305d52",
     "experiments/work-item-comparison/playground/tests/test_conventional_backends.py": "6fd6b374150ead2cff94964fb89a49029da5d5c07ed2ef6deeb8515880bcb724",
     "experiments/work-item-comparison/playground/tests/test_conventional_integration.py": "18da293f36d398ac87a5eac5fe8f292a42c5f47f0c51541092c5a3fb3e46a45a",
     "experiments/work-item-comparison/playground/tests/test_conventional_mcp.py": "f8c8e5dc27dbd24bece13354f3ad2882bce19f68fa7e0f419009e33c567020ab",
+    "experiments/work-item-comparison/playground/tests/test_conventional_pilot.py": "801f8a227ea3bb2e26b3375c4c23e29940f7d2ce209ca63a4423552903a37838",
     "experiments/work-item-comparison/playground/tests/test_conventional_service.py": "e2aa35c6ea49246e6f368db87b6c1757fb4fc4cd4425b26cb9a7749ba438c4d7"
   },
   "sourcesUnchangedDuringCheck": true,
-  "logSha256": "73a6cc01c822b676ef8cb184cc63722b14b255f5e8f2c4123d73047d52a755c2",
-  "capturedTechnicalLogSha256": "e3c108a1c0975cee1a0602fc4a2e3a596f240c8042e74b51ecfa5c9ce27df5bd",
+  "logSha256": "9b0822a5e6246380dfa06439ba71ff25d331d3ed8ade7c593be3d5d7049696a3",
+  "capturedTechnicalLogSha256": "e3045b6951cdb2baac023149af8710eab63c63292b727d93c643152c3b028be8",
   "logNormalization": "CRLF to LF technical log only; native receipts byte preserving",
-  "previousCheckpoint": "df6db9cc846378769efc9b8596b2a9736efe0425",
+  "previousCheckpoint": "cb7a92ae617735fe5ae1857004917ffcf8dfeaba",
   "nativeRuntimeTested": false,
-  "specificPilotAuthority": "pilots/conventional-wrapper-runtime-pilot-20261009/plan.json; generic example disabled"
+  "specificPilotAuthority": "original finite pilot; no Roombook replay; unused BF trajectory only"
 }

@@ -7,13 +7,13 @@ The original source checkpoint `df6db9cc846378769efc9b8596b2a9736efe0425` opened
 
 ## Focused result
 
-**44/44 PASS**, `7.475s` driver wall time, exit 0. The prior 41-fixture result remains in the original checkpoint.
+**46/46 PASS**, `19.701s` driver wall time, exit 0. The prior 41-fixture result remains in the original checkpoint.
 The exact command, UTC interval, tested source byte hashes and the syntax-checked pilot controller hash and technical log
 hash are in [offline-checks.json](offline-checks.json); output is retained in
 [offline-checks.log](offline-checks.log). Source hashes did not change during the check.
 The technical unittest log is normalized from CRLF to LF for Git; the captured
 pre-normalization hash is retained in the record. Native wire bytes are unchanged.
-Technical log SHA-256: `73a6cc01c822b676ef8cb184cc63722b14b255f5e8f2c4123d73047d52a755c2`.
+Technical log SHA-256: `9b0822a5e6246380dfa06439ba71ff25d331d3ed8ade7c593be3d5d7049696a3`.
 
 ```powershell
 C:/Python313/python.exe -B -m unittest discover -s experiments/work-item-comparison/playground/tests -p test_conventional*.py -v
@@ -69,3 +69,5 @@ current freeze and assessment templates. No old evidence was rescored or replace
 The files are source-prepared and offline-checked. The finite pilot is separately authorized; native results are recorded separately. Transport parity, Markitect method effects, economic benefit and human acceptance remain unestablished.
 
 Runtime setup checks cover typed workspace-write/approval/memory/helper overrides, rejection before dispatch, and legacy configs. Pilot approval=never and memories=false are declared deviations from an ordinary interactive CLI session. Owned stdio needs no external daemon. The controller reserves 15 minutes within each four-hour job for capture/assessment and uses a shared eight-hour deadline. An operator MCP observation error is recorded while the same native controller continues; unresolved ownership blocks the next trajectory.
+
+The first real pilot also exposed a controller call-site error after authoritative native completion. The metadata argument is now keyword-only at the call site. Two new provider-free controller fixtures execute the full four-stage capture/assessment/freeze path and verify that observer failure records evidence without stopping the owned actor. No real trajectory was replayed. The separate continuation script admits only the original terminal first receipt and still-unused BF destination, preserves the original overall expiry, and rejects repeated reconciliation/second-case setup.
