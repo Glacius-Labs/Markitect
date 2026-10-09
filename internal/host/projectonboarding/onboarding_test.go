@@ -411,6 +411,13 @@ func TestModelFirstWorkflowCoversShortWorkItemsReadinessAndBrownfieldAdoption(t 
 	}
 	workflow := fileFor(t, Plan{Files: files}, workflowPath).Content
 	for _, required := range []string{
+		"The model-first selector in this repository is .markitect/project.yaml",
+		"markitect project schema",
+		"markitect project index --repo PATH",
+		"Index returns the selected model and full Manager identities",
+		"An empty initial model is a starting point",
+		"top-level markitect init authors the historical Project/Domain format",
+		"Do not create markitect.yaml or .markitect/areas/ as a substitute",
 		"short Work Item, issue, bug, idea",
 		"explicit decision ledger",
 		"recover durable state",

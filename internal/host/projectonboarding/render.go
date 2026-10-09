@@ -44,6 +44,14 @@ func renderWorkflow(documentationPath string) (string, error) {
 
 This file is the shared workflow for contributors using Codex and Claude. Treat the selected Markitect project model as the canonical description of intended behavior, ownership, artifacts, checks, and relationships. Code, tests, documentation, and infrastructure realize that model; their presence alone does not prove they agree with it.
 
+The model-first selector in this repository is .markitect/project.yaml. It names the canonical YAML model files, initially .markitect/model/manager.yaml, and project policy; .markitect/runtime.yaml supplies execution configuration. Use the markitect project command surface throughout this workflow. Inspect the actual authoring contract and current Manager IDs before preparing model mutations:
+
+    markitect project schema
+    markitect project index --repo PATH
+    markitect project check --repo PATH
+
+The schema command returns the exact model schema without reading a repository. Index returns the selected model and full Manager identities; check reports structure and repository coverage. For an initialized project, extend its selected model through project edit. An empty initial model is a starting point: within the Work Item's delegation, define the required concepts, artifact ownership and verification checks before readiness. Initialization of a new project uses markitect project init; top-level markitect init authors the historical Project/Domain format and does not establish this selected model. Do not create markitect.yaml or .markitect/areas/ as a substitute for model-first authoring. Diagnose missing coverage or checks and repair the selected model within your authority; escalate only material intent or authority that the Work Item does not delegate.
+
 ## Start from an ordinary work item
 
 When a contributor gives a short Work Item, issue, bug, idea, or casual change request, use this model-first skill as the default starting workflow. Treat the short request as an entry point, not as complete requirements or authorization to skip exploration. Let the contributor explain the project and desired outcome in ordinary language and conversation; do not require Markitect commands or YAML knowledge.
@@ -179,11 +187,11 @@ These repository instructions help the selected agent follow the workflow. They 
 }
 
 func codexEntry() string {
-	return "For a short Work Item, issue, bug, idea, or change request, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, satisfy the repository's actual readiness review and acknowledgement policy using your own authorized actor, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Ask only for material intent or authority outside the Work Item's delegation, or review the repository policy explicitly reserves for a human. Resume persisted work without replaying completed work."
+	return "For a short Work Item, issue, bug, idea, or change request, use markitect project with the repository's .markitect/project.yaml selector, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, satisfy the repository's actual readiness review and acknowledgement policy using your own authorized actor, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Ask only for material intent or authority outside the Work Item's delegation, or review the repository policy explicitly reserves for a human. Resume persisted work without replaying completed work."
 }
 
 func claudeEntry() string {
-	return "For a short Work Item, issue, bug, idea, or change request, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, satisfy the repository's actual readiness review and acknowledgement policy using your own authorized actor, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Ask only for material intent or authority outside the Work Item's delegation, or review the repository policy explicitly reserves for a human. Resume persisted work without replaying completed work."
+	return "For a short Work Item, issue, bug, idea, or change request, use markitect project with the repository's .markitect/project.yaml selector, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, satisfy the repository's actual readiness review and acknowledgement policy using your own authorized actor, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Ask only for material intent or authority outside the Work Item's delegation, or review the repository policy explicitly reserves for a human. Resume persisted work without replaying completed work."
 }
 
 func skillDescription() string {
@@ -195,7 +203,7 @@ func skillFile(name, description, entry string) string {
 }
 
 func skillEntry() string {
-	return "When a short Work Item, issue, bug, or idea arrives, read the repository-root .markitect/workflows/model-first.md and follow it as the default. It covers a persistent decision ledger, iterative brownfield reverse-modeling, repository-policy acceptance at a committed model revision, computed first-scope readiness, bounded Manager and reviewer responsibilities, Plan/Run/Verify/Apply, first-success completion, and resuming persisted work without replay."
+	return "When a short Work Item, issue, bug, or idea arrives, use markitect project with .markitect/project.yaml, read the repository-root .markitect/workflows/model-first.md and follow it as the default. Inspect markitect project schema for the model contract and markitect project index --repo PATH for current Manager identities. The workflow covers a persistent decision ledger, iterative brownfield reverse-modeling, repository-policy acceptance at a committed model revision, computed first-scope readiness, bounded Manager and reviewer responsibilities, Plan/Run/Verify/Apply, first-success completion, and resuming persisted work without replay."
 }
 
 func managedBlock(body string) string {
