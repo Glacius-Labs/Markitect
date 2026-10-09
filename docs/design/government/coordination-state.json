@@ -16871,5 +16871,26 @@
     "scope": "Existing known runtime/config/logs and official docs only, distinguish packagedalpha versus Windows workspace-write setup; no edits/tests/models/installs/policy changes/global inventories",
     "nativeProductCalls": 0,
     "integrationNotifiedPublicInterfaceOnly": true
+  },
+  "playgroundVariantAdapterEvaluation20261009": {
+    "verifiedUtc": "2026-10-09T19:21:13Z",
+    "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
+    "directUserTurnVerified": "01a12219-9be4-7f82-8e77-d67bd4a43ac6",
+    "authority": "User asks Scientist to evaluate hooks/interfaces with variant-owned adapters for repeated comparisons",
+    "status": "EVALUATION_REPORTED_NO_IMPLEMENTATION_ORDER",
+    "inspectedSourceSha": "f056d39a5236f28a6474f011c314d4007277ce87",
+    "rootVerified": "Clean current Scientist worktree; actual user evaluation request; separate lifecycle functions and Conventional backend injection plus hardcoded case/backend routes read",
+    "ownerReportedReview": "Two bounded read-only development reviews; not runtime or study validation",
+    "recommendation": "Small versioned lifecycle contract composed of method and runtime/transport adapters; describe/setup/ensure_runtime/start/resume/status/cancel/close",
+    "ownership": "Variant owns native install/mapping/runtime readiness; Playground owns shared public requirements/resources, immutable capture and independent final assessment",
+    "runtime": "Owned stdio process handshake; attached endpoints identity/health/access checks without shutdown ownership",
+    "receiptBoundary": "Raw receipts/capabilities/gaps only, no self-scored acceptance; optional typed observation hooks; treatment differences explicit",
+    "implementationState": "Generic Markitect adapter not implemented; backend_runner is test injection",
+    "proposedSequence": "Contract/conformance then wrap existing Conventional, then product-owned Markitect mapping",
+    "limits": "Conformance does not prove equivalent human workflow, readiness, complete native-helper counting, serving or costs",
+    "actualCallsAuthorized": 0,
+    "mainGateAdded": false,
+    "newOrderSent": false,
+    "priorPilotEvidenceUnchanged": true
   }
 }
