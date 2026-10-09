@@ -1,0 +1,12 @@
+{
+  "receivedHostReleaseAtUtc": "2026-10-09T05:32:05.6018885+00:00",
+  "reportedDesignGateClosedUtc": "2026-10-09T05:28:40Z",
+  "hostWaitSeconds": 182.7780347,
+  "releaseCommunicationAndLaunchDelaySeconds": 205.6018885,
+  "totalSetupEnvelopeBeforeDriverSeconds": 388.4389794,
+  "hostReleaseSha256": "5f6bebe5fd05424226898937e937b2960ac4683b2bea5e58409bac989d23b9a6",
+  "driverLaunchRequestedAtUtc": "2026-10-09T05:32:05.6018885+00:00",
+  "entrySourceSha256": "67d28776ab87c5d998a20bd0e86dd5165adbe74a93b8266dddde741484561c64",
+  "actualFullStarts": 0,
+  "meaning": "Driver request recorded; actual full start requires own native PID/session receipt"
+}

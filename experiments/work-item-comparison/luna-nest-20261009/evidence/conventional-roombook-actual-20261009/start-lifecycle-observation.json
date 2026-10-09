@@ -1,0 +1,26 @@
+{
+  "observedUtc": "2026-10-09T05:33:27.4428050+00:00",
+  "events": [
+    {
+      "type": "thread.started",
+      "thread_id": "01a11f25-b2c5-7733-afe8-e7f20ea72cff",
+      "usage": null
+    },
+    {
+      "type": "turn.started",
+      "thread_id": null,
+      "usage": null
+    },
+    {
+      "type": "error",
+      "thread_id": null,
+      "usage": null
+    },
+    {
+      "type": "turn.failed",
+      "thread_id": null,
+      "usage": null
+    }
+  ],
+  "note": "Own raw JSONL lifecycle only, no candidate review/coaching; usage may be missing"
+}
