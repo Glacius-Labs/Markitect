@@ -13,7 +13,7 @@ This list owns Playground preparation only. Product P03–P10 remain with Produc
 | PG08 | Conventional shared lifecycle wrapper, CLI/MCP entrances and native CLI/App Server backends | source prepared; offline fixtures only | Scientist; conventional/README.md and validation.md; actual runtime/parity/recovery unproved, execution disabled |
 | PG07 | Bind the ordinary Codex CLI user reference, controller approximation, declared differences and later study interpretation | contract prepared; runtime evidence open | Scientist; study-contract.md and freeze/report fields; no transport probe or actual order |
 
-| PG09 | Bind runtime setup and execute the separately ordered two-trajectory Conventional wrapper pilot | setup correction/source checks; actual results pending | Scientist; setup-contract.md and pilots/conventional-wrapper-runtime-pilot-20261009/plan.json; no Markitect/transport winner |
+| PG09 | Bind runtime setup and execute the separately ordered two-trajectory Conventional wrapper pilot | pilot attempted; runtime blockers documented | Scientist; setup-contract.md and pilots/conventional-pilot-results-20261009.md; 47 offline PASS; three finite actual attempts; no Markitect/transport winner |
 
 Conventional may receive ordinary project instructions and a native provider entrypoint referencing the same shared rules. It has no Markitect model obligation. Markitect's additional generated instructions and model are its method installation; keep their setup/upkeep cost and substantive coverage visible. Do not improve common business requirements for one arm during setup.
 

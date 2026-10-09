@@ -1,0 +1,222 @@
+{
+  "schema": 1,
+  "scope": "finite Conventional runtime/setup pilot only; Markitect product and paired study NOT RUN",
+  "nativeExecutableVersion": "codex-cli 0.162.0-alpha.2",
+  "prospectiveCorrectedWrapperSource": "8b099d24dbf8902a18ff0d3e27d082e59b007a16",
+  "offlineFixtures": 47,
+  "trajectories": [
+    {
+      "group": "original",
+      "case": "roombook",
+      "backend": "codex-cli",
+      "status": "blocked_by_native_shell_setup",
+      "sourceCommit": "cb7a92ae617735fe5ae1857004917ffcf8dfeaba",
+      "audit": "C:\\Users\\Consiliari\\Documents\\Conventional-Wrapper-Pilot-20261009-1908\\roombook\\audit",
+      "wrapperRunId": "015c11d5-20ed-4e04-9a78-1c14d3b33d10",
+      "nativeSessionId": "01a121fe-0586-7a33-81b0-6de5abc1a6f5",
+      "nativeTurnId": null,
+      "nativeTerminalState": "completed",
+      "mainCommit": "c6fa871399081f61d8b41e01a3335cfe4f2f0c70",
+      "mainUnchangedFromSetup": true,
+      "immutableRawByteVerification": true,
+      "S1": {
+        "case": "roombook",
+        "station": 1,
+        "findings": [
+          {
+            "check": "application-entrypoint",
+            "status": "FAIL",
+            "detail": "required app.py is missing"
+          },
+          {
+            "check": "released-functional-checks",
+            "status": "NOT RUN",
+            "detail": "application cannot launch"
+          }
+        ],
+        "limitation": "Missing entrypoint; individual functional checks did not execute."
+      },
+      "S2_S4": "NOT RUN",
+      "effectiveValues": "unknown for original; correction thread reports requested Luna High/openai/workspaceWrite/never and instruction sources; effective serving unestablished",
+      "usage": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 302080,
+        "input_tokens": 328719,
+        "output_tokens": 1750,
+        "reasoning_output_tokens": 822
+      },
+      "usageScope": "native-reported aggregate scope unknown; do not sum parent/helper values as billing",
+      "nativeHelpers": {},
+      "humanAcceptance": "not established",
+      "independentFinalReview": "separate original S1 review retained"
+    },
+    {
+      "group": "original",
+      "case": "readinglog",
+      "backend": "codex-app-server",
+      "status": "thread_admission_failed",
+      "sourceCommit": "03f2b502fa4509e0eff036e40ce474a23ba2e6b5",
+      "audit": "C:\\Users\\Consiliari\\Documents\\Conventional-Wrapper-Pilot-20261009-1908\\readinglog\\audit",
+      "wrapperRunId": "43e16b3c-cbc0-4311-8523-f20f1ff9e488",
+      "nativeSessionId": null,
+      "nativeTurnId": null,
+      "nativeTerminalState": "failed",
+      "mainCommit": "4fafda5e71e8316da1c1d68ff5f96b71475911f4",
+      "mainUnchangedFromSetup": true,
+      "immutableRawByteVerification": true,
+      "S1": {
+        "case": "readinglog",
+        "station": 1,
+        "findings": [
+          {
+            "check": "legacy-add-restart",
+            "status": "PASS"
+          },
+          {
+            "check": "duplicate-no-mutation",
+            "status": "PASS"
+          },
+          {
+            "check": "finish-idempotence",
+            "status": "FAIL",
+            "detail": "exit 2, expected 0; args=('finish', '--id', 'a'); stderr=\"usage: app.py [-h] --db DB {list,add} ...\\r\\napp.py: error: argument command: invalid choice: 'finish' (choose from list, add)\\r\\n\"; stdout=''"
+          },
+          {
+            "check": "status-filter-regression",
+            "status": "FAIL",
+            "detail": "exit 2, expected 0; args=('list', '--status', 'unread'); stderr='usage: app.py [-h] --db DB {list,add} ...\\r\\napp.py: error: unrecognized arguments: --status unread\\r\\n'; stdout=''"
+          },
+          {
+            "check": "malformed-db-preserved",
+            "status": "PASS"
+          }
+        ],
+        "limitation": "Finite public checks; assessor must add meaningful cases and semantic review. Cascading failures retain individual evidence."
+      },
+      "S2_S4": "NOT RUN",
+      "effectiveValues": "unknown for original; correction thread reports requested Luna High/openai/workspaceWrite/never and instruction sources; effective serving unestablished",
+      "usage": null,
+      "usageScope": "native-reported aggregate scope unknown; do not sum parent/helper values as billing",
+      "nativeHelpers": {},
+      "humanAcceptance": "not established",
+      "independentFinalReview": "separate original S1 review retained"
+    },
+    {
+      "group": "explicit correction",
+      "case": "readinglog",
+      "backend": "codex-app-server",
+      "status": "blocked_by_native_tool_setup",
+      "sourceCommit": "8b099d24dbf8902a18ff0d3e27d082e59b007a16",
+      "audit": "C:\\Users\\Consiliari\\Documents\\Conventional-AppServer-Correction-Pilot-20261009-1900\\readinglog\\audit",
+      "wrapperRunId": "393a1fc9-8681-42a7-95a6-0ea49e3cab3c",
+      "nativeSessionId": "01a12207-2c3a-7d62-8f02-6a3eab95b164",
+      "nativeTurnId": "01a12207-2d33-76b0-a534-ffed6dcf9943",
+      "nativeTerminalState": "completed",
+      "mainCommit": "5f3ef4684d4c6647c879e841fbd512eec1e4728d",
+      "mainUnchangedFromSetup": true,
+      "immutableRawByteVerification": true,
+      "S1": {
+        "case": "readinglog",
+        "station": 1,
+        "findings": [
+          {
+            "check": "legacy-add-restart",
+            "status": "PASS"
+          },
+          {
+            "check": "duplicate-no-mutation",
+            "status": "PASS"
+          },
+          {
+            "check": "finish-idempotence",
+            "status": "FAIL",
+            "detail": "exit 2, expected 0; args=('finish', '--id', 'a'); stderr=\"usage: app.py [-h] --db DB {list,add} ...\\r\\napp.py: error: argument command: invalid choice: 'finish' (choose from list, add)\\r\\n\"; stdout=''"
+          },
+          {
+            "check": "status-filter-regression",
+            "status": "FAIL",
+            "detail": "exit 2, expected 0; args=('list', '--status', 'unread'); stderr='usage: app.py [-h] --db DB {list,add} ...\\r\\napp.py: error: unrecognized arguments: --status unread\\r\\n'; stdout=''"
+          },
+          {
+            "check": "malformed-db-preserved",
+            "status": "PASS"
+          }
+        ],
+        "limitation": "Finite public checks; assessor must add meaningful cases and semantic review. Cascading failures retain individual evidence."
+      },
+      "S2_S4": "NOT RUN",
+      "effectiveValues": "unknown for original; correction thread reports requested Luna High/openai/workspaceWrite/never and instruction sources; effective serving unestablished",
+      "usage": {
+        "last": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 30464,
+          "inputTokens": 31286,
+          "outputTokens": 194,
+          "reasoningOutputTokens": 0,
+          "totalTokens": 31480
+        },
+        "modelContextWindow": 258400,
+        "total": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 422656,
+          "inputTokens": 450408,
+          "outputTokens": 2200,
+          "reasoningOutputTokens": 718,
+          "totalTokens": 452608
+        }
+      },
+      "usageScope": "native-reported aggregate scope unknown; do not sum parent/helper values as billing",
+      "nativeHelpers": {
+        "01a12207-802e-7451-b365-ecceb2dea3fe": {
+          "started": {
+            "observedAt": "2026-10-09T18:57:59.758962+00:00",
+            "nativeEmittedAtMs": 1791572279758,
+            "agentPath": "/root/backlog_recon"
+          },
+          "completed": {
+            "observedAt": "2026-10-09T18:58:13.080829+00:00",
+            "nativeEmittedAtMs": 1791572293076,
+            "agentPath": "/root/backlog_recon"
+          }
+        },
+        "01a12207-87f3-7550-a297-96fc3a5c42aa": {
+          "started": {
+            "observedAt": "2026-10-09T18:58:01.653491+00:00",
+            "nativeEmittedAtMs": 1791572281653,
+            "agentPath": "/root/runtime_recon"
+          },
+          "completed": {
+            "observedAt": "2026-10-09T18:58:26.160399+00:00",
+            "nativeEmittedAtMs": 1791572306158,
+            "agentPath": "/root/runtime_recon"
+          }
+        }
+      },
+      "humanAcceptance": "not established",
+      "independentFinalReview": "NOT RUN: no implementation; no redundant baseline final start"
+    }
+  ],
+  "startAccounting": {
+    "outerDispatchAttempts": 3,
+    "originalPreModelFailedAttemptIncluded": 1,
+    "nativeHelperStartsObserved": 2,
+    "independentOriginalFinalStarts": 2,
+    "knownStartRequestsAtLeast": 7,
+    "completeGlobalHardCount": "unknown; no hard counter; CLI helper start completeness unestablished",
+    "originalSharedAllowance": 256,
+    "explicitCorrectionAdditionalAllowance": 64,
+    "originalOverallExpiry": "2026-10-10T02:47:35.240574Z",
+    "extraRefillOrReplay": false,
+    "developerPreparationAgents": "separate setup/development cost; not implementing pilot actors"
+  },
+  "setupFindings": [
+    "owned stdio starts need no external daemon/endpoint; process owner/PID/initialize/session/tool readiness must be recorded",
+    "whole mutable global config drift observed; explicit local options pinned for fresh BF, original bindings preserved; inherited/effective loaded settings unknown",
+    "thread/start sandbox expects kebab-case workspace-write; prospective wrapper corrected from actual native -32600 error",
+    "Windows helper_unknown_error prevented shell and Node tool startup in CLI and corrected App Server; root cause unknown; no permission/sandbox change",
+    "controller keyword-only execution capture call corrected and original terminal run reconciled without redispatch"
+  ],
+  "scientificInterpretation": "case and transport confounded; native setup failure prevented task execution; no Conventional-vs-Markitect, transport ranking, economic benefit or human acceptance result",
+  "ownershipVerification": "all three exact owned PIDs absent after authoritative terminal records; active locks absent; correction two observed helpers completed; no global descendant termination claim",
+  "sourceGovernanceNote": "source checkpoint0390d0d0 accidentally proceeded after EOF-only cached-check failure; cb7a92ae immediately removed blank EOF and passed guard; subsequent source commits passed guard; no runtime source ambiguity because all actual launches bound clean corrected commits"
+}

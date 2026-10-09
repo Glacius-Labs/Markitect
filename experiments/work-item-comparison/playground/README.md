@@ -38,3 +38,5 @@ C:/Python313/python.exe -B -m unittest discover -s experiments/work-item-compari
 ```
 
 These fixtures exercise Git/file mechanics, stub process reporting and local scripted transport processes. They do not run Markitect, an implementing study actor, installed Codex/Claude/App Server or a provider. The prospective lifecycle commands are documented in [workflow](workflow.md); lifecycle.py contains no model dispatcher. The optional Conventional wrapper is a separate, disabled launcher source; its own focused evidence is in [wrapper validation](conventional/validation.md).
+
+The [Conventional runtime pilot result](pilots/conventional-pilot-results-20261009.md) records three finite attempts including the explicit one-time protocol correction. Native setup blockers prevented implementation; all later stations remain NOT RUN. The wrapper has 47 passing offline fixtures. No paired method or transport comparison is established.
