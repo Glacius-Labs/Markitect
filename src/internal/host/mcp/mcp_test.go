@@ -73,6 +73,19 @@ func TestSetupSchemaExposesClosedWindowsSandboxBackendEnum(t *testing.T) {
 	}
 }
 
+func TestAppServerEnvironmentModeSchemaIsClosed(t *testing.T) {
+	modeSchema := schema(reflect.TypeFor[projectrun.AppServerEnvironmentMode]())
+	if modeSchema["type"] != "string" || !reflect.DeepEqual(modeSchema["enum"], []string{"inherit"}) {
+		t.Fatalf("App Server environment mode schema = %#v, want closed inherit enum", modeSchema)
+	}
+	if err := validate("inherit", modeSchema); err != nil {
+		t.Fatalf("valid inherited environment mode rejected: %v", err)
+	}
+	if err := validate("all", modeSchema); err == nil {
+		t.Fatal("unsupported environment mode passed the schema")
+	}
+}
+
 func TestRealHostPlanSelectionAndRedactedFailure(t *testing.T) {
 	root := t.TempDir()
 	git := func(args ...string) string {

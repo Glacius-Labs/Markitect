@@ -223,6 +223,13 @@ func ValidateRuntime(config Runtime) error {
 }
 
 func validateAgentTransport(managerID string, agent Agent) error {
+	if agent.AppServer != nil && agent.AppServer.EnvironmentMode != "" && agent.AppServer.EnvironmentMode != AppServerEnvironmentModeInherit {
+		return fmt.Errorf("runtime agent %q appServer environmentMode must be empty or inherit", managerID)
+	}
+	if agent.AppServer != nil && agent.AppServer.EnvironmentMode == AppServerEnvironmentModeInherit &&
+		(agent.Transport != TransportCodexAppServer || agent.WorkspaceMode != "git") {
+		return fmt.Errorf("runtime agent %q appServer environmentMode inherit requires native codex-app-server with owned git workspace", managerID)
+	}
 	switch agent.Transport {
 	case TransportProcess:
 		if agent.AppServer != nil {
@@ -246,8 +253,8 @@ func validateAgentTransport(managerID string, agent Agent) error {
 			Command: agent.Command, ProviderVersion: agent.ProviderVersion, Model: agent.Model,
 			ReasoningEffort: settings.ReasoningEffort, PermissionProfile: settings.PermissionProfile,
 			WindowsSandboxBackend: settings.WindowsSandboxBackend,
-			Helpers: codexappserver.HelperPolicy{Enabled: settings.Helpers.Enabled, MaxStartRequests: settings.Helpers.MaxStartRequests, MaxDepth: settings.Helpers.MaxDepth},
-			Timeout: time.Duration(agent.Timeout), MaxEventBytes: settings.MaxEventBytes,
+			Helpers:               codexappserver.HelperPolicy{Enabled: settings.Helpers.Enabled, MaxStartRequests: settings.Helpers.MaxStartRequests, MaxDepth: settings.Helpers.MaxDepth},
+			Timeout:               time.Duration(agent.Timeout), MaxEventBytes: settings.MaxEventBytes,
 		}
 		if err := adapterConfig.Validate(); err != nil {
 			return fmt.Errorf("runtime agent %q appServer settings: %w", managerID, err)
@@ -322,6 +329,13 @@ func (a Agent) AgentConfig() (agentexec.Config, error) {
 		// config. Its shared agentexec fingerprint remains transport-neutral.
 		workspaceMode = ""
 	}
+	var environmentAllowlist *[]string
+	if a.Transport == TransportCodexAppServer && a.AppServer != nil && a.AppServer.EnvironmentMode == AppServerEnvironmentModeInherit {
+		// Agent.Environment remains the selected-name policy for declared
+		// checks. Only the native App Server child inherits all caller values.
+	} else {
+		environmentAllowlist = &env
+	}
 	return agentexec.Config{
 		Command: a.Command, Args: append([]string(nil), a.Args...), Model: a.Model,
 		ModelOptions: modelOptions, ProviderVersion: a.ProviderVersion, Transport: a.Transport,
@@ -329,7 +343,7 @@ func (a Agent) AgentConfig() (agentexec.Config, error) {
 		WorkspaceMode:   workspaceMode,
 		Timeout:         time.Duration(a.Timeout), MaxStdoutBytes: a.MaxStdoutBytes,
 		MaxStderrBytes: a.MaxStderrBytes, RuntimeFiles: append([]agentexec.RuntimeFile(nil), a.RuntimeFiles...),
-		EnvironmentAllowlist: &env,
+		EnvironmentAllowlist: environmentAllowlist,
 	}, nil
 }
 

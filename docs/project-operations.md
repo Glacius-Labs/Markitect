@@ -28,6 +28,8 @@ The CLI exposes matching operations for shell use. Read the candidate's `markite
 
 `project init`, `project onboard`, `project edit`, `project explore`, `project readiness`, `project brownfield`, `project setup`, `project document`, and `project apply` have preview/write or guarded-write semantics as defined by their operation. Do not apply a stale plan. Onboarding writes only repository-local guidance and skills; it does not register MCP, configure global accounts, or authenticate a provider. Setup supports the native Codex App Server runtime and requires explicit budget weights/limits; configured cost is an estimate, not billing enforcement. On Windows, `project setup` may explicitly select `--windows-sandbox-backend mxc`; that process-local setting leaves permission profiles and Managed Policy unchanged. Omit the option to preserve Codex defaults. `project_doctor` does not start roles.
 
+Native App Server roles inherit the caller's environment through `appServer.environmentMode: inherit`. Markitect binds the effective values into the role fingerprint and receipt digest without exposing them. `Agent.Environment` remains the selected-name policy for declared-check executable resolution, not a filter on the inherited App Server environment. Ordinary process adapters retain explicit allowlists.
+
 ## Candidate workspaces and recovery
 
 Native work executes in an owned candidate workspace. The bridge binds each candidate to the fixed accepted source, repository identity, overlay, task, and candidate delta. The source working tree is preserved as the service baseline; the fixed accepted project snapshot supplies only the candidate overlay. Apply rechecks freshness and writes only the reviewed delta through guarded Host operations.

@@ -27,6 +27,9 @@ func schema(t reflect.Type) map[string]any {
 	if t == reflect.TypeFor[codexappserver.WindowsSandboxBackend]() {
 		return map[string]any{"type": "string", "enum": []string{string(codexappserver.WindowsSandboxBackendMXC)}}
 	}
+	if t == reflect.TypeFor[projectrun.AppServerEnvironmentMode]() {
+		return map[string]any{"type": "string", "enum": []string{string(projectrun.AppServerEnvironmentModeInherit)}}
+	}
 	if t.Kind() == reflect.Pointer {
 		return map[string]any{"anyOf": []any{schema(t.Elem()), map[string]any{"type": "null"}}}
 	}

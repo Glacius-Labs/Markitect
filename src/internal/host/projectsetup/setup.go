@@ -43,15 +43,15 @@ const (
 )
 
 type Options struct {
-	Provider               string `json:"provider"`
-	Model                  string `json:"model"`
-	Effort                 string `json:"effort"`
-	CodexProfile           string `json:"codexProfile"`
-	WindowsSandboxBackend codexappserver.WindowsSandboxBackend `json:"windowsSandboxBackend,omitempty"`
-	ProviderExecutable     string `json:"providerExecutable"`
-	InputMicrosPerMillion  int64  `json:"inputMicrosPerMillion"`
-	OutputMicrosPerMillion int64  `json:"outputMicrosPerMillion"`
-	MaxCostMicros          int64  `json:"maxCostMicros"`
+	Provider               string                               `json:"provider"`
+	Model                  string                               `json:"model"`
+	Effort                 string                               `json:"effort"`
+	CodexProfile           string                               `json:"codexProfile"`
+	WindowsSandboxBackend  codexappserver.WindowsSandboxBackend `json:"windowsSandboxBackend,omitempty"`
+	ProviderExecutable     string                               `json:"providerExecutable"`
+	InputMicrosPerMillion  int64                                `json:"inputMicrosPerMillion"`
+	OutputMicrosPerMillion int64                                `json:"outputMicrosPerMillion"`
+	MaxCostMicros          int64                                `json:"maxCostMicros"`
 }
 
 type Tool struct {
@@ -253,10 +253,11 @@ func selectedAgent(found Discovery, model, effort, permissionProfile string, san
 		AppServer: &projectrun.AppServerSettings{
 			ReasoningEffort: effort,
 			// Empty PermissionProfile preserves the user's existing Codex boundary.
-			PermissionProfile: permissionProfile,
+			PermissionProfile:     permissionProfile,
+			EnvironmentMode:       projectrun.AppServerEnvironmentModeInherit,
 			WindowsSandboxBackend: sandboxBackend,
-			Helpers:           projectrun.AppServerHelpers{Enabled: true, MaxStartRequests: DefaultMaxHelperStarts, MaxDepth: 1},
-			MaxEventBytes:     DefaultMaxEventBytes,
+			Helpers:               projectrun.AppServerHelpers{Enabled: true, MaxStartRequests: DefaultMaxHelperStarts, MaxDepth: 1},
+			MaxEventBytes:         DefaultMaxEventBytes,
 		},
 		Model: model, ProviderVersion: found.ProviderBinary.Version,
 		Timeout: projectrun.Duration(DefaultTimeout), MaxStdoutBytes: DefaultMaxStdout, MaxStderrBytes: DefaultMaxStderr,

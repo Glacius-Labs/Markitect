@@ -254,6 +254,19 @@ func Fingerprint(input Config) (string, error) {
 	return value, err
 }
 
+func bindsInheritedNativeEnvironment(cfg Config) bool {
+	if cfg.Transport != "codex-app-server" || len(cfg.TransportConfig) == 0 {
+		return false
+	}
+	var settings struct {
+		EnvironmentMode string `json:"environmentMode"`
+	}
+	if json.Unmarshal(cfg.TransportConfig, &settings) != nil {
+		return false
+	}
+	return settings.EnvironmentMode == "inherit"
+}
+
 func fingerprintConfig(input Config, inheritedEnvironment []string) (Config, string, []runtimeState, string, string, string, []string, string, error) {
 	cfg, err := normalizeConfig(input)
 	if err != nil {
@@ -295,7 +308,7 @@ func fingerprintConfig(input Config, inheritedEnvironment []string) (Config, str
 	// identity independent of ambient values so older prepared plans do not
 	// become stale when the caller's environment changes. New project flows use
 	// an explicit (possibly empty) allowlist and bind those effective values.
-	if cfg.EnvironmentAllowlist != nil {
+	if cfg.EnvironmentAllowlist != nil || bindsInheritedNativeEnvironment(cfg) {
 		bindings += "environment:" + environmentDigest
 	}
 	configDigest := digest(append(append([]byte(nil), configBytes...), []byte(bindings)...))
@@ -403,6 +416,9 @@ func normalizeConfig(input Config) (Config, error) {
 		if err := validateCodexAppServerTransportConfig(cfg.TransportConfig); err != nil {
 			return Config{}, err
 		}
+		if bindsInheritedNativeEnvironment(cfg) && cfg.EnvironmentAllowlist != nil {
+			return Config{}, errors.New("codex-app-server environmentMode inherit requires a nil environment allowlist")
+		}
 	default:
 		return Config{}, fmt.Errorf("unsupported agent transport %q", cfg.Transport)
 	}
@@ -484,10 +500,11 @@ func normalizeConfig(input Config) (Config, error) {
 
 func validateCodexAppServerTransportConfig(data json.RawMessage) error {
 	var config struct {
-		ReasoningEffort   string `json:"reasoningEffort"`
-		PermissionProfile string `json:"permissionProfile,omitempty"`
+		ReasoningEffort       string `json:"reasoningEffort"`
+		PermissionProfile     string `json:"permissionProfile,omitempty"`
 		WindowsSandboxBackend string `json:"windowsSandboxBackend,omitempty"`
-		Helpers           struct {
+		EnvironmentMode       string `json:"environmentMode,omitempty"`
+		Helpers               struct {
 			Enabled          bool `json:"enabled"`
 			MaxStartRequests int  `json:"maxStartRequests"`
 			MaxDepth         int  `json:"maxDepth"`
@@ -508,6 +525,9 @@ func validateCodexAppServerTransportConfig(data json.RawMessage) error {
 	}
 	if config.WindowsSandboxBackend != "" && config.WindowsSandboxBackend != "mxc" {
 		return errors.New("codex-app-server transportConfig has an unsupported Windows sandbox backend")
+	}
+	if config.EnvironmentMode != "" && config.EnvironmentMode != "inherit" {
+		return errors.New("codex-app-server transportConfig has an unsupported environmentMode; supported value is inherit")
 	}
 	if config.Helpers.MaxStartRequests < 0 || config.Helpers.MaxDepth < 0 ||
 		(config.Helpers.Enabled && (config.Helpers.MaxStartRequests == 0 || config.Helpers.MaxDepth == 0)) ||
