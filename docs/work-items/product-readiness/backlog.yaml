@@ -15,7 +15,7 @@ native_acceptance:
   main_required_jobs: [A01]
   deferred_not_main_gate_jobs: [A02, A03]
   renewal_policy_revision: renewable-execution-budget-20261010
-  renewal_policy_status: direct_human_hold_pending_simplification_discussion
+  renewal_policy_status: active_simplified_a01_authorized_pins_pending
   renewal_policy_authority_sha256: a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7
   per_batch_limits:
     max_role_wall_seconds: 7200
@@ -196,10 +196,20 @@ native_acceptance:
     readonly_dotnet_26_binding_provider_starts: 0
     native_actual_started: true
   next_batch:
-    status: direct_human_hold_pending_simplification_discussion
-    direct_human_hold: further_native_a01_diagnosis_and_provider_starts_paused
+    status: simplified_a01_authorized_pins_pending
+    authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
+    direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
     new_batch_pins: none
-    fresh_finite_batch_requires_hold_lift_and_exact_pins: true
+    execution_requires_current_readiness_and_exact_batch_pins: true
+    intended_profile:
+      fresh_native_roles: workspace_permission
+      windows_backend: mxc
+      inherited_environment: true
+      per_child_or_thread_approval: never
+      preserve_host_scope_owned_workspace_empty_review_delta_and_guarded_apply: true
+      scratch_workspace: fresh_owned_os_temp
+      hidden_dotnet_binding_gate: false
+      harness_or_canary: false
   current_source_checkpoint:
     primary_source_revision: 01de5b3003aa17a9f20e79204e9bd3d01b4b962b
     source_worktree_clean: true
@@ -220,6 +230,9 @@ native_acceptance:
     project_run_full_suite: interrupted_not_validation
     runtime_readiness_plan_pins: none_for_current_source
     technical_fix_validation_is_not_native_acceptance: true
+    direct_human_hold_lifted: true
+    simplified_a01_authorized: true
+    current_batch_pins: none
   prior_batch_history:
     revision: generous-native-limits-20261009
     max_role_wall_seconds: 3600

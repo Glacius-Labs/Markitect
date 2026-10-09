@@ -24,7 +24,9 @@ renewal_policy:
   authority_record_location: forwarded_external_contract_not_in_this_worktree
   authority_record_sha256: a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7
   issued_utc: '2026-10-09T22:01:37Z'
-  status: direct_human_hold_pending_simplification_discussion
+  status: active_simplified_a01_authorized_pins_pending
+  prior_hold_checkpoint: docs_checkpoint_20d6db54
+  prior_hold_lifted_by_direct_human_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
   cumulative_time_start_and_estimated_cost_cutoff: "none"
   per_batch:
     max_wall_seconds: 14400
@@ -278,10 +280,19 @@ renewal_policy:
     cumulative_estimated_cost_micros: 898953
     cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
   next_batch:
-    status: direct_human_hold_pending_simplification_discussion
-    direct_human_hold: further_native_a01_diagnosis_and_provider_starts_paused
+    status: simplified_a01_authorized_pins_pending
+    authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     new_batch_pins: none
-    fresh_finite_batch_requires_hold_lift_and_exact_pins: true
+    execution_requires_current_readiness_and_exact_batch_pins: true
+    intended_profile:
+      fresh_native_roles: workspace_permission
+      windows_backend: mxc
+      inherited_environment: true
+      per_child_or_thread_approval: never
+      preserve_host_scope_owned_workspace_empty_review_delta_and_guarded_apply: true
+      scratch_workspace: fresh_owned_os_temp
+      hidden_dotnet_binding_gate: false
+      harness_or_canary: false
   current_source_checkpoint:
     primary_source_revision: 01de5b3003aa17a9f20e79204e9bd3d01b4b962b
     source_worktree_clean: true
@@ -305,7 +316,9 @@ renewal_policy:
     latest_actual_remains_f147_failed_batch: true
     no_runtime_readiness_or_plan_for_current_source: true
     full_project_run_for_current_source: interrupted_not_validation
-    direct_human_hold: further_native_a01_diagnosis_and_provider_starts_paused_pending_simplification_discussion
+    direct_human_hold_lifted: true
+    simplified_a01_authorized: true
+    current_batch_pins: none
   provider_free_preparation:
     superseded_owned_project_revision: 89823a90df985ca4451ec3053467fa4b3d12319f
     rejected_role_wall_seconds: 7200
@@ -332,8 +345,8 @@ budget_amendments:
     prospective_effective_utc: '2026-10-09T22:01:37Z'
     supersedes_prior_cumulative_budget_and_deadline_as_future_blockers: true
     previous_batch_failures_and_source_pins_preserved: true
-    next_batch_pins_pending: false
-    next_batch_status: direct_human_hold_pending_simplification_discussion
+    next_batch_pins_pending: true
+    next_batch_status: simplified_a01_authorized_pins_pending
     last_actual_status: failed_not_passed
     main_gate_revision_unchanged: combined-normal-smoke-20261009
     release_publication_authorized: false
