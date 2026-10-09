@@ -1,0 +1,91 @@
+{
+  "event": "conventional-roombook-current-native-trial-20261009 true native start",
+  "newActualFullStarts": 1,
+  "globalActualFullStarts": 2,
+  "ownDriverSession": 67665,
+  "ownNativePid": 49036,
+  "nativeStartedUtc": "2026-10-09T05:53:38.4185920+00:00",
+  "cellStartedUtc": "2026-10-09T05:53:38.2055590+00:00",
+  "cellDeadlineUtc": "2026-10-09T07:53:38.2055590+00:00",
+  "implementationDeadlineUtc": "2026-10-09T07:23:38.2055590+00:00",
+  "evaluationDeadlineUtc": "2026-10-09T07:43:38.2055590+00:00",
+  "station": "S1",
+  "phase": "implementation",
+  "status": "returned",
+  "argv": [
+    "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/9691020b546a15b2/codex.exe",
+    "exec",
+    "--cd",
+    "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-current-native",
+    "--model",
+    "gpt-6-luna",
+    "--config",
+    "model_reasoning_effort=\"high\"",
+    "--json",
+    "--output-last-message",
+    "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-current-native\\session-01\\last-message.txt",
+    "-"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-current-native",
+  "nativeExecutableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "nativeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+  "requestedModel": "gpt-6-luna",
+  "requestedReasoning": "high",
+  "lifecycle": [
+    {
+      "type": "thread.started",
+      "thread_id": "01a11f39-691b-7af1-9677-d873bdd2285c",
+      "usage": null
+    },
+    {
+      "type": "turn.started",
+      "thread_id": null,
+      "usage": null
+    },
+    {
+      "type": "turn.completed",
+      "thread_id": null,
+      "usage": {
+        "input_tokens": 110966,
+        "cached_input_tokens": 88832,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1033,
+        "reasoning_output_tokens": 548
+      }
+    }
+  ],
+  "actualNativeContexts": [
+    {
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      },
+      "meaning": "Actual native request context, not serving attestation"
+    },
+    {
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      },
+      "meaning": "Actual native request context, not serving attestation"
+    },
+    {
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      },
+      "meaning": "Actual native request context, not serving attestation"
+    }
+  ],
+  "servingModel": null,
+  "cost": null,
+  "usage": null,
+  "stateDir": "C:/Users/Consiliari/Documents/Luna-Work-Item-Nests-20261009/state/roombook-conventional-current-native",
+  "grantSha256": "fed32412e7af3ce37acfca556a80b17cd697906e72d097bc9874387ab9144a38"
+}

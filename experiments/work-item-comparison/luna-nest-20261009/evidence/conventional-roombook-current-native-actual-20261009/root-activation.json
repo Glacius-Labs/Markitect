@@ -1,0 +1,115 @@
+{
+  "receiptId": "conventional-roombook-current-native-root-activation-20261009",
+  "issuedUtc": "2026-10-09T05:51:22Z",
+  "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "hostId": "local",
+  "grantId": "conventional-roombook-current-native-trial-20261009",
+  "executionAuthorized": true,
+  "acceptedSourceSha": "19bb5b1d8b40069b829cba8c252745de056cb416",
+  "privateResearchRemoteExactAndClean": true,
+  "privateVisibilityAndActionsDisabledVerified": true,
+  "bindingFile": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\work-item-comparison\\luna-nest-20261009\\evidence\\conventional-roombook-current-native-preparation-20261009\\bindings.json",
+  "bindingFileSha256": "3367d5833638c78276a655cc40532861d42edc33e9e0e93dc211c38e72b22f61",
+  "originalReservation": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-current-native-trial-reservation-20261009.json",
+  "originalReservationSha256": "98624a41272c8dbab86d614ad27c562ba831d8ce65db950a1294a890862373cb",
+  "case": "roombook",
+  "arm": "conventional",
+  "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-current-native",
+  "stateDir": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-current-native",
+  "seedCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+  "preparedCommit": "1344a1125962895c2f3e18c5286380a547d12c26",
+  "preparedTree": "8cea62c20a64d4571017818c7e73855b1ead5676",
+  "preparedFileHashes": {
+    ".gitignore": {
+      "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+      "bytes": 36
+    },
+    "AGENTS.md": {
+      "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+      "bytes": 5411
+    },
+    "BACKLOG.md": {
+      "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+      "bytes": 2566
+    },
+    "QUALITY.md": {
+      "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+      "bytes": 2687
+    },
+    "README.md": {
+      "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+      "bytes": 2276
+    },
+    "STATIONS.json": {
+      "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+      "bytes": 595
+    },
+    ".codex/config.toml": {
+      "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+      "bytes": 281
+    },
+    ".study/station.json": {
+      "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+      "bytes": 70
+    },
+    "checks/acceptance.py": {
+      "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+      "bytes": 7554
+    }
+  },
+  "runnerSha256": "67d28776ab87c5d998a20bd0e86dd5165adbe74a93b8266dddde741484561c64",
+  "nativeExecutable": "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/9691020b546a15b2/codex.exe",
+  "nativeExecutableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "nativeVersion": "codex-cli 0.162.0-alpha.2",
+  "nativeHome": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\homes\\roombook-conventional-current-native",
+  "nativeHomeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+  "rootReadOnlyChecks": {
+    "sourceChangedFilesWorkingRawGitChecked": 14,
+    "manifestPayloadHashesChecked": 13,
+    "preparedFileBytesAgainstOriginalRawGit": 9,
+    "sameOriginalPreparedTree": true,
+    "freshStateAndHomeNoAuthSessions": true,
+    "sourceExecutableAndConfigHashesChecked": true,
+    "newRootTestOrModelOrReviewerStarts": 0
+  },
+  "existingPriorEvidence": "Unchanged runner independent qualified review and positive8fixtures+Brownfieldbaseline+AST already accepted; no new source tests or model reviewer gate",
+  "localMetadataUsage": {
+    "scientistVersionAndExecHelpCalls": 2,
+    "wallSeconds": [
+      0.0303605,
+      0.0219512
+    ],
+    "modelProviderOrCaseCalls": 0
+  },
+  "profileDeclaration": {
+    "model": "gpt-6-luna",
+    "reasoning": "high",
+    "approval": "never",
+    "sandbox": "workspace-write",
+    "max_threads": 4,
+    "max_depth": 2
+  },
+  "effectiveProfileServingAuthWriteMerge": "Not observed on new entry; original0.130 effective readonly discrepancy preserved, declaredconfig alone not proof",
+  "originalTerminalFullStartsPreserved": 1,
+  "oldNativeErrorClosureSource": "0ded91666fda2407e480e125ca390b88544c3836",
+  "newMaxFullStarts": 1,
+  "globalAllocatedStarts": 2,
+  "globalUsedBeforeNewStart": 1,
+  "globalMaxStarts": 6,
+  "absoluteNotAfterUtc": "2026-10-09T09:12:43Z",
+  "limits": {
+    "setupWallSeconds": 900,
+    "cellWallSeconds": 7200,
+    "implementationWallSeconds": 5400,
+    "independentAssessmentWallSeconds": 1200,
+    "captureClosureWallSeconds": 600,
+    "implementationNativeEntries": 8,
+    "finalAssessmentNativeEntries": 1,
+    "nativeConcurrency": 4,
+    "nativeDepth": 2
+  },
+  "noDesignReadinessOrFurtherGenericCapabilityGate": true,
+  "noModelAliasChangePurchaseInstallProviderIntegrationOrBudgetRefill": true,
+  "futurePairedMarkitectSamePublicCaseNativeProfileResources": true,
+  "actualStarted": false
+}

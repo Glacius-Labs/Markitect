@@ -1,0 +1,19 @@
+{
+  "grantId": "conventional-roombook-current-native-trial-20261009",
+  "setupStartedUtc": "2026-10-09T05:53:37.2104189+00:00",
+  "setupEndedUtc": "2026-10-09T05:53:37.2200227+00:00",
+  "opaqueAccountCopyOperationWallSeconds": 0.0021743,
+  "setupEnvelopeNotAfterUtc": "2026-10-09T06:08:37.2104189+00:00",
+  "credentialContentsReadToModel": false,
+  "credentialContentsLogged": false,
+  "credentialsHashed": false,
+  "credentialsCommitted": false,
+  "nativeHome": "C:/Users/Consiliari/Documents/Luna-Work-Item-Nests-20261009/homes/roombook-conventional-current-native",
+  "nativeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+  "providerProbed": false,
+  "newCaseActors": 0,
+  "globalConfigChanged": false,
+  "hostWaitSeconds": 0,
+  "hostAvailability": "Root states measured host free; no global inventory",
+  "accountServingWriteCapabilities": "Unknown until real native entry"
+}
