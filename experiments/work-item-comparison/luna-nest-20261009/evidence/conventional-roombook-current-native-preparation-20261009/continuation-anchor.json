@@ -1,0 +1,20 @@
+{
+  "status": "COMPLETE fresh exact input/native bindings; no native actor/account setup; pending Root second activation",
+  "grantId": "conventional-roombook-current-native-preparation-20261009",
+  "notAfterUtc": "2026-10-09T05:59:04Z",
+  "sourceBasis": "0ded91666fda2407e480e125ca390b88544c3836",
+  "runnerSha256": "67d28776ab87c5d998a20bd0e86dd5165adbe74a93b8266dddde741484561c64",
+  "metadataCallsUsed": 2,
+  "metadataCallsMax": 2,
+  "eachMetadataTimeoutSeconds": 15,
+  "mechanicalBatches": 0,
+  "newReviewers": 0,
+  "caseActors": 0,
+  "providerProbes": 0,
+  "oldActualFullStarts": 1,
+  "newActualFullStarts": 0,
+  "newGrantExecutable": false,
+  "next": "Private checkpoint/push and one exact handoff; Root can activate reserved second actual. No extra metadata/test/reviewer/canary before activation.",
+  "preparedHead": "1344a1125962895c2f3e18c5286380a547d12c26",
+  "preparedTree": "8cea62c20a64d4571017818c7e73855b1ead5676"
+}

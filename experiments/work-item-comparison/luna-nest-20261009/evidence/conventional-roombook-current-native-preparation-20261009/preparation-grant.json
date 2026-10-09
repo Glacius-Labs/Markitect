@@ -1,0 +1,47 @@
+{
+  "grantId": "conventional-roombook-current-native-preparation-20261009",
+  "issuedUtc": "2026-10-09T05:39:04Z",
+  "notAfterUtc": "2026-10-09T05:59:04Z",
+  "maxPreparationWallSeconds": 1200,
+  "status": "EXACT EXISTING NATIVE BINDING, no capability loop",
+  "ownerThread": "01a1169c-3df6-7571-997d-48ab57365875",
+  "sourceAuthority": "Direct user requests cases execute independently of Design; one observed native model-route failure is corrected prospectively within max6 block",
+  "purpose": "Close old error evidence, preserve immutable inputs/runner, prepare one fresh ConventionalRoombook with existing AppCLI0.162.0-alpha.2",
+  "existingNativeExecutable": "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/9691020b546a15b2/codex.exe",
+  "existingNativeExecutableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "rootMetadataVersionVerified": "codex-cli0.162.0-alpha.2",
+  "rootMetadataOnlyVersionCalls": 1,
+  "priorOtherRecordedBinaryMissing": true,
+  "globalCatalogReadOnly": {
+    "path": "C:/Users/Consiliari/.codex/models_cache.json",
+    "clientVersion": "0.162.0",
+    "fetchedUtc": "2026-10-09T05:33:52.650051800Z",
+    "modelSlug": "gpt-6-luna",
+    "highListed": true,
+    "identityNotReadIntoEvidence": true,
+    "notARealModelExecutionReceipt": true
+  },
+  "officialSources": [
+    "https://learn.chatgpt.com/docs/models",
+    "https://learn.chatgpt.com/docs/cli/reference"
+  ],
+  "noAliasOrModelSubstitution": true,
+  "maxLocalMetadataCommands": 2,
+  "allowedLocalMetadataCommands": [
+    "existing pinned native --version",
+    "existing pinned native exec --help"
+  ],
+  "eachMetadataTimeoutSeconds": 15,
+  "mechanicalTestBatches": 0,
+  "newReadonlyModelReviewers": 0,
+  "actualActorsOrProviderProbes": 0,
+  "sourceRequirementsRulesRubricChangeAllowed": false,
+  "originalSeedCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+  "originalRunnerSha256": "67d28776ab87c5d998a20bd0e86dd5165adbe74a93b8266dddde741484561c64",
+  "freshCellStateAndNativeHomeRequired": true,
+  "samePreparedTreeAndPublicInputHashesRequired": true,
+  "preserveAllOldFailedSourceReceiptsAndFrozenCandidates": true,
+  "noInstallProviderIntegrationNewPaidCommitment": true,
+  "privateCleanCheckpointAndRootExactActivationRequired": true,
+  "futurePairedMarkitectSameNativeVersionAndProfile": true
+}

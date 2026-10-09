@@ -1,0 +1,39 @@
+{
+  "nativeSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "metadataCallsReserved": 2,
+  "receipts": [
+    {
+      "name": "version",
+      "args": [
+        "--version"
+      ],
+      "exitCode": 0,
+      "wallSeconds": 0.030360500000824686,
+      "purpose": "Nonmodel metadata only",
+      "sha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+    },
+    {
+      "name": "exec-help",
+      "args": [
+        "exec",
+        "--help"
+      ],
+      "exitCode": 0,
+      "wallSeconds": 0.021951199996692594,
+      "purpose": "Nonmodel metadata only",
+      "sha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+    }
+  ],
+  "normalUnchangedEntryOptions": {
+    "--cd": true,
+    "--model": true,
+    "--config": true,
+    "--json": true,
+    "--output-last-message": true,
+    "resume": true
+  },
+  "profileSemantics": "Metadata confirms flags, not authentication, serving, write permissions or native child profiles",
+  "actors": 0,
+  "providerProbes": 0,
+  "credentialsProvisioned": false
+}
