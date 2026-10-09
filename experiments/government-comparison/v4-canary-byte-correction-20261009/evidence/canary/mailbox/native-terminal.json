@@ -1,0 +1,9 @@
+{
+  "actorId": "/root/v4_corrected_public_canary_executor",
+  "finalMessage": "Completed the proposed executor response. Wrote only response.raw.json; no verification or acceptance is claimed.",
+  "terminalObservedUtc": "2026-10-09T01:22:09.6197345Z",
+  "status": "completed",
+  "nativeToolTerminalObserved": true,
+  "reportedResponsePath": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\canary-state\\mailbox\\460e52108f199c183863f40bf2fe0768\\response.raw.json",
+  "reportedResponseSha256": "7a2f94ec188855435e2bbc39f353f636a5937d41e731cf191584a60070a89b59"
+}

@@ -1,0 +1,13 @@
+{
+  "publicFiles": 24,
+  "privateFiles": 5,
+  "noProductSourceChanged": true,
+  "reviewNotAdmitted": true,
+  "publicMismatches": 0,
+  "baseline": "6ab266917eb2cc9111e2ce7120018dd22c5ce300",
+  "nativeCallId": null,
+  "privateMismatches": 0,
+  "oldTrackedChanges": [],
+  "actorWallUpperBoundSeconds": 77.916,
+  "utc": "2026-10-09T01:23:39.4326657Z"
+}

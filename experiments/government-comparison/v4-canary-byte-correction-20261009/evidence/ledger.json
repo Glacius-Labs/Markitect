@@ -1,0 +1,32 @@
+{
+  "canary": {
+    "maxMainSeconds": 360,
+    "reservedUtc": "2026-10-09T01:20:51.6646911Z",
+    "status": "terminal-main-parser-rejected-response",
+    "actualNativeStarts": 1,
+    "maxActorSeconds": 300,
+    "nativeActorReservations": 1,
+    "mainProductStarts": 1,
+    "actorId": "/root/v4_corrected_public_canary_executor",
+    "actorStartObservedUtc": "2026-10-09T01:21:27.4060771Z",
+    "actorStopDueUtc": "2026-10-09T01:26:12.4097353Z",
+    "terminalUtc": "2026-10-09T01:22:43.9085336Z"
+  },
+  "deadline": "2026-10-09T01:30:24Z",
+  "correctionBatches": 1,
+  "rootStartReceipt": null,
+  "status": "TERMINAL BLOCK; ALL UNUSED CORRECTION QUOTA CLOSED",
+  "review": {
+    "status": "not-reserved-not-started-success-condition-failed",
+    "maxReservations": 1,
+    "maxSeconds": 180
+  },
+  "newOfflineTestProcesses": 0,
+  "grant": "v4-canary-fixed-source-byte-correction-20261009",
+  "previousConsumed": {
+    "nativeReservations": 2,
+    "productStarts": 1,
+    "actualNativeStarts": 1
+  },
+  "cellsStarted": 0
+}

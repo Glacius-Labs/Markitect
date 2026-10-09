@@ -1,0 +1,9 @@
+{
+  "turn_id": "01a11e3e-cd0b-7362-99b7-8a8097c5ca21",
+  "model": "gpt-6.1-sol",
+  "effort": "high",
+  "approval_policy": "never",
+  "sandbox_policy": {
+    "type": "danger-full-access"
+  }
+}

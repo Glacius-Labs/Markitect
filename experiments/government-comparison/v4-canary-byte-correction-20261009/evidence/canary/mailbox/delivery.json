@@ -1,0 +1,7 @@
+{
+  "terminalReceiptSha256": "0696319461b0b70885fa3788dca5c1c7e59cc061501b47d701de4ce0275f3da7",
+  "responseSha256": "7a2f94ec188855435e2bbc39f353f636a5937d41e731cf191584a60070a89b59",
+  "invocationSha256": "0607e52e6dd8728381b5487593f5904db3ad246bfa46287c4f393e13e1efbeb1",
+  "nativeActorTerminal": true,
+  "nativeActorId": "/root/v4_corrected_public_canary_executor"
+}

@@ -1,0 +1,18 @@
+{
+  "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+  "runId": "460e52108f199c183863f40bf2fe0768",
+  "inputDigest": "sha256:94f27ac6feaa29be60750f90b1d023bb321a3ff6156ee974caa58d0b8077b65b",
+  "contextDigest": "sha256:fc0b63525474475192c9bc76765e5c52a1aa07efdd2fce4b3a1058d2ed594ec0",
+  "configDigest": "sha256:df59df10bd731c303a7d49bd736addcc25ff23d1b3caf571f518a1e2aaf75aaa",
+  "commandDigest": "sha256:b245365a4a98af209134881dec6847e05c105f0c25e70b2c028abebd0e901819",
+  "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+  "runtimeFilesDigest": "sha256:28799a448dedb9ca170d4cfcc593ff78575c85e72e29ff3b68cdc6b60f7a94de",
+  "providerVersion": "native-codex-collaboration-inherited-parent",
+  "providerVersionDigest": "sha256:7b3e386870c7aae0248339a6dd60df0f8d7f72066ad2a97f426315a3eb511e6c",
+  "stdoutDigest": "sha256:7a2f94ec188855435e2bbc39f353f636a5937d41e731cf191584a60070a89b59",
+  "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "privateLogDigest": "",
+  "outcome": "incomplete",
+  "wallTimeMilliseconds": 77093,
+  "retryCount": 0
+}

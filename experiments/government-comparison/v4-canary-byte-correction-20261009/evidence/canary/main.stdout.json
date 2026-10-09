@@ -1,0 +1,652 @@
+{
+  "apiVersion": "markitect.canonical/controller/v1alpha1",
+  "digest": "sha256:75f24c725c0b933da5f1c2797979de39f9933dd0de53a58116aa69ee50b3b7db",
+  "status": "incomplete",
+  "configPath": "examples/canonical-projection/canary.yaml",
+  "proposal": {
+    "apiVersion": "markitect.canonical/controller/v1alpha1",
+    "digest": "sha256:a15d2f542a22b251465dd40c18badc9dc9ce8212ad4b3afa2ad86067654f9778",
+    "status": "planned",
+    "configDigest": "sha256:89557d7f654286240f9c8c85d955a183bc08daeb3a6105c965439d032adbb696",
+    "ledgerHead": "",
+    "ledgerSelectionDigest": "",
+    "plan": {
+      "apiVersion": "markitect.canonical/scoped-reconcile/v1alpha1",
+      "digest": "sha256:41b8b120d9aecc3d30d3c6e25281a0f0c70ce83f4b40a976dcf6da1eefc37d1d",
+      "status": "planned",
+      "baseRevision": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+      "revision": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+      "modelDigest": "sha256:19663761bf34278ebac9fef0bb1917b2e7a3ce2e734d8cf40d5a6e86470f5e36",
+      "sourceScope": {
+        "repository": {
+          "Root": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\public-canary\\repo",
+          "GitDir": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\public-canary\\repo\\.git",
+          "CommonDir": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\public-canary\\repo\\.git",
+          "ObjectFormat": "sha1",
+          "Digest": "7c8582341bebd39ee749afbcf9fe65b6335b6ce1a5946518c831c83b4cbded78"
+        },
+        "fullCommit": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+        "paths": [
+          "examples/canonical-projection/canary.yaml",
+          "examples/canonical-projection/definitions/commerce.projection.yaml",
+          "examples/canonical-projection/definitions/create-order.effect-axis.yaml",
+          "examples/canonical-projection/definitions/create-order.handler.yaml",
+          "examples/canonical-projection/definitions/create-order.projection-policy.yaml",
+          "examples/canonical-projection/definitions/create-order.use-case.yaml",
+          "examples/canonical-projection/definitions/effect-axis.projection-policy.yaml",
+          "examples/canonical-projection/definitions/handler.projection-policy.yaml",
+          "examples/canonical-projection/modules/commerce/module.yaml",
+          "examples/canonical-projection/modules/commerce/schema.yaml",
+          "examples/canonical-projection/modules/dotnet/module.yaml",
+          "examples/canonical-projection/modules/foundation/module.yaml",
+          "examples/canonical-projection/modules/foundation/schema.yaml",
+          "examples/canonical-projection/modules/markdown/module.yaml"
+        ],
+        "digest": "b3780fb38251a6ddb56d878971333ac1ddd8c7fbc5deeba27585ad9adc031225"
+      },
+      "observedPaths": [
+        "examples/canonical-projection/canary.yaml",
+        "examples/canonical-projection/definitions/commerce.projection.yaml",
+        "examples/canonical-projection/definitions/create-order.effect-axis.yaml",
+        "examples/canonical-projection/definitions/create-order.handler.yaml",
+        "examples/canonical-projection/definitions/create-order.projection-policy.yaml",
+        "examples/canonical-projection/definitions/create-order.use-case.yaml",
+        "examples/canonical-projection/definitions/effect-axis.projection-policy.yaml",
+        "examples/canonical-projection/definitions/handler.projection-policy.yaml",
+        "examples/canonical-projection/modules/commerce/module.yaml",
+        "examples/canonical-projection/modules/commerce/schema.yaml",
+        "examples/canonical-projection/modules/dotnet/module.yaml",
+        "examples/canonical-projection/modules/foundation/module.yaml",
+        "examples/canonical-projection/modules/foundation/schema.yaml",
+        "examples/canonical-projection/modules/markdown/module.yaml"
+      ],
+      "observedDigest": "sha256:b3780fb38251a6ddb56d878971333ac1ddd8c7fbc5deeba27585ad9adc031225",
+      "inventory": {
+        "identity": {
+          "Root": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\public-canary\\repo",
+          "GitDir": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\public-canary\\repo\\.git",
+          "CommonDir": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\public-canary\\repo\\.git",
+          "ObjectFormat": "sha1",
+          "Digest": "7c8582341bebd39ee749afbcf9fe65b6335b6ce1a5946518c831c83b4cbded78"
+        },
+        "prefixes": [
+          "src"
+        ],
+        "entries": [],
+        "missingPrefixes": [
+          "src"
+        ],
+        "metadataDigest": "sha256:a0b60dcc6d715b531e450b29ab3568a4fa1c44fde42fceec706b0b3f159c230b"
+      },
+      "impact": {
+        "baseRevision": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+        "candidateRevision": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+        "changedDefinitions": null,
+        "affectedDefinitions": null,
+        "definitionCauses": {},
+        "scopeAffectedProjections": null,
+        "conservativeInvalidatedProjections": null
+      },
+      "proposals": [
+        {
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+          "module": {
+            "name": "markitect-dotnet",
+            "version": "1.0.0",
+            "digest": "sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c"
+          },
+          "decision": "work",
+          "reasons": [
+            "not-materialized"
+          ],
+          "request": {
+            "revision": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+            "modelDigest": "sha256:19663761bf34278ebac9fef0bb1917b2e7a3ce2e734d8cf40d5a6e86470f5e36",
+            "requestDigest": "sha256:1d110c0bd557dcb2a34efa7d0e68e408d486d7759dc3cb5ae08b506816091244",
+            "projection": {
+              "apiVersion": "markitect.foundation/v1",
+              "kind": "Projection",
+              "metadata": {
+                "name": "application-dotnet",
+                "namespace": "commerce"
+              },
+              "purpose": "Materializes the explicitly selected commerce application scope in the .NET source tree.",
+              "spec": {
+                "policies": [
+                  {
+                    "apiVersion": "markitect.foundation/v1",
+                    "kind": "ProjectionPolicy",
+                    "name": "use-case-to-dotnet",
+                    "namespace": "commerce"
+                  },
+                  {
+                    "apiVersion": "markitect.foundation/v1",
+                    "kind": "ProjectionPolicy",
+                    "name": "handler-to-dotnet",
+                    "namespace": "commerce"
+                  },
+                  {
+                    "apiVersion": "markitect.foundation/v1",
+                    "kind": "ProjectionPolicy",
+                    "name": "effect-axis-to-dotnet",
+                    "namespace": "commerce"
+                  }
+                ],
+                "representation": "dotnet",
+                "source": {
+                  "definitions": [
+                    {
+                      "apiVersion": "commerce.example.org/v1",
+                      "kind": "UseCase",
+                      "name": "create-order",
+                      "namespace": "commerce"
+                    },
+                    {
+                      "apiVersion": "commerce.example.org/v1",
+                      "kind": "Handler",
+                      "name": "create-order-handler",
+                      "namespace": "commerce"
+                    },
+                    {
+                      "apiVersion": "commerce.example.org/v1",
+                      "kind": "EffectAxis",
+                      "name": "create-order-effects",
+                      "namespace": "commerce"
+                    }
+                  ]
+                },
+                "target": {
+                  "path": "src/",
+                  "repository": "."
+                }
+              },
+              "source": {
+                "path": "examples/canonical-projection/definitions/commerce.projection.yaml",
+                "digest": "sha256:74ee6f2ea2690017ef0bd5636f1faba564917b72e33e4a2c3360b13d86e09962",
+                "line": 1
+              }
+            },
+            "binding": {
+              "projection": {
+                "apiVersion": "markitect.foundation/v1",
+                "kind": "Projection",
+                "namespace": "commerce",
+                "name": "application-dotnet"
+              },
+              "module": "markitect-dotnet"
+            },
+            "modulePin": {
+              "name": "markitect-dotnet",
+              "version": "1.0.0",
+              "digest": "sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c"
+            },
+            "projector": {
+              "ID": "dotnet-source",
+              "Version": "1.0.0",
+              "Target": "dotnet",
+              "AllKinds": true,
+              "SupportedKinds": null,
+              "AllowedRoots": [
+                "src/"
+              ],
+              "Guidance": "Use canonical semantics and applicable ProjectionPolicy guidance as inputs to a bounded Executor task. Escalate when representation intent is missing or ambiguous; return a candidate for independent verification.\n",
+              "RequiredChecks": null
+            },
+            "definitions": [
+              {
+                "apiVersion": "commerce.example.org/v1",
+                "kind": "UseCase",
+                "metadata": {
+                  "name": "create-order",
+                  "namespace": "commerce"
+                },
+                "purpose": "Allows a customer to create an order.",
+                "spec": {
+                  "handledBy": {
+                    "apiVersion": "commerce.example.org/v1",
+                    "kind": "Handler",
+                    "name": "create-order-handler",
+                    "namespace": "commerce"
+                  }
+                },
+                "source": {
+                  "path": "examples/canonical-projection/definitions/create-order.use-case.yaml",
+                  "digest": "sha256:a7378a24a0dc7e93ba7f477a2e5e9d9b610406899f770777d9b81ae774829ca3",
+                  "line": 1
+                }
+              },
+              {
+                "apiVersion": "commerce.example.org/v1",
+                "kind": "Handler",
+                "metadata": {
+                  "name": "create-order-handler",
+                  "namespace": "commerce"
+                },
+                "purpose": "Coordinates the application behavior for creating an order.",
+                "spec": {},
+                "source": {
+                  "path": "examples/canonical-projection/definitions/create-order.handler.yaml",
+                  "digest": "sha256:72c556e9504d13aeed165dacc3923ce0c28ea46ded1be76fe0dbea3b7b3f539f",
+                  "line": 1
+                }
+              },
+              {
+                "apiVersion": "commerce.example.org/v1",
+                "kind": "EffectAxis",
+                "metadata": {
+                  "name": "create-order-effects",
+                  "namespace": "commerce"
+                },
+                "purpose": "Keeps externally visible order effects behind the application boundary.",
+                "spec": {
+                  "boundary": "application"
+                },
+                "source": {
+                  "path": "examples/canonical-projection/definitions/create-order.effect-axis.yaml",
+                  "digest": "sha256:581648c57dd2fffdac622e1b44d9c7c951e7b68119ef2d8403a16662eb83bb9e",
+                  "line": 1
+                }
+              }
+            ],
+            "schemas": [
+              {
+                "apiVersion": "commerce.example.org/v1",
+                "purpose": "Independent example application vocabulary used to demonstrate ontology-neutral Projection binding.",
+                "kinds": {
+                  "EffectAxis": {
+                    "purpose": "Declares an application operation's effect boundary and ordering intent.",
+                    "properties": {
+                      "boundary": {
+                        "purpose": "States the explicit application boundary for this effect.",
+                        "type": "string",
+                        "minCount": 1,
+                        "maxCount": 1
+                      }
+                    }
+                  },
+                  "Handler": {
+                    "purpose": "Describes one application component responsible for handling a use case.",
+                    "properties": {}
+                  },
+                  "UseCase": {
+                    "purpose": "Describes one independently meaningful unit of application behavior.",
+                    "properties": {
+                      "handledBy": {
+                        "purpose": "Names the handler realizing this use case.",
+                        "type": "reference",
+                        "minCount": 1,
+                        "maxCount": 1,
+                        "target": {
+                          "apiVersion": "commerce.example.org/v1",
+                          "kind": "Handler"
+                        }
+                      }
+                    }
+                  }
+                },
+                "source": {
+                  "path": "module:commerce-example@1.0.0/schema.yaml",
+                  "digest": "sha256:645f78a7668f72970ddab47508a97280c19b9f9ca97bc79554d8d2022dd1eb02",
+                  "line": 1
+                }
+              }
+            ],
+            "policies": [
+              {
+                "apiVersion": "markitect.foundation/v1",
+                "kind": "ProjectionPolicy",
+                "metadata": {
+                  "name": "use-case-to-dotnet",
+                  "namespace": "commerce"
+                },
+                "purpose": "Guides the representation of commerce use cases in the selected .NET target.",
+                "spec": {
+                  "guidance": "Preserve externally visible behavior and keep application orchestration separate from persistence details.\n",
+                  "sourceKind": {
+                    "apiVersion": "commerce.example.org/v1",
+                    "kind": "UseCase"
+                  },
+                  "targetTechnology": "dotnet"
+                },
+                "source": {
+                  "path": "examples/canonical-projection/definitions/create-order.projection-policy.yaml",
+                  "digest": "sha256:db31cfc61942e619bcf3a91445e164181bb74df929875bda173e0cc86e8963c0",
+                  "line": 1
+                }
+              },
+              {
+                "apiVersion": "markitect.foundation/v1",
+                "kind": "ProjectionPolicy",
+                "metadata": {
+                  "name": "handler-to-dotnet",
+                  "namespace": "commerce"
+                },
+                "purpose": "Guides representation of commerce handlers in the selected .NET target.",
+                "spec": {
+                  "guidance": "Keep application orchestration explicit and isolate infrastructure access behind declared boundaries.\n",
+                  "sourceKind": {
+                    "apiVersion": "commerce.example.org/v1",
+                    "kind": "Handler"
+                  },
+                  "targetTechnology": "dotnet"
+                },
+                "source": {
+                  "path": "examples/canonical-projection/definitions/handler.projection-policy.yaml",
+                  "digest": "sha256:5e71e214134895ec5d02856e9d6d049f9cbf7eb89f5f892b4b68873e235a64a9",
+                  "line": 1
+                }
+              },
+              {
+                "apiVersion": "markitect.foundation/v1",
+                "kind": "ProjectionPolicy",
+                "metadata": {
+                  "name": "effect-axis-to-dotnet",
+                  "namespace": "commerce"
+                },
+                "purpose": "Constrains representation of the project-specific EffectAxis in the .NET target.",
+                "spec": {
+                  "guidance": "Preserve the declared application boundary and keep this responsibility visible in the application layer.\n",
+                  "sourceKind": {
+                    "apiVersion": "commerce.example.org/v1",
+                    "kind": "EffectAxis"
+                  },
+                  "targetTechnology": "dotnet"
+                },
+                "source": {
+                  "path": "examples/canonical-projection/definitions/effect-axis.projection-policy.yaml",
+                  "digest": "sha256:4c8730a36075feaa9d7e7aaab647bd56aa8239f56be4542ea7be98bccffee3cf",
+                  "line": 1
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]",
+                "to": "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+                "property": "handledBy",
+                "source": {
+                  "path": "examples/canonical-projection/definitions/create-order.use-case.yaml",
+                  "digest": "sha256:a7378a24a0dc7e93ba7f477a2e5e9d9b610406899f770777d9b81ae774829ca3",
+                  "line": 1
+                }
+              }
+            ],
+            "externalEdges": null,
+            "targetRepository": ".",
+            "targetPath": "src/",
+            "targetPrefix": "src",
+            "targetFiles": {},
+            "targetDigests": {}
+          },
+          "task": {
+            "RequestDigest": "sha256:1d110c0bd557dcb2a34efa7d0e68e408d486d7759dc3cb5ae08b506816091244",
+            "Objective": "Project the selected canonical scope into the declared .NET target using its supplied semantics and matching ProjectionPolicy guidance.",
+            "TargetPrefix": "src",
+            "AllowedRoots": [
+              "src"
+            ],
+            "AllowedExtensions": [
+              ".cs",
+              ".csproj"
+            ],
+            "Kinds": [
+              {
+                "Identity": {
+                  "apiVersion": "commerce.example.org/v1",
+                  "kind": "EffectAxis"
+                },
+                "SchemaPurpose": "Independent example application vocabulary used to demonstrate ontology-neutral Projection binding.",
+                "Kind": {
+                  "purpose": "Declares an application operation's effect boundary and ordering intent.",
+                  "properties": {
+                    "boundary": {
+                      "purpose": "States the explicit application boundary for this effect.",
+                      "type": "string",
+                      "minCount": 1,
+                      "maxCount": 1
+                    }
+                  }
+                },
+                "Definitions": [
+                  {
+                    "apiVersion": "commerce.example.org/v1",
+                    "kind": "EffectAxis",
+                    "metadata": {
+                      "name": "create-order-effects",
+                      "namespace": "commerce"
+                    },
+                    "purpose": "Keeps externally visible order effects behind the application boundary.",
+                    "spec": {
+                      "boundary": "application"
+                    },
+                    "source": {
+                      "path": "examples/canonical-projection/definitions/create-order.effect-axis.yaml",
+                      "digest": "sha256:581648c57dd2fffdac622e1b44d9c7c951e7b68119ef2d8403a16662eb83bb9e",
+                      "line": 1
+                    }
+                  }
+                ],
+                "Policies": [
+                  {
+                    "apiVersion": "markitect.foundation/v1",
+                    "kind": "ProjectionPolicy",
+                    "metadata": {
+                      "name": "effect-axis-to-dotnet",
+                      "namespace": "commerce"
+                    },
+                    "purpose": "Constrains representation of the project-specific EffectAxis in the .NET target.",
+                    "spec": {
+                      "guidance": "Preserve the declared application boundary and keep this responsibility visible in the application layer.\n",
+                      "sourceKind": {
+                        "apiVersion": "commerce.example.org/v1",
+                        "kind": "EffectAxis"
+                      },
+                      "targetTechnology": "dotnet"
+                    },
+                    "source": {
+                      "path": "examples/canonical-projection/definitions/effect-axis.projection-policy.yaml",
+                      "digest": "sha256:4c8730a36075feaa9d7e7aaab647bd56aa8239f56be4542ea7be98bccffee3cf",
+                      "line": 1
+                    }
+                  }
+                ]
+              },
+              {
+                "Identity": {
+                  "apiVersion": "commerce.example.org/v1",
+                  "kind": "Handler"
+                },
+                "SchemaPurpose": "Independent example application vocabulary used to demonstrate ontology-neutral Projection binding.",
+                "Kind": {
+                  "purpose": "Describes one application component responsible for handling a use case.",
+                  "properties": {}
+                },
+                "Definitions": [
+                  {
+                    "apiVersion": "commerce.example.org/v1",
+                    "kind": "Handler",
+                    "metadata": {
+                      "name": "create-order-handler",
+                      "namespace": "commerce"
+                    },
+                    "purpose": "Coordinates the application behavior for creating an order.",
+                    "spec": {},
+                    "source": {
+                      "path": "examples/canonical-projection/definitions/create-order.handler.yaml",
+                      "digest": "sha256:72c556e9504d13aeed165dacc3923ce0c28ea46ded1be76fe0dbea3b7b3f539f",
+                      "line": 1
+                    }
+                  }
+                ],
+                "Policies": [
+                  {
+                    "apiVersion": "markitect.foundation/v1",
+                    "kind": "ProjectionPolicy",
+                    "metadata": {
+                      "name": "handler-to-dotnet",
+                      "namespace": "commerce"
+                    },
+                    "purpose": "Guides representation of commerce handlers in the selected .NET target.",
+                    "spec": {
+                      "guidance": "Keep application orchestration explicit and isolate infrastructure access behind declared boundaries.\n",
+                      "sourceKind": {
+                        "apiVersion": "commerce.example.org/v1",
+                        "kind": "Handler"
+                      },
+                      "targetTechnology": "dotnet"
+                    },
+                    "source": {
+                      "path": "examples/canonical-projection/definitions/handler.projection-policy.yaml",
+                      "digest": "sha256:5e71e214134895ec5d02856e9d6d049f9cbf7eb89f5f892b4b68873e235a64a9",
+                      "line": 1
+                    }
+                  }
+                ]
+              },
+              {
+                "Identity": {
+                  "apiVersion": "commerce.example.org/v1",
+                  "kind": "UseCase"
+                },
+                "SchemaPurpose": "Independent example application vocabulary used to demonstrate ontology-neutral Projection binding.",
+                "Kind": {
+                  "purpose": "Describes one independently meaningful unit of application behavior.",
+                  "properties": {
+                    "handledBy": {
+                      "purpose": "Names the handler realizing this use case.",
+                      "type": "reference",
+                      "minCount": 1,
+                      "maxCount": 1,
+                      "target": {
+                        "apiVersion": "commerce.example.org/v1",
+                        "kind": "Handler"
+                      }
+                    }
+                  }
+                },
+                "Definitions": [
+                  {
+                    "apiVersion": "commerce.example.org/v1",
+                    "kind": "UseCase",
+                    "metadata": {
+                      "name": "create-order",
+                      "namespace": "commerce"
+                    },
+                    "purpose": "Allows a customer to create an order.",
+                    "spec": {
+                      "handledBy": {
+                        "apiVersion": "commerce.example.org/v1",
+                        "kind": "Handler",
+                        "name": "create-order-handler",
+                        "namespace": "commerce"
+                      }
+                    },
+                    "source": {
+                      "path": "examples/canonical-projection/definitions/create-order.use-case.yaml",
+                      "digest": "sha256:a7378a24a0dc7e93ba7f477a2e5e9d9b610406899f770777d9b81ae774829ca3",
+                      "line": 1
+                    }
+                  }
+                ],
+                "Policies": [
+                  {
+                    "apiVersion": "markitect.foundation/v1",
+                    "kind": "ProjectionPolicy",
+                    "metadata": {
+                      "name": "use-case-to-dotnet",
+                      "namespace": "commerce"
+                    },
+                    "purpose": "Guides the representation of commerce use cases in the selected .NET target.",
+                    "spec": {
+                      "guidance": "Preserve externally visible behavior and keep application orchestration separate from persistence details.\n",
+                      "sourceKind": {
+                        "apiVersion": "commerce.example.org/v1",
+                        "kind": "UseCase"
+                      },
+                      "targetTechnology": "dotnet"
+                    },
+                    "source": {
+                      "path": "examples/canonical-projection/definitions/create-order.projection-policy.yaml",
+                      "digest": "sha256:db31cfc61942e619bcf3a91445e164181bb74df929875bda173e0cc86e8963c0",
+                      "line": 1
+                    }
+                  }
+                ]
+              }
+            ],
+            "ExistingOwnedArtifacts": null,
+            "Constraints": [
+              "Choose candidate filenames from the supplied semantics and project conventions.",
+              "Return candidate files only under TargetPrefix and registered AllowedRoots.",
+              "Return the complete owned representation: include a candidate file for every existing owned artifact path listed in the task, even when its contents are unchanged. Omission is not deletion or retirement.",
+              "Do not delete or claim verification of any artifact."
+            ],
+            "Repair": null
+          },
+          "evidenceRefreshRequired": false
+        }
+      ],
+      "unobservedProjections": null,
+      "evidenceRefreshRequired": null,
+      "unknownArtifacts": null,
+      "explicitExcludedArtifacts": [],
+      "escalations": null
+    },
+    "inputPaths": [
+      "examples/canonical-projection/canary.yaml",
+      "examples/canonical-projection/definitions/commerce.projection.yaml",
+      "examples/canonical-projection/definitions/create-order.effect-axis.yaml",
+      "examples/canonical-projection/definitions/create-order.handler.yaml",
+      "examples/canonical-projection/definitions/create-order.projection-policy.yaml",
+      "examples/canonical-projection/definitions/create-order.use-case.yaml",
+      "examples/canonical-projection/definitions/effect-axis.projection-policy.yaml",
+      "examples/canonical-projection/definitions/handler.projection-policy.yaml",
+      "examples/canonical-projection/modules/commerce/module.yaml",
+      "examples/canonical-projection/modules/commerce/schema.yaml",
+      "examples/canonical-projection/modules/dotnet/module.yaml",
+      "examples/canonical-projection/modules/foundation/module.yaml",
+      "examples/canonical-projection/modules/foundation/schema.yaml",
+      "examples/canonical-projection/modules/markdown/module.yaml"
+    ],
+    "dependencyEvidencePaths": null,
+    "inputDigest": "sha256:b3780fb38251a6ddb56d878971333ac1ddd8c7fbc5deeba27585ad9adc031225"
+  },
+  "executorDigest": "sha256:df59df10bd731c303a7d49bd736addcc25ff23d1b3caf571f518a1e2aaf75aaa",
+  "verifierDigest": "sha256:df59df10bd731c303a7d49bd736addcc25ff23d1b3caf571f518a1e2aaf75aaa",
+  "hostExecutableDigest": "sha256:0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+  "toolVersion": "0.14.1",
+  "toolDigest": "sha256:0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+  "work": [
+    {
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "candidateDigest": "",
+      "planDigest": "",
+      "outputs": null,
+      "executor": {
+        "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+        "runId": "460e52108f199c183863f40bf2fe0768",
+        "inputDigest": "sha256:94f27ac6feaa29be60750f90b1d023bb321a3ff6156ee974caa58d0b8077b65b",
+        "contextDigest": "sha256:fc0b63525474475192c9bc76765e5c52a1aa07efdd2fce4b3a1058d2ed594ec0",
+        "configDigest": "sha256:df59df10bd731c303a7d49bd736addcc25ff23d1b3caf571f518a1e2aaf75aaa",
+        "commandDigest": "sha256:b245365a4a98af209134881dec6847e05c105f0c25e70b2c028abebd0e901819",
+        "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+        "runtimeFilesDigest": "sha256:28799a448dedb9ca170d4cfcc593ff78575c85e72e29ff3b68cdc6b60f7a94de",
+        "providerVersion": "native-codex-collaboration-inherited-parent",
+        "providerVersionDigest": "sha256:7b3e386870c7aae0248339a6dd60df0f8d7f72066ad2a97f426315a3eb511e6c",
+        "stdoutDigest": "sha256:7a2f94ec188855435e2bbc39f353f636a5937d41e731cf191584a60070a89b59",
+        "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "privateLogDigest": "",
+        "outcome": "incomplete",
+        "wallTimeMilliseconds": 77093,
+        "retryCount": 0
+      },
+      "escalations": [
+        {
+          "Code": "executor.invocation-failed",
+          "Identity": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+          "Message": "evidence reference was not supplied in the request"
+        }
+      ]
+    }
+  ]
+}

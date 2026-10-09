@@ -1,0 +1,135 @@
+{
+  "utc": "2026-10-09T01:20:51.2206626Z",
+  "sourceSha": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+  "repo": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\public-canary\\repo",
+  "all18RawEqual": true,
+  "bindings": [
+    {
+      "committedBlob": "3518b7d11e3c9431133674e450df5d36b7784d94",
+      "path": "examples/canonical-projection/binding-notes.md",
+      "bytes": 4077,
+      "rawWorkingGitHash": "3518b7d11e3c9431133674e450df5d36b7784d94",
+      "sha256": "56a37899200ebe4d0ca829eeb1f0d44edafba54ff017c9473a0e2ed5517f0511"
+    },
+    {
+      "committedBlob": "5ccd447249c719f07c95ecc56d62cec605eb9d66",
+      "path": "examples/canonical-projection/canary.yaml",
+      "bytes": 1974,
+      "rawWorkingGitHash": "5ccd447249c719f07c95ecc56d62cec605eb9d66",
+      "sha256": "f2816763f4122475c0327468d3e636c27aab50fecb425aedeb42be4c47719080"
+    },
+    {
+      "committedBlob": "9d0be781bcd94a2d2d9baa16542843a6aa624c35",
+      "path": "examples/canonical-projection/canonical.yaml",
+      "bytes": 2225,
+      "rawWorkingGitHash": "9d0be781bcd94a2d2d9baa16542843a6aa624c35",
+      "sha256": "dfe363d8ecd304333ec061a7563034c2f1c73fc9ddfdcf7fcdbbc47d6be2f9e6"
+    },
+    {
+      "committedBlob": "2809a6c25a8897ac4e76db2f7909b18da5edd641",
+      "path": "examples/canonical-projection/definitions/commerce.markdown-projection.yaml",
+      "bytes": 706,
+      "rawWorkingGitHash": "2809a6c25a8897ac4e76db2f7909b18da5edd641",
+      "sha256": "4e7f2bcbc78936e4ce8eaa570e46a10e594c5e8a2b63dde78567858159072760"
+    },
+    {
+      "committedBlob": "a4d3dfb7be2fbc051e136ea79c75c5fd91c74903",
+      "path": "examples/canonical-projection/definitions/commerce.projection.yaml",
+      "bytes": 1091,
+      "rawWorkingGitHash": "a4d3dfb7be2fbc051e136ea79c75c5fd91c74903",
+      "sha256": "74ee6f2ea2690017ef0bd5636f1faba564917b72e33e4a2c3360b13d86e09962"
+    },
+    {
+      "committedBlob": "17ca7befcd5da9b344284cab8701e002855f76ef",
+      "path": "examples/canonical-projection/definitions/create-order.effect-axis.yaml",
+      "bytes": 225,
+      "rawWorkingGitHash": "17ca7befcd5da9b344284cab8701e002855f76ef",
+      "sha256": "581648c57dd2fffdac622e1b44d9c7c951e7b68119ef2d8403a16662eb83bb9e"
+    },
+    {
+      "committedBlob": "bce68fc41637de8e01d72e65fd0d01eecb9da42e",
+      "path": "examples/canonical-projection/definitions/create-order.handler.yaml",
+      "bytes": 189,
+      "rawWorkingGitHash": "bce68fc41637de8e01d72e65fd0d01eecb9da42e",
+      "sha256": "72c556e9504d13aeed165dacc3923ce0c28ea46ded1be76fe0dbea3b7b3f539f"
+    },
+    {
+      "committedBlob": "689e7d93a2ee15dd3cae30c044054ef63b18e62c",
+      "path": "examples/canonical-projection/definitions/create-order.projection-policy.yaml",
+      "bytes": 438,
+      "rawWorkingGitHash": "689e7d93a2ee15dd3cae30c044054ef63b18e62c",
+      "sha256": "db31cfc61942e619bcf3a91445e164181bb74df929875bda173e0cc86e8963c0"
+    },
+    {
+      "committedBlob": "e92d6e8a65306c89b3bf0a3e0566432677b616f1",
+      "path": "examples/canonical-projection/definitions/create-order.use-case.yaml",
+      "bytes": 282,
+      "rawWorkingGitHash": "e92d6e8a65306c89b3bf0a3e0566432677b616f1",
+      "sha256": "a7378a24a0dc7e93ba7f477a2e5e9d9b610406899f770777d9b81ae774829ca3"
+    },
+    {
+      "committedBlob": "ca93c1989333837c2fd2eba86543b1758b09ef07",
+      "path": "examples/canonical-projection/definitions/effect-axis.projection-policy.yaml",
+      "bytes": 447,
+      "rawWorkingGitHash": "ca93c1989333837c2fd2eba86543b1758b09ef07",
+      "sha256": "4c8730a36075feaa9d7e7aaab647bd56aa8239f56be4542ea7be98bccffee3cf"
+    },
+    {
+      "committedBlob": "3a4f635c911567496c17e31ad50fd5636f547178",
+      "path": "examples/canonical-projection/definitions/handler.projection-policy.yaml",
+      "bytes": 427,
+      "rawWorkingGitHash": "3a4f635c911567496c17e31ad50fd5636f547178",
+      "sha256": "5e71e214134895ec5d02856e9d6d049f9cbf7eb89f5f892b4b68873e235a64a9"
+    },
+    {
+      "committedBlob": "6fcef1874c69adb672274a831868d865068bd696",
+      "path": "examples/canonical-projection/evidence/check.go",
+      "bytes": 1371,
+      "rawWorkingGitHash": "6fcef1874c69adb672274a831868d865068bd696",
+      "sha256": "22da5d8081ed35fdfb30f0e8f5f009efb50bb8a278a9db36225c9005d572c49e"
+    },
+    {
+      "committedBlob": "467d16ad3bbbbc59985d5057ce6da86d58c5b323",
+      "path": "examples/canonical-projection/modules/commerce/module.yaml",
+      "bytes": 282,
+      "rawWorkingGitHash": "467d16ad3bbbbc59985d5057ce6da86d58c5b323",
+      "sha256": "d24a2a70c48291bcd94b15ae7d785ccca69f450f6606265cfd7fd96e29cfc0f7"
+    },
+    {
+      "committedBlob": "93b8f8965240de26fafc56b8a3646176c32bd57c",
+      "path": "examples/canonical-projection/modules/commerce/schema.yaml",
+      "bytes": 872,
+      "rawWorkingGitHash": "93b8f8965240de26fafc56b8a3646176c32bd57c",
+      "sha256": "645f78a7668f72970ddab47508a97280c19b9f9ca97bc79554d8d2022dd1eb02"
+    },
+    {
+      "committedBlob": "e0196139794172e639656bf1d544eecfc72d3381",
+      "path": "examples/canonical-projection/modules/dotnet/module.yaml",
+      "bytes": 664,
+      "rawWorkingGitHash": "e0196139794172e639656bf1d544eecfc72d3381",
+      "sha256": "97e79a16e88f81babb7303994907135c273fa45ccc98e65ced86f1494b181023"
+    },
+    {
+      "committedBlob": "c9ad2323ccd4c61c55bd94e97bfa43425ea1212d",
+      "path": "examples/canonical-projection/modules/foundation/module.yaml",
+      "bytes": 276,
+      "rawWorkingGitHash": "c9ad2323ccd4c61c55bd94e97bfa43425ea1212d",
+      "sha256": "074d9275cb728f11030eccabb6db6d5b4215bb5152596b7efd29f67cf12790d6"
+    },
+    {
+      "committedBlob": "649a6df84eeb4131944c270b61b5439bf7778685",
+      "path": "examples/canonical-projection/modules/foundation/schema.yaml",
+      "bytes": 2822,
+      "rawWorkingGitHash": "649a6df84eeb4131944c270b61b5439bf7778685",
+      "sha256": "a06850f14a9e9cbea29881058f764493606200f430ac2334d121f605f0e643e2"
+    },
+    {
+      "committedBlob": "c40f5e86c1d9ac13b063460c9b5fee711fd010d5",
+      "path": "examples/canonical-projection/modules/markdown/module.yaml",
+      "bytes": 698,
+      "rawWorkingGitHash": "c40f5e86c1d9ac13b063460c9b5fee711fd010d5",
+      "sha256": "02472764536ba55ef0378f70dd25dcf1d404d31bc828ee8e3ce50f00bffd5a47"
+    }
+  ],
+  "coreAutocrlf": "false"
+}

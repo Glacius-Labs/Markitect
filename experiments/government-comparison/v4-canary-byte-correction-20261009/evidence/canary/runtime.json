@@ -1,0 +1,76 @@
+{
+  "assuranceScopes": [],
+  "apiVersion": "markitect.canonical/controller/v1alpha1",
+  "checkInputs": [],
+  "referenceDepth": 1,
+  "executor": {
+    "modelOptions": {
+      "transport": "Scientist-dispatched-native-tool",
+      "reasoning": "high",
+      "servingModel": "unobserved"
+    },
+    "timeoutSeconds": 360,
+    "runtimeFiles": [
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\v4-canary-byte-correction-20261009\\helpers\\live_bridge.py",
+        "digest": "sha256:b2a87582a1668fae26596c9521f038c596c5c40110899e2b4d70da55575ad33b",
+        "mode": "0644"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\canary-state\\policy.json",
+        "digest": "sha256:80b0a772025db92e87b73a41121a70aeac8599fd3423e0a39b42bd083799e318",
+        "mode": "0644"
+      }
+    ],
+    "maxStderrBytes": 1048576,
+    "model": "gpt-6.1-sol",
+    "command": "C:\\Python313\\python.exe",
+    "maxStdoutBytes": 1048576,
+    "args": [
+      "-B",
+      "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\v4-canary-byte-correction-20261009\\helpers\\live_bridge.py",
+      "--mailbox",
+      "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\canary-state\\mailbox",
+      "--policy",
+      "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\canary-state\\policy.json"
+    ],
+    "providerVersion": "native-codex-collaboration-inherited-parent"
+  },
+  "recordStore": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\canary-state\\records",
+  "assuranceRoots": [],
+  "verifier": {
+    "modelOptions": {
+      "transport": "Scientist-dispatched-native-tool",
+      "reasoning": "high",
+      "servingModel": "unobserved"
+    },
+    "timeoutSeconds": 360,
+    "runtimeFiles": [
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\v4-canary-byte-correction-20261009\\helpers\\live_bridge.py",
+        "digest": "sha256:b2a87582a1668fae26596c9521f038c596c5c40110899e2b4d70da55575ad33b",
+        "mode": "0644"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\canary-state\\policy.json",
+        "digest": "sha256:80b0a772025db92e87b73a41121a70aeac8599fd3423e0a39b42bd083799e318",
+        "mode": "0644"
+      }
+    ],
+    "maxStderrBytes": 1048576,
+    "model": "gpt-6.1-sol",
+    "command": "C:\\Python313\\python.exe",
+    "maxStdoutBytes": 1048576,
+    "args": [
+      "-B",
+      "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\v4-canary-byte-correction-20261009\\helpers\\live_bridge.py",
+      "--mailbox",
+      "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\canary-state\\mailbox",
+      "--policy",
+      "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\canary-state\\policy.json"
+    ],
+    "providerVersion": "native-codex-collaboration-inherited-parent"
+  },
+  "auditAll": false,
+  "privateLogs": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-canary-byte-correction-20261009\\canary-state\\logs"
+}

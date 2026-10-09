@@ -1,0 +1,50 @@
+{
+  "key": "v4-canary-fixed-source-byte-correction-20261009",
+  "issuedUtc": "2026-10-09T01:18:24Z",
+  "absoluteDeadlineUtc": "2026-10-09T01:30:24Z",
+  "maxWallSeconds": 720,
+  "basis": "Direct user requests actual case studies and readiness; Root proved sole CRLF byte mismatch at unchanged public canary source; original setup terminally closed, unused quotas not reused.",
+  "baselineScientist": "6ab266917eb2cc9111e2ce7120018dd22c5ce300",
+  "rootByteEvidence": {
+    "repo": "C:/Users/Consiliari/Documents/Scientist-v4-native-live-bridge-20261009/public-canary/repo",
+    "fixedRevision": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+    "path": "examples/canonical-projection/canary.yaml",
+    "workingBytes": 1975,
+    "gitBytes": 1974,
+    "workingSHA256": "00654eddcce822e3aaaa23c0b79ac8c84e104f21a925bb1b6d695820d6198dbf",
+    "gitSHA256": "f2816763f4122475c0327468d3e636c27aab50fecb425aedeb42be4c47719080",
+    "workingCRLF": 1,
+    "gitCRLF": 0,
+    "workingCRLFtoLFEqualsCommittedBlob": true,
+    "gitStatusClean": true,
+    "coreAutocrlf": "true"
+  },
+  "limits": {
+    "ordinaryCorrectionBatches": 1,
+    "newOfflineTestProcesses": 0,
+    "mainProductProcessStarts": 1,
+    "mainProcessMaxSeconds": 360,
+    "actualCanaryNativeActors": 1,
+    "canaryActorMaxSeconds": 300,
+    "independentReadonlyFreezeReviewers": 1,
+    "reviewerMaxSeconds": 180,
+    "newSharedNativeReservationsMax": 2,
+    "newProductBuilds": 0,
+    "newFullTrialReservations": 0,
+    "cliOrAppserverOrProviderApiOrInstallations": 0
+  },
+  "overallReservedPairEndUtc": "2026-10-09T05:32:04Z",
+  "existingPairGrant": "v4-native-main-bridge-and-first-matched-pair-20261009",
+  "conditions": [
+    "Original 6ab terminal failure, archived working bytes, source and metadata remain untouched. Create a new additive correction package and isolated public non-study canary repo/state/mailbox; use raw committed Git bytes for ALL fixed-revision inputs, prove working raw hashes equal committed blobs before invoking Main. Fix own setup byte materialization only; do not weaken product freshness checks or modify product sources.",
+    "Bridge implementation/live_bridge.py and run_owned_main.py remain exact frozen bytes from 93ed058. No transport/protocol/evaluator/rubric/requirements repair, fixtures, replay or Scientist-authored role response. Path-specific runtime/config/policy/processspec/continuation and archival bindings may change prospectively for new isolated state, actual bytes and unchanged absolute bounds.",
+    "Exactly one new real Main controller-execute canary process using existing a97cbd5 binary0621e6ce...; one fresh actual native executor Actor at most, same inherited Scientist gpt-6.1-sol/high configured profile checked from latest own turn metadata before activation, fork_turns=none, no override. Genuine normalized Invocation/request/nonce/inputDigest, actual Actor result/rawResponse and actual Main-generated ExecutorReceipt must all bind.",
+    "Reserve starts before tools; count failed/unused reservations honestly; prior 1process/2reservations/1reviewactivation remain consumed. No retry/fallback/refill. Stop on next concrete failure and report once with preserved raw evidence.",
+    "After successful live proof, freeze exact new source/runtime/profile and existing24public+5private evaluation hash chain/common cell resources; then exactly one fresh readonly inherited-profile independent reviewer <=180s, no children/followups/retries/program/tests, actual declared transport/freeze scope only. No corrections after review. Require executable positive evidence, not a fixture-only PASS.",
+    "Terminal safe handoff exact clean source/binary/config/Invocation/response/receipt/review hashes and PRIVATE research-backup remoteSHA. No private evaluator vectors or foreign cell results to Root/implementers. No new purchase/APIintegration/policy bypass or product build.",
+    "Both already-reserved GF cells remain NOT RUN until positive handoff Root verification and explicit Root start receipt under existing pair grant. No new or replacement full trials, no overall deadline extension:05:32:04Z. Preserve original cell resources and cannot start a cell without its full allocated7200s remaining. Design readiness must not delay ready Conventional/Classic pair.",
+    "All other existing cell scope, real compatibility/task6 assessment, fresh contexts, sole Scientist dispatcher, own handles/cwd, contamination rules, quotas and callback contract remain unchanged. This is a concrete source-byte correction and one live proof, not a general diagnosis loop."
+  ],
+  "status": "Issued; not yet dispatched",
+  "usage": null
+}
