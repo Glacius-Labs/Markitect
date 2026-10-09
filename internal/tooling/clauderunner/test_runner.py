@@ -243,6 +243,12 @@ class ClaudeRunnerTests(unittest.TestCase):
             "issue one bounded reworkRequests entry",
             "That tracked repair alone does not require parent escalation",
             "does not mean the candidate passed",
+            "account for each direct child's current reported result",
+            "Distinguish what a report says from candidate bytes you personally inspected",
+            "an earlier work-routing request that a child may already have fulfilled",
+            "Before requesting rework, identify a concrete current mismatch or unmet contract",
+            "summary omission alone is not a defect",
+            "Do not return an already-fulfilled request as rework",
             "If a question or risk remains unanswered, preserve it and report partial",
             "use outer outcome escalated even when a rework request is also present",
             "A new bounded rework request alone may accompany complete only when no question or risk remains unresolved",
@@ -282,6 +288,9 @@ class ClaudeRunnerTests(unittest.TestCase):
         self.assertIn("actual scoped candidate bytes", prompt)
         self.assertIn("Do not use an implementer transcript", prompt)
         self.assertIn("fabricate test execution or test results", prompt)
+        self.assertIn("is a static artifact claim", prompt)
+        self.assertIn("what the supplied artifact says", prompt)
+        self.assertIn("not present it as your own execution claim or as a verified pass", prompt)
         self.assertIn("candidateFiles must be empty", prompt)
         self.assertIn("grounding field must exactly equal", prompt)
         self.assertIn("statement:<id>", prompt)
