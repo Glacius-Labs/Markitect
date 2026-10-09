@@ -1,0 +1,15 @@
+{
+  "terminalToolResultReceived": true,
+  "observedUtc": "2026-10-09T10:52:09.025425+00:00",
+  "reportedMainCommit": "ffcf65173c030e8718ab7098c8b461dfe03b0395",
+  "reportedFeatureHead": "8fe3df7e8f5c74173071793a8e399a364c2c5e4e",
+  "reportedOwnJobsAllTerminal": true,
+  "reportedProductBlocker": "project briefings/readiness: briefing bundle is invalid: incomplete definition identity",
+  "actualModelStartUtc": null,
+  "reportedRequestedModel": "gpt-6-luna",
+  "reasoning": "high",
+  "actualServingModel": null,
+  "usage": null,
+  "cost": null,
+  "reportedExposure": "Own public project files/rules, own grant/gate; no foreign case/chat/private eval/memory/global inventory/credentials known; no OS isolation attestation"
+}

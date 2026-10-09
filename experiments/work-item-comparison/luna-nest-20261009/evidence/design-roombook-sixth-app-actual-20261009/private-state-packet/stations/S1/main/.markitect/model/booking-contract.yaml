@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: booking-contract
+  namespace: ""
+purpose: "booking-contract for roombook"
+spec:
+  category: rule
+  description: "Released S1 book/list exactly follow README: valid calendar UTC-minute half-open intervals, per-room active overlap rejection, adjacent intervals permitted, list sorted start then id; future waves in BACKLOG remain visible but unreleased."
+  public: true
+  uses: []
+  requires: []

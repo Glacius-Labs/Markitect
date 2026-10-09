@@ -1,0 +1,8 @@
+{
+  "bindingBeforeSha256": "40eb9f06c055ec9bfc37118f7b4975d22918f76937cc64896d7ded911e472d36",
+  "bindingAfterSha256": "3644c22da0b676f966f508ada4cf9acef85701e4eac77b76334a41021cf525f0",
+  "runtimeBeforeSha256": "369787c16daddf2e2c5da96121ff95fc4689e35e312400dbf942f07cc09df9d6",
+  "runtimeAfterSha256": "a51048aaae623c9bf08794189984ae60aec168fdc05a2882cf7635b71fb1edab",
+  "originalMutableCaseDirtyStatus": "M .markitect/runtime.yaml",
+  "scope": "Only post-freeze resource metadata in original mutable checkout; both immutable candidates unchanged"
+}

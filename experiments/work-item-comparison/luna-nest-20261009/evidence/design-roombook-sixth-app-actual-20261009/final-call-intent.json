@@ -1,0 +1,12 @@
+{
+  "tool": "collaboration.spawn_agent",
+  "task_name": "design_roombook_sixth_independent_final",
+  "fork_turns": "none",
+  "model": "gpt-6-luna",
+  "reasoning_effort": "high",
+  "messageSha256": "3f9fed314dc0ae8cf8d648c35f3db0601673b3c20476816132f3031b2239b404",
+  "reservation": 2,
+  "toolInvocationUtc": null,
+  "actualModelStartUtc": null,
+  "handle": null
+}

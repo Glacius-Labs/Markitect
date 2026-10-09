@@ -1,0 +1,542 @@
+[
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".agents/skills/markitect-model-first/SKILL.md",
+    "preparedSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "workingSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "rawGitSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".claude/skills/markitect-model-first/SKILL.md",
+    "preparedSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "workingSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "rawGitSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".codex/config.toml",
+    "preparedSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "workingSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "rawGitSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".gitignore",
+    "preparedSha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "workingSha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "rawGitSha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/.gitignore",
+    "preparedSha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce",
+    "workingSha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce",
+    "rawGitSha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/model/booking-contract.yaml",
+    "preparedSha256": "e9f088cbdd1183d2c7266709896abcf96b7dac97b6e48e039828bc94eccc4316",
+    "workingSha256": "6367645213bd0fad32b90d18dab960ef111fca54d3164250c916c570123f1fc7",
+    "rawGitSha256": "e9f088cbdd1183d2c7266709896abcf96b7dac97b6e48e039828bc94eccc4316",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": false,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/model/checks.yaml",
+    "preparedSha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+    "workingSha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+    "rawGitSha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/model/delivery-rules.yaml",
+    "preparedSha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+    "workingSha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+    "rawGitSha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/model/documentation.yaml",
+    "preparedSha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+    "workingSha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+    "rawGitSha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/model/durable-state.yaml",
+    "preparedSha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+    "workingSha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+    "rawGitSha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/model/implementation.yaml",
+    "preparedSha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+    "workingSha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+    "rawGitSha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/model/manager.yaml",
+    "preparedSha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+    "workingSha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+    "rawGitSha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/model/reservation.yaml",
+    "preparedSha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+    "workingSha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+    "rawGitSha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/model/tests.yaml",
+    "preparedSha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+    "workingSha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+    "rawGitSha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/project.yaml",
+    "preparedSha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098",
+    "workingSha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098",
+    "rawGitSha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/runtime.yaml",
+    "preparedSha256": "38bae9af3b7f6d353e5ef4b06e9f57e1d01d2ae985ac6871067a310b9455471e",
+    "workingSha256": "8c1c22a414968706f381d11fce8e0e92d90000449a4ed9b4964237364750727b",
+    "rawGitSha256": "38bae9af3b7f6d353e5ef4b06e9f57e1d01d2ae985ac6871067a310b9455471e",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": false,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".markitect/workflows/model-first.md",
+    "preparedSha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e",
+    "workingSha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e",
+    "rawGitSha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": ".study/station.json",
+    "preparedSha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+    "workingSha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+    "rawGitSha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": "AGENTS.md",
+    "preparedSha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6",
+    "workingSha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6",
+    "rawGitSha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": "BACKLOG.md",
+    "preparedSha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "workingSha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "rawGitSha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": "checks/acceptance.py",
+    "preparedSha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "workingSha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "rawGitSha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": "CLAUDE.md",
+    "preparedSha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05",
+    "workingSha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05",
+    "rawGitSha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": "docs/markitect/project.md",
+    "preparedSha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb",
+    "workingSha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb",
+    "rawGitSha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": "QUALITY.md",
+    "preparedSha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "workingSha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "rawGitSha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": "README.md",
+    "preparedSha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "workingSha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "rawGitSha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": "STATIONS.json",
+    "preparedSha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "workingSha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "rawGitSha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "path": "TOOLCHAIN.md",
+    "preparedSha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77",
+    "workingSha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77",
+    "rawGitSha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".agents/skills/markitect-model-first/SKILL.md",
+    "preparedSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "workingSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "rawGitSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".claude/skills/markitect-model-first/SKILL.md",
+    "preparedSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "workingSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "rawGitSha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".codex/config.toml",
+    "preparedSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "workingSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "rawGitSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".gitignore",
+    "preparedSha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "workingSha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "rawGitSha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/.gitignore",
+    "preparedSha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce",
+    "workingSha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce",
+    "rawGitSha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/model/booking-contract.yaml",
+    "preparedSha256": "e9f088cbdd1183d2c7266709896abcf96b7dac97b6e48e039828bc94eccc4316",
+    "workingSha256": "6367645213bd0fad32b90d18dab960ef111fca54d3164250c916c570123f1fc7",
+    "rawGitSha256": "e9f088cbdd1183d2c7266709896abcf96b7dac97b6e48e039828bc94eccc4316",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": false,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/model/checks.yaml",
+    "preparedSha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+    "workingSha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+    "rawGitSha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/model/delivery-rules.yaml",
+    "preparedSha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+    "workingSha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+    "rawGitSha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/model/documentation.yaml",
+    "preparedSha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+    "workingSha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+    "rawGitSha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/model/durable-state.yaml",
+    "preparedSha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+    "workingSha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+    "rawGitSha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/model/implementation.yaml",
+    "preparedSha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+    "workingSha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+    "rawGitSha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/model/manager.yaml",
+    "preparedSha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+    "workingSha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+    "rawGitSha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/model/reservation.yaml",
+    "preparedSha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+    "workingSha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+    "rawGitSha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/model/tests.yaml",
+    "preparedSha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+    "workingSha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+    "rawGitSha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/project.yaml",
+    "preparedSha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098",
+    "workingSha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098",
+    "rawGitSha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/runtime.yaml",
+    "preparedSha256": "38bae9af3b7f6d353e5ef4b06e9f57e1d01d2ae985ac6871067a310b9455471e",
+    "workingSha256": "8c1c22a414968706f381d11fce8e0e92d90000449a4ed9b4964237364750727b",
+    "rawGitSha256": "38bae9af3b7f6d353e5ef4b06e9f57e1d01d2ae985ac6871067a310b9455471e",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": false,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".markitect/workflows/model-first.md",
+    "preparedSha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e",
+    "workingSha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e",
+    "rawGitSha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": ".study/station.json",
+    "preparedSha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+    "workingSha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+    "rawGitSha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": "AGENTS.md",
+    "preparedSha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6",
+    "workingSha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6",
+    "rawGitSha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": "BACKLOG.md",
+    "preparedSha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "workingSha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "rawGitSha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": "checks/acceptance.py",
+    "preparedSha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "workingSha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "rawGitSha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": "CLAUDE.md",
+    "preparedSha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05",
+    "workingSha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05",
+    "rawGitSha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": "docs/markitect/project.md",
+    "preparedSha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb",
+    "workingSha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb",
+    "rawGitSha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": "QUALITY.md",
+    "preparedSha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "workingSha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "rawGitSha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": "README.md",
+    "preparedSha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "workingSha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "rawGitSha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": "STATIONS.json",
+    "preparedSha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "workingSha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "rawGitSha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  },
+  {
+    "folder": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "path": "TOOLCHAIN.md",
+    "preparedSha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77",
+    "workingSha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77",
+    "rawGitSha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77",
+    "gitMatchesPrepared": true,
+    "workingMatchesGit": true,
+    "lineEndingEquivalent": true
+  }
+]

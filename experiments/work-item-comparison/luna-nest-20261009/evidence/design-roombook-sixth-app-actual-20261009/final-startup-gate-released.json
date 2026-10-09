@@ -1,0 +1,12 @@
+{
+  "released": true,
+  "reservation": 2,
+  "ownHandle": "/root/design_roombook_sixth_independent_final",
+  "phase": "assessment",
+  "stationIndex": 0,
+  "bindingSha256": "40eb9f06c055ec9bfc37118f7b4975d22918f76937cc64896d7ded911e472d36",
+  "runtimeSha256": "369787c16daddf2e2c5da96121ff95fc4689e35e312400dbf942f07cc09df9d6",
+  "grantSha256": "6ffb11f2c31b043f283c15484840ee4630a17d968c7b6b37743b969ca6055811",
+  "releasedUtc": "2026-10-09T10:53:39.871166+00:00",
+  "frozenCandidateUntouched": true
+}

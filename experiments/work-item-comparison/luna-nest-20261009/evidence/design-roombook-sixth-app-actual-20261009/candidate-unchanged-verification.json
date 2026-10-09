@@ -1,0 +1,20 @@
+[
+  {
+    "path": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+    "head": "ffcf65173c030e8718ab7098c8b461dfe03b0395",
+    "clean": true,
+    "preparedRawGitBindings": 27,
+    "exactWorkingRawGitBindings": 25,
+    "workingRawGitCRLFOnlyDifferences": 2,
+    "unchangedSinceAssessment": true
+  },
+  {
+    "path": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\stations\\S1\\main",
+    "head": "ffcf65173c030e8718ab7098c8b461dfe03b0395",
+    "clean": true,
+    "preparedRawGitBindings": 27,
+    "exactWorkingRawGitBindings": 25,
+    "workingRawGitCRLFOnlyDifferences": 2,
+    "unchangedSinceAssessment": true
+  }
+]

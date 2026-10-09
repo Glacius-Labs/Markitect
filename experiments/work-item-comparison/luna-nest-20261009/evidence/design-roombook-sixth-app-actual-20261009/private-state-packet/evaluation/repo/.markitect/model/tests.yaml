@@ -1,0 +1,22 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: tests
+  namespace: ""
+purpose: "Owns verification representations of the accepted public contract"
+spec:
+  role: verification
+  realizes:
+    - namespace: ""
+      name: reservation
+    - namespace: ""
+      name: booking-contract
+    - namespace: ""
+      name: durable-state
+  paths:
+    - "tests/"
+  checks:
+    - namespace: ""
+      name: project-tests
+  required: true
+  reason: "Expected realizations, not proof of implementation or genuine installation; validate at the owner setup boundary."

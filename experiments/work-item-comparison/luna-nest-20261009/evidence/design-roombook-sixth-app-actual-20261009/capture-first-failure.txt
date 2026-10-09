@@ -1,0 +1,10 @@
+First close/capture attempt observed at 2026-10-09T10:59:50Z exited1 after recording final returned, disabling gates/binding and closing own ledger/state. It then asserted every frozen Working file equals original prepared raw-Git bytes and failed at .markitect/model/booking-contract.yaml. No actor was restarted and no candidate was changed.
+
+Readonly snapshot-byte-diagnostics.json proves all54 rawGit blobs (27 per clone) equal original prepared hashes and all54 Working files are equivalent to rawGit after CRLF-to-LF normalization. Exactly booking-contract.yaml and runtime.yaml in each immutable clone have Working CRLF different from Git LF. Snapshot clone used command-scoped core.autocrlf=false, but subsequent detach checkout inherited true; current clone config resolves true. The initial assumption was too strong. Both clones still have the assessor-observed Working bytes and remain clean at the same immutable main SHA. Capture resumes as file evidence only, without replaying terminal record/close or editing snapshots, changing source nest, or rerunning evaluation.
+
+Copied tool failure excerpt, not a raw session export:
+  close-actual.py, line 39:
+    for row in expected:assert actual[row['path']]['sha256']==row['sha256'],row['path']
+  AssertionError: .markitect/model/booking-contract.yaml
+
+The independent report remains original SHA f97ba9b7a9efa58395f28b47fb9d5b9f778434ee2d5019108c6f3336b31923a9. It established before/after equality of its own Working snapshots, not equality of every Working file to prepared rawGit. R01 missing app.py and staged NOT RUN findings remain unchanged; no rescore or new tests.

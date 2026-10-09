@@ -1,0 +1,48 @@
+{
+  "executionAuthorized": true,
+  "stateDir": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native",
+  "grantPath": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\design-roombook-sixth-enabled-grant-20261009.json",
+  "grantSha256": "6ffb11f2c31b043f283c15484840ee4630a17d968c7b6b37743b969ca6055811",
+  "phase": "assessment",
+  "parentReservation": 2,
+  "parentHandle": "/root/design_roombook_sixth_independent_final",
+  "maxOwnedWallSeconds": 300,
+  "cleanupReserveSeconds": 10,
+  "command": [
+    "C:\\Python313\\python.exe",
+    "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\runner.py",
+    "--model",
+    "gpt-6-luna",
+    "--codex-executable",
+    "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+    "--codex-version",
+    "0.162.0-alpha.2"
+  ],
+  "runtimePins": [
+    {
+      "path": "C:\\Python313\\python.exe",
+      "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\runner.py",
+      "sha256": "1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+      "sha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py",
+      "sha256": "a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\app_ledger.py",
+      "sha256": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\nest.py",
+      "sha256": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635"
+    }
+  ],
+  "activation": "Actual returned own handle recorded in shared ledger; resource-only activation inside original cell clock"
+}

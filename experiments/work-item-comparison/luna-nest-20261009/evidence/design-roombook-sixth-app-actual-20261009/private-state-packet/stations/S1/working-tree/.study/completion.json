@@ -1,0 +1,8 @@
+{
+  "station": "S1",
+  "status": "blocked",
+  "completedWorkItems": [],
+  "remainingIssues": [
+    "R01 is incomplete: the required Markitect readiness path fails because project briefings reports an invalid briefing bundle with incomplete definition identity. Resume the existing r01-book-list exploration after repairing the product-owned briefing state through a supported path."
+  ]
+}

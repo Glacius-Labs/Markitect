@@ -1,0 +1,12 @@
+{
+  "apiVersion": "project.markitect.example.org/v1alpha1",
+  "baseDigest": "1eb1b2d13b7bd6ded82dd7a7581518dab3169fddd1709127572cc310ec8627f8",
+  "actor": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+  "goal": "Make the accepted model explicit for R01 book/list commands, returned JSON, and invalid-input behavior.",
+  "files": [
+    {
+      "path": ".markitect/model/booking-contract.yaml",
+      "content": "apiVersion: project.markitect.example.org/v1alpha1\nkind: Statement\nmetadata:\n  name: booking-contract\n  namespace: \"\"\npurpose: \"booking-contract for roombook\"\nspec:\n  category: rule\n  description: \"Released S1 book/list: book accepts a trimmed nonempty room and title, exact valid UTC-minute timestamps with end later than start, and returns an active reservation with integer ID and normalized fields. Active reservations in the same case-sensitive room use half-open intervals; overlap is rejected and adjacency is allowed. list optionally filters by the same trimmed room identity and returns all reservations sorted by start then ID. Success emits one JSON object and exits 0; invalid input or conflict emits an error JSON object, exits 2, and leaves stored state unchanged. R01 excludes cancel and summary; future waves remain unreleased.\"\n  public: true\n  uses: []\n  requires: []\n"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+apiVersion: project.markitect.example.org/v1alpha1
+name: roombook
+coverageMode: full
+workflowMode: guided
+acceptancePolicy: committed-model
+documentPath: docs/markitect/project.md
+modelFiles:
+  - .markitect/model/manager.yaml
+  - .markitect/model/reservation.yaml
+  - .markitect/model/booking-contract.yaml
+  - .markitect/model/durable-state.yaml
+  - .markitect/model/delivery-rules.yaml
+  - .markitect/model/implementation.yaml
+  - .markitect/model/documentation.yaml
+  - .markitect/model/tests.yaml
+  - .markitect/model/checks.yaml
+inventoryRoots: []
+exclusions: []

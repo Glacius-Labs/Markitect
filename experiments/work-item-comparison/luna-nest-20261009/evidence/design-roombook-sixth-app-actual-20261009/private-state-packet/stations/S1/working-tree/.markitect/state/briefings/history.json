@@ -1,0 +1,183 @@
+{
+  "apiVersion": "markitect.example.org/project-model-briefing/v1alpha1",
+  "history": {
+    "policy": "committed-model policy: manifest-selected canonical .markitect/model YAML on the active first-parent branch is the accepted repository specification; exploration records and other drafts remain proposals; Git identity is not authenticated",
+    "baselineRevision": "ffcf65173c030e8718ab7098c8b461dfe03b0395",
+    "baselineModelDigest": "sha256:6417f793d498ac85c8d20cead61bf32c6f4416f146e3395210235afeedc7bc0b",
+    "revision": "f69161406c6f10efff6a38d44cc21e079fc0f774",
+    "modelDigest": "sha256:6a52cf603a6f2ffafb9a02fab0e3b491a8aaeeeae8555c7ccb7b6eb26e6868e6"
+  },
+  "briefings": [
+    {
+      "apiVersion": "markitect.example.org/project-model-briefing/v1alpha1",
+      "digest": "e9fce7d1a97f46591d975eca926ac31056394c57cc44c23730e16bf18e1bc423",
+      "sinceRevision": "65471296195a68194b229cd78073bdd08b0e332d",
+      "revision": "f69161406c6f10efff6a38d44cc21e079fc0f774",
+      "sinceModelDigest": "sha256:6417f793d498ac85c8d20cead61bf32c6f4416f146e3395210235afeedc7bc0b",
+      "modelDigest": "sha256:6a52cf603a6f2ffafb9a02fab0e3b491a8aaeeeae8555c7ccb7b6eb26e6868e6",
+      "sinceReportDigest": "sha256:1f2c49b69e31333cbe37e859a3ef66fee24153bdc5f7d7fac95508513ec729a3",
+      "reportDigest": "sha256:61cd6d8f80865b2204d2ce62b00f87a3548144916988301d6bc50aea07ed2847",
+      "provenance": {
+        "decisionReference": "git-commit:f69161406c6f10efff6a38d44cc21e079fc0f774",
+        "actor": "git-commit-author:Eduard Markgraf",
+        "authority": "committed-model policy: manifest-selected canonical .markitect/model YAML on the active first-parent branch is the accepted repository specification; exploration records and other drafts remain proposals; Git identity is not authenticated"
+      },
+      "impact": {
+        "apiVersion": "project.markitect.example.org/v1alpha1",
+        "baseDigest": "sha256:1f2c49b69e31333cbe37e859a3ef66fee24153bdc5f7d7fac95508513ec729a3",
+        "candidateDigest": "sha256:61cd6d8f80865b2204d2ce62b00f87a3548144916988301d6bc50aea07ed2847",
+        "digest": "sha256:46fb41e8d22adee2c675a128de62d99f9b84c5f2eac510f91907e0c7f2c97b61",
+        "changedDefinitions": [
+          "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]"
+        ],
+        "affectedStatements": [
+          "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+          "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"delivery-rules\"]",
+          "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+          "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+        ],
+        "managers": [
+          "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]"
+        ],
+        "files": [
+          ".codex/",
+          ".codex/config.toml",
+          ".gitignore",
+          ".study/",
+          ".study/station.json",
+          ".work/",
+          "AGENTS.md",
+          "BACKLOG.md",
+          "PROGRESS.md",
+          "QUALITY.md",
+          "README.md",
+          "STATIONS.json",
+          "TEAMWORK.md",
+          "TOOLCHAIN.md",
+          "WORKLOG.md",
+          "app.py",
+          "checks/acceptance.py",
+          "tests/"
+        ],
+        "checks": [
+          "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+        ],
+        "unknown": [
+          "base report status is incomplete",
+          "candidate report status is incomplete"
+        ],
+        "findings": [
+          {
+            "code": "impact.manager-routing",
+            "subject": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+            "message": "Manager is included through changed ownership or a relevant dependency.",
+            "severity": "info"
+          },
+          {
+            "code": "impact.statement-change",
+            "subject": "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "message": "Statement definition changed.",
+            "severity": "info"
+          },
+          {
+            "code": "impact.unknown-scope",
+            "message": "Some project or inventory scope is unresolved and remains in the impact.",
+            "severity": "incomplete"
+          }
+        ]
+      },
+      "events": [
+        {
+          "id": "model-change-d5470a76274c4e1cb16cfd9c",
+          "digest": "d5470a76274c4e1cb16cfd9c8250760fbc062b27b1dc1608363dcfd57d51413e",
+          "definitionId": {
+            "apiVersion": "project.markitect.example.org/v1alpha1",
+            "kind": "Statement",
+            "namespace": "",
+            "name": "booking-contract"
+          },
+          "change": "modified",
+          "before": {
+            "apiVersion": "project.markitect.example.org/v1alpha1",
+            "kind": "Statement",
+            "metadata": {
+              "name": "booking-contract",
+              "namespace": ""
+            },
+            "purpose": "booking-contract for roombook",
+            "spec": {
+              "category": "rule",
+              "description": "Released S1 book/list exactly follow README: valid calendar UTC-minute half-open intervals, per-room active overlap rejection, adjacent intervals permitted, list sorted start then id; future waves in BACKLOG remain visible but unreleased.",
+              "public": true,
+              "requires": [],
+              "uses": []
+            },
+            "source": {
+              "path": ".markitect/model/booking-contract.yaml",
+              "digest": "sha256:e9f088cbdd1183d2c7266709896abcf96b7dac97b6e48e039828bc94eccc4316",
+              "line": 1
+            }
+          },
+          "after": {
+            "apiVersion": "project.markitect.example.org/v1alpha1",
+            "kind": "Statement",
+            "metadata": {
+              "name": "booking-contract",
+              "namespace": ""
+            },
+            "purpose": "booking-contract for roombook",
+            "spec": {
+              "category": "rule",
+              "description": "Released S1 book/list: book accepts a trimmed nonempty room and title, exact valid UTC-minute timestamps with end later than start, and returns an active reservation with integer ID and normalized fields. Active reservations in the same case-sensitive room use half-open intervals; overlap is rejected and adjacency is allowed. list optionally filters by the same trimmed room identity and returns all reservations sorted by start then ID. Success emits one JSON object and exits 0; invalid input or conflict emits an error JSON object, exits 2, and leaves stored state unchanged. R01 excludes cancel and summary; future waves remain unreleased.",
+              "public": true,
+              "requires": [],
+              "uses": []
+            },
+            "source": {
+              "path": ".markitect/model/booking-contract.yaml",
+              "digest": "sha256:5067399a894cfd70b5b10d43d978e79d48b6585af73916d1d2a3d7ba9f582801",
+              "line": 1
+            }
+          },
+          "affectedManagers": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]"
+          ],
+          "affectedArtifacts": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"documentation\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"implementation\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"tests\"]"
+          ],
+          "category": "information",
+          "severity": "info",
+          "provenance": {
+            "decisionReference": "git-commit:f69161406c6f10efff6a38d44cc21e079fc0f774",
+            "actor": "git-commit-author:Eduard Markgraf",
+            "authority": "committed-model policy: manifest-selected canonical .markitect/model YAML on the active first-parent branch is the accepted repository specification; exploration records and other drafts remain proposals; Git identity is not authenticated"
+          }
+        }
+      ],
+      "global": {
+        "id": "briefing-c4f00b61555ba148d17be8bf",
+        "revision": "f69161406c6f10efff6a38d44cc21e079fc0f774",
+        "modelDigest": "sha256:6a52cf603a6f2ffafb9a02fab0e3b491a8aaeeeae8555c7ccb7b6eb26e6868e6",
+        "eventIds": [
+          "model-change-d5470a76274c4e1cb16cfd9c"
+        ],
+        "summary": "Accepted model revision f69161406c6f10efff6a38d44cc21e079fc0f774 changes 1 declared definitions."
+      },
+      "managers": [
+        {
+          "id": "briefing-455ac8829f6ee1b6760f322b",
+          "managerId": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "revision": "f69161406c6f10efff6a38d44cc21e079fc0f774",
+          "modelDigest": "sha256:6a52cf603a6f2ffafb9a02fab0e3b491a8aaeeeae8555c7ccb7b6eb26e6868e6",
+          "eventIds": [
+            "model-change-d5470a76274c4e1cb16cfd9c"
+          ],
+          "summary": "Accepted model revision f69161406c6f10efff6a38d44cc21e079fc0f774 changes 1 declared definitions relevant to manager [\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]."
+        }
+      ]
+    }
+  ],
+  "dismissals": []
+}

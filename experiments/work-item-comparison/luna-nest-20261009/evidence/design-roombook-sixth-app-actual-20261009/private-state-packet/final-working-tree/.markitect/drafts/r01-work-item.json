@@ -1,0 +1,19 @@
+{
+  "apiVersion": "markitect.example.org/project-exploration/v1alpha1",
+  "id": "r01-book-list",
+  "status": "active",
+  "request": "Implement released Roombook backlog item R01: book and list with validation, half-open overlap rules, sorting, IDs, durable state, and errors without mutation.",
+  "scopes": [
+    {
+      "id": "r01-book-list",
+      "name": "R01 book and list",
+      "goal": "Implement and document the released S1 book/list CLI behavior with meaningful real-process tests.",
+      "operation": "apply",
+      "managerIds": ["[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]"]
+    }
+  ],
+  "decisions": [],
+  "drafts": [],
+  "structureAcknowledgements": [],
+  "completions": []
+}

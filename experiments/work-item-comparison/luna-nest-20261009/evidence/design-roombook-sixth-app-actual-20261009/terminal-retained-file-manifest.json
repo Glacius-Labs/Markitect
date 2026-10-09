@@ -1,0 +1,917 @@
+[
+  {
+    "path": ".gitattributes",
+    "bytes": 8,
+    "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da"
+  },
+  {
+    "path": "bind-final.py",
+    "bytes": 2943,
+    "sha256": "363b241787d5aee364baa8c491750e8712bc06645aebac0f192f581e03b77d6f"
+  },
+  {
+    "path": "bind-primary.py",
+    "bytes": 3721,
+    "sha256": "6d82ee18f5c814a700265f50638ddb153c7951fa7094d856ed67ed3d982ebf9d"
+  },
+  {
+    "path": "candidate-unchanged-verification.json",
+    "bytes": 741,
+    "sha256": "815aea548c4e141fa15dd54697ed55578c406b4bf79f93819b572cf5c5e2dd7b"
+  },
+  {
+    "path": "capture-closed.py",
+    "bytes": 7704,
+    "sha256": "66d1f5fe9224545aa1af33fc4cd15eababac4d1dbd38c4788feba1d2863a3b26"
+  },
+  {
+    "path": "capture-first-failure.txt",
+    "bytes": 1636,
+    "sha256": "0358c9b3644ccc2d424d9b6b159aed8d8f4a3edcec98c2722ae2310e81b5c068"
+  },
+  {
+    "path": "close-actual.py",
+    "bytes": 9505,
+    "sha256": "54380125c4e3a88ea4e692f78c2ce4b5387d81d1aeac86ef39d10faf356a17f6"
+  },
+  {
+    "path": "closed-app-ledger.json",
+    "bytes": 3641,
+    "sha256": "62cbeecc7038b26a07adb20396643d089c24f9570927f8b33bc551484446f834"
+  },
+  {
+    "path": "closed-state.json",
+    "bytes": 13060,
+    "sha256": "5b6281b070b8ab0e8931820319ac4e5458e4d4069a24303e11d8e829cb0e850d"
+  },
+  {
+    "path": "enabled-grant.json",
+    "bytes": 5175,
+    "sha256": "6ffb11f2c31b043f283c15484840ee4630a17d968c7b6b37743b969ca6055811"
+  },
+  {
+    "path": "final-call-intent.json",
+    "bytes": 364,
+    "sha256": "f691bcae9e903e7018fbdcdb807859d5cb4004040abc764235a26572842b2816"
+  },
+  {
+    "path": "final-inner-binding-before.json",
+    "bytes": 2393,
+    "sha256": "1d627a6a655a4a09a3f3eedaac1f5a17589ed9c32fd8e52c67480a1f8626f286"
+  },
+  {
+    "path": "final-inner-binding-enabled.json",
+    "bytes": 2399,
+    "sha256": "40eb9f06c055ec9bfc37118f7b4975d22918f76937cc64896d7ded911e472d36"
+  },
+  {
+    "path": "final-message.txt",
+    "bytes": 3829,
+    "sha256": "3f9fed314dc0ae8cf8d648c35f3db0601673b3c20476816132f3031b2239b404"
+  },
+  {
+    "path": "final-reservation.json",
+    "bytes": 428,
+    "sha256": "1ee2fa02d283f26978f1371642b95a44a1bebea86bf570a0b7660b16ad681a6e"
+  },
+  {
+    "path": "final-resource-activation.json",
+    "bytes": 1196,
+    "sha256": "9137dd2716645399823eae6f7d0f1d8317d730c3c006701708ddf6d43e1747d5"
+  },
+  {
+    "path": "final-runtime-before.yaml",
+    "bytes": 6398,
+    "sha256": "ddc0f3ea6f02fba25b413d3de36351b648b91dec31e41eb323dbc7bfff1b8f24"
+  },
+  {
+    "path": "final-runtime-enabled.yaml",
+    "bytes": 6398,
+    "sha256": "369787c16daddf2e2c5da96121ff95fc4689e35e312400dbf942f07cc09df9d6"
+  },
+  {
+    "path": "final-startup-gate-released.json",
+    "bytes": 501,
+    "sha256": "cc7bf6b98edef19395a4a61eec654cb45af7df1fd08234fd99a9ac07ef0e23fb"
+  },
+  {
+    "path": "final-terminal-resource-receipt.json",
+    "bytes": 910,
+    "sha256": "7574c8cf8b93acce0332626edd9e3956228fecf80f4c5e305cadd3a886092a72"
+  },
+  {
+    "path": "final-tool-return.json",
+    "bytes": 529,
+    "sha256": "f89893c3a0e2b4af1d8060fbf0162eef2bbaf2aeabe5b6f19433acedaa8248ea"
+  },
+  {
+    "path": "first-reservation.json",
+    "bytes": 432,
+    "sha256": "d604f6e8fe1d8860d2d5191b74f64e57c2c696279abce053519d6515db26100f"
+  },
+  {
+    "path": "freeze-and-reserve-final.py",
+    "bytes": 5053,
+    "sha256": "68cfa62f9e53de3c8f874c2b314e055067727ebe4168bfbb66e5952f7288ed8e"
+  },
+  {
+    "path": "freeze.json",
+    "bytes": 5435,
+    "sha256": "3e14547e12b5482ece2b9fd069ea9291a9cacd3b4f83506f8c04bc77c86afdc1"
+  },
+  {
+    "path": "implementation-closed-ledger.json",
+    "bytes": 1855,
+    "sha256": "a7ef3a1303576f5ee6a7dcd7867dd3685eacb600d5a5cb7f9a592798ce45bd9b"
+  },
+  {
+    "path": "independent-final-report.md",
+    "bytes": 9029,
+    "sha256": "f97ba9b7a9efa58395f28b47fb9d5b9f778434ee2d5019108c6f3336b31923a9"
+  },
+  {
+    "path": "inner-binding-before.json",
+    "bytes": 2394,
+    "sha256": "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed"
+  },
+  {
+    "path": "inner-binding-enabled.json",
+    "bytes": 2393,
+    "sha256": "1d627a6a655a4a09a3f3eedaac1f5a17589ed9c32fd8e52c67480a1f8626f286"
+  },
+  {
+    "path": "primary-call-intent.json",
+    "bytes": 434,
+    "sha256": "046433d32a05649eee0fd2d25c69e6ada470b509a853c16910649c235ba5ccde"
+  },
+  {
+    "path": "primary-message.txt",
+    "bytes": 2957,
+    "sha256": "68030b756fa06eec79c15732c407b7080e1ef32bc559a2e4845ec602ef0dcf2f"
+  },
+  {
+    "path": "primary-reported-handoff.txt",
+    "bytes": 2629,
+    "sha256": "eb2e940d2062451d808c669813ddf340bc100f4d59af60407b0a266e7cbabac2"
+  },
+  {
+    "path": "primary-terminal-resource-receipt.json",
+    "bytes": 725,
+    "sha256": "91a5cda05d413e5f2d61f48fc90cbce38295305894077ed4169f3bbc06fae5ca"
+  },
+  {
+    "path": "primary-tool-return.json",
+    "bytes": 510,
+    "sha256": "1dd19f1637a562365f29a5dc1392923c4ec7c0a2a2c88fab78287ab8cab3253b"
+  },
+  {
+    "path": "private-state-packet/app-ledger.json",
+    "bytes": 3641,
+    "sha256": "62cbeecc7038b26a07adb20396643d089c24f9570927f8b33bc551484446f834"
+  },
+  {
+    "path": "private-state-packet/assessment/roombook-s1-independent-assessment.md",
+    "bytes": 9029,
+    "sha256": "f97ba9b7a9efa58395f28b47fb9d5b9f778434ee2d5019108c6f3336b31923a9"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.agents/skills/markitect-model-first/SKILL.md",
+    "bytes": 967,
+    "sha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.claude/skills/markitect-model-first/SKILL.md",
+    "bytes": 967,
+    "sha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.codex/config.toml",
+    "bytes": 281,
+    "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.gitignore",
+    "bytes": 36,
+    "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/.gitignore",
+    "bytes": 23,
+    "sha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/model/booking-contract.yaml",
+    "bytes": 491,
+    "sha256": "6367645213bd0fad32b90d18dab960ef111fca54d3164250c916c570123f1fc7"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/model/checks.yaml",
+    "bytes": 513,
+    "sha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/model/delivery-rules.yaml",
+    "bytes": 512,
+    "sha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/model/documentation.yaml",
+    "bytes": 801,
+    "sha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/model/durable-state.yaml",
+    "bytes": 467,
+    "sha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/model/implementation.yaml",
+    "bytes": 597,
+    "sha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/model/manager.yaml",
+    "bytes": 377,
+    "sha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/model/reservation.yaml",
+    "bytes": 394,
+    "sha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/model/tests.yaml",
+    "bytes": 584,
+    "sha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/project.yaml",
+    "bytes": 568,
+    "sha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/runtime.yaml",
+    "bytes": 6519,
+    "sha256": "8c1c22a414968706f381d11fce8e0e92d90000449a4ed9b4964237364750727b"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.markitect/workflows/model-first.md",
+    "bytes": 24524,
+    "sha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/.study/station.json",
+    "bytes": 70,
+    "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/AGENTS.md",
+    "bytes": 3328,
+    "sha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/BACKLOG.md",
+    "bytes": 2566,
+    "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/checks/acceptance.py",
+    "bytes": 7554,
+    "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/CLAUDE.md",
+    "bytes": 787,
+    "sha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/docs/markitect/project.md",
+    "bytes": 8367,
+    "sha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/QUALITY.md",
+    "bytes": 2687,
+    "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/README.md",
+    "bytes": 2276,
+    "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/STATIONS.json",
+    "bytes": 595,
+    "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183"
+  },
+  {
+    "path": "private-state-packet/evaluation/repo/TOOLCHAIN.md",
+    "bytes": 982,
+    "sha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77"
+  },
+  {
+    "path": "private-state-packet/final-startup-gate.json",
+    "bytes": 235,
+    "sha256": "d25e979187b8dddfa24209164b38b72c5a11c4bad4c9840c640bbf6655cfecb8"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.agents/skills/markitect-model-first/SKILL.md",
+    "bytes": 967,
+    "sha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.claude/skills/markitect-model-first/SKILL.md",
+    "bytes": 967,
+    "sha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.codex/config.toml",
+    "bytes": 281,
+    "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.gitignore",
+    "bytes": 36,
+    "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/.gitignore",
+    "bytes": 23,
+    "sha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/drafts/project-model-mutation.json",
+    "bytes": 1361,
+    "sha256": "60da9f36a34dcb06f4eae9b74a0071a6e36b4651bf98223159fc3dceb70a3e85"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/drafts/r01-work-item.json",
+    "bytes": 724,
+    "sha256": "24358373c1ee58b4d86b3e2b11b386963a4cb6f8e643351adadb01744d48964f"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/model/booking-contract.yaml",
+    "bytes": 886,
+    "sha256": "5067399a894cfd70b5b10d43d978e79d48b6585af73916d1d2a3d7ba9f582801"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/model/checks.yaml",
+    "bytes": 513,
+    "sha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/model/delivery-rules.yaml",
+    "bytes": 512,
+    "sha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/model/documentation.yaml",
+    "bytes": 801,
+    "sha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/model/durable-state.yaml",
+    "bytes": 467,
+    "sha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/model/implementation.yaml",
+    "bytes": 597,
+    "sha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/model/manager.yaml",
+    "bytes": 377,
+    "sha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/model/reservation.yaml",
+    "bytes": 394,
+    "sha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/model/tests.yaml",
+    "bytes": 584,
+    "sha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/project.yaml",
+    "bytes": 568,
+    "sha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/runtime.yaml",
+    "bytes": 6398,
+    "sha256": "ddc0f3ea6f02fba25b413d3de36351b648b91dec31e41eb323dbc7bfff1b8f24"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/state/briefings/history.json",
+    "bytes": 9288,
+    "sha256": "bf0b719e8502c1cdbb0da8145dc70d38c54ca0220cccac80b2bcb8bb065b5cfd"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/state/explorations/r01-book-list.json",
+    "bytes": 820,
+    "sha256": "a81849d25b1c96822d49d3c5a3a14edc603c7c9edee53e49ff4683537c65884e"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.markitect/workflows/model-first.md",
+    "bytes": 24524,
+    "sha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.study/completion.json",
+    "bytes": 389,
+    "sha256": "3d19a2dc0378afd42e57728bb00da09f627ad9eec512729c4961ea8435efc516"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/.study/station.json",
+    "bytes": 70,
+    "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/AGENTS.md",
+    "bytes": 3328,
+    "sha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/BACKLOG.md",
+    "bytes": 2566,
+    "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/checks/acceptance.py",
+    "bytes": 7554,
+    "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/CLAUDE.md",
+    "bytes": 787,
+    "sha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/docs/markitect/project.md",
+    "bytes": 8367,
+    "sha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/QUALITY.md",
+    "bytes": 2687,
+    "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/README.md",
+    "bytes": 2276,
+    "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/STATIONS.json",
+    "bytes": 595,
+    "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/TOOLCHAIN.md",
+    "bytes": 982,
+    "sha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77"
+  },
+  {
+    "path": "private-state-packet/final-working-tree/WORKLOG.md",
+    "bytes": 2266,
+    "sha256": "b423253fa91c48f15f7589dba088372ea89c64b45b96929f01421b5c85f28441"
+  },
+  {
+    "path": "private-state-packet/history.bundle",
+    "bytes": 32582,
+    "sha256": "467913816aa53f38ef568e41fbe362e18e2a84675469a555dc1908be1cd906ec"
+  },
+  {
+    "path": "private-state-packet/inner-binding.json",
+    "bytes": 2341,
+    "sha256": "3644c22da0b676f966f508ada4cf9acef85701e4eac77b76334a41021cf525f0"
+  },
+  {
+    "path": "private-state-packet/runtime-assets/app_ledger.py",
+    "bytes": 7339,
+    "sha256": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20"
+  },
+  {
+    "path": "private-state-packet/runtime-assets/inner_runtime_budget.py",
+    "bytes": 12623,
+    "sha256": "a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d"
+  },
+  {
+    "path": "private-state-packet/runtime-assets/markitect.exe",
+    "bytes": 16947200,
+    "sha256": "abf877849379900cf2f1cf6c19f3d5d1e67a134592ac810cedc437191e9a5f29"
+  },
+  {
+    "path": "private-state-packet/runtime-assets/nest.py",
+    "bytes": 27108,
+    "sha256": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635"
+  },
+  {
+    "path": "private-state-packet/runtime-assets/runner.py",
+    "bytes": 64805,
+    "sha256": "1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6"
+  },
+  {
+    "path": "private-state-packet/startup-gate.json",
+    "bytes": 250,
+    "sha256": "ff2ad69ed2d9a0f7a8c774de423dc62545c2d06af4bf403d670c66ba5c9ca087"
+  },
+  {
+    "path": "private-state-packet/state.json",
+    "bytes": 13060,
+    "sha256": "5b6281b070b8ab0e8931820319ac4e5458e4d4069a24303e11d8e829cb0e850d"
+  },
+  {
+    "path": "private-state-packet/stations/S1/history.bundle",
+    "bytes": 32582,
+    "sha256": "467913816aa53f38ef568e41fbe362e18e2a84675469a555dc1908be1cd906ec"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.agents/skills/markitect-model-first/SKILL.md",
+    "bytes": 967,
+    "sha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.claude/skills/markitect-model-first/SKILL.md",
+    "bytes": 967,
+    "sha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.codex/config.toml",
+    "bytes": 281,
+    "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.gitignore",
+    "bytes": 36,
+    "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/.gitignore",
+    "bytes": 23,
+    "sha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/model/booking-contract.yaml",
+    "bytes": 491,
+    "sha256": "6367645213bd0fad32b90d18dab960ef111fca54d3164250c916c570123f1fc7"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/model/checks.yaml",
+    "bytes": 513,
+    "sha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/model/delivery-rules.yaml",
+    "bytes": 512,
+    "sha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/model/documentation.yaml",
+    "bytes": 801,
+    "sha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/model/durable-state.yaml",
+    "bytes": 467,
+    "sha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/model/implementation.yaml",
+    "bytes": 597,
+    "sha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/model/manager.yaml",
+    "bytes": 377,
+    "sha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/model/reservation.yaml",
+    "bytes": 394,
+    "sha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/model/tests.yaml",
+    "bytes": 584,
+    "sha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/project.yaml",
+    "bytes": 568,
+    "sha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/runtime.yaml",
+    "bytes": 6519,
+    "sha256": "8c1c22a414968706f381d11fce8e0e92d90000449a4ed9b4964237364750727b"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.markitect/workflows/model-first.md",
+    "bytes": 24524,
+    "sha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/.study/station.json",
+    "bytes": 70,
+    "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/AGENTS.md",
+    "bytes": 3328,
+    "sha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/BACKLOG.md",
+    "bytes": 2566,
+    "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/checks/acceptance.py",
+    "bytes": 7554,
+    "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/CLAUDE.md",
+    "bytes": 787,
+    "sha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/docs/markitect/project.md",
+    "bytes": 8367,
+    "sha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/QUALITY.md",
+    "bytes": 2687,
+    "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/README.md",
+    "bytes": 2276,
+    "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/STATIONS.json",
+    "bytes": 595,
+    "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183"
+  },
+  {
+    "path": "private-state-packet/stations/S1/main/TOOLCHAIN.md",
+    "bytes": 982,
+    "sha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.agents/skills/markitect-model-first/SKILL.md",
+    "bytes": 967,
+    "sha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.claude/skills/markitect-model-first/SKILL.md",
+    "bytes": 967,
+    "sha256": "d97bc8e0b3c22e28f1e9e7c8adca58753679c16699110b58ffd622ca3fd11e17"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.codex/config.toml",
+    "bytes": 281,
+    "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.gitignore",
+    "bytes": 36,
+    "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/.gitignore",
+    "bytes": 23,
+    "sha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/drafts/project-model-mutation.json",
+    "bytes": 1361,
+    "sha256": "60da9f36a34dcb06f4eae9b74a0071a6e36b4651bf98223159fc3dceb70a3e85"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/drafts/r01-work-item.json",
+    "bytes": 724,
+    "sha256": "24358373c1ee58b4d86b3e2b11b386963a4cb6f8e643351adadb01744d48964f"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/model/booking-contract.yaml",
+    "bytes": 886,
+    "sha256": "5067399a894cfd70b5b10d43d978e79d48b6585af73916d1d2a3d7ba9f582801"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/model/checks.yaml",
+    "bytes": 513,
+    "sha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/model/delivery-rules.yaml",
+    "bytes": 512,
+    "sha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/model/documentation.yaml",
+    "bytes": 801,
+    "sha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/model/durable-state.yaml",
+    "bytes": 467,
+    "sha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/model/implementation.yaml",
+    "bytes": 597,
+    "sha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/model/manager.yaml",
+    "bytes": 377,
+    "sha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/model/reservation.yaml",
+    "bytes": 394,
+    "sha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/model/tests.yaml",
+    "bytes": 584,
+    "sha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/project.yaml",
+    "bytes": 568,
+    "sha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/runtime.yaml",
+    "bytes": 6398,
+    "sha256": "ddc0f3ea6f02fba25b413d3de36351b648b91dec31e41eb323dbc7bfff1b8f24"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/state/briefings/history.json",
+    "bytes": 9288,
+    "sha256": "bf0b719e8502c1cdbb0da8145dc70d38c54ca0220cccac80b2bcb8bb065b5cfd"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/state/explorations/r01-book-list.json",
+    "bytes": 820,
+    "sha256": "a81849d25b1c96822d49d3c5a3a14edc603c7c9edee53e49ff4683537c65884e"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.markitect/workflows/model-first.md",
+    "bytes": 24524,
+    "sha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.study/completion.json",
+    "bytes": 389,
+    "sha256": "3d19a2dc0378afd42e57728bb00da09f627ad9eec512729c4961ea8435efc516"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/.study/station.json",
+    "bytes": 70,
+    "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/AGENTS.md",
+    "bytes": 3328,
+    "sha256": "b0ae57d8f7f2902c03c48cb52cc1e3845c60bf1a5ecd14b21c5df17022e5e2e6"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/BACKLOG.md",
+    "bytes": 2566,
+    "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/checks/acceptance.py",
+    "bytes": 7554,
+    "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/CLAUDE.md",
+    "bytes": 787,
+    "sha256": "79e2b092e53e94036d048560df315aa68e9e2c818c2b6dd7ad459a64c8b30c05"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/docs/markitect/project.md",
+    "bytes": 8367,
+    "sha256": "c5d46c497eb675425a761770650a03138756774b31a5fafcd1a71fdff918b6cb"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/QUALITY.md",
+    "bytes": 2687,
+    "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/README.md",
+    "bytes": 2276,
+    "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/STATIONS.json",
+    "bytes": 595,
+    "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/TOOLCHAIN.md",
+    "bytes": 982,
+    "sha256": "238dda24e47655dda9d4e0162a98f8b9d1059338478353c995fcea3c7bc17c77"
+  },
+  {
+    "path": "private-state-packet/stations/S1/working-tree/WORKLOG.md",
+    "bytes": 2266,
+    "sha256": "b423253fa91c48f15f7589dba088372ea89c64b45b96929f01421b5c85f28441"
+  },
+  {
+    "path": "reported-completion.json",
+    "bytes": 389,
+    "sha256": "3d19a2dc0378afd42e57728bb00da09f627ad9eec512729c4961ea8435efc516"
+  },
+  {
+    "path": "resource-activation.json",
+    "bytes": 2275,
+    "sha256": "ef636c2b759d3b8995e8c3b682df0840cdcfab5d3714b5b2a245f3cf7578f096"
+  },
+  {
+    "path": "root-activation.json",
+    "bytes": 2148,
+    "sha256": "ae38dcea1a543e1c1462949819cbe251793f6c0ef49b27671282b3078bfde58b"
+  },
+  {
+    "path": "runtime-before.yaml",
+    "bytes": 6398,
+    "sha256": "38bae9af3b7f6d353e5ef4b06e9f57e1d01d2ae985ac6871067a310b9455471e"
+  },
+  {
+    "path": "runtime-enabled.yaml",
+    "bytes": 6398,
+    "sha256": "ddc0f3ea6f02fba25b413d3de36351b648b91dec31e41eb323dbc7bfff1b8f24"
+  },
+  {
+    "path": "S1-snapshot.json",
+    "bytes": 5299,
+    "sha256": "251686f716e615d6c321ffec847cf2ae3ae0cbf49392d30b6f7ffca5adc2012f"
+  },
+  {
+    "path": "snapshot-byte-diagnostics.json",
+    "bytes": 29555,
+    "sha256": "0f58502f20ccf4a25f4ee6e2313002028bdcfb671aba88c06b519e32a5599878"
+  },
+  {
+    "path": "start-ledger.json",
+    "bytes": 1536,
+    "sha256": "ab70cc8ae0ca9d9d1ecab3b3cb1a73c3deb256f3008fa8342eedf2bc35d9ec6d"
+  },
+  {
+    "path": "start-reservation.py",
+    "bytes": 4149,
+    "sha256": "33d4bd22ba59f119c48a4837df14349760b89fc5d3e24b393ae589f5210d47b6"
+  },
+  {
+    "path": "start-retained-file-manifest.json",
+    "bytes": 2329,
+    "sha256": "5a3432e9d4159afd8433420fee69acc29bbd7109dfce8a81fbd1b1f5733a9fdc"
+  },
+  {
+    "path": "startup-gate-released.json",
+    "bytes": 459,
+    "sha256": "4941beaa1481d0f4a8e2e8b2162005fbaa5d5175f168c3857bf0f937ee6c2961"
+  },
+  {
+    "path": "terminal-inner-binding-before.json",
+    "bytes": 2399,
+    "sha256": "40eb9f06c055ec9bfc37118f7b4975d22918f76937cc64896d7ded911e472d36"
+  },
+  {
+    "path": "terminal-inner-binding-disabled.json",
+    "bytes": 2341,
+    "sha256": "3644c22da0b676f966f508ada4cf9acef85701e4eac77b76334a41021cf525f0"
+  },
+  {
+    "path": "terminal-resource-config-delta.json",
+    "bytes": 553,
+    "sha256": "85999e42284f9cc50fa538e44526bdf3b05fe6ba39f8066dfdf3fddce35b8a86"
+  },
+  {
+    "path": "terminal-runtime-before.yaml",
+    "bytes": 6398,
+    "sha256": "369787c16daddf2e2c5da96121ff95fc4689e35e312400dbf942f07cc09df9d6"
+  },
+  {
+    "path": "terminal-runtime-disabled.yaml",
+    "bytes": 6398,
+    "sha256": "a51048aaae623c9bf08794189984ae60aec168fdc05a2882cf7635b71fb1edab"
+  },
+  {
+    "path": "terminal-summary.json",
+    "bytes": 4133,
+    "sha256": "544ef2b683390ba09d5e92147172b07acbf3a3618db3746d587c8abaced961b5"
+  }
+]

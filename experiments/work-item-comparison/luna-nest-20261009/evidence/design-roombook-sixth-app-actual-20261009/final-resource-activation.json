@@ -1,0 +1,22 @@
+{
+  "gate": {
+    "released": true,
+    "reservation": 2,
+    "ownHandle": "/root/design_roombook_sixth_independent_final",
+    "phase": "assessment",
+    "stationIndex": 0,
+    "bindingSha256": "40eb9f06c055ec9bfc37118f7b4975d22918f76937cc64896d7ded911e472d36",
+    "runtimeSha256": "369787c16daddf2e2c5da96121ff95fc4689e35e312400dbf942f07cc09df9d6",
+    "grantSha256": "6ffb11f2c31b043f283c15484840ee4630a17d968c7b6b37743b969ca6055811",
+    "releasedUtc": "2026-10-09T10:53:39.871166+00:00",
+    "frozenCandidateUntouched": true
+  },
+  "originalMutableCaseRuntimeOnly": true,
+  "frozenMainCandidate": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\evaluation\\repo",
+  "frozenMainCommit": "ffcf65173c030e8718ab7098c8b461dfe03b0395",
+  "runtimeBeforeSha256": "ddc0f3ea6f02fba25b413d3de36351b648b91dec31e41eb323dbc7bfff1b8f24",
+  "runtimeAfterSha256": "369787c16daddf2e2c5da96121ff95fc4689e35e312400dbf942f07cc09df9d6",
+  "bindingBeforeSha256": "1d627a6a655a4a09a3f3eedaac1f5a17589ed9c32fd8e52c67480a1f8626f286",
+  "bindingAfterSha256": "40eb9f06c055ec9bfc37118f7b4975d22918f76937cc64896d7ded911e472d36",
+  "candidateFilesNotChanged": true
+}
