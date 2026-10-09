@@ -1,0 +1,22 @@
+{
+  "archives": [
+    {
+      "archive": "conventional-terminal-state.zip",
+      "sha256": "311e11acc14b5c27a4fa8f8f6cc74b92076722f1159468df8c2615ed2bd780fe",
+      "entries": 84,
+      "sourceFiles": 84,
+      "allMemberBytesMatchTerminalState": true
+    },
+    {
+      "archive": "classic-terminal-state.zip",
+      "sha256": "110d7e849ba81b9dc0bf522e978b575d99c7c2648ba86ab345a0fc4fb90af766",
+      "entries": 208,
+      "sourceFiles": 208,
+      "allMemberBytesMatchTerminalState": true
+    }
+  ],
+  "frozenPublicInputsVerified": 24,
+  "frozenPrivateEvaluatorHashesVerified": 5,
+  "mainBinarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+  "newProductOrFrozenHarnessEdits": false
+}

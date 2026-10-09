@@ -1,0 +1,191 @@
+{
+  "reviewType": "independent read-only evidence review; diagnostics only",
+  "reviewedUtc": "2026-10-09T02:36:19Z/02:37:02Z",
+  "scope": {
+    "ownCanonicalRepo": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-classic-main-greenfield-01\\repo",
+    "releasedInputs": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-classic-main-greenfield-01\\released-task1",
+    "mainOutputs": [
+      "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\task1-propose-main-id",
+      "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\task1-execute-main-id"
+    ],
+    "mailbox": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\mailbox\\0f487f57500739fe04961f94ffa3ac2e",
+    "modelHandoffs": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\actor-output",
+    "diagnosticFreeze": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\diagnostic-candidate\\task1",
+    "output": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\independent-review\\task1",
+    "excluded": "No independent-assessment/oracle directories, private tests, foreign cells/chats/memory/futuretasks or old canary outputs read."
+  },
+  "hashes": {
+    "invocationRaw": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\mailbox\\0f487f57500739fe04961f94ffa3ac2e\\invocation.raw.json",
+      "sha256": "0929a10c2cb29b6e3b0d190ebf5af66a5b933ae106dabd1836dd9409cdb1961b"
+    },
+    "responseRaw": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\mailbox\\0f487f57500739fe04961f94ffa3ac2e\\response.raw.json",
+      "sha256": "b1ec79bd5589257f7309db666b4f16bdd2b3f81b71e7811e57887b6246212ac5"
+    },
+    "delivery": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\mailbox\\0f487f57500739fe04961f94ffa3ac2e\\delivery.json",
+      "sha256": "8b63924feca3e0e6a32b8514ce6c596268d4c30e0c5271d1cbe023c497d3c414"
+    },
+    "forwarded": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\mailbox\\0f487f57500739fe04961f94ffa3ac2e\\forwarded.json",
+      "sha256": "5fb4af8d923bd1282f645e14df6c31a2ff2fa2496448cae9a88dc7f47e4456bd"
+    },
+    "nativeTerminal": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\mailbox\\0f487f57500739fe04961f94ffa3ac2e\\native-terminal.json",
+      "sha256": "b7cc67d0b953e87f2c930bddd004f9f27e66df670dc9b62263ca0ad50feb8914"
+    },
+    "mainExecuteStdout": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\task1-execute-main-id\\main.stdout.json",
+      "sha256": "489cd6b3849743129beffb4db5bf3634c64cb985bc68a5fd638109df626f116c"
+    },
+    "mainExecuteReceipt": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\task1-execute-main-id\\process-receipt.json",
+      "sha256": "72bb3cae5819973fc1b347c1375990552adfb095559d2f5ff17d45f414ffd00b"
+    },
+    "mainProposeStdout": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\task1-propose-main-id\\main.stdout.json",
+      "sha256": "489193877badbec64edae88a1348b40f2d3b21523b2aaf21e3433775df6556d6"
+    },
+    "freeze": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\diagnostic-candidate\\task1\\freeze.json",
+      "sha256": "adb049c4fec31ae60d2ee349411588277b30aec1fea72f1321d95c8f709bf375"
+    },
+    "modelSourceBundle": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\diagnostic-candidate\\task1\\model-source.bundle",
+      "sha256": "8e2b67d34801b816f2a5129b36d108f4ce58c3a16d649d246c433aa55b438b20"
+    },
+    "programSource": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\diagnostic-candidate\\task1\\source\\Program.cs",
+      "sha256": "7cf5a0f1b7047cce04fb3e80c5f3023a62277c3fb1e238af705f542984f79bb5"
+    },
+    "projectSource": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\diagnostic-candidate\\task1\\source\\OrderService.csproj",
+      "sha256": "d006b7b8536dd71e353e3730ca42c0240e68ab2d39930f7dd573cdfba8ab245d"
+    },
+    "lockSource": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\diagnostic-candidate\\task1\\source\\packages.lock.json",
+      "sha256": "80949191d7388ec7b149d4cc85a70ccd213fd082d7aaa15d8d5e435f66bd42e0"
+    },
+    "dll": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\diagnostic-candidate\\task1\\binary\\OrderService.dll",
+      "sha256": "d216cabb21e320816a2a4df57b97940f44ed3e19251a79a2f020d34223e45392"
+    },
+    "publicChecks": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-classic-main-greenfield-01\\released-task1\\checks.py",
+      "sha256": "23348e213572b3c1c9c15b795e097c5bb07a9a141b6c402b9000689e29b8c147"
+    },
+    "transport": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-classic-main-greenfield-01\\released-task1\\owned_transport.py",
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487"
+    },
+    "diagnosticRun": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\independent-review\\task1\\diagnostic-run.json",
+      "sha256": "e2ff92581a3c78af4fdf2189bbe9d8124b1cbb8de588efc3e832358ec31f7577"
+    },
+    "ownedServerStarts": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\independent-review\\task1\\owned-server-starts.json",
+      "sha256": "6bc9a4beaab350d29a04c6b649975f9795e14750a5b06210e927e111bb03cf54"
+    },
+    "serverLog": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\independent-review\\task1\\public-checks-diagnostic.server.log",
+      "sha256": "551fbd4a027e4b2bf411537214187f15335c5e90e79d67260a8d73ac54e1fa96"
+    }
+  },
+  "questions": {
+    "extensionConstraint": {
+      "answer": "yes",
+      "invocationPath": "mailbox/.../invocation.raw.json#/request/context",
+      "allowedExtensions": [
+        ".cs",
+        ".csproj"
+      ],
+      "allowedRoots": [
+        "src"
+      ],
+      "targetPrefix": "src",
+      "effect": "Cannot return checked-in global.json or packages.lock.json under this Invocation."
+    },
+    "releasedArchitectureRequirements": {
+      "answer": "yes",
+      "sources": [
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-classic-main-greenfield-01\\released-task1\\architecture.md",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-classic-main-greenfield-01\\released-task1\\brief.md",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-classic-main-greenfield-01\\repo\\docs\\intent\\task1-q1.md"
+      ],
+      "required": "SDK 10.0.103 with rollForward disabled; checked-in package lock; net10.0/runtime 10.0.3; exact direct package pins; NuGet.org only with inherited feeds cleared.",
+      "projectWorkaround": "The MSBuild EnforcePinnedSdk target runs only after SDK selection/project loading, so it cannot enforce pre-selection rollForward=disable. RestorePackagesWithLockFile can generate a lock during restore, but does not satisfy checked-in lock artifact before execution. Both remain unfulfilled."
+    },
+    "actualMainResult": {
+      "rawResponseOutcome": "incomplete",
+      "responseSha256": "b1ec79bd5589257f7309db666b4f16bdd2b3f81b71e7811e57887b6246212ac5",
+      "deliveryBindsResponse": true,
+      "nativeTerminalStatus": "incomplete",
+      "controllerStatus": "escalated",
+      "escalation": "executor.incomplete",
+      "candidateFilesInResponse": [
+        "src/Program.cs",
+        "src/OrderService.csproj"
+      ],
+      "candidateHashesMatchRetainedDiagnosticSource": true,
+      "controllerCandidateDigest": "",
+      "controllerOutputs": null,
+      "applyOrVerifyEvidence": false,
+      "runId": "0f487f57500739fe04961f94ffa3ac2e",
+      "invocationSha256": "0929a10c2cb29b6e3b0d190ebf5af66a5b933ae106dabd1836dd9409cdb1961b",
+      "terminalReceiptSha256": "b7cc67d0b953e87f2c930bddd004f9f27e66df670dc9b62263ca0ad50feb8914",
+      "noApplicableCandidate": true
+    },
+    "candidateAndDllProvenance": {
+      "responseProgramSha256": "7cf5a0f1b7047cce04fb3e80c5f3023a62277c3fb1e238af705f542984f79bb5",
+      "retainedProgramSha256": "7cf5a0f1b7047cce04fb3e80c5f3023a62277c3fb1e238af705f542984f79bb5",
+      "responseCsprojSha256": "d006b7b8536dd71e353e3730ca42c0240e68ab2d39930f7dd573cdfba8ab245d",
+      "retainedCsprojSha256": "d006b7b8536dd71e353e3730ca42c0240e68ab2d39930f7dd573cdfba8ab245d",
+      "packagesLock": "Retained diagnostic source hash 80949191d7388ec7b149d4cc85a70ccd213fd082d7aaa15d8d5e435f66bd42e0; not present in response candidateFiles because extension restriction.",
+      "dllSha256": "d216cabb21e320816a2a4df57b97940f44ed3e19251a79a2f020d34223e45392",
+      "dllLimit": "Freeze labels sourceType canonical model only, no app materialization; DLL is explicitly diagnosticOnly and acceptedMainCandidate=false. Hash is retained, but no independent build-provenance receipt establishes reproducible source-to-binary linkage; response source hash equality supports content identity for the two returned source files only."
+    },
+    "audit": "No audit result available. Raw response explicitly says the vulnerability audit command did not complete within bounded execution window; no audit output/result receipt exists in reviewed allowed outputs.",
+    "behaviorObservation": "Released unchanged public checks.py completed 14/14 checks against retained diagnostic DLL. This is code behavior observation only, not candidate acceptance, Apply, Verify, full quality score, method win, human acceptance, or complete study result.",
+    "classification": {
+      "codeBehavior": "Diagnostic run passed all 14 released public assertions.",
+      "toolRepresentationGap": "Invocation extensions exclude root global.json and checked-in packages.lock.json required by released architecture.",
+      "operatorSetupErrors": "No operator error evidenced by this bounded diagnostic run. Prior operational Main start failures were not used to alter model/response assessment.",
+      "architectureUnfulfilled": "global.json SDK rollForward disable and checked-in lock unavailable in response under Invocation; project target workaround is too late for SDK selection.",
+      "evidenceUnknown": "Runner setup/audit result, source-to-DLL reproducible provenance, acceptance, Apply/Verify and human acceptance unknown or absent."
+    }
+  },
+  "diagnosticExecution": {
+    "startUtc": "2026-10-09T02:36:37.461399+00:00",
+    "stopUtc": "2026-10-09T02:36:37.915472+00:00",
+    "transport": "Unchanged released owned_transport.py; one start, dynamic loopback port 62303, PID 40704, own handle terminated in finally; exitCode 1 follows requested terminate.",
+    "database": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-classic-main-greenfield-01\\independent-review\\task1\\diagnostic-orders.sqlite",
+    "freshDb": true,
+    "checks": [
+      "health",
+      "catalog prices",
+      "invalid zero",
+      "invalid negative",
+      "invalid fractional",
+      "invalid unknown",
+      "invalid empty",
+      "invalid limit",
+      "missing key",
+      "unknown order",
+      "created exact total",
+      "read order",
+      "semantic retry",
+      "key conflict"
+    ],
+    "result": "All 14 assertions completed without failure. Raw run and server log preserved under this review directory.",
+    "limit": "Diagnostic only, retained frozen DLL; no candidate materialization/acceptance."
+  },
+  "boundaries": {
+    "noApplicationOrModelOrResponseOrReceiptAltered": true,
+    "noSourceEdits": true,
+    "repoGitStatus": "clean",
+    "noMainVerifierSubstitution": true,
+    "noStudyProductAssessment": true,
+    "nativeReceiptCaveat": "Actor ID/profile are evidence declarations; native terminal receipt explicitly has providerTerminationGuarantee=false."
+  }
+}

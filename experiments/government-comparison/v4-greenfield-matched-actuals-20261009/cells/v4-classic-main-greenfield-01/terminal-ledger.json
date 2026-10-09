@@ -1,0 +1,135 @@
+{
+  "cellId": "v4-classic-main-greenfield-01",
+  "method": "ClassicMain",
+  "condition": "greenfield",
+  "startUtc": "2026-10-09T04:21:55.258547+02:00",
+  "trialDeadlineUtc": "2026-10-09T06:21:55.258547+02:00",
+  "globalDeadlineUtc": "2026-10-09T07:32:04+02:00",
+  "startSha": "0416e366626d31933443ce2901d6a3696261db7b",
+  "mainSource": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+  "mainBinary": "C:/Users/Consiliari/Documents/Scientist-v4-runtime-binding-20261009/runtime/markitect.exe",
+  "mainBinarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+  "repo": "C:/Users/Consiliari/Documents/Scientist-v4-matched-actuals/cells/v4-classic-main-greenfield-01/repo",
+  "ownRoot": "C:/Users/Consiliari/Documents/Scientist-v4-matched-actuals/cells/v4-classic-main-greenfield-01",
+  "state": "C:/Users/Consiliari/Documents/Scientist-v4-matched-actuals/state/v4-classic-main-greenfield-01",
+  "status": "CLOSED INCOMPLETE / representation-capability",
+  "trialActivationReservations": 5,
+  "actualNativeActivations": 5,
+  "maxTrialActivations": 72,
+  "maxTaskActivations": 12,
+  "maxParallelActors": 4,
+  "servicesPerActor": 12,
+  "humanTime": null,
+  "cost": null,
+  "tokens": null,
+  "servingModel": null,
+  "tasks": [
+    {
+      "task": 1,
+      "startUtc": "2026-10-09T04:21:55.258547+02:00",
+      "implementationEndUtc": "2026-10-09T04:35:55.258547+02:00",
+      "deadlineUtc": "2026-10-09T04:41:55.258547+02:00",
+      "status": "CLOSED INCOMPLETE / representation-capability",
+      "semanticRepairs": 2,
+      "activationReservations": [
+        {
+          "reservation": 1,
+          "role": "canonical-author-primary",
+          "reservedUtc": "2026-10-09T04:21:55.258547+02:00",
+          "status": "completed partial",
+          "forkTurns": "none",
+          "overrides": null,
+          "actualActorId": "/root/v4_actual_classic_main_gf_canonical_author"
+        },
+        {
+          "status": "completed",
+          "overrides": null,
+          "role": "canonical-author-repair",
+          "reservation": 2,
+          "continuation": true,
+          "reservedUtc": "2026-10-09T04:25:03.7367378+02:00",
+          "actualActorId": "/root/v4_actual_classic_main_gf_canonical_author"
+        },
+        {
+          "overrides": null,
+          "reservedUtc": "2026-10-09T04:28:03.6216869+02:00",
+          "role": "canonical-author-repair2",
+          "status": "completed",
+          "reservation": 3,
+          "actualActorId": "/root/v4_actual_classic_main_gf_canonical_author",
+          "continuation": true
+        },
+        {
+          "runId": "0f487f57500739fe04961f94ffa3ac2e",
+          "reservedUtc": "2026-10-09T04:31:36.7920964+02:00",
+          "overrides": null,
+          "forkTurns": "none",
+          "status": "completed incomplete",
+          "reservation": 4,
+          "role": "Main-executor",
+          "actualActorId": "/root/v4_actual_classic_main_gf_task1_executor"
+        },
+        {
+          "overrides": null,
+          "role": "independent-evidence-review",
+          "deadlineUtc": "2026-10-09T02:38:30Z",
+          "reservation": 5,
+          "status": "completed",
+          "forkTurns": "none",
+          "reservedUtc": "2026-10-09T04:35:45.315512+02:00",
+          "actualActorId": "/root/v4_actual_classic_main_gf_task1_evidence_review"
+        }
+      ],
+      "closedUtc": "2026-10-09T02:39:08.6481200+00:00",
+      "canonicalSourceSha": "aa14251fe869b9e2653c6bc0fa7dfb9ef40b7323",
+      "mainResult": "escalated/executor.incomplete",
+      "acceptedCandidate": false,
+      "independentReviewSha256": "fb703da9e42ee66eacdac8dbc85d7909d750e22b7e596e89083674b064b6c8e6"
+    }
+  ],
+  "actualFirstNativeActivationObservedUtc": "2026-10-09T04:23:12.4004349+02:00",
+  "outcome": "incomplete/representation-capability",
+  "closedUtc": "2026-10-09T02:39:08.6481200+00:00",
+  "wallElapsedSeconds": 1033.389573,
+  "mainProcessStarts": 6,
+  "nativeMainRoleCalls": 1,
+  "applyCalls": 0,
+  "verifyCalls": 0,
+  "privateHoldoutRuns": 0,
+  "independentPublicDiagnosticChecks": 14,
+  "studyQualityAggregate": null,
+  "subsequentTasks": [
+    {
+      "task": 2,
+      "status": "NOT RUN",
+      "reason": "No applicable Task1 Main application candidate/materialization; both semantic repair allocations consumed; frozen representation excludes required architecture artifacts, no late bypass or frozen product change"
+    },
+    {
+      "task": 3,
+      "status": "NOT RUN",
+      "reason": "No applicable Task1 Main application candidate/materialization; both semantic repair allocations consumed; frozen representation excludes required architecture artifacts, no late bypass or frozen product change"
+    },
+    {
+      "task": 4,
+      "status": "NOT RUN",
+      "reason": "No applicable Task1 Main application candidate/materialization; both semantic repair allocations consumed; frozen representation excludes required architecture artifacts, no late bypass or frozen product change"
+    },
+    {
+      "task": 5,
+      "status": "NOT RUN",
+      "reason": "No applicable Task1 Main application candidate/materialization; both semantic repair allocations consumed; frozen representation excludes required architecture artifacts, no late bypass or frozen product change"
+    },
+    {
+      "task": 6,
+      "status": "NOT RUN",
+      "reason": "No applicable Task1 Main application candidate/materialization; both semantic repair allocations consumed; frozen representation excludes required architecture artifacts, no late bypass or frozen product change"
+    }
+  ],
+  "limitations": [
+    "Configured native profile inherited gpt-6.1-sol/high, serving model/cost/tokens/humanTime unmeasured",
+    "Cooperative shared-host scope only; no OS isolation/provider-stop guarantee",
+    "Diagnostic binary lacks independent reproducible source-to-binary provenance receipt",
+    "Incomplete audit command: no result, exact leftover subprocess identity unavailable in retained executor handoff; no global process search or termination attempted",
+    "Parent profile explicitly read before initial author; subsequent role bindings reference same immutable parent turn profile, no separate per-role live metadata read receipt"
+  ]
+}

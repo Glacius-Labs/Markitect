@@ -1,0 +1,10 @@
+{
+  "eventKey": "v4-first-greenfield-pair-terminal-20261009",
+  "targetThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "hostId": "local",
+  "status": "Reserved for once-only terminal callback after exact private remote verification",
+  "noAcknowledgmentLoop": true,
+  "newExecutionQuota": false,
+  "actualRootStart": "46b640b",
+  "reservedUtc": "2026-10-09T02:41:39.3658719+00:00"
+}

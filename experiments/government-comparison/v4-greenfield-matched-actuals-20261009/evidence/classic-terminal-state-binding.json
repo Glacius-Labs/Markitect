@@ -1,0 +1,7 @@
+{
+  "archive": "classic-terminal-state.zip",
+  "sha256": "110d7e849ba81b9dc0bf522e978b575d99c7c2648ba86ab345a0fc4fb90af766",
+  "bytes": 54566435,
+  "contains": "Complete own Classic state incl all six Main process specs/stdout/stderr/receipts, actual Invocation/rawresponse/terminal/delivery/forwarded, nativeprompt archives, initial and corrected canonical snapshots, model source bundle, executor scratch and retained diagnostic binary/source, independent raw review/results/own process start-stop, unused prepared private assessment inputs",
+  "private": true
+}

@@ -4,8 +4,15 @@
     "v4-classic-main-greenfield-01"
   ],
   "globalDeadlineUtc": "2026-10-09T05:32:04Z",
-  "currentCell": "v4-conventional-greenfield-01",
-  "classicStatus": "RESERVED NOT STARTED",
+  "currentCell": null,
+  "classicStatus": "CLOSED INCOMPLETE / representation-capability",
   "startReceipt": "evidence/root-start-receipt.json",
-  "conventionalState": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-conventional-greenfield-01"
+  "conventionalState": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-conventional-greenfield-01",
+  "conventionalStatus": "CLOSED INCOMPLETE/coordinator_interruption",
+  "status": "TERMINAL INCOMPLETE; NO MATCHED COMPARATIVE RESULT",
+  "closedUtc": "2026-10-09T02:39:08.6481200+00:00",
+  "pairNativeReservations": 8,
+  "pairActualNativeActivations": 7,
+  "furtherExecutionAllowed": false,
+  "comparativeOutcome": null
 }
