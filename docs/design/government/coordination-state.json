@@ -16349,6 +16349,16 @@
         "workspaceFinding": "Owner reports persisted Handle/request/OwnerRecord match; generic error arose during Harvest state-check, exact transient predicate not logged. Bounded provider-free original Reopen/Harvest ownership/quiescence/delta validation pending; no causal claim or blind continuation.",
         "amendmentRemains": "Explicit existing writer workspace profile only within original lease after provider-free binding/ownership resolution; no new quota/global change",
         "sourceAcceptance": "PENDING_NEW_FIXED_SOURCE_REVIEW_TEST_HANDOFF"
+      },
+      "workspacePhysicalPathFinding": {
+        "ownerReported": "Provider-free ReopenCandidate fail-closed before Harvest: Git candidate paths use Codex Windows package LocalCache alias, journal uses AppData/Local, physical symlink resolution agrees but string equality rejects. Exact ownership/request/trusted interrupted receipt/source/paths reportedly match.",
+        "candidatePreservation": "No Close/delete/actor; four modified tracked files retained unchanged",
+        "correction": "Minimal physical path identity fix with regressions and independent review underway; no ownership/scope weakening",
+        "rootVerified": "Owner callback; repaired source/full binding handoff pending",
+        "setupProfileFix": "Targeted tests reported PASS, independent review pending",
+        "fullGoSuite5b65": "Owner reports full fresh go test ./... PASS; hosted exact final head gates still required",
+        "newActual": "NOT_STARTED",
+        "leaseEndUnchanged": "2026-10-10T00:26:23Z"
       }
     }
   },
@@ -17352,7 +17362,14 @@
       "v2CaseAllowanceConsumed": 1,
       "v2StartupChecksConsumed": 2,
       "v2Reusable": false,
-      "privateBackupTerminal": "PENDING_OWNER_CAPTURE",
+      "privateBackupTerminal": {
+        "exactLocalAndPrivateRemoteShaVerified": "da57106262bc43d5e4f58d865db269c9a46c68d2",
+        "rawArchiveSha256": "21f8053721acd24765dfc82c71229c94fdca346ca7c3344f023634092de352a2",
+        "rootVerified": "ZIP Working/RawGit equal, all585 manifest payload hashes and exact entryset checked; terminal closure and independent reviewer outcome read",
+        "archiveEntries": 585,
+        "ownerIndependentClosureReview": "No material discrepancy, nativeCalls0",
+        "qualification": "Observed direct-child terminal scope only; full OS descendant containment/global instruction byte snapshot unknown"
+      },
       "mainOrPairedMethodResult": false
     }
   },
@@ -17383,6 +17400,16 @@
       "snapshotSha256": "ae098dd7713a5bc8f7c33cee456c3cea3677f2ecd91a48e3e2d52ffd693729c6",
       "originalAssessmentResultSha256": "974baf41f0c1eac48c987a5bf0d3d3514be663eab84566e0370ffcd84b20c363",
       "requirements": "Original pre-actor frozen public requirements and evaluation rules, no new retrospective criteria"
+    },
+    "latestPreparation": {
+      "ownerReported": "11 scratch assessor checks and5 admission/control tests passed; launch review found stale frozen .pyc may rewrite during import; child-local bytecode suppression fix/test before clean freeze",
+      "candidateFiles": 29,
+      "publicRequirementsFiles": 12,
+      "allInputsUnchangedOwnerReported": true,
+      "supplementNativeChecksConsumed": 0,
+      "supplementNativeStarts": 0,
+      "newRubricImplementationCaseHelpers": false,
+      "newOrderSent": false
     }
   }
 }
