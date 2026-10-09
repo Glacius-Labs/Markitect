@@ -1,0 +1,1 @@
+This placeholder only demonstrates an Artifact path in the project model.

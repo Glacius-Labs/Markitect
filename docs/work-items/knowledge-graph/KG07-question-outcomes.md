@@ -1,0 +1,20 @@
+# Twelve-question implementation outcomes
+
+The original KG01 matrix remains a fixed Management-reference inventory. This table maps the same twelve questions to the independent YAML KG variant. The final tested source SHA belongs in continuation-validation.md; this is implementation coverage and bounded fixture evidence, not a case study result or semantic completeness claim.
+
+| Question | Implemented answer and verification boundary |
+|---|---|
+| 01 File and definition ownership | Exact Report file membership supplies owns-file witnesses; nearest namespace Manager ownership supplies owned-by definition witnesses. The derivations remain distinct and carry declaration provenance. |
+| 02 Consumers and why | Visible uses/requires edges and reverse or bidirectional witnesses explain declared consumers. Existing ProjectModel Impact still owns change routing and the different obligation effects of these relations. |
+| 03 Removed relationship | Query the explicitly selected old/new snapshots separately. Existing Impact tests retain removed base obligations and conservative routing; a current-only graph never claims to contain a removed edge. |
+| 04 Supporting Decision | First-class Decision nodes include reason, subject, actor and optional supersession under explicit privacy. Missing declarations remain absent/unprovided. Actor is provenance, not authentication. |
+| 05 Accepted work to Apply chain | Explicit record selection reads validated Exploration, run/plan/candidate/check/review/verification/Apply and briefing joins. Planned or missing records use expected links and unknown/partial states. The provider-free port fixtures test exact stored record links; no new real actor chain or human acceptance is asserted. |
+| 06 Missing artifact/check obligation | Required-artifact gaps and known Check declarations are reported separately. Graph coverage does not replace the existing Run/Verify gates or establish runtime behavior. |
+| 07 Renamed/replaced concept | IdentityChange carries a structured historical identity claim and live current subject where required. No unresolved live reference, automatic alias, semantic equivalence or silent rewriting is introduced. |
+| 08 Visibility explanation | Scope is selected before indexing; node fields and edges are allowlisted. Child Purpose may be visible while Instructions remain private. A direct public contract owner is identity-only where its ID already belongs to Context. Forbidden and absent lookup results match. |
+| 09 Supplied conflicting claims | Validated Brownfield claim/evidence/question/contradiction/resolution records are projected as supplied structured relationships. The graph does not infer contradictions from prose or promote a proposed claim to accepted canonical intent. |
+| 10 Evidence current/stale/history/unknown | Exact model/source/candidate and record bindings are compared; runtime comparison remains explicitly unknown where no current provider fingerprint is read. Historical records, capture consistency and absent joins remain separate from PASS labels. |
+| 11 Why a contract is in Context | Own Statement uses AND requires relationships select direct public contracts. Query witnesses preserve the actual relation names; Context, Impact, execution and evidence meanings remain owned by their existing components. |
+| 12 Full declared coverage and limits | Model, inventory, Artifact, Check and selected-record availability are separate scoped fields. Whole-project visibility must be explicit. Declared coverage, graph reachability and passing checks do not certify all code/prose, production behavior or autonomous engineering quality. |
+
+Run the executable example from its own Git-root checkout as its README describes. Native CLI/MCP share the same Operations.Knowledge service. The read-only knowledge tools do not execute providers, create plans, mutate ledgers or bypass guarded Apply.

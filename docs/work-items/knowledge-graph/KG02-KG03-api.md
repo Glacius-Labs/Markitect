@@ -1,5 +1,7 @@
 # KG02 and read-only KG03 API handoff
 
+This records the finite pure-module handoff at source 08b273f6. The continuation adds opt-in Bidirectional traversal and real Host/CLI/MCP composition; see [current guide](../../project-knowledge.md) and [continuation design](continuation-design.md). Earlier Integration-only and no-transport wording below is historical.
+
 Pure module: `internal/modules/projectknowledge`. Imports are Core plus the standard library; the module does not load repository files, import ProjectModel/Host, execute checks, write ledgers or infer policy.
 
 ```go

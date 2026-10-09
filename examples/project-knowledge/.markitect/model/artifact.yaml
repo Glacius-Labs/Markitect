@@ -1,0 +1,22 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: explanatory-fixture
+  namespace: ""
+purpose: A trivial file used to show an Artifact-to-Statement relation.
+spec:
+  role: documentation
+  realizes:
+    - apiVersion: project.markitect.example.org/v1alpha1
+      kind: Statement
+      namespace: ""
+      name: project-goal
+  paths:
+    - src/project-knowledge.txt
+  checks:
+    - apiVersion: project.markitect.example.org/v1alpha1
+      kind: Check
+      namespace: ""
+      name: display-only
+  required: true
+  reason: The file makes the model-to-artifact edge visible without claiming production behavior.

@@ -126,7 +126,7 @@ func TestPreviewMergesNativeFilesWithoutChangingBytesOutsideManagedBlock(t *test
 	if !strings.HasPrefix(merged, prefix) || !strings.HasSuffix(merged, suffix) {
 		t.Fatalf("preview changed bytes outside managed block:\n%s", merged)
 	}
-	if strings.Contains(merged, "old generated text") || !strings.Contains(merged, "local operation skill") {
+	if strings.Contains(merged, "old generated text") || !strings.Contains(merged, "relevant operation skill") {
 		t.Fatalf("preview did not replace only the managed block:\n%s", merged)
 	}
 	if _, err := Apply(root, plan, plan.Digest); err != nil {

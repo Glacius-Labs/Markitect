@@ -20,17 +20,17 @@ items:
     owner: model subagent
     files: internal/modules/projectmodel
   - id: KG05-S
-    status: in_progress
+    status: complete_reviewed
     scope: Authoritative ProjectModel mapping and exact manager node-field-edge privacy; read-only queries.
     owner: scope service subagent
     files: internal/host/projectgraph
   - id: KG05-E
-    status: in_progress
+    status: complete_reviewed
     scope: Explicit selected existing exploration/run/briefing/evidence adapters; current stale historical partial unknown distinctions.
     owner: evidence subagent
     files: internal/host/knowledgeevidence
   - id: KG06
-    status: in_progress
+    status: complete_reviewed
     scope: Shared projectapp operations plus CLI and MCP graph tools; canonical guidance and executable examples.
     owner: parent and transport subagent
     files: [internal/host/projectapp, internal/host/projectcli, internal/host/knowledgeprotocol, docs]
@@ -51,3 +51,6 @@ items:
 ## Completed source slices
 
 KG04 focused tests and vet passed. An independent Luna High reader found a private foreign Decision subject leak and missing Impact routing to the subject owner. Both fixes and targeted regressions passed the reader recheck. KG03 adds explicit bounded bidirectional witnesses so Statement -> Artifact -> Check can be explained even when typed edges face different directions; original edge orientations stay visible. The existing failed full Verify is preserved. Whole variant gates and accepted Main reconciliation remain pending.
+
+
+The Host reader has closed all five material findings and the direct ExtraFacts seam residual with targeted rereads. All source owners are frozen for the integrated candidate. KG07 fixed-source full Verify and final binary journey are next; accepted Main remains explicitly unprovided.

@@ -1,0 +1,17 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Check
+metadata:
+  name: display-only
+  namespace: ""
+purpose: A deliberately trivial declared command for illustrating a Check graph node.
+spec:
+  command:
+    - python
+    - -c
+    - print('knowledge example check')
+  uses:
+    - apiVersion: project.markitect.example.org/v1alpha1
+      kind: Statement
+      namespace: ""
+      name: project-goal
+  limitation: Prints a message only; it does not test graph behavior or establish correctness.

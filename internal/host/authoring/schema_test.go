@@ -194,7 +194,7 @@ func TestProjectCheckSchemaConstraints(t *testing.T) {
 	}
 	checkProperties := mapping(t, item["properties"])
 	timeout := mapping(t, checkProperties["timeoutSeconds"])
-	if timeout["type"] != "integer" || timeout["minimum"] != 1 || timeout["maximum"] != 1800 || timeout["default"] != 600 || containsString(sequence(t, item["required"]), "timeoutSeconds") {
+	if timeout["type"] != "integer" || timeout["minimum"] != 1 || timeout["maximum"] != 3600 || timeout["default"] != 600 || containsString(sequence(t, item["required"]), "timeoutSeconds") {
 		t.Fatalf("optional timeout bounds/default are incorrect: %#v", timeout)
 	}
 	if mapping(t, checkProperties["name"])["pattern"] != CheckNamePattern {

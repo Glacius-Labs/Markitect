@@ -1,0 +1,9 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: project-owner
+  namespace: ""
+purpose: Owns the complete public example model.
+spec:
+  owns:
+    - .

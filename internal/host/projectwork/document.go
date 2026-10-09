@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
+	"net/url"
 	"path"
 	"path/filepath"
 	"sort"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/core"
 	hostwrite "github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
@@ -106,14 +108,14 @@ func documentText(project *Project) string {
 	var out strings.Builder
 	fmt.Fprintf(&out, "%s\n\n# %s\n\n", generatedViewMarker, heading(project.Config.Name))
 	if project.Config.CoverageMode == "full" {
-		fmt.Fprintf(&out, "Model digest: %s  \nReport status: %s\n\n", project.Model.Digest, project.Report.Status)
+		fmt.Fprintf(&out, "- Model digest: %s\n- Report status: %s\n\n", project.Model.Digest, project.Report.Status)
 	} else if project.Provisional {
 		out.WriteString("Source: provisional working-tree snapshot\n\n")
 	} else {
 		fmt.Fprintf(&out, "Source revision: %s\n\n", project.Revision)
 	}
 	if project.Config.CoverageMode != "full" {
-		fmt.Fprintf(&out, "Project binding: %s  \nModel digest: %s  \nReport status: %s\n\n", project.Digest, project.Model.Digest, project.Report.Status)
+		fmt.Fprintf(&out, "- Project binding: %s\n- Model digest: %s\n- Report status: %s\n\n", project.Digest, project.Model.Digest, project.Report.Status)
 	}
 	out.WriteString("The structural model compiled from the explicitly selected Definition files. This view does not establish that repository code, tests, or prose conform to the model. Declared checks are not evidence that they ran.\n\n")
 
@@ -124,7 +126,7 @@ func documentText(project *Project) string {
 		out.WriteString("No Manager definitions are selected.\n\n")
 	} else {
 		for _, manager := range managers {
-			fmt.Fprintf(&out, "### %s\n\n- Identity: %s\n- Namespace: %s\n", heading(manager.Name), manager.ID, manager.Namespace)
+			fmt.Fprintf(&out, "### %s\n\n- Identity: %s\n- Namespace: %s\n", heading(manager.Name), manager.ID, namespaceLabel(manager.Namespace))
 			if manager.Purpose != "" {
 				fmt.Fprintf(&out, "- Purpose: %s\n", inline(manager.Purpose))
 			}
@@ -158,6 +160,53 @@ func documentText(project *Project) string {
 			}
 		}
 	}
+
+	out.WriteString("## Decisions\n\n")
+	decisions := append([]projectmodel.Decision(nil), project.Report.Decisions...)
+	sort.Slice(decisions, func(i, j int) bool { return decisions[i].ID < decisions[j].ID })
+	if len(decisions) == 0 {
+		out.WriteString("No Decision records are selected.\n\n")
+	} else {
+		for _, decision := range decisions {
+			fmt.Fprintf(&out, "### %s\n\n- Identity: %s\n- Subject Statement: %s\n- Recorded Manager actor: %s\n- Source: %s\n\n%s\n\nReason: %s\n\n",
+				heading(markdownText(decision.Name)), codeSpan(decision.ID), codeSpan(decision.Subject), codeSpan(decision.Actor), sourceProvenance(sourceLink, decision.Source),
+				markdownText(decision.Decision), markdownText(decision.Reason))
+			if decision.Supersedes != "" {
+				fmt.Fprintf(&out, "Explicitly supersedes Decision: %s\n\n", codeSpan(decision.Supersedes))
+			}
+			if decision.Public {
+				out.WriteString("Visibility: public within permitted project views.\n\n")
+			} else {
+				out.WriteString("Visibility: owner-scoped.\n\n")
+			}
+		}
+	}
+
+	out.WriteString("## Identity changes\n\n")
+	changes := append([]projectmodel.IdentityChange(nil), project.Report.IdentityChanges...)
+	sort.Slice(changes, func(i, j int) bool { return changes[i].ID < changes[j].ID })
+	if len(changes) == 0 {
+		out.WriteString("No IdentityChange records are selected.\n\n")
+	} else {
+		for _, change := range changes {
+			previous := change.Previous
+			fmt.Fprintf(&out, "### %s\n\n- Identity: %s\n- Declared operation: %s\n- Previous Statement identity: API version %s, kind %s, namespace %s, name %s\n",
+				heading(markdownText(change.Name)), codeSpan(change.ID), inline(change.Operation), codeSpan(previous.APIVersion), codeSpan(previous.Kind), identityNamespace(previous.Namespace), codeSpan(previous.Name))
+			if change.Subject != "" {
+				fmt.Fprintf(&out, "- Associated current Statement: %s\n", codeSpan(change.Subject))
+			} else {
+				out.WriteString("- Associated current Statement: none declared\n")
+			}
+			fmt.Fprintf(&out, "- Recorded Manager actor: %s\n- Source: %s\n\nReason: %s\n\n",
+				codeSpan(change.Actor), sourceProvenance(sourceLink, change.Source), markdownText(change.Reason))
+			if change.Public {
+				out.WriteString("Visibility: public within permitted project views.\n\n")
+			} else {
+				out.WriteString("Visibility: owner-scoped.\n\n")
+			}
+		}
+	}
+	out.WriteString("These records preserve explicit source-bound project declarations. A recorded actor is not an authenticated person, and an identity-change claim does not by itself prove that the previous definition existed or that two concepts are equivalent. Neither records nor this view establish human acceptance.\n\n")
 
 	out.WriteString("## Expected artifacts\n\n")
 	artifacts := append([]projectmodel.Artifact(nil), project.Report.Artifacts...)
@@ -256,8 +305,46 @@ func documentText(project *Project) string {
 }
 
 func heading(value string) string { return strings.TrimSpace(strings.ReplaceAll(value, "\n", " ")) }
+func namespaceLabel(value string) string {
+	if value == "" {
+		return "(root)"
+	}
+	return inline(value)
+}
+
 func inline(value string) string {
 	return strings.NewReplacer("\r", " ", "\n", " ", "|", "\\|").Replace(value)
+}
+
+func markdownText(value string) string {
+	value = strings.NewReplacer("\r", " ", "\n", " ").Replace(value)
+	return strings.NewReplacer("\\", "\\\\", "`", "\\`", "*", "\\*", "_", "\\_", "[", "\\[", "]", "\\]", "<", "&lt;", ">", "&gt;", "|", "\\|").Replace(value)
+}
+
+func codeSpan(value string) string {
+	value = strings.NewReplacer("\r", " ", "\n", " ", "`", "&#96;").Replace(value)
+	return "`" + value + "`"
+}
+
+func identityNamespace(value string) string {
+	if value == "" {
+		return "(global namespace)"
+	}
+	return codeSpan(value)
+}
+
+func sourceProvenance(link func(string) string, source core.Source) string {
+	value := "not recorded"
+	if source.Path != "" {
+		value = link(source.Path)
+	}
+	if source.Line > 0 {
+		value += fmt.Sprintf(" (line %d)", source.Line)
+	}
+	if source.Digest != "" {
+		value += " (digest " + codeSpan(source.Digest) + ")"
+	}
+	return value
 }
 
 func list(values []string) string {
@@ -292,7 +379,11 @@ func sourceLinkAt(destination, value string) string {
 		return inline(value)
 	}
 	relative = filepath.ToSlash(relative)
-	return "[" + inline(value) + "](" + strings.ReplaceAll(relative, " ", "%20") + ")"
+	parts := strings.Split(relative, "/")
+	for i := range parts {
+		parts[i] = url.PathEscape(parts[i])
+	}
+	return "[" + markdownText(value) + "](" + strings.Join(parts, "/") + ")"
 }
 
 func shellDisplay(command []string) string {

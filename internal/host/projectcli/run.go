@@ -82,6 +82,10 @@ func runAction(opts options, out io.Writer) error {
 			return &projectOutcomeError{code: 1, message: "whole-repository coverage is not conforming"}
 		}
 		return nil
+	case "knowledge":
+		return runKnowledge(opts, out)
+	case "knowledge-mcp":
+		return runKnowledgeMCP(opts, out)
 	case "schema":
 		return writeJSON(out, projectmodel.Schema())
 	case "init":
@@ -638,10 +642,14 @@ func writeJSON(out io.Writer, value any) error {
 
 func printUsage(out io.Writer, action string) {
 	if action == "" {
-		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: schema init onboard explore readiness deliver brownfield check index coverage context impact document edit brief briefings dismiss discover distill resolve adopt setup doctor plan cleanup reconcile run resume repair status verify apply\n")
+		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: schema init onboard explore readiness deliver brownfield check index coverage context impact knowledge knowledge-mcp document edit brief briefings dismiss discover distill resolve adopt setup doctor plan cleanup reconcile run resume repair status verify apply\n")
 		return
 	}
 	if spec, ok := actionSpecs[action]; ok {
+		_, _ = fmt.Fprintf(out, "Usage: markitect project %s\n", spec.usage)
+		return
+	}
+	if spec, ok := knowledgeActionSpecs[action]; ok {
 		_, _ = fmt.Fprintf(out, "Usage: markitect project %s\n", spec.usage)
 	}
 }

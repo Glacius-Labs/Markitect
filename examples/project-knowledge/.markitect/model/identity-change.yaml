@@ -1,0 +1,25 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: IdentityChange
+metadata:
+  name: prior-goal-rename
+  namespace: ""
+purpose: Explicitly declares a historical name change for the current Statement.
+spec:
+  operation: renamed
+  previous:
+    apiVersion: project.markitect.example.org/v1alpha1
+    kind: Statement
+    namespace: ""
+    name: project-goal-v0
+  subject:
+    apiVersion: project.markitect.example.org/v1alpha1
+    kind: Statement
+    namespace: ""
+    name: project-goal
+  reason: The example declares this prior identity for graph-history illustration only.
+  actorManager:
+    apiVersion: project.markitect.example.org/v1alpha1
+    kind: Manager
+    namespace: ""
+    name: project-owner
+  public: true

@@ -1,0 +1,16 @@
+apiVersion: project.markitect.example.org/v1alpha1
+name: project-knowledge-example
+coverageMode: full
+documentPath: docs/project-knowledge/model.md
+modelFiles:
+  - .markitect/model/manager.yaml
+  - .markitect/model/statement.yaml
+  - .markitect/model/artifact.yaml
+  - .markitect/model/readme-artifact.yaml
+  - .markitect/model/check.yaml
+  - .markitect/model/decisions.yaml
+  - .markitect/model/decision-current.yaml
+  - .markitect/model/identity-change.yaml
+inventoryRoots:
+  - src
+exclusions: []

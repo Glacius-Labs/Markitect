@@ -1,0 +1,19 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Decision
+metadata:
+  name: original-display-choice
+  namespace: ""
+purpose: Retained first decision for the fixture statement.
+spec:
+  subject:
+    apiVersion: project.markitect.example.org/v1alpha1
+    kind: Statement
+    namespace: ""
+    name: project-goal
+  decision: Use the declared statement as the example's graph subject.
+  reason: A named subject makes the outgoing graph relations easy to inspect.
+  actor:
+    apiVersion: project.markitect.example.org/v1alpha1
+    kind: Manager
+    namespace: ""
+    name: project-owner

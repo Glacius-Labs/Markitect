@@ -1,0 +1,25 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Decision
+metadata:
+  name: current-display-choice
+  namespace: ""
+purpose: Retained newer decision that supersedes the first fixture decision.
+spec:
+  subject:
+    apiVersion: project.markitect.example.org/v1alpha1
+    kind: Statement
+    namespace: ""
+    name: project-goal
+  decision: Keep the current example statement and show the explicit decision chain.
+  reason: The fixture now demonstrates retained and superseding Decision nodes.
+  actor:
+    apiVersion: project.markitect.example.org/v1alpha1
+    kind: Manager
+    namespace: ""
+    name: project-owner
+  supersedes:
+    apiVersion: project.markitect.example.org/v1alpha1
+    kind: Decision
+    namespace: ""
+    name: original-display-choice
+  public: true

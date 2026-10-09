@@ -8,6 +8,8 @@ The installed native entrypoints identify `.markitect/project.yaml` as the selec
 
 The current source provides guided project initialization, native onboarding, durable one-scope Explore records, scoped readiness evaluation and digest-bound structure acknowledgements, model editing, configurable readable documentation, full repository classification, Manager execution, integration, verification, guarded Apply and recovery. New projects use `workflowMode: guided` and `acceptancePolicy: committed-model`; legacy manifests with empty fields remain readable. Guided plans bind an exploration and named scope. Explore/readiness do not start an agent or authenticate the person whose decision reference is recorded. The mandated ordinary-contributor journey and its completion gates are captured in the [native work-item delivery checklist](design/project-world/native-work-item-delivery.md); that design checklist is a plan, so its gates remain distinct from what source and runtime evidence currently establish.
 
+For scoped, read-only graph queries over the selected model and explicitly selected records, see [Project knowledge](project-knowledge.md).
+
 ```text
 project explore --repo PATH [--exploration ID | --input .markitect/drafts/exploration.json] [--expect PLAN_DIGEST --write]
 project readiness --repo PATH --exploration ID --scope ID [--acknowledge-structure --actor ACTOR --authority TEXT --decision-ref REF --acknowledged-at RFC3339 --expect DIGEST --write]

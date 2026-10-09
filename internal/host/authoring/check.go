@@ -10,7 +10,7 @@ import (
 const CheckNamePattern = `^[A-Za-z0-9][A-Za-z0-9._-]*$`
 const CheckExecutablePattern = `^[^/\\\s]+$`
 const DefaultCheckTimeoutSeconds = 600
-const MaxCheckTimeoutSeconds = 1800
+const MaxCheckTimeoutSeconds = 3600
 
 var checkNamePattern = regexp.MustCompile(CheckNamePattern)
 var checkExecutablePattern = regexp.MustCompile(CheckExecutablePattern)

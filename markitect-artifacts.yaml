@@ -2,6 +2,13 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - examples/project-knowledge
+    - docs/project-knowledge.md
+    - docs/work-items/knowledge-graph
+    - internal/host/knowledgeprotocol
+    - internal/host/knowledgeevidence
+    - internal/host/projectgraph
+    - internal/modules/projectknowledge
     - internal/host/projectworkspace
     - internal/host/projectapp
     - internal/host/codexappserver
@@ -180,6 +187,98 @@ spec:
     - examples/project_world_workflow_test.go
     - docs/design/work-item-comparison-20261009.md
   tooling:
+    - path: examples/project-knowledge/docs/project-knowledge/model.md
+      owner: project-knowledge-variant
+    - path: examples/project-knowledge/.markitect/model/readme-artifact.yaml
+      owner: project-knowledge-variant
+    - path: examples/project-knowledge/.markitect/model/decision-current.yaml
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/continuation-validation.md
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/KG07-question-outcomes.md
+      owner: project-knowledge-variant
+    - path: internal/modules/projectknowledge/walk.go
+      owner: project-knowledge-variant
+    - path: internal/modules/projectknowledge/types.go
+      owner: project-knowledge-variant
+    - path: internal/modules/projectknowledge/index.go
+      owner: project-knowledge-variant
+    - path: internal/modules/projectknowledge/graph_test.go
+      owner: project-knowledge-variant
+    - path: internal/modules/projectknowledge/graph.go
+      owner: project-knowledge-variant
+    - path: internal/host/projectwork/document_test.go
+      owner: project-knowledge-variant
+    - path: internal/host/projectrun/knowledge_records_test.go
+      owner: project-knowledge-variant
+    - path: internal/host/projectrun/knowledge_records.go
+      owner: project-knowledge-variant
+    - path: internal/host/projectonboarding/knowledgeguidance_test.go
+      owner: project-knowledge-variant
+    - path: internal/host/projectgraph/service_test.go
+      owner: project-knowledge-variant
+    - path: internal/host/projectgraph/service.go
+      owner: project-knowledge-variant
+    - path: internal/host/projectgraph/query.go
+      owner: project-knowledge-variant
+    - path: internal/host/projectcli/knowledge_test.go
+      owner: project-knowledge-variant
+    - path: internal/host/projectcli/knowledge.go
+      owner: project-knowledge-variant
+    - path: internal/host/projectapp/knowledge_test.go
+      owner: project-knowledge-variant
+    - path: internal/host/projectapp/knowledge.go
+      owner: project-knowledge-variant
+    - path: internal/host/knowledgeprotocol/server_test.go
+      owner: project-knowledge-variant
+    - path: internal/host/knowledgeprotocol/server.go
+      owner: project-knowledge-variant
+    - path: internal/host/knowledgeevidence/read_test.go
+      owner: project-knowledge-variant
+    - path: internal/host/knowledgeevidence/read.go
+      owner: project-knowledge-variant
+    - path: examples/project-knowledge/src/project-knowledge.txt
+      owner: project-knowledge-variant
+    - path: examples/project-knowledge/README.md
+      owner: project-knowledge-variant
+    - path: examples/project-knowledge/.markitect/project.yaml
+      owner: project-knowledge-variant
+    - path: examples/project-knowledge/.markitect/model/statement.yaml
+      owner: project-knowledge-variant
+    - path: examples/project-knowledge/.markitect/model/manager.yaml
+      owner: project-knowledge-variant
+    - path: examples/project-knowledge/.markitect/model/identity-change.yaml
+      owner: project-knowledge-variant
+    - path: examples/project-knowledge/.markitect/model/decisions.yaml
+      owner: project-knowledge-variant
+    - path: examples/project-knowledge/.markitect/model/check.yaml
+      owner: project-knowledge-variant
+    - path: examples/project-knowledge/.markitect/model/artifact.yaml
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/validation.md
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/handoff.md
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/evidence/verify-08b273f6.log
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/evidence/.gitattributes
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/continuation-design.md
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/backlog.md
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/README.md
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/RDF-fit-decision.md
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/KG02-KG03-api.md
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/KG01-reference.md
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/KG01-question-matrix.md
+      owner: project-knowledge-variant
+    - path: docs/project-knowledge.md
+      owner: project-knowledge-variant
     - path: docs/validation/classic-commerce-entrypoint.md
       owner: classic-commerce-public-example-validation
     - path: examples/classic-commerce/NuGet.Config

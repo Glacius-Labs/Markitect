@@ -20,6 +20,9 @@ type options struct {
 	brownfieldAction, sessionID                                         string
 	sourceRepo                                                          string
 	input, request                                                      string
+	knowledgeAction, knowledgeScope, knowledgeNodeID                    string
+	knowledgeRunID, knowledgeExplorationID, knowledgeSessionID          string
+	knowledgeMaxDepth, knowledgeMaxSteps, knowledgeMaxResults           string
 	output                                                              string
 	discovery, report, resolution                                       string
 	plan, run, candidate                                                string
@@ -27,6 +30,7 @@ type options struct {
 	managers                                                            []string
 	write, help, generate                                               bool
 	acknowledgeStructure                                                bool
+	knowledgeReverse, knowledgeBidirectional, knowledgeBriefingHistory  bool
 }
 
 type actionSpec struct {
@@ -71,6 +75,11 @@ var actionSpecs = map[string]actionSpec{
 	"resolve":    {usage: "resolve --repo TARGET --source-repo SOURCE --revision TARGET_COMMIT --discovery DISCOVERY.json --report DISTILLATION.json --input CHOICES.json [--output RESOLUTION.json]", flags: []string{"repo", "source-repo", "revision", "discovery", "report", "input", "output"}, required: []string{"repo", "source-repo", "revision", "discovery", "report", "input"}},
 }
 
+var knowledgeActionSpecs = map[string]actionSpec{
+	"knowledge":     {usage: "knowledge --repo PATH (--manager ID | --knowledge-scope project) --knowledge-action graph|relations|explain|trace|history|coverage [--node-id ID] [--reverse | --bidirectional] [--max-depth N --max-steps N --max-results N] [--run ID] [--exploration ID] [--session ID] [--briefing-history] [--revision COMMIT]", flags: []string{"repo", "revision", "manager", "knowledge-scope", "knowledge-action", "node-id", "reverse", "bidirectional", "max-depth", "max-steps", "max-results", "run", "exploration", "session", "briefing-history"}, required: []string{"repo", "knowledge-action"}},
+	"knowledge-mcp": {usage: "knowledge-mcp --repo PATH [--revision COMMIT] (read-only MCP server on stdio)", flags: []string{"repo", "revision"}, required: []string{"repo"}},
+}
+
 func parse(args []string, errout io.Writer) (options, bool, error) {
 	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
 		return options{}, true, nil
@@ -87,6 +96,9 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	action := args[0]
 	spec, ok := actionSpecs[action]
 	if !ok {
+		spec, ok = knowledgeActionSpecs[action]
+	}
+	if !ok {
 		return options{}, false, fmt.Errorf("unknown project action %q", action)
 	}
 	fs := flag.NewFlagSet("project "+action, flag.ContinueOnError)
@@ -94,7 +106,7 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	values := map[string]*string{}
 	for _, name := range spec.flags {
 		switch name {
-		case "write", "generate", "acknowledge-structure":
+		case "write", "generate", "acknowledge-structure", "reverse", "bidirectional", "briefing-history":
 			continue
 		case "manager":
 			continue
@@ -114,6 +126,18 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	acknowledgeStructure := false
 	if contains(spec.flags, "acknowledge-structure") {
 		fs.BoolVar(&acknowledgeStructure, "acknowledge-structure", false, "record caller-authorized acknowledgement of the exact proposed structure")
+	}
+	knowledgeReverse := false
+	knowledgeBidirectional := false
+	if contains(spec.flags, "reverse") {
+		fs.BoolVar(&knowledgeReverse, "reverse", false, "walk incoming knowledge relations")
+	}
+	if contains(spec.flags, "bidirectional") {
+		fs.BoolVar(&knowledgeBidirectional, "bidirectional", false, "walk outgoing and incoming knowledge relations")
+	}
+	knowledgeBriefingHistory := false
+	if contains(spec.flags, "briefing-history") {
+		fs.BoolVar(&knowledgeBriefingHistory, "briefing-history", false, "explicitly include selected Manager briefing history")
 	}
 	if contains(spec.flags, "generate") {
 		fs.BoolVar(&generate, "generate", false, "generate one agent-assisted report using the configured runtime")
@@ -220,7 +244,7 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 			}
 		}
 	}
-	o := options{action: action, write: write, generate: generate, acknowledgeStructure: acknowledgeStructure, managers: append([]string(nil), managers...)}
+	o := options{action: action, write: write, generate: generate, acknowledgeStructure: acknowledgeStructure, knowledgeReverse: knowledgeReverse, knowledgeBidirectional: knowledgeBidirectional, knowledgeBriefingHistory: knowledgeBriefingHistory, managers: append([]string(nil), managers...)}
 	if len(managers) > 0 {
 		o.manager = managers[0]
 	}
@@ -270,6 +294,41 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	assign("acknowledged-at", &o.acknowledgedAt)
 	assign("brownfield-action", &o.brownfieldAction)
 	assign("session", &o.sessionID)
+	assign("knowledge-scope", &o.knowledgeScope)
+	assign("knowledge-action", &o.knowledgeAction)
+	assign("node-id", &o.knowledgeNodeID)
+	assign("run", &o.knowledgeRunID)
+	assign("exploration", &o.knowledgeExplorationID)
+	assign("session", &o.knowledgeSessionID)
+	assign("max-depth", &o.knowledgeMaxDepth)
+	assign("max-steps", &o.knowledgeMaxSteps)
+	assign("max-results", &o.knowledgeMaxResults)
+	if action == "knowledge" {
+		if len(managers) > 1 {
+			return options{}, false, errors.New("project knowledge accepts only one --manager")
+		}
+		if (o.manager == "") == (o.knowledgeScope == "") {
+			return options{}, false, errors.New("project knowledge requires exactly one of --manager or --knowledge-scope project")
+		}
+		if o.knowledgeScope != "" && o.knowledgeScope != "project" {
+			return options{}, false, errors.New("project knowledge --knowledge-scope must be project")
+		}
+		switch o.knowledgeAction {
+		case "graph", "relations", "explain", "trace", "history", "coverage":
+		default:
+			return options{}, false, errors.New("project knowledge --knowledge-action must be graph, relations, explain, trace, history or coverage")
+		}
+		targetRequired := o.knowledgeAction == "relations" || o.knowledgeAction == "explain" || o.knowledgeAction == "trace" || o.knowledgeAction == "history"
+		if targetRequired != (o.knowledgeNodeID != "") {
+			return options{}, false, errors.New("project knowledge requires --node-id only for relations, explain, trace or history")
+		}
+		if o.knowledgeAction != "trace" && (seen["reverse"] || seen["bidirectional"] || seen["max-depth"] || seen["max-steps"] || seen["max-results"]) {
+			return options{}, false, errors.New("project knowledge traversal flags apply only to --knowledge-action trace")
+		}
+		if o.knowledgeReverse && o.knowledgeBidirectional {
+			return options{}, false, errors.New("project knowledge trace --reverse and --bidirectional are mutually exclusive")
+		}
+	}
 	_ = errout
 	return o, false, nil
 }

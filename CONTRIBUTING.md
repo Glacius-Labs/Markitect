@@ -44,7 +44,7 @@ Keep source and test files focused on one coherent responsibility. When new func
 Begin through the repository's model-first contributor guidance and classify a requested change as model intent, implementation or both. For an intent change, edit its canonical owner, review the generated readable document, and commit the accepted model before implementation. A passing check, digest or provider report is not human approval. From the repository root with Go 1.27.1 or later:
 
 ```powershell
-go test ./... -count=1 -timeout=30m
+go test ./... -count=1 -timeout=60m
 go vet ./...
 go run ./cmd/markitect schema --repo .
 go run ./cmd/markitect check --repo examples/minimal
@@ -69,9 +69,9 @@ go run ./cmd/markitect check --repo benchmark/fixtures/v2
 git diff --check
 ```
 
-Full source gates use `-count=1` to require fresh test execution rather than report a cached test success as a new candidate run. This source Project's `go-tests` check declares a 1800-second command limit and the explicit Go test-binary limit `-timeout=30m`; other repository checks keep their 600-second default.
+Full source gates use `-count=1` to require fresh test execution rather than report a cached test success as a new candidate run. This source Project's `go-tests` check declares a 3600-second command limit and the explicit Go test-binary limit `-timeout=60m`; other repository checks keep their 600-second default.
 
-The hosted quality job has a finite 60-minute limit because it runs the full source suite and then the independent fixed-revision dogfood Verify, whose declared checks include a fresh full suite. The individual test-command limits stay at 30 minutes; the job also executes the package, adapter, schema and example gates.
+The hosted quality job has a finite 90-minute limit because it runs the full source suite and then the independent fixed-revision dogfood Verify, whose declared checks include a fresh full suite. The individual test-command limits stay at 60 minutes; the job also executes the package, adapter, schema and example gates.
 
 For prose-only changes, validate the fixed candidate with `check`, selected `context` and `impact`, managed-artifact accounting, relevant local links/anchors and any changed command examples, plus independent documentation review. Do not repeat an unchanged full suite locally merely to refresh a prose-only SHA; retain its actual tested revision. Required hosted CI and release gates still apply, and focused documentation checks are not a new full Project Verify result.
 

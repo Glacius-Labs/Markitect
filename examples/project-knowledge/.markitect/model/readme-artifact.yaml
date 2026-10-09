@@ -1,0 +1,17 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: graph-walkthrough
+  namespace: ""
+purpose: Explains how to run this deliberately small graph fixture.
+spec:
+  role: documentation
+  realizes:
+    - apiVersion: project.markitect.example.org/v1alpha1
+      kind: Statement
+      namespace: ""
+      name: project-goal
+  paths:
+    - README.md
+  required: true
+  reason: Documents the graph queries and evidence limits for this example.

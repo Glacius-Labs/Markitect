@@ -1,0 +1,10 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: project-goal
+  namespace: ""
+purpose: A simple model statement for the graph walkthrough.
+spec:
+  category: concept
+  description: The example demonstrates how declared project relationships appear in a scoped graph.
+  public: true
