@@ -257,24 +257,29 @@ def validate_invocation(value: Any) -> dict[str, Any]:
 def role_instructions(role: str, context: dict[str, Any] | None = None) -> str:
     if role == "executor" and isinstance(context, dict) and context.get("kind") == "projectrun-review/v1":
         return (
-            "You are a read-only local Reviewer for one typed candidate review. Assess the original goal in "
-            "request.context.runGoal against the accepted model in request.context.acceptedModel and the actual "
-            "scoped candidate bytes supplied in request.artifacts. Assess only this Manager's supplied scope, "
-            "ownTask and current phase; runGoal supplies orientation. Work-phase routing does not require "
-            "descendant implementation before integration. Unrun Host checks remain pending and are not by "
-            "themselves a defect. Treat request.context.candidateFiles as "
+            "You are a read-only local Reviewer for one Manager's candidate. Lead with this Manager's ownTask, "
+            "current phase, and explicitly supplied scope, assessing only those assigned obligations against the "
+            "actual scoped candidate bytes in request.artifacts. request.context.runGoal gives overall orientation "
+            "only; it does not expand this review to other Managers' responsibilities or require proving the full "
+            "run goal. acceptedModel.statements describe project requirements; assess only those assigned to this "
+            "Manager by ownTask and scope. acceptedModel.contracts are relevant exported interfaces. Assess this "
+            "candidate's use of or provision for a contract when that responsibility is assigned within the supplied "
+            "scope; do not require implementing foreign-owned dependency bytes or functionality. Work-phase routing does not require "
+            "descendant implementation before integration. Missing out-of-scope functionality or candidate bytes, "
+            "and pending Host checks, are neither defects nor reasons for incomplete or escalated. Use incomplete or "
+            "escalated only when missing or ambiguous in-scope evidence prevents assessing this Manager's assigned "
+            "obligations. Treat request.context.candidateFiles as "
             "path/mode/digest references and match each reviewed artifact to that metadata before assessing it. "
             "Each finding must name a candidate path, state the violated or satisfied expectation, and ground that "
             "expectation in the supplied bytes. Its grounding field must exactly equal an allowed accepted-model "
             "identity in the form statement:<id> or artifact-path:<path>; never paraphrase or invent that identity. "
             "Choose grounding only from the matching request.context.candidateFiles entry's grounding list. "
-            "acceptedModel.statements and acceptedModel.contracts explain those requirements; contracts are "
-            "exported interfaces. An artifact-path grounding must cover the finding's candidate path. "
+            "An artifact-path grounding must cover the finding's candidate path. "
             "Do not use an implementer transcript, claim that one exists, or fabricate "
             "test execution or test results. Do not write files or return candidate files or candidateJson. "
             "For either assessable result, use outer outcome proposed and place the semantic verdict in reportJson: "
             "status=fail with at least one concrete finding for a mismatch, or status=pass with no findings for a "
-            "supported result. If the evidence does not support either conclusion, return incomplete or escalated "
+            "supported result. If the in-scope evidence does not support either conclusion, return incomplete or escalated "
             "with reportJson null and explain the uncertainty; uncertainty is not a semantic failure."
         )
     if role == "executor":
@@ -407,6 +412,22 @@ def make_prompt(invocation: dict[str, Any]) -> str:
         evidence_role_contract += "- No evidence references were supplied; evidenceRefs must be an empty array.\n"
     report_contract = ""
     report_schema = task_response_schema(invocation)
+    is_typed_review = (
+        request["role"] == "executor"
+        and isinstance(request["context"], dict)
+        and request["context"].get("kind") == "projectrun-review/v1"
+    )
+    if is_typed_review:
+        outcome_contract = (
+            "- For this review, missing or ambiguous evidence justifies incomplete or escalated only when it prevents "
+            "assessing this Manager's ownTask, current phase, or assigned in-scope statements. Missing out-of-scope "
+            "implementation and pending Host checks do not justify incomplete or escalated.\n"
+        )
+    else:
+        outcome_contract = (
+            "- Use only outcomes permitted for the assigned role. Missing or ambiguous information needed to satisfy "
+            "the request is incomplete or escalated, never a guessed pass, failure, canonical value, or reference.\n"
+        )
     if report_schema is None:
         report_contract = "- Always set reportJson to null for this role/request; no typed report is enabled.\n"
     if report_schema is not None:
@@ -416,7 +437,7 @@ def make_prompt(invocation: dict[str, Any]) -> str:
                 "For an assessable verdict, outer outcome must be proposed; report status pass has no findings and "
                 "report status fail has at least one finding. Each finding must use an exact candidate path, explain "
                 "the expectation against the supplied bytes, and cite its exact accepted-model grounding identity. "
-                "If the review is incomplete or escalated, reportJson may be null "
+                "If in-scope evidence is insufficient for a conclusion, reportJson may be null "
                 "and uncertainty must explain why. This is a read-only role: candidateFiles must be empty and "
                 "candidateJson must be null, and verifierObservations must be empty because findings are the typed "
                 "review record.\n"
@@ -444,7 +465,8 @@ def make_prompt(invocation: dict[str, Any]) -> str:
         + evidence_role_contract
         + report_contract
         + (verifier_observation_contract(request) if request["role"] == "verifier" else "")
-        + "- Use only outcomes permitted for the assigned role. Missing or ambiguous information needed to satisfy the request is incomplete or escalated, never a guessed pass, failure, canonical value, or reference.\n\n"
+        + outcome_contract
+        + "- Never guess a pass, failure, canonical value, or reference.\n\n"
         + role_instructions(request["role"], request["context"])
         + "\n\nThe complete request follows as JSON in a display-only view. Artifact bytes were verified against their "
         "original SHA-256 digest before rendering. UTF-8 artifacts use contentEncoding=utf-8 and contentUtf8 containing "

@@ -531,9 +531,28 @@ class CodexRunnerTests(unittest.TestCase):
 
     def test_typed_read_only_reviewer_report_preserves_semantic_failure_and_uncertainty(self) -> None:
         value = review_invocation()
+        value["request"]["context"]["runGoal"] = "Implement reservation handling and sales order cancellation."
+        value["request"]["context"]["ownTask"] = "Implement reservation status transitions for inventory."
+        value["request"]["context"]["acceptedModel"]["contracts"] = [{
+            "id": "sales-api", "text": "Exported interface owned by the sales dependency.",
+        }]
         prompt = runner.make_prompt(value)
+        instructions = runner.role_instructions("executor", value["request"]["context"])
+        self.assertLess(instructions.index("ownTask"), instructions.index("runGoal"))
+        self.assertIn("runGoal gives overall orientation only", instructions)
+        self.assertIn("acceptedModel.statements describe project requirements; assess only those assigned", instructions)
+        self.assertIn("acceptedModel.contracts are relevant exported interfaces", instructions)
+        self.assertIn("use of or provision for a contract when that responsibility is assigned within the supplied scope", instructions)
+        self.assertIn("do not require implementing foreign-owned dependency bytes or functionality", instructions)
+        self.assertIn("Missing out-of-scope functionality or candidate bytes", instructions)
+        self.assertIn("pending Host checks, are neither defects nor reasons for incomplete or escalated", instructions)
+        self.assertIn("missing or ambiguous in-scope evidence prevents assessing this Manager's assigned obligations", instructions)
+        self.assertIn("For this review, missing or ambiguous evidence justifies incomplete or escalated only when", prompt)
+        self.assertNotIn("information needed to satisfy the request is incomplete or escalated", prompt)
+        self.assertIn("If in-scope evidence is insufficient for a conclusion", prompt)
         self.assertIn("request.context.runGoal", prompt)
-        self.assertIn("request.context.acceptedModel", prompt)
+        self.assertIn("acceptedModel.statements describe project requirements", prompt)
+        self.assertIn("acceptedModel.contracts are relevant exported interfaces", prompt)
         self.assertIn("actual scoped candidate bytes", prompt)
         self.assertIn("Do not use an implementer transcript", prompt)
         self.assertIn("fabricate test execution or test results", prompt)
