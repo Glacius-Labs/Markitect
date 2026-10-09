@@ -29,7 +29,7 @@ func assetDigest(path string) (string, error) {
 	}
 	return "sha256:" + hex.EncodeToString(h.Sum(nil)), nil
 }
-func bindReceipt(receipt *agentexec.Receipt, cfg agentexec.Config, env []string) error {
+func bindReceipt(receipt *agentexec.Receipt, cfg agentexec.Config, env, args []string) error {
 	var err error
 	receipt.ExecutableDigest, err = assetDigest(cfg.Command)
 	if err != nil {
@@ -38,7 +38,7 @@ func bindReceipt(receipt *agentexec.Receipt, cfg agentexec.Config, env []string)
 	command, _ := json.Marshal(struct {
 		Command string
 		Args    []string
-	}{cfg.Command, []string{"app-server", "--listen", "stdio://"}})
+	}{cfg.Command, append([]string(nil), args...)})
 	receipt.CommandDigest = digest(command)
 	files := append([]agentexec.RuntimeFile(nil), cfg.RuntimeFiles...)
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })

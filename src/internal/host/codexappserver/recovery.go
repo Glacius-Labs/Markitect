@@ -53,7 +53,7 @@ func (a *Adapter) Recover(parent context.Context, cfg agentexec.Config, h Recove
 		}
 	}()
 	env := selectedEnvironment(cfg.EnvironmentAllowlist)
-	if err = bindReceipt(&result.Receipt, cfg, env); err != nil {
+	if err = bindReceipt(&result.Receipt, cfg, env, appServerArgs(a.config)); err != nil {
 		return result, err
 	}
 	if err = verifyVersion(ctx, a.config, env); err != nil {
