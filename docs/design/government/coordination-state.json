@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T04:26:20Z",
+  "updatedUtc": "2026-10-09T04:31:41Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12,8 +12,8 @@
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-09T04:25:49Z",
-    "verification": "automation_update ACTIVE; exact TOML prompt/status/2h/Root target verified; human scenario steering added, callback silence preserved",
+    "lastVerifiedUtc": "2026-10-09T04:31:41Z",
+    "verification": "automation_update ACTIVE/2h; exact saved prompt and Root target verified with conditional Design own regression followup; quiet callback policy preserved",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
     "latestMandateUpdatedUtc": "2026-10-08T22:54:35Z",
     "reportOnMeaningfulChange": true,
@@ -29,12 +29,13 @@
     "pauseReason": "Explicit finite-block terminal instruction: final evidence synthesis verified, no evidenced equal fulltool/realusage admission. Stop researchloop with honest incomplete comparison, no automatic capability/prep/refill. Separate younger direct Design productwork unaffected.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
     "resumedUtc": "2026-10-09T04:10:08Z",
-    "promptSha256": "bf279f1d6e33fb72cd3a93c1c709d1e22c0bb3ece4acf481d3dff78c04b05ca1",
+    "promptSha256": "55640230755c87b83e797079e52764e3fdcb7acb35ab63df74b2b46a87cb8426",
     "name": "Markitect: Produktabschluss und Luna-Case-Studies",
     "currentGrantContext": "Design productproof3jobs/7200nativeSeconds/128outerStartsLunaHigh; Scientistprep90min2mechanicalbatches/1LunaReadonlyResearchReviewer/zeroActuals; Oldschool45minzeroActors; alloldActualrestclosed; newmax6trialsunallocated",
     "exactSavedTomlVerified": true,
     "resumeReason": "New detailed direct user mandate9Oct: Design fullworkflow/docs/main and simple LunaConventional/newMarkitect nest. Historical researchpause remains correct for oldblock.",
-    "scenarioFrameworkUpdatedUtc": "2026-10-09T04:25:49Z"
+    "scenarioFrameworkUpdatedUtc": "2026-10-09T04:25:49Z",
+    "ownDesignSuiteMandateUpdatedUtc": "2026-10-09T04:31:41Z"
   },
   "threads": [
     {
@@ -527,6 +528,15 @@
           "sentUtc": "2026-10-09T04:24:48Z",
           "toolAccepted": true,
           "repeatInstruction": false
+        },
+        "designRegressionInterface": {
+          "issuedUtc": "2026-10-09T04:30:28Z",
+          "status": "SENT ONCE; tool accepted",
+          "prompt": "Öffentliche Produkt-/Studien-Schnittstellenpräzisierung aus neuem direkten Nutzerauftrag: Design soll nach sauberer angenommener Kandidatenübergabe seine eigene Funktions-/Regressionstestsuite aktiv weiter ausbauen, statt zu warten. Vor Übergabe bleiben gezielte Risikoprüfungen nötig; die spätere vollständige Suite ist KEINE zusätzliche Startvoraussetzung deiner CaseStudies. Dein bestehendes finite Nestpaket/Ende05:37:22Z/Quote bleibt unverändert.\n\nHalte bei Studienaufnahme den exakten angenommenen Design-Source/Binary/Configpin und eigenen isolierten Projektcheckout fest. Designs nachfolgende Tests/Fixes/Mainnachfolger bleiben auf getrenntem Entwicklungsstand; kein stiller Pinwechsel oder ungemessene zusätzliche Fallhilfe. Keine privaten Holdouts, Zwischenbewertungen oder Falllösungen an Design. Koordiniere öffentlich konkrete Produktfehler sowie schwere Suiten/native Proofs mit Overseer/Design so, dass geteilte Hostlast deine gemessenen Laufzeiten nicht verfälscht; kurze eigene isolierte Produkttests/Testentwicklung können parallel laufen. Native Produktproofs sind keine CaseStudy-Daten und erhalten keine zusätzliche Modell-/Trialquote. Kein ACK und kein neuer Diagnose-/Vorbereitungsblock aus dieser Nachricht.",
+          "changesActualQuota": false,
+          "changesDeadline": false,
+          "sentUtcApprox": "2026-10-09T04:30:28Z",
+          "toolAccepted": true
         }
       },
       "evidence": {
@@ -9935,7 +9945,7 @@
       "lastObservedStatus": "active",
       "candidateSha": "11f080815722089d84869fef536b94cae9321e74",
       "candidateStatus": "Publicremoteprovisionalcheckpoint, nativeReadiness running, no acceptedstudyfreeze",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:17",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:18",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac852a43fa08191a8d8e593c901cb96",
       "assignedMilestone": "Held bounded source7d/doc11f candidate and exact private recovery; no new source/runtime/study assignment",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
@@ -10183,13 +10193,14 @@
           "buildsSourceChecksSeparateFiniteRepoTimeouts": true
         },
         "sentUtc": "2026-10-09T04:07:22Z",
-        "toolAccepted": true
+        "toolAccepted": true,
+        "ownRegressionSuiteFollowupKey": "design-product-regression-suite-20261009"
       },
       "activeTurn": {
         "id": "01a11e76-c579-7ab1-997a-3cfe2e836cb8",
         "status": "completed"
       },
-      "lastObservedUtc": "2026-10-09T04:10:08Z",
+      "lastObservedUtc": "2026-10-09T04:30:28Z",
       "currentDirectWorkObservation": "Owner running later direct product cleanup/reconcile work with independent inventory findings; prior accepted source7d001579/doc11f0808 remain historical frozen readiness. No new research allocation from Root.",
       "assignmentHistory": [
         {
@@ -10203,10 +10214,40 @@
       ],
       "futureAutomaticAuthorityFromOldGrants": 0,
       "lastObservedTurnId": "01a11e93-9e21-70d3-a0ff-149803f831a8",
-      "lastObservedPublicProgress": "Der Prüfbericht hält jetzt die 56 bestandenen Go-Pakete, 63 Adapter-Protokolltests und 12 Shop-Tests mit ihren tatsächlichen Quellständen fest. Die abschließende Artefaktprüfung hat noch einen fehlenden Registereintrag für den neuen Bericht gefunden; der genaue Pfad ist ergänzt. Es fehlen nur noch Dokumentationsreview und Push."
+      "lastObservedPublicProgress": "Reported Explore/Brownfield state components implemented; correcting completion state that left applied work open before end-to-end tests. Current9cea10cf WIP, no clean handoff assumed.",
+      "nextAuthorizedAssignment": {
+        "key": "design-product-regression-suite-20261009",
+        "authorizedUtc": "2026-10-09T04:30:28Z",
+        "sourceAuthority": "Latest direct human user requests comprehensive own suite after clean handoff while Scientist studies, targeted correctness checks before handoff",
+        "status": "SENT ONCE; conditional autoactivation after accepted clean study handoff",
+        "activation": "Accepted clean usable source/binary/config/check/review handoff for Scientist; record own suite start, no general Go needed",
+        "scope": "Existing suite coverage inventory plus meaningful unit/integration/CLI/workflow/boundary/failure/concurrency/recovery regressions; reproducible local/CI commands and gaps",
+        "firstCoveragePackageMaxActiveSeconds": 10800,
+        "testsAndBuildsFiniteRepoTimeouts": true,
+        "noNativeModelQuotaAdded": true,
+        "existingNativeProductProofLimitsUnchanged": true,
+        "separateFeatureStandAfterStudyFreeze": true,
+        "noStudyPinSubstitution": true,
+        "exhaustiveSuiteNotStudyStartGate": true,
+        "sharedHostHeavyJobsCoordinated": true,
+        "noPrivateStudyInputs": true,
+        "followupFromConcreteRemainingGapsOnly": true,
+        "prompt": "Neuer direkter Nutzerauftrag vom9.Oktober im Overseer-Chat: Sobald dein aktueller Produktauftrag fertig und ein sauberer benutzbarer Kandidat an Scientist übergeben ist, sollst du NICHT in einen Warte-/Schlafzustand gehen. Du baust dann deine eigene ausführbare Produkttestsuite weiter aus, um möglichst alle unterstützten Funktionen und ihre kleinen Teilaspekte auf korrektes Verhalten prüfen zu können. Schon im aktuellen Implementierungspaket prüfst du gezielt die echten Korrektheitsrisiken vor dem Freeze. Aktueller Vertrag: C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/work-item-comparison-20261009.md, Abschnitt „Designs eigene Funktions- und Regressionstestsuite“.\n\nPriorität bleibt: vollständige angenommene Designdokumente/gewünschter Nutzerweg, tatsächlich funktionaler stabiler Kandidat, aktuelle README/Doku und reguläre Mainintegration. Die erschöpfende Testsuite ist KEIN zusätzliches Hindernis, bevor Scientist anfangen darf. Dein aktueller Snapshot zeigt Explore/Brownfield/Statuskorrektur WIP auf9cea10cf; kein fertiger Kandidat ist daraus angenommen. Schließe den echten Weg und seine risikobezogenen Checks sauber ab, melde exakten sauberen/pushed Source-/Binary-/Config-/Check-/unabhängigenReviewhandoff und autonome Work-Item-Bereitschaft. Der vorhandene Produktproofgrant bleibt: LunaHigh, max3E2EJobs/7200aktive nativeSekunden/128äußereModell-Rollenstarts insgesamt inklusive Fehlversuchen/Reviews/Repairs, keine neue Quote aus dieser Nachricht.\n\nDirekt anschließender bedingter Folgeauftrag design-product-regression-suite-20261009: Sobald der saubere Kandidat für Scientist angenommen/festgehalten ist, protokolliere den Start und arbeite auf einem GETRENNTEN nichtgeschützten Featurestand weiter. Erstes zusammenhängendes Abdeckungs-/Regressionspaket höchstens10800s aktive Paketarbeit, endliche Repo-Testtimeouts, dann Handoff mit konkreten übrigen Lücken. Du brauchst dafür keine neue pauschale Freigabe und sollst nicht erst auf einen weiteren allgemeinen Go-Prompt warten. Keine unbegrenzte Schleife. Scientist behält seinen exakten eingefrorenen Produktstand; weitere Tests/Korrekturen/PRs und spätere Main-SHAs ersetzen ihn nicht still.\n\nBaue auf bestehenden Tests auf. Kurze Matrix aktuelle Anforderung/unterstützte Funktion → erwartetes Verhalten → Tests/Befehl → geprüft/offen. Unit-/Integrations-/CLI-/durchgängige Tests je Risiko: native Installation ohne Beschädigung eigener Agentendateien; Modell-/Dateitreue/Determinismus/Invalidierung; Explore/offeneEntscheidungen/Readiness; Preview/Plan/Freigabe/Apply/Verify und Mutationen nach Freigabe; Work-Item-Lieferung/Briefings; Brownfield/Migration/Kompatibilität; Persistenz/Atomicity/Cleanup/Reconcile/Resume nach Abbruch oder bereits erfolgtemApply; Locks/stale Zustände/konkurrierendeÄnderungen; valide/ungültige/grenzwertige Inputs, fehlende/inkonsistente Nachweise, Providerfehler/Timeouts. Konkrete Regression für echte gefundene Bugs. Teste erklärtes Verhalten, nicht bloß dieselben Implementierungsschritte oder sinnlose Coveragezahlen. Öffentlich unterstützte Module/Dateitypen ehrlich benennen. Deterministische Fakes für Mechanik und echte native Produkt-/Modellproofs streng getrennt ausweisen.\n\nEin klarer lokaler deterministischer Testsuitebefehl und passende vorhandene CI, getrennte dokumentierte native Proofbefehle/Setup/Quoten. Neue kohärente Checkpoints normal pushen, Sourcepins/Checks/Grenzen nennen und erforderliche unabhängige Review-/PR-/Maingates einhalten; kein Release/Forcepush/Branchschutzbypass. Produktfehler selbst korrekt reparieren und regressionsprüfen; öffentlich relevante Auswirkungen an Overseer melden, keine privaten Scientist-Holdouts/Zellergebnisse/Falllösungen beschaffen oder nachbauen.\n\nWährend der CaseStudies schreibst/reviewst du Tests und führst kurze eigene Tests in eigenen Repositories/Tempdirs/Prozesshandles aus. Schweres Test-/Build-/Modellwerk mit Scientist koordinieren, damit gemeinsame Hostlast keine gemessenen Zeitwerte verfälscht. Keine globalen Prozesskills oder Zugriffe auf Studien-WIP. Genau einmal Abschluss/echteBlockade/öffentlicheProduktsperre melden; keine ACK-Schleife. Grüne Tests sind versionsgebundene Korrektheitsbelege, kein Versprechen absoluter Fehlerfreiheit oder gematchter Studienqualität.",
+        "sentUtcApprox": "2026-10-09T04:30:28Z",
+        "toolAccepted": true,
+        "noWaitForFurtherGenericGo": true
+      },
+      "lastProductWorkSnapshot": {
+        "observedUtc": "2026-10-09T04:28:03Z",
+        "sourceSha": "9cea10cf16162f64a9d666186b42c0fbf59f4f92",
+        "branch": "codex/model-first-operations",
+        "clean": false,
+        "evidence": "Root git metadata plus active snapshot, no product tests by Root",
+        "studyFreezeAccepted": false
+      }
     }
   ],
-  "nextAction": "Scientist resumes original finite nest preparation with human scenario coverage, fixes existing Oldschool cleanupfinding and privately backs up coherent work; return concrete seed/backlog/native entry/end assessment, no new diagnostic phase. Design continues full workflow/docs/Main package.",
+  "nextAction": "Design completes actual full workflow/docs/Main handoff then automatically starts own bounded product regression/coverage package on separate stand. Scientist finishes original finite nest preparation and studies frozen candidate without waiting for exhaustive suite; heavy host jobs coordinated.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -10244,13 +10285,12 @@
     "latestUserMandateDocument": "docs/design/work-item-comparison-20261009.md",
     "latestDecision": "New Design main; simple Conventional versus new Markitect WorkItem comparison, all measured Actors LunaHigh; old studies preserved, no oldClassic/Gov new trials",
     "latestEvent": {
-      "event": "Direct case-study variation expansion and Scientist wait regression",
-      "reviewedUtc": "2026-10-09T04:24:48Z",
-      "evidence": "Compact snapshot cursor95 completed generic waiting; own nest untracked WIP observed, no accepted completion",
-      "action": "Resume concrete current finite prep with scenario expansion, no deadline/reset/Actual addition",
+      "event": "Direct own product regression-suite mandate for Design",
+      "reviewedUtc": "2026-10-09T04:30:28Z",
+      "evidence": "Design active cursor18; local source9cea10cf dirty WIP, no accepted freeze. Existing Go/CLI/module tests inventoried read-only; no root product tests",
+      "action": "Current targeted riskchecks; autoactivate finite own suite after clean accepted study handoff, separate featurestand and pins",
       "userDecisionRequired": false,
-      "resumeObservedUtc": "2026-10-09T04:26:20Z",
-      "resumeEvidence": "Active Scientist turn01a11ee8 and concrete1/3/7/1 projectstation plan, no Actual start or accepted handoff."
+      "designAndScientistDeliveredOnceUtcApprox": "2026-10-09T04:30:28Z"
     }
   },
   "publicAdapterHandoff": {
@@ -10799,7 +10839,7 @@
       "authorizedUtc": "2026-10-09T04:07:10Z",
       "status": "NEW DIRECT MANDATE, PREPARATION ONLY",
       "document": "docs/design/work-item-comparison-20261009.md",
-      "documentSha256": "58e4f7803ee2ff7e71529281dcae153d8dcc51f2a50e82496915e94cbcb8f184",
+      "documentSha256": "7585880924e4963a01f625e9b671b05a021b5bd989c2db63be4659d4e4352b3b",
       "arms": [
         "Strong Conventional Agentic Coding",
         "New Markitect from Design"
@@ -11957,6 +11997,28 @@
     "usableWorkflowAndAutonomousWorkitemReadinessSeparate": true,
     "releasePublicationAuthorized": false,
     "forceOrProtectionBypassAuthorized": false,
-    "document": "docs/design/work-item-comparison-20261009.md"
+    "document": "docs/design/work-item-comparison-20261009.md",
+    "ownRegressionSuiteFollowup": {
+      "key": "design-product-regression-suite-20261009",
+      "authorizedUtc": "2026-10-09T04:30:28Z",
+      "sourceAuthority": "Latest direct human user requests comprehensive own suite after clean handoff while Scientist studies, targeted correctness checks before handoff",
+      "status": "SENT ONCE; conditional autoactivation after accepted clean study handoff",
+      "activation": "Accepted clean usable source/binary/config/check/review handoff for Scientist; record own suite start, no general Go needed",
+      "scope": "Existing suite coverage inventory plus meaningful unit/integration/CLI/workflow/boundary/failure/concurrency/recovery regressions; reproducible local/CI commands and gaps",
+      "firstCoveragePackageMaxActiveSeconds": 10800,
+      "testsAndBuildsFiniteRepoTimeouts": true,
+      "noNativeModelQuotaAdded": true,
+      "existingNativeProductProofLimitsUnchanged": true,
+      "separateFeatureStandAfterStudyFreeze": true,
+      "noStudyPinSubstitution": true,
+      "exhaustiveSuiteNotStudyStartGate": true,
+      "sharedHostHeavyJobsCoordinated": true,
+      "noPrivateStudyInputs": true,
+      "followupFromConcreteRemainingGapsOnly": true,
+      "prompt": "Neuer direkter Nutzerauftrag vom9.Oktober im Overseer-Chat: Sobald dein aktueller Produktauftrag fertig und ein sauberer benutzbarer Kandidat an Scientist übergeben ist, sollst du NICHT in einen Warte-/Schlafzustand gehen. Du baust dann deine eigene ausführbare Produkttestsuite weiter aus, um möglichst alle unterstützten Funktionen und ihre kleinen Teilaspekte auf korrektes Verhalten prüfen zu können. Schon im aktuellen Implementierungspaket prüfst du gezielt die echten Korrektheitsrisiken vor dem Freeze. Aktueller Vertrag: C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/work-item-comparison-20261009.md, Abschnitt „Designs eigene Funktions- und Regressionstestsuite“.\n\nPriorität bleibt: vollständige angenommene Designdokumente/gewünschter Nutzerweg, tatsächlich funktionaler stabiler Kandidat, aktuelle README/Doku und reguläre Mainintegration. Die erschöpfende Testsuite ist KEIN zusätzliches Hindernis, bevor Scientist anfangen darf. Dein aktueller Snapshot zeigt Explore/Brownfield/Statuskorrektur WIP auf9cea10cf; kein fertiger Kandidat ist daraus angenommen. Schließe den echten Weg und seine risikobezogenen Checks sauber ab, melde exakten sauberen/pushed Source-/Binary-/Config-/Check-/unabhängigenReviewhandoff und autonome Work-Item-Bereitschaft. Der vorhandene Produktproofgrant bleibt: LunaHigh, max3E2EJobs/7200aktive nativeSekunden/128äußereModell-Rollenstarts insgesamt inklusive Fehlversuchen/Reviews/Repairs, keine neue Quote aus dieser Nachricht.\n\nDirekt anschließender bedingter Folgeauftrag design-product-regression-suite-20261009: Sobald der saubere Kandidat für Scientist angenommen/festgehalten ist, protokolliere den Start und arbeite auf einem GETRENNTEN nichtgeschützten Featurestand weiter. Erstes zusammenhängendes Abdeckungs-/Regressionspaket höchstens10800s aktive Paketarbeit, endliche Repo-Testtimeouts, dann Handoff mit konkreten übrigen Lücken. Du brauchst dafür keine neue pauschale Freigabe und sollst nicht erst auf einen weiteren allgemeinen Go-Prompt warten. Keine unbegrenzte Schleife. Scientist behält seinen exakten eingefrorenen Produktstand; weitere Tests/Korrekturen/PRs und spätere Main-SHAs ersetzen ihn nicht still.\n\nBaue auf bestehenden Tests auf. Kurze Matrix aktuelle Anforderung/unterstützte Funktion → erwartetes Verhalten → Tests/Befehl → geprüft/offen. Unit-/Integrations-/CLI-/durchgängige Tests je Risiko: native Installation ohne Beschädigung eigener Agentendateien; Modell-/Dateitreue/Determinismus/Invalidierung; Explore/offeneEntscheidungen/Readiness; Preview/Plan/Freigabe/Apply/Verify und Mutationen nach Freigabe; Work-Item-Lieferung/Briefings; Brownfield/Migration/Kompatibilität; Persistenz/Atomicity/Cleanup/Reconcile/Resume nach Abbruch oder bereits erfolgtemApply; Locks/stale Zustände/konkurrierendeÄnderungen; valide/ungültige/grenzwertige Inputs, fehlende/inkonsistente Nachweise, Providerfehler/Timeouts. Konkrete Regression für echte gefundene Bugs. Teste erklärtes Verhalten, nicht bloß dieselben Implementierungsschritte oder sinnlose Coveragezahlen. Öffentlich unterstützte Module/Dateitypen ehrlich benennen. Deterministische Fakes für Mechanik und echte native Produkt-/Modellproofs streng getrennt ausweisen.\n\nEin klarer lokaler deterministischer Testsuitebefehl und passende vorhandene CI, getrennte dokumentierte native Proofbefehle/Setup/Quoten. Neue kohärente Checkpoints normal pushen, Sourcepins/Checks/Grenzen nennen und erforderliche unabhängige Review-/PR-/Maingates einhalten; kein Release/Forcepush/Branchschutzbypass. Produktfehler selbst korrekt reparieren und regressionsprüfen; öffentlich relevante Auswirkungen an Overseer melden, keine privaten Scientist-Holdouts/Zellergebnisse/Falllösungen beschaffen oder nachbauen.\n\nWährend der CaseStudies schreibst/reviewst du Tests und führst kurze eigene Tests in eigenen Repositories/Tempdirs/Prozesshandles aus. Schweres Test-/Build-/Modellwerk mit Scientist koordinieren, damit gemeinsame Hostlast keine gemessenen Zeitwerte verfälscht. Keine globalen Prozesskills oder Zugriffe auf Studien-WIP. Genau einmal Abschluss/echteBlockade/öffentlicheProduktsperre melden; keine ACK-Schleife. Grüne Tests sind versionsgebundene Korrektheitsbelege, kein Versprechen absoluter Fehlerfreiheit oder gematchter Studienqualität.",
+      "sentUtcApprox": "2026-10-09T04:30:28Z",
+      "toolAccepted": true,
+      "noWaitForFurtherGenericGo": true
+    }
   }
 }

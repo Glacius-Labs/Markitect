@@ -1273,3 +1273,12 @@ Direkte Nutzerergänzung: Greenfield/Brownfield, ein/mehrere/viele Items, Abhän
 Kompakter Scientist-Snapshot Cursor95 endete im generischen Warten statt einem Handoff, obwohl das neue Vorbereitungspaket läuft; untracked Nest-WIP besteht. Kein Abschluss angenommen. Einmalige konkrete Wiederaufnahme mit dieser Nutzerergänzung wird im ursprünglichen Paket beauftragt: Ende05:37:22Z/Prüfchargen/Readonlyreview unverändert, keine Actualquote oder automatische Nachfüllung. Der historische Warteauftrag ist nachrangig.
 
 Szenarien-/Fortsetzungsnachricht einmal04:24:48Z an Scientist zugestellt. Automation weiterhin ACTIVE/2h, genaue gespeicherte Instruktionen samt neuer Szenarienergänzung geprüft. Keine neue Laufquote, keine Fristverlängerung.
+
+
+### 2026-10-09 06:30 Europe/Berlin - Designs eigene Regressionstestsuite statt Wartephase
+
+Direkter Nutzerauftrag: Design prüft konkrete Korrektheitsrisiken schon vor dem sauberen Kandidatenhandoff und erweitert danach die eigene Testsuite aktiv während Scientists Studien. Bestehende Tests mit Funktions-/Anforderungsmatrix, Unit-/Integrations-/CLI-/Workflow-/Fehler-/Grenz-/Parallelitäts-/Wiederaufnahmeprüfungen ausbauen; reproduzierbare lokale/CI-Befehle und konkrete offene Lücken liefern. Das ist kein Warten auf zusätzliche allgemeine Freigabe und keine exhaustive Startbedingung für Scientist.
+
+Bedingter Folgeauftrag design-product-regression-suite-20261009: nach angenommener sauberer benutzbarer Übergabe automatisch aktivieren, erster zusammenhängender Abdeckungsdurchgang maximal10800s aktive Paketarbeit, endliche Repo-Timeouts. Vorhandene Luna-Produktproofquote unverändert, kein zusätzlicher Actual-/Nativegrant. Getrennter Featurestand; Studienpins bleiben unverändert. Öffentliche Produktbefunde und schwere Hostjobs koordinieren, keine privaten Studieninputs oder ungemessene Hilfestellung. Aktueller Design-Snapshot Cursor18 und9cea10cf mit WIP sind noch kein Abschluss.
+
+Design-Folgeauftrag und öffentliche Scientist-Pin-/Lastschnittstelle einmal um04:30:28Z zugestellt, Toolannahme bestätigt. Automation ACTIVE/2h mit exakt gespeicherter neuer Folgeanweisung geprüft. Keine zusätzliche Native-/Studienquote; aktuelle aktive Produktarbeit ist noch WIP.
