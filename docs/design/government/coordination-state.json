@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T23:19:49.662014Z",
+  "updatedUtc": "2026-10-09T23:31:24.855566Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "DISPATCHED_ACTIVE_IMPLEMENT_AND_TEST",
+    "status": "COMMON_NATIVE_STARTUP_IMPLEMENTED_NORMAL_SETUP_PASS_REAL_RUN_PENDING",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -17883,6 +17883,18 @@
     "reporting": "One functional success or material realblocker, no ACK/intermediateapproval loop",
     "knowledgeGraph": "SEPARATE_UNCHANGED",
     "studies": "AFTER_WORKING_PRODUCT",
-    "mainAcceptance": "PENDING_REAL_FUNCTIONAL_RESULT_AND_FINAL_CI_REVIEW"
+    "mainAcceptance": "PENDING_REAL_FUNCTIONAL_RESULT_AND_FINAL_CI_REVIEW",
+    "checkpoint": {
+      "sourceSha": "a9580036eb96ae0d9872897bb57af97b4d9a7b56",
+      "currentLocalHead": "c782802ae7f70e83ea1af118d287620fc033cec8",
+      "publicRemoteObserved": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
+      "rootVerified": "Read integrated setup/session diff: common workspace/never, inheritedenv, WindowsdefaultMXC, explicit independent Verifier, ordinarytemp instruction and effective settings validation; localWTclean observed. Do not claim latestsource public until push/readback.",
+      "binaryOwnerReported": "c6be48ca9da501a71ec89287653d3dd3b2d465375a42eba79f11b5af0a835e72",
+      "checksOwnerReported": "Build/vet/fullAppServer73.225s before narrowreadbackfix; affectedreadbackargv/setupMCPCLIfocused positive, independentreviewclosed",
+      "normalSetupOwnerReported": "NormalCLI setup preview/write/projectcheck succeeded in existingownprivateA01, privateHEADeaa11e9/readinessrefresh underway",
+      "noNewActorsYet": true,
+      "acceptance": "Realrun/helper/parallel/review/Verify/Apply/originalRecovery pending",
+      "operatorFinding": "Canonicaldocs check caught duplicate native_session_id in oldledger; owner fixes ordinarydocscheck without new rootapproval or capabilitygate"
+    }
   }
 }
