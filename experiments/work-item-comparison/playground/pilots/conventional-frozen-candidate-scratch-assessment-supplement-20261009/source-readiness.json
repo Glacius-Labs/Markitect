@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "scope": "Provider-free preparation of one separately ordered final-only reassessment",
+  "sourceFilePins": {
+    "run_scratch_assessment.py": "43ea81c7b26cc216ef36679a4a9b3bfc5c4ebc326b24cccab2ac18b37a4b4a2c",
+    "final_scratch_assessor.py": "086cfa5adc02d8b0cdced2b21768cf6647cf148db1adc4b7324c6baac5ca5273",
+    "conventional/backends.py": "8ab206bb097d34ee21113f94bdfced4a66878d13a92c7c9d9379d84843e7e16c",
+    "conventional/approvals.py": "ccda28a22960be8058ee945e79ee0f80abaa52ce4e67a5453e98c6372fd37fff"
+  },
+  "orderSha256": "22d7d1297fa59b1e48391b5464bb0163d98a403ff195e5e867c05c7f67017485",
+  "planSha256": "61b7c5370c14441d4dd2ee8cadf4f70a1ba5732f80f10a2df581957a30721967",
+  "candidateSnapshotSha256": "ae098dd7713a5bc8f7c33cee456c3cea3677f2ecd91a48e3e2d52ffd693729c6",
+  "originalCandidateFiles": 29,
+  "originalPublicFiles": 12,
+  "tests": {
+    "scratchAssessor": {
+      "passed": 12
+    },
+    "legacyFinalAssessor": {
+      "passed": 5
+    },
+    "supplementRunner": {
+      "passed": 5
+    }
+  },
+  "syntaxParsed": 4,
+  "fileOnlyAdmission": "PASS",
+  "nativeChecksConsumed": 0,
+  "nativeAssessorStarts": 0,
+  "independentReview": {
+    "reviewer": "/root/independent_review",
+    "result": "No remaining material blocker in bounded order/scratch/one-use launch scope",
+    "verified": [
+      "Local bytecode policy set only around single nativecall and restored in finally",
+      "Originalandcopyrequirementshashes and preparationbinding included afterrun",
+      "Semantic/artifactboundaryandnoobservedhelpersgates",
+      "All startupmarkers required; uncertain check stops without assessor"
+    ]
+  },
+  "copyBoundary": "Equal-hash copy; all preexisting files immutable by before/after checks. Only new scratch/report artifacts permitted; this does not claim OS readonly for copied code.",
+  "bytecodePolicy": "Process-local PYTHONDONTWRITEBYTECODE=1 plus python -B, restored afternative",
+  "oldResult": "Original nineteen readonly evaluation errors retained under separate closed order",
+  "humanAcceptance": "not established"
+}
