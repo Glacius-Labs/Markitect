@@ -42,7 +42,8 @@
   "sourceBasis": "fdabf6215da3d64576f0d7e5fa3987dc33341f8a",
   "appLedgerSourceSha256": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20",
   "freshAppPrimaryCall": "prospective-primary-call.json",
-  "status": "Disabled; requires exact Root activation and concrete Design host-job release",
+  "status": "Disabled; requires exact Root activation. Specific Design host job already released per Root.",
   "notAfterUtc": "2026-10-09T09:12:43Z",
-  "accountSetup": "Existing App account/tool configuration; no credential copying or account probe"
+  "accountSetup": "Existing App account/tool configuration; no credential copying or account probe",
+  "specificHostJobReleaseConfirmedByRoot": true
 }

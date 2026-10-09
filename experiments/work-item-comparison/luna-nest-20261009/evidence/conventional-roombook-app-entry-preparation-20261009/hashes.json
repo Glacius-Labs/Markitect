@@ -2,20 +2,20 @@
   "scope": "New App preparation payloads excluding manifest",
   "files": {
     "activation-proposal.json": {
-      "sha256": "519febe94b54f8a445f28dd7ea42cec7e6b766a8516299bb6126ac8e406df87f",
-      "bytes": 2593
+      "sha256": "5ffd93a7ed84d6ade4d1c12dc0739fa863cbee2cde0c4751ff52ab700538184c",
+      "bytes": 2707
     },
     "bindings.json": {
       "sha256": "2ce18a36b24e52123618fb303018d1950ab43df9679bb81f1390856ae4eda451",
       "bytes": 3521
     },
     "continuation-anchor.json": {
-      "sha256": "61b4c90f44156da0e3a5671fa180ca90707ee2e8fed576fc5a35d3c9f88e3b7f",
-      "bytes": 324
+      "sha256": "ea9602387cda097df03c9884140726bfbdfa3d48f91947019b10fb9e9fa5f53d",
+      "bytes": 345
     },
     "HANDOFF.md": {
-      "sha256": "fc227cbef0664c634692fe5b6707e93190a64c63b13f6a655d175f0b231136d4",
-      "bytes": 5663
+      "sha256": "b08f571faa43c38509419f31c022a58d926e6ee3615bdbd35dcde31ac9440cc8",
+      "bytes": 5731
     },
     "mechanical-receipt.json": {
       "sha256": "1de8ce53bbcaecbbb90b40ae4c5f475f5b19e1a5d59ff9ad88a793e48514ca3b",
@@ -46,8 +46,8 @@
       "bytes": 1745
     },
     "specific-host-boundary.json": {
-      "sha256": "0df768c416e891be48b88227f2ffc607a0f0ae0ba6496549b25d082bdd1f850f",
-      "bytes": 886
+      "sha256": "c6030860295398e8f9104c3ed7f0fbf146ca74a16c001e59376b0aded1c08109",
+      "bytes": 1113
     },
     "trial-reservation.json": {
       "sha256": "f8624ce3384b211586b71036f47ca9bf7bfa399a0011e618ee3b264187fc4643",

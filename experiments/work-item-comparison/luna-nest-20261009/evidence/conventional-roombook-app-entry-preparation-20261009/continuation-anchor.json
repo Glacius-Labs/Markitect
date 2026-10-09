@@ -3,5 +3,5 @@
   "sourceBasis": "fdabf6215da3d64576f0d7e5fa3987dc33341f8a",
   "newModelOrReviewerOrActualStarts": 0,
   "globalFullStarts": 3,
-  "next": "Handoff once; await Root activation and actual specific host-job release, then full7200s remains under09:12:43Z. No readiness/CLIprobe."
+  "next": "Handoff once and await exact Root activation. Specific Design host job already released by Root; no readiness wait. Full7200s remains under09:12:43Z."
 }
