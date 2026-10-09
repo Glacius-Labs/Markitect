@@ -13,10 +13,21 @@ This is an owner-facing collection of product thoughts and questions, not a prod
 | IDEA-20261009-005 | Change intent once, then have the project follow it | Noted; open questions | 001, 002, 003 |
 | IDEA-20261009-006 | Bounded structure may let less costly models do useful work | Noted; hypothesis | 003, 007 |
 | IDEA-20261009-007 | Reward clear, consistent repositories without creating a maintenance trap | Noted; open questions | 001, 005 |
+| IDEA-20261009-008 | Project-specific non-functional goals and priorities | Noted; open questions | 012 |
+| IDEA-20261009-009 | Project-specific precedents with reasons | Noted; open questions | 008, 010 |
+| IDEA-20261009-010 | Proportionate dispute severity and higher review levels | Noted; open questions | 009, 011, 012 |
+| IDEA-20261009-011 | Managers can raise implementation cases for adjudication | Noted; open questions | 003, 010, 012 |
+| IDEA-20261009-012 | Configurable local priorities at every level | Noted; open questions | 008, 010, 011 |
+
+### Group: Projektspezifische Entscheidungen und Government
+
+The five linked ideas below came together in one user contribution. They are a set of proposals for later examination, not accepted contracts, implementation assignments, roadmap priorities or study instructions. Their broader setting also relates to the user's earlier Government discussion in chat `01a121f1-b948-7050-ae5d-9921b99db9c0`, turn `01a12241-8b52-7010-ac05-edbebd3c80d3`; that relation does not establish that the proposed mechanisms are part of the existing Government implementation.
+
+**Motivation paraphrase supplied with the referral (not original wording):** transferred decisions should align with project goals and earlier reasoned user decisions; conflicts should escalate in proportion to their importance; managers should be able to raise problems found during implementation; local configuration and priorities matter. The original user wording is preserved separately in each entry below.
 
 ## Sources and status
 
-The seed entries below come from the user's product statement in the original Markitect discussion, Codex chat `01a121f1-b948-7050-ae5d-9921b99db9c0`. The principal source is turn `01a12217-533b-7633-a10d-d1cd82859e4f`, user message `01a12217-53aa-7733-985c-7b5cd63b92cf`, dated 2026-10-09. One later clarification is in turn `01a12204-e5ab-74a0-ad2d-820b2c6c6006`, user message `01a12204-e60f-78c0-adee-2cf16f2f6b8d`.
+The seed entries below come from the user's product statement in the original Markitect discussion, Codex chat `01a121f1-b948-7050-ae5d-9921b99db9c0`. The principal source is turn `01a12217-533b-7633-a10d-d1cd82859e4f`, user message `01a12217-53aa-7733-985c-7b5cd63b92cf`, dated 2026-10-09. One later clarification is in turn `01a12204-e5ab-74a0-ad2d-820b2c6c6006`, user message `01a12204-e60f-78c0-adee-2cf16f2f6b8d`. The decision and Government proposals are from turn `01a1224c-b070-76c0-8cd9-ad32b16b3e3b`, user message `01a1224c-b0ba-7bf2-ad59-feaa68c260e7`.
 
 The conversation's shared source summary also appears in the Ideas chat setup prompt. It is a summary, not a substitute for the user's wording above. No idea in this index is a product decision, accepted requirement, demonstrated benefit or roadmap commitment.
 
@@ -99,4 +110,64 @@ Historian is an authorized source for relevant findings from Markitect history a
 - **Hoped-for effect:** More understandable software, higher quality and justified confidence in agent work, without a “cleanup hell.”
 - **Open questions:** What observable user experience demonstrates that structure is rewarding? How much upkeep is acceptable? What would show that the system has shifted work back to people?
 - **Relationships:** IDEA-20261009-001, 005, 006. Quality and trust are goals; no productivity or economic benefit is claimed here as proven.
+- **Status:** Noted; questions open.
+
+### IDEA-20261009-008 — Project-specific non-functional goals and priorities
+
+- **Group:** Projektspezifische Entscheidungen und Government.
+- **Source wording (user):** “Ein Zielbild oder Priorisierung von Nichtfunktionalen Eigenschaften für jedes Projekt, wogegen dann abgewogen werden kann was jeweils wichtiger ist.”
+- **Problem:** Decisions can require trade-offs between non-functional properties, and a generic ordering may not reflect a particular project's aims.
+- **Idea:** Give each project a target picture or priority ordering for non-functional properties, so decisions can be weighed against its own context.
+- **Assumptions:** The project can articulate meaningful goals and relative importance; decision-makers can use them when properties conflict.
+- **Hoped-for effect (motivation paraphrase):** Transferred decisions align with project goals and conflicts can be judged against local priorities.
+- **Open questions:** Which properties belong in scope? Are priorities ordinal, weighted, or contextual? Who sets and revises them, and how are trade-offs explained?
+- **Relationships:** IDEA-20261009-009, 012; broader context in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
+- **Status:** Noted; questions open.
+
+### IDEA-20261009-009 — Project-specific precedents with reasons
+
+- **Group:** Projektspezifische Entscheidungen und Government.
+- **Source wording (user):** “Eine Art projektspezifischer Lernmechanismus, der Präzedenzfälle oder Entscheidungen vom Benutzer mit den Begründungen sammelt, worauf sich dann später bezogen werden kann. Also eine Art Auslegung des Gesetzes für den \"Richter\".”
+- **Problem:** A delegated decision-maker may lack context about earlier user decisions and the reasoning that should guide similar future cases.
+- **Idea:** Keep project-specific user decisions and their reasons as precedents that a later decision-maker can consult when interpreting rules.
+- **Assumptions:** Decisions and reasons can be captured with enough context to tell when a precedent applies; interpretation remains open to new circumstances.
+- **Hoped-for effect (motivation paraphrase):** Decisions delegated to agents stay aligned with earlier reasoned user decisions.
+- **Open questions:** What constitutes a precedent, how is applicability determined, how are conflicting or superseded precedents handled, and when must the user decide again?
+- **Relationships:** IDEA-20261009-008, 010; broader context in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
+- **Status:** Noted; questions open.
+
+### IDEA-20261009-010 — Proportionate dispute severity and higher review levels
+
+- **Group:** Projektspezifische Entscheidungen und Government.
+- **Source wording (user):** “Severity der Diskussion bei Uneinigkeit und höhere Gerichtsinstanzen.”
+- **Problem:** Not every disagreement warrants the same level of review, but consequential conflicts may need more authority or scrutiny.
+- **Idea:** Distinguish the severity of a disagreement and allow escalation to higher review levels where appropriate.
+- **Assumptions:** Disputes can be classified meaningfully; review levels have clear authority and the escalation path does not add needless friction.
+- **Hoped-for effect (motivation paraphrase):** Conflicts are escalated in proportion to their importance.
+- **Open questions:** Who or what assigns severity? What triggers escalation, what decisions may each level make, and how are urgent or misclassified cases handled?
+- **Relationships:** IDEA-20261009-009, 011, 012; broader context in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
+- **Status:** Noted; questions open.
+
+### IDEA-20261009-011 — Managers can raise implementation cases for adjudication
+
+- **Group:** Projektspezifische Entscheidungen und Government.
+- **Source wording (user):** “Generell auch die Möglichkeit von Managern beim Umsetzen einen Fall ins Gericht zu bringen bzw zu eskalieren und zu melden.”
+- **Problem:** Applying an accepted model can expose ambiguity, conflict, or a problem that the responsible manager cannot settle within the implementation remit.
+- **Idea:** Let a manager report and escalate a case arising during implementation to a decision or adjudication process.
+- **Assumptions:** A useful boundary can be drawn between implementation problems and issues that require interpretation or model change; reports carry enough evidence and context.
+- **Hoped-for effect (motivation paraphrase):** Managers can bring real implementation problems forward, while consequential questions receive proportionate review.
+- **Open questions:** Which cases qualify? Can implementation continue while a case is pending? Who resolves it, and how does the outcome update or preserve the governing model?
+- **Relationships:** IDEA-20261009-003, 010, 012; broader context in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
+- **Status:** Noted; questions open.
+
+### IDEA-20261009-012 — Configurable local priorities at every level
+
+- **Group:** Projektspezifische Entscheidungen und Government.
+- **Source wording (user):** “Konfigurierbarkeit auf allen Ebenen und einordnung in \"lokale\" Prioritäten, Ziele und Wichtigkeit”.
+- **Problem:** A single global configuration or priority scheme may fail to represent the aims and importance relevant at different project levels.
+- **Idea:** Support configuration at every level and interpret decisions in their local priorities, goals and importance.
+- **Assumptions:** Local configuration can be reconciled with higher-level constraints; the system can make inherited and overridden settings legible.
+- **Hoped-for effect (motivation paraphrase):** Delegated decisions account for project-specific and local goals.
+- **Open questions:** Which settings may be local, who controls them, how do conflicts with higher-level priorities resolve, and how are local exceptions surfaced?
+- **Relationships:** IDEA-20261009-008, 010, 011; broader context in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
 - **Status:** Noted; questions open.
