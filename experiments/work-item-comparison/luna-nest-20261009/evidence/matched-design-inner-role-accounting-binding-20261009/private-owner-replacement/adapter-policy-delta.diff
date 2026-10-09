@@ -1,0 +1,87 @@
+diff --git a/internal/tooling/codexrunner/README.md b/internal/tooling/codexrunner/README.md
+index 5cae1372..0c7fe5a9 100644
+--- a/internal/tooling/codexrunner/README.md
++++ b/internal/tooling/codexrunner/README.md
+@@ -2,7 +2,7 @@
+ 
+ This standalone standard-library Python adapter accepts the closed agentexec.Invocation JSON value on stdin and emits exactly one response JSON object on stdout. It rejects duplicate or unknown request fields, verifies explicit artifact byte digests, and uses separate Executor, Verifier, and infer-only instructions. It does not embed Markitect ontology or write candidate files.
+ 
+-The caller supplies --model, an explicit absolute --codex-executable, and --codex-version. The executable must be the native Codex binary; `.ps1`, `.cmd`, and `.bat` launchers are rejected. For an npm installation, resolve the platform package's vendored `codex` binary and pass that path (do not pass the npm shim or JavaScript entrypoint). The optional --codex-script is only for runtimes such as Node when a platform does not provide a native binary. The adapter invokes `codex exec` with --ignore-user-config, --ignore-rules, --sandbox read-only, --ephemeral, --json, --skip-git-repo-check, and --disable for plugins, shell_tool, and unified_exec, plus an output schema, an output-last-message file, the empty temporary --cd directory, and stdin -. `modelOptions` accepts only `model_reasoning_effort` with one of `minimal`, `low`, `medium`, `high`, or `xhigh`; arbitrary Codex `--config` settings are rejected before any files or provider process are created, so caller options cannot override sandbox or approval behavior. The strict output schema requires every response field. Optional inference `candidateJson` and ordinary typed task `reportJson` use JSON strings or null and are parsed and validated before emitting the Host protocol response. For `projectrun-full-verify/v1`, `reportJson` is instead the strict object supplied by `context.responseSchema`; the adapter validates that object directly, including declared array minimums, and keeps its canonical inner evidence references unchanged. Only outer `evidenceRefs` are transport aliases and decoded. Candidate JSON remains inference-only.
++The caller supplies --model, an explicit absolute --codex-executable, and --codex-version. The executable must be the native Codex binary; `.ps1`, `.cmd`, and `.bat` launchers are rejected. For an npm installation, resolve the platform package's vendored `codex` binary and pass that path (do not pass the npm shim or JavaScript entrypoint). The optional --codex-script is only for runtimes such as Node when a platform does not provide a native binary. The adapter leaves the CLI's normal rules and user configuration enabled. It invokes `codex exec` with --sandbox read-only, --ephemeral, --json, --skip-git-repo-check, and --disable for plugins, shell_tool, unified_exec, and multi_agent, plus an output schema, an output-last-message file, the empty temporary --cd directory, and stdin -. `modelOptions` accepts only `model_reasoning_effort` with one of `minimal`, `low`, `medium`, `high`, or `xhigh`; arbitrary Codex `--config` settings are rejected before any files or provider process are created, so caller options cannot override sandbox or approval behavior. The strict output schema requires every response field. Optional inference `candidateJson` and ordinary typed task `reportJson` use JSON strings or null and are parsed and validated before emitting the Host protocol response. For `projectrun-full-verify/v1`, `reportJson` is instead the strict object supplied by `context.responseSchema`; the adapter validates that object directly, including declared array minimums, and keeps its canonical inner evidence references unchanged. Only outer `evidenceRefs` are transport aliases and decoded. Candidate JSON remains inference-only.
+ 
+ The prompt tells the model to copy the invocation's apiVersion, runId, nonce, role, and inputDigest exactly, and to emit every required array even when empty. Response evidenceRefs are exact request scope IDs, policy IDs, or artifact paths only; digests are not evidence references. Executor and inference responses may cite relevant supplied references. Verifier responses must cite the complete sorted, unique union of every supplied scope ID, policy ID, and artifact path, including fixed-check input artifacts; the prompt renders that exact list from the request. A verifier must also report one observation for each supplied scope or policy ID and use an incomplete or escalated result when required information is missing or ambiguous. Listing references is protocol bookkeeping, not proof that an input was inspected or supports a conclusion. These are model instructions: the adapter validates the closed JSON shape, while the Host validates invocation binding and allowed references. Neither prompt compliance nor protocol validity proves verifier independence, evidence sufficiency, or human acceptance.
+ 
+@@ -16,7 +16,7 @@ The Host supplies MARKITECT_AGENT_CONFIG_JSON and MARKITECT_AGENT_PRIVATE_LOG. C
+ 
+ For recognized model/account incompatibility, authentication, rate-limit, and CLI invocation/configuration failures, the adapter returns a protocol-valid `incomplete` response with a fixed generic explanation; it never copies provider bodies, user paths, or request identifiers into that response. Unknown process failures keep the generic nonzero runner error. Any observed tool call forces an `incomplete` response even if a final proposal exists. The adapter disables Codex's plugin, `shell_tool`, and `unified_exec` features and checks for tool events as a second boundary.
+ 
+-`--ignore-user-config` does not establish that Codex loaded no ambient Skills. The [official skills documentation](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills) describes repository, user, admin, and system skill sources and per-skill disablement by exact `SKILL.md` path. The installed Codex CLI 0.130.0 feature list contains no global skills-disable feature. This adapter does not enumerate unknown installed skill paths or write global configuration, so it does not claim absence of ambient skill instructions. A strict deployment must control these sources in its verified host environment.
++The adapter does not enumerate or disable ambient Skills, rewrite user configuration, or claim that ordinary CLI rules are absent. The selected empty working directory bounds the supplied project workspace; it does not establish OS isolation or eliminate user, admin, or system instruction sources. Deployment owners retain responsibility for their normal policy and environment. The adapter's explicit read-only/tool restrictions and rejection of observed tool calls remain separate protocol boundaries.
+ 
+ Install Python 3.10 or later as a caller-managed dependency. Run the boundary tests from this directory with python -m unittest. The wrapper itself can be inspected without invoking Codex; the real CLI is an external dependency and is exercised separately by a controlled integration experiment.
+ 
+diff --git a/internal/tooling/codexrunner/runner.py b/internal/tooling/codexrunner/runner.py
+index 5209acbc..341def03 100644
+--- a/internal/tooling/codexrunner/runner.py
++++ b/internal/tooling/codexrunner/runner.py
+@@ -984,11 +984,9 @@ def launch_codex(
+     argv = [
+         *prefix,
+         "exec",
+-        "--ignore-user-config",
+         "--model", args.model,
+         *config_args,
+         "--sandbox", "read-only",
+-        "--ignore-rules",
+         "--ephemeral",
+         "--json",
+         "--skip-git-repo-check",
+diff --git a/internal/tooling/codexrunner/test_runner.py b/internal/tooling/codexrunner/test_runner.py
+index 9a2c6340..0fa3e6ac 100644
+--- a/internal/tooling/codexrunner/test_runner.py
++++ b/internal/tooling/codexrunner/test_runner.py
+@@ -569,6 +569,8 @@ class CodexRunnerTests(unittest.TestCase):
+             {"approval_policy": "never"},
+             {"shell_environment_policy": {"inherit": "all"}},
+             {"features.plugins": True},
++            {"ignore_rules": True},
++            {"ignore_user_config": True},
+             {"model": "other-model"},
+             {"model_reasoning_effort": "unbounded"},
+             {"model_reasoning_effort": ["high"]},
+@@ -1234,24 +1236,26 @@ class CodexRunnerTests(unittest.TestCase):
+             cwd = Path(directory)
+             log_path = cwd / "events.jsonl"
+             args = argparse.Namespace(
+-                codex_executable="node.exe",
+-                codex_script="codex.js",
+-                codex_version="0.130.0",
+-                model="gpt-5.5",
++                codex_executable="codex.exe",
++                codex_script=None,
++                codex_version="0.162.0-alpha.2",
++                model="gpt-6-luna",
+                 timeout_seconds=10,
+             )
+-            with patch.object(runner, "resolve_codex", return_value=["node.exe", "codex.js"]), \
++            with patch.object(runner, "resolve_codex", return_value=["codex.exe"]), \
+                  patch.object(runner, "check_version"), \
+                  patch.object(runner.subprocess, "Popen", side_effect=FakeProcess):
+                 response = runner.launch_codex(value, args, {"model_reasoning_effort":"high"}, cwd, log_path)
+             self.assertEqual(response["reportJson"], {"status": "complete", "summary": "done"})
+             argv = captured["argv"]
+-            self.assertIn("--ignore-user-config", argv)
+-            self.assertIn("--ignore-rules", argv)
++            self.assertEqual(argv[:2], ["codex.exe", "exec"])
++            self.assertNotIn("--ignore-user-config", argv)
++            self.assertNotIn("--ignore-rules", argv)
++            self.assertEqual(argv[argv.index("--model") + 1], "gpt-6-luna")
++            self.assertEqual(argv[argv.index("--config") + 1], 'model_reasoning_effort="high"')
+             self.assertIn("--ephemeral", argv)
+             self.assertIn("--json", argv)
+-            self.assertIn("--sandbox", argv)
+-            self.assertIn("read-only", argv)
++            self.assertEqual(argv[argv.index("--sandbox") + 1], "read-only")
+             self.assertIn("--disable", argv)
+             disabled_features = [argv[index + 1] for index, value in enumerate(argv[:-1]) if value == "--disable"]
+             self.assertEqual(disabled_features, ["plugins", "shell_tool", "unified_exec", "multi_agent"])

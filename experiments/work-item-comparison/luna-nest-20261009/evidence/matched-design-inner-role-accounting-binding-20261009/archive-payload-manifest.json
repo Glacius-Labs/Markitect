@@ -1,0 +1,314 @@
+[
+  {
+    "archive": "private-owner-installation\\roombook-model-installation-2b7b22ba.zip",
+    "sha256": "1f29af68c6ec2b295c6930c76512deac93a3c565dd6f1fbef1539db5a78918b0",
+    "entries": [
+      {
+        "name": "markitect-2b7b22ba.exe",
+        "bytes": 16947200,
+        "sha256": "abf877849379900cf2f1cf6c19f3d5d1e67a134592ac810cedc437191e9a5f29"
+      },
+      {
+        "name": "handoff.json",
+        "bytes": 29155,
+        "sha256": "0cf49b54ae019ab2ab2cb6dd3e863c995823a49137a375a9e5e4547ee8aa4cb2"
+      },
+      {
+        "name": "project-schema.json",
+        "bytes": 5999,
+        "sha256": "30c8fe1855afe37bd424e61c969f7cbab104848f2c0d95c01d8a6bcb4795cd62"
+      },
+      {
+        "name": "original-model-inventory.json",
+        "bytes": 3513,
+        "sha256": "2649eb747102b6a51c94fbf4881749f55bf48852716c7851cf9255aee25a7c29"
+      },
+      {
+        "name": "installed-model-inventory.json",
+        "bytes": 3515,
+        "sha256": "3144d7553fad50515ac8d3151eaff7077a50f6731c7ba8e409a07fc6fba3c98a"
+      },
+      {
+        "name": "schema-and-installation-migration.json",
+        "bytes": 1602,
+        "sha256": "6b3ef37e977e1c72b11672c5fbe36effd1f0d71063020ce20fb289fc50661826"
+      },
+      {
+        "name": "full-declared-model-migration.patch",
+        "bytes": 859,
+        "sha256": "0d7ac19bb33aa4b9c434a1a808832340b3b2df5f985cebff691852e8242e96bc"
+      },
+      {
+        "name": "installed-file-inventory.json",
+        "bytes": 3595,
+        "sha256": "1161f07a11e7918cf1e7365d610c4f7992cdd0cb11e09a3e20983415753fd513"
+      },
+      {
+        "name": "build-info.txt",
+        "bytes": 451,
+        "sha256": "12325e99448276b5b6ecad9d01413701fcb7feeb82b732b0854be9e10e63faf8"
+      },
+      {
+        "name": "installed-project-check.json",
+        "bytes": 13108,
+        "sha256": "63de68fcc8f8a84d6bf0aa50645dd8d49be9f3d7b8525dff358fa0265ef09e32"
+      },
+      {
+        "name": "installed-project-index.json",
+        "bytes": 15234,
+        "sha256": "51d3e52fc4f13bc4044d32728784ae81489517f2c6b455a8d5f19b99ec9016d4"
+      },
+      {
+        "name": "native-onboarding-idempotence.json",
+        "bytes": 30622,
+        "sha256": "8be53e720eca0eda9bd67dc2b02516d409d994f4b7cf3d7bd89e47d6a31f9df5"
+      },
+      {
+        "name": "original-model/.markitect/model/booking-contract.yaml",
+        "bytes": 483,
+        "sha256": "0dec869e40832bf901147a2f8393194a60b13f5316f153afe53f9823491b84bf"
+      },
+      {
+        "name": "original-model/.markitect/model/checks.yaml",
+        "bytes": 513,
+        "sha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a"
+      },
+      {
+        "name": "original-model/.markitect/model/delivery-rules.yaml",
+        "bytes": 512,
+        "sha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8"
+      },
+      {
+        "name": "original-model/.markitect/model/documentation.yaml",
+        "bytes": 801,
+        "sha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b"
+      },
+      {
+        "name": "original-model/.markitect/model/durable-state.yaml",
+        "bytes": 467,
+        "sha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65"
+      },
+      {
+        "name": "original-model/.markitect/model/implementation.yaml",
+        "bytes": 597,
+        "sha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc"
+      },
+      {
+        "name": "original-model/.markitect/model/manager.yaml",
+        "bytes": 377,
+        "sha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31"
+      },
+      {
+        "name": "original-model/.markitect/model/reservation.yaml",
+        "bytes": 394,
+        "sha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425"
+      },
+      {
+        "name": "original-model/.markitect/model/tests.yaml",
+        "bytes": 584,
+        "sha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb"
+      },
+      {
+        "name": "original-model/.markitect/project.yaml",
+        "bytes": 513,
+        "sha256": "aa024390df2d29b7c4ed2807afc830c1afad92b6a0ebee56214b25117ff18ece"
+      },
+      {
+        "name": "installed-tool-root/internal/tooling/codexrunner/runner.py",
+        "bytes": 64863,
+        "sha256": "0ceb15e6cfa28de4256d346d61de64a207c307405be4a3549b29bb4f380fc4ac"
+      },
+      {
+        "name": "installed-project/.agents/skills/markitect-model-first/SKILL.md",
+        "bytes": 968,
+        "sha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df"
+      },
+      {
+        "name": "installed-project/.claude/skills/markitect-model-first/SKILL.md",
+        "bytes": 968,
+        "sha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df"
+      },
+      {
+        "name": "installed-project/.markitect/.gitignore",
+        "bytes": 23,
+        "sha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce"
+      },
+      {
+        "name": "installed-project/.markitect/model/booking-contract.yaml",
+        "bytes": 479,
+        "sha256": "e9f088cbdd1183d2c7266709896abcf96b7dac97b6e48e039828bc94eccc4316"
+      },
+      {
+        "name": "installed-project/.markitect/model/checks.yaml",
+        "bytes": 513,
+        "sha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a"
+      },
+      {
+        "name": "installed-project/.markitect/model/delivery-rules.yaml",
+        "bytes": 512,
+        "sha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8"
+      },
+      {
+        "name": "installed-project/.markitect/model/documentation.yaml",
+        "bytes": 801,
+        "sha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b"
+      },
+      {
+        "name": "installed-project/.markitect/model/durable-state.yaml",
+        "bytes": 467,
+        "sha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65"
+      },
+      {
+        "name": "installed-project/.markitect/model/implementation.yaml",
+        "bytes": 597,
+        "sha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc"
+      },
+      {
+        "name": "installed-project/.markitect/model/manager.yaml",
+        "bytes": 377,
+        "sha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31"
+      },
+      {
+        "name": "installed-project/.markitect/model/reservation.yaml",
+        "bytes": 394,
+        "sha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425"
+      },
+      {
+        "name": "installed-project/.markitect/model/tests.yaml",
+        "bytes": 584,
+        "sha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb"
+      },
+      {
+        "name": "installed-project/.markitect/project.yaml",
+        "bytes": 568,
+        "sha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098"
+      },
+      {
+        "name": "installed-project/.markitect/runtime.yaml",
+        "bytes": 3758,
+        "sha256": "a99b619fda2226ccd820458b4bc501459b6ad05ba417338942074fead7a0ef98"
+      },
+      {
+        "name": "installed-project/.markitect/workflows/model-first.md",
+        "bytes": 24524,
+        "sha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e"
+      },
+      {
+        "name": "installed-project/AGENTS.md",
+        "bytes": 788,
+        "sha256": "0d75a4a8247dd8cc59a1125a2265ad555c9bbe7f3aa057bba97637483da2c321"
+      },
+      {
+        "name": "installed-project/CLAUDE.md",
+        "bytes": 788,
+        "sha256": "0d75a4a8247dd8cc59a1125a2265ad555c9bbe7f3aa057bba97637483da2c321"
+      },
+      {
+        "name": "installed-project/docs/markitect/project.md",
+        "bytes": 8370,
+        "sha256": "03d99e7b2a498c7a205ab6b1162a832bff246a58804e09f47bb981e65aca23ca"
+      }
+    ]
+  },
+  {
+    "archive": "private-owner-replacement\\native-policy-replacement-bcd614a3.zip",
+    "sha256": "1eb592b4560204ed799eeaae4386c559a483cb1e1a27aecce2a2857e458f933a",
+    "entries": [
+      {
+        "name": "markitect-bcd614a3.exe",
+        "bytes": 16947200,
+        "sha256": "abf877849379900cf2f1cf6c19f3d5d1e67a134592ac810cedc437191e9a5f29"
+      },
+      {
+        "name": "runtime-assets/runner.py",
+        "bytes": 64805,
+        "sha256": "1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6"
+      },
+      {
+        "name": "runtime-replacement.yaml",
+        "bytes": 3630,
+        "sha256": "c3d4204490a9d1d5230cc151f99a63dcb8357bcc425022d040c48a0888afc44e"
+      },
+      {
+        "name": "runtime-replacement.diff",
+        "bytes": 3043,
+        "sha256": "0435451309b210f4f6631545d50e0e7505a97ac4a8221ec1ccd02c749c10e2d3"
+      },
+      {
+        "name": "replacement-pins.json",
+        "bytes": 1448,
+        "sha256": "715dc4486b602a0014451c2de53f2b9d9aedc23d419247717bdf652d57501f3e"
+      },
+      {
+        "name": "project-schema.json",
+        "bytes": 5999,
+        "sha256": "30c8fe1855afe37bd424e61c969f7cbab104848f2c0d95c01d8a6bcb4795cd62"
+      },
+      {
+        "name": "committed-source.diff",
+        "bytes": 15404,
+        "sha256": "948fc8459f5f2916a4fd2d755603a4a6862842d03d364a6df0a6ea52a8e1f619"
+      },
+      {
+        "name": "source-correction-grant.json",
+        "bytes": 1455,
+        "sha256": "af11ba0ec4a27514867b501b02018b85ceec69494fa6033db6974bd6763947f0"
+      },
+      {
+        "name": "test-batch-1-adapter.txt",
+        "bytes": 7437,
+        "sha256": "00a9724c484eb01bf6d957b647b6ae48b82cf5956936c0ed4930b9298dddd0f5"
+      },
+      {
+        "name": "test-batch-2-entry.txt",
+        "bytes": 144,
+        "sha256": "32cf8c975c92c4b5e2b46e5fdaafbeb1757f47e34e50db832fa75f03f354ad09"
+      },
+      {
+        "name": "review-receipt.json",
+        "bytes": 2180,
+        "sha256": "db2d4b860d700b3d1cc6b2ed53a7ad6a5f55843c5fd8032b0e941c3a9fbadf1f"
+      },
+      {
+        "name": "review-session-records.json",
+        "bytes": 6931,
+        "sha256": "b0aae255d746d3e93b02e1596e4b7a88e7fc1e6d4ab820ef6cfdba6f58fe50b0"
+      },
+      {
+        "name": "adapter-policy-delta.diff",
+        "bytes": 10444,
+        "sha256": "166d75246ac206c2d79a807d30592389298fd9d627640e0354b647eefed2a8f7"
+      },
+      {
+        "name": "native-entry-2b7b22ba.diff",
+        "bytes": 9939,
+        "sha256": "9f420618551901715638009431dfb6c171b78340e8a44dbf2044e51b49fa491d"
+      },
+      {
+        "name": "build-receipt.json",
+        "bytes": 241,
+        "sha256": "31cce930178ae92632b19567a42c9fc089c8bd6fdcbddc5d9e324600ae65f1d5"
+      },
+      {
+        "name": "build.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "build-info.txt",
+        "bytes": 442,
+        "sha256": "e6036fcfdd57e3eef37cd58ff5387edd153d7284e0452bb49cb147b69590bb2e"
+      },
+      {
+        "name": "handoff.json",
+        "bytes": 11578,
+        "sha256": "2b5615e9231208990f8a4748bb6d022dda9b2d5201b9e851f205574e469f1c76"
+      },
+      {
+        "name": "HANDOFF.md",
+        "bytes": 2066,
+        "sha256": "fee9e6f353045ced36553f50775cc4a735fd745448925d40ce79b71706124ea2"
+      }
+    ]
+  }
+]

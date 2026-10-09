@@ -1,0 +1,92 @@
+[
+  {
+    "path": ".agents/skills/markitect-model-first/SKILL.md",
+    "sha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df",
+    "gitBlob": "2b9566377d25835d24b8af3c94b4a34df6feb989"
+  },
+  {
+    "path": ".claude/skills/markitect-model-first/SKILL.md",
+    "sha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df",
+    "gitBlob": "2b9566377d25835d24b8af3c94b4a34df6feb989"
+  },
+  {
+    "path": ".markitect/.gitignore",
+    "sha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce",
+    "gitBlob": "5316233a8762228125ffc5e4193f581a9549d774"
+  },
+  {
+    "path": ".markitect/model/booking-contract.yaml",
+    "sha256": "e9f088cbdd1183d2c7266709896abcf96b7dac97b6e48e039828bc94eccc4316",
+    "gitBlob": "95445dade00fd634ed5c0e8a4f82cea97d959460"
+  },
+  {
+    "path": ".markitect/model/checks.yaml",
+    "sha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+    "gitBlob": "68a6e61416eba749fbbd40d0a41bcd17187b4899"
+  },
+  {
+    "path": ".markitect/model/delivery-rules.yaml",
+    "sha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+    "gitBlob": "d0fda59ff2691dad23f7a7d6568faff1e332bfea"
+  },
+  {
+    "path": ".markitect/model/documentation.yaml",
+    "sha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+    "gitBlob": "4b9cb282703b3b8b53ee39c63638a14476c8134f"
+  },
+  {
+    "path": ".markitect/model/durable-state.yaml",
+    "sha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+    "gitBlob": "d83cf73e5c1b3505daa1448b65c16f51786d620a"
+  },
+  {
+    "path": ".markitect/model/implementation.yaml",
+    "sha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+    "gitBlob": "4ff80e7cdde81abcb3a9437b73b3d24005ff322d"
+  },
+  {
+    "path": ".markitect/model/manager.yaml",
+    "sha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+    "gitBlob": "28eabedce6309335cd0faedb153f000fb44378ab"
+  },
+  {
+    "path": ".markitect/model/reservation.yaml",
+    "sha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+    "gitBlob": "cf69ac964138f668686cdcdb61cba4c16c7549ac"
+  },
+  {
+    "path": ".markitect/model/tests.yaml",
+    "sha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+    "gitBlob": "c5b34e7022ac4ab0142006b9fcd79e6e73f9af6a"
+  },
+  {
+    "path": ".markitect/project.yaml",
+    "sha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098",
+    "gitBlob": "26d45742563d91092c9e89b5c8048e091a7a9315"
+  },
+  {
+    "path": ".markitect/runtime.yaml",
+    "sha256": "a99b619fda2226ccd820458b4bc501459b6ad05ba417338942074fead7a0ef98",
+    "gitBlob": "b53c83310da658980403db2867d40f874d1a412d"
+  },
+  {
+    "path": ".markitect/workflows/model-first.md",
+    "sha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e",
+    "gitBlob": "4dad06bbe2d408a04c1fce163d428ff21a631766"
+  },
+  {
+    "path": "AGENTS.md",
+    "sha256": "0d75a4a8247dd8cc59a1125a2265ad555c9bbe7f3aa057bba97637483da2c321",
+    "gitBlob": "452aba716d4484dc7ce97b946bd5dcd9b7d03aaa"
+  },
+  {
+    "path": "CLAUDE.md",
+    "sha256": "0d75a4a8247dd8cc59a1125a2265ad555c9bbe7f3aa057bba97637483da2c321",
+    "gitBlob": "452aba716d4484dc7ce97b946bd5dcd9b7d03aaa"
+  },
+  {
+    "path": "docs/markitect/project.md",
+    "sha256": "03d99e7b2a498c7a205ab6b1162a832bff246a58804e09f47bb981e65aca23ca",
+    "gitBlob": "3fc94dcf995f8bc23f20c5ec5dfcc8415fffa52e"
+  }
+]

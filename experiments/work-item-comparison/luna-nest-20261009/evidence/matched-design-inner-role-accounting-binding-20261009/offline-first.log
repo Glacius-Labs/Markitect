@@ -1,0 +1,31 @@
+test_1_opaque_bytes_and_failed_requests (__main__.MechanicalChecks.test_1_opaque_bytes_and_failed_requests) ... FAIL
+test_2_shared_caps_closed_and_unknown_admission (__main__.MechanicalChecks.test_2_shared_caps_closed_and_unknown_admission) ... ok
+test_3_exact_parent_station_phase_and_final_clock (__main__.MechanicalChecks.test_3_exact_parent_station_phase_and_final_clock) ... ok
+test_4_deadline_kills_known_descendant_tree (__main__.MechanicalChecks.test_4_deadline_kills_known_descendant_tree) ... ok
+test_5_disabled_drift_and_profile_fail_closed (__main__.MechanicalChecks.test_5_disabled_drift_and_profile_fail_closed) ... ok
+test_6_unconfirmed_cleanup_blocks_next_request (__main__.MechanicalChecks.test_6_unconfirmed_cleanup_blocks_next_request) ... ok
+
+======================================================================
+FAIL: test_1_opaque_bytes_and_failed_requests (__main__.MechanicalChecks.test_1_opaque_bytes_and_failed_requests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\tests\test_inner_runtime_budget.py", line 69, in test_1_opaque_bytes_and_failed_requests
+    self.assertEqual((code,out,err),(expected,raw,b'fixture-stderr\n'))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: (0, b'  opaque UTF8 \xc3\xbc\x00\n', b'fixture-stderr\n') != (7, b'  opaque UTF8 \xc3\xbc\x00\n', b'fixture-stderr\n')
+
+First differing element 0:
+0
+7
+
+- (0, b'  opaque UTF8 \xc3\xbc\x00\n', b'fixture-stderr\n')
+?  ^
+
++ (7, b'  opaque UTF8 \xc3\xbc\x00\n', b'fixture-stderr\n')
+?  ^
+
+
+----------------------------------------------------------------------
+Ran 6 tests in 1.551s
+
+FAILED (failures=1)

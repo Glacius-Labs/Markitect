@@ -1,0 +1,13 @@
+diff --git a/.markitect/model/booking-contract.yaml b/.markitect/model/booking-contract.yaml
+index 0ff8d72..95445da 100644
+--- a/.markitect/model/booking-contract.yaml
++++ b/.markitect/model/booking-contract.yaml
+@@ -5,7 +5,7 @@ metadata:
+   namespace: ""
+ purpose: "booking-contract for roombook"
+ spec:
+-  category: behavior
++  category: rule
+   description: "Released S1 book/list exactly follow README: valid calendar UTC-minute half-open intervals, per-room active overlap rejection, adjacent intervals permitted, list sorted start then id; future waves in BACKLOG remain visible but unreleased."
+   public: true
+   uses: []

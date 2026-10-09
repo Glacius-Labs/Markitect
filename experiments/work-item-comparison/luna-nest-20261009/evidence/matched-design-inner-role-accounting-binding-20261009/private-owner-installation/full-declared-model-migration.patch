@@ -1,0 +1,22 @@
+--- original/.markitect/model/booking-contract.yaml
++++ installed/.markitect/model/booking-contract.yaml
+@@ -5,7 +5,7 @@
+   namespace: ""
+ purpose: "booking-contract for roombook"
+ spec:
+-  category: behavior
++  category: rule
+   description: "Released S1 book/list exactly follow README: valid calendar UTC-minute half-open intervals, per-room active overlap rejection, adjacent intervals permitted, list sorted start then id; future waves in BACKLOG remain visible but unreleased."
+   public: true
+   uses: []
+--- original/.markitect/project.yaml
++++ installed/.markitect/project.yaml
+@@ -1,6 +1,8 @@
+ apiVersion: project.markitect.example.org/v1alpha1
+ name: roombook
+ coverageMode: full
++workflowMode: guided
++acceptancePolicy: committed-model
+ documentPath: docs/markitect/project.md
+ modelFiles:
+   - .markitect/model/manager.yaml

@@ -1,0 +1,72 @@
+[
+  {
+    "publicPath": "models/roombook/.markitect/model/booking-contract.yaml",
+    "installedPath": ".markitect/model/booking-contract.yaml",
+    "originalSha256": "0dec869e40832bf901147a2f8393194a60b13f5316f153afe53f9823491b84bf",
+    "installedSha256": "0dec869e40832bf901147a2f8393194a60b13f5316f153afe53f9823491b84bf",
+    "bytesUnchanged": true
+  },
+  {
+    "publicPath": "models/roombook/.markitect/model/checks.yaml",
+    "installedPath": ".markitect/model/checks.yaml",
+    "originalSha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+    "installedSha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+    "bytesUnchanged": true
+  },
+  {
+    "publicPath": "models/roombook/.markitect/model/delivery-rules.yaml",
+    "installedPath": ".markitect/model/delivery-rules.yaml",
+    "originalSha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+    "installedSha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+    "bytesUnchanged": true
+  },
+  {
+    "publicPath": "models/roombook/.markitect/model/documentation.yaml",
+    "installedPath": ".markitect/model/documentation.yaml",
+    "originalSha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+    "installedSha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+    "bytesUnchanged": true
+  },
+  {
+    "publicPath": "models/roombook/.markitect/model/durable-state.yaml",
+    "installedPath": ".markitect/model/durable-state.yaml",
+    "originalSha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+    "installedSha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+    "bytesUnchanged": true
+  },
+  {
+    "publicPath": "models/roombook/.markitect/model/implementation.yaml",
+    "installedPath": ".markitect/model/implementation.yaml",
+    "originalSha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+    "installedSha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+    "bytesUnchanged": true
+  },
+  {
+    "publicPath": "models/roombook/.markitect/model/manager.yaml",
+    "installedPath": ".markitect/model/manager.yaml",
+    "originalSha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+    "installedSha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+    "bytesUnchanged": true
+  },
+  {
+    "publicPath": "models/roombook/.markitect/model/reservation.yaml",
+    "installedPath": ".markitect/model/reservation.yaml",
+    "originalSha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+    "installedSha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+    "bytesUnchanged": true
+  },
+  {
+    "publicPath": "models/roombook/.markitect/model/tests.yaml",
+    "installedPath": ".markitect/model/tests.yaml",
+    "originalSha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+    "installedSha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+    "bytesUnchanged": true
+  },
+  {
+    "publicPath": "models/roombook/.markitect/project.yaml",
+    "installedPath": ".markitect/project.yaml",
+    "originalSha256": "aa024390df2d29b7c4ed2807afc830c1afad92b6a0ebee56214b25117ff18ece",
+    "installedSha256": "aa024390df2d29b7c4ed2807afc830c1afad92b6a0ebee56214b25117ff18ece",
+    "bytesUnchanged": true
+  }
+]

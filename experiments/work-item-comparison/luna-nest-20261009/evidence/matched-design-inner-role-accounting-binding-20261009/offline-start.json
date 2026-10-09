@@ -1,0 +1,8 @@
+{
+  "utc": "2026-10-09T09:57:05.466640+00:00",
+  "targetedChecksPlanned": 6,
+  "maximumChecks": 8,
+  "providerProductTransportStarts": 0,
+  "children": "Python byte echo/failure/sleep fixtures only",
+  "sourceReviewerStarts": 0
+}

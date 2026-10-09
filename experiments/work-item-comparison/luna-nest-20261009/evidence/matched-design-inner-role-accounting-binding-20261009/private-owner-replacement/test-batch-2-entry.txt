@@ -1,0 +1,2 @@
+ok  	github.com/Glacius-Labs/Markitect/internal/host/projectonboarding	0.311s
+ok  	github.com/Glacius-Labs/Markitect/internal/host/cli	0.555s

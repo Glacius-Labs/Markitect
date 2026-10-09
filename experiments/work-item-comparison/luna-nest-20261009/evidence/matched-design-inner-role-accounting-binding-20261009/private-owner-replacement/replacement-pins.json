@@ -1,0 +1,38 @@
+[
+  {
+    "role": "agents",
+    "path": "C:\\Python313\\python.exe",
+    "mode": "0644",
+    "digest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+  },
+  {
+    "role": "agents",
+    "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-native-policy-preservation-20261009\\runtime-assets\\runner.py",
+    "mode": "0644",
+    "digest": "sha256:1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6"
+  },
+  {
+    "role": "agents",
+    "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+    "mode": "0644",
+    "digest": "sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+  },
+  {
+    "role": "review.agents",
+    "path": "C:\\Python313\\python.exe",
+    "mode": "0644",
+    "digest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+  },
+  {
+    "role": "review.agents",
+    "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-native-policy-preservation-20261009\\runtime-assets\\runner.py",
+    "mode": "0644",
+    "digest": "sha256:1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6"
+  },
+  {
+    "role": "review.agents",
+    "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+    "mode": "0644",
+    "digest": "sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+  }
+]

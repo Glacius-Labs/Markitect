@@ -1,0 +1,247 @@
+[
+  {
+    "path": ".gitattributes",
+    "bytes": 8,
+    "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da"
+  },
+  {
+    "path": "archive-payload-manifest.json",
+    "bytes": 11489,
+    "sha256": "4c1f51a81461907bd967f0515f28e19109e56bccd177c6995e2e2f755e7f44ec"
+  },
+  {
+    "path": "grant.json",
+    "bytes": 1802,
+    "sha256": "7eaadef35f9ee38e7c48daf24edcc89400b87272446945c75f4ba50d90117f56"
+  },
+  {
+    "path": "offline-eighth.log",
+    "bytes": 226,
+    "sha256": "45a83638eeda0e539d9aebcdf11c2b21b7fbaf663d29f1239616d843537953a9"
+  },
+  {
+    "path": "offline-first.log",
+    "bytes": 1876,
+    "sha256": "a9fe095c6b4253c8696c4bedbc41df78f08a1bcde0e463a292a7e938f9912db8"
+  },
+  {
+    "path": "offline-seventh.log",
+    "bytes": 218,
+    "sha256": "95f5fce757d37ef9b8915036d025bc67d9a2fff183dd5fccce2a060cb1754729"
+  },
+  {
+    "path": "offline-start.json",
+    "bytes": 238,
+    "sha256": "d7b10640307a388e6de561e5185540e7894393432c5c78fe4ad7d1b38f2e0f3b"
+  },
+  {
+    "path": "private-owner-installation/build-info.txt",
+    "bytes": 451,
+    "sha256": "12325e99448276b5b6ecad9d01413701fcb7feeb82b732b0854be9e10e63faf8"
+  },
+  {
+    "path": "private-owner-installation/full-declared-model-migration.patch",
+    "bytes": 859,
+    "sha256": "0d7ac19bb33aa4b9c434a1a808832340b3b2df5f985cebff691852e8242e96bc"
+  },
+  {
+    "path": "private-owner-installation/handoff.json",
+    "bytes": 29155,
+    "sha256": "0cf49b54ae019ab2ab2cb6dd3e863c995823a49137a375a9e5e4547ee8aa4cb2"
+  },
+  {
+    "path": "private-owner-installation/HANDOFF.md",
+    "bytes": 4079,
+    "sha256": "61678ed4c3c4d77825ad3bb5f5cead5ccda12acd586493a95f52b61cef897fd1"
+  },
+  {
+    "path": "private-owner-installation/installed-file-inventory.json",
+    "bytes": 3595,
+    "sha256": "1161f07a11e7918cf1e7365d610c4f7992cdd0cb11e09a3e20983415753fd513"
+  },
+  {
+    "path": "private-owner-installation/installed-model-inventory.json",
+    "bytes": 3515,
+    "sha256": "3144d7553fad50515ac8d3151eaff7077a50f6731c7ba8e409a07fc6fba3c98a"
+  },
+  {
+    "path": "private-owner-installation/original-model-inventory.json",
+    "bytes": 3513,
+    "sha256": "2649eb747102b6a51c94fbf4881749f55bf48852716c7851cf9255aee25a7c29"
+  },
+  {
+    "path": "private-owner-installation/roombook-model-installation-2b7b22ba.zip",
+    "bytes": 8720963,
+    "sha256": "1f29af68c6ec2b295c6930c76512deac93a3c565dd6f1fbef1539db5a78918b0"
+  },
+  {
+    "path": "private-owner-installation/runtime-setup-apply.json",
+    "bytes": 28597,
+    "sha256": "06797a9517611e1df64ca02df507b8bf78a69836d84f1915d09e717713558544"
+  },
+  {
+    "path": "private-owner-installation/runtime-setup-apply.json.stderr.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "private-owner-installation/runtime-setup-preview.json",
+    "bytes": 28597,
+    "sha256": "06797a9517611e1df64ca02df507b8bf78a69836d84f1915d09e717713558544"
+  },
+  {
+    "path": "private-owner-installation/runtime-setup-preview.json.stderr.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "private-owner-installation/schema-migration.patch",
+    "bytes": 630,
+    "sha256": "04562dea8346feb39bdcdb313f82554a2167407a62b89e09d5a815aafb857009"
+  },
+  {
+    "path": "private-owner-replacement/adapter-policy-delta.diff",
+    "bytes": 10444,
+    "sha256": "166d75246ac206c2d79a807d30592389298fd9d627640e0354b647eefed2a8f7"
+  },
+  {
+    "path": "private-owner-replacement/build-info.txt",
+    "bytes": 442,
+    "sha256": "e6036fcfdd57e3eef37cd58ff5387edd153d7284e0452bb49cb147b69590bb2e"
+  },
+  {
+    "path": "private-owner-replacement/build-receipt.json",
+    "bytes": 241,
+    "sha256": "31cce930178ae92632b19567a42c9fc089c8bd6fdcbddc5d9e324600ae65f1d5"
+  },
+  {
+    "path": "private-owner-replacement/build.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "private-owner-replacement/committed-source.diff",
+    "bytes": 15404,
+    "sha256": "948fc8459f5f2916a4fd2d755603a4a6862842d03d364a6df0a6ea52a8e1f619"
+  },
+  {
+    "path": "private-owner-replacement/delivery-receipt.json",
+    "bytes": 825,
+    "sha256": "3dfe5ae134e9c2d3e21c34b4d879b115987e26cf75902c960888b9a5090d7b58"
+  },
+  {
+    "path": "private-owner-replacement/extract-own-review.py",
+    "bytes": 976,
+    "sha256": "0cb2eaa22e33f7bb9739bc18d1695318ee3a2db105c0c82f5f28eb331a7c2965"
+  },
+  {
+    "path": "private-owner-replacement/handoff-summary.json",
+    "bytes": 708,
+    "sha256": "4e27424de595003d91127c57b150f5b38925c603d6e448efe992e14e55613a85"
+  },
+  {
+    "path": "private-owner-replacement/handoff.json",
+    "bytes": 11578,
+    "sha256": "2b5615e9231208990f8a4748bb6d022dda9b2d5201b9e851f205574e469f1c76"
+  },
+  {
+    "path": "private-owner-replacement/HANDOFF.md",
+    "bytes": 2066,
+    "sha256": "fee9e6f353045ced36553f50775cc4a735fd745448925d40ce79b71706124ea2"
+  },
+  {
+    "path": "private-owner-replacement/markitect-bcd614a3.exe",
+    "bytes": 16947200,
+    "sha256": "abf877849379900cf2f1cf6c19f3d5d1e67a134592ac810cedc437191e9a5f29"
+  },
+  {
+    "path": "private-owner-replacement/native-entry-2b7b22ba.diff",
+    "bytes": 9939,
+    "sha256": "9f420618551901715638009431dfb6c171b78340e8a44dbf2044e51b49fa491d"
+  },
+  {
+    "path": "private-owner-replacement/native-policy-replacement-bcd614a3.zip",
+    "bytes": 8698141,
+    "sha256": "1eb592b4560204ed799eeaae4386c559a483cb1e1a27aecce2a2857e458f933a"
+  },
+  {
+    "path": "private-owner-replacement/pr-body.md",
+    "bytes": 7782,
+    "sha256": "b7724b6f1891de252057597760a389ecafa0139a9c5ee86d249bbfb45f72e65f"
+  },
+  {
+    "path": "private-owner-replacement/project-schema.json",
+    "bytes": 5999,
+    "sha256": "30c8fe1855afe37bd424e61c969f7cbab104848f2c0d95c01d8a6bcb4795cd62"
+  },
+  {
+    "path": "private-owner-replacement/replacement-pins.json",
+    "bytes": 1448,
+    "sha256": "715dc4486b602a0014451c2de53f2b9d9aedc23d419247717bdf652d57501f3e"
+  },
+  {
+    "path": "private-owner-replacement/review-receipt.json",
+    "bytes": 2180,
+    "sha256": "db2d4b860d700b3d1cc6b2ed53a7ad6a5f55843c5fd8032b0e941c3a9fbadf1f"
+  },
+  {
+    "path": "private-owner-replacement/review-session-records.json",
+    "bytes": 6931,
+    "sha256": "b0aae255d746d3e93b02e1596e4b7a88e7fc1e6d4ab820ef6cfdba6f58fe50b0"
+  },
+  {
+    "path": "private-owner-replacement/runtime-assets/runner.py",
+    "bytes": 64805,
+    "sha256": "1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6"
+  },
+  {
+    "path": "private-owner-replacement/runtime-replacement.diff",
+    "bytes": 3043,
+    "sha256": "0435451309b210f4f6631545d50e0e7505a97ac4a8221ec1ccd02c749c10e2d3"
+  },
+  {
+    "path": "private-owner-replacement/runtime-replacement.yaml",
+    "bytes": 3630,
+    "sha256": "c3d4204490a9d1d5230cc151f99a63dcb8357bcc425022d040c48a0888afc44e"
+  },
+  {
+    "path": "private-owner-replacement/seal-replacement.py",
+    "bytes": 12902,
+    "sha256": "85df28ce2fcdfdb2d20b280eeb3b36f82fa882bbd8d9a9405f4d40b4dfa11dfd"
+  },
+  {
+    "path": "private-owner-replacement/source-correction-grant.json",
+    "bytes": 1455,
+    "sha256": "af11ba0ec4a27514867b501b02018b85ceec69494fa6033db6974bd6763947f0"
+  },
+  {
+    "path": "private-owner-replacement/test-batch-1-adapter.txt",
+    "bytes": 7437,
+    "sha256": "00a9724c484eb01bf6d957b647b6ae48b82cf5956936c0ed4930b9298dddd0f5"
+  },
+  {
+    "path": "private-owner-replacement/test-batch-2-entry.txt",
+    "bytes": 144,
+    "sha256": "32cf8c975c92c4b5e2b46e5fdaafbeb1757f47e34e50db832fa75f03f354ad09"
+  },
+  {
+    "path": "private-owner-replacement/update-pr-body.py",
+    "bytes": 2812,
+    "sha256": "345eaaae4891460e43525fa9c804c4903a1a1dd03c4b8216746adc6f72daed4a"
+  },
+  {
+    "path": "seal.py",
+    "bytes": 4878,
+    "sha256": "f9b50954f4a64b49cfa86c6d57e64db958ec2434fbc3c8cc14fd03cd1cb9b79d"
+  },
+  {
+    "path": "source-review.txt",
+    "bytes": 4060,
+    "sha256": "4f70a01f99b2dc589970406c81b9bb5643a1e82ee76d1aa6c7b347f1960ccc34"
+  },
+  {
+    "path": "terminal.json",
+    "bytes": 2775,
+    "sha256": "acfa21daf5e7112ea296b713543698fb5c0b2882803c0ffb63739c27cd680b3b"
+  }
+]

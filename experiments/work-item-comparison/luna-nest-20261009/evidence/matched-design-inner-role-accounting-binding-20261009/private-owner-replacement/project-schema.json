@@ -1,0 +1,203 @@
+{
+  "apiVersion": "project.markitect.example.org/v1alpha1",
+  "purpose": "A project-owned model of managers, statements, expected artifacts, checks, and decisions.",
+  "kinds": {
+    "Artifact": {
+      "purpose": "An expected project artifact and its declared realization and checks.",
+      "properties": {
+        "checks": {
+          "purpose": "Checks declared for this artifact.",
+          "type": "reference",
+          "minCount": 0,
+          "maxCount": -1,
+          "target": {
+            "apiVersion": "project.markitect.example.org/v1alpha1",
+            "kind": "Check"
+          }
+        },
+        "paths": {
+          "purpose": "Repository-relative exact path or trailing-slash directory prefix.",
+          "type": "string",
+          "minCount": 0,
+          "maxCount": -1
+        },
+        "realizes": {
+          "purpose": "Statements this artifact is expected to realize.",
+          "type": "reference",
+          "minCount": 0,
+          "maxCount": -1,
+          "target": {
+            "apiVersion": "project.markitect.example.org/v1alpha1",
+            "kind": "Statement"
+          }
+        },
+        "reason": {
+          "purpose": "Reason the artifact is required or applicable.",
+          "type": "string",
+          "minCount": 0,
+          "maxCount": 1
+        },
+        "required": {
+          "purpose": "Whether the value is explicitly enabled.",
+          "type": "boolean",
+          "minCount": 0,
+          "maxCount": 1
+        },
+        "role": {
+          "purpose": "Artifact role.",
+          "type": "enum",
+          "minCount": 1,
+          "maxCount": 1,
+          "values": [
+            "implementation",
+            "documentation",
+            "verification",
+            "configuration"
+          ]
+        }
+      }
+    },
+    "Check": {
+      "purpose": "A declared literal command and its model scope and limitations.",
+      "properties": {
+        "command": {
+          "purpose": "Literal argv passed to the check executable.",
+          "type": "string",
+          "minCount": 1,
+          "maxCount": -1
+        },
+        "limitation": {
+          "purpose": "What the check does not establish.",
+          "type": "string",
+          "minCount": 0,
+          "maxCount": 1
+        },
+        "uses": {
+          "purpose": "Statements relevant to this check.",
+          "type": "reference",
+          "minCount": 0,
+          "maxCount": -1,
+          "target": {
+            "apiVersion": "project.markitect.example.org/v1alpha1",
+            "kind": "Statement"
+          }
+        }
+      }
+    },
+    "Decision": {
+      "purpose": "An explicit decision about a project statement by a manager.",
+      "properties": {
+        "actor": {
+          "purpose": "Manager recorded as the decision actor.",
+          "type": "reference",
+          "minCount": 1,
+          "maxCount": 1,
+          "target": {
+            "apiVersion": "project.markitect.example.org/v1alpha1",
+            "kind": "Manager"
+          }
+        },
+        "decision": {
+          "purpose": "Decision text.",
+          "type": "string",
+          "minCount": 1,
+          "maxCount": 1
+        },
+        "reason": {
+          "purpose": "Reason for the decision.",
+          "type": "string",
+          "minCount": 1,
+          "maxCount": 1
+        },
+        "subject": {
+          "purpose": "Statement this decision addresses.",
+          "type": "reference",
+          "minCount": 1,
+          "maxCount": 1,
+          "target": {
+            "apiVersion": "project.markitect.example.org/v1alpha1",
+            "kind": "Statement"
+          }
+        }
+      }
+    },
+    "Manager": {
+      "purpose": "A manager responsibility and its explicitly delegated repository paths.",
+      "properties": {
+        "instructions": {
+          "purpose": "Local decision and management instructions.",
+          "type": "string",
+          "minCount": 0,
+          "maxCount": 1
+        },
+        "owns": {
+          "purpose": "Repository-relative exact path or trailing-slash directory prefix.",
+          "type": "string",
+          "minCount": 0,
+          "maxCount": -1
+        },
+        "parent": {
+          "purpose": "The directly responsible parent Manager, when this is not the root Manager.",
+          "type": "reference",
+          "minCount": 0,
+          "maxCount": 1,
+          "target": {
+            "apiVersion": "project.markitect.example.org/v1alpha1",
+            "kind": "Manager"
+          }
+        }
+      }
+    },
+    "Statement": {
+      "purpose": "A typed project concept, rule, use case, architecture statement, or workflow.",
+      "properties": {
+        "category": {
+          "purpose": "Statement category.",
+          "type": "enum",
+          "minCount": 1,
+          "maxCount": 1,
+          "values": [
+            "concept",
+            "rule",
+            "use-case",
+            "architecture",
+            "workflow"
+          ]
+        },
+        "description": {
+          "purpose": "The statement expressed as readable project intent.",
+          "type": "string",
+          "minCount": 1,
+          "maxCount": 1
+        },
+        "public": {
+          "purpose": "Whether the value is explicitly enabled.",
+          "type": "boolean",
+          "minCount": 0,
+          "maxCount": 1
+        },
+        "requires": {
+          "purpose": "Statements whose obligations this statement requires.",
+          "type": "reference",
+          "minCount": 0,
+          "maxCount": -1,
+          "target": {
+            "apiVersion": "project.markitect.example.org/v1alpha1",
+            "kind": "Statement"
+          }
+        },
+        "uses": {
+          "purpose": "Statements whose relevant context this statement uses.",
+          "type": "reference",
+          "minCount": 0,
+          "maxCount": -1,
+          "target": {
+            "apiVersion": "project.markitect.example.org/v1alpha1",
+            "kind": "Statement"
+          }
+        }
+      }
+    }
+  },
+  "source": {}
+}

@@ -1,0 +1,11 @@
+C:\Users\Consiliari\AppData\Local\Temp\markitect-native-policy-preservation-20261009\markitect-bcd614a3.exe: go1.27.1
+	path	github.com/Glacius-Labs/Markitect/cmd/markitect
+	mod	github.com/Glacius-Labs/Markitect	(devel)	
+	dep	go.yaml.in/yaml/v3	v3.0.5	h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	-trimpath=true
+	build	CGO_ENABLED=0
+	build	GOARCH=amd64
+	build	GOOS=windows
+	build	GOAMD64=v1

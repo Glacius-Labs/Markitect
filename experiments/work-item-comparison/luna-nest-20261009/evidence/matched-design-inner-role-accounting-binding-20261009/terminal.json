@@ -1,0 +1,51 @@
+{
+  "closedUtc": "2026-10-09T10:08:59.168753+00:00",
+  "status": "qualified source package; actual admission disabled",
+  "grantSha256": "7eaadef35f9ee38e7c48daf24edcc89400b87272446945c75f4ba50d90117f56",
+  "grantEndUtc": "2026-10-09T10:12:18Z",
+  "sourceBaseline": "9e2bbeaa9965bf6fb4d5d95c0812165a069f1191",
+  "sharedFramework": "2037bfa65e7e05ee004921d282893d4a6c8e899a",
+  "offlineChecksConsumed": 8,
+  "offlineAttemptResults": [
+    "check1 FAIL",
+    "checks2-6 PASS",
+    "check7 exit preservation PASS",
+    "check8 reserve/pin rejection and descendant timeout PASS"
+  ],
+  "sourceReviewerStarts": 1,
+  "reviewerHandle": "/root/inner_runtime_source_review",
+  "reviewerModelRequested": "gpt-6-luna",
+  "reviewerReasoningRequested": "high",
+  "reviewerForkTurns": "none",
+  "reviewerMaxSeconds": 420,
+  "reviewerObservedIntervalUtc": [
+    "2026-10-09T10:02:39Z",
+    "2026-10-09T10:05:18Z"
+  ],
+  "reviewerExactStartEnd": null,
+  "actualServingModel": null,
+  "usage": null,
+  "cost": null,
+  "providerProductTrialTransportStarts": 0,
+  "builds": 0,
+  "installs": 0,
+  "actualSixthAllocation": null,
+  "reviewVerdict": "QUALIFIED; reviewed source differs from final source",
+  "unrunFinalDelta": "After check8: pipe-drain TimeoutExpired directly records unknown-stop rather than triggering a second cleanup pass. NOT RUN; no remaining test quota; not independently re-reviewed.",
+  "implementation": "Thin external reservation and owned-clock/process guard only; raw target invocation/response unchanged; Product Host owns semantics.",
+  "unchangedPublicSourceHashes": {
+    "app_ledger.py": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20",
+    "nest.py": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635",
+    "app-entry.md": "63dff8fddec0562fd7929e9d09b49443e8a42c21d4d3ce787518aed437e09655",
+    "oldschool-app-dispatch.md": "be8e2a003c561ad7e9d0cad809ea365e2c1b8535b7dbbf42f2954ede931d3751"
+  },
+  "finalWrapperSha256": "a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d",
+  "finalTestsSha256": "1ecbba58922aadb521cd986fe930ed3f78fd08a8b6a57e4afce8cbeb53aafd0a",
+  "templateExecutionAuthorized": false,
+  "oldSetupSecondsSeparatelyCharged": 1385.854584,
+  "studySetup900SecondsPass": false,
+  "replacementSourceSha": "bcd614a3bfcd335e0ca18850993742057103c092",
+  "replacementActivated": false,
+  "remaining": "Owner sealed runtime activation and hosted gates, final exceptional-path validation, separate Root readiness/actual admission, fresh case/common freeze. No product readiness or human acceptance established.",
+  "containment": "Only own Windows Job Object/process group. No escaped-provider containment, hard App global enforcement or OS isolation."
+}

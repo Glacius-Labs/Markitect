@@ -1,0 +1,7 @@
+{
+  "startedUtc": "2026-10-09T09:54:34.1023049Z",
+  "command": "go build -trimpath -buildvcs=false -o markitect-bcd614a3.exe ./cmd/markitect",
+  "sourceSha": "bcd614a3",
+  "endedUtc": "2026-10-09T09:54:35.3668676Z",
+  "exitCode": 0
+}

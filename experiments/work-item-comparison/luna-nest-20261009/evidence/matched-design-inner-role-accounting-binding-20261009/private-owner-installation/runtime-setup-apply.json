@@ -1,0 +1,458 @@
+{
+  "apiVersion": "markitect.example.org/project-setup/v1alpha1",
+  "discovery": {
+    "provider": "codex",
+    "providerBinary": {
+      "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+      "version": "0.162.0-alpha.2",
+      "digest": "sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+      "mode": "0644"
+    },
+    "python": {
+      "path": "C:\\Python313\\python.exe",
+      "version": "3.13.3",
+      "digest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+      "mode": "0644"
+    },
+    "adapter": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\model-driven-delivery\\Markitect\\internal\\tooling\\codexrunner\\runner.py",
+      "version": "",
+      "digest": "sha256:0ceb15e6cfa28de4256d346d61de64a207c307405be4a3549b29bb4f380fc4ac",
+      "mode": "0644"
+    },
+    "authentication": "not-verified",
+    "authenticationNote": "Markitect does not read credentials or probe provider login status; use the provider's existing OS-default sign-in."
+  },
+  "pricingBasis": "Caller-supplied budget estimate; not a provider price quote, invoice, or hard billing cap.",
+  "mutation": {
+    "apiVersion": "project.markitect.example.org/v1alpha1",
+    "baseDigest": "dac1c8c8d03c37b2e69d3325e9d3c6a09b2274e8709db55d6481d0bfca1b090c",
+    "actor": "user",
+    "goal": "Configure the project-local agent runtime from explicitly selected local tools",
+    "files": [
+      {
+        "path": ".markitect/runtime.yaml",
+        "content": "apiVersion: markitect.example.org/project-run/v1alpha1\nmode: controlled-local\nrequireIsolation: false\nagents:\n    '[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]':\n        command: C:\\Python313\\python.exe\n        args:\n            - C:\\Users\\Consiliari\\.codex\\worktrees\\model-driven-delivery\\Markitect\\internal\\tooling\\codexrunner\\runner.py\n            - --model\n            - gpt-6-luna\n            - --codex-executable\n            - C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe\n            - --codex-version\n            - 0.162.0-alpha.2\n        model: gpt-6-luna\n        modelOptions:\n            model_reasoning_effort: high\n        providerVersion: 0.162.0-alpha.2\n        timeout: 5m0s\n        maxStdoutBytes: 4194304\n        maxStderrBytes: 1048576\n        runtimeFiles:\n            - path: C:\\Python313\\python.exe\n              mode: \"0644\"\n              digest: sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125\n            - path: C:\\Users\\Consiliari\\.codex\\worktrees\\model-driven-delivery\\Markitect\\internal\\tooling\\codexrunner\\runner.py\n              mode: \"0644\"\n              digest: sha256:0ceb15e6cfa28de4256d346d61de64a207c307405be4a3549b29bb4f380fc4ac\n            - path: C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe\n              mode: \"0644\"\n              digest: sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68\n        environment:\n            - PATH\n            - TEMP\n            - TMP\n            - SystemRoot\n        pricing:\n            inputMicrosPerMillion: 100000\n            outputMicrosPerMillion: 500000\nreview:\n    agents:\n        '[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]':\n            command: C:\\Python313\\python.exe\n            args:\n                - C:\\Users\\Consiliari\\.codex\\worktrees\\model-driven-delivery\\Markitect\\internal\\tooling\\codexrunner\\runner.py\n                - --model\n                - gpt-6-luna\n                - --codex-executable\n                - C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe\n                - --codex-version\n                - 0.162.0-alpha.2\n            model: gpt-6-luna\n            modelOptions:\n                model_reasoning_effort: high\n            providerVersion: 0.162.0-alpha.2\n            timeout: 5m0s\n            maxStdoutBytes: 4194304\n            maxStderrBytes: 1048576\n            runtimeFiles:\n                - path: C:\\Python313\\python.exe\n                  mode: \"0644\"\n                  digest: sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125\n                - path: C:\\Users\\Consiliari\\.codex\\worktrees\\model-driven-delivery\\Markitect\\internal\\tooling\\codexrunner\\runner.py\n                  mode: \"0644\"\n                  digest: sha256:0ceb15e6cfa28de4256d346d61de64a207c307405be4a3549b29bb4f380fc4ac\n                - path: C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe\n                  mode: \"0644\"\n                  digest: sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68\n            environment:\n                - PATH\n                - TEMP\n                - TMP\n                - SystemRoot\n            pricing:\n                inputMicrosPerMillion: 100000\n                outputMicrosPerMillion: 500000\n    maxRounds: 3\n    maxManagerRounds: 2\nlimits:\n    maxDepth: 8\n    maxStarts: 24\n    maxRetries: 1\n    maxParallel: 1\n    maxDuration: 45m0s\n    maxCostMicros: 3000000\n    maxCandidateFileBytes: 1048576\n    maxCandidateBytes: 8388608\n"
+      }
+    ]
+  },
+  "editPlan": {
+    "apiVersion": "project.markitect.example.org/v1alpha1",
+    "baseDigest": "dac1c8c8d03c37b2e69d3325e9d3c6a09b2274e8709db55d6481d0bfca1b090c",
+    "digest": "eac3d6277957fc03286ee86d9adbb64f7a9465db843f43564c2b55de7c1fca97",
+    "mutation": {
+      "apiVersion": "project.markitect.example.org/v1alpha1",
+      "baseDigest": "dac1c8c8d03c37b2e69d3325e9d3c6a09b2274e8709db55d6481d0bfca1b090c",
+      "actor": "user",
+      "goal": "Configure the project-local agent runtime from explicitly selected local tools",
+      "files": [
+        {
+          "path": ".markitect/runtime.yaml",
+          "content": "apiVersion: markitect.example.org/project-run/v1alpha1\nmode: controlled-local\nrequireIsolation: false\nagents:\n    '[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]':\n        command: C:\\Python313\\python.exe\n        args:\n            - C:\\Users\\Consiliari\\.codex\\worktrees\\model-driven-delivery\\Markitect\\internal\\tooling\\codexrunner\\runner.py\n            - --model\n            - gpt-6-luna\n            - --codex-executable\n            - C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe\n            - --codex-version\n            - 0.162.0-alpha.2\n        model: gpt-6-luna\n        modelOptions:\n            model_reasoning_effort: high\n        providerVersion: 0.162.0-alpha.2\n        timeout: 5m0s\n        maxStdoutBytes: 4194304\n        maxStderrBytes: 1048576\n        runtimeFiles:\n            - path: C:\\Python313\\python.exe\n              mode: \"0644\"\n              digest: sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125\n            - path: C:\\Users\\Consiliari\\.codex\\worktrees\\model-driven-delivery\\Markitect\\internal\\tooling\\codexrunner\\runner.py\n              mode: \"0644\"\n              digest: sha256:0ceb15e6cfa28de4256d346d61de64a207c307405be4a3549b29bb4f380fc4ac\n            - path: C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe\n              mode: \"0644\"\n              digest: sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68\n        environment:\n            - PATH\n            - TEMP\n            - TMP\n            - SystemRoot\n        pricing:\n            inputMicrosPerMillion: 100000\n            outputMicrosPerMillion: 500000\nreview:\n    agents:\n        '[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]':\n            command: C:\\Python313\\python.exe\n            args:\n                - C:\\Users\\Consiliari\\.codex\\worktrees\\model-driven-delivery\\Markitect\\internal\\tooling\\codexrunner\\runner.py\n                - --model\n                - gpt-6-luna\n                - --codex-executable\n                - C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe\n                - --codex-version\n                - 0.162.0-alpha.2\n            model: gpt-6-luna\n            modelOptions:\n                model_reasoning_effort: high\n            providerVersion: 0.162.0-alpha.2\n            timeout: 5m0s\n            maxStdoutBytes: 4194304\n            maxStderrBytes: 1048576\n            runtimeFiles:\n                - path: C:\\Python313\\python.exe\n                  mode: \"0644\"\n                  digest: sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125\n                - path: C:\\Users\\Consiliari\\.codex\\worktrees\\model-driven-delivery\\Markitect\\internal\\tooling\\codexrunner\\runner.py\n                  mode: \"0644\"\n                  digest: sha256:0ceb15e6cfa28de4256d346d61de64a207c307405be4a3549b29bb4f380fc4ac\n                - path: C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe\n                  mode: \"0644\"\n                  digest: sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68\n            environment:\n                - PATH\n                - TEMP\n                - TMP\n                - SystemRoot\n            pricing:\n                inputMicrosPerMillion: 100000\n                outputMicrosPerMillion: 500000\n    maxRounds: 3\n    maxManagerRounds: 2\nlimits:\n    maxDepth: 8\n    maxStarts: 24\n    maxRetries: 1\n    maxParallel: 1\n    maxDuration: 45m0s\n    maxCostMicros: 3000000\n    maxCandidateFileBytes: 1048576\n    maxCandidateBytes: 8388608\n"
+        }
+      ]
+    },
+    "candidateDigest": "ba704bf67dbcbc4743a211335fdf971a518f9061c7e0290798bebe320cd26522",
+    "report": {
+      "apiVersion": "project.markitect.example.org/v1alpha1",
+      "modelDigest": "sha256:6417f793d498ac85c8d20cead61bf32c6f4416f146e3395210235afeedc7bc0b",
+      "inventoryDigest": "sha256:74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "digest": "sha256:2fd6ef61ac328c9c4d7953cfc94250dc30ef845eb1540c50f9032d618fd12c8f",
+      "status": "incomplete",
+      "managers": [
+        {
+          "id": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "name": "roombook",
+          "namespace": "",
+          "purpose": "Room reservation CLI with durable local state",
+          "owns": [
+            "."
+          ],
+          "instructions": "Use the genuine installed model-first workflow, maintain explicit model changes for new work and preserve public requirements. Decide ordinary implementation details yourself."
+        }
+      ],
+      "statements": [
+        {
+          "id": "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+          "name": "booking-contract",
+          "namespace": "",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "category": "rule",
+          "description": "Released S1 book/list exactly follow README: valid calendar UTC-minute half-open intervals, per-room active overlap rejection, adjacent intervals permitted, list sorted start then id; future waves in BACKLOG remain visible but unreleased.",
+          "public": true,
+          "uses": null,
+          "requires": null,
+          "source": ".markitect/model/booking-contract.yaml"
+        },
+        {
+          "id": "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"delivery-rules\"]",
+          "name": "delivery-rules",
+          "namespace": "",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "category": "workflow",
+          "description": "Obey public AGENTS/QUALITY/BACKLOG and released .study/station.json; freely choose internal organization using actual native installation. Keep tests/docs/model/views consistent, only verified work merged to isolated main. Preserve unknown telemetry; all roles Luna High.",
+          "public": true,
+          "uses": null,
+          "requires": null,
+          "source": ".markitect/model/delivery-rules.yaml"
+        },
+        {
+          "id": "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+          "name": "durable-state",
+          "namespace": "",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "category": "rule",
+          "description": "Successful mutation atomically replaces UTF-8 JSON; missing DB is empty. Invalid or conflicting input and malformed existing data fail without changing stored bytes. Later processes observe committed state. No multiwriter guarantee.",
+          "public": true,
+          "uses": null,
+          "requires": null,
+          "source": ".markitect/model/durable-state.yaml"
+        },
+        {
+          "id": "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]",
+          "name": "reservation",
+          "namespace": "",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "category": "concept",
+          "description": "A reservation has a monotonic never-reused integer identity, normalized case-sensitive room, UTC minute start/end, nonempty title and active or canceled status.",
+          "public": true,
+          "uses": null,
+          "requires": null,
+          "source": ".markitect/model/reservation.yaml"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"documentation\"]",
+          "name": "documentation",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "role": "documentation",
+          "realizes": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "paths": [
+            ".codex/",
+            ".gitignore",
+            ".study/",
+            ".work/",
+            "AGENTS.md",
+            "BACKLOG.md",
+            "PROGRESS.md",
+            "QUALITY.md",
+            "README.md",
+            "STATIONS.json",
+            "TEAMWORK.md",
+            "WORKLOG.md"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "required": false,
+          "reason": "Expected realizations, not proof of implementation or genuine installation; validate at the owner setup boundary."
+        },
+        {
+          "id": "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"implementation\"]",
+          "name": "implementation",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "role": "implementation",
+          "realizes": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "paths": [
+            "app.py"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "required": true,
+          "reason": "Expected realizations, not proof of implementation or genuine installation; validate at the owner setup boundary."
+        },
+        {
+          "id": "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"tests\"]",
+          "name": "tests",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "role": "verification",
+          "realizes": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "paths": [
+            "tests/"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "required": true,
+          "reason": "Expected realizations, not proof of implementation or genuine installation; validate at the owner setup boundary."
+        }
+      ],
+      "checks": [
+        {
+          "id": "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]",
+          "name": "project-tests",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "command": [
+            "python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-v"
+          ],
+          "uses": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "limitation": "Finite tests do not establish exhaustive semantics, billing, OS isolation, team execution or human acceptance."
+        }
+      ],
+      "files": [
+        {
+          "path": ".gitignore",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "class": "expected-artifact",
+          "statements": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "artifacts": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"documentation\"]"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "exists": false
+        },
+        {
+          "path": "AGENTS.md",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "class": "expected-artifact",
+          "statements": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "artifacts": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"documentation\"]"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "exists": false
+        },
+        {
+          "path": "BACKLOG.md",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "class": "expected-artifact",
+          "statements": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "artifacts": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"documentation\"]"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "exists": false
+        },
+        {
+          "path": "PROGRESS.md",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "class": "expected-artifact",
+          "statements": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "artifacts": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"documentation\"]"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "exists": false
+        },
+        {
+          "path": "QUALITY.md",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "class": "expected-artifact",
+          "statements": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "artifacts": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"documentation\"]"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "exists": false
+        },
+        {
+          "path": "README.md",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "class": "expected-artifact",
+          "statements": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "artifacts": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"documentation\"]"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "exists": false
+        },
+        {
+          "path": "STATIONS.json",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "class": "expected-artifact",
+          "statements": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "artifacts": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"documentation\"]"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "exists": false
+        },
+        {
+          "path": "TEAMWORK.md",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "class": "expected-artifact",
+          "statements": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "artifacts": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"documentation\"]"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "exists": false
+        },
+        {
+          "path": "WORKLOG.md",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "class": "expected-artifact",
+          "statements": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "artifacts": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"documentation\"]"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "exists": false
+        },
+        {
+          "path": "app.py",
+          "owner": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "class": "expected-artifact",
+          "statements": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+            "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+          ],
+          "artifacts": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"implementation\"]"
+          ],
+          "checks": [
+            "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+          ],
+          "exists": false
+        }
+      ],
+      "findings": [
+        {
+          "code": "coverage.required-artifact-missing",
+          "subject": "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"implementation\"]",
+          "message": "Expected Artifact path is absent from the supplied inventory: app.py",
+          "severity": "incomplete"
+        },
+        {
+          "code": "coverage.required-artifact-missing",
+          "subject": "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"tests\"]",
+          "message": "Expected Artifact path is absent from the supplied inventory: tests/",
+          "severity": "incomplete"
+        }
+      ],
+      "unknown": null
+    },
+    "impact": {
+      "apiVersion": "project.markitect.example.org/v1alpha1",
+      "baseDigest": "sha256:2fd6ef61ac328c9c4d7953cfc94250dc30ef845eb1540c50f9032d618fd12c8f",
+      "candidateDigest": "sha256:2fd6ef61ac328c9c4d7953cfc94250dc30ef845eb1540c50f9032d618fd12c8f",
+      "digest": "sha256:33b36de79dadf7b7d46afae763915c090009a82bdbde1a195ad2c4d79c80187e",
+      "changedDefinitions": null,
+      "affectedStatements": [
+        "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"booking-contract\"]",
+        "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"delivery-rules\"]",
+        "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"durable-state\"]",
+        "[\"project.markitect.example.org/v1alpha1\",\"Statement\",\"\",\"reservation\"]"
+      ],
+      "managers": [
+        "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]"
+      ],
+      "files": [
+        ".codex/",
+        ".gitignore",
+        ".study/",
+        ".work/",
+        "AGENTS.md",
+        "BACKLOG.md",
+        "PROGRESS.md",
+        "QUALITY.md",
+        "README.md",
+        "STATIONS.json",
+        "TEAMWORK.md",
+        "WORKLOG.md",
+        "app.py",
+        "tests/"
+      ],
+      "checks": [
+        "[\"project.markitect.example.org/v1alpha1\",\"Check\",\"\",\"project-tests\"]"
+      ],
+      "unknown": [
+        "base report status is incomplete",
+        "candidate report status is incomplete"
+      ],
+      "findings": [
+        {
+          "code": "impact.manager-routing",
+          "subject": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+          "message": "Manager is included through changed ownership or a relevant dependency.",
+          "severity": "info"
+        },
+        {
+          "code": "impact.unknown-scope",
+          "message": "Some project or inventory scope is unresolved and remains in the impact.",
+          "severity": "incomplete"
+        }
+      ]
+    }
+  }
+}

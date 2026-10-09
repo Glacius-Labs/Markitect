@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 1,
+  "status": "source-corrected replacement assets; not activated",
+  "source": {
+    "repository": "C:\\Users\\Consiliari\\.codex\\worktrees\\model-driven-delivery\\Markitect",
+    "branch": "codex/model-first-operations",
+    "baselineSha": "2b7b22bafb72de1d1ca3bf54e5870c281a171956",
+    "sha": "bcd614a3bfcd335e0ca18850993742057103c092",
+    "clean": true,
+    "pushed": true,
+    "changedFiles": [
+      "docs/validation/project-native-delivery-2026-10-09.md",
+      "internal/tooling/codexrunner/README.md",
+      "internal/tooling/codexrunner/runner.py",
+      "internal/tooling/codexrunner/test_runner.py"
+    ],
+    "allGoAndSchemaImplementationUnchanged": true
+  },
+  "grant": {
+    "key": "design-native-policy-preservation-source-correction-20261009",
+    "issuedUtc": "2026-10-09T09:42:18Z",
+    "notAfterUtc": "2026-10-09T10:42:18Z",
+    "maxActiveSeconds": 3600,
+    "builds": 1,
+    "targetedTestBatches": 2,
+    "sourceReviewers": 1,
+    "newInstallations": 0,
+    "productJobsAdded": 0,
+    "providerOrTransportProbes": 0,
+    "newStudyAllocation": null
+  },
+  "policy": {
+    "removedActualArguments": [
+      "--ignore-user-config",
+      "--ignore-rules"
+    ],
+    "normalCliRulesAndUserConfigEnabled": true,
+    "readOnlySandbox": true,
+    "disabledFeatures": [
+      "plugins",
+      "shell_tool",
+      "unified_exec",
+      "multi_agent"
+    ],
+    "adapterTimeoutRangeSeconds": [
+      1,
+      600
+    ],
+    "hostRoleTimeoutSeconds": 300,
+    "model": "gpt-6-luna",
+    "reasoningEffort": "high",
+    "normalAmbientInstructionsAbsentClaimed": false,
+    "osIsolationClaimed": false
+  },
+  "build": {
+    "startedUtc": "2026-10-09T09:54:34.1023049Z",
+    "command": "go build -trimpath -buildvcs=false -o markitect-bcd614a3.exe ./cmd/markitect",
+    "sourceSha": "bcd614a3bfcd335e0ca18850993742057103c092",
+    "endedUtc": "2026-10-09T09:54:35.3668676Z",
+    "exitCode": 0,
+    "binary": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-native-policy-preservation-20261009\\markitect-bcd614a3.exe",
+    "binarySha256": "abf877849379900cf2f1cf6c19f3d5d1e67a134592ac810cedc437191e9a5f29",
+    "identicalToRetainedBaselineBinary": true,
+    "release": false
+  },
+  "runtime": {
+    "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-native-policy-preservation-20261009\\runtime-replacement.yaml",
+    "sha256": "c3d4204490a9d1d5230cc151f99a63dcb8357bcc425022d040c48a0888afc44e",
+    "adapterPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-native-policy-preservation-20261009\\runtime-assets\\runner.py",
+    "adapterSha256": "1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6",
+    "pins": [
+      {
+        "role": "agents",
+        "path": "C:\\Python313\\python.exe",
+        "mode": "0644",
+        "digest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+      },
+      {
+        "role": "agents",
+        "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-native-policy-preservation-20261009\\runtime-assets\\runner.py",
+        "mode": "0644",
+        "digest": "sha256:1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6"
+      },
+      {
+        "role": "agents",
+        "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+        "mode": "0644",
+        "digest": "sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+      },
+      {
+        "role": "review.agents",
+        "path": "C:\\Python313\\python.exe",
+        "mode": "0644",
+        "digest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+      },
+      {
+        "role": "review.agents",
+        "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-native-policy-preservation-20261009\\runtime-assets\\runner.py",
+        "mode": "0644",
+        "digest": "sha256:1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6"
+      },
+      {
+        "role": "review.agents",
+        "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+        "mode": "0644",
+        "digest": "sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+      }
+    ],
+    "activated": false,
+    "delta": "Only four adapter path occurrences and two adapter digests replaced; all other bytes preserved.",
+    "perRunLimits": {
+      "maxDepth": 2,
+      "maxStarts": 24,
+      "maxRetries": 1,
+      "maxParallel": 1,
+      "maxDurationSeconds": 1200,
+      "reviewRounds": 3,
+      "managerRounds": 2
+    },
+    "cliVersion": "0.162.0-alpha.2",
+    "newVersionProbe": false
+  },
+  "schema": {
+    "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-native-policy-preservation-20261009\\project-schema.json",
+    "sha256": "30c8fe1855afe37bd424e61c969f7cbab104848f2c0d95c01d8a6bcb4795cd62",
+    "provenance": "Retained source-2b schema bytes; exact source delta leaves every schema implementation file unchanged."
+  },
+  "validation": {
+    "adapterTests": {
+      "count": 41,
+      "seconds": 1.107,
+      "result": "pass",
+      "actualProviderCall": false
+    },
+    "onboardingRegression": {
+      "seconds": 0.311,
+      "result": "pass"
+    },
+    "rootAndNestedHelpRegressions": {
+      "seconds": 0.555,
+      "result": "pass"
+    },
+    "review": {
+      "model": "gpt-6-luna",
+      "reasoningEffort": "high",
+      "forkTurns": "none",
+      "returnedTask": "/root/policy_source_review",
+      "returnedThreadId": null,
+      "observedActivityMetadataThreadId": "01a1200f-ee79-7a71-96cc-7df7ba3cf13c",
+      "requestRecordedUtc": "2026-10-09T09:47:57.420Z",
+      "terminalActivityUtc": "2026-10-09T09:48:39.028Z",
+      "finalReceivedUtc": "2026-10-09T09:48:47.240Z",
+      "conservativeReceiptSeconds": 49.82,
+      "sourceChecksOnly": true,
+      "providerProductEvidence": false,
+      "finalText": "Message Type: FINAL_ANSWER\nTask name: /root\nSender: /root/policy_source_review\nPayload:\nOne actionable documentation inconsistency: [README.md](/C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect/internal/tooling/codexrunner/README.md:17) says the adapter disables `plugins`, `shell_tool`, and `unified_exec`, but omits `multi_agent`, which the launch arguments disable at [runner.py](/C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect/internal/tooling/codexrunner/runner.py:993). Severity: low; update the README sentence.\n\nThe reviewed adapter delta otherwise meets the requested source checks: it omits both suppression flags; enforces read-only mode, four disabled features, and a 1\u2013600 second timeout; binds the model and accepted reasoning effort as literal arguments; derives the output schema from the invocation; and rejects all `modelOptions` keys except bounded `model_reasoning_effort`. The tests capture `Popen` argv with a fake process, without a provider call.\n\nThe native-entry delta consistently directs authors to `.markitect/project.yaml`, `markitect project schema`, and `markitect project index --repo PATH` for the selected model and current Manager identities. It distinguishes `markitect project init` from historical top-level `markitect init`. Source validity does not establish product readiness or approval.",
+      "findingDisposition": "Low README omission of multi_agent repaired; no post-review executable change.",
+      "requestArchive": "Original call arguments in review-session-records.json are opaque encrypted session data; no reconstructed request presented as original."
+    },
+    "diffCheck": "pass",
+    "baselineHostedCI": {
+      "runId": 37908655579,
+      "sha": "2b7b22bafb72de1d1ca3bf54e5870c281a171956",
+      "result": "success"
+    },
+    "replacementHostedCI": {
+      "runId": 37914238147,
+      "sha": "bcd614a3bfcd335e0ca18850993742057103c092",
+      "result": "in_progress at checkpoint"
+    }
+  },
+  "retainedEvidence": {
+    "oldHandoff": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-roombook-install-handoff-20261009\\handoff.json",
+    "oldHandoffSha256": "0cf49b54ae019ab2ab2cb6dd3e863c995823a49137a375a9e5e4547ee8aa4cb2",
+    "oldArchiveSha256": "1f29af68c6ec2b295c6930c76512deac93a3c565dd6f1fbef1539db5a78918b0",
+    "oldAdapterSha256": "0ceb15e6cfa28de4256d346d61de64a207c307405be4a3549b29bb4f380fc4ac",
+    "oldRuntimeSha256": "a99b619fda2226ccd820458b4bc501459b6ad05ba417338942074fead7a0ef98",
+    "oldInstallationTargetSha": "d7a004172f98ebb6bc59bf7e93f9c709fb2ebc86",
+    "unchanged": true,
+    "oldRuntimeMustNotStartNative": true
+  },
+  "remainingGates": [
+    "Complete replacement source hosted gates",
+    "External owner accepts/activates exact replacement runtime and verifies shared counters/deadlines",
+    "Fresh native product or study start requires a separate explicit allocation",
+    "No successful ordinary native delivery, Scientist acceptance, main integration or release established"
+  ],
+  "files": [
+    {
+      "path": "markitect-bcd614a3.exe",
+      "sha256": "abf877849379900cf2f1cf6c19f3d5d1e67a134592ac810cedc437191e9a5f29"
+    },
+    {
+      "path": "runtime-assets/runner.py",
+      "sha256": "1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6"
+    },
+    {
+      "path": "runtime-replacement.yaml",
+      "sha256": "c3d4204490a9d1d5230cc151f99a63dcb8357bcc425022d040c48a0888afc44e"
+    },
+    {
+      "path": "runtime-replacement.diff",
+      "sha256": "0435451309b210f4f6631545d50e0e7505a97ac4a8221ec1ccd02c749c10e2d3"
+    },
+    {
+      "path": "replacement-pins.json",
+      "sha256": "715dc4486b602a0014451c2de53f2b9d9aedc23d419247717bdf652d57501f3e"
+    },
+    {
+      "path": "project-schema.json",
+      "sha256": "30c8fe1855afe37bd424e61c969f7cbab104848f2c0d95c01d8a6bcb4795cd62"
+    },
+    {
+      "path": "committed-source.diff",
+      "sha256": "948fc8459f5f2916a4fd2d755603a4a6862842d03d364a6df0a6ea52a8e1f619"
+    },
+    {
+      "path": "source-correction-grant.json",
+      "sha256": "af11ba0ec4a27514867b501b02018b85ceec69494fa6033db6974bd6763947f0"
+    },
+    {
+      "path": "test-batch-1-adapter.txt",
+      "sha256": "00a9724c484eb01bf6d957b647b6ae48b82cf5956936c0ed4930b9298dddd0f5"
+    },
+    {
+      "path": "test-batch-2-entry.txt",
+      "sha256": "32cf8c975c92c4b5e2b46e5fdaafbeb1757f47e34e50db832fa75f03f354ad09"
+    },
+    {
+      "path": "review-receipt.json",
+      "sha256": "db2d4b860d700b3d1cc6b2ed53a7ad6a5f55843c5fd8032b0e941c3a9fbadf1f"
+    },
+    {
+      "path": "review-session-records.json",
+      "sha256": "b0aae255d746d3e93b02e1596e4b7a88e7fc1e6d4ab820ef6cfdba6f58fe50b0"
+    },
+    {
+      "path": "adapter-policy-delta.diff",
+      "sha256": "166d75246ac206c2d79a807d30592389298fd9d627640e0354b647eefed2a8f7"
+    },
+    {
+      "path": "native-entry-2b7b22ba.diff",
+      "sha256": "9f420618551901715638009431dfb6c171b78340e8a44dbf2044e51b49fa491d"
+    },
+    {
+      "path": "build-receipt.json",
+      "sha256": "31cce930178ae92632b19567a42c9fc089c8bd6fdcbddc5d9e324600ae65f1d5"
+    },
+    {
+      "path": "build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "build-info.txt",
+      "sha256": "e6036fcfdd57e3eef37cd58ff5387edd153d7284e0452bb49cb147b69590bb2e"
+    }
+  ],
+  "sealedUtc": "2026-10-09T09:57:02.808582+00:00"
+}

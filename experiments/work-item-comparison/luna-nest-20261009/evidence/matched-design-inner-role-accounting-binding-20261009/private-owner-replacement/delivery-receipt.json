@@ -1,0 +1,20 @@
+{
+  "conservativeFullIntervalSeconds": 1033.3193928,
+  "productJobsAdded": 0,
+  "sourceSha": "bcd614a3bfcd335e0ca18850993742057103c092",
+  "issuedUtc": "2026-10-09T09:42:18.0000000Z",
+  "within3600Seconds": true,
+  "deliveryToolReturnedSuccessfully": true,
+  "grantKey": "design-native-policy-preservation-source-correction-20261009",
+  "localPostDeliveryReceiptUtc": "2026-10-09T09:59:31.3193928Z",
+  "builds": 1,
+  "deadlineUtc": "2026-10-09T10:42:18Z",
+  "deliveredToThread": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "sourceReviewers": 1,
+  "deliveryClockObservedUtc": "2026-10-09 09:58:57 UTC",
+  "targetedTestBatches": 2,
+  "noSecondAckMessage": true,
+  "newInstallations": 0,
+  "handoffSha256": "2b5615e9231208990f8a4748bb6d022dda9b2d5201b9e851f205574e469f1c76",
+  "providerOrTransportProbes": 0
+}

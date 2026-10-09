@@ -1,0 +1,87 @@
+apiVersion: markitect.example.org/project-run/v1alpha1
+mode: controlled-local
+requireIsolation: false
+agents:
+    '["project.markitect.example.org/v1alpha1","Manager","","roombook"]':
+        command: C:\Python313\python.exe
+        args:
+            - C:\Users\Consiliari\AppData\Local\Temp\markitect-native-policy-preservation-20261009\runtime-assets\runner.py
+            - --model
+            - gpt-6-luna
+            - --codex-executable
+            - C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
+            - --codex-version
+            - 0.162.0-alpha.2
+        model: gpt-6-luna
+        modelOptions:
+            model_reasoning_effort: high
+        providerVersion: 0.162.0-alpha.2
+        timeout: 5m0s
+        maxStdoutBytes: 4194304
+        maxStderrBytes: 1048576
+        runtimeFiles:
+            - path: C:\Python313\python.exe
+              mode: "0644"
+              digest: sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125
+            - path: C:\Users\Consiliari\AppData\Local\Temp\markitect-native-policy-preservation-20261009\runtime-assets\runner.py
+              mode: "0644"
+              digest: sha256:1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6
+            - path: C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
+              mode: "0644"
+              digest: sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68
+        environment:
+            - PATH
+            - TEMP
+            - TMP
+            - SystemRoot
+        pricing:
+            inputMicrosPerMillion: 100000
+            outputMicrosPerMillion: 500000
+review:
+    agents:
+        '["project.markitect.example.org/v1alpha1","Manager","","roombook"]':
+            command: C:\Python313\python.exe
+            args:
+                - C:\Users\Consiliari\AppData\Local\Temp\markitect-native-policy-preservation-20261009\runtime-assets\runner.py
+                - --model
+                - gpt-6-luna
+                - --codex-executable
+                - C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
+                - --codex-version
+                - 0.162.0-alpha.2
+            model: gpt-6-luna
+            modelOptions:
+                model_reasoning_effort: high
+            providerVersion: 0.162.0-alpha.2
+            timeout: 5m0s
+            maxStdoutBytes: 4194304
+            maxStderrBytes: 1048576
+            runtimeFiles:
+                - path: C:\Python313\python.exe
+                  mode: "0644"
+                  digest: sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125
+                - path: C:\Users\Consiliari\AppData\Local\Temp\markitect-native-policy-preservation-20261009\runtime-assets\runner.py
+                  mode: "0644"
+                  digest: sha256:1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6
+                - path: C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
+                  mode: "0644"
+                  digest: sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68
+            environment:
+                - PATH
+                - TEMP
+                - TMP
+                - SystemRoot
+            pricing:
+                inputMicrosPerMillion: 100000
+                outputMicrosPerMillion: 500000
+    maxRounds: 3
+    maxManagerRounds: 2
+limits:
+    maxDepth: 2
+    maxStarts: 24
+    maxRetries: 1
+    maxParallel: 1
+    maxDuration: 20m0s
+    maxCostMicros: 3000000
+    maxCandidateFileBytes: 1048576
+    maxCandidateBytes: 8388608

@@ -1,0 +1,39 @@
+{
+  "executionAuthorized": false,
+  "stateDir": "ROOT_SEALED_FRESH_STATE_DIRECTORY",
+  "grantPath": "ROOT_SEALED_ENABLED_FRESH_CELL_GRANT",
+  "grantSha256": "ROOT_SEALED_GRANT_SHA256",
+  "phase": "implementation",
+  "parentReservation": 0,
+  "parentHandle": "ROOT_CURRENT_ACTIVE_OUTER_HANDLE",
+  "maxOwnedWallSeconds": 300,
+  "cleanupReserveSeconds": 10,
+  "command": [
+    "C:\\Python313\\python.exe",
+    "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-native-policy-preservation-20261009\\runtime-assets\\runner.py",
+    "--model",
+    "gpt-6-luna",
+    "--codex-executable",
+    "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+    "--codex-version",
+    "0.162.0-alpha.2"
+  ],
+  "runtimePins": [
+    {
+      "path": "C:\\Python313\\python.exe",
+      "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-native-policy-preservation-20261009\\runtime-assets\\runner.py",
+      "sha256": "1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+      "sha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+    }
+  ],
+  "ownerReplacementSourceSha": "bcd614a3bfcd335e0ca18850993742057103c092",
+  "ownerReplacementRuntimeSha256": "c3d4204490a9d1d5230cc151f99a63dcb8357bcc425022d040c48a0888afc44e",
+  "ownerActivation": "pending; example is not an enabled binding",
+  "actualSixthAllocation": null
+}

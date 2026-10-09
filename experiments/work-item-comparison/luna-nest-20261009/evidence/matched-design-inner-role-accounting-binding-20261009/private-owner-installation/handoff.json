@@ -1,0 +1,571 @@
+{
+  "schemaVersion": 1,
+  "status": "INSTALLATION_SCHEMA_HANDOFF_ONLY; AUTONOMOUS_READINESS_NOT_ESTABLISHED",
+  "executionAuthorized": false,
+  "source": {
+    "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\model-driven-delivery\\Markitect",
+    "branch": "codex/model-first-operations",
+    "sha": "2b7b22bafb72de1d1ca3bf54e5870c281a171956",
+    "remoteSha": "2b7b22bafb72de1d1ca3bf54e5870c281a171956",
+    "clean": true,
+    "pullRequest": "https://github.com/Glacius-Labs/Markitect/pull/89",
+    "draft": true,
+    "changesThisPackage": "No production/source changes or new source commit; already pushed immutable source retained to avoid cancelling its CI."
+  },
+  "build": {
+    "count": 1,
+    "command": "go build -trimpath -buildvcs=false -o C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-roombook-install-handoff-20261009\\markitect-2b7b22ba.exe ./cmd/markitect",
+    "binary": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-roombook-install-handoff-20261009\\markitect-2b7b22ba.exe",
+    "binarySha256": "abf877849379900cf2f1cf6c19f3d5d1e67a134592ac810cedc437191e9a5f29",
+    "sourceSha": "2b7b22bafb72de1d1ca3bf54e5870c281a171956",
+    "goVersion": "go1.27.1 windows/amd64",
+    "goModSha256": "c710445a3b7484bddd88420ee47ae9b764e370bf8d019825f216faeeac410e3b",
+    "goSumSha256": "ff6dac09ab3f5857925f01c0336e5c9499120ef2f3e7050ec60f55e39a408fec",
+    "infoPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-roombook-install-handoff-20261009\\build-info.txt",
+    "infoSha256": "12325e99448276b5b6ecad9d01413701fcb7feeb82b732b0854be9e10e63faf8",
+    "release": false
+  },
+  "publicInputs": {
+    "freezeMdSha256": "6555fa10d6ce06091efa267dc8ad2643f16ec7d2dab35a6717edb536084383b7",
+    "freezeJsonSha256": "f682e840915f80d69ae233c4790bfd0d3bc568eff1024b95235bbb2927a9a0a3",
+    "rawInitialModel": [
+      {
+        "publicPath": "models/roombook/.markitect/model/booking-contract.yaml",
+        "installedPath": ".markitect/model/booking-contract.yaml",
+        "originalSha256": "0dec869e40832bf901147a2f8393194a60b13f5316f153afe53f9823491b84bf",
+        "installedSha256": "0dec869e40832bf901147a2f8393194a60b13f5316f153afe53f9823491b84bf",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/checks.yaml",
+        "installedPath": ".markitect/model/checks.yaml",
+        "originalSha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+        "installedSha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/delivery-rules.yaml",
+        "installedPath": ".markitect/model/delivery-rules.yaml",
+        "originalSha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+        "installedSha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/documentation.yaml",
+        "installedPath": ".markitect/model/documentation.yaml",
+        "originalSha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+        "installedSha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/durable-state.yaml",
+        "installedPath": ".markitect/model/durable-state.yaml",
+        "originalSha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+        "installedSha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/implementation.yaml",
+        "installedPath": ".markitect/model/implementation.yaml",
+        "originalSha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+        "installedSha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/manager.yaml",
+        "installedPath": ".markitect/model/manager.yaml",
+        "originalSha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+        "installedSha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/reservation.yaml",
+        "installedPath": ".markitect/model/reservation.yaml",
+        "originalSha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+        "installedSha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/tests.yaml",
+        "installedPath": ".markitect/model/tests.yaml",
+        "originalSha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+        "installedSha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/project.yaml",
+        "installedPath": ".markitect/project.yaml",
+        "originalSha256": "aa024390df2d29b7c4ed2807afc830c1afad92b6a0ebee56214b25117ff18ece",
+        "installedSha256": "aa024390df2d29b7c4ed2807afc830c1afad92b6a0ebee56214b25117ff18ece",
+        "bytesUnchanged": true
+      }
+    ],
+    "readBoundary": "Only the two authorized public freeze files and their ten named public/models/roombook/.markitect files; no other Scientist file, Git state, private evaluation, case code or prior solution read."
+  },
+  "model": {
+    "apiVersion": "project.markitect.example.org/v1alpha1",
+    "counts": {
+      "managers": 1,
+      "statements": 4,
+      "artifacts": 3,
+      "checks": 1
+    },
+    "digest": "sha256:6417f793d498ac85c8d20cead61bf32c6f4416f146e3395210235afeedc7bc0b",
+    "migration": [
+      {
+        "path": ".markitect/model/booking-contract.yaml",
+        "beforeSha256": "0dec869e40832bf901147a2f8393194a60b13f5316f153afe53f9823491b84bf",
+        "afterSha256": "e9f088cbdd1183d2c7266709896abcf96b7dac97b6e48e039828bc94eccc4316",
+        "changedField": "spec.category",
+        "before": "behavior",
+        "after": "rule",
+        "reason": "The source-bound Statement category enum has concept/rule/use-case/architecture/workflow, no behavior. The existing book/list behavioral obligations are classified as a rule without changing description, names, references, commands, paths, requirements or station scope.",
+        "migration": "Schema-only category normalization; no new business behavior or code."
+      },
+      {
+        "path": ".markitect/project.yaml",
+        "beforeSha256": "aa024390df2d29b7c4ed2807afc830c1afad92b6a0ebee56214b25117ff18ece",
+        "afterSha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098",
+        "changedFields": [
+          "workflowMode",
+          "acceptancePolicy"
+        ],
+        "before": "omitted legacy-compatible policy",
+        "after": {
+          "workflowMode": "guided",
+          "acceptancePolicy": "committed-model"
+        },
+        "reason": "Current native guided delivery computes accepted-model readiness only with an explicit acceptance policy. These are the current project init defaults; without them the public legacy-compatible manifest cannot establish the intended committed-model native journey.",
+        "migration": "Installation/workflow policy binding; all business requirements, ownership, paths, checks and station scope remain unchanged."
+      }
+    ],
+    "migrationPatchPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-roombook-install-handoff-20261009\\full-declared-model-migration.patch",
+    "migrationPatchSha256": "0d7ac19bb33aa4b9c434a1a808832340b3b2df5f985cebff691852e8242e96bc",
+    "installedModel": [
+      {
+        "publicPath": "models/roombook/.markitect/model/booking-contract.yaml",
+        "installedPath": ".markitect/model/booking-contract.yaml",
+        "originalSha256": "0dec869e40832bf901147a2f8393194a60b13f5316f153afe53f9823491b84bf",
+        "installedSha256": "e9f088cbdd1183d2c7266709896abcf96b7dac97b6e48e039828bc94eccc4316",
+        "bytesUnchanged": false
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/checks.yaml",
+        "installedPath": ".markitect/model/checks.yaml",
+        "originalSha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+        "installedSha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/delivery-rules.yaml",
+        "installedPath": ".markitect/model/delivery-rules.yaml",
+        "originalSha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+        "installedSha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/documentation.yaml",
+        "installedPath": ".markitect/model/documentation.yaml",
+        "originalSha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+        "installedSha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/durable-state.yaml",
+        "installedPath": ".markitect/model/durable-state.yaml",
+        "originalSha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+        "installedSha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/implementation.yaml",
+        "installedPath": ".markitect/model/implementation.yaml",
+        "originalSha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+        "installedSha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/manager.yaml",
+        "installedPath": ".markitect/model/manager.yaml",
+        "originalSha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+        "installedSha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/reservation.yaml",
+        "installedPath": ".markitect/model/reservation.yaml",
+        "originalSha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+        "installedSha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/model/tests.yaml",
+        "installedPath": ".markitect/model/tests.yaml",
+        "originalSha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+        "installedSha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+        "bytesUnchanged": true
+      },
+      {
+        "publicPath": "models/roombook/.markitect/project.yaml",
+        "installedPath": ".markitect/project.yaml",
+        "originalSha256": "aa024390df2d29b7c4ed2807afc830c1afad92b6a0ebee56214b25117ff18ece",
+        "installedSha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098",
+        "bytesUnchanged": false
+      }
+    ],
+    "businessRequirementsUnchanged": true,
+    "implementationOrLaterStationPrefilled": false
+  },
+  "schemaModules": {
+    "schemaPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-roombook-install-handoff-20261009\\project-schema.json",
+    "schemaSha256": "30c8fe1855afe37bd424e61c969f7cbab104848f2c0d95c01d8a6bcb4795cd62",
+    "schemaApiVersion": "project.markitect.example.org/v1alpha1",
+    "schemaSource": {},
+    "builtinKinds": [
+      "Artifact",
+      "Check",
+      "Decision",
+      "Manager",
+      "Statement"
+    ],
+    "implementationModule": "internal/modules/projectmodel",
+    "implementationModuleSourceSha256": "56011faf8105a07806d4d77995a5fb62f5a5ed8199fe70896fb81e1b23494df6",
+    "separatelyInstalledExtensionModules": [],
+    "moduleVersionBinding": "Built-in projectmodel and Host packages compiled from the exact source SHA, not independently installed legacy extension Modules."
+  },
+  "installation": {
+    "repo": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-roombook-install-handoff-20261009\\roombook-model-install-check",
+    "branch": "codex/roombook-install-check",
+    "head": "d7a004172f98ebb6bc59bf7e93f9c709fb2ebc86",
+    "tree": "01b64bd79d5554ffde6f8df3333746b190630abf",
+    "clean": true,
+    "rawGitBlobDrift": 0,
+    "files": [
+      {
+        "path": ".agents/skills/markitect-model-first/SKILL.md",
+        "sha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df",
+        "gitBlob": "2b9566377d25835d24b8af3c94b4a34df6feb989"
+      },
+      {
+        "path": ".claude/skills/markitect-model-first/SKILL.md",
+        "sha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df",
+        "gitBlob": "2b9566377d25835d24b8af3c94b4a34df6feb989"
+      },
+      {
+        "path": ".markitect/.gitignore",
+        "sha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce",
+        "gitBlob": "5316233a8762228125ffc5e4193f581a9549d774"
+      },
+      {
+        "path": ".markitect/model/booking-contract.yaml",
+        "sha256": "e9f088cbdd1183d2c7266709896abcf96b7dac97b6e48e039828bc94eccc4316",
+        "gitBlob": "95445dade00fd634ed5c0e8a4f82cea97d959460"
+      },
+      {
+        "path": ".markitect/model/checks.yaml",
+        "sha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+        "gitBlob": "68a6e61416eba749fbbd40d0a41bcd17187b4899"
+      },
+      {
+        "path": ".markitect/model/delivery-rules.yaml",
+        "sha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+        "gitBlob": "d0fda59ff2691dad23f7a7d6568faff1e332bfea"
+      },
+      {
+        "path": ".markitect/model/documentation.yaml",
+        "sha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+        "gitBlob": "4b9cb282703b3b8b53ee39c63638a14476c8134f"
+      },
+      {
+        "path": ".markitect/model/durable-state.yaml",
+        "sha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+        "gitBlob": "d83cf73e5c1b3505daa1448b65c16f51786d620a"
+      },
+      {
+        "path": ".markitect/model/implementation.yaml",
+        "sha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+        "gitBlob": "4ff80e7cdde81abcb3a9437b73b3d24005ff322d"
+      },
+      {
+        "path": ".markitect/model/manager.yaml",
+        "sha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+        "gitBlob": "28eabedce6309335cd0faedb153f000fb44378ab"
+      },
+      {
+        "path": ".markitect/model/reservation.yaml",
+        "sha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+        "gitBlob": "cf69ac964138f668686cdcdb61cba4c16c7549ac"
+      },
+      {
+        "path": ".markitect/model/tests.yaml",
+        "sha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+        "gitBlob": "c5b34e7022ac4ab0142006b9fcd79e6e73f9af6a"
+      },
+      {
+        "path": ".markitect/project.yaml",
+        "sha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098",
+        "gitBlob": "26d45742563d91092c9e89b5c8048e091a7a9315"
+      },
+      {
+        "path": ".markitect/runtime.yaml",
+        "sha256": "a99b619fda2226ccd820458b4bc501459b6ad05ba417338942074fead7a0ef98",
+        "gitBlob": "b53c83310da658980403db2867d40f874d1a412d"
+      },
+      {
+        "path": ".markitect/workflows/model-first.md",
+        "sha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e",
+        "gitBlob": "4dad06bbe2d408a04c1fce163d428ff21a631766"
+      },
+      {
+        "path": "AGENTS.md",
+        "sha256": "0d75a4a8247dd8cc59a1125a2265ad555c9bbe7f3aa057bba97637483da2c321",
+        "gitBlob": "452aba716d4484dc7ce97b946bd5dcd9b7d03aaa"
+      },
+      {
+        "path": "CLAUDE.md",
+        "sha256": "0d75a4a8247dd8cc59a1125a2265ad555c9bbe7f3aa057bba97637483da2c321",
+        "gitBlob": "452aba716d4484dc7ce97b946bd5dcd9b7d03aaa"
+      },
+      {
+        "path": "docs/markitect/project.md",
+        "sha256": "03d99e7b2a498c7a205ab6b1162a832bff246a58804e09f47bb981e65aca23ca",
+        "gitBlob": "3fc94dcf995f8bc23f20c5ec5dfcc8415fffa52e"
+      }
+    ],
+    "nativeOnboardCommand": "markitect project onboard --repo PATH --provider both; preview then --expect DIGEST --write",
+    "schemaCommand": "markitect project schema",
+    "selectedModel": ".markitect/project.yaml",
+    "generatedViewsSkillsInstructions": [
+      {
+        "path": ".agents/skills/markitect-model-first/SKILL.md",
+        "sha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df",
+        "gitBlob": "2b9566377d25835d24b8af3c94b4a34df6feb989"
+      },
+      {
+        "path": ".claude/skills/markitect-model-first/SKILL.md",
+        "sha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df",
+        "gitBlob": "2b9566377d25835d24b8af3c94b4a34df6feb989"
+      },
+      {
+        "path": ".markitect/workflows/model-first.md",
+        "sha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e",
+        "gitBlob": "4dad06bbe2d408a04c1fce163d428ff21a631766"
+      },
+      {
+        "path": "AGENTS.md",
+        "sha256": "0d75a4a8247dd8cc59a1125a2265ad555c9bbe7f3aa057bba97637483da2c321",
+        "gitBlob": "452aba716d4484dc7ce97b946bd5dcd9b7d03aaa"
+      },
+      {
+        "path": "CLAUDE.md",
+        "sha256": "0d75a4a8247dd8cc59a1125a2265ad555c9bbe7f3aa057bba97637483da2c321",
+        "gitBlob": "452aba716d4484dc7ce97b946bd5dcd9b7d03aaa"
+      },
+      {
+        "path": "docs/markitect/project.md",
+        "sha256": "03d99e7b2a498c7a205ab6b1162a832bff246a58804e09f47bb981e65aca23ca",
+        "gitBlob": "3fc94dcf995f8bc23f20c5ec5dfcc8415fffa52e"
+      }
+    ],
+    "operationalIgnoreArtifact": ".markitect/.gitignore with exact current project init cache/runs/views bytes",
+    "nativeSkillMetadata": "Required native skill frontmatter only; canonical model remains YAML.",
+    "studyPreparedRepo": false,
+    "commonSourceFilesNotSupplied": "README/BACKLOG/STATIONS/QUALITY/shared AGENTS/acceptance and station state remain owned by Root/Scientist; not opened or recreated here."
+  },
+  "entryRoles": {
+    "outer": {
+      "tool": "collaboration.spawn_agent",
+      "forkTurns": "none",
+      "model": "gpt-6-luna",
+      "reasoningEffort": "high",
+      "cwdArgument": false,
+      "instruction": "A future authorized request must name its own absolute repository and installed CLI; use normal App permissions.",
+      "started": false
+    },
+    "inner": {
+      "transport": "Existing standard-library codexrunner Python adapter to genuine native Codex CLI; no fake provider, App API shim or proof-slot supervisor.",
+      "discovery": {
+        "provider": "codex",
+        "providerBinary": {
+          "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+          "version": "0.162.0-alpha.2",
+          "digest": "sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+          "mode": "0644"
+        },
+        "python": {
+          "path": "C:\\Python313\\python.exe",
+          "version": "3.13.3",
+          "digest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+          "mode": "0644"
+        },
+        "adapter": {
+          "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\model-driven-delivery\\Markitect\\internal\\tooling\\codexrunner\\runner.py",
+          "version": "",
+          "digest": "sha256:0ceb15e6cfa28de4256d346d61de64a207c307405be4a3549b29bb4f380fc4ac",
+          "mode": "0644"
+        },
+        "authentication": "not-verified",
+        "authenticationNote": "Markitect does not read credentials or probe provider login status; use the provider's existing OS-default sign-in."
+      },
+      "installedAdapter": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-roombook-install-handoff-20261009\\installed-tool-root\\internal\\tooling\\codexrunner\\runner.py",
+      "installedAdapterSha256": "0ceb15e6cfa28de4256d346d61de64a207c307405be4a3549b29bb4f380fc4ac",
+      "runtimePath": ".markitect/runtime.yaml",
+      "runtimeSha256": "a99b619fda2226ccd820458b4bc501459b6ad05ba417338942074fead7a0ef98",
+      "pins": [
+        {
+          "path": "C:\\Python313\\python.exe",
+          "mode": "0644",
+          "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+        },
+        {
+          "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-roombook-install-handoff-20261009\\installed-tool-root\\internal\\tooling\\codexrunner\\runner.py",
+          "mode": "0644",
+          "sha256": "0ceb15e6cfa28de4256d346d61de64a207c307405be4a3549b29bb4f380fc4ac"
+        },
+        {
+          "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+          "mode": "0644",
+          "sha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+        },
+        {
+          "path": "C:\\Python313\\python.exe",
+          "mode": "0644",
+          "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+        },
+        {
+          "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-roombook-install-handoff-20261009\\installed-tool-root\\internal\\tooling\\codexrunner\\runner.py",
+          "mode": "0644",
+          "sha256": "0ceb15e6cfa28de4256d346d61de64a207c307405be4a3549b29bb4f380fc4ac"
+        },
+        {
+          "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+          "mode": "0644",
+          "sha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68"
+        }
+      ],
+      "rolePurposes": [
+        "Manager/leaf implementation",
+        "independent local reviewer",
+        "parent integration if applicable",
+        "full Manager audit using the configured Manager binding"
+      ],
+      "configuredManagerId": "[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"roombook\"]",
+      "model": "gpt-6-luna",
+      "reasoningEffort": "high",
+      "perRoleSeconds": 300,
+      "perRunMaxStarts": 24,
+      "perRunMaxDurationSeconds": 1200,
+      "maxDepth": 2,
+      "maxParallel": 1,
+      "maxRetries": 1,
+      "reviewMaxRounds": 3,
+      "reviewMaxManagerRounds": 2,
+      "nativeArgs": [
+        "exec",
+        "--ignore-user-config",
+        "--ignore-rules",
+        "--sandbox",
+        "read-only",
+        "--ephemeral",
+        "--json",
+        "--skip-git-repo-check",
+        "--disable",
+        "plugins",
+        "--disable",
+        "shell_tool",
+        "--disable",
+        "unified_exec",
+        "--disable",
+        "multi_agent",
+        "--output-schema",
+        "BOUND_TEMP_SCHEMA",
+        "--output-last-message",
+        "BOUND_TEMP_RESPONSE",
+        "--cd",
+        "EMPTY_TEMP_DIRECTORY",
+        "-"
+      ],
+      "accounting": "Product run journal retains separate role attempts and per-run budgets. A study-wide shared 72-start/outer/final ledger, absolute cell/phase deadline and any gate coupling remain unbound and must be accepted by Root before any allocation. Per-run limits do not prove cross-run shared accounting.",
+      "authentication": "not-verified; normal setup checked executable versions/hash only, no login/status/credential or transport invocation",
+      "pricing": "Explicit caller estimates 100000/500000 micros per million and 3000000 max-cost-micros are product budget inputs, not observed provider prices, cost, billing or purchase.",
+      "isolation": "Outer inherited normal App profile; inner tools disabled/read-only CLI profile. No absence-of-ambient-Skills or OS isolation/containment proof."
+    }
+  },
+  "checks": {
+    "originalUnmodifiedSchema": "FAILED: category behavior is not in the source-bound enum",
+    "migratedSchema": "Decoded/compiled through project index; one Manager/four Statements/three Artifacts/one Check retained",
+    "projectCheck": {
+      "status": "incomplete",
+      "coverageAccounted": true,
+      "coverageConforming": false,
+      "findings": [
+        {
+          "code": "coverage.required-artifact-missing",
+          "subject": "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"implementation\"]",
+          "message": "Expected Artifact path is absent from the supplied inventory: app.py",
+          "severity": "incomplete"
+        },
+        {
+          "code": "coverage.required-artifact-missing",
+          "subject": "[\"project.markitect.example.org/v1alpha1\",\"Artifact\",\"\",\"tests\"]",
+          "message": "Expected Artifact path is absent from the supplied inventory: tests/",
+          "severity": "incomplete"
+        }
+      ],
+      "reason": "Required app.py and tests/ are deliberately absent from the initial model-only installation; no placeholder, weakened required flag or early implementation added."
+    },
+    "nativeOnboarding": "preview -> exact digest Apply -> unchanged preview for both providers",
+    "runtimeConfiguration": "normal project setup preview/Apply, then exact guarded edit for source-identical installed adapter and finite limits/policy; no agent invocation",
+    "documentGeneration": "normal project document --write; plaintext/Markdown output retained",
+    "ci": {
+      "id": 37908655579,
+      "url": "https://github.com/Glacius-Labs/Markitect/actions/runs/37908655579",
+      "sourceSha": "2b7b22bafb72de1d1ca3bf54e5870c281a171956",
+      "status": "in_progress",
+      "conclusion": "",
+      "jobs": [
+        {
+          "name": "Quality (ubuntu-24.04)",
+          "status": "completed",
+          "conclusion": "success",
+          "activeSteps": []
+        },
+        {
+          "name": "Quality (windows-latest)",
+          "status": "in_progress",
+          "conclusion": "",
+          "activeSteps": [
+            "Verify fixed dogfood engineering state"
+          ]
+        }
+      ]
+    },
+    "review": "Earlier guarded-root repair source review retained at 2757; no new independent review or reviewer/assessor start in this bounded package. Source-2b focused checks are recorded in its existing validation report."
+  },
+  "boundedWork": {
+    "startUtc": "2026-10-09T09:09:15+00:00",
+    "sealedUtc": "2026-10-09T09:32:20.854584+00:00",
+    "conservativeElapsedSeconds": 1385.854584,
+    "maximumSeconds": 1800,
+    "builds": 1,
+    "modelStarts": 0,
+    "agentStarts": 0,
+    "nativeProductStarts": 0,
+    "trialStarts": 0,
+    "transportProbeStarts": 0,
+    "normalSetupMetadata": "Two normal setup operations each perform version/fingerprint metadata discovery; no codex exec/login/status/authentication call.",
+    "retainedMechanicalIssues": [
+      "Initial public path omitted public prefix; FileNotFound corrected using only authorized files.",
+      "Initial script treated required-artifact incomplete check as installation failure; exact incomplete findings retained.",
+      "Document emits Markdown/plaintext; script JSON assumption failed after successful document write, corrected without treating this as provider/product proof."
+    ],
+    "ownJobs": "All known own mechanical shell sessions terminal."
+  },
+  "remainingGates": [
+    "All three previous product proof jobs remain exhausted/FAILED; no fourth proof or 10800-second post-handoff regression suite.",
+    "No successful autonomous Run/Review/Verify/Apply, product readiness, human acceptance or comparative advantage.",
+    "Full Windows CI remains pending unless the captured CI says otherwise; no main merge or release.",
+    "The sixth study cell remains unallocated/disabled; no canary/Testactor or enabled grant is created.",
+    "Root/Scientist must own actual common inputs, case state/S1, fresh prepared tree, empty study ledger, shared role accounting/deadlines and any separately accepted execution grant."
+  ]
+}
