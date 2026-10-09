@@ -54,6 +54,9 @@ func serveFixture() {
 		case "initialized":
 			continue
 		case "thread/start", "thread/resume":
+			if msg.Method == "thread/start" && strings.HasPrefix(mode, "recovery-") {
+				return
+			}
 			var threadParams struct {
 				Permissions string `json:"permissions"`
 			}
@@ -76,6 +79,9 @@ func serveFixture() {
 				result.(map[string]any)["activePermissionProfile"] = map[string]string{"id": threadParams.Permissions}
 			}
 		case "turn/start":
+			if strings.HasPrefix(mode, "recovery-") {
+				return
+			}
 			var p struct {
 				Input []struct {
 					Text string `json:"text"`
@@ -152,7 +158,36 @@ func serveFixture() {
 			inv := saved.Invocation
 			r := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: inv.RunID, Nonce: inv.Nonce, Role: inv.Request.Role, InputDigest: inv.InputDigest, Outcome: agentexec.OutcomeIncomplete, CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}}
 			b, _ := json.Marshal(r)
-			result = map[string]any{"thread": thread{ID: "thread-1", Turns: []turn{{ID: turnID, Status: "completed", Items: []item{{ID: "m", Type: "agentMessage", Text: string(b), Phase: "final_answer"}}}}}}
+			status := "completed"
+			items := []item{{ID: "m", Type: "agentMessage", Text: string(b), Phase: "final_answer"}}
+			if mode == "recovery-running" {
+				status = "inProgress"
+			}
+			if mode == "recovery-children" || mode == "recovery-running" {
+				state := "completed"
+				if mode == "recovery-running" {
+					state = "running"
+				}
+				child := item{ID: "spawn-child", Type: "collabAgentToolCall", Tool: "spawnAgent", Status: "completed", SenderThreadID: "thread-1", ReceiverThreadIDs: []string{"child-thread"}, AgentsStates: map[string]struct {
+					Status string `json:"status"`
+				}{"child-thread": {Status: state}}}
+				note("item/completed", map[string]any{"threadId": "thread-1", "turnId": turnID, "item": child})
+				note("thread/started", map[string]any{"thread": thread{ID: "child-thread", SessionID: "child-session", ParentThreadID: "thread-1"}})
+				if mode == "recovery-children" {
+					nested := item{ID: "spawn-nested", Type: "collabAgentToolCall", Tool: "spawnAgent", Status: "failed", SenderThreadID: "child-thread", ReceiverThreadIDs: []string{}}
+					note("item/completed", map[string]any{"threadId": "child-thread", "turnId": "child-turn", "item": nested})
+					items = append(items, child)
+				} else {
+					// An additional failed request in a running turn must survive
+					// the uncertain return, even when present only in history.
+					items = append(items, item{ID: "spawn-failed", Type: "collabAgentToolCall", Tool: "spawnAgent", Status: "failed", ReceiverThreadIDs: []string{}})
+				}
+			}
+			recovered := thread{ID: "thread-1", Turns: []turn{{ID: turnID, Status: status, Items: items}}}
+			if mode == "recovery-missing" {
+				recovered.Turns = nil
+			}
+			result = map[string]any{"thread": recovered}
 		default:
 			return
 		}
@@ -270,5 +305,52 @@ func TestDynamicToolAndRecovery(t *testing.T) {
 	_, err = a.Recover(context.Background(), cfg, handle)
 	if !errors.Is(err, ErrUncertain) {
 		t.Fatalf("lost turn ID guessed: %v", err)
+	}
+}
+
+func TestRecoveryRetainsOriginalRootAndObservedChildren(t *testing.T) {
+	for _, mode := range []string{"recovery-completed", "recovery-running", "recovery-missing", "recovery-children"} {
+		t.Run(mode, func(t *testing.T) {
+			var handle RecoveryHandle
+			reservations := 0
+			a, cfg, req, opts := fixture(t, "success", Options{BeforeStart: func(context.Context, agentexec.RoleStartRequest) error { reservations++; return nil }, OnHandle: func(_ context.Context, h RecoveryHandle) error { handle = h; return nil }})
+			a.config.Helpers.MaxDepth = 2
+			if _, err := a.Run(context.Background(), cfg, req, opts); err != nil {
+				t.Fatal(err)
+			}
+			wire, _ := json.Marshal(handle)
+			t.Setenv("MARKITECT_P04_RECOVERY", string(wire))
+			t.Setenv("MARKITECT_P04_MODE", mode)
+			result, err := a.Recover(context.Background(), cfg, handle)
+			life := result.Receipt.Lifecycle
+			if life == nil || len(life.StartRequests) == 0 {
+				t.Fatalf("original root absent: %v %+v", err, result.Receipt)
+			}
+			root := life.StartRequests[0]
+			if root.RequestID != handle.Invocation.RunID || root.Role != req.Role || root.SessionID != handle.SessionID || root.Model != cfg.Model || root.ReasoningEffort != "high" {
+				t.Fatalf("original root binding changed: %+v", root)
+			}
+			if reservations != 1 || life.Accounting != "partial" || result.Receipt.Usage != nil || life.Effective.InstructionDigest != "" {
+				t.Fatal("recovery invented new start or complete/usage/instruction evidence")
+			}
+			if mode == "recovery-completed" || mode == "recovery-children" {
+				if err != nil || root.State != "completed" || life.State != "completed" {
+					t.Fatalf("terminal original root not recovered: %v %+v", err, life)
+				}
+			} else if !errors.Is(err, ErrUncertain) || root.State != "unknown" || life.State != "unknown" {
+				t.Fatalf("nonterminal original became certain: %v %+v", err, life)
+			}
+			if mode == "recovery-completed" && len(life.StartRequests) != 1 {
+				t.Fatal("no-child recovery fabricated children")
+			}
+			if mode == "recovery-children" {
+				if len(life.StartRequests) != 3 || life.StartRequests[1].SessionID != "child-session" || life.StartRequests[1].State != "completed" || life.StartRequests[2].State != "failed" || life.StartRequests[2].ParentSessionID != "child-session" || life.StartRequests[2].SessionID != "" {
+					t.Fatalf("nested/failure evidence lost or invented: %+v", life.StartRequests)
+				}
+			}
+			if mode == "recovery-running" && (len(life.StartRequests) != 3 || life.StartRequests[2].State != "failed") {
+				t.Fatalf("running-turn child history dropped: %+v", life.StartRequests)
+			}
+		})
 	}
 }

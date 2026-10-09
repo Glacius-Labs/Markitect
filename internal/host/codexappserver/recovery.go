@@ -42,6 +42,9 @@ func (a *Adapter) Recover(parent context.Context, cfg agentexec.Config, h Recove
 	s.sessions = map[string]string{}
 	s.receivers = map[string]int{}
 	s.life = &agentexec.Lifecycle{Provider: "codex-app-server", SessionID: h.SessionID, TurnID: h.TurnID, State: "unknown", Accounting: "partial", Requested: agentexec.SessionSettings{Model: a.config.Model, ReasoningEffort: a.config.ReasoningEffort, CWD: h.Workspace.CWD, PermissionProfile: a.config.PermissionProfile}}
+	// This is the original trusted attempt, not a newly requested role start.
+	// Keep it unknown until the exact saved turn supplies a terminal observation.
+	s.life.StartRequests = []agentexec.RoleStartRequest{{RequestID: h.Invocation.RunID, SessionID: h.SessionID, Role: h.Invocation.Request.Role, Model: a.config.Model, ReasoningEffort: a.config.ReasoningEffort, State: "unknown"}}
 	result.Receipt = agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: h.Invocation.RunID, InputDigest: h.Invocation.InputDigest, ConfigDigest: fp, ProviderVersion: a.config.ProviderVersion, Outcome: agentexec.OutcomeIncomplete, Lifecycle: s.life}
 	defer func() {
 		result.Receipt.WallTimeMilliseconds = time.Since(start).Milliseconds()
@@ -104,13 +107,13 @@ func (a *Adapter) Recover(parent context.Context, cfg agentexec.Config, h Recove
 	} // cannot guess which turn belongs to a lost dispatch
 	for _, t := range snapshot.Thread.Turns {
 		if t.ID == h.TurnID {
-			if t.Status == "inProgress" {
-				return result, ErrUncertain
-			}
 			for _, v := range t.Items {
 				if err = s.takeItem(h.ThreadID, v, true); err != nil {
 					return result, err
 				}
+			}
+			if t.Status == "inProgress" {
+				return result, ErrUncertain
 			}
 			if err = s.finish(t); err != nil {
 				return result, err
