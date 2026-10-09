@@ -1,0 +1,15 @@
+{
+  "kind": "Additive evidence-only timestamp arithmetic correction",
+  "recordedUtc": "2026-10-09T00:40:46.4760140Z",
+  "originalRecord": "ledger-timestamp-calculation-original.json",
+  "originalRecordSha256": "b01047729a31b5301995fd6342c41fd8cb51a9e5d40f0df9628cc7ea1e940192",
+  "originalComputedReviewSeconds": 2512962.0,
+  "correctReviewSeconds": 161.4902698,
+  "reservedIso": "2026-10-09T00:36:51.5097302Z",
+  "terminalObservedIso": "2026-10-09T00:39:33Z",
+  "terminalGrantElapsedSeconds": 777.0,
+  "sourceCorrectionsAfterTerminal": 0,
+  "testsAfterTerminal": 0,
+  "quotaOrDeadlineChanged": false,
+  "cause": "PowerShell ConvertFrom-Json date coercion followed by current-culture reparsing; use explicit ISO/invariant DateTimeOffset operands"
+}

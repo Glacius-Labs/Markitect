@@ -1,0 +1,68 @@
+{
+  "verdict": "NOT READY",
+  "studyAdmission": "NOT ADMITTED",
+  "scope": "Prospective evaluator source only",
+  "requirementFindings": [
+    {
+      "sourceReview": "covered",
+      "id": "validated-order"
+    },
+    {
+      "sourceReview": "covered",
+      "id": "durable-lifecycle"
+    },
+    {
+      "sourceReview": "covered",
+      "id": "current-limit-and-compatibility"
+    },
+    {
+      "remaining": "Retained offline receipt-binding fixture error unresolved; not a product failure",
+      "sourceReview": "blocker",
+      "id": "verification_quality"
+    }
+  ],
+  "fixtureRuns": [
+    {
+      "exitCode": 0,
+      "testsRun": 23
+    },
+    {
+      "exitCode": 1,
+      "errors": 1,
+      "testsRun": 26
+    }
+  ],
+  "testCountIsNotQualityScore": true,
+  "task6": "Plan conforms; actual candidate-specific mutation/equivalence remains unexecuted and gated",
+  "neutrality": "Rubric unchanged; method conformance and Design migration separate; no Conventional Design-artifact duty",
+  "sourceCommit": "51b17efecd6c6c56128022642ae30f8fd0c03cec",
+  "inputManifestSha256": "5270e1a6cba07ad79bb1979d0068f12fbe2bd98db4c4c8b561fac7320aced9ce",
+  "privateReviewSha256": "42a25aa9cbba525d32e6c2f79435a66d6935038f4aaa255cdd7a1f0c7d37b790",
+  "privateReviewArchiveSha256": "1b56b267e6eef2974037453e3c09afffc332ffd27a17b4bff509dfcfd7b2ecc6",
+  "consumption": {
+    "appserver": 0,
+    "focusedOfflineTestProcesses": 2,
+    "productActors": 0,
+    "serverStarts": 0,
+    "fullTrials": 0,
+    "providerApi": 0,
+    "codexCli": 0,
+    "productBuilds": 0,
+    "freshIndependentReviewers": 1,
+    "correctionBatches": 2
+  },
+  "remainingAllQuotas": 0,
+  "measurements": {
+    "servingModel": null,
+    "cost": null,
+    "humanOversight": null,
+    "tokens": null
+  },
+  "futurePrerequisites": [
+    "Unresolved evaluator mechanics readiness blocker",
+    "Clean Design handoff",
+    "Common actual model/tool/runtime profile",
+    "Common fixed snapshot and finite actual-cell grant"
+  ],
+  "noFurtherPreparationAutomaticallyAuthorized": true
+}

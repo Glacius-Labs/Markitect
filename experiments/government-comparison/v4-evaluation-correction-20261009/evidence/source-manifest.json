@@ -1,0 +1,237 @@
+{
+  "scope": "Final additive source and evidence checkpoint; this manifest excludes itself",
+  "sourceFreezeCommit": "51b17efecd6c6c56128022642ae30f8fd0c03cec",
+  "createdUtc": "2026-10-09T00:41:42.8912636Z",
+  "files": [
+    {
+      "path": "continuation-anchor.md",
+      "sha256": "4dd5101f6b8e675d2b3fbc55924224990db56a978b0422a1eabbde6e1da09475",
+      "bytes": 1081
+    },
+    {
+      "path": "handoff.md",
+      "sha256": "253e36e9be53ff61f55db98ec5616e4bee5921846ce9f09ba8013f9ddf6543e5",
+      "bytes": 4213
+    },
+    {
+      "path": "safe-summary.json",
+      "sha256": "3d09207b6f8fb804da2ab2a3ccd538c9a38524dd1acd865b478eda18931f7285",
+      "bytes": 2106
+    },
+    {
+      "path": "evidence/archive-integrity.json",
+      "sha256": "9341fc64499802416aa9b73aa271ebbc37886186bebbd752563c8134fa39960b",
+      "bytes": 215
+    },
+    {
+      "path": "evidence/authorization-grant.json",
+      "sha256": "7fdc28b4a86c609431a8fad817b06eb601709a672e52479f099f3b6d6cd2e822",
+      "bytes": 5090
+    },
+    {
+      "path": "evidence/closure-continuation.md",
+      "sha256": "ec921daebc310d39bd0cde615ebf428b1005dbcbbf8e8259e7500dee1bccfc06",
+      "bytes": 811
+    },
+    {
+      "path": "evidence/ledger-timestamp-calculation-original.json",
+      "sha256": "b01047729a31b5301995fd6342c41fd8cb51a9e5d40f0df9628cc7ea1e940192",
+      "bytes": 3109
+    },
+    {
+      "path": "evidence/ledger.json",
+      "sha256": "f9ae2f62ee980f791f91df7f85ba7e923dcbc4fab226d2352600590f960c0c95",
+      "bytes": 3391
+    },
+    {
+      "path": "evidence/mechanics-summary.json",
+      "sha256": "0a1ead51f7ede2870022f03d58c69718311713b1a77a51534c68f3acb8293020",
+      "bytes": 1084
+    },
+    {
+      "path": "evidence/preservation-check.json",
+      "sha256": "45b605efb9331435e53fd770c787c991c7e3c51f4f1853a3278fb86f4a177820",
+      "bytes": 458
+    },
+    {
+      "path": "evidence/private-archive-manifest.json",
+      "sha256": "ea9415604ddd6553a87da087ab731844123211dbd556fe5db1ef3fda6c1a990d",
+      "bytes": 297
+    },
+    {
+      "path": "evidence/private-evaluation-source.zip",
+      "sha256": "070d44d10ac5b321a15e9aead404359a92eb36f77f9cfed603c48752c602b6b7",
+      "bytes": 18133
+    },
+    {
+      "path": "evidence/private-review-archive-manifest.json",
+      "sha256": "ea925e661154133bbc2f0d4f24f7419fb58e1c86e21dd0578f02803cf2f35a21",
+      "bytes": 601
+    },
+    {
+      "path": "evidence/private-review.zip",
+      "sha256": "1b56b267e6eef2974037453e3c09afffc332ffd27a17b4bff509dfcfd7b2ecc6",
+      "bytes": 3529
+    },
+    {
+      "path": "evidence/review-binding.json",
+      "sha256": "674652ddadaec097f10870ac4124f31cd2761a7fdf788a19fec8a34bc8a02675",
+      "bytes": 694
+    },
+    {
+      "path": "evidence/review-input-manifest.json",
+      "sha256": "5270e1a6cba07ad79bb1979d0068f12fbe2bd98db4c4c8b561fac7320aced9ce",
+      "bytes": 4998
+    },
+    {
+      "path": "evidence/timestamp-arithmetic-erratum.json",
+      "sha256": "d436567b17573f84c2eec36a737393d57267223fe32f56a606ca454a8932706c",
+      "bytes": 765
+    },
+    {
+      "path": "public/architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "bytes": 3296
+    },
+    {
+      "path": "public/brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "bytes": 3000
+    },
+    {
+      "path": "public/brownfield-provenance.md",
+      "sha256": "155f6f736adf4d48b71074f74a9221d9f8ac796a938b5b8b0650f741d59eb548",
+      "bytes": 5244
+    },
+    {
+      "path": "public/candidate-admission.json",
+      "sha256": "fc743e339885ac0cc25b3409c23a1497e075786730fd9f42f0b0cd64de33e856",
+      "bytes": 1322
+    },
+    {
+      "path": "public/checks.py",
+      "sha256": "783561065c3bc6c814aed3ba5c943710442dbbee4502ad7db6b58eed4dabeccf",
+      "bytes": 9151
+    },
+    {
+      "path": "public/common-outcome-record.json",
+      "sha256": "faf63ce63336e9df81646822181af74c995853482b838b254773a68b143f20ab",
+      "bytes": 1176
+    },
+    {
+      "path": "public/common-profile-proposal.json",
+      "sha256": "d153c97695ee95521331606ce413950df7c8c8f47f69c8441853fc3499883552",
+      "bytes": 1533
+    },
+    {
+      "path": "public/deadlines.py",
+      "sha256": "7e025a3e49625134abaad80036832746cb2b21f2e1bf976387f872ccb2437165",
+      "bytes": 1229
+    },
+    {
+      "path": "public/dto_preflight.py",
+      "sha256": "e6bba598c515925ce584342190b18f5fb7f4a67054e66e55d1c5572cb43e975d",
+      "bytes": 7883
+    },
+    {
+      "path": "public/holdout-procedure.md",
+      "sha256": "28f2169bc7fce3ccf586aa2527fef359a9709aa4eb87b9cb7feb6aff41309f9b",
+      "bytes": 3643
+    },
+    {
+      "path": "public/oldschool-workflow-brief-20261008.md",
+      "sha256": "5b9dddff5d07d9cb1e6427c43e46f1259e9fb49fd030fc0a6e1e44b21e60aadc",
+      "bytes": 2262
+    },
+    {
+      "path": "public/operator-evidence-contract.md",
+      "sha256": "cf230d578bacbb22d32743fecbc87d079eb03644ce8aabe8cdcd8296d03c49cb",
+      "bytes": 5464
+    },
+    {
+      "path": "public/owned_transport.py",
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487",
+      "bytes": 3279
+    },
+    {
+      "path": "public/q1-intent-setup-v1.md",
+      "sha256": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e",
+      "bytes": 3620
+    },
+    {
+      "path": "public/release.py",
+      "sha256": "15df0312e5c1150e685a44a49d969766f20bf6194f7b0b48cf2a80605f23d291",
+      "bytes": 4716
+    },
+    {
+      "path": "public/rubric.json",
+      "sha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+      "bytes": 5369
+    },
+    {
+      "path": "public/task-requirement-map.json",
+      "sha256": "2a6473f03df9aace3c7222a61e0078d97aabdf3d9a3d908ea3f1c36b5962f53c",
+      "bytes": 3857
+    },
+    {
+      "path": "public/test_mechanics.py",
+      "sha256": "9ee8088e7e61932acf67a8fbae4d1a49b7e3999571f2feff7fbb637f060b6603",
+      "bytes": 8712
+    },
+    {
+      "path": "public/tasks/01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "bytes": 1189
+    },
+    {
+      "path": "public/tasks/02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "bytes": 1075
+    },
+    {
+      "path": "public/tasks/03-persist-state.md",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "bytes": 737
+    },
+    {
+      "path": "public/tasks/04-order-lifecycle.md",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+      "bytes": 1028
+    },
+    {
+      "path": "public/tasks/05-change-limit.md",
+      "sha256": "b68ccd173891692050c64101af47754f1213e745a63071653b30b8d9d6ccf17f",
+      "bytes": 1315
+    },
+    {
+      "path": "public/tasks/06-repair-regression.md",
+      "sha256": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a",
+      "bytes": 892
+    },
+    {
+      "path": "public/__pycache__/deadlines.cpython-313.pyc",
+      "sha256": "6d44d793283f4f39723b4b1babeea77938ba512eb4a200d902744f99e29d092a",
+      "bytes": 2153
+    },
+    {
+      "path": "public/__pycache__/dto_preflight.cpython-313.pyc",
+      "sha256": "97ace81bbcfede9258f0e34c9b44d854b465474095efea1452226d765f1fd82b",
+      "bytes": 17185
+    },
+    {
+      "path": "public/__pycache__/owned_transport.cpython-313.pyc",
+      "sha256": "ff4033cd57f53c6d0e808d4eda7ec5cd7de71478cea2f4ab4bafc51f665d2655",
+      "bytes": 8426
+    },
+    {
+      "path": "public/__pycache__/release.cpython-313.pyc",
+      "sha256": "8572c4a9ad2403eb317f34c96c1ae74963683350413023a58f938bee0b4714c4",
+      "bytes": 8954
+    },
+    {
+      "path": "public/__pycache__/test_mechanics.cpython-313.pyc",
+      "sha256": "4397360bf84648e457befb8dcc0bbbe0fbfac818237373c0978ac6071be11e28",
+      "bytes": 21533
+    }
+  ]
+}

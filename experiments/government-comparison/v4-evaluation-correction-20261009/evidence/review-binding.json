@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "51b17efecd6c6c56128022642ae30f8fd0c03cec",
+  "inputManifestSha256": "5270e1a6cba07ad79bb1979d0068f12fbe2bd98db4c4c8b561fac7320aced9ce",
+  "reviewerTask": "/root/v4_coverage_correction_frozen_review",
+  "sourceFilesMatched": 24,
+  "sourceWorkingAndStagingUnchanged": true,
+  "reviewerReportedHashesMatched": 24,
+  "privateReportSha256": "42a25aa9cbba525d32e6c2f79435a66d6935038f4aaa255cdd7a1f0c7d37b790",
+  "privateReviewArchiveSha256": "1b56b267e6eef2974037453e3c09afffc332ffd27a17b4bff509dfcfd7b2ecc6",
+  "fullReviewIsPrivate": true,
+  "scope": "Source review only; no product evidence or admission",
+  "terminalObservedUtc": "2026-10-09T00:39:33.0000000Z"
+}

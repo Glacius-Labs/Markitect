@@ -1,0 +1,10 @@
+{
+  "privateSourceArchive": "private-evaluation-source.zip",
+  "privateSourceArchiveSha256": "070d44d10ac5b321a15e9aead404359a92eb36f77f9cfed603c48752c602b6b7",
+  "privateReviewArchive": "private-review.zip",
+  "privateReviewArchiveSha256": "1b56b267e6eef2974037453e3c09afffc332ffd27a17b4bff509dfcfd7b2ecc6",
+  "privateReportSha256": "42a25aa9cbba525d32e6c2f79435a66d6935038f4aaa255cdd7a1f0c7d37b790",
+  "archiveScope": "Only new changed private correction and review files; original 3459-file backup not repeated",
+  "backupRemote": "research-backup",
+  "publicOriginPushForbidden": true
+}

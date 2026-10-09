@@ -54,8 +54,8 @@
       "reservedUtc": "2026-10-09T00:36:51.5097302Z",
       "reviewerTask": "/root/v4_coverage_correction_frozen_review",
       "activationObservedUtc": "2026-10-09T00:37:37.2281306Z",
-      "terminalObservedUtc": "2026-10-09T00:39:33Z",
-      "reservationToTerminalObservedSeconds": 161.4902698,
+      "terminalObservedUtc": "2026-10-09T00:39:33.0000000Z",
+      "reservationToTerminalObservedSeconds": 2512962.0,
       "privateReportSha256": "42a25aa9cbba525d32e6c2f79435a66d6935038f4aaa255cdd7a1f0c7d37b790",
       "programExecutionsSelfReported": 0
     }
@@ -68,7 +68,7 @@
   "productActors": 0,
   "status": "CLOSED at first terminal review; NOT READY; no further corrections/tests/actors",
   "sourceFreezeUtc": "2026-10-09T00:36:41.0858362Z",
-  "closedUtc": "2026-10-09T00:39:33Z",
+  "closedUtc": "2026-10-09T00:39:33.0000000Z",
   "remaining": {
     "fullTrials": 0,
     "focusedOfflineTestProcesses": 0,
@@ -76,7 +76,5 @@
     "reviewerActivations": 0,
     "productActors": 0
   },
-  "accounting": "All correction/setup/tests/reviewer work is common comparison preparation, not free help to any arm. Exact serving/tokens/cost/human oversight unknown; exact model execution timestamps and independent process audit unavailable.",
-  "terminalGrantElapsedSeconds": 777.0,
-  "archivalTimingErratum": "An initial closure duration used DateTime reparsing with current culture. Incorrect archival record retained separately; corrected from explicit invariant ISO timestamps. Reservation/deadlines/quota/source/review unchanged."
+  "accounting": "All correction/setup/tests/reviewer work is common comparison preparation, not free help to any arm. Exact serving/tokens/cost/human oversight unknown; exact model execution timestamps and independent process audit unavailable."
 }
