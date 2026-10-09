@@ -191,7 +191,11 @@ func (s *GitService) PrepareCandidate(ctx context.Context, r Request, overlay []
 		return Handle{}, fmt.Errorf("%w: source changed during prepare", ErrInvalidRequest)
 	}
 	h := Handle{ID: id, CWD: cwd, RepositoryRoot: r.RepositoryRoot, RepositoryIdentity: r.RepositoryIdentity, BaseSHA: r.BaseSHA, OverlayDigest: r.OverlayDigest, TaskID: r.TaskID, BaseDigest: baselineDigest}
-	s.states[id] = &workspaceState{handle: h, request: r, initial: initial, storage: storage, sourceDigest: binding.InventoryDigest, overlayDigest: digest}
+	prepared := &workspaceState{handle: h, request: r, initial: initial, storage: storage, sourceDigest: binding.InventoryDigest, overlayDigest: digest}
+	if err := writeOwnershipRecord(prepared); err != nil {
+		return Handle{}, err
+	}
+	s.states[id] = prepared
 	ok = true
 	return h, nil
 }
@@ -221,13 +225,8 @@ func (s *GitService) Harvest(ctx context.Context, h Handle) (Delta, error) {
 	if binding.OverlayDigest != h.OverlayDigest || binding.InventoryDigest != st.sourceDigest {
 		return Delta{}, fmt.Errorf("%w: adopting checkout changed", ErrInvalidDelta)
 	}
-	metadata, err := os.Lstat(filepath.Join(h.CWD, ".git"))
-	if err != nil || !metadata.IsDir() || metadata.Mode()&os.ModeSymlink != 0 {
-		return Delta{}, ErrInvalidHandle
-	}
-	dir, err := git(ctx, h.CWD, "rev-parse", "--absolute-git-dir")
-	if err != nil || !samePath(strings.TrimSpace(string(dir)), filepath.Join(h.CWD, ".git")) {
-		return Delta{}, ErrInvalidHandle
+	if err := validateCandidateGit(ctx, h); err != nil {
+		return Delta{}, err
 	}
 	if _, err := git(ctx, h.CWD, "merge-base", "--is-ancestor", h.BaseSHA, "HEAD"); err != nil {
 		return Delta{}, fmt.Errorf("%w: candidate lost base history", ErrInvalidDelta)
