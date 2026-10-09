@@ -137,6 +137,25 @@ def task_response_schema(invocation: dict[str, Any]) -> dict[str, Any] | None:
 def provider_response_schema(invocation: dict[str, Any]) -> dict[str, Any]:
     schema = json.loads(json.dumps(RESPONSE_SCHEMA))
     task_response_schema(invocation)
+    request = invocation.get("request")
+    if not isinstance(request, dict):
+        raise AdapterError("request evidence inputs are malformed")
+    supplied_refs: set[str] = set()
+    for field in ("scopeIds", "policyIds"):
+        values = request.get(field)
+        if not isinstance(values, list) or any(not isinstance(value, str) or not value for value in values):
+            raise AdapterError("request evidence inputs are malformed")
+        supplied_refs.update(values)
+    artifacts = request.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise AdapterError("request evidence inputs are malformed")
+    for artifact in artifacts:
+        if not isinstance(artifact, dict) or not isinstance(artifact.get("path"), str) or not artifact["path"]:
+            raise AdapterError("request evidence inputs are malformed")
+        supplied_refs.add(artifact["path"])
+    evidence_schema = schema["properties"]["evidenceRefs"]
+    if supplied_refs:
+        evidence_schema["items"]["enum"] = sorted(supplied_refs)
     bound_values = {
         "apiVersion": invocation["apiVersion"],
         "runId": invocation["runId"],
@@ -358,6 +377,8 @@ def make_prompt(invocation: dict[str, Any]) -> str:
             "- For executor and inference responses, include only relevant exact references from the supplied scopeIds, policyIds, "
             "or artifact paths.\n"
         )
+    if not verifier_evidence_refs:
+        evidence_role_contract += "- No evidence references were supplied; evidenceRefs must be an empty array.\n"
     report_contract = ""
     report_schema = task_response_schema(invocation)
     if report_schema is None:

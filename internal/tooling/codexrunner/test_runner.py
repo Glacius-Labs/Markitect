@@ -357,6 +357,64 @@ class CodexRunnerTests(unittest.TestCase):
                 self.assertNotIn("mismatched-value", schema["properties"][field]["enum"])
         self.assertEqual(runner.RESPONSE_SCHEMA, original_schema)
 
+    def test_provider_response_schema_limits_evidence_refs_to_request(self) -> None:
+        value = invocation("executor")
+        value["request"]["scopeIds"] = ["scope/z", "scope/a", "scope/z"]
+        value["request"]["policyIds"] = ["policy/review"]
+        value["request"]["artifacts"] = [{"path": "src/check.py"}]
+        original_schema = json.loads(json.dumps(runner.RESPONSE_SCHEMA))
+
+        schema = runner.provider_response_schema(value)
+
+        evidence = schema["properties"]["evidenceRefs"]
+        self.assertEqual(evidence["items"]["enum"], ["policy/review", "scope/a", "scope/z", "src/check.py"])
+        self.assertNotIn("maxItems", evidence)
+        self.assertEqual(runner.RESPONSE_SCHEMA, original_schema)
+
+        empty = invocation("executor")
+        empty["request"]["scopeIds"] = []
+        empty["request"]["policyIds"] = []
+        empty_schema = runner.provider_response_schema(empty)["properties"]["evidenceRefs"]
+        self.assertNotIn("maxItems", empty_schema)
+        self.assertEqual(empty_schema["items"], {"type": "string"})
+        self.assertIn("evidenceRefs must be an empty array", runner.make_prompt(empty))
+
+        malformed = invocation("executor")
+        malformed["request"]["policyIds"] = "policy/review"
+        with self.assertRaises(runner.AdapterError):
+            runner.provider_response_schema(malformed)
+        malformed = invocation("executor")
+        malformed["request"]["artifacts"] = [{"path": None}]
+        with self.assertRaises(runner.AdapterError):
+            runner.provider_response_schema(malformed)
+
+    def test_verifier_schema_allows_only_full_union_and_prompt_requires_exact_union(self) -> None:
+        value = invocation("verifier")
+        value["request"]["scopeIds"] = ["scope/z", "scope/a"]
+        value["request"]["policyIds"] = ["policy/review"]
+        data = b"candidate"
+        value["request"]["artifacts"] = [{
+            "path": "src/check.py", "mode": "0644",
+            "digest": "sha256:" + hashlib.sha256(data).hexdigest(),
+            "content": base64.b64encode(data).decode("ascii"),
+        }]
+        schema = runner.provider_response_schema(value)
+
+        self.assertEqual(
+            schema["properties"]["evidenceRefs"]["items"]["enum"],
+            ["policy/review", "scope/a", "scope/z", "src/check.py"],
+        )
+        prompt = runner.make_prompt(value)
+        self.assertIn("evidenceRefs must equal the complete sorted unique union", prompt)
+        self.assertIn('["policy/review","scope/a","scope/z","src/check.py"]', prompt)
+
+        empty_verifier = invocation("verifier")
+        empty_verifier["request"]["scopeIds"] = []
+        empty_verifier["request"]["policyIds"] = []
+        verifier_prompt = runner.make_prompt(empty_verifier)
+        self.assertIn("evidenceRefs must equal the complete sorted unique union", verifier_prompt)
+        self.assertIn("exact required list is []", verifier_prompt)
+
     def test_typed_read_only_reviewer_report_preserves_semantic_failure_and_uncertainty(self) -> None:
         value = review_invocation()
         prompt = runner.make_prompt(value)
