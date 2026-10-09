@@ -1,0 +1,33 @@
+{
+  "key": "v4-prospective-oracle-outcome-independent-review-20261009",
+  "issuedUtc": "2026-10-08T23:57:05Z",
+  "notAfterUtc": "2026-10-09T00:12:05Z",
+  "maxOverallWallSeconds": 900,
+  "freshIndependentReviewerActivationsMax": 1,
+  "perReviewerWallSeconds": 600,
+  "maxConcurrentReviewers": 1,
+  "newProductActors": 0,
+  "providerAPICalls": 0,
+  "codexCLICalls": 0,
+  "appserverCalls": 0,
+  "applicationServerStarts": 0,
+  "fullTrials": 0,
+  "sourceBaseline": "ed9c5b33434219c64a39366b7d1b1cd30fc64884",
+  "publicPreparationSha": "c7d55105a1f0183d6517e263d15c0fadef7d4b2d",
+  "privateArchiveSha256": "b125e404f723d6c91223762dafa4c7d612a3f234aeebbe7d707f64511d4f3030",
+  "kind": "One independent prospective common-study setup review, counted separately from all arms and from fulltrial ceiling; not actual study cell or capability diagnosis",
+  "reason": "Known concrete oracle-applicability/restart-representation errors and Task5clarification/Task6equivalence require independent requirement-bound review before new matched comparisons. Candidate-independent review can finish while Design is active.",
+  "source": "Direct user Scientist tests/continues; finite authorized research and independent-review requirement in evaluation.md",
+  "conditions": [
+    "Reserve exactly one fresh fork_turns=none reviewer before native activation; no model/reasoning overrides, no childactors or followup/retry activation. Failedstart consumes1.",
+    "Only reviewed frozen publicTasks1-6/map/checks/rubric/commonoutcomes/q1intent axes and unchanged prospectiveprivatebundle. Do not include prior armresults/DesignWIP/otherchats/agentinventory/globalprocessreads. Sharedfilesystem boundary cooperative.",
+    "Reviewer privately verifies each holdout assertion derives solely from declared currently released requirements, prospective atomicity/restart fixes, Task5 oldTask4binary/sameDB/newlimit clarification, and Task6 independent mutationequivalence rule. Sharedoutcomes neutral to method; method/Designmigration criteria separate.",
+    "Read-only source review only: no program/test/build/server/CLIexecution, product/fixture/oracle edits, modelprovider/APIcalls, candidate measurement or scoring. Do not repair findings in this grant. No new general framework or capability work.",
+    "Reviewer output stored only in own Scientist evaluation evidence; public/rootcallback gives verdict, declaredrequirement IDs, exact reviewed hashes, concrete applicability/blocker metadata, usageunknowns and counts, never privateoracle content/solutions/testvectors. Privateverbatim report/ZIP stays away from implementers.",
+    "Record requested inherited actualprofile uncertainty, actual activation/start/end and elapsed, known usage only; no price/token estimates. Count this review as shared preparatory effort for every proposed comparison, not free assistance to one arm.",
+    "At deadline or first terminal result close with no retries/newquota; preserve all old37/115/264bindings, runtimebindingpacket and privatebundle. No blanket restart or waiting for Root approval within already authorized single review.",
+    "This grant does not admit any cell or allocate fulltrials. After review hold for exact clean Design callback/jointfreeze or concrete materialfinding; no generic preparation/diagnostic loop."
+  ],
+  "status": "Dispatched once; one fresh independent reviewer authorized, no actual cells",
+  "usage": null
+}

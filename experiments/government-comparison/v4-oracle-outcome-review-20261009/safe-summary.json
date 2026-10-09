@@ -1,0 +1,27 @@
+{
+  "status": "NOT READY for prospective scoring; NOT ADMITTED",
+  "reviewKind": "One independent read-only common-study setup review",
+  "publicPreparationSha": "c7d55105a1f0183d6517e263d15c0fadef7d4b2d",
+  "privateArchiveSha256": "b125e404f723d6c91223762dafa4c7d612a3f234aeebbe7d707f64511d4f3030",
+  "findings": [
+    {"requirementId":"validated-order","severity":"high","applicability":["greenfield","brownfield"],"metadata":"Declared requirement coverage incomplete; source-review finding only"},
+    {"requirementId":"atomic-inventory","severity":"none","applicability":["greenfield","brownfield"],"metadata":"Prospective correction is applicable to released requirements; no runtime validation"},
+    {"requirementId":"durable-state","severity":"medium","applicability":["greenfield","brownfield"],"metadata":"Prospective restart representation is consistent; separate operator same-database identity evidence remains required"},
+    {"requirementId":"durable-lifecycle","severity":"high","applicability":["greenfield","brownfield"],"metadata":"Declared requirement coverage incomplete; source-review finding only"},
+    {"requirementId":"current-limit-and-compatibility","severity":"critical","applicability":["greenfield","brownfield"],"blocker":true,"metadata":"Declared prior-stage accepted-order compatibility obligation is not covered; declared parity coverage also incomplete"},
+    {"requirementId":"controlled-repair","severity":"deferred","applicability":["greenfield","brownfield"],"blockerUntilGateSatisfied":true,"metadata":"Plan respects independent candidate-specific equivalence gate; no mutation/equivalence execution evidence"},
+    {"requirementId":"verification_quality","severity":"high","applicability":["all cells"],"blocker":true,"metadata":"Reliable attribution between product failures, evaluation/infrastructure errors and NOT RUN remains unestablished"}
+  ],
+  "scoring": {"sharedOutcomesMethodNeutral":true,"methodConformanceSeparate":true,"conventionalDesignArtifactDuty":false,"migrationSeparateReadinessAxis":true},
+  "repairs":0,
+  "testBuildServerExecutions":0,
+  "productActors":0,
+  "fullTrials":0,
+  "actualFreshReviewerActivations":1,
+  "servingModel":null,
+  "tokens":null,
+  "providerCost":null,
+  "humanAcceptance":null,
+  "privateReport": "Full structured terminal report retained only by Scientist; public metadata deliberately excludes private assertions, vectors and implementation details",
+  "interpretation": "Static applicability and coverage assessment of the frozen evaluation inputs; no candidate outcome, actual capability, comparative winner or admission proof"
+}

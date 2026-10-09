@@ -1,0 +1,174 @@
+{
+  "recordedUtc": "2026-10-09T00:03:36.7086080+00:00",
+  "kind": "Postreview read-only byte and reported-hash reconciliation",
+  "inputChecks": [
+    {
+      "visibility": "public",
+      "path": "brief.md",
+      "expectedSha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "actualStagedSha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "reviewerReportedSha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "architecture.md",
+      "expectedSha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "actualStagedSha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "reviewerReportedSha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "task-requirement-map.json",
+      "expectedSha256": "2a6473f03df9aace3c7222a61e0078d97aabdf3d9a3d908ea3f1c36b5962f53c",
+      "actualStagedSha256": "2a6473f03df9aace3c7222a61e0078d97aabdf3d9a3d908ea3f1c36b5962f53c",
+      "reviewerReportedSha256": "2a6473f03df9aace3c7222a61e0078d97aabdf3d9a3d908ea3f1c36b5962f53c",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "checks.py",
+      "expectedSha256": "783561065c3bc6c814aed3ba5c943710442dbbee4502ad7db6b58eed4dabeccf",
+      "actualStagedSha256": "783561065c3bc6c814aed3ba5c943710442dbbee4502ad7db6b58eed4dabeccf",
+      "reviewerReportedSha256": "783561065c3bc6c814aed3ba5c943710442dbbee4502ad7db6b58eed4dabeccf",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "rubric.json",
+      "expectedSha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+      "actualStagedSha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+      "reviewerReportedSha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "common-outcome-record.json",
+      "expectedSha256": "faf63ce63336e9df81646822181af74c995853482b838b254773a68b143f20ab",
+      "actualStagedSha256": "faf63ce63336e9df81646822181af74c995853482b838b254773a68b143f20ab",
+      "reviewerReportedSha256": "faf63ce63336e9df81646822181af74c995853482b838b254773a68b143f20ab",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "q1-intent-setup-v1.md",
+      "expectedSha256": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e",
+      "actualStagedSha256": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e",
+      "reviewerReportedSha256": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "holdout-procedure.md",
+      "expectedSha256": "795fd4bac98559ea7c8a1c2066deaa3f198a50406ae0b2f9d68c34e67ab6ac7f",
+      "actualStagedSha256": "795fd4bac98559ea7c8a1c2066deaa3f198a50406ae0b2f9d68c34e67ab6ac7f",
+      "reviewerReportedSha256": "795fd4bac98559ea7c8a1c2066deaa3f198a50406ae0b2f9d68c34e67ab6ac7f",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "tasks/01-create-order.md",
+      "expectedSha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "actualStagedSha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "reviewerReportedSha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "tasks/02-reserve-stock.md",
+      "expectedSha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "actualStagedSha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "reviewerReportedSha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "tasks/03-persist-state.md",
+      "expectedSha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "actualStagedSha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "reviewerReportedSha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "tasks/04-order-lifecycle.md",
+      "expectedSha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+      "actualStagedSha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+      "reviewerReportedSha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "tasks/05-change-limit.md",
+      "expectedSha256": "b68ccd173891692050c64101af47754f1213e745a63071653b30b8d9d6ccf17f",
+      "actualStagedSha256": "b68ccd173891692050c64101af47754f1213e745a63071653b30b8d9d6ccf17f",
+      "reviewerReportedSha256": "b68ccd173891692050c64101af47754f1213e745a63071653b30b8d9d6ccf17f",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "public",
+      "path": "tasks/06-repair-regression.md",
+      "expectedSha256": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a",
+      "actualStagedSha256": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a",
+      "reviewerReportedSha256": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "private",
+      "path": "holdout-plan.json",
+      "expectedSha256": "b29e61c8a753290e557cffc7fd6ab32c30e973835e79678ebf8865ee14e33ae9",
+      "actualStagedSha256": "b29e61c8a753290e557cffc7fd6ab32c30e973835e79678ebf8865ee14e33ae9",
+      "reviewerReportedSha256": "b29e61c8a753290e557cffc7fd6ab32c30e973835e79678ebf8865ee14e33ae9",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "private",
+      "path": "holdout_checks.py",
+      "expectedSha256": "dd276535cb7e47950da1174ba0549ad58a9d9a87c00ffe94ba9d80570cd28aea",
+      "actualStagedSha256": "dd276535cb7e47950da1174ba0549ad58a9d9a87c00ffe94ba9d80570cd28aea",
+      "reviewerReportedSha256": "dd276535cb7e47950da1174ba0549ad58a9d9a87c00ffe94ba9d80570cd28aea",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "private",
+      "path": "task6-equivalence-plan.json",
+      "expectedSha256": "50385660df977fe07ee76b5b67633c08ee18e03e79f4bf63fd385bd4e97d4e52",
+      "actualStagedSha256": "50385660df977fe07ee76b5b67633c08ee18e03e79f4bf63fd385bd4e97d4e52",
+      "reviewerReportedSha256": "50385660df977fe07ee76b5b67633c08ee18e03e79f4bf63fd385bd4e97d4e52",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    },
+    {
+      "visibility": "private",
+      "path": "test_oracle_mechanics.py",
+      "expectedSha256": "ff55a23ae0bd0ed08143868cd7261790a0a6f21a3aea131a8d93ede1a0c47598",
+      "actualStagedSha256": "ff55a23ae0bd0ed08143868cd7261790a0a6f21a3aea131a8d93ede1a0c47598",
+      "reviewerReportedSha256": "ff55a23ae0bd0ed08143868cd7261790a0a6f21a3aea131a8d93ede1a0c47598",
+      "stagedMatchesExpected": true,
+      "reviewerReportedMatchesExpected": true
+    }
+  ],
+  "inputManifestSha256": "07ab1aa0e503b15a3a44d124e253f52076b7cde3e3c97717506b11fd56d73734",
+  "reviewerReportedManifestSha256": "07ab1aa0e503b15a3a44d124e253f52076b7cde3e3c97717506b11fd56d73734",
+  "manifestReportedMatches": true,
+  "privateReportSha256": "d6d152cfb2db663db859c19902d52f3a7022537305473f0c7403ad2636dd2054",
+  "reportEncoding": "Complete structured transcription of terminal reviewer JSON; formatting differs from native message",
+  "noRepairOrRerun": true
+}

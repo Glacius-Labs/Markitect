@@ -1,0 +1,50 @@
+{
+  "createdUtc": "2026-10-09T00:05:30.8182276+00:00",
+  "scientistParentSha": "ed9c5b33434219c64a39366b7d1b1cd30fc64884",
+  "sourceBinding": "Exact working bytes; packet .gitattributes preserves bytes in Git",
+  "status": "Terminal independent source review; NOT READY/NOT ADMITTED",
+  "privateReportSha256": "d6d152cfb2db663db859c19902d52f3a7022537305473f0c7403ad2636dd2054",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "sha256": "8b9c3028d6467ff3be7c793141927841d70f47f52d0590677438f488ca154992",
+      "bytes": 9
+    },
+    {
+      "path": "evidence/authorization-grant.json",
+      "sha256": "37189271ba5351a395008060031145c1d26207434a001d4b9b56791f986c5607",
+      "bytes": 3451
+    },
+    {
+      "path": "evidence/ledger.json",
+      "sha256": "15efd74e3e32db6046097abc25500573f3daf143b5dc624a6629f40d2f7178de",
+      "bytes": 2807
+    },
+    {
+      "path": "evidence/preservation-check.json",
+      "sha256": "824bca7ea6d32153b0800e2957cdffdb63c2bc2f225b8bac5d27e0a236b6ed06",
+      "bytes": 51779
+    },
+    {
+      "path": "evidence/review-hash-reconciliation.json",
+      "sha256": "0f4498e826d70726ab496aa1fa56a34198c381ba35495cc716749d12e344f122",
+      "bytes": 8955
+    },
+    {
+      "path": "evidence/review-input-manifest.json",
+      "sha256": "07ab1aa0e503b15a3a44d124e253f52076b7cde3e3c97717506b11fd56d73734",
+      "bytes": 3853
+    },
+    {
+      "path": "handoff.md",
+      "sha256": "03172c2a389526da18e80bd9e398031298d3aee43c1dd11c5546fd86a7baf335",
+      "bytes": 5609
+    },
+    {
+      "path": "safe-summary.json",
+      "sha256": "a58d57d6ee85b9e863381e08c56db8ec845a52e7c2bbe03641562bae46ab3ff1",
+      "bytes": 2624
+    }
+  ],
+  "selfExcluded": "evidence/source-manifest.json"
+}

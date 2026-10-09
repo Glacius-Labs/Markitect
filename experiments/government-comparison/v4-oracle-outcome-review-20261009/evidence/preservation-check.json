@@ -1,0 +1,958 @@
+{
+  "checkedUtc": "2026-10-09T00:01:07.4502038+00:00",
+  "runtimePacketFiles": 37,
+  "acceptedPreparationFiles": 37,
+  "olderEvidenceFiles": 115,
+  "originalV3PinChecks": 264,
+  "privateOriginalFiles": 4,
+  "stagedReviewInputFiles": 18,
+  "mutations": 0,
+  "method": "Read-only shell file/hash operations; no candidate/oracle/test/build/server execution",
+  "runtimeAndOldEvidenceBindings": [
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\.gitattributes",
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\candidate-admission.json",
+      "sha256": "799f13d502e1687a36f62d4f42492971dc61a38540a9bd3f6e46eace6e092c81"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\design-contract-admission.json",
+      "sha256": "c4a19be8c8ab805113798c50d1222404c5f4db0c53dcee344b325db1c9a15be2"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\dispatch-config.json",
+      "sha256": "447c1df2141a1de5dc46be40a991d8e08b2c127759e9ae35daf8190440f8bd75"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\archival-events.json",
+      "sha256": "0544bf75d4851ad6baa9c586fc632974d46bf986cc72fad754521e23cee0ae9c"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\audit-root-binding.json",
+      "sha256": "0001bc8eed0cc61bf8012bbb0962824751795dedf2d54585c59b0c91f7718c35"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\authorization-grant.json",
+      "sha256": "e667a77f107c29139ba67acb76cab8a0f3ee2c08033eb2b047f0516535b3e2d6"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\classic-build.log",
+      "sha256": "4cd84ef6d6dde9b5c2cad1669fc03ca67d03cabe3e86e0168c5747a08edc8d52"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\classic-context.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\classic-context.stdout.log",
+      "sha256": "ae019e12d5e5fce2dc7fbcad9ad68091f2249ca9b3f6426d4a2c2312846247fb"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\classic-main-binding.json",
+      "sha256": "132da3a0e856b8a097f0181b7a434bbb992dd160f8e88fcde11be58998080029"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\classic-main-bound-source.partial-1.zip",
+      "sha256": "ae53b185835ff3526d2f213529ae6f7d7b95a1e8b1a22a7d8a6a2fdae15a8991"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\classic-main-bound-source.zip",
+      "sha256": "668a832da07f42e8fa1217ad9e2191a620c5fa4bfea0fe4b52bb8f7a61df18d7"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\classic-model.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\classic-model.stdout.log",
+      "sha256": "1edf62a784910fde5ff05fe703e32738b6e2074c709dd510cc5f7c1f2e97d9e9"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\classic-modules.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\classic-modules.stdout.log",
+      "sha256": "89cd2d6b6e0b6cc4e272364f90d8c4ba7c9f13c1168a8c42529e82438c15897f"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\existing-toolchain-build-grant.json",
+      "sha256": "8ca399c655df4e725cc723c317694872c9441ec20bcdf5363ff9661cb0eaad23"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\existing-toolchain-build.json",
+      "sha256": "024fb5e9e0012570b00dd045fc3b55852945dcb8d9c6b4af626a290f978f5b82"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\existing-toolchain-build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\focused-test-1.log",
+      "sha256": "58529ac039452152c85f66b49660d05de1e07673813cc1a6eb8a45efb6f5885b"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\focused-test-2.log",
+      "sha256": "ae66e18a299ea5b80df9ca7925dbe3a530aa398bf4c780ff0f6563776e76397e"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\human-callback-authorization.json",
+      "sha256": "e34d9cec85483d9cc1f02366146cc8c15f74b392ba22c46b910d1efd80cd4415"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\ledger.json",
+      "sha256": "aced6a8e65affe9c526d1fcd232d49fee7872580b8d43a6c1187fd8d09a9e365"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\preservation-check.json",
+      "sha256": "d94b5b7ff81525668da14d32bca60bf9ba5f58153c90136f1e1696f7bcddf058"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\handoff.md",
+      "sha256": "a7cd7b7333e791763cb25a3fa71c9a92e10946604de4b8e87043da274239cb0f"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\helpers\\bind_metadata.py",
+      "sha256": "bb24f8b5c72ebec51f83ba7f24faa1590df22f5feb60abb04209999b2b7e6df5"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\helpers\\build_existing.py",
+      "sha256": "a2949388185dd6438da77c38bb9905d024af8d8637d7ef72452387b275c4568a"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\helpers\\deadlines.py",
+      "sha256": "7e025a3e49625134abaad80036832746cb2b21f2e1bf976387f872ccb2437165"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\helpers\\dispatch_gate.py",
+      "sha256": "7d1cf2a8813e0d447923dd62a7621bddcef9029aa00a283c22f405adadbe704e"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\helpers\\dto_preflight.py",
+      "sha256": "7e3153729a6ef7c1c82ba828ea8c37506d26e30ab553e7d0d37d0582ef5528ad"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\helpers\\native_boundary.py",
+      "sha256": "470fd1f7d3dadeb20e53af1762ccd683805b6bc8d5a951b1f2c44a3f1b617122"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\helpers\\owned_transport.py",
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\helpers\\run_focused.py",
+      "sha256": "015eacf7cc7a88fde1b605cac2925bc682ecf0b09ab4dab953e70af728ad0454"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\helpers\\test_binding.py",
+      "sha256": "2a4c42852015157ecc690b4f65836d113ba4be7d27423868d448555553d9a3a5"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\seal_bindings.py",
+      "sha256": "f711d159265d0b726d915daebcedd1498cc1b86c45a21f70f3efd05c78d48aff"
+    },
+    {
+      "group": "ed9-runtime",
+      "path": "experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence\\source-manifest.json",
+      "sha256": "0bb7af63eccbefaa18b029e8fbc188f8baabb30d2c05ea305ade41535be9e5e6"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/.gitattributes",
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/continuation-anchor.md",
+      "sha256": "5a17e617fb624e60cb9b07df658ba41e9a84e20930ecd3e222f3965d92605667"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/evidence/authorization-grant.json",
+      "sha256": "cb7f9cfdb02b4a5e7504e1017c89b1c5f085483a8ca1eb2e0e8e7023b6e459cd"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/evidence/classic-main-contract-bindings.json",
+      "sha256": "9f4cb16ee03bcf1c2219913d545d660d7b0bbf9e377e839aea7bf5578d166ccd"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/evidence/focused-test-1.log",
+      "sha256": "d008f6c7703205399243a7a222afdebd26a83b0559f1e7e4c7c24a9edc8d76ed"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/evidence/focused-test-2.log",
+      "sha256": "5608c2e17d805c0bbeaf424b2d179a9cd98b0769ce56795449e5e61c8977661d"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/evidence/ledger.json",
+      "sha256": "f9c297019a94dcef9980bb1990471aa0374f7be03896c65f0752a602db243d30"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/evidence/private-archive-manifest.json",
+      "sha256": "d6cd6bab859c92f7a967a8899f62dc583e95b34f92f1cc70462be12e191dc518"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/evidence/private-preparation.zip",
+      "sha256": "b125e404f723d6c91223762dafa4c7d612a3f234aeebbe7d707f64511d4f3030"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/evidence/readonly-preservation-check.json",
+      "sha256": "af166ff557585fee91834533321a3325f745240e1012adf95c72d65a889cf429"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/evidence/source-lineage.json",
+      "sha256": "55d1ef567ebcba0a233f36caa8b6cd726d4d49c9d126ce3ce1e108726558e988"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/handoff.md",
+      "sha256": "c3721ac3e2ab3c21e49c7efbbacfdb49860371e435c69ad601ec11c287214337"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/protocol-draft.md",
+      "sha256": "b8d7abb528576968bfe063d20865630d24c20cb51fc35ad44d9967f2227bd83f"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/brownfield-provenance.md",
+      "sha256": "155f6f736adf4d48b71074f74a9221d9f8ac796a938b5b8b0650f741d59eb548"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/candidate-admission.json",
+      "sha256": "fc743e339885ac0cc25b3409c23a1497e075786730fd9f42f0b0cd64de33e856"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/checks.py",
+      "sha256": "783561065c3bc6c814aed3ba5c943710442dbbee4502ad7db6b58eed4dabeccf"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/common-outcome-record.json",
+      "sha256": "faf63ce63336e9df81646822181af74c995853482b838b254773a68b143f20ab"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/common-profile-proposal.json",
+      "sha256": "d153c97695ee95521331606ce413950df7c8c8f47f69c8441853fc3499883552"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/deadlines.py",
+      "sha256": "7e025a3e49625134abaad80036832746cb2b21f2e1bf976387f872ccb2437165"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/dto_preflight.py",
+      "sha256": "e6bba598c515925ce584342190b18f5fb7f4a67054e66e55d1c5572cb43e975d"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/holdout-procedure.md",
+      "sha256": "795fd4bac98559ea7c8a1c2066deaa3f198a50406ae0b2f9d68c34e67ab6ac7f"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/oldschool-workflow-brief-20261008.md",
+      "sha256": "5b9dddff5d07d9cb1e6427c43e46f1259e9fb49fd030fc0a6e1e44b21e60aadc"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/owned_transport.py",
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/q1-intent-setup-v1.md",
+      "sha256": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/release.py",
+      "sha256": "15df0312e5c1150e685a44a49d969766f20bf6194f7b0b48cf2a80605f23d291"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/rubric.json",
+      "sha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/task-requirement-map.json",
+      "sha256": "2a6473f03df9aace3c7222a61e0078d97aabdf3d9a3d908ea3f1c36b5962f53c"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/tasks/01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/tasks/02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/tasks/03-persist-state.md",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/tasks/04-order-lifecycle.md",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/tasks/05-change-limit.md",
+      "sha256": "b68ccd173891692050c64101af47754f1213e745a63071653b30b8d9d6ccf17f"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/tasks/06-repair-regression.md",
+      "sha256": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/public/test_mechanics.py",
+      "sha256": "9ee8088e7e61932acf67a8fbae4d1a49b7e3999571f2feff7fbb637f060b6603"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/v4-preparation-20261009/evidence/source-manifest.json",
+      "sha256": "e4b2892a3f13c5f6c0b12b69d5dda92d121760dacdca17ce98a77479e6c03148"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/.gitattributes",
+      "sha256": "1ea2ad6ebdae6cf826a0902e89e916ee21588a03bba86d1ba837c129bc7650c7"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/actor-instructions.md",
+      "sha256": "11118d17e4509557ea2e7074f762f5f804663e83039045f9296b245df9c6a64f"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/authorization-grant.json",
+      "sha256": "99f16336b02f91eee5787cc21c0660112cb656c6ec5199748a126c43f5f33d2a"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/base-study-report.md",
+      "sha256": "d564f7980d431429dea682be642daee3ceb229390c40c592fb9d9c3a5d4be814"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/bridge-instructions.txt",
+      "sha256": "46fb7f470ee2f03549ab65f63b0c149fd55e2239fc83a71728a7c66e154c6d0e"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/brownfield-process-cleanup.json",
+      "sha256": "5d7722db69f48c24be2cd385910850cc0a787f58a732b9a0057eaf80b4af0dba"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/callbacks.jsonl",
+      "sha256": "72152028babb82d7c9fbd4460f4a9313196f40a1e24cd58e09058c6551f43612"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/capability-result.json",
+      "sha256": "f8d2a32952bd2e7c8fe58d5f6ded303ba25c30529db6601311041c71758e64c7"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cell-starts.json",
+      "sha256": "8aad481f0b660586060f81a961c1080263f838fc7b69179570dd084a47722602"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-brownfield/archive-manifest.json",
+      "sha256": "18ba3e89fa2c3e04f2ba755af58fa74801be5332a7ab8125ae0d1222af12aba1"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-brownfield/base-or-final-committed.bundle",
+      "sha256": "45757688ba5475ce8addfa63670b6ecc092a56669a49ae894d236779b82ebe5e"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-brownfield/contamination.json",
+      "sha256": "8dec57533c136ae10bdf5fe961b8f708b4202e0441c9cf728cff5b01103bc32a"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-brownfield/diff.zip",
+      "sha256": "abb240b47ef886accf5e62caf516c5c1ef0a290f99fa61f35a72a3221da67edf"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-brownfield/evidence.zip",
+      "sha256": "03b5bbb255a52ac524c99b4bf1e24ee310dbf86c8f0bfa8e1467b4cd0d3ee8ed"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-brownfield/worktree.zip",
+      "sha256": "5c5b1fdde95662a6e99df34921510523696757648cc5741fec365be406254ba1"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-greenfield/archive-manifest.json",
+      "sha256": "c8129f753ca15f09d260a58ef974b68f9575d90911bce727b67c09416e4f8c00"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-greenfield/candidate.bundle",
+      "sha256": "f712b813ae721ed5670e13688b4aa244f65cee1ef70577723d7cc46e53738f77"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-greenfield/evaluator-binding-postcheck.json",
+      "sha256": "20cf30b0815a89ac18dd1a47f96a0d957ddf59ead34d244553ceb6782a5efce4"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-greenfield/evaluator-errata.md",
+      "sha256": "105d4c72bd9fa269da80be177d8a3221d676dd644e289f8f07439c020ffec003"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-greenfield/evidence.zip",
+      "sha256": "b5907636d0a56c3d097da7fb91889c7c75aca7ababb2da8017849d0bcb0ea651"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-greenfield/final-evaluation.json",
+      "sha256": "67b998cb075c8728f34429e76dddc229a1a3bde26b0dc6d4d5b421abf09f4263"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-greenfield/stage-1-result.json",
+      "sha256": "ecc20fec8df9fd76e1c8699888f60de02f851f2501261c3f9a549f54812bb208"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-brownfield/archive-manifest.json",
+      "sha256": "9777b0262fe1890f7b1095c6342f37907e6cbb76bb7f1f1e52f28ac47fde5758"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-brownfield/base-or-final-committed.bundle",
+      "sha256": "d99533b903606cbfcf3a3a93f889ab1b688b74ba98e388577ca08f3faeaaa72f"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-brownfield/contamination.json",
+      "sha256": "f2d6a6aa4aab9ea428562baf57ba66a77e1a59fa3e47f543ab8d1867b4525cd0"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-brownfield/diff.zip",
+      "sha256": "148ba776bd5c2b085df27c1c5356f9b7d0fe8f6c8f217848b3557bbb1113a83e"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-brownfield/evidence.zip",
+      "sha256": "3dc0c5632c760e5497cfc47aafe3341eb348940c92705a2abbe8cdc5e24fa6b4"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-brownfield/worktree.zip",
+      "sha256": "3cbf6cc8e68d852602e69c061fdaaf990eceffdc789d8c2e0a23ce539256eed7"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-greenfield/archive-manifest.json",
+      "sha256": "56bc2141b85898ccce06fcc32e44e5bef80d893610e0c9f78ad48c7bf1fc1b03"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-greenfield/candidate.bundle",
+      "sha256": "3a7c43c274f32b302505b9e15647354b81d973bb951a221b259f6e6fbaa56f10"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-greenfield/closure-reconciliation.json",
+      "sha256": "34c485b6080c4933473c55f3cbd2cc1020e135fdb84322ce9ca8b4c2366d9b28"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-greenfield/evidence.zip",
+      "sha256": "38a040ce7f9489d6e6ea6e671e1c3f7c682e78d0591ee308fe81e7bab7feef7c"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-brownfield/archive-manifest.json",
+      "sha256": "1e3cd2634619eafba80409907264822db2abcddee12b0b9051b97bcf90243967"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-brownfield/base-or-final-committed.bundle",
+      "sha256": "d16fa21fd1b82853cedfd17bb3adcaf67a565d0e7946c077e6b1b4963385c9b0"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-brownfield/contamination-scope-errata.md",
+      "sha256": "69389a867c9100a4c5c006ad50ff3d7f1258c884b9127cfa9e84cf626590689d"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-brownfield/contamination.json",
+      "sha256": "5f0859c054cad80651293ad53237ae3ec0457d4d3aaf1faac12474cb110b96fc"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-brownfield/diff.zip",
+      "sha256": "abb240b47ef886accf5e62caf516c5c1ef0a290f99fa61f35a72a3221da67edf"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-brownfield/evidence.zip",
+      "sha256": "e0e836fbe8e2da52b07c1d2a708a8b3dc3bbd9a399f758f51226f5c84cd9edb7"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-brownfield/orphan-executor-response-observation.json",
+      "sha256": "1b116de48a40bf8503ea47a60d429391f62c99a1b5c9b8ea746963268a99e772"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-brownfield/worktree.zip",
+      "sha256": "7f632ea41a1249402bd530337ed0fc0b2aad463168ef5ae8b7d31252b865bdf3"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-greenfield/archive-manifest.json",
+      "sha256": "094bd1e40143622e4ba149fb6679a4b95964373eae4d27d28d325f541255ad96"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-greenfield/candidate.bundle",
+      "sha256": "518062c8c800ba1b783a57026d940bab4f2d392aadef613c477f302fe25ec514"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-greenfield/evidence.zip",
+      "sha256": "5a3a0624fc56ae576360a6771c0d28ea7b1732c49debf42642fe4f1cb7595bc8"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/closed-brownfield-handoff.md",
+      "sha256": "b2ffe3139c580dd7dbc1f6cd01aa6a978785edb214228895782f9bf688f35381"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/closed-greenfield-errata.md",
+      "sha256": "e0e2b5d217397b3296a24f1062e1eac1efeb2985a7a8060520d19cb649df496c"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/closed-greenfield-handoff.md",
+      "sha256": "7aca2c644c0b5aa5356fbb53e888f5e870655096d528bd76879c993f82b8e540"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/design-migration-planning-addendum.md",
+      "sha256": "cd2731fca863f92ff1a26531b2a69351d45cd1ffc971c0030235aad88b746faf"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/dispatch-events.jsonl",
+      "sha256": "819483242b92aae1154832532d27dddc6ceda6064cce68a3574599e42bceb698"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/ephemeral-result-addendum.md",
+      "sha256": "1dfb2ab9f03c2766371b28a0e6dd1142d4ccf3ad2c30343ef79e1e9f557e354a"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/freeze-review.md",
+      "sha256": "7b01cbffec74701b946246ae08ef01f13d5f2a4f65dcf915576b745eefb32cd3"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/freeze.json",
+      "sha256": "18fd3a2af9356fd83c9b73c9fdfd1b67976146565659366959ca3b415627a484"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/interventions.jsonl",
+      "sha256": "0505275afb8bbc9efb21bafc40a8d3102998c4cada1eabc22282a17edfd60748"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/ledger.json",
+      "sha256": "e957e3b8448648647c8ebbf2d40a1d7c3a22a60d1af20378bf160bcd3eadb390"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/method-instructions.json",
+      "sha256": "5ad39a430efabfc92c9148b94feda9e232ab179bd44fa5442827de65889a5959"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/native-configuration.json",
+      "sha256": "8ce69505dcbe7837d5601651a393a63363b9af4d93733af60e8cab179dff8156"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/native-spawn-requests.json",
+      "sha256": "0a562d9295faaedfb8666cc9fb762beb41d5bcaa94193cebd619df43e33c999f"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/native_mailbox.py",
+      "sha256": "c2fb4b38ef61773735535bcb719b8de6d8804ada7891a82b100e4d9fbb09e912"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/pending-helper-requests.json",
+      "sha256": "2f46ed31c3f64b9cd9e04ddbf3b2839b95efa8148753d1005cc27be506ea3b04"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/prepare-posthoc.py",
+      "sha256": "6494de7ae8ae95bcf044da3cde4a8f468e156e8a971f1b395591b4b7b9527bcf"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/preseal-freeze-initial.json",
+      "sha256": "18fd3a2af9356fd83c9b73c9fdfd1b67976146565659366959ca3b415627a484"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/product-protocol-compatibility.json",
+      "sha256": "3ebd44b170048cb2379a114c34f38fc338ebd3e5c79c91b70f7eaf52f005b2d5"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/prospective-repeat-proposal.md",
+      "sha256": "df630a7abd4e3b0900e0115f3deb7e631b08b5d4781c1ea165ebb722d2fa8c75"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/protocol-review.md",
+      "sha256": "455f3e53fd768bace0124ce2fef8d7d422b9190b02cda92aaba764e9682bcacf"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/protocol.md",
+      "sha256": "78cd11a0578f8e708258d794de8235ca31dc1138b6ce0f79eb8446d7f11098ce"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/classic-brownfield-v3-20261008-task1-primary.json",
+      "sha256": "cb0516f9f0c5bd153bee48cb3415860d4e80c2ae4fac575b8a8515bce29e5451"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/classic-greenfield-v3-20261008-task1-evaluator.json",
+      "sha256": "1d5cf142d91fe1dc530b885d0f1f007604127051ade5df6a3f6bf92cac0ecd09"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/classic-greenfield-v3-20261008-task1-primary.json",
+      "sha256": "d269f13e2fe7a52c653ca7312f5f80dec86ff7cf48ce49fda4ca9391baa2e707"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/conventional-brownfield-v3-20261008-task1-primary.json",
+      "sha256": "7bf6ba9225cd0159b0ca7889c51454bed4fd1e9cf30bebefb6c187a86a8aab0a"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/conventional-brownfield-v3-20261008-task2-primary.json",
+      "sha256": "8dfc5a2e5ab21f8a6828fb1c327fe6e1331e98b37736b888731ada881e172fb7"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/conventional-greenfield-v3-20261008-task1-primary.json",
+      "sha256": "042823a1d3e3e56b1d0a8ca63d531cbba80e4bdc6222b51ff0ddb55ffd8f827c"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/conventional-greenfield-v3-20261008-task2-primary.json",
+      "sha256": "2d64a8e6f21f09780af244c14e13e758f0dbb2b0eb856132da397130843045ed"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/conventional-greenfield-v3-20261008-task3-primary.json",
+      "sha256": "12f2ebcf50d9ee5dc6497014fda9eada50cf1418ecbf9182f78f2b44331197d4"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/conventional-greenfield-v3-20261008-task4-primary.json",
+      "sha256": "76498c63af454b8401300481e4162459b4dbf7d31e025c932c70462096f75098"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/conventional-greenfield-v3-20261008-task5-primary.json",
+      "sha256": "7fe7990406a9a11505b86fae6b78bf88c2104964c097f54de062fdac7137b11e"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/government-brownfield-v3-20261008-task1-primary.json",
+      "sha256": "0061a92677206365856f2c55ed90442e9056c6c37ce7c33dca328dc05d4aa8a1"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/government-greenfield-v3-20261008-task1-evaluator.json",
+      "sha256": "6f4d45ddc264e13904102ab42527af0d3047542c990860b85dbfca37fd41e2e5"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/requests/government-greenfield-v3-20261008-task1-primary.json",
+      "sha256": "4f3af45bcd4ff360d11a97309b165e3a1772e09bbccb968ec008935fe86b6feb"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/study_control.py",
+      "sha256": "868194a8ed8885c0b0e1dcfa0ba0e320ead412e7f2accd9a74518fd22b97c8c6"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/test-results.json",
+      "sha256": "5fe1c208e1492aec4c1abc0c85856ff57380bdcc5472838410a152b26be6d570"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/test_native_envelope.initial.py.txt",
+      "sha256": "44ddd86f63316ba08bd9a115e62c40b0878a74290b9e84ee2c6350a764da2cb2"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/test_native_envelope.py",
+      "sha256": "de8eb61e2dc3e192ee3001de1890dea3873b1de2ca004e3c84f571326a96318e"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/archive-manifest.json",
+      "sha256": "52e7147328a959d5699b24e7557776454c2b3167b41492a760ae5cf4f79cb779"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/authorization-grant.json",
+      "sha256": "0107fe1474fcfe6a45fb5764c01ddecd53702c484bed0e2b9b65da2aaa894f2c"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/control.py",
+      "sha256": "13b372c63cab33ee3defb6df2777d9c1bb675cdc667558490416e1eed780c942"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/evaluator-boundaries-errata.md",
+      "sha256": "3b1230e930bd2b73d52b2a2dad827fe4930c3f77ef5d2327150faf2c7df6c852"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/evidence.zip",
+      "sha256": "3bfc5e1bd45a887df4b5b30c75093f8189e9fee21ca13c2089ea149bac298f5c"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/final-readonly-validation.json",
+      "sha256": "b75f86c69facc53d73f26f5e5794a3f58675f0457336acd68568c269f3f0c424"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/freeze.json",
+      "sha256": "44854023d5918756b78d059bf663dd91cf12a8aaa47ca888a9accb66c26c8862"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/handoff.md",
+      "sha256": "5372b9379cf217b9d2b75cfc45096646564fb2530458154d09ae59071c2abd33"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/independent-evaluation-prompt.txt",
+      "sha256": "7e9b0b482d1b68ffdcfca7b0aa53f42e492811cb7611be2f934719bac0f8368f"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/ledger.json",
+      "sha256": "cb57b66cc0379e613081fb9d9de26b13bcd775fe6d3c61f7b768f16b32abc7ca"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/native-call-receipts.json",
+      "sha256": "60e8968867b8d5c60f58d8c5fc823bba4c66481d29df3fd23a32ef0ca8daac6b"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/native-configuration.json",
+      "sha256": "82b38caee76f38c157dd8454853520d586c22a40edb25b8a28e0c2c3f9a79e81"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/original-ledger-at-reconciliation.json",
+      "sha256": "f5a728c3b8ef5d9159d7f2d91d79f1da4ace3d33d58e9ea69fb9c32164d0cee8"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/preliminary-readonly-validation.json",
+      "sha256": "ededb9ee6f06623531f1c4e898e15bf90020267464232b82f6839d42c1be4f4c"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/public-review-prompt.txt",
+      "sha256": "0f23e650e8b770d46a17dcd7ea213b109b276ad15c08d55234da294cb5c7d2f1"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/seal.py",
+      "sha256": "c479dde85c0a50d2aa65122e0d10b849f09acb3c3bb350a9250037d226441822"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/actor-prompt.txt",
+      "sha256": "b5b44e756ec5c7c49315d44d2b778f002a75c1c0848d1630706717b052de510c"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/archive-manifest.json",
+      "sha256": "331dc95e2d75af44c26e3ac5cb3fb09e9ccd60862fb69997269170596082ddcf"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/authorization-grant.json",
+      "sha256": "3bebf64e31c8726cb1b09dc7f02f323e51eeacd84196058dc6990130caad4c81"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/candidate.bundle",
+      "sha256": "3a7c43c274f32b302505b9e15647354b81d973bb951a221b259f6e6fbaa56f10"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/continuation-anchor.md",
+      "sha256": "8d6bad23ad73345d3e53cb1985243ae2e980c771cec2de624f34e8ed306d7741"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/evidence.zip",
+      "sha256": "ef7bb802b5f5c3040150d10a9046e2052fc78fbf2d36430cbb113cb4b7c7609e"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/final-readonly-validation.json",
+      "sha256": "7531f4ee562709968f272f7981b6a85d599bf0f57e305905300300bcaaa965c3"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/freeze.json",
+      "sha256": "8d6a769414d85b9a68efd2c01c300b1eb14b30c4cc97bdfd9948891c82b45ece"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/handoff.md",
+      "sha256": "3ab33d82470bcf45dc47cd94ab35732aca033fc60cdf9a9cfd6b724013a22484"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/ledger.json",
+      "sha256": "8e80102122bb024cb5110bee703b43a53195218a6fc0d9be6861877378ee1990"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/native-call-receipts.json",
+      "sha256": "202959fdd558f370cfb37573216f0b2d0a5fca1731370cf3b74b2ec7e5a850ec"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/native-configuration.json",
+      "sha256": "55b7b3599cbf62712bbc21c98f19441990ada45ea66237b7d092d667d66763e7"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/operator-errata.md",
+      "sha256": "370ad47c8be24e51e4410a9f6daccf439717591f5c5a4d878a978aae03138fdb"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/owned_transport.py",
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/parent-profile-observation.json",
+      "sha256": "2d535e75a21977e6f4fcfb05507d35bb2e5bbfb3a1ec6e18a34206dc4d75e765"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/preliminary-readonly-validation.json",
+      "sha256": "a05bafd68facd4ef0bd6e7841d206b6c29eeed18338e962dab1315e7ebe2858f"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/seal.py",
+      "sha256": "b9122ec35913667439ef84eb5f88844f582cc8db6a918454eb7145e08d326219"
+    },
+    {
+      "group": "prior-preparation-and-evidence",
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/transport-policy.json",
+      "sha256": "968b903af777041c923839c75ce6b2b68a9b369353c48c05c0e913beef790b84"
+    }
+  ]
+}

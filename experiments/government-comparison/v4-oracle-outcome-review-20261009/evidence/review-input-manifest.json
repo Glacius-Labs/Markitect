@@ -1,0 +1,117 @@
+{
+  "publicSourceSha": "c7d55105a1f0183d6517e263d15c0fadef7d4b2d",
+  "privateArchiveSha256": "b125e404f723d6c91223762dafa4c7d612a3f234aeebbe7d707f64511d4f3030",
+  "stagedRoot": "C:/Users/Consiliari/Documents/Scientist-v4-oracle-review-20261009",
+  "readOnlyReview": true,
+  "cooperativeBoundaryOnly": true,
+  "inputs": [
+    {
+      "visibility": "public",
+      "path": "brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "bytes": 3000
+    },
+    {
+      "visibility": "public",
+      "path": "architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "bytes": 3296
+    },
+    {
+      "visibility": "public",
+      "path": "task-requirement-map.json",
+      "sha256": "2a6473f03df9aace3c7222a61e0078d97aabdf3d9a3d908ea3f1c36b5962f53c",
+      "bytes": 3857
+    },
+    {
+      "visibility": "public",
+      "path": "checks.py",
+      "sha256": "783561065c3bc6c814aed3ba5c943710442dbbee4502ad7db6b58eed4dabeccf",
+      "bytes": 9151
+    },
+    {
+      "visibility": "public",
+      "path": "rubric.json",
+      "sha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+      "bytes": 5369
+    },
+    {
+      "visibility": "public",
+      "path": "common-outcome-record.json",
+      "sha256": "faf63ce63336e9df81646822181af74c995853482b838b254773a68b143f20ab",
+      "bytes": 1176
+    },
+    {
+      "visibility": "public",
+      "path": "q1-intent-setup-v1.md",
+      "sha256": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e",
+      "bytes": 3620
+    },
+    {
+      "visibility": "public",
+      "path": "holdout-procedure.md",
+      "sha256": "795fd4bac98559ea7c8a1c2066deaa3f198a50406ae0b2f9d68c34e67ab6ac7f",
+      "bytes": 3367
+    },
+    {
+      "visibility": "public",
+      "path": "tasks/01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "bytes": 1189
+    },
+    {
+      "visibility": "public",
+      "path": "tasks/02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "bytes": 1075
+    },
+    {
+      "visibility": "public",
+      "path": "tasks/03-persist-state.md",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "bytes": 737
+    },
+    {
+      "visibility": "public",
+      "path": "tasks/04-order-lifecycle.md",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+      "bytes": 1028
+    },
+    {
+      "visibility": "public",
+      "path": "tasks/05-change-limit.md",
+      "sha256": "b68ccd173891692050c64101af47754f1213e745a63071653b30b8d9d6ccf17f",
+      "bytes": 1315
+    },
+    {
+      "visibility": "public",
+      "path": "tasks/06-repair-regression.md",
+      "sha256": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a",
+      "bytes": 892
+    },
+    {
+      "visibility": "private-evaluation-only",
+      "path": "holdout-plan.json",
+      "sha256": "b29e61c8a753290e557cffc7fd6ab32c30e973835e79678ebf8865ee14e33ae9",
+      "bytes": 7007
+    },
+    {
+      "visibility": "private-evaluation-only",
+      "path": "holdout_checks.py",
+      "sha256": "dd276535cb7e47950da1174ba0549ad58a9d9a87c00ffe94ba9d80570cd28aea",
+      "bytes": 14722
+    },
+    {
+      "visibility": "private-evaluation-only",
+      "path": "task6-equivalence-plan.json",
+      "sha256": "50385660df977fe07ee76b5b67633c08ee18e03e79f4bf63fd385bd4e97d4e52",
+      "bytes": 816
+    },
+    {
+      "visibility": "private-evaluation-only",
+      "path": "test_oracle_mechanics.py",
+      "sha256": "ff55a23ae0bd0ed08143868cd7261790a0a6f21a3aea131a8d93ede1a0c47598",
+      "bytes": 2666
+    }
+  ]
+}
