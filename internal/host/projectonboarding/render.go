@@ -18,15 +18,9 @@ func renderFiles(options Options) ([]FileChange, error) {
 	for _, provider := range options.Providers {
 		switch provider {
 		case Codex:
-			files = append(files,
-				FileChange{Path: "AGENTS.md", Content: managedBlock(codexEntry()), Action: ""},
-				FileChange{Path: ".agents/skills/markitect-model-first/SKILL.md", Content: skillFile("markitect-model-first", skillDescription(), skillEntry()), Action: ""},
-			)
+			files = append(files, providerFiles(".agents/skills", codexEntry())...)
 		case Claude:
-			files = append(files,
-				FileChange{Path: "CLAUDE.md", Content: managedBlock(claudeEntry()), Action: ""},
-				FileChange{Path: ".claude/skills/markitect-model-first/SKILL.md", Content: skillFile("markitect-model-first", skillDescription(), skillEntry()), Action: ""},
-			)
+			files = append(files, providerFiles(".claude/skills", claudeEntry())...)
 		}
 	}
 	for i := range files {
@@ -187,23 +181,40 @@ These repository instructions help the selected agent follow the workflow. They 
 }
 
 func codexEntry() string {
-	return "For a short Work Item, issue, bug, idea, or change request, use markitect project with the repository's .markitect/project.yaml selector, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, satisfy the repository's actual readiness review and acknowledgement policy using your own authorized actor, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Ask only for material intent or authority outside the Work Item's delegation, or review the repository policy explicitly reserves for a human. Resume persisted work without replaying completed work."
+	return rootEntry("Codex", "codex")
 }
 
 func claudeEntry() string {
-	return "For a short Work Item, issue, bug, idea, or change request, use markitect project with the repository's .markitect/project.yaml selector, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, satisfy the repository's actual readiness review and acknowledgement policy using your own authorized actor, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Ask only for material intent or authority outside the Work Item's delegation, or review the repository policy explicitly reserves for a human. Resume persisted work without replaying completed work."
+	return rootEntry("Claude Code", "claude")
 }
 
-func skillDescription() string {
-	return "Use for ordinary short Work Items, issues, bugs, and ideas in a Markitect project; explore and persist decisions, establish scoped readiness, then implement through the accepted model-first workflow."
+func rootEntry(provider, providerFlag string) string {
+	return fmt.Sprintf("This repository uses the selected Markitect model in `.markitect/project.yaml`. For ordinary work, choose a local operation skill: `markitect-init`, `markitect-extract`, `markitect-design`, `markitect-suggest`, `markitect-configure`, `markitect-implement`, `markitect-cleanup`, `markitect-verify`, `markitect-apply`, or `markitect-check`. `markitect-model-first` remains a brief compatibility router. Follow the shared [project workflow](.markitect/workflows/model-first.md) when working as the outer project agent. Persist accepted intent before implementation, repair actionable diagnostics within delegated authority, run required checks, and use guarded Apply. Continue authorized Work Items through necessary operations and recover persisted work without replay. If this %s setup lacks a model or skills, preview `markitect project init --repo PATH --name NAME`, then preview `markitect project onboard --repo PATH --provider %s`; review each plan and use the write controls required by that operation.", provider, providerFlag)
 }
 
 func skillFile(name, description, entry string) string {
-	return fmt.Sprintf("---\nname: %s\ndescription: %s\n---\n\n%s\n", name, description, managedBlock(entry))
+	return fmt.Sprintf("---\nname: %s\ndescription: %q\n---\n\n%s\n", name, description, managedBlock(entry))
 }
 
-func skillEntry() string {
-	return "When a short Work Item, issue, bug, or idea arrives, use markitect project with .markitect/project.yaml, read the repository-root .markitect/workflows/model-first.md and follow it as the default. Inspect markitect project schema for the model contract and markitect project index --repo PATH for current Manager identities. The workflow covers a persistent decision ledger, iterative brownfield reverse-modeling, repository-policy acceptance at a committed model revision, computed first-scope readiness, bounded Manager and reviewer responsibilities, Plan/Run/Verify/Apply, first-success completion, and resuming persisted work without replay."
+func providerFiles(skillRoot, entry string) []FileChange {
+	rootEntryPath := "CLAUDE.md"
+	if strings.HasPrefix(skillRoot, ".agents/") {
+		rootEntryPath = "AGENTS.md"
+	}
+	files := []FileChange{{Path: rootEntryPath, Content: managedBlock(entry)}}
+	for _, capability := range capabilitySkills() {
+		base := strings.TrimSuffix(skillRoot, "/") + "/" + capability.name
+		files = append(files,
+			FileChange{Path: base + "/SKILL.md", Content: skillFile(capability.name, capability.description, capability.body)},
+			FileChange{Path: base + "/references/operating-guide.md", Content: managedBlock(capabilityGuide(capability))},
+		)
+		if capability.name == "markitect-implement" {
+			files = append(files, FileChange{Path: base + "/references/recovery.md", Content: managedBlock(recoveryReference())})
+		}
+	}
+	legacyBase := strings.TrimSuffix(skillRoot, "/") + "/markitect-model-first"
+	files = append(files, FileChange{Path: legacyBase + "/SKILL.md", Content: skillFile("markitect-model-first", legacyRouterDescription(), legacyRouterBody())})
+	return files
 }
 
 func managedBlock(body string) string {
@@ -255,7 +266,7 @@ func mergeManaged(existing, desired string) (string, error) {
 func mergeFile(filePath, existing, desired string) (string, error) {
 	if filePath == workflowPath {
 		if !strings.Contains(existing, beginMarker) && existing != desired && existing != desired+"\n" {
-			return "", fmt.Errorf("existing canonical workflow has no Markitect managed block")
+			return "", fmt.Errorf("existing generated workflow %s has no Markitect managed block", filePath)
 		}
 		return mergeManaged(existing, desired)
 	}
@@ -280,13 +291,78 @@ func mergeFile(filePath, existing, desired string) (string, error) {
 		} else if strings.HasPrefix(existing, "---") {
 			return "", fmt.Errorf("existing skill has malformed YAML frontmatter")
 		} else {
-			// Keep existing native skill bytes intact and add the frontmatter
-			// required for discovery ahead of them before managing our block.
-			existing = frontmatter + existing
+			return "", fmt.Errorf("target skill %s already exists without a Markitect managed block; refusing to replace or adopt it", filePath)
+		}
+		if !strings.Contains(existing, beginMarker) || !strings.Contains(existing, endMarker) {
+			return "", fmt.Errorf("target skill %s already exists without a Markitect managed block; refusing to replace or adopt it", filePath)
+		}
+		var err error
+		existing, err = migrateManagedSkillMetadata(filePath, existing, frontmatter)
+		if err != nil {
+			return "", err
 		}
 		return mergeManaged(existing, block)
 	}
 	return mergeManaged(existing, desired)
+}
+
+const legacyFullSkillDescription = "Use for ordinary short Work Items, issues, bugs, and ideas in a Markitect project; explore and persist decisions, establish scoped readiness, then implement through the accepted model-first workflow."
+
+// migrateManagedSkillMetadata updates only values known to have been emitted
+// by the previous Markitect generator. Other frontmatter bytes and extensions
+// are retained as written by the adopting project.
+func migrateManagedSkillMetadata(filePath, existing, desiredFrontmatter string) (string, error) {
+	expectedName := filePath[strings.LastIndex(filePath[:strings.LastIndex(filePath, "/")], "/")+1 : strings.LastIndex(filePath, "/")]
+	actualName := ""
+	lines := strings.Split(existing, "\n")
+	for index := 1; index < len(lines); index++ {
+		line := strings.TrimSuffix(lines[index], "\r")
+		if line == "---" {
+			break
+		}
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "name:") {
+			actualName = strings.Trim(strings.TrimSpace(strings.TrimPrefix(trimmed, "name:")), "\"'")
+			break
+		}
+	}
+	if actualName != expectedName {
+		return "", fmt.Errorf("target skill %s has frontmatter name %q; refusing same-path skill collision", filePath, actualName)
+	}
+	if expectedName != "markitect-model-first" {
+		return existing, nil
+	}
+	newDescription := frontmatterValue(desiredFrontmatter, "description")
+	for index := 1; index < len(lines); index++ {
+		line := strings.TrimSuffix(lines[index], "\r")
+		if line == "---" {
+			break
+		}
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "description:") {
+			value := strings.Trim(strings.TrimSpace(strings.TrimPrefix(trimmed, "description:")), "\"'")
+			if value == legacyFullSkillDescription && newDescription != "" {
+				prefix := line[:strings.Index(line, "description:")+len("description:")]
+				ending := ""
+				if strings.HasSuffix(lines[index], "\r") {
+					ending = "\r"
+				}
+				lines[index] = prefix + " " + newDescription + ending
+			}
+			break
+		}
+	}
+	return strings.Join(lines, "\n"), nil
+}
+
+func frontmatterValue(frontmatter, key string) string {
+	for _, line := range strings.Split(frontmatter, "\n") {
+		line = strings.TrimSuffix(line, "\r")
+		if strings.HasPrefix(strings.TrimSpace(line), key+":") {
+			return strings.Trim(strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), key+":")), "\"'")
+		}
+	}
+	return ""
 }
 
 func hasFrontmatterOpening(content string) bool {

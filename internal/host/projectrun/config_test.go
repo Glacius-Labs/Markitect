@@ -72,6 +72,42 @@ func TestValidateRuntimeRequiresExplicitBoundedControlledLocalConfiguration(t *t
 	}
 }
 
+func TestNativeRuntimeRestrictsInstructionsRolesAndHomeInheritance(t *testing.T) {
+	config := validRuntime()
+	agent := config.Agents["commerce"]
+	agent.WorkspaceMode = "scoped"
+	agent.InstructionPaths = []string{"AGENTS.md"}
+	agent.Environment = []string{"HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA"}
+	config.Agents["commerce"] = agent
+	if err := ValidateRuntime(config); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"CODEX_HOME", "SSH_AUTH_SOCK", "GIT_ASKPASS"} {
+		changed := agent
+		changed.Environment = []string{name}
+		config.Agents["commerce"] = changed
+		if err := ValidateRuntime(config); err == nil {
+			t.Fatalf("native runtime allowed forbidden environment %s", name)
+		}
+	}
+	config.Agents["commerce"] = agent
+	config.Verifier = &agent
+	if err := ValidateRuntime(config); err == nil {
+		t.Fatal("native verifier allowed executor workspace")
+	}
+	config.Verifier = nil
+	config.Review = &ReviewConfig{Agents: map[string]Agent{"commerce": agent}, MaxRounds: 1, MaxManagerRounds: 1}
+	if err := ValidateRuntime(config); err == nil {
+		t.Fatal("native reviewer allowed executor workspace")
+	}
+	config.Review = nil
+	agent.WorkspaceMode = ""
+	config.Agents["commerce"] = agent
+	if err := ValidateRuntime(config); err == nil {
+		t.Fatal("proposal runtime allowed native-only instructions")
+	}
+}
+
 func TestLoadRuntimeStrictlyDecodesOneDocumentAndDurations(t *testing.T) {
 	root := t.TempDir()
 	if err := os.Mkdir(filepath.Join(root, ".markitect"), 0o755); err != nil {

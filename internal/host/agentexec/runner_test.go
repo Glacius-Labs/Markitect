@@ -150,6 +150,43 @@ func TestAgentexecHelperProcess(t *testing.T) {
 	if mode == "allowed-evidence" {
 		response.EvidenceRefs = []string{"scope/a", "policy/a"}
 	}
+	if strings.HasPrefix(mode, "native-work") {
+		candidatePath := "src/a& café\u2028.go"
+		response.CandidateFiles = []CandidateFile{{Path: candidatePath, Mode: "0644", Content: "value <>& café\u2028 line"}}
+		contentDigest := sha256.Sum256([]byte(response.CandidateFiles[0].Content))
+		deltaJSON := fmt.Sprintf(`[{"digest":"sha256:%x","mode":"0644","path":"%s"}]`, contentDigest, candidatePath)
+		response.NativeWork = &NativeWork{
+			WorkspaceBaseDigest:  "sha256:" + strings.Repeat("0", 64),
+			WorkspaceFinalDigest: "sha256:" + strings.Repeat("1", 64),
+			DeltaDigest:          digest([]byte(deltaJSON)),
+			ChangedPaths:         []string{candidatePath},
+			ToolCalls:            2,
+			HelperStarts:         0,
+			HelperAccounting:     "disabled",
+		}
+		switch mode {
+		case "native-work-bad-digest":
+			response.NativeWork.DeltaDigest = "sha256:" + strings.Repeat("2", 64)
+		case "native-work-tampered-paths":
+			response.NativeWork.ChangedPaths = []string{"src/other.go"}
+		case "native-work-unsorted":
+			response.NativeWork.ChangedPaths = []string{"src/z.go", "src/a.go"}
+		case "native-work-unsafe-path":
+			response.NativeWork.ChangedPaths = []string{"../escape"}
+		case "native-work-negative-tools":
+			response.NativeWork.ToolCalls = -1
+		case "native-work-helper-start":
+			response.NativeWork.HelperStarts = 1
+		case "native-work-helper-unknown":
+			response.NativeWork.HelperAccounting = "reported"
+		}
+	}
+	if mode == "capture-agent-config" || mode == "native-work-capture-agent-config" {
+		response.CandidateFiles[0].Content = os.Getenv("MARKITECT_AGENT_CONFIG_JSON")
+		if response.NativeWork != nil {
+			response.NativeWork.DeltaDigest, _ = nativeDeltaDigest(response.CandidateFiles)
+		}
+	}
 	if role == RoleVerifier {
 		response.Outcome = OutcomePassed
 		response.CandidateFiles = []CandidateFile{}
@@ -190,6 +227,12 @@ func testRequest(role string) Request {
 		Context:        json.RawMessage(`{"number":1,"kind":"Projection"}`),
 		Artifacts:      []Artifact{},
 	}
+}
+
+func nativeTaskRequest() Request {
+	request := testRequest(RoleExecutor)
+	request.Context = json.RawMessage(`{"kind":"projectrun-task/v1","phase":"work","nativeWorkspace":{"apiVersion":"markitect.example.org/native-workspace/v1","instructions":[{"path":"AGENTS.md"}]}}`)
+	return request
 }
 
 func testConfig() Config {
@@ -315,6 +358,115 @@ func TestRunRejectsCrossRoleAndWrongDigestResponses(t *testing.T) {
 	_, err = runHelper(t, "wrong-digest", "", testRequest(RoleExecutor), testConfig())
 	if err == nil || !strings.Contains(err.Error(), "does not bind") {
 		t.Fatalf("expected wrong digest rejection, got %v", err)
+	}
+}
+
+func TestScopedNativeWorkMetadataIsValidatedAndCopiedToReceipt(t *testing.T) {
+	config := testConfig()
+	config.WorkspaceMode = "scoped"
+	result, err := runHelper(t, "native-work", "", nativeTaskRequest(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Response.NativeWork == nil || result.Receipt.NativeWork == nil ||
+		result.Response.NativeWork.DeltaDigest != result.Receipt.NativeWork.DeltaDigest {
+		t.Fatalf("native work metadata did not reach response and receipt: response=%#v receipt=%#v", result.Response.NativeWork, result.Receipt.NativeWork)
+	}
+	contentDigest := sha256.Sum256([]byte("value <>& café\u2028 line"))
+	wantDeltaJSON := fmt.Sprintf(`[{"digest":"sha256:%x","mode":"0644","path":"%s"}]`, contentDigest, "src/a& café\u2028.go")
+	if result.Response.NativeWork.DeltaDigest != digest([]byte(wantDeltaJSON)) {
+		t.Fatal("native delta digest differs from the Python canonical JSON contract for UTF-8 content")
+	}
+	result.Response.NativeWork.ChangedPaths[0] = "mutated-after-run"
+	if result.Receipt.NativeWork.ChangedPaths[0] != "src/a& café\u2028.go" {
+		t.Fatal("receipt native work changedPaths aliases the response")
+	}
+
+	if _, err := runHelper(t, "", "", nativeTaskRequest(), config); err == nil || !strings.Contains(err.Error(), "requires nativeWork") {
+		t.Fatalf("scoped proposal without nativeWork was accepted: %v", err)
+	}
+}
+
+func TestNativeDeltaDigestMatchesPythonCompactUTF8Contract(t *testing.T) {
+	path := "src/<>& café\u2028.go"
+	files := []CandidateFile{
+		{Path: "z.txt", Mode: "0644", Content: "last"},
+		{Path: path, Mode: "0755", Content: "<>& café\u2028"},
+	}
+	firstContentDigest := sha256.Sum256([]byte("<>& café\u2028"))
+	secondContentDigest := sha256.Sum256([]byte("last"))
+	expectedJSON := fmt.Sprintf(
+		`[{"digest":"sha256:%x","mode":"0755","path":"%s"},{"digest":"sha256:%x","mode":"0644","path":"z.txt"}]`,
+		firstContentDigest, path, secondContentDigest,
+	)
+	expectedBytesDigest := sha256.Sum256([]byte(expectedJSON))
+	want := "sha256:" + hex.EncodeToString(expectedBytesDigest[:])
+	got, err := nativeDeltaDigest(files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != want {
+		t.Fatalf("native delta digest = %s, want Python canonical UTF-8 digest %s", got, want)
+	}
+}
+
+func TestNativeWorkMetadataIsRestrictedAndStrictlyValidated(t *testing.T) {
+	if _, err := runHelper(t, "native-work", "", testRequest(RoleExecutor), testConfig()); err == nil || !strings.Contains(err.Error(), "requires scoped") {
+		t.Fatalf("nativeWork on a legacy proposal flow was accepted: %v", err)
+	}
+
+	for _, mode := range []string{"native-work-bad-digest", "native-work-tampered-paths", "native-work-unsorted", "native-work-unsafe-path", "native-work-negative-tools", "native-work-helper-start", "native-work-helper-unknown"} {
+		t.Run(mode, func(t *testing.T) {
+			config := testConfig()
+			config.WorkspaceMode = "scoped"
+			if _, err := runHelper(t, mode, "", nativeTaskRequest(), config); err == nil {
+				t.Fatalf("malformed nativeWork was accepted")
+			}
+		})
+	}
+
+	config := testConfig()
+	config.WorkspaceMode = "scoped"
+	if _, err := runHelper(t, "", "", testRequest(RoleVerifier), config); err == nil || !strings.Contains(err.Error(), "only for projectrun Manager executor") {
+		t.Fatalf("scoped native workspace was accepted for verifier: %v", err)
+	}
+	if _, err := runHelper(t, "", "", testRequest(RoleExecutor), config); err == nil || !strings.Contains(err.Error(), "projectrun-task/v1") {
+		t.Fatalf("scoped native workspace was accepted without native context: %v", err)
+	}
+}
+
+func TestWorkspaceModeIsBoundIntoConfigurationFingerprint(t *testing.T) {
+	legacy := testConfig()
+	scoped := testConfig()
+	scoped.WorkspaceMode = "scoped"
+	legacyFingerprint, err := Fingerprint(legacy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scopedFingerprint, err := Fingerprint(scoped)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if legacyFingerprint == scopedFingerprint {
+		t.Fatal("scoped workspace mode did not change the normalized configuration fingerprint")
+	}
+	invalid := testConfig()
+	invalid.WorkspaceMode = "unrestricted"
+	if _, err := Fingerprint(invalid); err == nil {
+		t.Fatal("unsupported workspace mode was accepted")
+	}
+}
+
+func TestWorkspaceModeDoesNotChangeProviderConfigEnvironmentContract(t *testing.T) {
+	config := testConfig()
+	config.WorkspaceMode = "scoped"
+	result, err := runHelper(t, "native-work-capture-agent-config", "", nativeTaskRequest(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const want = `{"model":"test-model","modelOptions":{"effort":"high"},"providerVersion":"test-helper/1"}`
+	if result.Response.CandidateFiles[0].Content != want {
+		t.Fatalf("provider config environment contract changed: got %s, want %s", result.Response.CandidateFiles[0].Content, want)
 	}
 }
 

@@ -1052,6 +1052,10 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 		return result, log, err
 	}
 	writePaths := allowedWritePaths(project.Config, project.Report, task, phase, conflicts, project.Snapshot)
+	nativeWorkspace, err := buildNativeWorkspace(root, project.Revision, project, configAgent)
+	if err != nil {
+		return result, log, err
+	}
 	artifactRelations, foreignOwnership := suppliedArtifactOwnership(project.Report, artifacts, task.ManagerID, writePaths)
 	responsibilities := activeResponsibilities(project.Report, plan.Managers)
 	briefing := BriefingContext{}
@@ -1065,6 +1069,8 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 		return result, log, ErrStale
 	}
 	ctxPayload := struct {
+		ManagerID              string                      `json:"managerId"`
+		NativeWorkspace        *nativeWorkspaceContext     `json:"nativeWorkspace,omitempty"`
 		Kind                   string                      `json:"kind"`
 		Operation              string                      `json:"operation"`
 		OperationGuidance      string                      `json:"operationGuidance"`
@@ -1092,7 +1098,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 		CandidateDigest        string                      `json:"candidateDigest"`
 		ResponseSchema         json.RawMessage             `json:"responseSchema"`
 	}{Kind: "projectrun-task/v1", Operation: plan.Operation, OperationGuidance: OperationGuidance(plan.Operation), Strictness: plan.Strictness[task.ManagerID], Briefing: briefing, Phase: phase, PhaseGuidance: managerPhaseGuidance(phase, repairRound) + " ExcludedWritePaths are explicit deny scopes and override every allowedWritePaths scope; never propose changes within them.", EscalationTarget: escalationTarget(task), GlobalGoal: plan.Goal, OwnTask: task.Goal, RepairDiagnostic: repairDiagnostic, ExcludedWritePaths: ignoredPaths,
-		RepairRound: repairRound, RepairChecks: repairChecks,
+		ManagerID: task.ManagerID, NativeWorkspace: nativeWorkspace, RepairRound: repairRound, RepairChecks: repairChecks,
 		AllowedWritePaths: writePaths, ArtifactRelations: artifactRelations, ForeignOwnership: foreignOwnership, ActiveResponsibilities: responsibilities,
 		Manager: managerContext, DirectChildren: activeChildrenFromContext(managerContext),
 		DirectChildContracts: publicChildContracts(project.Report, activeChildIDs), DirectChildArtifacts: requiredChildArtifacts(project.Report, activeChildIDs),

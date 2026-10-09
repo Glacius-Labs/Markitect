@@ -2273,3 +2273,24 @@ spec:
       owner: project-world-implementation
     - path: docs/validation/project-native-delivery-2026-10-09.md
       owner: project-world-validation
+
+    - path: internal/host/agentexec/native_work.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/projectonboarding/capabilities.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/native_workspace.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/native_workspace_test.go
+      owner: project-world-implementation
+    - path: internal/tooling/codexrunner/native_work.py
+      owner: codex-runner-tooling
+    - path: internal/tooling/codexrunner/test_native_work.py
+      owner: codex-runner-tooling
+    - path: docs/design/project-native-codex-work-20261009.md
+      owner: project-world-implementation
+    - path: docs/design/project-capability-skills-20261009.md
+      owner: project-world-implementation
+    - path: docs/design/project-world/native-codex-work.md
+      owner: project-world-implementation
+    - path: docs/validation/project-native-work-2026-10-09.md
+      owner: project-world-validation

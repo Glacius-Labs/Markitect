@@ -107,6 +107,9 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 	if err != nil {
 		return RunResult{}, err
 	}
+	if err := validateNativeWorkspaceRequest(cfg.WorkspaceMode, req); err != nil {
+		return RunResult{}, err
+	}
 	commandBytes, _ := json.Marshal(struct {
 		Command string   `json:"command"`
 		Args    []string `json:"args"`
@@ -237,12 +240,13 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 		result.Receipt = receipt
 		return result, errors.New("external runner returned an invalid response")
 	}
-	if err := validateResponse(response, req, invocation); err != nil {
+	if err := validateResponse(response, req, invocation, cfg.WorkspaceMode); err != nil {
 		result.Receipt = receipt
 		return result, err
 	}
 	receipt.Outcome = response.Outcome
 	receipt.Usage = cloneUsage(response.Usage)
+	receipt.NativeWork = cloneNativeWork(response.NativeWork)
 	result.Response = response
 	result.Receipt = receipt
 	return result, nil
@@ -379,6 +383,9 @@ func normalizeConfig(input Config) (Config, error) {
 	if cfg.ProviderVersion == "" || len(cfg.ProviderVersion) > maxFieldBytes || !utf8.ValidString(cfg.ProviderVersion) {
 		return Config{}, errors.New("explicit provider version is required")
 	}
+	if cfg.WorkspaceMode != "" && cfg.WorkspaceMode != "scoped" {
+		return Config{}, errors.New("workspaceMode must be empty or scoped")
+	}
 	if cfg.Timeout <= 0 || cfg.Timeout > 10*time.Minute {
 		return Config{}, errors.New("runner timeout must be at most ten minutes")
 	}
@@ -456,7 +463,10 @@ func normalizeConfig(input Config) (Config, error) {
 	return cfg, nil
 }
 
-func validateResponse(response Response, req Request, invocation Invocation) error {
+func validateResponse(response Response, req Request, invocation Invocation, workspaceMode string) error {
+	if err := validateNativeWorkspaceRequest(workspaceMode, req); err != nil {
+		return err
+	}
 	if response.APIVersion != APIVersion || response.RunID != invocation.RunID ||
 		response.Nonce != invocation.Nonce || response.Role != req.Role ||
 		response.InputDigest != invocation.InputDigest {
@@ -500,6 +510,16 @@ func validateResponse(response Response, req Request, invocation Invocation) err
 	if !allowedOutcome {
 		return errors.New("external response outcome is not valid for its role")
 	}
+	if response.NativeWork != nil {
+		if workspaceMode != "scoped" {
+			return errors.New("nativeWork metadata requires scoped workspace mode")
+		}
+		if err := validateNativeWork(*response.NativeWork); err != nil {
+			return err
+		}
+	} else if workspaceMode == "scoped" && response.Outcome == OutcomeProposed {
+		return errors.New("scoped workspace proposal requires nativeWork metadata")
+	}
 	if len(response.CandidateJSON) != 0 {
 		if _, err := canonicalObject(response.CandidateJSON, "candidateJson", maxContextBytes); err != nil {
 			return err
@@ -536,6 +556,11 @@ func validateResponse(response Response, req Request, invocation Invocation) err
 		total += len(file.Content)
 		if total > maxArtifactBytes {
 			return errors.New("candidate bytes exceed the 8 MiB response bound")
+		}
+	}
+	if workspaceMode == "scoped" && response.Outcome == OutcomeProposed && response.NativeWork != nil {
+		if err := validateNativeWorkProposal(*response.NativeWork, response.CandidateFiles); err != nil {
+			return err
 		}
 	}
 	evidenceRefs := make(map[string]struct{}, len(req.Artifacts)+len(req.ScopeIDs)+len(req.PolicyIDs))

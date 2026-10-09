@@ -74,17 +74,19 @@ type ReviewConfig struct {
 }
 
 type Agent struct {
-	Command         string                  `json:"command" yaml:"command"`
-	Args            []string                `json:"args" yaml:"args"`
-	Model           string                  `json:"model" yaml:"model"`
-	ModelOptions    any                     `json:"modelOptions,omitempty" yaml:"modelOptions"`
-	ProviderVersion string                  `json:"providerVersion" yaml:"providerVersion"`
-	Timeout         Duration                `json:"timeout" yaml:"timeout"`
-	MaxStdoutBytes  int                     `json:"maxStdoutBytes" yaml:"maxStdoutBytes"`
-	MaxStderrBytes  int                     `json:"maxStderrBytes" yaml:"maxStderrBytes"`
-	RuntimeFiles    []agentexec.RuntimeFile `json:"runtimeFiles" yaml:"runtimeFiles"`
-	Environment     []string                `json:"environment,omitempty" yaml:"environment,omitempty"`
-	Pricing         Pricing                 `json:"pricing" yaml:"pricing"`
+	Command          string                  `json:"command" yaml:"command"`
+	Args             []string                `json:"args" yaml:"args"`
+	Model            string                  `json:"model" yaml:"model"`
+	ModelOptions     any                     `json:"modelOptions,omitempty" yaml:"modelOptions"`
+	ProviderVersion  string                  `json:"providerVersion" yaml:"providerVersion"`
+	WorkspaceMode    string                  `json:"workspaceMode,omitempty" yaml:"workspaceMode,omitempty"`
+	InstructionPaths []string                `json:"instructionPaths,omitempty" yaml:"instructionPaths,omitempty"`
+	Timeout          Duration                `json:"timeout" yaml:"timeout"`
+	MaxStdoutBytes   int                     `json:"maxStdoutBytes" yaml:"maxStdoutBytes"`
+	MaxStderrBytes   int                     `json:"maxStderrBytes" yaml:"maxStderrBytes"`
+	RuntimeFiles     []agentexec.RuntimeFile `json:"runtimeFiles" yaml:"runtimeFiles"`
+	Environment      []string                `json:"environment,omitempty" yaml:"environment,omitempty"`
+	Pricing          Pricing                 `json:"pricing" yaml:"pricing"`
 }
 
 // Pricing is an explicit estimate used to enforce the configured run budget.

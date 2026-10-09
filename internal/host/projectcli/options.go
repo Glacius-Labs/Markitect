@@ -11,6 +11,7 @@ type options struct {
 	action, repo, revision, base                                        string
 	name, manager, goal                                                 string
 	provider, model, effort                                             string
+	executionMode, codexProfile                                         string
 	toolRoot, providerExecutable                                        string
 	inputMicros, outputMicros                                           string
 	maxCost, since                                                      string
@@ -65,7 +66,7 @@ var actionSpecs = map[string]actionSpec{
 	"dismiss":    {usage: "dismiss --repo PATH --event ID --manager ID --expect STATE_DIGEST --write", flags: []string{"repo", "event", "manager", "expect", "write"}, required: []string{"repo", "event", "manager", "expect", "write"}, write: true},
 	"onboard":    {usage: "onboard --repo PATH --provider codex|claude|both [--document-path PATH] [--expect PLAN_DIGEST --write]", flags: []string{"repo", "provider", "document-path", "expect", "write"}, required: []string{"repo", "provider"}, write: true},
 	"apply":      {usage: "apply --repo PATH --plan PLAN_ID --run RUN_ID --candidate ID [--branch BRANCH --head COMMIT --worktree DIGEST --expect VERIFY_DIGEST --write]", flags: []string{"repo", "plan", "run", "candidate", "branch", "head", "worktree", "expect", "write"}, required: []string{"repo", "plan", "run", "candidate"}, write: true},
-	"setup":      {usage: "setup --repo PATH --tool-root MARKITECT_SOURCE --provider codex|claude --model MODEL [--effort high] --input-micros-per-million N --output-micros-per-million N --max-cost-micros N [--provider-executable PATH] [--expect EDIT_DIGEST --write]", flags: []string{"repo", "tool-root", "provider", "model", "effort", "provider-executable", "input-micros-per-million", "output-micros-per-million", "max-cost-micros", "expect", "write"}, required: []string{"repo", "tool-root", "provider", "model", "input-micros-per-million", "output-micros-per-million", "max-cost-micros"}, write: true},
+	"setup":      {usage: "setup --repo PATH --tool-root MARKITECT_SOURCE --provider codex|claude --model MODEL [--effort high] [--execution-mode proposal-only|native-work --codex-profile luna-high] --input-micros-per-million N --output-micros-per-million N --max-cost-micros N [--provider-executable PATH] [--expect EDIT_DIGEST --write]", flags: []string{"repo", "tool-root", "provider", "model", "effort", "execution-mode", "codex-profile", "provider-executable", "input-micros-per-million", "output-micros-per-million", "max-cost-micros", "expect", "write"}, required: []string{"repo", "tool-root", "provider", "model", "input-micros-per-million", "output-micros-per-million", "max-cost-micros"}, write: true},
 	"doctor":     {usage: "doctor --repo PATH --tool-root MARKITECT_SOURCE --provider codex|claude [--provider-executable PATH]", flags: []string{"repo", "tool-root", "provider", "provider-executable"}, required: []string{"repo", "tool-root", "provider"}},
 	"resolve":    {usage: "resolve --repo TARGET --source-repo SOURCE --revision TARGET_COMMIT --discovery DISCOVERY.json --report DISTILLATION.json --input CHOICES.json [--output RESOLUTION.json]", flags: []string{"repo", "source-repo", "revision", "discovery", "report", "input", "output"}, required: []string{"repo", "source-repo", "revision", "discovery", "report", "input"}},
 }
@@ -237,6 +238,8 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	assign("provider", &o.provider)
 	assign("model", &o.model)
 	assign("effort", &o.effort)
+	assign("execution-mode", &o.executionMode)
+	assign("codex-profile", &o.codexProfile)
 	assign("tool-root", &o.toolRoot)
 	assign("provider-executable", &o.providerExecutable)
 	assign("input-micros-per-million", &o.inputMicros)

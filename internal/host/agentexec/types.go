@@ -74,6 +74,20 @@ type Usage struct {
 	ToolCalls    *int64 `json:"toolCalls,omitempty"`
 }
 
+// NativeWork records the scoped native workspace observed by the Codex adapter.
+// Its digests are adapter claims bound to the response bytes by StdoutDigest;
+// agentexec validates their wire shape but cannot independently reconstruct
+// the adapter's filesystem delta from the bounded response alone.
+type NativeWork struct {
+	WorkspaceBaseDigest  string   `json:"workspaceBaseDigest"`
+	WorkspaceFinalDigest string   `json:"workspaceFinalDigest"`
+	DeltaDigest          string   `json:"deltaDigest"`
+	ChangedPaths         []string `json:"changedPaths"`
+	ToolCalls            int64    `json:"toolCalls"`
+	HelperStarts         int64    `json:"helperStarts"`
+	HelperAccounting     string   `json:"helperAccounting"`
+}
+
 type Response struct {
 	APIVersion           string          `json:"apiVersion"`
 	RunID                string          `json:"runId"`
@@ -88,6 +102,7 @@ type Response struct {
 	ReportJSON           json.RawMessage `json:"reportJson,omitempty"`
 	Uncertainty          []string        `json:"uncertainty"`
 	Usage                *Usage          `json:"usage,omitempty"`
+	NativeWork           *NativeWork     `json:"nativeWork,omitempty"`
 }
 
 type RuntimeFile struct {
@@ -102,6 +117,9 @@ type Config struct {
 	Model           string          `json:"model"`
 	ModelOptions    json.RawMessage `json:"modelOptions"`
 	ProviderVersion string          `json:"providerVersion"`
+	// WorkspaceMode selects the optional scoped native workspace contract.
+	// The empty value preserves proposal-only and historical configuration.
+	WorkspaceMode string `json:"workspaceMode,omitempty"`
 	// EnvironmentAllowlist selects caller environment names passed to the child.
 	// nil preserves the historical inherit-all behavior; a non-nil empty slice
 	// passes no caller variables. Internal MARKITECT_AGENT_* values are added by
@@ -120,24 +138,25 @@ type RunOptions struct {
 }
 
 type Receipt struct {
-	APIVersion            string `json:"apiVersion"`
-	RunID                 string `json:"runId"`
-	InputDigest           string `json:"inputDigest"`
-	ContextDigest         string `json:"contextDigest"`
-	ConfigDigest          string `json:"configDigest"`
-	CommandDigest         string `json:"commandDigest"`
-	ExecutableDigest      string `json:"executableDigest"`
-	RuntimeFilesDigest    string `json:"runtimeFilesDigest"`
-	EnvironmentDigest     string `json:"environmentDigest"`
-	ProviderVersion       string `json:"providerVersion"`
-	ProviderVersionDigest string `json:"providerVersionDigest"`
-	StdoutDigest          string `json:"stdoutDigest"`
-	StderrDigest          string `json:"stderrDigest"`
-	PrivateLogDigest      string `json:"privateLogDigest"`
-	Outcome               string `json:"outcome"`
-	WallTimeMilliseconds  int64  `json:"wallTimeMilliseconds"`
-	RetryCount            int    `json:"retryCount"`
-	Usage                 *Usage `json:"usage,omitempty"`
+	APIVersion            string      `json:"apiVersion"`
+	RunID                 string      `json:"runId"`
+	InputDigest           string      `json:"inputDigest"`
+	ContextDigest         string      `json:"contextDigest"`
+	ConfigDigest          string      `json:"configDigest"`
+	CommandDigest         string      `json:"commandDigest"`
+	ExecutableDigest      string      `json:"executableDigest"`
+	RuntimeFilesDigest    string      `json:"runtimeFilesDigest"`
+	EnvironmentDigest     string      `json:"environmentDigest"`
+	ProviderVersion       string      `json:"providerVersion"`
+	ProviderVersionDigest string      `json:"providerVersionDigest"`
+	StdoutDigest          string      `json:"stdoutDigest"`
+	StderrDigest          string      `json:"stderrDigest"`
+	PrivateLogDigest      string      `json:"privateLogDigest"`
+	Outcome               string      `json:"outcome"`
+	WallTimeMilliseconds  int64       `json:"wallTimeMilliseconds"`
+	RetryCount            int         `json:"retryCount"`
+	Usage                 *Usage      `json:"usage,omitempty"`
+	NativeWork            *NativeWork `json:"nativeWork,omitempty"`
 }
 
 type RunResult struct {

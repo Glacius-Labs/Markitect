@@ -140,6 +140,20 @@ func ValidateRuntime(config Runtime) error {
 				return fmt.Errorf("runtime agent %q modelOptions must be JSON-compatible: %w", managerID, err)
 			}
 		}
+		if agent.WorkspaceMode != "" && agent.WorkspaceMode != "scoped" {
+			return fmt.Errorf("runtime agent %q has unsupported workspaceMode %q", managerID, agent.WorkspaceMode)
+		}
+		if agent.WorkspaceMode == "" && len(agent.InstructionPaths) != 0 {
+			return fmt.Errorf("runtime agent %q instructionPaths require scoped workspaceMode", managerID)
+		}
+		if agent.WorkspaceMode == "scoped" {
+			if len(agent.InstructionPaths) == 0 || len(agent.InstructionPaths) > maxNativeInstructionFiles {
+				return fmt.Errorf("runtime agent %q scoped workspace requires 1..%d instructionPaths", managerID, maxNativeInstructionFiles)
+			}
+			if err := validatePortablePaths(agent.InstructionPaths); err != nil {
+				return fmt.Errorf("runtime agent %q instructionPaths: %w", managerID, err)
+			}
+		}
 		if agent.Pricing.InputMicrosPerMillion < 0 || agent.Pricing.OutputMicrosPerMillion < 0 ||
 			(agent.Pricing.InputMicrosPerMillion == 0 && agent.Pricing.OutputMicrosPerMillion == 0) {
 			return fmt.Errorf("runtime agent %q must declare nonnegative input/output pricing with at least one positive rate", managerID)
@@ -150,7 +164,8 @@ func ValidateRuntime(config Runtime) error {
 				return fmt.Errorf("runtime agent %q has an invalid or duplicate environment variable name %q", managerID, name)
 			}
 			upper := strings.ToUpper(name)
-			if forbiddenEnvironmentNames[upper] {
+			standardNativeHome := agent.WorkspaceMode == "scoped" && (upper == "HOME" || upper == "USERPROFILE" || upper == "APPDATA" || upper == "LOCALAPPDATA")
+			if forbiddenEnvironmentNames[upper] && !standardNativeHome {
 				return fmt.Errorf("runtime agent %q may not inherit environment variable %q", managerID, name)
 			}
 			for _, prefix := range forbiddenEnvironmentPrefixes {
@@ -162,6 +177,9 @@ func ValidateRuntime(config Runtime) error {
 		}
 	}
 	if config.Verifier != nil {
+		if config.Verifier.WorkspaceMode != "" {
+			return fmt.Errorf("native workspace mode is supported only for Manager executors, not runtime verifier")
+		}
 		if _, err := config.Verifier.AgentConfig(); err != nil {
 			return fmt.Errorf("invalid runtime verifier: %w", err)
 		}
@@ -172,6 +190,9 @@ func ValidateRuntime(config Runtime) error {
 			return fmt.Errorf("runtime review must declare reviewer agents and rounds within 1..3")
 		}
 		for managerID, agent := range config.Review.Agents {
+			if agent.WorkspaceMode != "" {
+				return fmt.Errorf("native workspace mode is supported only for Manager executors, not reviewer %q", managerID)
+			}
 			if strings.TrimSpace(managerID) == "" {
 				return fmt.Errorf("runtime reviewer Manager ID must not be empty")
 			}
@@ -213,7 +234,8 @@ func (a Agent) AgentConfig() (agentexec.Config, error) {
 	return agentexec.Config{
 		Command: a.Command, Args: append([]string(nil), a.Args...), Model: a.Model,
 		ModelOptions: modelOptions, ProviderVersion: a.ProviderVersion,
-		Timeout: time.Duration(a.Timeout), MaxStdoutBytes: a.MaxStdoutBytes,
+		WorkspaceMode: a.WorkspaceMode,
+		Timeout:       time.Duration(a.Timeout), MaxStdoutBytes: a.MaxStdoutBytes,
 		MaxStderrBytes: a.MaxStderrBytes, RuntimeFiles: append([]agentexec.RuntimeFile(nil), a.RuntimeFiles...),
 		EnvironmentAllowlist: &env,
 	}, nil

@@ -9,6 +9,25 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/projectcoverage"
 )
 
+func TestNativeSkillPathsHaveExactToolOwnership(t *testing.T) {
+	for _, provider := range []string{"codex", "claude"} {
+		paths := NativeSkillPaths(provider)
+		if len(paths) != 2+2*len(NativeSkillNames()) {
+			t.Fatalf("incomplete %s native paths", provider)
+		}
+		for _, path := range paths {
+			if !IsToolPath(Config{}, path) {
+				t.Fatalf("generated file lacks ownership: %s", path)
+			}
+		}
+	}
+	for _, path := range []string{".agents/skills/custom/SKILL.md", ".agents/skills/markitect-implement/custom.md", ".claude/skills/markitect-check/private.md"} {
+		if IsToolPath(Config{}, path) {
+			t.Fatalf("unmanaged skill claimed by Markitect: %s", path)
+		}
+	}
+}
+
 func TestFullCoverageBindsUnknownOutsideLegacyRoots(t *testing.T) {
 	root := testGitRoot(t)
 	if _, err := Init(root, "Coverage fixture", true); err != nil {

@@ -90,10 +90,42 @@ func ToolPaths(config Config) []projectcoverage.ToolPath {
 		{Selector: ".agents/skills/markitect-model-first/SKILL.md", Owner: "project-onboarding"},
 		{Selector: ".claude/skills/markitect-model-first/SKILL.md", Owner: "project-onboarding"},
 	}
+	for _, provider := range []string{"codex", "claude"} {
+		for _, path := range NativeSkillPaths(provider) {
+			if !toolRegistered(tools, path) {
+				tools = append(tools, projectcoverage.ToolPath{Selector: path, Owner: "project-onboarding"})
+			}
+		}
+	}
 	if config.DocumentPath != "" && !toolRegistered(tools, config.DocumentPath) {
 		tools = append(tools, projectcoverage.ToolPath{Selector: config.DocumentPath, Owner: "projectwork"})
 	}
 	return tools
+}
+
+// NativeSkillNames declares the exact operation skill identities owned by
+// Markitect onboarding. Provider renderers supply their canonical content.
+func NativeSkillNames() []string {
+	return []string{"markitect-init", "markitect-extract", "markitect-design", "markitect-implement", "markitect-cleanup", "markitect-verify", "markitect-apply", "markitect-check", "markitect-suggest", "markitect-configure"}
+}
+
+// NativeSkillPaths returns exact generated files, never a directory prefix.
+// Unrelated repository skills therefore remain owned by the adopting project.
+func NativeSkillPaths(provider string) []string {
+	base := ""
+	switch provider {
+	case "codex":
+		base = ".agents/skills/"
+	case "claude":
+		base = ".claude/skills/"
+	default:
+		return nil
+	}
+	paths := []string{base + "markitect-model-first/SKILL.md", base + "markitect-implement/references/recovery.md"}
+	for _, name := range NativeSkillNames() {
+		paths = append(paths, base+name+"/SKILL.md", base+name+"/references/operating-guide.md")
+	}
+	return paths
 }
 
 func coverageOptions(config Config) projectcoverage.Options {

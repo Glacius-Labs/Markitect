@@ -42,6 +42,8 @@ type Options struct {
 	Provider               string
 	Model                  string
 	Effort                 string
+	ExecutionMode          string
+	CodexProfile           string
 	ToolRoot               string
 	ProviderExecutable     string
 	InputMicrosPerMillion  int64
@@ -61,6 +63,7 @@ type Discovery struct {
 	ProviderBinary     Tool   `json:"providerBinary"`
 	Python             Tool   `json:"python"`
 	Adapter            Tool   `json:"adapter"`
+	NativeWork         Tool   `json:"nativeWork,omitempty"`
 	Authentication     string `json:"authentication"`
 	AuthenticationNote string `json:"authenticationNote"`
 }
@@ -141,6 +144,28 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 	if options.Effort != "high" {
 		return config, errors.New("setup currently supports only --effort high")
 	}
+	if options.ExecutionMode == "" {
+		options.ExecutionMode = "proposal-only"
+	}
+	if options.ExecutionMode != "proposal-only" && options.ExecutionMode != "native-work" {
+		return config, errors.New("--execution-mode must be proposal-only or native-work")
+	}
+	if options.ExecutionMode == "native-work" {
+		if options.Provider != "codex" {
+			return config, errors.New("native-work setup currently supports only the Codex provider")
+		}
+		if options.CodexProfile != "luna-high" || options.Model != "gpt-6-luna" || options.Effort != "high" {
+			return config, errors.New("native-work requires --codex-profile luna-high with model gpt-6-luna and effort high")
+		}
+		if found.ProviderBinary.Version != "0.162.0" {
+			return config, errors.New("native-work requires Codex CLI 0.162.0")
+		}
+		if found.NativeWork.Path == "" {
+			return config, errors.New("native-work helper source is missing from the selected Markitect tool root")
+		}
+	} else if options.CodexProfile != "" {
+		return config, errors.New("--codex-profile is supported only with --execution-mode native-work")
+	}
 	if options.InputMicrosPerMillion < 0 || options.OutputMicrosPerMillion < 0 ||
 		(options.InputMicrosPerMillion == 0 && options.OutputMicrosPerMillion == 0) || options.MaxCostMicros <= 0 {
 		return config, errors.New("explicit nonnegative input/output rates and a positive max-cost-micros budget are required")
@@ -158,9 +183,34 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		modelOptions["effort"] = options.Effort
 	}
 	files := []agentexec.RuntimeFile{runtimeFile(found.Python), runtimeFile(found.Adapter), runtimeFile(found.ProviderBinary)}
+	workerArgs := append([]string(nil), args...)
+	workerFiles := append([]agentexec.RuntimeFile(nil), files...)
+	instructionPaths := []string(nil)
+	if options.ExecutionMode == "native-work" {
+		workerArgs = append(workerArgs, "--execution-mode", "native-work", "--codex-profile", options.CodexProfile, "--native-helper-limit", "0")
+		var instructionFiles []agentexec.RuntimeFile
+		var instructionErr error
+		instructionPaths, instructionFiles, instructionErr = nativeInstructionFiles(project, options.Provider)
+		if instructionErr != nil {
+			return config, instructionErr
+		}
+		if len(instructionPaths) == 0 {
+			return config, errors.New("native-work requires existing generated Codex project instructions; run project onboard first")
+		}
+		workerFiles = append(workerFiles, runtimeFile(found.NativeWork))
+		workerFiles = append(workerFiles, instructionFiles...)
+	}
 	environment := []string{"PATH", "TEMP", "TMP"}
 	if runtime.GOOS == "windows" {
 		environment = append(environment, "SystemRoot")
+	}
+	workerEnvironment := append([]string(nil), environment...)
+	if options.ExecutionMode == "native-work" {
+		if runtime.GOOS == "windows" {
+			workerEnvironment = append(workerEnvironment, "USERPROFILE", "APPDATA", "LOCALAPPDATA")
+		} else {
+			workerEnvironment = append(workerEnvironment, "HOME")
+		}
 	}
 	pricing := projectrun.Pricing{InputMicrosPerMillion: options.InputMicrosPerMillion, OutputMicrosPerMillion: options.OutputMicrosPerMillion}
 	agents := make(map[string]projectrun.Agent, len(project.Report.Managers))
@@ -169,8 +219,14 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		if manager.ID == "" {
 			return config, errors.New("active project has a Manager with an empty ID")
 		}
-		agents[manager.ID] = selectedAgent(found, args, options.Model, modelOptions, files, environment, pricing)
-		reviewAgents[manager.ID] = selectedAgent(found, args, options.Model, modelOptions, files, environment, pricing)
+		worker := selectedAgent(found, workerArgs, options.Model, modelOptions, workerFiles, workerEnvironment, pricing)
+		reviewer := selectedAgent(found, args, options.Model, modelOptions, files, environment, pricing)
+		if options.ExecutionMode == "native-work" {
+			worker.WorkspaceMode = "scoped"
+			worker.InstructionPaths = append([]string(nil), instructionPaths...)
+		}
+		agents[manager.ID] = worker
+		reviewAgents[manager.ID] = reviewer
 	}
 	config = projectrun.Runtime{
 		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal, RequireIsolation: false,
@@ -259,6 +315,75 @@ func runtimeFile(tool Tool) agentexec.RuntimeFile {
 	return agentexec.RuntimeFile{Path: tool.Path, Mode: tool.Mode, Digest: tool.Digest}
 }
 
+// nativeInstructionFiles selects only existing, non-operational Codex
+// instruction files owned by onboarding. Paths stay project-relative in the
+// invocation contract; runtime pins bind their exact absolute bytes and modes.
+func nativeInstructionFiles(project *projectwork.Project, provider string) ([]string, []agentexec.RuntimeFile, error) {
+	if project == nil || project.Root == "" {
+		return nil, nil, errors.New("native-work instructions require an active project root")
+	}
+	if provider != "codex" {
+		return nil, nil, errors.New("native-work instructions currently support only Codex")
+	}
+	root, err := filepath.Abs(project.Root)
+	if err != nil {
+		return nil, nil, fmt.Errorf("resolve project root for native instructions: %w", err)
+	}
+	rootInfo, err := os.Lstat(root)
+	if err != nil || !rootInfo.IsDir() || rootInfo.Mode()&fs.ModeSymlink != 0 {
+		return nil, nil, errors.New("native instruction project root must be a real directory")
+	}
+	var paths []string
+	var files []agentexec.RuntimeFile
+	for _, tool := range projectwork.ToolPaths(project.Config) {
+		path := tool.Selector
+		lower := strings.ToLower(filepath.ToSlash(path))
+		if tool.Operational || tool.Owner != "project-onboarding" || !strings.HasSuffix(lower, ".md") || strings.HasPrefix(lower, ".markitect/") {
+			continue
+		}
+		if path != "AGENTS.md" && !strings.HasPrefix(path, ".agents/") {
+			continue
+		}
+		absolute := filepath.Join(root, filepath.FromSlash(path))
+		current := root
+		missing := false
+		segments := strings.Split(filepath.FromSlash(path), string(filepath.Separator))
+		for index, segment := range segments {
+			current = filepath.Join(current, segment)
+			info, statErr := os.Lstat(current)
+			if errors.Is(statErr, os.ErrNotExist) {
+				missing = true
+				break
+			}
+			if statErr != nil {
+				return nil, nil, fmt.Errorf("inspect native instruction %s: %w", path, statErr)
+			}
+			if info.Mode()&fs.ModeSymlink != 0 {
+				return nil, nil, fmt.Errorf("native instruction %s contains a symlink", path)
+			}
+			if index < len(segments)-1 && !info.IsDir() {
+				return nil, nil, fmt.Errorf("native instruction %s has a non-directory parent", path)
+			}
+		}
+		if missing {
+			continue
+		}
+		toolFile, err := inspectFile(absolute)
+		if err != nil {
+			return nil, nil, fmt.Errorf("inspect native instruction %s: %w", path, err)
+		}
+		// Keep the project-root spelling used by projectrun's workspace
+		// validator; resolving a Windows junction here would make the absolute
+		// pin differ textually from the same project-relative instruction path.
+		toolFile.Path = filepath.Clean(absolute)
+		paths = append(paths, filepath.ToSlash(path))
+		files = append(files, runtimeFile(toolFile))
+	}
+	sort.Strings(paths)
+	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	return paths, files, nil
+}
+
 // Discover identifies direct native executables and exact source adapters. It
 // invokes only --version; it never checks login state or reads provider config.
 func Discover(options Options) (Discovery, error) {
@@ -286,6 +411,19 @@ func Discover(options Options) (Discovery, error) {
 	adapter, err := inspectFile(adapterPath)
 	if err != nil {
 		return result, fmt.Errorf("inspect selected %s adapter: %w", options.Provider, err)
+	}
+	var nativeWork Tool
+	if options.ExecutionMode == "native-work" {
+		if options.Provider != "codex" {
+			return result, errors.New("native-work setup currently supports only the Codex provider")
+		}
+		nativeWorkPath := filepath.Join(root, "internal", "tooling", "codexrunner", "native_work.py")
+		nativeWork, err = inspectFile(nativeWorkPath)
+		if err != nil {
+			return result, fmt.Errorf("inspect native-work helper source: %w", err)
+		}
+	} else if options.ExecutionMode != "" && options.ExecutionMode != "proposal-only" {
+		return result, errors.New("--execution-mode must be proposal-only or native-work")
 	}
 	pythonName := "python3"
 	if runtime.GOOS == "windows" {
@@ -323,7 +461,7 @@ func Discover(options Options) (Discovery, error) {
 		return result, fmt.Errorf("read selected Python version: %w", err)
 	}
 	result = Discovery{
-		Provider: options.Provider, ProviderBinary: providerTool, Python: pythonTool, Adapter: adapter,
+		Provider: options.Provider, ProviderBinary: providerTool, Python: pythonTool, Adapter: adapter, NativeWork: nativeWork,
 		Authentication:     "not-verified",
 		AuthenticationNote: "Markitect does not read credentials or probe provider login status; use the provider's existing OS-default sign-in.",
 	}
@@ -405,7 +543,7 @@ func isCommandShim(path string) bool {
 func discoverProvider(provider string) string {
 	if runtime.GOOS == "windows" && provider == "codex" {
 		if appData := os.Getenv("APPDATA"); appData != "" {
-			candidate := filepath.Join(appData, "npm", "node_modules", "@openai", "codex", "node_modules", "@openai", "codex-win32-x64", "vendor", "x86_64-pc-windows-msvc", "codex", "codex.exe")
+			candidate := filepath.Join(appData, "npm", "node_modules", "@openai", "codex", "node_modules", "@openai", "codex-win32-x64", "vendor", "x86_64-pc-windows-msvc", "bin", "codex.exe")
 			if _, err := os.Stat(candidate); err == nil {
 				return candidate
 			}

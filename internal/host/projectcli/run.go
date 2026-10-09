@@ -563,7 +563,7 @@ func setupOptions(opts options) (projectsetup.Options, error) {
 		return projectsetup.Options{}, err
 	}
 	return projectsetup.Options{
-		Provider: opts.provider, Model: opts.model, Effort: opts.effort, ToolRoot: opts.toolRoot,
+		Provider: opts.provider, Model: opts.model, Effort: opts.effort, ExecutionMode: opts.executionMode, CodexProfile: opts.codexProfile, ToolRoot: opts.toolRoot,
 		ProviderExecutable: opts.providerExecutable, InputMicrosPerMillion: rates.input,
 		OutputMicrosPerMillion: rates.output, MaxCostMicros: rates.maxCost,
 	}, nil
