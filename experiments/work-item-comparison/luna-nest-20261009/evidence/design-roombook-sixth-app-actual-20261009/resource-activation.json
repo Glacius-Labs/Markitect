@@ -1,0 +1,56 @@
+{
+  "parentEntry": {
+    "reservation": 1,
+    "kind": "implementation",
+    "depth": 1,
+    "parent": null,
+    "stationIndex": 0,
+    "reservedUtc": "2026-10-09T10:41:22.133399+00:00",
+    "deadlineUtc": "2026-10-09T11:03:52.133399+00:00",
+    "status": "started",
+    "handle": "/root/design_roombook_sixth_primary",
+    "continuationHandle": null,
+    "model": "gpt-6-luna",
+    "reasoning": "high",
+    "forkTurns": "none",
+    "usage": null,
+    "servingModel": null,
+    "cost": null,
+    "toolResult": {
+      "actualReturnedToolHandle": "/root/design_roombook_sixth_primary",
+      "actualToolResult": {
+        "task_name": "/root/design_roombook_sixth_primary"
+      },
+      "toolReturnRecordedUtc": "2026-10-09T10:43:17.330454+00:00",
+      "toolInvocationUtc": null,
+      "actualModelStartUtc": null,
+      "requestedModel": "gpt-6-luna",
+      "reasoning": "high",
+      "forkTurns": "none",
+      "servingModel": null,
+      "usage": null,
+      "cost": null,
+      "literalMessageSha256": "68030b756fa06eec79c15732c407b7080e1ef32bc559a2e4845ec602ef0dcf2f"
+    },
+    "observedUtc": "2026-10-09T10:43:17.335357+00:00"
+  },
+  "gate": {
+    "released": true,
+    "reservation": 1,
+    "ownHandle": "/root/design_roombook_sixth_primary",
+    "phase": "implementation",
+    "stationIndex": 0,
+    "grantSha256": "6ffb11f2c31b043f283c15484840ee4630a17d968c7b6b37743b969ca6055811",
+    "bindingSha256": "1d627a6a655a4a09a3f3eedaac1f5a17589ed9c32fd8e52c67480a1f8626f286",
+    "runtimeSha256": "ddc0f3ea6f02fba25b413d3de36351b648b91dec31e41eb323dbc7bfff1b8f24",
+    "releasedUtc": "2026-10-09T10:43:17.355245+00:00"
+  },
+  "runtimeBeforeSha256": "38bae9af3b7f6d353e5ef4b06e9f57e1d01d2ae985ac6871067a310b9455471e",
+  "runtimeAfterSha256": "ddc0f3ea6f02fba25b413d3de36351b648b91dec31e41eb323dbc7bfff1b8f24",
+  "bindingBeforeSha256": "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed",
+  "bindingAfterSha256": "1d627a6a655a4a09a3f3eedaac1f5a17589ed9c32fd8e52c67480a1f8626f286",
+  "delta": "Only enabled grant/actual own parent fields in binding, both binding-sha256 argv in runtime; no target argv/prompt/model/DTO change",
+  "caseClockStartedUtc": "2026-10-09T10:41:22.133399+00:00",
+  "modelStartUtc": null,
+  "runtimeMutationInsideCellClock": true
+}

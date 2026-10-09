@@ -1,0 +1,82 @@
+[
+  {
+    "path": ".gitattributes",
+    "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
+    "bytes": 8
+  },
+  {
+    "path": "bind-primary.py",
+    "sha256": "6d82ee18f5c814a700265f50638ddb153c7951fa7094d856ed67ed3d982ebf9d",
+    "bytes": 3721
+  },
+  {
+    "path": "enabled-grant.json",
+    "sha256": "6ffb11f2c31b043f283c15484840ee4630a17d968c7b6b37743b969ca6055811",
+    "bytes": 5175
+  },
+  {
+    "path": "first-reservation.json",
+    "sha256": "d604f6e8fe1d8860d2d5191b74f64e57c2c696279abce053519d6515db26100f",
+    "bytes": 432
+  },
+  {
+    "path": "inner-binding-before.json",
+    "sha256": "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed",
+    "bytes": 2394
+  },
+  {
+    "path": "inner-binding-enabled.json",
+    "sha256": "1d627a6a655a4a09a3f3eedaac1f5a17589ed9c32fd8e52c67480a1f8626f286",
+    "bytes": 2393
+  },
+  {
+    "path": "primary-call-intent.json",
+    "sha256": "046433d32a05649eee0fd2d25c69e6ada470b509a853c16910649c235ba5ccde",
+    "bytes": 434
+  },
+  {
+    "path": "primary-message.txt",
+    "sha256": "68030b756fa06eec79c15732c407b7080e1ef32bc559a2e4845ec602ef0dcf2f",
+    "bytes": 2957
+  },
+  {
+    "path": "primary-tool-return.json",
+    "sha256": "1dd19f1637a562365f29a5dc1392923c4ec7c0a2a2c88fab78287ab8cab3253b",
+    "bytes": 510
+  },
+  {
+    "path": "resource-activation.json",
+    "sha256": "ef636c2b759d3b8995e8c3b682df0840cdcfab5d3714b5b2a245f3cf7578f096",
+    "bytes": 2275
+  },
+  {
+    "path": "root-activation.json",
+    "sha256": "ae38dcea1a543e1c1462949819cbe251793f6c0ef49b27671282b3078bfde58b",
+    "bytes": 2148
+  },
+  {
+    "path": "runtime-before.yaml",
+    "sha256": "38bae9af3b7f6d353e5ef4b06e9f57e1d01d2ae985ac6871067a310b9455471e",
+    "bytes": 6398
+  },
+  {
+    "path": "runtime-enabled.yaml",
+    "sha256": "ddc0f3ea6f02fba25b413d3de36351b648b91dec31e41eb323dbc7bfff1b8f24",
+    "bytes": 6398
+  },
+  {
+    "path": "start-ledger.json",
+    "sha256": "ab70cc8ae0ca9d9d1ecab3b3cb1a73c3deb256f3008fa8342eedf2bc35d9ec6d",
+    "bytes": 1536
+  },
+  {
+    "path": "start-reservation.py",
+    "sha256": "33d4bd22ba59f119c48a4837df14349760b89fc5d3e24b393ae589f5210d47b6",
+    "bytes": 4149
+  },
+  {
+    "path": "startup-gate-released.json",
+    "sha256": "4941beaa1481d0f4a8e2e8b2162005fbaa5d5175f168c3857bf0f937ee6c2961",
+    "bytes": 459
+  }
+]

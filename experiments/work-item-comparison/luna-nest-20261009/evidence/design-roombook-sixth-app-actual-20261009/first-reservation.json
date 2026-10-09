@@ -1,0 +1,19 @@
+{
+  "reservation": 1,
+  "kind": "implementation",
+  "depth": 1,
+  "parent": null,
+  "stationIndex": 0,
+  "reservedUtc": "2026-10-09T10:41:22.133399+00:00",
+  "deadlineUtc": "2026-10-09T11:03:52.133399+00:00",
+  "status": "reserved",
+  "handle": null,
+  "continuationHandle": null,
+  "model": "gpt-6-luna",
+  "reasoning": "high",
+  "forkTurns": "none",
+  "usage": null,
+  "servingModel": null,
+  "cost": null,
+  "toolResult": null
+}
