@@ -34,3 +34,20 @@ Die lokalen Rohberichte liegen unter `.artifacts/government-concept/`. Der BASE-
 ## Übergabegrenze
 
 Die Dokumentation ist die reviewbare Grundlage eines späteren Implementierungsauftrags. Die Entscheidung GD01–GD20, Verträge, Architektur und GP00–GP14 bilden den gemeinsamen Eingang. Ein Implementer klärt zuerst BASE, tatsächliche Produktgates, projektgewählte Policywerte und die versionierte Syntax; dann folgen die im Plan geordneten Pakete. Mechaniktests, echte native Fälle, fachliche/menschliche Annahme, gemessener Nutzen und Release erhalten jeweils ihre eigenen tatsächlichen Nachweise.
+
+## Fester Dokumentationskandidat
+
+Der erste vollständige Konzeptcommit ist `5bfb4367b96996fa25db31846c8a1f82e393a487`. Er enthält 13 neue Konzept-/Reviewdateien und zwei Routerergänzungen, insgesamt ausschließlich Markdown. Der Arbeitsbaum war nach Commit sauber. Diese tatsächlich ausgeführten Ergebnisse gelten genau für diesen Kandidaten:
+
+| Prüfung | Tatsächliches Ergebnis / Grenze |
+|---|---|
+| Source-CLI `check --repo . --revision 5bfb4367b96996fa25db31846c8a1f82e393a487` | Exit 0, top-level `passed`; Snapshot `13c15fd110c6ee82e8bbcdc9ee85f95e1393f50f7ac29e948cd1cef089b1f62f`. Registrierte Projection bleibt separat `incomplete`; kein vollständiges Project Verify. |
+| Ausgewähltes `context` derselben Revision für `development/Skill/engineering-change` | Exit 0; Contextdigest unverändert `sha256:8cb6de5fad49409760041016eaf1f28f7d7442dccd23ee454d9b00b9e44a92cf`. |
+| `impact --repo . --base d41aaeb3950c99be467e1f198d3f08428e96691b --revision 5bfb4367b96996fa25db31846c8a1f82e393a487` | Exit 0; genau die 15 Dokumentationspfade als Änderungen. Konservative Auswirkungen bleiben im Rohbericht sichtbar. |
+| Standalone Artifact Check am sauberen Arbeitsbaum dieses Kandidaten | Exit 0, `passed`; Working-tree-Abdeckung der konfigurierten managed roots, keine Governance-Semantikprüfung. |
+| Lokaler Dokumentationsaudit | 30 Markdown-Dateien, 211 lokale Links, 113 Sourcebereiche in 50 festen Git-Blobs, keine Fehler. Pfad-/Bereichsprüfung, keine automatische Bestätigung jeder Schlussfolgerung. |
+| `git diff --check` und unabhängiger Konzeptreview | Keine Whitespacefehler; alle dokumentierten Findings auf Konzeptebene bearbeitet und gezielt nachgeprüft. |
+
+Tooldigest der Source-CLI: `sha256:944e801e1a572ee62d5675234d58960b1769fba278861207cfb49654607562ba`. Die vollständigen Rohberichte sind `.artifacts/government-concept/candidate-{check,context,impact,artifacts}.yaml`; der Audit steht in `document-audit.json`.
+
+Diese Ergebnisergänzung erhält einen eigenen Dokumentationscommit. Der abschließende HEAD wird erneut mit festen Check/Context/Impact und aktuellen Artifact-/Linkprüfungen kontrolliert; die Berichte werden als `final-*` gespeichert. Ergebnisse des ersten Kandidaten werden nicht auf dessen Nachfolger umetikettiert. Ausgeführt wurden Dokumentations-/Strukturinspektionen und Agentenarbeit an diesem Konzept, keine Government-Produktrollen, Fullsuite, Case Studies, native Annahmeläufe oder Release-/Adoptermutationen. Alle Implementierungs- und Wirkungsnachweise im Plan bleiben **NICHT GESTARTET**.
