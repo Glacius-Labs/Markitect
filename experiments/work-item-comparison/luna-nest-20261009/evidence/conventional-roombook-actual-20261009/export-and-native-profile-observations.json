@@ -1,0 +1,47 @@
+{
+  "archiveExcludesNativeHomeCredentials": true,
+  "originalStateAndRepoNotChanged": true,
+  "firstLocalDuplicate": "preserved untouched and ignored",
+  "regularFileExport": "terminal-export, .git excluded on copy; original frozen bundles retain history",
+  "priorMetadataRemoval": "automatic tool approval rejected; no removal executed, no retry/bypass",
+  "requestObservations": [
+    {
+      "session": 1,
+      "reconnectAnnouncementLines": 0,
+      "exactProviderRequestCount": null,
+      "toolCallsObserved": 0,
+      "note": "Announcement count is not inferred HTTP billing/model execution count"
+    },
+    {
+      "session": 2,
+      "reconnectAnnouncementLines": 0,
+      "exactProviderRequestCount": null,
+      "toolCallsObserved": 0,
+      "note": "Announcement count is not inferred HTTP billing/model execution count"
+    }
+  ],
+  "nativeRequestedContexts": [
+    {
+      "sessionFile": "rollout-2026-10-09T07-32-06-01a11f25-b2c5-7733-afe8-e7f20ea72cff.jsonl",
+      "recordType": "turn_context",
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      },
+      "meaning": "Native request context, not completed inference or serving attestation"
+    },
+    {
+      "sessionFile": "rollout-2026-10-09T07-32-55-01a11f26-71a7-7b93-807a-38f4e8a23d9f.jsonl",
+      "recordType": "turn_context",
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      },
+      "meaning": "Native request context, not completed inference or serving attestation"
+    }
+  ]
+}

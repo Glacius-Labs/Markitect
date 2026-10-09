@@ -1,0 +1,22 @@
+{
+  "grantId": "conventional-roombook-early-start-20261009",
+  "setupStartedUtc": "2026-10-09T05:25:37.1629091+00:00",
+  "setupFinishedUtc": "2026-10-09T05:25:37.2219653+00:00",
+  "observedSetupOperationWallSeconds": 0.0040397,
+  "setupEnvelopeNotAfterUtc": "2026-10-09T05:40:37.1629091+00:00",
+  "mechanism": "Opaque reuse of existing authorized current-user native account material in fresh cell CODEX_HOME",
+  "credentialContentsReadToModel": false,
+  "credentialContentLogged": false,
+  "credentialCommitted": false,
+  "providerProbed": false,
+  "nativeModelProcessesStarted": 0,
+  "globalConfigChanged": false,
+  "nativeHomeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+  "nativeHome": "C:/Users/Consiliari/Documents/Luna-Work-Item-Nests-20261009/homes/roombook-conventional",
+  "stateDir": "C:/Users/Consiliari/Documents/Luna-Work-Item-Nests-20261009/state/roombook-conventional",
+  "hostWaitStartedUtc": "2026-10-09T05:25:37.2219653+00:00",
+  "hostWaitCondition": "Await Root report that Design-owned pre-existing full Go gate ended; no foreign process lookup",
+  "hostLoadIndependentlyMeasured": false,
+  "setupNativeAccountFunctionalStatus": "unknown until real case entry",
+  "actualFullStarts": 0
+}

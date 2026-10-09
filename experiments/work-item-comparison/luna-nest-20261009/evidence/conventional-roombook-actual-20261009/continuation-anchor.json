@@ -1,6 +1,6 @@
 {
   "package": "conventional-roombook-early-start-20261009",
-  "status": "RUNNING real native Roombook Conventional trial",
+  "status": "CLOSED BLOCKED native requested Luna/ChatGPT path rejected400; both implementation and final assessor terminal",
   "acceptedSourceSha": "6578c0c96bd9504d4230ba1b8ce408b54fae742a",
   "rootActivationSha256": "871f27cef06cd9aa8bad5243a2db505b2205899f2eb59144340b24124262d1d4",
   "executionGrantSha256": "109e2752b175105b30e7056993a8a75af806c688847e6b5d5cecb37c92696c4c",
@@ -18,13 +18,18 @@
   "stateDir": "C:/Users/Consiliari/Documents/Luna-Work-Item-Nests-20261009/state/roombook-conventional",
   "nativeHome": "C:/Users/Consiliari/Documents/Luna-Work-Item-Nests-20261009/homes/roombook-conventional",
   "driverSession": 97368,
-  "startCallback": "pending once real start callback",
-  "completionCallback": "not sent",
-  "next": "Wait only own driver tool session97368; read own state/receipt metadata for transitions. No candidate edits/adaptive coaching. Capture final freeze+fresh independent assessment; callback completion/blocker once.",
+  "startCallback": "sent once successfully to Overseer/local",
+  "completionCallback": "pending once terminal blocker handoff",
+  "next": "Private checkpoint then report terminal exact400 and effective read-only discrepancy once. No retry/new cell/model substitution/probe/permission bypass from this grant.",
   "hostWaitCondition": "Root reports Design-owned full Go gate session33006 still running; setup>=05:25Z permitted, first measured native case waits for Root actual-completion notification. No foreign/global process inspection.",
   "setupStartedUtc": "2026-10-09T07:25:37.1629091+02:00",
   "setupFinishedUtc": "2026-10-09T07:25:37.2219653+02:00",
   "setupEnvelopeNotAfterUtc": "2026-10-09T07:40:37.1629091+02:00",
   "nativeStartedUtc": "2026-10-09T07:32:06.266172+02:00",
-  "cellDeadlineUtc": "2026-10-09T09:32:06.114601+02:00"
+  "cellDeadlineUtc": "2026-10-09T09:32:06.114601+02:00",
+  "implementationEntriesUsed": 1,
+  "assessmentEntriesUsed": 1,
+  "completedModelTurns": 0,
+  "terminalNativeEndedUtc": "2026-10-09T05:33:37.508518Z",
+  "actorFailure": "400invalid_request_error: gpt-6-luna unsupported with Codex ChatGPT account on this exact native path"
 }

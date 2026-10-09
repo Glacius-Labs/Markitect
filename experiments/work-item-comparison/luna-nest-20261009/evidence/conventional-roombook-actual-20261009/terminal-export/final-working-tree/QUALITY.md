@@ -1,0 +1,13 @@
+# Shared acceptance and quality criteria
+
+Implement the CLI behavior specified in README.md and BACKLOG.md. All business requirements are public. Tests exercise real CLI invocations on fresh temporary data, then a second process on the same data. Report not-run and evaluation errors separately from application failures. A passing test set is finite evidence, not human acceptance.
+
+The independent final assessor examines the frozen main commit, checks the declared requirements and legacy behavior, executes its own additional boundary/regression cases drawn only from these public requirements, and reviews source and documentation. It receives no implementer transcript, earlier solution or other-cell result. It does not fix the candidate.
+
+Common result dimensions: function/rules, regression and durable state, internal and documentation consistency, code quality and changeability, tests and operational documentation, architectural drift and continuation. Give concrete PASS/FAIL/NOT RUN/unknown findings with evidence, not a freely weighted aggregate. Critical required behavior failure or missing main integration prevents complete success.
+
+Method conformance is separate: truthful source/check binding, appropriate change control and review, reproducible continuation, honest failure/effort reporting, and for Markitect its genuine model/realization/check/document/Apply consistency. Conventional does not owe a Markitect model or ontology. Method artifacts alone earn no functional-quality credit.
+
+Record setup, model preparation/upkeep, implementation, tests, failed attempts, repairs, reviews, merge and oversight. Record known elapsed intervals and real native/product token receipts with scope and parent/child identity. Do not sum overlapping intervals or duplicate receipts. Missing provider usage/billing/active human time remains unknown and does not invalidate functional checks. No comparison winner follows from one small pair.
+
+Assess each retained station against its released requirements, then the final rename across active behavior/interfaces, implementation, tests, documentation/config and, for Markitect, canonical model/generated views. Retain declared compatible aliases and migration support; historical names are not automatically errors. Inspect behavior and references, not just text matches. Classify known-rule findings by rule, severity and affected scope, whether detected/repaired/remaining, and false alarms or unverifiable rules separately. Report actual team overlap/starts/contributions/merges versus unknown observations. Four stations and twelve items in one project remain one longitudinal case, not twelve independent replications.

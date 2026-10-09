@@ -1,0 +1,297 @@
+[
+  {
+    "path": ".gitignore",
+    "sha256": "683e5f394a4dab59d484f0bc6d817d75b526f9afa6a4ca02d41caef90617ff1b",
+    "bytes": 173
+  },
+  {
+    "path": "continuation-anchor.json",
+    "sha256": "d05b3c8c9d5c5d9bdd5ae2d51f6b9a7842cc806af74c985e88c6871d231033f2",
+    "bytes": 2188
+  },
+  {
+    "path": "execution-grant.json",
+    "sha256": "109e2752b175105b30e7056993a8a75af806c688847e6b5d5cecb37c92696c4c",
+    "bytes": 1759
+  },
+  {
+    "path": "export-and-native-profile-observations.json",
+    "sha256": "00868e2c7f8ece708be8b264421b24f60ef6e7448d0d8b1b055e4a92611d0401",
+    "bytes": 1697
+  },
+  {
+    "path": "HANDOFF.md",
+    "sha256": "6df8133c017a951efa1d9b8ef85ee2451d7f5a67bcdc7616612cead08b04b028",
+    "bytes": 5596
+  },
+  {
+    "path": "host-slot-release.json",
+    "sha256": "5f6bebe5fd05424226898937e937b2960ac4683b2bea5e58409bac989d23b9a6",
+    "bytes": 1326
+  },
+  {
+    "path": "launch-request.json",
+    "sha256": "63c362e5c75b7bb547747f648ffbcdc1634b57bd30eb2ff93f270636775099c8",
+    "bytes": 664
+  },
+  {
+    "path": "own-native-session-records/2026/10/09/rollout-2026-10-09T07-32-06-01a11f25-b2c5-7733-afe8-e7f20ea72cff.jsonl",
+    "sha256": "cf39898027483b8df891e1873195cf8129eaa833ba12339b3c402a5ce67a2abe",
+    "bytes": 42363
+  },
+  {
+    "path": "own-native-session-records/2026/10/09/rollout-2026-10-09T07-32-55-01a11f26-71a7-7b93-807a-38f4e8a23d9f.jsonl",
+    "sha256": "1571b526c3280425f31176432517b887bc02649488c82d924043b6c005ae2124",
+    "bytes": 39895
+  },
+  {
+    "path": "root-activation.json",
+    "sha256": "871f27cef06cd9aa8bad5243a2db505b2205899f2eb59144340b24124262d1d4",
+    "bytes": 5356
+  },
+  {
+    "path": "setup-receipt.json",
+    "sha256": "a3885bac63c549a2f280e150e4b99c259be05463253b525b77c19d1ea5aa3403",
+    "bytes": 1269
+  },
+  {
+    "path": "start-lifecycle-observation.json",
+    "sha256": "b3732d7487275218de534e5d4ce4f38a058e937b967e73d1feee0df971c004bb",
+    "bytes": 575
+  },
+  {
+    "path": "start-receipt.json",
+    "sha256": "af46d751d67065f1658285cc832183e295d8fd96d0344745a2bfb77a262a3b3a",
+    "bytes": 2179
+  },
+  {
+    "path": "terminal-export/driver-exit.json",
+    "sha256": "f6c7884117f251ad34ad752b519a453961bf56825f62549f8917da8c466b8e1c",
+    "bytes": 75
+  },
+  {
+    "path": "terminal-export/driver.stderr.txt",
+    "sha256": "f27e9157974b1dc3b51fd3f1c5c1831bfe9cef3441538d0bef018a1e176836b5",
+    "bytes": 148
+  },
+  {
+    "path": "terminal-export/driver.stdout.txt",
+    "sha256": "a364409e1b3d3abfea073e753f825ed5ef8cea654bb2cb2912bddf8b7204cf49",
+    "bytes": 6806
+  },
+  {
+    "path": "terminal-export/evaluation/repo/.gitignore",
+    "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "bytes": 36
+  },
+  {
+    "path": "terminal-export/evaluation/repo/AGENTS.md",
+    "sha256": "ba07d46c6791fc0f7e09c1390d3d96a9ca76f759b37a2a68add27e682a18976c",
+    "bytes": 2553
+  },
+  {
+    "path": "terminal-export/evaluation/repo/BACKLOG.md",
+    "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "bytes": 2566
+  },
+  {
+    "path": "terminal-export/evaluation/repo/checks/acceptance.py",
+    "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "bytes": 7554
+  },
+  {
+    "path": "terminal-export/evaluation/repo/QUALITY.md",
+    "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "bytes": 2687
+  },
+  {
+    "path": "terminal-export/evaluation/repo/README.md",
+    "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "bytes": 2276
+  },
+  {
+    "path": "terminal-export/evaluation/repo/STATIONS.json",
+    "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "bytes": 595
+  },
+  {
+    "path": "terminal-export/final-working-tree/.codex/config.toml",
+    "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "bytes": 281
+  },
+  {
+    "path": "terminal-export/final-working-tree/.gitignore",
+    "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "bytes": 36
+  },
+  {
+    "path": "terminal-export/final-working-tree/.study/station.json",
+    "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+    "bytes": 70
+  },
+  {
+    "path": "terminal-export/final-working-tree/AGENTS.md",
+    "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+    "bytes": 5411
+  },
+  {
+    "path": "terminal-export/final-working-tree/BACKLOG.md",
+    "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "bytes": 2566
+  },
+  {
+    "path": "terminal-export/final-working-tree/checks/acceptance.py",
+    "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "bytes": 7554
+  },
+  {
+    "path": "terminal-export/final-working-tree/QUALITY.md",
+    "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "bytes": 2687
+  },
+  {
+    "path": "terminal-export/final-working-tree/README.md",
+    "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "bytes": 2276
+  },
+  {
+    "path": "terminal-export/final-working-tree/STATIONS.json",
+    "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "bytes": 595
+  },
+  {
+    "path": "terminal-export/history.bundle",
+    "sha256": "654601c94020270d163903c22a2bf76debe54e3277975394e578c70dfe4e9e03",
+    "bytes": 10454
+  },
+  {
+    "path": "terminal-export/ordinary-setup-receipt.json",
+    "sha256": "a3885bac63c549a2f280e150e4b99c259be05463253b525b77c19d1ea5aa3403",
+    "bytes": 1269
+  },
+  {
+    "path": "terminal-export/session-01/prompt.txt",
+    "sha256": "cc4389f0f822251442bd0f7bafe40b2f357ac45c270ab3afc23b0a879806f591",
+    "bytes": 146
+  },
+  {
+    "path": "terminal-export/session-01/stderr.txt",
+    "sha256": "72cdf986a40dfb236ae65d718e94b23e0cd85daef8c5aa24fff84c345816ce45",
+    "bytes": 216598
+  },
+  {
+    "path": "terminal-export/session-01/stdout.jsonl",
+    "sha256": "f0e75781ea15946a2303b7913e606b5021fcd1d9a358c6f41edfd8114ca18735",
+    "bytes": 535
+  },
+  {
+    "path": "terminal-export/session-02/prompt.txt",
+    "sha256": "94e51ad764337c9055326fec4c4acb9d548c2ebca1ab126ae68dbdd14a4e3fee",
+    "bytes": 1736
+  },
+  {
+    "path": "terminal-export/session-02/stderr.txt",
+    "sha256": "94fb2e4e24dc424d3b2106957766bb907d33fdfb5ffe6a978aedc809b6575430",
+    "bytes": 216598
+  },
+  {
+    "path": "terminal-export/session-02/stdout.jsonl",
+    "sha256": "2315693848538fea39230cf4a59a7e4bb40b14c0d34f41bd2d89a37249ae716a",
+    "bytes": 535
+  },
+  {
+    "path": "terminal-export/state.json",
+    "sha256": "5794e2dd5b32e2bc91ec5619e8d24b29e793de70e329ab713ccfdcfc3c6881b7",
+    "bytes": 13097
+  },
+  {
+    "path": "terminal-export/stations/S1/history.bundle",
+    "sha256": "654601c94020270d163903c22a2bf76debe54e3277975394e578c70dfe4e9e03",
+    "bytes": 10454
+  },
+  {
+    "path": "terminal-export/stations/S1/main/.gitignore",
+    "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "bytes": 36
+  },
+  {
+    "path": "terminal-export/stations/S1/main/AGENTS.md",
+    "sha256": "ba07d46c6791fc0f7e09c1390d3d96a9ca76f759b37a2a68add27e682a18976c",
+    "bytes": 2553
+  },
+  {
+    "path": "terminal-export/stations/S1/main/BACKLOG.md",
+    "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "bytes": 2566
+  },
+  {
+    "path": "terminal-export/stations/S1/main/checks/acceptance.py",
+    "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "bytes": 7554
+  },
+  {
+    "path": "terminal-export/stations/S1/main/QUALITY.md",
+    "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "bytes": 2687
+  },
+  {
+    "path": "terminal-export/stations/S1/main/README.md",
+    "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "bytes": 2276
+  },
+  {
+    "path": "terminal-export/stations/S1/main/STATIONS.json",
+    "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "bytes": 595
+  },
+  {
+    "path": "terminal-export/stations/S1/working-tree/.codex/config.toml",
+    "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "bytes": 281
+  },
+  {
+    "path": "terminal-export/stations/S1/working-tree/.gitignore",
+    "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "bytes": 36
+  },
+  {
+    "path": "terminal-export/stations/S1/working-tree/.study/station.json",
+    "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+    "bytes": 70
+  },
+  {
+    "path": "terminal-export/stations/S1/working-tree/AGENTS.md",
+    "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+    "bytes": 5411
+  },
+  {
+    "path": "terminal-export/stations/S1/working-tree/BACKLOG.md",
+    "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "bytes": 2566
+  },
+  {
+    "path": "terminal-export/stations/S1/working-tree/checks/acceptance.py",
+    "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "bytes": 7554
+  },
+  {
+    "path": "terminal-export/stations/S1/working-tree/QUALITY.md",
+    "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "bytes": 2687
+  },
+  {
+    "path": "terminal-export/stations/S1/working-tree/README.md",
+    "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "bytes": 2276
+  },
+  {
+    "path": "terminal-export/stations/S1/working-tree/STATIONS.json",
+    "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "bytes": 595
+  },
+  {
+    "path": "terminal-summary.json",
+    "sha256": "e7dcee0f8126bd98c02c5dde229fca7e4da15b86a8d9e1075744a30a36151f81",
+    "bytes": 2718
+  }
+]

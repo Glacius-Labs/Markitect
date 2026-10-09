@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "case": "roombook",
+  "totalItems": 12,
+  "stations": [
+    {
+      "id": "S1",
+      "items": [
+        "R01"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S2",
+      "items": [
+        "R02",
+        "R03",
+        "R04"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S3",
+      "items": [
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11"
+      ],
+      "requiresTeam": true
+    },
+    {
+      "id": "S4",
+      "items": [
+        "R12"
+      ],
+      "requiresTeam": false
+    }
+  ]
+}

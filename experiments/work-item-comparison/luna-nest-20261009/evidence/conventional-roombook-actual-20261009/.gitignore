@@ -1,0 +1,3 @@
+# The first local duplicate contains embedded Git metadata and stays untouched.
+# Commit the separate regular-file export plus original Git history bundles.
+terminal-state/

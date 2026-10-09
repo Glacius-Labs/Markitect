@@ -1,0 +1,174 @@
+{
+  "freeze": {
+    "frozenUtc": "2026-10-09T05:32:54.817339+00:00",
+    "mainCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+    "headCommit": "128006c6efeb3ba9244de76d0dcc777e97aa9589",
+    "dirtyStatus": "",
+    "mergedAndClean": false,
+    "mainTree": "c9b88d6fe6c0d4c3d7b7ce81914699575d230606",
+    "rawWorkingFiles": {
+      ".codex/config.toml": {
+        "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+        "bytes": 281
+      },
+      ".gitignore": {
+        "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+        "bytes": 36
+      },
+      ".study/station.json": {
+        "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+        "bytes": 70
+      },
+      "AGENTS.md": {
+        "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+        "bytes": 5411
+      },
+      "BACKLOG.md": {
+        "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+        "bytes": 2566
+      },
+      "checks/acceptance.py": {
+        "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+        "bytes": 7554
+      },
+      "QUALITY.md": {
+        "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+        "bytes": 2687
+      },
+      "README.md": {
+        "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+        "bytes": 2276
+      },
+      "STATIONS.json": {
+        "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+        "bytes": 595
+      }
+    },
+    "historyBundleSha256": "654601c94020270d163903c22a2bf76debe54e3277975394e578c70dfe4e9e03",
+    "evaluationRepo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional\\evaluation\\repo",
+    "assessedScope": "isolated main; unfinished tree retained separately"
+  },
+  "assessment": {
+    "number": 2,
+    "phase": "assessment",
+    "reservedUtc": "2026-10-09T05:32:55.021470+00:00",
+    "argv": [
+      "C:/Users/Consiliari/AppData/Roaming/npm/node_modules/@openai/codex/node_modules/@openai/codex-win32-x64/vendor/x86_64-pc-windows-msvc/codex/codex.exe",
+      "exec",
+      "--cd",
+      "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional\\evaluation\\repo",
+      "--model",
+      "gpt-6-luna",
+      "--config",
+      "model_reasoning_effort=\"high\"",
+      "--json",
+      "--output-last-message",
+      "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional\\session-02\\last-message.txt",
+      "-"
+    ],
+    "cwd": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional\\evaluation\\repo",
+    "promptSha256": "94e51ad764337c9055326fec4c4acb9d548c2ebca1ab126ae68dbdd14a4e3fee",
+    "executableSha256": "280cb1c4e3375d94dbdcba1a191f4f6adbf73c293be1e4f16c74b006662b9c54",
+    "status": "failed",
+    "usage": null,
+    "providerRequests": null,
+    "servingModel": null,
+    "cost": null,
+    "tokensScope": "Raw own JSONL turns only; child/product receipts separately, no overlap sum",
+    "stationIndex": 0,
+    "phaseDeadlineUtc": "2026-10-09T05:52:55.020711+00:00",
+    "nativeHomeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "candidateFilesBefore": {
+      ".gitignore": {
+        "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+        "bytes": 36
+      },
+      "AGENTS.md": {
+        "sha256": "ba07d46c6791fc0f7e09c1390d3d96a9ca76f759b37a2a68add27e682a18976c",
+        "bytes": 2553
+      },
+      "BACKLOG.md": {
+        "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+        "bytes": 2566
+      },
+      "checks/acceptance.py": {
+        "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+        "bytes": 7554
+      },
+      "QUALITY.md": {
+        "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+        "bytes": 2687
+      },
+      "README.md": {
+        "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+        "bytes": 2276
+      },
+      "STATIONS.json": {
+        "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+        "bytes": 595
+      }
+    },
+    "pid": 44112,
+    "startedUtc": "2026-10-09T05:32:55.205741+00:00",
+    "exitCode": 1,
+    "endedUtc": "2026-10-09T05:33:37.508518+00:00",
+    "observedWallSeconds": 42.315579300004174,
+    "events": {
+      "sessionId": "01a11f26-71a7-7b93-807a-38f4e8a23d9f",
+      "completedTurns": [],
+      "errors": [
+        {
+          "type": "error",
+          "message": "{\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6-luna' model is not supported when using Codex with a ChatGPT account.\"}}"
+        },
+        {
+          "type": "turn.failed",
+          "error": {
+            "message": "{\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'gpt-6-luna' model is not supported when using Codex with a ChatGPT account.\"}}"
+          }
+        }
+      ],
+      "invalidLines": 0
+    },
+    "stdoutSha256": "2315693848538fea39230cf4a59a7e4bb40b14c0d34f41bd2d89a37249ae716a",
+    "stderrSha256": "94fb2e4e24dc424d3b2106957766bb907d33fdfb5ffe6a978aedc809b6575430",
+    "candidateFilesAfter": {
+      ".gitignore": {
+        "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+        "bytes": 36
+      },
+      "AGENTS.md": {
+        "sha256": "ba07d46c6791fc0f7e09c1390d3d96a9ca76f759b37a2a68add27e682a18976c",
+        "bytes": 2553
+      },
+      "BACKLOG.md": {
+        "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+        "bytes": 2566
+      },
+      "checks/acceptance.py": {
+        "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+        "bytes": 7554
+      },
+      "QUALITY.md": {
+        "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+        "bytes": 2687
+      },
+      "README.md": {
+        "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+        "bytes": 2276
+      },
+      "STATIONS.json": {
+        "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+        "bytes": 595
+      }
+    },
+    "candidateUnchanged": true,
+    "stationCandidatesUnchanged": [
+      {
+        "station": "S1",
+        "unchanged": true,
+        "headMatches": true
+      }
+    ]
+  }
+}
