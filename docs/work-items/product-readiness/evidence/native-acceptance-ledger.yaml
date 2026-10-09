@@ -1,13 +1,187 @@
 schema: markitect-product-acceptance-ledger/v1
 grant_id: product-readiness-native-acceptance-20261009
-limits_revision: generous-native-limits-20261009
+initial_limits_revision: generous-native-limits-20261009
+renewal_policy_revision: renewable-execution-budget-20261010
 main_gate_revision: combined-normal-smoke-20261009
-current_limits:
+prior_batch_limits:
+  revision: generous-native-limits-20261009
   max_jobs: 3
   max_job_wall_seconds: 14400
   max_total_wall_seconds: 43200
   max_total_role_start_requests: 256
   max_role_wall_seconds: 3600
+  consumed_jobs: 1
+  consumed_role_start_requests: 3
+  known_estimated_cost_micros: 401667
+  cost_accounting: partial_estimate_not_invoice
+  deadline_utc: '2026-10-10T00:26:23Z'
+  deadline_scope: historical_batch_only
+renewal_policy:
+  revision: renewable-execution-budget-20261010
+  authority: direct_human_instruction
+  direct_instruction: "Budget darfst du solange machen bis es klappt"
+  authority_record_name: renewable-execution-budget-20261010.json
+  authority_record_location: forwarded_external_contract_not_in_this_worktree
+  authority_record_sha256: a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7
+  issued_utc: '2026-10-09T22:01:37Z'
+  status: current_batch_failed_not_passed
+  cumulative_time_start_and_estimated_cost_cutoff: "none"
+  per_batch:
+    max_wall_seconds: 14400
+    max_role_wall_seconds: 7200
+    max_start_requests: 256
+    existing_product_role_configuration_ceiling_seconds: 3600
+    count_failed_and_nested_requests: true
+    finite_caller_estimate_cap_when_configured: required_and_pinned_before_execution
+  renewal_record_required_before_each_batch: true
+  next_batch:
+    batch_id: a01-renewal-cb2519fd709949f9b3911d7b00df66eb
+    status: failed_not_passed
+    execution_started: true
+    actual_started_utc: '2026-10-09T22:15:27.2664329Z'
+    observer_id: a2b7f2364cac447c98daad2c2a14555a
+    owned_host_pid: 4440
+    role_start_requests: 1
+    provider_starts: 1
+    helper_provider_starts: 0
+    native_root_session_id: 01a122bc-7ecc-7cb0-9c6d-9e028a97de78
+    native_root_turn_id: 01a122bc-81d6-77c0-8988-80c72eeb061f
+    native_root_profile: ':workspace'
+    native_root_actual_outcome: completed
+    host_terminal_utc: '2026-10-09T22:16:05.2379424Z'
+    host_exit_code: 2
+    observer_boundary_observed: false
+    failure: parallel_manager_work_dispatch_invalid_external_runner_response
+    input_tokens: 344668
+    output_tokens: 1987
+    cached_input_tokens: 293120
+    known_estimated_cost_micros: 348642
+    cost_accounting: partial_estimate_not_invoice
+    no_owned_children_remaining: true
+    owned_workspace: 49c78
+    owned_workspace_closed: true
+    normalized_workspace_changes: 0
+    cache_used: false
+    native_pid_4440_present: false
+    managers_completed: 0
+    overlapping_managers_observed: false
+    review_verify_apply_recovery_observed: false
+    blind_retry_authorized: false
+    diagnosed_repair_and_fresh_batch_within_renewal_authority: true
+    failure_diagnosis:
+      native_final_output: valid_json
+      external_runner_dto: invalid
+      outer_runner_state: blocked
+      verifierObservations_value_type: string_array
+      verifierObservations_expected_type: typed_objects
+      outer_outcome: blocked_invalid
+      reportJson_present: false
+      technical_cause_status: directly_observed
+      prompt_fix_candidate_revision: d664f96d1fe0de395404a1e818361f450a27331d
+      prompt_fix_review: closed
+      prompt_fix_focused_codex_appserver_seconds: 31.892
+      prompt_fix_focused_agentexec_seconds: 17.551
+      prompt_fix_vet: pass
+      prompt_fix_primary_integrated: false
+      primary_source_revision: c701a28908d379a4a6093caf03c0d88bef9f083a
+      primary_complete_suite: pending
+      shell_setup_evidence:
+        source: private_current_dated_sandbox_log
+        observed_window_utc: '2026-10-09T22:15:46Z/2026-10-09T22:15:58Z'
+        candidate_workspace: 49c78
+        bound_workspace_path: 'C:\Users\Consiliari\AppData\Local\Packages\OpenAI.Codex_2p2nqsd0c76g0\LocalCache\Local\Markitect\workspaces\workspace-49c78ed921d0647711f85fd34d5a0707-1039999904\repo'
+        sandbox_setup_helper_launched: true
+        candidate_acls_worked: true
+        runtime_acl_update_error: 32
+        runtime_acl_sharing_violation_caused_setup_failure: true
+        locked_runtime_file: node_repl.exe
+        locking_pid: unknown
+        cua_ready_correlation: inference_only
+        setup_failure_caused_outer_dto_rejection: not_established
+        private_matching_line_count: 20
+        private_matching_lines_sha256: a5f546c90ea01256b2594717718244074af5d2a60c486888f95f643d30b807fd
+        origin_append_log_snapshot_sha256: 21e0e34f177eb097d8e300e1fb96bcea054a63cd91b46e79c1951972e1691c08
+        origin_append_log_snapshot_bytes: 129344
+        origin_append_log_snapshot_last_write_utc: '2026-10-09T22:15:58.0429945Z'
+        read_utc: '2026-10-09T22:25:46.3546757Z'
+        snapshot_hash_is_not_permanent_current_file_hash: true
+      lifecycle_boundary:
+        root_terminal: true
+        exact_owned_workspace_closed: true
+        normalized_workspace_changes: 0
+        known_owned_children_remaining: false
+        native_observer_pid_present: false
+        exhaustive_os_process_census: false
+        recovery_observed: false
+      next_run_remediation:
+        status: implementation_underway
+        app_server_child_option: '-c windows.sandbox=mxc'
+        option_is_documented_by_native_app_server: true
+        requested_backend_receipt_and_fingerprint: configured
+        effective_backend: unknown_until_provider_api_evidence
+        workspace_managed_policy_unchanged: true
+        fallback: false
+        global_configuration_changes: false
+        process_kill: false
+        mxc_success_claimed: false
+    allocation_utc: '2026-10-09T22:14:58.0688235Z'
+    deadline_utc: '2026-10-10T02:14:58.0688235Z'
+    max_batch_wall_seconds: 14400
+    max_role_wall_seconds: 3600
+    max_start_requests: 256
+    finite_estimated_cost_cap_micros: 10000000
+    max_parallel_roles: 2
+    selected_role_wall_seconds: 3600
+    role_count: 7
+    role_limit_basis: existing_product_supported_maximum
+    markitect_source_revision: c701a28908d379a4a6093caf03c0d88bef9f083a
+    markitect_binary_sha256: 058e5aeb7a952edfc04802544d1197171a1dd7f6a780d84b2cd996cab574c4fa
+    owned_project_revision: 012c6f33875371ee3719ac86edab11bd6efe40a6
+    runtime_file_sha256: f12b476b019458ab30d5612312bdd2dc0480173aaea1a1205b3d46a43fd74d85
+    runtime_sha256: a0bcd80fe404b5ff744b77a865b4c2b4f1fa25d3b41ce10f2213bd8391cfa7e2
+    normal_plan_id: efe3013fdfdc7a28abe4669cfd920794
+    normal_plan_sha256: 2d812b4d6420e4d314745f4e04e8f75665187b054882acb7d89596f87ccc8a96
+    readiness_status: positive
+    readiness_sha256: 3398c12bc061205e7656481cf544094b308a3b0b8b5f7fb44a87064e5a731953
+    profile_selection: unchanged
+    private_allocation_record: controller/a01-renewal-cb2519fd709949f9b3911d7b00df66eb.json
+    prior_top_actual: f2e5c05bd80b0f118aac554ab45b5292b082bee9
+    current_top_actual_source: c701a28908d379a4a6093caf03c0d88bef9f083a
+    cumulative_known_role_start_requests: 4
+    cumulative_known_provider_starts: 3
+    cumulative_known_estimated_cost_micros: 750309
+    cumulative_cost_accounting: partial_estimate_not_invoice
+    reviewer_status: closed_exact_seven_scalar_fix
+  provider_free_preparation:
+    superseded_owned_project_revision: 89823a90df985ca4451ec3053467fa4b3d12319f
+    rejected_role_wall_seconds: 7200
+    outcome: normal_readiness_rejected_existing_product_role_limit
+    provider_starts: 0
+    role_start_requests: 0
+    acceptance_job_started: false
+    corrected_role_wall_seconds: 3600
+    corrected_role_count: 7
+    corrected_owned_project_revision: 012c6f33875371ee3719ac86edab11bd6efe40a6
+    markitect_source_revision: c701a28908d379a4a6093caf03c0d88bef9f083a
+    markitect_binary_sha256_prefix: '058e'
+    independent_review: closed_exact_seven_scalar_fix
+    fresh_readiness_acknowledgment_and_plan: positive_and_pinned_in_next_batch
+  prior_history_preserved: true
+  automatic_rollover: false
+budget_amendments:
+  - id: renewable-execution-budget-20261010
+    authority: direct_human_instruction
+    direct_instruction: "Budget darfst du solange machen bis es klappt"
+    authority_record_name: renewable-execution-budget-20261010.json
+    authority_record_location: forwarded_external_contract_not_in_this_worktree
+    authority_record_sha256: a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7
+    prospective_effective_utc: '2026-10-09T22:01:37Z'
+    supersedes_prior_cumulative_budget_and_deadline_as_future_blockers: true
+    previous_batch_failures_and_source_pins_preserved: true
+    next_batch_pins_pending: false
+    next_batch_status: failed_not_passed
+    main_gate_revision_unchanged: combined-normal-smoke-20261009
+    release_publication_authorized: false
 allocation_history:
   - revision: initial-product-readiness-20261009
     max_job_wall_seconds: 1800
@@ -64,6 +238,8 @@ runtime_amendments:
     new_quota: 0
     old_turn_replay: false
     automatic_retry_after_material_failure: false
+    scope: historical_batch_authorization_only
+    superseded_for_future_batch_authority_by: renewable-execution-budget-20261010
 jobs:
   - id: A01
     purpose: Combined normal Main smoke with setup Work Item parallel Managers fresh helper independent review Verify guarded Apply and original-turn workspace recovery

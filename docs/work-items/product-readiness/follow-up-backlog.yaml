@@ -4,7 +4,7 @@ goal: Evaluate optional mechanisms independently while finishing a stable usable
 coordinator: Overseer
 main_gate_dependencies: []
 product_implementation_authority: not_granted_by_research_items
-case_studies: stopped
+case_studies: deferred_until_product_ready_for_matched_studies
 items:
   - id: R01
     title: Evaluate Jev strongly typed AI for concrete Markitect uses

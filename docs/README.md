@@ -2,7 +2,7 @@
 
 Markitect's current product workflow manages ordinary Work Items through a recursively owned YAML model and typed fixed-root operations. Start with the [project workflow](project-workflow.md), the [Project operations reference](project-operations.md), and the [executable Shop example](../examples/project-world/README.md). The [implementation roadmap](implementation-plan.md) gives a short orientation; the [Product Readiness backlog](work-items/product-readiness/backlog.yaml) owns current statuses and evidence pointers.
 
-The current source is an integration candidate. Final hosted Linux/Windows gates remain pending. A01 has been attempted and has **not passed**: two native root turns and one failed pre-provider helper request consume three known requests, with partial lower-bound accounting. A02/A03 are deferred until after Main; Case Studies remain stopped. The published v0.14.1 binary preserves earlier Project/Domain commands and does not include this workflow. The [production assessment](production-assessment.md) binds release claims to their original assets.
+The current source is an integration candidate. Final hosted Linux/Windows gates remain pending. A01 has been attempted and has **not passed**. Current attempt identities, outcomes and accounting are recorded in the [acceptance ledger](work-items/product-readiness/evidence/native-acceptance-ledger.yaml) and [progress log](work-items/product-readiness/integration-progress-20261009.md); these records preserve prior attempts and the current concrete failure. A02/A03 remain deferred until after Main. Case Studies stay deferred until Markitect works, then proceed only as matched studies with prospective equal resources under the recorded renewal authority; none is starting now. The published v0.14.1 binary preserves earlier Project/Domain commands and does not include this workflow. No release publication is authorized. The [production assessment](production-assessment.md) binds release claims to their original assets.
 
 ## Operate and contribute
 
@@ -17,7 +17,7 @@ The current source is an integration candidate. Final hosted Linux/Windows gates
 | [Development guide](development/README.md) | Source checks, package boundaries, and development coordination |
 | [Contribution checks](../CONTRIBUTING.md) | Required local and hosted validation commands |
 | [Executable Shop example](../examples/project-world/README.md) | Model-first example and deterministic fixture behavior |
-| [Product Readiness backlog](work-items/product-readiness/backlog.yaml) | Canonical statuses, dependencies, owners, evidence, and finite acceptance allocation |
+| [Product Readiness backlog](work-items/product-readiness/backlog.yaml) | Canonical statuses, dependencies, owners, evidence, and renewed per-batch acceptance policy |
 | [Integration progress](work-items/product-readiness/integration-progress-20261009.md) | Current integration handoffs and technical findings |
 | [P09 readiness contract](work-items/product-readiness/P09-readiness.md) and [acceptance ledger](work-items/product-readiness/evidence/native-acceptance-ledger.yaml) | Final gate contract and actual native-run accounting |
 
