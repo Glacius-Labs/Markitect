@@ -16486,7 +16486,21 @@
         "originalDeadlineUnchanged": "2026-10-10T00:26:23Z",
         "newOrderOrRefill": false
       },
-      "latestResourceAuthority": "renewable-execution-budget-20261010 supersedes prior original end/global quota stop prospectively; old failures/counters preserved. Owner finite renewed batch before execution, no blanket permission per fix."
+      "latestResourceAuthority": "renewable-execution-budget-20261010 supersedes prior original end/global quota stop prospectively; old failures/counters preserved. Owner finite renewed batch before execution, no blanket permission per fix.",
+      "renewableBatchPreparation": {
+        "rootVerifiedSourceHeadAndPublicRemote": "c701a28908d379a4a6093caf03c0d88bef9f083a",
+        "currentWorkingTree": "Documentation/backlog/acceptance-ledger/progress WIP observed; not an entirely clean working tree now. Owner says clean binary/source freeze established before these accounting edits.",
+        "ownerReportedBinaryPrefix": "058e",
+        "helperAliasRegression": "Owner reports actual packaged parent-child regression and independent source review closed",
+        "budgetAuthority": "renewable-execution-budget-20261010 exact hash verified by owner",
+        "guardedRenewal": "Owner prepared256starts/10M caller estimate/new4hbatch with historical3requests/401667partialestimate unchanged",
+        "roleLimitAdjustment": "Proposed2h coordination maximum rejected by existing product native<=60m contract before any actor. Owner uses adequate1h for tinyA01 inside renewable4hbatch; no product protection/limit changes.",
+        "newActorsAtReport": 0,
+        "readinessPlan": "Targeted runtime correction and fresh exact pins pending",
+        "wholeSuite": "New c701 full suite active, packages reported positive so far; no wholePASS inferred",
+        "mainAcceptance": false,
+        "newRootOrder": false
+      }
     }
   },
   "playgroundAndClaudePreparation20261009": {
