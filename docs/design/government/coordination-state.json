@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T15:12:21Z",
+  "updatedUtc": "2026-10-09T15:44:34Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12097,7 +12097,7 @@
       "continuationAuthority": "Latest direct user request, docs/design/project-native-codex-work-20261009.md; previous work remains stopped"
     }
   ],
-  "nextAction": "Designer finishes bounded native Codex working package and capability guidance enhancement; other owners, studies, observer, Main merge and releases remain stopped.",
+  "nextAction": "Designer completes active native-working package and removes compatibility-only surfaces under latest direct user decision; source-bound focused checks, independent review and one existing bounded proof. Other owners, studies, observer, automatic Main merge and releases remain stopped.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -15625,13 +15625,14 @@
       "evidence": "C:/Users/Consiliari/AppData/Local/Temp/codex-native-helper-check-20261009/summary.json",
       "limitation": "CLI configuration proof only; JSON stream omitted spawn event; own rollout contains actual spawn call and return."
     },
-    "ownerCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:39"
+    "ownerCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:43",
+    "compatibilityRetentionRequired": false
   },
   "projectCapabilitySkillsRequest": {
     "status": "DISPATCHED_TO_ACTIVE_DESIGN_PACKAGE",
     "authority": "Direct latest user request to improve project-native skills/CLAUDE.md/AGENTS.md with several capability skills",
     "document": "docs/design/project-capability-skills-20261009.md",
-    "documentSha256": "e521779e8a0c5641af9ad731bf771b35b12cf3ba3fe38b65fcef2a1d219a783b",
+    "documentSha256": "610d9345a4c5387751a968bb1e7adec33daf8ee0e3cf72353e19b7d34199f50e",
     "ownerThread": "01a11c80-37aa-7fe0-9586-35d916ce6561",
     "sentUtc": "2026-10-09T15:00:01Z",
     "capabilities": [
@@ -15644,7 +15645,7 @@
       "markitect-apply",
       "markitect-check"
     ],
-    "compatibilityRouter": "markitect-model-first",
+    "compatibilityRouter": null,
     "rootSourceChanges": false,
     "additionalNativeProofQuota": 0,
     "studiesEnabled": false,
@@ -15666,6 +15667,54 @@
       "markitect-configure"
     ],
     "finalGroupingDecisionOwner": "Designer, explicitly delegated by latest direct user",
-    "fixedSkillCountRequired": false
+    "fixedSkillCountRequired": false,
+    "compatibilityRouterDisposition": "Remove if solely retained for compatibility; direct user decision overrides former Root requirement."
+  },
+  "compatibilityOnlyRemovalDecision": {
+    "status": "DISPATCHED_TO_ACTIVE_DESIGN",
+    "recordedUtc": "2026-10-09T15:44:34Z",
+    "authority": "Direct user: delete old functions retained only for compatibility; no users require compatibility.",
+    "ownerThread": "01a11c80-37aa-7fe0-9586-35d916ce6561",
+    "dispatch": "Tool confirmed delivered latest deletion instruction at approximately 2026-10-09T15:39:00Z; not an exact tool clock.",
+    "document": "docs/design/project-simplification-and-api-direction-20261009.md",
+    "audit": {
+      "independentReadonlyAudit": "implicit_compatibility_audit completed; Root rechecked canonical rule and Brownfield fallback source",
+      "canonicalRule": ".markitect/areas/development/repository-boundaries.rule.yaml explicitly preserves historical commands/manifests/records, inherited from eec465ed; update canonical source and regenerate views",
+      "brownfieldFallback": "reverse.go iterationAvailableEvidence expands root evidence authority for omitted pool to preserve earlier iterations",
+      "parallelInit": "Historical top-level init and current project init produce distinct formats and documented onboarding ambiguity",
+      "rootRequirementsWithdrawn": [
+        "proposal-only for compatibility",
+        "markitect-model-first compatibility router"
+      ],
+      "costAttribution": "Qualitative complexity/onboarding impact; development hours not measured"
+    },
+    "preserve": [
+      "historical evidence and pins",
+      "useful compiler/Host reuse",
+      "read-only independent assessment",
+      "ownership/freshness and guarded Apply",
+      "adopting-project custom contents"
+    ],
+    "additionalNativeProofQuota": 0,
+    "studiesEnabled": false,
+    "mainMergeOrReleaseEnabled": false,
+    "snapshot": {
+      "publicHead": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+      "ci": 37925341863,
+      "ciLinuxWindows": "SUCCESS on public head only",
+      "localNativeHead": "6121a8ad",
+      "localNativeCommits": [
+        "91bd9cf6",
+        "6121a8ad"
+      ],
+      "nativeProductProof": "NOT STARTED per current owner validation document at audit",
+      "limits": [
+        "candidate tree lacks Git history",
+        "file deletions/binary outputs unsupported",
+        "native helpers disabled; Host Manager scheduling remains"
+      ],
+      "freshness": "Audit snapshot, not an accepted freeze"
+    },
+    "interfaceDirection": "CLI remains usable local interface; prospective thin MCP for invoking Markitect and App Server for controlling fresh Codex Managers. Recommendation only, no new implementation grant."
   }
 }
