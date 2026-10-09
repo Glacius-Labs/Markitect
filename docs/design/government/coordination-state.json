@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T06:40:19Z",
+  "updatedUtc": "2026-10-09T06:42:19Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -476,7 +476,7 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:116",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:117",
       "lastObservedStatus": "idle",
       "activeTurn": {
         "id": "01a11f01-0b15-7a32-a818-2185b97f07ef",
@@ -10165,7 +10165,7 @@
       "lastObservedStatus": "active",
       "candidateSha": "11f080815722089d84869fef536b94cae9321e74",
       "candidateStatus": "Readiness open; new actual Manager invocation/child-report bridge in progress, prior reported ab306 pin not accepted as current studyfreeze",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:25",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:26",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac852a43fa08191a8d8e593c901cb96",
       "assignedMilestone": "Held bounded source7d/doc11f candidate and exact private recovery; no new source/runtime/study assignment",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
