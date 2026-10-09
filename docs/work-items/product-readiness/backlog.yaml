@@ -15,7 +15,7 @@ native_acceptance:
   main_required_jobs: [A01]
   deferred_not_main_gate_jobs: [A02, A03]
   renewal_policy_revision: renewable-execution-budget-20261010
-  renewal_policy_status: current_batch_failed_not_passed
+  renewal_policy_status: latest_actual_failed_scoped_repair_authorized
   renewal_policy_authority_sha256: a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7
   per_batch_limits:
     max_role_wall_seconds: 7200
@@ -26,7 +26,7 @@ native_acceptance:
     time_seconds: "none"
     start_requests: "none"
     estimated_cost: "none"
-  next_batch:
+  previous_actual:
     batch_id: a01-renewal-cb2519fd709949f9b3911d7b00df66eb
     status: failed_not_passed
     execution_started: true
@@ -89,6 +89,98 @@ native_acceptance:
     cumulative_known_estimated_cost_micros: 750309
     cumulative_cost_accounting: partial_estimate_not_invoice
     reviewer_status: closed_exact_seven_scalar_fix
+  latest_actual:
+    batch_id: a01-mxc-2d3a3d367b954e52be48ef8b86fc3fb3
+    status: failed_not_passed
+    execution_started: true
+    actual_started_utc: '2026-10-09T22:44:42.0379922Z'
+    actual_ended_utc: '2026-10-09T22:45:22.7199061Z'
+    observer_id: f0b0417763b24cb09b34beeb11be99b2
+    owned_host_pid: 19460
+    observer_exit_code: 2
+    observer_boundary_observed: false
+    observer_result: run_exited_before_trusted_root_boundary
+    role_start_requests: 1
+    provider_starts: 1
+    helper_provider_starts: 0
+    native_run_interrupted: true
+    native_root_integration_turn_observed: false
+    unified_exec_startup_failures: 2
+    startup_failure: mxc_platform_directory_hresult_0x80070003_before_shell
+    app_server_error: requires_a_user_decision
+    file_change_approval: declined_by_generic_client_handler
+    workspace_id: c952
+    workspace_closed: true
+    normalized_workspace_changes: 0
+    manager_overlap_observed: false
+    review_apply_recovery_observed: false
+    attempt_cost_estimate: not_separately_attributed
+    cumulative_known_role_start_requests: 5
+    cumulative_known_provider_starts: 4
+    cumulative_known_estimated_cost_micros: 898953
+    cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
+    prior_actual_batch: a01-renewal-cb2519fd709949f9b3911d7b00df66eb
+    unchanged_failed_batch_replay_authorized: false
+    scoped_approval_and_windows_fix_authorized: true
+    fresh_finite_batch_after_fix_authorized_under_renewal: true
+    source_worktree_clean: true
+    binary_frozen: true
+    allocation_utc: '2026-10-09T22:42:30.7744455Z'
+    deadline_utc: '2026-10-10T02:42:30.7744455Z'
+    max_batch_wall_seconds: 14400
+    max_role_wall_seconds: 3600
+    max_start_requests: 256
+    finite_estimated_cost_cap_micros: 10000000
+    max_parallel_roles: 2
+    markitect_source_revision: f14746cc2aab9a134a81fc0420b94fa323456e56
+    markitect_binary_sha256: 2bef3166e3220568d7c024ec7302a4af913eedcd588e0f17a913005190111207
+    runtime_controller_sha256: f47f139d8287f98111a875026cecfacaa08f29642fa2d99c36b1169ff773e92d
+    owned_project_revision: 669c6e322eaeb0721bc687716cccde4d0e0dd428
+    runtime_file_sha256: 6b250d14337d733e09268171ab5768c38b5cf31d44bd698e8352f7d6f261cddd
+    normal_plan_id: cdf99e36d5f81f0c33478ed94e5902b6
+    normal_plan_sha256: 65ea9de9f911b1354f47a777e42698295a35d5469d8a77655d8f944c95ad530e
+    runtime_sha256: f9004b98bbb5e324e6f198d4aa6321cfcb100d9147580ea1906894205624426a
+    readiness_status: positive
+    readiness_sha256: 7e33fc0277a267de3809a97a71d113ac5c4c061f9f077d236043416de12583cf
+    provider_version: codex-cli-0.162.0
+    provider_sha256: dce685d569526ef4712fa82d20ff20e1309baad5fcd34215e1126698f611242f
+    model: gpt-6-luna
+    reasoning_effort: high
+    writer_permission_profile: ':workspace'
+    reviewer_permission_profile: ':read-only'
+    verifier_permission_profile: ':read-only'
+    explicit_windows_sandbox_backend: mxc
+    requested_windows_sandbox_backend: mxc
+    app_server_child_option: '-c windows.sandbox=mxc'
+    effective_windows_sandbox_backend: unknown
+    role_profile_selection: three_workspace_and_four_readonly_unchanged
+    prior_role_start_requests: 4
+    prior_estimated_cost_micros: 750309
+    prior_cost_accounting: partial_observed_lower_bound_not_invoice
+    last_actual_source_remains: c701a28908d379a4a6093caf03c0d88bef9f083a
+    private_allocation_record: controller/a01-mxc-2d3a3d367b954e52be48ef8b86fc3fb3.json
+    reviewer_status: source_candidate_clean_focused_checks_passed
+    primary_c701_complete_suite: pass_at_2026_10_09T22_27_26Z
+    f147_six_affected_packages:
+      status: pass
+      check_count: 58
+      appserver_seconds: 31.778
+      agentexec_seconds: 17.343
+      setup_seconds: 3.311
+      run_focus_seconds: 0.510
+      cli_focus_seconds: 13.147
+      mcp_schema_seconds: 0.407
+    f147_build_and_vet: pass_58_seconds
+    f147_canonical_schemas_format_modules: pass
+    f147_managed_artifact_findings: 0
+    f147_go_sources_unchanged_during_checks: true
+    readonly_dotnet_26_binding_check: pass
+    readonly_dotnet_26_binding_role_start_requests: 0
+    readonly_dotnet_26_binding_provider_starts: 0
+    native_actual_started: true
+  next_batch:
+    status: not_prepared_scoped_approval_and_windows_fixes_in_progress
+    fresh_finite_batch_authorized_under_renewal: true
   prior_batch_history:
     revision: generous-native-limits-20261009
     max_role_wall_seconds: 3600
