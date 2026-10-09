@@ -16283,7 +16283,26 @@
       "mainCIReview": "Still required at final PR head",
       "newRootGrant": false,
       "sourceReadQualification": "Root independently read plan.go raw fingerprint calls and transport_invoker.go native adapter/optionsWithHelperSpec route; exact rebuilt fix and runtime success pending.",
-      "environmentCasingCause": "NOT_CONFIRMED"
+      "environmentCasingCause": "NOT_CONFIRMED",
+      "fingerprintCorrectionHandoff": {
+        "sourceSha": "5b65b46534ce040f5aab1058776c0cd4443bc3ad",
+        "isolatedFix": "0924b6955072d98f48dcbaf6acf3565e148d2e1e",
+        "rootVerified": "Exact local HEAD; source diff routes native Plan fingerprints through default TransportInvoker for managers/reviewer/verifier and keeps process behavior; only acceptance-ledger accounting WIP observed",
+        "publicRemoteAtCheck": "fc6d09a234572c344279a342416475e788435f1f",
+        "backupFollowupSentOnce": true,
+        "ownerReported": "Targeted provider-free tests PASS151.782s, build/vet/schema9/format/modules/accounting checks positive and independent reviews closed; full suite active, no full PASS",
+        "binarySha256OwnerBound": "261d7cdf8953dfb3b6c7f6603e2974c402ba902b9f1f21568e4950058affd2a2",
+        "planId": "9c1892e3311926ca6320898042bb04ec",
+        "planDigest": "sha256:81cd937e4e69d4653b551b9c860faa6b178aa81ec461d6aa9b2abeb8fba4a08b",
+        "runtimeDigest": "sha256:fee36c39a3ae90d89fce53aaf2e7367975f461ef8909fba48fc9940c660540c7",
+        "readinessDigest": "sha256:c2259cd49f2eb52bf8b66ecb1a700f41680b3e950c7bb2ec93b3a7bbed691cf8",
+        "providerFreeEquivalentPlan": "Owner reported exact source/project/runtime/readiness binding Exit0, native starts0",
+        "actualContinuation": "Owner proceeding within original A01 lease; first role start/outcome receipt pending",
+        "originalFailurePreserved": true,
+        "leaseExtended": false,
+        "newRootGrant": false,
+        "mainAcceptance": false
+      }
     }
   },
   "playgroundAndClaudePreparation20261009": {
