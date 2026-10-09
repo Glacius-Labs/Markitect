@@ -1,0 +1,144 @@
+<!-- BEGIN MARKITECT MODEL-FIRST -->
+# Model-first project workflow
+
+This file is the shared workflow for contributors using Codex and Claude. Treat the selected Markitect project model as the canonical description of intended behavior, ownership, artifacts, checks, and relationships. Code, tests, documentation, and infrastructure realize that model; their presence alone does not prove they agree with it.
+
+The model-first selector in this repository is .markitect/project.yaml. It names the canonical YAML model files, initially .markitect/model/manager.yaml, and project policy; .markitect/runtime.yaml supplies execution configuration. Use the markitect project command surface throughout this workflow. Inspect the actual authoring contract and current Manager IDs before preparing model mutations:
+
+    markitect project schema
+    markitect project index --repo PATH
+    markitect project check --repo PATH
+
+The schema command returns the exact model schema without reading a repository. Index returns the selected model and full Manager identities; check reports structure and repository coverage. For an initialized project, extend its selected model through project edit. An empty initial model is a starting point: within the Work Item's delegation, define the required concepts, artifact ownership and verification checks before readiness. Initialization of a new project uses markitect project init; top-level markitect init authors the historical Project/Domain format and does not establish this selected model. Do not create markitect.yaml or .markitect/areas/ as a substitute for model-first authoring. Diagnose missing coverage or checks and repair the selected model within your authority; escalate only material intent or authority that the Work Item does not delegate.
+
+## Start from an ordinary work item
+
+When a contributor gives a short Work Item, issue, bug, idea, or casual change request, use this model-first skill as the default starting workflow. Treat the short request as an entry point, not as complete requirements or authorization to skip exploration. Let the contributor explain the project and desired outcome in ordinary language and conversation; do not require Markitect commands or YAML knowledge.
+
+Keep an explicit decision ledger as the work proceeds: accepted intent, assumptions, options considered, unresolved questions, their owners, and which selected scopes they block. Carry that ledger forward in the active work item and recover durable state from the repository model and persisted Markitect run when resuming. Dialogue or a draft is not durable acceptance. Do not invent external facts.
+
+Ask the contributor only when material information is missing and changes intended behavior, scope, acceptance, authority, or readiness; otherwise state a bounded assumption and continue. Do not ask for facts already available from the accepted model or repository.
+
+## Explore before implementation
+
+During Explore, discuss useful concepts, rules, use cases, architecture, and workflow. Prepare model edits and explanations, then use structural checks and impact results to find missing references and affected areas. Keep accepted decisions separate from assumptions, suggestions, and open questions. A compiler error is a prompt to repair or clarify the draft, not a reason to start implementation. Discuss technology choices, Manager boundaries, shared artifact contracts, and a proposed first-scope file structure with the contributor. Managers own their declared areas; a shared artifact can serve several areas, while each file keeps one accountable owner and explicit cross-area contracts.
+
+For an existing codebase, reverse-model it iteratively from inspected files, repository history, configuration, and observed checks. Keep a reverse-modeling ledger that connects each proposed rule, artifact, and owner to inspected paths and records unknowns or confidence gaps. Reconcile that ledger with the contributor; do not infer behavior from names, comments, or directory structure alone. Use explicit transient scopes for areas that remain unmodeled, and never present those areas as covered or conforming. Keep the initial adoption model-only. Once the model is accepted under the repository's policy at a committed model revision, plan any cleanup as a separate operation.
+
+For a Brownfield Work Item, use the structured session to turn that ledger into bounded Manager responsibilities. Inspect the target and source at fixed revisions, run markitect project discover, then start a session from its discovery output and explicit scope statuses. Begin one root iteration with its own inspected evidence IDs and a concise purpose/review. Those own evidence IDs provide raw source content for claims and citations. An optional delegationEvidenceIDs pool gives the root permission only to route those IDs to children; its context exposes them as metadata (ID, path, basis, and digest), not raw content, and metadata does not establish behavior. Keep own and delegation pools disjoint. For new root iterations, set delegationEvidenceIDs explicitly: use [] to permit no child evidence or name only selected child evidence. An omitted root pool retains legacy broad routing over selected Discovery evidence. The durable explicit-empty marker preserves [] across session serialization. In a child .markitect/drafts/brownfield-begin.json record, copy the exact evidenceIds and delegationEvidenceIDs assigned by its parent proposal; do not broaden or rewrite either pool. Read the child's bounded context and run its propose phase.
+
+The root context also shows the selected Discovery inventory as metadata only. Do not load all child source into the root evidence pool: child Managers receive raw content only for their own evidenceIds. After each proposal assigns direct children and evidence, begin a separate child iteration and repeat recursively. After all children finish proposals and non-leaf integrations, retrieve the parent's context with phase integrate and run its integration phase. The parent receives each direct child's exact final report, citation references, public contracts, and bound digests; non-leaf reports include the completed descendant integration. Forward those citations when relevant; the parent does not need raw child source. Each Manager is a distinct invocation. For a proposed Manager, runtime configuration may map execution to an accepted ancestor, but the proposed Manager remains the work identity and receives only its bounded context.
+
+Use the native CLI stages below; have the agent create the closed JSON files from current command outputs and the repository's actual decisions. Every --request, --output, and --input record path must be a normalized repository-relative slash path ending in .json under .markitect/drafts/ or .markitect/runs/; absolute paths, backslashes, and root-level JSON names are rejected. Discovery request/output and project edit inputs are rooted in --repo. Brownfield stage inputs and its durable session are rooted in --source-repo when supplied, otherwise --repo; --repo remains the target project/runtime root. Keep these record files in that selected record repository. The Brownfield start record wraps the exact discovery object as discovery and includes scopeStatuses (an explicit empty array when none apply). The begin record contains a bare ReverseIterationRequest. The context record contains iterationId; for parent integration it also contains phase integrate. Do not ask the contributor to hand-author proposal, integration, or binding digests. The inputs shown are small shape examples, not reusable IDs:
+
+    {"id":"root-review","managerId":"<existing-manager-id>","evidenceIds":["<root-owned-evidence-id>"],"delegationEvidenceIds":["<selected-child-evidence-id>"],"purpose":"Model the observed order-cancellation behavior.","review":"State evidence, uncertainty, and public contracts."}
+
+    markitect project discover --repo TARGET --request .markitect/drafts/discovery-request.json --output .markitect/drafts/discovery.json
+    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action start --revision TARGET_COMMIT --input .markitect/drafts/brownfield-start.json
+    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action start --revision TARGET_COMMIT --input .markitect/drafts/brownfield-start.json --expect START_SESSION_DIGEST --write
+    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action begin --session SESSION_ID --input .markitect/drafts/brownfield-begin.json --expect SESSION_DIGEST --write
+    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action context --session SESSION_ID --input .markitect/drafts/brownfield-context.json
+    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action run --session SESSION_ID --input .markitect/drafts/brownfield-run.json
+    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action run --session SESSION_ID --input .markitect/drafts/brownfield-run.json --expect PREVIEW_DIGEST --write
+
+For run, use closed JSON such as {"iterationId":"ITERATION_ID","phase":"propose","agentManagerId":"ACCEPTED_RUNTIME_MANAGER_ID"}; use phase integrate for a parent. Preview is no-call and returns previewDigest; execution must confirm that exact digest with --expect. It binds session, context, fixed revisions, runtime selection and budget. Review requestContractDigest across attempts: it binds the stable request schema/instructions while deliberately excluding cumulative remaining-budget counters, which may advance after priced work; previewDigest still binds the current ledger and budget. Each write makes exactly one attempt. There is no automatic retry; only explicitly retry the latest known failed attempt with a final receipt, within cumulative configured retry/start/time/cost limits. Unknown cost, ambiguous durable publication, or an attempt without a known terminal receipt fails closed and is not automatically replayable. The process lock is released by the operating system when the owning process exits; inspect the session overview and run journal before resuming, and do not delete the lock file to force progress.
+
+Review outputs at their intended scope: session fields expose a safe overview of fixed bases, scope status, iteration IDs, and digests; resume and plan also retain typed readiness questions and conflict diagnostics for the outer coordinator to route and decide. These diagnostics contain no full source or private report bodies. Context returns only the requested Manager context; the inner Manager request includes that Manager's bounded context (own selected content and authorized metadata) and, for integration, completed direct-child reports, never the complete session or readiness. Run returns the scoped proposal/integration and attempt receipt. The plan action returns the full model AdoptionPlan for review before model-only Apply. An incomplete/ambiguous publication or unknown invocation outcome is a fail-closed state to inspect, not a signal to repeat the command.
+
+After root integration, have the authorized owner or delegated Manager review the ledger and make explicit scope/question decisions within their authority. If the Work Item does not delegate those decisions, a material issue remains open, or repository policy requires a human decision, ask the contributor. Have the agent build .markitect/drafts/brownfield-resolution.json from the current proposal and target bindings; its shape is {"iterationId":"ITERATION_ID","resolution":{"apiVersion":"markitect.example.org/project-resolution/v1alpha1","actor":"ACTOR","authorityClaim":"AUTHORITY","decisionReference":"REAL_PROVENANCE","authenticated":false,"questions":[{"questionId":"QUESTION_ID","scopeId":"SCOPE_ID","disposition":"answer","answer":"DECISION","reason":"WHY"}],"scopes":[{"scopeId":"SCOPE_ID","status":"adopt","reason":"WHY"}]}} plus the binding digests copied from current Host outputs. The provenance fields record a caller assertion and do not authenticate a human. Then use:
+
+    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action resolve --session SESSION_ID --input .markitect/drafts/brownfield-resolution.json --expect SESSION_DIGEST --write
+    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action plan --session SESSION_ID --input .markitect/drafts/brownfield-plan.json
+    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action apply-adoption --session SESSION_ID --input .markitect/drafts/brownfield-apply-adoption.json --expect SESSION_DIGEST --write
+
+The .markitect/drafts/brownfield-apply-adoption.json record contains the iteration ID and the reviewed expected plan digest from the plan output. Commit and accept the canonical model under repository policy before readiness or implementation; initial adoption remains model-only.
+
+The project documentation destination is "docs/markitect/project.md". Keep it readable and derived from the current accepted model through Markitect's documented generation path. Preserve independent documents under their named owners.
+
+## First-scope readiness
+
+Before implementation, select a first usable scope and compute its readiness from the current fixed project snapshot: structural validity, scoped ownership and dependencies, required artifacts, configured checks, blocking open decisions, and known evidence gaps. Report what is ready and what remains open; readiness is scoped planning evidence, not proof of implementation correctness. Show the proposed file structure, required artifacts, Managers, and checks, and obtain the review or acknowledgement required by repository policy. When the Work Item delegates ordinary implementation and structure decisions within its scope, the responsible Manager may review and acknowledge using its own actor, delegated authority, and task provenance; never present that assertion as the contributor's acknowledgement or as identity authentication. Ask the contributor only when material intent or authority remains undecided, or policy explicitly requires human review.
+
+The active project model expresses canonical ownership through Manager IDs and namespaces; the project-model tool classification only marks canonical model paths in the repository inventory and is not a human owner or separate approval identity. When this Work Item delegates a routine model decision, the responsible active Manager may author its bounded canonical change with its own Manager ID in the mutation actor field. The Host checks that actor against active namespace ownership and parent authority. Root-only controls remain guarded: inventory/scope and acceptance-policy changes require the active root Manager or explicit user actor; runtime changes require root or user; a Manager cannot silently remove or weaken a required Artifact. Use the real authorized Manager ID and task provenance, never impersonate user or a human.
+
+For the default committed-model policy, a valid selected canonical model at the current committed HEAD is the accepted repository specification. The edit preview, an unapplied model proposal, or an exploration record is not acceptance; committing a noncanonical draft file does not change the accepted model. The Explore CRUD path stores ModelAccepted:false, while computed readiness establishes acceptance only when the model is non-provisional, committed at current HEAD, and governed by committed-model policy. A human approval is not required unless the repository policy or this Work Item explicitly requires it.
+
+Do not implement a scope until its canonical model is accepted and current policy readiness is resolved. If the native workspace denies a required model write or Git commit, keep the exploration and draft intact, use the existing approval mechanism if available, and otherwise stop and report the exact blocked action. Do not bypass the Run/Review/Apply lifecycle by writing implementation files directly. A tool-permission failure does not authorize changing caller security settings. Resume the same exploration when the ordinary required action has completed.
+
+Have the responsible Manager prepare a closed mutation with the current Project baseDigest, its actor ID, a bounded goal, and exact canonical model file contents. Preview it, inspect the structural report and impact, and apply only that returned plan digest:
+
+    markitect project edit --repo PATH --input .markitect/drafts/project-model-mutation.json
+    markitect project edit --repo PATH --input .markitect/drafts/project-model-mutation.json --expect EDIT_PLAN_DIGEST --write
+
+After applying a delegated model change, run the repository's required policy checks/review and commit the selected canonical model on the task branch. Under committed-model, that committed canonical revision is the accepted specification; it is not a claim that a human approved it. Use the committed revision for readiness and implementation. Ask the contributor only when material intent or authority is outside the delegation, or repository policy explicitly requires their review.
+
+### Durable exploration records and commands
+
+Each ordinary Work Item gets one durable exploration ID and one named scope ID. Keep those IDs stable while updating or resuming that item. A new Work Item receives new IDs. The input is closed JSON with exactly one scope and explicit arrays; substitute a Manager ID that exists in the current model and JSON-escape it as one string value.
+
+Minimal new exploration input:
+
+```json
+{
+  "apiVersion": "markitect.example.org/project-exploration/v1alpha1",
+  "id": "cancel-order",
+  "status": "active",
+  "request": "Support safe order cancellation.",
+  "scopes": [
+    {
+      "id": "cancel-order",
+      "name": "Order cancellation",
+      "goal": "Allow eligible orders to be canceled and restore reserved stock once.",
+      "operation": "apply",
+      "managerIds": ["<existing-manager-id>"]
+    }
+  ],
+  "decisions": [],
+  "drafts": [],
+  "structureAcknowledgements": [],
+  "completions": []
+}
+```
+
+On creation, the Host fills the source-binding and record digests. To preview a create or update, then persist only that exact plan:
+
+```text
+markitect project explore --repo PATH --input .markitect/drafts/work-item.json
+markitect project explore --repo PATH --input .markitect/drafts/work-item.json --expect PLAN_DIGEST --write
+markitect project explore --repo PATH --exploration cancel-order
+markitect project explore --repo PATH
+```
+
+The first command returns a write plan; inspect its binding and digest before the second. Use the returned WritePlan digest as PLAN_DIGEST. The last commands read one durable record or list records. Keep status active until the Host records a successful Apply receipt; integration alone is not completion. Never delete or recreate a record to avoid its open decisions or history.
+
+## Implement and close the first Apply
+
+After the model is accepted at a committed revision, use the existing Plan, Run, Verify, and Apply lifecycle in that order. The Host reconciles committed accepted-model history automatically; inspect the exact context for a Manager with `markitect project briefings --repo PATH --manager MANAGER_ID`. Reconcile that Manager's scoped briefings, events, and relevant public neighbor contracts before work. Do not invent or manually aggregate a model delta that the accepted-history mechanism already supplies. A briefing summarizes declared model changes; it does not infer meaning from prose or prove implementation correctness. A caller-declared decision reference does not authenticate identity.
+
+Plan only the bounded goal against the selected accepted revision and review the plan and Manager assignments against the Work Item and repository policy. Follow the ownership tree: a Manager owns its assigned scope and delegates only to active direct children; leaf Managers implement their files, an independent reviewer assesses the exact scoped candidate bytes, and each parent integrates direct-child results against its own contracts. Do not substitute a whole-project implementer for these bounded responsibilities. Ask the contributor only when material intent or authority is undecided or the task or policy requires human review. Run the declared checks and complete full verification against the final candidate. Apply only the verified candidate with its current bindings. If a check or verification fails, report the gap and continue the same persisted run; do not call the attempt successful. Apply does not publish or deploy.
+
+If provider setup must be refreshed after Manager-tree edits, inspect its preview and explicitly preserve the already authorized time, start/retry, and cost limits. Setup may replace runtime limits with defaults; never accept a refresh that silently resets those bounds.
+
+The first successful Apply for the acknowledged scope closes the initial work item. Before that point, keep the work item open and continue its bounded repair, review, verification, and Apply cycle. If interrupted or moved to a new conversation, inspect and resume the existing persisted run from its last durable state; do not replay completed Manager work or create a duplicate run. After first Apply, use the same model, ownership, impact, planning, run, verification, and Apply workflow for later changes. A new feature can begin another Explore cycle without resetting the project. Keep technical validation, semantic evidence, and human acceptance distinguishable.
+
+The CLI forms below expose preview digests and durable IDs; replace each placeholder with the value just returned by the Host.
+
+```text
+markitect project readiness --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID
+markitect project readiness --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID --acknowledge-structure --actor ACTOR --authority AUTHORITY --decision-ref PROVENANCE --acknowledged-at RFC3339_TIME
+markitect project readiness --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID --acknowledge-structure --actor ACTOR --authority AUTHORITY --decision-ref PROVENANCE --acknowledged-at RFC3339_TIME --expect WRITE_PLAN_DIGEST --write
+markitect project deliver --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID --write
+markitect project deliver --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID --run RUN_ID --write
+markitect project status --repo PATH --run RUN_ID
+markitect project resume --repo PATH --run RUN_ID --write
+markitect project repair --repo PATH --run RUN_ID --write
+```
+
+Read the readiness preview's exact Managers, files, artifacts, checks, blockers, binding digest, structure digest, and write-plan digest. Use the returned writePlan.digest for WRITE_PLAN_DIGEST. Generate one explicit UTC RFC3339 --acknowledged-at value and reuse that exact value and all other acknowledgement arguments for preview and write; changing the timestamp changes the plan. Record only real authority and provenance: an authorized Manager may assert its own delegated authority within the Work Item, citing that task; never claim that assertion is a human acknowledgement. Use --actor user only after an actual user decision, with its real authority and provenance. If the task does not authorize the exact structure or a material blocking decision remains open, ask the contributor; do not invent a decision or acknowledgement.
+
+Project deliver uses the existing durable run: interrupted/running work resumes; integrated work advances through verification and Apply; verified work continues guarded Apply; an already applied run recovers the exploration completion from its immutable receipt. If delivery reports blocked or failed, inspect the same run with project status and resolve the reported cause. Resume interrupted work without replay; use repair only for a failed required check after correcting its cause. Never create a replacement run just because integration, verification, or Apply was interrupted.
+
+## Authority boundary
+
+These repository instructions help the selected agent follow the workflow. They do not prevent a contributor or agent with ordinary repository write access from editing files directly or bypassing Markitect. Rely on the project's guarded Apply and configured repository checks for their declared boundaries; do not claim that native instructions create an operating-system security boundary.
+<!-- END MARKITECT MODEL-FIRST -->

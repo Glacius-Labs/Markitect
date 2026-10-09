@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: durable-state
+  namespace: ""
+purpose: "durable-state for roombook"
+spec:
+  category: rule
+  description: "Successful mutation atomically replaces UTF-8 JSON; missing DB is empty. Invalid or conflicting input and malformed existing data fail without changing stored bytes. Later processes observe committed state. No multiwriter guarantee."
+  public: true
+  uses: []
+  requires: []

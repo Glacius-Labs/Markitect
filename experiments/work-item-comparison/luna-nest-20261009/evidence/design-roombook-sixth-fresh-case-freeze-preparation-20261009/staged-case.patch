@@ -1,0 +1,736 @@
+diff --git a/.agents/skills/markitect-model-first/SKILL.md b/.agents/skills/markitect-model-first/SKILL.md
+new file mode 100644
+index 0000000..2b95663
+--- /dev/null
++++ b/.agents/skills/markitect-model-first/SKILL.md
+@@ -0,0 +1,9 @@
++---
++name: markitect-model-first
++description: Use for ordinary short Work Items, issues, bugs, and ideas in a Markitect project; explore and persist decisions, establish scoped readiness, then implement through the accepted model-first workflow.
++---
++
++<!-- BEGIN MARKITECT MODEL-FIRST -->
++When a short Work Item, issue, bug, or idea arrives, use markitect project with .markitect/project.yaml, read the repository-root .markitect/workflows/model-first.md and follow it as the default. Inspect markitect project schema for the model contract and markitect project index --repo PATH for current Manager identities. The workflow covers a persistent decision ledger, iterative brownfield reverse-modeling, repository-policy acceptance at a committed model revision, computed first-scope readiness, bounded Manager and reviewer responsibilities, Plan/Run/Verify/Apply, first-success completion, and resuming persisted work without replay.
++<!-- END MARKITECT MODEL-FIRST -->
++
+diff --git a/.claude/skills/markitect-model-first/SKILL.md b/.claude/skills/markitect-model-first/SKILL.md
+new file mode 100644
+index 0000000..2b95663
+--- /dev/null
++++ b/.claude/skills/markitect-model-first/SKILL.md
+@@ -0,0 +1,9 @@
++---
++name: markitect-model-first
++description: Use for ordinary short Work Items, issues, bugs, and ideas in a Markitect project; explore and persist decisions, establish scoped readiness, then implement through the accepted model-first workflow.
++---
++
++<!-- BEGIN MARKITECT MODEL-FIRST -->
++When a short Work Item, issue, bug, or idea arrives, use markitect project with .markitect/project.yaml, read the repository-root .markitect/workflows/model-first.md and follow it as the default. Inspect markitect project schema for the model contract and markitect project index --repo PATH for current Manager identities. The workflow covers a persistent decision ledger, iterative brownfield reverse-modeling, repository-policy acceptance at a committed model revision, computed first-scope readiness, bounded Manager and reviewer responsibilities, Plan/Run/Verify/Apply, first-success completion, and resuming persisted work without replay.
++<!-- END MARKITECT MODEL-FIRST -->
++
+diff --git a/.codex/config.toml b/.codex/config.toml
+new file mode 100644
+index 0000000..af431a8
+--- /dev/null
++++ b/.codex/config.toml
+@@ -0,0 +1,11 @@
++# Shared supported base, isolated per-cell CODEX_HOME; children inherit Luna High.
++model = "gpt-6-luna"
++model_reasoning_effort = "high"
++approval_policy = "never"
++sandbox_mode = "workspace-write"
++[features]
++multi_agent = true
++memories = false
++[agents]
++max_threads = 4
++max_depth = 2
+diff --git a/.markitect/.gitignore b/.markitect/.gitignore
+new file mode 100644
+index 0000000..5316233
+--- /dev/null
++++ b/.markitect/.gitignore
+@@ -0,0 +1,3 @@
++/cache/
++/runs/
++/views/
+diff --git a/.markitect/model/booking-contract.yaml b/.markitect/model/booking-contract.yaml
+new file mode 100644
+index 0000000..95445da
+--- /dev/null
++++ b/.markitect/model/booking-contract.yaml
+@@ -0,0 +1,12 @@
++apiVersion: project.markitect.example.org/v1alpha1
++kind: Statement
++metadata:
++  name: booking-contract
++  namespace: ""
++purpose: "booking-contract for roombook"
++spec:
++  category: rule
++  description: "Released S1 book/list exactly follow README: valid calendar UTC-minute half-open intervals, per-room active overlap rejection, adjacent intervals permitted, list sorted start then id; future waves in BACKLOG remain visible but unreleased."
++  public: true
++  uses: []
++  requires: []
+diff --git a/.markitect/model/checks.yaml b/.markitect/model/checks.yaml
+new file mode 100644
+index 0000000..68a6e61
+--- /dev/null
++++ b/.markitect/model/checks.yaml
+@@ -0,0 +1,16 @@
++apiVersion: project.markitect.example.org/v1alpha1
++kind: Check
++metadata:
++  name: project-tests
++  namespace: ""
++purpose: "Runs meaningful maintained CLI regression tests"
++spec:
++  command: [python, -B, -m, unittest, discover, -s, tests, -v]
++  uses:
++    - namespace: ""
++      name: reservation
++    - namespace: ""
++      name: booking-contract
++    - namespace: ""
++      name: durable-state
++  limitation: "Finite tests do not establish exhaustive semantics, billing, OS isolation, team execution or human acceptance."
+diff --git a/.markitect/model/delivery-rules.yaml b/.markitect/model/delivery-rules.yaml
+new file mode 100644
+index 0000000..d0fda59
+--- /dev/null
++++ b/.markitect/model/delivery-rules.yaml
+@@ -0,0 +1,12 @@
++apiVersion: project.markitect.example.org/v1alpha1
++kind: Statement
++metadata:
++  name: delivery-rules
++  namespace: ""
++purpose: "delivery-rules for roombook"
++spec:
++  category: workflow
++  description: "Obey public AGENTS/QUALITY/BACKLOG and released .study/station.json; freely choose internal organization using actual native installation. Keep tests/docs/model/views consistent, only verified work merged to isolated main. Preserve unknown telemetry; all roles Luna High."
++  public: true
++  uses: []
++  requires: []
+diff --git a/.markitect/model/documentation.yaml b/.markitect/model/documentation.yaml
+new file mode 100644
+index 0000000..4b9cb28
+--- /dev/null
++++ b/.markitect/model/documentation.yaml
+@@ -0,0 +1,33 @@
++apiVersion: project.markitect.example.org/v1alpha1
++kind: Artifact
++metadata:
++  name: documentation
++  namespace: ""
++purpose: "Owns documentation representations of the accepted public contract"
++spec:
++  role: documentation
++  realizes:
++    - namespace: ""
++      name: reservation
++    - namespace: ""
++      name: booking-contract
++    - namespace: ""
++      name: durable-state
++  paths:
++    - "README.md"
++    - "BACKLOG.md"
++    - "STATIONS.json"
++    - "QUALITY.md"
++    - "AGENTS.md"
++    - ".gitignore"
++    - ".codex/"
++    - ".study/"
++    - "WORKLOG.md"
++    - "PROGRESS.md"
++    - "TEAMWORK.md"
++    - ".work/"
++  checks:
++    - namespace: ""
++      name: project-tests
++  required: false
++  reason: "Expected realizations, not proof of implementation or genuine installation; validate at the owner setup boundary."
+diff --git a/.markitect/model/durable-state.yaml b/.markitect/model/durable-state.yaml
+new file mode 100644
+index 0000000..d83cf73
+--- /dev/null
++++ b/.markitect/model/durable-state.yaml
+@@ -0,0 +1,12 @@
++apiVersion: project.markitect.example.org/v1alpha1
++kind: Statement
++metadata:
++  name: durable-state
++  namespace: ""
++purpose: "durable-state for roombook"
++spec:
++  category: rule
++  description: "Successful mutation atomically replaces UTF-8 JSON; missing DB is empty. Invalid or conflicting input and malformed existing data fail without changing stored bytes. Later processes observe committed state. No multiwriter guarantee."
++  public: true
++  uses: []
++  requires: []
+diff --git a/.markitect/model/implementation.yaml b/.markitect/model/implementation.yaml
+new file mode 100644
+index 0000000..4ff80e7
+--- /dev/null
++++ b/.markitect/model/implementation.yaml
+@@ -0,0 +1,22 @@
++apiVersion: project.markitect.example.org/v1alpha1
++kind: Artifact
++metadata:
++  name: implementation
++  namespace: ""
++purpose: "Owns implementation representations of the accepted public contract"
++spec:
++  role: implementation
++  realizes:
++    - namespace: ""
++      name: reservation
++    - namespace: ""
++      name: booking-contract
++    - namespace: ""
++      name: durable-state
++  paths:
++    - "app.py"
++  checks:
++    - namespace: ""
++      name: project-tests
++  required: true
++  reason: "Expected realizations, not proof of implementation or genuine installation; validate at the owner setup boundary."
+diff --git a/.markitect/model/manager.yaml b/.markitect/model/manager.yaml
+new file mode 100644
+index 0000000..28eabed
+--- /dev/null
++++ b/.markitect/model/manager.yaml
+@@ -0,0 +1,9 @@
++apiVersion: project.markitect.example.org/v1alpha1
++kind: Manager
++metadata:
++  name: roombook
++  namespace: ""
++purpose: Room reservation CLI with durable local state
++spec:
++  owns: ["."]
++  instructions: "Use the genuine installed model-first workflow, maintain explicit model changes for new work and preserve public requirements. Decide ordinary implementation details yourself."
+diff --git a/.markitect/model/reservation.yaml b/.markitect/model/reservation.yaml
+new file mode 100644
+index 0000000..cf69ac9
+--- /dev/null
++++ b/.markitect/model/reservation.yaml
+@@ -0,0 +1,12 @@
++apiVersion: project.markitect.example.org/v1alpha1
++kind: Statement
++metadata:
++  name: reservation
++  namespace: ""
++purpose: "reservation for roombook"
++spec:
++  category: concept
++  description: "A reservation has a monotonic never-reused integer identity, normalized case-sensitive room, UTC minute start/end, nonempty title and active or canceled status."
++  public: true
++  uses: []
++  requires: []
+diff --git a/.markitect/model/tests.yaml b/.markitect/model/tests.yaml
+new file mode 100644
+index 0000000..c5b34e7
+--- /dev/null
++++ b/.markitect/model/tests.yaml
+@@ -0,0 +1,22 @@
++apiVersion: project.markitect.example.org/v1alpha1
++kind: Artifact
++metadata:
++  name: tests
++  namespace: ""
++purpose: "Owns verification representations of the accepted public contract"
++spec:
++  role: verification
++  realizes:
++    - namespace: ""
++      name: reservation
++    - namespace: ""
++      name: booking-contract
++    - namespace: ""
++      name: durable-state
++  paths:
++    - "tests/"
++  checks:
++    - namespace: ""
++      name: project-tests
++  required: true
++  reason: "Expected realizations, not proof of implementation or genuine installation; validate at the owner setup boundary."
+diff --git a/.markitect/project.yaml b/.markitect/project.yaml
+new file mode 100644
+index 0000000..26d4574
+--- /dev/null
++++ b/.markitect/project.yaml
+@@ -0,0 +1,18 @@
++apiVersion: project.markitect.example.org/v1alpha1
++name: roombook
++coverageMode: full
++workflowMode: guided
++acceptancePolicy: committed-model
++documentPath: docs/markitect/project.md
++modelFiles:
++  - .markitect/model/manager.yaml
++  - .markitect/model/reservation.yaml
++  - .markitect/model/booking-contract.yaml
++  - .markitect/model/durable-state.yaml
++  - .markitect/model/delivery-rules.yaml
++  - .markitect/model/implementation.yaml
++  - .markitect/model/documentation.yaml
++  - .markitect/model/tests.yaml
++  - .markitect/model/checks.yaml
++inventoryRoots: []
++exclusions: []
+diff --git a/.markitect/runtime.yaml b/.markitect/runtime.yaml
+new file mode 100644
+index 0000000..6c12ae1
+--- /dev/null
++++ b/.markitect/runtime.yaml
+@@ -0,0 +1,121 @@
++apiVersion: markitect.example.org/project-run/v1alpha1
++mode: controlled-local
++requireIsolation: false
++agents:
++    '["project.markitect.example.org/v1alpha1","Manager","","roombook"]':
++        command: C:\Python313\python.exe
++        args:
++            - "-B"
++            - "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py"
++            - "--binding"
++            - "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\inner-binding.json"
++            - "--binding-sha256"
++            - "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed"
++            - "--"
++            - "C:\\Python313\\python.exe"
++            - C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\runner.py
++            - --model
++            - gpt-6-luna
++            - --codex-executable
++            - C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
++            - --codex-version
++            - 0.162.0-alpha.2
++        model: gpt-6-luna
++        modelOptions:
++            model_reasoning_effort: high
++        providerVersion: 0.162.0-alpha.2
++        timeout: 5m0s
++        maxStdoutBytes: 4194304
++        maxStderrBytes: 1048576
++        runtimeFiles:
++            - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py"
++              mode: "0644"
++              digest: sha256:a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d
++            - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\app_ledger.py"
++              mode: "0644"
++              digest: sha256:3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20
++            - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\nest.py"
++              mode: "0644"
++              digest: sha256:45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635
++            - path: C:\Python313\python.exe
++              mode: "0644"
++              digest: sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125
++            - path: C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\runner.py
++              mode: "0644"
++              digest: sha256:1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6
++            - path: C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
++              mode: "0644"
++              digest: sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68
++        environment:
++            - PATH
++            - TEMP
++            - TMP
++            - SystemRoot
++        pricing:
++            inputMicrosPerMillion: 100000
++            outputMicrosPerMillion: 500000
++review:
++    agents:
++        '["project.markitect.example.org/v1alpha1","Manager","","roombook"]':
++            command: C:\Python313\python.exe
++            args:
++                - "-B"
++                - "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py"
++                - "--binding"
++                - "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\inner-binding.json"
++                - "--binding-sha256"
++                - "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed"
++                - "--"
++                - "C:\\Python313\\python.exe"
++                - C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\runner.py
++                - --model
++                - gpt-6-luna
++                - --codex-executable
++                - C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
++                - --codex-version
++                - 0.162.0-alpha.2
++            model: gpt-6-luna
++            modelOptions:
++                model_reasoning_effort: high
++            providerVersion: 0.162.0-alpha.2
++            timeout: 5m0s
++            maxStdoutBytes: 4194304
++            maxStderrBytes: 1048576
++            runtimeFiles:
++                - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\inner_runtime_budget.py"
++                  mode: "0644"
++                  digest: sha256:a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d
++                - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\app_ledger.py"
++                  mode: "0644"
++                  digest: sha256:3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20
++                - path: "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-design-app-native\\runtime-assets\\nest.py"
++                  mode: "0644"
++                  digest: sha256:45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635
++                - path: C:\Python313\python.exe
++                  mode: "0644"
++                  digest: sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125
++                - path: C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\runner.py
++                  mode: "0644"
++                  digest: sha256:1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6
++                - path: C:\Users\Consiliari\AppData\Local\OpenAI\Codex\bin\9691020b546a15b2\codex.exe
++                  mode: "0644"
++                  digest: sha256:3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68
++            environment:
++                - PATH
++                - TEMP
++                - TMP
++                - SystemRoot
++            pricing:
++                inputMicrosPerMillion: 100000
++                outputMicrosPerMillion: 500000
++    maxRounds: 3
++    maxManagerRounds: 2
++limits:
++    maxDepth: 2
++    maxStarts: 24
++    maxRetries: 1
++    maxParallel: 1
++    maxDuration: 20m0s
++    maxCostMicros: 3000000
++    maxCandidateFileBytes: 1048576
++    maxCandidateBytes: 8388608
+diff --git a/.markitect/workflows/model-first.md b/.markitect/workflows/model-first.md
+new file mode 100644
+index 0000000..4dad06b
+--- /dev/null
++++ b/.markitect/workflows/model-first.md
+@@ -0,0 +1,144 @@
++<!-- BEGIN MARKITECT MODEL-FIRST -->
++# Model-first project workflow
++
++This file is the shared workflow for contributors using Codex and Claude. Treat the selected Markitect project model as the canonical description of intended behavior, ownership, artifacts, checks, and relationships. Code, tests, documentation, and infrastructure realize that model; their presence alone does not prove they agree with it.
++
++The model-first selector in this repository is .markitect/project.yaml. It names the canonical YAML model files, initially .markitect/model/manager.yaml, and project policy; .markitect/runtime.yaml supplies execution configuration. Use the markitect project command surface throughout this workflow. Inspect the actual authoring contract and current Manager IDs before preparing model mutations:
++
++    markitect project schema
++    markitect project index --repo PATH
++    markitect project check --repo PATH
++
++The schema command returns the exact model schema without reading a repository. Index returns the selected model and full Manager identities; check reports structure and repository coverage. For an initialized project, extend its selected model through project edit. An empty initial model is a starting point: within the Work Item's delegation, define the required concepts, artifact ownership and verification checks before readiness. Initialization of a new project uses markitect project init; top-level markitect init authors the historical Project/Domain format and does not establish this selected model. Do not create markitect.yaml or .markitect/areas/ as a substitute for model-first authoring. Diagnose missing coverage or checks and repair the selected model within your authority; escalate only material intent or authority that the Work Item does not delegate.
++
++## Start from an ordinary work item
++
++When a contributor gives a short Work Item, issue, bug, idea, or casual change request, use this model-first skill as the default starting workflow. Treat the short request as an entry point, not as complete requirements or authorization to skip exploration. Let the contributor explain the project and desired outcome in ordinary language and conversation; do not require Markitect commands or YAML knowledge.
++
++Keep an explicit decision ledger as the work proceeds: accepted intent, assumptions, options considered, unresolved questions, their owners, and which selected scopes they block. Carry that ledger forward in the active work item and recover durable state from the repository model and persisted Markitect run when resuming. Dialogue or a draft is not durable acceptance. Do not invent external facts.
++
++Ask the contributor only when material information is missing and changes intended behavior, scope, acceptance, authority, or readiness; otherwise state a bounded assumption and continue. Do not ask for facts already available from the accepted model or repository.
++
++## Explore before implementation
++
++During Explore, discuss useful concepts, rules, use cases, architecture, and workflow. Prepare model edits and explanations, then use structural checks and impact results to find missing references and affected areas. Keep accepted decisions separate from assumptions, suggestions, and open questions. A compiler error is a prompt to repair or clarify the draft, not a reason to start implementation. Discuss technology choices, Manager boundaries, shared artifact contracts, and a proposed first-scope file structure with the contributor. Managers own their declared areas; a shared artifact can serve several areas, while each file keeps one accountable owner and explicit cross-area contracts.
++
++For an existing codebase, reverse-model it iteratively from inspected files, repository history, configuration, and observed checks. Keep a reverse-modeling ledger that connects each proposed rule, artifact, and owner to inspected paths and records unknowns or confidence gaps. Reconcile that ledger with the contributor; do not infer behavior from names, comments, or directory structure alone. Use explicit transient scopes for areas that remain unmodeled, and never present those areas as covered or conforming. Keep the initial adoption model-only. Once the model is accepted under the repository's policy at a committed model revision, plan any cleanup as a separate operation.
++
++For a Brownfield Work Item, use the structured session to turn that ledger into bounded Manager responsibilities. Inspect the target and source at fixed revisions, run markitect project discover, then start a session from its discovery output and explicit scope statuses. Begin one root iteration with its own inspected evidence IDs and a concise purpose/review. Those own evidence IDs provide raw source content for claims and citations. An optional delegationEvidenceIDs pool gives the root permission only to route those IDs to children; its context exposes them as metadata (ID, path, basis, and digest), not raw content, and metadata does not establish behavior. Keep own and delegation pools disjoint. For new root iterations, set delegationEvidenceIDs explicitly: use [] to permit no child evidence or name only selected child evidence. An omitted root pool retains legacy broad routing over selected Discovery evidence. The durable explicit-empty marker preserves [] across session serialization. In a child .markitect/drafts/brownfield-begin.json record, copy the exact evidenceIds and delegationEvidenceIDs assigned by its parent proposal; do not broaden or rewrite either pool. Read the child's bounded context and run its propose phase.
++
++The root context also shows the selected Discovery inventory as metadata only. Do not load all child source into the root evidence pool: child Managers receive raw content only for their own evidenceIds. After each proposal assigns direct children and evidence, begin a separate child iteration and repeat recursively. After all children finish proposals and non-leaf integrations, retrieve the parent's context with phase integrate and run its integration phase. The parent receives each direct child's exact final report, citation references, public contracts, and bound digests; non-leaf reports include the completed descendant integration. Forward those citations when relevant; the parent does not need raw child source. Each Manager is a distinct invocation. For a proposed Manager, runtime configuration may map execution to an accepted ancestor, but the proposed Manager remains the work identity and receives only its bounded context.
++
++Use the native CLI stages below; have the agent create the closed JSON files from current command outputs and the repository's actual decisions. Every --request, --output, and --input record path must be a normalized repository-relative slash path ending in .json under .markitect/drafts/ or .markitect/runs/; absolute paths, backslashes, and root-level JSON names are rejected. Discovery request/output and project edit inputs are rooted in --repo. Brownfield stage inputs and its durable session are rooted in --source-repo when supplied, otherwise --repo; --repo remains the target project/runtime root. Keep these record files in that selected record repository. The Brownfield start record wraps the exact discovery object as discovery and includes scopeStatuses (an explicit empty array when none apply). The begin record contains a bare ReverseIterationRequest. The context record contains iterationId; for parent integration it also contains phase integrate. Do not ask the contributor to hand-author proposal, integration, or binding digests. The inputs shown are small shape examples, not reusable IDs:
++
++    {"id":"root-review","managerId":"<existing-manager-id>","evidenceIds":["<root-owned-evidence-id>"],"delegationEvidenceIds":["<selected-child-evidence-id>"],"purpose":"Model the observed order-cancellation behavior.","review":"State evidence, uncertainty, and public contracts."}
++
++    markitect project discover --repo TARGET --request .markitect/drafts/discovery-request.json --output .markitect/drafts/discovery.json
++    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action start --revision TARGET_COMMIT --input .markitect/drafts/brownfield-start.json
++    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action start --revision TARGET_COMMIT --input .markitect/drafts/brownfield-start.json --expect START_SESSION_DIGEST --write
++    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action begin --session SESSION_ID --input .markitect/drafts/brownfield-begin.json --expect SESSION_DIGEST --write
++    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action context --session SESSION_ID --input .markitect/drafts/brownfield-context.json
++    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action run --session SESSION_ID --input .markitect/drafts/brownfield-run.json
++    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action run --session SESSION_ID --input .markitect/drafts/brownfield-run.json --expect PREVIEW_DIGEST --write
++
++For run, use closed JSON such as {"iterationId":"ITERATION_ID","phase":"propose","agentManagerId":"ACCEPTED_RUNTIME_MANAGER_ID"}; use phase integrate for a parent. Preview is no-call and returns previewDigest; execution must confirm that exact digest with --expect. It binds session, context, fixed revisions, runtime selection and budget. Review requestContractDigest across attempts: it binds the stable request schema/instructions while deliberately excluding cumulative remaining-budget counters, which may advance after priced work; previewDigest still binds the current ledger and budget. Each write makes exactly one attempt. There is no automatic retry; only explicitly retry the latest known failed attempt with a final receipt, within cumulative configured retry/start/time/cost limits. Unknown cost, ambiguous durable publication, or an attempt without a known terminal receipt fails closed and is not automatically replayable. The process lock is released by the operating system when the owning process exits; inspect the session overview and run journal before resuming, and do not delete the lock file to force progress.
++
++Review outputs at their intended scope: session fields expose a safe overview of fixed bases, scope status, iteration IDs, and digests; resume and plan also retain typed readiness questions and conflict diagnostics for the outer coordinator to route and decide. These diagnostics contain no full source or private report bodies. Context returns only the requested Manager context; the inner Manager request includes that Manager's bounded context (own selected content and authorized metadata) and, for integration, completed direct-child reports, never the complete session or readiness. Run returns the scoped proposal/integration and attempt receipt. The plan action returns the full model AdoptionPlan for review before model-only Apply. An incomplete/ambiguous publication or unknown invocation outcome is a fail-closed state to inspect, not a signal to repeat the command.
++
++After root integration, have the authorized owner or delegated Manager review the ledger and make explicit scope/question decisions within their authority. If the Work Item does not delegate those decisions, a material issue remains open, or repository policy requires a human decision, ask the contributor. Have the agent build .markitect/drafts/brownfield-resolution.json from the current proposal and target bindings; its shape is {"iterationId":"ITERATION_ID","resolution":{"apiVersion":"markitect.example.org/project-resolution/v1alpha1","actor":"ACTOR","authorityClaim":"AUTHORITY","decisionReference":"REAL_PROVENANCE","authenticated":false,"questions":[{"questionId":"QUESTION_ID","scopeId":"SCOPE_ID","disposition":"answer","answer":"DECISION","reason":"WHY"}],"scopes":[{"scopeId":"SCOPE_ID","status":"adopt","reason":"WHY"}]}} plus the binding digests copied from current Host outputs. The provenance fields record a caller assertion and do not authenticate a human. Then use:
++
++    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action resolve --session SESSION_ID --input .markitect/drafts/brownfield-resolution.json --expect SESSION_DIGEST --write
++    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action plan --session SESSION_ID --input .markitect/drafts/brownfield-plan.json
++    markitect project brownfield --repo TARGET --source-repo SOURCE --brownfield-action apply-adoption --session SESSION_ID --input .markitect/drafts/brownfield-apply-adoption.json --expect SESSION_DIGEST --write
++
++The .markitect/drafts/brownfield-apply-adoption.json record contains the iteration ID and the reviewed expected plan digest from the plan output. Commit and accept the canonical model under repository policy before readiness or implementation; initial adoption remains model-only.
++
++The project documentation destination is "docs/markitect/project.md". Keep it readable and derived from the current accepted model through Markitect's documented generation path. Preserve independent documents under their named owners.
++
++## First-scope readiness
++
++Before implementation, select a first usable scope and compute its readiness from the current fixed project snapshot: structural validity, scoped ownership and dependencies, required artifacts, configured checks, blocking open decisions, and known evidence gaps. Report what is ready and what remains open; readiness is scoped planning evidence, not proof of implementation correctness. Show the proposed file structure, required artifacts, Managers, and checks, and obtain the review or acknowledgement required by repository policy. When the Work Item delegates ordinary implementation and structure decisions within its scope, the responsible Manager may review and acknowledge using its own actor, delegated authority, and task provenance; never present that assertion as the contributor's acknowledgement or as identity authentication. Ask the contributor only when material intent or authority remains undecided, or policy explicitly requires human review.
++
++The active project model expresses canonical ownership through Manager IDs and namespaces; the project-model tool classification only marks canonical model paths in the repository inventory and is not a human owner or separate approval identity. When this Work Item delegates a routine model decision, the responsible active Manager may author its bounded canonical change with its own Manager ID in the mutation actor field. The Host checks that actor against active namespace ownership and parent authority. Root-only controls remain guarded: inventory/scope and acceptance-policy changes require the active root Manager or explicit user actor; runtime changes require root or user; a Manager cannot silently remove or weaken a required Artifact. Use the real authorized Manager ID and task provenance, never impersonate user or a human.
++
++For the default committed-model policy, a valid selected canonical model at the current committed HEAD is the accepted repository specification. The edit preview, an unapplied model proposal, or an exploration record is not acceptance; committing a noncanonical draft file does not change the accepted model. The Explore CRUD path stores ModelAccepted:false, while computed readiness establishes acceptance only when the model is non-provisional, committed at current HEAD, and governed by committed-model policy. A human approval is not required unless the repository policy or this Work Item explicitly requires it.
++
++Do not implement a scope until its canonical model is accepted and current policy readiness is resolved. If the native workspace denies a required model write or Git commit, keep the exploration and draft intact, use the existing approval mechanism if available, and otherwise stop and report the exact blocked action. Do not bypass the Run/Review/Apply lifecycle by writing implementation files directly. A tool-permission failure does not authorize changing caller security settings. Resume the same exploration when the ordinary required action has completed.
++
++Have the responsible Manager prepare a closed mutation with the current Project baseDigest, its actor ID, a bounded goal, and exact canonical model file contents. Preview it, inspect the structural report and impact, and apply only that returned plan digest:
++
++    markitect project edit --repo PATH --input .markitect/drafts/project-model-mutation.json
++    markitect project edit --repo PATH --input .markitect/drafts/project-model-mutation.json --expect EDIT_PLAN_DIGEST --write
++
++After applying a delegated model change, run the repository's required policy checks/review and commit the selected canonical model on the task branch. Under committed-model, that committed canonical revision is the accepted specification; it is not a claim that a human approved it. Use the committed revision for readiness and implementation. Ask the contributor only when material intent or authority is outside the delegation, or repository policy explicitly requires their review.
++
++### Durable exploration records and commands
++
++Each ordinary Work Item gets one durable exploration ID and one named scope ID. Keep those IDs stable while updating or resuming that item. A new Work Item receives new IDs. The input is closed JSON with exactly one scope and explicit arrays; substitute a Manager ID that exists in the current model and JSON-escape it as one string value.
++
++Minimal new exploration input:
++
++```json
++{
++  "apiVersion": "markitect.example.org/project-exploration/v1alpha1",
++  "id": "cancel-order",
++  "status": "active",
++  "request": "Support safe order cancellation.",
++  "scopes": [
++    {
++      "id": "cancel-order",
++      "name": "Order cancellation",
++      "goal": "Allow eligible orders to be canceled and restore reserved stock once.",
++      "operation": "apply",
++      "managerIds": ["<existing-manager-id>"]
++    }
++  ],
++  "decisions": [],
++  "drafts": [],
++  "structureAcknowledgements": [],
++  "completions": []
++}
++```
++
++On creation, the Host fills the source-binding and record digests. To preview a create or update, then persist only that exact plan:
++
++```text
++markitect project explore --repo PATH --input .markitect/drafts/work-item.json
++markitect project explore --repo PATH --input .markitect/drafts/work-item.json --expect PLAN_DIGEST --write
++markitect project explore --repo PATH --exploration cancel-order
++markitect project explore --repo PATH
++```
++
++The first command returns a write plan; inspect its binding and digest before the second. Use the returned WritePlan digest as PLAN_DIGEST. The last commands read one durable record or list records. Keep status active until the Host records a successful Apply receipt; integration alone is not completion. Never delete or recreate a record to avoid its open decisions or history.
++
++## Implement and close the first Apply
++
++After the model is accepted at a committed revision, use the existing Plan, Run, Verify, and Apply lifecycle in that order. The Host reconciles committed accepted-model history automatically; inspect the exact context for a Manager with `markitect project briefings --repo PATH --manager MANAGER_ID`. Reconcile that Manager's scoped briefings, events, and relevant public neighbor contracts before work. Do not invent or manually aggregate a model delta that the accepted-history mechanism already supplies. A briefing summarizes declared model changes; it does not infer meaning from prose or prove implementation correctness. A caller-declared decision reference does not authenticate identity.
++
++Plan only the bounded goal against the selected accepted revision and review the plan and Manager assignments against the Work Item and repository policy. Follow the ownership tree: a Manager owns its assigned scope and delegates only to active direct children; leaf Managers implement their files, an independent reviewer assesses the exact scoped candidate bytes, and each parent integrates direct-child results against its own contracts. Do not substitute a whole-project implementer for these bounded responsibilities. Ask the contributor only when material intent or authority is undecided or the task or policy requires human review. Run the declared checks and complete full verification against the final candidate. Apply only the verified candidate with its current bindings. If a check or verification fails, report the gap and continue the same persisted run; do not call the attempt successful. Apply does not publish or deploy.
++
++If provider setup must be refreshed after Manager-tree edits, inspect its preview and explicitly preserve the already authorized time, start/retry, and cost limits. Setup may replace runtime limits with defaults; never accept a refresh that silently resets those bounds.
++
++The first successful Apply for the acknowledged scope closes the initial work item. Before that point, keep the work item open and continue its bounded repair, review, verification, and Apply cycle. If interrupted or moved to a new conversation, inspect and resume the existing persisted run from its last durable state; do not replay completed Manager work or create a duplicate run. After first Apply, use the same model, ownership, impact, planning, run, verification, and Apply workflow for later changes. A new feature can begin another Explore cycle without resetting the project. Keep technical validation, semantic evidence, and human acceptance distinguishable.
++
++The CLI forms below expose preview digests and durable IDs; replace each placeholder with the value just returned by the Host.
++
++```text
++markitect project readiness --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID
++markitect project readiness --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID --acknowledge-structure --actor ACTOR --authority AUTHORITY --decision-ref PROVENANCE --acknowledged-at RFC3339_TIME
++markitect project readiness --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID --acknowledge-structure --actor ACTOR --authority AUTHORITY --decision-ref PROVENANCE --acknowledged-at RFC3339_TIME --expect WRITE_PLAN_DIGEST --write
++markitect project deliver --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID --write
++markitect project deliver --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID --run RUN_ID --write
++markitect project status --repo PATH --run RUN_ID
++markitect project resume --repo PATH --run RUN_ID --write
++markitect project repair --repo PATH --run RUN_ID --write
++```
++
++Read the readiness preview's exact Managers, files, artifacts, checks, blockers, binding digest, structure digest, and write-plan digest. Use the returned writePlan.digest for WRITE_PLAN_DIGEST. Generate one explicit UTC RFC3339 --acknowledged-at value and reuse that exact value and all other acknowledgement arguments for preview and write; changing the timestamp changes the plan. Record only real authority and provenance: an authorized Manager may assert its own delegated authority within the Work Item, citing that task; never claim that assertion is a human acknowledgement. Use --actor user only after an actual user decision, with its real authority and provenance. If the task does not authorize the exact structure or a material blocking decision remains open, ask the contributor; do not invent a decision or acknowledgement.
++
++Project deliver uses the existing durable run: interrupted/running work resumes; integrated work advances through verification and Apply; verified work continues guarded Apply; an already applied run recovers the exploration completion from its immutable receipt. If delivery reports blocked or failed, inspect the same run with project status and resolve the reported cause. Resume interrupted work without replay; use repair only for a failed required check after correcting its cause. Never create a replacement run just because integration, verification, or Apply was interrupted.
++
++## Authority boundary
++
++These repository instructions help the selected agent follow the workflow. They do not prevent a contributor or agent with ordinary repository write access from editing files directly or bypassing Markitect. Rely on the project's guarded Apply and configured repository checks for their declared boundaries; do not claim that native instructions create an operating-system security boundary.
++<!-- END MARKITECT MODEL-FIRST -->
+diff --git a/.study/station.json b/.study/station.json
+new file mode 100644
+index 0000000..3998188
+--- /dev/null
++++ b/.study/station.json
+@@ -0,0 +1,7 @@
++{
++  "id": "S1",
++  "items": [
++    "R01"
++  ],
++  "requiresTeam": false
++}
+diff --git a/AGENTS.md b/AGENTS.md
+index 203ab8e..57418e1 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -11,3 +11,8 @@ Keep a concise WORKLOG.md: work item, checks, failures, repairs, reviews, model/
+ At each station handoff write .study/completion.json with station equal to the released station ID, status "complete" or "blocked", completed work-item IDs, and brief remaining issues. Commit it with the work. This is completion metadata, not a quality verdict. An interrupted run resumes from this repository and its own session. Before every commit run git diff --cached --check immediately. WORKLOG.md may point to PROGRESS.md rather than duplicate it.
+ 
+ The third station requires actual collaboration by at least two executing agents on independent work groups, with overlapping work intervals and integrated contributions. Choose your own native planning, prompts, roles and branches. Record actual agent IDs, requested and observed model/effort where available, start/end times, contribution/merge SHAs, conflict handling and reviews in TEAMWORK.md; retain native receipts where available. A request for parallelism alone is not completion. If your installed product cannot support this, report the missing capability rather than imitate a team. The dispatcher supplies no semantic help.
++
++<!-- BEGIN MARKITECT MODEL-FIRST -->
++For a short Work Item, issue, bug, idea, or change request, use markitect project with the repository's .markitect/project.yaml selector, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, satisfy the repository's actual readiness review and acknowledgement policy using your own authorized actor, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Ask only for material intent or authority outside the Work Item's delegation, or review the repository policy explicitly reserves for a human. Resume persisted work without replaying completed work.
++<!-- END MARKITECT MODEL-FIRST -->
++
+diff --git a/CLAUDE.md b/CLAUDE.md
+new file mode 100644
+index 0000000..452aba7
+--- /dev/null
++++ b/CLAUDE.md
+@@ -0,0 +1,4 @@
++<!-- BEGIN MARKITECT MODEL-FIRST -->
++For a short Work Item, issue, bug, idea, or change request, use markitect project with the repository's .markitect/project.yaml selector, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, satisfy the repository's actual readiness review and acknowledgement policy using your own authorized actor, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Ask only for material intent or authority outside the Work Item's delegation, or review the repository policy explicitly reserves for a human. Resume persisted work without replaying completed work.
++<!-- END MARKITECT MODEL-FIRST -->
++
+diff --git a/TOOLCHAIN.md b/TOOLCHAIN.md
+new file mode 100644
+index 0000000..1922a01
+--- /dev/null
++++ b/TOOLCHAIN.md
+@@ -0,0 +1,9 @@
++# Declared local tool and resource bindings
++
++Genuine source-bound Markitect executable: `C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native\runtime-assets\markitect.exe`.
++Selected model and normal native instructions remain in this repository.
++Product runtime is `.markitect/runtime.yaml`; raw genuine adapter argv and inherited profile remain owned by the product.
++This preparation is disabled. Do not invoke product runtime until Root has recorded your actual outer handle in the own ledger and sealed the matching enabled resource binding.
++Own resource state: `C:\Users\Consiliari\Documents\Luna-Work-Item-Nests-20261009\state\roombook-design-app-native`. No semantic help or private evaluation is supplied by resource orchestration.
++All outer, inner, helper and final roles share 72 starts, four active roles and depth two; station/phase deadlines never extend.
++Serving identity, tokens and cost remain unknown without actual receipts.
+diff --git a/docs/markitect/project.md b/docs/markitect/project.md
+new file mode 100644
+index 0000000..3fc94dc
+--- /dev/null
++++ b/docs/markitect/project.md
+@@ -0,0 +1,118 @@
++<!-- Generated by Markitect projectwork; edit selected model sources instead. -->
++
++# roombook
++
++Model digest: sha256:6417f793d498ac85c8d20cead61bf32c6f4416f146e3395210235afeedc7bc0b  
++Report status: incomplete
++
++The structural model compiled from the explicitly selected Definition files. This view does not establish that repository code, tests, or prose conform to the model. Declared checks are not evidence that they ran.
++
++## Responsibilities
++
++### roombook
++
++- Identity: ["project.markitect.example.org/v1alpha1","Manager","","roombook"]
++- Namespace: 
++- Purpose: Room reservation CLI with durable local state
++- Delegated paths: .
++- Instructions: Use the genuine installed model-first workflow, maintain explicit model changes for new work and preserve public requirements. Decide ordinary implementation details yourself.
++
++## Statements
++
++### booking-contract
++
++- Identity: ["project.markitect.example.org/v1alpha1","Statement","","booking-contract"]
++- Category: rule
++- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","","roombook"]
++- Source: [.markitect/model/booking-contract.yaml](../../.markitect/model/booking-contract.yaml)
++
++Released S1 book/list exactly follow README: valid calendar UTC-minute half-open intervals, per-room active overlap rejection, adjacent intervals permitted, list sorted start then id; future waves in BACKLOG remain visible but unreleased.
++
++### delivery-rules
++
++- Identity: ["project.markitect.example.org/v1alpha1","Statement","","delivery-rules"]
++- Category: workflow
++- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","","roombook"]
++- Source: [.markitect/model/delivery-rules.yaml](../../.markitect/model/delivery-rules.yaml)
++
++Obey public AGENTS/QUALITY/BACKLOG and released .study/station.json; freely choose internal organization using actual native installation. Keep tests/docs/model/views consistent, only verified work merged to isolated main. Preserve unknown telemetry; all roles Luna High.
++
++### durable-state
++
++- Identity: ["project.markitect.example.org/v1alpha1","Statement","","durable-state"]
++- Category: rule
++- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","","roombook"]
++- Source: [.markitect/model/durable-state.yaml](../../.markitect/model/durable-state.yaml)
++
++Successful mutation atomically replaces UTF-8 JSON; missing DB is empty. Invalid or conflicting input and malformed existing data fail without changing stored bytes. Later processes observe committed state. No multiwriter guarantee.
++
++### reservation
++
++- Identity: ["project.markitect.example.org/v1alpha1","Statement","","reservation"]
++- Category: concept
++- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","","roombook"]
++- Source: [.markitect/model/reservation.yaml](../../.markitect/model/reservation.yaml)
++
++A reservation has a monotonic never-reused integer identity, normalized case-sensitive room, UTC minute start/end, nonempty title and active or canceled status.
++
++## Expected artifacts
++
++### documentation
++
++- Identity: ["project.markitect.example.org/v1alpha1","Artifact","","documentation"]
++- Requirement: optional
++- Role: documentation
++- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","","roombook"]
++- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","booking-contract"], ["project.markitect.example.org/v1alpha1","Statement","","durable-state"], ["project.markitect.example.org/v1alpha1","Statement","","reservation"]
++- Expected paths: [.codex/](../../.codex), [.gitignore](../../.gitignore), [.study/](../../.study), [.work/](../../.work), [AGENTS.md](../../AGENTS.md), [BACKLOG.md](../../BACKLOG.md), [PROGRESS.md](../../PROGRESS.md), [QUALITY.md](../../QUALITY.md), [README.md](../../README.md), [STATIONS.json](../../STATIONS.json), [TEAMWORK.md](../../TEAMWORK.md), [WORKLOG.md](../../WORKLOG.md)
++- Related checks: ["project.markitect.example.org/v1alpha1","Check","","project-tests"] (declared; execution not observed)
++- Applicability: Expected realizations, not proof of implementation or genuine installation; validate at the owner setup boundary.
++
++### implementation
++
++- Identity: ["project.markitect.example.org/v1alpha1","Artifact","","implementation"]
++- Requirement: required
++- Role: implementation
++- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","","roombook"]
++- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","booking-contract"], ["project.markitect.example.org/v1alpha1","Statement","","durable-state"], ["project.markitect.example.org/v1alpha1","Statement","","reservation"]
++- Expected paths: [app.py](../../app.py)
++- Related checks: ["project.markitect.example.org/v1alpha1","Check","","project-tests"] (declared; execution not observed)
++- Applicability: Expected realizations, not proof of implementation or genuine installation; validate at the owner setup boundary.
++
++### tests
++
++- Identity: ["project.markitect.example.org/v1alpha1","Artifact","","tests"]
++- Requirement: required
++- Role: verification
++- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","","roombook"]
++- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","booking-contract"], ["project.markitect.example.org/v1alpha1","Statement","","durable-state"], ["project.markitect.example.org/v1alpha1","Statement","","reservation"]
++- Expected paths: [tests/](../../tests)
++- Related checks: ["project.markitect.example.org/v1alpha1","Check","","project-tests"] (declared; execution not observed)
++- Applicability: Expected realizations, not proof of implementation or genuine installation; validate at the owner setup boundary.
++
++## Observed inventory
++
++| Path | Observation | Responsible Manager | Class | Coverage |
++|---|---|---|---|---|
++| [.gitignore](../../.gitignore) | not present | ["project.markitect.example.org/v1alpha1","Manager","","roombook"] | expected-artifact | linked to an expected Artifact |
++| [AGENTS.md](../../AGENTS.md) | not present | ["project.markitect.example.org/v1alpha1","Manager","","roombook"] | expected-artifact | linked to an expected Artifact |
++| [BACKLOG.md](../../BACKLOG.md) | not present | ["project.markitect.example.org/v1alpha1","Manager","","roombook"] | expected-artifact | linked to an expected Artifact |
++| [PROGRESS.md](../../PROGRESS.md) | not present | ["project.markitect.example.org/v1alpha1","Manager","","roombook"] | expected-artifact | linked to an expected Artifact |
++| [QUALITY.md](../../QUALITY.md) | not present | ["project.markitect.example.org/v1alpha1","Manager","","roombook"] | expected-artifact | linked to an expected Artifact |
++| [README.md](../../README.md) | not present | ["project.markitect.example.org/v1alpha1","Manager","","roombook"] | expected-artifact | linked to an expected Artifact |
++| [STATIONS.json](../../STATIONS.json) | not present | ["project.markitect.example.org/v1alpha1","Manager","","roombook"] | expected-artifact | linked to an expected Artifact |
++| [TEAMWORK.md](../../TEAMWORK.md) | not present | ["project.markitect.example.org/v1alpha1","Manager","","roombook"] | expected-artifact | linked to an expected Artifact |
++| [WORKLOG.md](../../WORKLOG.md) | not present | ["project.markitect.example.org/v1alpha1","Manager","","roombook"] | expected-artifact | linked to an expected Artifact |
++| [app.py](../../app.py) | not present | ["project.markitect.example.org/v1alpha1","Manager","","roombook"] | expected-artifact | linked to an expected Artifact |
++
++## Declared checks
++
++- project-tests (["project.markitect.example.org/v1alpha1","Check","","project-tests"]), owned by ["project.markitect.example.org/v1alpha1","Manager","","roombook"]: python -B -m unittest discover -s tests -v — declared only; no run result is bound to this report.
++  - Limit: Finite tests do not establish exhaustive semantics, billing, OS isolation, team execution or human acceptance.
++
++## Coverage and findings
++
++No unowned inventory paths were reported. Per-file Artifact coverage is shown above.
++
++- incomplete (coverage.required-artifact-missing, ["project.markitect.example.org/v1alpha1","Artifact","","implementation"]): Expected Artifact path is absent from the supplied inventory: app.py
++- incomplete (coverage.required-artifact-missing, ["project.markitect.example.org/v1alpha1","Artifact","","tests"]): Expected Artifact path is absent from the supplied inventory: tests/

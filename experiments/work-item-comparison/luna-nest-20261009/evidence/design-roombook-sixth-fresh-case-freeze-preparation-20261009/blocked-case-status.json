@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "git",
+    "-C",
+    "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-design-app-native",
+    "status",
+    "--porcelain"
+  ],
+  "exitCode": 0,
+  "stdout": "A  .agents/skills/markitect-model-first/SKILL.md\nA  .claude/skills/markitect-model-first/SKILL.md\nA  .codex/config.toml\nA  .markitect/.gitignore\nA  .markitect/model/booking-contract.yaml\nA  .markitect/model/checks.yaml\nA  .markitect/model/delivery-rules.yaml\nA  .markitect/model/documentation.yaml\nA  .markitect/model/durable-state.yaml\nA  .markitect/model/implementation.yaml\nA  .markitect/model/manager.yaml\nA  .markitect/model/reservation.yaml\nA  .markitect/model/tests.yaml\nA  .markitect/project.yaml\nA  .markitect/runtime.yaml\nA  .markitect/workflows/model-first.md\nA  .study/station.json\nM  AGENTS.md\nA  CLAUDE.md\nA  TOOLCHAIN.md\nA  docs/markitect/project.md\n",
+  "stderr": ""
+}

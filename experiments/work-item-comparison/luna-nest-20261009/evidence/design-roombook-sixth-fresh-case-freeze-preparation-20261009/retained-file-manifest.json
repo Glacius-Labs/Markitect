@@ -1,0 +1,302 @@
+[
+  {
+    "path": ".gitattributes",
+    "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
+    "bytes": 8
+  },
+  {
+    "path": "activation-plan.md",
+    "sha256": "066949eee918c9501d646a402c3b09f08853219631f9d024fde9733f276e1ec1",
+    "bytes": 3761
+  },
+  {
+    "path": "blocked-cached-check.json",
+    "sha256": "04ecf47c71d8f3eea7ceb2dfff6d3128fb69546ea2003c65eb426b0c81e8348a",
+    "bytes": 15324
+  },
+  {
+    "path": "blocked-case-status.json",
+    "sha256": "0fbfdcedff047a5a1f46e34447172f4af9fe67719de09e4dd2e3ba874425b605",
+    "bytes": 926
+  },
+  {
+    "path": "blocked-terminal.json",
+    "sha256": "f6512cd18db69a51a697b38e6a42841b44a8c8e5df0453ff6bcc9786ccb71f18",
+    "bytes": 17493
+  },
+  {
+    "path": "close-blocked.py",
+    "sha256": "9a09654510c95f8d83dd1fbdfd6189e780230815ea0fbf3bb4b03148003b0e11",
+    "bytes": 5649
+  },
+  {
+    "path": "common-nine-inputs.json",
+    "sha256": "6cc169fcdd71c442715187beda536a3a630c67261609ec2d790bd84090aed157",
+    "bytes": 1287
+  },
+  {
+    "path": "design-roombook-sixth-actual-reservation-20261009-grant.json",
+    "sha256": "3e25f7486284b63cf583d6c208187d40b6ef0ce6d0645112128c7d076ceec9df",
+    "bytes": 2564
+  },
+  {
+    "path": "design-roombook-sixth-fresh-case-freeze-preparation-20261009-grant.json",
+    "sha256": "c5f0c7e7f751090beaaa01b6336abb682a706026ba4297dd7fe9b55b8856d2a7",
+    "bytes": 2691
+  },
+  {
+    "path": "first-preparation-failure.txt",
+    "sha256": "253d0e927f2c1a4cc8a3b202d758015429460b8b940ce008e241b157b164bbe7",
+    "bytes": 1183
+  },
+  {
+    "path": "model-migration-provenance.json",
+    "sha256": "08d012acd459949e9c1ccd2ca597f1a26b81f088d7ef92e691ca332e947f3a56",
+    "bytes": 5401
+  },
+  {
+    "path": "original-model/.markitect/model/booking-contract.yaml",
+    "sha256": "0dec869e40832bf901147a2f8393194a60b13f5316f153afe53f9823491b84bf",
+    "bytes": 483
+  },
+  {
+    "path": "original-model/.markitect/model/checks.yaml",
+    "sha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+    "bytes": 513
+  },
+  {
+    "path": "original-model/.markitect/model/delivery-rules.yaml",
+    "sha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+    "bytes": 512
+  },
+  {
+    "path": "original-model/.markitect/model/documentation.yaml",
+    "sha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+    "bytes": 801
+  },
+  {
+    "path": "original-model/.markitect/model/durable-state.yaml",
+    "sha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+    "bytes": 467
+  },
+  {
+    "path": "original-model/.markitect/model/implementation.yaml",
+    "sha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+    "bytes": 597
+  },
+  {
+    "path": "original-model/.markitect/model/manager.yaml",
+    "sha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+    "bytes": 377
+  },
+  {
+    "path": "original-model/.markitect/model/reservation.yaml",
+    "sha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+    "bytes": 394
+  },
+  {
+    "path": "original-model/.markitect/model/tests.yaml",
+    "sha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+    "bytes": 584
+  },
+  {
+    "path": "original-model/.markitect/project.yaml",
+    "sha256": "aa024390df2d29b7c4ed2807afc830c1afad92b6a0ebee56214b25117ff18ece",
+    "bytes": 513
+  },
+  {
+    "path": "partial-case-inventory.json",
+    "sha256": "075cfc022ac6d0bcb55b463adfaf800da0906cc0b170af9b665803cdf6708c79",
+    "bytes": 4147
+  },
+  {
+    "path": "partial-case-seed.bundle",
+    "sha256": "3eda5d048908ecc2e3476c40f7ecd49e1ebfe31169dc493b86cb0b1f9a18b075",
+    "bytes": 8343
+  },
+  {
+    "path": "partial-case-working-files/.agents/skills/markitect-model-first/SKILL.md",
+    "sha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df",
+    "bytes": 968
+  },
+  {
+    "path": "partial-case-working-files/.claude/skills/markitect-model-first/SKILL.md",
+    "sha256": "a814b4984898e20a0176eadc96463155bcf255d95be1e75d16dccea1f48d44df",
+    "bytes": 968
+  },
+  {
+    "path": "partial-case-working-files/.codex/config.toml",
+    "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "bytes": 281
+  },
+  {
+    "path": "partial-case-working-files/.gitignore",
+    "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "bytes": 36
+  },
+  {
+    "path": "partial-case-working-files/.markitect/.gitignore",
+    "sha256": "99d0ad337ab793b80532376cb5476964fa2a2286166b2ce0b01305b5e34e17ce",
+    "bytes": 23
+  },
+  {
+    "path": "partial-case-working-files/.markitect/model/booking-contract.yaml",
+    "sha256": "e9f088cbdd1183d2c7266709896abcf96b7dac97b6e48e039828bc94eccc4316",
+    "bytes": 479
+  },
+  {
+    "path": "partial-case-working-files/.markitect/model/checks.yaml",
+    "sha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+    "bytes": 513
+  },
+  {
+    "path": "partial-case-working-files/.markitect/model/delivery-rules.yaml",
+    "sha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+    "bytes": 512
+  },
+  {
+    "path": "partial-case-working-files/.markitect/model/documentation.yaml",
+    "sha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+    "bytes": 801
+  },
+  {
+    "path": "partial-case-working-files/.markitect/model/durable-state.yaml",
+    "sha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+    "bytes": 467
+  },
+  {
+    "path": "partial-case-working-files/.markitect/model/implementation.yaml",
+    "sha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+    "bytes": 597
+  },
+  {
+    "path": "partial-case-working-files/.markitect/model/manager.yaml",
+    "sha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+    "bytes": 377
+  },
+  {
+    "path": "partial-case-working-files/.markitect/model/reservation.yaml",
+    "sha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+    "bytes": 394
+  },
+  {
+    "path": "partial-case-working-files/.markitect/model/tests.yaml",
+    "sha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+    "bytes": 584
+  },
+  {
+    "path": "partial-case-working-files/.markitect/project.yaml",
+    "sha256": "3cfcc1556e99fce834b16643d6b9f57b02bd3cb788862742b9469461fca9f098",
+    "bytes": 568
+  },
+  {
+    "path": "partial-case-working-files/.markitect/runtime.yaml",
+    "sha256": "8c1c22a414968706f381d11fce8e0e92d90000449a4ed9b4964237364750727b",
+    "bytes": 6519
+  },
+  {
+    "path": "partial-case-working-files/.markitect/workflows/model-first.md",
+    "sha256": "9d1b7f7c3b974f90e24341442daee19516d83d2d209be759a5e4292da574945e",
+    "bytes": 24524
+  },
+  {
+    "path": "partial-case-working-files/.study/station.json",
+    "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+    "bytes": 70
+  },
+  {
+    "path": "partial-case-working-files/AGENTS.md",
+    "sha256": "ac48151f5d0cebcd47232ba59a2a1e1ba55cfe135883c21fd187833a5c4a1071",
+    "bytes": 3329
+  },
+  {
+    "path": "partial-case-working-files/BACKLOG.md",
+    "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "bytes": 2566
+  },
+  {
+    "path": "partial-case-working-files/checks/acceptance.py",
+    "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "bytes": 7554
+  },
+  {
+    "path": "partial-case-working-files/CLAUDE.md",
+    "sha256": "0d75a4a8247dd8cc59a1125a2265ad555c9bbe7f3aa057bba97637483da2c321",
+    "bytes": 788
+  },
+  {
+    "path": "partial-case-working-files/docs/markitect/project.md",
+    "sha256": "03d99e7b2a498c7a205ab6b1162a832bff246a58804e09f47bb981e65aca23ca",
+    "bytes": 8370
+  },
+  {
+    "path": "partial-case-working-files/QUALITY.md",
+    "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "bytes": 2687
+  },
+  {
+    "path": "partial-case-working-files/README.md",
+    "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "bytes": 2276
+  },
+  {
+    "path": "partial-case-working-files/STATIONS.json",
+    "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "bytes": 595
+  },
+  {
+    "path": "partial-case-working-files/TOOLCHAIN.md",
+    "sha256": "c8659f0e8fa39e6bbe725521795c6d2447e70b8bfaa3ddf6bd03435c8c1dddae",
+    "bytes": 991
+  },
+  {
+    "path": "partial-state-files/inner-binding.json",
+    "sha256": "95e6f0160cd29d8c62ba09c9291e4a4a40f14fd320345f0321172350b97c46ed",
+    "bytes": 2394
+  },
+  {
+    "path": "partial-state-files/runtime-assets/app_ledger.py",
+    "sha256": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20",
+    "bytes": 7339
+  },
+  {
+    "path": "partial-state-files/runtime-assets/inner_runtime_budget.py",
+    "sha256": "a94e9a897f39db454d3e004deab21d46af5eb830f039a23af9402b440f02839d",
+    "bytes": 12623
+  },
+  {
+    "path": "partial-state-files/runtime-assets/markitect.exe",
+    "sha256": "abf877849379900cf2f1cf6c19f3d5d1e67a134592ac810cedc437191e9a5f29",
+    "bytes": 16947200
+  },
+  {
+    "path": "partial-state-files/runtime-assets/nest.py",
+    "sha256": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635",
+    "bytes": 27108
+  },
+  {
+    "path": "partial-state-files/runtime-assets/runner.py",
+    "sha256": "1284ea4e187cf68ab8a9c15062366cadc750d63a9deb5b833214ec05bcc56ba6",
+    "bytes": 64805
+  },
+  {
+    "path": "partial-state-inventory.json",
+    "sha256": "f7256e0d068e7cdacb52677b00ef6ef4f44bd8b5990ce143a0df13b376a32db4",
+    "bytes": 950
+  },
+  {
+    "path": "prepare.py",
+    "sha256": "3515fe94d64478b274dab49863465c711d68b52f69b50c5f98f186e4c2f31d09",
+    "bytes": 13283
+  },
+  {
+    "path": "staged-case.patch",
+    "sha256": "3d8d842532b6cab4bf0631bdd3049ebd17846c0c0a05efb0646aabe463adc87f",
+    "bytes": 55176
+  },
+  {
+    "path": "unstaged-case.patch",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  }
+]

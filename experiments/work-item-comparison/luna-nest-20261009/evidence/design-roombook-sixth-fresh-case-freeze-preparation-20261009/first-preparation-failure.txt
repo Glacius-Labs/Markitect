@@ -1,0 +1,9 @@
+First preparation batch, 2026-10-09T10:24:59Z observed completion, exit1. No model/provider/product/tests/builds. Own clone exists only at original seed HEAD on codex/design-roombook-prepared, no application or model setup yet, state absent. Default Git checkout autocrlf was not disabled until after clone; exact seed working-byte assertion failed. One permitted correction batch restores ONLY line-ending-equivalent bytes from original seed after checking exact own partial repo HEAD/branch/no remote. No deletion or alternate case/seed used.
+
+Switched to a new branch 'codex/design-roombook-prepared'
+Traceback (most recent call last):
+  File "prepare.py", line 43, in <module>
+    for row in seed_inventory: assert sha(repo/row['path'])==row['sha256']
+AssertionError
+
+This is a copied tool-output excerpt and explanatory disposition, not an original raw session export. The failed first source revision was not separately hashed before execution; retained correction source and explicit normalization list identify the change. Preparation cost is conservatively charged from prep grant issuedUtc, including metadata/failed setup/closure, not reset to the correction batch start.
