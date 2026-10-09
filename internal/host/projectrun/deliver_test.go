@@ -20,6 +20,12 @@ func TestDeliverResumesIntegratedRunAndCompletesAcknowledgedScope(t *testing.T) 
 	enableGuidedWorkflow(t, root)
 	introduceAcceptedModelEvent(t, root)
 	configureOperationsFullVerify(t, root)
+	// This positive delivery path performs several full source validations before
+	// Verify. Give the fixture enough wall-clock budget for those real checks;
+	// runtime-budget enforcement is covered by separate tests.
+	updateE2ERuntime(t, root, func(runtime *Runtime) {
+		runtime.Limits.MaxDuration = Duration(15 * time.Minute)
+	})
 	setupE2EProcess(t, "normal")
 	const explorationID, scopeID = "deliver-orders", "orders-change"
 	event := dismissFirstUnresolvedEvent(t, root)

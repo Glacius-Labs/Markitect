@@ -1,0 +1,59 @@
+{
+  "source": "ebe5147025c8d1f5bf40c4dc30b14509c0e5d6e3",
+  "fixtureRevision": "963a5f1e00ada83eb59072f60f426c793117d034",
+  "binarySha256": "82d0680e73a2807883970ac89cf32cd0eee6aba6fc93226684b9cd71b41ce06d",
+  "providerCalls": 0,
+  "projectCheckExitCode": 0,
+  "coverageAccounted": true,
+  "coverageConforming": true,
+  "queries": [
+    {
+      "action": "graph",
+      "exitCode": 0,
+      "queryDigest": "sha256:b0e34b8e1eb69fed85b95bd6a7e438659a51a6a21b51dedfa269a495b327ca4b",
+      "graphDigest": "sha256:1868708c623713c12965a3c6509c6fdd985a5aa79c19b4e1dff80e4946cfaf78",
+      "outputSha256": "4fbbb4e6d1efc97e2f0d68155a540ac282ed3507823c3b36911b0c545e26b904"
+    },
+    {
+      "action": "relations",
+      "exitCode": 0,
+      "queryDigest": "sha256:a679709b516a09b13441daa9ac21123ea897b1203d27496a98880d0e98fbe18d",
+      "graphDigest": "sha256:1868708c623713c12965a3c6509c6fdd985a5aa79c19b4e1dff80e4946cfaf78",
+      "outputSha256": "d4ea01191ed535fa6dab5674210363deebd7bcbab5c96f0471b930ddaf840133"
+    },
+    {
+      "action": "explain",
+      "exitCode": 0,
+      "queryDigest": "sha256:79dc4df122538e2db92806bc799e4a58e054d667d8d594b98ef2d061801378e0",
+      "graphDigest": "sha256:1868708c623713c12965a3c6509c6fdd985a5aa79c19b4e1dff80e4946cfaf78",
+      "outputSha256": "5ae8134c5f9d2c5a504e0126bcb02233b226e386462bcca05e7f09d7b2cf9310"
+    },
+    {
+      "action": "trace",
+      "exitCode": 0,
+      "queryDigest": "sha256:df64436a1b9b5bb2bb98b4099d67c685682fd8b7f972450e98590725e11b826b",
+      "graphDigest": "sha256:1868708c623713c12965a3c6509c6fdd985a5aa79c19b4e1dff80e4946cfaf78",
+      "outputSha256": "29ba8d66acc328ecbf4ac3813117dffdb3dfc3024ac2ba65a5324eb1d711ace2"
+    },
+    {
+      "action": "history",
+      "exitCode": 0,
+      "queryDigest": "sha256:6378dc5b6ba391ed6517f0bd3c519dec3483b684f272573450066fe775a3f4f3",
+      "graphDigest": "sha256:1868708c623713c12965a3c6509c6fdd985a5aa79c19b4e1dff80e4946cfaf78",
+      "outputSha256": "ef0236f4833dc8326f560ccae1ed3df11c27a012f05a6c4222b8024f60bcdbce"
+    },
+    {
+      "action": "coverage",
+      "exitCode": 0,
+      "queryDigest": "sha256:9b7a4f4aad4130fc2a8d1ada6ef592c9cfaf049b98c73786a29e5d4aadcf05ae",
+      "graphDigest": "sha256:1868708c623713c12965a3c6509c6fdd985a5aa79c19b4e1dff80e4946cfaf78",
+      "outputSha256": "36decd71053bcf78af99b5438987a195de067a483f03fdc6e92fe29b40f48a85"
+    }
+  ],
+  "mcp": {
+    "exitCode": 0,
+    "tools": 6,
+    "sameGraphDigest": true,
+    "outputSha256": "eee158a0eb65c0fc5b3c26007acb6222c969ad2e732390992a886f7a557afecd"
+  }
+}

@@ -35,7 +35,7 @@ items:
     owner: parent and transport subagent
     files: [internal/host/projectapp, internal/host/projectcli, internal/host/knowledgeprotocol, docs]
   - id: KG07
-    status: in_progress
+    status: implemented_targeted_validated_reviewed
     scope: Twelve-question regression, normal provider-free user journey, privacy negatives, honest code/source/config/evidence handoff.
     owner: parent and independent Reader
   - id: KG07-M
@@ -50,7 +50,7 @@ items:
 
 ## Completed source slices
 
-KG04 focused tests and vet passed. An independent Luna High reader found a private foreign Decision subject leak and missing Impact routing to the subject owner. Both fixes and targeted regressions passed the reader recheck. KG03 adds explicit bounded bidirectional witnesses so Statement -> Artifact -> Check can be explained even when typed edges face different directions; original edge orientations stay visible. The existing failed full Verify is preserved. Whole variant gates and accepted Main reconciliation remain pending.
+KG04 focused tests and vet passed. An independent Luna High reader found a private foreign Decision subject leak and missing Impact routing to the subject owner. Both fixes and targeted regressions passed the reader recheck. KG03 adds explicit bounded bidirectional witnesses so Statement -> Artifact -> Check can be explained even when typed edges face different directions; original edge orientations stay visible. All failed full Verifies remain preserved. There is no full-suite PASS; accepted Main reconciliation and the combined full gate remain pending.
 
 
-The Host reader has closed all five material findings and the direct ExtraFacts seam residual with targeted rereads. All source owners are frozen for the integrated candidate. KG07 fixed-source full Verify and final binary journey are next; accepted Main remains explicitly unprovided.
+The Host reader has closed all five material findings and the direct ExtraFacts seam residual with targeted rereads. All implementation owners are complete. Both source-bound actual CLI/MCP journeys passed all six queries without provider calls. The d360ec01 full Verify failed two CLI fixtures; their repairs passed in the ebe51470 full suite. That replay failed a shared four-minute positive Delivery fixture budget; the localized fifteen-minute repair passed the exact targeted test in 217.099 s and independent review. KG07 therefore records implementation/targeted closure, not an overall full Verify PASS. Per Overseer's explicit direction, the next full replay is the combined accepted Main-to-KG candidate. KG07-M is still awaiting the exact accepted Main SHA; the RDF assessment is complete and its optional prototype is deferred.

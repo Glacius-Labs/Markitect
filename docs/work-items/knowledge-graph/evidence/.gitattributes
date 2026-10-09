@@ -2,3 +2,6 @@ verify-08b273f6.log -text whitespace=cr-at-eol
 user-journey-d360ec01.json -text whitespace=cr-at-eol
 verify-d360ec01.log -text whitespace=cr-at-eol
 verify-d360ec01-receipt.json -text whitespace=cr-at-eol
+user-journey-ebe51470.json -text whitespace=cr-at-eol
+verify-ebe51470.log -text whitespace=cr-at-eol
+verify-ebe51470-receipt.json -text whitespace=cr-at-eol
