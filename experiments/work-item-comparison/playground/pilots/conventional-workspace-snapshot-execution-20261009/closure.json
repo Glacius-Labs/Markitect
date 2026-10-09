@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "state": "closed",
+  "sourceCommit": "6adcfdb09b3dd579468e43c1b6b0c10fb363a11a",
+  "orderSha256": "58cf8d06944223b77f51062bfa48ecb224bee9e5f5651abec18597dff1664d63",
+  "planSha256": "c8463f6513d39b1470415d3a6dad27fd5aac0db809cdee9c80389a185528b672",
+  "originalStudyPath": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009",
+  "completionTarget": "workspace_snapshot",
+  "controllerStatus": "trajectory_completed",
+  "nativeTrajectoryCompleted": true,
+  "overallScientificResult": "partial independent assessment; no reliable overall PASS",
+  "publicStationFindings": [
+    {
+      "station": "S1",
+      "counts": {
+        "PASS": 5
+      },
+      "candidateUnchanged": true
+    },
+    {
+      "station": "S2",
+      "counts": {
+        "PASS": 8
+      },
+      "candidateUnchanged": true
+    },
+    {
+      "station": "S3",
+      "counts": {
+        "PASS": 11
+      },
+      "candidateUnchanged": true
+    },
+    {
+      "station": "S4",
+      "counts": {
+        "PASS": 13
+      },
+      "candidateUnchanged": true
+    }
+  ],
+  "independentFinal": {
+    "result": {
+      "candidateFilesUnchanged": true,
+      "detail": "App Server terminal status: completed",
+      "endedAt": "2026-10-09T21:06:45.714140+00:00",
+      "frozenInitialPublicRequirementsUnchanged": true,
+      "humanAcceptance": "not established",
+      "initialPublicWorkspaceBindingUnchanged": true,
+      "nativeSessionId": "01a1227b-0d5f-7352-bee3-b51b5fcdac9b",
+      "nativeTurnId": "01a1227b-0e20-78e0-9f1a-19964a666f07",
+      "ownedProcessScope": "direct-child-only",
+      "state": "completed",
+      "usage": {
+        "last": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 43776,
+          "inputTokens": 46456,
+          "outputTokens": 1778,
+          "reasoningOutputTokens": 516,
+          "totalTokens": 48234
+        },
+        "modelContextWindow": 258400,
+        "total": {
+          "cacheWriteInputTokens": 0,
+          "cachedInputTokens": 229120,
+          "inputTokens": 279231,
+          "outputTokens": 7460,
+          "reasoningOutputTokens": 4374,
+          "totalTokens": 286691
+        }
+      },
+      "usageScope": "native-reported; aggregate scope unknown"
+    },
+    "report": "final-assessor-report.txt",
+    "fullDynamicEvaluation": "EVALUATION_ERROR: readonly sandbox prevents ephemeral databases and test file cleanup",
+    "readonlyChecks": "PASS: four pure-query tests and added AST/in-memory boundaries",
+    "productDefect": "no definite defect found in independent source inspection; persistence/import/export/rename dynamic verification incomplete",
+    "teamEvidenceAvailableToAssessor": "candidate-owned TEAMWORK only; no native receipts supplied"
+  },
+  "resourcesConsumed": {
+    "freshTrajectories": 1,
+    "providerFreeStartupChecks": 2,
+    "nativeCanaries": 0,
+    "outerImplementationTurns": 4,
+    "freshFinalTurns": 1,
+    "observedHelperStarts": 5,
+    "uniqueObservedNativeTurnStarts": 10,
+    "noRetry": true
+  },
+  "time": {
+    "startedAt": "2026-10-09T20:54:30.008259+00:00",
+    "endedAt": "2026-10-09T21:06:45.718581+00:00",
+    "totalSeconds": 735.710322,
+    "jobExpiresAt": "2026-10-10T00:54:30.008259+00:00"
+  },
+  "scientistCandidateEdits": 0,
+  "scientistSemanticCoaching": 0,
+  "pairedComparison": "NOT RUN",
+  "humanAcceptance": "not established",
+  "nativeHardGlobalStartCap": "unknown; observed receipts only",
+  "nativeHardDepthCap": "unknown; cooperative profile",
+  "helperActiveModelTelemetry": "unknown; requested LunaHigh profile, no observed override",
+  "servingCosts": "unknown",
+  "globalInstructionBoundary": "native reports current-user global AGENTS.md inherited; exact global content at launch not separately frozen",
+  "ownedNativeProcessScope": "direct-child-only; helper completed receipts observed, complete OS descendant inventory unknown",
+  "oldUncertainCli": "quarantined untouched; no retroactive terminal claim",
+  "rawArchive": {
+    "path": "raw-study.zip",
+    "sha256": "21f8053721acd24765dfc82c71229c94fdca346ca7c3344f023634092de352a2",
+    "entries": 585,
+    "everyEntrySha256Verified": true,
+    "excluded": "live repo/.git; retained externally, provenance bundles and captured Git metadata remain included",
+    "authFiles": "none credential-named; no auth values inspected/copied"
+  },
+  "nextWork": "Provider-free evaluator design correction: immutable candidate/spec plus separate owned scratch. No native retry or second trajectory admitted by this closed order."
+}

@@ -1,0 +1,306 @@
+{
+  "schema": 1,
+  "lastCumulativeUsageByThread": {
+    "01a12272-3ea5-7870-8ca0-9c92e1945395": {
+      "totalTokens": 6504352,
+      "inputTokens": 6457874,
+      "cachedInputTokens": 6295808,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 46478,
+      "reasoningOutputTokens": 20570
+    },
+    "01a12273-8cba-7ac2-89ba-6d2e6c9137cc": {
+      "totalTokens": 339455,
+      "inputTokens": 335105,
+      "cachedInputTokens": 297984,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 4350,
+      "reasoningOutputTokens": 1053
+    },
+    "01a12273-9f04-73e1-bf66-9011fbf14bb8": {
+      "totalTokens": 244486,
+      "inputTokens": 240907,
+      "cachedInputTokens": 225792,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 3579,
+      "reasoningOutputTokens": 1201
+    },
+    "01a12275-b74b-7221-8533-3530ca3fb22b": {
+      "totalTokens": 190083,
+      "inputTokens": 188051,
+      "cachedInputTokens": 178176,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 2032,
+      "reasoningOutputTokens": 548
+    },
+    "01a12275-c20b-7ff2-b0af-5091ad4da46a": {
+      "totalTokens": 319922,
+      "inputTokens": 317412,
+      "cachedInputTokens": 298752,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 2510,
+      "reasoningOutputTokens": 576
+    },
+    "01a12276-8f15-7210-96b3-824e5a18ee06": {
+      "totalTokens": 224405,
+      "inputTokens": 221114,
+      "cachedInputTokens": 205568,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 3291,
+      "reasoningOutputTokens": 1152
+    },
+    "01a1227b-0d5f-7352-bee3-b51b5fcdac9b": {
+      "totalTokens": 286691,
+      "inputTokens": 279231,
+      "cachedInputTokens": 229120,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 7460,
+      "reasoningOutputTokens": 4374
+    }
+  },
+  "aggregation": "sum final observed native counters once per distinct thread; native aggregate attribution scope unknown; not billed cost",
+  "sumReportedThreadCounters": {
+    "totalTokens": 8109394,
+    "inputTokens": 8039694,
+    "cachedInputTokens": 7731200,
+    "cacheWriteInputTokens": 0,
+    "outputTokens": 69700,
+    "reasoningOutputTokens": 29474
+  },
+  "nativeRuntimeBindings": [
+    {
+      "kind": "native-runtime-binding",
+      "nativeSessionId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "reported": {
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high",
+        "modelProvider": "openai",
+        "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo",
+        "sandbox": {
+          "type": "workspaceWrite",
+          "writableRoots": [],
+          "networkAccess": false,
+          "excludeTmpdirEnvVar": false,
+          "excludeSlashTmp": false
+        },
+        "approvalPolicy": "never",
+        "instructionSources": [
+          "C:\\Users\\Consiliari\\.codex\\AGENTS.md",
+          "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo\\AGENTS.md"
+        ]
+      },
+      "claimScope": "native-reported fields only"
+    },
+    {
+      "kind": "native-runtime-binding",
+      "nativeSessionId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "reported": {
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high",
+        "modelProvider": "openai",
+        "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo",
+        "sandbox": {
+          "type": "workspaceWrite",
+          "writableRoots": [],
+          "networkAccess": false,
+          "excludeTmpdirEnvVar": false,
+          "excludeSlashTmp": false
+        },
+        "approvalPolicy": "never",
+        "instructionSources": [
+          "C:\\Users\\Consiliari\\.codex\\AGENTS.md",
+          "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo\\AGENTS.md"
+        ]
+      },
+      "claimScope": "native-reported fields only"
+    },
+    {
+      "kind": "native-runtime-binding",
+      "nativeSessionId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "reported": {
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high",
+        "modelProvider": "openai",
+        "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo",
+        "sandbox": {
+          "type": "workspaceWrite",
+          "writableRoots": [],
+          "networkAccess": false,
+          "excludeTmpdirEnvVar": false,
+          "excludeSlashTmp": false
+        },
+        "approvalPolicy": "never",
+        "instructionSources": [
+          "C:\\Users\\Consiliari\\.codex\\AGENTS.md",
+          "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo\\AGENTS.md"
+        ]
+      },
+      "claimScope": "native-reported fields only"
+    },
+    {
+      "kind": "native-runtime-binding",
+      "nativeSessionId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "reported": {
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high",
+        "modelProvider": "openai",
+        "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo",
+        "sandbox": {
+          "type": "workspaceWrite",
+          "writableRoots": [],
+          "networkAccess": false,
+          "excludeTmpdirEnvVar": false,
+          "excludeSlashTmp": false
+        },
+        "approvalPolicy": "never",
+        "instructionSources": [
+          "C:\\Users\\Consiliari\\.codex\\AGENTS.md",
+          "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo\\AGENTS.md"
+        ]
+      },
+      "claimScope": "native-reported fields only"
+    },
+    {
+      "kind": "native-runtime-binding",
+      "nativeSessionId": "01a1227b-0d5f-7352-bee3-b51b5fcdac9b",
+      "reported": {
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high",
+        "modelProvider": "openai",
+        "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\audit\\independent-final-assessment\\candidate",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "approvalPolicy": "never",
+        "instructionSources": [
+          "C:\\Users\\Consiliari\\.codex\\AGENTS.md",
+          "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\audit\\independent-final-assessment\\candidate\\AGENTS.md"
+        ]
+      },
+      "claimScope": "native-reported fields only"
+    }
+  ],
+  "helperIntervals": {
+    "01a12273-8cba-7ac2-89ba-6d2e6c9137cc": {
+      "agentPath": "/root/import_tests",
+      "started": "2026-10-09T20:56:00.857767+00:00",
+      "completed": "2026-10-09T20:56:57.455985+00:00"
+    },
+    "01a12273-9f04-73e1-bf66-9011fbf14bb8": {
+      "agentPath": "/root/summary_tests",
+      "started": "2026-10-09T20:56:05.918324+00:00",
+      "completed": "2026-10-09T20:56:52.581496+00:00"
+    },
+    "01a12275-b74b-7221-8533-3530ca3fb22b": {
+      "agentPath": "/root/query_group",
+      "started": "2026-10-09T20:58:22.754341+00:00",
+      "completed": "2026-10-09T20:58:51.672005+00:00"
+    },
+    "01a12275-c20b-7ff2-b0af-5091ad4da46a": {
+      "agentPath": "/root/export_group",
+      "started": "2026-10-09T20:58:25.489407+00:00",
+      "completed": "2026-10-09T20:59:37.384069+00:00"
+    },
+    "01a12276-8f15-7210-96b3-824e5a18ee06": {
+      "agentPath": "/root/summary_group",
+      "started": "2026-10-09T20:59:17.847697+00:00",
+      "completed": "2026-10-09T20:59:54.777704+00:00"
+    }
+  },
+  "uniqueObservedNativeTurnStarted": {
+    "01a12273-5e45-7810-aeb4-b7dfb7dd65ce": {
+      "threadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "observedAt": "2026-10-09T20:55:48.658133+00:00"
+    },
+    "01a12273-8e4d-7cc1-a4ab-c3a8264164a5": {
+      "threadId": "01a12273-8cba-7ac2-89ba-6d2e6c9137cc",
+      "observedAt": "2026-10-09T20:56:01.216603+00:00"
+    },
+    "01a12273-a082-78a1-8739-d0f74dd83011": {
+      "threadId": "01a12273-9f04-73e1-bf66-9011fbf14bb8",
+      "observedAt": "2026-10-09T20:56:05.927343+00:00"
+    },
+    "01a12272-3fed-7740-a15a-5ecdab36e792": {
+      "threadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "observedAt": "2026-10-09T20:54:35.620942+00:00"
+    },
+    "01a12275-76ea-7071-a977-f92bb78442fe": {
+      "threadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "observedAt": "2026-10-09T20:58:05.966554+00:00"
+    },
+    "01a12275-b894-76b3-8155-44ab15cb5483": {
+      "threadId": "01a12275-b74b-7221-8533-3530ca3fb22b",
+      "observedAt": "2026-10-09T20:58:22.908412+00:00"
+    },
+    "01a12275-c344-7130-85de-e9e6f9e68a48": {
+      "threadId": "01a12275-c20b-7ff2-b0af-5091ad4da46a",
+      "observedAt": "2026-10-09T20:58:25.757550+00:00"
+    },
+    "01a12276-8fc9-7172-b8fe-3c9b594bb238": {
+      "threadId": "01a12276-8f15-7210-96b3-824e5a18ee06",
+      "observedAt": "2026-10-09T20:59:18.105386+00:00"
+    },
+    "01a12277-ec09-7152-81f3-744f387dfd63": {
+      "threadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "observedAt": "2026-10-09T21:00:47.053788+00:00"
+    },
+    "01a1227b-0e20-78e0-9f1a-19964a666f07": {
+      "threadId": "01a1227b-0d5f-7352-bee3-b51b5fcdac9b",
+      "observedAt": "2026-10-09T21:04:12.512294+00:00"
+    }
+  },
+  "nativeLaunches": [
+    {
+      "at": "2026-10-09T20:55:48.000243+00:00",
+      "kind": "native-launch",
+      "backend": "codex-app-server",
+      "pid": 26436,
+      "stdio": "stdin/stdout/stderr JSONL",
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo",
+      "ownedProcessScope": "direct-child-only"
+    },
+    {
+      "at": "2026-10-09T20:54:34.707478+00:00",
+      "kind": "native-launch",
+      "backend": "codex-app-server",
+      "pid": 45384,
+      "stdio": "stdin/stdout/stderr JSONL",
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo",
+      "ownedProcessScope": "direct-child-only"
+    },
+    {
+      "at": "2026-10-09T20:58:05.357225+00:00",
+      "kind": "native-launch",
+      "backend": "codex-app-server",
+      "pid": 5508,
+      "stdio": "stdin/stdout/stderr JSONL",
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo",
+      "ownedProcessScope": "direct-child-only"
+    },
+    {
+      "at": "2026-10-09T21:00:46.388490+00:00",
+      "kind": "native-launch",
+      "backend": "codex-app-server",
+      "pid": 55872,
+      "stdio": "stdin/stdout/stderr JSONL",
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo",
+      "ownedProcessScope": "direct-child-only"
+    },
+    {
+      "at": "2026-10-09T21:04:11.931264+00:00",
+      "kind": "native-launch",
+      "backend": "codex-app-server",
+      "pid": 59652,
+      "stdio": "stdin/stdout/stderr JSONL",
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\audit\\independent-final-assessment\\candidate",
+      "ownedProcessScope": "direct-child-only"
+    }
+  ],
+  "knownLimitations": [
+    "Not an authoritative counter of all attempted/discarded starts",
+    "No hard native depth enforcement proof",
+    "No complete OS descendant inventory",
+    "Actor TEAMWORK times approximate; native receipt observations separately authoritative for overlap"
+  ]
+}

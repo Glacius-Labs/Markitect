@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "observedAt": "2026-10-09T21:09:30Z",
+  "ownedScope": "five exact direct AppServer launch PIDs only",
+  "observations": [
+    {
+      "pid": 45384,
+      "ownedProcess": "absent"
+    },
+    {
+      "pid": 5508,
+      "ownedProcess": "absent"
+    },
+    {
+      "pid": 55872,
+      "ownedProcess": "absent"
+    },
+    {
+      "pid": 59652,
+      "ownedProcess": "absent"
+    },
+    {
+      "pid": 26436,
+      "ownedProcess": "original absent; PID reused",
+      "currentImage": "C:/WINDOWS/system32/conhost.exe",
+      "currentCreated": "2026-10-09T21:06:44.279461Z",
+      "originalLaunch": "2026-10-09T20:55:48.000243Z",
+      "action": "none"
+    }
+  ],
+  "completeDescendantInventory": "unknown",
+  "oldUncertainCli": "untouched"
+}

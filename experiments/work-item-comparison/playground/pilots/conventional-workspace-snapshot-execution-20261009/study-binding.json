@@ -1,0 +1,97 @@
+{
+  "controllerSha256": "ec82c1c94edf1cc6417d0658653b0e10d8be0a077816b9f7690d4c39855a7924",
+  "executable": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+  "executableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "overallExpiresAt": "2026-10-10T00:54:30.008259+00:00",
+  "plan": {
+    "absoluteEndUtc": "2026-10-10T04:31:08Z",
+    "authSource": "existing native current-user authentication; secret values not inspected or copied",
+    "authority": {
+      "directUserTurn": "01a1225a-b646-7262-ba7a-4219ee6bfdf9",
+      "orderPath": "C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/conventional-workspace-snapshot-execution-v2-20261009.json",
+      "scope": "new prospective v2; one fresh workspace-snapshot case; old orders closed",
+      "verifiedRootOrderSha256": "58cf8d06944223b77f51062bfa48ecb224bee9e5f5651abec18597dff1664d63"
+    },
+    "captureAssessmentReserveSeconds": 900,
+    "comparison": "Conventional functional readiness for separately declared workspace_snapshot target; no paired or transport winner",
+    "completionTarget": "workspace_snapshot",
+    "destination": "C:/Users/Consiliari/Documents/Conventional-Workspace-Snapshot-Study-20261009",
+    "evaluation": "actual byte-bound worktree snapshots each station; all public checks required before next station; fresh readonly AppServer final on frozen workspace, not main/merge credit",
+    "executableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+    "executableVersion": "codex-cli 0.162.0-alpha.2",
+    "executionLedgerPath": "C:/Users/Consiliari/Documents/Conventional-Workspace-Snapshot-Execution-20261009.reservation.json",
+    "execution_authorized": true,
+    "freshFinalSeconds": 2700,
+    "id": "conventional-workspace-snapshot-execution-20261009",
+    "implementationSeconds": 10800,
+    "jobWallSeconds": 14400,
+    "lastStartUtc": "2026-10-10T00:31:08Z",
+    "limits": {
+      "concurrency": 4,
+      "depth": 2,
+      "depthNativeEnforcement": "unsupported/unknown; cooperative profile bound",
+      "maxConcurrentAgents": 4,
+      "maxDepth": 2,
+      "nativeConcurrentThreads": "3 spawned threads plus main = total4; official cap excludes main",
+      "roleWallSeconds": 5400,
+      "totalStarts": "observed including helpers/failed/final; no hard native global counter"
+    },
+    "maxRuntimeStartupChecks": 2,
+    "nativeRuntime": "child-local MXC; managed restrictions; no global changes",
+    "outerTurnsPerTrajectory": 4,
+    "overallWallSeconds": 14400,
+    "profileId": "codex-luna-high",
+    "providerFreeChecks": {
+      "alreadyConsumed": 0,
+      "maximum": 2,
+      "nativeModelCanaries": 0,
+      "perTrajectoryMaximum": 2
+    },
+    "requestTimeoutSeconds": 600,
+    "schema": 1,
+    "secondCondition": "no second trajectory or retry under this order",
+    "sourceFiles": [
+      "conventional_wrapper.py",
+      "playground_adapter.py",
+      "final_assessor.py",
+      "delivery_binding.py",
+      "workspace_policy.py"
+    ],
+    "sourceRoots": [
+      "adapters",
+      "conventional"
+    ],
+    "startAllowance": 256,
+    "trajectories": [
+      {
+        "case": "readinglog",
+        "config": {
+          "backend": "codex-app-server",
+          "effort": "high",
+          "model": "gpt-6-luna",
+          "runtimeOptions": {
+            "allowLoginShell": false,
+            "approvalPolicy": "never",
+            "memoryEnabled": false,
+            "nativeHelperEffort": "high",
+            "nativeHelperModel": "gpt-6-luna",
+            "nativeMaxConcurrentAgents": 3,
+            "sandbox": "workspace-write",
+            "windowsSandbox": "mxc"
+          }
+        },
+        "factory": "conventional.adapter:ConventionalAdapter",
+        "manifestSourceRoots": [
+          "conventional"
+        ],
+        "method": "Conventional",
+        "setupSourceRoot": "public/conventional"
+      }
+    ],
+    "turnWallSeconds": 5400
+  },
+  "planSha256": "c8463f6513d39b1470415d3a6dad27fd5aac0db809cdee9c80389a185528b672",
+  "sourceCheckout": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect",
+  "sourceCommit": "6adcfdb09b3dd579468e43c1b6b0c10fb363a11a",
+  "startedAt": "2026-10-09T20:54:30.008259+00:00"
+}

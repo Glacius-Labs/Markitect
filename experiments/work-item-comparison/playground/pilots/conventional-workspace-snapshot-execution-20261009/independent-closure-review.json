@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "reviewer": "/root/independent_review",
+  "scope": "Read-only actual closure evidence review",
+  "result": "No material discrepancy",
+  "checks": [
+    "Scientific partial result distinguished from controller trajectory_completed",
+    "Original 19 readonly execution errors retained",
+    "Actual public checks PASS5/8/11/13 and all stability flags verified",
+    "Source and six functional-input pins verified",
+    "Root order SHA and one case limits match",
+    "Five observed helpers, ten native turn starts, overlap intervals verified",
+    "All 585 ZIP members match manifest; archive SHA21f8053721acd24765dfc82c71229c94fdca346ca7c3344f023634092de352a2",
+    "735.710322 seconds within four-hour bound"
+  ],
+  "nativeCalls": 0
+}

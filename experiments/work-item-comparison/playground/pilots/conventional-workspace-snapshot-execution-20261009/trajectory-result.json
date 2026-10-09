@@ -1,0 +1,633 @@
+{
+  "assessmentCandidate": {
+    "kind": "workspace_snapshot",
+    "manifest": {
+      ".gitignore": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+      ".study/run-id": "165a468e78028da72c199d7a9517b84b6e5f780433fda01de97fac429b53c0f5",
+      ".study/runtime-profile.json": "248b28109bb8e24fdf69f6d1569bf707059586c9504889cdb9653acde20c41c2",
+      ".study/station.json": "c046d07b2c3dff806f569b21b7e0fbe669d97f7c3e6c235cfe590dd71074be72",
+      "AGENTS.md": "159125025d22806fb883c0768a7b6b547a3e22e0177de8b961aa74d5b5b20cc0",
+      "BACKLOG.md": "8536d87d6c6d74bbf5c131e4598a33d70ebf7c70cfc7803d0b87201975e04a5f",
+      "QUALITY.md": "71de79d12a33b5daf31fc34270ba57e312bf0593a7ed094c6b27db41419d49f6",
+      "README.md": "f21e7e904b3adfb96eb1314857d6b15623bbb36331151e49ac97f533fb283a2a",
+      "STATIONS.json": "180166b424693f6c8d0a4bc502b356b5786367cc23302be4b6a1a9737f361aac",
+      "TEAMWORK.md": "def5be3413b3e7e1d601ac7a664e0b1be1a510bd43d2c3d72b1b00f814e6eb06",
+      "WORKLOG.md": "db8ab10516bb220580420b2bac10a94cc5a3c754dec4c87ee968d5e21c28688f",
+      "__pycache__/app.cpython-313.pyc": "4524b67f763a2e20731129530d65fe26561db9f52aa23121ac982ee3b88061c0",
+      "__pycache__/book_export.cpython-313.pyc": "a0e0d523e29b189fdadb3d5b69d8852fc9fb1d8b027c8c4946e83abcebf0cd07",
+      "__pycache__/book_queries.cpython-313.pyc": "c3869bdedf86194af74e31d45d4a70cefa34e313409b188e59b8962cff562b54",
+      "__pycache__/entry_export.cpython-313.pyc": "fdb29f21bda24b170cfe2960c1277d94b83a63d4e9f2294d3a030820add1a3b4",
+      "__pycache__/entry_queries.cpython-313.pyc": "d8d8214ac337e6937851ff3caed05f66af7cb796c728ee55bfe72ed357abe340",
+      "app.py": "165a9c871406885a62d387be971666172de72ecde28386bb1d5c4d5b09f0a6f5",
+      "checks/acceptance.py": "903ec954d2fb7c5df78b21c24ef3f8d830d22c7334597a21950f6c4c82940dfb",
+      "entry_export.py": "b90e93c639e4187c7ec2436a3282bdaf36f9c1550dfc809c8dd612ad3f9246ef",
+      "entry_queries.py": "26220556577f3c2fc23c04b89d652359fe96120184affece47a714eb1b60ac2d",
+      "tests/__pycache__/test_summary_author_cli.cpython-313.pyc": "a0a9738662523107e40194ec65d7ab8917419a0d7a047906d1dbec31d6f45db7",
+      "tests/test_baseline.py": "8f7a743856bd6af42842bdc275eecccf53560f621dd18d72165874874b9aa829",
+      "tests/test_compatibility.py": "aca90c4864976a721e049c5d3e728c4fa6d130e20ba1101a42b82eb843247090",
+      "tests/test_entry_export.py": "545cde92a62e26714ac8273c01a842c7e1b6212ee098fe1019d19ea38a99086d",
+      "tests/test_entry_queries.py": "60aa82c0f517527a752fa9bb2ffe2805248d733453a25f36a7b01e8e1009d034",
+      "tests/test_import.py": "bb15cd521f828c3d333d287d726d83c311c92464cdb54031b44e5cfb72fb14f1",
+      "tests/test_s3_cli.py": "f58fb4c33578098aa1be45062d2a80630a57f414915d3e7a6671278434051220",
+      "tests/test_summary.py": "c7150c535ab8240579cefd44ef7082ada59532ed5ed076f61bbb95696793e964",
+      "tests/test_summary_author_cli.py": "8c7d58a7e9d4ac21bf336193b1536a05105aff1ab69c24351639f618477705a1"
+    },
+    "path": "worktree"
+  },
+  "backend": "codex-app-server",
+  "case": "readinglog",
+  "closeDisposition": {
+    "observations": [
+      {
+        "data": {
+          "message": "adapter closed; unresolved native ownership remains represented by service receipts"
+        },
+        "observedAt": "2026-10-09T21:04:11.827901+00:00",
+        "schema": 1,
+        "type": "adapter.warning"
+      }
+    ],
+    "schema": 1,
+    "service": null,
+    "state": "closed"
+  },
+  "completionTarget": "workspace_snapshot",
+  "endedAt": "2026-10-09T21:06:45.714565+00:00",
+  "finalCandidatePath": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\audit\\final-freeze\\worktree",
+  "humanAcceptance": "not established",
+  "independentFinalAssessment": {
+    "candidateFilesUnchanged": true,
+    "detail": "App Server terminal status: completed",
+    "endedAt": "2026-10-09T21:06:45.714140+00:00",
+    "frozenInitialPublicRequirementsUnchanged": true,
+    "humanAcceptance": "not established",
+    "initialPublicWorkspaceBindingUnchanged": true,
+    "nativeSessionId": "01a1227b-0d5f-7352-bee3-b51b5fcdac9b",
+    "nativeTurnId": "01a1227b-0e20-78e0-9f1a-19964a666f07",
+    "ownedProcessScope": "direct-child-only",
+    "state": "completed",
+    "usage": {
+      "last": {
+        "cacheWriteInputTokens": 0,
+        "cachedInputTokens": 43776,
+        "inputTokens": 46456,
+        "outputTokens": 1778,
+        "reasoningOutputTokens": 516,
+        "totalTokens": 48234
+      },
+      "modelContextWindow": 258400,
+      "total": {
+        "cacheWriteInputTokens": 0,
+        "cachedInputTokens": 229120,
+        "inputTokens": 279231,
+        "outputTokens": 7460,
+        "reasoningOutputTokens": 4374,
+        "totalTokens": 286691
+      }
+    },
+    "usageScope": "native-reported; aggregate scope unknown"
+  },
+  "initialPublicWorkspaceBindingSha256": "84a00502247e819e04e051139fa00eb13b832038784aaf1231d4a8c448347502",
+  "jobExpiresAt": "2026-10-10T00:54:30.008259+00:00",
+  "method": "Conventional",
+  "runtimeReadiness": {
+    "observations": [
+      {
+        "data": {
+          "actualGitApprovalObserved": false,
+          "argv": [
+            "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+            "-c",
+            "windows.sandbox=\"mxc\"",
+            "sandbox",
+            "--include-managed-config",
+            "--permission-profile",
+            ":workspace",
+            "--",
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            "$ErrorActionPreference='Stop';$p='C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo\\.playground-runtime-probe-7529f7fb3fd140e6965c00151951d449.txt';[IO.File]::WriteAllText($p,'playground-runtime-probe:7529f7fb3fd140e6965c00151951d449');if([IO.File]::ReadAllText($p) -ne 'playground-runtime-probe:7529f7fb3fd140e6965c00151951d449'){exit 41};Write-Output 'PLAYGROUND_WRITE_READ_OK';git -C 'C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo' status --porcelain *> $null;if($LASTEXITCODE -ne 0){exit 42};Write-Output 'PLAYGROUND_REPO_GIT_READ_OK';Remove-Item -LiteralPath $p -Force;Write-Output 'PLAYGROUND_SANDBOX_PROBE_OK';"
+          ],
+          "backend": "codex-app-server",
+          "checkId": "02-312eddb7cf334a6b96847c276a7b1add",
+          "clientInitializeBase64": "eyJpZCI6MSwibWV0aG9kIjoiaW5pdGlhbGl6ZSIsInBhcmFtcyI6eyJjbGllbnRJbmZvIjp7Im5hbWUiOiJwbGF5Z3JvdW5kLWNvbnZlbnRpb25hbC1hZGFwdGVyIiwidmVyc2lvbiI6IjEifX19Cg==",
+          "clientInitializeByteLength": 112,
+          "clientInitializedBase64": "eyJtZXRob2QiOiJpbml0aWFsaXplZCIsInBhcmFtcyI6e319Cg==",
+          "clientInitializedByteLength": 37,
+          "completionTarget": "workspace_snapshot",
+          "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo",
+          "directMetadataWriteProbe": "not performed",
+          "dispatchOccurred": true,
+          "endedAt": "2026-10-09T20:54:34.340842+00:00",
+          "exitCode": 0,
+          "gitCommandReady": true,
+          "gitMergeReadiness": "not required for workspace_snapshot",
+          "gitMetadataReady": null,
+          "gitReadinessScope": "read-only Git CLI in prepared repository; writes require actual scoped native approval",
+          "initializeResponseBase64": "eyJpZCI6MSwicmVzdWx0Ijp7InVzZXJBZ2VudCI6IkNvZGV4IERlc2t0b3AvMC4xNjIuMC1hbHBoYS4yIChXaW5kb3dzIDEwLjAuMjYxMDA7IHg4Nl82NCkgZHVtYiAocGxheWdyb3VuZC1jb252ZW50aW9uYWwtYWRhcHRlcjsgMSkiLCJjb2RleEhvbWUiOiJDOlxcVXNlcnNcXENvbnNpbGlhcmlcXC5jb2RleCIsInBsYXRmb3JtRmFtaWx5Ijoid2luZG93cyIsInBsYXRmb3JtT3MiOiJ3aW5kb3dzIn19Cg==",
+          "initializeResponseByteLength": 229,
+          "initializeResultFields": [
+            "codexHome",
+            "platformFamily",
+            "platformOs",
+            "userAgent"
+          ],
+          "kind": "codex-native-sandbox",
+          "nativeTurnStarted": false,
+          "ownedProcessScope": "direct-child-only",
+          "owner": "adapter",
+          "pid": 46628,
+          "probePath": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo\\.playground-runtime-probe-7529f7fb3fd140e6965c00151951d449.txt",
+          "processTerminalConfirmed": true,
+          "protocolReady": true,
+          "sandbox": "mxc",
+          "sandboxReady": true,
+          "scopedGitApprovalConfigured": false,
+          "startedAt": "2026-10-09T20:54:33.569635+00:00",
+          "stderr": "",
+          "stderrBase64": "",
+          "stderrByteLength": 0,
+          "stdout": "PLAYGROUND_WRITE_READ_OK\r\nPLAYGROUND_REPO_GIT_READ_OK\r\nPLAYGROUND_SANDBOX_PROBE_OK",
+          "stdoutBase64": "UExBWUdST1VORF9XUklURV9SRUFEX09LDQpQTEFZR1JPVU5EX1JFUE9fR0lUX1JFQURfT0sNClBMQVlHUk9VTkRfU0FOREJPWF9QUk9CRV9PSw0K",
+          "stdoutByteLength": 84,
+          "toolReady": true,
+          "version": null,
+          "writeReadReady": true
+        },
+        "observedAt": "2026-10-09T20:54:34.345258+00:00",
+        "schema": 1,
+        "type": "runtime.ready"
+      }
+    ],
+    "runtime": {
+      "actualGitApprovalObserved": false,
+      "argv": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+        "-c",
+        "windows.sandbox=\"mxc\"",
+        "sandbox",
+        "--include-managed-config",
+        "--permission-profile",
+        ":workspace",
+        "--",
+        "powershell.exe",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "$ErrorActionPreference='Stop';$p='C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo\\.playground-runtime-probe-7529f7fb3fd140e6965c00151951d449.txt';[IO.File]::WriteAllText($p,'playground-runtime-probe:7529f7fb3fd140e6965c00151951d449');if([IO.File]::ReadAllText($p) -ne 'playground-runtime-probe:7529f7fb3fd140e6965c00151951d449'){exit 41};Write-Output 'PLAYGROUND_WRITE_READ_OK';git -C 'C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo' status --porcelain *> $null;if($LASTEXITCODE -ne 0){exit 42};Write-Output 'PLAYGROUND_REPO_GIT_READ_OK';Remove-Item -LiteralPath $p -Force;Write-Output 'PLAYGROUND_SANDBOX_PROBE_OK';"
+      ],
+      "backend": "codex-app-server",
+      "checkId": "02-312eddb7cf334a6b96847c276a7b1add",
+      "clientInitializeBase64": "eyJpZCI6MSwibWV0aG9kIjoiaW5pdGlhbGl6ZSIsInBhcmFtcyI6eyJjbGllbnRJbmZvIjp7Im5hbWUiOiJwbGF5Z3JvdW5kLWNvbnZlbnRpb25hbC1hZGFwdGVyIiwidmVyc2lvbiI6IjEifX19Cg==",
+      "clientInitializeByteLength": 112,
+      "clientInitializedBase64": "eyJtZXRob2QiOiJpbml0aWFsaXplZCIsInBhcmFtcyI6e319Cg==",
+      "clientInitializedByteLength": 37,
+      "completionTarget": "workspace_snapshot",
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo",
+      "directMetadataWriteProbe": "not performed",
+      "dispatchOccurred": true,
+      "endedAt": "2026-10-09T20:54:34.340842+00:00",
+      "exitCode": 0,
+      "gitCommandReady": true,
+      "gitMergeReadiness": "not required for workspace_snapshot",
+      "gitMetadataReady": null,
+      "gitReadinessScope": "read-only Git CLI in prepared repository; writes require actual scoped native approval",
+      "initializeResponseBase64": "eyJpZCI6MSwicmVzdWx0Ijp7InVzZXJBZ2VudCI6IkNvZGV4IERlc2t0b3AvMC4xNjIuMC1hbHBoYS4yIChXaW5kb3dzIDEwLjAuMjYxMDA7IHg4Nl82NCkgZHVtYiAocGxheWdyb3VuZC1jb252ZW50aW9uYWwtYWRhcHRlcjsgMSkiLCJjb2RleEhvbWUiOiJDOlxcVXNlcnNcXENvbnNpbGlhcmlcXC5jb2RleCIsInBsYXRmb3JtRmFtaWx5Ijoid2luZG93cyIsInBsYXRmb3JtT3MiOiJ3aW5kb3dzIn19Cg==",
+      "initializeResponseByteLength": 229,
+      "initializeResultFields": [
+        "codexHome",
+        "platformFamily",
+        "platformOs",
+        "userAgent"
+      ],
+      "kind": "codex-native-sandbox",
+      "nativeTurnStarted": false,
+      "ownedProcessScope": "direct-child-only",
+      "owner": "adapter",
+      "pid": 46628,
+      "probePath": "C:\\Users\\Consiliari\\Documents\\Conventional-Workspace-Snapshot-Study-20261009\\readinglog\\repo\\.playground-runtime-probe-7529f7fb3fd140e6965c00151951d449.txt",
+      "processTerminalConfirmed": true,
+      "protocolReady": true,
+      "sandbox": "mxc",
+      "sandboxReady": true,
+      "scopedGitApprovalConfigured": false,
+      "startedAt": "2026-10-09T20:54:33.569635+00:00",
+      "stderr": "",
+      "stderrBase64": "",
+      "stderrByteLength": 0,
+      "stdout": "PLAYGROUND_WRITE_READ_OK\r\nPLAYGROUND_REPO_GIT_READ_OK\r\nPLAYGROUND_SANDBOX_PROBE_OK",
+      "stdoutBase64": "UExBWUdST1VORF9XUklURV9SRUFEX09LDQpQTEFZR1JPVU5EX1JFUE9fR0lUX1JFQURfT0sNClBMQVlHUk9VTkRfU0FOREJPWF9QUk9CRV9PSw0K",
+      "stdoutByteLength": 84,
+      "toolReady": true,
+      "version": null,
+      "writeReadReady": true
+    },
+    "schema": 1,
+    "state": "ready"
+  },
+  "sourceCommit": "6adcfdb09b3dd579468e43c1b6b0c10fb363a11a",
+  "startedAt": "2026-10-09T20:54:30.263541+00:00",
+  "stations": [
+    {
+      "assessmentCandidate": {
+        "kind": "workspace_snapshot",
+        "manifest": {
+          ".gitignore": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+          ".study/run-id": "165a468e78028da72c199d7a9517b84b6e5f780433fda01de97fac429b53c0f5",
+          ".study/runtime-profile.json": "248b28109bb8e24fdf69f6d1569bf707059586c9504889cdb9653acde20c41c2",
+          ".study/station.json": "8be8dae98f45e7bce4956cd9b7654dbcc59010331f3f94c7077e25815e5349ee",
+          "AGENTS.md": "159125025d22806fb883c0768a7b6b547a3e22e0177de8b961aa74d5b5b20cc0",
+          "BACKLOG.md": "8536d87d6c6d74bbf5c131e4598a33d70ebf7c70cfc7803d0b87201975e04a5f",
+          "QUALITY.md": "71de79d12a33b5daf31fc34270ba57e312bf0593a7ed094c6b27db41419d49f6",
+          "README.md": "efe095940cb0b1d679fae3ca93469973f47fe9099dab2b9e9e4c08ab5a4821eb",
+          "STATIONS.json": "180166b424693f6c8d0a4bc502b356b5786367cc23302be4b6a1a9737f361aac",
+          "WORKLOG.md": "c8d4b1abd9006e48c310a3213d2d248b6d04aa95aea91073a9ac2fa937c3fa50",
+          "app.py": "203a9aae6f5398d1bae7375bcf5ab7964433c90ef8533c4c3bf60c9800621be7",
+          "checks/acceptance.py": "903ec954d2fb7c5df78b21c24ef3f8d830d22c7334597a21950f6c4c82940dfb",
+          "tests/test_baseline.py": "a674ff82484e023003a4d05d561ef1c6a3b22924ae9a0df06c0ada29ff7cd7c4"
+        },
+        "path": "worktree"
+      },
+      "assessmentCandidateUnchangedAfterPublicChecks": true,
+      "completionTarget": "workspace_snapshot",
+      "integration": {
+        "controllerDeltaAllowed": ".study/station.json",
+        "mainAdvanced": false,
+        "mainRefStableAfterCapture": true,
+        "selectedHeadIntegratedInMain": true,
+        "stagedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "unexpectedGitStatusRowsBase64": [
+          "MSAuTSBOLi4uIDEwMDY0NCAxMDA2NDQgMTAwNjQ0IGY2ZGQxODcwNmExOWQwM2Y3ZGRlZWEwNThhZDY0MDhkMTUxOTY3MmIgZjZkZDE4NzA2YTE5ZDAzZjdkZGVlYTA1OGFkNjQwOGQxNTE5NjcyYiBSRUFETUUubWQ=",
+          "MSAuTSBOLi4uIDEwMDY0NCAxMDA2NDQgMTAwNjQ0IDZmYjRjNTRhMmFlMzc5OTA2M2UyMzhmYmUyNDNlMTg3ZTNmN2UwYTcgNmZiNGM1NGEyYWUzNzk5MDYzZTIzOGZiZTI0M2UxODdlM2Y3ZTBhNyBhcHAucHk=",
+          "MSAuTSBOLi4uIDEwMDY0NCAxMDA2NDQgMTAwNjQ0IDNiZmQ3NzNhZWNkMjFjMDUwOWI4ODdjNjcyMmE5OGM0Y2UxMzA1MTEgM2JmZDc3M2FlY2QyMWMwNTA5Yjg4N2M2NzIyYTk4YzRjZTEzMDUxMSB0ZXN0cy90ZXN0X2Jhc2VsaW5lLnB5",
+          "PyBXT1JLTE9HLm1k"
+        ],
+        "worktreeAndIndexCleanExceptControllerStationDelta": false
+      },
+      "mainCommit": "39e91a74511f49d901b6f6901a1186621958fb2c",
+      "nativeState": "completed",
+      "publicChecks": {
+        "case": "readinglog",
+        "findings": [
+          {
+            "check": "legacy-add-restart",
+            "status": "PASS"
+          },
+          {
+            "check": "duplicate-no-mutation",
+            "status": "PASS"
+          },
+          {
+            "check": "finish-idempotence",
+            "status": "PASS"
+          },
+          {
+            "check": "status-filter-regression",
+            "status": "PASS"
+          },
+          {
+            "check": "malformed-db-preserved",
+            "status": "PASS"
+          }
+        ],
+        "limitation": "Finite public checks; assessor must add meaningful cases and semantic review. Cascading failures retain individual evidence.",
+        "station": 1
+      },
+      "runtimeFailure": null,
+      "snapshotBindingSha256": "752f395a675cea5f3a5976ad927fd6504071e5b039fd745d802a1fd633573458",
+      "station": "S1"
+    },
+    {
+      "assessmentCandidate": {
+        "kind": "workspace_snapshot",
+        "manifest": {
+          ".gitignore": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+          ".study/run-id": "165a468e78028da72c199d7a9517b84b6e5f780433fda01de97fac429b53c0f5",
+          ".study/runtime-profile.json": "248b28109bb8e24fdf69f6d1569bf707059586c9504889cdb9653acde20c41c2",
+          ".study/station.json": "8119211a1e450024e528cca8ad4a3d64ce0f769b9ff78d6e4e72ef7a67862af3",
+          "AGENTS.md": "159125025d22806fb883c0768a7b6b547a3e22e0177de8b961aa74d5b5b20cc0",
+          "BACKLOG.md": "8536d87d6c6d74bbf5c131e4598a33d70ebf7c70cfc7803d0b87201975e04a5f",
+          "QUALITY.md": "71de79d12a33b5daf31fc34270ba57e312bf0593a7ed094c6b27db41419d49f6",
+          "README.md": "c7fe24f418deb24d7c26c7002fdfd502f6a10cf1ebbc543e7805a2bdeb04513a",
+          "STATIONS.json": "180166b424693f6c8d0a4bc502b356b5786367cc23302be4b6a1a9737f361aac",
+          "WORKLOG.md": "cc963903d7b513f8a31f8a79e175e02738a9e56963fb96d49bf1682f8cf767ed",
+          "__pycache__/app.cpython-313.pyc": "241a45dceec9f922fc9566ec69daa18f6dade4ebbb807a22cd9aae3758695af7",
+          "app.py": "e08cf7e4bd11ab5ebd607e283aa3d6b0f77ea7ea39ecee2e3ee41c9249401289",
+          "checks/acceptance.py": "903ec954d2fb7c5df78b21c24ef3f8d830d22c7334597a21950f6c4c82940dfb",
+          "tests/test_baseline.py": "dcc25d768136332ec098ec6895b35c91ca82a7e1f983cfb52f6575b57d700f1a",
+          "tests/test_import.py": "488e5e05419f51c27de9e7bc832c25869d45943e576efb4852295ccbe23be0dd",
+          "tests/test_summary.py": "cc211ec30750929346cfad4c5f48c0270d264eb115a935c634fdcb5ba4d4a808"
+        },
+        "path": "worktree"
+      },
+      "assessmentCandidateUnchangedAfterPublicChecks": true,
+      "completionTarget": "workspace_snapshot",
+      "integration": {
+        "controllerDeltaAllowed": ".study/station.json",
+        "mainAdvanced": false,
+        "mainRefStableAfterCapture": true,
+        "selectedHeadIntegratedInMain": true,
+        "stagedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "unexpectedGitStatusRowsBase64": [
+          "MSAuTSBOLi4uIDEwMDY0NCAxMDA2NDQgMTAwNjQ0IGY2ZGQxODcwNmExOWQwM2Y3ZGRlZWEwNThhZDY0MDhkMTUxOTY3MmIgZjZkZDE4NzA2YTE5ZDAzZjdkZGVlYTA1OGFkNjQwOGQxNTE5NjcyYiBSRUFETUUubWQ=",
+          "MSAuTSBOLi4uIDEwMDY0NCAxMDA2NDQgMTAwNjQ0IDZmYjRjNTRhMmFlMzc5OTA2M2UyMzhmYmUyNDNlMTg3ZTNmN2UwYTcgNmZiNGM1NGEyYWUzNzk5MDYzZTIzOGZiZTI0M2UxODdlM2Y3ZTBhNyBhcHAucHk=",
+          "MSAuTSBOLi4uIDEwMDY0NCAxMDA2NDQgMTAwNjQ0IDNiZmQ3NzNhZWNkMjFjMDUwOWI4ODdjNjcyMmE5OGM0Y2UxMzA1MTEgM2JmZDc3M2FlY2QyMWMwNTA5Yjg4N2M2NzIyYTk4YzRjZTEzMDUxMSB0ZXN0cy90ZXN0X2Jhc2VsaW5lLnB5",
+          "PyBXT1JLTE9HLm1k",
+          "PyB0ZXN0cy90ZXN0X2ltcG9ydC5weQ==",
+          "PyB0ZXN0cy90ZXN0X3N1bW1hcnkucHk="
+        ],
+        "worktreeAndIndexCleanExceptControllerStationDelta": false
+      },
+      "mainCommit": "39e91a74511f49d901b6f6901a1186621958fb2c",
+      "nativeState": "completed",
+      "publicChecks": {
+        "case": "readinglog",
+        "findings": [
+          {
+            "check": "legacy-add-restart",
+            "status": "PASS"
+          },
+          {
+            "check": "duplicate-no-mutation",
+            "status": "PASS"
+          },
+          {
+            "check": "finish-idempotence",
+            "status": "PASS"
+          },
+          {
+            "check": "status-filter-regression",
+            "status": "PASS"
+          },
+          {
+            "check": "valid-import",
+            "status": "PASS"
+          },
+          {
+            "check": "import-all-or-nothing",
+            "status": "PASS"
+          },
+          {
+            "check": "summary-count-pages",
+            "status": "PASS"
+          },
+          {
+            "check": "malformed-db-preserved",
+            "status": "PASS"
+          }
+        ],
+        "limitation": "Finite public checks; assessor must add meaningful cases and semantic review. Cascading failures retain individual evidence.",
+        "station": 2
+      },
+      "runtimeFailure": null,
+      "snapshotBindingSha256": "6f09d12d9b691743b444017bcf9facfbac0f7a31dc11634d12b9a63148703597",
+      "station": "S2"
+    },
+    {
+      "assessmentCandidate": {
+        "kind": "workspace_snapshot",
+        "manifest": {
+          ".gitignore": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+          ".study/run-id": "165a468e78028da72c199d7a9517b84b6e5f780433fda01de97fac429b53c0f5",
+          ".study/runtime-profile.json": "248b28109bb8e24fdf69f6d1569bf707059586c9504889cdb9653acde20c41c2",
+          ".study/station.json": "d1c845923a3866001f1060232e336acea6b2e35742c44f0dad1f610b6d6d6200",
+          "AGENTS.md": "159125025d22806fb883c0768a7b6b547a3e22e0177de8b961aa74d5b5b20cc0",
+          "BACKLOG.md": "8536d87d6c6d74bbf5c131e4598a33d70ebf7c70cfc7803d0b87201975e04a5f",
+          "QUALITY.md": "71de79d12a33b5daf31fc34270ba57e312bf0593a7ed094c6b27db41419d49f6",
+          "README.md": "aeb686c3691db86f6525804ee1f631540803eac703a0e6d0fee4e77a10598cb4",
+          "STATIONS.json": "180166b424693f6c8d0a4bc502b356b5786367cc23302be4b6a1a9737f361aac",
+          "TEAMWORK.md": "def5be3413b3e7e1d601ac7a664e0b1be1a510bd43d2c3d72b1b00f814e6eb06",
+          "WORKLOG.md": "eb709f9551717a0d686350b5078f0ebb99fb596ecfcdbca1f7e1def8b0d7e15c",
+          "__pycache__/app.cpython-313.pyc": "df38f1d82d8a99a40b0b6ceea3cc04c4a927e1049eaec14b736f90a89d84382e",
+          "__pycache__/book_export.cpython-313.pyc": "a0e0d523e29b189fdadb3d5b69d8852fc9fb1d8b027c8c4946e83abcebf0cd07",
+          "__pycache__/book_queries.cpython-313.pyc": "c3869bdedf86194af74e31d45d4a70cefa34e313409b188e59b8962cff562b54",
+          "app.py": "a589057ac519ecdead549b53324933a8aef86511528bdea9806ad6439ffb2b92",
+          "book_export.py": "bb0f77f52da77a38f7d3b5279ec03eb7e1267f20ae29bca9fb19113d1543facb",
+          "book_queries.py": "467a663c2c0d8873223c9b4b674a4a40cb90f9e12245a038294c1dfbbeca3a31",
+          "checks/acceptance.py": "903ec954d2fb7c5df78b21c24ef3f8d830d22c7334597a21950f6c4c82940dfb",
+          "tests/__pycache__/test_summary_author_cli.cpython-313.pyc": "a0a9738662523107e40194ec65d7ab8917419a0d7a047906d1dbec31d6f45db7",
+          "tests/test_baseline.py": "dcc25d768136332ec098ec6895b35c91ca82a7e1f983cfb52f6575b57d700f1a",
+          "tests/test_book_export.py": "3bb8d5d1f56c05188b285eeadc00a4bd3e9e0838001db57c4f17f0a2eb237271",
+          "tests/test_book_queries.py": "030c535e282a404554e260522c13733bad4e6d16b603afa0f6314cef96ac2c38",
+          "tests/test_import.py": "488e5e05419f51c27de9e7bc832c25869d45943e576efb4852295ccbe23be0dd",
+          "tests/test_s3_cli.py": "9cec5992252abbc5460bff0930fc8c52970071669342e1759e76708b6b9b8025",
+          "tests/test_summary.py": "cc211ec30750929346cfad4c5f48c0270d264eb115a935c634fdcb5ba4d4a808",
+          "tests/test_summary_author_cli.py": "21e84da3d03368dcb2c8e922b9fd036ed96e4261a4f6101a17e0878220227059"
+        },
+        "path": "worktree"
+      },
+      "assessmentCandidateUnchangedAfterPublicChecks": true,
+      "completionTarget": "workspace_snapshot",
+      "integration": {
+        "controllerDeltaAllowed": ".study/station.json",
+        "mainAdvanced": false,
+        "mainRefStableAfterCapture": true,
+        "selectedHeadIntegratedInMain": true,
+        "stagedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "unexpectedGitStatusRowsBase64": [
+          "MSAuTSBOLi4uIDEwMDY0NCAxMDA2NDQgMTAwNjQ0IGY2ZGQxODcwNmExOWQwM2Y3ZGRlZWEwNThhZDY0MDhkMTUxOTY3MmIgZjZkZDE4NzA2YTE5ZDAzZjdkZGVlYTA1OGFkNjQwOGQxNTE5NjcyYiBSRUFETUUubWQ=",
+          "MSAuTSBOLi4uIDEwMDY0NCAxMDA2NDQgMTAwNjQ0IDZmYjRjNTRhMmFlMzc5OTA2M2UyMzhmYmUyNDNlMTg3ZTNmN2UwYTcgNmZiNGM1NGEyYWUzNzk5MDYzZTIzOGZiZTI0M2UxODdlM2Y3ZTBhNyBhcHAucHk=",
+          "MSAuTSBOLi4uIDEwMDY0NCAxMDA2NDQgMTAwNjQ0IDNiZmQ3NzNhZWNkMjFjMDUwOWI4ODdjNjcyMmE5OGM0Y2UxMzA1MTEgM2JmZDc3M2FlY2QyMWMwNTA5Yjg4N2M2NzIyYTk4YzRjZTEzMDUxMSB0ZXN0cy90ZXN0X2Jhc2VsaW5lLnB5",
+          "PyBURUFNV09SSy5tZA==",
+          "PyBXT1JLTE9HLm1k",
+          "PyBib29rX2V4cG9ydC5weQ==",
+          "PyBib29rX3F1ZXJpZXMucHk=",
+          "PyB0ZXN0cy90ZXN0X2Jvb2tfZXhwb3J0LnB5",
+          "PyB0ZXN0cy90ZXN0X2Jvb2tfcXVlcmllcy5weQ==",
+          "PyB0ZXN0cy90ZXN0X2ltcG9ydC5weQ==",
+          "PyB0ZXN0cy90ZXN0X3MzX2NsaS5weQ==",
+          "PyB0ZXN0cy90ZXN0X3N1bW1hcnkucHk=",
+          "PyB0ZXN0cy90ZXN0X3N1bW1hcnlfYXV0aG9yX2NsaS5weQ=="
+        ],
+        "worktreeAndIndexCleanExceptControllerStationDelta": false
+      },
+      "mainCommit": "39e91a74511f49d901b6f6901a1186621958fb2c",
+      "nativeState": "completed",
+      "publicChecks": {
+        "case": "readinglog",
+        "findings": [
+          {
+            "check": "legacy-add-restart",
+            "status": "PASS"
+          },
+          {
+            "check": "duplicate-no-mutation",
+            "status": "PASS"
+          },
+          {
+            "check": "finish-idempotence",
+            "status": "PASS"
+          },
+          {
+            "check": "status-filter-regression",
+            "status": "PASS"
+          },
+          {
+            "check": "valid-import",
+            "status": "PASS"
+          },
+          {
+            "check": "import-all-or-nothing",
+            "status": "PASS"
+          },
+          {
+            "check": "summary-count-pages",
+            "status": "PASS"
+          },
+          {
+            "check": "composed-list-filter",
+            "status": "PASS"
+          },
+          {
+            "check": "unknown-author-summary",
+            "status": "PASS"
+          },
+          {
+            "check": "export-quotes-status-no-db-mutation",
+            "status": "PASS"
+          },
+          {
+            "check": "malformed-db-preserved",
+            "status": "PASS"
+          }
+        ],
+        "limitation": "Finite public checks; assessor must add meaningful cases and semantic review. Cascading failures retain individual evidence.",
+        "station": 3
+      },
+      "runtimeFailure": null,
+      "snapshotBindingSha256": "8f7bde61903154b99e3bee4e360d728dbe05bbadb648df5c1b01c1301cd3d0f2",
+      "station": "S3"
+    },
+    {
+      "assessmentCandidate": {
+        "kind": "workspace_snapshot",
+        "manifest": {
+          ".gitignore": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+          ".study/run-id": "165a468e78028da72c199d7a9517b84b6e5f780433fda01de97fac429b53c0f5",
+          ".study/runtime-profile.json": "248b28109bb8e24fdf69f6d1569bf707059586c9504889cdb9653acde20c41c2",
+          ".study/station.json": "c046d07b2c3dff806f569b21b7e0fbe669d97f7c3e6c235cfe590dd71074be72",
+          "AGENTS.md": "159125025d22806fb883c0768a7b6b547a3e22e0177de8b961aa74d5b5b20cc0",
+          "BACKLOG.md": "8536d87d6c6d74bbf5c131e4598a33d70ebf7c70cfc7803d0b87201975e04a5f",
+          "QUALITY.md": "71de79d12a33b5daf31fc34270ba57e312bf0593a7ed094c6b27db41419d49f6",
+          "README.md": "f21e7e904b3adfb96eb1314857d6b15623bbb36331151e49ac97f533fb283a2a",
+          "STATIONS.json": "180166b424693f6c8d0a4bc502b356b5786367cc23302be4b6a1a9737f361aac",
+          "TEAMWORK.md": "def5be3413b3e7e1d601ac7a664e0b1be1a510bd43d2c3d72b1b00f814e6eb06",
+          "WORKLOG.md": "db8ab10516bb220580420b2bac10a94cc5a3c754dec4c87ee968d5e21c28688f",
+          "__pycache__/app.cpython-313.pyc": "4524b67f763a2e20731129530d65fe26561db9f52aa23121ac982ee3b88061c0",
+          "__pycache__/book_export.cpython-313.pyc": "a0e0d523e29b189fdadb3d5b69d8852fc9fb1d8b027c8c4946e83abcebf0cd07",
+          "__pycache__/book_queries.cpython-313.pyc": "c3869bdedf86194af74e31d45d4a70cefa34e313409b188e59b8962cff562b54",
+          "__pycache__/entry_export.cpython-313.pyc": "fdb29f21bda24b170cfe2960c1277d94b83a63d4e9f2294d3a030820add1a3b4",
+          "__pycache__/entry_queries.cpython-313.pyc": "d8d8214ac337e6937851ff3caed05f66af7cb796c728ee55bfe72ed357abe340",
+          "app.py": "165a9c871406885a62d387be971666172de72ecde28386bb1d5c4d5b09f0a6f5",
+          "checks/acceptance.py": "903ec954d2fb7c5df78b21c24ef3f8d830d22c7334597a21950f6c4c82940dfb",
+          "entry_export.py": "b90e93c639e4187c7ec2436a3282bdaf36f9c1550dfc809c8dd612ad3f9246ef",
+          "entry_queries.py": "26220556577f3c2fc23c04b89d652359fe96120184affece47a714eb1b60ac2d",
+          "tests/__pycache__/test_summary_author_cli.cpython-313.pyc": "a0a9738662523107e40194ec65d7ab8917419a0d7a047906d1dbec31d6f45db7",
+          "tests/test_baseline.py": "8f7a743856bd6af42842bdc275eecccf53560f621dd18d72165874874b9aa829",
+          "tests/test_compatibility.py": "aca90c4864976a721e049c5d3e728c4fa6d130e20ba1101a42b82eb843247090",
+          "tests/test_entry_export.py": "545cde92a62e26714ac8273c01a842c7e1b6212ee098fe1019d19ea38a99086d",
+          "tests/test_entry_queries.py": "60aa82c0f517527a752fa9bb2ffe2805248d733453a25f36a7b01e8e1009d034",
+          "tests/test_import.py": "bb15cd521f828c3d333d287d726d83c311c92464cdb54031b44e5cfb72fb14f1",
+          "tests/test_s3_cli.py": "f58fb4c33578098aa1be45062d2a80630a57f414915d3e7a6671278434051220",
+          "tests/test_summary.py": "c7150c535ab8240579cefd44ef7082ada59532ed5ed076f61bbb95696793e964",
+          "tests/test_summary_author_cli.py": "8c7d58a7e9d4ac21bf336193b1536a05105aff1ab69c24351639f618477705a1"
+        },
+        "path": "worktree"
+      },
+      "assessmentCandidateUnchangedAfterPublicChecks": true,
+      "completionTarget": "workspace_snapshot",
+      "integration": {
+        "controllerDeltaAllowed": ".study/station.json",
+        "mainAdvanced": false,
+        "mainRefStableAfterCapture": true,
+        "selectedHeadIntegratedInMain": true,
+        "stagedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "unexpectedGitStatusRowsBase64": [
+          "MSAuTSBOLi4uIDEwMDY0NCAxMDA2NDQgMTAwNjQ0IGY2ZGQxODcwNmExOWQwM2Y3ZGRlZWEwNThhZDY0MDhkMTUxOTY3MmIgZjZkZDE4NzA2YTE5ZDAzZjdkZGVlYTA1OGFkNjQwOGQxNTE5NjcyYiBSRUFETUUubWQ=",
+          "MSAuTSBOLi4uIDEwMDY0NCAxMDA2NDQgMTAwNjQ0IDZmYjRjNTRhMmFlMzc5OTA2M2UyMzhmYmUyNDNlMTg3ZTNmN2UwYTcgNmZiNGM1NGEyYWUzNzk5MDYzZTIzOGZiZTI0M2UxODdlM2Y3ZTBhNyBhcHAucHk=",
+          "MSAuTSBOLi4uIDEwMDY0NCAxMDA2NDQgMTAwNjQ0IDNiZmQ3NzNhZWNkMjFjMDUwOWI4ODdjNjcyMmE5OGM0Y2UxMzA1MTEgM2JmZDc3M2FlY2QyMWMwNTA5Yjg4N2M2NzIyYTk4YzRjZTEzMDUxMSB0ZXN0cy90ZXN0X2Jhc2VsaW5lLnB5",
+          "PyBURUFNV09SSy5tZA==",
+          "PyBXT1JLTE9HLm1k",
+          "PyBlbnRyeV9leHBvcnQucHk=",
+          "PyBlbnRyeV9xdWVyaWVzLnB5",
+          "PyB0ZXN0cy90ZXN0X2NvbXBhdGliaWxpdHkucHk=",
+          "PyB0ZXN0cy90ZXN0X2VudHJ5X2V4cG9ydC5weQ==",
+          "PyB0ZXN0cy90ZXN0X2VudHJ5X3F1ZXJpZXMucHk=",
+          "PyB0ZXN0cy90ZXN0X2ltcG9ydC5weQ==",
+          "PyB0ZXN0cy90ZXN0X3MzX2NsaS5weQ==",
+          "PyB0ZXN0cy90ZXN0X3N1bW1hcnkucHk=",
+          "PyB0ZXN0cy90ZXN0X3N1bW1hcnlfYXV0aG9yX2NsaS5weQ=="
+        ],
+        "worktreeAndIndexCleanExceptControllerStationDelta": false
+      },
+      "mainCommit": "39e91a74511f49d901b6f6901a1186621958fb2c",
+      "nativeState": "completed",
+      "publicChecks": {
+        "case": "readinglog",
+        "findings": [
+          {
+            "check": "legacy-add-restart",
+            "status": "PASS"
+          },
+          {
+            "check": "duplicate-no-mutation",
+            "status": "PASS"
+          },
+          {
+            "check": "finish-idempotence",
+            "status": "PASS"
+          },
+          {
+            "check": "status-filter-regression",
+            "status": "PASS"
+          },
+          {
+            "check": "valid-import",
+            "status": "PASS"
+          },
+          {
+            "check": "import-all-or-nothing",
+            "status": "PASS"
+          },
+          {
+            "check": "summary-count-pages",
+            "status": "PASS"
+          },
+          {
+            "check": "composed-list-filter",
+            "status": "PASS"
+          },
+          {
+            "check": "unknown-author-summary",
+            "status": "PASS"
+          },
+          {
+            "check": "export-quotes-status-no-db-mutation",
+            "status": "PASS"
+          },
+          {
+            "check": "intentional-legacy-list",
+            "status": "PASS"
+          },
+          {
+            "check": "intentional-legacy-summary",
+            "status": "PASS"
+          },
+          {
+            "check": "malformed-db-preserved",
+            "status": "PASS"
+          }
+        ],
+        "limitation": "Finite public checks; assessor must add meaningful cases and semantic review. Cascading failures retain individual evidence.",
+        "station": 4
+      },
+      "runtimeFailure": null,
+      "snapshotBindingSha256": "8d0faaa3f81c040e0c888d141a8a3347188dec20b72f6593e066f95e52e4fdc1",
+      "station": "S4"
+    }
+  ],
+  "status": "trajectory_completed",
+  "transportParity": "unverified"
+}
