@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "status": "PREPARED STATIC ONLY; sixth fullstart unallocated",
+  "executionAuthorized": false,
+  "case": "roombook",
+  "arms": [
+    "conventional",
+    "markitect"
+  ],
+  "basePublicSource": "2037bfa65e7e05ee004921d282893d4a6c8e899a",
+  "createdUtc": "2026-10-09T09:01:20.068040+00:00",
+  "globalFullStartsConsumed": 5,
+  "globalMaximumFullStarts": 6,
+  "prospectiveSixthAllocation": null,
+  "sourceBindings": {
+    "common/.gitignore": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "common/AGENTS.md": "fff473528e6290171b64b1cb2f8b16f7d18a0e8f556e22b354cbfb3222cfd8a7",
+    "common/QUALITY.md": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "common/checks/acceptance.py": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "cases/roombook/README.md": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "cases/roombook/BACKLOG.md": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "cases/roombook/STATIONS.json": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "native/config.toml": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "evaluation/assessor-prompt.txt": "7eec156128339344121c1040c3f6b76f1cc5545c239eb99b6462420163a72741",
+    "evaluation/report-template.json": "c05cf898e9ae80cedbf0fc203f4a37d561b4997ed39dc181e4739bd5cf010ede",
+    "app-entry.md": "63dff8fddec0562fd7929e9d09b49443e8a42c21d4d3ce787518aed437e09655",
+    "app_ledger.py": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20",
+    "nest.py": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635",
+    "models/README.md": "52ca759be37d3f082321f33ccc1ab07eb5c104288849e0976535b5540ef92e9c"
+  },
+  "originalSeedCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+  "originalConventionalPreparedTree": "8cea62c20a64d4571017818c7e73855b1ead5676",
+  "sharedInputRule": "Same original public README/BACKLOG/STATIONS/QUALITY/checks/shared AGENTS rules and initial S1. Method additions are declared native inputs, not common case solutions; Conventional does not owe a Markitect model. Arm prepared trees may differ only through declared method/setup artifacts.",
+  "canonicalInitialMarkitectModel": {
+    "root": "models/roombook/.markitect",
+    "files": {
+      "models/roombook/.markitect/model/booking-contract.yaml": "0dec869e40832bf901147a2f8393194a60b13f5316f153afe53f9823491b84bf",
+      "models/roombook/.markitect/model/checks.yaml": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+      "models/roombook/.markitect/model/delivery-rules.yaml": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+      "models/roombook/.markitect/model/documentation.yaml": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+      "models/roombook/.markitect/model/durable-state.yaml": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+      "models/roombook/.markitect/model/implementation.yaml": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+      "models/roombook/.markitect/model/manager.yaml": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+      "models/roombook/.markitect/model/reservation.yaml": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+      "models/roombook/.markitect/model/tests.yaml": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+      "models/roombook/.markitect/project.yaml": "aa024390df2d29b7c4ed2807afc830c1afad92b6a0ebee56214b25117ff18ece"
+    },
+    "firstAuthoredCommit": "429c52d8a37fa60ca4393a3501a495128b4d2e88",
+    "firstAuthoredUtc": "2026-10-09T04:47:18Z",
+    "shapeReferenceDesignCommit": "9cea10cf16162f64a9d666186b42c0fbf59f4f92",
+    "source": "Public requirements before actuals; reuse unchanged, no Conventional implementation/private judgment input",
+    "nativeSchemaCompatibility": "NOT VALIDATED here; Design binds genuine schema/installation corrections and cost before sealing; Scientist does not implement or prefill later stations"
+  },
+  "stationPlan": {
+    "totalItems": 12,
+    "waves": [
+      1,
+      3,
+      7,
+      1
+    ],
+    "sameReleasedRequirementsForBothArms": true,
+    "snapshotAdvanceFreeze": "Existing nest APIs and matching completion metadata only; no adaptive semantic dispatcher",
+    "semanticTasks": {
+      "PROMPT": "Hier liegt das Backlog. Implementiere die Arbeit, halte die Projektregeln ein, pr\u00fcfe die Ergebnisse und merge die fertigen \u00c4nderungen nach main.",
+      "CONTINUE": "Setze denselben Backlog-Auftrag aus dem vorhandenen Projektstand fort. Halte die Projektregeln ein, pr\u00fcfe die Ergebnisse und merge fertige \u00c4nderungen nach main. Dokumentiere einen echten Blocker, falls du nicht fortsetzen kannst."
+    },
+    "taskTextSha256": {
+      "PROMPT": "cc4389f0f822251442bd0f7bafe40b2f357ac45c270ab3afc23b0a879806f591",
+      "CONTINUE": "ad379aef3481487ed9366a7d854813fff1ed2979ebd49fcf9b1cbcf5970b6d99"
+    }
+  },
+  "resources": {
+    "setupSeconds": 900,
+    "cellSeconds": 7200,
+    "implementationSeconds": 5400,
+    "independentFinalSeconds": 1200,
+    "captureSeconds": 600,
+    "outerImplementationEntries": 8,
+    "entriesPerStation": 2,
+    "independentFinalEntries": 1,
+    "sharedMeasuredAppStarts": 72,
+    "concurrentMeasuredRoles": 4,
+    "depth": 2,
+    "stationOffsetsSeconds": [
+      1350,
+      2700,
+      4050,
+      5400
+    ],
+    "finalPhaseEndOffsetSeconds": 6600,
+    "initialAdmissionRequiresFullCellWindowBeforeImmutableOwnerEnd": true,
+    "noAutomaticRefill": true,
+    "usageServingCostsMissing": "unknown, not a functional start gate"
+  },
+  "profile": {
+    "rootEntry": "Fresh App native collaboration.spawn_agent with fork_turns=none/model=gpt-6-luna/reasoning_effort=high; supported normal protections, no cwd argument",
+    "continuation": "Existing own returned handle, exact original CONTINUE, reserve first",
+    "innerRoles": "Same Luna High, same shared finite start/depth/concurrency/time accounting; supported genuine product role/runtime transports may differ and are declared, no restricted transport forced on Conventional",
+    "context": "Exact prospective accepted app-entry boundary: common instructions/general setup without foreign case/evaluation and own legitimate history allowed; known concrete forbidden exposure terminal, unresolved case-specific exposure uncertain; no sanitizer/OS isolation proof",
+    "existingNativeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b"
+  },
+  "commonEvaluation": {
+    "publicCriteriaSha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "publicAcceptanceSha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "neutralAssessorPromptSha256": "7eec156128339344121c1040c3f6b76f1cc5545c239eb99b6462420163a72741",
+    "reportTemplateSha256": "c05cf898e9ae80cedbf0fc203f4a37d561b4997ed39dc181e4739bd5cf010ede",
+    "requirements": "Station scope plus prior regression, persistence/error nonmutation, filter/export/summary composition, S4 active rename and own pre-change data/legacy compatibility, actual team contribution/integration/native overlap separate from function",
+    "rules": "PASS/FAIL/NOT RUN/unknown by evidence; no weighted winner or human acceptance; own source/architecture freedom remains",
+    "privateSupplementFreezeId": "matched-design-roombook-static-freeze-20261009/private-evaluation",
+    "privateVectorsToImplementationOwners": false,
+    "supplementProvenance": "Additional independent CLI cases were authored/corrected during the Conventional final, not pre-Actual holdouts; prospective same declared functional scenario scope is frozen before Design actual, with concrete storage/path applicability recorded privately",
+    "noRetrospectiveCriteriaOrScoreChange": true
+  },
+  "ownership": {
+    "Root": "Accept exact owner pins and separately allocate/enable at most sixth start",
+    "Design": "Real product readiness/install/schema/runtime/model/role bindings and bounded method execution",
+    "Scientist": "Public cases, fixed stations/snapshots/measurement and fresh neutral final; private evaluation vectors/judgments stay evaluator-side"
+  },
+  "missingExactOwnerPins": [
+    "Root accepted Design source commit/repository and exact source-bound readiness receipt",
+    "Actual installed binary path/SHA/build-source binding and native tool/transport identity",
+    "Real schema/module/package/runtime pins and model/projection/Skill/instruction inventory",
+    "All model input files: original ten-file baseline plus any genuine schema-only migration with diff, rationale and charged setup cost",
+    "Exact real initial canonical model/generated views/inventory after normal product setup; no case solution imported",
+    "All inner measured roles requested Luna High with parent identity/start accounting/normal protections; actual serving unknown allowed",
+    "Fresh own case repo/state/initial prepared commit/tree/raw input hashes/S1 and empty App ledger after setup",
+    "Accepted common/input/evaluation/resource freeze digest and matched functional scope",
+    "Separate finite immutable Root enabled grant for at most the sixth fullstart, execution owner and exact repo/preparedCommit/end/hash"
+  ],
+  "ownerBindings": {
+    "designSourceCommit": null,
+    "readinessReceiptPathAndSha256": null,
+    "installedBinaryPathAndSha256": null,
+    "nativeRuntimeAndTransportPins": null,
+    "schemaModulePins": null,
+    "canonicalModelAfterRealSetupHashInventory": null,
+    "generatedViewsSkillsInstructionsHashes": null,
+    "freshCaseRepoAndState": null,
+    "preparedCommitAndTree": null,
+    "emptyLedgerSha256": null,
+    "enabledGrantPathAndSha256AndDeadline": null,
+    "supportedCanonicalOnboardingCommandAndSchema": null
+  },
+  "callsThisPreparation": {
+    "models": 0,
+    "actors": 0,
+    "helpers": 0,
+    "assessors": 0,
+    "trials": 0,
+    "tests": 0,
+    "builds": 0,
+    "installs": 0,
+    "cliTransportProbes": 0,
+    "newReviewers": 0
+  },
+  "productInterfaceStatus": {
+    "acceptedReadiness": false,
+    "sourceAndBinaryPins": "pending, no substitution from CI",
+    "rootPublicUpdate": "Last original native product job failed on legacy init/new canonical project coverage boundary; three product jobs closed, no delivery/inner role review/Apply/Verify. Owner fixes ordinary entry/schema/CLI guidance/source regressions, no fourth proof granted.",
+    "lastFailedProofPinReportedOnlyShort": "2757",
+    "lastFailedProofFullSha": null,
+    "nextAcceptedSourceSha": null,
+    "oldPlanPins": "superseded, not reused",
+    "noAdditionalProofTrialCanaryAuthority": true
+  }
+}

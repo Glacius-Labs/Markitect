@@ -1,0 +1,10 @@
+S1 common: PASS
+S2 common: PASS
+S2 S2 behavior: PASS
+S3 common: PASS
+S3 S2 behavior: PASS
+S3 S3 behavior: PASS
+S4 common: PASS
+S4 S2 behavior: PASS
+S4 S3 behavior: PASS
+S4 rename/storage compatibility: PASS

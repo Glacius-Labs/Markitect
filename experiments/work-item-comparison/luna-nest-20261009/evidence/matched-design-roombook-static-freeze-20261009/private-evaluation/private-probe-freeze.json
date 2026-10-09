@@ -1,0 +1,71 @@
+{
+  "status": "FROZEN PRIVATE STATIC EVALUATION SUPPLEMENT; no execution here",
+  "createdUtc": "2026-10-09T09:01:20.068040+00:00",
+  "sourceDigestBindings": {
+    "cli_assessment.py": {
+      "sha256": "7a9789d048e1f335ad12ffd976bc635d07eb208ed98cedba3118c17522258532",
+      "bytes": 5847,
+      "observedFileCreationUtc": "2026-10-09T08:32:26.778590+00:00",
+      "observedFileLastWriteUtc": "2026-10-09T08:32:51.218915+00:00",
+      "source": "Actual Conventional independent assessment artifact; filesystem times are not exact tool/model event times"
+    },
+    "logs/commands-and-results.txt": {
+      "sha256": "23874f021f5567af7a13045fa43cb85f49272e1929290897ba98a1a13dee4814",
+      "bytes": 2060,
+      "observedFileCreationUtc": "2026-10-09T08:34:57.042664+00:00",
+      "observedFileLastWriteUtc": "2026-10-09T08:34:57.042664+00:00",
+      "source": "Actual Conventional independent assessment artifact; filesystem times are not exact tool/model event times"
+    },
+    "logs/independent-cli.txt": {
+      "sha256": "2a91aca614ecd5dd6a82bde17588f48b485c3e788cef454e36eeb1dddb068dfd",
+      "bytes": 217,
+      "observedFileCreationUtc": "2026-10-09T08:32:26.793674+00:00",
+      "observedFileLastWriteUtc": "2026-10-09T08:32:56.174304+00:00",
+      "source": "Actual Conventional independent assessment artifact; filesystem times are not exact tool/model event times"
+    },
+    "logs/assessor-harness-corrections.txt": {
+      "sha256": "375ef15cdd2932712eb709ca84d9340582cebc36dc9f23c5bcbf6c2910556ddf",
+      "bytes": 522,
+      "observedFileCreationUtc": "2026-10-09T08:34:57.045172+00:00",
+      "observedFileLastWriteUtc": "2026-10-09T08:34:57.045172+00:00",
+      "source": "Actual Conventional independent assessment artifact; filesystem times are not exact tool/model event times"
+    }
+  },
+  "provenance": "Authored during actual independent Conventional final; corrected complete source retained. This is not a pre-Conventional Actual holdout. Exact two individual failure/correction event times and overwritten initial source versions were not retained; unknown, not reconstructed.",
+  "harnessCorrections": "Wrong canceled CSV row index versus required start/id sorting, and pre-S4 response envelope assumed for S4. Both are assessor false assumptions, not candidate fixes; final source/digests and actual correction log retained byte-exact.",
+  "equalProspectiveScenarioScope": {
+    "S1": [
+      "empty nonmutating reads",
+      "trim/identity/status/strict UTC validation",
+      "half-open overlap and error nonmutation",
+      "case-sensitive rooms/sort/order/new-process persistence"
+    ],
+    "S2": [
+      "idempotent cancel/missing ID/history/free interval",
+      "active exact-minute lexical summary and regression"
+    ],
+    "S3": [
+      "status/room filter composition",
+      "CSV quoting/history/order/export nonmutation/destination error",
+      "filtered summary/unknown room and regression"
+    ],
+    "S4": [
+      "own pre-S4 persisted data readable without read rewrite",
+      "default booking and declared legacy envelope/filter parity",
+      "subsequent mutation/ID continuation/export and regression"
+    ]
+  },
+  "bindingOnlyProspectiveChanges": [
+    "Bind existing private ROOT/PY execution locations to accepted own immutable Design snapshots and declared same Python, before its final; record derived binding digest",
+    "Pre-S4 fixture must represent that arms own S3 persisted data under the public free internal representation. Exact Conventional raw JSON is an additional representation-specific observation, not a universal storage-schema mandate. Freeze this provenance/applicability guard before Design actual; no new implementation advice or result tuning."
+  ],
+  "explicitApplicabilityLimits": [
+    "Existing source hardcodes ROOT to Conventional station paths; cannot execute unchanged against a new own case",
+    "Existing check_s4 prior fixture and post-mutation storage key assertions name Conventional reservations representation. Public contract requires compatible own pre-change data and declared aliases, not an implementation-wide storage layout; preserve actual F5 outcome, mark these raw-format observations separately for another representation",
+    "Existing call helper asserts empty stderr. Public stdout/exit/nonmutation behavior owns functional result; stderr-only diagnostic output not forbidden by that contract is an additional observation, not a new retrospective requirement"
+  ],
+  "noNewProbeCodeAuthoredOrExecuted": true,
+  "noScoresOrOldCandidatesChanged": true,
+  "notDistributedToImplementationOrProductOwners": true,
+  "prospectiveAssessmentInstruction": "Same frozen functional scenario scope for both arms, plus unchanged public acceptance/QUALITY/neutral prompt; private data vectors stay private. Apply own-format persistence scenario without pretending a foreign storage layout is a universal criterion; report applicability/NOT RUN/unknown explicitly."
+}
