@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T01:41:26Z",
+  "updatedUtc": "2026-10-09T01:46:02Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12,8 +12,8 @@
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-09T01:41:26Z",
-    "verification": "automation_update ACTIVE; savedTOML exactprompt/2h verified; eventsfiveowners/quietunchanged preserved",
+    "lastVerifiedUtc": "2026-10-09T01:46:02Z",
+    "verification": "automation_update ACTIVE; exactsavedTOMLprompt/2h verified; callback/quietunchanged preserved",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
     "latestMandateUpdatedUtc": "2026-10-08T22:54:35Z",
     "reportOnMeaningfulChange": true,
@@ -31,9 +31,9 @@
     "pauseReason": "Final resumed two-actual-attempt window closed after R3; S1/read/write/build unproved, all six cells NOT RUN. Evidence/effort synthesis supplemented; no new grant or routine polling.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
     "resumedUtc": "2026-10-08T21:28:26Z",
-    "promptSha256": "5528dd6cee78620794d9f00a648b9b8bac1b731eb86f52012f0fe1b54998d0c5",
+    "promptSha256": "652b07eec9c5723de0b8895c1d098960ee74b9fee4bc53e68eaa8e304584e4c4",
     "name": "Markitect: Vergleich und fünf Arbeitschats koordinieren",
-    "currentGrantContext": "d1be704 actualnativepositive+independentfreeze Rootverifiedaccepted. RootStart46b640b dispatched01:40:36/activecursor80; originaltwoGFreservedexecutionnowauthorized, actualactivationpending; original05:32:04unchanged.",
+    "currentGrantContext": "ActualConventionalGFactivated01:44:05/chargedstart01:42:59, ends03:42:59; frozenoriginalresources, ClassicreservedNOTRUN, originalglobal05:32:04. No extraorders/quotas.",
     "exactSavedTomlVerified": true
   },
   "threads": [
@@ -458,13 +458,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:80",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:81",
       "lastObservedStatus": "active",
       "activeTurn": "01a11e51-c131-7191-998f-592ec4a73ff6",
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac8461955488191b41b3e7a16a9e1ac",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "v4-two-reserved-greenfield-cells-execution-20261009",
-      "latestProgress": "Rootstartreceipt46b640b delivered01:40:36Z. Scientistfreshturnactive preparing ownConventionalGFcheckout atfrozenstartSHA; actualfirstcellactivationnotyetobserved. No further readinessdiagnostics.",
+      "latestProgress": "ConventionalGF actualnativeprimary/root/v4_actual_conventional_greenfield_primary activated01:44:05.209Z, chargedcellstart01:42:59.3173598Z; Roottool/profile/repo/receiptbindingverified; Task1running/qualityunknown, ClassicreservedNOTRUN.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "d1be70415f05c79a8af3e064ab8ea0d70ec3e706",
@@ -7718,7 +7718,7 @@
             "Before cells Root must have exact shared review/canary/config pin; during cells report only actual start/material blocker/terminal completion, no ACK loops. After each actual cell commit/push own raw/evidence privately, verify remoteRef/SHA, report safe actual results/limits once. Other BF/Design cells remain unallocated, Design readiness cannot stop these ready pairs or see baseline/private data.",
             "All allocations finite and terminate at deadline/terminal block; no new Government trial, main/release promotion, purchases, additional obligations, protection bypass, trial substitution or automatic replenishment. At pair end return intermediate absolute/reference-relative outcomes and errors/effort/uncertainty; later research must fit remaining6 of8/max2questions under separate concrete decision."
           ],
-          "status": "RootacceptedpositiveS1/commonfreeze; existingtwoGFslots startauthorized, actualstartpending",
+          "status": "First originalGFcellACTUALRUNNING; ClassicGFreservedNOTRUN, sequentialadmissionafterfirstwithfullremainingwindow",
           "usage": {
             "correctionBatches": 1,
             "offlineTestProcesses": 1,
@@ -7734,7 +7734,7 @@
           "sentUtc": "2026-10-09T01:04:51Z",
           "grantCommit": "59414d1",
           "deliveryConfirmed": true,
-          "actualFullCellsStarted": 0,
+          "actualFullCellsStarted": 1,
           "rootStartReceiptKey": "v4-greenfield-pair-root-start-receipt-20261009",
           "rootStartReceiptUtc": "2026-10-09T01:38:56Z"
         },
@@ -8098,6 +8098,67 @@
           "deliveryConfirmed": true,
           "status": "START AUTHORIZED and dispatched; fresh actualScientistturnactive, firstactualcellactivationstillunobserved",
           "scope": "Execute originalreservedConventionalGF thenClassicMainGF withinoriginal05:32:04Z/identicalexistingcellquotas; noextrafulltrial/resources"
+        },
+        "v4ConventionalGreenfieldActualStartAcceptance": {
+          "checkedUtc": "2026-10-09T01:45:32Z",
+          "rootVerifiedOwnStartRepoSha": "0416e366626d31933443ce2901d6a3696261db7b",
+          "ownBranch": "codex/v4-conventional-greenfield-01",
+          "actualActorToolCallUtc": "2026-10-09T01:44:05.209Z",
+          "actualActorToolCallId": "call_62817949059b48c7ad720b1ffa01ab05",
+          "targetActor": "/root/v4_actual_conventional_greenfield_primary",
+          "forkTurns": "none",
+          "configuredParentModel": "gpt-6.1-sol",
+          "configuredParentReasoning": "high",
+          "modelOrReasoningOverrides": null,
+          "configuredParentTurn": "01a11e51-c131-7191-998f-592ec4a73ff6",
+          "approvalPolicy": "never",
+          "sandboxType": "danger-full-access",
+          "startReceipt": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-conventional-greenfield-01\\first-actual-start-receipt.json",
+          "startReceiptSHA256": "d697f4d3cf3d1aba8eaead23d9050c9e16135218da5b3b1a9c9ec2c18bd63f8b",
+          "rootStartReceiptFileSHA256": "61cd7afa9d46ac3f3d331ed4f3645eebd61f8153fa8e12d0d383a00443ce465f",
+          "rootReceiptMatchesLiveLedger": true,
+          "immutableOwnerStartReceiptSnapshot": {
+            "cellId": "v4-conventional-greenfield-01",
+            "status": "ACTUAL NATIVE PRIMARY RUNNING",
+            "startUtc": "2026-10-09T01:42:59.3173598Z",
+            "actualFirstNativeActivationObservedUtc": "2026-10-09T01:44:44.6700496Z",
+            "trialDeadlineUtc": "2026-10-09T03:42:59.3173598Z",
+            "globalDeadlineUtc": "2026-10-09T05:32:04Z",
+            "repo": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-conventional-greenfield-01\\repo",
+            "state": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-conventional-greenfield-01",
+            "primaryActorId": "/root/v4_actual_conventional_greenfield_primary",
+            "trialActivationReservations": 1,
+            "tasks": [
+              {
+                "task": 1,
+                "status": "IMPLEMENTATION",
+                "endReserveSeconds": 30,
+                "semanticRepairs": 0,
+                "deadlineUtc": "2026-10-09T02:02:59.3173598Z",
+                "startUtc": "2026-10-09T01:42:59.3173598Z",
+                "assessmentMinimumSeconds": 300,
+                "activationReservations": [
+                  {
+                    "role": "primary-implementation",
+                    "reservation": 1,
+                    "overrides": null,
+                    "reservedUtc": "2026-10-09T01:42:59.3173598Z",
+                    "forkTurns": "none",
+                    "status": "running",
+                    "actualActorId": "/root/v4_actual_conventional_greenfield_primary"
+                  }
+                ],
+                "implementationEndUtc": "2026-10-09T01:56:59.3173598Z"
+              }
+            ]
+          },
+          "currentImplementationWIPObserved": true,
+          "qualityOutcome": null,
+          "servingModel": null,
+          "tokens": null,
+          "cost": null,
+          "humanTime": null,
+          "limitations": "Own primary activation/toolmetadata/ledger only; no OSisolation/provider cancellation/semanticacceptance or taskcompletion claim"
         }
       },
       "classicHandoffReceived": true,
@@ -9380,7 +9441,7 @@
       }
     }
   ],
-  "nextAction": "Dispatch Rootstartreceipt immediately; Scientist executes alreadyreservedConventionalGF thenClassicMainGF withfrozenresources/deadlines. Waitactualstart/materialblock/terminalcallbacks; nofurthergenericreadinessprep. Designownreadinessseparate.",
+  "nextAction": "LetScientistexecute activeConventionalGF stagedtasks/independentassessment, thenreservedClassicGFonlyiffull7200sleftbefore05:32:04Z. Handlematerial/terminalcallbacks; no repeatingorders/pollingsummaries/extraquota. Designownreadinessseparate.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -9391,8 +9452,8 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-09T01:38:56Z",
-    "evidenceLevel": "Root exact31working/freezeGit/finalGit,24public/5privatehashes,18rawsource,32ZIPbindings plus genuineMainreceipt/config/response; independentfreezeaccepted withencryptedpromptprooflimit",
+    "reviewedUtc": "2026-10-09T01:45:32Z",
+    "evidenceLevel": "FirstactualConventionalGF nativeToolactivation/profile/freshownrepo/startreceipt/liveledger binding independently confirmed; no qualityresult yet",
     "coordinationActions": [
       "Verifieded9c5b3source/binary/archive/logs and acceptedqualifiedofflineafterindependentRootreview",
       "Preserved3of2correctiondeviation/staleclosedUtcqualification",
@@ -9404,7 +9465,7 @@
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-08T19:51:14Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
-    "observationStatus": "Dispatch Rootstartreceipt immediately; Scientist executes alreadyreservedConventionalGF thenClassicMainGF withfrozenresources/deadlines. Waitactualstart/materialblock/terminalcallbacks; nofurthergenericreadinessprep. Designownreadinessseparate.",
+    "observationStatus": "LetScientistexecute activeConventionalGF stagedtasks/independentassessment, thenreservedClassicGFonlyiffull7200sleftbefore05:32:04Z. Handlematerial/terminalcallbacks; no repeatingorders/pollingsummaries/extraquota. Designownreadinessseparate.",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z",
     "latestQuietFallback": {
@@ -9610,9 +9671,11 @@
   "fullSuiteSlot": {
     "owner": "Scientist",
     "key": "v4-greenfield-pair-root-start-receipt-20261009",
-    "status": "Original reserved Greenfield pair actualexecution authorized; oneprimarycell at a time",
+    "status": "ConventionalGF actualrunning; ScientistsoleDispatcher; ClassicGFreservedNOTRUN pendingfirstcompletionandfullremaining7200s",
     "queue": [],
-    "absoluteEndUtc": "2026-10-09T05:32:04Z"
+    "absoluteEndUtc": "2026-10-09T05:32:04Z",
+    "activeCell": "v4-conventional-greenfield-01",
+    "activeCellDeadlineUtc": "2026-10-09T03:42:59.3173598Z"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
