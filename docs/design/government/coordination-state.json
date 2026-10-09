@@ -16255,6 +16255,15 @@
         "newGrant": false,
         "mainGate": false,
         "integrationNotifiedOnce": true
+      },
+      "conventionalWrapperCallbackPendingReview": {
+        "sourceShaReported": "df6db9cc846378769efc9b8596b2a9736efe0425",
+        "status": "RECEIVED_NOT_YET_ROOT_VERIFIED",
+        "authorityReported": "Younger direct human request in Scientist chat",
+        "scopeReported": "Source-only Conventional CLI/operator-MCP wrapper over native exec/App Server;41offline fixtures, no actual calls",
+        "privateHistoryOnly": true,
+        "actualsReported": 0,
+        "reviewPending": true
       }
     },
     "claude": {
@@ -16359,8 +16368,8 @@
     "status": "INDEPENDENT_VARIANT_CONTINUATION_DISPATCHED_KG04_TO_KG07",
     "threadId": "01a12178-5797-7c41-8acc-8e8231084c79",
     "hostId": "local",
-    "afterCursor": "67fe9212-ff51-49b6-b0fb-948f5db1b4db:2",
-    "turnId": "01a121ab-3ea0-70b0-9274-e3d5981e7d3e",
+    "afterCursor": "67fe9212-ff51-49b6-b0fb-948f5db1b4db:3",
+    "turnId": "01a121e9-f862-7943-89e9-ba878de09032",
     "worktree": "C:/Users/Consiliari/.codex/worktrees/product-knowledge-graph/Markitect",
     "branch": "codex/knowledge-graph",
     "cleanBase": "1495e1be7b0046711531fa42c8407fba67b8e814",
@@ -16474,7 +16483,9 @@
       "ownerBacklogRequired": true,
       "rootDispatchedOnce": true,
       "integrationNotifiedOnce": true,
-      "generousDevelopmentLimitsApply": true
+      "generousDevelopmentLimitsApply": true,
+      "observedActiveAfterDispatch": true,
+      "ownerObservedNext": "Own durable backlog and disjoint parallel work: identity/model, evidence adapters, services/user access"
     }
   },
   "callbackHandlingAudit20261009": {
