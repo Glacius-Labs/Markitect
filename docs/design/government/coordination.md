@@ -1264,3 +1264,12 @@ Oldschool lieferte sieben Beitragsdateien samt Hashliste außerhalb der Produktq
 Root-Quellenbefund: Unbeschränkte WaitForExit-Aufrufe nach Kill können die endliche Timeoutbehauptung verletzen. Scientist erhielt den öffentlichen Beitrag und diesen konkreten Korrekturpunkt einmal um04:16:18Z zur Integration innerhalb seines ursprünglichen Vorbereitungsauftrags. Keine neue Phase/Quote/Frist. Native Toolversionen und äußere versus transitive Grenzen bleiben sichtbar; keine Sicherheitsabschaltung oder allgemeine Diagnose verlangt. Private Sicherung der übernommenen Quellen durch Scientist noch ausstehend.
 
 Scientist bereitet neue Fälle Raumreservierung/Greenfield und vorhandenes Leselog/Brownfield vor; Inputs je Arm noch nicht final eingefroren. Oldschools Beitrag ist fertig; der vorgesehene enge Readonly-Vertragsreview wartet auf einen ausdrücklich sicheren öffentlichen Scientist-Dateipfad/Hash. Originalfristen04:52:23Z/05:37:22Z unverändert. Keine privaten Bewertungsquellen an Oldschool, kein ACK.
+
+
+### 2026-10-09 06:24 Europe/Berlin - vergleichbare Szenarien und konkrete Fortsetzung
+
+Direkte Nutzerergänzung: Greenfield/Brownfield, ein/mehrere/viele Items, Abhängigkeiten und unabhängige Arbeit, echte parallele Teamarbeit und abschließende fachliche Umbenennung beziehungsweise Modelländerung gehören in beide Arme. Scientist verteilt dies auf wenige gepaarte Projektverläufe und gesicherte Arbeitsstationen; kein vollständiger Kreuzvergleich oder vorgegebener Lösungsweg. Gleiche bekannte Regeln und fachliche Endbewertung; reale Überlappung/Mergekonflikte, Konsistenz und Regelverstöße sowie Aufwand erfassen. Einzelne Stationen/Checks sind keine unabhängigen Replikationen. Neuer Szenarienabschnitt im aktuellen Work-Item-Vertrag; Obergrenze drei Paare/sechs Starts bleibt unzugeteilt.
+
+Kompakter Scientist-Snapshot Cursor95 endete im generischen Warten statt einem Handoff, obwohl das neue Vorbereitungspaket läuft; untracked Nest-WIP besteht. Kein Abschluss angenommen. Einmalige konkrete Wiederaufnahme mit dieser Nutzerergänzung wird im ursprünglichen Paket beauftragt: Ende05:37:22Z/Prüfchargen/Readonlyreview unverändert, keine Actualquote oder automatische Nachfüllung. Der historische Warteauftrag ist nachrangig.
+
+Szenarien-/Fortsetzungsnachricht einmal04:24:48Z an Scientist zugestellt. Automation weiterhin ACTIVE/2h, genaue gespeicherte Instruktionen samt neuer Szenarienergänzung geprüft. Keine neue Laufquote, keine Fristverlängerung.

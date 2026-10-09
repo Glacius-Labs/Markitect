@@ -2,6 +2,8 @@
 
 > **Nutzerentscheidung vom 9. Oktober 2026:** Für neue Arbeit gilt [Neue Hauptlinie und Work-Item-Vergleich](../work-item-comparison-20261009.md). Neuer Vergleich: starkes Conventional Agentic Coding gegen neues Markitect aus Design, alle Fall-Actors Luna High, gleicher kurzer Auftrag mit normaler variantenbezogener Installation. Government und alter Classic werden nicht erneut getestet. Der folgende Vertrag bleibt historischer Nachweis; neue Versuche übernehmen seine Rollen-/Runnergleichschaltung nicht.
 
+> **Szenarienergänzung vom 9. Oktober 2026:** Der aktuelle Work-Item-Vertrag verteilt Greenfield/Brownfield, steigende Backloggröße, abhängige/unabhängige Items, echte Teamparallelität und eine abschließende fachliche Umbenennung auf gepaarte Projektverläufe. Gemeinsame bekannte Regeln, Konsistenz und Regelverstöße werden an gesicherten Zuständen unabhängig bewertet. Interne Arbeit bleibt frei; Arbeitsstationen sind keine unabhängigen Wiederholungen. Historische Bewertungen werden nicht geändert.
+
 Stand: 2026-10-07. **Aktiver Evaluationsauftrag; noch kein Nachweis einer überlegenen Methode.** Das Nutzer-Go und die spätere Erweiterung des Forschungsauftrags sind in [coordination.md](coordination.md) festgehalten. Der Koordinator führt die endlichen Phasen und gewöhnlichen technischen Entscheidungen eigenständig weiter. Konkrete Modellläufe bleiben an Readiness, unveränderliche Eingaben und eine ausdrücklich begrenzte Ressourcenzuteilung gebunden. Aktuelle Implementierungs- und Diagnosenachweise stehen in der Koordinationsakte; sie ersetzen keine Vergleichsstudie.
 
 ## Frage und Versuchsarme

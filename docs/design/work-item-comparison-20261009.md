@@ -34,6 +34,26 @@ Gleiche fachliche Ausgangslage, Work-Item-Folge, erklärte Abnahme-/Qualitätskr
 
 Nach dem festgehaltenen Endzustand: unabhängige Funktions-/Regel-/Regressionsprüfungen sowie Beurteilung von Konsistenz, Codequalität, Änderbarkeit, Dokumentation, Modell-/Dateitreue, Architekturdrift und Wiederaufnahme. Methodenkonformität getrennt von gemeinsamem Ergebnis. Alle Fehlversuche, Setup, Modellpflege, Reviews, Reparaturen, Mergearbeit und externe Eingriffe erfassen. Tokenreceipts werden soweit tatsächlich vorhanden gesammelt; Preisberechnung nur aus benannter gültiger Preisbasis, sonst Kosten unknown. Fehlende Kostentelemetrie verhindert keine funktionale Bewertung. Keine erfundenen Tokenzahlen oder Gleichsetzung von Wand-, Agenten- und Menschenzeit.
 
+## Szenarien: Umfang, Abhängigkeiten, Teamarbeit und Abschlussänderung
+
+Die direkte Nutzerergänzung vom 9. Oktober erweitert den Rahmen für beide Arme. Scientist baut vergleichbare Projektverläufe mit wenigen klaren Stationen, keinen vollständigen Kreuzvergleich aller Kombinationen und keine Anleitung zur Lösung. Die bereits vorbereiteten Greenfield-/Brownfield-Fälle bleiben der Ausgangspunkt. Zunächst decken zwei Projektpaare die Variationen ab; das mögliche dritte Paar dient einem gezielten Teamvergleich oder einer Replikation. Die bestehende Grenze von drei Paaren/sechs Volltrialstarts bleibt bestehen; zusätzliche Stationen sind keine zusätzlichen unabhängigen Trials.
+
+| Variation | Gemeinsamer Rahmen und Beobachtung |
+|---|---|
+| Greenfield / Brownfield | Neues Projekt beziehungsweise vorhandenes funktionierendes Projekt mit erklärten Bestandsregeln. Im Brownfield Bestand, Migration und Regressionen mitbewerten. |
+| Ein / mehrere / viele Work Items | Ein einzelner Einstieg, danach eine kleine und eine größere Backlog-Welle. Scientist wählt überschaubare konkrete Größen und dokumentiert erledigte/offene Items und Qualität je Station. |
+| Abhängige / unabhängige Items | Fachliche Voraussetzungen und unabhängige Arbeitsgruppen im Backlog kenntlich machen. Reihenfolge, Integrationsfehler und tatsächlich nutzbare Parallelität beobachten; interne Planung bleibt Sache der Variante. |
+| Parallele Teamarbeit | Mindestens eine gemeinsame Station verlangt echte Zusammenarbeit mehrerer ausführender Agents. Gleiche verfügbare Teamressourcen, freie native Organisation. Tatsächliche zeitliche Überlappung, Branch-/Mergearbeit, Konflikte, verlorene Änderungen und Abstimmungsaufwand erfassen. Nur angeforderte Parallelität gilt nicht als ausgeführte Teamarbeit. |
+| Abschließende Modelländerung | Nach dem Aufbau dieselbe fachliche Umbenennung, etwa Order zu Bestellung, oder eine ähnlich klare Regel-/Vertragsänderung durchführen. Konsistente Fortschreibung und vergessene Stellen sowie Regressionen und Änderungsaufwand prüfen. |
+
+Für jede Station genügen ein kurzer normaler Arbeitsauftrag, sichtbare Anforderungen/Regeln, der veröffentlichte fachliche Aufgaben- und Abhängigkeitsrahmen und ein nachvollziehbarer Git-Zustand. Die gemeinsamen Grenzen und erwarteten Ergebnisse werden vor dem betreffenden Lauf festgehalten; keine kleinteiligen Rollenrezepte, vorgeschriebenen internen Prompts oder adaptive Scientist-Hilfe. Ein Dispatcher darf die vorab festgelegten Backlog-Wellen freigeben und Zustände erfassen. Die unabhängige Bewertung erfolgt an den gespeicherten Zuständen, ohne Implementierer während der Arbeit mit Bewertungstipps zu versorgen.
+
+Die Abschlussänderung gilt für Verhalten, aktive Schnittstellen, Code, Tests, Konfiguration und Benutzerdokumentation sowie bei Markitect für sein kanonisches Modell und daraus erzeugte Ansichten. Erforderliche Kompatibilität oder Datenmigration wird im Work Item klar benannt. Historische Belege und absichtlich erhaltene kompatible Namen sind keine vergessenen Stellen; eine bloße Textsuche ersetzt keine Konsistenzprüfung. Conventional wird nach denselben fachlichen Ergebnissen beurteilt, ohne Pflicht zu Markitect-Artefakten.
+
+Regelverstöße werden soweit prüfbar gegen dieselben vorher bekannten Projektregeln gemessen: betroffene Regel/Schwere, erkannte und reparierte Verstöße sowie verbleibende Verstöße am jeweiligen Zustand. Fehlalarme und nicht prüfbare Regeln getrennt ausweisen. Funktionsfehler, Architektur-/Abhängigkeitsverstöße, ausgelassene Arbeit und unzulässige Änderungen bleiben nachvollziehbare Befunde statt eines frei gewichteten Gesamtscores.
+
+Mehr Daten entstehen durch mehrere Arbeitsstationen, nachvollziehbare Verlaufsdaten und die gezielte Wiederholung eines interessanten Befunds. Die tatsächliche Zahl von Projekten, Items, Teams und Wiederholungen bleibt sichtbar. Stationen und einzelne Checks desselben Projekts zählen nicht als unabhängige Stichproben; aus gemischten kleinen Szenarien folgt kein isolierter kausaler Nachweis für einen einzelnen Mechanismus.
+
 ## Nächste begrenzte Eigentümerpakete
 
 - Design: `design-complete-workflow-docs-main-20261009`, aktuelles Produktpaket fertigstellen, übrige verbindliche Dokumentanforderungen schließen, echte Benutzbarkeit prüfen, Dokumentation ersetzen, regulär nach Main integrieren. Autonome Work-Item-Bereitschaft ausdrücklich belegen oder deren konkreten Produktrest schließen.
