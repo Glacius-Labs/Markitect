@@ -1,0 +1,14 @@
+{
+  "status": "RUNNING App fourth full cell",
+  "acceptedSourceSha": "eace743e2bb70caf89305b597424d3b124e10178",
+  "grantId": "conventional-roombook-app-native-trial-20261009",
+  "ownPrimaryHandle": "/root/app_conventional_roombook_primary",
+  "stateDir": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-app-native",
+  "cellClockStartedUtc": "2026-10-09T06:53:40.468196+00:00",
+  "cellDeadlineUtc": "2026-10-09T08:53:40.468196+00:00",
+  "stationDeadlineUtc": "2026-10-09T07:16:10.468196+00:00",
+  "globalFullStarts": 4,
+  "startCallback": "pending once after private push",
+  "terminalCallback": "not sent",
+  "next": "Own lifecycle/status/metadata only; fixed station transitions or terminal blocker; no semantic coaching, probes or extra transport attempts."
+}

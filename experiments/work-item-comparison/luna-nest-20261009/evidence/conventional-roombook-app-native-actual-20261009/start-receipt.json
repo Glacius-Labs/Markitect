@@ -1,0 +1,31 @@
+{
+  "event": "Fourth full cell actual native App start",
+  "grantId": "conventional-roombook-app-native-trial-20261009",
+  "acceptedSourceSha": "eace743e2bb70caf89305b597424d3b124e10178",
+  "ownHandle": "/root/app_conventional_roombook_primary",
+  "nativeToolResult": {
+    "task_name": "/root/app_conventional_roombook_primary"
+  },
+  "ownPrefixStatus": "running",
+  "observedStartUtc": "2026-10-09T06:54:46.705327+00:00",
+  "cellClockStartedUtc": "2026-10-09T06:53:40.468196+00:00",
+  "cellDeadlineUtc": "2026-10-09T08:53:40.468196+00:00",
+  "implementationDeadlineUtc": "2026-10-09T08:23:40.468196+00:00",
+  "evaluationDeadlineUtc": "2026-10-09T08:43:40.468196+00:00",
+  "firstStationDeadlineUtc": "2026-10-09T07:16:10.468196+00:00",
+  "nativeStartTiming": "Reservation-before-call time and observed running-after-call time bound start; no fabricated exact model-execution timestamp",
+  "requestedProfile": {
+    "model": "gpt-6-luna",
+    "reasoning": "high",
+    "fork_turns": "none",
+    "cwdArgument": null
+  },
+  "globalFullStarts": 4,
+  "newFullStarts": 1,
+  "reservedAppStarts": 1,
+  "usage": null,
+  "servingModel": null,
+  "cost": null,
+  "inheritedCwdAndInstructions": "Not yet observed; no sanitizer/OS isolation claim",
+  "normalAppAccountSetupCalls": 0
+}
