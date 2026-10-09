@@ -1364,3 +1364,15 @@ Fresh third fullstart now enabled by an immutable activation receipt and enabled
 
 
 Exact enabled grant dispatched once06:14:57Z, tool accepted; Scientist active cursor116 executing setup/drive. No genuine native start receipt yet. Automation exact ACTIVE/2h/current activation/Root binding checked. No repeated Design task or new quote from callback.
+
+
+### 2026-10-09T06:32:20Z - direct human selects fresh App agents instead of blocked CLI
+
+Third actual CLI start terminal. Root verified fdabf621 clean/exact private remote,62payloadhashes and63changed Working/RawGit files since preparation, only this Actual evidence. Explicit normal workspace selector still produced read-only and shell reads were rejected;2implementation+1independent-final entries, no work/quality result. Three fullstarts consumed and old remainders closed; no invented policy cause.
+
+Human explicitly selected fresh Codex-App agents with Luna High for both arms. One small900s app entry package is issued with0model/actual/reviewer/probes and one mechanical batch<=180s. Use existing app subagent tools, public nest/stations and exact same seed/input bytes; no new general harness or semantic coaching. One fourth App fullstart is conditional within max6, unchanged outer/time/deadline limits. Explicit finite app-agent ledger72 starts includes helpers/internal roles/final assessment; identical prospective allowance for matched Markitect. Record actual context/tool exposure and cooperative boundaries, no fake isolation or ignored protections.
+
+Design74a44460 exact public remote and hosted run37892759401 in progress verified, no accepted readiness/Main. Own product hostslot released06:21:01Z with unchanged3/7200/128 proofquote and public CLI/toolprofile finding; no private case data. Product completion stays independent.
+
+
+App preparation and public Design interface sent once06:33:36Z, tools accepted. Existing own Design proof began06:32:45Z/session13309/PID25732/hardend06:52:40Z, quote1job/1outer/0inner owner-reported so far. Owner reports actual read/write under normal unelevated Windows sandbox with managed requirements; Root has not independently checked this proof or established cause of older failures. Human App choice remains unchanged, no automatic CLI retry. Scientist receives only public timing/runtime interface; App prep deadline unchanged06:47:20Z, actual measurement waits only for this own existing process end. Automation exact ACTIVE/2h/current grants/Root target checked.
