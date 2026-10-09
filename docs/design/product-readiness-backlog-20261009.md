@@ -32,3 +32,8 @@ The later user preference for fresh topic chats supersedes Designer as default o
 ## Latest direct human runtime-limit revision
 
 The short allocation above is historical. The direct user instruction of 9 October now sets generous limits: same three acceptance jobs, four hours per job/twelve hours total, 256 total role-start attempts and up to sixty minutes per role within the job remainder. See [generous runtime limits](generous-runtime-limits-20261009.md). Integration updates the central ledger and actual nested caps; healthy ongoing work is not restarted for this revision. Historical attempts remain unchanged, no automatic refill or Case Study authorization.
+
+
+## Current Main gate simplification
+
+Root has decided on the human-requested P09/P10 review: one combined genuine native normal-work smoke before Main, plus required platform checks, regressions and independent review; separate broad A02/A03 journeys are deferred and comparative Case Studies stay separate/stopped. This supersedes the earlier three-mandatory-job text. See [current Main gates](main-readiness-gates-20261009.md). Integration updates its exclusively owned queue/ledger coherently; overall generous allocation unchanged.

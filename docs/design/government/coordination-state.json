@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T18:25:07Z",
+  "updatedUtc": "2026-10-09T18:30:57Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -15908,7 +15908,10 @@
       "revisionAuthority": "Direct human instruction 2026-10-09: generous timeouts and limits; no healthy-work restarts due to short windows",
       "revisionDocument": "docs/design/generous-runtime-limits-20261009.md",
       "roleTimeoutSecondsDefault": 3600,
-      "newJobCount": 0
+      "newJobCount": 0,
+      "mainGateRevision": "docs/design/main-readiness-gates-20261009.md",
+      "requiredBeforeMainJobs": 1,
+      "otherJobsDeferredAfterMain": true
     },
     "notification": "Material completion/blocker/decision callback once to Root/local; continue eligible work without ACK loops/repeated human permission. No interrupt or reset of active WIP.",
     "firstStep": "Concrete shared services/wiring in Integration; P03/P04/P05 implementation in separate clean worktrees; P06-P10 follow integration",
@@ -16532,5 +16535,34 @@
     "nativeJobsConsumedOwnerReported": 0,
     "nativeStartsConsumedOwnerReported": 0,
     "lifecycleClarification": "Generic partial usage/accounting does not block proven known terminal lifecycle; concrete unresolved child/turn/owned-handle uncertainty preserves candidate and prevents unsupported cleanup/promotion; no full-child/OS guarantee"
+  },
+  "mainReadinessGateRevision20261009": {
+    "authority": "Verified direct human request in Monitor01a121ad-0631-7ce2-b013-a35add645424 asks Overseer to decide/readiness vs comparative studies",
+    "issuedUtc": "2026-10-09T18:30:57Z",
+    "document": "docs/design/main-readiness-gates-20261009.md",
+    "decision": "ONE_COMBINED_NATIVE_SMOKE_BEFORE_MAIN_BROAD_A02_A03_DEFERRED",
+    "mandatory": [
+      "Coherent integrated source/build/install/onboarding/current docs",
+      "Relevant regression tests and final required Linux/Windows CI/PR checks",
+      "Independent review with material findings resolved",
+      "One real normal Codex/LunaHigh product smoke: small Work Item/model Run/Review/Verify/Apply, two actual overlapping Managers, genuine fresh helper and original-turn/workspace recovery without replay"
+    ],
+    "notRequiredBeforeMain": [
+      "Comparative Playground Case Studies",
+      "Three separate broad native journeys",
+      "Large domain app/error-injection or transport evaluation matrix",
+      "Complete cost/usage telemetry"
+    ],
+    "queueOwner": "01a121a0-0417-71c1-9e4b-be742f8c1146",
+    "queueUpdateDispatchedOnce": true,
+    "queuePublicationVerified": false,
+    "A01": "prospective combined-main-smoke",
+    "A02A03": "deferred_not_main_gate_no_automatic_start",
+    "totalAllocationUnchanged": true,
+    "newJobs": 0,
+    "caseStudiesEnabled": false,
+    "releaseAuthorized": false,
+    "kgCurrentMainIntegration": false,
+    "originalEvidencePreserved": true
   }
 }
