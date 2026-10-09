@@ -76,6 +76,9 @@ type runtimeState struct {
 }
 
 func run(parent context.Context, cfg Config, request Request, opts RunOptions) (RunResult, error) {
+	if opts.Workspace != nil {
+		return RunResult{}, errors.New("process adapter does not support an owned Git workspace")
+	}
 	if parent == nil {
 		return RunResult{}, errors.New("execution context is required")
 	}
@@ -116,26 +119,12 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 	}{cfg.Command, cfg.Args})
 	commandDigest := digest(commandBytes)
 
-	runID, err := randomID()
+	invocation, inputJSON, err := prepareInvocation(req, requestJSON)
 	if err != nil {
-		return RunResult{}, errors.New("could not allocate an invocation identity")
+		return RunResult{}, err
 	}
-	nonce, err := randomID()
-	if err != nil {
-		return RunResult{}, errors.New("could not allocate an invocation nonce")
-	}
-	inputDigest := digest(requestJSON)
-	invocation := Invocation{
-		APIVersion:  APIVersion,
-		RunID:       runID,
-		Nonce:       nonce,
-		InputDigest: inputDigest,
-		Request:     req,
-	}
-	inputJSON, err := json.Marshal(invocation)
-	if err != nil || len(inputJSON) > maxJSONBytes {
-		return RunResult{}, errors.New("invocation could not be encoded within the protocol bound")
-	}
+	runID := invocation.RunID
+	inputDigest := invocation.InputDigest
 
 	before, err := snapshotRoots(roots)
 	if err != nil {
@@ -235,12 +224,8 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 		return result, errors.New("external runner failed")
 	}
 
-	var response Response
-	if err := strictDecode(stdout.buffer.Bytes(), &response); err != nil {
-		result.Receipt = receipt
-		return result, errors.New("external runner returned an invalid response")
-	}
-	if err := validateResponse(response, req, invocation, cfg.WorkspaceMode); err != nil {
+	response, err := DecodeResponse(stdout.buffer.Bytes(), invocation, cfg.WorkspaceMode)
+	if err != nil {
 		result.Receipt = receipt
 		return result, err
 	}

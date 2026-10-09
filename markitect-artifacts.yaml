@@ -2,6 +2,9 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - internal/host/projectworkspace
+    - internal/host/projectapp
+    - internal/host/codexappserver
     - docs/work-items/product-readiness
     - docs/validation/classic-commerce-entrypoint.md
     - examples/classic-commerce
@@ -2319,3 +2322,25 @@ spec:
       owner: project-world-implementation
     - path: docs/work-items/product-readiness/R03-agent-guidance.md
       owner: project-world-implementation
+    - path: docs/work-items/product-readiness/research-results-20261009.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/source-handoff-20261009.md
+      owner: project-world-implementation
+    - path: internal/host/projectworkspace/contracts.go
+      owner: project-world-implementation
+    - path: internal/host/projectworkspace/contracts_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectapp/operations.go
+      owner: project-world-implementation
+    - path: internal/host/projectapp/operations_test.go
+      owner: project-world-implementation
+    - path: internal/host/codexappserver/contracts.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/codexappserver/contracts_test.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/agentexec/invocation.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/agentexec/invocation_test.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/agentexec/lifecycle.go
+      owner: bounded-agent-execution-host

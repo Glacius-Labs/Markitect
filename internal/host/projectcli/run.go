@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/projectadoption"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectrun"
@@ -453,7 +454,9 @@ func runAction(opts options, out io.Writer) error {
 			operation = opts.action
 		}
 		request := projectrun.PlanRequest{Operation: operation, Goal: opts.goal, Managers: append([]string(nil), opts.managers...), BaseRevision: opts.revision, SinceRevision: opts.since, ExplorationID: opts.explorationID, ScopeID: opts.scope, ExecuteAuthorized: opts.write}
-		plan, err := projectrun.Plan(projectRunHost(), opts.repo, opts.revision, request)
+		plan, err := projectOperations().Plan(projectapp.PlanOperation{
+			Selection: projectapp.Selection{Root: opts.repo, Revision: opts.revision}, Request: request,
+		})
 		if err != nil {
 			return err
 		}
@@ -472,7 +475,7 @@ func runAction(opts options, out io.Writer) error {
 		return writeJSON(out, report)
 	case "repair":
 		if !opts.write {
-			report, err := projectrun.Status(opts.repo, opts.run)
+			report, err := projectOperations().Status(projectapp.RunOperation{Root: opts.repo, RunID: opts.run})
 			if err != nil {
 				return err
 			}
@@ -484,7 +487,7 @@ func runAction(opts options, out io.Writer) error {
 		}
 		return writeJSON(out, report)
 	case "status":
-		report, err := projectrun.Status(opts.repo, opts.run)
+		report, err := projectOperations().Status(projectapp.RunOperation{Root: opts.repo, RunID: opts.run})
 		if err != nil {
 			return err
 		}
@@ -524,7 +527,7 @@ func runAction(opts options, out io.Writer) error {
 	case "apply":
 		host := projectRunHost()
 		if !opts.write {
-			preflight, err := projectrun.PreflightApply(host, opts.repo, opts.run, opts.candidate)
+			preflight, err := projectOperations().PreflightApply(projectapp.PreflightOperation{Root: opts.repo, RunID: opts.run, CandidateID: opts.candidate})
 			if err != nil {
 				return err
 			}
@@ -558,6 +561,10 @@ func projectRunHost() projectrun.Host {
 		PlanEdit:     projectwork.PlanEdit,
 		ApplyEdit:    projectwork.ApplyEdit,
 	}
+}
+
+func projectOperations() projectapp.Operations {
+	return projectapp.Operations{Host: projectRunHost(), Invoker: projectrun.ProcessInvoker{}}
 }
 
 func setupOptions(opts options) (projectsetup.Options, error) {

@@ -12,6 +12,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
 
@@ -430,6 +431,9 @@ type ApplyPreflight struct {
 // Host is the function bundle for the selected project frontend. It composes
 // directly from projectwork's APIs without introducing a dependency cycle.
 type Host struct {
+	// Workspaces is the optional owned Git workspace seam. Current orchestration
+	// does not invoke it; P03/P06 must wire prepare, harvest and cleanup explicitly.
+	Workspaces   projectworkspace.Service
 	Load         func(root, revision string) (*Project, error)
 	FromSnapshot func(root string, source *Snapshot) (*Project, error)
 	PlanEdit     func(project *Project, mutation Mutation) (EditPlan, error)

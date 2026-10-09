@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"time"
+
+	"github.com/Glacius-Labs/Markitect/internal/host/projectworkspace"
 )
 
 const (
@@ -118,10 +120,10 @@ type Config struct {
 	ModelOptions    json.RawMessage `json:"modelOptions"`
 	ProviderVersion string          `json:"providerVersion"`
 	// WorkspaceMode selects the optional scoped native workspace contract.
-	// The empty value preserves proposal-only and historical configuration.
+	// Empty selects explicit context-only assessment or custom adapter execution.
 	WorkspaceMode string `json:"workspaceMode,omitempty"`
 	// EnvironmentAllowlist selects caller environment names passed to the child.
-	// nil preserves the historical inherit-all behavior; a non-nil empty slice
+	// nil inherits the caller environment; a non-nil empty slice
 	// passes no caller variables. Internal MARKITECT_AGENT_* values are added by
 	// agentexec after this selection.
 	EnvironmentAllowlist *[]string     `json:"environmentAllowlist,omitempty"`
@@ -132,6 +134,9 @@ type Config struct {
 }
 
 type RunOptions struct {
+	// Workspace is an owned Host workspace handle. The process adapter rejects
+	// it; the App Server adapter must explicitly support and bind this contract.
+	Workspace           *projectworkspace.Handle
 	InputRoots          []string
 	TempParent          string
 	PrivateLogDirectory string
@@ -157,9 +162,13 @@ type Receipt struct {
 	RetryCount            int         `json:"retryCount"`
 	Usage                 *Usage      `json:"usage,omitempty"`
 	NativeWork            *NativeWork `json:"nativeWork,omitempty"`
+	Lifecycle             *Lifecycle  `json:"lifecycle,omitempty"`
 }
 
 type RunResult struct {
+	// Delta is harvested by the Host workspace service, never parsed from the
+	// model response. Wiring it into candidates belongs to P03/P06.
+	Delta    *projectworkspace.Delta
 	Response Response
 	Receipt  Receipt
 }

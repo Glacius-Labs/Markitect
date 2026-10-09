@@ -8,6 +8,7 @@ The published v0.14.1 binary contains earlier Project/Domain commands and the ca
 |---|---|
 | [Model-first project workflow](project-workflow.md) | Current source entrypoint, initial setup, model changes, bounded implementation, Verify, Apply and known workflow gaps |
 | [Project operations](project-operations.md) | Current source CLI contracts for coverage, full verification, cleanup/reconcile, model briefs and native onboarding |
+| [Product source handoff](work-items/product-readiness/source-handoff-20261009.md) | P01/P02 checkpoint, shared concrete contracts, checks, limits and fresh implementation ownership |
 | [Project world design](design/project-world/README.md) | Accepted project-model direction, recursive Managers, responsibilities, controlled work, and planned workflow acceptance |
 | [Executable Shop project](../examples/project-world/README.md) | Current model-first example and finite behavior tests |
 | [Project workflow validation](validation/project-world-delivery.md) | Dated source/Shop evidence, actual provider-run boundary and remaining limits |
