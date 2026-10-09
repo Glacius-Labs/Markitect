@@ -1,0 +1,17 @@
+{
+  "grant": "research-terminal-evidence-synthesis-20261009",
+  "notAfterUtc": "2026-10-09T03:41:25Z",
+  "sourceSha": "f40db50d7744d6ef3604c13682762307a089b148",
+  "status": "TERMINAL SYNTHESIS COMPLETE / private delivery pending",
+  "writingBatchesUsed": 1,
+  "newReviewers": 0,
+  "productActors": 0,
+  "providerCalls": 0,
+  "cliOrAppserverCalls": 0,
+  "productProcesses": 0,
+  "tests": 0,
+  "builds": 0,
+  "fullTrials": 0,
+  "next": "Commit only new synthesis package, verify private research-backup exact remoteSHA and clean checkout, then once-only authorized terminal Overseer/local callback. External receipt tracks delivery. After callback Hold; no additional research execution.",
+  "closedUtc": "2026-10-09T03:29:22.2316646+00:00"
+}

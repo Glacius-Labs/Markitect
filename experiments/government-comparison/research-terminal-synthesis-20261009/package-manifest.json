@@ -1,0 +1,37 @@
+{
+  "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+  "frozenUtc": "2026-10-09T03:29:52.4803137+00:00",
+  "retainedEvidenceBindings": 55,
+  "oldTrackedFilesModified": 0,
+  "newPackageFiles": [
+    {
+      "path": "continuation-anchor.json",
+      "bytes": 759,
+      "sha256": "2318a17731637e6385580c5b07788ec2ebbca2bc81498dfc54e453af2dc1cde7"
+    },
+    {
+      "path": "grant.json",
+      "bytes": 3777,
+      "sha256": "31a7297119a43471617bf7031775bb8e2df3a021e5f74b89f1e8b33cb65c1fe1"
+    },
+    {
+      "path": "safe-public-summary.md",
+      "bytes": 4339,
+      "sha256": "72ce38fa270468fd76f37ea6b2b59282c51d2d90f3668deb4d208127536b8523"
+    },
+    {
+      "path": "terminal-ledger.json",
+      "bytes": 64910,
+      "sha256": "fa4032a705ba72860a0f8b6943139ed790e7a8cad94803073c1ad1c9cdcc756e"
+    },
+    {
+      "path": "terminal-synthesis.md",
+      "bytes": 25703,
+      "sha256": "84afaeee8f7d708294ee1e16a2afafa147cbd117d446cdbbc08af5c3e704c940"
+    }
+  ],
+  "newReviewers": 0,
+  "testsRun": 0,
+  "runtimeRun": 0,
+  "boundary": "Archival byte/hash and JSON serialization checks only, no new semantic evaluation/contract test/runtime. Retained source records not reexecuted; reviewer reports accepted with preserved qualifications. No public publication."
+}

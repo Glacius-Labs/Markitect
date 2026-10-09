@@ -1,0 +1,1512 @@
+{
+  "schemaVersion": 1,
+  "key": "research-terminal-evidence-synthesis-20261009",
+  "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+  "grantRootCommit": "44658dba415e107ab1c0926b36d26b7814a56327",
+  "grantSha256": "31a7297119a43471617bf7031775bb8e2df3a021e5f74b89f1e8b33cb65c1fe1",
+  "issuedUtc": "2026-10-09T03:21:25Z",
+  "notAfterUtc": "2026-10-09T03:41:25Z",
+  "status": "TERMINAL SYNTHESIS / no complete comparable study",
+  "newUsage": {
+    "writingBatches": 1,
+    "actors": 0,
+    "reviewers": 0,
+    "providerCalls": 0,
+    "productProcesses": 0,
+    "tests": 0,
+    "builds": 0,
+    "fullTrials": 0,
+    "remainingSlotsUnallocatedAndUnused": 6,
+    "codexCliOrAppserverCalls": 0
+  },
+  "evidenceBindings": [
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/authorization-grant.json",
+      "workingSha256": "99f16336b02f91eee5787cc21c0660112cb656c6ec5199748a126c43f5f33d2a",
+      "bytes": 10075,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "c05da72eded951dab5a3df1633c02ebc3fabf824"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/base-study-report.md",
+      "workingSha256": "d564f7980d431429dea682be642daee3ceb229390c40c592fb9d9c3a5d4be814",
+      "bytes": 4743,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "0bb0c40fbb94ba6ae7a9217b9ae3f7d3f570d1ec"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/ledger.json",
+      "workingSha256": "e957e3b8448648647c8ebbf2d40a1d7c3a22a60d1af20378bf160bcd3eadb390",
+      "bytes": 45051,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "f4e4cb4aa709dffe47a45f253e03a075a23e3d4f"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/freeze.json",
+      "workingSha256": "18fd3a2af9356fd83c9b73c9fdfd1b67976146565659366959ca3b415627a484",
+      "bytes": 59595,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "0b0638c1050cf8df3ab225095db559ddb6cda94b"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/protocol.md",
+      "workingSha256": "78cd11a0578f8e708258d794de8235ca31dc1138b6ce0f79eb8446d7f11098ce",
+      "bytes": 8738,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "4642ac5669391b83b7c14cf7dc99e8e24f9bae6e"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/native-configuration.json",
+      "workingSha256": "8ce69505dcbe7837d5601651a393a63363b9af4d93733af60e8cab179dff8156",
+      "bytes": 1127,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "e634954185f2e9db21a2411438fc3f96b916148d"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/closed-greenfield-handoff.md",
+      "workingSha256": "7aca2c644c0b5aa5356fbb53e888f5e870655096d528bd76879c993f82b8e540",
+      "bytes": 3866,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "9400492c75e7daea426ee839c2815928202cc467"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/closed-greenfield-errata.md",
+      "workingSha256": "e0e2b5d217397b3296a24f1062e1eac1efeb2985a7a8060520d19cb649df496c",
+      "bytes": 1132,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "fc07b5c3b7aa546b9d384312ca797c81f3e5daae"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/closed-brownfield-handoff.md",
+      "workingSha256": "b2ffe3139c580dd7dbc1f6cd01aa6a978785edb214228895782f9bf688f35381",
+      "bytes": 3268,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "dde57164ad0e8a1fbb428e77df7e78c3f64dadd3"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/interventions.jsonl",
+      "workingSha256": "0505275afb8bbc9efb21bafc40a8d3102998c4cada1eabc22282a17edfd60748",
+      "bytes": 4458,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "3e1a1015a0df93a5c78675d148043b4886f90c67"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/ephemeral-result-addendum.md",
+      "workingSha256": "1dfb2ab9f03c2766371b28a0e6dd1142d4ccf3ad2c30343ef79e1e9f557e354a",
+      "bytes": 2142,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "9eb9df834080dccfe5ca1db934c61de67cef3605"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-greenfield/final-evaluation.json",
+      "workingSha256": "67b998cb075c8728f34429e76dddc229a1a3bde26b0dc6d4d5b421abf09f4263",
+      "bytes": 10759,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "212a098c1e39e76f7fc618272d29cc25f7319b4c"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-greenfield/evaluator-errata.md",
+      "workingSha256": "105d4c72bd9fa269da80be177d8a3221d676dd644e289f8f07439c020ffec003",
+      "bytes": 1230,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "c3680a240aa9b1152f27e63c01869e85f9aac677"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-greenfield/closure-reconciliation.json",
+      "workingSha256": "34c485b6080c4933473c55f3cbd2cc1020e135fdb84322ce9ca8b4c2366d9b28",
+      "bytes": 923,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "01c54d10f4cf4dcc08a71f0dc89c60506e892d01"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-brownfield/contamination-scope-errata.md",
+      "workingSha256": "69389a867c9100a4c5c006ad50ff3d7f1258c884b9127cfa9e84cf626590689d",
+      "bytes": 1333,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "5811eccfef2ce82ebfbb2a715e2fbf3981747fc5"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/handoff.md",
+      "workingSha256": "5372b9379cf217b9d2b75cfc45096646564fb2530458154d09ae59071c2abd33",
+      "bytes": 5411,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "c25952219344b9a2dbb15d28f664b1dfaa83335e"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-posthoc-validation-20261009/ledger.json",
+      "workingSha256": "cb57b66cc0379e613081fb9d9de26b13bcd775fe6d3c61f7b768f16b32abc7ca",
+      "bytes": 2893,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "6553bf4f4c26788c1fd099592ce7e21d610909db"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/handoff.md",
+      "workingSha256": "3ab33d82470bcf45dc47cd94ab35732aca033fc60cdf9a9cfd6b724013a22484",
+      "bytes": 5601,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "2869a3da950eb92c83f1176ec77595fa01df17d8"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-v3-conventional-gf-ephemeral-validation-20261009/ledger.json",
+      "workingSha256": "8e80102122bb024cb5110bee703b43a53195218a6fc0d9be6861877378ee1990",
+      "bytes": 1612,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "a3ccefa606dca3a90a235f8274329418d0264b0e"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-greenfield/archive-manifest.json",
+      "workingSha256": "c8129f753ca15f09d260a58ef974b68f9575d90911bce727b67c09416e4f8c00",
+      "bytes": 15131,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "14d964c1387ff5aaa24308dfcddf5f03527f3cbe"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-greenfield/archive-manifest.json",
+      "workingSha256": "094bd1e40143622e4ba149fb6679a4b95964373eae4d27d28d325f541255ad96",
+      "bytes": 24363,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "018e16de57d1192c75b5f231214c54f2e1b1de46"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-greenfield/archive-manifest.json",
+      "workingSha256": "56bc2141b85898ccce06fcc32e44e5bef80d893610e0c9f78ad48c7bf1fc1b03",
+      "bytes": 18790,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "f589d8e368b5f7140e747a1a00f48969c23a776f"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/classic-brownfield/archive-manifest.json",
+      "workingSha256": "18ba3e89fa2c3e04f2ba755af58fa74801be5332a7ab8125ae0d1222af12aba1",
+      "bytes": 26522,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "b8fb9d1e1f7f7ef59c7be05233e0790f357028be"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/government-brownfield/archive-manifest.json",
+      "workingSha256": "1e3cd2634619eafba80409907264822db2abcddee12b0b9051b97bcf90243967",
+      "bytes": 20629,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "a94a74d3f9888236f3feb9e83caa7ec35c2f41c0"
+    },
+    {
+      "path": "experiments/government-comparison/evidence/native-codex-exploratory-v3-20261008/cells/conventional-brownfield/archive-manifest.json",
+      "workingSha256": "9777b0262fe1890f7b1095c6342f37907e6cbb76bb7f1f1e52f28ac47fde5758",
+      "bytes": 7204,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "ed0ce594cda10d12df51eff52274bbc6d8b3c9dc"
+    },
+    {
+      "path": "experiments/government-comparison/v4-preparation-20261009/handoff.md",
+      "workingSha256": "c3721ac3e2ab3c21e49c7efbbacfdb49860371e435c69ad601ec11c287214337",
+      "bytes": 6193,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "9a954d4ba5d688df12b516df29d22b25c8755435"
+    },
+    {
+      "path": "experiments/government-comparison/v4-preparation-20261009/evidence/ledger.json",
+      "workingSha256": "f9c297019a94dcef9980bb1990471aa0374f7be03896c65f0752a602db243d30",
+      "bytes": 2409,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "bb7ffccc937eb635b03011ee166e56d9257a56ee"
+    },
+    {
+      "path": "experiments/government-comparison/v4-runtime-binding-20261009/handoff.md",
+      "workingSha256": "a7cd7b7333e791763cb25a3fa71c9a92e10946604de4b8e87043da274239cb0f",
+      "bytes": 11632,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "47a9bd969ecbd1d22908b70ab5c3a763b21b080b"
+    },
+    {
+      "path": "experiments/government-comparison/v4-runtime-binding-20261009/evidence/ledger.json",
+      "workingSha256": "aced6a8e65affe9c526d1fcd232d49fee7872580b8d43a6c1187fd8d09a9e365",
+      "bytes": 8673,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "f49c42c79932dfaab577fe88c804cd9edee7c638"
+    },
+    {
+      "path": "experiments/government-comparison/v4-oracle-outcome-review-20261009/handoff.md",
+      "workingSha256": "03172c2a389526da18e80bd9e398031298d3aee43c1dd11c5546fd86a7baf335",
+      "bytes": 5609,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "6d8eae796596b3069d408fd3c4ce070cc2887a9d"
+    },
+    {
+      "path": "experiments/government-comparison/v4-oracle-outcome-review-20261009/evidence/ledger.json",
+      "workingSha256": "15efd74e3e32db6046097abc25500573f3daf143b5dc624a6629f40d2f7178de",
+      "bytes": 2807,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "0e81e530bfb0188c75a16de93349fc4b751fb8de"
+    },
+    {
+      "path": "experiments/government-comparison/v4-evaluation-correction-20261009/handoff.md",
+      "workingSha256": "253e36e9be53ff61f55db98ec5616e4bee5921846ce9f09ba8013f9ddf6543e5",
+      "bytes": 4213,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "b1fa560a3cff09c71f52a96e66539c9140c2cb73"
+    },
+    {
+      "path": "experiments/government-comparison/v4-evaluation-correction-20261009/evidence/ledger.json",
+      "workingSha256": "f9ae2f62ee980f791f91df7f85ba7e923dcbc4fab226d2352600590f960c0c95",
+      "bytes": 3391,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "3165496420d356341ecda9767167fb8e362cd775"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/handoff.md",
+      "workingSha256": "bd6e8a4ecaa208b9830b44d3a71b177244c218e58479812df8449e7efad7bbfa",
+      "bytes": 4509,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "bb1d676a2a9c2cd589cea06e23b9ff2e0e6d3abc"
+    },
+    {
+      "path": "experiments/government-comparison/v4-receipt-repair-20261009/evidence/ledger.json",
+      "workingSha256": "97ad3af39f97f5134818bfeb88af1af367e02ad8a67e802d80768353d9d81d53",
+      "bytes": 2559,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "9a61743fb6cc71e5739efc65eeb6bd41084c488e"
+    },
+    {
+      "path": "experiments/government-comparison/v4-native-live-bridge-20261009/handoff.md",
+      "workingSha256": "ab5fbd891020e38c60e648f556d6d1b8c1a8076b98ef5c1034be3193163f8bb8",
+      "bytes": 2836,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "1765acee3157d97e6e306e7b9652b70c742b12df"
+    },
+    {
+      "path": "experiments/government-comparison/v4-native-live-bridge-20261009/evidence/ledger.json",
+      "workingSha256": "17474a46c18626c89bb9a6567e1206af3d811365c1400b6f7c1e083b98d71d87",
+      "bytes": 2286,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "2b92af6ce22b4b0062ab27062b88eaa94389b640"
+    },
+    {
+      "path": "experiments/government-comparison/v4-canary-byte-correction-20261009/handoff.md",
+      "workingSha256": "aec84debc9a863b3055c6b158789a8c8f55238b880314e0c2160e7edc38c2e8a",
+      "bytes": 4249,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "fafd5b82d8c7017db4ab877cb21eeb18482a2633"
+    },
+    {
+      "path": "experiments/government-comparison/v4-canary-byte-correction-20261009/evidence/ledger.json",
+      "workingSha256": "c01ab4a8eacc4e6b18c30019d4102df1f1c733e72415edaa0ae6c1c4e132afdf",
+      "bytes": 1050,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "8372f86d22e94569093a73aed0a8557d3100a3d8"
+    },
+    {
+      "path": "experiments/government-comparison/v4-evidence-contract-canary-20261009/handoff.md",
+      "workingSha256": "f11ae8834a3fd1c72d0d21b2ab701b0b1a648a5fb30325b9f1a8c484655bd860",
+      "bytes": 5645,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "0b7f0cc66bbe5d2e5316df8949eef861cb9d13be"
+    },
+    {
+      "path": "experiments/government-comparison/v4-evidence-contract-canary-20261009/evidence/ledger.json",
+      "workingSha256": "aae2725dad0ec9914efe49e3fcc0e8f368f92cb5b9416662e070c03a86a5e040",
+      "bytes": 991,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "77f27db605d43410fa3ed95310d2a7d4b5277124"
+    },
+    {
+      "path": "experiments/government-comparison/v4-greenfield-matched-actuals-20261009/handoff.md",
+      "workingSha256": "04f208eea0308d668000392d5239151370dc8b8ba6bf001012eb216a0a6708a6",
+      "bytes": 6706,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "779c936e557bd7ea55c3713122c377418e3c4d71"
+    },
+    {
+      "path": "experiments/government-comparison/v4-greenfield-matched-actuals-20261009/pair-ledger.json",
+      "workingSha256": "2cb0b496818bfc166096143f5c7883193be0c973fa9681129fb5778cc22a6858",
+      "bytes": 752,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "367c2ce729d1f579fea8fbca824a69300da5c693"
+    },
+    {
+      "path": "experiments/government-comparison/v4-greenfield-matched-actuals-20261009/evidence/root-start-receipt.json",
+      "workingSha256": "61cd7afa9d46ac3f3d331ed4f3645eebd61f8153fa8e12d0d383a00443ce465f",
+      "bytes": 6744,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "6e04f728d923b8c7076ba4126b79bbf30d7da90a"
+    },
+    {
+      "path": "experiments/government-comparison/v4-greenfield-matched-actuals-20261009/cells/v4-conventional-greenfield-01/terminal-ledger.json",
+      "workingSha256": "5c5fe9c555d001a9268b661945f5368b3e781a3216aa7eaaec9a4a5d37a14ddb",
+      "bytes": 4816,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "ab1832302609e4f3521c8d0efeef4bb93d825dc2"
+    },
+    {
+      "path": "experiments/government-comparison/v4-greenfield-matched-actuals-20261009/cells/v4-classic-main-greenfield-01/terminal-ledger.json",
+      "workingSha256": "b75e478a655de168bf07f9848f6dc6874d4804e4eda69ee6734e2d8b04512994",
+      "bytes": 6330,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "360f39e58fd0d1321edae16e6db312eddaa591be"
+    },
+    {
+      "path": "experiments/government-comparison/v4-greenfield-matched-actuals-20261009/evidence/conventional-terminal-state-binding.json",
+      "workingSha256": "2ddfce9e9cbf890331b5dc960a30c820d2e3b909000cab5e486e533076748939",
+      "bytes": 345,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "5d265aa805e27ed4586dc42f231a6663a0f9cf84"
+    },
+    {
+      "path": "experiments/government-comparison/v4-greenfield-matched-actuals-20261009/evidence/classic-terminal-state-binding.json",
+      "workingSha256": "e7ab20afa4bf99af18738284d1bcdf52477a9f6f5f8b99aa4c9f9c2601f42e75",
+      "bytes": 572,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "96158e96c7e63a3e41be557e96ba20e58e862bb6"
+    },
+    {
+      "path": "experiments/government-comparison/v5-common-profile-freeze-20261009/HANDOFF.md",
+      "workingSha256": "e06e6d2027224804a30af86b6bf3d9e51a1786d3d0c3577a2d865d94bb3d281a",
+      "bytes": 6245,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "6f48d41e88310d935b3de758aad50b7270c02674"
+    },
+    {
+      "path": "experiments/government-comparison/v5-common-profile-freeze-20261009/closure-ledger.json",
+      "workingSha256": "250cbcd2d89c88a8db71c74a1a0301c70179b46fa1125c07767038060767ffdf",
+      "bytes": 9614,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "5b7a64c8bb0c6c17826c3c63e55470c648e2cd92"
+    },
+    {
+      "path": "experiments/government-comparison/v5-common-profile-freeze-20261009/binding/command-plan.json",
+      "workingSha256": "9d9b635eec2fe29900cb43fc1e0e51712fa3027490514409edf73c9cbc1ffda3",
+      "bytes": 3552,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "9f1ddebb2bc11dd3864af9fd3543adc562f22beb"
+    },
+    {
+      "path": "experiments/government-comparison/v5-common-profile-freeze-20261009/binding/common-profile-proposal.json",
+      "workingSha256": "7d487a0831f88f8703cc80fab14573d33141f5cfcd9f477ff7541ff3f50e6580",
+      "bytes": 13874,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "0f0f6fbf2b9d29ed0c6b48f839fd1b1fcf0df011"
+    },
+    {
+      "path": "experiments/government-comparison/v5-common-profile-freeze-20261009/evidence/design-metadata-summary.json",
+      "workingSha256": "c96781df611d5f65013019fc90957118f16b6f005b487b8a42a726caee29eacf",
+      "bytes": 2928,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "4ea8ba7c25b4acf5a1fd9da2aa39ad83fc8066b4"
+    },
+    {
+      "path": "experiments/government-comparison/v5-common-profile-freeze-20261009/evidence/pre-review-freeze.json",
+      "workingSha256": "30e192fe193c7b007bfd98a6f68ec44dbcc9b5f08ef40c88d4628fa1d0cbe64a",
+      "bytes": 9897,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "8f61612242886ae3359fcb0435623cce74be75d8"
+    },
+    {
+      "path": "experiments/government-comparison/v5-common-profile-freeze-20261009/review/report.json",
+      "workingSha256": "76a38813ed5b28878493ed096ccf0bb081403ef9bbf8cfc971efaa96264432bd",
+      "bytes": 8051,
+      "sourceCommit": "f40db50d7744d6ef3604c13682762307a089b148",
+      "sourceGitBlob": "fbd47a768c4ef6643f597d58b741bf97f42f292b"
+    }
+  ],
+  "v3": {
+    "actualCellStarts": 6,
+    "completeSixTaskTrials": 0,
+    "invalidatedCells": 3,
+    "trialReservations": 30,
+    "actualNativeTrialActivations": 29,
+    "unlaunchedReservations": 1,
+    "sharedPreparationActivations": 3,
+    "sharedPreparationElapsedSeconds": 761.454163,
+    "historicalAccountingUnnormalized": {
+      "appserverTrees": 15,
+      "actorReservations": 8,
+      "cliMetadataCalls": 8,
+      "knownHistoricalTokens": 53331,
+      "totalTokens": null,
+      "nativeVector": [
+        15,
+        16,
+        13,
+        2250
+      ]
+    },
+    "cells": [
+      {
+        "trialId": "conventional-greenfield-v3-20261008",
+        "method": "conventional",
+        "condition": "greenfield",
+        "started": true,
+        "outcome": "incomplete-at-limit/coordinator-interruption",
+        "reservations": 12,
+        "actualActivations": 11,
+        "activationStatusGroups": [
+          {
+            "Name": "completed",
+            "Count": 11
+          },
+          {
+            "Name": "reserved",
+            "Count": 1
+          }
+        ],
+        "roleGroups": [
+          {
+            "Name": "primary",
+            "Count": 1
+          },
+          {
+            "Name": "primary-followup",
+            "Count": 4
+          },
+          {
+            "Name": "primary-public-repair",
+            "Count": 1
+          },
+          {
+            "Name": "public-independent-re-review",
+            "Count": 1
+          },
+          {
+            "Name": "public-independent-review",
+            "Count": 5
+          }
+        ],
+        "startedUtc": "2026-10-08T23:40:20.417168+02:00",
+        "closedObservedUtc": "2026-10-09T00:53:27.969238+02:00",
+        "reservationToClosureObservationSeconds": 4387.55207,
+        "tasks": {
+          "1": {
+            "startedUtc": "2026-10-08T23:40:20.417168+02:00",
+            "startedMonotonic": 24724.278298,
+            "deadlineUtc": "2026-10-09T00:00:20.417168+02:00",
+            "status": "closed",
+            "outcome": "passed",
+            "candidateSha": "663cbdfdfb49cd390bb87a9bd9b261b09a26e18b",
+            "frozenUtc": "2026-10-08T23:52:10.112316+02:00",
+            "endedMonotonic": 25433.9734281
+          },
+          "2": {
+            "startedUtc": "2026-10-08T23:52:10.151585+02:00",
+            "startedMonotonic": 25434.0127054,
+            "deadlineUtc": "2026-10-09T00:12:10.151585+02:00",
+            "status": "closed",
+            "outcome": "passed",
+            "candidateSha": "05fc2e9f1b986f1747921a23a40882934ec7cb08",
+            "frozenUtc": "2026-10-08T23:57:21.473667+02:00",
+            "endedMonotonic": 25745.334785
+          },
+          "3": {
+            "startedUtc": "2026-10-08T23:58:00.630229+02:00",
+            "startedMonotonic": 25784.4913575,
+            "deadlineUtc": "2026-10-09T00:18:00.630229+02:00",
+            "status": "closed",
+            "outcome": "passed",
+            "candidateSha": "52a6e707184f6492a7cff2fca9c842261e74a45c",
+            "frozenUtc": "2026-10-09T00:04:39.457868+02:00",
+            "endedMonotonic": 26183.3189803
+          },
+          "4": {
+            "startedUtc": "2026-10-09T00:04:39.49618+02:00",
+            "startedMonotonic": 26183.3573043,
+            "deadlineUtc": "2026-10-09T00:24:39.49618+02:00",
+            "status": "closed",
+            "outcome": "passed",
+            "candidateSha": "baacb07fba54fcfce9244a6089ef93f037d01bc3",
+            "frozenUtc": "2026-10-09T00:10:39.422979+02:00",
+            "endedMonotonic": 26543.2840909
+          },
+          "5": {
+            "startedUtc": "2026-10-09T00:15:08.316849+02:00",
+            "startedMonotonic": 26812.1779703,
+            "deadlineUtc": "2026-10-09T00:35:08.316849+02:00",
+            "status": "closed",
+            "outcome": "incomplete-at-limit/coordinator-interruption",
+            "candidateSha": "d1e271b8472cc55565696b976a87ff968a4e8c7a",
+            "closureObservedUtc": "2026-10-09T00:53:27.969238+02:00",
+            "independentRereview": "NOT RUN; activation-0030 reserved but no launch receipt"
+          }
+        },
+        "productQualityAggregate": null,
+        "completedSixTaskTrial": false,
+        "invalidated": false
+      },
+      {
+        "trialId": "classic-greenfield-v3-20261008",
+        "method": "classic",
+        "condition": "greenfield",
+        "started": true,
+        "outcome": "incomplete/readiness_gap",
+        "reservations": 6,
+        "actualActivations": 6,
+        "activationStatusGroups": [
+          {
+            "Name": "completed",
+            "Count": 5
+          },
+          {
+            "Name": "failed",
+            "Count": 1
+          }
+        ],
+        "roleGroups": [
+          {
+            "Name": "independent-evaluation",
+            "Count": 1
+          },
+          {
+            "Name": "modeling-helper",
+            "Count": 1
+          },
+          {
+            "Name": "native-executor",
+            "Count": 2
+          },
+          {
+            "Name": "native-executor-continuation",
+            "Count": 1
+          },
+          {
+            "Name": "primary",
+            "Count": 1
+          }
+        ],
+        "startedUtc": "2026-10-08T23:41:19.105982+02:00",
+        "closedObservedUtc": "2026-10-09T00:00:49.238986+02:00",
+        "reservationToClosureObservationSeconds": 1170.133004,
+        "tasks": {
+          "1": {
+            "startedUtc": "2026-10-08T23:41:19.105982+02:00",
+            "startedMonotonic": 24782.9671171,
+            "deadlineUtc": "2026-10-09T00:01:19.105982+02:00",
+            "status": "closed",
+            "outcome": "incomplete",
+            "candidateSha": "e00ec8c49cb4912aebf02cf6057965463f8ef8b4",
+            "frozenUtc": "2026-10-08T23:58:52.805942+02:00",
+            "endedMonotonic": 25836.6670548
+          }
+        },
+        "productQualityAggregate": null,
+        "completedSixTaskTrial": false,
+        "invalidated": false
+      },
+      {
+        "trialId": "government-greenfield-v3-20261008",
+        "method": "government",
+        "condition": "greenfield",
+        "started": true,
+        "outcome": "incomplete/readiness_gap",
+        "reservations": 4,
+        "actualActivations": 4,
+        "activationStatusGroups": [
+          {
+            "Name": "completed",
+            "Count": 3
+          },
+          {
+            "Name": "interrupted",
+            "Count": 1
+          }
+        ],
+        "roleGroups": [
+          {
+            "Name": "independent-evaluation",
+            "Count": 1
+          },
+          {
+            "Name": "modeling-helper",
+            "Count": 1
+          },
+          {
+            "Name": "native-executor",
+            "Count": 1
+          },
+          {
+            "Name": "primary",
+            "Count": 1
+          }
+        ],
+        "startedUtc": "2026-10-08T23:41:19.124976+02:00",
+        "closedObservedUtc": "2026-10-09T00:01:37.102836+02:00",
+        "reservationToClosureObservationSeconds": 1217.97786,
+        "tasks": {
+          "1": {
+            "startedUtc": "2026-10-08T23:41:19.124976+02:00",
+            "startedMonotonic": 24782.9861084,
+            "deadlineUtc": "2026-10-09T00:01:19.124976+02:00",
+            "status": "closed",
+            "outcome": "incomplete",
+            "candidateSha": "00e4755797d59bc5713d1533b10598f323c29f12",
+            "frozenUtc": "2026-10-08T23:59:27.150675+02:00",
+            "endedMonotonic": 25871.0117968
+          }
+        },
+        "productQualityAggregate": null,
+        "completedSixTaskTrial": false,
+        "invalidated": false
+      },
+      {
+        "trialId": "conventional-brownfield-v3-20261008",
+        "method": "conventional",
+        "condition": "brownfield",
+        "started": true,
+        "outcome": "contaminated_stopped",
+        "reservations": 5,
+        "actualActivations": 5,
+        "activationStatusGroups": [
+          {
+            "Name": "completed",
+            "Count": 4
+          },
+          {
+            "Name": "interrupted",
+            "Count": 1
+          }
+        ],
+        "roleGroups": [
+          {
+            "Name": "primary",
+            "Count": 1
+          },
+          {
+            "Name": "primary-followup",
+            "Count": 1
+          },
+          {
+            "Name": "primary-public-repair",
+            "Count": 1
+          },
+          {
+            "Name": "public-independent-re-review",
+            "Count": 1
+          },
+          {
+            "Name": "public-independent-review",
+            "Count": 1
+          }
+        ],
+        "startedUtc": "2026-10-09T00:00:02.839447+02:00",
+        "closedObservedUtc": "2026-10-09T00:14:15.873665+02:00",
+        "reservationToClosureObservationSeconds": 853.034218,
+        "tasks": {
+          "1": {
+            "startedUtc": "2026-10-09T00:00:02.839447+02:00",
+            "startedMonotonic": 25906.7005958,
+            "deadlineUtc": "2026-10-09T00:20:02.839447+02:00",
+            "status": "closed",
+            "outcome": "passed",
+            "candidateSha": "e76b88cef7bf01d4cb2e324d62cc6372b952c700",
+            "frozenUtc": "2026-10-09T00:09:03.395768+02:00",
+            "endedMonotonic": 26447.256881
+          },
+          "2": {
+            "startedUtc": "2026-10-09T00:09:26.374045+02:00",
+            "startedMonotonic": 26470.2351669,
+            "deadlineUtc": "2026-10-09T00:29:26.374045+02:00",
+            "status": "contaminated",
+            "outcome": "contaminated_stopped",
+            "stoppedObservedUtc": "2026-10-09T00:14:15.873673+02:00"
+          }
+        },
+        "productQualityAggregate": null,
+        "completedSixTaskTrial": false,
+        "invalidated": true
+      },
+      {
+        "trialId": "classic-brownfield-v3-20261008",
+        "method": "classic",
+        "condition": "brownfield",
+        "started": true,
+        "outcome": "contaminated_stopped",
+        "reservations": 1,
+        "actualActivations": 1,
+        "activationStatusGroups": [
+          {
+            "Name": "interrupted",
+            "Count": 1
+          }
+        ],
+        "roleGroups": [
+          {
+            "Name": "primary",
+            "Count": 1
+          }
+        ],
+        "startedUtc": "2026-10-09T00:02:13.358517+02:00",
+        "closedObservedUtc": "2026-10-09T00:14:15.873998+02:00",
+        "reservationToClosureObservationSeconds": 722.515481,
+        "tasks": {
+          "1": {
+            "startedUtc": "2026-10-09T00:02:13.358517+02:00",
+            "startedMonotonic": 26037.2196532,
+            "deadlineUtc": "2026-10-09T00:22:13.358517+02:00",
+            "status": "contaminated",
+            "outcome": "contaminated_stopped",
+            "stoppedObservedUtc": "2026-10-09T00:14:15.874003+02:00"
+          }
+        },
+        "productQualityAggregate": null,
+        "completedSixTaskTrial": false,
+        "invalidated": true
+      },
+      {
+        "trialId": "government-brownfield-v3-20261008",
+        "method": "government",
+        "condition": "brownfield",
+        "started": true,
+        "outcome": "contaminated_stopped",
+        "reservations": 2,
+        "actualActivations": 2,
+        "activationStatusGroups": [
+          {
+            "Name": "interrupted",
+            "Count": 2
+          }
+        ],
+        "roleGroups": [
+          {
+            "Name": "native-executor",
+            "Count": 1
+          },
+          {
+            "Name": "primary",
+            "Count": 1
+          }
+        ],
+        "startedUtc": "2026-10-09T00:03:10.728662+02:00",
+        "closedObservedUtc": "2026-10-09T00:14:15.874255+02:00",
+        "reservationToClosureObservationSeconds": 665.145593,
+        "tasks": {
+          "1": {
+            "startedUtc": "2026-10-09T00:03:10.728662+02:00",
+            "startedMonotonic": 26094.5898302,
+            "deadlineUtc": "2026-10-09T00:23:10.728662+02:00",
+            "status": "contaminated",
+            "outcome": "contaminated_stopped",
+            "stoppedObservedUtc": "2026-10-09T00:14:15.87426+02:00"
+          }
+        },
+        "productQualityAggregate": null,
+        "completedSixTaskTrial": false,
+        "invalidated": true
+      }
+    ],
+    "perActivationObservationIntervals": [
+      {
+        "reservationId": "activation-0001",
+        "trialId": "conventional-greenfield-v3-20261008",
+        "task": 1,
+        "role": "primary",
+        "actorId": "/root/v3_conventional_greenfield",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:40:20.417168+02:00",
+        "observedReservationToEndSeconds": 388.13330940000014,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0002",
+        "trialId": "classic-greenfield-v3-20261008",
+        "task": 1,
+        "role": "primary",
+        "actorId": "/root/v3_classic_greenfield",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:41:19.105982+02:00",
+        "observedReservationToEndSeconds": 1053.6353617999994,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0003",
+        "trialId": "government-greenfield-v3-20261008",
+        "task": 1,
+        "role": "primary",
+        "actorId": "/root/v3_government_greenfield",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:41:19.124976+02:00",
+        "observedReservationToEndSeconds": 1123.6137866999998,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0004",
+        "trialId": "classic-greenfield-v3-20261008",
+        "task": 1,
+        "role": "modeling-helper",
+        "actorId": "/root/v3_classic_gf_model_helper",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:43:18.120151+02:00",
+        "observedReservationToEndSeconds": 110.25779749999856,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0005",
+        "trialId": "government-greenfield-v3-20261008",
+        "task": 1,
+        "role": "modeling-helper",
+        "actorId": "/root/v3_government_gf_model_helper",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:45:08.440712+02:00",
+        "observedReservationToEndSeconds": 271.4922179000023,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0006",
+        "trialId": "conventional-greenfield-v3-20261008",
+        "task": 1,
+        "role": "public-independent-review",
+        "actorId": "/root/v3_conventional_gf_public_review",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:46:48.61337+02:00",
+        "observedReservationToEndSeconds": 321.4412360000024,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0007",
+        "trialId": "classic-greenfield-v3-20261008",
+        "task": 1,
+        "role": "native-executor",
+        "actorId": "/root/v3_classic_gf_executor_1",
+        "status": "failed",
+        "reservedUtc": "2026-10-08T23:49:47.517912+02:00",
+        "observedReservationToEndSeconds": 68.88633909999771,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0008",
+        "trialId": "classic-greenfield-v3-20261008",
+        "task": 1,
+        "role": "native-executor-continuation",
+        "actorId": "/root/v3_classic_gf_executor_1",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:50:56.412164+02:00",
+        "observedReservationToEndSeconds": 89.76853169999958,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0009",
+        "trialId": "conventional-greenfield-v3-20261008",
+        "task": 2,
+        "role": "primary-followup",
+        "actorId": "/root/v3_conventional_greenfield",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:52:10.151585+02:00",
+        "observedReservationToEndSeconds": 180.11881949999952,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0010",
+        "trialId": "government-greenfield-v3-20261008",
+        "task": 1,
+        "role": "native-executor",
+        "actorId": "/root/v3_government_gf_executor_1",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:53:06.891884+02:00",
+        "observedReservationToEndSeconds": 135.40200209999966,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0011",
+        "trialId": "conventional-greenfield-v3-20261008",
+        "task": 2,
+        "role": "public-independent-review",
+        "actorId": "/root/v3_conventional_gf_public_review_2",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:55:22.304029+02:00",
+        "observedReservationToEndSeconds": 119.08546320000096,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0012",
+        "trialId": "classic-greenfield-v3-20261008",
+        "task": 1,
+        "role": "native-executor",
+        "actorId": "/root/v3_classic_gf_executor_2",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:55:52.167885+02:00",
+        "observedReservationToEndSeconds": 77.2555715999988,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0013",
+        "trialId": "conventional-greenfield-v3-20261008",
+        "task": 3,
+        "role": "primary-followup",
+        "actorId": "/root/v3_conventional_greenfield",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:58:00.630229+02:00",
+        "observedReservationToEndSeconds": 216.46424010000192,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0014",
+        "trialId": "classic-greenfield-v3-20261008",
+        "task": 1,
+        "role": "independent-evaluation",
+        "actorId": "/root/v3_classic_gf_evaluator",
+        "status": "completed",
+        "reservedUtc": "2026-10-08T23:58:53.001054+02:00",
+        "observedReservationToEndSeconds": 116.22182260000045,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0015",
+        "trialId": "government-greenfield-v3-20261008",
+        "task": 1,
+        "role": "independent-evaluation",
+        "actorId": "/root/v3_government_gf_evaluator",
+        "status": "interrupted",
+        "reservedUtc": "2026-10-08T23:59:27.391508+02:00",
+        "observedReservationToEndSeconds": 129.69479610000053,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0016",
+        "trialId": "conventional-brownfield-v3-20261008",
+        "task": 1,
+        "role": "primary",
+        "actorId": "/root/v3_conventional_brownfield",
+        "status": "completed",
+        "reservedUtc": "2026-10-09T00:00:02.839447+02:00",
+        "observedReservationToEndSeconds": 187.80446040000243,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0017",
+        "trialId": "classic-brownfield-v3-20261008",
+        "task": 1,
+        "role": "primary",
+        "actorId": "/root/v3_classic_brownfield",
+        "status": "interrupted",
+        "reservedUtc": "2026-10-09T00:02:13.358517+02:00",
+        "observedReservationToEndSeconds": 722.4858122000005,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0018",
+        "trialId": "conventional-greenfield-v3-20261008",
+        "task": 3,
+        "role": "public-independent-review",
+        "actorId": "/root/v3_conventional_gf_public_review_3",
+        "status": "completed",
+        "reservedUtc": "2026-10-09T00:02:13.370643+02:00",
+        "observedReservationToEndSeconds": 145.9907662000005,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0019",
+        "trialId": "conventional-brownfield-v3-20261008",
+        "task": 1,
+        "role": "public-independent-review",
+        "actorId": "/root/v3_conventional_bf_public_review_1",
+        "status": "completed",
+        "reservedUtc": "2026-10-09T00:03:10.651718+02:00",
+        "observedReservationToEndSeconds": 143.47403340000164,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0020",
+        "trialId": "government-brownfield-v3-20261008",
+        "task": 1,
+        "role": "primary",
+        "actorId": "/root/v3_government_brownfield",
+        "status": "interrupted",
+        "reservedUtc": "2026-10-09T00:03:10.728662+02:00",
+        "observedReservationToEndSeconds": 665.1237330000004,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0021",
+        "trialId": "conventional-greenfield-v3-20261008",
+        "task": 4,
+        "role": "primary-followup",
+        "actorId": "/root/v3_conventional_greenfield",
+        "status": "completed",
+        "reservedUtc": "2026-10-09T00:04:39.49618+02:00",
+        "observedReservationToEndSeconds": 227.70239339999898,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0022",
+        "trialId": "conventional-brownfield-v3-20261008",
+        "task": 1,
+        "role": "primary-public-repair",
+        "actorId": "/root/v3_conventional_brownfield",
+        "status": "completed",
+        "reservedUtc": "2026-10-09T00:05:34.133588+02:00",
+        "observedReservationToEndSeconds": 111.535153300003,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0023",
+        "trialId": "conventional-brownfield-v3-20261008",
+        "task": 1,
+        "role": "public-independent-re-review",
+        "actorId": "/root/v3_conventional_bf_public_review_1",
+        "status": "completed",
+        "reservedUtc": "2026-10-09T00:07:25.676227+02:00",
+        "observedReservationToEndSeconds": 97.64968339999905,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0024",
+        "trialId": "conventional-greenfield-v3-20261008",
+        "task": 4,
+        "role": "public-independent-review",
+        "actorId": "/root/v3_conventional_gf_public_review_4",
+        "status": "completed",
+        "reservedUtc": "2026-10-09T00:08:27.206495+02:00",
+        "observedReservationToEndSeconds": 132.15893610000057,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0025",
+        "trialId": "conventional-brownfield-v3-20261008",
+        "task": 2,
+        "role": "primary-followup",
+        "actorId": "/root/v3_conventional_brownfield",
+        "status": "interrupted",
+        "reservedUtc": "2026-10-09T00:09:26.374045+02:00",
+        "observedReservationToEndSeconds": 289.4855491999988,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0026",
+        "trialId": "government-brownfield-v3-20261008",
+        "task": 1,
+        "role": "native-executor",
+        "actorId": "/root/v3_government_bf_executor_1",
+        "status": "interrupted",
+        "reservedUtc": "2026-10-09T00:10:54.837298+02:00",
+        "observedReservationToEndSeconds": 201.02926319999824,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0027",
+        "trialId": "conventional-greenfield-v3-20261008",
+        "task": 5,
+        "role": "primary-followup",
+        "actorId": "/root/v3_conventional_greenfield",
+        "status": "completed",
+        "reservedUtc": "2026-10-09T00:15:08.316849+02:00",
+        "observedReservationToEndSeconds": 137.2674435000008,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0028",
+        "trialId": "conventional-greenfield-v3-20261008",
+        "task": 5,
+        "role": "public-independent-review",
+        "actorId": "/root/v3_conventional_gf_public_review_5",
+        "status": "completed",
+        "reservedUtc": "2026-10-09T00:17:25.592674+02:00",
+        "observedReservationToEndSeconds": 229.08770640000148,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0029",
+        "trialId": "conventional-greenfield-v3-20261008",
+        "task": 5,
+        "role": "primary-public-repair",
+        "actorId": "/root/v3_conventional_greenfield",
+        "status": "completed",
+        "reservedUtc": "2026-10-09T00:21:14.688487+02:00",
+        "observedReservationToEndSeconds": 215.71465289999833,
+        "usage": null
+      },
+      {
+        "reservationId": "activation-0030",
+        "trialId": "conventional-greenfield-v3-20261008",
+        "task": 5,
+        "role": "public-independent-re-review",
+        "actorId": "/root/v3_conventional_gf_public_review_5",
+        "status": "reserved",
+        "reservedUtc": "2026-10-09T00:24:50.412048+02:00",
+        "observedReservationToEndSeconds": null,
+        "usage": null
+      }
+    ],
+    "sumOfIntervalsIsWallOrCompute": false,
+    "fullTask6Results": 0,
+    "methodScoreQualification": "Classic GF raw separate method72.5/100, product quality null; evaluator transcription and resource-visibility errata retained"
+  },
+  "posthoc": {
+    "fullTrials": 0,
+    "fixedPortAssessmentReservations": 2,
+    "fixedPortAssessmentActivations": 2,
+    "fixedPortOutcome": "build/static evidence; current HTTP and all7assigned private cases NOT RUN, later applicability qualification retained",
+    "fixedPortDescriptiveQualityScore": 71.25,
+    "fixedPortDescriptiveMethodScore": 63.75,
+    "fixedPortScoresAcceptedAsRuntimePass": false,
+    "ephemeralAssessmentReservations": 1,
+    "ephemeralAssessmentActivations": 1,
+    "publicLogEntries": 46,
+    "publicRestartEntries": 3,
+    "privatePassedCases": 5,
+    "privateRestartAfterPhase": "FAILED evaluation checkpoint representation comparison; not rescored",
+    "atomicCase": "inapplicable NOT RUN",
+    "extraTwelfthDiagnostic": "unplanned scope deviation, no score credit",
+    "ownServerStarts": 12,
+    "ownServerStopReceipts": 12,
+    "originalTrialReopened": false,
+    "originalTask6": "NOT RUN"
+  },
+  "v4": {
+    "actualCellStarts": 2,
+    "completeSixTaskTrials": 0,
+    "pairReservations": 8,
+    "pairActualActivations": 7,
+    "conventional": {
+      "maxParallelActors": 4,
+      "cost": null,
+      "globalDeadlineUtc": "2026-10-09T05:32:04Z",
+      "ownRoot": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-conventional-greenfield-01",
+      "startSha": "0416e366626d31933443ce2901d6a3696261db7b",
+      "tokens": null,
+      "contamination": "Not observed; cooperative boundary only",
+      "cellId": "v4-conventional-greenfield-01",
+      "servingModel": null,
+      "condition": "greenfield",
+      "rootStartReceiptSha256": "61cd7afa9d46ac3f3d331ed4f3645eebd61f8153fa8e12d0d383a00443ce465f",
+      "trialDeadlineUtc": "2026-10-09T03:42:59.3173598Z",
+      "rootStartReceipt": "v4-greenfield-pair-root-start-receipt-20261009",
+      "maxTaskActivations": 12,
+      "method": "Conventional/Oldschool",
+      "servicesPerActor": 12,
+      "maxTrialActivations": 72,
+      "trialActivationReservations": 3,
+      "humanTime": null,
+      "sourceFreeze": "48845595368188c46d56f1a909f8fecd43ff7fe7",
+      "startTree": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+      "maxParallelPrimaryCells": 1,
+      "tasks": [
+        {
+          "task": 1,
+          "status": "CLOSED FROZEN WITH INDEPENDENT ASSESSMENT",
+          "endReserveSeconds": 30,
+          "semanticRepairs": 0,
+          "deadlineUtc": "2026-10-09T02:02:59.3173598Z",
+          "startUtc": "2026-10-09T01:42:59.3173598Z",
+          "assessmentMinimumSeconds": 300,
+          "activationReservations": [
+            {
+              "role": "primary-implementation",
+              "reservation": 1,
+              "overrides": null,
+              "reservedUtc": "2026-10-09T01:42:59.3173598Z",
+              "forkTurns": "none",
+              "status": "completed",
+              "actualActorId": "/root/v4_actual_conventional_greenfield_primary"
+            },
+            {
+              "reservation": 2,
+              "deadlineUtc": "2026-10-09T01:53:31.114879Z",
+              "role": "independent-assessor",
+              "overrides": null,
+              "status": "completed",
+              "forkTurns": "none",
+              "maxSeconds": 300,
+              "reservedUtc": "2026-10-09T01:48:31.114879Z",
+              "actualActorId": "/root/v4_conventional_gf_task1_independent_assessor",
+              "nativeStartObservedUtc": "2026-10-09T01:49:56.4404379Z"
+            }
+          ],
+          "implementationEndUtc": "2026-10-09T01:56:59.3173598Z",
+          "candidateCommit": "db7df944c8d5e514797a0184943d74f5fa3a9cd1",
+          "candidateFreeze": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-conventional-greenfield-01\\candidates\\task1\\freeze.json",
+          "closedUtc": "2026-10-09T01:52:06.3939405Z",
+          "assessmentPath": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-conventional-greenfield-01\\independent-assessment\\task1\\assessment.json",
+          "assessmentSha256": "bdfac8bae05af3d49086dab1ec447b828677f2f9958372b63cc280e93218e830"
+        },
+        {
+          "implementationEndUtc": "2026-10-09T02:06:06.4835503Z",
+          "task": 2,
+          "semanticRepairs": 0,
+          "status": "NOT RUN / coordinator_interruption",
+          "endReserveSeconds": 30,
+          "activationReservations": [
+            {
+              "continuation": true,
+              "status": "reserved never dispatched; expired",
+              "overrides": null,
+              "role": "primary-implementation",
+              "reservation": 1,
+              "reservedUtc": "2026-10-09T01:52:06.4835503Z",
+              "actorId": "/root/v4_actual_conventional_greenfield_primary"
+            }
+          ],
+          "deadlineUtc": "2026-10-09T02:12:06.4835503Z",
+          "startUtc": "2026-10-09T01:52:06.4835503Z",
+          "assessmentMinimumSeconds": 300
+        }
+      ],
+      "state": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-conventional-greenfield-01",
+      "repo": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-conventional-greenfield-01\\repo",
+      "status": "CLOSED INCOMPLETE / coordinator_interruption",
+      "startUtc": "2026-10-09T01:42:59.3173598Z",
+      "primaryActorId": "/root/v4_actual_conventional_greenfield_primary",
+      "actualFirstNativeActivationObservedUtc": "2026-10-09T01:44:44.6700496Z",
+      "closedUtc": "2026-10-09T04:20:21.2898489+02:00",
+      "actualNativeActivations": 2,
+      "outcome": "incomplete/coordinator_interruption",
+      "subsequentTasks": [
+        {
+          "task": 3,
+          "status": "NOT RUN",
+          "reason": "Missing completed predecessor after task2 coordinator interruption"
+        },
+        {
+          "task": 4,
+          "status": "NOT RUN",
+          "reason": "Missing completed predecessor after task2 coordinator interruption"
+        },
+        {
+          "task": 5,
+          "status": "NOT RUN",
+          "reason": "Missing completed predecessor after task2 coordinator interruption"
+        },
+        {
+          "task": 6,
+          "status": "NOT RUN",
+          "reason": "Missing completed predecessor after task2 coordinator interruption"
+        }
+      ]
+    },
+    "classicMain": {
+      "cellId": "v4-classic-main-greenfield-01",
+      "method": "ClassicMain",
+      "condition": "greenfield",
+      "startUtc": "2026-10-09T04:21:55.258547+02:00",
+      "trialDeadlineUtc": "2026-10-09T06:21:55.258547+02:00",
+      "globalDeadlineUtc": "2026-10-09T07:32:04+02:00",
+      "startSha": "0416e366626d31933443ce2901d6a3696261db7b",
+      "mainSource": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+      "mainBinary": "C:/Users/Consiliari/Documents/Scientist-v4-runtime-binding-20261009/runtime/markitect.exe",
+      "mainBinarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+      "repo": "C:/Users/Consiliari/Documents/Scientist-v4-matched-actuals/cells/v4-classic-main-greenfield-01/repo",
+      "ownRoot": "C:/Users/Consiliari/Documents/Scientist-v4-matched-actuals/cells/v4-classic-main-greenfield-01",
+      "state": "C:/Users/Consiliari/Documents/Scientist-v4-matched-actuals/state/v4-classic-main-greenfield-01",
+      "status": "CLOSED INCOMPLETE / representation-capability",
+      "trialActivationReservations": 5,
+      "actualNativeActivations": 5,
+      "maxTrialActivations": 72,
+      "maxTaskActivations": 12,
+      "maxParallelActors": 4,
+      "servicesPerActor": 12,
+      "humanTime": null,
+      "cost": null,
+      "tokens": null,
+      "servingModel": null,
+      "tasks": [
+        {
+          "task": 1,
+          "startUtc": "2026-10-09T04:21:55.258547+02:00",
+          "implementationEndUtc": "2026-10-09T04:35:55.258547+02:00",
+          "deadlineUtc": "2026-10-09T04:41:55.258547+02:00",
+          "status": "CLOSED INCOMPLETE / representation-capability",
+          "semanticRepairs": 2,
+          "activationReservations": [
+            {
+              "reservation": 1,
+              "role": "canonical-author-primary",
+              "reservedUtc": "2026-10-09T04:21:55.258547+02:00",
+              "status": "completed partial",
+              "forkTurns": "none",
+              "overrides": null,
+              "actualActorId": "/root/v4_actual_classic_main_gf_canonical_author"
+            },
+            {
+              "status": "completed",
+              "overrides": null,
+              "role": "canonical-author-repair",
+              "reservation": 2,
+              "continuation": true,
+              "reservedUtc": "2026-10-09T04:25:03.7367378+02:00",
+              "actualActorId": "/root/v4_actual_classic_main_gf_canonical_author"
+            },
+            {
+              "overrides": null,
+              "reservedUtc": "2026-10-09T04:28:03.6216869+02:00",
+              "role": "canonical-author-repair2",
+              "status": "completed",
+              "reservation": 3,
+              "actualActorId": "/root/v4_actual_classic_main_gf_canonical_author",
+              "continuation": true
+            },
+            {
+              "runId": "0f487f57500739fe04961f94ffa3ac2e",
+              "reservedUtc": "2026-10-09T04:31:36.7920964+02:00",
+              "overrides": null,
+              "forkTurns": "none",
+              "status": "completed incomplete",
+              "reservation": 4,
+              "role": "Main-executor",
+              "actualActorId": "/root/v4_actual_classic_main_gf_task1_executor"
+            },
+            {
+              "overrides": null,
+              "role": "independent-evidence-review",
+              "deadlineUtc": "2026-10-09T02:38:30Z",
+              "reservation": 5,
+              "status": "completed",
+              "forkTurns": "none",
+              "reservedUtc": "2026-10-09T04:35:45.315512+02:00",
+              "actualActorId": "/root/v4_actual_classic_main_gf_task1_evidence_review"
+            }
+          ],
+          "closedUtc": "2026-10-09T04:39:08.64812+02:00",
+          "canonicalSourceSha": "aa14251fe869b9e2653c6bc0fa7dfb9ef40b7323",
+          "mainResult": "escalated/executor.incomplete",
+          "acceptedCandidate": false,
+          "independentReviewSha256": "fb703da9e42ee66eacdac8dbc85d7909d750e22b7e596e89083674b064b6c8e6"
+        }
+      ],
+      "actualFirstNativeActivationObservedUtc": "2026-10-09T04:23:12.4004349+02:00",
+      "outcome": "incomplete/representation-capability",
+      "closedUtc": "2026-10-09T04:39:08.64812+02:00",
+      "wallElapsedSeconds": 1033.389573,
+      "mainProcessStarts": 6,
+      "nativeMainRoleCalls": 1,
+      "applyCalls": 0,
+      "verifyCalls": 0,
+      "privateHoldoutRuns": 0,
+      "independentPublicDiagnosticChecks": 14,
+      "studyQualityAggregate": null,
+      "subsequentTasks": [
+        {
+          "task": 2,
+          "status": "NOT RUN",
+          "reason": "No applicable Task1 Main application candidate/materialization; both semantic repair allocations consumed; frozen representation excludes required architecture artifacts, no late bypass or frozen product change"
+        },
+        {
+          "task": 3,
+          "status": "NOT RUN",
+          "reason": "No applicable Task1 Main application candidate/materialization; both semantic repair allocations consumed; frozen representation excludes required architecture artifacts, no late bypass or frozen product change"
+        },
+        {
+          "task": 4,
+          "status": "NOT RUN",
+          "reason": "No applicable Task1 Main application candidate/materialization; both semantic repair allocations consumed; frozen representation excludes required architecture artifacts, no late bypass or frozen product change"
+        },
+        {
+          "task": 5,
+          "status": "NOT RUN",
+          "reason": "No applicable Task1 Main application candidate/materialization; both semantic repair allocations consumed; frozen representation excludes required architecture artifacts, no late bypass or frozen product change"
+        },
+        {
+          "task": 6,
+          "status": "NOT RUN",
+          "reason": "No applicable Task1 Main application candidate/materialization; both semantic repair allocations consumed; frozen representation excludes required architecture artifacts, no late bypass or frozen product change"
+        }
+      ],
+      "limitations": [
+        "Configured native profile inherited gpt-6.1-sol/high, serving model/cost/tokens/humanTime unmeasured",
+        "Cooperative shared-host scope only; no OS isolation/provider-stop guarantee",
+        "Diagnostic binary lacks independent reproducible source-to-binary provenance receipt",
+        "Incomplete audit command: no result, exact leftover subprocess identity unavailable in retained executor handoff; no global process search or termination attempted",
+        "Parent profile explicitly read before initial author; subsequent role bindings reference same immutable parent turn profile, no separate per-role live metadata read receipt"
+      ]
+    },
+    "otherConditions": "Brownfield, Design, Government v4 cells NOT RUN",
+    "commonLiveSetupCumulative": {
+      "mainProcesses": 3,
+      "nativeReservations": 5,
+      "actualNativeActivations": 4,
+      "executorActivations": 2,
+      "readonlyReviewActivations": 2,
+      "doubleCountPreviousConsumed": false
+    },
+    "conventionalTask1Assessment": {
+      "publicPassed": 14,
+      "privateApplicablePassed": 2,
+      "qualityScores": {
+        "functional": 4,
+        "stateAndData": 4,
+        "verification": 4,
+        "maintainability": 4,
+        "regressionCompatibility": "N/A"
+      },
+      "scoreScale": 4,
+      "fourObservableMethodDimensionsScore": 4,
+      "resourceAccounting": "NOT ASSESSABLE",
+      "aggregate": null
+    },
+    "classicDiagnostics": {
+      "publicPassed": 14,
+      "acceptedApplicableCandidate": false,
+      "independentReproducibleSourceToBinaryReceipt": false,
+      "qualityAggregate": null
+    },
+    "runtimeBindingCorrectionDeviation": "3ordinarycorrectionbatches versus max2, archivalfix notprereserved; source/testsunchanged afterterminal",
+    "rootOversightTotals": null
+  },
+  "designReadiness": {
+    "scope": "Historical retained metadata, not StudyDesign GF/BF",
+    "historicalCalls": 16,
+    "roles": {
+      "work": 6,
+      "review": 7,
+      "integration": 3
+    },
+    "inputTokens": 304223,
+    "outputTokens": 15626,
+    "actualTrueVerifierReceiptEstablished": false,
+    "foreignShopSolutionRuntimeArchiveContentsOpenedForSynthesis": false,
+    "studyDesignCellsStarted": 0,
+    "studyOutcome": null
+  },
+  "v5": {
+    "verdict": "independently approved qualified NOT ADMITTED",
+    "bindingBatches": 1,
+    "syntheticChecks": 1,
+    "syntheticCheckSeconds": 0.0830383,
+    "readonlyReviewReservations": 1,
+    "readonlyReviewActivations": 1,
+    "productRuntime": 0,
+    "proposalActorCapCell": 144,
+    "proposalActorCapTask": 24,
+    "proposalWallSecondsCell": 7200,
+    "proposalWallSecondsTask": 1200,
+    "proposalAllocatedTrials": 0,
+    "wallFeasibility": null,
+    "commonFullToolRealUsagePathEstablished": false,
+    "reviewNativeExactWall": null
+  },
+  "comparability": {
+    "withinV3WorkflowAttainment": "Descriptive absolute stage attainment only; no quality/productivity/compute delta",
+    "v3Brownfield": "invalid for comparison",
+    "v4Task1PublicCounts": "different candidate admissibility and binary provenance; no aggregate delta",
+    "crossVersion": "different check/oracle/protocol scope",
+    "designReadiness": "different case/profile/method, not a study cell",
+    "qualityDelta": null,
+    "methodScoreDelta": null,
+    "reliabilityDelta": null,
+    "productivityDelta": null,
+    "economicDelta": null,
+    "winner": null,
+    "humanAcceptance": null
+  },
+  "unknowns": [
+    "native serving model",
+    "complete provider request counts",
+    "native input/output/cache tokens and billing",
+    "compute",
+    "exclusive setup/model/coding/review/repair time within primary turns",
+    "parent Scientist active cognitive time",
+    "Root complete call/time/token totals",
+    "active human oversight time and actual compliance with cap",
+    "OS confinement/provider cancellation"
+  ],
+  "accountingRules": [
+    "Reservation is not actual activation; activation is not uniqueActor/providerrequest/productprocess.",
+    "Modeling/helpers/review/repair/failedstarts are charged.",
+    "Primary/helper/process and setup grant intervals can overlap; do not sum into wall/compute/human.",
+    "Nested previousConsumed fields are cumulative, not new events.",
+    "Historical tokens/R12tokens do not fill native study unknowns.",
+    "NOTRUN/inapplicable/missing quality is null, not0orPASS."
+  ],
+  "next": "Hold. Root owns final product recommendation/version-bound usage guidance; no automatic new preparation, canary, runtime, replacement or unused-slot allocation.",
+  "externalRetainedEvidenceReferences": [
+    {
+      "path": "C:/Users/Consiliari/Documents/Scientist-v4-matched-actuals/state/v4-conventional-greenfield-01/independent-assessment/task1/assessment.json",
+      "sha256": "bdfac8bae05af3d49086dab1ec447b828677f2f9958372b63cc280e93218e830",
+      "bytes": 12484,
+      "scope": "Existing closed frozen Task1 independent assessment; retained in original conventional-terminal-state.zip bound by its manifest. Read only; no runtime or evaluation."
+    }
+  ],
+  "closedUtc": "2026-10-09T05:29:22.2316646+02:00"
+}
