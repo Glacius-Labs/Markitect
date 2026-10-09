@@ -1,0 +1,115 @@
+{
+  "baseSourceSha": "429c52d8a37fa60ca4393a3501a495128b4d2e88",
+  "sourceFileSha256": "67d28776ab87c5d998a20bd0e86dd5165adbe74a93b8266dddde741484561c64",
+  "testFileSha256": "8001be4a6d844cf8483e106e80ff9a2c33360cc738526b77f98ee1cffa1f5a00",
+  "finalPublicInventorySha256": "95e09c04f9168e785a8d0ca52e515de363c48e915a450ed228be72d984af2bff",
+  "preparedInputsSha256": "78c6c905cc1db07be780c603b0b7b3b967072edc078f365946c0d639b4c5772e",
+  "reviewFreezeSha256": "2e77dc5f82884d43b83164c8d69a8b2cf5057b45b658022dddbe5630e0f0b431",
+  "independentReviewSha256": "b00612b54125f5b9511bd91b8f72565304608b7e568f8ec398d3400f20bcc5fd",
+  "cells": [
+    {
+      "case": "roombook",
+      "arm": "conventional",
+      "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional",
+      "state": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional",
+      "head": "128006c6efeb3ba9244de76d0dcc777e97aa9589",
+      "expectedHead": "128006c6efeb3ba9244de76d0dcc777e97aa9589",
+      "main": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+      "expectedMain": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+      "clean": true,
+      "headMatches": true,
+      "mainMatches": true,
+      "nativeHome": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\homes\\roombook-conventional",
+      "nativeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+      "nativeConfigMatches": true,
+      "authentication": "not provisioned/probed",
+      "nativeHomeEntries": [
+        "config.toml"
+      ]
+    },
+    {
+      "case": "roombook",
+      "arm": "markitect",
+      "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-markitect",
+      "state": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-markitect",
+      "head": "f769c6a4cce26c1e7867f4ef9900ebe2b2a9d339",
+      "expectedHead": "f769c6a4cce26c1e7867f4ef9900ebe2b2a9d339",
+      "main": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+      "expectedMain": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+      "clean": true,
+      "headMatches": true,
+      "mainMatches": true,
+      "nativeHome": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\homes\\roombook-markitect",
+      "nativeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+      "nativeConfigMatches": true,
+      "authentication": "not provisioned/probed",
+      "nativeHomeEntries": [
+        "config.toml"
+      ]
+    },
+    {
+      "case": "readinglog",
+      "arm": "conventional",
+      "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\readinglog-conventional",
+      "state": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\readinglog-conventional",
+      "head": "2594ede8385c369ae244bddca9a5acbe61dc5122",
+      "expectedHead": "2594ede8385c369ae244bddca9a5acbe61dc5122",
+      "main": "ebd5e6a0455b37364c5ce302f7383e045e8b34e1",
+      "expectedMain": "ebd5e6a0455b37364c5ce302f7383e045e8b34e1",
+      "clean": true,
+      "headMatches": true,
+      "mainMatches": true,
+      "nativeHome": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\homes\\readinglog-conventional",
+      "nativeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+      "nativeConfigMatches": true,
+      "authentication": "not provisioned/probed",
+      "nativeHomeEntries": [
+        "config.toml"
+      ]
+    },
+    {
+      "case": "readinglog",
+      "arm": "markitect",
+      "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\readinglog-markitect",
+      "state": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\readinglog-markitect",
+      "head": "cb2930c3bf9e2f078aeab1952a565af74b46ebfd",
+      "expectedHead": "cb2930c3bf9e2f078aeab1952a565af74b46ebfd",
+      "main": "ebd5e6a0455b37364c5ce302f7383e045e8b34e1",
+      "expectedMain": "ebd5e6a0455b37364c5ce302f7383e045e8b34e1",
+      "clean": true,
+      "headMatches": true,
+      "mainMatches": true,
+      "nativeHome": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\homes\\readinglog-markitect",
+      "nativeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+      "nativeConfigMatches": true,
+      "authentication": "not provisioned/probed",
+      "nativeHomeEntries": [
+        "config.toml"
+      ]
+    }
+  ],
+  "seeds": [
+    {
+      "case": "roombook",
+      "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\seeds\\roombook",
+      "commit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+      "tree": "c9b88d6fe6c0d4c3d7b7ce81914699575d230606",
+      "bundleSha256": "da53e8a16135066dd264ad85987270cb20d1fd6993d3f77ee48213151a3e90ca"
+    },
+    {
+      "case": "readinglog",
+      "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\seeds\\readinglog",
+      "commit": "ebd5e6a0455b37364c5ce302f7383e045e8b34e1",
+      "tree": "996cb9f60d061ac3eef6e3c42ae34dd61945b8c2",
+      "bundleSha256": "76ebca89bde4b2089b63a45254b1b15343cf57b6032b557851e01236f99bcf90"
+    }
+  ],
+  "nativeExecutable": "C:/Users/Consiliari/AppData/Roaming/npm/node_modules/@openai/codex/node_modules/@openai/codex-win32-x64/vendor/x86_64-pc-windows-msvc/codex/codex.exe",
+  "nativeExecutableSha256": "280cb1c4e3375d94dbdcba1a191f4f6adbf73c293be1e4f16c74b006662b9c54",
+  "pythonExecutable": "C:/Python313/python.exe",
+  "pythonExecutableSha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+  "recordedUtc": "2026-10-09T04:56:46.1823031+00:00",
+  "caseActors": 0,
+  "providerProbes": 0,
+  "actualFullStarts": 0
+}

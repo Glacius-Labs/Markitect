@@ -1,0 +1,29 @@
+test_actual_raw_event_parser_and_missing_usage (test_nest.Mechanics.test_actual_raw_event_parser_and_missing_usage) ... Switched to a new branch 'work/backlog'
+ok
+test_bounded_owned_non_model_child_stop (test_nest.Mechanics.test_bounded_owned_non_model_child_stop) ... Switched to a new branch 'work/backlog'
+ok
+test_fake_local_process_capture_resume_and_grant_no_refill (test_nest.Mechanics.test_fake_local_process_capture_resume_and_grant_no_refill) ... Switched to a new branch 'work/backlog'
+ok
+test_fixed_dispatch_all_stations_without_code_advice (test_nest.Mechanics.test_fixed_dispatch_all_stations_without_code_advice) ... Switched to a new branch 'work/backlog'
+HEAD is now at 1117ae1 Original shared readinglog seed and public backlog
+HEAD is now at 1117ae1 Original shared readinglog seed and public backlog
+HEAD is now at 1117ae1 Original shared readinglog seed and public backlog
+HEAD is now at 1117ae1 Original shared readinglog seed and public backlog
+HEAD is now at 1117ae1 Original shared readinglog seed and public backlog
+ok
+test_lock_and_exact_grants (test_nest.Mechanics.test_lock_and_exact_grants) ... Switched to a new branch 'work/backlog'
+ok
+test_native_template_is_luna_high_and_memory_disabled (test_nest.Mechanics.test_native_template_is_luna_high_and_memory_disabled) ... Switched to a new branch 'work/backlog'
+ok
+test_shared_seed_parity_and_non_solution_greenfield (test_nest.Mechanics.test_shared_seed_parity_and_non_solution_greenfield) ... Switched to a new branch 'work/backlog'
+Switched to a new branch 'work/backlog'
+ok
+test_snapshot_retains_dirty_separate_from_main_and_no_replay (test_nest.Mechanics.test_snapshot_retains_dirty_separate_from_main_and_no_replay) ... Switched to a new branch 'work/backlog'
+HEAD is now at 9025033 Original shared readinglog seed and public backlog
+HEAD is now at 9025033 Original shared readinglog seed and public backlog
+ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 18.483s
+
+OK

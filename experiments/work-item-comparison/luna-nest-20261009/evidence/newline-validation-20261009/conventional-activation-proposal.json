@@ -1,0 +1,21 @@
+{
+  "executionAuthorized": false,
+  "grantId": "conventional-roombook-early-start-20261009",
+  "cell": "roombook/conventional",
+  "model": "gpt-6-luna",
+  "reasoning": "high",
+  "preparedCommit": "128006c6efeb3ba9244de76d0dcc777e97aa9589",
+  "executableSha256": "280cb1c4e3375d94dbdcba1a191f4f6adbf73c293be1e4f16c74b006662b9c54",
+  "nativeHome": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\homes\\roombook-conventional",
+  "nativeHomeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+  "nativeConfigurationReviewed": false,
+  "freshContextConfirmed": false,
+  "maxCellWallSeconds": 7200,
+  "maxImplementationSessions": 8,
+  "notAfterUtc": "2026-10-09T09:12:43Z",
+  "markitectReadinessReceipt": null,
+  "mechanicalValidationReceipt": "receipt.json",
+  "baseSourceSha": "429c52d8a37fa60ca4393a3501a495128b4d2e88",
+  "setupMaxWallSeconds": 900,
+  "actualActivationOwner": "Root exact receipt pending, no model or account probe here"
+}

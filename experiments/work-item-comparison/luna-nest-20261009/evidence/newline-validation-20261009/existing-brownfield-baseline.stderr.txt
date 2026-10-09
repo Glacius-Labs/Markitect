@@ -1,0 +1,6 @@
+test_add_list_restart_duplicate_and_invalid_input (test_baseline.ExistingContract.test_add_list_restart_duplicate_and_invalid_input) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.252s
+
+OK

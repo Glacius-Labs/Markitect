@@ -1,0 +1,82 @@
+[
+  {
+    "file": "ast-only.ps1",
+    "sha256": "d8e7b64974f40678543cb0e10303dbe0d9df998922a762a177f93294980f5995",
+    "bytes": 386
+  },
+  {
+    "file": "bindings.json",
+    "sha256": "8adf68c218873623e69b79c1cc48295cea0e8c2e53e67c705bc0ebc4b6320a9e",
+    "bytes": 5881
+  },
+  {
+    "file": "continuation-anchor.json",
+    "sha256": "b5e6d032ed16bbc912eecd01df2d178902bed1a9c2eb55a73b84742e3316f157",
+    "bytes": 558
+  },
+  {
+    "file": "conventional-activation-proposal.json",
+    "sha256": "638c907661a8c2710b9a2c7a79f649987983cad5ce61efe8e398a20b7dca651c",
+    "bytes": 1008
+  },
+  {
+    "file": "existing-brownfield-baseline.stderr.txt",
+    "sha256": "edb5aec601add07dc3afe56277c0b550583bd24bf7b4ea625f1bbd19500b54e7",
+    "bytes": 243
+  },
+  {
+    "file": "existing-brownfield-baseline.stdout.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "file": "existing-eight-fixtures.stderr.txt",
+    "sha256": "42800d5aae5eeb098dabed8e6d85f9cc44449e679b2f837773f9c2a18f19a3ae",
+    "bytes": 2008
+  },
+  {
+    "file": "existing-eight-fixtures.stdout.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "file": "existing-oldschool-ast.stderr.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "file": "existing-oldschool-ast.stdout.txt",
+    "sha256": "79b39641babc1f155d6388d23a67b26ce85478767a4f525b2e168d4f62cc54bd",
+    "bytes": 58
+  },
+  {
+    "file": "grant.json",
+    "sha256": "6b807eb4e6277bfb9d7b2cb761db245e1cd39896a29da050b9aa0ffc8d39235f",
+    "bytes": 1399
+  },
+  {
+    "file": "HANDOFF.md",
+    "sha256": "544b7347d0db7d5e2d4e6ec3a4bf9ee2191ef08150ab7d1f487705e43fbebbde",
+    "bytes": 4437
+  },
+  {
+    "file": "preflight-note.json",
+    "sha256": "d7f0b91321203192bc91873d4090b31f8d80927b91895760b0099f7ebd34ace1",
+    "bytes": 594
+  },
+  {
+    "file": "receipt.json",
+    "sha256": "418a62bbd8250a659fd4ed0b0b53db2fe8ad84b1cd2730f6ee2f594664e45ef0",
+    "bytes": 3011
+  },
+  {
+    "file": "reservation.json",
+    "sha256": "eee764549ae6f4a28aff218c99eb04278878b8bcaae36ca974773291943c19e8",
+    "bytes": 10356
+  },
+  {
+    "file": "validate-once.py",
+    "sha256": "ffaf740631151f8849ea68507c033818282a8622fa582f28b24f9a2468d3e5f6",
+    "bytes": 7418
+  }
+]

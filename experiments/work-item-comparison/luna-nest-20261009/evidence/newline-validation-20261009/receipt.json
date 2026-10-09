@@ -1,0 +1,77 @@
+{
+  "grantId": "luna-nest-newline-mechanical-validation-20261009",
+  "baseSourceSha": "429c52d8a37fa60ca4393a3501a495128b4d2e88",
+  "additionalBatch": 1,
+  "status": "PASS",
+  "aggregateTestWallSeconds": 19.380952200001047,
+  "originalFilesUnchanged": true,
+  "receipts": [
+    {
+      "name": "existing-eight-fixtures",
+      "argv": [
+        "C:\\Python313\\python.exe",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\work-item-comparison\\luna-nest-20261009\\tests",
+        "-v"
+      ],
+      "startedUtc": "2026-10-09T04:55:12.356706+00:00",
+      "pid": 35740,
+      "exitCode": 0,
+      "status": "PASS",
+      "endedUtc": "2026-10-09T04:55:31.084267+00:00",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "42800d5aae5eeb098dabed8e6d85f9cc44449e679b2f837773f9c2a18f19a3ae"
+    },
+    {
+      "name": "existing-brownfield-baseline",
+      "argv": [
+        "C:\\Python313\\python.exe",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\work-item-comparison\\luna-nest-20261009\\public\\cases\\readinglog\\tests",
+        "-v"
+      ],
+      "startedUtc": "2026-10-09T04:55:31.089337+00:00",
+      "pid": 43104,
+      "exitCode": 0,
+      "status": "PASS",
+      "endedUtc": "2026-10-09T04:55:31.436539+00:00",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "edb5aec601add07dc3afe56277c0b550583bd24bf7b4ea625f1bbd19500b54e7"
+    },
+    {
+      "name": "existing-oldschool-ast",
+      "argv": [
+        "C:\\Users\\Consiliari\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.EXE",
+        "-NoProfile",
+        "-File",
+        "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\work-item-comparison\\luna-nest-20261009\\evidence\\newline-validation-20261009\\ast-only.ps1",
+        "-Launcher",
+        "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\work-item-comparison\\luna-nest-20261009\\public\\conventional\\oldschool\\Invoke-NestTurn.ps1"
+      ],
+      "startedUtc": "2026-10-09T04:55:31.441355+00:00",
+      "pid": 49236,
+      "exitCode": 0,
+      "status": "PASS",
+      "endedUtc": "2026-10-09T04:55:31.727112+00:00",
+      "stdoutSha256": "79b39641babc1f155d6388d23a67b26ce85478767a4f525b2e168d4f62cc54bd",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "caseActors": 0,
+  "productActors": 0,
+  "providerProbes": 0,
+  "productBuilds": 0,
+  "actualFullStarts": 0,
+  "newReviewerStarts": 0,
+  "cost": null,
+  "tokens": null,
+  "scope": "Mechanical fixtures + original baseline + PS AST; no native case execution or acceptance"
+}

@@ -1,0 +1,12 @@
+{
+  "attempt": "source-binding preflights before batch reservation/test starts",
+  "status": "stopped before tests",
+  "causes": [
+    "Historical continuation-anchor local CRLF versus canonical Git LF",
+    "Historical evidence/final-public-source.json likewise normalized in original checkpoint"
+  ],
+  "testStarts": 0,
+  "batchReservations": 0,
+  "oldFilesUnchanged": true,
+  "validatorAdjustment": "Recognize only mathematically exact CRLF-to-LF differences in original metadata, never public/ or tests/. Retain all raw local before/after hashes; no original files modified."
+}

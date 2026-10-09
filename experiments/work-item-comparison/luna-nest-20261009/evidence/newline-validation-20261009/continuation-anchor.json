@@ -1,0 +1,12 @@
+{
+  "status": "COMPLETE one additional mechanical batch PASS; original evidence unchanged; exact private handoff pending callback",
+  "oldPreparationBatches": 2,
+  "oldPreparationFailedBatches": 2,
+  "oldReviewers": 1,
+  "newReviewerStarts": 0,
+  "newMechanicalBatches": 1,
+  "actualFullStarts": 0,
+  "noRepeat": true,
+  "deadlineUtc": "2026-10-09T05:07:04Z",
+  "next": "Root exact activation of existing Conventional Roombook reservation, then normal measured setup+one actual. No repeat validation/new reviewer/native probe from this grant."
+}
