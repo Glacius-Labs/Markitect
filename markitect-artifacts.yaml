@@ -2478,6 +2478,12 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectrun/helper_budget_binding.go
       owner: project-world-implementation
+    - path: src/internal/host/projectrun/helper_closure_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/cost.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/native_cost_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectrun/helpers_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectrun/resume_invocation.go
