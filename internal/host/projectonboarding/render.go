@@ -96,6 +96,8 @@ The active project model expresses canonical ownership through Manager IDs and n
 
 For the default committed-model policy, a valid selected canonical model at the current committed HEAD is the accepted repository specification. The edit preview, an unapplied model proposal, or an exploration record is not acceptance; committing a noncanonical draft file does not change the accepted model. The Explore CRUD path stores ModelAccepted:false, while computed readiness establishes acceptance only when the model is non-provisional, committed at current HEAD, and governed by committed-model policy. A human approval is not required unless the repository policy or this Work Item explicitly requires it.
 
+Do not implement a scope until its canonical model is accepted and current policy readiness is resolved. If the native workspace denies a required model write or Git commit, keep the exploration and draft intact, use the existing approval mechanism if available, and otherwise stop and report the exact blocked action. Do not bypass the Run/Review/Apply lifecycle by writing implementation files directly. A tool-permission failure does not authorize changing caller security settings. Resume the same exploration when the ordinary required action has completed.
+
 Have the responsible Manager prepare a closed mutation with the current Project baseDigest, its actor ID, a bounded goal, and exact canonical model file contents. Preview it, inspect the structural report and impact, and apply only that returned plan digest:
 
     markitect project edit --repo PATH --input MUTATION.json
