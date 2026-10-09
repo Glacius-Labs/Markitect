@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T17:42:23Z",
+  "updatedUtc": "2026-10-09T17:47:05Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16148,7 +16148,18 @@
       "nativeStarts": 0,
       "newGrant": false,
       "mainMerge": false,
-      "release": false
+      "release": false,
+      "recoveryCorrection": {
+        "sha": "8b3f69ec26d7e3d19e61b7de3156dd2ccaf3c2c8",
+        "verifiedUtc": "2026-10-09T17:47:05Z",
+        "rootVerified": "Clean exact local/public remote; only recovery.go/adapter_test.go/own handoff; nine-line implementation delta read",
+        "change": "Original trusted RoleStartRequest retained unknown until exact saved terminal turn; observed items/failed children retained before running ErrUncertain",
+        "ledgerInstruction": "Merge same original RequestID into original journal; no new reservation/start, uncertainty retained",
+        "checks": "Owner reports focused2.344s/package6.210s/vet/diff and independent bounded review PASS; no Root rerun",
+        "nativeCalls": 0,
+        "newQuota": false,
+        "mainOrRelease": false
+      }
     }
   },
   "playgroundAndClaudePreparation20261009": {
