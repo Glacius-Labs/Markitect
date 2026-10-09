@@ -5,13 +5,13 @@ This fixture vendors the exact `review-guidance` ZIP built by `markitect pack` f
 From the Markitect source checkout, inspect the package export directly:
 
 ```sh
-go run ./cmd/markitect context --repo examples/package-consumer --package review-guidance --namespace review --kind Workflow --name review-change
+go run ./src/cmd/markitect context --repo examples/package-consumer --package review-guidance --namespace review --kind Workflow --name review-change
 ```
 
 Inspect the consumer-owned wrapper and its imported dependency:
 
 ```sh
-go run ./cmd/markitect context --repo examples/package-consumer --namespace consumer --kind Skill --name local-review-entry
+go run ./src/cmd/markitect context --repo examples/package-consumer --namespace consumer --kind Skill --name local-review-entry
 ```
 
 The archive was built by the CLI from a fixed Git commit of the neutral package example. To update it, repeat the pack steps in [the package source README](../content-package/README.md), review the source and resulting bytes, copy the ZIP to `.markitect/packages/`, then update the consumer pin’s version, source, archive path, and SHA-256 together. A changed archive fails closed against the current pin.

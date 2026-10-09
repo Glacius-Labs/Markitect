@@ -1,0 +1,66 @@
+package examples
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/host"
+)
+
+func TestRepositoryLayoutExampleCompilesExplicitInputsAndNativeOutput(t *testing.T) {
+	root := filepath.Join(harnessRepositoryRoot(t), "examples", "repository-layout")
+	project, err := host.Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(project.Diagnostics) != 0 {
+		t.Fatalf("layout example has graph diagnostics: %#v", project.Diagnostics)
+	}
+	context, err := host.CompileContext(project, "engineering/Workflow/review-change", "layout-example-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{
+		"engineering/Workflow/review-change":        ".markitect/areas/engineering/review/review-change.workflow.yaml",
+		"engineering/Rule/change-review":            ".markitect/areas/engineering/review/change-review.rule.yaml",
+		"shared/Text/principles":                    ".markitect/areas/shared/review/principles.text.yaml",
+		"file:docs/engineering/change-procedure.md": "docs/engineering/change-procedure.md",
+	}
+	for _, input := range context.Inputs {
+		key := input.Key
+		if input.Resource != nil {
+			key = input.Resource.Key()
+			if expected, ok := want[key]; ok && input.Resource.Path == expected && input.Resource.Spec.Text != "" {
+				delete(want, key)
+			}
+		} else if expected, ok := want[key]; ok && input.Path == expected && input.Text != "" {
+			delete(want, key)
+		}
+		if input.Key == "file:docs/README.md" || input.Key == "file:docs/engineering/README.md" {
+			t.Fatalf("navigation became an implicit input: %#v", input)
+		}
+	}
+	if len(want) != 0 {
+		t.Fatalf("context omitted explicit typed or ordinary inputs: %v", want)
+	}
+	outputs, err := host.GenerateOutputs(project)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := outputs[".claude/rules/change-review.md"]; !ok || len(outputs) != 1 {
+		t.Fatalf("provider-only project must produce exactly its native rule adapter: %v", outputs)
+	}
+	if _, err := os.Stat(filepath.Join(root, "docs", "markitect")); !os.IsNotExist(err) {
+		t.Fatalf("provider-only example must not contain a Markdown view tree: %v", err)
+	}
+	if findings := host.CheckOutputs(project); len(findings) != 0 {
+		t.Fatalf("layout example has output diagnostics: %#v", findings)
+	}
+	if findings := host.CheckDocumentationRouters(project); len(findings) != 0 {
+		t.Fatalf("layout example has router diagnostics: %#v", findings)
+	}
+	if changed, err := host.Format(root, project, false); err != nil || len(changed) != 0 {
+		t.Fatalf("layout example is not canonically formatted: changed=%v err=%v", changed, err)
+	}
+}

@@ -52,13 +52,13 @@ jobs:
           [[ "$tagged_commit" == "$SOURCE_SHA" ]] || { echo "tag does not resolve to the workflow source commit" >&2; exit 1; }
           git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "tagged commit is not contained in origin/main" >&2; exit 1; }
 
-          version_output="$(go run ./cmd/markitect version)"
+          version_output="$(go run ./src/cmd/markitect version)"
           source_version="$(sed -E 's/^Markitect ([^ ]+) \(.+$/\1/' <<< "$version_output")"
           [[ "$version_output" == "Markitect $source_version (linux/amd64)" ]] || { echo "could not read the source version from Markitect" >&2; exit 1; }
           [[ "$TAG" == "v$source_version" ]] || { echo "release tag $TAG does not match source version $source_version" >&2; exit 1; }
 
           bundle_path="$RUNNER_TEMP/markitect-$TAG-bundle.zip"
-          go run ./cmd/markitect bundle --repo . --revision "$SOURCE_SHA" --output "$bundle_path"
+          go run ./src/cmd/markitect bundle --repo . --revision "$SOURCE_SHA" --output "$bundle_path"
           bundle_sha256="$(sha256sum "$bundle_path" | cut -d ' ' -f 1)"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$source_version" >> "$GITHUB_OUTPUT"
@@ -124,7 +124,7 @@ jobs:
         run: |
           set -euo pipefail
           bundle_path="$RUNNER_TEMP/markitect-$RELEASE_TAG-bundle.zip"
-          go run ./cmd/markitect bundle --repo . --revision "$GITHUB_SHA" --output "$bundle_path"
+          go run ./src/cmd/markitect bundle --repo . --revision "$GITHUB_SHA" --output "$bundle_path"
           actual_sha256="$(sha256sum "$bundle_path" | cut -d ' ' -f 1)"
           [[ "$actual_sha256" == "$EXPECTED_BUNDLE_SHA256" ]] || { echo "bundle is not deterministic across release jobs" >&2; exit 1; }
 
@@ -137,7 +137,7 @@ jobs:
           git -C "$consumer" add .
           git -C "$consumer" commit -m "Create isolated Markitect release smoke fixture"
 
-          go run ./cmd/markitect install --repo "$consumer" --bundle "$bundle_path" --sha256 "$actual_sha256" --write
+          go run ./src/cmd/markitect install --repo "$consumer" --bundle "$bundle_path" --sha256 "$actual_sha256" --write
           cd "$consumer"
           go test .markitect/bootstrap/run.go .markitect/bootstrap/run_test.go
           authoring_output="$(go run .markitect/bootstrap/run.go authoring)"
@@ -194,7 +194,7 @@ jobs:
           RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
         run: |
           $bundlePath = Join-Path $env:RUNNER_TEMP "markitect-$env:RELEASE_TAG-bundle.zip"
-          go run ./cmd/markitect bundle --repo . --revision $env:GITHUB_SHA --output $bundlePath
+          go run ./src/cmd/markitect bundle --repo . --revision $env:GITHUB_SHA --output $bundlePath
           if ($LASTEXITCODE -ne 0) { throw "Bundle creation failed with exit code $LASTEXITCODE" }
           $actualSha256 = (Get-FileHash -LiteralPath $bundlePath -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($actualSha256 -ne $env:EXPECTED_BUNDLE_SHA256) { throw 'Bundle is not deterministic across release jobs' }
@@ -210,7 +210,7 @@ jobs:
           git -C $consumer commit -m 'Create isolated Markitect release smoke fixture'
           if ($LASTEXITCODE -ne 0) { throw 'Could not commit the isolated feature fixture' }
 
-          go run ./cmd/markitect install --repo $consumer --bundle $bundlePath --sha256 $actualSha256 --write
+          go run ./src/cmd/markitect install --repo $consumer --bundle $bundlePath --sha256 $actualSha256 --write
           if ($LASTEXITCODE -ne 0) { throw "Bundle installation failed with exit code $LASTEXITCODE" }
           Push-Location $consumer
           go test .markitect/bootstrap/run.go .markitect/bootstrap/run_test.go
@@ -331,19 +331,19 @@ jobs:
           set -euo pipefail
           [[ "$(git rev-parse "refs/tags/$TAG^{commit}")" == "$SOURCE_SHA" ]] || { echo "release tag moved away from the workflow source commit" >&2; exit 1; }
           git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "release source commit is no longer contained in origin/main" >&2; exit 1; }
-          [[ "$(go run ./cmd/markitect version)" == "Markitect $VERSION (linux/amd64)" ]] || { echo "release source version changed" >&2; exit 1; }
+          [[ "$(go run ./src/cmd/markitect version)" == "Markitect $VERSION (linux/amd64)" ]] || { echo "release source version changed" >&2; exit 1; }
 
           out="$RUNNER_TEMP/markitect-release-$GITHUB_SHA"
           mkdir -p "$out"
           bundle="$out/markitect-$TAG-bundle.zip"
-          go run ./cmd/markitect bundle --repo . --revision "$SOURCE_SHA" --output "$bundle"
+          go run ./src/cmd/markitect bundle --repo . --revision "$SOURCE_SHA" --output "$bundle"
           bundle_sha256="$(sha256sum "$bundle" | cut -d ' ' -f 1)"
           [[ "$bundle_sha256" == "$EXPECTED_BUNDLE_SHA256" ]] || { echo "release bundle differs from the bundle tested on both platforms" >&2; exit 1; }
 
           linux_binary="$out/markitect-$TAG-linux-amd64"
           windows_binary="$out/markitect-$TAG-windows-amd64.exe"
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/internal/host/cli.version=$VERSION" -o "$linux_binary" ./cmd/markitect
-          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/internal/host/cli.version=$VERSION" -o "$windows_binary" ./cmd/markitect
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/src/internal/host/cli.version=$VERSION" -o "$linux_binary" ./src/cmd/markitect
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/src/internal/host/cli.version=$VERSION" -o "$windows_binary" ./src/cmd/markitect
 
           linux_sha256="$(sha256sum "$linux_binary" | cut -d ' ' -f 1)"
           windows_sha256="$(sha256sum "$windows_binary" | cut -d ' ' -f 1)"

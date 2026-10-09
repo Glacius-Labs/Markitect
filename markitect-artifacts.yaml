@@ -3,183 +3,183 @@ kind: ArtifactCoverage
 spec:
   roots:
     - docs/history/implementation-plan-before-product-integration-20261009.md
-    - internal/host/mcp
-    - internal/host/projectworkspace
-    - internal/host/projectapp
-    - internal/host/codexappserver
+    - src/internal/host/mcp
+    - src/internal/host/projectworkspace
+    - src/internal/host/projectapp
+    - src/internal/host/codexappserver
     - docs/work-items/product-readiness
     - docs/validation/classic-commerce-entrypoint.md
     - examples/classic-commerce
-    - internal/host/canonical_controller_apply_receipt.go
-    - internal/host/canonical_controller_apply_receipt_test.go
-    - internal/host/cli/canonical_apply_result_test.go
+    - src/internal/host/canonical_controller_apply_receipt.go
+    - src/internal/host/canonical_controller_apply_receipt_test.go
+    - src/internal/host/cli/canonical_apply_result_test.go
     - experiments/sequential-operating-pilot
-    - internal/host/canonical_controller_model_change_test.go
-    - internal/host/canonical_controller_audit.go
-    - internal/host/canonical_controller_audit_test.go
-    - internal/host/canonical_controller_operating_test.go
-    - internal/host/cli/canonical_audit_test.go
+    - src/internal/host/canonical_controller_model_change_test.go
+    - src/internal/host/canonical_controller_audit.go
+    - src/internal/host/canonical_controller_audit_test.go
+    - src/internal/host/canonical_controller_operating_test.go
+    - src/internal/host/cli/canonical_audit_test.go
     - docs/validation/standard-operating-model.md
-    - internal/host/canonical_controller_verification_windows_test.go
-    - internal/host/canonical_controller_lease_windows_test.go
-    - internal/host/canonical_controller_lease_linux_test.go
-    - internal/host/canonical_controller_lease_test.go
+    - src/internal/host/canonical_controller_verification_windows_test.go
+    - src/internal/host/canonical_controller_lease_windows_test.go
+    - src/internal/host/canonical_controller_lease_linux_test.go
+    - src/internal/host/canonical_controller_lease_test.go
     - docs/design/host-write-identity.md
-    - internal/host/format.go
-    - internal/host/install.go
-    - internal/host/outputs_write.go
-    - internal/host/projections.go
-    - internal/host/write_safety.go
-    - internal/host/writers_test.go
-    - internal/host/writers_windows_test.go
-    - internal/host/writers_nonwindows_test.go
-    - internal/infrastructure/source/selective_identity_test.go
-    - internal/host/canonical_controller_assurance_preflight_test.go
+    - src/internal/host/format.go
+    - src/internal/host/install.go
+    - src/internal/host/outputs_write.go
+    - src/internal/host/projections.go
+    - src/internal/host/write_safety.go
+    - src/internal/host/writers_test.go
+    - src/internal/host/writers_windows_test.go
+    - src/internal/host/writers_nonwindows_test.go
+    - src/internal/infrastructure/source/selective_identity_test.go
+    - src/internal/host/canonical_controller_assurance_preflight_test.go
     - docs/validation/proof-capability-checkpoint-2026-10-06.md
     - docs/design/canonical-verifier-observation-coverage.md
-    - internal/host/canonical_controller_coverage.go
-    - internal/host/canonical_controller_coverage_test.go
+    - src/internal/host/canonical_controller_coverage.go
+    - src/internal/host/canonical_controller_coverage_test.go
     - runs/c11checktools
-    - internal/host/canonical_controller_reuse.go
-    - internal/host/canonical_verification_refresh_test.go
+    - src/internal/host/canonical_controller_reuse.go
+    - src/internal/host/canonical_verification_refresh_test.go
     - docs/design/canonical-verification-refresh.md
     - docs/validation/independent-proof-capability-review.md
-    - internal/host/cli/canonical_adoption_durable_test.go
-    - internal/host/canonical_adoption_store.go
-    - internal/modules/markdownreference
+    - src/internal/host/cli/canonical_adoption_durable_test.go
+    - src/internal/host/canonical_adoption_store.go
+    - src/internal/modules/markdownreference
     - examples/module-replacement
-    - internal/host/canonical_markdown_reference.go
-    - internal/host/canonical_markdown_reference_test.go
+    - src/internal/host/canonical_markdown_reference.go
+    - src/internal/host/canonical_markdown_reference_test.go
     - .markitect
     - .githooks
     - .github/workflows
-    - internal/host/embedded
-    - internal/host/artifactcli
-    - internal/host/artifact_coverage.go
-    - internal/host/artifact_coverage_test.go
-    - internal/host/compat/v0_13/consumers/artifactcoverage
+    - src/internal/host/embedded
+    - src/internal/host/artifactcli
+    - src/internal/host/artifact_coverage.go
+    - src/internal/host/artifact_coverage_test.go
+    - src/internal/host/compat/v0_13/consumers/artifactcoverage
     - .agents
     - .claude
     - docs/markitect
-    - cmd/markitect-check-artifacts
+    - src/cmd/markitect-check-artifacts
     - AGENTS.md
     - markitect.yaml
     - markitect-artifacts.yaml
     - docs/markitect-first.md
-    - internal/core
-    - internal/host/canonical
-    - internal/host/records
-    - internal/host/assurance
-    - internal/host/projectionengine
-    - internal/modules/markdown
-    - internal/modules/dotnet
-    - internal/host/canonical_load.go
-    - internal/host/canonical_load_test.go
-    - internal/host/canonical_projections.go
-    - internal/host/canonical_projections_test.go
-    - internal/host/projection_primitives_test.go
-    - internal/host/cli/canonical.go
-    - internal/host/cli/canonical_test.go
+    - src/internal/core
+    - src/internal/host/canonical
+    - src/internal/host/records
+    - src/internal/host/assurance
+    - src/internal/host/projectionengine
+    - src/internal/modules/markdown
+    - src/internal/modules/dotnet
+    - src/internal/host/canonical_load.go
+    - src/internal/host/canonical_load_test.go
+    - src/internal/host/canonical_projections.go
+    - src/internal/host/canonical_projections_test.go
+    - src/internal/host/projection_primitives_test.go
+    - src/internal/host/cli/canonical.go
+    - src/internal/host/cli/canonical_test.go
     - examples/canonical-projection
-    - internal/host/canonical_impact.go
-    - internal/host/canonical_impact_test.go
-    - internal/host/canonical_reconciliation.go
-    - internal/host/canonical_reconciliation_test.go
-    - internal/host/canonical_verification.go
-    - examples/canonical-projection_test.go
-    - internal/host/canonical_verification_test.go
+    - src/internal/host/canonical_impact.go
+    - src/internal/host/canonical_impact_test.go
+    - src/internal/host/canonical_reconciliation.go
+    - src/internal/host/canonical_reconciliation_test.go
+    - src/internal/host/canonical_verification.go
+    - src/harness/examples/canonical-projection_test.go
+    - src/internal/host/canonical_verification_test.go
     - docs/design/brownfield-representation-adoption.md
     - docs/strategy/sources/canonical-reset/markitect-coordinator-steer-latest-architecture-clarifications.md
-    - internal/host/canonical_adoption.go
-    - internal/host/canonical_adoption_test.go
-    - examples/capability_proof_test.go
-    - internal/host/agentexec
-    - internal/host/recordstore
-    - internal/modules/agentrules
-    - internal/modules/githooks
-    - internal/modules/azurepipelines
-    - internal/tooling/codexrunner
+    - src/internal/host/canonical_adoption.go
+    - src/internal/host/canonical_adoption_test.go
+    - src/harness/examples/capability_proof_test.go
+    - src/internal/host/agentexec
+    - src/internal/host/recordstore
+    - src/internal/modules/agentrules
+    - src/internal/modules/githooks
+    - src/internal/modules/azurepipelines
+    - src/internal/tooling/codexrunner
     - examples/capability-ontologies
-    - examples/capability_ontologies_test.go
+    - src/harness/examples/capability_ontologies_test.go
     - examples/operating-model
-    - examples/operating_model_test.go
-    - internal/host/canonical_agent_context.go
-    - internal/host/canonical_controller.go
-    - internal/host/canonical_controller_assurance.go
-    - internal/host/canonical_controller_execution.go
-    - internal/host/canonical_scoped_reconciliation.go
-    - internal/host/canonical_workflow_projection_test.go
-    - internal/host/canonical_workflow_projection.go
-    - internal/host/canonical_scoped_test.go
-    - internal/host/canonical_scoped_write.go
-    - internal/host/canonical_selected.go
-    - internal/host/canonical_selected_test.go
+    - src/harness/examples/operating_model_test.go
+    - src/internal/host/canonical_agent_context.go
+    - src/internal/host/canonical_controller.go
+    - src/internal/host/canonical_controller_assurance.go
+    - src/internal/host/canonical_controller_execution.go
+    - src/internal/host/canonical_scoped_reconciliation.go
+    - src/internal/host/canonical_workflow_projection_test.go
+    - src/internal/host/canonical_workflow_projection.go
+    - src/internal/host/canonical_scoped_test.go
+    - src/internal/host/canonical_scoped_write.go
+    - src/internal/host/canonical_selected.go
+    - src/internal/host/canonical_selected_test.go
     - docs/design/canonical-reverse-inference.md
     - examples/canonical-workflow
-    - internal/host/canonical_inference.go
-    - internal/host/canonical_inference_test.go
-    - internal/host/canonical_provider_projection.go
-    - internal/host/canonical_provider_projection_test.go
-    - internal/host/canonical_controller_verification.go
-    - internal/host/canonical_controller_verification_test.go
+    - src/internal/host/canonical_inference.go
+    - src/internal/host/canonical_inference_test.go
+    - src/internal/host/canonical_provider_projection.go
+    - src/internal/host/canonical_provider_projection_test.go
+    - src/internal/host/canonical_controller_verification.go
+    - src/internal/host/canonical_controller_verification_test.go
     - examples/recursive-assurance
     - experiments/operating-model-proof
-    - internal/host/canonical_controller_dependencies.go
-    - internal/host/canonical_controller_dependencies_test.go
-    - internal/host/canonical_controller_test.go
+    - src/internal/host/canonical_controller_dependencies.go
+    - src/internal/host/canonical_controller_dependencies_test.go
+    - src/internal/host/canonical_controller_test.go
     - docs/design/candidate-dependency-execution.md
-    - examples/recursive_assurance_test.go
-    - internal/host/canonical_goal_modeling.go
-    - internal/host/canonical_goal_modeling_test.go
+    - src/harness/examples/recursive_assurance_test.go
+    - src/internal/host/canonical_goal_modeling.go
+    - src/internal/host/canonical_goal_modeling_test.go
     - docs/design/goal-led-modeling.md
     - docs/design/projection-evidence-refresh.md
     - examples/unknown-ontology
-    - examples/unknown_ontology_test.go
-    - internal/host/canonical_target_exclusions.go
-    - internal/host/canonical_target_exclusions_test.go
+    - src/harness/examples/unknown_ontology_test.go
+    - src/internal/host/canonical_target_exclusions.go
+    - src/internal/host/canonical_target_exclusions_test.go
     - docs/design/scoped-target-exclusions.md
-    - internal/host/cli/adoption_inference_test.go
-    - internal/host/canonical_evidence_refresh.go
-    - internal/host/canonical_evidence_refresh_test.go
-    - internal/host/cli/canonical_refresh.go
-    - internal/host/cli/canonical_refresh_test.go
-    - internal/host/cli/canonical_goal.go
-    - internal/host/cli/canonical_goal_test.go
-    - examples/public_fixture_test.go
+    - src/internal/host/cli/adoption_inference_test.go
+    - src/internal/host/canonical_evidence_refresh.go
+    - src/internal/host/canonical_evidence_refresh_test.go
+    - src/internal/host/cli/canonical_refresh.go
+    - src/internal/host/cli/canonical_refresh_test.go
+    - src/internal/host/cli/canonical_goal.go
+    - src/internal/host/cli/canonical_goal_test.go
+    - src/harness/examples/public_fixture_test.go
     - experiments/live-operating-pilot
     - experiments/two-area-operating-pilot
     - docs/design/project-world
-    - internal/modules/projectmodel
-    - internal/host/projectwork
-    - internal/host/projectadoption
-    - internal/host/projectsetup
-    - internal/host/projectcoverage
-    - internal/host/projectbriefing
-    - internal/host/projectonboarding
-    - internal/tooling/clauderunner
-    - internal/host/project_guarded_write.go
-    - internal/host/project_guarded_write_test.go
-    - internal/host/tool_build_digest.go
-    - internal/host/tool_build_digest_test.go
-    - internal/infrastructure/source/scoped_revision.go
-    - internal/infrastructure/source/scoped_revision_test.go
-    - internal/host/projectrun
-    - internal/host/projectcli
+    - src/internal/modules/projectmodel
+    - src/internal/host/projectwork
+    - src/internal/host/projectadoption
+    - src/internal/host/projectsetup
+    - src/internal/host/projectcoverage
+    - src/internal/host/projectbriefing
+    - src/internal/host/projectonboarding
+    - src/internal/tooling/clauderunner
+    - src/internal/host/project_guarded_write.go
+    - src/internal/host/project_guarded_write_test.go
+    - src/internal/host/tool_build_digest.go
+    - src/internal/host/tool_build_digest_test.go
+    - src/internal/infrastructure/source/scoped_revision.go
+    - src/internal/infrastructure/source/scoped_revision_test.go
+    - src/internal/host/projectrun
+    - src/internal/host/projectcli
     - examples/project-world
     - experiments/project-world-live
     - docs/project-workflow.md
     - docs/project-operations.md
-    - internal/host/cli/project_dispatch_test.go
+    - src/internal/host/cli/project_dispatch_test.go
     - docs/validation/project-world-delivery.md
     - docs/validation/project-native-delivery-2026-10-09.md
     - docs/validation/project-native-work-2026-10-09.md
     - docs/design/project-native-codex-work-20261009.md
     - docs/design/project-capability-skills-20261009.md
     - docs/design/project-simplification-and-api-direction-20261009.md
-    - internal/host/shared_helpers.go
+    - src/internal/host/shared_helpers.go
     - docs/validation/project-operations-2026-10-09.md
-    - internal/host/projectexplore
-    - examples/project_world_workflow_test.go
+    - src/internal/host/projectexplore
+    - src/harness/examples/project_world_workflow_test.go
     - docs/design/work-item-comparison-20261009.md
   tooling:
     - path: docs/validation/classic-commerce-entrypoint.md
@@ -244,25 +244,25 @@ spec:
       owner: classic-commerce-public-example
     - path: examples/classic-commerce/tools/smoke.py
       owner: classic-commerce-public-example
-    - path: internal/host/canonical_controller_apply_receipt.go
+    - path: src/internal/host/canonical_controller_apply_receipt.go
       owner: controller-apply-verification-handoff
-    - path: internal/host/canonical_controller_apply_receipt_test.go
+    - path: src/internal/host/canonical_controller_apply_receipt_test.go
       owner: controller-apply-verification-handoff
-    - path: internal/host/cli/canonical_apply_result_test.go
+    - path: src/internal/host/cli/canonical_apply_result_test.go
       owner: controller-apply-verification-handoff
-    - path: internal/host/canonical_controller_model_change_test.go
+    - path: src/internal/host/canonical_controller_model_change_test.go
       owner: standard-operating-model-closure
-    - path: internal/host/canonical_controller_audit.go
+    - path: src/internal/host/canonical_controller_audit.go
       owner: standard-operating-model-closure
-    - path: internal/host/canonical_controller_audit_test.go
+    - path: src/internal/host/canonical_controller_audit_test.go
       owner: standard-operating-model-closure
-    - path: internal/host/canonical_controller_operating_test.go
+    - path: src/internal/host/canonical_controller_operating_test.go
       owner: standard-operating-model-closure
-    - path: internal/host/cli/canonical_audit_test.go
+    - path: src/internal/host/cli/canonical_audit_test.go
       owner: standard-operating-model-closure
     - path: docs/validation/standard-operating-model.md
       owner: standard-operating-model-closure
-    - path: internal/host/canonical_controller_verification_windows_test.go
+    - path: src/internal/host/canonical_controller_verification_windows_test.go
       owner: controller-verifier-fixture-path-controls
     - path: experiments/operating-model-proof/runs/windows-verifier-fixture-paths/receipt.json
       owner: preserved-verifier-fixture-focused-evidence
@@ -270,21 +270,21 @@ spec:
       owner: preserved-frozen-platform-gate-evidence
     - path: experiments/operating-model-proof/runs/gates-59b3e812/README.md
       owner: preserved-frozen-platform-gate-evidence
-    - path: internal/host/format.go
+    - path: src/internal/host/format.go
       owner: anchored-host-write-boundary
-    - path: internal/host/install.go
+    - path: src/internal/host/install.go
       owner: anchored-host-write-boundary
-    - path: internal/host/outputs_write.go
+    - path: src/internal/host/outputs_write.go
       owner: anchored-host-write-boundary
-    - path: internal/host/projections.go
+    - path: src/internal/host/projections.go
       owner: anchored-host-write-boundary
-    - path: internal/host/write_safety.go
+    - path: src/internal/host/write_safety.go
       owner: anchored-host-write-boundary
-    - path: internal/host/writers_test.go
+    - path: src/internal/host/writers_test.go
       owner: anchored-host-write-boundary
-    - path: internal/host/writers_windows_test.go
+    - path: src/internal/host/writers_windows_test.go
       owner: anchored-host-write-boundary
-    - path: internal/host/writers_nonwindows_test.go
+    - path: src/internal/host/writers_nonwindows_test.go
       owner: anchored-host-write-boundary
     - path: experiments/operating-model-proof/runs/c8-orders-auditall-control-01/attempt-01-outcome.json
       owner: c8-invalid-harness-preflight-evidence
@@ -316,7 +316,7 @@ spec:
       owner: c11-module-binding-readonly-evidence
     - path: experiments/operating-model-proof/runs/linux-gates-4465186/receipt.json
       owner: preserved-failed-linux-gate-evidence
-    - path: internal/infrastructure/source/selective_identity_test.go
+    - path: src/internal/infrastructure/source/selective_identity_test.go
       owner: selective-git-identity-query-tests
     - path: AGENTS.md
       owner: repository-agent-navigation
@@ -332,97 +332,97 @@ spec:
       owner: release-benchmark-workflow
     - path: .github/workflows/winget-validation.yaml
       owner: winget-validation-workflow
-    - path: cmd/markitect-check-artifacts/main.go
+    - path: src/cmd/markitect-check-artifacts/main.go
       owner: managed-artifact-check-command
-    - path: internal/host/artifactcli/main.go
+    - path: src/internal/host/artifactcli/main.go
       owner: managed-artifact-check-host-command
-    - path: internal/host/artifactcli/main_test.go
+    - path: src/internal/host/artifactcli/main_test.go
       owner: managed-artifact-check-host-command-tests
-    - path: internal/host/artifact_coverage.go
+    - path: src/internal/host/artifact_coverage.go
       owner: managed-artifact-accounting-implementation
-    - path: internal/host/artifact_coverage_test.go
+    - path: src/internal/host/artifact_coverage_test.go
       owner: managed-artifact-accounting-host-tests
-    - path: internal/host/embedded/authoring.go
+    - path: src/internal/host/embedded/authoring.go
       owner: embedded-authoring-host-implementation
-    - path: internal/host/embedded/authoring_test.go
+    - path: src/internal/host/embedded/authoring_test.go
       owner: embedded-authoring-host-tests
-    - path: internal/host/embedded/project.yaml
+    - path: src/internal/host/embedded/project.yaml
       owner: embedded-project-configuration
-    - path: internal/host/compat/v0_13/consumers/artifactcoverage/README.md
+    - path: src/internal/host/compat/v0_13/consumers/artifactcoverage/README.md
       owner: artifactcoverage-module-documentation
-    - path: internal/host/compat/v0_13/consumers/artifactcoverage/artifactcoverage.go
+    - path: src/internal/host/compat/v0_13/consumers/artifactcoverage/artifactcoverage.go
       owner: artifactcoverage-module-implementation
-    - path: internal/host/compat/v0_13/consumers/artifactcoverage/artifactcoverage_test.go
+    - path: src/internal/host/compat/v0_13/consumers/artifactcoverage/artifactcoverage_test.go
       owner: artifactcoverage-module-tests
-    - path: internal/core/compile.go
+    - path: src/internal/core/compile.go
       owner: canonical-core-implementation
-    - path: internal/core/compile_test.go
+    - path: src/internal/core/compile_test.go
       owner: canonical-core-implementation
-    - path: internal/core/identity_test.go
+    - path: src/internal/core/identity_test.go
       owner: canonical-core-implementation
-    - path: internal/core/README.md
+    - path: src/internal/core/README.md
       owner: canonical-core-implementation
-    - path: internal/core/snapshot/snapshot.go
+    - path: src/internal/core/snapshot/snapshot.go
       owner: canonical-core-implementation
-    - path: internal/core/snapshot/snapshot_test.go
+    - path: src/internal/core/snapshot/snapshot_test.go
       owner: canonical-core-implementation
-    - path: internal/core/types.go
+    - path: src/internal/core/types.go
       owner: canonical-core-implementation
-    - path: internal/host/canonical/binding.go
+    - path: src/internal/host/canonical/binding.go
       owner: canonical-implementation
-    - path: internal/host/canonical/binding_test.go
+    - path: src/internal/host/canonical/binding_test.go
       owner: canonical-implementation
-    - path: internal/host/canonical/catalog.go
+    - path: src/internal/host/canonical/catalog.go
       owner: canonical-implementation
-    - path: internal/host/canonical/catalog_test.go
+    - path: src/internal/host/canonical/catalog_test.go
       owner: canonical-implementation
-    - path: internal/host/canonical/codec.go
+    - path: src/internal/host/canonical/codec.go
       owner: canonical-implementation
-    - path: internal/host/canonical/codec_test.go
+    - path: src/internal/host/canonical/codec_test.go
       owner: canonical-implementation
-    - path: internal/host/records/README.md
+    - path: src/internal/host/records/README.md
       owner: canonical-records-implementation
-    - path: internal/host/records/records.go
+    - path: src/internal/host/records/records.go
       owner: canonical-records-implementation
-    - path: internal/host/records/records_test.go
+    - path: src/internal/host/records/records_test.go
       owner: canonical-records-implementation
-    - path: internal/host/assurance/assurance.go
+    - path: src/internal/host/assurance/assurance.go
       owner: canonical-assurance-implementation
-    - path: internal/host/assurance/assurance_test.go
+    - path: src/internal/host/assurance/assurance_test.go
       owner: canonical-assurance-implementation
-    - path: internal/host/assurance/README.md
+    - path: src/internal/host/assurance/README.md
       owner: canonical-assurance-implementation
-    - path: internal/host/projectionengine/engine.go
+    - path: src/internal/host/projectionengine/engine.go
       owner: canonical-projectionengine-implementation
-    - path: internal/host/projectionengine/engine_test.go
+    - path: src/internal/host/projectionengine/engine_test.go
       owner: canonical-projectionengine-implementation
-    - path: internal/host/projectionengine/README.md
+    - path: src/internal/host/projectionengine/README.md
       owner: canonical-projectionengine-implementation
-    - path: internal/modules/markdown/markdown.go
+    - path: src/internal/modules/markdown/markdown.go
       owner: canonical-markdown-implementation
-    - path: internal/modules/markdown/markdown_test.go
+    - path: src/internal/modules/markdown/markdown_test.go
       owner: canonical-markdown-implementation
-    - path: internal/modules/markdown/README.md
+    - path: src/internal/modules/markdown/README.md
       owner: canonical-markdown-implementation
-    - path: internal/modules/dotnet/dotnet.go
+    - path: src/internal/modules/dotnet/dotnet.go
       owner: canonical-dotnet-implementation
-    - path: internal/modules/dotnet/dotnet_test.go
+    - path: src/internal/modules/dotnet/dotnet_test.go
       owner: canonical-dotnet-implementation
-    - path: internal/modules/dotnet/README.md
+    - path: src/internal/modules/dotnet/README.md
       owner: canonical-dotnet-implementation
-    - path: internal/host/canonical_load.go
+    - path: src/internal/host/canonical_load.go
       owner: canonical-load-implementation
-    - path: internal/host/canonical_load_test.go
+    - path: src/internal/host/canonical_load_test.go
       owner: canonical-load-test-implementation
-    - path: internal/host/canonical_projections.go
+    - path: src/internal/host/canonical_projections.go
       owner: canonical-projections-implementation
-    - path: internal/host/canonical_projections_test.go
+    - path: src/internal/host/canonical_projections_test.go
       owner: canonical-projections-test-implementation
-    - path: internal/host/projection_primitives_test.go
+    - path: src/internal/host/projection_primitives_test.go
       owner: canonical-projection-primitives-test-implementation
-    - path: internal/host/cli/canonical.go
+    - path: src/internal/host/cli/canonical.go
       owner: canonical-implementation
-    - path: internal/host/cli/canonical_test.go
+    - path: src/internal/host/cli/canonical_test.go
       owner: canonical-test-implementation
     - path: examples/canonical-projection/binding-notes.md
       owner: canonical-projection-fixture
@@ -456,31 +456,31 @@ spec:
       owner: canonical-projection-fixture
     - path: examples/canonical-projection/modules/markdown/module.yaml
       owner: canonical-projection-fixture
-    - path: internal/host/canonical_impact.go
+    - path: src/internal/host/canonical_impact.go
       owner: canonical-projection-lifecycle
-    - path: internal/host/canonical_impact_test.go
+    - path: src/internal/host/canonical_impact_test.go
       owner: canonical-projection-lifecycle
-    - path: internal/host/canonical_reconciliation.go
+    - path: src/internal/host/canonical_reconciliation.go
       owner: canonical-projection-lifecycle
-    - path: internal/host/canonical_reconciliation_test.go
+    - path: src/internal/host/canonical_reconciliation_test.go
       owner: canonical-projection-lifecycle
-    - path: internal/host/canonical_verification.go
+    - path: src/internal/host/canonical_verification.go
       owner: canonical-projection-lifecycle
-    - path: examples/canonical-projection_test.go
+    - path: src/harness/examples/canonical-projection_test.go
       owner: canonical-projection-lifecycle
     - path: examples/canonical-projection/evidence/check.go
       owner: canonical-projection-lifecycle
-    - path: internal/host/canonical_verification_test.go
+    - path: src/internal/host/canonical_verification_test.go
       owner: canonical-projection-lifecycle
     - path: docs/design/brownfield-representation-adoption.md
       owner: canonical-adoption-design
     - path: docs/strategy/sources/canonical-reset/markitect-coordinator-steer-latest-architecture-clarifications.md
       owner: owner-supplied-architecture-direction
-    - path: internal/host/canonical_adoption.go
+    - path: src/internal/host/canonical_adoption.go
       owner: canonical-projection-lifecycle
-    - path: internal/host/canonical_adoption_test.go
+    - path: src/internal/host/canonical_adoption_test.go
       owner: canonical-projection-lifecycle
-    - path: examples/capability_proof_test.go
+    - path: src/harness/examples/capability_proof_test.go
       owner: capability-proof-falsification-harness
     - path: examples/capability-ontologies/README.md
       owner: capability-ontology-proof-fixture
@@ -528,7 +528,7 @@ spec:
       owner: capability-ontology-proof-fixture
     - path: examples/capability-ontologies/workflow-responsibility/work-item.yaml
       owner: capability-ontology-proof-fixture
-    - path: examples/capability_ontologies_test.go
+    - path: src/harness/examples/capability_ontologies_test.go
       owner: capability-ontology-proof-tests
     - path: examples/operating-model/README.md
       owner: operating-model-proof-fixture
@@ -588,83 +588,83 @@ spec:
       owner: operating-model-proof-fixture
     - path: examples/operating-model/negative-specifications.md
       owner: operating-model-proof-fixture
-    - path: examples/operating_model_test.go
+    - path: src/harness/examples/operating_model_test.go
       owner: operating-model-proof-tests
-    - path: internal/host/agentexec/README.md
+    - path: src/internal/host/agentexec/README.md
       owner: bounded-agent-execution-host
-    - path: internal/host/agentexec/json.go
+    - path: src/internal/host/agentexec/json.go
       owner: bounded-agent-execution-host
-    - path: internal/host/agentexec/runner.go
+    - path: src/internal/host/agentexec/runner.go
       owner: bounded-agent-execution-host
-    - path: internal/host/agentexec/runner_test.go
+    - path: src/internal/host/agentexec/runner_test.go
       owner: bounded-agent-execution-host
-    - path: internal/host/agentexec/types.go
+    - path: src/internal/host/agentexec/types.go
       owner: bounded-agent-execution-host
-    - path: internal/host/assurance/run.go
+    - path: src/internal/host/assurance/run.go
       owner: recursive-assurance-runner
-    - path: internal/host/assurance/run_test.go
+    - path: src/internal/host/assurance/run_test.go
       owner: recursive-assurance-runner-tests
-    - path: internal/host/canonical/request_validation.go
+    - path: src/internal/host/canonical/request_validation.go
       owner: canonical-controller-validation
-    - path: internal/host/canonical_agent_context.go
+    - path: src/internal/host/canonical_agent_context.go
       owner: canonical-agent-context
-    - path: internal/host/canonical_controller.go
+    - path: src/internal/host/canonical_controller.go
       owner: canonical-controller
-    - path: internal/host/canonical_controller_assurance.go
+    - path: src/internal/host/canonical_controller_assurance.go
       owner: canonical-controller-assurance
-    - path: internal/host/canonical_controller_execution.go
+    - path: src/internal/host/canonical_controller_execution.go
       owner: canonical-controller-execution
-    - path: internal/modules/azurepipelines/azurepipelines.go
+    - path: src/internal/modules/azurepipelines/azurepipelines.go
       owner: azure-pipelines-projection-module
-    - path: internal/modules/azurepipelines/azurepipelines_test.go
+    - path: src/internal/modules/azurepipelines/azurepipelines_test.go
       owner: azure-pipelines-projection-module
-    - path: internal/modules/azurepipelines/README.md
+    - path: src/internal/modules/azurepipelines/README.md
       owner: azure-pipelines-projection-module
-    - path: internal/modules/githooks/githooks.go
+    - path: src/internal/modules/githooks/githooks.go
       owner: git-hooks-projection-module
-    - path: internal/modules/githooks/githooks_test.go
+    - path: src/internal/modules/githooks/githooks_test.go
       owner: git-hooks-projection-module
-    - path: internal/host/canonical_scoped_reconciliation.go
+    - path: src/internal/host/canonical_scoped_reconciliation.go
       owner: canonical-scoped-reconciliation
-    - path: internal/host/canonical_scoped_test.go
+    - path: src/internal/host/canonical_scoped_test.go
       owner: canonical-scoped-reconciliation-tests
-    - path: internal/host/canonical_scoped_write.go
+    - path: src/internal/host/canonical_scoped_write.go
       owner: canonical-scoped-write
-    - path: internal/host/canonical_selected.go
+    - path: src/internal/host/canonical_selected.go
       owner: canonical-selected-source
-    - path: internal/host/canonical_selected_test.go
+    - path: src/internal/host/canonical_selected_test.go
       owner: canonical-selected-source-tests
-    - path: internal/host/recordstore/README.md
+    - path: src/internal/host/recordstore/README.md
       owner: projection-recordstore-host
-    - path: internal/host/recordstore/path.go
+    - path: src/internal/host/recordstore/path.go
       owner: projection-recordstore-host
-    - path: internal/host/recordstore/store.go
+    - path: src/internal/host/recordstore/store.go
       owner: projection-recordstore-host
-    - path: internal/host/recordstore/store_test.go
+    - path: src/internal/host/recordstore/store_test.go
       owner: projection-recordstore-host
-    - path: internal/modules/agentrules/README.md
+    - path: src/internal/modules/agentrules/README.md
       owner: agent-rules-projection-module
-    - path: internal/modules/agentrules/agentrules.go
+    - path: src/internal/modules/agentrules/agentrules.go
       owner: agent-rules-projection-module
-    - path: internal/modules/agentrules/agentrules_test.go
+    - path: src/internal/modules/agentrules/agentrules_test.go
       owner: agent-rules-projection-module
-    - path: internal/modules/agentrules/claude.go
+    - path: src/internal/modules/agentrules/claude.go
       owner: agent-rules-projection-module
-    - path: internal/modules/agentrules/codex.go
+    - path: src/internal/modules/agentrules/codex.go
       owner: agent-rules-projection-module
-    - path: internal/tooling/codexrunner/README.md
+    - path: src/internal/tooling/codexrunner/README.md
       owner: codex-runner-tooling
-    - path: internal/tooling/codexrunner/runner.py
+    - path: src/internal/tooling/codexrunner/runner.py
       owner: codex-runner-tooling
-    - path: internal/tooling/codexrunner/test_runner.py
+    - path: src/internal/tooling/codexrunner/test_runner.py
       owner: codex-runner-tooling
-    - path: internal/modules/dotnet/proposal.go
+    - path: src/internal/modules/dotnet/proposal.go
       owner: canonical-dotnet-proposal-implementation
-    - path: internal/modules/dotnet/proposal_test.go
+    - path: src/internal/modules/dotnet/proposal_test.go
       owner: canonical-dotnet-proposal-tests
-    - path: internal/modules/markdown/proposal.go
+    - path: src/internal/modules/markdown/proposal.go
       owner: canonical-markdown-proposal-implementation
-    - path: internal/modules/markdown/proposal_test.go
+    - path: src/internal/modules/markdown/proposal_test.go
       owner: canonical-markdown-proposal-tests
     - path: docs/design/canonical-reverse-inference.md
       owner: canonical-reverse-inference-design
@@ -722,23 +722,23 @@ spec:
       owner: canonical-workflow-proof-fixture
     - path: examples/canonical-workflow/modules/workflow/schema.yaml
       owner: canonical-workflow-proof-fixture
-    - path: internal/host/canonical_controller_verification.go
+    - path: src/internal/host/canonical_controller_verification.go
       owner: canonical-controller-verification
-    - path: internal/host/canonical_controller_verification_test.go
+    - path: src/internal/host/canonical_controller_verification_test.go
       owner: canonical-controller-verification-tests
-    - path: internal/host/canonical_inference.go
+    - path: src/internal/host/canonical_inference.go
       owner: canonical-inference-implementation
-    - path: internal/host/canonical_inference_test.go
+    - path: src/internal/host/canonical_inference_test.go
       owner: canonical-inference-tests
-    - path: internal/host/canonical_provider_projection.go
+    - path: src/internal/host/canonical_provider_projection.go
       owner: canonical-provider-projection
-    - path: internal/host/canonical_provider_projection_test.go
+    - path: src/internal/host/canonical_provider_projection_test.go
       owner: canonical-provider-projection-tests
-    - path: internal/host/canonical_controller_dependencies.go
+    - path: src/internal/host/canonical_controller_dependencies.go
       owner: canonical-controller-dependency-preparation
-    - path: internal/host/canonical_controller_dependencies_test.go
+    - path: src/internal/host/canonical_controller_dependencies_test.go
       owner: canonical-controller-dependency-tests
-    - path: internal/host/canonical_controller_test.go
+    - path: src/internal/host/canonical_controller_test.go
       owner: canonical-controller-lifecycle-tests
     - path: docs/design/candidate-dependency-execution.md
       owner: candidate-dependency-design
@@ -810,19 +810,19 @@ spec:
       owner: operating-model-proof-harness
     - path: experiments/operating-model-proof/run.py
       owner: operating-model-proof-harness
-    - path: examples/recursive_assurance_test.go
+    - path: src/harness/examples/recursive_assurance_test.go
       owner: recursive-assurance-fixture-tests
-    - path: internal/host/agentexec/process_linux.go
+    - path: src/internal/host/agentexec/process_linux.go
       owner: agent-process-lifecycle
-    - path: internal/host/agentexec/process_windows.go
+    - path: src/internal/host/agentexec/process_windows.go
       owner: agent-process-lifecycle
-    - path: internal/host/agentexec/process_tree.go
+    - path: src/internal/host/agentexec/process_tree.go
       owner: agent-process-lifecycle
-    - path: internal/host/agentexec/process_other.go
+    - path: src/internal/host/agentexec/process_other.go
       owner: agent-process-lifecycle
-    - path: internal/host/canonical_goal_modeling.go
+    - path: src/internal/host/canonical_goal_modeling.go
       owner: goal-led-modeling-proposal
-    - path: internal/host/canonical_goal_modeling_test.go
+    - path: src/internal/host/canonical_goal_modeling_test.go
       owner: goal-led-modeling-tests
     - path: docs/design/goal-led-modeling.md
       owner: goal-led-modeling-design
@@ -866,7 +866,7 @@ spec:
       owner: unknown-ontology-fixture
     - path: examples/unknown-ontology/negative-specifications.md
       owner: unknown-ontology-fixture
-    - path: examples/unknown_ontology_test.go
+    - path: src/harness/examples/unknown_ontology_test.go
       owner: unknown-ontology-fixture
     - path: experiments/operating-model-proof/protocol-v3.md
       owner: bounded-controller-contract
@@ -906,15 +906,15 @@ spec:
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/runs/c3-positive-01/events/propose-eb4a4daf44d34949b34cbfff90a459a8.json
       owner: operating-model-proof-evidence
-    - path: internal/host/canonical_target_exclusions.go
+    - path: src/internal/host/canonical_target_exclusions.go
       owner: bounded-controller-contract
-    - path: internal/host/canonical_target_exclusions_test.go
+    - path: src/internal/host/canonical_target_exclusions_test.go
       owner: bounded-controller-contract
     - path: docs/design/scoped-target-exclusions.md
       owner: bounded-controller-contract
-    - path: internal/host/cli/adoption_inference_test.go
+    - path: src/internal/host/cli/adoption_inference_test.go
       owner: bounded-controller-contract
-    - path: examples/public_fixture_test.go
+    - path: src/harness/examples/public_fixture_test.go
       owner: bounded-host-proposal-contract
     - path: experiments/operating-model-proof/capability-results.md
       owner: operating-model-proof-evidence
@@ -1054,9 +1054,9 @@ spec:
       owner: canonical-ontology-examples
     - path: examples/capability-ontologies/workflow-responsibility/module.yaml
       owner: canonical-ontology-examples
-    - path: internal/host/canonical_workflow_projection.go
+    - path: src/internal/host/canonical_workflow_projection.go
       owner: canonical-projection-host
-    - path: internal/host/canonical_workflow_projection_test.go
+    - path: src/internal/host/canonical_workflow_projection_test.go
       owner: canonical-projection-host
     - path: experiments/operating-model-proof/c12-goal-propose-01.md
       owner: operating-model-proof-evidence
@@ -1072,17 +1072,17 @@ spec:
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/runs/c3-positive-01/events/provider-3864ad67fd0b5477c2658a909253e291.json
       owner: operating-model-proof-evidence
-    - path: internal/host/canonical_evidence_refresh.go
+    - path: src/internal/host/canonical_evidence_refresh.go
       owner: bounded-host-proposal-contract
-    - path: internal/host/canonical_evidence_refresh_test.go
+    - path: src/internal/host/canonical_evidence_refresh_test.go
       owner: bounded-host-proposal-contract
-    - path: internal/host/cli/canonical_goal.go
+    - path: src/internal/host/cli/canonical_goal.go
       owner: bounded-host-proposal-contract
-    - path: internal/host/cli/canonical_goal_test.go
+    - path: src/internal/host/cli/canonical_goal_test.go
       owner: bounded-host-proposal-contract
-    - path: internal/host/cli/canonical_refresh.go
+    - path: src/internal/host/cli/canonical_refresh.go
       owner: bounded-host-proposal-contract
-    - path: internal/host/cli/canonical_refresh_test.go
+    - path: src/internal/host/cli/canonical_refresh_test.go
       owner: bounded-host-proposal-contract
     - path: experiments/operating-model-proof/runs/c3-insufficient-03/binding.json
       owner: operating-model-proof-evidence
@@ -1224,15 +1224,15 @@ spec:
       owner: independent-markdown-reference-projection
     - path: examples/module-replacement/replacement.yaml
       owner: independent-markdown-reference-projection
-    - path: internal/host/canonical_markdown_reference.go
+    - path: src/internal/host/canonical_markdown_reference.go
       owner: independent-markdown-reference-projection
-    - path: internal/host/canonical_markdown_reference_test.go
+    - path: src/internal/host/canonical_markdown_reference_test.go
       owner: independent-markdown-reference-projection
-    - path: internal/modules/markdownreference/README.md
+    - path: src/internal/modules/markdownreference/README.md
       owner: independent-markdown-reference-projection
-    - path: internal/modules/markdownreference/markdownreference.go
+    - path: src/internal/modules/markdownreference/markdownreference.go
       owner: independent-markdown-reference-projection
-    - path: internal/modules/markdownreference/markdownreference_test.go
+    - path: src/internal/modules/markdownreference/markdownreference_test.go
       owner: independent-markdown-reference-projection
     - path: examples/canonical-workflow/canonical-azurepipelines-only.yaml
       owner: immutable-operating-model-proof-records
@@ -1486,9 +1486,9 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/c4-postverify-propose-readonly-01/structured-summary.json
       owner: immutable-operating-model-proof-records
-    - path: internal/host/canonical_adoption_store.go
+    - path: src/internal/host/canonical_adoption_store.go
       owner: canonical-adoption-host
-    - path: internal/host/cli/canonical_adoption_durable_test.go
+    - path: src/internal/host/cli/canonical_adoption_durable_test.go
       owner: canonical-adoption-host
     - path: experiments/operating-model-proof/runs/c4-current-host-propose-wt-01/direct-current-host-observation.json
       owner: immutable-operating-model-proof-records
@@ -1560,17 +1560,17 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/c8-orders-owned-drift-control-02/propose-event.json
       owner: immutable-operating-model-proof-records
-    - path: internal/host/canonical_controller_coverage.go
+    - path: src/internal/host/canonical_controller_coverage.go
       owner: controller-verifier-observation-coverage
-    - path: internal/host/canonical_controller_coverage_test.go
+    - path: src/internal/host/canonical_controller_coverage_test.go
       owner: controller-verifier-observation-coverage
     - path: docs/design/canonical-verification-refresh.md
       owner: controller-verification-freshness
-    - path: internal/host/canonical_verification_refresh_test.go
+    - path: src/internal/host/canonical_verification_refresh_test.go
       owner: controller-verification-freshness
     - path: experiments/operating-model-proof/protocol-v8.md
       owner: operating-model-proof-protocol
-    - path: internal/host/canonical_controller_reuse.go
+    - path: src/internal/host/canonical_controller_reuse.go
       owner: controller-verification-freshness
     - path: experiments/operating-model-proof/runs/c11-original-markdown/assessment.json
       owner: immutable-operating-model-proof-records
@@ -1668,7 +1668,7 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/c7-unknown-exclusion-01/scope-note.md
       owner: immutable-operating-model-proof-records
-    - path: internal/host/canonical_controller_assurance_preflight_test.go
+    - path: src/internal/host/canonical_controller_assurance_preflight_test.go
       owner: controller-source-check-preflight
     - path: experiments/operating-model-proof/runs/windows-gates-4465186/receipt.json
       owner: immutable-operating-model-proof-records
@@ -1684,13 +1684,13 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: docs/design/host-write-identity.md
       owner: host-write-identity
-    - path: internal/host/recordstore/rooted.go
+    - path: src/internal/host/recordstore/rooted.go
       owner: canonical-record-store
-    - path: internal/host/canonical_controller_lease_test.go
+    - path: src/internal/host/canonical_controller_lease_test.go
       owner: controller-lease-identity
-    - path: internal/host/canonical_controller_lease_linux_test.go
+    - path: src/internal/host/canonical_controller_lease_linux_test.go
       owner: controller-lease-identity
-    - path: internal/host/canonical_controller_lease_windows_test.go
+    - path: src/internal/host/canonical_controller_lease_windows_test.go
       owner: controller-lease-identity
 
     - path: experiments/operating-model-proof/runs/gates-e788fc0/README.md
@@ -1899,73 +1899,73 @@ spec:
       owner: project-world-implementation
     - path: docs/design/project-world/shop-walkthrough.md
       owner: project-world-implementation
-    - path: internal/host/agentexec/private_log_other.go
+    - path: src/internal/host/agentexec/private_log_other.go
       owner: project-world-implementation
-    - path: internal/host/agentexec/private_log_windows.go
+    - path: src/internal/host/agentexec/private_log_windows.go
       owner: project-world-implementation
-    - path: internal/host/agentexec/private_log_windows_test.go
+    - path: src/internal/host/agentexec/private_log_windows_test.go
       owner: project-world-implementation
-    - path: internal/host/project_guarded_write.go
+    - path: src/internal/host/project_guarded_write.go
       owner: project-world-implementation
-    - path: internal/host/project_guarded_write_test.go
+    - path: src/internal/host/project_guarded_write_test.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/adopt.go
+    - path: src/internal/host/projectadoption/adopt.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/bindings.go
+    - path: src/internal/host/projectadoption/bindings.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/discovery.go
+    - path: src/internal/host/projectadoption/discovery.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/projectadoption_test.go
+    - path: src/internal/host/projectadoption/projectadoption_test.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/types.go
+    - path: src/internal/host/projectadoption/types.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/validate.go
+    - path: src/internal/host/projectadoption/validate.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/wire.go
+    - path: src/internal/host/projectadoption/wire.go
       owner: project-world-implementation
-    - path: internal/host/projectwork/config.go
+    - path: src/internal/host/projectwork/config.go
       owner: project-world-implementation
-    - path: internal/host/projectwork/coverage.go
+    - path: src/internal/host/projectwork/coverage.go
       owner: project-world-implementation
-    - path: internal/host/projectwork/coverage_test.go
+    - path: src/internal/host/projectwork/coverage_test.go
       owner: project-world-implementation
-    - path: internal/host/projectwork/document.go
+    - path: src/internal/host/projectwork/document.go
       owner: project-world-implementation
-    - path: internal/host/projectwork/init.go
+    - path: src/internal/host/projectwork/init.go
       owner: project-world-implementation
-    - path: internal/host/projectwork/inventory.go
+    - path: src/internal/host/projectwork/inventory.go
       owner: project-world-implementation
-    - path: internal/host/projectwork/mutation.go
+    - path: src/internal/host/projectwork/mutation.go
       owner: project-world-implementation
-    - path: internal/host/projectwork/project.go
+    - path: src/internal/host/projectwork/project.go
       owner: project-world-implementation
-    - path: internal/host/projectwork/projectwork_test.go
+    - path: src/internal/host/projectwork/projectwork_test.go
       owner: project-world-implementation
-    - path: internal/host/projectwork/types.go
+    - path: src/internal/host/projectwork/types.go
       owner: project-world-implementation
-    - path: internal/host/tool_build_digest.go
+    - path: src/internal/host/tool_build_digest.go
       owner: project-world-implementation
-    - path: internal/host/tool_build_digest_test.go
+    - path: src/internal/host/tool_build_digest_test.go
       owner: project-world-implementation
-    - path: internal/infrastructure/source/scoped_revision.go
+    - path: src/internal/infrastructure/source/scoped_revision.go
       owner: project-world-implementation
-    - path: internal/infrastructure/source/scoped_revision_test.go
+    - path: src/internal/infrastructure/source/scoped_revision_test.go
       owner: project-world-implementation
-    - path: internal/modules/projectmodel/analyze.go
+    - path: src/internal/modules/projectmodel/analyze.go
       owner: project-world-implementation
-    - path: internal/modules/projectmodel/impact.go
+    - path: src/internal/modules/projectmodel/impact.go
       owner: project-world-implementation
-    - path: internal/modules/projectmodel/projectmodel.go
+    - path: src/internal/modules/projectmodel/projectmodel.go
       owner: project-world-implementation
-    - path: internal/modules/projectmodel/projectmodel_test.go
+    - path: src/internal/modules/projectmodel/projectmodel_test.go
       owner: project-world-implementation
-    - path: internal/modules/projectmodel/types.go
+    - path: src/internal/modules/projectmodel/types.go
       owner: project-world-implementation
-    - path: internal/tooling/clauderunner/README.md
+    - path: src/internal/tooling/clauderunner/README.md
       owner: project-world-implementation
-    - path: internal/tooling/clauderunner/runner.py
+    - path: src/internal/tooling/clauderunner/runner.py
       owner: project-world-implementation
-    - path: internal/tooling/clauderunner/test_runner.py
+    - path: src/internal/tooling/clauderunner/test_runner.py
       owner: project-world-implementation
     - path: docs/project-workflow.md
       owner: project-world-implementation
@@ -2037,139 +2037,139 @@ spec:
       owner: project-world-implementation
     - path: examples/project-world/tests/test_cancellation.py
       owner: project-world-implementation
-    - path: internal/host/cli/project_dispatch_test.go
+    - path: src/internal/host/cli/project_dispatch_test.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/options.go
+    - path: src/internal/host/projectcli/options.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/options_test.go
+    - path: src/internal/host/projectcli/options_test.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/project_e2e_test.go
+    - path: src/internal/host/projectcli/project_e2e_test.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/records.go
+    - path: src/internal/host/projectcli/records.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/records_test.go
+    - path: src/internal/host/projectcli/records_test.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/run.go
+    - path: src/internal/host/projectcli/run.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/operations.go
+    - path: src/internal/host/projectcli/operations.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/operations_cli_test.go
+    - path: src/internal/host/projectcli/operations_cli_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/apply.go
+    - path: src/internal/host/projectrun/apply.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/checks.go
+    - path: src/internal/host/projectrun/checks.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/config.go
+    - path: src/internal/host/projectrun/config.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/config_test.go
+    - path: src/internal/host/projectrun/config_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/invoker.go
+    - path: src/internal/host/projectrun/invoker.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/obligations_test.go
+    - path: src/internal/host/projectrun/obligations_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/obligations.go
+    - path: src/internal/host/projectrun/obligations.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/path.go
+    - path: src/internal/host/projectrun/path.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/plan.go
+    - path: src/internal/host/projectrun/plan.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/process_alive_unix.go
+    - path: src/internal/host/projectrun/process_alive_unix.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/process_alive_windows.go
+    - path: src/internal/host/projectrun/process_alive_windows.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/protocol.go
+    - path: src/internal/host/projectrun/protocol.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/run.go
+    - path: src/internal/host/projectrun/run.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/review.go
+    - path: src/internal/host/projectrun/review.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/review_contract_test.go
+    - path: src/internal/host/projectrun/review_contract_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/review_test.go
+    - path: src/internal/host/projectrun/review_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/rework.go
+    - path: src/internal/host/projectrun/rework.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/store.go
+    - path: src/internal/host/projectrun/store.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/types.go
+    - path: src/internal/host/projectrun/types.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/verify.go
+    - path: src/internal/host/projectrun/verify.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/briefing_context.go
+    - path: src/internal/host/projectrun/briefing_context.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/full_verify.go
+    - path: src/internal/host/projectrun/full_verify.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/full_verify_test.go
+    - path: src/internal/host/projectrun/full_verify_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/full_apply_test.go
+    - path: src/internal/host/projectrun/full_apply_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/operation.go
+    - path: src/internal/host/projectrun/operation.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/operation_test.go
+    - path: src/internal/host/projectrun/operation_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/candidate_document.go
+    - path: src/internal/host/projectrun/candidate_document.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/candidate_policy_test.go
+    - path: src/internal/host/projectrun/candidate_policy_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/operations_e2e_test.go
+    - path: src/internal/host/projectrun/operations_e2e_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/review_briefing_test.go
+    - path: src/internal/host/projectrun/review_briefing_test.go
       owner: project-world-implementation
     - path: examples/project-world/.markitect/model/commerce/sales/orders/requires-active-reservation.yaml
       owner: project-world-implementation
-    - path: internal/host/projectrun/git_binding.go
+    - path: src/internal/host/projectrun/git_binding.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/path_test.go
+    - path: src/internal/host/projectrun/path_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/plan_test.go
+    - path: src/internal/host/projectrun/plan_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/protocol_test.go
+    - path: src/internal/host/projectrun/protocol_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/store_test.go
+    - path: src/internal/host/projectrun/store_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/verification_budget_test.go
+    - path: src/internal/host/projectrun/verification_budget_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/resume_crash_test.go
+    - path: src/internal/host/projectrun/resume_crash_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/repair_e2e_test.go
+    - path: src/internal/host/projectrun/repair_e2e_test.go
       owner: project-world-implementation
-    - path: internal/host/projectwork/runtime_edit_test.go
+    - path: src/internal/host/projectwork/runtime_edit_test.go
       owner: project-world-implementation
     - path: docs/validation/project-world-delivery.md
       owner: project-world-validation
     - path: docs/validation/project-operations-2026-10-09.md
       owner: project-world-validation
-    - path: internal/host/projectrun/process_e2e_test.go
+    - path: src/internal/host/projectrun/process_e2e_test.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/runner.go
+    - path: src/internal/host/projectadoption/runner.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/runner_test.go
+    - path: src/internal/host/projectadoption/runner_test.go
       owner: project-world-implementation
     - path: experiments/project-world-live/acceptance.py
       owner: project-world-live-validation
-    - path: internal/host/projectsetup/setup.go
+    - path: src/internal/host/projectsetup/setup.go
       owner: project-world-implementation
-    - path: internal/host/projectsetup/setup_test.go
+    - path: src/internal/host/projectsetup/setup_test.go
       owner: project-world-implementation
-    - path: internal/host/projectcoverage/types.go
+    - path: src/internal/host/projectcoverage/types.go
       owner: project-world-implementation
-    - path: internal/host/projectcoverage/ignore.go
+    - path: src/internal/host/projectcoverage/ignore.go
       owner: project-world-implementation
-    - path: internal/host/projectcoverage/coverage.go
+    - path: src/internal/host/projectcoverage/coverage.go
       owner: project-world-implementation
-    - path: internal/host/projectcoverage/coverage_test.go
+    - path: src/internal/host/projectcoverage/coverage_test.go
       owner: project-world-implementation
-    - path: internal/host/projectcoverage/census.go
+    - path: src/internal/host/projectcoverage/census.go
       owner: project-world-implementation
-    - path: internal/host/projectbriefing/briefing.go
+    - path: src/internal/host/projectbriefing/briefing.go
       owner: project-world-implementation
-    - path: internal/host/projectbriefing/store.go
+    - path: src/internal/host/projectbriefing/store.go
       owner: project-world-implementation
-    - path: internal/host/projectbriefing/briefing_test.go
+    - path: src/internal/host/projectbriefing/briefing_test.go
       owner: project-world-implementation
-    - path: internal/host/projectbriefing/identity_test.go
+    - path: src/internal/host/projectbriefing/identity_test.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/identity_history_test.go
+    - path: src/internal/host/projectcli/identity_history_test.go
       owner: project-world-implementation
     - path: examples/project-world/.markitect/model/commerce/sales/artifacts.yaml
       owner: project-world-implementation
@@ -2181,120 +2181,120 @@ spec:
       owner: project-world-implementation
     - path: examples/project-world/.markitect/model/project-overview.yaml
       owner: project-world-implementation
-    - path: internal/host/projectonboarding/onboarding.go
+    - path: src/internal/host/projectonboarding/onboarding.go
       owner: project-world-implementation
-    - path: internal/host/projectonboarding/render.go
+    - path: src/internal/host/projectonboarding/render.go
       owner: project-world-implementation
-    - path: internal/host/projectonboarding/onboarding_test.go
+    - path: src/internal/host/projectonboarding/onboarding_test.go
       owner: project-world-implementation
-    - path: internal/host/projectonboarding/init_test.go
+    - path: src/internal/host/projectonboarding/init_test.go
       owner: project-world-implementation
     - path: experiments/project-world-live/run.py
       owner: project-world-live-validation
     - path: experiments/project-world-live/README.md
       owner: project-world-live-validation
-    - path: internal/host/projectadoption/target_context.go
+    - path: src/internal/host/projectadoption/target_context.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/resolution.go
+    - path: src/internal/host/projectcli/resolution.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/resolution_test.go
+    - path: src/internal/host/projectcli/resolution_test.go
       owner: project-world-implementation
     - path: experiments/project-world-live/brownfield.py
       owner: project-world-live-validation
-    - path: internal/host/projectcli/distill_basis_test.go
+    - path: src/internal/host/projectcli/distill_basis_test.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/schema_test.go
+    - path: src/internal/host/projectcli/schema_test.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/repair_test.go
+    - path: src/internal/host/projectcli/repair_test.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/distill_receipt_test.go
+    - path: src/internal/host/projectcli/distill_receipt_test.go
       owner: project-world-implementation
     - path: docs/design/project-world/native-work-item-delivery.md
       owner: project-world-implementation
     - path: docs/design/work-item-comparison-20261009.md
       owner: project-world-implementation
-    - path: examples/project_world_workflow_test.go
+    - path: src/harness/examples/project_world_workflow_test.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/readiness.go
+    - path: src/internal/host/projectadoption/readiness.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/reverse.go
+    - path: src/internal/host/projectadoption/reverse.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/session.go
+    - path: src/internal/host/projectadoption/session.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/session_test.go
+    - path: src/internal/host/projectadoption/session_test.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/delegation_test.go
+    - path: src/internal/host/projectadoption/delegation_test.go
       owner: project-world-implementation
-    - path: internal/host/projectbriefing/history_test.go
+    - path: src/internal/host/projectbriefing/history_test.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/project_brownfield.go
+    - path: src/internal/host/projectcli/project_brownfield.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/project_brownfield_test.go
+    - path: src/internal/host/projectcli/project_brownfield_test.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/project_deliver.go
+    - path: src/internal/host/projectcli/project_deliver.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/project_explore.go
+    - path: src/internal/host/projectcli/project_explore.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/project_explore_test.go
+    - path: src/internal/host/projectcli/project_explore_test.go
       owner: project-world-implementation
-    - path: internal/host/projectexplore/projectexplore_test.go
+    - path: src/internal/host/projectexplore/projectexplore_test.go
       owner: project-world-implementation
-    - path: internal/host/projectexplore/readiness.go
+    - path: src/internal/host/projectexplore/readiness.go
       owner: project-world-implementation
-    - path: internal/host/projectexplore/record.go
+    - path: src/internal/host/projectexplore/record.go
       owner: project-world-implementation
-    - path: internal/host/projectexplore/store.go
+    - path: src/internal/host/projectexplore/store.go
       owner: project-world-implementation
-    - path: internal/host/projectexplore/types.go
+    - path: src/internal/host/projectexplore/types.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/deliver.go
+    - path: src/internal/host/projectrun/deliver.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/deliver_test.go
+    - path: src/internal/host/projectrun/deliver_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/exploration.go
+    - path: src/internal/host/projectrun/exploration.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/session_apply.go
+    - path: src/internal/host/projectadoption/session_apply.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/session_apply_test.go
+    - path: src/internal/host/projectadoption/session_apply_test.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/manager_integration_context.go
+    - path: src/internal/host/projectadoption/manager_integration_context.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/manager_run.go
+    - path: src/internal/host/projectadoption/manager_run.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/manager_run_ledger.go
+    - path: src/internal/host/projectadoption/manager_run_ledger.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/manager_run_test.go
+    - path: src/internal/host/projectadoption/manager_run_test.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/process_lock_test.go
+    - path: src/internal/host/projectadoption/process_lock_test.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/process_lock_unix.go
+    - path: src/internal/host/projectadoption/process_lock_unix.go
       owner: project-world-implementation
-    - path: internal/host/projectadoption/process_lock_windows.go
+    - path: src/internal/host/projectadoption/process_lock_windows.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/project_brownfield_run.go
+    - path: src/internal/host/projectcli/project_brownfield_run.go
       owner: project-world-implementation
     - path: docs/validation/project-native-delivery-2026-10-09.md
       owner: project-world-validation
 
-    - path: internal/host/agentexec/native_work.go
+    - path: src/internal/host/agentexec/native_work.go
       owner: bounded-agent-execution-host
-    - path: internal/host/projectonboarding/capabilities.go
+    - path: src/internal/host/projectonboarding/capabilities.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/native_workspace.go
+    - path: src/internal/host/projectrun/native_workspace.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/native_workspace_test.go
+    - path: src/internal/host/projectrun/native_workspace_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/failed_native_receipt_test.go
+    - path: src/internal/host/projectrun/failed_native_receipt_test.go
       owner: project-world-implementation
-    - path: internal/tooling/codexrunner/native_work.py
+    - path: src/internal/tooling/codexrunner/native_work.py
       owner: codex-runner-tooling
-    - path: internal/tooling/codexrunner/test_native_work.py
+    - path: src/internal/tooling/codexrunner/test_native_work.py
       owner: codex-runner-tooling
     - path: docs/design/project-world/native-codex-work.md
       owner: project-world-implementation
     - path: docs/validation/project-native-work-2026-10-09.md
       owner: project-world-validation
-    - path: internal/host/shared_helpers.go
+    - path: src/internal/host/shared_helpers.go
       owner: host-write-identity
     - path: docs/work-items/product-readiness/P01-current-checkpoint.md
       owner: project-world-implementation
@@ -2328,177 +2328,177 @@ spec:
       owner: project-world-implementation
     - path: docs/work-items/product-readiness/source-handoff-20261009.md
       owner: project-world-implementation
-    - path: internal/host/projectworkspace/contracts.go
+    - path: src/internal/host/projectworkspace/contracts.go
       owner: project-world-implementation
-    - path: internal/host/projectworkspace/contracts_test.go
+    - path: src/internal/host/projectworkspace/contracts_test.go
       owner: project-world-implementation
-    - path: internal/host/projectapp/operations.go
+    - path: src/internal/host/projectapp/operations.go
       owner: project-world-implementation
-    - path: internal/host/projectapp/operations_test.go
+    - path: src/internal/host/projectapp/operations_test.go
       owner: project-world-implementation
-    - path: internal/host/codexappserver/contracts.go
+    - path: src/internal/host/codexappserver/contracts.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/contracts_test.go
+    - path: src/internal/host/codexappserver/contracts_test.go
       owner: bounded-agent-execution-host
-    - path: internal/host/agentexec/invocation.go
+    - path: src/internal/host/agentexec/invocation.go
       owner: bounded-agent-execution-host
-    - path: internal/host/agentexec/invocation_test.go
+    - path: src/internal/host/agentexec/invocation_test.go
       owner: bounded-agent-execution-host
-    - path: internal/host/agentexec/lifecycle.go
+    - path: src/internal/host/agentexec/lifecycle.go
       owner: bounded-agent-execution-host
-    - path: internal/host/projectrun/invoker_test.go
+    - path: src/internal/host/projectrun/invoker_test.go
       owner: project-world-implementation
-    - path: internal/host/projectapp/brownfield.go
+    - path: src/internal/host/projectapp/brownfield.go
       owner: project-world-implementation
-    - path: internal/host/projectapp/brownfield_run.go
+    - path: src/internal/host/projectapp/brownfield_run.go
       owner: project-world-implementation
-    - path: internal/host/projectapp/brownfield_test.go
+    - path: src/internal/host/projectapp/brownfield_test.go
       owner: project-world-implementation
-    - path: internal/host/projectapp/exploration.go
+    - path: src/internal/host/projectapp/exploration.go
       owner: project-world-implementation
-    - path: internal/host/projectapp/exploration_test.go
+    - path: src/internal/host/projectapp/exploration_test.go
       owner: project-world-implementation
-    - path: internal/host/projectapp/setup.go
+    - path: src/internal/host/projectapp/setup.go
       owner: project-world-implementation
     - path: docs/work-items/product-readiness/integration-progress-20261009.md
       owner: project-world-implementation
-    - path: internal/host/projectapp/model.go
+    - path: src/internal/host/projectapp/model.go
       owner: project-world-implementation
-    - path: internal/host/projectapp/model_test.go
+    - path: src/internal/host/projectapp/model_test.go
       owner: project-world-implementation
-    - path: internal/host/projectapp/onboarding.go
+    - path: src/internal/host/projectapp/onboarding.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/mcp.go
+    - path: src/internal/host/projectcli/mcp.go
       owner: project-world-implementation
-    - path: internal/host/projectcli/mcp_integration_test.go
+    - path: src/internal/host/projectcli/mcp_integration_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/scheduling.go
+    - path: src/internal/host/projectrun/scheduling.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/scheduling_test.go
+    - path: src/internal/host/projectrun/scheduling_test.go
       owner: project-world-implementation
-    - path: internal/host/mcp/stdio.go
+    - path: src/internal/host/mcp/stdio.go
       owner: project-world-implementation
-    - path: internal/host/mcp/schema.go
+    - path: src/internal/host/mcp/schema.go
       owner: project-world-implementation
-    - path: internal/host/mcp/tools.go
+    - path: src/internal/host/mcp/tools.go
       owner: project-world-implementation
-    - path: internal/host/mcp/mcp_test.go
+    - path: src/internal/host/mcp/mcp_test.go
       owner: project-world-implementation
     - path: docs/work-items/product-readiness/P05-mcp-handoff-20261009.md
       owner: project-world-implementation
-    - path: internal/host/projectworkspace/git_service.go
+    - path: src/internal/host/projectworkspace/git_service.go
       owner: project-world-implementation
-    - path: internal/host/projectworkspace/git_inventory.go
+    - path: src/internal/host/projectworkspace/git_inventory.go
       owner: project-world-implementation
-    - path: internal/host/projectworkspace/git_overlay.go
+    - path: src/internal/host/projectworkspace/git_overlay.go
       owner: project-world-implementation
-    - path: internal/host/projectworkspace/git_renames.go
+    - path: src/internal/host/projectworkspace/git_renames.go
       owner: project-world-implementation
-    - path: internal/host/projectworkspace/git_service_test.go
+    - path: src/internal/host/projectworkspace/git_service_test.go
       owner: project-world-implementation
-    - path: internal/host/projectworkspace/git_overlay_test.go
+    - path: src/internal/host/projectworkspace/git_overlay_test.go
       owner: project-world-implementation
-    - path: internal/host/projectworkspace/git_hardening_test.go
+    - path: src/internal/host/projectworkspace/git_hardening_test.go
       owner: project-world-implementation
-    - path: internal/host/projectworkspace/git_recovery_test.go
+    - path: src/internal/host/projectworkspace/git_recovery_test.go
       owner: project-world-implementation
     - path: docs/work-items/product-readiness/P03-workspaces-handoff-20261009.md
       owner: project-world-implementation
     - path: docs/work-items/product-readiness/P04-adapter-handoff-20261009.md
       owner: project-world-implementation
-    - path: internal/host/projectrun/transport_config_test.go
+    - path: src/internal/host/projectrun/transport_config_test.go
       owner: project-world-implementation
-    - path: internal/host/codexappserver/adapter_test.go
+    - path: src/internal/host/codexappserver/adapter_test.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/client.go
+    - path: src/internal/host/codexappserver/client.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/client_test.go
+    - path: src/internal/host/codexappserver/client_test.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/events.go
+    - path: src/internal/host/codexappserver/events.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/evidence.go
+    - path: src/internal/host/codexappserver/evidence.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/process.go
+    - path: src/internal/host/codexappserver/process.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/process_linux.go
+    - path: src/internal/host/codexappserver/process_linux.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/process_other.go
+    - path: src/internal/host/codexappserver/process_other.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/process_tree.go
+    - path: src/internal/host/codexappserver/process_tree.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/process_windows.go
+    - path: src/internal/host/codexappserver/process_windows.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/recovery.go
+    - path: src/internal/host/codexappserver/recovery.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/session.go
+    - path: src/internal/host/codexappserver/session.go
       owner: bounded-agent-execution-host
-    - path: internal/host/codexappserver/tools.go
+    - path: src/internal/host/codexappserver/tools.go
       owner: bounded-agent-execution-host
-    - path: internal/host/projectrun/local_workspaces.go
+    - path: src/internal/host/projectrun/local_workspaces.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/local_workspaces_test.go
+    - path: src/internal/host/projectrun/local_workspaces_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/transport_invoker.go
+    - path: src/internal/host/projectrun/transport_invoker.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/transport_invoker_test.go
+    - path: src/internal/host/projectrun/transport_invoker_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/workspace_bridge.go
+    - path: src/internal/host/projectrun/workspace_bridge.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/workspace_bridge_test.go
+    - path: src/internal/host/projectrun/workspace_bridge_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/workspace_delta.go
+    - path: src/internal/host/projectrun/workspace_delta.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/workspace_delta_test.go
+    - path: src/internal/host/projectrun/workspace_delta_test.go
       owner: project-world-implementation
-    - path: internal/host/projectworkspace/git_reopen.go
+    - path: src/internal/host/projectworkspace/git_reopen.go
       owner: project-world-implementation
-    - path: internal/host/projectworkspace/git_reopen_test.go
+    - path: src/internal/host/projectworkspace/git_reopen_test.go
       owner: project-world-implementation
-    - path: internal/host/projectonboarding/newnative_workflow_test.go
+    - path: src/internal/host/projectonboarding/newnative_workflow_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/coordinator.go
+    - path: src/internal/host/projectrun/coordinator.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/coordinator_test.go
+    - path: src/internal/host/projectrun/coordinator_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/native_journal.go
+    - path: src/internal/host/projectrun/native_journal.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/native_journal_test.go
+    - path: src/internal/host/projectrun/native_journal_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/read_only_repository.go
+    - path: src/internal/host/projectrun/read_only_repository.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/read_only_repository_test.go
+    - path: src/internal/host/projectrun/read_only_repository_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/start_accounting.go
+    - path: src/internal/host/projectrun/start_accounting.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/start_accounting_test.go
+    - path: src/internal/host/projectrun/start_accounting_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/workspace_recovery.go
+    - path: src/internal/host/projectrun/workspace_recovery.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/helper.go
+    - path: src/internal/host/projectrun/helper.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/helper_budget_binding.go
+    - path: src/internal/host/projectrun/helper_budget_binding.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/helpers_test.go
+    - path: src/internal/host/projectrun/helpers_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/resume_invocation.go
+    - path: src/internal/host/projectrun/resume_invocation.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/resume_review.go
+    - path: src/internal/host/projectrun/resume_review.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/resume_review_test.go
+    - path: src/internal/host/projectrun/resume_review_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/resume_verifier.go
+    - path: src/internal/host/projectrun/resume_verifier.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/role_budget.go
+    - path: src/internal/host/projectrun/role_budget.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/role_budget_test.go
+    - path: src/internal/host/projectrun/role_budget_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/workspace_recovery_test.go
+    - path: src/internal/host/projectrun/workspace_recovery_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/resume_verifier_test.go
+    - path: src/internal/host/projectrun/resume_verifier_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/resume_invocation_test.go
+    - path: src/internal/host/projectrun/resume_invocation_test.go
       owner: project-world-implementation
-    - path: internal/host/projectrun/resume_native_e2e_test.go
+    - path: src/internal/host/projectrun/resume_native_e2e_test.go
       owner: project-world-implementation
     - path: docs/history/implementation-plan-before-product-integration-20261009.md
       owner: project-world-implementation

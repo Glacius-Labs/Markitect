@@ -39,6 +39,6 @@ The MCP server is selected for one explicit project root at startup; tool calls 
 
 ## Source repository layout
 
-Markitect source currently has its Go module at the repository root, executable entrypoints under `cmd/`, and production packages under `internal/`. P08's `src/` relocation is a planned migration and has not happened in this checkout. Do not copy anticipated `src/...` paths into build commands or contribution instructions until the move and clean-checkout gates are complete. This product-source layout is separate from the target-project example above.
+Markitect source keeps its Go module at the repository root. Production entrypoints and packages live under `src/cmd/` and `src/internal/`; external harnesses that import Host packages live under `src/harness/`. The example fixture data remains at the repository root under `examples/`. Build and test commands run from the repository root, so production package paths include the `src/` prefix. This product-source layout is separate from the target-project example above, where each adopting project chooses its own application paths.
 
 Historical Project/Domain and canonical Projection inputs remain versioned compatibility surfaces. The currently published v0.14.1 pin retains its own paths and behavior; no in-place migration or automatic removal is implied by this recommended target layout. See the [compatibility reference](usage.md#legacy-projectdomain-cli-compatibility) and [distribution guide](../integration/README.md).

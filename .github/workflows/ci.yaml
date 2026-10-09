@@ -41,17 +41,17 @@ jobs:
         run: go mod verify
 
       - name: Enforce Core, Module, Host and CLI import boundaries
-        run: go test ./internal/tooling/architecture
+        run: go test ./src/internal/tooling/architecture
 
       - name: Test
         run: go test ./... -count=1 -timeout=60m
 
       - name: Repeat temporary Git fixture cleanup regression (Linux)
         if: runner.os == 'Linux'
-        run: go test ./examples -run '^TestUnknownOntologyLoadsExactPackagesAndPreparesBoundedScope$' -count=100
+        run: go test ./src/harness/examples -run '^TestUnknownOntologyLoadsExactPackagesAndPreparesBoundedScope$' -count=100
 
       - name: Validate authoring benchmark fixtures
-        run: go test ./internal/host -run '^$' -bench Authoring -benchtime=1x
+        run: go test ./src/internal/host -run '^$' -bench Authoring -benchtime=1x
 
       - name: Vet
         run: go vet ./...
@@ -63,31 +63,31 @@ jobs:
         run: go mod verify
 
       - name: Check Markitect-first dogfood project
-        run: go run ./cmd/markitect check --repo . --revision ${{ github.sha }}
+        run: go run ./src/cmd/markitect check --repo . --revision ${{ github.sha }}
 
       - name: Check dogfood canonical formatting
-        run: go run ./cmd/markitect format --repo .
+        run: go run ./src/cmd/markitect format --repo .
 
       - name: Check managed artifact accounting
-        run: go run ./cmd/markitect-check-artifacts --repo . --config markitect-artifacts.yaml
+        run: go run ./src/cmd/markitect-check-artifacts --repo . --config markitect-artifacts.yaml
 
       - name: Check configured modules
-        run: go run ./cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config
+        run: go run ./src/cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config
 
       - name: Check Claude proposal adapter protocol
-        run: python -B -m unittest discover -s internal/tooling/clauderunner
+        run: python -B -m unittest discover -s src/internal/tooling/clauderunner
 
       - name: Check Codex proposal adapter protocol
-        run: python -B -m unittest discover -s internal/tooling/codexrunner
+        run: python -B -m unittest discover -s src/internal/tooling/codexrunner
 
       - name: Compile fixed dogfood engineering context
-        run: go run ./cmd/markitect context --repo . --revision ${{ github.sha }} --namespace development --kind Skill --name engineering-change
+        run: go run ./src/cmd/markitect context --repo . --revision ${{ github.sha }} --namespace development --kind Skill --name engineering-change
 
       - name: Verify fixed dogfood engineering state
-        run: go run ./cmd/markitect verify --repo . --revision ${{ github.sha }}
+        run: go run ./src/cmd/markitect verify --repo . --revision ${{ github.sha }}
 
       - name: Replay independent greenfield AI candidate bytes
-        run: go test ./internal/host -run '^TestProjectionGreenfieldCandidatesConvergeAgainstIndependentEvidence$' -count=1
+        run: go test ./src/internal/host -run '^TestProjectionGreenfieldCandidatesConvergeAgainstIndependentEvidence$' -count=1
 
       - name: Verify fixed projection-first example
         shell: python {0}
@@ -105,110 +105,110 @@ jobs:
           git("commit", "-m", "Freeze projection example from " + os.environ["GITHUB_SHA"])
           revision = git("rev-parse", "HEAD")
           print("Projection fixture source=" + os.environ["GITHUB_SHA"] + " revision=" + revision, flush=True)
-          subprocess.run(["go", "run", "./cmd/markitect", "projection", "--repo", str(root), "--action", "verify", "--config", "projections.config", "--coverage", "markitect-artifacts.yaml", "--revision", revision], check=True)
+          subprocess.run(["go", "run", "./src/cmd/markitect", "projection", "--repo", str(root), "--action", "verify", "--config", "projections.config", "--coverage", "markitect-artifacts.yaml", "--revision", revision], check=True)
 
       - name: Compile fixed canonical source alpha
-        run: go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action model --revision ${{ github.sha }}
+        run: go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action model --revision ${{ github.sha }}
 
       - name: Replay canonical candidate, records, verification and drift
-        run: go test ./examples -run '^TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair$' -count=1
+        run: go test ./src/harness/examples -run '^TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair$' -count=1
 
       - name: Check generated schemas
-        run: go run ./cmd/markitect schema --repo .
+        run: go run ./src/cmd/markitect schema --repo .
 
       - name: Check canonical formatting
-        run: go run ./cmd/markitect format --repo examples/minimal
+        run: go run ./src/cmd/markitect format --repo examples/minimal
 
       - name: Check minimal example
-        run: go run ./cmd/markitect check --repo examples/minimal
+        run: go run ./src/cmd/markitect check --repo examples/minimal
 
       - name: Check repository layout example
-        run: go run ./cmd/markitect check --repo examples/repository-layout
+        run: go run ./src/cmd/markitect check --repo examples/repository-layout
 
       - name: Check repository layout example formatting
-        run: go run ./cmd/markitect format --repo examples/repository-layout
+        run: go run ./src/cmd/markitect format --repo examples/repository-layout
 
       - name: Check Markdown navigation example
-        run: go run ./cmd/markitect check --repo examples/markdown-navigation
+        run: go run ./src/cmd/markitect check --repo examples/markdown-navigation
 
       - name: Check Markdown navigation example formatting
-        run: go run ./cmd/markitect format --repo examples/markdown-navigation
+        run: go run ./src/cmd/markitect format --repo examples/markdown-navigation
 
       - name: Check versioned release benchmark fixture
-        run: go run ./cmd/markitect check --repo benchmark/fixtures/v2
+        run: go run ./src/cmd/markitect check --repo benchmark/fixtures/v2
 
       - name: Check code and documentation example
-        run: go run ./cmd/markitect check --repo examples/documentation
+        run: go run ./src/cmd/markitect check --repo examples/documentation
 
       - name: Check code and documentation example formatting
-        run: go run ./cmd/markitect format --repo examples/documentation
+        run: go run ./src/cmd/markitect format --repo examples/documentation
 
       - name: Check onboarding example
-        run: go run ./cmd/markitect check --repo examples/onboarding/delivery-service
+        run: go run ./src/cmd/markitect check --repo examples/onboarding/delivery-service
 
       - name: Check onboarding example formatting
-        run: go run ./cmd/markitect format --repo examples/onboarding/delivery-service
+        run: go run ./src/cmd/markitect format --repo examples/onboarding/delivery-service
 
       - name: Check canonical engineering example
-        run: go run ./cmd/markitect check --repo examples/canonical-engineering
+        run: go run ./src/cmd/markitect check --repo examples/canonical-engineering
 
       - name: Compile canonical engineering context
-        run: go run ./cmd/markitect context --repo examples/canonical-engineering --kind Skill --name architecture-review --namespace engineering
+        run: go run ./src/cmd/markitect context --repo examples/canonical-engineering --kind Skill --name architecture-review --namespace engineering
 
       - name: Compile canonical engineering model
-        run: go run ./cmd/markitect model --repo examples/canonical-engineering
+        run: go run ./src/cmd/markitect model --repo examples/canonical-engineering
 
       - name: Check canonical engineering formatting
-        run: go run ./cmd/markitect format --repo examples/canonical-engineering
+        run: go run ./src/cmd/markitect format --repo examples/canonical-engineering
 
       - name: Check reusable engineering constitution
-        run: go run ./cmd/markitect check --repo examples/engineering-constitution
+        run: go run ./src/cmd/markitect check --repo examples/engineering-constitution
 
       - name: Compile engineering constitution context
-        run: go run ./cmd/markitect context --repo examples/engineering-constitution --namespace engineering --kind Skill --name add-order
+        run: go run ./src/cmd/markitect context --repo examples/engineering-constitution --namespace engineering --kind Skill --name add-order
 
       - name: Compile engineering constitution model
-        run: go run ./cmd/markitect model --repo examples/engineering-constitution
+        run: go run ./src/cmd/markitect model --repo examples/engineering-constitution
 
       - name: Check engineering constitution formatting
-        run: go run ./cmd/markitect format --repo examples/engineering-constitution
+        run: go run ./src/cmd/markitect format --repo examples/engineering-constitution
 
       - name: Check discovery workflow example
-        run: go run ./cmd/markitect check --repo examples/engineering-discovery
+        run: go run ./src/cmd/markitect check --repo examples/engineering-discovery
 
       - name: Check discovery workflow formatting
-        run: go run ./cmd/markitect format --repo examples/engineering-discovery
+        run: go run ./src/cmd/markitect format --repo examples/engineering-discovery
 
       - name: Check software architecture stress case
-        run: go run ./cmd/markitect check --repo examples/software-architecture
+        run: go run ./src/cmd/markitect check --repo examples/software-architecture
 
       - name: Compile software architecture context
-        run: go run ./cmd/markitect context --repo examples/software-architecture --namespace engineering --kind Skill --name implement-order
+        run: go run ./src/cmd/markitect context --repo examples/software-architecture --namespace engineering --kind Skill --name implement-order
 
       - name: Compile software architecture model
-        run: go run ./cmd/markitect model --repo examples/software-architecture
+        run: go run ./src/cmd/markitect model --repo examples/software-architecture
 
       - name: Check software architecture formatting
-        run: go run ./cmd/markitect format --repo examples/software-architecture
+        run: go run ./src/cmd/markitect format --repo examples/software-architecture
 
       - name: Check Delivery target equality
-        run: go run ./cmd/markitect check --repo examples/delivery-target-equality
+        run: go run ./src/cmd/markitect check --repo examples/delivery-target-equality
 
       - name: Compile Delivery target equality model
-        run: go run ./cmd/markitect model --repo examples/delivery-target-equality
+        run: go run ./src/cmd/markitect model --repo examples/delivery-target-equality
 
       - name: Compile Delivery target equality context
-        run: go run ./cmd/markitect context --repo examples/delivery-target-equality --namespace engineering --kind Skill --name deployment-review
+        run: go run ./src/cmd/markitect context --repo examples/delivery-target-equality --namespace engineering --kind Skill --name deployment-review
 
       - name: Check Delivery target equality formatting
-        run: go run ./cmd/markitect format --repo examples/delivery-target-equality
+        run: go run ./src/cmd/markitect format --repo examples/delivery-target-equality
 
       - name: Replay onboarding workflow
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $binary = Join-Path $env:RUNNER_TEMP 'markitect-onboarding.exe'
-          go build -o $binary ./cmd/markitect
+          go build -o $binary ./src/cmd/markitect
           if ($LASTEXITCODE -ne 0) { throw 'Could not build the onboarding candidate' }
           ./scripts/onboarding/Measure-Adoption.ps1 -MarkitectBinary $binary -OutputDirectory (Join-Path $env:RUNNER_TEMP "markitect-onboarding-$env:GITHUB_SHA")
 
@@ -221,19 +221,19 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
       - name: Check documentation placement example
-        run: go run ./cmd/markitect check --repo examples/documentation-placement
+        run: go run ./src/cmd/markitect check --repo examples/documentation-placement
 
       - name: Check documentation placement example formatting
-        run: go run ./cmd/markitect format --repo examples/documentation-placement
+        run: go run ./src/cmd/markitect format --repo examples/documentation-placement
 
       - name: Check pinned content package consumer
-        run: go run ./cmd/markitect check --repo examples/package-consumer
+        run: go run ./src/cmd/markitect check --repo examples/package-consumer
 
       - name: Compile imported package context
-        run: go run ./cmd/markitect context --repo examples/package-consumer --package review-guidance --namespace review --kind Workflow --name review-change
+        run: go run ./src/cmd/markitect context --repo examples/package-consumer --package review-guidance --namespace review --kind Workflow --name review-change
 
       - name: Compile consumer wrapper context
-        run: go run ./cmd/markitect context --repo examples/package-consumer --namespace consumer --kind Skill --name local-review-entry
+        run: go run ./src/cmd/markitect context --repo examples/package-consumer --namespace consumer --kind Skill --name local-review-entry
 
       - name: Check diff whitespace
         run: git diff --check
@@ -243,7 +243,7 @@ jobs:
         shell: bash
         run: |
           package_dir="$RUNNER_TEMP/markitect-source-smoke-$GITHUB_SHA"
-          go run ./cmd/markitect package --repo . --output "$package_dir"
+          go run ./src/cmd/markitect package --repo . --output "$package_dir"
           mkdir -p "$package_dir/.markitect/bootstrap"
           cp integration/run-markitect.go "$package_dir/.markitect/bootstrap/run.go"
           cp integration/run-markitect_test.go "$package_dir/.markitect/bootstrap/run_test.go"
@@ -254,7 +254,7 @@ jobs:
         shell: pwsh
         run: |
           $packageDir = Join-Path $env:RUNNER_TEMP "markitect-source-smoke-$env:GITHUB_SHA"
-          go run ./cmd/markitect package --repo . --output $packageDir
+          go run ./src/cmd/markitect package --repo . --output $packageDir
           if ($LASTEXITCODE -ne 0) { throw "Markitect package failed with exit code $LASTEXITCODE" }
           New-Item -ItemType Directory -Path (Join-Path $packageDir '.markitect/bootstrap') | Out-Null
           Copy-Item integration/run-markitect.go (Join-Path $packageDir '.markitect/bootstrap/run.go')
@@ -329,11 +329,11 @@ jobs:
           adoption_binary="$RUNNER_TEMP/markitect-adoption-$GITHUB_SHA"
           mkdir "$adoption_source"
           unzip -q "$MARKITECT_PACKAGE_DIR/.markitect/tool/source.zip" -d "$adoption_source"
-          (cd "$adoption_source" && go build -trimpath -buildvcs=false -o "$adoption_binary" ./cmd/markitect)
-          MARKITECT_ADOPTION_BINARY="$adoption_binary" go test ./examples -run '^TestSelectiveAdoptionCLI$' -count=1
-          MARKITECT_POLICY_ANALYSIS_BINARY="$adoption_binary" go test ./internal/host/cli -run '^(TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict|TestPolicyFailingWorkingTreeRejectsReconciliationAndWritersWithoutMutation|TestPolicyFailureAnalysisBlocksStructuralDiagnostics)$' -count=1
+          (cd "$adoption_source" && go build -trimpath -buildvcs=false -o "$adoption_binary" ./src/cmd/markitect)
+          MARKITECT_ADOPTION_BINARY="$adoption_binary" go test ./src/harness/examples -run '^TestSelectiveAdoptionCLI$' -count=1
+          MARKITECT_POLICY_ANALYSIS_BINARY="$adoption_binary" go test ./src/internal/host/cli -run '^(TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict|TestPolicyFailingWorkingTreeRejectsReconciliationAndWritersWithoutMutation|TestPolicyFailureAnalysisBlocksStructuralDiagnostics)$' -count=1
           artifact_binary="$RUNNER_TEMP/markitect-check-artifacts-$GITHUB_SHA"
-          (cd "$adoption_source" && go build -trimpath -buildvcs=false -o "$artifact_binary" ./cmd/markitect-check-artifacts)
+          (cd "$adoption_source" && go build -trimpath -buildvcs=false -o "$artifact_binary" ./src/cmd/markitect-check-artifacts)
           "$artifact_binary" --repo "$GITHUB_WORKSPACE" --config markitect-artifacts.yaml
 
       - name: Replay selective adoption with packaged CLI (Windows)
@@ -345,19 +345,19 @@ jobs:
           Expand-Archive -LiteralPath (Join-Path $env:MARKITECT_PACKAGE_DIR '.markitect/tool/source.zip') -DestinationPath $adoptionSource
           Push-Location $adoptionSource
           try {
-            go build -trimpath -buildvcs=false -o $adoptionBinary ./cmd/markitect
+            go build -trimpath -buildvcs=false -o $adoptionBinary ./src/cmd/markitect
             if ($LASTEXITCODE -ne 0) { throw 'Packaged adoption CLI build failed' }
           } finally { Pop-Location }
           $env:MARKITECT_ADOPTION_BINARY = $adoptionBinary
-          go test ./examples -run '^TestSelectiveAdoptionCLI$' -count=1
+          go test ./src/harness/examples -run '^TestSelectiveAdoptionCLI$' -count=1
           if ($LASTEXITCODE -ne 0) { throw 'Packaged selective adoption replay failed' }
           $env:MARKITECT_POLICY_ANALYSIS_BINARY = $adoptionBinary
-          go test ./internal/host/cli -run '^(TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict|TestPolicyFailingWorkingTreeRejectsReconciliationAndWritersWithoutMutation|TestPolicyFailureAnalysisBlocksStructuralDiagnostics)$' -count=1
+          go test ./src/internal/host/cli -run '^(TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict|TestPolicyFailingWorkingTreeRejectsReconciliationAndWritersWithoutMutation|TestPolicyFailureAnalysisBlocksStructuralDiagnostics)$' -count=1
           if ($LASTEXITCODE -ne 0) { throw 'Packaged policy failure analysis replay failed' }
           $artifactBinary = Join-Path $env:RUNNER_TEMP "markitect-check-artifacts-$env:GITHUB_SHA.exe"
           Push-Location $adoptionSource
           try {
-            go build -trimpath -buildvcs=false -o $artifactBinary ./cmd/markitect-check-artifacts
+            go build -trimpath -buildvcs=false -o $artifactBinary ./src/cmd/markitect-check-artifacts
             if ($LASTEXITCODE -ne 0) { throw 'Packaged artifact checker build failed' }
           } finally { Pop-Location }
           & $artifactBinary --repo $env:GITHUB_WORKSPACE --config markitect-artifacts.yaml
@@ -486,7 +486,7 @@ jobs:
         shell: bash
         run: |
           package_dir="$RUNNER_TEMP/markitect-source-$GITHUB_SHA"
-          go run ./cmd/markitect package --repo . --output "$package_dir"
+          go run ./src/cmd/markitect package --repo . --output "$package_dir"
           mkdir -p "$package_dir/.markitect/bootstrap"
           cp integration/run-markitect.go "$package_dir/.markitect/bootstrap/run.go"
           cp integration/run-markitect_test.go "$package_dir/.markitect/bootstrap/run_test.go"

@@ -15,9 +15,9 @@ The executable tests are `TestDeliveryTargetEqualityCurrentLanguageAcceptsMatchi
 From the repository root:
 
 ```powershell
-go run ./cmd/markitect format --repo examples/delivery-target-equality
-go run ./cmd/markitect check --repo examples/delivery-target-equality
-go run ./cmd/markitect model --repo examples/delivery-target-equality
-go run ./cmd/markitect context --repo examples/delivery-target-equality --namespace engineering --kind Skill --name deployment-review
+go run ./src/cmd/markitect format --repo examples/delivery-target-equality
+go run ./src/cmd/markitect check --repo examples/delivery-target-equality
+go run ./src/cmd/markitect model --repo examples/delivery-target-equality
+go run ./src/cmd/markitect context --repo examples/delivery-target-equality --namespace engineering --kind Skill --name deployment-review
 go test ./examples -run DeliveryTargetEquality -count=1
 ```

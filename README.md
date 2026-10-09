@@ -26,7 +26,7 @@ For Windows, use Git and Go 1.27.1 or later. From this Markitect source checkout
 $toolSource = (Get-Location).Path
 $toolBin = Join-Path $env:LOCALAPPDATA 'Markitect\development'
 New-Item -ItemType Directory -Force -Path $toolBin | Out-Null
-go build -o (Join-Path $toolBin 'markitect.exe') ./cmd/markitect
+go build -o (Join-Path $toolBin 'markitect.exe') ./src/cmd/markitect
 if ($LASTEXITCODE -ne 0) { throw 'Markitect build failed.' }
 $env:PATH = "$toolBin;$env:PATH"
 markitect project --help

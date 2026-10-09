@@ -1,0 +1,356 @@
+package codexappserver
+
+import (
+	"bufio"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
+)
+
+// TestMain supplies a protocol-only child executable. It does not invoke Codex
+// or a model. Using the real process boundary exercises version and cleanup too.
+func TestMain(m *testing.M) {
+	if os.Getenv("MARKITECT_P04_FIXTURE") == "1" {
+		if len(os.Args) > 1 && os.Args[1] == "--version" {
+			if os.Getenv("MARKITECT_P04_MODE") == "version" {
+				fmt.Println("codex-cli 0.161.0")
+			} else {
+				fmt.Println(SupportedProviderVersion)
+			}
+			os.Exit(0)
+		}
+		serveFixture()
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
+func serveFixture() {
+	mode := os.Getenv("MARKITECT_P04_MODE")
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Buffer(make([]byte, 65536), 16<<20)
+	enc := json.NewEncoder(os.Stdout)
+	note := func(method string, params any) { _ = enc.Encode(map[string]any{"method": method, "params": params}) }
+	var response string
+	var turnID = "turn-1"
+	for scanner.Scan() {
+		var msg struct {
+			ID     json.RawMessage `json:"id"`
+			Method string          `json:"method"`
+			Params json.RawMessage `json:"params"`
+		}
+		_ = json.Unmarshal(scanner.Bytes(), &msg)
+		result := any(map[string]any{})
+		switch msg.Method {
+		case "initialize":
+			result = map[string]string{"userAgent": "codex/0.162.0", "codexHome": os.TempDir(), "platformFamily": "windows", "platformOs": "windows"}
+		case "initialized":
+			continue
+		case "thread/start", "thread/resume":
+			if msg.Method == "thread/start" && strings.HasPrefix(mode, "recovery-") {
+				return
+			}
+			var threadParams struct {
+				Permissions string `json:"permissions"`
+			}
+			_ = json.Unmarshal(msg.Params, &threadParams)
+			if mode == "request-failure" {
+				_ = enc.Encode(map[string]any{"id": msg.ID, "error": map[string]any{"code": -32000, "message": "fixture failure"}})
+				continue
+			}
+			cwd, _ := os.Getwd()
+			sessionID := "thread-1"
+			if mode == "different-session" {
+				sessionID = "session-other"
+			}
+			model := "gpt-6-luna"
+			if mode == "model-mismatch" {
+				model = "wrong"
+			}
+			result = map[string]any{"thread": thread{ID: "thread-1", SessionID: sessionID, CLIVersion: "0.162.0", CWD: cwd}, "model": model, "reasoningEffort": "high", "cwd": cwd, "approvalPolicy": "never", "sandbox": map[string]string{"type": "workspaceWrite"}, "instructionSources": []string{}}
+			if threadParams.Permissions != "" && mode != "profile-unconfirmed" {
+				result.(map[string]any)["activePermissionProfile"] = map[string]string{"id": threadParams.Permissions}
+			}
+		case "turn/start":
+			if strings.HasPrefix(mode, "recovery-") {
+				return
+			}
+			var p struct {
+				Input []struct {
+					Text string `json:"text"`
+				} `json:"input"`
+			}
+			_ = json.Unmarshal(msg.Params, &p)
+			var inv agentexec.Invocation
+			if len(p.Input) > 0 {
+				parts := strings.Split(p.Input[0].Text, "Invocation:\n")
+				if len(parts) > 1 {
+					_ = json.Unmarshal([]byte(parts[1]), &inv)
+				}
+			}
+			r := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: inv.RunID, Nonce: inv.Nonce, Role: inv.Request.Role, InputDigest: inv.InputDigest, Outcome: agentexec.OutcomeIncomplete, CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}}
+			b, _ := json.Marshal(r)
+			response = string(b)
+			if mode == "malformed-response" {
+				response = `{"bad":true}`
+			}
+			if mode == "transport-loss" {
+				return
+			}
+			if mode == "malformed-wire" {
+				fmt.Println("{broken")
+				return
+			}
+			note("turn/started", map[string]any{"threadId": "thread-1", "turn": turn{ID: turnID, Status: "inProgress"}})
+			_ = enc.Encode(map[string]any{"id": msg.ID, "result": map[string]any{"turn": turn{ID: turnID, Status: "inProgress"}}})
+			if mode == "timeout" || mode == "interrupt-confirmed" {
+				continue
+			}
+			if mode == "approval" {
+				_ = enc.Encode(map[string]any{"id": 99, "method": "item/commandExecution/requestApproval", "params": map[string]string{"threadId": "thread-1", "turnId": turnID}})
+				continue
+			}
+			if mode == "dynamic" {
+				_ = enc.Encode(map[string]any{"id": 98, "method": "item/tool/call", "params": ToolCall{ThreadID: "thread-1", TurnID: turnID, CallID: "call-1", Tool: "markitect_start_helper", Arguments: json.RawMessage(`{"task":"bounded"}`)}})
+				continue
+			}
+			if mode == "event-limit" {
+				note("item/agentMessage/delta", map[string]string{"delta": strings.Repeat("x", 100000)})
+				continue
+			}
+			if mode == "helper" {
+				v := item{ID: "spawn-1", Type: "collabAgentToolCall", Tool: "spawnAgent", SenderThreadID: "thread-1", Status: "failed", ReceiverThreadIDs: []string{}, AgentsStates: map[string]struct {
+					Status string `json:"status"`
+				}{}}
+				note("item/started", map[string]any{"threadId": "thread-1", "turnId": turnID, "item": v})
+				note("item/completed", map[string]any{"threadId": "thread-1", "turnId": turnID, "item": v})
+			}
+			status := "completed"
+			if mode == "failed" {
+				status = "failed"
+			}
+			if mode == "interrupted" {
+				status = "interrupted"
+			}
+			note("item/completed", map[string]any{"threadId": "thread-1", "turnId": turnID, "item": item{ID: "message-1", Type: "agentMessage", Phase: "final_answer", Text: response}})
+			note("turn/completed", map[string]any{"threadId": "thread-1", "turn": turn{ID: turnID, Status: status}})
+			continue
+		case "turn/interrupt":
+			if mode == "interrupt-confirmed" {
+				note("turn/completed", map[string]any{"threadId": "thread-1", "turn": turn{ID: turnID, Status: "interrupted"}})
+			}
+		case "":
+			if mode == "dynamic" {
+				note("item/completed", map[string]any{"threadId": "thread-1", "turnId": turnID, "item": item{ID: "message-1", Type: "agentMessage", Phase: "final_answer", Text: response}})
+				note("turn/completed", map[string]any{"threadId": "thread-1", "turn": turn{ID: turnID, Status: "completed"}})
+			}
+			continue
+		case "thread/read":
+			var saved RecoveryHandle
+			_ = json.Unmarshal([]byte(os.Getenv("MARKITECT_P04_RECOVERY")), &saved)
+			inv := saved.Invocation
+			r := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: inv.RunID, Nonce: inv.Nonce, Role: inv.Request.Role, InputDigest: inv.InputDigest, Outcome: agentexec.OutcomeIncomplete, CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}}
+			b, _ := json.Marshal(r)
+			status := "completed"
+			items := []item{{ID: "m", Type: "agentMessage", Text: string(b), Phase: "final_answer"}}
+			if mode == "recovery-running" {
+				status = "inProgress"
+			}
+			if mode == "recovery-children" || mode == "recovery-running" {
+				state := "completed"
+				if mode == "recovery-running" {
+					state = "running"
+				}
+				child := item{ID: "spawn-child", Type: "collabAgentToolCall", Tool: "spawnAgent", Status: "completed", SenderThreadID: "thread-1", ReceiverThreadIDs: []string{"child-thread"}, AgentsStates: map[string]struct {
+					Status string `json:"status"`
+				}{"child-thread": {Status: state}}}
+				note("item/completed", map[string]any{"threadId": "thread-1", "turnId": turnID, "item": child})
+				note("thread/started", map[string]any{"thread": thread{ID: "child-thread", SessionID: "child-session", ParentThreadID: "thread-1"}})
+				if mode == "recovery-children" {
+					nested := item{ID: "spawn-nested", Type: "collabAgentToolCall", Tool: "spawnAgent", Status: "failed", SenderThreadID: "child-thread", ReceiverThreadIDs: []string{}}
+					note("item/completed", map[string]any{"threadId": "child-thread", "turnId": "child-turn", "item": nested})
+					items = append(items, child)
+				} else {
+					// An additional failed request in a running turn must survive
+					// the uncertain return, even when present only in history.
+					items = append(items, item{ID: "spawn-failed", Type: "collabAgentToolCall", Tool: "spawnAgent", Status: "failed", ReceiverThreadIDs: []string{}})
+				}
+			}
+			recovered := thread{ID: "thread-1", Turns: []turn{{ID: turnID, Status: status, Items: items}}}
+			if mode == "recovery-missing" {
+				recovered.Turns = nil
+			}
+			result = map[string]any{"thread": recovered}
+		default:
+			return
+		}
+		if len(msg.ID) > 0 {
+			_ = enc.Encode(map[string]any{"id": msg.ID, "result": result})
+		}
+	}
+}
+
+func fixture(t *testing.T, mode string, options Options) (*Adapter, agentexec.Config, agentexec.Request, agentexec.RunOptions) {
+	t.Helper()
+	t.Setenv("MARKITECT_P04_FIXTURE", "1")
+	t.Setenv("MARKITECT_P04_MODE", mode)
+	exe, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	config := Config{Command: exe, ProviderVersion: SupportedProviderVersion, Model: "gpt-6-luna", ReasoningEffort: "high", Timeout: 5 * time.Second, MaxEventBytes: 1 << 20, Helpers: HelperPolicy{Enabled: true, MaxStartRequests: 2, MaxDepth: 1}}
+	a, err := NewAdapter(config, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	shared := agentexec.Config{Command: exe, ProviderVersion: config.ProviderVersion, Model: config.Model, Timeout: config.Timeout, MaxStdoutBytes: 65536, MaxStderrBytes: 65536}
+	req := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: strings.Repeat("a", 40), ModelDigest: "sha256:" + strings.Repeat("b", 64), ModulePin: "test@1", ProjectionID: "test", ScopeIDs: []string{"source"}, PolicyIDs: []string{}, Context: json.RawMessage(`{}`), Artifacts: []agentexec.Artifact{}}
+	opts := agentexec.RunOptions{Workspace: &projectworkspace.Handle{ID: "workspace-1", CWD: t.TempDir(), BaseSHA: req.SourceRevision}}
+	return a, shared, req, opts
+}
+
+func TestAdapterLifecycle(t *testing.T) {
+	for _, mode := range []string{"success", "different-session", "failed", "interrupted", "helper", "malformed-response", "malformed-wire", "transport-loss", "model-mismatch", "request-failure", "version", "event-limit", "approval"} {
+		t.Run(mode, func(t *testing.T) {
+			var saved RecoveryHandle
+			reserved := 0
+			a, cfg, req, opts := fixture(t, mode, Options{BeforeStart: func(_ context.Context, r agentexec.RoleStartRequest) error { reserved++; return nil }, OnHandle: func(_ context.Context, h RecoveryHandle) error { saved = h; return nil }})
+			if mode == "event-limit" {
+				a.config.MaxEventBytes = 4096
+			}
+			result, err := a.Run(context.Background(), cfg, req, opts)
+			if mode == "success" || mode == "helper" || mode == "different-session" {
+				if err != nil {
+					t.Fatal(err)
+				}
+				if result.Receipt.Lifecycle.State != "completed" || result.Receipt.ConfigDigest == "" || saved.TurnID != "turn-1" || reserved != 1 {
+					t.Fatalf("bad receipt/handle: %+v", result.Receipt)
+				}
+				if result.Receipt.Usage != nil {
+					t.Fatal("unknown usage invented")
+				}
+				if mode == "different-session" && result.Receipt.Lifecycle.StartRequests[0].SessionID != "session-other" {
+					t.Fatal("thread ID mislabeled as session ID")
+				}
+				if mode == "helper" {
+					if len(result.Receipt.Lifecycle.StartRequests) != 2 || result.Receipt.Lifecycle.StartRequests[1].State != "failed" {
+						t.Fatalf("helper failure not counted: %+v", result.Receipt.Lifecycle)
+					}
+				}
+			} else if err == nil {
+				t.Fatalf("%s accepted", mode)
+			}
+			if mode == "transport-loss" && (!errors.Is(err, ErrUncertain) || result.Receipt.Lifecycle.State != "unknown") {
+				t.Fatalf("lost dispatch falsely certain: %+v %v", result.Receipt, err)
+			}
+			if mode == "version" && reserved != 0 {
+				t.Fatal("version mismatch started thread")
+			}
+		})
+	}
+}
+
+func TestTimeoutInterruptionAndReservation(t *testing.T) {
+	for _, mode := range []string{"timeout", "interrupt-confirmed"} {
+		t.Run(mode, func(t *testing.T) {
+			a, cfg, req, opts := fixture(t, mode, Options{})
+			ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
+			defer cancel()
+			r, err := a.Run(ctx, cfg, req, opts)
+			if err == nil {
+				t.Fatal("timeout accepted")
+			}
+			if mode == "timeout" && (!errors.Is(err, ErrUncertain) || r.Receipt.Lifecycle.State != "unknown") {
+				t.Fatalf("uncertain timeout mislabeled: %v %+v", err, r.Receipt)
+			}
+			if mode == "interrupt-confirmed" && r.Receipt.Lifecycle.State != "interrupted" {
+				t.Fatalf("confirmed interruption lost: %v %+v", err, r.Receipt)
+			}
+		})
+	}
+	a, cfg, req, opts := fixture(t, "success", Options{BeforeStart: func(context.Context, agentexec.RoleStartRequest) error { return errors.New("budget refused") }})
+	r, err := a.Run(context.Background(), cfg, req, opts)
+	if err == nil || r.Receipt.Lifecycle.SessionID != "" {
+		t.Fatal("refused budget launched thread")
+	}
+}
+
+func TestDynamicToolAndRecovery(t *testing.T) {
+	called := 0
+	var handle RecoveryHandle
+	options := Options{DynamicTools: []DynamicTool{{Type: "function", Name: "markitect_start_helper", Description: "Start bounded helper after reservation", InputSchema: json.RawMessage(`{"type":"object"}`)}}, MaxToolCalls: 1, ToolTimeout: time.Second, HandleToolCall: func(_ context.Context, call ToolCall) (ToolResult, error) {
+		called++
+		return ToolResult{Success: true, Text: "reserved helper result"}, nil
+	}, OnHandle: func(_ context.Context, h RecoveryHandle) error { handle = h; return nil }}
+	a, cfg, req, opts := fixture(t, "dynamic", options)
+	r, err := a.Run(context.Background(), cfg, req, opts)
+	if err != nil || called != 1 || r.Receipt.Lifecycle.State != "completed" {
+		t.Fatalf("dynamic dispatch failed: %v %d %+v", err, called, r.Receipt)
+	}
+	t.Setenv("MARKITECT_P04_MODE", "success")
+	b, _ := json.Marshal(handle)
+	t.Setenv("MARKITECT_P04_RECOVERY", string(b))
+	r, err = a.Recover(context.Background(), cfg, handle)
+	if err != nil || r.Response.RunID != handle.Invocation.RunID {
+		t.Fatalf("owned recovery failed: %v %+v", err, r)
+	}
+	handle.TurnID = ""
+	_, err = a.Recover(context.Background(), cfg, handle)
+	if !errors.Is(err, ErrUncertain) {
+		t.Fatalf("lost turn ID guessed: %v", err)
+	}
+}
+
+func TestRecoveryRetainsOriginalRootAndObservedChildren(t *testing.T) {
+	for _, mode := range []string{"recovery-completed", "recovery-running", "recovery-missing", "recovery-children"} {
+		t.Run(mode, func(t *testing.T) {
+			var handle RecoveryHandle
+			reservations := 0
+			a, cfg, req, opts := fixture(t, "success", Options{BeforeStart: func(context.Context, agentexec.RoleStartRequest) error { reservations++; return nil }, OnHandle: func(_ context.Context, h RecoveryHandle) error { handle = h; return nil }})
+			a.config.Helpers.MaxDepth = 2
+			if _, err := a.Run(context.Background(), cfg, req, opts); err != nil {
+				t.Fatal(err)
+			}
+			wire, _ := json.Marshal(handle)
+			t.Setenv("MARKITECT_P04_RECOVERY", string(wire))
+			t.Setenv("MARKITECT_P04_MODE", mode)
+			result, err := a.Recover(context.Background(), cfg, handle)
+			life := result.Receipt.Lifecycle
+			if life == nil || len(life.StartRequests) == 0 {
+				t.Fatalf("original root absent: %v %+v", err, result.Receipt)
+			}
+			root := life.StartRequests[0]
+			if root.RequestID != handle.Invocation.RunID || root.Role != req.Role || root.SessionID != handle.SessionID || root.Model != cfg.Model || root.ReasoningEffort != "high" {
+				t.Fatalf("original root binding changed: %+v", root)
+			}
+			if reservations != 1 || life.Accounting != "partial" || result.Receipt.Usage != nil || life.Effective.InstructionDigest != "" {
+				t.Fatal("recovery invented new start or complete/usage/instruction evidence")
+			}
+			if mode == "recovery-completed" || mode == "recovery-children" {
+				if err != nil || root.State != "completed" || life.State != "completed" {
+					t.Fatalf("terminal original root not recovered: %v %+v", err, life)
+				}
+			} else if !errors.Is(err, ErrUncertain) || root.State != "unknown" || life.State != "unknown" {
+				t.Fatalf("nonterminal original became certain: %v %+v", err, life)
+			}
+			if mode == "recovery-completed" && len(life.StartRequests) != 1 {
+				t.Fatal("no-child recovery fabricated children")
+			}
+			if mode == "recovery-children" {
+				if len(life.StartRequests) != 3 || life.StartRequests[1].SessionID != "child-session" || life.StartRequests[1].State != "completed" || life.StartRequests[2].State != "failed" || life.StartRequests[2].ParentSessionID != "child-session" || life.StartRequests[2].SessionID != "" {
+					t.Fatalf("nested/failure evidence lost or invented: %+v", life.StartRequests)
+				}
+			}
+			if mode == "recovery-running" && (len(life.StartRequests) != 3 || life.StartRequests[2].State != "failed") {
+				t.Fatalf("running-turn child history dropped: %+v", life.StartRequests)
+			}
+		})
+	}
+}

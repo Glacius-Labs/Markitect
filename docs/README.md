@@ -12,7 +12,7 @@ The current source is an integration candidate. Required final gates and the com
 | [Project operations](project-operations.md) | Current typed MCP tools, CLI equivalents, write boundaries, and runtime limits |
 | [Provider adapters](provider-adapters.md) | Connecting outer Codex/Claude clients and understanding the inner Codex App Server boundary |
 | [Architecture](architecture.md) | Host composition, ownership, snapshots, candidate workspaces, and evidence limits |
-| [Repository layout](repository-layout.md) | Source/project boundaries and the current layout migration |
+| [Repository layout](repository-layout.md) | Adopting-project organization and the completed Markitect source layout |
 | [Usage](usage.md) | Legacy Project/Domain syntax and retained command contracts |
 | [Development guide](development/README.md) | Source checks, package boundaries, and development coordination |
 | [Contribution checks](../CONTRIBUTING.md) | Required local and hosted validation commands |

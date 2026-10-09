@@ -36,13 +36,13 @@ Replace the illustrative artifact paths with the exact existing paths under the 
 Create and inspect the read-only adoption plan against full immutable commits:
 
 ```powershell
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action adopt-plan --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json
+go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action adopt-plan --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json
 ```
 
 The plan binds the exact selected artifact paths, Projection, source/target inputs, caller-supplied ownership claims and existing immutable checks. Any `materialized-unverified` prospective state in its preview applies only to these selected bytes; it is not semantic verification or a claim about a larger target prefix. Review its plan digest, matched scope and unmatched UNKNOWN artifacts before adoption:
 
 ```powershell
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action adopt --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json --expect PLAN_DIGEST
+go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action adopt --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json --expect PLAN_DIGEST
 ```
 
 `adopt` verifies only the existing selected artifact scope. It performs no generation, target writes, record persistence or active-record selection. It returns a ProjectionRecord with `origin: adopted` only when existing immutable checks pass. A failed or missing required check produces no adopted record. This proves the supplied bytes passed the declared checks for that bounded scope; it does not prove semantic adequacy, authenticate the review reference, or establish whole-repository adoption. Preserve the record through explicit caller-owned persistence and active selection, which remain separate operations.
@@ -50,8 +50,8 @@ go run ./cmd/markitect canonical --repo . --config examples/canonical-projection
 For durable first adoption, pass the closed canonical controller runtime configuration to both calls. Its `recordStore` and `checkInputs` supply the existing external ledger path and exact additional command inputs; its Executor and Verifier entries are required by the shared runtime format but are not invoked by adoption:
 
 ```powershell
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --runtime .artifacts/canonical-review/runtime.json --action adopt-plan --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --runtime .artifacts/canonical-review/runtime.json --action adopt --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json --expect PLAN_DIGEST --write
+go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --runtime .artifacts/canonical-review/runtime.json --action adopt-plan --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json
+go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --runtime .artifacts/canonical-review/runtime.json --action adopt --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json --expect PLAN_DIGEST --write
 ```
 
 The durable plan binds the runtime digest and whether the external ledger is absent or its current StoreID, head and active record IDs. The selection must contain `activeRecords: []`; ownership is loaded from the ledger. Apply takes the controller lease, refreshes that binding, runs only the selected fixed commands over the exact selected evidence, and then initializes an absent external store if necessary, appends the retained adopted record and compare-and-swaps the active selection. A conflict, stale plan or failed check refuses before initialization. An append followed by a selection error is reported as partial. Host rereads the authoritative ledger: `activeSelectionStatus` is `observed-selected` or `observed-not-selected` when readable, or `unknown` when readback fails. An error may follow a committed selection, so inactive ownership is never assumed. Unobserved ledger head and active IDs are omitted; the attempted record and original error remain visible. No rollback or automatic retry occurs. No repository artifact, canonical input, index or HEAD is changed.
@@ -63,11 +63,11 @@ Durable mode reads only canonical source blobs, selected artifact blobs and runt
 Run from a source checkout with Go 1.27.1. Set `BASE` and `CURRENT` to full immutable Git revisions containing the example; `CURRENT` is the intended canonical state. Module preview may use the working tree, but projection planning requires fixed canonical inputs.
 
 ```powershell
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action modules
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action model --revision CURRENT
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action context --revision CURRENT --api-version commerce.example.org/v1 --kind UseCase --namespace commerce --name create-order
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action impact --base BASE --revision CURRENT
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action reconcile-plan --base BASE --revision CURRENT
+go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action modules
+go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action model --revision CURRENT
+go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action context --revision CURRENT --api-version commerce.example.org/v1 --kind UseCase --namespace commerce --name create-order
+go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action impact --base BASE --revision CURRENT
+go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action reconcile-plan --base BASE --revision CURRENT
 ```
 
 Context shows the exact selected Definition, its Kind purpose/contract and outgoing reference facts. It does not yet compile the historical contextual closure or infer prose dependencies. Impact follows explicit reverse reference dependencies, terminates on cycles, and shows the exact causing property/edge. It does not discover source-code dependencies.
@@ -103,7 +103,7 @@ function Invoke-MarkitectJson([string]$name, [string[]]$arguments) {
     [pscustomobject]@{ ExitCode = $exitCode; Stdout = $stdout; Stderr = $stderr }
 }
 
-$common = @("run", "./cmd/markitect", "canonical", "--repo", ".", "--config", $config, "--runtime", $runtime)
+$common = @("run", "./src/cmd/markitect", "canonical", "--repo", ".", "--config", $config, "--runtime", $runtime)
 $proposal = Invoke-MarkitectJson "controller-propose" ($common + @("--action", "controller-propose", "--base", $base, "--revision", $source))
 if ($proposal.ExitCode -ne 0) { Get-Content -Raw $proposal.Stdout; throw "Propose returned $($proposal.ExitCode); preserve its JSON and stderr for review." }
 $proposalReport = Get-Content -Raw $proposal.Stdout | ConvertFrom-Json
@@ -158,7 +158,7 @@ A failed semantic Verifier result remains failed. The experimental alpha control
 Targeted request/plan/apply actions are tools for a selected reconcile scope, not the primary user request to implement a file. Markdown uses a symbolic renderer inside the same candidate/verification lifecycle. .NET consumes supplied candidate bytes and does not invoke a model itself.
 
 ```powershell
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action request --revision CURRENT --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet
+go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action request --revision CURRENT --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet
 ```
 
 A .NET candidate is one UTF-8 JSON object: `requestDigest` must match that exact request, and `files` contains exact `path`/`content` pairs. No globs, duplicate paths/object members, implicit scope expansion, source mutation or arbitrary file extensions are accepted. Candidate preparation never creates canonical truth.
@@ -167,7 +167,7 @@ Build one fixed executable before reviewing mutable targets, and keep candidate/
 
 ```powershell
 New-Item -ItemType Directory -Force .artifacts/canonical-review | Out-Null
-go build -o .artifacts/canonical-review/markitect.exe ./cmd/markitect
+go build -o .artifacts/canonical-review/markitect.exe ./src/cmd/markitect
 $markitectBinary = (Resolve-Path .artifacts/canonical-review/markitect.exe).Path
 & $markitectBinary canonical --repo . --config examples/canonical-projection/canonical.yaml --action plan --revision CURRENT --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/candidate.json > .artifacts/canonical-review/reviewed-plan.yaml
 & $markitectBinary canonical --repo . --config examples/canonical-projection/canonical.yaml --action apply --revision CURRENT --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/candidate.json --plan .artifacts/canonical-review/reviewed-plan.yaml --expect REVIEWED_CANDIDATE_DIGEST --write
@@ -182,7 +182,7 @@ Apply emits a `materialized-unverified` ProjectionRecord in its report. It does 
 Commit materialized outputs to obtain full immutable `TARGET`. Supply one closed JSON ProjectionRecord in `.artifacts/canonical-review/record.json`:
 
 ```powershell
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action verify --base CURRENT --revision TARGET --evidence .artifacts/canonical-review/record.json
+go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action verify --base CURRENT --revision TARGET --evidence .artifacts/canonical-review/record.json
 ```
 
 Host checks exact source/capability/scope/policy and recorded target bytes/modes, then executes declared literal check argument arrays against immutable materializations. Each check identity binds its arguments plus the full evidence revision/snapshot, including checker source bytes. It does not hash the PATH executable, sandbox the process, authenticate the verifier or prove check independence/sufficiency. Missing checks are incomplete; failed checks fail. Evidence remains separate from canonical intent and ProjectionRecord.

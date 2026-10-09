@@ -93,7 +93,7 @@ items:
     evidence: [integration-progress-20261009.md]
   - id: P08
     title: Consolidated documentation and clean src repository layout
-    status: blocked
+    status: in_progress
     depends_on: [P03, P04, P05, P06, P07]
     owner: Product Integration
     owner_thread: 01a121a0-0417-71c1-9e4b-be742f8c1146

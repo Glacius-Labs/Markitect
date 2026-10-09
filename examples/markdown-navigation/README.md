@@ -9,8 +9,8 @@ The fixture also includes an inline code span and a fenced Markdown example cont
 From the Markitect source repository root:
 
 ```powershell
-go run ./cmd/markitect check --repo examples/markdown-navigation
-go run ./cmd/markitect render --repo examples/markdown-navigation --write
+go run ./src/cmd/markitect check --repo examples/markdown-navigation
+go run ./src/cmd/markitect render --repo examples/markdown-navigation --write
 go test ./examples -run MarkdownNavigation -count=1
 ```
 

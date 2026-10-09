@@ -126,10 +126,10 @@ From the exact tagged source checkout, first print and inspect the read-only pla
 ```powershell
 Set-Location -LiteralPath '<exact tagged Markitect source checkout>'
 $tag = 'vX.Y.Z' # Replace with the exact version tag for this release.
-go run ./cmd/markitect-release --tag $tag --run $runId --assets $assets
+go run ./src/cmd/markitect-release --tag $tag --run $runId --assets $assets
 if ($LASTEXITCODE -ne 0) { throw 'Release preflight failed.' }
 # Review the exact tag, source commit, run and four assets in the plan.
-go run ./cmd/markitect-release --tag $tag --run $runId --assets $assets --publish
+go run ./src/cmd/markitect-release --tag $tag --run $runId --assets $assets --publish
 if ($LASTEXITCODE -ne 0) { throw 'Publication or final verification failed; inspect the release state.' }
 ```
 

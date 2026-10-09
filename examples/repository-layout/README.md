@@ -7,9 +7,9 @@ This synthetic project uses `.markitect/areas/` for typed YAML, grouped by Area 
 From the Markitect source repository root:
 
 ```powershell
-go run ./cmd/markitect check --repo examples/repository-layout
-go run ./cmd/markitect context --repo examples/repository-layout --namespace engineering --kind Workflow --name review-change
-go run ./cmd/markitect render --repo examples/repository-layout
+go run ./src/cmd/markitect check --repo examples/repository-layout
+go run ./src/cmd/markitect context --repo examples/repository-layout --namespace engineering --kind Workflow --name review-change
+go run ./src/cmd/markitect render --repo examples/repository-layout
 ```
 
 For local edits, run `format --write` and `render --write` on a feature branch, then `check`. The fixture has no declared runtime checks; structural success does not produce complete `verify` evidence. To query a fixed revision, copy the fixture into its own Git repository and commit it; fixed snapshots expect `markitect.yaml` at the selected Git root.

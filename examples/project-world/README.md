@@ -24,12 +24,12 @@ python -B -m unittest discover -s tests -v
 Pop-Location
 
 Push-Location $markitectRoot
-go run ./cmd/markitect project check --repo $fixtureRepo
-go run ./cmd/markitect project coverage --repo $fixtureRepo
-go run ./cmd/markitect project index --repo $fixtureRepo
-go run ./cmd/markitect project context --repo $fixtureRepo --manager '["project.markitect.example.org/v1alpha1","Manager","","shop"]'
-go run ./cmd/markitect project context --repo $fixtureRepo --manager '["project.markitect.example.org/v1alpha1","Manager","commerce.sales.orders","orders"]'
-go run ./cmd/markitect project document --repo $fixtureRepo
+go run ./src/cmd/markitect project check --repo $fixtureRepo
+go run ./src/cmd/markitect project coverage --repo $fixtureRepo
+go run ./src/cmd/markitect project index --repo $fixtureRepo
+go run ./src/cmd/markitect project context --repo $fixtureRepo --manager '["project.markitect.example.org/v1alpha1","Manager","","shop"]'
+go run ./src/cmd/markitect project context --repo $fixtureRepo --manager '["project.markitect.example.org/v1alpha1","Manager","commerce.sales.orders","orders"]'
+go run ./src/cmd/markitect project document --repo $fixtureRepo
 Pop-Location
 ```
 
@@ -39,8 +39,8 @@ The CLI also exposes an onboarding preview and briefing ledger inspection. The o
 
 ```powershell
 Push-Location $markitectRoot
-go run ./cmd/markitect project onboard --repo $fixtureRepo --provider both
-go run ./cmd/markitect project briefings --repo $fixtureRepo
+go run ./src/cmd/markitect project onboard --repo $fixtureRepo --provider both
+go run ./src/cmd/markitect project briefings --repo $fixtureRepo
 Pop-Location
 ```
 
@@ -50,15 +50,15 @@ To prepare that disposable copy for a conversational run, first check local prer
 
 ```powershell
 Push-Location $markitectRoot
-go run ./cmd/markitect project doctor --repo $fixtureRepo --tool-root $markitectRoot --provider codex
-go run ./cmd/markitect project setup --repo $fixtureRepo --tool-root $markitectRoot --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET
+go run ./src/cmd/markitect project doctor --repo $fixtureRepo --tool-root $markitectRoot --provider codex
+go run ./src/cmd/markitect project setup --repo $fixtureRepo --tool-root $markitectRoot --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET
 ```
 
 Review `editPlan.digest` and the exact native executable/adapter pins in the preview before applying that same deterministic runtime edit:
 
 ```powershell
-go run ./cmd/markitect project setup --repo $fixtureRepo --tool-root $markitectRoot --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET --expect EDIT_PLAN_DIGEST --write
-go run ./cmd/markitect project document --repo $fixtureRepo --write
+go run ./src/cmd/markitect project setup --repo $fixtureRepo --tool-root $markitectRoot --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET --expect EDIT_PLAN_DIGEST --write
+go run ./src/cmd/markitect project document --repo $fixtureRepo --write
 Pop-Location
 Push-Location $fixtureRepo
 git add .markitect/runtime.yaml docs/markitect/project.md
@@ -66,10 +66,10 @@ git commit -m "Configure project-local Markitect runtime"
 $verifiedRevision = (git rev-parse HEAD).Trim()
 Pop-Location
 Push-Location $markitectRoot
-go run ./cmd/markitect project verify --repo $fixtureRepo --revision $verifiedRevision --write
-go run ./cmd/markitect project cleanup --repo $fixtureRepo --goal "Improve Shop implementations while preserving the accepted model"
-go run ./cmd/markitect project reconcile --repo $fixtureRepo --goal "Reconcile every Shop responsibility against its repository files"
-go run ./cmd/markitect project plan --repo $fixtureRepo --goal "Cancel confirmed orders and release their reservation atomically" --since $modelBasis
+go run ./src/cmd/markitect project verify --repo $fixtureRepo --revision $verifiedRevision --write
+go run ./src/cmd/markitect project cleanup --repo $fixtureRepo --goal "Improve Shop implementations while preserving the accepted model"
+go run ./src/cmd/markitect project reconcile --repo $fixtureRepo --goal "Reconcile every Shop responsibility against its repository files"
+go run ./src/cmd/markitect project plan --repo $fixtureRepo --goal "Cancel confirmed orders and release their reservation atomically" --since $modelBasis
 Pop-Location
 ```
 

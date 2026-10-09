@@ -18,10 +18,10 @@ The base Project pins package v1 and has no automatic way to assume v2. The migr
 From the Markitect checkout:
 
 ```powershell
-go run ./cmd/markitect format --repo examples/engineering-constitution
-go run ./cmd/markitect check --repo examples/engineering-constitution
-go run ./cmd/markitect model --repo examples/engineering-constitution
-go run ./cmd/markitect context --repo examples/engineering-constitution --namespace engineering --kind Skill --name add-order
+go run ./src/cmd/markitect format --repo examples/engineering-constitution
+go run ./src/cmd/markitect check --repo examples/engineering-constitution
+go run ./src/cmd/markitect model --repo examples/engineering-constitution
+go run ./src/cmd/markitect context --repo examples/engineering-constitution --namespace engineering --kind Skill --name add-order
 go test ./examples -run EngineeringConstitution -count=1
 ```
 
