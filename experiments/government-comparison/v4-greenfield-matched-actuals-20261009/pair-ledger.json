@@ -1,0 +1,11 @@
+{
+  "order": [
+    "v4-conventional-greenfield-01",
+    "v4-classic-main-greenfield-01"
+  ],
+  "globalDeadlineUtc": "2026-10-09T05:32:04Z",
+  "currentCell": "v4-conventional-greenfield-01",
+  "classicStatus": "RESERVED NOT STARTED",
+  "startReceipt": "evidence/root-start-receipt.json",
+  "conventionalState": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-conventional-greenfield-01"
+}

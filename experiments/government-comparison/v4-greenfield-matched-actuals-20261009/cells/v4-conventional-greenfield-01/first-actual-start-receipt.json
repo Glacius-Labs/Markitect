@@ -1,0 +1,35 @@
+{
+  "cellId": "v4-conventional-greenfield-01",
+  "status": "ACTUAL NATIVE PRIMARY RUNNING",
+  "startUtc": "2026-10-09T01:42:59.3173598Z",
+  "actualFirstNativeActivationObservedUtc": "2026-10-09T01:44:44.6700496Z",
+  "trialDeadlineUtc": "2026-10-09T03:42:59.3173598Z",
+  "globalDeadlineUtc": "2026-10-09T05:32:04Z",
+  "repo": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-conventional-greenfield-01\\repo",
+  "state": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-conventional-greenfield-01",
+  "primaryActorId": "/root/v4_actual_conventional_greenfield_primary",
+  "trialActivationReservations": 1,
+  "tasks": [
+    {
+      "task": 1,
+      "status": "IMPLEMENTATION",
+      "endReserveSeconds": 30,
+      "semanticRepairs": 0,
+      "deadlineUtc": "2026-10-09T02:02:59.3173598Z",
+      "startUtc": "2026-10-09T01:42:59.3173598Z",
+      "assessmentMinimumSeconds": 300,
+      "activationReservations": [
+        {
+          "role": "primary-implementation",
+          "reservation": 1,
+          "overrides": null,
+          "reservedUtc": "2026-10-09T01:42:59.3173598Z",
+          "forkTurns": "none",
+          "status": "running",
+          "actualActorId": "/root/v4_actual_conventional_greenfield_primary"
+        }
+      ],
+      "implementationEndUtc": "2026-10-09T01:56:59.3173598Z"
+    }
+  ]
+}

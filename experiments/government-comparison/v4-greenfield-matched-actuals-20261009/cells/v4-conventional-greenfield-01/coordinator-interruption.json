@@ -1,0 +1,23 @@
+{
+  "observedUtc": "2026-10-09T02:20:21.2898489+00:00",
+  "classification": "incomplete/coordinator_interruption",
+  "cause": "Context compaction followed by historical wait instruction ended active turn; task2 reservation was never dispatched before original deadlines",
+  "evidence": [
+    "Own native session has spawn_agent at01:44:05.209Z for primary and01:49:24.373Z for task1 assessor, no task2 followup_task or spawn_agent before reconciliation",
+    "Own prompts directory contains task1 primary and assessor only",
+    "Task2 reservation remains reserved; repository clean at original task1 db7df944c8d5e514797a0184943d74f5fa3a9cd1"
+  ],
+  "actualNativeActivations": 2,
+  "activationReservations": 3,
+  "task2ActualActivated": false,
+  "task2ActualStartUtc": null,
+  "task2PromptArchive": null,
+  "productFailureInferred": false,
+  "providerTerminationGuarantee": false,
+  "rootReactivationUtc": "2026-10-09T02:18:56.027Z",
+  "unknowns": [
+    "Underlying reason active coordinator ended beyond observed context/wait behavior",
+    "No provider-serving-model/token/cost/human-time receipt"
+  ],
+  "subsequentTasks": "NOT RUN: prerequisite staged task2 candidate absent; no late implementation/replay or sequential requirement bypass"
+}

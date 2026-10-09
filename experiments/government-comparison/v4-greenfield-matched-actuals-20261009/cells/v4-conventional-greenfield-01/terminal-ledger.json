@@ -1,0 +1,116 @@
+{
+  "maxParallelActors": 4,
+  "cost": null,
+  "globalDeadlineUtc": "2026-10-09T05:32:04Z",
+  "ownRoot": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-conventional-greenfield-01",
+  "startSha": "0416e366626d31933443ce2901d6a3696261db7b",
+  "tokens": null,
+  "contamination": "Not observed; cooperative boundary only",
+  "cellId": "v4-conventional-greenfield-01",
+  "servingModel": null,
+  "condition": "greenfield",
+  "rootStartReceiptSha256": "61cd7afa9d46ac3f3d331ed4f3645eebd61f8153fa8e12d0d383a00443ce465f",
+  "trialDeadlineUtc": "2026-10-09T03:42:59.3173598Z",
+  "rootStartReceipt": "v4-greenfield-pair-root-start-receipt-20261009",
+  "maxTaskActivations": 12,
+  "method": "Conventional/Oldschool",
+  "servicesPerActor": 12,
+  "maxTrialActivations": 72,
+  "trialActivationReservations": 3,
+  "humanTime": null,
+  "sourceFreeze": "48845595368188c46d56f1a909f8fecd43ff7fe7",
+  "startTree": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+  "maxParallelPrimaryCells": 1,
+  "tasks": [
+    {
+      "task": 1,
+      "status": "CLOSED FROZEN WITH INDEPENDENT ASSESSMENT",
+      "endReserveSeconds": 30,
+      "semanticRepairs": 0,
+      "deadlineUtc": "2026-10-09T02:02:59.3173598Z",
+      "startUtc": "2026-10-09T01:42:59.3173598Z",
+      "assessmentMinimumSeconds": 300,
+      "activationReservations": [
+        {
+          "role": "primary-implementation",
+          "reservation": 1,
+          "overrides": null,
+          "reservedUtc": "2026-10-09T01:42:59.3173598Z",
+          "forkTurns": "none",
+          "status": "completed",
+          "actualActorId": "/root/v4_actual_conventional_greenfield_primary"
+        },
+        {
+          "reservation": 2,
+          "deadlineUtc": "2026-10-09T01:53:31.114879Z",
+          "role": "independent-assessor",
+          "overrides": null,
+          "status": "completed",
+          "forkTurns": "none",
+          "maxSeconds": 300,
+          "reservedUtc": "2026-10-09T01:48:31.114879Z",
+          "actualActorId": "/root/v4_conventional_gf_task1_independent_assessor",
+          "nativeStartObservedUtc": "2026-10-09T01:49:56.4404379Z"
+        }
+      ],
+      "implementationEndUtc": "2026-10-09T01:56:59.3173598Z",
+      "candidateCommit": "db7df944c8d5e514797a0184943d74f5fa3a9cd1",
+      "candidateFreeze": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-conventional-greenfield-01\\candidates\\task1\\freeze.json",
+      "closedUtc": "2026-10-09T01:52:06.3939405Z",
+      "assessmentPath": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-conventional-greenfield-01\\independent-assessment\\task1\\assessment.json",
+      "assessmentSha256": "bdfac8bae05af3d49086dab1ec447b828677f2f9958372b63cc280e93218e830"
+    },
+    {
+      "implementationEndUtc": "2026-10-09T02:06:06.4835503Z",
+      "task": 2,
+      "semanticRepairs": 0,
+      "status": "NOT RUN / coordinator_interruption",
+      "endReserveSeconds": 30,
+      "activationReservations": [
+        {
+          "continuation": true,
+          "status": "reserved never dispatched; expired",
+          "overrides": null,
+          "role": "primary-implementation",
+          "reservation": 1,
+          "reservedUtc": "2026-10-09T01:52:06.4835503Z",
+          "actorId": "/root/v4_actual_conventional_greenfield_primary"
+        }
+      ],
+      "deadlineUtc": "2026-10-09T02:12:06.4835503Z",
+      "startUtc": "2026-10-09T01:52:06.4835503Z",
+      "assessmentMinimumSeconds": 300
+    }
+  ],
+  "state": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\state\\v4-conventional-greenfield-01",
+  "repo": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-matched-actuals\\cells\\v4-conventional-greenfield-01\\repo",
+  "status": "CLOSED INCOMPLETE / coordinator_interruption",
+  "startUtc": "2026-10-09T01:42:59.3173598Z",
+  "primaryActorId": "/root/v4_actual_conventional_greenfield_primary",
+  "actualFirstNativeActivationObservedUtc": "2026-10-09T01:44:44.6700496Z",
+  "closedUtc": "2026-10-09T02:20:21.2898489+00:00",
+  "actualNativeActivations": 2,
+  "outcome": "incomplete/coordinator_interruption",
+  "subsequentTasks": [
+    {
+      "task": 3,
+      "status": "NOT RUN",
+      "reason": "Missing completed predecessor after task2 coordinator interruption"
+    },
+    {
+      "task": 4,
+      "status": "NOT RUN",
+      "reason": "Missing completed predecessor after task2 coordinator interruption"
+    },
+    {
+      "task": 5,
+      "status": "NOT RUN",
+      "reason": "Missing completed predecessor after task2 coordinator interruption"
+    },
+    {
+      "task": 6,
+      "status": "NOT RUN",
+      "reason": "Missing completed predecessor after task2 coordinator interruption"
+    }
+  ]
+}
