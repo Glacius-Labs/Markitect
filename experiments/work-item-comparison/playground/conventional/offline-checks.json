@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "scope": "46 provider-free fixtures including four-station lifecycle integration and nonfatal MCP observer failure; no native implementing actor",
+  "scope": "47 provider-free fixtures; installed-error enum correction and stop-on-known-native-tool-setup-failure; no native retry",
   "command": [
     "C:/Python313/python.exe",
     "-B",
@@ -13,29 +13,30 @@
     "test_conventional*.py",
     "-v"
   ],
-  "startedAt": "2026-10-09T18:50:53.625620+00:00",
-  "endedAt": "2026-10-09T18:51:13.327048+00:00",
-  "durationSeconds": 19.701,
+  "startedAt": "2026-10-09T18:56:28.270648+00:00",
+  "endedAt": "2026-10-09T18:56:50.533856+00:00",
+  "durationSeconds": 22.263,
   "exitCode": 0,
   "testedSourcesSha256": {
     "experiments/work-item-comparison/playground/continue_conventional_pilot.py": "b4287a751f6869284f50fa8e2c06e5c72c089a26a6f300fa7b6c319a9735b4aa",
     "experiments/work-item-comparison/playground/conventional/__init__.py": "d5113c22eef217fce313aad32623c5b3dbd97c47f739c298ab118e951fc1b798",
-    "experiments/work-item-comparison/playground/conventional/backends.py": "f2f86edfa749e8af0f1e629ebab01b94c2d82ab67f2c9fc0a7dc1a61bfa2600d",
+    "experiments/work-item-comparison/playground/conventional/backends.py": "4886be0d4afb344847e53bea01e90f0f1ab2a7dfbec6ab3b4cc06b1a061d3450",
     "experiments/work-item-comparison/playground/conventional/mcp.py": "247d68696cfa7c52265c7d6e978a8b0726750e82b1f9b1321b8cf12eb8e4c2b9",
     "experiments/work-item-comparison/playground/conventional/service.py": "713d191f1b6f4a4d4fa8f47dfe54db4caed628907e961e7bca77975004e4cc2f",
     "experiments/work-item-comparison/playground/conventional_wrapper.py": "f24759f673e10965751ee718bf6022a219788ea22e0e6bf15c749e40cf6db5c2",
-    "experiments/work-item-comparison/playground/run_conventional_pilot.py": "20b1a23a702cea0d36797e48d09ba44acb76abfac68fb5dce536646cc4305d52",
-    "experiments/work-item-comparison/playground/tests/test_conventional_backends.py": "6fd6b374150ead2cff94964fb89a49029da5d5c07ed2ef6deeb8515880bcb724",
+    "experiments/work-item-comparison/playground/run_appserver_correction_pilot.py": "e32a291977e4394da5a3bb97e1ee3842d1df1d53d953a5b59f6158e28facd071",
+    "experiments/work-item-comparison/playground/run_conventional_pilot.py": "07ec57d71a077237a08e85456c85e245cfeffbadbc0c28c8f76995786d36bd81",
+    "experiments/work-item-comparison/playground/tests/test_conventional_backends.py": "a3c831d92250c30096589c1b216bf5fc3f49ad01c88b59897e85cedd362fb5ae",
     "experiments/work-item-comparison/playground/tests/test_conventional_integration.py": "18da293f36d398ac87a5eac5fe8f292a42c5f47f0c51541092c5a3fb3e46a45a",
     "experiments/work-item-comparison/playground/tests/test_conventional_mcp.py": "f8c8e5dc27dbd24bece13354f3ad2882bce19f68fa7e0f419009e33c567020ab",
-    "experiments/work-item-comparison/playground/tests/test_conventional_pilot.py": "801f8a227ea3bb2e26b3375c4c23e29940f7d2ce209ca63a4423552903a37838",
+    "experiments/work-item-comparison/playground/tests/test_conventional_pilot.py": "b9a3715b4e10605db8cb043dec347a9afdb67832bcae5c728f35a14170bbe9c1",
     "experiments/work-item-comparison/playground/tests/test_conventional_service.py": "e2aa35c6ea49246e6f368db87b6c1757fb4fc4cd4425b26cb9a7749ba438c4d7"
   },
   "sourcesUnchangedDuringCheck": true,
-  "logSha256": "9b0822a5e6246380dfa06439ba71ff25d331d3ed8ade7c593be3d5d7049696a3",
-  "capturedTechnicalLogSha256": "e3045b6951cdb2baac023149af8710eab63c63292b727d93c643152c3b028be8",
+  "logSha256": "232d140c9aef545a8ec68b246734a981e11bf11fe249635172b17616a6e769b2",
+  "capturedTechnicalLogSha256": "00108f44128cf8613e17e659817a445f544f25d96788695f13322896185a55c0",
   "logNormalization": "CRLF to LF technical log only; native receipts byte preserving",
-  "previousCheckpoint": "cb7a92ae617735fe5ae1857004917ffcf8dfeaba",
+  "previousCheckpoint": "03f2b502fa4509e0eff036e40ce474a23ba2e6b5",
   "nativeRuntimeTested": false,
-  "specificPilotAuthority": "original finite pilot; no Roombook replay; unused BF trajectory only"
+  "specificPilotAuthority": "separate explicit one-time correction plan; original two actual failures unchanged"
 }

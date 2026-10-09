@@ -1,0 +1,29 @@
+{
+  "id": "conventional-appserver-enum-correction-pilot-20261009",
+  "execution_authorized": true,
+  "authority": "Root verified direct user wrapper-suite goal and explicit one-time correction order; no automatic refill",
+  "trajectories": [
+    {
+      "case": "readinglog",
+      "backend": "codex-app-server"
+    }
+  ],
+  "model": "gpt-6-luna",
+  "effort": "high",
+  "jobWallSeconds": 14400,
+  "turnWallSeconds": 5400,
+  "startAllowance": 64,
+  "sharedOriginalAllowance": 256,
+  "overallExpiresAt": "2026-10-10T02:47:35.240574+00:00",
+  "maxOuterTurns": 4,
+  "requirements": "original public S1-S4 1/3/7/1; fresh context; same session resumed across waves",
+  "runtimeOptions": {
+    "sandbox": "workspace-write",
+    "approvalPolicy": "never",
+    "memoryEnabled": false,
+    "nativeHelperModel": "gpt-6-luna",
+    "nativeHelperEffort": "high"
+  },
+  "limits": "one fresh BF only; no resume of failed original; original allowance and overall expiry retained; if thread/tool setup blocks stop without policy change or refill",
+  "interpretation": "runtime correction pilot; no fair transport or Markitect result; explicit approval/memory deviations; effective inherited config unknown"
+}

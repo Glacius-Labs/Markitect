@@ -54,3 +54,5 @@ is a newer Conventional-only order; it does not reopen old attempts or require
 Markitect to finish first. Paired method comparisons remain unbound.
 
 The first native pilot exposed mutable user-config drift and a Windows shell setup failure. Original bindings remain untouched. For the still-unused second trajectory, explicit child-local model/effort/rights/memory/helper settings are pinned in the exact config; the full user-config hash is an observation, not an admission pin. Inherited settings and actual loaded config remain unverified. This is a prospective correction, not ordinary CLI parity or a change to old evidence.
+
+Installed-runtime errors outrank assumed protocol shapes: Codex 0.162.0-alpha.2 rejected thread sandbox `workspaceWrite` and explicitly expects `workspace-write`. The wrapper now preserves the native enum value; readiness includes successful thread admission and tool access, not merely initialize. A separate one-time correction order uses a fresh BF repo/context while retaining original failures and the original overall deadline.

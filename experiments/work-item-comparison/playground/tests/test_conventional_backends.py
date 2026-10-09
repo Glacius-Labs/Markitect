@@ -213,9 +213,9 @@ for line in sys.stdin:
     elif method == "initialized": pass
     elif method == "thread/start":
         assert m["params"]["cwd"] == __import__("os").getcwd()
-        assert m["params"]["sandbox"] == "workspaceWrite"
+        assert m["params"]["sandbox"] == "workspace-write"
         assert m["params"]["approvalPolicy"] == "never"
-        send({"id":m["id"],"result":{"thread":{"id":"thread-A","model":"fixture-model","reasoningEffort":"high","modelProvider":"fixture-provider","cwd":__import__("os").getcwd(),"sandbox":"workspaceWrite","approvalPolicy":"never","instructionSources":["AGENTS.md"]}}})
+        send({"id":m["id"],"result":{"thread":{"id":"thread-A","model":"fixture-model","reasoningEffort":"high","modelProvider":"fixture-provider","cwd":__import__("os").getcwd(),"sandbox":"workspace-write","approvalPolicy":"never","instructionSources":["AGENTS.md"]}}})
         send({"method":"thread/tokenUsage/updated","params":{"threadId":"thread-A","tokenUsage":{"input_tokens":7}}})
     elif method == "turn/start":
         send({"method":"turn/completed","params":{"threadId":"thread-A","turn":{"id":"wrong","status":"completed"}}})

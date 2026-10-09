@@ -212,6 +212,13 @@ def trajectory(case, backend, destination, plan, executable, version, source_sha
         result["stations"].append(row)
         print(json.dumps({"event":"station-captured","case":case,"station":stage,"nativeState":turn["state"],
                           "checks":{status:sum(f["status"]==status for f in assessment["findings"]) for status in ("PASS","FAIL","NOT RUN","EVALUATION_ERROR")}}),flush=True)
+        events = audit / "conventional-execution" / turn.get("runId", "missing") / "events.jsonl"
+        native_setup_failure = events.exists() and "helper_unknown_error: setup refresh had errors" in events.read_text(encoding="utf-8", errors="replace")
+        if native_setup_failure:
+            lifecycle.freeze(repo, audit, reason="known native tool setup failure; completed actor turn; no automatic replay")
+            result["status"] = "blocked_by_native_tool_setup"
+            result["runtimeFailure"] = "helper_unknown_error: setup refresh had errors"
+            break
         if turn["state"] != "completed":
             lifecycle.freeze(repo,audit,reason="known terminal runtime failure; no automatic retry")
             result["status"] = "runtime_failed"

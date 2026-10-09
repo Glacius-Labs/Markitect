@@ -2,6 +2,7 @@
 {"event": "station-captured", "case": "roombook", "station": "S2", "nativeState": "completed", "checks": {"PASS": 0, "FAIL": 1, "NOT RUN": 1, "EVALUATION_ERROR": 0}}
 {"event": "station-captured", "case": "roombook", "station": "S3", "nativeState": "completed", "checks": {"PASS": 0, "FAIL": 1, "NOT RUN": 1, "EVALUATION_ERROR": 0}}
 {"event": "station-captured", "case": "roombook", "station": "S4", "nativeState": "completed", "checks": {"PASS": 0, "FAIL": 1, "NOT RUN": 1, "EVALUATION_ERROR": 0}}
+{"event": "station-captured", "case": "readinglog", "station": "S1", "nativeState": "completed", "checks": {"PASS": 3, "FAIL": 2, "NOT RUN": 0, "EVALUATION_ERROR": 0}}
 test_app_server_approval_is_never_accepted (test_conventional_backends.ConventionalBackendTests.test_app_server_approval_is_never_accepted) ... ok
 test_app_server_cancellation_targets_exact_turn_and_waits_for_interrupt (test_conventional_backends.ConventionalBackendTests.test_app_server_cancellation_targets_exact_turn_and_waits_for_interrupt) ... ok
 test_app_server_deadline_without_terminal_is_uncertain (test_conventional_backends.ConventionalBackendTests.test_app_server_deadline_without_terminal_is_uncertain) ... ok
@@ -37,6 +38,9 @@ test_strict_request_id_shapes_and_unknown_methods (test_conventional_mcp.Convent
 test_completed_scripted_turns_capture_all_four_public_stations (test_conventional_pilot.PilotTests.test_completed_scripted_turns_capture_all_four_public_stations) ... Switched to branch 'main'
 Switched to branch 'codex/backlog'
 ok
+test_known_native_tool_setup_failure_stops_after_terminal_first_turn (test_conventional_pilot.PilotTests.test_known_native_tool_setup_failure_stops_after_terminal_first_turn) ... Switched to branch 'main'
+Switched to branch 'codex/backlog'
+ok
 test_mcp_observation_failure_is_recorded_without_replay_or_stop (test_conventional_pilot.PilotTests.test_mcp_observation_failure_is_recorded_without_replay_or_stop) ... ok
 test_config_order_binary_and_run_binding_reject_before_dispatch (test_conventional_service.ServiceTests.test_config_order_binary_and_run_binding_reject_before_dispatch) ... ok
 test_disabled_start_never_dispatches (test_conventional_service.ServiceTests.test_disabled_start_never_dispatches) ... ok
@@ -52,6 +56,6 @@ test_unknown_dispatch_blocks_replay_and_fresh_starts (test_conventional_service.
 test_worker_start_failure_preserves_handle_and_never_dispatches (test_conventional_service.ServiceTests.test_worker_start_failure_preserves_handle_and_never_dispatches) ... ok
 
 ----------------------------------------------------------------------
-Ran 46 tests in 19.431s
+Ran 47 tests in 21.974s
 
 OK

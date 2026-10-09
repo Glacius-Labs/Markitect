@@ -617,10 +617,8 @@ def _run_app_server(spec: dict[str, Any], command: list[str], cwd: str, model: s
                     params = dict(thread_options)
                     params.update({"cwd": cwd, "model": model})
                     if runtime_options is not None:
-                        params["sandbox"] = {"read-only": "readOnly",
-                                              "workspace-write": "workspaceWrite"}[runtime_options["sandbox"]]
-                        params["approvalPolicy"] = {"never": "never",
-                                                     "on-request": "onRequest"}[runtime_options["approvalPolicy"]]
+                        params["sandbox"] = runtime_options["sandbox"]
+                        params["approvalPolicy"] = runtime_options["approvalPolicy"]
                     if resume_id:
                         params["threadId"] = resume_id
                     request_id = next_id

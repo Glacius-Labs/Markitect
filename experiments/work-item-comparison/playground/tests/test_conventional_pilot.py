@@ -37,3 +37,21 @@ class PilotTests(unittest.TestCase):
             self.assertEqual(receipt["status"], "observation_failed")
             self.assertEqual(receipt["startsConsumed"], 0)
             self.assertTrue((audit / "operator-mcp-S1.error.json").exists())
+
+    def test_known_native_tool_setup_failure_stops_after_terminal_first_turn(self):
+        plan = {"id": "offline-controller-fixture", "model": "gpt-6-luna", "effort": "high",
+                "jobWallSeconds": 14400, "turnWallSeconds": 5400, "startAllowance": 64}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            def terminal_with_setup_error(config, audit, parent, expiry, station):
+                events = audit / "conventional-execution/offline-native/events.jsonl"
+                events.parent.mkdir(parents=True)
+                events.write_bytes(b'{"event":{"raw":"helper_unknown_error: setup refresh had errors"}}\n')
+                return {"state":"completed", "runId":"offline-native", "nativeSessionId":"scripted-same"}
+            with patch.object(pilot, "run_turn", side_effect=terminal_with_setup_error) as run:
+                result = pilot.trajectory("readinglog", "codex-app-server", root, plan, Path(sys.executable),
+                                          "offline fixture", "source-fixture", pilot.now() + timedelta(hours=8))
+            self.assertEqual(result["status"], "blocked_by_native_tool_setup")
+            self.assertEqual(run.call_count, 1)
+            self.assertEqual(len(result["stations"]), 1)
+            self.assertTrue((root / "readinglog/audit/final-freeze/immutable-main").is_dir())

@@ -7,13 +7,13 @@ The original source checkpoint `df6db9cc846378769efc9b8596b2a9736efe0425` opened
 
 ## Focused result
 
-**46/46 PASS**, `19.701s` driver wall time, exit 0. The prior 41-fixture result remains in the original checkpoint.
+**47/47 PASS**, `22.263s` driver wall time, exit 0. The prior 41-fixture result remains in the original checkpoint.
 The exact command, UTC interval, tested source byte hashes and the syntax-checked pilot controller hash and technical log
 hash are in [offline-checks.json](offline-checks.json); output is retained in
 [offline-checks.log](offline-checks.log). Source hashes did not change during the check.
 The technical unittest log is normalized from CRLF to LF for Git; the captured
 pre-normalization hash is retained in the record. Native wire bytes are unchanged.
-Technical log SHA-256: `9b0822a5e6246380dfa06439ba71ff25d331d3ed8ade7c593be3d5d7049696a3`.
+Technical log SHA-256: `232d140c9aef545a8ec68b246734a981e11bf11fe249635172b17616a6e769b2`.
 
 ```powershell
 C:/Python313/python.exe -B -m unittest discover -s experiments/work-item-comparison/playground/tests -p test_conventional*.py -v
@@ -71,3 +71,5 @@ The files are source-prepared and offline-checked. The finite pilot is separatel
 Runtime setup checks cover typed workspace-write/approval/memory/helper overrides, rejection before dispatch, and legacy configs. Pilot approval=never and memories=false are declared deviations from an ordinary interactive CLI session. Owned stdio needs no external daemon. The controller reserves 15 minutes within each four-hour job for capture/assessment and uses a shared eight-hour deadline. An operator MCP observation error is recorded while the same native controller continues; unresolved ownership blocks the next trajectory.
 
 The first real pilot also exposed a controller call-site error after authoritative native completion. The metadata argument is now keyword-only at the call site. Two new provider-free controller fixtures execute the full four-stage capture/assessment/freeze path and verify that observer failure records evidence without stopping the owned actor. No real trajectory was replayed. The separate continuation script admits only the original terminal first receipt and still-unused BF destination, preserves the original overall expiry, and rejects repeated reconciliation/second-case setup.
+
+The installed App Server rejected camel-case `workspaceWrite` at thread/start before any native model turn. Thread sandbox and approval now retain native kebab-case values. This prospective correction is offline-checked; original failed wire evidence is unchanged. The Overseer separately ordered exactly one fresh BF correction trajectory, at most 64 additional starts within the original shared 256 allowance and unchanged eight-hour expiry. No original attempt is resumed or replayed. A known native tool setup error after a terminal actor turn freezes that trajectory before any next station. The additional provider-free fixture verifies this stop behavior.
