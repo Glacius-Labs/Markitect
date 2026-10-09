@@ -26,9 +26,10 @@ type reviewResponse struct {
 }
 
 type reviewFileRef struct {
-	Path   string `json:"path"`
-	Mode   string `json:"mode"`
-	Digest string `json:"digest"`
+	Path      string   `json:"path"`
+	Mode      string   `json:"mode"`
+	Digest    string   `json:"digest"`
+	Grounding []string `json:"grounding"`
 }
 
 // invokeReviewer supplies only the original goal, accepted scoped model and
@@ -56,20 +57,17 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 			config.Timeout = remaining
 		}
 	}
-	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers)
-	if err != nil {
-		return record, log, err
-	}
 	files := scopedCandidateFiles(project, task)
 	if len(files) == 0 {
 		// A legitimate no-op can have no owned file in inventory. Keep an empty
 		// array explicit; the candidate digest still binds the review.
 		files = []agentexec.Artifact{}
 	}
-	fileRefs := make([]reviewFileRef, 0, len(files))
-	for _, file := range files {
-		fileRefs = append(fileRefs, reviewFileRef{Path: file.Path, Mode: file.Mode, Digest: file.Digest})
+	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files)
+	if err != nil {
+		return record, log, err
 	}
+	fileRefs := reviewFileReferences(project.Report, accepted, files)
 	responseSchema := reviewResponseSchema()
 	contextJSON, err := json.Marshal(struct {
 		Kind            string                      `json:"kind"`
@@ -84,6 +82,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 		AcceptedModel   projectmodel.ManagerContext `json:"acceptedModel"`
 		ScopedModel     struct {
 			Statements []projectmodel.Statement `json:"statements"`
+			Contracts  []projectmodel.Statement `json:"contracts"`
 			Artifacts  []projectmodel.Artifact  `json:"artifacts"`
 			OwnedPaths []string                 `json:"ownedPaths"`
 		} `json:"scopedModel"`
@@ -93,20 +92,15 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 		CandidateID: candidate.ID, CandidateDigest: candidate.Digest, ChangedPaths: unionPaths(task.WrittenPaths, task.IntegratedPaths), AcceptedModel: accepted,
 		ScopedModel: struct {
 			Statements []projectmodel.Statement `json:"statements"`
+			Contracts  []projectmodel.Statement `json:"contracts"`
 			Artifacts  []projectmodel.Artifact  `json:"artifacts"`
 			OwnedPaths []string                 `json:"ownedPaths"`
-		}{Statements: append([]projectmodel.Statement(nil), accepted.Statements...), Artifacts: append([]projectmodel.Artifact(nil), accepted.Artifacts...), OwnedPaths: reviewScopePaths(files)},
+		}{Statements: append([]projectmodel.Statement(nil), accepted.Statements...), Contracts: append([]projectmodel.Statement(nil), accepted.Contracts...), Artifacts: append([]projectmodel.Artifact(nil), accepted.Artifacts...), OwnedPaths: reviewScopePaths(files)},
 		CandidateFiles: fileRefs, ResponseSchema: responseSchema})
 	if err != nil {
 		return record, log, err
 	}
-	scopeIDs := []string{task.ManagerID}
-	for _, statement := range accepted.Statements {
-		scopeIDs = append(scopeIDs, "statement:"+statement.ID)
-	}
-	for _, artifact := range accepted.Artifacts {
-		scopeIDs = append(scopeIDs, "artifact:"+artifact.ID)
-	}
+	scopeIDs := reviewScopeIDs(task.ManagerID, accepted)
 	acceptedDigest, err := digest(accepted)
 	if err != nil {
 		return record, log, err
@@ -145,7 +139,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	if err != nil {
 		return record, log, err
 	}
-	findings, err := validateReviewFindings(parsed.Findings, accepted, files)
+	findings, err := validateReviewFindings(parsed.Findings, fileRefs)
 	if err != nil {
 		return record, log, err
 	}
@@ -192,11 +186,12 @@ func canonicalizeReviewContext(request *agentexec.Request) error {
 // It includes the accepted local contract, task goal, review phase and every
 // actual owned file byte and mode supplied to the reviewer.
 func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phase string) (string, error) {
-	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers)
+	files := scopedCandidateFiles(project, task)
+	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files)
 	if err != nil {
 		return "", err
 	}
-	files := scopedCandidateFiles(project, task)
+	fileRefs := reviewFileReferences(project.Report, accepted, files)
 	return digest(struct {
 		Kind          string                      `json:"kind"`
 		RunGoal       string                      `json:"runGoal"`
@@ -207,16 +202,18 @@ func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phas
 		Checks        []string                    `json:"checks"`
 		ChangedPaths  []string                    `json:"changedPaths"`
 		Files         []agentexec.Artifact        `json:"files"`
-	}{"projectrun-review/v1", plan.Goal, task.ManagerID, task.Goal, phase, accepted, append([]string(nil), task.Checks...), unionPaths(task.WrittenPaths, task.IntegratedPaths), files})
+		FileRefs      []reviewFileRef             `json:"fileRefs"`
+	}{"projectrun-review/v1", plan.Goal, task.ManagerID, task.Goal, phase, accepted, append([]string(nil), task.Checks...), unionPaths(task.WrittenPaths, task.IntegratedPaths), files, fileRefs})
 }
 
-func scopedReviewModel(report projectmodel.Report, managerID string, tasks []ManagerTask) (projectmodel.ManagerContext, error) {
+func scopedReviewModel(report projectmodel.Report, managerID string, tasks []ManagerTask, files []agentexec.Artifact) (projectmodel.ManagerContext, error) {
 	accepted, err := projectmodel.Context(report, managerID)
 	if err != nil {
 		return accepted, err
 	}
+	activeIDs := activeChildren(tasks, managerID)
 	active := map[string]bool{}
-	for _, id := range activeChildren(tasks, managerID) {
+	for _, id := range activeIDs {
 		active[id] = true
 	}
 	children := accepted.Children[:0]
@@ -226,7 +223,147 @@ func scopedReviewModel(report projectmodel.Report, managerID string, tasks []Man
 		}
 	}
 	accepted.Children = children
+
+	statementByID := make(map[string]projectmodel.Statement, len(report.Statements))
+	for _, statement := range report.Statements {
+		statementByID[statement.ID] = statement
+	}
+	visibleStatements := make(map[string]bool, len(accepted.Statements)+len(accepted.Contracts))
+	for _, statement := range accepted.Statements {
+		visibleStatements[statement.ID] = true
+	}
+	contractByID := make(map[string]projectmodel.Statement)
+	for _, contract := range accepted.Contracts {
+		contractByID[contract.ID] = contract
+	}
+	addContract := func(statement projectmodel.Statement) {
+		if statement.ID == "" || visibleStatements[statement.ID] {
+			return
+		}
+		contractByID[statement.ID] = statement
+	}
+	// An admitted candidate file can implement an artifact or public statement
+	// owned by another Manager. Carry only the interfaces explicitly related to
+	// these exact files; never expand to the foreign Manager's full model.
+	selectedPaths := make(map[string]bool, len(files))
+	for _, file := range files {
+		selectedPaths[file.Path] = true
+	}
+	relatedArtifacts := make(map[string]bool)
+	for _, entry := range report.Files {
+		if !selectedPaths[entry.Path] {
+			continue
+		}
+		for _, id := range entry.Artifacts {
+			relatedArtifacts[id] = true
+		}
+		for _, id := range entry.Statements {
+			if statement, ok := statementByID[id]; ok && statement.Public {
+				addContract(statement)
+			}
+		}
+	}
+	for _, artifact := range report.Artifacts {
+		for _, path := range artifact.Paths {
+			if selectedPaths[path] {
+				relatedArtifacts[artifact.ID] = true
+				break
+			}
+		}
+	}
+	requiredChildArtifactIDs := make(map[string]bool)
+	for _, artifact := range requiredChildArtifacts(report, activeIDs) {
+		relatedArtifacts[artifact.ID] = true
+		requiredChildArtifactIDs[artifact.ID] = true
+	}
+
+	artifactByID := make(map[string]projectmodel.Artifact, len(accepted.Artifacts))
+	for _, artifact := range accepted.Artifacts {
+		artifactByID[artifact.ID] = artifact
+	}
+	for _, artifact := range report.Artifacts {
+		if !relatedArtifacts[artifact.ID] {
+			continue
+		}
+		artifactByID[artifact.ID] = artifact
+		for _, id := range artifact.Realizes {
+			if statement, ok := statementByID[id]; ok && statement.Public && (requiredChildArtifactIDs[artifact.ID] || selectedArtifactForReview(report, artifact.ID, selectedPaths)) {
+				addContract(statement)
+			}
+		}
+	}
+
+	// Exported interface relations must not smuggle private or unrelated
+	// statement identifiers into the review context.
+	visibleContracts := make(map[string]bool, len(visibleStatements)+len(contractByID))
+	for id := range visibleStatements {
+		visibleContracts[id] = true
+	}
+	for id := range contractByID {
+		visibleContracts[id] = true
+	}
+	accepted.Contracts = accepted.Contracts[:0]
+	for _, contract := range contractByID {
+		contract.Uses = filterVisibleStatementRefs(contract.Uses, visibleContracts)
+		contract.Requires = filterVisibleStatementRefs(contract.Requires, visibleContracts)
+		accepted.Contracts = append(accepted.Contracts, contract)
+	}
+	sort.Slice(accepted.Contracts, func(i, j int) bool { return accepted.Contracts[i].ID < accepted.Contracts[j].ID })
+	accepted.Artifacts = accepted.Artifacts[:0]
+	for _, artifact := range artifactByID {
+		artifact.Realizes = filterVisibleStatementRefs(artifact.Realizes, visibleContracts)
+		accepted.Artifacts = append(accepted.Artifacts, artifact)
+	}
+	sort.Slice(accepted.Artifacts, func(i, j int) bool { return accepted.Artifacts[i].ID < accepted.Artifacts[j].ID })
 	return accepted, nil
+}
+
+func selectedArtifactForReview(report projectmodel.Report, artifactID string, selectedPaths map[string]bool) bool {
+	for _, entry := range report.Files {
+		if !selectedPaths[entry.Path] {
+			continue
+		}
+		for _, id := range entry.Artifacts {
+			if id == artifactID {
+				return true
+			}
+		}
+	}
+	for _, artifact := range report.Artifacts {
+		if artifact.ID != artifactID {
+			continue
+		}
+		for _, path := range artifact.Paths {
+			if selectedPaths[path] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func filterVisibleStatementRefs(ids []string, visible map[string]bool) []string {
+	filtered := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if visible[id] {
+			filtered = append(filtered, id)
+		}
+	}
+	return uniqueSorted(filtered)
+}
+
+func reviewScopeIDs(managerID string, accepted projectmodel.ManagerContext) []string {
+	ids := []string{managerID}
+	for _, statement := range accepted.Statements {
+		ids = append(ids, "statement:"+statement.ID)
+	}
+	for _, contract := range accepted.Contracts {
+		ids = append(ids, "statement:"+contract.ID)
+	}
+	for _, artifact := range accepted.Artifacts {
+		ids = append(ids, "artifact:"+artifact.ID)
+	}
+	return uniqueSorted(ids)
 }
 
 func scopedCandidateFiles(project *Project, task ManagerTask) []agentexec.Artifact {
@@ -290,30 +427,89 @@ func reviewScopePaths(files []agentexec.Artifact) []string {
 	return paths
 }
 
-func reviewGrounding(model projectmodel.ManagerContext) map[string]bool {
-	allowed := map[string]bool{}
-	for _, statement := range model.Statements {
-		if statement.ID != "" {
-			allowed["statement:"+statement.ID] = true
+func reviewFileReferences(report projectmodel.Report, accepted projectmodel.ManagerContext, files []agentexec.Artifact) []reviewFileRef {
+	mandateContracts := map[string]bool{}
+	if mandate, err := projectmodel.Context(report, accepted.Manager.ID); err == nil {
+		for _, contract := range mandate.Contracts {
+			mandateContracts[contract.ID] = true
 		}
 	}
-	for _, artifact := range model.Artifacts {
-		for _, path := range artifact.Paths {
-			allowed["artifact-path:"+path] = true
-		}
+	acceptedStatements := make(map[string]bool, len(accepted.Statements)+len(accepted.Contracts))
+	for _, statement := range accepted.Statements {
+		acceptedStatements[statement.ID] = true
 	}
-	return allowed
+	for _, contract := range accepted.Contracts {
+		acceptedStatements[contract.ID] = true
+	}
+	artifactByID := make(map[string]projectmodel.Artifact, len(accepted.Artifacts))
+	for _, artifact := range accepted.Artifacts {
+		artifactByID[artifact.ID] = artifact
+	}
+	refs := make([]reviewFileRef, 0, len(files))
+	for _, file := range files {
+		grounding := map[string]bool{}
+		for _, statement := range accepted.Statements {
+			if statement.ID != "" {
+				grounding["statement:"+statement.ID] = true
+			}
+		}
+		for id := range mandateContracts {
+			grounding["statement:"+id] = true
+		}
+		relatedArtifacts := map[string]bool{}
+		for _, entry := range report.Files {
+			if entry.Path != file.Path {
+				continue
+			}
+			for _, id := range entry.Statements {
+				if acceptedStatements[id] {
+					grounding["statement:"+id] = true
+				}
+			}
+			for _, id := range entry.Artifacts {
+				relatedArtifacts[id] = true
+			}
+		}
+		for id, artifact := range artifactByID {
+			coversPath := false
+			for _, path := range artifact.Paths {
+				if path == file.Path || strings.HasSuffix(path, "/") && strings.HasPrefix(file.Path, path) {
+					grounding["artifact-path:"+path] = true
+					coversPath = true
+				}
+			}
+			if !relatedArtifacts[id] && !coversPath {
+				continue
+			}
+			for _, statementID := range artifact.Realizes {
+				if acceptedStatements[statementID] {
+					grounding["statement:"+statementID] = true
+				}
+			}
+		}
+		values := make([]string, 0, len(grounding))
+		for value := range grounding {
+			values = append(values, value)
+		}
+		sort.Strings(values)
+		refs = append(refs, reviewFileRef{Path: file.Path, Mode: file.Mode, Digest: file.Digest, Grounding: values})
+	}
+	return refs
 }
 
-func validateReviewFindings(raw []reviewFindingResponse, accepted projectmodel.ManagerContext, files []agentexec.Artifact) ([]ReviewFinding, error) {
-	allowedGrounding := reviewGrounding(accepted)
+func validateReviewFindings(raw []reviewFindingResponse, refs []reviewFileRef) ([]ReviewFinding, error) {
 	allowedPaths := map[string]bool{}
-	for _, file := range files {
-		allowedPaths[file.Path] = true
+	allowedGrounding := make(map[string]map[string]bool, len(refs))
+	for _, ref := range refs {
+		allowedPaths[ref.Path] = true
+		allowedGrounding[ref.Path] = make(map[string]bool, len(ref.Grounding))
+		for _, grounding := range ref.Grounding {
+			allowedGrounding[ref.Path][grounding] = true
+		}
 	}
 	findings := make([]ReviewFinding, 0, len(raw))
 	for _, finding := range raw {
-		if !allowedPaths[finding.Path] || strings.TrimSpace(finding.Expectation) == "" || len(finding.Expectation) > 2048 || !allowedGrounding[finding.Grounding] {
+		if !allowedPaths[finding.Path] || strings.TrimSpace(finding.Expectation) == "" || len(finding.Expectation) > 2048 || !allowedGrounding[finding.Path][finding.Grounding] {
 			return nil, fmt.Errorf("reviewer finding is ungrounded or outside the exact candidate scope")
 		}
 		findings = append(findings, ReviewFinding{Path: finding.Path, Expectation: finding.Expectation, Grounding: finding.Grounding})

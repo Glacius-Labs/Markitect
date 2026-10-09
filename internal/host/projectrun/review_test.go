@@ -15,8 +15,9 @@ import (
 func TestReviewFindingRequiresExactCandidatePathAndAcceptedGrounding(t *testing.T) {
 	model := projectmodel.ManagerContext{Statements: []projectmodel.Statement{{ID: "accepted-statement"}}, Artifacts: []projectmodel.Artifact{{Paths: []string{"src/orders/result.txt"}}}}
 	files := []agentexec.Artifact{{Path: "src/orders/result.txt"}}
+	refs := reviewFileReferences(projectmodel.Report{}, model, files)
 	valid := []reviewFindingResponse{{Path: "src/orders/result.txt", Expectation: "write the declared output", Grounding: "statement:accepted-statement"}}
-	if _, err := validateReviewFindings(valid, model, files); err != nil {
+	if _, err := validateReviewFindings(valid, refs); err != nil {
 		t.Fatalf("accepted grounded finding rejected: %v", err)
 	}
 	for name, finding := range map[string]reviewFindingResponse{
@@ -25,10 +26,99 @@ func TestReviewFindingRequiresExactCandidatePathAndAcceptedGrounding(t *testing.
 		"unknown artifact path": {Path: "src/orders/result.txt", Expectation: "invent an artifact", Grounding: "artifact-path:src/other.txt"},
 	} {
 		t.Run(name, func(t *testing.T) {
-			if _, err := validateReviewFindings([]reviewFindingResponse{finding}, model, files); err == nil {
+			if _, err := validateReviewFindings([]reviewFindingResponse{finding}, refs); err == nil {
 				t.Fatal("ungrounded or out-of-scope review finding was accepted")
 			}
 		})
+	}
+	model.Artifacts[0].Paths = append(model.Artifacts[0].Paths, "src/orders/other.txt")
+	refs = reviewFileReferences(projectmodel.Report{}, model, files)
+	if _, err := validateReviewFindings([]reviewFindingResponse{{Path: "src/orders/result.txt", Expectation: "cite the matching artifact", Grounding: "artifact-path:src/orders/other.txt"}}, refs); err == nil {
+		t.Fatal("unrelated accepted artifact path grounded a finding for another candidate path")
+	}
+}
+
+func TestScopedReviewModelIncludesOnlyRelatedPublicForeignInterfaces(t *testing.T) {
+	const (
+		salesID     = "shop/sales"
+		ordersID    = "shop/orders"
+		financeID   = "shop/finance"
+		path        = "src/shop/commerce/cancellation.py"
+		financePath = "src/shop/commerce/finance_test.py"
+	)
+	report := projectmodel.Report{
+		Managers: []projectmodel.Manager{
+			{ID: salesID}, {ID: ordersID, Parent: salesID}, {ID: financeID, Parent: salesID},
+		},
+		Statements: []projectmodel.Statement{
+			{ID: "order-cancellation-contract", Owner: ordersID, Public: true, Description: "Cancellation interface"},
+			{ID: "orders-private-detail", Owner: ordersID, Public: false, Description: "Private implementation"},
+			{ID: "finance-ledger-contract", Owner: financeID, Public: true, Description: "Finance test contract"},
+			{ID: "finance-unrelated-contract", Owner: financeID, Public: true, Description: "Unrelated finance contract"},
+		},
+		Artifacts: []projectmodel.Artifact{
+			{ID: "order-lifecycle", Name: "Order lifecycle", Owner: ordersID, Role: "implementation", Required: true,
+				Paths: []string{path}, Realizes: []string{"order-cancellation-contract", "orders-private-detail"}},
+			{ID: "finance-ledger", Name: "Finance ledger", Owner: financeID, Required: true,
+				Paths: []string{financePath}, Realizes: []string{"finance-ledger-contract"}},
+			{ID: "finance-private-notes", Name: "Finance private notes", Owner: financeID,
+				Paths: []string{"src/shop/finance/private-notes.md"}},
+		},
+		Files: []projectmodel.FileEntry{
+			{Path: path, Owner: salesID, Class: "source", Statements: []string{"order-cancellation-contract", "orders-private-detail"}, Artifacts: []string{"order-lifecycle"}},
+			{Path: financePath, Owner: salesID, Class: "test", Statements: []string{"finance-ledger-contract"}, Artifacts: []string{"finance-ledger"}},
+		},
+	}
+	tasks := []ManagerTask{{ManagerID: salesID}, {ManagerID: ordersID, ParentTask: salesID}}
+	files := []agentexec.Artifact{{Path: path, Mode: "0644", Content: []byte("cancel order")}, {Path: financePath, Mode: "0644", Content: []byte("finance test")}}
+	accepted, err := scopedReviewModel(report, salesID, tasks, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contracts := map[string]projectmodel.Statement{}
+	for _, statement := range accepted.Contracts {
+		contracts[statement.ID] = statement
+	}
+	if _, ok := contracts["order-cancellation-contract"]; !ok {
+		t.Fatalf("public contract related to the admitted file is missing: %+v", accepted.Contracts)
+	}
+	if _, ok := contracts["finance-ledger-contract"]; !ok {
+		t.Fatalf("public contract explicitly related to the second admitted file is missing: %+v", accepted.Contracts)
+	}
+	for _, excluded := range []string{"orders-private-detail", "finance-unrelated-contract"} {
+		if _, ok := contracts[excluded]; ok {
+			t.Fatalf("private or unrelated contract %q leaked into review model", excluded)
+		}
+	}
+	artifacts := map[string]projectmodel.Artifact{}
+	for _, artifact := range accepted.Artifacts {
+		artifacts[artifact.ID] = artifact
+	}
+	if _, ok := artifacts["order-lifecycle"]; !ok {
+		t.Fatalf("required related artifact interface is missing: %+v", accepted.Artifacts)
+	}
+	if _, ok := artifacts["finance-ledger"]; !ok {
+		t.Fatal("foreign artifact explicitly related to the second candidate file is missing")
+	}
+	if _, ok := artifacts["finance-private-notes"]; ok {
+		t.Fatal("unrelated foreign artifact leaked into review model")
+	}
+	refs := reviewFileReferences(report, accepted, files)
+	if !containsString(refs[0].Grounding, "statement:order-cancellation-contract") {
+		t.Fatal("explicitly supplied contract cannot ground a finding")
+	}
+	if _, err := validateReviewFindings([]reviewFindingResponse{{Path: path, Expectation: "Preserve cancellation behavior.", Grounding: "statement:order-cancellation-contract"}}, refs); err != nil {
+		t.Fatalf("finding grounded in supplied contract rejected: %v", err)
+	}
+	if _, err := validateReviewFindings([]reviewFindingResponse{{Path: path, Expectation: "Preserve cancellation behavior.", Grounding: "statement:finance-ledger-contract"}}, refs); err == nil {
+		t.Fatal("contract related only to the other candidate file grounded this finding")
+	}
+	if _, err := validateReviewFindings([]reviewFindingResponse{{Path: financePath, Expectation: "Preserve the test obligation.", Grounding: "statement:finance-ledger-contract"}}, refs); err != nil {
+		t.Fatalf("file-specific public contract rejected for its related candidate: %v", err)
+	}
+	ids := reviewScopeIDs(salesID, accepted)
+	if !containsString(ids, "statement:order-cancellation-contract") || !containsString(ids, "statement:finance-ledger-contract") || !containsString(ids, "artifact:order-lifecycle") || containsString(ids, "statement:finance-unrelated-contract") {
+		t.Fatalf("review request scope IDs do not match accepted interface context: %v", ids)
 	}
 }
 
