@@ -21,14 +21,16 @@ from typing import Any, Callable
 Emit = Callable[[dict[str, Any]], None]
 RUNTIME_OPTION_KEYS = {"sandbox", "approvalPolicy", "memoryEnabled",
                        "nativeHelperModel", "nativeHelperEffort", "windowsSandbox",
-                       "nativeMaxConcurrentAgents"}
+                       "nativeMaxConcurrentAgents", "scopedGitApproval", "gitApprovalShell",
+                       "allowLoginShell"}
 
 
 class BackendSpecError(ValueError):
     """The frozen backend specification is incomplete or unsafe to use."""
 
 
-def validate_runtime_options(options: Any, model: str, effort: str) -> dict[str, Any] | None:
+def validate_runtime_options(options: Any, model: str, effort: str,
+                             backend: str | None = None) -> dict[str, Any] | None:
     """Validate the closed, optional ordinary-runtime policy binding."""
     if options is None:
         return None
@@ -43,6 +45,28 @@ def validate_runtime_options(options: Any, model: str, effort: str) -> dict[str,
         raise BackendSpecError("runtimeOptions.approvalPolicy must be never or on-request")
     if type(options["memoryEnabled"]) is not bool:
         raise BackendSpecError("runtimeOptions.memoryEnabled must be a boolean")
+    if "scopedGitApproval" in options:
+        if type(options["scopedGitApproval"]) is not bool:
+            raise BackendSpecError("runtimeOptions.scopedGitApproval must be a boolean")
+        if options["scopedGitApproval"] and options["approvalPolicy"] != "on-request":
+            raise BackendSpecError("runtimeOptions.scopedGitApproval requires approvalPolicy on-request")
+        if options["scopedGitApproval"] and backend != "codex-app-server":
+            raise BackendSpecError("runtimeOptions.scopedGitApproval is only supported by codex-app-server")
+        if options["scopedGitApproval"] and "gitApprovalShell" not in options:
+            raise BackendSpecError("runtimeOptions.scopedGitApproval requires exact PowerShell and Git executable pins")
+    if "allowLoginShell" in options and type(options["allowLoginShell"]) is not bool:
+        raise BackendSpecError("runtimeOptions.allowLoginShell must be a boolean")
+    if "gitApprovalShell" in options:
+        if (options.get("scopedGitApproval") is not True or backend != "codex-app-server"
+                or options.get("approvalPolicy") != "on-request"
+                or options.get("allowLoginShell") is not False):
+            raise BackendSpecError("runtimeOptions.gitApprovalShell requires scopedGitApproval, codex-app-server, on-request, and allowLoginShell false")
+        from .approvals import validate_git_approval_shell
+        try:
+            options = dict(options)
+            options["gitApprovalShell"] = validate_git_approval_shell(options["gitApprovalShell"])
+        except ValueError as exc:
+            raise BackendSpecError(str(exc)) from exc
     if "windowsSandbox" in options and options["windowsSandbox"] not in {"mxc", "elevated"}:
         raise BackendSpecError("runtimeOptions.windowsSandbox must be mxc or elevated")
     if "nativeMaxConcurrentAgents" in options:
@@ -66,6 +90,8 @@ def _runtime_config_args(options: dict[str, Any] | None, model: str, effort: str
         ("approval_policy", json.dumps(options["approvalPolicy"])),
         ("features.memories", "true" if options["memoryEnabled"] else "false"),
     ]
+    if "allowLoginShell" in options:
+        settings.append(("allow_login_shell", "true" if options["allowLoginShell"] else "false"))
     if "nativeHelperModel" in options:
         settings.append(("agents.default_subagent_model", json.dumps(model)))
     if "nativeHelperEffort" in options:
@@ -78,6 +104,19 @@ def _runtime_config_args(options: dict[str, Any] | None, model: str, effort: str
     for key, value in settings:
         result.extend(["-c", f"{key}={value}"])
     return result
+
+
+def _app_server_environment(runtime_options: dict[str, Any] | None) -> dict[str, str] | None:
+    """Return child-local Git config isolation for scoped approval mode."""
+    if not runtime_options or runtime_options.get("scopedGitApproval") is not True:
+        return None
+    # Remove inherited Git controls, including config-injection variables,
+    # without copying their values into any event or receipt.
+    env = {key: value for key, value in os.environ.items()
+           if not key.upper().startswith("GIT_")}
+    env["GIT_CONFIG_NOSYSTEM"] = "1"
+    env["GIT_CONFIG_GLOBAL"] = os.devnull
+    return env
 
 
 def _launch_event(emit: Emit, backend: str, proc: subprocess.Popen[bytes], cwd: str, stdio: str) -> None:
@@ -119,7 +158,7 @@ def _validate(spec: dict[str, Any], prompt: str, resume_id: str | None) -> tuple
         raise BackendSpecError("model and effort must be non-empty strings")
     if effort not in {"none", "minimal", "low", "medium", "high", "xhigh"}:
         raise BackendSpecError("effort must be one of none, minimal, low, medium, high, xhigh")
-    runtime_options = validate_runtime_options(spec.get("runtimeOptions"), model, effort)
+    runtime_options = validate_runtime_options(spec.get("runtimeOptions"), model, effort, backend)
     if not isinstance(prompt, str) or not prompt:
         raise BackendSpecError("prompt must be a non-empty string")
     if resume_id is not None and (not isinstance(resume_id, str) or not resume_id.strip()):
@@ -497,10 +536,27 @@ def _run_app_server(spec: dict[str, Any], command: list[str], cwd: str, model: s
         raise BackendSpecError("threadOptions must be empty until permission choices are frozen and reviewed")
     if not isinstance(turn_options, dict) or turn_options:
         raise BackendSpecError("turnOptions must be empty; turn identity and instructions are runtime-owned")
+    if runtime_options and runtime_options.get("scopedGitApproval") is True:
+        from .approvals import validate_git_approval_shell
+        try:
+            verified_shell = validate_git_approval_shell(runtime_options.get("gitApprovalShell"))
+        except ValueError as exc:
+            return _result("failed", resume_id, None, None,
+                           f"scoped Git approval executable pin recheck failed before App Server start: {exc}")
+        if verified_shell != runtime_options.get("gitApprovalShell"):
+            return _result("failed", resume_id, None, None,
+                           "scoped Git approval executable bindings changed before App Server start")
     args = [*command, *_runtime_config_args(runtime_options, model, effort), "app-server"]
+    child_env = _app_server_environment(runtime_options)
+    if child_env is not None:
+        policy = {"kind": "child-local-git-config-policy", "policy": "scoped-git-approval-env-v1",
+                  "inheritedGitEnvironment": "removed", "systemConfig": "disabled",
+                  "globalConfig": "null-device", "repositoryConfig": "inert-allowlist-required"}
+        _emit(emit, "codex-app-server", "runtime-policy",
+              json.dumps(policy, sort_keys=True, separators=(",", ":")), policy)
     try:
         proc = subprocess.Popen(args, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, bufsize=0)
+                                stderr=subprocess.PIPE, bufsize=0, env=child_env)
     except OSError as exc:
         return _result("failed", resume_id, None, None, f"could not start App Server: {exc}")
     _launch_event(emit, "codex-app-server", proc, cwd, "stdin/stdout/stderr JSONL")
@@ -549,6 +605,8 @@ def _run_app_server(spec: dict[str, Any], command: list[str], cwd: str, model: s
     phase_id: int | None = None
     terminal: dict[str, Any] | None = None
     incoming_attention = False
+    started_commands: dict[str, dict[str, Any]] = {}
+    approval_broker = None
     try:
         _rpc(proc, next_id, "initialize", {"clientInfo": {"name": "markitect-conventional-playground", "version": "1"}}, emit)
         phase_id = next_id
@@ -599,6 +657,25 @@ def _run_app_server(spec: dict[str, Any], command: list[str], cwd: str, model: s
                 continue
             method = message.get("method")
             if method and message.get("id") is not None:
+                if (method == "item/commandExecution/requestApproval" and approval_broker is not None):
+                    params = message.get("params")
+                    item_id = params.get("itemId") if isinstance(params, dict) else None
+                    active_item = started_commands.get(item_id) if isinstance(item_id, str) else None
+                    decision = approval_broker.decide(message, active_item)
+                    response = {"id": message["id"],
+                                "result": {"decision": decision.decision}}
+                    raw = json.dumps(response, ensure_ascii=False, separators=(",", ":"))
+                    wire = (raw + "\n").encode("utf-8")
+                    _deliver_rpc(proc, wire)
+                    _emit(emit, "codex-app-server", "client", raw, response, wire)
+                    audit = {"kind": "scoped-git-approval", "request": message,
+                             "decision": decision.decision, "reason": decision.reason,
+                             "actionArgv": list(decision.action) if decision.action else None,
+                             "ownedThreadId": session, "ownedTurnId": turn,
+                             "ownedCwd": cwd}
+                    _emit(emit, "codex-app-server", "approval-broker",
+                          json.dumps(audit, ensure_ascii=False, separators=(",", ":")), audit)
+                    continue
                 if _requires_user_input(method, message):
                     incoming_attention = True
                     _terminate(proc)
@@ -662,6 +739,12 @@ def _run_app_server(spec: dict[str, Any], command: list[str], cwd: str, model: s
                         _terminate(proc)
                         return _result("uncertain", session, None, usage, "turn/start reply omitted native turn id")
                     phase, phase_id = "terminal", None
+                    if runtime_options and runtime_options.get("scopedGitApproval") is True:
+                        from .approvals import ScopedGitApprovalBroker
+                        approval_broker = ScopedGitApprovalBroker(
+                            cwd, session, turn,
+                            runtime_options.get("gitApprovalShell"),
+                        )
                     # Notifications can race ahead of the start reply. Retain
                     # them and only accept an exact matching thread and turn.
                     for queued in early:
@@ -677,6 +760,18 @@ def _run_app_server(spec: dict[str, Any], command: list[str], cwd: str, model: s
                 continue
             if method:
                 params = message.get("params", {})
+                if method == "item/started" and isinstance(params, dict):
+                    item = params.get("item")
+                    if (isinstance(item, dict) and item.get("type") == "commandExecution"
+                            and isinstance(item.get("id"), str) and item["id"]):
+                        started_commands[item["id"]] = {
+                            "threadId": params.get("threadId"), "turnId": params.get("turnId"),
+                            "item": dict(item),
+                        }
+                elif method == "item/completed" and isinstance(params, dict):
+                    item = params.get("item")
+                    if isinstance(item, dict) and isinstance(item.get("id"), str):
+                        started_commands.pop(item["id"], None)
                 if session and _session_id(params) == session:
                     reported_usage = _usage(message)
                     if reported_usage is not None:

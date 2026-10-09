@@ -161,6 +161,8 @@ class Service:
         source_root = Path(__file__).resolve().parent
         required_sources = [source_root / name for name in ("service.py", "backends.py", "mcp.py")]
         required_sources.append(source_root.parent / "conventional_wrapper.py")
+        if (self.config.get("runtimeOptions") or {}).get("scopedGitApproval") is True:
+            required_sources.append(source_root/"approvals.py")
         if any(str(path) not in normalized_pins for path in required_sources):
             raise ValueError("filePins must include wrapper service, backend, MCP and CLI source")
         for key in ("threadOptions", "turnOptions"):
@@ -172,7 +174,7 @@ class Service:
             if not isinstance(self.config.get(key), str) or not self.config[key].strip():
                 raise ValueError(key + " must be explicit")
         runtime_options = validate_runtime_options(self.config.get("runtimeOptions"),
-                                                   self.config["model"], self.config["effort"])
+                                                   self.config["model"], self.config["effort"],self.config.get("backend"))
         _positive(self.config.get("timeoutSeconds"), "timeoutSeconds")
         _positive(self.config.get("requestTimeoutSeconds"), "requestTimeoutSeconds")
         order_path = _absolute(self.config.get("actualOrderPath"), "actualOrderPath")

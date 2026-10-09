@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "execution_authorized": false,
+  "actualOrderPath": null,
+  "backend": "codex-app-server",
+  "command": null,
+  "filePins": null,
+  "cwd": null,
+  "audit": null,
+  "model": "gpt-6-luna",
+  "effort": "high",
+  "timeoutSeconds": 5400,
+  "requestTimeoutSeconds": 600,
+  "threadOptions": {},
+  "turnOptions": {},
+  "runtimeBinding": {
+    "executableVersion": null,
+    "effectiveModel": null,
+    "effectiveEffort": null,
+    "configurationManifestSha256": null,
+    "instructionsSkillsToolsManifestSha256": null,
+    "permissionsAndApprovals": null,
+    "nativeHelperBehavior": null,
+    "referenceEquivalence": "unverified"
+  },
+  "runtimeOptions": {
+    "sandbox": "workspace-write",
+    "approvalPolicy": "on-request",
+    "memoryEnabled": false,
+    "nativeHelperModel": "gpt-6-luna",
+    "nativeHelperEffort": "high",
+    "windowsSandbox": "mxc",
+    "nativeMaxConcurrentAgents": 3,
+    "scopedGitApproval": true,
+    "allowLoginShell": false,
+    "gitApprovalShell": {
+      "executable": "C:/absolute/path/to/pwsh.exe",
+      "pinSha256": "REPLACE_WITH_SHA256",
+      "gitExecutable": "C:/absolute/path/to/git.exe",
+      "gitPinSha256": "REPLACE_WITH_SHA256"
+    }
+  }
+}

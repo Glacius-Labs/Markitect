@@ -8,6 +8,7 @@
     "C:/absolute/path/to/playground/conventional/service.py": "REPLACE_WITH_SHA256",
     "C:/absolute/path/to/playground/conventional/backends.py": "REPLACE_WITH_SHA256",
     "C:/absolute/path/to/playground/conventional/mcp.py": "REPLACE_WITH_SHA256",
-    "C:/absolute/path/to/playground/conventional_wrapper.py": "REPLACE_WITH_SHA256"
+    "C:/absolute/path/to/playground/conventional_wrapper.py": "REPLACE_WITH_SHA256",
+    "C:/absolute/path/to/playground/conventional/approvals.py": "REPLACE_WITH_SHA256"
   }
 }

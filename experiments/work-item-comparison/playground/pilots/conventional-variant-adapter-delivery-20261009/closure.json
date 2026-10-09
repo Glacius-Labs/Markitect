@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "id": "conventional-variant-adapter-delivery-20261009",
+  "state": "closed",
+  "closedAt": "2026-10-09T20:08:33.469891+00:00",
+  "sourceAtStarts": "0a1e6963f9fa86d5c0affdcfa9061f928feebe74",
+  "externalOriginals": "C:\\Users\\Consiliari\\Documents\\Conventional-Variant-Adapter-Study-20261009-2000",
+  "resourceUse": {
+    "freshCasesConsumed": 2,
+    "providerFreeStartupChecksConsumed": 6,
+    "mainStartRequests": 3,
+    "observedNativeCollaborationItems": 0,
+    "freshIndependentFinalAssessors": 0,
+    "completeHelperAccounting": "not established"
+  },
+  "cases": [
+    {
+      "case": "readinglog",
+      "backend": "codex-app-server",
+      "S1": "native completed; main unchanged; public immutable main checks PASS3/FAIL2",
+      "S2": "native cancellation confirmed; advanced in error after unmerged S1; main checks PASS3/FAIL5",
+      "S3": "NOT RUN",
+      "S4": "NOT RUN",
+      "worktree": "actual S1/S2 code and checks observed, unmerged work preserved",
+      "finalMain": "0aa76e465eccfd8d6758cdf85a9fcca19d319423",
+      "overall": "not successful; native Git metadata writes denied"
+    },
+    {
+      "case": "roombook",
+      "backend": "codex-cli",
+      "S1": "inadvertently started after cancelled first case; cancel requested; returned uncertain",
+      "S2": "NOT RUN",
+      "S3": "NOT RUN",
+      "S4": "NOT RUN",
+      "finalMain": "not frozen because runtime terminal is uncertain",
+      "overall": "not a valid completed trajectory; no replay"
+    }
+  ],
+  "controllerDeviations": [
+    "Native completed was treated as station completion although agent explicitly reported unmerged work",
+    "main loop tested stopStudy only; runtime_failed did not set it, allowing prospective second case without completed/corrected first case"
+  ],
+  "closure": {
+    "controllerExitCode": 1,
+    "ownedAppServerPidsAbsent": [
+      52908,
+      48644
+    ],
+    "ownedCliPidAbsentAtLaterObservation": 54936,
+    "cliTerminal": "uncertain; targeted own journal has no task_aborted/task_completed; direct child absent does not prove all descendants or native turn termination",
+    "locks": "uncertain CLI lock retained; no automatic replay/close/restart",
+    "foreignProcessesTouched": false,
+    "globalPolicyChanged": false
+  },
+  "conclusions": {
+    "completeConventionalRun": "not established",
+    "nativeMxcStartup": "protected shell, files and tests worked; Git approvals still required",
+    "methodWinner": "NOT RUN",
+    "transportWinner": "NOT RUN; case/backend confounded",
+    "humanAcceptance": "not established",
+    "independentFinalAssessment": "NOT RUN"
+  },
+  "nextExecution": "requires separately documented Root order after corrected source/test/review freeze; this order cannot be reused",
+  "archiveSha256": "7cebdbdbfd5cb8d0d8217fd7c474d3fb38459f3da481a3105b31ea8fc9b2a7c9"
+}

@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "recordedAt": "2026-10-09T20:24:09.140160+00:00",
+  "scope": "Provider-free corrective implementation checks after closed actual delivery. No Codex/App Server/model startup in this validation.",
+  "sourceAtActualStarts": "0a1e6963f9fa86d5c0affdcfa9061f928feebe74",
+  "sourcePins": {
+    "experiments/work-item-comparison/playground/conventional/adapter.py": "ffccbb22d9123b7c3a3518db90ab6dd834cf9d66a03fc24237b1dc3dc9f9a036",
+    "experiments/work-item-comparison/playground/conventional/approvals.py": "555ce4d22b1c1a0dfaea2f92b7979f06c68817fb8fc61fc64cd6838422a539a2",
+    "experiments/work-item-comparison/playground/conventional/backends.py": "8ab206bb097d34ee21113f94bdfced4a66878d13a92c7c9d9379d84843e7e16c",
+    "experiments/work-item-comparison/playground/conventional/service.py": "9d095698ff4c0fc286b24adb7e59ba9f38bc035572789369f071000d7dae3767",
+    "experiments/work-item-comparison/playground/run_variant_study.py": "d3335cc63e3a1ec8a68451fe0a3edccc4371264dd001d6e450e17b525675a226",
+    "experiments/work-item-comparison/playground/delivery_binding.py": "94b8823203b6343d892bd945fbfebc2f996ec87276a58ab3b2037883c7afec03",
+    "experiments/work-item-comparison/playground/playground_adapter.py": "f9d39cb1bf24098fbcb7b2c6700bd9b43f8dcfa06cf1b85590386aebac290c50",
+    "experiments/work-item-comparison/playground/final_assessor.py": "2c7f81ef6a5b2cf11d9ce24f03e69335df73fd2e39dc4126f05b510ea4c223c0",
+    "experiments/work-item-comparison/playground/adapters/contract.py": "83750aebbf48044fbf4ea12910a35b07f97e53554a69c4f9754f8be290407aa4",
+    "experiments/work-item-comparison/playground/adapters/loader.py": "81d40e8867188f657c5d5e0bb20dca3ed54017f4c0ed512a01ebf5de58d78b7e",
+    "experiments/work-item-comparison/playground/tests/test_variant_study.py": "3fea40da9031a8771b1f1819dedacc4c33eec5af16eadee287c15bfe0698abb0",
+    "experiments/work-item-comparison/playground/tests/test_conventional_adapter.py": "f252bc9856ae0da3c8b61d945e76f2f084c992bc0a4d253f9a890f43e03864ed",
+    "experiments/work-item-comparison/playground/tests/test_conventional_service.py": "cf44e47bbf776533c03e90d738f110b93c342850cc146d9f8fd637382d04f6e7",
+    "experiments/work-item-comparison/playground/tests/test_conventional_integration.py": "18da293f36d398ac87a5eac5fe8f292a42c5f47f0c51541092c5a3fb3e46a45a",
+    "experiments/work-item-comparison/playground/tests/test_delivery_binding.py": "0a4550470296615c132d9eee0903d2a164b6124789cd35d8b7c47dfed04b018f",
+    "experiments/work-item-comparison/playground/tests/test_conventional_approvals.py": "2696da27b97f34c8015b7d0c9887aeff5c51aca259f7a37e0106edfde4e63302",
+    "experiments/work-item-comparison/playground/tests/test_conventional_backends.py": "b6999f024adf221b5389f84c4e688dcf856fa46d2f83d567db0b252660ded5a2"
+  },
+  "testGroups": [
+    {
+      "module": "test_variant_study",
+      "run": 8,
+      "passed": 8,
+      "performedBy": "Scientist",
+      "note": "After final aggregate status correction, two affected main-loop tests additionally passed; regression includes a single failed final choice."
+    },
+    {
+      "module": "test_conventional_adapter",
+      "run": 12,
+      "passed": 12,
+      "performedBy": "Scientist"
+    },
+    {
+      "module": "test_conventional_service",
+      "run": 17,
+      "passed": 17,
+      "performedBy": "Scientist"
+    },
+    {
+      "module": "test_conventional_integration",
+      "run": 5,
+      "passed": 5,
+      "performedBy": "Scientist",
+      "nativeProcess": "scripted Python fixtures only"
+    },
+    {
+      "module": "test_delivery_binding",
+      "run": 3,
+      "passed": 3,
+      "performedBy": "Scientist"
+    },
+    {
+      "modules": [
+        "test_conventional_approvals",
+        "test_conventional_backends"
+      ],
+      "run": 37,
+      "passed": 36,
+      "skipped": 1,
+      "performedBy": "conventional_adapter_implementation subagent",
+      "skipReason": "Windows symbolic link creation privilege unavailable",
+      "note": "Actual existing pinned PowerShell/Git temp-repository add and commit passed; configured hook suppression, inert local config negatives, exact JSON-RPC decisions and scoped child env verified without native Codex."
+    }
+  ],
+  "totals": {
+    "uniqueTests": 82,
+    "passed": 81,
+    "skipped": 1,
+    "failed": 0
+  },
+  "staticChecks": {
+    "pythonSourcesCompiled": 34,
+    "jsonFilesParsed": 25,
+    "zipFilesIndividuallyVerified": 415,
+    "archiveSha256": "7cebdbdbfd5cb8d0d8217fd7c474d3fb38459f3da481a3105b31ea8fc9b2a7c9"
+  },
+  "independentReview": {
+    "agent": "independent_review",
+    "mode": "read-only; no runtime calls",
+    "reportedFindingsClosed": [
+      "malformed decision crash",
+      "one-time JSON-RPC response shape",
+      "unbound Git executable/PATH",
+      "PowerShell profile and missing call operator",
+      "hooks/fsmonitor execution",
+      "Git filter/signing/merge/include config execution"
+    ],
+    "conclusion": "No remaining material fail-open found in the reviewed paths. Local remote or other non-allowlisted Git config deliberately declines. Native effectiveness unverified."
+  },
+  "evidenceBoundary": {
+    "completeConventionalTrajectory": "not established",
+    "freshFinalAssessment": "NOT RUN",
+    "pairedMethodOrTransportResult": "NOT RUN",
+    "humanAcceptance": "not established",
+    "scopedNativeGitApproval": "NOT RUN",
+    "containerRuntime": "NOT RUN"
+  }
+}

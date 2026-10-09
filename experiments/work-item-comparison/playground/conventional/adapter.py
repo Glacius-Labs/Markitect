@@ -12,7 +12,6 @@ import json
 import os
 from pathlib import Path
 import queue
-import shutil
 import subprocess
 import threading
 import time
@@ -176,12 +175,19 @@ class ConventionalAdapter:
                            "approvalPolicy": runtime_options.get("approvalPolicy"),
                            "memoryEnabled": runtime_options.get("memoryEnabled"),
                            "windowsSandbox": runtime_options.get("windowsSandbox"),
+                           "scopedGitApproval":runtime_options.get("scopedGitApproval",False),
+                           "gitApprovalShell":runtime_options.get("gitApprovalShell"),
+                           "scopedGitRequiredArgvPrefix":["-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false"] if runtime_options.get("scopedGitApproval") else None,
+                           "scopedGitConfigurationBoundary":"child-local system/global config excluded; inherited Git environment removed; only inert owned local config accepted" if runtime_options.get("scopedGitApproval") else None,
+                           "allowLoginShell":runtime_options.get("allowLoginShell"),
                            "nativeMaxConcurrentAgents": runtime_options.get("nativeMaxConcurrentAgents"),
                            "nativeMaxDepth": "unsupported by documented Codex config; unknown",
                            "studyLimits": dict(profile),
                            "setupContext": {key: context[key] for key in ("case", "station") if key in context}}
             profile_bytes = (json.dumps(profile_doc, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
             agents_bytes = (current_agents.rstrip() + "\n\n" + marker + "\n" + fragment_text + "\nThe installed finite runtime profile is .study/runtime-profile.json. Keep its model, effort and shared limits for every native role.\n").encode("utf-8")
+            if runtime_options.get("scopedGitApproval"):
+                agents_bytes += ("For Git metadata changes, use the exact absolute pinned Git executable from gitApprovalShell and scopedGitRequiredArgvPrefix before the single Git action. The approval broker recognizes only one owned-repository action per request; a PowerShell wrapper must use the pinned executable with -NoProfile and exactly one leading call operator (&) for the quoted Git executable. System/global Git configuration is excluded in this runtime; any local config outside the inert allowlist blocks approval. This configuration is an explicit study approximation.\n").encode("utf-8")
             agents_path.write_bytes(agents_bytes)
             profile_path.write_bytes(profile_bytes)
             self._git(repo, "add", "AGENTS.md", ".study/runtime-profile.json")
@@ -245,9 +251,14 @@ class ConventionalAdapter:
             ready = sandbox.get("sandboxReady") is True and (
                 protocol.get("protocolReady") is True if backend == "codex-app-server"
                 else bool(version and version.get("versionReady")))
+            git_verified=sandbox.get("gitMetadataReady") is True
+            broker_configured=(backend=="codex-app-server" and (spec.get("runtimeOptions") or {}).get("scopedGitApproval") is True and (spec.get("runtimeOptions") or {}).get("approvalPolicy")=="on-request")
             observed = {"backend": backend, "version": version, **protocol, **sandbox,
+                        "gitMergeReadiness":"verified metadata write" if git_verified else "conditional; real native approval not observed" if broker_configured else "blocked protected metadata",
+                        "actualGitApprovalObserved":False,"scopedGitApprovalConfigured":broker_configured,
                         "toolReady": ready, "nativeTurnStarted": False,
                         "ownedProcessScope": "direct-child-only"}
+            ready=ready and (git_verified or broker_configured)
             return _envelope("ready" if ready else "blocked", runtime=observed,
                              observations=[self._observation("runtime.ready" if ready else "runtime.blocked", observed)])
         except Exception as exc:
@@ -371,14 +382,13 @@ class ConventionalAdapter:
         token = uuid.uuid4().hex
         probe_name = ".playground-runtime-probe-" + token + ".txt"
         probe_path = repo / probe_name
-        scratch_name = ".playground-runtime-git-probe-" + token
-        scratch_path = repo / scratch_name
+        metadata_probe = repo / ".git" / ("playground-runtime-probe-" + token + ".tmp")
         payload = "playground-runtime-probe:" + token
         # PowerShell is passed as an argv item to Codex's native sandbox command;
         # user input and shell text are not interpolated into this script.
         escaped_repo = str(repo).replace("'", "''")
         escaped_probe = str(probe_path).replace("'", "''")
-        escaped_scratch = str(scratch_path).replace("'", "''")
+        escaped_metadata = str(metadata_probe).replace("'", "''")
         script = (
             "$ErrorActionPreference='Stop';"
             f"$p='{escaped_probe}';"
@@ -387,20 +397,17 @@ class ConventionalAdapter:
             "Write-Output 'PLAYGROUND_WRITE_READ_OK';"
             f"git -C '{escaped_repo}' status --porcelain *> $null;"
             "if($LASTEXITCODE -ne 0){exit 42};"
-            f"$g='{escaped_scratch}';"
-            f"$root=[IO.Path]::GetFullPath('{escaped_repo}').TrimEnd([IO.Path]::DirectorySeparatorChar)+[IO.Path]::DirectorySeparatorChar;"
-            "$g=[IO.Path]::GetFullPath($g);"
-            f"if(!$g.StartsWith($root,[StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($g) -ne '{scratch_name}'){{exit 46}};"
-            "git init --quiet $g *> $null; if($LASTEXITCODE -ne 0){exit 43};"
-            "Set-Content -LiteralPath (Join-Path $g 'probe.txt') -Value 'metadata probe';"
-            "git -C $g add -- probe.txt *> $null; if($LASTEXITCODE -ne 0){exit 44};"
-            "git -C $g write-tree *> $null; if($LASTEXITCODE -ne 0){exit 45};"
-            "Write-Output 'PLAYGROUND_GIT_OK';"
-            f"if(!([IO.Path]::GetFullPath($p)).StartsWith($root,[StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($p) -ne '{probe_name}'){{exit 49}};"
+            f"$m='{escaped_metadata}';"
+            f"$expectedGit=[IO.Path]::GetFullPath((Join-Path '{escaped_repo}' '.git'));"
+            f"$actualGit=(git -C '{escaped_repo}' rev-parse --absolute-git-dir);"
+            "if($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($actualGit) -ne $expectedGit){exit 50};"
+            "if(([IO.Path]::GetDirectoryName($m)) -ne $expectedGit -or "
+            f"[IO.Path]::GetFileName($m) -ne 'playground-runtime-probe-{token}.tmp'){{exit 51}};"
+            "try{[IO.File]::WriteAllText($m,'owned metadata readiness');"
+            "if([IO.File]::ReadAllText($m) -ne 'owned metadata readiness'){exit 52};"
+            "Remove-Item -LiteralPath $m -Force;Write-Output 'PLAYGROUND_REPO_GIT_WRITE_OK'}"
+            "catch{Write-Output 'PLAYGROUND_REPO_GIT_WRITE_BLOCKED'};"
             "Remove-Item -LiteralPath $p -Force;"
-            f"if(!$g.StartsWith($root,[StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($g) -ne '{scratch_name}'){{exit 47}};"
-            "if((Get-Item -LiteralPath $g -Force).Attributes -band [IO.FileAttributes]::ReparsePoint){exit 48};"
-            "Remove-Item -LiteralPath $g -Recurse -Force;"
             "Write-Output 'PLAYGROUND_SANDBOX_PROBE_OK';"
         )
         receipt = self._reserve_runtime_check(order, binding, "codex-native-sandbox")
@@ -409,7 +416,6 @@ class ConventionalAdapter:
                    "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script]
         observed: dict[str, Any] = {"checkId": receipt["checkId"], "kind": "codex-native-sandbox",
                                    "sandbox": sandbox, "probePath": str(probe_path),
-                                   "gitScratchPath": str(scratch_path),
                                    "sandboxReady": False, "nativeTurnStarted": False}
         started_at = _now()
         try:
@@ -433,7 +439,10 @@ class ConventionalAdapter:
                              "processTerminalConfirmed": proc.poll() is not None,
                              "sandboxReady": return_code == 0 and "PLAYGROUND_SANDBOX_PROBE_OK" in stdout,
                              "writeReadReady": return_code == 0 and "PLAYGROUND_WRITE_READ_OK" in stdout,
-                             "gitCommandReady": return_code == 0 and "PLAYGROUND_GIT_OK" in stdout})
+                             "gitCommandReady": return_code == 0 and "PLAYGROUND_REPO_GIT_WRITE_OK" in stdout,
+                             "gitMetadataReady": return_code == 0 and "PLAYGROUND_REPO_GIT_WRITE_OK" in stdout,
+                             "gitMetadataProbePath":str(metadata_probe),
+                             "gitReadinessScope":"exact prepared repository metadata; no branch/index/main mutation"})
         except (OSError, subprocess.SubprocessError) as exc:
             observed.update({"dispatchOccurred": "pid" in observed,
                              "disposition": "unknown-after-launch" if "pid" in observed else "known-not-dispatched",
@@ -448,15 +457,10 @@ class ConventionalAdapter:
             except OSError as exc:
                 observed["cleanupError"] = type(exc).__name__
             try:
-                resolved_scratch = scratch_path.resolve()
-                if (resolved_scratch.parent == repo and scratch_path.name == scratch_name and
-                        scratch_name.startswith(".playground-runtime-git-probe-") and
-                        not scratch_path.is_symlink()):
-                    shutil.rmtree(resolved_scratch, ignore_errors=True)
+                if metadata_probe.parent.resolve()==(repo/".git").resolve() and (repo/".git").is_dir() and not (repo/".git").is_symlink():
+                    metadata_probe.unlink(missing_ok=True)
             except OSError as exc:
-                observed["gitCleanupError"] = type(exc).__name__
-            observed["processTerminalConfirmed"] = not observed.get("dispatchOccurred") or (
-                "pid" in observed and proc.poll() is not None)
+                observed["metadataCleanupError"]=type(exc).__name__
             self._finish_runtime_check(receipt, observed,
                                        release=observed["processTerminalConfirmed"])
         return observed

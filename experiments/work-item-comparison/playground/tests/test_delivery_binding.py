@@ -18,3 +18,8 @@ class DeliveryBindingTests(unittest.TestCase):
     def test_other_executable_cannot_admit(self):
         with self.assertRaisesRegex(ValueError,"executable binding changed"):
             binding.verify(self.plan,Path(sys.executable))
+
+    def test_closed_delivery_cannot_restart_even_with_exact_existing_executable(self):
+        executable=Path("C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/9691020b546a15b2/codex.exe")
+        with self.assertRaisesRegex(ValueError,"delivery order is closed"):
+            binding.verify(self.plan,executable)

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 from datetime import datetime, timedelta, timezone
 import hashlib
 import importlib.util
@@ -65,6 +66,40 @@ def _runtime_error(status):
     """Read the adapter's structured runtime-failure receipt, never native log text."""
     failure = status.get("runtimeFailure")
     return failure if failure not in (None, False, "") else None
+
+
+def _integration_check(repo, captured, main_before, main_after_capture):
+    """Require new main content and a clean actor index/worktree before advancing."""
+    branch = captured.get("branch", {})
+    status_raw = base64.b64decode(branch.get("statusPorcelainV2Base64", ""))
+    controller_delta = b".study/station.json"
+    dirty_rows = []
+    for row in status_raw.split(b"\0"):
+        if not row:
+            continue
+        if row.startswith(b"1 "):
+            fields = row.split(b" ", 8)
+            xy, path = fields[1], fields[8]
+            if xy == b".M" and path == controller_delta:
+                continue
+        dirty_rows.append(row)
+    staged_is_clean = branch.get("stagedDiffSha256") == hashlib.sha256(b"").hexdigest()
+    main_advanced = captured.get("immutableMain", {}).get("commit") != main_before
+    ref_stable = captured.get("immutableMain", {}).get("commit") == main_after_capture
+    selected_head = branch.get("head")
+    main_commit = captured.get("immutableMain", {}).get("commit")
+    selected_head_integrated = selected_head == main_commit
+    if not selected_head_integrated and selected_head:
+        selected_head_integrated = subprocess.run(
+            ["git", "-C", str(repo), "merge-base", "--is-ancestor", selected_head, main_commit],
+            capture_output=True, timeout=60).returncode == 0
+    worktree_clean = not dirty_rows and staged_is_clean
+    return {"mainAdvanced": main_advanced, "mainRefStableAfterCapture": ref_stable,
+            "selectedHeadIntegratedInMain": selected_head_integrated,
+            "worktreeAndIndexCleanExceptControllerStationDelta": worktree_clean,
+            "unexpectedGitStatusRowsBase64": [base64.b64encode(row).decode("ascii") for row in dirty_rows],
+            "stagedDiffSha256": branch.get("stagedDiffSha256"),
+            "controllerDeltaAllowed": controller_delta.decode("ascii")}
 
 
 def run_station(adapter, prompt, parent, audit, number, expires, ownership):
@@ -173,6 +208,7 @@ def _close(adapter, audit, result, *, ownership_unresolved):
         return
     if ownership_unresolved:
         result["closeDisposition"] = "deferred because native ownership or disposition is unresolved"
+        result["stopStudy"] = True
         save(audit / "adapter-close-disposition.json", {"state": "deferred", "reason": result["closeDisposition"]})
         return
     try:
@@ -182,6 +218,8 @@ def _close(adapter, audit, result, *, ownership_unresolved):
             "source": "adapter close call", "errorType": type(exc).__name__, "detail": str(exc)}}
     save(audit / "adapter-close-result.json", receipt)
     result["closeDisposition"] = receipt
+    if receipt.get("state") != "closed":
+        result["stopStudy"] = True
 
 
 def _capture_known_block(repo, audit, stage, reason):
@@ -351,6 +389,7 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
         result.update(status="running", runtimeReadiness=readiness)
         prompt = (ROOT / "public/task-prompt.txt").read_text(encoding="utf-8")
         parent = None
+        main_before_station = git(repo, "rev-parse", "main")
         for number in range(1, 5):
             stage = f"S{number}"
             status = run_station(adapter, prompt, parent, audit, number, actor_expires, ownership)
@@ -373,6 +412,9 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
                    "mainCommit": captured["immutableMain"]["commit"], "publicChecks": assessment,
                    "snapshotBindingSha256": digest(audit / f"snapshot-{stage}" / "binding.json"),
                    "runtimeFailure": _runtime_error(status)}
+            main_after_capture = git(repo, "rev-parse", "main")
+            integration = _integration_check(repo, captured, main_before_station, main_after_capture)
+            row["integration"] = integration
             result["stations"].append(row)
             print(json.dumps({"event": "station-captured", "case": case, "station": stage,
                               "nativeState": status["state"], "runtimeFailure": bool(row["runtimeFailure"]),
@@ -382,8 +424,16 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
                 lifecycle.freeze(repo, audit, reason="terminal adapter/runtime failure; no automatic replay")
                 result["status"] = "runtime_failed"
                 break
+            if not (integration["mainAdvanced"] and integration["mainRefStableAfterCapture"] and
+                    integration["selectedHeadIntegratedInMain"] and
+                    integration["worktreeAndIndexCleanExceptControllerStationDelta"]):
+                lifecycle.freeze(repo, audit, reason="station did not produce a clean integrated main advancement")
+                result.update(status="station_incomplete", stopStudy=True,
+                              reason="native completion is not proof of integrated clean work")
+                break
             ownership.update(active=False, disposition="terminal completed station")
             parent = status["runId"]
+            main_before_station = captured["immutableMain"]["commit"]
             if number < 4:
                 lifecycle.advance(repo, audit)
             else:
@@ -401,9 +451,9 @@ def execute(plan, choice, destination, executable, source, overall_expiry):
                 final_result = {"state": "uncertain", "reason": f"{type(exc).__name__}: {exc}",
                                 "replay": "forbidden"}
             result["independentFinalAssessment"] = final_result
-            if final_result.get("state") in UNRESOLVED_STATES:
+            if final_result.get("state") != "completed":
                 result.update(status="final_assessment_unresolved", stopStudy=True,
-                              reason="independent final assessment disposition is unresolved")
+                              reason="independent final assessment did not complete with a report")
     except Exception as exc:
         result.update(status="controller_error", reason=f"{type(exc).__name__}: {exc}",
                       outcome="preserved without replay")
@@ -489,9 +539,10 @@ def main(argv=None):
         result = execute(plan, choice, destination, executable, source, overall)
         results.append(result)
         save(destination / "study-results.json", {
-            "trajectories": results, "status": "complete" if len(results) == len(plan["trajectories"]) else "stopped",
+            "trajectories": results, "status": "complete" if len(results) == len(plan["trajectories"]) and all(
+                row.get("status") == "trajectory_completed" and not row.get("stopStudy") for row in results) else "stopped",
             "interpretation": "adapter-specific functional evidence; no automatic method or transport winner"})
-        if result.get("stopStudy"):
+        if result.get("status") != "trajectory_completed" or result.get("stopStudy"):
             break
     final = {"event": "study-ended", "results": results,
              "endedAt": now().isoformat(), "overallExpiresAt": overall.isoformat()}

@@ -5,7 +5,7 @@
   "researchedAt": "2026-10-09",
   "scope": "Read-only assessment of an optional Linux-container environment for future Playground variants.",
   "recommendation": {
-    "current": "Keep host-native Windows CLI as the active Conventional environment while resolving the observed native sandbox startup issue. Do not change the current pilot environment mid-study.",
+    "current": "Keep host-native Windows with child-local MXC for the next separately ordered Conventional attempt: real coding/tests worked; resolve repository Git approval and controller integration before changing the environment. Do not change environments mid-study.",
     "future": "Add an optional, separately identified Linux-container environment stratum after adapter contract integration. First run a bounded provider-free readiness check and measure setup/cold-start cost; authorize a model trajectory only after that check.",
     "rationale": [
       "Inference: Linux Codex CLI inside a Linux container uses the Linux sandbox path rather than native Windows sandboxing, which could avoid a Windows-specific failure. It changes OS, shell, filesystem, process and helper behavior, so it cannot establish that the Windows failure is fixed.",
@@ -101,5 +101,12 @@
     "priorClaim": "Initial read-only assessment incorrectly said no authoritative Codex ChatGPT-account container-auth route had been found, suggesting API-key/Agents API might be necessary.",
     "correctedFinding": "That was wrong. The official Codex auth page explicitly documents device-code auth for headless use and copying auth.json into Docker. Auth remains a security/lifecycle concern, not a reason to exclude containers or switch providers.",
     "source": "https://learn.chatgpt.com/docs/auth"
+  },
+  "currentRuntimeAddendum": {
+    "observedAt": "2026-10-09T20:08:33.470937+00:00",
+    "nativeMxc": "real coding and tests succeeded; protected repository .git prevented branch/commit/merge with approval never",
+    "crossEnvironmentBoundary": "default workspace-write protects .git regardless of Windows vs Linux; container switch would not solve missing Git approval flow",
+    "source": "https://learn.chatgpt.com/docs/agent-approvals-security",
+    "environmentChanged": false
   }
 }

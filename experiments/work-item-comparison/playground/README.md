@@ -27,7 +27,7 @@ Both cases have 12 work items in 1/3/7/1 waves: one item; several dependent item
 
 The normal prompt after setup is the same for both methods:
 
-> Hier liegt das Backlog. Implementiere die Arbeit, halte die Projektregeln ein, prüfe die Ergebnisse und merge die fertigen Änderungen nach main.
+> Hier liegt das Backlog. Implementiere die Arbeit, halte die Projektregeln ein, prÃ¼fe die Ergebnisse und merge die fertigen Ã„nderungen nach main.
 
 No semantic Scientist coaching, solution architecture, repair service or taught product response schema is inserted between waves. Ordinary tools, history, shell, native subagents, diagnosis, repairs and affected rechecks remain available under the prospective pair limits. Missing usage is unknown rather than zero or a start barrier.
 
@@ -44,3 +44,7 @@ The [Conventional runtime pilot result](pilots/conventional-pilot-results-202610
 The versioned [adapter API](adapters/contract.py) gives each variant its own setup and runtime lifecycle. The Playground prepares common inputs and records immutable station evidence; the variant owns installation, runtime readiness, execution and owned shutdown. [ConventionalAdapter](conventional/adapter.py) maps this API to the existing durable native CLI/App Server service. [The generic entrypoint](playground_adapter.py) supports explicit hash-pinned factories and passive observations; [the station controller](run_variant_study.py) applies the shared four-wave capture protocol. Markitect will supply its own adapter once its genuine setup and interfaces are ready.
 
 The new [finite adapter delivery plan](pilots/conventional-variant-adapter-delivery-20261009/plan.json) is distinct from the closed failed pilots. Native child-local MXC is the current runtime candidate. The [container assessment](pilots/container-environment-evaluation-20261009.json) records a possible future Linux environment stratum and its authentication, host and isolation costs.
+
+The [adapter delivery closure](pilots/conventional-variant-adapter-delivery-20261009/closure.json) preserves the two new native attempts and the controller deviations. MXC enabled real code/test work, but protected `.git` prevented integration under approval `never`. Conventional has not completed a valid four-station run. The corrected controller requires clean integrated main advancement and stops after any failed, cancelled or uncertain trajectory. A scoped, disabled Git approval broker is prepared for a separately ordered followup; its real native effectiveness remains unverified. The old delivery order is closed in admission code.
+
+The [corrective validation](pilots/conventional-variant-adapter-delivery-20261009/corrective-validation.json) binds 81 passing provider-free checks and one Windows symlink-privilege skip to the corrected sources. The [private handoff](pilots/conventional-variant-adapter-delivery-20261009/handoff.json) separates implementation, observed actuals, unresolved native termination and the remaining fresh-run/final-assessment work.

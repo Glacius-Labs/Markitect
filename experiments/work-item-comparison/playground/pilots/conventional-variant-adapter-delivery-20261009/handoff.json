@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "state": "private-source-and-closure-ready",
+  "baselineActualSource": "0a1e6963f9fa86d5c0affdcfa9061f928feebe74",
+  "correctedSourceBinding": "Git commit containing this record, with exact corrected source byte pins in corrective-validation.json",
+  "validation": "corrective-validation.json",
+  "closedActuals": "closure.json",
+  "rawObservationArchive": "raw-study-observation.zip",
+  "rawObservationSha256": "7cebdbdbfd5cb8d0d8217fd7c474d3fb38459f3da481a3105b31ea8fc9b2a7c9",
+  "completion": {
+    "adapterInterface": "implemented",
+    "conventionalAdapter": "implemented",
+    "controllerIntegrationAndStopGates": "corrected and provider-free verified",
+    "scopedAppServerGitBroker": "prepared, disabled example; native execution effect unverified",
+    "completeEvaluatedConventionalRun": "not established",
+    "markitectAdapter": "deferred until real installation/interface readiness",
+    "containerEnvironment": "documentation assessment only; future separate environment factor"
+  },
+  "authority": {
+    "oldDeliveryOrder": "closed; all two cases and six startup checks consumed",
+    "furtherActualsOrStartupChecks": "not authorized under old order; requires separately documented Root order",
+    "cliCancellation": "uncertain native terminal; exact own direct process absent, no claim all descendants stopped, unresolved lock retained"
+  },
+  "remainingExecutionWork": [
+    "Separately ordered fresh run must demonstrate actual bound Git approval and clean main integration before releasing a later station.",
+    "Run all four stations and fresh independent final assessment before claiming evaluated Conventional success.",
+    "CLI approval control remains a separate supported-route gap; current scoped broker is App Server only."
+  ],
+  "containerRecommendation": "Keep native Windows MXC for current reference; add Linux container as separately measured environment, preserving CLI/model/auth/rights bindings. Container does not resolve protected Git metadata approvals."
+}

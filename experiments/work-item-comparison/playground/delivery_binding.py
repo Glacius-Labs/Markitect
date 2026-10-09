@@ -33,4 +33,7 @@ def verify(plan,executable):
             opts.get("nativeMaxConcurrentAgents")!=3 or opts.get("memoryEnabled") is not False or
             choice["config"].get("model")!="gpt-6-luna" or choice["config"].get("effort")!="high"):
             raise ValueError("delivery child-local runtime stratum changed")
+    closure=Path(__file__).resolve().parent/"pilots/conventional-variant-adapter-delivery-20261009/closure.json"
+    if closure.exists() and json.loads(closure.read_text(encoding="utf-8")).get("state")=="closed":
+        raise ValueError("delivery order is closed; no automatic quota refill or actual replay")
     return raw

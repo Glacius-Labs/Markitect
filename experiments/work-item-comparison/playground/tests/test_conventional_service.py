@@ -118,6 +118,29 @@ class ServiceTests(unittest.TestCase):
                     self.service().start("work")
         self.assertEqual([], self.calls)
 
+    def test_scoped_approval_requires_approval_source_pin_before_dispatch(self):
+        self.config["backend"] = "codex-app-server"
+        self.config["runtimeOptions"].update({"approvalPolicy": "on-request",
+                                            "scopedGitApproval": True,
+                                            "allowLoginShell": False,
+                                            "gitApprovalShell": {}})
+        self.persist()
+        with self.assertRaisesRegex(ValueError, "filePins must include"):
+            self.service().start("work")
+        self.assertEqual([], self.calls)
+
+    def test_scoped_approval_is_rejected_for_cli_before_dispatch(self):
+        source = Path(__file__).resolve().parents[1] / "conventional/approvals.py"
+        self.config["filePins"][str(source)] = hashlib.sha256(source.read_bytes()).hexdigest()
+        self.config["runtimeOptions"].update({"approvalPolicy": "on-request",
+                                            "scopedGitApproval": True,
+                                            "allowLoginShell": False,
+                                            "gitApprovalShell": {}})
+        self.persist()
+        with self.assertRaisesRegex(ValueError, "only supported by codex-app-server"):
+            self.service().start("work")
+        self.assertEqual([], self.calls)
+
     def test_legacy_configuration_without_runtime_options_remains_valid(self):
         self.config.pop("runtimeOptions")
         self.persist()

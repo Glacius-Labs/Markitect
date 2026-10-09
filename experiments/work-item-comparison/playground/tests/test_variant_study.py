@@ -44,6 +44,7 @@ class VariantStudyTests(unittest.TestCase):
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 
 def record(config, event):
     path = Path(config["audit"]) / "fixture-calls.json"
@@ -67,6 +68,29 @@ class FixtureAdapter:
                                   "status": True, "cancel": True, "close": True},
                 "runtime": {"kind": "fake", "owner": "none", "scope": "fixture process-free"}}
 
+    def integrate_station(self):
+        repo = Path(self.config["cwd"])
+        path = repo / "fixture-work.md"
+        with path.open("ab") as stream:
+            stream.write(f"station {self.counter + 1}\\n".encode("utf-8"))
+        def git(*args, check=True):
+            result = subprocess.run(["git", "-C", str(repo), *args], check=False,
+                                    capture_output=True, timeout=30)
+            if check and result.returncode:
+                raise subprocess.CalledProcessError(result.returncode, result.args,
+                                                    result.stdout, result.stderr)
+            return result
+        previous_main = git("rev-parse", "main").stdout.decode().strip()
+        git("add", "fixture-work.md")
+        checked = git("diff", "--cached", "--check", check=False)
+        if checked.returncode:
+            raise ValueError(f"fixture cached diff check failed ({checked.returncode}): " +
+                             checked.stdout.decode("utf-8", "replace") + checked.stderr.decode("utf-8", "replace") +
+                             git("diff", "--cached").stdout.decode("utf-8", "replace"))
+        git("commit", "-m", f"Fixture station {self.counter + 1}")
+        next_main = git("rev-parse", "HEAD").stdout.decode().strip()
+        git("update-ref", "refs/heads/main", next_main, previous_main)
+
     def setup(self, context):
         mode = self.config.get("fixtureMode", "complete")
         state = "blocked" if mode == "setup-blocked" else "ready"
@@ -85,11 +109,14 @@ class FixtureAdapter:
         if mode == "start-blocked":
             return {"schema": 1, "state": "blocked", "reason": "offline pre-dispatch fixture"}
         self.counter += 1
+        if mode != "no-integration":
+            self.integrate_station()
         return {"schema": 1, "state": "accepted", "runId": f"fixture-{self.counter}"}
 
     def resume(self, run_id, prompt):
         record(self.config, {"event": "resume", "runId": run_id, "prompt": prompt})
         self.counter += 1
+        self.integrate_station()
         return {"schema": 1, "state": "accepted", "runId": f"fixture-{self.counter}"}
 
     def status(self, run_id):
@@ -129,6 +156,10 @@ class FixtureAdapter:
         self.assertEqual(result["independentFinalAssessment"]["state"], "completed")
         self.assertEqual([row["station"] for row in result["stations"]], ["S1", "S2", "S3", "S4"])
         self.assertEqual(len(list(audit.glob("snapshot-S*/binding.json"))), 4)
+        self.assertEqual(len({row["mainCommit"] for row in result["stations"]}), 4)
+        self.assertTrue(all(row["integration"]["mainAdvanced"] and
+                            row["integration"]["worktreeAndIndexCleanExceptControllerStationDelta"]
+                            for row in result["stations"]))
         self.assertTrue((audit / "final-freeze" / "binding.json").is_file())
         self.assertEqual([call["event"] for call in calls].count("start"), 1)
         self.assertEqual([call["event"] for call in calls].count("resume"), 3)
@@ -154,6 +185,15 @@ class FixtureAdapter:
         self.assertEqual([call["event"] for call in calls].count("status"), 0)
         self.assertEqual([call["event"] for call in calls].count("close"), 1)
         self.assertTrue((audit / "final-freeze" / "binding.json").is_file())
+
+    def test_completed_turn_without_integrated_main_is_not_advanced(self):
+        result, audit, calls = self.run_choice("no-integration")
+        self.assertEqual(result["status"], "station_incomplete")
+        self.assertTrue(result["stopStudy"])
+        self.assertEqual(len(result["stations"]), 1)
+        self.assertFalse(result["stations"][0]["integration"]["mainAdvanced"])
+        self.assertFalse((audit / "transitions" / "S1-to-S2.json").exists())
+        self.assertEqual([call["event"] for call in calls].count("resume"), 0)
 
     def test_uncertain_status_preserves_worktree_and_skips_close_and_resume(self):
         result, audit, calls = self.run_choice("status-uncertain")
@@ -202,6 +242,43 @@ class FixtureAdapter:
         self.assertEqual(calls, ["readinglog"])
         stored = json.loads((destination / "study-results.json").read_text(encoding="utf-8"))
         self.assertEqual(len(stored["trajectories"]), 1)
+
+    def test_main_stops_after_known_runtime_failure_or_cancellation(self):
+        for terminal_status, choice_count in (("runtime_failed", 1), ("runtime_failed", 2), ("cancelled", 2)):
+            terminal_key = terminal_status + str(choice_count)
+            with self.subTest(status=terminal_status, choices=choice_count):
+                checkout = self.root / ("checkout-" + terminal_key)
+                checkout.mkdir()
+                plan = dict(self.plan)
+                plan["trajectories"] = [self.choice, {**self.choice, "case": "roombook"}][:choice_count]
+                plan_path = self.root / (terminal_key + "-plan.json")
+                plan_path.write_text(json.dumps(plan), encoding="utf-8")
+                destination = self.root / ("destination-" + terminal_key)
+                calls = []
+
+                def stop_after_known(*args):
+                    calls.append(args[1]["case"])
+                    return {"case": args[1]["case"], "status": terminal_status}
+
+                def fake_git(_repo, *args):
+                    if args == ("status", "--porcelain"):
+                        return ""
+                    if args == ("rev-parse", "--show-toplevel"):
+                        return str(checkout)
+                    if args == ("rev-parse", "HEAD"):
+                        return "fixture-clean-source"
+                    raise AssertionError(args)
+
+                with patch.object(study, "git", side_effect=fake_git), \
+                     patch.object(study, "execute", side_effect=stop_after_known), \
+                     patch("delivery_binding.verify", return_value=b"offline-authority-fixture"):
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        code = study.main(["--plan", str(plan_path), "--destination", str(destination),
+                                           "--executable", sys.executable])
+                self.assertEqual(code, 1)
+                self.assertEqual(calls, ["readinglog"])
+                stored = json.loads((destination / "study-results.json").read_bytes())
+                self.assertEqual(stored["status"], "stopped")
 
 
 if __name__ == "__main__":

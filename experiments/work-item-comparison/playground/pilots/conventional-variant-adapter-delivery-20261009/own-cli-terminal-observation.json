@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "observedAt": "2026-10-09T20:06:16.804829+00:00",
+  "nativeSession": "01a1223b-1aa5-7c03-8ee3-7c62b700277d",
+  "exactJournal": "C:\\Users\\Consiliari\\.codex\\sessions\\2026\\10\\09\\rollout-2026-10-09T21-54-21-01a1223b-1aa5-7c03-8ee3-7c62b700277d.jsonl",
+  "journalSha256": "1e0c7aa462c5eee7a6a4b7c0951dda8e723d7a641a166d2b317d36e8a5c2166e",
+  "events": [
+    {
+      "timestamp": "2026-10-09T19:54:22.386Z",
+      "type": "task_started",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:24.470Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:27.578Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:28.731Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:32.106Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:32.121Z",
+      "type": "token_count",
+      "turnId": null
+    },
+    {
+      "timestamp": "2026-10-09T19:54:35.731Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:37.199Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:40.146Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:40.168Z",
+      "type": "token_count",
+      "turnId": null
+    },
+    {
+      "timestamp": "2026-10-09T19:54:43.745Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:45.815Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:45.836Z",
+      "type": "token_count",
+      "turnId": null
+    },
+    {
+      "timestamp": "2026-10-09T19:54:47.455Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:49.424Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:49.445Z",
+      "type": "token_count",
+      "turnId": null
+    },
+    {
+      "timestamp": "2026-10-09T19:54:52.446Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    },
+    {
+      "timestamp": "2026-10-09T19:54:54.248Z",
+      "type": "item_completed",
+      "turnId": "01a1223b-1d61-7423-ae02-704e374421fa"
+    }
+  ],
+  "terminalObserved": false,
+  "ownedCodexPidsAbsent": [
+    52908,
+    48644,
+    54936
+  ],
+  "pid54936Observation": "briefly reused by python, then absent; no action on reused process",
+  "nativeTurnOutcome": "uncertain; no automatic replay",
+  "observationScope": "targeted owned journal plus exact PIDs; no foreign process inventory or intervention"
+}
