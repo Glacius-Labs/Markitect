@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "recordKind": "source-contract-observation",
+  "observedAt": "2026-10-09T22:12:02.460225+00:00",
+  "researchBaseCommit": "f54827311e439607f7edb8890b5c83aaea18df5d",
+  "product": {
+    "sourceCommit": "c701a28908d379a4a6093caf03c0d88bef9f083a",
+    "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-integration\\Markitect",
+    "branch": "codex/product-integration-20261009",
+    "sourceFileSha256": {
+      "src/internal/host/projectcli/mcp.go": "c9cf3d1a77bf1eff274cbfc90902bca2e508220eb84f9af918dca5121ec100dc",
+      "src/internal/host/projectcli/options.go": "77ac2a3f9e5b149491e7391b76fd7a9e597627ac89267727330bbd585c66d4e1",
+      "src/internal/host/mcp/tools.go": "12b6e81070a391db9c9643b4d72d14252fde4d2a1c7dc6d252787c107acc440e",
+      "src/internal/host/mcp/stdio.go": "bb67d1af5e81b5e20c4379ca5bcf902724458e806e717a19563e3a60eccc4bd8",
+      "src/internal/host/projectapp/exploration.go": "c36477474a0676e85e8250c415e68d2d4791ca98f850ddaa52e22bcbf3ef8a62",
+      "src/internal/host/projectsetup/setup.go": "ec6ea1d307e4bcbee388e245372b3d8c6d62b84ca08876c083cf4d52b0e795ea",
+      "src/internal/host/projectrun/types.go": "6d14d6f09f740313ced1f7516ffdc71d7016bd02b96bb54c72cc2620a3a7021a",
+      "src/internal/host/projectrun/deliver.go": "fbfa2a50f45008c4590635a7db1896b5d434e3cdd9190da6df2c6479d5b9b8d9",
+      "src/internal/host/projectrun/apply.go": "fa5536be980740f253a89d36c5fe2352acd0dc4e6c14efe940ae318fbe6bbbd6",
+      "src/internal/host/projectrun/workspace_bridge.go": "f4037e0b688807484350a8b1526873d311902dfad8dca58895869c43ce8db0b1",
+      "src/internal/host/projectrun/workspace_delta.go": "4070dfdb95ab8e03484741dc0c5d7b64e38b579fca3dfab1dc0ed3a022fc58f4",
+      "src/internal/host/projectrun/transport_invoker.go": "33933fca41fe78f7dd13d107fcdbae38d70a8e6590f14242b477039eb78e9519",
+      "src/internal/host/codexappserver/contracts.go": "0c0c093b855b990b7987e4d68e4a6500adc1ee75963d6af8ba8213b0b2b39039",
+      "src/internal/host/codexappserver/session.go": "297fb5fad85168b9216a99e0b5c3b5b3b2470675c853b84e229040af1f739205",
+      "src/internal/host/codexappserver/recovery.go": "bf6bcf1026f1126c9ec9de63229caa8980d797aa17ab439665b8f284fe7a1d78",
+      "src/internal/host/codexappserver/process.go": "49de1bd55ffbb81f50c1df04aa8685df23d5c6de3183534f9d263b0ed117b92c",
+      "docs/work-items/product-readiness/integration-progress-20261009.md": "077de55f2c241ded19f9f3629c5f3266d5f30c373d5ca35c9e69c1b933941a38",
+      "docs/work-items/product-readiness/evidence/native-acceptance-ledger.yaml": "079f723aba2d9990ef28e0d178b10d79ab96269c1901fb50443a27fda8e1d4d9"
+    },
+    "inboundMCP": {
+      "argv": [
+        "<exact pinned markitect binary>",
+        "project",
+        "mcp",
+        "--repo",
+        "<own case repo>"
+      ],
+      "transport": "owned stdio newline-delimited JSON-RPC",
+      "protocolVersion": "2025-11-25",
+      "baseTools": [
+        "project_plan",
+        "project_run",
+        "project_resume",
+        "project_repair",
+        "project_status",
+        "project_verify",
+        "project_full_verify",
+        "project_preflight",
+        "project_apply",
+        "project_deliver"
+      ],
+      "compositionTools": [
+        "project_setup",
+        "project_doctor",
+        "project_onboard",
+        "project_explore",
+        "project_readiness",
+        "project_brownfield",
+        "project_brownfield_run",
+        "project_init",
+        "project_check",
+        "project_index",
+        "project_context",
+        "project_document",
+        "project_edit",
+        "project_impact",
+        "project_coverage"
+      ],
+      "expectedToolCount": 25,
+      "serverVersionField": "source; insufficient executable provenance"
+    },
+    "outboundExecution": "Product TransportInvoker owns independent Codex App Server roles and exact original-turn recovery",
+    "nativeVersionRequirement": "codex-cli 0.162.0",
+    "readiness": "Complete A01 acceptance not established at this fixed source snapshot",
+    "observedA01": {
+      "roleStartRequests": 3,
+      "providerStarts": 2,
+      "successfulHelperProviderStarts": 0,
+      "lastOutcome": "helper_parent_workspace_source_identity_rejected",
+      "scope": "fixed source lower-bound accounting, not current owner-live state"
+    },
+    "binaryPin": null,
+    "caseInstallationPin": null
+  },
+  "adapter": {
+    "implemented": false,
+    "nativeRuns": 0,
+    "completionTarget": "workspace_snapshot",
+    "ordinaryUserPath": "same outer native actor/backlog prompt with genuine product instructions and product CLI/MCP tools",
+    "directDeliverIsOrdinaryPromptIngress": false,
+    "publicStandaloneProductCancel": false,
+    "setupOwner": "Product Integration; Scientist records provenance/cost without semantic model or human acknowledgement fabrication",
+    "candidateBoundary": "Delivered target bytes after real guarded Apply, with product candidate/delta/journal retained"
+  },
+  "readinessGaps": [
+    "Functional installation and exact binary/config/own case setup receipts",
+    "Real ordinary-user model/exploration/acknowledgement ingress and authority provenance",
+    "Controller configuration and finite total inner/outer role allocations",
+    "Prospective identical scratch assessment/public inputs/resources/runtime context"
+  ],
+  "conventionalReference": "../pilots/conventional-workspace-assessed-handoff-20261009.json",
+  "execution": "Source reads only; no product/Codex native launch, model turn or credential/global configuration change",
+  "prospectiveContinuationAuthority": {
+    "path": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\renewable-execution-budget-20261010.json",
+    "sha256": "a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7",
+    "directHumanInstruction": "Budget darfst du solange machen bis es klappt",
+    "humanTurnId": "01a122af-81ca-7cd3-b57e-9294932a4ac4",
+    "policy": "Record necessary finite renewals before native execution; old grants stay closed; no unnecessary Conventional repetition; genuine product readiness and equal future cell allocations remain required",
+    "newNativeBatchAllocated": false
+  }
+}

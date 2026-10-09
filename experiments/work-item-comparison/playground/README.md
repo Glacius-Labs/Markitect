@@ -56,3 +56,12 @@ The [workspace pilot closure](pilots/conventional-workspace-snapshot-execution-2
 The separate [final-only scratch supplement](pilots/conventional-frozen-candidate-scratch-assessment-supplement-20261009/plan.json) preserves that candidate and its original requirements. [The scratch assessor](final_scratch_assessor.py) executes an equal-hash copy in its own writable CWD because existing tests use local scratch paths. It accepts new test artifacts only below `.scratch` and `.assessment-output`, rejects changed existing files or requirements, and disables bytecode writes and helpers. [Its runner](run_scratch_assessment.py) enforces the specific single-use order; this is not an implementation retry or a new case. Scientific findings remain separate from native completion.
 
 The [assessed workspace handoff](pilots/conventional-workspace-assessed-handoff-20261009.json) connects the four passed stations to the additive successful final evaluation: 24 existing tests, 13 frozen public checks and five independent boundary cases. All original and copied semantic bytes remained unchanged. Native team receipts remain separate from endpoint assessment. Inherited plugin stop-hook failures, evaluator invocation repairs, runtime warnings and unknown cost/cap attribution are retained. This is one Conventional case, not a paired Markitect comparison.
+
+[Markitect adapter preparation](markitect/README.md) binds the real integrated
+CLI/MCP, inner App Server, setup and workspace contracts to an immutable product
+source. The normal outer backlog session remains the user reference; direct
+`project_deliver` needs existing acknowledged product scope and cannot replace
+that session. Product native attempts exist, but the inspected complete readiness
+gate is not passed. A live adapter and matched study await the functional exact
+installation and case bindings; completed Conventional work is not rerun merely
+because execution resources may now be renewed prospectively.
