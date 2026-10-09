@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -47,6 +48,9 @@ func TestAppServerRuntimeConfigProducesTransportFingerprint(t *testing.T) {
 	if shared.Transport != TransportCodexAppServer || shared.WorkspaceMode != "" || len(shared.TransportConfig) == 0 {
 		t.Fatalf("shared native config leaked or omitted transport binding: %#v", shared)
 	}
+	if shared.EnvironmentAllowlist == nil {
+		t.Fatal("omitted environmentMode must preserve the existing explicit environment name list")
+	}
 	var encoded AppServerSettings
 	if err := json.Unmarshal(shared.TransportConfig, &encoded); err != nil || encoded.ReasoningEffort != "high" || encoded.MaxEventBytes != 1<<20 {
 		t.Fatalf("transport config = %#v err=%v", encoded, err)
@@ -83,6 +87,85 @@ func TestAppServerRuntimeConfigProducesTransportFingerprint(t *testing.T) {
 	}
 	if decoded.Agents["commerce"].AppServer == nil || decoded.Agents["commerce"].AppServer.Helpers != agent.AppServer.Helpers {
 		t.Fatalf("App Server settings did not round trip: %#v", decoded.Agents["commerce"])
+	}
+}
+
+func TestNativeInheritedEnvironmentModeBindsEffectiveCallerEnvironment(t *testing.T) {
+	const environmentName = "MARKITECT_NATIVE_ENV_MODE_FINGERPRINT_TEST"
+	t.Setenv(environmentName, "first-sensitive-value")
+	config := validRuntime()
+	agent := appServerAgent(t)
+	agent.Model = "gpt-6-luna"
+	agent.ProviderVersion = codexappserver.SupportedProviderVersion
+	agent.Environment = []string{"PATH"}
+	agent.AppServer.EnvironmentMode = AppServerEnvironmentModeInherit
+	config.Agents["commerce"] = agent
+	if err := ValidateRuntime(config); err != nil {
+		t.Fatalf("native inherited environment runtime: %v", err)
+	}
+	shared, err := agent.AgentConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if shared.EnvironmentAllowlist != nil {
+		t.Fatalf("native inherit mode must pass a nil environment allowlist: %#v", shared.EnvironmentAllowlist)
+	}
+	if !reflect.DeepEqual(agent.Environment, []string{"PATH"}) {
+		t.Fatalf("native inheritance must not widen declared-check name policy: %#v", agent.Environment)
+	}
+	var encoded AppServerSettings
+	if err := json.Unmarshal(shared.TransportConfig, &encoded); err != nil || encoded.EnvironmentMode != AppServerEnvironmentModeInherit {
+		t.Fatalf("environment mode did not flow into transport config: %+v err=%v", encoded, err)
+	}
+	serialized, err := json.Marshal(shared)
+	if err != nil || strings.Contains(string(serialized), "first-sensitive-value") {
+		t.Fatalf("effective environment value leaked into invocation config: err=%v", err)
+	}
+	invoker := NewTransportInvokerWithoutHostHelpers(codexappserver.Options{})
+	first, err := invoker.Fingerprint(shared)
+	if err != nil {
+		t.Fatalf("fingerprint inherited native environment: %v", err)
+	}
+	t.Setenv(environmentName, "second-sensitive-value")
+	second, err := invoker.Fingerprint(shared)
+	if err != nil {
+		t.Fatalf("fingerprint changed inherited native environment: %v", err)
+	}
+	if first == second {
+		t.Fatal("changing the effective caller environment did not invalidate the native transport fingerprint")
+	}
+
+	runtimeYAML, err := yaml.Marshal(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded Runtime
+	decoder := yaml.NewDecoder(strings.NewReader(string(runtimeYAML)))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&decoded); err != nil || decoded.Agents["commerce"].AppServer.EnvironmentMode != AppServerEnvironmentModeInherit {
+		t.Fatalf("strict runtime YAML round trip lost environment mode: err=%v", err)
+	}
+}
+
+func TestNativeInheritedEnvironmentModeRequiresNativeOwnedGitAndClosedValue(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		change func(*Agent)
+		want   string
+	}{
+		{"requires owned Git", func(agent *Agent) { agent.WorkspaceMode = ""; agent.InstructionPaths = nil }, "requires native codex-app-server with owned git workspace"},
+		{"closed mode", func(agent *Agent) { agent.AppServer.EnvironmentMode = "all" }, "must be empty or inherit"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			config := validRuntime()
+			agent := appServerAgent(t)
+			agent.AppServer.EnvironmentMode = AppServerEnvironmentModeInherit
+			test.change(&agent)
+			config.Agents["commerce"] = agent
+			if err := ValidateRuntime(config); err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("expected %q validation error, got %v", test.want, err)
+			}
+		})
 	}
 }
 

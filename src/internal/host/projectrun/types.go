@@ -101,12 +101,20 @@ const (
 // AppServerSettings explicitly selects the native Codex transport contract.
 // Workspace authority remains in Agent.WorkspaceMode and the project model.
 type AppServerSettings struct {
-	ReasoningEffort       string                              `json:"reasoningEffort" yaml:"reasoningEffort"`
-	PermissionProfile     string                              `json:"permissionProfile,omitempty" yaml:"permissionProfile,omitempty"`
+	ReasoningEffort       string                               `json:"reasoningEffort" yaml:"reasoningEffort"`
+	PermissionProfile     string                               `json:"permissionProfile,omitempty" yaml:"permissionProfile,omitempty"`
 	WindowsSandboxBackend codexappserver.WindowsSandboxBackend `json:"windowsSandboxBackend,omitempty" yaml:"windowsSandboxBackend,omitempty"`
-	Helpers               AppServerHelpers                    `json:"helpers" yaml:"helpers"`
-	MaxEventBytes         int64                               `json:"maxEventBytes" yaml:"maxEventBytes"`
+	EnvironmentMode       AppServerEnvironmentMode             `json:"environmentMode,omitempty" yaml:"environmentMode,omitempty"`
+	Helpers               AppServerHelpers                     `json:"helpers" yaml:"helpers"`
+	MaxEventBytes         int64                                `json:"maxEventBytes" yaml:"maxEventBytes"`
 }
+
+// AppServerEnvironmentMode selects caller environment inheritance for the
+// native App Server child only. Agent.Environment remains the explicit name
+// policy used to resolve declared-check executables.
+type AppServerEnvironmentMode string
+
+const AppServerEnvironmentModeInherit AppServerEnvironmentMode = "inherit"
 
 type AppServerHelpers struct {
 	Enabled          bool `json:"enabled" yaml:"enabled"`

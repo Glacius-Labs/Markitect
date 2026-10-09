@@ -53,7 +53,7 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 		if agent.Command != provider.Path || len(agent.Args) != 0 || agent.Transport != projectrun.TransportCodexAppServer || agent.Model != "gpt-6-luna" || agent.ProviderVersion != provider.Version {
 			t.Fatalf("unexpected mapping for %s: %#v", id, agent)
 		}
-		if agent.WorkspaceMode != "git" || agent.AppServer == nil || agent.AppServer.ReasoningEffort != "high" || agent.AppServer.PermissionProfile != "" || agent.AppServer.WindowsSandboxBackend != "" || !agent.AppServer.Helpers.Enabled {
+		if agent.WorkspaceMode != "git" || agent.AppServer == nil || agent.AppServer.ReasoningEffort != "high" || agent.AppServer.PermissionProfile != "" || agent.AppServer.WindowsSandboxBackend != "" || agent.AppServer.EnvironmentMode != projectrun.AppServerEnvironmentModeInherit || !agent.AppServer.Helpers.Enabled {
 			t.Fatalf("default setup must select the typed native Codex App Server worker: %#v", agent)
 		}
 		if agent.ModelOptions != nil || agent.AppServer.Helpers.MaxStartRequests != DefaultMaxHelperStarts || agent.AppServer.Helpers.MaxDepth != 1 || agent.AppServer.MaxEventBytes != DefaultMaxEventBytes {
@@ -72,7 +72,7 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 		if reviewer.ModelOptions != nil || reviewer.AppServer == nil || reviewer.AppServer.PermissionProfile != "" || reviewer.Model != agent.Model || reviewer.ProviderVersion != agent.ProviderVersion {
 			t.Fatalf("reviewer model profile for %s differs from worker profile", id)
 		}
-		if reviewer.AppServer.WindowsSandboxBackend != "" {
+		if reviewer.AppServer.WindowsSandboxBackend != "" || reviewer.AppServer.EnvironmentMode != projectrun.AppServerEnvironmentModeInherit {
 			t.Fatalf("omitted sandbox backend must preserve default reviewer settings for %s: %#v", id, reviewer.AppServer)
 		}
 		if containsName(reviewer.Environment, "CODEX_HOME") {

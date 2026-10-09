@@ -477,6 +477,52 @@ func TestNativeWindowsSandboxBackendIsClosedAndFingerprintBound(t *testing.T) {
 	}
 }
 
+func TestNativeInheritedEnvironmentModeBindsEffectiveDigestWithoutValues(t *testing.T) {
+	const environmentName = "MARKITECT_AGENTEXEC_NATIVE_INHERIT_TEST"
+	config := testConfig()
+	config.Args = nil
+	config.ModelOptions = nil
+	config.Transport = "codex-app-server"
+	config.TransportConfig = json.RawMessage(`{"reasoningEffort":"high","environmentMode":"inherit","helpers":{"enabled":false,"maxStartRequests":0,"maxDepth":0},"maxEventBytes":1024}`)
+	config.EnvironmentAllowlist = nil
+	t.Setenv(environmentName, "first-sensitive-value")
+	first, err := Fingerprint(config)
+	if err != nil {
+		t.Fatalf("fingerprint native inherited environment: %v", err)
+	}
+	encoded, err := json.Marshal(config)
+	if err != nil || strings.Contains(string(encoded), "first-sensitive-value") {
+		t.Fatalf("raw environment value leaked into native config JSON: err=%v", err)
+	}
+	t.Setenv(environmentName, "second-sensitive-value")
+	second, err := Fingerprint(config)
+	if err != nil {
+		t.Fatalf("fingerprint changed inherited environment: %v", err)
+	}
+	if first == second {
+		t.Fatal("native inherited environment digest did not bind the effective caller environment")
+	}
+
+	legacy := config
+	legacy.TransportConfig = json.RawMessage(`{"reasoningEffort":"high","helpers":{"enabled":false,"maxStartRequests":0,"maxDepth":0},"maxEventBytes":1024}`)
+	legacyFirst, err := Fingerprint(legacy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(environmentName, "third-sensitive-value")
+	legacySecond, err := Fingerprint(legacy)
+	if err != nil || legacyFirst != legacySecond {
+		t.Fatalf("omitted environmentMode must preserve historical nil-allowlist fingerprint behavior: %v", err)
+	}
+
+	selected := []string{"PATH"}
+	conflict := config
+	conflict.EnvironmentAllowlist = &selected
+	if _, err := Fingerprint(conflict); err == nil || !strings.Contains(err.Error(), "requires a nil environment allowlist") {
+		t.Fatalf("native inherit mode accepted a competing allowlist: %v", err)
+	}
+}
+
 func TestWorkspaceModeDoesNotChangeProviderConfigEnvironmentContract(t *testing.T) {
 	config := testConfig()
 	config.WorkspaceMode = "scoped"
