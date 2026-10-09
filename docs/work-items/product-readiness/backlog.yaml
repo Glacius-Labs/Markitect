@@ -19,8 +19,8 @@ native_acceptance:
   max_job_wall_seconds: 14400
   max_total_wall_seconds: 43200
   max_total_role_start_requests: 256
-  consumed_jobs: 0
-  consumed_role_start_requests: 0
+  consumed_jobs: 1
+  consumed_role_start_requests: 3
   model: gpt-6-luna
   reasoning_effort: high
   prior_closed_grants_reusable: false

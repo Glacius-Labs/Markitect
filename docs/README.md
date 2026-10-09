@@ -2,7 +2,7 @@
 
 Markitect's current product workflow manages ordinary Work Items through a recursively owned YAML model and typed fixed-root operations. Start with the [project workflow](project-workflow.md), the [Project operations reference](project-operations.md), and the [executable Shop example](../examples/project-world/README.md). The [implementation roadmap](implementation-plan.md) gives a short orientation; the [Product Readiness backlog](work-items/product-readiness/backlog.yaml) owns current statuses and evidence pointers.
 
-The current source is an integration candidate. Required final gates and the combined native A01 journey are **NOT RUN**. A02/A03 are deferred until after Main; Case Studies remain stopped. The published v0.14.1 binary preserves earlier Project/Domain commands and does not include this workflow. The [production assessment](production-assessment.md) binds release claims to their original assets.
+The current source is an integration candidate. Final hosted Linux/Windows gates remain pending. A01 has been attempted and has **not passed**: two native root turns and one failed pre-provider helper request consume three known requests, with partial lower-bound accounting. A02/A03 are deferred until after Main; Case Studies remain stopped. The published v0.14.1 binary preserves earlier Project/Domain commands and does not include this workflow. The [production assessment](production-assessment.md) binds release claims to their original assets.
 
 ## Operate and contribute
 

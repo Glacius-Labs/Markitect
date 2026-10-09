@@ -52,6 +52,18 @@ runtime_amendments:
     original_deadline_utc: '2026-10-10T00:26:23Z'
     condition: Resolve or safely stop preserved Handle and bind fresh exact inputs before one ordinary continuation
     original_declined_turn_replay: false
+  - id: product-a01-helper-inventory-alias-correction-20261009
+    authority: direct_user_mandate_via_coordinator
+    authority_record_sha256: 2ee4a4b3e861207f2727b4d1cc786b54b6d9449d2a8ecc332cd1af6ace57f391
+    known_requests_consumed: 3
+    remaining_total_start_allocation: 253
+    original_deadline_utc: '2026-10-10T00:26:23Z'
+    source_scope: Trusted Git reported physical directory identity across Source Parent Helper inventory boundaries
+    condition: Fix and review bounded alias cluster then bind fresh exact source binary project runtime readiness Plan before one ordinary continuation
+    new_jobs: 0
+    new_quota: 0
+    old_turn_replay: false
+    automatic_retry_after_material_failure: false
 jobs:
   - id: A01
     purpose: Combined normal Main smoke with setup Work Item parallel Managers fresh helper independent review Verify guarded Apply and original-turn workspace recovery
@@ -59,24 +71,29 @@ jobs:
     main_gate: required
     status: repairing_for_authorized_continuation
     source:
-      revision: 5b65b46534ce040f5aab1058776c0cd4443bc3ad
-      binary_sha256: 261d7cdf8953dfb3b6c7f6603e2974c402ba902b9f1f21568e4950058affd2a2
-      owned_project_revision: acfbb7a39b79cfa4f2507039e3e6801d88a4fc57
+      revision: f2e5c05bd80b0f118aac554ab45b5292b082bee9
+      binary_sha256: 3f1368ec846dfd7609a0bf6c65b29383e66a8969565620f1cf6b82d21ba2e2a1
+      owned_project_revision: 45f4ffc3dc69789e2b65275f8c8e1bfce89ae857
     config:
-      runtime_digest: sha256:fee36c39a3ae90d89fce53aaf2e7367975f461ef8909fba48fc9940c660540c7
-      plan_id: 9c1892e3311926ca6320898042bb04ec
-      plan_digest: sha256:81cd937e4e69d4653b551b9c860faa6b178aa81ec461d6aa9b2abeb8fba4a08b
+      runtime_digest: sha256:382b8c8b08b0c97c9396e9a2ccafe6dc3fe68befb16bc2a219701fbcde94f966
+      plan_id: 7ff160846acd58ea5a065ff19e74ac78
+      plan_digest: sha256:c6651d258080870b8133fec0306e9461ff08553db0b1e5bfe4e76b60d85e0c77
+      readiness_digest: sha256:e05231e1bf21e0ab16be513a86a86030baa5fb33e9544d5e2fe41156032b02e7
       provider_version: codex-cli 0.162.0
       provider_sha256: dce685d569526ef4712fa82d20ff20e1309baad5fcd34215e1126698f611242f
       model: gpt-6-luna
       reasoning_effort: high
-      permission_profile: inherited
+      permission_profile: ':workspace'
+      reviewer_permission_profile: ':read-only'
+      verifier_permission_profile: ':read-only'
       max_role_seconds: 3600
-      max_role_start_requests: 256
+      max_role_start_requests: 255
+      remaining_total_start_allocation: 253
       observed_accounting: lower_bound
     start_utc: '2026-10-09T20:26:23Z'
     deadline_utc: '2026-10-10T00:26:23.000Z'
-    role_start_requests: 1
+    role_start_requests: 3
+    provider_starts: 2
     role_accounting: observed_lower_bound_partial
     cli_attempts:
       - source_revision: fc6d09a234572c344279a342416475e788435f1f
@@ -115,6 +132,35 @@ jobs:
         harvest_cause: Git-reported Windows packaged LocalCache alias differs from trusted AppData Local path under string equality
         provider_free_reopen: stopped_before_harvest_no_actor_or_cleanup
         original_handles_preserved: true
+        recovery_boundary_observed: false
+        acceptance: not_passed
+      - source_revision: f2e5c05bd80b0f118aac554ab45b5292b082bee9
+        binary_sha256: 3f1368ec846dfd7609a0bf6c65b29383e66a8969565620f1cf6b82d21ba2e2a1
+        owned_project_revision: 45f4ffc3dc69789e2b65275f8c8e1bfce89ae857
+        plan_id: 7ff160846acd58ea5a065ff19e74ac78
+        plan_digest: sha256:c6651d258080870b8133fec0306e9461ff08553db0b1e5bfe4e76b60d85e0c77
+        runtime_digest: sha256:382b8c8b08b0c97c9396e9a2ccafe6dc3fe68befb16bc2a219701fbcde94f966
+        start_utc: '2026-10-09T21:38:55.4297362Z'
+        end_utc: '2026-10-09T21:39:33.6991426Z'
+        exit_code: 2
+        outcome: helper_parent_workspace_source_identity_rejected
+        role_start_requests: 2
+        host_helper_start_requests: 1
+        provider_starts: 1
+        host_helper_provider_starts: 0
+        observer_id: b5f9ae72304a466aaf39c4a5b115419c
+        native_invocation_id: d5d2d016db034bf0463375390c23622a
+        thread_id: 01a1229b-0d5b-7602-956e-534e1ea81b76
+        turn_id: 01a1229b-109f-7071-9abb-6dc90c2d858a
+        terminal_state: interrupted
+        effective_permission_profile: ':workspace'
+        failed_helper_request: helper-exec-a63d4fe3-8082-4e62-9ac0-3d5dc5ba465f
+        failed_helper_state: failed_before_provider_dispatch
+        workspace_handle_id: 3b5bec9cbb8885397d993cc4f20da4bb
+        workspace_state: closed_by_normal_terminal_harvest
+        normalized_delta_changes: 0
+        cached_result: absent
+        cause: Source inventory compares parent workspace Git top-level alias using lexical path equality
         recovery_boundary_observed: false
         acceptance: not_passed
     evidence: []
