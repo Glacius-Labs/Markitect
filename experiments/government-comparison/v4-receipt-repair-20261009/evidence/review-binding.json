@@ -1,0 +1,15 @@
+{
+  "sourceFreeze": "b4d645a02a27b87a844799d050e1d54f0e663fee",
+  "manifestSha256": "50c78a80ef47230d776c378ee1aa9a0dc6eed6d95cef3816fab92e79f4475eeb",
+  "reviewFilesMatched": 16,
+  "privateReportSha256": "8c67ab8381bf3e6fd028d891dbed3406e8009854bcce34f191052aa3f91b8b3c",
+  "privateReviewZipSha256": "e76365458593bfba0b6f18534ec8c1559a68ef3e7f1cb3f1ad26ad7595c4866c",
+  "fullReportRemainsPrivate": true,
+  "reviewerTask": "/root/v4_receipt_binding_delta_review",
+  "reviewerProgramExecutionsSelfReported": 0,
+  "reviewerLimitation": "Public criteria baseline copies were not separately staged for reviewer; parent independently compared all24 public old/new files after review without executing code",
+  "parentPublicByteComparisonsMatched": 24,
+  "verdict": "CLOSED concrete delta only",
+  "sourceChangesAfterTerminal": 0,
+  "testProcessesAfterTerminal": 0
+}

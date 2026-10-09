@@ -22,14 +22,44 @@
       "elapsedSeconds": 0.2988988
     }
   ],
-  "reviewReservations": [],
+  "reviewReservations": [
+    {
+      "number": 1,
+      "retries": 0,
+      "children": 0,
+      "modelOverride": null,
+      "sourceCommit": "b4d645a02a27b87a844799d050e1d54f0e663fee",
+      "reservedUtc": "2026-10-09T02:50:55.1591032+02:00",
+      "deadlineUtc": "2026-10-09T02:54:55.1591032+02:00",
+      "inputManifestSha256": "50c78a80ef47230d776c378ee1aa9a0dc6eed6d95cef3816fab92e79f4475eeb",
+      "followups": 0,
+      "forkTurns": "none",
+      "maxSeconds": 240,
+      "reasoningOverride": null,
+      "status": "terminal",
+      "reviewerTask": "/root/v4_receipt_binding_delta_review",
+      "activationObservedUtc": "2026-10-09T02:51:41.370426+02:00",
+      "terminalObservedUtc": "2026-10-09T00:52:43.0000000+00:00",
+      "reservationToTerminalObservedSeconds": 107.8408968,
+      "privateReportSha256": "8c67ab8381bf3e6fd028d891dbed3406e8009854bcce34f191052aa3f91b8b3c"
+    }
+  ],
   "fullTrials": 0,
   "productActors": 0,
-  "status": "ACTIVE",
+  "status": "CLOSED at first terminal review; concrete mechanics delta CLOSED; actual comparison NOT ADMITTED",
   "measurements": {
     "cost": null,
     "tokens": null,
     "humanOversight": null,
     "servingModel": null
-  }
+  },
+  "closedUtc": "2026-10-09T00:52:43.0000000+00:00",
+  "remaining": {
+    "productActors": 0,
+    "reviewerActivations": 0,
+    "correctionBatches": 0,
+    "focusedOfflineTestProcesses": 0,
+    "fullTrials": 0
+  },
+  "accounting": "All setup/test/delta review is shared comparison preparation; no product quality from fixtures; exact serving/tokens/cost/human oversight unknown. No native execution/OS/process audit proven."
 }

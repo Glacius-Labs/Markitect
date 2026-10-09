@@ -1,0 +1,222 @@
+{
+  "scope": "Tracked final checkpoint files; excludes this manifest itself",
+  "sourceFreeze": "b4d645a02a27b87a844799d050e1d54f0e663fee",
+  "createdUtc": "2026-10-09T00:54:19.7780588+00:00",
+  "files": [
+    {
+      "path": "common-freeze-proposal.json",
+      "bytes": 7410,
+      "sha256": "8c1bfcb59342fe41c85ff010e4decad09a28ca4a4415a769b55261ae5e35e956"
+    },
+    {
+      "path": "continuation-anchor.md",
+      "bytes": 950,
+      "sha256": "e4ebf3acdb52dab30cea839c2614289c6c5d58ff21081600f94e25f2a24cdfdd"
+    },
+    {
+      "path": "evidence/archival-events.json",
+      "bytes": 736,
+      "sha256": "02a529e07a8839dbb2a3e3ec579fef6c75262acb7354e8b3e321192f675af5bb"
+    },
+    {
+      "path": "evidence/archive-integrity.json",
+      "bytes": 433,
+      "sha256": "58ab1944c240b432b7dc7216fb414de3b99a3bcabc154bc6622c5e133dfc6cac"
+    },
+    {
+      "path": "evidence/authorization-grant.json",
+      "bytes": 4446,
+      "sha256": "27413f2a1dca5e6732642d1747e9fd2d745cb935e9ac85099baf55f7701b7d02"
+    },
+    {
+      "path": "evidence/closure-continuation.md",
+      "bytes": 821,
+      "sha256": "55805df713431479504aec22bbb2f7fd55aaa05401fe2619fc3b2b1271c5e529"
+    },
+    {
+      "path": "evidence/delta-binding.json",
+      "bytes": 1913,
+      "sha256": "776a827021a939d8a1c45a534e00421479562108d2920f5598375f44259f0f21"
+    },
+    {
+      "path": "evidence/existing-binding-facts.json",
+      "bytes": 4959,
+      "sha256": "2f09480c6a77def1bf0d3aee0a28bd0ee5392ea52e22d0649281a1fec95f0667"
+    },
+    {
+      "path": "evidence/ledger.json",
+      "bytes": 2559,
+      "sha256": "97ad3af39f97f5134818bfeb88af1af367e02ad8a67e802d80768353d9d81d53"
+    },
+    {
+      "path": "evidence/mechanics-summary.json",
+      "bytes": 516,
+      "sha256": "61370afb33b159495f53ce5b86fbc4db74a4691330418d838be7d2e44378cc33"
+    },
+    {
+      "path": "evidence/preservation-check.json",
+      "bytes": 527,
+      "sha256": "dfda0c376183e922a93f1487af4b4f0b76235fd1e8a072c6aa3de759695c8e31"
+    },
+    {
+      "path": "evidence/private-review.zip",
+      "bytes": 2192,
+      "sha256": "e76365458593bfba0b6f18534ec8c1559a68ef3e7f1cb3f1ad26ad7595c4866c"
+    },
+    {
+      "path": "evidence/private-source-archive-manifest.json",
+      "bytes": 209,
+      "sha256": "84ff215f914626b2375cfbf1d197540aa3a1cda49d28c756880bd7e2df62209e"
+    },
+    {
+      "path": "evidence/private-source.zip",
+      "bytes": 17553,
+      "sha256": "4471ed7c7b37b63f717a3d31394bea5dbb045bc01cc767085c52b66e587a8e32"
+    },
+    {
+      "path": "evidence/review-binding.json",
+      "bytes": 876,
+      "sha256": "052fda11e45b9a79692af5ad9f9c1c0e4692d3cf322025111e59c2d7f7b15479"
+    },
+    {
+      "path": "evidence/review-input-manifest.json",
+      "bytes": 2986,
+      "sha256": "50c78a80ef47230d776c378ee1aa9a0dc6eed6d95cef3816fab92e79f4475eeb"
+    },
+    {
+      "path": "handoff.md",
+      "bytes": 4509,
+      "sha256": "bd6e8a4ecaa208b9830b44d3a71b177244c218e58479812df8449e7efad7bbfa"
+    },
+    {
+      "path": "native-tool-metadata.json",
+      "bytes": 16447,
+      "sha256": "d64c47e4274e3d26b67247b5ce1202bc35f21a89c17d13c9ef60bbeb9f1695d3"
+    },
+    {
+      "path": "public/architecture.md",
+      "bytes": 3296,
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700"
+    },
+    {
+      "path": "public/brief.md",
+      "bytes": 3000,
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8"
+    },
+    {
+      "path": "public/brownfield-provenance.md",
+      "bytes": 5244,
+      "sha256": "155f6f736adf4d48b71074f74a9221d9f8ac796a938b5b8b0650f741d59eb548"
+    },
+    {
+      "path": "public/candidate-admission.json",
+      "bytes": 1322,
+      "sha256": "fc743e339885ac0cc25b3409c23a1497e075786730fd9f42f0b0cd64de33e856"
+    },
+    {
+      "path": "public/checks.py",
+      "bytes": 9151,
+      "sha256": "783561065c3bc6c814aed3ba5c943710442dbbee4502ad7db6b58eed4dabeccf"
+    },
+    {
+      "path": "public/common-outcome-record.json",
+      "bytes": 1176,
+      "sha256": "faf63ce63336e9df81646822181af74c995853482b838b254773a68b143f20ab"
+    },
+    {
+      "path": "public/common-profile-proposal.json",
+      "bytes": 1533,
+      "sha256": "d153c97695ee95521331606ce413950df7c8c8f47f69c8441853fc3499883552"
+    },
+    {
+      "path": "public/deadlines.py",
+      "bytes": 1229,
+      "sha256": "7e025a3e49625134abaad80036832746cb2b21f2e1bf976387f872ccb2437165"
+    },
+    {
+      "path": "public/dto_preflight.py",
+      "bytes": 7883,
+      "sha256": "e6bba598c515925ce584342190b18f5fb7f4a67054e66e55d1c5572cb43e975d"
+    },
+    {
+      "path": "public/holdout-procedure.md",
+      "bytes": 3643,
+      "sha256": "28f2169bc7fce3ccf586aa2527fef359a9709aa4eb87b9cb7feb6aff41309f9b"
+    },
+    {
+      "path": "public/oldschool-workflow-brief-20261008.md",
+      "bytes": 2262,
+      "sha256": "5b9dddff5d07d9cb1e6427c43e46f1259e9fb49fd030fc0a6e1e44b21e60aadc"
+    },
+    {
+      "path": "public/operator-evidence-contract.md",
+      "bytes": 5464,
+      "sha256": "cf230d578bacbb22d32743fecbc87d079eb03644ce8aabe8cdcd8296d03c49cb"
+    },
+    {
+      "path": "public/owned_transport.py",
+      "bytes": 3279,
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487"
+    },
+    {
+      "path": "public/q1-intent-setup-v1.md",
+      "bytes": 3620,
+      "sha256": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e"
+    },
+    {
+      "path": "public/release.py",
+      "bytes": 4716,
+      "sha256": "15df0312e5c1150e685a44a49d969766f20bf6194f7b0b48cf2a80605f23d291"
+    },
+    {
+      "path": "public/rubric.json",
+      "bytes": 5369,
+      "sha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37"
+    },
+    {
+      "path": "public/task-requirement-map.json",
+      "bytes": 3857,
+      "sha256": "2a6473f03df9aace3c7222a61e0078d97aabdf3d9a3d908ea3f1c36b5962f53c"
+    },
+    {
+      "path": "public/tasks/01-create-order.md",
+      "bytes": 1189,
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9"
+    },
+    {
+      "path": "public/tasks/02-reserve-stock.md",
+      "bytes": 1075,
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6"
+    },
+    {
+      "path": "public/tasks/03-persist-state.md",
+      "bytes": 737,
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53"
+    },
+    {
+      "path": "public/tasks/04-order-lifecycle.md",
+      "bytes": 1028,
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0"
+    },
+    {
+      "path": "public/tasks/05-change-limit.md",
+      "bytes": 1315,
+      "sha256": "b68ccd173891692050c64101af47754f1213e745a63071653b30b8d9d6ccf17f"
+    },
+    {
+      "path": "public/tasks/06-repair-regression.md",
+      "bytes": 892,
+      "sha256": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a"
+    },
+    {
+      "path": "public/test_mechanics.py",
+      "bytes": 8712,
+      "sha256": "9ee8088e7e61932acf67a8fbae4d1a49b7e3999571f2feff7fbb637f060b6603"
+    },
+    {
+      "path": "safe-summary.json",
+      "bytes": 1501,
+      "sha256": "b966214490c0d7bd10f0aba7661946e299a1b95b5773556f387c4b0af26197ca"
+    }
+  ]
+}

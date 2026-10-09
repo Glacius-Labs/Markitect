@@ -1,0 +1,42 @@
+{
+  "mechanicsVerdict": "CLOSED",
+  "requirementId": "verification_quality",
+  "blocker": false,
+  "studyAdmission": "NOT ADMITTED",
+  "actualComparison": "NOT EXECUTABLE: actual Main native role runtime and parent-chat profile bindings missing",
+  "priorDeclaredCoverage": "Qualified earlier source coverage preserved; not reopened",
+  "fixtureProcess": {
+    "consumed": 1,
+    "testsRun": 26,
+    "exitCode": 0,
+    "max": 1
+  },
+  "correctionBatchesConsumed": 1,
+  "reviewersConsumed": 1,
+  "allRemainingQuotas": 0,
+  "sourceCorrectionsAfterTerminal": 0,
+  "testProcessesAfterTerminal": 0,
+  "sourceFreeze": "b4d645a02a27b87a844799d050e1d54f0e663fee",
+  "reviewManifestSha256": "50c78a80ef47230d776c378ee1aa9a0dc6eed6d95cef3816fab92e79f4475eeb",
+  "privateReviewSha256": "8c67ab8381bf3e6fd028d891dbed3406e8009854bcce34f191052aa3f91b8b3c",
+  "privateReviewZipSha256": "e76365458593bfba0b6f18534ec8c1559a68ef3e7f1cb3f1ad26ad7595c4866c",
+  "profileSha256": "8c1bfcb59342fe41c85ff010e4decad09a28ca4a4415a769b55261ae5e35e956",
+  "designBlocksReadyClassicConventionalPairs": false,
+  "proposedFollowupCells": 6,
+  "actualFollowupTrials": 0,
+  "globalTrialCeiling": 8,
+  "maxResearchQuestions": 2,
+  "productActors": 0,
+  "providerApi": 0,
+  "codexCli": 0,
+  "appserver": 0,
+  "productBuilds": 0,
+  "serviceStarts": 0,
+  "fullTrials": 0,
+  "unknownMeasurements": {
+    "cost": null,
+    "servingModel": null,
+    "tokens": null,
+    "humanOversight": null
+  }
+}

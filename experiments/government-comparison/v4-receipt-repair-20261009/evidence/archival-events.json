@@ -1,0 +1,15 @@
+{
+  "events": [
+    {
+      "stage": "Profile metadata collection before freeze",
+      "failure": "PowerShell array plus comma expression produced one joined path",
+      "disposition": "No profile written; data collection corrected using explicit filename array; no product/test/Actor invocation"
+    },
+    {
+      "stage": "Post-terminal evidence summary serialization",
+      "failure": "Bare false token in PowerShell hashtable",
+      "disposition": "Existing ledger/review binding preserved; safe summary serialization completed with Boolean literal; evaluator/source/test/quotas unchanged"
+    }
+  ],
+  "scope": "Archival/metadata command errors only, no additional evaluator correction batch or test process"
+}
