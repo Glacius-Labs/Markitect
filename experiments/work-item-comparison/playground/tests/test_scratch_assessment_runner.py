@@ -1,5 +1,6 @@
 """Provider-free admission and startup-control tests for the supplement."""
 from copy import deepcopy
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import subprocess
@@ -18,9 +19,19 @@ class ScratchRunnerTests(unittest.TestCase):
         self.plan["sourcePins"] = {name: runner.digest(runner.ROOT / name) for name in self.plan["sourcePins"]}
         self.exe = Path("C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/9691020b546a15b2/codex.exe")
 
+    def verify_fresh_fixture(self, plan):
+        class Clock(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return cls(2026, 10, 9, 21, 10, tzinfo=timezone.utc)
+        # Admission fixtures do not depend on whether the actual single-use
+        # execution has already closed. No live ledger is edited or removed.
+        with patch.object(runner, "datetime", Clock), patch.object(Path, "exists", return_value=False):
+            return runner.verify(plan, self.exe)
+
     def test_exact_frozen_inputs_admit_without_native_dispatch(self):
         with patch.object(runner.subprocess, "run") as native:
-            raw, candidate, requirements, binding = runner.verify(self.plan, self.exe)
+            raw, candidate, requirements, binding = self.verify_fresh_fixture(self.plan)
         native.assert_not_called()
         self.assertEqual(runner.manifest(candidate), self.plan["candidateManifest"])
         self.assertEqual(runner.manifest(requirements), self.plan["initialPublicManifest"])
@@ -33,7 +44,7 @@ class ScratchRunnerTests(unittest.TestCase):
                 plan = deepcopy(self.plan)
                 plan[field] = {}
                 with self.assertRaises(ValueError):
-                    runner.verify(plan, self.exe)
+                    self.verify_fresh_fixture(plan)
 
     def test_reservation_is_single_use_and_original_bytes_retained(self):
         with tempfile.TemporaryDirectory() as folder:

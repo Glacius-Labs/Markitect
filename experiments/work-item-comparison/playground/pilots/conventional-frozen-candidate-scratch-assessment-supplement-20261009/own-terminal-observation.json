@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "scope": "Exact owned native AppServer launch PID3064 only",
+  "ownedProcess": "PIDabsent after terminalcompleted",
+  "completeDescendantInventory": "unknown",
+  "action": "none"
+}

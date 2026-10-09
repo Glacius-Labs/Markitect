@@ -1,0 +1,213 @@
+{
+  "schema": 1,
+  "classification": "Inherited turn-scoped plugin command hook is separate from observed model-helper/subagent metric; not an additional model turn",
+  "hookEvents": [
+    {
+      "scope": "supplement",
+      "observedAt": "2026-10-09T21:24:25.746849+00:00",
+      "method": "hook/started",
+      "threadId": "01a1228c-63c6-7730-8d24-a03a77419b5c",
+      "turnId": "01a1228c-647e-7941-bf93-91fa1522190e",
+      "eventName": "stop",
+      "executionMode": "sync",
+      "handlerType": "command",
+      "hookScope": "turn",
+      "source": "plugin",
+      "plugin": "ralph-loop/1.0.0",
+      "status": "running",
+      "entryKinds": []
+    },
+    {
+      "scope": "supplement",
+      "observedAt": "2026-10-09T21:24:26.056711+00:00",
+      "method": "hook/completed",
+      "threadId": "01a1228c-63c6-7730-8d24-a03a77419b5c",
+      "turnId": "01a1228c-647e-7941-bf93-91fa1522190e",
+      "eventName": "stop",
+      "executionMode": "sync",
+      "handlerType": "command",
+      "hookScope": "turn",
+      "source": "plugin",
+      "plugin": "ralph-loop/1.0.0",
+      "status": "failed",
+      "entryKinds": [
+        "error"
+      ]
+    },
+    {
+      "scope": "originalClosedStudy",
+      "observedAt": "2026-10-09T20:58:01.785583+00:00",
+      "method": "hook/started",
+      "threadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "turnId": "01a12273-5e45-7810-aeb4-b7dfb7dd65ce",
+      "eventName": "stop",
+      "executionMode": "sync",
+      "handlerType": "command",
+      "hookScope": "turn",
+      "source": "plugin",
+      "plugin": "ralph-loop/1.0.0",
+      "status": "running",
+      "entryKinds": []
+    },
+    {
+      "scope": "originalClosedStudy",
+      "observedAt": "2026-10-09T20:58:02.151709+00:00",
+      "method": "hook/completed",
+      "threadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "turnId": "01a12273-5e45-7810-aeb4-b7dfb7dd65ce",
+      "eventName": "stop",
+      "executionMode": "sync",
+      "handlerType": "command",
+      "hookScope": "turn",
+      "source": "plugin",
+      "plugin": "ralph-loop/1.0.0",
+      "status": "failed",
+      "entryKinds": [
+        "error"
+      ]
+    },
+    {
+      "scope": "originalClosedStudy",
+      "observedAt": "2026-10-09T20:55:43.572250+00:00",
+      "method": "hook/started",
+      "threadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "turnId": "01a12272-3fed-7740-a15a-5ecdab36e792",
+      "eventName": "stop",
+      "executionMode": "sync",
+      "handlerType": "command",
+      "hookScope": "turn",
+      "source": "plugin",
+      "plugin": "ralph-loop/1.0.0",
+      "status": "running",
+      "entryKinds": []
+    },
+    {
+      "scope": "originalClosedStudy",
+      "observedAt": "2026-10-09T20:55:43.905581+00:00",
+      "method": "hook/completed",
+      "threadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "turnId": "01a12272-3fed-7740-a15a-5ecdab36e792",
+      "eventName": "stop",
+      "executionMode": "sync",
+      "handlerType": "command",
+      "hookScope": "turn",
+      "source": "plugin",
+      "plugin": "ralph-loop/1.0.0",
+      "status": "failed",
+      "entryKinds": [
+        "error"
+      ]
+    },
+    {
+      "scope": "originalClosedStudy",
+      "observedAt": "2026-10-09T21:00:42.372752+00:00",
+      "method": "hook/started",
+      "threadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "turnId": "01a12275-76ea-7071-a977-f92bb78442fe",
+      "eventName": "stop",
+      "executionMode": "sync",
+      "handlerType": "command",
+      "hookScope": "turn",
+      "source": "plugin",
+      "plugin": "ralph-loop/1.0.0",
+      "status": "running",
+      "entryKinds": []
+    },
+    {
+      "scope": "originalClosedStudy",
+      "observedAt": "2026-10-09T21:00:42.679568+00:00",
+      "method": "hook/completed",
+      "threadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "turnId": "01a12275-76ea-7071-a977-f92bb78442fe",
+      "eventName": "stop",
+      "executionMode": "sync",
+      "handlerType": "command",
+      "hookScope": "turn",
+      "source": "plugin",
+      "plugin": "ralph-loop/1.0.0",
+      "status": "failed",
+      "entryKinds": [
+        "error"
+      ]
+    },
+    {
+      "scope": "originalClosedStudy",
+      "observedAt": "2026-10-09T21:04:06.391213+00:00",
+      "method": "hook/started",
+      "threadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "turnId": "01a12277-ec09-7152-81f3-744f387dfd63",
+      "eventName": "stop",
+      "executionMode": "sync",
+      "handlerType": "command",
+      "hookScope": "turn",
+      "source": "plugin",
+      "plugin": "ralph-loop/1.0.0",
+      "status": "running",
+      "entryKinds": []
+    },
+    {
+      "scope": "originalClosedStudy",
+      "observedAt": "2026-10-09T21:04:06.769795+00:00",
+      "method": "hook/completed",
+      "threadId": "01a12272-3ea5-7870-8ca0-9c92e1945395",
+      "turnId": "01a12277-ec09-7152-81f3-744f387dfd63",
+      "eventName": "stop",
+      "executionMode": "sync",
+      "handlerType": "command",
+      "hookScope": "turn",
+      "source": "plugin",
+      "plugin": "ralph-loop/1.0.0",
+      "status": "failed",
+      "entryKinds": [
+        "error"
+      ]
+    },
+    {
+      "scope": "originalClosedStudy",
+      "observedAt": "2026-10-09T21:06:45.227144+00:00",
+      "method": "hook/started",
+      "threadId": "01a1227b-0d5f-7352-bee3-b51b5fcdac9b",
+      "turnId": "01a1227b-0e20-78e0-9f1a-19964a666f07",
+      "eventName": "stop",
+      "executionMode": "sync",
+      "handlerType": "command",
+      "hookScope": "turn",
+      "source": "plugin",
+      "plugin": "ralph-loop/1.0.0",
+      "status": "running",
+      "entryKinds": []
+    },
+    {
+      "scope": "originalClosedStudy",
+      "observedAt": "2026-10-09T21:06:45.666529+00:00",
+      "method": "hook/completed",
+      "threadId": "01a1227b-0d5f-7352-bee3-b51b5fcdac9b",
+      "turnId": "01a1227b-0e20-78e0-9f1a-19964a666f07",
+      "eventName": "stop",
+      "executionMode": "sync",
+      "handlerType": "command",
+      "hookScope": "turn",
+      "source": "plugin",
+      "plugin": "ralph-loop/1.0.0",
+      "status": "failed",
+      "entryKinds": [
+        "error"
+      ]
+    }
+  ],
+  "completedHookCounts": {
+    "originalClosedStudy": {
+      "failed": 5
+    },
+    "supplement": {
+      "failed": 1
+    }
+  },
+  "pluginOrGlobalConfigChanges": 0,
+  "unknowns": [
+    "Exact hook-side effects outside frozen inputs not audited",
+    "Complete OS descendant inventory unknown",
+    "Global plugin/config contents at original launch not frozen"
+  ],
+  "scientificBoundary": "Canonical/public/independent test successes and before/after source hashes remain verified; no claim of a hook-free environment or method superiority"
+}

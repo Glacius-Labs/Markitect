@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "liveAdmissionAfterClosure": "declined by retained single-use reservation/destination",
+  "nativeDispatch": false,
+  "ledgerSha256": "632ceeb9468dff6ad4f1e625fda3ee626a6d04a9267b260b68e2b34819991004",
+  "providerFreeRunnerFixturesAfterClosure": {
+    "passed": 5,
+    "nativeCalls": 0,
+    "fixtureScope": "Clock/fresh-reservation observations mocked; real execution reservation notchanged"
+  }
+}

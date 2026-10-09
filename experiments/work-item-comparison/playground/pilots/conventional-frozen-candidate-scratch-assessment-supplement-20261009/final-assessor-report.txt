@@ -1,0 +1,77 @@
+# Final assessment — Conventional Readinglog candidate
+
+Assessment date: 2026-10-09
+Assessed workspace: `audit/scratch/candidate`
+Frozen requirements: `audit/scratch/requirements` (read-only sibling)
+Declared release: S4, item B12, from `.study/station.json`
+
+## Scope and evidence
+
+This was a read-only assessment of the candidate. I did not modify application code, tests, requirements, docs, or caches. The only file written for this assessment is this report. Temporary database, CSV, and test data were directed below `.scratch/`; Python commands used `-B`. No agents or helpers were used.
+
+I read the frozen README, BACKLOG, QUALITY, AGENTS, and public acceptance runner, plus the candidate README, backlog, station metadata, runtime profile, application/helpers, tests, TEAMWORK.md, and WORKLOG.md. These files describe the active CLI and B12 compatibility contract. I did not inspect implementation transcripts or private feedback. Candidate worklog/team statements are treated as claims, not independent execution evidence.
+
+The declared station is S4 and releases B12. The final snapshot directory was available and the candidate entrypoint was present. There is no `.git` repository in the candidate directory (`git status --short` returned “fatal: not a git repository”), so Git-bound change history, a diff, and a content-addressed immutable-snapshot check could not be established here. No prior S1–S3 workspace snapshots were supplied for separate reassessment.
+
+## Commands and results
+
+1. Full existing suite:
+
+   `python -B -m unittest discover -s tests -v`
+
+   Environment: PowerShell `$env:TEMP` and `$env:TMP` set to the candidate `.scratch` directory. **PASS: 24 tests, 0 failures, 0 errors** (7.824 seconds). The Python launcher printed `Failed to find real location of C:\Python313\python.exe`; despite that launcher warning, the suite ran to completion and exited successfully.
+
+2. Frozen original public acceptance cases:
+
+   `python -B ..\requirements\checks\acceptance.py --repo <absolute-candidate-path> --case readinglog --station 4`
+
+   Temporary directory environment also pointed to `.scratch`. **PASS: 13 of 13 findings**, detailed below. The same runner was first invoked with `--repo .`; it reported missing `app.py` and did not run functional checks. This was an invocation/path resolution error (**EVALUATION_ERROR**, not a product failure); rerunning with the absolute workspace path completed all checks. The Python launcher warning appeared again.
+
+3. Assessor-authored public-boundary probes, run through actual `app.py` subprocesses using `python -B` and a temporary directory under `.scratch`: **PASS: 5 of 5**. Cases: missing database gives empty default/legacy list and summary; trimmed author filters remain case-sensitive and ID identity is case-sensitive; export to the database path fails without changing database bytes; CSV IDs differing only by case are accepted and retain input order; a later invalid import row rejects the whole import without changing database bytes.
+
+   An initial draft of the probe harness called an undefined assertion helper (**EVALUATION_ERROR**, before exercising the application). I corrected the harness and reran all five cases successfully. This does not affect the product test counts.
+
+## Frozen public acceptance findings
+
+All 13 checks below passed in the original frozen runner:
+
+| Public case | Result | Evidence |
+|---|---|---|
+| `legacy-add-restart` | PASS | Add normalized `" a "`; subsequent process listed ID `a`. |
+| `duplicate-no-mutation` | PASS | Duplicate ID returned error/exit 2 without database mutation. |
+| `finish-idempotence` | PASS | Repeated finish returned identical record. |
+| `status-filter-regression` | PASS | Finished record no longer appeared in unread filter. |
+| `valid-import` | PASS | One-row import returned `{"imported":1}`. |
+| `import-all-or-nothing` | PASS | File with a duplicate after a valid row was rejected without mutation. |
+| `summary-count-pages` | PASS | Two records, one finished, 140 pages reported with new `entries` key. |
+| `composed-list-filter` | PASS | Trimmed author plus finished status selected the expected record. |
+| `unknown-author-summary` | PASS | Unknown author returned `{"authors":[]}`. |
+| `export-quotes-status-no-db-mutation` | PASS | Newline title round-tripped through CSV, finished status preserved, DB bytes unchanged. |
+| `intentional-legacy-list` | PASS | `list --legacy` returned `books` content equal to default `entries`. |
+| `intentional-legacy-summary` | PASS | `summary --legacy` returned former `books` count of 2. |
+| `malformed-db-preserved` | PASS | Malformed stored JSON produced an error and retained original bytes. |
+
+The runner’s `application-entrypoint` check was not applicable as a finding because `app.py` was present and, on the corrected invocation, the runner proceeded to all 13 functional checks.
+
+## Requirements and quality review
+
+- **Function and rules — PASS for exercised public behavior.** The S4 default list/summary naming, legacy output, add/finish, import, filtering, export, malformed-data handling, and persistence paths passed the suite, frozen acceptance checks, and additional probes.
+- **Regression and durable state — PASS for tested cases.** Tests and acceptance invoke separate CLI processes; tested failed mutations preserve database bytes, successful finish/import persist, and exports leave the database unchanged. No concurrent multiwriter guarantee is required by the contract.
+- **Compatibility — PASS.** The compatibility test supplies pre-rename raw record arrays and checks default and legacy outputs, filter composition, unchanged bytes for reads, and continued add/finish/import/export behavior. It passed as part of the 24-test suite.
+- **Documentation/interfaces — PASS by inspection.** README examples and descriptions cover active and legacy list/summary forms, command behavior, normalization, CSV, errors, and persistence. Active code uses entry terminology for values and output keys; `books` remains for the documented compatibility path. Stored record field names and command names remain stable.
+- **Code quality/changeability — PASS with ordinary small-project limitations.** The CLI keeps command integration in `app.py` and separates query/export helpers. Validation and atomic replacement are straightforward to follow. No architecture drift or unrelated product components were observed. The assessment did not exercise concurrency, which is explicitly out of scope.
+- **Tests and operational documentation — PASS for the delivered state.** The suite contains and passes 24 tests; test coverage spans baseline, compatibility, query/export helpers, import, S3 CLI integration, and summaries. README gives runnable CLI examples. The frozen acceptance runner adds the separate 13-case check set.
+- **Method/station history — UNKNOWN / NOT independently verifiable.** `.study/station.json` declares S4. Candidate `TEAMWORK.md` records three helper roles and approximate overlap/contributions, but this assessment has no native receipts to independently verify identities, exact execution intervals, model/effort telemetry, or actual overlapping runs. The file itself reports missing exact telemetry. No historical station snapshots, Git metadata, or immutable snapshot hash were available to inspect. Conventional requires no Markitect model or ontology; their absence is not a defect.
+- **Human acceptance — NOT established.** Automated technical checks do not establish human acceptance, as the frozen rubric states.
+
+## Failures, evaluation errors, and limitations
+
+- **Product FAIL:** None observed in the commands and cases executed.
+- **EVALUATION_ERROR:** The first frozen-runner invocation used a relative repo path and therefore did not locate the entrypoint; the absolute-path rerun passed all 13 checks. The first assessor-probe harness had an undefined helper; corrected rerun passed all five probes.
+- **NOT RUN:** Separate assessment of S1, S2, and S3 retained snapshots; unavailable because no such snapshots were present. Concurrent writer behavior was not run and is not required.
+- **Unverified:** Immutable snapshot identity, source-to-check Git binding, historical station progression, and actual native team overlap/receipts. Lack of `.git` metadata prevents independent change-history verification.
+- **Environment limitation:** Python launcher emitted a real-location warning while commands still completed with successful exit status. It is recorded as an environment warning, not silently treated as product output or a test failure.
+
+## Overall finding
+
+For the available declared S4 workspace, the implemented public behavior and regression evidence **PASS**: 24/24 existing tests, 13/13 frozen S4 acceptance findings, and 5/5 additional public-boundary probes passed. This is a positive technical assessment of the inspected workspace, not a claim that historical station snapshots, immutable provenance, native-team execution, or human acceptance were independently established.

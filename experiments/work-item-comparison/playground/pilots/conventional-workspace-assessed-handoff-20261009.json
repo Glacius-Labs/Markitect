@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "objective": "Conventional execution and evaluation works for the fixed Readinglog workspace-snapshot case",
+  "outcome": "TECHNICAL PASS for fourstation execution and final public functionality; no pairedmethodcomparison orhumanacceptance",
+  "completionTarget": "workspace_snapshot",
+  "installationAndExecution": "Commonpublicseededdisposablerepo; variantsetup/ensure_runtime/start/resume/status/cancel/close throughversionedadapter API; actualCodexAppServerLunaHighWindowsMXC/workspace-write",
+  "gitPolicy": "No directmetadatawriteprobe; actors need no branch/commit/merge; GitCLI used for repo preparation/provenance; actualbytebound workspaceassessed",
+  "case": {
+    "name": "readinglog",
+    "items": 12,
+    "stationWaves": [
+      1,
+      3,
+      7,
+      1
+    ],
+    "controllerPublicChecks": [
+      5,
+      8,
+      11,
+      13
+    ],
+    "snapshotsStableAfterChecks": true,
+    "finalCandidateSnapshotSha256": "ae098dd7713a5bc8f7c33cee456c3cea3677f2ecd91a48e3e2d52ffd693729c6",
+    "implementationSourceCommit": "6adcfdb09b3dd579468e43c1b6b0c10fb363a11a"
+  },
+  "initialFinal": {
+    "scope": "OriginalfreshfullyreadonlyAppServerassessment",
+    "result": "Partial;19write/cleanupEVALUATIONERRORS, fourpurequerytestsplusASTboundaryPASS",
+    "evidenceCommit": "da57106262bc43d5e4f58d865db269c9a46c68d2",
+    "closure": "conventional-workspace-snapshot-execution-20261009/closure.json",
+    "rawArchiveSha256": "21f8053721acd24765dfc82c71229c94fdca346ca7c3344f023634092de352a2",
+    "reinterpretation": "none; originalreportretained"
+  },
+  "correctedFinal": {
+    "scope": "Separatelyorderedfinal-only equalhash executioncopy with temporaryscratch",
+    "sourceCommit": "a95f9e0a187dacabbaf296c94db8421a60e8e718",
+    "existingTests": 24,
+    "frozenPublicChecks": 13,
+    "assessorAdditionalBoundaryCases": 5,
+    "allPassed": true,
+    "originalCandidateFiles": 29,
+    "originalRequirementFiles": 12,
+    "allOriginalAndCopiedSemanticHashesUnchanged": true,
+    "model": "gpt-6-luna",
+    "effort": "high",
+    "backend": "codex-app-server",
+    "nativeAssessorStarts": 1,
+    "startupChecks": 1,
+    "observedModelHelpers": 0,
+    "newImplementationStarts": 0,
+    "newCaseStarts": 0,
+    "closure": "conventional-frozen-candidate-scratch-assessment-supplement-20261009/closure.json",
+    "report": "conventional-frozen-candidate-scratch-assessment-supplement-20261009/final-assessor-report.txt",
+    "rawArchiveSha256": "7d9de3421186cf6ff44974fb9b32517314cba0daf5853974def17e57dd9acabd"
+  },
+  "scientistIntervention": {
+    "candidateCodeEdits": 0,
+    "candidateTestOrExpectationEdits": 0,
+    "semanticCoaching": 0,
+    "harnessCorrections": "Prospective workspacecapture, publicspecfreeze beforeactorstart, separate scratchfinal+bytecodesuppression; originals preserved"
+  },
+  "teamEvidence": "Originalnativehelperreceipts showS3independentoverlapandpresentcontributions; finalassessorreportsUNKNOWNbecause nativehistoricalreceiptsnot provided",
+  "environment": "InheritedRalphLoopStopcommandhookfailed five times in originalcontroller/final andonce supplemental; separate from modelhelpermetric. Noglobalplugin/configchanges. No hook-freeclaim.",
+  "usageAndCosts": "Exactnativecounters/usageScopes/timecaptured; aggregateattribution, actualcosts/helpereffectiveidentity/hardnativeglobalcaps/descendants remainunknown",
+  "repositories": "All originalrepos/evidencekept; cleanup after evidence+confirmedown closure possible later; olduncertainCLIuntouched",
+  "futureMatchedMarkitect": {
+    "status": "NOT RUN; adapter waits for genuineMarkitectinterfaces",
+    "condition": "Samefunctionalinputs, completiontarget, stagedrequirements, resources, evaluationconditions anddeclaredcommonruntimecontext; no methodwinnerinferred"
+  },
+  "adapters": [
+    "../adapters/contract.py",
+    "../conventional/adapter.py"
+  ],
+  "assessmentMechanics": [
+    "../final_scratch_assessor.py",
+    "../run_scratch_assessment.py"
+  ],
+  "limits": "Both finiteorders closed; no automaticrerun/refill"
+}
