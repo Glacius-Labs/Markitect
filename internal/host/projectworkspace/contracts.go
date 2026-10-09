@@ -144,7 +144,7 @@ func NormalizeDelta(r Request, h Handle, changes []Change, limits Limits) (Delta
 	}
 
 	normalized := make([]Change, 0, len(changes))
-	touched := make(map[string]string, len(changes)*2)
+	touched := make(map[string]reservedPath, len(changes)*2)
 	totalBytes := 0
 	for _, original := range changes {
 		change := original
@@ -156,9 +156,7 @@ func NormalizeDelta(r Request, h Handle, changes []Change, limits Limits) (Delta
 		if err := authorize(path, allowed, excluded); err != nil {
 			return Delta{}, err
 		}
-		if err := reservePath(touched, path); err != nil {
-			return Delta{}, err
-		}
+		deletesPath := false
 		switch change.Kind {
 		case ChangeAdd, ChangeModify:
 			if change.OldPath != "" || !validMode(change.Mode) || change.Content == nil {
@@ -168,6 +166,7 @@ func NormalizeDelta(r Request, h Handle, changes []Change, limits Limits) (Delta
 			if change.OldPath != "" || change.Mode != "" || change.Content != nil {
 				return Delta{}, fmt.Errorf("%w: delete cannot carry mode or content", ErrInvalidDelta)
 			}
+			deletesPath = true
 		case ChangeRename:
 			oldPath, pathErr := portablePath(change.OldPath)
 			if pathErr != nil || oldPath == path {
@@ -176,15 +175,20 @@ func NormalizeDelta(r Request, h Handle, changes []Change, limits Limits) (Delta
 			if err := authorize(oldPath, allowed, excluded); err != nil {
 				return Delta{}, err
 			}
-			if err := reservePath(touched, oldPath); err != nil {
-				return Delta{}, err
-			}
 			change.OldPath = oldPath
 			if !validMode(change.Mode) || change.Content == nil {
 				return Delta{}, fmt.Errorf("%w: rename requires destination mode and content", ErrInvalidDelta)
 			}
 		default:
 			return Delta{}, fmt.Errorf("%w: unsupported change kind", ErrInvalidDelta)
+		}
+		if err := reservePath(touched, path, deletesPath); err != nil {
+			return Delta{}, err
+		}
+		if change.Kind == ChangeRename {
+			if err := reservePath(touched, change.OldPath, true); err != nil {
+				return Delta{}, err
+			}
 		}
 		if change.Content != nil {
 			if len(change.Content) > limits.MaxFileBytes {
@@ -305,11 +309,16 @@ func within(path, scope string) bool {
 	return path == scope || strings.HasPrefix(path, scope+"/")
 }
 
-func reservePath(touched map[string]string, path string) error {
+type reservedPath struct {
+	path   string
+	delete bool
+}
+
+func reservePath(touched map[string]reservedPath, path string, deletes bool) error {
 	key := strings.ToLower(path)
 	if prior, ok := touched[key]; ok {
-		if prior != path {
-			return fmt.Errorf("%w: case-alias paths %q and %q", ErrInvalidDelta, prior, path)
+		if prior.path != path {
+			return fmt.Errorf("%w: case-alias paths %q and %q", ErrInvalidDelta, prior.path, path)
 		}
 		return fmt.Errorf("%w: path is used by multiple changes: %s", ErrInvalidDelta, path)
 	}
@@ -324,9 +333,14 @@ func reservePath(touched map[string]string, path string) error {
 			continue
 		}
 		if strings.HasPrefix(priorKey, key+"/") || strings.HasPrefix(key, priorKey+"/") {
-			return fmt.Errorf("%w: file/directory path collision between %q and %q", ErrInvalidDelta, prior, path)
+			// Replacing a file with a directory tree (or the inverse) is
+			// valid when the old path is explicitly deleted. Two writes still
+			// cannot name a file and one of its descendants at once.
+			if !prior.delete && !deletes {
+				return fmt.Errorf("%w: file/directory path collision between %q and %q", ErrInvalidDelta, prior.path, path)
+			}
 		}
 	}
-	touched[key] = path
+	touched[key] = reservedPath{path: path, delete: deletes}
 	return nil
 }
