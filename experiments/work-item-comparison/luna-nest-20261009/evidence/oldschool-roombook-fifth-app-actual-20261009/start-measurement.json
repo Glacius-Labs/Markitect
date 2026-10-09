@@ -1,0 +1,26 @@
+{
+  "status": "actual own native start recorded; implementation active; no quality conclusion",
+  "capturedUtc": "2026-10-09T08:01:28.799416+00:00",
+  "clockBasis": "First own reservation; native start observation separately recorded",
+  "reservationUtc": "2026-10-09T07:59:40.609082+00:00",
+  "nativeStartObservedUtc": "2026-10-09T08:00:43.456946+00:00",
+  "modelStartExactUtc": null,
+  "ownHandle": "/root/app_conventional_oldschool_roombook_primary",
+  "stationDeadlinesUtc": [
+    "2026-10-09T08:22:10.609082+00:00",
+    "2026-10-09T08:44:40.609082+00:00",
+    "2026-10-09T09:07:10.609082+00:00",
+    "2026-10-09T09:29:40.609082+00:00"
+  ],
+  "implementationDeadlineUtc": "2026-10-09T09:29:40.609082+00:00",
+  "assessmentEndUtc": "2026-10-09T09:49:40.609082+00:00",
+  "cellEndUtc": "2026-10-09T09:59:40.609082+00:00",
+  "rootAbsoluteEndUtc": "2026-10-09T10:11:17Z",
+  "globalFullStartsConsumed": 5,
+  "globalMaximum": 6,
+  "phaseOwner": "Oldschool execution; Scientist fixed metadata snapshots/measurement/freeze/neutral fresh final",
+  "noAdditionalActorOrModelStartByScientist": true,
+  "usageServingCosts": null,
+  "initialContextReceipt": "Not yet supplied; no private context probe",
+  "inputPreparationEvidenceCommit": "2eee96a0e56f01f03a14b3badf2488e8cbd86ea9"
+}
