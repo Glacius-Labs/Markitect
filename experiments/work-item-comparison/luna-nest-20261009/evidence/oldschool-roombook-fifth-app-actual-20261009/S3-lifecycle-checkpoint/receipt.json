@@ -1,0 +1,20 @@
+{
+  "utc": "2026-10-09T08:15:13.449027+00:00",
+  "entries": 6,
+  "recordedActive": [
+    {
+      "reservation": 3,
+      "kind": "implementation",
+      "depth": 1,
+      "parent": null,
+      "handle": "/root/app_conventional_oldschool_roombook_primary",
+      "requestedModel": "gpt-6-luna",
+      "requestedReasoning": "high"
+    }
+  ],
+  "sourceBoundCounters": "cooperative ledger, not OS/provider hard enforcement",
+  "quality": "No contribution or team quality conclusion before independent final",
+  "noAdditionalScientistModelsOrProbes": true,
+  "S2OwnerReceiptSha256": "5d005b2e443dac20bbc59ed66053727dbca284ce69c73262ee8cd7c0417fd319",
+  "noRepeatedStationTransition": true
+}

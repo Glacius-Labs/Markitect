@@ -1,0 +1,248 @@
+{
+  "case": "roombook",
+  "arm": "conventional",
+  "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-oldschool-app",
+  "stateDir": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app",
+  "seedCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+  "preparedCommit": "88d7233bc14bc962e7ef471af0faaf3c4824351b",
+  "preparedTree": "8cea62c20a64d4571017818c7e73855b1ead5676",
+  "createdUtc": "2026-10-09T07:52:47.341253+00:00",
+  "status": "running",
+  "sessions": [],
+  "interventions": [],
+  "productReadiness": null,
+  "initialSetup": [],
+  "trialGrant": null,
+  "sessionId": null,
+  "deadlineUtc": null,
+  "implementationDeadlineUtc": null,
+  "evaluationDeadlineUtc": null,
+  "tokens": null,
+  "cost": null,
+  "servingModel": null,
+  "stationIndex": 2,
+  "stations": [
+    {
+      "id": "S1",
+      "items": [
+        "R01"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S2",
+      "items": [
+        "R02",
+        "R03",
+        "R04"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S3",
+      "items": [
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11"
+      ],
+      "requiresTeam": true
+    },
+    {
+      "id": "S4",
+      "items": [
+        "R12"
+      ],
+      "requiresTeam": false
+    }
+  ],
+  "snapshots": [
+    {
+      "stationIndex": 0,
+      "station": "S1",
+      "mainCommit": "370b996d1e2ff5f7025a30eb0904c7367702257a",
+      "headCommit": "370b996d1e2ff5f7025a30eb0904c7367702257a",
+      "dirtyStatus": "",
+      "evaluationRepo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app\\stations\\S1\\main",
+      "rawFiles": {
+        ".codex/config.toml": {
+          "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+          "bytes": 281
+        },
+        ".gitignore": {
+          "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+          "bytes": 36
+        },
+        ".study/completion.json": {
+          "sha256": "eefaa9f822e27314d19f0029d4807a61eec3487110b931b9cc7d45b74fdf078a",
+          "bytes": 106
+        },
+        ".study/station.json": {
+          "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+          "bytes": 70
+        },
+        ".work/logs/acceptance-s1.log": {
+          "sha256": "88d79e18bd339e853041ee06c6fac1e0b68f5f6e652a169b36ec2a81164c287c",
+          "bytes": 642
+        },
+        ".work/logs/post-merge-acceptance-s1.log": {
+          "sha256": "88d79e18bd339e853041ee06c6fac1e0b68f5f6e652a169b36ec2a81164c287c",
+          "bytes": 642
+        },
+        ".work/logs/post-merge-unit-s1.log": {
+          "sha256": "5d23af1634ae8820ecb88a897f1e832ba11e0bd00843b81b6390d52bcb9b88a6",
+          "bytes": 724
+        },
+        ".work/logs/unit-s1.log": {
+          "sha256": "4297317d1547820e6618611c8c62f4415a074633a5693ae1408e3597eaa9aabf",
+          "bytes": 724
+        },
+        "AGENTS.md": {
+          "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+          "bytes": 5411
+        },
+        "app.py": {
+          "sha256": "858239654e2a48821108e39603b2b64f8a2bc263cb3159e4dad45b32fd303ffb",
+          "bytes": 6607
+        },
+        "BACKLOG.md": {
+          "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+          "bytes": 2566
+        },
+        "checks/acceptance.py": {
+          "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+          "bytes": 7554
+        },
+        "PROGRESS.md": {
+          "sha256": "b7257b20f07d487d5d1f09967115289426bad0c9bad56b2e0df2e2d36e3589be",
+          "bytes": 1158
+        },
+        "QUALITY.md": {
+          "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+          "bytes": 2687
+        },
+        "README.md": {
+          "sha256": "5c15614990aa72fa3de6570d9457f176fefced2df5590c598ea535eed411a872",
+          "bytes": 2785
+        },
+        "STATIONS.json": {
+          "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+          "bytes": 595
+        },
+        "tests/test_cli.py": {
+          "sha256": "412dc8a14456792cdc6c74762dffef0a9ac78fdae9e1c815430b765233506e01",
+          "bytes": 3817
+        },
+        "WORKLOG.md": {
+          "sha256": "0beda77c7c4fa4c93068de41940ee17b71b5deecf56d0149d3565a59b2d04a2c",
+          "bytes": 1420
+        }
+      },
+      "bundleSha256": "a54e0355b320c64ef0006d9087119fa61cead81e11dedadf4c301bd6346a1536",
+      "utc": "2026-10-09T08:05:48.920924+00:00"
+    },
+    {
+      "stationIndex": 1,
+      "station": "S2",
+      "mainCommit": "c705f94dafb9a091473e5a90522c3f870640b097",
+      "headCommit": "c705f94dafb9a091473e5a90522c3f870640b097",
+      "dirtyStatus": "M .study/station.json",
+      "evaluationRepo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app\\stations\\S2\\main",
+      "rawFiles": {
+        ".codex/config.toml": {
+          "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+          "bytes": 281
+        },
+        ".gitignore": {
+          "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+          "bytes": 36
+        },
+        ".study/completion.json": {
+          "sha256": "546cbebf26287dfa2c0cc08c67c98de06bb4bfb31e96f7625014e24ad2f35f98",
+          "bytes": 120
+        },
+        ".study/station.json": {
+          "sha256": "cc220aa0278ce5bc5668fb65f06de74df717361290c874ca6df0bf47e823975e",
+          "bytes": 92
+        },
+        ".work/logs/acceptance-s1.log": {
+          "sha256": "88d79e18bd339e853041ee06c6fac1e0b68f5f6e652a169b36ec2a81164c287c",
+          "bytes": 642
+        },
+        ".work/logs/acceptance-s2.log": {
+          "sha256": "326514e2504b7ad94a1b723ff447429c7e09b136d3bf64f05899b1eef9797ad5",
+          "bytes": 871
+        },
+        ".work/logs/post-merge-acceptance-s1.log": {
+          "sha256": "88d79e18bd339e853041ee06c6fac1e0b68f5f6e652a169b36ec2a81164c287c",
+          "bytes": 642
+        },
+        ".work/logs/post-merge-acceptance-s2.log": {
+          "sha256": "326514e2504b7ad94a1b723ff447429c7e09b136d3bf64f05899b1eef9797ad5",
+          "bytes": 871
+        },
+        ".work/logs/post-merge-unit-s1.log": {
+          "sha256": "5d23af1634ae8820ecb88a897f1e832ba11e0bd00843b81b6390d52bcb9b88a6",
+          "bytes": 724
+        },
+        ".work/logs/post-merge-unit-s2.log": {
+          "sha256": "2a79c302942a9caab78d10a2168c422f5619f730c7ed62b4d9113ff74d6c23c7",
+          "bytes": 1044
+        },
+        ".work/logs/unit-s1.log": {
+          "sha256": "4297317d1547820e6618611c8c62f4415a074633a5693ae1408e3597eaa9aabf",
+          "bytes": 724
+        },
+        ".work/logs/unit-s2.log": {
+          "sha256": "541c401696da915ced3f6da713aa4afaea05208cea5d3cb2db3ae0bec78d254e",
+          "bytes": 1044
+        },
+        "AGENTS.md": {
+          "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+          "bytes": 5411
+        },
+        "app.py": {
+          "sha256": "394665060ea736789a4555bc40e958bd6cf28fd95be236bf398e35ea701e60a1",
+          "bytes": 8085
+        },
+        "BACKLOG.md": {
+          "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+          "bytes": 2566
+        },
+        "checks/acceptance.py": {
+          "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+          "bytes": 7554
+        },
+        "PROGRESS.md": {
+          "sha256": "ac1d2d694f01bbce19537fb69d6ed998e90f99e6b29226d3bdbb4ba9986c9cb7",
+          "bytes": 1182
+        },
+        "QUALITY.md": {
+          "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+          "bytes": 2687
+        },
+        "README.md": {
+          "sha256": "890f64f8eeff0ace06b787124bbd3d9336ac33262c164b25362036b0fb844eed",
+          "bytes": 2830
+        },
+        "STATIONS.json": {
+          "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+          "bytes": 595
+        },
+        "tests/test_cli.py": {
+          "sha256": "3fb29edd938cadc20459463ce60685e53b85af886509e7e5a7d5cd0de4949d3f",
+          "bytes": 5785
+        },
+        "WORKLOG.md": {
+          "sha256": "4c3dd35a94d4b2ab1676abe53d5aa8bc558f274d0a4087431c03e1b77a4dd661",
+          "bytes": 1166
+        }
+      },
+      "bundleSha256": "421302552c8a8a81c130d843afc832f059bf061a3b07b4795a568f021d8d90ac",
+      "utc": "2026-10-09T08:11:23.128112+00:00"
+    }
+  ]
+}
