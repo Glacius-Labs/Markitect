@@ -16359,6 +16359,17 @@
         "fullGoSuite5b65": "Owner reports full fresh go test ./... PASS; hosted exact final head gates still required",
         "newActual": "NOT_STARTED",
         "leaseEndUnchanged": "2026-10-10T00:26:23Z"
+      },
+      "latestIntegrationPreparation": {
+        "setupFixOwnerReportedSha": "3e9800cf",
+        "setupFix": "Owner integrated explicit writer/readonlyreviewer/omissioninheritance contract with focused checks and independent review",
+        "workspaceFix": "Narrow Git-reported directory identity fallback for Windows alias only, lexical containment/symlink/Close guards preserved; positive alias and negative regressions/review active",
+        "missingVerifierFinding": "Owner discovered private runtime lacks top-level native verifier, Verify would only execute declared checks. New runtime will bind separate readonly native verifier from root-review configuration; no missing role simulated.",
+        "remainingKnownStarts": 255,
+        "priorKnownStartRetained": 1,
+        "condition": "No private mutation or actor until original Handle safe resolution and exact new binding; no replay",
+        "rootSourceAcceptance": "PENDING_COMPLETE_HANDOFF",
+        "leaseEndUnchanged": "2026-10-10T00:26:23Z"
       }
     }
   },
@@ -17377,7 +17388,7 @@
     "grantPath": "docs/design/government/conventional-frozen-candidate-scratch-assessment-supplement-20261009.json",
     "grantSha256": "22d7d1297fa59b1e48391b5464bb0163d98a403ff195e5e867c05c7f67017485",
     "issuedUtc": "2026-10-09T21:08:16Z",
-    "status": "PREPARATION_BINDING_PENDING_ONE_FINAL_ONLY",
+    "status": "SOURCE_FROZEN_PRIVATE_REMOTE_VERIFIED_RESERVATION_CREATED_NATIVE_RECEIPT_PENDING",
     "dispatch": "SENT_ONCE",
     "limits": {
       "sourcePreparationSeconds": 7200,
@@ -17410,6 +17421,18 @@
       "supplementNativeStarts": 0,
       "newRubricImplementationCaseHelpers": false,
       "newOrderSent": false
+    },
+    "sourceFreeze": {
+      "exactCleanLocalPrivateRemoteSha": "a95f9e0a187dacabbaf296c94db8421a60e8e718",
+      "rootVerified": "Four source files and plan Working/RawGit/hash equality (5bindings); exact original final snapshot hash and manifest match plan. Clean HEAD/private remote checked.",
+      "planSha256": "61b7c5370c14441d4dd2ee8cadf4f70a1ba5732f80f10a2df581957a30721967",
+      "ownerReported": "Scratch12/legacyfinal5/runner5 tests and independent launch review positive; bytecode process-local policy, no copy semantic changes/nohelpers/oneuse guards",
+      "originalCandidateFiles": 29,
+      "originalPublicFiles": 12,
+      "reservationUtc": "2026-10-09T21:23:07.135786Z",
+      "nativeStart": "RECEIPT_PENDING",
+      "sourceIntegrityBoundary": "Equal-hash execution copies checked before/after, not OS-readonly claim; original candidate/spec outside scratch writable root",
+      "newGrant": false
     }
   }
 }
