@@ -1,0 +1,35 @@
+{
+  "event": "oldschool-roombook-fifth-actual-native-start-20261009",
+  "grantSha256": "eec26e29db63c59b00f255fcab2728853fb34acbae42954980885ffe0c225134",
+  "publicEnvelopeSha256": "f6aa5f6886d4110bcf52dc215a10af06bbf9a8adc6a9519b1c72c19af4c254d6",
+  "requestTemplateSha256": "756b42150bc1c91509b043c23a9471528d79e098de7ed5bdd87415fdf0f79172",
+  "tool": "collaboration.spawn_agent",
+  "nativeResult": {
+    "task_name": "/root/app_conventional_oldschool_roombook_primary"
+  },
+  "ownHandle": "/root/app_conventional_oldschool_roombook_primary",
+  "reservation": 1,
+  "reservedUtc": "2026-10-09T07:59:40.609082+00:00",
+  "nativeStartObservedUtc": "2026-10-09T08:00:43.456946+00:00",
+  "entryDeadlineUtc": "2026-10-09T08:22:10.609082+00:00",
+  "implementationDeadlineUtc": "2026-10-09T09:29:40.609082+00:00",
+  "assessmentEndUtc": "2026-10-09T09:49:40.609082+00:00",
+  "cellEndUtc": "2026-10-09T09:59:40.609082+00:00",
+  "absoluteRootEndUtc": "2026-10-09T10:11:17Z",
+  "requestedProfile": {
+    "model": "gpt-6-luna",
+    "reasoning_effort": "high",
+    "fork_turns": "none"
+  },
+  "actualServingModel": null,
+  "usage": null,
+  "cost": null,
+  "inputBinding": {
+    "files": 9,
+    "sourceFiles": 7,
+    "preparedCommit": "88d7233bc14bc962e7ef471af0faaf3c4824351b",
+    "preparedTree": "8cea62c20a64d4571017818c7e73855b1ead5676",
+    "cleanBeforeReserve": true
+  },
+  "qualityCredit": false
+}
