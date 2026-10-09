@@ -2410,6 +2410,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/codexappserver/adapter_test.go
       owner: bounded-agent-execution-host
+    - path: src/internal/host/codexappserver/approvals.go
+      owner: bounded-agent-execution-host
     - path: src/internal/host/codexappserver/client.go
       owner: bounded-agent-execution-host
     - path: src/internal/host/codexappserver/client_test.go
