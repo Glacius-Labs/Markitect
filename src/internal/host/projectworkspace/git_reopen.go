@@ -239,9 +239,9 @@ func validateCandidateGit(ctx context.Context, h Handle) error {
 }
 
 // Git may report a Windows package-virtualized path spelling for the same
-// candidate directory that the trusted Host journal records. Keep ordinary
-// path and containment checks lexical; only Git's identity assertion may use
-// the underlying existing directory identity as a fallback.
+// directory that the Host named. Keep ordinary path and containment checks
+// lexical; only a Git-reported directory identity may use the underlying
+// existing directory identity as a fallback.
 func sameGitReportedPath(reported, expected string) bool {
 	if samePath(reported, expected) {
 		return true

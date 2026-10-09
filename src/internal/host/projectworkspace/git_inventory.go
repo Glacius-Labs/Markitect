@@ -60,7 +60,7 @@ func sourceInventory(ctx context.Context, root, base string) (inventory, error) 
 	if err != nil {
 		return nil, err
 	}
-	if !samePath(resolved, strings.TrimSpace(string(top))) {
+	if !sameGitReportedPath(resolved, strings.TrimSpace(string(top))) {
 		return nil, fmt.Errorf("%w: repository root must be top level", ErrInvalidRequest)
 	}
 	head, err := git(ctx, root, "rev-parse", "HEAD")
