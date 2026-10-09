@@ -1,0 +1,11 @@
+{
+  "kind": "Additive evidence-only postcommit verification note",
+  "originalPacketCommit": "480f547",
+  "initialCheck": "The first postcommit shell verification reported Git/working byte mismatch and exited before producing its external receipt. Raw terminal output is in the Scientist chat; this is a transcription.",
+  "followup": "Explicit raw Git hashing with --no-filters, normalized repository paths and --verify matched all eight manifest entries. No source, oracle, helper, review content or earlier packet byte was changed.",
+  "initialCause": "Not isolated further; no underlying byte change was observed. No general diagnostic loop or native retry followed.",
+  "finalVerification": "Reconcile all nine original public packet files and this additive note against raw Git blobs, plus the private report hash and retained old evidence, in the external postcommit receipt.",
+  "manifestScope": "The unchanged original source-manifest binds eight files plus itself. This additive note is bound by the final Git commit and external final verification receipt.",
+  "additionalReviewerActivations": 0,
+  "additionalCandidateOracleTestBuildServerExecutions": 0
+}
