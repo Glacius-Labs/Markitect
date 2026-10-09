@@ -1,0 +1,38 @@
+{
+  "id": "product-a01-workspace-profile-amendment-20261009",
+  "amends": "product-readiness-native-acceptance-20261009/A01",
+  "authority": "Direct human mandate: ordinary tools/context and autonomous independent Managers must implement in real own workspace; existing A01 execution and generous limits authorized",
+  "reason": "Actual inherited :read-only declined owned README fileChange; no pending approval exists and interrupted original turn is preserved",
+  "runtimeChange": {
+    "writeRoles": "Explicit existing built-in :workspace profile for Manager work and allowed own-workspace helpers",
+    "assessmentRoles": "Keep independent review/verification readonly where intended; do not broaden assessment write scope",
+    "approvalPolicy": "on-request unchanged",
+    "managedPolicy": "enforced unchanged",
+    "workspaceScope": "Only owned A01 CWD/runtimeWorkspaceRoot and previously declared Manager/helper paths",
+    "globalConfig": "unchanged"
+  },
+  "conditionsBeforeFreshContinuation": [
+    "Resolve or safely fail the reported workspace Handle/request cleanup binding mismatch with targeted regression and independent review as needed",
+    "Regenerate exact source/binary/runtime/readiness/normal Plan bindings for explicit profile; old plan and declined receipt immutable",
+    "Account every failed/actual/helper start under original total and own absolute deadline"
+  ],
+  "execution": "One next ordinary A01 continuation permitted after concrete bindings and Handle resolution; no additional blanket approval required. New bound turn, no replay/resume of the declined interrupted turn. Later recovery only genuinely original turn of the new run. Stop if unresolved binding/ownership or ordinary profile denied.",
+  "limits": {
+    "originalLeaseStartUtc": "2026-10-09T20:26:23Z",
+    "absoluteEndUtc": "2026-10-10T00:26:23Z",
+    "roleWallSeconds": 3600,
+    "originalTotalStartRequests": 256,
+    "knownStartsAlreadyReported": 1,
+    "newJobs": 0,
+    "newQuota": 0
+  },
+  "notAuthorized": [
+    "Global security changes",
+    "FullAccess or sandbox disable",
+    "Automatic file-change or external-path approval",
+    "Policy/session/network amendments",
+    "Retry loop",
+    "A02/A03 start",
+    "Release or Main merge without required gates"
+  ]
+}

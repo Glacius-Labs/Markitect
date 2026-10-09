@@ -16328,6 +16328,18 @@
         "leaseEndUnchanged": "2026-10-10T00:26:23Z",
         "newGrant": false,
         "fullSuite": "RUNNING_OWNER_REPORTED_NO_PASS"
+      },
+      "workspaceProfileAmendment": {
+        "path": "docs/design/government/product-a01-workspace-profile-amendment-20261009.json",
+        "sha256": "426b04f870aa7fc5bcf7bdcbce088270d7ed77b9b30bf7a8ae096c146c9a8e7e",
+        "profile": ":workspace for write roles, readonly assessments as intended",
+        "authority": "Existing direct human normal-tool/owned-workspace/A01 mandate",
+        "approvalPolicy": "on-request unchanged",
+        "handleResolutionAndRebindingRequired": true,
+        "oldInterruptedTurnPreserved": true,
+        "leaseEndUnchanged": "2026-10-10T00:26:23Z",
+        "newQuota": false,
+        "dispatch": "SENT_ONCE"
       }
     }
   },
@@ -17241,7 +17253,7 @@
     ],
     "grantPath": "docs/design/government/conventional-workspace-snapshot-execution-v2-20261009.json",
     "grantSha256": "58cf8d06944223b77f51062bfa48ecb224bee9e5f5651abec18597dff1664d63",
-    "status": "RUNNING_ONE_FRESH_APP_SERVER_TRAJECTORY",
+    "status": "FOUR_STATIONS_PUBLIC_PASS_FROZEN_INDEPENDENT_FINAL_RUNNING",
     "actualStartsObserved": 1,
     "dispatch": "SENT_ONCE_V2",
     "initialUnstartedOrder": {
@@ -17290,17 +17302,24 @@
           "station": "S3",
           "pass": 11,
           "fail": 0
+        },
+        {
+          "station": "S4",
+          "pass": 13,
+          "fail": 0
         }
       ],
       "snapshotFileBindingsVerified": 55,
       "teamOverlap": "Owner reports three distinct native helpers query/export/summary with overlapping intervals20:58:22.754Z–20:59:54.778Z; not independently fully attested by Root yet",
       "ownerReportedSelfRepair": "Actor repaired own workspace-local TEMP/TMP test issue, no Scientist semantic coaching/candidate edits reported",
       "ownerReportedS4Run": "e07578a6-e1db-44f5-89a9-f1f25e9c60b1",
-      "S4": "RUNNING_OWNER_REPORTED",
-      "freshIndependentFinal": "NOT_RUN_PENDING_S4_FREEZE",
+      "S4": "FROZEN_PUBLIC_CHECKS_ROOT_VERIFIED",
+      "freshIndependentFinal": "RUNNING_OWNER_REPORTED",
       "qualityConclusion": "Positive finite public checks only; semantic quality/rule consistency/final outcome pending",
       "pairedComparison": "NOT_RUN",
-      "newOrder": false
+      "newOrder": false,
+      "S4SnapshotFileBindingsVerified": 29,
+      "S4SnapshotSha256": "655d3557f4fd6b35401cdb10192045b24ab0bba9720f1690829cd3613e94ef1b"
     }
   }
 }

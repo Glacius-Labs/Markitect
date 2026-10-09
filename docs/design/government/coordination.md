@@ -1817,3 +1817,9 @@ Root independently verified public integration branch now exactly5b65b465. Owner
 ### Conventional functional progress through station3
 
 Root read recorded public assessments S1 PASS5/FAIL0, S2 PASS8/FAIL0, S3 PASS11/FAIL0 and verified all55 files bound by the three immutable workspace-snapshot manifests, without rerunning tests or touching the live candidate. Scientist reports three genuine native helpers with overlapping execution and actor-owned TEMP/TMP repair; Root has not independently fully attested all helper intervals. Station4 is reported running; fresh independent final waits for its freeze. These are positive finite public checks, not a completed quality judgment or paired method comparison. No new owner order or allocation.
+
+### Explicit normal A01 workspace profile and Conventional S4 freeze
+
+Owner verified native inherited :read-only, on-request, exactly owned CWD/root and one declined README fileChange request; interrupted original turn has no pending approval. Under the direct human normal-tool/Manager mandate, Root permits the existing built-in :workspace for write roles only, ordinary on-request and managed restrictions unchanged. The concrete amendment preserves original lease/end/256-start allocation, grants no new jobs, and requires Handle/request issue resolution plus exact new source/binary/runtime/readiness/Plan before one next normal continuation. No global broadening, approval automation or interrupted-turn replay.
+
+Conventional S4 recorded PASS13/FAIL0, its29 frozen file bindings and snapshot hash verified by Root. All four stations now have positive finite public checks. Owner reports fresh readonly LunaHigh final running; independent quality judgment is pending. No new trial allocation.
