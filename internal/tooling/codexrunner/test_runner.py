@@ -1254,7 +1254,7 @@ class CodexRunnerTests(unittest.TestCase):
             self.assertIn("read-only", argv)
             self.assertIn("--disable", argv)
             disabled_features = [argv[index + 1] for index, value in enumerate(argv[:-1]) if value == "--disable"]
-            self.assertEqual(disabled_features, ["plugins", "shell_tool", "unified_exec"])
+            self.assertEqual(disabled_features, ["plugins", "shell_tool", "unified_exec", "multi_agent"])
             self.assertEqual(argv[-1], "-")
             self.assertLess(argv.index("--config"), len(argv) - 1)
             self.assertNotIn("--add-dir", argv)

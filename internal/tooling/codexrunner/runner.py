@@ -995,6 +995,7 @@ def launch_codex(
         "--disable", "plugins",
         "--disable", "shell_tool",
         "--disable", "unified_exec",
+        "--disable", "multi_agent",
         "--output-schema", str(schema_path),
         "--output-last-message", str(response_path),
         "--cd", str(cwd),

@@ -57,6 +57,12 @@ func DecodeConfig(data []byte) (Config, error) {
 	if config.CoverageMode != "" && config.CoverageMode != "selected" && config.CoverageMode != "full" {
 		return Config{}, fmt.Errorf("coverageMode must be selected or full")
 	}
+	if config.WorkflowMode != "" && config.WorkflowMode != WorkflowModeGuided && config.WorkflowMode != WorkflowModeEmpty {
+		return Config{}, fmt.Errorf("workflowMode must be guided or empty")
+	}
+	if config.AcceptancePolicy != "" && config.AcceptancePolicy != AcceptancePolicyCommittedModel {
+		return Config{}, fmt.Errorf("acceptancePolicy must be committed-model")
+	}
 	if config.DocumentPath != "" {
 		if err := validateRepoPath(config.DocumentPath); err != nil {
 			return Config{}, fmt.Errorf("documentPath: %w", err)
@@ -113,6 +119,34 @@ func DecodeConfig(data []byte) (Config, error) {
 			}
 		}
 	}
+	for i, exclusion := range config.TransitionalExclusions {
+		if err := validateRepoSelector(exclusion.Path); err != nil {
+			return Config{}, fmt.Errorf("transitionalExclusions[%d].path: %w", i, err)
+		}
+		if strings.TrimSpace(exclusion.Reason) == "" || exclusion.Reason != strings.TrimSpace(exclusion.Reason) {
+			return Config{}, fmt.Errorf("transitionalExclusions[%d].reason must be nonempty and have no surrounding whitespace", i)
+		}
+		for j := 0; j < i; j++ {
+			if repoSelectorsOverlap(config.TransitionalExclusions[j].Path, exclusion.Path) {
+				return Config{}, fmt.Errorf("transitionalExclusions paths %q and %q duplicate or overlap", config.TransitionalExclusions[j].Path, exclusion.Path)
+			}
+		}
+		for _, ordinary := range config.Exclusions {
+			if repoSelectorsOverlap(ordinary.Path, exclusion.Path) {
+				return Config{}, fmt.Errorf("transitional exclusion %q overlaps ordinary exclusion %q", exclusion.Path, ordinary.Path)
+			}
+		}
+		for _, modelFile := range config.ModelFiles {
+			if repoSelectorsOverlap(modelFile, exclusion.Path) {
+				return Config{}, fmt.Errorf("transitional exclusion %q overlaps canonical model file %q", exclusion.Path, modelFile)
+			}
+		}
+		for _, tool := range ToolPaths(config) {
+			if repoSelectorsOverlap(tool.Selector, exclusion.Path) {
+				return Config{}, fmt.Errorf("transitional exclusion %q overlaps registered tool path %q", exclusion.Path, tool.Selector)
+			}
+		}
+	}
 	return config, nil
 }
 
@@ -164,11 +198,11 @@ func validateExactPaths(field string, values []string, _ bool) error {
 
 func validateProjectYAMLFields(document *yaml.Node) error {
 	root := document.Content[0]
-	if err := exactYAMLFields(root, map[string]bool{"apiVersion": true, "name": true, "modelFiles": true, "inventoryRoots": true, "exclusions": true, "documentPath": true, "coverageMode": true}); err != nil {
+	if err := exactYAMLFields(root, map[string]bool{"apiVersion": true, "name": true, "modelFiles": true, "inventoryRoots": true, "exclusions": true, "transitionalExclusions": true, "documentPath": true, "coverageMode": true, "workflowMode": true, "acceptancePolicy": true}); err != nil {
 		return err
 	}
 	for i, exclusionList := range root.Content {
-		if exclusionList.Value != "exclusions" || i+1 >= len(root.Content) {
+		if exclusionList.Value != "exclusions" && exclusionList.Value != "transitionalExclusions" || i+1 >= len(root.Content) {
 			continue
 		}
 		list := root.Content[i+1]
@@ -181,6 +215,22 @@ func validateProjectYAMLFields(document *yaml.Node) error {
 		}
 	}
 	return nil
+}
+
+func validateRepoSelector(value string) error {
+	base := strings.TrimSuffix(value, "/")
+	if err := validateRepoPath(base); err != nil {
+		return err
+	}
+	if strings.EqualFold(base, ".markitect") || strings.HasPrefix(strings.ToLower(base), ".markitect/") {
+		return fmt.Errorf("selector may not include Markitect-owned paths")
+	}
+	return nil
+}
+
+func repoSelectorsOverlap(left, right string) bool {
+	left, right = strings.TrimSuffix(left, "/"), strings.TrimSuffix(right, "/")
+	return pathWithin(left, right) || pathWithin(right, left)
 }
 
 func exactYAMLFields(node *yaml.Node, allowed map[string]bool) error {

@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/projectadoption"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectsetup"
@@ -56,6 +57,14 @@ func runAction(opts options, out io.Writer) error {
 		ctx = bounded
 	}
 	switch opts.action {
+	case "explore":
+		return runExplore(opts, out)
+	case "readiness":
+		return runReadiness(opts, out)
+	case "brownfield":
+		return runBrownfield(opts, out)
+	case "deliver":
+		return runDeliver(opts, out)
 	case "brief", "briefings", "dismiss":
 		return runBriefing(opts, out)
 	case "onboard":
@@ -148,6 +157,11 @@ func runAction(opts options, out io.Writer) error {
 		case "index":
 			return writeJSON(out, project.Report)
 		case "context":
+			if project.Config.WorkflowMode == "guided" && !project.Provisional && project.Revision != "" {
+				if _, err := projectbriefing.EnsureAcceptedHistory(opts.repo, project.Revision); err != nil {
+					return err
+				}
+			}
 			result, err := projectmodel.Context(project.Report, opts.manager)
 			if err != nil {
 				return err
@@ -435,7 +449,7 @@ func runAction(opts options, out io.Writer) error {
 		if opts.action != "plan" {
 			operation = opts.action
 		}
-		request := projectrun.PlanRequest{Operation: operation, Goal: opts.goal, Managers: append([]string(nil), opts.managers...), BaseRevision: opts.revision, SinceRevision: opts.since, ExecuteAuthorized: opts.write}
+		request := projectrun.PlanRequest{Operation: operation, Goal: opts.goal, Managers: append([]string(nil), opts.managers...), BaseRevision: opts.revision, SinceRevision: opts.since, ExplorationID: opts.explorationID, ScopeID: opts.scope, ExecuteAuthorized: opts.write}
 		plan, err := projectrun.Plan(projectRunHost(), opts.repo, opts.revision, request)
 		if err != nil {
 			return err
@@ -614,7 +628,7 @@ func writeJSON(out io.Writer, value any) error {
 
 func printUsage(out io.Writer, action string) {
 	if action == "" {
-		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: schema init onboard check index coverage context impact document edit brief briefings dismiss discover distill resolve adopt setup doctor plan cleanup reconcile run resume repair status verify apply\n")
+		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: schema init onboard explore readiness deliver brownfield check index coverage context impact document edit brief briefings dismiss discover distill resolve adopt setup doctor plan cleanup reconcile run resume repair status verify apply\n")
 		return
 	}
 	if spec, ok := actionSpecs[action]; ok {

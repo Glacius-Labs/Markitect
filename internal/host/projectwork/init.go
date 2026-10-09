@@ -24,13 +24,16 @@ func Init(root, name string, write bool) (InitPlan, error) {
 		return InitPlan{}, fmt.Errorf("project name must be nonempty and have no surrounding whitespace")
 	}
 	config := map[string]any{
-		"apiVersion":     APIVersion,
-		"name":           name,
-		"coverageMode":   "full",
-		"documentPath":   DefaultDocumentPath,
-		"modelFiles":     []string{initManagerPath},
-		"inventoryRoots": []string{},
-		"exclusions":     []any{},
+		"apiVersion":             APIVersion,
+		"name":                   name,
+		"coverageMode":           "full",
+		"workflowMode":           WorkflowModeGuided,
+		"acceptancePolicy":       AcceptancePolicyCommittedModel,
+		"documentPath":           DefaultDocumentPath,
+		"modelFiles":             []string{initManagerPath},
+		"inventoryRoots":         []string{},
+		"exclusions":             []any{},
+		"transitionalExclusions": []any{},
 	}
 	configBytes, err := yaml.Marshal(config)
 	if err != nil {

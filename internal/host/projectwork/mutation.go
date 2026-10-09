@@ -210,13 +210,19 @@ func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
 		if decoded.Name != project.Config.Name {
 			return EditPlan{}, fmt.Errorf("project identity is fixed by the active Project")
 		}
-		scopeChanged := !reflect.DeepEqual(decoded.InventoryRoots, project.Config.InventoryRoots) || !reflect.DeepEqual(decoded.Exclusions, project.Config.Exclusions)
+		scopeChanged := !reflect.DeepEqual(decoded.InventoryRoots, project.Config.InventoryRoots) ||
+			!reflect.DeepEqual(decoded.Exclusions, project.Config.Exclusions) ||
+			!reflect.DeepEqual(decoded.TransitionalExclusions, project.Config.TransitionalExclusions) ||
+			decoded.CoverageMode != project.Config.CoverageMode ||
+			decoded.WorkflowMode != project.Config.WorkflowMode ||
+			decoded.AcceptancePolicy != project.Config.AcceptancePolicy ||
+			decoded.DocumentPath != project.Config.DocumentPath
 		if scopeChanged && !mayChangeInventoryScope(project, actor, user) {
-			return EditPlan{}, fmt.Errorf("only the explicit user actor or active root Manager may change inventory roots or exclusions")
+			return EditPlan{}, fmt.Errorf("only the explicit user actor or active root Manager may change project scope or acceptance policy")
 		}
 		candidateConfig = decoded
 	}
-	if !reflect.DeepEqual(candidateConfig.InventoryRoots, project.Config.InventoryRoots) || !reflect.DeepEqual(candidateConfig.Exclusions, project.Config.Exclusions) {
+	if !reflect.DeepEqual(candidateConfig.InventoryRoots, project.Config.InventoryRoots) || !reflect.DeepEqual(candidateConfig.Exclusions, project.Config.Exclusions) || candidateConfig.CoverageMode != project.Config.CoverageMode {
 		inventory, inventoryErr := loadConfiguredInventory(project.Root, project.Revision, project.Provisional, candidateConfig)
 		if inventoryErr != nil {
 			return EditPlan{}, fmt.Errorf("acquire prospective selected inventory: %w", inventoryErr)

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
@@ -140,6 +141,11 @@ func FullVerify(ctx context.Context, host Host, invoker Invoker, root string, re
 	}
 	if project.Provisional || !fullVerifyCommitID(project.Revision) {
 		return empty, fmt.Errorf("full verification requires a committed immutable revision")
+	}
+	if project.Config.WorkflowMode == "guided" {
+		if _, err := projectbriefing.EnsureAcceptedHistory(root, project.Revision); err != nil {
+			return empty, err
+		}
 	}
 	runtime, err := LoadRuntime(root)
 	if err != nil {

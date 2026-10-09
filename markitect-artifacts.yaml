@@ -169,6 +169,9 @@ spec:
     - internal/host/cli/project_dispatch_test.go
     - docs/validation/project-world-delivery.md
     - docs/validation/project-operations-2026-10-09.md
+    - internal/host/projectexplore
+    - examples/project_world_workflow_test.go
+    - docs/design/work-item-comparison-20261009.md
   tooling:
     - path: docs/validation/classic-commerce-entrypoint.md
       owner: classic-commerce-public-example-validation
@@ -2196,4 +2199,50 @@ spec:
     - path: internal/host/projectcli/repair_test.go
       owner: project-world-implementation
     - path: internal/host/projectcli/distill_receipt_test.go
+      owner: project-world-implementation
+    - path: docs/design/project-world/native-work-item-delivery.md
+      owner: project-world-implementation
+    - path: docs/design/work-item-comparison-20261009.md
+      owner: project-world-implementation
+    - path: examples/project_world_workflow_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/readiness.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/reverse.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/session.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/session_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectbriefing/history_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/project_brownfield.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/project_brownfield_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/project_deliver.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/project_explore.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/project_explore_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectexplore/projectexplore_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectexplore/readiness.go
+      owner: project-world-implementation
+    - path: internal/host/projectexplore/record.go
+      owner: project-world-implementation
+    - path: internal/host/projectexplore/store.go
+      owner: project-world-implementation
+    - path: internal/host/projectexplore/types.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/deliver.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/deliver_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/exploration.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/session_apply.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/session_apply_test.go
       owner: project-world-implementation

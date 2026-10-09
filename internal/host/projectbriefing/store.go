@@ -27,9 +27,23 @@ var (
 	ErrAmbiguousHistory = errors.New("briefing history has multiple accepted paths to the requested model digest")
 	ErrHistoryTooDeep   = errors.New("briefing history closure exceeds the bounded commit scan")
 	ErrDismissal        = errors.New("dismissal requires an event and manager")
+	ErrNoAcceptedModel  = errors.New("no valid committed project model exists at the selected revision")
+	ErrResolution       = errors.New("verified resolution evidence is invalid or stale")
+	ErrAlreadyResolved  = errors.New("model-change event already has different resolution evidence")
+)
+
+const (
+	acceptedPolicy            = "committed-model policy: manifest-selected canonical .markitect/model YAML on the active first-parent branch is the accepted repository specification; exploration records and other drafts remain proposals; Git identity is not authenticated"
+	maxAcceptedHistoryCommits = 4096
 )
 
 func validateStore(state Store) error {
+	if state.History != nil {
+		history := state.History
+		if !fullObjectID(history.BaselineRevision) || strings.TrimSpace(history.BaselineModelDigest) == "" || !fullObjectID(history.Revision) || strings.TrimSpace(history.ModelDigest) == "" || history.Policy != acceptedPolicy {
+			return errors.New("accepted history cursor has invalid revisions or model digests")
+		}
+	}
 	bundlesByID := map[string]bool{}
 	bundleByRevision := map[string]Bundle{}
 	eventsByID := map[string]Event{}
@@ -76,6 +90,24 @@ func validateStore(state Store) error {
 			return fmt.Errorf("dismissal references unknown event-manager pair %s", dismissal.EventID)
 		}
 		dismissals[key] = true
+	}
+	resolutions := map[string]bool{}
+	for _, resolution := range state.Resolutions {
+		if resolution.EventID == "" || !fullObjectID(resolution.ModelRevision) || strings.TrimSpace(resolution.ModelDigest) == "" || !validVerifiedEvidence(resolution.Evidence) || resolution.Digest != resolutionDigest(resolution) {
+			return ErrResolution
+		}
+		if resolutions[resolution.EventID] || eventsByID[resolution.EventID].ID == "" {
+			return ErrResolution
+		}
+		if !contains(resolution.Evidence.EventIDs, resolution.EventID) {
+			return ErrResolution
+		}
+		for _, eventID := range resolution.Evidence.EventIDs {
+			if eventsByID[eventID].ID == "" {
+				return ErrResolution
+			}
+		}
+		resolutions[resolution.EventID] = true
 	}
 	return nil
 }
@@ -220,9 +252,63 @@ type Dismissal struct {
 }
 
 type Store struct {
-	APIVersion string      `json:"apiVersion"`
-	Briefings  []Bundle    `json:"briefings"`
-	Dismissals []Dismissal `json:"dismissals"`
+	APIVersion  string         `json:"apiVersion"`
+	History     *HistoryCursor `json:"history,omitempty"`
+	Briefings   []Bundle       `json:"briefings"`
+	Dismissals  []Dismissal    `json:"dismissals"`
+	Resolutions []Resolution   `json:"resolutions,omitempty"`
+}
+
+// VerifiedResolutionEvidence binds a completed full verification and applied
+// candidate to its durable run, plan, checks, and complete Manager coverage.
+// It records Host evidence; it is not human approval or authenticated identity.
+type VerifiedResolutionEvidence struct {
+	EventIDs           []string `json:"eventIds"`
+	RunID              string   `json:"runId"`
+	PlanDigest         string   `json:"planDigest"`
+	CandidateID        string   `json:"candidateId"`
+	CandidateDigest    string   `json:"candidateDigest"`
+	VerificationDigest string   `json:"verificationDigest"`
+	ApplyDigest        string   `json:"applyDigest"`
+	FullVerifyPassed   bool     `json:"fullVerifyPassed"`
+	CoveredManagerIDs  []string `json:"coveredManagerIds"`
+	EvidenceRefs       []string `json:"evidenceRefs"`
+}
+
+// Resolution is an immutable status record. Dismissal and resolution remain
+// separate: one changes visibility; the other cites fresh Host evidence.
+type Resolution struct {
+	EventID       string                     `json:"eventId"`
+	ModelRevision string                     `json:"modelRevision"`
+	ModelDigest   string                     `json:"modelDigest"`
+	Evidence      VerifiedResolutionEvidence `json:"evidence"`
+	Digest        string                     `json:"digest"`
+}
+
+type ResolutionStatus struct {
+	Status     string      `json:"status"`
+	Resolution *Resolution `json:"resolution,omitempty"`
+}
+
+// HistoryCursor records the committed model history accepted by repository
+// policy. It is operational state, separate from draft/exploration content.
+type HistoryCursor struct {
+	Policy              string `json:"policy"`
+	BaselineRevision    string `json:"baselineRevision"`
+	BaselineModelDigest string `json:"baselineModelDigest"`
+	Revision            string `json:"revision"`
+	ModelDigest         string `json:"modelDigest"`
+}
+
+// EnsureReceipt is the fixed-revision result after accepted model history has
+// been reconciled. Bundles are the immutable entries added during this call.
+type EnsureReceipt struct {
+	BaselineRevision    string   `json:"baselineRevision"`
+	BaselineModelDigest string   `json:"baselineModelDigest"`
+	Revision            string   `json:"revision"`
+	ModelDigest         string   `json:"modelDigest"`
+	StoreDigest         string   `json:"storeDigest"`
+	Bundles             []Bundle `json:"bundles"`
 }
 
 // Read validates and returns the operational event history and its current
@@ -264,6 +350,434 @@ func Read(root string) (Store, string, error) {
 // StoreDigest returns the canonical digest used as the optimistic write token.
 func StoreDigest(state Store) string { return hash(state) }
 
+// EventResolutionStatus reports conformity resolution independently of
+// dismissal. Events remain available in manager context after either choice.
+func EventResolutionStatus(state Store, eventID string) ResolutionStatus {
+	for i := range state.Resolutions {
+		if state.Resolutions[i].EventID == eventID {
+			copy := state.Resolutions[i]
+			return ResolutionStatus{Status: "resolved", Resolution: &copy}
+		}
+	}
+	return ResolutionStatus{Status: "unresolved"}
+}
+
+// ResolveVerified records fresh full-Manager Verify and successful Apply
+// evidence against the exact selected committed model. The caller is expected
+// to invoke this only from the Host's successful after-Apply path.
+func ResolveVerified(root, modelRevision, modelDigest string, evidence VerifiedResolutionEvidence, expectedStoreDigest string) (string, error) {
+	if strings.TrimSpace(modelRevision) == "" || strings.TrimSpace(modelDigest) == "" || !validVerifiedEvidence(evidence) {
+		return "", ErrResolution
+	}
+	state, storeDigest, err := Read(root)
+	if err != nil {
+		return "", err
+	}
+	if storeDigest != expectedStoreDigest {
+		return "", ErrStaleStore
+	}
+	if state.History == nil {
+		return "", ErrStaleModel
+	}
+	project, err := projectwork.Load(root, modelRevision)
+	if err != nil || project == nil || project.Provisional || project.Model.Digest != modelDigest {
+		return "", ErrStaleModel
+	}
+	cursorProjects, err := acceptedProjects(root, state.History.Revision)
+	if err != nil {
+		return "", err
+	}
+	if err := validateAcceptedPrefix(state, cursorProjects); err != nil {
+		return "", err
+	}
+	if indexOf(projectRevisions(cursorProjects), modelRevision) < 0 {
+		return "", ErrAmbiguousHistory
+	}
+	if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", state.History.BaselineRevision, modelRevision); err != nil {
+		return "", ErrAmbiguousHistory
+	}
+	if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", modelRevision, state.History.Revision); err != nil {
+		return "", ErrStaleModel
+	}
+	managerIDs := make([]string, 0, len(project.Report.Managers))
+	for _, manager := range project.Report.Managers {
+		managerIDs = append(managerIDs, manager.ID)
+	}
+	sort.Strings(managerIDs)
+	if !equalStrings(managerIDs, evidence.CoveredManagerIDs) {
+		return "", fmt.Errorf("full verification did not cover every selected Manager: %w", ErrResolution)
+	}
+	events := make(map[string]Event, len(evidence.EventIDs))
+	for _, bundle := range state.Briefings {
+		for _, event := range bundle.Events {
+			if !contains(evidence.EventIDs, event.ID) {
+				continue
+			}
+			if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", bundle.Revision, modelRevision); err != nil {
+				return "", fmt.Errorf("event %s is not ancestral to verified model: %w", event.ID, ErrStaleModel)
+			}
+			events[event.ID] = event
+		}
+	}
+	if len(events) != len(evidence.EventIDs) {
+		return "", ErrStaleModel
+	}
+	for _, eventID := range evidence.EventIDs {
+		for _, managerID := range events[eventID].AffectedManagers {
+			if !contains(evidence.CoveredManagerIDs, managerID) {
+				return "", fmt.Errorf("full verification omitted affected Manager %s: %w", managerID, ErrResolution)
+			}
+		}
+	}
+	resolutions := make([]Resolution, 0, len(evidence.EventIDs))
+	for _, eventID := range evidence.EventIDs {
+		resolution := Resolution{EventID: eventID, ModelRevision: modelRevision, ModelDigest: modelDigest, Evidence: evidence}
+		resolution.Digest = resolutionDigest(resolution)
+		resolutions = append(resolutions, resolution)
+	}
+	return update(root, expectedStoreDigest, func(current *Store) error {
+		for _, resolution := range resolutions {
+			for _, prior := range current.Resolutions {
+				if prior.EventID != resolution.EventID {
+					continue
+				}
+				if prior.Digest != resolution.Digest {
+					return ErrAlreadyResolved
+				}
+			}
+		}
+		for _, resolution := range resolutions {
+			found := false
+			for _, prior := range current.Resolutions {
+				if prior.EventID == resolution.EventID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				current.Resolutions = append(current.Resolutions, resolution)
+			}
+		}
+		sort.Slice(current.Resolutions, func(i, j int) bool { return current.Resolutions[i].EventID < current.Resolutions[j].EventID })
+		return nil
+	})
+}
+
+func validVerifiedEvidence(evidence VerifiedResolutionEvidence) bool {
+	return sortedUniqueNonempty(evidence.EventIDs) && strings.TrimSpace(evidence.RunID) != "" && strings.TrimSpace(evidence.PlanDigest) != "" && strings.TrimSpace(evidence.CandidateID) != "" && strings.TrimSpace(evidence.CandidateDigest) != "" && strings.TrimSpace(evidence.VerificationDigest) != "" && strings.TrimSpace(evidence.ApplyDigest) != "" && evidence.FullVerifyPassed && sortedUniqueNonempty(evidence.CoveredManagerIDs) && sortedUniqueNonempty(evidence.EvidenceRefs)
+}
+
+func resolutionDigest(resolution Resolution) string {
+	resolution.Digest = ""
+	return hash(resolution)
+}
+
+func projectRevisions(projects []*projectwork.Project) []string {
+	revisions := make([]string, 0, len(projects))
+	for _, project := range projects {
+		revisions = append(revisions, project.Revision)
+	}
+	return revisions
+}
+
+// EnsureAcceptedHistory reconciles the bounded first-parent history ending at
+// targetRevision. The first valid committed project model is the baseline;
+// each subsequent canonical model-digest change gets one immutable briefing.
+// Working-tree state is never inspected or accepted. Git commit identity is
+// retained only as unauthenticated source metadata.
+func EnsureAcceptedHistory(root, targetRevision string) (EnsureReceipt, error) {
+	var receipt EnsureReceipt
+	if !fullObjectID(targetRevision) {
+		return receipt, ErrUncommittedModel
+	}
+	head, err := source.GitOutput(root, "rev-parse", "--verify", "HEAD^{commit}")
+	if err != nil {
+		return receipt, fmt.Errorf("resolve active accepted branch: %w", ErrUncommittedModel)
+	}
+	activeRevisions, err := firstParentRevisions(root, strings.TrimSpace(string(head)))
+	if err != nil {
+		return receipt, err
+	}
+	targetIndex := indexOf(activeRevisions, targetRevision)
+	if targetIndex < 0 {
+		return receipt, fmt.Errorf("accepted history target must be on the active first-parent branch: %w", ErrUncommittedModel)
+	}
+	projects, err := acceptedProjects(root, targetRevision)
+	if err != nil {
+		return receipt, err
+	}
+	if len(projects) == 0 || projects[len(projects)-1].Revision != targetRevision {
+		return receipt, ErrNoAcceptedModel
+	}
+	state, digest, err := Read(root)
+	if err != nil {
+		return receipt, err
+	}
+	if state.History == nil && len(state.Briefings) > 0 {
+		return receipt, fmt.Errorf("existing briefing entries have no accepted-history cursor and cannot be safely rebased: %w", ErrAmbiguousHistory)
+	}
+	if err := validateAcceptedPrefix(state, projects); err != nil {
+		if state.History == nil || indexOf(activeRevisions, state.History.Revision) <= targetIndex {
+			return receipt, err
+		}
+		cursorProjects, cursorErr := acceptedProjects(root, state.History.Revision)
+		if cursorErr != nil {
+			return receipt, cursorErr
+		}
+		if cursorErr = validateAcceptedPrefix(state, cursorProjects); cursorErr != nil {
+			return receipt, cursorErr
+		}
+	}
+	if state.History == nil {
+		baseline := projects[0]
+		digest, err = update(root, digest, func(current *Store) error {
+			if current.History != nil {
+				return ErrStaleStore
+			}
+			current.History = &HistoryCursor{Policy: acceptedPolicy, BaselineRevision: baseline.Revision, BaselineModelDigest: baseline.Model.Digest, Revision: baseline.Revision, ModelDigest: baseline.Model.Digest}
+			return nil
+		})
+		if err != nil {
+			return receipt, err
+		}
+		state, _, err = Read(root)
+		if err != nil {
+			return receipt, err
+		}
+	}
+	start := -1
+	for i, project := range projects {
+		if project.Revision == state.History.Revision {
+			start = i
+			break
+		}
+	}
+	if start < 0 {
+		if indexOf(activeRevisions, state.History.Revision) > targetIndex {
+			cursorProjects, cursorErr := acceptedProjects(root, state.History.Revision)
+			if cursorErr != nil {
+				return receipt, cursorErr
+			}
+			if err := validateAcceptedPrefix(state, cursorProjects); err != nil {
+				return receipt, err
+			}
+			state, digest, err = Read(root)
+			if err != nil {
+				return receipt, err
+			}
+			receipt.BaselineRevision = state.History.BaselineRevision
+			receipt.BaselineModelDigest = state.History.BaselineModelDigest
+			receipt.Revision = targetRevision
+			receipt.ModelDigest = projects[len(projects)-1].Model.Digest
+			receipt.StoreDigest = digest
+			return receipt, nil
+		}
+		return receipt, ErrAmbiguousHistory
+	}
+	if projects[start].Model.Digest != state.History.ModelDigest {
+		return receipt, ErrStaleModel
+	}
+	receipt.BaselineRevision = state.History.BaselineRevision
+	receipt.BaselineModelDigest = state.History.BaselineModelDigest
+	for i := start + 1; i < len(projects); i++ {
+		previous, current := projects[i-1], projects[i]
+		if current.Model.Digest != previous.Model.Digest {
+			provenance, provenanceErr := gitProvenance(root, current.Revision)
+			if provenanceErr != nil {
+				return EnsureReceipt{}, provenanceErr
+			}
+			bundle, generateErr := Generate(root, previous.Revision, current.Revision, provenance)
+			if generateErr != nil {
+				return EnsureReceipt{}, fmt.Errorf("generate accepted model change at %s: %w", current.Revision, generateErr)
+			}
+			state, digest, err = Read(root)
+			if err != nil {
+				return EnsureReceipt{}, err
+			}
+			digest, err = appendCanonicalBundle(root, bundle, digest)
+			if err != nil {
+				return EnsureReceipt{}, err
+			}
+			receipt.Bundles = append(receipt.Bundles, bundle)
+		} else {
+			digest, err = advanceCursor(root, previous, current, digest)
+			if err != nil {
+				return EnsureReceipt{}, err
+			}
+		}
+	}
+	state, digest, err = Read(root)
+	if err != nil {
+		return EnsureReceipt{}, err
+	}
+	if state.History == nil || state.History.Revision != targetRevision || state.History.ModelDigest != projects[len(projects)-1].Model.Digest {
+		return EnsureReceipt{}, ErrStaleModel
+	}
+	receipt.Revision = state.History.Revision
+	receipt.ModelDigest = state.History.ModelDigest
+	receipt.StoreDigest = digest
+	return receipt, nil
+}
+
+func acceptedProjects(root, targetRevision string) ([]*projectwork.Project, error) {
+	shallow, err := source.GitOutput(root, "rev-parse", "--is-shallow-repository")
+	if err != nil {
+		return nil, fmt.Errorf("inspect repository history completeness: %w", err)
+	}
+	if strings.TrimSpace(string(shallow)) != "false" {
+		return nil, fmt.Errorf("accepted history requires complete Git ancestry: %w", ErrAmbiguousHistory)
+	}
+	revisions, err := firstParentRevisions(root, targetRevision)
+	if err != nil {
+		return nil, fmt.Errorf("enumerate accepted first-parent history: %w", err)
+	}
+	projects := make([]*projectwork.Project, 0, len(revisions))
+	for _, revision := range revisions {
+		paths, err := source.GitOutput(root, "ls-tree", "-r", "--name-only", revision, "--", projectwork.ManifestPath)
+		if err != nil {
+			return nil, fmt.Errorf("inspect project manifest at %s: %w", revision, err)
+		}
+		if strings.TrimSpace(string(paths)) == "" {
+			if len(projects) == 0 {
+				continue
+			}
+			return nil, fmt.Errorf("project manifest disappeared at %s: %w", revision, ErrAmbiguousHistory)
+		}
+		project, err := projectwork.Load(root, revision)
+		if err != nil {
+			return nil, fmt.Errorf("load committed project model at %s: %w", revision, err)
+		}
+		if project == nil || project.Provisional || project.Model.Digest == "" {
+			return nil, fmt.Errorf("invalid committed model at %s: %w", revision, ErrAmbiguousHistory)
+		}
+		for _, finding := range project.Report.Findings {
+			// `incomplete` findings describe absent implementation or inventory
+			// evidence and do not invalidate the declared model. Error findings
+			// describe declarations that cannot be accepted as a project
+			// specification (for example unresolved references or invalid
+			// ownership), even when Core compilation produced a model digest.
+			if finding.Severity == "error" {
+				return nil, fmt.Errorf("committed project model at %s has structural finding %s (%s): %w", revision, finding.Code, finding.Subject, ErrAmbiguousHistory)
+			}
+		}
+		projects = append(projects, project)
+	}
+	return projects, nil
+}
+
+func firstParentRevisions(root, revision string) ([]string, error) {
+	output, err := source.GitOutput(root, "rev-list", "--first-parent", "--reverse", "--topo-order", revision)
+	if err != nil {
+		return nil, err
+	}
+	revisions := strings.Fields(string(output))
+	if len(revisions) == 0 || len(revisions) > maxAcceptedHistoryCommits {
+		return nil, ErrHistoryTooDeep
+	}
+	return revisions, nil
+}
+
+func indexOf(revisions []string, revision string) int {
+	for i, item := range revisions {
+		if item == revision {
+			return i
+		}
+	}
+	return -1
+}
+
+func validateAcceptedPrefix(state Store, projects []*projectwork.Project) error {
+	if state.History == nil {
+		return nil
+	}
+	if len(projects) == 0 || projects[0].Revision != state.History.BaselineRevision || projects[0].Model.Digest != state.History.BaselineModelDigest {
+		return ErrAmbiguousHistory
+	}
+	cursorIndex := -1
+	for i, project := range projects {
+		if project.Revision == state.History.Revision {
+			cursorIndex = i
+			break
+		}
+	}
+	if cursorIndex < 0 || projects[cursorIndex].Model.Digest != state.History.ModelDigest {
+		return ErrAmbiguousHistory
+	}
+	bundles := make(map[string]Bundle, len(state.Briefings))
+	for _, bundle := range state.Briefings {
+		bundles[bundle.Revision] = bundle
+	}
+	for i := 1; i <= cursorIndex; i++ {
+		previous, current := projects[i-1], projects[i]
+		bundle, exists := bundles[current.Revision]
+		if current.Model.Digest != previous.Model.Digest {
+			if !exists || bundle.SinceRevision != previous.Revision || bundle.SinceModelDigest != previous.Model.Digest || bundle.ModelDigest != current.Model.Digest {
+				return fmt.Errorf("accepted model transition %s..%s is not completely briefed: %w", previous.Revision, current.Revision, ErrStaleModel)
+			}
+		} else if exists {
+			return fmt.Errorf("no-op model revision %s has a briefing bundle: %w", current.Revision, ErrAmbiguousHistory)
+		}
+	}
+	for revision := range bundles {
+		found := false
+		for i := 1; i <= cursorIndex; i++ {
+			if projects[i].Revision == revision {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return ErrAmbiguousHistory
+		}
+	}
+	return nil
+}
+
+func advanceCursor(root string, previous, current *projectwork.Project, expectedDigest string) (string, error) {
+	if previous == nil || current == nil || previous.Model.Digest != current.Model.Digest {
+		return "", ErrStaleModel
+	}
+	return update(root, expectedDigest, func(state *Store) error {
+		if state.History == nil || state.History.Revision != previous.Revision || state.History.ModelDigest != previous.Model.Digest {
+			return ErrStaleStore
+		}
+		if err := requireNextFirstParent(root, previous.Revision, current.Revision); err != nil {
+			return err
+		}
+		state.History.Revision = current.Revision
+		state.History.ModelDigest = current.Model.Digest
+		return nil
+	})
+}
+
+func requireNextFirstParent(root, sinceRevision, revision string) error {
+	output, err := source.GitOutput(root, "rev-list", "--first-parent", "--parents", "-n", "1", revision)
+	if err != nil {
+		return err
+	}
+	fields := strings.Fields(string(output))
+	if len(fields) < 2 || fields[0] != revision || fields[1] != sinceRevision {
+		return ErrAmbiguousHistory
+	}
+	return nil
+}
+
+func gitProvenance(root, revision string) (Provenance, error) {
+	author, err := source.GitOutput(root, "show", "-s", "--format=%an", revision)
+	if err != nil {
+		return Provenance{}, fmt.Errorf("read accepted model commit metadata: %w", err)
+	}
+	name := strings.TrimSpace(string(author))
+	if name == "" {
+		return Provenance{}, ErrMissingProvenance
+	}
+	return Provenance{
+		DecisionReference: "git-commit:" + revision,
+		Actor:             "git-commit-author:" + name,
+		Authority:         acceptedPolicy,
+	}, nil
+}
+
 // Write appends an immutable briefing bundle. expectedDigest must be the token
 // returned by Read; pass the empty-store digest for a not-yet-created store.
 func Write(root string, bundle Bundle, expectedDigest string) (string, error) {
@@ -284,16 +798,96 @@ func Write(root string, bundle Bundle, expectedDigest string) (string, error) {
 		return "", fmt.Errorf("%w: unchanged model digest cannot carry events", ErrInvalidBundle)
 	}
 	if bundle.SinceModelDigest == bundle.ModelDigest {
-		_, current, err := Read(root)
+		state, current, err := Read(root)
 		if err != nil {
 			return "", err
 		}
 		if current != expectedDigest {
 			return "", ErrStaleStore
 		}
+		if prior, exists := bundleForRevision(state, bundle.Revision); exists {
+			if hash(prior) == hash(bundle) {
+				return current, nil
+			}
+			return "", ErrAmbiguousHistory
+		}
+		if state.History != nil {
+			if state.History.Revision != bundle.SinceRevision || state.History.ModelDigest != bundle.SinceModelDigest {
+				return "", ErrAmbiguousHistory
+			}
+			if err := requireNextFirstParent(root, bundle.SinceRevision, bundle.Revision); err != nil {
+				return "", err
+			}
+		}
 		return current, nil
 	}
+	state, currentDigest, err := Read(root)
+	if err != nil {
+		return "", err
+	}
+	if currentDigest != expectedDigest {
+		return "", ErrStaleStore
+	}
+	if prior, exists := bundleForRevision(state, bundle.Revision); exists {
+		if hash(prior) == hash(bundle) {
+			return currentDigest, nil
+		}
+		return "", ErrAmbiguousHistory
+	}
+	if state.History == nil {
+		projects, err := acceptedProjects(root, bundle.Revision)
+		if err != nil {
+			return "", err
+		}
+		if len(projects) < 2 || projects[0].Revision != bundle.SinceRevision {
+			return "", fmt.Errorf("first persisted briefing must begin at the earliest committed project model: %w", ErrAmbiguousHistory)
+		}
+		currentDigest, err = update(root, currentDigest, func(current *Store) error {
+			if current.History != nil || len(current.Briefings) != 0 {
+				return ErrStaleStore
+			}
+			baseline := projects[0]
+			current.History = &HistoryCursor{Policy: acceptedPolicy, BaselineRevision: baseline.Revision, BaselineModelDigest: baseline.Model.Digest, Revision: baseline.Revision, ModelDigest: baseline.Model.Digest}
+			return nil
+		})
+		if err != nil {
+			return "", err
+		}
+	}
+	return appendCanonicalBundle(root, bundle, currentDigest)
+}
+
+func bundleForRevision(state Store, revision string) (Bundle, bool) {
+	for _, bundle := range state.Briefings {
+		if bundle.Revision == revision {
+			return bundle, true
+		}
+	}
+	return Bundle{}, false
+}
+
+func appendCanonicalBundle(root string, bundle Bundle, expectedDigest string) (string, error) {
 	return update(root, expectedDigest, func(state *Store) error {
+		if state.History == nil {
+			return ErrStaleModel
+		}
+		if state.History.Revision != bundle.SinceRevision || state.History.ModelDigest != bundle.SinceModelDigest {
+			return fmt.Errorf("briefing must extend the accepted cursor: %w", ErrStaleModel)
+		}
+		if err := requireNextFirstParent(root, bundle.SinceRevision, bundle.Revision); err != nil {
+			return err
+		}
+		before, err := projectwork.Load(root, bundle.SinceRevision)
+		if err != nil {
+			return err
+		}
+		after, err := projectwork.Load(root, bundle.Revision)
+		if err != nil {
+			return err
+		}
+		if before.Model.Digest != bundle.SinceModelDigest || after.Model.Digest != bundle.ModelDigest || before.Model.Digest == after.Model.Digest {
+			return ErrStaleModel
+		}
 		for _, prior := range state.Briefings {
 			if prior.Revision == bundle.Revision {
 				if hash(prior) == hash(bundle) {
@@ -318,6 +912,8 @@ func Write(root string, bundle Bundle, expectedDigest string) (string, error) {
 			}
 		}
 		state.Briefings = append(state.Briefings, bundle)
+		state.History.Revision = bundle.Revision
+		state.History.ModelDigest = bundle.ModelDigest
 		sort.Slice(state.Briefings, func(i, j int) bool {
 			if state.Briefings[i].Revision != state.Briefings[j].Revision {
 				return state.Briefings[i].Revision < state.Briefings[j].Revision
@@ -404,7 +1000,18 @@ func LoadForManager(root, modelDigest, managerID string, requestedRevision ...st
 			}
 		}
 		if len(chain) == 0 {
-			return nil, nil, "", ErrStaleModel
+			if state.History == nil || state.History.BaselineModelDigest != modelDigest {
+				return nil, nil, "", ErrStaleModel
+			}
+			if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", state.History.BaselineRevision, project.Revision); err != nil {
+				return nil, nil, "", ErrAmbiguousHistory
+			}
+			if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", project.Revision, state.History.Revision); err != nil {
+				return nil, nil, "", ErrStaleModel
+			}
+			return []Briefing{}, []Event{}, hash(struct {
+				ModelDigest, ManagerID, Revision string
+			}{modelDigest, managerID, project.Revision}), nil
 		}
 		sort.Slice(chain, func(i, j int) bool { return rank[chain[i].Revision] < rank[chain[j].Revision] })
 		if chain[len(chain)-1].ModelDigest != modelDigest {
@@ -429,7 +1036,8 @@ func LoadForManager(root, modelDigest, managerID string, requestedRevision ...st
 		}
 	}
 	briefings := make([]Briefing, 0)
-	eventsByID := map[string]Event{}
+	events := make([]Event, 0)
+	seenEvents := map[string]bool{}
 	for _, bundle := range chain {
 		for _, briefing := range bundle.Managers {
 			if briefing.ManagerID != managerID {
@@ -437,22 +1045,13 @@ func LoadForManager(root, modelDigest, managerID string, requestedRevision ...st
 			}
 			briefings = append(briefings, briefing)
 			for _, event := range bundle.Events {
-				if contains(briefing.EventIDs, event.ID) {
-					eventsByID[event.ID] = event
+				if contains(briefing.EventIDs, event.ID) && !seenEvents[event.ID] {
+					events = append(events, event)
+					seenEvents[event.ID] = true
 				}
 			}
 		}
 	}
-	events := make([]Event, 0, len(eventsByID))
-	for _, event := range eventsByID {
-		events = append(events, event)
-	}
-	sort.Slice(events, func(i, j int) bool {
-		if events[i].DefinitionID.Key() != events[j].DefinitionID.Key() {
-			return events[i].DefinitionID.Key() < events[j].DefinitionID.Key()
-		}
-		return events[i].ID < events[j].ID
-	})
 	return briefings, events, hash(struct {
 		ModelDigest, ManagerID string
 		Briefings              []Briefing
@@ -562,7 +1161,7 @@ func legacyDigestChain(bundles []Bundle, modelDigest string) ([]Bundle, error) {
 }
 
 func emptyStore() Store {
-	return Store{APIVersion: APIVersion, Briefings: []Bundle{}, Dismissals: []Dismissal{}}
+	return Store{APIVersion: APIVersion, Briefings: []Bundle{}, Dismissals: []Dismissal{}, Resolutions: []Resolution{}}
 }
 
 func update(root, expected string, mutate func(*Store) error) (string, error) {

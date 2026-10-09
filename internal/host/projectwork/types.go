@@ -13,19 +13,30 @@ const ManifestPath = ".markitect/project.yaml"
 const ModelRoot = ".markitect/model"
 const RuntimePath = ".markitect/runtime.yaml"
 
+const (
+	WorkflowModeGuided             = "guided"
+	WorkflowModeEmpty              = "empty"
+	AcceptancePolicyCommittedModel = "committed-model"
+)
+
 type Exclusion struct {
 	Path   string `json:"path" yaml:"path"`
 	Reason string `json:"reason" yaml:"reason"`
 }
 
 type Config struct {
-	DocumentPath   string      `json:"documentPath,omitempty" yaml:"documentPath,omitempty"`
-	CoverageMode   string      `json:"coverageMode,omitempty" yaml:"coverageMode,omitempty"`
-	APIVersion     string      `json:"apiVersion" yaml:"apiVersion"`
-	Name           string      `json:"name" yaml:"name"`
-	ModelFiles     []string    `json:"modelFiles" yaml:"modelFiles"`
-	InventoryRoots []string    `json:"inventoryRoots" yaml:"inventoryRoots"`
-	Exclusions     []Exclusion `json:"exclusions" yaml:"exclusions"`
+	DocumentPath string `json:"documentPath,omitempty" yaml:"documentPath,omitempty"`
+	CoverageMode string `json:"coverageMode,omitempty" yaml:"coverageMode,omitempty"`
+	WorkflowMode string `json:"workflowMode,omitempty" yaml:"workflowMode,omitempty"`
+	// AcceptancePolicyCommittedModel treats canonical committed model YAML as
+	// the accepted repository specification; draft files remain proposals.
+	AcceptancePolicy       string      `json:"acceptancePolicy,omitempty" yaml:"acceptancePolicy,omitempty"`
+	APIVersion             string      `json:"apiVersion" yaml:"apiVersion"`
+	Name                   string      `json:"name" yaml:"name"`
+	ModelFiles             []string    `json:"modelFiles" yaml:"modelFiles"`
+	InventoryRoots         []string    `json:"inventoryRoots" yaml:"inventoryRoots"`
+	Exclusions             []Exclusion `json:"exclusions" yaml:"exclusions"`
+	TransitionalExclusions []Exclusion `json:"transitionalExclusions,omitempty" yaml:"transitionalExclusions,omitempty"`
 }
 
 type Project struct {

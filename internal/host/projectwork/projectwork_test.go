@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
 
 func TestInitPreviewAndGuardedWriteCreateControlPlaneAndDocumentation(t *testing.T) {
@@ -43,6 +44,9 @@ func TestInitPreviewAndGuardedWriteCreateControlPlaneAndDocumentation(t *testing
 	if len(project.Report.Managers) != 1 || project.Report.Managers[0].Namespace != "" || len(project.Report.Statements) != 0 {
 		t.Fatalf("Init invented domain definitions: %+v", project.Report)
 	}
+	if project.Config.WorkflowMode != WorkflowModeGuided || project.Config.AcceptancePolicy != AcceptancePolicyCommittedModel {
+		t.Fatalf("Init defaults = workflow %q, acceptance %q", project.Config.WorkflowMode, project.Config.AcceptancePolicy)
+	}
 	document, err := Document(project, true)
 	if err != nil {
 		t.Fatal(err)
@@ -52,6 +56,62 @@ func TestInitPreviewAndGuardedWriteCreateControlPlaneAndDocumentation(t *testing
 	}
 	if _, err := os.Stat(filepath.Join(root, ".artifacts")); !os.IsNotExist(err) {
 		t.Fatalf("project initialization or document write created legacy Host state: %v", err)
+	}
+}
+
+func TestWorkflowAndAcceptanceConfigModesAreClosedAndLegacyCompatible(t *testing.T) {
+	legacy, err := DecodeConfig([]byte(projectConfig(initManagerPath)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if legacy.WorkflowMode != "" || legacy.AcceptancePolicy != "" {
+		t.Fatalf("legacy omitted fields were not preserved as compatibility defaults: %+v", legacy)
+	}
+	for _, mode := range []string{WorkflowModeGuided, WorkflowModeEmpty} {
+		data := strings.Replace(projectConfig(initManagerPath), "name: Fixture\n", "name: Fixture\nworkflowMode: "+mode+"\n", 1)
+		config, err := DecodeConfig([]byte(data))
+		if err != nil || config.WorkflowMode != mode {
+			t.Errorf("workflowMode %q decode = %q, %v", mode, config.WorkflowMode, err)
+		}
+	}
+	committed := strings.Replace(projectConfig(initManagerPath), "name: Fixture\n", "name: Fixture\nacceptancePolicy: committed-model\n", 1)
+	if config, err := DecodeConfig([]byte(committed)); err != nil || config.AcceptancePolicy != AcceptancePolicyCommittedModel {
+		t.Fatalf("committed-model acceptance policy decode = %+v, %v", config, err)
+	}
+	for field, value := range map[string]string{"workflowMode": "automatic", "acceptancePolicy": "drafts-accepted"} {
+		data := strings.Replace(projectConfig(initManagerPath), "name: Fixture\n", "name: Fixture\n"+field+": "+value+"\n", 1)
+		if _, err := DecodeConfig([]byte(data)); err == nil {
+			t.Errorf("invalid %s %q was accepted", field, value)
+		}
+	}
+}
+
+func TestTransitionalExclusionsRequireSafeNonoverlappingSelectors(t *testing.T) {
+	base := projectConfig(initManagerPath)
+	for name, list := range map[string]string{
+		"repository root":   "- path: .\n  reason: legacy\n",
+		"traversal":         "- path: ../outside\n  reason: legacy\n",
+		"Markitect state":   "- path: .markitect/state/\n  reason: legacy\n",
+		"reserved Git path": "- path: .git/config\n  reason: legacy\n",
+		"overlap":           "- path: legacy/\n  reason: parent\n- path: legacy/child.txt\n  reason: child\n",
+		"ordinary overlap":  "- path: src/file.go\n  reason: migration\n",
+		"model overlap":     "- path: .markitect/model/manager.yaml\n  reason: migration\n",
+	} {
+		data := base
+		if name == "ordinary overlap" {
+			data = strings.Replace(data, "exclusions: []\n", "exclusions:\n  - path: src/file.go\n    reason: excluded\n", 1)
+		} else if name == "model overlap" {
+			list = "- path: .markitect/model/\n  reason: migration\n"
+		}
+		data += "transitionalExclusions:\n" + list
+		if _, err := DecodeConfig([]byte(data)); err == nil {
+			t.Errorf("%s transitional selector was accepted", name)
+		}
+	}
+	valid := base + "transitionalExclusions:\n  - path: legacy/generated/\n    reason: Migration is incomplete\n"
+	config, err := DecodeConfig([]byte(valid))
+	if err != nil || len(config.TransitionalExclusions) != 1 || config.TransitionalExclusions[0].Path != "legacy/generated/" {
+		t.Fatalf("valid transitional directory selector decode = %+v, %v", config, err)
 	}
 }
 
@@ -80,6 +140,91 @@ func TestLoadSelectsConfiguredInventoryAndExcludesCache(t *testing.T) {
 	}
 	if fixed.Provisional || fixed.Revision != commit {
 		t.Fatalf("fixed snapshot identity lost: %+v", fixed)
+	}
+}
+
+func TestLoadModelWithoutRuntimeForWorkingAndFixedSnapshots(t *testing.T) {
+	root, initialRevision := testProject(t)
+	withRuntime, err := Load(root, initialRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := withRuntime.Snapshot.Files[RuntimePath]; !ok {
+		t.Fatal("initial fixed snapshot did not include the present runtime file")
+	}
+	if err := os.Remove(filepath.Join(root, filepath.FromSlash(RuntimePath))); err != nil {
+		t.Fatal(err)
+	}
+	working, err := Load(root, "")
+	if err != nil {
+		t.Fatalf("working model load without runtime failed: %v", err)
+	}
+	if _, ok := working.Snapshot.Files[RuntimePath]; ok {
+		t.Fatal("working snapshot bound a runtime file that is absent")
+	}
+	if working.Digest == withRuntime.Digest {
+		t.Fatal("runtime presence change did not alter the selected model digest")
+	}
+	if _, err := projectmodel.Context(working.Report, working.Report.Managers[0].ID); err != nil {
+		t.Fatalf("model context required runtime configuration: %v", err)
+	}
+	gitTest(t, root, "add", "-u", RuntimePath)
+	gitTest(t, root, "commit", "-m", "remove optional runtime configuration")
+	withoutRuntimeRevision := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	fixed, err := Load(root, withoutRuntimeRevision)
+	if err != nil {
+		t.Fatalf("fixed model load without runtime failed: %v", err)
+	}
+	if fixed.Provisional || fixed.Revision != withoutRuntimeRevision {
+		t.Fatalf("fixed model identity changed: %+v", fixed)
+	}
+	if _, ok := fixed.Snapshot.Files[RuntimePath]; ok {
+		t.Fatal("fixed snapshot bound a runtime file that is absent")
+	}
+	if _, err := projectmodel.Context(fixed.Report, fixed.Report.Managers[0].ID); err != nil {
+		t.Fatalf("fixed model context required runtime configuration: %v", err)
+	}
+	repeated, err := Load(root, withoutRuntimeRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if repeated.Digest != fixed.Digest || repeated.Snapshot.Digest() != fixed.Snapshot.Digest() {
+		t.Fatalf("fixed absence binding was nondeterministic: %s/%s versus %s/%s", fixed.Digest, fixed.Snapshot.Digest(), repeated.Digest, repeated.Snapshot.Digest())
+	}
+}
+
+func TestLoadFullCoverageModelWithoutRuntimeForWorkingAndFixedSnapshots(t *testing.T) {
+	root := testGitRoot(t)
+	if _, err := Init(root, "No runtime fixture", true); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "add", ".")
+	gitTest(t, root, "commit", "-m", "initialize full-coverage model")
+	if err := os.Remove(filepath.Join(root, filepath.FromSlash(RuntimePath))); err != nil {
+		t.Fatal(err)
+	}
+	working, err := Load(root, "")
+	if err != nil {
+		t.Fatalf("working full-coverage model load without runtime failed: %v", err)
+	}
+	if _, ok := working.Snapshot.Files[RuntimePath]; ok {
+		t.Fatal("working full-coverage snapshot bound an absent runtime")
+	}
+	if _, err := projectmodel.Context(working.Report, working.Report.Managers[0].ID); err != nil {
+		t.Fatalf("working full-coverage context required runtime configuration: %v", err)
+	}
+	gitTest(t, root, "add", "-u", RuntimePath)
+	gitTest(t, root, "commit", "-m", "remove runtime from full-coverage project")
+	revision := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	fixed, err := Load(root, revision)
+	if err != nil {
+		t.Fatalf("fixed full-coverage model load without runtime failed: %v", err)
+	}
+	if _, ok := fixed.Snapshot.Files[RuntimePath]; ok {
+		t.Fatal("fixed full-coverage snapshot bound an absent runtime")
+	}
+	if _, err := projectmodel.Context(fixed.Report, fixed.Report.Managers[0].ID); err != nil {
+		t.Fatalf("fixed full-coverage context required runtime configuration: %v", err)
 	}
 }
 

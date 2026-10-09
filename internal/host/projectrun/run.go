@@ -65,6 +65,9 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 	if !plan.ExecuteAuthorized {
 		return empty, ErrNotRunnable
 	}
+	if err := validateExplorationReadiness(root, plan); err != nil {
+		return supersedeExisting(store, id, err)
+	}
 	runtime, err := LoadRuntime(root)
 	if err != nil {
 		return empty, err
@@ -1863,6 +1866,9 @@ func repositoryMatches(root string, plan PlanRecord) error {
 }
 
 func ensureWorkingBinding(host Host, root string, plan PlanRecord) error {
+	if err := validateExplorationReadiness(root, plan); err != nil {
+		return err
+	}
 	working, err := host.Load(root, "")
 	if err != nil {
 		return err

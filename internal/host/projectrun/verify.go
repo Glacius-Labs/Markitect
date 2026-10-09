@@ -41,6 +41,9 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if err != nil {
 		return out, err
 	}
+	if err := validateExplorationReadiness(root, plan); err != nil {
+		return out, err
+	}
 	run, err := s.readLatestState(runID)
 	if err != nil {
 		return out, err
@@ -565,6 +568,9 @@ func validateVerifierCoverage(observations []agentexec.Observation, subjects, re
 }
 
 func freshBindings(host Host, invoker Invoker, root string, plan PlanRecord, runtime Runtime) error {
+	if err := validateExplorationReadiness(root, plan); err != nil {
+		return err
+	}
 	fresh, err := host.Load(root, "")
 	if err != nil {
 		return err
@@ -573,7 +579,16 @@ func freshBindings(host Host, invoker Invoker, root string, plan PlanRecord, run
 		return ErrStale
 	}
 	for _, manager := range fresh.Report.Managers {
-		briefing, err := managerBriefing(root, fresh.Report.ModelDigest, manager.ID, fresh.Revision)
+		if plan.ModelEdit != nil {
+			if plan.BriefingDigests[manager.ID] != "" {
+				return ErrStale
+			}
+			continue
+		}
+		// The working snapshot above establishes live source freshness; it is
+		// provisional and cannot establish accepted-model ancestry. Briefings
+		// remain bound to the plan's exact committed model revision.
+		briefing, err := managerBriefing(root, fresh.Report.ModelDigest, manager.ID, plan.BaseRevision)
 		if err != nil {
 			return err
 		}

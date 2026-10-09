@@ -20,12 +20,12 @@ func renderFiles(options Options) ([]FileChange, error) {
 		case Codex:
 			files = append(files,
 				FileChange{Path: "AGENTS.md", Content: managedBlock(codexEntry()), Action: ""},
-				FileChange{Path: ".agents/skills/markitect-model-first/SKILL.md", Content: skillFile("markitect-model-first", "Use the shared Markitect model-first workflow when exploring or implementing a Markitect-managed project.", skillEntry()), Action: ""},
+				FileChange{Path: ".agents/skills/markitect-model-first/SKILL.md", Content: skillFile("markitect-model-first", skillDescription(), skillEntry()), Action: ""},
 			)
 		case Claude:
 			files = append(files,
 				FileChange{Path: "CLAUDE.md", Content: managedBlock(claudeEntry()), Action: ""},
-				FileChange{Path: ".claude/skills/markitect-model-first/SKILL.md", Content: skillFile("markitect-model-first", "Use the shared Markitect model-first workflow when exploring or implementing a Markitect-managed project.", skillEntry()), Action: ""},
+				FileChange{Path: ".claude/skills/markitect-model-first/SKILL.md", Content: skillFile("markitect-model-first", skillDescription(), skillEntry()), Action: ""},
 			)
 		}
 	}
@@ -44,41 +44,111 @@ func renderWorkflow(documentationPath string) (string, error) {
 
 This file is the shared workflow for contributors using Codex and Claude. Treat the selected Markitect project model as the canonical description of intended behavior, ownership, artifacts, checks, and relationships. Code, tests, documentation, and infrastructure realize that model; their presence alone does not prove they agree with it.
 
-## Start in the conversation
+## Start from an ordinary work item
 
-Let the contributor describe the project or requested change in ordinary language. Do not require them to know Markitect commands or YAML. Begin with the project's purpose and the outcome they want. Model useful concepts, rules, use cases, architecture, and workflow while discussing them; keep accepted decisions distinct from assumptions, suggestions, and open questions. Ask focused follow-up questions when a missing decision blocks the next design or implementation step. Do not invent external facts.
+When a contributor gives a short Work Item, issue, bug, idea, or casual change request, use this model-first skill as the default starting workflow. Treat the short request as an entry point, not as complete requirements or authorization to skip exploration. Let the contributor explain the project and desired outcome in ordinary language and conversation; do not require Markitect commands or YAML knowledge.
+
+Keep an explicit decision ledger as the work proceeds: accepted intent, assumptions, options considered, unresolved questions, their owners, and which selected scopes they block. Carry that ledger forward in the active work item and recover durable state from the repository model and persisted Markitect run when resuming. Dialogue or a draft is not durable acceptance. Do not invent external facts.
+
+Ask the contributor only when material information is missing and changes intended behavior, scope, acceptance, authority, or readiness; otherwise state a bounded assumption and continue. Do not ask for facts already available from the accepted model or repository.
 
 ## Explore before implementation
 
-During Explore, prepare model edits and readable explanations, and use structural checks and impact results to find missing references and affected areas. Keep unresolved decisions visible with their scope and whether they block work. A compiler error is a prompt to repair or clarify the draft, not a reason to start implementation. Discuss technology choices, Manager boundaries, shared artifact contracts, and the proposed first-scope file structure with the contributor. Managers own their declared areas; shared artifacts may be realized by several areas, with each file retaining one accountable owner and explicit cross-area contracts.
+During Explore, discuss useful concepts, rules, use cases, architecture, and workflow. Prepare model edits and explanations, then use structural checks and impact results to find missing references and affected areas. Keep accepted decisions separate from assumptions, suggestions, and open questions. A compiler error is a prompt to repair or clarify the draft, not a reason to start implementation. Discuss technology choices, Manager boundaries, shared artifact contracts, and a proposed first-scope file structure with the contributor. Managers own their declared areas; a shared artifact can serve several areas, while each file keeps one accountable owner and explicit cross-area contracts.
+
+For an existing codebase, reverse-model it iteratively from inspected files, repository history, configuration, and observed checks. Keep a reverse-modeling ledger that connects each proposed rule, artifact, and owner to inspected paths and records unknowns or confidence gaps. Reconcile that ledger with the contributor; do not infer behavior from names, comments, or directory structure alone. Use explicit transient scopes for areas that remain unmodeled, and never present those areas as covered or conforming. Keep the initial adoption model-only. Once the model is accepted under the repository's policy at a committed model revision, plan any cleanup as a separate operation.
 
 The project documentation destination is %q. Keep it readable and derived from the current accepted model through Markitect's documented generation path. Preserve independent documents under their named owners.
 
 ## First-scope readiness
 
-Before implementation, name the first usable scope and show its proposed file structure, required artifacts, Managers, checks, open decisions, and known evidence gaps. Continue discussing or revising the model until decisions that block this scope are resolved. Make the contributor's review of the proposed structure explicit in the conversation. That acknowledgement is conversation evidence, not identity authentication or a technical access control. Keep unresolved decisions and readiness status visible; do not imply they are durably stored unless the project host provides that state. Explore remains unfinished until a successful first Apply for the agreed scope.
+Before implementation, select a first usable scope and compute its readiness from the current fixed project snapshot: structural validity, scoped ownership and dependencies, required artifacts, configured checks, blocking open decisions, and known evidence gaps. Report what is ready and what remains open; readiness is scoped planning evidence, not proof of implementation correctness. Show the proposed file structure, required artifacts, Managers, and checks. Ask the contributor to review, acknowledge, or revise that structure before proceeding. Keep that acknowledgement visible as conversation evidence; it is not identity authentication or technical access control.
+
+Only the canonical model owner and repository policy can accept a model change. A saved proposal or draft is not accepted, and committing a draft by itself does not make it accepted. Satisfy the repository's required review and policy checks, then bind implementation planning to the resulting committed model revision. Do not implement a scope while its blocking decisions or model acceptance remain unresolved.
+
+### Durable exploration records and commands
+
+Each ordinary Work Item gets one durable exploration ID and one named scope ID. Keep those IDs stable while updating or resuming that item. A new Work Item receives new IDs. The input is closed JSON with exactly one scope and explicit arrays; substitute a Manager ID that exists in the current model and JSON-escape it as one string value.
+
+Minimal new exploration input:
+
+%[2]sjson
+{
+  "apiVersion": "markitect.example.org/project-exploration/v1alpha1",
+  "id": "cancel-order",
+  "status": "active",
+  "request": "Support safe order cancellation.",
+  "scopes": [
+    {
+      "id": "cancel-order",
+      "name": "Order cancellation",
+      "goal": "Allow eligible orders to be canceled and restore reserved stock once.",
+      "operation": "apply",
+      "managerIds": ["<existing-manager-id>"]
+    }
+  ],
+  "decisions": [],
+  "drafts": [],
+  "structureAcknowledgements": [],
+  "completions": []
+}
+%[2]s
+
+On creation, the Host fills the source-binding and record digests. To preview a create or update, then persist only that exact plan:
+
+%[2]stext
+markitect project explore --repo PATH --input .markitect/drafts/work-item.json
+markitect project explore --repo PATH --input .markitect/drafts/work-item.json --expect PLAN_DIGEST --write
+markitect project explore --repo PATH --exploration cancel-order
+markitect project explore --repo PATH
+%[2]s
+
+The first command returns a write plan; inspect its binding and digest before the second. Use the returned WritePlan digest as PLAN_DIGEST. The last commands read one durable record or list records. Keep status active until the Host records a successful Apply receipt; integration alone is not completion. Never delete or recreate a record to avoid its open decisions or history.
 
 ## Implement and close the first Apply
 
-When an accepted model change is committed, generate and review the deterministic project brief for the exact before and after revisions before assigning the next Manager work. Use the markitect project brief command with the accepted decision reference; preview first, then persist against the returned current state digest. Share each Manager's scoped brief and public neighbor contracts; use them to orient the next plan. A brief summarizes declared model changes; it does not infer meaning from prose or prove implementation correctness. A caller-declared decision reference does not authenticate identity.
+After the model is accepted at a committed revision, use the existing Plan, Run, Verify, and Apply lifecycle in that order. The Host reconciles committed accepted-model history automatically; inspect the exact context for a Manager with `+"`markitect project briefings --repo PATH --manager MANAGER_ID`"+`. Reconcile that Manager's scoped briefings, events, and relevant public neighbor contracts before work. Do not invent or manually aggregate a model delta that the accepted-history mechanism already supplies. A briefing summarizes declared model changes; it does not infer meaning from prose or prove implementation correctness. A caller-declared decision reference does not authenticate identity.
 
-For an implementation request, use the project's model edit and impact workflows as needed, then plan the bounded goal against the current committed model. Review the plan and Manager assignments with the contributor. Run the delegated implementation, reviews, integration, and declared checks. Complete full verification against the final candidate (supply the CLI's required --write flag for an agent verification invocation) and apply only the verified candidate with its current bindings. If a check or verification fails, report the gap and continue the same bounded workflow; do not call the attempt successful. Apply does not publish or deploy.
+Plan only the bounded goal against the selected accepted revision and review the plan and Manager assignments with the contributor. Follow the ownership tree: a Manager owns its assigned scope and delegates only to active direct children; leaf Managers implement their files, an independent reviewer assesses the exact scoped candidate bytes, and each parent integrates direct-child results against its own contracts. Do not substitute a whole-project implementer for these bounded responsibilities. Run the declared checks and complete full verification against the final candidate. Apply only the verified candidate with its current bindings. If a check or verification fails, report the gap and continue the same persisted run; do not call the attempt successful. Apply does not publish or deploy.
 
-After first Apply, use the same model, ownership, impact, planning, run, verification, and Apply workflow for later changes. A new feature can begin another Explore cycle without resetting the project. Keep technical validation, semantic evidence, and human acceptance distinguishable.
+If provider setup must be refreshed after Manager-tree edits, inspect its preview and explicitly preserve the already authorized time, start/retry, and cost limits. Setup may replace runtime limits with defaults; never accept a refresh that silently resets those bounds.
+
+The first successful Apply for the acknowledged scope closes the initial work item. Before that point, keep the work item open and continue its bounded repair, review, verification, and Apply cycle. If interrupted or moved to a new conversation, inspect and resume the existing persisted run from its last durable state; do not replay completed Manager work or create a duplicate run. After first Apply, use the same model, ownership, impact, planning, run, verification, and Apply workflow for later changes. A new feature can begin another Explore cycle without resetting the project. Keep technical validation, semantic evidence, and human acceptance distinguishable.
+
+The CLI forms below expose preview digests and durable IDs; replace each placeholder with the value just returned by the Host.
+
+%[2]stext
+markitect project readiness --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID
+markitect project readiness --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID --acknowledge-structure --actor ACTOR --authority AUTHORITY --decision-ref PROVENANCE --acknowledged-at RFC3339_TIME
+markitect project readiness --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID --acknowledge-structure --actor ACTOR --authority AUTHORITY --decision-ref PROVENANCE --acknowledged-at RFC3339_TIME --expect WRITE_PLAN_DIGEST --write
+markitect project deliver --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID --write
+markitect project deliver --repo PATH --exploration EXPLORATION_ID --scope SCOPE_ID --run RUN_ID --write
+markitect project status --repo PATH --run RUN_ID
+markitect project resume --repo PATH --run RUN_ID --write
+markitect project repair --repo PATH --run RUN_ID --write
+%[2]s
+
+Read the readiness preview's exact Managers, files, artifacts, checks, blockers, binding digest, structure digest, and write-plan digest. Use the returned writePlan.digest for WRITE_PLAN_DIGEST. Generate one explicit UTC RFC3339 --acknowledged-at value and reuse that exact value and all other acknowledgement arguments for preview and write; changing the timestamp changes the plan. Record only real authority and provenance: an authorized Manager may assert its own delegated authority within the Work Item, citing that task; never claim that assertion is a human acknowledgement. Use --actor user only after an actual user decision, with its real authority and provenance. If the task does not authorize the exact structure or a material blocking decision remains open, ask the contributor; do not invent a decision or acknowledgement.
+
+Project deliver uses the existing durable run: interrupted/running work resumes; integrated work advances through verification and Apply; verified work continues guarded Apply; an already applied run recovers the exploration completion from its immutable receipt. If delivery reports blocked or failed, inspect the same run with project status and resolve the reported cause. Resume interrupted work without replay; use repair only for a failed required check after correcting its cause. Never create a replacement run just because integration, verification, or Apply was interrupted.
 
 ## Authority boundary
 
 These repository instructions help the selected agent follow the workflow. They do not prevent a contributor or agent with ordinary repository write access from editing files directly or bypassing Markitect. Rely on the project's guarded Apply and configured repository checks for their declared boundaries; do not claim that native instructions create an operating-system security boundary.
-`, documentationPath)
+`, documentationPath, strings.Repeat(string(rune(96)), 3))
 	return managedBlock(body), nil
 }
 
 func codexEntry() string {
-	return "Read and follow the shared [Markitect model-first workflow](.markitect/workflows/model-first.md). Guide the contributor through Explore in ordinary conversation; do not ask them to issue Markitect commands. Keep assumptions and unresolved decisions visible, and use the workflow's model, impact, planning, verification, and Apply steps."
+	return "For a short Work Item, issue, bug, idea, or change request, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, acknowledge computed readiness and the proposed first-scope structure, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Resume persisted work without replaying completed work."
 }
 
 func claudeEntry() string {
-	return "Read and follow the shared [Markitect model-first workflow](.markitect/workflows/model-first.md). Guide the contributor through Explore in ordinary conversation; do not ask them to issue Markitect commands. Keep assumptions and unresolved decisions visible, and use the workflow's model, impact, planning, verification, and Apply steps."
+	return "For a short Work Item, issue, bug, idea, or change request, use the repository-local Markitect model-first skill and follow the shared [workflow](.markitect/workflows/model-first.md). Begin in ordinary conversation, preserve decisions and open questions, acknowledge computed readiness and the proposed first-scope structure, then use the accepted model and existing Plan/Run/Verify/Apply lifecycle. Resume persisted work without replaying completed work."
+}
+
+func skillDescription() string {
+	return "Use for ordinary short Work Items, issues, bugs, and ideas in a Markitect project; explore and persist decisions, establish scoped readiness, then implement through the accepted model-first workflow."
 }
 
 func skillFile(name, description, entry string) string {
@@ -86,7 +156,7 @@ func skillFile(name, description, entry string) string {
 }
 
 func skillEntry() string {
-	return "For project modeling and implementation, read the repository-root .markitect/workflows/model-first.md file and follow it. This shared workflow covers natural-language Explore, visible open decisions, model and impact work, Manager ownership, first-scope readiness, model-change briefs, implementation, full verification, and Apply."
+	return "When a short Work Item, issue, bug, or idea arrives, read the repository-root .markitect/workflows/model-first.md and follow it as the default. It covers a persistent decision ledger, iterative brownfield reverse-modeling, repository-policy acceptance at a committed model revision, computed first-scope readiness, bounded Manager and reviewer responsibilities, Plan/Run/Verify/Apply, first-success completion, and resuming persisted work without replay."
 }
 
 func managedBlock(body string) string {

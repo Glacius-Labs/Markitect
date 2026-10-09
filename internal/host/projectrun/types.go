@@ -10,6 +10,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
@@ -108,10 +109,12 @@ type Limits struct {
 type Duration time.Duration
 
 type PlanRequest struct {
-	Operation    string   `json:"operation,omitempty"`
-	Goal         string   `json:"goal"`
-	Managers     []string `json:"managers,omitempty"`
-	BaseRevision string   `json:"baseRevision,omitempty"`
+	ExplorationID string   `json:"explorationId,omitempty"`
+	ScopeID       string   `json:"scopeId,omitempty"`
+	Operation     string   `json:"operation,omitempty"`
+	Goal          string   `json:"goal"`
+	Managers      []string `json:"managers,omitempty"`
+	BaseRevision  string   `json:"baseRevision,omitempty"`
 	// SinceRevision is an optional older selected-project revision used only to
 	// derive change impact. The execution basis remains BaseRevision (or HEAD).
 	SinceRevision string    `json:"sinceRevision,omitempty"`
@@ -122,6 +125,11 @@ type PlanRequest struct {
 }
 
 type PlanRecord struct {
+	ExplorationID           string                       `json:"explorationId,omitempty"`
+	ScopeID                 string                       `json:"scopeId,omitempty"`
+	ExplorationDigest       string                       `json:"explorationDigest,omitempty"`
+	ReadinessDigest         string                       `json:"readinessDigest,omitempty"`
+	ExplorationBinding      *projectexplore.Binding      `json:"explorationBinding,omitempty"`
 	BriefingDigests         map[string]string            `json:"briefingDigests,omitempty"`
 	Strictness              map[string]StrictnessProfile `json:"strictness,omitempty"`
 	Operation               string                       `json:"operation,omitempty"`

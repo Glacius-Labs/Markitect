@@ -39,7 +39,7 @@ type File struct {
 }
 
 func planDigest(plan PlanRecord) (string, error) {
-	return digest(struct {
+	base, err := digest(struct {
 		APIVersion              string                       `json:"apiVersion"`
 		ID                      string                       `json:"id"`
 		Status                  string                       `json:"status"`
@@ -75,6 +75,13 @@ func planDigest(plan PlanRecord) (string, error) {
 		Findings                []string                     `json:"findings,omitempty"`
 		Blockers                []string                     `json:"blockers,omitempty"`
 	}{plan.APIVersion, plan.ID, plan.Status, plan.Operation, plan.Goal, plan.ExecuteAuthorized, plan.BaseRevision, plan.ChangeBaseRevision, plan.ChangeBaseSnapshot, plan.ChangeBaseProjectDigest, plan.ChangeBaseModelDigest, plan.ChangeBaseReportDigest, plan.ChangeImpact, plan.ChangeImpactDigest, plan.TargetBranch, plan.TargetHead, plan.RepositoryDigest, plan.BaseSnapshot, plan.WorkingSnapshot, plan.BaseProjectDigest, plan.WorkingProjectDigest, plan.BaseModelDigest, plan.ModelDigest, plan.ReportDigest, plan.RuntimeDigest, plan.Managers, plan.Strictness, plan.BriefingDigests, plan.Checks, plan.ModelEdit, plan.InitialCandidateID, plan.RuntimeAgents, plan.Findings, plan.Blockers})
+	if err != nil || plan.ExplorationBinding == nil && plan.ExplorationID == "" && plan.ScopeID == "" && plan.ExplorationDigest == "" && plan.ReadinessDigest == "" {
+		return base, err
+	}
+	return digest(struct {
+		Base, ExplorationID, ScopeID, ExplorationDigest, ReadinessDigest string
+		Binding                                                          any
+	}{base, plan.ExplorationID, plan.ScopeID, plan.ExplorationDigest, plan.ReadinessDigest, plan.ExplorationBinding})
 }
 
 func newID() (string, error) {

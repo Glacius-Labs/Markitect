@@ -27,8 +27,9 @@ var (
 	ErrInvalidBundle       = errors.New("briefing bundle is invalid")
 )
 
-// Provenance is supplied by the caller from the accepted change decision. The
-// package never treats a commit message or model prose as decision evidence.
+// Provenance binds the source decision reference, declared actor, and authority
+// policy. Automatically collected Git metadata is source attribution only and
+// does not authenticate a human decision.
 type Provenance struct {
 	DecisionReference string `json:"decisionReference"`
 	Actor             string `json:"actor"`

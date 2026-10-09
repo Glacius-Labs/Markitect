@@ -83,6 +83,7 @@ func ToolPaths(config Config) []projectcoverage.ToolPath {
 		{Selector: ".markitect/state/briefings.json.lock", Owner: "projectbriefing", Operational: true},
 		{Selector: ".markitect/state/briefings.json.tmp", Owner: "projectbriefing", Operational: true},
 		{Selector: ".markitect/state/briefings/", Owner: "projectbriefing", Operational: true},
+		{Selector: ".markitect/state/explorations/", Owner: "projectexplore", Operational: true},
 		{Selector: ".markitect/workflows/model-first.md", Owner: "projectwork"},
 		{Selector: "AGENTS.md", Owner: "project-onboarding"},
 		{Selector: "CLAUDE.md", Owner: "project-onboarding"},
@@ -96,7 +97,11 @@ func ToolPaths(config Config) []projectcoverage.ToolPath {
 }
 
 func coverageOptions(config Config) projectcoverage.Options {
-	return projectcoverage.Options{CanonicalModelPaths: append([]string(nil), config.ModelFiles...), ToolPaths: ToolPaths(config)}
+	transitional := make([]projectcoverage.TransitionalExclusion, 0, len(config.TransitionalExclusions))
+	for _, exclusion := range config.TransitionalExclusions {
+		transitional = append(transitional, projectcoverage.TransitionalExclusion{Path: exclusion.Path, Reason: exclusion.Reason})
+	}
+	return projectcoverage.Options{CanonicalModelPaths: append([]string(nil), config.ModelFiles...), ToolPaths: ToolPaths(config), Transitional: transitional}
 }
 
 // IsToolPath reports whether an exact repository path is registered as a

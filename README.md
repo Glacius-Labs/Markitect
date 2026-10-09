@@ -5,21 +5,15 @@
   </picture>
 </h1>
 
-**Humans architect the system of work. AI performs the work. Markitect keeps them aligned.**
+**Humans shape the project world. AI works within it. Markitect keeps their model and repository aligned.**
 
-Markitect connects owner-selected engineering intent—concepts, relationships, purposes, rules and responsibilities—to the code, documentation and other representations a project chooses to govern. A change to accepted intent should expose affected work and lead to independently checked results. The goal is better project quality and consistency through fewer missed obligations and contradictions. The [product vision](docs/vision.md) owns the quality hypothesis and human/agent responsibilities.
+Markitect is a model-first engineering workflow. A project records its accepted goals, rules, architecture, responsibilities, expected artifacts and checks as a recursively managed tree under `.markitect/`. Agents receive bounded Manager tasks, produce candidate changes, and return evidence for integration and verification. The owner-readable project document is generated from that model; it is a view, not a second source of truth. See the [product vision](docs/vision.md) and the [model-first workflow](docs/project-workflow.md).
 
-Classic is the active Markitect product line on `main`; the [vision](docs/vision.md#current-basis-and-unproven-benefit) defines that scope. Government remains a separate experiment. The [roadmap](docs/implementation-plan.md#public-classic-entrypoint-on-main-unreleased-source) distinguishes integrated source, published capabilities and planned work.
+The model in a committed project revision is the accepted repository specification Markitect uses for that revision. A draft, distillation, uncommitted edit, passing check, plan digest, commit identity or supplied provenance string does not authenticate human approval. Project commands run with the caller's local permissions; native agent instructions and scoped payloads are not an operating-system sandbox.
 
-The published [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1) preserves Markitect's stable Project/Domain CLI. The stable CLI validates typed resources and relations, produces scoped context and impact, and runs explicitly declared checks and outputs. The same distribution bundles a separate canonical alpha: Schema/Definition intent, Schema Modules and Projection Modules, explicit projection bindings, reviewed materialization, fresh declared verification, and read-only declared-scope audit. The saved Apply-to-Verify handoff belongs only to this experimental canonical controller alpha. These reset/controller capabilities are not stable support for an autonomous operator or continuous agent runtime. See the [alpha guide](docs/canonical-projections.md) for its command and evidence boundaries.
+The [current source](docs/project-workflow.md#choose-the-executable) provides the new `markitect project` workflow. It is not included in the published [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1), whose install instructions below remain bound to that immutable release. Build or run the exact source candidate to try newer commands; no new release is promised here.
 
-The new [managed project workflow](docs/project-workflow.md) is an unreleased source alpha on the `codex/model-driven-delivery` candidate. It organizes a YAML project model into vertical slices with recursive managers, file responsibilities, explicit artifact/check links, selected Brownfield adoption and staged agent proposals. Start with the [Shop example](examples/project-world/README.md) for its file structure and executable behavior. The released CLI does not acquire these commands from a source change.
-
-The [complete Classic Commerce example](examples/classic-commerce/README.md) supplies all projection policies, a native CLI walkthrough, an opt-in .NET build and an independent finite behavior check, including a compilable negative candidate. Its deterministic runner is explicitly a test double; it introduces no general .NET requirement or new release claim.
-
-Across both paths, evidence is finite. Configured checks establish only what their selected inputs and declared scopes test; they do not prove arbitrary implementation semantics or complete repository consistency. Continuous agent operation and reduced human supervision remain goals, not demonstrated properties. The [roadmap](docs/implementation-plan.md) records shipped capabilities, negative findings and remaining limits.
-
-The earlier additive releases remain compatibility history: [v0.13.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0) added policy-failure analysis, selective handoff and Markitect-first; [v0.12.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.12.0) added bounded `same-target`; [v0.11.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.11.0) added reusable architecture contracts; and [v0.10.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.10.0) established the generic canonical engineering model. [Architecture](docs/architecture.md) describes the compatibility boundary; historical comparisons and their inconclusive or negative findings remain linked from the roadmap.
+Start with the [Shop walkthrough](examples/project-world/README.md) for a runnable vertical-slice example, then follow the [project guide](docs/project-workflow.md) to initialize, model, delegate and verify a repository. Existing Project/Domain commands and canonical projection tools remain available as compatibility contracts; their examples and validation records are preserved in the [documentation index](docs/README.md). Historical comparisons remain evidence, not proof that this model-first workflow is superior; quality, cost and human-attention benefits remain unproven.
 
 ## Why Markitect?
 
@@ -67,61 +61,50 @@ deterministic validation
 bounded context and impact
 ```
 
-Projects independently select the Markdown and provider projections they need.
+The Manager tree assigns documentation, code, configuration and agent guidance to their accountable owners.
 
 These mechanisms aim to remove independently maintained copies of modeled intent and make consistency questions answerable structurally, leaving human attention for engineering decisions. Their upkeep must be included when testing whether that goal is achieved.
 
 ## Working method
 
-The [canonical operating methodology](docs/operating-methodology.md) defines the target process:
+The current project workflow is organized by the model's recursive Manager tree:
 
 ```text
-accepted project ontology
-    -> applicable context, explicit impact and affected work
-    -> Executor -> candidate -> independent Verifier
-    -> guarded materialization and final-state verification
-    -> completion, bounded repair or an owner decision
+owner explores and decides project intent
+    -> accepted model revision and generated readable view
+    -> impact-scoped Manager assignments
+    -> bounded implementation and integration
+    -> full Manager and declared-check verification
+    -> guarded Apply, bounded repair or an owner decision
 ```
 
-Use the same responsibilities at component, slice and parent/project scope. Passing child checks do not establish integration correctness. A valid representation may have different implementation details where the policy allows them; exact bytes are required only by an exact deterministic contract. Repair drift against unchanged intent without inventing a model edit. Real intent changes update their canonical owner before implementation.
+The intended user journey begins with conversational Explore and explicit decisions, then commits accepted model changes before implementation. The source supports durable Explore records, scoped readiness, model edits, impact, Manager runs, integration, verification, guarded Apply, recovery, readable documentation, full repository classification, structured Brownfield proposal sessions, and the composed/resumable `project deliver` operation. These structured interfaces do not establish the quality of natural-language exploration or human approval. See the [workflow and status](docs/project-workflow.md), the [native work-item delivery checklist](docs/design/project-world/native-work-item-delivery.md), and [roadmap](docs/implementation-plan.md).
 
-The [measurement procedure](docs/measurement.md#staged-method-readiness) establishes finite readiness stages: component boundaries, one complete real change, recursive composition, repeated usable operation, then a fair conventional-versus-Markitect project backlog. It evaluates quality, consistency, missed fanout, rule/process conformity and human intervention first, with tokens and duration as secondary observations. These stages do not claim current whole-repository convergence or waive contribution and release gates. The [roadmap](docs/implementation-plan.md) owns actual implementation and release status.
+At every scope, child success is not parent integration success. Implementations may vary within their declared freedom; exact bytes are required only for deterministic contracts. Repair drift against unchanged intent without inventing model changes. When intent changes, update its canonical owner, review and commit that model before implementation. The [measurement procedure](docs/measurement.md#staged-method-readiness) defines how to evaluate quality, missed fanout, conformity, maintenance effort and human intervention. No superiority or productivity advantage is established.
 
 Agents working on this repository begin through [AGENTS.md](AGENTS.md) and its fixed Markitect engineering context. The vision, operating methodology and measurement procedure are declared inputs of that context. Adopting projects select their own ontology, checks, ownership and delegation policy.
 
-## Desired intent and declared representations
+## The model owns desired project intent
 
-A Markitect project keeps canonical typed resources separate from explicitly selected projections and other project-owned artifacts. The target model applies only to a declared governed scope. Markdown views under `docs/markitect/` are optional; provider outputs read canonical sources independently.
+A Markitect project keeps canonical model files and runtime configuration under `.markitect/`. The recursive Manager tree owns conceptual slices, artifact responsibilities and required checks. Source files, tests, configuration and documentation remain project artifacts assigned to their declared owners. The generated readable view under `docs/markitect/project.md` reflects the accepted model; agents and people propose changes to the canonical model rather than editing its generated view as a second authority.
 
 ```text
-             Human-owned engineering intent
-                           │
-                           ▼
-                 Canonical Markitect state
-                  .markitect/areas/...
-                           │
-                    Explicit contracts
-                           │
-       ┌───────────┬───────┼────────┬───────────┐
-       ▼           ▼       ▼        ▼           ▼
-    Code/tests   Docs   CI/hooks  Agent rules  Other declared targets
-    AI/checks   render  adapters  projections   adapters
-       └───────────┴───────┴────────┴───────────┘
-                           │
-                           ▼
-                 Observed repository state
-                           │
-                           ▼
-                 Bounded verify/reconcile
+owner decisions -> committed .markitect model -> managers and file owners
+                                      |                  |
+                                      v                  v
+                              generated readable view   candidate changes
+                                                         |
+                                                         v
+                                      integration -> full Verify -> guarded Apply
 ```
 
-This diagram is the target flow, not a claim that current Markitect generates or semantically verifies each row. Project-owned verification commands run separately against a materialized fixed project snapshot. AI-created files are candidate representations whose permitted variation and evidence must be project-defined.
+This is the workflow direction, not a claim that Markitect generates or semantically verifies every artifact. Project-owned checks run against a fixed candidate snapshot and establish only their declared assertions. Agent output remains a candidate until it passes the selected evidence and is applied under the caller's authority. A commit supplies a stable model basis; it does not authenticate who approved the model.
 
-Generated output is never the canonical owner. Provider projections can be regenerated from canonical resources. Human-authored narrative, external/vendor/tool inputs and implementation details not governed by a declared contract remain project-owned sources or observations; they are not automatically projections.
+The older Project/Domain and canonical Projection formats remain compatibility surfaces. Their versioned contracts, release evidence and examples are retained, but they are not a second active product workflow. See [legacy CLI compatibility](docs/usage.md#legacy-projectdomain-cli-compatibility).
 
-## From a request to a governed change
+## Historical canonical Projection example
 
-For the canonical alpha, start with a concrete request and review the intended rule in its canonical owner before implementing it. The model contains what applies; brainstorming and alternatives stay outside it. Ordinary implementation choices do not need a permissions checklist.
+The following Commerce walkthrough preserves evidence for the v0.14.1 canonical Projection alpha. It is a compatibility example, not the current model-first product entrypoint.
 
 The [intent-change walkthrough](examples/classic-commerce/intent-change.md) follows one rule from `UseCase.purpose` through selected .NET and Markdown policies to a handler, readable documentation and an independent behavior probe. It then changes the minimum order quantity from one to two, exposes stale evidence, refuses reuse of the old Apply candidate, and requests fresh verification. Model acceptance and review of exact materialization bytes are separate decisions.
 
@@ -129,9 +112,9 @@ This walkthrough is an unreleased source example on `main` using the published v
 
 <a id="the-current-workflow"></a>
 
-## Stable Project/Domain workflow
+## Legacy Project/Domain CLI compatibility
 
-The following resource kinds and `spec.targets` configuration belong to the stable Project/Domain path. The canonical alpha instead uses Schema/Definition sources, explicit Projection Definitions and runtime bindings; follow its example rather than combining the two formats.
+The released v0.14.1 CLI and its Project/Domain resources remain supported compatibility contracts. They are not the recommended workflow for new projects. Keep existing repositories on their current contract unless undertaking an explicit migration; do not mix these resource formats with the new `.markitect/model/` format.
 
 ### Define
 
@@ -267,45 +250,40 @@ The canonical YAML remains the source for the modeled engineering decisions. Hum
 
 Task context, deterministic checks and explicit policy evolution are ways to make human engineering decisions usable by many agents. Markitect's [vision](docs/vision.md) defines their role in executable governance and the desired shift from routine supervision to architecture-level decisions. Relevant context, fewer interventions and sustainable maintenance remain [evaluation questions](docs/measurement.md#human-attention-and-delegated-work); generated instructions do not prove agent compliance.
 
-## Canonical repository layout
+## Current project layout
 
-New projects default to responsibility-owned Areas under `.markitect/areas/<namespace>`.
+New model-first projects keep their canonical model and runtime under `.markitect/`:
 
 ```text
 project/
-├── markitect.yaml
 ├── .markitect/
-│   ├── areas/
-│   │   └── engineering/
-│   ├── packages/
-│   ├── tool/
-│   └── bootstrap/
+│   ├── project.yaml
+│   ├── runtime.yaml
+│   ├── model/
+│   │   └── <responsibility-owned vertical slices>/
+│   ├── ignore.yaml
+│   └── drafts/              # explicit proposals and operational records
 ├── docs/
 │   ├── ... human-owned documentation ...
-│   └── markitect/          # generated only when target: markdown
-├── .agents/
-├── .codex/
-├── .claude/
-└── src/                    # ordinary project artifacts stay project-owned
+│   └── markitect/project.md # generated readable model view
+└── src/                     # assigned to a declared Manager
 ```
 
-The layout is a convention, not hidden semantics. Configured Areas are authoritative. File names do not infer resource types, and directory adjacency does not create dependencies.
+The project model declares conceptual slices, Managers, statements, expected artifacts, concrete file responsibility and checks. Names or directory adjacency do not infer semantic meaning or dependencies. See the [model-first project guide](docs/project-workflow.md) for the implemented schema and source/release boundary.
 
-See [Repository layout](docs/repository-layout.md) for the exact current contract.
+The earlier `.markitect/areas/<namespace>` layout belongs to the legacy Project/Domain CLI; see [Repository layout](docs/repository-layout.md) for its exact compatibility contract.
 
-## What Markitect does today
+## What the model-first source workflow provides
 
-- Models project-selected engineering concepts and policy as typed YAML resources; AI-working knowledge is one supplied Domain.
-- Gives each resource explicit identity, ownership, and graph relationships.
-- Keeps project-file bytes opaque in Core; explicit adapters and project-owned checks may provide bounded evidence about declared representations.
-- Validates resource structure, references, bindings, contracts, cycles, file inputs, and configured documentation routers.
-- Compiles a selected resource's bounded context.
-- Supports committed fixed-run task context with exact selected project artifacts.
-- Compares resolved snapshots to identify changed paths and affected resources.
-- Produces only explicitly selected Markdown, Codex, and Claude outputs.
-- Supports exact direct offline content packages with explicit exports and package-qualified identities.
-- Runs only project-owned verification commands declared in `Project.spec.checks`.
-- Records advisory review evidence and determines when its declared basis no longer matches.
+- Stores a recursively managed project model, manager responsibilities, artifact requirements and checks under `.markitect/`.
+- Compiles context and impact from fixed source snapshots, with targeted implementation and complete Manager verification for full-coverage projects.
+- Supports exact model proposals, explicit Brownfield selection, bounded Manager execution, integration, independent review, declared checks, recovery and guarded Apply.
+- Classifies the full repository in full-coverage mode; every ordinary path must have an explicit model, tool-owner or ignore classification before closure.
+- Generates a readable project-model document and can install native Codex/Claude contributor instructions.
+- Preserves prior Project/Domain commands and the canonical Projection alpha as compatibility contracts.
+- Keeps model truth, proposals, machine evidence and human authority distinct. Checks prove only their declared assertions; project files are not semantically understood by generic Core.
+
+Explore/readiness records and structured Brownfield return to model proposals are available in current source. A natural-language interview's completeness, end-to-end acceptance and productivity effects remain unproven. Native instructions do not prevent an agent with write access from bypassing Markitect. Quality, cost and autonomy benefits remain unmeasured.
 
 ## What Markitect deliberately does not do
 
@@ -319,9 +297,11 @@ Markitect does not currently:
 - replace your CI platform, work-item system, or source-control system;
 - claim that a passing structural check proves human acceptance or software correctness.
 
-Project-owned checks and configured adapters integrate specialized tooling without moving domain-specific analysis into the deterministic core. A projection plan is a bound work contract, not owner approval; successful evidence proves only its declared checks.
+Project-owned checks and target tools integrate specialized evidence without moving domain-specific analysis into the generic compiler. A candidate plan binds work and inputs; it is not human approval, and successful evidence proves only its declared checks.
 
-## The v0.10.0 canonical engineering model
+## Historical model background: v0.10.0
+
+The following describes a preserved release contract and examples, not the current model-first project setup.
 
 The v0.10.0 release extends the deterministic foundation with project-owned, versioned Domain definitions: closed resource schemas, typed references within a custom Domain, relation-specific context and invalidation, and a finite set of structural constraints. The bundled AI-working Domain can explicitly use registered custom-domain resources through qualified references. The normalized model feeds configured adapters without exposing the core to technology-specific analysis. Domain definitions can be selected locally or from exact pinned content packages.
 
@@ -388,7 +368,7 @@ Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. Fo
 
 <!-- markitect-release:try:start -->
 
-## Try the installed CLI
+## Try the published v0.14.1 compatibility CLI
 
 Clone the v0.14.1 synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
 
@@ -416,33 +396,28 @@ The [minimal example](examples/minimal/README.md) is a synthetic, executable fix
 
 <!-- markitect-release:try:end -->
 
-## Start a project
+## Start a model-first project
 
-For a complete first-project exercise, follow the [onboarding walkthrough](docs/onboarding.md).
+The current model-first commands are available from this source checkout, not the published v0.14.1 binary. From the Markitect source root, preview initialization for the target repository:
 
-A new project can preview its minimal Markitect layout before anything is written:
-
-```sh
-markitect init --repo . --name my-project --namespace engineering
+```powershell
+go run ./cmd/markitect project init --repo C:\src\my-project --name my-project
 ```
 
-On a named non-protected Git branch, apply the reviewed plan with:
+Review the returned paths and exact plan digest, then apply the preview on a writable feature branch:
 
-```sh
-markitect init --repo . --name my-project --namespace engineering --write
+```powershell
+go run ./cmd/markitect project init --repo C:\src\my-project --name my-project --write
+go run ./cmd/markitect project check --repo C:\src\my-project
+go run ./cmd/markitect project index --repo C:\src\my-project
+go run ./cmd/markitect project document --repo C:\src\my-project
 ```
 
-The default canonical Area is:
+Then follow [Project workflow](docs/project-workflow.md) for onboarding, durable Explore, scoped readiness, model changes, implementation plans, Manager runs, Verify, guarded Apply and recovery. Current source also has the composed, resumable `project deliver` operation and structured Brownfield sessions for repeated model proposals and reviewed adoption. The [native work-item delivery checklist](docs/design/project-world/native-work-item-delivery.md) records the intended user journey and its remaining validation gates; it is not proof that those gates passed. The [Shop example](examples/project-world/README.md) provides the executable model-first project.
 
-```text
-.markitect/areas/engineering/
-```
+## Legacy CLI quick check from a source checkout
 
-Initialization deliberately does not invent your engineering rules, checks, packages, or provider outputs.
-
-## Try it from a source checkout
-
-From a Markitect source checkout, with Go 1.27.1 or later:
+These commands are retained for repositories using the released Project/Domain contract; they are not the model-first quick start:
 
 ```sh
 go run ./cmd/markitect check --repo examples/minimal
@@ -462,9 +437,9 @@ Engineering knowledge should not become independently maintained copies across p
 
 Ownership and dependency should be modeled rather than reconstructed from prose whenever they matter structurally.
 
-### Projection over duplication
+### Generated views over duplicated authority
 
-Generated Markdown, Codex, and Claude outputs are projections of canonical sources.
+Readable documentation and native agent instructions derive from canonical model sources where supported; they do not become independent authorities.
 
 ### Deterministic where possible
 

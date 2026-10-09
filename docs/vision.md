@@ -20,24 +20,23 @@ Humans should spend more attention defining goals, concepts, architecture, invar
 
 ## Product definition
 
-**Markitect is the canonical desired-state model of an engineering system.** Human owners define durable, provider-independent meaning when it is needed: goals, rules, processes, responsibilities, invariants and other concepts that still make sense if today's providers and file formats disappear. This is a test for canonical ownership, not a requirement to add every such concept to a shared foundation. Schema Modules make selected intent expressible; Projection Modules supply target expertise and tools. Explicit desired representations and project-owned ProjectionPolicies connect meaning to target representations, while project configuration resolves installed target capabilities separately from that intent. Provider Skills, Workflows, agent definitions, human documentation and generated enforcement are normally representations of this meaning.
+**Markitect is the canonical model of a project's intended world and the responsibilities for realizing it.** A project organizes concepts, rules, architecture, workflows and decisions into recursively managed vertical slices. Its model also declares expected artifacts, file responsibility, integration contracts and checks. The model lives under `.markitect/` in the adopting repository; the generated readable project document is a view of those sources, not a competing owner. Provider, editor and file-format choices are implementation details unless the project deliberately makes them part of its intent.
 
-**Users change canonical intent. Markitect reconciles representations.** The target flow is:
+**Owners change the model. Managers coordinate realization.** The target flow is:
 
 ```text
-human-owned engineering intent
-    -> canonical Markitect Definitions and purpose
-    -> compile, compare intent and derive explicit impact
-    -> plan reconciliation of desired representations
-    -> Executor Agent using resolved target tools
-    -> candidate representation
-    -> independent Verifier with bounded evidence
-    -> pass, repair or decision escalation
+explore goals, constraints and open decisions
+    -> accept and commit the project model
+    -> derive affected Managers and bounded work
+    -> delegate implementation within declared freedom
+    -> integrate child changes and run declared checks
+    -> Verify the full required Manager tree
+    -> guarded Apply, bounded repair or owner decision
 ```
 
-The desired authority model extends to code, documentation, agent guidance and automation: they represent accepted canonical intent instead of becoming competing semantic owners. Brownfield work adds a reverse inference path: existing representations can inform a candidate intent, but never grant it authority. Owners review and correct that proposal, accept canonical intent, then match exact artifact scopes and verify existing representations before adopting valid bytes as a baseline. Adoption preserves valid bytes; it does not regenerate or normalize them to an Executor's preference. Unknown or excluded artifacts remain explicit and unresolved artifacts are not rewritten or deleted. A partially adopted repository must identify what remains unmodeled, externally owned, excluded or uncertain; installation alone does not govern the whole repository. Humans decide adoption and real intent changes; unchanged intent with a drifting artifact calls for repair of that artifact.
+The committed model revision is Markitect's accepted repository specification for that revision. Drafts, distillation reports and uncommitted edits remain proposals. Git commits and digests bind bytes and history; they do not authenticate who approved the model or prove that a human reviewed it. Projects define their decision and acceptance process outside that machine identity boundary. Brownfield work can use existing artifacts to inform a proposal, but inference never grants the proposal authority. Owners review and correct the model, commit the selected specification, then map artifact scopes and assess existing realizations. Unmodeled, excluded, externally owned and uncertain paths remain explicit. A partial model must not imply repository-wide governance.
 
-The product direction is an executable engineering-governance layer for autonomous software development. Markdown views, provider instructions, context, checks and adapters serve that purpose. Their existence or volume is not the product's success criterion.
+The product direction is an executable engineering-governance workflow for AI-assisted software development. Readable documentation, native agent instructions, bounded context, implementation tools and checks serve the model-first process. Their existence or volume is not the product's success criterion.
 
 Markitect lets humans program the shape and rules of software development instead of repeatedly supervising each implementation detail. AI should implement the project's architecture rather than invent a competing architecture on every task. The desired benefit is faithful, higher-quality autonomous engineering with architectural authority remaining human-owned. More work per unit of human attention is a consequence to measure alongside quality, reliability and model upkeep.
 
@@ -45,19 +44,19 @@ Markitect lets humans program the shape and rules of software development instea
 
 | Role | Responsibility |
 |---|---|
-| Humans | Decide what should exist and why; choose concepts, architecture, boundaries, invariants, policies, processes and owners; define implementation freedom, acceptance requirements and delegated authority; decide genuine ambiguity, conflicts, exceptions and architecture evolution. |
-| Markitect | Make selected engineering decisions explicit and versioned; compile declared structure deterministically; orchestrate explicitly supplied checks and policy mechanisms above Core; compile relevant context and impact; preserve provenance; supply canonical meaning to independent projections, checks and reconciliation adapters. |
-| AI agents | Understand the task, consume its relevant context, implement within granted boundaries, test/refactor, update owned projections, run configured verification/reconciliation and continue routine work. Propose changes to intent separately and escalate decisions they are not authorized or equipped to make. |
+| Humans | Decide what should exist and why; choose concepts, architecture, boundaries, invariants, policies, processes and Managers; define implementation freedom and acceptance requirements; maintain the project's approval process and resolve decisions outside delegated authority. |
+| Markitect | Compile the committed project model and fixed repository snapshots; derive bounded context and impact; route Manager work; validate candidate structure and declared evidence; preserve provenance and guard writes. |
+| AI agents | Explore and propose intent, implement assigned responsibilities, test and integrate within granted boundaries, report evidence, and raise unresolved decisions. An agent report is not owner approval. |
 
-For governed changes, the intended flow is accepted desired state → relevant agent context and bounded checks → materialization or repair of declared representations → observed evidence. An intent change updates its canonical owner and replans before materialization. When intent is unchanged, a bug or stale representation is repaired against that unchanged model; this is not a bypass and does not require a fake model edit. Architecture changes and proposed policies return to their human owner for deliberate review and adoption; observations do not silently rewrite the rules.
+For governed changes, the intended flow is committed accepted model → relevant Manager context and bounded checks → materialization or repair of declared artifacts → full Verify and observed evidence. A real intent change updates its canonical owner before implementation. When intent is unchanged, a bug or stale artifact is repaired against that same model; no artificial model edit is needed. Exploration, distillation and other proposals remain drafts until the owner chooses to commit the revised model. A commit is the specification basis, not proof of who reviewed or approved it.
 
-This operating model is a target, not a claim that the current release intercepts every repository change or reconciles every artifact. Current workflow guidance and configured checks cover only their declared scope. Applying the target more broadly requires explicit representation ownership, adapters and bounded verification evidence.
+This operating model is not a claim that the published release supports the new workflow or that current source closes every user journey. Current source includes durable Explore records, scoped readiness and structure acknowledgements, structured Brownfield proposal/adoption sessions, Manager execution, integration, full verification and guarded Apply. The composed `project deliver` operation advances and resumes that bounded proof. These protocol surfaces do not establish the quality of a natural-language interview, semantic correctness, human acceptance, or a successful outcome for every adopting repository. Configured checks establish only their declared scope. Agent instructions and scoped execution are not an OS sandbox and do not prevent an independently writable process from changing repository files.
 
 The target human role is specification and engineering judgment. Being a permanent agent scheduler, prompt supervisor, manual synchronizer or reader of every routine PR should not be necessary merely to keep declared intent consistent. Whether those activities can actually be reduced is a validation question. A project still defines which changes require human acceptance; passing technical checks do not grant authority or authenticate a reviewer.
 
 ## What executable governance means
 
-One semantic owner exists per accepted engineering fact or representation decision. Natural-language rationale and guidance can be canonical Definition data. Human narrative not yet adopted, vendor inputs and specialist observations remain explicitly classified outside that scope; migrating them is a reviewed intent change, not automatic inference.
+One canonical owner exists per modeled engineering fact or representation decision. Rationale and guidance may be prose inside the project model. Unadopted narrative, vendor material and specialist observations remain outside accepted intent until explicitly incorporated. The project tree makes responsibility, artifact relationships and decision scope visible; it does not infer source-code semantics or turn every repository file into a model fact.
 
 The new structural Core does not contain an engineering assertion DSL. Checks, policies and assurance live above Core; the historical finite Domain/policy contract remains supported through compatibility. Project-owned checks and target tools can provide specialized implementation evidence. Rule and Workflow prose remains instruction and rationale where no executable assertion exists; storing it in a typed resource does not enforce the process or prove that an agent followed it.
 
@@ -97,11 +96,12 @@ Reconsider proposals that introduce another manually synchronized truth owner, h
 
 | Category | What is established or intended |
 |---|---|
-| Current product line | Classic is the active Markitect development line on `main`. Government remains a separate experiment; it does not redefine the canonical model, add Core semantics or supply a prerequisite for using Classic. The [roadmap](implementation-plan.md) owns exact integrated-source status; a source merge is not a new published CLI version. |
-| Published capability | v0.14.1 preserves the stable Project/Domain CLI contract from v0.13.0, including versioned Domains, typed relations, finite assertions, context/impact, packages, PolicyResults/exceptions and configured projections/adapters. The prior read-only analysis, selective preparation/Copy Me, Markitect-first workflow and managed-artifact accounting remain within that compatibility contract. The roadmap and production assessment own exact release coverage. |
-| Experimental alpha (v0.14.1) | The canonical reset and controller are bundled as an explicitly experimental preview, separate from stable Project/Domain CLI support. The [v0.14.1 production assessment](production-assessment.md#v0141-published-release) records the exact source, release gates and assets. Bounded existing-target adoption remains limited to declared scope; Apply produces materialized-unverified records that need fresh Verify. Neither the owner claim nor report establishes semantic review, automatic ownership, complete assurance or real-adopter benefit. |
-| Aspirational operation | Many continuously working agents, less routine human supervision, architecture-level escalation and sustainable governance at greater scale. No current scheduler, dashboard or universal automatic acceptance is claimed. |
-| Unproven benefit | Reduced human intervention, lower total maintenance/synchronization cost, fewer missed updates or defects, better sustained autonomy, token savings and market demand. |
+| Product direction | A single model-first user workflow centered on the recursively managed `.markitect/` project tree. The [roadmap](implementation-plan.md) records exact source and release status. |
+| Current source | The `project` CLI supports model, Manager, artifact, coverage, operation, briefing, onboarding, durable Explore/readiness, structured Brownfield refinement, and composed bounded delivery. See the [workflow](project-workflow.md), [native work-item delivery checklist](design/project-world/native-work-item-delivery.md), and [validation record](validation/project-operations-2026-10-09.md); checklist requirements and protocol tests are not user-journey or benefit proof. |
+| Published compatibility | v0.14.1 preserves the earlier Project/Domain CLI and bundles the experimental canonical Projection alpha. These versioned contracts and evidence remain available to existing projects; they are not a second active product UX and are not included in the current model-first source command surface. See the [production assessment](production-assessment.md#v0141-published-release). |
+| Acceptance boundary | A committed model revision is the accepted specification used for that revision. Commit/provenance values bind data but do not authenticate a human decision. Passing checks, generated docs and agent reports are evidence with declared scope, not approval. |
+| Aspirational operation | More parallel Managers, less routine supervision, architecture-level escalation and sustainable governance at greater scale. No universal autonomous acceptance or OS isolation is claimed. |
+| Unproven benefit | Reduced human intervention, lower total maintenance cost, fewer missed obligations or defects, better sustained autonomy, token savings and market demand remain unmeasured. Historical comparisons are preserved, including their negative or inconclusive findings. |
 
 The [real-code adoption pilot](validation/real-project-adoption-pilot.md), [AGENTS.md comparison](validation/agents-md-vs-markitect.md) and [parallel-wave consumer inventory](validation/parallel-wave-konfyra.md) are evidence, not marketing demonstrations. The comparison remains inconclusive: additional model/projection maintenance was observed, and no independent truth owner or concrete human review step was removed. Missing context and broad impact remain meaningful findings. The parallel wave proved bounded subsystem independence, not reduced human coordination cost.
 

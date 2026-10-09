@@ -17,25 +17,42 @@ import (
 )
 
 type visibleNotification struct {
-	EventID          string                  `json:"eventId"`
-	Revision         string                  `json:"revision"`
-	CommitTime       string                  `json:"commitTime,omitempty"`
-	DefinitionID     core.DefinitionIdentity `json:"definitionId"`
-	Change           string                  `json:"change"`
-	Category         string                  `json:"category"`
-	Severity         string                  `json:"severity"`
-	AffectedManagers []string                `json:"affectedManagers"`
-	ResolutionStatus string                  `json:"resolutionStatus"`
-	NextAction       string                  `json:"nextAction"`
+	EventID          string                      `json:"eventId"`
+	Revision         string                      `json:"revision"`
+	CommitTime       string                      `json:"commitTime,omitempty"`
+	DefinitionID     core.DefinitionIdentity     `json:"definitionId"`
+	Change           string                      `json:"change"`
+	Category         string                      `json:"category"`
+	Severity         string                      `json:"severity"`
+	AffectedManagers []string                    `json:"affectedManagers"`
+	ResolutionStatus string                      `json:"resolutionStatus"`
+	NextAction       string                      `json:"nextAction"`
+	Resolution       *projectbriefing.Resolution `json:"resolution,omitempty"`
 	commitUnix       int64
 }
 
 type managerEvent struct {
 	projectbriefing.Event
-	ResolutionStatus string `json:"resolutionStatus"`
+	ResolutionStatus string                      `json:"resolutionStatus"`
+	Resolution       *projectbriefing.Resolution `json:"resolution,omitempty"`
 }
 
 func runBriefing(opts options, out io.Writer) error {
+	if opts.action == "briefings" {
+		revision, err := gitHeadRevision(opts.repo)
+		if err != nil {
+			return err
+		}
+		project, err := projectwork.Load(opts.repo, revision)
+		if err != nil {
+			return err
+		}
+		if project.Config.WorkflowMode == "guided" {
+			if _, err := projectbriefing.EnsureAcceptedHistory(opts.repo, revision); err != nil {
+				return err
+			}
+		}
+	}
 	state, stateDigest, err := projectbriefing.Read(opts.repo)
 	if err != nil {
 		return err
@@ -76,7 +93,8 @@ func runBriefing(opts options, out io.Writer) error {
 		}
 		withStatus := make([]managerEvent, 0, len(events))
 		for _, event := range events {
-			withStatus = append(withStatus, managerEvent{Event: event, ResolutionStatus: "unresolved"})
+			resolution := projectbriefing.EventResolutionStatus(state, event.ID)
+			withStatus = append(withStatus, managerEvent{Event: event, ResolutionStatus: resolution.Status, Resolution: resolution.Resolution})
 		}
 		return writeJSON(out, struct {
 			Briefings     []projectbriefing.Briefing `json:"briefings"`
@@ -151,11 +169,16 @@ func visibleBriefings(root string, state projectbriefing.Store) ([]visibleNotifi
 			commitUnix = value
 			commitTimes[item.revision] = value
 		}
+		resolution := projectbriefing.EventResolutionStatus(state, event.ID)
+		nextAction := "Review the declared model change and its affected responsibilities."
+		if resolution.Status == "resolved" {
+			nextAction = "Inspect the recorded full verification and Apply evidence."
+		}
 		notifications = append(notifications, visibleNotification{
 			EventID: event.ID, Revision: item.revision, CommitTime: time.Unix(commitUnix, 0).UTC().Format(time.RFC3339),
 			DefinitionID: event.DefinitionID, Change: event.Change, Category: event.Category, Severity: event.Severity,
-			AffectedManagers: event.AffectedManagers, ResolutionStatus: "unresolved",
-			NextAction: "Review the declared model change and its affected responsibilities.", commitUnix: commitUnix,
+			AffectedManagers: event.AffectedManagers, ResolutionStatus: resolution.Status, Resolution: resolution.Resolution,
+			NextAction: nextAction, commitUnix: commitUnix,
 		})
 	}
 	sort.Slice(notifications, func(i, j int) bool {

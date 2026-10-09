@@ -8,21 +8,24 @@ import (
 )
 
 type options struct {
-	action, repo, revision, base               string
-	name, manager, goal                        string
-	provider, model, effort                    string
-	toolRoot, providerExecutable               string
-	inputMicros, outputMicros                  string
-	maxCost, since                             string
-	operation, provenance, event, documentPath string
-	sourceRepo                                 string
-	input, request                             string
-	output                                     string
-	discovery, report, resolution              string
-	plan, run, candidate                       string
-	expect, branch, head, tree                 string
-	managers                                   []string
-	write, help, generate                      bool
+	action, repo, revision, base                                        string
+	name, manager, goal                                                 string
+	provider, model, effort                                             string
+	toolRoot, providerExecutable                                        string
+	inputMicros, outputMicros                                           string
+	maxCost, since                                                      string
+	operation, provenance, event, documentPath                          string
+	explorationID, scope, actor, authority, decisionRef, acknowledgedAt string
+	brownfieldAction, sessionID                                         string
+	sourceRepo                                                          string
+	input, request                                                      string
+	output                                                              string
+	discovery, report, resolution                                       string
+	plan, run, candidate                                                string
+	expect, branch, head, tree                                          string
+	managers                                                            []string
+	write, help, generate                                               bool
+	acknowledgeStructure                                                bool
 }
 
 type actionSpec struct {
@@ -33,34 +36,38 @@ type actionSpec struct {
 }
 
 var actionSpecs = map[string]actionSpec{
-	"schema":    {usage: "schema", flags: []string{}},
-	"init":      {usage: "init --repo PATH --name NAME [--write]", flags: []string{"repo", "name", "write"}, required: []string{"repo", "name"}, write: true},
-	"check":     {usage: "check --repo PATH [--revision COMMIT]", flags: []string{"repo", "revision"}, required: []string{"repo"}},
-	"index":     {usage: "index --repo PATH [--revision COMMIT]", flags: []string{"repo", "revision"}, required: []string{"repo"}},
-	"context":   {usage: "context --repo PATH --manager ID [--revision COMMIT]", flags: []string{"repo", "revision", "manager"}, required: []string{"repo", "manager"}},
-	"impact":    {usage: "impact --repo PATH --base COMMIT --revision COMMIT", flags: []string{"repo", "base", "revision"}, required: []string{"repo", "base", "revision"}},
-	"document":  {usage: "document --repo PATH [--revision COMMIT] [--write]", flags: []string{"repo", "revision", "write"}, required: []string{"repo"}, write: true},
-	"edit":      {usage: "edit --repo PATH --input MUTATION.json [--revision COMMIT] [--expect PLAN_DIGEST --write]", flags: []string{"repo", "revision", "input", "expect", "write"}, required: []string{"repo", "input"}, write: true},
-	"discover":  {usage: "discover --repo PATH --request DISCOVERY-REQUEST.json [--output DISCOVERY.json]", flags: []string{"repo", "request", "output"}, required: []string{"repo", "request"}},
-	"distill":   {usage: "distill --repo PATH --discovery DISCOVERY.json --report DISTILLATION.json [--output VALIDATED-DISTILLATION.json] | distill --repo PATH --discovery DISCOVERY.json --generate --write --output DISTILLATION.json --input-micros-per-million N --output-micros-per-million N --max-cost-micros N", flags: []string{"repo", "discovery", "report", "output", "generate", "write", "input-micros-per-million", "output-micros-per-million", "max-cost-micros"}, required: []string{"repo", "discovery"}, write: true},
-	"adopt":     {usage: "adopt --repo TARGET --source-repo SOURCE --revision TARGET_COMMIT --discovery DISCOVERY.json --report DISTILLATION.json --resolution RESOLUTION.json [--output PLAN.json] [--plan PLAN.json --expect PLAN_DIGEST --write]", flags: []string{"repo", "source-repo", "revision", "discovery", "report", "resolution", "plan", "output", "expect", "write"}, required: []string{"repo", "source-repo", "revision", "discovery", "report", "resolution"}, write: true},
-	"plan":      {usage: "plan --repo PATH --goal TEXT [--operation apply|cleanup|reconcile] [--manager ID ...] [--revision COMMIT] [--since OLD_COMMIT] [--write]", flags: []string{"repo", "goal", "operation", "manager", "revision", "since", "write"}, required: []string{"repo", "goal"}, write: true},
-	"run":       {usage: "run --repo PATH --plan PLAN_ID --write", flags: []string{"repo", "plan", "write"}, required: []string{"repo", "plan", "write"}, write: true},
-	"resume":    {usage: "resume --repo PATH --run RUN_ID --write", flags: []string{"repo", "run", "write"}, required: []string{"repo", "run", "write"}, write: true},
-	"repair":    {usage: "repair --repo PATH --run RUN_ID [--write]", flags: []string{"repo", "run", "write"}, required: []string{"repo", "run"}, write: true},
-	"status":    {usage: "status --repo PATH --run RUN_ID", flags: []string{"repo", "run"}, required: []string{"repo", "run"}},
-	"verify":    {usage: "verify --repo PATH (--run RUN_ID | --revision COMMIT) --write", flags: []string{"repo", "run", "revision", "write"}, required: []string{"repo", "write"}, write: true},
-	"coverage":  {usage: "coverage --repo PATH [--revision COMMIT]", flags: []string{"repo", "revision"}, required: []string{"repo"}},
-	"cleanup":   {usage: "cleanup --repo PATH --goal TEXT [--revision COMMIT] [--write] (creates a plan; run/verify/apply separately)", flags: []string{"repo", "goal", "revision", "write"}, required: []string{"repo", "goal"}, write: true},
-	"reconcile": {usage: "reconcile --repo PATH --goal TEXT [--revision COMMIT] [--write] (creates a plan; run/verify/apply separately)", flags: []string{"repo", "goal", "revision", "write"}, required: []string{"repo", "goal"}, write: true},
-	"brief":     {usage: "brief --repo PATH --since COMMIT --revision COMMIT --provenance TEXT [--expect STATE_DIGEST --write]", flags: []string{"repo", "since", "revision", "provenance", "expect", "write"}, required: []string{"repo", "since", "revision", "provenance"}, write: true},
-	"briefings": {usage: "briefings --repo PATH [--manager ID]", flags: []string{"repo", "manager"}, required: []string{"repo"}},
-	"dismiss":   {usage: "dismiss --repo PATH --event ID --manager ID --expect STATE_DIGEST --write", flags: []string{"repo", "event", "manager", "expect", "write"}, required: []string{"repo", "event", "manager", "expect", "write"}, write: true},
-	"onboard":   {usage: "onboard --repo PATH --provider codex|claude|both [--document-path PATH] [--expect PLAN_DIGEST --write]", flags: []string{"repo", "provider", "document-path", "expect", "write"}, required: []string{"repo", "provider"}, write: true},
-	"apply":     {usage: "apply --repo PATH --plan PLAN_ID --run RUN_ID --candidate ID [--branch BRANCH --head COMMIT --worktree DIGEST --expect VERIFY_DIGEST --write]", flags: []string{"repo", "plan", "run", "candidate", "branch", "head", "worktree", "expect", "write"}, required: []string{"repo", "plan", "run", "candidate"}, write: true},
-	"setup":     {usage: "setup --repo PATH --tool-root MARKITECT_SOURCE --provider codex|claude --model MODEL [--effort high] --input-micros-per-million N --output-micros-per-million N --max-cost-micros N [--provider-executable PATH] [--expect EDIT_DIGEST --write]", flags: []string{"repo", "tool-root", "provider", "model", "effort", "provider-executable", "input-micros-per-million", "output-micros-per-million", "max-cost-micros", "expect", "write"}, required: []string{"repo", "tool-root", "provider", "model", "input-micros-per-million", "output-micros-per-million", "max-cost-micros"}, write: true},
-	"doctor":    {usage: "doctor --repo PATH --tool-root MARKITECT_SOURCE --provider codex|claude [--provider-executable PATH]", flags: []string{"repo", "tool-root", "provider", "provider-executable"}, required: []string{"repo", "tool-root", "provider"}},
-	"resolve":   {usage: "resolve --repo TARGET --source-repo SOURCE --revision TARGET_COMMIT --discovery DISCOVERY.json --report DISTILLATION.json --input CHOICES.json [--output RESOLUTION.json]", flags: []string{"repo", "source-repo", "revision", "discovery", "report", "input", "output"}, required: []string{"repo", "source-repo", "revision", "discovery", "report", "input"}},
+	"explore":    {usage: "explore --repo PATH [--exploration ID | --input RECORD.json] [--expect PLAN_DIGEST --write]", flags: []string{"repo", "revision", "exploration", "input", "expect", "write"}, required: []string{"repo"}, write: true},
+	"readiness":  {usage: "readiness --repo PATH --exploration ID --scope ID [--acknowledge-structure --actor ACTOR --authority TEXT --decision-ref REF --acknowledged-at RFC3339 --expect DIGEST --write]", flags: []string{"repo", "revision", "exploration", "scope", "acknowledge-structure", "actor", "authority", "decision-ref", "acknowledged-at", "expect", "write"}, required: []string{"repo", "exploration", "scope"}, write: true},
+	"brownfield": {usage: "brownfield --repo TARGET [--source-repo SOURCE] --brownfield-action start|begin|context|propose|integrate|iterate|resolve|plan|apply-adoption|resume [--revision COMMIT] [--session ID] [--input STAGE.json] [--expect DIGEST --write]", flags: []string{"repo", "source-repo", "revision", "brownfield-action", "session", "input", "expect", "write"}, required: []string{"repo", "brownfield-action"}, write: true},
+	"deliver":    {usage: "deliver --repo PATH --exploration ID --scope ID [--run ID] --write", flags: []string{"repo", "exploration", "scope", "run", "write"}, required: []string{"repo", "exploration", "scope", "write"}, write: true},
+	"schema":     {usage: "schema", flags: []string{}},
+	"init":       {usage: "init --repo PATH --name NAME [--write]", flags: []string{"repo", "name", "write"}, required: []string{"repo", "name"}, write: true},
+	"check":      {usage: "check --repo PATH [--revision COMMIT]", flags: []string{"repo", "revision"}, required: []string{"repo"}},
+	"index":      {usage: "index --repo PATH [--revision COMMIT]", flags: []string{"repo", "revision"}, required: []string{"repo"}},
+	"context":    {usage: "context --repo PATH --manager ID [--revision COMMIT]", flags: []string{"repo", "revision", "manager"}, required: []string{"repo", "manager"}},
+	"impact":     {usage: "impact --repo PATH --base COMMIT --revision COMMIT", flags: []string{"repo", "base", "revision"}, required: []string{"repo", "base", "revision"}},
+	"document":   {usage: "document --repo PATH [--revision COMMIT] [--write]", flags: []string{"repo", "revision", "write"}, required: []string{"repo"}, write: true},
+	"edit":       {usage: "edit --repo PATH --input MUTATION.json [--revision COMMIT] [--expect PLAN_DIGEST --write]", flags: []string{"repo", "revision", "input", "expect", "write"}, required: []string{"repo", "input"}, write: true},
+	"discover":   {usage: "discover --repo PATH --request DISCOVERY-REQUEST.json [--output DISCOVERY.json]", flags: []string{"repo", "request", "output"}, required: []string{"repo", "request"}},
+	"distill":    {usage: "distill --repo PATH --discovery DISCOVERY.json --report DISTILLATION.json [--output VALIDATED-DISTILLATION.json] | distill --repo PATH --discovery DISCOVERY.json --generate --write --output DISTILLATION.json --input-micros-per-million N --output-micros-per-million N --max-cost-micros N", flags: []string{"repo", "discovery", "report", "output", "generate", "write", "input-micros-per-million", "output-micros-per-million", "max-cost-micros"}, required: []string{"repo", "discovery"}, write: true},
+	"adopt":      {usage: "adopt --repo TARGET --source-repo SOURCE --revision TARGET_COMMIT --discovery DISCOVERY.json --report DISTILLATION.json --resolution RESOLUTION.json [--output PLAN.json] [--plan PLAN.json --expect PLAN_DIGEST --write]", flags: []string{"repo", "source-repo", "revision", "discovery", "report", "resolution", "plan", "output", "expect", "write"}, required: []string{"repo", "source-repo", "revision", "discovery", "report", "resolution"}, write: true},
+	"plan":       {usage: "plan --repo PATH --goal TEXT [--operation apply|cleanup|reconcile] [--manager ID ...] [--revision COMMIT] [--since OLD_COMMIT] [--write]", flags: []string{"repo", "goal", "operation", "manager", "revision", "since", "exploration", "scope", "write"}, required: []string{"repo", "goal"}, write: true},
+	"run":        {usage: "run --repo PATH --plan PLAN_ID --write", flags: []string{"repo", "plan", "write"}, required: []string{"repo", "plan", "write"}, write: true},
+	"resume":     {usage: "resume --repo PATH --run RUN_ID --write", flags: []string{"repo", "run", "write"}, required: []string{"repo", "run", "write"}, write: true},
+	"repair":     {usage: "repair --repo PATH --run RUN_ID [--write]", flags: []string{"repo", "run", "write"}, required: []string{"repo", "run"}, write: true},
+	"status":     {usage: "status --repo PATH --run RUN_ID", flags: []string{"repo", "run"}, required: []string{"repo", "run"}},
+	"verify":     {usage: "verify --repo PATH (--run RUN_ID | --revision COMMIT) --write", flags: []string{"repo", "run", "revision", "write"}, required: []string{"repo", "write"}, write: true},
+	"coverage":   {usage: "coverage --repo PATH [--revision COMMIT]", flags: []string{"repo", "revision"}, required: []string{"repo"}},
+	"cleanup":    {usage: "cleanup --repo PATH --goal TEXT [--revision COMMIT] [--write] (creates a plan; run/verify/apply separately)", flags: []string{"repo", "goal", "revision", "exploration", "scope", "write"}, required: []string{"repo", "goal"}, write: true},
+	"reconcile":  {usage: "reconcile --repo PATH --goal TEXT [--revision COMMIT] [--write] (creates a plan; run/verify/apply separately)", flags: []string{"repo", "goal", "revision", "exploration", "scope", "write"}, required: []string{"repo", "goal"}, write: true},
+	"brief":      {usage: "brief --repo PATH --since COMMIT --revision COMMIT --provenance TEXT [--expect STATE_DIGEST --write]", flags: []string{"repo", "since", "revision", "provenance", "expect", "write"}, required: []string{"repo", "since", "revision", "provenance"}, write: true},
+	"briefings":  {usage: "briefings --repo PATH [--manager ID]", flags: []string{"repo", "manager"}, required: []string{"repo"}},
+	"dismiss":    {usage: "dismiss --repo PATH --event ID --manager ID --expect STATE_DIGEST --write", flags: []string{"repo", "event", "manager", "expect", "write"}, required: []string{"repo", "event", "manager", "expect", "write"}, write: true},
+	"onboard":    {usage: "onboard --repo PATH --provider codex|claude|both [--document-path PATH] [--expect PLAN_DIGEST --write]", flags: []string{"repo", "provider", "document-path", "expect", "write"}, required: []string{"repo", "provider"}, write: true},
+	"apply":      {usage: "apply --repo PATH --plan PLAN_ID --run RUN_ID --candidate ID [--branch BRANCH --head COMMIT --worktree DIGEST --expect VERIFY_DIGEST --write]", flags: []string{"repo", "plan", "run", "candidate", "branch", "head", "worktree", "expect", "write"}, required: []string{"repo", "plan", "run", "candidate"}, write: true},
+	"setup":      {usage: "setup --repo PATH --tool-root MARKITECT_SOURCE --provider codex|claude --model MODEL [--effort high] --input-micros-per-million N --output-micros-per-million N --max-cost-micros N [--provider-executable PATH] [--expect EDIT_DIGEST --write]", flags: []string{"repo", "tool-root", "provider", "model", "effort", "provider-executable", "input-micros-per-million", "output-micros-per-million", "max-cost-micros", "expect", "write"}, required: []string{"repo", "tool-root", "provider", "model", "input-micros-per-million", "output-micros-per-million", "max-cost-micros"}, write: true},
+	"doctor":     {usage: "doctor --repo PATH --tool-root MARKITECT_SOURCE --provider codex|claude [--provider-executable PATH]", flags: []string{"repo", "tool-root", "provider", "provider-executable"}, required: []string{"repo", "tool-root", "provider"}},
+	"resolve":    {usage: "resolve --repo TARGET --source-repo SOURCE --revision TARGET_COMMIT --discovery DISCOVERY.json --report DISTILLATION.json --input CHOICES.json [--output RESOLUTION.json]", flags: []string{"repo", "source-repo", "revision", "discovery", "report", "input", "output"}, required: []string{"repo", "source-repo", "revision", "discovery", "report", "input"}},
 }
 
 func parse(args []string, errout io.Writer) (options, bool, error) {
@@ -86,7 +93,7 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	values := map[string]*string{}
 	for _, name := range spec.flags {
 		switch name {
-		case "write", "generate":
+		case "write", "generate", "acknowledge-structure":
 			continue
 		case "manager":
 			continue
@@ -103,6 +110,10 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 		fs.BoolVar(&write, "write", false, "apply the already-authorized, reviewed operation")
 	}
 	generate := false
+	acknowledgeStructure := false
+	if contains(spec.flags, "acknowledge-structure") {
+		fs.BoolVar(&acknowledgeStructure, "acknowledge-structure", false, "record caller-authorized acknowledgement of the exact proposed structure")
+	}
 	if contains(spec.flags, "generate") {
 		fs.BoolVar(&generate, "generate", false, "generate one agent-assisted report using the configured runtime")
 	}
@@ -208,7 +219,7 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 			}
 		}
 	}
-	o := options{action: action, write: write, generate: generate, managers: append([]string(nil), managers...)}
+	o := options{action: action, write: write, generate: generate, acknowledgeStructure: acknowledgeStructure, managers: append([]string(nil), managers...)}
 	if len(managers) > 0 {
 		o.manager = managers[0]
 	}
@@ -249,6 +260,14 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	assign("provenance", &o.provenance)
 	assign("event", &o.event)
 	assign("document-path", &o.documentPath)
+	assign("exploration", &o.explorationID)
+	assign("scope", &o.scope)
+	assign("actor", &o.actor)
+	assign("authority", &o.authority)
+	assign("decision-ref", &o.decisionRef)
+	assign("acknowledged-at", &o.acknowledgedAt)
+	assign("brownfield-action", &o.brownfieldAction)
+	assign("session", &o.sessionID)
 	_ = errout
 	return o, false, nil
 }

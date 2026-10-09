@@ -51,6 +51,9 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if err != nil {
 		return out, err
 	}
+	if err := validateExplorationReadiness(root, plan); err != nil {
+		return out, err
+	}
 	run, err := store.readLatestState(runID)
 	if err != nil {
 		return out, err
@@ -133,6 +136,10 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if len(capturePaths) == 0 {
 		capturePaths = []string{projectwork.ManifestPath}
 	}
+	capturePaths, err = explorationApplyCapturePaths(plan, capturePaths)
+	if err != nil {
+		return out, err
+	}
 	capture, err := hostwrite.CaptureGuardedWrite(root, capturePaths)
 	if err != nil {
 		return out, err
@@ -184,6 +191,9 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	defer unlock()
 	plan, err := s.readPlan(request.PlanID)
 	if err != nil {
+		return out, err
+	}
+	if err := validateExplorationReadiness(root, plan); err != nil {
 		return out, err
 	}
 	if plan.ID != request.RunID {
@@ -287,6 +297,10 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if len(capturePaths) == 0 {
 		capturePaths = []string{projectwork.ManifestPath}
 	}
+	capturePaths, err = explorationApplyCapturePaths(plan, capturePaths)
+	if err != nil {
+		return out, err
+	}
 	capture, err := hostwrite.CaptureGuardedWrite(root, capturePaths)
 	if err != nil {
 		return out, err
@@ -312,6 +326,9 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		return out, err
 	}
 	validate := func() error {
+		if err := validateExplorationReadiness(root, plan); err != nil {
+			return err
+		}
 		if err := validateCheckExecutables(plan); err != nil {
 			return err
 		}
@@ -418,6 +435,9 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		out.Status = "partial"
 		out.Error = "files applied but apply report journal failed: " + err.Error()
 		return out, fmt.Errorf("files applied; apply report journal failed: %w", err)
+	}
+	if err := completeExploration(root, plan, candidate, verify, out); err != nil {
+		return out, fmt.Errorf("files applied and journalled; exploration completion needs recovery using the same run: %w", err)
 	}
 	return out, nil
 }

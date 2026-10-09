@@ -2,6 +2,9 @@ package projectonboarding
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 	"go.yaml.in/yaml/v3"
 )
@@ -341,6 +345,143 @@ func TestGeneratedSkillsHaveDiscoverableFrontmatterAndRootBasedWorkflowPointer(t
 			if !strings.Contains(parts[2], "repository-root .markitect/workflows/model-first.md") || strings.Contains(parts[2], "](.markitect/workflows/") {
 				t.Fatalf("%s does not point to the canonical workflow from the repository root", file.Path)
 			}
+		}
+	}
+}
+
+func TestModelFirstWorkflowCoversShortWorkItemsReadinessAndBrownfieldAdoption(t *testing.T) {
+	files, err := renderFiles(Options{Providers: []Provider{Codex, Claude}, DocumentationPath: "docs/markitect/project.md"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := fileFor(t, Plan{Files: files}, workflowPath).Content
+	for _, required := range []string{
+		"short Work Item, issue, bug, idea",
+		"explicit decision ledger",
+		"recover durable state",
+		"compute its readiness from the current fixed project snapshot",
+		"acknowledge, or revise",
+		"A saved proposal or draft is not accepted",
+		"committing a draft by itself does not make it accepted",
+		"reverse-model it iteratively",
+		"explicit transient scopes",
+		"Keep the initial adoption model-only",
+		"cleanup as a separate operation",
+		"bounded goal against the selected accepted revision",
+		"leaf Managers implement their files",
+		"independent reviewer assesses the exact scoped candidate bytes",
+		"first successful Apply",
+		"resume the existing persisted run",
+		"do not replay completed Manager work",
+	} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("shared workflow is missing required guidance %q", required)
+		}
+	}
+}
+
+func TestRenderedExploreRecordDecodesAndCreatesBoundPreview(t *testing.T) {
+	root, project := onboardingRepo(t)
+	if len(project.Report.Managers) == 0 {
+		t.Fatal("fixture has no Manager to select")
+	}
+	files, err := renderFiles(Options{Providers: []Provider{Codex}, DocumentationPath: "docs/markitect/project.md"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := fileFor(t, Plan{Files: files}, workflowPath).Content
+	fence := strings.Repeat(string(rune(96)), 3)
+	marker := "Minimal new exploration input:\n\n" + fence + "json\n"
+	start := strings.Index(workflow, marker)
+	if start < 0 {
+		t.Fatal("shared workflow is missing its minimal Explore JSON example")
+	}
+	start += len(marker)
+	end := strings.Index(workflow[start:], "\n"+fence)
+	if end < 0 {
+		t.Fatal("minimal Explore JSON example has no closing code fence")
+	}
+	input := strings.TrimSpace(workflow[start : start+end])
+	managerJSON, err := json.Marshal(project.Report.Managers[0].ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	input = strings.Replace(input, `"<existing-manager-id>"`, string(managerJSON), 1)
+	record, err := projectexplore.DecodeRecordInput([]byte(input))
+	if err != nil {
+		t.Fatalf("rendered minimal Explore JSON did not decode: %v\n%s", err, input)
+	}
+	if record.Status != projectexplore.StatusActive || record.ID != "cancel-order" || len(record.Scopes) != 1 || record.CreatedAgainst != "" {
+		t.Fatalf("rendered Explore input has unexpected initial state: %#v", record)
+	}
+
+	head, err := exec.Command("git", "-C", root, "rev-parse", "HEAD").Output()
+	if err != nil {
+		t.Fatalf("read fixture HEAD: %v", err)
+	}
+	branch, err := exec.Command("git", "-C", root, "symbolic-ref", "--quiet", "--short", "HEAD").Output()
+	if err != nil {
+		t.Fatalf("read fixture branch: %v", err)
+	}
+	managerIDs := append([]string{}, record.Scopes[0].ManagerIDs...)
+	empty := []string{}
+	binding := projectexplore.Binding{
+		RepositoryRoot: root, Branch: strings.TrimSpace(string(branch)), Head: strings.TrimSpace(string(head)),
+		ModelRevision: project.Revision, ModelAccepted: false, AcceptancePolicy: project.Config.AcceptancePolicy,
+		ProjectDigest: testDigest(project.Digest), ModelDigest: testDigest(project.Report.ModelDigest),
+		SnapshotDigest: testDigest(project.Snapshot.Digest()), SelectionDigest: testDigest("selection"),
+		ScopeID: record.Scopes[0].ID, ScopeName: record.Scopes[0].Name, Goal: record.Scopes[0].Goal,
+		Operation: record.Scopes[0].Operation, ManagerIDs: managerIDs, ResponsibleManagerIDs: empty,
+		RequiredArtifacts: []string{}, FileStructure: []string{}, Checks: []string{}, BasisFiles: []projectexplore.BasisFile{},
+	}
+	preview, err := projectexplore.CreatePreview(root, record, binding)
+	if err != nil {
+		t.Fatalf("rendered minimal Explore record did not create a bound preview: %v", err)
+	}
+	if preview.Digest == "" || preview.Next.CreatedAgainst != preview.BindingDigest || preview.Target.Exists {
+		t.Fatalf("CreatePreview did not bind the new active record: %#v", preview)
+	}
+	for _, required := range []string{
+		"markitect project explore --repo PATH --input .markitect/drafts/work-item.json",
+		"--acknowledged-at RFC3339_TIME",
+		"Generate one explicit UTC RFC3339 --acknowledged-at value and reuse that exact value",
+		"Use the returned writePlan.digest for WRITE_PLAN_DIGEST",
+		"an authorized Manager may assert its own delegated authority",
+		"never claim that assertion is a human acknowledgement",
+		"The Host reconciles committed accepted-model history automatically",
+		"markitect project briefings --repo PATH --manager MANAGER_ID",
+		"Do not invent or manually aggregate a model delta that the accepted-history mechanism already supplies",
+		"explicitly preserve the already authorized time, start/retry, and cost limits",
+		"never accept a refresh that silently resets those bounds",
+		"integrated work advances through verification and Apply",
+		"an already applied run recovers the exploration completion",
+	} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("shared workflow is missing usable lifecycle guidance %q", required)
+		}
+	}
+}
+
+func testDigest(value string) string {
+	sum := sha256.Sum256([]byte(value))
+	return "sha256:" + hex.EncodeToString(sum[:])
+}
+
+func TestNativeProviderEntriesSelectSkillForShortWorkItems(t *testing.T) {
+	files, err := renderFiles(Options{Providers: []Provider{Codex, Claude}, DocumentationPath: "docs/markitect/project.md"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{"AGENTS.md", "CLAUDE.md"} {
+		content := fileFor(t, Plan{Files: files}, path).Content
+		if !strings.Contains(content, "short Work Item, issue, bug, idea") || !strings.Contains(content, "repository-local Markitect model-first skill") {
+			t.Errorf("%s does not trigger the native model-first skill for a short request", path)
+		}
+	}
+	for _, path := range []string{".agents/skills/markitect-model-first/SKILL.md", ".claude/skills/markitect-model-first/SKILL.md"} {
+		content := fileFor(t, Plan{Files: files}, path).Content
+		if !strings.Contains(content, "description: Use for ordinary short Work Items, issues, bugs, and ideas") {
+			t.Errorf("%s metadata does not support native discovery for short work requests", path)
 		}
 	}
 }

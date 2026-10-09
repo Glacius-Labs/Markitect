@@ -100,7 +100,26 @@ func Load(root, revision string) (*Project, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ManifestPath, err)
 	}
-	paths := append([]string{ManifestPath, RuntimePath}, config.ModelFiles...)
+	paths := append([]string{ManifestPath}, config.ModelFiles...)
+	if config.CoverageMode != "full" && revision != "" {
+		// Runtime configuration is optional while loading the accepted model.
+		// Inspect only this exact fixed-revision path to decide whether to bind
+		// its bytes; runtime-dependent operations validate it separately.
+		runtimeInventory, inventoryErr := source.InventoryRevisionRoots(root, manifest.ID, []string{RuntimePath})
+		if inventoryErr != nil {
+			return nil, fmt.Errorf("inspect optional runtime path: %w", inventoryErr)
+		}
+		for _, entry := range runtimeInventory.Entries {
+			if entry.Path != RuntimePath {
+				return nil, fmt.Errorf("%s must be a regular file", RuntimePath)
+			}
+			paths = append(paths, RuntimePath)
+		}
+	} else if config.CoverageMode != "full" {
+		// Request the exact runtime path even when absent. The selected working
+		// snapshot records presence or absence deterministically in its digest.
+		paths = append(paths, RuntimePath)
+	}
 	if config.CoverageMode == "full" {
 		paths = append(paths, fullSnapshotPaths(fullUniverse)...)
 	}
@@ -142,13 +161,15 @@ func Load(root, revision string) (*Project, error) {
 		for _, file := range observed.MissingPaths {
 			missing[file] = true
 		}
-		for _, required := range append([]string{ManifestPath, RuntimePath}, config.ModelFiles...) {
+		for _, required := range append([]string{ManifestPath}, config.ModelFiles...) {
 			if missing[required] {
 				return nil, fmt.Errorf("selected project input %q is missing", required)
 			}
 		}
-		if len(observed.MissingPaths) > 0 {
-			return nil, fmt.Errorf("selected inventory file %q disappeared while acquiring the project snapshot", observed.MissingPaths[0])
+		for _, missingPath := range observed.MissingPaths {
+			if missingPath != RuntimePath {
+				return nil, fmt.Errorf("selected inventory file %q disappeared while acquiring the project snapshot", missingPath)
+			}
 		}
 		if !bytes.Equal(observed.Snapshot.Files[ManifestPath], configBytes) {
 			return nil, fmt.Errorf("project manifest changed while acquiring the selected snapshot")
@@ -223,8 +244,6 @@ func FromSnapshot(root string, s *snapshot.Snapshot) (*Project, error) {
 		if modes[RuntimePath] == "" {
 			return nil, fmt.Errorf("selected runtime config has no source mode")
 		}
-	} else {
-		return nil, fmt.Errorf("selected project snapshot is missing %q", RuntimePath)
 	}
 	definitions := make([]core.Definition, 0, len(config.ModelFiles))
 	for _, file := range config.ModelFiles {

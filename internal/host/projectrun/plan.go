@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
@@ -76,6 +77,11 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	}
 	if project.Snapshot.Provisional {
 		return plan, fmt.Errorf("project run requires a non-provisional snapshot")
+	}
+	if (project.Config.WorkflowMode == "guided" || request.ExplorationID != "") && request.ModelEdit == nil {
+		if _, err := projectbriefing.EnsureAcceptedHistory(root, project.Revision); err != nil {
+			return plan, fmt.Errorf("capture accepted model history: %w", err)
+		}
 	}
 	working, err := host.Load(root, "")
 	if err != nil {
@@ -348,12 +354,12 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 		plan.ChangeImpact = changeImpact
 		plan.ChangeImpactDigest = changeImpact.Digest
 	}
+	if err := bindExplorationReadiness(root, project, request, &plan); err != nil {
+		return plan, err
+	}
 	plan.Digest, err = planDigest(plan)
 	if err != nil {
 		return plan, err
-	}
-	if !request.ExecuteAuthorized {
-		return plan, nil
 	}
 	if !request.ExecuteAuthorized {
 		return plan, nil
