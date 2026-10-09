@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T12:25:27Z",
+  "updatedUtc": "2026-10-09T14:49:33Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -8,12 +8,12 @@
   "sourceBaseline": "1ea5c76f55526fc4d721e865885436153f48b497",
   "automation": {
     "id": "jev-nach-markitect-grundmodell-untersuchen",
-    "status": "ACTIVE",
+    "status": "DELETED",
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
     "lastVerifiedUtc": "2026-10-09T12:23:46Z",
-    "verification": "Exact saved ACTIVE/2h/Root prompt verified against intended current instruction; quiet callbacks",
+    "verification": "automation_update delete returned deleteStatus=deleted.",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
     "latestMandateUpdatedUtc": "2026-10-08T22:54:35Z",
     "reportOnMeaningfulChange": true,
@@ -39,13 +39,14 @@
     "earlyConventionalMandateUpdatedUtc": "2026-10-09T04:45:30Z",
     "currentPromptSha256": "8f6a3f54a418b612db7a53d4956908ec48062eab719dd09613c1db9d48daf883",
     "lastUpdatedUtc": "2026-10-09T12:23:46Z",
-    "currentPurpose": "Existing exact PRODUCT CI37925341863 terminal completion only, 2h quiet fallback; STUDY observation remains PAUSED",
+    "currentPurpose": "STOPPED by direct user; observer deleted.",
     "verifiedUtc": "2026-10-09T12:23:46Z",
     "rrule": "FREQ=HOURLY;INTERVAL=2",
     "studyObservationPaused": true,
     "productOnly": true,
     "productObservationAuthority": "Earlier direct human regular Design checking and ongoing full product/docs/main mandate; rescope existing useful heartbeat, no study revival",
-    "pauseOnCICompletion": true
+    "pauseOnCICompletion": true,
+    "deletedUtc": "2026-10-09T13:11:52Z"
   },
   "threads": [
     {
@@ -53,7 +54,7 @@
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
       "afterCursor": "021842db-4338-41c4-887e-a41be4678e53:2",
-      "lastObservedStatus": "archived",
+      "lastObservedStatus": "archived; no reactivation",
       "activeTurn": {
         "id": "01a11dff-2aa8-7670-8008-c0de5a47b978",
         "status": "inProgress"
@@ -476,14 +477,15 @@
         "studyCells": 0,
         "sentUtc": "2026-10-08T00:25:02Z"
       },
-      "futureAutomaticAuthorityFromOldGrants": 0
+      "futureAutomaticAuthorityFromOldGrants": 0,
+      "continuationAuthority": "REVOKED_BY_DIRECT_USER_STOP"
     },
     {
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:138",
-      "lastObservedStatus": "idle / finite block and exact private synthesis backup closed",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:139",
+      "lastObservedStatus": "idle; stopped by direct user, owner confirmation returned",
       "activeTurn": {
         "id": "01a11f01-0b15-7a32-a818-2185b97f07ef",
         "status": "inProgress"
@@ -10042,14 +10044,15 @@
           "original57cAndEarlierCandidatesPreserved": true,
           "remainingGrantAuthority": false
         }
-      }
+      },
+      "continuationAuthority": "REVOKED_BY_DIRECT_USER_STOP"
     },
     {
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "2a29b9c8-23e7-440f-a2cf-f0a33806c326:9",
-      "lastObservedStatus": "idle",
+      "afterCursor": "2a29b9c8-23e7-440f-a2cf-f0a33806c326:10",
+      "lastObservedStatus": "archived; no reactivation",
       "activeTurn": {
         "id": "01a11dff-2e70-7402-9159-5d747fa0a1e8",
         "status": "completed"
@@ -10556,14 +10559,15 @@
           }
         }
       },
-      "futureAutomaticAuthorityFromOldGrants": 0
+      "futureAutomaticAuthorityFromOldGrants": 0,
+      "continuationAuthority": "REVOKED_BY_DIRECT_USER_STOP"
     },
     {
       "name": "Oldschool",
       "threadId": "01a11928-cc8d-7580-9d29-f6557bb2cbd7",
       "hostId": "local",
-      "afterCursor": "5600487e-cdb2-4e37-96f6-759aef4307d4:9",
-      "lastObservedStatus": "idle",
+      "afterCursor": "5600487e-cdb2-4e37-96f6-759aef4307d4:10",
+      "lastObservedStatus": "idle; stopped by direct user, owner confirmation returned",
       "activeTurn": null,
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Hold after accepted case-independent baseline preparation; await bounded fresh-cell assignment.",
@@ -10735,17 +10739,18 @@
         "prompt": "Jetzt genau den einen neuen fünften Conventional-Roombook-App-Lauf ausführen. Root hat den frischen Handoff2eee96a statisch geprüft und immutable aktiviert; keine weitere Capability-/Review-/Testphase und keine Designreadiness-Wartebedingung.\nENABLED_GRANT: C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/oldschool-roombook-fifth-enabled-grant-20261009.json\nSHA256: eec26e29db63c59b00f255fcab2728853fb34acbae42954980885ffe0c225134\nRootreceipt: oldschool-roombook-fifth-root-activation-20261009.json SHA25670395fb88f349ea5ef59b3f749dfc6246da8666f351b2296f3065f0b4084912f.\nÖffentliches eigenes Envelope: C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect/experiments/work-item-comparison/luna-nest-20261009/evidence/oldschool-roombook-fresh-input-preparation-20261009/public-owner-envelope.json SHA256f6aa5f6886d4110bcf52dc215a10af06bbf9a8adc6a9519b1c72c19af4c254d6. Nur dieses explizit öffentliche Envelope und die dort exakt benannten öffentlichen Einstieg-/Payload-/Tooldateien lesen, keine angrenzende History/Evidence oder private Bewertung.\nCASE_REPO C:/Users/Consiliari/Documents/Luna-Work-Item-Nests-20261009/cells/roombook-conventional-oldschool-app\nCASE_STATE C:/Users/Consiliari/Documents/Luna-Work-Item-Nests-20261009/state/roombook-conventional-oldschool-app\nPrepared88d7233bc14bc962e7ef471af0faaf3c4824351b/tree8cea62c20a64d4571017818c7e73855b1ead5676; frisch sauber, S1, leerer Ledger. PublicSource2037bfa, öffentliche app_ledger.py/nest.py unverändert; Python C:/Python313/python.exe -B.\nVor echtem Start Grant-/Inputbindung/Uhr nur statisch prüfen, dann einmal bestehenden app_ledger.reserve(CASE_STATE, ENABLED_GRANT, \"implementation\") und direkt native collaboration.spawn_agent mit den vorhandenen fünf Feldern aus disabled-native-primary-call.json desselben Envelopeordners. Keine Python-Collaboration-API/cwd-Argumente. Der Dateiname disabled bezeichnet archivierte Vorbereitung; echte Autorität ist der oben genannte enabledGrant. Semantischer Normalauftrag im tatsächlichen UTF8-Payload korrekt; envelope originalPrompt-Metadaten haben historisches Mojibake und werden nicht für den Auftrag verwendet. Message nur um exakten enabledGrantpfad/hash, eigene Reservation/parent und zurückgegebene entryDeadline ergänzen, kein Lösungs-/Methodenprompt. Eigene Handles/Request/Result/Zeiten/angefordertes LunaHigh/actual unknowns im bestehenden Ledger erfassen; helperdepth2 vor tatsächlicher Aktivierung reservieren.\nMax1Vollstart, Ende10:11:17Z, volle7200s muss vor erster Reservation verbleiben; cell7200/impl5400/final1200/capture600,8outer/2station/72alleStarts/4concurrent/depth2. Vier alte Versuche/Restquoten geschlossen, kein automatischer Retry/Refill/CLI-Wechsel. Nur eigene Handles/Jobs, harte Stop/Cleanupfristen, keine globale Inventur. Contextcontract aus angenommenem öffentlichen Einstieg: allgemeines normales Setup und eigene Geschichte erlaubt; konkrete fremde Lösung/private Bewertung terminal, Unklarheiten ehrlich, kein unnötiger Kontextdiagnoseactor. Schutzregeln aktiv.\nMelde tatsächlichen Start mit eigenem Handle/Reservation/clock/deadlines und öffentlichem Startreceipt einmal an Root; noch kein Qualitätscredit. Danach nur feste eigene öffentliche Completion-/Lifecycle-Meldungen pro Station/terminaler Blocker an Root, damit Scientist snapshots/advance/freeze/freshneutralFinal übernehmen kann. Keine semantische Hilfe vom Scientist oder von Root. Normale Implementierung/Planung/Tests/Subagenten/Reviews wählt dein gemessener Actor selbst, ohne Markitect. Folgeaktivierungen nur aus demselben eigenen Handle mit der öffentlichen festen Continuation und vorheriger Reservation; Root liefert nur mechanisch freigegebene Station/Frist, keine Codeprüfung. Kein ACK, beginne jetzt.",
         "status": "ACTUAL START VERIFIED, running",
         "startReceiptSha256": "066ca2f9d025be05b5614cec37e96e48162fe96fc03c643004f167bf0ee3ac0e"
-      }
+      },
+      "continuationAuthority": "REVOKED_BY_DIRECT_USER_STOP"
     },
     {
       "name": "Design",
       "threadId": "01a11c80-37aa-7fe0-9586-35d916ce6561",
       "hostId": "local",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect",
-      "lastObservedStatus": "idle / returned terminal recovery and additive time correction",
+      "lastObservedStatus": "active; only latest native Codex work configuration task authorized",
       "candidateSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
       "candidateStatus": "CLOSED / QUALIFIED SOURCE IDENTITY REGRESSION ACCEPTED, FINAL WINDOWS CI AND NATIVE USABILITY OPEN",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:37",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:39",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac852a43fa08191a8d8e593c901cb96",
       "assignedMilestone": "Identity correction and recovery closed; existing hosted CI pending, autonomous proof/main acceptance unresolved",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
@@ -12088,10 +12093,11 @@
           "releasePublished": false,
           "oldStudySynthesisAndPinsPreserved": true
         }
-      ]
+      ],
+      "continuationAuthority": "Latest direct user request, docs/design/project-native-codex-work-20261009.md; previous work remains stopped"
     }
   ],
-  "nextAction": "Only observe existing exact hosted CI37925341863 via product-only quiet2h/callback fallback; after terminal head/gates verified pause observer and present concrete remaining native-normal-workflow proof decision. No repeated owner assignments or new tests/builds/CI starts/native models/productproofs/studies/automatic quota refill. Existing Model/docs/main mandate continues subject to actual usability, required gates/review; old Main and study pins retained.",
+  "nextAction": "Only bounded Designer native Codex work adapter/configuration task; all other previous work and observation remain stopped.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -15534,5 +15540,91 @@
       },
       "remainingPackageAuthority": false
     }
+  },
+  "executionStop": {
+    "status": "STOPPED_BY_DIRECT_USER",
+    "recordedUtc": "2026-10-09T13:11:52Z",
+    "authority": "Direct user instruction in Overseer: stop other chats and the experiment; supersedes all prior continuation, product, monitoring and unused execution authority.",
+    "automationDeletion": "Tool confirmed deleted jev-nach-markitect-grundmodell-untersuchen.",
+    "stopDispatches": [
+      {
+        "thread": "Scientist",
+        "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
+        "delivered": true,
+        "observedStatus": "idle",
+        "ownerReported": "Work stopped; own agents/jobs ended per last confirmed state."
+      },
+      {
+        "thread": "Design",
+        "threadId": "01a11c80-37aa-7fe0-9586-35d916ce6561",
+        "delivered": true,
+        "observedStatus": "idle",
+        "ownerReported": "Work stopped; own subagents/observers ended."
+      },
+      {
+        "thread": "Oldschool",
+        "threadId": "01a11928-cc8d-7580-9d29-f6557bb2cbd7",
+        "delivered": true,
+        "observedStatus": "idle",
+        "ownerReported": "No own agents active; no stop blocker."
+      },
+      {
+        "thread": "Architect",
+        "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
+        "delivered": false,
+        "observedStatus": "archived",
+        "reason": "Tool rejected message because already archived; no unarchive or retry."
+      },
+      {
+        "thread": "Worker",
+        "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
+        "delivered": false,
+        "observedStatus": "archived",
+        "reason": "Already retired/archived in coordination record; not reactivated."
+      }
+    ],
+    "rootAgentTree": "Root listing showed only completed subagents; no active child to interrupt.",
+    "existingCI": {
+      "id": 37925341863,
+      "headSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
+      "status": "completed",
+      "conclusion": "success",
+      "action": "No cancellation required; no new run, promotion, merge or release."
+    },
+    "preservation": "Keep worktrees, branches, WIP, original grants, receipts, failed attempts and private evidence. No destructive cleanup.",
+    "resumption": "Only a new direct user instruction; no automatic continuation or callbacks."
+  },
+  "nativeCodexWorkConfigurationRequest": {
+    "status": "DISPATCHED_TO_DESIGN_ONLY",
+    "issuedUtc": "2026-10-09T14:46:34Z",
+    "authority": "Direct latest user request to resolve/configure read-only and native subagent restrictions.",
+    "document": "docs/design/project-native-codex-work-20261009.md",
+    "ownerThread": "01a11c80-37aa-7fe0-9586-35d916ce6561",
+    "oldStopPreservedExceptThisTask": true,
+    "studiesEnabled": false,
+    "automationEnabled": false,
+    "mainMergeOrReleaseEnabled": false,
+    "maxNativeProofs": 1,
+    "maxProofSeconds": 600,
+    "maxProofManagerAndHelperStarts": 2,
+    "requestedModel": "gpt-6-luna",
+    "requestedEffort": "high",
+    "dispatchedUtc": "2026-10-09T14:49:33Z",
+    "cliConfigurationVerification": {
+      "status": "PASS",
+      "cliVersion": "0.162.0",
+      "profile": "luna-high",
+      "actualModel": "gpt-6-luna",
+      "actualEffort": "high",
+      "actualApproval": "never",
+      "actualSandbox": "danger-full-access",
+      "actualNativeSpawnReturned": true,
+      "fileReadWritePassed": true,
+      "exitCode": 0,
+      "elapsedSeconds": 23.11,
+      "evidence": "C:/Users/Consiliari/AppData/Local/Temp/codex-native-helper-check-20261009/summary.json",
+      "limitation": "CLI configuration proof only; JSON stream omitted spawn event; own rollout contains actual spawn call and return."
+    },
+    "ownerCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:39"
   }
 }
