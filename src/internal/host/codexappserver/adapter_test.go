@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -145,6 +146,10 @@ func serveFixture() {
 		case "turn/interrupt":
 			if mode == "interrupt-confirmed" {
 				note("turn/completed", map[string]any{"threadId": "thread-1", "turn": turn{ID: turnID, Status: "interrupted"}})
+			} else if mode == "timeout" {
+				// The server closes without confirming interruption. The adapter
+				// must retain unknown state instead of inventing a terminal result.
+				return
 			}
 		case "":
 			if mode == "dynamic" {
@@ -260,10 +265,19 @@ func TestAdapterLifecycle(t *testing.T) {
 func TestTimeoutInterruptionAndReservation(t *testing.T) {
 	for _, mode := range []string{"timeout", "interrupt-confirmed"} {
 		t.Run(mode, func(t *testing.T) {
-			a, cfg, req, opts := fixture(t, mode, Options{})
-			ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
-			defer cancel()
+			ctx := newPostDispatchTimeoutContext(context.Background())
+			dispatchObserved := false
+			a, cfg, req, opts := fixture(t, mode, Options{OnHandle: func(_ context.Context, handle RecoveryHandle) error {
+				if handle.TurnDispatched && handle.TurnID != "" {
+					dispatchObserved = true
+					ctx.arm(100 * time.Millisecond)
+				}
+				return nil
+			}})
 			r, err := a.Run(ctx, cfg, req, opts)
+			if !dispatchObserved || !ctx.armed() {
+				t.Fatal("negative timeout did not start after turn dispatch")
+			}
 			if err == nil {
 				t.Fatal("timeout accepted")
 			}
@@ -281,6 +295,63 @@ func TestTimeoutInterruptionAndReservation(t *testing.T) {
 		t.Fatal("refused budget launched thread")
 	}
 }
+
+// postDispatchTimeoutContext gives Run an ordinary unbounded context while it
+// probes the executable and completes handshake. The test arms a finite
+// DeadlineExceeded only after OnHandle proves turn dispatch, so this tests the
+// actual uncertain/interrupted turn path under slow test-suite load.
+type postDispatchTimeoutContext struct {
+	parent   context.Context
+	done     chan struct{}
+	mu       sync.Mutex
+	deadline time.Time
+	expired  bool
+}
+
+func newPostDispatchTimeoutContext(parent context.Context) *postDispatchTimeoutContext {
+	return &postDispatchTimeoutContext{parent: parent, done: make(chan struct{})}
+}
+
+func (c *postDispatchTimeoutContext) arm(timeout time.Duration) {
+	c.mu.Lock()
+	if !c.deadline.IsZero() {
+		c.mu.Unlock()
+		return
+	}
+	c.deadline = time.Now().Add(timeout)
+	c.mu.Unlock()
+	time.AfterFunc(timeout, func() {
+		c.mu.Lock()
+		c.expired = true
+		close(c.done)
+		c.mu.Unlock()
+	})
+}
+
+func (c *postDispatchTimeoutContext) armed() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return !c.deadline.IsZero()
+}
+
+func (c *postDispatchTimeoutContext) Deadline() (time.Time, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.deadline, !c.deadline.IsZero()
+}
+
+func (c *postDispatchTimeoutContext) Done() <-chan struct{} { return c.done }
+
+func (c *postDispatchTimeoutContext) Err() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.expired {
+		return context.DeadlineExceeded
+	}
+	return nil
+}
+
+func (c *postDispatchTimeoutContext) Value(key any) any { return c.parent.Value(key) }
 
 func TestDynamicToolAndRecovery(t *testing.T) {
 	called := 0
