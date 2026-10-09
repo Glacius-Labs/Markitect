@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T23:40:38.707142Z",
+  "updatedUtc": "2026-10-09T23:51:08.082651Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ORDINARY_NATIVE_TOOL_WORK_SUCCEEDED_OWNER_REPORTED_STRUCTURED_RESPONSE_FIX_IN_PROGRESS",
+    "status": "REAL_NATIVE_MANAGER_OUTPUT_ACCEPTED_REVIEW_IN_PROGRESS",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -17912,6 +17912,18 @@
       "next": "Supported turn/start.outputSchema with existingtypedreport; real native filesystemdelta authoritative, no inlinefilebyte/hash duplication forreport, explicithelperCandidateFileshape; relevantwirechecks/review thenfreshnormalA01, no replay/canary/newapproval",
       "publicRemoteObserved": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
       "fullProductAcceptance": false
+    },
+    "structuredOutputActualProgress": {
+      "source": "73103156264a6eaf919f2bc8e358dbf8da2f53e1",
+      "binary": "f0f3f7a0a2a00a714b11216a0b445f93dbc2b34d52665d6d2a6d988987fe270d",
+      "binaryVcsModifiedOwnerReported": false,
+      "batch": "a01-schema-88b220bfea92462189b14ec6f759f110",
+      "plan": "b237b401952dae06b44d8dcba2d7a504",
+      "batchDeadlineUtc": "2026-10-10T03:49:34.1234471Z",
+      "ownerActual": "Attempt7/native6 rootManager completed with acceptedREADMEcandidate and genuine source/docs delegations, freshreviewer invoking; previouscandidateDTO failure overcome in actual",
+      "ownerChecks": "NormalReadiness/Planready, exactheadvet/strictcanonicalPASS; no manualstartgate",
+      "evidenceScope": "Reported genuineprogress; exactrawactual receipts not independentlyreadthisevent. Helper/parallel/Verify/Apply/originalRecovery and fullMainacceptance unproved",
+      "executionAuthority": "Directhuman simplify+renewablebudget, ownercontinuesautonomously/noextraRootgrant"
     }
   }
 }
