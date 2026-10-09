@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T15:58:17Z",
+  "updatedUtc": "2026-10-09T16:09:16Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12097,7 +12097,7 @@
       "continuationAuthority": "Latest direct user request, docs/design/project-native-codex-work-20261009.md; previous work remains stopped"
     }
   ],
-  "nextAction": "Designer completes active native-working package and removes compatibility-only surfaces under latest direct user decision; source-bound focused checks, independent review and one existing bounded proof. Other owners, studies, observer, automatic Main merge and releases remain stopped.",
+  "nextAction": "Designer executes durable product-readiness P01-P10 queue, integrating true Git/tools/change operations/independent Managers/helpers/review, MCP and Codex App Server, clean src/docs, tests and regular Main merge after positive gates. Other owners, Case Studies and release publication remain stopped.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -15542,7 +15542,7 @@
     }
   },
   "executionStop": {
-    "status": "STOPPED_BY_DIRECT_USER",
+    "status": "STOPPED_EXCEPT_NEW_DESIGN_PRODUCT_READINESS_MANDATE",
     "recordedUtc": "2026-10-09T13:11:52Z",
     "authority": "Direct user instruction in Overseer: stop other chats and the experiment; supersedes all prior continuation, product, monitoring and unused execution authority.",
     "automationDeletion": "Tool confirmed deleted jev-nach-markitect-grundmodell-untersuchen.",
@@ -15592,10 +15592,10 @@
       "action": "No cancellation required; no new run, promotion, merge or release."
     },
     "preservation": "Keep worktrees, branches, WIP, original grants, receipts, failed attempts and private evidence. No destructive cleanup.",
-    "resumption": "Only a new direct user instruction; no automatic continuation or callbacks."
+    "resumption": "Latest direct user authorizes Designer P01-P10 through validated normal Main merge. Historical stop remains for Scientist/other retired owners, Case Studies, observer and release publication."
   },
   "nativeCodexWorkConfigurationRequest": {
-    "status": "DISPATCHED_TO_DESIGN_ONLY",
+    "status": "SUPERSEDED_BY_PRODUCT_READINESS_BACKLOG",
     "issuedUtc": "2026-10-09T14:46:34Z",
     "authority": "Direct latest user request to resolve/configure read-only and native subagent restrictions.",
     "document": "docs/design/project-native-codex-work-20261009.md",
@@ -15625,7 +15625,7 @@
       "evidence": "C:/Users/Consiliari/AppData/Local/Temp/codex-native-helper-check-20261009/summary.json",
       "limitation": "CLI configuration proof only; JSON stream omitted spawn event; own rollout contains actual spawn call and return."
     },
-    "ownerCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:44",
+    "ownerCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:45",
     "compatibilityRetentionRequired": false,
     "productProofClosure": {
       "status": "CLOSED_PRE_PROVIDER_OWNER_REPORTED",
@@ -15761,5 +15761,68 @@
     "mainRecommendation": "Finish current simplification/native package, push coherent source, exact-head required CI and independent review, positive real ordinary delivery including actionable repair and guarded Apply. No additional research phase or interface migration required.",
     "newExecutionAuthority": false,
     "nativeProofGate": "OPEN, previous allowance closed; no automatic retry or reset."
+  },
+  "productReadinessBacklogMandate": {
+    "status": "CREATED_IN_DESIGN_REPO_AND_DISPATCHED_ONCE",
+    "issuedUtc": "2026-10-09T16:09:16Z",
+    "authority": "Latest direct user request: implement normal Git/context/tools/delete/rename/helpers/fresh Managers, MCP/App Server; clean src/docs/no marketing; coordinate via persistent Work Items through validated Main; studies later.",
+    "ownerThread": "01a11c80-37aa-7fe0-9586-35d916ce6561",
+    "ownerWorktree": "C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect",
+    "ownerBranch": "codex/model-first-operations",
+    "queue": "docs/work-items/product-readiness/backlog.yaml",
+    "queueSourceOfTruth": "Designer product branch; Root initial handoff hashes only, no second live queue",
+    "rootDocument": "docs/design/product-readiness-backlog-20261009.md",
+    "items": [
+      "P01",
+      "P02",
+      "P03",
+      "P04",
+      "P05",
+      "P06",
+      "P07",
+      "P08",
+      "P09",
+      "P10"
+    ],
+    "handoffHashes": {
+      "backlog.yaml": "e3314eb0c498850cc6670159aa4a3e06769eb3c05c570f8c23106a7fb926d8a4",
+      "evidence/native-acceptance-ledger.yaml": "e3ef0b91d168ae6e4dba0e14dae5f0e620e748012b1e11b861a386f0d1618ef0",
+      "P01-current-checkpoint.md": "bc500751efc0ac06981510b30cefb6b9eb34569c2d9cc1e9a7767c7df22d5fef",
+      "P02-shared-contracts.md": "0707102c53a9008dbca14d77f0f15d9afe2303134e8065d16542934fb4b3afe6",
+      "P03-workspaces.md": "da797021697e40d9ec4d30e308995237ddf116b44bea7695a4e132a31a323f5b",
+      "P04-app-server.md": "7f4a22200e3ec491da0007472b0aaf71fb3005e8409bacee24f7768ec7be8ca0",
+      "P05-mcp.md": "abc38ab3d106fef7f87b4c33bf01e87e6bd7be2ebc873b97d1c29eeb4c40f1ea",
+      "P06-agent-lifecycle.md": "f259dbe866552d6560455b933345db6cbac6b89409c86aecd9ff3d3ba74caaae",
+      "P07-user-workflow.md": "4203a50a4a433342186f03661872b3b0eb2a5adccb4a169a6c5428fd8ef07159",
+      "P08-repository.md": "7a607374bc72451038f6989616cf6c39983ad8e0ea6297e3c8a8e19f304cb544",
+      "P09-readiness.md": "d9299a8e10153bb2c8c4c597dc00e6c0338f2c94beba584b9359e8189e3ecfc9",
+      "P10-main.md": "f93b5744f6bda352c5599d42819d842154b07ac79659ecf48b0d068126a52ec0",
+      "README.md": "44710ed2c52d038afb5fe01be9c5b7a7cea73a7f6aa2fe205a832d0690b24229"
+    },
+    "verification": "Both YAML documents parsed; ten unique IDs and dependencies/file references checked. No product tests/builds/model calls by Root.",
+    "subagents": "Designer authorized to delegate disjoint MCP/App Server/workspace slices after minimal concrete shared contracts, independent review. Root two bounded read-only source investigations completed; no product changes.",
+    "mainMergeAuthorized": true,
+    "condition": "P01-P09 complete, coherent exact source, required local/hosted gates, independent review and real product acceptance positive; regular PR89 merge without protection bypass.",
+    "releasePublicationAuthorized": false,
+    "caseStudiesEnabled": false,
+    "observerAutomationEnabled": false,
+    "newNativeProductAcceptanceGrant": {
+      "id": "product-readiness-native-acceptance-20261009",
+      "status": "CONDITIONAL_ON_SOURCE_READINESS_AND_PER_JOB_RESERVATION",
+      "maxJobs": 3,
+      "maxJobWallSeconds": 1800,
+      "maxTotalWallSeconds": 5400,
+      "maxTotalRoleStartRequests": 64,
+      "consumedJobsAtIssuance": 0,
+      "consumedStartRequestsAtIssuance": 0,
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "ledger": "docs/work-items/product-readiness/evidence/native-acceptance-ledger.yaml",
+      "oldGrantsReusable": false,
+      "automaticRefill": false,
+      "sourceChecksAndDeveloperSubagents": "Separately necessary ordinary implementation/review work under explicit user mandate, not product or study evidence"
+    },
+    "notification": "Material completion/blocker/decision callback once to Root/local; continue eligible work without ACK loops/repeated human permission. No interrupt or reset of active WIP.",
+    "firstStep": "P01 closes existing compatibility/native WIP; no concurrent Root product edits."
   }
 }
