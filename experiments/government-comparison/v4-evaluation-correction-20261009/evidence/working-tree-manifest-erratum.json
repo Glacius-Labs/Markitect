@@ -1,0 +1,41 @@
+{
+  "kind": "Additive working-tree versus Git checkpoint manifest erratum",
+  "recordedUtc": "2026-10-09T00:43:09.8100411Z",
+  "originalManifest": "source-manifest.json",
+  "originalManifestSha256": "5840018051e88ffe0b4f49b7803594af77e2ef813494a4701720df787b818974",
+  "originalCheckpoint": "880702c5a70c0de375a44afee48c9d364a04ccc4",
+  "originalManifestScope": "All selected working-tree files, including five copied ignored cache files; not exclusively Git-tracked files",
+  "excludedLocalCaches": [
+    {
+      "classification": "Copied ignored regenerable Python cache; remains local, excluded from remote checkpoint and frozen review",
+      "sha256": "6d44d793283f4f39723b4b1babeea77938ba512eb4a200d902744f99e29d092a",
+      "path": "public/__pycache__/deadlines.cpython-313.pyc"
+    },
+    {
+      "classification": "Copied ignored regenerable Python cache; remains local, excluded from remote checkpoint and frozen review",
+      "sha256": "97ace81bbcfede9258f0e34c9b44d854b465474095efea1452226d765f1fd82b",
+      "path": "public/__pycache__/dto_preflight.cpython-313.pyc"
+    },
+    {
+      "classification": "Copied ignored regenerable Python cache; remains local, excluded from remote checkpoint and frozen review",
+      "sha256": "ff4033cd57f53c6d0e808d4eda7ec5cd7de71478cea2f4ab4bafc51f665d2655",
+      "path": "public/__pycache__/owned_transport.cpython-313.pyc"
+    },
+    {
+      "classification": "Copied ignored regenerable Python cache; remains local, excluded from remote checkpoint and frozen review",
+      "sha256": "8572c4a9ad2403eb317f34c96c1ae74963683350413023a58f938bee0b4714c4",
+      "path": "public/__pycache__/release.cpython-313.pyc"
+    },
+    {
+      "classification": "Copied ignored regenerable Python cache; remains local, excluded from remote checkpoint and frozen review",
+      "sha256": "4397360bf84648e457befb8dcc0bbbe0fbfac818237373c0978ac6071be11e28",
+      "path": "public/__pycache__/test_mechanics.cpython-313.pyc"
+    }
+  ],
+  "authoritativeGitManifest": "git-checkpoint-manifest.json",
+  "reviewedSourceAffected": false,
+  "sourceCorrectionsAfterReview": 0,
+  "testsAfterReview": 0,
+  "originalManifestPreserved": true,
+  "failedArchiveGitCheck": "Stopped before push on absent Git revision for an ignored pycache entry; no byte mismatch of a tracked reviewed source established"
+}
