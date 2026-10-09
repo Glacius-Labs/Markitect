@@ -16994,6 +16994,23 @@
     "grantSha256": "e6c2b11ce4758d9c315d6babb01612f43ebef23e492da018424cb92732f08d73",
     "status": "AUTHORIZED_IMPLEMENTATION_AND_FRESH_FINITE_EXECUTION",
     "actualStartsObserved": 0,
-    "dispatch": "SENT_ONCE_TO_SCIENTIST_LOCAL"
+    "dispatch": "SENT_ONCE_TO_SCIENTIST_LOCAL",
+    "latestPreparationCallback": {
+      "observedUtc": "2026-10-09T19:50:05Z",
+      "sourceHead": "f056d39a5236f28a6474f011c314d4007277ce87",
+      "sourceFreeze": "ACTIVE_WIP_NOT_YET_CLEAN_PUBLISHED",
+      "rootVerified": "Private worktree WIP and local diagnostics/plan read; daily sandbox log has OS error32/node_repl/ACL matches through19:28:15Z",
+      "ownerReported": "Contract/mapping/four-station controller implemented; status-read PermissionError repaired, five focused integrations PASS; source loader binds bytes without stale pyc",
+      "providerFreeChecksConsumed": 2,
+      "providerFreeChecksRemaining": 4,
+      "firstCheck": "Legacy help invocation interpreted as sandbox command, failed pre-model helper_unknown_error",
+      "secondCheck": "Recorded child-local documented MXC, managed config and workspace profile, PID55956 exit0; stdout/stderr hashes recorded, no global edits or model dispatch",
+      "runtimeQualification": "Concrete legacy ACL-refresh file-lock failure observed; MXC command startup positive, full protected read/write/Git and model trajectory still pending",
+      "plan": "Readinglog AppServer first, Roombook CLI second within same original new-delivery limits; case/backend confounding disclosed",
+      "actualModelStartsObserved": 0,
+      "containerPlan": "Future separate environment evaluation only; no Docker/WSL/auth action",
+      "publicRuntimeFactForwardedToIntegrationOnce": true,
+      "newGrantOrRefill": false
+    }
   }
 }
