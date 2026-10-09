@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T23:16:44.879632Z",
+  "updatedUtc": "2026-10-09T23:19:49.662014Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17849,7 +17849,7 @@
   },
   "nativeRetryReflectionHold20261010": {
     "authority": "Direct user: stop spending further hours on launch loop and briefly rethink approach",
-    "status": "HOLD_CONFIRMED_NO_NEW_ACTUAL_SOURCE_CHECKPOINT_SECURED",
+    "status": "SUPERSEDED_BY_DIRECT_SIMPLIFY_AND_FUNCTIONAL_EXECUTION_ORDER",
     "integrationDispatch": "SENT_ONCE",
     "scope": "Pause new provider attempts; finish already concrete sourcechecks/reviews to coherent secured checkpoint; preserve WIP/receipts. No global process kill. Report any already running ownActual once.",
     "lastCompactCursor": "abeb765e-9882-4852-9bc4-08f7cb067370:7",
@@ -17869,5 +17869,20 @@
       "originalTurn": "Interrupted unchanged; ownworkspacec9520cace3d9a67d8ab688b5c75c94ef closed0delta ownerreported; no replay",
       "acceptance": "A01 NOTPASSED, PR89/Main/release unchanged"
     }
+  },
+  "nativeRuntimeSimplification20261010": {
+    "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
+    "status": "DISPATCHED_ACTIVE_IMPLEMENT_AND_TEST",
+    "designPath": "docs/design/native-runtime-simplification-20261010.md",
+    "integrationDispatch": "SENT_ONCE",
+    "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
+    "rootObserved": "LocalbaselineHEAD, progress/backlog/ledgerWIP preserved",
+    "goal": "Thin common normal native runtime with useful setupdefaults/ordinary environment/auth/tools/fresh independent roles; existing canonicalmodel/ownedcandidate/review/Verify/guardedApply/recovery kept",
+    "execution": "Human reflectionhold lifted for concrete simplification and normal existingA01. Renewable budget remains authorized; no extra perattempt/rootapproval/manual26binding/dotnet hiddenchild/generalcapability gate. Capture through ordinary product/CLI; meaningful change checks and final CI/review.",
+    "testScratch": "Assessors ordinarytools/ownwritablescratch; delivered candidate unchanged",
+    "reporting": "One functional success or material realblocker, no ACK/intermediateapproval loop",
+    "knowledgeGraph": "SEPARATE_UNCHANGED",
+    "studies": "AFTER_WORKING_PRODUCT",
+    "mainAcceptance": "PENDING_REAL_FUNCTIONAL_RESULT_AND_FINAL_CI_REVIEW"
   }
 }
