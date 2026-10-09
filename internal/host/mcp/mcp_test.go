@@ -6,7 +6,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -264,5 +266,86 @@ func TestUnsignedOutputSchema(t *testing.T) {
 	}
 	if err := validate(json.Number("18446744073709551616"), schema(reflect.TypeFor[uint64]())); err == nil {
 		t.Fatal("out of range integer accepted")
+	}
+}
+
+func TestSafeHostClassificationAndOperationRecovery(t *testing.T) {
+	for _, tc := range []struct {
+		err  error
+		code string
+	}{
+		{projectrun.ErrStale, "stale"}, {projectrun.ErrLocked, "locked"}, {projectrun.ErrNotFound, "notfound"}, {projectrun.ErrNotRunnable, "notrunnable"}, {fs.ErrNotExist, "notfound"}, {context.Canceled, "cancelled"}, {context.DeadlineExceeded, "cancelled"},
+		{errors.New("project model has structural error findings"), "model_invalid"},
+		{errors.New("project Host frontend is incomplete"), "config_invalid"},
+		{errors.New("apply requires exact verification digest, target branch, HEAD and working-file digest"), "precondition_failed"},
+		{fmt.Errorf("load selected project revision: %w", errors.New("provider secret")), "selection_failed"},
+		{errors.New("provider secret"), "host_rejected"},
+	} {
+		t.Run(tc.code, func(t *testing.T) {
+			d := classifyError("project_run", fmt.Errorf("outer private detail: %w", tc.err))
+			if d.Code != tc.code || strings.Contains(d.Message, "secret") || strings.Contains(d.Recovery, "private") {
+				t.Fatalf("unsafe or flattened diagnostic: %+v", d)
+			}
+		})
+	}
+	for _, operation := range []string{"project_setup", "project_doctor", "project_edit", "project_explore", "project_readiness", "project_brownfield_accept", "project_plan", "project_full_verify"} {
+		for _, code := range []string{"host_rejected", "cancelled", "busy", "encoding_failed", "stale", "notfound", "notrunnable"} {
+			d := diagnosticFor(operation, code)
+			if strings.Contains(d.Recovery, "project_status") || strings.Contains(d.Recovery, "runId") {
+				t.Fatalf("pre-run action invented handle: %s %+v", operation, d)
+			}
+		}
+	}
+	if !strings.Contains(diagnosticFor("project_apply", "stale").Recovery, "preflight") {
+		t.Fatal("Apply freshness recovery omitted")
+	}
+	if strings.Contains(diagnosticFor("project_status", "notfound").Recovery, "Inspect project_status") {
+		t.Fatal("notfound status recovery loops")
+	}
+	if !strings.Contains(diagnosticFor("project_deliver", "host_rejected").Recovery, "If the partial report contains a runId") {
+		t.Fatal("delivery invented run")
+	}
+}
+
+func TestPublicErrorMapperAndRetainedStructuredValidation(t *testing.T) {
+	s, _ := New(t.TempDir(), projectapp.Operations{})
+	type report struct {
+		SessionID string   `json:"sessionId"`
+		Findings  []string `json:"findings"`
+		Error     string   `json:"error,omitempty"`
+	}
+	sentinel := errors.New("private selected-model detail")
+	Register(s, "project_brownfield_fixture", "typed application error fixture", true, func(context.Context, runInput) (report, error) {
+		return report{SessionID: "existing-session", Findings: []string{"missing owner for declared artifact"}, Error: "provider secret"}, sentinel
+	}, func(err error) *Diagnostic {
+		if errors.Is(err, sentinel) {
+			return &Diagnostic{Code: "stage_precondition", Message: "The acceptance stage needs reviewed ownership.", Recovery: "Correct the session's ownership findings, refresh its preview and expected digest, then accept the same session."}
+		}
+		return nil
+	})
+	result, err := s.Call(context.Background(), "project_brownfield_fixture", []byte(`{"runId":"fixture-input"}`))
+	if err != nil || !result.IsError {
+		t.Fatal("mapped failure lost")
+	}
+	raw := result.Content[0].Text
+	for _, want := range []string{"stage_precondition", "existing-session", "missing owner"} {
+		if !strings.Contains(raw, want) {
+			t.Fatalf("missing %s: %s", want, raw)
+		}
+	}
+	for _, bad := range []string{"private", "provider secret", "project_status", "runId"} {
+		if strings.Contains(raw, bad) {
+			t.Fatalf("leaked or invented %s: %s", bad, raw)
+		}
+	}
+	Register(s, "fixture_bad_mapper", "unsafe shape rejected", true, func(context.Context, runInput) (report, error) { return report{}, sentinel }, func(error) *Diagnostic { return &Diagnostic{Code: "bad code", Message: "message", Recovery: "repair"} })
+	result, _ = s.Call(context.Background(), "fixture_bad_mapper", []byte(`{"runId":"fixture"}`))
+	if !strings.Contains(result.Content[0].Text, "host_rejected") || strings.Contains(result.Content[0].Text, "bad code") {
+		t.Fatal("invalid callback escaped")
+	}
+	Register(s, "fixture_sentinel_mapper", "sentinel cannot be hidden", true, func(context.Context, runInput) (report, error) { return report{}, projectrun.ErrStale }, func(error) *Diagnostic { t.Error("known sentinel reached custom mapper"); return nil })
+	result, _ = s.Call(context.Background(), "fixture_sentinel_mapper", []byte(`{"runId":"fixture"}`))
+	if !strings.Contains(result.Content[0].Text, `"code":"stale"`) {
+		t.Fatal("stale classification lost")
 	}
 }
