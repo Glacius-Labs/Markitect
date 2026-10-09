@@ -51,6 +51,12 @@ Quellenbindung und additive Korrektur sind wiederkehrend: Rohlogs bleiben erhalt
 
 Concepts- und Marketing-Notizen halten Nutzerwortlaut, Hypothesen und eigene Deutungen getrennt. Ideen zu Briefings, Cockpit, Monitoring, Delegationsspielraum und Gamification sind ausdrücklich Zukunftsszenarien; der Nutzer vertagte Feinplanung bis zu abgeschlossenen Arbeitspaketen, Case-Study-Zahlen und stabilem Main. Die tägliche Historian-Automation soll eigenständig laufen; sie ist keine Aufforderung für manuelle ACK- oder Weckschleifen.
 
+### 7. Release, Veröffentlichung und Adoption sind getrennte Übergänge
+
+Schon die frühe Versionierung bindet Releases an einen exakten Quellstand, Windows-/Linux-Gates, unveränderliche Assets und Verifikationsmaterial. Ein grüner lokaler Build ist keine Veröffentlichung; ein veröffentlichter Markitect-Tag aktualisiert weder die Tool-Pins eines Consumers noch beweist er dessen Adoption. Konfyra- oder andere project-owned Policy und Releaseentscheidungen bleiben beim jeweiligen Projekt.
+
+Die frühe Distributionsarbeit zeigt, warum der Status präzise benannt wird: Das v0.5-Release-Workflow-Benchmark scheiterte zunächst am abgeschnittenen Action-Pin; ein separat reparierter Lauf lieferte danach Messartefakte, aber keine allgemeine Speedup-Aussage. Die v0.7-WinGet-Manifeste waren lokal geprüft und eingereicht, doch die Microsoft-Katalogfreigabe blieb ein eigener, manueller Gate. Siehe [Produktionsbewertung](../../production-assessment.md), [WinGet-Status](../../winget.md) und [Messmethodik](../../measurement.md).
+
 ## Wiederkehrende Reibungspunkte
 
 - **Parallelität erhöht Integrationslast.** Viele spezialisierte Worktrees ermöglichen getrennte Eigentümer, doch ein gemeinsamer Vollgate muss die tatsächliche Zusammensetzung prüfen.

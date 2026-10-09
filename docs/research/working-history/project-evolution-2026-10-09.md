@@ -2,6 +2,8 @@
 
 **Rückblick, Stand der Quellen:** 9. Oktober 2026. Der kanonische öffentliche Quellstand wurde gegen das Live-Remote bestätigt: `origin/main = 5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e`. Neuere Kandidaten auf Feature-Branches sind getrennt aufgeführt. Zeitangaben nennen Berlinzeit oder UTC ausdrücklich. Branch- und Teststände sind Momentaufnahmen, keine stillschweigende Aussage über den heutigen Zustand nach diesem Zeitfenster.
 
+Die Frühgeschichte ab dem ältesten erreichbaren Produktcode-Commit, die Releasefolge v0.1–v0.13 und der frühe Nutzersteuerungsverlauf stehen in [der früheren Historie](early-history-2026-08-22-to-2026-10-06.md).
+
 ## Der längere Produktbogen
 
 Markitect hat sich nicht als einzelner Markdown-Generator entwickelt. Die kanonischen Dokumente auf Main beschreiben das Produkt als Modell des gewünschten Engineering-Systems: Menschen definieren dauerhafte Absicht und Grenzen; Markitect ordnet Struktur und Auswirkungen; Agenten passen explizit zugeordnete Realisierungen an; getrennte Prüfschritte bewerten die Resultate. Die Leitformel lautet: „Define the desired project world once. Reconcile its representations without losing intent.“
@@ -27,6 +29,14 @@ Am 6.–7. Oktober entstanden Standard Operating Model, Controller-Aktionen, Aud
 Am **7. Oktober** wurde **v0.14.1** veröffentlicht; der Release-Eintrag datiert auf 13:15 UTC und nennt Tagziel `784d3c3c61443b291ac7db9727c7c5856e253d66`. PR #85 schloss Release-Evidenz und Distribution ab. Danach kamen der öffentliche Classic-Commerce-Walkthrough und eine Intent-Änderung hinzu: PR #86 (`560acdcd`, 8. Oktober 18:25 Berlin) zeigt ein begrenztes Projektbeispiel; PR #87 (`a97cbd5e`, 8. Oktober 18:59 Berlin) richtet Classic-Dokumentation auf Main aus. In den Chats wurde zugleich festgehalten: Der kanonische Controller ist weiterhin eine Alpha, der installierte Release ist v0.14.1 und CI beweist nicht die gesamte Produktthese.
 
 Am **8. Oktober** ergänzte PR #88 (`5be48ce1`, 22:00 Berlin) eine spätere Untersuchung zu Knowledge Graph und Markdown Front Matter. Die Untersuchung war als Optionen-/Backlog-Eintrag gedacht, nicht als Formatentscheid. Am 9. Oktober sagte der Nutzer später ausdrücklich, dass Front Matter verworfen werden kann, und korrigierte eine Markdown-zentrierte Produktbeschreibung. Die Folge ist wichtig: #88 bleibt historische Quelle eines offenen Prüfauftrags; spätere Nutzerkorrektur verändert dessen Einordnung. YAML, OWL/RDF und Graph bleiben getrennt zu bewertende Möglichkeiten.
+
+### 8. Oktober: vom Ressourcenmodell zur delegierten Projektorganisation
+
+Im **Design**-Verlauf (`01a11c80-37aa-7fe0-9586-35d916ce6561`) weitete der Nutzer die Zielvorstellung auf eine zusammenhängende Projektwelt aus: Code, Dokumentation, Pipelines, Tests, Prozesse, Konfiguration, Konzepte und Anwendungsfälle sollten als zusammengehörig verständlich werden (`01a11c8d-aa3c-7563-8afd-516e2466e8ba`). Er wollte die Struktur an fachlichen Konzepten/Vertical Slices und Verantwortung ausrichten, nicht bloß an Ressourcentypen (`01a11cc5-d740-75b2-b8f6-7cb910d8d54e`); Owner sollen erklären, wem eine Datei gehört, wozu sie gehört und was sie realisiert (`01a11ce2-f87e-73f2-ae56-83e405e57528`).
+
+Als Zielmodell skizzierte er rekursive, spezialisierte Manager-Agenten mit begrenztem Kontext und delegierten Aufgaben. Untergeordnete Resultate sollten integriert, ungelöste Konflikte nach oben eskaliert und Umsetzungen von Reviewern iterativ geprüft werden (`01a11c9e-fa12-7ba2-b9d0-9bc41a7a45ac`, `01a11ca1-534e-7e32-ae2b-277f99d4e651`, `01a11dcd-d661-74a1-a86d-c9effdbca822`). Vor Annahme der UX wollte der Nutzer einen kleinen Softwarefall vom Modell über Änderung und Brownfield-Aufnahme bis Installation und täglicher Nutzung nachvollziehen (`01a11ca8-f205-7f60-b5fd-b9e73b83265b`, `01a11ce9-3a0b-7500-8a7c-c40376a608ee`).
+
+Diese Unterhaltung beschreibt ein **Ziel- und Designmodell**, keine fertige Markitect-Laufzeit. Im veröffentlichten Vertrag bleiben Code und andere normale Dateien explizite, opake Inputs; generische Graphkanten werden nicht aus Prosa oder Dateinamen hergeleitet. Der Management-/Manager-Ausbau lag in separaten Arbeitssträngen. Der Abstand zwischen umfassender Projektvision und begrenztem, explizitem Datenmodell ist damit eine zentrale offene Produktfrage, kein Beleg für bereits vorhandene autonome Projektmanager.
 
 ## 9. Oktober: Untersuchung, Experimente und parallele Quellenentwicklung
 

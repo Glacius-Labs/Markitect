@@ -8,6 +8,7 @@ As of 2026-10-09. This is a source-bound historical reconstruction, not product 
 - [Working patterns](working-patterns.md)
 - [Finding register](finding-register.md)
 - [Themes and open questions](themes-and-open-questions.md)
+- [Early history: prehistory through 2026-10-06](early-history-2026-08-22-to-2026-10-06.md)
 - [Project evolution through 2026-10-09](project-evolution-2026-10-09.md)
 - [How project work is organized](how-work-happens-2026-10-09.md)
 - [Point-in-time source and worktree state](current-state-2026-10-09.md)

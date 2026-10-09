@@ -15,6 +15,6 @@ Across older Oldschool, Architect, Worker, Reviewer, Coordinator, Release Mechan
 
 ## Retrospective extension
 
-For the version arc, mainline commits, parallel Oct 9 candidates and their evidence boundaries, see [Project evolution](project-evolution-2026-10-09.md). For the coordination roles, worktree isolation, validation stages and recurring corrections, see [How the team works](how-work-happens-2026-10-09.md). The specific 9 October branch snapshot is in [Current state](current-state-2026-10-09.md).
+For the prehistory and versions v0.1–v0.13, see [Early history](early-history-2026-08-22-to-2026-10-06.md). For the later version arc, mainline commits, parallel Oct 9 candidates and their evidence boundaries, see [Project evolution](project-evolution-2026-10-09.md). For the coordination roles, worktree isolation, validation stages and recurring corrections, see [How the team works](how-work-happens-2026-10-09.md). The specific 9 October branch snapshot is in [Current state](current-state-2026-10-09.md).
 
 The historical **Create an Agent** chat (`01a0f9d0-26a8-77b1-bcda-5eaece6bdd19`) shows an earlier user-led experimental boundary: build a substantial prototype, keep it outside Main, and evaluate usefulness after trying it. The chat reported full repository and browser checks, but authoring value remained explicitly unverified. Its attached concept document is unavailable now.

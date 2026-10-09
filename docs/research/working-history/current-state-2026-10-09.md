@@ -36,3 +36,7 @@ Der Agent-Designer-Chat enthält einen historischen Downloads-Anhang, der am dam
 ## Änderungs- und Prüfgrenze dieser Aufnahme
 
 Historian hat hier lokale Markdown-/JSON-/TSV-Dokumentation geschrieben und JSON-/Git-Formatprüfungen ausgeführt. **Keine Produkt-Tests, Build, A01-Rolle, Agentenlauf oder Studie wurden in dieser Aufnahme gestartet.** Keine fremde Worktree-Datei wurde geändert. Es gab keinen Push, Main-Merge, Release oder Versand neuer Befunde an andere Chats.
+
+## Spätere punktuelle Referenzprüfung
+
+Bei einer getrennten, lesenden Prüfung am **9. Oktober 2026, 20:41:40 UTC** meldete `git ls-remote origin refs/heads/main` weiterhin `5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e` (kein Fetch). Der primäre Benutzercheckout war inzwischen auf `codex/government-assessment`, HEAD `b1d34a215e42508661708563c29c90537e3db5be`, mit nicht versionierten Dateien unter `docs/design/concepts/`. Die Worktree-Tabelle oben bleibt die Aufnahme von 20:29 UTC; sie ist kein atomarer oder aktualisierter Vollinventarstand für 20:41.
