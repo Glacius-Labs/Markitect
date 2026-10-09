@@ -1,0 +1,11 @@
+# Current native Conventional Roombook terminal handoff
+
+The second actual full start is terminal. Three native entries completed with exit 0: initial implementation, fixed own-session resume, and one fresh independent final assessor. The driver completed with exit 0. These are native/orchestration completion receipts, not engineering success.
+
+The pinned app CLI accepts the requested gpt-6-luna/high context and returns completed-turn usage. Both intended configs declare workspace-write, while every observed native turn context records read-only. Ordinary shell reads were rejected with `Rejected: blocked by policy`; the independent assessor was also unable to inspect its checkout. The exact rejection records and their original line locations are in terminal-summary.json and own-native-session-records. This is an environment/tool-policy blocker. No verified root cause, Conventional quality verdict, method comparison, product acceptance or serving-model attestation follows.
+
+The prepared feature HEAD remains 1344a1125962895c2f3e18c5286380a547d12c26; main remains the shared seed 71acaae99c826d0dce0ade81a5a84ab0aee6cfef, with clean status. S1 snapshot is retained; S2-S4 were not released. No implementation, tests, main merge, team execution or rename occurred. The independent assessor reports NOT RUN and candidateUnchanged=true. The Scientist made no candidate/source/config fixes or adaptive coaching.
+
+Consumption: one new full start, two global full starts total; two implementation entries and one independent assessment entry. Unused slots are closed, not transferable. Raw per-entry token receipts are retained without overlap summation; resume usage may be cumulative. Cached input and reasoning output remain subsets, not additional totals. Serving identity, request count and cost remain unknown.
+
+The terminal export excludes embedded .git directories and preserves history bundles. Only this actual's own native session records are archived; credentials are excluded. The first actual and accepted preparation remain unchanged. No new probe, retry, test, review actor or permission bypass was launched during closure. Overseer must decide any fresh bounded work to establish a supported ordinary executable read/write tool profile. Until then: hold.

@@ -1,0 +1,3 @@
+**Blockiert:** Der vorhandene Projektstand ist in dieser Sitzung nicht zugänglich. Der erneute Versuch, die vorgeschriebenen Projektdateien und den Git-Stand zu lesen, wurde bereits beim Start der PowerShell durch die Ausführungsrichtlinie abgewiesen. Die Umgebung weist außerdem Dateizugriff nur zum Lesen aus.
+
+Der kleinste nötige Eingriff ist eine Sitzung mit ausführbarer Shell und Schreibzugriff auf dieses Projekt. Bis dahin kann ich den Backlog nicht bestimmen, Änderungen nicht im Projekt dokumentieren, keine Prüfungen ausführen und nichts nach `main` mergen. Ich habe keine Dateien geändert.

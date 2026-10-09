@@ -1,0 +1,5 @@
+Ich kann die Arbeit in dieser Sitzung nicht umsetzen: Die Umgebung ist ausdrücklich auf **Dateisystemzugriff nur zum Lesen** beschränkt, und schon der erste Leseversuch mit `Get-Content` und `git status` wurde von der Ausführungsrichtlinie blockiert.
+
+Damit konnte ich weder `README.md`, `BACKLOG.md`, `STATIONS.json`, `QUALITY.md` und `.study/station.json` lesen noch den Git-Stand feststellen. Ich habe keine Dateien geändert und keine Checks oder einen Merge ausgeführt.
+
+Bitte starte die Aufgabe in einer Sitzung mit freigegebenem Lese- und Schreibzugriff auf dieses Projekt. Dann kann ich die freigegebene Station bestimmen und die Arbeit samt Prüfungen und Merge nach `main` erledigen.

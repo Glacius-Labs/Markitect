@@ -1,0 +1,426 @@
+{
+  "case": "roombook",
+  "arm": "conventional",
+  "repo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-current-native",
+  "stateDir": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-current-native",
+  "seedCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+  "preparedCommit": "1344a1125962895c2f3e18c5286380a547d12c26",
+  "preparedTree": "8cea62c20a64d4571017818c7e73855b1ead5676",
+  "createdUtc": "2026-10-09T05:42:31.766617+00:00",
+  "status": "returned",
+  "sessions": [
+    {
+      "number": 1,
+      "phase": "implementation",
+      "reservedUtc": "2026-10-09T05:53:38.206128+00:00",
+      "argv": [
+        "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/9691020b546a15b2/codex.exe",
+        "exec",
+        "--cd",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-current-native",
+        "--model",
+        "gpt-6-luna",
+        "--config",
+        "model_reasoning_effort=\"high\"",
+        "--json",
+        "--output-last-message",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-current-native\\session-01\\last-message.txt",
+        "-"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-current-native",
+      "promptSha256": "cc4389f0f822251442bd0f7bafe40b2f357ac45c270ab3afc23b0a879806f591",
+      "executableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+      "status": "returned",
+      "usage": null,
+      "providerRequests": null,
+      "servingModel": null,
+      "cost": null,
+      "tokensScope": "Raw own JSONL turns only; child/product receipts separately, no overlap sum",
+      "stationIndex": 0,
+      "phaseDeadlineUtc": "2026-10-09T06:16:08.205559+00:00",
+      "nativeHomeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+      "pid": 49036,
+      "startedUtc": "2026-10-09T05:53:38.418592+00:00",
+      "exitCode": 0,
+      "endedUtc": "2026-10-09T05:53:56.192293+00:00",
+      "observedWallSeconds": 17.781266800004232,
+      "events": {
+        "sessionId": "01a11f39-691b-7af1-9677-d873bdd2285c",
+        "completedTurns": [
+          {
+            "usage": {
+              "input_tokens": 110966,
+              "cached_input_tokens": 88832,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 1033,
+              "reasoning_output_tokens": 548
+            },
+            "event": {
+              "type": "turn.completed",
+              "usage": {
+                "input_tokens": 110966,
+                "cached_input_tokens": 88832,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 1033,
+                "reasoning_output_tokens": 548
+              }
+            }
+          }
+        ],
+        "errors": [],
+        "invalidLines": 0
+      },
+      "stdoutSha256": "81c0a75a543e3e3e9c0f448be5aaa03c1773b9b42f379c48d7621b3e7abe9702",
+      "stderrSha256": "b9443bc804451408b34874a3e144a6eeb70dfddd2cde161756ac45edae57cb06"
+    },
+    {
+      "number": 2,
+      "phase": "implementation",
+      "reservedUtc": "2026-10-09T05:53:56.463821+00:00",
+      "argv": [
+        "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/9691020b546a15b2/codex.exe",
+        "exec",
+        "resume",
+        "01a11f39-691b-7af1-9677-d873bdd2285c",
+        "--model",
+        "gpt-6-luna",
+        "--config",
+        "model_reasoning_effort=\"high\"",
+        "--json",
+        "--output-last-message",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-current-native\\session-02\\last-message.txt",
+        "-"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-current-native",
+      "promptSha256": "ad379aef3481487ed9366a7d854813fff1ed2979ebd49fcf9b1cbcf5970b6d99",
+      "executableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+      "status": "returned",
+      "usage": null,
+      "providerRequests": null,
+      "servingModel": null,
+      "cost": null,
+      "tokensScope": "Raw own JSONL turns only; child/product receipts separately, no overlap sum",
+      "stationIndex": 0,
+      "phaseDeadlineUtc": "2026-10-09T06:16:08.205559+00:00",
+      "nativeHomeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+      "pid": 21536,
+      "startedUtc": "2026-10-09T05:53:56.679044+00:00",
+      "exitCode": 0,
+      "endedUtc": "2026-10-09T05:54:05.689537+00:00",
+      "observedWallSeconds": 9.017181399998663,
+      "events": {
+        "sessionId": "01a11f39-691b-7af1-9677-d873bdd2285c",
+        "completedTurns": [
+          {
+            "usage": {
+              "input_tokens": 171275,
+              "cached_input_tokens": 147712,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 1643,
+              "reasoning_output_tokens": 827
+            },
+            "event": {
+              "type": "turn.completed",
+              "usage": {
+                "input_tokens": 171275,
+                "cached_input_tokens": 147712,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 1643,
+                "reasoning_output_tokens": 827
+              }
+            }
+          }
+        ],
+        "errors": [],
+        "invalidLines": 0
+      },
+      "stdoutSha256": "9eab7307b02747d86ab482d16cf826ba3a5adbf83eb5ee31704521c45347c854",
+      "stderrSha256": "ab9ba272c441f7c22fbe05d453d4a1f8a88ba10a612c54a219d563bb128128af"
+    },
+    {
+      "number": 3,
+      "phase": "assessment",
+      "reservedUtc": "2026-10-09T05:54:06.774945+00:00",
+      "argv": [
+        "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/9691020b546a15b2/codex.exe",
+        "exec",
+        "--cd",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-current-native\\evaluation\\repo",
+        "--model",
+        "gpt-6-luna",
+        "--config",
+        "model_reasoning_effort=\"high\"",
+        "--json",
+        "--output-last-message",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-current-native\\session-03\\last-message.txt",
+        "-"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-current-native\\evaluation\\repo",
+      "promptSha256": "2400a354319466bda9f5b703e724315c17adc2db9fc1654a44ad246504ab6178",
+      "executableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+      "status": "returned",
+      "usage": null,
+      "providerRequests": null,
+      "servingModel": null,
+      "cost": null,
+      "tokensScope": "Raw own JSONL turns only; child/product receipts separately, no overlap sum",
+      "stationIndex": 0,
+      "phaseDeadlineUtc": "2026-10-09T06:14:06.774177+00:00",
+      "nativeHomeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+      "candidateFilesBefore": {
+        ".gitignore": {
+          "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+          "bytes": 36
+        },
+        "AGENTS.md": {
+          "sha256": "ba07d46c6791fc0f7e09c1390d3d96a9ca76f759b37a2a68add27e682a18976c",
+          "bytes": 2553
+        },
+        "BACKLOG.md": {
+          "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+          "bytes": 2566
+        },
+        "checks/acceptance.py": {
+          "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+          "bytes": 7554
+        },
+        "QUALITY.md": {
+          "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+          "bytes": 2687
+        },
+        "README.md": {
+          "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+          "bytes": 2276
+        },
+        "STATIONS.json": {
+          "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+          "bytes": 595
+        }
+      },
+      "pid": 31476,
+      "startedUtc": "2026-10-09T05:54:07.022004+00:00",
+      "exitCode": 0,
+      "endedUtc": "2026-10-09T05:54:33.554937+00:00",
+      "observedWallSeconds": 26.540362200001255,
+      "events": {
+        "sessionId": "01a11f39-d853-7670-9311-45f1149b0442",
+        "completedTurns": [
+          {
+            "usage": {
+              "input_tokens": 186857,
+              "cached_input_tokens": 166912,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 2033,
+              "reasoning_output_tokens": 1105
+            },
+            "event": {
+              "type": "turn.completed",
+              "usage": {
+                "input_tokens": 186857,
+                "cached_input_tokens": 166912,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 2033,
+                "reasoning_output_tokens": 1105
+              }
+            }
+          }
+        ],
+        "errors": [],
+        "invalidLines": 0
+      },
+      "stdoutSha256": "eed864b509770f47235b437cf87f22a69c8f98a722fbbe2c252f39d802b22618",
+      "stderrSha256": "14d73630a262e6e3326c5a75dd5763682a1ff577eacdb5ec3d8c7c934ed0484e",
+      "candidateFilesAfter": {
+        ".gitignore": {
+          "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+          "bytes": 36
+        },
+        "AGENTS.md": {
+          "sha256": "ba07d46c6791fc0f7e09c1390d3d96a9ca76f759b37a2a68add27e682a18976c",
+          "bytes": 2553
+        },
+        "BACKLOG.md": {
+          "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+          "bytes": 2566
+        },
+        "checks/acceptance.py": {
+          "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+          "bytes": 7554
+        },
+        "QUALITY.md": {
+          "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+          "bytes": 2687
+        },
+        "README.md": {
+          "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+          "bytes": 2276
+        },
+        "STATIONS.json": {
+          "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+          "bytes": 595
+        }
+      },
+      "candidateUnchanged": true,
+      "stationCandidatesUnchanged": [
+        {
+          "station": "S1",
+          "unchanged": true,
+          "headMatches": true
+        }
+      ]
+    }
+  ],
+  "interventions": [],
+  "productReadiness": null,
+  "initialSetup": [],
+  "trialGrant": {
+    "path": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-current-native-enabled-grant-20261009.json",
+    "sha256": "fed32412e7af3ce37acfca556a80b17cd697906e72d097bc9874387ab9144a38"
+  },
+  "sessionId": "01a11f39-691b-7af1-9677-d873bdd2285c",
+  "deadlineUtc": "2026-10-09T07:53:38.205559+00:00",
+  "implementationDeadlineUtc": "2026-10-09T07:23:38.205559+00:00",
+  "evaluationDeadlineUtc": "2026-10-09T07:43:38.205559+00:00",
+  "tokens": null,
+  "cost": null,
+  "servingModel": null,
+  "stationIndex": 0,
+  "stations": [
+    {
+      "id": "S1",
+      "items": [
+        "R01"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S2",
+      "items": [
+        "R02",
+        "R03",
+        "R04"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S3",
+      "items": [
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11"
+      ],
+      "requiresTeam": true
+    },
+    {
+      "id": "S4",
+      "items": [
+        "R12"
+      ],
+      "requiresTeam": false
+    }
+  ],
+  "snapshots": [
+    {
+      "stationIndex": 0,
+      "station": "S1",
+      "mainCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+      "headCommit": "1344a1125962895c2f3e18c5286380a547d12c26",
+      "dirtyStatus": "",
+      "evaluationRepo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-current-native\\stations\\S1\\main",
+      "rawFiles": {
+        ".codex/config.toml": {
+          "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+          "bytes": 281
+        },
+        ".gitignore": {
+          "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+          "bytes": 36
+        },
+        ".study/station.json": {
+          "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+          "bytes": 70
+        },
+        "AGENTS.md": {
+          "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+          "bytes": 5411
+        },
+        "BACKLOG.md": {
+          "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+          "bytes": 2566
+        },
+        "checks/acceptance.py": {
+          "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+          "bytes": 7554
+        },
+        "QUALITY.md": {
+          "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+          "bytes": 2687
+        },
+        "README.md": {
+          "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+          "bytes": 2276
+        },
+        "STATIONS.json": {
+          "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+          "bytes": 595
+        }
+      },
+      "bundleSha256": "26eab59227d09009549713255e99d935f01346b8666aef70d317a76b1b30db61",
+      "utc": "2026-10-09T05:54:06.049885+00:00"
+    }
+  ],
+  "startedUtc": "2026-10-09T05:53:38.205559+00:00",
+  "freeze": {
+    "frozenUtc": "2026-10-09T05:54:06.533346+00:00",
+    "mainCommit": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+    "headCommit": "1344a1125962895c2f3e18c5286380a547d12c26",
+    "dirtyStatus": "",
+    "mergedAndClean": false,
+    "mainTree": "c9b88d6fe6c0d4c3d7b7ce81914699575d230606",
+    "rawWorkingFiles": {
+      ".codex/config.toml": {
+        "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+        "bytes": 281
+      },
+      ".gitignore": {
+        "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+        "bytes": 36
+      },
+      ".study/station.json": {
+        "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+        "bytes": 70
+      },
+      "AGENTS.md": {
+        "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+        "bytes": 5411
+      },
+      "BACKLOG.md": {
+        "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+        "bytes": 2566
+      },
+      "checks/acceptance.py": {
+        "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+        "bytes": 7554
+      },
+      "QUALITY.md": {
+        "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+        "bytes": 2687
+      },
+      "README.md": {
+        "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+        "bytes": 2276
+      },
+      "STATIONS.json": {
+        "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+        "bytes": 595
+      }
+    },
+    "historyBundleSha256": "26eab59227d09009549713255e99d935f01346b8666aef70d317a76b1b30db61",
+    "evaluationRepo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-current-native\\evaluation\\repo",
+    "assessedScope": "isolated main; unfinished tree retained separately"
+  }
+}

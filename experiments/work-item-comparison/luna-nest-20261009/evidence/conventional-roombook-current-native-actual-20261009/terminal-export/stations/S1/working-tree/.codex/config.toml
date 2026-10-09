@@ -1,0 +1,11 @@
+# Shared supported base, isolated per-cell CODEX_HOME; children inherit Luna High.
+model = "gpt-6-luna"
+model_reasoning_effort = "high"
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+[features]
+multi_agent = true
+memories = false
+[agents]
+max_threads = 4
+max_depth = 2
