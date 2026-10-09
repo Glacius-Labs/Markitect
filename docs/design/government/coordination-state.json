@@ -16582,7 +16582,7 @@
       "sourceScope": "Independent YAML identity/decision/impact, scoped graph and validated evidence, shared services plus CLI/MCP queries and native guidance/example",
       "ownerReported": "Component tests/vet/accounting positive and independent model/Host findings closed; provider-free example journey positive on earlier working binary",
       "qualification": "Source-bound provider-free CLI/MCP journey on d360 recorded; repaired full Verify pending, no provider/actor/Main acceptance",
-      "fullVerify": "FAILED_D360EC01_TWO_TEST_FIXTURES; REPAIRED_EBE51470_FULL_REPLAY_RUNNING",
+      "fullVerify": "EBE51470_TERMINAL_EXIT1_DELIVERY_FIXTURE_BUDGET; TEST_ONLY_REPAIR_ACTIVE",
       "mainIntegrationExcluded": true,
       "acceptedMainSha": null,
       "next": "Owner finishes already active Verify and final source-bound handoff; later exact accepted main into KG, resolve conflicts, regressions/review, then separate evaluation",
@@ -16605,6 +16605,25 @@
         "providerFreeJourney": "Committed exact d360/binaryac709206 receipt reports project coverage and six CLI actions plus stdio MCP six tools with same graph digest PASS, provider calls0; Root read receipt, did not rerun",
         "acceptedMainSha": null,
         "newOrderSent": false
+      },
+      "deliveryFixtureFollowup": {
+        "verifiedUtc": "2026-10-09T20:13:53Z",
+        "sourceSha": "ebe5147025c8d1f5bf40c4dc30b14509c0e5d6e3",
+        "rootVerified": "Exact local/public source remains ebe51470 with owned evidence/docs/artifact and deliver_test WIP; receipt/log hash read, fixture diff only",
+        "fullVerify": {
+          "exitCode": 1,
+          "elapsedMilliseconds": 1751466,
+          "suiteTimeout": false,
+          "workingLogSha256": "5589833ac8d1a8aaee31ec011a148bf2a35f770d357bdb60bcabeb7b6b0f4274",
+          "committedEvidence": "PENDING"
+        },
+        "ownerReported": "projectcli including prior corrected tests PASS; other Go packages except projectrun PASS; positive delivery failed546.07s at4min fake-process MaxDuration before verification",
+        "causalQualification": "D360 projectrun previously PASS; no baseline/shared causal attribution beyond observed test budget failure",
+        "localRepair": "One positive delivery fixture sets MaxDuration30min before setup/Plan/Run, no production enforcement or actor/study budget change; targeted rerun/review pending",
+        "ownerOtherChecks": "Actual source-bound ebe51470 CLI/MCP six-action journey PASS0providerCalls; separate PythonClaude22/Codex54skip1PASS, FullVerify downstream Python NOT_RUN",
+        "peerCoordination": "Known Integration same delivery4m finding and isolated217.91sPASS/test-only15m correction sent once; do not merge unfinished Integration, combine exact accepted Main later",
+        "rootTestsOrModelsRepeated": false,
+        "mainMergeOrAcceptance": false
       }
     }
   },

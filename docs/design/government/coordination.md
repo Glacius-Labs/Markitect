@@ -1780,3 +1780,8 @@ Scientist reports MXC code/test works but protected actual .git prevents request
 ### 2026-10-09T19:58:40Z - controller closed but original Greenfield turn remains uncertain
 
 Owner reports controller87753 Exit1 and known AppServer PIDs absent. Root read BFcancelled status/finalfreeze and GFuncertain/no finalfreeze. Exact own GFjournal SHA1e0c7aa4 binds native session01a1223b-1aa5 and turn01a1223b-1d61; onlytask_started19:54:22Z, no terminalevent atcapture. FormerCLI54936 nowpython PIDreuse, ownerdidnottouch; processabsence not turnterminal proof. Keep GFlock/originalbytes, no replay/immutablequalityclaim. Actual/startup orders exhausted/disabled; provider-free controller/readiness/scopedapprovalfixes and private archives continue, no additional Root instruction or broad inventory.
+
+
+### 2026-10-09T20:13:53Z - KG second full Verify failed at positive delivery fixture budget
+
+Root verified exact public ebe51470 with evidence/test WIP; local receipt Exit1/1751466ms/no suite timeout and rawlog5589833a read. Owner reports previous CLI repairs and all Go packages exceptprojectrun PASS; positive delivery546.07s exceeds4m fixture budget beforeverification. D360 projectrun earlierPASS, no invented baseline cause. Test-only local30m limit before setup observed; normal product/actor enforcement unchanged, focusedrerun/review/published evidence pending. Root forwarded known Integration samefixture finding/isolated217.91sPASS/15m test correction, no unfinished Mainmerge. Source-bound six CLI/MCP queries and separate Python checks owner-positive, fullVerify downstreamPythonNOTRUN. No fullPASS, Root rerun/newActual/Maingate/KG-to-Main.
