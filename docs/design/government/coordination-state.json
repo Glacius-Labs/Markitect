@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T01:06:03Z",
+  "updatedUtc": "2026-10-09T01:18:24Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -458,19 +458,19 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:73",
-      "lastObservedStatus": "active",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:74",
+      "lastObservedStatus": "idle",
       "activeTurn": {
         "id": "01a11e31-0564-76f2-9ea5-aa1a0cdcc7e7",
         "status": "inProgress"
       },
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac83db978b08191b0a4fba323a5e339",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "One independent prospective oracle/outcome source review, then exact clean Design handoff and commonfreeze for bounded matched comparisons",
-      "latestProgress": "Actual fresh turn builds missing Main-to-nativeActor transport in new harness copy; one real canary/freeze review authorized, twoGF trials wait for exact Rootstartreceipt.",
+      "assignedMilestone": "v4-canary-fixed-source-byte-correction-20261009",
+      "latestProgress": "Native bridge setup closed negative before agentexec; Root proved one CRLF-only source mismatch; new bounded source-byte correction issued, both GF cells NOT RUN.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "323ea7c050a7a92aa220d7282b06e66a977b417e",
+      "candidateSha": "6ab266917eb2cc9111e2ce7120018dd22c5ce300",
       "acceptance": "Current public preparation qualified accepted after root/independent review; DTOhelper advisory only and3/2correctiondeviation retained. No matchedstudyadmission; historicalactualv3/posthoc preserved.",
       "lastAssignment": {
         "key": "v4-native-main-bridge-and-first-matched-pair-20261009",
@@ -7721,8 +7721,19 @@
             "Before cells Root must have exact shared review/canary/config pin; during cells report only actual start/material blocker/terminal completion, no ACK loops. After each actual cell commit/push own raw/evidence privately, verify remoteRef/SHA, report safe actual results/limits once. Other BF/Design cells remain unallocated, Design readiness cannot stop these ready pairs or see baseline/private data.",
             "All allocations finite and terminate at deadline/terminal block; no new Government trial, main/release promotion, purchases, additional obligations, protection bypass, trial substitution or automatic replenishment. At pair end return intermediate absolute/reference-relative outcomes and errors/effort/uncertainty; later research must fit remaining6 of8/max2questions under separate concrete decision."
           ],
-          "status": "Dispatched once; actual fresh turn implements exact live bridge; two GF cells reserved but not started",
-          "usage": null,
+          "status": "Shared setup terminal NOT READY, closed; two conditional full cells remain reserved NOT RUN",
+          "usage": {
+            "correctionBatches": 1,
+            "offlineTestProcesses": 1,
+            "offlineTestsPassed": 6,
+            "mainProcesses": 1,
+            "canaryActors": 0,
+            "sharedNativeReservations": 2,
+            "sharedNativeActivations": 1,
+            "independentReviewers": 1,
+            "unusedSetupQuotaClosed": true,
+            "actualFullCellsStarted": 0
+          },
           "sentUtc": "2026-10-09T01:04:51Z",
           "grantCommit": "59414d1",
           "deliveryConfirmed": true,
@@ -7753,6 +7764,87 @@
           "promptSha256": "fec72c13179013118b3c90f3864bbcae1a6c51f3f821d1522155e954e6a9880a",
           "prompt": "Dein Abschluss323ea7c ist Root-geprüft: clean/exakter privater Remote,44Working/RawGitbindungen/44reineAdditionen,alteBasis unverändert. Bewertungskorrektur CLOSED; alle alten Quoten geschlossen. Root hat beide Restbindungen konkret untersucht.\n\nModellbefund: Dein eigener persistierter turn_context vom2026-10-09T00:46:13.810Z/Turn01a11e1f-f6fa-7763-8e71-9af3187ef2f4 bestätigt model=gpt-6.1-sol, effort=high, never/danger-full-access; globale TOMLmedium ist nicht maßgeblich. Allowlistreceipt: Root docs/design/government/native-profile-binding-20261009.json, Metadatenzeilenhash739ae34112a24dbea421e4498dad3bd1b8d165ab5f47683d88805bd665eb83e7. Keine rohen Chat-/Developer-/Memoryinhalte an Actors. Prüfe vor Actuals gezielt neueste eigene Turnmetadaten und vererbe ohne Overrides; Serving/Tokens/Kosten bleibenunknown.\n\nUnabhängiger Quellenreview konkret: Maina97 hat echten agentexec stdin/stdout-Runner/Produktparser/Receipts und separat CodexCLIAdapter. Dein native_boundary bereitet nur toolArguments vor und verbindet ihn nicht. Es fehlt ausschließlich die minimale parentgesteuerte Liveverbindung: Main startet konfigurierten literalPythonprozess, übergibt echte Invocation; Brücke legt exakt eigenen Request ab/wartet begrenzt, du startest aus diesem Request einen echten frischen nativen Actor, lieferst erst nach dessen Abschluss dessen genuine rawResponse/Artefakt zurück. Main validiert selbst und erzeugt echte Receipts. Kein Replay/Fixture, keine von dir erfundene/semantisch reparierte Antwort, kein CodexCLI/Appserver/API-/Ausschaltfallback oder neue Parserplattform.\n\nNeuer konkreter Grant v4-native-main-bridge-and-first-matched-pair-20261009, Rootcommit59414d1, coordination-state.json unter Scientist.evidence.v4NativeMainBridgePairGrant. Lies den vollständigen Grant sowie aktuellen coordination.md/evaluation.md. Issued2026-10-09T01:02:04Z, gemeinsames Setup absolut bis2026-10-09T01:27:04Z/max1500s; Gesamtende2026-10-09T05:32:04Z/max16200s. Jüngere direkte Nutzeraufträge respektieren.\n\nNur neue additive Scientist-Harnesskopie ab323ea7c, keine Produkt-/Adopterquelländerung oder Bewertungs-/Rubrik-/Anforderungsänderung. Setup höchstens2gewöhnliche Korrekturchargen/2reinOfflineTransporttestprozesseje120s, genau1echter öffentlicher Nichtstudien-Executorcanary mit EINEM frischen nativen Actor<=300s/einem Produktrollenprozess<=360s, keinRetry/zweiterRolecall. Pinne Command/Args/Python/RuntimeFiles/Configfingerprint vorher. Canary muss aus tatsächlicher MainInvocation einen echten Actor, dessen Antwort und einen vom tatsächlichen Mainparser akzeptierten gebundenenReceipt erzeugen; keine Studienqualität daraus. Keine Canarylöseartefakte in tatsächliche Zellen kopieren. Keine Produktbuilds/Installation/CLI/Appserver/ProviderAPI. Zwei gemeinsame Modellreservationen insgesamt: CanaryActor und abschließenderReviewer; keine weiterenHelfer/Kinder.\n\nNach Setup/Canary exakten Bridge-/Runtime-/Profil-/Public-/privatenEvaluator-/Commonfreeze versiegeln, dann EIN frischer unabhängiger readonly FreezeReviewer<=240s, fork_turns=none/geerbtesProfil/keineOverrides/Kinder/Followups/Retry/Programme/Tests. Er prüft echten Livebeleg/Transport statt Replay sowie gleiche Inputs/Ressourcen und vorhandene erklärte Bewertungsregeln; keine fremden Zellresultate/privateVektoren nötig. Danach keine Harness-/Protokoll-/Rubrikreparaturen unter diesem Grant. Schicke EINEN sicheren konkreten Readiness-/Freezecallback mit Source-/Runtime-/Review-/Canary-/Config-/Modellpins/Verbrauch an Overseer. Root prüft und erteilt anschließend den exakt gebundenen Startreceipt unter DIESEM Grant, ohne neue pauschale Nutzerfreigabe. Vor Rootstartreceipt keine Vollzelle.\n\nBereits endlich konditional reserviert sind GENAU zwei Greenfieldzellen: zuerst starke Conventional/Oldschool, danach ClassicMaina97/Binary0621e6ce..., jeweils frischer Checkout von0416e366626d31933443ce2901d6a3696261db7b und frische Actors. Gemeinsame24öffentlicheInputs/Rubrik/privaterEvaluator unverändert. ProTrial7200s/72Actorreservationen; proTask1200s/12Reservationen/max2semantischeRepairs, max4ActorsinklHelfer/Reviews und einePrimärzelle, max600saktiveMenschzeit. Jede Rolle/Primary/Helfer/Review/Repair/Fehlstart zählt vorTooldispatch; keineautomatischeNachfüllung. Implementation endet840s, mindestens300sAssessmentreserve,30sEndreserve/10sInterruptmargin. Max12eigeneServerstarts jeActor,Port0/ownstdout/DB/ownhandles. Task6 actualmutation/equivalence erst nach echterTask5Freeze/innerhalbTask-/Trialquoten; unabhängigeerklärteInvarianten, keine fremden Lösungen/Ergebnisse. Alle semantischeImplementierung/Modellpflege durch echteZellActors, nieScientist.\n\nScientist bleibtalleinigerDispatcher; Actors fordernHelfer bei dir an stattungemessen selbstzuspawnen. fork_turns=none; keinefremdenChats/Memory/Studienzellen/privatenInputs, keinlist_agents/globalesProzessinventar. NativeAPI bietetkein cwd: jederActor bekommtnur exaktenOwnRoot und mussjedesFilesystem-/Shellkommando dorthinbinden. TatsächlicheFremdexpositionehrlichinvalidieren; sharedHostistkooperativeGrenze, keineOSIsolation. Stop_duebeiWaits<=60s prüfen, nurbekannteownActorIDs unterbrechen/ownServicesfinallystoppen, keineProvider-/OSStopgarantie. KontinuitätsnotizfüraktuellenGrantpflegen,beiCompactionnichtzumgenerischenWarten zurückfallen.\n\nAndere Brownfield-/Design-/Governmentzellen sind NICHTfreigegeben; zwei von insgesamtachtFolgeslots werdenreserviert, keineErsatztrials. Design blockiertdiese beiden nachReadinessnicht undbekommtkeineBaseline-/Privatdaten. BeiS1/Freezefehler/Frist/Quota sofortkonkretenBefund/Belege sichernundstoppen,keinallgemeinerDiagnoseloop. Altefehlerhaftenläufe/Unknownserhalten. NachtatsächlichemZellstart/Blocker/Abschlusseinmalereignisbezogenmelden; nachjederZelleprivateQuelle/BelegepushenundRemoteSHAprüfen. Allesnachresearch-backup,keineVollarchivwiederholung. KeineACKs.",
           "activeTurnConfirmed": true
+        },
+        "v4NativeMainBridgeSetupAcceptance": {
+          "checkedUtc": "2026-10-09T01:18:24Z",
+          "sha": "6ab266917eb2cc9111e2ce7120018dd22c5ce300",
+          "clean": true,
+          "remoteExact": true,
+          "reviewManifestWorkingAndRawGitBindings": 39,
+          "mismatches": 0,
+          "newFilesOnly": 49,
+          "oldTrackedChanges": 0,
+          "rawArchiveSHA256": "c7ca2972d9bc3c3e4240f0d20b43100146040b67c13a8029684381bf7e8e8d50",
+          "independentVerdict": "NOT READY / NOT EXECUTABLE",
+          "actualMainExit": 2,
+          "actualBridgeInvocations": 0,
+          "actualNativeCanaryActors": 0,
+          "actualExecutorReceipts": 0,
+          "rootByteCause": {
+            "repo": "C:/Users/Consiliari/Documents/Scientist-v4-native-live-bridge-20261009/public-canary/repo",
+            "fixedRevision": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+            "path": "examples/canonical-projection/canary.yaml",
+            "workingBytes": 1975,
+            "gitBytes": 1974,
+            "workingSHA256": "00654eddcce822e3aaaa23c0b79ac8c84e104f21a925bb1b6d695820d6198dbf",
+            "gitSHA256": "f2816763f4122475c0327468d3e636c27aab50fecb425aedeb42be4c47719080",
+            "workingCRLF": 1,
+            "gitCRLF": 0,
+            "workingCRLFtoLFEqualsCommittedBlob": true,
+            "gitStatusClean": true,
+            "coreAutocrlf": "true"
+          },
+          "qualifiedAcceptance": "Terminal negative setup evidence; no study or product quality credit; private vectors not opened"
+        },
+        "v4CanarySourceByteCorrectionGrant": {
+          "key": "v4-canary-fixed-source-byte-correction-20261009",
+          "issuedUtc": "2026-10-09T01:18:24Z",
+          "absoluteDeadlineUtc": "2026-10-09T01:30:24Z",
+          "maxWallSeconds": 720,
+          "basis": "Direct user requests actual case studies and readiness; Root proved sole CRLF byte mismatch at unchanged public canary source; original setup terminally closed, unused quotas not reused.",
+          "baselineScientist": "6ab266917eb2cc9111e2ce7120018dd22c5ce300",
+          "rootByteEvidence": {
+            "repo": "C:/Users/Consiliari/Documents/Scientist-v4-native-live-bridge-20261009/public-canary/repo",
+            "fixedRevision": "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+            "path": "examples/canonical-projection/canary.yaml",
+            "workingBytes": 1975,
+            "gitBytes": 1974,
+            "workingSHA256": "00654eddcce822e3aaaa23c0b79ac8c84e104f21a925bb1b6d695820d6198dbf",
+            "gitSHA256": "f2816763f4122475c0327468d3e636c27aab50fecb425aedeb42be4c47719080",
+            "workingCRLF": 1,
+            "gitCRLF": 0,
+            "workingCRLFtoLFEqualsCommittedBlob": true,
+            "gitStatusClean": true,
+            "coreAutocrlf": "true"
+          },
+          "limits": {
+            "ordinaryCorrectionBatches": 1,
+            "newOfflineTestProcesses": 0,
+            "mainProductProcessStarts": 1,
+            "mainProcessMaxSeconds": 360,
+            "actualCanaryNativeActors": 1,
+            "canaryActorMaxSeconds": 300,
+            "independentReadonlyFreezeReviewers": 1,
+            "reviewerMaxSeconds": 180,
+            "newSharedNativeReservationsMax": 2,
+            "newProductBuilds": 0,
+            "newFullTrialReservations": 0,
+            "cliOrAppserverOrProviderApiOrInstallations": 0
+          },
+          "overallReservedPairEndUtc": "2026-10-09T05:32:04Z",
+          "existingPairGrant": "v4-native-main-bridge-and-first-matched-pair-20261009",
+          "conditions": [
+            "Original 6ab terminal failure, archived working bytes, source and metadata remain untouched. Create a new additive correction package and isolated public non-study canary repo/state/mailbox; use raw committed Git bytes for ALL fixed-revision inputs, prove working raw hashes equal committed blobs before invoking Main. Fix own setup byte materialization only; do not weaken product freshness checks or modify product sources.",
+            "Bridge implementation/live_bridge.py and run_owned_main.py remain exact frozen bytes from 93ed058. No transport/protocol/evaluator/rubric/requirements repair, fixtures, replay or Scientist-authored role response. Path-specific runtime/config/policy/processspec/continuation and archival bindings may change prospectively for new isolated state, actual bytes and unchanged absolute bounds.",
+            "Exactly one new real Main controller-execute canary process using existing a97cbd5 binary0621e6ce...; one fresh actual native executor Actor at most, same inherited Scientist gpt-6.1-sol/high configured profile checked from latest own turn metadata before activation, fork_turns=none, no override. Genuine normalized Invocation/request/nonce/inputDigest, actual Actor result/rawResponse and actual Main-generated ExecutorReceipt must all bind.",
+            "Reserve starts before tools; count failed/unused reservations honestly; prior 1process/2reservations/1reviewactivation remain consumed. No retry/fallback/refill. Stop on next concrete failure and report once with preserved raw evidence.",
+            "After successful live proof, freeze exact new source/runtime/profile and existing24public+5private evaluation hash chain/common cell resources; then exactly one fresh readonly inherited-profile independent reviewer <=180s, no children/followups/retries/program/tests, actual declared transport/freeze scope only. No corrections after review. Require executable positive evidence, not a fixture-only PASS.",
+            "Terminal safe handoff exact clean source/binary/config/Invocation/response/receipt/review hashes and PRIVATE research-backup remoteSHA. No private evaluator vectors or foreign cell results to Root/implementers. No new purchase/APIintegration/policy bypass or product build.",
+            "Both already-reserved GF cells remain NOT RUN until positive handoff Root verification and explicit Root start receipt under existing pair grant. No new or replacement full trials, no overall deadline extension:05:32:04Z. Preserve original cell resources and cannot start a cell without its full allocated7200s remaining. Design readiness must not delay ready Conventional/Classic pair.",
+            "All other existing cell scope, real compatibility/task6 assessment, fresh contexts, sole Scientist dispatcher, own handles/cwd, contamination rules, quotas and callback contract remain unchanged. This is a concrete source-byte correction and one live proof, not a general diagnosis loop."
+          ],
+          "status": "Issued; not yet dispatched",
+          "usage": null
         }
       },
       "classicHandoffReceived": true,
@@ -8957,13 +9049,13 @@
       "lastObservedStatus": "active",
       "candidateSha": "4ea88971c2e6122019c4c557cd80bfebf93df14a",
       "candidateStatus": "Publicremoteprovisionalcheckpoint, nativeReadiness running, no acceptedstudyfreeze",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:10",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:11",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac831c872848191b28ade4ec5df0af9",
       "assignedMilestone": "Continue latest direct user-authorized native Luna High Shop verification; then immutable test-readiness handoff/callback",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
       "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
       "acceptance": "Not yet independently accepted; development/native test reports only",
-      "latestProgress": "Actual CLI returns shortened invocation identifiers, rejected by Host; owner works on adapter reference-key mapping, no admitted study freeze.",
+      "latestProgress": "Host rejected invalid manager report; owner adds evidence-resolution/escalation manager prompt with strict validation and budgets retained; no admitted readiness pin. Public branch4a535f3 remote verified.",
       "evidence": {
         "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
         "observedBranch": "codex/model-driven-delivery",
@@ -9005,7 +9097,7 @@
       }
     }
   ],
-  "nextAction": "Remote backups complete. Issue exactly one bounded declaredevaluationcoverage/attribution correction plus independentre-review toScientist; Design ownreadiness/nativefeedback continues. Then exact matchedfreeze and actualexecution withinexistingfiniteblock, no genericprep.",
+  "nextAction": "Dispatch exactly new source-byte correction/livecanary grant; after real positive receipt and independent freeze review Root verifies and starts already-reserved ConventionalGF then ClassicMainGF. No automatic retries, new full trials or global extension. Design own readiness continues.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -9016,8 +9108,8 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T23:58:37Z",
-    "evidenceLevel": "Root exacthash/Git/archive/source confirmation plus independentreadonlyauthorityreview. ed9c5b3 offline/CLIqualified,42mechanics;DTOconformancewithdrawn;3/2deviationexplicit. No new productActor/fulltrial.",
+    "reviewedUtc": "2026-10-09T01:18:24Z",
+    "evidenceLevel": "Root39working/rawGit bindings plus actual source byte comparison/clean exact private remote; independent terminal setup review negative. No actual new study cell.",
     "coordinationActions": [
       "Verifieded9c5b3source/binary/archive/logs and acceptedqualifiedofflineafterindependentRootreview",
       "Preserved3of2correctiondeviation/staleclosedUtcqualification",
@@ -9029,7 +9121,7 @@
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-08T19:51:14Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
-    "observationStatus": "One concrete independentprospectiveoracle/outcomereview dispatched while Design active, exact finite newgrant; awaiting concrete Design readiness then matchedfreeze.",
+    "observationStatus": "Dispatch exactly new source-byte correction/livecanary grant; after real positive receipt and independent freeze review Root verifies and starts already-reserved ConventionalGF then ClassicMainGF. No automatic retries, new full trials or global extension. Design own readiness continues.",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z",
     "latestQuietFallback": {
@@ -9233,11 +9325,11 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": null,
-    "key": null,
-    "status": "Free; no actual product suite/build/trial authority allocated",
+    "owner": "Scientist",
+    "key": "v4-canary-fixed-source-byte-correction-20261009",
+    "status": "Reserved one corrected live canary/Main process; full cell pair conditional, not started",
     "queue": [],
-    "releasedUtc": "2026-10-08T23:58:37Z"
+    "absoluteEndUtc": "2026-10-09T01:30:24Z"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -10405,6 +10497,14 @@
       "reason": "Resume exact existingprivateRecoverycheckpoint after failed archive/Githygienepipeline; keep data bytes/oldstudyHEADs unchanged"
     },
     "completedVerifiedUtc": "2026-10-09T00:26:36Z",
-    "futureCheckpointContract": "Owners push their own coherent source/evidence checkpoints to correctprivacyremote and report verifiedremoteRef/SHA; Root ls-remotechecks. WIPbackup is never readiness/studyacceptance. No force/Mainmerge/release/paid-runtimeauthority from backup."
+    "futureCheckpointContract": "Owners push their own coherent source/evidence checkpoints to correctprivacyremote and report verifiedremoteRef/SHA; Root ls-remotechecks. WIPbackup is never readiness/studyacceptance. No force/Mainmerge/release/paid-runtimeauthority from backup.",
+    "publicRefsRootVerifiedLatest": {
+      "checkedUtc": "2026-10-09T01:18:24Z",
+      "main": "5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e",
+      "codex/model-driven-delivery": "4a535f3b4cb6a5c662949ef759208e38cf04d31f",
+      "codex/government-p1": "839dc4e3f6078aa051e08c50c2b958150ca45f49",
+      "codex/government-worker": "04e225d5caee78c2a198607143863fca1e829750",
+      "codex/classic-readiness-v0141": "c91363b7ac4decbe87212ff0f588b5451581a152"
+    }
   }
 }
