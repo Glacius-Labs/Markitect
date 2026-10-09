@@ -24,7 +24,7 @@ renewal_policy:
   authority_record_location: forwarded_external_contract_not_in_this_worktree
   authority_record_sha256: a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7
   issued_utc: '2026-10-09T22:01:37Z'
-  status: latest_actual_failed_scoped_repair_authorized
+  status: direct_human_hold_pending_simplification_discussion
   cumulative_time_start_and_estimated_cost_cutoff: "none"
   per_batch:
     max_wall_seconds: 14400
@@ -171,7 +171,10 @@ renewal_policy:
     provider_starts: 1
     helper_provider_starts: 0
     native_run_interrupted: true
-    native_root_integration_turn_observed: false
+    native_root_integration_turn_observed: true
+    native_invocation_run_id: b7d7dfee9be8d39757734043c9f84d36
+    native_session_id: 01a122d7-3dfe-7c41-a6cf-178de5a0523c
+    native_turn_id: 01a122d7-40a8-7ab2-a1c8-03c204b92ae9
     unified_exec_startup_failures: 2
     startup_failure: mxc_platform_directory_hresult_0x80070003_before_shell
     windows_os_build: 26100.9457
@@ -184,12 +187,17 @@ renewal_policy:
     file_change_approval_resource: README
     file_change_approval_method: requestApproval
     file_change_approval: declined_by_generic_client_handler
-    workspace_id: c952
+    workspace_short_id: c952
+    workspace_id: c9520cace3d9a67d8ab688b5c75c94ef
     workspace_closed: true
     normalized_workspace_changes: 0
     manager_overlap_observed: false
     review_apply_recovery_observed: false
-    attempt_cost_estimate: not_separately_attributed
+    input_tokens: 146970
+    output_tokens: 837
+    cached_input_tokens: 98560
+    attempt_known_estimated_cost_micros: 148644
+    attempt_cost_accounting: partial_observed_lower_bound_not_invoice
     cumulative_known_role_start_requests: 5
     cumulative_known_provider_starts: 4
     cumulative_known_estimated_cost_micros: 898953
@@ -198,6 +206,7 @@ renewal_policy:
     unchanged_failed_batch_replay_authorized: false
     scoped_approval_and_windows_fix_authorized: true
     fresh_finite_batch_after_fix_authorized_under_renewal: true
+    subsequently_paused_by_direct_human_hold: true
     source_worktree_clean: true
     binary_frozen: true
     allocation_utc: '2026-10-09T22:42:30.7744455Z'
@@ -253,16 +262,50 @@ renewal_policy:
     readonly_dotnet_26_binding_role_start_requests: 0
     readonly_dotnet_26_binding_provider_starts: 0
     native_actual_started: true
+    terminal_status: failed_not_passed
+    root_turn_observed: true
+    native_invocation_id: b7d7dfee9be8d39757734043c9f84d36
+    native_session_id: 01a122d7-3dfe-7c41-a6cf-178de5a0523c
+    native_turn_id: 01a122d7-40a8-7ab2-a1c8-03c204b92ae9
+    workspace_id: c9520cace3d9a67d8ab688b5c75c94ef
+    workspace_normalized_changes: 0
+    attempt_usage_input_tokens: 146970
+    attempt_usage_output_tokens: 837
+    attempt_usage_cached_input_tokens: 98560
+    attempt_estimated_cost_micros: 148644
+    cumulative_known_role_start_requests: 5
+    cumulative_known_provider_starts: 4
+    cumulative_estimated_cost_micros: 898953
+    cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
   next_batch:
-    status: scoped_approval_and_windows_diagnosis_in_progress
-    direct_root_human_authorization: ordinary_inherited_context_runtime_option
-    runtime_option_strategy: inherited_context_no_guessed_environment_iterations
-    normal_config_implementation_owner: native_setup
-    workspace_managed_policy_unchanged: true
-    global_configuration_changes: false
-    security_sandbox_policy_changed: false
-    new_batch_pins: not_prepared
-    fresh_finite_batch_authorized_under_renewal: true
+    status: direct_human_hold_pending_simplification_discussion
+    direct_human_hold: further_native_a01_diagnosis_and_provider_starts_paused
+    new_batch_pins: none
+    fresh_finite_batch_requires_hold_lift_and_exact_pins: true
+  current_source_checkpoint:
+    primary_source_revision: 01de5b3003aa17a9f20e79204e9bd3d01b4b962b
+    source_worktree_clean: true
+    source_pushed: true
+    vcs_modified: false
+    binary_sha256: ff9eeec9f012083ebdca05ca5be179e57172e5249baee469818be7e137a1533f
+    incorporated_source_fixes: [15e955fa, 792dd760, 9fda7a33, 01de5b30]
+    independent_environment_and_approval_reviews: closed
+    isolated_agentexec_setup_mcp_checks: passed
+    isolated_codex_appserver_seconds: 71.730
+    isolated_project_workspace_seconds: 81.414
+    nullable_fix_focused_test_seconds: 43.940
+    nullable_fix_vet: passed
+    whole_build_and_vet: passed
+    fixed_canonical_schema_format_artifact_module_modverify_checks: passed
+    artifact_findings: 0
+    primary_go_tree_matches_isolated_revision_prefix: ea1dbd
+    project_run_full_suite: interrupted_not_validation
+    runtime_readiness_plan_pins: none_for_current_source
+    technical_fix_validation_is_not_native_acceptance: true
+    latest_actual_remains_f147_failed_batch: true
+    no_runtime_readiness_or_plan_for_current_source: true
+    full_project_run_for_current_source: interrupted_not_validation
+    direct_human_hold: further_native_a01_diagnosis_and_provider_starts_paused_pending_simplification_discussion
   provider_free_preparation:
     superseded_owned_project_revision: 89823a90df985ca4451ec3053467fa4b3d12319f
     rejected_role_wall_seconds: 7200
@@ -290,7 +333,7 @@ budget_amendments:
     supersedes_prior_cumulative_budget_and_deadline_as_future_blockers: true
     previous_batch_failures_and_source_pins_preserved: true
     next_batch_pins_pending: false
-    next_batch_status: not_prepared_scoped_approval_and_windows_fixes_in_progress
+    next_batch_status: direct_human_hold_pending_simplification_discussion
     last_actual_status: failed_not_passed
     main_gate_revision_unchanged: combined-normal-smoke-20261009
     release_publication_authorized: false
