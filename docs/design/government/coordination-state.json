@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T18:00:11Z",
+  "updatedUtc": "2026-10-09T18:14:16Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16407,10 +16407,34 @@
       "scope": "Five new pure projectknowledge files and owned KG docs; Build/Core-neutral facts/scope, immutable index and bounded witness navigation",
       "checks": "Owner-reported targeted tests/vet/import/schema/example checks and independent review positive; full fixed Verify/Go-suite still running; race unavailable",
       "integrationForwardedOnce": true,
-      "fullVerify": "PENDING_NOT_PASS",
+      "fullVerify": "FAILED_GO_TESTS_EXIT1_NOT_OUTER_TIMEOUT",
       "mainGate": false,
       "actualStarts": 0,
-      "newGrant": false
+      "newGrant": false,
+      "sourceGateConclusion": {
+        "verifiedUtc": "2026-10-09T18:14:16Z",
+        "codeSha": "08b273f62723c61e9445238d49dfa990dc1d6a7e",
+        "logSha256": "4B8EAAF56D6C286DE054EB8E4676873780FC63E56C5804ECE1F580E716EAF68B",
+        "rootLogHashVerified": true,
+        "snapshotOwnerReported": "85c3188d88ef93a0f0d00fa1f211cfdfc708ea72816d754aee8dc19a8d1c6b32",
+        "goSuiteMsOwnerReported": 1270417,
+        "rootReadRecordedFailures": true,
+        "kgTest": "PASS_0.740s",
+        "projectrun": "PASS_1254.930s",
+        "unchangedSharedFailurePathsVerifiedAgainstBase": true,
+        "failures": [
+          "Native CLI workflow onboard timeout; inner helper30s, underlying performance cause not proved",
+          "Three Brownfieldfixtures null delegationEvidenceIds instead of explicit empty list",
+          "Onboarding test literal local vs relevant operation skill"
+        ],
+        "laterPythonProtocolChecks": "NOT_RUN_AFTER_GO_GATE_FAILURE",
+        "fullSuiteRepeated": false,
+        "integrationNotifiedOnce": true,
+        "integrationInstruction": "Compare known fixture fixes against current source; include inner helper timeouts in generous-limit revision; final integrated gates required",
+        "newActualGrant": false,
+        "mainGateAdded": false,
+        "next": "Owner publishes prose-only gate record, no shared repairs or automatic full retry"
+      }
     }
   },
   "callbackHandlingAudit20261009": {
