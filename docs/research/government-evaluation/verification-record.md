@@ -32,4 +32,16 @@ Der Kritiker hat die vier Korrekturen nochmals gezielt geprüft und als erledigt
 
 Die lokale Dokumentationsprüfung kontrollierte 16 Markdown-Dateien, 45 lokale Links und 113 vollständige bzw. registergebundene Source-Zeilenverweise in 50 festen Git-Blobs: keine fehlenden Ziele oder außerhalb des Source liegenden Bereiche. Das ist ein Pfad-/Bereichscheck, kein automatischer Beweis, dass jede Quelle jede semantische Schlussfolgerung trägt. Root und Kritiker prüften zentrale Aussagen inhaltlich. `git diff --check` meldete keine Fehler. Die standalone managed-artifact Prüfung meldete `status: passed`; neue Research-Prose bleibt außerhalb ihres managed Scope. Die Rohberichte und der einfache Audithelper liegen lokal unter `.artifacts/government-evaluation/` und werden nicht als Produktcode eingecheckt.
 
-Nach dem ersten Dokumentationscommit werden dessen feste `check`, ausgewählter `context` und `impact` sowie die dann aktuellen Artefakt-/Linkprüfungen ausgeführt und die genauen Ergebnisse unten ergänzt. Eine lokale Dokumentationsprüfung oder ein Commit ist kein Produktbeweis, kein vollständiges Project Verify und keine menschliche Annahme der Government-Idee.
+## Fester Dokumentationskandidat
+
+Der vollständige erste Dokumentationscommit ist `baa4d69a25b5f8216b9642a8d3de3547486c267f`. Er enthält ausschließlich Research-Prose und den Research-Router. Die folgenden tatsächlich ausgeführten Prüfungen beziehen sich auf diesen Kandidaten:
+
+| Prüfung | Ergebnis |
+|---|---|
+| `check --repo . --revision baa4d69a25b5f8216b9642a8d3de3547486c267f` via Source-CLI | Exit 0, top-level `passed`; Snapshot `8cf8edf630e98371e5afed1928ed2da3611dcb2cf055f4c3b4344fe070110f56` |
+| `context` derselben Revision für `development/Skill/engineering-change` | Exit 0; Contextdigest unverändert `sha256:8cb6de5fad49409760041016eaf1f28f7d7442dccd23ee454d9b00b9e44a92cf` |
+| `impact` von Produktbasis `fc6d09a234572c344279a342416475e788435f1f` auf diesen Kandidaten | Exit 0; reine Dokumentationsänderungen, konservative Auswirkungen bleiben sichtbar |
+| Standalone Artifact Check am sauberen Arbeitsbaum dieses HEAD | Exit 0, `passed`; Working-tree-Prüfung, keine neue fixed-revision Project-Verify-Behauptung |
+| Lokaler Link-/Quellbereichsaudit und Diff-Whitespace | 16 Dateien, 45 lokale Links, 113 Sourceverweise / 50 feste Blobs ohne Fehler; `git diff --check` sauber |
+
+Diese Evidenzergänzung erhält einen weiteren normalen Dokumentationscommit. Der finale HEAD wird nochmals mit festen Check/Context/Impact und aktuellen Artifact-/Dokumentprüfungen kontrolliert; deren Rohberichte liegen unter `.artifacts/government-evaluation/final-*`. Die hier aufgeführten Ergebnisse werden nicht rückwirkend auf den Nachfolgecommit umetikettiert. Eine lokale Dokumentationsprüfung oder ein Commit ist kein Produktbeweis, kein vollständiges Project Verify und keine menschliche Annahme der Government-Idee. Fullsuite, Studien, native A01-Abnahme, Push, PR, Merge und Release wurden nicht ausgeführt.
