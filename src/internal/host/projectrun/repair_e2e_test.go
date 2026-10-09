@@ -353,8 +353,8 @@ func TestProjectRunRepairCannotVerifyNewIDForUnchangedFailedSnapshot(t *testing.
 	if oldSnapshot.Digest() != newSnapshot.Digest() {
 		t.Fatalf("no-change fixture changed snapshot bytes unexpectedly: old=%s new=%s", oldSnapshot.Digest(), newSnapshot.Digest())
 	}
-	if _, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID); err == nil || !strings.Contains(err.Error(), "must be integrated") {
-		t.Fatalf("new candidate ID bypassed failed verification: %v", err)
+	if _, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID); err == nil || !strings.Contains(err.Error(), "no exact pending native verifier to recover") {
+		t.Fatalf("new candidate ID bypassed failed verification state: %v", err)
 	}
 	if _, err := latestVerification(dir, repaired.Candidate.ID); err == nil {
 		t.Fatal("no verification report should exist for unchanged repair candidate")

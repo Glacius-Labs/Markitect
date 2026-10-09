@@ -267,7 +267,7 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 	if invoker.calls != 1 {
 		t.Fatalf("expected exactly one real verifier subprocess, got %d", invoker.calls)
 	}
-	if _, err := Verify(context.Background(), host, invoker, root, runID); err == nil || !strings.Contains(err.Error(), StatusFailed) {
+	if _, err := Verify(context.Background(), host, invoker, root, runID); err == nil || !strings.Contains(err.Error(), "no exact pending native verifier to recover") {
 		t.Fatalf("failed verification replay was not rejected: %v", err)
 	}
 	if invoker.calls != 1 {

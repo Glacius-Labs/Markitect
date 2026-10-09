@@ -20,6 +20,13 @@ func TestDeliverResumesIntegratedRunAndCompletesAcknowledgedScope(t *testing.T) 
 	enableGuidedWorkflow(t, root)
 	introduceAcceptedModelEvent(t, root)
 	configureOperationsFullVerify(t, root)
+	// This end-to-end delivery runs Manager work, process checks, and a complete
+	// whole-repository audit. Keep the cumulative fixture window generous enough
+	// for the same provider-free subprocess workload under a loaded Windows suite;
+	// per-process timeout and start/cost bounds remain unchanged.
+	updateE2ERuntime(t, root, func(runtime *Runtime) {
+		runtime.Limits.MaxDuration = Duration(15 * time.Minute)
+	})
 	setupE2EProcess(t, "normal")
 	const explorationID, scopeID = "deliver-orders", "orders-change"
 	event := dismissFirstUnresolvedEvent(t, root)
