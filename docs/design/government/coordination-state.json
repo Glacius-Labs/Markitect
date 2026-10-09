@@ -17320,6 +17320,16 @@
       "newOrder": false,
       "S4SnapshotFileBindingsVerified": 29,
       "S4SnapshotSha256": "655d3557f4fd6b35401cdb10192045b24ab0bba9720f1690829cd3613e94ef1b"
+    },
+    "independentFinalLimitation": {
+      "ownerReported": "Fresh read-only AppServer evaluator cannot create ephemeral database/clean temp folders under Windows MXC read-only. Distinguishes EVALUATION_ERROR from product failures; read-only source/AST and four in-memory/query tests plus boundary cases positive.",
+      "rootVerification": "Owner callback only; full final report and exact candidate/spec preservation receipts pending",
+      "status": "FINAL_STILL_RUNNING_OWNER_REPORTED",
+      "publicStationChecks": "PASS5/8/11/13 preserved; not relabelled or equivalent to full semantic final",
+      "prospectiveCorrection": "Readonly frozen candidate and requirements plus separately owned writable disposable evaluator scratch, preserving candidate/spec hashes. No sandbox disable/candidate mutation.",
+      "newActorRetryAuthorized": false,
+      "sourceActualBindings": "UNCHANGED",
+      "methodConclusion": "No method advantage/failure inference from evaluator environment"
     }
   }
 }
