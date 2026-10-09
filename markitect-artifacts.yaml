@@ -168,6 +168,7 @@ spec:
     - docs/project-operations.md
     - internal/host/cli/project_dispatch_test.go
     - docs/validation/project-world-delivery.md
+    - docs/validation/project-native-delivery-2026-10-09.md
     - docs/validation/project-operations-2026-10-09.md
     - internal/host/projectexplore
     - examples/project_world_workflow_test.go
@@ -2246,3 +2247,21 @@ spec:
       owner: project-world-implementation
     - path: internal/host/projectadoption/session_apply_test.go
       owner: project-world-implementation
+    - path: internal/host/projectadoption/manager_integration_context.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/manager_run.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/manager_run_ledger.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/manager_run_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/process_lock_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/process_lock_unix.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/process_lock_windows.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/project_brownfield_run.go
+      owner: project-world-implementation
+    - path: docs/validation/project-native-delivery-2026-10-09.md
+      owner: project-world-validation

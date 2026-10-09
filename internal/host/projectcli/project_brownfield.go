@@ -17,6 +17,9 @@ import (
 // A stage is preview-only unless --write is explicit; writes compare-and-swap
 // against the session digest shown by the preview.
 func runBrownfield(opts options, out io.Writer) error {
+	if opts.brownfieldAction == "run" {
+		return runBrownfieldManagerStage(opts, out, projectadoption.AgentExecManagerRunInvoker{})
+	}
 	sourceRoot := opts.sourceRepo
 	if sourceRoot == "" {
 		sourceRoot = opts.repo
@@ -93,11 +96,24 @@ func runBrownfield(opts options, out io.Writer) error {
 			if err != nil {
 				return err
 			}
-			managerContext, err := projectadoption.BuildManagerReverseContext(session, request.IterationID)
-			if err != nil {
-				return err
+			result := brownfieldResult{Status: "context", Action: "context", SessionDigest: session.Digest}
+			switch request.Phase {
+			case "", "propose":
+				managerContext, buildErr := projectadoption.BuildManagerReverseContext(session, request.IterationID)
+				if buildErr != nil {
+					return buildErr
+				}
+				result.ManagerContext = &managerContext
+			case "integrate":
+				integrationContext, buildErr := projectadoption.BuildManagerIntegrationContext(session, request.IterationID)
+				if buildErr != nil {
+					return buildErr
+				}
+				result.IntegrationContext = &integrationContext
+			default:
+				return errors.New("Brownfield context phase must be propose or integrate")
 			}
-			return writeJSON(out, brownfieldResult{Status: "context", Action: "context", SessionDigest: session.Digest, ManagerContext: &managerContext})
+			return writeJSON(out, result)
 		}
 		if opts.input == "" {
 			return fmt.Errorf("Brownfield %s requires --input", opts.brownfieldAction)
@@ -268,6 +284,7 @@ type brownfieldPlanInput struct {
 
 type brownfieldContextInput struct {
 	IterationID string `json:"iterationId"`
+	Phase       string `json:"phase,omitempty"`
 }
 
 type brownfieldApplyAdoptionInput struct {
@@ -276,15 +293,16 @@ type brownfieldApplyAdoptionInput struct {
 }
 
 type brownfieldResult struct {
-	Status             string                                 `json:"status"`
-	Action             string                                 `json:"action"`
-	PriorSessionDigest string                                 `json:"priorSessionDigest,omitempty"`
-	SessionDigest      string                                 `json:"sessionDigest"`
-	Session            *projectadoption.BrownfieldSession     `json:"session,omitempty"`
-	Readiness          *projectadoption.Readiness             `json:"readiness,omitempty"`
-	Plan               *projectadoption.AdoptionPlan          `json:"plan,omitempty"`
-	ManagerContext     *projectadoption.ManagerReverseContext `json:"managerContext,omitempty"`
-	Receipt            *projectadoption.AdoptionReceipt       `json:"receipt,omitempty"`
+	Status             string                                     `json:"status"`
+	Action             string                                     `json:"action"`
+	PriorSessionDigest string                                     `json:"priorSessionDigest,omitempty"`
+	SessionDigest      string                                     `json:"sessionDigest"`
+	Session            *projectadoption.BrownfieldSession         `json:"session,omitempty"`
+	Readiness          *projectadoption.Readiness                 `json:"readiness,omitempty"`
+	Plan               *projectadoption.AdoptionPlan              `json:"plan,omitempty"`
+	ManagerContext     *projectadoption.ManagerReverseContext     `json:"managerContext,omitempty"`
+	IntegrationContext *projectadoption.ManagerIntegrationContext `json:"integrationContext,omitempty"`
+	Receipt            *projectadoption.AdoptionReceipt           `json:"receipt,omitempty"`
 }
 
 func decodeClosedProjectJSON(data []byte, target any) error {

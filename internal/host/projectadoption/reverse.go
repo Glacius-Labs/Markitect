@@ -283,6 +283,9 @@ func BeginReverseIteration(sourceRoot string, target *projectwork.Project, sessi
 		}
 	}
 	for _, item := range session.Iterations {
+		if request.ParentIterationID != "" && item.ParentIterationID == request.ParentIterationID && item.ManagerID == request.ManagerID {
+			return BrownfieldSession{}, fmt.Errorf("parent iteration %q already has a child iteration for Manager %q", request.ParentIterationID, request.ManagerID)
+		}
 		if item.ID == request.ID {
 			return BrownfieldSession{}, fmt.Errorf("reverse iteration %q already exists", request.ID)
 		}
@@ -568,6 +571,7 @@ func validateManagerIntegration(integration ManagerIntegration, iteration Revers
 	}
 	children := []string{}
 	expectedContracts := []IntegratedChildContracts{}
+	expectedIntegrations := []ChildIntegrationDigest{}
 	for _, item := range session.Iterations {
 		if item.ParentIterationID == iteration.ID && item.Proposal != nil {
 			if len(item.Proposal.Hierarchy) > 0 && item.Integration == nil {
@@ -575,6 +579,10 @@ func validateManagerIntegration(integration ManagerIntegration, iteration Revers
 			}
 			children = append(children, item.Proposal.Digest)
 			expectedContracts = append(expectedContracts, IntegratedChildContracts{ManagerID: item.ManagerID, ProposalDigest: item.Proposal.Digest, Contracts: append([]ManagerPublicContract{}, item.Proposal.PublicContracts...)})
+			if item.Integration != nil {
+				expectedIntegrations = append(expectedIntegrations, ChildIntegrationDigest{ManagerID: item.ManagerID, ProposalDigest: item.Proposal.Digest,
+					IntegrationDigest: item.Integration.Digest, ReportDigest: item.Integration.Report.Digest})
+			}
 		}
 	}
 	sort.Strings(children)
@@ -605,6 +613,18 @@ func validateManagerIntegration(integration ManagerIntegration, iteration Revers
 		provided, ok := byProposal[expected.ProposalDigest]
 		if !ok || provided.ManagerID != expected.ManagerID || !sameContracts(provided.Contracts, expected.Contracts) {
 			return fmt.Errorf("parent integration does not preserve Manager %q public contracts under its exact proposal digest", expected.ManagerID)
+		}
+	}
+	sort.Slice(expectedIntegrations, func(i, j int) bool { return expectedIntegrations[i].ManagerID < expectedIntegrations[j].ManagerID })
+	providedIntegrations := append([]ChildIntegrationDigest(nil), integration.ChildIntegrationDigests...)
+	sort.Slice(providedIntegrations, func(i, j int) bool { return providedIntegrations[i].ManagerID < providedIntegrations[j].ManagerID })
+	if len(providedIntegrations) != len(expectedIntegrations) {
+		return errors.New("parent integration must bind every direct child integration digest; an empty legacy list is valid only when no child integration exists")
+	}
+	for i, expected := range expectedIntegrations {
+		provided := providedIntegrations[i]
+		if provided.ManagerID != expected.ManagerID || provided.ProposalDigest != expected.ProposalDigest || provided.IntegrationDigest != expected.IntegrationDigest || provided.ReportDigest != expected.ReportDigest {
+			return fmt.Errorf("parent integration child integration binding differs for Manager %q", expected.ManagerID)
 		}
 	}
 	for _, conflict := range integration.Conflicts {

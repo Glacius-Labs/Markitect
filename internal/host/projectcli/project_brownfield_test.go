@@ -2,6 +2,7 @@ package projectcli
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -9,8 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectadoption"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
@@ -195,7 +199,7 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 
 	rootRequest := projectadoption.ReverseIterationRequest{ID: "root-pass", ManagerID: rootID, EvidenceIDs: []string{"cancellation-doc"}, Purpose: "Model cancellation ownership", Review: "root-pass-review"}
 	result := runBrownfieldMutation(t, repo, discovery.ID, "begin", rootRequest, session.Digest)
-	rootContext := runBrownfieldContext(t, repo, discovery.ID, "root-pass")
+	rootContext := runBrownfieldContext(t, repo, discovery.ID, "root-pass", "")
 	if rootContext.ManagerContext.ManagerOrigin != "accepted-target" || len(rootContext.ManagerContext.Evidence) != 1 || rootContext.ManagerContext.Evidence[0].EvidenceID != "cancellation-doc" {
 		t.Fatalf("root context was not assignment-bounded: %+v", rootContext.ManagerContext)
 	}
@@ -214,7 +218,7 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 			unassignedSource = item.Content
 		}
 	}
-	childContext := runBrownfieldContext(t, repo, discovery.ID, "child-pass", unassignedSource, "Root cancellation understanding.")
+	childContext := runBrownfieldContext(t, repo, discovery.ID, "child-pass", "propose", unassignedSource, "Root cancellation understanding.")
 	if childContext.ManagerContext.ManagerOrigin != "proposed-by-parent" || childContext.ManagerContext.Manager.ID != childID || len(childContext.ManagerContext.Evidence) != 1 || childContext.ManagerContext.Evidence[0].EvidenceID != "orders-code" {
 		t.Fatalf("child context was not derived from the parent assignment: %+v", childContext.ManagerContext)
 	}
@@ -223,6 +227,10 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 	childProposal := projectadoption.ManagerProposal{ManagerID: childID, EvidenceIDs: []string{"orders-code"}, Hierarchy: []projectadoption.ProposedManager{}, PublicContracts: []projectadoption.ManagerPublicContract{contract}, Report: childReport}
 	result = runBrownfieldMutation(t, repo, discovery.ID, "propose", brownfieldProposalInput{IterationID: "child-pass", Proposal: childProposal}, result.SessionDigest)
 	childDigest := result.Session.Iterations[1].Proposal.Digest
+	integrationContext := runBrownfieldContext(t, repo, discovery.ID, "root-pass", "integrate")
+	if integrationContext.IntegrationContext == nil || integrationContext.IntegrationContext.ParentProposal.ManagerID != rootID || len(integrationContext.IntegrationContext.Children) != 1 || integrationContext.IntegrationContext.Children[0].ProposalDigest != childDigest || integrationContext.IntegrationContext.Children[0].PublicContracts[0].Contract.ID != "cancellation-api" {
+		t.Fatalf("integration context omitted the assigned child proposal/report/contracts: %+v", integrationContext.IntegrationContext)
+	}
 
 	integrated := makeStagedIntegratedDistillation(discovery, target, result.Session.TargetContext.Digest, schemaDigest)
 	integration := projectadoption.ManagerIntegration{ManagerID: rootID, ChildProposalDigests: []string{childDigest},
@@ -232,6 +240,133 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 	if result.Session.Iterations[0].Integration == nil || result.Session.Iterations[0].Integration.ChildProposalDigests[0] != childDigest || result.Session.Iterations[0].Integration.ChildContracts[0].Contracts[0].Contract.ID != "cancellation-api" {
 		t.Fatalf("root integration did not retain immutable child contract evidence: %+v", result.Session.Iterations[0].Integration)
 	}
+}
+
+func TestBrownfieldManagerRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.T) {
+	repo := copyProjectWorld(t)
+	commit := gitOutput(t, repo, "rev-parse", "HEAD")
+	discovery, err := projectadoption.Discover(repo, projectadoption.DiscoveryRequest{
+		APIVersion: projectadoption.DiscoveryVersion, ID: "manager-run-preview", Purpose: "Exercise the provider-free manager-run boundary",
+		Review: "owner-review-manager-run", Commit: commit, ScopeRoots: []string{"docs"},
+		Selected:   []projectadoption.SelectedPath{{ID: "cancellation-doc", Path: "docs/cancellation.md", Reason: "Selected behavior evidence", Basis: "documentation"}},
+		Exclusions: []projectadoption.PathReason{}, Unselected: []projectadoption.PathReason{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	target, err := projectwork.Load(repo, commit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, err := projectadoption.StartBrownfieldSession(repo, target, discovery, []projectadoption.ScopeStatus{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	managerID := session.TargetContext.RootManagerID
+	session, err = projectadoption.BeginReverseIteration(repo, target, session, projectadoption.ReverseIterationRequest{
+		ID: "manager-run-root", ManagerID: managerID, EvidenceIDs: []string{"cancellation-doc"},
+		Purpose: "Model selected cancellation behavior", Review: "manager-run-review",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := projectadoption.WriteBrownfieldSession(repo, session, session.Digest); err != nil {
+		t.Fatal(err)
+	}
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime := projectrun.Runtime{
+		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal,
+		Agents: map[string]projectrun.Agent{managerID: {
+			Command: executable, Args: []string{"PRIVATE_ARGUMENT_SENTINEL"}, Model: "PRIVATE_MODEL_SENTINEL", ModelOptions: map[string]any{"secret": "PRIVATE_OPTION_SENTINEL"},
+			ProviderVersion: "fixture-provider-v1", Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
+			RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectrun.Pricing{InputMicrosPerMillion: 10, OutputMicrosPerMillion: 20},
+		}},
+		Limits: projectrun.Limits{MaxDepth: 4, MaxStarts: 8, MaxRetries: 1, MaxParallel: 1, MaxDuration: projectrun.Duration(5 * time.Minute),
+			MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 8 << 20},
+	}
+	runtimeBytes, err := json.Marshal(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, filepath.FromSlash(projectrun.RuntimePath)), runtimeBytes, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, repo, "add", projectrun.RuntimePath)
+	runGitWithEnv(t, repo, []string{"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.invalid", "GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.invalid"}, "commit", "-m", "add manager runtime fixture")
+	commit = gitOutput(t, repo, "rev-parse", "HEAD")
+	discovery, err = projectadoption.Discover(repo, projectadoption.DiscoveryRequest{
+		APIVersion: projectadoption.DiscoveryVersion, ID: "manager-run-preview-final", Purpose: "Exercise the provider-free manager-run boundary",
+		Review: "owner-review-manager-run-final", Commit: commit, ScopeRoots: []string{"docs"},
+		Selected:   []projectadoption.SelectedPath{{ID: "cancellation-doc", Path: "docs/cancellation.md", Reason: "Selected behavior evidence", Basis: "documentation"}},
+		Exclusions: []projectadoption.PathReason{}, Unselected: []projectadoption.PathReason{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	target, err = projectwork.Load(repo, commit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, err = projectadoption.StartBrownfieldSession(repo, target, discovery, []projectadoption.ScopeStatus{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, err = projectadoption.BeginReverseIteration(repo, target, session, projectadoption.ReverseIterationRequest{
+		ID: "manager-run-root", ManagerID: managerID, EvidenceIDs: []string{"cancellation-doc"},
+		Purpose: "Model selected cancellation behavior", Review: "manager-run-review-final",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := projectadoption.WriteBrownfieldSession(repo, session, session.Digest); err != nil {
+		t.Fatal(err)
+	}
+	inputBytes, err := json.Marshal(brownfieldManagerRunInput{IterationID: "manager-run-root", Phase: "propose", AgentManagerID: managerID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	inputPath := ".markitect/drafts/manager-run-preview.json"
+	if _, err := writeRecord(repo, inputPath, inputBytes); err != nil {
+		t.Fatal(err)
+	}
+	args := []string{"project", "brownfield", "--repo", repo, "--brownfield-action", "run", "--session", discovery.ID, "--input", inputPath}
+	var out, errOut bytes.Buffer
+	if code := Run(args, &out, &errOut); code != 0 {
+		t.Fatalf("Brownfield manager-run preview exit=%d stderr=%s", code, errOut.String())
+	}
+	var preview brownfieldManagerRunOutput
+	if err := json.Unmarshal(out.Bytes(), &preview); err != nil {
+		t.Fatalf("decode manager-run preview: %v\n%s", err, out.String())
+	}
+	if preview.Status != "preview" || preview.SessionDigest != session.Digest || preview.Preview == nil || preview.PreviewDigest == "" || preview.Preview.PreviewDigest != preview.PreviewDigest || preview.Attempt != nil {
+		t.Fatalf("unexpected Brownfield manager-run preview: %+v", preview)
+	}
+	for _, secret := range []string{"PRIVATE_ARGUMENT_SENTINEL", "PRIVATE_OPTION_SENTINEL", "cancellation-doc"} {
+		if strings.Contains(out.String(), secret) {
+			t.Fatalf("manager-run preview exposed private runtime or evidence content %q: %s", secret, out.String())
+		}
+	}
+
+	invoker := &countingManagerInvoker{}
+	var staleOut bytes.Buffer
+	err = runBrownfieldManagerStage(options{repo: repo, sourceRepo: repo, sessionID: discovery.ID, input: inputPath, write: true, expect: "sha256:stale-preview"}, &staleOut, invoker)
+	if err == nil || !strings.Contains(err.Error(), "does not match") || invoker.runCalls != 0 || staleOut.Len() != 0 {
+		t.Fatalf("stale manager-run preview was not rejected before invocation: err=%v calls=%d output=%s", err, invoker.runCalls, staleOut.String())
+	}
+}
+
+type countingManagerInvoker struct{ runCalls int }
+
+func (i *countingManagerInvoker) Run(context.Context, agentexec.Config, agentexec.Request, agentexec.RunOptions) (agentexec.RunResult, error) {
+	i.runCalls++
+	return agentexec.RunResult{}, nil
+}
+
+func (*countingManagerInvoker) Fingerprint(agentexec.Config) (string, error) {
+	return "test-fingerprint", nil
 }
 
 func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.T) {
@@ -402,13 +537,13 @@ func makeApplyableStagedDistillation(discovery projectadoption.Discovery, target
 	return report
 }
 
-func runBrownfieldContext(t *testing.T, repo, sessionID, iterationID string, forbidden ...string) brownfieldResult {
+func runBrownfieldContext(t *testing.T, repo, sessionID, iterationID, phase string, forbidden ...string) brownfieldResult {
 	t.Helper()
-	data, err := json.Marshal(brownfieldContextInput{IterationID: iterationID})
+	data, err := json.Marshal(brownfieldContextInput{IterationID: iterationID, Phase: phase})
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := ".markitect/drafts/context-" + iterationID + ".json"
+	path := ".markitect/drafts/context-" + iterationID + "-" + phase + ".json"
 	if _, err := writeRecord(repo, path, data); err != nil {
 		t.Fatal(err)
 	}
@@ -426,7 +561,7 @@ func runBrownfieldContext(t *testing.T, repo, sessionID, iterationID string, for
 	if err := json.Unmarshal(out.Bytes(), &result); err != nil {
 		t.Fatalf("decode context %s: %v\n%s", iterationID, err, out.String())
 	}
-	if result.ManagerContext == nil {
+	if phase == "integrate" && result.IntegrationContext == nil || phase != "integrate" && result.ManagerContext == nil {
 		t.Fatalf("context %s returned no Manager context: %s", iterationID, out.String())
 	}
 	if result.Session != nil || result.Readiness != nil {

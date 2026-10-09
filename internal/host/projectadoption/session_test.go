@@ -1,6 +1,7 @@
 package projectadoption
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -198,6 +199,25 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 	if err != nil {
 		t.Fatal(err)
 	}
+	if _, err := BeginReverseIteration(root, target, childIteration, ReverseIterationRequest{ID: "orders-manager-second", ParentIterationID: "root", ManagerID: childManager.ID,
+		EvidenceIDs: []string{"orders-code"}, Purpose: "Retry order inspection", Review: "orders-review-2"}); err == nil {
+		t.Fatal("a parent cannot open duplicate child iterations for the same Manager")
+	}
+	duplicateStored := cloneSession(childIteration)
+	duplicateChild := duplicateStored.Iterations[1]
+	duplicateChild.ID = "orders-manager-second"
+	duplicateStored.Iterations = append(duplicateStored.Iterations, duplicateChild)
+	sealSession(&duplicateStored)
+	if err := ValidateBrownfieldSession(duplicateStored); err == nil {
+		t.Fatal("stored session validation must reject duplicate parent/Manager child iterations")
+	}
+	duplicateBytes, err := json.Marshal(duplicateStored)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DecodeBrownfieldSession(duplicateBytes); err == nil {
+		t.Fatal("ledger decoding must enforce the same duplicate child iteration rule")
+	}
 	managerContext, err := BuildManagerReverseContext(childIteration, "orders-manager")
 	if err != nil {
 		t.Fatal(err)
@@ -221,13 +241,8 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 	}
 	childReport := sessionReport(discovery, "orders-code", "orders", "func Order() {}", "Order code declares the order module.")
 	publicOrderContract := ManagerPublicContract{Contract: DistillationTargetContract{ID: "orders.accept-order", Name: "accept-order", Namespace: "orders", Owner: childManager.ID, Category: "use-case", Description: "Accept a valid order.", Uses: []string{}, Requires: []string{}}, ClaimIDs: []string{"orders-claim"}}
-	childProposal := ManagerProposal{ManagerID: childManager.ID, EvidenceIDs: []string{"orders-code"}, Hierarchy: []ProposedManager{}, PublicContracts: []ManagerPublicContract{publicOrderContract}, Report: childReport}
-	nonleafProposal := childProposal
-	nonleafProposal.Hierarchy = []ProposedManager{{ID: "orders-submanager", Name: "Orders Submanager", Purpose: "Inspect order implementation details.", ParentID: childManager.ID, EvidenceIDs: []string{"orders-code"}}}
-	nonleafSession, err := RecordManagerProposal(childIteration, "orders-manager", nonleafProposal)
-	if err != nil {
-		t.Fatal(err)
-	}
+	submanager := ProposedManager{ID: "orders-submanager", Name: "Orders Submanager", Purpose: "Inspect order implementation details.", ParentID: childManager.ID, EvidenceIDs: []string{"orders-code"}}
+	childProposal := ManagerProposal{ManagerID: childManager.ID, EvidenceIDs: []string{"orders-code"}, Hierarchy: []ProposedManager{submanager}, PublicContracts: []ManagerPublicContract{publicOrderContract}, Report: childReport}
 	delegationAttempt := childProposal
 	delegationAttempt.Hierarchy = []ProposedManager{{ID: "orders-submanager", Name: "Orders Submanager", Purpose: "Inspect assigned implementation.", ParentID: childManager.ID, EvidenceIDs: []string{"orders-doc"}}}
 	if _, err := RecordManagerProposal(childIteration, "orders-manager", delegationAttempt); err == nil {
@@ -248,13 +263,44 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 	integration := ManagerIntegration{ManagerID: session.TargetContext.RootManagerID, ChildProposalDigests: []string{childDigest}, ChildContracts: []IntegratedChildContracts{{ManagerID: childManager.ID, ProposalDigest: childDigest, Contracts: []ManagerPublicContract{publicOrderContract}}}, Report: integrated, Conflicts: []SessionConflict{{
 		ID: "orders-intent-conflict", ScopeID: "orders", QuestionID: "clarify-orders", Description: "Implementation and documentation differ.", EvidenceIDs: []string{"orders-code", "orders-doc"}, Disposition: "unresolved", Reason: "The manager cannot decide desired behavior.",
 	}}}
-	nonleafDigest := nonleafSession.Iterations[1].Proposal.Digest
-	nonleafIntegration := integration
-	nonleafIntegration.ChildProposalDigests = []string{nonleafDigest}
-	nonleafIntegration.ChildContracts = []IntegratedChildContracts{{ManagerID: childManager.ID, ProposalDigest: nonleafDigest, Contracts: []ManagerPublicContract{publicOrderContract}}}
-	if _, err := IntegrateManagerProposal(nonleafSession, "root", session.TargetContext.RootManagerID, nonleafIntegration); err == nil {
+	if _, err := IntegrateManagerProposal(childIteration, "root", session.TargetContext.RootManagerID, integration); err == nil {
 		t.Fatal("parent integration cannot accept a non-leaf child before that child integrates its own branch")
 	}
+	if _, err := BuildManagerIntegrationContext(childIteration, "root"); err == nil {
+		t.Fatal("parent integration context cannot be built before its non-leaf child completes integration")
+	}
+	grandchildIteration, err := BeginReverseIteration(root, target, childIteration, ReverseIterationRequest{ID: "orders-submanager", ParentIterationID: "orders-manager", ManagerID: submanager.ID,
+		EvidenceIDs: []string{"orders-code"}, Purpose: "Inspect order implementation details", Review: "submanager-review"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	grandchildReport := sessionReport(discovery, "orders-code", "orders", "func Order() {}", "The submanager observed the order implementation.")
+	grandchildProposal := ManagerProposal{ManagerID: submanager.ID, EvidenceIDs: []string{"orders-code"}, Hierarchy: []ProposedManager{}, PublicContracts: []ManagerPublicContract{}, Report: grandchildReport}
+	grandchildIteration, err = RecordManagerProposal(grandchildIteration, "orders-submanager", grandchildProposal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	grandchildDigest := grandchildIteration.Iterations[2].Proposal.Digest
+	childFinalReport := childReport
+	childFinalReport.Claims = append([]Claim(nil), childReport.Claims...)
+	childFinalReport.Claims[0].Statement = "The order manager integrated its submanager's finding."
+	SealDistillation(&childFinalReport)
+	childIntegration := ManagerIntegration{ManagerID: childManager.ID, ChildProposalDigests: []string{grandchildDigest},
+		ChildContracts: []IntegratedChildContracts{{ManagerID: submanager.ID, ProposalDigest: grandchildDigest, Contracts: []ManagerPublicContract{}}},
+		Report:         childFinalReport, Conflicts: []SessionConflict{}}
+	childIteration, err = IntegrateManagerProposal(grandchildIteration, "orders-manager", childManager.ID, childIntegration)
+	if err != nil {
+		t.Fatalf("child Manager should integrate its submanager before the root: %v", err)
+	}
+	integrationContext, err := BuildManagerIntegrationContext(childIteration, "root")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if integrationContext.ParentProposal.ManagerID != session.TargetContext.RootManagerID || len(integrationContext.Children) != 1 || integrationContext.Children[0].ManagerID != childManager.ID || integrationContext.Children[0].IntegrationDigest != childIteration.Iterations[1].Integration.Digest || integrationContext.Children[0].ReportDigest != childFinalReport.Digest || integrationContext.Children[0].Report.Claims[0].Statement != childFinalReport.Claims[0].Statement {
+		t.Fatalf("parent integration context must include the completed direct-child report after grandchild integration: %+v", integrationContext)
+	}
+	integration.ChildIntegrationDigests = []ChildIntegrationDigest{{ManagerID: childManager.ID, ProposalDigest: childDigest,
+		IntegrationDigest: childIteration.Iterations[1].Integration.Digest, ReportDigest: childFinalReport.Digest}}
 	childIteration, err = IntegrateManagerProposal(childIteration, "root", session.TargetContext.RootManagerID, integration)
 	if err != nil {
 		t.Fatalf("parent integration should bind its child's public proposal: %v", err)
@@ -268,6 +314,13 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 	sealSession(&preIntegration)
 	if _, err := IntegrateManagerProposal(preIntegration, "root", session.TargetContext.RootManagerID, wrongContracts); err == nil {
 		t.Fatal("parent cannot silently alter the child's public contract during integration")
+	}
+	wrongChildIntegration := *childIteration.Iterations[0].Integration
+	wrongChildIntegration.ChildIntegrationDigests = append([]ChildIntegrationDigest(nil), wrongChildIntegration.ChildIntegrationDigests...)
+	wrongChildIntegration.ChildIntegrationDigests[0].ReportDigest = strings.Repeat("a", 64)
+	wrongChildIntegration.Digest = ""
+	if _, err := IntegrateManagerProposal(preIntegration, "root", session.TargetContext.RootManagerID, wrongChildIntegration); err == nil {
+		t.Fatal("parent integration must bind the exact final child integration and report digests")
 	}
 	if childIteration.Iterations[0].Integration == nil || childIteration.Iterations[0].Integration.ChildProposalDigests[0] != childDigest {
 		t.Fatal("parent integration did not record child proposal digest")

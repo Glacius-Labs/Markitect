@@ -90,12 +90,13 @@ type ProposedManager struct {
 }
 
 type ManagerIntegration struct {
-	ManagerID            string                     `json:"managerId"`
-	ChildProposalDigests []string                   `json:"childProposalDigests"`
-	ChildContracts       []IntegratedChildContracts `json:"childContracts"`
-	Report               Distillation               `json:"report"`
-	Conflicts            []SessionConflict          `json:"conflicts"`
-	Digest               string                     `json:"digest"`
+	ManagerID               string                     `json:"managerId"`
+	ChildProposalDigests    []string                   `json:"childProposalDigests"`
+	ChildIntegrationDigests []ChildIntegrationDigest   `json:"childIntegrationDigests,omitempty"`
+	ChildContracts          []IntegratedChildContracts `json:"childContracts"`
+	Report                  Distillation               `json:"report"`
+	Conflicts               []SessionConflict          `json:"conflicts"`
+	Digest                  string                     `json:"digest"`
 }
 
 type IntegratedChildContracts struct {
@@ -203,6 +204,7 @@ func ValidateBrownfieldSession(session BrownfieldSession) error {
 		return err
 	}
 	seen := map[string]bool{}
+	seenChildManagers := map[string]bool{}
 	knownScopes := map[string]bool{}
 	lastRootIterationID := ""
 	for _, iteration := range session.Iterations {
@@ -211,6 +213,11 @@ func ValidateBrownfieldSession(session BrownfieldSession) error {
 		}
 		seen[iteration.ID] = true
 		if iteration.ParentIterationID != "" {
+			childKey := iteration.ParentIterationID + "\x00" + iteration.ManagerID
+			if seenChildManagers[childKey] {
+				return fmt.Errorf("parent iteration %q has duplicate child iterations for Manager %q", iteration.ParentIterationID, iteration.ManagerID)
+			}
+			seenChildManagers[childKey] = true
 			if iteration.SupersedesIterationID != "" {
 				return fmt.Errorf("child iteration %q cannot supersede a root iteration", iteration.ID)
 			}
@@ -350,6 +357,9 @@ func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expect
 		return BrownfieldSession{}, err
 	}
 	defer unlock()
+	if err := ensureNoIncompleteAtomicWrite(dir, "session.json"); err != nil {
+		return BrownfieldSession{}, err
+	}
 	file := filepath.Join(dir, "session.json")
 	old, readErr := readRegularLedger(file)
 	if expectedDigest == session.Digest {
@@ -394,30 +404,8 @@ func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expect
 		_ = os.Remove(temp)
 		return BrownfieldSession{}, err
 	}
-	if err := os.Rename(temp, file); err != nil {
-		// Windows does not replace existing destinations. Under the held lock,
-		// move the old ledger aside, publish the new one, and restore on failure.
-		backup := filepath.Join(dir, ".session.json.previous")
-		if _, statErr := os.Lstat(file); statErr != nil || errors.Is(statErr, fs.ErrNotExist) {
-			_ = os.Remove(temp)
-			return BrownfieldSession{}, err
-		}
-		if _, statErr := os.Lstat(backup); statErr == nil {
-			_ = os.Remove(temp)
-			return BrownfieldSession{}, errors.New("Brownfield ledger has an unrecovered prior-write backup")
-		}
-		if moveErr := os.Rename(file, backup); moveErr != nil {
-			_ = os.Remove(temp)
-			return BrownfieldSession{}, moveErr
-		}
-		if moveErr := os.Rename(temp, file); moveErr != nil {
-			_ = os.Rename(backup, file)
-			_ = os.Remove(temp)
-			return BrownfieldSession{}, moveErr
-		}
-		if removeErr := os.Remove(backup); removeErr != nil {
-			return BrownfieldSession{}, removeErr
-		}
+	if err := atomicReplaceFile(temp, file); err != nil {
+		return BrownfieldSession{}, err
 	}
 	return session, nil
 }
@@ -435,6 +423,9 @@ func LoadBrownfieldSession(sourceRoot, id string) (BrownfieldSession, error) {
 		return BrownfieldSession{}, err
 	}
 	defer unlock()
+	if err := ensureNoIncompleteAtomicWrite(dir, "session.json"); err != nil {
+		return BrownfieldSession{}, err
+	}
 	data, err := readRegularLedger(filepath.Join(dir, "session.json"))
 	if err != nil {
 		return BrownfieldSession{}, err
@@ -454,21 +445,11 @@ func readRegularLedger(path string) ([]byte, error) {
 }
 
 func acquireSessionLock(dir string) (func(), error) {
-	lock := filepath.Join(dir, "session.lock")
-	file, err := os.OpenFile(lock, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	unlock, err := acquireProcessFileLock(filepath.Join(dir, "session.lock"))
 	if err != nil {
-		return nil, fmt.Errorf("Brownfield session is being updated or has an unrecovered lock: %w", err)
+		return nil, fmt.Errorf("Brownfield session is being updated: %w", err)
 	}
-	if _, err := file.WriteString("locked\n"); err != nil {
-		_ = file.Close()
-		_ = os.Remove(lock)
-		return nil, err
-	}
-	if err := file.Close(); err != nil {
-		_ = os.Remove(lock)
-		return nil, err
-	}
-	return func() { _ = os.Remove(lock) }, nil
+	return unlock, nil
 }
 
 // ResumeBrownfieldSession verifies both original fixed bases and returns

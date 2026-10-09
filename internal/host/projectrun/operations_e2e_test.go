@@ -300,7 +300,6 @@ func TestFullCoverageBlocksUnclassifiedOrdinaryFile(t *testing.T) {
 
 func TestDismissedAcceptedModelEventStillLoadsForManagerContext(t *testing.T) {
 	root := makeFullVerifyFixture(t)
-	base := gitE2E(t, root, "rev-parse", "HEAD")
 	statementPath := ".markitect/model/orders/statement.yaml"
 	statement, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(statementPath)))
 	if err != nil {
@@ -314,22 +313,14 @@ func TestDismissedAcceptedModelEventStillLoadsForManagerContext(t *testing.T) {
 	gitE2E(t, root, "add", statementPath)
 	gitE2E(t, root, "commit", "-m", "accept Orders model clarification")
 	revision := gitE2E(t, root, "rev-parse", "HEAD")
-	bundle, err := projectbriefing.Generate(root, base, revision, projectbriefing.Provenance{
-		DecisionReference: "fixture-decision-17", Actor: "fixture-owner", Authority: "project-model-owner",
-	})
+	receipt, err := projectbriefing.EnsureAcceptedHistory(root, revision)
 	if err != nil {
-		t.Fatalf("generate accepted-model briefing: %v", err)
+		t.Fatalf("ensure accepted-model history: %v", err)
 	}
-	state, digest, err := projectbriefing.Read(root)
-	if err != nil {
-		t.Fatal(err)
+	if len(receipt.Bundles) != 1 || len(receipt.Bundles[0].Events) == 0 {
+		t.Fatalf("fixture did not create one accepted event bundle: bundles=%d", len(receipt.Bundles))
 	}
-	if len(state.Briefings) != 0 || len(bundle.Events) == 0 {
-		t.Fatalf("fixture did not create a new accepted event: prior=%d events=%d", len(state.Briefings), len(bundle.Events))
-	}
-	if _, err := projectbriefing.Write(root, bundle, digest); err != nil {
-		t.Fatalf("write accepted-model briefing: %v", err)
-	}
+	bundle := receipt.Bundles[0]
 	ordersID := e2eManagerID("orders", "orders")
 	var ordersEvent string
 	for _, event := range bundle.Events {
@@ -342,7 +333,7 @@ func TestDismissedAcceptedModelEventStillLoadsForManagerContext(t *testing.T) {
 	if ordersEvent == "" {
 		t.Fatalf("accepted change did not affect Orders: %+v", bundle.Events)
 	}
-	_, digest, err = projectbriefing.Read(root)
+	_, digest, err := projectbriefing.Read(root)
 	if err != nil {
 		t.Fatal(err)
 	}

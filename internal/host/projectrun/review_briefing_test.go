@@ -105,7 +105,6 @@ func TestDraftModelEditReviewerDoesNotLoadUnacceptedBriefingHistory(t *testing.T
 func acceptedBriefingFixture(t *testing.T) (root, revision string, project *Project, managerID, eventID string) {
 	t.Helper()
 	root = makeFullVerifyFixture(t)
-	base := gitE2E(t, root, "rev-parse", "HEAD")
 	const statementPath = ".markitect/model/orders/statement.yaml"
 	content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(statementPath)))
 	if err != nil {
@@ -119,19 +118,14 @@ func acceptedBriefingFixture(t *testing.T) (root, revision string, project *Proj
 	gitE2E(t, root, "add", statementPath)
 	gitE2E(t, root, "commit", "-m", "accept Orders model clarification")
 	revision = gitE2E(t, root, "rev-parse", "HEAD")
-	bundle, err := projectbriefing.Generate(root, base, revision, projectbriefing.Provenance{
-		DecisionReference: "fixture-decision-17", Actor: "fixture-owner", Authority: "project-model-owner",
-	})
+	receipt, err := projectbriefing.EnsureAcceptedHistory(root, revision)
 	if err != nil {
-		t.Fatalf("generate accepted-model briefing: %v", err)
+		t.Fatalf("ensure accepted-model history: %v", err)
 	}
-	_, storeDigest, err := projectbriefing.Read(root)
-	if err != nil {
-		t.Fatal(err)
+	if len(receipt.Bundles) != 1 {
+		t.Fatalf("fixture did not create one accepted briefing bundle: %d", len(receipt.Bundles))
 	}
-	if _, err := projectbriefing.Write(root, bundle, storeDigest); err != nil {
-		t.Fatalf("write accepted-model briefing: %v", err)
-	}
+	bundle := receipt.Bundles[0]
 	managerID = e2eManagerID("orders", "orders")
 	for _, event := range bundle.Events {
 		if containsString(event.AffectedManagers, managerID) {
