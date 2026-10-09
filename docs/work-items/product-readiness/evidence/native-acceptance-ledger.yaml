@@ -401,7 +401,7 @@ renewal_policy:
     run_state_revision: 11
     run_state_sha256: b18b2a972c936f5c78418ec95cc3bbf94399715e76fa32b6f01437b9aa2b075b
     private_allocation_record: controller/a01-schema-88b220bfea92462189b14ec6f759f110.json
-    private_allocation_record_sha256: 15d20dde6167ad5b038649d643a3aaa923ae3fffb01de3b8952cc365b1d01348
+    private_allocation_record_sha256: 99e274d670ae4d3920e39814ae8632d6d8ba08ebd220a5ad30e882d3f33e471e
     max_batch_wall_seconds: 14400
     max_role_wall_seconds: 3600
     max_start_requests: 256
