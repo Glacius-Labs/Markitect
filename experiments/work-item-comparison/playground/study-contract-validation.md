@@ -1,0 +1,9 @@
+# CLI user-reference clarification validation
+
+2026-10-09, direct user clarification after clean preparation checkpoint `955fc85e8ab365962ed54786e8ed81ee52e239d0`. The research target is normal Codex CLI user benefit/burden, with transport controlled and its equivalence unproved. This source-only contract refinement changes documentation and prospective freeze/report/profile metadata; it starts no study.
+
+Checked: all JSON parses; freeze/report contract hashes match study-contract.md; local Markdown links resolve; whitespace check passes; execution flags remain false. Lifecycle, fixture tests, public case/common/model inputs and the prior technical check log/receipt are unchanged. The four tested implementation-source hashes still match the 18/18 offline fixture receipt from the preceding checkpoint. Those tests were not rerun because executable behavior and fixture inputs did not change; they do not prove this proposed research design, runtime parity or method benefit.
+
+Historical `luna-nest-20261009` diff against `dc34459dfef9d31f3832fc0dafc14e6851b2f7ab` remains empty. No old results were rescored. No product build/test, native CLI/SDK/App Server/provider call, installation or account diagnosis occurred. Official CLI and non-interactive documentation was read as interface evidence only. Actual control path, reference/parity observations, stable product binding, finite order/repetition design and real comparative data remain open.
+
+The contract includes normal session continuity, shared resource opportunity without copied method artifacts, full setup/model/repair costs, independent public-spec assessment and its blinding limits, order/repetition inputs, and limits on synthetic-case/general/economic conclusions. Codex is primary and Claude a separate secondary extension. No new product Main gate or automatic run allowance follows.

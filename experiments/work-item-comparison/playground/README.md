@@ -4,8 +4,11 @@ Preparation baseline: `dc34459dfef9d31f3832fc0dafc14e6851b2f7ab`, 2026-10-09. Th
 
 Compare a strong ordinary Conventional workflow with new Markitect main. Each method receives the same public case, staged requirements, runtime resources and independent assessment within its runtime stratum. Product installation, initial canonical business model, generated instructions/Skills and provider wiring belong to Markitect setup. The harness owns file/Git snapshots and measurement bookkeeping.
 
+The primary question is the benefit and burden of each method in ordinary Codex CLI use. [The study contract](study-contract.md) owns that target, transport equivalence as an unproved control assumption, total method costs and limits on conclusions. Codex is primary; Claude is a separate secondary extension. Automation must approximate that user workflow rather than define a different one.
+
 | Entry | Purpose |
 |---|---|
+| [Study contract](study-contract.md) | Ordinary CLI user question, fair treatment, validity and interpretation |
 | [Preparation work items](WORK-ITEMS.md) | Small current list and open bindings |
 | [Workflow](workflow.md) | Prepare, ordinary work, station boundary, freeze, assess |
 | [Runtime profiles](runtime-profiles.json) and [binding notes](runtime-bindings.md) | Codex Luna High and Claude Latest Sonnet, separately |

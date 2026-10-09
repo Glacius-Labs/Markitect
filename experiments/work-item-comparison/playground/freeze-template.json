@@ -36,7 +36,8 @@
       "businessModelManifest": null,
       "proposalMigrationReceipt": null,
       "ownerSetupReceipt": null,
-      "genuineInnerProviderSupport": "unbound"
+      "genuineInnerProviderSupport": "unbound",
+      "methodSpecificMechanisms": "genuine installed guidance/model/MCP-or-CLI tools/internal roles; costs included; no Scientist replacement"
     }
   },
   "pairedRuntime": {
@@ -52,7 +53,19 @@
     "toolsAndRights": null,
     "roleOverridesAndFallbacks": null,
     "nativeHelpers": null,
-    "globalConfigChanges": false
+    "globalConfigChanges": false,
+    "userFlowApproximation": {
+      "referenceSurface": null,
+      "actualExecutionSurface": null,
+      "sessionContinuation": null,
+      "loadedContextAndInstructions": null,
+      "toolsSkillsAndMcp": null,
+      "approvalBehavior": null,
+      "nativeHelperBehavior": null,
+      "equivalenceStatus": "unverified",
+      "declaredDifferences": [],
+      "evidence": []
+    }
   },
   "equalLimits": {
     "wallTimeSeconds": null,
@@ -74,7 +87,9 @@
     "nativeUsageReceipts": [],
     "tokens": null,
     "cost": null,
-    "priceBasis": null
+    "priceBasis": null,
+    "initialModelAuthoringAndOwnerContributions": null,
+    "totalMethodEffort": "report with setup/upkeep/repair/review/intervention costs; unknowns visible; no overlap double count"
   },
   "terminal": {
     "reason": null,
@@ -94,5 +109,21 @@
     "effective runtime model/effort/rights per role",
     "Claude product inner-provider support",
     "finite separately authorized actual order"
-  ]
+  ],
+  "studyContractSha256": "69de58ae2934755356a8255b2b5b124e79fd5feb29ee66ec54ed05977071b04e",
+  "researchQuestion": "Observed benefit and burden of Markitect versus strong Conventional agentic coding in ordinary Codex CLI use",
+  "studyDesign": {
+    "primaryRuntime": "codex-luna-high",
+    "secondaryRuntime": "claude-latest-sonnet",
+    "unit": "one longitudinal project trajectory per method/case/repetition",
+    "pairOrder": null,
+    "orderAssignmentRule": null,
+    "repetitions": null,
+    "evaluatorInputManifestSha256": null,
+    "publicSpecAdditionalChecksSha256": null,
+    "allowedUserInterventions": null,
+    "endRule": null,
+    "hiddenRequirementsAllowed": false,
+    "transportIsTreatment": false
+  }
 }

@@ -65,7 +65,10 @@
     "nativeReceipts": [],
     "tokens": null,
     "cost": null,
-    "priceBasis": null
+    "priceBasis": null,
+    "initialModelAuthoringAndOwnerContributions": null,
+    "totalObservedMethodBurden": null,
+    "totalBurdenCoverageAndUnknowns": []
   },
   "runtimeObserved": {
     "model": null,
@@ -74,12 +77,34 @@
     "fallbacks": [],
     "limitsEnforced": [],
     "cooperativeLimits": [],
-    "unknowns": []
+    "unknowns": [],
+    "userFlowApproximation": {
+      "referenceSurface": null,
+      "actualExecutionSurface": null,
+      "contextToolsRightsSessionDifferences": [],
+      "equivalenceEvidence": [],
+      "equivalenceStatus": "unknown",
+      "transportRelatedFindings": []
+    }
   },
   "humanAcceptance": "not established",
   "limitations": [
     "finite public checks plus independent public-spec review",
     "one longitudinal case, dependent station observations",
-    "shared host is not OS isolation"
-  ]
+    "shared host is not OS isolation",
+    "transport/user-flow equivalence unproved until bound; synthetic cases do not establish general user effects"
+  ],
+  "researchInterpretation": {
+    "targetUserFlow": "ordinary Codex CLI; Claude secondary extension separately",
+    "studyContractSha256": "69de58ae2934755356a8255b2b5b124e79fd5feb29ee66ec54ed05977071b04e",
+    "methodBenefitsObserved": [],
+    "methodDisadvantagesObserved": [],
+    "mechanismObservations": [],
+    "plausibleExplanations": [],
+    "untestedHypotheses": [],
+    "generalizationLimits": [],
+    "fullBlindingEstablished": false,
+    "functionalLabelBlinding": "unknown",
+    "pooledCrossRuntimeMethodClaimAllowed": false
+  }
 }

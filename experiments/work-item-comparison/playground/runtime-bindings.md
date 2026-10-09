@@ -1,11 +1,15 @@
 # Runtime strata and open bindings
 
+The [study contract](study-contract.md) makes ordinary Codex CLI use the primary reference. The outer controller's actual transport remains unbound. Prefer direct CLI reference observations; CLI automation/SDK/App Server may approximate them only with declared context/tool/permission/session differences and evidence. Sharing an executable does not prove equivalent behavior. No new native capability or transport test is authorized by this contract.
+
 | Stratum | Prospective selection | Observed now | Still required before actual work |
 |---|---|---|---|
 | Codex Luna High | `gpt-6-luna`, reasoning `high` for all executing/review roles | Selected design profile only; no runtime call in preparation | CLI/App transport/version/config pins, genuine installed Markitect binding and native tools/helpers, effective model/effort and actual receipts |
 | Claude Code Latest Sonnet | `--model sonnet --effort xhigh`; pin effective full ID before the pair | Root reported CLI 2.1.295, latest channel/current update check, authenticated first-party claude.ai Max, user effortLevel=xhigh and permission mode auto; no model/provider overrides reported | Effective serving ID/effort/caps/fallbacks/role overrides, exact binary/config/tool permissions, genuine Markitect Claude inner-role support |
 
 These are two separate strata. Compare Conventional versus Markitect within each, with identical selected model, effort, provider, ordinary tools, rights and available finite resources. Do not infer method effects from Sonnet versus Luna. Native provider orchestration may differ across strata; record it. No fallback or helper model switch may silently become a same-model observation.
+
+Keep the same outer control path inside a pair. Method-specific installed guidance, Markitect MCP/CLI tools and genuine internal managers are part of the Markitect treatment, not tools that Conventional must duplicate. Include their complete setup/upkeep/execution cost. Claude is a secondary user-workflow extension, never a replacement for the primary Codex question.
 
 The [official Claude model configuration](https://code.claude.com/docs/en/model-config), read 2026-10-09, documents `sonnet` as a changing latest alias; the Anthropic table currently names Sonnet 5.5. `--effort` selects a session level. User `effortLevel=xhigh` is configuration metadata, not observed effective effort: model-specific defaults, caps and role frontmatter can affect it; JSON/background caps may be silent. A future explicit `--effort xhigh` avoids relying on the old user default, but does not prove serving behavior. Keep effective values null until observed. No additional CLI, account or provider diagnosis was performed here.
 

@@ -17,7 +17,26 @@
       "toolsAndRights": null,
       "nativeHelpers": null,
       "productInnerProviderSupport": "unbound",
-      "status": "preparation_only"
+      "status": "preparation_only",
+      "studyRole": "primary",
+      "referenceUserFlow": {
+        "surface": "Codex CLI",
+        "mode": "ordinary interactive user workflow",
+        "referenceObserved": false
+      },
+      "outerControl": {
+        "transportSelected": null,
+        "preferredReference": "native CLI user flow",
+        "automatedAlternatives": [
+          "non-interactive native CLI",
+          "native SDK",
+          "App Server"
+        ],
+        "equivalenceStatus": "unverified",
+        "mustMatchWithinPair": true,
+        "declaredDifferences": [],
+        "evidence": []
+      }
     },
     {
       "id": "claude-latest-sonnet",
@@ -52,7 +71,24 @@
       "nativeHelpers": null,
       "productInnerProviderSupport": "unbound",
       "unsupportedPairStatus": "blocked_by_provider_support",
-      "status": "preparation_only"
+      "status": "preparation_only",
+      "studyRole": "secondary_extension",
+      "referenceUserFlow": {
+        "surface": "Claude Code",
+        "mode": "ordinary interactive user workflow",
+        "referenceObserved": false
+      },
+      "outerControl": {
+        "transportSelected": null,
+        "preferredReference": "native CLI user flow",
+        "automatedAlternatives": [
+          "native Claude Code automation"
+        ],
+        "equivalenceStatus": "unverified",
+        "mustMatchWithinPair": true,
+        "declaredDifferences": [],
+        "evidence": []
+      }
     }
   ]
 }
