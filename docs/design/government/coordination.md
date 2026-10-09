@@ -1255,3 +1255,12 @@ Begrenzte Eigentümerpakete und Produkt-Proofquote stehen in `../work-item-compa
 
 
 Neue Aufträge einmal um 04:07:22Z an Design und Scientist sowie 04:07:23Z an Oldschool und Architect zugestellt. Scientist-Ende05:37:22Z, Oldschool-Ende04:52:23Z; keine Actualquote. Toolmeldungen bestätigen aktive Scientist-/Oldschool-Turns und laufenden Design-Turn, keine Abschlussbehauptung. Worker-Nachricht nicht zugestellt, weil Chat bereits archiviert; kein Wiederöffnen oder Retry. Eine enge Präzisierung erlaubt normale nichtmodellgestützte CLI-Metadaten und den ausdrücklich vorgesehenen einen Luna-Readonly-Forschungsreview, ohne Frist-/Actualerweiterung. Automation ACTIVE/2h/exaktes gespeichertes Prompt und Rootziel geprüft. Auftrag und aktuelle Koordination werden öffentlich regulär gesichert; private Studienhistory bleibt privat.
+
+
+### 2026-10-09 06:17 Europe/Berlin - Conventional-Nest-Beitrag geprüft und übergeben
+
+Oldschool lieferte sieben Beitragsdateien samt Hashliste außerhalb der Produktquellen. Root bestätigte die sieben Dateihashes, den lokalen Native-Exehash und einen reinen PowerShell-AST-Parse ohne Syntaxfehler; kein Launcher-/Modelllauf. Native CLI 0.130.0 ist laut Owner-Metadaten nachgewiesen, tatsächliche Luna-High-/Kindprofile und Git-/Mergefähigkeit bleiben ungeprüft. Beitrag ist qualifizierte Vorbereitung, kein laufbereiter Entry.
+
+Root-Quellenbefund: Unbeschränkte WaitForExit-Aufrufe nach Kill können die endliche Timeoutbehauptung verletzen. Scientist erhielt den öffentlichen Beitrag und diesen konkreten Korrekturpunkt einmal um04:16:18Z zur Integration innerhalb seines ursprünglichen Vorbereitungsauftrags. Keine neue Phase/Quote/Frist. Native Toolversionen und äußere versus transitive Grenzen bleiben sichtbar; keine Sicherheitsabschaltung oder allgemeine Diagnose verlangt. Private Sicherung der übernommenen Quellen durch Scientist noch ausstehend.
+
+Scientist bereitet neue Fälle Raumreservierung/Greenfield und vorhandenes Leselog/Brownfield vor; Inputs je Arm noch nicht final eingefroren. Oldschools Beitrag ist fertig; der vorgesehene enge Readonly-Vertragsreview wartet auf einen ausdrücklich sicheren öffentlichen Scientist-Dateipfad/Hash. Originalfristen04:52:23Z/05:37:22Z unverändert. Keine privaten Bewertungsquellen an Oldschool, kein ACK.
