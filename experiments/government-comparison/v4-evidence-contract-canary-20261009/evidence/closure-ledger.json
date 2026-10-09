@@ -1,0 +1,34 @@
+{
+  "servingModel": null,
+  "nativeReservations": 2,
+  "actualCellsStarted": 0,
+  "retries": 0,
+  "humanTime": null,
+  "productApplyCalls": 0,
+  "cumulativeScientistSetup": {
+    "productProcesses": 3,
+    "nativeReservations": 5,
+    "nativeActivations": 4
+  },
+  "offlineTestProcesses": 0,
+  "executorActors": 1,
+  "nativeActivations": 2,
+  "frozenSource": "48845595368188c46d56f1a909f8fecd43ff7fe7",
+  "previousConsumed": {
+    "productProcesses": 2,
+    "nativeReservations": 3,
+    "nativeActivations": 2
+  },
+  "cost": null,
+  "mainProductProcesses": 1,
+  "productVerificationCalls": 0,
+  "tokens": null,
+  "setupQuotaClosed": true,
+  "instructionBatches": 1,
+  "closedUtc": "2026-10-09T01:36:35.6530582Z",
+  "rootStartReceipt": null,
+  "status": "POSITIVE NATIVE TRANSPORT/PARSER CANARY + FROZEN INDEPENDENT REVIEW; ROOT START RECEIPT PENDING",
+  "noPostReviewSourceCorrectionsTests": true,
+  "completedReviewers": 1,
+  "actualCellStatus": "NOT RUN"
+}

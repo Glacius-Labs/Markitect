@@ -1,0 +1,167 @@
+{
+  "purpose": "Exact raw pre-review frozen bytes including literal prompt and genuine response; PRIVATE research-backup only",
+  "entries": [
+    {
+      "bytes": 8760,
+      "path": "common-freeze.json",
+      "sha256": "3d9e7a7c0e34ff87160dafc379c2dd780a6f9039e91c37cdc90214d6730305eb"
+    },
+    {
+      "bytes": 7255,
+      "path": "common-input-bindings.json",
+      "sha256": "8d0af2706eb6d95c4edb20baa083c7dc4d281cd3a67682d4f68372417b688f2d"
+    },
+    {
+      "bytes": 1091,
+      "path": "continuation-anchor.md",
+      "sha256": "1415d71425316aecd6c252a9d1a965d2e7392453d744c3274e8b19c30b2a7390"
+    },
+    {
+      "bytes": 739,
+      "path": "evidence/actor-prompt-binding.json",
+      "sha256": "b46edd17480a8989bf8ed76cf19c67d8b74360b41a3d6e5aa2677a52b0d8baf5"
+    },
+    {
+      "bytes": 3113,
+      "path": "evidence/actual-outbound-actor-prompt.txt",
+      "sha256": "9c8e7b590cfdbc7fb5861907a2e6889aefda4fc80320edc539d1b2eed2d65e14"
+    },
+    {
+      "bytes": 887,
+      "path": "evidence/actual-tool-prompt-reconciliation.json",
+      "sha256": "7d04529004098b9ecfedea77240553da3de1619528d8cb15ad9d5ccd3d8b8331"
+    },
+    {
+      "bytes": 5388,
+      "path": "evidence/authorization-grant.json",
+      "sha256": "925c22ed7dc0511972a1452bc3a7dd7e5e28ca9e09b0c1279b7f1aa6970b4fc3"
+    },
+    {
+      "bytes": 1494,
+      "path": "evidence/canary-result.json",
+      "sha256": "136e01ae6e84544a12395892763971ba0ae2e940d88fd87aa21b06f53fb225c5"
+    },
+    {
+      "bytes": 379,
+      "path": "evidence/canary/mailbox/delivery.json",
+      "sha256": "ef0edadb51d0eac7eaf9ef1958a5983f5576535b7d3013f452af7d6385f9e038"
+    },
+    {
+      "bytes": 187,
+      "path": "evidence/canary/mailbox/forwarded.json",
+      "sha256": "93ede2d047bc5d0d6b1d7e6bf284192d500e66584fc9d4b463f486e5ad5e3029"
+    },
+    {
+      "bytes": 7812,
+      "path": "evidence/canary/mailbox/invocation.raw.json",
+      "sha256": "c04bf55bbec961e1be8d16e1184f31459e834bd98fc62c95c712556606a3b4a0"
+    },
+    {
+      "bytes": 687,
+      "path": "evidence/canary/mailbox/native-terminal.json",
+      "sha256": "6c80a676797b832254e4e00d9b9043ed1c5f9a3a7a0624ac4d87730f6ea812cd"
+    },
+    {
+      "bytes": 326,
+      "path": "evidence/canary/mailbox/ready.json",
+      "sha256": "661708bc7ecedd1c08a2b7cb3a343eb6bd8aa92c1d1efc4c0d4bbdad1373ee05"
+    },
+    {
+      "bytes": 326,
+      "path": "evidence/canary/mailbox/request-metadata.json",
+      "sha256": "661708bc7ecedd1c08a2b7cb3a343eb6bd8aa92c1d1efc4c0d4bbdad1373ee05"
+    },
+    {
+      "bytes": 170,
+      "path": "evidence/canary/mailbox/requests.json",
+      "sha256": "9848f00f9e8d71b672cf86a85374d18f68c767ac5e11216a876a63f8e0c959ff"
+    },
+    {
+      "bytes": 1904,
+      "path": "evidence/canary/mailbox/response.raw.json",
+      "sha256": "014461aab91ab242e2fbd320bf235e711ad2d01d0d85bb5072d3162d4d8f251d"
+    },
+    {
+      "bytes": 0,
+      "path": "evidence/canary/main.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 33025,
+      "path": "evidence/canary/main.stdout.json",
+      "sha256": "2f2079cc68ca6964bf2349a8cdbd155e532ca8f5045b6a41fd35f45e50495998"
+    },
+    {
+      "bytes": 151,
+      "path": "evidence/canary/policy.json",
+      "sha256": "e37339650845cc3c0f837a912f3dcae9d5bee710765019bc97115b2d436e2cbd"
+    },
+    {
+      "bytes": 963,
+      "path": "evidence/canary/process-receipt.json",
+      "sha256": "1593c3331b2687f08401d892c7da9099e70e7b5c5c2b1fdb427840ca1e09a5c3"
+    },
+    {
+      "bytes": 936,
+      "path": "evidence/canary/process-spec.json",
+      "sha256": "4a911b53c7579885a98e244258c1df4e9d40b7faa55c7f0251e2f2144c30739b"
+    },
+    {
+      "bytes": 3479,
+      "path": "evidence/canary/runtime.json",
+      "sha256": "73b22680f598baa1608cd4595754e60559a509c3b43910f68b8a2a8bad0b4a6d"
+    },
+    {
+      "bytes": 85,
+      "path": "evidence/guardian-start.json",
+      "sha256": "9ff1986b9ae56377566f2e0ea05b1055a8148849b86eaadc47e3b5db11fa78a0"
+    },
+    {
+      "bytes": 991,
+      "path": "evidence/ledger.json",
+      "sha256": "aae2725dad0ec9914efe49e3fcc0e8f368f92cb5b9416662e070c03a86a5e040"
+    },
+    {
+      "bytes": 1163,
+      "path": "evidence/main-executor-receipt.json",
+      "sha256": "6e2278b02b8723fbf416afb07917a4c627ad6f9e0fc67d1e3c80bb962653b4d6"
+    },
+    {
+      "bytes": 4051,
+      "path": "evidence/pre-canary-pin.json",
+      "sha256": "7d9114f786448ec41d9b29e8cd947db5f6c55d4c53e7942c2b66920a61c14e09"
+    },
+    {
+      "bytes": 201,
+      "path": "evidence/profile-before-canary.json",
+      "sha256": "3b8c1e6001640044e450acce478bd0163f614abcb995ea95fd08060935538436"
+    },
+    {
+      "bytes": 5568,
+      "path": "evidence/review-input-manifest.json",
+      "sha256": "ff0d8d22380162d00df767e5549463bfe2c5958a141d82bd4a50625b3fecaf87"
+    },
+    {
+      "bytes": 6043,
+      "path": "evidence/source-byte-admission.json",
+      "sha256": "04b43dcb36f8d1dd50052515a39841c4a3f0952685ea339dc8d7f19590b4daec"
+    },
+    {
+      "bytes": 4414,
+      "path": "helpers/live_bridge.py",
+      "sha256": "b2a87582a1668fae26596c9521f038c596c5c40110899e2b4d70da55575ad33b"
+    },
+    {
+      "bytes": 1533,
+      "path": "helpers/run_owned_main.py",
+      "sha256": "63010204f09f5264d9e3bfb311663810841b6ecf870ce02633d5b52aaaca10c3"
+    },
+    {
+      "bytes": 3884,
+      "path": "public/role-dto-briefing.md",
+      "sha256": "eb324def4d1f6b06e9fcb7c13bac82bd5a13ce1e570ff80db80c218f6bcfc144"
+    }
+  ],
+  "sourceFreeze": "48845595368188c46d56f1a909f8fecd43ff7fe7",
+  "archiveSha256": "bf87ef5cd085bbce33fb7396df7518b7a2c999bbdae0eb83e1796bd88ae1b307"
+}

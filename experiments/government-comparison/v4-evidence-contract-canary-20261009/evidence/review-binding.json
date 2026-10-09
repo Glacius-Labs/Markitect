@@ -1,0 +1,14 @@
+{
+  "spawnObservedUtc": "2026-10-09T01:35:03.7765865Z",
+  "stopDueUtc": "2026-10-09T01:37:53.7802242Z",
+  "forkTurns": "none",
+  "overrides": null,
+  "programsTestsAllowed": 0,
+  "readonly": true,
+  "taskName": "/root/v4_evidence_contract_common_freeze_review",
+  "actualNativeActivationNumber": 2,
+  "maxSeconds": 180,
+  "reservationNumber": 2,
+  "nativeToolCallId": null,
+  "sourceFreeze": "48845595368188c46d56f1a909f8fecd43ff7fe7"
+}

@@ -1,0 +1,17 @@
+{
+  "sourceFreeze": "48845595368188c46d56f1a909f8fecd43ff7fe7",
+  "children": 0,
+  "maxSeconds": 180,
+  "rawReviewFile": "evidence/final-review.md",
+  "status": "completed",
+  "programsTests": 0,
+  "rawReviewSha256": "4cbd105aadd9fddff612277f849154b8b18985a691b0c86c39531e796163b1f8",
+  "taskName": "/root/v4_evidence_contract_common_freeze_review",
+  "outcome": "Acceptable frozen transport/common handoff for Root validation, with opaque persisted-prompt comparison limit",
+  "retries": 0,
+  "cost": null,
+  "followups": 0,
+  "terminalObservedUtc": "2026-10-09T01:36:35.6329355Z",
+  "servingModel": null,
+  "tokens": null
+}
