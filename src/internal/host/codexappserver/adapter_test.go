@@ -152,6 +152,9 @@ func serveFixture() {
 					params["grantRoot"] = ""
 				case "unknown-field":
 					params["futurePermission"] = true
+				case "nullable-optional-fields":
+					params["reason"] = nil
+					params["grantRoot"] = nil
 				}
 				_ = enc.Encode(map[string]any{"id": 99, "method": "item/fileChange/requestApproval", "params": params})
 				continue
@@ -502,6 +505,7 @@ func runApprovalFixture(t *testing.T, tc approvalTestCase) (string, error) {
 func TestFileChangeApprovalRequiresExactOwnedDelegatedScope(t *testing.T) {
 	tests := []approvalTestCase{
 		{name: "manager update", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, wantDecision: "accept"},
+		{name: "protocol nullable optional fields", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, variant: "nullable-optional-fields", wantDecision: "accept"},
 		{name: "child patch telemetry cannot disrupt parent approval", mode: "filechange-childtelemetry-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, wantDecision: "accept"},
 		{name: "new owned file under new directories", mode: "filechange-accept", paths: []string{"add:new/nested/README.md"}, allowed: []string{"new/"}, wantDecision: "accept"},
 		{name: "helper own scope", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, kind: "helper", parentAllowed: []string{"README.md"}, wantDecision: "accept"},
@@ -546,13 +550,15 @@ func TestFileChangeApprovalParamsRejectDuplicateAndUnknownFields(t *testing.T) {
 		`{"threadId":"thread-1","threadId":"thread-1","turnId":"turn-1","itemId":"patch-1","startedAtMs":1}`,
 		`{"threadId":"thread-1","turnId":"turn-1","itemId":"patch-1","startedAtMs":1,"futurePermission":true}`,
 		`{"threadId":"thread-1","turnId":"turn-1","itemId":"patch-1","startedAtMs":1,"grantRoot":"C:\\\\outside","GrantRoot":null}`,
-		`{"threadId":"thread-1","turnId":"turn-1","itemId":"patch-1","startedAtMs":1,"grantRoot":null}`,
-		`{"threadId":"thread-1","turnId":"turn-1","itemId":"patch-1","startedAtMs":1,"reason":null}`,
 	} {
 		var params fileChangeApprovalParams
 		if err := decodeFileChangeApprovalParams([]byte(raw), &params); err == nil {
 			t.Fatalf("accepted unpinned approval params: %s", raw)
 		}
+	}
+	var nullable fileChangeApprovalParams
+	if err := decodeFileChangeApprovalParams([]byte(`{"threadId":"thread-1","turnId":"turn-1","itemId":"patch-1","startedAtMs":1,"reason":null,"grantRoot":null}`), &nullable); err != nil {
+		t.Fatalf("rejected pinned nullable optional fields: %v", err)
 	}
 }
 

@@ -104,9 +104,6 @@ func decodeFileChangeApprovalParams(raw []byte, params *fileChangeApprovalParams
 		if err := decoder.Decode(&value); err != nil {
 			return ErrProtocol
 		}
-		if (key == "reason" || key == "grantRoot") && bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
-			return ErrProtocol
-		}
 	}
 	if token, err := decoder.Token(); err != nil || token != json.Delim('}') {
 		return ErrProtocol
