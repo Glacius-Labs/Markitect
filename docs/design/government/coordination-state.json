@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T22:01:37Z",
+  "updatedUtc": "2026-10-09T22:26:59.167957Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16535,9 +16535,26 @@
         "sharedRuntimeFactSentOnce": "Read own dated Windows sandboxlog/PID/time for known legacy ACLerror32 pattern. Child-local ordinary WindowsMXC with explicit ownworkspace/ManagedPolicy may be supported alternative on pinnedruntime; verify exactactualcause/config support first, no global policydisable/foreignPIDkill/transportprobe. Source/config/Fingerprint/readiness/receipts for any necessary nativeconfiguration.",
         "promptBoundary": "Canonical strict schema/enum/statusmapping and honestblockedexecution report; no fakeResponse/candidatePASS",
         "newRootBudgetApprovalNeeded": false,
-        "rootCauseQualification": "Current savedJSON/envlogs ownerdiagnosed; previouslegacyWindowscause only diagnostic hypothesis, not asserted currentcause",
+        "rootCauseQualification": "Root independently read dated sandbox.2026-10-09.log in own A01 22:15:41-22:15:58Z window: runtime read/execute ACL validation fails node_repl.exe with OS error32, before shell ProcessStart. Exact lockholder PID remains unproven.",
         "next": "Concrete prompt and real ordinary-shell setup fixes before normal renewable-batch run; no blind unchangedretry",
-        "mainAcceptance": false
+        "mainAcceptance": false,
+        "rootVerifiedWindowsLog": {
+          "path": "C:/Users/Consiliari/.codex/.sandbox/sandbox.2026-10-09.log",
+          "errorUtc": "2026-10-09T22:15:46.401249600Z",
+          "runtime": "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/runtimes/cua_node/3dd31cfff853001c/bin/node_repl.exe",
+          "error": "root-only ACL update failed: OS error32/file used by another process",
+          "ownedWorkspace": "49c78ed921d0647711f85fd34d5a0707",
+          "writeAceGrantedUtc": "2026-10-09T22:15:46.402727200Z",
+          "protectedMetadata": [
+            ".git",
+            ".agents"
+          ],
+          "setupRefreshErrorUtc": "2026-10-09T22:15:46.506066100Z",
+          "exactLockholder": "UNPROVEN",
+          "foreignProcessesKilled": false,
+          "globalSecurityChanged": false
+        },
+        "correctionProgress": "Owner reports isolated canonical prompt fix/focused tests PASS; independent review running. Child-local MXC correction pending pinned stable0.162 support check and typed config/fingerprint/readiness/effective receipts. No new actual yet."
       }
     }
   },
