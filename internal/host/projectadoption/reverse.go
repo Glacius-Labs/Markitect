@@ -18,6 +18,14 @@ type ManagerReverseEvidence struct {
 	Content        string `json:"content"`
 }
 
+type ManagerReverseEvidenceMetadata struct {
+	EvidenceID     string `json:"evidenceId"`
+	Path           string `json:"path"`
+	Basis          string `json:"basis"`
+	Classification string `json:"classification"`
+	Digest         string `json:"digest"`
+}
+
 type ManagerReverseContract struct {
 	Classification string                     `json:"classification"` // accepted-desired-contract
 	Contract       DistillationTargetContract `json:"contract"`
@@ -30,8 +38,9 @@ type ManagerReverseProposalContract struct {
 	Contract       ManagerPublicContract `json:"contract"`
 }
 
-// ManagerReverseContext contains the exact assigned source evidence and only
-// accepted public contracts adjacent to the assigned Manager.
+// ManagerReverseContext contains the Manager's own raw evidence, authorized
+// delegation metadata, and only adjacent public contracts. Root inventory is
+// metadata-only and never grants assignment authority by itself.
 type ManagerReverseContext struct {
 	APIVersion                string                           `json:"apiVersion"`
 	SessionDigest             string                           `json:"sessionDigest"`
@@ -41,15 +50,18 @@ type ManagerReverseContext struct {
 	Manager                   DistillationTargetManager        `json:"manager"`
 	ManagerOrigin             string                           `json:"managerOrigin"` // accepted-target or proposed-by-parent
 	Evidence                  []ManagerReverseEvidence         `json:"evidence"`
+	DelegationEvidence        []ManagerReverseEvidenceMetadata `json:"delegationEvidence"`
+	DiscoveryInventory        []ManagerReverseEvidenceMetadata `json:"discoveryInventory,omitempty"`
 	PublicNeighborContracts   []ManagerReverseContract         `json:"publicNeighborContracts"`
 	ProposedNeighborContracts []ManagerReverseProposalContract `json:"proposedNeighborContracts"`
 	Digest                    string                           `json:"digest"`
 }
 
-const ManagerReverseContextVersion = "markitect.example.org/manager-reverse-context/v1alpha1"
+const ManagerReverseContextVersion = "markitect.example.org/manager-reverse-context/v1alpha2"
 
 // BuildManagerReverseContext creates a bounded prompt artifact. It does not
-// invoke an agent and never includes unassigned Discovery evidence.
+// invoke an agent. A root receives the full selected-evidence inventory as
+// metadata only; non-root Managers see only their own and delegated metadata.
 func BuildManagerReverseContext(session BrownfieldSession, iterationID string) (ManagerReverseContext, error) {
 	if err := ValidateBrownfieldSession(session); err != nil {
 		return ManagerReverseContext{}, err
@@ -79,26 +91,37 @@ func BuildManagerReverseContext(session BrownfieldSession, iterationID string) (
 	}
 	result := ManagerReverseContext{APIVersion: ManagerReverseContextVersion, SessionDigest: session.Digest, DiscoveryDigest: session.Source.Digest,
 		TargetContextDigest: iteration.TargetContextDigest, IterationID: iteration.ID, Manager: manager, ManagerOrigin: managerOrigin,
-		Evidence: []ManagerReverseEvidence{}, PublicNeighborContracts: []ManagerReverseContract{}, ProposedNeighborContracts: []ManagerReverseProposalContract{}}
+		Evidence: []ManagerReverseEvidence{}, DelegationEvidence: []ManagerReverseEvidenceMetadata{}, DiscoveryInventory: []ManagerReverseEvidenceMetadata{},
+		PublicNeighborContracts: []ManagerReverseContract{}, ProposedNeighborContracts: []ManagerReverseProposalContract{}}
 	selected := map[string]bool{}
 	for _, id := range iteration.EvidenceIDs {
 		selected[id] = true
 	}
+	delegated := map[string]bool{}
+	for _, id := range iteration.DelegationEvidenceIDs {
+		delegated[id] = true
+	}
+	if iteration.ParentIterationID == "" && !delegationPoolExplicit(iteration.DelegationEvidenceIDs, iteration.DelegationEvidenceExplicit) {
+		for _, evidence := range session.Source.Evidence {
+			if !selected[evidence.ID] {
+				delegated[evidence.ID] = true
+			}
+		}
+	}
 	for _, evidence := range session.Source.Evidence {
-		if !selected[evidence.ID] {
-			continue
+		classification := evidenceClassification(evidence.Basis)
+		if selected[evidence.ID] {
+			result.Evidence = append(result.Evidence, ManagerReverseEvidence{EvidenceID: evidence.ID, Path: evidence.Path, Basis: evidence.Basis,
+				Classification: classification, Digest: evidence.Digest, Content: evidence.Content})
 		}
-		classification := "selected-evidence"
-		switch evidence.Basis {
-		case "code", "test", "configuration":
-			classification = "observed-implementation"
-		case "documentation":
-			classification = "documented-intent"
-		case "runtime-record":
-			classification = "submitted-runtime-record"
+		if delegated[evidence.ID] {
+			result.DelegationEvidence = append(result.DelegationEvidence, ManagerReverseEvidenceMetadata{EvidenceID: evidence.ID, Path: evidence.Path, Basis: evidence.Basis,
+				Classification: classification, Digest: evidence.Digest})
 		}
-		result.Evidence = append(result.Evidence, ManagerReverseEvidence{EvidenceID: evidence.ID, Path: evidence.Path, Basis: evidence.Basis,
-			Classification: classification, Digest: evidence.Digest, Content: evidence.Content})
+		if iteration.ParentIterationID == "" {
+			result.DiscoveryInventory = append(result.DiscoveryInventory, ManagerReverseEvidenceMetadata{EvidenceID: evidence.ID, Path: evidence.Path, Basis: evidence.Basis,
+				Classification: classification, Digest: evidence.Digest})
+		}
 	}
 	acceptedAncestor := manager.ID
 	for {
@@ -232,10 +255,11 @@ func BeginReverseIteration(sourceRoot string, target *projectwork.Project, sessi
 	if !validID(request.ID) || strings.TrimSpace(request.ManagerID) == "" || strings.TrimSpace(request.Purpose) == "" || strings.TrimSpace(request.Review) == "" {
 		return BrownfieldSession{}, errors.New("reverse iteration requires stable ID, accepted Manager, purpose, and review reference")
 	}
+	request.DelegationEvidenceExplicit = delegationPoolExplicit(request.DelegationEvidenceIDs, request.DelegationEvidenceExplicit)
 	if _, err := sortedUniqueStrings(request.EvidenceIDs); err != nil || len(request.EvidenceIDs) == 0 {
 		return BrownfieldSession{}, errors.New("reverse iteration requires unique selected evidence IDs")
 	}
-	if err := validateEvidenceSubset(request.EvidenceIDs, session.Source); err != nil {
+	if err := validateEvidencePools(request.EvidenceIDs, request.DelegationEvidenceIDs, session.Source); err != nil {
 		return BrownfieldSession{}, err
 	}
 	manager, accepted := targetManager(session.TargetContext, request.ManagerID)
@@ -271,8 +295,14 @@ func BeginReverseIteration(sourceRoot string, target *projectwork.Project, sessi
 			return BrownfieldSession{}, errors.New("child reverse iteration requires a parent Manager proposal that established its responsibility")
 		}
 		assignment, proposed := proposedManager(parent, request.ManagerID)
-		if !proposed || assignment.ParentID != parent.ManagerID || !sameStrings(assignment.EvidenceIDs, request.EvidenceIDs) {
+		if !proposed || assignment.ParentID != parent.ManagerID || !sameStrings(assignment.EvidenceIDs, request.EvidenceIDs) || !sameDelegationPool(assignment.DelegationEvidenceIDs, assignment.DelegationEvidenceExplicit, request.DelegationEvidenceIDs, request.DelegationEvidenceExplicit) {
 			return BrownfieldSession{}, errors.New("child Manager and exact evidence assignment must be explicitly listed by its parent")
+		}
+		available := iterationAvailableEvidence(parent, session.Source)
+		for _, id := range append(append([]string(nil), request.EvidenceIDs...), request.DelegationEvidenceIDs...) {
+			if !available[id] {
+				return BrownfieldSession{}, fmt.Errorf("child Manager evidence %q is outside the parent's own and delegated evidence", id)
+			}
 		}
 		if accepted {
 			if manager.Parent != parent.ManagerID || manager.Name != assignment.Name || manager.Purpose != assignment.Purpose {
@@ -291,9 +321,13 @@ func BeginReverseIteration(sourceRoot string, target *projectwork.Project, sessi
 		}
 	}
 	request.EvidenceIDs, _ = sortedUniqueStrings(request.EvidenceIDs)
+	if request.DelegationEvidenceIDs != nil {
+		request.DelegationEvidenceIDs, _ = sortedUniqueStrings(request.DelegationEvidenceIDs)
+	}
 	result := cloneSession(session)
 	result.Iterations = append(result.Iterations, ReverseIteration{ID: request.ID, ParentIterationID: request.ParentIterationID, SupersedesIterationID: request.SupersedesIterationID, ManagerID: request.ManagerID,
-		EvidenceIDs: request.EvidenceIDs, Purpose: request.Purpose, Review: request.Review, TargetContextDigest: session.TargetContext.Digest})
+		EvidenceIDs: request.EvidenceIDs, DelegationEvidenceIDs: request.DelegationEvidenceIDs, DelegationEvidenceExplicit: request.DelegationEvidenceExplicit,
+		Purpose: request.Purpose, Review: request.Review, TargetContextDigest: session.TargetContext.Digest})
 	sealSession(&result)
 	return result, nil
 }
@@ -312,6 +346,9 @@ func RecordManagerProposal(session BrownfieldSession, iterationID string, propos
 	iteration := result.Iterations[index]
 	if iteration.Proposal != nil {
 		return BrownfieldSession{}, errors.New("Manager proposal is immutable once recorded")
+	}
+	for index := range proposal.Hierarchy {
+		proposal.Hierarchy[index].DelegationEvidenceExplicit = delegationPoolExplicit(proposal.Hierarchy[index].DelegationEvidenceIDs, proposal.Hierarchy[index].DelegationEvidenceExplicit)
 	}
 	if err := validateManagerProposal(proposal, iteration, session); err != nil {
 		return BrownfieldSession{}, err
@@ -501,23 +538,17 @@ func validateManagerProposal(proposal ManagerProposal, iteration ReverseIteratio
 		if strings.TrimSpace(child.ID) == "" || seenManagers[strings.ToLower(child.ID)] || strings.TrimSpace(child.Name) == "" || strings.TrimSpace(child.Purpose) == "" || child.ParentID != proposal.ManagerID || child.EvidenceIDs == nil || len(child.EvidenceIDs) == 0 {
 			return fmt.Errorf("invalid proposed child Manager %q", child.ID)
 		}
+		if child.DelegationEvidenceIDs != nil && !child.DelegationEvidenceExplicit {
+			return fmt.Errorf("proposed Manager %q delegation pool must preserve its explicit-empty marker", child.ID)
+		}
 		seenManagers[strings.ToLower(child.ID)] = true
-		if err := validateEvidenceSubset(child.EvidenceIDs, session.Source); err != nil {
+		if err := validateEvidencePools(child.EvidenceIDs, child.DelegationEvidenceIDs, session.Source); err != nil {
 			return fmt.Errorf("proposed Manager %q: %w", child.ID, err)
 		}
-		// The accepted root assigns work from the repository-wide Discovery
-		// inventory without receiving every evidence body in its own context.
-		// Non-root Managers can delegate only evidence they themselves were
-		// assigned, including when the child is already in the accepted tree.
-		if iteration.ParentIterationID != "" {
-			parentEvidence := map[string]bool{}
-			for _, evidenceID := range iteration.EvidenceIDs {
-				parentEvidence[evidenceID] = true
-			}
-			for _, evidenceID := range child.EvidenceIDs {
-				if !parentEvidence[evidenceID] {
-					return fmt.Errorf("proposed Manager %q assignment exceeds its parent iteration evidence: evidence %q is not assigned to the parent", child.ID, evidenceID)
-				}
+		available := iterationAvailableEvidence(iteration, session.Source)
+		for _, evidenceID := range append(append([]string(nil), child.EvidenceIDs...), child.DelegationEvidenceIDs...) {
+			if !available[evidenceID] {
+				return fmt.Errorf("proposed Manager %q assignment exceeds its parent own and delegation evidence: evidence %q is not authorized", child.ID, evidenceID)
 			}
 		}
 	}
@@ -542,27 +573,41 @@ func validateManagerIntegration(integration ManagerIntegration, iteration Revers
 		return fmt.Errorf("integrated report: %w", err)
 	}
 	allowedEvidence := map[string]bool{}
+	allowedForwardedRefs := map[evidenceRefKey]bool{}
 	for _, id := range iteration.EvidenceIDs {
 		allowedEvidence[id] = true
 	}
 	for _, child := range session.Iterations {
 		if child.ParentIterationID == iteration.ID && child.Proposal != nil {
-			for _, id := range child.EvidenceIDs {
-				allowedEvidence[id] = true
+			finalReport := child.Proposal.Report
+			if child.Integration != nil {
+				finalReport = child.Integration.Report
+			}
+			for _, claim := range finalReport.Claims {
+				for _, ref := range claim.Evidence {
+					allowedForwardedRefs[evidenceRefIdentity(ref.EvidenceID, ref.StartLine, ref.EndLine, ref.Excerpt)] = true
+					allowedEvidence[ref.EvidenceID] = true
+				}
+			}
+			for _, term := range finalReport.Terms {
+				for _, ref := range term.Occurrences {
+					allowedForwardedRefs[evidenceRefIdentity(ref.EvidenceID, ref.StartLine, ref.EndLine, ref.Excerpt)] = true
+					allowedEvidence[ref.EvidenceID] = true
+				}
 			}
 		}
 	}
 	for _, claim := range integration.Report.Claims {
 		for _, ref := range claim.Evidence {
-			if !allowedEvidence[ref.EvidenceID] {
-				return fmt.Errorf("integrated claim %q cites evidence outside parent and direct-child assignments", claim.ID)
+			if !allowedEvidence[ref.EvidenceID] || (!containsString(iteration.EvidenceIDs, ref.EvidenceID) && !allowedForwardedRefs[evidenceRefIdentity(ref.EvidenceID, ref.StartLine, ref.EndLine, ref.Excerpt)]) {
+				return fmt.Errorf("integrated claim %q cites evidence outside parent raw evidence or exact direct-child report occurrences", claim.ID)
 			}
 		}
 	}
 	for _, term := range integration.Report.Terms {
 		for _, occurrence := range term.Occurrences {
-			if !allowedEvidence[occurrence.EvidenceID] {
-				return fmt.Errorf("integrated term %q cites evidence outside parent and direct-child assignments", term.ID)
+			if !allowedEvidence[occurrence.EvidenceID] || (!containsString(iteration.EvidenceIDs, occurrence.EvidenceID) && !allowedForwardedRefs[evidenceRefIdentity(occurrence.EvidenceID, occurrence.StartLine, occurrence.EndLine, occurrence.Excerpt)]) {
+				return fmt.Errorf("integrated term %q cites evidence outside parent raw evidence or exact direct-child report occurrences", term.ID)
 			}
 		}
 	}
@@ -713,6 +758,97 @@ func validateEvidenceSubset(ids []string, discovery Discovery) error {
 		seen[id] = true
 	}
 	return nil
+}
+
+func validateEvidencePools(own, delegation []string, discovery Discovery) error {
+	if own == nil || len(own) == 0 {
+		return errors.New("own evidence IDs must be an explicit nonempty list")
+	}
+	if _, err := sortedUniqueStrings(own); err != nil {
+		return fmt.Errorf("own evidence IDs: %w", err)
+	}
+	if err := validateEvidenceSubset(own, discovery); err != nil {
+		return err
+	}
+	if delegation == nil {
+		return nil
+	}
+	if _, err := sortedUniqueStrings(delegation); err != nil {
+		return fmt.Errorf("delegation evidence IDs: %w", err)
+	}
+	if err := validateEvidenceSubset(delegation, discovery); err != nil {
+		return err
+	}
+	owned := make(map[string]bool, len(own))
+	for _, id := range own {
+		owned[id] = true
+	}
+	for _, id := range delegation {
+		if owned[id] {
+			return fmt.Errorf("evidence %q cannot appear in both own and delegation pools", id)
+		}
+	}
+	return nil
+}
+
+func iterationAvailableEvidence(iteration ReverseIteration, discovery Discovery) map[string]bool {
+	available := make(map[string]bool, len(iteration.EvidenceIDs)+len(iteration.DelegationEvidenceIDs))
+	for _, id := range iteration.EvidenceIDs {
+		available[id] = true
+	}
+	for _, id := range iteration.DelegationEvidenceIDs {
+		available[id] = true
+	}
+	// Root iterations created before explicit delegation pools retain the
+	// original repository-wide routing authority. New root requests can bound
+	// future assignments by supplying a non-nil pool.
+	if iteration.ParentIterationID == "" && !delegationPoolExplicit(iteration.DelegationEvidenceIDs, iteration.DelegationEvidenceExplicit) {
+		for _, evidence := range discovery.Evidence {
+			available[evidence.ID] = true
+		}
+	}
+	return available
+}
+
+func delegationPoolExplicit(ids []string, explicit bool) bool {
+	return explicit || ids != nil
+}
+
+func sameDelegationPool(left []string, leftExplicit bool, right []string, rightExplicit bool) bool {
+	return delegationPoolExplicit(left, leftExplicit) == delegationPoolExplicit(right, rightExplicit) && sameStrings(left, right)
+}
+
+func evidenceClassification(basis string) string {
+	switch basis {
+	case "code", "test", "configuration":
+		return "observed-implementation"
+	case "documentation":
+		return "documented-intent"
+	case "runtime-record":
+		return "submitted-runtime-record"
+	default:
+		return "selected-evidence"
+	}
+}
+
+func containsString(values []string, expected string) bool {
+	for _, value := range values {
+		if value == expected {
+			return true
+		}
+	}
+	return false
+}
+
+type evidenceRefKey struct {
+	ID        string
+	StartLine int
+	EndLine   int
+	Excerpt   string
+}
+
+func evidenceRefIdentity(id string, startLine, endLine int, excerpt string) evidenceRefKey {
+	return evidenceRefKey{ID: id, StartLine: startLine, EndLine: endLine, Excerpt: excerpt}
 }
 
 func targetManager(context DistillationTargetContext, id string) (DistillationTargetManager, bool) {

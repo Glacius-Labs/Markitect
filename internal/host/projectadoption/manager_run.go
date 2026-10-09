@@ -79,6 +79,7 @@ type ManagerRunPreview struct {
 	LedgerDigest                string        `json:"ledgerDigest"`
 	ContextDigest               string        `json:"contextDigest"`
 	RequestDigest               string        `json:"requestDigest"`
+	RequestContractDigest       string        `json:"requestContractDigest"`
 	PreviewDigest               string        `json:"previewDigest"`
 	RetryOfAttemptID            string        `json:"retryOfAttemptId,omitempty"`
 	EvidenceCount               int           `json:"evidenceCount"`
@@ -111,6 +112,7 @@ type ManagerRunEvent struct {
 	PreviewDigest               string              `json:"previewDigest"`
 	ContextDigest               string              `json:"contextDigest"`
 	RequestDigest               string              `json:"requestDigest"`
+	RequestContractDigest       string              `json:"requestContractDigest"`
 	ConfigFingerprint           string              `json:"configFingerprint"`
 	RuntimeFileDigest           string              `json:"runtimeFileDigest"`
 	LimitsDigest                string              `json:"limitsDigest"`
@@ -281,7 +283,7 @@ func RunManagerStage(ctx context.Context, sourceRoot, targetRoot, sessionID, ite
 	}
 	start := ManagerRunEvent{Sequence: len(ledger.Events) + 1, AttemptID: attemptID, RetryOfAttemptID: retryOfAttemptID, Event: "started", SessionDigest: session.Digest,
 		IterationID: iterationID, Phase: phase, ManagerID: preview.ManagerID, AgentManagerID: agentManagerID,
-		PreviewDigest: preview.PreviewDigest, ContextDigest: preview.ContextDigest, RequestDigest: preview.RequestDigest,
+		PreviewDigest: preview.PreviewDigest, ContextDigest: preview.ContextDigest, RequestDigest: preview.RequestDigest, RequestContractDigest: preview.RequestContractDigest,
 		ConfigFingerprint: preview.ConfigFingerprint, RuntimeFileDigest: preview.RuntimeFileDigest, LimitsDigest: preview.LimitsDigest,
 		Timeout: preview.Timeout, MaxStdoutBytes: preview.MaxStdoutBytes, MaxStderrBytes: preview.MaxStderrBytes,
 		InputPriceMicrosPerMillion: preview.InputPriceMicrosPerMillion, OutputPriceMicrosPerMillion: preview.OutputPriceMicrosPerMillion, StartedAt: started}
@@ -295,7 +297,7 @@ func RunManagerStage(ctx context.Context, sourceRoot, targetRoot, sessionID, ite
 	runResult, invokeErr := invoker.Run(ctx, config, request, agentexec.RunOptions{InputRoots: []string{}, TempParent: tempParent, PrivateLogDirectory: privateLogs})
 	terminal := ManagerRunEvent{Sequence: len(ledger.Events) + 1, AttemptID: attemptID, Event: "terminal", SessionDigest: session.Digest,
 		IterationID: iterationID, Phase: phase, ManagerID: preview.ManagerID, AgentManagerID: agentManagerID,
-		PreviewDigest: preview.PreviewDigest, ContextDigest: preview.ContextDigest, RequestDigest: preview.RequestDigest,
+		PreviewDigest: preview.PreviewDigest, ContextDigest: preview.ContextDigest, RequestDigest: preview.RequestDigest, RequestContractDigest: preview.RequestContractDigest,
 		ConfigFingerprint: preview.ConfigFingerprint, RuntimeFileDigest: preview.RuntimeFileDigest, LimitsDigest: preview.LimitsDigest,
 		Timeout: preview.Timeout, MaxStdoutBytes: preview.MaxStdoutBytes, MaxStderrBytes: preview.MaxStderrBytes,
 		InputPriceMicrosPerMillion: preview.InputPriceMicrosPerMillion, OutputPriceMicrosPerMillion: preview.OutputPriceMicrosPerMillion,
@@ -488,11 +490,15 @@ func buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iteration
 		return empty, emptySession, emptyRequest, emptyContext, err
 	}
 	requestDigest := digestValue(request)
+	requestContractDigest, err := managerRequestContractDigest(request, ctxData)
+	if err != nil {
+		return empty, emptySession, emptyRequest, emptyContext, err
+	}
 	limitsDigest := digestValue(limitsForDigest(limits))
 	preview := ManagerRunPreview{SessionDigest: session.Digest, IterationID: iterationID, Phase: phase, ManagerID: iteration.ManagerID,
 		AgentManagerID: agentManagerID, ManagerOrigin: managerContext.ManagerOrigin, ProviderVersion: config.ProviderVersion, Model: config.Model,
 		ConfigFingerprint: fingerprint, RuntimeFileDigest: runtimeDigest, LimitsDigest: limitsDigest, LedgerDigest: ledger.Digest,
-		ContextDigest: managerContext.Digest, RequestDigest: requestDigest, RetryOfAttemptID: retryOfAttemptID,
+		ContextDigest: managerContext.Digest, RequestDigest: requestDigest, RequestContractDigest: requestContractDigest, RetryOfAttemptID: retryOfAttemptID,
 		EvidenceCount: len(managerContext.Evidence), ChildReportCount: childReports, Timeout: config.Timeout, MaxStdoutBytes: config.MaxStdoutBytes,
 		MaxStderrBytes: config.MaxStderrBytes, InputPriceMicrosPerMillion: limits.InputPriceMicrosPerMillion, OutputPriceMicrosPerMillion: limits.OutputPriceMicrosPerMillion}
 	preview.RemainingStarts = limits.MaxStarts - usedStarts
@@ -553,6 +559,24 @@ Use modelSchema as authoritative. Do not invent fields or silently normalize YAM
 	return requestContext, agentexec.Request{}, children, nil
 }
 
+// managerRequestContractDigest binds all stable semantic request inputs while
+// excluding only cumulative remaining-budget counters, which change after each
+// terminal attempt. RequestedTimeout remains part of the contract.
+func managerRequestContractDigest(request agentexec.Request, requestContext managerRunRequestContext) (string, error) {
+	staticContext := requestContext
+	staticContext.Budget.RemainingStarts = 0
+	staticContext.Budget.RemainingRetries = 0
+	staticContext.Budget.RemainingDuration = 0
+	staticContext.Budget.RemainingCostMicros = 0
+	contextBytes, err := json.Marshal(staticContext)
+	if err != nil {
+		return "", err
+	}
+	contractRequest := request
+	contractRequest.Context = contextBytes
+	return digestValue(contractRequest), nil
+}
+
 func managerRunArtifacts(session BrownfieldSession, context ManagerReverseContext) ([]agentexec.Artifact, error) {
 	byID := make(map[string]Evidence, len(session.Source.Evidence))
 	for _, evidence := range session.Source.Evidence {
@@ -561,7 +585,7 @@ func managerRunArtifacts(session BrownfieldSession, context ManagerReverseContex
 	out := make([]agentexec.Artifact, 0, len(context.Evidence))
 	for _, evidence := range context.Evidence {
 		selected, ok := byID[evidence.EvidenceID]
-		if !ok || selected.Path != evidence.Path || selected.Content != evidence.Content || digestBytes([]byte(selected.Content)) != selected.Digest {
+		if !ok || selected.Path != evidence.Path || selected.Basis != evidence.Basis || selected.Digest != evidence.Digest || digestBytes([]byte(selected.Content)) != selected.Digest {
 			return nil, fmt.Errorf("Manager context evidence %q differs from fixed Discovery", evidence.EvidenceID)
 		}
 		mode := "0644"

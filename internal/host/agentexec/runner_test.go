@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -722,6 +723,39 @@ func TestRuntimeFileOver256MiBIsFingerprintedWithStreamingHash(t *testing.T) {
 	}
 	if len(states) != 1 || states[0].digest != declaredDigest {
 		t.Fatalf("large runtime state did not preserve its declared digest: %#v", states)
+	}
+}
+
+func TestPrivateExecutableRuntimeAssetKeepsExact0700ModePin(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows does not preserve Unix executable permission bits")
+	}
+	path := filepath.Join(t.TempDir(), "private-tool")
+	content := []byte("#!/bin/sh\nexit 0\n")
+	if err := os.WriteFile(path, content, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(path, 0700); err != nil {
+		t.Fatal(err)
+	}
+	file := RuntimeFile{Path: path, Mode: "0700", Digest: digest(content)}
+	config := testConfig()
+	config.RuntimeFiles = []RuntimeFile{file}
+	if _, err := normalizeConfig(config); err != nil {
+		t.Fatalf("private executable mode should be accepted as an exact runtime pin: %v", err)
+	}
+	states, _, err := snapshotRuntimeFiles([]RuntimeFile{file})
+	if err != nil {
+		t.Fatalf("private executable mode should match its pinned fingerprint: %v", err)
+	}
+	if len(states) != 1 || states[0].mode != "0700" || states[0].digest != file.Digest {
+		t.Fatalf("runtime fingerprint did not retain exact mode and bytes: %#v", states)
+	}
+	if err := os.Chmod(path, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := snapshotRuntimeFiles([]RuntimeFile{file}); err == nil || !strings.Contains(err.Error(), "differs from its declared digest or mode") {
+		t.Fatalf("a mode change must invalidate the exact pin, got %v", err)
 	}
 }
 

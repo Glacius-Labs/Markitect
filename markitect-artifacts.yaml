@@ -2215,6 +2215,8 @@ spec:
       owner: project-world-implementation
     - path: internal/host/projectadoption/session_test.go
       owner: project-world-implementation
+    - path: internal/host/projectadoption/delegation_test.go
+      owner: project-world-implementation
     - path: internal/host/projectbriefing/history_test.go
       owner: project-world-implementation
     - path: internal/host/projectcli/project_brownfield.go

@@ -21,6 +21,16 @@ import (
 
 func TestBrownfieldStartPreviewAndCASWrite(t *testing.T) {
 	repo := copyProjectWorld(t)
+	selectedPath := filepath.Join(repo, "docs", "cancellation.md")
+	selectedBytes, err := os.ReadFile(selectedPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(selectedPath, append(selectedBytes, []byte("\nPRIVATE_SOURCE_SENTINEL: selected source body must stay in the session ledger.\n")...), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, repo, "add", "docs/cancellation.md")
+	runGitWithEnv(t, repo, []string{"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.invalid", "GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.invalid"}, "commit", "-m", "add private evidence fixture")
 	commit := gitOutput(t, repo, "rev-parse", "HEAD")
 	request := projectadoption.DiscoveryRequest{
 		APIVersion: projectadoption.DiscoveryVersion,
@@ -56,8 +66,11 @@ func TestBrownfieldStartPreviewAndCASWrite(t *testing.T) {
 	if err := json.Unmarshal(previewOut.Bytes(), &preview); err != nil {
 		t.Fatalf("decode Brownfield preview: %v\n%s", err, previewOut.String())
 	}
-	if preview.Status != "preview" || preview.Action != "start" || preview.Session == nil || preview.Session.Digest == "" || preview.SessionDigest != preview.Session.Digest {
+	if preview.Status != "preview" || preview.Action != "start" || preview.Session == nil || preview.Session.Digest == "" || preview.SessionDigest != preview.Session.Digest || preview.Session.Source.EvidenceCount != 1 || preview.Session.Source.Digest != discovery.Digest || preview.Session.Target.Revision != commit {
 		t.Fatalf("unexpected Brownfield start preview: %+v", preview)
+	}
+	if strings.Contains(previewOut.String(), "PRIVATE_SOURCE_SENTINEL") || strings.Contains(previewOut.String(), "cancellation-document") {
+		t.Fatalf("Brownfield start preview exposed raw source evidence: %s", previewOut.String())
 	}
 	if _, err := os.Stat(ledgerPath); !os.IsNotExist(err) {
 		t.Fatalf("Brownfield preview wrote the session ledger: %v", err)
@@ -75,6 +88,9 @@ func TestBrownfieldStartPreviewAndCASWrite(t *testing.T) {
 	if written.Status != "recorded" || written.SessionDigest != preview.SessionDigest {
 		t.Fatalf("Brownfield start write differs from reviewed preview: %+v", written)
 	}
+	if strings.Contains(writeOut.String(), "PRIVATE_SOURCE_SENTINEL") || strings.Contains(writeOut.String(), "cancellation-document") {
+		t.Fatalf("Brownfield start write exposed raw source evidence: %s", writeOut.String())
+	}
 	if _, err := os.Stat(ledgerPath); err != nil {
 		t.Fatalf("Brownfield session was not durably written: %v", err)
 	}
@@ -90,6 +106,9 @@ func TestBrownfieldStartPreviewAndCASWrite(t *testing.T) {
 	}
 	if resumed.Status != "resumed" || resumed.SessionDigest != preview.SessionDigest || resumed.Readiness == nil || !resumed.Readiness.SourceCurrent || !resumed.Readiness.TargetCurrent {
 		t.Fatalf("resume did not validate both fixed bases: %+v", resumed)
+	}
+	if resumed.Session == nil || resumed.Session.Source.Digest != discovery.Digest || resumed.Session.Target.ProjectDigest == "" || strings.Contains(resumeOut.String(), "PRIVATE_SOURCE_SENTINEL") {
+		t.Fatalf("resume did not return safe fixed-basis metadata or leaked source evidence: %s", resumeOut.String())
 	}
 }
 
@@ -203,7 +222,7 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 	if rootContext.ManagerContext.ManagerOrigin != "accepted-target" || len(rootContext.ManagerContext.Evidence) != 1 || rootContext.ManagerContext.Evidence[0].EvidenceID != "cancellation-doc" {
 		t.Fatalf("root context was not assignment-bounded: %+v", rootContext.ManagerContext)
 	}
-	rootReport := makeStagedDistillation(discovery, target, result.Session.TargetContext.Digest, schemaDigest, "root-scope", "root-claim", "cancellation-doc", "documented-intent", "documentation", "Root cancellation understanding.")
+	rootReport := makeStagedDistillation(discovery, target, result.Session.TargetContextDigest, schemaDigest, "root-scope", "root-claim", "cancellation-doc", "documented-intent", "documentation", "PRIVATE_MANAGER_REPORT_SENTINEL root cancellation understanding.")
 	childID := "cancellation-owner"
 	rootProposal := projectadoption.ManagerProposal{ManagerID: rootID, EvidenceIDs: []string{"cancellation-doc"},
 		Hierarchy:       []projectadoption.ProposedManager{{ID: childID, Name: "Cancellation Owner", Purpose: "Own cancellation implementation", ParentID: rootID, EvidenceIDs: []string{"orders-code"}}},
@@ -222,23 +241,31 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 	if childContext.ManagerContext.ManagerOrigin != "proposed-by-parent" || childContext.ManagerContext.Manager.ID != childID || len(childContext.ManagerContext.Evidence) != 1 || childContext.ManagerContext.Evidence[0].EvidenceID != "orders-code" {
 		t.Fatalf("child context was not derived from the parent assignment: %+v", childContext.ManagerContext)
 	}
-	childReport := makeStagedDistillation(discovery, target, result.Session.TargetContext.Digest, schemaDigest, "child-scope", "child-claim", "orders-code", "observation", "static-source", "Implementation owns cancellation handling.")
+	childReport := makeStagedDistillation(discovery, target, result.Session.TargetContextDigest, schemaDigest, "child-scope", "child-claim", "orders-code", "observation", "static-source", "PRIVATE_CHILD_REPORT_SENTINEL implementation owns cancellation handling.")
 	contract := projectadoption.ManagerPublicContract{Contract: projectadoption.DistillationTargetContract{ID: "cancellation-api", Name: "Cancellation API", Namespace: "shop.cancellation", Owner: childID, Category: "capability", Description: "Public cancellation operation.", Uses: []string{}, Requires: []string{}}, ClaimIDs: []string{"child-claim"}}
 	childProposal := projectadoption.ManagerProposal{ManagerID: childID, EvidenceIDs: []string{"orders-code"}, Hierarchy: []projectadoption.ProposedManager{}, PublicContracts: []projectadoption.ManagerPublicContract{contract}, Report: childReport}
 	result = runBrownfieldMutation(t, repo, discovery.ID, "propose", brownfieldProposalInput{IterationID: "child-pass", Proposal: childProposal}, result.SessionDigest)
-	childDigest := result.Session.Iterations[1].Proposal.Digest
+	fullSession, err := projectadoption.LoadBrownfieldSession(repo, discovery.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	childDigest := fullSession.Iterations[1].Proposal.Digest
 	integrationContext := runBrownfieldContext(t, repo, discovery.ID, "root-pass", "integrate")
 	if integrationContext.IntegrationContext == nil || integrationContext.IntegrationContext.ParentProposal.ManagerID != rootID || len(integrationContext.IntegrationContext.Children) != 1 || integrationContext.IntegrationContext.Children[0].ProposalDigest != childDigest || integrationContext.IntegrationContext.Children[0].PublicContracts[0].Contract.ID != "cancellation-api" {
 		t.Fatalf("integration context omitted the assigned child proposal/report/contracts: %+v", integrationContext.IntegrationContext)
 	}
 
-	integrated := makeStagedIntegratedDistillation(discovery, target, result.Session.TargetContext.Digest, schemaDigest)
+	integrated := makeStagedIntegratedDistillation(discovery, target, result.Session.TargetContextDigest, schemaDigest)
 	integration := projectadoption.ManagerIntegration{ManagerID: rootID, ChildProposalDigests: []string{childDigest},
 		ChildContracts: []projectadoption.IntegratedChildContracts{{ManagerID: childID, ProposalDigest: childDigest, Contracts: []projectadoption.ManagerPublicContract{contract}}},
 		Report:         integrated, Conflicts: []projectadoption.SessionConflict{}}
 	result = runBrownfieldMutation(t, repo, discovery.ID, "integrate", brownfieldIntegrationInput{IterationID: "root-pass", Integration: integration}, result.SessionDigest)
-	if result.Session.Iterations[0].Integration == nil || result.Session.Iterations[0].Integration.ChildProposalDigests[0] != childDigest || result.Session.Iterations[0].Integration.ChildContracts[0].Contracts[0].Contract.ID != "cancellation-api" {
-		t.Fatalf("root integration did not retain immutable child contract evidence: %+v", result.Session.Iterations[0].Integration)
+	fullSession, err = projectadoption.LoadBrownfieldSession(repo, discovery.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fullSession.Iterations[0].Integration == nil || fullSession.Iterations[0].Integration.ChildProposalDigests[0] != childDigest || fullSession.Iterations[0].Integration.ChildContracts[0].Contracts[0].Contract.ID != "cancellation-api" {
+		t.Fatalf("root integration did not retain immutable child contract evidence: %+v", fullSession.Iterations[0].Integration)
 	}
 }
 
@@ -371,6 +398,16 @@ func (*countingManagerInvoker) Fingerprint(agentexec.Config) (string, error) {
 
 func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.T) {
 	repo := copyProjectWorld(t)
+	selectedSource := filepath.Join(repo, "docs", "cancellation.md")
+	selectedBytes, err := os.ReadFile(selectedSource)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(selectedSource, append(selectedBytes, []byte("\nPRIVATE_COORDINATOR_SOURCE_SENTINEL: selected source bytes stay ledger-only.\n")...), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, repo, "add", "docs/cancellation.md")
+	runGitWithEnv(t, repo, []string{"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.invalid", "GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.invalid"}, "commit", "-m", "add coordinator privacy fixture")
 	commit := gitOutput(t, repo, "rev-parse", "HEAD")
 	discovery, err := projectadoption.Discover(repo, projectadoption.DiscoveryRequest{
 		APIVersion: projectadoption.DiscoveryVersion, ID: "brownfield-real-adoption", Purpose: "Apply a resolved model-only adoption",
@@ -400,21 +437,54 @@ func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.
 	result := runBrownfieldMutation(t, repo, discovery.ID, "begin", projectadoption.ReverseIterationRequest{
 		ID: "root-pass", ManagerID: rootID, EvidenceIDs: []string{"cancellation-doc"}, Purpose: "Model cancellation intent", Review: "manager-review-adoption",
 	}, session.Digest)
-	report := makeApplyableStagedDistillation(discovery, target, result.Session.TargetContext.Digest, schemaDigest)
+	report := makeApplyableStagedDistillation(discovery, target, result.Session.TargetContextDigest, schemaDigest)
+	report.Claims[0].Statement = "PRIVATE_COORDINATOR_REPORT_SENTINEL selected claim stays inside the manager ledger."
+	blocking := true
+	report.Questions = []projectadoption.Question{{ID: "clarify-cancellation", ScopeID: "orders", Prompt: "Which owner-approved cancellation rule governs?",
+		Alternatives: []string{"Documented behavior", "Implementation behavior"}, ClaimIDs: []string{"claim-orders"}, Blocking: &blocking}}
+	projectadoption.SealDistillation(&report)
 	proposal := projectadoption.ManagerProposal{ManagerID: rootID, EvidenceIDs: []string{"cancellation-doc"}, Hierarchy: []projectadoption.ProposedManager{}, PublicContracts: []projectadoption.ManagerPublicContract{}, Report: report}
 	result = runBrownfieldMutation(t, repo, discovery.ID, "propose", brownfieldProposalInput{IterationID: "root-pass", Proposal: proposal}, result.SessionDigest)
-	integration := projectadoption.ManagerIntegration{ManagerID: rootID, ChildProposalDigests: []string{}, ChildContracts: []projectadoption.IntegratedChildContracts{}, Report: report, Conflicts: []projectadoption.SessionConflict{}}
+	integration := projectadoption.ManagerIntegration{ManagerID: rootID, ChildProposalDigests: []string{}, ChildContracts: []projectadoption.IntegratedChildContracts{}, Report: report,
+		Conflicts: []projectadoption.SessionConflict{{ID: "cancellation-intent-conflict", ScopeID: "orders", QuestionID: "clarify-cancellation",
+			Description: "The selected documentation and implementation leave the desired cancellation rule unresolved.", EvidenceIDs: []string{"cancellation-doc"},
+			Disposition: "unresolved", Reason: "Coordinator decision required."}}}
 	result = runBrownfieldMutation(t, repo, discovery.ID, "integrate", brownfieldIntegrationInput{IterationID: "root-pass", Integration: integration}, result.SessionDigest)
+	var resumeOut, resumeErr bytes.Buffer
+	if code := Run([]string{"project", "brownfield", "--repo", repo, "--brownfield-action", "resume", "--session", discovery.ID}, &resumeOut, &resumeErr); code != 0 {
+		t.Fatalf("resume with coordinator blockers exit=%d stderr=%s", code, resumeErr.String())
+	}
+	var resumed brownfieldResult
+	if err := json.Unmarshal(resumeOut.Bytes(), &resumed); err != nil {
+		t.Fatalf("decode coordinator readiness: %v\n%s", err, resumeOut.String())
+	}
+	if resumed.Readiness == nil || len(resumed.Readiness.BlockingQuestions) != 1 || resumed.Readiness.BlockingQuestions[0].Prompt != "Which owner-approved cancellation rule governs?" ||
+		len(resumed.Readiness.UnresolvedConflicts) != 1 || resumed.Readiness.UnresolvedConflicts[0].Description != "The selected documentation and implementation leave the desired cancellation rule unresolved." {
+		t.Fatalf("resume hid actionable coordinator diagnostics: %+v", resumed.Readiness)
+	}
+	for _, private := range []string{"PRIVATE_COORDINATOR_SOURCE_SENTINEL", "PRIVATE_COORDINATOR_REPORT_SENTINEL"} {
+		if strings.Contains(resumeOut.String(), private) {
+			t.Fatalf("resume exposed raw source or full manager report %q: %s", private, resumeOut.String())
+		}
+	}
 	resolution := projectadoption.Resolution{APIVersion: projectadoption.ResolutionVersion, DiscoveryDigest: discovery.Digest,
 		DistillationDigest: report.Digest, ProposalDigest: projectadoption.ProposalDigest(report.Proposal), TargetBasis: target.Digest,
 		SchemaDigest: schemaDigest, BuildDigest: buildDigest, Actor: "user", AuthorityClaim: "Owner authorizes this model-only adoption",
-		DecisionReference: "review-real-adoption", Authenticated: boolPointer(false), Questions: []projectadoption.QuestionResolution{},
+		DecisionReference: "review-real-adoption", Authenticated: boolPointer(false), Questions: []projectadoption.QuestionResolution{{QuestionID: "clarify-cancellation", ScopeID: "orders", Disposition: "answer", Answer: "Documented behavior governs", Reason: "Owner answered the actionable question"}},
 		Scopes: []projectadoption.ScopeResolution{{ScopeID: "orders", Status: "adopt", Reason: "Owner approved the grounded order scope"}}}
 	projectadoption.SealResolution(&resolution)
 	result = runBrownfieldMutation(t, repo, discovery.ID, "resolve", brownfieldResolveInput{IterationID: "root-pass", Resolution: resolution}, result.SessionDigest)
-	plan := runBrownfieldPlan(t, repo, discovery.ID, "root-pass")
+	plan, planOutput := runBrownfieldPlanWithOutput(t, repo, discovery.ID, "root-pass")
 	if plan.Plan == nil || plan.Plan.PlanDigest == "" {
 		t.Fatalf("plan preview returned no exact reviewed plan: %+v", plan)
+	}
+	if len(plan.Plan.Edit.Mutation.Files) == 0 || !strings.Contains(plan.Plan.Edit.Mutation.Files[0].Content, "A confirmed order can be cancelled before shipment.") {
+		t.Fatalf("plan preview no longer exposes the exact reviewable candidate model edit: %+v", plan.Plan)
+	}
+	for _, private := range []string{"PRIVATE_COORDINATOR_SOURCE_SENTINEL", "PRIVATE_COORDINATOR_REPORT_SENTINEL"} {
+		if strings.Contains(planOutput, private) {
+			t.Fatalf("plan preview exposed raw source or full manager report %q: %s", private, planOutput)
+		}
 	}
 	wrongPlanInput, err := json.Marshal(brownfieldApplyAdoptionInput{IterationID: "root-pass", ExpectedPlanDigest: strings.Repeat("0", 64)})
 	if err != nil {
@@ -428,7 +498,6 @@ func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.
 	if code := Run(wrongPlanArgs, &wrongPlanOut, &wrongPlanErr); code == 0 || !strings.Contains(wrongPlanErr.String(), "exact reviewed adoption plan digest") {
 		t.Fatalf("wrong reviewed plan digest was not rejected before mutation: exit=%d stderr=%s", code, wrongPlanErr.String())
 	}
-	selectedSource := filepath.Join(repo, "docs", "cancellation.md")
 	implementationSource := filepath.Join(repo, "src", "shop", "orders", "order.py")
 	docBefore, err := os.ReadFile(selectedSource)
 	if err != nil {
@@ -501,6 +570,11 @@ func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.
 }
 
 func runBrownfieldPlan(t *testing.T, repo, sessionID, iterationID string) brownfieldResult {
+	result, _ := runBrownfieldPlanWithOutput(t, repo, sessionID, iterationID)
+	return result
+}
+
+func runBrownfieldPlanWithOutput(t *testing.T, repo, sessionID, iterationID string) (brownfieldResult, string) {
 	t.Helper()
 	data, err := json.Marshal(brownfieldPlanInput{IterationID: iterationID})
 	if err != nil {
@@ -519,7 +593,7 @@ func runBrownfieldPlan(t *testing.T, repo, sessionID, iterationID string) brownf
 	if err := json.Unmarshal(out.Bytes(), &result); err != nil {
 		t.Fatalf("decode plan preview: %v\n%s", err, out.String())
 	}
-	return result
+	return result, out.String()
 }
 
 func makeApplyableStagedDistillation(discovery projectadoption.Discovery, target *projectwork.Project, contextDigest, schemaDigest string) projectadoption.Distillation {
@@ -590,8 +664,13 @@ func runBrownfieldMutation(t *testing.T, repo, sessionID, action string, request
 	if err := json.Unmarshal(previewOut.Bytes(), &preview); err != nil {
 		t.Fatalf("decode %s preview: %v\n%s", action, err, previewOut.String())
 	}
-	if preview.Status != "preview" || preview.Session == nil || preview.PriorSessionDigest != priorDigest || preview.Readiness != nil {
+	if preview.Status != "preview" || preview.Session == nil || preview.Session.ID != sessionID || preview.Session.Digest != preview.SessionDigest || preview.Session.TargetContextDigest == "" || len(preview.Session.Iterations) == 0 || preview.PriorSessionDigest != priorDigest || preview.Readiness != nil {
 		t.Fatalf("unexpected %s preview: %+v", action, preview)
+	}
+	for _, private := range []string{"PRIVATE_MANAGER_REPORT_SENTINEL", "PRIVATE_CHILD_REPORT_SENTINEL", "cancellation-doc", "orders-code"} {
+		if strings.Contains(previewOut.String(), private) {
+			t.Fatalf("%s preview exposed private evidence/report data %q: %s", action, private, previewOut.String())
+		}
 	}
 	writeArgs := append(append([]string(nil), args...), "--expect", priorDigest, "--write")
 	var writeOut, writeErr bytes.Buffer
@@ -604,6 +683,11 @@ func runBrownfieldMutation(t *testing.T, repo, sessionID, action string, request
 	}
 	if written.Status != "recorded" || written.SessionDigest != preview.SessionDigest || written.Readiness != nil {
 		t.Fatalf("%s write diverged from preview: preview=%s written=%s", action, preview.SessionDigest, written.SessionDigest)
+	}
+	for _, private := range []string{"PRIVATE_MANAGER_REPORT_SENTINEL", "PRIVATE_CHILD_REPORT_SENTINEL", "cancellation-doc", "orders-code"} {
+		if strings.Contains(writeOut.String(), private) {
+			t.Fatalf("%s write exposed private evidence/report data %q: %s", action, private, writeOut.String())
+		}
 	}
 	return written
 }

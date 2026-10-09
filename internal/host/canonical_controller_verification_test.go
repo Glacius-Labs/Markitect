@@ -100,6 +100,24 @@ func TestCanonicalControllerVerifierRequiresExactEvidenceReferences(t *testing.T
 	}
 }
 
+func TestCanonicalControllerVerifierReceiptBindingKeepsMissingReceiptFailureDistinct(t *testing.T) {
+	const expected = "sha256:" + "aabb"
+	if err := canonicalControllerVerifierReceiptInputBinding(agentexec.Receipt{InputDigest: expected}, expected, nil); err != nil {
+		t.Fatalf("matching receipt input digest was rejected: %v", err)
+	}
+	if err := canonicalControllerVerifierReceiptInputBinding(agentexec.Receipt{InputDigest: "sha256:ccdd"}, expected, nil); err == nil || err.Error() != "Verifier receipt input digest differs from the reconstructed request" {
+		t.Fatalf("mismatched nonempty receipt digest was not rejected strictly: %v", err)
+	}
+	invocationErr := fmt.Errorf("private log directory could not be created")
+	err := canonicalControllerVerifierReceiptInputBinding(agentexec.Receipt{}, expected, invocationErr)
+	if err == nil || !strings.Contains(err.Error(), invocationErr.Error()) || strings.Contains(err.Error(), "input digest differs") {
+		t.Fatalf("pre-receipt invocation failure was mislabeled as a digest mismatch: %v", err)
+	}
+	if err := canonicalControllerVerifierReceiptInputBinding(agentexec.Receipt{}, expected, nil); err == nil || !strings.Contains(err.Error(), "returned no receipt") {
+		t.Fatalf("missing receipt without invocation error was accepted: %v", err)
+	}
+}
+
 func TestCanonicalControllerVerifierRequestBindsAgentExecutionAPIAndCoverage(t *testing.T) {
 	record := controllerVerificationTestRecord(t, "core/v1:Projection:protocol", "core/v1:UseCase:orders")
 	check := records.CheckResult{ID: "fixed-check", Version: "command/v1", Digest: sha256Prefix(sha256Hex([]byte("fixed check"))), Outcome: records.CheckPassed}
@@ -404,6 +422,26 @@ func TestCanonicalControllerVerifierProtocolFailureAndIncompleteAreNotPassing(t 
 	}
 	item.request.Policies = nil
 	node := assurance.NodeRunInput{Node: assurance.Node{ID: "scope"}}
+	t.Run("preflight-error-does-not-fabricate-receipt-or-result", func(t *testing.T) {
+		marker := filepath.Join(external, "preflight-runs.log")
+		setCanonicalControllerVerifierActor(t, marker, agentexec.OutcomeFailed)
+		blockedLogs := filepath.Join(external, "private-logs-is-a-file")
+		if err := os.WriteFile(blockedLogs, []byte("not a directory"), 0600); err != nil {
+			t.Fatal(err)
+		}
+		blockedConfig := cfg
+		blockedConfig.PrivateLogs = blockedLogs
+		result, run, err := invokeCanonicalControllerVerifier(context.Background(), blockedConfig, item, node, verifier, fingerprint, strings.Repeat("a", 40))
+		if err == nil || !strings.Contains(err.Error(), "private log directory") {
+			t.Fatalf("preflight failure was not preserved: result=%#v run=%#v err=%v", result, run, err)
+		}
+		if run.Receipt.InputDigest != "" || run.RunID != "" || run.ResultID != "" || result.ID != "" {
+			t.Fatalf("preflight failure fabricated verifier evidence: result=%#v run=%#v", result, run)
+		}
+		if got := countCanonicalVerifierInvocations(t, marker); got != 0 {
+			t.Fatalf("preflight failure started verifier process %d times", got)
+		}
+	})
 	for _, outcome := range []string{agentexec.OutcomeFailed, agentexec.OutcomeIncomplete} {
 		t.Run(outcome, func(t *testing.T) {
 			setCanonicalControllerVerifierActor(t, filepath.Join(external, "runs.log"), outcome)

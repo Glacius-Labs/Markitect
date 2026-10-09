@@ -20,6 +20,30 @@ import (
 )
 
 const verifierProcessHelperEnv = "MARKITECT_PROJECTRUN_VERIFY_HELPER"
+const unallowlistedEnvironmentSentinel = "MARKITECT_PROJECTRUN_UNALLOWLISTED_SENTINEL"
+
+func TestProjectRunEmptyEnvironmentHelperProcess(t *testing.T) {
+	for _, arg := range os.Args {
+		if arg == "-test.run=^TestProjectRunEmptyEnvironmentHelperProcess$" {
+			if os.Getenv(unallowlistedEnvironmentSentinel) != "" {
+				t.Fatal("unallowlisted environment sentinel reached child process")
+			}
+			return
+		}
+	}
+}
+
+func TestExplicitEnvironmentWithUnsetAllowlistDoesNotInherit(t *testing.T) {
+	t.Setenv(unallowlistedEnvironmentSentinel, "must-not-reach-child")
+	cmd := exec.Command(os.Args[0], "-test.run=^TestProjectRunEmptyEnvironmentHelperProcess$")
+	cmd.Env = explicitEnvironment([]string{"MARKITECT_PROJECTRUN_NOT_SET"})
+	if cmd.Env == nil {
+		t.Fatal("unset allowlist produced nil environment, which means inherit-all")
+	}
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("empty allowlisted child inherited a caller variable: %v\n%s", err, output)
+	}
+}
 
 // TestProjectRunVerifierHelperProcess is invoked as a real agentexec child by
 // TestFailedVerifierAttemptIsDurableAndCannotReplayBudget. Its failed response
@@ -114,6 +138,9 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 	checkAgent := runtime.Agents["commerce"]
 	checkAgent.Command = executable
 	checkAgent.Args = []string{"-test.run=^TestProjectRunVerifierHelperProcess$"}
+	// verifierProcessHelperEnv is set in the parent only for the verifier. The
+	// check's allowlist intentionally excludes it; when SystemRoot is absent,
+	// this also exercises an allowlist with no inherited values.
 	checkAgent.Environment = []string{"SystemRoot"}
 	checkAgent.ProviderVersion = "fixture-v1"
 	checkAgent.Timeout = Duration(30 * time.Second)

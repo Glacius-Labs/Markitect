@@ -78,7 +78,8 @@ func runBrownfield(opts options, out io.Writer) error {
 			if err != nil {
 				return err
 			}
-			return writeJSON(out, brownfieldResult{Status: "resumed", Action: "resume", SessionDigest: session.Digest, Session: &session, Readiness: &readiness})
+			overview := overviewBrownfieldSession(session)
+			return writeJSON(out, brownfieldResult{Status: "resumed", Action: "resume", SessionDigest: session.Digest, Session: &overview, Readiness: &readiness})
 		}
 		if opts.brownfieldAction == "context" {
 			if opts.input == "" || opts.write || opts.expect != "" {
@@ -158,7 +159,8 @@ func runBrownfield(opts options, out io.Writer) error {
 			if _, err := projectadoption.WriteBrownfieldSession(sourceRoot, next, prior.Digest); err != nil {
 				return fmt.Errorf("model adoption was applied (plan %s, receipt candidate %s), but the Brownfield session receipt could not be recorded because its ledger compare-and-swap failed: %w; do not rerun apply-adoption automatically; inspect the target model and session ledger first", plan.PlanDigest, receipt.CandidateDigest, err)
 			}
-			return writeJSON(out, brownfieldResult{Status: "recorded", Action: "apply-adoption", PriorSessionDigest: prior.Digest, SessionDigest: next.Digest, Session: &next, Plan: &plan, Receipt: &receipt})
+			overview := overviewBrownfieldSession(next)
+			return writeJSON(out, brownfieldResult{Status: "recorded", Action: "apply-adoption", PriorSessionDigest: prior.Digest, SessionDigest: next.Digest, Session: &overview, Plan: &plan, Receipt: &receipt})
 		}
 		var next projectadoption.BrownfieldSession
 		var plan *projectadoption.AdoptionPlan
@@ -216,7 +218,8 @@ func runBrownfield(opts options, out io.Writer) error {
 				return planErr
 			}
 			plan = &planValue
-			return writeJSON(out, brownfieldResult{Status: "preview", Action: "plan", SessionDigest: prior.Digest, Session: &prior, Readiness: &readiness, Plan: plan})
+			overview := overviewBrownfieldSession(prior)
+			return writeJSON(out, brownfieldResult{Status: "preview", Action: "plan", SessionDigest: prior.Digest, Session: &overview, Readiness: &readiness, Plan: plan})
 		default:
 			return fmt.Errorf("unsupported Brownfield action %q", opts.brownfieldAction)
 		}
@@ -249,7 +252,8 @@ func emitBrownfieldSession(opts options, sourceRoot, action, priorDigest string,
 		}
 		status = "recorded"
 	}
-	return writeJSON(out, brownfieldResult{Status: status, Action: action, PriorSessionDigest: priorDigest, SessionDigest: session.Digest, Session: &session, Plan: plan})
+	overview := overviewBrownfieldSession(session)
+	return writeJSON(out, brownfieldResult{Status: status, Action: action, PriorSessionDigest: priorDigest, SessionDigest: session.Digest, Session: &overview, Plan: plan})
 }
 
 type brownfieldStartInput struct {
@@ -297,12 +301,103 @@ type brownfieldResult struct {
 	Action             string                                     `json:"action"`
 	PriorSessionDigest string                                     `json:"priorSessionDigest,omitempty"`
 	SessionDigest      string                                     `json:"sessionDigest"`
-	Session            *projectadoption.BrownfieldSession         `json:"session,omitempty"`
+	Session            *brownfieldSessionOverview                 `json:"session,omitempty"`
 	Readiness          *projectadoption.Readiness                 `json:"readiness,omitempty"`
 	Plan               *projectadoption.AdoptionPlan              `json:"plan,omitempty"`
 	ManagerContext     *projectadoption.ManagerReverseContext     `json:"managerContext,omitempty"`
 	IntegrationContext *projectadoption.ManagerIntegrationContext `json:"integrationContext,omitempty"`
 	Receipt            *projectadoption.AdoptionReceipt           `json:"receipt,omitempty"`
+}
+
+// brownfieldSessionOverview exposes only fixed bases and workflow metadata.
+// The durable ledger remains the full validator input, but CLI responses never
+// return unassigned source bodies or private Manager report content.
+type brownfieldSessionOverview struct {
+	APIVersion          string                        `json:"apiVersion"`
+	ID                  string                        `json:"id"`
+	Digest              string                        `json:"digest"`
+	Source              brownfieldSourceOverview      `json:"source"`
+	Target              brownfieldTargetOverview      `json:"target"`
+	TargetContextDigest string                        `json:"targetContextDigest"`
+	Scopes              []brownfieldScopeOverview     `json:"scopes"`
+	Iterations          []brownfieldIterationOverview `json:"iterations"`
+	Adoptions           []brownfieldAdoptionOverview  `json:"adoptions"`
+}
+
+type brownfieldSourceOverview struct {
+	Root                string `json:"root"`
+	DiscoveryID         string `json:"discoveryId"`
+	Commit              string `json:"commit"`
+	Digest              string `json:"digest"`
+	ScopeRootCount      int    `json:"scopeRootCount"`
+	SelectedPathCount   int    `json:"selectedPathCount"`
+	ExclusionCount      int    `json:"exclusionCount"`
+	UnselectedPathCount int    `json:"unselectedPathCount"`
+	EvidenceCount       int    `json:"evidenceCount"`
+}
+
+type brownfieldTargetOverview struct {
+	Root          string `json:"root"`
+	Revision      string `json:"revision"`
+	ProjectDigest string `json:"projectDigest"`
+	ModelDigest   string `json:"modelDigest"`
+}
+
+type brownfieldScopeOverview struct {
+	ScopeID string `json:"scopeId"`
+	Status  string `json:"status"`
+}
+
+type brownfieldIterationOverview struct {
+	ID                  string `json:"id"`
+	ParentIterationID   string `json:"parentIterationId,omitempty"`
+	ManagerID           string `json:"managerId"`
+	TargetContextDigest string `json:"targetContextDigest"`
+	ProposalDigest      string `json:"proposalDigest,omitempty"`
+	IntegrationDigest   string `json:"integrationDigest,omitempty"`
+	ResolutionDigest    string `json:"resolutionDigest,omitempty"`
+}
+
+type brownfieldAdoptionOverview struct {
+	IterationID     string `json:"iterationId"`
+	PlanDigest      string `json:"planDigest"`
+	ReceiptStatus   string `json:"receiptStatus"`
+	CandidateDigest string `json:"candidateDigest"`
+}
+
+func overviewBrownfieldSession(session projectadoption.BrownfieldSession) brownfieldSessionOverview {
+	result := brownfieldSessionOverview{
+		APIVersion: session.APIVersion, ID: session.ID, Digest: session.Digest,
+		Source: brownfieldSourceOverview{Root: session.Source.Identity.Root, DiscoveryID: session.Source.ID, Commit: session.Source.Commit,
+			Digest: session.Source.Digest, ScopeRootCount: len(session.Source.ScopeRoots), SelectedPathCount: len(session.Source.Selected),
+			ExclusionCount: len(session.Source.Exclusions), UnselectedPathCount: len(session.Source.Unselected), EvidenceCount: len(session.Source.Evidence)},
+		Target:              brownfieldTargetOverview{Root: session.Target.Root, Revision: session.Target.Revision, ProjectDigest: session.Target.ProjectDigest, ModelDigest: session.Target.ModelDigest},
+		TargetContextDigest: session.TargetContext.Digest,
+		Scopes:              make([]brownfieldScopeOverview, 0, len(session.Scopes)),
+		Iterations:          make([]brownfieldIterationOverview, 0, len(session.Iterations)),
+		Adoptions:           make([]brownfieldAdoptionOverview, 0, len(session.Adoptions)),
+	}
+	for _, scope := range session.Scopes {
+		result.Scopes = append(result.Scopes, brownfieldScopeOverview{ScopeID: scope.ScopeID, Status: scope.Status})
+	}
+	for _, iteration := range session.Iterations {
+		item := brownfieldIterationOverview{ID: iteration.ID, ParentIterationID: iteration.ParentIterationID, ManagerID: iteration.ManagerID, TargetContextDigest: iteration.TargetContextDigest}
+		if iteration.Proposal != nil {
+			item.ProposalDigest = iteration.Proposal.Digest
+		}
+		if iteration.Integration != nil {
+			item.IntegrationDigest = iteration.Integration.Digest
+		}
+		if iteration.Resolution != nil {
+			item.ResolutionDigest = iteration.Resolution.Digest
+		}
+		result.Iterations = append(result.Iterations, item)
+	}
+	for _, adoption := range session.Adoptions {
+		result.Adoptions = append(result.Adoptions, brownfieldAdoptionOverview{IterationID: adoption.IterationID, PlanDigest: adoption.Plan.PlanDigest,
+			ReceiptStatus: adoption.Receipt.Status, CandidateDigest: adoption.Receipt.CandidateDigest})
+	}
+	return result
 }
 
 func decodeClosedProjectJSON(data []byte, target any) error {

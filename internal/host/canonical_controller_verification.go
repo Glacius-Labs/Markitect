@@ -788,8 +788,8 @@ func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControl
 	})
 	run.Receipt = execution.Receipt
 	run.InputDigest, run.RunID = execution.Receipt.InputDigest, execution.Receipt.RunID
-	if run.InputDigest != verifierInputDigest {
-		return records.VerificationResult{}, run, errors.New("Verifier receipt input digest differs from the reconstructed request")
+	if err := canonicalControllerVerifierReceiptInputBinding(run.Receipt, verifierInputDigest, invokeErr); err != nil {
+		return records.VerificationResult{}, run, err
 	}
 	run.ReceiptDigest, err = digestCanonicalValue(execution.Receipt)
 	if err != nil {
@@ -884,6 +884,19 @@ func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControl
 	}
 	run.ResultID = verification.ID
 	return verification, run, nil
+}
+
+func canonicalControllerVerifierReceiptInputBinding(receipt agentexec.Receipt, expected string, invocationErr error) error {
+	if receipt.InputDigest == "" {
+		if invocationErr != nil {
+			return fmt.Errorf("Verifier invocation failed before producing a receipt: %w", invocationErr)
+		}
+		return errors.New("Verifier invocation returned no receipt")
+	}
+	if receipt.InputDigest != expected {
+		return errors.New("Verifier receipt input digest differs from the reconstructed request")
+	}
+	return nil
 }
 
 func canonicalControllerSemanticFindings(response agentexec.Response, invokeErr error, runOutcome string, checks []records.CheckResult) ([]records.VerificationFinding, string) {

@@ -3,6 +3,7 @@
 package agentexec
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,9 +12,12 @@ import (
 func TestPrivateLogWindowsDirectoryAndFileACL(t *testing.T) {
 	parent := t.TempDir()
 	directory := filepath.Join(parent, "private-logs")
+	if err := createPrivateLogDirectory(directory); err != nil {
+		t.Fatalf("create owner-only log directory: %v", err)
+	}
 	prepared, err := preparePrivateLogDirectory(directory, nil)
 	if err != nil {
-		t.Fatalf("create owner-only log directory: %v", err)
+		t.Fatalf("verify existing owner-only log directory: %v", err)
 	}
 	if filepath.Base(prepared) != filepath.Base(directory) {
 		t.Fatalf("prepared path = %q, want %q", prepared, directory)
@@ -34,6 +38,37 @@ func TestPrivateLogWindowsDirectoryAndFileACL(t *testing.T) {
 	}
 }
 
+func TestPrivateLogWindowsFileDefaultOwnerGroupIsNormalized(t *testing.T) {
+	parent := t.TempDir()
+	directory := filepath.Join(parent, "private-logs")
+	prepared, err := preparePrivateLogDirectory(directory, nil)
+	if err != nil {
+		t.Fatalf("create owner-only log directory: %v", err)
+	}
+	logPath := filepath.Join(prepared, "run.jsonl")
+	file, err := os.OpenFile(logPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatal(err)
+	}
+	currentSID, err := currentUserSID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	const administratorsSID = "S-1-5-32-544"
+	if currentSID == administratorsSID {
+		t.Skip("the current token user is itself BUILTIN\\Administrators")
+	}
+	if err := setPrivateObjectOwner(logPath, administratorsSID); err != nil {
+		t.Skipf("cannot construct an alternate default owner with this token: %v", err)
+	}
+	if err := verifyPrivateLogFile(logPath); err != nil {
+		t.Fatalf("file with inherited owner-only DACL should be pinned to the current user owner: %v", err)
+	}
+}
+
 func TestPrivateLogWindowsRejectsUnverifiedDirectoryACL(t *testing.T) {
 	directory := filepath.Join(t.TempDir(), "inherited-logs")
 	if err := os.Mkdir(directory, 0700); err != nil {
@@ -44,5 +79,21 @@ func TestPrivateLogWindowsRejectsUnverifiedDirectoryACL(t *testing.T) {
 	}
 	if err := verifyPrivateLogDirectory(directory); err == nil {
 		t.Fatal("rejected existing directory was unexpectedly changed into an accepted ACL")
+	}
+}
+
+func TestPrivateACEOwnerSIDSizeRejectsTruncatedSIDHeader(t *testing.T) {
+	for _, size := range []int{8, 9, 15} {
+		t.Run(fmt.Sprintf("%d-bytes", size), func(t *testing.T) {
+			if _, err := privateACEOwnerSIDSize(make([]byte, size)); err == nil {
+				t.Fatalf("expected %d-byte ACE body to fail before SID indexing", size)
+			}
+		})
+	}
+
+	ace := make([]byte, 16)
+	size, err := privateACEOwnerSIDSize(ace)
+	if err != nil || size != 8 {
+		t.Fatalf("minimum complete SID header size = %d, %v; want 8, nil", size, err)
 	}
 }

@@ -42,19 +42,29 @@ func TestManagerRunExecutorHelper(t *testing.T) {
 		os.Exit(32)
 	}
 	evidence := contextData.ManagerContext.Evidence[0]
+	var evidenceContent string
+	for _, artifact := range invocation.Request.Artifacts {
+		if artifact.Path == "evidence/"+evidence.EvidenceID+".txt" {
+			evidenceContent = string(artifact.Content)
+			break
+		}
+	}
+	if evidenceContent == "" {
+		os.Exit(33)
+	}
 	line := 0
-	for i, value := range strings.Split(evidence.Content, "\n") {
+	for i, value := range strings.Split(evidenceContent, "\n") {
 		if value != "" {
 			line = i + 1
 			break
 		}
 	}
 	if line == 0 {
-		os.Exit(33)
+		os.Exit(34)
 	}
 	scopeID := "orders"
 	claimID := "orders-claim"
-	excerpt := strings.Split(evidence.Content, "\n")[line-1]
+	excerpt := strings.Split(evidenceContent, "\n")[line-1]
 	draft := DistillationDraft{
 		Claims: []DistillationDraftClaim{{ID: claimID, ScopeID: scopeID, Kind: "observation", Method: "static-source", Statement: "The selected source defines order behavior.",
 			Evidence: []EvidenceRef{{EvidenceID: evidence.EvidenceID, StartLine: line, EndLine: line, Excerpt: excerpt}}, Uncertainty: []string{}, RuntimeObservationJSON: ""}},
@@ -392,6 +402,84 @@ func TestManagerRunBudgetCannotRefillFromChangedRuntime(t *testing.T) {
 	newCost, known := managerRunCost(usage, effective)
 	if !known || newCost <= 0 {
 		t.Fatalf("current Manager's explicit price was not used for its own call: cost=%d known=%v", newCost, known)
+	}
+}
+
+func TestManagerRequestContractDigestCoversStaticInputsAndIgnoresOnlyRemainingBudget(t *testing.T) {
+	base := managerRunRequestContext{Kind: "proposal", Instructions: "instructions", Phase: ManagerRunPhasePropose,
+		SessionDigest: "session", DiscoveryDigest: "discovery", TargetDigest: "target",
+		ManagerContext: ManagerReverseContext{APIVersion: "context-v1", SessionDigest: "session", IterationID: "root", Digest: "manager-context"},
+		Integration:    &ManagerIntegrationContext{APIVersion: "integration-v1", SessionDigest: "session", IterationID: "root", Digest: "child-context"},
+		ModelSchema:    map[string]any{"kind": "Statement", "version": 1}, Schema: json.RawMessage(`{"type":"object"}`),
+		Budget: ManagerRunContextBudget{RemainingStarts: 4, RemainingRetries: 2, RemainingDuration: time.Minute, RemainingCostMicros: 100, RequestedTimeout: 5 * time.Second}}
+	request := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: "source-revision", ModelDigest: "sha256:source",
+		ModulePin: "module-v1", ProjectionID: "brownfield-manager-propose", ScopeIDs: []string{"root"}, PolicyIDs: []string{"report-only"},
+		Artifacts: []agentexec.Artifact{{Path: "evidence/one.txt", Mode: "0644", Digest: "evidence-digest", Content: []byte("assigned evidence")}}}
+	request.Context, _ = json.Marshal(base)
+	baseDigest, err := managerRequestContractDigest(request, base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	baseFullRequestDigest := digestValue(request)
+
+	volatile := base
+	volatile.Budget.RemainingStarts = 3
+	volatile.Budget.RemainingRetries = 1
+	volatile.Budget.RemainingDuration = 30 * time.Second
+	volatile.Budget.RemainingCostMicros = 90
+	request.Context, _ = json.Marshal(volatile)
+	volatileDigest, err := managerRequestContractDigest(request, volatile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if volatileDigest != baseDigest {
+		t.Fatal("remaining budget counters changed the stable request contract")
+	}
+	if digestValue(request) == baseFullRequestDigest {
+		t.Fatal("full request digest should remain sensitive to current remaining budget")
+	}
+
+	mutations := []struct {
+		name string
+		edit func(*managerRunRequestContext, *agentexec.Request)
+	}{
+		{"instructions", func(ctx *managerRunRequestContext, _ *agentexec.Request) { ctx.Instructions += " changed" }},
+		{"response schema", func(ctx *managerRunRequestContext, _ *agentexec.Request) {
+			ctx.Schema = json.RawMessage(`{"type":"array"}`)
+		}},
+		{"active model schema", func(ctx *managerRunRequestContext, _ *agentexec.Request) {
+			ctx.ModelSchema = map[string]any{"kind": "different"}
+		}},
+		{"integration report binding", func(ctx *managerRunRequestContext, _ *agentexec.Request) {
+			ctx.Integration.Digest = "different-child-context"
+		}},
+		{"artifact content", func(_ *managerRunRequestContext, req *agentexec.Request) {
+			req.Artifacts[0].Content = []byte("different assigned evidence")
+		}},
+		{"semantic envelope", func(_ *managerRunRequestContext, req *agentexec.Request) {
+			req.PolicyIDs = []string{"different-policy"}
+		}},
+		{"requested timeout", func(ctx *managerRunRequestContext, _ *agentexec.Request) { ctx.Budget.RequestedTimeout++ }},
+	}
+	for _, test := range mutations {
+		t.Run(test.name, func(t *testing.T) {
+			contextCopy := base
+			if base.Integration != nil {
+				integrationCopy := *base.Integration
+				contextCopy.Integration = &integrationCopy
+			}
+			requestCopy := request
+			requestCopy.Artifacts = append([]agentexec.Artifact{}, request.Artifacts...)
+			requestCopy.PolicyIDs = append([]string{}, request.PolicyIDs...)
+			test.edit(&contextCopy, &requestCopy)
+			got, err := managerRequestContractDigest(requestCopy, contextCopy)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got == baseDigest {
+				t.Fatal("static request mutation did not change the contract digest")
+			}
+		})
 	}
 }
 

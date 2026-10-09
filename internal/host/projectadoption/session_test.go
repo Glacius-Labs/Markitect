@@ -155,7 +155,7 @@ func TestSessionLedgerRejectsSymlinkedControlPlane(t *testing.T) {
 
 func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t *testing.T) {
 	root, sourceCommit := committedRepository(t, map[string]string{
-		"src/orders.go":  "package orders\nfunc Order() {}\n",
+		"src/orders.go":  "package orders\nfunc Order() {}\n// another valid source line\n",
 		"docs/orders.md": "Orders are managed by the order module.\n",
 	})
 	gitRun(t, root, "checkout", "-b", "codex/brownfield-manager-fixture")
@@ -240,6 +240,9 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 		t.Fatal("child Manager must not cite evidence outside its assignment")
 	}
 	childReport := sessionReport(discovery, "orders-code", "orders", "func Order() {}", "Order code declares the order module.")
+	childReport.Terms = []Term{{ID: "order-term", Text: "Order", Context: "The selected implementation names the order operation.",
+		Occurrences: []TermOccurrence{{EvidenceID: "orders-code", StartLine: 2, EndLine: 2, Excerpt: "func Order() {}"}}, Synonyms: []string{}, Ambiguities: []string{}}}
+	SealDistillation(&childReport)
 	publicOrderContract := ManagerPublicContract{Contract: DistillationTargetContract{ID: "orders.accept-order", Name: "accept-order", Namespace: "orders", Owner: childManager.ID, Category: "use-case", Description: "Accept a valid order.", Uses: []string{}, Requires: []string{}}, ClaimIDs: []string{"orders-claim"}}
 	submanager := ProposedManager{ID: "orders-submanager", Name: "Orders Submanager", Purpose: "Inspect order implementation details.", ParentID: childManager.ID, EvidenceIDs: []string{"orders-code"}}
 	childProposal := ManagerProposal{ManagerID: childManager.ID, EvidenceIDs: []string{"orders-code"}, Hierarchy: []ProposedManager{submanager}, PublicContracts: []ManagerPublicContract{publicOrderContract}, Report: childReport}
@@ -254,6 +257,8 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 	}
 	childDigest := childIteration.Iterations[1].Proposal.Digest
 	integrated := sessionReport(discovery, "orders-code", "orders", "func Order() {}", "Integrated order contract.")
+	integrated.Terms = []Term{{ID: "order-term", Text: "Order", Context: "The selected implementation names the order operation.",
+		Occurrences: []TermOccurrence{{EvidenceID: "orders-code", StartLine: 2, EndLine: 2, Excerpt: "func Order() {}"}}, Synonyms: []string{}, Ambiguities: []string{}}}
 	integrated.Claims = append(integrated.Claims, Claim{ID: "root-orders-intent", ScopeID: "orders", Kind: "documented-intent", Method: "documentation", Statement: "The documentation assigns order management to the order module.",
 		Evidence: []EvidenceRef{{EvidenceID: "orders-doc", StartLine: 1, EndLine: 1, Excerpt: "Orders are managed by the order module."}}, Uncertainty: []string{}})
 	integrated.Scopes[0].ClaimIDs = []string{"orders-claim", "root-orders-intent"}
@@ -301,6 +306,26 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 	}
 	integration.ChildIntegrationDigests = []ChildIntegrationDigest{{ManagerID: childManager.ID, ProposalDigest: childDigest,
 		IntegrationDigest: childIteration.Iterations[1].Integration.Digest, ReportDigest: childFinalReport.Digest}}
+	unauthorizedReport := integrated
+	unauthorizedReport.Claims = append([]Claim(nil), integrated.Claims...)
+	unauthorizedReport.Claims[0].Evidence = append([]EvidenceRef(nil), integrated.Claims[0].Evidence...)
+	unauthorizedReport.Claims[0].Evidence[0] = EvidenceRef{EvidenceID: "orders-code", StartLine: 1, EndLine: 1, Excerpt: "package orders"}
+	SealDistillation(&unauthorizedReport)
+	unauthorizedIntegration := integration
+	unauthorizedIntegration.Report = unauthorizedReport
+	if _, err := IntegrateManagerProposal(childIteration, "root", session.TargetContext.RootManagerID, unauthorizedIntegration); err == nil {
+		t.Fatal("parent integration must not invent a new valid line citation from delegated evidence")
+	}
+	unauthorizedTermReport := integrated
+	unauthorizedTermReport.Terms = append([]Term(nil), integrated.Terms...)
+	unauthorizedTermReport.Terms[0].Occurrences = append([]TermOccurrence(nil), integrated.Terms[0].Occurrences...)
+	unauthorizedTermReport.Terms[0].Occurrences[0] = TermOccurrence{EvidenceID: "orders-code", StartLine: 1, EndLine: 1, Excerpt: "package orders"}
+	SealDistillation(&unauthorizedTermReport)
+	unauthorizedTermIntegration := integration
+	unauthorizedTermIntegration.Report = unauthorizedTermReport
+	if _, err := IntegrateManagerProposal(childIteration, "root", session.TargetContext.RootManagerID, unauthorizedTermIntegration); err == nil {
+		t.Fatal("parent integration must not invent a new term occurrence from delegated evidence")
+	}
 	childIteration, err = IntegrateManagerProposal(childIteration, "root", session.TargetContext.RootManagerID, integration)
 	if err != nil {
 		t.Fatalf("parent integration should bind its child's public proposal: %v", err)

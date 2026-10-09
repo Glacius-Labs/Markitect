@@ -435,7 +435,10 @@ func checkExecutableUnchanged(check CheckPlan) error {
 }
 
 func explicitEnvironment(names []string) []string {
-	var env []string
+	// A non-nil empty slice is important: exec.Cmd treats nil Env as inherit
+	// all of the caller's environment, which violates this allowlist when none
+	// of the selected variables are set.
+	env := make([]string, 0, len(names))
 	for _, name := range names {
 		if value, ok := os.LookupEnv(name); ok {
 			env = append(env, name+"="+value)

@@ -43,6 +43,7 @@ var (
 	procConvertStringSDDLToSD        = privateAdvapi32.NewProc("ConvertStringSecurityDescriptorToSecurityDescriptorW")
 	procGetNamedSecurityInfo         = privateAdvapi32.NewProc("GetNamedSecurityInfoW")
 	procGetSecurityDescriptorControl = privateAdvapi32.NewProc("GetSecurityDescriptorControl")
+	procSetNamedSecurityInfo         = privateAdvapi32.NewProc("SetNamedSecurityInfoW")
 )
 
 func createPrivateLogDirectory(path string) error {
@@ -50,7 +51,11 @@ func createPrivateLogDirectory(path string) error {
 	if err != nil {
 		return err
 	}
-	sddl, err := syscall.UTF16PtrFromString(fmt.Sprintf("D:P(A;OICI;FA;;;%s)", sid))
+	// Set the owner explicitly. Elevated Windows tokens can use an owner group
+	// (for example BUILTIN\\Administrators) as their default object owner even
+	// when the token's user SID is runneradmin. The DACL remains protected and
+	// grants access only to that user SID.
+	sddl, err := syscall.UTF16PtrFromString(fmt.Sprintf("O:%sD:P(A;OICI;FA;;;%s)", sid, sid))
 	if err != nil {
 		return err
 	}
@@ -76,9 +81,12 @@ func createPrivateLogDirectory(path string) error {
 		InheritHandle:      0,
 	}
 	if err := syscall.CreateDirectory(pathPtr, &attributes); err != nil {
-		return err
+		return fmt.Errorf("CreateDirectoryW: %w", err)
 	}
-	return verifyPrivateLogDirectory(path)
+	if err := verifyPrivateLogDirectory(path); err != nil {
+		return fmt.Errorf("verify created private log directory: %w", err)
+	}
+	return nil
 }
 
 func verifyPrivateLogDirectory(path string) error {
@@ -93,10 +101,35 @@ func verifyPrivateLogFile(path string) error {
 	if err != nil || !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
 		return errors.New("private log must be a regular non-reparse file")
 	}
+	if err := verifyPrivateObjectACL(path, false); err == nil {
+		return nil
+	} else if !errors.Is(err, errPrivateLogOwnerMismatch) {
+		return err
+	}
+	// Files created beneath a protected directory inherit its DACL, but Windows
+	// may assign the token's default owner group. First verify the complete
+	// owner-only DACL while allowing only that owner mismatch, then set the file
+	// owner to the current user and run the strict verification again.
+	if err := verifyPrivateObjectACLWithOwner(path, false, false); err != nil {
+		return err
+	}
+	ownerSID, err := currentUserSID()
+	if err != nil {
+		return err
+	}
+	if err := setPrivateObjectOwner(path, ownerSID); err != nil {
+		return err
+	}
 	return verifyPrivateObjectACL(path, false)
 }
 
+var errPrivateLogOwnerMismatch = errors.New("private log owner differs from the current user")
+
 func verifyPrivateObjectACL(path string, directory bool) error {
+	return verifyPrivateObjectACLWithOwner(path, directory, true)
+}
+
+func verifyPrivateObjectACLWithOwner(path string, directory, requireCurrentUserOwner bool) error {
 	expectedOwner, err := currentUserSID()
 	if err != nil {
 		return err
@@ -119,6 +152,9 @@ func verifyPrivateObjectACL(path string, directory bool) error {
 		uintptr(unsafe.Pointer(&descriptor)),
 	)
 	if result != 0 || descriptor == 0 {
+		if result != 0 {
+			return fmt.Errorf("GetNamedSecurityInfoW: %w", syscall.Errno(uint32(result)))
+		}
 		return winCallError(callErr, "private log access list could not be read")
 	}
 	defer syscall.LocalFree(syscall.Handle(descriptor))
@@ -126,8 +162,11 @@ func verifyPrivateObjectACL(path string, directory bool) error {
 		return errors.New("private log access list is absent")
 	}
 	ownerSID, err := owner.String()
-	if err != nil || ownerSID != expectedOwner {
-		return errors.New("private log owner differs from the current user")
+	if err != nil {
+		return errors.New("private log owner could not be read")
+	}
+	if requireCurrentUserOwner && ownerSID != expectedOwner {
+		return errPrivateLogOwnerMismatch
 	}
 	if directory {
 		var control uint16
@@ -166,12 +205,9 @@ func verifyPrivateObjectACL(path string, directory bool) error {
 	} else if flags & ^byte(objectInheritACE|containerInheritACE|inheritedACE) != 0 {
 		return errors.New("private log file access entry has unexpected flags")
 	}
-	if len(ace) < 8 {
-		return errors.New("private log access entry has no owner identity")
-	}
-	sidSize := 8 + int(ace[9])*4
-	if sidSize > len(ace)-8 {
-		return errors.New("private log access entry has a truncated owner identity")
+	sidSize, err := privateACEOwnerSIDSize(ace)
+	if err != nil {
+		return err
 	}
 	aceSID := (*syscall.SID)(unsafe.Pointer(&ace[8]))
 	if int(aceSID.Len()) != sidSize {
@@ -180,6 +216,44 @@ func verifyPrivateObjectACL(path string, directory bool) error {
 	aceOwnerSID, err := aceSID.String()
 	if err != nil || aceOwnerSID != expectedOwner {
 		return errors.New("private log access entry grants a different identity")
+	}
+	return nil
+}
+
+func privateACEOwnerSIDSize(ace []byte) (int, error) {
+	// An allowed ACE needs its header and mask (8 bytes), followed by the
+	// fixed 8-byte SID header before the subauthority count at offset 9 is safe
+	// to read.
+	if len(ace) < 16 {
+		return 0, errors.New("private log access entry has a truncated owner identity")
+	}
+	sidSize := 8 + int(ace[9])*4
+	if sidSize > len(ace)-8 {
+		return 0, errors.New("private log access entry has a truncated owner identity")
+	}
+	return sidSize, nil
+}
+
+func setPrivateObjectOwner(path, sid string) error {
+	owner, err := syscall.StringToSid(sid)
+	if err != nil {
+		return errors.New("current Windows user identity could not be represented as a SID")
+	}
+	pathPtr, err := syscall.UTF16PtrFromString(filepath.Clean(path))
+	if err != nil {
+		return err
+	}
+	result, _, _ := procSetNamedSecurityInfo.Call(
+		uintptr(unsafe.Pointer(pathPtr)),
+		seFileObject,
+		ownerSecurityInformation,
+		uintptr(unsafe.Pointer(owner)),
+		0,
+		0,
+		0,
+	)
+	if result != 0 {
+		return fmt.Errorf("SetNamedSecurityInfoW: %w", syscall.Errno(uint32(result)))
 	}
 	return nil
 }

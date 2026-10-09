@@ -446,8 +446,8 @@ func normalizeConfig(input Config) (Config, error) {
 			return Config{}, errors.New("runtime files contain a duplicate path")
 		}
 		seen[key] = struct{}{}
-		if file.Mode != "0444" && file.Mode != "0644" && file.Mode != "0600" && file.Mode != "0755" {
-			return Config{}, errors.New("runtime file mode must be 0444, 0600, 0644, or 0755")
+		if file.Mode != "0444" && file.Mode != "0644" && file.Mode != "0600" && file.Mode != "0700" && file.Mode != "0755" {
+			return Config{}, errors.New("runtime file mode must be 0444, 0600, 0644, 0700, or 0755")
 		}
 		if !validDigest(file.Digest) {
 			return Config{}, errors.New("runtime file digest must be sha256")

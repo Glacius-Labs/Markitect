@@ -175,7 +175,7 @@ func managerRunAttemptResult(session BrownfieldSession, ledger ManagerRunLedger,
 
 func recoverManagerRunStage(sourceRoot, targetRoot string, session BrownfieldSession, ledger ManagerRunLedger, event ManagerRunEvent, preview ManagerRunPreview, invoker ManagerRunInvoker, config agentexec.Config) (ManagerRunResult, error) {
 	result := managerRunAttemptResult(session, ledger, event, "stage-recovery")
-	if event.Status != "succeeded" || event.SessionDigest != session.Digest || event.ContextDigest != preview.ContextDigest || event.ConfigFingerprint != preview.ConfigFingerprint ||
+	if event.Status != "succeeded" || event.SessionDigest != session.Digest || event.ContextDigest != preview.ContextDigest || event.RequestContractDigest != preview.RequestContractDigest || event.ConfigFingerprint != preview.ConfigFingerprint ||
 		event.RuntimeFileDigest != preview.RuntimeFileDigest || event.LimitsDigest != preview.LimitsDigest || event.Execution == nil || event.ExecutionDigest != digestValue(*event.Execution) {
 		return result, errors.New("prior successful Manager receipt cannot be recovered against the current session")
 	}
