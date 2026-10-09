@@ -1,0 +1,193 @@
+{
+  "sourceCommit": "9c8a46fd3918dc7a5647d09eb054de83f245ea2f",
+  "frozenUtc": "2026-10-09T03:08:16.488602+00:00",
+  "status": "NOT ADMITTED / before independent readonly review",
+  "manifest": [
+    {
+      "path": "binding/command-plan.json",
+      "workingSha256": "9d9b635eec2fe29900cb43fc1e0e51712fa3027490514409edf73c9cbc1ffda3",
+      "bytes": 3552,
+      "sealedSourceGitBlob": "9f1ddebb2bc11dd3864af9fd3543adc562f22beb",
+      "sealedSourceGitSha256": "9d9b635eec2fe29900cb43fc1e0e51712fa3027490514409edf73c9cbc1ffda3"
+    },
+    {
+      "path": "binding/common-profile-proposal.json",
+      "workingSha256": "7d487a0831f88f8703cc80fab14573d33141f5cfcd9f477ff7541ff3f50e6580",
+      "bytes": 13874,
+      "sealedSourceGitBlob": "0f0f6fbf2b9d29ed0c6b48f839fd1b1fcf0df011",
+      "sealedSourceGitSha256": "7d487a0831f88f8703cc80fab14573d33141f5cfcd9f477ff7541ff3f50e6580"
+    },
+    {
+      "path": "binding/offline_contract_check.py",
+      "workingSha256": "e6db419e04ab6c0993b9494ec6f7d3cff411f3145f6590a56176a6d2a38346c8",
+      "bytes": 6546,
+      "sealedSourceGitBlob": "cc8c9b4b7a857800334cce92cd469bfb39835e47",
+      "sealedSourceGitSha256": "e6db419e04ab6c0993b9494ec6f7d3cff411f3145f6590a56176a6d2a38346c8"
+    },
+    {
+      "path": "binding/source-assessment.json",
+      "workingSha256": "24325b31e8123f43000b7e58daa808e9a41d1ed76edaf1a448d40b1558525e44",
+      "bytes": 1514,
+      "sealedSourceGitBlob": "f1268841979a228531d42cb9206a97b79acba039",
+      "sealedSourceGitSha256": "24325b31e8123f43000b7e58daa808e9a41d1ed76edaf1a448d40b1558525e44"
+    },
+    {
+      "path": "evidence/design-metadata-summary.json",
+      "workingSha256": "c96781df611d5f65013019fc90957118f16b6f005b487b8a42a726caee29eacf",
+      "bytes": 2928,
+      "sealedSourceGitBlob": "4ea8ba7c25b4acf5a1fd9da2aa39ad83fc8066b4",
+      "sealedSourceGitSha256": "c96781df611d5f65013019fc90957118f16b6f005b487b8a42a726caee29eacf"
+    },
+    {
+      "path": "evidence/offline-check-receipt.json",
+      "workingSha256": "e15c400038d732c2ccd072c479453fad6afceff99691c59beb7ce2497064d5a7",
+      "bytes": 572,
+      "sealedSourceGitBlob": "b397e9b10e747109cc0adfc1327e44c21d0acbbe",
+      "sealedSourceGitSha256": "e15c400038d732c2ccd072c479453fad6afceff99691c59beb7ce2497064d5a7"
+    },
+    {
+      "path": "evidence/offline-check.stderr.txt",
+      "workingSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "sealedSourceGitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sealedSourceGitSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/offline-check.stdout.json",
+      "workingSha256": "90fbefebb804e380e7d89c9f48193bea3f9040ae0817331cf9f7d05640685ae1",
+      "bytes": 765,
+      "sealedSourceGitBlob": "6f1cb9a0b42b1005d463a7c556a1b1abe3530635",
+      "sealedSourceGitSha256": "90fbefebb804e380e7d89c9f48193bea3f9040ae0817331cf9f7d05640685ae1"
+    },
+    {
+      "path": "evidence/public-source-bindings.json",
+      "workingSha256": "7781acc656d978b5e5d53399152890b62dc55460a7dd28940a11a46f32a03a98",
+      "bytes": 3845,
+      "sealedSourceGitBlob": "92339309db3c8a69b1274325676d01e6099bb7cf",
+      "sealedSourceGitSha256": "7781acc656d978b5e5d53399152890b62dc55460a7dd28940a11a46f32a03a98"
+    },
+    {
+      "path": "evidence/root-grant.json",
+      "workingSha256": "980431cecb5d1d4ee7630f4d1bca5c0469f60ebd4ee1667abafa65646e4553b1",
+      "bytes": 6571,
+      "sealedSourceGitBlob": "f9c8686cd5dc16c63a0ea2fe8a0d0227b0ee2a8f",
+      "sealedSourceGitSha256": "980431cecb5d1d4ee7630f4d1bca5c0469f60ebd4ee1667abafa65646e4553b1"
+    },
+    {
+      "path": "evidence/study-input-bindings.json",
+      "workingSha256": "7f49a7c9f442d9aa21496cff00b3b54d5275f1598b12fb71f613cb3c5463edbb",
+      "bytes": 6727,
+      "sealedSourceGitBlob": null,
+      "sealedSourceGitSha256": null
+    },
+    {
+      "path": "proposal.md",
+      "workingSha256": "9f15623e824687349008795aaca669496978591c09d0e1050dde6c4d31acb4df",
+      "bytes": 6121,
+      "sealedSourceGitBlob": "b14258ac254f25f62402a3c1d4e0c5e10bc5d526",
+      "sealedSourceGitSha256": "9f15623e824687349008795aaca669496978591c09d0e1050dde6c4d31acb4df"
+    },
+    {
+      "path": "public-source/classic/dotnet.go",
+      "workingSha256": "331f44e452645253278c666d49ee4f61e466cd02640c0d40df0b76173e2be186",
+      "bytes": 5108,
+      "sealedSourceGitBlob": "fd8047c6211bf2a3013292bfc8c4bc4cdb335edd",
+      "sealedSourceGitSha256": "331f44e452645253278c666d49ee4f61e466cd02640c0d40df0b76173e2be186"
+    },
+    {
+      "path": "public-source/classic/proposal.go",
+      "workingSha256": "bd523a35779a968fd3a7ad17a96fbaf722041c3c05c5bb7de553f04f9ccf2197",
+      "bytes": 19780,
+      "sealedSourceGitBlob": "ce2539be44348c3ec51a9db5e19dff753958e27a",
+      "sealedSourceGitSha256": "bd523a35779a968fd3a7ad17a96fbaf722041c3c05c5bb7de553f04f9ccf2197"
+    },
+    {
+      "path": "public-source/docs/project-workflow.md",
+      "workingSha256": "d212852da496897bf53869cc6ae4cd478b381edcb33d7d9a7cc263b23a3b518b",
+      "bytes": 21911,
+      "sealedSourceGitBlob": "b75927f4ce5e46ce913dffa11f4047b3f9f9601f",
+      "sealedSourceGitSha256": "d212852da496897bf53869cc6ae4cd478b381edcb33d7d9a7cc263b23a3b518b"
+    },
+    {
+      "path": "public-source/internal/host/agentexec/process_windows.go",
+      "workingSha256": "d703c475828a77bc460089cfd2d121bc8a001b10feedd66bff8591fb330ce23b",
+      "bytes": 5251,
+      "sealedSourceGitBlob": "0e4a64d94786a4509d43ccbe00d05690a41d63e3",
+      "sealedSourceGitSha256": "d703c475828a77bc460089cfd2d121bc8a001b10feedd66bff8591fb330ce23b"
+    },
+    {
+      "path": "public-source/internal/host/agentexec/runner.go",
+      "workingSha256": "8fbf9f1cee4ffdf52be5b63a69022a602ac3e252005d4f2aed390359bcaa90b9",
+      "bytes": 36052,
+      "sealedSourceGitBlob": "d164a47fed3dc19a3a2ec4103fb7b75c840deb13",
+      "sealedSourceGitSha256": "8fbf9f1cee4ffdf52be5b63a69022a602ac3e252005d4f2aed390359bcaa90b9"
+    },
+    {
+      "path": "public-source/internal/host/agentexec/types.go",
+      "workingSha256": "c9b1d583611e1ca63cac5ad30a12e959d3d0f00e3a249501c39a1034ff14151f",
+      "bytes": 5590,
+      "sealedSourceGitBlob": "5382d256c21cc23eb4a6b1b120b547a39f3ad7c6",
+      "sealedSourceGitSha256": "c9b1d583611e1ca63cac5ad30a12e959d3d0f00e3a249501c39a1034ff14151f"
+    },
+    {
+      "path": "public-source/internal/host/projectrun/config.go",
+      "workingSha256": "f7c124db136ea65e82ac35dd0a3376741af0cf7f8ce10595da4c8a06fc63ede0",
+      "bytes": 9348,
+      "sealedSourceGitBlob": "5606a5a7c265e488862e1fb14d3e3d046367b508",
+      "sealedSourceGitSha256": "f7c124db136ea65e82ac35dd0a3376741af0cf7f8ce10595da4c8a06fc63ede0"
+    },
+    {
+      "path": "public-source/internal/host/projectrun/invoker.go",
+      "workingSha256": "ec55c5ec2c059d4c9f9d573224f8898cdc867a2606e76ccaa7ab835d9bb1c83e",
+      "bytes": 624,
+      "sealedSourceGitBlob": "7b555c53e39bbe8926d68d3f26e13a57d73cdbba",
+      "sealedSourceGitSha256": "ec55c5ec2c059d4c9f9d573224f8898cdc867a2606e76ccaa7ab835d9bb1c83e"
+    },
+    {
+      "path": "public-source/internal/host/projectrun/protocol.go",
+      "workingSha256": "51baa2bec10468e5f117388a3be9f98b51e4cee8c74268932dfe3d0c20c1ece0",
+      "bytes": 9949,
+      "sealedSourceGitBlob": "cfb9a79c95915a4182f905923f47d0c10578b3e9",
+      "sealedSourceGitSha256": "51baa2bec10468e5f117388a3be9f98b51e4cee8c74268932dfe3d0c20c1ece0"
+    },
+    {
+      "path": "public-source/internal/host/projectrun/review.go",
+      "workingSha256": "8611a8f4893fe88abd1028f183e7f5cabcb7b644a022deaaab3acd1834657062",
+      "bytes": 25688,
+      "sealedSourceGitBlob": "f41db5e59ca2a405dd5f180e20db38ac84c54800",
+      "sealedSourceGitSha256": "8611a8f4893fe88abd1028f183e7f5cabcb7b644a022deaaab3acd1834657062"
+    },
+    {
+      "path": "public-source/internal/host/projectrun/run.go",
+      "workingSha256": "63d78289770d71fbfc1b21f39d6d7843f40c65b7d295da79f0bf6606c4ec603d",
+      "bytes": 88503,
+      "sealedSourceGitBlob": "04595019a62cfcc39cafb2e04020e9e584ab3fb1",
+      "sealedSourceGitSha256": "63d78289770d71fbfc1b21f39d6d7843f40c65b7d295da79f0bf6606c4ec603d"
+    },
+    {
+      "path": "public-source/internal/host/projectrun/types.go",
+      "workingSha256": "f83d4307665bbf30dfbfc9a594de44896120439b37b1160eb6b4d3ce74eda6bb",
+      "bytes": 20063,
+      "sealedSourceGitBlob": "fbe9526f976e4b4cdbf2f94325fa7110251a5bb1",
+      "sealedSourceGitSha256": "f83d4307665bbf30dfbfc9a594de44896120439b37b1160eb6b4d3ce74eda6bb"
+    },
+    {
+      "path": "public-source/internal/host/projectrun/verify.go",
+      "workingSha256": "30f536c436a316f1849761985d421fa6f3247f10e6c5f0385050451e2172df15",
+      "bytes": 21532,
+      "sealedSourceGitBlob": "68250630a5ece533f2381a3a2c86e66f1602f531",
+      "sealedSourceGitSha256": "30f536c436a316f1849761985d421fa6f3247f10e6c5f0385050451e2172df15"
+    },
+    {
+      "path": "public-source/internal/tooling/codexrunner/runner.py",
+      "workingSha256": "477b4895567d386abf4d3e7105e14d9cee939df97d34183f67f20a23256f6c67",
+      "bytes": 56540,
+      "sealedSourceGitBlob": "8bf04e340758dfb453a3e7facc2e8b9e90eaf0db",
+      "sealedSourceGitSha256": "477b4895567d386abf4d3e7105e14d9cee939df97d34183f67f20a23256f6c67"
+    }
+  ],
+  "rawArchive": "pre-review-raw-freeze.zip",
+  "rawArchiveSha256": "8d1837e0f959d91190aebc3edfb76448dc4f2c9f9eddf7d7d359ab05dcbf5339",
+  "workingVersusGitNormalizationDifferences": 0,
+  "boundary": "Raw archive preserves original exact pre-review bytes; Git object hashes recorded separately, not presumed equal after line normalization. Anchor and review outputs excluded. No frozen source/config/command changes after review."
+}
