@@ -1,5 +1,7 @@
 # Umsetzungsvertrag und Teamaufteilung
 
+Die spätere [Nutzerpräzisierung zu Operationsumfang und Modellbriefings](operation-scopes-and-model-briefings.md) definiert zusätzliche Produktanforderungen und den Quellabgleich an `11f080815722089d84869fef536b94cae9321e74`. Sie unterscheidet gezielte Implementierung von vollständigem Verify, Cleanup und Reconcile über alle Manager und ergänzt Strictness sowie Briefings. Die folgenden technischen Verträge beschreiben den bisherigen Sourcekandidaten; neue Operationsnamen und Briefingzustände sind damit nicht implementiert.
+
 Status: konkrete, koordinierte Implementierung des Nutzerauftrags auf der frisch abgefragten Hauptlinie `a97cbd5ef3e0b22b9e6397501047a4e01dc90204`. Integration erfolgt lokal auf `codex/model-driven-delivery`. Die ursprüngliche Planung bei `d3f3b43` bleibt erhalten. Kein Push, Release oder Eingriff in andere aktive Arbeitskopien ist Teil dieses Auftrags.
 
 ## Gewählte technische Abbildung

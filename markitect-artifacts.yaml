@@ -1846,6 +1846,8 @@ spec:
       owner: project-world-implementation
     - path: docs/design/project-world/model-first-user-workflow.md
       owner: project-world-implementation
+    - path: docs/design/project-world/operation-scopes-and-model-briefings.md
+      owner: project-world-implementation
     - path: docs/design/project-world/implementation-plan.md
       owner: project-world-implementation
     - path: docs/design/project-world/model.md

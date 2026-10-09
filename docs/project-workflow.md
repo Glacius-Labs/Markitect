@@ -6,6 +6,8 @@ An AI author can inspect the active project-model contract with `markitect proje
 
 The [9 October user direction](design/project-world/model-first-user-workflow.md) specifies the next workflow: contributor-provider onboarding, guided Explore until the first successful Apply, configurable Managers, generated documentation under a configurable root `docs/`, complete file classification and iterative reverse adoption before cleanup. Those are requirements, not additional commands or behavior provided by the current CLI described below.
 
+The subsequent [operation scope and model briefing direction](design/project-world/operation-scopes-and-model-briefings.md) requires impact-scoped implementation but full Manager verification, model-preserving Cleanup, full-scope Reconcile, configurable review depth and persistent change briefings. Current `project verify` remains the integrated-run verification described below; the new all-Manager snapshot operation and notification lifecycle are not yet implemented.
+
 ## Choose the executable
 
 The published CLI and a source candidate are different tools. Install or upgrade the released CLI only through the documented versioned, verified release bundle. Until this project workflow is released, run it from the exact Markitect source checkout being evaluated:

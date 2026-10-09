@@ -6,6 +6,8 @@ Das Ziel ist ein typisiertes, kanonisches Weltbild, das das gewünschte System, 
 
 Diese Präzisierung besitzt den neuen Benutzerablauf, die vollständige Dateiabdeckung und die Brownfield-Rückführung. Bei abweichenden früheren Produktvorschlägen im [Planungspaket](README.md) gilt diese Richtung. Der [Umsetzungsvertrag](delivery-contract.md) und der [CLI-Arbeitsablauf](../../project-workflow.md) bleiben die Beschreibung der jeweils tatsächlich vorhandenen Technik; eine neue Anforderung ändert deren Implementierungsstatus nicht.
 
+Die spätere [Operations- und Briefingpräzisierung](operation-scopes-and-model-briefings.md) konkretisiert den Abschluss: Apply implementiert gezielt, Verify beurteilt alle Verantwortungen ohne Reparatur, Cleanup verbessert innerhalb des geltenden Weltbilds und Reconcile stellt es umfassend her. Sie ergänzt Strictness, Änderungsbriefings und Meldungen und ersetzt insoweit den unten noch offenen allgemeinen Clean-Vorschlag. Der nächste Ausbauschritt bleibt Model → Repo; autonome Weiterentwicklung des Modells durch Government folgt getrennt.
+
 ## Problem und gewünschter Nutzen
 
 Das Ausgangsbeispiel ist Software für die Vermietung von Baustützen: Bestand, zeitbezogene Verfügbarkeit, Mietaufträge, Ausgabe, Rückgabe, Lieferung, Ersatzbeschaffung und Abrechnung werden zunächst ungeordnet im Gespräch beschrieben. Das Modell wird fortlaufend verfeinert, später kommen Architektur, Modularisierung und Entwicklungsprozesse hinzu. Mehr Mitarbeiter meint hier zusätzliche **Softwareentwickler**, die das Repository gemeinsam weiterentwickeln, nicht zusätzliche Beschäftigte des Vermietungsbetriebs.

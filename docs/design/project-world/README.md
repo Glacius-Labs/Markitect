@@ -8,6 +8,8 @@ Dieses Paket hält die direkte Produktdiskussion und den anschließend erteilten
 
 Die [Nutzerpräzisierung vom 9. Oktober](model-first-user-workflow.md) definiert den nächsten Produktstand: kanonisches Systemmodell mit verschiedenen Realisierungen, Provider-Onboarding für Beitragende, Explore bis zum ersten erfolgreichen Apply, konfigurierbare Manager, standardmäßige Dokumentation unter `docs/`, vollständige Dateiklassifikation vor Apply und iterative Brownfield-Rückführung vor einem gesonderten Aufräumauftrag. Sie hat bei abweichenden älteren Zielvorschlägen Vorrang; ihre Anforderungen sind nicht automatisch implementiert.
 
+Die anschließende [Präzisierung von Operationsumfang und Modellbriefings](operation-scopes-and-model-briefings.md) trennt gezieltes Apply von vollständigem Verify, Cleanup und Reconcile über alle Manager. Sie definiert Strictness ohne Absenken verbindlicher Anforderungen sowie Briefings nach jeder angenommenen Modelländerung und nach Severity sortierte, dismissbare Meldungen. Model → Repo ist zuerst durch Case Studies und praktikable Git-Zusammenarbeit zu belegen; die Government-Achse von Anliegen zu autonomen Modellentscheidungen folgt getrennt.
+
 Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücken: Ziele, Fachbegriffe, Konzepte, Use Cases, Regeln, Architektur, Organisation und Arbeitsabläufe. Verantwortliche lassen diese Vorgaben innerhalb ihrer Befugnisse umsetzen und prüfen. Das Repository enthält ihre konkreten Realisierungen und die kanonischen Modelleingaben selbst.
 
 ## Festgehaltene Richtungsentscheidungen
@@ -31,6 +33,7 @@ Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücke
 
 | Dokument | Verantworteter Inhalt |
 |---|---|
+| [Operationsumfang und Modellbriefings](operation-scopes-and-model-briefings.md) | Neueste Operationsverträge für Plan, Apply, Verify, Cleanup und Reconcile; Strictness, Briefings, Meldungen, Git-Abschluss und getrennte Government-Folgeachse |
 | [Kanonisches Systemmodell und Benutzerablauf](model-first-user-workflow.md) | Neueste Nutzerpräzisierung, Greenfield-Explore, Provider-Onboarding, vollständige Dateiabdeckung, Brownfield-Rückführung, Quellabgleich und nächste Abnahmekriterien |
 | [Praktischer Arbeitsablauf](../../project-workflow.md) | Installation des Sourcekandidaten, Init, Migration, Modelländerung und delegierte Umsetzung |
 | [Ausführbares Shop-Projekt](../../../examples/project-world/README.md) | Aktuelles Schema, vertikale Slices, konkrete Dateizuordnung und prüfbarer Python-/SQLite-Code |
@@ -46,7 +49,7 @@ Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücke
 
 Dieses Paket ist der Besitzer dieser neuen Planung. Es ändert keine veröffentlichten Verträge. Die bestehende [Architektur](../../architecture.md) beschreibt ihren jeweiligen Quellstand; die [Roadmap](../../implementation-plan.md) verweist auf die neue Planung. Frühere Government-/Architect-Planung ist im ursprünglichen Planungscommit `d3f3b43` erhalten und wird nicht als benötigte Produktabhängigkeit kopiert. Deren zusätzliche Institutionen werden hier nicht automatisch übernommen.
 
-Lesereihenfolge: diese Richtungsentscheidungen, Umsetzungsvertrag, praktischer Arbeitsablauf und ausführbares Shop-Projekt. Fachliche Module, Projektvertrag und Laufzeitprotokoll erläutern die ausführlichere Zielrichtung. Das allgemeine Zielmodell, der ältere Walkthrough und `shop-example/` bewahren den ersten Entwurf mit abweichenden Identitäten und Syntax; dessen Dateien enden bewusst auf `.yaml.example`. Für die implementierte Syntax gilt der Umsetzungsvertrag mit `project.markitect.example.org/v1alpha1`, nicht dieser historische Beleg. Die umfangreichen Abnahmeszenarien im Plan sind Anforderungen; nur tatsächlich ausgeführte Prüfungen sind Evidenz.
+Lesereihenfolge: diese Richtungsentscheidungen, kanonischer Benutzerablauf, Operationsumfang und Modellbriefings, Umsetzungsvertrag, praktischer Arbeitsablauf und ausführbares Shop-Projekt. Fachliche Module, Projektvertrag und Laufzeitprotokoll erläutern die ausführlichere Zielrichtung. Das allgemeine Zielmodell, der ältere Walkthrough und `shop-example/` bewahren den ersten Entwurf mit abweichenden Identitäten und Syntax; dessen Dateien enden bewusst auf `.yaml.example`. Für die implementierte Syntax gilt der Umsetzungsvertrag mit `project.markitect.example.org/v1alpha1`, nicht dieser historische Beleg. Die umfangreichen Abnahmeszenarien im Plan sind Anforderungen; nur tatsächlich ausgeführte Prüfungen sind Evidenz.
 
 ## Arbeitsgrundlage
 
