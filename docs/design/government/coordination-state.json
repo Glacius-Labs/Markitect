@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T15:47:04Z",
+  "updatedUtc": "2026-10-09T15:58:17Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -15626,7 +15626,34 @@
       "limitation": "CLI configuration proof only; JSON stream omitted spawn event; own rollout contains actual spawn call and return."
     },
     "ownerCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:44",
-    "compatibilityRetentionRequired": false
+    "compatibilityRetentionRequired": false,
+    "productProofClosure": {
+      "status": "CLOSED_PRE_PROVIDER_OWNER_REPORTED",
+      "reportedBy": "Design 01a11c80-37aa-7fe0-9586-35d916ce6561 callback",
+      "recordedUtc": "2026-10-09T15:58:17Z",
+      "leaseStartUtc": "2026-10-09T15:36:10Z",
+      "leaseEndUtc": "2026-10-09T15:46:10Z",
+      "maxWallSeconds": 600,
+      "cliRunAttempts": 2,
+      "cliExitCodes": [
+        2,
+        2
+      ],
+      "firstFailure": "Test model authored absolute Check.command; corrected to PATH-pinned python before provider.",
+      "secondFailure": "Host RuntimeFiles instruction digest comparison omitted sha256 prefix; source fix 9f1891d36da90231d34f5cf7fc2fc25437d6a83a.",
+      "providerManagerStartsOwnerReported": 0,
+      "nativeHelperStartsOwnerReported": 0,
+      "subsequentAttempt": "Remaining-time guard rejected continuation before project run; no lease reset.",
+      "adoptingSourceTests": "Unchanged per owner report",
+      "rootVerified": "Read-only exact local source commit confirms sha256 prefix comparison correction and fixture update. No new tests or model calls; raw lease/CLI receipts pending coherent owner handoff.",
+      "focusedRegression": "PASS owner-reported, not independently rerun",
+      "productNativeSuccess": false,
+      "productAuthenticationEvidence": false,
+      "configurationAuthenticationEvidenceUnaffected": "Earlier standalone user CLI configuration/auth proof remains separate.",
+      "remainingProofAuthority": false,
+      "automaticRefill": false,
+      "readiness": "Native product end-to-end gate remains open; no Main/readiness claim from pre-provider failures."
+    }
   },
   "projectCapabilitySkillsRequest": {
     "status": "DISPATCHED_TO_ACTIVE_DESIGN_PACKAGE",
@@ -15722,9 +15749,9 @@
     "publicHead": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
     "requiredLinuxWindowsCI": "SUCCESS on public head; PR89 still draft",
     "localHead": "9f1891d3",
-    "localWorktree": "docs/project-workflow.md and internal/tooling/codexrunner/README.md modified",
+    "localWorktree": "Compatibility-removal WIP spans CLI/init, onboarding/router, Brownfield omission widening, setup and runner modes; no coherent accepted checkpoint yet.",
     "localDelta": "Native working implementation, ten operation skills, failed receipt persistence, instruction pins, native-only project setup; not yet covered by public CI",
-    "ownerReportedProof": "First CLI invocation blocked before agent start by absolute check command in test model. Owner correcting known model error inside original bounded proof; no model invoked at latest callback.",
+    "ownerReportedProof": "Two project run attempts Exit2 before adapter/provider; setup-model correction then Host digest-prefix defect. Original 600-second lease closed; no provider/Manager/helper actual start. Raw receipt handoff pending.",
     "rootVerified": "Read-only Git/PR/remote/source record and own compact callback; no new tests or actual model calls",
     "limits": [
       "candidate tree has no Git history",
@@ -15732,6 +15759,7 @@
       "native helper accounting unsupported and helpers disabled; Host-declared Managers remain"
     ],
     "mainRecommendation": "Finish current simplification/native package, push coherent source, exact-head required CI and independent review, positive real ordinary delivery including actionable repair and guarded Apply. No additional research phase or interface migration required.",
-    "newExecutionAuthority": false
+    "newExecutionAuthority": false,
+    "nativeProofGate": "OPEN, previous allowance closed; no automatic retry or reset."
   }
 }
