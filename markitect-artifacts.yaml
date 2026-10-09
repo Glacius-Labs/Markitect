@@ -1844,6 +1844,8 @@ spec:
       owner: sequential-operating-pilot-evidence
     - path: docs/design/project-world/conceptual-modules.md
       owner: project-world-implementation
+    - path: docs/design/project-world/model-first-user-workflow.md
+      owner: project-world-implementation
     - path: docs/design/project-world/implementation-plan.md
       owner: project-world-implementation
     - path: docs/design/project-world/model.md

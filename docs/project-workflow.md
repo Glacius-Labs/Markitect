@@ -4,6 +4,8 @@
 
 An AI author can inspect the active project-model contract with `markitect project schema`; this read-only command needs no repository or Markitect source checkout and emits the exact schema used by project validation.
 
+The [9 October user direction](design/project-world/model-first-user-workflow.md) specifies the next workflow: contributor-provider onboarding, guided Explore until the first successful Apply, configurable Managers, generated documentation under a configurable root `docs/`, complete file classification and iterative reverse adoption before cleanup. Those are requirements, not additional commands or behavior provided by the current CLI described below.
+
 ## Choose the executable
 
 The published CLI and a source candidate are different tools. Install or upgrade the released CLI only through the documented versioned, verified release bundle. Until this project workflow is released, run it from the exact Markitect source checkout being evaluated:

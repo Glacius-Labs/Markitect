@@ -1,5 +1,7 @@
 # Fachliche Module und Vertical Slices
 
+Die [Nutzerpräzisierung vom 9. Oktober 2026](model-first-user-workflow.md) ergänzt diesen Entwurf um den durchgängigen Benutzerablauf und vollständige Dateiabdeckung. Dort wird „Projektion“ wieder als fachlicher Begriff für die Realisierungen des kanonischen Modells verwendet; ältere abweichende Benennungsabsichten sind ersetzt. Für tatsächlich implementierte Syntax gilt weiterhin der [Umsetzungsvertrag](delivery-contract.md).
+
 Status: nächste Entwurfsiteration aus der direkten Nutzerrückmeldung vom 8. Oktober 2026. Die Nutzervorgaben zu Vertical Slices, `.markitect/` und modellzentrierter Arbeit sind festgehalten; „Modul“, `manager.yaml` und die konkrete Syntax sind Arbeitsvorschläge. Die bestehende Shop-YAML bleibt ein Beleg des ersten Entwurfs und ist noch nicht auf diesen Zuschnitt umgebaut. Keine implementierte Produktfunktion wird behauptet.
 
 ## Präzisierung des Ziels
