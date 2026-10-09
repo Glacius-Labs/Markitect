@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T00:30:44Z",
+  "updatedUtc": "2026-10-09T00:45:00Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -458,8 +458,8 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:67",
-      "lastObservedStatus": "active",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:70",
+      "lastObservedStatus": "active: sealing terminal NOT READY correction; exact next mechanics repair separately authorized",
       "activeTurn": {
         "id": "01a11e11-04c9-7d60-ad6f-4bac519f95b9",
         "status": "inProgress"
@@ -7482,8 +7482,23 @@
             "At firstterminalreview or deadline stop, preserveWIP, close exactusage/remaining0, push new ownsource/evidence checkpoints only to research-backup/private target withoutForce, verifyremoteSHA, callbackonce. Newexternalprivateevidence backuponlyadditivechangedfiles, no repeatfullarchiveofunchanged3459files. No genericwaitingfinal whileconcretegrantactive.",
             "This is final specificcorrection for these known evaluatorfindings, not celladmission. Furtherfulltrialallocation0, global8trial/2questionceilingunchanged; next cleanDesign/profile/commonfreeze+finiteactualgrant, no automaticprep/diagnosisloop."
           ],
-          "status": "Dispatched once; awaiting concrete bounded correction and terminal independent review",
-          "usage": null,
+          "status": "CLOSED at reported terminal review00:39:33Z; evidence archival/push pending, no remaining execution authority",
+          "usage": {
+            "correctionBatches": 2,
+            "focusedOfflineTestProcesses": 2,
+            "testCounts": [
+              23,
+              26
+            ],
+            "testExitCodes": [
+              0,
+              1
+            ],
+            "freshIndependentReviewers": 1,
+            "productActors": 0,
+            "fullTrials": 0,
+            "remainingAllQuotas": 0
+          },
           "deliveryConfirmed": true,
           "sentUtc": "2026-10-09T00:29:54Z",
           "grantCommit": "1b0f7e3"
@@ -7496,6 +7511,58 @@
           "promptSha256": "7fe464616c9bef7cbaec43bba03ee09e11cd111416e7f8c66a565d053d78c71e",
           "prompt": "Nächster konkreter Scientist-Auftrag nach der jetzt vollständig remote geprüften Git-Sicherung: v4-declared-evaluation-coverage-correction-20261009. Die kanonische Akte ist Root-Commit 1b0f7e3, docs/design/government/coordination-state.json, threads[name=Scientist].evidence.v4DeclaredEvaluationCoverageCorrectionGrant. Lies diesen Grant und den aktuellen Forschungsrahmen in coordination.md/evaluation.md. Respektiere neuere direkte Nutzeraufträge in deinem Chat. Dein Backup e378ae8/a97cbd5/d4a5d32 ist bestätigt; keine erneute Komplettarchivierung.\n\nGrant: ausgestellt 2026-10-09T00:26:36Z, absolute Endfrist 2026-10-09T00:56:36Z (02:56:36 Europe/Berlin), maximal 1800 Sekunden insgesamt. Höchstens zwei gewöhnliche Korrekturchargen und zwei rein offline fokussierte Evaluationsmechanik-/Vertragstestprozesse, je höchstens 120 Sekunden. Danach genau ein frischer unabhängiger Reviewer, fork_turns=none, geerbtes Profil ohne Modell-/Reasoning-Override, höchstens 600 Sekunden und ein paralleler Reviewer; keine Kinder, Followups, Wiederholung oder Programm-/Testausführung durch ihn. Jede erlaubte Test-/Reviewaktion vorab reservieren; Fehlstarts zählen. Null Produkt-Actors, Provider-API-/Codex-CLI-/Appserver-Aufrufe, Serverstarts, Produktbuilds und Volltrials.\n\nArbeite ausschließlich an einer neuen additiven prospektiven Evaluationsversion ab e378ae8144f054e6ff957bb08ee3e6120ca4f955. Der unabhängige Review hat konkret vorhandene erklärte Anforderungsabdeckung beanstandet: validated-order, durable-lifecycle, current-limit-and-compatibility einschließlich echter Task4-Altauftrag-Kompatibilität und Routenparität sowie verification_quality/Fehlerzuordnung. Korrigiere genau diese Befunde. Task5 benötigt die tatsächliche vorherige Binary aus derselben Zelle, dieselbe Datenbank, einen zuvor angenommenen Auftrag und dessen Wiederholung beim neuen Limit. Keine erfundene Altversion, keine neuen überraschenden Anforderungen oder Ergebnisänderungen an alten Versuchen. Öffentlicher Operatorvertrag darf vorhandene Pflichten nachvollziehbar präzisieren.\n\nTrenne Produktinvariantenfehler von Evaluator-/Harnessfehlern und Infrastruktur/NOT RUN. Unknown, inapplicable und unexecuted ergeben keinen PASS oder Methodensieg. Gemeinsame Ergebnisqualität bleibt methodenneutral; Methodenkonformität/Design-Migration separat, keine Design-Artefaktpflicht für Conventional, keine angepassten Rubrikgewichte oder Testanzahl als Qualitätsmaß. Offline Fixtures belegen nur Bewertungsmechanik, keine Produktqualität.\n\nBeende sämtliche Korrekturen und höchstens zwei Testprozesse und friere dann die exakte zu reviewende Quelle mit Hashes ein, bevor der eine Reviewer startet. Er prüft nur eingefrorene erklärte öffentliche Anforderungen plus private Evaluation, Anwendbarkeit, Zuordnung, Neutralität und den unabhängigen kandidatenspezifischen Task6-ÄquivalenzPLAN. Keine fremden Zellergebnisse, Design-WIP, Chats/Memory oder globale Agenten-/Prozessinventur für den Reviewer. Task6-Mutation/Äquivalenzausführung bleibt einer zukünftigen tatsächlichen Zelle nach Task5-Freeze vorbehalten. Nach terminalem Review keine weiteren Quell-/Oracle-Korrekturen oder Tests in diesem Grant.\n\nAlte c7d5510/ed9c5b3/e378ae8/264-Pins, Originalarchive und Original-Oracles bytegleich erhalten, keine rückwirkende Neubewertung. Keine Produkt-/Adopteränderungen, DTO-Parser-Neuimplementierung oder allgemeine Capability-/Appserverdiagnoseschleife. Python-DTOVorprüfung bleibt nur beratend; echter Produktparser/Invocation/Receipt sind maßgeblich. Gemeinsames tatsächliches Modell-/Tool-/Runtimeprofil und sauberer Design-Handoff sind vor späteren Actuals weiterhin nötig.\n\nReview-/Setupaufwand als gemeinsame Vergleichsvorbereitung zählen; Serving/Token/Kosten/menschliche Aufsicht ohne echten Beleg unknown lassen. Private Vektoren/volle Reviews nur privat speichern. Öffentlicher Handoff/Root-Callback enthält sichere Anforderungs-IDs, Urteil, Hashes, Verbräuche und Grenzen, keine privaten Prüfinhalte. Beim ersten terminalen Review oder Endfrist stoppen, WIP erhalten, Restquoten schließen und eigene neue Quell-/Evidenz-Checkpoints nur nach research-backup pushen, Remote-SHA prüfen. Externe Sicherung nur für neu geänderte private Dateien, keine Wiederholung des unveränderten 3459-Dateien-Archivs.\n\nPflege eine konkrete eigene Fortsetzungsnotiz zum aktiven Grant, damit Kontextkürzung nicht zum ursprünglichen generischen Warteprompt zurückführt. Dies ist die letzte spezifische Korrektur dieser bekannten Bewertungsbefunde; keine automatische weitere Vorbereitungsphase. Folge-Volltrialquote bleibt null, Gesamtgrenze acht Trials/zwei Fragen unverändert. Einmal Abschluss oder echte Blockade mit sauberem Source-/Remote-SHA, Reviewpin/Hash, Tests/Verbrauch und offenem Rest an Overseer 01a11367-a781-7683-a20f-46e12614dcb4 auf local melden. Keine Empfangsbestätigung.",
           "activeTurnConfirmed": true
+        },
+        "v4DeclaredEvaluationCoverageCorrectionClosureObserved": {
+          "observedUtc": "2026-10-09T00:45:00Z",
+          "sourceFreezeSha": "51b17efecd6c6c56128022642ae30f8fd0c03cec",
+          "terminalReviewObservedUtc": "2026-10-09T00:39:33Z",
+          "verdict": "NOT READY / NOT ADMITTED; declared validated-order/durable-lifecycle/current-limit-and-compatibility covered in source, one receipt-binding fixture mechanics error under verification_quality",
+          "rootPersonallyVerifiedPublicFrozenBindings": 15,
+          "publicBindingsMatchGitAndWorking": true,
+          "reportedPrivateReviewBindings": 9,
+          "privateVectorsNotOpenedByRoot": true,
+          "reviewInputManifestSha256": "5270e1a6cba07ad79bb1979d0068f12fbe2bd98db4c4c8b561fac7320aced9ce",
+          "privateReviewSha256": "42a25aa9cbba525d32e6c2f79435a66d6935038f4aaa255cdd7a1f0c7d37b790",
+          "packageClosure": "Owner actively sealing/pushing, final cleanSHA not yet accepted",
+          "sourceReviewOnly": true,
+          "newActualFullTrials": 0
+        },
+        "v4ReceiptBindingRepairGrant": {
+          "key": "v4-receipt-binding-repair-and-executable-freeze-20261009",
+          "issuedUtc": "2026-10-09T00:45:00Z",
+          "notAfterUtc": "2026-10-09T01:00:00Z",
+          "maxOverallWallSeconds": 900,
+          "sourceAuthority": "Continuing direct user mandate to run/ready case studies; renewed human status request says study should run and be made ready. One new concrete receipt-binding mechanics error from second fixture run; earlier declared coverage review is closed and preserved, not reopened.",
+          "sourceBaseline": "51b17efecd6c6c56128022642ae30f8fd0c03cec",
+          "priorTerminalReviewObservedUtc": "2026-10-09T00:39:33Z",
+          "startCondition": "Seal/push current closed package first and bind exact closure/source SHA; no edits to frozen51b or old package. Respect newer direct human instructions.",
+          "correctionBatchesMax": 1,
+          "focusedOfflineTestProcessesMax": 1,
+          "offlineTestTimeoutSeconds": 120,
+          "freshIndependentReviewersMax": 1,
+          "reviewerWallSecondsMax": 240,
+          "maxConcurrentReviewers": 1,
+          "newProductActors": 0,
+          "providerAPICalls": 0,
+          "codexCLIOrAppserverCalls": 0,
+          "productBuilds": 0,
+          "serviceStarts": 0,
+          "fullTrials": 0,
+          "scope": "New additive copy: fix only exact receipt-binding fixture/evaluator mechanics error and verify its pass/fail/error classifications. Preserve declared requirements/rubric/old evidence and private separation. Then one minimal executable common profile/freeze proposal using existing receipts/config only, prioritizing matched ClassicMain/Conventional pairs without waiting on Design.",
+          "conditions": [
+            "Reserve each one permitted test/reviewer before execution; failed starts consume allocation, no retries/refill. No code/program/test execution by reviewer, no children/followups/model-reasoning override; fork_turns=none inherited.",
+            "Freeze exact correction source/hashes before independent delta review; after terminal review no further correction/test. Review exact error closure and no silent criterion/requirement change; retain existing qualified coverage and all original failures.",
+            "Only evaluator/fixture data-binding bug; if fixing requires new substantive requirement, product/adopter changes, old rescore or private exposure stop and report concrete blocker.",
+            "One pure offline mechanics test process<=120s; no real product quality claim from fixtures. Unknown/inapplicable/unexecuted remain NOT RUN/evaluationerror.",
+            "Common actual configured model/reasoning/tool/rights/native dispatch/own checkout/port and finite budget must be stated from available configuration/receipts; serving/cost/usage unknown remains unknown. No general capability/Appserver diagnostics or speculative adapters/platforms.",
+            "Deliver a minimal frozen executable plan for ClassicMain a97cbd5 vs strong Conventional/Oldschool GF/BF, plus unchanged common public tasks/profile reserved for later Design pair once clean source/binary handoff exists. Source main5be48ce docs successor does not silently replace study a97cbd5.",
+            "Design delay alone must not hold otherwise ready Classic/Conventional pairs. Do not admit unfinished Design or inject foreign cell results/holdouts into its implementation. Existing v3/Government results preserved, no new Government fulltrial from this grant.",
+            "Proposed total followups<=6 within existing global8 and max2 questions; actual allocation remains0 until Root verifies exact joint freeze and gives separate finite cell execution grant. Freeze public inputs/measurement before any new actual result; no later tuning to baseline results.",
+            "Private vectors/fullreview remain private research-backup; safe callback only requirement IDs/verdict/hashes/counts/explicit remaining concrete prerequisites. No product Actor inventories/foreign chats/processes/memory.",
+            "Close at terminal review/deadline, preserve WIP, push own new source/evidence privately, verify remote SHA and callback once. No full repeated archive; all setup/test/review effort charged as shared preparation. This is only one exact new mechanics failure repair, no generic preparation loop."
+          ],
+          "status": "Authorized/not yet dispatched",
+          "usage": null
         }
       },
       "classicHandoffReceived": true,
@@ -8700,13 +8767,13 @@
       "lastObservedStatus": "active",
       "candidateSha": "4ea88971c2e6122019c4c557cd80bfebf93df14a",
       "candidateStatus": "Publicremoteprovisionalcheckpoint, nativeReadiness running, no acceptedstudyfreeze",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:9",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:10",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac831c872848191b28ade4ec5df0af9",
       "assignedMilestone": "Continue latest direct user-authorized native Luna High Shop verification; then immutable test-readiness handoff/callback",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
       "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
       "acceptance": "Not yet independently accepted; development/native test reports only",
-      "latestProgress": "Remote4ea8897 verified, provisionalcheckpointclean reported. NativeShopreview found terminalcancelOrderreactivation and sentownerImplementerrepair; independentreadinessclosure stillpending, not a matchedtrial.",
+      "latestProgress": "Actual CLI returns shortened invocation identifiers, rejected by Host; owner works on adapter reference-key mapping, no admitted study freeze.",
       "evidence": {
         "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
         "observedBranch": "codex/model-driven-delivery",
@@ -8723,6 +8790,14 @@
           "reportedClean": true,
           "reportedScannedBlobVersions": 423,
           "status": "Provisionalcoherentproductcheckpoint only; ownernativeLunaShop/reviewrepair ongoing, NOTReadinessFreeze"
+        },
+        "remoteBranchLatestObserved": {
+          "observedUtc": "2026-10-09T00:43:12Z",
+          "remoteRef": "refs/heads/codex/model-driven-delivery",
+          "remoteSha": "f3e9c9accb40ca93f47f2f37e082face7fe06e3f",
+          "localHeadAtObservation": "4209664",
+          "localAhead": 1,
+          "status": "Development checkpoint only, no readiness acceptance"
         }
       },
       "lastAssignment": {
@@ -9283,7 +9358,8 @@
           "Old Design GPT5.5High Shop attempts9+10calls and11checker cases are feasibility only; current nativeLuna WIP separate.",
           "No Design main replacement or clean candidate accepted; migration/history/provider/isolation limits remain."
         ]
-      }
+      },
+      "executionSequencing": "Freeze common public inputs/profile before actuals; otherwise ready matched ClassicMain/Conventional pairs need not wait on Design; Design remains prospective with same frozen common conditions once clean handoff exists. Actual fulltrial quota still0 pending separate verified Root grant."
     }
   },
   "fullSuiteSlotHistory": [
@@ -10039,9 +10115,9 @@
     },
     "root": {
       "branch": "codex/government-assessment",
-      "verifiedPublicSha": "a2c91eee436e51003ee779a600e4e27da66574e5",
+      "verifiedPublicSha": "ffdf341d39c6418f6997876366ca6de498c49ca5",
       "upstream": "origin/codex/government-assessment",
-      "status": "Pushed/ls-remote exact; final coordination checkpoint tofollow"
+      "status": "Prior final checkpoint pushed and ls-remote exact; new coordination checkpoints push before handoff"
     },
     "ownerDispatches": [
       {
