@@ -15,4 +15,4 @@ The new direct user mandate authorizes full KG implementation in this isolated v
 YAML stays canonical. RDF/SPARQL is evaluated separately if justified; engines, migration, purchases and case-study/provider starts are not authorized by developer checks.
 
 
-Current variant: [user knowledge guide](../../project-knowledge.md), [same twelve question outcomes](KG07-question-outcomes.md), [continuation validation](continuation-validation.md), and [separate RDF fit decision](RDF-fit-decision.md). The initial finite-slice handoff and failed Verify remain historical evidence; the full continuation is source-bound separately.
+Current variant: [user knowledge guide](../../project-knowledge.md), [same twelve question outcomes](KG07-question-outcomes.md), [continuation validation](continuation-validation.md), [continuation handoff](continuation-handoff.md), and [separate RDF fit decision](RDF-fit-decision.md). The initial finite-slice handoff and failed Verify remain historical evidence; the full continuation is source-bound separately.

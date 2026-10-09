@@ -43,8 +43,8 @@ items:
     scope: Merge actual accepted main into this branch, resolve conflicts, regressions and independent review.
     owner: parent
   - id: RDF-FIT
-    status: deferred
-    scope: Separate justified fit evaluation; no canonical migration, installation, purchase or study implied.
+    status: assessment_complete_prototype_deferred
+    scope: RDF-fit-decision.md records the separate fit assessment and optional RF01-RF06 plan; no canonical migration, engine installation, purchase or study implied.
 ```
 
 

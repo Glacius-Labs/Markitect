@@ -110,6 +110,7 @@ func TestKnowledgeCLIAndMCPShareTheSameProjectService(t *testing.T) {
 		t.Fatal(err)
 	}
 	ordersManager, inventoryManager := "", ""
+	privateInventoryArtifact := ""
 	for _, manager := range loaded.Report.Managers {
 		if manager.Name == "orders" {
 			ordersManager = manager.ID
@@ -118,12 +119,39 @@ func TestKnowledgeCLIAndMCPShareTheSameProjectService(t *testing.T) {
 			inventoryManager = manager.ID
 		}
 	}
-	if ordersManager == "" || inventoryManager == "" {
-		t.Fatalf("fixture lacks Orders or Inventory scope: orders=%q inventory=%q", ordersManager, inventoryManager)
+	for _, artifact := range loaded.Report.Artifacts {
+		if artifact.Owner == inventoryManager {
+			privateInventoryArtifact = artifact.ID
+			break
+		}
+	}
+	if ordersManager == "" || inventoryManager == "" || privateInventoryArtifact == "" {
+		t.Fatalf("fixture lacks Orders, Inventory, or a private Inventory artifact: orders=%q inventory=%q artifact=%q", ordersManager, inventoryManager, privateInventoryArtifact)
+	}
+	managerArgs := []string{"project", "knowledge", "--repo", repo, "--manager", ordersManager, "--knowledge-action", "graph"}
+	var managerOut, managerErr bytes.Buffer
+	if code := Run(managerArgs, &managerOut, &managerErr); code != 0 {
+		t.Fatalf("Manager knowledge CLI exit=%d stderr=%s", code, managerErr.String())
+	}
+	var managerResult projectapp.KnowledgeResult
+	if err := json.Unmarshal(managerOut.Bytes(), &managerResult); err != nil {
+		t.Fatalf("decode Manager CLI result: %v", err)
+	}
+	identityOnlyOwner := false
+	for _, node := range managerResult.Graph.Nodes {
+		if node.ID == inventoryManager {
+			identityOnlyOwner = true
+			if len(node.Properties) != 0 || node.Purpose != "" || node.Source != nil {
+				t.Fatalf("public contract owner identity exposed private manager details: %+v", node)
+			}
+		}
+	}
+	if !identityOnlyOwner {
+		t.Fatal("public contract owner identity was not admitted to the Manager graph")
 	}
 	privateCall, err := json.Marshal(map[string]any{
 		"jsonrpc": "2.0", "id": 2, "method": "tools/call",
-		"params": map[string]any{"name": "knowledge_explain", "arguments": map[string]any{"managerId": ordersManager, "targetId": inventoryManager}},
+		"params": map[string]any{"name": "knowledge_explain", "arguments": map[string]any{"managerId": ordersManager, "targetId": privateInventoryArtifact}},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -136,8 +164,28 @@ func TestKnowledgeCLIAndMCPShareTheSameProjectService(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(protocolOut.String(), inventoryManager) || !strings.Contains(protocolOut.String(), "knowledge query failed") {
-		t.Fatalf("private-scope failure exposed target identity: %s", protocolOut.String())
+	responses = bytes.Split(bytes.TrimSpace(protocolOut.Bytes()), []byte{'\n'})
+	if len(responses) != 2 {
+		t.Fatalf("unexpected private MCP response sequence: %s", protocolOut.String())
+	}
+	var privateEnvelope struct {
+		Result struct {
+			Structured json.RawMessage `json:"structuredContent"`
+			IsError    bool            `json:"isError"`
+			Content    []struct {
+				Type string `json:"type"`
+				Text string `json:"text"`
+			} `json:"content"`
+		} `json:"result"`
+	}
+	if err := json.Unmarshal(responses[1], &privateEnvelope); err != nil {
+		t.Fatalf("decode private MCP response: %v", err)
+	}
+	if !privateEnvelope.Result.IsError || len(privateEnvelope.Result.Structured) != 0 || len(privateEnvelope.Result.Content) != 1 || privateEnvelope.Result.Content[0].Type != "text" || privateEnvelope.Result.Content[0].Text != "knowledge query failed; check the explicit scope, target and bounded selectors" {
+		t.Fatalf("private-scope failure was not generic and content-only: %s", protocolOut.String())
+	}
+	if bytes.Contains(protocolOut.Bytes(), mustJSON(t, privateInventoryArtifact)) {
+		t.Fatalf("private-scope failure exposed target identity %q: %s", privateInventoryArtifact, protocolOut.String())
 	}
 }
 

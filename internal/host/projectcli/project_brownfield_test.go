@@ -225,7 +225,7 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 	rootReport := makeStagedDistillation(discovery, target, result.Session.TargetContextDigest, schemaDigest, "root-scope", "root-claim", "cancellation-doc", "documented-intent", "documentation", "PRIVATE_MANAGER_REPORT_SENTINEL root cancellation understanding.")
 	childID := "cancellation-owner"
 	rootProposal := projectadoption.ManagerProposal{ManagerID: rootID, EvidenceIDs: []string{"cancellation-doc"},
-		Hierarchy:       []projectadoption.ProposedManager{{ID: childID, Name: "Cancellation Owner", Purpose: "Own cancellation implementation", ParentID: rootID, EvidenceIDs: []string{"orders-code"}}},
+		Hierarchy:       []projectadoption.ProposedManager{{ID: childID, Name: "Cancellation Owner", Purpose: "Own cancellation implementation", ParentID: rootID, EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}}},
 		PublicContracts: []projectadoption.ManagerPublicContract{}, Report: rootReport}
 	result = runBrownfieldMutation(t, repo, discovery.ID, "propose", brownfieldProposalInput{IterationID: "root-pass", Proposal: rootProposal}, result.SessionDigest)
 

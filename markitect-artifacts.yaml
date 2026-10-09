@@ -187,6 +187,14 @@ spec:
     - examples/project_world_workflow_test.go
     - docs/design/work-item-comparison-20261009.md
   tooling:
+    - path: docs/work-items/knowledge-graph/evidence/verify-d360ec01.log
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/evidence/verify-d360ec01-receipt.json
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/continuation-handoff.md
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/evidence/user-journey-d360ec01.json
+      owner: project-knowledge-variant
     - path: examples/project-knowledge/docs/project-knowledge/model.md
       owner: project-knowledge-variant
     - path: examples/project-knowledge/.markitect/model/readme-artifact.yaml
