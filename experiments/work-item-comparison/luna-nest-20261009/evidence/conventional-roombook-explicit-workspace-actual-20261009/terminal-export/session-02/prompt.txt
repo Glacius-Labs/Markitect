@@ -1,0 +1,1 @@
+Setze denselben Backlog-Auftrag aus dem vorhandenen Projektstand fort. Halte die Projektregeln ein, prüfe die Ergebnisse und merge fertige Änderungen nach main. Dokumentiere einen echten Blocker, falls du nicht fortsetzen kannst.

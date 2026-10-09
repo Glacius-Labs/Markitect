@@ -1,0 +1,3 @@
+Ich kann die Arbeit hier nicht ausführen: Die aktive Dateisystemfreigabe ist **read-only**, und schon der reine Lesezugriff auf `README.md` wurde durch die Ausführungsrichtlinie abgewiesen. Deshalb konnte ich die Projektdateien und den Git-Zustand nicht prüfen; Änderungen, Prüfungen oder ein Merge nach `main` waren nicht möglich.
+
+Der Projektstand ist durch meine Versuche unverändert geblieben. Bitte öffne das Projekt in einer beschreibbaren Workspace-Sitzung, damit ich die freigegebene Station bearbeiten und die vorgeschriebenen Commits und Prüfungen durchführen kann.

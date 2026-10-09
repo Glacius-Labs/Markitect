@@ -1,0 +1,3 @@
+**Blockiert:** Der Backlog-Auftrag kann in dieser Sitzung nicht fortgesetzt werden. Ein erneuter Leseversuch für `README.md` wurde von der Ausführungsrichtlinie abgewiesen (`blocked by policy`). Die aktive Dateisystemfreigabe ist weiterhin read-only; damit kann ich weder den Projektstand prüfen noch Änderungen, WORKLOG, Completion-Metadaten oder Commits schreiben.
+
+Es gab keinen Zugriff auf den Backlog oder Git-Zustand und keinen Merge. Der kleinste nötige nächste Schritt ist eine Sitzung mit Lese- und Schreibzugriff auf dieses Projektverzeichnis.

@@ -1,0 +1,11 @@
+{
+  "startedUtc": "2026-10-09T06:16:38.0240644+00:00",
+  "endedUtc": "2026-10-09T06:16:38.0646363+00:00",
+  "observedSetupWallSeconds": 0.0405719,
+  "accountMaterialCopiedOpaque": true,
+  "accountContentReadByModel": false,
+  "accountContentHashed": false,
+  "accountContentLoggedOrCommitted": false,
+  "source": "Existing current-user saved Codex account material; authorized opaque local copy",
+  "grantId": "conventional-roombook-explicit-workspace-trial-20261009"
+}

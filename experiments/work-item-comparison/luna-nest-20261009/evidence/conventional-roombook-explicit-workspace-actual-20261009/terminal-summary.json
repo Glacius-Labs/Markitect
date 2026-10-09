@@ -1,0 +1,403 @@
+{
+  "grantId": "conventional-roombook-explicit-workspace-trial-20261009",
+  "status": "CLOSED BLOCKED / no further automatic retry",
+  "acceptedSourceSha": "76a63bdeb0e740241db20ddbd08d4547154acd84",
+  "runnerSha256": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635",
+  "capturedUtc": "2026-10-09T06:20:28.733333+00:00",
+  "nativeTerminalUtc": "2026-10-09T06:17:31.723787+00:00",
+  "captureElapsedSeconds": 177.009546,
+  "driverExit": {
+    "exitCode": 0,
+    "endedUtc": "2026-10-09T06:17:31.832811+00:00",
+    "ownedStop": null
+  },
+  "requestedModel": "gpt-6-luna",
+  "requestedReasoning": "high",
+  "explicitArgvSandbox": "workspace-write",
+  "nativeContexts": [
+    {
+      "path": "own-native-session-records/2026/10/09/rollout-2026-10-09T08-16-40-01a11f4e-7bcb-7782-9db7-523a23bead85.jsonl",
+      "line": 8,
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      }
+    },
+    {
+      "path": "own-native-session-records/2026/10/09/rollout-2026-10-09T08-16-40-01a11f4e-7bcb-7782-9db7-523a23bead85.jsonl",
+      "line": 41,
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      }
+    },
+    {
+      "path": "own-native-session-records/2026/10/09/rollout-2026-10-09T08-17-06-01a11f4e-e4b2-7322-acb2-7859d7098644.jsonl",
+      "line": 8,
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      }
+    }
+  ],
+  "exactToolRejections": [
+    {
+      "path": "own-native-session-records/2026/10/09/rollout-2026-10-09T08-16-40-01a11f4e-7bcb-7782-9db7-523a23bead85.jsonl",
+      "line": 15,
+      "call": {
+        "line": 13,
+        "input": "const r = await tools.exec_command({cmd:\"Get-Content README.md; Get-Content BACKLOG.md; Get-Content STATIONS.json; Get-Content QUALITY.md; Get-Content .study/station.json; git status --short --branch; git branch --show-current; git log -5 --oneline --decorate\",\"workdir\":\"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Luna-Work-Item-Nests-20261009\\\\cells\\\\roombook-conventional-explicit-workspace\",\"max_output_tokens\":12000});\ntext(r.output);\n"
+      },
+      "output": {
+        "type": "custom_tool_call_output",
+        "id": "ctco_01a11f4e-8e8c-7792-be31-b00d80392ca2",
+        "call_id": "call_aa626946e73e4d6abed58a84c5e1993c",
+        "output": [
+          {
+            "type": "input_text",
+            "text": "Script failed\nWall time 0.0 seconds\nOutput:\n"
+          },
+          {
+            "type": "input_text",
+            "text": "Script error:\nexec_command failed: CreateProcess { message: \"Rejected(\\\"`\\\\\\\"C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\Consiliari\\\\\\\\\\\\\\\\.cache\\\\\\\\\\\\\\\\codex-runtimes\\\\\\\\\\\\\\\\codex-primary-runtime\\\\\\\\\\\\\\\\dependencies\\\\\\\\\\\\\\\\native\\\\\\\\\\\\\\\\powershell\\\\\\\\\\\\\\\\pwsh.exe\\\\\\\" -Command 'Get-Content README.md; Get-Content BACKLOG.md; Get-Content STATIONS.json; Get-Content QUALITY.md; Get-Content .study/station.json; git status --short --branch; git branch --show-current; git log -5 --oneline --decorate'` rejected: blocked by policy\\\")\" }"
+          }
+        ],
+        "internal_chat_message_metadata_passthrough": {
+          "turn_id": "01a11f4e-7db9-74d1-bda1-d8b1b2234f60",
+          "create_time": 1791526604.428703
+        }
+      }
+    },
+    {
+      "path": "own-native-session-records/2026/10/09/rollout-2026-10-09T08-16-40-01a11f4e-7bcb-7782-9db7-523a23bead85.jsonl",
+      "line": 23,
+      "call": {
+        "line": 21,
+        "input": "const r = await tools.exec_command({cmd:\"Get-Content README.md\",\"workdir\":\"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Luna-Work-Item-Nests-20261009\\\\cells\\\\roombook-conventional-explicit-workspace\",\"max_output_tokens\":3000});\ntext(r.output);\n"
+      },
+      "output": {
+        "type": "custom_tool_call_output",
+        "id": "ctco_01a11f4e-9d60-7c70-934f-3049cb32f3c5",
+        "call_id": "call_30c61df56d334052ba77ce41872f2901",
+        "output": [
+          {
+            "type": "input_text",
+            "text": "Script failed\nWall time 0.0 seconds\nOutput:\n"
+          },
+          {
+            "type": "input_text",
+            "text": "Script error:\nexec_command failed: CreateProcess { message: \"Rejected(\\\"`\\\\\\\"C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\Consiliari\\\\\\\\\\\\\\\\.cache\\\\\\\\\\\\\\\\codex-runtimes\\\\\\\\\\\\\\\\codex-primary-runtime\\\\\\\\\\\\\\\\dependencies\\\\\\\\\\\\\\\\native\\\\\\\\\\\\\\\\powershell\\\\\\\\\\\\\\\\pwsh.exe\\\\\\\" -Command 'Get-Content README.md'` rejected: blocked by policy\\\")\" }"
+          }
+        ],
+        "internal_chat_message_metadata_passthrough": {
+          "turn_id": "01a11f4e-7db9-74d1-bda1-d8b1b2234f60",
+          "create_time": 1791526608.224473
+        }
+      }
+    },
+    {
+      "path": "own-native-session-records/2026/10/09/rollout-2026-10-09T08-16-40-01a11f4e-7bcb-7782-9db7-523a23bead85.jsonl",
+      "line": 50,
+      "call": {
+        "line": 48,
+        "input": "const r = await tools.exec_command({cmd:\"Get-Content README.md\",\"workdir\":\"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Luna-Work-Item-Nests-20261009\\\\cells\\\\roombook-conventional-explicit-workspace\",\"max_output_tokens\":2000});\ntext(r.output);\n"
+      },
+      "output": {
+        "type": "custom_tool_call_output",
+        "id": "ctco_01a11f4e-cd7d-71c2-872e-e51a77ec8ad1",
+        "call_id": "call_5f9330eca6e64918a617eca1f501067c",
+        "output": [
+          {
+            "type": "input_text",
+            "text": "Script failed\nWall time 0.1 seconds\nOutput:\n"
+          },
+          {
+            "type": "input_text",
+            "text": "Script error:\nexec_command failed: CreateProcess { message: \"Rejected(\\\"`\\\\\\\"C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\Consiliari\\\\\\\\\\\\\\\\.cache\\\\\\\\\\\\\\\\codex-runtimes\\\\\\\\\\\\\\\\codex-primary-runtime\\\\\\\\\\\\\\\\dependencies\\\\\\\\\\\\\\\\native\\\\\\\\\\\\\\\\powershell\\\\\\\\\\\\\\\\pwsh.exe\\\\\\\" -Command 'Get-Content README.md'` rejected: blocked by policy\\\")\" }"
+          }
+        ],
+        "internal_chat_message_metadata_passthrough": {
+          "turn_id": "01a11f4e-baa5-71a3-a7cd-3b58bd53f4c2",
+          "create_time": 1791526620.5418146
+        }
+      }
+    },
+    {
+      "path": "own-native-session-records/2026/10/09/rollout-2026-10-09T08-17-06-01a11f4e-e4b2-7322-acb2-7859d7098644.jsonl",
+      "line": 17,
+      "call": {
+        "line": 15,
+        "input": "const r = await tools.exec_command({\n  cmd: \"Get-Content README.md; Get-Content BACKLOG.md; Get-Content STATIONS.json; Get-Content QUALITY.md; git status --short --branch; git rev-parse HEAD\",\n  workdir: \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Luna-Work-Item-Nests-20261009\\\\state\\\\roombook-conventional-explicit-workspace\\\\evaluation\\\\repo\",\n  shell: \"powershell\",\n  login: false,\n  max_output_tokens: 9000\n});\ntext(r.output);\n"
+      },
+      "output": {
+        "type": "custom_tool_call_output",
+        "id": "ctco_01a11f4e-fd87-7b82-8c45-fcb7cf09fb94",
+        "call_id": "call_2e181b66c8d244b38ad5fca15ddf60f3",
+        "output": [
+          {
+            "type": "input_text",
+            "text": "Script failed\nWall time 0.0 seconds\nOutput:\n"
+          },
+          {
+            "type": "input_text",
+            "text": "Script error:\nexec_command failed: CreateProcess { message: \"Rejected(\\\"`\\\\\\\"C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\Consiliari\\\\\\\\\\\\\\\\.cache\\\\\\\\\\\\\\\\codex-runtimes\\\\\\\\\\\\\\\\codex-primary-runtime\\\\\\\\\\\\\\\\dependencies\\\\\\\\\\\\\\\\native\\\\\\\\\\\\\\\\powershell\\\\\\\\\\\\\\\\pwsh.exe\\\\\\\" -NoProfile -Command 'Get-Content README.md; Get-Content BACKLOG.md; Get-Content STATIONS.json; Get-Content QUALITY.md; git status --short --branch; git rev-parse HEAD'` rejected: blocked by policy\\\")\" }"
+          }
+        ],
+        "internal_chat_message_metadata_passthrough": {
+          "turn_id": "01a11f4e-e601-7bf2-ad42-eef5e8becb8b",
+          "create_time": 1791526632.8399272
+        }
+      }
+    },
+    {
+      "path": "own-native-session-records/2026/10/09/rollout-2026-10-09T08-17-06-01a11f4e-e4b2-7322-acb2-7859d7098644.jsonl",
+      "line": 23,
+      "call": {
+        "line": 21,
+        "input": "const paths = [\"README.md\",\"BACKLOG.md\",\"STATIONS.json\",\"QUALITY.md\"];\nconst rs = await Promise.all(paths.map(p => tools.exec_command({\n  cmd: `Get-Content -LiteralPath '${p}'`,\n  workdir: \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Luna-Work-Item-Nests-20261009\\\\state\\\\roombook-conventional-explicit-workspace\\\\evaluation\\\\repo\",\n  shell: \"powershell\",\n  login: false,\n  max_output_tokens: 3000\n})));\nfor (let i=0;i<rs.length;i++) text(`--- ${paths[i]} ---\\n${rs[i].output}`);\n"
+      },
+      "output": {
+        "type": "custom_tool_call_output",
+        "id": "ctco_01a11f4f-0701-77f3-a451-7b0354ead334",
+        "call_id": "call_84350c5791694ddf8c73251ff942c948",
+        "output": [
+          {
+            "type": "input_text",
+            "text": "Script failed\nWall time 0.0 seconds\nOutput:\n"
+          },
+          {
+            "type": "input_text",
+            "text": "Script error:\nexec_command failed: CreateProcess { message: \"Rejected(\\\"`\\\\\\\"C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\Consiliari\\\\\\\\\\\\\\\\.cache\\\\\\\\\\\\\\\\codex-runtimes\\\\\\\\\\\\\\\\codex-primary-runtime\\\\\\\\\\\\\\\\dependencies\\\\\\\\\\\\\\\\native\\\\\\\\\\\\\\\\powershell\\\\\\\\\\\\\\\\pwsh.exe\\\\\\\" -NoProfile -Command \\\\\\\"Get-Content -LiteralPath 'BACKLOG.md'\\\\\\\"` rejected: blocked by policy\\\")\" }"
+          }
+        ],
+        "internal_chat_message_metadata_passthrough": {
+          "turn_id": "01a11f4e-e601-7bf2-ad42-eef5e8becb8b",
+          "create_time": 1791526635.2654593
+        }
+      }
+    },
+    {
+      "path": "own-native-session-records/2026/10/09/rollout-2026-10-09T08-17-06-01a11f4e-e4b2-7322-acb2-7859d7098644.jsonl",
+      "line": 35,
+      "call": {
+        "line": 33,
+        "input": "const r = await tools.exec_command({cmd:\"Get-Location\", shell:\"powershell\", login:false, max_output_tokens:1000});\ntext(r.output);\n"
+      },
+      "output": {
+        "type": "custom_tool_call_output",
+        "id": "ctco_01a11f4f-127d-75a3-ae65-ab2d241228e2",
+        "call_id": "call_f9f02424c5d5477db49d2541ddbc3fff",
+        "output": [
+          {
+            "type": "input_text",
+            "text": "Script failed\nWall time 0.0 seconds\nOutput:\n"
+          },
+          {
+            "type": "input_text",
+            "text": "Script error:\nexec_command failed: CreateProcess { message: \"Rejected(\\\"`\\\\\\\"C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\Consiliari\\\\\\\\\\\\\\\\.cache\\\\\\\\\\\\\\\\codex-runtimes\\\\\\\\\\\\\\\\codex-primary-runtime\\\\\\\\\\\\\\\\dependencies\\\\\\\\\\\\\\\\native\\\\\\\\\\\\\\\\powershell\\\\\\\\\\\\\\\\pwsh.exe\\\\\\\" -NoProfile -Command Get-Location` rejected: blocked by policy\\\")\" }"
+          }
+        ],
+        "internal_chat_message_metadata_passthrough": {
+          "turn_id": "01a11f4e-e601-7bf2-ad42-eef5e8becb8b",
+          "create_time": 1791526638.2058036
+        }
+      }
+    }
+  ],
+  "sessions": [
+    {
+      "number": 1,
+      "phase": "implementation",
+      "pid": 43816,
+      "startedUtc": "2026-10-09T06:16:39.445083+00:00",
+      "endedUtc": "2026-10-09T06:16:54.965519+00:00",
+      "exitCode": 0,
+      "observedWallSeconds": 15.528011200003675,
+      "argv": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+        "exec",
+        "--sandbox",
+        "workspace-write",
+        "--cd",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-explicit-workspace",
+        "--model",
+        "gpt-6-luna",
+        "--config",
+        "model_reasoning_effort=\"high\"",
+        "--json",
+        "--output-last-message",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-explicit-workspace\\session-01\\last-message.txt",
+        "-"
+      ],
+      "events": {
+        "sessionId": "01a11f4e-7bcb-7782-9db7-523a23bead85",
+        "completedTurns": [
+          {
+            "usage": {
+              "input_tokens": 72406,
+              "cached_input_tokens": 51200,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 775,
+              "reasoning_output_tokens": 349
+            },
+            "event": {
+              "type": "turn.completed",
+              "usage": {
+                "input_tokens": 72406,
+                "cached_input_tokens": 51200,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 775,
+                "reasoning_output_tokens": 349
+              }
+            }
+          }
+        ],
+        "errors": [],
+        "invalidLines": 0
+      }
+    },
+    {
+      "number": 2,
+      "phase": "implementation",
+      "pid": 44716,
+      "startedUtc": "2026-10-09T06:16:55.420423+00:00",
+      "endedUtc": "2026-10-09T06:17:05.181476+00:00",
+      "exitCode": 0,
+      "observedWallSeconds": 9.7683423999988,
+      "argv": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+        "exec",
+        "--sandbox",
+        "workspace-write",
+        "resume",
+        "01a11f4e-7bcb-7782-9db7-523a23bead85",
+        "--model",
+        "gpt-6-luna",
+        "--config",
+        "model_reasoning_effort=\"high\"",
+        "--json",
+        "--output-last-message",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-explicit-workspace\\session-02\\last-message.txt",
+        "-"
+      ],
+      "events": {
+        "sessionId": "01a11f4e-7bcb-7782-9db7-523a23bead85",
+        "completedTurns": [
+          {
+            "usage": {
+              "input_tokens": 125132,
+              "cached_input_tokens": 101888,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 1256,
+              "reasoning_output_tokens": 559
+            },
+            "event": {
+              "type": "turn.completed",
+              "usage": {
+                "input_tokens": 125132,
+                "cached_input_tokens": 101888,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 1256,
+                "reasoning_output_tokens": 559
+              }
+            }
+          }
+        ],
+        "errors": [],
+        "invalidLines": 0
+      }
+    },
+    {
+      "number": 3,
+      "phase": "assessment",
+      "pid": 27344,
+      "startedUtc": "2026-10-09T06:17:06.444438+00:00",
+      "endedUtc": "2026-10-09T06:17:31.723787+00:00",
+      "exitCode": 0,
+      "observedWallSeconds": 25.28678239999863,
+      "argv": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\9691020b546a15b2\\codex.exe",
+        "exec",
+        "--sandbox",
+        "workspace-write",
+        "--cd",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-explicit-workspace\\evaluation\\repo",
+        "--model",
+        "gpt-6-luna",
+        "--config",
+        "model_reasoning_effort=\"high\"",
+        "--json",
+        "--output-last-message",
+        "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-explicit-workspace\\session-03\\last-message.txt",
+        "-"
+      ],
+      "events": {
+        "sessionId": "01a11f4e-e4b2-7322-acb2-7859d7098644",
+        "completedTurns": [
+          {
+            "usage": {
+              "input_tokens": 129740,
+              "cached_input_tokens": 109056,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 2138,
+              "reasoning_output_tokens": 936
+            },
+            "event": {
+              "type": "turn.completed",
+              "usage": {
+                "input_tokens": 129740,
+                "cached_input_tokens": 109056,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 2138,
+                "reasoning_output_tokens": 936
+              }
+            }
+          }
+        ],
+        "errors": [],
+        "invalidLines": 0
+      }
+    }
+  ],
+  "candidate": {
+    "head": "181a16de508f1fcbcc74622ffa09441613e6bddd",
+    "main": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+    "status": "",
+    "assessmentCandidateUnchanged": true,
+    "stationCandidatesUnchanged": [
+      {
+        "station": "S1",
+        "unchanged": true,
+        "headMatches": true
+      }
+    ]
+  },
+  "globalFullStarts": 3,
+  "newFullStarts": 1,
+  "implementationEntries": 2,
+  "independentFinalEntries": 1,
+  "executingHelpers": 0,
+  "unusedImplementationEntriesClosed": 6,
+  "unusedFinalEntriesClosed": 0,
+  "stations": {
+    "S1": "snapshot retained; implementation and product assessment NOT RUN",
+    "S2": "NOT RUN / not released",
+    "S3": "NOT RUN / not released",
+    "S4": "NOT RUN / not released"
+  },
+  "interventions": [],
+  "scientistNewProbesOrTests": 0,
+  "nativeTurnCompletionMeaning": "Native processing completed, not successful engineering or independent product evaluation.",
+  "accountBoundary": "Opaque local existing-account copy only; auth content never read by model, hashed, logged, archived or committed. Only own sessions exported.",
+  "usageScope": "Raw per-entry usage retained. Resume receipts may be cumulative; no total fabricated. Cached input/ reasoning output are subsets, not additive tokens. Serving identity, provider request count and billing unknown.",
+  "dispatchBoundary": "Fixed own-session resume already started 06:16:55.420423Z before first Scientist status observation 06:16:58Z; no free retry, third full start, coaching, source change or protection bypass. All three granted entries are now terminal.",
+  "rootCause": "Not established. Explicit standard CLI selector is present; actual native contexts remain read-only, and native tool CreateProcess returns blocked by policy even for reads.",
+  "operatorDecisionNeeded": "Provide a supported ordinary per-project native session/tool environment whose effective permission is workspace-write and whose shell can perform normal repository reads and writes. Current explicit CLI option/config alone did not establish that. The controlling setting/policy owner is not identified by these receipts; do not infer that disabling protection is necessary. Any new runtime attempt needs a fresh bounded owner grant.",
+  "next": "Hold for Overseer; all unused entries closed, no automatic start/transport diagnosis/permission bypass."
+}

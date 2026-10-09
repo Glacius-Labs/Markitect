@@ -1,5 +1,5 @@
 {
-  "status": "Third actual started; first turn reports renewed policy blocker; own fixed runner closure in progress",
+  "status": "CLOSED BLOCKED / HOLD",
   "grantId": "conventional-roombook-explicit-workspace-trial-20261009",
   "acceptedSourceSha": "76a63bdeb0e740241db20ddbd08d4547154acd84",
   "driverSession": 86030,
@@ -8,7 +8,11 @@
   "globalFullStarts": 3,
   "stateDir": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-explicit-workspace",
   "nativeHome": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\homes\\roombook-conventional-explicit-workspace",
-  "startCallback": "pending once after push",
-  "terminalCallback": "not sent",
-  "next": "Observe only own runner terminal and final assessor; archive exact blocker within 600s; no retry or bypass"
+  "startCallback": "sent once successfully",
+  "terminalCallback": "pending once after private push",
+  "next": "Hold for Overseer; all unused entries closed, no automatic start/transport diagnosis/permission bypass.",
+  "implementationEntries": 2,
+  "independentFinalEntries": 1,
+  "nativeTerminalUtc": "2026-10-09T06:17:31.723787+00:00",
+  "capturedUtc": "2026-10-09T06:20:28.733333+00:00"
 }
