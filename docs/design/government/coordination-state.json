@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T22:31:24.572434Z",
+  "updatedUtc": "2026-10-09T22:33:31.531954Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17758,7 +17758,7 @@
   },
   "scientistWindowsRuntimeReuse20261010": {
     "authority": "Direct human: use Scientist successful Windows setup and reconsider prolonged approach",
-    "status": "SOURCE_COMPARISON_DONE_OWNER_TECHNICAL_HANDOFF_IN_PROGRESS",
+    "status": "TECHNICAL_HANDOFF_VERIFIED_AND_SANITIZED_START_FACTS_FORWARDED_ONCE",
     "scientistDispatch": "SENT_ONCE: source-only sanitized technical handoff, no new run/installation/private case data",
     "integrationDispatch": "SENT_ONCE: minimal demonstrated startup, concrete MXC correction, reconsider unnecessary runner complexity; no unchanged retry loop",
     "rootVerifiedSource": {
@@ -17795,6 +17795,20 @@
       "possibleLaterSimplification": "Per-role version subprocess may be redundant with pre-turn returned cliVersion; preserve deliberate failfast value before changing",
       "ambientMCP": "Ambient user MCP startup is not Markitect prerequisite; no global configuration change or unproved causal claim",
       "currentNext": "Existing typed optional config/CLI/MCP/setup/fingerprint/requested receipt targeted checks/review, then fresh ordinary stable0.162 MXC A01. Effective backend remains unknown absent provider evidence."
+    },
+    "technicalHandoff": {
+      "privateSource": "cbb6c8f6f43448f030315e1e557d5e7c94e7b792",
+      "file": "experiments/work-item-comparison/playground/markitect/windows-runtime-handoff-20261010.md",
+      "sha256": "f28d64dd291fb0563a7c99f80fbb3ad3b93c4d185315bb5e6b6c7afc4e4feeef",
+      "rootVerified": "Clean own worktree/exact local HEAD/private remote/read full sanitized file/WorkingRawGit equality; no source case or judgment forwarded",
+      "observedExecutableVersion": "0.162.0-alpha.2",
+      "observedExecutableSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+      "startup": "Child-local MXC/workspace-write/never with ordinary stdio AppServer; explicit thread permissions, turn inherits, memoryfalse/loginfalse/helperLunaHigh/concurrency3 requested",
+      "nativeReported": "workspaceWrite/writableRoots[]/networkfalse/approvalnever",
+      "observedCapability": "Ordinary CWD read/write/remove, tests, real native helpers/overlap; read-only Git only",
+      "limits": "Protected .git mutation not proved/available; helper effectiveidentity/globalinheritedsettings/exhaustivedescendants unverified; no recovery/Apply equivalence; alpha/stable and defaultstdio/explicitlisten launch differences real",
+      "integrationDispatch": "SENT_ONCE_SANITIZED_ADDITIVE_TECHNICAL_FACTS",
+      "newRunProbeInstall": false
     }
   }
 }
