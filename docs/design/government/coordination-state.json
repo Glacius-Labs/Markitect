@@ -16258,12 +16258,22 @@
       },
       "conventionalWrapperCallbackPendingReview": {
         "sourceShaReported": "df6db9cc846378769efc9b8596b2a9736efe0425",
-        "status": "RECEIVED_NOT_YET_ROOT_VERIFIED",
+        "status": "QUALIFIED_PRIVATE_SOURCE_OFFLINE_HANDOFF_ROOT_VERIFIED",
         "authorityReported": "Younger direct human request in Scientist chat",
         "scopeReported": "Source-only Conventional CLI/operator-MCP wrapper over native exec/App Server;41offline fixtures, no actual calls",
         "privateHistoryOnly": true,
         "actualsReported": 0,
-        "reviewPending": true
+        "reviewPending": false,
+        "cleanExactPrivateRemoteVerified": true,
+        "deltaFiles": 23,
+        "workingRawGitBindingsVerified": 23,
+        "testSourceHashesVerified": 9,
+        "logSha256Verified": "ef9ea309e784f37b6e4b2602b527d6b704c3ddf8c4b9a2775329886c35297d81",
+        "historicalLunaNestDiffEmpty": true,
+        "checks": "Recorded41/41 offline6.117s, no Root repeat/runtime calls",
+        "limits": "Direct-child-only ownership; unconfirmed lifecycle blocks replay; context/helper/tool parity and aggregate cost unknown; source preparation not runtime acceptance",
+        "studyContractSha256": "63efed76bdc060818136444f4927e45db62f7a50315c3dd04951fb2c1f996899",
+        "actualGrant": 0
       }
     },
     "claude": {
