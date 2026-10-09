@@ -1342,3 +1342,15 @@ Fresh bounded decision:1200s offline preparation to close oldprivateevidence and
 Root accepted private clean/exactremote19bb5b1d8b40069b829cba8c252745de056cb416, PRIVATE/Actionsdisabled rechecked. Fourteen changed additive evidence files match RawGit, thirteen payload hashes verify, nine new prepared files match exact original128006RawGit bytes/tree8cea62c2; seed71acaae, unchangedcheckedRunner67d28776, configff07b59d andinstalledAppCLI0.162/SHA3553cd6e verified. FreshState prepared/0sessions/Home onlyconfig+metadataTmp. Two boundedmetadata calls consumed; no newsource/test/actors/reviewers orrequirement/rubricchanges.
 
 Separate immutable Rootactivation andenabledwrapper authorize exactly the newlyreserved1Actual,7200+900s/8Impl+1Final/Concurrency4depth2/LunaHigh under unchanged09:12:43Z end. OldActual1of6 and400/read-only-profile discrepancy are preserved; actualprofile/serving/auth/write onnewCLI not assumed fixed. No furthergenericcapabilitystage, Designwait orhumanGo. Startcount advances only on realInvocationreceipt; futureMarkitect usesmatchednewruntime/inputs/resources.
+
+
+### 2026-10-09T06:06:21Z - normal explicit workspace entry after real second execution blocker
+
+Root verified clean private terminal source7cd94977, exact remote,60payloadhashes and57changed Working/RawGit files, all only second-actual evidence. Three native entries completed with Luna High but effective read-only; ordinary shell calls were policy-rejected. Implementation and independent functional assessment NOT RUN, no method result. Two actual fullstarts consumed and retained; no usage overlap sum or cost claim.
+
+Official ordinary unattended entry is codex exec --sandbox workspace-write. Existing launcher omitted this selector despite its config declaration. One fresh900s correction package permits only explicit normal argv selection, targeted argv regression and one existing mechanical batch;0model/provider/reviewer/actual probes. Preserve native policies and project/user rules, no global policy editing or bypass. One third fresh same-input trial is conditional under unchanged resources/09:12:43Z deadline/max6starts, Root source-binding activation required. Next actual policy blocker terminal, no automatic extra retry. Design readiness is irrelevant.
+
+Design809e7df is a remote-verified DraftPR89 checkpoint, not accepted readiness or Main. CI still in progress; owner working on runtime file-mode/verifier findings and Brownfield delegation/recovery. No repeated Design assignment or private case results shared.
+
+
+Correction dispatched once06:06:49Z, tool accepted. Automation saved ACTIVE/2h with exact current grant, conditional third start, terminal policy-failure boundary and public DesignPR status. No additional Actual authority from preparation or heartbeat.

@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T05:53:08Z",
+  "updatedUtc": "2026-10-09T06:10:13Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12,8 +12,8 @@
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-09T04:54:08Z",
-    "verification": "Exact saved ACTIVE/2h/Root automation prompt with concrete mechanicalblocker/newgrant verified; callbacks quiet",
+    "lastVerifiedUtc": "2026-10-09T06:10:13Z",
+    "verification": "Exact saved ACTIVE/2h/Root prompt verified against intended current instruction; quiet callbacks",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
     "latestMandateUpdatedUtc": "2026-10-08T22:54:35Z",
     "reportOnMeaningfulChange": true,
@@ -31,14 +31,14 @@
     "resumedUtc": "2026-10-09T04:10:08Z",
     "promptSha256": "bff68eda12cd4d58f111bded1d249f0f1c986c028bf86ccc54ef0c5df4ee0c18",
     "name": "Markitect: Produktabschluss und Luna-Case-Studies",
-    "currentGrantContext": "One finite fixednewline mechanicalvalidation ends05:07:04Z/max1batch180s/0sourcechanges/newreviewers/Actuals; earlyConventional1reserved0started absolute09:12:43Z unchanged; Designproofgrantunchanged",
+    "currentGrantContext": "2 actual starts terminal; one normal workspace-entry correction ends06:21:21Z, third start conditional, trial absolute09:12:43Z unchanged; no bypass or refill",
     "exactSavedTomlVerified": true,
     "resumeReason": "New detailed direct user mandate9Oct: Design fullworkflow/docs/main and simple LunaConventional/newMarkitect nest. Historical researchpause remains correct for oldblock.",
     "scenarioFrameworkUpdatedUtc": "2026-10-09T04:25:49Z",
     "ownDesignSuiteMandateUpdatedUtc": "2026-10-09T04:31:41Z",
     "earlyConventionalMandateUpdatedUtc": "2026-10-09T04:45:30Z",
-    "currentPromptSha256": "db53a4f1b26536e0c21c80208602d15d040d067ba8c0d87422f6744b9a82f48c",
-    "lastUpdatedUtc": "2026-10-09T05:53:08Z",
+    "currentPromptSha256": "2d3a43ac3fe1f46c62d3adac506515b71ef5972dc6d69d6e3ffa81cb443744ed",
+    "lastUpdatedUtc": "2026-10-09T06:10:13Z",
     "currentPurpose": "Two-hour quiet callback fallback: Design main/product tests and independent early Conventional Luna case study"
   },
   "threads": [
@@ -476,7 +476,7 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:107",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:110",
       "lastObservedStatus": "idle",
       "activeTurn": {
         "id": "01a11f01-0b15-7a32-a818-2185b97f07ef",
@@ -9451,6 +9451,22 @@
         "sentUtc": "2026-10-09T05:53:08Z",
         "toolAccepted": true,
         "prompt": "Root hat den aktuellen Handoff19bb5b1d8b40069b829cba8c252745de056cb416 vollständig für den konkretenStart angenommen: sauber/exakterPRIVATEresearchremote, PRIVATE/Actionsdisabled erneutgeprüft;14Working/RawGitdateien und13Payloadhashes exakt;9FreshPreparedFiles bytegleich zu original128006RawGit undTree8cea62c2;Seed71acaae, unveränderterRunner67d28776,configff07b59d,nativeAppCLI0.162/SHA3553cd6e selbstgeprüft; frischeState0sessions/Home nurConfig+MetadataTmp. Genau2zugelassene lokaleMetadatacalls/0Tests/Reviewer/Provider/Caseactors. Alte400- und effektiveRead-only-Abweichung ausdrücklich erhalten; Root behauptet neueAuth/Serving/write/merge-Funktion nicht alsbewiesen.\n\nDer frisch reservierte zweiteActual ist JETZT exakt AKTIVIERT. Rootreceipt C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/conventional-roombook-current-native-root-activation-20261009.json SHAeb5cdfc710e175265a1be261a9f0915403fb9d1656aa48a33c124025bd9c39ce. AUSFÜHRBARE Wrappergrantdatei C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/conventional-roombook-current-native-enabled-grant-20261009.json SHAfed32412e7af3ce37acfca556a80b17cd697906e72d097bc9874387ab9144a38. ImmuteableReservation bleibtfalse/bytegleich; aktiverWrapper ist dieFreigabe. NeuesRepo/State/Home -current-native undexistingAppCLI9691020b exaktverwenden, keines deraltenGrants/States wiederaufnehmen.\n\nSOFORT gewöhnlichesbereitsautorisiertesAccountsetup imfrischenHome<=900s separat, opaque Credentials wederModel/Log/Git zeigennochhashen. Danach echter unveränderter public/nest.py drive mit enabledWrapper und gepinnterAppCLI; vorhandenerMesshostistfrei. KEINEweitere allgCapability-/Review-/Test-/Canaryphase oderDesignwait/Freigabefrage. Volles900+7200sFenster muss weiterhinbis09:12:43Z passen. Genau1neuerVollstart7200sZellwand(5400Impl/1200IndependentFinal/600Capture),8Implentriesinclfails/resumes/repairs+1Finalassessmententry,4nativeThreads/depth2/alleLunaHigh. Alter1von6Vollstart bleibtverbraucht; insgesamt2allokiert/max6, anderer0Quote. KeinModellwechsel/Installation/Kauf/Providerintegration/Deadlineextend/Refill.\n\nBeobachte tatsächlichen erstenNativeentry/Profile/Serving/ownPID/Thread/Turnreceipts. Stelle vor realer Arbeit eine effektiveTransportabweichung ehrlich fest; keineSicherheitsregelumgehung oder Ausschaltflags alsReparatur. Ordinary erlaubteWritetools/Git/Teamarbeit sindPrüflingseigenaufgabe, ScientistkeinCoaching/Codefix. MissingUsage/Costsunknown blockiertfunktionalnicht. EinmalgenuineStartreceipt melden, danach selbstständigfeste1/3/7/1Trajektorie+unabhängigesFinalassessment aufeingefrorenemOutcome bisEnde/konkretemBlocker. AlleFehlversuche/Setupzeit/Hostwait/Eingriffe ehrlich zählen, keineüberlappendenZeiten summieren. Bei erneutemStartup-/Modelzugriffsfehler terminalen konkretenBeleg liefern, keinunbegrenztererneuterproviderProbe. NeueRuntime giltprospektiv fürspäterenmatchedMarkitect; Originalfalldaten/Rubrikbleibengleich. PrivateEvidence privatpushen undOriginalfailedFreeze bytegleicherhalten. KeineACK."
+      },
+      "explicitWorkspaceEntryAssignment": {
+        "issuedUtc": "2026-10-09T06:06:21Z",
+        "status": "SENT ONCE; ordinary entry correction in progress",
+        "fixGrant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-explicit-workspace-entry-fix-grant-20261009.json",
+        "fixGrantSha256": "53da947ddc53f8b177e39fd3eff21d54ba8864d629aa9d31adb96a3a128f77cf",
+        "preparationNotAfterUtc": "2026-10-09T06:21:21Z",
+        "trialReservation": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-explicit-workspace-trial-reservation-20261009.json",
+        "trialReservationSha256": "728482a9c43e44568697a4b20edc0f8dc8a3fd851d922ab178f13fdac84ce431",
+        "actualExecutionAuthorized": false,
+        "noDesignDependency": true,
+        "noExtraMethodHelp": true,
+        "officialNormalEntryDocumentation": "https://learn.chatgpt.com/docs/non-interactive-mode",
+        "sentUtc": "2026-10-09T06:06:49Z",
+        "toolAccepted": true,
+        "prompt": "Der jüngste direkte Nutzerauftrag gilt: Conventional eigenständig evaluieren, ohne auf Design zu warten. Deinen terminalen 7cd94977274fc6ea86e469ba6b849c3e92f09154 habe ich sauber/privat/remote und mit60Payloadhashes sowie57geänderten Working/RawGitdateien geprüft. Beide bisherigen Actuals bleiben terminal und zählen2von6; alte Reste geschlossen. Keine Qualitätsbewertung aus dem Toolblocker.\n\nJetzt genau ein frisches konkretes Korrekturpaket, kein allgemeiner Capability-/Canarylauf: C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/conventional-explicit-workspace-entry-fix-grant-20261009.json, SHA25653da947ddc53f8b177e39fd3eff21d54ba8864d629aa9d31adb96a3a128f77cf, issued06:06:21Z, Ende06:21:21Z/max900s. Official https://learn.chatgpt.com/docs/non-interactive-mode dokumentiert exec default read-only und normalen unattended Einstieg --sandbox workspace-write. public/nest.py command() lässt den expliziten Selector bisher weg. Korrigiere ausschließlich diese normale argv-Auswahl für initial, eigene Resume-Session und frischen Assessor, vor optionalem resume-Subcommand. Native Sandbox/Projekt-/Nutzerrules und managed Requirements bleiben wirksam. Kein danger-full-access, --full-auto, ignore-rules/user-config, globaler Config-/Policychange, Install/Adminsetup oder Schutzbypass. Damit ist die konfigurierte normale Projektberechtigung explizit, die tatsächliche Ausführbarkeit noch offen.\n\nMaximal eine bestehende mechanische Prüfcharge <=180s, bestehende acht Fixtures plus gezielte argv-Vertragsregression für initial/resume/assessment. Falls Grammatik nötig, genau einmal vorhandenes gepinntes CLI exec resume --help <=15s (nichtmodellgestützt). Null Modell-/Provider-/Reviewer-/Canary-/Actualaufrufe aus diesem Paket; keine fachlichen Seeds/Tasks/Prompts/Rules/Oracle/Productänderungen. Alle alten Originalinputs und Fehlerbelege erhalten. Frisches eigenes Roombook-Repo/Home/State mit exakt gleichem Seed/tree/Inputbytes und0.162CLI/LunaHigh, Auth niemals lesen/hashloggen/archivieren/committen. Exakte kleine Source-Deltas, Checks, Runtime/Profile/Freshbindings und disabled Proposal sauber privat pushen, einmal Handoff melden. Kein weiterer Reviewactor oder Volltestgate.\n\nEine einzige dritte Zelle ist bedingt reserviert in conventional-roombook-explicit-workspace-trial-reservation-20261009.json SHA256728482a9c43e44568697a4b20edc0f8dc8a3fd851d922ab178f13fdac84ce431: noch NICHT aktiviert. Nach deinem konkreten erfolgreichen Handoff prüfe ich die kleine Bindung und aktiviere unmittelbar. Normale Ressourcen unverändert900sSetup/7200sZelle/5400Impl/1200Assessment/600Capture/8Impl+1Final/Team4depth2, absolutes Ende09:12:43Z. Für volle Zelle müssen7200s übrig sein. Start zählt dritter von maximal6, keine Design-Abhängigkeit/Fristverlängerung/Refill/alte Grantreuse. Wenn der neue Actual wieder echte Toolpolicyblockade zeigt, terminal und konkrete unterstützte Operatorentscheidung melden; kein weiterer automatischer Retry oder Schutzabschaltung. Als Scientist den konkreten Auftrag auch nach Kompaktion weiterführen, nicht auf historischen Warteprompt zurückfallen. Keine ACK."
       }
     },
     {
@@ -10113,7 +10129,7 @@
       "lastObservedStatus": "active",
       "candidateSha": "11f080815722089d84869fef536b94cae9321e74",
       "candidateStatus": "Readiness open; new actual Manager invocation/child-report bridge in progress, prior reported ab306 pin not accepted as current studyfreeze",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:23",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:25",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac852a43fa08191a8d8e593c901cb96",
       "assignedMilestone": "Held bounded source7d/doc11f candidate and exact private recovery; no new source/runtime/study assignment",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
@@ -10470,10 +10486,21 @@
         "prompt": "Öffentliche Runtime-Schnittstelle für deine eigenenLunaProofs und spätereStudienbindung: AufdiesemHost ist die bestehendeAppCLI C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/9691020b546a15b2/codex.exe verfügbar; Root las reinoffline --version:0.162.0-alpha.2, SHA2563553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68. Der bestehendeAppModellkatalog führtgpt-6-luna/high. Die ältere separat installiertenpmCLI0.130 lehnt exaktgpt-6-luna aufdemChatGPT-Accountpfad ab; offiziellerModellnameistkorrekt (https://learn.chatgpt.com/docs/models). Dies ist ein Umgebungs-/Clientbefund, kein Produkt-/Methodenurteil und keine neueNativefreigabe. Falls du deine reale bereitsvorhandeneAppCLI anders bindest, liefere imHandoff exaktenPath/SHA/Config; keine heimlicheModellsubstitution/neueInstallation/APIintegration.\n\nVorherigeGo33006-Last ist beendet/FAILerhalten. Scientist schließt Fehlerbelege und bindet sofort die bereitsinstallierteAppCLI fürfrischenConventionalfall; folgenderMessslot bleibt beiScientist. Deine konkreteBrownfieldManagerbridge/Historyfixes undLightwork/offhostCI weiterführen; nativeProofs undneueHeavySuiten erst nach konkretkoordiniertemMessslot. VorhandeneProduktquote3/7200/128 unverändert/keinezusätzlichenKäufe. KeineprivatenFall-/Lösung-/Bewertungsdaten betroffen, keineACK.",
         "privateInputsShared": false,
         "extraProofQuota": 0
+      },
+      "currentPublicCheckpoint": {
+        "observedUtc": "2026-10-09T06:06:21Z",
+        "sourceSha": "809e7df14638593100d064d85bc484ece8667a5d",
+        "branch": "codex/model-first-operations",
+        "pullRequest": "https://github.com/Glacius-Labs/Markitect/pull/89",
+        "rootVerifiedRemoteAndDraftPr": true,
+        "ciRun": 37890746830,
+        "ciStatus": "in_progress",
+        "rootAcceptedReadiness": false,
+        "ownerReportedCurrentWork": "Runtime setup file modes and verifier test exposed by Linux CI; Brownfield delegation file metadata and stable receipt recovery still being corrected."
       }
     }
   ],
-  "nextAction": "Dispatch fresh exact currentAppCLI enabledgrant once; Scientist actualdrive immediately, no newreview/test/capabilityphase. Recordgenuine newStartreceipt andeffectiveModel/Sandbox observations, independentlyassessfrozenoutcome; oldmodelrejection remains1of6.",
+  "nextAction": "Send exact 900s correction once, verify resulting tiny source delta/fresh unchanged inputs, activate the third fresh Conventional start immediately under unchanged 09:12:43Z deadline. No general capability phase. Next actual tool-policy failure terminal for a concrete operator decision.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -10712,12 +10739,12 @@
   },
   "fullSuiteSlot": {
     "assignedUtc": "2026-10-09T05:13:26Z",
-    "status": "CURRENT APPCLI CONVENTIONAL SETUP/MEASUREMENT",
+    "status": "SECOND ACTUAL CLOSED; SCIENTIST ONE SMALL RUNNER CORRECTION, THIRD START CONDITIONAL",
     "designHeavyStartUtc": "2026-10-09T05:15:00Z",
     "designHeavyEndUtc": "2026-10-09T05:25:00Z",
     "scientistSetupNotBeforeUtc": "2026-10-09T05:25:00Z",
     "scientistMeasuredCellMaxWallSeconds": 7200,
-    "purpose": "Actual samecaseConventional with installed0.162, ordinarysetup andindependentassessment; noDesignwait/noheavyDesignoverlap",
+    "purpose": "No Design readiness wait; ordinary explicit workspace-write entry only. Preserve all policy checks and old failed starts.",
     "noPrivateCaseResultsToDesign": true,
     "timingCorrection": {
       "recordedUtc": "2026-10-09T05:24:08Z",
@@ -11087,7 +11114,7 @@
     "newWorkItemComparison": {
       "key": "luna-native-work-item-comparison-20261009",
       "authorizedUtc": "2026-10-09T04:07:10Z",
-      "status": "Second currentAppCLIConventional activated, original1startpreserved, freshstartreceipt pending",
+      "status": "Two actual starts terminal and retained; concrete ordinary workspace-entry correction, third start conditional, independent of Design",
       "document": "docs/design/work-item-comparison-20261009.md",
       "documentSha256": "2f76bfd4a21bc9f28a6cdc671952de3a547d3e27df2fd43ce6853735be24edcf",
       "arms": [
@@ -11118,7 +11145,7 @@
       "noNewAiPrompterInitially": true,
       "maxPairedProjects": 3,
       "maxActualFullTrialStarts": 6,
-      "actualAllocated": 2,
+      "actualAllocated": 3,
       "initialPreparationProjects": 2,
       "oldUnusedSlotsRemainClosed": true,
       "executionGrantAfterConcreteReadinessByRootExistingUserGo": true,
@@ -11174,7 +11201,7 @@
           "acceptedSeedsOrActuals": "Prepared seeds accepted; no actual start receipt yet"
         }
       },
-      "actualStarted": 1,
+      "actualStarted": 2,
       "earlyConventionalExecution": {
         "authorizedUtc": "2026-10-09T04:42:43Z",
         "status": "CLOSED TERMINAL EXECUTIONBLOCKED,1actualstart preserved",
@@ -11251,13 +11278,13 @@
         "preparationGrantSha256": "3784cc83e4b7522813b9e766baeabf19e3a9cd03246fbd29c0ba217db89842ec",
         "trialReservation": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-current-native-trial-reservation-20261009.json",
         "trialReservationSha256": "98624a41272c8dbab86d614ad27c562ba831d8ce65db950a1294a890862373cb",
-        "trialExecutionAuthorized": true,
+        "trialExecutionAuthorized": false,
         "actualStartsAddedToReservation": 1,
-        "actualStartsStartedThisReservation": 0,
-        "status": "ACTIVATED AND DISPATCHED, source/private/freshbindingschecked, newactualstart pending",
+        "actualStartsStartedThisReservation": 1,
+        "status": "CLOSED BLOCKED: effective read-only and ordinary shell calls denied",
         "activation": {
           "issuedUtc": "2026-10-09T05:51:22Z",
-          "status": "SENT ONCE, exactfreshActual enabled; genuinestart pending",
+          "status": "CLOSED BLOCKED",
           "sourceSha": "19bb5b1d8b40069b829cba8c252745de056cb416",
           "receipt": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-current-native-root-activation-20261009.json",
           "receiptSha256": "eb5cdfc710e175265a1be261a9f0915403fb9d1656aa48a33c124025bd9c39ce",
@@ -11265,9 +11292,43 @@
           "executionGrantSha256": "fed32412e7af3ce37acfca556a80b17cd697906e72d097bc9874387ab9144a38",
           "absoluteNotAfterUtc": "2026-10-09T09:12:43Z",
           "actualAllocated": 1,
-          "actualStarted": 0
+          "actualStarted": 1
         },
-        "acceptedSourceSha": "19bb5b1d8b40069b829cba8c252745de056cb416"
+        "acceptedSourceSha": "19bb5b1d8b40069b829cba8c252745de056cb416",
+        "terminalSourceSha": "7cd94977274fc6ea86e469ba6b849c3e92f09154",
+        "terminalRootVerification": {
+          "verifiedUtc": "2026-10-09T06:06:21Z",
+          "cleanAndExactPrivateRemote": true,
+          "payloadHashes": 60,
+          "changedWorkingRawGitFiles": 57,
+          "changesOnlyActualEvidence": true,
+          "completedNativeEntries": 3,
+          "implementationEntries": 2,
+          "assessmentEntries": 1,
+          "firstStartedUtc": "2026-10-09T05:53:38.418592Z",
+          "lastEndedUtc": "2026-10-09T05:54:33.554937Z",
+          "requestedProfile": "gpt-6-luna/high; workspace-write; never",
+          "effectiveObservedProfile": "gpt-6-luna/high; read-only; never",
+          "functionalImplementationAndAssessment": "NOT RUN",
+          "oldUnusedEntriesClosed": true,
+          "rawUsagePreservedNotSummed": true,
+          "billingServingAndCost": "unknown"
+        }
+      },
+      "explicitWorkspaceEntryCorrection": {
+        "issuedUtc": "2026-10-09T06:06:21Z",
+        "status": "SENT ONCE; ordinary entry correction in progress",
+        "fixGrant": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-explicit-workspace-entry-fix-grant-20261009.json",
+        "fixGrantSha256": "53da947ddc53f8b177e39fd3eff21d54ba8864d629aa9d31adb96a3a128f77cf",
+        "preparationNotAfterUtc": "2026-10-09T06:21:21Z",
+        "trialReservation": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\conventional-roombook-explicit-workspace-trial-reservation-20261009.json",
+        "trialReservationSha256": "728482a9c43e44568697a4b20edc0f8dc8a3fd851d922ab178f13fdac84ce431",
+        "actualExecutionAuthorized": false,
+        "noDesignDependency": true,
+        "noExtraMethodHelp": true,
+        "officialNormalEntryDocumentation": "https://learn.chatgpt.com/docs/non-interactive-mode",
+        "sentUtc": "2026-10-09T06:06:49Z",
+        "toolAccepted": true
       }
     }
   },
