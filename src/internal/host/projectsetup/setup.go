@@ -90,6 +90,10 @@ type DoctorReport struct {
 var versionPattern = regexp.MustCompile(`(?i)(?:^|[^0-9])v?([0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?)`)
 
 func PreviewEdit(project *projectwork.Project, options Options) (Preview, error) {
+	return previewEditWithDiscovery(project, options, Discover)
+}
+
+func previewEditWithDiscovery(project *projectwork.Project, options Options, discover func(Options) (Discovery, error)) (Preview, error) {
 	var result Preview
 	if project == nil {
 		return result, errors.New("active project is required")
@@ -98,7 +102,7 @@ func PreviewEdit(project *projectwork.Project, options Options) (Preview, error)
 	if err != nil {
 		return result, err
 	}
-	discovery, err := Discover(options)
+	discovery, err := discover(options)
 	if err != nil {
 		return result, err
 	}
@@ -150,8 +154,8 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 	if options.Effort != "high" {
 		return config, errors.New("setup currently supports only --effort high")
 	}
-	if options.CodexProfile != "luna-high" || options.Model != "gpt-6-luna" || options.Effort != "high" {
-		return config, errors.New("native Codex App Server setup requires the luna-high model preset with model gpt-6-luna and effort high")
+	if options.Model != "gpt-6-luna" || options.Effort != "high" {
+		return config, errors.New("native Codex App Server setup currently requires model gpt-6-luna and effort high")
 	}
 	if found.ProviderBinary.Version != "codex-cli 0.162.0" {
 		return config, errors.New("native Codex setup requires Codex CLI 0.162.0")
@@ -178,14 +182,20 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		environment = append(environment, "HOME")
 	}
 	pricing := projectrun.Pricing{InputMicrosPerMillion: options.InputMicrosPerMillion, OutputMicrosPerMillion: options.OutputMicrosPerMillion}
+	reviewerPermissionProfile := ""
+	if options.CodexProfile != "" {
+		// The explicit setup profile opts in only Manager work. Separate
+		// assessment/review invocations stay read-only under that opt-in.
+		reviewerPermissionProfile = ":read-only"
+	}
 	agents := make(map[string]projectrun.Agent, len(project.Report.Managers))
 	reviewAgents := make(map[string]projectrun.Agent, len(project.Report.Managers))
 	for _, manager := range project.Report.Managers {
 		if manager.ID == "" {
 			return config, errors.New("active project has a Manager with an empty ID")
 		}
-		worker := selectedAgent(found, options.Model, options.Effort, runtimeFiles, environment, pricing)
-		reviewer := selectedAgent(found, options.Model, options.Effort, runtimeFiles, environment, pricing)
+		worker := selectedAgent(found, options.Model, options.Effort, options.CodexProfile, runtimeFiles, environment, pricing)
+		reviewer := selectedAgent(found, options.Model, options.Effort, reviewerPermissionProfile, runtimeFiles, environment, pricing)
 		worker.WorkspaceMode = "git"
 		worker.InstructionPaths = append([]string(nil), instructionPaths...)
 		reviewer.WorkspaceMode = "git"
@@ -226,23 +236,18 @@ func normalizeOptions(options Options) (Options, error) {
 	if options.Provider != "codex" {
 		return options, errors.New("project setup currently supports native Codex only")
 	}
-	if options.CodexProfile == "" {
-		options.CodexProfile = "luna-high"
-	}
-	if options.CodexProfile != "luna-high" {
-		return options, errors.New("--codex-profile currently supports only luna-high")
-	}
 	return options, nil
 }
 
-func selectedAgent(found Discovery, model, effort string, files []agentexec.RuntimeFile, environment []string, pricing projectrun.Pricing) projectrun.Agent {
+func selectedAgent(found Discovery, model, effort, permissionProfile string, files []agentexec.RuntimeFile, environment []string, pricing projectrun.Pricing) projectrun.Agent {
 	return projectrun.Agent{
 		Command: found.ProviderBinary.Path, Transport: projectrun.TransportCodexAppServer,
 		AppServer: &projectrun.AppServerSettings{
 			ReasoningEffort: effort,
 			// Empty PermissionProfile preserves the user's existing Codex boundary.
-			Helpers:       projectrun.AppServerHelpers{Enabled: true, MaxStartRequests: DefaultMaxHelperStarts, MaxDepth: 1},
-			MaxEventBytes: DefaultMaxEventBytes,
+			PermissionProfile: permissionProfile,
+			Helpers:           projectrun.AppServerHelpers{Enabled: true, MaxStartRequests: DefaultMaxHelperStarts, MaxDepth: 1},
+			MaxEventBytes:     DefaultMaxEventBytes,
 		},
 		Model: model, ProviderVersion: found.ProviderBinary.Version,
 		Timeout: projectrun.Duration(DefaultTimeout), MaxStdoutBytes: DefaultMaxStdout, MaxStderrBytes: DefaultMaxStderr,
