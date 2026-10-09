@@ -15,7 +15,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/host/projectadoption"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectapp"
-	"github.com/Glacius-Labs/Markitect/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectsetup"
@@ -58,6 +57,8 @@ func runAction(opts options, out io.Writer) error {
 		ctx = bounded
 	}
 	switch opts.action {
+	case "mcp":
+		return runMCPCommand(opts.repo, out)
 	case "explore":
 		return runExplore(opts, out)
 	case "readiness":
@@ -71,7 +72,7 @@ func runAction(opts options, out io.Writer) error {
 	case "onboard":
 		return runOnboarding(opts, out)
 	case "coverage":
-		coverage, err := projectwork.Coverage(opts.repo, opts.revision)
+		coverage, err := projectOperations().Coverage(projectapp.Selection{Root: opts.repo, Revision: opts.revision})
 		if err != nil {
 			return err
 		}
@@ -85,7 +86,7 @@ func runAction(opts options, out io.Writer) error {
 	case "schema":
 		return writeJSON(out, projectmodel.Schema())
 	case "init":
-		plan, err := projectwork.Init(opts.repo, opts.name, opts.write)
+		plan, err := projectOperations().Init(projectapp.InitOperation{Root: opts.repo, Name: opts.name, Write: opts.write})
 		if err != nil {
 			return err
 		}
@@ -117,85 +118,78 @@ func runAction(opts options, out io.Writer) error {
 		}
 		return writeJSON(out, preview)
 
-	case "check", "index", "context", "document", "edit":
-		project, err := projectwork.Load(opts.repo, opts.revision)
+	case "check":
+		selection := projectapp.Selection{Root: opts.repo, Revision: opts.revision}
+		result, err := projectOperations().Check(selection)
 		if err != nil {
 			return err
 		}
-		switch opts.action {
-		case "check":
-			if err := writeJSON(out, struct {
-				ProjectDigest string                  `json:"projectDigest"`
-				Revision      string                  `json:"revision"`
-				Provisional   bool                    `json:"provisional"`
-				Status        string                  `json:"status"`
-				Findings      []projectmodel.Finding  `json:"findings"`
-				Unknown       []string                `json:"unknown"`
-				Coverage      *projectcoverage.Report `json:"coverage,omitempty"`
-			}{project.Digest, project.Revision, project.Provisional, project.Report.Status, project.Report.Findings, project.Report.Unknown, project.Coverage}); err != nil {
-				return err
-			}
-			if project.Report.Status != "succeeded" {
-				return &projectOutcomeError{code: 1, message: "project report is " + project.Report.Status}
-			}
-			if project.Config.CoverageMode == "full" && (project.Coverage == nil || !project.Coverage.Conforming) {
-				return &projectOutcomeError{code: 1, message: "whole-repository coverage is not conforming; inspect project coverage"}
-			}
-			return nil
-		case "index":
-			return writeJSON(out, project.Report)
-		case "context":
-			if project.Config.WorkflowMode == "guided" && !project.Provisional && project.Revision != "" {
-				if _, err := projectbriefing.EnsureAcceptedHistory(opts.repo, project.Revision); err != nil {
-					return err
-				}
-			}
-			result, err := projectmodel.Context(project.Report, opts.manager)
-			if err != nil {
-				return err
-			}
-			return writeJSON(out, result)
-		case "document":
-			content, err := projectwork.Document(project, opts.write)
-			if err != nil {
-				return err
-			}
-			_, err = io.WriteString(out, content)
+		if err := writeJSON(out, struct {
+			ProjectDigest string                  `json:"projectDigest"`
+			Revision      string                  `json:"revision"`
+			Provisional   bool                    `json:"provisional"`
+			Status        string                  `json:"status"`
+			Findings      []projectmodel.Finding  `json:"findings"`
+			Unknown       []string                `json:"unknown"`
+			Coverage      *projectcoverage.Report `json:"coverage,omitempty"`
+		}{result.Source.ProjectDigest, result.Source.Revision, result.Source.Provisional, result.Report.Status, result.Findings, result.Unknown, result.Coverage}); err != nil {
 			return err
-		case "edit":
-			data, err := readRecord(opts.repo, opts.input)
-			if err != nil {
-				return err
-			}
-			mutation, err := projectwork.DecodeMutation(data)
-			if err != nil {
-				return err
-			}
-			plan, err := projectwork.PlanEdit(project, mutation)
-			if err != nil {
-				return err
-			}
-			if opts.write {
-				if opts.expect != plan.Digest {
-					return fmt.Errorf("--expect does not match the exact edit plan digest %s", plan.Digest)
-				}
-				plan, err = projectwork.ApplyEdit(opts.repo, plan, plan.BaseDigest)
-				if err != nil {
-					return err
-				}
-			}
-			return writeJSON(out, plan)
 		}
+		if result.Report.Status != "succeeded" {
+			return &projectOutcomeError{code: 1, message: "project report is " + result.Report.Status}
+		}
+		if result.Source.CoverageMode == "full" && (result.Coverage == nil || !result.Coverage.Conforming) {
+			return &projectOutcomeError{code: 1, message: "whole-repository coverage is not conforming; inspect project coverage"}
+		}
+		return nil
+	case "index":
+		report, err := projectOperations().Index(projectapp.Selection{Root: opts.repo, Revision: opts.revision})
+		if err != nil {
+			return err
+		}
+		return writeJSON(out, report)
+	case "context":
+		result, err := projectOperations().Context(projectapp.ContextOperation{
+			Selection: projectapp.Selection{Root: opts.repo, Revision: opts.revision}, ManagerID: opts.manager,
+		})
+		if err != nil {
+			return err
+		}
+		return writeJSON(out, result)
+	case "document":
+		content, err := projectOperations().Document(projectapp.DocumentOperation{
+			Selection: projectapp.Selection{Root: opts.repo, Revision: opts.revision}, Write: opts.write,
+		})
+		if err != nil {
+			return err
+		}
+		_, err = io.WriteString(out, content)
+		return err
+	case "edit":
+		data, err := readRecord(opts.repo, opts.input)
+		if err != nil {
+			return err
+		}
+		mutation, err := projectwork.DecodeMutation(data)
+		if err != nil {
+			return err
+		}
+		plan, err := projectOperations().Edit(projectapp.EditOperation{
+			Selection: projectapp.Selection{Root: opts.repo, Revision: opts.revision}, Mutation: mutation,
+			Write: opts.write, ExpectedDigest: opts.expect,
+		})
+		if err != nil {
+			return err
+		}
+		return writeJSON(out, plan)
 	case "impact":
-		base, err := projectwork.Load(opts.repo, opts.base)
+		impact, err := projectOperations().Impact(projectapp.ImpactOperation{
+			Root: opts.repo, BaseRevision: opts.base, Revision: opts.revision,
+		})
 		if err != nil {
-			return fmt.Errorf("load base project: %w", err)
+			return err
 		}
-		candidate, err := projectwork.Load(opts.repo, opts.revision)
-		if err != nil {
-			return fmt.Errorf("load candidate project: %w", err)
-		}
-		return writeJSON(out, projectmodel.Impact(base.Report, candidate.Report))
+		return writeJSON(out, impact)
 	case "discover":
 		data, err := readRecord(opts.repo, opts.request)
 		if err != nil {
@@ -538,7 +532,6 @@ func runAction(opts options, out io.Writer) error {
 	default:
 		return errors.New("action requires a project service that is not wired in this package build")
 	}
-	return fmt.Errorf("unsupported project action %q", opts.action)
 }
 
 func projectRunHost() projectrun.Host {

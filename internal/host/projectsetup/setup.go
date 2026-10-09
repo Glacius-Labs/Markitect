@@ -39,15 +39,15 @@ const (
 )
 
 type Options struct {
-	Provider               string
-	Model                  string
-	Effort                 string
-	CodexProfile           string
-	ToolRoot               string
-	ProviderExecutable     string
-	InputMicrosPerMillion  int64
-	OutputMicrosPerMillion int64
-	MaxCostMicros          int64
+	Provider               string `json:"provider"`
+	Model                  string `json:"model"`
+	Effort                 string `json:"effort"`
+	CodexProfile           string `json:"codexProfile"`
+	ToolRoot               string `json:"toolRoot"`
+	ProviderExecutable     string `json:"providerExecutable"`
+	InputMicrosPerMillion  int64  `json:"inputMicrosPerMillion"`
+	OutputMicrosPerMillion int64  `json:"outputMicrosPerMillion"`
+	MaxCostMicros          int64  `json:"maxCostMicros"`
 }
 
 type Tool struct {

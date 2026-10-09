@@ -41,3 +41,15 @@ items:
     implementation_authority: requires_later_user_selection
     scope: Versioned YAML defaults, integrated init/onboard preview and apply, controlled frontmatter updates, and model-to-output coverage.
     constraints: No additional workflow runner or ontology; rebind source paths after P08; optional comparisons require a fresh user start and grant.
+
+  - id: KG01-KG03
+    title: Independent bounded knowledge graph source/index/explain implementation
+    status: independently_authorized_post_main_integration
+    owner_thread: 01a12178-5797-7c41-8acc-8e8231084c79
+    branch: codex/knowledge-graph
+    base: 1495e1be7b0046711531fa42c8407fba67b8e814
+    reserved_new_files: internal/modules/projectknowledge
+    main_gate: false
+    scope: Core-neutral module DTOs and generic bounded index/explain; no sibling or Host imports, shared declarations, dependencies or composition changes.
+    integration_owned: ProjectModel mapping, operational evidence/privacy, CLI/MCP/skills, identity/schema.
+    constraints: Separate user-authorized work; rebase to final P08 source paths; no actual product/study grant.

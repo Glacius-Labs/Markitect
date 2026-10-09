@@ -37,6 +37,7 @@ type actionSpec struct {
 }
 
 var actionSpecs = map[string]actionSpec{
+	"mcp":        {usage: "mcp --repo PATH (local MCP stdio server)", flags: []string{"repo"}, required: []string{"repo"}},
 	"explore":    {usage: "explore --repo PATH [--exploration ID | --input RECORD.json] [--expect PLAN_DIGEST --write]", flags: []string{"repo", "revision", "exploration", "input", "expect", "write"}, required: []string{"repo"}, write: true},
 	"readiness":  {usage: "readiness --repo PATH --exploration ID --scope ID [--acknowledge-structure --actor ACTOR --authority TEXT --decision-ref REF --acknowledged-at RFC3339 --expect DIGEST --write]", flags: []string{"repo", "revision", "exploration", "scope", "acknowledge-structure", "actor", "authority", "decision-ref", "acknowledged-at", "expect", "write"}, required: []string{"repo", "exploration", "scope"}, write: true},
 	"brownfield": {usage: "brownfield --repo TARGET [--source-repo SOURCE] --brownfield-action start|begin|context|propose|integrate|iterate|run|resolve|plan|apply-adoption|resume [--revision COMMIT] [--session ID] [--input STAGE.json] [--expect DIGEST --write]", flags: []string{"repo", "source-repo", "revision", "brownfield-action", "session", "input", "expect", "write"}, required: []string{"repo", "brownfield-action"}, write: true},

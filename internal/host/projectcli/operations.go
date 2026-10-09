@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectonboarding"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
@@ -258,19 +259,10 @@ func runOnboarding(opts options, out io.Writer) error {
 	default:
 		return fmt.Errorf("provider must be codex, claude or both")
 	}
-	project, err := projectwork.Load(opts.repo, "")
+	plan, err := projectOperations().Onboard(projectapp.OnboardOperation{Root: opts.repo, Options: projectonboarding.Options{Providers: providers, DocumentationPath: opts.documentPath}, Write: opts.write, ExpectedDigest: opts.expect})
 	if err != nil {
 		return err
 	}
-	plan, err := projectonboarding.Preview(opts.repo, project.Report.ModelDigest, projectonboarding.Options{Providers: providers, DocumentationPath: opts.documentPath})
-	if err != nil {
-		return err
-	}
-	if opts.write {
-		plan, err = projectonboarding.Apply(opts.repo, plan, opts.expect)
-		if err != nil {
-			return err
-		}
-	}
+
 	return writeJSON(out, plan)
 }

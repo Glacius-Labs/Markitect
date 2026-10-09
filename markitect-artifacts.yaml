@@ -2,6 +2,7 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - internal/host/mcp
     - internal/host/projectworkspace
     - internal/host/projectapp
     - internal/host/codexappserver
@@ -2359,4 +2360,44 @@ spec:
     - path: internal/host/projectapp/setup.go
       owner: project-world-implementation
     - path: docs/work-items/product-readiness/integration-progress-20261009.md
+      owner: project-world-implementation
+    - path: internal/host/projectapp/model.go
+      owner: project-world-implementation
+    - path: internal/host/projectapp/model_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectapp/onboarding.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/mcp.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/mcp_integration_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/scheduling.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/scheduling_test.go
+      owner: project-world-implementation
+    - path: internal/host/mcp/stdio.go
+      owner: project-world-implementation
+    - path: internal/host/mcp/schema.go
+      owner: project-world-implementation
+    - path: internal/host/mcp/tools.go
+      owner: project-world-implementation
+    - path: internal/host/mcp/mcp_test.go
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P05-mcp-handoff-20261009.md
+      owner: project-world-implementation
+    - path: internal/host/projectworkspace/git_service.go
+      owner: project-world-implementation
+    - path: internal/host/projectworkspace/git_inventory.go
+      owner: project-world-implementation
+    - path: internal/host/projectworkspace/git_overlay.go
+      owner: project-world-implementation
+    - path: internal/host/projectworkspace/git_renames.go
+      owner: project-world-implementation
+    - path: internal/host/projectworkspace/git_service_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectworkspace/git_overlay_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectworkspace/git_hardening_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectworkspace/git_recovery_test.go
       owner: project-world-implementation
