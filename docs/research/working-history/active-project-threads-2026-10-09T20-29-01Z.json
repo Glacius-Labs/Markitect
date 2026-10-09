@@ -1,0 +1,117 @@
+{
+  "capturedAtUtc": "2026-10-09 20:29:01 UTC",
+  "activeIndexReturned": 50,
+  "activeIndexLimit": 50,
+  "continuationCursorAvailable": false,
+  "selectedRelevantCount": 12,
+  "threads": [
+    {
+      "id": "01a1169c-3df6-7571-997d-48ab57365875",
+      "title": "Scientist",
+      "status": "active",
+      "projectId": "efd196a0-cb53-477a-90e8-f65e6af0d65e",
+      "cwd": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect",
+      "updatedAt": 1791577738,
+      "summary": "Scientist wartet auf Anweisungen des Overseers"
+    },
+    {
+      "id": "01a11367-a781-7683-a20f-46e12614dcb4",
+      "title": "Overseer",
+      "status": "active",
+      "projectId": "efd196a0-cb53-477a-90e8-f65e6af0d65e",
+      "cwd": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect",
+      "updatedAt": 1791577722,
+      "summary": "Government Modell, Verantwortungsbereiche, kanonisches Modell, Repository-Projektionen, rekursive Ag"
+    },
+    {
+      "id": "01a121f1-b948-7050-ae5d-9921b99db9c0",
+      "title": "Chat",
+      "status": "idle",
+      "projectId": null,
+      "cwd": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect",
+      "updatedAt": 1791577534,
+      "summary": "Markitect Produktstand, Worktrees, Vision, Kernkonzepte, Nutzerablauf"
+    },
+    {
+      "id": "01a121ad-0631-7ce2-b013-a35add645424",
+      "title": "Monitor",
+      "status": "idle",
+      "projectId": null,
+      "cwd": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect",
+      "updatedAt": 1791577489,
+      "summary": "Markitect Chats, Branches, Overseer-Auslastung, main-Updates alle 15 Minuten"
+    },
+    {
+      "id": "01a12232-2c5e-7ea3-adb5-12eac55d6847",
+      "title": "Sammle viel mehr Kontext. Das Projekt hat sich in den letzten Tagen stark entwickelt und du sollst über den Verlauf des Projekts berichten und wie es sich entwickelt und wie generell gearbeitet wird. Für jetzt sollst du so viel Kontext sammeln wie du kannst und versuchen diesen Verlauf Rückwirkend aufzuarbeiten und entsprechend zu dokumentieren",
+      "status": "active",
+      "projectId": "efd196a0-cb53-477a-90e8-f65e6af0d65e",
+      "cwd": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect",
+      "updatedAt": 1791577741,
+      "summary": null
+    },
+    {
+      "id": "01a12238-b3c1-7530-b988-d502ff28aaba",
+      "title": "Hier liegt das Backlog. Implementiere die Arbeit, halte die Projektregeln ein, prüfe die Ergebnisse und merge die fertigen Änderungen nach main.",
+      "status": "notLoaded",
+      "projectId": null,
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-Variant-Adapter-Study-20261009-2000\\readinglog\\repo",
+      "updatedAt": 1791575642,
+      "summary": null
+    },
+    {
+      "id": "01a12207-2c3a-7d62-8f02-6a3eab95b164",
+      "title": "Hier liegt das Backlog. Implementiere die Arbeit, halte die Projektregeln ein, prüfe die Ergebnisse und merge die fertigen Änderungen nach main.",
+      "status": "notLoaded",
+      "projectId": null,
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Conventional-AppServer-Correction-Pilot-20261009-1900\\readinglog\\repo",
+      "updatedAt": 1791572314,
+      "summary": null
+    },
+    {
+      "id": "01a12178-5797-7c41-8acc-8e8231084c79",
+      "title": "Knowledge Graph",
+      "status": "idle",
+      "projectId": "efd196a0-cb53-477a-90e8-f65e6af0d65e",
+      "cwd": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect",
+      "updatedAt": 1791577573,
+      "summary": "Markitect Knowledge Graph bewerten"
+    },
+    {
+      "id": "01a12178-516b-78c0-8ebb-47da32643984",
+      "title": "Jev",
+      "status": "idle",
+      "projectId": "efd196a0-cb53-477a-90e8-f65e6af0d65e",
+      "cwd": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect",
+      "updatedAt": 1791566897,
+      "summary": "Jev-Codebaseanalyse, Einsatzmöglichkeiten, Empfehlung nach Main-Update im Repo ablegen"
+    },
+    {
+      "id": "01a113d5-7677-72af-9798-b26aef90907e",
+      "title": "Set up Markitect",
+      "status": "idle",
+      "projectId": null,
+      "cwd": "/tmp/codex-cloud-agent-580ed0e185a6-ec6ab5d7f891432baee55aadc731a5fb/app_servers/thread_service/workspace",
+      "updatedAt": 1791334411,
+      "summary": null
+    },
+    {
+      "id": "6ac03071-16e8-83eb-a9a1-fd82d99b8a7e",
+      "title": "Перевод запроса Markitect",
+      "status": "idle",
+      "projectId": null,
+      "cwd": null,
+      "updatedAt": 1790980271.096,
+      "summary": null
+    },
+    {
+      "id": "6abec2cc-e3ec-83ed-bf38-2f84d0a88ed3",
+      "title": "Repo bewerten Markitect",
+      "status": "idle",
+      "projectId": null,
+      "cwd": null,
+      "updatedAt": 1790897265.066,
+      "summary": null
+    }
+  ]
+}

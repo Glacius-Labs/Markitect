@@ -1,0 +1,18 @@
+# Current registered worktrees; captured near 2026-10-09 UTC snapshot
+Path	Branch	SHA	Status
+C:/Users/Consiliari/Glacius Labs/Markitect	codex/government-assessment	d26b494b19f345aea3917679b6a1cc792ed8492e	?? docs/design/concepts/README.md; ?? docs/design/concepts/canonical-model-and-delegated-development.md; ?? docs/design/concepts/discussion-impulse-20261009-01.md; ?? docs/design/concepts/user-description-20261009.md
+C:/Users/Consiliari/.codex/visualizations/2026/10/08/01a11d05-adbf-7082-b693-caebbfb83a2a/markitect-options	codex/knowledge-graph-frontmatter-options	6ddbc66e0ee3515149fcf806fca1f33bf2c8107e	clean
+C:/Users/Consiliari/.codex/worktrees/c11-module-replacement/Markitect	codex/c11-module-replacement	6dd126fdf9e13cbddf0edf82fa4e72971744c792	M internal/tooling/codexrunner/runner.py; ?? runs/c11only/original/repo/; ?? runs/c11only/original/runtime.json; ?? runs/c11only/replacement/repo/; ?? runs/c11only/replacement/runtime.json; ?? runs/c11only/v5/original/repo/; ?? runs/c11only/v5/replacement/repo/
+C:/Users/Consiliari/.codex/worktrees/concepts-historian-notes/Markitect	codex/concepts-historian-notes	5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e	M docs/README.md; ?? docs/design/concepts/README.md; ?? docs/design/concepts/canonical-model-and-delegated-development.md; ?? docs/design/concepts/decision-framework-ideas-20261009.md; ?? docs/design/concepts/discussion-boundaries-20261009.md; ?? docs/design/concepts/discussion-impulse-20261009-01.md; ?? docs/design/concepts/government-as-model-governance-20261009.md; ?? docs/design/concepts/historian-intake.md; ?? docs/design/concepts/operational-overview-ideas-20261009.md; ?? docs/design/concepts/operational-overview-source-check-20261009.md; ?? docs/design/concepts/personal-agent-cockpit-20261009.md; ?? docs/design/concepts/source-snapshot-20261009.md; ?? docs/design/concepts/user-description-20261009.md
+C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect	codex/government-scientist	4392129bc8c27f9ee758a228d0aaa8938d1e040d	clean
+C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect	codex/government-worker	04e225d5caee78c2a198607143863fca1e829750	clean
+C:/Users/Consiliari/.codex/worktrees/ideas-notes/Markitect	codex/ideas-notes-20261009	d5129176dfc88c5ee099793696433af1862e3ffd	clean
+C:/Users/Consiliari/.codex/worktrees/marketing-notes/Markitect	codex/marketing-notes-20261009	5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e	?? docs/strategy/marketing-research-log.md
+C:/Users/Consiliari/.codex/worktrees/markitect-historian/Markitect	codex/markitect-historian-working-history	02617c530d9bb355aa40a0b1b65651487fcfc592	clean
+C:/Users/Consiliari/.codex/worktrees/product-app-server/Markitect	codex/product-app-server-20261009	8b3f69ec26d7e3d19e61b7de3156dd2ccaf3c2c8	clean
+C:/Users/Consiliari/.codex/worktrees/product-integration/Markitect	codex/product-integration-20261009	fc6d09a234572c344279a342416475e788435f1f	M docs/work-items/product-readiness/evidence/native-acceptance-ledger.yaml
+C:/Users/Consiliari/.codex/worktrees/product-knowledge-graph/Markitect	codex/knowledge-graph	4a77dc9abeacc7c6494e67d225609f8633022f7b	clean
+C:/Users/Consiliari/.codex/worktrees/product-mcp/Markitect	codex/product-mcp-20261009	6e4b620fc8cf553690b22ba63ee9fa58dc063f21	clean
+C:/Users/Consiliari/.codex/worktrees/product-workspaces/Markitect	codex/product-workspaces-20261009	4840bac0ac96a13e224f353bf926d6779ef3101e	clean
+C:/Users/Consiliari/.codex/worktrees/projectrun-known-check-repair/Markitect	codex/projectrun-known-check-repair	97df2ca457687999823d57a8237a3f556e6c2e55	clean
+C:/Users/Consiliari/.codex/worktrees/readiness-candidate-fix/Markitect	codex/readiness-candidate-fix-20261009	1756a669e30626fc9f464f39788b5c9ea4409033	clean

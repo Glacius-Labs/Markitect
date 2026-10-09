@@ -22,4 +22,8 @@ This file separates current product direction from unresolved choices. Sources a
 
 ## Revisit protocol
 
-For any proposed resolution, bind it to a current branch and SHA; identify the direct user decision or mark the proposal as open; name canonical owner and projection/data flow; and separate implementation, technical validation, runtime/ adoption evidence and human acceptance.
+For any proposed resolution, bind it to a current branch and SHA; identify the direct user decision or mark the proposal as open; name canonical owner and projection/data flow; and separate implementation, technical validation, runtime/adoption evidence and human acceptance.
+
+## Future-use scenarios raised on 9 October
+
+A user-supplied discussion captured in Concepts/Marketing/Ideas imagines Markitect as already finished and explores live operation, recursive managers with configurable freedom or rule strictness, a daily briefing, monitoring/logs/data, a personal chat cockpit, project visualization and gamification. Kubernetes and etcd were mentioned as options to investigate, not selected technologies. The direct timing constraint was to defer detailed planning until existing work packages finish, Case Study numbers exist, Main is clean, and the product is stable/useful. These are therefore brainstorming inputs, not accepted features. See current `docs/design/concepts/discussion-boundaries-20261009.md` in its separate uncommitted worktree and Ideas `IDEA-20261009-018` for the cockpit entry; both are proposals.

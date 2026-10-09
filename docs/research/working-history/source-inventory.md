@@ -15,9 +15,9 @@ Vision: define desired project world once, reconcile representations without los
 
 ## Chat coverage
 
-Archived Codex index: 243 entries / 5 pages, fully paginated; 24 relevant archived threads selected. Active index: 50 entries, no continuation cursor; 9 Markitect entries plus 3 explicitly known recipients selected. Archived ChatGPT index: one Markitect chat. In all, 38 selected histories were read through every returned page; this does not establish global completeness.
+Archived Codex index: 243 entries / 5 pages, fully paginated; 25 relevant archived threads selected and transcript-read. Active index: 50 entries, no continuation cursor; 9 Markitect entries plus 3 explicitly known recipients selected. Archived ChatGPT index: one Markitect chat. In all, 39 selected histories were read through every returned page; this does not establish global completeness.
 
-Gaps: active list is capped at 50 with no cursor; some message IDs lack accessible user text; Integrator is a sparse in-progress history with no final answer; one ChatGPT attachment was not included; some Coordinator/Reviewer attachments were not opened. The other 219 archived records were not transcript-read. Details and returned IDs: [chat inventory](chat-inventory.json), [checkpoint](checkpoint.json).
+Gaps: active list is capped at 50 with no cursor; some message IDs lack accessible user text; Integrator is a sparse in-progress history with no final answer; one ChatGPT attachment was not included; some Coordinator/Reviewer attachments were not opened. The other 218 archived Codex records were not transcript-read. Details and returned IDs: [chat inventory](chat-inventory.json), [checkpoint](checkpoint.json).
 
 ## Git and GitHub snapshots
 
@@ -28,3 +28,11 @@ At that snapshot, integration candidate `3c4ab67cca313c1beabe82aafed34a5a5b513b0
 GitHub returned 86 PRs; #89 open draft at `1495e1be7b0046711531fa42c8407fba67b8e814`, #78 open draft for a paired gauntlet. Latest listed release v0.14.1 dated 2026-10-07, tag target `784d3c3c61443b291ac7db9727c7c5856e253d66`. Recheck before relying on status.
 
 Primary, Concepts, Marketing, Ideas, integration and proof worktrees were simultaneously active; exact paths, SHAs and dirty files are in `git-worktrees.tsv`. Drafts are not adopted product decisions.
+
+## Retrospective expansion, 9 October
+
+The new [project evolution report](project-evolution-2026-10-09.md) reads the version history in `docs/architecture.md` and `docs/implementation-plan.md`, current Main, the dated Government assessment, and Oct 9 integration/KG worktree reports. The new [working-method report](how-work-happens-2026-10-09.md) uses role-chat transcripts and source-bound integration reports. Current source status is frozen separately in [current-state-2026-10-09.md](current-state-2026-10-09.md).
+
+Since the first Historian commit, one further archived transcript (“Create an Agent”, `01a0f9d0-26a8-77b1-bcda-5eaece6bdd19`) was read through all four turns. The selected history now has 39 conversation records with every returned page read; 25 project-related archived candidate transcripts were read. The referenced Downloads concept file was not found. The refreshed active index returned 50 records with no cursor. Point-in-time filtered inventories are [here](archived-project-thread-candidates-20261009.json), [here](active-project-threads-2026-10-09T20-29-01Z.json) and in [the worktree table](git-worktrees-current-2026-10-09T20-29-01Z.tsv).
+
+Do not treat the new assessments or parallel candidates as Main. The live main ref was checked with `git ls-remote`; the primary checkout is a separate branch with untracked concept drafts. No fetch or product test was run for this documentation pass.
