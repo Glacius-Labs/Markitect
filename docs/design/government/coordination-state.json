@@ -16217,6 +16217,16 @@
       "actualRoles": 0,
       "mainMerged": false,
       "release": false
+    },
+    "p08SourceCheckpoint": {
+      "verifiedUtc": "2026-10-09T19:11:22Z",
+      "cleanExactLocalPublicRemoteSha": "dae4b4a570faa8561ff0c62b186fc51fed9fb6f3",
+      "rootVerified": "Clean local/public ref and src/cmd, src/internal, src/harness with root go.mod preserved; source report read previously",
+      "ownerReported": "Focused regressions/build/vet/schema/module/architecture positive and independent findings closed; final full suite running on unchanged source",
+      "fullSuite": "RUNNING_OWNER_REPORTED_60MIN_TEST_90MIN_OUTER",
+      "actualProductJobs": 0,
+      "mainMerged": false,
+      "kgImported": false
     }
   },
   "playgroundAndClaudePreparation20261009": {
@@ -16407,7 +16417,7 @@
   },
   "knowledgeGraphFollowup20261009": {
     "authority": "Verified direct user request in KG topic chat; YAML KG expansion plus separate RDF evaluate-then-decide plan; no new Main gate",
-    "status": "INDEPENDENT_VARIANT_CONTINUATION_DISPATCHED_KG04_TO_KG07",
+    "status": "INDEPENDENT_KG04_TO_KG07_SOURCE_PUSHED_FIXED_VERIFY_RUNNING",
     "threadId": "01a12178-5797-7c41-8acc-8e8231084c79",
     "hostId": "local",
     "afterCursor": "67fe9212-ff51-49b6-b0fb-948f5db1b4db:3",
@@ -16528,6 +16538,21 @@
       "generousDevelopmentLimitsApply": true,
       "observedActiveAfterDispatch": true,
       "ownerObservedNext": "Own durable backlog and disjoint parallel work: identity/model, evidence adapters, services/user access"
+    },
+    "latestIndependentVariantCheckpoint": {
+      "verifiedUtc": "2026-10-09T19:11:22Z",
+      "cleanExactLocalPublicRemoteSha": "d360ec0199d4333271fd6ec6c66227a2da4aca83",
+      "branch": "codex/knowledge-graph",
+      "rootVerified": "Clean worktree, exact HEAD and public remote ref; committed owned backlog and validation report read; no tests or actual calls repeated",
+      "sourceScope": "Independent YAML identity/decision/impact, scoped graph and validated evidence, shared services plus CLI/MCP queries and native guidance/example",
+      "ownerReported": "Component tests/vet/accounting positive and independent model/Host findings closed; provider-free example journey positive on earlier working binary",
+      "qualification": "Final source-bound binary journey pending after review fixes; full fixed-source Verify running, no PASS assumed",
+      "fullVerify": "RUNNING_OWNER_REPORTED_60MIN_TEST_90MIN_OUTER",
+      "mainIntegrationExcluded": true,
+      "acceptedMainSha": null,
+      "next": "Owner finishes already active Verify and final source-bound handoff; later exact accepted main into KG, resolve conflicts, regressions/review, then separate evaluation",
+      "newOrderSent": false,
+      "studiesOrReleaseAuthorized": false
     }
   },
   "callbackHandlingAudit20261009": {
