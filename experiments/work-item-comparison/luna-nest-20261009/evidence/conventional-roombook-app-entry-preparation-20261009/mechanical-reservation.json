@@ -1,0 +1,12 @@
+{
+  "batch": 1,
+  "reservedUtc": "2026-10-09T06:41:38.231254+00:00",
+  "maxWallSeconds": 180,
+  "scope": "Four focused offline App ledger tests only",
+  "sourceHashes": {
+    "public/app_ledger.py": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20",
+    "public/app-entry.md": "168c974a9ece21834117dabc53dcff7a2c9ef868cf58b5b555a0ccda0a584859",
+    "tests/test_app_ledger.py": "b0594fcea5d32fc62d8f793e8259c9222c58cc759d90c966b242d33fc4901fee"
+  },
+  "modelOrReviewerOrActualStarts": 0
+}

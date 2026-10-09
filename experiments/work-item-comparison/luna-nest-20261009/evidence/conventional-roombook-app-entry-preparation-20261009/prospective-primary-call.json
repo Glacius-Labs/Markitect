@@ -1,0 +1,12 @@
+{
+  "tool": "collaboration.spawn_agent",
+  "arguments": {
+    "task_name": "app_conventional_roombook_primary",
+    "fork_turns": "none",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "high",
+    "message": "Hier liegt das Backlog. Implementiere die Arbeit, halte die Projektregeln ein, prüfe die Ergebnisse und merge die fertigen Änderungen nach main.\nArbeitsprojekt: C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\cells\\roombook-conventional-app-native. Lies dessen eigene AGENTS.md und öffentliche Projektregeln; normale Dateiaufrufe richten sich auf dieses Projekt. Kein Zugriff auf andere Projekte, Studien, Chats oder Memory. Frischer App-Kontext, Luna High für alle Rollen. Budgetledger: C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-app-native/app-ledger.json; öffentliche Reservierungsmechanik: C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\work-item-comparison\\luna-nest-20261009/public/app_ledger.py. Vor jedem eigenen Helfer-/Rollenstart dort reservieren; nur native collaboration-Tools mit fork_turns=none, model=gpt-6-luna, reasoning_effort=high. Maximal4gleichzeitige gemesseneAgenten/Depth2/72Starts gesamt; konkrete eigene Deadline aus Reservierung einhalten, keine persistenten Hintergrundjobs. Nur eigene Handles erfassen und koordinieren. Tatsächlich angeerbtesCWD/Instruktionsherkunft/Toolumfang und bekannte Fremdexposition ehrlich als Ausführungsreceipt erfassen, keine privaten Inhalte kopieren. Bei realer Toolpolicyblockade Arbeit terminal melden, kein Transportwechsel oder Neustart. Keine erfundenen Token-/Serving-/Kostenreceipts."
+  },
+  "cwdArgument": null,
+  "executionAuthorized": false
+}

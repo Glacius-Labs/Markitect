@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "batch": 1,
+  "argv": [
+    "C:\\Python313\\python.exe",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\work-item-comparison\\luna-nest-20261009\\tests",
+    "-p",
+    "test_app_ledger.py",
+    "-v"
+  ],
+  "pid": 38708,
+  "startedUtc": "2026-10-09T06:41:38.231727+00:00",
+  "endedUtc": "2026-10-09T06:41:38.624121+00:00",
+  "wallSeconds": 0.39238789999944856,
+  "exitCode": 0,
+  "ownedStop": null,
+  "tests": 4,
+  "modelCalls": 0,
+  "providerCalls": 0,
+  "reviewers": 0,
+  "actualStarts": 0
+}

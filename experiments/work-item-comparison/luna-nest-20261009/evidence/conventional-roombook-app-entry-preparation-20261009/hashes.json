@@ -1,0 +1,57 @@
+{
+  "scope": "New App preparation payloads excluding manifest",
+  "files": {
+    "activation-proposal.json": {
+      "sha256": "519febe94b54f8a445f28dd7ea42cec7e6b766a8516299bb6126ac8e406df87f",
+      "bytes": 2593
+    },
+    "bindings.json": {
+      "sha256": "2ce18a36b24e52123618fb303018d1950ab43df9679bb81f1390856ae4eda451",
+      "bytes": 3521
+    },
+    "continuation-anchor.json": {
+      "sha256": "61b4c90f44156da0e3a5671fa180ca90707ee2e8fed576fc5a35d3c9f88e3b7f",
+      "bytes": 324
+    },
+    "HANDOFF.md": {
+      "sha256": "fc227cbef0664c634692fe5b6707e93190a64c63b13f6a655d175f0b231136d4",
+      "bytes": 5663
+    },
+    "mechanical-receipt.json": {
+      "sha256": "1de8ce53bbcaecbbb90b40ae4c5f475f5b19e1a5d59ff9ad88a793e48514ca3b",
+      "bytes": 625
+    },
+    "mechanical-reservation.json": {
+      "sha256": "fc0d3dcec3a67b61b397566c60864284492bfac51d327fa8ea86d113269272e7",
+      "bytes": 505
+    },
+    "mechanical.stderr.txt": {
+      "sha256": "14ede1df61b9c95322e1aafa24e920b57c12f74141d824fec9dc487b1dda16f1",
+      "bytes": 643
+    },
+    "mechanical.stdout.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "preparation-grant.json": {
+      "sha256": "f31ba9eeeb6a74f3e64d6feb54150a54e059f41b69ca7b7f0537c5a6df3dce30",
+      "bytes": 2027
+    },
+    "prepare-once.py": {
+      "sha256": "d204044af9197d9c57aa6ed559e307e408aa4b83f9e928750dbe87719c2c4998",
+      "bytes": 7491
+    },
+    "prospective-primary-call.json": {
+      "sha256": "cc6195b9c5a2a65030581c761eebdcd58f4659be6e0599542d3c17c313cf49e6",
+      "bytes": 1745
+    },
+    "specific-host-boundary.json": {
+      "sha256": "0df768c416e891be48b88227f2ffc607a0f0ae0ba6496549b25d082bdd1f850f",
+      "bytes": 886
+    },
+    "trial-reservation.json": {
+      "sha256": "f8624ce3384b211586b71036f47ca9bf7bfa399a0011e618ee3b264187fc4643",
+      "bytes": 1792
+    }
+  }
+}

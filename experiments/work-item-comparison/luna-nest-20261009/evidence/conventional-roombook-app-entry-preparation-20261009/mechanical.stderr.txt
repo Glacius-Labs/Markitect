@@ -1,0 +1,9 @@
+test_attempts_handles_and_station_ceiling (test_app_ledger.AppReservations.test_attempts_handles_and_station_ceiling) ... ok
+test_cooperative_concurrency_depth_and_total_cap (test_app_ledger.AppReservations.test_cooperative_concurrency_depth_and_total_cap) ... ok
+test_disabled_full_window_and_grant_drift (test_app_ledger.AppReservations.test_disabled_full_window_and_grant_drift) ... ok
+test_terminal_policy_freeze_final_and_phase_deadline (test_app_ledger.AppReservations.test_terminal_policy_freeze_final_and_phase_deadline) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.204s
+
+OK

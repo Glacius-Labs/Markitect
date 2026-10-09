@@ -1,0 +1,20 @@
+{
+  "source": "Root direct owner report received during preparation, not independently verified",
+  "designSpecificHostJob": {
+    "outerPid": 25732,
+    "execSession": 13309,
+    "startedUtc": "2026-10-09T06:32:45Z",
+    "hardEndUtc": "2026-10-09T06:52:40Z",
+    "actualReleasePending": true
+  },
+  "noGlobalInventoryOrForeignHandleRead": true,
+  "designProductReadinessIsDependency": false,
+  "ownerReportedRuntime": {
+    "windowsSandboxUnelevated": "reported reads/writes with ordinary workspace-write and managed requirements",
+    "inheritedElevated": "reported helper_unknown_error",
+    "rootIndependentlyVerified": false,
+    "scientistVerified": false,
+    "oldCliRootCauseEstablished": false
+  },
+  "instruction": "No CLI probe/back-switch/config change; native App choice stays. Future matched Markitect inner-role profile must report actual runtime."
+}
