@@ -1,0 +1,15 @@
+{
+  "actualMainBinarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+  "checkedUtc": "2026-10-09T01:13:16.5305612Z",
+  "scope": "Read-only archival/hash preservation, no test or product/Actor invocation",
+  "matchesAuthorizedBinary": true,
+  "mainSourceSha": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+  "sourceFreeze": "93ed058d2ba1b27789d9b56a756220e1987fe854",
+  "addedFiles": 40,
+  "publicFiles": 24,
+  "publicHashMismatches": 0,
+  "privateHashMismatches": 0,
+  "privateEvaluationFiles": 5,
+  "mainSourceStatus": [],
+  "oldTrackedChanges": []
+}

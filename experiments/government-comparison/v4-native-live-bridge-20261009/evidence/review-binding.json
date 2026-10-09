@@ -1,0 +1,13 @@
+{
+  "overrides": null,
+  "maxSeconds": 240,
+  "canaryActorNeverActivated": true,
+  "spawnObservedUtc": "2026-10-09T01:12:49.9481783Z",
+  "taskName": "/root/v4_live_bridge_terminal_freeze_review",
+  "stopDueUtc": "2026-10-09T01:16:39.9525390Z",
+  "reservationNumber": 2,
+  "nativeActivationNumber": 1,
+  "forkTurns": "none",
+  "sourceFreeze": "93ed058d2ba1b27789d9b56a756220e1987fe854",
+  "actualToolCallId": null
+}

@@ -1,0 +1,18 @@
+{
+  "retries": 0,
+  "rawReviewSha256": "3b8d81845d13967e87327224a5bb8262c4b91417c70185b23a45d7bef229b714",
+  "rawReviewFile": "evidence/final-review.md",
+  "tokens": null,
+  "nativeToolCallId": null,
+  "taskName": "/root/v4_live_bridge_terminal_freeze_review",
+  "programsOrTests": 0,
+  "sourceFreeze": "93ed058d2ba1b27789d9b56a756220e1987fe854",
+  "maxSeconds": 240,
+  "followups": 0,
+  "reviewOutcome": "NOT READY / NOT EXECUTABLE",
+  "terminalObservedUtc": "2026-10-09T01:14:06.0998143Z",
+  "cost": null,
+  "servingModel": null,
+  "children": 0,
+  "status": "completed"
+}
