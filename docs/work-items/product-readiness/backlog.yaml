@@ -96,6 +96,7 @@ native_acceptance:
     actual_started_utc: '2026-10-09T22:44:42.0379922Z'
     actual_ended_utc: '2026-10-09T22:45:22.7199061Z'
     observer_id: f0b0417763b24cb09b34beeb11be99b2
+    terminal_record_sha256: 35619b252b934b9356e109c9c2f6ac66bc4b9400f9c6cfe174852b7db6c5f354
     owned_host_pid: 19460
     observer_exit_code: 2
     observer_boundary_observed: false
@@ -107,7 +108,15 @@ native_acceptance:
     native_root_integration_turn_observed: false
     unified_exec_startup_failures: 2
     startup_failure: mxc_platform_directory_hresult_0x80070003_before_shell
+    windows_os_build: 26100.9457
+    windows_os_supported_baseline: 9278
+    mxc_known_folder_lookup_names: [ProgramFiles, ProgramFilesX86, ProgramData]
+    explicit_child_environment_missing_codex_core_path_variables: true
+    missing_folder_precisely_identified: false
+    package_alias_identity_verified_after_cleanup: false
     app_server_error: requires_a_user_decision
+    file_change_approval_resource: README
+    file_change_approval_method: requestApproval
     file_change_approval: declined_by_generic_client_handler
     workspace_id: c952
     workspace_closed: true
@@ -179,7 +188,14 @@ native_acceptance:
     readonly_dotnet_26_binding_provider_starts: 0
     native_actual_started: true
   next_batch:
-    status: not_prepared_scoped_approval_and_windows_fixes_in_progress
+    status: scoped_approval_and_windows_diagnosis_in_progress
+    direct_root_human_authorization: ordinary_inherited_context_runtime_option
+    runtime_option_strategy: inherited_context_no_guessed_environment_iterations
+    normal_config_implementation_owner: native_setup
+    workspace_managed_policy_unchanged: true
+    global_configuration_changes: false
+    security_sandbox_policy_changed: false
+    new_batch_pins: not_prepared
     fresh_finite_batch_authorized_under_renewal: true
   prior_batch_history:
     revision: generous-native-limits-20261009
