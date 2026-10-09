@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-09T08:07:15.839172+00:00",
+  "transitionAlreadyPerformed": true,
+  "noRepeatedSnapshotAdvance": true,
+  "ownerReceiptSha256": "45a046fc4f2fda9baa394d1331ffbd83db88a0f6e02458601671cb75eda22177",
+  "immutableReleasedStateSha256": "fe7648fc6fa04fd8b5f18d8ef92f411c44660083a3b8b8bc43fa31da02920d6d",
+  "fixedS2StationSha256": "cc220aa0278ce5bc5668fb65f06de74df717361290c874ca6df0bf47e823975e",
+  "S1HistoryBundleSha256": "a54e0355b320c64ef0006d9087119fa61cead81e11dedadf4c301bd6346a1536",
+  "currentOwnStateSha256": "fe7648fc6fa04fd8b5f18d8ef92f411c44660083a3b8b8bc43fa31da02920d6d",
+  "currentOwnLedgerSha256": "64bea9bdccec7bd9ed414a7c129b06bcd83fac807659fa07536ce600b339ea31",
+  "stationIndex": 1,
+  "station": "S2",
+  "deadlineUtc": "2026-10-09T08:44:40.609082Z"
+}
