@@ -1,0 +1,7 @@
+# Prospective correction terminal receipt
+
+Only public app-entry context instructions and public Oldschool dispatch documentation changed. General common instructions/setup memory and legitimate own station history are allowed; concrete foreign case/evaluation content remains forbidden, unresolved case-specific exposure stays uncertain. No sanitizer or OS isolation is attested.
+
+Oldschool owns native Conventional dispatch; Scientist owns fixed stations, measurement/snapshots and neutral final assessment. The public handoff provides source-bound original PROMPT/CONTINUE, interpreter/module path and exact existing ledger/completion/snapshot/advance/freeze/closure calls. Fresh case/state/prepared commit/station/grant bindings remain unallocated pending Root activation, matching Design readiness and a full unchanged 7200-second window.
+
+Zero actors/helpers/assessors/providers/trials/tests/builds/installs/CLI probes/reviewers. Static Git/file bindings only. Existing code, seeds, inputs, work items, rules, rubric, resources and closed evidence remain unchanged. Four full starts consumed; two unallocated within maximum six; no fifth trial, refill or deadline extension. Root forwards the public source handoff without prior case candidates or judgments. Historical Oldschool contribution remains byte-exact and its old-source observations are superseded prospectively. Runtime ability and actual inherited context are NOT RUN.

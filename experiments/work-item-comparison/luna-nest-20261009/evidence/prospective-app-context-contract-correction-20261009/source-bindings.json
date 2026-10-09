@@ -1,0 +1,24 @@
+{
+  "priorCommit": "2543ebd4f3a01cf69e78580b19ee8a8ec4f6672a",
+  "utc": "2026-10-09T07:29:32.584504+00:00",
+  "scope": "Public prospective context instructions and execution-only dispatch documentation",
+  "sourceBindings": {
+    "public/app-entry.md": "f310f94780d87c445cd2359409dbaaaa91ff56670c20630434f94b3bad3860f5",
+    "public/oldschool-app-dispatch.md": "23496e6dc045e066b370771d5d294bf62dd8355ecc549bf71c0ea96dfae0c0b9",
+    "public/app_ledger.py": "3b3633202954804e983e53e939d852f58ab45a9b3a1d1e232954c6e7e3c75d20",
+    "public/nest.py": "45241de9e157394cf2dd83412ebd3d86ce83764f1b791447030e5d82f320d635",
+    "public/evaluation/assessor-prompt.txt": "7eec156128339344121c1040c3f6b76f1cc5545c239eb99b6462420163a72741",
+    "tests/test_app_ledger.py": "b0594fcea5d32fc62d8f793e8259c9222c58cc759d90c966b242d33fc4901fee"
+  },
+  "previousAppEntrySha256": "168c974a9ece21834117dabc53dcff7a2c9ef868cf58b5b555a0ccda0a584859",
+  "rootCanonicalContractSha256": "181337e3cedb7c7c68c3d2b8c542a319b199450939d2517ec35bbfba26214838",
+  "interpreter": "C:/Python313/python.exe",
+  "actualActorHelperAssessorProviderCalls": 0,
+  "testsBuildsInstallsCliProbes": 0,
+  "newReviewActors": 0,
+  "fullStartsConsumed": 4,
+  "unallocatedWithinMax6": 2,
+  "oldEvidenceRescored": false,
+  "futureActualGrantRequired": true,
+  "actualContextAndRuntime": "NOT RUN; origin categories/serving/cleanup attestation require actual own receipts"
+}
