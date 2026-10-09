@@ -1,5 +1,7 @@
 # Vergleichsprotokoll: Agentic, Markitect Classic und Markitect Government
 
+> **Nutzerentscheidung vom 9. Oktober 2026:** Für neue Arbeit gilt [Neue Hauptlinie und Work-Item-Vergleich](../work-item-comparison-20261009.md). Neuer Vergleich: starkes Conventional Agentic Coding gegen neues Markitect aus Design, alle Fall-Actors Luna High, gleicher kurzer Auftrag mit normaler variantenbezogener Installation. Government und alter Classic werden nicht erneut getestet. Der folgende Vertrag bleibt historischer Nachweis; neue Versuche übernehmen seine Rollen-/Runnergleichschaltung nicht.
+
 Stand: 2026-10-07. **Aktiver Evaluationsauftrag; noch kein Nachweis einer überlegenen Methode.** Das Nutzer-Go und die spätere Erweiterung des Forschungsauftrags sind in [coordination.md](coordination.md) festgehalten. Der Koordinator führt die endlichen Phasen und gewöhnlichen technischen Entscheidungen eigenständig weiter. Konkrete Modellläufe bleiben an Readiness, unveränderliche Eingaben und eine ausdrücklich begrenzte Ressourcenzuteilung gebunden. Aktuelle Implementierungs- und Diagnosenachweise stehen in der Koordinationsakte; sie ersetzen keine Vergleichsstudie.
 
 ## Frage und Versuchsarme

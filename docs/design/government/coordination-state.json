@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T03:35:23Z",
+  "updatedUtc": "2026-10-09T04:07:10Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -56,11 +56,14 @@
       "candidateSha": "839dc4e3f6078aa051e08c50c2b958150ca45f49",
       "acceptance": "GOV-P1 technical mechanics and additive evidence closure accepted with explicit four-vs-two attempt deviation and archival/semantic limits; no retrospective execution authority or study-pin replacement.",
       "lastAssignment": {
-        "key": "government-p1-additive-evidence-closure",
-        "authorizedUtc": "2026-10-08T00:25:02Z",
-        "status": "Completed and accepted; source and historical artifacts unchanged. Hold for concrete future findings.",
-        "scope": "Additive evidence-only errata and available original review messages; preserve old122files/index/ledger/source. No new tests or runtime.",
-        "sentUtc": "2026-10-08T00:25:02Z"
+        "key": "hold-standalone-government-no-new-study-20261009",
+        "authorizedUtc": "2026-10-09T04:07:10Z",
+        "sourceAuthority": "Direct detailed user mandate9Oct2026 in Overseer chat; supersedes prior paused research/ClassicMain choice for future work",
+        "document": "docs/design/work-item-comparison-20261009.md",
+        "scope": "No further standalone Government comparisons/expansion from oldgrant; optional future integration belongs Design",
+        "status": "ISSUED NOT YET DISPATCHED",
+        "maxPreparationWallSecondsFromDispatch": null,
+        "actualStudyQuota": 0
       },
       "evidence": {
         "summary": ".artifacts/government-g1/budget-final-summary.json",
@@ -428,6 +431,13 @@
           "sentUtc": "2026-10-08T00:25:02Z",
           "status": "Sent once; active confirmed",
           "promptRecord": "govP1EvidenceClosureAssignment"
+        },
+        {
+          "key": "government-p1-additive-evidence-closure",
+          "authorizedUtc": "2026-10-08T00:25:02Z",
+          "status": "Completed and accepted; source and historical artifacts unchanged. Hold for concrete future findings.",
+          "scope": "Additive evidence-only errata and available original review messages; preserve old122files/index/ledger/source. No new tests or runtime.",
+          "sentUtc": "2026-10-08T00:25:02Z"
         }
       ],
       "continuationHistory": [
@@ -452,7 +462,8 @@
         "newModelProviderCalls": 0,
         "studyCells": 0,
         "sentUtc": "2026-10-08T00:25:02Z"
-      }
+      },
+      "futureAutomaticAuthorityFromOldGrants": 0
     },
     {
       "name": "Scientist",
@@ -473,13 +484,20 @@
       "candidateSha": "f40db50d7744d6ef3604c13682762307a089b148",
       "acceptance": "Current public preparation qualified accepted after root/independent review; DTOhelper advisory only and3/2correctiondeviation retained. No matchedstudyadmission; historicalactualv3/posthoc preserved.",
       "lastAssignment": {
-        "key": "research-terminal-evidence-synthesis-20261009",
-        "authorizedUtc": "2026-10-09T03:21:25Z",
-        "notAfterUtc": "2026-10-09T03:41:25Z",
-        "scope": "One terminal evidence/error/effort/outcome synthesis of already closed v3, separate posthoc, v4 pair and v5/Design readiness metadata, with exact version and evidence pointers. Honest condition-specific absolute outcomes and whether reference-relative comparisons are possible; safe public summary excludes private vectors/solutions.",
-        "status": "CLOSED; terminal documentary synthesis qualified accepted, remainingauthority0",
-        "fullTrialQuota": 0,
-        "sentUtc": "2026-10-09T03:21:50Z"
+        "key": "luna-work-item-case-study-nest-preparation-20261009",
+        "authorizedUtc": "2026-10-09T04:07:10Z",
+        "sourceAuthority": "Direct detailed user mandate9Oct2026 in Overseer chat; supersedes prior paused research/ClassicMain choice for future work",
+        "document": "docs/design/work-item-comparison-20261009.md",
+        "scope": "Simple two-arm normal-workitem nest/seeds/backlog/evaluation/metrics, no actuals or product capability substitution",
+        "status": "ISSUED NOT YET DISPATCHED",
+        "maxPreparationWallSecondsFromDispatch": 5400,
+        "actualStudyQuota": 0,
+        "limits": {
+          "mechanicalCheckBatchesMax": 2,
+          "freshReadonlyReviewersMax": 1,
+          "reviewerModel": "gpt-6-luna/high",
+          "newProductActorsProviderCliAppserverBuildsFullTrials": 0
+        }
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -8980,6 +8998,15 @@
           "deliveryConfirmed": true,
           "status": "Dispatched once; fresh Scientist turn active on exact literalDTOcontract canary",
           "scope": "One prospective existingDTO Actorinstruction correction and actualCanary/finalconditionalreview; no responseediting/productrepair/newfullcells/globalextension"
+        },
+        {
+          "key": "research-terminal-evidence-synthesis-20261009",
+          "authorizedUtc": "2026-10-09T03:21:25Z",
+          "notAfterUtc": "2026-10-09T03:41:25Z",
+          "scope": "One terminal evidence/error/effort/outcome synthesis of already closed v3, separate posthoc, v4 pair and v5/Design readiness metadata, with exact version and evidence pointers. Honest condition-specific absolute outcomes and whether reference-relative comparisons are possible; safe public summary excludes private vectors/solutions.",
+          "status": "CLOSED; terminal documentary synthesis qualified accepted, remainingauthority0",
+          "fullTrialQuota": 0,
+          "sentUtc": "2026-10-09T03:21:50Z"
         }
       ],
       "offlineAdapterContractAssignment": {
@@ -9213,7 +9240,8 @@
           "supersededUtc": "2026-10-08T23:58:37Z"
         }
       ],
-      "lastObservedUtc": "2026-10-09T03:34:02Z"
+      "lastObservedUtc": "2026-10-09T03:34:02Z",
+      "futureAutomaticAuthorityFromOldGrants": 0
     },
     {
       "name": "Architect",
@@ -9529,29 +9557,14 @@
         }
       },
       "lastAssignment": {
-        "key": "classic-main-integration-20261008",
-        "authorizedUtc": "2026-10-08T16:07:25Z",
-        "status": "Sent once; active integration confirmed",
-        "baseSha": "4908bd2cb25fbc8a231717c099e049da8546703a",
-        "destination": "https://github.com/Glacius-Labs/Markitect.git refs/heads/main",
-        "sourceAuthority": "Direct user 8 Oct: continue Classic while Scientist works, bring version to main and retain as main version",
-        "scope": "Classic integration, required corrections/README/gates, independent review, feature push/PR and regular merge after checks; no new release authority",
-        "heldStudySha": "c91363b7ac4decbe87212ff0f588b5451581a152",
-        "newModelProviderCalls": 0,
-        "newNativeSmokeAllowance": 0,
-        "sentUtc": "2026-10-08T16:08:57Z",
-        "prompt": "Direkter neuer Nutzerauftrag an Overseer vom 8. Oktober 2026: „Während der Scientist arbeitet könntest du den Architect weiter an der Classic Version arbeiten lassen und wir bringen die Version nach main und halten es als die Hauptversion“.\n\nDamit ist der bisherige allgemeine Classic-Hold aufgehoben. Classic ist die gewählte Hauptentwicklungslinie des Produkts. Du bist Eigentümer des nächsten begrenzten Pakets classic-main-integration-20261008: Führe den angenommenen Classic-Folgestand zur geprüften Übernahme nach origin/main in https://github.com/Glacius-Labs/Markitect.git. Der Nutzer autorisiert dafür ausdrücklich die nötigen Featurebranch-Pushes, PR-Erstellung/-Aktualisierung und den Merge nach main, sobald die vorgeschriebenen Checks und unabhängigen Reviews positiv sind. Keine erneute pauschale Rückfrage vor diesen autorisierten Schritten. Branchschutz/Prüfregeln respektieren, keine Umgehung, kein Force-Push oder Löschen fremder Arbeit. Jede erstellte PR über attach_artifact an deinen Chat hängen.\n\nAusgangslage: lokal angenommenes CLASSIC-P1 auf sauberem 4908bd2cb25fbc8a231717c099e049da8546703a im Worktree C:/Users/Consiliari/.codex/worktrees/classic-p1-intent-change/Markitect. Voller Replay und vier Quellgates bestanden an fbb2deab8d85be74a77874a705229a0a1ea1fee4; der vier-Markdown-Nachfolger wurde separat geprüft. Gehostete Windows-/Ubuntu-/Linux- und Integrations-/Releasegrenzen nicht als erledigt erben. Prüfe aktuelle Remotezustände, offene PRs und deine jüngsten direkten Nutzeraufträge, bevor du Änderungen integrierst. Geeigneten bestehenden Featureworktree wiederverwenden oder getrennten codex/-Integrationsbranch auf aktueller Produktbasis verwenden; kein Zurücksetzen von WIP oder Root-Designbranch als Produktbasis. Konflikte fachlich lösen und nötige Regressionen prüfen.\n\nArbeitsumfang dieses Pakets: Classic stabil zur Hauptversion auf main bringen, einschließlich vorhandener öffentlicher Bedienbeispiele, README, erforderlicher Kompatibilitäts-/Integrationskorrekturen und bestehender verbindlicher Gates. Priorisiere echte Integrations-, Bedien- oder Releasebefunde; keine große neue Featureplattform und keine Beschäftigungsarbeit. Halte Aussagen und kopierbaren Bedienweg mit dem tatsächlich integrierten Stand konsistent. Kanonisches Modell, konservative Invalidierung, feste Snapshots und explizite Annahme-/Apply-Grenzen erhalten. Government, Jev/SAT, private Scientist-Daten, Studienfixtures und Vergleichsbewertung gehören nicht in dieses Paket.\n\nWichtig: Scientists eingefrorener Classic-Studienkandidat c91363b7ac4decbe87212ff0f588b5451581a152 / Runtime v0.14.1 mit Quelle 7dbd599c81540c8203a1b7f83afbc335174f4f1f bleibt unverändert samt gehaltenem Worktree und Belegen. Main darf weiterentwickelt werden; es wird dadurch keine Studienversion still ersetzt. Main-Übernahme ist eine Produktentscheidung, kein Nachweis eines gemessenen Methodensiegers.\n\nNormale Implementierung, gezielte risikobasierte Tests, unabhängige Reviews und erforderliche lokale/gehostete Integrationschecks sind autorisiert. Keine redundanten unveränderten Vollsuiten. Der aktuell freie schwere Prüfslot wird dir für dieses Paket zugewiesen; Scientist bearbeitet nur seinen Offline-Diagnoseplan und braucht vor weiteren tatsächlichen Runneraufrufen ohnehin einen neuen Grant. Schwere lokale Quellgates sequenziell, endlich begrenzt und gemäß vorhandenen Projektbudgets; nach Paketabschluss ausdrücklich Slot freigeben. Alte geschlossene Smoke-/Rollen-/Modellgrants nicht wiederverwenden: neue reale Modell-/Provider- oder native Produkt-/Rollen-Smokes benötigen weiterhin einen konkreten separaten Grant. Keine Käufe, globale Policyänderungen oder zusätzliche kostenpflichtige Verpflichtungen. Neue Release-Veröffentlichung ist durch diesen Auftrag nicht zusätzlich autorisiert; bereits direkt autorisierte Release-Aufgaben behalten ihren belegten Umfang.\n\nNach positiver Review-/Checklage PR regulär nach main mergen und den tatsächlichen Remote-main-SHA sowie Check-SHAs nach dem Merge lesen. Falls ein nicht selbst lösbarer Blocker bleibt, genau diesen mit konkreter Entscheidung melden. Liefere einmalig terminale Rückmeldung mit PR-Link, tatsächlichem Merge-/Remote-main-SHA, sauberem lokalen Stand, Dateien/Verhalten, Checks, unabhängigem Review, offenen Releasegrenzen und Slotfreigabe an Overseer 01a11367-a781-7683-a20f-46e12614dcb4 auf Host local. Nutzerautorisierung für Rückmeldungen besteht. Danach dieses Paket beenden; keine Empfangsbestätigungs- oder Pollingschleife. Koordination liegt in C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination.md und coordination-state.json.",
-        "documentationAddendum": {
-          "key": "classic-main-documentation-addendum-20261008",
-          "authorizedUtc": "2026-10-08T16:36:09Z",
-          "status": "Sent once to active Architect",
-          "sourceAuthority": "Direct user: Architect must also update README and documentation to current state",
-          "scope": "Audit and correct affected canonical Classic product docs/README/examples against current main and actual released CLI; follow-up PR/merge after appropriate checks and independent review",
-          "newRuntimeAllowance": 0,
-          "studiesUnchanged": true,
-          "sentUtc": "2026-10-08T16:36:49Z",
-          "prompt": "Ergänzung zum laufenden Auftrag classic-main-integration-20261008, direkt vom Nutzer: „Der Architect soll auch die Readme anpassen und die Doku, sodass sie aktuell ist“.\n\nBitte gleiche ausdrücklich README UND die betroffene kanonische Produktdokumentation mit dem tatsächlich auf main integrierten Classic-Stand ab. Schließe zuerst laufende erforderliche Prüfungen sauber ab; arbeite danach bzw. ohne Konflikt dazu diese Dokumentationsphase im selben Eigentümerauftrag ab. Kein zweiter paralleler Bearbeiter.\n\nPrüfe über die Dokumentationskarte besonders Produktzweck/Begriffe, Architekturgrenzen, Quickstart und ausführbaren Bedienweg, Nutzerabsicht→kanonisches Modell→Umsetzung→Modell-/Dateipflege→Wiederaufnahme, Beispiele, Entwicklungs-/Verifikationsanweisungen und aktuellen Roadmapstatus. Ändere konkret veraltete oder widersprüchliche Stellen, keine pauschale Neufassung aller Dokumente. README soll klar zu den zuständigen vertiefenden Dokumenten führen. Kopierbare Befehle, Voraussetzungen und Links müssen zum richtigen Quell- bzw. Release-Stand passen.\n\nWichtig: Classic ist die Hauptentwicklungslinie auf main; Government bleibt experimentell separat. Unterscheide aktuellen Quellstand, tatsächlich veröffentlichte CLI-Version und erst geplante Fähigkeiten. Weder Source-Merge als neue veröffentlichte Version noch technische Beispiele als bewiesene autonome Produktqualität darstellen. Bestehende unabhängige Prüfung, explizite Annahme/Apply und konservative Invalidierung korrekt erklären. Scientists eingefrorenes c91363b7ac4decbe87212ff0f588b5451581a152/v0.14.1 und Studieninputs unverändert halten; Root-Koordinationsdateien und private Studienbelege nicht bearbeiten.\n\nNötige Dokumentationskorrekturen über geeigneten codex/-Featurebranch und gegebenenfalls eine neue Folge-PR nach main bringen; die frühere ausdrückliche Push-/PR-/Mergeautorisierung gilt für diese angeforderte Dokumentation ebenfalls, nach passenden vorgeschriebenen Checks und unabhängigem Doc-/Bedienreview. PR anhängen. Kanonische Quellen ändern und nur relevante generierte Ansichten regenerieren. Keine redundanten Produktvollsuiten für reine Prosa; nutze passende Link-/Schema-/Beispiel-/Dokugates und nur nötige Regressionen. Keine neue Release-Veröffentlichung, Provider-/Smokequote oder Produktfeature daraus ableiten.\n\nLiefere beim terminalen Abschluss zusätzlich konkret aktualisierte Dokumente, behobene Widersprüche, passende Prüfungen/Review, gegebenenfalls Folge-PR und tatsächlichen Remote-main-SHA. Melde echte Blockade statt endloser Nacharbeit; Slot nach notwendigen schweren Prüfungen ausdrücklich freigeben. Keine reine Empfangsbestätigung oder separater Routinebericht nötig."
-        }
+        "key": "retire-old-classic-development-20261009",
+        "authorizedUtc": "2026-10-09T04:07:10Z",
+        "sourceAuthority": "Direct detailed user mandate9Oct2026 in Overseer chat; supersedes prior paused research/ClassicMain choice for future work",
+        "document": "docs/design/work-item-comparison-20261009.md",
+        "scope": "Retire active oldClassic line, preserve branches/worktrees/evidence, no new implementation/study work",
+        "status": "ISSUED NOT YET DISPATCHED",
+        "maxPreparationWallSecondsFromDispatch": null,
+        "actualStudyQuota": 0
       },
       "heldCandidateSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
       "followupWorktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
@@ -9607,6 +9620,31 @@
           "status": "Completed and qualified accepted; runtime authority closed. Hold for concrete findings.",
           "scope": "Correct counted seven-start public script replay, one attempt plus required final gates; shared slot required.",
           "sentUtc": "2026-10-08T00:22:06Z"
+        },
+        {
+          "key": "classic-main-integration-20261008",
+          "authorizedUtc": "2026-10-08T16:07:25Z",
+          "status": "Sent once; active integration confirmed",
+          "baseSha": "4908bd2cb25fbc8a231717c099e049da8546703a",
+          "destination": "https://github.com/Glacius-Labs/Markitect.git refs/heads/main",
+          "sourceAuthority": "Direct user 8 Oct: continue Classic while Scientist works, bring version to main and retain as main version",
+          "scope": "Classic integration, required corrections/README/gates, independent review, feature push/PR and regular merge after checks; no new release authority",
+          "heldStudySha": "c91363b7ac4decbe87212ff0f588b5451581a152",
+          "newModelProviderCalls": 0,
+          "newNativeSmokeAllowance": 0,
+          "sentUtc": "2026-10-08T16:08:57Z",
+          "prompt": "Direkter neuer Nutzerauftrag an Overseer vom 8. Oktober 2026: „Während der Scientist arbeitet könntest du den Architect weiter an der Classic Version arbeiten lassen und wir bringen die Version nach main und halten es als die Hauptversion“.\n\nDamit ist der bisherige allgemeine Classic-Hold aufgehoben. Classic ist die gewählte Hauptentwicklungslinie des Produkts. Du bist Eigentümer des nächsten begrenzten Pakets classic-main-integration-20261008: Führe den angenommenen Classic-Folgestand zur geprüften Übernahme nach origin/main in https://github.com/Glacius-Labs/Markitect.git. Der Nutzer autorisiert dafür ausdrücklich die nötigen Featurebranch-Pushes, PR-Erstellung/-Aktualisierung und den Merge nach main, sobald die vorgeschriebenen Checks und unabhängigen Reviews positiv sind. Keine erneute pauschale Rückfrage vor diesen autorisierten Schritten. Branchschutz/Prüfregeln respektieren, keine Umgehung, kein Force-Push oder Löschen fremder Arbeit. Jede erstellte PR über attach_artifact an deinen Chat hängen.\n\nAusgangslage: lokal angenommenes CLASSIC-P1 auf sauberem 4908bd2cb25fbc8a231717c099e049da8546703a im Worktree C:/Users/Consiliari/.codex/worktrees/classic-p1-intent-change/Markitect. Voller Replay und vier Quellgates bestanden an fbb2deab8d85be74a77874a705229a0a1ea1fee4; der vier-Markdown-Nachfolger wurde separat geprüft. Gehostete Windows-/Ubuntu-/Linux- und Integrations-/Releasegrenzen nicht als erledigt erben. Prüfe aktuelle Remotezustände, offene PRs und deine jüngsten direkten Nutzeraufträge, bevor du Änderungen integrierst. Geeigneten bestehenden Featureworktree wiederverwenden oder getrennten codex/-Integrationsbranch auf aktueller Produktbasis verwenden; kein Zurücksetzen von WIP oder Root-Designbranch als Produktbasis. Konflikte fachlich lösen und nötige Regressionen prüfen.\n\nArbeitsumfang dieses Pakets: Classic stabil zur Hauptversion auf main bringen, einschließlich vorhandener öffentlicher Bedienbeispiele, README, erforderlicher Kompatibilitäts-/Integrationskorrekturen und bestehender verbindlicher Gates. Priorisiere echte Integrations-, Bedien- oder Releasebefunde; keine große neue Featureplattform und keine Beschäftigungsarbeit. Halte Aussagen und kopierbaren Bedienweg mit dem tatsächlich integrierten Stand konsistent. Kanonisches Modell, konservative Invalidierung, feste Snapshots und explizite Annahme-/Apply-Grenzen erhalten. Government, Jev/SAT, private Scientist-Daten, Studienfixtures und Vergleichsbewertung gehören nicht in dieses Paket.\n\nWichtig: Scientists eingefrorener Classic-Studienkandidat c91363b7ac4decbe87212ff0f588b5451581a152 / Runtime v0.14.1 mit Quelle 7dbd599c81540c8203a1b7f83afbc335174f4f1f bleibt unverändert samt gehaltenem Worktree und Belegen. Main darf weiterentwickelt werden; es wird dadurch keine Studienversion still ersetzt. Main-Übernahme ist eine Produktentscheidung, kein Nachweis eines gemessenen Methodensiegers.\n\nNormale Implementierung, gezielte risikobasierte Tests, unabhängige Reviews und erforderliche lokale/gehostete Integrationschecks sind autorisiert. Keine redundanten unveränderten Vollsuiten. Der aktuell freie schwere Prüfslot wird dir für dieses Paket zugewiesen; Scientist bearbeitet nur seinen Offline-Diagnoseplan und braucht vor weiteren tatsächlichen Runneraufrufen ohnehin einen neuen Grant. Schwere lokale Quellgates sequenziell, endlich begrenzt und gemäß vorhandenen Projektbudgets; nach Paketabschluss ausdrücklich Slot freigeben. Alte geschlossene Smoke-/Rollen-/Modellgrants nicht wiederverwenden: neue reale Modell-/Provider- oder native Produkt-/Rollen-Smokes benötigen weiterhin einen konkreten separaten Grant. Keine Käufe, globale Policyänderungen oder zusätzliche kostenpflichtige Verpflichtungen. Neue Release-Veröffentlichung ist durch diesen Auftrag nicht zusätzlich autorisiert; bereits direkt autorisierte Release-Aufgaben behalten ihren belegten Umfang.\n\nNach positiver Review-/Checklage PR regulär nach main mergen und den tatsächlichen Remote-main-SHA sowie Check-SHAs nach dem Merge lesen. Falls ein nicht selbst lösbarer Blocker bleibt, genau diesen mit konkreter Entscheidung melden. Liefere einmalig terminale Rückmeldung mit PR-Link, tatsächlichem Merge-/Remote-main-SHA, sauberem lokalen Stand, Dateien/Verhalten, Checks, unabhängigem Review, offenen Releasegrenzen und Slotfreigabe an Overseer 01a11367-a781-7683-a20f-46e12614dcb4 auf Host local. Nutzerautorisierung für Rückmeldungen besteht. Danach dieses Paket beenden; keine Empfangsbestätigungs- oder Pollingschleife. Koordination liegt in C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination.md und coordination-state.json.",
+          "documentationAddendum": {
+            "key": "classic-main-documentation-addendum-20261008",
+            "authorizedUtc": "2026-10-08T16:36:09Z",
+            "status": "Sent once to active Architect",
+            "sourceAuthority": "Direct user: Architect must also update README and documentation to current state",
+            "scope": "Audit and correct affected canonical Classic product docs/README/examples against current main and actual released CLI; follow-up PR/merge after appropriate checks and independent review",
+            "newRuntimeAllowance": 0,
+            "studiesUnchanged": true,
+            "sentUtc": "2026-10-08T16:36:49Z",
+            "prompt": "Ergänzung zum laufenden Auftrag classic-main-integration-20261008, direkt vom Nutzer: „Der Architect soll auch die Readme anpassen und die Doku, sodass sie aktuell ist“.\n\nBitte gleiche ausdrücklich README UND die betroffene kanonische Produktdokumentation mit dem tatsächlich auf main integrierten Classic-Stand ab. Schließe zuerst laufende erforderliche Prüfungen sauber ab; arbeite danach bzw. ohne Konflikt dazu diese Dokumentationsphase im selben Eigentümerauftrag ab. Kein zweiter paralleler Bearbeiter.\n\nPrüfe über die Dokumentationskarte besonders Produktzweck/Begriffe, Architekturgrenzen, Quickstart und ausführbaren Bedienweg, Nutzerabsicht→kanonisches Modell→Umsetzung→Modell-/Dateipflege→Wiederaufnahme, Beispiele, Entwicklungs-/Verifikationsanweisungen und aktuellen Roadmapstatus. Ändere konkret veraltete oder widersprüchliche Stellen, keine pauschale Neufassung aller Dokumente. README soll klar zu den zuständigen vertiefenden Dokumenten führen. Kopierbare Befehle, Voraussetzungen und Links müssen zum richtigen Quell- bzw. Release-Stand passen.\n\nWichtig: Classic ist die Hauptentwicklungslinie auf main; Government bleibt experimentell separat. Unterscheide aktuellen Quellstand, tatsächlich veröffentlichte CLI-Version und erst geplante Fähigkeiten. Weder Source-Merge als neue veröffentlichte Version noch technische Beispiele als bewiesene autonome Produktqualität darstellen. Bestehende unabhängige Prüfung, explizite Annahme/Apply und konservative Invalidierung korrekt erklären. Scientists eingefrorenes c91363b7ac4decbe87212ff0f588b5451581a152/v0.14.1 und Studieninputs unverändert halten; Root-Koordinationsdateien und private Studienbelege nicht bearbeiten.\n\nNötige Dokumentationskorrekturen über geeigneten codex/-Featurebranch und gegebenenfalls eine neue Folge-PR nach main bringen; die frühere ausdrückliche Push-/PR-/Mergeautorisierung gilt für diese angeforderte Dokumentation ebenfalls, nach passenden vorgeschriebenen Checks und unabhängigem Doc-/Bedienreview. PR anhängen. Kanonische Quellen ändern und nur relevante generierte Ansichten regenerieren. Keine redundanten Produktvollsuiten für reine Prosa; nutze passende Link-/Schema-/Beispiel-/Dokugates und nur nötige Regressionen. Keine neue Release-Veröffentlichung, Provider-/Smokequote oder Produktfeature daraus ableiten.\n\nLiefere beim terminalen Abschluss zusätzlich konkret aktualisierte Dokumente, behobene Widersprüche, passende Prüfungen/Review, gegebenenfalls Folge-PR und tatsächlichen Remote-main-SHA. Melde echte Blockade statt endloser Nacharbeit; Slot nach notwendigen schweren Prüfungen ausdrücklich freigeben. Keine reine Empfangsbestätigung oder separater Routinebericht nötig."
+          }
         }
       ],
       "classicP1ClosureAssignment": {
@@ -9714,7 +9752,8 @@
             "qualification": "Root verified clean head, changed-file list, successful PR checks, merged PR and remote main. Complete documentation packet and postmerge checks not yet accepted; no new release claimed."
           }
         }
-      }
+      },
+      "futureAutomaticAuthorityFromOldGrants": 0
     },
     {
       "name": "Oldschool",
@@ -9771,7 +9810,18 @@
           "studyStarted": false
         }
       },
-      "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
+      "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f",
+      "lastAssignment": {
+        "key": "oldschool-luna-nest-contract-20261009",
+        "authorizedUtc": "2026-10-09T04:07:10Z",
+        "sourceAuthority": "Direct detailed user mandate9Oct2026 in Overseer chat; supersedes prior paused research/ClassicMain choice for future work",
+        "document": "docs/design/work-item-comparison-20261009.md",
+        "scope": "Fall-independent strong Conventional native nest/AGENTS/continuation/closure contribution, no actuals",
+        "status": "ISSUED NOT YET DISPATCHED",
+        "maxPreparationWallSecondsFromDispatch": 2700,
+        "actualStudyQuota": 0
+      },
+      "futureAutomaticAuthorityFromOldGrants": 0
     },
     {
       "name": "Design",
@@ -10011,22 +10061,44 @@
         }
       },
       "lastAssignment": {
-        "key": "design-readiness-preservation-handoff-20261009",
-        "authorizedUtc": "2026-10-09T02:20:07Z",
-        "scope": "Existing own evidence archive/hash/git preservation and exact executable public-contract handoff only; source7d001579/dochead11f0808 held, no study/main/release/adaptive-product expansion. Own selected ignored evidence only to private research-backup, no auth/caches/foreign data.",
-        "status": "Completed and qualified accepted; candidate held, no followup grant",
-        "sentUtc": "2026-10-09T02:21:02Z",
-        "deliveryConfirmed": true
+        "key": "design-complete-workflow-docs-main-20261009",
+        "authorizedUtc": "2026-10-09T04:07:10Z",
+        "sourceAuthority": "Direct detailed user mandate9Oct2026 in Overseer chat; supersedes prior paused research/ClassicMain choice for future work",
+        "document": "docs/design/work-item-comparison-20261009.md",
+        "scope": "Full accepted design implementation and native userworkflow, stable product validation, replacement README/docs, main promotion; smallest autonomous workitem entry productowned",
+        "status": "ISSUED NOT YET DISPATCHED",
+        "maxPreparationWallSecondsFromDispatch": null,
+        "actualStudyQuota": 0,
+        "nativeProductProofLimits": {
+          "e2eJobsMax": 3,
+          "aggregateNativeActiveSecondsMax": 7200,
+          "outerModelRoleStartsMax": 128,
+          "model": "gpt-6-luna",
+          "reasoning": "high",
+          "noAutomaticRefill": true,
+          "buildsSourceChecksSeparateFiniteRepoTimeouts": true
+        }
       },
       "activeTurn": {
         "id": "01a11e76-c579-7ab1-997a-3cfe2e836cb8",
         "status": "completed"
       },
       "lastObservedUtc": "2026-10-09T03:31:00Z",
-      "currentDirectWorkObservation": "Owner running later direct product cleanup/reconcile work with independent inventory findings; prior accepted source7d001579/doc11f0808 remain historical frozen readiness. No new research allocation from Root."
+      "currentDirectWorkObservation": "Owner running later direct product cleanup/reconcile work with independent inventory findings; prior accepted source7d001579/doc11f0808 remain historical frozen readiness. No new research allocation from Root.",
+      "assignmentHistory": [
+        {
+          "key": "design-readiness-preservation-handoff-20261009",
+          "authorizedUtc": "2026-10-09T02:20:07Z",
+          "scope": "Existing own evidence archive/hash/git preservation and exact executable public-contract handoff only; source7d001579/dochead11f0808 held, no study/main/release/adaptive-product expansion. Own selected ignored evidence only to private research-backup, no auth/caches/foreign data.",
+          "status": "Completed and qualified accepted; candidate held, no followup grant",
+          "sentUtc": "2026-10-09T02:21:02Z",
+          "deliveryConfirmed": true
+        }
+      ],
+      "futureAutomaticAuthorityFromOldGrants": 0
     }
   ],
-  "nextAction": "Research observation PAUSED; all grant remainders0, six slots unused/unallocated. Preserve exact pins and evidence. Final public checkpoint remote verification is retained externally in C:/Users/Consiliari/Documents/Markitect-Overseer-Remote-Backup-20261009.json. Separate newer direct Design product tasks continue. No automatic research continuation/ACK/activity tasks.",
+  "nextAction": "Dispatch new Design/Scientist/Oldschool mandates once; notify Architect/Worker of retired lines; resume quiet2h coordination for newmandate, preserve alloldclosed evidence. Scientist prepares simple nest; Design completes product/docs/main. No actual study allocation until concrete readiness.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -10037,7 +10109,7 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-09T03:34:02Z",
+    "reviewedUtc": "2026-10-09T04:07:10Z",
     "evidenceLevel": "Terminal Scientist3250da0 clean/private exact/6newWorkingGit+55retainedWorkingGit+originalTask1hash verified; final public source recipe review and scope qualifications addressed",
     "coordinationActions": [
       "Accepted terminal documentary synthesis without rerun or privateOracle decoding",
@@ -10048,7 +10120,7 @@
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-09T03:34:02Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-09.md",
-    "observationStatus": "PAUSED; finite researchblock closed with incomplete comparison; no further automatic capability/prep/actual allocation",
+    "observationStatus": "New direct user mandate supersedes prior researchpause for futurework; owner dispatches pending",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z",
     "latestQuietFallback": {
@@ -10060,7 +10132,9 @@
       "result": "Bothactive. ScientistreportedpositiveactualCanary,finalfreezereviewpending;Designactiveownreadinesscorrections. No terminalhandoff/actionableblocker/newassignment/quota; waitauthorizedcallbacks, no routineusernotification."
     },
     "synthesisSha256": "30fdad2b6b8e136ed5d55661d7b0f20ad7e79630c6288630943346876810c0a0",
-    "reportHashBinding": "UTF-8 LF bytes identical in final working file and raw public Git blob; line endings normalized without semantic change."
+    "reportHashBinding": "UTF-8 LF bytes identical in final working file and raw public Git blob; line endings normalized without semantic change.",
+    "latestUserMandateDocument": "docs/design/work-item-comparison-20261009.md",
+    "latestDecision": "New Design main; simple Conventional versus new Markitect WorkItem comparison, all measured Actors LunaHigh; old studies preserved, no oldClassic/Gov new trials"
   },
   "publicAdapterHandoff": {
     "version": "1.1",
@@ -10254,10 +10328,11 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": null,
-    "key": null,
-    "status": "FREE; v4 pair terminal; v5 offline preparation needs no fullsuite/Actual slot",
-    "queue": []
+    "status": "DESIGN",
+    "owner": "Design",
+    "purpose": "Finish current source gates and complete new fullworkflow/productmain package; Scientist preparation only focused mechanical checks",
+    "noRedundantParallelProductSuites": true,
+    "assignedUtc": "2026-10-09T04:07:10Z"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -10601,6 +10676,48 @@
       "researchGoalComparisonAchieved": false,
       "productRecommendation": "Classic stays main; strong Conventional engineering plus selective canonical model now; Design most promising integrated successor but not proven replacement; Government optional separate layer",
       "separateLaterDirectDesignProductWorkUninterrupted": true
+    },
+    "newWorkItemComparison": {
+      "key": "luna-native-work-item-comparison-20261009",
+      "authorizedUtc": "2026-10-09T04:07:10Z",
+      "status": "NEW DIRECT MANDATE, PREPARATION ONLY",
+      "document": "docs/design/work-item-comparison-20261009.md",
+      "documentSha256": "a78237d9cb8740338a922ada89913040f1341af7ad8314c7d85e02db230f7a1b",
+      "arms": [
+        "Strong Conventional Agentic Coding",
+        "New Markitect from Design"
+      ],
+      "retiredArms": [
+        "old Architect Classic",
+        "standalone Government"
+      ],
+      "allMeasuredActorProfiles": {
+        "model": "gpt-6-luna",
+        "reasoning": "high",
+        "includes": [
+          "implementers",
+          "internal productroles",
+          "independent evaluators",
+          "any eventual promptagent"
+        ]
+      },
+      "topLevelPrompt": "Hier liegt das Backlog. Implementiere die Arbeit, halte die Projektregeln ein, prüfe die Ergebnisse und merge die fertigen Änderungen nach main.",
+      "projectMainOnly": true,
+      "nativeProjectInstructionsMayDiffer": true,
+      "markitectInitialModelProvided": true,
+      "initialSetupModelPreparationCountedSeparately": true,
+      "inTrialModelUpkeepCounted": true,
+      "noAdaptiveScientistCoaching": true,
+      "noNewAiPrompterInitially": true,
+      "maxPairedProjects": 3,
+      "maxActualFullTrialStarts": 6,
+      "actualAllocated": 0,
+      "initialPreparationProjects": 2,
+      "oldUnusedSlotsRemainClosed": true,
+      "executionGrantAfterConcreteReadinessByRootExistingUserGo": true,
+      "noAutomaticRefillOrPurchases": true,
+      "missingCostTelemetryNotFunctionalTestGate": true,
+      "noRetrospectiveOldStudyChange": true
     }
   },
   "fullSuiteSlotHistory": [
@@ -11641,5 +11758,29 @@
       },
       "nextAction": "Hold exact public candidate and private recovery. After active Classic trial terminal, Scientist may receive a new bounded concrete public-contract/matched-profile admission task from Root; no immediate automatic Actual/canary/product changes or busywork to Design."
     }
+  },
+  "designMainPromotionMandate": {
+    "key": "design-complete-workflow-docs-main-20261009",
+    "authorizedUtc": "2026-10-09T04:07:10Z",
+    "ownerThread": "01a11c80-37aa-7fe0-9586-35d916ce6561",
+    "observedOperationsSource": "ce0f836dcf5401351493dd8cdb467b9b64259e42",
+    "operationsSourceReadiness": "Own tests in progress, not final accepted maincandidate",
+    "destination": "https://github.com/Glacius-Labs/Markitect.git refs/heads/main",
+    "authorizedActions": [
+      "Complete accepted design requirements",
+      "Native practice validation LunaHigh within documented finite productproofbudget",
+      "Rewrite current README and userdocs",
+      "Necessary migration and compatibility",
+      "Featurepush and attached PR",
+      "Regular merge after required hosted/local gates and independentreview"
+    ],
+    "oldClassicActiveDevelopmentRetired": true,
+    "oldClassicBranchesHistoryPreserved": true,
+    "standaloneGovComparisonRetired": true,
+    "optionalGovRefinementBelongsDesign": true,
+    "usableWorkflowAndAutonomousWorkitemReadinessSeparate": true,
+    "releasePublicationAuthorized": false,
+    "forceOrProtectionBypassAuthorized": false,
+    "document": "docs/design/work-item-comparison-20261009.md"
   }
 }
