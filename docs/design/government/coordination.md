@@ -1305,3 +1305,12 @@ Scientist429c52d clean/exaktPRIVATEremote/Actionsdisabled. Root pruefte48Working
 Einziger frischer Auftrag luna-nest-newline-mechanical-validation-20261009:900s absolutesPaketfenster, genau1weiterebestehende8Fixture/Baseline/PSASTCharge bis180s,0Source-/Fixture-/Requirementaenderungen/Reviewer/Produkt-/Case-/Provider-/Appserver-/Build-/Installation-/Canary-/Trialprozesse. Alte Fehler/Quoten erhalten. BeiPASS konkrete vorhandeneSource-/Input-/Nativebindungen fuer bereitsreserviertesConventional sofortaktivieren; keine weitereallgemeineVorbereitungsphase. BeiFAIL terminalerBefund, keinRetry ausdiesemGrant. Actualfrist09:12:43Z unveraendert.
 
 NeueValidation einmal04:52:04Z zugestellt,Ende05:07:04Z;Automationkontext exakt ACTIVE/2h/Rootgespeichert. AktuellerActualgrantbleibtunaktiviert;Root wartetnuraufdiesen konkretenReceipt,nichtDesign.
+
+
+### 2026-10-09T05:13:26Z — Conventional independently activated
+
+Root accepted clean private source6578c0c96bd9504d4230ba1b8ce408b54fae742a, immutable executable basis429c52d. Exactly one additional mechanical batch passed all eight existing nest fixtures, Brownfield baseline and PowerShell AST in19.3809522s; both prior failed batches and two pre-test metadata preflights remain recorded. Root checked17 additive Git/working files,16 payload hashes and preservation of81 original working files; prior48 public/freeze and76 prepared-input bindings remain qualified. No further test/model/reviewer gate was introduced.
+
+The original conditional early-start grant remains byte-identical. Root activation receipt and enabled execution wrapper bind the exact common seed, Conventional checkout, inputs, native/Python executables and fresh Luna High config. One7200s actual trajectory plus<=900s ordinary existing-account setup,8 implementation native entries and1 final independent entry is now authorized under the original absolute09:12:43Z end. Real model/auth/Git/team results and usage remain unobserved; authorization is not an actual start. Missing cost receipts do not block execution.
+
+Design requested a heavy-host window:05:15–05:25Z for bounded local source gates, then Scientist setup and measurement. Design continues light code/docs/tests; native product proofs and heavy same-host work do not overlap measured Conventional execution. Design readiness does not block Conventional. Substantive future case refinement preserves the original run and needs a matched new version for both arms; no retroactive outcome change or automatic extra start.
