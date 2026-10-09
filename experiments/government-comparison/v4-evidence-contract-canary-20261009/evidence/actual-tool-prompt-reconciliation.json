@@ -1,0 +1,12 @@
+{
+  "literalPromptComparisonFromPersistedLog": null,
+  "actualToolCallId": "call_95c21e8b8e0d4bcd8304f05ad53988cf",
+  "preDispatchLiteralPromptPath": "evidence/actual-outbound-actor-prompt.txt",
+  "preDispatchLiteralPromptSha256": "9c8e7b590cfdbc7fb5861907a2e6889aefda4fc80320edc539d1b2eed2d65e14",
+  "ownPersistedToolCallLocated": true,
+  "preDispatchLiteralPromptBytes": 3113,
+  "actorId": "/root/v4_evidence_contract_public_executor",
+  "event": "Read-only metadata reconciliation initially compared opaque encrypted message to plaintext and threw; this is not a product/native failure. No retry or prompt/response edits; literal prompt was already archived before dispatch as required. Encrypted log is not used as substitute for prompt.",
+  "persistedMessageRepresentation": "Opaque encrypted payload, not literal prompt text",
+  "utc": "2026-10-09T01:34:14.4370774Z"
+}

@@ -1,0 +1,41 @@
+{
+  "key": "v4-native-evidence-reference-contract-canary-20261009",
+  "issuedUtc": "2026-10-09T01:26:01Z",
+  "absoluteDeadlineUtc": "2026-10-09T01:39:01Z",
+  "maxWallSeconds": 780,
+  "baselineScientist": "4a64c15b90b5796ae88b6baa4523ab8ee7b3b2f7",
+  "basis": "Concrete actual Main response-validation failure independently confirmed. Prospective actor instruction of existing public product DTO contract; direct user authorization for actual case-study readiness. Old grants remain closed.",
+  "limits": {
+    "ordinaryInstructionAndBindingBatches": 1,
+    "offlineTestProcesses": 0,
+    "mainProductProcesses": 1,
+    "mainProcessMaxSeconds": 360,
+    "canaryNativeActors": 1,
+    "canaryActorMaxSeconds": 300,
+    "independentReadonlyFreezeReviewers": 1,
+    "reviewerMaxSeconds": 180,
+    "newSharedNativeReservationsMax": 2,
+    "newProductBuilds": 0,
+    "newFullTrialReservations": 0,
+    "codexCLIAppserverProviderApiInstallations": 0
+  },
+  "overallReservedPairEndUtc": "2026-10-09T05:32:04Z",
+  "existingPairGrant": "v4-native-main-bridge-and-first-matched-pair-20261009",
+  "contractSource": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204:internal/host/agentexec/runner.go:369-492",
+  "conditions": [
+    "Only prospective native Actor instruction and new additive isolated public canary runtime/state/mailbox/prompt/freeze bindings may change. Preserve4a64/6ab/old raw request/response/receipts unchanged. Bridge+launcher exact old93ed058 bytes, Mainbinary0621e6ce... unchanged, no product/evaluator/rubric/requirements/transport implementation change.",
+    "Native Actor prompt must accurately state actual existing DTO rules: echo genuine apiVersion/runId/nonce/inputDigest/role; all required arrays present even empty; executor genuine proposed/failed/incomplete/escalated with role-compatible content, canonical candidate paths/modes0644/0600/0755 and owned roots. evidenceRefs may contain ONLY exact request.scopeIds, request.policyIds or request.artifacts[].path that the Actor really relied on; context model source paths, arbitrary repo files, invocation/mailbox/log paths are NOT evidenceRefs. Empty[] is allowed if none apply. Do not force a fake success or evidence citation.",
+    "Exact full actual outbound Actor instruction must be saved as literal UTF-8 bytes with hash before tool invocation and bound to reservation/toolActorID/request; logs may encrypt prompts and are not a substitute. Only fresh own public nonstudy checkout/current genuine request+existing public contract; no previous response/candidate solution or foreign/privately evaluated inputs to Actor.",
+    "Before one Main launch prove raw committed bytes of all fixed sourceinputs equal workingrawbytes, rather than git status alone. Latest own Scientist parent metadata gpt6.1sol/high inherited/never/danger-full-access, fork_turns=none, no model/reasoning overrides. One actual Actor reserves before tool; no helper/secondrole/retry/fallback/response editing.",
+    "Main genuinely normalizes one Invocation; Scientist dispatches actual nativeActor from exact live request and forwards genuine terminal rawResponse unmodified; require actual parser acceptance/proposed ExecutorReceipt with exact run/nonce/input/config/stdout bindings. A positive transport/parser canary is no semantic/product-quality acceptance. If Actor fails/escalates, classify honestly and terminate; do not manufacture a proposal.",
+    "On positive actual canary, exact shared source/config/profile/public24/private5hashes/commonresources freeze, then one fresh readonly independent freeze reviewer<=180s inherited/forknone/nochildren/followups/retries/program/tests. Reviewer sees own public declared protocol/actual receipts and hashes, not private vectors or foreign cells. No postreview corrections. On any next failure close and callback concrete blocked/unready; no automatic further canaries.",
+    "Old spent resources: original native setup1Main/2reservations/1reviewactivation; byte correction1Main/1reservation+1nativeExecutoractivation/incompleteReceipt. Keep all counted; new2maxsetupreservationsexplicit shared overhead, neither a full trial nor replacement. Root separate independent coordination review counted independently, serving/tokens/cost/humanTime remainunknown.",
+    "After successful final review seal and privatelypush clean checkpoint toresearch-backup exactRemoteSHA; safe once-only handoff toRoot. Both existing GFcells NOT RUN until Root verifies and records/sends startreceipt under original pairgrant. No new fulltrialslots or globaldeadlineextension05:32:04Z; cannotstartcell without full7200s remaining; sequentialConventionalthenClassic and all actual cell quotas/commonconditions unchanged. If first consumes too much absolute window second honestlyNOTRUN, no silent time refill.",
+    "Scientist continues concrete active grant after compaction; ownhandles/cwd/Port0/contamination rules and fresh context apply. No generic capability/CLI/appserver diagnostic loop, productimplementation, APIs, purchase, main/release changes. No blanket human phase approval required; callback once on positive terminalhandoff/materialblocker."
+  ],
+  "status": "Dispatched once; fresh Scientist turn active on exact literalDTOcontract canary",
+  "usage": null,
+  "sentUtc": "2026-10-09T01:27:52Z",
+  "grantCommit": "d2a9f6a",
+  "deliveryConfirmed": true
+}

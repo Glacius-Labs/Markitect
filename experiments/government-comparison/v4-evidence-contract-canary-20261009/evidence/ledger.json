@@ -1,0 +1,33 @@
+{
+  "deadline": "2026-10-09T01:39:01Z",
+  "instructionBatches": 1,
+  "offlineTestProcesses": 0,
+  "rootStartReceipt": null,
+  "cellsStarted": 0,
+  "grant": "v4-native-evidence-reference-contract-canary-20261009",
+  "status": "LIVE PASS; FROZEN FOR FINAL REVIEW",
+  "previousConsumed": {
+    "nativeReservations": 3,
+    "actualNativeStarts": 2,
+    "productStarts": 2
+  },
+  "review": {
+    "maxSeconds": 180,
+    "status": "reserved-before-tool",
+    "maxReservations": 1,
+    "reservedUtc": "2026-10-09T01:34:14.5360331Z",
+    "reservationNumber": 2
+  },
+  "canary": {
+    "status": "terminal-positive-main-parser-proposed",
+    "maxActorSeconds": 300,
+    "actualNativeStarts": 1,
+    "mainProductStarts": 1,
+    "reservedUtc": "2026-10-09T01:29:32.7731368Z",
+    "maxMainSeconds": 360,
+    "nativeActorReservations": 1,
+    "actorId": "/root/v4_evidence_contract_public_executor",
+    "stopDueUtc": "2026-10-09T01:34:56Z",
+    "productExitCode": 0
+  }
+}

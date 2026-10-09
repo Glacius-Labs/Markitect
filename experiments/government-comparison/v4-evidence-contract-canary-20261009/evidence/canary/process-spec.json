@@ -1,0 +1,22 @@
+{
+  "notAfterEpoch": 1791509941,
+  "command": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\runtime\\markitect.exe",
+  "state": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-evidence-contract-canary-20261009\\canary-state",
+  "args": [
+    "canonical",
+    "--repo",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-v4-evidence-contract-canary-20261009\\public-canary\\repo",
+    "--config",
+    "examples/canonical-projection/canary.yaml",
+    "--runtime",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-v4-evidence-contract-canary-20261009\\canary-state\\runtime.json",
+    "--action",
+    "controller-execute",
+    "--base",
+    "132f8fed0871c6640af6eb6d709f9dc069a4aec5",
+    "--revision",
+    "132f8fed0871c6640af6eb6d709f9dc069a4aec5"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-evidence-contract-canary-20261009\\public-canary\\repo",
+  "maxSeconds": 360
+}

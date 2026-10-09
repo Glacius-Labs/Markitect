@@ -1,0 +1,7 @@
+{
+  "responseSha256": "014461aab91ab242e2fbd320bf235e711ad2d01d0d85bb5072d3162d4d8f251d",
+  "invocationSha256": "c04bf55bbec961e1be8d16e1184f31459e834bd98fc62c95c712556606a3b4a0",
+  "nativeActorId": "/root/v4_evidence_contract_public_executor",
+  "nativeActorTerminal": true,
+  "terminalReceiptSha256": "6c80a676797b832254e4e00d9b9043ed1c5f9a3a7a0624ac4d87730f6ea812cd"
+}

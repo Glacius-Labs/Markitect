@@ -1,0 +1,9 @@
+{
+  "reportedResponseSha256": "014461aab91ab242e2fbd320bf235e711ad2d01d0d85bb5072d3162d4d8f251d",
+  "terminalObservedUtc": "2026-10-09T01:31:32.4075090Z",
+  "reportedResponsePath": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-evidence-contract-canary-20261009\\canary-state\\mailbox\\dd02e7e828e0ddcb882831c5e2eb3d21\\response.raw.json",
+  "nativeToolTerminalObserved": true,
+  "finalMessage": "Proposed bounded .NET candidates for the selected scope. Handler workflow details remain uncertain because the canonical scope does not define inputs, results, persistence, or effect ordering.",
+  "actorId": "/root/v4_evidence_contract_public_executor",
+  "status": "completed"
+}

@@ -1,0 +1,16 @@
+{
+  "nativeReservation": 1,
+  "literalUtf8Sha256": "9c8e7b590cfdbc7fb5861907a2e6889aefda4fc80320edc539d1b2eed2d65e14",
+  "maxSeconds": 300,
+  "requestSha256": "c04bf55bbec961e1be8d16e1184f31459e834bd98fc62c95c712556606a3b4a0",
+  "status": "dispatched-native-actor-running",
+  "promptPath": "experiments/government-comparison/v4-evidence-contract-canary-20261009/evidence/actual-outbound-actor-prompt.txt",
+  "runId": "dd02e7e828e0ddcb882831c5e2eb3d21",
+  "forkTurns": "none",
+  "reservedUtc": "2026-10-09T01:30:11.5120821Z",
+  "overrides": null,
+  "promptBytes": 3113,
+  "actualActorId": "/root/v4_evidence_contract_public_executor",
+  "actualToolCallId": null,
+  "nativeStartObservedUtc": "2026-10-09T01:30:46.7590990Z"
+}
