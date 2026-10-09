@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T00:45:00Z",
+  "updatedUtc": "2026-10-09T00:47:12Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12,7 +12,7 @@
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-09T00:30:44Z",
+    "lastVerifiedUtc": "2026-10-09T00:47:12Z",
     "verification": "automation_update confirmedACTIVE; savedTOML exactprompt/2h/rootTarget verified; callbacksfiveowners/quietunchanged preserved",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
     "latestMandateUpdatedUtc": "2026-10-08T22:54:35Z",
@@ -31,9 +31,9 @@
     "pauseReason": "Final resumed two-actual-attempt window closed after R3; S1/read/write/build unproved, all six cells NOT RUN. Evidence/effort synthesis supplemented; no new grant or routine polling.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
     "resumedUtc": "2026-10-08T21:28:26Z",
-    "promptSha256": "d45fdc8894a8e8f652e49dd6faedc90b1be020a23fad21a0b95c0b5a360cd0a3",
+    "promptSha256": "5652ccc333cb9bcadc87b9333c4196208fd08dcb60305963dfdbf5e902e7bac3",
     "name": "Markitect: Vergleich und fünf Arbeitschats koordinieren",
-    "currentGrantContext": "Remote backups COMPLETE independently verified; concrete declared evaluation coverage correction issued/dispatched once until00:56:36Z, max2batches/2offlineTests/1reviewer, zero product Actors/fulltrials; Design readiness ongoing",
+    "currentGrantContext": "a8c2ee5 closed/NOTREADY; new exact receiptbinding repair+executable Classical/Conventional pair freeze grant52e2d83 until01:00Z,1batch/1offlineTest/1deltaReviewer, zero product Actors/fulltrials. Design later under frozen common conditions.",
     "exactSavedTomlVerified": true
   },
   "threads": [
@@ -470,17 +470,17 @@
       "latestProgress": "Actual fresh turn active: reads concrete grant and prior findings, prospective correction then frozen independent review; no actual product trial admission.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "e378ae8144f054e6ff957bb08ee3e6120ca4f955",
+      "candidateSha": "a8c2ee5c94334e310d800e0597a9cf786f575e31",
       "acceptance": "Current public preparation qualified accepted after root/independent review; DTOhelper advisory only and3/2correctiondeviation retained. No matchedstudyadmission; historicalactualv3/posthoc preserved.",
       "lastAssignment": {
-        "key": "v4-declared-evaluation-coverage-correction-20261009",
-        "authorizedUtc": "2026-10-09T00:26:36Z",
-        "status": "Dispatched once; concrete declared coverage/attribution correction and one terminal independent review only",
-        "grantPointer": "threads[name=Scientist].evidence.v4DeclaredEvaluationCoverageCorrectionGrant",
-        "scope": "New prospective evaluationcopy only: close explicitlydeclared validated-order/durable-lifecycle/current-limit-and-compatibility/parity gaps plus product/evaluation/infrastructure/NOTRUN attribution. Existing declaredrequirements, rubricweights and methodneutral outcome separation unchanged.",
-        "sentUtc": "2026-10-09T00:29:54Z",
-        "grantCommit": "1b0f7e3",
-        "deliveryConfirmed": true
+        "key": "v4-receipt-binding-repair-and-executable-freeze-20261009",
+        "authorizedUtc": "2026-10-09T00:45:00Z",
+        "sentUtc": "2026-10-09T00:46:13Z",
+        "grantPointer": "threads[name=Scientist].evidence.v4ReceiptBindingRepairGrant",
+        "grantCommit": "52e2d83",
+        "deliveryConfirmed": true,
+        "status": "Dispatched once; exact new fixture mechanics repair, no actual trial allocation",
+        "scope": "New additive copy: fix only exact receipt-binding fixture/evaluator mechanics error and verify its pass/fail/error classifications. Preserve declared requirements/rubric/old evidence and private separation. Then one minimal executable common profile/freeze proposal using existing receipts/config only, prioritizing matched ClassicMain/Conventional pairs without waiting on Design."
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -7482,7 +7482,7 @@
             "At firstterminalreview or deadline stop, preserveWIP, close exactusage/remaining0, push new ownsource/evidence checkpoints only to research-backup/private target withoutForce, verifyremoteSHA, callbackonce. Newexternalprivateevidence backuponlyadditivechangedfiles, no repeatfullarchiveofunchanged3459files. No genericwaitingfinal whileconcretegrantactive.",
             "This is final specificcorrection for these known evaluatorfindings, not celladmission. Furtherfulltrialallocation0, global8trial/2questionceilingunchanged; next cleanDesign/profile/commonfreeze+finiteactualgrant, no automaticprep/diagnosisloop."
           ],
-          "status": "CLOSED at reported terminal review00:39:33Z; evidence archival/push pending, no remaining execution authority",
+          "status": "CLOSED; clean private remote a8c2ee5 and evidence closure qualified accepted, evaluator remains NOT READY/NOT ADMITTED",
           "usage": {
             "correctionBatches": 2,
             "focusedOfflineTestProcesses": 2,
@@ -7497,7 +7497,10 @@
             "freshIndependentReviewers": 1,
             "productActors": 0,
             "fullTrials": 0,
-            "remainingAllQuotas": 0
+            "remainingAllQuotas": 0,
+            "reviewReservationToTerminalSeconds": 161.4902698,
+            "issueToRemoteVerifiedSeconds": 1033.127742,
+            "allOldQuotaRemaindersClosed": true
           },
           "deliveryConfirmed": true,
           "sentUtc": "2026-10-09T00:29:54Z",
@@ -7561,8 +7564,41 @@
             "Private vectors/fullreview remain private research-backup; safe callback only requirement IDs/verdict/hashes/counts/explicit remaining concrete prerequisites. No product Actor inventories/foreign chats/processes/memory.",
             "Close at terminal review/deadline, preserve WIP, push own new source/evidence privately, verify remote SHA and callback once. No full repeated archive; all setup/test/review effort charged as shared preparation. This is only one exact new mechanics failure repair, no generic preparation loop."
           ],
-          "status": "Authorized/not yet dispatched",
-          "usage": null
+          "status": "Dispatched once; one exact new mechanics failure repair and executable pair freeze proposal",
+          "usage": null,
+          "sentUtc": "2026-10-09T00:46:13Z",
+          "grantCommit": "52e2d83",
+          "deliveryConfirmed": true,
+          "closureSourceSha": "a8c2ee5c94334e310d800e0597a9cf786f575e31",
+          "closureVerifiedBeforeDispatch": true
+        },
+        "v4DeclaredEvaluationCoverageCorrectionAcceptance": {
+          "acceptedUtc": "2026-10-09T00:46:13Z",
+          "sourceSha": "a8c2ee5c94334e310d800e0597a9cf786f575e31",
+          "sourceFreezeSha": "51b17efecd6c6c56128022642ae30f8fd0c03cec",
+          "localRemoteExact": true,
+          "cleanObserved": true,
+          "rootWorkingRawGitBindingsChecked": 44,
+          "rootPrivateArchiveHashesChecked": 2,
+          "privateArchiveContentsNotOpenedByRoot": true,
+          "only44AdditiveFiles": true,
+          "oldTrackedFilesUnchanged": true,
+          "gitCheckpointManifestSha256": "2c04089d8e63eb86c584d1b33fed6767fc7dcc3ace3d3cd4b0db9c3a564caa63",
+          "privateSourceArchiveSha256": "070d44d10ac5b321a15e9aead404359a92eb36f77f9cfed603c48752c602b6b7",
+          "privateReviewArchiveSha256": "1b56b267e6eef2974037453e3c09afffc332ffd27a17b4bff509dfcfd7b2ecc6",
+          "verdict": "Evidence closure accepted; evaluator NOT READY/NOT ADMITTED due exact receipt-binding fixture error, not product quality failure",
+          "publicDeclaredCoverage": "validated-order/durable-lifecycle/current-limit-and-compatibility covered in reviewed source",
+          "historicalFailuresPreserved": true,
+          "timestampAndCacheManifestErrataQualified": true,
+          "newActualFullTrials": 0
+        },
+        "v4ReceiptBindingRepairDispatch": {
+          "key": "v4-receipt-binding-repair-and-executable-freeze-20261009",
+          "sentUtc": "2026-10-09T00:46:13Z",
+          "grantCommit": "52e2d83",
+          "deliveryConfirmed": true,
+          "promptSha256": "908b436a613e0297da00e6c07f9a2fb527c1b049c80133f6b7327e1f3d4f618c",
+          "prompt": "Dein terminaler Handoff a8c2ee5 ist jetzt Root-geprüft: remote/local exakt, clean, 44 getrackte Working-/Raw-Gitbindungen, alte getrackte Basis unverändert und beide neuen privaten Archivhashes bestätigt; private Inhalte wurden nicht geöffnet. Vorheriger Grant geschlossen, Rest0. Der Mensch fragt erneut, wie die Case Study läuft, und bekräftigt, dass sie laufen/ready gemacht werden soll.\n\nGenau nächster enger Auftrag: v4-receipt-binding-repair-and-executable-freeze-20261009, Root-Commit52e2d83, coordination-state.json unter threads[name=Scientist].evidence.v4ReceiptBindingRepairGrant. Ausgabe2026-10-09T00:45:00Z, absolute Endfrist2026-10-09T01:00:00Z (03:00 Berlin), insgesamt900s. Kein Wiederverwenden alter Quoten, kein automatisches Auffüllen. Respektiere jüngere direkte Nutzeraufträge.\n\nEine neue additive Kopie ab sauberem a8c2ee5/Quellfreeze51b17ef, keine Änderungen an alten Paketen/Oracles/Ergebnissen. Behebe ausschließlich den neuen konkret erhaltenen receipt-binding-Mechanikfehler des zweiten Offline-Fixtureprozesses. Maximal EINE gewöhnliche Korrekturcharge und EIN reiner Offline-Mechaniktestprozess <=120s, vorab reserviert. Fehlerstarts zählen; keine Wiederholung. Keine Produkt-/Adopteränderung, neue Anforderungen oder verdeckte Umwertung. Wenn der Befund eine substanzielle Anforderungsänderung bräuchte, konkret stoppen.\n\nDanach exakte Quelle/Hashes einfrieren und genau EIN frischer unabhängiger readonly Delta-Reviewer, fork_turns=none, geerbtes Profil ohne Overrides, <=240s, keine Kinder/Followups/Retry/Programm- oder Testausführung. Er prüft nur Schließung dieses konkreten Fehlers und unveränderte erklärte Kriterien/Fehlerklassifikation. Die zuvor qualifizierte Abdeckung bleibt dokumentiert; keine allgemeine neue Bewertungsplattform. Nach terminalem Urteil keine weiteren Korrekturen/Tests. Alle diese Arbeiten zählen als gemeinsame Vergleichsvorbereitung, keine Produktqualität aus Fixtures.\n\nLiefere zusätzlich einen MINIMALEN tatsächlich ausführbaren gemeinsamen Profil-/Freezevorschlag aus VORHANDENEN Konfigurationen und Belegen: ClassicMain a97cbd5 gegen starke Conventional/Oldschool zunächst Greenfield/Brownfield. Sauberer Design-Handoff darf ansonsten reife Classic/Conventional-Paare nicht blockieren; die späteren Design-Zellen müssen dieselben bereits vorher eingefrorenen gemeinsamen öffentlichen Inputs/Anforderungen, Bewertungsregeln, tatsächlichen Modell-/Toolbedingungen und endlichen Ressourcen verwenden. Keine Baseline-Ergebnisse/privaten Holdouts an Design. Maximal6 vorgeschlagene Folgezellen innerhalb der bestehenden Gesamtgrenze8/max2Fragen; diese Nachricht gibt NULL Actual-Volltrialquote.\n\nNenne im Freeze exakte Quellen/Binaries, tatsächlich konfigurierte Modell-/Reasoning-/Tool-/Rechteprofile und native Dispatch-/eigene Checkout-/Port-/Stopwege, gleiche Gesamtressourcen und Zellreihenfolge. Serving/Tokens/Kosten ohne Receipt unknown. Kein vorausgesetztes OS-Isolationsversprechen, keine stille Parseräquivalenz; Produktparser/echte Invocations/Receipts maßgeblich, Pythonvorprüfung beratend. Falls vorhandene Konfiguration keinen fairen ausführbaren Vergleich erlaubt, exakt fehlende Bindung benennen, keine Capability-/Appserverdiagnose oder spekulativen Adapter bauen.\n\nNULL Produkt-Actors, Provider-API/Codex-CLI/Appserver-Aufrufe, Service-/Serverstarts, Produktbuilds, Volltrials. Alle alten V3/Government-/Posthoc-Pins und Ergebnisse erhalten. Ein dokumentierter gemeinsamer Freeze und separater Root-Ausführungsgrant folgen nach erfolgreicher Prüfung; keine weitere allgemeine Vorbereitungsrunde ableiten.\n\nNach terminalem Review oder Deadline stoppen, konkrete Fortsetzungsnotiz/Verbrauch/Rest0 sichern, eigene neue Quell-/private Belegcheckpoints ausschließlich research-backup pushen und Remote-SHA prüfen. Keine Wiederholung des vollständigen alten Archivs, nur neue Dateien. Einmal Abschluss/konkrete Blockade mit sicherem Urteil, Source-/Remote-SHA, Reviewpin/Hash, Testverbrauch und ausführbarem Freeze bzw. präziser Restbindung an Overseer/local melden. Keine Empfangsbestätigung."
         }
       },
       "classicHandoffReceived": true,
@@ -10111,6 +10147,14 @@
         "globalAuthDpapiForeignDataExcluded": true,
         "regenerableExternalBinObjPackageCachesExcluded": true,
         "historicalSecretFreedomNotClaimed": true
+      },
+      "latestScientistPrivateCheckpointVerified": {
+        "sha": "a8c2ee5c94334e310d800e0597a9cf786f575e31",
+        "verifiedUtc": "2026-10-09T00:46:13Z",
+        "ref": "refs/heads/codex/government-scientist",
+        "workingRawGitBindingsChecked": 44,
+        "privateArchiveHashesChecked": 2,
+        "clean": true
       }
     },
     "root": {
