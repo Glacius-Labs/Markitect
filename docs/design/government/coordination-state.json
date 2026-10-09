@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T18:48:11Z",
+  "updatedUtc": "2026-10-09T18:50:58Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16628,7 +16628,7 @@
     "hostLoadMustBeRecorded": true,
     "requiredSetup": "Existing installed executable/profile/tool/write/helper bindings, exact own stdio process/session ownership, fresh context plus normal session continuation",
     "completion": "Functional/rule/rename/restart outcomes and real time/usage/unknowns; preserve failures and changes prospected; report source/handles/consumption/evidence",
-    "status": "FIRST_ROOOMBOOK_CLI_WRAPPER_RUNNING_ACTUAL_NATIVE_SESSION_PENDING",
+    "status": "ROOOMBOOK_S1_TERMINAL_RUNTIME_SETUP_FAILURE_CONTROLLER_CAPTURE_FIX_ACTIVE_BF_UNUSED",
     "grantDocument": "docs/design/government/conventional-wrapper-runtime-pilot-20261009.json",
     "ownerMessageSentOnce": true,
     "integrationNoMainDependencyNoticeSentOnce": true,
@@ -16678,6 +16678,41 @@
         "scientistNotifiedOnce": true,
         "instruction": "Preserve original pins and actual own lifecycle/effective receipts; no automatic healthy-run termination/replay/global reset; prospective next-turn binding before dispatch"
       }
+    },
+    "firstTerminalObservation": {
+      "verifiedUtc": "2026-10-09T18:50:58Z",
+      "wrapperRunId": "015c11d5-20ed-4e04-9a78-1c14d3b33d10",
+      "nativeSessionId": "01a121fe-0586-7a33-81b0-6de5abc1a6f5",
+      "nativeEvent": "turn.completed",
+      "wrapperState": "completed",
+      "statusUpdatedAt": "2026-10-09T18:48:26.890657+00:00",
+      "statusSha256": "1ae7f33614c3c678578cac515cbb9f58e0e5236685cceec3fbe03cd463ef4795",
+      "turnCaptureSha256": "81add8385d39f46cf9b1d9af8ee98ab5625e07e66a80cb2bc2455d6d654f4a43",
+      "trajectoryResultSha256": "8ecd101f55291b49fc71489fc13e6e7c054f667246d4a49500967a27af69a788",
+      "rawEventsSha256": "6766224bf73e8661e8721fea7128e718d2899ad256d5d75fa01dde36102e75cc",
+      "nativeTerminalAndSessionRootRead": true,
+      "rawEventEntries": 48,
+      "recordedHelperUnknownErrorEntries": 15,
+      "runtimeFailure": "exec_command helper_unknown_error: setup refresh had errors, pre-process tool rejection; cause not established",
+      "actorOutcomeOwnerReported": "No files/merge, one native helper attempt, terminal; no healthy turn restarted",
+      "controllerOutcome": "controller_error keyword-only record_execution call bug; additive provider-free capture fix in progress",
+      "observedNativeUsage": {
+        "input_tokens": 328719,
+        "cached_input_tokens": 302080,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1750,
+        "reasoning_output_tokens": 822
+      },
+      "usageScope": "Native reported turn; completeness/helper aggregate/modelserving/cost unknown",
+      "functionalAssessment": "NOT_RUN_NO_METHOD_QUALITY_CONCLUSION",
+      "knownPilotTrajectoriesConsumed": 1,
+      "secondBrownfieldTrajectory": "UNUSED_CONDITIONAL_ON_PROSPECTIVE_SOURCE_CONFIG_BINDING",
+      "ownedChildReleased": "OWNER_REPORTED_DIRECT_CHILD_ONLY",
+      "replay": false,
+      "originalBindingPreserved": true,
+      "originalOverallDeadlineUnchanged": true,
+      "newGrant": false,
+      "next": "Owner source-only capture regression/additive snapshot and freeze; prospectively observed global config separate from executable/source admission pins before already authorized BF start"
     }
   }
 }
