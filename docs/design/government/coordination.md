@@ -1326,3 +1326,12 @@ One already-running full-Go process (owner session33006, start~05:12Z, named own
 ### 2026-10-09T05:29:59Z — Conventional measured-host slot released
 
 Design reports existingGo33006 closed05:28:40Z,exit1. Root independently read the exact named own log and bound its hash: terminalFAIL,projectrun891.875s,three failed briefing/history tests. No green source gate/readiness claim. Existing job termination removes the only transient host-load wait; one alreadyactivatedConventionalRoombook may now proceed immediately with unchanged source/profile/resources/09:12:43Z end. Design readiness remains irrelevant to Conventional. Design continues concrete Brownfield Manager-bridge/history corrections and light/offhostCI work, no newheavy ornativeDesignproof while measuredcaseactive. Actualstart not inferred from hostrelease.
+
+
+### 2026-10-09T05:39:04Z — real native rejection, concrete existing-client correction
+
+The originalConventional fullstart is real and counts1of6: nativeprocess05:32:06Z/PID47172, native thread.started/turn.started observed, then HTTP400 modelnot-supported. One implementation and the intended fresh finalassessment both failed;0completedmodelturns,0functionalassessment. Root independently read own state and sanitized nativeerror metadata; no codequality/method claim. Oldgrant andunusedentries closed, originalfailedrun/freeze/usageunknowns preserved.
+
+Official OpenAI docs confirm exactgpt-6-luna/high; no alias substitution. Root read allowed cachedcatalog metadata (client0.162.0 listsLunaHigh) and exactly one local --version on existingAppCLI9691020b...:0.162.0-alpha.2/SHA3553cd6e..., no model/provider request. Trial used oldernpmCLI0.130/280cb1c4. Clientversion difference is a concrete correction candidate, not proved successful modelaccess.
+
+Fresh bounded decision:1200s offline preparation to close oldprivateevidence and freshsameinputRoombook cell/home using existingAppCLI, max2local --version/exec--help metadata calls15s each,0tests/newreviewers/model/providerprobes/installations; no runner/requirements/rubric changes. Root reserves second1actual within existingmax6 and unchangedabsolute09:12:43Z; fresh7200+900 resourcebasis matches first and futureMarkitect. Exact source/seed/tree/config/CLIhandoff then Rootactivation, no generic capability or Designwait. This is an explicitly recorded new bounded decision, no reusing or refilling failedgrant.
