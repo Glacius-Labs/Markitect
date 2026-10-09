@@ -11,3 +11,7 @@ Fresh tasks receive the verified source and small permanent Work Item plus accep
 The new user preference changes the default execution owner for P03 onward from long-lived Designer to fresh assigned chats after P02. Designer may finish genuinely coupled current fixes but should not silently take the entire queue or spawn permanent new topic history before Root handoff. P01/P02 normal work continues; do not interrupt/reset it.
 
 R01–R03 may run now as separate read-only research chats. Their results remain proposals. Only a current correctness/usability defect belongs in the fixed Main baseline; speculative Jev/KG/additional guidance integration is selected later. Case Studies remain later, after a genuinely functional product and a new user instruction. Product proof allocation and positive gates remain as recorded; no new allowance or release from this handoff.
+
+## Active dispatch
+
+All four owners started at `1495e1be7b0046711531fa42c8407fba67b8e814` in isolated feature checkouts. Exact chat IDs and branches are in backlog.yaml. Product Integration alone writes the central queue and native acceptance ledger; P03/P04/P05 return clean reviewed commits for integration. The preserved Designer source is not a parallel write target. P06 shared service extraction and wiring can proceed while modules develop; module-dependent acceptance remains pending.

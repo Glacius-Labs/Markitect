@@ -91,13 +91,9 @@ func runAction(opts options, out io.Writer) error {
 		}
 		return writeJSON(out, plan)
 	case "setup", "doctor":
-		project, err := projectwork.Load(opts.repo, "")
-		if err != nil {
-			return err
-		}
+		operations := projectapp.Operations{}
 		if opts.action == "doctor" {
-			setupOptions := projectsetup.Options{Provider: opts.provider, ToolRoot: opts.toolRoot, ProviderExecutable: opts.providerExecutable}
-			report, err := projectsetup.Doctor(project, setupOptions)
+			report, err := operations.Doctor(projectapp.DoctorOperation{Root: opts.repo, Options: projectsetup.Options{Provider: opts.provider, ToolRoot: opts.toolRoot, ProviderExecutable: opts.providerExecutable}})
 			if err != nil {
 				return err
 			}
@@ -111,25 +107,16 @@ func runAction(opts options, out io.Writer) error {
 			}
 			return nil
 		}
-		setupOptions, err := setupOptions(opts)
+		options, err := setupOptions(opts)
 		if err != nil {
 			return err
 		}
-		preview, err := projectsetup.PreviewEdit(project, setupOptions)
+		preview, err := operations.Setup(projectapp.SetupOperation{Root: opts.repo, Options: options, Write: opts.write, ExpectedDigest: opts.expect})
 		if err != nil {
 			return err
-		}
-		if opts.write {
-			if opts.expect != preview.EditPlan.Digest {
-				return fmt.Errorf("--expect does not match the exact runtime edit plan digest %s", preview.EditPlan.Digest)
-			}
-			applied, err := projectwork.ApplyEdit(opts.repo, preview.EditPlan, preview.EditPlan.BaseDigest)
-			if err != nil {
-				return err
-			}
-			preview.EditPlan = applied
 		}
 		return writeJSON(out, preview)
+
 	case "check", "index", "context", "document", "edit":
 		project, err := projectwork.Load(opts.repo, opts.revision)
 		if err != nil {

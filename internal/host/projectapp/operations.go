@@ -21,39 +21,39 @@ type Operations struct {
 // Selection identifies an explicit project root and optional source revision.
 // Revision is passed through unchanged to the selected project Host.
 type Selection struct {
-	Root     string
-	Revision string
+	Root     string `json:"root"`
+	Revision string `json:"revision"`
 }
 
 type PlanOperation struct {
-	Selection Selection
-	Request   projectrun.PlanRequest
+	Selection Selection              `json:"selection"`
+	Request   projectrun.PlanRequest `json:"request"`
 }
 
 type RunOperation struct {
-	Root  string
-	RunID string
+	Root  string `json:"root"`
+	RunID string `json:"runId"`
 }
 
 type ApplyOperation struct {
-	Root    string
-	Request projectrun.ApplyRequest
+	Root    string                  `json:"root"`
+	Request projectrun.ApplyRequest `json:"request"`
 }
 
 type PreflightOperation struct {
-	Root        string
-	RunID       string
-	CandidateID string
+	Root        string `json:"root"`
+	RunID       string `json:"runId"`
+	CandidateID string `json:"candidateId"`
 }
 
 type FullVerifyOperation struct {
-	Root    string
-	Request projectrun.FullVerifyRequest
+	Root    string                       `json:"root"`
+	Request projectrun.FullVerifyRequest `json:"request"`
 }
 
 type DeliverOperation struct {
-	Root    string
-	Request projectrun.DeliverRequest
+	Root    string                    `json:"root"`
+	Request projectrun.DeliverRequest `json:"request"`
 }
 
 func (o Operations) Plan(operation PlanOperation) (projectrun.PlanRecord, error) {

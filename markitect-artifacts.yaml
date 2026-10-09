@@ -2346,3 +2346,17 @@ spec:
       owner: bounded-agent-execution-host
     - path: internal/host/projectrun/invoker_test.go
       owner: project-world-implementation
+    - path: internal/host/projectapp/brownfield.go
+      owner: project-world-implementation
+    - path: internal/host/projectapp/brownfield_run.go
+      owner: project-world-implementation
+    - path: internal/host/projectapp/brownfield_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectapp/exploration.go
+      owner: project-world-implementation
+    - path: internal/host/projectapp/exploration_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectapp/setup.go
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/integration-progress-20261009.md
+      owner: project-world-implementation

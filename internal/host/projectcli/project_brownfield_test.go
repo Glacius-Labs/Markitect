@@ -146,7 +146,7 @@ func TestBrownfieldManagerContextIsReadOnlyAndBoundToIteration(t *testing.T) {
 	}
 	iterationID := "root-context"
 	session, err = projectadoption.BeginReverseIteration(repo, target, session, projectadoption.ReverseIterationRequest{
-		ID: iterationID, ManagerID: session.TargetContext.RootManagerID, EvidenceIDs: []string{"cancellation-document"},
+		ID: iterationID, ManagerID: session.TargetContext.RootManagerID, EvidenceIDs: []string{"cancellation-document"}, DelegationEvidenceIDs: []string{},
 		Purpose: "Review selected cancellation behavior", Review: "manager-review-context",
 	})
 	if err != nil {
@@ -216,7 +216,7 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 		t.Fatal(err)
 	}
 
-	rootRequest := projectadoption.ReverseIterationRequest{ID: "root-pass", ManagerID: rootID, EvidenceIDs: []string{"cancellation-doc"}, Purpose: "Model cancellation ownership", Review: "root-pass-review"}
+	rootRequest := projectadoption.ReverseIterationRequest{ID: "root-pass", ManagerID: rootID, EvidenceIDs: []string{"cancellation-doc"}, DelegationEvidenceIDs: []string{"orders-code"}, Purpose: "Model cancellation ownership", Review: "root-pass-review"}
 	result := runBrownfieldMutation(t, repo, discovery.ID, "begin", rootRequest, session.Digest)
 	rootContext := runBrownfieldContext(t, repo, discovery.ID, "root-pass", "")
 	if rootContext.ManagerContext.ManagerOrigin != "accepted-target" || len(rootContext.ManagerContext.Evidence) != 1 || rootContext.ManagerContext.Evidence[0].EvidenceID != "cancellation-doc" {
@@ -225,11 +225,11 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 	rootReport := makeStagedDistillation(discovery, target, result.Session.TargetContextDigest, schemaDigest, "root-scope", "root-claim", "cancellation-doc", "documented-intent", "documentation", "PRIVATE_MANAGER_REPORT_SENTINEL root cancellation understanding.")
 	childID := "cancellation-owner"
 	rootProposal := projectadoption.ManagerProposal{ManagerID: rootID, EvidenceIDs: []string{"cancellation-doc"},
-		Hierarchy:       []projectadoption.ProposedManager{{ID: childID, Name: "Cancellation Owner", Purpose: "Own cancellation implementation", ParentID: rootID, EvidenceIDs: []string{"orders-code"}}},
+		Hierarchy:       []projectadoption.ProposedManager{{ID: childID, Name: "Cancellation Owner", Purpose: "Own cancellation implementation", ParentID: rootID, EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}}},
 		PublicContracts: []projectadoption.ManagerPublicContract{}, Report: rootReport}
 	result = runBrownfieldMutation(t, repo, discovery.ID, "propose", brownfieldProposalInput{IterationID: "root-pass", Proposal: rootProposal}, result.SessionDigest)
 
-	childRequest := projectadoption.ReverseIterationRequest{ID: "child-pass", ParentIterationID: "root-pass", ManagerID: childID, EvidenceIDs: []string{"orders-code"}, Purpose: "Model cancellation implementation", Review: "child-pass-review"}
+	childRequest := projectadoption.ReverseIterationRequest{ID: "child-pass", ParentIterationID: "root-pass", ManagerID: childID, EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}, Purpose: "Model cancellation implementation", Review: "child-pass-review"}
 	result = runBrownfieldMutation(t, repo, discovery.ID, "begin", childRequest, result.SessionDigest)
 	var unassignedSource string
 	for _, item := range discovery.Evidence {
@@ -472,7 +472,7 @@ func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.
 	}
 	rootID := session.TargetContext.RootManagerID
 	result := runBrownfieldMutation(t, repo, discovery.ID, "begin", projectadoption.ReverseIterationRequest{
-		ID: "root-pass", ManagerID: rootID, EvidenceIDs: []string{"cancellation-doc"}, Purpose: "Model cancellation intent", Review: "manager-review-adoption",
+		ID: "root-pass", ManagerID: rootID, EvidenceIDs: []string{"cancellation-doc"}, DelegationEvidenceIDs: []string{}, Purpose: "Model cancellation intent", Review: "manager-review-adoption",
 	}, session.Digest)
 	report := makeApplyableStagedDistillation(discovery, target, result.Session.TargetContextDigest, schemaDigest)
 	report.Claims[0].Statement = "PRIVATE_COORDINATOR_REPORT_SENTINEL selected claim stays inside the manager ledger."

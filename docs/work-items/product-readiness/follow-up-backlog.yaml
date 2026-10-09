@@ -30,3 +30,14 @@ items:
     thread_id: 01a12178-64de-7d41-aa82-11b8fb202786
     decision: refine_existing_skills_entrypoints_defer_extra_agent_rule_packages
     evidence: [research-results-20261009.md]
+
+  - id: R03-F01
+    title: Canonical product defaults and model-bound provider guidance projection
+    status: deferred_post_main
+    owner: unassigned
+    source_recommendation: R03
+    document: R03-agent-guidance.md
+    main_gate: false
+    implementation_authority: requires_later_user_selection
+    scope: Versioned YAML defaults, integrated init/onboard preview and apply, controlled frontmatter updates, and model-to-output coverage.
+    constraints: No additional workflow runner or ontology; rebind source paths after P08; optional comparisons require a fresh user start and grant.
