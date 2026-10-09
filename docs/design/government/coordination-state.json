@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T07:20:48Z",
+  "updatedUtc": "2026-10-09T07:24:11Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -29,7 +29,7 @@
     "pauseReason": "Explicit finite-block terminal instruction: final evidence synthesis verified, no evidenced equal fulltool/realusage admission. Stop researchloop with honest incomplete comparison, no automatic capability/prep/refill. Separate younger direct Design productwork unaffected.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
     "resumedUtc": "2026-10-09T04:10:08Z",
-    "promptSha256": "411efe3fb69c99cff9b71401eb3fe927fc77212ceaba0f83de9cedde43d869b6",
+    "promptSha256": "451915b033b40941d3ae2f143bb4ffb18171a37ce70a8ea9c0c97bef491cb922",
     "name": "Markitect: Produktabschluss und Luna-Case-Studies",
     "currentGrantContext": "Human-selected App/LunaHigh preparation ends06:47:20Z,0Actuals. Fourth same-input start conditional under09:12:43Z. Prior3CLIstarts terminal. Existing Design proof hardend06:52:40Z; no general Design wait.",
     "exactSavedTomlVerified": true,
@@ -40,7 +40,7 @@
     "currentPromptSha256": "32591dfcfb505db5542a39758c13695fa08b325afd6ca7a1558dd3f93bd0609f",
     "lastUpdatedUtc": "2026-10-09T06:40:19Z",
     "currentPurpose": "Two-hour quiet callback fallback: Design main/product tests and independent early Conventional Luna case study",
-    "verifiedUtc": "2026-10-09T07:20:48Z",
+    "verifiedUtc": "2026-10-09T07:22:23Z",
     "rrule": "FREQ=HOURLY;INTERVAL=2"
   },
   "threads": [
@@ -10249,7 +10249,7 @@
       "threadId": "01a11c80-37aa-7fe0-9586-35d916ce6561",
       "hostId": "local",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect",
-      "lastObservedStatus": "idle",
+      "lastObservedStatus": "active",
       "candidateSha": "11f080815722089d84869fef536b94cae9321e74",
       "candidateStatus": "Readiness open; new actual Manager invocation/child-report bridge in progress, prior reported ab306 pin not accepted as current studyfreeze",
       "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:30",
@@ -10258,7 +10258,7 @@
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
       "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
       "acceptance": "Qualified bounded testable delivery candidate. No full workflow readiness, matched study admission, semantic generality, human acceptance, main replacement or release.",
-      "latestProgress": "7915bd40 pure two-document canonical-format decision direct human verified; YAML canonical, Markdown view, Skillfrontmatter retained. Source/pushed/binary checked; native proof2 ready, no Readiness/Main credit.",
+      "latestProgress": "Own ordinary LunaHigh Shop productproof2 active, exact namedPID/start Root-verified; newer7915bd canonicalYAML docs source and CI bound, no Readiness/Main verdict.",
       "evidence": {
         "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
         "observedBranch": "codex/model-driven-delivery",
@@ -10627,32 +10627,29 @@
         "prompt": "Öffentliche neue direkte Nutzerentscheidung: Die Case-Study-Top-Level-Ausführung beider Varianten wird auf frische Codex-App-Agenten mit Luna High umgestellt; die separat installierte CLI bleibt als bisher blockierter Pilotpfad erhalten. Scientist baut dafür nur den kleinsten Einstieg in seine bestehenden Seeds/Stationen, keine Produktplattform und keine Produktnachimplementierung. Deine Produktarbeit/Readme/Mainintegration und eigener Testsuiteauftrag bleiben unverändert, keine neue Studienrolle für dich. Für dein Markitect-Pendant werden normale native Installation/Agentenhinweise und ein wirklich vorhandenes Anfangsmodell verwendet; Work Items→Modelländerung→echtesApply/Verify bleiben echte Produktmechanismen und innere Rollen müssen weiter real LunaHigh sein. Wenn dein bestehender agentexec-Runtime dafür noch eine konkrete normale Anbindungslücke hat, benenne/schließe sie im laufenden Produktpaket, ohne fremde Case-Lösungen oder Fixturezustimmungen. Deine vorhandene Produktproofquote3/7200/128 und normale Hostfreigabe bleiben, keine neueQuote. Vor schweren/nativen eigenen Jobs Handle/Slot melden, damit Scientists nächster echter App-Case nicht mit Hostlast vermischt wird. Keine ACK."
       },
       "currentOwnProductProof": {
-        "ownerReportedStartedUtc": "2026-10-09T06:32:45Z",
-        "ownExecSession": 13309,
-        "ownOuterPid": 25732,
-        "hardEndUtc": "2026-10-09T06:52:40Z",
-        "sourceSha": "74a4446080c500a55551cdd018897225b211d771",
-        "binarySha256": "4908ad11a35bb9afac4459a45c4ddd81b72d11006ff43674da0632da83f40383",
-        "productJobsUsedOwnerReported": 1,
-        "outerStartsUsedOwnerReported": 1,
-        "innerRolesStartedOwnerReported": 0,
+        "status": "ACTUAL PRODUCT SLOT2 ACTIVE, no final product verdict",
+        "ownerReportedStartedUtc": "2026-10-09T07:19:45.5633537Z",
+        "rootExactNamedProcessStartUtc": "2026-10-09T07:19:45.5697807Z",
+        "ownExecSession": 93725,
+        "ownOuterPid": 50664,
+        "sourceSha": "7915bd404b57125a6491df728b3fd22c2af72c5c",
+        "targetSha": "cf002251b0f7f672ca14dd7c7ef1214e4dd0a40c",
+        "binarySha256": "ef6828e56caa30a24d04d0d5c29fa8a47fbdd7656db342301d10b0918fd12c4f",
+        "outerActiveNotAfterUtc": "2026-10-09T07:39:45Z",
+        "additionalCleanupMaxSeconds": 15,
+        "maxOuterNativeWallSeconds": 1200,
+        "maxInnerNativeWallSeconds": 1200,
+        "cumulativeOuterStartsOwnerReported": 2,
+        "innerStartsAtStartOwnerReported": 0,
+        "priorNativeWallSeconds": 174.607623,
         "unchangedMaxJobs": 3,
         "unchangedMaxNativeWallSeconds": 7200,
         "unchangedMaxOuterStarts": 128,
-        "ordinaryRuntimeProfileOwnerReported": "windows.sandbox=unelevated, workspace-write, managed requirements active",
-        "ownerReportedActualTools": "Own actor reads project files and uses Explore",
-        "openOwnProofFindings": "Fixed readiness revision and runtime file pin mismatch being investigated",
-        "rootIndependentlyVerifiedProof": false,
-        "status": "FIRST JOB TERMINAL, no Apply/productsuccess",
-        "endedUtc": "2026-10-09T06:35:40.1195Z",
-        "ownerReportedOuterStarts": 1,
-        "ownerReportedInnerStarts": 0,
-        "ownerReportedWallSeconds": 174.607623,
-        "rootSpecificPidAbsent": true,
-        "terminalFindings": [
-          "Supervisor serialization changed gate config; Host correctly rejected",
-          "Unnecessary human modelowner request for ordinary delegated Shop work"
-        ]
+        "existingPreparationPinsOwnerRechecked": 10,
+        "rootNoGlobalInventory": true,
+        "hostedRun": 37897059091,
+        "hostedRootVerifiedHead": "7915bd404b57125a6491df728b3fd22c2af72c5c",
+        "hostedStatus": "in_progress"
       },
       "measurementHostDeferral": {
         "issuedUtc": "2026-10-09T06:51:42Z",
@@ -10683,7 +10680,7 @@
         "binarySha256": "ef6828e56caa30a24d04d0d5c29fa8a47fbdd7656db342301d10b0918fd12c4f",
         "rootBinaryHashVerified": true,
         "targetUnchanged": "cf002251b0f7f672ca14dd7c7ef1214e4dd0a40c",
-        "status": "HOST RELEASE DISPATCHED ONCE; actual start not yet observed",
+        "status": "ACTUAL STARTED",
         "noNewQuota": true,
         "maxOuterNativeWallSeconds": 1200,
         "maxInnerNativeWallSeconds": 1200,
@@ -10691,7 +10688,37 @@
         "sentUtc": "2026-10-09T07:18:18Z",
         "toolAccepted": true,
         "prompt": "Der gemessene Scientist-Hostslot ist beendet; die eigene Actor-Unterstruktur ist terminal und es bestehen keine bekannten offenen eigenen Shelljobs. Ab jetzt ist der Host für deinen bereits vorbereiteten Produkt-Slot2 frei. Ich habe die direkte neue Nutzerentscheidung in deinem Chat und den reinen Zwei-Doku-Delta7915bd404b57125a6491df728b3fd22c2af72c5c, exakte öffentliche RemoteRef und named BinarySHA ef6828e56caa30a24d04d0d5c29fa8a47fbdd7656db342301d10b0918fd12c4f selbst geprüft. YAML kanonisch, Markdown Ansicht, erforderliches Skillfrontmatter erhalten, Knowledge-Graph-Prüfung offen. Kein Readiness/Maincredit.\n\nFühre jetzt genau deinen vorhandenen, ungestarteten und gepinnten normalen Shop-Work-Item-Praxislauf2 aus. Vor Start eigeneSource/Targetcf002251/Runtimes/Args/Prompt/Gate/Ledger/OrdinaryLunaHigh-Bindungen erneut statisch prüfen, dann echte native Ausführung, bestehende normale Policies/verwalteteRequirements. Deine angekündigten max1200s äußere+1200s innere native Sekunden und Cleanup einhalten, harte endliche Lauf-/Cleanupfrist und eigeneHandles nennen. Originalgesamtquote bleibt3Jobs/7200aktiveNativeSekunden/128äußereStarts inklusive Fehlversuchen; bisher1outer/0inner/174.607623s zählt weiter. Kein neuer Grant/keine Nachfüllung/keine zusätzlichen Rollen aus dieser Hostfreigabe. Keine globalenInventuren/Kills oder Studieninputs. Scientist macht derzeit ausschließlich leichte Offline-Vertragsarbeit, keine neue Messzelle.\n\nMelde nur echten Start mit eigenenHandle/Hardend und danach materiellenBefund/terminalenHandoff einmal; keine ACK. Deine bestehenden Produkt-/Doku-/Readiness-/Review-/CI-/regulärenMainaufgaben weiterführen. Nach sauberem angenommenem Studienhandoff aktiviert sich der vorhandene getrennte Regression-suite-Folgeauftrag; kein stiller Studienpinwechsel."
-      }
+      },
+      "ownProductProofHistory": [
+        {
+          "ownerReportedStartedUtc": "2026-10-09T06:32:45Z",
+          "ownExecSession": 13309,
+          "ownOuterPid": 25732,
+          "hardEndUtc": "2026-10-09T06:52:40Z",
+          "sourceSha": "74a4446080c500a55551cdd018897225b211d771",
+          "binarySha256": "4908ad11a35bb9afac4459a45c4ddd81b72d11006ff43674da0632da83f40383",
+          "productJobsUsedOwnerReported": 1,
+          "outerStartsUsedOwnerReported": 1,
+          "innerRolesStartedOwnerReported": 0,
+          "unchangedMaxJobs": 3,
+          "unchangedMaxNativeWallSeconds": 7200,
+          "unchangedMaxOuterStarts": 128,
+          "ordinaryRuntimeProfileOwnerReported": "windows.sandbox=unelevated, workspace-write, managed requirements active",
+          "ownerReportedActualTools": "Own actor reads project files and uses Explore",
+          "openOwnProofFindings": "Fixed readiness revision and runtime file pin mismatch being investigated",
+          "rootIndependentlyVerifiedProof": false,
+          "status": "FIRST JOB TERMINAL, no Apply/productsuccess",
+          "endedUtc": "2026-10-09T06:35:40.1195Z",
+          "ownerReportedOuterStarts": 1,
+          "ownerReportedInnerStarts": 0,
+          "ownerReportedWallSeconds": 174.607623,
+          "rootSpecificPidAbsent": true,
+          "terminalFindings": [
+            "Supervisor serialization changed gate config; Host correctly rejected",
+            "Unnecessary human modelowner request for ordinary delegated Shop work"
+          ]
+        }
+      ]
     }
   ],
   "nextAction": "Dispatch existing prepared Design proof2 host release, and one bounded no-actual prospective context-contract correction to Scientist/Oldschool; no automatic fifth trial, no historical rescoring, retain all private evidence.",
@@ -10934,10 +10961,15 @@
   "fullSuiteSlot": {
     "owner": "Design",
     "assignedUtc": "2026-10-09T07:16:47Z",
-    "status": "MEASURED SCIENTIST CELL CLOSED; EXISTING PREPARED DESIGN PROOF2 HOST RELEASED",
+    "status": "DESIGN PRODUCT PROOF2 ACTIVE; SCIENTIST/OLDSCHOOL LIGHT OFFLINE CONTRACT ONLY",
     "sourceSha": "7915bd404b57125a6491df728b3fd22c2af72c5c",
     "noNewQuoteOrDeadlineExtension": true,
-    "scientistMode": "Only bounded offline context-contract correction, no actors/heavy checks"
+    "scientistMode": "Only bounded offline context-contract correction, no actors/heavy checks",
+    "ownPid": 50664,
+    "ownExecSession": 93725,
+    "ownerReportedStartedUtc": "2026-10-09T07:19:45.5633537Z",
+    "hardActiveEndUtc": "2026-10-09T07:39:45Z",
+    "cleanupMaxAdditionalSeconds": 15
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
