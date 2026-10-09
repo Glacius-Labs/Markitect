@@ -1,0 +1,199 @@
+{
+  "utc": "2026-10-09T08:20:12.578200+00:00",
+  "matchingCompletion": {
+    "station": "S3",
+    "status": "complete",
+    "completedWorkItemIds": [
+      "R05",
+      "R06",
+      "R07",
+      "R08",
+      "R09",
+      "R10",
+      "R11"
+    ],
+    "remainingIssues": []
+  },
+  "snapshot": {
+    "stationIndex": 2,
+    "station": "S3",
+    "mainCommit": "cf05cb152e4943207a70fa60cb0b25bb6f63e363",
+    "headCommit": "cf05cb152e4943207a70fa60cb0b25bb6f63e363",
+    "dirtyStatus": "M .study/station.json",
+    "evaluationRepo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app\\stations\\S3\\main",
+    "rawFiles": {
+      ".codex/config.toml": {
+        "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+        "bytes": 281
+      },
+      ".gitignore": {
+        "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+        "bytes": 36
+      },
+      ".study/completion.json": {
+        "sha256": "b5c4d1aa39ae7273c179f84240ab1ee06ac5b3a5c215657792be5e440c367f11",
+        "bytes": 148
+      },
+      ".study/station.json": {
+        "sha256": "533097752a321d2f62c950c42822385bbc31d1e406f3c78d74063d3d273cb5eb",
+        "bytes": 135
+      },
+      ".work/logs/acceptance-s1.log": {
+        "sha256": "88d79e18bd339e853041ee06c6fac1e0b68f5f6e652a169b36ec2a81164c287c",
+        "bytes": 642
+      },
+      ".work/logs/acceptance-s2.log": {
+        "sha256": "326514e2504b7ad94a1b723ff447429c7e09b136d3bf64f05899b1eef9797ad5",
+        "bytes": 871
+      },
+      ".work/logs/acceptance-s3.log": {
+        "sha256": "38456aebd31816c920d157c212e7ef1e26f54932b11cee012ff2307860f0819d",
+        "bytes": 1109
+      },
+      ".work/logs/post-merge-acceptance-s1.log": {
+        "sha256": "88d79e18bd339e853041ee06c6fac1e0b68f5f6e652a169b36ec2a81164c287c",
+        "bytes": 642
+      },
+      ".work/logs/post-merge-acceptance-s2.log": {
+        "sha256": "326514e2504b7ad94a1b723ff447429c7e09b136d3bf64f05899b1eef9797ad5",
+        "bytes": 871
+      },
+      ".work/logs/post-merge-acceptance-s3.log": {
+        "sha256": "38456aebd31816c920d157c212e7ef1e26f54932b11cee012ff2307860f0819d",
+        "bytes": 1109
+      },
+      ".work/logs/post-merge-unit-s1.log": {
+        "sha256": "5d23af1634ae8820ecb88a897f1e832ba11e0bd00843b81b6390d52bcb9b88a6",
+        "bytes": 724
+      },
+      ".work/logs/post-merge-unit-s2.log": {
+        "sha256": "2a79c302942a9caab78d10a2168c422f5619f730c7ed62b4d9113ff74d6c23c7",
+        "bytes": 1044
+      },
+      ".work/logs/post-merge-unit-s3.log": {
+        "sha256": "479a2aa086f5cef0310982dacda1263910f2f99d3f8a07cef7e2dda8a314ec41",
+        "bytes": 3717
+      },
+      ".work/logs/team-export-focused.log": {
+        "sha256": "8b7d85af4ccf960e2e3e9d1cc267f550c8c71eb15eea4361c2387b1d03a0e0cc",
+        "bytes": 966
+      },
+      ".work/logs/team-query-focused.log": {
+        "sha256": "dfc9f6c3b8f7c51eda9c79e9578cc29fc9de5611ef92492e46a0814cad287796",
+        "bytes": 744
+      },
+      ".work/logs/team-summary-focused.log": {
+        "sha256": "99817c7da5ccce2f77f2f9d4f0fc09a059b119d71c180e2541a365141a290d2f",
+        "bytes": 724
+      },
+      ".work/logs/unit-s1.log": {
+        "sha256": "4297317d1547820e6618611c8c62f4415a074633a5693ae1408e3597eaa9aabf",
+        "bytes": 724
+      },
+      ".work/logs/unit-s2.log": {
+        "sha256": "541c401696da915ced3f6da713aa4afaea05208cea5d3cb2db3ae0bec78d254e",
+        "bytes": 1044
+      },
+      ".work/logs/unit-s3-first.log": {
+        "sha256": "067cc474cf3fb8973acabb0f37f0c7aa45472cf80b38f129597dbf046502cd1a",
+        "bytes": 4743
+      },
+      ".work/logs/unit-s3.log": {
+        "sha256": "b895d0d4a267fa7f653fb78f6870aff8caff41bf91218ccec4529904eb5ede58",
+        "bytes": 3717
+      },
+      "AGENTS.md": {
+        "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+        "bytes": 5411
+      },
+      "app.py": {
+        "sha256": "1a1ca61c0927a5063f187052c8b5396fe45dce89d4ce5dd7bd0d3753acbe9464",
+        "bytes": 8045
+      },
+      "BACKLOG.md": {
+        "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+        "bytes": 2566
+      },
+      "checks/acceptance.py": {
+        "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+        "bytes": 7554
+      },
+      "PROGRESS.md": {
+        "sha256": "e37014fd8c4306224f6d1109d736a40ef368e7ebc7873fe19810f0ea9ab49e10",
+        "bytes": 1160
+      },
+      "QUALITY.md": {
+        "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+        "bytes": 2687
+      },
+      "README.md": {
+        "sha256": "80c864ee78249507cee02e7aa8c51422404baef1cdfd8b97829035d0700112b5",
+        "bytes": 3498
+      },
+      "roombook_export.py": {
+        "sha256": "30b0bdbf18fd5bacf111b28f58074123948f0656dec987b2c6d2f6a2aaebb814",
+        "bytes": 2106
+      },
+      "roombook_query.py": {
+        "sha256": "a3f15a2011b9ba6556b8d9eed950b90a8b2117672167b3432da9277f92f16868",
+        "bytes": 1092
+      },
+      "roombook_summary.py": {
+        "sha256": "15d9fb3d43cee900421551be4f859a3448d5917954d68901379ff278fd775f2e",
+        "bytes": 1298
+      },
+      "STATIONS.json": {
+        "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+        "bytes": 595
+      },
+      "TEAMWORK.md": {
+        "sha256": "53a456d613e9bf6609de5bb75c016f001945139bac1c0c80b494d0961bb05891",
+        "bytes": 3955
+      },
+      "tests/test_cli.py": {
+        "sha256": "fbf00d09a7758083d8b72b1316ba0099239e23699e1795e8cbfa56a4c72c2650",
+        "bytes": 9364
+      },
+      "tests/test_export_group.py": {
+        "sha256": "2eee54f20e2f1f68bf7a8d6a8cda9292d1884d448d041de822ad4e130c5b8401",
+        "bytes": 3856
+      },
+      "tests/test_query_group.py": {
+        "sha256": "1cabe21e0607d0c1e015ec38abc31611e3afe918c62bb48ef04a3f2f4fde0040",
+        "bytes": 1761
+      },
+      "tests/test_summary_group.py": {
+        "sha256": "32165914da15757a1f18bf8f485d7c5bd96b4cbfc0ae0af0a9a56446a52881d6",
+        "bytes": 2443
+      },
+      "WORKLOG.md": {
+        "sha256": "c7e42b78e5510ae6666afee6ae2866b997fcb683bfdbf8b8ed8f94fa793d12e5",
+        "bytes": 1327
+      }
+    },
+    "bundleSha256": "9362c70a9842c449f4d78d81cf02a2dc0fd0634e24c69c162eea323760946e20",
+    "utc": "2026-10-09T08:20:12.522624+00:00"
+  },
+  "releasedStation": "S4",
+  "releasedStationIndex": 3,
+  "publicReleaseOnly": ".study/station.json",
+  "allKnownOwnEntriesTerminal": true,
+  "unknownStopEntries": 0,
+  "recordedImplementationEntries": 3,
+  "recordedHelpers": 3,
+  "observerLedgerConcurrency": {
+    "utc": "2026-10-09T08:14:19.717055Z",
+    "startedReservations": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "count": 4,
+    "basis": "Scientist own metadata read; cooperative ledger statuses, not provider sampling proof"
+  },
+  "scientistKnownOwnedShellJobs": [],
+  "transitiveProcessContainment": "not independently attested; no known residual own job or cleanup failure reported; no global inventory",
+  "quality": "Actor reported tests/merge/team; independent final NOT RUN yet",
+  "nextExecution": "Oldschool reserves original fixed continuation against own returned handle within existing station/cell ceilings; no Scientist semantic advice"
+}
