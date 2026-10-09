@@ -2,6 +2,12 @@
 
 Stand: 8. Oktober 2026. Dies ist der Umsetzungsplan des [Planungspakets](README.md). Er beauftragt zunächst Planung und behauptet keine Produktimplementierung. Die [Root-Roadmap](../../implementation-plan.md) bleibt Besitzer des allgemeinen Quell- und Release-Status.
 
+## Aktueller Implementerhandoff vom 9. Oktober 2026
+
+Die direkte [Nutzerpräzisierung zum kanonischen Systemmodell und Benutzerablauf](model-first-user-workflow.md) besitzt die nächste Ausbaurichtung. Vor weiterer Implementierung sind deren Quellabgleich, Dateiabdeckungsvertrag, Greenfield-Explore und Brownfield-Rückführung zu lesen. Sie ersetzt abweichende ältere Produktvorschläge, insbesondere das öffentliche Verwerfen des Begriffs „Projektion“. Die folgenden ursprünglichen Planungsabschnitte bleiben historischer Kontext; tatsächliche vorhandene Technik steht im [Umsetzungsvertrag](delivery-contract.md), aktuelle Laufnachweise in der [Validierung](../../validation/project-world-delivery.md).
+
+Nächste Reihenfolge: Gesamtinventur und Klassifikation einschließlich `.markitectignore` konkretisieren; Provider-Onboarding und Explore mit generierter `docs/`-Dokumentation integrieren; einen vollständigen Greenfieldlauf abnehmen; danach iterative Reverse-Adoption mit unverändertem Anwendungscode und einen gesonderten Aufräumweg ergänzen. Die neue Abnahmetabelle ist ein Anforderungskatalog, kein bereits ausgeführter Produkttest. Kosten- und Konsistenzvorteile mit Luna High bleiben eine zu messende Hypothese.
+
 ## 1. Aktuelle Arbeitsgrenze
 
 Erledigt in diesem Planungsschritt: isolierter Worktree und Feature-Branch, Festhalten der Nutzerrichtung, Modellvorschlag, Terminologieabgrenzung, erste Umsetzungsschritte und Abnahmeszenarien. Produktcode, Schemas, Runtime, bestehende Releaseverträge und andere Worktrees bleiben in diesem Schritt unverändert.

@@ -1,10 +1,12 @@
 # Markitect als gemeinsames Projektmodell
 
-Stand: 8. Oktober 2026, Europe/Berlin.
+Stand: 9. Oktober 2026, Europe/Berlin.
 
 ## Auftrag und Status
 
 Dieses Paket hält die direkte Produktdiskussion und den anschließend erteilten Umsetzungsauftrag fest. Die neue experimentelle Sourceoberfläche heißt `markitect project ...`; ihr verbindlicher technischer Stand steht im [Umsetzungsvertrag](delivery-contract.md). Der [Arbeitsablauf](../../project-workflow.md) und das [ausführbare Shop-Projekt](../../../examples/project-world/README.md) zeigen die konkrete Bedienung und Dateistruktur. Umsetzung und Prüfung erfolgen in einem eigenen Worktree auf `codex/model-driven-delivery`; eine Veröffentlichung ist damit nicht verbunden.
+
+Die [Nutzerpräzisierung vom 9. Oktober](model-first-user-workflow.md) definiert den nächsten Produktstand: kanonisches Systemmodell mit verschiedenen Realisierungen, Provider-Onboarding für Beitragende, Explore bis zum ersten erfolgreichen Apply, konfigurierbare Manager, standardmäßige Dokumentation unter `docs/`, vollständige Dateiklassifikation vor Apply und iterative Brownfield-Rückführung vor einem gesonderten Aufräumauftrag. Sie hat bei abweichenden älteren Zielvorschlägen Vorrang; ihre Anforderungen sind nicht automatisch implementiert.
 
 Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücken: Ziele, Fachbegriffe, Konzepte, Use Cases, Regeln, Architektur, Organisation und Arbeitsabläufe. Verantwortliche lassen diese Vorgaben innerhalb ihrer Befugnisse umsetzen und prüfen. Das Repository enthält ihre konkreten Realisierungen und die kanonischen Modelleingaben selbst.
 
@@ -14,7 +16,7 @@ Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücke
 2. **Management als öffentliches Modell:** Arbeit wird nach rekursiven verantworteten Modulen organisiert. „Modul“ ist der aktuelle Namensvorschlag für die gemeinsame Einheit aus fachlicher Gliederung, Namensraum und Verantwortung. Jeder Manager behält die Verantwortung für seinen Gesamtauftrag und die Integration seiner Teilaufträge.
 3. **Eindeutige Verantwortung:** Jedes deklarierte Modul hat genau einen auflösbaren Manager. Interne Namensräume und Modellinhalte sind über diese ausdrücklich gewählte Gliederung eindeutig verantwortet; es entstehen keine parallelen lokalen Ownershipregister. Mehrere Mitwirkende und Prüfer sind möglich. Eine konkrete Agenteninstanz ist nicht automatisch die dauerhafte Rolle.
 4. **Verbundene Sichten auf fachliche Slices:** Konzepte, Use Cases, Regeln und Erwartungen bleiben bei ihrer Fachlichkeit. Architektur, Organisation, Prozesse und Workflows sind ebenfalls verantwortete Modellinhalte. Code, Tests, Dokumentation, Pipelines und Konfiguration sind miteinander verknüpfte Realisierungen.
-5. **Begriffswechsel:** „Projektion“ wird als öffentlicher Zielbegriff aufgegeben. Er wird nicht pauschal durch „Bereich“ ersetzt. Verantwortung, Zielvorgabe, Arbeitsauftrag, Fähigkeit und Artefakt bekommen jeweils ihren eigenen Begriff. Bestehende technische Namen werden ausschließlich in der Übergangsplanung bezeichnet.
+5. **Repräsentationen des Modells:** Code, Tests, Dokumentation und Infrastruktur realisieren die Konzepte und Regeln des kanonischen Systemmodells. Nach der Nutzerpräzisierung vom 9. Oktober ist „Projektion“ dafür wieder ein zulässiger fachlicher Begriff; die frühere Absicht, ihn öffentlich aufzugeben, ist ersetzt. Verantwortung, Arbeitsauftrag, Fähigkeit und Artefakt behalten ihre eigenen Bedeutungen. Bestehende technische Projection-Verträge werden dadurch nicht stillschweigend geändert.
 6. **Vom Entwurf zur Verbindlichkeit:** Brainstorming bleibt frei und kann unvollständig oder widersprüchlich sein. Akzeptierte Modellinhalte sind davon erkennbar getrennt. Nicht jede Notiz benötigt einen formalen Vorgang.
 7. **Gewünschter Arbeitsablauf:** Projekt aufbauen, Modell entwickeln oder ändern, betroffene Arbeit ableiten, delegiert umsetzen, unabhängig prüfen und das Repository erneut mit dem Soll abgleichen. Reparaturen bei unverändertem Soll bleiben möglich.
 8. **Manager als Abstraktions- und Entscheidungsebene:** Jeder Bereichsmanager bündelt ausschließlich den relevanten Kontext, delegiert Ziele und Entscheidungsspielraum, erhält Berichte und verantwortet die Integration. Die Hierarchie ist der Ablauf für Änderungen und Entscheidungen, nicht nur eine Beschreibung von Zuständigkeiten.
@@ -29,6 +31,7 @@ Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücke
 
 | Dokument | Verantworteter Inhalt |
 |---|---|
+| [Kanonisches Systemmodell und Benutzerablauf](model-first-user-workflow.md) | Neueste Nutzerpräzisierung, Greenfield-Explore, Provider-Onboarding, vollständige Dateiabdeckung, Brownfield-Rückführung, Quellabgleich und nächste Abnahmekriterien |
 | [Praktischer Arbeitsablauf](../../project-workflow.md) | Installation des Sourcekandidaten, Init, Migration, Modelländerung und delegierte Umsetzung |
 | [Ausführbares Shop-Projekt](../../../examples/project-world/README.md) | Aktuelles Schema, vertikale Slices, konkrete Dateizuordnung und prüfbarer Python-/SQLite-Code |
 | [Zielmodell](model.md) | Begriffe, vorgeschlagene Verträge, Verantwortungsregeln und durchgehendes Order-Beispiel |
