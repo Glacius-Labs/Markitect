@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T16:23:58Z",
+  "updatedUtc": "2026-10-09T16:28:00Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12097,7 +12097,7 @@
       "continuationAuthority": "Latest direct user request, docs/design/project-native-codex-work-20261009.md; previous work remains stopped"
     }
   ],
-  "nextAction": "Designer finishes P01/P02 coherent source/contract/queue handoff; Root then assigns fresh integration and workspace/App Server/MCP implementation chats on a verified common base. R01-R03 separate read-only research is active and not a Main gate. Cases/releases remain stopped; no additional product acceptance quota.",
+  "nextAction": "Designer P01/P02 exact clean pushed handoff, then fresh integration/workspace/App Server/MCP owners. R01-R03 read-only research closed; no new Main gates or speculative integration. Product readiness and existing finite acceptance remain; cases/releases stopped.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -15853,9 +15853,10 @@
         "title": "Markitect Jev evaluieren",
         "threadId": "01a12178-516b-78c0-8ebb-47da32643984",
         "hostId": "local",
-        "cursor": "b68b5871-0195-4a64-887c-27d585284ad3:1",
-        "observedStatus": "active",
-        "scope": "read-only primary-source capability/fit/license/maintenance assessment, no product changes"
+        "cursor": "b68b5871-0195-4a64-887c-27d585284ad3:2",
+        "observedStatus": "idle/completed verified by compact wait",
+        "scope": "read-only primary-source capability/fit/license/maintenance assessment, no product changes",
+        "completion": "Detailed final callback received; source/documentation evaluation closed, not runtime proof"
       },
       {
         "item": "R02",
@@ -15863,8 +15864,9 @@
         "threadId": "01a12178-5797-7c41-8acc-8e8231084c79",
         "hostId": "local",
         "cursor": "67fe9212-ff51-49b6-b0fb-948f5db1b4db:1",
-        "observedStatus": "active",
-        "scope": "read-only actual canonical graph/traceability gaps/useful minimum target"
+        "observedStatus": "completion reported by final callback; no additional idle poll needed",
+        "scope": "read-only actual canonical graph/traceability gaps/useful minimum target",
+        "completion": "Detailed final callback received; source/documentation evaluation closed, not runtime proof"
       },
       {
         "item": "R03",
@@ -15872,13 +15874,30 @@
         "threadId": "01a12178-64de-7d41-aa82-11b8fb202786",
         "hostId": "local",
         "cursor": "bfe53924-c588-4a05-81d4-09708059f9d5:1",
-        "observedStatus": "active",
-        "scope": "read-only actual provider-native capability matrix/minimal asset ownership and install strategy"
+        "observedStatus": "completion reported by final callback; no additional idle poll needed",
+        "scope": "read-only actual provider-native capability matrix/minimal asset ownership and install strategy",
+        "completion": "Detailed final callback received; source/documentation evaluation closed, not runtime proof"
       }
     ],
     "creationMode": "User-owned local project chats, no model override; no shared product writes.",
     "verification": "New follow-up YAML parsed, three refs checked; one compact wait confirms all three started. Research observations not final findings.",
     "designerMessage": "Sent once: finish current P01/P02 and push queues/handoff, optional themes in fresh research chats, no extra Main gate or study.",
-    "notification": "Each fresh chat explicitly authorized to send one material completion/blocker to Root/local; no ACK or routine polling."
+    "notification": "Each fresh chat explicitly authorized to send one material completion/blocker to Root/local; no ACK or routine polling.",
+    "researchCompletion": {
+      "recordedUtc": "2026-10-09T16:28:00Z",
+      "status": "R01_R02_R03_CLOSED_QUALIFIED_READONLY_EVALUATIONS",
+      "document": "docs/design/research/results-20261009.md",
+      "designerSummary": "docs/work-items/product-readiness/research-results-20261009.md",
+      "source": "18eabf96ece65825d8cd9a72c7c03692caf59157",
+      "R01": "DEFER optional non-authoritative claim/evidence observer; REJECT compiler/Manager/generation/VerifyApply replacement",
+      "R02": "USE existing typed graph, optional Explain/Trace; DEFER general KG technologies/continuing rename identity; no required graph DB/Core universal reasoner",
+      "R03": "USE/refine existing ten skills and concise entrypoints; DEFER native agent/hook/permission packages without concrete fit; reject provider-symmetric invented directories",
+      "rootVerification": "Read-only spot-check exact source task report, core types, project context/impact and skill definitions; fetched official TypeSafe models/coding-agent/limitations, W3C RDF, Claude memory/rules and OpenAI skills. SDK/license/version details researcher-reported, no client execution.",
+      "runtimeDiscoveryTestsModelsProviderCalls": "NOT RUN in research; no quality/token/productivity advantage measured",
+      "mainDependencyAdded": false,
+      "productImplementationGrantAdded": false,
+      "newPurchaseIntegrationReplayStudyAuthority": false,
+      "notification": "Researcher callbacks received once; no reply/ACK loop or new task. Topic chats finish; product P01/P02 handoff remains priority."
+    }
   }
 }
