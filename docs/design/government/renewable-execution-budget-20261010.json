@@ -1,0 +1,39 @@
+{
+  "id": "renewable-execution-budget-20261010",
+  "issuedUtc": "2026-10-09T22:01:37Z",
+  "directHumanInstruction": "Budget darfst du solange machen bis es klappt",
+  "authority": "Newest direct human instruction authorizes continuing necessary repair, validation and execution until the intended usable product/workflow succeeds; replaces earlier cumulative quota and absolute lease blockers prospectively.",
+  "scope": [
+    "Complete stable usable Markitect and normal Main readiness/integration",
+    "Finish genuine functional workflow and evaluation infrastructure; prepare matched studies when product really works"
+  ],
+  "budgetPolicy": {
+    "cumulativeTimeStartsOrEstimatedCost": "No fixed cumulative cutoff requiring user/root approval merely for replenishment; owners may renew finite execution batches within authorized work until success or genuine external blocker. Record each renewal before execution.",
+    "ordinaryBatchWallSeconds": 14400,
+    "ordinaryRoleWallSeconds": 7200,
+    "startRequestsPerBatch": 256,
+    "sourceSuiteTimeoutSeconds": 5400,
+    "sourcePackageTimeoutSeconds": 1800,
+    "sourceFocusedTimeoutSeconds": 600,
+    "principle": "Generous per-process bounds and known ownership remain; successful work is not restarted for a coordination lease expiry. Resolve a concrete diagnosed failure before restarting. No repeated unchanged-failure loop or unnecessary repeated full suites.",
+    "concurrency": "Existing bounded concurrency/helper-depth and declared scope unchanged; no unlimited parallelism.",
+    "estimatedCostCap": "Earlier cumulative caller-estimate ceiling is not a stop by itself. Choose and log finite adequate per-batch caller-estimate cap where product config requires it; actual invoiced costs/scope remain unknown unless real receipts. No unauthorized provider purchases or paid obligations.",
+    "existingProviders": "Existing authorized authenticated tooling/model only; no new provider integrations/installations/purchases/global security changes inferred."
+  },
+  "executionContract": [
+    "Old grants, attempts, failed requests, hooks, reports and source pins remain closed/preserved; never relabel old failure or reuse exhausted identifiers",
+    "Before each new native batch bind exact source/binary/config/own project/normal Plan and adequate remaining timeout, record resource allocation/start/receipt/terminal cleanup in owner ledger",
+    "Owner may continue required targeted repairs/reviews and genuine fresh normal execution without blanket Root/user permission for each phase or quota rollover",
+    "No replay of failed/interrupted original turns; only real original-turn recovery in the same intended run when protocol and ownership allow",
+    "Explicit own workspace profile and managed restrictions stay; blocked approval requiring human decision is not automatically bypassed",
+    "Declined/unresolved ownership or foreign exposure requires honest terminal state and exact diagnosis, not new random capability attempts",
+    "Markitect A01 remains real helper/parallel Managers/independent review/Verifier/Verify/guardedApply/original recovery; no missing role simulation",
+    "Main requires normal final-head hosted checks/independent review plus product evidence; KG stays separate until exact accepted Main import then evaluation"
+  ],
+  "scientistPolicy": {
+    "completedConventional": "Accepted technical endpoint remains closed; no unnecessary rerun because budget now renews. Original evaluation errors and additive successful scratch-final receipts retained.",
+    "futureStudies": "Case Studies resume on truly working Markitect with matched functional inputs/target/assessment and prospectively equal finite per-cell resources; do not hide total prior setup/repair/oversight costs or invent cost-efficiency evidence. No model/method simulation.",
+    "next": "Existing genuine adapter/framework preparation can continue; new matched actual plan needs concrete product-ready configuration, not a broad unbounded study expansion."
+  },
+  "reporting": "Events/completion/material blockers; no busy polling or routine progress reports. Stop workstream when intended objective achieved, not because cumulative budget exhausted."
+}

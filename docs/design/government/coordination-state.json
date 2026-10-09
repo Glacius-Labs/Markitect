@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T19:03:28Z",
+  "updatedUtc": "2026-10-09T22:01:37Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12175,7 +12175,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Designer P01/P02 exact clean pushed handoff, then fresh integration/workspace/App Server/MCP owners. R01-R03 read-only research closed; no new Main gates or speculative integration. Product readiness and existing finite acceptance remain; cases/releases stopped.",
+  "nextAction": "Integration carries concrete reviewed helper alias fix through genuine product execution and normal Main gates under renewable finite batches. Scientist completed baseline retained and prepares genuine matched adapter/framework once product functional. KG separate.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -16485,7 +16485,8 @@
         "next": "Integrate after original pinned suite result, rebuild/exact source/project/runtime/readiness/Plan bindings then one previously authorized original-lease continuation",
         "originalDeadlineUnchanged": "2026-10-10T00:26:23Z",
         "newOrderOrRefill": false
-      }
+      },
+      "latestResourceAuthority": "renewable-execution-budget-20261010 supersedes prior original end/global quota stop prospectively; old failures/counters preserved. Owner finite renewed batch before execution, no blanket permission per fix."
     }
   },
   "playgroundAndClaudePreparation20261009": {
@@ -17619,5 +17620,32 @@
       "next": "No further Actual for this candidate. Future genuine Markitect adapter/trial only after accepted working interface/runtime and fresh matched finite grant; same functional inputs/target/evaluation/resources/context differences explicit.",
       "newGrant": false
     }
+  },
+  "renewableExecutionBudget20261010": {
+    "authority": "Budget darfst du solange machen bis es klappt",
+    "grantPath": "docs/design/government/renewable-execution-budget-20261010.json",
+    "sha256": "a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7",
+    "issuedUtc": "2026-10-09T22:01:37Z",
+    "status": "ACTIVE_UNTIL_SUCCESS_OR_GENUINE_EXTERNAL_BLOCKER",
+    "cumulativeTimeStartEstimateCeilingsSupersededProspectively": true,
+    "ownerMayRenewFiniteBatches": true,
+    "limits": {
+      "cumulativeTimeStartsOrEstimatedCost": "No fixed cumulative cutoff requiring user/root approval merely for replenishment; owners may renew finite execution batches within authorized work until success or genuine external blocker. Record each renewal before execution.",
+      "ordinaryBatchWallSeconds": 14400,
+      "ordinaryRoleWallSeconds": 7200,
+      "startRequestsPerBatch": 256,
+      "sourceSuiteTimeoutSeconds": 5400,
+      "sourcePackageTimeoutSeconds": 1800,
+      "sourceFocusedTimeoutSeconds": 600,
+      "principle": "Generous per-process bounds and known ownership remain; successful work is not restarted for a coordination lease expiry. Resolve a concrete diagnosed failure before restarting. No repeated unchanged-failure loop or unnecessary repeated full suites.",
+      "concurrency": "Existing bounded concurrency/helper-depth and declared scope unchanged; no unlimited parallelism.",
+      "estimatedCostCap": "Earlier cumulative caller-estimate ceiling is not a stop by itself. Choose and log finite adequate per-batch caller-estimate cap where product config requires it; actual invoiced costs/scope remain unknown unless real receipts. No unauthorized provider purchases or paid obligations.",
+      "existingProviders": "Existing authorized authenticated tooling/model only; no new provider integrations/installations/purchases/global security changes inferred."
+    },
+    "oldEvidenceAndOrdersUnchanged": true,
+    "mainProductGatesUnchanged": true,
+    "knowledgeGraphSeparate": true,
+    "integrationDispatch": "SENT_ONCE",
+    "scientistDispatch": "SENT_ONCE"
   }
 }
