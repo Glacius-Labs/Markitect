@@ -126,7 +126,7 @@ func TestToolDuplicateAndTimeoutAreBounded(t *testing.T) {
 }
 
 func TestExplicitProfileMustBeConfirmed(t *testing.T) {
-	for _, mode := range []string{"success", "profile-unconfirmed"} {
+	for _, mode := range []string{"success", "profile-unconfirmed", "policy-unconfirmed", "readonly-sandbox", "extra-writable-root", "network-enabled", "temp-disabled"} {
 		t.Run(mode, func(t *testing.T) {
 			a, cfg, req, opts := fixture(t, mode, Options{})
 			a.config.PermissionProfile = ":workspace"

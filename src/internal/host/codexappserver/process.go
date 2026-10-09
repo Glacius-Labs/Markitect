@@ -17,7 +17,7 @@ import (
 // SupportedProviderVersion pins the generated v1 initialize / v2 thread-turn
 // shapes used here. Advancing this pin requires protocol fixtures and review.
 const SupportedProviderVersion = "codex-cli 0.162.0"
-const protocolIdentity = "codex-app-server/v2/0.162.0/markitect-p04-1/stable-0bf5254bede109d4ae03ce2e81372e4c93a30b359c0749ec7dce7a9382a7f857/experimental-5c0ee37a723e4672108aa5c68b0c63cd540e17d408ca2f8ac1e7ebf76e737ac2"
+const protocolIdentity = "codex-app-server/v2/0.162.0/markitect-workspace-start-v1/stable-0bf5254bede109d4ae03ce2e81372e4c93a30b359c0749ec7dce7a9382a7f857/experimental-5c0ee37a723e4672108aa5c68b0c63cd540e17d408ca2f8ac1e7ebf76e737ac2"
 
 type processConnection struct {
 	in     io.WriteCloser
@@ -138,6 +138,12 @@ func startProcess(cfg Config, cwd string, env []string, maxStderr int) (*process
 
 func appServerArgs(cfg Config) []string {
 	args := make([]string, 0, 5)
+	if cfg.PermissionProfile == ":workspace" {
+		// This owned-workspace default authorizes ordinary task work without
+		// asking again per file. The workspace sandbox and Host delta guards
+		// remain in force; no user/global configuration is changed.
+		args = append(args, "-c", "approval_policy=never", "-c", "sandbox_workspace_write={writable_roots=[],network_access=false,exclude_tmpdir_env_var=false,exclude_slash_tmp=false}")
+	}
 	if cfg.WindowsSandboxBackend == WindowsSandboxBackendMXC {
 		// Codex documents -c as a global CLI option, so it must precede the
 		// app-server subcommand. This changes only this child process.

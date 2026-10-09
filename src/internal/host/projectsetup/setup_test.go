@@ -45,6 +45,10 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 	if len(config.Review.Agents) != len(config.Agents) {
 		t.Fatalf("reviewer mappings = %d, want one for every Manager", len(config.Review.Agents))
 	}
+	wantBackend := codexappserver.WindowsSandboxBackend("")
+	if runtime.GOOS == "windows" {
+		wantBackend = codexappserver.WindowsSandboxBackendMXC
+	}
 	for _, id := range []string{"root-manager", "orders-manager", "inventory-manager"} {
 		agent, ok := config.Agents[id]
 		if !ok {
@@ -53,7 +57,7 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 		if agent.Command != provider.Path || len(agent.Args) != 0 || agent.Transport != projectrun.TransportCodexAppServer || agent.Model != "gpt-6-luna" || agent.ProviderVersion != provider.Version {
 			t.Fatalf("unexpected mapping for %s: %#v", id, agent)
 		}
-		if agent.WorkspaceMode != "git" || agent.AppServer == nil || agent.AppServer.ReasoningEffort != "high" || agent.AppServer.PermissionProfile != "" || agent.AppServer.WindowsSandboxBackend != "" || agent.AppServer.EnvironmentMode != projectrun.AppServerEnvironmentModeInherit || !agent.AppServer.Helpers.Enabled {
+		if agent.WorkspaceMode != "git" || agent.AppServer == nil || agent.AppServer.ReasoningEffort != "high" || agent.AppServer.PermissionProfile != ":workspace" || agent.AppServer.WindowsSandboxBackend != wantBackend || agent.AppServer.EnvironmentMode != projectrun.AppServerEnvironmentModeInherit || !agent.AppServer.Helpers.Enabled {
 			t.Fatalf("default setup must select the typed native Codex App Server worker: %#v", agent)
 		}
 		if agent.ModelOptions != nil || agent.AppServer.Helpers.MaxStartRequests != DefaultMaxHelperStarts || agent.AppServer.Helpers.MaxDepth != 1 || agent.AppServer.MaxEventBytes != DefaultMaxEventBytes {
@@ -67,13 +71,13 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 			t.Fatalf("missing reviewer mapping for %s", id)
 		}
 		if reviewer.WorkspaceMode != "git" || reviewer.Transport != projectrun.TransportCodexAppServer || len(reviewer.InstructionPaths) != len(agent.InstructionPaths) || len(reviewer.RuntimeFiles) != len(agent.RuntimeFiles) || reviewer.Command != provider.Path {
-			t.Fatalf("reviewer config for %s must use a fresh native read-only workspace with pinned instructions: %#v", id, reviewer)
+			t.Fatalf("reviewer config for %s must use a fresh native owned workspace with pinned instructions: %#v", id, reviewer)
 		}
-		if reviewer.ModelOptions != nil || reviewer.AppServer == nil || reviewer.AppServer.PermissionProfile != "" || reviewer.Model != agent.Model || reviewer.ProviderVersion != agent.ProviderVersion {
+		if reviewer.ModelOptions != nil || reviewer.AppServer == nil || reviewer.AppServer.PermissionProfile != ":workspace" || reviewer.Model != agent.Model || reviewer.ProviderVersion != agent.ProviderVersion {
 			t.Fatalf("reviewer model profile for %s differs from worker profile", id)
 		}
-		if reviewer.AppServer.WindowsSandboxBackend != "" || reviewer.AppServer.EnvironmentMode != projectrun.AppServerEnvironmentModeInherit {
-			t.Fatalf("omitted sandbox backend must preserve default reviewer settings for %s: %#v", id, reviewer.AppServer)
+		if reviewer.AppServer.WindowsSandboxBackend != wantBackend || reviewer.AppServer.EnvironmentMode != projectrun.AppServerEnvironmentModeInherit {
+			t.Fatalf("reviewer sandbox/environment settings for %s = %#v, want sandbox %q and inherited caller environment", id, reviewer.AppServer, wantBackend)
 		}
 		if containsName(reviewer.Environment, "CODEX_HOME") {
 			t.Fatal("runtime must use the existing OS-default Codex profile, not override CODEX_HOME")
@@ -88,6 +92,12 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 			t.Fatalf("native reviewer allowlist omits OS-default HOME: %#v", reviewer.Environment)
 		}
 	}
+	if config.Verifier == nil || config.Verifier.AppServer == nil || config.Verifier.AppServer.PermissionProfile != ":workspace" || config.Verifier.WorkspaceMode != "git" || config.Verifier.Command != provider.Path {
+		t.Fatalf("default setup must configure an independent verifier in its own workspace with the shared workspace profile: %#v", config.Verifier)
+	}
+	if config.Verifier.AppServer.WindowsSandboxBackend != wantBackend || !reflect.DeepEqual(config.Verifier.RuntimeFiles, config.Agents["root-manager"].RuntimeFiles) || !reflect.DeepEqual(config.Verifier.InstructionPaths, config.Agents["root-manager"].InstructionPaths) {
+		t.Fatalf("verifier does not use platform sandbox or share pinned executable/instructions: verifier=%+v root=%+v", config.Verifier, config.Agents["root-manager"])
+	}
 	if config.Mode != "controlled-local" || config.RequireIsolation || config.Limits.MaxRetries != 1 || config.Limits.MaxParallel != 2 || config.Limits.MaxStarts != DefaultMaxStarts || config.Limits.MaxDuration != projectrun.Duration(DefaultMaxRunTime) || config.Limits.MaxCostMicros != 5000 {
 		t.Fatalf("unsafe or unexpected limits: %#v", config)
 	}
@@ -99,7 +109,7 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 	}
 }
 
-func TestBuildRuntimeExplicitWindowsMXCLeavesPermissionProfilesAlone(t *testing.T) {
+func TestBuildRuntimeExplicitWindowsMXCUsesSharedWorkspaceProfile(t *testing.T) {
 	root := t.TempDir()
 	writeNativeInstructions(t, root)
 	provider := testTool(t, root, "codex.exe", true)
@@ -123,8 +133,33 @@ func TestBuildRuntimeExplicitWindowsMXCLeavesPermissionProfilesAlone(t *testing.
 	if worker.AppServer.WindowsSandboxBackend != codexappserver.WindowsSandboxBackendMXC || reviewer.AppServer.WindowsSandboxBackend != codexappserver.WindowsSandboxBackendMXC {
 		t.Fatalf("explicit backend not applied consistently: worker=%+v reviewer=%+v", worker.AppServer, reviewer.AppServer)
 	}
-	if worker.AppServer.PermissionProfile != ":workspace" || reviewer.AppServer.PermissionProfile != ":read-only" {
-		t.Fatalf("backend option changed permissions: worker=%+v reviewer=%+v", worker.AppServer, reviewer.AppServer)
+	if worker.AppServer.PermissionProfile != ":workspace" || reviewer.AppServer.PermissionProfile != ":workspace" || config.Verifier.AppServer.PermissionProfile != ":workspace" {
+		t.Fatalf("setup roles must share the workspace profile: worker=%+v reviewer=%+v verifier=%+v", worker.AppServer, reviewer.AppServer, config.Verifier.AppServer)
+	}
+}
+
+func TestBuildRuntimeDefaultsWindowsMXCAndSharedWorkspaceProfile(t *testing.T) {
+	project := setupProjectFixture(t)
+	provider := testTool(t, t.TempDir(), providerName(), true)
+	provider.Version = "codex-cli 0.162.0"
+	options := Options{Provider: "codex", Model: "gpt-6-luna", Effort: "high", InputMicrosPerMillion: 1, OutputMicrosPerMillion: 2, MaxCostMicros: 10}
+	config, err := BuildRuntime(project, options, Discovery{Provider: "codex", ProviderBinary: provider})
+	if err != nil {
+		t.Fatalf("default setup: %v", err)
+	}
+	wantBackend := codexappserver.WindowsSandboxBackend("")
+	if runtime.GOOS == "windows" {
+		wantBackend = codexappserver.WindowsSandboxBackendMXC
+	}
+	managerID := project.Report.Managers[0].ID
+	profiles := []projectrun.Agent{config.Agents[managerID], config.Review.Agents[managerID]}
+	if config.Verifier != nil {
+		profiles = append(profiles, *config.Verifier)
+	}
+	for i, agent := range profiles {
+		if agent.AppServer == nil || agent.AppServer.PermissionProfile != ":workspace" || agent.AppServer.WindowsSandboxBackend != wantBackend {
+			t.Fatalf("native role %d defaults must share workspace permission and platform sandbox: %+v want backend %q", i, agent.AppServer, wantBackend)
+		}
 	}
 }
 
@@ -187,13 +222,16 @@ func TestBuildRuntimeDefaultsNativeModelAndBindsInstructions(t *testing.T) {
 				t.Fatalf("instruction %s lacks its absolute mode/digest runtime pin: %#v", path, agent.RuntimeFiles)
 			}
 		}
-		if agent.AppServer == nil || agent.AppServer.ReasoningEffort != "high" || agent.AppServer.PermissionProfile != "" {
-			t.Fatalf("native model effort/inherited permissions = %#v", agent.AppServer)
+		if agent.AppServer == nil || agent.AppServer.ReasoningEffort != "high" || agent.AppServer.PermissionProfile != ":workspace" {
+			t.Fatalf("native model effort/shared workspace permissions = %#v", agent.AppServer)
 		}
 		reviewer := config.Review.Agents[id]
-		if reviewer.WorkspaceMode != "git" || len(reviewer.RuntimeFiles) != 3 || !reflect.DeepEqual(reviewer.InstructionPaths, agent.InstructionPaths) {
-			t.Fatalf("reviewer config should use its own read-only Git workspace with the same instruction pins: %#v", reviewer)
+		if reviewer.WorkspaceMode != "git" || len(reviewer.RuntimeFiles) != 3 || !reflect.DeepEqual(reviewer.InstructionPaths, agent.InstructionPaths) || reviewer.AppServer.PermissionProfile != ":workspace" {
+			t.Fatalf("reviewer config should use its own Git workspace with the same instructions and shared permission profile: %#v", reviewer)
 		}
+	}
+	if config.Verifier == nil || config.Verifier.AppServer.PermissionProfile != ":workspace" || config.Verifier.WorkspaceMode != "git" {
+		t.Fatalf("verifier does not use the shared native workspace profile: %+v", config.Verifier)
 	}
 }
 
@@ -296,7 +334,7 @@ func TestBuildRuntimeRejectsUnsupportedNativeModelEffortAndProvider(t *testing.T
 	}
 }
 
-func TestBuildRuntimeExplicitCodexProfileIsWriterOnlyAndPreviewIsDigestGuarded(t *testing.T) {
+func TestBuildRuntimeExplicitCodexProfileIsSharedAndPreviewIsDigestGuarded(t *testing.T) {
 	project := setupProjectFixture(t)
 	provider := testTool(t, t.TempDir(), providerName(), true)
 	provider.Version = "codex-cli 0.162.0"
@@ -334,8 +372,8 @@ func TestBuildRuntimeExplicitCodexProfileIsWriterOnlyAndPreviewIsDigestGuarded(t
 	if manager.AppServer == nil || reviewer.AppServer == nil {
 		t.Fatalf("runtime YAML omitted App Server settings: %s", preview.Mutation.Files[0].Content)
 	}
-	if manager.AppServer.PermissionProfile != ":workspace" || reviewer.AppServer.PermissionProfile != ":read-only" {
-		t.Fatalf("explicit writer profile must not widen the independent reviewer: manager=%+v reviewer=%+v", manager.AppServer, reviewer.AppServer)
+	if manager.AppServer.PermissionProfile != ":workspace" || reviewer.AppServer.PermissionProfile != ":workspace" || runtimeConfig.Verifier == nil || runtimeConfig.Verifier.AppServer.PermissionProfile != ":workspace" {
+		t.Fatalf("explicit setup profile must apply consistently to independent roles: manager=%+v reviewer=%+v verifier=%+v", manager.AppServer, reviewer.AppServer, runtimeConfig.Verifier)
 	}
 	assertSameNativePins(t, manager, reviewer, provider, options)
 
@@ -353,12 +391,12 @@ func TestBuildRuntimeExplicitCodexProfileIsWriterOnlyAndPreviewIsDigestGuarded(t
 		t.Fatal(err)
 	}
 	var applied projectrun.Runtime
-	if err := yaml.Unmarshal(written, &applied); err != nil || applied.Agents[managerID].AppServer.PermissionProfile != ":workspace" || applied.Review.Agents[managerID].AppServer.PermissionProfile != ":read-only" {
-		t.Fatalf("guarded write did not preserve role profiles: runtime=%+v err=%v", applied, err)
+	if err := yaml.Unmarshal(written, &applied); err != nil || applied.Agents[managerID].AppServer.PermissionProfile != ":workspace" || applied.Review.Agents[managerID].AppServer.PermissionProfile != ":workspace" || applied.Verifier == nil || applied.Verifier.AppServer.PermissionProfile != ":workspace" {
+		t.Fatalf("guarded write did not preserve the shared role profile: runtime=%+v err=%v", applied, err)
 	}
 }
 
-func TestBuildRuntimeOmittedProfileInheritsForEveryRoleAndMalformedProfileFailsConfigValidation(t *testing.T) {
+func TestBuildRuntimeOmittedProfileDefaultsWorkspaceForEveryRoleAndMalformedProfileFailsConfigValidation(t *testing.T) {
 	root := t.TempDir()
 	writeNativeInstructions(t, root)
 	provider := testTool(t, root, providerName(), true)
@@ -371,8 +409,16 @@ func TestBuildRuntimeOmittedProfileInheritsForEveryRoleAndMalformedProfileFailsC
 		t.Fatalf("default setup: %v", err)
 	}
 	managerID := project.Report.Managers[0].ID
-	if config.Agents[managerID].AppServer.PermissionProfile != "" || config.Review.Agents[managerID].AppServer.PermissionProfile != "" {
-		t.Fatalf("omitting --codex-profile must preserve inherited settings for all roles: manager=%+v reviewer=%+v", config.Agents[managerID].AppServer, config.Review.Agents[managerID].AppServer)
+	if config.Agents[managerID].AppServer.PermissionProfile != ":workspace" || config.Review.Agents[managerID].AppServer.PermissionProfile != ":workspace" || config.Verifier == nil || config.Verifier.AppServer.PermissionProfile != ":workspace" {
+		t.Fatalf("omitting --codex-profile must select the shared workspace profile for every role: manager=%+v reviewer=%+v verifier=%+v", config.Agents[managerID].AppServer, config.Review.Agents[managerID].AppServer, config.Verifier)
+	}
+	base.CodexProfile = ":read-only"
+	custom, err := BuildRuntime(project, base, found)
+	if err != nil {
+		t.Fatalf("explicit shared profile: %v", err)
+	}
+	if custom.Agents[managerID].AppServer.PermissionProfile != ":read-only" || custom.Review.Agents[managerID].AppServer.PermissionProfile != ":read-only" || custom.Verifier == nil || custom.Verifier.AppServer.PermissionProfile != ":read-only" {
+		t.Fatalf("explicit profile override was not shared across roles: manager=%+v reviewer=%+v verifier=%+v", custom.Agents[managerID].AppServer, custom.Review.Agents[managerID].AppServer, custom.Verifier)
 	}
 	base.CodexProfile = string([]byte{0xff})
 	if _, err := BuildRuntime(project, base, found); err == nil || !strings.Contains(err.Error(), "valid UTF-8") {

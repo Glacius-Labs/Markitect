@@ -169,6 +169,10 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 	if found.Provider != options.Provider || found.ProviderBinary.Path == "" || !filepath.IsAbs(found.ProviderBinary.Path) {
 		return config, errors.New("tool discovery does not match the selected provider")
 	}
+	sandboxBackend := options.WindowsSandboxBackend
+	if sandboxBackend == "" && runtime.GOOS == "windows" {
+		sandboxBackend = codexappserver.WindowsSandboxBackendMXC
+	}
 	instructionPaths, instructionFiles, instructionErr := nativeInstructionFiles(project, options.Provider)
 	if instructionErr != nil {
 		return config, instructionErr
@@ -184,11 +188,9 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		environment = append(environment, "HOME")
 	}
 	pricing := projectrun.Pricing{InputMicrosPerMillion: options.InputMicrosPerMillion, OutputMicrosPerMillion: options.OutputMicrosPerMillion}
-	reviewerPermissionProfile := ""
-	if options.CodexProfile != "" {
-		// The explicit setup profile opts in only Manager work. Separate
-		// assessment/review invocations stay read-only under that opt-in.
-		reviewerPermissionProfile = ":read-only"
+	permissionProfile := options.CodexProfile
+	if permissionProfile == "" {
+		permissionProfile = ":workspace"
 	}
 	agents := make(map[string]projectrun.Agent, len(project.Report.Managers))
 	reviewAgents := make(map[string]projectrun.Agent, len(project.Report.Managers))
@@ -196,8 +198,8 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		if manager.ID == "" {
 			return config, errors.New("active project has a Manager with an empty ID")
 		}
-		worker := selectedAgent(found, options.Model, options.Effort, options.CodexProfile, options.WindowsSandboxBackend, runtimeFiles, environment, pricing)
-		reviewer := selectedAgent(found, options.Model, options.Effort, reviewerPermissionProfile, options.WindowsSandboxBackend, runtimeFiles, environment, pricing)
+		worker := selectedAgent(found, options.Model, options.Effort, permissionProfile, sandboxBackend, runtimeFiles, environment, pricing)
+		reviewer := selectedAgent(found, options.Model, options.Effort, permissionProfile, sandboxBackend, runtimeFiles, environment, pricing)
 		worker.WorkspaceMode = "git"
 		worker.InstructionPaths = append([]string(nil), instructionPaths...)
 		reviewer.WorkspaceMode = "git"
@@ -205,9 +207,11 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		agents[manager.ID] = worker
 		reviewAgents[manager.ID] = reviewer
 	}
+	verifierManagerID := project.Report.Managers[0].ID
+	verifier := agents[verifierManagerID]
 	config = projectrun.Runtime{
 		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal, RequireIsolation: false,
-		Agents: agents,
+		Agents: agents, Verifier: &verifier,
 		Review: &projectrun.ReviewConfig{
 			Agents: reviewAgents, MaxRounds: DefaultReviewMaxRounds, MaxManagerRounds: DefaultReviewMaxManagerRounds,
 		},
@@ -231,6 +235,13 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 			}
 		}
 	}
+	verifierConfig, err := verifier.AgentConfig()
+	if err != nil {
+		return config, err
+	}
+	if _, err := agentexec.Fingerprint(verifierConfig); err != nil {
+		return config, err
+	}
 	return config, nil
 }
 
@@ -252,7 +263,7 @@ func selectedAgent(found Discovery, model, effort, permissionProfile string, san
 		Command: found.ProviderBinary.Path, Transport: projectrun.TransportCodexAppServer,
 		AppServer: &projectrun.AppServerSettings{
 			ReasoningEffort: effort,
-			// Empty PermissionProfile preserves the user's existing Codex boundary.
+			// BuildRuntime supplies one shared :workspace profile by default.
 			PermissionProfile:     permissionProfile,
 			EnvironmentMode:       projectrun.AppServerEnvironmentModeInherit,
 			WindowsSandboxBackend: sandboxBackend,

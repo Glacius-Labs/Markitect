@@ -63,7 +63,8 @@ func serveFixture() {
 				return
 			}
 			var threadParams struct {
-				Permissions string `json:"permissions"`
+				Permissions    string `json:"permissions"`
+				ApprovalPolicy string `json:"approvalPolicy"`
 			}
 			_ = json.Unmarshal(msg.Params, &threadParams)
 			if mode == "request-failure" {
@@ -86,11 +87,23 @@ func serveFixture() {
 			if strings.Contains(mode, "unknown-sandbox") {
 				sandboxType = ""
 			}
-			sandbox := map[string]string{"type": sandboxType}
+			sandbox := map[string]any{"type": sandboxType}
 			if sandboxType == "" {
-				sandbox = map[string]string{}
+				sandbox = map[string]any{}
+			}
+			if mode == "extra-writable-root" {
+				sandbox["writableRoots"] = []string{os.TempDir()}
+			}
+			if mode == "network-enabled" {
+				sandbox["networkAccess"] = true
+			}
+			if mode == "temp-disabled" {
+				sandbox["excludeTmpdirEnvVar"] = true
 			}
 			result = map[string]any{"thread": thread{ID: "thread-1", SessionID: sessionID, CLIVersion: "0.162.0", CWD: cwd}, "model": model, "reasoningEffort": "high", "cwd": cwd, "approvalPolicy": "on-request", "sandbox": sandbox, "instructionSources": []string{}}
+			if threadParams.ApprovalPolicy != "" && mode != "policy-unconfirmed" {
+				result.(map[string]any)["approvalPolicy"] = threadParams.ApprovalPolicy
+			}
 			if threadParams.Permissions != "" && mode != "profile-unconfirmed" {
 				result.(map[string]any)["activePermissionProfile"] = map[string]string{"id": threadParams.Permissions}
 			}

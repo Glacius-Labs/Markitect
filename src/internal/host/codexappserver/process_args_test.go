@@ -17,6 +17,14 @@ func TestAppServerArgsKeepDefaultAndScopeMXCToChildCommand(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("MXC args = %#v, want global CLI override before app-server: %#v", got, want)
 	}
+	got = appServerArgs(Config{PermissionProfile: ":workspace", WindowsSandboxBackend: WindowsSandboxBackendMXC})
+	want = []string{"-c", "approval_policy=never", "-c", "sandbox_workspace_write={writable_roots=[],network_access=false,exclude_tmpdir_env_var=false,exclude_slash_tmp=false}", "-c", "windows.sandbox=mxc", "app-server", "--listen", "stdio://"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("owned workspace args = %#v, want %#v", got, want)
+	}
+	if got := appServerArgs(Config{PermissionProfile: ":read-only"}); !reflect.DeepEqual(got, []string{"app-server", "--listen", "stdio://"}) {
+		t.Fatalf("nondefault profile changed approval policy: %#v", got)
+	}
 }
 
 func TestWindowsSandboxBackendFailsClosedOffWindowsBeforeProcessLaunch(t *testing.T) {

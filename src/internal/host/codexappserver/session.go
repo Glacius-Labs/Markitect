@@ -252,6 +252,9 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 	if a.config.PermissionProfile != "" {
 		startParams["permissions"] = a.config.PermissionProfile
 	}
+	if a.config.PermissionProfile == ":workspace" {
+		startParams["approvalPolicy"] = "never"
+	}
 	if len(a.options.DynamicTools) > 0 {
 		startParams["dynamicTools"] = a.options.DynamicTools
 	}
@@ -346,7 +349,9 @@ func nativeTurnPrompt(inv agentexec.Invocation, wire []byte) string {
 	default:
 		contract += "- The request role is unsupported; return incomplete with empty arrays and explain the limitation in uncertainty.\n"
 	}
-	return "Implement/assess the supplied Host invocation in this real workspace using ordinary project tools and guidance.\n" + contract + "\nInvocation:\n" + string(wire)
+	return "Implement/assess the supplied Host invocation in this real workspace using ordinary project tools and guidance.\n" +
+		"Use a fresh temporary directory you own under the inherited OS temporary directory for test scratch and caches; clean it up when finished. Review and verification must leave repository artifacts unchanged.\n" +
+		contract + "\nInvocation:\n" + string(wire)
 }
 
 func (s *session) save() error {
@@ -371,13 +376,23 @@ func (s *session) bind(r threadResponse) error {
 		return errors.New("effective approval/sandbox settings unavailable")
 	}
 	var effectiveSandbox struct {
-		Type string `json:"type"`
+		Type                string   `json:"type"`
+		WritableRoots       []string `json:"writableRoots"`
+		NetworkAccess       bool     `json:"networkAccess"`
+		ExcludeTmpdirEnvVar bool     `json:"excludeTmpdirEnvVar"`
+		ExcludeSlashTmp     bool     `json:"excludeSlashTmp"`
 	}
 	if json.Unmarshal(r.Sandbox, &effectiveSandbox) == nil {
 		s.effectiveSandboxType = effectiveSandbox.Type
 	}
 	if s.a.config.PermissionProfile != "" && (r.ActivePermissionProfile == nil || r.ActivePermissionProfile.ID != s.a.config.PermissionProfile) {
 		return errors.New("explicit permission profile was not confirmed by server")
+	}
+	if s.a.config.PermissionProfile == ":workspace" {
+		var approval string
+		if json.Unmarshal(r.ApprovalPolicy, &approval) != nil || approval != "never" || s.effectiveSandboxType != "workspaceWrite" || len(effectiveSandbox.WritableRoots) != 0 || effectiveSandbox.NetworkAccess || effectiveSandbox.ExcludeTmpdirEnvVar || effectiveSandbox.ExcludeSlashTmp {
+			return errors.New("owned workspace startup settings were not confirmed by server")
+		}
 	}
 	s.h.ThreadID = r.Thread.ID
 	s.h.SessionID = r.Thread.SessionID
