@@ -1,0 +1,468 @@
+.gitignore:1: trailing whitespace.
++__pycache__/
+.gitignore:2: trailing whitespace.
++*.pyc
+.gitignore:3: trailing whitespace.
++.venv/
+.gitignore:4: trailing whitespace.
++.scratch/
+AGENTS.md:1: trailing whitespace.
++# Project rules
+AGENTS.md:2: trailing whitespace.
++
+AGENTS.md:3: trailing whitespace.
++Read README.md, BACKLOG.md, STATIONS.json and QUALITY.md. The current station is .study/station.json. All requirements are public from the outset; implement only the released station, then return so the fixed dispatcher can retain its state. Work on a feature branch, preserve existing behavior, add meaningful tests, and merge finished work into this repository's main. This main is isolated; never push or change another repository.
+AGENTS.md:4: trailing whitespace.
++
+AGENTS.md:5: trailing whitespace.
++Decide routine implementation details yourself. You may plan, document, use ordinary tools, delegate, review and repair within the common cell time. Every executing helper and reviewer must use gpt-6-luna with high reasoning; inherit that configuration and record any departure rather than silently changing it. Use at most four simultaneous helpers and depth two.
+AGENTS.md:6: trailing whitespace.
++
+AGENTS.md:7: trailing whitespace.
++Use only this project, its declared tool installation and its own temporary files. Do not read past study results, other cells, chats, personal memory, private evaluation materials or global process/agent inventories. Shared host rights do not make that an OS boundary. Report unexpected foreign exposure and stop. Do not inspect credentials or change global tool settings.
+AGENTS.md:8: trailing whitespace.
++
+AGENTS.md:9: trailing whitespace.
++Keep a concise WORKLOG.md: work item, checks, failures, repairs, reviews, model/document changes if applicable, merge outcome and unresolved decisions. Keep code, tests and readable documentation consistent. No predetermined architecture is required.
+AGENTS.md:10: trailing whitespace.
++
+AGENTS.md:11: trailing whitespace.
++At each station handoff write .study/completion.json with station equal to the released station ID, status "complete" or "blocked", completed work-item IDs, and brief remaining issues. Commit it with the work. This is completion metadata, not a quality verdict. An interrupted run resumes from this repository and its own session. Before every commit run git diff --cached --check immediately. WORKLOG.md may point to PROGRESS.md rather than duplicate it.
+AGENTS.md:12: trailing whitespace.
++
+AGENTS.md:13: trailing whitespace.
++The third station requires actual collaboration by at least two executing agents on independent work groups, with overlapping work intervals and integrated contributions. Choose your own native planning, prompts, roles and branches. Record actual agent IDs, requested and observed model/effort where available, start/end times, contribution/merge SHAs, conflict handling and reviews in TEAMWORK.md; retain native receipts where available. A request for parallelism alone is not completion. If your installed product cannot support this, report the missing capability rather than imitate a team. The dispatcher supplies no semantic help.
+BACKLOG.md:1: trailing whitespace.
++# Public trajectory: Roombook
+BACKLOG.md:2: trailing whitespace.
++Only .study/station.json releases work. All requirements are public. Each item includes tests/docs, freely chosen implementation and integration into isolated main.
+BACKLOG.md:3: trailing whitespace.
++
+BACKLOG.md:4: trailing whitespace.
++## S1: one item
+BACKLOG.md:5: trailing whitespace.
++- R01: Implement README book/list: validation, half-open overlap, sorting, IDs, durable state and errors without mutation. No cancel/summary yet.
+BACKLOG.md:6: trailing whitespace.
++
+BACKLOG.md:7: trailing whitespace.
++## S2: three items
+BACKLOG.md:8: trailing whitespace.
++- R02 (R01): README cancel: idempotence, missing ID, history and freed interval.
+BACKLOG.md:9: trailing whitespace.
++- R03 (R01): README summary: active-only counts/exact minutes, lexical rooms.
+BACKLOG.md:10: trailing whitespace.
++- R04 (R02,R03): integrate regression tests and ordinary run/failure/state/limitation docs.
+BACKLOG.md:11: trailing whitespace.
++
+BACKLOG.md:12: trailing whitespace.
++## S3: seven items, actual team station
+BACKLOG.md:13: trailing whitespace.
++At least two executing agents must overlap on independent groups and integrate contributions. Choose native roles/prompts/planning/branches yourself; retain TEAMWORK.md with identities/intervals/SHAs/merges/conflicts.
+BACKLOG.md:14: trailing whitespace.
++- R05 (R04; query group): list --status active|canceled, preserving unfiltered ordering; compose with --room.
+BACKLOG.md:15: trailing whitespace.
++- R06 (R04; export group): export --csv PATH writes UTF-8 CSV header id,room,start,end,title,status, in list order, with comma/newline quoting, returns {"exported":COUNT}, never changes DB; destination errors fail clearly.
+BACKLOG.md:16: trailing whitespace.
++- R07 (R04; reporting group): summary --room NAME selects normalized case-sensitive room; unknown gives rooms=[]; unfiltered behavior unchanged.
+BACKLOG.md:17: trailing whitespace.
++- R08 (R05): test status/room combinations, unknown rooms and stable order across processes.
+BACKLOG.md:18: trailing whitespace.
++- R09 (R06): test CSV escaping, empty export/canceled history, DB nonmutation and output failures.
+BACKLOG.md:19: trailing whitespace.
++- R10 (R07): test filtered counts/minutes after cancel/adjacent bookings.
+BACKLOG.md:20: trailing whitespace.
++- R11 (R08,R09,R10): integrate all groups, regression/docs and actual team/merge/conflict evidence. No prescribed architecture or allocation recipe.
+BACKLOG.md:21: trailing whitespace.
++
+BACKLOG.md:22: trailing whitespace.
++## S4: one final domain rename
+BACKLOG.md:23: trailing whitespace.
++- R12 (R11): Change active domain term reservation to booking. Default list becomes {"bookings":[...]}; active code/tests/docs/config and Markitect model/views consistently use booking. Existing commands book/list/cancel/summary/export, returned record fields and raw stored JSON remain readable/compatible, without rewriting on read. For one compatibility period list --legacy returns {"reservations":[...]} with identical records, composable with room/status. Explain compatibility before implementation; test both interfaces on pre-change data and every behavior. Historical logs and deliberate legacy aliases are permitted; grep alone is not acceptance.
+BACKLOG.md:24: trailing whitespace.
++
+BACKLOG.md:25: trailing whitespace.
++12 items, 1/3/7/1 waves, one longitudinal Greenfield case. Do not implement unreleased waves.
+QUALITY.md:1: trailing whitespace.
++# Shared acceptance and quality criteria
+QUALITY.md:2: trailing whitespace.
++
+QUALITY.md:3: trailing whitespace.
++Implement the CLI behavior specified in README.md and BACKLOG.md. All business requirements are public. Tests exercise real CLI invocations on fresh temporary data, then a second process on the same data. Report not-run and evaluation errors separately from application failures. A passing test set is finite evidence, not human acceptance.
+QUALITY.md:4: trailing whitespace.
++
+QUALITY.md:5: trailing whitespace.
++The independent final assessor examines the frozen main commit, checks the declared requirements and legacy behavior, executes its own additional boundary/regression cases drawn only from these public requirements, and reviews source and documentation. It receives no implementer transcript, earlier solution or other-cell result. It does not fix the candidate.
+QUALITY.md:6: trailing whitespace.
++
+QUALITY.md:7: trailing whitespace.
++Common result dimensions: function/rules, regression and durable state, internal and documentation consistency, code quality and changeability, tests and operational documentation, architectural drift and continuation. Give concrete PASS/FAIL/NOT RUN/unknown findings with evidence, not a freely weighted aggregate. Critical required behavior failure or missing main integration prevents complete success.
+QUALITY.md:8: trailing whitespace.
++
+QUALITY.md:9: trailing whitespace.
++Method conformance is separate: truthful source/check binding, appropriate change control and review, reproducible continuation, honest failure/effort reporting, and for Markitect its genuine model/realization/check/document/Apply consistency. Conventional does not owe a Markitect model or ontology. Method artifacts alone earn no functional-quality credit.
+QUALITY.md:10: trailing whitespace.
++
+QUALITY.md:11: trailing whitespace.
++Record setup, model preparation/upkeep, implementation, tests, failed attempts, repairs, reviews, merge and oversight. Record known elapsed intervals and real native/product token receipts with scope and parent/child identity. Do not sum overlapping intervals or duplicate receipts. Missing provider usage/billing/active human time remains unknown and does not invalidate functional checks. No comparison winner follows from one small pair.
+QUALITY.md:12: trailing whitespace.
++
+QUALITY.md:13: trailing whitespace.
++Assess each retained station against its released requirements, then the final rename across active behavior/interfaces, implementation, tests, documentation/config and, for Markitect, canonical model/generated views. Retain declared compatible aliases and migration support; historical names are not automatically errors. Inspect behavior and references, not just text matches. Classify known-rule findings by rule, severity and affected scope, whether detected/repaired/remaining, and false alarms or unverifiable rules separately. Report actual team overlap/starts/contributions/merges versus unknown observations. Four stations and twelve items in one project remain one longitudinal case, not twelve independent replications.
+README.md:1: trailing whitespace.
++# Roombook
+README.md:2: trailing whitespace.
++
+README.md:3: trailing whitespace.
++A small local room reservation CLI. Greenfield: no application implementation is supplied. Use Python 3.13 standard library, no service, network, package installation or framework requirement. The public contract is a process invocation, allowing free internal structure:
+README.md:4: trailing whitespace.
++
+README.md:5: trailing whitespace.
++`python -B app.py --db PATH COMMAND ...`
+README.md:6: trailing whitespace.
++
+README.md:7: trailing whitespace.
++Each successful command writes one JSON object to stdout and exits 0. Invalid input or a business conflict writes `{"error":"..."}` to stdout, exits 2, and leaves stored state unchanged. Error wording is free. Missing data file represents empty state; malformed existing data fails clearly without overwriting it. Use a durable UTF-8 JSON file and an atomic replace on successful mutation. A later process must observe committed data.
+README.md:8: trailing whitespace.
++
+README.md:9: trailing whitespace.
++Commands:
+README.md:10: trailing whitespace.
++
+README.md:11: trailing whitespace.
++- `book --room NAME --start YYYY-MM-DDTHH:MMZ --end YYYY-MM-DDTHH:MMZ --title TEXT`: returns a reservation with integer `id`, room, start, end, title and `status:"active"`. Strip room/title surrounding whitespace; nonempty required. Timestamps are exactly UTC minutes and end must be later than start. IDs start at 1, increase and are never reused.
+README.md:12: trailing whitespace.
++- `list [--room NAME]`: returns `{"reservations":[...]}` sorted by start then id, including canceled records. Room identities are case-sensitive after trimming. A room filter uses the same normalization.
+README.md:13: trailing whitespace.
++- `cancel --id INTEGER`: returns the existing record with `status:"canceled"`. Canceling a canceled record is an idempotent success; missing ID fails.
+README.md:14: trailing whitespace.
++- `summary`: returns `{"rooms":[{"room":NAME,"active":COUNT,"minutes":TOTAL},...]}` in lexical room order. Count only active reservations and sum their exact minute durations. Empty state gives an empty list.
+README.md:15: trailing whitespace.
++
+README.md:16: trailing whitespace.
++For one room, active reservations must not overlap; intervals are half-open, so an end equal to the next start is permitted. Other rooms do not conflict. Canceled reservations no longer block the room. Do not silently reinterpret timezone offsets or invalid calendar values. Concurrent independent writers are outside this small contract; state that limitation rather than claiming a distributed booking system.
+README.md:17: trailing whitespace.
++
+README.md:18: trailing whitespace.
++The backlog is in BACKLOG.md. Keep README and meaningful tests current; document run/test commands and data behavior. Merge completed work to this isolated repository's main.
+STATIONS.json:1: trailing whitespace.
++{
+STATIONS.json:2: trailing whitespace.
++  "schema": 1,
+STATIONS.json:3: trailing whitespace.
++  "case": "roombook",
+STATIONS.json:4: trailing whitespace.
++  "totalItems": 12,
+STATIONS.json:5: trailing whitespace.
++  "stations": [
+STATIONS.json:6: trailing whitespace.
++    {
+STATIONS.json:7: trailing whitespace.
++      "id": "S1",
+STATIONS.json:8: trailing whitespace.
++      "items": [
+STATIONS.json:9: trailing whitespace.
++        "R01"
+STATIONS.json:10: trailing whitespace.
++      ],
+STATIONS.json:11: trailing whitespace.
++      "requiresTeam": false
+STATIONS.json:12: trailing whitespace.
++    },
+STATIONS.json:13: trailing whitespace.
++    {
+STATIONS.json:14: trailing whitespace.
++      "id": "S2",
+STATIONS.json:15: trailing whitespace.
++      "items": [
+STATIONS.json:16: trailing whitespace.
++        "R02",
+STATIONS.json:17: trailing whitespace.
++        "R03",
+STATIONS.json:18: trailing whitespace.
++        "R04"
+STATIONS.json:19: trailing whitespace.
++      ],
+STATIONS.json:20: trailing whitespace.
++      "requiresTeam": false
+STATIONS.json:21: trailing whitespace.
++    },
+STATIONS.json:22: trailing whitespace.
++    {
+STATIONS.json:23: trailing whitespace.
++      "id": "S3",
+STATIONS.json:24: trailing whitespace.
++      "items": [
+STATIONS.json:25: trailing whitespace.
++        "R05",
+STATIONS.json:26: trailing whitespace.
++        "R06",
+STATIONS.json:27: trailing whitespace.
++        "R07",
+STATIONS.json:28: trailing whitespace.
++        "R08",
+STATIONS.json:29: trailing whitespace.
++        "R09",
+STATIONS.json:30: trailing whitespace.
++        "R10",
+STATIONS.json:31: trailing whitespace.
++        "R11"
+STATIONS.json:32: trailing whitespace.
++      ],
+STATIONS.json:33: trailing whitespace.
++      "requiresTeam": true
+STATIONS.json:34: trailing whitespace.
++    },
+STATIONS.json:35: trailing whitespace.
++    {
+STATIONS.json:36: trailing whitespace.
++      "id": "S4",
+STATIONS.json:37: trailing whitespace.
++      "items": [
+STATIONS.json:38: trailing whitespace.
++        "R12"
+STATIONS.json:39: trailing whitespace.
++      ],
+STATIONS.json:40: trailing whitespace.
++      "requiresTeam": false
+STATIONS.json:41: trailing whitespace.
++    }
+STATIONS.json:42: trailing whitespace.
++  ]
+STATIONS.json:43: trailing whitespace.
++}
+checks/acceptance.py:1: trailing whitespace.
++"""Published finite CLI contract checks. Run per frozen station; never a complete verdict."""
+checks/acceptance.py:2: trailing whitespace.
++import argparse
+checks/acceptance.py:3: trailing whitespace.
++import csv
+checks/acceptance.py:4: trailing whitespace.
++import json
+checks/acceptance.py:5: trailing whitespace.
++from pathlib import Path
+checks/acceptance.py:6: trailing whitespace.
++import subprocess
+checks/acceptance.py:7: trailing whitespace.
++import sys
+checks/acceptance.py:8: trailing whitespace.
++import tempfile
+checks/acceptance.py:9: trailing whitespace.
++
+checks/acceptance.py:10: trailing whitespace.
++
+checks/acceptance.py:11: trailing whitespace.
++def assess(repo, case, station):
+checks/acceptance.py:12: trailing whitespace.
++    findings = []
+checks/acceptance.py:13: trailing whitespace.
++    with tempfile.TemporaryDirectory(prefix="luna-public-check-") as folder:
+checks/acceptance.py:14: trailing whitespace.
++        db = Path(folder) / "state.json"
+checks/acceptance.py:15: trailing whitespace.
++        def call(*args, error=False):
+checks/acceptance.py:16: trailing whitespace.
++            before = db.read_bytes() if db.exists() else None
+checks/acceptance.py:17: trailing whitespace.
++            proc = subprocess.run([sys.executable, "-B", str(repo / "app.py"), "--db", str(db), *args],
+checks/acceptance.py:18: trailing whitespace.
++                                  capture_output=True, text=True, timeout=15, cwd=repo)
+checks/acceptance.py:19: trailing whitespace.
++            value = json.loads(proc.stdout)
+checks/acceptance.py:20: trailing whitespace.
++            assert proc.returncode == (2 if error else 0), (args, proc.returncode, proc.stderr)
+checks/acceptance.py:21: trailing whitespace.
++            if error:
+checks/acceptance.py:22: trailing whitespace.
++                assert isinstance(value, dict) and "error" in value
+checks/acceptance.py:23: trailing whitespace.
++                assert (db.read_bytes() if db.exists() else None) == before
+checks/acceptance.py:24: trailing whitespace.
++            return value
+checks/acceptance.py:25: trailing whitespace.
++        def check(name, body):
+checks/acceptance.py:26: trailing whitespace.
++            try:
+checks/acceptance.py:27: trailing whitespace.
++                body()
+checks/acceptance.py:28: trailing whitespace.
++                findings.append({"check": name, "status": "PASS"})
+checks/acceptance.py:29: trailing whitespace.
++            except Exception as error:
+checks/acceptance.py:30: trailing whitespace.
++                findings.append({"check": name, "status": "FAIL", "detail": str(error)})
+checks/acceptance.py:31: trailing whitespace.
++        def expect(actual, wanted):
+checks/acceptance.py:32: trailing whitespace.
++            assert actual == wanted, (actual, wanted)
+checks/acceptance.py:33: trailing whitespace.
++        def malformed():
+checks/acceptance.py:34: trailing whitespace.
++            saved = db.read_bytes() if db.exists() else None
+checks/acceptance.py:35: trailing whitespace.
++            try:
+checks/acceptance.py:36: trailing whitespace.
++                db.write_text("{broken", encoding="utf-8")
+checks/acceptance.py:37: trailing whitespace.
++                call("list", error=True)
+checks/acceptance.py:38: trailing whitespace.
++            finally:
+checks/acceptance.py:39: trailing whitespace.
++                if saved is None:
+checks/acceptance.py:40: trailing whitespace.
++                    db.unlink(missing_ok=True)
+checks/acceptance.py:41: trailing whitespace.
++                else:
+checks/acceptance.py:42: trailing whitespace.
++                    db.write_bytes(saved)
+checks/acceptance.py:43: trailing whitespace.
++        if case == "roombook":
+checks/acceptance.py:44: trailing whitespace.
++            key = "bookings" if station == 4 else "reservations"
+checks/acceptance.py:45: trailing whitespace.
++            args = ("--room", " A ", "--start", "2026-10-09T10:00Z", "--end", "2026-10-09T11:00Z", "--title", "Meet,\nteam")
+checks/acceptance.py:46: trailing whitespace.
++            check("empty", lambda: expect(call("list"), {key: []}))
+checks/acceptance.py:47: trailing whitespace.
++            check("create-normalize-and-restart", lambda: (call("book", *args), expect(len(call("list")[key]), 1),
+checks/acceptance.py:48: trailing whitespace.
++                                                          expect(call("list")[key][0]["room"], "A")))
+checks/acceptance.py:49: trailing whitespace.
++            check("overlap-no-mutation", lambda: call("book", *args, error=True))
+checks/acceptance.py:50: trailing whitespace.
++            check("adjacent-interval", lambda: call("book", "--room", "A", "--start", "2026-10-09T11:00Z",
+checks/acceptance.py:51: trailing whitespace.
++                                                   "--end", "2026-10-09T11:30Z", "--title", "Next"))
+checks/acceptance.py:52: trailing whitespace.
++            check("invalid-calendar", lambda: call("book", "--room", "B", "--start", "2026-02-30T10:00Z",
+checks/acceptance.py:53: trailing whitespace.
++                                                   "--end", "2026-03-01T10:00Z", "--title", "Bad", error=True))
+checks/acceptance.py:54: trailing whitespace.
++            if station >= 2:
+checks/acceptance.py:55: trailing whitespace.
++                check("cancel-idempotence", lambda: expect(call("cancel", "--id", "1"), call("cancel", "--id", "1")))
+checks/acceptance.py:56: trailing whitespace.
++                check("cancel-frees-room-and-no-id-reuse", lambda: expect(call("book", *args)["id"], 3))
+checks/acceptance.py:57: trailing whitespace.
++                check("active-report", lambda: expect(call("summary"), {"rooms": [{"room": "A", "active": 2, "minutes": 90}]}))
+checks/acceptance.py:58: trailing whitespace.
++            if station >= 3:
+checks/acceptance.py:59: trailing whitespace.
++                check("status-room-filter", lambda: expect(len(call("list", "--status", "canceled", "--room", " A ")[key]), 1))
+checks/acceptance.py:60: trailing whitespace.
++                check("unknown-room-report", lambda: expect(call("summary", "--room", "Unknown"), {"rooms": []}))
+checks/acceptance.py:61: trailing whitespace.
++                def export():
+checks/acceptance.py:62: trailing whitespace.
++                    before = db.read_bytes()
+checks/acceptance.py:63: trailing whitespace.
++                    path = Path(folder) / "out.csv"
+checks/acceptance.py:64: trailing whitespace.
++                    expect(call("export", "--csv", str(path)), {"exported": 3})
+checks/acceptance.py:65: trailing whitespace.
++                    with path.open(encoding="utf-8", newline="") as handle:
+checks/acceptance.py:66: trailing whitespace.
++                        rows = list(csv.DictReader(handle))
+checks/acceptance.py:67: trailing whitespace.
++                    expect(rows[0]["title"], "Meet,\nteam")
+checks/acceptance.py:68: trailing whitespace.
++                    expect(db.read_bytes(), before)
+checks/acceptance.py:69: trailing whitespace.
++                check("export-quotes-history-no-db-mutation", export)
+checks/acceptance.py:70: trailing whitespace.
++            if station == 4:
+checks/acceptance.py:71: trailing whitespace.
++                check("intentional-legacy-list", lambda: expect(call("list", "--legacy")["reservations"], call("list")["bookings"]))
+checks/acceptance.py:72: trailing whitespace.
++        else:
+checks/acceptance.py:73: trailing whitespace.
++            key = "entries" if station == 4 else "books"
+checks/acceptance.py:74: trailing whitespace.
++            check("legacy-add-restart", lambda: (call("add", "--id", " a ", "--title", "Story,\npart",
+checks/acceptance.py:75: trailing whitespace.
++                                                     "--author", " Writer ", "--pages", "120"),
+checks/acceptance.py:76: trailing whitespace.
++                                                 expect(call("list")[key][0]["id"], "a")))
+checks/acceptance.py:77: trailing whitespace.
++            check("duplicate-no-mutation", lambda: call("add", "--id", "a", "--title", "X", "--author", "Y", "--pages", "1", error=True))
+checks/acceptance.py:78: trailing whitespace.
++            check("finish-idempotence", lambda: expect(call("finish", "--id", "a"), call("finish", "--id", "a")))
+checks/acceptance.py:79: trailing whitespace.
++            check("status-filter-regression", lambda: expect(call("list", "--status", "unread"), {key: []}))
+checks/acceptance.py:80: trailing whitespace.
++            if station >= 2:
+checks/acceptance.py:81: trailing whitespace.
++                path = Path(folder) / "in.csv"
+checks/acceptance.py:82: trailing whitespace.
++                path.write_text("id,title,author,pages\nb,Second,Writer,20\n", encoding="utf-8")
+checks/acceptance.py:83: trailing whitespace.
++                check("valid-import", lambda: expect(call("import", "--csv", str(path)), {"imported": 1}))
+checks/acceptance.py:84: trailing whitespace.
++                path_bad = Path(folder) / "bad.csv"
+checks/acceptance.py:85: trailing whitespace.
++                path_bad.write_text("id,title,author,pages\nc,Third,Writer,20\na,Duplicate,Writer,30\n", encoding="utf-8")
+checks/acceptance.py:86: trailing whitespace.
++                check("import-all-or-nothing", lambda: call("import", "--csv", str(path_bad), error=True))
+checks/acceptance.py:87: trailing whitespace.
++                count_key = "entries" if station == 4 else "books"
+checks/acceptance.py:88: trailing whitespace.
++                check("summary-count-pages", lambda: expect(call("summary"), {"authors": [{"author": "Writer", count_key: 2, "finished": 1, "pages": 140}]}))
+checks/acceptance.py:89: trailing whitespace.
++            if station >= 3:
+checks/acceptance.py:90: trailing whitespace.
++                check("composed-list-filter", lambda: expect(len(call("list", "--author", " Writer ", "--status", "finished")[key]), 1))
+checks/acceptance.py:91: trailing whitespace.
++                check("unknown-author-summary", lambda: expect(call("summary", "--author", "unknown"), {"authors": []}))
+checks/acceptance.py:92: trailing whitespace.
++                def export():
+checks/acceptance.py:93: trailing whitespace.
++                    before = db.read_bytes()
+checks/acceptance.py:94: trailing whitespace.
++                    path_out = Path(folder) / "out.csv"
+checks/acceptance.py:95: trailing whitespace.
++                    expect(call("export", "--csv", str(path_out)), {"exported": 2})
+checks/acceptance.py:96: trailing whitespace.
++                    with path_out.open(encoding="utf-8", newline="") as handle:
+checks/acceptance.py:97: trailing whitespace.
++                        rows = list(csv.DictReader(handle))
+checks/acceptance.py:98: trailing whitespace.
++                    expect(rows[0]["title"], "Story,\npart")
+checks/acceptance.py:99: trailing whitespace.
++                    expect(rows[0]["status"], "finished")
+checks/acceptance.py:100: trailing whitespace.
++                    expect(db.read_bytes(), before)
+checks/acceptance.py:101: trailing whitespace.
++                check("export-quotes-status-no-db-mutation", export)
+checks/acceptance.py:102: trailing whitespace.
++            if station == 4:
+checks/acceptance.py:103: trailing whitespace.
++                check("intentional-legacy-list", lambda: expect(call("list", "--legacy")["books"], call("list")["entries"]))
+checks/acceptance.py:104: trailing whitespace.
++                check("intentional-legacy-summary", lambda: expect(call("summary", "--legacy")["authors"][0]["books"], 2))
+checks/acceptance.py:105: trailing whitespace.
++        check("malformed-db-preserved", malformed)
+checks/acceptance.py:106: trailing whitespace.
++    return {"case": case, "station": station, "findings": findings,
+checks/acceptance.py:107: trailing whitespace.
++            "limitation": "Finite public checks; assessor must add meaningful cases and semantic review. Cascading failures retain individual evidence."}
+checks/acceptance.py:108: trailing whitespace.
++
+checks/acceptance.py:109: trailing whitespace.
++
+checks/acceptance.py:110: trailing whitespace.
++if __name__ == "__main__":
+checks/acceptance.py:111: trailing whitespace.
++    parser = argparse.ArgumentParser()
+checks/acceptance.py:112: trailing whitespace.
++    parser.add_argument("--repo", type=Path, default=Path.cwd())
+checks/acceptance.py:113: trailing whitespace.
++    parser.add_argument("--case", choices=["roombook", "readinglog"], required=True)
+checks/acceptance.py:114: trailing whitespace.
++    parser.add_argument("--station", type=int, choices=range(1, 5), required=True)
+checks/acceptance.py:115: trailing whitespace.
++    args = parser.parse_args()
+checks/acceptance.py:116: trailing whitespace.
++    result = assess(args.repo.resolve(), args.case, args.station)
+checks/acceptance.py:117: trailing whitespace.
++    print(json.dumps(result, indent=2, ensure_ascii=False))
+checks/acceptance.py:118: trailing whitespace.
++    sys.exit(1 if any(f["status"] != "PASS" for f in result["findings"]) else 0)

@@ -1,0 +1,9 @@
+{
+  "batch": 1,
+  "nestExit": 1,
+  "baselineExit": 0,
+  "oldschoolAstErrors": 0,
+  "modelActors": 0,
+  "productBuilds": 0,
+  "purpose": "Fake local processes/Git fixtures; original Brownfield add/list baseline only, no case evaluation or trial"
+}

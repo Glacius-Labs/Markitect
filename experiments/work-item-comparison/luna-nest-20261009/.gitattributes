@@ -1,0 +1,4 @@
+# Raw source imports, receipts and captured logs retain their exact bytes/hashes.
+evidence/** -text -diff
+# Public prepared inputs use canonical LF.
+public/** text eol=lf

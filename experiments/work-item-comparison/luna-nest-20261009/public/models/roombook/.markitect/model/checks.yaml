@@ -1,0 +1,16 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Check
+metadata:
+  name: project-tests
+  namespace: ""
+purpose: "Runs meaningful maintained CLI regression tests"
+spec:
+  command: [python, -B, -m, unittest, discover, -s, tests, -v]
+  uses:
+    - namespace: ""
+      name: reservation
+    - namespace: ""
+      name: booking-contract
+    - namespace: ""
+      name: durable-state
+  limitation: "Finite tests do not establish exhaustive semantics, billing, OS isolation, team execution or human acceptance."

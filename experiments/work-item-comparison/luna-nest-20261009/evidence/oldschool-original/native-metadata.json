@@ -1,0 +1,22 @@
+{
+  "package_id": "oldschool-luna-nest-contract-20261009",
+  "observed_date": "2026-10-09",
+  "npm_package": "@openai/codex",
+  "npm_version": "0.130.0",
+  "native_package_version": "0.130.0-win32-x64",
+  "cli_version_stdout": "codex-cli 0.130.0",
+  "powershell_version": "7.6.5",
+  "native_executable": "C:/Users/Consiliari/AppData/Roaming/npm/node_modules/@openai/codex/node_modules/@openai/codex-win32-x64/vendor/x86_64-pc-windows-msvc/codex/codex.exe",
+  "native_executable_bytes": 235079472,
+  "native_sha256": "280CB1C4E3375D94DBDCBA1A191F4F6ADBF73C293BE1E4F16C74B006662B9C54",
+  "npm_package_json_sha256": "41BCF2DCA75FA66CDB3A313E87F76F4B6C462FD2FAEB01AD2E92E274C9D9C259",
+  "input_mandate_sha256_at_first_read": "A78237D9CB8740338A922ADA89913040F1341AF7AD8314C7D85E02DB230F7A1B",
+  "later_mandate_clarification": "Overseer explicitly allowed ordinary CLI --help/--version; no Actor/Provider/Appserver probes, tests or child agents for Oldschool.",
+  "non_model_cli_commands_executed": ["codex.exe --version", "codex.exe exec --help"],
+  "requested_model": "gpt-6-luna",
+  "requested_reasoning": "high",
+  "native_actor_started": false,
+  "launcher_executed": false,
+  "tests_builds_installs_or_children_started": false,
+  "runtime_profile_and_child_receipts_verified": false
+}

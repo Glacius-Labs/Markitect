@@ -1,0 +1,10 @@
+{
+  "rootForwardedUtc": "2026-10-09T04:17:37.5467050+00:00",
+  "originalManifestSha256": "2cc32e20a17fde88fb852ade61046a0adebc870a3cd9bdad1949736157fd576b",
+  "verifiedFiles": 7,
+  "originalLauncherExecuted": false,
+  "originalUnboundedWaitFinding": "Timeout and catch WaitForExit() must become bounded in adapted copy",
+  "activeEntryDecision": "Use normal codex exec/resume through the minimal nest wrapper, without a forced final JSON response schema; retain Oldschool contribution and corrected bounded PowerShell alternate entry. Exact native versions remain per-arm.",
+  "oldschoolNativeVersion": "0.130.0",
+  "oldschoolNativeSha256": "280cb1c4e3375d94dbdcba1a191f4f6adbf73c293be1e4f16c74b006662b9c54"
+}

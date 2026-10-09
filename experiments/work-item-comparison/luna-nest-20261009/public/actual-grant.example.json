@@ -1,0 +1,17 @@
+{
+  "executionAuthorized": false,
+  "grantId": "UNALLOCATED",
+  "cell": "roombook/conventional",
+  "model": "gpt-6-luna",
+  "reasoning": "high",
+  "preparedCommit": "OWNER_SEALED_SHA",
+  "executableSha256": "OBSERVED_NATIVE_SHA",
+  "nativeHome": "FRESH_EXTERNAL_CODEX_HOME",
+  "nativeHomeConfigSha256": "SEALED_CONFIG_SHA",
+  "nativeConfigurationReviewed": false,
+  "freshContextConfirmed": false,
+  "maxCellWallSeconds": 7200,
+  "maxImplementationSessions": 8,
+  "notAfterUtc": "ACTUAL_WINDOW_NOT_ASSIGNED",
+  "markitectReadinessReceipt": null
+}

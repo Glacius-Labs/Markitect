@@ -1,0 +1,34 @@
+{
+  "case": null,
+  "arm": null,
+  "stationResults": [
+    {
+      "station": null,
+      "mainCommit": null,
+      "scope": "requirements released through this station",
+      "completedItems": [],
+      "openItems": [],
+      "mainIntegration": "unknown",
+      "checks": [],
+      "findings": [
+        {"rule": null, "severity": null, "scope": null, "status": "unknown", "detectedBy": null,
+         "repairCommit": null, "remaining": null, "falseAlarm": null, "evidence": []}
+      ],
+      "team": {"requestedAgents": null, "observedExecutingStarts": null, "actualOverlapSeconds": null,
+               "contributionCommits": [], "mergeCommits": [], "conflicts": [], "evidence": []},
+      "dimensions": {"function": "unknown", "regression": "unknown", "consistency": "unknown",
+                     "codeQuality": "unknown", "changeability": "unknown", "docs": "unknown",
+                     "drift": "unknown", "continuation": "unknown"},
+      "methodConformance": "unknown"
+    }
+  ],
+  "finalRename": {"activeRepresentations": [], "compatibleExceptions": [], "prechangeDataTests": [],
+                  "modelAndViews": "not applicable for conventional; unknown for markitect until inspected"},
+  "effort": {"initialSetup": null, "initialModelPreparation": null, "modelUpkeep": null,
+             "implementation": null, "tests": null, "failuresAndRepair": null, "reviews": null,
+             "merge": null, "oversight": null, "contextResume": null,
+             "elapsedScope": "retain intervals; no sum of overlaps", "nativeReceipts": [],
+             "tokenTotals": null, "billingPriceBasis": null, "billingCost": null},
+  "limitations": ["one project trajectory, not independent station replications", "shared host is not OS isolation"],
+  "humanAcceptance": "not established"
+}

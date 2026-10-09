@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: reading-contract
+  namespace: ""
+purpose: "reading-contract for readinglog"
+spec:
+  category: behavior
+  description: "Released S1 adds idempotent finish and status filtering to the existing add/list CLI; preserve no-filter insertion order and all baseline semantics in README. Future waves in BACKLOG remain visible but unreleased."
+  public: true
+  uses: []
+  requires: []

@@ -1,0 +1,242 @@
+[
+  {
+    "path": "public/actual-grant.example.json",
+    "sha256": "508a8b177dae654b4444b82589b08ea5fb27cc3126ea055e0af7cd89f9b1e2eb",
+    "bytes": 547
+  },
+  {
+    "path": "public/cases/readinglog/app.py",
+    "sha256": "b66a2417b532e993710e5436864c3d58c3ebeb1d3dfab05fa1ef13f76c00dfd4",
+    "bytes": 2410
+  },
+  {
+    "path": "public/cases/readinglog/BACKLOG.md",
+    "sha256": "8536d87d6c6d74bbf5c131e4598a33d70ebf7c70cfc7803d0b87201975e04a5f",
+    "bytes": 2648
+  },
+  {
+    "path": "public/cases/readinglog/README.md",
+    "sha256": "ace63419db3d77338a91ffd14634c0516979e87df2bc177bc5bfceffd487b573",
+    "bytes": 2227
+  },
+  {
+    "path": "public/cases/readinglog/STATIONS.json",
+    "sha256": "180166b424693f6c8d0a4bc502b356b5786367cc23302be4b6a1a9737f361aac",
+    "bytes": 597
+  },
+  {
+    "path": "public/cases/readinglog/tests/test_baseline.py",
+    "sha256": "6a10ef1af13cc01f7e040796aacb8ecfbd5a619522fbfcebe81f40c646b4e6ab",
+    "bytes": 1373
+  },
+  {
+    "path": "public/cases/roombook/BACKLOG.md",
+    "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+    "bytes": 2566
+  },
+  {
+    "path": "public/cases/roombook/README.md",
+    "sha256": "47577f69f3443f4b761c5f8132c5f977748d110a19c0b0738695426eb5b9fa1d",
+    "bytes": 2276
+  },
+  {
+    "path": "public/cases/roombook/STATIONS.json",
+    "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+    "bytes": 595
+  },
+  {
+    "path": "public/common/.gitignore",
+    "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+    "bytes": 36
+  },
+  {
+    "path": "public/common/AGENTS.md",
+    "sha256": "fff473528e6290171b64b1cb2f8b16f7d18a0e8f556e22b354cbfb3222cfd8a7",
+    "bytes": 2540
+  },
+  {
+    "path": "public/common/checks/acceptance.py",
+    "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+    "bytes": 7554
+  },
+  {
+    "path": "public/common/QUALITY.md",
+    "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+    "bytes": 2687
+  },
+  {
+    "path": "public/conventional/AGENTS.fragment.md",
+    "sha256": "13defc09103507b30c8d131ffc27cdccfeef5fed1261b51924725916bfa8e9dc",
+    "bytes": 2870
+  },
+  {
+    "path": "public/conventional/contract.json",
+    "sha256": "9e19c26c5ec36d54227b575c6de6f89137d160009a9ef7d0bde1d10cff9c0119",
+    "bytes": 918
+  },
+  {
+    "path": "public/conventional/oldschool/AGENTS.md",
+    "sha256": "13defc09103507b30c8d131ffc27cdccfeef5fed1261b51924725916bfa8e9dc",
+    "bytes": 2870
+  },
+  {
+    "path": "public/conventional/oldschool/cell.example.json",
+    "sha256": "4080574ecba40970cd1bc2e85825bf56030849e3e628b820e9d47c503e243af9",
+    "bytes": 512
+  },
+  {
+    "path": "public/conventional/oldschool/config.toml",
+    "sha256": "2bbda7152eaaa0d94981c82e8f7b4221e83d17d701d5bfdb1c81b738bca31cad",
+    "bytes": 335
+  },
+  {
+    "path": "public/conventional/oldschool/final.schema.json",
+    "sha256": "e829daabeff53def17531f001b16a2631fd02986766cfd5f49cbb4c6107dce5b",
+    "bytes": 1381
+  },
+  {
+    "path": "public/conventional/oldschool/Invoke-NestTurn.ps1",
+    "sha256": "11c092c75ec753266b88b15c62052ff2e2c17e5c457a7f20d72212384369c509",
+    "bytes": 8785
+  },
+  {
+    "path": "public/conventional/oldschool/native-metadata.json",
+    "sha256": "68f28da1c9ef69573d6a4a477160069934e33da47b4f66c39308715c3e85625e",
+    "bytes": 1286
+  },
+  {
+    "path": "public/conventional/oldschool/README.md",
+    "sha256": "ee07bd1f860ba623e4444aa4aae012566db38ca6c74abdb4e7cc40071fb901c3",
+    "bytes": 10371
+  },
+  {
+    "path": "public/evaluation/assessor-prompt.txt",
+    "sha256": "7eec156128339344121c1040c3f6b76f1cc5545c239eb99b6462420163a72741",
+    "bytes": 1353
+  },
+  {
+    "path": "public/evaluation/report-template.json",
+    "sha256": "c05cf898e9ae80cedbf0fc203f4a37d561b4997ed39dc181e4739bd5cf010ede",
+    "bytes": 1794
+  },
+  {
+    "path": "public/models/readinglog/.markitect/model/book.yaml",
+    "sha256": "8e57b91d8c40af71f16a32e7ae9383793482ead3bb8ea715753a331ce2107716",
+    "bytes": 376
+  },
+  {
+    "path": "public/models/readinglog/.markitect/model/checks.yaml",
+    "sha256": "47cbb500698f8b840a63f1f829debb6e667fed722e499322569688901793fa4c",
+    "bytes": 506
+  },
+  {
+    "path": "public/models/readinglog/.markitect/model/delivery-rules.yaml",
+    "sha256": "9df8af5e987b69d61d370062ccf55fa305cb2dcc9846349b93b59fc2a7d5a2fb",
+    "bytes": 514
+  },
+  {
+    "path": "public/models/readinglog/.markitect/model/documentation.yaml",
+    "sha256": "c19c0d432218148b2e432b9c2bd2969dfe619bfcb4a4c614a9fa7daa18e003d4",
+    "bytes": 794
+  },
+  {
+    "path": "public/models/readinglog/.markitect/model/durable-state.yaml",
+    "sha256": "ec713d71f9231fad77fef42a2ff6583d2628845ad4b0dfde7cd005a72b0e196a",
+    "bytes": 478
+  },
+  {
+    "path": "public/models/readinglog/.markitect/model/implementation.yaml",
+    "sha256": "50cf3d10bc1031cd5c38aa33c8aa0cbf52aedd48adcc8f86e8d62d1cd4cacdc8",
+    "bytes": 590
+  },
+  {
+    "path": "public/models/readinglog/.markitect/model/manager.yaml",
+    "sha256": "83d66922106945607543147dddeba5fe12a195d8a10cf41da048239ad5200b5e",
+    "bytes": 394
+  },
+  {
+    "path": "public/models/readinglog/.markitect/model/reading-contract.yaml",
+    "sha256": "2d8dfc3eb5a4d956d00856e7451d96f5fe0cf913aa4359d9dc181bf86bbbe3a8",
+    "bytes": 460
+  },
+  {
+    "path": "public/models/readinglog/.markitect/model/tests.yaml",
+    "sha256": "0f51f6cd4b2ef7c805a7fe892dccb50bd077e8adb1c38429a633a5d838d0d8af",
+    "bytes": 577
+  },
+  {
+    "path": "public/models/readinglog/.markitect/project.yaml",
+    "sha256": "6f9f9b82c9dea8998ccbc6fde025fc0b1e9124df65e8eef6ce9bd877de6f81b7",
+    "bytes": 508
+  },
+  {
+    "path": "public/models/README.md",
+    "sha256": "52ca759be37d3f082321f33ccc1ab07eb5c104288849e0976535b5540ef92e9c",
+    "bytes": 1223
+  },
+  {
+    "path": "public/models/roombook/.markitect/model/booking-contract.yaml",
+    "sha256": "0dec869e40832bf901147a2f8393194a60b13f5316f153afe53f9823491b84bf",
+    "bytes": 483
+  },
+  {
+    "path": "public/models/roombook/.markitect/model/checks.yaml",
+    "sha256": "f2d0d08465ab8b320277487996c9a429df361fc8ee84450fe5fb9ab08d0e3c8a",
+    "bytes": 513
+  },
+  {
+    "path": "public/models/roombook/.markitect/model/delivery-rules.yaml",
+    "sha256": "34d800e7ece22c9099ce856babd90e8393a0541825d5b02e43737ee6f1c34af8",
+    "bytes": 512
+  },
+  {
+    "path": "public/models/roombook/.markitect/model/documentation.yaml",
+    "sha256": "6a421459c5c599da3d1ed997dfa766daa0fc8fc68d3e43a910db5e967a1d106b",
+    "bytes": 801
+  },
+  {
+    "path": "public/models/roombook/.markitect/model/durable-state.yaml",
+    "sha256": "b3b3bbb390d0e2ffff2259841220e30f114e3e58623d792011175273e8790f65",
+    "bytes": 467
+  },
+  {
+    "path": "public/models/roombook/.markitect/model/implementation.yaml",
+    "sha256": "fae7fa40749790dfa09faa32acff864cb7e1e621da382e6b5b350865fbc357fc",
+    "bytes": 597
+  },
+  {
+    "path": "public/models/roombook/.markitect/model/manager.yaml",
+    "sha256": "5e50d224debab56e3535110c4b8a990db5cf393b1ad88a91868a786396ec7e31",
+    "bytes": 377
+  },
+  {
+    "path": "public/models/roombook/.markitect/model/reservation.yaml",
+    "sha256": "6e2eb91d27c31d0a283b7f936497edb783e4ea543f99c0f630540b51b1988425",
+    "bytes": 394
+  },
+  {
+    "path": "public/models/roombook/.markitect/model/tests.yaml",
+    "sha256": "f44d85e5c3298ce90939317383de0e6713709bbaf13114f4e9e3fb748a20ccfb",
+    "bytes": 584
+  },
+  {
+    "path": "public/models/roombook/.markitect/project.yaml",
+    "sha256": "aa024390df2d29b7c4ed2807afc830c1afad92b6a0ebee56214b25117ff18ece",
+    "bytes": 513
+  },
+  {
+    "path": "public/native/config.toml",
+    "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+    "bytes": 281
+  },
+  {
+    "path": "public/nest.py",
+    "sha256": "67d28776ab87c5d998a20bd0e86dd5165adbe74a93b8266dddde741484561c64",
+    "bytes": 27076
+  },
+  {
+    "path": "public/README.md",
+    "sha256": "5f6f1a2b3a60d9b7926a6221bb6304d2409606a617b85f7ebb336cf064df2443",
+    "bytes": 8563
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "execution_authorized": false,
+  "grant_id": null,
+  "repository": null,
+  "evidence_root": null,
+  "codex_home": null,
+  "codex_exe": "C:/Users/Consiliari/AppData/Roaming/npm/node_modules/@openai/codex/node_modules/@openai/codex-win32-x64/vendor/x86_64-pc-windows-msvc/codex/codex.exe",
+  "native_sha256": "280CB1C4E3375D94DBDCBA1A191F4F6ADBF73C293BE1E4F16C74B006662B9C54",
+  "config_sha256": null,
+  "initial_main_sha": null,
+  "deadline_utc": null,
+  "max_outer_turns": null,
+  "max_turn_seconds": null
+}

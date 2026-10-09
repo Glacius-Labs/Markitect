@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: delivery-rules
+  namespace: ""
+purpose: "delivery-rules for readinglog"
+spec:
+  category: workflow
+  description: "Obey public AGENTS/QUALITY/BACKLOG and released .study/station.json; freely choose internal organization using actual native installation. Keep tests/docs/model/views consistent, only verified work merged to isolated main. Preserve unknown telemetry; all roles Luna High."
+  public: true
+  uses: []
+  requires: []

@@ -1,0 +1,14 @@
+{
+  "interfaceVersion": 1,
+  "owner": "Oldschool contribution via Overseer; Scientist common nest",
+  "status": "Oldschool contribution integrated; source prepared, mechanical gate failed in both authorized batches; NOT ADMITTED, actual profile execution untested",
+  "entry": "codex exec with project-local normal instructions and tools",
+  "model": "gpt-6-luna",
+  "reasoning": "high",
+  "fragment": "AGENTS.fragment.md",
+  "allowedContribution": ["ordinary project instructions", "native config declarations", "fixed continuation/closure observations"],
+  "excludedContribution": ["case solution", "oracle/private inputs", "product DTO repair", "additional prompter", "provider calls"],
+  "topLevelPromptOwner": "nest.py PROMPT, identical across arms",
+  "mechanicalDispatcherReads": ["own process/event receipts", ".study/completion.json", "Git metadata for freeze"],
+  "mechanicalDispatcherSourceReview": false
+}

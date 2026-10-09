@@ -1,0 +1,13 @@
+# In den pro Zelle vorbereiteten CODEX_HOME/config.toml übernehmen.
+# Bestehende Authentifizierung wird von Scientist vorbereitet, niemals mitgeloggt.
+model = "gpt-6-luna"
+model_reasoning_effort = "high"
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+
+[features]
+multi_agent = true
+
+[agents]
+default_subagent_model = "gpt-6-luna"
+default_subagent_reasoning_effort = "high"

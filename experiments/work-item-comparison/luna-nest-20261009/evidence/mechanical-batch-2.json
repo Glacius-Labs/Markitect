@@ -1,0 +1,12 @@
+{
+  "batch": 2,
+  "nestExit": 1,
+  "baselineExit": 0,
+  "oldschoolAstErrors": 0,
+  "caseActors": 0,
+  "productActors": 0,
+  "providerProbes": 0,
+  "fullTrials": 0,
+  "productBuilds": 0,
+  "qualification": "Mechanical local fixtures only. Source review separate and qualified, not product readiness."
+}

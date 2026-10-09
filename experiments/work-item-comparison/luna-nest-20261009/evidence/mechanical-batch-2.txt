@@ -1,0 +1,235 @@
+test_actual_raw_event_parser_and_missing_usage (test_nest.Mechanics.test_actual_raw_event_parser_and_missing_usage) ... Switched to a new branch 'work/backlog'
+ERROR
+test_bounded_owned_non_model_child_stop (test_nest.Mechanics.test_bounded_owned_non_model_child_stop) ... Switched to a new branch 'work/backlog'
+ERROR
+test_fake_local_process_capture_resume_and_grant_no_refill (test_nest.Mechanics.test_fake_local_process_capture_resume_and_grant_no_refill) ... Switched to a new branch 'work/backlog'
+ERROR
+test_fixed_dispatch_all_stations_without_code_advice (test_nest.Mechanics.test_fixed_dispatch_all_stations_without_code_advice) ... Switched to a new branch 'work/backlog'
+ERROR
+test_lock_and_exact_grants (test_nest.Mechanics.test_lock_and_exact_grants) ... Switched to a new branch 'work/backlog'
+ERROR
+test_native_template_is_luna_high_and_memory_disabled (test_nest.Mechanics.test_native_template_is_luna_high_and_memory_disabled) ... Switched to a new branch 'work/backlog'
+ERROR
+test_shared_seed_parity_and_non_solution_greenfield (test_nest.Mechanics.test_shared_seed_parity_and_non_solution_greenfield) ... Switched to a new branch 'work/backlog'
+ERROR
+test_snapshot_retains_dirty_separate_from_main_and_no_replay (test_nest.Mechanics.test_snapshot_retains_dirty_separate_from_main_and_no_replay) ... Switched to a new branch 'work/backlog'
+ERROR
+
+======================================================================
+ERROR: test_actual_raw_event_parser_and_missing_usage (test_nest.Mechanics.test_actual_raw_event_parser_and_missing_usage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\tests\test_nest.py", line 28, in setUp
+    nest.cell("readinglog", "conventional", self.seed, self.repo, self.state)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 109, in cell
+    commit(target, f"Prepare {arm} method inputs; no application work")
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 60, in commit
+    git(repo, "diff", "--cached", "--check")
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 43, in git
+    return subprocess.check_output(["git", "-C", str(repo), *args], text=True, encoding="utf-8", timeout=45).strip()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 472, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               **kwargs).stdout
+               ^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['git', '-C', 'C:\\Users\\Consiliari\\AppData\\Local\\Temp\\luna-nest-mechanical-_28dajyp\\repo', 'diff', '--cached', '--check']' returned non-zero exit status 2.
+
+======================================================================
+ERROR: test_bounded_owned_non_model_child_stop (test_nest.Mechanics.test_bounded_owned_non_model_child_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\tests\test_nest.py", line 28, in setUp
+    nest.cell("readinglog", "conventional", self.seed, self.repo, self.state)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 109, in cell
+    commit(target, f"Prepare {arm} method inputs; no application work")
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 60, in commit
+    git(repo, "diff", "--cached", "--check")
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 43, in git
+    return subprocess.check_output(["git", "-C", str(repo), *args], text=True, encoding="utf-8", timeout=45).strip()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 472, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               **kwargs).stdout
+               ^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['git', '-C', 'C:\\Users\\Consiliari\\AppData\\Local\\Temp\\luna-nest-mechanical-dcub46kv\\repo', 'diff', '--cached', '--check']' returned non-zero exit status 2.
+
+======================================================================
+ERROR: test_fake_local_process_capture_resume_and_grant_no_refill (test_nest.Mechanics.test_fake_local_process_capture_resume_and_grant_no_refill)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\tests\test_nest.py", line 28, in setUp
+    nest.cell("readinglog", "conventional", self.seed, self.repo, self.state)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 109, in cell
+    commit(target, f"Prepare {arm} method inputs; no application work")
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 60, in commit
+    git(repo, "diff", "--cached", "--check")
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 43, in git
+    return subprocess.check_output(["git", "-C", str(repo), *args], text=True, encoding="utf-8", timeout=45).strip()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 472, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               **kwargs).stdout
+               ^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['git', '-C', 'C:\\Users\\Consiliari\\AppData\\Local\\Temp\\luna-nest-mechanical-pjb38tpb\\repo', 'diff', '--cached', '--check']' returned non-zero exit status 2.
+
+======================================================================
+ERROR: test_fixed_dispatch_all_stations_without_code_advice (test_nest.Mechanics.test_fixed_dispatch_all_stations_without_code_advice)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\tests\test_nest.py", line 28, in setUp
+    nest.cell("readinglog", "conventional", self.seed, self.repo, self.state)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 109, in cell
+    commit(target, f"Prepare {arm} method inputs; no application work")
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 60, in commit
+    git(repo, "diff", "--cached", "--check")
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 43, in git
+    return subprocess.check_output(["git", "-C", str(repo), *args], text=True, encoding="utf-8", timeout=45).strip()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 472, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               **kwargs).stdout
+               ^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['git', '-C', 'C:\\Users\\Consiliari\\AppData\\Local\\Temp\\luna-nest-mechanical-46hx9yh4\\repo', 'diff', '--cached', '--check']' returned non-zero exit status 2.
+
+======================================================================
+ERROR: test_lock_and_exact_grants (test_nest.Mechanics.test_lock_and_exact_grants)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\tests\test_nest.py", line 28, in setUp
+    nest.cell("readinglog", "conventional", self.seed, self.repo, self.state)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 109, in cell
+    commit(target, f"Prepare {arm} method inputs; no application work")
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 60, in commit
+    git(repo, "diff", "--cached", "--check")
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 43, in git
+    return subprocess.check_output(["git", "-C", str(repo), *args], text=True, encoding="utf-8", timeout=45).strip()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 472, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               **kwargs).stdout
+               ^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['git', '-C', 'C:\\Users\\Consiliari\\AppData\\Local\\Temp\\luna-nest-mechanical-qhwt4746\\repo', 'diff', '--cached', '--check']' returned non-zero exit status 2.
+
+======================================================================
+ERROR: test_native_template_is_luna_high_and_memory_disabled (test_nest.Mechanics.test_native_template_is_luna_high_and_memory_disabled)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\tests\test_nest.py", line 28, in setUp
+    nest.cell("readinglog", "conventional", self.seed, self.repo, self.state)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 109, in cell
+    commit(target, f"Prepare {arm} method inputs; no application work")
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 60, in commit
+    git(repo, "diff", "--cached", "--check")
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 43, in git
+    return subprocess.check_output(["git", "-C", str(repo), *args], text=True, encoding="utf-8", timeout=45).strip()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 472, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               **kwargs).stdout
+               ^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['git', '-C', 'C:\\Users\\Consiliari\\AppData\\Local\\Temp\\luna-nest-mechanical-3det5dg8\\repo', 'diff', '--cached', '--check']' returned non-zero exit status 2.
+
+======================================================================
+ERROR: test_shared_seed_parity_and_non_solution_greenfield (test_nest.Mechanics.test_shared_seed_parity_and_non_solution_greenfield)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\tests\test_nest.py", line 28, in setUp
+    nest.cell("readinglog", "conventional", self.seed, self.repo, self.state)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 109, in cell
+    commit(target, f"Prepare {arm} method inputs; no application work")
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 60, in commit
+    git(repo, "diff", "--cached", "--check")
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 43, in git
+    return subprocess.check_output(["git", "-C", str(repo), *args], text=True, encoding="utf-8", timeout=45).strip()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 472, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               **kwargs).stdout
+               ^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['git', '-C', 'C:\\Users\\Consiliari\\AppData\\Local\\Temp\\luna-nest-mechanical-abvgh040\\repo', 'diff', '--cached', '--check']' returned non-zero exit status 2.
+
+======================================================================
+ERROR: test_snapshot_retains_dirty_separate_from_main_and_no_replay (test_nest.Mechanics.test_snapshot_retains_dirty_separate_from_main_and_no_replay)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\tests\test_nest.py", line 28, in setUp
+    nest.cell("readinglog", "conventional", self.seed, self.repo, self.state)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 109, in cell
+    commit(target, f"Prepare {arm} method inputs; no application work")
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 60, in commit
+    git(repo, "diff", "--cached", "--check")
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\work-item-comparison\luna-nest-20261009\public\nest.py", line 43, in git
+    return subprocess.check_output(["git", "-C", str(repo), *args], text=True, encoding="utf-8", timeout=45).strip()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 472, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               **kwargs).stdout
+               ^^^^^^^^^
+  File "C:\Python313\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['git', '-C', 'C:\\Users\\Consiliari\\AppData\\Local\\Temp\\luna-nest-mechanical-j7n2s9jb\\repo', 'diff', '--cached', '--check']' returned non-zero exit status 2.
+
+----------------------------------------------------------------------
+Ran 8 tests in 6.951s
+
+FAILED (errors=8)
+test_add_list_restart_duplicate_and_invalid_input (test_baseline.ExistingContract.test_add_list_restart_duplicate_and_invalid_input) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.253s
+
+OK

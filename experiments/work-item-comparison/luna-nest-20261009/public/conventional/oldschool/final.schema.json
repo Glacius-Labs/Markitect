@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": { "type": "string", "enum": ["continue", "completed", "blocked"] },
+    "summary": { "type": "string" },
+    "main_sha": { "type": "string" },
+    "completed_items": { "type": "array", "items": { "type": "string" } },
+    "remaining_items": { "type": "array", "items": { "type": "string" } },
+    "blocker": { "type": "string" },
+    "next_step": { "type": "string" },
+    "merges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "work_item": { "type": "string" },
+          "feature_sha": { "type": "string" },
+          "merge_sha": { "type": "string" }
+        },
+        "required": ["work_item", "feature_sha", "merge_sha"]
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "command": { "type": "string" },
+          "exit_code": { "type": "integer" },
+          "tested_sha": { "type": "string" },
+          "log_path": { "type": "string" }
+        },
+        "required": ["command", "exit_code", "tested_sha", "log_path"]
+      }
+    }
+  },
+  "required": ["status", "summary", "main_sha", "completed_items", "remaining_items", "blocker", "next_step", "merges", "checks"]
+}

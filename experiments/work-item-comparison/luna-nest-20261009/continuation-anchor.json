@@ -1,0 +1,21 @@
+{
+  "key": "luna-work-item-case-study-nest-preparation-20261009",
+  "authorizedUtc": "2026-10-09T04:07:10Z",
+  "conservativeNotAfterUtc": "2026-10-09T05:37:10Z",
+  "sourceSha": "3250da0945bb6cfbc7974d67a5477e767d0c77f4",
+  "status": "BLOCKED required mechanical gate after both allowed batches; prepared input/source handoff",
+  "mechanicalCheckBatchesUsed": 2,
+  "maxMechanicalCheckBatches": 2,
+  "readonlyReviewerReservations": 1,
+  "maxReadonlyReviewers": 1,
+  "reviewerProfile": "gpt-6-luna/high",
+  "productActors": 0,
+  "providerCalls": 0,
+  "cliOrAppserverCalls": 0,
+  "productBuilds": 0,
+  "fullTrials": 0,
+  "next": "Push private checkpoint and notify Overseer once with exact hashes and 2/2 failed batches. No third batch/second reviewer/actual entry until a concrete finite validation/activation assignment.",
+  "actualReservation": "conventional-roombook-early-start-20261009 conditional false, zero actual starts",
+  "metadataCalls": "Ordinary nonmodel metadata observed; distinct from cliOrAppserverCalls model entries=0",
+  "reviewerVerdict": "APPROVE QUALIFIED on frozen prior source; later six source-site newline/clone fixes untested"
+}

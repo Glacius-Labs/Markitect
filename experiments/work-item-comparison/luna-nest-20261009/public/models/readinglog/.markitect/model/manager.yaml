@@ -1,0 +1,9 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: readinglog
+  namespace: ""
+purpose: Existing reading log CLI with compatible incremental changes
+spec:
+  owns: ["."]
+  instructions: "Use the genuine installed model-first workflow, maintain explicit model changes for new work and preserve public requirements. Decide ordinary implementation details yourself."
