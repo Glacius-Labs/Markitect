@@ -280,7 +280,11 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 		Turn turn `json:"turn"`
 	}
 	prompt := nativeTurnPrompt(inv, wire)
-	if err = s.c.call(ctx, "turn/start", map[string]any{"threadId": s.h.ThreadID, "input": []any{map[string]any{"type": "text", "text": prompt}}, "model": a.config.Model, "effort": a.config.ReasoningEffort, "cwd": opts.Workspace.CWD}, &begun); err != nil {
+	turnParams := map[string]any{"threadId": s.h.ThreadID, "input": []any{map[string]any{"type": "text", "text": prompt}}, "model": a.config.Model, "effort": a.config.ReasoningEffort, "cwd": opts.Workspace.CWD}
+	if schema := nativeTurnOutputSchema(inv); schema != nil {
+		turnParams["outputSchema"] = schema
+	}
+	if err = s.c.call(ctx, "turn/start", turnParams, &begun); err != nil {
 		s.interrupt()
 		return result, err
 	}
@@ -327,6 +331,7 @@ func nativeTurnPrompt(inv agentexec.Invocation, wire []byte) string {
 		"- Return exactly one JSON object and no surrounding Markdown. Copy apiVersion, runId, nonce, inputDigest, and role exactly from this invocation. Do not invent lifecycle, workspace delta, or evidence.\n" +
 		"- Always include candidateFiles, evidenceRefs, verifierObservations, and uncertainty as JSON arrays, including empty arrays when there are no entries. Each verifierObservations entry is an object with exactly subject, outcome, and detail string fields; observation outcome must be passed, failed, incomplete, or escalated. Never use strings in place of observation objects.\n" +
 		"- Do not include nativeWork; the Host owns that metadata. Include usage only when provider-reported telemetry is available.\n"
+	contract += "- CandidateFile output entries have exactly path, mode, and content; mode is 0644 or 0755 for this Git workspace, and content is plain UTF-8 text, not base64. Input Artifact digest/base64 fields are not the output format. Copy identifiers as decoded JSON string values, without adding escaping characters.\n"
 	switch inv.Request.Role {
 	case agentexec.RoleExecutor:
 		contract += "- For executor responses, outer outcome must be one of proposed, failed, incomplete, or escalated. Never use a task report status such as blocked, complete, or partial as the outer outcome. verifierObservations must be an empty array; omit candidateJson.\n"
@@ -336,6 +341,7 @@ func nativeTurnPrompt(inv agentexec.Invocation, wire []byte) string {
 		}
 		if json.Unmarshal(inv.Request.Context, &context) == nil && len(context.ResponseSchema) > 0 {
 			contract += "- Include reportJson as a JSON object matching request.context.responseSchema exactly; do not encode the object as a string. Return every required property and use arrays for every declared array field.\n"
+			contract += "- Return candidateFiles as an empty array for this native report invocation; the Host harvests your actual workspace delta. Do not reproduce file bytes or compute their hashes in the response.\n"
 		} else {
 			contract += "- Omit reportJson unless this invocation supplies request.context.responseSchema. A proposed response needs candidateFiles or reportJson.\n"
 		}
@@ -350,8 +356,39 @@ func nativeTurnPrompt(inv agentexec.Invocation, wire []byte) string {
 		contract += "- The request role is unsupported; return incomplete with empty arrays and explain the limitation in uncertainty.\n"
 	}
 	return "Implement/assess the supplied Host invocation in this real workspace using ordinary project tools and guidance.\n" +
-		"Use a fresh temporary directory you own under the inherited OS temporary directory for test scratch and caches; clean it up when finished. Review and verification must leave repository artifacts unchanged.\n" +
+		"Use a fresh temporary directory you own under the inherited OS temporary directory for test scratch and caches; create, use and clean it up within the same shell call because Windows MXC temp paths can differ between calls. Review and verification must leave repository artifacts unchanged.\n" +
 		contract + "\nInvocation:\n" + string(wire)
+}
+
+// Constrain the native final message to the existing closed wire DTO. The Host
+// still validates the response and harvests real bytes; schema is not evidence.
+func nativeTurnOutputSchema(inv agentexec.Invocation) map[string]any {
+	if inv.Request.Role != agentexec.RoleExecutor && inv.Request.Role != agentexec.RoleVerifier {
+		return nil
+	}
+	text := map[string]any{"type": "string"}
+	list := func(items any) map[string]any { return map[string]any{"type": "array", "items": items} }
+	fixed := func(value string) map[string]any { return map[string]any{"type": "string", "enum": []string{value}} }
+	candidates := list(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"path", "mode", "content"}, "properties": map[string]any{"path": text, "mode": map[string]any{"type": "string", "enum": []string{"0644", "0755"}}, "content": text}})
+	observations := list(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"subject", "outcome", "detail"}, "properties": map[string]any{"subject": text, "outcome": map[string]any{"type": "string", "enum": []string{"passed", "failed", "incomplete", "escalated"}}, "detail": text}})
+	outcomes := []string{"proposed", "failed", "incomplete", "escalated"}
+	if inv.Request.Role == agentexec.RoleVerifier {
+		outcomes = []string{"passed", "failed", "incomplete", "escalated"}
+		candidates["maxItems"] = 0
+	} else {
+		observations["maxItems"] = 0
+	}
+	properties := map[string]any{"apiVersion": fixed(inv.APIVersion), "runId": fixed(inv.RunID), "nonce": fixed(inv.Nonce), "inputDigest": fixed(inv.InputDigest), "role": fixed(inv.Request.Role), "outcome": map[string]any{"type": "string", "enum": outcomes}, "candidateFiles": candidates, "evidenceRefs": list(text), "verifierObservations": observations, "uncertainty": list(text)}
+	required := []string{"apiVersion", "runId", "nonce", "inputDigest", "role", "outcome", "candidateFiles", "evidenceRefs", "verifierObservations", "uncertainty"}
+	var context struct {
+		ResponseSchema json.RawMessage `json:"responseSchema"`
+	}
+	if inv.Request.Role == agentexec.RoleExecutor && json.Unmarshal(inv.Request.Context, &context) == nil && len(context.ResponseSchema) > 0 {
+		properties["reportJson"] = context.ResponseSchema
+		required = append(required, "reportJson")
+		candidates["maxItems"] = 0
+	}
+	return map[string]any{"type": "object", "additionalProperties": false, "required": required, "properties": properties}
 }
 
 func (s *session) save() error {

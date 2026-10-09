@@ -18,7 +18,7 @@ func TestAppServerArgsKeepDefaultAndScopeMXCToChildCommand(t *testing.T) {
 		t.Fatalf("MXC args = %#v, want global CLI override before app-server: %#v", got, want)
 	}
 	got = appServerArgs(Config{PermissionProfile: ":workspace", WindowsSandboxBackend: WindowsSandboxBackendMXC})
-	want = []string{"-c", "approval_policy=never", "-c", "sandbox_workspace_write={writable_roots=[],network_access=false,exclude_tmpdir_env_var=false,exclude_slash_tmp=false}", "-c", "windows.sandbox=mxc", "app-server", "--listen", "stdio://"}
+	want = []string{"-c", "approval_policy=never", "-c", "sandbox_workspace_write={writable_roots=[],network_access=false,exclude_tmpdir_env_var=false,exclude_slash_tmp=false}", "-c", "features.memories=false", "-c", "allow_login_shell=false", "-c", "windows.sandbox=mxc", "app-server", "--listen", "stdio://"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("owned workspace args = %#v, want %#v", got, want)
 	}

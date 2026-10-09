@@ -112,7 +112,8 @@ func serveFixture() {
 				return
 			}
 			var p struct {
-				Input []struct {
+				OutputSchema map[string]any `json:"outputSchema"`
+				Input        []struct {
 					Text string `json:"text"`
 				} `json:"input"`
 			}
@@ -122,6 +123,16 @@ func serveFixture() {
 				parts := strings.Split(p.Input[0].Text, "Invocation:\n")
 				if len(parts) > 1 {
 					_ = json.Unmarshal([]byte(parts[1]), &inv)
+				}
+			}
+			if mode == "schema-required" {
+				properties, ok := p.OutputSchema["properties"].(map[string]any)
+				if !ok {
+					return
+				}
+				nonce, ok := properties["nonce"].(map[string]any)
+				if !ok || len(nonce["enum"].([]any)) != 1 || nonce["enum"].([]any)[0] != inv.Nonce {
+					return
 				}
 			}
 			r := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: inv.RunID, Nonce: inv.Nonce, Role: inv.Request.Role, InputDigest: inv.InputDigest, Outcome: agentexec.OutcomeIncomplete, CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}}
@@ -297,6 +308,18 @@ func fixture(t *testing.T, mode string, options Options) (*Adapter, agentexec.Co
 	return a, shared, req, opts
 }
 
+func TestNativeTurnSendsBoundOutputSchema(t *testing.T) {
+	for _, role := range []string{agentexec.RoleExecutor, agentexec.RoleVerifier} {
+		t.Run(role, func(t *testing.T) {
+			a, cfg, req, opts := fixture(t, "schema-required", Options{})
+			req.Role = role
+			if _, err := a.Run(context.Background(), cfg, req, opts); err != nil {
+				t.Fatalf("native turn did not send its nonce-bound output schema: %v", err)
+			}
+		})
+	}
+}
+
 func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 	request := agentexec.Request{
 		Role:           agentexec.RoleExecutor,
@@ -314,6 +337,11 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	prompt := nativeTurnPrompt(inv, wire)
+	schema := nativeTurnOutputSchema(inv)
+	properties := schema["properties"].(map[string]any)
+	if properties["candidateFiles"].(map[string]any)["maxItems"] != 0 || !strings.Contains(string(properties["reportJson"].(json.RawMessage)), `"additionalProperties":false`) {
+		t.Fatal("native report schema must require Host-harvested bytes and preserve the closed task report")
+	}
 	for _, required := range []string{
 		"candidateFiles, evidenceRefs, verifierObservations, and uncertainty as JSON arrays",
 		"object with exactly subject, outcome, and detail string fields",
@@ -324,6 +352,8 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 		"If reportJson.escalateTo is empty, outer outcome is proposed",
 		"if escalateTo is nonempty, outer outcome is escalated",
 		"Never copy reportJson.status into outer outcome",
+		"content is plain UTF-8 text, not base64",
+		"Return candidateFiles as an empty array",
 	} {
 		if !strings.Contains(prompt, required) {
 			t.Errorf("native prompt omits contract clause %q", required)
@@ -337,6 +367,12 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 		inv.APIVersion, inv.RunID, inv.Nonce, request.Role, inv.InputDigest))
 	if _, err := agentexec.DecodeResponse(malformed, inv, ""); err == nil {
 		t.Fatal("captured malformed executor response passed the strict decoder")
+	}
+	// The next real attempt confused input Artifact with output CandidateFile.
+	artifactOutput := []byte(fmt.Sprintf(`{"apiVersion":%q,"runId":%q,"nonce":%q,"role":%q,"inputDigest":%q,"outcome":"proposed","candidateFiles":[{"path":"README.md","mode":"0644","digest":"sha256:wrong","content":"IyBHcmVldGluZwo="}],"evidenceRefs":[],"verifierObservations":[],"uncertainty":[]}`,
+		inv.APIVersion, inv.RunID, inv.Nonce, request.Role, inv.InputDigest))
+	if _, err := agentexec.DecodeResponse(artifactOutput, inv, ""); err == nil {
+		t.Fatal("input Artifact output shape passed the closed CandidateFile decoder")
 	}
 
 	// A blocked TaskResponse remains a typed report status. The outer executor
