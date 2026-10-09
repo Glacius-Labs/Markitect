@@ -1,0 +1,105 @@
+{
+  "utc": "2026-10-09T08:05:48.954638+00:00",
+  "matchingCompletion": {
+    "station": "S1",
+    "status": "complete",
+    "completedWorkItemIds": [
+      "R01"
+    ],
+    "remainingIssues": []
+  },
+  "snapshot": {
+    "stationIndex": 0,
+    "station": "S1",
+    "mainCommit": "370b996d1e2ff5f7025a30eb0904c7367702257a",
+    "headCommit": "370b996d1e2ff5f7025a30eb0904c7367702257a",
+    "dirtyStatus": "",
+    "evaluationRepo": "C:\\Users\\Consiliari\\Documents\\Luna-Work-Item-Nests-20261009\\state\\roombook-conventional-oldschool-app\\stations\\S1\\main",
+    "rawFiles": {
+      ".codex/config.toml": {
+        "sha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+        "bytes": 281
+      },
+      ".gitignore": {
+        "sha256": "c3dbe0ccc8fa8191710ffdbbe688bca40715318938ba44b65b4d9e6a8dfc93a9",
+        "bytes": 36
+      },
+      ".study/completion.json": {
+        "sha256": "eefaa9f822e27314d19f0029d4807a61eec3487110b931b9cc7d45b74fdf078a",
+        "bytes": 106
+      },
+      ".study/station.json": {
+        "sha256": "2a1730faa0850b603f9d08e8b3791ad6bf833723df48dcc8957bfacc2423ea9a",
+        "bytes": 70
+      },
+      ".work/logs/acceptance-s1.log": {
+        "sha256": "88d79e18bd339e853041ee06c6fac1e0b68f5f6e652a169b36ec2a81164c287c",
+        "bytes": 642
+      },
+      ".work/logs/post-merge-acceptance-s1.log": {
+        "sha256": "88d79e18bd339e853041ee06c6fac1e0b68f5f6e652a169b36ec2a81164c287c",
+        "bytes": 642
+      },
+      ".work/logs/post-merge-unit-s1.log": {
+        "sha256": "5d23af1634ae8820ecb88a897f1e832ba11e0bd00843b81b6390d52bcb9b88a6",
+        "bytes": 724
+      },
+      ".work/logs/unit-s1.log": {
+        "sha256": "4297317d1547820e6618611c8c62f4415a074633a5693ae1408e3597eaa9aabf",
+        "bytes": 724
+      },
+      "AGENTS.md": {
+        "sha256": "42489ead45343c02a1fe804f721d7e51439497f623a663732bb892ddecbe8a3d",
+        "bytes": 5411
+      },
+      "app.py": {
+        "sha256": "858239654e2a48821108e39603b2b64f8a2bc263cb3159e4dad45b32fd303ffb",
+        "bytes": 6607
+      },
+      "BACKLOG.md": {
+        "sha256": "a826401c5e73acfd7f7984c272f390fb5c43fd650354fa2302ea033aacb46540",
+        "bytes": 2566
+      },
+      "checks/acceptance.py": {
+        "sha256": "c7372a8a71814d7de07143ff468e02979ceb89bc80e75a30ae45878b922633f3",
+        "bytes": 7554
+      },
+      "PROGRESS.md": {
+        "sha256": "b7257b20f07d487d5d1f09967115289426bad0c9bad56b2e0df2e2d36e3589be",
+        "bytes": 1158
+      },
+      "QUALITY.md": {
+        "sha256": "fd09b7edf513c0cd6bdd75c69f8e998c3908602fb746eb6a7cfaf18e7039a1fc",
+        "bytes": 2687
+      },
+      "README.md": {
+        "sha256": "5c15614990aa72fa3de6570d9457f176fefced2df5590c598ea535eed411a872",
+        "bytes": 2785
+      },
+      "STATIONS.json": {
+        "sha256": "4da79a8d2b538754e41e15ec08f820f0942fd503301de57b9a975aad45016183",
+        "bytes": 595
+      },
+      "tests/test_cli.py": {
+        "sha256": "412dc8a14456792cdc6c74762dffef0a9ac78fdae9e1c815430b765233506e01",
+        "bytes": 3817
+      },
+      "WORKLOG.md": {
+        "sha256": "0beda77c7c4fa4c93068de41940ee17b71b5deecf56d0149d3565a59b2d04a2c",
+        "bytes": 1420
+      }
+    },
+    "bundleSha256": "a54e0355b320c64ef0006d9087119fa61cead81e11dedadf4c301bd6346a1536",
+    "utc": "2026-10-09T08:05:48.920924+00:00"
+  },
+  "releasedStation": "S2",
+  "releasedStationIndex": 1,
+  "publicReleaseOnly": ".study/station.json",
+  "allKnownOwnEntriesTerminal": true,
+  "unknownStopEntries": 0,
+  "helpers": 0,
+  "scientistKnownOwnedShellJobs": [],
+  "transitiveProcessContainment": "not independently attested; no known residual own job or cleanup failure reported; no global inventory",
+  "quality": "Actor reported tests/merge; independent final NOT RUN yet",
+  "nextExecution": "Oldschool reserves original fixed continuation against own returned handle within existing station/cell ceilings; Root relay only, no semantic advice"
+}
