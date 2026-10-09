@@ -22,6 +22,12 @@ func TestConfigurationIsExplicitAndBounded(t *testing.T) {
 	if err != nil || baseline == other {
 		t.Fatalf("effort not bound: %v", err)
 	}
+	changed = cfg
+	changed.WindowsSandboxBackend = WindowsSandboxBackendMXC
+	withMXC, err := changed.Digest()
+	if err != nil || baseline == withMXC {
+		t.Fatalf("Windows sandbox backend was not validated and bound: %v", err)
+	}
 	for _, mutate := range []func(*Config){
 		func(c *Config) { c.Model = "" }, func(c *Config) { c.ReasoningEffort = "" },
 		func(c *Config) { c.Command = "codex" }, func(c *Config) { c.Timeout = 0 },
@@ -29,6 +35,8 @@ func TestConfigurationIsExplicitAndBounded(t *testing.T) {
 		func(c *Config) { c.Helpers.MaxStartRequests = 1 },
 		func(c *Config) { c.Model = string([]byte{0xff}) },
 		func(c *Config) { c.PermissionProfile = string([]byte{0xfe}) },
+		func(c *Config) { c.WindowsSandboxBackend = WindowsSandboxBackend("unsupported") },
+		func(c *Config) { c.WindowsSandboxBackend = WindowsSandboxBackend(string([]byte{0xff})) },
 	} {
 		invalid := cfg
 		mutate(&invalid)

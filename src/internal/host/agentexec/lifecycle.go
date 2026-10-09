@@ -23,6 +23,9 @@ type SessionSettings struct {
 	Model             string `json:"model,omitempty"`
 	ReasoningEffort   string `json:"reasoningEffort,omitempty"`
 	PermissionProfile string `json:"permissionProfile,omitempty"`
+	// WindowsSandboxBackend is a requested implementation setting. It is an
+	// effective value only when an authoritative provider readback reports it.
+	WindowsSandboxBackend string `json:"windowsSandboxBackend,omitempty"`
 	CWD               string `json:"cwd,omitempty"`
 	InstructionDigest string `json:"instructionDigest,omitempty"`
 }

@@ -22,10 +22,18 @@ type Config struct {
 	Model             string        `json:"model"`
 	ReasoningEffort   string        `json:"reasoningEffort"`
 	PermissionProfile string        `json:"permissionProfile,omitempty"`
+	WindowsSandboxBackend WindowsSandboxBackend `json:"windowsSandboxBackend,omitempty"`
 	Helpers           HelperPolicy  `json:"helpers"`
 	Timeout           time.Duration `json:"timeout"`
 	MaxEventBytes     int64         `json:"maxEventBytes"`
 }
+
+// WindowsSandboxBackend selects a supported Windows-only native sandbox
+// implementation for the child Codex CLI process. It does not select an
+// approval policy or permission profile.
+type WindowsSandboxBackend string
+
+const WindowsSandboxBackendMXC WindowsSandboxBackend = "mxc"
 
 type HelperPolicy struct {
 	Enabled          bool `json:"enabled"`
@@ -34,7 +42,7 @@ type HelperPolicy struct {
 }
 
 func (c Config) Validate() error {
-	for _, value := range []string{c.Command, c.ProviderVersion, c.Model, c.ReasoningEffort, c.PermissionProfile} {
+	for _, value := range []string{c.Command, c.ProviderVersion, c.Model, c.ReasoningEffort, c.PermissionProfile, string(c.WindowsSandboxBackend)} {
 		if !utf8.ValidString(value) {
 			return errors.New("App Server configuration text must be valid UTF-8")
 		}
@@ -44,6 +52,9 @@ func (c Config) Validate() error {
 	}
 	if c.Timeout <= 0 || c.MaxEventBytes <= 0 {
 		return errors.New("App Server requires finite positive time and event byte limits")
+	}
+	if c.WindowsSandboxBackend != "" && c.WindowsSandboxBackend != WindowsSandboxBackendMXC {
+		return errors.New("unsupported Windows sandbox backend; supported value is mxc")
 	}
 	if c.Helpers.MaxStartRequests < 0 || c.Helpers.MaxDepth < 0 || (c.Helpers.Enabled && (c.Helpers.MaxStartRequests == 0 || c.Helpers.MaxDepth == 0)) || (!c.Helpers.Enabled && (c.Helpers.MaxStartRequests != 0 || c.Helpers.MaxDepth != 0)) {
 		return errors.New("helper policy must explicitly disable helpers or bound start requests and depth")

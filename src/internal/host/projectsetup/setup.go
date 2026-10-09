@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"go.yaml.in/yaml/v3"
@@ -46,6 +47,7 @@ type Options struct {
 	Model                  string `json:"model"`
 	Effort                 string `json:"effort"`
 	CodexProfile           string `json:"codexProfile"`
+	WindowsSandboxBackend codexappserver.WindowsSandboxBackend `json:"windowsSandboxBackend,omitempty"`
 	ProviderExecutable     string `json:"providerExecutable"`
 	InputMicrosPerMillion  int64  `json:"inputMicrosPerMillion"`
 	OutputMicrosPerMillion int64  `json:"outputMicrosPerMillion"`
@@ -194,8 +196,8 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		if manager.ID == "" {
 			return config, errors.New("active project has a Manager with an empty ID")
 		}
-		worker := selectedAgent(found, options.Model, options.Effort, options.CodexProfile, runtimeFiles, environment, pricing)
-		reviewer := selectedAgent(found, options.Model, options.Effort, reviewerPermissionProfile, runtimeFiles, environment, pricing)
+		worker := selectedAgent(found, options.Model, options.Effort, options.CodexProfile, options.WindowsSandboxBackend, runtimeFiles, environment, pricing)
+		reviewer := selectedAgent(found, options.Model, options.Effort, reviewerPermissionProfile, options.WindowsSandboxBackend, runtimeFiles, environment, pricing)
 		worker.WorkspaceMode = "git"
 		worker.InstructionPaths = append([]string(nil), instructionPaths...)
 		reviewer.WorkspaceMode = "git"
@@ -236,16 +238,23 @@ func normalizeOptions(options Options) (Options, error) {
 	if options.Provider != "codex" {
 		return options, errors.New("project setup currently supports native Codex only")
 	}
+	if options.WindowsSandboxBackend != "" && options.WindowsSandboxBackend != codexappserver.WindowsSandboxBackendMXC {
+		return options, errors.New("unsupported --windows-sandbox-backend; supported value is mxc")
+	}
+	if options.WindowsSandboxBackend != "" && runtime.GOOS != "windows" {
+		return options, errors.New("--windows-sandbox-backend mxc is supported only on Windows")
+	}
 	return options, nil
 }
 
-func selectedAgent(found Discovery, model, effort, permissionProfile string, files []agentexec.RuntimeFile, environment []string, pricing projectrun.Pricing) projectrun.Agent {
+func selectedAgent(found Discovery, model, effort, permissionProfile string, sandboxBackend codexappserver.WindowsSandboxBackend, files []agentexec.RuntimeFile, environment []string, pricing projectrun.Pricing) projectrun.Agent {
 	return projectrun.Agent{
 		Command: found.ProviderBinary.Path, Transport: projectrun.TransportCodexAppServer,
 		AppServer: &projectrun.AppServerSettings{
 			ReasoningEffort: effort,
 			// Empty PermissionProfile preserves the user's existing Codex boundary.
 			PermissionProfile: permissionProfile,
+			WindowsSandboxBackend: sandboxBackend,
 			Helpers:           projectrun.AppServerHelpers{Enabled: true, MaxStartRequests: DefaultMaxHelperStarts, MaxDepth: 1},
 			MaxEventBytes:     DefaultMaxEventBytes,
 		},

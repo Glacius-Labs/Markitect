@@ -19,6 +19,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectsetup"
 )
 
 func TestClosedSchemasAndAuthority(t *testing.T) {
@@ -54,6 +55,21 @@ func TestClosedSchemasAndAuthority(t *testing.T) {
 		if _, err := s.Call(context.Background(), "project_apply", []byte(args)); err == nil {
 			t.Fatalf("Apply guards omitted: %s", args)
 		}
+	}
+}
+
+func TestSetupSchemaExposesClosedWindowsSandboxBackendEnum(t *testing.T) {
+	setupSchema := schema(reflect.TypeFor[projectsetup.Options]())
+	properties := setupSchema["properties"].(map[string]any)
+	backendSchema := properties["windowsSandboxBackend"].(map[string]any)
+	if backendSchema["type"] != "string" || !reflect.DeepEqual(backendSchema["enum"], []string{"mxc"}) {
+		t.Fatalf("Windows sandbox backend schema = %#v, want optional closed enum mxc", backendSchema)
+	}
+	if err := validate("mxc", backendSchema); err != nil {
+		t.Fatalf("valid mxc backend rejected by schema: %v", err)
+	}
+	if err := validate("unsupported", backendSchema); err == nil {
+		t.Fatal("unsupported Windows sandbox backend passed the MCP schema")
 	}
 }
 

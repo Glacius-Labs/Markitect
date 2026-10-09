@@ -457,6 +457,26 @@ func TestWorkspaceModeIsBoundIntoConfigurationFingerprint(t *testing.T) {
 	}
 }
 
+func TestNativeWindowsSandboxBackendIsClosedAndFingerprintBound(t *testing.T) {
+	config := testConfig()
+	config.Transport = "codex-app-server"
+	config.ModelOptions = nil
+	config.TransportConfig = json.RawMessage(`{"reasoningEffort":"high","helpers":{"enabled":false,"maxStartRequests":0,"maxDepth":0},"maxEventBytes":1024}`)
+	baseline, err := Fingerprint(config)
+	if err != nil {
+		t.Fatalf("fingerprint inherited backend: %v", err)
+	}
+	config.TransportConfig = json.RawMessage(`{"reasoningEffort":"high","windowsSandboxBackend":"mxc","helpers":{"enabled":false,"maxStartRequests":0,"maxDepth":0},"maxEventBytes":1024}`)
+	withMXC, err := Fingerprint(config)
+	if err != nil || baseline == withMXC {
+		t.Fatalf("mxc backend was not accepted and bound: fingerprint=%q err=%v", withMXC, err)
+	}
+	config.TransportConfig = json.RawMessage(`{"reasoningEffort":"high","windowsSandboxBackend":"unsafe","helpers":{"enabled":false,"maxStartRequests":0,"maxDepth":0},"maxEventBytes":1024}`)
+	if _, err := Fingerprint(config); err == nil || !strings.Contains(err.Error(), "unsupported Windows sandbox backend") {
+		t.Fatalf("unsupported backend was accepted: %v", err)
+	}
+}
+
 func TestWorkspaceModeDoesNotChangeProviderConfigEnvironmentContract(t *testing.T) {
 	config := testConfig()
 	config.WorkspaceMode = "scoped"

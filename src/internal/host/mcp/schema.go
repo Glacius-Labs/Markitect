@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 )
 
@@ -22,6 +23,9 @@ func schema(t reflect.Type) map[string]any {
 	}
 	if t == reflect.TypeFor[projectrun.Duration]() || t == reflect.TypeFor[[]byte]() {
 		return map[string]any{"type": "string"}
+	}
+	if t == reflect.TypeFor[codexappserver.WindowsSandboxBackend]() {
+		return map[string]any{"type": "string", "enum": []string{string(codexappserver.WindowsSandboxBackendMXC)}}
 	}
 	if t.Kind() == reflect.Pointer {
 		return map[string]any{"anyOf": []any{schema(t.Elem()), map[string]any{"type": "null"}}}
@@ -153,6 +157,18 @@ func validate(v any, s map[string]any) error {
 		typ = types[0]
 	}
 	bad := errors.New("arguments do not match closed tool schema")
+	if values, ok := s["enum"].([]string); ok {
+		text, ok := v.(string)
+		if !ok {
+			return bad
+		}
+		for _, value := range values {
+			if text == value {
+				return nil
+			}
+		}
+		return bad
+	}
 	switch typ {
 	case "object":
 		m, ok := v.(map[string]any)

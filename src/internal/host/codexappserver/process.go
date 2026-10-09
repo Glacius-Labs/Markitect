@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -70,6 +71,9 @@ func selectedEnvironment(allowlist *[]string) []string {
 	return out
 }
 func verifyVersion(ctx context.Context, cfg Config, env []string) error {
+	if err := validateSandboxPlatform(cfg); err != nil {
+		return err
+	}
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, cfg.Command, "--version")
@@ -86,11 +90,14 @@ func verifyVersion(ctx context.Context, cfg Config, env []string) error {
 	return nil
 }
 func startProcess(cfg Config, cwd string, env []string, maxStderr int) (*processConnection, error) {
+	if err := validateSandboxPlatform(cfg); err != nil {
+		return nil, err
+	}
 	guard, err := newProcessTreeGuard()
 	if err != nil {
 		return nil, err
 	}
-	cmd := exec.Command(cfg.Command, "app-server", "--listen", "stdio://")
+	cmd := exec.Command(cfg.Command, appServerArgs(cfg)...)
 	cmd.Dir = cwd
 	cmd.Env = env
 	if err = guard.prepare(cmd); err != nil {
@@ -127,6 +134,23 @@ func startProcess(cfg Config, cwd string, env []string, maxStderr int) (*process
 	p := &processConnection{in: in, out: out, cmd: cmd, guard: guard, done: make(chan error, 1), stderr: b}
 	go func() { p.done <- cmd.Wait() }()
 	return p, nil
+}
+
+func appServerArgs(cfg Config) []string {
+	args := make([]string, 0, 5)
+	if cfg.WindowsSandboxBackend == WindowsSandboxBackendMXC {
+		// Codex documents -c as a global CLI option, so it must precede the
+		// app-server subcommand. This changes only this child process.
+		args = append(args, "-c", "windows.sandbox=mxc")
+	}
+	return append(args, "app-server", "--listen", "stdio://")
+}
+
+func validateSandboxPlatform(cfg Config) error {
+	if cfg.WindowsSandboxBackend != "" && runtime.GOOS != "windows" {
+		return errors.New("Windows sandbox backend mxc is only supported on Windows")
+	}
+	return nil
 }
 func (p *processConnection) Read(b []byte) (int, error)  { return p.out.Read(b) }
 func (p *processConnection) Write(b []byte) (int, error) { return p.in.Write(b) }
