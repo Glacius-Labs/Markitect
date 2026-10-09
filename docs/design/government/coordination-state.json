@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T04:45:30Z",
+  "updatedUtc": "2026-10-09T04:58:48Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12,8 +12,8 @@
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-09T04:45:30Z",
-    "verification": "Exact automation TOML prompt/status/2h/Root verified; fresh earlyConventional allocation and prospective refinement replace stale genericunallocated status; callbacks quiet",
+    "lastVerifiedUtc": "2026-10-09T04:54:08Z",
+    "verification": "Exact saved ACTIVE/2h/Root automation prompt with concrete mechanicalblocker/newgrant verified; callbacks quiet",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
     "latestMandateUpdatedUtc": "2026-10-08T22:54:35Z",
     "reportOnMeaningfulChange": true,
@@ -29,9 +29,9 @@
     "pauseReason": "Explicit finite-block terminal instruction: final evidence synthesis verified, no evidenced equal fulltool/realusage admission. Stop researchloop with honest incomplete comparison, no automatic capability/prep/refill. Separate younger direct Design productwork unaffected.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
     "resumedUtc": "2026-10-09T04:10:08Z",
-    "promptSha256": "20991853a205cb2b6aa0ef49d74df265e7d8517567192829e7ff51263c6da0be",
+    "promptSha256": "bff68eda12cd4d58f111bded1d249f0f1c986c028bf86ccc54ef0c5df4ee0c18",
     "name": "Markitect: Produktabschluss und Luna-Case-Studies",
-    "currentGrantContext": "Design nativeproof3jobs/7200activeSeconds/128outerstarts unchanged; Scientist prep ends05:37:22Z with2mechanicalbatches/1LunaReadonlyreview; one new ConventionalRoombookfullstart reserved,0started, exact activation bindings pending, absolute09:12:43Z end; no Design wait; otherActualcellsunallocated",
+    "currentGrantContext": "One finite fixednewline mechanicalvalidation ends05:07:04Z/max1batch180s/0sourcechanges/newreviewers/Actuals; earlyConventional1reserved0started absolute09:12:43Z unchanged; Designproofgrantunchanged",
     "exactSavedTomlVerified": true,
     "resumeReason": "New detailed direct user mandate9Oct: Design fullworkflow/docs/main and simple LunaConventional/newMarkitect nest. Historical researchpause remains correct for oldblock.",
     "scenarioFrameworkUpdatedUtc": "2026-10-09T04:25:49Z",
@@ -473,10 +473,10 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:98",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:99",
       "lastObservedStatus": "active",
       "activeTurn": {
-        "id": "01a11ee8-1760-7b53-8e9b-3de81f677382",
+        "id": "01a11f01-0b15-7a32-a818-2185b97f07ef",
         "status": "inProgress"
       },
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac854c570f48191a595d544b5898fd6",
@@ -485,7 +485,7 @@
       "latestProgress": "v4pairterminalprivatefa20ff3 accepted; freshv5profilefreezeactive02:56:13Z, no CLI/provider/productActor run, exactabsoluteend03:23:42Z.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "f40db50d7744d6ef3604c13682762307a089b148",
+      "candidateSha": "429c52d8a37fa60ca4393a3501a495128b4d2e88",
       "acceptance": "Current public preparation qualified accepted after root/independent review; DTOhelper advisory only and3/2correctiondeviation retained. No matchedstudyadmission; historicalactualv3/posthoc preserved.",
       "lastAssignment": {
         "key": "luna-work-item-case-study-nest-preparation-20261009",
@@ -493,7 +493,7 @@
         "sourceAuthority": "Direct detailed user mandate9Oct2026 in Overseer chat; supersedes prior paused research/ClassicMain choice for future work",
         "document": "docs/design/work-item-comparison-20261009.md",
         "scope": "Simple two-arm normal-workitem nest/seeds/backlog/evaluation/metrics, no actuals or product capability substitution",
-        "status": "SENT ONCE; active work or retirement instruction, no repeated order",
+        "status": "Original preparation CLOSED qualified BLOCKED handoff;2/2mechanical batches failed,1/1readonlyreview consumed",
         "maxPreparationWallSecondsFromDispatch": 5400,
         "actualStudyQuota": 0,
         "limits": {
@@ -9281,10 +9281,10 @@
           "supersededUtc": "2026-10-08T23:58:37Z"
         }
       ],
-      "lastObservedUtc": "2026-10-09T04:42:43Z",
+      "lastObservedUtc": "2026-10-09T04:58:48Z",
       "futureAutomaticAuthorityFromOldGrants": 0,
-      "lastObservedTurnId": "01a11ee8-1760-7b53-8e9b-3de81f677382",
-      "lastObservedPublicProgress": "Independent Luna readonly source review underway; final mechanical batch and private handoff pending. No cases/productActors started in preparation.",
+      "lastObservedTurnId": "01a11f01-0b15-7a32-a818-2185b97f07ef",
+      "lastObservedPublicProgress": "One additionally authorized existing mechanical batch active; source/fixtures unchanged and separate private receipt pending; no cases/providers.",
       "earlyConventionalExecutionAssignment": {
         "issuedUtc": "2026-10-09T04:42:43Z",
         "status": "SENT ONCE; tool accepted",
@@ -9292,6 +9292,47 @@
         "grant": "docs/design/government/conventional-roombook-early-start-grant-20261009.json",
         "preparationDeadlineUnchanged": "2026-10-09T05:37:22Z",
         "sentUtcApprox": "2026-10-09T04:42:43Z",
+        "toolAccepted": true
+      },
+      "latestPreparationAcceptance": {
+        "reviewedUtc": "2026-10-09T04:52:04Z",
+        "sourceSha": "429c52d8a37fa60ca4393a3501a495128b4d2e88",
+        "clean": true,
+        "privateRemoteExact": true,
+        "actionsDisabled": true,
+        "workingRawGitBindingsChecked": 48,
+        "readonlyFrozenFileHashesChecked": 48,
+        "hashMismatches": 0,
+        "oldFailedMechanicalBatches": 2,
+        "oldReadonlyReviewers": 1,
+        "deltaReview": "Root read-only exact6sites,3LFwrites+3precheckoutcloneconfig, tests never run byRoot; no second reviewer",
+        "readiness": "NOT READY pending mechanical validation, not Design blocked",
+        "unconditionalTrialCredit": false,
+        "preparedInputBindingReview": {
+          "checkedUtc": "2026-10-09T04:58:48Z",
+          "repoBindingsChecked": 6,
+          "fileBindingsChecked": 76,
+          "allReposClean": true,
+          "hashMismatches": 0,
+          "roombookSeed": "71acaae99c826d0dce0ade81a5a84ab0aee6cfef",
+          "roombookConventionalPrepared": "128006c6efeb3ba9244de76d0dcc777e97aa9589",
+          "nativeHomeConfigSha256": "ff07b59dcf82b76a95748636f379a39632a76c57454b95e068c9148ff780279b",
+          "freshHomeObservedOnlyConfig": true,
+          "authenticationNotProvisionedOrProbed": true,
+          "rootExecutedTestsOrModelActors": 0,
+          "notAnActivationReceipt": true
+        }
+      },
+      "newlineValidationAssignment": {
+        "issuedUtc": "2026-10-09T04:52:04Z",
+        "notAfterUtc": "2026-10-09T05:07:04Z",
+        "status": "SENT ONCE toolaccepted; awaiting terminalvalidationreceipt",
+        "grant": "docs/design/government/luna-nest-newline-mechanical-validation-grant-20261009.json",
+        "grantSha256": "6b807eb4e6277bfb9d7b2cb761db245e1cd39896a29da050b9aa0ffc8d39235f",
+        "prompt": "Dein einmaliger Blocker luna-nest-preparation-mechanical-blocker-20261009 ist geprüft. Root bestätigt clean/exakte PRIVATEresearchRemote429c52d8a37fa60ca4393a3501a495128b4d2e88, Actionsdisabled, alle48finalWorking/RawGitbindungen und48ReadonlyfreezeDateihashes ohneAbweichung. Die einzige executableÄnderung seitReview sind exakt6Newline/CloneSites inpublic/nest.py:3expliziteLFwrites und3clone-cautocrlf=false VOR Checkout. Root hat dieseDeltas unddie8FixtureQuellen selbstreadonlygesehen; keine neueLunaRevieweraktivierung oder Testwiederholung durchRoot. Beide ursprünglichen Chargen bleibenFAILED/2von2verbraucht; dein Bericht korrigiert meine zwischenzeitlich überholte1Charge-Angabe.\n\nNeuer enger Einmalauftrag luna-nest-newline-mechanical-validation-20261009, Grantdatei C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/luna-nest-newline-mechanical-validation-grant-20261009.json. Basis429c52d vollständig beibehalten; KEINE weiteren Source-/Fixture-/Rule-/Backlogänderungen in diesem Auftrag. Innerhalb900s ab protokollierter Issue, genau1zusätzliche mechanischePrüfcharge mit insgesamtmax180sTestwand: die bestehenden8tests/test_nest.py-Methoden, vorhandenerBrownfield-add/list-Basistest und reinerPS-ASTCheck des bestehendenOldschoolLaunchers. BestehendeFakePythonprozesse/temporäreGit/FileFixtures ausschließlich in eigenenTempdirs und mit endlicher Prozesszeit; keineCodex/Luna/Provider-/Appserver-/Produkt-/Installation-/Build-/Canary-/Trialprozesse, keinneuerReviewer. Whitespacecheck undübrigeInvarianten bleiben scharf. Keine globaleGitConfig ändern, kein Wiederholen beiFAIL, kein Refilling alterQuote. Die alte ursprüngliche90minPreparationbilanz bleibt eigenständig erhalten.\n\nSichere OriginalfailedLogs/Freeze/48Quellen bytegleich. NeuesValidatorlog/-receipt/Hashes/DeltaHandoff/Continuationanker als reinadditiver neuer evidenzgebundenerCheckpoint, sauber privatpushen und tatsächlichenRemoteSHA melden. Keine nativeCredentials provisionieren oder testen aus diesem mechanischenGrant. Erfolgsfall liefert echtesPASS derbetroffenenMechanik mit exaktenSource-/Test-/PreparedSeed/Cell-/Config-/Executable-/Reviewbindungen; Root aktiviert danach unmittelbar die schonreservierte earlyConventional-Zelle ohneDesignwait, keinen weiterengenerischenCapabilityblock. BeiFAIL terminalen konkretenFehler undbetroffenenQuellpfad melden, keine weitereTestcharge/Actual aus diesem Auftrag.\n\nConventionalRoombookGrant remainsconditional/false mitunverändertemEnde09:12:43Z und0Actuals. Erforderliche spätereRootaktivierung bleibt exakter konkreter Bindungsschritt unter dem vorhandenenNutzerGo, keine neue menschlichePhasenfrage. Deine unabhängigeReadonlyqualification zu MarkitectReadiness bleibt erhalten, istkeineConventional-Produktsperre. EinmalHandoff/Blocker, keineACK-/Meldeschleife.",
+        "additionalMechanicalBatchesMax": 1,
+        "actualQuotaAdded": 0,
+        "sentUtc": "2026-10-09T04:52:04Z",
         "toolAccepted": true
       }
     },
@@ -10265,7 +10306,7 @@
       }
     }
   ],
-  "nextAction": "Scientist finishes exact current prep/readonlyreview/finalcheck and private source handoff. Root verifies concrete bindings and activates reserved early ConventionalRoombookcell immediately without waiting for Design; retain protocol revision/pilot accounting. Design continues full product and own regression followup.",
+  "nextAction": "Scientist executes one bounded existingfixture mechanical validation, no source changes or actualActors. Root reads new evidence then binds/activates alreadyreserved ConventionalRoombook immediately ifPASS; no Designwait or generaldiagnosisphase.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -10303,10 +10344,10 @@
     "latestUserMandateDocument": "docs/design/work-item-comparison-20261009.md",
     "latestDecision": "New Design main; simple Conventional versus new Markitect WorkItem comparison, all measured Actors LunaHigh; old studies preserved, no oldClassic/Gov new trials",
     "latestEvent": {
-      "event": "Human early Conventional evaluation and case-study refinement mandate",
-      "reviewedUtc": "2026-10-09T04:42:43Z",
-      "evidence": "Source review underway, prepBatch1records nestExit1/baselineExit0, finalbatch/review/handoff still pending; currentfirstActualnotready",
-      "action": "Reserve1finiteConventionalRoombookcell without Design dependency, bind exact completed source/profile after terminal prep review, no new general diagnostic phase",
+      "event": "Verified newline mechanical blocker and6site root readonly delta",
+      "reviewedUtc": "2026-10-09T04:52:04Z",
+      "evidence": "Clean429c52d PRIVATEremote/actionsdisabled;48WorkingRawGit/48reviewfreeze hashes; exact6source sites inspected",
+      "action": "One additional mechanicalbatch max180s within900s package, old2failed retained; freshActualstillreservednotactivated",
       "userDecisionRequired": false
     },
     "latestStatusQueryUtc": "2026-10-09T04:35:26Z"
@@ -10855,7 +10896,7 @@
     "newWorkItemComparison": {
       "key": "luna-native-work-item-comparison-20261009",
       "authorizedUtc": "2026-10-09T04:07:10Z",
-      "status": "PREPARATION FINAL REVIEW ACTIVE; one Conventional fullstart conditionally allocated, not activated",
+      "status": "One Conventional fullstart reserved; exact corrected nest mechanical validation active,0Actuals",
       "document": "docs/design/work-item-comparison-20261009.md",
       "documentSha256": "2f76bfd4a21bc9f28a6cdc671952de3a547d3e27df2fd43ce6853735be24edcf",
       "arms": [
@@ -10955,7 +10996,8 @@
         "scope": "One roombook Conventional actual cell after real prep review/source/config freeze, followed by independent evaluation",
         "prospectiveRefinementAllowed": true,
         "materialRefinementBreaksOriginalPairComparison": true,
-        "oldResultsNeverOverwritten": true
+        "oldResultsNeverOverwritten": true,
+        "mechanicalGate": "BLOCKED both originalcharges, specificRootvalidated6sitefix, one fresh finitemechanicalvalidation assigned"
       }
     }
   },
@@ -11480,6 +11522,13 @@
         "sha": "7d6964331f542462b4a29db3819f60c75083e3be",
         "onceOnlyTerminal": true,
         "newAssignment": false
+      },
+      {
+        "event": "luna-nest-preparation-mechanical-blocker-20261009",
+        "sourceThreadId": "01a1169c-3df6-7571-997d-48ab57365875",
+        "candidateSha": "429c52d8a37fa60ca4393a3501a495128b4d2e88",
+        "processedUtc": "2026-10-09T04:52:04Z",
+        "disposition": "Source/evidence/remote verified; one finite deterministicvalidation, noActual/canary/provider quota"
       }
     ],
     "oldschoolAuthorization": {
