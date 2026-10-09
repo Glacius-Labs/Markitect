@@ -146,6 +146,8 @@ When an authorized ancestor resolves a forwarded obligation, the Host carries th
 
 Targeted rework rejects a target that still has unresolved questions or risks. Its parent must explicitly resolve those obligations first; restarting implementation cannot silently erase them.
 
+Plans and execution evidence bind the Host executable and schema. A changed Host build requires a new plan. Retained historical escalation status does not establish current provenance; outstanding legacy questions or risks without typed provenance block resolution.
+
 ## Executable example
 
 `examples/project-world/` models a Shop with a root manager, commerce integration manager, Sales manager, and separate Orders and Inventory managers. Its vertical slices cover order state, reservation release, the shared transaction rule, declared artifacts, and a literal test command. The Python example uses only the standard library and SQLite:

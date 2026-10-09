@@ -124,4 +124,6 @@ Gezielte Nacharbeit blockiert für ein Ziel mit noch offenen Fragen oder Risiken
 
 Laufabschluss, Verify, Apply-Vorschau und der letzte geschützte Apply-Schritt prüfen denselben gespeicherten Abschlusszustand: vollständige Managerberichte ohne offene Text- oder Herkunftseinträge und ausschließlich ausdrücklich aufgelöste Eskalationen. Ein fertiger Status allein ersetzt diese Prüfung nicht; Resume darf fehlende Abschlussbelege nicht durch neue Aufrufe umgehen.
 
+Plan und Ausführungsnachweise binden Hostbinary und Schema. Ein geänderter Hostbuild verlangt einen neuen Plan. Historisch aufgelöste Eskalationen bleiben historische Statusnachweise; sie können keine neue Pflicht auflösen. Offene Altfragen oder Risiken ohne typisierte Herkunft blockieren.
+
 Die Abnahme umfasst einen behobenen Reviewerbefund, Manager-Rückgabe nach erstem PASS mit erneutem Review, unveränderte Geschwister ohne Neuausführung, abgelehnte Reviewer-Schreibvorschläge und fremde Nacharbeitsziele, veraltete Reviewevidenz, erschöpfte Runden/Budgets und unklare Aufrufe. Ein echter Luna-High-Shopdurchlauf ergänzt diese mechanischen Tests; beide Evidenzarten werden separat berichtet.
