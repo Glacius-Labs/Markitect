@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 )
 
@@ -230,9 +231,25 @@ func validateCandidateGit(ctx context.Context, h Handle) error {
 		return ErrInvalidHandle
 	}
 	for i, expected := range []string{filepath.Join(h.CWD, ".git"), h.CWD, filepath.Join(h.CWD, ".git")} {
-		if !samePath(strings.TrimSpace(paths[i]), expected) {
+		if !sameGitReportedPath(strings.TrimSpace(paths[i]), expected) {
 			return ErrInvalidHandle
 		}
 	}
 	return nil
+}
+
+// Git may report a Windows package-virtualized path spelling for the same
+// candidate directory that the trusted Host journal records. Keep ordinary
+// path and containment checks lexical; only Git's identity assertion may use
+// the underlying existing directory identity as a fallback.
+func sameGitReportedPath(reported, expected string) bool {
+	if samePath(reported, expected) {
+		return true
+	}
+	if runtime.GOOS != "windows" {
+		return false
+	}
+	reportedInfo, reportedErr := os.Stat(reported)
+	expectedInfo, expectedErr := os.Stat(expected)
+	return reportedErr == nil && expectedErr == nil && reportedInfo.IsDir() && expectedInfo.IsDir() && os.SameFile(reportedInfo, expectedInfo)
 }
