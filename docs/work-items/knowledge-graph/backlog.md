@@ -1,3 +1,6 @@
+# Durable implementation backlog
+
+```yaml
 version: 1
 workstream: knowledge-graph
 branch: codex/knowledge-graph
@@ -42,3 +45,4 @@ items:
   - id: RDF-FIT
     status: deferred
     scope: Separate justified fit evaluation; no canonical migration, installation, purchase or study implied.
+```

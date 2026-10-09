@@ -5,7 +5,7 @@ Reference: Management/P01/P02 source `1495e1be7b0046711531fa42c8407fba67b8e814`;
 
 The new direct user mandate authorizes full KG implementation in this isolated variant, including necessary schema/Host/CLI/MCP/guidance changes. Historical Integration-only holds in older handoffs no longer apply here. Work does not write the Integration branch or add a Main gate. After Root reports exact accepted Main, merge that source into this branch and validate the combined candidate; no automatic KG-to-Main merge, release or study.
 
-- [Backlog](backlog.yaml): durable current work and owners.
+- [Backlog](backlog.md): durable current work and owners.
 - [Continuation design](continuation-design.md): accepted local intent and parallel seams.
 - [KG01 reference](KG01-reference.md) and [twelve questions](KG01-question-matrix.md): source-bound acceptance contract.
 - [Pure index API](KG02-KG03-api.md): existing projection/navigation contract.
