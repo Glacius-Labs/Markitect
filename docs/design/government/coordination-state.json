@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T17:07:22Z",
+  "updatedUtc": "2026-10-09T17:10:51Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16053,6 +16053,22 @@
     "releasePublicationAuthorized": false,
     "mainAuthority": "Existing conditional regular PR89 merge after final exact-source readiness/gates/review; no protection bypass",
     "newOptionalRecommendation": "model-bound-guidance-follow-up-20261009.md; separate post-Main design recommendation, no implementation/study grant",
-    "notification": "Human-authorized one material callback Root and Integration, bounded peer-interface coordination; no ACK/polling loops"
+    "notification": "Human-authorized one material callback Root and Integration, bounded peer-interface coordination; no ACK/polling loops",
+    "nativeHelperAccountingFinding": {
+      "reportedUtc": "2026-10-09T17:10:51Z",
+      "reporters": [
+        "01a121a0-b660-7403-93c5-a0fc53501177",
+        "01a121a0-0417-71c1-9e4b-be742f8c1146"
+      ],
+      "status": "P04_P06_SOURCE_WORK_CONTINUES_A02_ACCEPTANCE_PLAN_PENDING",
+      "ownerReported": "CLI0.162 concurrency/depth controls exist; native collab child events post-dispatch, no proven hard total prelaunch request reservation",
+      "rootVerified": "Callbacks and targeted coordination only; no independent CLI/schema validation or actual calls in this follow-up",
+      "hostReservedAlternative": "Integration investigating real durable Host-reserved helper contexts; does not by itself prove ordinary native helper UX",
+      "instructionsSentOnce": "Separate actual enforcement from cooperative budget/unknowns, preserve native tools/helpers, no Actuals until existing allowance can be meaningfully respected, return one concrete protocol/source-bound acceptance plan",
+      "additionalGrant": false,
+      "starts": 0,
+      "securityOrToolsDisablingAuthorized": false,
+      "otherSourceWorkBlocked": false
+    }
   }
 }
