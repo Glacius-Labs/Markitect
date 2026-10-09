@@ -1434,3 +1434,10 @@ Fifth enabled actual dispatched once directly to Oldschool, fixed measurement to
 Own Oldschool native spawn receipt066ca2f/ownLedger reservation1 verified, exact own handle. Reservation clock07:59:40.609082Z distinct from observed native toolstart08:00:43.456946Z; exact modelstart/serving/usage/costunknown. Scientist6Git/5payload startcheckpoint5042969 clean/exact PRIVATE checked after one transient combined-head/clean read condition failed; cause not independently established, originals untouched, no trialfailure implied. Global5started/max6, one remaining unallocated.
 
 Fixed S1/S2/S3/Impl end08:22:10/08:44:40/09:07:10/09:29:40.609082Z, Final09:49:40.609082Z/closure09:59:40.609082Z under Root10:11:17Z. No completion/quality verdict. Start receipt relayed once to Scientist; real measured hosthold once to Design, light code/docs/CI continue. Agent callbacks primary, quiet2h heartbeat current/verified.
+
+
+### 2026-10-09T08:09:26Z - fixed S1 completion and S2 dispatch
+
+Own returned/completionreceipt45a046f Root verified; one S1 snapshot then fixed S2 release08:05:48.954638Z. S1 main370b996 and actorreported5unit/6publicPASS remain implementation reports, not independentQuality/humanacceptance. Root private3c8323 transition45Git/43payload bindings verified:44subtree plus one previously delivered startreceipt, correcting initial Root whole-delta44 assumption without scope violation. Two additive receipt bindings3752ce/releasedstatefe7648f verified, index1/oneSnapshot.
+
+Original fixed UTF8 continuation sent once to Oldschool for own returned handle/S2 after reservation, same grant/clock/deadline08:44:40.609082Z; actualS2receipt pending. No new trial/semantic coaching/test rerun. Root remote coordination checkpoints normal-pushed; private research history remains private.
