@@ -58,6 +58,9 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 		runE2EReview(invocation)
 		return
 	}
+	if discriminator.Kind != "projectrun-task/v1" {
+		processExit(2, "expected explicit Manager task context")
+	}
 	var contextPayload struct {
 		Phase          string   `json:"phase"`
 		DirectChildren []string `json:"directChildren"`

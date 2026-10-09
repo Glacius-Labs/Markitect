@@ -97,6 +97,21 @@ def review_invocation() -> dict:
     return value
 
 
+def projectrun_task_invocation(phase: str) -> dict:
+    value = invocation("executor")
+    value["request"]["context"] = {
+        "kind": "projectrun-task/v1",
+        "managerId": "manager-commerce",
+        "phase": phase,
+        "ownTask": "Integrate the supplied Inventory and Sales candidate work.",
+        "globalGoal": "Deliver the complete reservation workflow.",
+        "phaseGuidance": "Follow the scoped obligations for this phase.",
+        "escalationTarget": "manager-parent",
+        "responseSchema": task_report_schema(),
+    }
+    return value
+
+
 def provider_refs(value: dict, canonical_refs: list[str]) -> list[str]:
     alias_by_ref = {ref: alias for alias, ref in runner.evidence_ref_aliases(value).items()}
     return [alias_by_ref[ref] for ref in canonical_refs]
@@ -280,6 +295,54 @@ class CodexRunnerTests(unittest.TestCase):
                 instructions = runner.role_instructions(role)
                 for phrase in phrases:
                     self.assertIn(phrase, instructions)
+
+    def test_projectrun_task_work_prompt_keeps_local_mandate_and_delegations(self) -> None:
+        value = projectrun_task_invocation("work")
+        instructions = runner.role_instructions("executor", value["request"]["context"])
+        prompt = runner.make_prompt(value)
+
+        self.assertIn("request.context.ownTask", instructions)
+        self.assertIn("request.context.globalGoal is orientation only", instructions)
+        self.assertIn("accepted-model requirements assigned to your scope", instructions)
+        self.assertIn("Follow request.context.phaseGuidance as the authoritative workflow", instructions)
+        self.assertIn("candidateJson to null and return no verifierObservations", instructions)
+        self.assertIn("typed reportJson separate from candidateFiles", instructions)
+        self.assertIn("include every required active direct-child delegation", instructions)
+        self.assertIn("Do not claim that delegated children have already completed", instructions)
+        self.assertIn("A no-change report may be complete when phaseGuidance and supplied evidence", instructions)
+        self.assertIn("typed report and outer outcome must agree", prompt)
+        self.assertIn("supported complete report uses outer outcome proposed", prompt)
+        self.assertNotIn("project-run task", runner.make_prompt(invocation("executor")))
+        self.assertNotIn("project-run task", runner.make_prompt(review_invocation()))
+
+    def test_projectrun_task_integrate_prompt_preserves_or_closes_obligations(self) -> None:
+        value = projectrun_task_invocation("integrate")
+        instructions = runner.role_instructions("executor", value["request"]["context"])
+        prompt = runner.make_prompt(value)
+
+        for phrase in (
+            "inspect every supplied direct-child report and the merged candidate bytes",
+            "copying its text verbatim into the corresponding resolved list",
+            "never silently omit, rewrite, or mark it resolved without evidence",
+            "report partial",
+            "set escalateTo exactly to the supplied escalationTarget",
+            "use outer outcome escalated",
+            "Do not demand hidden descendant files or transcripts",
+            "Pending Host checks are expected",
+            "issue one bounded reworkRequests entry",
+            "That tracked repair alone does not require parent escalation",
+            "does not mean the candidate passed",
+            "If a question or risk remains unanswered, preserve it and report partial",
+            "use outer outcome escalated even when a rework request is also present",
+            "A new bounded rework request alone may accompany complete only when no question or risk remains unresolved",
+            "a repair request is not evidence that an obligation is resolved",
+            "Report complete only when the supplied evidence supports closure of this manager's obligations",
+            "a valid rework request may accompany that report while the Host awaits reintegration",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, instructions)
+        self.assertIn("preserve unresolved obligations and escalate them as specified", prompt)
+        self.assertIn("outer outcome escalated", prompt)
 
     def test_explicit_model_options_become_literal_codex_config_arguments(self) -> None:
         self.assertEqual(
