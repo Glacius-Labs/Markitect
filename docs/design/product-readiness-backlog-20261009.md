@@ -27,3 +27,8 @@ Proceed through eligible items without another blanket permission each phase. Ma
 ## Latest ownership transition
 
 The later user preference for fresh topic chats supersedes Designer as default owner of the entire P01-P10 execution. Designer closes P01 and concrete P02 then hands off a coherent pushed base; Root coordinates a fresh integration owner and workspace/App Server/MCP workers. R01-R03 research has separate read-only chats and no Main dependency. See fresh-product-chats-20261009.md and the queue fresh-chat-handoff.md. Existing product acceptance/Main authorization is unchanged.
+
+
+## Latest direct human runtime-limit revision
+
+The short allocation above is historical. The direct user instruction of 9 October now sets generous limits: same three acceptance jobs, four hours per job/twelve hours total, 256 total role-start attempts and up to sixty minutes per role within the job remainder. See [generous runtime limits](generous-runtime-limits-20261009.md). Integration updates the central ledger and actual nested caps; healthy ongoing work is not restarted for this revision. Historical attempts remain unchanged, no automatic refill or Case Study authorization.

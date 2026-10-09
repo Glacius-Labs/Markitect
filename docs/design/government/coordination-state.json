@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T17:59:11Z",
+  "updatedUtc": "2026-10-09T18:00:11Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -15888,9 +15888,9 @@
       "id": "product-readiness-native-acceptance-20261009",
       "status": "CONDITIONAL_ON_SOURCE_READINESS_AND_PER_JOB_RESERVATION",
       "maxJobs": 3,
-      "maxJobWallSeconds": 1800,
-      "maxTotalWallSeconds": 5400,
-      "maxTotalRoleStartRequests": 64,
+      "maxJobWallSeconds": 14400,
+      "maxTotalWallSeconds": 43200,
+      "maxTotalRoleStartRequests": 256,
       "consumedJobsAtIssuance": 0,
       "consumedStartRequestsAtIssuance": 0,
       "model": "gpt-6-luna",
@@ -15898,7 +15898,17 @@
       "ledger": "docs/work-items/product-readiness/evidence/native-acceptance-ledger.yaml",
       "oldGrantsReusable": false,
       "automaticRefill": false,
-      "sourceChecksAndDeveloperSubagents": "Separately necessary ordinary implementation/review work under explicit user mandate, not product or study evidence"
+      "sourceChecksAndDeveloperSubagents": "Separately necessary ordinary implementation/review work under explicit user mandate, not product or study evidence",
+      "priorAllocationBeforeGenerousLimits": {
+        "maxJobs": 3,
+        "maxJobWallSeconds": 1800,
+        "maxTotalWallSeconds": 5400,
+        "maxTotalRoleStartRequests": 64
+      },
+      "revisionAuthority": "Direct human instruction 2026-10-09: generous timeouts and limits; no healthy-work restarts due to short windows",
+      "revisionDocument": "docs/design/generous-runtime-limits-20261009.md",
+      "roleTimeoutSecondsDefault": 3600,
+      "newJobCount": 0
     },
     "notification": "Material completion/blocker/decision callback once to Root/local; continue eligible work without ACK loops/repeated human permission. No interrupt or reset of active WIP.",
     "firstStep": "Concrete shared services/wiring in Integration; P03/P04/P05 implementation in separate clean worktrees; P06-P10 follow integration",
@@ -16410,5 +16420,32 @@
     "latestKGForwardedOnceToIntegration": true,
     "open": "Integration wiring/runtime/gates; KG full Verify; Scientist newer direct-user source-preparation task",
     "ackRepliesRequired": false
+  },
+  "generousRuntimeLimits20261009": {
+    "recordedUtc": "2026-10-09T18:00:11Z",
+    "authority": "Direct user instruction",
+    "document": "docs/design/generous-runtime-limits-20261009.md",
+    "productJobsMax": 3,
+    "jobWallSecondsMax": 14400,
+    "totalWallSecondsMax": 43200,
+    "totalStartRequestsMax": 256,
+    "roleHelperReviewerSecondsDefault": 3600,
+    "focusedTestSecondsDefault": 600,
+    "broadPackageSecondsDefault": 1800,
+    "fullSuiteSecondsDefault": 3600,
+    "outerProcessCISecondsMinimum": 5400,
+    "nestedTimeoutsOwner": "Integration updates actual source/config validation and ledger before actual starts",
+    "dispatchedTo": [
+      "Integration",
+      "Knowledge Graph",
+      "Scientist preparation-only"
+    ],
+    "healthyCurrentWorkRestartRequired": false,
+    "historicalFailuresRelabeled": false,
+    "automaticRefill": false,
+    "caseStudiesEnabled": false,
+    "nativeJobsConsumedOwnerReported": 0,
+    "nativeStartsConsumedOwnerReported": 0,
+    "lifecycleClarification": "Generic partial usage/accounting does not block proven known terminal lifecycle; concrete unresolved child/turn/owned-handle uncertainty preserves candidate and prevents unsupported cleanup/promotion; no full-child/OS guarantee"
   }
 }
