@@ -179,7 +179,7 @@ func (c *Client) next(ctx context.Context) (envelope, error) {
 				}
 			}
 			if len(msg.ID) > 0 {
-				if c.request != nil && msg.Method == "item/tool/call" {
+				if c.request != nil && (msg.Method == "item/tool/call" || msg.Method == "item/fileChange/requestApproval") {
 					return msg, c.request(ctx, msg)
 				}
 				// Fail closed. Never synthesize approval, input, auth tokens or tool results.

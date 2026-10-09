@@ -9,9 +9,39 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 )
+
+type fileUpdateChange struct {
+	Path string         `json:"path"`
+	Kind fileChangeKind `json:"kind"`
+}
+
+type fileChangeKind struct {
+	Type          string  `json:"type"`
+	MovePath      *string `json:"movePath"`
+	MovePathSnake *string `json:"move_path"`
+}
+
+func (k fileChangeKind) MarshalJSON() ([]byte, error) {
+	value := map[string]any{"type": k.Type}
+	if k.Type == "update" || k.MovePathSnake != nil {
+		value["move_path"] = k.MovePathSnake
+	}
+	return json.Marshal(value)
+}
+
+type trackedFileChange struct {
+	ThreadID string
+	TurnID   string
+	Item     item
+}
+
+func fileChangeKey(threadID, turnID, itemID string) string {
+	return strings.Join([]string{threadID, turnID, itemID}, "\x00")
+}
 
 func digestBytes(b []byte) string {
 	sum := sha256.Sum256(b)
@@ -118,7 +148,48 @@ func (s *session) observe(e Event) error {
 		if p.ThreadID == s.h.ThreadID && s.h.TurnID != "" && p.TurnID != s.h.TurnID {
 			return ErrProtocol
 		}
+		if p.Item.Type == "fileChange" && p.ThreadID == s.h.ThreadID {
+			if s.pendingFileChanges == nil {
+				s.pendingFileChanges = make(map[string]trackedFileChange)
+			}
+			key := fileChangeKey(p.ThreadID, p.TurnID, p.Item.ID)
+			if e.Method == "item/started" {
+				if p.TurnID == "" || p.TurnID != s.h.TurnID || p.Item.Status != "inProgress" || len(p.Item.Changes) == 0 || len(p.Item.Changes) > 128 || len(s.pendingFileChanges) >= 1024 {
+					return ErrProtocol
+				}
+				s.pendingFileChanges[key] = trackedFileChange{ThreadID: p.ThreadID, TurnID: p.TurnID, Item: p.Item}
+			} else {
+				delete(s.pendingFileChanges, key)
+			}
+		}
 		return s.takeItem(p.ThreadID, p.Item, e.Method == "item/completed")
+	case "item/fileChange/patchUpdated":
+		var update struct {
+			ThreadID string             `json:"threadId"`
+			TurnID   string             `json:"turnId"`
+			ItemID   string             `json:"itemId"`
+			Changes  []fileUpdateChange `json:"changes"`
+		}
+		if json.Unmarshal(e.Params, &update) != nil {
+			return ErrProtocol
+		}
+		if update.ThreadID != s.h.ThreadID {
+			// Child-thread patch telemetry is retained in the raw event journal,
+			// but is not evidence for root-thread approval and cannot fail the
+			// parent invocation merely by being observed.
+			return nil
+		}
+		if update.TurnID == "" || update.TurnID != s.h.TurnID || update.ItemID == "" || len(update.Changes) == 0 || len(update.Changes) > 128 {
+			return ErrProtocol
+		}
+		key := fileChangeKey(update.ThreadID, update.TurnID, update.ItemID)
+		if s.pendingFileChanges == nil {
+			s.pendingFileChanges = make(map[string]trackedFileChange)
+		}
+		if _, exists := s.pendingFileChanges[key]; !exists {
+			return ErrProtocol
+		}
+		s.pendingFileChanges[key] = trackedFileChange{ThreadID: update.ThreadID, TurnID: update.TurnID, Item: item{ID: update.ItemID, Type: "fileChange", Status: "inProgress", Changes: update.Changes}}
 	case "thread/tokenUsage/updated":
 		if p.ThreadID != s.h.ThreadID || (s.h.TurnID != "" && p.TurnID != s.h.TurnID) {
 			return nil

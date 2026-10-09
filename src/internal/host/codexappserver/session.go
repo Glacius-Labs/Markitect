@@ -112,16 +112,17 @@ type turn struct {
 	Error  json.RawMessage `json:"error"`
 }
 type item struct {
-	ID                string   `json:"id"`
-	Type              string   `json:"type"`
-	Text              string   `json:"text"`
-	Phase             string   `json:"phase"`
-	Tool              string   `json:"tool"`
-	Status            string   `json:"status"`
-	SenderThreadID    string   `json:"senderThreadId"`
-	ReceiverThreadIDs []string `json:"receiverThreadIds"`
-	Model             string   `json:"model"`
-	ReasoningEffort   string   `json:"reasoningEffort"`
+	ID                string             `json:"id"`
+	Type              string             `json:"type"`
+	Text              string             `json:"text"`
+	Phase             string             `json:"phase"`
+	Tool              string             `json:"tool"`
+	Status            string             `json:"status"`
+	Changes           []fileUpdateChange `json:"changes"`
+	SenderThreadID    string             `json:"senderThreadId"`
+	ReceiverThreadIDs []string           `json:"receiverThreadIds"`
+	Model             string             `json:"model"`
+	ReasoningEffort   string             `json:"reasoningEffort"`
 	AgentsStates      map[string]struct {
 		Status string `json:"status"`
 	} `json:"agentsStates"`
@@ -140,22 +141,26 @@ type threadResponse struct {
 }
 
 type session struct {
-	a               *Adapter
-	ctx             context.Context
-	c               *Client
-	h               RecoveryHandle
-	life            *agentexec.Lifecycle
-	output          map[string]string
-	final           string
-	terminal        bool
-	usage           *agentexec.Usage
-	children        map[string]int
-	spawns          map[string]int
-	outputLimit     int
-	toolCalls       map[string]bool
-	instructionPins map[string]string
-	sessions        map[string]string
-	receivers       map[string]int
+	a                    *Adapter
+	ctx                  context.Context
+	c                    *Client
+	h                    RecoveryHandle
+	inv                  agentexec.Invocation
+	life                 *agentexec.Lifecycle
+	output               map[string]string
+	final                string
+	terminal             bool
+	usage                *agentexec.Usage
+	children             map[string]int
+	spawns               map[string]int
+	outputLimit          int
+	toolCalls            map[string]bool
+	instructionPins      map[string]string
+	sessions             map[string]string
+	receivers            map[string]int
+	pendingFileChanges   map[string]trackedFileChange
+	handledApprovals     map[string]bool
+	effectiveSandboxType string
 }
 
 func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexec.Request, opts agentexec.RunOptions) (result agentexec.RunResult, err error) {
@@ -180,7 +185,7 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 	ctx, cancel := context.WithTimeout(parent, a.config.Timeout)
 	defer cancel()
 	start := time.Now()
-	s := &session{a: a, ctx: ctx, h: RecoveryHandle{Protocol: protocolIdentity, Fingerprint: fp, Invocation: inv, Workspace: *opts.Workspace}, output: map[string]string{}, children: map[string]int{}, spawns: map[string]int{}, outputLimit: cfg.MaxStdoutBytes, toolCalls: map[string]bool{}}
+	s := &session{a: a, ctx: ctx, h: RecoveryHandle{Protocol: protocolIdentity, Fingerprint: fp, Invocation: inv, Workspace: *opts.Workspace}, inv: inv, output: map[string]string{}, children: map[string]int{}, spawns: map[string]int{}, outputLimit: cfg.MaxStdoutBytes, toolCalls: map[string]bool{}, pendingFileChanges: map[string]trackedFileChange{}, handledApprovals: map[string]bool{}}
 	s.sessions = map[string]string{}
 	s.receivers = map[string]int{}
 	s.life = &agentexec.Lifecycle{Provider: "codex-app-server", State: "unknown", Accounting: "partial", Requested: agentexec.SessionSettings{Model: a.config.Model, ReasoningEffort: a.config.ReasoningEffort, PermissionProfile: a.config.PermissionProfile, WindowsSandboxBackend: string(a.config.WindowsSandboxBackend), CWD: opts.Workspace.CWD, InstructionDigest: digest(wire)}}
@@ -194,7 +199,7 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 		}
 	}()
 	env := selectedEnvironment(cfg.EnvironmentAllowlist)
-	if err = bindReceipt(&result.Receipt, cfg, env); err != nil {
+	if err = bindReceipt(&result.Receipt, cfg, env, appServerArgs(a.config)); err != nil {
 		return result, err
 	}
 	if err = verifyVersion(ctx, a.config, env); err != nil {
@@ -219,7 +224,7 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 	if err != nil {
 		return result, err
 	}
-	s.c.request = s.toolRequest
+	s.c.request = s.serverRequest
 	s.c.experimental = len(a.options.DynamicTools) > 0 || a.config.PermissionProfile != ""
 	defer func() {
 		_ = s.c.Close()
@@ -364,6 +369,12 @@ func (s *session) bind(r threadResponse) error {
 	}
 	if len(r.ApprovalPolicy) == 0 || !json.Valid(r.ApprovalPolicy) || len(r.Sandbox) == 0 || !json.Valid(r.Sandbox) {
 		return errors.New("effective approval/sandbox settings unavailable")
+	}
+	var effectiveSandbox struct {
+		Type string `json:"type"`
+	}
+	if json.Unmarshal(r.Sandbox, &effectiveSandbox) == nil {
+		s.effectiveSandboxType = effectiveSandbox.Type
 	}
 	if s.a.config.PermissionProfile != "" && (r.ActivePermissionProfile == nil || r.ActivePermissionProfile.ID != s.a.config.PermissionProfile) {
 		return errors.New("explicit permission profile was not confirmed by server")

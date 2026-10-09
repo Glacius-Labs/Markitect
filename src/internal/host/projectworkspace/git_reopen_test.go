@@ -53,6 +53,43 @@ func TestGitServiceReopenPreservesCompletedBinaryDeleteAndParentBaseline(t *test
 	}
 }
 
+func TestValidateOwnedWorkspaceAcceptsManagerAndHelperHandlesAndRejectsForgedMarker(t *testing.T) {
+	fixture := newGitFixture(t)
+	for _, tc := range []struct {
+		name    string
+		task    string
+		allowed []string
+	}{
+		{name: "manager", task: "manager-work", allowed: []string{"src", "docs/guide.md"}},
+		{name: "helper", task: "manager-helper-1", allowed: []string{"src/app.go"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			storage := filepath.Join(t.TempDir(), "storage")
+			service, request := newGitServiceRequest(t, fixture, storage, tc.task, tc.allowed, nil)
+			handle, err := service.Prepare(context.Background(), request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = service.Close(context.Background(), handle) })
+			if err := ValidateOwnedWorkspace(request, handle); err != nil {
+				t.Fatalf("fresh Host-owned candidate was rejected: %v", err)
+			}
+			forged := handle
+			forged.ID = "ffffffffffffffffffffffffffffffff"
+			if err := ValidateOwnedWorkspace(request, forged); err == nil {
+				t.Fatal("forged handle was accepted")
+			}
+			marker := filepath.Join(filepath.Dir(handle.CWD), ownershipRecordName)
+			if err := os.WriteFile(marker, []byte(`{"schema":"markitect-owned-workspace/v1"}`), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if err := ValidateOwnedWorkspace(request, handle); err == nil {
+				t.Fatal("forged ownership marker was accepted")
+			}
+		})
+	}
+}
+
 func TestGitServiceReopenRejectsUnknownTerminalStaleAndForgedBindings(t *testing.T) {
 	for _, scenario := range []string{"active-or-unknown", "scope", "handle", "overlay", "source", "marker", "missing-marker", "git-identity"} {
 		t.Run(scenario, func(t *testing.T) {

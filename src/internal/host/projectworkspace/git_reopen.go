@@ -49,6 +49,87 @@ func writeOwnershipRecord(st *workspaceState) error {
 	return closeErr
 }
 
+// ValidateOwnedWorkspace verifies the live physical workspace path and its
+// stable Host ownership record without registering, harvesting, or closing it.
+func ValidateOwnedWorkspace(r Request, h Handle) error {
+	if err := h.ValidateFor(r); err != nil || len(h.ID) != 32 || filepath.Base(h.CWD) != "repo" {
+		return ErrInvalidHandle
+	}
+	for _, c := range h.ID {
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'f') {
+			return ErrInvalidHandle
+		}
+	}
+	storage := filepath.Dir(h.CWD)
+	if !strings.HasPrefix(filepath.Base(storage), "workspace-"+h.ID+"-") {
+		return ErrInvalidHandle
+	}
+	for _, path := range []string{storage, h.CWD, filepath.Join(h.CWD, ".git")} {
+		info, err := os.Lstat(path)
+		if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+			return ErrInvalidHandle
+		}
+		resolved, err := filepath.EvalSymlinks(path)
+		if err != nil || !samePath(resolved, path) {
+			return ErrInvalidHandle
+		}
+	}
+	sourceRoot, err := filepath.EvalSymlinks(r.RepositoryRoot)
+	if err != nil {
+		return err
+	}
+	relative, err := filepath.Rel(sourceRoot, storage)
+	if err != nil {
+		return err
+	}
+	if relative == "." || (relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator))) {
+		return ErrInvalidHandle
+	}
+	_, err = readOwnedWorkspaceRecord(storage, r, h)
+	return err
+}
+
+func readOwnedWorkspaceRecord(storage string, r Request, h Handle) (ownershipRecord, error) {
+	// Confine the marker read and require a stable regular file. It is not a
+	// content snapshot of agent output; it binds original Prepare ownership.
+	root, err := os.OpenRoot(storage)
+	if err != nil {
+		return ownershipRecord{}, err
+	}
+	defer root.Close()
+	info, err := root.Lstat(ownershipRecordName)
+	if err != nil || !info.Mode().IsRegular() || info.Size() > maxOwnershipRecordBytes {
+		return ownershipRecord{}, ErrInvalidHandle
+	}
+	file, err := root.Open(ownershipRecordName)
+	if err != nil {
+		return ownershipRecord{}, err
+	}
+	opened, err := file.Stat()
+	if err != nil || !os.SameFile(info, opened) {
+		file.Close()
+		return ownershipRecord{}, ErrInvalidHandle
+	}
+	content, err := io.ReadAll(io.LimitReader(file, maxOwnershipRecordBytes+1))
+	after, statErr := file.Stat()
+	file.Close()
+	current, currentErr := root.Lstat(ownershipRecordName)
+	if err != nil {
+		return ownershipRecord{}, err
+	}
+	if statErr != nil || currentErr != nil || len(content) > maxOwnershipRecordBytes || !os.SameFile(info, after) || !os.SameFile(info, current) || after.Size() != info.Size() || !after.ModTime().Equal(info.ModTime()) {
+		return ownershipRecord{}, ErrInvalidHandle
+	}
+	var record ownershipRecord
+	decoder := json.NewDecoder(bytes.NewReader(content))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&record); err != nil || decoder.Decode(new(any)) != io.EOF || record.Schema != "markitect-owned-workspace/v1" ||
+		record.Handle != h || !sameRequest(record.Request, r) || !sha256Digest.MatchString(record.SourceDigest) || (record.OverlayDigest != "" && !sha256Digest.MatchString(record.OverlayDigest)) {
+		return ownershipRecord{}, ErrInvalidHandle
+	}
+	return record, nil
+}
+
 // ReopenCandidate is an explicit trusted Host-journal seam, never discovery or
 // automatic adoption. terminalConfirmed must attest the original execution is
 // observed terminal and all writers are stopped; unknown/active execution fails.
@@ -106,46 +187,11 @@ func (s *GitService) ReopenCandidate(ctx context.Context, r Request, h Handle, o
 	} else if !strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
 		return ErrInvalidHandle
 	}
-	// Confine the marker read and require a stable regular file. It is not a
-	// content snapshot of agent output; it binds original Prepare ownership.
-	root, err := os.OpenRoot(storage)
+	record, err := readOwnedWorkspaceRecord(storage, r, h)
 	if err != nil {
 		return err
 	}
-	defer root.Close()
-	info, err := root.Lstat(ownershipRecordName)
-	if err != nil || !info.Mode().IsRegular() || info.Size() > maxOwnershipRecordBytes {
-		return ErrInvalidHandle
-	}
-	file, err := root.Open(ownershipRecordName)
-	if err != nil {
-		return err
-	}
-	opened, err := file.Stat()
-	if err != nil || !os.SameFile(info, opened) {
-		file.Close()
-		return ErrInvalidHandle
-	}
-	content, err := io.ReadAll(io.LimitReader(file, maxOwnershipRecordBytes+1))
-	after, statErr := file.Stat()
-	file.Close()
-	current, currentErr := root.Lstat(ownershipRecordName)
-	if err != nil {
-		return err
-	}
-	if statErr != nil || currentErr != nil || len(content) > maxOwnershipRecordBytes || !os.SameFile(info, after) || !os.SameFile(info, current) || after.Size() != info.Size() || !after.ModTime().Equal(info.ModTime()) {
-		return ErrInvalidHandle
-	}
-	var record ownershipRecord
-	decoder := json.NewDecoder(bytes.NewReader(content))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&record); err != nil {
-		return ErrInvalidHandle
-	}
-	if decoder.Decode(new(any)) != io.EOF {
-		return ErrInvalidHandle
-	}
-	if record.Schema != "markitect-owned-workspace/v1" || record.Handle != h || !sameRequest(record.Request, r) || record.OverlayDigest != digest {
+	if record.OverlayDigest != digest {
 		return ErrInvalidHandle
 	}
 	binding, err := InspectRepository(ctx, r.RepositoryRoot, r.BaseSHA)

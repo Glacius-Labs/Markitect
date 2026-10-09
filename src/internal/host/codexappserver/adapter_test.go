@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -47,6 +49,7 @@ func serveFixture() {
 			ID     json.RawMessage `json:"id"`
 			Method string          `json:"method"`
 			Params json.RawMessage `json:"params"`
+			Result json.RawMessage `json:"result"`
 		}
 		_ = json.Unmarshal(scanner.Bytes(), &msg)
 		result := any(map[string]any{})
@@ -76,7 +79,18 @@ func serveFixture() {
 			if mode == "model-mismatch" {
 				model = "wrong"
 			}
-			result = map[string]any{"thread": thread{ID: "thread-1", SessionID: sessionID, CLIVersion: "0.162.0", CWD: cwd}, "model": model, "reasoningEffort": "high", "cwd": cwd, "approvalPolicy": "never", "sandbox": map[string]string{"type": "workspaceWrite"}, "instructionSources": []string{}}
+			sandboxType := "workspaceWrite"
+			if strings.Contains(mode, "readonly-sandbox") {
+				sandboxType = "readOnly"
+			}
+			if strings.Contains(mode, "unknown-sandbox") {
+				sandboxType = ""
+			}
+			sandbox := map[string]string{"type": sandboxType}
+			if sandboxType == "" {
+				sandbox = map[string]string{}
+			}
+			result = map[string]any{"thread": thread{ID: "thread-1", SessionID: sessionID, CLIVersion: "0.162.0", CWD: cwd}, "model": model, "reasoningEffort": "high", "cwd": cwd, "approvalPolicy": "on-request", "sandbox": sandbox, "instructionSources": []string{}}
 			if threadParams.Permissions != "" && mode != "profile-unconfirmed" {
 				result.(map[string]any)["activePermissionProfile"] = map[string]string{"id": threadParams.Permissions}
 			}
@@ -112,6 +126,36 @@ func serveFixture() {
 			}
 			note("turn/started", map[string]any{"threadId": "thread-1", "turn": turn{ID: turnID, Status: "inProgress"}})
 			_ = enc.Encode(map[string]any{"id": msg.ID, "result": map[string]any{"turn": turn{ID: turnID, Status: "inProgress"}}})
+			if mode == "filechange-childtelemetry-accept" {
+				note("thread/started", map[string]any{"thread": thread{ID: "child-thread", SessionID: "child-session", ParentThreadID: "thread-1"}})
+				note("item/fileChange/patchUpdated", map[string]any{"threadId": "child-thread", "turnId": "child-turn", "itemId": "child-patch", "changes": []map[string]any{{"path": "README.md", "kind": map[string]any{"type": "update"}}}})
+			}
+			if strings.HasPrefix(mode, "filechange-") {
+				var changes []fileUpdateChange
+				_ = json.Unmarshal([]byte(os.Getenv("MARKITECT_P04_CHANGES")), &changes)
+				changeItem := item{ID: "patch-1", Type: "fileChange", Status: "inProgress", Changes: changes}
+				note("item/started", map[string]any{"threadId": "thread-1", "turnId": turnID, "item": changeItem})
+				params := map[string]any{"threadId": "thread-1", "turnId": turnID, "itemId": changeItem.ID, "startedAtMs": time.Now().UnixMilli()}
+				switch os.Getenv("MARKITECT_P04_APPROVAL_VARIANT") {
+				case "wrong-thread":
+					params["threadId"] = "thread-other"
+				case "wrong-turn":
+					params["turnId"] = "turn-other"
+				case "wrong-item":
+					params["itemId"] = "item-other"
+				case "grant-root":
+					cwd, _ := os.Getwd()
+					params["grantRoot"] = cwd
+				case "missing-start":
+					delete(params, "startedAtMs")
+				case "empty-grant-root":
+					params["grantRoot"] = ""
+				case "unknown-field":
+					params["futurePermission"] = true
+				}
+				_ = enc.Encode(map[string]any{"id": 99, "method": "item/fileChange/requestApproval", "params": params})
+				continue
+			}
 			if mode == "timeout" || mode == "interrupt-confirmed" {
 				continue
 			}
@@ -145,7 +189,9 @@ func serveFixture() {
 			note("turn/completed", map[string]any{"threadId": "thread-1", "turn": turn{ID: turnID, Status: status}})
 			continue
 		case "turn/interrupt":
-			if mode == "interrupt-confirmed" {
+			if strings.HasPrefix(mode, "filechange-") {
+				note("turn/completed", map[string]any{"threadId": "thread-1", "turn": turn{ID: turnID, Status: "interrupted"}})
+			} else if mode == "interrupt-confirmed" {
 				note("turn/completed", map[string]any{"threadId": "thread-1", "turn": turn{ID: turnID, Status: "interrupted"}})
 			} else if mode == "timeout" {
 				// The server closes without confirming interruption. The adapter
@@ -153,6 +199,19 @@ func serveFixture() {
 				return
 			}
 		case "":
+			if strings.HasPrefix(mode, "filechange-") && string(msg.ID) == "99" {
+				var decision struct {
+					Decision string `json:"decision"`
+				}
+				_ = json.Unmarshal(msg.Result, &decision)
+				if decision.Decision == "accept" {
+					var changes []fileUpdateChange
+					_ = json.Unmarshal([]byte(os.Getenv("MARKITECT_P04_CHANGES")), &changes)
+					note("item/completed", map[string]any{"threadId": "thread-1", "turnId": turnID, "item": item{ID: "patch-1", Type: "fileChange", Status: "completed", Changes: changes}})
+					note("item/completed", map[string]any{"threadId": "thread-1", "turnId": turnID, "item": item{ID: "message-1", Type: "agentMessage", Phase: "final_answer", Text: response}})
+					note("turn/completed", map[string]any{"threadId": "thread-1", "turn": turn{ID: turnID, Status: "completed"}})
+				}
+			}
 			if mode == "dynamic" {
 				note("item/completed", map[string]any{"threadId": "thread-1", "turnId": turnID, "item": item{ID: "message-1", Type: "agentMessage", Phase: "final_answer", Text: response}})
 				note("turn/completed", map[string]any{"threadId": "thread-1", "turn": turn{ID: turnID, Status: "completed"}})
@@ -274,6 +333,278 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 	}
 	if parsed.Outcome != agentexec.OutcomeProposed || len(parsed.ReportJSON) == 0 || len(parsed.VerifierObservations) != 0 {
 		t.Fatalf("corrected response contract was not preserved: outcome=%q report=%s observations=%#v", parsed.Outcome, parsed.ReportJSON, parsed.VerifierObservations)
+	}
+}
+
+func makeApprovalWorkspace(t *testing.T, taskID string, allowed, excluded []string) (*projectworkspace.GitService, projectworkspace.Request, projectworkspace.Handle) {
+	t.Helper()
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("candidate\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "docs"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	runGit := func(args ...string) string {
+		cmd := exec.Command("git", args...)
+		cmd.Dir = root
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("git %v failed: %v: %s", args, err, out)
+		}
+		return strings.TrimSpace(string(out))
+	}
+	runGit("init", "--quiet")
+	runGit("config", "user.name", "Codex Approval Test")
+	runGit("config", "user.email", "approval-test@example.invalid")
+	runGit("add", "README.md")
+	runGit("commit", "--quiet", "-m", "candidate")
+	base := runGit("rev-parse", "HEAD")
+	binding, err := projectworkspace.InspectRepository(context.Background(), root, base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := projectworkspace.Request{RepositoryRoot: root, RepositoryIdentity: "repo:approval-test", BaseSHA: base, OverlayDigest: binding.OverlayDigest,
+		TaskID: taskID, AllowedPaths: append([]string(nil), allowed...), ExcludedPaths: append([]string(nil), excluded...)}
+	service, err := projectworkspace.NewGitService(filepath.Join(t.TempDir(), "owned-workspaces"), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handle, err := service.Prepare(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = service.Close(context.Background(), handle) })
+	return service, request, handle
+}
+
+type approvalTestCase struct {
+	name          string
+	mode          string
+	paths         []string
+	allowed       []string
+	excluded      []string
+	variant       string
+	kind          string
+	parentAllowed []string
+	profile       string
+	role          string
+	moveKind      string
+	wantDecision  string
+	wantErr       bool
+}
+
+func runApprovalFixture(t *testing.T, tc approvalTestCase) (string, error) {
+	t.Helper()
+	if tc.role == "" {
+		tc.role = agentexec.RoleExecutor
+	}
+	service, workspaceRequest, handle := makeApprovalWorkspace(t, "approval-"+tc.name, tc.allowed, tc.excluded)
+	_ = service
+	if tc.name == "symlink" {
+		if err := os.Symlink(t.TempDir(), filepath.Join(handle.CWD, "link")); err != nil {
+			t.Skipf("symlinks unavailable: %v", err)
+		}
+	}
+	if tc.kind == "helper" && tc.parentAllowed == nil {
+		tc.parentAllowed = tc.allowed
+	}
+	contextValue := map[string]any{"kind": "projectrun-task/v1", "managerId": "docs-manager", "phase": "work", "allowedWritePaths": tc.allowed, "excludedWritePaths": tc.excluded}
+	if tc.kind == "helper" {
+		parent := map[string]any{"kind": "projectrun-task/v1", "managerId": "docs-manager", "phase": "work", "allowedWritePaths": tc.parentAllowed, "excludedWritePaths": tc.excluded}
+		contextValue = map[string]any{"kind": "projectrun-helper/v1", "managerId": "docs-manager", "helperDepth": 1, "helperAccounting": "partial", "task": "edit the assigned documentation", "allowedWritePaths": tc.allowed, "excludedWritePaths": tc.excluded, "parentContext": parent}
+	}
+	contextJSON, err := json.Marshal(contextValue)
+	if err != nil {
+		t.Fatal(err)
+	}
+	events := []Event{}
+	options := Options{OnEvent: func(_ context.Context, e Event) error { events = append(events, e); return nil }}
+	if tc.kind == "helper" {
+		options.BeforeStart = func(context.Context, agentexec.RoleStartRequest) error { return nil }
+	}
+	base, shared, request, runOptions := fixture(t, tc.mode, options)
+	if tc.profile != "" {
+		config := base.config
+		config.PermissionProfile = tc.profile
+		base, err = NewAdapter(config, options)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	request.Role = tc.role
+	request.SourceRevision = workspaceRequest.BaseSHA
+	request.Context = contextJSON
+	runOptions.Workspace = &handle
+	changes := make([]fileUpdateChange, len(tc.paths))
+	for index, path := range tc.paths {
+		kind := "update"
+		if strings.HasPrefix(path, "add:") {
+			path, kind = strings.TrimPrefix(path, "add:"), "add"
+		} else if strings.HasPrefix(path, "delete:") {
+			path, kind = strings.TrimPrefix(path, "delete:"), "delete"
+		}
+		if !filepath.IsAbs(path) {
+			if strings.HasPrefix(path, "foreign:") {
+				path = filepath.Join(t.TempDir(), filepath.FromSlash(strings.TrimPrefix(path, "foreign:")))
+			} else if strings.HasPrefix(path, "physical-alias:") {
+				path = `\\?\` + strings.TrimSuffix(handle.CWD, `\`) + `\` + filepath.FromSlash(strings.TrimPrefix(path, "physical-alias:"))
+			} else {
+				path = handle.CWD + string(filepath.Separator) + filepath.FromSlash(path)
+			}
+		}
+		changes[index] = fileUpdateChange{Path: path}
+		changes[index].Kind.Type = kind
+		if tc.moveKind == kind {
+			movePath := "moved.md"
+			changes[index].Kind.MovePath = &movePath
+		}
+	}
+	changesJSON, err := json.Marshal(changes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tc.moveKind != "" {
+		var raw []map[string]any
+		if err := json.Unmarshal(changesJSON, &raw); err != nil {
+			t.Fatal(err)
+		}
+		raw[0]["kind"].(map[string]any)["move_path"] = "moved.md"
+		changesJSON, err = json.Marshal(raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("MARKITECT_P04_CHANGES", string(changesJSON))
+	t.Setenv("MARKITECT_P04_APPROVAL_VARIANT", tc.variant)
+	result, runErr := base.Run(context.Background(), shared, request, runOptions)
+	if runErr == nil && result.Receipt.Lifecycle.State != "completed" {
+		t.Fatalf("accepted fixture did not complete: %+v", result.Receipt.Lifecycle)
+	}
+	decision := ""
+	for _, event := range events {
+		if event.Method == "markitect/fileChangeApproval/decision" {
+			var value struct {
+				Decision string `json:"decision"`
+				Scope    string `json:"scope"`
+			}
+			if json.Unmarshal(event.Params, &value) == nil {
+				decision = value.Decision
+				if value.Scope != "delegated-write-scope" {
+					t.Errorf("approval decision misrepresented its authority: %#v", value)
+				}
+			}
+		}
+	}
+	return decision, runErr
+}
+
+func TestFileChangeApprovalRequiresExactOwnedDelegatedScope(t *testing.T) {
+	tests := []approvalTestCase{
+		{name: "manager update", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, wantDecision: "accept"},
+		{name: "child patch telemetry cannot disrupt parent approval", mode: "filechange-childtelemetry-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, wantDecision: "accept"},
+		{name: "new owned file under new directories", mode: "filechange-accept", paths: []string{"add:new/nested/README.md"}, allowed: []string{"new/"}, wantDecision: "accept"},
+		{name: "helper own scope", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, kind: "helper", parentAllowed: []string{"README.md"}, wantDecision: "accept"},
+		{name: "helper cannot borrow parent scope", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"docs/"}, kind: "helper", parentAllowed: []string{"README.md"}, wantDecision: "decline", wantErr: true},
+		{name: "one out of scope change rejects whole patch", mode: "filechange-accept", paths: []string{"README.md", "add:src/other.go"}, allowed: []string{"README.md"}, wantDecision: "decline", wantErr: true},
+		{name: "excluded scope overrides allowed", mode: "filechange-accept", paths: []string{"add:src/other.go"}, allowed: []string{"src/"}, excluded: []string{"src/"}, wantDecision: "decline", wantErr: true},
+		{name: "unverifiable physical alias", mode: "filechange-accept", paths: []string{"foreign:README.md"}, allowed: []string{"README.md"}, wantDecision: "decline", wantErr: true},
+		{name: "protected metadata", mode: "filechange-accept", paths: []string{"add:.markitect/policy.yaml"}, allowed: []string{"README.md"}, wantDecision: "decline", wantErr: true},
+		{name: "traversal", mode: "filechange-accept", paths: []string{`..\outside.md`}, allowed: []string{"outside.md"}, wantDecision: "decline", wantErr: true},
+		{name: "wrong thread", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, variant: "wrong-thread", wantDecision: "decline", wantErr: true},
+		{name: "wrong turn", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, variant: "wrong-turn", wantDecision: "decline", wantErr: true},
+		{name: "wrong item", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, variant: "wrong-item", wantDecision: "decline", wantErr: true},
+		{name: "no session grant", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, variant: "grant-root", wantDecision: "decline", wantErr: true},
+		{name: "empty grant root still explicit", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, variant: "empty-grant-root", wantDecision: "decline", wantErr: true},
+		{name: "unknown approval field", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, variant: "unknown-field", wantDecision: "decline", wantErr: true},
+		{name: "move path on add rejected", mode: "filechange-accept", paths: []string{"add:README.md"}, allowed: []string{"README.md"}, moveKind: "add", wantDecision: "decline", wantErr: true},
+		{name: "move path on delete rejected", mode: "filechange-accept", paths: []string{"delete:README.md"}, allowed: []string{"README.md"}, moveKind: "delete", wantDecision: "decline", wantErr: true},
+		{name: "required timestamp", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, variant: "missing-start", wantDecision: "decline", wantErr: true},
+		{name: "read only requested profile", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, profile: ":read-only", wantDecision: "decline", wantErr: true},
+		{name: "effective read only sandbox", mode: "filechange-readonly-sandbox", paths: []string{"README.md"}, allowed: []string{"README.md"}, wantDecision: "decline", wantErr: true},
+		{name: "unknown effective sandbox", mode: "filechange-unknown-sandbox", paths: []string{"README.md"}, allowed: []string{"README.md"}, wantDecision: "decline", wantErr: true},
+		{name: "non executor role", mode: "filechange-accept", paths: []string{"README.md"}, allowed: []string{"README.md"}, role: agentexec.RoleVerifier, wantDecision: "decline", wantErr: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			decision, err := runApprovalFixture(t, tc)
+			if decision != tc.wantDecision {
+				t.Fatalf("decision = %q, want %q (err=%v)", decision, tc.wantDecision, err)
+			}
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("run error = %v, wantErr=%v", err, tc.wantErr)
+			}
+			if tc.wantErr && !errors.Is(err, ErrApprovalRequired) {
+				t.Fatalf("rejected approval did not fail closed with ErrApprovalRequired: %v", err)
+			}
+		})
+	}
+}
+
+func TestFileChangeApprovalParamsRejectDuplicateAndUnknownFields(t *testing.T) {
+	for _, raw := range []string{
+		`{"threadId":"thread-1","threadId":"thread-1","turnId":"turn-1","itemId":"patch-1","startedAtMs":1}`,
+		`{"threadId":"thread-1","turnId":"turn-1","itemId":"patch-1","startedAtMs":1,"futurePermission":true}`,
+		`{"threadId":"thread-1","turnId":"turn-1","itemId":"patch-1","startedAtMs":1,"grantRoot":"C:\\\\outside","GrantRoot":null}`,
+		`{"threadId":"thread-1","turnId":"turn-1","itemId":"patch-1","startedAtMs":1,"grantRoot":null}`,
+		`{"threadId":"thread-1","turnId":"turn-1","itemId":"patch-1","startedAtMs":1,"reason":null}`,
+	} {
+		var params fileChangeApprovalParams
+		if err := decodeFileChangeApprovalParams([]byte(raw), &params); err == nil {
+			t.Fatalf("accepted unpinned approval params: %s", raw)
+		}
+	}
+}
+
+func TestFileChangeApprovalRejectsSymlinkAndUnverifiablePaths(t *testing.T) {
+	decision, err := runApprovalFixture(t, approvalTestCase{name: "symlink", mode: "filechange-accept", paths: []string{"add:link/new.go"}, allowed: []string{"link/"}})
+	if decision != "decline" || !errors.Is(err, ErrApprovalRequired) {
+		t.Fatalf("symlink write was not rejected: decision=%q err=%v", decision, err)
+	}
+}
+
+func TestFileChangeApprovalAcceptsVerifiedWindowsExtendedPathAlias(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("Windows extended-path alias is platform-specific")
+	}
+	decision, err := runApprovalFixture(t, approvalTestCase{name: "extended-path-alias", mode: "filechange-accept", paths: []string{"physical-alias:README.md"}, allowed: []string{"README.md"}, wantDecision: "accept"})
+	if decision != "accept" || err != nil {
+		t.Fatalf("verified same-directory Windows spelling alias was not accepted: decision=%q err=%v", decision, err)
+	}
+}
+
+func TestWindowsApprovalAliasRejectsUNCWithoutResolvingIt(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("Windows path namespaces are platform-specific")
+	}
+	root := t.TempDir()
+	if _, err := workspaceRelativeChangePath(root, `\\server\share\README.md`, "add"); err == nil {
+		t.Fatal("foreign UNC proposal was treated as an owned local alias")
+	}
+}
+
+func TestAppServerReceiptBindsActualProcessArguments(t *testing.T) {
+	command, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, backend := range []WindowsSandboxBackend{"", WindowsSandboxBackendMXC} {
+		config := Config{WindowsSandboxBackend: backend}
+		args := appServerArgs(config)
+		receipt := agentexec.Receipt{}
+		if err := bindReceipt(&receipt, agentexec.Config{Command: command}, nil, args); err != nil {
+			t.Fatal(err)
+		}
+		encoded, _ := json.Marshal(struct {
+			Command string
+			Args    []string
+		}{command, args})
+		if receipt.CommandDigest != digest(encoded) {
+			t.Fatalf("command digest omitted the actual app-server args: backend=%q args=%v digest=%s", backend, args, receipt.CommandDigest)
+		}
+		if backend == WindowsSandboxBackendMXC && (len(args) < 2 || args[0] != "-c" || args[1] != "windows.sandbox=mxc") {
+			t.Fatalf("receipt test did not exercise configured MXC process args: %v", args)
+		}
 	}
 }
 
