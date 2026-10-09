@@ -1354,3 +1354,13 @@ Design809e7df is a remote-verified DraftPR89 checkpoint, not accepted readiness 
 
 
 Correction dispatched once06:06:49Z, tool accepted. Automation saved ACTIVE/2h with exact current grant, conditional third start, terminal policy-failure boundary and public DesignPR status. No additional Actual authority from preparation or heartbeat.
+
+
+### 2026-10-09T06:14:26Z - third independent Conventional cell activated after concrete normal-entry correction
+
+Root accepted clean private76a63bde/exact remote,19changed Working/RawGit bindings,16payloadhashes, unchanged nine inputs/tree/profile/executable and fresh own home. One launcher line chooses normal workspace-write explicitly, targeted argv regression;9mechanical fixtures PASS16.6948212s,1offline resume-help0.0404563s,0new model/reviewer/probes. No additional general test or capability phase.
+
+Fresh third fullstart now enabled by an immutable activation receipt and enabled wrapper. Prior two terminal starts retained, global2used/3allocated/max6; actual new start not yet observed. Same900setup/7200cell/5400implementation/1200assessment/600capture/8implementation+1final/team4depth2, absolute09:12:43Z. Native safeguards remain, no Design readiness dependency. If actual policy still blocks normal tools, terminal operator decision rather than another automatic retry or bypass.
+
+
+Exact enabled grant dispatched once06:14:57Z, tool accepted; Scientist active cursor116 executing setup/drive. No genuine native start receipt yet. Automation exact ACTIVE/2h/current activation/Root binding checked. No repeated Design task or new quote from callback.
