@@ -43,12 +43,38 @@ jobs:
     purpose: Combined normal Main smoke with setup Work Item parallel Managers fresh helper independent review Verify guarded Apply and original-turn workspace recovery
     original_purpose: App Server real authenticated fresh-context tool execution
     main_gate: required
-    status: not_started
-    source: null
-    config: null
-    start_utc: null
-    deadline_utc: null
+    status: reserved
+    source:
+      revision: fc6d09a234572c344279a342416475e788435f1f
+      binary_sha256: cfeb36912da0bbe95f910ef5e79de9f0bbb58ed515e93071838cbb21fb10b50f
+      owned_project_revision: acfbb7a39b79cfa4f2507039e3e6801d88a4fc57
+    config:
+      runtime_digest: sha256:d10a4d73636ca223f854ef2969dbc7a7299dc3f80a65be7ec0041cbcfa4da3b6
+      plan_id: fcca72abe1abc505de2d0321adfdab3a
+      plan_digest: sha256:8b4bbf654450b4d04e3a4c2b313fd4d56ba805b089d3b26cef6f32006d663034
+      provider_version: codex-cli 0.162.0
+      provider_sha256: dce685d569526ef4712fa82d20ff20e1309baad5fcd34215e1126698f611242f
+      model: gpt-6-luna
+      reasoning_effort: high
+      permission_profile: inherited
+      max_role_seconds: 3600
+      max_role_start_requests: 256
+      observed_accounting: lower_bound
+    start_utc: '2026-10-09T20:26:23Z'
+    deadline_utc: '2026-10-10T00:26:23.000Z'
     role_start_requests: 0
+    cli_attempts:
+      - source_revision: fc6d09a234572c344279a342416475e788435f1f
+        plan_id: fcca72abe1abc505de2d0321adfdab3a
+        start_utc: '2026-10-09T20:27:03.4574198Z'
+        end_utc: '2026-10-09T20:27:07.7103709Z'
+        exit_code: 2
+        outcome: stale_pre_provider
+        role_start_requests: 0
+        provider_starts: 0
+        run_state_created: false
+        observer_id: f5656e3366e544a488883bbe2ad47b80
+        cause: Plan used transport-neutral fingerprints while native Run required protocol options and stable helper tool fingerprints
     evidence: []
   - id: A02
     purpose: Independent parallel Managers, native helper and independent review
