@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T22:51:44.296045Z",
+  "updatedUtc": "2026-10-09T22:52:33.919400Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16602,7 +16602,14 @@
           "scopedFix": "Minimal typed candidate-edit approval isolated delegated source fix, no blanketaccept/policychange/replay"
         },
         "rootVerifiedEnvironmentSource": "codexappserver/process.go57-71: nilallowlist=ordinaryos.Environ; explicitnamesselectonly and omitothers. Successful Scientist coding inherited ordinarycurrent-userenv/auth (sanitizedhand-off/sourceconfirmed), no Gitbroker override.",
-        "environmentCorrectionCoordination": "Root sent additive source comparison: prefer existing ordinary inheritance if no realprojectpolicy requires allowlist, rather than guessedWindowsvariablesinglefixloop; privatelybindconfig/envdigest; explicitallowlist needs documentednecessaryplatformprerequisites. No global security change/sandboxdisable/secretoutput."
+        "environmentCorrectionCoordination": "Root sent additive source comparison: prefer existing ordinary inheritance if no realprojectpolicy requires allowlist, rather than guessedWindowsvariablesinglefixloop; privatelybindconfig/envdigest; explicitallowlist needs documentednecessaryplatformprerequisites. No global security change/sandboxdisable/secretoutput.",
+        "nativeEnvironmentModeFinding": {
+          "rootVerified": "projectrun/config.go309-332 always converts Environment slice to nonnil &env; omission becomes empty env. Thus existing adapter nil-inheritance cannot be selected through normal project runtime.",
+          "ownerPinnedLookupFinding": "Pinned0.162 source locates exact MXC platform error in known-folder ProgramFiles/ProgramFilesX86/ProgramData lookup; owncore Windowsenv contains names excluded by configured allowlist",
+          "correction": "Minimal explicit native inherited-environment mode through ordinary runtime/setup, private fingerprint/receipt digest only; preserve deliberate explicitname list and declared check existing selection semantics",
+          "status": "Owner implementing targeted source/config repair; no new actual/current A01 still FAILED",
+          "otherAuthority": "No sandbox/profile/global changes; scoped candidate-file approval repair separate"
+        }
       }
     }
   },
