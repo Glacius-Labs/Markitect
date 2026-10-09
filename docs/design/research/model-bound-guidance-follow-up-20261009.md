@@ -1,0 +1,18 @@
+# Optional model-bound guidance follow-up
+
+R03 research returned an additional recommendation under the user's request to assess provider Rules/Workflows/Agents. This is a backlog/design handoff, not a new implementation or experiment grant. P01–P10 and stable Main remain the priority. Root forwarded the recommendation to fresh Product Integration for the optional follow-up queue and implementation-plan link. Researcher-reported source observations below are not independently re-reviewed in this handoff.
+
+Proposed topic: versioned canonical YAML product defaults and model-bound provider guidance with integrated Init/Onboard. Keep project responsibilities in the existing Manager/Statement/Artifact/Check/Decision model. Package-level YAML defaults have explicit version/content digests; adopting projects bind effective inputs rather than silently changing when the installed binary changes. AGENTS.md/CLAUDE.md/native skills remain derived provider outputs. Do not create another project ontology or executable workflow engine. Host scope, independent roles, budgets and evidence remain product-code responsibilities.
+
+Suggested sequence after stable Main, using its actual SHA and post-P08 paths:
+
+1. Define one source owner and output writer, defaults/update rules, project customization and minimal typed projection metadata.
+2. Move existing generic onboarding texts to a validated embedded versioned YAML catalogue; reproduce deterministic existing output first, bind operation IDs to code contracts.
+3. Project actually selected Manager instructions, explicit Statements/uses/requires, Artifacts and Checks; keep entrypoints compact and do not infer dependencies from prose.
+4. Offer one explicit Preview/Apply plan for Init plus Onboard, including the not-yet-written initial-model snapshot, conflicts, Brownfield preservation and recovery.
+5. Manage canonical name/description updates while preserving unknown user frontmatter; compare against previous generated base and handle missing-base conflicts explicitly.
+6. Close model-to-provider-output traceability without conflating tool-managed writer ownership with required artifact realization or counting unrelated tool paths as fulfilled.
+
+The researcher reports that current Preview binds ModelDigest but renderFiles lacks selected model contents; generic guidance lives in Go strings, old frontmatter preservation can hide canonical metadata updates, and Required-Artifact/ToolPaths exclusions need an explicit narrow projection contract. Verify these statements against the final integrated source before acting; current P07 defects must still be fixed under its existing normal-user mandate. P07/P08 overlap makes a second parallel onboarding writer inappropriate. Optional isolated catalogue/renderer preparation would need Integration to assign ownership; none is started here.
+
+For a later separately authorized A/B study, compare one stable Main S against its single feature descendant with the same adopting start snapshot, available project information, prompts, model/effort/runtime/permissions/resources/evaluation. Treatment is the setup/projection change, not different product maturities. Existing public Roombook/Readinglog tasks may be reused after independently checking the stopped sandbox's actual mechanics and bindings. Never reuse closed actor grants or expose private evaluator data. Freeze fresh finite quota/stop rules before actual calls. Measure setup, guidance maintenance, task outcomes, consistency, errors/interventions and available usage; unknown costs stay unknown. This multi-part change alone does not isolate every component's causal contribution. No Case Study or Scientist reactivation is authorized by this document.

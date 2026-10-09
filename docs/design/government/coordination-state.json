@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T16:28:00Z",
+  "updatedUtc": "2026-10-09T17:07:22Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -10747,16 +10747,16 @@
       "threadId": "01a11c80-37aa-7fe0-9586-35d916ce6561",
       "hostId": "local",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect",
-      "lastObservedStatus": "active; only latest native Codex work configuration task authorized",
-      "candidateSha": "b61eb445fdceb851640d1fd8c7084a8b7b664403",
-      "candidateStatus": "CLOSED / QUALIFIED SOURCE IDENTITY REGRESSION ACCEPTED, FINAL WINDOWS CI AND NATIVE USABILITY OPEN",
+      "lastObservedStatus": "P01/P02 completed by exact clean pushed handoff; old chat source ownership closed",
+      "candidateSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
+      "candidateStatus": "P01/P02 source/contracts accepted for fresh implementation; no full runtime/Main acceptance",
       "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:39",
       "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac852a43fa08191a8d8e593c901cb96",
-      "assignedMilestone": "Identity correction and recovery closed; existing hosted CI pending, autonomous proof/main acceptance unresolved",
+      "assignedMilestone": "None: retained terminal handoff; ownership now fresh Product Integration",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
       "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
       "acceptance": "Qualified bounded testable delivery candidate. No full workflow readiness, matched study admission, semantic generality, human acceptance, main replacement or release.",
-      "latestProgress": "Exact PRIVATE4c45589c/49treeblobs/45originalmanifest/2followupbindings verified, failed batches/source/build preserved. Final closure948.1124439s exceeds900s/absolute12:14:06Z; initial within-budget claim withdrawn. Windows later gates running, no fullPASS or native proof.",
+      "latestProgress": "Clean actual local HEAD and exact public remote; final diff two status/handoff files; one independent read-only source review; four isolated worktrees/feature branches; first compact wait observes all active. No Root builds/tests/models.",
       "evidence": {
         "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
         "observedBranch": "codex/model-driven-delivery",
@@ -12095,6 +12095,66 @@
         }
       ],
       "continuationAuthority": "Latest direct user request, docs/design/project-native-codex-work-20261009.md; previous work remains stopped"
+    },
+    {
+      "name": "integration",
+      "scope": "Shared integration P06-P10 and Main",
+      "threadId": "01a121a0-0417-71c1-9e4b-be742f8c1146",
+      "hostId": "local",
+      "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-integration\\Markitect",
+      "branch": "codex/product-integration-20261009",
+      "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
+      "afterCursor": "abeb765e-9882-4852-9bc4-08f7cb067370:1",
+      "lastObservedStatus": "active",
+      "activeTurn": "01a121a0-083c-7290-9ede-fed5f31c6c66",
+      "creationAndPromptDelivered": true,
+      "firstSnapshotVerifiedActive": true,
+      "nativeProductJobsAuthorizedIndependently": "Existing conditional central grant only"
+    },
+    {
+      "name": "workspaces",
+      "scope": "P03",
+      "threadId": "01a121a0-af62-7bd1-984e-9a5c6b048ca0",
+      "hostId": "local",
+      "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-workspaces\\Markitect",
+      "branch": "codex/product-workspaces-20261009",
+      "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
+      "afterCursor": "61f1912c-2dbe-46ca-9712-fe5f07c2009b:1",
+      "lastObservedStatus": "active",
+      "activeTurn": "01a121a0-b288-7d20-ad99-b2f3c1d260fc",
+      "creationAndPromptDelivered": true,
+      "firstSnapshotVerifiedActive": true,
+      "nativeProductJobsAuthorizedIndependently": false
+    },
+    {
+      "name": "app-server",
+      "scope": "P04",
+      "threadId": "01a121a0-b660-7403-93c5-a0fc53501177",
+      "hostId": "local",
+      "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-app-server\\Markitect",
+      "branch": "codex/product-app-server-20261009",
+      "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
+      "afterCursor": "7203aae6-2241-4a1f-9fa3-2d6fa89740e7:1",
+      "lastObservedStatus": "active",
+      "activeTurn": "01a121a0-bb2c-7642-91f5-9217e6a22884",
+      "creationAndPromptDelivered": true,
+      "firstSnapshotVerifiedActive": true,
+      "nativeProductJobsAuthorizedIndependently": false
+    },
+    {
+      "name": "mcp",
+      "scope": "P05",
+      "threadId": "01a121a0-bee0-7621-943c-c45ea125bf7e",
+      "hostId": "local",
+      "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-mcp\\Markitect",
+      "branch": "codex/product-mcp-20261009",
+      "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
+      "afterCursor": "be2d6806-8e78-4fbb-82cc-a34732f0d79f:1",
+      "lastObservedStatus": "active",
+      "activeTurn": "01a121a0-c2b3-7663-9f6c-ea9ba4737962",
+      "creationAndPromptDelivered": true,
+      "firstSnapshotVerifiedActive": true,
+      "nativeProductJobsAuthorizedIndependently": false
     }
   ],
   "nextAction": "Designer P01/P02 exact clean pushed handoff, then fresh integration/workspace/App Server/MCP owners. R01-R03 read-only research closed; no new Main gates or speculative integration. Product readiness and existing finite acceptance remain; cases/releases stopped.",
@@ -15763,14 +15823,14 @@
     "nativeProofGate": "OPEN, previous allowance closed; no automatic retry or reset."
   },
   "productReadinessBacklogMandate": {
-    "status": "CREATED_IN_DESIGN_REPO_AND_DISPATCHED_ONCE",
+    "status": "P01_P02_ACCEPTED_FRESH_INTEGRATION_AND_THREE_WORKERS_ACTIVE",
     "issuedUtc": "2026-10-09T16:09:16Z",
     "authority": "Latest direct user request: implement normal Git/context/tools/delete/rename/helpers/fresh Managers, MCP/App Server; clean src/docs/no marketing; coordinate via persistent Work Items through validated Main; studies later.",
-    "ownerThread": "01a11c80-37aa-7fe0-9586-35d916ce6561",
-    "ownerWorktree": "C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect",
-    "ownerBranch": "codex/model-first-operations",
+    "ownerThread": "01a121a0-0417-71c1-9e4b-be742f8c1146",
+    "ownerWorktree": "C:/Users/Consiliari/.codex/worktrees/product-integration/Markitect",
+    "ownerBranch": "codex/product-integration-20261009",
     "queue": "docs/work-items/product-readiness/backlog.yaml",
-    "queueSourceOfTruth": "Designer product branch; Root initial handoff hashes only, no second live queue",
+    "queueSourceOfTruth": "Fresh Product Integration branch; workers submit isolated handoffs; no second mutable queue",
     "rootDocument": "docs/design/product-readiness-backlog-20261009.md",
     "items": [
       "P01",
@@ -15823,7 +15883,7 @@
       "sourceChecksAndDeveloperSubagents": "Separately necessary ordinary implementation/review work under explicit user mandate, not product or study evidence"
     },
     "notification": "Material completion/blocker/decision callback once to Root/local; continue eligible work without ACK loops/repeated human permission. No interrupt or reset of active WIP.",
-    "firstStep": "P01 closes existing compatibility/native WIP; no concurrent Root product edits.",
+    "firstStep": "Concrete shared services/wiring in Integration; P03/P04/P05 implementation in separate clean worktrees; P06-P10 follow integration",
     "latestOwnershipSteering": "User wants fresh chats rather than multi-day Designer owning every topic. Designer default limited to P01/P02 handoff; fresh integration/implementation owners for P03-P10 after verified base.",
     "latestOwnershipDocument": "docs/design/fresh-product-chats-20261009.md"
   },
@@ -15845,7 +15905,7 @@
     "researchImplementationAuthorized": false,
     "researchSourceBuildsModelsInstallationsStudiesAuthorized": false,
     "designerScope": "P01 completion and concrete P02 contracts/clean pushed handoff, no reset; avoid long chat implementing every P03-P10 or research topic.",
-    "freshImplementationChats": "Not yet created: await verified coherent P02 source/contracts; then fresh integration owner plus bounded workspace/App Server/MCP workers in distinct feature worktrees.",
+    "freshImplementationChats": "Created and observed active on clean shared1495e1be; see freshProductImplementationHandoff",
     "nativeAcceptanceQuotaChange": 0,
     "threadDispatches": [
       {
@@ -15899,5 +15959,100 @@
       "newPurchaseIntegrationReplayStudyAuthority": false,
       "notification": "Researcher callbacks received once; no reply/ACK loop or new task. Topic chats finish; product P01/P02 handoff remains priority."
     }
+  },
+  "freshProductImplementationHandoff": {
+    "recordedUtc": "2026-10-09T17:07:22Z",
+    "status": "P01_P02_ACCEPTED_FOUR_FRESH_PRODUCT_CHATS_ACTIVE",
+    "handoffSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
+    "implementationSha": "08a61ea706584ceeab1b387ff67f07fe3dfdccf2",
+    "contractsSha": "36c20ea36ae15e5aff0d4095a6d6f1f2e1a0eece",
+    "rootVerified": "Clean actual local HEAD and exact public remote; final diff two status/handoff files; one independent read-only source review; four isolated worktrees/feature branches; first compact wait observes all active. No Root builds/tests/models.",
+    "independentReview": {
+      "agent": "p02_fresh_dispatch_review",
+      "status": "CLOSED_NO_FATAL_DISPATCH_BLOCKER",
+      "scope": "Concrete contracts, disjoint ownership, receipt/error-preserving unconsumed delta guard; not native runtime acceptance"
+    },
+    "hostedCI": {
+      "runId": 37962994018,
+      "sha": "1495e1be7b0046711531fa42c8407fba67b8e814",
+      "observedStatus": "IN_PROGRESS_NOT_FULL_PASS"
+    },
+    "ownerReportedChecks": "Focused Go/CLI/compile-only/vet/Python/Shop and structural/dogfood checks in source handoff; full suite previously timeout, NOT PASS",
+    "oldDesignerStatus": "P01/P02 terminal clean pushed handoff; no further source assignment or ACK requested",
+    "dispatches": [
+      {
+        "name": "integration",
+        "scope": "Shared integration P06-P10 and Main",
+        "threadId": "01a121a0-0417-71c1-9e4b-be742f8c1146",
+        "hostId": "local",
+        "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-integration\\Markitect",
+        "branch": "codex/product-integration-20261009",
+        "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
+        "afterCursor": "abeb765e-9882-4852-9bc4-08f7cb067370:1",
+        "lastObservedStatus": "active",
+        "activeTurn": "01a121a0-083c-7290-9ede-fed5f31c6c66",
+        "creationAndPromptDelivered": true,
+        "firstSnapshotVerifiedActive": true,
+        "nativeProductJobsAuthorizedIndependently": "Existing conditional central grant only"
+      },
+      {
+        "name": "workspaces",
+        "scope": "P03",
+        "threadId": "01a121a0-af62-7bd1-984e-9a5c6b048ca0",
+        "hostId": "local",
+        "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-workspaces\\Markitect",
+        "branch": "codex/product-workspaces-20261009",
+        "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
+        "afterCursor": "61f1912c-2dbe-46ca-9712-fe5f07c2009b:1",
+        "lastObservedStatus": "active",
+        "activeTurn": "01a121a0-b288-7d20-ad99-b2f3c1d260fc",
+        "creationAndPromptDelivered": true,
+        "firstSnapshotVerifiedActive": true,
+        "nativeProductJobsAuthorizedIndependently": false
+      },
+      {
+        "name": "app-server",
+        "scope": "P04",
+        "threadId": "01a121a0-b660-7403-93c5-a0fc53501177",
+        "hostId": "local",
+        "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-app-server\\Markitect",
+        "branch": "codex/product-app-server-20261009",
+        "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
+        "afterCursor": "7203aae6-2241-4a1f-9fa3-2d6fa89740e7:1",
+        "lastObservedStatus": "active",
+        "activeTurn": "01a121a0-bb2c-7642-91f5-9217e6a22884",
+        "creationAndPromptDelivered": true,
+        "firstSnapshotVerifiedActive": true,
+        "nativeProductJobsAuthorizedIndependently": false
+      },
+      {
+        "name": "mcp",
+        "scope": "P05",
+        "threadId": "01a121a0-bee0-7621-943c-c45ea125bf7e",
+        "hostId": "local",
+        "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-mcp\\Markitect",
+        "branch": "codex/product-mcp-20261009",
+        "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
+        "afterCursor": "be2d6806-8e78-4fbb-82cc-a34732f0d79f:1",
+        "lastObservedStatus": "active",
+        "activeTurn": "01a121a0-c2b3-7663-9f6c-ea9ba4737962",
+        "creationAndPromptDelivered": true,
+        "firstSnapshotVerifiedActive": true,
+        "nativeProductJobsAuthorizedIndependently": false
+      }
+    ],
+    "centralQueueOwner": "01a121a0-0417-71c1-9e4b-be742f8c1146",
+    "centralQueue": "docs/work-items/product-readiness/backlog.yaml on codex/product-integration-20261009",
+    "sharedPathsOwner": "Integration; workers only new files in owned package; existing contracts/tests/shared DTOs/wiring/dependencies reserved",
+    "layoutMoves": "After module integration",
+    "nativeProofQuotaChange": 0,
+    "nativeConsumedJobsAtDispatch": 0,
+    "nativeConsumedStartRequestsAtDispatch": 0,
+    "studiesEnabled": false,
+    "observerAutomationEnabled": false,
+    "releasePublicationAuthorized": false,
+    "mainAuthority": "Existing conditional regular PR89 merge after final exact-source readiness/gates/review; no protection bypass",
+    "newOptionalRecommendation": "model-bound-guidance-follow-up-20261009.md; separate post-Main design recommendation, no implementation/study grant",
+    "notification": "Human-authorized one material callback Root and Integration, bounded peer-interface coordination; no ACK/polling loops"
   }
 }
