@@ -1685,3 +1685,8 @@ KGcode08b273f6 full Verify failed at Go gate after owner-reported1270417ms, not 
 ### 2026-10-09T18:21:55Z - finite KG source/evidence closure
 
 Root verified clean exact public0a56d1ce, four documentation/evidence-only changes afterCODE08b273f6 and no code delta. Original failed Verify output committed with exact Working/RawGit SHA4b8eaaf5; filename-specific -text/CR attribute preserves raw bytes. Focused KG checks remain positive, full Project Verify FAILED and new paths ownership UNVERIFIED. No full-suite rerun/shared repair/Main gate/RDF/Actuals. Exact final pin forwarded to Integration for later separately scoped adapters/privacy/operational evidence/artifact mapping/P08 rebase. KG01+pureKG02+readonlyKG03 finite slice closed without ACK/new task.
+
+
+### 2026-10-09T18:25:07Z - direct human resumes independent KG implementation
+
+Human requires KG continue refine/implement separately with parallel subagents, not wait or enter current Main. Root dispatched KG04–07 own concrete backlog/implementation, necessary shared-surface changes allowed ONLY in isolated KG feature worktree; earlier narrow hold/Integration-only scope superseded for that variant. Integration separately notified: no KG imports/gates in P01–P10/PR89. Current product Main finishes first; Root supplies exact accepted Main SHA, KG merges main into KG, resolves conflicts/regenerates/regressionchecks/independentreview and publishescleanhandoff, then evaluate separately. No automatic KG→main/release/CaseStudy grant; YAML canonical and RDF fit separate. Original finite-slice closure/FAILEDVerify remain historical intact. Generous developer limits apply, no ACK/new general preparatory laboratory.

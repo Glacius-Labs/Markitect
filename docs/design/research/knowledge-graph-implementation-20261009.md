@@ -1,6 +1,6 @@
 # Knowledge Graph and RDF/SPARQL plans
 
-**Status:** design and ownership proposal; no implementation, schema decision, queue change, runtime proof, or product acceptance is implied.
+**Current status (direct human instruction, 2026-10-09 18:25 UTC):** continue the independently implemented KG variant through KG04–KG07 on its own feature branches. The narrow ownership/stop proposals below are historical and superseded for that isolated variant. It is excluded from the current Main package. After the current product version is complete on Main, merge that exact Main into the KG branch, resolve conflicts and verify the combined variant before separate evaluation. No automatic KG promotion or release.
 
 **Source basis:** the management branch publication at `1495e1be7b0046711531fa42c8407fba67b8e814` (`codex/model-first-operations`), with the model/compiler baseline at `36c20ea36ae15e5aff0d4095a6d6f1f2e1a0eece`. The exact source worktree was clean and tracked its `origin` branch when checked. A source diff across `internal/core`, `internal/modules/projectmodel`, and `internal/host/projectwork` is empty between those two SHAs, so the earlier model/compiler inspection remains applicable. The P01/P02 handoff at the newer source SHA records the runtime gaps and confirms that KG work is outside the P01–P10 Main gates.
 
@@ -111,3 +111,10 @@ Reserved for Integration coordination: `internal/core`, shared schemas and gener
 - Model/compiler comparison base: `36c20ea36ae15e5aff0d4095a6d6f1f2e1a0eece`.
 - P01/P02 status and current ownership: `docs/work-items/product-readiness/source-handoff-20261009.md` and `P02-shared-contracts.md` at the product source SHA.
 - Primary standards and engine references: [RDF 1.1 Concepts](https://www.w3.org/TR/rdf11-concepts/), [SPARQL 1.1 Query](https://www.w3.org/TR/sparql11-query/), [SHACL](https://www.w3.org/TR/shacl/), [RDF Dataset Canonicalization](https://www.w3.org/TR/rdf-canon/), [SPARQL Federated Query](https://www.w3.org/TR/sparql11-federated-query/), [Apache Jena Query](https://jena.apache.org/documentation/query/), [Apache Jena SHACL](https://jena.apache.org/documentation/shacl/), and [Oxigraph](https://github.com/oxigraph/oxigraph). Engine behavior, packaging, platform support, and licenses must be refreshed in RF02 before relying on them.
+
+
+## Latest direct human continuation: independent KG variant
+
+The user explicitly requires continued refinement and implementation instead of a hold after KG01–KG03. The KG owner maintains its own concrete backlog and can use parallel subagents with disjoint file ownership. Necessary Core/schema/Host/service/CLI/MCP/guidance/dependency changes are permitted in the isolated KG worktree and feature branches. The previous Integration-only restrictions in this proposal protect the current Main worktree; they do not prevent the KG owner from implementing its independent variant. Never write the current Integration worktree or import KG commits into P01–P10/PR89. Preserve original failed checks and exact code/evidence pins.
+
+The current product version reaches Main first. Root then supplies its exact accepted Main SHA to KG. KG merges Main into its own branch, resolves conflicts, regenerates views/schemas, runs needed KG and ordinary product regressions, obtains independent review and publishes a clean source/build/config/check handoff. Separate evaluation follows. This direction does not authorize automatic KG-to-Main promotion, release or Case Study execution. YAML remains canonical; RDF/SPARQL remains a separate evaluate-then-decide question. Use generous current development time limits and avoid duplicate unchanged suites or artificial approval phases. New actual product/actor experiments need a concrete separately recorded scope.

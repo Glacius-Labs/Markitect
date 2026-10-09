@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T18:21:55Z",
+  "updatedUtc": "2026-10-09T18:25:07Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16356,7 +16356,7 @@
   },
   "knowledgeGraphFollowup20261009": {
     "authority": "Verified direct user request in KG topic chat; YAML KG expansion plus separate RDF evaluate-then-decide plan; no new Main gate",
-    "status": "KG01_KG02_READONLY_KG03_FINITE_SLICE_CLOSED_FULL_VERIFY_FAILED",
+    "status": "INDEPENDENT_VARIANT_CONTINUATION_DISPATCHED_KG04_TO_KG07",
     "threadId": "01a12178-5797-7c41-8acc-8e8231084c79",
     "hostId": "local",
     "afterCursor": "67fe9212-ff51-49b6-b0fb-948f5db1b4db:2",
@@ -16453,6 +16453,28 @@
       "integrationNotifiedOnce": true,
       "mainMerged": false,
       "release": false
+    },
+    "continuationMandate": {
+      "issuedUtc": "2026-10-09T18:25:07Z",
+      "authority": "Direct human: Knowledgegraph continues separately with parallel chats/subagents, merges completed main later and then evaluate",
+      "scope": "Refine and implement usable YAML KG variant through own concrete KG04–07 backlog; required own Core/schema/Host/services/CLI/MCP/guidance/dependency changes permitted",
+      "parallelSubagentsAuthorized": true,
+      "branch": "codex/knowledge-graph",
+      "worktree": "C:/Users/Consiliari/.codex/worktrees/product-knowledge-graph/Markitect",
+      "mainIntegrationExcluded": true,
+      "currentIntegrationWorktreeWritesAuthorized": false,
+      "mainMergeDirection": "After current product accepted on main: main into KG branch, resolve conflicts, regenerate and run required regressions/independent review, clean public handoff; evaluate separately",
+      "futureAcceptedMainSha": null,
+      "kgToMainAutomaticPromotion": false,
+      "release": false,
+      "studiesActuals": false,
+      "oldEvidencePreserved": true,
+      "priorLimitedHoldSuperseded": true,
+      "priorSharedPathRestrictionSupersededOnlyWithinIsolatedKGVariant": true,
+      "ownerBacklogRequired": true,
+      "rootDispatchedOnce": true,
+      "integrationNotifiedOnce": true,
+      "generousDevelopmentLimitsApply": true
     }
   },
   "callbackHandlingAudit20261009": {
