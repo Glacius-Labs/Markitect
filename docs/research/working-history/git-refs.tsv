@@ -1,0 +1,345 @@
+79d41aa88481af5e09d4d58494543250a7cde2a2		refs/heads/codex/adapter-modules	test: preserve adapter protocol and evidence boundaries
+c09e8caeb21c766e5a1251b18a31a99fd0a01dca		refs/heads/codex/adoption-distill-runner	Generate grounded adoption distillations via agentexec
+542a81070d6cb3667475e2c6f30e7725462a5dfe		refs/heads/codex/adoption-distill-usability	Add bounded evidence line guidance to distillation
+9780b92add87f7bcd64d311def2c8597aa95d542		refs/heads/codex/adoption-mcp-winget	Merge remote-tracking branch 'origin/codex/adoption-mcp-winget' into codex/adoption-mcp-winget
+c28eb123c4443d3ecdfc56d68daeab1668dbde77		refs/heads/codex/adoption-reportonly-prompt	Improve proposal guidance and preserve usage cost
+c54ecfd72c68d9b7a52644fd55ce54e48accb3f5		refs/heads/codex/agent-behaviour-designer	Merge pull request #41 from Glacius-Labs/codex/release-v081-evidence
+df4ef7fb2172b8fbff6f08341815f2f9aedc8f26		refs/heads/codex/agent-invocation-binding	Harden agent invocation bindings
+e0ba53f80cf97dfdac2aab5861939f7724176db6		refs/heads/codex/agent-process-lifecycle	Stop agent runner process trees
+2f5597e23c6dcad611f38f50fca529033a4679e9		refs/heads/codex/agent-rules-projection	Split Agent Rules projector manifests
+d4a13199b2509e7d224973015e1bd2dcae2fde08		refs/heads/codex/agentexec-legacy-env-fingerprint	Preserve legacy runner fingerprint environment semantics
+9b0ed1b2dc1d2b5e94ada881f6b068e7fae8f794		refs/heads/codex/agents-md-comparison	Record matched AGENTS.md and Markitect comparison with preserved limits
+9c2d4228beaf24584e6e807851317e61826ba7fa		refs/heads/codex/anchored-host-writes	Preserve rooted writes after identity changes
+6567523a87f0cbf29c259a9b818785eb012e1d35		refs/heads/codex/architecture-docs	docs: align architecture ownership with final modules
+9856644228dc3a80cb19e60201a396541860ea53		refs/heads/codex/artifact-product-boundary	Clarify fixed-run artifact inputs
+f84a3854f6d1fe76a0bac7b3bd74614e78960971		refs/heads/codex/astra-assessment-follow-through	Preserve bounded assessment follow-through verification status
+4bdd7a2dda6e1e7b37b04f47046ee65adc081c6d		refs/heads/codex/astra-assessment-snapshot	review: freeze Coordinator source and canonical method snapshot
+dc891eb87dc75411c441b542459230deee14f279		refs/heads/codex/authoring-pilot-results	Record controlled authoring pilot repeat
+a22717b5ce172faee1dcd3177ed4fcf8cfcaeee7		refs/heads/codex/autonomous-ab-gauntlet	Validate exact staged bytes of preserved pause receipts
+66dc5daa699b7e2b5ffa4fd864a87e3cf308a197		refs/heads/codex/azure-pipelines-projection	Preserve canonical Azure projection meaning
+f4f6a9b0404f384f9d553b0809375e495ea9ad72		refs/heads/codex/bounded-canonical-unit-fixture	Bound canonical reconciliation unit fixture
+f17c199b0d40bd1db96db746ec7867be82705f66		refs/heads/codex/brownfield-inference-cli	Add proposal-only brownfield inference CLI
+ce6c802b51980a94792de3687b2b9b08e35cda71		refs/heads/codex/c1-five-ontology-cli-proof	Record executable C1 canonical CLI proof
+eca734c2a1e6b6064e69ff09cb88299fb14566d7		refs/heads/codex/c1-typed-ontology-proof	Record C1 typed ontology proof run
+6dd126fdf9e13cbddf0edf82fa4e72971744c792		refs/heads/codex/c11-module-replacement	Record C11 Verify configuration refusals
+e788fc0110b2f89b488c8c719602d4aedab8362e		refs/heads/codex/c11-replay-harness	Account for Windows verifier fixture controls and focused evidence
+dadfb6b358c04d038b1f7dc0d5b2c27282d2ee8e		refs/heads/codex/c12-goal-propose-02-evidence	Record C12 proposal trial authorization block
+68007ca4379bbf008efd4d0ab12fd84dad64b246		refs/heads/codex/c13-durable-proof	Record C13 durable adoption control
+0e7920833f4994b3932e7cca6fbddca433c909d5		refs/heads/codex/c13-forward-proof	Record C13 public forward-axis control
+80f614b668ac36a0ab2d190017a92b7a26d5209a		refs/heads/codex/c3-v5-trials	Record source-bound C3 v5 agent trials
+1de398cfe52249e0cc2a965383490a5b62dea360		refs/heads/codex/c6-proof-preparation	Correct C6 Codex scope inventory
+41ec0239f5fcb953642de4736f1df5c257ab0297		refs/heads/codex/c7-unknown-exclusion-01	Correct C7 proposal result record
+5a1fb5462b2c1546786a9de5916561b81f81bbbb		refs/heads/codex/c9-real-proof-v5	Retain duplicate control verification outcome
+9771abb3e11ccde06025592baebab74669adf3d2		refs/heads/codex/canonical-assurance-preflight	Record C8 audit-all read-only proposal
+7ab8a68992f986ea46aa5efcc9e14814f18f61e2		refs/heads/codex/canonical-doc-refresh-claims	Align canonical alpha docs with current source
+44f14040a26330d7c395654835ac81f4f039da72		refs/heads/codex/canonical-engineering-v010	Close domain validation and reconciliation review findings
+6212c157adc5866b2c3f65027911233495f5ff79		refs/heads/codex/canonical-reset	List canonical adoption in CLI help
+9e4a054a743c52b86d53d7a6904ccf371af423a8		refs/heads/codex/canonical-workflow-host-composition	Compose Azure Pipelines projection in scoped Host
+710725c6120f34c3ea298b6009d6448a8a27ab68		refs/heads/codex/capability-proof-program	Normalize inventory document final newline
+698e54fb3b65e73ae03e545997f7e9822e730b69		refs/heads/codex/classic-main-documentation	Fix usage link to supported adapter contract
+6b0336dfbd85bef680adc46ee441ba907569fd72		refs/heads/codex/classic-p1-intent-change	Clarify Git prerequisite for public Classic example
+8927704c5bc2c83601d36eb2ff99ae8332c7b406		refs/heads/codex/classic-public-example	Support bounded explicit check budgets for Classic integration gates
+c91363b7ac4decbe87212ff0f588b5451581a152		refs/heads/codex/classic-readiness-v0141	Merge pull request #85 from Glacius-Labs/codex/v0141-release-evidence
+ab31a62a0bc22b9a962414d296f65550c3748ca0		refs/heads/codex/claude-proposal-adapter	Accept typed executor task reports
+adef79d935399f8ac63ad874dbdeab8d15c418a1		refs/heads/codex/clean-architecture-consolidation	Merge pull request #77 from Glacius-Labs/codex/clean-architecture-consolidation
+d3492836d62587c69c28792a9e0fc15a8a0d8416		refs/heads/codex/cli-installation	Document public CLI installation and distribution options
+44db39765349a36206eecb06327c8949ae4fd7e1		refs/heads/codex/cli-installation-resolve	Merge remote-tracking branch 'origin/main' into codex/cli-installation-resolve
+bfaaf797b553cfffcce07b2376699f455944d494		refs/heads/codex/codex-prompt-witness	record prompt submission witness in Codex runner
+e06a884ae95e23ad4be9fca02dbd57b713178e5e		refs/heads/codex/codexrunner-livecli-adapter	Test Codex incomplete failure protocol exit
+5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e		refs/heads/codex/concepts-historian-notes	docs: record knowledge graph and frontmatter assessment options (#88)
+eb60c14caad4c579af2e62c7f773308249d0cae3		refs/heads/codex/concurrency-witness	record blocked concurrency witness preflight
+4121288e03a84475afb7bcc2dbcef2ec9ff80927		refs/heads/codex/concurrency-witness-record-v6	Avoid fetching unselected evidence blobs
+a009249b2122d7b1ca76bb433a9a4968533bfaa9		refs/heads/codex/concurrency-witness-v6	record v6 receipt schema preflight block
+246f4a00319825b3d345d8f75c94049d5fb73639		refs/heads/codex/concurrency-witness-v7	Record rejected v7 provider trial
+ff5ffd5e3b538be58341fdb7983490895201d2b1		refs/heads/codex/control-plane-layout-v090	Merge pull request #43 from Glacius-Labs/codex/control-plane-layout-v090
+1403096e023b06179c0a276ff1095eb95d7a3706		refs/heads/codex/controller-lease-anchoring	Anchor canonical controller lease cleanup
+73b892cc87d94d5b514a93790e4ad2d52e4b8fdd		refs/heads/codex/controller-source-docs	Add canonical controller CLI actions
+330cf7007366eaa48b5dc1f835d9f6edf0d3f311		refs/heads/codex/core-consolidation	Keep built-in references in authoring resolver
+c202ffb7ade1728bfec82f5ed5db3197480c6621		refs/heads/codex/current-verification-reconcile	Reuse fresh canonical controller verification evidence
+c6874fb272a3886e895549c0ff099cf3f83447ea		refs/heads/codex/distribution-follow-up	Prepare explicit public WinGet catalog lifecycle tests
+653325364e47b00c716e761fc61fe1a0d11dd6d5		refs/heads/codex/documentation-routers	Preserve router links surrounded by escaped backticks
+fa7f8ea8bab1c3a721aebc333e69ae505084283c		refs/heads/codex/dogfood-test-fixture-portability	Make canonical source tests use isolated Git fixtures
+1e707e8f6eef3953832ce6182e8cdf6bdce4abfc		refs/heads/codex/domain-language-stress-test	Record architecture authoring repetition as language pressure
+443330ed100d1160515c410fa216a9a97a6f1678		refs/heads/codex/durable-adoption-state-report	Report observed adoption selection after CAS errors
+1402339701b55cfec20c2fccf2f5ec1e65cda1e5		refs/heads/codex/durable-canonical-adoption	Report durable adoption partial failure cause
+9acb01fc8beadcf0b13b04422eecb33aca494e98		refs/heads/codex/engineering-constitution	Add reusable engineering contracts and evidence-bound policy exceptions
+b2f2effb6e10bebf14b3bee6b853e59532ad0eef		refs/heads/codex/engineering-constitution-release-evidence	Describe shipped architecture contracts and separate future engine options
+1698636c311c23b8e8df89381a0258cedf63ccd4		refs/heads/codex/evidence-commit	Use platform null device for Git config
+0d55fd70fabff1c4d6fad0bf00e1e355cee9ed4c		refs/heads/codex/evidence-refresh-coverage	Update refresh verifier coverage fixture
+a51f39e790254b69b47b11e71c8e6fb2663fa3ff		refs/heads/codex/evidence-tree-metadata	Avoid fetching unselected evidence blobs
+431aa9e823400ca1bc71e9069f4d7191cab6c420		refs/heads/codex/git-snapshot-adapter	Separate resolved snapshots from Git acquisition
+b8fedc0cc31e1ac8edc870754cafa1730f48b883		refs/heads/codex/githooks-projection	Reject Git Hooks target aliases
+ca219dfd764b37068c0cc8f98d32a4cbf8549c23		refs/heads/codex/goal-modeling-proposal	Record goal proposal 02 incomplete result
+07c8d022b6e072996de087c2d8fdec66c03efab3		refs/heads/codex/goal-proposal-reference-context	Clarify Core references in goal proposals
+4a3109715d9fbb1e2e684d1e9ec0d2813243f632		refs/heads/codex/government-assessment	Record protected MXC startup and concrete Windows ACL lock
+839dc4e3f6078aa051e08c50c2b958150ca45f49		refs/heads/codex/government-p1	Bound example technical check within runtime budget
+0a1e6963f9fa86d5c0affdcfa9061f928feebe74		refs/heads/codex/government-scientist	Add variant adapter contract and Conventional runtime lifecycle
+04e225d5caee78c2a198607143863fca1e829750		refs/heads/codex/government-worker	Reject incomplete Government lease records before takeover
+970123228358072372b08d84b3dafac59576b2dd		refs/heads/codex/guarded-write	Route new project writes through Markitect lock
+bb7989fbe5ab3235f9ade68aa46cf9b810cefede		refs/heads/codex/host-contentpackage	Migrate content package to authoring resources
+9eb778d2926ec2503e485abc3b8448c8c27c6200		refs/heads/codex/host-inputs	Decouple input resolver from projection renderer
+79658f85c27ef208b74290726a9799ba38bbe343		refs/heads/codex/host-inputs-resolver	Move source compiler out of generic core
+df0e958be3ae794a793fdb64042506f5d603c251		refs/heads/codex/host-module-checks	feat: compose read-only host module checks
+532a8d02fe74bf7d21f154d80603c7c98b2ddec7		refs/heads/codex/host-private-inference-logs	Create private inference log leaf per run
+b85ddd60e74fdab1c6fd32ef183a73a46f39938c		refs/heads/codex/host-runtime	refactor: move CLI runtimes under host
+274e617ec76ef959fccfcedd2d1b4f010ef2e4a9		refs/heads/codex/ideas-notes-20261009	docs: record historian idea intake source
+ebe5147025c8d1f5bf40c4dc30b14509c0e5d6e3		refs/heads/codex/knowledge-graph	test(knowledge): reconcile scoped fixtures and retain fixed-source evidence
+6ddbc66e0ee3515149fcf806fca1f33bf2c8107e		refs/heads/codex/knowledge-graph-frontmatter-options	docs: record knowledge graph and frontmatter assessment options
+1f47e7b7176b776b6b6575e3bef5702b34aae294		refs/heads/codex/layout-doc-followup	Align layout documentation with published v0.9 behavior
+658866480bafa37c8c2e94b5d58fc2074655f416		refs/heads/codex/live-operating-proof	Freeze complete verifier evidence contract v5
+4443d7eb334d8321f8bfedd606ea8246a53e9c9f		refs/heads/codex/luna-high-projectrun	Match exclusions with portable path casing
+e3dc9c577c68341448c4c0933e3adf8781279476		refs/heads/codex/luna-project-cli	Document committed project runtime setup
+65d8a7a4a62d9413f1eb7d99c8e5049e8324121e		refs/heads/codex/luna-projectwork-frontend	Implement bounded project run runtime
+22c062ddea387f3346381003117cfc92a9fa4ca7		refs/heads/codex/markdown-reference-module	Add explicit Markdown module replacement fixture
+5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e		refs/heads/codex/marketing-notes-20261009	docs: record knowledge graph and frontmatter assessment options (#88)
+7609eeee69912b2823c95aef7137bc294a8f486b		refs/heads/codex/markitect-brand-concepts	Add Markitect titanium brand assets
+ec312e35c15012c07acb6838c03e9316c5373dde		refs/heads/codex/markitect-first-coverage-fix	Merge pull request #75 from Glacius-Labs/codex/markitect-first-coverage-fix
+e192c8c79a25c05db725b82535316583c2a0621b		refs/heads/codex/markitect-first-release	Merge pull request #74 from Glacius-Labs/codex/markitect-first-release
+5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e		refs/heads/codex/markitect-historian-working-history	docs: record knowledge graph and frontmatter assessment options (#88)
+14a59e0dcee3046d458afa0863ad1b283652f52f		refs/heads/codex/markitect-marketing	Make distribution guidance visibility neutral
+70143b775e8b954b70092afcb18be899a1c81fdf		refs/heads/codex/markitect-release-evidence	Record verified v0.4.1 release
+c7814656424c6e793a8b791916e74195de05e900		refs/heads/codex/mcp-pilot	docs: record CLI and MCP client evaluation with Claude blocked
+11f080815722089d84869fef536b94cae9321e74		refs/heads/codex/model-driven-delivery	docs: record reviewed Shop lifecycle and preserve native attempt accounting
+1495e1be7b0046711531fa42c8407fba67b8e814		refs/heads/codex/model-first-operations	Record P01 P02 completion and fresh implementation handoff
+4b9df44bfe486dd51a225eabc7d394f7a742cf8a		refs/heads/codex/module-agentrules	Port provider projection regression tests
+35ce355366d8cd32c0aea453c7811dcf76ecd2a2		refs/heads/codex/module-artifacts	Add pure managed artifact coverage module
+5c3b6389bbc6d2496f66e714253de25eaf645029		refs/heads/codex/module-artifacts-host	Wire artifact coverage through Host
+d35cfa461a009d7eff0ba42cfa18d835c2a653b0		refs/heads/codex/module-dogfood	Configure read-only module dogfood checks
+67e31e0aadcb50bf056cd923c1f9c4c48f6b68c4		refs/heads/codex/module-markdown	Cover Markdown navigation projection regressions
+619e0181285c1f88e348c9bae8f08488a40d2c86		refs/heads/codex/modules-hooks-pipelines	Bind module reports to normalized configs
+9d20adbf4883ea618d9969ec7753d9cd6d1339fb		refs/heads/codex/mymeetings-utility-pilot	Record pilot quality gates and clarify context accounting
+3c79ccde1814848ab46ddf2fcdc1f48e470f42d3		refs/heads/codex/onboarding-release-retry	Improve release onboarding and attestation verification
+1e28dbe3c9e21facd004293355206ee880ae488d		refs/heads/codex/operating-audit-cli	Add read-only canonical controller closure audit
+f9a9e29860f61707152ab5af7b65a37bbc708163		refs/heads/codex/operating-closure	Test canonical model change closure flow
+8ab35e920b47a5c342da6fc15291973fdbcc3f26		refs/heads/codex/operating-example	Exercise canonical controller failure repair closure
+121f6545724e30860d4cd683e47cf94f1de77bb4		refs/heads/codex/operating-model-c4-proof	Record direct current-host working-tree proposal
+911ccfa27c1d674d07f3876a1a30a0d1f40a69ac		refs/heads/codex/operating-model-c5-proof	Record C8 audit-all harness preflight
+0ba7a7218f2ceae65b8db90bb8133c2ffa583ada		refs/heads/codex/parallel-development-baseline	Merge pull request #60 from Glacius-Labs/codex/parallel-development-baseline
+8bd6602ece50f5e56a715bdaf6e5be37aa760047		refs/heads/codex/parallel-wave-1	Merge pull request #71 from Glacius-Labs/codex/parallel-wave-1
+1996ef2106e2df6aa8f5955359fa4a5542004799		refs/heads/codex/policy-failure-analysis	Validate corrected policy-failure analysis against preserved MyMeetings snapshots
+8b3f69ec26d7e3d19e61b7de3156dd2ccaf3c2c8		refs/heads/codex/product-app-server-20261009	Retain original root and observed children in recovery receipts
+ad7a13c5db08b8d21cdbc6367938e9dbd3164098		refs/heads/codex/product-docs-followup	Keep personal pilot instructions out of product planning
+3c4ab67cca313c1beabe82aafed34a5a5b513b0e		refs/heads/codex/product-integration-20261009	docs(readiness): record full-suite failures and corrected source gates
+6e4b620fc8cf553690b22ba63ee9fa58dc063f21		refs/heads/codex/product-mcp-20261009	fix(mcp): describe raw JSON values separately from byte slices
+93181bb9bc1af0e663b3daa1a4ff772822320307		refs/heads/codex/product-vision	Merge pull request #72 from Glacius-Labs/codex/product-vision
+4840bac0ac96a13e224f353bf926d6779ef3101e		refs/heads/codex/product-workspaces-20261009	Document trusted journal recovery API and focused evidence
+4153c6c2bdb9e26e6d0e054c045ef557a1fc00c2		refs/heads/codex/project-distill-fixed-basis	Compare generated distillation snapshot basis
+feb8cae9fe17a8f9db3caffc9b7da2cd5ff7d914		refs/heads/codex/project-model-analysis	projectmodel: retain manager purpose in derived context
+aa018477f991525f653073e322381560199bb01b		refs/heads/codex/project-repair-cli	Preserve receipts for concurrent distillation runs
+660318be69156aedbb89af8fd56910a24452397b		refs/heads/codex/project-schema-action	Expose active project schema in project CLI
+81f944a3c0b7aa0b8cdd7ac1c02dd914a91b509b		refs/heads/codex/project-setup-cli	Add host-bound project resolution command
+d3f3b43284aa438ff523f80bc8fa3f697de73425		refs/heads/codex/project-world-planning	docs: consolidate project contracts and review model plan
+6c4ddbdd768a74dc606ac4e01c97133010d28a9c		refs/heads/codex/projectadoption	Harden adoption evidence and path bindings
+db7be73309084c43e0b3ee3f598c5d45ba8c0baa		refs/heads/codex/projection-artifact-modes	Observe controller artifacts within exact scope
+896c1ad644114bedd266a3b77b0c66197833f901		refs/heads/codex/projection-first	Record commit-scoped projection validation and evidence boundaries
+f5b14547b7f30cc651069bf3fb3d88d93e9bb3f8		refs/heads/codex/projection-recordstore	Add durable projection record store
+7e238bdc5a3f5387977985477a014c2ea3911f9d		refs/heads/codex/projection-refresh-design	Verify bounded canonical context before refresh
+97df2ca457687999823d57a8237a3f556e6c2e55		refs/heads/codex/projectrun-known-check-repair	Test unchanged snapshot repair cannot be verified
+ffbdf871cc7cb55c80e3cd98972936dd8973b347		refs/heads/codex/projectrun-process-e2e	Export project model file change type
+54b199f64aab1c4ee2812849a3314728d7601e13		refs/heads/codex/projectrun-process-e2e-final	test: exercise project runs through real subprocesses
+2baacaf98083189b9f1b234dc9c2871fa678fbbc		refs/heads/codex/projectrun-verify-budget	Persist project verification attempt budgets
+ac3fa37557498d795fc09271ed64f912d816d56a		refs/heads/codex/proof-agentexec-control	test agentexec descendant timeout cleanup reliably
+27a685ad3f7e3feb372f007f591f6214a01e25f1		refs/heads/codex/proof-brownfield	Specify brownfield inference proposal contract
+3859af440946484e3cf3a8f05255f177b2f65b9c		refs/heads/codex/proof-capability-docs	Align proof capability docs with current evidence
+a5b97314f25c116f936da51435d78e2a03aca81a		refs/heads/codex/proof-controller-cli	Add canonical controller CLI actions
+8a9147a025a918c542482cf2b23036a6db508b6f		refs/heads/codex/proof-controller-lifecycle-tests	test(host): exercise controller verification lifecycle
+dc77fdd160ec7cd413d2ecf3143fef3728c46352		refs/heads/codex/proof-controller-portability	test: isolate canonical fixture Git snapshots
+8a084d17801485de887adcd1e8602b0b859675a7		refs/heads/codex/proof-controller-tests	test: cover canonical controller lifecycle refusals
+92f9f61a0bcaa5711f5440aaa2c2bb01fdab892f		refs/heads/codex/proof-controller-verify	Fix scoped controller verification integration
+6ec45fa3060f09a1f91f04d1e6f29188223d6a28		refs/heads/codex/proof-coverage	Account for proof controller artifacts
+83c75863054a62603da04b1cccd0b02365344c7f		refs/heads/codex/proof-coverage-followup	Account for controller proof additions
+dd2ce84de65ade1aef738cb95cc0ba8dff628416		refs/heads/codex/proof-driver-hardening	Harden operating model proof evidence capture
+d92eaddcb5479163271a6d589e21c963c35eba2f		refs/heads/codex/proof-evidence-ref-contract	Clarify Codex runner response contract
+74e06f68ae0f2b4b06938466fa4da568cf175f51		refs/heads/codex/proof-example-gates	Record fixed-source example gate receipt
+24462e8e653701759bde18c0dcd478a2af69bb24		refs/heads/codex/proof-inflight-v5	record in-flight proof attempt evidence
+d88afeb7f3d5ab3c2b2a33aff764134cb429149f		refs/heads/codex/proof-modules-markdown-render-projection	fix: stabilize Markdown policy escalation order
+d290af602a2e302816d9245c6c79931681fe91f9		refs/heads/codex/proof-operating-fixture	Fix operating model check scope assertion
+5808ea586979cb48e20f94157b6ccfa9ed318c60		refs/heads/codex/proof-ready-controller	Rebind proof driver to the hardened runner bytes
+866b70a3de21f4a2cad46804706934c8a6d19ddb		refs/heads/codex/proof-recursive-assurance	feat(assurance): execute bounded recursive DAG
+1fd01da081b2216c211459ca2d0aeae2c2f91617		refs/heads/codex/proof-ref-completeness	Require complete verifier evidence refs
+5c44c9ddd63bbd34974afa9853863fe12b470f5c		refs/heads/codex/proof-runner	fix: bind native Codex runtime with strict schema
+6250b9d74f7a4df4f5244fa686e19f2f6dda5799		refs/heads/codex/proof-source-docs-finish	Align canonical reset docs with controller source
+7d1cd21478b691a05e7439cedf46956bc7ef71fe		refs/heads/codex/proof-workflow-fixture	Add provider workflow projection fixture
+eb1b9781da6459d796c4e8fe108b6a8260c75b8e		refs/heads/codex/prose-navigation-v091	Merge pull request #46 from Glacius-Labs/codex/prose-navigation-v091
+be91082b0e36b488a3ed3f3406a43b920d851c9e		refs/heads/codex/provider-adapters-bench-consistency	Preserve rule adapter titles across source refactor
+cbdbbee0e1ffea0a9b3217f003916cbfcf394192		refs/heads/codex/provider-review-fixes	Stabilize provider diagnostics and shared agent contract links
+87fcb93caede1c0cc142dffb1a1dbb20e5f054a6		refs/heads/codex/readiness-candidate-fix-20261009	test(readiness): preserve strict replay guards and allow loaded delivery fixture
+683fb5b3ec27272900e5ff31033cf605eacf85ad		refs/heads/codex/readme-product-narrative	docs: explain canonical engineering knowledge and workflows
+f58481f5778e0379af2000808d4b567de1cb6e11		refs/heads/codex/readme-wordmark	Use theme-aware wordmark in README heading
+7ca99b65e833f9a41e8a95e82e87f8e7e6421957		refs/heads/codex/real-project-adoption-pilot	Prepare v0.12.0 bounded equality release contract
+e80c6ddd08401d54ca21e7e4b8eb6eeaf55c51d6		refs/heads/codex/real-project-validation	Record verified v0.12.0 publication and distribution metadata
+3f18d54bb9ff25a274f05416d384f53fc8962e64		refs/heads/codex/recordstore-rooted-io	Bind record store I/O to inspected roots
+6fffbb9ba1a1fe2ad683a5ca2dd309fbb1ceee7a		refs/heads/codex/recursive-assurance	Clarify Commerce composition invariant
+a46b712d070daceaa60e186270b72e7438d69fec		refs/heads/codex/refactor-source-responsibilities	Refactor Go source by responsibility and document boundaries
+c641a8349da5d35451e1d973167114867f68ac48		refs/heads/codex/release-distribution-sync	chore: verify distribution metadata for published v0.6.0
+a609eae7bef11b67360cda5284a37751d1ccbaef		refs/heads/codex/release-v0.5.0	Repair release benchmark artifact upload and add rerun route
+8ee0924f9e4f94b0b0d74529cf7217f80e16de3a		refs/heads/codex/release-v0.6.0	Prepare v0.6.0 and stabilize Windows fixture cleanup
+41958e6b4dc33f27976a6a48ff62e508101f22a8		refs/heads/codex/release-v010-evidence	Record verified v0.10.0 release and refresh distribution metadata
+7c0ea8ce6f74d00c7255af5af2f51179349853fd		refs/heads/codex/release-v070-evidence	Merge remote-tracking branch 'origin/main' into codex/release-v070-evidence
+a8f4eb2b4257cb877f891d51f582c6f08ce25389		refs/heads/codex/release-v080-evidence	Merge pull request #39 from Glacius-Labs/codex/git-snapshot-adapter
+c54ecfd72c68d9b7a52644fd55ce54e48accb3f5		refs/heads/codex/release-v081-evidence	Merge pull request #41 from Glacius-Labs/codex/release-v081-evidence
+521cd0d037db1519bd79ea83c3ce059a49164d20		refs/heads/codex/release-v090-evidence	Merge pull request #44 from Glacius-Labs/codex/release-v090-evidence
+d2d299d3e85e9c9c19e414ef78838d93c3982051		refs/heads/codex/release-v091-evidence	Merge pull request #47 from Glacius-Labs/codex/release-v091-evidence
+b8b81f0739d23894592ba5b76ee91a25e7dea6d4		refs/heads/codex/repository-layout-control-plane	Merge pull request #36 from Glacius-Labs/codex/repository-layout-control-plane
+a4da2a5455e4c27960ed02aef8804c8c734280b2		refs/heads/codex/resolve-target-binding	Bind project resolution to its distillation target
+b8013c0eac2cd9ccfdb57da47fd0268e59375dd8		refs/heads/codex/resolved-target-equality	Remove trailing blank line found in integration review
+8025e2bf7bcc0072211866c82385f1721370f870		refs/heads/codex/retry-release-attestation	Merge pull request #18 from Glacius-Labs/codex/structure-followup
+26195c0f17f9f9e8ab5b5962561b2bed33412462		refs/heads/codex/reverse-inference-proof	Record partial C13 public inference trial
+bfe884b872c967b1f0b704b3c2fc67fc26663530		refs/heads/codex/runtime-project-edit	Allow guarded project runtime configuration edits
+45e1ae7da7ff0b8ec3b336e4ec9201ca498bfc56		refs/heads/codex/scoped-source-slice	Add scoped canonical source acquisition
+c130a56b48c576f627f517c2d862b5f3f67129dc		refs/heads/codex/scoped-target-exclusions	Reject directory target exclusions
+5cc9718c740185f61a92fbaf3f26cd8b7a17d031		refs/heads/codex/selective-adoption-handoff	Merge pull request #73 from Glacius-Labs/codex/selective-adoption-handoff
+983f9440ec9666ea04073618bd14a54e950e7e53		refs/heads/codex/shop-runtime-audit	Add projectrun change impact routing and phase guidance
+4eb30bc1cf8190ed1738e56bba45b8ec971e5ab6		refs/heads/codex/shop-runtime-context-a3ba	Clarify project manager write scope in requests
+9ee79bbc55e3af2cbfc4bc598e22954a4e7512c9		refs/heads/codex/shop-runtime-routing	Resume durable running project runs safely
+361dfd8fc96b1d2a5d335bc6a4eb2a33deb2a995		refs/heads/codex/source-query-batching	Batch Git identity metadata queries
+c26aa905ec8eb1cf11049198c70d243dfba07881		refs/heads/codex/standard-operating-model	docs: clarify saved report alternative to explicit Verify revisions
+3d7ec3124d01b8f0a4b108d9ab0968ef0f5293d7		refs/heads/codex/structure-followup	Document design exporter and standalone bootstrap boundaries
+857a77f86b3a4056c7973fed49d12ce2e6bf9b28		refs/heads/codex/survey-task-context	Merge fixed task and selected source context for v0.7.0
+73b375a1d0ce3b347c3b4ac66d65f1c851642d34		refs/heads/codex/unknown-ontology	Assert exact ontology projection scope
+e116e5c16d63546260a2155e80d8965da72ba30b		refs/heads/codex/v0.13.0-publication-evidence	Merge pull request #76 from Glacius-Labs/codex/v0.13.0-publication-evidence
+44e1d935e547298c2720a379944a47a1f00c5095		refs/heads/codex/v0.5-release-followup	Record completed v0.5.0 benchmark recovery
+09a3ac4c8015fb5d39e5111017381ebc9f676c7a		refs/heads/codex/v0.5-release-record	Keep Konfyra consumer status in its owning repository
+810a86ffe13aef065f38e70ae49d40911f447af2		refs/heads/codex/v0.6.0-publication	Prepare v0.6.0 and stabilize Windows fixture cleanup (#27)
+d12d1a01672b5eb12f02558f59f365c37a2c6e73		refs/heads/codex/v0.6.0-release-record	Record verified v0.6.0 release and public installation hashes
+e2fd633d8983eb4a9e24bb55bc81d1467d487d12		refs/heads/codex/v0141-fixture-lifecycle	fix: refresh pipeline bindings after fixture regression step
+58ddabec1ca163557f184d0e822d46fe498308da		refs/heads/codex/v0141-release-evidence	test: allow bounded descendant fixture startup on Windows
+f5d2f9d7fc5b0743956fe143856f525ef4d7c65b		refs/heads/codex/verifier-coverage-enforcement	Cover all supplied verifier artifacts
+3d410ee85149ad92df261913a5567b31cb4202d9		refs/heads/codex/verifier-observation-coverage	host: require complete verifier observation coverage
+8be0ecb2bbb2c3c5f007d07a8e699a2d84783c32		refs/heads/codex/vision-method-alignment	docs: align README with ontology reconciliation methodology
+dca78e1b7fb8bd3b9dae632e605c52098f809304		refs/heads/codex/wave-azure	Reject case-folded Azure capture keys
+148f40698cf3aa86517815087931340002e07d12		refs/heads/codex/wave-claude	test Claude projection independence boundaries
+de36c6cb226a2027ced878efc24c23c365189c77		refs/heads/codex/wave-codex	test: add Codex projection independence controls
+befda848a3eb9617856699c0389f56a48a750985		refs/heads/codex/wave-copy	Propose Copy Me evidence review handoff
+d7daa4b759d94f409ba298e067255f0aa7d3e788		refs/heads/codex/wave-docs	test: pin Markdown projection independence
+971b6e7887c2a8f2772bd70d855516772d653955		refs/heads/codex/wave-dotnet	Refresh .NET adapter evidence after review
+edf4be2943a85a67df260ede85109be1c826adf7		refs/heads/codex/wave-github	Accept full model DTO and reject ambiguous captures
+d53a05576e3c5a4c53c49c6391adb2a6f016fecf		refs/heads/codex/wave-init	docs: propose safe existing-project preparation
+da3ab5992b12b3a3b436eddca9038a8627d7afee		refs/heads/codex/wave-konfyra	Add sanitized consumer engineering guidance inventory
+947b8a5ffd5de2c39151d7956cf21d0fb141f291		refs/heads/codex/wave-risk	Add parallel wave risk triage evidence
+a20135450c094241ddfce4a51c1e07bab6617387		refs/heads/codex/windows-host-diagnosis	Batch selected Git tree metadata lookups
+8440ba8e70798f276b36e558173969a1cebb4a47		refs/heads/codex/windows-verifier-path-fix	Canonicalize verifier test-owned Windows directories
+ee7f93ddd05c0b09ed448ba0f17ca05434914fa9		refs/heads/codex/winget-path-fix	Normalize MCP report line endings
+74e14ee7e6b778f8548a598fa06d2585451130e3		refs/heads/docs/production-assessment	Close final documentation review and consumer evidence
+8da3335b1d197638cc0ec56a035151c057d8aa65		refs/heads/docs/rc3-assessments	Document verified RC3 distribution and Konfyra pilot
+f8c03d64421dd38a365704bd449e4dde8f15e53a		refs/heads/feature/content-packages	Add deterministic offline content packages and origin-safe dependency resolution
+fb000760ccc7b64a15e9c00a6961207fff154127		refs/heads/feature/core-authoring	Merge pull request #1 from Glacius-Labs/feature/core-authoring
+4adb45964a172a77a1355c6ea5ac2596c325b90d		refs/heads/feature/production-release	Verify owner publication and harden consumer write boundaries
+d4a07704e9cb8aac877854a337c444c31f091aec		refs/heads/feature/project-initialization	Merge pull request #10 from Glacius-Labs/feature/project-initialization
+66035da4ec58007ac797a3b4b8c6916116d1aa0c		refs/heads/fix/binding-self-cycle	fix: reject self-selected contract execution cycles
+d3d6f4e55588f966849de9bf0f71fd3a9e4949f8		refs/heads/fix/bootstrap-path-comparison	Merge pull request #2 from Glacius-Labs/fix/bootstrap-path-comparison
+d4a07704e9cb8aac877854a337c444c31f091aec		refs/heads/main	Merge pull request #10 from Glacius-Labs/feature/project-initialization
+8ff0af4adb8e22619704afea0c99b80f2100ae25		refs/heads/refactor/standalone-product	Merge pull request #6 from Glacius-Labs/refactor/standalone-product
+5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e		refs/remotes/origin/HEAD	docs: record knowledge graph and frontmatter assessment options (#88)
+9780b92add87f7bcd64d311def2c8597aa95d542		refs/remotes/origin/codex/adoption-mcp-winget	Merge remote-tracking branch 'origin/codex/adoption-mcp-winget' into codex/adoption-mcp-winget
+9b0ed1b2dc1d2b5e94ada881f6b068e7fae8f794		refs/remotes/origin/codex/agents-md-comparison	Record matched AGENTS.md and Markitect comparison with preserved limits
+9856644228dc3a80cb19e60201a396541860ea53		refs/remotes/origin/codex/artifact-product-boundary	Clarify fixed-run artifact inputs
+dc891eb87dc75411c441b542459230deee14f279		refs/remotes/origin/codex/authoring-pilot-results	Record controlled authoring pilot repeat
+a22717b5ce172faee1dcd3177ed4fcf8cfcaeee7		refs/remotes/origin/codex/autonomous-ab-gauntlet	Validate exact staged bytes of preserved pause receipts
+44f14040a26330d7c395654835ac81f4f039da72		refs/remotes/origin/codex/canonical-engineering-v010	Close domain validation and reconciliation review findings
+6212c157adc5866b2c3f65027911233495f5ff79		refs/remotes/origin/codex/canonical-reset	List canonical adoption in CLI help
+710725c6120f34c3ea298b6009d6448a8a27ab68		refs/remotes/origin/codex/capability-proof-program	Normalize inventory document final newline
+698e54fb3b65e73ae03e545997f7e9822e730b69		refs/remotes/origin/codex/classic-main-documentation	Fix usage link to supported adapter contract
+6b0336dfbd85bef680adc46ee441ba907569fd72		refs/remotes/origin/codex/classic-p1-intent-change	Clarify Git prerequisite for public Classic example
+8927704c5bc2c83601d36eb2ff99ae8332c7b406		refs/remotes/origin/codex/classic-public-example	Support bounded explicit check budgets for Classic integration gates
+c91363b7ac4decbe87212ff0f588b5451581a152		refs/remotes/origin/codex/classic-readiness-v0141	Merge pull request #85 from Glacius-Labs/codex/v0141-release-evidence
+a74a306ede12f8c5be02b75a5c2a5b0889afb15f		refs/remotes/origin/codex/clean-architecture-consolidation	Repair current workflow navigation and record verified PR gates
+9fb1a82c2c91d4df9d2e38a39e021dd3485b158e		refs/remotes/origin/codex/control-plane-layout-v090	Normalize canonical package fixture and regenerate its pinned archive
+c6874fb272a3886e895549c0ff099cf3f83447ea		refs/remotes/origin/codex/distribution-follow-up	Prepare explicit public WinGet catalog lifecycle tests
+653325364e47b00c716e761fc61fe1a0d11dd6d5		refs/remotes/origin/codex/documentation-routers	Preserve router links surrounded by escaped backticks
+1e707e8f6eef3953832ce6182e8cdf6bdce4abfc		refs/remotes/origin/codex/domain-language-stress-test	Record architecture authoring repetition as language pressure
+9acb01fc8beadcf0b13b04422eecb33aca494e98		refs/remotes/origin/codex/engineering-constitution	Add reusable engineering contracts and evidence-bound policy exceptions
+b2f2effb6e10bebf14b3bee6b853e59532ad0eef		refs/remotes/origin/codex/engineering-constitution-release-evidence	Describe shipped architecture contracts and separate future engine options
+431aa9e823400ca1bc71e9069f4d7191cab6c420		refs/remotes/origin/codex/git-snapshot-adapter	Separate resolved snapshots from Git acquisition
+4a3109715d9fbb1e2e684d1e9ec0d2813243f632		refs/remotes/origin/codex/government-assessment	Record protected MXC startup and concrete Windows ACL lock
+839dc4e3f6078aa051e08c50c2b958150ca45f49		refs/remotes/origin/codex/government-p1	Bound example technical check within runtime budget
+04e225d5caee78c2a198607143863fca1e829750		refs/remotes/origin/codex/government-worker	Reject incomplete Government lease records before takeover
+ebe5147025c8d1f5bf40c4dc30b14509c0e5d6e3		refs/remotes/origin/codex/knowledge-graph	test(knowledge): reconcile scoped fixtures and retain fixed-source evidence
+6ddbc66e0ee3515149fcf806fca1f33bf2c8107e		refs/remotes/origin/codex/knowledge-graph-frontmatter-options	docs: record knowledge graph and frontmatter assessment options
+1f47e7b7176b776b6b6575e3bef5702b34aae294		refs/remotes/origin/codex/layout-doc-followup	Align layout documentation with published v0.9 behavior
+7609eeee69912b2823c95aef7137bc294a8f486b		refs/remotes/origin/codex/markitect-brand-concepts	Add Markitect titanium brand assets
+f1c1428867ef09902590599588a64af537f9528d		refs/remotes/origin/codex/markitect-first-coverage-fix	Respect non-renderer generated artifact ownership in coverage
+688b0950a8b31e2a4f6c6980927a7903876875f9		refs/remotes/origin/codex/markitect-first-release	Align native reconciliation with projection ownership boundaries
+14a59e0dcee3046d458afa0863ad1b283652f52f		refs/remotes/origin/codex/markitect-marketing	Make distribution guidance visibility neutral
+c7814656424c6e793a8b791916e74195de05e900		refs/remotes/origin/codex/mcp-pilot	docs: record CLI and MCP client evaluation with Claude blocked
+ae6396dcc11777b773763b8fa6f27e4237a63462		refs/remotes/origin/codex/model-driven-delivery	docs: define full manager verification cleanup and model briefings
+1495e1be7b0046711531fa42c8407fba67b8e814		refs/remotes/origin/codex/model-first-operations	Record P01 P02 completion and fresh implementation handoff
+9d20adbf4883ea618d9969ec7753d9cd6d1339fb		refs/remotes/origin/codex/mymeetings-utility-pilot	Record pilot quality gates and clarify context accounting
+747ab4b67b8a7007237c36d5c5af359a9b23ddfe		refs/remotes/origin/codex/parallel-development-baseline	Correct source map and reserve shared dependency integration
+6fcc150d6ba79a8e98f6a728cf27382255f2f841		refs/remotes/origin/codex/parallel-wave-1	Qualify XML evidence scope and link final integration gates
+1996ef2106e2df6aa8f5955359fa4a5542004799		refs/remotes/origin/codex/policy-failure-analysis	Validate corrected policy-failure analysis against preserved MyMeetings snapshots
+8b3f69ec26d7e3d19e61b7de3156dd2ccaf3c2c8		refs/remotes/origin/codex/product-app-server-20261009	Retain original root and observed children in recovery receipts
+ad7a13c5db08b8d21cdbc6367938e9dbd3164098		refs/remotes/origin/codex/product-docs-followup	Keep personal pilot instructions out of product planning
+3c4ab67cca313c1beabe82aafed34a5a5b513b0e		refs/remotes/origin/codex/product-integration-20261009	docs(readiness): record full-suite failures and corrected source gates
+6e4b620fc8cf553690b22ba63ee9fa58dc063f21		refs/remotes/origin/codex/product-mcp-20261009	fix(mcp): describe raw JSON values separately from byte slices
+2eb6e9ffbe10aff548fec44503411ee8699dcc96		refs/remotes/origin/codex/product-vision	Point agent entrypoint to canonical product vision
+4840bac0ac96a13e224f353bf926d6779ef3101e		refs/remotes/origin/codex/product-workspaces-20261009	Document trusted journal recovery API and focused evidence
+896c1ad644114bedd266a3b77b0c66197833f901		refs/remotes/origin/codex/projection-first	Record commit-scoped projection validation and evidence boundaries
+5808ea586979cb48e20f94157b6ccfa9ed318c60		refs/remotes/origin/codex/proof-ready-controller	Rebind proof driver to the hardened runner bytes
+6afd17cdfc6e9e64a0cc405c976a015d0f8948e8		refs/remotes/origin/codex/prose-navigation-v091	Merge remote-tracking branch 'origin/main' into codex/prose-navigation-v091
+be91082b0e36b488a3ed3f3406a43b920d851c9e		refs/remotes/origin/codex/provider-adapters-bench-consistency	Preserve rule adapter titles across source refactor
+cbdbbee0e1ffea0a9b3217f003916cbfcf394192		refs/remotes/origin/codex/provider-review-fixes	Stabilize provider diagnostics and shared agent contract links
+683fb5b3ec27272900e5ff31033cf605eacf85ad		refs/remotes/origin/codex/readme-product-narrative	docs: explain canonical engineering knowledge and workflows
+a46b712d070daceaa60e186270b72e7438d69fec		refs/remotes/origin/codex/refactor-source-responsibilities	Refactor Go source by responsibility and document boundaries
+c641a8349da5d35451e1d973167114867f68ac48		refs/remotes/origin/codex/release-distribution-sync	chore: verify distribution metadata for published v0.6.0
+a609eae7bef11b67360cda5284a37751d1ccbaef		refs/remotes/origin/codex/release-v0.5.0	Repair release benchmark artifact upload and add rerun route
+8ee0924f9e4f94b0b0d74529cf7217f80e16de3a		refs/remotes/origin/codex/release-v0.6.0	Prepare v0.6.0 and stabilize Windows fixture cleanup
+41958e6b4dc33f27976a6a48ff62e508101f22a8		refs/remotes/origin/codex/release-v010-evidence	Record verified v0.10.0 release and refresh distribution metadata
+7c0ea8ce6f74d00c7255af5af2f51179349853fd		refs/remotes/origin/codex/release-v070-evidence	Merge remote-tracking branch 'origin/main' into codex/release-v070-evidence
+487ed540e242b5e17a27f30d8e33418a66262f67		refs/remotes/origin/codex/release-v080-evidence	Record verified v0.8.0 distribution and release evidence
+2e93aebdc0e89faf982482baa9cf6e539c13eeb4		refs/remotes/origin/codex/release-v081-evidence	Record verified v0.8.1 release and distribution metadata
+a556552974c2528d4e086344be530023e16e912e		refs/remotes/origin/codex/release-v090-evidence	Record verified v0.9.0 release and regenerate distribution metadata
+2fb006ddd848547af7fcc5b2096cfa9ca3b9c945		refs/remotes/origin/codex/release-v091-evidence	Record verified v0.9.1 release and refresh distribution metadata
+983b96b4b87892079b25c2e8c59321179c1fccb9		refs/remotes/origin/codex/repository-layout-control-plane	Prepare v0.8.0 and exercise canonical layout in packaged CI
+b8013c0eac2cd9ccfdb57da47fd0268e59375dd8		refs/remotes/origin/codex/resolved-target-equality	Remove trailing blank line found in integration review
+005e7f17e1b5411a112561b3f57e3a904ec0612f		refs/remotes/origin/codex/selective-adoption-handoff	Keep selective Git acquisition local and read-only
+c26aa905ec8eb1cf11049198c70d243dfba07881		refs/remotes/origin/codex/standard-operating-model	docs: clarify saved report alternative to explicit Verify revisions
+3d7ec3124d01b8f0a4b108d9ab0968ef0f5293d7		refs/remotes/origin/codex/structure-followup	Document design exporter and standalone bootstrap boundaries
+0942be024cad977b54a3513f852b8be9de9d551f		refs/remotes/origin/codex/survey-task-context	Add fixed-run task and source context
+5ca1313a63c739aee81c82d95c06668374ffa982		refs/remotes/origin/codex/v0.13.0-publication-evidence	Record verified v0.13.0 publication and refresh distribution metadata
+09a3ac4c8015fb5d39e5111017381ebc9f676c7a		refs/remotes/origin/codex/v0.5-release-record	Keep Konfyra consumer status in its owning repository
+d12d1a01672b5eb12f02558f59f365c37a2c6e73		refs/remotes/origin/codex/v0.6.0-release-record	Record verified v0.6.0 release and public installation hashes
+e80c6ddd08401d54ca21e7e4b8eb6eeaf55c51d6		refs/remotes/origin/codex/v012-publication-metadata	Record verified v0.12.0 publication and distribution metadata
+7ca99b65e833f9a41e8a95e82e87f8e7e6421957		refs/remotes/origin/codex/v012-release-source	Prepare v0.12.0 bounded equality release contract
+e2fd633d8983eb4a9e24bb55bc81d1467d487d12		refs/remotes/origin/codex/v0141-fixture-lifecycle	fix: refresh pipeline bindings after fixture regression step
+58ddabec1ca163557f184d0e822d46fe498308da		refs/remotes/origin/codex/v0141-release-evidence	test: allow bounded descendant fixture startup on Windows
+dca78e1b7fb8bd3b9dae632e605c52098f809304		refs/remotes/origin/codex/wave-azure	Reject case-folded Azure capture keys
+148f40698cf3aa86517815087931340002e07d12		refs/remotes/origin/codex/wave-claude	test Claude projection independence boundaries
+de36c6cb226a2027ced878efc24c23c365189c77		refs/remotes/origin/codex/wave-codex	test: add Codex projection independence controls
+befda848a3eb9617856699c0389f56a48a750985		refs/remotes/origin/codex/wave-copy	Propose Copy Me evidence review handoff
+d7daa4b759d94f409ba298e067255f0aa7d3e788		refs/remotes/origin/codex/wave-docs	test: pin Markdown projection independence
+971b6e7887c2a8f2772bd70d855516772d653955		refs/remotes/origin/codex/wave-dotnet	Refresh .NET adapter evidence after review
+edf4be2943a85a67df260ede85109be1c826adf7		refs/remotes/origin/codex/wave-github	Accept full model DTO and reject ambiguous captures
+d53a05576e3c5a4c53c49c6391adb2a6f016fecf		refs/remotes/origin/codex/wave-init	docs: propose safe existing-project preparation
+da3ab5992b12b3a3b436eddca9038a8627d7afee		refs/remotes/origin/codex/wave-konfyra	Add sanitized consumer engineering guidance inventory
+947b8a5ffd5de2c39151d7956cf21d0fb141f291		refs/remotes/origin/codex/wave-risk	Add parallel wave risk triage evidence
+74e14ee7e6b778f8548a598fa06d2585451130e3		refs/remotes/origin/docs/production-assessment	Close final documentation review and consumer evidence
+8da3335b1d197638cc0ec56a035151c057d8aa65		refs/remotes/origin/docs/rc3-assessments	Document verified RC3 distribution and Konfyra pilot
+f8c03d64421dd38a365704bd449e4dde8f15e53a		refs/remotes/origin/feature/content-packages	Add deterministic offline content packages and origin-safe dependency resolution
+8f3b11a6a67a60293673c46fe6bff4206023173e		refs/remotes/origin/feature/core-authoring	Close verification environment and bootstrap authentication review findings
+4adb45964a172a77a1355c6ea5ac2596c325b90d		refs/remotes/origin/feature/production-release	Verify owner publication and harden consumer write boundaries
+c7135d09ebb321f684210f69ff54f7ee0cec8c86		refs/remotes/origin/feature/project-initialization	docs: record verified v0.4.0 release and measurement boundaries
+66035da4ec58007ac797a3b4b8c6916116d1aa0c		refs/remotes/origin/fix/binding-self-cycle	fix: reject self-selected contract execution cycles
+c08d18875e4e8330aa97d30cb3af61db1542a339		refs/remotes/origin/fix/bootstrap-path-comparison	Fix bootstrap fixture comparison for normalized temporary paths
+5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e		refs/remotes/origin/main	docs: record knowledge graph and frontmatter assessment options (#88)
+3abb0f446f64f8a298804732c3dc7771c89e73ed		refs/remotes/origin/refactor/standalone-product	Explain project authoring when configuration is missing
+0a1e6963f9fa86d5c0affdcfa9061f928feebe74		refs/remotes/research-backup/codex/government-scientist	Add variant adapter contract and Conventional runtime lifecycle
+45e0017a3d25d2abd464de934b5ef3a802732d0a		refs/tags/v0.1.0	Merge pull request #4 from Glacius-Labs/feature/production-release
+33f63566110201408b4bc38f2b214a5008038fd2	8882d8f8b9eee184036c1dec4b4c51422608d1b1	refs/tags/v0.10.0	Markitect v0.10.0: canonical engineering domains and explicit reconciliation
+eff84473c931982ff9c027ede0fe31e3b19e2adf	a86903f1e94cada583a225800fa42b2273755fbd	refs/tags/v0.11.0	Markitect v0.11.0: reusable engineering contracts and evidence-bound policy exceptions
+848efc4448e872279b1a7da3210e8ef644ed9d6d	83b715c415e39af79715cd8a40b3c79237a4c850	refs/tags/v0.12.0	Markitect v0.12.0: bounded resolved-target equality
+1a1ae2bbd6bab6bee9d25e871fbfe5552138634e	ec312e35c15012c07acb6838c03e9316c5373dde	refs/tags/v0.13.0	Markitect v0.13.0: fixed Markitect-first workflow and bounded adoption/verification
+bd3c84a1a1fb396ca44cb06204726c09afd956b9	c59acc45f05c7cd1368376f8ea5bac707615a1fc	refs/tags/v0.14.0	Markitect v0.14.0: preserved CLI contract and experimental canonical projection alpha
+784d3c3c61443b291ac7db9727c7c5856e253d66	7dbd599c81540c8203a1b7f83afbc335174f4f1f	refs/tags/v0.14.1	Markitect v0.14.1: additive experimental projection preview and fixture lifecycle hardening
+e461c06bedfc2dc36457bfff40e1f14170b988f2	8ff0af4adb8e22619704afea0c99b80f2100ae25	refs/tags/v0.2.0	Markitect 0.2.0: independent product with explicit project checks
+444d28897f29d65554567de2ea09744357d0f864		refs/tags/v0.3.0	Merge pull request #7 from Glacius-Labs/feature/content-packages
+52f0bd64ce64759be10ffdee180c2cf7c939d49b		refs/tags/v0.3.1	Merge pull request #8 from Glacius-Labs/fix/binding-self-cycle
+a03e05e5841f5382c5f2a5a06ee1254fa4abbed5	1f0d17bff22143afc6b2b63b4ea8f17486c818e6	refs/tags/v0.4.0	Markitect v0.4.0: explicit project initialization and distribution hardening
+65ae8735dc7fc38d045b8260f3dcc87c261a7e0d	f4244324b04d4dd748ae13cea43e2455b251a5de	refs/tags/v0.4.1	Markitect v0.4.1
+f12e9d2d647b88ee45aa7d105e8f4e9d790f075e	78837346d0cb27c95b3a10f0a469b2709b757a83	refs/tags/v0.5.0	Markitect v0.5.0
+811d7d488cf15ccbccc575cebd2ed9239d7a15aa	810a86ffe13aef065f38e70ae49d40911f447af2	refs/tags/v0.6.0	Markitect v0.6.0 release candidate
+1ca3b45ba4f3550fe6a9f69c99c619cbb509c317	857a77f86b3a4056c7973fed49d12ce2e6bf9b28	refs/tags/v0.7.0	Markitect 0.7.0: fixed task and selected source context
+7158be7e3217fcb0d9fe35c837ca9a49031422ec	b8b81f0739d23894592ba5b76ee91a25e7dea6d4	refs/tags/v0.8.0	Markitect v0.8.0: canonical repository layout
+7c1f6bd140932f26e15a32350042513168a6bfdf	a8f4eb2b4257cb877f891d51f582c6f08ce25389	refs/tags/v0.8.1	Markitect 0.8.1: resolved snapshots independent of Git acquisition
+46e632536af8e3bf4e26060c260039aa5f567a14	ff5ffd5e3b538be58341fdb7983490895201d2b1	refs/tags/v0.9.0	Markitect v0.9.0: separate canonical resources, optional views and tool pins
+97cbc738700aa11e446f2ebb9ab6b4dc18255a36	eb1b9781da6459d796c4e8fe108b6a8260c75b8e	refs/tags/v0.9.1	Markitect v0.9.1: source-relative prose navigation
