@@ -1655,3 +1655,8 @@ Preparation accepted QUALIFIED, actualexecutiondisabled flag checked. Stable int
 ### 2026-10-09T17:47:05Z - App Server original-start recovery correction
 
 Root verified P048b3f69ec clean exact local/public remote and owned recovery.go/adapter_test.go/handoff delta; nine-line implementation correction read. Recover seeds original trusted RunID/Role as unknown, retains matched running-turn items/failed children before ErrUncertain, and finishes only the exact saved turn. No new root/helper/turn start or replay; original ledger RequestID merges rather than adding another reservation. Partial usage/helper/loaded-instruction facts stay unknown. Focused tests/vet/bounded independent review owner-reported PASS, no Root rerun/models. Single corrective commit passed to Integration; no new quota/Main/release or native-recovery acceptance.
+
+
+### 2026-10-09T17:55:51Z - callback audit and latest KG interface handoff
+
+Root reconciled the material owner callbacks with recorded source checks and Integration dispatches. P03 workspace/recovery, P04 adapter/recovery, P05 MCP/diagnostics and Scientist completed offline preparation were already handled. Latest KG02/readonly KG03 public remote08b273f6 verified and concrete interface handoff sent once to Integration; full fixed Verify remains running/NOT PASS, no Main gate or immediate integration. No redundant ACK or resumed retired owner. Scientist has a newer direct human preparation-only instruction to clarify ordinary Codex CLI user-flow comparison and transport/context/tool differences; source work observed active and prior checkpoint preserved. Integration wiring/gates/native acceptance remain open. No new Actuals, grant, Main merge, release or observer.

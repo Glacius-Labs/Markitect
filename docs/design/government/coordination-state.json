@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-09T17:47:05Z",
+  "updatedUtc": "2026-10-09T17:55:51Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -16203,6 +16203,14 @@
         "newActualGrant": 0,
         "automaticRefill": false,
         "next": "Hold after completed first preparation; later actual stable binding and finite human instruction required"
+      },
+      "latestDirectUserFollowup": {
+        "observedUtc": "2026-10-09T17:55:51Z",
+        "turnId": "01a121ca-1c2f-7b60-a332-4017f394781e",
+        "status": "ACTIVE_PREPARATION_ONLY",
+        "scope": "User directly requests normal Codex CLI user-flow research question and explicit transport/context/tools/rights/session differences; source contract revision ongoing",
+        "previousPreparationCheckpointPreserved": true,
+        "actualGrant": 0
       }
     },
     "claude": {
@@ -16304,7 +16312,7 @@
   },
   "knowledgeGraphFollowup20261009": {
     "authority": "Verified direct user request in KG topic chat; YAML KG expansion plus separate RDF evaluate-then-decide plan; no new Main gate",
-    "status": "KG01_ACTIVE_KG02_KG03_DISJOINT_PATH_CONFIRMED",
+    "status": "KG02_KG03_PUBLIC_MODULE_HANDOFF_FULL_VERIFY_PENDING",
     "threadId": "01a12178-5797-7c41-8acc-8e8231084c79",
     "hostId": "local",
     "afterCursor": "67fe9212-ff51-49b6-b0fb-948f5db1b4db:2",
@@ -16347,6 +16355,26 @@
       "handoff": "docs/work-items/knowledge-graph/handoff.md",
       "next": "Already authorized new pure KG02/readonlyKG03 implementation continues, no ACK hold",
       "productRuntimeStudiesAcceptance": false
+    },
+    "KG02KG03ModuleHandoff": {
+      "sourceSha": "08b273f62723c61e9445238d49dfa990dc1d6a7e",
+      "rootVerifiedUtc": "2026-10-09T17:55:51Z",
+      "exactPublicRemoteVerified": true,
+      "scope": "Five new pure projectknowledge files and owned KG docs; Build/Core-neutral facts/scope, immutable index and bounded witness navigation",
+      "checks": "Owner-reported targeted tests/vet/import/schema/example checks and independent review positive; full fixed Verify/Go-suite still running; race unavailable",
+      "integrationForwardedOnce": true,
+      "fullVerify": "PENDING_NOT_PASS",
+      "mainGate": false,
+      "actualStarts": 0,
+      "newGrant": false
     }
+  },
+  "callbackHandlingAudit20261009": {
+    "checkedUtc": "2026-10-09T17:55:51Z",
+    "source": "Existing coordination records and compact/read-only latest owner turns",
+    "handled": "P03 workspace and recovery, P04 adapter and recovery, P05 MCP and diagnostics, Scientist completed preparation, KG01 and latest KG02/03 handoff",
+    "latestKGForwardedOnceToIntegration": true,
+    "open": "Integration wiring/runtime/gates; KG full Verify; Scientist newer direct-user source-preparation task",
+    "ackRepliesRequired": false
   }
 }
