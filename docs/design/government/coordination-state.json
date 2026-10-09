@@ -17388,7 +17388,7 @@
     "grantPath": "docs/design/government/conventional-frozen-candidate-scratch-assessment-supplement-20261009.json",
     "grantSha256": "22d7d1297fa59b1e48391b5464bb0163d98a403ff195e5e867c05c7f67017485",
     "issuedUtc": "2026-10-09T21:08:16Z",
-    "status": "SOURCE_FROZEN_PRIVATE_REMOTE_VERIFIED_RESERVATION_CREATED_NATIVE_RECEIPT_PENDING",
+    "status": "NATIVE_FINAL_COMPLETED_PRESERVED_REPORT_REVIEW_HANDOFF_PENDING",
     "dispatch": "SENT_ONCE",
     "limits": {
       "sourcePreparationSeconds": 7200,
@@ -17404,7 +17404,7 @@
       "overallAbsoluteEndUtc": "2026-10-10T01:08:16Z"
     },
     "originalOrderRemainsClosed": true,
-    "actualStartsObserved": 0,
+    "actualStartsObserved": 1,
     "candidate": {
       "actualSource": "6adcfdb09b3dd579468e43c1b6b0c10fb363a11a",
       "snapshotPath": "C:/Users/Consiliari/Documents/Conventional-Workspace-Snapshot-Study-20261009/readinglog/audit/final-freeze/snapshot.json",
@@ -17433,6 +17433,25 @@
       "nativeStart": "RECEIPT_PENDING",
       "sourceIntegrityBoundary": "Equal-hash execution copies checked before/after, not OS-readonly claim; original candidate/spec outside scratch writable root",
       "newGrant": false
+    },
+    "actualStart": {
+      "rootVerified": "Own binding exact source/plan/executable; own result startup readyExit0/1check and native assessment completed21:24:26Z with unchanged original/copy requirements/candidate/preparation flags and nohelpersObserved. Scientific report review pending.",
+      "sourceSha": "a95f9e0a187dacabbaf296c94db8421a60e8e718",
+      "startedUtcOwnerReported": "2026-10-09T21:23:08.719619Z",
+      "nativeThreadOwnerReported": "01a1228c-63c6-7730-8d24-a03a77419b5c",
+      "nativeTurnOwnerReported": "01a1228c-647e-7941-bf93-91fa1522190e",
+      "nativeEndedUtc": "2026-10-09T21:24:26.105834Z",
+      "startupChecksConsumed": 1,
+      "startupCheck": "ReadyExit0, own scratch write/read and outside-root fixture DENIED, no original write probe; ownerreports markersallpositive",
+      "effectiveRuntimeOwnerReported": "gpt-6-luna/high/openai workspaceWrite own scratch CWD, writableRoots[], networkfalse, never; helpersdisabled",
+      "originalCandidateUnchanged": true,
+      "originalRequirementsUnchanged": true,
+      "originalInitialBindingUnchanged": true,
+      "copySemanticFilesUnchanged": true,
+      "scientificJudgment": "PENDING_INDEPENDENT_REVIEW_OF_PRESERVED_REPORT",
+      "remainingNativeStarts": 0,
+      "retryAuthorized": false,
+      "privateTerminalBackup": "PENDING_OWNER_HANDOFF"
     }
   }
 }
