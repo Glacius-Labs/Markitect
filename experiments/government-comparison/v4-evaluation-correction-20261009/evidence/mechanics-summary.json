@@ -1,0 +1,39 @@
+{
+  "scope": "Offline evaluator mechanics only; no product quality evidence",
+  "processesConsumed": 2,
+  "processesMaximum": 2,
+  "correctionBatchesConsumed": 2,
+  "correctionBatchesMaximum": 2,
+  "first": {
+    "exitCode": 0,
+    "errors": 0,
+    "testsRun": 23
+  },
+  "second": {
+    "status": "FAILED; unresolved receipt-binding fixture error retained without retry",
+    "exitCode": 1,
+    "errors": 1,
+    "testsRun": 26
+  },
+  "rawLogs": [
+    {
+      "file": "test-1.stderr.log",
+      "sha256": "b0c96886a6d58845e6f15a2797f82a8d7ad801171f844b02b980bf0da668e0e7"
+    },
+    {
+      "file": "test-1.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "test-2.stderr.log",
+      "sha256": "4f071a7e68126c59dd055f5812d1f700726275219b09c90cf61ff05eb7e855a7"
+    },
+    {
+      "file": "test-2.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "furtherTestsAllowed": 0,
+  "productActors": 0,
+  "fullTrials": 0
+}

@@ -1,0 +1,49 @@
+{
+  "grant": "v4-declared-evaluation-coverage-correction-20261009",
+  "issuedUtc": "2026-10-09T00:26:36Z",
+  "deadlineUtc": "2026-10-09T00:56:36Z",
+  "baseline": "e378ae8144f054e6ff957bb08ee3e6120ca4f955",
+  "correctionBatches": [
+    {
+      "reservedUtc": "2026-10-09T00:30:54.4051369Z",
+      "number": 1,
+      "purpose": "New additive private evaluator, public operator evidence contract, offline fixture coverage"
+    },
+    {
+      "number": 2,
+      "purpose": "Close terminal lifecycle persistence; bind independent operator evidence validation; avoid requiring binary changes for config-only Task5",
+      "reservedUtc": "2026-10-09T00:35:28.906009Z"
+    }
+  ],
+  "testReservations": [
+    {
+      "number": 1,
+      "maxSeconds": 120,
+      "scope": "Pure in-memory evaluator mechanics, no HTTP/product/subprocess/server/build",
+      "reservedUtc": "2026-10-09T00:34:21.5932099Z",
+      "status": "terminal",
+      "command": "C:/Python313/python.exe -B test_oracle_mechanics.py",
+      "exitCode": 0,
+      "elapsedSeconds": 0.3053909
+    },
+    {
+      "status": "terminal",
+      "scope": "Pure in-memory evaluator fixtures only",
+      "maxSeconds": 120,
+      "command": "C:/Python313/python.exe -B test_oracle_mechanics.py",
+      "reservedUtc": "2026-10-09T00:35:47.9003646Z",
+      "number": 2,
+      "exitCode": 1,
+      "elapsedSeconds": 0.2783096
+    }
+  ],
+  "reviewReservations": [],
+  "servingModel": null,
+  "tokens": null,
+  "cost": null,
+  "humanOversight": null,
+  "fullTrials": 0,
+  "productActors": 0,
+  "status": "SOURCE FROZEN; TESTS CLOSED; REVIEW NOT STARTED",
+  "sourceFreezeUtc": "2026-10-09T00:36:41.0858362Z"
+}

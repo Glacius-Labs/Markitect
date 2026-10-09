@@ -1,0 +1,76 @@
+{
+  "version": "v4-draft",
+  "tasks": [
+    {
+      "task": 1,
+      "id": "validated-order",
+      "publicSource": "brief.md and tasks/01-create-order.md",
+      "requirement": "Health/catalog/order/read/error/cent-total/canonical idempotency at limit10",
+      "assessment": "public staged1; private order-normalization/validation-boundaries; Brownfield baseline preservation",
+      "releasedOnlyAtOrAfterTask": 1,
+      "futureInputAccessAllowed": false,
+      "candidateMayBeFixedAfterPrivateFeedback": false
+    },
+    {
+      "task": 2,
+      "id": "atomic-inventory",
+      "publicSource": "tasks/02-reserve-stock.md",
+      "requirement": "All-or-nothing reservation, no oversell, exactly-once same-key effects",
+      "assessment": "public staged2; private within-current-limit atomic setup and idempotent-concurrency",
+      "releasedOnlyAtOrAfterTask": 2,
+      "futureInputAccessAllowed": false,
+      "candidateMayBeFixedAfterPrivateFeedback": false
+    },
+    {
+      "task": 3,
+      "id": "durable-state",
+      "publicSource": "tasks/03-persist-state.md",
+      "requirement": "Same-DB restart preserves catalog/order/inventory/key logical results",
+      "assessment": "public staged3 restart; private normalized checkpoint before/after",
+      "releasedOnlyAtOrAfterTask": 3,
+      "futureInputAccessAllowed": false,
+      "candidateMayBeFixedAfterPrivateFeedback": false
+    },
+    {
+      "task": 4,
+      "id": "durable-lifecycle",
+      "publicSource": "tasks/04-order-lifecycle.md",
+      "requirement": "Cancel/fulfill/repeat/opposite transitions and inventory effects",
+      "assessment": "public staged4; private terminal-transition-ordering",
+      "releasedOnlyAtOrAfterTask": 4,
+      "futureInputAccessAllowed": false,
+      "candidateMayBeFixedAfterPrivateFeedback": false
+    },
+    {
+      "task": 5,
+      "id": "current-limit-and-compatibility",
+      "publicSource": "tasks/05-change-limit.md",
+      "requirement": "New-order inclusive6 on all active routes; existing accepted-order retry and lifecycle preserved",
+      "assessment": "public staged5 plus real own prior-stage accepted-order DB compatibility probe; private rule-change-entrypoint-parity/current boundary cases",
+      "releasedOnlyAtOrAfterTask": 5,
+      "futureInputAccessAllowed": false,
+      "candidateMayBeFixedAfterPrivateFeedback": false
+    },
+    {
+      "task": 6,
+      "id": "controlled-repair",
+      "publicSource": "tasks/06-repair-regression.md",
+      "requirement": "Repair one precommitted existing invariant violation, preserve neighbors, fresh evidence",
+      "assessment": "Stage5 must independently pass and freeze first; operator-only mutation/equivalence map then same unchanged generic card; failed equivalence non-comparable",
+      "releasedOnlyAtOrAfterTask": 6,
+      "futureInputAccessAllowed": false,
+      "candidateMayBeFixedAfterPrivateFeedback": false
+    }
+  ],
+  "publicCardBindings": {
+    "01-create-order.md": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+    "02-reserve-stock.md": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+    "03-persist-state.md": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+    "04-order-lifecycle.md": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+    "05-change-limit.md": "b68ccd173891692050c64101af47754f1213e745a63071653b30b8d9d6ccf17f",
+    "06-repair-regression.md": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a"
+  },
+  "commonOutcomeQualitySeparateFromMethodConformance": true,
+  "originalRubricDigestPreserved": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+  "newMethodOrMigrationRubric": "Requires prospective independent review; no retrospective v3 changes"
+}

@@ -1,0 +1,6 @@
+{
+  "file": "private-evaluation-source.zip",
+  "sha256": "070d44d10ac5b321a15e9aead404359a92eb36f77f9cfed603c48752c602b6b7",
+  "scope": "Private backup only; never include in actor inputs",
+  "frozenSourceManifestSha256": "5270e1a6cba07ad79bb1979d0068f12fbe2bd98db4c4c8b561fac7320aced9ce"
+}

@@ -1,0 +1,153 @@
+{
+  "grant": "v4-declared-evaluation-coverage-correction-20261009",
+  "baseline": "e378ae8144f054e6ff957bb08ee3e6120ca4f955",
+  "frozenUtc": "2026-10-09T00:36:41.0858362Z",
+  "terminalAfterReview": true,
+  "noFurtherSourceChangesOrTests": true,
+  "entries": [
+    {
+      "path": "public/brief.md",
+      "scope": "public",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8",
+      "bytes": 3000
+    },
+    {
+      "path": "public/architecture.md",
+      "scope": "public",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700",
+      "bytes": 3296
+    },
+    {
+      "path": "public/task-requirement-map.json",
+      "scope": "public",
+      "sha256": "2a6473f03df9aace3c7222a61e0078d97aabdf3d9a3d908ea3f1c36b5962f53c",
+      "bytes": 3857
+    },
+    {
+      "path": "public/checks.py",
+      "scope": "public",
+      "sha256": "783561065c3bc6c814aed3ba5c943710442dbbee4502ad7db6b58eed4dabeccf",
+      "bytes": 9151
+    },
+    {
+      "path": "public/rubric.json",
+      "scope": "public",
+      "sha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37",
+      "bytes": 5369
+    },
+    {
+      "path": "public/common-outcome-record.json",
+      "scope": "public",
+      "sha256": "faf63ce63336e9df81646822181af74c995853482b838b254773a68b143f20ab",
+      "bytes": 1176
+    },
+    {
+      "path": "public/q1-intent-setup-v1.md",
+      "scope": "public",
+      "sha256": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e",
+      "bytes": 3620
+    },
+    {
+      "path": "public/holdout-procedure.md",
+      "scope": "public",
+      "sha256": "28f2169bc7fce3ccf586aa2527fef359a9709aa4eb87b9cb7feb6aff41309f9b",
+      "bytes": 3643
+    },
+    {
+      "path": "public/operator-evidence-contract.md",
+      "scope": "public",
+      "sha256": "cf230d578bacbb22d32743fecbc87d079eb03644ce8aabe8cdcd8296d03c49cb",
+      "bytes": 5464
+    },
+    {
+      "path": "public/tasks/01-create-order.md",
+      "scope": "public",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9",
+      "bytes": 1189
+    },
+    {
+      "path": "public/tasks/02-reserve-stock.md",
+      "scope": "public",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6",
+      "bytes": 1075
+    },
+    {
+      "path": "public/tasks/03-persist-state.md",
+      "scope": "public",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53",
+      "bytes": 737
+    },
+    {
+      "path": "public/tasks/04-order-lifecycle.md",
+      "scope": "public",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0",
+      "bytes": 1028
+    },
+    {
+      "path": "public/tasks/05-change-limit.md",
+      "scope": "public",
+      "sha256": "b68ccd173891692050c64101af47754f1213e745a63071653b30b8d9d6ccf17f",
+      "bytes": 1315
+    },
+    {
+      "path": "public/tasks/06-repair-regression.md",
+      "scope": "public",
+      "sha256": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a",
+      "bytes": 892
+    },
+    {
+      "path": "private/base_checks.py",
+      "scope": "private",
+      "sha256": "dd276535cb7e47950da1174ba0549ad58a9d9a87c00ffe94ba9d80570cd28aea",
+      "bytes": 14722
+    },
+    {
+      "path": "private/holdout_checks.py",
+      "scope": "private",
+      "sha256": "b32cf2496f7888766d529f5228a1f0c3524d702dff3baeb481c9c783597e2e5a",
+      "bytes": 22214
+    },
+    {
+      "path": "private/holdout-plan.json",
+      "scope": "private",
+      "sha256": "b3662d4c5447b9ff8365bd2070ac7029cfb78d8e6393dc058b7891c01eb52ffa",
+      "bytes": 7668
+    },
+    {
+      "path": "private/task6-equivalence-plan.json",
+      "scope": "private",
+      "sha256": "50385660df977fe07ee76b5b67633c08ee18e03e79f4bf63fd385bd4e97d4e52",
+      "bytes": 816
+    },
+    {
+      "path": "private/test_oracle_mechanics.py",
+      "scope": "private",
+      "sha256": "8e986e160902c1c689d67e99cc8bb1dbf7fc6f5240eb557223ee21c81993f10f",
+      "bytes": 10927
+    },
+    {
+      "path": "private/mechanics-evidence/test-1.stderr.log",
+      "scope": "private",
+      "sha256": "b0c96886a6d58845e6f15a2797f82a8d7ad801171f844b02b980bf0da668e0e7",
+      "bytes": 127
+    },
+    {
+      "path": "private/mechanics-evidence/test-1.stdout.log",
+      "scope": "private",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "private/mechanics-evidence/test-2.stderr.log",
+      "scope": "private",
+      "sha256": "4f071a7e68126c59dd055f5812d1f700726275219b09c90cf61ff05eb7e855a7",
+      "bytes": 1095
+    },
+    {
+      "path": "private/mechanics-evidence/test-2.stdout.log",
+      "scope": "private",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "version": "0.1",
+  "status": "proposed frozen rubric; bind exact SHA before trials",
+  "scoring": {
+    "scale": {
+      "0": "absent, contradicted, or harmful",
+      "1": "major gaps; only a small part works",
+      "2": "partial; material omissions or regressions remain",
+      "3": "meets the released requirements with minor non-critical gaps",
+      "4": "meets the released requirements with strong, current evidence and preserves relevant neighboring behavior"
+    },
+    "result_quality": {
+      "report_separately_from_method_conformance": true,
+      "dimensions": [
+        {
+          "id": "functional_behavior",
+          "weight": 30,
+          "evidence": "Public checks and independent review of released behavior through the task cutoff."
+        },
+        {
+          "id": "state_and_data_integrity",
+          "weight": 25,
+          "evidence": "Atomic reservation, idempotency, persistence, lifecycle effects and restart behavior as applicable."
+        },
+        {
+          "id": "regression_and_compatibility",
+          "weight": 20,
+          "evidence": "Brownfield preservation and Greenfield legacy alias when applicable; valid neighboring behavior."
+        },
+        {
+          "id": "verification_quality",
+          "weight": 15,
+          "evidence": "Relevant repeatable checks, meaningful failure assertions, and recorded actual results."
+        },
+        {
+          "id": "maintainability_and_operability",
+          "weight": 10,
+          "evidence": "Proportionate organization, understandable errors, runnable instructions, and no unnecessary infrastructure."
+        }
+      ]
+    },
+    "method_conformance": {
+      "report_separately_from_result_quality": true,
+      "dimensions": [
+        {
+          "id": "input_and_snapshot_binding",
+          "weight": 20,
+          "evidence": "Work is tied to the actual cell start and released task inputs; changes and candidate state are identifiable."
+        },
+        {
+          "id": "requirement_coverage_and_change_control",
+          "weight": 20,
+          "evidence": "Released obligations are tracked; no unapproved future requirement is used to steer the task."
+        },
+        {
+          "id": "evidence_freshness_and_review",
+          "weight": 25,
+          "evidence": "Checks and reviews identify their candidate/input and are refreshed after material changes."
+        },
+        {
+          "id": "failure_and_uncertainty_reporting",
+          "weight": 15,
+          "evidence": "Failures, incomplete work, uncertainty, and unresolved conflicts are reported accurately."
+        },
+        {
+          "id": "resource_and_intervention_accounting",
+          "weight": 20,
+          "evidence": "Actual tool/model use, setup, waits, retries, oversight, and interventions follow the cell ledger."
+        }
+      ],
+      "arm_specific_evidence": [
+        {
+          "evidence": "Good conventional engineering evidence: task/change trace, relevant checks, independent review, clear reporting; no Markitect-specific artifact is required.",
+          "arm": "conventional"
+        },
+        {
+          "evidence": "In addition to common evidence, inspect actual canonical model, selected context/impact, Executor/Verifier, parent review, and final audit receipts where the frozen Classic version supports them.",
+          "arm": "classic"
+        },
+        {
+          "evidence": "In addition to Classic/common evidence, inspect active mandate and round identity, selected ministries, explicit final-candidate votes, and root integration/audit receipts where the frozen Government version supports them.",
+          "arm": "government"
+        }
+      ]
+    }
+  },
+  "non_compensable_gates": [
+    {
+      "id": "critical_behavior_failure",
+      "rule": "Mark the quality gate failed regardless of weighted score if any released hard invariant fails, including overselling, partial reservation reported as success, lost accepted state, duplicate stock effect, or incorrect total. Keep trial completion status independent: a fully finished trial with a failed invariant is still complete evidence of a failed result."
+    },
+    {
+      "id": "critical_compatibility_regression",
+      "rule": "For Brownfield, a broken released legacy contract is a critical regression even if the new canonical endpoint passes."
+    },
+    {
+      "id": "stale_or_misattributed_evidence",
+      "rule": "Evidence from another candidate, cell, or fixture cannot establish a pass for the current candidate."
+    },
+    {
+      "id": "unreleased_requirement_or_leakage",
+      "rule": "A cell materially steered by unreleased task content or private oracle data is contaminated and reported separately."
+    },
+    {
+      "id": "incomplete_at_limit",
+      "rule": "A resource-capped or interrupted task is incomplete; do not convert missing evidence into a pass."
+    }
+  ],
+  "reporting": {
+    "never_average_away_non_compensable_gates": true,
+    "publish_dimension_scores_and_evidence_separately": true,
+    "do_not_combine_result_quality_and_method_conformance_into_one_primary_score": true,
+    "applicability_is_recorded_per_cell_before_scoring": true,
+    "soft_maintainability_judgments_require_a_written_reason": true
+  }
+}
