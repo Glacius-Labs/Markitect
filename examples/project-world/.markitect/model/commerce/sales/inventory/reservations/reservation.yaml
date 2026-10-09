@@ -6,7 +6,7 @@ metadata:
 purpose: Defines inventory held for an order before shipment.
 spec:
   category: concept
-  description: An active reservation holds a quantity for one order and may be released once.
+  description: A reservation's quantity records the original amount held for one order; only active reservations count toward reserved stock. Releasing changes its status, not its recorded quantity.
   public: true
   uses: []
   requires: []

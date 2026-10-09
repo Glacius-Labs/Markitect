@@ -382,7 +382,8 @@ func scopedCandidateFiles(project *Project, task ManagerTask) []agentexec.Artifa
 				continue
 			}
 			for _, path := range artifact.Paths {
-				if _, exists := project.Snapshot.Files[path]; exists && projectPathAllowed(project.Config, path) {
+				owner, known := ownerForPath(project.Report, path)
+				if _, exists := project.Snapshot.Files[path]; exists && projectPathAllowed(project.Config, path) && known && owner == task.ManagerID {
 					selected[path] = true
 				}
 			}

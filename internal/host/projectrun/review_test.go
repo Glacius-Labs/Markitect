@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
 
@@ -119,6 +121,73 @@ func TestScopedReviewModelIncludesOnlyRelatedPublicForeignInterfaces(t *testing.
 	ids := reviewScopeIDs(salesID, accepted)
 	if !containsString(ids, "statement:order-cancellation-contract") || !containsString(ids, "statement:finance-ledger-contract") || !containsString(ids, "artifact:order-lifecycle") || containsString(ids, "statement:finance-unrelated-contract") {
 		t.Fatalf("review request scope IDs do not match accepted interface context: %v", ids)
+	}
+}
+
+func TestReviewerScopeExcludesForeignArtifactBytesButRetainsInterfaceAndFreshness(t *testing.T) {
+	const (
+		ordersID      = "shop/orders"
+		engineeringID = "shop/engineering"
+		orderPath     = "src/shop/orders/cancellation.py"
+		engineerPath  = "tests/test_cancellation.py"
+	)
+	project := &Project{
+		Config: projectwork.Config{InventoryRoots: []string{"src", "tests"}},
+		Snapshot: &snapshot.Snapshot{
+			Files: map[string][]byte{orderPath: []byte("orders implementation"), engineerPath: []byte("engineering test")},
+			Modes: map[string]string{orderPath: snapshot.RegularMode, engineerPath: snapshot.RegularMode},
+		},
+		Report: projectmodel.Report{
+			Managers:   []projectmodel.Manager{{ID: ordersID}, {ID: engineeringID}},
+			Statements: []projectmodel.Statement{{ID: "order-lifecycle-contract", Owner: ordersID, Public: true}},
+			Artifacts: []projectmodel.Artifact{{ID: "orders-lifecycle", Name: "Orders lifecycle", Owner: ordersID, Role: "implementation", Required: true,
+				Paths: []string{orderPath, engineerPath}, Realizes: []string{"order-lifecycle-contract"}}},
+			Files: []projectmodel.FileEntry{
+				{Path: orderPath, Owner: ordersID, Class: "source", Statements: []string{"order-lifecycle-contract"}, Artifacts: []string{"orders-lifecycle"}},
+				{Path: engineerPath, Owner: engineeringID, Class: "test", Artifacts: []string{"orders-lifecycle"}},
+			},
+		},
+	}
+	ordersTask := ManagerTask{ManagerID: ordersID, Goal: "Implement order cancellation.", Artifacts: []string{"orders-lifecycle"}}
+	engineeringTask := ManagerTask{ManagerID: engineeringID, Goal: "Test order cancellation."}
+	ordersFiles := scopedCandidateFiles(project, ordersTask)
+	if len(ordersFiles) != 1 || ordersFiles[0].Path != orderPath {
+		t.Fatalf("Orders reviewer received foreign Engineering bytes: %+v", ordersFiles)
+	}
+	accepted, err := scopedReviewModel(project.Report, ordersID, []ManagerTask{ordersTask, engineeringTask}, ordersFiles)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(accepted.Artifacts) != 1 || accepted.Artifacts[0].ID != "orders-lifecycle" || !containsString(accepted.Artifacts[0].Paths, engineerPath) {
+		t.Fatalf("foreign implementation filtering discarded the relevant artifact interface: %+v", accepted.Artifacts)
+	}
+	if !containsString(reviewFileReferences(project.Report, accepted, ordersFiles)[0].Grounding, "statement:order-lifecycle-contract") {
+		t.Fatal("Orders reviewer lost the public contract realized by its owned file")
+	}
+	engineeringFiles := scopedCandidateFiles(project, engineeringTask)
+	if len(engineeringFiles) != 1 || engineeringFiles[0].Path != engineerPath {
+		t.Fatalf("Engineering reviewer did not receive its own changed test bytes: %+v", engineeringFiles)
+	}
+	plan := PlanRecord{Goal: "Implement and test order cancellation.", Managers: []ManagerTask{ordersTask, engineeringTask}}
+	initialDigest, err := reviewScopeDigest(plan, project, engineeringTask, "work")
+	if err != nil {
+		t.Fatal(err)
+	}
+	changed := *project
+	changed.Snapshot = &snapshot.Snapshot{ID: project.Snapshot.ID, Provisional: project.Snapshot.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
+	for path, content := range project.Snapshot.Files {
+		changed.Snapshot.Files[path] = append([]byte(nil), content...)
+		changed.Snapshot.Modes[path] = project.Snapshot.Modes[path]
+	}
+	changed.Snapshot.Files[engineerPath] = []byte("engineering test changed")
+	changedDigest, err := reviewScopeDigest(plan, &changed, engineeringTask, "work")
+	if err != nil || changedDigest == initialDigest {
+		t.Fatalf("final Engineering review scope did not bind changed test bytes: initial=%s changed=%s err=%v", initialDigest, changedDigest, err)
+	}
+	ordersTask.IntegratedPaths = []string{engineerPath}
+	integratedFiles := scopedCandidateFiles(project, ordersTask)
+	if len(integratedFiles) != 2 || integratedFiles[1].Path != engineerPath {
+		t.Fatal("explicit parent integration edit was dropped from its review scope")
 	}
 }
 
