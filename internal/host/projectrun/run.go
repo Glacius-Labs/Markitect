@@ -331,6 +331,10 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 					return empty, err
 				}
 			}
+			task.Obligations, err = newLocalObligations(task.ManagerID, parsed.Questions, parsed.Risks)
+			if err != nil {
+				return blockRun(store, report, fmt.Errorf("Manager %s obligation provenance: %w", task.ManagerID, err))
+			}
 			if parsed.EscalateTo != "" {
 				if err := recordEscalation(&report, *task, parsed); err != nil {
 					return blockRun(store, report, err)
@@ -474,6 +478,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		var parsed TaskResponse
 		var resolved candidateData
 		var remainingQ, remainingR []string
+		var resolvedObligations, remainingObligations []Obligation
 		for {
 			if starts >= runtime.Limits.MaxStarts {
 				return blockRun(store, report, fmt.Errorf("runtime start limit %d exceeded before %s integration repair", runtime.Limits.MaxStarts, task.ManagerID))
@@ -530,20 +535,17 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				if len(conflicts) > 0 && !proposesEvery(proposal.Response.CandidateFiles, conflicts) {
 					return fmt.Errorf("manager %s did not resolve child path conflict(s): %s", task.ManagerID, strings.Join(conflicts, ", "))
 				}
-				outstandingQuestions, outstandingRisks, obligationErr := managerObligations(*task, report.Tasks, children)
+				outstanding, obligationErr := managerObligationRecords(*task, report.Tasks, children)
 				if obligationErr != nil {
 					return terminalTaskResponseError{blocked: true, err: fmt.Errorf("manager %s obligations: %w", task.ManagerID, obligationErr)}
 				}
-				_, questionsRemaining, resolveErr := resolveObligations(outstandingQuestions, parsed.ResolvedQuestions)
-				if resolveErr != nil {
-					return fmt.Errorf("manager %s questions: %w", task.ManagerID, resolveErr)
+				resolvedObligations, remainingObligations, obligationErr = resolveObligationRecords(outstanding, parsed.ResolvedQuestions, parsed.ResolvedRisks)
+				if obligationErr != nil {
+					return fmt.Errorf("manager %s obligation resolution: %w", task.ManagerID, obligationErr)
 				}
-				_, risksRemaining, resolveErr := resolveObligations(outstandingRisks, parsed.ResolvedRisks)
-				if resolveErr != nil {
-					return fmt.Errorf("manager %s risks: %w", task.ManagerID, resolveErr)
-				}
-				remainingQ = append(questionsRemaining, parsed.Questions...)
-				remainingR = append(risksRemaining, parsed.Risks...)
+				remainingQ, remainingR = obligationTexts(remainingObligations)
+				remainingQ = append(remainingQ, parsed.Questions...)
+				remainingR = append(remainingR, parsed.Risks...)
 				if len(remainingQ)+len(remainingR) > 0 {
 					if parsed.Status != "partial" || parsed.EscalateTo != escalationTarget(*task) {
 						return fmt.Errorf("manager %s has unresolved obligations that did not escalate to its nearest parent", task.ManagerID)
@@ -577,36 +579,25 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				return empty, err
 			}
 		}
+		newLocal, err := newLocalResponseObligations(task.ManagerID, remainingObligations, parsed.Questions, parsed.Risks)
+		if err != nil {
+			return blockRun(store, report, fmt.Errorf("Manager %s obligation provenance: %w", task.ManagerID, err))
+		}
+		forwarded := appendForwardedObligations(remainingObligations, task.ManagerID)
+		if err := applyObligationResolutions(&report, resolvedObligations); err != nil {
+			return blockRun(store, report, fmt.Errorf("Manager %s obligation resolution: %w", task.ManagerID, err))
+		}
+		task.Obligations = append(forwarded, newLocal...)
 		if len(remainingQ)+len(remainingR) > 0 {
 			if err := recordEscalation(&report, *task, TaskResponse{Summary: parsed.Summary, Questions: remainingQ, Risks: remainingR, EscalateTo: parsed.EscalateTo}); err != nil {
 				return blockRun(store, report, err)
 			}
 		}
 		task.ReworkRequests = append([]ReworkRequest(nil), parsed.ReworkRequests...)
-		for _, childID := range children {
-			child := findTask(report.Tasks, childID)
-			if child != nil && containsAll(parsed.ResolvedQuestions, child.Questions) && containsAll(parsed.ResolvedRisks, child.Risks) {
-				child.Questions = []string{}
-				child.Risks = []string{}
-				if child.ReportStatus == "partial" {
-					child.ReportStatus = "complete"
-				}
-				for i := range report.Escalations {
-					if report.Escalations[i].Status == "open" && report.Escalations[i].ToManager == task.ManagerID && containsString(report.Escalations[i].AffectedTasks, child.ID) {
-						report.Escalations[i].Status = "resolved"
-					}
-				}
-			}
-		}
 		if len(remainingQ)+len(remainingR) > 0 {
-			for i := range report.Escalations {
-				if report.Escalations[i].Status == "open" && report.Escalations[i].ToManager == task.ManagerID {
-					report.Escalations[i].Status = "escalated"
-				}
-			}
+			markObligationEscalationsEscalated(&report, task.ManagerID, task.Obligations)
 		}
-		task.Questions = remainingQ
-		task.Risks = remainingR
+		task.Questions, task.Risks = uniqueSorted(remainingQ), uniqueSorted(remainingR)
 		if len(remainingQ) == 0 && len(remainingR) == 0 {
 			task.ReportStatus = "complete"
 		} else {
@@ -827,15 +818,8 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			}
 		}
 	}
-	for _, task := range report.Tasks {
-		if (task.ReportStatus != "complete" && task.ReportStatus != "no-op") || len(task.Questions) > 0 || len(task.Risks) > 0 {
-			return blockRun(store, report, fmt.Errorf("manager %s has unresolved report status or obligations", task.ManagerID))
-		}
-	}
-	for _, escalation := range report.Escalations {
-		if escalation.Status == "open" {
-			return blockRun(store, report, fmt.Errorf("unresolved escalation %s from %s", escalation.ID, escalation.FromManager))
-		}
+	if err := validateReportClosure(report); err != nil {
+		return blockRun(store, report, err)
 	}
 	if err := validateFinalCandidate(host, root, project.Snapshot, finalCandidate, plan); err != nil {
 		return blockRun(store, report, err)
@@ -987,6 +971,7 @@ func resetTaskForRepair(task *ManagerTask) {
 	task.Delegations = nil
 	task.Summary = ""
 	task.Questions, task.Risks = []string{}, []string{}
+	task.Obligations = nil
 }
 
 func boundedFeedbackText(value string, maximum int) string {
@@ -1735,6 +1720,7 @@ func cloneTasks(input []ManagerTask) []ManagerTask {
 		out[i].Delegations = append([]Delegation(nil), out[i].Delegations...)
 		out[i].Questions = append([]string(nil), out[i].Questions...)
 		out[i].Risks = append([]string(nil), out[i].Risks...)
+		out[i].Obligations = cloneObligations(out[i].Obligations)
 	}
 	return out
 }
@@ -2084,11 +2070,23 @@ func recordEscalation(report *RunReport, task ManagerTask, response TaskResponse
 	if len(parts) == 0 {
 		return fmt.Errorf("escalation from %s has no question or risk", task.ManagerID)
 	}
+	obligationIDs := make([]string, 0, len(task.Obligations))
+	for _, obligation := range task.Obligations {
+		if obligation.Kind != "question" && obligation.Kind != "risk" || strings.TrimSpace(obligation.Text) == "" || obligation.ID == "" {
+			return fmt.Errorf("escalation from %s has invalid obligation provenance", task.ManagerID)
+		}
+		if obligation.Kind == "question" && containsString(response.Questions, obligation.Text) || obligation.Kind == "risk" && containsString(response.Risks, obligation.Text) {
+			obligationIDs = append(obligationIDs, obligation.ID)
+		}
+	}
+	if len(obligationIDs) == 0 {
+		return fmt.Errorf("escalation from %s has no provenance-bound obligation", task.ManagerID)
+	}
 	id, err := newID()
 	if err != nil {
 		return err
 	}
-	report.Escalations = append(report.Escalations, Escalation{ID: id, FromManager: task.ManagerID, ToManager: target, Question: strings.Join(uniqueSorted(parts), "; "), AffectedTasks: []string{task.ID}, Status: "open"})
+	report.Escalations = append(report.Escalations, Escalation{ID: id, FromManager: task.ManagerID, ToManager: target, Question: strings.Join(uniqueSorted(parts), "; "), AffectedTasks: []string{task.ID}, ObligationIDs: uniqueSorted(obligationIDs), Status: "open"})
 	return nil
 }
 
@@ -2130,6 +2128,7 @@ func managerObligations(parent ManagerTask, tasks []ManagerTask, children []stri
 	}
 	return uniqueSorted(questions), uniqueSorted(risks), nil
 }
+
 func resolveObligations(outstanding, resolved []string) ([]string, []string, error) {
 	want := map[string]bool{}
 	for _, v := range outstanding {

@@ -134,11 +134,23 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 				response.Delegations = append(response.Delegations, Delegation{ManagerID: child, Goal: "Implement the owned source artifact and report its evidence."})
 			}
 		} else {
+			if len(contextPayload.DirectChildren) > 0 {
+				response.Delegations = make([]Delegation, 0, len(contextPayload.DirectChildren))
+				for _, child := range contextPayload.DirectChildren {
+					response.Delegations = append(response.Delegations, Delegation{ManagerID: child, Goal: "Implement the nested owned artifact and report its evidence."})
+				}
+			}
 			artifactPath, content := e2eArtifactForManager(contextPayload.Manager.Manager.ID)
 			if artifactPath == "" {
 				processExit(2, "unexpected work manager "+contextPayload.Manager.Manager.ID)
 			}
 			files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: content}}
+			if os.Getenv(e2eBehaviorEnv) == "provenance-escalation" && contextPayload.Manager.Manager.ID == e2eManagerID("orders.commerce", "commerce") {
+				response.Status = "partial"
+				response.Questions = []string{"Commerce deployment question"}
+				response.Risks = []string{"Commerce deployment risk"}
+				response.EscalateTo = e2eManagerID("orders", "orders")
+			}
 			if os.Getenv(e2eBehaviorEnv) == "review-defect-fix" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
 				files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: "DEFECT: orders implementation v2\n"}}
 			}
@@ -156,8 +168,8 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 			}
 		}
 	case "integrate":
-		if len(contextPayload.ChildReports) != 2 {
-			processExit(2, fmt.Sprintf("root integration saw %d child reports, want 2", len(contextPayload.ChildReports)))
+		if len(contextPayload.ChildReports) != len(contextPayload.DirectChildren) {
+			processExit(2, fmt.Sprintf("Manager integration saw %d child reports, want %d", len(contextPayload.ChildReports), len(contextPayload.DirectChildren)))
 		}
 		if os.Getenv(e2eBehaviorEnv) == "failed-integration" {
 			response.Status = "failed"
@@ -176,6 +188,16 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 		if os.Getenv(e2eBehaviorEnv) == "repair-foreign-first" && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
 			files = []agentexec.CandidateFile{{Path: "src/orders/implementation.txt", Mode: "0644", Content: "unauthorized"}}
 		}
+		if os.Getenv(e2eBehaviorEnv) == "provenance-escalation" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") {
+			response.Status = "partial"
+			response.Questions = []string{"Commerce deployment question"}
+			response.Risks = []string{"Commerce deployment risk"}
+			response.EscalateTo = e2eManagerID("", "project-owner")
+		}
+		if os.Getenv(e2eBehaviorEnv) == "provenance-escalation" && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") {
+			response.ResolvedQuestions = []string{"Commerce deployment question"}
+			response.ResolvedRisks = []string{"Commerce deployment risk"}
+		}
 	default:
 		processExit(2, "unknown phase "+contextPayload.Phase)
 	}
@@ -188,8 +210,12 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 	if os.Getenv(e2eBehaviorEnv) == "stale-nonce" {
 		nonce = "stale-" + nonce
 	}
+	outcome := agentexec.OutcomeProposed
+	if response.EscalateTo != "" {
+		outcome = agentexec.OutcomeEscalated
+	}
 	result := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: nonce,
-		Role: agentexec.RoleExecutor, InputDigest: invocation.InputDigest, Outcome: agentexec.OutcomeProposed,
+		Role: agentexec.RoleExecutor, InputDigest: invocation.InputDigest, Outcome: outcome,
 		CandidateFiles: files, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{},
 		ReportJSON: reportJSON, Uncertainty: []string{}, Usage: &agentexec.Usage{Source: "provider-reported", InputTokens: &inputTokens, OutputTokens: &outputTokens}}
 	encoded, err := json.Marshal(result)
@@ -918,6 +944,100 @@ func TestProjectRunRepairsKnownValidationFailuresInWorkAndIntegration(t *testing
 	}
 }
 
+func TestProjectRunPropagatesRootResolutionThroughForwardedObligationChain(t *testing.T) {
+	root := makeMultilevelObligationFixture(t)
+	setupE2EProcess(t, "provenance-escalation")
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and verify nested Commerce cancellation behavior.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory"), e2eManagerID("orders.commerce", "commerce")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatalf("Plan: %v", err)
+	}
+	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err != nil || run.Status != StatusIntegrated {
+		t.Fatalf("multilevel escalated run did not integrate after root resolution: status=%s err=%v tasks=%+v escalations=%+v", run.Status, err, run.Tasks, run.Escalations)
+	}
+	for _, managerID := range []string{e2eManagerID("orders.commerce", "commerce"), e2eManagerID("orders", "orders"), e2eManagerID("", "project-owner")} {
+		task := findTask(run.Tasks, managerID)
+		if task == nil || task.ReportStatus != "complete" || len(task.Questions)+len(task.Risks)+len(task.Obligations) != 0 {
+			t.Fatalf("root resolution did not clear only the forwarded chain at %s: %+v", managerID, task)
+		}
+	}
+	if len(run.Escalations) != 2 {
+		t.Fatalf("expected the retained Commerce→Orders→root escalation chain: %+v", run.Escalations)
+	}
+	for _, escalation := range run.Escalations {
+		if escalation.Status != "resolved" || len(escalation.ObligationIDs) != 2 {
+			t.Fatalf("resolution history lacks typed obligation IDs or terminal status: %+v", escalation)
+		}
+	}
+	for _, managerID := range []string{e2eManagerID("orders.commerce", "commerce"), e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")} {
+		passed := false
+		for _, review := range run.Reviews {
+			if review.ManagerID == managerID && review.Outcome == "pass" {
+				passed = true
+				break
+			}
+		}
+		if !passed {
+			t.Fatalf("candidate review evidence for %s did not survive ancestor-only obligation resolution: %+v", managerID, run.Reviews)
+		}
+	}
+	verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err != nil || verified.Status != StatusVerified {
+		t.Fatalf("Verify rejected the reviewed candidate after root-only obligation resolution: status=%s err=%v", verified.Status, err)
+	}
+	preflight, err := PreflightApply(host, root, plan.ID, run.Candidate.ID)
+	if err != nil {
+		t.Fatalf("PreflightApply: %v", err)
+	}
+	if _, err := Apply(host, ProcessInvoker{}, root, applyRequestFromPreflight(preflight)); err != nil {
+		t.Fatalf("Apply rejected the freshly verified provenance-resolved candidate: %v", err)
+	}
+}
+
+func makeMultilevelObligationFixture(t *testing.T) string {
+	t.Helper()
+	root := makeProjectRunFixture(t)
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	manifest, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	needle := "  - .markitect/model/orders/check.yaml\n"
+	addition := needle + "  - .markitect/model/orders/commerce/manager.yaml\n  - .markitect/model/orders/commerce/statement.yaml\n  - .markitect/model/orders/commerce/artifact.yaml\n"
+	updatedManifest := strings.Replace(string(manifest), needle, addition, 1)
+	if updatedManifest == string(manifest) {
+		t.Fatal("could not add Commerce model files to the multilevel fixture")
+	}
+	if err := os.WriteFile(manifestPath, []byte(updatedManifest), 0644); err != nil {
+		t.Fatal(err)
+	}
+	commerceManager := strings.Replace(e2eChildManager("commerce"), "    namespace: \"\"\n    name: project-owner\n  owns: [src/commerce/]", "    namespace: orders\n    name: orders\n  owns: [src/orders/commerce/]", 1)
+	commerceManager = strings.Replace(commerceManager, "  namespace: commerce\n", "  namespace: orders.commerce\n", 1)
+	if strings.Contains(commerceManager, "namespace: \"\"\n    name: project-owner") {
+		t.Fatal("failed to nest Commerce under Orders")
+	}
+	writeE2E(t, root, ".markitect/model/orders/commerce/manager.yaml", commerceManager)
+	writeE2E(t, root, ".markitect/model/orders/commerce/statement.yaml", e2eStatement("orders.commerce", "commerce-work", "Resolve nested Commerce cancellation obligations."))
+	commerceArtifact := "apiVersion: " + projectmodel.APIVersion + "\nkind: Artifact\nmetadata:\n  name: commerce-code\n  namespace: orders.commerce\npurpose: Implements the Commerce-owned nested source behavior.\nspec:\n  role: implementation\n  realizes:\n    - apiVersion: " + projectmodel.APIVersion + "\n      kind: Statement\n      namespace: orders.commerce\n      name: commerce-work\n  paths: [src/orders/commerce/implementation.txt]\n  required: false\n"
+	writeE2E(t, root, ".markitect/model/orders/commerce/artifact.yaml", commerceArtifact)
+	writeE2E(t, root, "src/orders/commerce/implementation.txt", "commerce implementation v1\n")
+	gitE2E(t, root, "add", ".")
+	gitE2E(t, root, "commit", "-m", "add nested Commerce obligation fixture")
+	updateE2ERuntime(t, root, func(runtime *Runtime) {
+		commerceID := e2eManagerID("orders.commerce", "commerce")
+		runtime.Agents[commerceID] = runtime.Agents[e2eManagerID("orders", "orders")]
+		reviewAgents := make(map[string]Agent, len(runtime.Agents))
+		for managerID, agent := range runtime.Agents {
+			reviewAgents[managerID] = agent
+		}
+		runtime.Review = &ReviewConfig{Agents: reviewAgents, MaxRounds: 3, MaxManagerRounds: 2}
+		runtime.Limits.MaxStarts = 24
+	})
+	return root
+}
+
 func TestProjectRunRetryCeilingAndCostAccountingAreDurable(t *testing.T) {
 	for _, scenario := range []struct {
 		name        string
@@ -988,6 +1108,8 @@ func e2eManagerID(namespace, name string) string {
 
 func e2eArtifactForManager(id string) (string, string) {
 	switch id {
+	case e2eManagerID("orders.commerce", "commerce"):
+		return "src/orders/commerce/implementation.txt", "commerce implementation v2\n"
 	case e2eManagerID("orders", "orders"):
 		return "src/orders/implementation.txt", "orders implementation v2\n"
 	case e2eManagerID("inventory", "inventory"):

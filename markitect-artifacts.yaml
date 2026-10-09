@@ -2038,6 +2038,10 @@ spec:
       owner: project-world-implementation
     - path: internal/host/projectrun/invoker.go
       owner: project-world-implementation
+    - path: internal/host/projectrun/obligations_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/obligations.go
+      owner: project-world-implementation
     - path: internal/host/projectrun/path.go
       owner: project-world-implementation
     - path: internal/host/projectrun/plan.go

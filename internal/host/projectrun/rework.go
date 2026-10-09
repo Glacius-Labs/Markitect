@@ -140,6 +140,9 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 	if task == nil {
 		return fmt.Errorf("rework target %s is absent", managerID)
 	}
+	if len(task.Questions)+len(task.Risks) != 0 || len(task.Obligations) != 0 {
+		return fmt.Errorf("rework target %s has unresolved obligations; targeted work cannot clear them", managerID)
+	}
 	children := activeChildren(report.Tasks, managerID)
 	currentID := task.CandidateID
 	if currentID == "" {
@@ -214,6 +217,10 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 		task.CandidateID, task.ReportID = candidate.ID, invocation.ReportID
 		task.WrittenPaths = unionPaths(task.WrittenPaths, proposalPaths(proposal.Response.CandidateFiles))
 		task.Summary, task.Questions, task.Risks, task.Delegations, task.ReportStatus = parsed.Summary, parsed.Questions, parsed.Risks, parsed.Delegations, parsed.Status
+		task.Obligations, err = newLocalObligations(task.ManagerID, parsed.Questions, parsed.Risks)
+		if err != nil {
+			return fmt.Errorf("targeted work obligation provenance for %s: %w", task.ManagerID, err)
+		}
 		for _, delegation := range parsed.Delegations {
 			child := findTask(report.Tasks, delegation.ManagerID)
 			if child == nil {
@@ -331,11 +338,32 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 		return nil, fmt.Errorf("estimated cost limit exceeded during targeted integration")
 	}
 	parsed, err := decodeTaskResponse(proposal.Response.ReportJSON, "integrate", children)
-	if err != nil || validateTaskOutcome(proposal.Response.Outcome, parsed) != nil || parsed.Status != "complete" || len(parsed.Questions)+len(parsed.Risks) != 0 {
-		if err == nil {
-			err = fmt.Errorf("reintegrated manager report is incomplete or unresolved")
-		}
+	if err != nil {
 		return nil, err
+	}
+	if err := validateTaskOutcome(proposal.Response.Outcome, parsed); err != nil {
+		return nil, err
+	}
+	if parsed.EscalateTo != "" && parsed.EscalateTo != escalationTarget(*task) {
+		return nil, fmt.Errorf("Manager %s may escalate only to its nearest empowered recipient %q", task.ManagerID, escalationTarget(*task))
+	}
+	outstanding, err := managerObligationRecords(*task, report.Tasks, children)
+	if err != nil {
+		return nil, fmt.Errorf("manager %s reintegration obligations: %w", task.ManagerID, err)
+	}
+	resolvedObligations, remainingObligations, err := resolveObligationRecords(outstanding, parsed.ResolvedQuestions, parsed.ResolvedRisks)
+	if err != nil {
+		return nil, fmt.Errorf("manager %s reintegration resolution: %w", task.ManagerID, err)
+	}
+	remainingQ, remainingR := obligationTexts(remainingObligations)
+	remainingQ = append(remainingQ, parsed.Questions...)
+	remainingR = append(remainingR, parsed.Risks...)
+	if len(remainingQ)+len(remainingR) > 0 {
+		if parsed.Status != "partial" || parsed.EscalateTo != escalationTarget(*task) {
+			return nil, fmt.Errorf("manager %s reintegration has unresolved obligations that did not escalate to its nearest parent", task.ManagerID)
+		}
+	} else if parsed.Status != "complete" || parsed.EscalateTo != "" {
+		return nil, fmt.Errorf("manager %s reintegration is not complete after resolving obligations", task.ManagerID)
 	}
 	candidate, err := applyProposal(merged, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "integrate", conflicts, runtime.Limits)
 	if err != nil {
@@ -359,7 +387,24 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 	task.State, task.IntegrationReportID, task.IntegrationCandidateID = "integrated", invocation.ReportID, candidate.ID
 	task.IntegratedPaths = unionPaths(task.IntegratedPaths, changedCandidatePaths(merged, candidate))
 	task.Summary = parsed.Summary
-	task.ReportStatus, task.Questions, task.Risks = "complete", []string{}, []string{}
+	newLocal, err := newLocalResponseObligations(task.ManagerID, remainingObligations, parsed.Questions, parsed.Risks)
+	if err != nil {
+		return nil, fmt.Errorf("manager %s reintegration obligation provenance: %w", task.ManagerID, err)
+	}
+	if err := applyObligationResolutions(report, resolvedObligations); err != nil {
+		return nil, fmt.Errorf("manager %s reintegration obligation resolution: %w", task.ManagerID, err)
+	}
+	task.Obligations = append(appendForwardedObligations(remainingObligations, task.ManagerID), newLocal...)
+	task.Questions, task.Risks = uniqueSorted(remainingQ), uniqueSorted(remainingR)
+	if len(task.Questions)+len(task.Risks) == 0 {
+		task.ReportStatus = "complete"
+	} else {
+		task.ReportStatus = "partial"
+		if err := recordEscalation(report, *task, TaskResponse{Summary: parsed.Summary, Questions: task.Questions, Risks: task.Risks, EscalateTo: parsed.EscalateTo}); err != nil {
+			return nil, err
+		}
+		markObligationEscalationsEscalated(report, task.ManagerID, task.Obligations)
+	}
 	task.ReworkRequests = append([]ReworkRequest(nil), parsed.ReworkRequests...)
 	report.Candidate = candidateRef(candidate, false)
 	if err := persistState(store, report); err != nil {

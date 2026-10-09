@@ -2,6 +2,7 @@ package projectrun
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 )
 
 func TestResumeReconcilesDurableRunningStateAfterCrash(t *testing.T) {
@@ -80,6 +82,136 @@ func TestResumeReconcilesDurableRunningStateAfterCrash(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPersistedClosureRejectsHiddenTypedObligationsWithoutReplay(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	setupE2EProcess(t, "")
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{
+		Goal:              "Implement both owned artifacts and integrate them.",
+		Managers:          []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")},
+		ExecuteAuthorized: true,
+	})
+	if err != nil {
+		t.Fatalf("Plan: %v", err)
+	}
+	invoker := &resumeCountingInvoker{inner: ProcessInvoker{}}
+	run, err := Run(context.Background(), host, invoker, root, plan.ID)
+	if err != nil || run.Status != StatusIntegrated {
+		t.Fatalf("Run: status=%s err=%v", run.Status, err)
+	}
+	if _, err := Verify(context.Background(), host, invoker, root, plan.ID); err != nil {
+		t.Fatalf("Verify baseline: %v", err)
+	}
+	preflight, err := PreflightApply(host, root, plan.ID, run.Candidate.ID)
+	if err != nil {
+		t.Fatalf("PreflightApply baseline: %v", err)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mutateLatest := func(status string) RunReport {
+		t.Helper()
+		latest, err := store.readLatestState(plan.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rootTask := findTask(latest.Tasks, e2eManagerID("", "project-owner"))
+		if rootTask == nil {
+			t.Fatal("integrated report omitted root task")
+		}
+		rootTask.Obligations = []Obligation{{ID: "hidden-obligation", Kind: "question", Text: "hidden unresolved question", OriginManager: rootTask.ManagerID, Chain: []string{rootTask.ManagerID}}}
+		latest.Status = status
+		if err := persistState(store, &latest); err != nil {
+			t.Fatal(err)
+		}
+		return latest
+	}
+
+	mutateLatest(StatusIntegrated)
+	if _, err := Verify(context.Background(), host, invoker, root, plan.ID); err == nil || !strings.Contains(err.Error(), "unresolved report status or obligations") {
+		t.Fatalf("Verify accepted an integrated report with a hidden typed obligation: %v", err)
+	}
+	mutateLatest(StatusVerified)
+	if _, err := PreflightApply(host, root, plan.ID, run.Candidate.ID); err == nil || !strings.Contains(err.Error(), "unresolved report status or obligations") {
+		t.Fatalf("PreflightApply accepted a verified report with a hidden typed obligation: %v", err)
+	}
+	if _, err := Apply(host, invoker, root, applyRequestFromPreflight(preflight)); err == nil || !strings.Contains(err.Error(), "unresolved report status or obligations") {
+		t.Fatalf("Apply accepted a verified report with a hidden typed obligation: %v", err)
+	}
+
+	mutateLatest(StatusInterrupted)
+	callsBeforeResume := invoker.calls
+	resumed, err := Resume(context.Background(), host, invoker, root, plan.ID)
+	if err == nil || !strings.Contains(err.Error(), "unresolved report status or obligations") || resumed.Status != StatusBlocked {
+		t.Fatalf("Resume closed a report with a hidden typed obligation: status=%s err=%v", resumed.Status, err)
+	}
+	if invoker.calls != callsBeforeResume {
+		t.Fatalf("closure guard replayed an invocation: before=%d after=%d", callsBeforeResume, invoker.calls)
+	}
+}
+
+func TestApplyRechecksReportClosureAtGuardedWriteBoundary(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	setupE2EProcess(t, "")
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{
+		Goal:              "Implement both owned artifacts and integrate them.",
+		Managers:          []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")},
+		ExecuteAuthorized: true,
+	})
+	if err != nil {
+		t.Fatalf("Plan: %v", err)
+	}
+	invoker := &resumeCountingInvoker{inner: ProcessInvoker{}}
+	run, err := Run(context.Background(), host, invoker, root, plan.ID)
+	if err != nil || run.Status != StatusIntegrated {
+		t.Fatalf("Run: status=%s err=%v", run.Status, err)
+	}
+	if _, err := Verify(context.Background(), host, invoker, root, plan.ID); err != nil {
+		t.Fatalf("Verify: %v", err)
+	}
+	preflight, err := PreflightApply(host, root, plan.ID, run.Candidate.ID)
+	if err != nil {
+		t.Fatalf("PreflightApply: %v", err)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workingLoads := 0
+	guardedHost := host
+	guardedHost.Load = func(loadRoot, revision string) (*Project, error) {
+		if revision == "" {
+			workingLoads++
+			if workingLoads == 2 {
+				latest, loadErr := store.readLatestState(plan.ID)
+				if loadErr != nil {
+					return nil, loadErr
+				}
+				rootTask := findTask(latest.Tasks, e2eManagerID("", "project-owner"))
+				if rootTask == nil {
+					return nil, fmt.Errorf("integrated report omitted root task")
+				}
+				rootTask.Obligations = []Obligation{{ID: "late-hidden-obligation", Kind: "question", Text: "late unresolved question", OriginManager: rootTask.ManagerID, Chain: []string{rootTask.ManagerID}}}
+				if err := persistState(store, &latest); err != nil {
+					return nil, err
+				}
+			}
+		}
+		return projectwork.Load(loadRoot, revision)
+	}
+	result, err := Apply(guardedHost, invoker, root, applyRequestFromPreflight(preflight))
+	if err == nil || !strings.Contains(err.Error(), "unresolved report status or obligations") {
+		t.Fatalf("Apply did not reject a late hidden obligation at its guarded recheck: result=%+v err=%v", result, err)
+	}
+	if workingLoads != 2 || len(result.Written) != 0 || len(result.Journal) != 0 {
+		t.Fatalf("guarded closure mutation reached a write: loads=%d result=%+v", workingLoads, result)
+	}
+	assertFileContents(t, root, "src/orders/implementation.txt", "orders implementation v1\n")
 }
 
 func persistRunningCrashState(t *testing.T, root string, plan PlanRecord, inFlight, retryReady bool) RunReport {

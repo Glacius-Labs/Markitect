@@ -140,6 +140,10 @@ Review evidence binds the candidate and actual reviewed scope. Unchanged indepen
 
 Manager task contexts use `projectrun-task/v1`. During integration, inherited questions and risks remain open until explicitly resolved from current evidence. Remaining questions and risks, including required work in a sibling branch that this Manager cannot assess, require a partial report and escalation to the exact supplied parent target. Pending Host checks remain expected until Verify. A complete report cannot silently omit unresolved items. A valid direct-child rework request alone may accompany a complete integration report with no remaining questions or risks; the Host performs that repair and fresh integration before final run closure.
 
+When an authorized ancestor resolves a forwarded obligation, the Host carries that decision back to its origin along the recorded forwarding chain. Exact provenance distinguishes unrelated questions with the same text. Partial resolutions retain other questions, risks and escalation state; absent legacy provenance is never reconstructed by guessing.
+
+Targeted rework rejects a target that still has unresolved questions or risks. Its parent must explicitly resolve those obligations first; restarting implementation cannot silently erase them.
+
 ## Executable example
 
 `examples/project-world/` models a Shop with a root manager, commerce integration manager, Sales manager, and separate Orders and Inventory managers. Its vertical slices cover order state, reservation release, the shared transaction rule, declared artifacts, and a literal test command. The Python example uses only the standard library and SQLite:

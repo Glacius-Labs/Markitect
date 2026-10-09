@@ -48,6 +48,9 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if run.Status != StatusIntegrated {
 		return out, fmt.Errorf("run must be integrated before verification (status %s)", run.Status)
 	}
+	if err := validateReportClosure(run); err != nil {
+		return out, err
+	}
 	runtime, err := LoadRuntime(root)
 	if err != nil {
 		return out, err

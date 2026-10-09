@@ -183,6 +183,7 @@ type ManagerTask struct {
 	Summary                string          `json:"summary,omitempty"`
 	Questions              []string        `json:"questions,omitempty"`
 	Risks                  []string        `json:"risks,omitempty"`
+	Obligations            []Obligation    `json:"obligations,omitempty"`
 	ReviewStatus           string          `json:"reviewStatus,omitempty"`
 	ReviewCandidateID      string          `json:"reviewCandidateId,omitempty"`
 	ReviewRound            int             `json:"reviewRound,omitempty"`
@@ -193,6 +194,17 @@ type ReworkRequest struct {
 	ManagerID string `json:"managerId"`
 	Goal      string `json:"goal"`
 	Reason    string `json:"reason"`
+}
+
+// Obligation records the exact Manager chain for one unresolved question or
+// risk. It is Host-authored durable provenance; response text alone is never
+// enough to clear a legacy or ambiguously forwarded item.
+type Obligation struct {
+	ID            string   `json:"id"`
+	Kind          string   `json:"kind"`
+	Text          string   `json:"text"`
+	OriginManager string   `json:"originManager"`
+	Chain         []string `json:"chain"`
 }
 
 type CheckPlan struct {
@@ -335,6 +347,7 @@ type Escalation struct {
 	ToManager     string   `json:"toManager"`
 	Question      string   `json:"question"`
 	AffectedTasks []string `json:"affectedTasks"`
+	ObligationIDs []string `json:"obligationIds,omitempty"`
 	Status        string   `json:"status"`
 }
 

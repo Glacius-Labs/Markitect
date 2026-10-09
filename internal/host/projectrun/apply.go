@@ -56,6 +56,9 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if run.Status != StatusVerified || run.Candidate.ID != candidateID || !run.Candidate.Integrated {
 		return out, fmt.Errorf("requested candidate is not the latest verified integrated candidate")
 	}
+	if err := validateReportClosure(run); err != nil {
+		return out, err
+	}
 	dir, err := store.runDir(runID)
 	if err != nil {
 		return out, err
@@ -170,6 +173,9 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	}
 	if run.Status != StatusVerified {
 		return out, fmt.Errorf("run status %s is not verified", run.Status)
+	}
+	if err := validateReportClosure(run); err != nil {
+		return out, err
 	}
 	if run.PlanID != plan.ID || run.Candidate.ID != request.CandidateID || !run.Candidate.Integrated {
 		return out, fmt.Errorf("requested candidate is not the integrated candidate for this run")
@@ -315,6 +321,9 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		}
 		if latest.Status != StatusVerified || latest.Candidate.ID != request.CandidateID {
 			return ErrStale
+		}
+		if err := validateReportClosure(latest); err != nil {
+			return err
 		}
 		latestVerify, loadErr := latestVerification(dir, request.CandidateID)
 		if loadErr != nil {
