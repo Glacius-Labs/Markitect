@@ -23,6 +23,7 @@ This is an owner-facing collection of product thoughts and questions, not a prod
 | IDEA-20261009-015 | Examine Kubernetes or etcd suitability later | Noted; technology undecided | 014 |
 | IDEA-20261009-016 | Visualize the governed project “realm” | Noted; meaning open | 013, 014 |
 | IDEA-20261009-017 | Explore gamification | Noted; meaning open | 013, 016 |
+| IDEA-20261009-018 | Cockpit with a conversational personal access agent | Noted; authority and views open | 013, 014, 016 |
 
 ### Group: Projektspezifische Entscheidungen und Government
 
@@ -258,3 +259,15 @@ Historian is an authorized source for relevant findings from Markitect history a
 - **Open questions:** What would be gamified, for whom, and toward what desired behavior? How could perverse incentives, superficial metrics or competition be avoided?
 - **Relationships:** IDEA-20261009-013, 016.
 - **Status:** Noted as an open future idea; meaning open and planning deferred.
+
+### IDEA-20261009-018 — Cockpit with a conversational personal access agent
+
+- **Group:** Government operation and observability.
+- **Source wording (user):** “Eine Art Cockpit wäre hier vermutlich das Stichwort, mit einem Chat Interface, das mit einem AI Agent verbunden ist, der dieses System für mich durchsuchen und das Modell anpassen kann, oder mir direkt zeigen kann was mich interessiert in meinem Cockpit”.
+- **Problem:** The user would otherwise need to search organizational areas manually to find relevant state and perform model-related work.
+- **Idea:** A cockpit provides a personal interface combining chat with an AI agent that could search the system, adjust the model or show information the user wants to see.
+- **Assumptions:** A conversational agent can understand requests, retrieve grounded system information and present relevant views; any model changes can be governed and reviewed appropriately.
+- **Hoped-for effect (motivation paraphrase supplied with the referral, not original wording):** Let the user steer attention through conversation and inspect relevant state without manually searching every area.
+- **Open questions:** What search and model-editing authority may be delegated? How are changes previewed, authorized and traced? How does the cockpit choose or explain relevant views? How do periodic briefings relate to a spontaneous question or a user-directed view?
+- **Relationships:** IDEA-20261009-013 (briefings), -014 (monitoring and records), -016 (realm visualization), and -010/-012 (decision authority and local priorities); earlier Government framing in user turn `01a12241-8b52-7010-ac05-edbebd3c80d3`.
+- **Status:** Noted as a possible operating and use experience; no detailed planning, implementation decision or priority.
