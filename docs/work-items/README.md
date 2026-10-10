@@ -1,21 +1,9 @@
 # Work-item records
 
-This directory holds the current backlog and the records of completed work programs. The map points to each owner; it does not duplicate statuses or attempt outcomes.
-
-## Current work
+This directory holds the one valid backlog and the surveys that feed it. The map points to each owner; it does not duplicate statuses.
 
 - [Backlog](backlog.yaml): the single owner of work-package status, owners, branches, zones, dependencies and acceptance criteria.
 - [Roadmap](../implementation-plan.md): streams, waves, zones, branch names and the integration rules the backlog follows.
-- [Surveys](surveys/README.md): read-only surveys of 10 October 2026 that list facts, earlier work and collision zones per area, so that sessions do not repeat the analysis.
+- [Surveys](surveys/README.md): read-only, AI-generated surveys that list facts, earlier work, collision zones and lessons per area, so that sessions do not repeat the analysis.
 
-## Completed: Product Readiness (P01 to P10)
-
-The Product Readiness program ended with the model-first integration into Main (pull request #89, 10 October 2026). Its records stay here as history. Its open follow-ups moved to the backlog: AGENT-03 replaces R03-F01, and KG-00 to KG-03 replace KG01 to KG03.
-
-- [Product Readiness guide](product-readiness/README.md): scope, authority, execution boundaries, and routing of that program.
-- [Program backlog](product-readiness/backlog.yaml): item states, dependencies, assignments, and evidence pointers as recorded at the end of the program.
-- [Integration progress](product-readiness/integration-progress-20261009.md): technical handoffs and progress notes for its recorded integration checkpoint.
-- [Native acceptance ledger](product-readiness/evidence/native-acceptance-ledger.yaml): attempt identities, accounting, and acceptance evidence boundaries.
-- [Numbered work items](product-readiness/): individual scope and acceptance requirements.
-
-Preserve dated reports and ledger entries as recorded; do not rewrite them to match a later status.
+The Product Readiness program (P01 to P10) closed with pull request #89 on 10 October 2026. Its lessons are in the [Product Readiness lessons survey](surveys/product-readiness-lessons-20261010.md), its A01 result is in the [A01 validation record](../validation/a01-native-smoke-20261010.md), and git history keeps its original records.

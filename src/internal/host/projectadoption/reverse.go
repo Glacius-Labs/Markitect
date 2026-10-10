@@ -234,7 +234,7 @@ func anyProposedManager(session BrownfieldSession, id string) (ProposedManager, 
 
 // BeginReverseIteration appends a fixed, evidence-selected Manager work item.
 // The Manager identity must belong to the accepted target tree and a child
-// iteration can only be routed beneath its declared parent.
+// iteration can only be routed beneath its declared, not yet integrated parent.
 func BeginReverseIteration(sourceRoot string, target *projectwork.Project, session BrownfieldSession, request ReverseIterationRequest) (BrownfieldSession, error) {
 	if err := ValidateBrownfieldSession(session); err != nil {
 		return BrownfieldSession{}, err
@@ -286,6 +286,9 @@ func BeginReverseIteration(sourceRoot string, target *projectwork.Project, sessi
 		if !exists || parent.Proposal == nil {
 			return BrownfieldSession{}, errors.New("child reverse iteration requires a parent Manager proposal that established its responsibility")
 		}
+		if parent.Integration != nil {
+			return BrownfieldSession{}, fmt.Errorf("parent iteration %q is already integrated and cannot accept another child iteration", request.ParentIterationID)
+		}
 		assignment, proposed := proposedManager(parent, request.ManagerID)
 		if !proposed || assignment.ParentID != parent.ManagerID || !sameStrings(assignment.EvidenceIDs, request.EvidenceIDs) || !sameStrings(assignment.DelegationEvidenceIDs, request.DelegationEvidenceIDs) {
 			return BrownfieldSession{}, errors.New("child Manager and exact evidence assignment must be explicitly listed by its parent")
@@ -326,7 +329,9 @@ func BeginReverseIteration(sourceRoot string, target *projectwork.Project, sessi
 }
 
 // RecordManagerProposal attaches one externally supplied proposal. It checks
-// that every cited evidence item was explicitly selected for this Manager.
+// that every cited evidence item was explicitly selected for this Manager and
+// that the resulting session remains valid, so an accepted proposal can always
+// be persisted.
 func RecordManagerProposal(session BrownfieldSession, iterationID string, proposal ManagerProposal) (BrownfieldSession, error) {
 	if err := ValidateBrownfieldSession(session); err != nil {
 		return BrownfieldSession{}, err
@@ -349,6 +354,9 @@ func RecordManagerProposal(session BrownfieldSession, iterationID string, propos
 	result.Iterations[index].Proposal = &proposal
 	setScopeStatesFromReport(&result, proposal.Report, "modeled")
 	sealSession(&result)
+	if err := ValidateBrownfieldSession(result); err != nil {
+		return BrownfieldSession{}, fmt.Errorf("Manager proposal cannot be recorded: %w", err)
+	}
 	return result, nil
 }
 

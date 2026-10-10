@@ -1,0 +1,21 @@
+{
+  "id": "legacy-list-drops-tag-filter",
+  "base": "S6",
+  "item": "B15",
+  "rule": null,
+  "violates": "list --legacy ignores --tag.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    return {entries_key(args): matching(entries, args)}",
+      "new": [
+        "    if args.legacy:",
+        "        args.tag = None",
+        "    return {entries_key(args): matching(entries, args)}"
+      ]
+    }
+  ],
+  "fails": [
+    "b15-legacy-list-filters"
+  ]
+}

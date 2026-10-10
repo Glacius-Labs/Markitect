@@ -1,0 +1,25 @@
+{
+  "id": "list-tag-drops-other-filters",
+  "base": "S3",
+  "item": "B08",
+  "rule": null,
+  "violates": "list --tag ignores the other list filters.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    \"\"\"Apply the optional filters of `list` and `summary`; all given filters must match.\"\"\"",
+      "new": [
+        "    \"\"\"Apply the optional filters of `list` and `summary`; all given filters must match.\"\"\"",
+        "    everything = books"
+      ]
+    },
+    {
+      "file": "app.py",
+      "old": "        books = [book for book in books if name in book[\"tags\"]]",
+      "new": "        books = [book for book in everything if name in book[\"tags\"]]"
+    }
+  ],
+  "fails": [
+    "b08-list-tag-filters"
+  ]
+}

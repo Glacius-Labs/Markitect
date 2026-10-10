@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	hostwrite "github.com/Glacius-Labs/Markitect/src/internal/host"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
@@ -33,7 +33,7 @@ func ApplyPaths(host Host, root, runID string) ([]string, error) {
 // mutate. The digest binds repository identity, branch, HEAD, selected bytes,
 // modes and absent paths. Callers obtain paths through ApplyPaths.
 func CaptureTarget(root string, paths []string) (string, error) {
-	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
+	capture, err := guardedwrite.CaptureFiles(root, paths)
 	if err != nil {
 		return "", err
 	}
@@ -142,7 +142,7 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if err != nil {
 		return out, err
 	}
-	capture, err := hostwrite.CaptureGuardedWrite(root, capturePaths)
+	capture, err := guardedwrite.CaptureFiles(root, capturePaths)
 	if err != nil {
 		return out, err
 	}
@@ -161,16 +161,16 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 }
 
 // TargetDigest is the precondition token accepted by ApplyRequest.
-func TargetDigest(capture *hostwrite.GuardedWriteCapture) (string, error) {
+func TargetDigest(capture *guardedwrite.Capture) (string, error) {
 	if capture == nil {
 		return "", fmt.Errorf("target capture is required")
 	}
 	return digest(struct {
-		Root     string                                `json:"root"`
-		Identity any                                   `json:"identity"`
-		Branch   string                                `json:"branch"`
-		Head     string                                `json:"head"`
-		Files    map[string]hostwrite.GuardedWriteFile `json:"files"`
+		Root     string                       `json:"root"`
+		Identity any                          `json:"identity"`
+		Branch   string                       `json:"branch"`
+		Head     string                       `json:"head"`
+		Files    map[string]guardedwrite.File `json:"files"`
 	}{capture.Root, capture.Identity, capture.Branch, capture.Head, capture.Files})
 }
 
@@ -303,7 +303,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if err != nil {
 		return out, err
 	}
-	capture, err := hostwrite.CaptureGuardedWrite(root, capturePaths)
+	capture, err := guardedwrite.CaptureFiles(root, capturePaths)
 	if err != nil {
 		return out, err
 	}
@@ -415,7 +415,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		}
 		return nil
 	}
-	result, applyErr := hostwrite.ApplyGuardedWriteChecked(capture.Root, capture, changes, validate)
+	result, applyErr := guardedwrite.ApplyChecked(capture.Root, capture, changes, validate)
 	out.Written = append([]string(nil), result.CompletedPaths...)
 	out.Journal = append([]string(nil), result.CompletedPaths...)
 	out.AppliedAt = time.Now().UTC()
@@ -605,7 +605,7 @@ func candidateDeltaPaths(base *Snapshot, c candidateData) []string {
 	sort.Strings(paths)
 	return paths
 }
-func compareCaptureToBase(root, revision string, capture *hostwrite.GuardedWriteCapture, base *Snapshot, paths []string) error {
+func compareCaptureToBase(root, revision string, capture *guardedwrite.Capture, base *Snapshot, paths []string) error {
 	for _, p := range paths {
 		current, ok := capture.Files[p]
 		if !ok {
@@ -701,15 +701,15 @@ func captureModeMatchesGit(captured fs.FileMode, gitMode string) bool {
 	}
 	return captured.Perm() == want
 }
-func guardedChanges(c candidateData, paths []string) ([]hostwrite.GuardedWriteChange, error) {
-	changes := make([]hostwrite.GuardedWriteChange, 0, len(paths))
+func guardedChanges(c candidateData, paths []string) ([]guardedwrite.Change, error) {
+	changes := make([]guardedwrite.Change, 0, len(paths))
 	for _, p := range paths {
 		f, ok := c.Files[p]
 		if !ok {
 			return nil, fmt.Errorf("candidate delta %s is missing", p)
 		}
 		if f.Delete {
-			changes = append(changes, hostwrite.GuardedWriteChange{Path: p, Delete: true})
+			changes = append(changes, guardedwrite.Change{Path: p, Delete: true})
 			continue
 		}
 		mode := fs.FileMode(0o644)
@@ -718,7 +718,7 @@ func guardedChanges(c candidateData, paths []string) ([]hostwrite.GuardedWriteCh
 		} else if f.Mode != "100644" {
 			return nil, fmt.Errorf("candidate mode %s is unsupported for %s", f.Mode, p)
 		}
-		changes = append(changes, hostwrite.GuardedWriteChange{Path: p, Bytes: append([]byte(nil), f.Content...), Mode: mode})
+		changes = append(changes, guardedwrite.Change{Path: p, Bytes: append([]byte(nil), f.Content...), Mode: mode})
 	}
 	return changes, nil
 }

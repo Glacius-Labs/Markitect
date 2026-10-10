@@ -1,6 +1,6 @@
 # Native Codex checkpoint and shared contracts — 9 October 2026
 
-This report closes P01 source work and records P02 shared contracts. It does not establish native product acceptance. YAML is the sole canonical model format. Markdown remains readable documentation; provider-required SKILL.md front matter remains discovery metadata. The product queue and its [fresh-chat handoff](../work-items/product-readiness/fresh-chat-handoff.md) supersede earlier phase stops.
+This report closes P01 source work and records P02 shared contracts. It does not establish native product acceptance. YAML is the sole canonical model format. Markdown remains readable documentation; provider-required SKILL.md front matter remains discovery metadata. The product queue and its fresh-chat handoff (retired on 10 October 2026; in git history) supersede earlier phase stops.
 
 ## Implemented checkpoint
 
@@ -10,7 +10,7 @@ Native Managers currently work in a bounded candidate file tree without Git hist
 
 Failed Manager receipts are persisted once when invocation identity exists. The selected instruction pin comparison now uses the required sha256: prefix. Distillation and Brownfield assessment explicitly select a separate unscoped read-only agent configuration rather than reusing a scoped native Manager. Required independent review, Verify and guarded Apply remain in place.
 
-The P02 source adds compiling workspace/delta, application-operation, invocation-validation and lifecycle/configuration contracts. It supplies no Git workspace implementation, App Server transport or MCP server. See [P02](../work-items/product-readiness/P02-shared-contracts.md) for concrete API paths and reserved ownership.
+The P02 source adds compiling workspace/delta, application-operation, invocation-validation and lifecycle/configuration contracts. It supplies no Git workspace implementation, App Server transport or MCP server. P02 (retired on 10 October 2026; in git history) recorded the concrete API paths and reserved ownership.
 
 ## Source validation and review
 
@@ -35,6 +35,6 @@ The fixture check command was corrected within the same lease. The source pin de
 
 ## Remaining acceptance
 
-The separate finite product acceptance grant is recorded in [the ledger](../work-items/product-readiness/evidence/native-acceptance-ledger.yaml): A01–A03 are all not started, consumed jobs and role-start requests are zero. Fresh implementation/integration owners must first implement and validate P03–P08, then run the permitted finite jobs and final gates. A fresh session declaration, mock, schema export, skill/config file or source push is not an actual independent agent run, successful user journey, human acceptance or comparative advantage.
+The separate finite product acceptance grant is recorded in the native acceptance ledger (retired on 10 October 2026; in git history): A01–A03 are all not started, consumed jobs and role-start requests are zero. Fresh implementation/integration owners must first implement and validate P03–P08, then run the permitted finite jobs and final gates. A fresh session declaration, mock, schema export, skill/config file or source push is not an actual independent agent run, successful user journey, human acceptance or comparative advantage.
 
 PR89 remains draft. The user authorized normal Main integration after positive required gates; P01/P02 is a development handoff, not that readiness result. No release is authorized.

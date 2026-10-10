@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	hostwrite "github.com/Glacius-Labs/Markitect/src/internal/host"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
@@ -41,7 +41,7 @@ func writeRecord(root, rawPath string, data []byte) (string, error) {
 		return "", err
 	}
 	for attempt := 0; attempt < 100; attempt++ {
-		capture, err := hostwrite.CaptureGuardedWrite(root, []string{rel})
+		capture, err := guardedwrite.CaptureFiles(root, []string{rel})
 		if err != nil {
 			if isGuardedWriterBusy(err) && waitForGuardedWriter(attempt) {
 				continue
@@ -51,7 +51,7 @@ func writeRecord(root, rawPath string, data []byte) (string, error) {
 		if current, ok := capture.Files[rel]; !ok || current.Exists {
 			return "", fmt.Errorf("refusing to overwrite existing Markitect record %s", rel)
 		}
-		_, err = hostwrite.ApplyGuardedWrite(capture.Root, capture, []hostwrite.GuardedWriteChange{{Path: rel, Bytes: data, Mode: 0644}})
+		_, err = guardedwrite.Apply(capture.Root, capture, []guardedwrite.Change{{Path: rel, Bytes: data, Mode: 0644}})
 		if err != nil {
 			if isGuardedWriterBusy(err) && waitForGuardedWriter(attempt) {
 				continue
@@ -96,7 +96,7 @@ func preflightRecordDestinations(root string, rawPaths ...string) error {
 		return errors.New("at least one Markitect record destination is required")
 	}
 	sort.Strings(paths)
-	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
+	capture, err := guardedwrite.CaptureFiles(root, paths)
 	if err != nil {
 		return fmt.Errorf("capture Markitect record targets: %w", err)
 	}
@@ -127,11 +127,11 @@ func writeRecords(root string, records map[string][]byte) (map[string]string, er
 	if len(paths) == 0 {
 		return nil, errors.New("at least one Markitect record is required")
 	}
-	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
+	capture, err := guardedwrite.CaptureFiles(root, paths)
 	if err != nil {
 		return nil, fmt.Errorf("capture Markitect record targets: %w", err)
 	}
-	changes := make([]hostwrite.GuardedWriteChange, 0, len(paths))
+	changes := make([]guardedwrite.Change, 0, len(paths))
 	digests := make(map[string]string, len(paths))
 	for _, path := range paths {
 		current, ok := capture.Files[path]
@@ -139,11 +139,11 @@ func writeRecords(root string, records map[string][]byte) (map[string]string, er
 			return nil, fmt.Errorf("refusing to overwrite existing Markitect record %s", path)
 		}
 		data := records[path]
-		changes = append(changes, hostwrite.GuardedWriteChange{Path: path, Bytes: data, Mode: 0644})
+		changes = append(changes, guardedwrite.Change{Path: path, Bytes: data, Mode: 0644})
 		sum := sha256.Sum256(data)
 		digests[path] = "sha256:" + hex.EncodeToString(sum[:])
 	}
-	if _, err := hostwrite.ApplyGuardedWrite(capture.Root, capture, changes); err != nil {
+	if _, err := guardedwrite.Apply(capture.Root, capture, changes); err != nil {
 		return nil, fmt.Errorf("write Markitect records: %w", err)
 	}
 	return digests, nil

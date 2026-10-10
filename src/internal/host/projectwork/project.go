@@ -13,7 +13,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	hostwrite "github.com/Glacius-Labs/Markitect/src/internal/host"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/canonical"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
@@ -341,7 +340,7 @@ func digestProject(project *Project) (string, error) {
 	if project.Coverage != nil {
 		write("coverage", []byte(project.Coverage.Digest))
 	}
-	toolBuildDigest, err := hostwrite.ToolBuildDigest()
+	toolBuildDigest, err := ToolBuildDigest()
 	if err != nil {
 		return "", fmt.Errorf("identify running Markitect build: %w", err)
 	}

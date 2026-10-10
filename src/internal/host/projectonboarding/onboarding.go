@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	hostwrite "github.com/Glacius-Labs/Markitect/src/internal/host"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
@@ -110,7 +110,7 @@ func Preview(root, modelDigest string, options Options) (Plan, error) {
 		paths = append(paths, files[i].Path)
 	}
 	paths = append(paths, legacyPaths...)
-	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
+	capture, err := guardedwrite.CaptureFiles(root, paths)
 	if err != nil {
 		return plan, fmt.Errorf("capture onboarding targets: %w", err)
 	}
@@ -184,7 +184,7 @@ func Apply(root string, plan Plan, expectDigest string) (Plan, error) {
 	for i, target := range current.Targets {
 		paths[i] = target.Path
 	}
-	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
+	capture, err := guardedwrite.CaptureFiles(root, paths)
 	if err != nil {
 		return plan, fmt.Errorf("recapture onboarding targets: %w", err)
 	}
@@ -197,20 +197,20 @@ func Apply(root string, plan Plan, expectDigest string) (Plan, error) {
 			return plan, fmt.Errorf("onboarding target %s changed after preview", expected.Path)
 		}
 	}
-	changes := make([]hostwrite.GuardedWriteChange, 0, len(current.Files))
+	changes := make([]guardedwrite.Change, 0, len(current.Files))
 	for _, file := range current.Files {
 		if file.Action == "unchanged" {
 			continue
 		}
 		if file.Action == "delete" {
-			changes = append(changes, hostwrite.GuardedWriteChange{Path: file.Path, Delete: true})
+			changes = append(changes, guardedwrite.Change{Path: file.Path, Delete: true})
 			continue
 		}
 		mode := fs.FileMode(0644)
 		if observed := capture.Files[file.Path]; observed.Exists {
 			mode = observed.Mode.Perm()
 		}
-		changes = append(changes, hostwrite.GuardedWriteChange{Path: file.Path, Bytes: []byte(file.Content), Mode: mode})
+		changes = append(changes, guardedwrite.Change{Path: file.Path, Bytes: []byte(file.Content), Mode: mode})
 	}
 	validate := func() error {
 		fresh, loadErr := projectwork.Load(root, "")
@@ -222,7 +222,7 @@ func Apply(root string, plan Plan, expectDigest string) (Plan, error) {
 		}
 		return nil
 	}
-	result, err := hostwrite.ApplyGuardedWriteChecked(capture.Root, capture, changes, validate)
+	result, err := guardedwrite.ApplyChecked(capture.Root, capture, changes, validate)
 	current.Written = append([]string(nil), result.CompletedPaths...)
 	if err != nil {
 		return current, fmt.Errorf("onboarding write was partial after %s: %w", strings.Join(current.Written, ", "), err)

@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	hostwrite "github.com/Glacius-Labs/Markitect/src/internal/host"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
@@ -65,7 +65,7 @@ func writeDocument(project *Project, content string) error {
 	}
 	paths = append(paths, viewPath)
 	paths = uniqueSorted(paths)
-	capture, err := hostwrite.CaptureGuardedWrite(project.Root, paths)
+	capture, err := guardedwrite.CaptureFiles(project.Root, paths)
 	if err != nil {
 		return fmt.Errorf("capture generated project view: %w", err)
 	}
@@ -94,7 +94,7 @@ func writeDocument(project *Project, content string) error {
 		}
 		return nil
 	}
-	_, err = hostwrite.ApplyGuardedWriteChecked(capture.Root, capture, []hostwrite.GuardedWriteChange{{Path: viewPath, Bytes: []byte(content), Mode: fs.FileMode(0644)}}, validate)
+	_, err = guardedwrite.ApplyChecked(capture.Root, capture, []guardedwrite.Change{{Path: viewPath, Bytes: []byte(content), Mode: fs.FileMode(0644)}}, validate)
 	if err != nil {
 		return fmt.Errorf("write generated view %s: %w", viewPath, err)
 	}

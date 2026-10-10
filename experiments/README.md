@@ -1,6 +1,6 @@
 # Experiments and preserved evaluations
 
-This directory holds bounded exercise harnesses and their evidence. Each exercise defines its own source, runtime, input, authority and result limits. Use the [validation map](../docs/validation/README.md) to locate recorded outcomes and the [readiness backlog](../docs/work-items/product-readiness/backlog.yaml) for current product status.
+This directory holds bounded exercise harnesses and their evidence. Each exercise defines its own source, runtime, input, authority and result limits. Use the [validation map](../docs/validation/README.md) to locate recorded outcomes and the [backlog](../docs/work-items/backlog.yaml) for current work status.
 
 ## Project workflow exercise
 
@@ -9,6 +9,12 @@ This directory holds bounded exercise harnesses and their evidence. Each exercis
 | [Live Shop](project-world-live/README.md) | Disposable model-first delivery, Brownfield proposals and independent acceptance checks |
 
 The deterministic [Shop example](../examples/project-world/README.md) and [Project workflow](../docs/project-workflow.md) are the starting points for ordinary use. An exercise description or retained runtime configuration does not start a new provider run.
+
+## Case studies
+
+| Exercise | Scope |
+|---|---|
+| [Case playground](case-playground/README.md) | One coding agent through a staged backlog in a fresh Linux container, Conventional versus Markitect, with a separate assessment per wave |
 
 ## Earlier bounded evaluations
 

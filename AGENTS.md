@@ -1,13 +1,26 @@
 # Markitect agent entrypoint
 
-Begin each engineering task with the canonical [Markitect-first Change workflow](src/internal/host/embedded/resources/workflow-markitect-first-change.yaml). The repository entry is `development/Skill/engineering-change` in [the root Project](markitect.yaml). Resolve a fixed BASE commit, then run `go run ./src/cmd/markitect check --repo . --revision BASE` and `go run ./src/cmd/markitect context --repo . --revision BASE --namespace development --kind Skill --name engineering-change`. [The workflow guide](docs/markitect-first.md) explains classification, desired intent first, artifact accounting and completion. Implementation-only work does not require a fake model change. Generated Codex/Claude entrypoints derive from these owners.
+Markitect is model-first development with delegated realization. People maintain a canonical model of the project's intended world. Markitect compiles it, derives the affected responsibilities and files, and has each change of intent realized by recursive Managers with independent review, integration, verification and guarded Apply. Before you assess the product direction or propose changing it, read [Markitect in brief](docs/vision.md#markitect-in-brief), [Common misreadings](docs/vision.md#common-misreadings) and the [concept register](docs/concepts/register.md). Do not reopen an accepted entry without new evidence.
 
-Start with [the documentation map](docs/README.md). [Vision](docs/vision.md) owns the product thesis and human/agent responsibilities; read [Operating methodology](docs/operating-methodology.md) for the intended process and [Measurement](docs/measurement.md#staged-method-readiness) for readiness stages. [Architecture](docs/architecture.md) owns technical boundaries; [Project workflow](docs/project-workflow.md) and [Project operations](docs/project-operations.md) describe the current model-first product; [Usage](docs/usage.md) covers structural commands and historical release contracts. [The roadmap](docs/implementation-plan.md) owns direction, streams and the rules for parallel work; the [backlog](docs/work-items/backlog.yaml) owns work-package status. Name new branches with a meaningful prefix such as `dev/`, `fix/` or `docs/`, as the roadmap describes. For method or proof changes, read the relevant frozen assessments and their dispositions, including the [historical Astra checkpoint](docs/implementation-plan.md#astra-assessment-disposition-and-next-method-checkpoint). [CONTRIBUTING](CONTRIBUTING.md) owns contribution checks; the [development map](docs/development/README.md) routes coordination and documentation maintenance.
+## Every task
 
-Markitect is model-first development with delegated realization. People maintain a canonical model of the project's intended world. Markitect compiles that model, derives the affected responsibilities and files, and has each change of intent realized by recursive Managers, with independent review, integration, verification and guarded Apply. Before you assess the product direction or propose changing it, read [Markitect in brief](docs/vision.md#markitect-in-brief), [Common misreadings](docs/vision.md#common-misreadings) and the [concept register](docs/concepts/register.md). Do not reopen accepted entries without new evidence; record such evidence as an open question there. Keep Markitect's Core independent of adopting repositories and model providers. Use YAML for machine-relevant ownership and dependencies, Markdown for readable prose, and explicit inputs for data that affects a result. Preserve deterministic diagnostics, fixed-snapshot evidence, and one owner per generated output.
+1. Work on a branch from current `origin/main`. Its name starts with a prefix that says what it holds, such as `dev/`, `fix/` or `docs/` ([branch names](docs/implementation-plan.md#branch-names)).
+2. Resolve a fixed BASE commit and load this repository's engineering context:
 
-Treat adopting-project code, schemas, configuration, infrastructure and documentation as declared artifact inputs. The core may track exact paths and bytes but must not infer their domain-specific structure or meaning. [Architecture](docs/architecture.md#project-artifact-boundary) owns this product boundary.
+   ```text
+   go run ./src/cmd/markitect check --repo . --revision BASE
+   go run ./src/cmd/markitect context --repo . --revision BASE --namespace development --kind Skill --name engineering-change
+   ```
 
-Change canonical sources and regenerate generated views/schemas. Keep examples executable. Do not infer dependencies from prose links, weaken conservative invalidation, or treat AI evidence as human acceptance. Keep project-local policy in the project that owns it unless a deliberate product decision establishes a reusable general rule.
+   The context contains the [engineering-change Skill](.markitect/areas/development/engineering-change.skill.yaml), the [Markitect-first Change workflow](src/internal/host/embedded/resources/workflow-markitect-first-change.yaml), the [repository rules](.markitect/areas/development/repository-boundaries.rule.yaml) and the [document owners](.markitect/areas/development/document-owners.text.yaml). [The workflow guide](docs/markitect-first.md) explains how to classify and complete a change. Implementation-only work needs no model change.
+3. If you change a file under `.markitect/`, regenerate its views with `go run ./src/cmd/markitect render --repo . --write`. Do not edit generated files.
+4. Before you open a pull request, run the checks in [CONTRIBUTING](CONTRIBUTING.md#verify-a-change).
 
-Work on a non-protected feature branch. Scope tests to concrete risks and required gates. Changes to an adopting project belong in its checkout and follow its instructions. A source change here does not update an installed release; validate the candidate and publish a versioned release through the documented process.
+These commands belong to the earlier Project/Domain line, which still runs this repository's own checks. ARCH-07 moves Markitect onto its own project model.
+
+## Where things are
+
+- [Roadmap](docs/implementation-plan.md): direction, streams, zones and the rules for parallel work.
+- [Backlog](docs/work-items/backlog.yaml): the status of each work package.
+- [Concept register](docs/concepts/register.md): accepted decisions and open questions.
+- [Documentation map](docs/README.md): every other document.

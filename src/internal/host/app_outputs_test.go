@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	core "github.com/Glacius-Labs/Markitect/src/internal/host/compat/v0_13/kernel"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 )
 
 func TestCheckOutputsReportsMissingAndDrift(t *testing.T) {
@@ -132,8 +133,8 @@ func TestWriteOutputsRejectsUnsafeDestinationAndSnapshot(t *testing.T) {
 	root := tempRoot(t)
 	initAppTestRepo(t, root)
 	for _, name := range []string{"../outside", "docs\\outside.md", ".git/config", "C:/outside"} {
-		if _, err := safeDestination(root, name); err == nil {
-			t.Errorf("safeDestination(%q) accepted an unsafe path", name)
+		if _, err := guardedwrite.SafeDestination(root, name); err == nil {
+			t.Errorf("guardedwrite.SafeDestination(%q) accepted an unsafe path", name)
 		}
 	}
 	p := loadFixture(t, root)

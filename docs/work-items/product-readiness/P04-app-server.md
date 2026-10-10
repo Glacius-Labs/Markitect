@@ -1,7 +1,0 @@
-# P04 — Codex App Server adapter
-
-Implement the product execution adapter over the existing Codex App Server, using the actual installed authenticated CLI and the supported pinned protocol. This is Markitect→Codex control, distinct from inbound MCP. Official reference: https://learn.chatgpt.com/docs/app-server. Avoid a new provider/key integration or policy bypass.
-
-Implement initialize, fresh thread creation, normal turns, events, interruption, terminal/failure/uncertain states, and resumable owned handles. Each Manager and reviewer must be a real independent agent context, not a role label inside one shared conversation. Use explicit model/effort/cwd/instruction/permission configuration, shared request/response validation and fingerprinting. Keep fresh-context boundaries and persisted recovery distinct; do not accidentally fork another Manager's conversation. Account for loaded project guidance, actual tools, child threads, changes and available usage without assuming all telemetry is complete.
-
-Acceptance: deterministic protocol tests for success, malformed output, version/config mismatch, timeout, interruption, uncertainty, failed requests and correct terminal receipts; scoped normal tools actually usable. One permitted actual acceptance job validates existing authentication, fresh context, file/test tools and completion. Preserve failed attempts; process startup is not model execution. Align helper/lifecycle requirements with P06. The one-shot runner may remain only for an independent current need; it is not a mandatory compatibility backend.

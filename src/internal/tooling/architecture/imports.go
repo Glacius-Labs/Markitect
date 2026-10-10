@@ -55,7 +55,7 @@ func layer(p string) (string, string) {
 		return "cli", p
 	// This isolated adopting-code fixture is compiled by Go, but is not a
 	// Markitect capability. It cannot import any Markitect product package.
-	case p == "examples/documentation/docs/implementation/src" || p == "examples/canonical-projection/evidence" || p == "examples/canonical-workflow/check":
+	case p == "examples/documentation/docs/implementation/src" || p == "examples/canonical-projection/evidence" || p == "examples/canonical-workflow/check" || p == "runs/c11checktools/original" || p == "runs/c11checktools/replacement":
 		return "fixture", p
 	case p == "integration":
 		return "bootstrap", "bootstrap"
@@ -149,7 +149,7 @@ func Inspect(root string) ([]Edge, error) {
 		}
 		rel = filepath.ToSlash(rel)
 		// Only product source and explicitly classified test/tool harnesses.
-		if !strings.HasPrefix(rel, "src/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "integration/") && !strings.HasPrefix(rel, "experiments/") && !strings.HasPrefix(rel, "benchmark/") {
+		if !strings.HasPrefix(rel, "src/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "integration/") && !strings.HasPrefix(rel, "experiments/") && !strings.HasPrefix(rel, "benchmark/") && !strings.HasPrefix(rel, "runs/") {
 			return nil
 		}
 		packagePath := filepath.ToSlash(filepath.Dir(rel))

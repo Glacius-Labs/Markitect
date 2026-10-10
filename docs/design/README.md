@@ -13,6 +13,10 @@ The [Project World package](project-world/README.md) has its own reading order a
 - [Standard operating model](standard-operating-model.md)
 - [Work-item comparison](work-item-comparison-20261009.md) — dated 9 October 2026
 
+## Command and tool surface
+
+- [Verb table](verb-table.md) — CLI-01 specification of the top-level verbs and MCP tools (DEC-017), dated 10 October 2026
+
 ## Architecture, ownership, and capability boundaries
 
 - [Candidate dependency execution](candidate-dependency-execution.md)
