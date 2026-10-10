@@ -21,7 +21,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `legacy` | The published v0.13 Project/Domain surfaces. DEC-014 allows removing them. | `host`, `module` | 26 |
 | `module` | Independent capability packages that import only Core. | `module` | 0 |
 | `cli` | Thin entrypoints that delegate to Host. | `cli` | 10 |
-| `tooling` | Maintainer tooling: import gate, release, publication and notices. | `tooling` | 4 |
+| `tooling` | Maintainer tooling: import gate, release, publication and notices. | `tooling` | 5 |
 | `bootstrap` | Standalone public bootstrap without Markitect imports. | `bootstrap` | 1 |
 | `harness` | Executable tests, test support and example programs; not product code. | `harness-tests`, `harness-runtime`, `testkit` | 5 |
 | `experiment` | Bounded pilots kept with their evaluation. | `harness-runtime` | 1 |
@@ -122,6 +122,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `src/internal/tooling/licenses` | Third-party notices embedded in the CLI. | [CONTRIBUTING.md](../../CONTRIBUTING.md#release-work) |
 | `src/internal/tooling/publish` | Prepares and, on request, publishes an immutable GitHub release. | [integration/README.md](../../integration/README.md#owner-publication) |
 | `src/internal/tooling/release` | Builds the reproducible source archive and release bundle. | [integration/README.md](../../integration/README.md#release-contents-and-verification) |
+| `tools/smoke` | Smoke driver that packages the source and checks the built tools end to end on every OS. | [CONTRIBUTING.md](../../CONTRIBUTING.md#verify-a-change) |
 
 ## Bootstrap
 

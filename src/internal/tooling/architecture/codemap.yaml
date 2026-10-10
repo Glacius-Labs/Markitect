@@ -266,6 +266,10 @@ packages:
     layer: tooling
     purpose: Builds the reproducible source archive and release bundle.
     doc: integration/README.md#release-contents-and-verification
+  - path: tools/smoke
+    layer: tooling
+    purpose: Smoke driver that packages the source and checks the built tools end to end on every OS.
+    doc: CONTRIBUTING.md#verify-a-change
 
   # --- bootstrap ----------------------------------------------------------
   - path: integration
