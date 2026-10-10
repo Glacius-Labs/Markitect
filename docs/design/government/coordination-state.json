@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T10:12:13.865456+00:00",
+  "updatedUtc": "2026-10-10T10:27:31.322840+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator continues finite Actual24 and returns genuine terminal proof/blocker once, Root verifies exact native/Apply evidence and then ordinary final hosted gates/PR89 Main integration if positive. Studies suspended, KG separate waiting accepted Main.",
+  "nextAction": "Integrator closes narrow existing own-integration-review context correction with source/independent review/checkpoint and continues normal finite genuine product proof. No duplicate order or semantic verdict shortcut; studies suspended/KG waits Main.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL24_ACTIVE_FRESH_PARENT_REVIEW_EVIDENCE_FREEZE_SOURCE_BINARY_REMOTE_ROOT_VERIFIED",
+    "status": "ACTUAL24_TERMINAL_TOP_LEVEL_OWN_INTEGRATION_REVIEW_CONTEXT_GAP_NARROW_CORRECTION_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18880,7 +18880,7 @@
       "rootFreezeVerification": "Clean exact localHEAD/publiclsremote4fe; final3docclosurestat; binaryexactSHA and WindowsGo1.27.1 CGO0 VCS4fe modifiedfalse. Source1745 bounded direct-parent freshreview projection already inspected; finalfocused/independentreviews ownerPASS, not retro interimbroadPASS."
     },
     "actual24Preparation": {
-      "status": "ACTIVE_OWNER_REPORTED_SOURCE_BINARY_REMOTE_ROOT_BOUND_CURRENT_NATIVE_RECEIPTS_PENDING",
+      "status": "TERMINAL_FULL_VERIFY_INCOMPLETE_ROOT_OWN_REVIEW_CONTEXT_MISSING_NO_APPLY",
       "freezeRef": "freshParentReviewEvidenceCorrection",
       "sourceSha": "4fe8562bd9e00121eddc40b5d14170dbebb84896",
       "binarySha256": "401e15711827d1b84a3a79ca2848505b8a5b2c679da779c6d2b01c34e0dd908b",
@@ -18892,7 +18892,39 @@
       "adopterRuntimeFileSha256OwnerReported": "58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574",
       "batchId": "a01-review-evidence-b3100b1bd36f4e6887069e3243b8e297",
       "deadlineUtc": "2026-10-10T14:10:16.5784089Z",
-      "boundary": "Fresh normal4hfiniteproof/128MiB runtime; originalRootsamebinaryrecovery/realhelper/parallelwork/independentreviews/fullVerify/guardedApply pending. Failed23 preserved, no replay/retrocredit/newframework/newgate/studies/release or repeated Root order."
+      "boundary": "Fresh normal4hfiniteproof/128MiB runtime; originalRootsamebinaryrecovery/realhelper/parallelwork/independentreviews/fullVerify/guardedApply pending. Failed23 preserved, no replay/retrocredit/newframework/newgate/studies/release or repeated Root order.",
+      "terminalOwnerReport": {
+        "positiveBoundaries": "Same-binary originalRoot recoverycompletedwithoutReplay; DocsSourceoverlap27.1239694s; genuinefreshhelperappliedclosed; configuredcheck+initialVerifierPASS.",
+        "failure": "TwofullauditsPASS, overallintegrationauditINCOMPLETE because its own existing integrationreview absent from supplied context; direct-parent selector excludes rootself. NoApply/fullA01PASS.",
+        "next": "Narrow source correction+independent review active; preservefailed24/no invented semanticverdict/newframework.",
+        "cumulativeCombinedStarts": 137,
+        "cumulativeProviderStarts": 133,
+        "cumulativePartialEstimatedCostMicros": 19866060,
+        "costQualification": "Owner partial observed lower bound, Rootcostunknown/helpernotseparatelyitemized; no complete invoice/efficiency or Rootfullrawunionclaim."
+      },
+      "rootTerminalStateVerified": {
+        "path": "C:/Users/Consiliari/AppData/Local/Temp/markitect-a01-3c5c733388014645b0ca178338078b6a/repo/.markitect/runs/aefe06c61a22ecc6067f9b844eece8b3/states/00000049.json",
+        "status": "failed",
+        "revision": 49,
+        "workReviewHistory": [
+          "fail",
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "integrationReviewOutcome": "pass",
+        "originalIntegrationReceipt": "295b2a0a9fa523bbbe98275362ee7551",
+        "integrationRows": 1,
+        "checkExitCode": 0,
+        "initialVerifierReceipt": "de4ecbe5bed211ffdcd3b8bd76ce6522",
+        "initialVerifierRecordedOutcome": "passed",
+        "fullAuditReceiptOutcomes": {
+          "70b62266fde15dd0403989b276c87ea1": "passed",
+          "70e97fdd2c420081bb8f4ebcba50eec5": "passed",
+          "ec9a964c44220eb372399a95b2e0a075": "incomplete"
+        },
+        "qualification": "ShortsharedReadWriteDelete copy/streamclosedbeforeparse; earlier legitimateWorkfail retained, later3Workpass+Integrationpass do not imply fullVerify/Apply. Original native noReplay/parallel/helper/raw accounting union ownerreported, not reaudited at Root."
+      }
     }
   },
   "restartAfterInterruptedIntegration20261010": {

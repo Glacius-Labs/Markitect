@@ -2283,3 +2283,7 @@ Owner docs dcd38db7/terminal76945657/lifecycle227700ac cumulative122combined118n
 ### Fresh review context clean freeze verified; Actual24 active
 
 Root cleanpublic/local4fe8562b/final3docsstat + exactWindows401e1571 Go1.27.1VCS4fe/modifiedfalse bound. Source1745narrowparentreviewcontext earlierinspected/finalfocusedreviewqualified. Owner freshPlanaefe06c6/digest369e3815/readinessd3b8/runtime0b0bea/unchangedadopter275baa9-runtime58aee128MiB/batcha01-review-evidenceb310/deadline14:10:16.5784089Z active. Currentnativehandles/startunion/fullVerify/Applyresultpending, failed23immutable/noReplay/newRootorder/Main/study/releasePASS.
+
+### Actual24 top-level audit lacks existing own integration review
+
+Owner samebinaryoriginalRootrecovery/noReplay/helperclosed/27.1239694sparallel/checkinitialVerifierPASS; 2fullauditsPASS/rootINCOMPLETE owingdirectparentselector excludes ownexistingIntegrationReview. Root shortshared state49failed binds earlierWorkfail then3Workpass+Integrationpass, originalintegrate295b2a0aonce/initialVerifierde4ecpassed/checkexit0/fullaudits70b6passed70e9passedec9aincomplete. NoApply/A01/MainPASS; historicalfailure preserved. Owner cumulative137combined133providers19866060partial/Rootcostunknown/helpernotitemized, wholeunionnotRootreaudited. Narrowownreviewcontextsource+independentreviewactive underexistingfiniteauthority, no repeatedRootorder/framework/verdictshortcut.
