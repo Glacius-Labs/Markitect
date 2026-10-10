@@ -41,7 +41,7 @@ flowchart TD
   Tooling --> Core
 ```
 
-A Module imports only Core and its own subtree, plus standard library/justified external dependencies. No sibling Module, Host, Infrastructure or Tooling import is allowed, including unit tests. Examples, experiments and adopter fixtures are explicitly classified Harness. The independently copied public bootstrap in `integration` is distribution Tooling with no Markitect package imports. Core imports only its own subtree and justified language/encoding dependencies. CLI imports only Host. Host composes concrete functions; no service locator, reflection, dynamic plugin loader or generic Module lifecycle is introduced.
+A Module imports only Core and its own subtree among Markitect packages. No sibling Module, Host, Infrastructure or Tooling import is allowed, including unit tests. Examples, experiments and adopter fixtures are explicitly classified Harness. The independently copied public bootstrap in `integration` is distribution Tooling with no Markitect package imports. Core imports only its own subtree among Markitect packages. Every layer may use any third-party library that helps ([DEC-020](../concepts/register.md#dec-020-markitect-uses-any-library-that-helps)); the gate does not restrict them. CLI imports only Host. Host composes concrete functions; no service locator, reflection, dynamic plugin loader or generic Module lifecycle is introduced.
 
 | Current ownership | Final owner and reason |
 |---|---|
@@ -66,7 +66,7 @@ A Module imports only Core and its own subtree, plus standard library/justified 
 | Git Hooks/Pipelines | Independent bounded artifact Modules: literal configured paths/bytes/ownership/check linkage, no shell semantics or universal pipeline DSL |
 | inputs | Host input resolution using Host-composed generated paths; no sibling Module import |
 | examples/experiments/adopter fixtures | Harness; not a production exemption, and cannot be imported by production |
-| integration bootstrap | Standalone public distribution Tooling; standard library only, no Markitect package imports |
+| integration bootstrap | Standalone public distribution Tooling; no Markitect package imports. It uses only the standard library for a distribution reason: it runs inside the adopting repository's module before Markitect is built ([integration README](../../integration/README.md)) |
 
 ## Every significant Core concept
 
