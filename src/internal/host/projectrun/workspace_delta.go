@@ -187,3 +187,12 @@ func applyAgentCandidate(base candidateData, result agentexec.RunResult, config 
 	}
 	return applyProposal(base, result.Response.CandidateFiles, config, report, task, phase, conflictPaths, limits, input)
 }
+
+// agentCandidatePaths lists the paths of the byte source applyAgentCandidate
+// selects: the Host-observed delta when present, else the model proposals.
+func agentCandidatePaths(result agentexec.RunResult) []string {
+	if result.Delta != nil {
+		return deltaPaths(*result.Delta)
+	}
+	return proposalPaths(result.Response.CandidateFiles)
+}
