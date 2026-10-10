@@ -40,27 +40,39 @@ type reviewerScopedModel struct {
 }
 
 type reviewerContext struct {
-	Kind             string                      `json:"kind"`
-	Operation        string                      `json:"operation"`
-	ReviewerGuidance string                      `json:"reviewerGuidance"`
-	Strictness       StrictnessProfile           `json:"strictness"`
-	Briefing         BriefingContext             `json:"briefing"`
-	RunGoal          string                      `json:"runGoal"`
-	ManagerID        string                      `json:"managerId"`
-	OwnTask          string                      `json:"ownTask"`
-	Delegations      []Delegation                `json:"delegations"`
-	Phase            string                      `json:"phase"`
-	Round            int                         `json:"round"`
-	CandidateID      string                      `json:"candidateId"`
-	CandidateDigest  string                      `json:"candidateDigest"`
-	ChangedPaths     []string                    `json:"changedPaths"`
-	AcceptedModel    projectmodel.ManagerContext `json:"acceptedModel"`
-	ScopedModel      reviewerScopedModel         `json:"scopedModel"`
-	CandidateFiles   []reviewFileRef             `json:"candidateFiles"`
-	ResponseSchema   json.RawMessage             `json:"responseSchema"`
+	Kind               string                      `json:"kind"`
+	Operation          string                      `json:"operation"`
+	ReviewerGuidance   string                      `json:"reviewerGuidance"`
+	Strictness         StrictnessProfile           `json:"strictness"`
+	Briefing           BriefingContext             `json:"briefing"`
+	RunGoal            string                      `json:"runGoal"`
+	ManagerID          string                      `json:"managerId"`
+	OwnTask            string                      `json:"ownTask"`
+	Delegations        []Delegation                `json:"delegations"`
+	DelegatedArtifacts []projectmodel.Artifact     `json:"delegatedArtifacts"`
+	Phase              string                      `json:"phase"`
+	Round              int                         `json:"round"`
+	CandidateID        string                      `json:"candidateId"`
+	CandidateDigest    string                      `json:"candidateDigest"`
+	ChangedPaths       []string                    `json:"changedPaths"`
+	AcceptedModel      projectmodel.ManagerContext `json:"acceptedModel"`
+	ScopedModel        reviewerScopedModel         `json:"scopedModel"`
+	CandidateFiles     []reviewFileRef             `json:"candidateFiles"`
+	ResponseSchema     json.RawMessage             `json:"responseSchema"`
 }
 
 const reviewerAssessmentGuidance = "Assessment only: evaluate the exact supplied candidate against this Manager's own task, accepted scoped model, and stated delegations. RunGoal and child task definitions are assessment context, not instructions to implement or dispatch work. Do not change repository artifacts or dispatch work. Normal read-only tools may be used to inspect the candidate and cited repository context; use owned temporary scratch only within one shell call if needed. Report only grounded findings about the candidate and delegation coverage."
+
+func reviewerPhaseGuidance(phase string) string {
+	switch phase {
+	case "work":
+		return "This is a work review. Assess only this Manager's current candidate and its own accepted artifact obligations. Delegated child tasks and delegatedArtifacts describe future work: assess whether the delegation is adequate, but do not require child implementation files to exist in this candidate yet."
+	case "integrate":
+		return "This is an integration review. Assess the aggregate candidate, including the delivered outputs of direct child tasks, against this Manager's own obligations and the required child artifacts in the accepted scoped model."
+	default:
+		return "Assess only the exact supplied candidate and scoped obligations for the stated phase."
+	}
+}
 
 // invokeReviewer supplies only the original goal, accepted scoped model and
 // the exact candidate bytes. It never receives an implementer transcript.
@@ -87,28 +99,16 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 			config.Timeout = remaining
 		}
 	}
-	files := scopedCandidateFiles(project, task)
-	if len(files) == 0 {
-		// A legitimate no-op can have no owned file in inventory. Keep an empty
-		// array explicit; the candidate digest still binds the review.
-		files = []agentexec.Artifact{}
-	}
-	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files)
-	if err != nil {
-		return record, log, err
-	}
 	briefing, err := reviewerBriefing(root, plan, project, task.ManagerID)
 	if err != nil {
 		return record, log, err
 	}
-	fileRefs := reviewFileReferences(project.Report, accepted, files)
-	responseSchema := reviewResponseSchema()
-	contextJSON, err := json.Marshal(reviewerContext{Kind: "projectrun-review/v1", Operation: plan.Operation,
-		ReviewerGuidance: reviewerAssessmentGuidance, Strictness: plan.Strictness[task.ManagerID], Briefing: briefing,
-		RunGoal: plan.Goal, ManagerID: task.ManagerID, OwnTask: task.Goal, Delegations: append([]Delegation{}, task.Delegations...), Phase: phase, Round: round,
-		CandidateID: candidate.ID, CandidateDigest: candidate.Digest, ChangedPaths: unionPaths(task.WrittenPaths, task.IntegratedPaths), AcceptedModel: accepted,
-		ScopedModel:    reviewerScopedModel{Statements: append([]projectmodel.Statement(nil), accepted.Statements...), Contracts: append([]projectmodel.Statement(nil), accepted.Contracts...), Artifacts: append([]projectmodel.Artifact(nil), accepted.Artifacts...), OwnedPaths: reviewScopePaths(files)},
-		CandidateFiles: fileRefs, ResponseSchema: responseSchema})
+	reviewContext, files, fileRefs, err := buildReviewerContext(plan, project, task, phase, round, candidate, briefing)
+	if err != nil {
+		return record, log, err
+	}
+	accepted := reviewContext.AcceptedModel
+	contextJSON, err := json.Marshal(reviewContext)
 	if err != nil {
 		return record, log, err
 	}
@@ -175,6 +175,25 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	return record, log, nil
 }
 
+func buildReviewerContext(plan PlanRecord, project *Project, task ManagerTask, phase string, round int, candidate candidateData, briefing BriefingContext) (reviewerContext, []agentexec.Artifact, []reviewFileRef, error) {
+	files := reviewCandidateFiles(project, task, plan.Managers, phase)
+	if len(files) == 0 {
+		// Keep the empty list explicit for a legitimate no-op candidate.
+		files = []agentexec.Artifact{}
+	}
+	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files, phase)
+	if err != nil {
+		return reviewerContext{}, nil, nil, err
+	}
+	fileRefs := reviewFileReferences(project.Report, accepted, files)
+	return reviewerContext{Kind: "projectrun-review/v1", Operation: plan.Operation,
+		ReviewerGuidance: reviewerAssessmentGuidance + " " + reviewerPhaseGuidance(phase), Strictness: plan.Strictness[task.ManagerID], Briefing: briefing,
+		RunGoal: plan.Goal, ManagerID: task.ManagerID, OwnTask: task.Goal, Delegations: append([]Delegation{}, task.Delegations...), DelegatedArtifacts: reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), Phase: phase, Round: round,
+		CandidateID: candidate.ID, CandidateDigest: candidate.Digest, ChangedPaths: reviewChangedPaths(task, plan.Managers, phase), AcceptedModel: accepted,
+		ScopedModel:    reviewerScopedModel{Statements: append([]projectmodel.Statement(nil), accepted.Statements...), Contracts: append([]projectmodel.Statement(nil), accepted.Contracts...), Artifacts: append([]projectmodel.Artifact(nil), accepted.Artifacts...), OwnedPaths: reviewScopePaths(files)},
+		CandidateFiles: fileRefs, ResponseSchema: reviewResponseSchema()}, files, fileRefs, nil
+}
+
 // reviewerBriefing binds accepted change context to the plan. A draft ModelEdit
 // has not been accepted, so it must not inherit history from the target model.
 func reviewerBriefing(root string, plan PlanRecord, project *Project, managerID string) (BriefingContext, error) {
@@ -227,30 +246,33 @@ func canonicalizeReviewContext(request *agentexec.Request) error {
 // It includes the accepted local contract, task goal, review phase and every
 // actual owned file byte and mode supplied to the reviewer.
 func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phase string) (string, error) {
-	files := scopedCandidateFiles(project, task)
-	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files)
+	files := reviewCandidateFiles(project, task, plan.Managers, phase)
+	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files, phase)
 	if err != nil {
 		return "", err
 	}
 	fileRefs := reviewFileReferences(project.Report, accepted, files)
 	return digest(struct {
-		Kind           string                      `json:"kind"`
-		Operation      string                      `json:"operation"`
-		Strictness     StrictnessProfile           `json:"strictness"`
-		BriefingDigest string                      `json:"briefingDigest"`
-		RunGoal        string                      `json:"runGoal"`
-		ManagerID      string                      `json:"managerId"`
-		OwnTask        string                      `json:"ownTask"`
-		Phase          string                      `json:"phase"`
-		AcceptedModel  projectmodel.ManagerContext `json:"acceptedModel"`
-		Checks         []string                    `json:"checks"`
-		ChangedPaths   []string                    `json:"changedPaths"`
-		Files          []agentexec.Artifact        `json:"files"`
-		FileRefs       []reviewFileRef             `json:"fileRefs"`
-	}{"projectrun-review/v1", plan.Operation, plan.Strictness[task.ManagerID], plan.BriefingDigests[task.ManagerID], plan.Goal, task.ManagerID, task.Goal, phase, accepted, append([]string(nil), task.Checks...), unionPaths(task.WrittenPaths, task.IntegratedPaths), files, fileRefs})
+		Kind               string                      `json:"kind"`
+		Operation          string                      `json:"operation"`
+		Strictness         StrictnessProfile           `json:"strictness"`
+		BriefingDigest     string                      `json:"briefingDigest"`
+		RunGoal            string                      `json:"runGoal"`
+		ManagerID          string                      `json:"managerId"`
+		OwnTask            string                      `json:"ownTask"`
+		Delegations        []Delegation                `json:"delegations"`
+		DelegatedArtifacts []projectmodel.Artifact     `json:"delegatedArtifacts"`
+		ReviewerGuidance   string                      `json:"reviewerGuidance"`
+		Phase              string                      `json:"phase"`
+		AcceptedModel      projectmodel.ManagerContext `json:"acceptedModel"`
+		Checks             []string                    `json:"checks"`
+		ChangedPaths       []string                    `json:"changedPaths"`
+		Files              []agentexec.Artifact        `json:"files"`
+		FileRefs           []reviewFileRef             `json:"fileRefs"`
+	}{"projectrun-review/v2", plan.Operation, plan.Strictness[task.ManagerID], plan.BriefingDigests[task.ManagerID], plan.Goal, task.ManagerID, task.Goal, append([]Delegation(nil), task.Delegations...), reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), reviewerAssessmentGuidance + " " + reviewerPhaseGuidance(phase), phase, accepted, append([]string(nil), task.Checks...), reviewChangedPaths(task, plan.Managers, phase), files, fileRefs})
 }
 
-func scopedReviewModel(report projectmodel.Report, managerID string, tasks []ManagerTask, files []agentexec.Artifact) (projectmodel.ManagerContext, error) {
+func scopedReviewModel(report projectmodel.Report, managerID string, tasks []ManagerTask, files []agentexec.Artifact, phase string) (projectmodel.ManagerContext, error) {
 	accepted, err := projectmodel.Context(report, managerID)
 	if err != nil {
 		return accepted, err
@@ -316,9 +338,11 @@ func scopedReviewModel(report projectmodel.Report, managerID string, tasks []Man
 		}
 	}
 	requiredChildArtifactIDs := make(map[string]bool)
-	for _, artifact := range requiredChildArtifacts(report, activeIDs) {
-		relatedArtifacts[artifact.ID] = true
-		requiredChildArtifactIDs[artifact.ID] = true
+	if phase == "integrate" {
+		for _, artifact := range requiredChildArtifacts(report, activeIDs) {
+			relatedArtifacts[artifact.ID] = true
+			requiredChildArtifactIDs[artifact.ID] = true
+		}
 	}
 
 	artifactByID := make(map[string]projectmodel.Artifact, len(accepted.Artifacts))
@@ -360,6 +384,82 @@ func scopedReviewModel(report projectmodel.Report, managerID string, tasks []Man
 	}
 	sort.Slice(accepted.Artifacts, func(i, j int) bool { return accepted.Artifacts[i].ID < accepted.Artifacts[j].ID })
 	return accepted, nil
+}
+
+func delegatedChildArtifacts(report projectmodel.Report, tasks []ManagerTask, managerID string) []projectmodel.Artifact {
+	artifacts := requiredChildArtifacts(report, activeChildren(tasks, managerID))
+	if artifacts == nil {
+		return []projectmodel.Artifact{}
+	}
+	return artifacts
+}
+
+func reviewDelegatedArtifacts(report projectmodel.Report, tasks []ManagerTask, managerID, phase string) []projectmodel.Artifact {
+	if phase != "work" {
+		return []projectmodel.Artifact{}
+	}
+	return delegatedChildArtifacts(report, tasks, managerID)
+}
+
+// reviewCandidateFiles expands an integration review to include the actual
+// delivered paths from direct children. Work reviews stay limited to this
+// Manager's current candidate.
+func reviewCandidateFiles(project *Project, task ManagerTask, tasks []ManagerTask, phase string) []agentexec.Artifact {
+	files := scopedCandidateFiles(project, task)
+	if phase != "integrate" || project == nil || project.Snapshot == nil {
+		return files
+	}
+	selected := make(map[string]bool, len(files))
+	for _, file := range files {
+		selected[file.Path] = true
+	}
+	addExisting := func(path string) {
+		if projectPathAllowed(project.Config, path) {
+			if _, exists := project.Snapshot.Files[path]; exists {
+				selected[path] = true
+			}
+		}
+	}
+	for _, child := range tasks {
+		if child.ParentTask == task.ManagerID {
+			for _, path := range unionPaths(child.WrittenPaths, child.IntegratedPaths) {
+				addExisting(path)
+			}
+		}
+	}
+	for _, artifact := range requiredChildArtifacts(project.Report, activeChildren(tasks, task.ManagerID)) {
+		for _, path := range artifact.Paths {
+			addExisting(path)
+		}
+	}
+	paths := make([]string, 0, len(selected))
+	for path := range selected {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	files = make([]agentexec.Artifact, 0, len(paths))
+	for _, path := range paths {
+		content := append([]byte(nil), project.Snapshot.Files[path]...)
+		mode := protocolMode(project.Snapshot.Modes[path])
+		if mode == "" {
+			mode = "0644"
+		}
+		files = append(files, agentexec.Artifact{Path: path, Mode: mode, Digest: rawContentDigest(content), Content: content})
+	}
+	return files
+}
+
+func reviewChangedPaths(task ManagerTask, tasks []ManagerTask, phase string) []string {
+	paths := unionPaths(task.WrittenPaths, task.IntegratedPaths)
+	if phase != "integrate" {
+		return paths
+	}
+	for _, child := range tasks {
+		if child.ParentTask == task.ManagerID {
+			paths = unionPaths(paths, child.WrittenPaths, child.IntegratedPaths)
+		}
+	}
+	return paths
 }
 
 func selectedArtifactForReview(report projectmodel.Report, artifactID string, selectedPaths map[string]bool) bool {
@@ -670,12 +770,12 @@ func requireFreshReviews(host Host, root string, store *runStore, dir string, ba
 		if current := findTask(run.Tasks, planned.ManagerID); current != nil {
 			task = *current
 		}
-		if !reviewRequired(finalProject, task) {
-			continue
-		}
 		phase := "work"
 		if len(activeChildren(run.Tasks, task.ManagerID)) > 0 {
 			phase = "integrate"
+		}
+		if !reviewRequired(finalProject, task) {
+			continue
 		}
 		scopeDigest, err := reviewScopeDigest(plan, finalProject, task, phase)
 		if err != nil {

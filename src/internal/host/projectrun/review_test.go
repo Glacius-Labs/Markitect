@@ -73,7 +73,7 @@ func TestScopedReviewModelIncludesOnlyRelatedPublicForeignInterfaces(t *testing.
 	}
 	tasks := []ManagerTask{{ManagerID: salesID}, {ManagerID: ordersID, ParentTask: salesID}}
 	files := []agentexec.Artifact{{Path: path, Mode: "0644", Content: []byte("cancel order")}, {Path: financePath, Mode: "0644", Content: []byte("finance test")}}
-	accepted, err := scopedReviewModel(report, salesID, tasks, files)
+	accepted, err := scopedReviewModel(report, salesID, tasks, files, "work")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +154,7 @@ func TestReviewerScopeExcludesForeignArtifactBytesButRetainsInterfaceAndFreshnes
 	if len(ordersFiles) != 1 || ordersFiles[0].Path != orderPath {
 		t.Fatalf("Orders reviewer received foreign Engineering bytes: %+v", ordersFiles)
 	}
-	accepted, err := scopedReviewModel(project.Report, ordersID, []ManagerTask{ordersTask, engineeringTask}, ordersFiles)
+	accepted, err := scopedReviewModel(project.Report, ordersID, []ManagerTask{ordersTask, engineeringTask}, ordersFiles, "work")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -250,6 +250,102 @@ func TestReviewScopeDigestSurvivesSiblingMergeButChangesWithOwnedBytes(t *testin
 	if err != nil || parentAfterSibling != parentInitial {
 		t.Fatalf("parent review scope changed with independent child bytes: got=%s want=%s err=%v", parentAfterSibling, parentInitial, err)
 	}
+}
+
+func TestReviewerContextSeparatesWorkDelegationFromIntegrationDelivery(t *testing.T) {
+	const (
+		rootID  = "project/root"
+		childID = "project/greeting"
+		readme  = "README.md"
+		source  = "src/greeting.py"
+		tests   = "tests/test_greeting.py"
+		docs    = "docs/greeting.md"
+	)
+	project := &Project{
+		Config: projectwork.Config{CoverageMode: "full", InventoryRoots: []string{"src", "tests", "docs"}},
+		Snapshot: &snapshot.Snapshot{
+			Files: map[string][]byte{readme: []byte("Project README"), source: []byte("def greet(name): return name"), tests: []byte("assert greet('Ada')"), docs: []byte("Use greet(name).")},
+			Modes: map[string]string{readme: snapshot.RegularMode, source: snapshot.RegularMode, tests: snapshot.RegularMode, docs: snapshot.RegularMode},
+		},
+		Report: projectmodel.Report{
+			Managers: []projectmodel.Manager{{ID: rootID}, {ID: childID, Parent: rootID}},
+			Artifacts: []projectmodel.Artifact{
+				{ID: "readme-artifact", Owner: rootID, Required: true, Paths: []string{readme}},
+				{ID: "greeting-source", Owner: childID, Required: true, Paths: []string{source}},
+				{ID: "greeting-tests", Owner: childID, Required: true, Paths: []string{tests}},
+				{ID: "greeting-guide", Owner: childID, Required: true, Paths: []string{docs}},
+			},
+			Files: []projectmodel.FileEntry{
+				{Path: readme, Owner: rootID, Class: "documentation", Artifacts: []string{"readme-artifact"}},
+				{Path: source, Owner: childID, Class: "source", Artifacts: []string{"greeting-source"}},
+				{Path: tests, Owner: childID, Class: "test", Artifacts: []string{"greeting-tests"}},
+				{Path: docs, Owner: childID, Class: "documentation", Artifacts: []string{"greeting-guide"}},
+			},
+		},
+	}
+	rootTask := ManagerTask{ID: "root-task", ManagerID: rootID, Goal: "Coordinate the greeting feature.", WrittenPaths: []string{readme}, Delegations: []Delegation{{ManagerID: childID, Goal: "Implement greeting behavior and document it."}}}
+	childTask := ManagerTask{ID: "child-task", ManagerID: childID, ParentTask: rootID, Goal: "Implement greeting behavior.", WrittenPaths: []string{source, tests, docs}, State: "integrated"}
+	plan := PlanRecord{Goal: "Implement greeting and provide its usage guide.", Managers: []ManagerTask{rootTask, childTask}}
+	candidate := candidateData{ID: "candidate-1", Digest: "digest-1"}
+
+	work, workFiles, _, err := buildReviewerContext(plan, project, rootTask, "work", 1, candidate, BriefingContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := reviewScopePaths(workFiles); len(got) != 1 || got[0] != readme {
+		t.Fatalf("work review should receive only current root delivery: %v", got)
+	}
+	if !hasProjectArtifact(work.AcceptedModel.Artifacts, "readme-artifact") || hasProjectArtifact(work.AcceptedModel.Artifacts, "greeting-source") || hasProjectArtifact(work.AcceptedModel.Artifacts, "greeting-tests") || hasProjectArtifact(work.AcceptedModel.Artifacts, "greeting-guide") {
+		t.Fatalf("work review accepted model mixes in future child obligations: %+v", work.AcceptedModel.Artifacts)
+	}
+	for _, id := range []string{"greeting-source", "greeting-tests", "greeting-guide"} {
+		if !hasProjectArtifact(work.DelegatedArtifacts, id) {
+			t.Fatalf("work review lost child artifact %q from delegation context: %+v", id, work.DelegatedArtifacts)
+		}
+	}
+
+	integration, integrationFiles, _, err := buildReviewerContext(plan, project, rootTask, "integrate", 1, candidate, BriefingContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(integration.DelegatedArtifacts) != 0 {
+		t.Fatalf("integration review should treat child outputs as aggregate obligations, not future delegation artifacts: %+v", integration.DelegatedArtifacts)
+	}
+	gotPaths := reviewScopePaths(integrationFiles)
+	for _, path := range []string{readme, source, tests, docs} {
+		if !containsString(gotPaths, path) {
+			t.Fatalf("integration review omitted delivered aggregate path %q: %v", path, gotPaths)
+		}
+	}
+	for _, id := range []string{"greeting-source", "greeting-tests", "greeting-guide"} {
+		if !hasProjectArtifact(integration.AcceptedModel.Artifacts, id) {
+			t.Fatalf("integration review omitted required child artifact %q: %+v", id, integration.AcceptedModel.Artifacts)
+		}
+	}
+	if got := integration.ScopedModel.OwnedPaths; len(got) != len(gotPaths) {
+		t.Fatalf("integration scoped model paths do not bind aggregate candidate: scoped=%v files=%v", got, gotPaths)
+	}
+
+	workDigest, err := reviewScopeDigest(plan, project, rootTask, "work")
+	if err != nil {
+		t.Fatal(err)
+	}
+	integrationDigest, err := reviewScopeDigest(plan, project, rootTask, "integrate")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if workDigest == integrationDigest {
+		t.Fatal("phase-specific review obligations and candidate scope did not change the scope digest")
+	}
+}
+
+func hasProjectArtifact(artifacts []projectmodel.Artifact, id string) bool {
+	for _, artifact := range artifacts {
+		if artifact.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCheckRepairPreservesReviewScopeHistoryForDeletedPaths(t *testing.T) {
