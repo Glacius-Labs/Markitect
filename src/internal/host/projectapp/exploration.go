@@ -243,6 +243,16 @@ func explorationCRUDModelBinding(host projectrun.Host, root, revision string, sc
 	if project == nil || project.Snapshot == nil {
 		return binding, errors.New("exploration requires an exact project model snapshot")
 	}
+	working, err := host.Load(root, "")
+	if err != nil {
+		return binding, fmt.Errorf("capture current selected project inputs: %w", err)
+	}
+	if working == nil || working.Snapshot == nil {
+		return binding, errors.New("exploration requires a selected working-input snapshot")
+	}
+	if err := projectrun.RequireCleanSelectedBasisAtRevision(root, project.Revision, project.Snapshot, working.Snapshot); err != nil {
+		return binding, err
+	}
 	identity, err := source.IdentifyGit(root)
 	if err != nil {
 		return binding, err
@@ -307,8 +317,8 @@ func explorationCRUDModelBinding(host projectrun.Host, root, revision string, sc
 		sort.Strings(out)
 		return out
 	}
-	basisByPath := make(map[string]string, len(project.Snapshot.Files)+1)
-	for path, data := range project.Snapshot.Files {
+	basisByPath := make(map[string]string, len(working.Snapshot.Files)+1)
+	for path, data := range working.Snapshot.Files {
 		basisByPath[path] = bytesDigest(data)
 	}
 	runtime, runtimeErr := source.ObserveSelectedWorking(root, []string{projectwork.RuntimePath})

@@ -212,6 +212,24 @@ func GitOutput(root string, args ...string) ([]byte, error) {
 	return nil, err
 }
 
+// GitOutputInput runs Git against root with input on stdin while preserving
+// the same explicit-repository and sanitized-environment guarantees as
+// GitOutput. It is intended for operations such as hashing an already-captured
+// working-tree file through Git's path-specific clean filters.
+func GitOutputInput(root string, input []byte, args ...string) ([]byte, error) {
+	cmd := gitCommand(root, args...)
+	cmd.Stdin = bytes.NewReader(input)
+	out, err := cmd.Output()
+	if err == nil {
+		return out, nil
+	}
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		return nil, fmt.Errorf("%w: %s", err, strings.TrimSpace(string(ee.Stderr)))
+	}
+	return nil, err
+}
+
 // CleanGitEnv returns the process environment without Git-specific variables.
 // It is also used for child gate processes so an ambient GIT_DIR cannot make
 // their repository checks inspect a different checkout.

@@ -43,8 +43,15 @@ func ExplorationBinding(host Host, root, revision string, request PlanRequest) (
 	if err != nil {
 		return projectexplore.Binding{}, err
 	}
+	working, err := host.Load(root, "")
+	if err != nil {
+		return projectexplore.Binding{}, err
+	}
+	if working == nil || working.Snapshot == nil || working.Snapshot.Digest() != plan.WorkingSnapshot {
+		return projectexplore.Binding{}, ErrStale
+	}
 	request.ExplorationID, request.ScopeID = explorationID, scopeID
-	return explorationBindingFromPlan(root, project, request, plan)
+	return explorationBindingFromPlan(root, project, working.Snapshot, request, plan)
 }
 
 // LoadExplorationReadiness is the shared native contributor entry point.
@@ -73,10 +80,13 @@ func LoadExplorationReadiness(host Host, root, explorationID, scopeID string) (p
 	return record, scope, binding, ready, err
 }
 
-func explorationBindingFromPlan(root string, project *Project, request PlanRequest, plan PlanRecord) (projectexplore.Binding, error) {
+func explorationBindingFromPlan(root string, project *Project, working *Snapshot, request PlanRequest, plan PlanRecord) (projectexplore.Binding, error) {
 	var binding projectexplore.Binding
-	if project == nil || project.Snapshot == nil {
-		return binding, fmt.Errorf("exploration requires a fixed project snapshot")
+	if project == nil || project.Snapshot == nil || working == nil {
+		return binding, fmt.Errorf("exploration requires fixed and working project snapshots")
+	}
+	if working.Digest() != plan.WorkingSnapshot {
+		return binding, ErrStale
 	}
 	if request.ModelEdit != nil || plan.ModelEdit != nil {
 		return binding, fmt.Errorf("draft model edits are not an accepted readiness basis")
@@ -148,7 +158,7 @@ func explorationBindingFromPlan(root string, project *Project, request PlanReque
 	}
 	paths := append([]string{projectwork.ManifestPath, projectwork.RuntimePath}, project.Config.ModelFiles...)
 	for _, path := range uniqueSorted(paths) {
-		if data, ok := project.Snapshot.Files[path]; ok {
+		if data, ok := working.Files[path]; ok {
 			binding.BasisFiles = append(binding.BasisFiles, projectexplore.BasisFile{Path: path, Digest: explorationBytesDigest(data)})
 		}
 	}
@@ -172,7 +182,7 @@ func explorationBindingFromPlan(root string, project *Project, request PlanReque
 	return binding, err
 }
 
-func bindExplorationReadiness(root string, project *Project, request PlanRequest, plan *PlanRecord) error {
+func bindExplorationReadiness(root string, project *Project, working *Snapshot, request PlanRequest, plan *PlanRecord) error {
 	if !request.ExecuteAuthorized && request.ExplorationID == "" {
 		return nil
 	}
@@ -182,7 +192,7 @@ func bindExplorationReadiness(root string, project *Project, request PlanRequest
 	if request.ExplorationID == "" || request.ScopeID == "" {
 		return fmt.Errorf("guided implementation requires --exploration and --scope with current computed readiness")
 	}
-	binding, err := explorationBindingFromPlan(root, project, request, *plan)
+	binding, err := explorationBindingFromPlan(root, project, working, request, *plan)
 	if err != nil {
 		return err
 	}

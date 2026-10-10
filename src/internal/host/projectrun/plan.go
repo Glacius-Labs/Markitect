@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -359,7 +357,7 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 		plan.ChangeImpact = changeImpact
 		plan.ChangeImpactDigest = changeImpact.Digest
 	}
-	if err := bindExplorationReadiness(root, project, request, &plan); err != nil {
+	if err := bindExplorationReadiness(root, project, working.Snapshot, request, &plan); err != nil {
 		return plan, err
 	}
 	plan.Digest, err = planDigest(plan)
@@ -654,13 +652,9 @@ func requireCleanSelectedBasisAtRevision(root, revision string, fixed, working *
 	if len(changes.Added) != 0 || len(changes.Removed) != 0 {
 		return selectedBasisChangedError()
 	}
-	// Compare changed bytes through Git's clean filters. On Windows, a normal
-	// core.autocrlf checkout has CRLF worktree bytes while the fixed Git tree
-	// contains LF; those bytes are the same selected source after Git's normal
-	// conversion. Git still reports substantive edits as differences.
 	const maxPathspecArgumentBytes = 16 * 1024
 	for start := 0; start < len(changes.Modified); {
-		args := []string{"diff", "--no-ext-diff", "--quiet", revision, "--"}
+		args := []string{"ls-files", "-v", "-z", "--"}
 		size := 0
 		end := start
 		for end < len(changes.Modified) {
@@ -675,8 +669,7 @@ func requireCleanSelectedBasisAtRevision(root, revision string, fixed, working *
 		if end == start {
 			return fmt.Errorf("selected path exceeds Git comparison argument limit")
 		}
-		flagArgs := append([]string{"ls-files", "-v", "-z", "--"}, args[5:]...)
-		flags, err := source.GitOutput(root, flagArgs...)
+		flags, err := source.GitOutput(root, args...)
 		if err != nil {
 			return fmt.Errorf("inspect selected path index flags: %w", err)
 		}
@@ -689,16 +682,51 @@ func requireCleanSelectedBasisAtRevision(root, revision string, fixed, working *
 				return fmt.Errorf("selected project input %q has an assume-unchanged or skip-worktree Git index flag; clear the flag before planning", string(record[2:]))
 			}
 		}
-		if _, err := source.GitOutput(root, args...); err != nil {
-			var exitErr *exec.ExitError
-			if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
-				return selectedBasisChangedError()
-			}
-			return fmt.Errorf("compare selected project inputs with Git's clean filters: %w", err)
-		}
 		start = end
 	}
+	// Compare captured changed bytes through Git's clean filters. On Windows, a
+	// normal core.autocrlf checkout has CRLF worktree bytes while the fixed Git
+	// tree contains LF. Hashing the captured bytes avoids consulting a second,
+	// potentially different worktree read as `git diff` would.
+	for _, path := range changes.Modified {
+		if fixed.Modes[path] != working.Modes[path] {
+			return selectedBasisChangedError()
+		}
+		fixedBytes, fixedOK := fixed.Files[path]
+		workingBytes, workingOK := working.Files[path]
+		if !fixedOK || !workingOK {
+			return selectedBasisChangedError()
+		}
+		fixedAttributes, err := source.GitOutput(root, "check-attr", "--source", revision, "-z", "--all", "--", path)
+		if err != nil {
+			return fmt.Errorf("inspect fixed Git attributes for selected path %q: %w", path, err)
+		}
+		workingAttributes, err := source.GitOutput(root, "check-attr", "-z", "--all", "--", path)
+		if err != nil {
+			return fmt.Errorf("inspect working Git attributes for selected path %q: %w", path, err)
+		}
+		if !bytes.Equal(fixedAttributes, workingAttributes) {
+			return fmt.Errorf("selected project input %q has Git attributes that differ from fixed revision %q", path, revision)
+		}
+		workingOID, err := source.GitOutputInput(root, workingBytes, "hash-object", "--path="+path, "--stdin")
+		if err != nil {
+			return fmt.Errorf("compare captured selected input %q through Git's clean filters: %w", path, err)
+		}
+		fixedOID, err := source.GitOutputInput(root, fixedBytes, "hash-object", "--no-filters", "--stdin")
+		if err != nil {
+			return fmt.Errorf("hash fixed selected input %q: %w", path, err)
+		}
+		if !bytes.Equal(bytes.TrimSpace(workingOID), bytes.TrimSpace(fixedOID)) {
+			return selectedBasisChangedError()
+		}
+	}
 	return nil
+}
+
+// RequireCleanSelectedBasisAtRevision verifies a captured selected working
+// snapshot against the exact fixed project revision using Git's clean filters.
+func RequireCleanSelectedBasisAtRevision(root, revision string, fixed, working *Snapshot) error {
+	return requireCleanSelectedBasisAtRevision(root, revision, fixed, working)
 }
 
 func selectedBasisChangedError() error {
