@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T00:08:27.492282Z",
+  "updatedUtc": "2026-10-10T00:14:00.846571Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL8_REVIEW_CONSTRUCTOR_WIRING_REJECTED_BEFORE_NATIVE_START_FIX_UNDERWAY",
+    "status": "REAL_ROLE_CONSTRUCTOR_COMPOSITION_PASS_FRESH_ACTUAL9_PREPARING",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -17958,6 +17958,17 @@
       "regressionCoordination": "Sentonce samefix: real normalsetup Writer/Reviewer/Verifier/Helper Adapter.New composition with/withoutHosthelper provider-free, not isolatedoption/fingerprint-only check/newcanary/manualgate",
       "next": "Targetedfix/tests/review plus exactownundispatchedlifecycle, thenfreshordinaryA01 underexistinghuman/renewableauthority; no replay/rights widening",
       "fullAcceptance": false
+    },
+    "constructorCompositionRepair": {
+      "sourceFix": "aff0b543",
+      "cleanPublicCheckpoint": "86589befc34f84f7d7ff9ed380901f169f114d38",
+      "rootVerified": "Clean localHEAD andexactpublicremote verified, sourcefixfiles observed; checks/lifecycle raw evidence ownerreported thisevent",
+      "behavior": "Zero-tool callback/limitscleanup +bindingsuffixv2; normalsetup Writer/Reviewer/Verifier/depthoneHelper realAdapter.New withhelpersenabled/disabled providerfree",
+      "checksOwnerReported": "Setup1.074s/transportconstructor1.291s/fullbuildvetdiffPASS, independentreviewclosed nofindings",
+      "binaryOwnerReported": "c54c4bdf0d15a69e8e52012627bcf94ae2f78973be095036f459fbc7ef065daf",
+      "actual8LifecycleOwnerReported": "UndispatchedReviewer empty events/start lists/nohandles; own79fb93workspacepreserved, no fabricatedtermination or guessedcleanup",
+      "knownHistoricalLedger": "12knownrolecalls/9providers/2982357partialestimate preserved, NOTinvoice",
+      "next": "NormalReadiness/Plan/freshactual9 preparing, sameauthorizedA01scope, no newmain/release/privatepublication"
     }
   }
 }
