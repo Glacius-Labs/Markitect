@@ -1983,6 +1983,10 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectwork/coverage_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectwork/definition_codec.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectwork/definition_codec_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectwork/document.go
       owner: project-world-implementation
     - path: src/internal/host/projectwork/init.go
