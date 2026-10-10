@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T05:28:57.968237+00:00",
+  "updatedUtc": "2026-10-10T05:33:35.124612+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -484,13 +484,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "5ff91514-6e73-4172-b94d-2a82e07fb0c5:2",
-      "lastObservedStatus": "Static alignment completed by exact verified private handoff; awaiting functional product, no Actuals.",
+      "afterCursor": "5ff91514-6e73-4172-b94d-2a82e07fb0c5:3",
+      "lastObservedStatus": "active",
       "activeTurn": "01a123f6-ab28-7cb0-b093-646dd9431a9b",
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac854c570f48191a595d544b5898fd6",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "None after first refinement; later exact stable product/runtime binding, no additional tests or actual starts now",
-      "latestProgress": "Exact PRIVATEdc34459d document backup Root verified; current actor-free finite task closed, no new Actual or evaluation authority.",
+      "latestProgress": "Read-only platform recommendation privately backed up and Root verified; WSL prospective, not runtime ready or new study start.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "955fc85e8ab365962ed54786e8ed81ee52e239d0",
@@ -12119,12 +12119,13 @@
       "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-integration\\Markitect",
       "branch": "codex/product-integration-20261009",
       "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
-      "afterCursor": "fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:5",
+      "afterCursor": "fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:13",
       "lastObservedStatus": "active",
       "activeTurn": "01a123f6-a629-7151-a41e-4252209ebc74",
       "creationAndPromptDelivered": true,
       "firstSnapshotVerifiedActive": true,
-      "nativeProductJobsAuthorizedIndependently": "Existing conditional central grant only"
+      "nativeProductJobsAuthorizedIndependently": "Existing conditional central grant only",
+      "latestProgress": "CRLF focused tests/review owner PASS; prepared-crash recovery regression caught independently, minimum durable current owner binding repair active; no new native execution."
     },
     {
       "name": "workspaces",
@@ -18239,6 +18240,12 @@
       "resumeIntent": "After targeted fix/review/frozen recovery binary, ordinary Resume samePlan/originalturns, no newPlan/replay/retagging original invocation; current repair operatorSource recorded separately from original frozenInvocation.",
       "otherWork": "CRLFExplore uses existing sourcecomparison seam plus separate rawCAS; capturedbyte cleanfilter proof may strengthen TOCTOU/ABA. Distinct helper cleanup-pending resume gap static audit, not actual15 cause.",
       "safety": "Sharing cause uncertain, no blockinglive journal readers or guessed/foreign cleanup. Original counts/evidence preserved; no completed fullacceptance."
+    },
+    "latestRecoveryReview20261010": {
+      "status": "OWNER_REPORTED_PREPARED_CRASH_REGRESSION_CAUGHT_REPAIR_ACTIVE_NOT_ADMITTED",
+      "crlf": "Owner reports projectapp44.424s/projectrun14.047s targeted PASS, independent clear, exact raw CAS unchanged. No clean new candidate accepted by Root yet.",
+      "recovery": "Independent reviewer caught prepared-crash path before receipt exists. Existing workspace journal needs durable current run/plan-owner binding before dispatch; exact owner/request/trusted dispatched handle required. Input-only historical fallback rejected. Missing/duplicate original owner/handle stays blocked, no replay. Existing Actual15 exact receipt path retained.",
+      "execution": "No new native execution until bounded source/review clears; helper cleanup remains separate queued gap, negative preservation test only."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
@@ -18409,5 +18416,15 @@
     "findings": "Independent clean README 80 CRLF versus 78 LF confirms revision-bound Explore false positive. Existing Git-filter equality plus exact captured raw worktree CAS remains repair direction. Exact original invocation recovery selector repair active; generic recovery cause loss recorded. Actual15 recorded revision22 blocked, genuine helper applied-and-closed.",
     "limits": "Scientist scratch FileShare probe establishes possible read interference, not actual locking PID or causality. Snapshot-wide model-only binding breadth requires explicit dependency-closure decision; no automatic weakening of conservative invalidation. Cleanup-pending helper reconciliation is a separate static gap, not Actual15 cause.",
     "coordination": "Integration already received technical findings; no duplicate dispatch or ACK. Current original recovery and CRLF repairs first. No new models/trials/Main acceptance; Actual15 accounting remains unknown, historical closed totals unchanged."
+  },
+  "scientistWslStabilizationRecommendation20261010": {
+    "status": "PRIVATE_ASSESSMENT_VERIFIED_RECOMMENDATION_NOT_ENVIRONMENT_ADMISSION",
+    "sourceSha": "5ef17d7328972da66747eb38532929fbee7128ec",
+    "file": "experiments/work-item-comparison/playground/pilots/container-environment-evaluation-20261009.json",
+    "sha256": "669ab56262a505cc249f313a98f8714aa6be1b99474288958bf8304289d4ce4d",
+    "rootVerified": "Clean private remote HEAD and working/raw Git equality; additive assessment read. Local inventory is Scientist-reported, no Root runtime retest.",
+    "recommendation": "Future prospective paired environment WSL2/native Linux binaries and owned /home filesystem; defer Docker complexity. Current inherited WSL cwd and npm codex wrapper point to Windows; Linux-only PATH lacks selected native runtimes, no sandbox/login/product admission demonstrated.",
+    "boundary": "No migration/install/model/trial ordered. Product CRLF/exact-invocation recovery repairs remain required regardless of OS; preserve Windows results and targeted regressions. Environment provisioning/preflight belongs Playground, native MCP/App Server process lifecycle belongs variant; future actuals need fresh common environment freeze.",
+    "coordination": "Scientist already delivered findings to Integration; no ACK or repeated dispatch."
   }
 }
