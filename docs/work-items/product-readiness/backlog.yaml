@@ -670,10 +670,10 @@ native_acceptance:
     separate_open_lifecycle_gap_focused_negative_result: passed_5_392s_on_uncommitted_fix_tree; proves_cleanup_pending_and_child_preserved_after_injected_close_failure_only_not_automatic_resume_reconciliation
     separate_open_lifecycle_gap_next: lifecycle_owner_to_supply_follow_up_negative_command_before_investigating_existing_owned_close_recovery
   next_batch:
-    status: actual25_failed_before_root_integration_docs_helper_byte_mismatch_no_apply; fresh_bounded_attempt_pending_no_source_fix_claimed
+    status: actual26_blocked_after_three_failed_integration_reviews_no_verify_no_apply; sequencing_correction_technically_validated_fresh_native_candidate_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
-    new_batch_pins: actual25_terminal_record_ac145188f8e8ca13b04b63de1770db02ef61841a08dabdf0870a9724e6a77809; next_a01_requires_fresh_clean_build_readiness_and_plan
+    new_batch_pins: actual26_terminal_record_c6cad360a2a22a62e2022930a5d50297922f51f80ed8b6e193d4569cdcce29d0; next_a01_requires_technical_closure_clean_build_fresh_readiness_and_plan
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
     no_eighteenth_actual_claimed: false
@@ -684,10 +684,11 @@ native_acceptance:
     no_twenty_third_actual_claimed: false
     no_twenty_fourth_actual_claimed: false
     no_twenty_fifth_actual_claimed: false
-    no_twenty_sixth_actual_claimed: true
+    no_twenty_sixth_actual_claimed: false
+    no_twenty_seventh_actual_claimed: true
     owner_repair_in_progress: true
-    owner_repair_status: Actual25_failed_before_root_integration_boundary; Root_work_review_passed; Docs_helper_completed_but_Host_rejected_declared_LF_bytes_vs_observed_CRLF_bytes; Source_helper_interrupted_without_delta; no_helper_delta_applied_no_Verify_or_Apply; strict_observation_guard_preserved; no_source_fix_claimed
-    repair: run a fresh bounded A01 after clean candidate build and fresh readiness/Plan on unchanged implementation; no source fix is claimed for Actual25; do not replay Actual25; retain 4h batch and 1h role bounds; Actual25 remains failed_not_passed
+    owner_repair_status: Actual26_blocked_after_three_failed_integration_reviews; original_Root_integration_completed_and_same_binary_resume_did_not_replay; helper_delta_applied_and_closed; three_work_reviews_passed; three_integration_reviews_failed_on_docs_import; queued_Docs_child_rework_not_executed_before_Root_review_recheck; sequencing_correction_committed_and_technically_validated; fresh_native_candidate_pending; no_Verify_or_Apply
+    repair: sequencing correction is technically validated at 0c8d38730064e36ab491995578f6ab6d624831ed; build a clean candidate and obtain fresh readiness/Plan before a new bounded A01; do not resume blocked Actual26; retain 4h batch and 1h role bounds; Actual26 remains blocked_not_passed
     deferred_helper_followup: P11; outside_current_A01_implementation_allocation; future_bounded_design_under_existing_user_mandate; no_general_readonly_helper_capability_or_framework_implemented
     actual_16_terminal_record_sha256: 0a9db024fba47cde9a9c2ffc34e096205cc9f25927c71ca2ae391a629dfae352
     actual_16_acceptance: not_passed
@@ -1501,7 +1502,7 @@ native_acceptance:
     root_integration_context_correction_validation: independent_review_clear; three_focused_tests_passed_11_894s; projectrun_vet_passed_1_2616117s; diff_check_passed; fresh_native_validation_pending
     root_integration_context_vet_command: "go vet ./src/internal/host/projectrun"
     acceptance: not_passed
-  latest_actual:
+  attempt_25:
     batch_id: a01-integration-review-scope-ec247e985abd4169b5dc1c1d0997a88a
     attempt_number: 25
     status: failed_before_root_integration_docs_helper_observed_bytes_mismatch_no_apply
@@ -1560,6 +1561,66 @@ native_acceptance:
     cumulative_estimated_cost_micros: 20466796
     cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
     source_fix_claimed: false
+    acceptance: not_passed
+
+  latest_actual:
+    batch_id: a01-helper-byte-retry-ffe3b64e818349acaa170d672aecbdf2
+    attempt_number: 26
+    status: blocked_after_three_failed_integration_reviews_no_verify_no_apply
+    private_record_sha256: c6cad360a2a22a62e2022930a5d50297922f51f80ed8b6e193d4569cdcce29d0
+    lifecycle_audit_sha256: 891170ec5f465c55c1fd5925bdfdc8940dba83f9cc271532c1da2fc64ea92b08
+    source_revision: 325f98182771cae4ee4f798106e53e96979d55be
+    binary_sha256: 49c0df895a2d6d3b29b4e01ccb2d1d06fe8529850695889170acb0bcc37e2271
+    plan_id: bcf3c796ea5da8ac0bff569ae577dbbd
+    plan_sha256: 1b7e7a8c0c05ac52a4bfb6f19e62266c3df897b85723da4673721a232c978fe1
+    readiness_sha256: 7e9ae8d750eabdb2cc59af06c640a09928994e8af08d901e987d273b0346fbec
+    runtime_sha256: 0b0bea059d135cf436833a5a8327ddef1d95581cd8483911739e039ded14b9f7
+    runtime_file_sha256: 58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574
+    hard_deadline_utc: '2026-10-10T14:46:28.5596881Z'
+    observer_id: d9bb228d19574b5d84e6b10d5e79285e
+    observer_exit_code: 2
+    observer_boundary_observed: true
+    observer_terminal_turn_observed: true
+    state_revision: 44
+    state_status: blocked
+    state_updated_utc: '2026-10-10T10:56:16.3149589Z'
+    root_original_integration_completed: true
+    root_original_physical_starts: 1
+    original_root_resume_started_new_provider: false
+    resume_command_id: 0719ae4c1c1f48f4a136a571464daf56
+    resume_exit_code: 2
+    resume_state: blocked
+    resume_recovery_inspection_starts: 0
+    distinct_semantic_root_repairs_during_resume: 2
+    distinct_integration_reviews_during_resume: 3
+    work_reviews: 3_pass
+    integration_reviews: 3_fail_on_docs_greeting_import
+    queued_docs_rework_executed: false
+    helper_reservation_id: helper-exec-0b8fbbed-9cb8-4b50-9e67-03ebd810db33
+    helper_child_session: 01a1256e-49e2-79d3-affc-131c955c9d17
+    helper_child_turn: 01a1256e-4ace-7e31-9d54-8f52ed61f90c
+    helper_delivery_state: applied_and_closed
+    helper_changed_path: tests/test_greeting.py
+    helper_changed_bytes: 580
+    helper_changed_mode: '100644'
+    helper_file_sha256: 9733979664ecce2db988efc050050c79911314c5753e0a17bbd70976bbe9ec9b
+    helper_delta_sha256: 5542f96ae723f9a97a4915060e3bbc0b645f3ffbdcab956fe8a3a23852d45423
+    helper_cost_separately_itemized: false
+    docs_source_overlap_seconds: 32.081275
+    original_root_replayed: false
+    full_verify_started: false
+    apply_started: false
+    state_current_cost_micros: 1332647
+    preserved_original_root_max_micro: 150928
+    batch_partial_cost_micros: 1483575
+    cumulative_combined_requests: 156
+    cumulative_provider_starts: 152
+    cumulative_partial_cost_micros: 21950371
+    cost_accounting: partial_lower_bound_not_invoice_helper_cost_unknown
+    sequencing_correction: technically_validated_fresh_native_validation_pending
+    sequencing_correction_source_commit: 0c8d38730064e36ab491995578f6ab6d624831ed
+    sequencing_correction_focused_tests: passed_94_679s_independent_review_clear; rootcheck_managed_artifacts_vet_diff_passed
+    fresh_native_validation: pending_clean_candidate_build_and_readiness_plan
     acceptance: not_passed
   prior_batch_history:
     revision: generous-native-limits-20261009
