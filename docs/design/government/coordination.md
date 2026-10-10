@@ -2307,3 +2307,7 @@ Root cleanpublic/local325f9818 and3docclosurestat, exactWindows49c0df89 Go1.27.1
 ### Actual26 real integration defect remains after semantic rework
 
 Root exactsharedstate44blocked binds3WorkPASS/3distinctIntegrationFAILrounds1–3, original00ea0256 + newsemanticrepairsf61a6386/03795adb, noVerify/Applyphases. Owner samebinaryoriginalRootonephysical/noReplay/helperappliedclosed/32.081275sparallel, Resume0719ae ended10:56:16.5326677Z exit2: greetingimport docs versus actualsrc layout remains. Boundedexactrepairreports/descendantownership-rework diagnosisactive, strictreviewsnotbypassed/arbitrarylimitnotraised. Owner13new12roles1helper/cumulative156combined152providers21950371partial/original150928once, rawunionnotRootreaudited/noA01MainPASS/repeatedorder.
+
+### Host sequencing defect confirmed for legitimate child rework
+
+Owner all3Rootreports correctlyboundedDocsrework/candidateFilesempty, childworkAttempts1/samebytes. Root unchangedrun.gofailedReview→reintegrateAfterRework→later runManagerReworkRounds plus rework.go storedrequests→review→recursiveparent confirms childrepair postponed untilreviewlimit consumed. Validfindingnotignoredmodelinstruction. Narrowexistingsequencing/regression/independentreviewactive underhumanstabilizationmandate, no framework/guardweakening/goalworkaround; exactprivate reportsource ownerattested. Failed26terminalc6cad360/audit891170ec prefixes retained/noVerifyApply/newActual27/MainPASS or repeatedRootorder.

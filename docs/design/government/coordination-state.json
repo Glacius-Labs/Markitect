@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T10:58:45.721785+00:00",
+  "updatedUtc": "2026-10-10T11:01:57.919629+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator diagnoses exact descendant ownership/rework and legitimate review findings before bounded ordinary nextaction; preserve strict reviews and separate original-recovery from genuine semanticrepairs. No duplicateRootorder/arbitrary review bypass/studies/Main.",
+  "nextAction": "Integrator repairs confirmed existing Host sequencing so legitimate boundedchildrework executes before fresh parentintegrationreview, retains budgets/reviewfindings/ownership; independent source/regression closure then fresh normal finite proof. No studies/newRootorder/permission gate.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL26_BLOCKED_INTEGRATION_REVIEW_LIMIT_GENUINE_DOC_DEFECT_REWORK_DIAGNOSIS_ACTIVE",
+    "status": "ACTUAL26_HOST_REWORK_SEQUENCING_DEFECT_SOURCE_CONFIRMED_NARROW_FIX_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -19064,6 +19064,15 @@
         "cumulativePartialEstimatedCostMicros": 21950371,
         "originalRootKnownMaximumCostMicrosCountedOnce": 150928,
         "qualification": "Partial known estimates, exactrawunionnotRootreaudited; no complete invoice/efficiency claim."
+      },
+      "deeperDiagnosis": {
+        "ownerFinding": "All3Root integrationreports correctlyrequestedboundedactiveDocsrework with emptycandidateFiles; DocsworkAttempts1/samebytes. Failed-review recursion consumed3integrationreviewrounds beforelater childrework execution. Actualreviewfindingvalid, not ignored modelinstructions.",
+        "rootSourceConfirmation": "Unchanged source inspected run.go failedintegrationreview path invokesreintegrateAfterRework thenlater runManagerReworkRounds; rework.go storesparsedReworkRequests theninvokesreview andrecursivelyreintegratesonfailure beforechildrework. This confirms sequencinggap, exactprivate repairreportbytes ownerattested ratherthan Rootreaudited.",
+        "ownerTerminalPrefixes": {
+          "terminalSha256": "c6cad360",
+          "lifecycleAuditSha256": "891170ec"
+        },
+        "next": "Bounded existing rework sequencing correction+regression/independentreview underhuman stabilizationmandate, no newframework/semanticguardweakening/goalworkaround. Failed26preserved/newcleanSourcePlan afterreviewedfix; no actual27started/MainPASS."
       }
     }
   },
