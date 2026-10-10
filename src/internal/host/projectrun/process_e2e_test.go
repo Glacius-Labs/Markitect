@@ -687,7 +687,9 @@ func TestProjectRunReviewerFindingsTriggerTargetedImplementerRepair(t *testing.T
 	if err := persistState(store, &latest); err != nil {
 		t.Fatal(err)
 	}
-	if _, staleErr := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID); staleErr == nil || !strings.Contains(staleErr.Error(), "fresh passed work review") {
+	// The changed child file is in both the child's work review and the
+	// parent's integration review scope, so either one is stale.
+	if _, staleErr := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID); staleErr == nil || !strings.Contains(staleErr.Error(), "has no fresh passed") {
 		t.Fatalf("Verify accepted bytes outside the passed review scope: %v", staleErr)
 	}
 	latest.Candidate = run.Candidate
@@ -812,7 +814,7 @@ func TestManagerDirectedReworkRerunsOnlyRequestedLeafAndReintegratesAncestors(t 
 	}
 }
 
-func TestPureRoutingManagerSkipsReviewerButImplementationManagersDoNot(t *testing.T) {
+func TestPureRoutingManagerSkipsWorkReviewButReviewsDeliveredChildOutputs(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "normal")
 	enableE2EReviews(t, root, 100000)
@@ -828,11 +830,33 @@ func TestPureRoutingManagerSkipsReviewerButImplementationManagersDoNot(t *testin
 	}
 	rootID := e2eManagerID("", "project-owner")
 	rootTask := findTask(run.Tasks, rootID)
-	if rootTask == nil || rootTask.ReviewStatus != "not-required" {
-		t.Fatalf("pure router did not retain explicit not-required state: %+v", rootTask)
+	if rootTask == nil || len(rootTask.WrittenPaths)+len(rootTask.IntegratedPaths) != 0 || rootTask.ReviewStatus != "pass" {
+		t.Fatalf("file-less router whose children delivered was not integration-reviewed: %+v", rootTask)
 	}
-	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), rootID, "review"); calls != 0 {
-		t.Fatalf("pure routing Manager invoked reviewer %d times, want zero", calls)
+	for _, review := range run.Reviews {
+		if review.ManagerID == rootID && review.Phase != "integrate" {
+			t.Fatalf("pure router's delegation-only %s phase was reviewed: %+v", review.Phase, review)
+		}
+	}
+	records, err := readE2ERecords(os.Getenv(e2eLogEnv))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var reviewed []string
+	for _, record := range records {
+		if record["phase"] == "review" && record["managerId"] == rootID {
+			artifacts, _ := record["artifacts"].([]any)
+			for _, artifact := range artifacts {
+				fields, _ := artifact.(map[string]any)
+				path, _ := fields["path"].(string)
+				reviewed = append(reviewed, path)
+			}
+		}
+	}
+	for _, path := range []string{"src/orders/implementation.txt", "src/inventory/implementation.txt"} {
+		if !containsString(reviewed, path) {
+			t.Fatalf("router integration review input omitted child-delivered %s: %v", path, reviewed)
+		}
 	}
 	for _, managerID := range []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")} {
 		if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), managerID, "review"); calls == 0 {
