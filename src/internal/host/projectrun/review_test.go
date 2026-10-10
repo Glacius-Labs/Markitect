@@ -169,7 +169,7 @@ func TestReviewerScopeExcludesForeignArtifactBytesButRetainsInterfaceAndFreshnes
 		t.Fatalf("Engineering reviewer did not receive its own changed test bytes: %+v", engineeringFiles)
 	}
 	plan := PlanRecord{Goal: "Implement and test order cancellation.", Managers: []ManagerTask{ordersTask, engineeringTask}}
-	initialDigest, err := reviewScopeDigest(plan, project, engineeringTask, "work")
+	initialDigest, err := reviewScopeDigest(plan, project, engineeringTask, "work", RunReport{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,7 +180,7 @@ func TestReviewerScopeExcludesForeignArtifactBytesButRetainsInterfaceAndFreshnes
 		changed.Snapshot.Modes[path] = project.Snapshot.Modes[path]
 	}
 	changed.Snapshot.Files[engineerPath] = []byte("engineering test changed")
-	changedDigest, err := reviewScopeDigest(plan, &changed, engineeringTask, "work")
+	changedDigest, err := reviewScopeDigest(plan, &changed, engineeringTask, "work", RunReport{})
 	if err != nil || changedDigest == initialDigest {
 		t.Fatalf("final Engineering review scope did not bind changed test bytes: initial=%s changed=%s err=%v", initialDigest, changedDigest, err)
 	}
@@ -199,7 +199,7 @@ func TestReviewScopeDigestSurvivesSiblingMergeButChangesWithOwnedBytes(t *testin
 	}
 	plan := PlanRecord{Goal: "Implement both fixture artifacts."}
 	task := ManagerTask{ManagerID: e2eManagerID("orders", "orders"), Goal: "Implement the orders artifact.", Owns: []string{"src/orders/"}}
-	initial, err := reviewScopeDigest(plan, base, task, "work")
+	initial, err := reviewScopeDigest(plan, base, task, "work", RunReport{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -208,7 +208,7 @@ func TestReviewScopeDigestSurvivesSiblingMergeButChangesWithOwnedBytes(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	unchanged, err := reviewScopeDigest(plan, mergedSibling, task, "work")
+	unchanged, err := reviewScopeDigest(plan, mergedSibling, task, "work", RunReport{})
 	if err != nil || unchanged != initial {
 		t.Fatalf("unaffected review scope changed after sibling merge: got=%s want=%s err=%v", unchanged, initial, err)
 	}
@@ -217,7 +217,7 @@ func TestReviewScopeDigestSurvivesSiblingMergeButChangesWithOwnedBytes(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	changed, err := reviewScopeDigest(plan, mergedOwned, task, "work")
+	changed, err := reviewScopeDigest(plan, mergedOwned, task, "work", RunReport{})
 	if err != nil || changed == initial {
 		t.Fatalf("review scope did not invalidate after owned bytes changed: got=%s initial=%s err=%v", changed, initial, err)
 	}
@@ -242,11 +242,11 @@ func TestReviewScopeDigestSurvivesSiblingMergeButChangesWithOwnedBytes(t *testin
 			t.Fatalf("broad parent owns rule leaked child bytes into reviewer input: %s", file.Path)
 		}
 	}
-	parentInitial, err := reviewScopeDigest(plan, base, parent, "integrate")
+	parentInitial, err := reviewScopeDigest(plan, base, parent, "integrate", RunReport{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	parentAfterSibling, err := reviewScopeDigest(plan, mergedSibling, parent, "integrate")
+	parentAfterSibling, err := reviewScopeDigest(plan, mergedSibling, parent, "integrate", RunReport{})
 	if err != nil || parentAfterSibling != parentInitial {
 		t.Fatalf("parent review scope changed with independent child bytes: got=%s want=%s err=%v", parentAfterSibling, parentInitial, err)
 	}
@@ -283,17 +283,56 @@ func TestReviewerContextSeparatesWorkDelegationFromIntegrationDelivery(t *testin
 			},
 		},
 	}
-	rootTask := ManagerTask{ID: "root-task", ManagerID: rootID, Goal: "Coordinate the greeting feature.", WrittenPaths: []string{readme}, Delegations: []Delegation{{ManagerID: childID, Goal: "Implement greeting behavior and document it."}}}
-	childTask := ManagerTask{ID: "child-task", ManagerID: childID, ParentTask: rootID, Goal: "Implement greeting behavior.", WrittenPaths: []string{source, tests, docs}, State: "integrated"}
+	rootTask := ManagerTask{ID: "root-task", ManagerID: rootID, Goal: "Coordinate the greeting feature.", WrittenPaths: []string{readme}, ReportID: "root-work-run", IntegrationReportID: "root-integrate-run", Delegations: []Delegation{{ManagerID: childID, Goal: "Implement greeting behavior and document it."}}}
+	childTask := ManagerTask{ID: "child-task", ManagerID: childID, ParentTask: rootID, Goal: "Implement greeting behavior.", WrittenPaths: []string{source, tests, docs}, ReportID: "child-work-run", State: "integrated"}
 	plan := PlanRecord{Goal: "Implement greeting and provide its usage guide.", Managers: []ManagerTask{rootTask, childTask}}
 	candidate := candidateData{ID: "candidate-1", Digest: "digest-1"}
 
-	work, workFiles, _, err := buildReviewerContext(plan, project, rootTask, "work", 1, candidate, BriefingContext{})
+	work, workFiles, _, err := buildReviewerContext(plan, project, rootTask, "work", 1, candidate, BriefingContext{}, RunReport{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got := reviewScopePaths(workFiles); len(got) != 1 || got[0] != readme {
 		t.Fatalf("work review should receive only current root delivery: %v", got)
+	}
+	workReport := RunReport{RoleStartReservations: []RoleStartReservation{{Key: "helper-work", Kind: "helper", ManagerID: rootID, Phase: "work", ParentRunID: rootTask.ReportID,
+		Request:        agentexec.RoleStartRequest{RequestID: "helper-work-request", Role: "helper", ParentSessionID: "parent-session", SessionID: "child-session", State: "completed"},
+		HelperDelivery: &HelperDelivery{State: "applied-and-closed", RequestID: "helper-work-request", Task: "write scoped docs", RequestedPaths: []string{readme}, DeltaDigest: "sha256:" + strings.Repeat("d", 64), Changes: []HelperDeliveryChange{{Kind: "modify", Path: readme, Mode: workFiles[0].Mode, ContentDigest: workFiles[0].Digest}}}}}}
+	workWithHelper, _, _, err := buildReviewerContext(plan, project, rootTask, "work", 1, candidate, BriefingContext{}, workReport)
+	if err != nil || len(workWithHelper.HostHelperResults) != 1 || !workWithHelper.HostHelperResults[0].Changes[0].PresentInCandidate {
+		t.Fatalf("current work helper delivery was not bound to candidate: evidence=%+v err=%v", workWithHelper.HostHelperResults, err)
+	}
+	withoutHelperDigest, err := reviewScopeDigest(plan, project, rootTask, "work", RunReport{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	withHelperDigest, err := reviewScopeDigest(plan, project, rootTask, "work", workReport)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if withoutHelperDigest == withHelperDigest {
+		t.Fatal("helper delivery facts did not invalidate the review scope digest")
+	}
+	wrongParent := workReport
+	wrongParent.RoleStartReservations = append([]RoleStartReservation(nil), workReport.RoleStartReservations...)
+	wrongParent.RoleStartReservations[0].ParentRunID = "repair-history-only"
+	ignored, _, _, err := buildReviewerContext(plan, project, rootTask, "work", 1, candidate, BriefingContext{}, wrongParent)
+	if err != nil || len(ignored.HostHelperResults) != 0 {
+		t.Fatalf("repair-history helper leaked into current review: %+v err=%v", ignored.HostHelperResults, err)
+	}
+	unresolved := workReport
+	unresolved.RoleStartReservations = append([]RoleStartReservation(nil), workReport.RoleStartReservations...)
+	unresolved.RoleStartReservations[0].Request.State = "unknown"
+	if _, _, _, err := buildReviewerContext(plan, project, rootTask, "work", 1, candidate, BriefingContext{}, unresolved); err == nil {
+		t.Fatal("review context hid an unresolved current helper request")
+	}
+	malformedRename := workReport
+	malformedRename.RoleStartReservations = append([]RoleStartReservation(nil), workReport.RoleStartReservations...)
+	malformedRename.RoleStartReservations[0].HelperDelivery = cloneHelperDeliveryPtr(workReport.RoleStartReservations[0].HelperDelivery)
+	malformedRename.RoleStartReservations[0].HelperDelivery.Changes[0].Kind = "rename"
+	malformedRename.RoleStartReservations[0].HelperDelivery.Changes[0].OldPath = ""
+	if _, _, _, err := buildReviewerContext(plan, project, rootTask, "work", 1, candidate, BriefingContext{}, malformedRename); err == nil {
+		t.Fatal("review context accepted rename evidence without its source path")
 	}
 	if !hasProjectArtifact(work.AcceptedModel.Artifacts, "readme-artifact") || hasProjectArtifact(work.AcceptedModel.Artifacts, "greeting-source") || hasProjectArtifact(work.AcceptedModel.Artifacts, "greeting-tests") || hasProjectArtifact(work.AcceptedModel.Artifacts, "greeting-guide") {
 		t.Fatalf("work review accepted model mixes in future child obligations: %+v", work.AcceptedModel.Artifacts)
@@ -304,12 +343,24 @@ func TestReviewerContextSeparatesWorkDelegationFromIntegrationDelivery(t *testin
 		}
 	}
 
-	integration, integrationFiles, _, err := buildReviewerContext(plan, project, rootTask, "integrate", 1, candidate, BriefingContext{})
+	integration, integrationFiles, _, err := buildReviewerContext(plan, project, rootTask, "integrate", 1, candidate, BriefingContext{}, RunReport{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(integration.DelegatedArtifacts) != 0 {
 		t.Fatalf("integration review should treat child outputs as aggregate obligations, not future delegation artifacts: %+v", integration.DelegatedArtifacts)
+	}
+	childHelper := RunReport{RoleStartReservations: []RoleStartReservation{{Key: "child-helper", Kind: "helper", ManagerID: childID, Phase: "work", ParentRunID: childTask.ReportID,
+		Request:        agentexec.RoleStartRequest{RequestID: "child-helper-request", Role: "helper", ParentSessionID: "child-parent-session", SessionID: "child-helper-session", State: "completed"},
+		HelperDelivery: &HelperDelivery{State: "applied-and-closed", RequestID: "child-helper-request", Task: "write greeting tests", RequestedPaths: []string{tests + "/"}, DeltaDigest: "sha256:" + strings.Repeat("e", 64), Changes: []HelperDeliveryChange{{Kind: "modify", Path: tests + "/greeting_test.go", Mode: "0644", ContentDigest: "sha256:" + strings.Repeat("f", 64)}}}}}}
+	childHelper.RoleStartReservations = append(childHelper.RoleStartReservations, workReport.RoleStartReservations...)
+	integrationWithHelper, _, _, err := buildReviewerContext(plan, project, rootTask, "integrate", 1, candidate, BriefingContext{}, childHelper)
+	owners := map[string]bool{}
+	for _, evidence := range integrationWithHelper.HostHelperResults {
+		owners[evidence.ManagerID] = true
+	}
+	if err != nil || len(integrationWithHelper.HostHelperResults) != 2 || !owners[childID] || !owners[rootID] {
+		t.Fatalf("aggregate review omitted active child helper delivery: evidence=%+v err=%v", integrationWithHelper.HostHelperResults, err)
 	}
 	gotPaths := reviewScopePaths(integrationFiles)
 	for _, path := range []string{readme, source, tests, docs} {
@@ -326,11 +377,11 @@ func TestReviewerContextSeparatesWorkDelegationFromIntegrationDelivery(t *testin
 		t.Fatalf("integration scoped model paths do not bind aggregate candidate: scoped=%v files=%v", got, gotPaths)
 	}
 
-	workDigest, err := reviewScopeDigest(plan, project, rootTask, "work")
+	workDigest, err := reviewScopeDigest(plan, project, rootTask, "work", RunReport{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	integrationDigest, err := reviewScopeDigest(plan, project, rootTask, "integrate")
+	integrationDigest, err := reviewScopeDigest(plan, project, rootTask, "integrate", RunReport{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -346,6 +397,14 @@ func hasProjectArtifact(artifacts []projectmodel.Artifact, id string) bool {
 		}
 	}
 	return false
+}
+
+func cloneHelperDeliveryPtr(delivery *HelperDelivery) *HelperDelivery {
+	if delivery == nil {
+		return nil
+	}
+	clone := cloneHelperDelivery(*delivery)
+	return &clone
 }
 
 func TestCheckRepairPreservesReviewScopeHistoryForDeletedPaths(t *testing.T) {

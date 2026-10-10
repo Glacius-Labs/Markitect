@@ -305,7 +305,35 @@ type RoleStartReservation struct {
 	ParentRunID       string                     `json:"parentRunId,omitempty"`
 	Request           agentexec.RoleStartRequest `json:"request"`
 	ProtocolRequestID string                     `json:"protocolRequestId,omitempty"`
+	HelperDelivery    *HelperDelivery            `json:"helperDelivery,omitempty"`
 	RecordedAt        time.Time                  `json:"recordedAt"`
+}
+
+// HelperDelivery is Host-authored proof that a helper's validated delta was
+// applied to its parent candidate and its terminal workspace was closed.
+// File contents are intentionally omitted; each write is represented by a
+// digest and can be matched against the exact candidate shown to a reviewer.
+type HelperDelivery struct {
+	State          string                 `json:"state"` // applied-and-closed
+	RequestID      string                 `json:"requestId"`
+	Task           string                 `json:"task"`
+	RequestedPaths []string               `json:"requestedPaths"`
+	DeltaDigest    string                 `json:"deltaDigest"`
+	Changes        []HelperDeliveryChange `json:"changes"`
+}
+
+type HelperDeliveryChange struct {
+	Kind          string `json:"kind"`
+	Path          string `json:"path"`
+	OldPath       string `json:"oldPath,omitempty"`
+	Mode          string `json:"mode,omitempty"`
+	ContentDigest string `json:"contentDigest,omitempty"`
+}
+
+func cloneHelperDelivery(delivery HelperDelivery) HelperDelivery {
+	delivery.RequestedPaths = append([]string{}, delivery.RequestedPaths...)
+	delivery.Changes = append([]HelperDeliveryChange{}, delivery.Changes...)
+	return delivery
 }
 
 type ManagerReworkRound struct {

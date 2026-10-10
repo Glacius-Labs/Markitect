@@ -66,6 +66,29 @@ func TestHelperRunsFreshScopedChildAndAppliesOnlyObservedDelta(t *testing.T) {
 	if len(session.Receipts()) != 1 || fixture.reserver.reserveCount != 1 || fixture.reserver.updateCount != 2 || len(fixture.reserver.updateStates) != 2 || fixture.reserver.updateStates[0] != "unknown" || fixture.reserver.updateStates[1] != "completed" {
 		t.Fatalf("helper receipt/reservation counts differ: receipts=%d reserve=%d update=%d", len(session.Receipts()), fixture.reserver.reserveCount, fixture.reserver.updateCount)
 	}
+	if len(fixture.reserver.deliveries) != 1 || fixture.reserver.deliveries[0].State != "applied-and-closed" || fixture.reserver.deliveries[0].RequestID != "helper-call-1" || fixture.reserver.deliveries[0].DeltaDigest == "" || len(fixture.reserver.deliveries[0].Changes) != 1 || fixture.reserver.deliveries[0].Changes[0].Mode != "0644" || fixture.reserver.deliveries[0].Changes[0].ContentDigest != rawContentDigest(behavior.content) {
+		t.Fatalf("completed helper did not persist typed applied delivery facts: %+v", fixture.reserver.deliveries)
+	}
+}
+
+func TestHelperAllowsSuccessfullyClosedEmptyDelta(t *testing.T) {
+	fixture := newHelperFixture(t)
+	session := fixture.session(t, func(options codexappserver.Options) Invoker {
+		return &helperFakeInvoker{options: options}
+	})
+	if err := session.BindHandle(fixture.parentRecoveryHandle()); err != nil {
+		t.Fatal(err)
+	}
+	result, err := session.HandleToolCall(context.Background(), helperCall("empty-delta", `{"task":"inspect scoped source and make no changes","paths":["src/main.go"]}`))
+	if err != nil || !result.Success {
+		t.Fatalf("successful empty helper delta was rejected: result=%+v err=%v", result, err)
+	}
+	if got := session.Requests(); len(got) != 1 || got[0].State != "completed" {
+		t.Fatalf("empty helper delta did not reach completed state: %+v", got)
+	}
+	if got := fixture.reserver.deliveries; len(got) != 1 || got[0].State != "applied-and-closed" || len(got[0].Changes) != 0 {
+		t.Fatalf("empty helper delta lost its completion evidence: %+v", got)
+	}
 }
 
 func TestHelperCountsMalformedAndOutOfScopeRequestsBeforeValidation(t *testing.T) {
@@ -465,6 +488,7 @@ type helperFakeReserver struct {
 	requests     []HelperStartAttempt
 	updateErr    error
 	updateStates []string
+	deliveries   []HelperDelivery
 	onAttach     func(agentexec.RoleStartRequest)
 }
 
@@ -487,6 +511,18 @@ func (r *helperFakeReservation) AttachProtocolStart(_ context.Context, request a
 func (r *helperFakeReservation) Update(_ context.Context, request agentexec.RoleStartRequest) error {
 	r.owner.updateCount++
 	r.owner.updateStates = append(r.owner.updateStates, request.State)
+	if r.owner.updateErr != nil {
+		err := r.owner.updateErr
+		r.owner.updateErr = nil
+		return err
+	}
+	return nil
+}
+
+func (r *helperFakeReservation) CompleteDelivery(_ context.Context, request agentexec.RoleStartRequest, delivery HelperDelivery) error {
+	r.owner.updateCount++
+	r.owner.updateStates = append(r.owner.updateStates, request.State)
+	r.owner.deliveries = append(r.owner.deliveries, delivery)
 	if r.owner.updateErr != nil {
 		err := r.owner.updateErr
 		r.owner.updateErr = nil

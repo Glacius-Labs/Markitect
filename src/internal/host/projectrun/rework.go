@@ -489,7 +489,7 @@ func recordReview(ctx context.Context, host Host, invoker Invoker, root string, 
 		report.Invocations = append(report.Invocations, started)
 		startedIndex = len(report.Invocations) - 1
 		return persistState(store, report)
-	})
+	}, *report)
 	if startedIndex >= 0 {
 		report.Invocations[startedIndex] = invocation
 		if err == nil {

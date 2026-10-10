@@ -158,7 +158,7 @@ func TestReviewScopeDigestBindsOperationStrictnessAndBriefing(t *testing.T) {
 	plan := PlanRecord{Goal: "Implement both fixture artifacts.", Operation: OperationApply,
 		Strictness:      map[string]StrictnessProfile{task.ManagerID: {Evidence: []string{"tests"}, Counterexamples: 1}},
 		BriefingDigests: map[string]string{task.ManagerID: "briefing-digest-a"}}
-	base, err := reviewScopeDigest(plan, project, task, "work")
+	base, err := reviewScopeDigest(plan, project, task, "work", RunReport{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +174,7 @@ func TestReviewScopeDigestBindsOperationStrictnessAndBriefing(t *testing.T) {
 	variants["briefing"] = briefing
 	for name, variant := range variants {
 		t.Run(name, func(t *testing.T) {
-			got, err := reviewScopeDigest(variant, project, task, "work")
+			got, err := reviewScopeDigest(variant, project, task, "work", RunReport{})
 			if err != nil || got == base {
 				t.Fatalf("review scope digest did not bind %s: got=%s base=%s err=%v", name, got, base, err)
 			}

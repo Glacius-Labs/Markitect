@@ -18,6 +18,23 @@ var (
 
 const maxRoleStartBudget = 256
 
+func cloneRoleStartReservation(reservation RoleStartReservation) RoleStartReservation {
+	if reservation.HelperDelivery != nil {
+		delivery := cloneHelperDelivery(*reservation.HelperDelivery)
+		reservation.HelperDelivery = &delivery
+	}
+	return reservation
+}
+
+func cloneRoleStartDeliveries(report RunReport) RunReport {
+	reservations := make([]RoleStartReservation, len(report.RoleStartReservations))
+	for index, reservation := range report.RoleStartReservations {
+		reservations[index] = cloneRoleStartReservation(reservation)
+	}
+	report.RoleStartReservations = reservations
+	return report
+}
+
 // RoleStartBudget serializes request reservation and state updates. Snapshot
 // and Persist callbacks belong to the coordinator and must read/update the
 // durable RunReport; Persist must upsert by reservation Key and durably save it.
@@ -41,7 +58,7 @@ func NewRoleStartBudget(limit int, snapshot func() RunReport, persist func(RoleS
 	if limit < 1 || limit > maxRoleStartBudget || snapshot == nil || persist == nil {
 		return nil, fmt.Errorf("role-start budget requires a limit in 1..%d and durable snapshot/persist callbacks", maxRoleStartBudget)
 	}
-	initial := snapshot()
+	initial := cloneRoleStartDeliveries(snapshot())
 	accounting, _ := reportStartAccounting(initial)
 	rootKeys := map[string]bool{}
 	for _, reservation := range initial.RoleStartReservations {
@@ -85,7 +102,7 @@ func (b *RoleStartBudget) reserve(ctx context.Context, record RoleStartReservati
 	if record.Key == "" || record.Request.RequestID == "" {
 		return nil, errors.New("role-start reservation requires a stable request ID")
 	}
-	report := b.snapshot()
+	report := cloneRoleStartDeliveries(b.snapshot())
 	for _, existing := range report.RoleStartReservations {
 		if existing.Key == record.Key {
 			return &RoleStartPermit{budget: b, key: record.Key}, ErrRoleStartAlreadyReserved
@@ -101,12 +118,12 @@ func (b *RoleStartBudget) reserve(ctx context.Context, record RoleStartReservati
 	}
 	if b.accounting(report).ObservedTotal >= b.limit {
 		record.Request.State = "failed"
-		if err := b.persist(record); err != nil {
+		if err := b.persist(cloneRoleStartReservation(record)); err != nil {
 			return nil, errors.Join(ErrRoleStartBudgetExceeded, fmt.Errorf("persist rejected role-start request: %w", err))
 		}
 		return &RoleStartPermit{budget: b, key: record.Key}, errors.Join(ErrRoleStartBudgetExceeded, ctx.Err())
 	}
-	if err := b.persist(record); err != nil {
+	if err := b.persist(cloneRoleStartReservation(record)); err != nil {
 		return nil, fmt.Errorf("persist role-start reservation before dispatch: %w", err)
 	}
 	permit := &RoleStartPermit{budget: b, key: record.Key}
@@ -145,6 +162,29 @@ func (p *RoleStartPermit) Update(ctx context.Context, request agentexec.RoleStar
 			return errors.New("role-start lifecycle update changed its Host request identity")
 		}
 		record.Request = request
+		if request.State != "completed" {
+			record.HelperDelivery = nil
+		}
+		return nil
+	})
+}
+
+// CompleteDelivery atomically records the terminal Host request and the
+// validated, applied, and closed helper result on its original reservation.
+func (p *RoleStartPermit) CompleteDelivery(ctx context.Context, request agentexec.RoleStartRequest, delivery HelperDelivery) error {
+	if p == nil || p.budget == nil || request.RequestID == "" || request.ParentSessionID == "" || request.SessionID == "" || delivery.State != "applied-and-closed" || delivery.RequestID != request.RequestID || delivery.DeltaDigest == "" {
+		return errors.New("helper delivery completion lacks its durable identity or applied state")
+	}
+	return p.budget.update(ctx, p.key, func(record *RoleStartReservation) error {
+		if record.Kind != "helper" || request.RequestID != record.Request.RequestID || request.ParentSessionID != record.Request.ParentSessionID || request.State != "completed" {
+			return errors.New("helper delivery completion changed its Host request identity or terminal state")
+		}
+		if record.ParentRunID == "" || record.ManagerID == "" || record.Phase == "" {
+			return errors.New("helper delivery completion is missing its parent binding")
+		}
+		record.Request = request
+		cloned := cloneHelperDelivery(delivery)
+		record.HelperDelivery = &cloned
 		return nil
 	})
 }
@@ -155,7 +195,7 @@ func (b *RoleStartBudget) update(ctx context.Context, key string, change func(*R
 	}
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	report := b.snapshot()
+	report := cloneRoleStartDeliveries(b.snapshot())
 	for _, existing := range report.RoleStartReservations {
 		if existing.Key != key {
 			continue
@@ -165,7 +205,7 @@ func (b *RoleStartBudget) update(ctx context.Context, key string, change func(*R
 			return err
 		}
 		updated.RecordedAt = time.Now().UTC()
-		if err := b.persist(updated); err != nil {
+		if err := b.persist(cloneRoleStartReservation(updated)); err != nil {
 			return fmt.Errorf("persist role-start lifecycle update: %w", err)
 		}
 		return nil
@@ -178,7 +218,7 @@ func (b *RoleStartBudget) update(ctx context.Context, key string, change func(*R
 func (b *RoleStartBudget) Accounting() StartAccounting {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	return b.accounting(b.snapshot())
+	return b.accounting(cloneRoleStartDeliveries(b.snapshot()))
 }
 
 func (b *RoleStartBudget) accounting(report RunReport) StartAccounting {

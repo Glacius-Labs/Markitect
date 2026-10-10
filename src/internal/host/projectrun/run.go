@@ -626,7 +626,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 						report.Invocations = append(report.Invocations, started)
 						startedIndex = len(report.Invocations) - 1
 						return persistState(store, &report)
-					})
+					}, report)
 					starts++
 					if startedIndex >= 0 {
 						report.Invocations[startedIndex] = reviewLog
@@ -911,7 +911,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 					report.Invocations = append(report.Invocations, started)
 					startedIndex = len(report.Invocations) - 1
 					return persistState(store, &report)
-				})
+				}, report)
 				starts++
 				if startedIndex >= 0 {
 					report.Invocations[startedIndex] = reviewLog
@@ -982,7 +982,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				}
 				continue
 			}
-			scopeDigest, digestErr := reviewScopeDigest(plan, finalProject, *task, phase)
+			scopeDigest, digestErr := reviewScopeDigest(plan, finalProject, *task, phase, report)
 			if digestErr != nil {
 				return failRun(store, report, digestErr)
 			}
@@ -1014,7 +1014,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				report.Invocations = append(report.Invocations, started)
 				startedIndex = len(report.Invocations) - 1
 				return persistState(store, &report)
-			})
+			}, report)
 			starts++
 			if startedIndex >= 0 {
 				report.Invocations[startedIndex] = reviewLog

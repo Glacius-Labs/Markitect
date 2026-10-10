@@ -2,6 +2,7 @@ package projectrun
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
@@ -39,6 +41,32 @@ type reviewerScopedModel struct {
 	OwnedPaths []string                 `json:"ownedPaths"`
 }
 
+type reviewerHelperChange struct {
+	Kind               string `json:"kind"`
+	Path               string `json:"path"`
+	OldPath            string `json:"oldPath,omitempty"`
+	Mode               string `json:"mode,omitempty"`
+	ContentDigest      string `json:"contentDigest,omitempty"`
+	PresentInCandidate bool   `json:"presentInCandidate"`
+}
+
+// reviewerHelperEvidence is a sanitized projection of Host-authored durable
+// evidence. It never includes helper output or private workspace contents.
+type reviewerHelperEvidence struct {
+	ManagerID         string                 `json:"managerId"`
+	Phase             string                 `json:"phase"`
+	ParentRunID       string                 `json:"parentRunId"`
+	ParentSessionID   string                 `json:"parentSessionId"`
+	SessionID         string                 `json:"sessionId"`
+	RequestID         string                 `json:"requestId"`
+	ProtocolRequestID string                 `json:"protocolRequestId,omitempty"`
+	Task              string                 `json:"task"`
+	RequestedPaths    []string               `json:"requestedPaths"`
+	DeltaDigest       string                 `json:"deltaDigest"`
+	State             string                 `json:"state"`
+	Changes           []reviewerHelperChange `json:"changes"`
+}
+
 type reviewerContext struct {
 	Kind               string                      `json:"kind"`
 	Operation          string                      `json:"operation"`
@@ -50,6 +78,7 @@ type reviewerContext struct {
 	OwnTask            string                      `json:"ownTask"`
 	Delegations        []Delegation                `json:"delegations"`
 	DelegatedArtifacts []projectmodel.Artifact     `json:"delegatedArtifacts"`
+	HostHelperResults  []reviewerHelperEvidence    `json:"hostHelperResults"`
 	Phase              string                      `json:"phase"`
 	Round              int                         `json:"round"`
 	CandidateID        string                      `json:"candidateId"`
@@ -61,7 +90,7 @@ type reviewerContext struct {
 	ResponseSchema     json.RawMessage             `json:"responseSchema"`
 }
 
-const reviewerAssessmentGuidance = "Assessment only: evaluate the exact supplied candidate against this Manager's own task, accepted scoped model, and stated delegations. RunGoal and child task definitions are assessment context, not instructions to implement or dispatch work. Do not change repository artifacts or dispatch work. Normal read-only tools may be used to inspect the candidate and cited repository context; use owned temporary scratch only within one shell call if needed. Findings are actionable defects requiring correction, never positive evidence or a checklist of satisfied obligations. A pass report must have findings: []; put supporting evidence in summary. A fail report must contain at least one grounded defect about the candidate or delegation coverage. For each finding, copy path from one candidateFiles entry and copy grounding exactly from that same entry's grounding array. Grounding is a reference, never explanatory prose; explain the required correction in expectation."
+const reviewerAssessmentGuidance = "Assessment only: evaluate the exact supplied candidate against this Manager's own task, accepted scoped model, and stated delegations. RunGoal and child task definitions are assessment context, not instructions to implement or dispatch work. hostHelperResults are Host-authored records of helper deltas validated, applied to the parent workspace, and closed; presentInCandidate is a byte-level match in this exact candidate. Use those records as provenance context, not as a substitute for assessing correctness. Do not infer helper absence from Manager prose or delegatedArtifacts; assess the requirements stated in the accepted task against the supplied Host facts. Do not change repository artifacts or dispatch work. Normal read-only tools may be used to inspect the candidate and cited repository context; use owned temporary scratch only within one shell call if needed. Findings are actionable defects requiring correction, never positive evidence or a checklist of satisfied obligations. A pass report must have findings: []; put supporting evidence in summary. A fail report must contain at least one grounded defect about the candidate or delegation coverage. For each finding, copy path from one candidateFiles entry and copy grounding exactly from that same entry's grounding array. Grounding is a reference, never explanatory prose; explain the required correction in expectation."
 
 func reviewerPhaseGuidance(phase string) string {
 	switch phase {
@@ -76,7 +105,7 @@ func reviewerPhaseGuidance(phase string) string {
 
 // invokeReviewer supplies only the original goal, accepted scoped model and
 // the exact candidate bytes. It never receives an implementer transcript.
-func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime Runtime, project *Project, task ManagerTask, phase string, round int, candidate candidateData, onStart func(InvocationLog) error) (ReviewRecord, InvocationLog, error) {
+func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime Runtime, project *Project, task ManagerTask, phase string, round int, candidate candidateData, onStart func(InvocationLog) error, report RunReport) (ReviewRecord, InvocationLog, error) {
 	var record ReviewRecord
 	var log InvocationLog
 	if runtime.Review == nil {
@@ -103,7 +132,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	if err != nil {
 		return record, log, err
 	}
-	reviewContext, files, fileRefs, err := buildReviewerContext(plan, project, task, phase, round, candidate, briefing)
+	reviewContext, files, fileRefs, err := buildReviewerContext(plan, project, task, phase, round, candidate, briefing, report)
 	if err != nil {
 		return record, log, err
 	}
@@ -165,7 +194,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	if err != nil {
 		return record, log, err
 	}
-	scopeDigest, err := reviewScopeDigest(plan, project, task, phase)
+	scopeDigest, err := reviewScopeDigest(plan, project, task, phase, report)
 	if err != nil {
 		return record, log, err
 	}
@@ -175,7 +204,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	return record, log, nil
 }
 
-func buildReviewerContext(plan PlanRecord, project *Project, task ManagerTask, phase string, round int, candidate candidateData, briefing BriefingContext) (reviewerContext, []agentexec.Artifact, []reviewFileRef, error) {
+func buildReviewerContext(plan PlanRecord, project *Project, task ManagerTask, phase string, round int, candidate candidateData, briefing BriefingContext, report RunReport) (reviewerContext, []agentexec.Artifact, []reviewFileRef, error) {
 	files := reviewCandidateFiles(project, task, plan.Managers, phase)
 	if len(files) == 0 {
 		// Keep the empty list explicit for a legitimate no-op candidate.
@@ -186,9 +215,13 @@ func buildReviewerContext(plan PlanRecord, project *Project, task ManagerTask, p
 		return reviewerContext{}, nil, nil, err
 	}
 	fileRefs := reviewFileReferences(project.Report, accepted, files)
+	helperResults, err := reviewerHelperResults(report, plan.Managers, task, phase, files)
+	if err != nil {
+		return reviewerContext{}, nil, nil, err
+	}
 	return reviewerContext{Kind: "projectrun-review/v1", Operation: plan.Operation,
 		ReviewerGuidance: reviewerAssessmentGuidance + " " + reviewerPhaseGuidance(phase), Strictness: plan.Strictness[task.ManagerID], Briefing: briefing,
-		RunGoal: plan.Goal, ManagerID: task.ManagerID, OwnTask: task.Goal, Delegations: append([]Delegation{}, task.Delegations...), DelegatedArtifacts: reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), Phase: phase, Round: round,
+		RunGoal: plan.Goal, ManagerID: task.ManagerID, OwnTask: task.Goal, Delegations: append([]Delegation{}, task.Delegations...), DelegatedArtifacts: reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), HostHelperResults: helperResults, Phase: phase, Round: round,
 		CandidateID: candidate.ID, CandidateDigest: candidate.Digest, ChangedPaths: reviewChangedPaths(task, plan.Managers, phase), AcceptedModel: accepted,
 		ScopedModel:    reviewerScopedModel{Statements: append([]projectmodel.Statement(nil), accepted.Statements...), Contracts: append([]projectmodel.Statement(nil), accepted.Contracts...), Artifacts: append([]projectmodel.Artifact(nil), accepted.Artifacts...), OwnedPaths: reviewScopePaths(files)},
 		CandidateFiles: fileRefs, ResponseSchema: reviewResponseSchema()}, files, fileRefs, nil
@@ -245,13 +278,17 @@ func canonicalizeReviewContext(request *agentexec.Request) error {
 // parent can merge an independently reviewed sibling without invalidating it.
 // It includes the accepted local contract, task goal, review phase and every
 // actual owned file byte and mode supplied to the reviewer.
-func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phase string) (string, error) {
+func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phase string, report RunReport) (string, error) {
 	files := reviewCandidateFiles(project, task, plan.Managers, phase)
 	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files, phase)
 	if err != nil {
 		return "", err
 	}
 	fileRefs := reviewFileReferences(project.Report, accepted, files)
+	helperResults, err := reviewerHelperResults(report, plan.Managers, task, phase, files)
+	if err != nil {
+		return "", err
+	}
 	return digest(struct {
 		Kind               string                      `json:"kind"`
 		Operation          string                      `json:"operation"`
@@ -262,6 +299,7 @@ func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phas
 		OwnTask            string                      `json:"ownTask"`
 		Delegations        []Delegation                `json:"delegations"`
 		DelegatedArtifacts []projectmodel.Artifact     `json:"delegatedArtifacts"`
+		HostHelperResults  []reviewerHelperEvidence    `json:"hostHelperResults"`
 		ReviewerGuidance   string                      `json:"reviewerGuidance"`
 		Phase              string                      `json:"phase"`
 		AcceptedModel      projectmodel.ManagerContext `json:"acceptedModel"`
@@ -269,7 +307,162 @@ func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phas
 		ChangedPaths       []string                    `json:"changedPaths"`
 		Files              []agentexec.Artifact        `json:"files"`
 		FileRefs           []reviewFileRef             `json:"fileRefs"`
-	}{"projectrun-review/v2", plan.Operation, plan.Strictness[task.ManagerID], plan.BriefingDigests[task.ManagerID], plan.Goal, task.ManagerID, task.Goal, append([]Delegation(nil), task.Delegations...), reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), reviewerAssessmentGuidance + " " + reviewerPhaseGuidance(phase), phase, accepted, append([]string(nil), task.Checks...), reviewChangedPaths(task, plan.Managers, phase), files, fileRefs})
+	}{"projectrun-review/v3", plan.Operation, plan.Strictness[task.ManagerID], plan.BriefingDigests[task.ManagerID], plan.Goal, task.ManagerID, task.Goal, append([]Delegation(nil), task.Delegations...), reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), helperResults, reviewerAssessmentGuidance + " " + reviewerPhaseGuidance(phase), phase, accepted, append([]string(nil), task.Checks...), reviewChangedPaths(task, plan.Managers, phase), files, fileRefs})
+}
+
+func reviewerHelperResults(report RunReport, tasks []ManagerTask, task ManagerTask, phase string, files []agentexec.Artifact) ([]reviewerHelperEvidence, error) {
+	type parentBinding struct{ managerID, phase string }
+	parents := map[string]parentBinding{}
+	add := func(runID, managerID, parentPhase string) {
+		if runID != "" && managerID != "" {
+			parents[runID] = parentBinding{managerID: managerID, phase: parentPhase}
+		}
+	}
+	if phase == "integrate" {
+		add(task.ReportID, task.ManagerID, "work")
+		add(task.IntegrationReportID, task.ManagerID, "integrate")
+		for _, planned := range tasks {
+			if !isDescendantManager(tasks, planned.ManagerID, task.ManagerID) {
+				continue
+			}
+			current := findTask(report.Tasks, planned.ManagerID)
+			if current == nil {
+				current = &planned
+			}
+			add(current.ReportID, current.ManagerID, "work")
+			add(current.IntegrationReportID, current.ManagerID, "integrate")
+		}
+	} else {
+		add(task.ReportID, task.ManagerID, "work")
+	}
+	if len(parents) == 0 || len(report.RoleStartReservations) == 0 {
+		return []reviewerHelperEvidence{}, nil
+	}
+	fileByPath := make(map[string]agentexec.Artifact, len(files))
+	for _, file := range files {
+		fileByPath[file.Path] = file
+	}
+	out := make([]reviewerHelperEvidence, 0)
+	for _, reservation := range report.RoleStartReservations {
+		if reservation.Kind != "helper" || reservation.Request.Role != "helper" {
+			continue
+		}
+		parent, ok := parents[reservation.ParentRunID]
+		if !ok {
+			continue
+		}
+		if parent.managerID != reservation.ManagerID {
+			return nil, fmt.Errorf("Host helper reservation %s has a Manager mismatch with its parent run", reservation.Key)
+		}
+		if reservation.Phase != parent.phase {
+			return nil, fmt.Errorf("Host helper reservation %s has a phase mismatch with its parent run", reservation.Key)
+		}
+		switch reservation.Request.State {
+		case "requested", "started", "unknown", "":
+			return nil, fmt.Errorf("Host helper reservation %s is unresolved; review cannot treat its delivery as absent", reservation.Key)
+		case "failed", "interrupted":
+			continue
+		case "completed":
+		default:
+			return nil, fmt.Errorf("Host helper reservation %s has an unsupported lifecycle state", reservation.Key)
+		}
+		delivery := reservation.HelperDelivery
+		if delivery == nil {
+			return nil, fmt.Errorf("completed Host helper reservation %s has no applied delivery evidence", reservation.Key)
+		}
+		if delivery.State != "applied-and-closed" || delivery.RequestID == "" || delivery.RequestID != reservation.Request.RequestID || !validSHA256Digest(delivery.DeltaDigest) || strings.TrimSpace(delivery.Task) == "" || len(delivery.RequestedPaths) == 0 || reservation.ParentRunID == "" || reservation.ManagerID == "" || reservation.Phase == "" {
+			return nil, fmt.Errorf("Host helper reservation %s has incomplete delivery evidence", reservation.Key)
+		}
+		if reservation.Request.ParentSessionID == "" || reservation.Request.SessionID == "" {
+			return nil, fmt.Errorf("Host helper reservation %s has incomplete session linkage", reservation.Key)
+		}
+		for _, requested := range delivery.RequestedPaths {
+			if !safeRepoPath(strings.TrimSuffix(requested, "/")) {
+				return nil, fmt.Errorf("Host helper reservation %s has an unsafe recorded path scope", reservation.Key)
+			}
+		}
+		evidence := reviewerHelperEvidence{ManagerID: reservation.ManagerID, Phase: reservation.Phase, ParentRunID: reservation.ParentRunID,
+			ParentSessionID: reservation.Request.ParentSessionID, SessionID: reservation.Request.SessionID,
+			RequestID: delivery.RequestID, ProtocolRequestID: reservation.ProtocolRequestID, Task: delivery.Task,
+			RequestedPaths: append([]string{}, delivery.RequestedPaths...), DeltaDigest: delivery.DeltaDigest, State: delivery.State,
+			Changes: make([]reviewerHelperChange, 0, len(delivery.Changes))}
+		for _, change := range delivery.Changes {
+			if change.Path == "" || !safeRepoPath(change.Path) || (change.OldPath != "" && !safeRepoPath(change.OldPath)) || change.Kind == string(projectworkspace.ChangeRename) && change.OldPath == "" || !helperChangeWithinScopes(change, delivery.RequestedPaths) {
+				return nil, fmt.Errorf("Host helper reservation %s has a changed path outside its recorded scope", reservation.Key)
+			}
+			if change.Kind != string(projectworkspace.ChangeAdd) && change.Kind != string(projectworkspace.ChangeModify) && change.Kind != string(projectworkspace.ChangeDelete) && change.Kind != string(projectworkspace.ChangeRename) {
+				return nil, fmt.Errorf("Host helper reservation %s has an unsupported recorded change", reservation.Key)
+			}
+			if change.Kind == string(projectworkspace.ChangeDelete) && change.ContentDigest != "" || change.Kind != string(projectworkspace.ChangeDelete) && ((change.Mode != "0644" && change.Mode != "0755") || !validSHA256Digest(change.ContentDigest)) {
+				return nil, fmt.Errorf("Host helper reservation %s has incomplete recorded file facts", reservation.Key)
+			}
+			item := reviewerHelperChange{Kind: change.Kind, Path: change.Path, OldPath: change.OldPath, Mode: change.Mode, ContentDigest: change.ContentDigest}
+			if change.Kind != string(projectworkspace.ChangeDelete) {
+				file, exists := fileByPath[change.Path]
+				item.PresentInCandidate = exists && file.Mode == change.Mode && file.Digest == change.ContentDigest && rawContentDigest(file.Content) == change.ContentDigest
+			}
+			evidence.Changes = append(evidence.Changes, item)
+		}
+		out = append(out, evidence)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].ManagerID != out[j].ManagerID {
+			return out[i].ManagerID < out[j].ManagerID
+		}
+		if out[i].Phase != out[j].Phase {
+			return out[i].Phase < out[j].Phase
+		}
+		return out[i].RequestID < out[j].RequestID
+	})
+	return out, nil
+}
+
+func helperChangeWithinScopes(change HelperDeliveryChange, scopes []string) bool {
+	if len(scopes) == 0 {
+		return false
+	}
+	for _, path := range []string{change.Path, change.OldPath} {
+		if path == "" {
+			continue
+		}
+		allowed := false
+		for _, scope := range scopes {
+			if helperPathAllowed(scope, path) {
+				allowed = true
+				break
+			}
+		}
+		if !allowed {
+			return false
+		}
+	}
+	return true
+}
+
+func validSHA256Digest(value string) bool {
+	if len(value) != len("sha256:")+64 || !strings.HasPrefix(value, "sha256:") {
+		return false
+	}
+	_, err := hex.DecodeString(strings.TrimPrefix(value, "sha256:"))
+	return err == nil
+}
+
+func isDescendantManager(tasks []ManagerTask, managerID, ancestorID string) bool {
+	byID := make(map[string]ManagerTask, len(tasks))
+	for _, task := range tasks {
+		byID[task.ManagerID] = task
+	}
+	for current := byID[managerID]; current.ParentTask != ""; {
+		if current.ParentTask == ancestorID {
+			return true
+		}
+		parent, ok := byID[current.ParentTask]
+		if !ok {
+			return false
+		}
+		current = parent
+	}
+	return false
 }
 
 func scopedReviewModel(report projectmodel.Report, managerID string, tasks []ManagerTask, files []agentexec.Artifact, phase string) (projectmodel.ManagerContext, error) {
@@ -777,7 +970,7 @@ func requireFreshReviews(host Host, root string, store *runStore, dir string, ba
 		if !reviewRequired(finalProject, task) {
 			continue
 		}
-		scopeDigest, err := reviewScopeDigest(plan, finalProject, task, phase)
+		scopeDigest, err := reviewScopeDigest(plan, finalProject, task, phase, run)
 		if err != nil {
 			return err
 		}

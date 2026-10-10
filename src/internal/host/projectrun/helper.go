@@ -64,6 +64,7 @@ type HelperStartAttempt struct {
 type HelperReservation interface {
 	AttachProtocolStart(context.Context, agentexec.RoleStartRequest) error
 	Update(context.Context, agentexec.RoleStartRequest) error
+	CompleteDelivery(context.Context, agentexec.RoleStartRequest, HelperDelivery) error
 }
 
 type HelperReserveFunc func(context.Context, HelperStartAttempt) (HelperReservation, error)
@@ -471,8 +472,14 @@ func (s *HelperSession) runHelper(ctx context.Context, call codexappserver.ToolC
 	if len(persistenceErrs) != 0 {
 		state = "unknown"
 	}
-	if err := s.updateRequest(ctx, requestIndex, reservation, state, result.Receipt, ""); err != nil {
-		persistenceErrs = append(persistenceErrs, err)
+	var completionErr error
+	if state == "completed" {
+		completionErr = s.completeRequest(ctx, requestIndex, reservation, result.Receipt, helperDeliveryFromDelta(attempt.Request.RequestID, args, delta))
+	} else {
+		completionErr = s.updateRequest(ctx, requestIndex, reservation, state, result.Receipt, "")
+	}
+	if completionErr != nil {
+		persistenceErrs = append(persistenceErrs, completionErr)
 		if state != "unknown" {
 			if unknownErr := s.updateRequest(ctx, requestIndex, reservation, "unknown", result.Receipt, ""); unknownErr != nil {
 				persistenceErrs = append(persistenceErrs, unknownErr)
@@ -484,6 +491,20 @@ func (s *HelperSession) runHelper(ctx context.Context, call codexappserver.ToolC
 	}
 	text := fmt.Sprintf("Helper completed. task=%s status=proposed paths=%s delta=%s", request.TaskID, strings.Join(deltaPaths(delta), ","), delta.Digest)
 	return codexappserver.ToolResult{Success: true, Text: truncateHelperText(text, 4096)}, nil
+}
+
+func helperDeliveryFromDelta(requestID string, args helperToolArgs, delta projectworkspace.Delta) HelperDelivery {
+	delivery := HelperDelivery{State: "applied-and-closed", RequestID: requestID, Task: args.Task,
+		RequestedPaths: append([]string(nil), args.Paths...), DeltaDigest: delta.Digest,
+		Changes: make([]HelperDeliveryChange, 0, len(delta.Changes))}
+	for _, change := range delta.Changes {
+		fact := HelperDeliveryChange{Kind: string(change.Kind), Path: change.Path, OldPath: change.OldPath, Mode: protocolMode(change.Mode)}
+		if change.Kind != projectworkspace.ChangeDelete {
+			fact.ContentDigest = rawContentDigest(change.Content)
+		}
+		delivery.Changes = append(delivery.Changes, fact)
+	}
+	return delivery
 }
 
 func (s *HelperSession) childOptions(reservation HelperReservation, hostRequest agentexec.RoleStartRequest) codexappserver.Options {
@@ -603,6 +624,28 @@ func (s *HelperSession) updateRequest(ctx context.Context, index int, reservatio
 		if err := reservation.Update(ctx, request); err != nil {
 			return fmt.Errorf("persist Host helper request update: %w", err)
 		}
+	}
+	return nil
+}
+
+func (s *HelperSession) completeRequest(ctx context.Context, index int, reservation HelperReservation, receipt agentexec.Receipt, delivery HelperDelivery) error {
+	s.mu.Lock()
+	if index < 0 || index >= len(s.requests) {
+		s.mu.Unlock()
+		return errors.New("helper reservation index is invalid")
+	}
+	request := s.requests[index]
+	request.State = "completed"
+	if receipt.Lifecycle != nil {
+		request.SessionID = receipt.Lifecycle.SessionID
+	}
+	s.requests[index] = request
+	s.mu.Unlock()
+	if reservation == nil {
+		return errors.New("completed helper delivery has no durable Host reservation")
+	}
+	if err := reservation.CompleteDelivery(ctx, request, delivery); err != nil {
+		return fmt.Errorf("persist Host helper delivery: %w", err)
 	}
 	return nil
 }

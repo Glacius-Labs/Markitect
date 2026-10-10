@@ -118,6 +118,30 @@ func TestRoleStartBudgetAttachesChildRootWithoutAnotherCharge(t *testing.T) {
 	}
 }
 
+func TestRoleStartBudgetCopiesCompletedHelperDelivery(t *testing.T) {
+	store := &roleBudgetMemoryStore{}
+	budget := newRoleBudgetForTest(t, store, 3)
+	attempt := HelperStartAttempt{Request: agentexec.RoleStartRequest{RequestID: "helper-copy", ParentSessionID: "parent-session", SessionID: "helper-session", Role: "helper", State: "requested"},
+		ManagerID: "orders", Phase: "work", ParentRunID: "parent-run"}
+	reservation, err := budget.ReserveHelper(context.Background(), attempt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	delivery := HelperDelivery{State: "applied-and-closed", RequestID: "helper-copy", DeltaDigest: "sha256:delta",
+		RequestedPaths: []string{"tests/"}, Changes: []HelperDeliveryChange{{Kind: "modify", Path: "tests/a_test.go", Mode: "0644", ContentDigest: "sha256:content"}}}
+	request := attempt.Request
+	request.State = "completed"
+	if err := reservation.CompleteDelivery(context.Background(), request, delivery); err != nil {
+		t.Fatal(err)
+	}
+	delivery.RequestedPaths[0] = "outside/"
+	delivery.Changes[0].Path = "outside/file"
+	saved := store.snapshot().RoleStartReservations[0].HelperDelivery
+	if saved == nil || saved.RequestedPaths[0] != "tests/" || saved.Changes[0].Path != "tests/a_test.go" {
+		t.Fatalf("caller mutation changed the durable helper evidence: %+v", saved)
+	}
+}
+
 func TestRoleStartBudgetSerializesConcurrentHelperReservations(t *testing.T) {
 	store := &roleBudgetMemoryStore{}
 	budget := newRoleBudgetForTest(t, store, 2)

@@ -99,7 +99,7 @@ func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *tes
 	}
 	invoker := &resumeReviewInvoker{}
 	_, originalLog, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, project, task,
-		"work", 1, candidate, nil)
+		"work", 1, candidate, nil, RunReport{})
 	if err == nil || invoker.runCalls != 1 || invoker.request.Role != agentexec.RoleExecutor {
 		t.Fatalf("dry request capture did not reach the scripted invoker: err=%v calls=%d", err, invoker.runCalls)
 	}
