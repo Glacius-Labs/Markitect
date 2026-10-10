@@ -18,18 +18,11 @@ The release binary is already installed when the measurement script receives `-M
 
 The synthetic [parcel-support fixture](../examples/onboarding/delivery-service/README.md) contains shared customer-data guidance, a policy, workflow, contract, agent, and Skill entrypoint. `tasks/query-only-prompt.md` with `tasks/query-only-expected.yaml` is the shared read-only task for MCP/CLI find, explain, and context parity. `tasks/policy-edit-prompt.md` with `tasks/expected.yaml` is a separate CLI-only mutation task that also exercises verification and fixed-SHA impact. Oracle and prompt files are excluded from the measured project's Git snapshots.
 
-Run the repeatable CLI exercise with the installed executable. Its legacy steps need the temporary `markitect-legacy` executable built from the same source (`go build -o $legacyBinary ./src/cmd/markitect-legacy`) until ARCH-09 removes them:
+The scripted replay of this task, `scripts/onboarding/Measure-Adoption.ps1`, was retired on 11 October 2026 (backlog CI-03). It mixed the model-first `init` with legacy commands. Two checks now cover the model-first onboarding path:
+- On every pull request, the [smoke driver](../tools/smoke/main.go) runs `init` and `onboard` with a preview, a digest-checked write and `check`.
+- The [playground smoke](../.github/workflows/playground-smoke.yaml) also runs it in a container.
 
-```powershell
-pwsh -NoProfile -File scripts/onboarding/Measure-Adoption.ps1 `
-  -MarkitectBinary $binary `
-  -MarkitectLegacyBinary $legacyBinary `
-  -OutputDirectory (Join-Path $env:TEMP ('markitect-onboarding-' + [guid]::NewGuid().ToString('N')))
-```
-
-This is a scripted CLI workflow replay: the runner reads the task description for presence, then makes the predefined policy replacement itself; no participant or model applies the task. The script checks the version, exercises read-only `init` preview and `init --write` in a disposable feature branch, creates the fixture's baseline commit, checks the baseline, compiles context at its full SHA, applies a scripted replacement for the fixed policy task, commits it, runs `check` and declared `verify` at the full candidate SHA, and checks `impact --base <full-sha> --revision <full-sha>`. It exits nonzero if any fixed expected input or affected resource is missing. A build candidate can be supplied the same way in CI; its hash/version are recorded as observed values.
-
-The measurement YAML is written to the selected output directory; raw command logs are in its `raw-logs` folder. After committing the candidate, the runner also creates `fixture.bundle` containing both fixed snapshots, so CI artifacts retain the Git evidence without depending on hidden `.git` files. The record contains elapsed command times, binary identity, and baseline/candidate SHAs. It does not contain source text, actor prompts, or estimated token usage. Preserve the entire output directory with the run artifact when reviewing a result.
+The dated result below is the record of the retired script.
 
 ## Dated result
 

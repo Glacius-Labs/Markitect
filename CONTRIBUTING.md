@@ -72,6 +72,7 @@ Begin through the repository's model-first contributor guidance and classify a r
 ```powershell
 go test ./... -count=1 -timeout=60m
 go vet ./...
+go run ./tools/smoke -repo .
 go run ./src/cmd/markitect-legacy schema --repo .
 go run ./src/cmd/markitect-legacy check --repo examples/minimal
 go run ./src/cmd/markitect-legacy check --repo examples/repository-layout
@@ -100,6 +101,8 @@ Tests must not depend on the machine's Git configuration. A package whose tests 
 Full source gates use `-count=1` to require fresh test execution rather than report a cached test success as a new candidate run. The complete suite runs once per CI job; this source Project's `verify` does not declare it as a check, so the dogfood Verify does not run it a second time. Focused checks use a ten-minute default, broad package runs thirty minutes and a complete local suite run sixty minutes. Preserve already-running work and original timeout evidence; investigate a real expiry rather than automatically retrying it.
 
 Pull requests and main commits run the hosted quality job on Linux; that job is the required gate. It has a 30-minute limit and gives the suite a 20-minute test-binary limit, so a hung test still ends with Go's timeout report. Windows runs the same job nightly, on manual dispatch and in releases, with a 90-minute job limit and a 60-minute test-binary limit, and does not block merges ([DEC-013](docs/concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)). The job also executes the package, adapter, schema and example gates and the fixed-revision dogfood Verify.
+
+`go run ./tools/smoke -repo .` packages the source, tests the standalone bootstrap, builds the tools from the packaged source and checks them end to end: `init` and `onboard` with preview, a refused stale digest, digest-checked write and `check`, the selective-adoption replay, artifact accounting, and a marked group of legacy checks that ARCH-09 removes. CI runs it in the quality job on every operating system; it replaces the earlier shell-specific smoke steps.
 
 The [playground smoke](.github/workflows/playground-smoke.yaml) runs the case playground's unit tests and its provider-free container run: a fake agent drives the Markitect arm (`project init`, `onboard`, `setup`, every station and the final `project check`) against a Linux build of the commit. It runs nightly, on manual dispatch and on pull requests that change `src/`, `go.mod`, `go.sum` or `experiments/case-playground/`. It makes no model call and uses no secrets.
 
