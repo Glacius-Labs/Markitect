@@ -2025,3 +2025,9 @@ Root sent boundedretainedwire comparison: actualtransmittedoutputSchema+request 
 ### Actual10 saved response contains escaped/truncated references and Manager IDs
 
 Owner savednativeJSON contains twoidenticaltruncated/overescaped evidencevalues (encodedarrayprefix project.mark) plusREADME.md, childManagerIDs alsooverescaped. Hostrejectcorrect; actualwire/constraint behavior stillindependentlyread, noexactcauseassertionyet. Unconditionalscratchguidance createdunnecessarytempforREADME-onlytask, deniedcleanupbecamepartialrisk; ownerlimitsguidance towhenneeded. No newproviderbatch before concretefix/focusedchecks, no inventedcleanup or widenedrights.
+
+### Real-wire cause uncertain; Host-owned envelope simplifies native output
+
+Owner exactactualbin99a1/go-version clean8e0 proof; obsoleteprivate-rootbinary reviewwithdrawn preserved. Finalseq586 exactnativefinalselectedcorrectly, allowedrefs3known andactualrefs malformed. OutgoingRPCframes were notretained: sourcecall+fixture provescodepath, notactualframe/providerconstraintenforcement; exactcauseUNKNOWN, Hostdecoderrejectcorrect.
+
+Owner minimalsemantic-onlynativeExecutor/Verifier output, Hostknownidentity/emptyoptionalrefs composeexistingDTO thenstrictdecode, reports/judgement/helperbytes unchanged; unknownmetadata/refclaimsrejected. Invoke/OriginalRecovershared/no replay; RootobservedInferlegacybranchpreserved. Rootrequestedcheapactualoutgoingframe/schema capture inexistingprivatejournal, no controller/probe/manualgate/publicleak. Currentboundedfourrole/protocol/recoverychecks+reviewbeforeordinaryfreshA01; conditional scratchguidance, notnewrightsmatrix.
