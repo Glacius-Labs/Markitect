@@ -21,21 +21,21 @@ packages:
   - path: src/internal/host/projectbriefing
     layer: core
     purpose: Records deterministic briefings for accepted model changes from committed history.
-    doc: docs/design/project-world/operation-scopes-and-model-briefings.md
+    doc: docs/architecture.md#core-layer
   - path: src/internal/host/projectcoverage
     layer: core
     purpose: Inventories repository paths and classifies how the project model covers them.
-    doc: docs/project-operations.md#ordinary-work-item
+    doc: docs/architecture.md#core-layer
   - path: src/internal/modules/projectmodel
     layer: core
     purpose: Derives management, artifact and impact views from the compiled project model.
-    doc: docs/project-workflow.md#model-and-readiness
+    doc: docs/architecture.md#core-layer
 
   # --- infrastructure -----------------------------------------------------
   - path: src/internal/host/guardedwrite
     layer: infrastructure
     purpose: Applies selected working-tree changes only while repository, branch, HEAD and captured bytes are unchanged.
-    doc: docs/design/host-write-identity.md#authority-and-object-identity
+    doc: docs/architecture.md#infrastructure-layer
   - path: src/internal/infrastructure/source
     layer: infrastructure
     purpose: Loads fixed snapshots from the working tree or a Git commit with hardened Git processes.
@@ -53,7 +53,7 @@ packages:
   - path: src/internal/host/projectapp
     layer: application
     purpose: Shared application facade that the project CLI and MCP server call.
-    doc: docs/architecture.md
+    doc: docs/architecture.md#application-layer
   - path: src/internal/host/projectcli
     layer: application
     purpose: The `markitect project` command line.
@@ -105,7 +105,7 @@ packages:
   - path: src/internal/host
     layer: legacy
     purpose: Host root with the v0.13 Project/Domain commands and their composition.
-    doc: docs/development/modules.md#responsibility-map
+    doc: docs/architecture.md#legacy-line
   - path: src/internal/host/artifactcli
     layer: legacy
     purpose: Command interface of `markitect-check-artifacts` for managed-artifact accounting.
@@ -181,7 +181,7 @@ packages:
   - path: src/internal/host/embedded
     layer: legacy
     purpose: Tool-shipped authoring guidance compiled as a Markitect context.
-    doc: docs/architecture.md#authoring-and-queries
+    doc: docs/architecture.md#legacy-line
   - path: src/internal/host/githubcli
     layer: legacy
     purpose: Command protocol of the GitHub repository-metadata adapter.
@@ -189,7 +189,7 @@ packages:
   - path: src/internal/host/inputs
     layer: legacy
     purpose: Resolves explicitly declared non-Markitect input files for a v0.13 graph.
-    doc: docs/architecture.md#fixed-inputs-and-evidence
+    doc: docs/architecture.md#legacy-line
   - path: src/internal/host/modulecli
     layer: legacy
     purpose: Command interface of `markitect-check-modules`.
