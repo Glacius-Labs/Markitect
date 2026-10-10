@@ -574,7 +574,7 @@ native_acceptance:
     terminal_run_state_digest: 3af3f544431f422b7b345a82255783e789eae1a233f7d81f60ff26cc9ca13fa5
     root_work_and_review: pass
     docs_work: complete
-    source_native_turn: complete
+    source_native_turn_status: complete
     source_durable_task_state: invoking
     source_review_observed: false
     docs_review_native_run_id: 58dc4dcd689bc685fe888b581c9319aa
