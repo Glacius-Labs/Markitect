@@ -52,6 +52,26 @@ type WorkingRootInventory struct {
 // empty files. It does not change source.Load or repository-wide snapshot
 // digest semantics.
 func ObserveSelectedWorking(root string, paths []string) (*SelectedWorkingSnapshot, error) {
+	clean, err := selectedWorkingPaths(paths)
+	if err != nil {
+		return nil, err
+	}
+	return acquireOnce(root, selectiveGitOutput, func(a *Acquisition) (*SelectedWorkingSnapshot, error) {
+		return a.observeWorkingPaths(clean)
+	})
+}
+
+// ObserveSelectedWorking is the package-level ObserveSelectedWorking bound to
+// the acquisition's repository identity.
+func (a *Acquisition) ObserveSelectedWorking(paths []string) (*SelectedWorkingSnapshot, error) {
+	clean, err := selectedWorkingPaths(paths)
+	if err != nil {
+		return nil, err
+	}
+	return a.observeWorkingPaths(clean)
+}
+
+func selectedWorkingPaths(paths []string) ([]string, error) {
 	if len(paths) > DefaultMaxFiles {
 		return nil, errors.New("selected working snapshot exceeds file-count limit")
 	}
@@ -60,11 +80,12 @@ func ObserveSelectedWorking(root string, paths []string) (*SelectedWorkingSnapsh
 		return nil, fmt.Errorf("validate selected working paths: %w", err)
 	}
 	sort.Strings(clean)
-	identity, initialStats, err := identifyGit(root, selectiveGitOutput)
-	if err != nil {
-		return nil, err
-	}
-	rootFS, err := os.OpenRoot(identity.Root)
+	return clean, nil
+}
+
+func (a *Acquisition) observeWorkingPaths(clean []string) (*SelectedWorkingSnapshot, error) {
+	identity := a.identity
+	rootFS, err := a.openRoot()
 	if err != nil {
 		return nil, fmt.Errorf("open selected working tree root: %w", err)
 	}
@@ -93,7 +114,7 @@ func ObserveSelectedWorking(root string, paths []string) (*SelectedWorkingSnapsh
 		result.Snapshot.Files[repoPath] = data
 		result.Snapshot.Modes[repoPath] = mode
 	}
-	fileModeEnabled, err := GitFileModeEnabled(identity.Root)
+	fileModeEnabled, err := a.FileModeEnabled()
 	if err != nil {
 		return nil, fmt.Errorf("inspect Git worktree mode policy: %w", err)
 	}
@@ -109,9 +130,6 @@ func ObserveSelectedWorking(root string, paths []string) (*SelectedWorkingSnapsh
 		for repoPath, mode := range indexModes {
 			result.Snapshot.Modes[repoPath] = mode
 		}
-	}
-	if err := confirmGitIdentity(identity, initialStats, selectiveGitOutput); err != nil {
-		return nil, err
 	}
 	return result, nil
 }
@@ -219,11 +237,24 @@ func InventoryWorkingRoots(root string, exactPrefixes []string) (*WorkingRootInv
 	if err != nil {
 		return nil, err
 	}
-	identity, initialStats, err := identifyGit(root, selectiveGitOutput)
+	return acquireOnce(root, selectiveGitOutput, func(a *Acquisition) (*WorkingRootInventory, error) {
+		return a.inventoryWorkingPrefixes(prefixes)
+	})
+}
+
+// InventoryWorkingRoots is the package-level InventoryWorkingRoots bound to
+// the acquisition's repository identity.
+func (a *Acquisition) InventoryWorkingRoots(exactPrefixes []string) (*WorkingRootInventory, error) {
+	prefixes, err := normalizeInventoryPrefixes(exactPrefixes)
 	if err != nil {
 		return nil, err
 	}
-	rootFS, err := os.OpenRoot(identity.Root)
+	return a.inventoryWorkingPrefixes(prefixes)
+}
+
+func (a *Acquisition) inventoryWorkingPrefixes(prefixes []string) (*WorkingRootInventory, error) {
+	identity := a.identity
+	rootFS, err := a.openRoot()
 	if err != nil {
 		return nil, fmt.Errorf("open working inventory root: %w", err)
 	}
@@ -277,9 +308,6 @@ func InventoryWorkingRoots(root string, exactPrefixes []string) (*WorkingRootInv
 		return nil, err
 	}
 	sort.Slice(result.Entries, func(i, j int) bool { return result.Entries[i].Path < result.Entries[j].Path })
-	if err := confirmGitIdentity(identity, initialStats, selectiveGitOutput); err != nil {
-		return nil, err
-	}
 	result.MetadataDigest = workingMetadataDigest(result.Prefixes, result.Entries, result.MissingPrefixes)
 	return result, nil
 }

@@ -62,12 +62,20 @@ func buildNativeWorkspace(root, revision string, project *Project, agent Agent) 
 	if err != nil || !rootInfo.IsDir() || rootInfo.Mode()&os.ModeSymlink != 0 {
 		return nil, fmt.Errorf("native workspace project root must be a real directory")
 	}
-	fixed, err := source.LoadSelected(root, revision, paths)
+	// One repository identity check covers both the fixed and working reads.
+	acquisition, err := source.BeginAcquisition(root)
 	if err != nil {
 		return nil, fmt.Errorf("load fixed native instruction snapshot: %w", err)
 	}
-	working, err := source.ObserveSelectedWorking(root, paths)
+	fixed, err := acquisition.LoadSelected(revision, paths)
 	if err != nil {
+		return nil, fmt.Errorf("load fixed native instruction snapshot: %w", err)
+	}
+	working, err := acquisition.ObserveSelectedWorking(paths)
+	if err != nil {
+		return nil, fmt.Errorf("observe working native instructions: %w", err)
+	}
+	if err := acquisition.Confirm(); err != nil {
 		return nil, fmt.Errorf("observe working native instructions: %w", err)
 	}
 	if working.Snapshot == nil || len(working.MissingPaths) != 0 {

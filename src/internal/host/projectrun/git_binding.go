@@ -13,6 +13,12 @@ func resolveGitHead(root string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	return resolveIdentifiedGitHead(root, identity)
+}
+
+// resolveIdentifiedGitHead resolves HEAD for a repository the caller has just
+// identified, without a second identity check.
+func resolveIdentifiedGitHead(root string, identity source.GitIdentity) (string, error) {
 	output, err := source.GitOutput(root, "rev-parse", "--verify", "HEAD^{commit}")
 	if err != nil {
 		return "", fmt.Errorf("resolve repository HEAD: %w", err)

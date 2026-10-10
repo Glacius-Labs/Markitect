@@ -2,11 +2,13 @@ package projectwork
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -226,6 +228,53 @@ func TestLoadFullCoverageModelWithoutRuntimeForWorkingAndFixedSnapshots(t *testi
 	}
 	if _, err := projectmodel.Context(fixed.Report, fixed.Report.Managers[0].ID); err != nil {
 		t.Fatalf("fixed full-coverage context required runtime configuration: %v", err)
+	}
+}
+
+// Each Git process costs far more on Windows than on Linux, and every Host
+// step loads the Project. Exact counts catch a Load that starts more Git
+// processes, such as one identity check per selected read instead of one per
+// Load.
+func TestLoadChecksRepositoryIdentityOnceAndPinsGitStarts(t *testing.T) {
+	selectedRoot, selectedRevision := testProject(t)
+	fullRoot := testGitRoot(t)
+	if _, err := Init(fullRoot, "Git count fixture", true); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, fullRoot, "add", ".")
+	gitTest(t, fullRoot, "commit", "-m", "initialize full-coverage model")
+	fullRevision := strings.TrimSpace(gitTest(t, fullRoot, "rev-parse", "HEAD"))
+	for _, root := range []string{selectedRoot, fullRoot} {
+		// Git disables file modes on Windows; use that policy everywhere so the
+		// counts include the index-mode lookups and match on every platform.
+		gitTest(t, root, "config", "core.filemode", "false")
+	}
+	gitCalls := countGitStarts(t)
+	// Full coverage includes the repository census, which reads through the
+	// same acquisition and rechecks HEAD, index and file-mode policy itself.
+	for _, tc := range []struct {
+		name, root, revision string
+		starts, identities   int
+	}{
+		{"selected working tree", selectedRoot, "", 6, 2},
+		{"selected fixed revision", selectedRoot, selectedRevision, 9, 2},
+		{"full working tree", fullRoot, "", 15, 2},
+		{"full fixed revision", fullRoot, fullRevision, 9, 2},
+	} {
+		calls := gitCalls(func() {
+			if _, err := Load(tc.root, tc.revision); err != nil {
+				t.Fatalf("%s: %v", tc.name, err)
+			}
+		})
+		identities := 0
+		for _, call := range calls {
+			if strings.Contains(call, "rev-parse --path-format=absolute --show-toplevel") {
+				identities++
+			}
+		}
+		if len(calls) != tc.starts || identities != tc.identities {
+			t.Errorf("%s: Load started %d Git processes with %d identity checks, want %d with %d:\n%s", tc.name, len(calls), identities, tc.starts, tc.identities, strings.Join(calls, "\n"))
+		}
 	}
 }
 
@@ -670,4 +719,50 @@ func gitTest(t *testing.T, root string, args ...string) string {
 		t.Fatalf("git %v: %v\n%s", args, err, output)
 	}
 	return string(output)
+}
+
+// countGitStarts puts a copy of this test binary first on PATH as git for the
+// rest of the test (see TestMain). The returned function runs run and returns
+// the arguments of each Git process it started.
+func countGitStarts(t *testing.T) func(run func()) []string {
+	t.Helper()
+	realGit, err := exec.LookPath("git")
+	if err != nil {
+		t.Fatal(err)
+	}
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	binary, err := os.ReadFile(executable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wrapperDir := t.TempDir()
+	wrapper := filepath.Join(wrapperDir, "git")
+	if runtime.GOOS == "windows" {
+		wrapper += ".exe"
+	}
+	if err := os.WriteFile(wrapper, binary, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	log := filepath.Join(t.TempDir(), "git-calls.log")
+	t.Setenv(realGitEnv, realGit)
+	t.Setenv(gitCountLogEnv, log)
+	t.Setenv("PATH", wrapperDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	return func(run func()) []string {
+		t.Helper()
+		if err := os.Remove(log); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			t.Fatal(err)
+		}
+		run()
+		data, err := os.ReadFile(log)
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		return strings.Split(strings.TrimSuffix(string(data), "\n"), "\n")
+	}
 }

@@ -2,7 +2,10 @@ package source
 
 import (
 	"bytes"
+	"errors"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -45,6 +48,64 @@ func TestIdentifyGitUsesOneMetadataQueryAndRechecksAroundLoad(t *testing.T) {
 	}
 	if len(selected.Snapshot.Files) != 1 || string(selected.Snapshot.Files["seed.txt"]) != "seed" {
 		t.Fatalf("selected snapshot = %#v; batching must not broaden selected content", selected.Snapshot.Files)
+	}
+}
+
+func TestAcquisitionIdentifiesOnceAcrossReadsAndRejectsReplacedRepository(t *testing.T) {
+	repo := testkit.NewRepo(t)
+	repo.Write("src/seed.txt", "original")
+	commit := repo.Commit("seed")
+	other := testkit.NewRepo(t)
+	other.Write("src/seed.txt", "replacement")
+	other.Commit("seed")
+	root := repo.Dir
+	var identities, verifications int
+	run := func(repo string, args ...string) ([]byte, error) {
+		if reflect.DeepEqual(args, batchedGitIdentityArgs) {
+			identities++
+		} else if len(args) > 1 && args[0] == "rev-parse" && args[1] == "--verify" {
+			verifications++
+		}
+		return selectiveGitOutput(repo, args...)
+	}
+
+	acquisition, err := beginAcquisition(root, run)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := acquisition.InventoryRevisionRoots(commit, []string{"src"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := acquisition.LoadSelected(commit, []string{"src/seed.txt"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := acquisition.InventoryWorkingRoots([]string{"src"}); err != nil {
+		t.Fatal(err)
+	}
+	observed, err := acquisition.ObserveSelectedWorking([]string{"src/seed.txt"})
+	if err != nil || string(observed.Snapshot.Files["src/seed.txt"]) != "original" {
+		t.Fatalf("working read = %v, %v", observed, err)
+	}
+	if err := acquisition.Confirm(); err != nil {
+		t.Fatal(err)
+	}
+	if identities != 2 || verifications != 1 {
+		t.Fatalf("four reads in one acquisition ran %d identity checks and %d commit verifications, want 2 and 1", identities, verifications)
+	}
+
+	// Replace the repository at the identified path. A later working read must
+	// not follow the path into the other repository, and Confirm rejects it.
+	if err := os.Rename(root, filepath.Join(testkit.TempDir(t), "moved")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(other.Dir, root); err != nil {
+		t.Fatal(err)
+	}
+	if replaced, err := acquisition.ObserveSelectedWorking([]string{"src/seed.txt"}); !errors.Is(err, errGitIdentityChanged) {
+		t.Fatalf("working read after replacement = %v, %v; want identity change", replaced, err)
+	}
+	if err := acquisition.Confirm(); !errors.Is(err, errGitIdentityChanged) {
+		t.Fatalf("Confirm after replacement = %v, want identity change", err)
 	}
 }
 

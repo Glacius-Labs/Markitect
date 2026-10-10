@@ -2285,7 +2285,7 @@ func repositoryMatches(root string, plan PlanRecord) error {
 	if identity.Digest != plan.RepositoryDigest {
 		return ErrStale
 	}
-	head, err := resolveGitHead(root)
+	head, err := resolveIdentifiedGitHead(root, identity)
 	if err != nil {
 		return err
 	}

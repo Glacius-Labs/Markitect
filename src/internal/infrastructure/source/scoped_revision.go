@@ -25,15 +25,28 @@ func InventoryRevisionRoots(root, fullCommit string, exactPrefixes []string) (*R
 	return inventoryRevisionRoots(root, fullCommit, exactPrefixes, selectiveGitOutput)
 }
 
+// InventoryRevisionRoots is the package-level InventoryRevisionRoots bound to
+// the acquisition's repository identity.
+func (a *Acquisition) InventoryRevisionRoots(fullCommit string, exactPrefixes []string) (*RevisionRootInventory, error) {
+	prefixes, err := normalizeInventoryPrefixes(exactPrefixes)
+	if err != nil {
+		return nil, err
+	}
+	return a.inventoryRevisionPrefixes(fullCommit, prefixes)
+}
+
 func inventoryRevisionRoots(root, fullCommit string, exactPrefixes []string, run gitOutputFunc) (*RevisionRootInventory, error) {
 	prefixes, err := normalizeInventoryPrefixes(exactPrefixes)
 	if err != nil {
 		return nil, err
 	}
-	identity, stats, err := identifyGit(root, run)
-	if err != nil {
-		return nil, err
-	}
+	return acquireOnce(root, run, func(a *Acquisition) (*RevisionRootInventory, error) {
+		return a.inventoryRevisionPrefixes(fullCommit, prefixes)
+	})
+}
+
+func (a *Acquisition) inventoryRevisionPrefixes(fullCommit string, prefixes []string) (*RevisionRootInventory, error) {
+	identity, run := a.identity, a.run
 	wantLength := 40
 	if identity.ObjectFormat == "sha256" {
 		wantLength = 64
@@ -44,11 +57,11 @@ func inventoryRevisionRoots(root, fullCommit string, exactPrefixes []string, run
 	if _, err := hex.DecodeString(fullCommit); err != nil {
 		return nil, errors.New("revision inventory requires a hexadecimal commit ID")
 	}
-	resolved, err := run(identity.Root, "rev-parse", "--verify", "--end-of-options", fullCommit+"^{commit}")
+	resolved, err := a.verifyCommit(fullCommit)
 	if err != nil {
 		return nil, fmt.Errorf("verify inventory commit: %w", err)
 	}
-	if strings.TrimSpace(string(resolved)) != fullCommit {
+	if resolved != fullCommit {
 		return nil, errors.New("inventory commit resolved to another ID")
 	}
 	result := &RevisionRootInventory{Identity: identity, Revision: fullCommit, Prefixes: prefixes, Entries: []WorkingFileMetadata{}, MissingPrefixes: []string{}}
@@ -113,9 +126,6 @@ func inventoryRevisionRoots(root, fullCommit string, exactPrefixes []string, run
 		}
 	}
 	sort.Slice(result.Entries, func(i, j int) bool { return result.Entries[i].Path < result.Entries[j].Path })
-	if err := confirmGitIdentity(identity, stats, run); err != nil {
-		return nil, err
-	}
 	result.MetadataDigest = workingMetadataDigest(result.Prefixes, result.Entries, result.MissingPrefixes)
 	return result, nil
 }

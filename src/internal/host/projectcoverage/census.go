@@ -66,14 +66,40 @@ func ObserveWorking(root string, options Options) (*Universe, error) {
 	return observeWorking(root, options, nil)
 }
 
+// ObserveWorkingIn is ObserveWorking for a caller that reads the repository
+// through acquisition. The census adds no identity checks of its own; the
+// caller confirms the acquisition after its last read.
+func ObserveWorkingIn(acquisition *source.Acquisition, options Options) (*Universe, error) {
+	return observeWorkingIn(acquisition, options, nil)
+}
+
 // observeWorking keeps an internal mutation seam immediately before the final
 // consistency check so tests can exercise concurrent path changes without
 // timing-dependent filesystem races.
 func observeWorking(root string, options Options, beforeRecheck func() error) (*Universe, error) {
-	identity, err := source.IdentifyGit(root)
+	return acquireCensus(root, func(acquisition *source.Acquisition) (*Universe, error) {
+		return observeWorkingIn(acquisition, options, beforeRecheck)
+	})
+}
+
+// acquireCensus runs one census as its own repository acquisition.
+func acquireCensus(root string, census func(*source.Acquisition) (*Universe, error)) (*Universe, error) {
+	acquisition, err := source.BeginAcquisition(root)
 	if err != nil {
 		return nil, err
 	}
+	universe, err := census(acquisition)
+	if err != nil {
+		return nil, err
+	}
+	if err := acquisition.Confirm(); err != nil {
+		return nil, err
+	}
+	return universe, nil
+}
+
+func observeWorkingIn(acquisition *source.Acquisition, options Options, beforeRecheck func() error) (*Universe, error) {
+	identity := acquisition.Identity()
 	head, err := source.GitOutput(identity.Root, "rev-parse", "--verify", "HEAD^{commit}")
 	revision := ""
 	unbornRef := ""
@@ -102,7 +128,7 @@ func observeWorking(root string, options Options, beforeRecheck func() error) (*
 	if err := addIndexPaths(identity.Root, paths, gitlinks); err != nil {
 		return nil, err
 	}
-	fileModeEnabled, err := source.GitFileModeEnabled(identity.Root)
+	fileModeEnabled, err := acquisition.FileModeEnabled()
 	if err != nil {
 		return nil, fmt.Errorf("inspect Git worktree mode policy: %w", err)
 	}
@@ -120,7 +146,7 @@ func observeWorking(root string, options Options, beforeRecheck func() error) (*
 		state.OpaqueBoundary = true
 		state.Worktree = FileState{Present: true, Mode: "opaque-repository"}
 	}
-	ignoreBytes, err := readWorkingIgnore(identity.Root)
+	ignoreBytes, err := readWorkingIgnore(acquisition)
 	if err != nil {
 		return nil, err
 	}
@@ -134,12 +160,9 @@ func observeWorking(root string, options Options, beforeRecheck func() error) (*
 	contentPaths := selectedContentPaths(paths, ignore, options, true)
 	contentPaths = append(contentPaths, IgnorePath)
 	contentPaths = uniquePaths(contentPaths)
-	observed, observeErr := source.ObserveSelectedWorking(identity.Root, contentPaths)
+	observed, observeErr := acquisition.ObserveSelectedWorking(contentPaths)
 	if observeErr != nil {
 		return nil, fmt.Errorf("read repository census bytes: %w", observeErr)
-	}
-	if observed.Identity.Digest != identity.Digest {
-		return nil, fmt.Errorf("repository identity changed during census")
 	}
 	if len(observed.MissingPaths) > 0 {
 		for _, missing := range observed.MissingPaths {
@@ -166,7 +189,7 @@ func observeWorking(root string, options Options, beforeRecheck func() error) (*
 	// staged or unstaged change as part of that commit.
 	headContent := selectedHeadContentPaths(paths, ignore, options)
 	if revision != "" && len(headContent) > 0 {
-		selected, loadErr := source.LoadSelected(identity.Root, revision, headContent)
+		selected, loadErr := acquisition.LoadSelected(revision, headContent)
 		if loadErr != nil {
 			return nil, fmt.Errorf("read fixed HEAD census bytes: %w", loadErr)
 		}
@@ -191,10 +214,15 @@ func observeWorking(root string, options Options, beforeRecheck func() error) (*
 // ObserveRevision captures only the named immutable Git tree. Index and live
 // worktree state are deliberately absent from the result.
 func ObserveRevision(root, revision string, options Options) (*Universe, error) {
-	identity, err := source.IdentifyGit(root)
-	if err != nil {
-		return nil, err
-	}
+	return acquireCensus(root, func(acquisition *source.Acquisition) (*Universe, error) {
+		return ObserveRevisionIn(acquisition, revision, options)
+	})
+}
+
+// ObserveRevisionIn is ObserveRevision for a caller that reads the repository
+// through acquisition, as ObserveWorkingIn is for ObserveWorking.
+func ObserveRevisionIn(acquisition *source.Acquisition, revision string, options Options) (*Universe, error) {
+	identity := acquisition.Identity()
 	resolved, err := source.GitOutput(identity.Root, "rev-parse", "--verify", "--end-of-options", revision+"^{commit}")
 	if err != nil {
 		return nil, fmt.Errorf("resolve revision %q: %w", revision, err)
@@ -210,7 +238,7 @@ func ObserveRevision(root, revision string, options Options) (*Universe, error) 
 	}
 	ignoreBytes := []byte(nil)
 	if state := paths[IgnorePath]; state != nil && state.Head.Present {
-		selected, loadErr := source.LoadSelected(identity.Root, full, []string{IgnorePath})
+		selected, loadErr := acquisition.LoadSelected(full, []string{IgnorePath})
 		if loadErr != nil {
 			return nil, loadErr
 		}
@@ -231,7 +259,7 @@ func ObserveRevision(root, revision string, options Options) (*Universe, error) 
 		allContent = append(allContent, IgnorePath)
 	}
 	allContent = uniquePaths(allContent)
-	selected, err := source.LoadSelected(identity.Root, full, allContent)
+	selected, err := acquisition.LoadSelected(full, allContent)
 	if err != nil {
 		return nil, fmt.Errorf("capture fixed revision census snapshot: %w", err)
 	}
@@ -410,8 +438,8 @@ func hasGitMetadata(directory string) bool {
 	return err == nil && (info.IsDir() || info.Mode().IsRegular())
 }
 
-func readWorkingIgnore(root string) ([]byte, error) {
-	observed, err := source.ObserveSelectedWorking(root, []string{IgnorePath})
+func readWorkingIgnore(acquisition *source.Acquisition) ([]byte, error) {
+	observed, err := acquisition.ObserveSelectedWorking([]string{IgnorePath})
 	if err != nil {
 		return nil, fmt.Errorf("read %s: %w", IgnorePath, err)
 	}
