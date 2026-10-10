@@ -1,0 +1,5 @@
+--- FAIL: TestKnowledgeProcessEndToEndStoredRunEvidence (37.62s)
+    knowledge_process_e2e_test.go:100: root integration review did not witness the final candidate record/candidate/9730a7729a8d625f0e0916d40cac34a3/7c746738c358e63aea2026b1abf9dbc8
+FAIL
+FAIL	github.com/Glacius-Labs/Markitect/internal/host/projectrun	38.022s
+FAIL

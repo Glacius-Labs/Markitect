@@ -1,0 +1,5 @@
+--- FAIL: TestKnowledgeProcessEndToEndStoredRunEvidence (213.50s)
+    knowledge_process_e2e_test.go:111: Apply written paths differ from persisted receipt: graph=[src/inventory/implementation.txt src/orders/implementation.txt] receipt=[src/inventory/implementation.txt src/orders/implementation.txt src/project-integration.txt]
+FAIL
+FAIL	github.com/Glacius-Labs/Markitect/internal/host/projectrun	213.943s
+FAIL

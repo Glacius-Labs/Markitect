@@ -1,0 +1,5 @@
+--- FAIL: TestKnowledgeProcessEndToEndStoredRunEvidence (103.66s)
+    knowledge_process_e2e_test.go:152: bufio.Scanner: token too long
+FAIL
+FAIL	github.com/Glacius-Labs/Markitect/internal/host/projectrun	104.059s
+FAIL

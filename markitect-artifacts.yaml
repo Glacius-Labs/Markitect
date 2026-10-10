@@ -187,6 +187,24 @@ spec:
     - examples/project_world_workflow_test.go
     - docs/design/work-item-comparison-20261009.md
   tooling:
+    - path: docs/work-items/knowledge-graph/evidence/fresh-chain-development-attempt6-20261010.log
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/evidence/fresh-chain-development-attempt6-20261010.json
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/evidence/fresh-chain-development-attempt5-20261010.log
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/evidence/fresh-chain-development-attempt3-20261010.log
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/evidence/fresh-chain-development-attempt4-20261010.log
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/evidence/fresh-chain-development-attempt1-20261010.log
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/evidence/fresh-chain-development-attempt2-20261010.log
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/fresh-evidence-chain-20261010.md
+      owner: project-knowledge-variant
+    - path: internal/host/projectrun/knowledge_process_e2e_test.go
+      owner: project-knowledge-variant
     - path: docs/work-items/knowledge-graph/evidence/verify-ebe51470.log
       owner: project-knowledge-variant
     - path: docs/work-items/knowledge-graph/evidence/verify-ebe51470-receipt.json
