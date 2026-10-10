@@ -2,6 +2,7 @@ package projectrun
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -260,6 +261,189 @@ func TestReviewReworkRefusesCandidateOutsideItsFailedReview(t *testing.T) {
 				t.Fatalf("fresh rework turn was not refused: runs=%d status=%s err=%v", invoker.runCalls, resumed.Status, resumeErr)
 			}
 		})
+	}
+}
+
+// nativeFinalReviewInvoker leaves one dispatched native reviewer turn behind
+// and later recovers it as a failed review. Other requests are only recorded;
+// the fixture has no provider for them.
+type nativeFinalReviewInvoker struct {
+	seed          bool
+	reviewContext json.RawMessage
+	requests      []agentexec.Request
+	recoverCalls  int
+}
+
+func (i *nativeFinalReviewInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	if !i.seed {
+		i.requests = append(i.requests, request)
+		return agentexec.RunResult{}, errors.New("fixture has no provider")
+	}
+	i.seed, i.reviewContext = false, request.Context
+	invocation, _, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	fingerprint, err := i.Fingerprint(config)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	journal, err := newNativeJournal(options.PrivateLogDirectory, options.Workspace.CWD, options.Workspace.ID)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	journalOptions := journal.wrapOptions(codexappserver.Options{})
+	if err := journalOptions.BeforeStart(ctx, agentexec.RoleStartRequest{RequestID: invocation.RunID, Role: agentexec.RoleExecutor}); err != nil {
+		return agentexec.RunResult{}, err
+	}
+	if err := journalOptions.OnHandle(ctx, codexappserver.RecoveryHandle{Protocol: "codex-app-server/fixture", Fingerprint: fingerprint, Invocation: invocation,
+		Workspace: *options.Workspace, ThreadID: "final-review-thread", SessionID: "final-review-session", TurnID: "final-review-turn", TurnDispatched: true}); err != nil {
+		return agentexec.RunResult{}, err
+	}
+	// The turn was dispatched, then the Host lost it: its outcome is unknown.
+	return agentexec.RunResult{}, errors.New("reviewer connection lost after dispatch")
+}
+
+func (*nativeFinalReviewInvoker) Fingerprint(config agentexec.Config) (string, error) {
+	return NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+}
+
+func (i *nativeFinalReviewInvoker) Recover(_ context.Context, config agentexec.Config, handle codexappserver.RecoveryHandle, _ agentexec.RunOptions) (agentexec.RunResult, error) {
+	i.recoverCalls++
+	var reviewContext struct {
+		CandidateFiles []reviewFileRef `json:"candidateFiles"`
+	}
+	if err := json.Unmarshal(i.reviewContext, &reviewContext); err != nil {
+		return agentexec.RunResult{}, err
+	}
+	findings := []reviewFindingResponse{}
+	for _, file := range reviewContext.CandidateFiles {
+		if file.Path == "src/orders/implementation.txt" && len(file.Grounding) > 0 {
+			findings = append(findings, reviewFindingResponse{Path: file.Path, Expectation: "restore the orders behaviour the integration changed", Grounding: file.Grounding[0]})
+		}
+	}
+	reportJSON, err := json.Marshal(reviewResponse{Status: "fail", Summary: "the integrated orders artifact misses its accepted statement", Findings: findings})
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	fingerprint, err := i.Fingerprint(config)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	invocation, tokens := handle.Invocation, int64(1)
+	usage := &agentexec.Usage{Source: "provider-reported", InputTokens: &tokens, OutputTokens: &tokens}
+	lifecycle := &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: handle.SessionID, TurnID: handle.TurnID, State: "completed", Accounting: "partial",
+		StartRequests: []agentexec.RoleStartRequest{{RequestID: invocation.RunID, Role: agentexec.RoleExecutor, State: "completed"}}}
+	return agentexec.RunResult{
+		Response: agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce, Role: agentexec.RoleExecutor,
+			InputDigest: invocation.InputDigest, Outcome: agentexec.OutcomeProposed, CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{},
+			VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}, ReportJSON: reportJSON, Usage: usage},
+		Receipt: agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, InputDigest: invocation.InputDigest, ConfigDigest: fingerprint,
+			ProviderVersion: config.ProviderVersion, Outcome: agentexec.OutcomeProposed, Usage: usage, Lifecycle: lifecycle},
+	}, nil
+}
+
+// The final review loop reviews a leaf against the root candidate and routes
+// a failure to the leaf's parent, whose rework round rebuilds the root. A
+// crash during that review must not turn the recovered failure into leaf-only
+// rework: the root would keep its stale candidate and never receive the fix.
+func TestResumedFinalReviewFailureRoutesToParentRework(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	configureWorkspaceBridgeInstructions(t, root)
+	rootID, ordersID, inventoryID := e2eManagerID("", "project-owner"), e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")
+	updateE2ERuntime(t, root, func(runtime *Runtime) {
+		base := runtime.Agents[rootID]
+		native := workspaceBridgeAgent(t, root)
+		native.Command, native.Model, native.ProviderVersion, native.Timeout = base.Command, base.Model, codexappserver.SupportedProviderVersion, base.Timeout
+		native.MaxStdoutBytes, native.MaxStderrBytes, native.Pricing = base.MaxStdoutBytes, base.MaxStderrBytes, base.Pricing
+		native.AppServer = &AppServerSettings{ReasoningEffort: "medium", MaxEventBytes: 1 << 20}
+		runtime.Review = &ReviewConfig{Agents: map[string]Agent{rootID: native, ordersID: native, inventoryID: native}, MaxRounds: 3, MaxManagerRounds: 2}
+		runtime.Limits.MaxStarts = 32
+	})
+	host := projectworkHost()
+	storage, workspaceLimits := t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20}
+	workspaces, err := projectworkspace.NewGitService(storage, workspaceLimits)
+	if err != nil {
+		t.Fatal(err)
+	}
+	host.Workspaces = workspaces
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and review owned artifacts.", Managers: []string{ordersID, inventoryID}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime, err := LoadRuntime(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	base, err := host.Load(root, plan.BaseRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err := store.runDir(plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	orders := storeReviewFixtureCandidate(t, store, dir, []string{plan.InitialCandidateID}, map[string]string{"src/orders/implementation.txt": "orders implementation v2\n"})
+	inventory := storeReviewFixtureCandidate(t, store, dir, []string{plan.InitialCandidateID}, map[string]string{"src/inventory/implementation.txt": "inventory implementation v2\n"})
+	integrated := storeReviewFixtureCandidate(t, store, dir, []string{orders.ID, inventory.ID}, map[string]string{
+		"src/orders/implementation.txt": "orders implementation v2 as integrated\n", "src/inventory/implementation.txt": "inventory implementation v2\n"})
+	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Operation: plan.Operation, Status: StatusInterrupted, Mode: ModeControlledLocal,
+		StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(), BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot,
+		ModelDigest: plan.ModelDigest, RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers), Candidate: candidateRef(integrated, false), Revision: 1}
+	rootTask, ordersTask, inventoryTask := findTask(report.Tasks, rootID), findTask(report.Tasks, ordersID), findTask(report.Tasks, inventoryID)
+	if rootTask == nil || ordersTask == nil || inventoryTask == nil {
+		t.Fatalf("plan omitted expected tasks: %+v", report.Tasks)
+	}
+	rootTask.State, rootTask.CandidateID, rootTask.IntegrationCandidateID, rootTask.ReportStatus = "integrated", plan.InitialCandidateID, integrated.ID, "complete"
+	rootTask.WorkAttempts, rootTask.IntegrationAttempts, rootTask.Attempts, rootTask.ReviewStatus, rootTask.ReviewCandidateID = 1, 1, 2, "not-required", integrated.ID
+	inventoryTask.State, inventoryTask.CandidateID, inventoryTask.WorkAttempts, inventoryTask.Attempts, inventoryTask.ReportStatus = "worked", inventory.ID, 1, 1, "complete"
+	inventoryTask.ReviewStatus, inventoryTask.ReviewCandidateID = "not-required", inventory.ID
+	ordersTask.State, ordersTask.CandidateID, ordersTask.WorkAttempts, ordersTask.Attempts, ordersTask.ReportStatus = "worked", orders.ID, 1, 1, "complete"
+	ordersTask.WrittenPaths = []string{"src/orders/implementation.txt"}
+	// The final review loop reserved this reviewer start against the root candidate.
+	ordersTask.ReviewStatus, ordersTask.ReviewCandidateID, ordersTask.ReviewRound = "invoking", integrated.ID, 1
+	finalProject, err := projectForCandidate(host, root, base.Snapshot, integrated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	invoker := &nativeFinalReviewInvoker{seed: true}
+	if _, _, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, finalProject, *ordersTask, "work", 1, integrated, func(started InvocationLog) error {
+		report.Invocations = append(report.Invocations, started)
+		return nil
+	}, report); err == nil || len(report.Invocations) != 1 || len(invoker.reviewContext) == 0 {
+		t.Fatalf("fixture did not leave one dispatched final review: err=%v invocations=%d", err, len(report.Invocations))
+	}
+	if err := store.appendState(report); err != nil {
+		t.Fatal(err)
+	}
+	// A new Host process reopens the preserved workspace from its storage.
+	if host.Workspaces, err = projectworkspace.NewGitService(storage, workspaceLimits); err != nil {
+		t.Fatal(err)
+	}
+
+	resumed, resumeErr := Resume(context.Background(), host, invoker, root, plan.ID)
+	if invoker.recoverCalls != 1 {
+		t.Fatalf("Resume recovered %d reviewer turns, want the pending final review: status=%s err=%v", invoker.recoverCalls, resumed.Status, resumeErr)
+	}
+	recovered := false
+	for _, review := range resumed.Reviews {
+		recovered = recovered || review.ManagerID == ordersID && review.CandidateID == integrated.ID && review.Outcome == "fail"
+	}
+	if !recovered {
+		t.Fatalf("recovered final review was not recorded: %+v status=%s err=%v", resumed.Reviews, resumed.Status, resumeErr)
+	}
+	if len(resumed.ManagerReworkRounds) != 1 || len(resumed.ManagerReworkRounds[0].Requests) != 1 ||
+		resumed.ManagerReworkRounds[0].Requests[0].Requester != rootID || resumed.ManagerReworkRounds[0].Requests[0].Request.ManagerID != ordersID {
+		task := findTask(resumed.Tasks, ordersID)
+		t.Fatalf("recovered final review failure was not routed to the root's rework round: rounds=%+v orders=%s/%s status=%s err=%v",
+			resumed.ManagerReworkRounds, task.State, task.ReviewStatus, resumed.Status, resumeErr)
+	}
+	if len(invoker.requests) != 1 || !strings.Contains(string(invoker.requests[0].Context), "Manager-directed rework") {
+		t.Fatalf("Resume dispatched %d requests, want only the root-directed orders rework", len(invoker.requests))
 	}
 }
 
