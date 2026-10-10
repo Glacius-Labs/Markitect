@@ -302,11 +302,3 @@ packages:
     layer: fixture
     purpose: Ordinary Go source used as a declared artifact input.
     doc: examples/documentation/README.md
-  - path: runs/c11checktools/original
-    layer: fixture
-    purpose: C11 proof check program for the original Markdown output.
-    doc: docs/repository-layout.md#source-repository-layout
-  - path: runs/c11checktools/replacement
-    layer: fixture
-    purpose: C11 proof check program for the replacement Markdown output.
-    doc: docs/repository-layout.md#source-repository-layout
