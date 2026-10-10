@@ -109,6 +109,11 @@ def main() -> int:
         check(((report.get("setup") or {}).get("claudeRouter") or {}).get("added") is True,
               "the CLAUDE.md router was added")
         check((report.get("fairness") or {}).get("claude") is not None, "the Claude Code version is recorded")
+    if kind == "fake":
+        events = [out / "results" / "stations" / f"S{n}" / "events.jsonl" for n in range(1, count + 1)]
+        hidden = [path.is_file() and '"fakeResultsVisible": false' in path.read_text(encoding="utf-8")
+                  for path in events]
+        check(all(hidden), f"the agent could not open /out in any station {hidden}")
     remaining = subprocess.run(["docker", "ps", "--all", "--quiet", "--filter", "label=markitect-playground=1",
                                 "--filter", f"name=mpg-{manifest['id']}"],
                                capture_output=True, text=True, encoding="utf-8").stdout.split()

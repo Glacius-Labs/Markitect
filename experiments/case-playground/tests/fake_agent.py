@@ -14,6 +14,8 @@ Optional per-station behavior for tests: `$CODEX_HOME/fake-plan.json`, e.g.
 {"S2": "fail-after-work"}. Modes: crlf (also merges a `.gitattributes` with
 `*.md text eol=crlf`), fail-after-work (exit 1 with turn.failed after merging),
 no-thread (resume without a thread.started event), timeout (hang after merging).
+turn.started carries `fakeResultsVisible`: whether the agent can open /out (None
+outside the container).
 """
 from __future__ import annotations
 
@@ -126,7 +128,9 @@ def main(argv: list[str]) -> int:
     mode = plan.get(station, "")
     if not (mode == "no-thread" and args["session"]):
         events.emit({"type": "thread.started", "thread_id": session})
-    events.emit({"type": "turn.started"})
+    # Inside the container the agent must not reach the results under /out.
+    visible = os.access("/out", os.R_OK | os.X_OK) if os.path.isdir("/out") else None
+    events.emit({"type": "turn.started", "fakeResultsVisible": visible})
     try:
         number = station.removeprefix("S")
         branch, name = f"fake/s{number}", f"FAKE_S{number}.md"
