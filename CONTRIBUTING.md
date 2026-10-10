@@ -2,7 +2,7 @@
 
 Markitect's current product workflow is the model-first `markitect project` surface: a committed recursive Manager model under `.markitect/` owns project intent and artifact responsibility. Draft model changes are proposals; commits and digests bind bytes but do not authenticate human approval. Native instructions and scoped execution operate with caller permissions, not an OS sandbox. Retain mechanisms for their current engineering purpose; remove compatibility-only functions. Published releases and original evidence remain immutable historical records.
 
-For coordinated parallel work, follow the [roadmap](docs/implementation-plan.md#how-we-work), read the [development guide](docs/development/README.md) and [parallel-work flow](docs/development/parallel-work.md), then record the current fixed base and assigned paths. Shared semantic contracts remain coordinator-owned; the normal gates below apply to every integrated candidate. For documentation placement and ownership, read the [documentation maintenance guide](docs/development/documentation.md).
+For coordinated parallel work, follow [Pull requests and parallel work](#pull-requests-and-parallel-work) below and the [roadmap](docs/implementation-plan.md#how-we-work); the [development guide](docs/development/README.md) and [parallel-work flow](docs/development/parallel-work.md) give the details. Shared semantic contracts remain coordinator-owned; the normal gates below apply to every integrated candidate. For documentation placement and ownership, read the [documentation maintenance guide](docs/development/documentation.md).
 
 ## Ownership and layout
 
@@ -29,6 +29,36 @@ Adopting repositories own their content and any import scripts used to bring exi
 The product treats adopting-project files as [declared artifact inputs](docs/architecture.md#project-artifact-boundary), including source code. Its own Go implementation and release tooling do not imply a source-code analysis feature for adopting projects.
 
 Keep source and test files focused on one coherent responsibility. When new functionality introduces an independent responsibility, prefer a new file in the existing package. Keep related types and helpers together; do not add packages or abstractions solely to shorten files.
+
+## Pull requests and parallel work
+
+Several sessions change this repository at the same time, each in its own worktree. The [roadmap](docs/implementation-plan.md#how-we-work) owns sessions, work packages, [zones](docs/implementation-plan.md#zones) and the [backlog](docs/work-items/backlog.yaml). These rules keep the work from colliding.
+
+**Branches and pull requests**
+
+- Start every branch from current `origin/main`. Give it a meaningful lower-case name with a prefix: `dev/`, `fix/`, `docs/` or `exp/`. No tool name, date, version or number ([branch names](docs/implementation-plan.md#branch-names)).
+- Open one pull request per work package. Its title starts with the package ID, for example `ARCH-04: Remove the canonical projection alpha`.
+- Change only files in your package's zone. An edit outside it needs the integrator's approval; say so in the pull request.
+- Put status, acceptance evidence, findings and open owner decisions in the pull-request description. Sessions do not edit the backlog, the roadmap or the concept register; the integrator does.
+
+**Before every push**
+
+- Run `git show --stat` for each new commit, or `git diff --name-only origin/main HEAD`, and check that only the intended files changed.
+- Never use `git stash`. The stash is shared by all worktrees of this repository, so a pop can apply another session's changes. Use a patch file instead (`git diff > change.patch`, later `git apply change.patch`) or a separate worktree.
+- Run the cheap gates first: managed-artifact accounting, `check`, `format`, the module checks and the documentation check (see [Verify a change](#verify-a-change)). A new file under a managed root needs an owner entry in `markitect-artifacts.yaml`. A change to `.github/workflows/ci.yaml` needs a renewed digest in `.markitect/modules/pipelines.config`.
+
+**While CI runs**
+
+- The pull-request head is frozen while the required Linux CI runs. Nobody pushes to it during that run.
+- A review fix may be pushed while only a run that is not required (Windows) is still going ([DEC-013](docs/concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)).
+- Push fixes as new commits. Do not force-push a pull request that is under review.
+
+**Merging**
+
+- The integrator merges in dependency order, one pull request at a time, with merge commits, once Linux CI is green.
+- Before each merge, the integrator compiles the pull request merged onto current main (`go vet ./...`). Two pull requests that pass alone can still break main together.
+- A stacked pull request, whose base is another branch, must be retargeted to `main` before it merges. A pull request merged into a branch that has already merged never reaches main.
+- To bring a branch up to date, merge `origin/main` into it or rebase unpushed commits. Do not rewrite commits that are already pushed.
 
 ## Verify a change
 
