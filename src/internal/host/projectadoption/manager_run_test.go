@@ -352,6 +352,53 @@ func TestManagerRunUnrecordableHierarchyIsRetryableFailure(t *testing.T) {
 	}
 }
 
+func TestManagerRunLeafIntegrationUnderIntegratedParentIsRetryableFailure(t *testing.T) {
+	root, target, session, report := leafChildSession(t)
+	session, err := integrateLeafParent(session, report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := WriteBrownfieldSession(root, session, session.Digest); err != nil {
+		t.Fatal(err)
+	}
+	counter := filepath.Join(t.TempDir(), "calls.txt")
+	config := managerRunTestConfig(t, counter)
+	limits := managerRunTestLimits()
+	rootID := session.TargetContext.RootManagerID
+	preview, err := PreviewManagerStage(root, target.Root, session.ID, "orders-pass", ManagerRunPhaseIntegrate, rootID, session.Digest, "", config, limits)
+	if err != nil {
+		t.Fatal(err)
+	}
+	failed, err := RunManagerStage(context.Background(), root, target.Root, session.ID, "orders-pass", ManagerRunPhaseIntegrate,
+		rootID, preview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
+	if err == nil || failed.Status != "failed" || failed.AttemptStatus != "failed" || failed.Execution == nil {
+		t.Fatalf("an integration the session rejects must seal a failed attempt with its receipt: %+v err=%v", failed, err)
+	}
+	ledgerDir, _ := sessionDirectory(root, session.ID, false)
+	ledger, err := loadManagerRunLedger(ledgerDir, session.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ledger.Events) != 2 || ledger.Events[1].SafeFailure != "invalid-manager-report" || ledger.Events[1].Integration != nil {
+		t.Fatalf("failed attempt must be recorded as invalid-manager-report without a recoverable integration: %+v", ledger.Events)
+	}
+	replayPreview, err := PreviewManagerStage(root, target.Root, session.ID, "orders-pass", ManagerRunPhaseIntegrate, rootID, session.Digest, "", config, limits)
+	if err != nil {
+		t.Fatal(err)
+	}
+	replayed, err := RunManagerStage(context.Background(), root, target.Root, session.ID, "orders-pass", ManagerRunPhaseIntegrate,
+		rootID, replayPreview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
+	if err == nil || replayed.Status != "attempt-exists" {
+		t.Fatalf("plain re-run must report the failed attempt, not recover it: %+v err=%v", replayed, err)
+	}
+	if _, err := PreviewManagerStage(root, target.Root, session.ID, "orders-pass", ManagerRunPhaseIntegrate, rootID, session.Digest, failed.AttemptID, config, limits); err != nil {
+		t.Fatalf("explicit retry of the failed attempt must be allowed: %v", err)
+	}
+	if b, _ := os.ReadFile(counter); string(b) != "x" {
+		t.Fatalf("invocation count=%q", b)
+	}
+}
+
 func TestManagerRunLedgerChangeInvalidatesPreview(t *testing.T) {
 	root, targetRoot, session, iterationID := managerRunFixture(t)
 	counter := filepath.Join(t.TempDir(), "calls.txt")

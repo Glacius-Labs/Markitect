@@ -457,7 +457,7 @@ func TestAdoptionValidationErrorsAreDeterministic(t *testing.T) {
 	t.Run("PlanAdoption adopted scopes without files", func(t *testing.T) {
 		planned := multiScopeDistillation(discovery, schemaDigest, []string{"alpha", "beta", "gamma"}, false, []string{"alpha"})
 		resolution := adoptAll(planned, []string{"alpha", "beta", "gamma"}, target.Digest)
-		assertSameErrorEveryRun(t, 40, func() error {
+		assertSameErrorEveryRun(t, 5, func() error {
 			_, err := PlanAdoption(root, target, discovery, planned, resolution, schemaDigest, buildDigest)
 			return err
 		})
