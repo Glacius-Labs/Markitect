@@ -22,17 +22,22 @@ func TestPermittedEdges(t *testing.T) {
 	}
 }
 
-func TestCoreExternalDependencyRequiresApproval(t *testing.T) {
+// DEC-020: the gate restricts only imports between Markitect packages, so a
+// third-party library is allowed in every layer, in production and tests.
+func TestThirdPartyImportsAreNotRestricted(t *testing.T) {
 	root := t.TempDir()
-	dir := filepath.Join(root, "src/internal", "core")
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	for name, imports := range map[string]string{
-		"generic.go":       "\"fmt\"\n_ \"go.yaml.in/yaml/v3\"",
-		"provider_test.go": "_ \"example.org/provider/sdk\"",
+	for name, content := range map[string]string{
+		"src/internal/core/generic.go":                 "package core\nimport (\n\"fmt\"\n_ \"go.yaml.in/yaml/v3\"\n)\n",
+		"src/internal/core/provider_test.go":           "package core\nimport _ \"example.org/provider/sdk\"\n",
+		"src/internal/modules/a/a.go":                  "package a\nimport _ \"go.yaml.in/yaml/v3\"\n",
+		"src/internal/infrastructure/source/s.go":      "package source\nimport _ \"example.org/git/client\"\n",
+		"src/internal/host/projectwork/projectwork.go": "package projectwork\nimport _ \"example.org/any/library\"\n",
 	} {
-		if err := os.WriteFile(filepath.Join(dir, name), []byte("package core\nimport (\n"+imports+"\n)\n"), 0644); err != nil {
+		p := filepath.Join(root, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(content), 0644); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -40,16 +45,13 @@ func TestCoreExternalDependencyRequiresApproval(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	findings := Check(edges)
-	if len(findings) != 2 {
-		t.Fatalf("Core external dependencies were hidden: %v", findings)
+	for _, e := range edges {
+		if e.To != "" {
+			t.Fatalf("third-party import became a gate edge: %+v", e)
+		}
 	}
-	found := map[string]bool{}
-	for _, finding := range findings {
-		found[finding.Edge.To] = true
-	}
-	if !found["go.yaml.in/yaml/v3"] || !found["example.org/provider/sdk"] {
-		t.Fatalf("missing exact external dependency: %v", findings)
+	if v := Check(edges); len(v) != 0 {
+		t.Fatalf("third-party imports were restricted: %v", v)
 	}
 }
 func TestInspectAllPlatformsAndTests(t *testing.T) {
@@ -72,11 +74,11 @@ func TestInspectAllPlatformsAndTests(t *testing.T) {
 	}
 }
 func TestRepositoryArchitecture(t *testing.T) {
-	edges, err := Inspect(filepath.Join("..", "..", "..", ".."))
+	violations, err := CheckRepository(repositoryRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, v := range Check(edges) {
+	for _, v := range violations {
 		t.Error(v.String())
 	}
 }

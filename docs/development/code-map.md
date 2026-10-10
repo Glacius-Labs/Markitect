@@ -8,7 +8,7 @@ The page is generated from [codemap.yaml](../../src/internal/tooling/architectur
 go test ./src/internal/tooling/architecture -run TestCodeMapPage -update
 ```
 
-Tests in `src/internal/tooling/architecture` fail when a Go package is missing from the map, when an entry names a directory that is no longer a package, when an owning document is missing, or when this page is stale. Each layer must agree with the coarse layer of the [import gate](modules.md#mechanical-dependency-gate); the gate does not yet enforce the finer layers.
+Tests in `src/internal/tooling/architecture` fail when a Go package is missing from the map, when an entry names a directory that is no longer a package, when an owning document is missing, or when this page is stale. Each layer must agree with the coarse layer of the [import gate](modules.md#mechanical-dependency-gate). The gate also enforces two rules of the finer layers: `core`, `infrastructure`, `application` and `runtime` packages may not import `legacy` packages, and they may use only the guarded API of `src/internal/host/guardedwrite`.
 
 ## Layers
 

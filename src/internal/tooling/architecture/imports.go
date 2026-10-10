@@ -81,8 +81,6 @@ func Check(edges []Edge) []Violation {
 		to, target := layer(e.To)
 		rule := ""
 		switch {
-		case from == "core" && externalImport(e.To):
-			rule = "Core external imports require an explicitly approved generic dependency"
 		case from == "bootstrap":
 			rule = "standalone bootstrap tooling may not import Markitect packages"
 		case from == "fixture":
@@ -123,11 +121,6 @@ func Check(edges []Edge) []Violation {
 	return out
 }
 
-func externalImport(path string) bool {
-	first, _, _ := strings.Cut(path, "/")
-	return strings.Contains(first, ".")
-}
-
 func Inspect(root string) ([]Edge, error) {
 	var edges []Edge
 	err := filepath.WalkDir(root, func(name string, entry fs.DirEntry, err error) error {
@@ -166,10 +159,10 @@ func Inspect(root string) ([]Edge, error) {
 			if err != nil {
 				return err
 			}
+			// Only imports between Markitect packages are edges; third-party
+			// libraries are not restricted in any layer (DEC-020).
 			if strings.HasPrefix(imported, ModulePath) {
 				edges = append(edges, Edge{rel, fset.Position(imp.Pos()).Line, packagePath, strings.TrimPrefix(imported, ModulePath), strings.HasSuffix(rel, "_test.go")})
-			} else if from, _ := layer(packagePath); from == "core" && externalImport(imported) {
-				edges = append(edges, Edge{rel, fset.Position(imp.Pos()).Line, packagePath, imported, strings.HasSuffix(rel, "_test.go")})
 			}
 		}
 		return nil
