@@ -20,19 +20,25 @@ import (
 
 // Load loads only the Project manifest and exact paths it selects. A working
 // tree inventory is acquired as metadata first, then its exact file list is
-// captured through Infrastructure's selected-snapshot API.
+// captured through Infrastructure's selected-snapshot API. All selected reads
+// share one repository acquisition: the identity is checked once before the
+// first read and confirmed once after the last.
 func Load(root, revision string) (*Project, error) {
+	acquisition, err := source.BeginAcquisition(root)
+	if err != nil {
+		return nil, err
+	}
 	// Full coverage observes the entire repository independently of the legacy
 	// selected inventory roots. The fixed-revision path never consults the live
 	// worktree when constructing its snapshot semantics.
 	var fullUniverse *projectcoverage.Universe
 	var fullOptions projectcoverage.Options
 	var expectedManifest []byte
-	var err error
+	var fixedManifest *snapshot.Snapshot
 	if revision == "" {
 		// The manifest determines exact canonical model paths and optional view
 		// output ownership, so read it before building the full registry.
-		manifestCapture, captureErr := source.ObserveSelectedWorking(root, []string{ManifestPath})
+		manifestCapture, captureErr := acquisition.ObserveSelectedWorking([]string{ManifestPath})
 		if captureErr != nil {
 			return nil, captureErr
 		}
@@ -52,10 +58,11 @@ func Load(root, revision string) (*Project, error) {
 			}
 		}
 	} else {
-		manifestCapture, captureErr := source.LoadSelected(root, revision, []string{ManifestPath})
+		manifestCapture, captureErr := acquisition.LoadSelected(revision, []string{ManifestPath})
 		if captureErr != nil {
 			return nil, captureErr
 		}
+		fixedManifest = manifestCapture.Snapshot
 		config, decodeErr := DecodeConfig(manifestCapture.Snapshot.Files[ManifestPath])
 		if decodeErr != nil {
 			return nil, fmt.Errorf("%s: %w", ManifestPath, decodeErr)
@@ -78,7 +85,7 @@ func Load(root, revision string) (*Project, error) {
 			return nil, fmt.Errorf("project manifest changed while acquiring the full repository snapshot")
 		}
 	} else if revision == "" {
-		observed, observeErr := source.ObserveSelectedWorking(root, []string{ManifestPath})
+		observed, observeErr := acquisition.ObserveSelectedWorking([]string{ManifestPath})
 		if observeErr != nil {
 			return nil, observeErr
 		}
@@ -87,11 +94,8 @@ func Load(root, revision string) (*Project, error) {
 		}
 		manifest = observed.Snapshot
 	} else {
-		selected, selectErr := source.LoadSelected(root, revision, []string{ManifestPath})
-		if selectErr != nil {
-			return nil, selectErr
-		}
-		manifest = selected.Snapshot
+		// The fixed revision cannot change, so its manifest is read only once.
+		manifest = fixedManifest
 	}
 	configBytes = manifest.Files[ManifestPath]
 	config, err := DecodeConfig(configBytes)
@@ -103,7 +107,7 @@ func Load(root, revision string) (*Project, error) {
 		// Runtime configuration is optional while loading the accepted model.
 		// Inspect only this exact fixed-revision path to decide whether to bind
 		// its bytes; runtime-dependent operations validate it separately.
-		runtimeInventory, inventoryErr := source.InventoryRevisionRoots(root, manifest.ID, []string{RuntimePath})
+		runtimeInventory, inventoryErr := acquisition.InventoryRevisionRoots(manifest.ID, []string{RuntimePath})
 		if inventoryErr != nil {
 			return nil, fmt.Errorf("inspect optional runtime path: %w", inventoryErr)
 		}
@@ -123,7 +127,7 @@ func Load(root, revision string) (*Project, error) {
 	}
 	var inventoryMetadata *source.WorkingRootInventory
 	if config.CoverageMode != "full" && revision == "" && len(config.InventoryRoots) > 0 {
-		inventoryMetadata, err = source.InventoryWorkingRoots(root, config.InventoryRoots)
+		inventoryMetadata, err = acquisition.InventoryWorkingRoots(config.InventoryRoots)
 		if err != nil {
 			return nil, fmt.Errorf("inventory selected project roots: %w", err)
 		}
@@ -133,7 +137,7 @@ func Load(root, revision string) (*Project, error) {
 			}
 		}
 	} else if config.CoverageMode != "full" && revision != "" && len(config.InventoryRoots) > 0 {
-		fixedMetadata, inventoryErr := source.InventoryRevisionRoots(root, manifest.ID, config.InventoryRoots)
+		fixedMetadata, inventoryErr := acquisition.InventoryRevisionRoots(manifest.ID, config.InventoryRoots)
 		if inventoryErr != nil {
 			return nil, fmt.Errorf("inventory fixed project revision: %w", inventoryErr)
 		}
@@ -151,7 +155,7 @@ func Load(root, revision string) (*Project, error) {
 			return nil, fmt.Errorf("project manifest changed while acquiring the full repository snapshot")
 		}
 	} else if revision == "" {
-		observed, observeErr := source.ObserveSelectedWorking(root, paths)
+		observed, observeErr := acquisition.ObserveSelectedWorking(paths)
 		if observeErr != nil {
 			return nil, observeErr
 		}
@@ -174,24 +178,15 @@ func Load(root, revision string) (*Project, error) {
 		}
 		selected = observed.Snapshot
 	} else {
-		var inventoryMetadata *source.RevisionRootInventory
-		if config.CoverageMode != "full" && len(config.InventoryRoots) > 0 {
-			inventoryMetadata, err = source.InventoryRevisionRoots(root, manifest.ID, config.InventoryRoots)
-			if err != nil {
-				return nil, fmt.Errorf("inventory fixed project revision: %w", err)
-			}
-			for _, entry := range inventoryMetadata.Entries {
-				if !excludedPath(config, entry.Path) {
-					paths = append(paths, entry.Path)
-				}
-			}
-			paths = uniqueSorted(paths)
-		}
-		fixed, selectErr := source.LoadSelected(root, manifest.ID, paths)
+		// paths already holds the fixed inventory listed above.
+		fixed, selectErr := acquisition.LoadSelected(manifest.ID, paths)
 		if selectErr != nil {
 			return nil, selectErr
 		}
 		selected = fixed.Snapshot
+	}
+	if err := acquisition.Confirm(); err != nil {
+		return nil, err
 	}
 	project, err := FromSnapshot(root, selected)
 	if err != nil {

@@ -50,6 +50,119 @@ func LoadSelected(root, fullCommit string, paths []string) (*SelectedSnapshot, e
 	return loadSelected(root, fullCommit, paths, selectiveGitOutput, readSelectedBlobs)
 }
 
+// LoadSelected is the package-level LoadSelected bound to the acquisition's
+// repository identity.
+func (a *Acquisition) LoadSelected(fullCommit string, paths []string) (*SelectedSnapshot, error) {
+	selected, err := selectedCommitPaths(paths)
+	if err != nil {
+		return nil, err
+	}
+	return a.loadSelectedPaths(fullCommit, selected, readSelectedBlobs)
+}
+
+// Acquisition binds a sequence of selected reads from one repository to one
+// Git identity. BeginAcquisition identifies the repository once and Confirm
+// rechecks it once, so a caller that combines several reads, such as a
+// Project load, starts two identity processes instead of two per read. Every
+// read in between runs Git against the identified root and opens working
+// files only beneath the identified root directory, so a repository replaced
+// at that path fails the read or Confirm. A result is bound to its reported
+// identity only after Confirm succeeds. Each package-level read function is
+// one acquisition. An Acquisition remembers the commits it verified and the
+// worktree file-mode policy it read; it is not safe for concurrent use.
+type Acquisition struct {
+	identity GitIdentity
+	stats    gitIdentityStats
+	run      gitOutputFunc
+	commits  map[string]string
+	fileMode *bool
+}
+
+// BeginAcquisition identifies root as IdentifyGit does and starts one
+// acquisition bound to that identity.
+func BeginAcquisition(root string) (*Acquisition, error) {
+	return beginAcquisition(root, selectiveGitOutput)
+}
+
+func beginAcquisition(root string, run gitOutputFunc) (*Acquisition, error) {
+	identity, stats, err := identifyGit(root, run)
+	if err != nil {
+		return nil, err
+	}
+	return &Acquisition{identity: identity, stats: stats, run: run}, nil
+}
+
+// Confirm rechecks that root still has the identity established by
+// BeginAcquisition, including the same root, Git and common directories.
+func (a *Acquisition) Confirm() error {
+	return confirmGitIdentity(a.identity, a.stats, a.run)
+}
+
+// acquireOnce runs read as its own acquisition: one identity check before it
+// and one recheck after it.
+func acquireOnce[T any](root string, run gitOutputFunc, read func(*Acquisition) (*T, error)) (*T, error) {
+	acquisition, err := beginAcquisition(root, run)
+	if err != nil {
+		return nil, err
+	}
+	result, err := read(acquisition)
+	if err != nil {
+		return nil, err
+	}
+	if err := acquisition.Confirm(); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// openRoot opens the identified worktree root and requires it to be the
+// directory that was identified, so working reads cannot follow a root path
+// that was replaced after the identity check.
+func (a *Acquisition) openRoot() (*os.Root, error) {
+	rootFS, err := os.OpenRoot(a.identity.Root)
+	if err != nil {
+		return nil, err
+	}
+	opened, err := rootFS.Stat(".")
+	if err != nil || !os.SameFile(a.stats.root, opened) {
+		_ = rootFS.Close()
+		return nil, errGitIdentityChanged
+	}
+	return rootFS, nil
+}
+
+// verifyCommit resolves fullCommit as a commit once per acquisition. A full
+// commit ID names an immutable object and replace refs are disabled, so a
+// repeated check within one acquisition cannot resolve differently.
+func (a *Acquisition) verifyCommit(fullCommit string) (string, error) {
+	if resolved, ok := a.commits[fullCommit]; ok {
+		return resolved, nil
+	}
+	out, err := a.run(a.identity.Root, "rev-parse", "--verify", "--end-of-options", fullCommit+"^{commit}")
+	if err != nil {
+		return "", err
+	}
+	resolved := strings.TrimSpace(string(out))
+	if a.commits == nil {
+		a.commits = map[string]string{}
+	}
+	a.commits[fullCommit] = resolved
+	return resolved, nil
+}
+
+// fileModeEnabled reads Git's core.filemode once per acquisition, so all
+// working reads in it apply the same mode policy.
+func (a *Acquisition) fileModeEnabled() (bool, error) {
+	if a.fileMode == nil {
+		enabled, err := GitFileModeEnabled(a.identity.Root)
+		if err != nil {
+			return false, err
+		}
+		a.fileMode = &enabled
+	}
+	return *a.fileMode, nil
+}
+
 type gitOutputFunc func(root string, args ...string) ([]byte, error)
 type selectedBlobReader func(root string, files []treeFile) (map[string][]byte, error)
 
@@ -219,6 +332,16 @@ func gitIdentityDigest(identity GitIdentity) string {
 }
 
 func loadSelected(root, fullCommit string, requested []string, run gitOutputFunc, readBlobs selectedBlobReader) (*SelectedSnapshot, error) {
+	paths, err := selectedCommitPaths(requested)
+	if err != nil {
+		return nil, err
+	}
+	return acquireOnce(root, run, func(a *Acquisition) (*SelectedSnapshot, error) {
+		return a.loadSelectedPaths(fullCommit, paths, readBlobs)
+	})
+}
+
+func selectedCommitPaths(requested []string) ([]string, error) {
 	paths := append([]string(nil), requested...)
 	if err := validateSelectedPaths(paths); err != nil {
 		return nil, fmt.Errorf("validate selected paths: %w", err)
@@ -227,10 +350,11 @@ func loadSelected(root, fullCommit string, requested []string, run gitOutputFunc
 	if len(paths) > DefaultMaxFiles {
 		return nil, errors.New("selected snapshot exceeds file-count limit")
 	}
-	identity, initialStats, err := identifyGit(root, run)
-	if err != nil {
-		return nil, err
-	}
+	return paths, nil
+}
+
+func (a *Acquisition) loadSelectedPaths(fullCommit string, paths []string, readBlobs selectedBlobReader) (*SelectedSnapshot, error) {
+	identity, run := a.identity, a.run
 	if len(fullCommit) != 40 && len(fullCommit) != 64 {
 		return nil, errors.New("selected source requires a full lowercase commit ID")
 	}
@@ -243,11 +367,11 @@ func loadSelected(root, fullCommit string, requested []string, run gitOutputFunc
 	if _, err := hex.DecodeString(fullCommit); err != nil {
 		return nil, errors.New("selected source requires a full hexadecimal commit ID")
 	}
-	resolved, err := run(identity.Root, "rev-parse", "--verify", "--end-of-options", fullCommit+"^{commit}")
+	resolved, err := a.verifyCommit(fullCommit)
 	if err != nil {
 		return nil, fmt.Errorf("verify selected commit: %w", err)
 	}
-	if strings.TrimSpace(string(resolved)) != fullCommit {
+	if resolved != fullCommit {
 		return nil, errors.New("Git resolved selected commit to a different ID")
 	}
 
@@ -321,9 +445,6 @@ func loadSelected(root, fullCommit string, requested []string, run gitOutputFunc
 		}
 		resolvedSnapshot.Files[file.path] = data
 		resolvedSnapshot.Modes[file.path] = file.mode
-	}
-	if err := confirmGitIdentity(identity, initialStats, run); err != nil {
-		return nil, err
 	}
 	return &SelectedSnapshot{Identity: identity, Snapshot: resolvedSnapshot}, nil
 }
@@ -524,7 +645,9 @@ func confirmGitIdentity(before GitIdentity, beforeStats gitIdentityStats, run gi
 		return fmt.Errorf("recheck Git repository identity: %w", err)
 	}
 	if before != after || !os.SameFile(beforeStats.root, afterStats.root) || !os.SameFile(beforeStats.git, afterStats.git) || !os.SameFile(beforeStats.common, afterStats.common) {
-		return errors.New("Git repository identity changed during selected snapshot acquisition")
+		return errGitIdentityChanged
 	}
 	return nil
 }
+
+var errGitIdentityChanged = errors.New("Git repository identity changed during selected snapshot acquisition")
