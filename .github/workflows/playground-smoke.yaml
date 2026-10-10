@@ -1,0 +1,78 @@
+name: Playground smoke
+
+# The case playground's provider-free container tier (backlog CI-04). A fake
+# outer agent drives the Markitect arm through the playground container: the
+# product's project init, onboard and setup with preview and digest-checked
+# writes, every station, and the final project check, all against a Linux
+# build of this commit. It makes no model call and uses no secrets.
+on:
+  schedule:
+    - cron: '47 2 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'experiments/case-playground/**'
+      - '.github/workflows/playground-smoke.yaml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playground-smoke-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  smoke:
+    name: Playground smoke (Markitect arm, fake agent)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Test the playground harness
+        working-directory: experiments/case-playground
+        run: python3 -B -m unittest discover -s tests -t .
+
+      - name: Write the smoke manifest
+        shell: python3 {0}
+        run: |
+          import json, os, pathlib, subprocess
+          example = pathlib.Path("experiments/case-playground/examples/fake-roombook.json")
+          manifest = json.loads(example.read_text(encoding="utf-8"))
+          manifest["id"] = "ci-markitect-roombook"
+          manifest["method"] = "markitect"
+          commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          manifest["markitect"] = {"sourceRepo": os.environ["GITHUB_WORKSPACE"], "commit": commit}
+          target = pathlib.Path(os.environ["RUNNER_TEMP"]) / "smoke-manifest.json"
+          target.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+          print(target.read_text(encoding="utf-8"))
+
+      - name: Run the container smoke
+        working-directory: experiments/case-playground
+        env:
+          # The smoke keeps a failed run's folder below TMPDIR for the upload.
+          TMPDIR: ${{ runner.temp }}/smoke
+        run: |
+          mkdir -p "$TMPDIR"
+          python3 -B tests/smoke_docker.py --manifest "$RUNNER_TEMP/smoke-manifest.json"
+
+      - name: Upload the failed run
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playground-smoke-${{ github.sha }}
+          path: ${{ runner.temp }}/smoke/
+          if-no-files-found: ignore
+          retention-days: 14
+          overwrite: true
