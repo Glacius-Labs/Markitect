@@ -2021,3 +2021,7 @@ Root cleanlocal/exactpublic8e0d103a verified, frozenbinary99a13305 ownerreported
 Owner source8e0/bin99a1/normalPlan8b4 actual10rootnativecompleted butsame evidenceRefrejection persists. No boundary/laterroles/VerifyApplyRecovery; cumulative14knowncalls/11providers/4038772partialestimate preserved. This disproves sufficiency of currentproviderfreecontractcheck, not proof of exact parser/providercause.
 
 Root sent boundedretainedwire comparison: actualtransmittedoutputSchema+request projection, exactfinalmessage/extractor, originalHostallowedrefset. No nextsamefailurefreshbatch or prompt-onlytweak before concretecausefix; no newcapabilityActor/generalframework. Host should own callerknownIDs/nonces/hash/realfiledelta, AI owns semanticreport/reviewjudgement; minimaladaptercomposition if genuinelyneeded, no fabricatedverdict/ref/evidence or silentnormalization. Ownerdiagnosisactiveunderexistingauthority; next meaningfulcause/correction/blocker once.
+
+### Actual10 saved response contains escaped/truncated references and Manager IDs
+
+Owner savednativeJSON contains twoidenticaltruncated/overescaped evidencevalues (encodedarrayprefix project.mark) plusREADME.md, childManagerIDs alsooverescaped. Hostrejectcorrect; actualwire/constraint behavior stillindependentlyread, noexactcauseassertionyet. Unconditionalscratchguidance createdunnecessarytempforREADME-onlytask, deniedcleanupbecamepartialrisk; ownerlimitsguidance towhenneeded. No newproviderbatch before concretefix/focusedchecks, no inventedcleanup or widenedrights.
