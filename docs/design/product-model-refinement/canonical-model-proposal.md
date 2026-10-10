@@ -1,6 +1,6 @@
 # Proposal: Aufbau des kanonischen Modells
 
-Datum: 11. Oktober 2026. Status: zur Diskussion; beauftragt, aber nicht angenommen, implementiert oder eingeplant.
+Datum: 11. Oktober 2026. Status: Proposal und Vorbereitung der gewünschten gemeinsamen Umsetzung; einzelne Formatentscheidungen noch offen, keine Implementierung erfolgt.
 
 ## 1. Auftrag und Maßstab
 
@@ -230,6 +230,58 @@ Die neue Vokabularsemantik braucht vor einer späteren Implementierung einen koo
 
 Für jede ergänzte Modellrelation muss ihre Wirkung auf Digest, Kontext, Impact, Coverage und Prüfevidenz festgelegt werden. Nicht in Lesesichten übernommene semantische Daten dürfen bei Änderungen nicht verschwinden. Unbekannter Impact bleibt konservativ; eine engere Auswahl wird begründet, nicht angenommen.
 
+### 8.1 Begründung der Designentscheidungen
+
+Diese Begründungen machen den Proposal für einen Implementer nachvollziehbar. Sie sind Designargumente und überprüfbare Erwartungen, kein gemessener Nachweis der erhofften Produktwirkung.
+
+| Entscheidung | Warum sie zur Leitfrage passt | Alternative und bewusste Abwägung |
+| --- | --- | --- |
+| Kleiner struktureller Core, Softwarebedeutung im Projektvokabular | Dieselbe Typ-, Identitäts- und Referenzprüfung kann unterschiedliche Systeme tragen. Fachbegriffe sollen beschreibbar sein, ohne Bibliotheks- oder Architekturlogik in den generischen Compiler einzubauen. | Universeller Katalog vieler Core-Kinds würde Semantik und Compiler koppeln. Erst ein belegter struktureller Ausdrucksbedarf rechtfertigt eine Core-Erweiterung. |
+| Typisierte Facetten als erster Kandidat | Ein heutiges Statement kann verständliche Prosa und präzisere Daten zusammenhalten. Zusammengehörige Festlegungen haben damit eine kanonische Quelle und bleiben unabhängig referenzierbar. | Eigene nominale Kinds bieten stärkere Zieltypprüfung, erhöhen aber Vokabular- und Referenzaufwand. Facetten benötigen ihrerseits strikte Rollenvalidierung; beliebige Zusatzdaten würden den Nutzen verlieren. |
+| Inhaltliche Rollen vor endgültigen YAML-Typen | Die Sprache soll den Beschreibungsbedarf eines Systems erfüllen. Bibliothek und Kontrastbeispiel zeigen, welche Rollen eigenständig sein müssen und welche Details kohäsiv zusammengehören. | Direkt den C#-Klassenkatalog als YAML abzubilden würde illustrative Objektstrukturen ungeprüft zum Produktvertrag machen. |
+| Komposition, Abhängigkeiten und Verantwortung unterscheiden | Ein Baum ordnet Zugehörigkeit; Querbeziehungen beschreiben Zusammenarbeit und Auswirkungen. Ein Graphpfad allein sagt nicht, wer entscheiden oder schreiben darf. | Jede Beziehung als allgemeine Dependency zu behandeln verwischt Kontext, Pflicht und Befugnis. Die heutige Namespace-/Managerkonvention bleibt ein ausdrücklich gewählter Ausgangspunkt. |
+| Realisierungsverpflichtungen plus deklarierte Pfadbereiche | Das Modell kann beschreiben, welcher Beitrag notwendig ist, während der konkrete Dateibestand abgeleitet wird. Main kann Pfadpräfixe und Mehrfachzuordnung bereits verarbeiten. | Jede Datei manuell als eigene Fachdefinition zu pflegen erhöht Synchronisationsaufwand. Vollautomatische Sourcezuordnung wäre ein zusätzlicher, noch unbelegter Mechanismus. |
+| Neue Semantik durch alle Sichten führen | Ein typisiertes Feld hilft der Agentenkoordination nur, wenn Kontext, Änderungsfolgen und Prüfpflichten es ebenfalls berücksichtigen. Main besitzt dafür bereits Analyse-, Graph- und Explain-Strukturen. | Ein reines Schema-Upgrade könnte Daten kompilieren, die der Umsetzer nicht sieht oder deren Änderung keine geeignete Prüfung auslöst. |
+| Modellstruktur und realisierte Fachregel getrennt beurteilen | Die Definition einer Invariante kann syntaktisch konsistent sein, während der Anwendungscode sie verletzt. Auch ein vollständiger Dateiindex beweist keinen Verhaltensvertrag. | Eine pauschale „Verify passt, also vollständig“-Zusage würde den tatsächlichen Prüfumfang überschreiten. Jeder Nachweis muss seine Aussage und Grenze nennen. |
+
+Die wichtigste Annahme ist, dass zusätzliche Struktur relevante Entscheidungen sichtbar macht und ihren Erhalt gezielter prüfen lässt. Offen bleibt, ob dieser Nutzen den zusätzlichen Autoren- und Prüfaufwand übersteigt. Dieser Plan misst das nicht; spätere Evaluation muss beide Seiten erfassen.
+
+### 8.2 Umsetzungsvorbereitung für den Implementer
+
+Vom Nutzer gewünscht: gemeinsame Umsetzung mit dem Implementer im nächsten Arbeitsschritt. Diese Übergabe bereitet sie vor; offene Formatentscheidungen werden dadurch nicht stillschweigend angenommen.
+
+**Lesereihenfolge:** [Leitfrage und Arbeitsstand](system-description-notes.md), dieser Proposal, [fester Main-Abgleich](canonical-model-main-comparison.md). Der ältere C#-Entwurf dient als Beispiel und Gegenprobe, nicht als verbindliche Klassenliste.
+
+Der Dokumentationsbranch `docs/product-model-concepts` stammt aus einer älteren Main-Basis. Der Implementer soll einen Implementierungsbranch vom dann frisch abgerufenen `origin/main` anlegen und die vereinbarten Dokumentationsänderungen gezielt übernehmen. Vorher festen SHA, Pfad, Branch und lokale Änderungen erfassen sowie die aktuellen Beitragshinweise und den Modellzonen-Owner prüfen. Den alten Dokumentationsbranch nicht allein als aktuelle Produktbasis verwenden. Die folgenden Quellbereiche stammen aus dem Abgleich an `32afd1a57e715130d056e98e433721c6e7a10278`; ihre Zuständigkeit beim Start erneut bestätigen.
+
+| Reihenfolge / Paket | Konkretes Ergebnis | Voraussichtlich betroffene Bereiche | Abnahmebedingung |
+| --- | --- | --- | --- |
+| U0 — Ausgangspunkt und Beschreibungsbedarf | Main-Delta prüfen; Umfang, Bibliotheksausschnitt und CLI-Kontrast in gewöhnlicher Spezifikation beschreiben; benötigte Felder/Rollen einschließlich Kontext-/Impactwirkung bestimmen. | Proposal, zuständige Produkt-/Modellverträge; Koordination mit Modell-Owner. | Feldbedarf ist aus den Fällen begründet; Formatoptionen sind eingegrenzt, Freiräume und Prüfgrenzen ausdrücklich festgelegt. Keine zweite kanonische Quelle. |
+| U1 — Kleinster zusammenhängender Beschreibungsfall | Bibliotheksausschnitt mit Systemgrenze, Exemplar/Ausleihe, Ausleihvertrag, Eindeutigkeitsregel sowie Code-/Prüf-/Dokumentationspflichten als gültige Modellquellen. | Neues Beispiel und versionierter Schema-Vertrag in `src/internal/modules/projectmodel/projectmodel.go` oder dessen abgestimmtem Nachfolger. | Der Fall beschreibt eine wesentliche Fähigkeit samt Daten, Regel und Realisierung; ein gültiges bisheriges Minimalprojekt bleibt unter seiner bisherigen Version gültig. |
+| U2 — Strukturelle und semantische Validierung | Geschlossene Felder, Wert-/Kardinalitätsregeln, erlaubte Zielrollen und Kompositionsregeln mit deterministischen Diagnosen. | Projectmodel-Schema und Analyse/Validator; Core nur bei konkret belegter Ausdruckslücke. | Ungültige Rolle, fehlende Pflichtangabe, unzulässige Referenz und Kompositionszyklus werden am passenden Quellgegenstand gemeldet. Fachinstanzregel wird nicht als Compilerbeweis ausgegeben. |
+| U3 — Lesesichten und Sichtbarkeit | Strukturierte Inhalte im Report und benötigten Managerkontext; passende Graphbeziehungen und lesbare Ausgabe. | `types.go`, `analyze.go`, `Context` in `impact.go`, `graph.go`; bestehende Host-/Ausgabeanschlüsse nach Bedarf. | Jede bindende neue Angabe ist im zuständigen Umsetzungs-/Prüfkontext verfügbar; private Inhalte gelangen nicht in fremde Ansichten. Graph bleibt abgeleitet. |
+| U4 — Änderungsfolgen | Jedes neue Feld und jede Relation explizit für Digest, Delta, Kontext, Impact und Erklärung behandeln; alte und neue Endpunkte berücksichtigen. | `impact.go`, `explain.go`, Snapshot-/Hostbindungen soweit deren Vertrag betroffen ist. | Semantische Änderungen erreichen betroffene Realisierungen und Checks; Entfernung einer Relation verliert deren alte Wirkung nicht. Schreibänderung und unbekannter Umfang behalten die dokumentierte Behandlung. |
+| U5 — Realisierung und Verify-Anschluss | Vorhandene Artifact-/Check-/Coverage-Strukturen mit vereinbarten Beitragstypen verbinden; Prefix-Zuordnung und eindeutige Schreibzuständigkeit nutzen. | Projectmodel, `src/internal/host/projectcoverage`, `projectwork` und bei tatsächlich geänderter Bindung `projectrun`. | Mehrere Aussagen können dieselbe Datei betreffen; jede konkrete Ausgabe hat einen Owner. Unklassifizierte Dateien bleiben Befunde. Bericht trennt Struktur, Coverage, ausgeführte Checks und unbelegte Aussagen. |
+| U6 — Kontrast, Dokumentation und Integration | Kleines CLI-Gegenbeispiel, gezielte Negativfälle, aktuelle Nutzer-/Formatdokumentation und normale Integrationsprüfung. | Beispiele, zuständige Dokumente, erforderliche Tests und Beitragseinträge. | Sprache trägt beide Beispiele; Aufwand und fehlende Semantik sind sichtbar. Projektgates laufen am festen Implementierungskandidaten; Dokumentation behauptet nur belegte Fähigkeiten. |
+
+Die gemeinsame Entscheidung über Facetten versus nominale Kinds und Versionierung folgt aus den Beschreibungsfällen von U0 und fällt vor dem Schema-Vertrag in U1. U1 bis U5 bilden gemeinsam den ersten funktionsfähigen Durchstich. Ein nur erlaubtes Schemafeld ist kein fertiges Feature. U2 und U3 folgen dem festgelegten Feldvertrag; U4 benötigt deren gemeinsame Darstellung. U5 nutzt die bestehende Ausführungslinie und erweitert sie nur für konkret veränderte Verpflichtungen. Der Modellvertrag hat einen koordinierten Owner; andere Arbeiten können danach klar getrennte Dateien oder Beispiele übernehmen. Die Paketnamen hier sind Vorschläge und keine vergebenen Backlog-IDs.
+
+### 8.3 Prüfplan für die spätere Implementierung
+
+Heute werden diese Prüfungen nur geplant. Bei der Umsetzung gelten die dann aktuellen Checks aus `CONTRIBUTING.md` zusätzlich zu den folgenden konkreten Risiken:
+
+| Risiko | Gezielter Nachweis am Implementierungskandidaten |
+| --- | --- |
+| Fachrolle ist strukturell gültig, aber semantisch falsch | Ein Vorbedingungsverweis auf einen unpassenden Gegenstand und ein ungültiger Fachbeziehungsendpunkt werden abgewiesen. |
+| Neue Bedeutung fehlt im Agentenkontext | Ein Manager bekommt den benötigten Verhaltensvertrag samt Regel; ein fremder privater Inhalt bleibt verborgen. |
+| Änderung wird im Impact übersehen | Regeländerung, geänderte Eigenschaft und entfernte Beziehung erreichen erwartete Owner, Artefakte und Checks in alter/neuer Betrachtung. Kombinierte Änderungen verkleinern den erforderlichen Umfang nicht. |
+| Erklärung und Impact widersprechen sich | Explain bindet den passenden Digest und erklärt die betroffenen Listen, ohne sie durch Change-/Context-Priorisierung zu verkürzen. |
+| Realisierungsindex wird zweite manuelle Wahrheit | Verzeichnispräfix und tatsächlicher Dateizugang erzeugen aktuelle Coverage; Mehrfachzuordnung bleibt möglich, widersprüchliche Schreibowner bleiben Befunde. |
+| Sprache wird unnötig schwer oder bibliotheksspezifisch | Das CLI-Gegenbeispiel kommt ohne Ausleihe, Datenbank, Zustandsautomat oder zusätzliche Managementebenen aus. |
+| Versionierung verändert alte Bedeutung still | Bisherige Modelle behalten ihren Versionsvertrag; neue Syntax/Regeln besitzen eine ausdrückliche Versionierungs- beziehungsweise Migrationsentscheidung. |
+
+Zur Übergabe gehören feste Code-/Modell-SHAs, lokaler Zustand, tatsächlich ausgeführte Prüfungen samt Ergebnis, nicht ausgeführte Prüfungen und verbliebene offene Entscheidungen. Repo-Extraktionsstudien, allgemeine Ausdrucksevaluator-, Government- oder Cockpit-Arbeit gehören nicht zum ersten Durchstich. Die endgültige Implementierungsfreigabe bezieht sich auf den gemeinsam gewählten Umfang.
+
 ## 9. Zusagen und offene Entscheidungen
 
 Der vorgeschlagene Vertrag soll ausdrücken können, was gilt, wozu etwas gehört, was eine Umsetzung realisieren muss, was frei bleibt und welche Evidenz verlangt wird. Strukturprüfung, vollständige Pfadzuordnung, fachliche Konformität und ausreichende Systembeschreibung bleiben unterschiedliche Urteile.
@@ -245,7 +297,7 @@ Offen sind besonders:
 
 ## 10. Herkunft und Status
 
-- Quelle: Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`, zuletzt ausdrücklicher Planungs- und Vergleichsauftrag vom 11. Oktober 2026.
+- Quelle: Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`, Planungs- und Vergleichsauftrag sowie anschließender Wunsch nach Begründung und Umsetzungsplan für die gemeinsame Arbeit mit dem Implementer vom 11. Oktober 2026.
 - Dokumentationsworktree: `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`.
 - Branch: `docs/product-model-concepts`.
 - Eingang der Gesprächsnotizen: `357a726347676ca8589a173b88aa8cb34d241c3d`; Worktree beim Beginn sauber.
