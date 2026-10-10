@@ -34,7 +34,7 @@ Die Notiz hält zuerst die [zentrale Leitfrage](system-description-notes.md#leit
 
 ## Beauftragter Entwurf
 
-Der [Proposal zum Aufbau des kanonischen Modells](canonical-model-proposal.md) vom 11. Oktober 2026 plant die Beschreibungssprache anhand der Leitfrage und des festgehaltenen Arbeitsstands. Sein [Abgleich mit frisch abgerufenem Main](canonical-model-main-comparison.md) trennt dokumentierte Verträge, implementierten Code, gelesene Testquellen und offene Arbeit am festen Commit `95251f1b76b9d7cb1c9c7321a7751146147a0b78`. Beide Dokumente sind Vorschlag beziehungsweise Quellenvergleich; keine angenommenen Modelländerungen oder Implementierungsaufträge.
+Der [Proposal zum Aufbau des kanonischen Modells](canonical-model-proposal.md) vom 11. Oktober 2026 plant die Beschreibungssprache anhand der Leitfrage und des festgehaltenen Arbeitsstands. Sein [Abgleich mit frisch abgerufenem Main](canonical-model-main-comparison.md) trennt dokumentierte Verträge, implementierten Code, gelesene Testquellen und offene Arbeit am festen Commit `32afd1a57e715130d056e98e433721c6e7a10278`. Beide Dokumente sind Vorschlag beziehungsweise Quellenvergleich; keine angenommenen Modelländerungen oder Implementierungsaufträge.
 
 Der [Entwurf der kanonischen Beschreibungssprache](canonical-model-draft.md) beschreibt Inhalte, Ausdrucksmittel, Hierarchie und Beziehungen, Realisierung ohne manuelle Aufzählung jeder Datei sowie Verify als mögliche Rückkopplung. Abschnitt 2 hält das vom Nutzer gewünschte Vorgehen fest. Status: Entwurf zur Diskussion; seine Einzelvorschläge sind noch nicht angenommen.
 

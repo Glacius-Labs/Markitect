@@ -250,7 +250,7 @@ Offen sind besonders:
 - Branch: `docs/product-model-concepts`.
 - Eingang der Gesprächsnotizen: `357a726347676ca8589a173b88aa8cb34d241c3d`; Worktree beim Beginn sauber.
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
-- Aktueller Main-Abgleich: separat an `95251f1b76b9d7cb1c9c7321a7751146147a0b78`; über Git-Objekte gelesen, nicht mit dem älteren Working Tree gleichgesetzt.
+- Aktueller Main-Abgleich: separat an `32afd1a57e715130d056e98e433721c6e7a10278`; über Git-Objekte gelesen, nicht mit dem älteren Working Tree gleichgesetzt.
 - Lokale Arbeit: dieser Proposal, Vergleichsdokument und Navigations-/Statushinweise im Entwurfsordner. Keine Produktimplementierung, Tests, Studien oder Agentenausführung am Beispiel.
 
 Die lokale Commit-SHA des fertigen Dokumentationsstands wird bei der Übergabe berichtet. Der Proposal ersetzt keine akzeptierte Main-Entscheidung und keine kanonische Produktdokumentation.
