@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T05:12:40.367719+00:00",
+  "updatedUtc": "2026-10-10T05:18:18.278779+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17870,7 +17870,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL15_NORMAL_FROZEN_RUN_ACTIVE_OWNER_REPORTED",
+    "status": "ACTUAL15_JOURNAL_SHARING_FAILURE_UNCERTAIN_DOCS_NORMAL_RESUME_REJECTED_SAFE_HANDLE_AUDIT_AND_EXPLORE_CRLF_FIX",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18219,6 +18219,18 @@
       "historicalLedger": "Closed38requests35providers8555542partial retained; current batch separate",
       "fullWorkflowAccepted": false,
       "next": "Owner continues normal Run/recovery/Verify/Apply within finite budget, material outcome once; no repeated Go/grant/newstudy."
+    },
+    "actual15InterruptedFailure": {
+      "ownerReported": "Real freshHosthelper applied-and-closed, SourceDocs directoverlap59.8254736s, RootWorkReviewPASS; failedstate20 DocsReview nativejournal appendsharingviolation/unknowntermination/noRootintegration. Auditor live .NET ReadLines defaultshare overlapped failure; stopped reads, future explicit ReadWrite|Delete only.",
+      "causality": "Observation interference possible, not proven; no attribution to specific cause as fact. Root no live private-journal read during this batch.",
+      "normalOriginalResume": "Sameplan/binary05:16:19-05:16:26Z exit2 uncertain in-flight manager process requires new plan docs. Bounded independent ownhandle/recoveryeligibility audit now; no replay/guessedcleanup/new acceptance.",
+      "exploreBugErratum": "Previous owner and Root recorded revisionpreview READMEbyte mismatch as correct stale rejection; independently checked LF/CRLF only/core.autocrlf=true/gitclean makes it a product false rejection. Historical claim preserved but withdrawn. Workingtree CAS workaround is not productfix.",
+      "rootSourceHintSentOnce": "Existing plan.go646 requireCleanSelectedBasisAtRevision compares via Git cleanfilters/literalpathspec/no-extdiff and rejects index concealment flags. Reuse applicable semantics for Explore, preserve exact rawWorktree CAS/TOCTOU and true Add/Delete/Binary/substantive changes; avoid blanketline-endingnormalization or newguardframework.",
+      "source": "e10ad79a8fb238f016fa9026796fc38df8a35a82",
+      "newActualCounts": "NOT PROVIDED/UNKNOWN at interrupted callback; do not infer zero or close historical totals",
+      "historicalClosed": "38requests35providers8555542partial unchanged until full batch accounting",
+      "fullWorkflowAccepted": false,
+      "next": "Resolve genuine ownhandle uncertainty/eligibility without replay; concrete minimal Explore source-vsrawworktree correction/regression under standing authority; no new Go/grant/study."
     }
   },
   "restartAfterInterruptedIntegration20261010": {

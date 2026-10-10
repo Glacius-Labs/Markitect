@@ -2107,3 +2107,7 @@ Root cleanexactpublice10/source6ce verified; actualknownbin1329/goVCSexacte10 mo
 ### Actual15 normal fresh run allocated and active
 
 Owner samefrozene10/binary1329 normalPlan3c41/digest15e615/readiness5e3a/newordinaryexplorationminimum1 starts batcha01-helper-evidence30a1 allocated05:11:20.4396594Z deadline09:11:20.4396594Z. Observer741392/PID66624 ownerreportedrootworkinvoking/boundaryfalse; rawstartnotRootcheckedthisevent, sourcebinaryverifiedprior. Immutablepreparedexploration copiednormalreporelativeinput, workingtreeCASsucceeds; revisionpreviewREADMEbyte mismatchreject preservedno bypass. Historical38/35/8555542partial closedunchanged/currentbatchseparate. OwnercontinueswithoutRootGo/newgrant, no acceptanceyet.
+
+### Actual15 journal-sharing failure and revision-bound Explore CRLF erratum
+
+Owner realhelperappliedclosed/SourceDocsoverlap59.8254736/RootreviewPASS then failedstate20Docsreviewjournalappendsharing/unknowntermination. Auditor .NETReadLinesdefaultshareoverlappossibleinterferenceNOTproven; ownerstoppedblockingreads/futureReadWriteDelete. OriginalsamePlan/binaryResume05:16:19-26exit2 uncertainDocs/newPlan; exactownhandleeligibilityauditactive/no replay/guessedcleanup/Rootintegration/fullacceptance. Newcountsunknown/notzero. Scientist provesgitcleanLFCRLF/coreautocrlf falseExplorestale: priorowner/Rootproper-rejectionclaim preservedbutwithdrawn, workingtreeCASonlyworkaround. Root sourcehint existingplan.go646Gitcleanfiltercomparisons, preserve rawCAS/TOCTOU and truechanges/binary; no secondblanketnormalizer/newguard/capabilityphase.
