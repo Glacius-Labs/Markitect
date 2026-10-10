@@ -27,6 +27,9 @@ This register records Markitect's long-term vision, product-level decisions, cla
 | [DEC-018](#dec-018-the-knowledge-graph-explains-impact) | Decision | The knowledge graph explains impact | Accepted |
 | [DEC-019](#dec-019-government-code-starts-after-wave-2) | Decision | Government code starts after Wave 2 | Accepted |
 | [DEC-020](#dec-020-markitect-uses-any-library-that-helps) | Decision | Markitect uses any library that helps | Accepted |
+| [DEC-021](#dec-021-purpose-and-meaning-free-edits-route-narrowly) | Decision | Purpose and meaning-free edits route narrowly | Accepted |
+| [DEC-022](#dec-022-decisions-are-visible-and-route-through-their-subject) | Decision | Decisions are visible and route through their subject | Accepted |
+| [DEC-023](#dec-023-impact-marks-change-and-context-without-dropping-either) | Decision | Impact marks change and context without dropping either | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-005](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -268,7 +271,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
   - A reduced core is ported to current main. The branch `codex/knowledge-graph` is not revived; it stays as a frozen reference.
   - The existing MCP surface is used. There is no separate knowledge server.
   - The YAML model stays canonical.
-  - Whether Decisions become first-class model entries is proposed in KG-01 and KG-02, not decided here.
+  - Whether Decisions become first-class model entries was proposed in KG-02 and is decided in [DEC-022](#dec-022-decisions-are-visible-and-route-through-their-subject).
 - **Work items:** KG-01 to KG-03 in the [backlog](../work-items/backlog.yaml). The earlier research item R02 is summarized on the [research page](../research/optional-research-r01-r03-20261009.md).
 
 ### DEC-019 Government code starts after Wave 2
@@ -290,6 +293,36 @@ This register records Markitect's long-term vision, product-level decisions, cla
   - The architecture gate keeps its rules for imports between Markitect's own packages; it does not restrict third-party libraries.
 - **Consequences:** the documents that state "standard library only" for Core or Modules are aligned, and the gate's third-party check for Core is removed.
 - **Work items:** ARCH-03 in the [backlog](../work-items/backlog.yaml).
+
+### DEC-021 Purpose and meaning-free edits route narrowly
+
+- **Status:** Accepted, owner, 10 October 2026, choosing the recommended option of the KG-02 question ([source](sources/roadmap-planning-20261010.md#knowledge-graph-impact-routing)).
+- **Statement:**
+  - A change to the purpose of a Statement, Artifact or Check is routed like a description change: the definition, its realizations, consumers, owners and ancestors. It no longer widens impact to the whole project.
+  - A meaning-free edit, such as a list reorder or an explicit default, routes only through its changed model file: that file's owner and the definitions in it.
+  - Combining changes never shrinks impact; the monotonicity test covers the narrowed routing.
+- **Consequences:** impact and plans for these edits become much smaller, and impact digests change once, so `--since` plans must be replanned. An obligation written only in a purpose routes narrowly, as one written in a description already does.
+- **Work items:** KG-02 in the [backlog](../work-items/backlog.yaml).
+
+### DEC-022 Decisions are visible and route through their subject
+
+- **Status:** Accepted, owner, 10 October 2026, choosing the recommended option of the KG-02 question ([source](sources/roadmap-planning-20261010.md#knowledge-graph-impact-routing)). This settles the open point of [DEC-018](#dec-018-the-knowledge-graph-explains-impact).
+- **Statement:**
+  - Decisions appear in the Report (omitted when a project has none) and in the owning Manager's Context.
+  - A Decision change routes as a change of its subject Statement plus the Decision's owner, instead of a full-project review.
+  - The actor is provenance, never authority.
+- **Consequences:** ManagerContext digests change for Managers that own Decisions; plans for Decision edits select fewer Managers.
+- **Work items:** KG-02 in the [backlog](../work-items/backlog.yaml).
+
+### DEC-023 Impact marks change and context without dropping either
+
+- **Status:** Accepted, owner, 10 October 2026, choosing the recommended option of the KG-02 question ([source](sources/roadmap-planning-20261010.md#knowledge-graph-impact-routing)).
+- **Statement:**
+  - Each impact element is classed by a fixed rule. "Change" covers changed definitions and files, their realizations and Checks, direct consumers of changed Statements, and requires targets. "Context" is the rest of the closure.
+  - Impact sets and plans stay unchanged; the class is a priority signal, never permission to skip.
+  - Dropping context-only Managers from plans or briefings waits for measured evidence from the playground (KG-03).
+- **Consequences:** the impact result gains fields, so its digest changes once; invalidation and plans do not change.
+- **Work items:** KG-02 and KG-03 in the [backlog](../work-items/backlog.yaml).
 
 ## Promises
 
