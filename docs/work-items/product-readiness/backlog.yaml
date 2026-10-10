@@ -355,7 +355,7 @@ native_acceptance:
     cumulative_known_provider_starts: 10
     cumulative_estimated_cost_micros: 3511133
     cost_accounting: partial_observed_lower_bound_not_invoice
-  latest_actual:
+  attempt_10:
     batch_id: a01-evidence-4d64c087720d415a8194f1ac00cbfe1a
     attempt_number: 10
     native_run_number: 11
@@ -399,16 +399,55 @@ native_acceptance:
     cumulative_known_provider_starts: 11
     cumulative_estimated_cost_micros: 4038772
     cost_accounting: partial_observed_lower_bound_not_invoice
+  latest_actual:
+    batch_id: a01-semantic-b9d9dc1428754b70a5e8d5cd9e9839e4
+    attempt_number: 11
+    native_run_numbers: [12, 13]
+    status: failed_not_passed
+    source_revision: 354b08ff8ea4d80f85959fa62d871ee09bd6a88d
+    binary_sha256: 3d5b13477f6d9019e6ed52cf511ed0ec6fd7e806c1d53afa47a301aa70d89bd2
+    owned_project_revision: eaa11e9969db66e6c1a5cd80949cfb757074ce54
+    plan_id: f66bc6a666870551adb97dc66b96f774
+    plan_sha256: e8f1866a23e195bb6de212c42e4f723494c02502733bfa7861e19996219aa224
+    preflight_rejected_stale_plan: 9b55b0bb7b95909281832e8978fb6412
+    preflight_provider_starts: 0
+    preflight_role_start_requests: 0
+    observer_id: 9c08767032984307a869e4f5844e6bea
+    observer_record_sha256: b80f929ce165de14029e77f709386da764811c09233e986a6b2ade48135180e4
+    private_record_sha256: d0ca2162dcf795be64ee370bbcdc0fb1e5865015ff27258d0223dff8b57106f3
+    root_native_session: 01a12350-0657-7873-a4c4-ea8f9cce1fde
+    root_native_turn: 01a12350-0915-7090-b585-cacecb4f654c
+    root_report_acceptance: accepted
+    root_candidate_paths: [README.md]
+    candidate_integrated: false
+    review_native_session: 01a12350-fb94-7b53-b91e-1a2da545b3b1
+    review_native_turn: 01a12350-fce7-7b50-8e44-232bea1359e3
+    review_acceptance: rejected_by_exact_candidate_scope_validation
+    review_finding: delegated future child work in source/, tests/, and docs/ was outside the exact README-only candidate scope
+    helper_reservations: 0
+    helper_native_child_starts: 0
+    manager_overlap_observed: false
+    verify_apply_recovery_observed: false
+    role_start_requests: 2
+    provider_starts: 2
+    input_tokens: 735421
+    output_tokens: 6476
+    cached_input_tokens: 643328
+    attempt_estimated_cost_micros: 748373
+    cumulative_known_role_start_requests: 16
+    cumulative_known_provider_starts: 13
+    cumulative_estimated_cost_micros: 4787145
+    cost_accounting: partial_observed_lower_bound_not_invoice
   next_batch:
-    status: native_evidence_reference_output_investigation_next_pins_pending
+    status: reviewer_candidate_scope_investigation_next_pins_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
     new_batch_pins: none
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
-    no_eleventh_actual_claimed: true
+    no_twelfth_actual_claimed: true
     owner_repair_in_progress: true
-    repair: investigate_provider_nonconformance_to_request_bound_evidence_enum_without_weakening_validation
+    repair: investigate reviewer scope grounding against the exact root candidate without widening scope validation
     next_shared_native_defaults: { memories: false, login: false }
     intended_profile:
       fresh_native_roles: workspace_permission
@@ -439,10 +478,10 @@ native_acceptance:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_used_for_latest_attempt: 8e0d103a13650036bc8ac98fdca98fcf38ffd98a
-    binary_sha256: 99a13305ce58def97100d700aa6179cdeb3504a1c9cf71d52469f44d82344564
-    latest_native_acceptance: failed_not_passed_attempt_10
-    next_repair: investigate_native_evidence_reference_enum_provider_output
+    source_revision_used_for_latest_attempt: 354b08ff8ea4d80f85959fa62d871ee09bd6a88d
+    binary_sha256: 3d5b13477f6d9019e6ed52cf511ed0ec6fd7e806c1d53afa47a301aa70d89bd2
+    latest_native_acceptance: failed_not_passed_attempt_11
+    next_repair: investigate_reviewer_scope_grounding_against_exact_candidate
     next_batch_pins: pending
   prior_batch_history:
     revision: generous-native-limits-20261009
