@@ -205,6 +205,7 @@ func Load(root, revision string) (*Project, error) {
 			return nil, fmt.Errorf("classify full repository coverage: %w", coverageErr)
 		}
 		project.Coverage = &coverage
+		project.census = fullUniverse
 		project.Digest, err = digestProject(project)
 		if err != nil {
 			return nil, err
@@ -215,7 +216,8 @@ func Load(root, revision string) (*Project, error) {
 
 // FromSnapshot compiles only the exact model files selected by the closed
 // manifest and derives a report from the inventory bytes present in s and
-// admitted by configured roots. Other snapshot entries are ignored.
+// admitted by configured roots. Other snapshot entries are ignored. Its full
+// coverage sees only snapshot paths; closure gates use ClassifyCandidate.
 func FromSnapshot(root string, s *snapshot.Snapshot) (*Project, error) {
 	if s == nil {
 		return nil, fmt.Errorf("project snapshot is required")

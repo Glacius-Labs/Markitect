@@ -1,7 +1,11 @@
 package projectwork
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
@@ -67,6 +71,55 @@ func Coverage(root, revision string) (projectcoverage.Report, error) {
 	}
 	return projectcoverage.Classify(projectcoverage.Request{Universe: universe, Model: project.Report, Options: options,
 		LegacyRoots: config.InventoryRoots, LegacyExclusions: legacyExclusions(config.Exclusions)})
+}
+
+// ClassifyCandidate returns candidate, compiled from a snapshot derived from
+// base, with full coverage classified against base's repository census plus
+// the files the candidate adds, replaces or deletes. Ignored, transitional and
+// operational paths absent from both snapshots keep their census state, so an
+// unchanged candidate is classified exactly like its base.
+func ClassifyCandidate(base, candidate *Project) (*Project, error) {
+	if candidate == nil || candidate.Config.CoverageMode != "full" {
+		return candidate, nil
+	}
+	if base == nil || base.census == nil || base.Snapshot == nil || candidate.Snapshot == nil {
+		return nil, fmt.Errorf("candidate coverage requires the repository census of its base")
+	}
+	coverage, err := projectcoverage.ValidateCandidate(base.census, candidateDelta(base.Snapshot, candidate.Snapshot), candidate.Report,
+		coverageOptions(candidate.Config), candidate.Config.InventoryRoots, legacyExclusions(candidate.Config.Exclusions))
+	if err != nil {
+		return nil, fmt.Errorf("classify candidate against the repository census: %w", err)
+	}
+	classified := *candidate
+	classified.Coverage = &coverage
+	classified.Digest, err = digestProject(&classified)
+	if err != nil {
+		return nil, err
+	}
+	return &classified, nil
+}
+
+func candidateDelta(base, candidate *snapshot.Snapshot) []projectcoverage.Delta {
+	var delta []projectcoverage.Delta
+	for file, data := range candidate.Files {
+		mode := candidate.Modes[file]
+		if old, exists := base.Files[file]; exists && bytes.Equal(old, data) && base.Modes[file] == mode {
+			continue
+		}
+		digest := sha256.Sum256(data)
+		change := projectcoverage.Delta{Path: file, Mode: mode, Digest: hex.EncodeToString(digest[:])}
+		if file == projectcoverage.IgnorePath {
+			change.Content = append([]byte(nil), data...)
+		}
+		delta = append(delta, change)
+	}
+	for file := range base.Files {
+		if _, exists := candidate.Files[file]; !exists {
+			delta = append(delta, projectcoverage.Delta{Path: file, Delete: true})
+		}
+	}
+	sort.Slice(delta, func(i, j int) bool { return delta[i].Path < delta[j].Path })
+	return delta
 }
 
 func ToolPaths(config Config) []projectcoverage.ToolPath {

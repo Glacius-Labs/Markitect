@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
 )
 
@@ -87,6 +88,94 @@ func TestTransitionalExclusionIsAccountedButBlocksConformance(t *testing.T) {
 		}
 	}
 	t.Fatal("coverage omitted transitional path")
+}
+
+// An exact ignore entry matches a census path that the snapshot omits. The
+// candidate must still see that path, and a candidate delta is classified on
+// top of the census rather than instead of it.
+func TestCandidateCoverageKeepsExactIgnoreSatisfiedByCensus(t *testing.T) {
+	root := testGitRoot(t)
+	if _, err := Init(root, "Coverage fixture", true); err != nil {
+		t.Fatal(err)
+	}
+	ignore := "apiVersion: " + projectcoverage.IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries:\n  - path: README.md\n    reason: Fixture readme outside the model\n"
+	writeFile(t, root, projectcoverage.IgnorePath, ignore)
+	gitTest(t, root, "add", ".")
+	gitTest(t, root, "commit", "-m", "init with exact ignore")
+	head := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	for _, revision := range []string{"", head} {
+		base, err := Load(root, revision)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if base.Coverage == nil || !base.Coverage.Conforming {
+			t.Fatalf("precondition (revision %q): census not conforming: %+v", revision, base.Coverage)
+		}
+		candidate := classifiedCandidate(t, base, base.Snapshot)
+		if candidate.Coverage == nil || candidate.Coverage.Conforming != base.Coverage.Conforming || len(candidate.Coverage.Findings) != 0 {
+			t.Errorf("revision %q: unchanged candidate conforming=%v, census conforming=%v; findings=%+v",
+				revision, candidate.Coverage != nil && candidate.Coverage.Conforming, base.Coverage.Conforming, candidate.Coverage.Findings)
+		}
+		added := &snapshot.Snapshot{ID: base.Snapshot.ID, Provisional: base.Snapshot.Provisional,
+			Files: map[string][]byte{"notes/unknown.md": []byte("unclassified candidate file\n")}, Modes: map[string]string{"notes/unknown.md": snapshot.RegularMode}}
+		for file, data := range base.Snapshot.Files {
+			added.Files[file], added.Modes[file] = data, base.Snapshot.Modes[file]
+		}
+		changed := classifiedCandidate(t, base, added)
+		if changed.Coverage.Conforming || len(changed.Coverage.Findings) != 1 || changed.Coverage.Findings[0].Code != "coverage.unclassified" || changed.Coverage.Findings[0].Path != "notes/unknown.md" {
+			t.Errorf("revision %q: candidate delta was not classified on top of the census: %+v", revision, changed.Coverage.Findings)
+		}
+	}
+}
+
+// DEC-006: a transitional path is accounted for but not conforming. The
+// snapshot omits it, so only the census lets the candidate keep that state.
+func TestCandidateCoverageKeepsTransitionalPathsNonconforming(t *testing.T) {
+	root := testGitRoot(t)
+	if _, err := Init(root, "Coverage fixture", true); err != nil {
+		t.Fatal(err)
+	}
+	manifestPath := filepath.Join(root, filepath.FromSlash(ManifestPath))
+	manifest, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := strings.Replace(string(manifest), "transitionalExclusions: []\n", "transitionalExclusions:\n  - path: README.md\n    reason: Fixture readme awaits modeling\n  - path: legacy/\n    reason: Existing file awaits explicit modeling\n", 1)
+	if updated == string(manifest) {
+		t.Fatal("could not add transitional exclusions")
+	}
+	writeFile(t, root, ManifestPath, updated)
+	writeFile(t, root, "legacy/old.txt", "legacy bytes\n")
+	gitTest(t, root, "add", ".")
+	gitTest(t, root, "commit", "-m", "init with transitional exclusions")
+	head := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	for _, revision := range []string{"", head} {
+		base, err := Load(root, revision)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if base.Coverage == nil || !base.Coverage.Accounted || base.Coverage.Conforming {
+			t.Fatalf("precondition (revision %q): census must be accounted but nonconforming: %+v", revision, base.Coverage)
+		}
+		candidate := classifiedCandidate(t, base, base.Snapshot)
+		if candidate.Coverage == nil || candidate.Coverage.Accounted != base.Coverage.Accounted || candidate.Coverage.Conforming != base.Coverage.Conforming {
+			t.Errorf("revision %q: candidate accounted=%v conforming=%v, census accounted=%v conforming=%v",
+				revision, candidate.Coverage != nil && candidate.Coverage.Accounted, candidate.Coverage != nil && candidate.Coverage.Conforming, base.Coverage.Accounted, base.Coverage.Conforming)
+		}
+	}
+}
+
+func classifiedCandidate(t *testing.T, base *Project, s *snapshot.Snapshot) *Project {
+	t.Helper()
+	compiled, err := FromSnapshot(base.Root, s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	classified, err := ClassifyCandidate(base, compiled)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return classified
 }
 
 func TestExplorationOperationalRegistrationIsExact(t *testing.T) {

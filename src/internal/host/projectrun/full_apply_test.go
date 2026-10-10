@@ -1,9 +1,13 @@
 package projectrun
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
@@ -76,7 +80,7 @@ func TestFullApplyAcceptsVerifiedImplementationDigestDifferentFromPlanReport(t *
 	if compiled.Report.ModelDigest != base.Report.ModelDigest || compiled.Report.Digest == base.Report.Digest {
 		t.Fatalf("fixture edit did not isolate model-stable implementation digest change: model=%t report=%t", compiled.Report.ModelDigest == base.Report.ModelDigest, compiled.Report.Digest != base.Report.Digest)
 	}
-	if err := validateFinalCandidate(host, root, base.Snapshot, candidate, PlanRecord{ModelDigest: base.Report.ModelDigest}); err != nil {
+	if err := validateFinalCandidate(host, root, base, candidate, PlanRecord{ModelDigest: base.Report.ModelDigest}); err != nil {
 		t.Fatalf("valid full coverage implementation update rejected: %v", err)
 	}
 	briefings, err := briefingBindings(root, compiled)
@@ -107,9 +111,63 @@ func TestFullApplyRejectsUnclassifiedCandidatePath(t *testing.T) {
 	if compiled.Coverage == nil || compiled.Coverage.Conforming {
 		t.Fatalf("unclassified candidate path did not break full coverage: coverage=%+v", compiled.Coverage)
 	}
-	if err := validateFinalCandidate(Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot}, root, base.Snapshot, candidate, PlanRecord{ModelDigest: compiled.Report.ModelDigest}); err == nil {
+	if err := validateFinalCandidate(Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot}, root, base, candidate, PlanRecord{ModelDigest: compiled.Report.ModelDigest}); err == nil {
 		t.Fatal("unclassified candidate path passed final candidate validation")
 	}
+}
+
+// The closure gate classifies the candidate against the base repository
+// census. The candidate snapshot omits ignored and transitional files, yet an
+// exact ignore entry must stay satisfied and a transitional path must still
+// block closure (DEC-006).
+func TestFinalCandidateCoverageUsesRepositoryCensus(t *testing.T) {
+	host := Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot}
+	loadHead := func(t *testing.T, root string) *Project {
+		t.Helper()
+		base, err := projectwork.Load(root, gitE2E(t, root, "rev-parse", "HEAD"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return base
+	}
+	t.Run("exact ignore", func(t *testing.T) {
+		root := makeFullVerifyFixture(t)
+		writeE2E(t, root, projectcoverage.IgnorePath, "apiVersion: "+projectcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries:\n  - path: scratch.txt\n    reason: Local notes outside the model\n")
+		writeE2E(t, root, "scratch.txt", "ignored notes\n")
+		gitE2E(t, root, "add", projectcoverage.IgnorePath, "scratch.txt")
+		gitE2E(t, root, "commit", "-m", "ignore one exact path")
+		base := loadHead(t, root)
+		if base.Coverage == nil || !base.Coverage.Conforming {
+			t.Fatalf("precondition: census not conforming: %+v", base.Coverage)
+		}
+		candidate := candidateData{ID: "candidate-exact-ignore", Files: map[string]File{}}
+		if err := validateFinalCandidate(host, root, base, candidate, PlanRecord{ModelDigest: base.Report.ModelDigest}); err != nil {
+			t.Fatalf("census-satisfied exact ignore entry failed final candidate validation: %v", err)
+		}
+	})
+	t.Run("transitional", func(t *testing.T) {
+		root := makeFullVerifyFixture(t)
+		manifest, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		updated := strings.Replace(string(manifest), "exclusions: []\n", "exclusions: []\ntransitionalExclusions:\n  - path: legacy/\n    reason: Existing file awaits explicit modeling\n", 1)
+		if updated == string(manifest) {
+			t.Fatal("could not add a transitional exclusion")
+		}
+		writeE2E(t, root, projectwork.ManifestPath, updated)
+		writeE2E(t, root, "legacy/old.txt", "legacy bytes\n")
+		gitE2E(t, root, "add", projectwork.ManifestPath, "legacy/old.txt")
+		gitE2E(t, root, "commit", "-m", "mark legacy path transitional")
+		base := loadHead(t, root)
+		if base.Coverage == nil || !base.Coverage.Accounted || base.Coverage.Conforming {
+			t.Fatalf("precondition: census must be accounted but nonconforming: %+v", base.Coverage)
+		}
+		candidate := candidateData{ID: "candidate-transitional", Files: map[string]File{}}
+		if err := validateFinalCandidate(host, root, base, candidate, PlanRecord{ModelDigest: base.Report.ModelDigest}); err == nil || !strings.Contains(err.Error(), "coverage is not conforming") {
+			t.Fatalf("transitional path did not block final candidate validation: %v", err)
+		}
+	})
 }
 
 func TestFullApplyRejectsUnclassifiedWorktreeAddedAfterPlan(t *testing.T) {

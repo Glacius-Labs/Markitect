@@ -97,11 +97,11 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if err := validateChangeImpact(host, root, base, plan); err != nil {
 		return out, err
 	}
-	compiled, err := projectForCandidate(host, root, base.Snapshot, candidate)
+	compiled, err := finalProjectForCandidate(host, root, base, candidate)
 	if err != nil {
 		return out, err
 	}
-	if err := validateFinalCandidate(host, root, base.Snapshot, candidate, plan); err != nil {
+	if err := validateFinalCandidate(host, root, base, candidate, plan); err != nil {
 		return out, err
 	}
 	if compiled.Config.CoverageMode == "full" {
@@ -263,11 +263,11 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if err := validateCheckExecutables(plan); err != nil {
 		return out, err
 	}
-	compiled, err := projectForCandidate(host, root, base.Snapshot, candidate)
+	compiled, err := finalProjectForCandidate(host, root, base, candidate)
 	if err != nil {
 		return out, err
 	}
-	if err := validateFinalCandidate(host, root, base.Snapshot, candidate, plan); err != nil {
+	if err := validateFinalCandidate(host, root, base, candidate, plan); err != nil {
 		return out, err
 	}
 	if compiled.Config.CoverageMode == "full" {
@@ -394,11 +394,11 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		if loadErr != nil {
 			return loadErr
 		}
-		freshCompiled, loadErr := projectForCandidate(host, root, fixedBase.Snapshot, freshCandidate)
+		freshCompiled, loadErr := finalProjectForCandidate(host, root, fixedBase, freshCandidate)
 		if loadErr != nil {
 			return loadErr
 		}
-		if loadErr = validateFinalCandidate(host, root, fixedBase.Snapshot, freshCandidate, plan); loadErr != nil {
+		if loadErr = validateFinalCandidate(host, root, fixedBase, freshCandidate, plan); loadErr != nil {
 			return loadErr
 		}
 		if freshCompiled.Config.CoverageMode == "full" {
