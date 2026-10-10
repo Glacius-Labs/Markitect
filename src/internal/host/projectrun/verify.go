@@ -150,15 +150,17 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if costExceedsLimit(run.Invocations, runtime.Limits.MaxCostMicros) {
 		return out, failVerificationBudget(s, &run, fmt.Errorf("run has already exceeded maxCostMicros before verification"))
 	}
-	verifyDir := filepath.Join(dir, "verification", candidate.ID)
-	if err := ensureDirectory(filepath.Dir(verifyDir)); err != nil {
-		return out, err
-	}
-	_ = os.RemoveAll(verifyDir)
-	if err := materializeCandidate(verifyDir, base.Snapshot, candidate); err != nil {
+	// Checks run in a fresh private directory with a short path, as in full
+	// verification. A directory under a deep repository's run store can exceed
+	// the Windows limit for a process working directory.
+	verifyDir, err := os.MkdirTemp("", "markitect-verify-*")
+	if err != nil {
 		return out, err
 	}
 	defer os.RemoveAll(verifyDir)
+	if err := materializeCandidate(verifyDir, base.Snapshot, candidate); err != nil {
+		return out, err
+	}
 	out = VerifyReport{APIVersion: APIVersion, VerificationScope: "planned", RunID: runID, CandidateID: candidate.ID, CandidateHash: candidate.Digest, Status: "failed", VerifiedAt: time.Now().UTC(), Checks: []CheckResult{}}
 	// This durable marker reserves the single verification attempt before any
 	// external process starts. A crash after this point cannot replay checks or
@@ -491,6 +493,10 @@ func runCheck(parent context.Context, dir string, check CheckPlan, agent Agent, 
 		out.Error = err.Error()
 		return out
 	}
+	if err := checkWorkingDirectoryLength(dir); err != nil {
+		out.Error = err.Error()
+		return out
+	}
 	timeout := time.Duration(agent.Timeout)
 	if timeout > time.Duration(maximum) {
 		timeout = time.Duration(maximum)
@@ -646,7 +652,7 @@ func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, p
 	if err == nil && result.Delta != nil && len(result.Delta.Changes) != 0 {
 		err = fmt.Errorf("read-only verifier changed its owned workspace")
 	}
-	usageCost, costKnown, costOverflow := estimateCostDetailed(result.Receipt.Usage, runtime.Verifier.Pricing)
+	usageCost, costKnown, costOverflow := estimateAgentCost(result.Receipt.Usage, *runtime.Verifier)
 	log = InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: inputDigest, Receipt: result.Receipt, ReportID: result.Receipt.RunID, Outcome: result.Receipt.Outcome, CostMicros: usageCost, CostKnown: costKnown, CostOverflow: costOverflow}
 	if log.Outcome == "" {
 		log.Outcome = agentexec.OutcomeIncomplete
@@ -667,7 +673,7 @@ func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, p
 	if costOverflow {
 		return verifierReport, log, fmt.Errorf("verifier cost estimate exceeds the supported int64 range")
 	}
-	if !costKnown && config.Transport != TransportCodexAppServer {
+	if !costKnown && runtime.Verifier.requiresReportedUsage() {
 		return verifierReport, log, fmt.Errorf("verifier usage is missing; bounded cost cannot be asserted")
 	}
 	return verifierReport, log, nil

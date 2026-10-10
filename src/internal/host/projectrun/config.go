@@ -164,9 +164,18 @@ func ValidateRuntime(config Runtime) error {
 				return fmt.Errorf("runtime agent %q instructionPaths: %w", managerID, err)
 			}
 		}
-		if agent.Pricing.InputMicrosPerMillion < 0 || agent.Pricing.OutputMicrosPerMillion < 0 ||
-			(agent.Pricing.InputMicrosPerMillion == 0 && agent.Pricing.OutputMicrosPerMillion == 0) {
-			return fmt.Errorf("runtime agent %q must declare nonnegative input/output pricing with at least one positive rate", managerID)
+		switch agent.CostMode {
+		case "", CostModeMetered:
+			if agent.Pricing.InputMicrosPerMillion < 0 || agent.Pricing.OutputMicrosPerMillion < 0 ||
+				(agent.Pricing.InputMicrosPerMillion == 0 && agent.Pricing.OutputMicrosPerMillion == 0) {
+				return fmt.Errorf("runtime agent %q must declare nonnegative input/output pricing with at least one positive rate", managerID)
+			}
+		case CostModeUnmetered:
+			if agent.Pricing != (Pricing{}) {
+				return fmt.Errorf("runtime agent %q is unmetered and must not declare pricing", managerID)
+			}
+		default:
+			return fmt.Errorf("runtime agent %q has unsupported costMode %q; use %q or %q", managerID, agent.CostMode, CostModeMetered, CostModeUnmetered)
 		}
 		seen := map[string]bool{}
 		for _, name := range agent.Environment {

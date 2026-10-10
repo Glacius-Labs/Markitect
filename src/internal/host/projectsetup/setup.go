@@ -40,18 +40,73 @@ const (
 	DefaultMaxTotalBytes                = 8 << 20
 	DefaultReviewMaxRounds              = 3
 	DefaultReviewMaxManagerRounds       = 2
+	// DefaultProcessMaxStdout leaves room for a full 8 MiB candidate in a
+	// process executor's JSON response.
+	DefaultProcessMaxStdout = 16 << 20
+	DefaultCodexEffort      = "high"
+	// UndeclaredProviderVersion is recorded when a process executor declares no
+	// version. The executable bytes are still pinned by digest.
+	UndeclaredProviderVersion = "undeclared"
+
+	ProviderCodex   = "codex"
+	ProviderProcess = "process"
+	RoleManager     = "manager"
+	RoleReviewer    = "reviewer"
+	RoleVerifier    = "verifier"
 )
 
+// Options selects the default executor profile for every role. Roles
+// optionally overrides it for Managers, reviewers or the verifier; mixed
+// providers and models are allowed.
 type Options struct {
-	Provider               string                               `json:"provider"`
-	Model                  string                               `json:"model"`
-	Effort                 string                               `json:"effort"`
-	CodexProfile           string                               `json:"codexProfile"`
-	WindowsSandboxBackend  codexappserver.WindowsSandboxBackend `json:"windowsSandboxBackend,omitempty"`
-	ProviderExecutable     string                               `json:"providerExecutable"`
-	InputMicrosPerMillion  int64                                `json:"inputMicrosPerMillion"`
-	OutputMicrosPerMillion int64                                `json:"outputMicrosPerMillion"`
-	MaxCostMicros          int64                                `json:"maxCostMicros"`
+	Provider              string                               `json:"provider"`
+	Model                 string                               `json:"model"`
+	Effort                string                               `json:"effort"`
+	CodexProfile          string                               `json:"codexProfile"`
+	WindowsSandboxBackend codexappserver.WindowsSandboxBackend `json:"windowsSandboxBackend,omitempty"`
+	ProviderExecutable    string                               `json:"providerExecutable"`
+	// ProviderArgs, ProviderVersion and Environment apply only to process
+	// executors. Environment lists extra caller variable names to pass.
+	ProviderArgs           []string     `json:"providerArgs,omitempty"`
+	ProviderVersion        string       `json:"providerVersion,omitempty"`
+	Environment            []string     `json:"environment,omitempty"`
+	CostMode               string       `json:"costMode,omitempty"`
+	InputMicrosPerMillion  int64        `json:"inputMicrosPerMillion"`
+	OutputMicrosPerMillion int64        `json:"outputMicrosPerMillion"`
+	MaxCostMicros          int64        `json:"maxCostMicros"`
+	Roles                  *RoleOptions `json:"roles,omitempty"`
+}
+
+// RoleOptions overrides the default profile per role class. Every Manager
+// shares the manager profile and every Manager's reviewer the reviewer profile.
+type RoleOptions struct {
+	Manager  *RoleProfile `json:"manager,omitempty"`
+	Reviewer *RoleProfile `json:"reviewer,omitempty"`
+	Verifier *RoleProfile `json:"verifier,omitempty"`
+}
+
+// RoleProfile changes selected fields of the default profile for one role.
+// Empty fields inherit it. Changing the provider inherits only cost settings,
+// so the role must name its own model and, for a process, its executable.
+type RoleProfile struct {
+	Provider               string   `json:"provider,omitempty"`
+	Model                  string   `json:"model,omitempty"`
+	Effort                 string   `json:"effort,omitempty"`
+	ProviderExecutable     string   `json:"providerExecutable,omitempty"`
+	ProviderArgs           []string `json:"providerArgs,omitempty"`
+	ProviderVersion        string   `json:"providerVersion,omitempty"`
+	Environment            []string `json:"environment,omitempty"`
+	CostMode               string   `json:"costMode,omitempty"`
+	InputMicrosPerMillion  *int64   `json:"inputMicrosPerMillion,omitempty"`
+	OutputMicrosPerMillion *int64   `json:"outputMicrosPerMillion,omitempty"`
+}
+
+// roleProfile is one resolved, validated role selection.
+type roleProfile struct {
+	provider, model, effort       string
+	executable, version, costMode string
+	args, environment             []string
+	pricing                       projectrun.Pricing
 }
 
 type Tool struct {
@@ -108,7 +163,7 @@ func previewEditWithDiscovery(project *projectwork.Project, options Options, dis
 	if err != nil {
 		return result, err
 	}
-	runtimeConfig, err := BuildRuntime(project, options, discovery)
+	runtimeConfig, err := buildRuntime(project, options, cachedDiscovery(options, discovery, discover))
 	if err != nil {
 		return result, err
 	}
@@ -135,62 +190,68 @@ func previewEditWithDiscovery(project *projectwork.Project, options Options, dis
 	}, nil
 }
 
+// BuildRuntime builds the runtime proposal. found is the discovery of the
+// default profile's executable; a role that selects another executable is
+// discovered separately.
 func BuildRuntime(project *projectwork.Project, options Options, found Discovery) (projectrun.Runtime, error) {
+	return buildRuntime(project, options, cachedDiscovery(options, found, Discover))
+}
+
+// cachedDiscovery discovers each selected executable once and returns found
+// for the default profile's selection.
+func cachedDiscovery(options Options, found Discovery, discover func(Options) (Discovery, error)) func(Options) (Discovery, error) {
+	cache := map[string]Discovery{discoveryKey(options): found}
+	return func(selected Options) (Discovery, error) {
+		key := discoveryKey(selected)
+		if cached, ok := cache[key]; ok {
+			return cached, nil
+		}
+		discovered, err := discover(selected)
+		if err != nil {
+			return Discovery{}, err
+		}
+		cache[key] = discovered
+		return discovered, nil
+	}
+}
+
+func discoveryKey(options Options) string {
+	version := options.ProviderVersion
+	switch options.Provider {
+	case ProviderCodex:
+		version = ""
+	case ProviderProcess:
+		if version == "" {
+			version = UndeclaredProviderVersion
+		}
+	}
+	return options.Provider + "\x00" + options.ProviderExecutable + "\x00" + version
+}
+
+func buildRuntime(project *projectwork.Project, options Options, discover func(Options) (Discovery, error)) (projectrun.Runtime, error) {
 	var config projectrun.Runtime
 	if project == nil || len(project.Report.Managers) == 0 {
 		return config, errors.New("active project must contain at least one Manager")
-	}
-	if options.Provider != "codex" {
-		return config, errors.New("project setup currently supports the native Codex App Server only; other providers are unsupported")
 	}
 	options, err := normalizeOptions(options)
 	if err != nil {
 		return config, err
 	}
-	if strings.TrimSpace(options.Model) == "" || options.Model != strings.TrimSpace(options.Model) {
-		return config, errors.New("model must be nonempty and have no surrounding whitespace")
+	if options.MaxCostMicros <= 0 {
+		return config, errors.New("a positive max-cost-micros budget is required; it bounds the known estimated cost of metered agents")
 	}
-	if options.Effort == "" {
-		options.Effort = "high"
+	profiles, err := resolveRoleProfiles(options)
+	if err != nil {
+		return config, err
 	}
-	if options.Effort != "high" {
-		return config, errors.New("setup currently supports only --effort high")
-	}
-	if options.Model != "gpt-6-luna" || options.Effort != "high" {
-		return config, errors.New("native Codex App Server setup currently requires model gpt-6-luna and effort high")
-	}
-	if found.ProviderBinary.Version != "codex-cli 0.162.0" {
-		return config, errors.New("native Codex setup requires Codex CLI 0.162.0")
-	}
-	if options.InputMicrosPerMillion < 0 || options.OutputMicrosPerMillion < 0 ||
-		(options.InputMicrosPerMillion == 0 && options.OutputMicrosPerMillion == 0) || options.MaxCostMicros <= 0 {
-		return config, errors.New("explicit nonnegative input/output rates and a positive max-cost-micros budget are required")
-	}
-	if found.Provider != options.Provider || found.ProviderBinary.Path == "" || !filepath.IsAbs(found.ProviderBinary.Path) {
-		return config, errors.New("tool discovery does not match the selected provider")
-	}
-	sandboxBackend := options.WindowsSandboxBackend
-	if sandboxBackend == "" && runtime.GOOS == "windows" {
-		sandboxBackend = codexappserver.WindowsSandboxBackendMXC
-	}
-	instructionPaths, instructionFiles, instructionErr := nativeInstructionFiles(project, options.Provider)
-	if instructionErr != nil {
-		return config, instructionErr
-	}
-	if len(instructionPaths) == 0 {
-		return config, errors.New("native Codex setup requires existing generated Codex project instructions; run project onboard first")
-	}
-	runtimeFiles := append([]agentexec.RuntimeFile{runtimeFile(found.ProviderBinary)}, instructionFiles...)
-	environment := []string{"PATH", "TEMP", "TMP"}
-	if runtime.GOOS == "windows" {
-		environment = append(environment, "SystemRoot", "USERPROFILE", "APPDATA", "LOCALAPPDATA")
-	} else {
-		environment = append(environment, "HOME")
-	}
-	pricing := projectrun.Pricing{InputMicrosPerMillion: options.InputMicrosPerMillion, OutputMicrosPerMillion: options.OutputMicrosPerMillion}
-	permissionProfile := options.CodexProfile
-	if permissionProfile == "" {
-		permissionProfile = ":workspace"
+	builder := &agentBuilder{project: project, options: options, discover: discover}
+	roleAgents := make(map[string]projectrun.Agent, len(profiles))
+	for _, role := range []string{RoleManager, RoleReviewer, RoleVerifier} {
+		agent, err := builder.agent(role, profiles[role])
+		if err != nil {
+			return config, err
+		}
+		roleAgents[role] = agent
 	}
 	agents := make(map[string]projectrun.Agent, len(project.Report.Managers))
 	reviewAgents := make(map[string]projectrun.Agent, len(project.Report.Managers))
@@ -198,17 +259,10 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		if manager.ID == "" {
 			return config, errors.New("active project has a Manager with an empty ID")
 		}
-		worker := selectedAgent(found, options.Model, options.Effort, permissionProfile, sandboxBackend, runtimeFiles, environment, pricing)
-		reviewer := selectedAgent(found, options.Model, options.Effort, permissionProfile, sandboxBackend, runtimeFiles, environment, pricing)
-		worker.WorkspaceMode = "git"
-		worker.InstructionPaths = append([]string(nil), instructionPaths...)
-		reviewer.WorkspaceMode = "git"
-		reviewer.InstructionPaths = append([]string(nil), instructionPaths...)
-		agents[manager.ID] = worker
-		reviewAgents[manager.ID] = reviewer
+		agents[manager.ID] = cloneAgent(roleAgents[RoleManager])
+		reviewAgents[manager.ID] = cloneAgent(roleAgents[RoleReviewer])
 	}
-	verifierManagerID := project.Report.Managers[0].ID
-	verifier := agents[verifierManagerID]
+	verifier := cloneAgent(roleAgents[RoleVerifier])
 	config = projectrun.Runtime{
 		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal, RequireIsolation: false,
 		Agents: agents, Verifier: &verifier,
@@ -246,8 +300,8 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 }
 
 func normalizeOptions(options Options) (Options, error) {
-	if options.Provider != "codex" {
-		return options, errors.New("project setup currently supports native Codex only")
+	if options.Provider != ProviderCodex && options.Provider != ProviderProcess {
+		return options, unsupportedProvider(options.Provider)
 	}
 	if options.WindowsSandboxBackend != "" && options.WindowsSandboxBackend != codexappserver.WindowsSandboxBackendMXC {
 		return options, errors.New("unsupported --windows-sandbox-backend; supported value is mxc")
@@ -256,6 +310,177 @@ func normalizeOptions(options Options) (Options, error) {
 		return options, errors.New("--windows-sandbox-backend mxc is supported only on Windows")
 	}
 	return options, nil
+}
+
+func unsupportedProvider(provider string) error {
+	return fmt.Errorf("unsupported provider %q; project setup supports %q (native Codex App Server) and %q (bring-your-own executor over agent-execution/v1alpha1)", provider, ProviderCodex, ProviderProcess)
+}
+
+// resolveRoleProfiles applies each role's overrides to the default profile and
+// validates the result.
+func resolveRoleProfiles(options Options) (map[string]roleProfile, error) {
+	base := roleProfile{provider: options.Provider, model: options.Model, effort: options.Effort,
+		executable: options.ProviderExecutable, version: options.ProviderVersion, costMode: options.CostMode,
+		args: options.ProviderArgs, environment: options.Environment,
+		pricing: projectrun.Pricing{InputMicrosPerMillion: options.InputMicrosPerMillion, OutputMicrosPerMillion: options.OutputMicrosPerMillion}}
+	var overrides RoleOptions
+	if options.Roles != nil {
+		overrides = *options.Roles
+	}
+	profiles := make(map[string]roleProfile, 3)
+	for _, role := range []struct {
+		name     string
+		override *RoleProfile
+	}{{RoleManager, overrides.Manager}, {RoleReviewer, overrides.Reviewer}, {RoleVerifier, overrides.Verifier}} {
+		profile := base
+		if override := role.override; override != nil {
+			if override.Provider != "" && override.Provider != base.provider {
+				profile = roleProfile{provider: override.Provider, costMode: base.costMode, pricing: base.pricing}
+			}
+			if override.Model != "" {
+				profile.model = override.Model
+			}
+			if override.Effort != "" {
+				profile.effort = override.Effort
+			}
+			if override.ProviderExecutable != "" {
+				profile.executable = override.ProviderExecutable
+			}
+			if override.ProviderVersion != "" {
+				profile.version = override.ProviderVersion
+			}
+			if override.ProviderArgs != nil {
+				profile.args = override.ProviderArgs
+			}
+			if override.Environment != nil {
+				profile.environment = override.Environment
+			}
+			if override.CostMode != "" {
+				profile.costMode = override.CostMode
+				if override.CostMode == projectrun.CostModeUnmetered {
+					profile.pricing = projectrun.Pricing{}
+				}
+			}
+			if override.InputMicrosPerMillion != nil {
+				profile.pricing.InputMicrosPerMillion = *override.InputMicrosPerMillion
+			}
+			if override.OutputMicrosPerMillion != nil {
+				profile.pricing.OutputMicrosPerMillion = *override.OutputMicrosPerMillion
+			}
+		}
+		if err := validateRoleProfile(&profile); err != nil {
+			return nil, fmt.Errorf("%s profile: %w", role.name, err)
+		}
+		profiles[role.name] = profile
+	}
+	return profiles, nil
+}
+
+func validateRoleProfile(profile *roleProfile) error {
+	if strings.TrimSpace(profile.model) == "" || profile.model != strings.TrimSpace(profile.model) {
+		return errors.New("model must be nonempty and have no surrounding whitespace")
+	}
+	switch profile.costMode {
+	case "", projectrun.CostModeMetered:
+		if profile.pricing.InputMicrosPerMillion < 0 || profile.pricing.OutputMicrosPerMillion < 0 ||
+			(profile.pricing.InputMicrosPerMillion == 0 && profile.pricing.OutputMicrosPerMillion == 0) {
+			return errors.New("a metered agent requires explicit nonnegative input/output rates with at least one positive rate")
+		}
+	case projectrun.CostModeUnmetered:
+		if profile.pricing != (projectrun.Pricing{}) {
+			return errors.New("an unmetered agent must not declare input/output rates")
+		}
+	default:
+		return fmt.Errorf("unsupported cost mode %q; use %q or %q", profile.costMode, projectrun.CostModeMetered, projectrun.CostModeUnmetered)
+	}
+	switch profile.provider {
+	case ProviderCodex:
+		if profile.effort == "" {
+			profile.effort = DefaultCodexEffort
+		}
+		if !codexappserver.SupportedReasoningEffort(profile.effort) {
+			return fmt.Errorf("unsupported Codex reasoning effort %q", profile.effort)
+		}
+		if len(profile.args) != 0 || profile.version != "" || len(profile.environment) != 0 {
+			return errors.New("providerArgs, providerVersion and environment apply only to process executors")
+		}
+	case ProviderProcess:
+		if profile.executable == "" || !filepath.IsAbs(profile.executable) {
+			return errors.New("a process executor requires an absolute providerExecutable")
+		}
+		if profile.version == "" {
+			profile.version = UndeclaredProviderVersion
+		}
+		if profile.version != strings.TrimSpace(profile.version) || profile.effort != strings.TrimSpace(profile.effort) {
+			return errors.New("process providerVersion and effort must have no surrounding whitespace")
+		}
+	default:
+		return unsupportedProvider(profile.provider)
+	}
+	return nil
+}
+
+// agentBuilder discovers each role's executable and builds its runtime agent.
+// Native instruction pins are read once and only when a role uses Codex.
+type agentBuilder struct {
+	project          *projectwork.Project
+	options          Options
+	discover         func(Options) (Discovery, error)
+	instructionsRead bool
+	instructionPaths []string
+	instructionFiles []agentexec.RuntimeFile
+}
+
+func (b *agentBuilder) agent(role string, profile roleProfile) (projectrun.Agent, error) {
+	selected := b.options
+	selected.Provider, selected.ProviderExecutable, selected.ProviderVersion, selected.Roles = profile.provider, profile.executable, profile.version, nil
+	if profile.provider == ProviderCodex {
+		// Codex identifies itself through --version; a declared label is not used.
+		selected.ProviderVersion = ""
+	}
+	found, err := b.discover(selected)
+	if err != nil {
+		return projectrun.Agent{}, fmt.Errorf("%s executor: %w", role, err)
+	}
+	if found.Provider != profile.provider || found.ProviderBinary.Path == "" || !filepath.IsAbs(found.ProviderBinary.Path) {
+		return projectrun.Agent{}, fmt.Errorf("%s executor discovery does not match the selected provider", role)
+	}
+	if profile.provider == ProviderProcess {
+		return processAgent(profile, found), nil
+	}
+	if found.ProviderBinary.Version != codexappserver.SupportedProviderVersion {
+		return projectrun.Agent{}, errors.New("native Codex setup requires Codex CLI 0.162.0")
+	}
+	if !b.instructionsRead {
+		b.instructionPaths, b.instructionFiles, err = nativeInstructionFiles(b.project, ProviderCodex)
+		if err != nil {
+			return projectrun.Agent{}, err
+		}
+		b.instructionsRead = true
+	}
+	if len(b.instructionPaths) == 0 {
+		return projectrun.Agent{}, errors.New("native Codex setup requires existing generated Codex project instructions; run project onboard first")
+	}
+	sandboxBackend := b.options.WindowsSandboxBackend
+	if sandboxBackend == "" && runtime.GOOS == "windows" {
+		sandboxBackend = codexappserver.WindowsSandboxBackendMXC
+	}
+	permissionProfile := b.options.CodexProfile
+	if permissionProfile == "" {
+		permissionProfile = ":workspace"
+	}
+	environment := []string{"PATH", "TEMP", "TMP"}
+	if runtime.GOOS == "windows" {
+		environment = append(environment, "SystemRoot", "USERPROFILE", "APPDATA", "LOCALAPPDATA")
+	} else {
+		environment = append(environment, "HOME")
+	}
+	runtimeFiles := append([]agentexec.RuntimeFile{runtimeFile(found.ProviderBinary)}, b.instructionFiles...)
+	agent := selectedAgent(found, profile.model, profile.effort, permissionProfile, sandboxBackend, runtimeFiles, environment, profile.pricing)
+	agent.CostMode = costModeField(profile.costMode)
+	agent.WorkspaceMode = "git"
+	agent.InstructionPaths = append([]string(nil), b.instructionPaths...)
+	return agent, nil
 }
 
 func selectedAgent(found Discovery, model, effort, permissionProfile string, sandboxBackend codexappserver.WindowsSandboxBackend, files []agentexec.RuntimeFile, environment []string, pricing projectrun.Pricing) projectrun.Agent {
@@ -276,6 +501,61 @@ func selectedAgent(found Discovery, model, effort, permissionProfile string, san
 	}
 }
 
+// processAgent selects a bring-your-own executor over the process transport.
+// It receives each invocation on stdin and returns candidate files and reports
+// on stdout; its executable bytes are pinned and its environment is explicit.
+func processAgent(profile roleProfile, found Discovery) projectrun.Agent {
+	var modelOptions any
+	if profile.effort != "" {
+		modelOptions = map[string]any{"reasoningEffort": profile.effort}
+	}
+	environment := []string{"PATH", "TEMP", "TMP"}
+	if runtime.GOOS == "windows" {
+		environment = append(environment, "SystemRoot")
+	}
+	for _, name := range profile.environment {
+		if !containsString(environment, name) {
+			environment = append(environment, name)
+		}
+	}
+	return projectrun.Agent{
+		Command: found.ProviderBinary.Path, Args: append([]string(nil), profile.args...),
+		Model: profile.model, ModelOptions: modelOptions, ProviderVersion: found.ProviderBinary.Version,
+		Timeout: projectrun.Duration(DefaultTimeout), MaxStdoutBytes: DefaultProcessMaxStdout, MaxStderrBytes: DefaultMaxStderr,
+		RuntimeFiles: []agentexec.RuntimeFile{runtimeFile(found.ProviderBinary)}, Environment: environment,
+		CostMode: costModeField(profile.costMode), Pricing: profile.pricing,
+	}
+}
+
+// costModeField keeps metered agents in the existing runtime shape.
+func costModeField(mode string) string {
+	if mode == projectrun.CostModeUnmetered {
+		return projectrun.CostModeUnmetered
+	}
+	return ""
+}
+
+func cloneAgent(agent projectrun.Agent) projectrun.Agent {
+	agent.Args = append([]string(nil), agent.Args...)
+	agent.InstructionPaths = append([]string(nil), agent.InstructionPaths...)
+	agent.RuntimeFiles = append([]agentexec.RuntimeFile(nil), agent.RuntimeFiles...)
+	agent.Environment = append([]string(nil), agent.Environment...)
+	if agent.AppServer != nil {
+		settings := *agent.AppServer
+		agent.AppServer = &settings
+	}
+	return agent
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
+}
+
 // Doctor performs local prerequisite checks without reading provider
 // credentials or invoking login/status commands.
 func Doctor(project *projectwork.Project, options Options) (DoctorReport, error) {
@@ -287,8 +567,12 @@ func Doctor(project *projectwork.Project, options Options) (DoctorReport, error)
 	if err != nil {
 		return result, err
 	}
+	executorCheck := "codex-app-server"
+	if discovery.Provider == ProviderProcess {
+		executorCheck = "process-executor"
+	}
 	result.Checks = append(result.Checks,
-		Check{Name: "codex-app-server", Status: "available", Detail: discovery.ProviderBinary.Path + " (" + discovery.ProviderBinary.Version + ")"},
+		Check{Name: executorCheck, Status: "available", Detail: discovery.ProviderBinary.Path + " (" + discovery.ProviderBinary.Version + ")"},
 		Check{Name: "provider-authentication", Status: "not-verified", Detail: "No login-status probe or credential/config read was performed."},
 	)
 	for _, check := range project.Report.Checks {
@@ -388,8 +672,9 @@ func nativeInstructionFiles(project *projectwork.Project, provider string) ([]st
 	return paths, files, nil
 }
 
-// Discover identifies the direct native Codex executable. It invokes only
-// --version; it never checks login state or reads provider config.
+// Discover identifies the direct native Codex executable or the selected
+// process executor. It invokes only Codex --version and never starts a process
+// executor; it never checks login state or reads provider config.
 func Discover(options Options) (Discovery, error) {
 	return discoverWithVersion(options, version)
 }
@@ -399,8 +684,11 @@ func Discover(options Options) (Discovery, error) {
 // source-file dependency and does not require or inspect a Markitect checkout.
 func discoverWithVersion(options Options, readVersion func(string) (string, error)) (Discovery, error) {
 	var result Discovery
-	if options.Provider != "codex" {
-		return result, errors.New("native runtime discovery currently supports Codex App Server only; other providers are unsupported")
+	if options.Provider == ProviderProcess {
+		return discoverProcess(options)
+	}
+	if options.Provider != ProviderCodex {
+		return result, unsupportedProvider(options.Provider)
 	}
 	providerPath := options.ProviderExecutable
 	if providerPath == "" {
@@ -426,6 +714,27 @@ func discoverWithVersion(options Options, readVersion func(string) (string, erro
 		AuthenticationNote: "Markitect does not read credentials or probe provider login status; use the provider's existing OS-default sign-in.",
 	}
 	return result, nil
+}
+
+// discoverProcess pins a bring-your-own executor by path and digest. Its
+// version is the caller's declaration; Markitect does not start it here.
+func discoverProcess(options Options) (Discovery, error) {
+	if options.ProviderExecutable == "" {
+		return Discovery{}, errors.New("a process executor requires --provider-executable with its absolute path")
+	}
+	tool, err := inspectFile(options.ProviderExecutable)
+	if err != nil {
+		return Discovery{}, fmt.Errorf("process executor executable: %w", err)
+	}
+	tool.Version = options.ProviderVersion
+	if tool.Version == "" {
+		tool.Version = UndeclaredProviderVersion
+	}
+	return Discovery{
+		Provider: ProviderProcess, ProviderBinary: tool,
+		Authentication:     "not-verified",
+		AuthenticationNote: "Markitect passes only the configured environment names to a process executor and does not inspect its credentials.",
+	}, nil
 }
 
 func inspectFile(raw string) (Tool, error) {

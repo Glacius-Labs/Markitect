@@ -386,7 +386,7 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 			out.Starts++
 		} // A failed or interrupted external attempt still consumes a start.
 		if attempted {
-			cost, usageKnown, overflow := estimateCostDetailed(row.Receipt.Usage, runtime.Review.Agents[row.ManagerID].Pricing)
+			cost, usageKnown, overflow := estimateAgentCost(row.Receipt.Usage, runtime.Review.Agents[row.ManagerID])
 			row.CostMicros, row.CostKnown, row.CostOverflow = cost, usageKnown, overflow
 			known, unknown := costCounts([]InvocationLog{{CostKnown: usageKnown, Receipt: *row.Receipt}})
 			knownCostInvocations += known
@@ -430,7 +430,7 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 						break
 					}
 				} else {
-					if runtime.Review.Agents[row.ManagerID].Transport != TransportCodexAppServer {
+					if runtime.Review.Agents[row.ManagerID].requiresReportedUsage() {
 						unknownUsage = true
 						row.Error += "; invocation usage missing, cumulative cost cannot be asserted"
 					}
@@ -450,7 +450,7 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 			continue
 		}
 		if !row.CostKnown {
-			if runtime.Review.Agents[row.ManagerID].Transport != TransportCodexAppServer {
+			if runtime.Review.Agents[row.ManagerID].requiresReportedUsage() {
 				row.Status, row.Error = "incomplete", "reviewer usage is missing; bounded cumulative cost cannot be asserted"
 				out.Error = "one or more Manager assessments are missing, failed, or incomplete"
 				markRemainingFullRows(out.Managers, i+1, "not started because preceding usage was unavailable")

@@ -1,6 +1,6 @@
 # Provider adapters
 
-The current project workflow has two provider boundaries. The outer coding client (Codex or Claude Code) connects to Markitect's repository-local MCP server and coordinates the Work Item conversation. Markitect Host schedules inner Manager and reviewer roles through Codex CLI 0.162.0 App Server using the configured `gpt-6-luna` model and `high` reasoning effort. Claude Code 2.1.295 is supported as an outer MCP client, not as an inner worker runtime.
+The current project workflow has two provider boundaries. The outer coding client (Codex or Claude Code) connects to Markitect's repository-local MCP server and coordinates the Work Item conversation. Markitect Host schedules inner Manager, reviewer and verifier roles. By default they run through Codex CLI 0.162.0 App Server using the `gpt-6-luna` model and `high` reasoning effort. `project setup` can give each role class its own provider, model, effort and cost mode, including a [bring-your-own process executor](#bring-your-own-executor). Claude Code 2.1.295 is supported as an outer MCP client, not yet as an inner worker runtime.
 
 ## Connect the outer client
 
@@ -22,7 +22,7 @@ The MCP server advertises closed typed schemas. The outer agent should use those
 
 ## Inner role execution and workspace boundary
 
-`project setup` supports the native Codex App Server runtime and pins its resolved executable/configuration. `project_doctor` inspects local tools and authentication prerequisites without starting roles. Authentication is not established by setup or doctor; only a real provider invocation can exercise it. Setup does not configure Claude, global MCP, editor, hooks, plugins, or account settings.
+`project setup` configures the native Codex App Server runtime by default and pins its resolved executable/configuration. `project_doctor` inspects local tools and authentication prerequisites without starting roles. Authentication is not established by setup or doctor; only a real provider invocation can exercise it. Setup does not configure Claude, global MCP, editor, hooks, plugins, or account settings.
 
 On Windows, setup defaults to `appServer.windowsSandboxBackend: mxc`; `--windows-sandbox-backend mxc` can also be specified explicitly. The adapter starts only its child Codex process with the documented `-c windows.sandbox=mxc` override before `app-server`; it does not change global Codex configuration. Windows Managed Policy remains in force. Receipts record the requested backend, while effective backend remains unavailable unless Codex provides an authoritative readback. Unsupported values and non-Windows execution fail closed without a fallback.
 
@@ -52,9 +52,44 @@ On Windows, shell processes in any role may start outside the workspace; the nat
 
 The workspace candidate is bound to the fixed accepted project revision and permitted paths. Candidate deltas are validated and staged; guarded Apply rechecks freshness and scope before writing the adopting checkout. Native receipts and digests bind observed inputs/results but do not prove provider identity, semantic correctness, human approval, or every filesystem effect outside the declared boundary.
 
+## Role profiles
+
+`project setup` writes one profile for every Manager, one for every Manager's independent reviewer, and one for the verifier. The flags `--provider`, `--model`, `--effort`, `--cost-mode` and the rates select the default profile, which applies to all three role classes. To give role classes different profiles, pass one complete options record with `--input .markitect/drafts/SETUP.json`; the MCP `project_setup` tool takes the same record as `options`. Its optional `roles.manager`, `roles.reviewer` and `roles.verifier` entries override fields of the default. A role that changes the provider inherits only the cost settings and must name its own model and, for a process, its executable.
+
+```json
+{
+  "provider": "codex", "model": "gpt-6-luna", "effort": "high",
+  "codexProfile": "", "providerExecutable": "",
+  "inputMicrosPerMillion": 1250000, "outputMicrosPerMillion": 10000000, "maxCostMicros": 50000000,
+  "roles": {
+    "reviewer": { "model": "gpt-6-sol", "effort": "medium" },
+    "verifier": { "provider": "process", "model": "human-verifier",
+                  "providerExecutable": "C:\\tools\\markitect-exchange-executor.exe",
+                  "providerArgs": ["--dir", "C:\\exchange"], "costMode": "unmetered" }
+  }
+}
+```
+
+The default profile stays Codex App Server with `gpt-6-luna` and `high`. Codex roles accept any model name and the efforts the adapter passes through (`minimal`, `low`, `medium`, `high`, `xhigh`, `max`, `ultra`); the account and model decide what actually runs. Helpers inherit their parent's profile. Changing a profile changes the pinned executor fingerprints, so existing plans become stale.
+
+Every agent has a cost mode. `metered`, the default, requires input/output rates; Markitect prices provider-reported usage with them and enforces `maxCostMicros` on that known estimate. `unmetered` declares that Markitect cannot price the agent, for example a script or a person: it takes no rates, its usage is optional and never priced, and its invocations count as unknown cost, so the run's `costAccounting` becomes `partial` or `unknown` instead of an invented total. Start, duration and per-role timeout limits apply unchanged. A metered process executor that omits usage still stops the invocation. Brownfield manager stages keep a priced ledger and reject unmetered agents.
+
+## Bring your own executor
+
+The process transport lets any local program act as a Manager, reviewer or verifier. Markitect keeps the method; the executor only produces the candidate or verdict for one invocation, which the Host validates with the same rules as for the native runtime.
+
+- **Selection.** `--provider process --provider-executable ABSOLUTE_PATH` with optional repeatable `--provider-arg`, `--provider-version` and extra environment names in the options record. Setup pins the executable bytes by digest; a different binary makes the plan stale. Shells such as `cmd`, `powershell` or `bash` are rejected; use a wrapper executable.
+- **Invocation.** The executor starts in a fresh empty private directory. It receives exactly one `markitect.example.org/agent-execution/v1alpha1` invocation on stdin: `apiVersion`, `runId`, `nonce`, `inputDigest` and the `request` with `role`, the fixed `sourceRevision`, model digests, `scopeIds`, `policyIds`, a typed `context` and the scoped `artifacts` (path, mode, digest, base64 content). Only the configured environment names are passed, plus `MARKITECT_AGENT_CONFIG_JSON` (model, modelOptions with `reasoningEffort`, providerVersion) and `MARKITECT_AGENT_PRIVATE_LOG`, a path for an optional private log whose digest enters the receipt.
+- **Requests.** `request.context.kind` names the work: `projectrun-task/v1` for Manager work and integration, `projectrun-review/v1` for an independent review and `projectrun-full-verify/v1` for a Manager's full-verification audit. Each carries its `responseSchema` for `reportJson`. Role `verifier` asks for one passed observation per `requiredSubjects` entry and exactly the `requiredEvidenceRefs`.
+- **Response.** Exit code 0 and one JSON object on stdout within the configured bound: the echoed envelope (`apiVersion`, `runId`, `nonce`, `role`, `inputDigest`), an `outcome`, the arrays `candidateFiles` (path, mode `0644`/`0755`/`0600`, UTF-8 content), `evidenceRefs`, `verifierObservations` and `uncertainty`, plus `reportJson` for executor requests. `usage` with `source: provider-reported` is required for metered agents and optional otherwise.
+- **Validation.** The Host rejects a response that does not bind to the invocation, writes outside the Manager's scope, exceeds a size bound, comes from a reviewer that proposes files, or cites ungrounded findings. It also rejects the invocation if the repository or the pinned executable changed while it ran. Submitted reviews stay AI evidence, not human acceptance.
+- **Current limits.** Invocations are synchronous and end at the role timeout (at most 60 minutes). Candidate files can add or replace text files but cannot delete or rename them. Process executors get no native workspace or helpers. Exporting work packets, submitting external candidates or verdicts later, and plans independent of executor fingerprints are planned in [P12](work-items/product-readiness/P12-exchangeable-executor.md).
+
+`markitect-exchange-executor` is the reference adapter. Build it from this source with `go build -o markitect-exchange-executor.exe ./src/cmd/markitect-exchange-executor` and select it with `--provider-arg=--dir --provider-arg ABSOLUTE_EXCHANGE_DIR`. The directory must exist and lie outside the governed repository, because the Host requires the repository to stay unchanged during an invocation. For each invocation the adapter writes `DIR/RUN_ID/request.json`, the exact invocation bytes, and waits for `DIR/RUN_ID/response.json`. The responder (a person, a script or another agent session) writes the semantic fields and may omit the envelope; the adapter fills it from the invocation and rejects mismatching values. Write the file atomically (write a temporary file, then rename it). An invalid response is kept as `response.rejected-N.json` with the reason in `response-error.txt`, and the adapter keeps waiting until the role timeout. Use the exchange adapter with `costMode: unmetered` unless the responder reports provider usage.
+
 ## Limits and evidence status
 
-Project runtime limits are configured in `.markitect/runtime.yaml`; they constrain declared Host scheduling and local accounting. Estimated cost weights are estimates, not invoices or hard billing controls. Missing provider usage remains unknown; reports distinguish complete, partial and unknown cost accounting and retain the known estimate without inventing token counts. Provider-side usage and independently launched processes may not be exhaustively observable through partial helper telemetry.
+Project runtime limits are configured in `.markitect/runtime.yaml`; they constrain declared Host scheduling and local accounting. Estimated cost weights are estimates, not invoices or hard billing controls. Missing provider usage and unmetered agents remain unknown cost; reports distinguish complete, partial and unknown cost accounting and retain the known estimate without inventing token counts. Provider-side usage and independently launched processes may not be exhaustively observable through partial helper telemetry.
 
 The [readiness backlog](work-items/product-readiness/backlog.yaml) owns current validation status. Exercise grants and configured runtime limits have separate purposes; the [native acceptance ledger](work-items/product-readiness/evidence/native-acceptance-ledger.yaml) preserves exact attempt inputs and accounting. Use [integration progress](work-items/product-readiness/integration-progress-20261009.md) for native, hosted-CI and Main checkpoints, and the [operations reference](project-operations.md) for supported runtime behavior.
 
