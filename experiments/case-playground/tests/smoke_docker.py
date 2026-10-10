@@ -77,7 +77,7 @@ def main() -> int:
           f"final assessment ran the public checks of S{count} (station {final.get('station')})")
     if manifest.get("method") == "markitect":
         check((final.get("conformance") or {}).get("reportStatus") is not None,
-              "final assessment ran markitect project check")
+              "final assessment ran markitect check")
         check(bool(report.get("roles")), f"Markitect roles recorded from runtime.yaml ({report.get('roles')})")
     stations = report.get("stations") or []
     check(len(stations) == count and (report.get("totals") or {}).get("stationsPlanned") == count,

@@ -86,8 +86,8 @@ class AssessTest(unittest.TestCase):
                               markitect_cmd=[sys.executable, str(fake)])
         self.assertEqual(tree_digest(self.candidate), before)
         seen = json.loads(log.read_text(encoding="utf-8"))
-        self.assertEqual(seen["args"][:2], ["project", "check"])
-        self.assertNotEqual(Path(seen["args"][3]).resolve(), self.candidate.resolve())
+        self.assertEqual(seen["args"][:2], ["check", "--repo"])
+        self.assertNotEqual(Path(seen["args"][2]).resolve(), self.candidate.resolve())
         self.assertTrue(seen["git"] and seen["app"])
         conformance = result["conformance"]
         self.assertEqual((conformance["status"], conformance["exitCode"]), ("fail", 1))

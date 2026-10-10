@@ -17,30 +17,30 @@ never reads these notes.
 1. **Binary.** Copy `/in/bin/markitect` (a Linux build of the pinned commit, made by
    the host) to `/usr/local/bin/markitect` and record its SHA-256.
 2. **Native Codex.** `command -v codex` is the npm Node launcher (a symlink to a `#!`
-   script). `project setup` accepts only a direct native executable, so the setup uses
+   script). `config` accepts only a direct native executable, so the setup uses
    the ELF binary that the npm package ships under `vendor/.../bin/codex` (same
    version).
 3. **Feature branch.** Product writes refuse `main`/`master`, so the setup works on
    `markitect-setup`.
-4. **Init.** `markitect project init --repo R --name <case>` (preview), then the same
-   with `--write`. Init has no `--expect`; the harness checks that the write returns
+4. **Init.** `markitect init --repo R --name <case>` (preview), then the same
+   with `--expect <digest> --write`. The harness checks that the write returns
    the preview digest.
-5. **Onboard.** `markitect project onboard --repo R --provider codex` (preview), then
+5. **Onboard.** `markitect onboard --repo R --provider codex` (preview), then
    with `--expect <digest> --write`. This merges Markitect guidance into `AGENTS.md`
    and adds `.agents/skills/markitect-*` and `.markitect/workflows/model-first.md`.
-6. **Runtime setup.** `markitect project setup --repo R --provider codex --model
+6. **Runtime setup.** `markitect config --repo R --provider codex --model
    <model> --effort <effort> --provider-executable <native codex>
    --input-micros-per-million 1000000 --output-micros-per-million 1000000
    --max-cost-micros <totalSeconds x 50000>` (preview), then the same with
    `--expect <editPlan.digest> --write`. This writes `.markitect/runtime.yaml`.
 7. **Commit.** "Install Markitect project workflow", fast-forward the start branch and
    delete `markitect-setup`.
-8. **Observation.** `markitect project check --repo R`. Right after setup it exits 1:
+8. **Observation.** `markitect check --repo R`. Right after setup it exits 1:
    whole-repository coverage is not conforming because the root Manager owns no
    artifacts yet. This is recorded, not treated as a failure.
 9. **MCP server for the outer Codex:** `[mcp_servers.markitect]` with command
-   `/usr/local/bin/markitect` and args `project mcp --repo /work/<case>`. This is the
-   config-file form of the documented `codex mcp add markitect -- markitect project mcp
+   `/usr/local/bin/markitect` and args `mcp --repo /work/<case>`. This is the
+   config-file form of the documented `codex mcp add markitect -- markitect mcp
    --repo <root>`.
 
 If a product command fails, setup returns `blocked` with the product's error and the
@@ -48,7 +48,7 @@ run stops. That is a product finding; the harness does not work around it.
 
 ## Budget values
 
-`project setup` requires caller-supplied cost weights and a positive cost cap; they are
+`config` requires caller-supplied cost weights and a positive cost cap; they are
 an estimate, not a price or a billing limit. We weight every token as one micro-unit
 (1,000,000 per million tokens), so the product's cost counter equals its token count.
 The cap is `limits.totalSeconds x 50,000` (720 million for the 4-hour example), high
@@ -69,7 +69,7 @@ enough that it cannot bind before the wall-clock limit that both methods share.
 ## Final conformance
 
 `assess.final` copies the frozen `main` into a scratch Git repository and runs
-`markitect project check --repo <scratch>` (as the agent user, with a fresh empty HOME). Exit code, report status and coverage
+`markitect check --repo <scratch>` (as the agent user, with a fresh empty HOME). Exit code, report status and coverage
 conformance are recorded as method conformance, separate from the public checks.
 
 ## Sources (read at commit 669cecd2)
