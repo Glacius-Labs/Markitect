@@ -10,6 +10,16 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 )
 
+// ValidateRecoveryProtocol rejects handles written by another App Server
+// protocol binding. Callers that persist recovery journals before Adapter.Recover
+// use this guard to avoid creating evidence for an incompatible handle.
+func ValidateRecoveryProtocol(handle RecoveryHandle) error {
+	if handle.Protocol != protocolIdentity {
+		return errors.New("recovery handle does not match the owned App Server protocol")
+	}
+	return nil
+}
+
 // Recover reopens only a trusted Host-journaled thread and inspects the exact
 // dispatched turn. It never submits input or invokes turn/start. Missing, running
 // or unidentifiable turns remain uncertain, including a lost turn/start reply.
@@ -21,7 +31,7 @@ func (a *Adapter) Recover(parent context.Context, cfg agentexec.Config, h Recove
 	if err != nil {
 		return result, err
 	}
-	if h.Protocol != protocolIdentity || h.Fingerprint != fp || h.ThreadID == "" || h.SessionID == "" || !filepath.IsAbs(h.Workspace.CWD) || h.Workspace.BaseSHA != h.Invocation.Request.SourceRevision || !h.TurnDispatched {
+	if protocolErr := ValidateRecoveryProtocol(h); protocolErr != nil || h.Fingerprint != fp || h.ThreadID == "" || h.SessionID == "" || !filepath.IsAbs(h.Workspace.CWD) || h.Workspace.BaseSHA != h.Invocation.Request.SourceRevision || !h.TurnDispatched {
 		return result, errors.New("recovery handle does not match the owned invocation/configuration")
 	}
 	// Validate the saved invocation binding without allocating a new identity.

@@ -91,6 +91,80 @@ func TestNativeJournalHandleIsBoundAndPersistedBeforeCallback(t *testing.T) {
 	}
 }
 
+func TestNativeRecoveryJournalPersistsObservedTurnHandleWithoutReservingANewStart(t *testing.T) {
+	journal := newTestNativeJournal(t)
+	handle := nativeJournalRecoveryHandle(t, journal)
+	if err := journal.bindRecoveryHandle(handle); err != nil {
+		t.Fatalf("bind exact original turn: %v", err)
+	}
+	if err := journal.bindRecoveryHandle(handle); err != nil {
+		t.Fatalf("idempotent exact binding: %v", err)
+	}
+
+	beforeStartCalls, onHandleCalls := 0, 0
+	options := journal.wrapOptions(codexappserver.Options{
+		BeforeStart: func(context.Context, agentexec.RoleStartRequest) error {
+			beforeStartCalls++
+			return nil
+		},
+		OnHandle: func(_ context.Context, observed codexappserver.RecoveryHandle) error {
+			onHandleCalls++
+			if !sameRecoveryJournalBinding(handle, observed) {
+				t.Fatalf("recovery changed the bound turn: %+v", observed)
+			}
+			recovered, err := readTrustedRecoveryHandles(filepath.Dir(filepath.Dir(filepath.Dir(journal.directory))), journal.workspaceID)
+			if err != nil || len(recovered) != 1 || recovered[0].TurnID != handle.TurnID {
+				t.Fatalf("observed recovery handle was not durable before callback: %#v, %v", recovered, err)
+			}
+			return nil
+		},
+	})
+	// Adapter.Recover's turn/started observer calls save after event journaling.
+	if err := options.OnEvent(context.Background(), codexappserver.Event{Method: "turn/started", Wire: []byte(`{"method":"turn/started"}`), Params: []byte(`{"threadId":"thread-1","turn":{"id":"turn-1","status":"inProgress"}}`)}); err != nil {
+		t.Fatalf("journal observed turn event: %v", err)
+	}
+	if err := options.OnHandle(context.Background(), handle); err != nil {
+		t.Fatalf("persist observed existing turn handle: %v", err)
+	}
+	if beforeStartCalls != 0 || onHandleCalls != 1 {
+		t.Fatalf("recovery hooks called BeforeStart=%d OnHandle=%d", beforeStartCalls, onHandleCalls)
+	}
+	starts, err := os.Stat(filepath.Join(journal.directory, "starts.jsonl"))
+	if err != nil || starts.Size() != 0 {
+		t.Fatalf("recovery recorded a new root start: size=%v err=%v", starts, err)
+	}
+
+	wrongTurn := handle
+	wrongTurn.TurnID = "another-turn"
+	if err := options.OnHandle(context.Background(), wrongTurn); err == nil || onHandleCalls != 1 {
+		t.Fatal("recovery accepted a different dispatched turn")
+	}
+	wrongRequest := handle
+	wrongRequest.Invocation.Request.ProjectionID = "another-projection"
+	if err := options.OnHandle(context.Background(), wrongRequest); err == nil || onHandleCalls != 1 {
+		t.Fatal("recovery accepted a different invocation under the same run ID")
+	}
+	wrongRoot := handle
+	wrongRoot.Invocation.RunID = "another-root"
+	if err := journal.bindRecoveryHandle(wrongRoot); err == nil {
+		t.Fatal("recovery journal accepted an ambiguous root binding")
+	}
+}
+
+func nativeJournalRecoveryHandle(t *testing.T, journal *nativeJournal) codexappserver.RecoveryHandle {
+	t.Helper()
+	request := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: strings.Repeat("a", 40),
+		ModelDigest: "sha256:" + strings.Repeat("b", 64), ModulePin: "module@1", ProjectionID: "projection",
+		ScopeIDs: []string{"source"}, PolicyIDs: []string{}, Context: json.RawMessage(`{}`), Artifacts: []agentexec.Artifact{}}
+	invocation, _, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return codexappserver.RecoveryHandle{Protocol: "codex-app-server/fixture", Fingerprint: "fingerprint",
+		Invocation: invocation, Workspace: projectworkspace.Handle{ID: journal.workspaceID, CWD: journal.workspaceCWD, BaseSHA: request.SourceRevision},
+		ThreadID: "thread-1", SessionID: "session-1", TurnID: "turn-1", TurnDispatched: true}
+}
+
 func TestNativeJournalPersistsExactPrivateEventBeforeCallback(t *testing.T) {
 	journal := newTestNativeJournal(t)
 	called := false

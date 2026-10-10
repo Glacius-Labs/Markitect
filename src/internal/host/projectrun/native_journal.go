@@ -12,6 +12,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -31,9 +32,11 @@ const (
 type nativeJournal struct {
 	directory      string
 	workspaceID    string
+	workspaceCWD   string
 	mu             sync.Mutex
 	usedRequestIDs map[string]bool
 	rootRequestID  string
+	recoveryHandle *codexappserver.RecoveryHandle
 	eventBytes     int64
 	eventSequence  uint64
 }
@@ -135,7 +138,61 @@ func newNativeJournal(privateLogDirectory, workspaceCWD, workspaceID string) (*n
 			return nil, err
 		}
 	}
-	return &nativeJournal{directory: invocationDir, workspaceID: workspaceID, usedRequestIDs: map[string]bool{}}, nil
+	return &nativeJournal{directory: invocationDir, workspaceID: workspaceID, workspaceCWD: cwdReal, usedRequestIDs: map[string]bool{}}, nil
+}
+
+// bindRecoveryHandle authorizes journal handle updates for the exact already
+// dispatched turn. Recovery does not execute BeforeStart and must not create a
+// second role-start record; this binding only lets an observed update to the
+// same trusted invocation be persisted in the recovery journal.
+func (j *nativeJournal) bindRecoveryHandle(handle codexappserver.RecoveryHandle) error {
+	if j == nil || handle.Workspace.ID != j.workspaceID || !sameNativeJournalPath(handle.Workspace.CWD, j.workspaceCWD) ||
+		handle.Invocation.RunID == "" || handle.Invocation.Nonce == "" || handle.Invocation.InputDigest == "" ||
+		handle.ThreadID == "" || handle.SessionID == "" || handle.TurnID == "" || !handle.TurnDispatched ||
+		!requestMatch(handle.Invocation.Request, handle.Invocation) {
+		return errors.New("recovery journal requires the exact trusted dispatched invocation and workspace")
+	}
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	if j.rootRequestID != "" {
+		if j.recoveryHandle != nil && sameRecoveryJournalBinding(*j.recoveryHandle, handle) {
+			return nil
+		}
+		return errors.New("recovery journal is already bound to another root invocation")
+	}
+	if j.recoveryHandle != nil {
+		return errors.New("recovery journal has an ambiguous root invocation binding")
+	}
+	bound := handle
+	j.rootRequestID = handle.Invocation.RunID
+	j.recoveryHandle = &bound
+	return nil
+}
+
+func sameNativeJournalPath(left, right string) bool {
+	left, leftErr := filepath.Abs(left)
+	right, rightErr := filepath.Abs(right)
+	if leftErr != nil || rightErr != nil {
+		return false
+	}
+	if sameRecoveryPath(left, right) {
+		return true
+	}
+	if runtime.GOOS != "windows" {
+		return false
+	}
+	leftInfo, leftErr := os.Stat(left)
+	rightInfo, rightErr := os.Stat(right)
+	return leftErr == nil && rightErr == nil && leftInfo.IsDir() && rightInfo.IsDir() && os.SameFile(leftInfo, rightInfo)
+}
+
+func sameRecoveryJournalBinding(left, right codexappserver.RecoveryHandle) bool {
+	return left.Workspace == right.Workspace && left.Invocation.APIVersion == right.Invocation.APIVersion &&
+		left.Invocation.RunID == right.Invocation.RunID &&
+		left.Invocation.Nonce == right.Invocation.Nonce && left.Invocation.InputDigest == right.Invocation.InputDigest &&
+		left.Fingerprint == right.Fingerprint && left.Protocol == right.Protocol &&
+		left.ThreadID == right.ThreadID && left.SessionID == right.SessionID && left.TurnID == right.TurnID &&
+		left.TurnDispatched && right.TurnDispatched
 }
 
 func (j *nativeJournal) wrapOptions(original codexappserver.Options) codexappserver.Options {
@@ -220,9 +277,16 @@ func (j *nativeJournal) persistHandle(handle codexappserver.RecoveryHandle) erro
 	}
 	j.mu.Lock()
 	rootRequestID := j.rootRequestID
+	recoveryHandle := j.recoveryHandle
 	j.mu.Unlock()
 	if rootRequestID == "" || handle.Invocation.RunID != rootRequestID {
 		return errors.New("App Server recovery handle does not match the reserved root request")
+	}
+	if recoveryHandle != nil {
+		if !sameNativeJournalPath(handle.Workspace.CWD, j.workspaceCWD) || handle.Invocation.APIVersion != agentexec.APIVersion ||
+			!requestMatch(handle.Invocation.Request, handle.Invocation) || !sameRecoveryJournalBinding(*recoveryHandle, handle) {
+			return errors.New("App Server recovery handle differs from the exact bound turn")
+		}
 	}
 	recordID, err := nativeRandomID()
 	if err != nil {

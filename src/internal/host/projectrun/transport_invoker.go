@@ -100,8 +100,17 @@ func (i *TransportInvoker) Recover(ctx context.Context, config agentexec.Config,
 	if config.Transport != TransportCodexAppServer {
 		return agentexec.RunResult{}, fmt.Errorf("recovery requires transport %q", TransportCodexAppServer)
 	}
-	if options.Workspace == nil || options.Workspace.ID != handle.Workspace.ID || options.PrivateLogDirectory == "" {
+	if err := codexappserver.ValidateRecoveryProtocol(handle); err != nil {
+		return agentexec.RunResult{}, err
+	}
+	if options.Workspace == nil || *options.Workspace != handle.Workspace || options.PrivateLogDirectory == "" {
 		return agentexec.RunResult{}, errors.New("native recovery requires its original owned workspace and private journal")
+	}
+	if handle.Invocation.APIVersion != agentexec.APIVersion || handle.Invocation.RunID == "" || handle.Invocation.Nonce == "" ||
+		handle.Invocation.InputDigest == "" || !requestMatch(handle.Invocation.Request, handle.Invocation) ||
+		handle.Invocation.Request.SourceRevision != handle.Workspace.BaseSHA || handle.ThreadID == "" ||
+		handle.SessionID == "" || handle.TurnID == "" || !handle.TurnDispatched {
+		return agentexec.RunResult{}, errors.New("native recovery requires the exact trusted dispatched turn and invocation")
 	}
 	appOptions := i.appServerOptions
 	var err error
@@ -118,12 +127,23 @@ func (i *TransportInvoker) Recover(ctx context.Context, config agentexec.Config,
 			appOptions = withoutHelperTool(appOptions)
 		}
 	}
+	adapter, err := i.appServerAdapterWithOptions(config, appOptions)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	fingerprint, err := adapter.Fingerprint(config)
+	if err != nil || fingerprint != handle.Fingerprint {
+		return agentexec.RunResult{}, errors.New("native recovery configuration does not match the trusted original handle")
+	}
 	journal, err := newNativeJournal(options.PrivateLogDirectory, options.Workspace.CWD, options.Workspace.ID)
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
+	if err := journal.bindRecoveryHandle(handle); err != nil {
+		return agentexec.RunResult{}, err
+	}
 	appOptions = journal.wrapOptions(appOptions)
-	adapter, err := i.appServerAdapterWithOptions(config, appOptions)
+	adapter, err = i.appServerAdapterWithOptions(config, appOptions)
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 )
 
 var _ Invoker = (*TransportInvoker)(nil)
@@ -53,6 +54,57 @@ func TestTransportInvokerRoutesFingerprintByTransportWithoutStartingAnything(t *
 	if withHostOptions.appServerOptions.BeforeStart == nil || withHostOptions.appServerOptions.OnHandle == nil ||
 		withHostOptions.appServerOptions.OnEvent == nil || len(withHostOptions.appServerOptions.DynamicTools) != 1 {
 		t.Fatal("constructor did not retain Host-provided App Server options")
+	}
+}
+
+func TestTransportInvokerRecoveryRequiresExactDispatchedBindingBeforeJournalOrProcess(t *testing.T) {
+	invoker := NewTransportInvoker(codexappserver.Options{})
+	config := nativeFingerprintConfig(t)
+	request := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: strings.Repeat("a", 40),
+		ModelDigest: "sha256:" + strings.Repeat("b", 64), ModulePin: "module@1", ProjectionID: "projection",
+		ScopeIDs: []string{"source"}, PolicyIDs: []string{}, Context: json.RawMessage(`{}`), Artifacts: []agentexec.Artifact{}}
+	invocation, _, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fingerprint, err := invoker.Fingerprint(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workspace := projectworkspace.Handle{ID: "0123456789abcdef0123456789abcdef", CWD: filepath.Join(t.TempDir(), "repo"), BaseSHA: request.SourceRevision}
+	handle := codexappserver.RecoveryHandle{Protocol: "codex-app-server/fixture", Fingerprint: fingerprint,
+		Invocation: invocation, Workspace: workspace, ThreadID: "thread-1", SessionID: "session-1", TurnID: "turn-1", TurnDispatched: true}
+	private := filepath.Join(t.TempDir(), "private")
+	options := agentexec.RunOptions{Workspace: &workspace, PrivateLogDirectory: private}
+
+	wrongWorkspace := handle
+	wrongWorkspace.Workspace.BaseSHA = strings.Repeat("c", 40)
+	if _, err := invoker.Recover(context.Background(), config, wrongWorkspace, options); err == nil {
+		t.Fatal("recovery accepted a handle for a different owned workspace")
+	}
+
+	missingTurn := handle
+	missingTurn.TurnID = ""
+	if _, err := invoker.Recover(context.Background(), config, missingTurn, options); err == nil {
+		t.Fatal("recovery accepted an ambiguous dispatched request without its exact turn ID")
+	}
+
+	wrongProtocol := handle
+	wrongProtocol.Protocol = "codex-app-server/older-protocol"
+	if _, err := invoker.Recover(context.Background(), config, wrongProtocol, options); err == nil {
+		t.Fatal("recovery accepted a handle from a different protocol binding")
+	}
+	if _, err := os.Stat(private); !os.IsNotExist(err) {
+		t.Fatalf("wrong protocol created a recovery journal before rejection: stat err=%v", err)
+	}
+
+	wrongConfig := handle
+	wrongConfig.Fingerprint = "another-config"
+	if _, err := invoker.Recover(context.Background(), config, wrongConfig, options); err == nil {
+		t.Fatal("recovery accepted a handle from a different native configuration")
+	}
+	if _, err := os.Stat(private); !os.IsNotExist(err) {
+		t.Fatalf("invalid recovery binding created a journal or reached process startup: stat err=%v", err)
 	}
 }
 
