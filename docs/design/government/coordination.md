@@ -2039,3 +2039,7 @@ SourceReviewcaughtblanketHostemptyrefs breaksprojectrunVerifycoverage beforefres
 ### Required coverage is an explicit subset of allowed references
 
 RealVerifyconsumer review clarifies requiredrefs taggedartifact/checkScopeIDs versus broaderallowedaliasunion includingplaincheckPolicyIDs. Wholeallowedunionexpectationwithdrawn: declaration requiredEvidenceRefs innormalVerifiercontext determinesexactselectedsubset; genuinealiasselection/countandunchangedcoveragechecks retained, no auto-unionfill. RealAdapter-generatedsentSchema nowreadviaexistingprivateRPCeventfixture, not syntheticclientonly. Implementation/reviewongoing/no newprovider.
+
+### Minimal native answer and real Verify coverage correction checked locally
+
+Owner checkpoint b8e34d98 includes real Adapter.Run through unchanged validateVerifierCoverage: full required subset passes despite extra allowed plain PolicyID; unknown/duplicate aliases fail adapter, omitted/extra known refs fail coverage. Root read all five cases, no Root test rerun. Owner reports targeted 0.898/0.524/18.595s PASS and independent schema/journal source review closed. Nine product files remain WIP, full adapter package/build/vet/clean freeze pending; public remote still 8e0d103a. No new native starts or full workflow acceptance. Owner continues existing concrete repair/checks then normal A01 under standing human authority; no repeated order or new grant.
