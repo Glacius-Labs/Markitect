@@ -343,19 +343,9 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 					if task == nil {
 						return failRun(store, report, fmt.Errorf("recovered Manager %s is absent from the run", action.managerID))
 					}
-					currentID := baseCandidateID
-					if task.ParentTask != "" {
-						parent := findTask(report.Tasks, task.ParentTask)
-						if parent == nil || parent.CandidateID == "" {
-							return failRun(store, report, fmt.Errorf("parent Manager %s has no completed work candidate", task.ParentTask))
-						}
-						currentID = parent.CandidateID
-					}
-					if task.CandidateID != "" && task.ReviewStatus == "rework-requested" {
-						currentID = task.CandidateID
-					}
-					if task.CandidateID != "" && task.ReviewStatus == "rework-requested" {
-						currentID = task.CandidateID
+					currentID, idErr := workCandidateID(report.Tasks, *task, baseCandidateID)
+					if idErr != nil {
+						return failRun(store, report, idErr)
 					}
 					current, readErr := store.readCandidate(dir, currentID)
 					if readErr != nil {
@@ -375,14 +365,9 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				if err := ctx.Err(); err != nil {
 					return interruptRun(store, report, err)
 				}
-				parentID := task.ParentTask
-				currentID := baseCandidateID
-				if parentID != "" {
-					parent := findTask(report.Tasks, parentID)
-					if parent == nil || parent.CandidateID == "" {
-						return failRun(store, report, fmt.Errorf("parent Manager %s has no completed work candidate", parentID))
-					}
-					currentID = parent.CandidateID
+				currentID, idErr := workCandidateID(report.Tasks, *task, baseCandidateID)
+				if idErr != nil {
+					return failRun(store, report, idErr)
 				}
 				current, readErr := store.readCandidate(dir, currentID)
 				if readErr != nil {
