@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T00:52:00.635473+00:00",
+  "updatedUtc": "2026-10-10T00:56:02.603602+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "SEMANTIC_OUTPUT_FIX_CLEAN_PUBLIC_FREEZE_CHECKED_OWNER_NORMAL_A01_REFRESH_IN_PROGRESS",
+    "status": "FINAL_SCHEMA_JOURNAL_REGRESSION_FROZEN_STALE_PLAN_PREFLIGHT_ZERO_START_OWNER_REFRESHING",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18048,6 +18048,18 @@
       "providerConstraintCause": "UNKNOWN",
       "fullWorkflowAccepted": false,
       "mainMerged": false
+    },
+    "semanticActualPreparationCorrection": {
+      "sourceSha": "354b08ff8ea4d80f85959fa62d871ee09bd6a88d",
+      "rootVerified": "Clean exact local HEAD/public remote; test-only 36-line adapter regression delta observed.",
+      "ownerReported": "Actual Adapter OnEvent sent-schema assertion PASS0.486s/independent review; rebuilt binary3d5b13477f6d9019e6ed52cf511ed0ec6fd7e806c1d53afa47a301aa70d89bd2. Reused previous Plan after rebuilding; ordinary Run rejected stale Plan before run state/provider/role start.",
+      "batch": "a01-semantic-b9d9dc1428754b70a5e8d5cd9e9839e4",
+      "observer": "cd3ff646f7c648329620c6a423534b2a",
+      "deadlineUtc": "2026-10-10T04:54:36Z",
+      "preflightProviderStarts": 0,
+      "preflightRoleRequests": 0,
+      "cumulativeUnchanged": "14requests/11starts/4038772partialestimate NOTinvoice",
+      "next": "Owner refreshes normal readiness/Plan against final binary then Run within same finite batch. No replay/new Root grant/repeated order, no acceptance claimed."
     }
   }
 }

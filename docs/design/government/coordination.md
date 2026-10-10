@@ -2047,3 +2047,7 @@ Owner checkpoint b8e34d98 includes real Adapter.Run through unchanged validateVe
 ### Corrected native boundary has clean public freeze; normal actual next
 
 Root verified clean exact local/public b4b0c053. Owner reports independently reviewed full native adapter75.192s/real consumer-recovery-cache21.182s/compile/vet/canonical/diff PASS; binary05ad103f same source/modifiedfalse reported. Binary actual path not supplied; guessed product worktree bin/markitect.exe absent, so Root binary verification not claimed. Ordinary readiness/Plan refresh underway then fresh finite A01 under standing authority/no new Go or grant. Actual schema now privately retained; original provider enum cause UNKNOWN. Full workflow/Main acceptance still pending.
+
+### Final sent-schema regression and stale-plan operator correction
+
+Root verified clean exact local/public354b08ff, adapter-test-only delta. Owner reports actual Adapter OnEvent schema assertion0.486s/reviewPASS and rebuilt binary3d5b1347. Prior Plan mistakenly reused after rebuild; normal Run correctly rejected stale preflight with0requests/0providerstarts/no run state. Preserved in same a01-semantic-b9d9 batch/observercd3ff; deadline04:54:36Z unchanged, cumulative14/11/4038772partialunchanged. Owner normal final-binary readiness/Plan refresh then Run, no replay/new Root grant or repeated instruction. Full workflow still unaccepted.
