@@ -309,6 +309,93 @@ func TestImpactRoutesDecisionSubjectOwner(t *testing.T) {
 	}
 }
 
+// sourcedFixture is the standard fixture with each definition in its own model file.
+func sourcedFixture(t *testing.T) ([]core.Definition, core.Model, []File) {
+	t.Helper()
+	model, files := fixture(t, true, true, true)
+	definitions := copyDefinitions(model.Definitions)
+	for i := range definitions {
+		definitions[i].Source.Path = ".markitect/model/" + definitions[i].Metadata.Namespace + "/" + definitions[i].Metadata.Name + ".yaml"
+	}
+	return definitions, model, files
+}
+
+func analyzeDefinitions(t *testing.T, model core.Model, definitions []core.Definition, files []File) Report {
+	t.Helper()
+	compiled, diagnostics := core.Compile(model.Schemas, definitions, "sourced")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile: %+v", diagnostics)
+	}
+	return Analyze(compiled, files)
+}
+
+// DEC-021: a purpose change is a change of its definition and routes exactly
+// like a description change of the same Statement.
+func TestImpactRoutesPurposeChangeLikeDescriptionChange(t *testing.T) {
+	definitions, model, files := sourcedFixture(t)
+	base := analyzeDefinitions(t, model, definitions, files)
+	edited := func(edit func(*core.Definition)) Report {
+		changed := copyDefinitions(definitions)
+		for i := range changed {
+			if changed[i].Metadata.Name == "release-reservation" {
+				edit(&changed[i])
+			}
+		}
+		return analyzeDefinitions(t, model, changed, files)
+	}
+	purpose := Impact(base, edited(func(d *core.Definition) { d.Purpose = "Public inventory contract, now with expiry." }))
+	description := Impact(base, edited(func(d *core.Definition) { d.Spec["description"] = "Release reservation at most once." }))
+	if len(purpose.Unknown) != 0 {
+		t.Fatalf("purpose change widened to the whole project: %v", purpose.Unknown)
+	}
+	for name, sets := range map[string][2][]string{
+		"changed definitions": {purpose.ChangedDefinitions, description.ChangedDefinitions},
+		"statements":          {purpose.AffectedStatements, description.AffectedStatements},
+		"managers":            {purpose.Managers, description.Managers},
+		"files":               {purpose.Files, description.Files},
+		"checks":              {purpose.Checks, description.Checks},
+	} {
+		if strings.Join(sets[0], "|") != strings.Join(sets[1], "|") {
+			t.Fatalf("%s: purpose change %v, description change %v", name, sets[0], sets[1])
+		}
+	}
+}
+
+// DEC-021: an edit that changes only how a definition is written routes its
+// model file, the file's owner and the definitions in that file, and nothing
+// that depends on their meaning.
+func TestImpactRoutesMeaningFreeEditThroughItsFile(t *testing.T) {
+	definitions, model, files := sourcedFixture(t)
+	contract := map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "inventory", "name": "release-reservation"}
+	for i := range definitions {
+		if definitions[i].Kind == checkKind {
+			definitions[i].Spec["uses"] = []any{contract, map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "orders", "name": "cancel-order"}}
+		}
+	}
+	files = append(files, File{Path: ".markitect/model/orders/cancel-order-tests.yaml", Digest: "sha256:check", Mode: "100644"})
+	base := analyzeDefinitions(t, model, definitions, files)
+	reordered := copyDefinitions(definitions)
+	for i := range reordered {
+		if reordered[i].Kind == checkKind {
+			uses := append([]any(nil), reordered[i].Spec["uses"].([]any)...)
+			uses[0], uses[1] = uses[1], uses[0]
+			reordered[i].Spec["uses"] = uses
+		}
+	}
+	impact := Impact(base, analyzeDefinitions(t, model, reordered, files))
+	checkID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: checkKind, Namespace: "orders", Name: "cancel-order-tests"}).Key()
+	ordersID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}).Key()
+	if len(impact.Unknown) != 0 || len(impact.ChangedDefinitions) != 0 {
+		t.Fatalf("meaning-free edit was treated as a semantic change: changed=%v unknown=%v", impact.ChangedDefinitions, impact.Unknown)
+	}
+	if !contains(impact.Files, ".markitect/model/orders/cancel-order-tests.yaml") || !contains(impact.Checks, checkID) || !contains(impact.Managers, ordersID) || !contains(impact.Managers, rootManagerKey()) {
+		t.Fatalf("meaning-free edit was not routed through its file: files=%v checks=%v managers=%v", impact.Files, impact.Checks, impact.Managers)
+	}
+	if len(impact.AffectedStatements) != 0 || contains(impact.Files, "src/inventory/release.go") || contains(impact.Files, "src/orders/cancel.go") {
+		t.Fatalf("meaning-free edit routed what depends on meaning: statements=%v files=%v", impact.AffectedStatements, impact.Files)
+	}
+}
+
 // BUG-01: a Check that exercises a changed Statement must run again, and its
 // owner is routed, even when no Artifact declares that Check.
 func TestImpactRoutesChecksThatUseAChangedStatement(t *testing.T) {

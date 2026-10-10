@@ -140,6 +140,10 @@ func Impact(base, candidate Report) ChangeImpact {
 	compareArtifacts(base.Artifacts, candidate.Artifacts, addChanged)
 	compareChecks(base.Checks, candidate.Checks, addChanged)
 	compareDecisions(base.Decisions, candidate.Decisions, addChanged)
+	// A changed purpose is a change of its definition, routed like any other (DEC-021).
+	for _, id := range purposeChanges(base, candidate) {
+		addChanged(id)
+	}
 	for id := range changed {
 		out.ChangedDefinitions = append(out.ChangedDefinitions, id)
 	}
@@ -294,9 +298,55 @@ func Impact(base, candidate Report) ChangeImpact {
 			requires[s.ID] = appendUnique(requires[s.ID], s.Requires...)
 		}
 	}
-	modelUnprojected := base.ModelDigest != candidate.ModelDigest && (len(changed) == 0 || unprojectedChange(base, candidate, changed) || writingChange(base, candidate))
-	if modelUnprojected {
-		out.Unknown = append(out.Unknown, "model digest changed beyond the projected definition delta; decision or unprojected definition changes may require review")
+	// An edit that changes only how a definition is written routes through its model
+	// file alone: the file's owner and the definitions in that file (DEC-021).
+	rewritten := writingChanges(base, candidate)
+	rewrittenStatements := map[string]bool{}
+	for _, id := range rewritten {
+		path := base.sources[id]
+		inFile := []string{id}
+		if path != "" {
+			files[path] = true
+			for _, r := range []Report{base, candidate} {
+				managers[fileOwner(path, r.Managers)] = true
+				for other, source := range r.sources {
+					if source == path {
+						inFile = append(inFile, other)
+					}
+				}
+			}
+		}
+		for _, other := range inFile {
+			if s, ok := statementByID[other]; ok {
+				rewrittenStatements[other] = true
+				managers[s.Owner] = true
+			}
+			if _, ok := managerByID[other]; ok {
+				managers[other] = true
+			}
+			for _, r := range []Report{base, candidate} {
+				for _, a := range r.Artifacts {
+					if a.ID == other {
+						managers[a.Owner] = true
+					}
+				}
+				for _, c := range r.Checks {
+					if c.ID == other {
+						managers[c.Owner] = true
+						checks[c.ID] = true
+					}
+				}
+				for _, d := range r.Decisions {
+					if d.ID == other {
+						managers[d.Owner] = true
+					}
+				}
+			}
+		}
+	}
+	// A model change that nothing above names, or reports not built by Analyze, still widen.
+	if base.ModelDigest != candidate.ModelDigest && (len(changed) == 0 && len(rewritten) == 0 || !traced(base) || !traced(candidate)) {
+		out.Unknown = append(out.Unknown, "model digest changed without a definition change the report can name; the declared project needs review")
 	}
 
 	// Directly changed statements and reverse dependents need their own realizing artifacts
@@ -370,6 +420,9 @@ func Impact(base, candidate Report) ChangeImpact {
 		}
 	}
 	for id := range closure {
+		out.AffectedStatements = append(out.AffectedStatements, id)
+	}
+	for id := range rewrittenStatements {
 		out.AffectedStatements = append(out.AffectedStatements, id)
 	}
 	for id := range changed {
@@ -560,35 +613,24 @@ func compareChecks(a, b []Check, add func(string)) {
 	}
 }
 
-// unprojectedChange reports a change the report collections do not show: an
-// unprojected part, such as a purpose, of a definition in both revisions, even
-// when its projection changed too, or a Decision added or removed. Reports not
-// built by Analyze carry no such digests, so the change cannot be ruled out.
-func unprojectedChange(base, candidate Report, changed map[string]bool) bool {
-	if base.unprojected == nil || candidate.unprojected == nil {
-		return true
-	}
+// purposeChanges returns the definitions in both revisions whose purpose, the
+// part the report collections do not carry, changed.
+func purposeChanges(base, candidate Report) []string {
+	var ids []string
 	for id, d := range base.unprojected {
-		if next, ok := candidate.unprojected[id]; ok && next != d || !ok && !changed[id] {
-			return true
+		if next, ok := candidate.unprojected[id]; ok && next != d {
+			ids = append(ids, id)
 		}
 	}
-	for id := range candidate.unprojected {
-		if _, ok := base.unprojected[id]; !ok && !changed[id] {
-			return true
-		}
-	}
-	return false
+	return ids
 }
 
-// writingChange reports an edit that changes only how a property is written,
-// such as list order, a repeated entry or an explicit default. Such an edit
-// widens on its own, so it widens next to other changes too. In a set-like
-// list, the entries kept in both revisions must keep their order and count.
-func writingChange(base, candidate Report) bool {
-	if base.written == nil || candidate.written == nil {
-		return true
-	}
+// writingChanges returns the definitions in both revisions with an edit that
+// changes only how a property is written, such as list order, a repeated entry
+// or an explicit default. In a set-like list, the entries kept in both
+// revisions must also keep their order and count.
+func writingChanges(base, candidate Report) []string {
+	var ids []string
 	for id, properties := range base.written {
 		for name, before := range properties {
 			after, ok := candidate.written[id][name]
@@ -596,11 +638,18 @@ func writingChange(base, candidate Report) bool {
 				continue
 			}
 			if before.raw != after.raw && before.value == after.value || !slices.Equal(keptElements(before.elements, after.elements), keptElements(after.elements, before.elements)) {
-				return true
+				ids = append(ids, id)
+				break
 			}
 		}
 	}
-	return false
+	return ids
+}
+
+// traced reports whether Analyze built the report, so its purpose and writing
+// digests can name every model change.
+func traced(r Report) bool {
+	return r.unprojected != nil && r.written != nil && r.sources != nil
 }
 
 // keptElements returns the elements also present in other, in written order.
