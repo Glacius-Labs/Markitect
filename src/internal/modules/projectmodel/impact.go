@@ -128,6 +128,19 @@ func findingTouchesManager(f Finding, managerID string, r Report) bool {
 }
 
 func Impact(base, candidate Report) ChangeImpact {
+	return route(base, candidate).impact
+}
+
+// routing is one impact computation together with the cause of every element
+// it routed, so Explain and Impact share a single set of rules.
+type routing struct {
+	impact ChangeImpact
+	causes causes
+	// seeds are the statements a change reaches directly (DEC-023 class rule).
+	seeds map[string]bool
+}
+
+func route(base, candidate Report) routing {
 	out := ChangeImpact{APIVersion: APIVersion, BaseDigest: base.Digest, CandidateDigest: candidate.Digest}
 	changed := map[string]bool{}
 	addChanged := func(id string) {
@@ -171,83 +184,118 @@ func Impact(base, candidate Report) ChangeImpact {
 	for _, a := range candidate.Artifacts {
 		artifactByID[a.ID] = a
 	}
+	rec := causes{}
 	seed := map[string]bool{}
-	managers := map[string]bool{}
-	files := map[string]bool{}
-	checks := map[string]bool{}
+	seedFrom := func(statementID string, from element, relation string) {
+		if statementID != "" {
+			seed[statementID] = true
+			rec.add(element{"statement", statementID}, cause{"seeded", from, relation})
+		}
+	}
+	ownedBy := func(managerID string, from element) {
+		rec.add(element{"manager", managerID}, cause{"owner", from, "owned by"})
+	}
+	addAncestorsOf := func(managerID string, managers map[string]Manager) {
+		seen := map[string]bool{}
+		for id := managerID; id != "" && !seen[id]; {
+			seen[id] = true
+			m, ok := managers[id]
+			if !ok || m.Parent == "" {
+				return
+			}
+			rec.add(element{"manager", m.Parent}, cause{"ancestor", element{"manager", id}, "parent"})
+			id = m.Parent
+		}
+	}
+	artifactPaths := func(a Artifact, from element, reason string) {
+		for _, p := range a.Paths {
+			rec.add(element{"file", p}, cause{reason, from, "expects"})
+		}
+	}
 	for id := range changed {
 		for _, report := range []Report{base, candidate} {
 			for _, s := range report.Statements {
 				if s.ID == id {
+					self := element{"statement", id}
 					seed[id] = true
-					managers[s.Owner] = true
+					rec.add(self, cause{reason: "changed"})
+					ownedBy(s.Owner, self)
 				}
 			}
 			for _, a := range report.Artifacts {
 				if a.ID == id {
-					managers[a.Owner] = true
+					self := element{"artifact", id}
+					rec.add(self, cause{reason: "changed"})
+					ownedBy(a.Owner, self)
 					for _, sid := range a.Realizes {
-						seed[sid] = true
+						seedFrom(sid, self, "realizes")
 					}
-					addArtifactPaths(files, a)
+					artifactPaths(a, self, "realization")
 					for _, cid := range a.Checks {
-						checks[cid] = true
+						rec.add(element{"check", cid}, cause{"artifact check", self, "checked by"})
 					}
 				}
 			}
 			for _, c := range report.Checks {
 				if c.ID == id {
-					managers[c.Owner] = true
+					self := element{"check", id}
+					rec.add(self, cause{reason: "changed"})
+					ownedBy(c.Owner, self)
 					for _, sid := range c.Uses {
-						seed[sid] = true
+						seedFrom(sid, self, "exercises")
 					}
-					checks[id] = true
 				}
 			}
 			// A changed Decision is a change of its subject, routed with the Decision's owner.
 			for _, d := range report.Decisions {
 				if d.ID == id {
-					managers[d.Owner] = true
-					seed[d.Subject] = true
+					self := element{"decision", id}
+					rec.add(self, cause{reason: "changed"})
+					ownedBy(d.Owner, self)
+					seedFrom(d.Subject, self, "decides on")
 					if s, ok := statementByID[d.Subject]; ok {
-						managers[s.Owner] = true
+						ownedBy(s.Owner, element{"statement", d.Subject})
 					}
 				}
 			}
 			for _, m := range report.Managers {
 				if m.ID == id {
-					managers[id] = true
-					addAncestors(managers, id, managersForReport(report))
+					rec.add(element{"manager", id}, cause{reason: "changed"})
+					addAncestorsOf(id, managersForReport(report))
 				}
 			}
 			if managerByID[id].ID != "" {
+				self := element{"manager", id}
 				for _, statement := range report.Statements {
 					if statement.Owner == id {
-						seed[statement.ID] = true
+						seedFrom(statement.ID, self, "owns")
 					}
 				}
 				for _, artifact := range report.Artifacts {
 					if artifact.Owner == id {
+						owned := element{"artifact", artifact.ID}
+						rec.add(owned, cause{"owned by changed manager", self, "owns"})
 						for _, sid := range artifact.Realizes {
-							seed[sid] = true
+							seedFrom(sid, owned, "realizes")
 						}
-						addArtifactPaths(files, artifact)
+						artifactPaths(artifact, owned, "realization")
 						for _, cid := range artifact.Checks {
-							checks[cid] = true
+							rec.add(element{"check", cid}, cause{"artifact check", owned, "checked by"})
 						}
 					}
 				}
 				for _, check := range report.Checks {
 					if check.Owner == id {
-						checks[check.ID] = true
+						owned := element{"check", check.ID}
+						rec.add(owned, cause{"owned by changed manager", self, "owns"})
 						for _, sid := range check.Uses {
-							seed[sid] = true
+							seedFrom(sid, owned, "exercises")
 						}
 					}
 				}
 				for _, entry := range report.Files {
 					if entry.Owner == id {
-						files[entry.Path] = true
+						rec.add(element{"file", entry.Path}, cause{"owned by changed manager", self, "owns"})
 					}
 				}
 			}
@@ -267,24 +315,27 @@ func Impact(base, candidate Report) ChangeImpact {
 		if aok && bok && equal(a, b) {
 			continue
 		}
-		files[p] = true
+		self := element{"file", p}
+		rec.add(self, cause{reason: "file changed"})
 		for _, entry := range []FileEntry{a, b} {
 			if entry.Owner != "" {
-				managers[entry.Owner] = true
+				ownedBy(entry.Owner, self)
 			}
 			for _, sid := range entry.Statements {
-				seed[sid] = true
+				seedFrom(sid, self, "maps to")
 			}
 			for _, aid := range entry.Artifacts {
 				if art, ok := artifactByID[aid]; ok {
-					managers[art.Owner] = true
+					mapped := element{"artifact", aid}
+					rec.add(mapped, cause{"mapped by changed file", self, "maps to"})
+					ownedBy(art.Owner, mapped)
 					for _, sid := range art.Realizes {
-						seed[sid] = true
+						seedFrom(sid, mapped, "realizes")
 					}
 				}
 			}
 			for _, cid := range entry.Checks {
-				checks[cid] = true
+				rec.add(element{"check", cid}, cause{"mapped by changed file", self, "maps to"})
 			}
 		}
 	}
@@ -303,42 +354,42 @@ func Impact(base, candidate Report) ChangeImpact {
 	rewritten := writingChanges(base, candidate)
 	rewrittenStatements := map[string]bool{}
 	for _, id := range rewritten {
-		path := base.sources[id]
-		inFile := []string{id}
-		if path != "" {
-			files[path] = true
+		self := definitionElement(id, base, candidate)
+		rec.add(self, cause{reason: "rewritten"})
+		inFile := []element{self}
+		if path := base.sources[id]; path != "" {
+			file := element{"file", path}
+			rec.add(file, cause{"model file", self, "written in"})
 			for _, r := range []Report{base, candidate} {
-				managers[fileOwner(path, r.Managers)] = true
+				ownedBy(fileOwner(path, r.Managers), file)
 				for other, source := range r.sources {
-					if source == path {
-						inFile = append(inFile, other)
+					if source == path && other != id {
+						declared := definitionElement(other, base, candidate)
+						rec.add(declared, cause{"in model file", file, "declares"})
+						inFile = append(inFile, declared)
 					}
 				}
 			}
 		}
-		for _, other := range inFile {
-			if s, ok := statementByID[other]; ok {
-				rewrittenStatements[other] = true
-				managers[s.Owner] = true
-			}
-			if _, ok := managerByID[other]; ok {
-				managers[other] = true
+		for _, e := range inFile {
+			if s, ok := statementByID[e.id]; ok {
+				rewrittenStatements[e.id] = true
+				ownedBy(s.Owner, e)
 			}
 			for _, r := range []Report{base, candidate} {
 				for _, a := range r.Artifacts {
-					if a.ID == other {
-						managers[a.Owner] = true
+					if a.ID == e.id {
+						ownedBy(a.Owner, e)
 					}
 				}
 				for _, c := range r.Checks {
-					if c.ID == other {
-						managers[c.Owner] = true
-						checks[c.ID] = true
+					if c.ID == e.id {
+						ownedBy(c.Owner, e)
 					}
 				}
 				for _, d := range r.Decisions {
-					if d.ID == other {
-						managers[d.Owner] = true
+					if d.ID == e.id {
+						ownedBy(d.Owner, e)
 					}
 				}
 			}
@@ -353,19 +404,23 @@ func Impact(base, candidate Report) ChangeImpact {
 	// and every check that exercises them.
 	allChecks := append(append([]Check(nil), base.Checks...), candidate.Checks...)
 	addCoverage := func(statementID string) {
+		from := element{"statement", statementID}
 		for _, artifact := range allArtifacts {
 			if contains(artifact.Realizes, statementID) {
-				managers[artifact.Owner] = true
-				addArtifactPaths(files, artifact)
+				realizing := element{"artifact", artifact.ID}
+				rec.add(realizing, cause{"realization", from, "realized by"})
+				ownedBy(artifact.Owner, realizing)
+				artifactPaths(artifact, realizing, "realization")
 				for _, checkID := range artifact.Checks {
-					checks[checkID] = true
+					rec.add(element{"check", checkID}, cause{"artifact check", realizing, "checked by"})
 				}
 			}
 		}
 		for _, check := range allChecks {
 			if contains(check.Uses, statementID) {
-				managers[check.Owner] = true
-				checks[check.ID] = true
+				exercising := element{"check", check.ID}
+				rec.add(exercising, cause{"exercises", from, "exercised by"})
+				ownedBy(check.Owner, exercising)
 			}
 		}
 	}
@@ -398,24 +453,35 @@ func Impact(base, candidate Report) ChangeImpact {
 		pending = append(append(append(pending, uses[id]...), requires[id]...), consumers[id]...)
 	}
 	for id := range closure {
+		from := element{"statement", id}
 		// uses adds context and ownership routing. It does not imply implementation coverage.
 		for _, dep := range uses[id] {
+			used := element{"statement", dep}
+			rec.add(used, cause{"used", from, "uses"})
 			if s, ok := statementByID[dep]; ok {
-				managers[s.Owner] = true
+				ownedBy(s.Owner, used)
 			}
 		}
 		// requires adds the target contract and its declared artifact/check coverage.
 		for _, dep := range requires[id] {
+			required := element{"statement", dep}
+			rec.add(required, cause{"required", from, "requires"})
 			addCoverage(dep)
 			if s, ok := statementByID[dep]; ok {
-				managers[s.Owner] = true
+				ownedBy(s.Owner, required)
 			}
 		}
 		// An affected statement routes every direct consumer; each consumer's own realization is affected too.
 		for _, consumer := range consumers[id] {
+			consuming := element{"statement", consumer}
+			relation := "required by"
+			if contains(uses[consumer], id) {
+				relation = "used by"
+			}
+			rec.add(consuming, cause{"consumer", from, relation})
 			addCoverage(consumer)
 			for _, owner := range statementOwners[consumer] {
-				managers[owner] = true
+				ownedBy(owner, consuming)
 			}
 		}
 	}
@@ -425,25 +491,9 @@ func Impact(base, candidate Report) ChangeImpact {
 	for id := range rewrittenStatements {
 		out.AffectedStatements = append(out.AffectedStatements, id)
 	}
-	for id := range changed {
-		if _, ok := managerByID[id]; ok {
-			addAncestors(managers, id, managerByID)
-		}
+	for _, id := range rec.ids("manager") {
+		addAncestorsOf(id, managerByID)
 	}
-	initialManagers := mapKeys(managers)
-	for _, id := range initialManagers {
-		if id != "" {
-			addAncestors(managers, id, managerByID)
-			out.Managers = append(out.Managers, id)
-		}
-	}
-	for id := range managers {
-		if id != "" {
-			out.Managers = append(out.Managers, id)
-		}
-	}
-	out.Files = mapKeys(files)
-	out.Checks = mapKeys(checks)
 	out.Unknown = append(out.Unknown, base.Unknown...)
 	out.Unknown = append(out.Unknown, candidate.Unknown...)
 	if base.Status != "succeeded" {
@@ -455,38 +505,40 @@ func Impact(base, candidate Report) ChangeImpact {
 	out.Unknown = sortedUnique(out.Unknown)
 	if len(out.Unknown) > 0 {
 		// Unknown scope is never treated as a no-op: route every declared Manager and inventory item.
+		widened := cause{reason: "widened"}
 		for _, report := range []Report{base, candidate} {
 			for _, manager := range report.Managers {
-				managers[manager.ID] = true
-				addAncestors(managers, manager.ID, managersForReport(report))
+				rec.add(element{"manager", manager.ID}, widened)
+				addAncestorsOf(manager.ID, managersForReport(report))
 			}
 			for _, statement := range report.Statements {
+				rec.add(element{"statement", statement.ID}, widened)
 				out.AffectedStatements = append(out.AffectedStatements, statement.ID)
 			}
 			for _, entry := range report.Files {
-				files[entry.Path] = true
+				rec.add(element{"file", entry.Path}, widened)
 			}
 			for _, artifact := range report.Artifacts {
-				addArtifactPaths(files, artifact)
+				artifactPaths(artifact, element{"artifact", artifact.ID}, "widened")
+				rec.add(element{"artifact", artifact.ID}, widened)
 				for _, checkID := range artifact.Checks {
-					checks[checkID] = true
+					rec.add(element{"check", checkID}, widened)
 				}
 			}
 			for _, check := range report.Checks {
-				checks[check.ID] = true
+				rec.add(element{"check", check.ID}, widened)
 			}
 		}
-		out.Managers = mapKeys(managers)
-		out.Files = mapKeys(files)
-		out.Checks = mapKeys(checks)
 		out.Findings = append(out.Findings, Finding{Code: "impact.unknown-scope", Message: "Some project or inventory scope is unresolved and remains in the impact.", Severity: "incomplete"})
 	}
+	out.Managers = rec.ids("manager")
+	out.Files = rec.ids("file")
+	out.Checks = rec.ids("check")
 	for _, m := range out.Managers {
 		out.Findings = append(out.Findings, Finding{Code: "impact.manager-routing", Subject: m, Message: "Manager is included through changed ownership or a relevant dependency.", Severity: "info"})
 	}
 	for id := range changed {
-		if s, ok := statementByID[id]; ok {
-			_ = s
+		if _, ok := statementByID[id]; ok {
 			out.Findings = append(out.Findings, Finding{Code: "impact.statement-change", Subject: id, Message: "Statement definition changed.", Severity: "info"})
 		}
 	}
@@ -497,14 +549,58 @@ func Impact(base, candidate Report) ChangeImpact {
 			}
 		}
 	}
-	out.Findings = sortedFindings(out.Findings)
+	out.Findings = uniqueFindings(sortedFindings(out.Findings))
 	out.ChangedDefinitions = sortedUnique(out.ChangedDefinitions)
 	out.AffectedStatements = sortedUnique(out.AffectedStatements)
 	out.Managers = sortedUnique(out.Managers)
 	out.Files = sortedUnique(out.Files)
 	out.Checks = sortedUnique(out.Checks)
 	out.Digest = digest(out)
+	return routing{impact: out, causes: rec, seeds: seed}
+}
+
+// uniqueFindings drops repeats from sorted findings, such as one finding
+// raised for both revisions of the same definition.
+func uniqueFindings(sorted []Finding) []Finding {
+	out := sorted[:0]
+	for i, f := range sorted {
+		if i == 0 || f != sorted[i-1] {
+			out = append(out, f)
+		}
+	}
 	return out
+}
+
+// definitionElement names a definition by its kind as either report knows it.
+func definitionElement(id string, reports ...Report) element {
+	for _, r := range reports {
+		for _, s := range r.Statements {
+			if s.ID == id {
+				return element{"statement", id}
+			}
+		}
+		for _, m := range r.Managers {
+			if m.ID == id {
+				return element{"manager", id}
+			}
+		}
+		for _, a := range r.Artifacts {
+			if a.ID == id {
+				return element{"artifact", id}
+			}
+		}
+		for _, c := range r.Checks {
+			if c.ID == id {
+				return element{"check", id}
+			}
+		}
+		for _, d := range r.Decisions {
+			if d.ID == id {
+				return element{"decision", id}
+			}
+		}
+	}
+	return element{"definition", id}
 }
 
 func compareManagers(a, b []Manager, add func(string)) {

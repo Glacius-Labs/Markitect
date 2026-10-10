@@ -80,8 +80,8 @@ func TestShopKnowledgeQuestions(t *testing.T) {
 	questions := []knowledgeQuestion{
 		{"Q01", "Who owns a declared file and the definition that claims it?", questionAnswered,
 			"Report.Files owner, artifacts, statements and checks; Statement.Owner", askShopFileOwnership},
-		{"Q02", "Which consumers depend on a changed contract, and why?", questionPartial,
-			"Impact routes consumers, their paths, checks and owners; it returns no reason per element", askShopContractConsumers},
+		{"Q02", "Which consumers depend on a changed contract, and why?", questionAnswered,
+			"Impact routes consumers, their paths, checks and owners; Explain gives each its reason, witness and class (DEC-023)", askShopContractConsumers},
 		{"Q03", "What changes when the relation itself is removed?", questionAnswered,
 			"Impact evaluates the union of base and candidate edges", askShopRemovedRelation},
 		{"Q04", "Which decision supports this rule?", questionAnswered,
@@ -119,7 +119,7 @@ func TestShopKnowledgeQuestions(t *testing.T) {
 		counts[question.status]++
 		t.Run(question.id, func(t *testing.T) { question.run(t, shop) })
 	}
-	want := map[string]int{questionAnswered: 6, questionPartial: 2, questionGap: 1, questionOutsideModel: 3}
+	want := map[string]int{questionAnswered: 7, questionPartial: 1, questionGap: 1, questionOutsideModel: 3}
 	if !reflect.DeepEqual(counts, want) {
 		t.Fatalf("knowledge question statuses = %v, want %v; change a status only together with its row", counts, want)
 	}
@@ -173,12 +173,26 @@ func askShopContractConsumers(t *testing.T, shop shopFixture) {
 		"src/shop/__init__.py", "src/shop/commerce/__init__.py", "src/shop/commerce/cancellation.py")
 	assertContains(t, "impact checks", impact.Checks, shopCancellationTests)
 	assertContains(t, "impact managers", impact.Managers, shopInventoryManager, shopCommerceManager, shopSalesManager, shopOrdersManager)
-	// Gap: nothing names the edge that put a consumer into the impact.
+	// Explain names the edge that put each consumer into the impact; the
+	// impact itself keeps its shape.
 	assertChangeImpactShape(t)
-	for _, finding := range impact.Findings {
-		if slices.Contains(consumers, finding.Subject) {
-			t.Fatalf("impact finding %+v now explains a consumer; re-assess Q02", finding)
+	explanation := projectmodel.Explain(shop.project.Report, candidate.Report)
+	if explanation.ImpactDigest != impact.Digest {
+		t.Fatalf("explanation is bound to %s, impact is %s", explanation.ImpactDigest, impact.Digest)
+	}
+	explained := map[string]projectmodel.ExplainedElement{}
+	for _, e := range explanation.Elements {
+		explained[e.ID] = e
+	}
+	for _, consumer := range consumers {
+		e := explained[consumer]
+		if e.Reason != "consumer" || e.Class != "change" || len(e.Witness) != 1 || e.Witness[0].From != shopReleaseReservation || e.Witness[0].To != consumer {
+			t.Fatalf("consumer %s is not explained by its edge to release-reservation: %+v", consumer, e)
 		}
+	}
+	// release-reservation only uses reservation, so reservation is context to read.
+	if e := explained[shopReservation]; e.Class != "context" || e.Reason != "used" {
+		t.Fatalf("reservation = %+v, want context reached through uses", e)
 	}
 }
 
