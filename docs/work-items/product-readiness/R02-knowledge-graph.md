@@ -1,0 +1,7 @@
+# R02 — Full knowledge graph assessment
+
+Define what a useful full knowledge graph means for this product before comparing formats. Inventory the actual canonical model's entities/identities, typed relations, provenance, constraints, traversal/query, versions and links to intended/observed/candidate implementation. YAML authoring and a semantic graph are not mutually exclusive; RDF/OWL/SHACL or a graph database are choices requiring an actual need, not synonyms for completion.
+
+Answer how far the current committed source is from the useful target with concrete implemented/gap distinctions. Use real desired questions such as impact of a concept rename, dependency/ownership navigation, traceability from Work Item to model/change/check, cross-scope consistency and explanation of conflicting requirements. Explain which are already possible, which need simple indexes/explicit relations, and which would justify a stronger graph/query/constraint mechanism. Avoid claiming automatic source-language meaning or consistency proving semantic correctness.
+
+Deliver a source-bound decision brief and a minimal prioritized optional delta, with examples, costs and rejected alternatives. Keep canonical ownership and provider independence. Do not convert the model, install a graph database/solver or rewrite Core. Read-only research does not gate Main, authorize product edits or reopen studies. Report once through a fresh dedicated chat.

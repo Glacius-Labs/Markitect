@@ -1,0 +1,24 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: cancel-order
+  namespace: commerce.sales.orders
+purpose: Describes the customer order cancellation use case and its order and reservation preconditions.
+spec:
+  category: use-case
+  description: A confirmed order may be cancelled before shipment only when exactly one active inventory reservation exists; cancellation releases it in the same transaction or leaves both records unchanged on failure.
+  public: true
+  uses:
+    - namespace: commerce.sales.orders
+      name: order
+    - namespace: commerce.sales.inventory.reservations
+      name: reservation
+    - namespace: commerce.sales.inventory.reservations
+      name: release-reservation
+  requires:
+    - namespace: commerce.sales.orders
+      name: cancel-before-shipped
+    - namespace: commerce.sales.orders
+      name: requires-active-reservation
+    - namespace: commerce.sales.inventory.reservations
+      name: release-reservation

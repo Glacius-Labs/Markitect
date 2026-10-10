@@ -1,0 +1,136 @@
+designVersion: project-world/0.1
+resources:
+- kind: ArtifactGroup
+  id: engineering/orders-artifacts
+  owner: orders-manager
+  area: orders
+  purpose: Bestellzustände und API als konkrete Dateien realisieren.
+  realizes:
+  - sales/order
+  - sales/confirmed
+  - sales/shipped
+  managedRoots:
+  - src/Shop/Orders/
+  - tests/Shop.Tests/Orders/
+  knownPaths:
+  - src/Shop/Orders/Orders.cs
+  - src/Shop/Orders/Endpoints.cs
+  - tests/Shop.Tests/Orders/OrderTests.cs
+  - docs/orders.md
+  checks:
+  - engineering/check-orders
+- kind: ArtifactGroup
+  id: engineering/inventory-artifacts
+  owner: inventory-manager
+  area: inventory
+  purpose: Reservierung und Freigabe als konkrete Dateien realisieren.
+  realizes:
+  - inventory/stock
+  - inventory/reservation
+  - inventory/release
+  - inventory/no-overbooking
+  managedRoots:
+  - src/Shop/Inventory/
+  - tests/Shop.Tests/Inventory/
+  knownPaths:
+  - src/Shop/Inventory/Reservations.cs
+  - tests/Shop.Tests/Inventory/ReservationTests.cs
+  - docs/inventory.md
+  checks:
+  - engineering/check-inventory
+- kind: ArtifactGroup
+  id: engineering/commerce-artifacts
+  owner: commerce-manager
+  area: commerce
+  purpose: Fachübergreifende Use Cases und ihre Integrationsprüfungen realisieren.
+  realizes:
+  - sales/create-order
+  - commerce/create-reserves-stock
+  managedRoots:
+  - src/Shop/Commerce/
+  - tests/Shop.Tests/Commerce/
+  knownPaths:
+  - src/Shop/Commerce/CreateOrder.cs
+  - tests/Shop.Tests/Commerce/CreateOrderTests.cs
+  - docs/commerce.md
+  checks:
+  - engineering/check-commerce
+- kind: ArtifactGroup
+  id: engineering/platform-artifacts
+  owner: platform-manager
+  area: platform
+  purpose: Anwendung bauen und lokal mit Datenbank betreiben.
+  realizes:
+  - engineering/shop-monolith
+  managedRoots:
+  - ops/
+  knownPaths:
+  - src/Shop/Program.cs
+  - src/Shop/ShopDbContext.cs
+  - src/Shop/Shop.csproj
+  - tests/Shop.Tests/Shop.Tests.csproj
+  - ops/Dockerfile
+  - ops/compose.yaml.example
+  - .github/workflows/ci.yaml.example
+  checks:
+  - engineering/check-project
+- kind: Check
+  id: engineering/check-orders
+  owner: orders-manager
+  area: orders
+  purpose: Lokale Zustandsregeln der Bestellungen prüfen.
+  uses:
+  - sales/order
+  command:
+  - dotnet
+  - test
+  - tests/Shop.Tests/Shop.Tests.csproj
+  - --filter
+  - FullyQualifiedName~Orders
+  limitation: Bestandsfreigabe und atomare Gesamttransaktion werden hier nicht bewiesen.
+- kind: Check
+  id: engineering/check-inventory
+  owner: inventory-manager
+  area: inventory
+  purpose: Reservierung und idempotente Freigabe lokal prüfen.
+  uses:
+  - inventory/reservation
+  - inventory/release
+  - inventory/no-overbooking
+  command:
+  - dotnet
+  - test
+  - tests/Shop.Tests/Shop.Tests.csproj
+  - --filter
+  - FullyQualifiedName~Inventory
+  limitation: Der Aufruf im vollständigen Order-Ablauf wird hier nicht bewiesen.
+- kind: Check
+  id: engineering/check-commerce
+  owner: commerce-manager
+  area: commerce
+  purpose: Das Zusammenspiel beider Fachbereiche an der echten Datenbanktransaktion
+    prüfen.
+  uses:
+  - sales/create-order
+  - commerce/create-reserves-stock
+  - engineering/shop-monolith
+  command:
+  - dotnet
+  - test
+  - tests/Shop.Tests/Shop.Tests.csproj
+  - --filter
+  - FullyQualifiedName~Commerce
+  limitation: Fachliche Vollständigkeit über die deklarierten Fälle hinaus bleibt
+    offen.
+- kind: Check
+  id: engineering/check-project
+  owner: platform-manager
+  area: platform
+  purpose: Den integrierten Anwendungskandidaten bauen und die Tests ausführen.
+  uses:
+  - engineering/shop-monolith
+  command:
+  - dotnet
+  - test
+  - tests/Shop.Tests/Shop.Tests.csproj
+  limitation: Deployment und externer Betrieb werden nicht geprüft.

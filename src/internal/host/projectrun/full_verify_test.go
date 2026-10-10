@@ -1,0 +1,981 @@
+package projectrun
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"io"
+	"math"
+	"os"
+	"path/filepath"
+	"reflect"
+	"sort"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+)
+
+const (
+	fullVerifyHelperEnv  = "MARKITECT_FULL_VERIFY_HELPER"
+	fullVerifyCheckEnv   = "MARKITECT_FULL_VERIFY_CHECK"
+	fullVerifyBadEnv     = "MARKITECT_FULL_VERIFY_BAD_MANAGER"
+	fullVerifyNoUsageEnv = "MARKITECT_FULL_VERIFY_NO_USAGE"
+	fullVerifyLogEnv     = "MARKITECT_FULL_VERIFY_LOG"
+)
+
+// Process fixture for the same stdin/stdout agentexec protocol used by real
+// adapters; it returns typed evidence reports without calling a model.
+func TestFullVerifyHelperProcess(t *testing.T) {
+	if os.Getenv(fullVerifyHelperEnv) != "1" {
+		return
+	}
+	raw, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var invocation agentexec.Invocation
+	if err := json.Unmarshal(raw, &invocation); err != nil {
+		t.Fatal(err)
+	}
+	var contextPayload struct {
+		Kind    string `json:"kind"`
+		Manager struct {
+			Manager struct {
+				ID string `json:"id"`
+			} `json:"manager"`
+		} `json:"manager"`
+		RequiredSubjects []string              `json:"requiredSubjects"`
+		ChildAssessments []fullChildAssessment `json:"childAssessments"`
+		CheckResults     []CheckResult         `json:"checkResults"`
+	}
+	if err := json.Unmarshal(invocation.Request.Context, &contextPayload); err != nil {
+		t.Fatal(err)
+	}
+	if contextPayload.Kind != "projectrun-full-verify/v1" || contextPayload.Manager.Manager.ID == "" {
+		t.Fatalf("unexpected context: %s", invocation.Request.Context)
+	}
+	if path := os.Getenv(fullVerifyLogEnv); path != "" {
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = json.NewEncoder(file).Encode(map[string]any{"managerId": contextPayload.Manager.Manager.ID, "context": contextPayload})
+		_ = file.Close()
+	}
+	assessments := make([]FullAssessment, 0, len(contextPayload.RequiredSubjects))
+	for _, subject := range contextPayload.RequiredSubjects {
+		assessments = append(assessments, FullAssessment{Subject: subject, Outcome: "pass", Detail: "bound project snapshot inspected"})
+	}
+	status := "pass"
+	if bad := os.Getenv(fullVerifyBadEnv); bad != "" && strings.Contains(contextPayload.Manager.Manager.ID, bad) {
+		status = "incomplete"
+		assessments = nil
+	}
+	report, err := json.Marshal(fullAuditResponse{Status: status, Summary: "completed bounded Manager audit", Assessments: assessments, Findings: []string{}, Counterexamples: []FullCounterexample{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var usage *agentexec.Usage
+	if noUsage := os.Getenv(fullVerifyNoUsageEnv); noUsage == "" || !strings.Contains(contextPayload.Manager.Manager.ID, noUsage) {
+		usage = &agentexec.Usage{Source: "provider-reported", InputTokens: int64Ptr(10), OutputTokens: int64Ptr(5)}
+	}
+	response, err := json.Marshal(agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce,
+		Role: agentexec.RoleExecutor, InputDigest: invocation.InputDigest, Outcome: agentexec.OutcomeProposed,
+		CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{},
+		ReportJSON: report, Uncertainty: []string{}, Usage: usage})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _ = os.Stdout.Write(append(response, '\n'))
+	os.Exit(0)
+}
+
+func TestFullVerifyCheckProcess(t *testing.T) {
+	if os.Getenv(fullVerifyCheckEnv) != "1" {
+		return
+	}
+	for _, path := range []string{"src/orders/implementation.txt", "src/inventory/implementation.txt"} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("snapshot check input %s missing: %v", path, err)
+		}
+	}
+}
+
+func TestFullVerifyAuditsAllManagersAndParentsReceiveIntegrationScope(t *testing.T) {
+	root := makeFullVerifyFixture(t)
+	loaded, loadErr := projectwork.Load(root, gitE2E(t, root, "rev-parse", "HEAD"))
+	if loadErr != nil {
+		t.Fatal(loadErr)
+	}
+	if loaded.Coverage != nil && !loaded.Coverage.Conforming {
+		t.Fatalf("fixture coverage not conforming: %+v", loaded.Coverage.Findings)
+	}
+	setupFullVerifyProcesses(t)
+	configureFullVerifyRuntime(t, root)
+	head := gitE2E(t, root, "rev-parse", "HEAD")
+	before := gitE2E(t, root, "status", "--porcelain")
+	host := Host{Load: projectwork.Load}
+	got, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	if err != nil {
+		t.Fatalf("full verify failed: %v report=%+v", err, got)
+	}
+	if got.Status != "passed" || len(got.Managers) != 3 || len(got.Checks) != 2 {
+		t.Fatalf("unexpected full verification result: %+v", got)
+	}
+	if got.Starts != 5 {
+		t.Fatalf("starts = %d, want three Manager audits and two checks", got.Starts)
+	}
+	if after := gitE2E(t, root, "status", "--porcelain"); after != before {
+		t.Fatalf("read-only verification changed working tree: before %q after %q", before, after)
+	}
+	data, err := os.ReadFile(os.Getenv(fullVerifyLogEnv))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Count(string(data), `"context":`) != 3 {
+		t.Fatalf("logged Manager calls = %d, want 3", strings.Count(string(data), `"context":`))
+	}
+	if !strings.Contains(string(data), "integration:manager:") || !strings.Contains(string(data), "integration:artifact:") {
+		t.Fatalf("root Manager did not receive direct-child integration obligations: %s", data)
+	}
+	if !strings.Contains(string(data), `"childAssessments":[{"managerId"`) || !strings.Contains(string(data), `"checkResults":[{"id"`) {
+		t.Fatalf("root Manager did not receive direct-child assessment and check evidence: %s", data)
+	}
+	written, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head, Write: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	persisted, err := os.ReadFile(filepath.FromSlash(written.PersistedPath))
+	if err != nil {
+		t.Fatalf("persisted report missing: %v", err)
+	}
+	var stored FullVerifyReport
+	if err := json.Unmarshal(persisted, &stored); err != nil {
+		t.Fatal(err)
+	}
+	if stored.Status != "passed" || len(stored.Managers) != 3 || stored.Managers[0].Receipt == nil || len(stored.Checks) != 2 {
+		t.Fatalf("persisted report omitted receipt or check evidence: %+v", stored)
+	}
+}
+
+func TestFullVerifyMissingManagerAssessmentCannotPassAndStaleSnapshotRejected(t *testing.T) {
+	root := makeFullVerifyFixture(t)
+	setupFullVerifyProcesses(t)
+	configureFullVerifyRuntime(t, root)
+	head := gitE2E(t, root, "rev-parse", "HEAD")
+	before := gitE2E(t, root, "status", "--porcelain")
+	host := Host{Load: projectwork.Load}
+	t.Setenv(fullVerifyBadEnv, "orders")
+	report, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	if err == nil || report.Status == "passed" {
+		t.Fatalf("missing Manager evidence passed: report=%+v err=%v", report, err)
+	}
+	if after := gitE2E(t, root, "status", "--porcelain"); after != before {
+		t.Fatalf("failed read-only audit changed project tree: before=%q after=%q", before, after)
+	}
+	t.Setenv(fullVerifyBadEnv, "")
+	project, err := projectwork.Load(root, head)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime, err := LoadRuntime(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := FullVerifyProject(context.Background(), host, ProcessInvoker{}, root, project, runtime, FullVerifyBinding{ExpectedSnapshot: "stale"}); err != ErrStale {
+		t.Fatalf("stale snapshot error = %v, want ErrStale", err)
+	}
+}
+
+func TestFullVerifyReviewEvidenceIncludesOnlyCurrentParentIntegrationAndPreservesOriginalBindings(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	project, err := projectwork.Load(root, identityHead(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var target projectmodel.Manager
+	var sibling projectmodel.Manager
+	for _, manager := range project.Report.Managers {
+		if manager.Parent != "" {
+			target = manager
+			break
+		}
+	}
+	if target.ID == "" {
+		t.Fatal("fixture has no child Manager")
+	}
+	for _, manager := range project.Report.Managers {
+		if manager.ID != target.ID && manager.Parent == target.Parent {
+			sibling = manager
+			break
+		}
+	}
+	if sibling.ID == "" {
+		t.Fatal("fixture has no sibling Manager")
+	}
+	project.Report.Managers = append(project.Report.Managers, projectmodel.Manager{ID: "unrelated-manager", Parent: "other-root"})
+	finalCandidateID := "candidate-final"
+	finalCandidateDigest := "sha256:final-candidate"
+	want := fullReviewEvidence{TaskID: "task-parent", ManagerID: target.Parent, Phase: "integrate",
+		ReviewCandidateID: "candidate-reviewed", ReviewCandidateDigest: "sha256:reviewed",
+		FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest,
+		ScopeDigest: "sha256:scope", InputDigest: "sha256:input", ReceiptRunID: "review-run", Outcome: "pass", Findings: []ReviewFinding{}}
+	got := fullAuditIntegrationReviewsForManager(project.Report, target.ID, finalCandidateID, finalCandidateDigest, []fullReviewEvidence{
+		{ManagerID: target.ID, Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: sibling.ID, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: target.Parent, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: target.Parent, Phase: "integrate", Outcome: "pass", FinalCandidateID: "stale-candidate", FinalCandidateDigest: "sha256:stale"},
+		{ManagerID: target.Parent, Phase: "integrate", Outcome: "fail", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		want,
+		{ManagerID: "unrelated-manager", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+	})
+	if len(got) != 1 {
+		t.Fatalf("review evidence was not limited to the current parent integration review: %+v", got)
+	}
+	if !reflect.DeepEqual(got[0], want) {
+		t.Fatalf("parent review provenance or findings changed: got=%+v want=%+v", got[0], want)
+	}
+	rootReview := want
+	rootReview.TaskID, rootReview.ManagerID, rootReview.ReviewCandidateID = "task-root", target.Parent, "root-reviewed-partial-candidate"
+	rootReview.ReviewCandidateDigest, rootReview.ReceiptRunID = "sha256:root-reviewed", "root-integration-receipt"
+	rootReviews := fullAuditIntegrationReviewsForManager(project.Report, target.Parent, finalCandidateID, finalCandidateDigest, []fullReviewEvidence{
+		rootReview,
+		{ManagerID: target.ID, Phase: "integrate", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: target.Parent, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+	})
+	if len(rootReviews) != 1 || !reflect.DeepEqual(rootReviews[0], rootReview) {
+		t.Fatalf("top-level Manager did not receive its own exact integration review: %+v", rootReviews)
+	}
+}
+
+func TestFreshReviewEvidenceForVerifySelectsCurrentScopeAndRetainsPartialCandidate(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	project, err := projectwork.Load(root, identityHead(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var target projectmodel.Manager
+	var artifactID string
+	for _, artifact := range project.Report.Artifacts {
+		if len(artifact.Paths) != 0 {
+			for _, manager := range project.Report.Managers {
+				if manager.ID == artifact.Owner {
+					target, artifactID = manager, artifact.ID
+					break
+				}
+			}
+		}
+		if target.ID != "" {
+			break
+		}
+	}
+	if target.ID == "" || artifactID == "" {
+		t.Fatal("fixture has no manager-owned artifact for a scoped review")
+	}
+	documentPath := "src/inventory/docs/greeting.md"
+	documentContent := []byte("The greeting is displayed to the caller.\n")
+	project.Snapshot.Files[documentPath] = documentContent
+	project.Snapshot.Modes[documentPath] = "0644"
+	project.Report.Files = append(project.Report.Files, projectmodel.FileEntry{Path: documentPath, Mode: "0644", Owner: target.ID,
+		Class: "documentation", Artifacts: []string{artifactID}, Exists: true})
+	for i := range project.Report.Artifacts {
+		if project.Report.Artifacts[i].ID == artifactID {
+			project.Report.Artifacts[i].Paths = append(project.Report.Artifacts[i].Paths, documentPath)
+			break
+		}
+	}
+	task := ManagerTask{ID: "task-current", ManagerID: target.ID, Goal: "Review the owned artifact.", Artifacts: []string{artifactID}}
+	plan := PlanRecord{ID: "plan-current", Goal: "Complete the project artifact.", Operation: OperationApply,
+		Managers: []ManagerTask{task}, BriefingDigests: map[string]string{}, Strictness: map[string]StrictnessProfile{}}
+	run := RunReport{ID: "0123456789abcdef0123456789abcdef", Tasks: []ManagerTask{task}}
+	currentScope, err := reviewScopeDigest(plan, project, task, "work", run)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err := store.runDir(run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(store.base); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(dir); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(dir, "candidates")); err != nil {
+		t.Fatal(err)
+	}
+	partial := candidateData{ID: "11111111111111111111111111111111", Files: map[string]File{}}
+	if err := store.writeCandidate(dir, partial); err != nil {
+		t.Fatal(err)
+	}
+	partial, err = store.readCandidate(dir, partial.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	final := candidateData{ID: "22222222222222222222222222222222", Files: map[string]File{}}
+	if err := store.writeCandidate(dir, final); err != nil {
+		t.Fatal(err)
+	}
+	final, err = store.readCandidate(dir, final.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	current := ReviewRecord{TaskID: task.ID, ManagerID: task.ManagerID, Phase: "work", CandidateID: partial.ID,
+		CandidateDigest: partial.Digest, ScopeDigest: currentScope, InputDigest: "sha256:review-input", Outcome: "pass",
+		Findings: []ReviewFinding{}, Receipt: agentexec.Receipt{RunID: "review-run-current"}}
+	historical := current
+	historical.CandidateID, historical.CandidateDigest, historical.ScopeDigest, historical.Receipt.RunID = "33333333333333333333333333333333", "sha256:old", "sha256:old-scope", "review-run-old"
+	run.Reviews = []ReviewRecord{current, historical}
+	evidence, err := freshReviewEvidenceForVerify(store, dir, project, final, plan, Runtime{Review: &ReviewConfig{}}, run)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(evidence) != 1 {
+		t.Fatalf("selected review count = %d, want 1: %+v", len(evidence), evidence)
+	}
+	got := evidence[0]
+	if got.ReviewCandidateID != partial.ID || got.ReviewCandidateDigest != partial.Digest || got.FinalCandidateID != final.ID || got.FinalCandidateDigest != final.Digest {
+		t.Fatalf("review and final candidate bindings were collapsed or changed: %+v", got)
+	}
+	if got.ReceiptRunID != current.Receipt.RunID || got.ScopeDigest != currentScope || !reflect.DeepEqual(got.Findings, current.Findings) {
+		t.Fatalf("selected review provenance/findings differ from the exact current-scope record: got=%+v want=%+v", got, current)
+	}
+	documentDigest := rawContentDigest(documentContent)
+	if len(got.ReviewedFiles) != 2 || got.ReviewedFiles[0].Path != documentPath || got.ReviewedFiles[0].Mode != "0644" || got.ReviewedFiles[0].ContentDigest != documentDigest {
+		t.Fatalf("review scope omitted the exact documentation file reference: %+v", got.ReviewedFiles)
+	}
+	tampered := run
+	tampered.Reviews = append([]ReviewRecord(nil), run.Reviews...)
+	tampered.Reviews[0].CandidateDigest = "sha256:wrong-retained-candidate"
+	if _, err := freshReviewEvidenceForVerify(store, dir, project, final, plan, Runtime{Review: &ReviewConfig{}}, tampered); err == nil {
+		t.Fatal("review with a mismatched retained-candidate digest was accepted")
+	}
+}
+
+func TestFullVerifyProjectAuditsComposedCandidateBytesWithoutReopeningBaseRevision(t *testing.T) {
+	root := makeFullVerifyFixture(t)
+	setupFullVerifyProcesses(t)
+	configureFullVerifyRuntime(t, root)
+	head := gitE2E(t, root, "rev-parse", "HEAD")
+	host := Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot}
+	base, err := host.Load(root, head)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime, err := LoadRuntime(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	baseDigest := base.Snapshot.Digest()
+	base.Snapshot.Files["src/orders/implementation.txt"] = []byte("uncommitted composed candidate bytes\n")
+	candidate, err := host.FromSnapshot(root, base.Snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if candidate.Snapshot.Digest() == baseDigest {
+		t.Fatal("candidate composition did not change snapshot binding")
+	}
+	report, err := FullVerifyProject(context.Background(), host, ProcessInvoker{}, root, candidate, runtime, FullVerifyBinding{ExpectedSnapshot: candidate.Snapshot.Digest()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Status != "passed" || report.SnapshotDigest != candidate.Snapshot.Digest() {
+		t.Fatalf("candidate verification did not bind to composed bytes: %+v", report)
+	}
+	assertFileContents(t, root, "src/orders/implementation.txt", "orders implementation v1\n")
+}
+
+type fullVerifyNativeWorkspaceInvoker struct {
+	root            string
+	called          bool
+	workspace       projectworkspace.Handle
+	roleTimeout     time.Duration
+	requestDigest   string
+	requestContext  json.RawMessage
+	typedIncomplete bool
+}
+
+func (i *fullVerifyNativeWorkspaceInvoker) Run(_ context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	i.called = true
+	i.roleTimeout = config.Timeout
+	i.requestContext = append(json.RawMessage(nil), request.Context...)
+	if options.Workspace == nil {
+		return agentexec.RunResult{}, errors.New("native assessment received no owned workspace")
+	}
+	i.workspace = *options.Workspace
+	if sameWorkspacePath(i.workspace.CWD, i.root) {
+		return agentexec.RunResult{}, errors.New("native assessment received the adopting checkout as CWD")
+	}
+	journalBytes, err := os.ReadFile(filepath.Join(i.root, ".markitect", "runs", "private", "workspaces", i.workspace.ID+".json"))
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	var journal workspaceJournal
+	if err := json.Unmarshal(journalBytes, &journal); err != nil {
+		return agentexec.RunResult{}, err
+	}
+	if len(journal.Request.AllowedPaths) != 0 {
+		return agentexec.RunResult{}, errors.New("read-only assessment workspace has writable paths")
+	}
+	var payload struct {
+		RequiredSubjects []string `json:"requiredSubjects"`
+	}
+	if err := json.Unmarshal(request.Context, &payload); err != nil {
+		return agentexec.RunResult{}, err
+	}
+	assessments := make([]FullAssessment, 0, len(payload.RequiredSubjects))
+	for _, subject := range payload.RequiredSubjects {
+		outcome := "pass"
+		if i.typedIncomplete && len(assessments) == 0 {
+			outcome = "incomplete"
+		}
+		assessments = append(assessments, FullAssessment{Subject: subject, Outcome: outcome, Detail: "fixed audit subject inspected"})
+	}
+	status := "pass"
+	if i.typedIncomplete {
+		status = "incomplete"
+	}
+	report, err := json.Marshal(fullAuditResponse{Status: status, Summary: "native read-only workspace inspected", Assessments: assessments, Findings: []string{}, Counterexamples: []FullCounterexample{}})
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	inputDigest, err := digest(request)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	i.requestDigest = inputDigest
+	usage := &agentexec.Usage{Source: "provider-reported", InputTokens: int64Ptr(10), OutputTokens: int64Ptr(5)}
+	response := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: "full-verify-native-run", Nonce: "full-verify-native-nonce",
+		Role: request.Role, InputDigest: inputDigest, Outcome: agentexec.OutcomeProposed, CandidateFiles: []agentexec.CandidateFile{},
+		EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, ReportJSON: report, Uncertainty: []string{}, Usage: usage}
+	receipt := terminalWorkspaceReceipt("full-verify-native-run")
+	receipt.InputDigest = inputDigest
+	receipt.Outcome = agentexec.OutcomeProposed
+	receipt.Usage = usage
+	return agentexec.RunResult{Response: response, Receipt: receipt}, nil
+}
+
+func (*fullVerifyNativeWorkspaceInvoker) Fingerprint(agentexec.Config) (string, error) {
+	return "native-fixture-fingerprint", nil
+}
+
+func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	configureWorkspaceBridgeInstructions(t, root)
+	revision := identityHead(t, root)
+	project, err := projectwork.Load(root, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	managerID := project.Report.Managers[0].ID
+	for _, manager := range project.Report.Managers {
+		if manager.Parent != "" {
+			managerID = manager.ID
+			break
+		}
+	}
+	assessmentAgent := workspaceBridgeAgent(t, root)
+	assessmentAgent.Command = filepath.Join(t.TempDir(), "codex-app-server")
+	assessmentAgent.Model = "gpt-6-luna"
+	assessmentAgent.ProviderVersion = "codex-cli 0.162.0"
+	assessmentAgent.AppServer = &AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
+	assessmentAgent.Timeout = Duration(time.Hour)
+	assessmentAgent.MaxStdoutBytes = 1 << 20
+	assessmentAgent.MaxStderrBytes = 1 << 20
+	assessmentAgent.Pricing = Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
+	runtime := Runtime{Agents: map[string]Agent{managerID: assessmentAgent}, Review: &ReviewConfig{Agents: map[string]Agent{managerID: assessmentAgent}},
+		Limits: Limits{MaxDepth: 1, MaxStarts: 256, MaxParallel: 2, MaxDuration: Duration(4 * time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
+	invoker := &fullVerifyNativeWorkspaceInvoker{root: root}
+	finalID, finalDigest := "final-candidate-id", "sha256:final-candidate"
+	parentID := ""
+	for _, manager := range project.Report.Managers {
+		if manager.ID == managerID {
+			parentID = manager.Parent
+			break
+		}
+	}
+	parentReview := fullReviewEvidence{TaskID: "parent-task", ManagerID: parentID, Phase: "integrate",
+		ReviewCandidateID: "reviewed-partial-candidate", ReviewCandidateDigest: "sha256:partial",
+		FinalCandidateID: finalID, FinalCandidateDigest: finalDigest, ScopeDigest: "sha256:scope", InputDigest: "sha256:review-input",
+		ReceiptRunID: "review-receipt", Outcome: "pass", Findings: []ReviewFinding{},
+		ReviewedFiles: []fullReviewFileReference{{Path: "docs/greeting.md", Mode: "0644", ContentDigest: "sha256:docs-content"}}}
+	integrationReviews := fullAuditIntegrationReviewsForManager(project.Report, managerID, finalID, finalDigest, []fullReviewEvidence{parentReview})
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	row, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
+		managerID, StrictnessProfile{}, BriefingContext{}, nil, nil, integrationReviews, false, "full-verify-test")
+	if err != nil {
+		t.Fatalf("native Manager audit failed: row=%+v err=%v", row, err)
+	}
+	if !invoker.called || invoker.roleTimeout != time.Hour || invoker.requestDigest != row.InputDigest {
+		t.Fatalf("native audit did not preserve the role configuration and request binding: called=%t timeout=%s digest=%q row=%+v", invoker.called, invoker.roleTimeout, invoker.requestDigest, row)
+	}
+	if row.Status != "passed" || row.Receipt == nil || row.Receipt.RunID != "full-verify-native-run" || row.Receipt.InputDigest != row.InputDigest {
+		t.Fatalf("native audit report did not preserve terminal receipt and validated status: %+v", row)
+	}
+	if _, err := os.Stat(invoker.workspace.CWD); !os.IsNotExist(err) {
+		t.Fatalf("terminal read-only workspace was not closed: %v", err)
+	}
+	journal := readWorkspaceJournal(t, root, invoker.workspace.ID)
+	if journal.State != "closed" || journal.Delta == nil || len(journal.Delta.Changes) != 0 || journal.Receipt.RunID != "full-verify-native-run" {
+		t.Fatalf("read-only workspace journal did not retain empty harvested evidence and receipt: %+v", journal)
+	}
+	var captured struct {
+		FreshIntegrationReviews []fullReviewEvidence `json:"freshIntegrationReviews"`
+	}
+	if err := json.Unmarshal(invoker.requestContext, &captured); err != nil {
+		t.Fatalf("decode parent review projection: %v", err)
+	}
+	if len(captured.FreshIntegrationReviews) != 1 || !reflect.DeepEqual(captured.FreshIntegrationReviews[0], parentReview) {
+		t.Fatalf("full audit did not receive the exact parent integration provenance: %+v", captured.FreshIntegrationReviews)
+	}
+}
+
+func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	configureWorkspaceBridgeInstructions(t, root)
+	revision := identityHead(t, root)
+	project, err := projectwork.Load(root, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(project.Report.Artifacts) == 0 || len(project.Report.Managers) < 2 {
+		t.Fatalf("fixture lacks cross-Manager model definitions: artifacts=%d managers=%d", len(project.Report.Artifacts), len(project.Report.Managers))
+	}
+	managerID := project.Report.Artifacts[0].Owner
+	otherManagerID := ""
+	for _, manager := range project.Report.Managers {
+		if manager.ID != managerID {
+			otherManagerID = manager.ID
+			break
+		}
+	}
+	if otherManagerID == "" {
+		t.Fatal("fixture has no second Manager for cross-Manager evidence")
+	}
+	publicRelation := projectmodel.Statement{ID: "statement:public-relation", Owner: otherManagerID, Public: true, Description: "Public related contract."}
+	privateRelation := projectmodel.Statement{ID: "statement:private-relation", Owner: otherManagerID, Public: false, Description: "Private related detail."}
+	publicStatement := projectmodel.Statement{ID: "statement:public-contract", Owner: otherManagerID, Public: true, Description: "Public contract realized by the artifact.", Uses: []string{publicRelation.ID, privateRelation.ID}}
+	privateStatement := projectmodel.Statement{ID: "statement:private-detail", Owner: otherManagerID, Public: false, Description: "Private implementation detail."}
+	unrelatedStatement := projectmodel.Statement{ID: "statement:unrelated", Owner: otherManagerID, Public: true, Description: "Unrelated public contract."}
+	project.Report.Statements = append(project.Report.Statements, publicRelation, privateRelation, publicStatement, privateStatement, unrelatedStatement)
+	attachedCheck := projectmodel.Check{ID: "check:artifact-check", Owner: otherManagerID, Command: []string{"python", "-m", "unittest"}, Limitation: "Checks the same snapshot."}
+	unrelatedCheck := projectmodel.Check{ID: "check:unrelated", Owner: otherManagerID, Command: []string{"go", "test", "./..."}}
+	project.Report.Checks = append(project.Report.Checks, attachedCheck, unrelatedCheck)
+	for index := range project.Report.Artifacts {
+		if project.Report.Artifacts[index].Owner == managerID {
+			project.Report.Artifacts[index].Realizes = append(project.Report.Artifacts[index].Realizes, publicStatement.ID, privateStatement.ID)
+			project.Report.Artifacts[index].Checks = append(project.Report.Artifacts[index].Checks, attachedCheck.ID)
+			break
+		}
+	}
+	owned, err := projectmodel.Context(project.Report, managerID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantSubjects := fullAuditSubjects(owned, nil)
+
+	service, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assessmentAgent := workspaceBridgeAgent(t, root)
+	assessmentAgent.Command = filepath.Join(t.TempDir(), "codex-app-server")
+	assessmentAgent.Model = "gpt-6-luna"
+	assessmentAgent.ProviderVersion = "codex-cli 0.162.0"
+	assessmentAgent.AppServer = &AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
+	assessmentAgent.Timeout = Duration(time.Hour)
+	assessmentAgent.MaxStdoutBytes = 1 << 20
+	assessmentAgent.MaxStderrBytes = 1 << 20
+	assessmentAgent.Pricing = Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
+	runtime := Runtime{Agents: map[string]Agent{managerID: assessmentAgent}, Review: &ReviewConfig{Agents: map[string]Agent{managerID: assessmentAgent}},
+		Limits: Limits{MaxDepth: 1, MaxStarts: 8, MaxParallel: 1, MaxDuration: Duration(time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
+	invoker := &fullVerifyNativeWorkspaceInvoker{root: root}
+	failedResult := CheckResult{ID: attachedCheck.ID, Outcome: "failed", ExitCode: 1, Stderr: "assertion failed"}
+	results := relevantManagerChecks(project.Report, managerID, []CheckResult{failedResult, {ID: unrelatedCheck.ID, Outcome: "passed"}})
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if _, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
+		managerID, StrictnessProfile{}, BriefingContext{}, nil, results, nil, false, "full-verify-support-test"); err != nil {
+		t.Fatalf("Manager audit failed: %v", err)
+	}
+	var auditContext struct {
+		SupportingStatements []projectmodel.Statement `json:"supportingStatements"`
+		SupportingChecks     []projectmodel.Check     `json:"supportingChecks"`
+		CheckResults         []CheckResult            `json:"checkResults"`
+		RequiredSubjects     []string                 `json:"requiredSubjects"`
+	}
+	if err := json.Unmarshal(invoker.requestContext, &auditContext); err != nil {
+		t.Fatalf("decode captured audit context: %v", err)
+	}
+	if len(auditContext.SupportingStatements) != 1 || auditContext.SupportingStatements[0].ID != publicStatement.ID {
+		t.Fatalf("invocation supporting statements = %+v", auditContext.SupportingStatements)
+	}
+	if !reflect.DeepEqual(auditContext.SupportingStatements[0].Uses, []string{publicRelation.ID}) {
+		t.Fatalf("invocation exposed non-public or unrelated contract references: %v", auditContext.SupportingStatements[0].Uses)
+	}
+	gotSupportingCheckIDs := make([]string, 0, len(auditContext.SupportingChecks))
+	for _, check := range auditContext.SupportingChecks {
+		gotSupportingCheckIDs = append(gotSupportingCheckIDs, check.ID)
+	}
+	checkIDs := map[string]bool{}
+	for _, check := range project.Report.Checks {
+		checkIDs[check.ID] = true
+	}
+	wantSupportingCheckIDs := []string{}
+	attachedCheckExpected := false
+	for _, artifact := range project.Report.Artifacts {
+		if artifact.Owner == managerID {
+			for _, checkID := range artifact.Checks {
+				if checkIDs[checkID] {
+					wantSupportingCheckIDs = append(wantSupportingCheckIDs, checkID)
+					if checkID == attachedCheck.ID {
+						attachedCheckExpected = true
+					}
+				}
+			}
+		}
+	}
+	sort.Strings(wantSupportingCheckIDs)
+	if !reflect.DeepEqual(gotSupportingCheckIDs, wantSupportingCheckIDs) || !attachedCheckExpected {
+		t.Fatalf("invocation supporting checks = %+v", auditContext.SupportingChecks)
+	}
+	if !reflect.DeepEqual(auditContext.CheckResults, []CheckResult{failedResult}) {
+		t.Fatalf("invocation changed the attached check result: %+v", auditContext.CheckResults)
+	}
+	if !reflect.DeepEqual(auditContext.RequiredSubjects, wantSubjects) {
+		t.Fatalf("supporting evidence changed the Manager's owned obligations: got=%v want=%v", auditContext.RequiredSubjects, wantSubjects)
+	}
+}
+
+func TestFullVerifyTypedIncompleteAuditCannotPass(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	configureWorkspaceBridgeInstructions(t, root)
+	revision := identityHead(t, root)
+	project, err := projectwork.Load(root, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	managerID := project.Report.Managers[0].ID
+	agent := workspaceBridgeAgent(t, root)
+	agent.Command = filepath.Join(t.TempDir(), "codex-app-server")
+	agent.Model = "gpt-6-luna"
+	agent.ProviderVersion = "codex-cli 0.162.0"
+	agent.AppServer = &AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
+	agent.Timeout = Duration(time.Hour)
+	agent.MaxStdoutBytes = 1 << 20
+	agent.MaxStderrBytes = 1 << 20
+	agent.Pricing = Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
+	runtime := Runtime{Agents: map[string]Agent{managerID: agent}, Review: &ReviewConfig{Agents: map[string]Agent{managerID: agent}},
+		Limits: Limits{MaxDepth: 1, MaxStarts: 256, MaxParallel: 2, MaxDuration: Duration(4 * time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
+	invoker := &fullVerifyNativeWorkspaceInvoker{root: root, typedIncomplete: true}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	row, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
+		managerID, StrictnessProfile{}, BriefingContext{}, nil, nil, nil, false, "full-verify-incomplete-test")
+	if err == nil || row.Status != "incomplete" {
+		t.Fatalf("typed incomplete audit was accepted: row=%+v err=%v", row, err)
+	}
+	if len(row.Assessments) == 0 || row.Assessments[0].Outcome != "incomplete" || row.Receipt == nil {
+		t.Fatalf("typed incomplete evidence or terminal receipt was not preserved: %+v", row)
+	}
+}
+
+func TestFullVerifyStopsWhenUsageCannotBoundCumulativeCost(t *testing.T) {
+	root := makeFullVerifyFixture(t)
+	setupFullVerifyProcesses(t)
+	configureFullVerifyRuntime(t, root)
+	head := gitE2E(t, root, "rev-parse", "HEAD")
+	host := Host{Load: projectwork.Load}
+	t.Setenv(fullVerifyNoUsageEnv, "inventory")
+	report, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	if err == nil || report.Status != "incomplete" {
+		t.Fatalf("missing usage did not leave full verification incomplete: report=%+v err=%v", report, err)
+	}
+	if report.Starts != 3 {
+		t.Fatalf("starts=%d; want two checks and exactly one Manager before stopping", report.Starts)
+	}
+	if report.Managers[1].Status != "incomplete" || report.Managers[2].Status != "incomplete" {
+		t.Fatalf("later Managers ran without a bounded cost basis: %+v", report.Managers)
+	}
+}
+
+func TestFullVerifyRecordsKnownCostBeyondLimitForSuccessfulAndFailedCalls(t *testing.T) {
+	for _, failReview := range []bool{false, true} {
+		name := "successful review"
+		if failReview {
+			name = "failed review"
+		}
+		t.Run(name, func(t *testing.T) {
+			root := makeFullVerifyFixture(t)
+			setupFullVerifyProcesses(t)
+			configureFullVerifyRuntime(t, root)
+			updateE2ERuntime(t, root, func(runtime *Runtime) {
+				runtime.Limits.MaxCostMicros = 1
+				for id, reviewer := range runtime.Review.Agents {
+					reviewer.Pricing.InputMicrosPerMillion = 1_000_000
+					reviewer.Pricing.OutputMicrosPerMillion = 1_000_000
+					runtime.Review.Agents[id] = reviewer
+				}
+			})
+			if failReview {
+				t.Setenv(fullVerifyBadEnv, "inventory")
+			}
+			head := gitE2E(t, root, "rev-parse", "HEAD")
+			report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+			if err == nil || report.Status == "passed" {
+				t.Fatalf("over-budget Manager call passed: report=%+v err=%v", report, err)
+			}
+			if report.CostMicros != 15 || report.Starts != 3 || report.Managers[0].CostMicros != 15 {
+				t.Fatalf("known over-budget cost was not retained: total=%d starts=%d first=%+v", report.CostMicros, report.Starts, report.Managers[0])
+			}
+		})
+	}
+}
+
+func TestFullVerifyKnownCostOverflowSaturatesExplicitly(t *testing.T) {
+	total := int64(math.MaxInt64 - 2)
+	if !addFullKnownCost(&total, 3) || total != math.MaxInt64 {
+		t.Fatalf("known cost overflow = (%d, false), want saturated MaxInt64 and overflow=true", total)
+	}
+}
+
+func TestFullVerifyRejectsStrictnessForUnknownManagerBeforeChecks(t *testing.T) {
+	root := makeFullVerifyFixture(t)
+	configureFullVerifyRuntime(t, root)
+	updateE2ERuntime(t, root, func(runtime *Runtime) {
+		runtime.Strictness = &StrictnessConfig{Managers: map[string]StrictnessProfile{"not-in-model": {Evidence: []string{"typed evidence"}}}}
+	})
+	head := gitE2E(t, root, "rev-parse", "HEAD")
+	report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	if err == nil || report.Status != "failed" || !strings.Contains(report.Error, "Manager absent from the accepted model") {
+		t.Fatalf("unknown strictness Manager was not rejected: report=%+v err=%v", report, err)
+	}
+	if report.Starts != 0 {
+		t.Fatalf("strictness validation happened after checks or provider calls: starts=%d", report.Starts)
+	}
+}
+
+func TestFullVerifyCumulativeStartLimitLeavesUnstartedManagersIncomplete(t *testing.T) {
+	root := makeFullVerifyFixture(t)
+	setupFullVerifyProcesses(t)
+	configureFullVerifyRuntime(t, root)
+	updateE2ERuntime(t, root, func(runtime *Runtime) { runtime.Limits.MaxStarts = 4 })
+	head := gitE2E(t, root, "rev-parse", "HEAD")
+	host := Host{Load: projectwork.Load}
+	report, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	if err == nil || report.Status != "incomplete" {
+		t.Fatalf("start-budget exhaustion passed: report=%+v err=%v", report, err)
+	}
+	if report.Starts != 4 || report.Managers[0].Status != "passed" || report.Managers[1].Status != "passed" || report.Managers[2].Status != "incomplete" {
+		t.Fatalf("cumulative start budget was not shared across checks and Managers: %+v", report)
+	}
+}
+
+func TestFullVerifyStrictnessRequiresTypedEvidenceAndGroundedCounterexamples(t *testing.T) {
+	required := []string{"statement:orders", "evidence:negative stock case"}
+	base := fullAuditResponse{Status: "pass", Summary: "review complete", Findings: []string{},
+		Assessments:     []FullAssessment{{Subject: "statement:orders", Outcome: "pass", Detail: "checked"}, {Subject: "evidence:negative stock case", Outcome: "pass", Detail: "checked"}},
+		Counterexamples: []FullCounterexample{{Expected: "reject negative stock", Observed: "negative stock can be submitted", EvidenceRefs: []string{"statement:orders"}}}}
+	if err := validateFullAssessments(base, required, 1, required, []string{"src/orders.go"}); err != nil {
+		t.Fatalf("valid strict response rejected: %v", err)
+	}
+	missingEvidence := base
+	missingEvidence.Assessments = base.Assessments[:1]
+	if err := validateFullAssessments(missingEvidence, required, 1, required, []string{"src/orders.go"}); err == nil {
+		t.Fatal("missing typed evidence subject was accepted")
+	}
+	inventedSubject := base
+	inventedSubject.Assessments = append(append([]FullAssessment(nil), base.Assessments...), FullAssessment{Subject: "Documentation semantics", Outcome: "pass", Detail: "invented scope"})
+	if err := validateFullAssessments(inventedSubject, required, 1, required, []string{"src/orders.go"}); err == nil {
+		t.Fatal("invented audit subject was accepted")
+	}
+	missingCounterexample := base
+	missingCounterexample.Counterexamples = nil
+	if err := validateFullAssessments(missingCounterexample, required, 1, required, []string{"src/orders.go"}); err == nil {
+		t.Fatal("missing required counterexample was accepted")
+	}
+	unbound := base
+	unbound.Counterexamples = []FullCounterexample{{Expected: "reject negative stock", Observed: "it passed", EvidenceRefs: []string{"unrelated:file"}}}
+	if err := validateFullAssessments(unbound, required, 1, required, []string{"src/orders.go"}); err == nil {
+		t.Fatal("counterexample with out-of-scope evidence was accepted")
+	}
+}
+
+func TestFullVerifyResponseSchemaUsesExactDynamicSubjectEnum(t *testing.T) {
+	want := []string{"statement:orders", "evidence:negative stock case"}
+	var schema struct {
+		Properties struct {
+			Assessments struct {
+				MinItems int `json:"minItems"`
+				MaxItems int `json:"maxItems"`
+				Items    struct {
+					Properties struct {
+						Subject struct {
+							Enum        []string `json:"enum"`
+							Description string   `json:"description"`
+						} `json:"subject"`
+						Outcome struct {
+							Description string `json:"description"`
+						} `json:"outcome"`
+						Detail struct {
+							Description string `json:"description"`
+						} `json:"detail"`
+					} `json:"properties"`
+				} `json:"items"`
+			} `json:"assessments"`
+			Status struct {
+				Description string `json:"description"`
+			} `json:"status"`
+		} `json:"properties"`
+	}
+	if err := json.Unmarshal(fullVerifyResponseSchema(want, 0), &schema); err != nil {
+		t.Fatalf("response schema is not valid JSON: %v", err)
+	}
+	if !reflect.DeepEqual(schema.Properties.Assessments.Items.Properties.Subject.Enum, want) {
+		t.Fatalf("subject enum=%q; want exact request subjects %q", schema.Properties.Assessments.Items.Properties.Subject.Enum, want)
+	}
+	if schema.Properties.Assessments.MinItems != len(want) || schema.Properties.Assessments.MaxItems != len(want) {
+		t.Fatalf("assessment item bounds=(%d,%d); want exact required-subject count %d", schema.Properties.Assessments.MinItems, schema.Properties.Assessments.MaxItems, len(want))
+	}
+	for name, description := range map[string]string{
+		"status":  schema.Properties.Status.Description,
+		"subject": schema.Properties.Assessments.Items.Properties.Subject.Description,
+		"outcome": schema.Properties.Assessments.Items.Properties.Outcome.Description,
+		"detail":  schema.Properties.Assessments.Items.Properties.Detail.Description,
+	} {
+		if strings.TrimSpace(description) == "" {
+			t.Errorf("schema %s is missing its contract description", name)
+		}
+	}
+}
+
+func TestFullVerifyRejectsUnknownRepositoryCoverageBeforeManagerCalls(t *testing.T) {
+	root := makeFullVerifyFixture(t)
+	writeE2E(t, root, "outside/unclassified.txt", "not represented by the project model\n")
+	gitE2E(t, root, "add", "outside/unclassified.txt")
+	gitE2E(t, root, "commit", "-m", "add unclassified repository path")
+	setupFullVerifyProcesses(t)
+	configureFullVerifyRuntime(t, root)
+	head := gitE2E(t, root, "rev-parse", "HEAD")
+	host := Host{Load: projectwork.Load}
+	report, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	if err == nil || report.Status != "failed" || !strings.Contains(report.Error, "coverage census") {
+		t.Fatalf("unknown repository path did not fail the full census gate: report=%+v err=%v", report, err)
+	}
+	if report.Starts != 0 || len(report.Managers) != 0 {
+		t.Fatalf("provider or check calls started before coverage was conforming: %+v", report)
+	}
+	if _, statErr := os.Stat(os.Getenv(fullVerifyLogEnv)); !os.IsNotExist(statErr) {
+		if data, readErr := os.ReadFile(os.Getenv(fullVerifyLogEnv)); readErr == nil && len(data) != 0 {
+			t.Fatalf("Manager called before coverage census passed: %s", data)
+		}
+	}
+}
+
+func TestFullVerifyRejectsStaleGeneratedDocumentBeforeManagerCalls(t *testing.T) {
+	root := makeFullVerifyFixture(t)
+	writeE2E(t, root, "README.md", "stale hand-edited document\n")
+	gitE2E(t, root, "add", "README.md")
+	gitE2E(t, root, "commit", "-m", "make generated document stale")
+	setupFullVerifyProcesses(t)
+	configureFullVerifyRuntime(t, root)
+	head := gitE2E(t, root, "rev-parse", "HEAD")
+	report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	if err == nil || report.Status != "failed" || !strings.Contains(report.Error, "generated documentation is missing or stale") {
+		t.Fatalf("stale generated document did not fail the pre-provider gate: report=%+v err=%v", report, err)
+	}
+	if report.Starts != 0 || len(report.Managers) != 0 {
+		t.Fatalf("provider or check calls started before document validation: %+v", report)
+	}
+}
+
+func makeFullVerifyFixture(t *testing.T) string {
+	t.Helper()
+	root := makeProjectRunFixture(t)
+	manifest := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	data, err := os.ReadFile(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := strings.Replace(string(data), "name: Process fixture\n", "name: Process fixture\ndocumentPath: README.md\ncoverageMode: full\n", 1)
+	if updated == string(data) {
+		t.Fatal("could not set full coverage mode in fixture manifest")
+	}
+	writeE2E(t, root, projectwork.ManifestPath, updated)
+	writeE2E(t, root, projectcoverage.IgnorePath, "apiVersion: "+projectcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries: []\n")
+	gitE2E(t, root, "add", projectwork.ManifestPath)
+	gitE2E(t, root, "add", projectcoverage.IgnorePath)
+	gitE2E(t, root, "commit", "-m", "enable full project coverage")
+	project, err := projectwork.Load(root, gitE2E(t, root, "rev-parse", "HEAD"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	document, err := projectwork.Document(project, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeE2E(t, root, projectwork.DocumentPath(project.Config), document)
+	gitE2E(t, root, "add", projectwork.DocumentPath(project.Config))
+	gitE2E(t, root, "commit", "-m", "generate full project document")
+	return root
+}
+
+func setupFullVerifyProcesses(t *testing.T) {
+	t.Helper()
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", filepath.Dir(executable)+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv(fullVerifyHelperEnv, "1")
+	t.Setenv(fullVerifyLogEnv, filepath.Join(t.TempDir(), "full-verify.jsonl"))
+	// Test subprocesses receive this path through the deliberately narrow allowlist.
+	t.Setenv(fullVerifyCheckEnv, "1")
+}
+
+func configureFullVerifyRuntime(t *testing.T, root string) {
+	t.Helper()
+	updateE2ERuntime(t, root, func(runtime *Runtime) {
+		executable, err := os.Executable()
+		if err != nil {
+			t.Fatal(err)
+		}
+		args := []string{"-test.run=^TestFullVerifyHelperProcess$"}
+		reviewers := make(map[string]Agent, len(runtime.Agents))
+		for id, agent := range runtime.Agents {
+			agent.Command, agent.Args = executable, args
+			agent.Environment = append(agent.Environment, fullVerifyHelperEnv, fullVerifyBadEnv, fullVerifyLogEnv, fullVerifyNoUsageEnv)
+			reviewers[id] = agent
+		}
+		runtime.Review = &ReviewConfig{Agents: reviewers, MaxRounds: 1, MaxManagerRounds: 1}
+		for id, agent := range runtime.Agents {
+			agent.Args = []string{"-test.run=^TestFullVerifyCheckProcess$"}
+			agent.Environment = append(agent.Environment, fullVerifyCheckEnv)
+			runtime.Agents[id] = agent
+		}
+	})
+	// Ensure the helper executable remains available to the pinned check resolver.
+	t.Setenv("PATHEXT", ".EXE;.COM;.BAT;.CMD")
+}
+
+func int64Ptr(value int64) *int64 { return &value }

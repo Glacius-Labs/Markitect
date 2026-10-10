@@ -298,7 +298,7 @@ properties:
                             type: array
                         timeoutSeconds:
                             default: 600
-                            maximum: 1800
+                            maximum: 5400
                             minimum: 1
                             type: integer
                     required:

@@ -1,0 +1,18 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: cancellation-integration
+  namespace: commerce.sales
+purpose: Defines the Sales integration boundary for order cancellation.
+spec:
+  category: architecture
+  description: The Shop package exposes one cross-slice cancellation operation that changes order state and releases the matching active inventory reservation atomically.
+  public: true
+  uses:
+    - namespace: commerce
+      name: cancellation-transaction
+    - namespace: commerce.sales.orders
+      name: cancel-order
+    - namespace: commerce.sales.inventory.reservations
+      name: release-reservation
+  requires: []

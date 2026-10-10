@@ -77,4 +77,4 @@ Safe initial fan-out means independently owned external commands with verified r
 - [Existing-project Init workstream](../workstreams/init-existing-project.md)
 - [Copy Me discovery workstream](../workstreams/copy-me.md)
 - [Konfyra adoption workstream](../workstreams/konfyra-adoption.md)
-- [.NET reference adapter and independent tests](../../cmd/markitect-adapter-dotnet/README.md)
+- [.NET reference adapter and independent tests](../../src/cmd/markitect-adapter-dotnet/README.md)

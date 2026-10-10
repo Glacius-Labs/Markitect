@@ -1,0 +1,18 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: cancellation-transaction
+  namespace: commerce
+purpose: Describes the order and inventory transaction boundary.
+spec:
+  category: architecture
+  description: Order cancellation and reservation release commit or roll back together in one SQLite transaction.
+  public: true
+  uses:
+    - namespace: commerce.sales.orders
+      name: cancel-order
+    - namespace: commerce.sales.inventory.reservations
+      name: release-reservation
+  requires:
+    - namespace: commerce.sales.orders
+      name: cancel-before-shipped

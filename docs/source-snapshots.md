@@ -6,7 +6,7 @@ Current source owners follow the [Module architecture](development/modules.md); 
 
 ## Current value
 
-`internal/core/snapshot` owns a concrete resolved `Snapshot` value:
+`src/internal/core/snapshot` owns a concrete resolved `Snapshot` value:
 
 ```go
 type Snapshot struct {
@@ -21,20 +21,20 @@ Paths are slash-separated project-relative names. `Modes` uses the existing regu
 
 `Snapshot.Digest()` is a compatibility identity for content. It keeps the existing algorithm: sort paths, then hash each path, mode token, and file bytes using the existing length framing. It deliberately excludes `ID` and `Provisional`. Context and review evidence already depend on this digest, so changing its inputs or encoding requires a separate compatibility decision.
 
-The deterministic `Compare` operation consumes two snapshots and returns a `ChangeSet` for added, modified, and removed paths. A modification includes a byte or mode change. The result is sorted deterministically. `internal/host.Parse`, context compilation, and impact analysis consume the resolved values; impact uses the changed paths and old/new dependency closures. They do not run Git to decide graph or impact semantics. `internal/core` contains no production Git types or command execution.
+The deterministic `Compare` operation consumes two snapshots and returns a `ChangeSet` for added, modified, and removed paths. A modification includes a byte or mode change. The result is sorted deterministically. `src/internal/host.Parse`, context compilation, and impact analysis consume the resolved values; impact uses the changed paths and old/new dependency closures. They do not run Git to decide graph or impact semantics. `src/internal/core` contains no production Git types or command execution.
 
 ## Adapter and use-case ownership
 
 | Concern | Current owner | Contract |
 |---|---|---|
-| Resolve a revision, read a commit tree and blobs, or capture a working directory | `internal/infrastructure/source` | Git remains the fixed-revision acquisition adapter. The directory reader also captures provisional working-tree input, including outside Git. Git process environment is cleaned, the repository is selected explicitly, and path, mode, symlink, and resource limits are checked. |
-| Store and compare resolved state | `internal/core/snapshot` | Deterministic values and comparison operate on paths, mode tokens, bytes, and opaque IDs. No Git subprocess is needed. |
-| Parse resources, compile context, and calculate impact | `internal/host` plus `internal/core` | These use cases consume resolved values. They retain conservative invalidation for changed inputs whose ownership is unknown. |
-| Materialize a selected snapshot | `internal/infrastructure/source` filesystem materializer | It writes the supplied snapshot value into a filesystem tree; it does not resolve a revision or consult Git. Verification runs declared commands against that materialized tree. Materialization is not an operating-system sandbox. |
+| Resolve a revision, read a commit tree and blobs, or capture a working directory | `src/internal/infrastructure/source` | Git remains the fixed-revision acquisition adapter. The directory reader also captures provisional working-tree input, including outside Git. Git process environment is cleaned, the repository is selected explicitly, and path, mode, symlink, and resource limits are checked. |
+| Store and compare resolved state | `src/internal/core/snapshot` | Deterministic values and comparison operate on paths, mode tokens, bytes, and opaque IDs. No Git subprocess is needed. |
+| Parse resources, compile context, and calculate impact | `src/internal/host` plus `src/internal/core` | These use cases consume resolved values. They retain conservative invalidation for changed inputs whose ownership is unknown. |
+| Materialize a selected snapshot | `src/internal/infrastructure/source` filesystem materializer | It writes the supplied snapshot value into a filesystem tree; it does not resolve a revision or consult Git. Verification runs declared commands against that materialized tree. Materialization is not an operating-system sandbox. |
 | Protect repository writes | Write use cases and the Git source adapter | Operations such as initialization, installation, formatting, and rendering retain the branch, HEAD, index, and worktree checks required by their safety contract. Those checks are operational policy, not resource-graph semantics. |
-| Create release bundles | `internal/tooling/release` and the release CLI | Source bundle provenance and validation remain tied to a fixed Git source commit. This is distribution policy, not a reason to put Git in the resource model. |
-| Pin an offline content package | `internal/host.PackContent` and its CLI caller | The pack operation receives provenance explicitly. The Git CLI supplies `git:<full-commit-id>`, preserving the existing Project pin format and provenance. Archive SHA-256 remains a separate content integrity check. |
-| Select CLI input | `internal/host/cli` behind thin `cmd/markitect` | Existing `--revision` and `--base` behavior stays intact: Git accepts revision selectors such as branches and `HEAD`, then the adapter records the resolved full commit ID. The fixed-run manifest and stored review-evidence workflows require full Git commit IDs. No new selector syntax is added. |
+| Create release bundles | `src/internal/tooling/release` and the release CLI | Source bundle provenance and validation remain tied to a fixed Git source commit. This is distribution policy, not a reason to put Git in the resource model. |
+| Pin an offline content package | `src/internal/host.PackContent` and its CLI caller | The pack operation receives provenance explicitly. The Git CLI supplies `git:<full-commit-id>`, preserving the existing Project pin format and provenance. Archive SHA-256 remains a separate content integrity check. |
+| Select CLI input | `src/internal/host/cli` behind thin `cmd/markitect` | Existing `--revision` and `--base` behavior stays intact: Git accepts revision selectors such as branches and `HEAD`, then the adapter records the resolved full commit ID. The fixed-run manifest and stored review-evidence workflows require full Git commit IDs. No new selector syntax is added. |
 
 Fixed Git acquisition is rooted at the selected Git repository root. Supplying a nested directory with a repository-wide revision does not rebase that commit tree into a nested Project. For an independently verified example or subproject, use a separate explicit Git repository/snapshot; do not silently substitute its configuration for the root Project.
 
@@ -58,7 +58,7 @@ The materialized directory is an execution input, not an identity source. A veri
 | Defer until a real consumer | A directory or archive acquisition adapter, public non-Git selectors, an adapter registry, a generic repository interface, and a separate interface for every acquisition step. A future in-memory fixture can exercise the value boundary without adding a production adapter. |
 | Do not abstract | Resource identity, graph ownership, dependency edges, rendering semantics, provider configuration, or project policy into Git-aware concepts. Do not infer dependencies from document links. Do not weaken conservative impact or review invalidation. |
 
-The historical audit above retains its inspected package names. Current-source tests exercise the same behavior without adding a second production provider. `internal/core/snapshot/snapshot_test.go` checks the legacy digest and deterministic comparison; `internal/host/snapshot_neutrality_test.go` parses caller-owned opaque snapshots, compiles context, and checks both dependency-scoped impact and conservative invalidation for unknown files. Production Git subprocesses remain owned by `internal/infrastructure/source`, while Host runtime/use-case calls request Git for revision selection and repository-safe writes. Impact compares resolved values without commit semantics. Git package provenance, full commit validation for fixed-run and stored review evidence, fixed verification inputs, and repository write guards remain explicit contracts.
+The historical audit above retains its inspected package names. Current-source tests exercise the same behavior without adding a second production provider. `src/internal/core/snapshot/snapshot_test.go` checks the legacy digest and deterministic comparison; `src/internal/host/snapshot_neutrality_test.go` parses caller-owned opaque snapshots, compiles context, and checks both dependency-scoped impact and conservative invalidation for unknown files. Production Git subprocesses remain owned by `src/internal/infrastructure/source`, while Host runtime/use-case calls request Git for revision selection and repository-safe writes. Impact compares resolved values without commit semantics. Git package provenance, full commit validation for fixed-run and stored review evidence, fixed verification inputs, and repository write guards remain explicit contracts.
 
 ## Security and verification limits
 

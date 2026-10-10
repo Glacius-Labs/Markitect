@@ -1,0 +1,20 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: reservation-lifecycle
+  namespace: commerce.sales.inventory.reservations
+purpose: Maps reservation behavior to implementation and cancellation verification.
+spec:
+  role: implementation
+  realizes:
+    - namespace: commerce.sales.inventory.reservations
+      name: reservation
+    - namespace: commerce.sales.inventory.reservations
+      name: release-reservation
+  paths:
+    - src/shop/inventory/
+  checks:
+    - namespace: engineering
+      name: cancellation-tests
+  required: true
+  reason: Cancellation must release the matching active reservation exactly once.

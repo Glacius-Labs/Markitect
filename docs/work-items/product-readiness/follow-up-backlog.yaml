@@ -1,0 +1,55 @@
+schema: markitect-research-backlog/v1
+mandate_date: '2026-10-09'
+goal: Evaluate optional mechanisms independently while finishing a stable usable product baseline.
+coordinator: Overseer
+main_gate_dependencies: []
+product_implementation_authority: not_granted_by_research_items
+case_studies: deferred_until_product_ready_for_matched_studies
+items:
+  - id: R01
+    title: Evaluate Jev strongly typed AI for concrete Markitect uses
+    status: research_complete
+    document: R01-jev.md
+    owner: Markitect Jev evaluieren
+    thread_id: 01a12178-516b-78c0-8ebb-47da32643984
+    decision: defer_optional_observer_reject_compiler_manager_gate_replacement
+    evidence: [research-results-20261009.md]
+  - id: R02
+    title: Assess canonical model as a full knowledge graph
+    status: research_complete
+    document: R02-knowledge-graph.md
+    owner: Markitect Knowledge Graph bewerten
+    thread_id: 01a12178-5797-7c41-8acc-8e8231084c79
+    decision: retain_typed_graph_optional_explain_trace_no_required_graph_database
+    evidence: [research-results-20261009.md]
+  - id: R03
+    title: Evaluate provider-native Rules, Workflows and Agents alongside skills
+    status: research_complete
+    document: R03-agent-guidance.md
+    owner: Markitect Rules Workflows und Agents
+    thread_id: 01a12178-64de-7d41-aa82-11b8fb202786
+    decision: refine_existing_skills_entrypoints_defer_extra_agent_rule_packages
+    evidence: [research-results-20261009.md]
+
+  - id: R03-F01
+    title: Canonical product defaults and model-bound provider guidance projection
+    status: deferred_post_main
+    owner: unassigned
+    source_recommendation: R03
+    document: R03-agent-guidance.md
+    main_gate: false
+    implementation_authority: requires_later_user_selection
+    scope: Versioned YAML defaults, integrated init/onboard preview and apply, controlled frontmatter updates, and model-to-output coverage.
+    constraints: No additional workflow runner or ontology; rebind source paths after P08; optional comparisons require a fresh user start and grant.
+
+  - id: KG01-KG03
+    title: Independent bounded knowledge graph source/index/explain implementation
+    status: independently_authorized_post_main_integration
+    owner_thread: 01a12178-5797-7c41-8acc-8e8231084c79
+    branch: codex/knowledge-graph
+    base: 1495e1be7b0046711531fa42c8407fba67b8e814
+    reserved_new_files: internal/modules/projectknowledge
+    main_gate: false
+    scope: Core-neutral module DTOs and generic bounded index/explain; no sibling or Host imports, shared declarations, dependencies or composition changes.
+    integration_owned: ProjectModel mapping, operational evidence/privacy, CLI/MCP/skills, identity/schema.
+    constraints: Separate user-authorized work; rebase to final P08 source paths; no actual product/study grant.

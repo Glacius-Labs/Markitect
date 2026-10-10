@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: engineering
+  namespace: engineering
+purpose: Owns executable checks and the project change workflow.
+spec:
+  parent:
+    namespace: ""
+    name: shop
+  owns:
+    - tests/

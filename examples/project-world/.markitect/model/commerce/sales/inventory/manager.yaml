@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: inventory
+  namespace: commerce.sales.inventory
+purpose: Owns inventory reservations and their release contract.
+spec:
+  parent:
+    namespace: commerce.sales
+    name: sales
+  owns:
+    - src/shop/inventory/

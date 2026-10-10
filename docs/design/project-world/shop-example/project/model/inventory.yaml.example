@@ -1,0 +1,38 @@
+designVersion: project-world/0.1
+resources:
+  - kind: Concept
+    id: inventory/stock
+    owner: inventory-manager
+    area: inventory
+    purpose: Tatsächliche und verfügbare Artikelmengen unterscheiden.
+    module: inventory-domain
+    namespace: inventory-language
+    meaning: Bestand bezeichnet vorhandene Artikelmengen; aktiv reservierte Mengen sind nicht verfügbar.
+  - kind: Concept
+    id: inventory/reservation
+    owner: inventory-manager
+    area: inventory
+    purpose: Artikelmengen einer Order exklusiv zuordnen.
+    module: inventory-domain
+    namespace: inventory-language
+    meaning: Eine aktive Reservierung bindet Artikelmengen für genau eine Order.
+    uses: [inventory/stock, sales/order]
+  - kind: Concept
+    id: inventory/release
+    owner: inventory-manager
+    area: inventory
+    purpose: Die exklusive Bestandsbindung aufheben.
+    module: inventory-domain
+    namespace: inventory-language
+    meaning: Eine Reservierung wird inaktiv; ihre Menge ist wieder verfügbar, ohne den tatsächlichen Bestand zu erhöhen.
+    uses: [inventory/reservation, inventory/stock]
+  - kind: Rule
+    id: inventory/no-overbooking
+    owner: inventory-manager
+    area: inventory
+    purpose: Nicht vorhandene Mengen nicht mehrfach versprechen.
+    module: inventory-domain
+    namespace: inventory-language
+    uses: [inventory/stock, inventory/reservation]
+    condition: Aktive Reservierungen dürfen den tatsächlichen Bestand nicht überschreiten.
+    outcome: Die Reservierung unzureichender Mengen wird ohne Teiländerung abgelehnt.

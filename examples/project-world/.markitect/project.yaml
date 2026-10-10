@@ -1,0 +1,29 @@
+apiVersion: project.markitect.example.org/v1alpha1
+name: shop-cancellation
+coverageMode: full
+documentPath: docs/markitect/project.md
+modelFiles:
+  - .markitect/model/project-overview.yaml
+  - .markitect/model/project-artifacts.yaml
+  - .markitect/model/commerce/architecture.yaml
+  - .markitect/model/commerce/sales/inventory/manager.yaml
+  - .markitect/model/commerce/sales/inventory/reservations/artifacts.yaml
+  - .markitect/model/commerce/sales/inventory/reservations/release-reservation.yaml
+  - .markitect/model/commerce/sales/inventory/reservations/reservation.yaml
+  - .markitect/model/commerce/sales/manager.yaml
+  - .markitect/model/commerce/sales/orders/artifacts.yaml
+  - .markitect/model/commerce/sales/orders/cancel-order.yaml
+  - .markitect/model/commerce/sales/orders/cancel-before-shipped.yaml
+  - .markitect/model/commerce/sales/orders/manager.yaml
+  - .markitect/model/commerce/sales/orders/order.yaml
+  - .markitect/model/commerce/sales/orders/requires-active-reservation.yaml
+  - .markitect/model/commerce/manager.yaml
+  - .markitect/model/commerce/sales/integration.yaml
+  - .markitect/model/commerce/sales/artifacts.yaml
+  - .markitect/model/engineering/checks.yaml
+  - .markitect/model/engineering/manager.yaml
+  - .markitect/model/engineering/artifacts.yaml
+  - .markitect/model/engineering/workflow.yaml
+  - .markitect/model/manager.yaml
+inventoryRoots: []
+exclusions: []

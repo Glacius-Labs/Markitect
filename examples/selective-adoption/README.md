@@ -11,7 +11,7 @@ The flow is:
 Run the full CLI proof from the repository root:
 
 ```powershell
-go test ./examples -run '^TestSelectiveAdoptionCLI$' -count=1
+go test ./src/harness/examples -run '^TestSelectiveAdoptionCLI$' -count=1
 ```
 
 The test covers preview without external writes, unchanged source state, exclusion of unselected/private fixture content, handoff creation, validated-but-unauthenticated review, stale expected digest refusal after selected bytes change, and a new capture after an unselected-only commit whose selected snapshot digest remains stable.

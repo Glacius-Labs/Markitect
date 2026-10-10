@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -44,6 +45,15 @@ func makeZip(t *testing.T, entries []zipFixtureEntry) []byte {
 }
 
 func validZipEntries() []zipFixtureEntry {
+	return []zipFixtureEntry{
+		{name: "go.mod", data: []byte("module markitect\n\ngo 1.24.0\n"), mode: 0644},
+		{name: "go.sum", data: []byte(""), mode: 0644},
+		{name: "src/cmd/markitect/main.go", data: []byte("package main\n"), mode: 0644},
+		{name: "src/internal/app/host.go", data: []byte("package app\n"), mode: 0644},
+	}
+}
+
+func legacyZipEntries() []zipFixtureEntry {
 	return []zipFixtureEntry{
 		{name: "go.mod", data: []byte("module markitect\n\ngo 1.24.0\n"), mode: 0644},
 		{name: "go.sum", data: []byte(""), mode: 0644},
@@ -162,10 +172,10 @@ func TestReadArchiveVerifiesDigestLayoutAndRejectsUnsafeEntries(t *testing.T) {
 		{name: "traversal", entries: append(validZipEntries(), zipFixtureEntry{name: "../escape", mode: 0644})},
 		{name: "symlink", entries: append(validZipEntries(), zipFixtureEntry{name: "link", data: []byte("target"), mode: os.ModeSymlink | 0777})},
 		{name: "reparse", entries: append(validZipEntries(), zipFixtureEntry{name: "reparse", data: []byte("x"), mode: 0644, attr: 0x400})},
-		{name: "case-collision", entries: append(validZipEntries(), zipFixtureEntry{name: "CMD/other.go", data: []byte("x"), mode: 0644})},
-		{name: "file-directory-collision", entries: append(validZipEntries(), zipFixtureEntry{name: "internal", data: []byte("x"), mode: 0644})},
+		{name: "case-collision", entries: append(validZipEntries(), zipFixtureEntry{name: "SRC/CMD/other.go", data: []byte("x"), mode: 0644})},
+		{name: "file-directory-collision", entries: append(validZipEntries(), zipFixtureEntry{name: "src/internal", data: []byte("x"), mode: 0644})},
 		{name: "count-limit", entries: validZipEntries(), limits: limits{maxEntries: 2, maxFile: 100, maxTotal: 1000, maxArchive: 1000}},
-		{name: "file-limit", entries: append(validZipEntries(), zipFixtureEntry{name: "internal/large.go", data: bytes.Repeat([]byte("a"), 8), mode: 0644}), limits: limits{maxEntries: 100, maxFile: 4, maxTotal: 100, maxArchive: 10000}},
+		{name: "file-limit", entries: append(validZipEntries(), zipFixtureEntry{name: "src/internal/large.go", data: bytes.Repeat([]byte("a"), 8), mode: 0644}), limits: limits{maxEntries: 100, maxFile: 4, maxTotal: 100, maxArchive: 10000}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			data := makeZip(t, test.entries)
@@ -182,6 +192,48 @@ func TestReadArchiveVerifiesDigestLayoutAndRejectsUnsafeEntries(t *testing.T) {
 				t.Fatal("unsafe or over-limit archive was accepted")
 			}
 		})
+	}
+}
+
+func TestReadArchiveAcceptsPinnedLegacyLayoutButRejectsMixedLayouts(t *testing.T) {
+	legacy := makeZip(t, legacyZipEntries())
+	legacyPath := filepath.Join(t.TempDir(), "legacy.zip")
+	if err := os.WriteFile(legacyPath, legacy, 0644); err != nil {
+		t.Fatal(err)
+	}
+	archive, err := readArchive(legacyPath, hexDigest(legacy), defaultLimits)
+	if err != nil {
+		t.Fatalf("pinned legacy source archive was rejected: %v", err)
+	}
+	if archive.sourcePrefix != "" {
+		t.Fatalf("legacy archive selected source prefix %q", archive.sourcePrefix)
+	}
+	var legacyBuildArgs []string
+	_, err = buildOrReuse(t.TempDir(), fixtureManifest(legacy), archive, "fake-go", os.Environ(), func(_ string, args []string, _ string, _ []string) error {
+		legacyBuildArgs = append([]string(nil), args...)
+		outputIndex := indexOf(args, "-o")
+		if outputIndex < 0 || outputIndex+1 >= len(args) {
+			return errors.New("build output argument missing")
+		}
+		return os.WriteFile(args[outputIndex+1], []byte("mock executable"), 0755)
+	}, func(_, _ string, _ []string) (string, error) {
+		return "go1.27.1", nil
+	})
+	if err != nil {
+		t.Fatalf("pinned legacy source archive did not build: %v", err)
+	}
+	if !contains(legacyBuildArgs, "./cmd/markitect") || !contains(legacyBuildArgs, "-X main.version=0.1.0-dev -X github.com/Glacius-Labs/Markitect/internal/host/cli.version=0.1.0-dev") {
+		t.Fatalf("legacy archive used non-legacy build paths: %v", legacyBuildArgs)
+	}
+
+	mixedEntries := append(validZipEntries(), zipFixtureEntry{name: "cmd/markitect/legacy.go", data: []byte("package main\n"), mode: 0644})
+	mixed := makeZip(t, mixedEntries)
+	mixedPath := filepath.Join(t.TempDir(), "mixed.zip")
+	if err := os.WriteFile(mixedPath, mixed, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readArchive(mixedPath, hexDigest(mixed), defaultLimits); err == nil || !strings.Contains(err.Error(), "mixes") {
+		t.Fatalf("mixed old/new source layout was not rejected: %v", err)
 	}
 }
 
@@ -203,7 +255,7 @@ func TestExtractedSourceIsVerifiedAndTamperingInvalidatesIt(t *testing.T) {
 	if valid, err := verifyExtracted(sourceDir, a); err != nil || !valid {
 		t.Fatalf("valid extracted source = %v, err=%v", valid, err)
 	}
-	if err := os.WriteFile(filepath.Join(sourceDir, "cmd", "markitect", "main.go"), []byte("tampered"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(sourceDir, "src", "cmd", "markitect", "main.go"), []byte("tampered"), 0644); err != nil {
 		t.Fatal(err)
 	}
 	if valid, err := verifyExtracted(sourceDir, a); err != nil || valid {
@@ -267,7 +319,7 @@ func TestBuildCacheReusesOnlyVerifiedBinaryAndUsesLocalGoCaches(t *testing.T) {
 	if noiseReuse != first || buildCount != 1 {
 		t.Fatalf("irrelevant caller environment invalidated cache: builds=%d", buildCount)
 	}
-	if indexOf(buildArgs, "-buildvcs=false") < 0 || indexOf(buildArgs, "-trimpath") < 0 || !contains(buildArgs, "-X main.version="+m.version+" -X github.com/Glacius-Labs/Markitect/internal/host/cli.version="+m.version) {
+	if indexOf(buildArgs, "-buildvcs=false") < 0 || indexOf(buildArgs, "-trimpath") < 0 || !contains(buildArgs, "-X main.version="+m.version+" -X github.com/Glacius-Labs/Markitect/src/internal/host/cli.version="+m.version) || !contains(buildArgs, "./src/cmd/markitect") {
 		t.Fatalf("build flags missing: %v", buildArgs)
 	}
 	base := filepath.Join(root, ".artifacts", "markitect")
@@ -356,7 +408,7 @@ func TestBuildMutationIsNotStampedAsPinnedSource(t *testing.T) {
 		if err := os.WriteFile(args[indexOf(args, "-o")+1], []byte("mock executable"), 0755); err != nil {
 			return err
 		}
-		return os.WriteFile(filepath.Join(dir, "cmd", "markitect", "main.go"), []byte("mutated during build"), 0644)
+		return os.WriteFile(filepath.Join(dir, filepath.FromSlash(archive.sourcePrefix+"cmd/markitect/main.go")), []byte("mutated during build"), 0644)
 	}
 	probe := func(_ string, _ string, _ []string) (string, error) { return "go1.27.1", nil }
 	if _, err := buildOrReuse(root, m, archive, "fake-go", nil, fakeBuild, probe); err == nil || !strings.Contains(err.Error(), "changed during build") {

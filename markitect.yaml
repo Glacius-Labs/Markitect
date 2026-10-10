@@ -9,7 +9,7 @@ spec:
         - markdown
     areas:
         - name: core
-          path: internal/host/embedded/resources
+          path: src/internal/host/embedded/resources
           rules:
             - name: canonical-ownership
         - name: development
@@ -38,12 +38,12 @@ spec:
           run:
             - go
             - test
-            - ./internal/tooling/architecture
+            - ./src/internal/tooling/architecture
         - name: managed-artifacts
           run:
             - go
             - run
-            - ./cmd/markitect-check-artifacts
+            - ./src/cmd/markitect-check-artifacts
             - --repo
             - .
             - --config
@@ -52,7 +52,7 @@ spec:
           run:
             - go
             - run
-            - ./cmd/markitect-check-modules
+            - ./src/cmd/markitect-check-modules
             - --repo
             - .
             - --hooks
@@ -65,8 +65,26 @@ spec:
             - test
             - ./...
             - -count=1
-            - -timeout=30m
-          timeoutSeconds: 1800
+            - -timeout=60m
+          timeoutSeconds: 5400
+        - name: claude-protocol
+          run:
+            - python
+            - -B
+            - -m
+            - unittest
+            - discover
+            - -s
+            - src/internal/tooling/clauderunner
+        - name: codex-protocol
+          run:
+            - python
+            - -B
+            - -m
+            - unittest
+            - discover
+            - -s
+            - src/internal/tooling/codexrunner
     adapters:
         - name: engineering-representations
           type: local-projection

@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: repository-overview
+  namespace: ""
+purpose: Provides the repository guide for contributors and reviewers.
+spec:
+  category: architecture
+  description: The root README explains the Shop example, its finite evidence, and the supported Markitect CLI workflow without implying a provider run.
+  public: true
+  uses: []
+  requires: []

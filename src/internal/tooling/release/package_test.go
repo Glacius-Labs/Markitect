@@ -1,0 +1,223 @@
+package release
+
+import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"os"
+	"path/filepath"
+	"runtime"
+	"sort"
+	"strings"
+	"testing"
+)
+
+func TestPackageIsDeterministicAndContainsOnlyReleaseSources(t *testing.T) {
+	root := fixtureRoot(t)
+	first, lock1, err := Package(root, "v1.2.3-rc.4+build.7")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, lock2, err := Package(root, "v1.2.3-rc.4+build.7")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(first, second) || !bytes.Equal(lock1, lock2) {
+		t.Fatal("packaging the same source twice changed output")
+	}
+	entries := archiveEntries(t, first)
+	want := []string{"LICENSE", "README.md", "go.mod", "go.sum", "schema/manifest.yaml", "src/cmd/markitect/main.go", "src/internal/host/embedded/project.yaml", "src/internal/core/model.go", "src/internal/host/authoring/format/schema.go", "src/internal/tooling/release/package.go", "src/internal/tooling/release/package_test.go"}
+	sort.Strings(want)
+	if strings.Join(entries, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("unexpected package contents:\n%v\nwant:\n%v", entries, want)
+	}
+	for _, name := range entries {
+		if err := safeArchivePath(name); err != nil {
+			t.Fatalf("unsafe archive path %q: %v", name, err)
+		}
+	}
+	verifyNormalZipMetadata(t, first)
+	hash := sha256.Sum256(first)
+	wantLock := "version: \"v1.2.3-rc.4+build.7\"\nsource: \".markitect/tool/source.zip\"\nsha256: \"" + hex.EncodeToString(hash[:]) + "\"\n"
+	if string(lock1) != wantLock {
+		t.Fatalf("lock format or digest mismatch:\n%s\nwant:\n%s", lock1, wantLock)
+	}
+}
+
+func TestPackageIncludesEmbeddedAuthoringProjectAndResourcesOnly(t *testing.T) {
+	moduleRoot := sourceModuleRoot(t)
+	prefix, err := sourceLayoutPrefix(moduleRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	archive, _, err := Package(moduleRoot, "1.0.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents := archiveContents(t, archive)
+	license, err := os.ReadFile(filepath.Join(moduleRoot, "LICENSE"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	license, err = normalizeTextSource("LICENSE", license)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(contents["LICENSE"], license) {
+		t.Fatal("source archive omitted or changed the root license")
+	}
+	want := []string{
+		prefix + "internal/host/embedded/resources/rule-canonical-ownership.yaml",
+		prefix + "internal/host/embedded/resources/skill-authoring.yaml",
+		prefix + "internal/host/embedded/resources/text-resource-modelling.yaml",
+		prefix + "internal/host/embedded/resources/workflow-authoring-change.yaml",
+		prefix + "internal/host/embedded/resources/workflow-constitution-change.yaml",
+		prefix + "internal/host/embedded/resources/workflow-engineering-discovery.yaml",
+		prefix + "internal/host/embedded/resources/workflow-markitect-first-change.yaml",
+	}
+	var got []string
+	for name := range contents {
+		if strings.HasPrefix(name, prefix+"internal/host/embedded/resources/") {
+			got = append(got, name)
+		}
+	}
+	sort.Strings(got)
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("bundled authoring resources in source archive = %v, want %v", got, want)
+	}
+	projectPath := prefix + "internal/host/embedded/project.yaml"
+	projectData, err := os.ReadFile(filepath.Join(moduleRoot, filepath.FromSlash(projectPath)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	projectData, err = normalizeTextSource(projectPath, projectData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(contents[projectPath], projectData) {
+		t.Fatal("archive omitted or changed the embedded authoring Project")
+	}
+	if _, included := contents[prefix+"internal/host/embedded/notes.yaml"]; included {
+		t.Fatal("unrelated YAML under internal/authoring was packaged")
+	}
+	for _, name := range want {
+		data, err := os.ReadFile(filepath.Join(moduleRoot, filepath.FromSlash(name)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err = normalizeTextSource(name, data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(contents[name], data) {
+			t.Errorf("archive content differs from embedded resource source %s", name)
+		}
+	}
+	if _, included := contents[prefix+"internal/host/embedded/testdata/not-embedded.yaml"]; included {
+		t.Fatal("unrelated YAML under internal was packaged")
+	}
+}
+
+func sourceModuleRoot(t *testing.T) string {
+	t.Helper()
+	_, testFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("cannot locate release test source")
+	}
+	// This package lives at src/internal/tooling/release under the root Go module.
+	root := filepath.Clean(filepath.Join(filepath.Dir(testFile), "..", "..", "..", ".."))
+	if _, err := os.Stat(filepath.Join(root, "go.mod")); err != nil {
+		t.Fatalf("resolved source module root %q has no go.mod: %v", root, err)
+	}
+	return root
+}
+
+func TestPackageChangesWhenIncludedSourceChanges(t *testing.T) {
+	root := fixtureRoot(t)
+	before, beforeLock, err := Package(root, "1.0.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "tools", "markitect", "src", "internal", "core", "model.go")
+	if err := os.WriteFile(path, []byte("package core\n// changed\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	after, afterLock, err := Package(root, "1.0.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Equal(before, after) || bytes.Equal(beforeLock, afterLock) {
+		t.Fatal("included source edit did not change archive and digest lock")
+	}
+}
+
+func TestPackageNormalizesTextLineEndingsForReproducibleArchive(t *testing.T) {
+	root := fixtureRoot(t)
+	lfArchive, lfLock, err := Package(root, "1.0.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	moduleDir := filepath.Join(root, "tools", "markitect")
+	for _, relative := range []string{
+		"go.mod",
+		"go.sum",
+		"LICENSE",
+		"README.md",
+		"src/cmd/markitect/main.go",
+		"src/internal/core/model.go",
+		"src/internal/host/authoring/format/schema.go",
+		"src/internal/tooling/release/package.go",
+		"src/internal/tooling/release/package_test.go",
+		"schema/manifest.yaml",
+	} {
+		full := filepath.Join(moduleDir, filepath.FromSlash(relative))
+		data, err := os.ReadFile(full)
+		if err != nil {
+			t.Fatal(err)
+		}
+		data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
+		data = bytes.ReplaceAll(data, []byte("\n"), []byte("\r\n"))
+		if err := os.WriteFile(full, data, 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	crlfArchive, crlfLock, err := Package(root, "1.0.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(lfArchive, crlfArchive) || !bytes.Equal(lfLock, crlfLock) {
+		t.Fatal("CRLF checkout changed the canonical source archive or lock")
+	}
+	entries := archiveContents(t, crlfArchive)
+	if got, want := string(entries["src/internal/core/model.go"]), "package core\n"; got != want {
+		t.Fatalf("normalized source = %q, want %q", got, want)
+	}
+}
+
+func TestPackageRejectsSymlinksInSourceTree(t *testing.T) {
+	root := fixtureRoot(t)
+	external := filepath.Join(t.TempDir(), "outside.go")
+	if err := os.WriteFile(external, []byte("package outside\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(root, "tools", "markitect", "src", "cmd", "markitect", "linked.go")
+	if err := os.Symlink(external, link); err != nil {
+		t.Skipf("symlink creation unavailable: %v", err)
+	}
+	if _, _, err := Package(root, "1.0.0"); err == nil || !strings.Contains(err.Error(), "symlink") {
+		t.Fatalf("expected symlink rejection, got %v", err)
+	}
+}
+
+func TestPackageAcceptsSemverReleasesAndRejectsMalformedVersions(t *testing.T) {
+	for _, version := range []string{"0.0.1", "v1.2.3", "1.2.3-rc.1", "v1.2.3-alpha.2+sha.abc"} {
+		if !validVersion(version) {
+			t.Errorf("valid version rejected: %s", version)
+		}
+	}
+	for _, version := range []string{"", "latest", "01.2.3", "1.02.3", "1.2", "1.2.3-01", "1.2.3+build+again", "v1.2.3/evil"} {
+		if validVersion(version) {
+			t.Errorf("invalid version accepted: %s", version)
+		}
+	}
+}

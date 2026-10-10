@@ -132,19 +132,49 @@ if ($versionOutput.Trim() -notmatch '^Markitect\s+\d+\.\d+\.\d+(?:[-+][A-Za-z0-9
     throw "Unexpected version output: $versionOutput"
 }
 
-# Exercise the supported safe init flow in a fresh named branch.
+# Exercise the model-first project init flow in a fresh named branch.
 $null = New-Item -ItemType Directory -Path $initWorkspace
 $null = Invoke-Git -Directory $initWorkspace -Arguments @('init', '--initial-branch=feature/adoption-init')
 $null = Invoke-Git -Directory $initWorkspace -Arguments @('config', 'user.name', 'Markitect onboarding exercise')
 $null = Invoke-Git -Directory $initWorkspace -Arguments @('config', 'user.email', 'onboarding@example.invalid')
-$preview = Invoke-Markitect -Name 'init-preview' -Arguments @('init', '--repo', $initWorkspace, '--name', 'parcel-support', '--namespace', 'support', '--path', 'docs/support')
-if ((Test-Path (Join-Path $initWorkspace 'markitect.yaml')) -or (Test-Path (Join-Path $initWorkspace 'docs/support'))) {
-    throw 'Initialization preview wrote files.'
+$initPaths = @(
+    '.markitect/.gitignore',
+    '.markitect/model/manager.yaml',
+    '.markitect/project.yaml',
+    '.markitect/runtime.yaml',
+    'docs/markitect/project.md'
+)
+$preview = Invoke-Markitect -Name 'init-preview' -Arguments @('project', 'init', '--repo', $initWorkspace, '--name', 'parcel-support')
+$previewPlan = ConvertFrom-Json -InputObject $preview
+if ($previewPlan.apiVersion -ne 'project.markitect.example.org/v1alpha1' -or $previewPlan.name -ne 'parcel-support' -or $previewPlan.digest -notmatch '^[0-9a-f]{64}$') {
+    throw 'Initialization preview returned an invalid or unexpected model-first plan.'
+}
+$previewPaths = @($previewPlan.files | ForEach-Object { $_.path })
+if (($previewPaths -join "`n") -cne ($initPaths -join "`n")) {
+    throw "Initialization preview paths differed. Expected [$($initPaths -join ', ')]; observed [$($previewPaths -join ', ')]."
+}
+foreach ($path in $initPaths) {
+    if (Test-Path -LiteralPath (Join-Path $initWorkspace $path)) {
+        throw "Initialization preview created $path."
+    }
 }
 $outcomes.initPreviewReadOnly = 'passed'
-$null = Invoke-Markitect -Name 'init-write' -Arguments @('init', '--repo', $initWorkspace, '--name', 'parcel-support', '--namespace', 'support', '--path', 'docs/support', '--write')
-if (-not (Test-Path (Join-Path $initWorkspace 'markitect.yaml')) -or -not (Test-Path (Join-Path $initWorkspace 'docs/support/README.md'))) {
-    throw 'Initialization write did not create the documented two files.'
+$write = Invoke-Markitect -Name 'init-write' -Arguments @('project', 'init', '--repo', $initWorkspace, '--name', 'parcel-support', '--write')
+$writePlan = ConvertFrom-Json -InputObject $write
+if ($writePlan.apiVersion -ne 'project.markitect.example.org/v1alpha1' -or $writePlan.name -ne 'parcel-support' -or $writePlan.digest -ne $previewPlan.digest) {
+    throw 'Initialization write did not preserve the preview plan identity.'
+}
+$writtenPaths = @($writePlan.written)
+if (($writtenPaths -join "`n") -cne ($initPaths -join "`n")) {
+    throw "Initialization write paths differed. Expected [$($initPaths -join ', ')]; observed [$($writtenPaths -join ', ')]."
+}
+foreach ($path in $initPaths) {
+    if (-not (Test-Path -LiteralPath (Join-Path $initWorkspace $path) -PathType Leaf)) {
+        throw "Initialization write did not create $path."
+    }
+}
+if (Test-Path -LiteralPath (Join-Path $initWorkspace 'markitect.yaml')) {
+    throw 'Initialization created the retired top-level model.'
 }
 $outcomes.initWriteCreatedExpectedFiles = 'passed'
 

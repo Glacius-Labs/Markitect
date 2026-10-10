@@ -1,0 +1,9 @@
+# P08 — Clean repository and current documentation
+
+Consolidate the final product after parallel integration. Place production source under `src/` with one coherent module/build layout; Designer selects the practical Go layout and updates imports, commands, embedded resources, generation, tests, CI, packaging/bootstrap and example references. No duplicate old/new implementation roots. A directory move is complete only when normal clean-checkout build/test/install succeeds.
+
+Replace README and current docs with concise accurate best-practice guides: purpose, installation, first project, ordinary work, Brownfield, model maintenance, skills, CLI/MCP, App Server/agents, review/apply, recovery, testing/contribution and real limits. One documentation map and one current operational source of truth. Consolidate repeated/contradictory design/roadmap/status material; clearly distinguish current behavior from optional future ideas.
+
+Remove marketing/branding assets and promotional copy from the active product repository, plus dead source/fixtures/obsolete generated guidance. Inventory exact paths first; preserve LICENSE/notices, functional test assets, executable examples, needed provider metadata and recorded evidence. Do not publish private study data or erase immutable historical Git/release pins. Historical research can stay in its existing appropriate backup/history instead of cluttering current user documentation. Update this backlog's references/status and root entrypoints during the move.
+
+Acceptance: no stale old executable/source path references, required builds/generation/schema/examples/CI/bootstrap work, local docs links/commands valid, independently reviewed current docs and exact removal/move list. Avoid marketing replacement or a new parallel architecture documentation tree.

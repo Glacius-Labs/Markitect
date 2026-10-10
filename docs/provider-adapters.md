@@ -1,80 +1,61 @@
 # Provider adapters
 
-This document covers the built-in Codex and Claude file projections, configured adapters, and the reconciliation model supported in v0.10.0. Markitect renders Codex and Claude entrypoints only when `Project.spec.targets` selects them. In the earlier v0.9.1 model, `Skill` resources created `.agents/skills/<name>/SKILL.md` and `.claude/skills/<name>/SKILL.md`; `Agent` resources created `.codex/agents/<name>.toml` and `.claude/agents/<name>.md`. The current generic model represents that bundled AI-working vocabulary as a Domain. Canonical sources supply descriptions, text, explicit dependencies, and provider settings. Generated provider entrypoints link directly to canonical sources and do not require Markdown resource views. Unsupported fields fail strict parsing. `render --write` changes owned outputs; `check` reports missing, changed, stale, retired, and unregistered outputs.
+The current project workflow has two provider boundaries. The outer coding client (Codex or Claude Code) connects to Markitect's repository-local MCP server and coordinates the Work Item conversation. Markitect Host schedules inner Manager and reviewer roles through Codex CLI 0.162.0 App Server using the configured `gpt-6-luna` model and `high` reasoning effort. Claude Code 2.1.295 is supported as an outer MCP client, not as an inner worker runtime.
 
-## Additional source adapters (unreleased)
+## Connect the outer client
 
-The first parallel wave adds separately built [GitHub](../cmd/markitect-adapter-github/README.md) and [Azure DevOps](../cmd/markitect-adapter-azure-devops/README.md) command consumers. They compare explicit canonical repository properties with exact, sanitized JSON captures staged through the existing command protocol. They have no live API calls, credentials or Apply capability. Their operation-free Plans report observed conformance findings; Verify fails for remaining differences or stale evidence. Capture validation proves only correspondence with the supplied recording, not its authenticity, authorization or current remote state.
-
-These are source capabilities, not new built-in adapter types or binaries included in published v0.12.0. The .NET source adapter also rejects foreign namespaces on recognized MSBuild elements and relevant attributes as incomplete literal-reference evidence. [Wave evidence](validation/parallel-development-wave-1.md) records the tests and integration boundaries. No Core/schema/protocol meaning changes.
-
-## Configured adapters and reconciliation
-
-The v0.10.0 contract declares adapters under Project `spec.adapters`. Each entry names the adapter, its type and version, and its explicit mapping/configuration. These mappings are canonical model inputs. Adapters consume validated normalized data; they do not interpret raw resource YAML or silently infer ownership from generated files. The built-in `markitect-render` adapter covers local managed projections and needs no `spec.adapters` entry. Other adapter types are selected explicitly by their configured entries; they may observe a target and return a named, digested observation independently of the canonical desired model, so external drift remains visible even if the model has not changed.
-
-Reconciliation separates four operations. `observe` reads a configured target and reports its state. `plan` emits a concrete, input-bound plan without applying it. `apply` requires the selected plan and explicit write intent, validates that it is still current, and executes only its declared operations. `verify` observes again and checks the result against the plan. The plan and observation identify their source snapshot, adapter configuration, and desired/observed digests; a successful operation does not imply semantic correctness or human acceptance.
-
-For local generated files, the current CLI exposes this flow:
+Build or select the Markitect executable for this source checkout. From the project root, register its stdio server with the exact absolute executable and root paths:
 
 ```powershell
-New-Item -ItemType Directory -Force .artifacts/markitect/reconcile | Out-Null
-markitect reconcile --repo . --action observe --adapter markitect-render
-markitect reconcile --repo . --action plan --adapter markitect-render > .artifacts/markitect/reconcile/plan.yaml
-markitect reconcile --repo . --action apply --adapter markitect-render --plan .artifacts/markitect/reconcile/plan.yaml --write
-markitect reconcile --repo . --action verify --adapter markitect-render --plan .artifacts/markitect/reconcile/plan.yaml
+codex mcp add markitect -- C:\absolute\path\to\markitect.exe project mcp --repo C:\absolute\path\to\project
+codex mcp list
 ```
 
-`observe` and `plan` print YAML to standard output and do not write. Save the plan in the reserved `.artifacts/markitect/reconcile/` evidence directory before applying. `apply` is limited to the working tree and re-plans against current inputs before writing; stale or modified plans fail. Unmanaged destination collisions appear in `conflicts` and make the plan incomplete; it offers no operation to take over those files. The plan never deletes stale generated files automatically. Review removals separately.
-
-### Supported command adapter contract
-
-The generic command adapter supports observe, plan, and verify; capability-gated apply is available when explicitly configured. The separately built .NET reference adapter is read-only, checks mapped literal unconditional `ProjectReference` entries, and reports unsupported MSBuild semantics as incomplete. Neither adapter establishes evaluated build-system correctness or transfers human acceptance. See the [roadmap](implementation-plan.md) for the consumer proof and evidence limits.
-
-A configured command adapter has `type: command` and exact `inputs`, `observe`, `plan`, and `verify` argv. It may declare `apply` together with `allowApply: true`. Each argv starts with a bare executable name resolved through `PATH`; Markitect passes literal arguments without a shell. The command runs in a temporary directory containing only the declared snapshot inputs, receives a `markitect.example.org/adapter-request/v1alpha1` YAML request on standard input, and must return exactly one `markitect.example.org/adapter-result/v1alpha1` YAML result document in its bounded combined output. The model DTO, selected source files, adapter mapping, action, and any preceding observation or plan are included in the request as appropriate. The saved plan uses `markitect.example.org/adapter-plan/v1alpha1`.
-
-`target` is a non-secret identity for the external destination and is included in the adapter request and saved plan; it is required when `apply` is enabled. Use `parameters` for plugin-owned, reviewable non-secret mappings that shape how canonical resources correspond to that target. Secrets do not belong in canonical mapping or saved plan data; adapters should obtain credentials through their own secure external lookup. An adapter must not use mutable ambient environment state to select a different destination from the identity declared in the plan.
-
-```yaml
-spec:
-  adapters:
-    - name: delivery-state
-      type: command
-      version: v1alpha1
-      config:
-        target: stable-non-secret-target-id
-        inputs: [domains/delivery.yaml]
-        parameters:
-          policyResource: engineering/delivery.example.org/v1/ReleasePolicy/main
-        observe: [markitect-delivery]
-        plan: [markitect-delivery]
-        verify: [markitect-delivery]
-        # Add apply and allowApply: true only when this adapter is authorized to write.
+```powershell
+claude mcp add --transport stdio markitect -- C:\absolute\path\to\markitect.exe project mcp --repo C:\absolute\path\to\project
+claude mcp list
 ```
 
-Commands return an adapter result with the supported protocol version, adapter name, action, model digest, status, and optional target, observations, findings, or operations. When a target is configured, the adapter echoes that exact target; Markitect compares it with the requested target and with the saved plan. `incomplete` and `failed` remain distinct from `complete`; only complete observation and plan results can proceed through planning and apply. Completeness describes evidence coverage: error findings still produce a nonzero CLI exit code, including when printing a complete plan.
+Confirm that `markitect` is available through the client's MCP view (`/mcp`). Quote paths according to the shell in use. The executable and repository root are fixed when the server starts; do not replace the root per operation. The Codex and Claude clients keep their own MCP registration configuration. Markitect onboarding creates repository-local guidance only; it does not register a client or change global provider/account settings.
 
-Plans retain the captured observation and bind the source, semantic model, Project/adapter configuration, target, adapter executable digest, CLI identity, and observation digest. A command's planning stage must deterministically derive its result from the supplied model, captured files, configuration, and observation. Apply rechecks these values and observes again to reject external drift since planning. Verify first validates the retained observation and reproduces the plan from those captured inputs, rejecting altered results before invoking the verification command. It then returns a fresh verification result. These checks preserve the declared evidence basis; they do not authenticate a human review or make a configured executable trustworthy.
+The MCP server advertises closed typed schemas. The outer agent should use those schemas for inspect, exploration, model edit, readiness, Brownfield, plan/run/status/resume/repair, verify, preflight, apply, and delivery operations. A preview digest must be passed back exactly to the matching write operation where the schema requires one. Failed or stale operations remain errors; do not translate them into success or invent missing fields.
 
-Execution has a timeout and combined stdout/stderr size bound. Defaults are two minutes and 1 MiB; configured limits are capped at ten minutes and 10 MiB. Adapter commands run with the caller's local authority; the temporary working directory and staged inputs are not an operating-system security sandbox. Do not enable apply unless the adapter's effects and credential access are appropriate for that execution context. Apply is not a multi-system transaction: after an interrupted or failed apply, observe the target before deciding what remains. `apply` requires an explicit plan and `--write` on the working tree.
+## Inner role execution and workspace boundary
 
-`spec.providerAdapters` optionally configures shared entrypoints and a strict inventory:
+`project setup` supports the native Codex App Server runtime and pins its resolved executable/configuration. `project_doctor` inspects local tools and authentication prerequisites without starting roles. Authentication is not established by setup or doctor; only a real provider invocation can exercise it. Setup does not configure Claude, global MCP, editor, hooks, plugins, or account settings.
 
-```yaml
-spec:
-    targets: [codex, claude]
-    providerAdapters:
-        inlineAgentText: true
-        strictInventory: true
-        agentContract: docs/agents/README.md
-        roleRegister: docs/roles.md
-        ruleSources:
-            change-review:
-                - docs/rules/change-review.md
-                - docs/workflows/review.md
-        retiredSkills: [old-review]
-        retiredAgents: [old-reviewer]
-```
+On Windows, setup defaults to `appServer.windowsSandboxBackend: mxc`; `--windows-sandbox-backend mxc` can also be specified explicitly. The adapter starts only its child Codex process with the documented `-c windows.sandbox=mxc` override before `app-server`; it does not change global Codex configuration. Windows Managed Policy remains in force. Receipts record the requested backend, while effective backend remains unavailable unless Codex provides an authoritative readback. Unsupported values and non-Windows execution fail closed without a fallback.
 
-`ruleSources` maps each Claude rule entrypoint to at least one ordered repository-relative Markdown source. These paths must exist; strict inventory requires every local canonical `Rule` to have a mapping when Claude is selected. The Project owns each aggregate rule output; individual `Agent` and `Skill` outputs have one resource owner. `agentContract` and `roleRegister` are explicit shared paths; role pointers are emitted only for selected targets. An Agent entrypoint links to `agentContract` whenever it is declared. `inlineAgentText` copies canonical Agent text into selected provider outputs and rebases Markdown navigation from the canonical YAML directory; typed links remain aimed at canonical YAML and ordinary links at their real source paths; without it, adapters link to canonical Agent YAML. Strict inventory requires explicit Agent settings for each selected target and rejects provider files outside the generated set in the owned skills, agents, and rule directories. Retired names must be valid, unique, and absent from active resources; old files fail the inventory check. Remove those files deliberately in the same reviewed migration; `render` does not delete them automatically.
+Setup applies one `:workspace` permission profile to its Managers, independent Review roles, and independent Verifier. For this profile, the adapter sets child-local and thread-local `approvalPolicy: never` so ordinary delegated work needs no per-file human prompt, and confirms the effective workspace-write sandbox and approval policy before dispatch. Tools use inherited user environment and authentication. Test scratch and caches belong in a fresh owned directory under inherited OS temp; Review and Verify must leave repository artifacts unchanged. Host still guards accepted Manager artifacts and rejects nonempty Review or Verify deltas; guarded Apply remains the bridge to the adopting checkout. Helpers inherit the parent role's profile. `--codex-profile` overrides this shared profile for every generated role; other profiles preserve their approval policy.
 
-Markitect validates its output paths, source paths, declared settings, collisions, and drift. It does not infer mappings from prose links. A repository still owns its root `AGENTS.md` and `CLAUDE.md`, documentation navigation, hook policy, and other domain-specific checks. Generated provider prose is routing, not a second source of policy. A package's resources cannot generate host provider entrypoints directly; use a local wrapper.
+The shared default disables provider memories and login-shell startup only for the child process. Final executor and Verifier messages use `turn/start.outputSchema` for the role's semantic response. The model does not return invocation identity; the Host composes those fields from the trusted invocation and runs the existing strict decoder. Executor responses omit `evidenceRefs`, which the Host supplies as an empty array. Verifiers select request-derived short aliases; the adapter maps only known aliases back to the supplied canonical references, and existing verifier coverage still requires the complete union. Report invocations return an empty `candidateFiles` array because Host harvests actual workspace bytes; helpers return plain-text CandidateFile entries rather than the input Artifact's digest/base64 shape. Strict response decoding and candidate-delta checks remain authoritative. Create temporary scratch only when a test or tool needs it; on Windows MXC, create, use and remove that owned scratch within one shell call because temp paths can differ between calls.
+
+Process adapters map evidence references from the request's artifact paths, Scope IDs and Policy IDs to bounded aliases and decode them back before Host validation. App Server executor responses use an empty Host-owned reference array; App Server Verifiers use the same bounded alias approach, with the exact required coverage set carried separately from other allowed request references. The adapter maps selected aliases back without filling omissions or dropping extras; exact Host coverage validation remains authoritative. Empty references do not establish semantic acceptance. Host still validates response bytes, observations and actual workspace changes. Successfully written outgoing RPC requests, including turn schemas, are retained in the existing private operational journal; this records what the Host sent and does not establish provider enforcement.
+
+Native setup also sets `appServer.environmentMode: inherit` for App Server roles. This passes the caller's ordinary environment to the native child and binds its effective values into the role fingerprint and receipt digest without exposing them. The separate `Agent.Environment` list remains the selected-name policy for resolving declared-check executables; it is not an App Server environment filter in this mode. Process adapters keep their explicit environment allowlists. Inheritance does not prevent same-user access to OS-managed credentials or network resources.
+
+Host schedules the model-declared Managers and records bounded work, integration and repair attempts. Inner workers receive bounded task context and candidate workspace ownership, with standard file, shell, and test tools under caller permissions. The provider may also expose bounded helper starts according to runtime policy; helpers are nested work, not additional model-declared Managers. The native lifecycle adapter reports observed child starts with **partial accounting**. The durable summary separates Host-started roots and observed nested starts; observed nested totals are a lower bound, and zero does not prove no child ran. The workspace bridge waits for the root and each child it observed to reach terminal state before harvesting/closing, but this is not an exhaustive process census or OS isolation.
+
+The Host tool `markitect_start_helper` currently delegates bounded file authoring within a subset of the parent Manager's write paths. It delivers validated workspace changes and has no report-only response contract. Use the parent's normal tools for standalone inspection, analysis, or verification, and the existing independent Review roles for candidate assessment. Authoring helpers may inspect context and run checks for their scoped edits. Do not request unnecessary edits to obtain a helper result. Safe, genuine read-only and analysis-helper returns remain a deferred capability in the [product backlog](work-items/product-readiness/backlog.yaml).
+
+The Host helper tool is available only to Manager work and integration invocations with an explicit write scope. Independent reviewers do not implement the overall goal or dispatch helpers. A Work review assesses the Manager's current delivery and delegation intent; child implementation files are future work and are not required in that candidate. An Integration review assesses the aggregate candidate, including delivered child outputs and required child artifacts. Review findings are actionable defects: a pass has an empty findings list and puts supporting evidence in its summary; a fail identifies at least one grounded correction. The Host rejects a contradictory verdict without rewriting it. A correctly bound, decoded helper request rejected by argument or path-scope validation before child dispatch returns a failed tool result to the same parent turn after its failed reservation is durably recorded, allowing the parent to correct the request. Identity, replay, persistence and child-lifecycle uncertainty remain terminal errors.
+
+Each review finding must copy `path` from one exact `candidateFiles[]` entry and copy `grounding` exactly from that same entry's `grounding[]` array. `grounding` is a reference token, not explanatory prose; use `expectation` to explain the unmet obligation and required correction. Do not combine paths or cite unsupplied files. Reviewers and Verifiers remain read-only.
+
+Review context includes `hostHelperResults` from the current parent runs' durable Host reservations. Host records a helper delivery only after validating its delta, applying it to the parent workspace, and closing its workspace. The records carry request/session linkage, task and path scope, delta digest, and file digests; `presentInCandidate` reports whether the resulting file bytes and mode remain in the exact review candidate. Work reviews receive their own current work-run results; Integration reviews also receive current descendant work and integration results. These facts are distinct from Manager-child delegations and do not replace correctness review. Unresolved helper requests or completed requests without delivery evidence block review, and the same supplied helper facts are bound into review freshness digests.
+
+Executor task reports use `complete` only when the current phase is closed and `questions` and `risks` are empty. An actionable unresolved question or risk requires `partial`; successful command warnings and resolved caveats belong in the summary. Host keeps the strict report validation and does not remove risks or rewrite a contradictory status.
+
+Native executors can approve an individual file change within their delegated Manager or helper scope when App Server reports `workspaceWrite` and the live owned workspace identity matches. The request remains bound to its thread, turn and item; it cannot expand permission roots. Host artifact guards, nonempty Review or Verify deltas, protected or outside paths, unknown requests and permission escalations remain restricted. This carries the existing task delegation and does not authenticate human approval.
+
+On Windows, shell processes in any role may start outside the workspace; the native prompt names the exact owned workspace CWD and requires tools to set and verify it before reading, checking, or writing files. Writable Manager and helper invocations retain ordinary project tools, including shell writes within their explicit scope. When a workspace alias or packaged `LocalCache` path causes shell access problems, the prompt recommends the native file-change/editor operation. A denied shell write is not a reason to switch filesystem paths or add permissions; use the native edit operation or report the observed limitation. Reviewers and Verifiers remain read-only.
+
+The workspace candidate is bound to the fixed accepted project revision and permitted paths. Candidate deltas are validated and staged; guarded Apply rechecks freshness and scope before writing the adopting checkout. Native receipts and digests bind observed inputs/results but do not prove provider identity, semantic correctness, human approval, or every filesystem effect outside the declared boundary.
+
+## Limits and evidence status
+
+Project runtime limits are configured in `.markitect/runtime.yaml`; they constrain declared Host scheduling and local accounting. Estimated cost weights are estimates, not invoices or hard billing controls. Missing provider usage remains unknown; reports distinguish complete, partial and unknown cost accounting and retain the known estimate without inventing token counts. Provider-side usage and independently launched processes may not be exhaustively observable through partial helper telemetry.
+
+The readiness backlog's proposed native acceptance grant is bounded at 60 minutes per role, four hours per job, and 256 role-start requests. Those are prospective test limits, not completed provider evidence or universal product defaults. Bounded authenticated native attempts have run, but no native acceptance has passed. See the [project workflow](project-workflow.md), [operations reference](project-operations.md), and dated [readiness backlog](work-items/product-readiness/backlog.yaml).
+
+Earlier `Project.spec.targets`, render projections, and command adapters describe preserved Project/Domain compatibility contracts. They are not the provider setup path for the current `.markitect/project.yaml` workflow. Consult [legacy CLI compatibility](usage.md#legacy-projectdomain-cli-compatibility) when maintaining a released installation.

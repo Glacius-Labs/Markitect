@@ -18,11 +18,11 @@ The base Project pins package v1 and has no automatic way to assume v2. The migr
 From the Markitect checkout:
 
 ```powershell
-go run ./cmd/markitect format --repo examples/engineering-constitution
-go run ./cmd/markitect check --repo examples/engineering-constitution
-go run ./cmd/markitect model --repo examples/engineering-constitution
-go run ./cmd/markitect context --repo examples/engineering-constitution --namespace engineering --kind Skill --name add-order
-go test ./examples -run EngineeringConstitution -count=1
+go run ./src/cmd/markitect format --repo examples/engineering-constitution
+go run ./src/cmd/markitect check --repo examples/engineering-constitution
+go run ./src/cmd/markitect model --repo examples/engineering-constitution
+go run ./src/cmd/markitect context --repo examples/engineering-constitution --namespace engineering --kind Skill --name add-order
+go test ./src/harness/examples -run EngineeringConstitution -count=1
 ```
 
 The package archive is a deterministic fixture built from `constitution-package-v1` with Markitect's package builder. Its `source` pin is explicitly a local fixture coordinate, not a claimed upstream Git commit. To rebuild it, run the fixture's `build-package.ps1`; the script prints the resulting SHA-256 and refuses to overwrite an existing archive. Change the exact package version, archive, digest, and selected Domain together only as part of an intentional migration.
