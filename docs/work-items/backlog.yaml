@@ -77,6 +77,19 @@ packages:
       - CONTRIBUTING states the branch naming, one package per PR, no pushes to a PR head during CI, and the merge order.
       - The pull-request template asks for the package ID, zone and acceptance evidence.
 
+  - id: OPS-05
+    title: One backlog; retire old queues and keep their value
+    stream: OPS
+    wave: 0
+    status: review
+    owner: integrator
+    branch: docs/single-backlog
+    pr: 105
+    zone: docs-entry
+    acceptance:
+      - Only docs/work-items/backlog.yaml holds work-package status; the Product Readiness records and old workstream packages are removed from main.
+      - Their lasting value lives in the lessons survey, the A01 validation record and the research page; every reference points to current documents.
+
   # --- PLAY: case studies and playground --------------------------------
   - id: PLAY-01
     title: Commit the playground and bring it onto main
@@ -175,6 +188,8 @@ packages:
     depends_on: [PLAY-02, PLAY-04, PLAY-05]
     needs_owner: Freeze of the study protocol, cases and budget.
     zone: free
+    inputs:
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     acceptance:
       - Results answer the register's central evaluation question (DEC-009) for the chosen case, with failure classes separated.
 
@@ -204,6 +219,8 @@ packages:
     inputs:
       - docs/concepts/register.md#enh-005-exchangeable-executor-for-the-delegated-method
       - docs/work-items/surveys/tests-and-ci-20261010.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
+      - docs/validation/a01-native-smoke-20261010.md
     acceptance:
       - Work packets can be exported and external candidates and review verdicts submitted, with the same validation as in-process results.
       - Git candidates can include deletions; plans no longer depend on executor fingerprints.
@@ -229,8 +246,7 @@ packages:
     zone: runtime
     note: Former Product Readiness item P11.
     inputs:
-      - docs/work-items/product-readiness/backlog.yaml (P11)
-      - docs/work-items/product-readiness/integration-progress-20261009.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md (former P11 and helper limits)
     acceptance:
       - Helpers can return read-only inspection or analysis results without authoring files, with the same scope and review rules.
 
@@ -302,6 +318,7 @@ packages:
     inputs:
       - origin archive/wip/readiness-candidate-fix-20261010 (uncommitted App Server and full-verify changes)
       - docs/work-items/surveys/cli-mcp-app-server-20261010.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     scope: >-
       The product branches for App Server, MCP and workspaces are already on main. Review whether the
       Codex App Server path remains the right inner transport next to the exchangeable executor, and
@@ -325,7 +342,7 @@ packages:
     title: Question catalog and impact correctness tests
     stream: KG
     wave: 1
-    status: ready
+    status: active
     owner: kg
     depends_on: [KG-00]
     zone: model
@@ -373,6 +390,7 @@ packages:
     zone: free
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     acceptance:
       - One fixture helper with isolated git configuration, fixed identity and dates, short temporary paths and retrying cleanup replaces the per-package helpers.
       - The suite passes under a hostile global git configuration and in 20 consecutive runs.
@@ -401,6 +419,7 @@ packages:
     zone: runtime
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     acceptance:
       - Runtime end-to-end tests live in their own package or tag, share a fixture template and run in parallel.
 
@@ -415,6 +434,8 @@ packages:
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - pull request 92 (exchange executor and fault-injection tests)
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
+      - docs/validation/a01-native-smoke-20261010.md
     acceptance:
       - Scripted scenarios drive the real binary through plan, run, review, repair, verify and apply, including fault injection (out-of-scope write, forgotten file, integration defect) and resume after a kill.
 
@@ -428,6 +449,7 @@ packages:
     zone: runtime
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     acceptance:
       - Timers are injected or faked; a flake report comes from test results without automatic retries that hide failures.
 
@@ -460,6 +482,7 @@ packages:
     zone: ci
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     decision: DEC-013
     acceptance:
       - The required pull-request gate runs on Linux and stays under about 15 minutes.
@@ -475,6 +498,7 @@ packages:
     zone: ci
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     acceptance:
       - Packaged, bundle and onboarding smoke run from one Go driver in CI and release workflows; the duplicated bash and PowerShell steps are removed.
 
@@ -489,6 +513,7 @@ packages:
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/case-playground-20261010.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     acceptance:
       - The playground's provider-free smoke runs nightly in a Linux container against the main build.
       - A real-provider smoke is available manually with a cost cap; no secrets on pull requests.
@@ -501,6 +526,8 @@ packages:
     owner: qa
     decision: DEC-013
     zone: ci
+    inputs:
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     acceptance:
       - Owner decides how Windows is supported (smoke tier, nightly full suite or none) based on the Linux-first results.
 
@@ -509,13 +536,14 @@ packages:
     title: Continuous bug hunt with verified findings
     stream: BUG
     wave: 1
-    status: ready
+    status: active
     owner: bughunter
     zone: free
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - origin archive/wip/readiness-candidate-fix-20261010
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md (open defect: a failed helper Close leaves cleanup-pending that nothing reconciles)
     scope: >-
       Read-only sweeps with subagents per area; every finding is independently verified before it is
       reported; fixes go out as small packages that respect zone ownership. Inputs include the suspected
@@ -549,6 +577,7 @@ packages:
     zone: interface
     inputs:
       - docs/work-items/surveys/agent-files-20261010.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     acceptance:
       - Generated AGENTS.md, CLAUDE.md and skills use the new verbs; a test fails if generated text names a command or tool that does not exist.
       - Runtime pins in generated onboarding text come from one data source (moved here from AGENT-01).
@@ -561,6 +590,8 @@ packages:
     owner: interface
     depends_on: [AGENT-02]
     zone: interface
+    inputs:
+      - docs/research/optional-research-r01-r03-20261009.md
     note: Former follow-up R03-F01.
     acceptance:
       - Versioned defaults drive generated provider guidance with model-to-output coverage.
@@ -577,6 +608,7 @@ packages:
     zone: free
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     acceptance:
       - One page lists every package with layer, purpose and owning document; a test fails when a package is missing or extra.
 
@@ -611,7 +643,7 @@ packages:
     title: Remove the canonical projection alpha
     stream: ARCH
     wave: 1
-    status: ready
+    status: active
     owner: cleaner
     decision: DEC-014
     zone: legacy
@@ -657,6 +689,7 @@ packages:
     inputs:
       - docs/work-items/surveys/agent-files-20261010.md
       - docs/work-items/surveys/code-architecture-20261010.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     acceptance:
       - The repository has a .markitect/project.yaml model that checks green; AGENTS.md, CI and hooks use only current verbs.
 
@@ -767,6 +800,8 @@ packages:
       - origin archive/wip/government-assessment-untracked-docs-20261010 (refinement plan, independent assessment, knowledge-graph plan)
       - origin archive/wip/marketing-notes-20261010 (marketing research log)
       - origin archive/codex/markitect-historian-working-history
+      - docs/research/optional-research-r01-r03-20261009.md
+      - docs/work-items/surveys/product-readiness-lessons-20261010.md
     scope: >-
       Earlier plans, assessments and logs that are not on main (refinement plan, independent assessment,
       knowledge-graph plan, marketing log, historian notes) are inputs only. Check each idea against

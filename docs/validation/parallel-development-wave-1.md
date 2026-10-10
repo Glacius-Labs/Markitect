@@ -4,7 +4,7 @@ Status: all ten workstream assignments closed as integrated source/tests/reports
 
 ## Fixed baseline and gates
 
-All workstreams start from `0ba7a7218f2ceae65b8db90bb8133c2ffa583ada`, the PR 60 preparation merge. [Main CI 37144006754](https://github.com/Glacius-Labs/Markitect/actions/runs/37144006754) passed Windows, Linux and source-artifact gates at that exact commit; verified again before dispatch. The [workstream specifications](../workstreams/README.md), [shared contracts](../development/shared-contracts.md) and [constitution](../engineering-constitution.md) are implementer authority. Earlier proposals remain design inputs.
+All workstreams start from `0ba7a7218f2ceae65b8db90bb8133c2ffa583ada`, the PR 60 preparation merge. [Main CI 37144006754](https://github.com/Glacius-Labs/Markitect/actions/runs/37144006754) passed Windows, Linux and source-artifact gates at that exact commit; verified again before dispatch. The workstream specifications (retired on 10 October 2026; in git history), [shared contracts](../development/shared-contracts.md) and [constitution](../engineering-constitution.md) are implementer authority. Earlier proposals remain design inputs.
 
 ## Assignments and live integration record
 

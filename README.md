@@ -97,7 +97,7 @@ Native instructions guide cooperation but do not prevent a process with ordinary
 
 ## Current source status and compatibility
 
-The combined A01 native smoke passed for source `cdd30b0efc540f151404dabe86b022275dc40d83`. That result is tied to its recorded source and does not establish human semantic acceptance or productivity benefit. The [roadmap](docs/implementation-plan.md) and its [backlog](docs/work-items/backlog.yaml) own current direction and status; the [acceptance ledger](docs/work-items/product-readiness/evidence/native-acceptance-ledger.yaml) records run details.
+The combined A01 native smoke passed for source `cdd30b0efc540f151404dabe86b022275dc40d83`. That result is tied to its recorded source and does not establish human semantic acceptance or productivity benefit. The [roadmap](docs/implementation-plan.md) and its [backlog](docs/work-items/backlog.yaml) own current direction and status; the [A01 validation record](docs/validation/a01-native-smoke-20261010.md) records the run and its limits.
 
 Earlier Project/Domain and canonical Projection contracts, released examples, and historical research are preserved. Existing projects need an explicit migration; the model-first workflow does not silently reinterpret old files. Use the [compatibility reference](docs/usage.md#legacy-projectdomain-cli-compatibility) and [distribution guide](integration/README.md) to maintain a released installation.
 <details>

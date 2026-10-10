@@ -1,7 +1,0 @@
-# R01 — Jev / strongly typed AI
-
-Research first; this item does not gate the usable Main baseline. Identify the actual Jev project/product intended by the user's strongly typed AI description, verify primary source/version/license/maintenance/dependencies, and disclose ambiguity rather than researching an unrelated name. Read existing deferred notes as history, not as proof that integration is needed.
-
-Evaluate concrete uses against current Markitect model/compiler/Host/adapter responsibilities: typed agent requests/results, model-change proposals, rule/claim/evidence validation or other demonstrable benefit. Distinguish type/schema correctness from semantic correctness, actual code conformance and human intent. Compare reuse against current deterministic checks and schema validation; avoid a second ontology or workflow engine merely to adopt a library.
-
-Deliver a concise source-bound decision brief: actual capabilities, two or three concrete fit/non-fit examples, integration boundary, maintenance/runtime/license cost, drawbacks and recommendation (use/defer/reject). If promising, propose the smallest separately reviewable experiment and observable acceptance; do not execute provider calls, install dependencies, modify product code or infer implementation approval. No Case Studies, paid commitment or secret/private evaluation access. New research chat works read-only from an exact committed Designer source and reports once to Overseer.

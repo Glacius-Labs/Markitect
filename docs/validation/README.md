@@ -1,6 +1,6 @@
 # Validation records
 
-These reports preserve the exact scope, inputs, source references, and outcomes stated by each assessment. A report is evidence for that recorded run; its date or a `pending`/`NOT RUN` statement does not describe today's source status. Use the [implementation roadmap](../implementation-plan.md) for current source scope, the [Product Readiness backlog](../work-items/product-readiness/backlog.yaml) for work-item status, and the [production assessment](../production-assessment.md) for release-asset claims. The [work-items map](../work-items/README.md) explains the separate queue and evidence owners.
+These reports preserve the exact scope, inputs, source references, and outcomes stated by each assessment. A report is evidence for that recorded run; its date or a `pending`/`NOT RUN` statement does not describe today's source status. Use the [implementation roadmap](../implementation-plan.md) for current source scope, the [backlog](../work-items/backlog.yaml) for work-item status, and the [production assessment](../production-assessment.md) for release-asset claims. The [work-items map](../work-items/README.md) routes the backlog and its surveys.
 
 ## Project workflow and integration reports
 
@@ -10,6 +10,7 @@ These reports preserve the exact scope, inputs, source references, and outcomes 
 - [Managed project operations validation — 9 October 2026](project-operations-2026-10-09.md)
 - [Native project delivery validation — 9 October 2026](project-native-delivery-2026-10-09.md)
 - [Native Codex checkpoint and shared contracts — 9 October 2026](project-native-work-2026-10-09.md)
+- [A01 native smoke — 10 October 2026](a01-native-smoke-20261010.md)
 - [Public Classic Commerce entrypoint validation](classic-commerce-entrypoint.md)
 - [Standard operating model validation](standard-operating-model.md)
 

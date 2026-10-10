@@ -24,7 +24,6 @@ spec:
     - src/internal/host/projectworkspace
     - src/internal/host/projectapp
     - src/internal/host/codexappserver
-    - docs/work-items/product-readiness
     - docs/validation/classic-commerce-entrypoint.md
     - examples/classic-commerce
     - src/internal/host/canonical_controller_apply_receipt.go
@@ -2359,38 +2358,6 @@ spec:
       owner: project-world-validation
     - path: src/internal/host/shared_helpers.go
       owner: host-write-identity
-    - path: docs/work-items/product-readiness/P01-current-checkpoint.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P02-shared-contracts.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P03-workspaces.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P04-app-server.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P05-mcp.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P06-agent-lifecycle.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P07-user-workflow.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P08-repository.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P09-readiness.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P10-main.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/fresh-chat-handoff.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/R01-jev.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/R02-knowledge-graph.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/R03-agent-guidance.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/research-results-20261009.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/source-handoff-20261009.md
-      owner: project-world-implementation
     - path: src/internal/host/projectworkspace/contracts.go
       owner: project-world-implementation
     - path: src/internal/host/projectworkspace/contracts_test.go
@@ -2423,8 +2390,6 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectapp/setup.go
       owner: project-world-implementation
-    - path: docs/work-items/product-readiness/integration-progress-20261009.md
-      owner: project-world-implementation
     - path: src/internal/host/projectapp/model.go
       owner: project-world-implementation
     - path: src/internal/host/projectapp/model_test.go
@@ -2447,8 +2412,6 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/mcp/mcp_test.go
       owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P05-mcp-handoff-20261009.md
-      owner: project-world-implementation
     - path: src/internal/host/projectworkspace/git_service.go
       owner: project-world-implementation
     - path: src/internal/host/projectworkspace/git_inventory.go
@@ -2464,10 +2427,6 @@ spec:
     - path: src/internal/host/projectworkspace/git_hardening_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectworkspace/git_recovery_test.go
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P03-workspaces-handoff-20261009.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P04-adapter-handoff-20261009.md
       owner: project-world-implementation
     - path: src/internal/host/projectrun/transport_config_test.go
       owner: project-world-implementation
