@@ -15,7 +15,7 @@ native_acceptance:
   main_required_jobs: [A01]
   deferred_not_main_gate_jobs: [A02, A03]
   renewal_policy_revision: renewable-execution-budget-20261010
-  renewal_policy_status: active_simplified_a01_actual_21_failed_full_verify_incomplete_no_apply_source_delta_pending_next_profile_prospective
+  renewal_policy_status: active_simplified_a01_actual_22_failed_initial_verifier_subject_alias_no_full_manager_verify_no_apply_fresh_native_revalidation_pending
   renewal_policy_authority_sha256: a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7
   per_batch_limits:
     max_role_wall_seconds: 7200
@@ -670,20 +670,21 @@ native_acceptance:
     separate_open_lifecycle_gap_focused_negative_result: passed_5_392s_on_uncommitted_fix_tree; proves_cleanup_pending_and_child_preserved_after_injected_close_failure_only_not_automatic_resume_reconciliation
     separate_open_lifecycle_gap_next: lifecycle_owner_to_supply_follow_up_negative_command_before_investigating_existing_owned_close_recovery
   next_batch:
-    status: no_followup_batch_allocated_actual_21_full_verify_incomplete_source_delta_pending_next_profile_prospective
+    status: actual22_failed_project_verify_host_rejected_subject_alias_no_full_manager_verify_no_apply; fresh_native_revalidation_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
-    new_batch_pins: none
+    new_batch_pins: actual22_terminal_record_d0d1e41e84d890256bf6786c5eceee3df7966ec51b0ffd2ef6ceb13f748abb81; next_a01_requires_fresh_clean_build_readiness_and_plan
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
     no_eighteenth_actual_claimed: false
     no_nineteenth_actual_claimed: false
     no_twentieth_actual_claimed: false
     no_twenty_first_actual_claimed: false
-    no_twenty_second_actual_claimed: true
-    owner_repair_in_progress: false
-    owner_repair_status: actual21_original_root_recovery_passed_without_replay; three_work_reviews_and_one_integration_review_passed; full_verify_incomplete_docs_and_root_quoted_subjects_truncated_source_event_limit_reached_app_turn_interrupted_host_lifecycle_unknown_preserved; configured_python_check_and_initial_verifier_passed; full_verify_exit_1_no_apply; initial_codexappserver_package_passed_before_final_protocol_test_delta_89_460s_full_verify_projectrun_regressions_passed_94_839s_protocol_alias_recovery_output_schema_focused_tests_passed_1_037s_final_go_vet_passed_3_113s_rootcheck_and_managed_artifacts_passed_full_verify_context_review_clear_protocol_finding_fixed_alias_final_review_clear_source_committed_1a84f921846fc573411555d11778999d97fbaa1b_protocol_finding_closed_generic_compatible
-    repair: prepare a clean candidate build and fresh existing-profile Runtime/readiness/Plan using the separately verified 128MiB event limit (do not retrofit Actual21 Plan), retain 4h batch and 1h role bounds; preserve Actual21 failed_not_passed
+    no_twenty_second_actual_claimed: false
+    no_twenty_third_actual_claimed: true
+    owner_repair_in_progress: true
+    owner_repair_status: Actual22_same_binary_root_recovery_and_resume_integrated_without_replay; three_work_reviews_and_one_integration_review_passed; normal_Verifier_typed_report_passed_but_Host_rejected_four_paraphrased_subjects_including_repository_README; configured_check_passed_but_no_valid_Verifier_pass; no_full_manager_audits_or_Apply; narrow_subject_alias_fix_committed_41a6a0fdd0392f2bf13af1f9576d48eee4e94eb6_independently_reviewed_and_validated_focused_1_080s_full_codexappserver_73_157s_vet_3_295s; fresh_native_A01_revalidation_pending
+    repair: run a fresh normal A01 on a clean binary/readiness/Plan after the committed subject alias correction; do not replay Actual22; retain 4h batch and 1h role bounds; Actual22 remains failed_not_passed
     deferred_helper_followup: P11; outside_current_A01_implementation_allocation; future_bounded_design_under_existing_user_mandate; no_general_readonly_helper_capability_or_framework_implemented
     actual_16_terminal_record_sha256: 0a9db024fba47cde9a9c2ffc34e096205cc9f25927c71ca2ae391a629dfae352
     actual_16_acceptance: not_passed
@@ -1139,7 +1140,7 @@ native_acceptance:
     apply_observed: false
     final_status: blocked_not_passed
     acceptance: not_passed
-  latest_actual:
+  attempt_21:
     batch_id: a01-authoring-helper-e23d702acbb9459f9abd20907886afed
     attempt_number: 21
     status: failed_full_verify_incomplete_no_apply
@@ -1231,6 +1232,118 @@ native_acceptance:
     source_delta_corrections: committed_1a84f921846fc573411555d11778999d97fbaa1b; alias_independent_review_clear; protocol_finding_closed_generic_compatible; focused_protocol_alias_recover_output_schema_tests_passed_1_037s; initial_codexappserver_package_passed_before_final_protocol_test_delta_89_460s; full_verify_projectrun_regressions_passed_94_839s; final_go_vet_passed_3_113s; rootcheck_and_managed_artifacts_passed; full_verify_context_review_clear
     next_profile_proposal: guarded_existing_profile_mutation_succeeded_max_event_bytes_16_mib_to_128_mib_uniform_across_7_profiles; runtime_sha256_58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574; edit_sha256_8ebb249e3f61f426a7fa6ed432788a433cf26d11c395906a2994338acb2f56bf; no_provider_started; fresh_readiness_and_plan_pending; do_not_retrofit_actual21_plan; retain_existing_4h_batch_and_1h_role_bounds
     acceptance: not_passed
+  latest_actual:
+    batch_id: a01-audit-aliases-0c12e067bcf14f48893688a852269418
+    attempt_number: 22
+    status: failed_project_verify_host_rejected_subject_alias_no_full_manager_verify_no_apply
+    private_record_sha256: d0d1e41e84d890256bf6786c5eceee3df7966ec51b0ffd2ef6ceb13f748abb81
+    terminal_reason: initial_verifier_noncanonical_subjects_rejected_before_full_manager_audits
+    allocated_utc: '2026-10-10T09:15:39.9867012Z'
+    hard_deadline_utc: '2026-10-10T13:15:39.9867012Z'
+    source_revision: 443057863ad4d2cb18b69b473033c9b5d5766706
+    validated_docs_revision: 443057863ad4d2cb18b69b473033c9b5d5766706
+    project_revision: 275baa9b830f1eee67cc901321a595002ffe0744
+    binary_sha256: 368eae53c6e843354eebdb2d89362f7178cb535c62598b712daea94eef9c47f2
+    plan_id: ccd5e731231f4b3198408563ad3ee18c
+    plan_sha256: e26fdd0abd80f1b269a0fe2cf7974c9ed9b1696ba603aa02de215efe60e55e7d
+    readiness_sha256: a39b2407a1442e68a65e29c27833ea220e60f8acbf7953fb636b0616c2ce7b08
+    runtime_sha256: 052722b34befab8cc7116e6467fffb99d3913652737296c18c952166fc9faf5d
+    runtime_file_sha256: 58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574
+    max_event_bytes: 134217728
+    runtime_profile_guarded_edit_sha256: 8ebb249e3f61f426a7fa6ed432788a433cf26d11c395906a2994338acb2f56bf
+    original_root_run_id: 3a2678aabd3ab5224d97a9c5ee1f8df7
+    original_root_workspace_id: bcae612da039866dfd8a84e99a7c538d
+    original_root_session_id: 01a1251d-2480-7490-91fa-fc9bcccbb478
+    original_root_turn_id: 01a1251d-2569-7f91-b336-b4ae7eef25ab
+    original_root_recovery: same_binary_original_turn_completed_and_integrated_state35_without_replay
+    original_root_typed_report_status: complete_integrated
+    original_root_workspace_closed_receipt_proposed: true
+    original_root_candidate_files_questions_risks: none
+    original_root_native_start_requests: 1
+    observer_id: 4edec0b4a1674b64bf65833f55c1ef91
+    observer_record: observer-logs/4edec0b4a1674b64bf65833f55c1ef91.observer.json
+    observer_workspace_id: bcae612da039866dfd8a84e99a7c538d
+    observer_workspace_journal_sha256: 0466a098a44571bf334079f091f446869eb5c294953a351f0c6deaf0c7fb53ca
+    observer_script_sha256: c6541846825115d328de2033c01a647644d2ad54c8aa128a934a397a9608265f
+    observer_interval_utc: 2026-10-10T09:15:58.4554553Z-2026-10-10T09:20:48.9535406Z
+    observer_exit_code: 2
+    observer_boundary_and_turn_terminal_observed: true
+    observer_result: original_root_exited_with_rename_lock_held; recovered_without_replay
+    state_41_digest: sha256:78945d2a5e68ae00f9e7b513888fa1aa71fd22201881e39c58139aa8d8d39c24
+    state_41_role_run_ids: [4a86a222b93b39403c55b73fcda8d6ce, f623ceb38dd2bafe1a38d9255db7c27e, 8edaf8931724d119c85d31eb3b2d126a, 7adada620b1eb2c45d9188a964ed3efd, 347c9847886104ed45fff4e70fe1e89b, 3fd148780a0a8dcc995a2238af50a703, 3a2678aabd3ab5224d97a9c5ee1f8df7, 078bb63ff48c4d09197ed22a5ff8e0f5, 3a7b9df6caedab20af403228cad20ffd]
+    reviews_passed: three_work_reviews_plus_one_integration_review
+    source_docs_overlap_seconds: 34.130486
+    source_run_id: 7adada620b1eb2c45d9188a964ed3efd
+    source_workspace_handle_id: a6fa5001e14d49ffe55de844af49156b
+    source_native_session: 01a1251a-7ba5-7cc1-86ef-809848d3b04e
+    source_native_turn: 01a1251a-7d33-7cf3-9b74-cb703ac9c86a
+    source_native_interval_utc: '09:17:35.7114304Z-09:18:58.3564249Z'
+    docs_run_id: 8edaf8931724d119c85d31eb3b2d126a
+    docs_workspace_handle_id: 4a4549a1a66e2b568a64661cc8753d5a
+    docs_native_session: 01a1251a-815e-7180-a158-4b952b589c7f
+    docs_native_turn: 01a1251a-835f-7c13-a73d-9c42b56b0dcd
+    docs_native_interval_utc: '09:17:37.2888314Z-09:18:11.4193174Z'
+    helper_dynamic_tool_call_id: exec-dd1fee69-ff25-4ff8-956c-cddd42ca80ba
+    helper_reservation_request_id: helper-exec-dd1fee69-ff25-4ff8-956c-cddd42ca80ba
+    helper_protocol_request_id: 499ebc6cd8aff47cc94ef6b30d4fead4
+    helper_parent_run_id: 7adada620b1eb2c45d9188a964ed3efd
+    helper_parent_workspace_id: a6fa5001e14d49ffe55de844af49156b
+    helper_parent_session: 01a1251a-7ba5-7cc1-86ef-809848d3b04e
+    helper_child_session: 01a1251a-b6c8-7853-9fcc-74959dac7927
+    helper_child_turn: 01a1251a-b7b7-7d61-8cf3-207a364dbbf9
+    helper_child_workspace_id: 781f8177c6aff54689277768283eac72
+    helper_native_interval_utc_approx: "2026-10-10T09:17:50Z-09:18:43Z; duration 52.882 seconds"
+    helper_delivery_utc: '2026-10-10T09:18:44.4993773Z'
+    helper_path: tests/test_greeting.py
+    helper_delivery_state: applied_and_closed
+    helper_delta_sha256: 7c011ec84e958f2cf8a51aab97c839b4285678f4c46cfdc4472f8d0c5014c46e
+    helper_content_sha256: 65867317371bc6a93a9e82d4546b6ceacbb4b5e2ed6ef9c618475d347d31608d
+    helper_specific_cost: unknown_not_separately_itemized
+    source_parent_cost_micros: 263451
+    source_parent_usage: 259539_in_1956_out_212736_cached
+    root_integrate_cost: unknown_no_estimate_available
+    state_41_revision: 41
+    state_41_status: failed
+    state_41_estimated_cost_micros: 1108840
+    batch_estimated_cost_micros: 1108840
+    cost_accounting: partial_observed_lower_bound_not_invoice; no_extra_helper_cost_added
+    role_start_requests: 9
+    helper_start_requests: 1
+    combined_start_requests: 10
+    native_provider_starts: 10
+    resume_command_record: observer-logs/76bce4ea298f4a8eb16ca57056fbaee9.command.json
+    resume_interval_utc: 2026-10-10T09:22:04.2509196Z-2026-10-10T09:22:54.1816293Z
+    resume_exit_code: 0
+    resume_command_started_provider: false
+    original_root_turn_replayed: false
+    resume_state: revision_35_integrated
+    separate_integration_review_report_id: 078bb63ff48c4d09197ed22a5ff8e0f5
+    separate_integration_review_workspace: 9b573a5fcc4cf40ec2aa1eb3a7832f00
+    separate_integration_review_session: 01a1251e-e808-7ab2-a1a8-35ecb5d987f5
+    separate_integration_review_turn: 01a1251e-e90d-7522-974f-3860bb411748
+    separate_integration_review_status: pass; provider_start_counted_in_role_totals
+    verify_command_id: 162a933e261a494ebc54317e8791f0ba
+    verify_command_record: observer-logs/162a933e261a494ebc54317e8791f0ba.command.json
+    verify_command_stdout_log: observer-logs/162a933e261a494ebc54317e8791f0ba.command.stdout.log
+    verify_command_stdout_sha256: a23f85f2728a4e33628859d729300bf667574e612e88fbb03c1c29c4bde6a6db
+    verifier_receipt_id: 3a7b9df6caedab20af403228cad20ffd
+    verify_command_interval_utc: '09:23:32.1756795Z-09:24:08.2054788Z'
+    verify_command_exit_code: 1
+    configured_check: passed
+    initial_verifier_typed_report: passed_but_host_rejected_unrelated_subject_repository_readme; not_a_validated_verifier_pass
+    verifier_rejected_subjects: repository_README; greeting_guide; greeting_implementation_and_tests; greeting_tests_check
+    verifier_observation_alias_correction: pending
+    full_manager_verify: not_started
+    full_manager_audits_started: false
+    apply_started: false
+    acceptance: not_passed
+    cumulative_combined_start_requests: 109
+    cumulative_native_provider_starts: 105
+    cumulative_estimated_cost_micros: 17251631
+    cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
+    prior_native_source_context_alias_fix: committed_and_technically_validated; not_exercised_by_actual22
+    current_source_delta: committed_41a6a0fdd0392f2bf13af1f9576d48eee4e94eb6; alias_independent_review_clear; focused_test_passed_1_080s; full_codexappserver_package_passed_73_157s; go_vet_passed_3_295s; native_A01_revalidation_pending
+    deferred_helper_followup: backlog_p11_outside_current_a01_allocation_future_bounded_design_under_existing_user_mandate
   prior_batch_history:
     revision: generous-native-limits-20261009
     max_role_wall_seconds: 3600
