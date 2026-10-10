@@ -2059,3 +2059,7 @@ Owner unchanged354b08ff/binary3d5b fresh Planf66bc6 normal Run accepts complete 
 ### Actual11 reaches native review, then fails phase-specific scope contract
 
 Owner root semantic report accepted; fresh native reviewer completed/README affirmed but reviewed not-yet-dispatched child source/tests/docs as missing and returned compound/outside-rootWork findings. Host strict scope rejection terminal before helper/siblings. Root read review.go: same guidance mentions delegation coverage for work/integrate although Phase is supplied; no raw actual receipt read this callback. Owner bounded phase-specific context correction underway, no guard weakening/fake PASS/replay/new grant. New2requests/2starts/748373partialestimate; closed cumulative16/13/4787145partial NOTinvoice preserved. Original native review session01a12350-fb94/turn01a12350-fce7 complete; full workflow still unaccepted.
+
+### Work versus Integration review correction clean and public
+
+Root verified clean local/exactpublic96424410 and read actual diff: Work own obligations/currentcandidate plus separate future delegation artifacts; Integration includes actual delivered direct-child paths/required child artifacts; cache binds phase/context/delegations, strict findings unchanged. Owner independent Services review/focused tests/compile-vet-check PASS, binary4882c050 reported. Actual11 terminalhistory90d21b26/16requests13native4787145partial retained. Normal Readiness/Plan refresh then fresh actual12 under standing authority, no repeated order/new grant/case/Main. Full workflow unaccepted.

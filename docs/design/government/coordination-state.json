@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T01:00:34.433288+00:00",
+  "updatedUtc": "2026-10-10T01:12:34.244129+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL11_SEMANTIC_ROOT_ACCEPTED_REVIEW_PHASE_SCOPE_MISMATCH_TERMINAL_OWNER_CORRECTION",
+    "status": "PHASE_SPECIFIC_WORK_INTEGRATION_REVIEW_FIX_CLEAN_PUBLIC_OWNER_REFRESHING_ACTUAL12",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18096,6 +18096,16 @@
       "cumulativePartialEstimateMicros": 4787145,
       "costQualification": "Partial estimate, not invoice or efficiency evidence",
       "next": "Owner bounded phase-specific Work-vs-Integration review context correction under standing authority, preserve strict scope/no fabricated pass/no replay. No repeat Root order or new grant.",
+      "fullWorkflowAccepted": false
+    },
+    "phaseSpecificReviewCorrection": {
+      "sourceSha": "96424410c87366072adf16688aa56c38aba246a2",
+      "terminalHistoryCommit": "90d21b26",
+      "rootVerified": "Clean exact local/public SHA. Read review.go actual diff: Work own candidate/obligations and separately declared future delegatedArtifacts; Integration direct-child delivered paths and required child artifacts; digest now binds phase guidance/delegations/context. Strict finding guard untouched.",
+      "ownerReportedChecks": "Independent Services review no findings; focused context/pure-routing/scope/integration tests and compile-only/vet/canonical PASS; test ownership registered.",
+      "binarySha256OwnerReported": "4882c05044ffb40f76f8953b9bf7cae95344849138de764035b658cc7e5525dc",
+      "historyPreserved": "Actual11 terminal16requests/13native/4787145partial estimate, no helper/sibling/Verify/Apply/recovery.",
+      "next": "Owner normal final-frozen readiness/Plan refresh then fresh actual12 under existing authority. No new case/release/PR/Main action or RootGo/grant.",
       "fullWorkflowAccepted": false
     }
   }
