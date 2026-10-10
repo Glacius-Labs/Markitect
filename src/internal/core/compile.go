@@ -635,6 +635,10 @@ func validateSingleValue(value any, p Property, identity, path string, source So
 		if !hasNamespace || !hasName || !nsOK || !nameOK || !validNamespace(namespace) || !validIdentifier(name) {
 			return bad("reference.value", "reference requires an explicit namespace (empty is valid) and a valid name")
 		}
+		if p.Target == nil {
+			// The Schema check reports the missing target Kind as property.target.
+			return bad("reference.target-kind", "reference Property declares no target Kind")
+		}
 		target := *p.Target
 		if apiValue, exists := ref["apiVersion"]; exists {
 			api, ok := apiValue.(string)

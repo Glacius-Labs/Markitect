@@ -424,6 +424,30 @@ func TestCompileDiagnosticsAreStableAndOutputIsAtomic(t *testing.T) {
 	}
 }
 
+// BUG-01: a reference Property without a target Kind is a Schema error; a
+// Definition that uses it must yield diagnostics, not a nil dereference.
+func TestCompileReportsTargetlessReferenceWithoutPanicking(t *testing.T) {
+	schemas := []Schema{{APIVersion: domainAPI, Purpose: "Declares a broken reference.", Kinds: map[string]Kind{
+		"Thing": {Purpose: "Has a targetless link.", Properties: map[string]Property{
+			"link": {Purpose: "Link without target.", Type: TypeReference, MinCount: 0, MaxCount: 1},
+		}},
+	}}}
+	definitions := []Definition{{APIVersion: domainAPI, Kind: "Thing", Metadata: Metadata{Namespace: "x", Name: "a"}, Purpose: "First thing.", Spec: map[string]any{"link": map[string]any{"namespace": "x", "name": "a"}}}}
+	var model Model
+	var diagnostics []Diagnostic
+	func() {
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				t.Fatalf("Compile panicked: %v", recovered)
+			}
+		}()
+		model, diagnostics = Compile(schemas, definitions, "targetless")
+	}()
+	if !hasPropertyDiagnostic(diagnostics, "link", "property.target") || model.Digest != "" {
+		t.Fatalf("want property.target and no Model: digest=%q diagnostics=%#v", model.Digest, diagnostics)
+	}
+}
+
 func hasDiagnostic(values []Diagnostic, code string) bool {
 	for _, value := range values {
 		if value.Code == code {
