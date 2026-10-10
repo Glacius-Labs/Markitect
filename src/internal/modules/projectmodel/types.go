@@ -109,6 +109,8 @@ type Report struct {
 	// written maps each definition and property to how it is written, so Impact
 	// can see edits that change only the writing. Set only by Analyze.
 	written map[string]map[string]writtenProperty
+	// sources maps each definition to its model file. Set only by Analyze.
+	sources map[string]string
 }
 
 // writtenProperty compares the digest of a property as written with the

@@ -75,10 +75,10 @@ func TestImpactIsIndependentOfReportOrder(t *testing.T) {
 	}
 }
 
-// Every part of every definition is either projected, so Impact names the
-// definition as changed, or unprojected, so Impact widens to the declared
-// project. Each edit is paired with an unrelated projected change, next to
-// which an unprojected change used to be lost.
+// Every part of every definition is seen: Impact names the definition as
+// changed, purpose included (DEC-021), without widening to the whole project.
+// Each edit is paired with an unrelated change, next to which a purpose or
+// Decision change used to be lost.
 func TestImpactSeesEveryDefinitionPropertyChange(t *testing.T) {
 	model, files := fixture(t, true, true, true)
 	ref := func(kind, namespace, name string) map[string]any {
@@ -100,36 +100,33 @@ func TestImpactSeesEveryDefinitionPropertyChange(t *testing.T) {
 		checkKind:     {APIVersion: APIVersion, Kind: checkKind, Namespace: "orders", Name: "cancel-order-tests"},
 		decisionKind:  {APIVersion: APIVersion, Kind: decisionKind, Namespace: "inventory", Name: "release-once"},
 	}
-	edits := map[string]struct {
-		projected bool
-		edit      func(*core.Definition)
-	}{
-		"Manager.purpose":       {true, func(d *core.Definition) { d.Purpose = "Orders and returns." }},
-		"Manager.parent":        {true, func(d *core.Definition) { d.Spec["parent"] = ref(managerKind, "inventory", "inventory") }},
-		"Manager.owns":          {true, func(d *core.Definition) { d.Spec["owns"] = []any{"src/orders/", "src/returns/"} }},
-		"Manager.instructions":  {true, func(d *core.Definition) { d.Spec["instructions"] = "Keep returns consistent." }},
-		"Statement.purpose":     {false, func(d *core.Definition) { d.Purpose = "Order cancellation and refunds." }},
-		"Statement.category":    {true, func(d *core.Definition) { d.Spec["category"] = "workflow" }},
-		"Statement.description": {true, func(d *core.Definition) { d.Spec["description"] = "Cancel before packing." }},
-		"Statement.public":      {true, func(d *core.Definition) { d.Spec["public"] = true }},
-		"Statement.uses":        {true, func(d *core.Definition) { d.Spec["uses"] = []any{contract} }},
-		"Statement.requires":    {true, func(d *core.Definition) { delete(d.Spec, "requires") }},
-		"Artifact.purpose":      {false, func(d *core.Definition) { d.Purpose = "Cancellation and refund code." }},
-		"Artifact.role":         {true, func(d *core.Definition) { d.Spec["role"] = "documentation" }},
-		"Artifact.realizes":     {true, func(d *core.Definition) { d.Spec["realizes"] = []any{contract} }},
-		"Artifact.paths":        {true, func(d *core.Definition) { d.Spec["paths"] = []any{"src/orders/refund.go"} }},
-		"Artifact.checks":       {true, func(d *core.Definition) { delete(d.Spec, "checks") }},
-		"Artifact.required":     {true, func(d *core.Definition) { d.Spec["required"] = false }},
-		"Artifact.reason":       {true, func(d *core.Definition) { d.Spec["reason"] = "Refunds need it." }},
-		"Check.purpose":         {false, func(d *core.Definition) { d.Purpose = "Run refund tests." }},
-		"Check.command":         {true, func(d *core.Definition) { d.Spec["command"] = []any{"go", "test", "./orders", "-race"} }},
-		"Check.uses":            {true, func(d *core.Definition) { d.Spec["uses"] = []any{contract} }},
-		"Check.limitation":      {true, func(d *core.Definition) { d.Spec["limitation"] = "Does not prove refunds." }},
-		"Decision.purpose":      {false, func(d *core.Definition) { d.Purpose = "Why release is idempotent." }},
-		"Decision.subject":      {true, func(d *core.Definition) { d.Spec["subject"] = ref(statementKind, "orders", "cancel-order") }},
-		"Decision.decision":     {true, func(d *core.Definition) { d.Spec["decision"] = "Release at most once." }},
-		"Decision.reason":       {true, func(d *core.Definition) { d.Spec["reason"] = "Stock must stay exact." }},
-		"Decision.actor":        {true, func(d *core.Definition) { d.Spec["actor"] = ref(managerKind, "orders", "orders") }},
+	edits := map[string]func(*core.Definition){
+		"Manager.purpose":       func(d *core.Definition) { d.Purpose = "Orders and returns." },
+		"Manager.parent":        func(d *core.Definition) { d.Spec["parent"] = ref(managerKind, "inventory", "inventory") },
+		"Manager.owns":          func(d *core.Definition) { d.Spec["owns"] = []any{"src/orders/", "src/returns/"} },
+		"Manager.instructions":  func(d *core.Definition) { d.Spec["instructions"] = "Keep returns consistent." },
+		"Statement.purpose":     func(d *core.Definition) { d.Purpose = "Order cancellation and refunds." },
+		"Statement.category":    func(d *core.Definition) { d.Spec["category"] = "workflow" },
+		"Statement.description": func(d *core.Definition) { d.Spec["description"] = "Cancel before packing." },
+		"Statement.public":      func(d *core.Definition) { d.Spec["public"] = true },
+		"Statement.uses":        func(d *core.Definition) { d.Spec["uses"] = []any{contract} },
+		"Statement.requires":    func(d *core.Definition) { delete(d.Spec, "requires") },
+		"Artifact.purpose":      func(d *core.Definition) { d.Purpose = "Cancellation and refund code." },
+		"Artifact.role":         func(d *core.Definition) { d.Spec["role"] = "documentation" },
+		"Artifact.realizes":     func(d *core.Definition) { d.Spec["realizes"] = []any{contract} },
+		"Artifact.paths":        func(d *core.Definition) { d.Spec["paths"] = []any{"src/orders/refund.go"} },
+		"Artifact.checks":       func(d *core.Definition) { delete(d.Spec, "checks") },
+		"Artifact.required":     func(d *core.Definition) { d.Spec["required"] = false },
+		"Artifact.reason":       func(d *core.Definition) { d.Spec["reason"] = "Refunds need it." },
+		"Check.purpose":         func(d *core.Definition) { d.Purpose = "Run refund tests." },
+		"Check.command":         func(d *core.Definition) { d.Spec["command"] = []any{"go", "test", "./orders", "-race"} },
+		"Check.uses":            func(d *core.Definition) { d.Spec["uses"] = []any{contract} },
+		"Check.limitation":      func(d *core.Definition) { d.Spec["limitation"] = "Does not prove refunds." },
+		"Decision.purpose":      func(d *core.Definition) { d.Purpose = "Why release is idempotent." },
+		"Decision.subject":      func(d *core.Definition) { d.Spec["subject"] = ref(statementKind, "orders", "cancel-order") },
+		"Decision.decision":     func(d *core.Definition) { d.Spec["decision"] = "Release at most once." },
+		"Decision.reason":       func(d *core.Definition) { d.Spec["reason"] = "Stock must stay exact." },
+		"Decision.actor":        func(d *core.Definition) { d.Spec["actor"] = ref(managerKind, "orders", "orders") },
 	}
 	// A new schema property needs a row here, so it cannot be silently unprojected.
 	for kind, k := range Schema().Kinds {
@@ -139,13 +136,13 @@ func TestImpactSeesEveryDefinitionPropertyChange(t *testing.T) {
 			}
 		}
 	}
-	for name, tc := range edits {
+	for name, edit := range edits {
 		t.Run(name, func(t *testing.T) {
 			kind := name[:strings.Index(name, ".")]
 			definitions := copyDefinitions(baseModel.Definitions)
 			for i := range definitions {
 				if definitions[i].Identity().Key() == targets[kind].Key() {
-					tc.edit(&definitions[i])
+					edit(&definitions[i])
 				}
 				if definitions[i].Kind == managerKind && definitions[i].Metadata.Namespace == "" {
 					definitions[i].Purpose = "Root project manager for the shop."
@@ -156,11 +153,13 @@ func TestImpactSeesEveryDefinitionPropertyChange(t *testing.T) {
 				t.Fatalf("compile candidate: %+v", diagnostics)
 			}
 			impact := Impact(base, Analyze(candidateModel, files))
-			if tc.projected && !contains(impact.ChangedDefinitions, targets[kind].Key()) {
-				t.Fatalf("projected change was not named: changed=%v", impact.ChangedDefinitions)
+			if !contains(impact.ChangedDefinitions, targets[kind].Key()) {
+				t.Fatalf("change was not named: changed=%v unknown=%v", impact.ChangedDefinitions, impact.Unknown)
 			}
-			if !tc.projected && (len(impact.Unknown) == 0 || !strings.HasPrefix(impact.Unknown[0], "model digest changed beyond")) {
-				t.Fatalf("unprojected change was lost next to a projected one: unknown=%v", impact.Unknown)
+			for _, u := range impact.Unknown {
+				if strings.HasPrefix(u, "model digest changed") {
+					t.Fatalf("a nameable change widened to the whole project: %v", impact.Unknown)
+				}
 			}
 		})
 	}
@@ -269,8 +268,11 @@ func TestImpactNeverShrinksWhenChangesCombine(t *testing.T) {
 		check(t, "reorder next to another statement's edit", base, []projectEdit{reversed(0)}, []projectEdit{description(3)})
 		check(t, "explicit default next to an edit of the same statement", base, []projectEdit{implicit(0)}, []projectEdit{description(0)})
 		check(t, "reorder and addition in one list", base, []projectEdit{reversed(0)}, []projectEdit{addUse})
-		if alone := Impact(base.analyze(t, nil), base.with(reversed(0)).analyze(t, nil)); len(alone.Unknown) == 0 {
-			t.Fatal("a reordered uses list alone no longer widens; the cases above would pass vacuously")
+		// DEC-021: alone, the reorder routes its statement narrowly; the cases above
+		// would pass vacuously if it routed nothing.
+		statementID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Name: "sa"}).Key()
+		if alone := Impact(base.analyze(t, nil), base.with(reversed(0)).analyze(t, nil)); len(alone.Unknown) != 0 || len(alone.ChangedDefinitions) != 0 || !contains(alone.AffectedStatements, statementID) {
+			t.Fatalf("a reordered uses list alone is not routed narrowly: changed=%v statements=%v unknown=%v", alone.ChangedDefinitions, alone.AffectedStatements, alone.Unknown)
 		}
 	})
 	t.Run("generated projects", func(t *testing.T) {

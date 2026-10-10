@@ -18,7 +18,7 @@ type definitionIndex struct {
 }
 
 func Analyze(model core.Model, inventory []File) Report {
-	r := Report{APIVersion: APIVersion, ModelDigest: model.Digest, Status: "succeeded", unprojected: map[string]string{}, written: map[string]map[string]writtenProperty{}}
+	r := Report{APIVersion: APIVersion, ModelDigest: model.Digest, Status: "succeeded", unprojected: map[string]string{}, written: map[string]map[string]writtenProperty{}, sources: map[string]string{}}
 	idx := definitionIndex{byID: map[string]core.Definition{}, byKind: map[string][]core.Definition{}}
 	kinds := Schema().Kinds
 	for _, d := range model.Definitions {
@@ -27,6 +27,7 @@ func Analyze(model core.Model, inventory []File) Report {
 		idx.byKind[d.Kind] = append(idx.byKind[d.Kind], d)
 		r.unprojected[id] = unprojectedDigest(d)
 		r.written[id] = writtenProperties(d, kinds[d.Kind])
+		r.sources[id] = d.Source.Path
 	}
 	for _, d := range idx.byKind[managerKind] {
 		spec := d.Spec
