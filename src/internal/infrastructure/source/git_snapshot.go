@@ -63,18 +63,17 @@ func loadCommit(root, commit string, s *snapshot.Snapshot, limits Limits) error 
 			return errors.New("malformed git ls-tree header")
 		}
 		mode, kind, oid := fields[0], fields[1], fields[2]
-		blobSize, parseErr := strconv.ParseInt(fields[3], 10, 64)
-		if parseErr != nil || blobSize < 0 {
-			return fmt.Errorf("invalid Git blob size for %q", string(name))
-		}
 		p := string(name)
-		if excludedFilePath(p) {
+		gitlink := kind == "commit" || mode == "160000"
+		// A gitlink is a directory in the working tree, so it is skipped
+		// wherever the working-tree reader would skip that directory.
+		if excludedFilePath(p) || (gitlink && excludedDirectoryPath(p)) {
 			continue
 		}
 		if err := validateRepoPath(p); err != nil {
 			return err
 		}
-		if kind == "commit" || mode == "160000" {
+		if gitlink {
 			return fmt.Errorf("Git submodule is not a source file: %q", p)
 		}
 		if mode == "120000" {
@@ -82,6 +81,11 @@ func loadCommit(root, commit string, s *snapshot.Snapshot, limits Limits) error 
 		}
 		if kind != "blob" || (mode != snapshot.RegularMode && mode != snapshot.ExecutableMode) {
 			return fmt.Errorf("unsupported Git tree entry %q (mode %s, type %s)", p, mode, kind)
+		}
+		// Only blobs carry a size; gitlinks report "-".
+		blobSize, parseErr := strconv.ParseInt(fields[3], 10, 64)
+		if parseErr != nil || blobSize < 0 {
+			return fmt.Errorf("invalid Git blob size for %q", p)
 		}
 		if blobSize > limits.MaxFileBytes {
 			return fmt.Errorf("source file %q exceeds per-file limit", p)
