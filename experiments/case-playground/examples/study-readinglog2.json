@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "id": "study-readinglog2",
+  "case": "readinglog2",
+  "arms": ["conventional", "markitect"],
+  "firstArm": "conventional",
+  "pairs": 1,
+  "agent": {
+    "kind": "codex",
+    "codexVersion": "0.162.0",
+    "model": "gpt-6-luna",
+    "effort": "high",
+    "maxSubagents": 3
+  },
+  "limits": {"stationSeconds": 5400, "totalSeconds": 21600},
+  "container": {"cpus": 4, "memory": "8g", "pidsLimit": 2048},
+  "markitect": {"commit": "424ae9dd"},
+  "reviewers": ["codex", "claude"]
+}

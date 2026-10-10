@@ -37,7 +37,7 @@ import tempfile
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from . import assess, codex_agent, lifecycle, methods, reviewers
 from . import report as report_module
@@ -48,6 +48,7 @@ EVALUATION = ROOT / "evaluation"
 CONTAINER_ROOT = Path("/assess")
 SECRET_CODEX = "/assess/secrets/codex-auth.json"
 SECRET_CLAUDE = "/assess/secrets/claude-token"
+REVIEWER_LOGIN = reviewers.LOGIN_COPY.as_posix()  # the reviewers' working copy, copied out by a study
 DEFAULT_CLAUDE_TOKEN = Path.home() / ".markitect-playground" / "claude-token"
 COPY_IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc")
 # The reference and the mutants that validate the holdouts are never staged, never shown.
@@ -640,7 +641,8 @@ def _review_phase(station: dict, entry: dict, ctx: dict) -> None:
                     name, ctx["config"]["reviewers"][name], prompt=prompt, schema=ctx["schema"],
                     schema_path=bundle / "reviewer-schema.json", repo_dir=repo, bundle_dir=bundle,
                     out_dir=folder / "reviewers" / name, codex_auth=ctx["codexAuth"],
-                    claude_token=ctx["claudeToken"], executable=ctx["executables"].get(name))
+                    claude_token=ctx["claudeToken"], executable=ctx["executables"].get(name),
+                    login_copy=ctx["codexAuth"])
                 _write_json(folder / "reviewers" / name / "review.json", record)
                 records[name] = record
         finally:
@@ -666,9 +668,12 @@ def _review_root() -> Path:
 
 def assess_run(run_dir: Path, evaluation_dir: Path, out_dir: Path, *, reviewer_names: list[str] | tuple = (),
                codex_auth: Path | None = None, claude_token_file: Path | None = None, in_dir: Path | None = None,
-               executables: dict | None = None, evaluation: dict | None = None, image: str | None = None) -> dict:
+               executables: dict | None = None, evaluation: dict | None = None, image: str | None = None,
+               login_copy: Path | None = None) -> dict:
     """Assess every station of one run folder; writes report.json, report.md and
-    product-findings.md into `out_dir` and returns the report."""
+    product-findings.md into `out_dir` and returns the report. The Codex reviewers share
+    one working copy of `codex_auth` (at `login_copy`; default reviewers.LOGIN_COPY in
+    the container, else a temporary one), which carries a refreshed login between waves."""
     run_dir, evaluation_dir, out_dir = (Path(p).resolve() for p in (run_dir, evaluation_dir, out_dir))
     out_dir.mkdir(parents=True, exist_ok=True)
     results = run_dir / "results"
@@ -696,6 +701,8 @@ def assess_run(run_dir: Path, evaluation_dir: Path, out_dir: Path, *, reviewer_n
     token = None
     if "claude" in names and claude_token_file is not None and Path(claude_token_file).is_file():
         token = Path(claude_token_file).read_text(encoding="utf-8").strip() or None
+    login = reviewers.working_login(codex_auth, login_copy) if "codex" in names else None
+    temporary_login = login is not None and login_copy is None and not codex_agent.container_mode()
     ctx: dict[str, Any] = {
         "out": out_dir, "case": case, "stations": stations, "groundTruth": ground_truth,
         "holdoutTimeout": float(config.get("holdoutTimeoutSeconds") or HOLDOUT_TIMEOUT),
@@ -706,7 +713,7 @@ def assess_run(run_dir: Path, evaluation_dir: Path, out_dir: Path, *, reviewer_n
         "promptMaxBytes": int(config.get("promptMaxBytes") or reviewers.DEFAULT_PROMPT_MAX_BYTES),
         "backlog": _read_text(case_inputs / "BACKLOG.md"), "rules": rules,
         "allItems": [item for wave in plan for item in wave] or [i for s in stations for i in s["items"]],
-        "codexAuth": Path(codex_auth) if codex_auth else None, "claudeToken": token,
+        "codexAuth": login, "claudeToken": token,
         "executables": executables or {}, "roles": None,
     }
     if names and not isinstance(ctx["schema"], dict):
@@ -729,6 +736,8 @@ def assess_run(run_dir: Path, evaluation_dir: Path, out_dir: Path, *, reviewer_n
             _review_phase(station, entry, ctx)
     finally:
         reviewers.remove_tree(work)
+        if temporary_login:
+            reviewers.remove_tree(login.parent)
     report = _report(run_dir, out_dir, manifest, host_record, run_report, runner_state, setup, results, entries,
                      ctx, evaluation_dir, case_eval, evaluation or {}, image, versions, errors)
     _write_json(out_dir / "report.json", report)
@@ -977,7 +986,7 @@ def render_product_findings(report: dict, setup: dict | None, results: Path, ana
              f"Case {_fmt(run.get('case'))}, method {_fmt(run.get('method'))}, Markitect "
              f"{_fmt(versions.get('markitectCommit'))} (binary sha256 {_fmt(versions.get('markitectSha256'))}). "
              "Collected from the run's records with the exact error text; the product side judges them. "
-             "A failed call is not necessarily a defect (a nonconforming `project_check` reports findings by "
+             "A failed call is not necessarily a defect (a nonconforming `check` reports findings by "
              "failing).", ""]
     if run.get("method") != "markitect":
         lines += ["This run did not use Markitect; nothing to report.", ""]
@@ -1099,17 +1108,8 @@ def inside_command(names: list[str], identity: dict, image_id: str | None, *, co
 
 
 def host_assess(args: argparse.Namespace) -> int:
-    from . import host
     run_dir = Path(args.run).resolve()
-    record = _read_json(run_dir / "host.json")
-    manifest = (record or {}).get("manifest")
-    if not isinstance(manifest, dict) or not (run_dir / "results").is_dir():
-        raise AssessError(f"not a run folder (needs host.json with a manifest and results/): {run_dir}")
     names = parse_reviewers(args.reviewers)
-    config = load_config(EVALUATION / "config.json")
-    missing = [name for name in names if name not in config["reviewers"]]
-    if missing:
-        raise AssessError(f"evaluation/config.json has no reviewer {', '.join(missing)}")
     fake = bool(args.fake_reviewers and names)
     if fake and (args.codex_auth or args.claude_token):
         raise AssessError("--fake-reviewers uses throwaway credentials; do not pass --codex-auth or --claude-token")
@@ -1126,13 +1126,40 @@ def host_assess(args: argparse.Namespace) -> int:
         if not claude_token.is_file():
             raise AssessError(f"Claude token file not found: {claude_token} (create it once with `claude setup-token`)")
         claude_token = claude_token.resolve()
+    exit_code, _result = assess_container(run_dir, names=names, codex_auth=codex_auth, claude_token=claude_token,
+                                          fake=fake, image=args.image, force=args.force, keep=args.keep_container)
+    print(f"assessment: {run_dir / 'assessment' / 'report.md'}")
+    return exit_code
+
+
+def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None = None,
+                     claude_token: Path | None = None, fake: bool = False, image: str | None = None,
+                     force: bool = False, keep: bool = False,
+                     before_remove: Callable[[str], None] | None = None) -> tuple[int, dict]:
+    """Assess one run folder in its own container and return (exit code, host record).
+
+    `codex_auth` and `claude_token` are login files mounted read-only (never opened here);
+    with `fake` the reviewers get throwaway credentials instead. `before_remove(container)`
+    runs after the container has stopped and before it is removed: the Codex reviewers'
+    working copy of the login is then at REVIEWER_LOGIN inside it.
+    """
+    from . import host
+    run_dir = Path(run_dir).resolve()
+    record = _read_json(run_dir / "host.json")
+    manifest = (record or {}).get("manifest")
+    if not isinstance(manifest, dict) or not (run_dir / "results").is_dir():
+        raise AssessError(f"not a run folder (needs host.json with a manifest and results/): {run_dir}")
+    config = load_config(EVALUATION / "config.json")
+    missing = [name for name in names if name not in config["reviewers"]]
+    if missing:
+        raise AssessError(f"evaluation/config.json has no reviewer {', '.join(missing)}")
     out = run_dir / "assessment"
     if out.exists() or out.is_symlink():
-        if not args.force:
+        if not force:
             raise AssessError(f"{out} already exists; pass --force to replace it")
         shutil.rmtree(out)
     name = f"mpg-assess-{manifest['id']}"
-    image = args.image or (record.get("image") or {}).get("id") or (record.get("image") or {}).get("tag")
+    image = image or (record.get("image") or {}).get("id") or (record.get("image") or {}).get("tag")
     if not image:
         raise AssessError("host.json names no image; pass --image")
     docker_version = host._capture(["docker", "version", "--format", "{{.Server.Version}}"])
@@ -1153,6 +1180,7 @@ def host_assess(args: argparse.Namespace) -> int:
         raise
     throwaway = Path(tempfile.mkdtemp(prefix="mpg-fake-credentials-")) if fake else None
     if throwaway is not None:
+        codex_auth = claude_token = None
         if "codex" in names:
             codex_auth = throwaway / "auth.json"
             codex_auth.write_text('{"fake": "login"}\n', encoding="utf-8")
@@ -1184,7 +1212,7 @@ def host_assess(args: argparse.Namespace) -> int:
         result["error"] = str(exc)
         print(f"error: {exc}", file=sys.stderr)
     finally:
-        host._finish_container(name, result, out, args.keep_container)
+        host._finish_container(name, result, out, keep, before_remove)
         if throwaway is not None:
             shutil.rmtree(throwaway, ignore_errors=True)
         result["endedAt"] = _utc()
@@ -1193,8 +1221,7 @@ def host_assess(args: argparse.Namespace) -> int:
         _write_json(out / "host.json", result)
         if result["handBack"].startswith(("failed", "skipped")):
             print(f"warning: {out} stays owned by root ({result['handBack']})", file=sys.stderr)
-    print(f"assessment: {out / 'report.md'}")
-    return exit_code
+    return exit_code, result
 
 
 # --- CLI ---------------------------------------------------------------------------------------

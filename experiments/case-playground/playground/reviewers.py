@@ -5,6 +5,8 @@ unprivileged agent user (as the current user in test mode) through
 `codex_agent.run_as_agent`, in a fresh home that holds only its own credential:
 `auth.json` in a fresh CODEX_HOME for Codex, the OAuth token in the child's
 environment (never in argv, files or logs) and a fresh CLAUDE_CONFIG_DIR for Claude.
+Every Codex reviewer starts from one root-only working copy of the login, which takes
+back a login the reviewer refreshed, so a refresh carries over to the next wave.
 
 Both reviewers get the identical prompt: the fixed `evaluation/common/reviewer-prompt.md`
 followed by the wave's inputs (released item text, project rules, ground-truth slice
@@ -27,7 +29,7 @@ import traceback
 from pathlib import Path
 from typing import Any
 
-from . import codex_agent
+from . import codex_agent, lifecycle
 from .lifecycle import read_text as _read_text
 
 PROVIDERS = ("codex", "claude")
@@ -44,6 +46,10 @@ OUTPUT_LIMIT = 4 << 20  # bytes of a reviewer answer that are read
 DEFAULT_PROMPT_MAX_BYTES = 100_000
 CLAUDE_ENV = {"DISABLE_AUTOUPDATER": "1", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"}
 REVIEWER_HOMES = Path("/var/lib/mpg-reviewers")  # container only; see _fresh_home
+# Container only: the root-only working copy of the Codex login (see working_login). The
+# host copies it out after the container stopped (the study's login hand-over).
+LOGIN_COPY = Path("/var/lib/mpg-login/codex-auth.json")
+LOGIN_MAX_BYTES = 64 << 10
 
 
 # --- schema validation (the subset reviewer-schema.json uses) --------------------------
@@ -278,6 +284,47 @@ def _fresh_home() -> Path:
     return home
 
 
+def working_login(src: Path | None, target: Path | None = None) -> Path | None:
+    """A root-only working copy of the mounted Codex login (0600 in a 0700 folder) that
+    every Codex reviewer starts from and that carries a refreshed login from wave to
+    wave. In the container it lies at LOGIN_COPY; elsewhere in a new temporary folder."""
+    if src is None or not Path(src).is_file():
+        return None
+    if target is None:
+        target = (LOGIN_COPY if codex_agent.container_mode()
+                  else Path(tempfile.mkdtemp(prefix="mpg-login-")) / "codex-auth.json")
+    target = Path(target)
+    target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    os.chmod(target.parent, 0o700)
+    with Path(src).open("rb") as handle:
+        _replace_private(target, handle.read())
+    return target
+
+
+def keep_login(home_auth: Path, working: Path) -> bool:
+    """Carry a reviewer's refreshed login into the working copy: only a regular file
+    (never a link) that the reviewer's user owns, of 1 B to 64 KiB."""
+    handle = lifecycle.open_plain(home_auth, codex_agent.agent_uid())
+    if handle is None:
+        return False
+    with handle:
+        data = handle.read(LOGIN_MAX_BYTES + 1)
+    if not 0 < len(data) <= LOGIN_MAX_BYTES:
+        return False
+    _replace_private(Path(working), data)
+    return True
+
+
+def _replace_private(target: Path, data: bytes) -> None:
+    """Write `data` to `target` atomically, readable by its owner only."""
+    temporary = target.with_name(target.name + ".new")
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_BINARY", 0), 0o600)
+    with os.fdopen(fd, "wb") as handle:
+        handle.write(data)
+    os.chmod(temporary, 0o600)
+    os.replace(temporary, target)
+
+
 def _file_key(path: Path) -> tuple[int, int] | None:
     try:
         info = os.stat(path, follow_symlinks=False)
@@ -296,8 +343,10 @@ def _read_capped(path: Path) -> str:
 
 def run_reviewer(provider: str, cfg: dict, *, prompt: str, schema: dict, schema_path: Path, repo_dir: Path,
                  bundle_dir: Path, out_dir: Path, codex_auth: Path | None = None,
-                 claude_token: str | None = None, executable: list[str] | None = None) -> dict:
-    """Run one reviewer on one wave and return its record; raw output stays in `out_dir`."""
+                 claude_token: str | None = None, executable: list[str] | None = None,
+                 login_copy: Path | None = None) -> dict:
+    """Run one reviewer on one wave and return its record; raw output stays in `out_dir`.
+    A Codex login the reviewer refreshed goes back into `login_copy` (see working_login)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     record: dict[str, Any] = {
         "provider": provider, "model": cfg.get("model"), "effort": cfg.get("effort"), "status": "error",
@@ -347,6 +396,8 @@ def run_reviewer(provider: str, cfg: dict, *, prompt: str, schema: dict, schema_
             record["error"] = f"cannot start the {provider} reviewer: {run['error']}"
         if provider == "codex":
             record["loginRefreshed"] = login is not None and _file_key(home / ".codex" / "auth.json") != login
+            if record["loginRefreshed"] and login_copy is not None:
+                record["loginKept"] = keep_login(home / ".codex" / "auth.json", Path(login_copy))
             raw = _read_capped(output) if output is not None else ""
             _codex_details(record, stdout)
         else:

@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "id": "study-fake-roombook",
+  "case": "roombook",
+  "stations": 2,
+  "arms": ["conventional", "markitect"],
+  "firstArm": "conventional",
+  "pairs": 1,
+  "agent": {
+    "kind": "fake",
+    "codexVersion": "0.162.0",
+    "model": "gpt-6-luna",
+    "effort": "high",
+    "maxSubagents": 3
+  },
+  "limits": {"stationSeconds": 120, "totalSeconds": 600},
+  "container": {"cpus": 2, "memory": "2g", "pidsLimit": 512},
+  "markitect": {"commit": "424ae9dd"},
+  "reviewers": ["codex", "claude"]
+}

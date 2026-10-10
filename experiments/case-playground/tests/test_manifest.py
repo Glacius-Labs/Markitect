@@ -168,6 +168,11 @@ class ManifestTests(unittest.TestCase):
             data = variant(method="markitect", markitect={"commit": "669cecd2"})
             self.assertRejectedIn(playground, data, "no Git checkout holds the playground")
             (checkout / ".git").write_text("gitdir: elsewhere\n", encoding="utf-8")  # a worktree's .git file
+            self.assertRejectedIn(playground, data, "not a Markitect checkout")
+            (checkout / "go.mod").write_text("module example.com/other\n", encoding="utf-8")
+            self.assertRejectedIn(playground, data, "set markitect.sourceRepo")
+            (checkout / "go.mod").write_text("// product\nmodule github.com/Glacius-Labs/Markitect // root\n\n"
+                                             "go 1.27.1\n", encoding="utf-8")
             self.assertEqual(manifest.validate(data, playground=playground)["markitect"]["sourceRepo"],
                              str(checkout.resolve()))
             given = manifest.validate(variant(method="markitect", markitect=MARKITECT), playground=playground)
@@ -215,6 +220,8 @@ class ManifestTests(unittest.TestCase):
         # around the playground; the tests also run on a copy mounted into the image.
         with mock.patch.object(manifest, "default_source_repo", return_value="/checkout"):
             for path in sorted(examples.glob("*.json")):
+                if path.name.startswith("study-"):
+                    continue  # study files; see test_study
                 with self.subTest(example=path.name):
                     manifest.load(path)
 

@@ -249,6 +249,22 @@ class RunTests(HostTestBase):
         self.assertNotIn("docker kill", commands)
         self.assertIsNone(docker.container)
 
+    def test_a_non_linux_host_gets_a_warning_and_the_run_goes_on(self):
+        for system, warned in (("Windows", True), ("Darwin", True), ("Linux", False)):
+            with self.subTest(system=system):
+                shutil.rmtree(self.out, ignore_errors=True)
+                docker, err = FakeDocker(), io.StringIO()
+                argv = ["run", "--manifest", str(self.manifest_path), "--out", str(self.out)]
+                with mock.patch.object(host.subprocess, "run", docker.run), \
+                        mock.patch.object(host.subprocess, "Popen", docker.popen), \
+                        mock.patch.object(host.platform, "system", return_value=system), \
+                        contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+                    self.assertEqual(host.main(argv), 1)  # the container's exit code: the run went on
+                self.assertEqual("DEC-013" in err.getvalue(), warned, err.getvalue())
+                if warned:
+                    self.assertIn(f"warning: this host runs {system}", err.getvalue())
+                    self.assertIn("compare refuses", err.getvalue())
+
     def test_results_are_handed_back_after_the_container_ends(self):
         docker = FakeDocker()
         with mock.patch.object(host, "hand_back", return_value="done") as hand_back:
@@ -401,7 +417,11 @@ class RunTests(HostTestBase):
             self.assertEqual(self.run_host(docker, manifest=manifest), 2)  # no checkout holds the fake root
         self.assertEqual(docker.calls, [])
         (host.ROOT / ".git").mkdir()  # the playground's checkout (the run folder stays outside it)
-        built = {"commit": "669cecd2" + "0" * 32, "sha256": "f" * 64}
+        with mock.patch.object(host.shutil, "which", return_value="go"):
+            self.assertEqual(self.run_host(docker, manifest=manifest), 2)  # not a Markitect checkout
+        self.assertEqual(docker.calls, [])
+        (host.ROOT / "go.mod").write_text("module github.com/Glacius-Labs/Markitect\n", encoding="utf-8")
+        built ={"commit": "669cecd2" + "0" * 32, "sha256": "f" * 64}
         with mock.patch.object(host.shutil, "which", return_value="go"), \
                 mock.patch.object(host, "resolve_markitect", side_effect=resolved) as resolve, \
                 mock.patch.object(host, "build_markitect", return_value=built):

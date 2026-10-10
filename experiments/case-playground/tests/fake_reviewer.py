@@ -8,7 +8,9 @@ It checks the read-only contract the harness promises (sandbox, tools, no settin
 and exits 9 when it is broken. It answers from the prompt: one `missed_obligation` for
 the first released item that both modes report, plus one finding of its own, so
 agreement is visible. `notes` says what the harness gave it: the files of its fresh
-home, whether a token reached its environment, and the SHA-256 of the prompt.
+home, whether a token reached its environment, and the SHA-256 of the prompt. Like a
+token refresh, the Codex mode rewrites a throwaway login `{"generation": N, ...}` in its
+CODEX_HOME with N + 1.
 
 Behavior per mode from `fake-reviewer-plan.json` in the working directory (the bundle;
 the reviewer's environment is clean in the container), e.g. {"codex": "invalid"}:
@@ -68,6 +70,16 @@ def render(value: dict, behavior: str) -> str:
     return f"```json\n{text}\n```" if behavior == "fenced" else text
 
 
+def refresh_login(home: Path | None) -> None:
+    path = home / "auth.json" if home else None
+    try:
+        login = json.loads(path.read_text(encoding="utf-8")) if path and path.is_file() else None
+    except (OSError, ValueError):
+        return
+    if isinstance(login, dict) and type(login.get("generation")) is int:
+        path.write_text(json.dumps({**login, "generation": login["generation"] + 1}), encoding="utf-8")
+
+
 def codex(args: list[str]) -> int:
     if value_after(args, "--sandbox") != "read-only" or "--output-schema" not in args or "--json" not in args:
         print("contract: read-only sandbox, --json and --output-schema are required", file=sys.stderr)
@@ -81,6 +93,7 @@ def codex(args: list[str]) -> int:
         time.sleep(120)
     prompt = prompt_of(args)
     home = Path(os.environ["CODEX_HOME"]) if os.environ.get("CODEX_HOME") else None
+    refresh_login(home)
     text = render(answer("codex", prompt, home, False), behavior)
     Path(value_after(args, "-o")).write_text(text, encoding="utf-8")
     for event in ({"type": "thread.started", "thread_id": "fake-review-thread"}, {"type": "turn.started"},

@@ -186,6 +186,41 @@ class RunReviewerTests(unittest.TestCase):
         for base in (Path(tempfile.gettempdir()), reviewers.REVIEWER_HOMES):  # homes are removed after the run
             self.assertFalse(list(base.glob("mpg-reviewer-home-*/.codex/auth.json")))
 
+    def test_a_refreshed_login_goes_back_into_the_working_copy(self):
+        self.auth.write_text('{"generation": 0, "secret": "s"}', encoding="utf-8")
+        working = reviewers.working_login(self.auth, self.root / "login" / "codex-auth.json")
+        for generation in (1, 2):
+            record = reviewers.run_reviewer("codex", CONFIG["reviewers"]["codex"], prompt=self.prompt, schema=SCHEMA,
+                                            schema_path=self.bundle / "reviewer-schema.json",
+                                            repo_dir=self.root / "repo", bundle_dir=self.bundle,
+                                            out_dir=self.root / "out" / f"codex-{generation}", codex_auth=working,
+                                            executable=FAKE, login_copy=working)
+            self.assertEqual((record["status"], record["loginRefreshed"], record["loginKept"]), ("ok", True, True))
+            self.assertEqual(json.loads(working.read_text(encoding="utf-8"))["generation"], generation)
+        self.assertEqual(json.loads(self.auth.read_text(encoding="utf-8"))["generation"], 0)  # the source stays
+        self.assertIsNone(reviewers.working_login(self.root / "missing.json"))
+
+    def test_only_a_small_regular_file_goes_back_into_the_working_copy(self):
+        working = reviewers.working_login(self.auth, self.root / "login" / "codex-auth.json")
+        home = self.root / "home"
+        home.mkdir()
+        refreshed = home / "auth.json"
+        for content in (b"", b"x" * (reviewers.LOGIN_MAX_BYTES + 1)):
+            refreshed.write_bytes(content)
+            codex_agent.give_to_agent(home, refreshed)
+            self.assertFalse(reviewers.keep_login(refreshed, working))
+        self.assertFalse(reviewers.keep_login(home / "missing.json", working))
+        if os.name == "posix":
+            refreshed.unlink()
+            refreshed.symlink_to(self.root / "repo" / "app.py")  # e.g. pointing at another secret
+            self.assertFalse(reviewers.keep_login(refreshed, working))
+        self.assertEqual(working.read_bytes(), self.auth.read_bytes())
+        refreshed.unlink()
+        refreshed.write_bytes(b'{"new": 1}')
+        codex_agent.give_to_agent(refreshed)
+        self.assertTrue(reviewers.keep_login(refreshed, working))
+        self.assertEqual(working.read_bytes(), b'{"new": 1}')
+
     def test_claude_review_gets_the_token_only_through_its_environment(self):
         record = self.review("claude")
         self.assertEqual(record["status"], "ok", record)

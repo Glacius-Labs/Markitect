@@ -172,7 +172,7 @@ def _classification(out: Path, runner: dict | None, setup: dict | None, stations
     conformance = _get(final, "conformance")
     if _get(conformance, "errorSource"):
         decisive.append({"class": _get(conformance, "errorSource"),
-                         "reason": f"markitect project check: {_get(conformance, 'error')}"})
+                         "reason": f"markitect check: {_get(conformance, 'error')}"})
     for station in stations:
         # Timeouts never stop a run, but a whole station without any agent activity means
         # the provider never answered.
