@@ -1,7 +1,0 @@
-# C7 unknown and exact exclusion proposal result
-
-The original `controller-propose-result.json` is retained but invalid as a record: strict JSON rejects a trailing comma, and it attributes operator-measured hashes to product output that did not report them. See `record-correction.md`; use `controller-propose-result-v2.json` for the corrected observation, which is machine-derived from the preserved raw CLI stdout.
-
-The approved `controller-propose` invocation ran once and exited 1 with controller status `escalated`. Its exact product output lists `src/Orders/UnknownBehavior.cs` under `unknownArtifacts`, lists `src/Orders/legacy-note.md` as an explicit exclusion with the exact configured reason and metadata `{path, mode, size}`, and reports `artifact.unowned`. Inventory entries are preserved exactly as reported (path, mode, size); fixture content hashes appear only in the separate operator-measured setup section.
-
-The fixture HEAD/tree/index and clean status, target-file modes/hashes, runtime hash, eight copied store-file hashes and ledger head were unchanged; private logs remained empty. Raw stdout is retained externally and bound by its SHA-256 in the corrected record. The CLI was invoked, but no executor, verifier, agent process, provider, Execute, Apply, or Verify was invoked. This is one bounded controller-propose observation, not semantic verification, global coverage, or human acceptance. Sentinel bytes are not included.

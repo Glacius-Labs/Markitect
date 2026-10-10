@@ -81,7 +81,7 @@ func TestCodeMapLayersMatchGateLayers(t *testing.T) {
 		{"src/internal/modules/markdown", "application", false},
 		{"src/cmd/markitect", "legacy", false},
 		{"src/internal/core", "legacy", false},
-		{"runs/c11checktools/original", "fixture", true},
+		{"examples/documentation/docs/implementation/src", "fixture", true},
 		{"src/internal/unowned", "legacy", false},
 	} {
 		gateLayer, _ := layer(c.path)

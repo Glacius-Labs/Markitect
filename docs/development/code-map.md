@@ -25,7 +25,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `bootstrap` | Standalone public bootstrap without Markitect imports. | `bootstrap` | 1 |
 | `harness` | Executable tests, test support and example programs; not product code. | `harness-tests`, `harness-runtime`, `testkit` | 5 |
 | `experiment` | Bounded pilots kept with their evaluation. | `harness-runtime` | 1 |
-| `fixture` | Adopting-project code used as test input; it may not import Markitect. | `fixture` | 3 |
+| `fixture` | Adopting-project code used as test input; it may not import Markitect. | `fixture` | 1 |
 
 ## Deterministic core
 
@@ -149,5 +149,3 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | Package | Purpose | Owning document |
 |---|---|---|
 | `examples/documentation/docs/implementation/src` | Ordinary Go source used as a declared artifact input. | [examples/documentation/README.md](../../examples/documentation/README.md) |
-| `runs/c11checktools/original` | C11 proof check program for the original Markdown output. | [docs/repository-layout.md](../repository-layout.md#source-repository-layout) |
-| `runs/c11checktools/replacement` | C11 proof check program for the replacement Markdown output. | [docs/repository-layout.md](../repository-layout.md#source-repository-layout) |
