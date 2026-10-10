@@ -25,9 +25,10 @@ packages:
     title: Fresh roadmap and lean backlog on main
     stream: OPS
     wave: 0
-    status: review
+    status: done
     owner: integrator
     branch: docs/roadmap
+    pr: 94
     zone: docs-entry
     acceptance:
       - docs/implementation-plan.md is the roadmap; this file is the single status owner.
@@ -72,6 +73,7 @@ packages:
     wave: 0
     status: proposed
     owner: integrator
+    note: Pull request 102 added the push rule to the roadmap; CONTRIBUTING and the pull-request template remain.
     zone: docs-entry
     acceptance:
       - CONTRIBUTING states the branch naming, one package per PR, no pushes to a PR head during CI, and the merge order.
@@ -81,7 +83,7 @@ packages:
     title: One backlog; retire old queues and keep their value
     stream: OPS
     wave: 0
-    status: review
+    status: done
     owner: integrator
     branch: docs/single-backlog
     pr: 105
@@ -95,7 +97,8 @@ packages:
     title: Commit the playground and bring it onto main
     stream: PLAY
     wave: 0
-    status: active
+    status: done
+    pr: 103
     owner: scientist
     zone: free
     inputs:
@@ -114,9 +117,10 @@ packages:
     title: Ground truth, hidden holdouts and seeded rules
     stream: PLAY
     wave: 1
-    status: blocked
+    status: ready
     owner: scientist
     depends_on: [PLAY-01]
+    note: PLAY-01 found that the snapshot already holds ground-truth.json, holdout.py and 36 mutants, and validate.py passes; this package can shrink to a review of those files.
     zone: free
     inputs:
       - research-backup archive/wip/case-playground-v2-20261010 (case readinglog2 and reference)
@@ -198,11 +202,11 @@ packages:
     title: Exchangeable executor, increment 1
     stream: RUN
     wave: 0
-    status: review
+    status: done
     owner: integrator
     branch: dev/exchangeable-executor
-    pr: 92
-    note: The runtime session that opened pull request 92 has ended. The integrator rebases it onto current main as dev/exchangeable-executor and merges the replacement pull request.
+    pr: 104
+    note: Merged as pull request 104, which superseded 92. Review follow-ups are RUN-05.
     zone: runtime
     acceptance:
       - Rebased on current main; independent review addressed; Linux CI green; merged.
@@ -250,6 +254,24 @@ packages:
     acceptance:
       - Helpers can return read-only inspection or analysis results without authoring files, with the same scope and review rules.
 
+  - id: RUN-05
+    title: Exchangeable executor follow-ups from the RUN-01 review
+    stream: RUN
+    wave: 2
+    status: proposed
+    owner: runtime
+    depends_on: [RUN-01]
+    zone: runtime
+    inputs:
+      - docs/provider-adapters.md#bring-your-own-executor
+      - pull request 104 (independent review)
+    acceptance:
+      - The exchange adapter takes a deadline shorter than the role timeout, removes its request directory when it gives up, and refuses an exchange directory that is not private to the user, on Windows through an ACL check.
+      - Setup either rejects script executors (#!, .cmd, .bat) as it does for the native provider, or pins their interpreter.
+      - Declared checks get the same environment whether or not the owning Manager is a process executor, including HOME and cache directories.
+      - maxCostMicros is optional when every role is unmetered.
+      - The next release notes state that setup no longer pins the Codex model and effort.
+
   # --- CLI and MCP: command and tool surface -----------------------------
   - id: CLI-01
     title: Verb model decision and specification
@@ -274,6 +296,12 @@ packages:
     status: blocked
     owner: interface
     depends_on: [CLI-01]
+    note: >-
+      Agreed with the integrator on 10 October 2026: switch every legacy call in .github/workflows,
+      .githooks, scripts and the documents that name repository checks to ./src/cmd/markitect-legacy,
+      as a mechanical edit after CI-01 and CI-02 merge, with the pipelines config digest in the same
+      commit. The case playground's Markitect arm calls `markitect project ...`; update it in step
+      with the scientist (PLAY-01 finding).
     zone: interface
     inputs:
       - docs/work-items/surveys/cli-mcp-app-server-20261010.md
@@ -538,6 +566,10 @@ packages:
     wave: 1
     status: active
     owner: bughunter
+    note: >-
+      Zones for fixes, set by the integrator on 10 October 2026: findings in core and projectmodel go
+      to kg; the bughunter fixes findings in projectwork, projectbriefing and projectcoverage and,
+      while no runtime session runs, in the runtime zone; interface-zone findings go to the integrator.
     zone: free
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
@@ -556,7 +588,7 @@ packages:
     title: Slim the repository's agent entry files
     stream: AGENT
     wave: 1
-    status: review
+    status: done
     owner: cleaner
     branch: docs/slim-agent-entry
     pr: 100
@@ -632,7 +664,8 @@ packages:
     wave: 1
     status: blocked
     owner: cleaner
-    depends_on: [ARCH-02]
+    depends_on: [ARCH-02, ARCH-04]
+    note: projectwork imports the codec from host/canonical until ARCH-04 moves it, so the new rule fails on main before then.
     zone: free
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md

@@ -36,7 +36,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 | [ENH-002](#enh-002-model-quality-linter-and-metrics) | Enhancement | Model-quality linter and metrics | Accepted direction |
 | [ENH-003](#enh-003-test-to-statement-binding-and-test-review) | Enhancement | Test-to-statement binding and test review | Accepted direction |
 | [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) | Enhancement | Per-role agent configuration and model mixing | Accepted direction |
-| [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) | Enhancement | Exchangeable executor for the delegated method | Endorsed; design pending |
+| [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) | Enhancement | Exchangeable executor for the delegated method | Endorsed; increment 1 merged |
 | [OQ-001 to OQ-007](#open-questions) | Open question | Open questions | Open |
 | [IDEA-001](#idea-001-the-model-as-institutional-memory-for-stateless-agents) | Idea | The model as institutional memory for stateless agents | Proposed |
 | [IDEA-002](#idea-002-government-delegated-model-maintenance) | Idea | Government: delegated model maintenance | Owner idea; parked |
@@ -141,7 +141,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 - **Statement:**
   - The cost hypothesis targets capable mid-tier models such as Luna and Sonnet. Haiku is a candidate for cost-sensitive use if it proves sufficient.
   - These models are not weak. The owner distinguishes them from the high-end tier: Fable, Opus and Astra.
-- **Current source:** Every inner role runs on Luna. Using Sonnet or Haiku for inner roles requires [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) and [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method).
+- **Current source:** By default every inner role runs on Luna. Since RUN-01 a role can use another model through a process executor ([ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing), [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method)); a Claude executor for Sonnet or Haiku is RUN-03.
 
 ### DEC-008 The delegated method has not yet been tested
 
@@ -381,27 +381,26 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 - **Status:** Accepted direction, owner, 10 October 2026. A separate configuration for every agent role was already planned.
 - **Current source:**
   - `.markitect/runtime.yaml` binds one executor and one reviewer per Manager. Each binding has its own model, plus a reasoning effort for the App Server or model options for the process transport. One verifier is configured globally.
-  - `project setup` generates a single profile and uses it for every role: Codex App Server, `gpt-6-luna`, `high` effort ([provider adapters](../provider-adapters.md#inner-role-execution-and-workspace-boundary)).
+  - `project setup` generates a default profile for every role: Codex App Server, `gpt-6-luna`, `high` effort. Since RUN-01, a setup options record gives Managers, reviewers and the verifier their own provider (`codex` or `process`), model, effort and cost mode, and profiles can be mixed ([role profiles](../provider-adapters.md#role-profiles)).
   - Helpers inherit their parent's configuration.
   - The Manager implements its own slice; there is no separate implementer role.
 - **Direction:**
   - Configure model, reasoning effort and provider per role (Manager or implementer, helper, reviewer, verifier), and possibly per Manager.
   - Allow mixing, for example one model implements and another reviews.
   - Evaluate combinations as an experimental factor ([ASM-005](#assumptions-and-hypotheses), [OQ-003](#open-questions)).
-- **Work items:** RUN-01 (pull request #92) and PLAY-06 in the [backlog](../work-items/backlog.yaml).
+- **Work items:** RUN-01 (merged as pull request #104) and PLAY-06 in the [backlog](../work-items/backlog.yaml).
 
 ### ENH-005 Exchangeable executor for the delegated method
 
-- **Status:** Endorsed by the owner on 10 October 2026; the design is pending. This is the product side of [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime).
+- **Status:** Endorsed by the owner on 10 October 2026. Increment 1 is merged (RUN-01); the asynchronous boundary is pending (RUN-02). This is the product side of [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime).
 - **Problem:** In practice every delegated role runs through one native runtime, the Codex App Server adapter. Runtime and environment failures therefore block both product use and evaluation of the method.
 - **Current source:**
   - Run invokes every role through the `projectrun.Invoker` interface. That interface has two transports:
     - a hand-configurable process transport with a versioned JSON protocol (`agent-execution/v1alpha1`);
     - the native Codex App Server transport.
   - Repository end-to-end tests drive Plan, Run, Review, Verify and guarded Apply through a scripted, model-free process executor.
+  - Since RUN-01, `project setup` selects a process executor per role, `costMode: unmetered` covers executors that cannot report token usage, such as scripts or people, and `markitect-exchange-executor` is a reference adapter that hands each invocation to a person, a script or another session through files ([bring your own executor](../provider-adapters.md#bring-your-own-executor)).
   - What is missing is product surface:
-    - setup for executors other than the native one;
-    - executors that cannot report provider token usage, such as scripts or people (process executors must report it today);
     - export of work packets;
     - submission of external candidates and review verdicts;
     - plans that do not depend on executor fingerprints.
@@ -412,7 +411,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Expose a stable executor boundary. Through it, Markitect hands each role a deterministic work packet: scope, context, obligations, required checks and required reviews. It then accepts the resulting candidate and review verdict and validates them with the same rules as today.
   - The native Codex adapter becomes one executor among others. Further executors, for example Claude Code, can be added without changing the method.
   - Authority does not change. Scope checks, fixed snapshots and guarded Apply apply to every executor, and submitted reviews remain AI evidence, not human acceptance.
-- **Work items:** RUN-01 (pull request #92), RUN-02 and RUN-03 in the [backlog](../work-items/backlog.yaml).
+- **Work items:** RUN-01 (merged as pull request #104), RUN-02, RUN-03 and RUN-05 in the [backlog](../work-items/backlog.yaml).
 
 ## Open questions
 
