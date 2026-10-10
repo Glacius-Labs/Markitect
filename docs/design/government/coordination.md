@@ -2319,3 +2319,7 @@ Root local0c8d3873threefilediff inspected: existingrun/reintegration defersfresh
 ### Actual27 recovered original Root integrated; normal Verify active
 
 Root exactWindows4fc1fb00 VCS361c7f1a Go1.27.1modifiedfalse and361threeDocclosure bound; cleanpubliccurrentd623fiveDoccommandpathdiff inspected, proofbinaryunchanged. Root sharedimmutable state35Plan57030e5a integrated/3Work+IntegrationPASS/originalintegrate6774ea4d exactlyone row. Owner genuineRenameRecovery1originalphysical0Replay/helperappliedclosed/27.0056638sparallel. NormalVerify--run--write active; priorunsupported--plan rejectedbeforechecks loggedInvocationError/no credit. FullVerifyApply/usage/deadlineexactreceiptpending, no inferredA01/MainPASS/repeatedRootorder.
+
+### Actual27 full verification passed; Windows Apply preflight basis inconsistency
+
+Root shortsharedimmutable state42verified independently bindsCheckexit0/initialVerifier262cpassed/3fullManagerreceipts7ef1-e25a-5179allpassed/4reviewsPASS. Owner originalRootrecovery/helperparallelpassed; readonlyApplypreflight actualcleanREADME80CRLFvs78LFblob rejectedinconsistentlywithPlanGitcleanfilterbasis, noApplywrite/fullA01. Terminalc8c6fa05/audit72bb9cf4 cumulative169combined165providers23282065partial/original99022once ownerunionnotRootreaudited. Narrowcapturedcleanfilter-equivalence/fixedattrs/index/rawtargetCASretained/regressionreviewactiveWIP; sourcefixnotyetRootfrozen, noenvironmentnormalizationworkaround/newframework/MainPASS/repeatedorder.

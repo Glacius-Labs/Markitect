@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T11:29:25.546656+00:00",
+  "updatedUtc": "2026-10-10T11:40:40.297501+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator completes normal fixedbinary Actual27Verify/guardedApply and terminal lifecycle/accounting once; Root verifies genuine acceptance then final exactPR89CI/Main normally. Studies suspended/KG separate; no repeatedRootorder/newgate.",
+  "nextAction": "Integrator closes narrow Windows Apply basis consistency correction with genuine read-only preflight/write regression and independent review, cleancheckpoint then freshnormal finiteA01. Root binds source/targetCAS protections beforeacceptance; no repeatedorders/studies/Mainclaim.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL27_ORIGINAL_RECOVERY_INTEGRATED_ROOT_STATE_VERIFIED_NORMAL_VERIFY_ACTIVE",
+    "status": "ACTUAL27_FULL_VERIFY_ROOT_VERIFIED_APPLY_PREFLIGHT_WINDOWS_BASE_CONSISTENCY_FIX_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -19086,7 +19086,7 @@
       "rootFreezeVerification": "BinaryexactSHA/WindowsGo1.27.1CGO0VCS361modifiedfalse;361additive3docclosure stat. Currentcleanpublichead d623 is later5docs-only commandpath correction inspected, ongoingbinary remains361, no hotpatch/Plan rewrite."
     },
     "actual27Preparation": {
-      "status": "INTEGRATED_ORIGINAL_ROOT_RECOVERY_VERIFIED_CURRENT_NORMAL_VERIFY_PENDING",
+      "status": "TERMINAL_BATCH_APPLY_PREFLIGHT_FAILED_RUN_VERIFIED_NO_APPLY_WRITE",
       "sourceSha": "361c7f1af10e647833da3034b02064207cd8bf57",
       "binarySha256": "4fc1fb007112eff26840ce91f52b84ee7c723c3f083bcd9735ae1a30719b655b",
       "planId": "57030e5a979329fe354486544be4a45b",
@@ -19106,7 +19106,44 @@
         "integrationRows": 1,
         "qualification": "Exactimmutable sharedshortread/closebeforeparse. Native physical/noReplay/helper/parallel union owneraudit not Rootwholetrace repeated. FullVerify/Apply/currentcounts/digest/batchdeadline not yet provided; no inferred PASS."
       },
-      "boundary": "Existing finite renewable authority/fixed361binary; no unsupportedCLIretrycredit/old26replay/fabricated fullA01/Main/study/release."
+      "boundary": "Existing finite renewable authority/fixed361binary; no unsupportedCLIretrycredit/old26replay/fabricated fullA01/Main/study/release.",
+      "terminalOwnerReport": {
+        "fullVerify": "Configuredcheck/initialVerifier/DocsSourceRootfullauditsPASS samebinaryafteroriginalRootRecovery/noReplay/genuineappliedclosedhelper.",
+        "applyPreflight": "Readonlypreflight rejects actualGitclean README80CRLFworkingbytes versus78LFGitblob; PlanacceptsviaGitcleanfilters butApplyrawbasecomparison inconsistent. NoApplywrite/nofullA01PASS.",
+        "terminalBatchSha256": "c8c6fa059af99b5ea41024c1e45f9e8381e3ec9f33b8f72762737c5190eb77cb",
+        "lifecycleAuditSha256": "72bb9cf42ea81ef2cd29a594739b370c94d7381a36e9c03f9af368bc27d7dc17",
+        "cumulativeCombinedStarts": 169,
+        "cumulativeProviderStarts": 165,
+        "cumulativePartialEstimatedCostMicros": 23282065,
+        "originalRootCostMicrosCountedOnce": 99022,
+        "accountingQualification": "Owner partial observed costs not invoice/rawunionnotRootreaudited.",
+        "next": "NarrowApplycapturedbytescleanfilterequivalence/fixedattrs+selectedindexvalidation, rawtargetCASunchanged; realPreflightApply-to-Applyregressions/independentreview active. FreshActual28afterfix, noenvironmentnormalizationworkaround/broadframework/guardbypass."
+      },
+      "rootFullVerifyStateVerified": {
+        "path": "C:/Users/Consiliari/AppData/Local/Temp/markitect-a01-3c5c733388014645b0ca178338078b6a/repo/.markitect/runs/57030e5a979329fe354486544be4a45b/states/00000042.json",
+        "revision": 42,
+        "status": "verified",
+        "workAndIntegrationReviewOutcomes": [
+          "pass",
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "configuredCheckExitCode": 0,
+        "initialVerifierReceipt": "262c15a5eda76d3eee8dbc6a47bb52a4",
+        "initialVerifierRecordedOutcome": "passed",
+        "fullManagerReceipts": [
+          "7ef1d50c60c4edcb5471aeca42d47fda",
+          "e25a0b5b6e06c937df2b78c17e074f98",
+          "51793c3702135bc3e29504ec2af38913"
+        ],
+        "fullManagerRecordedOutcomes": [
+          "passed",
+          "passed",
+          "passed"
+        ],
+        "qualification": "Sharedshortimmutablecopy/closebeforeparse binds explicitverifiedstate/allactualchecks/audits; not applied or fullA01/mainaccepted. ExactApplybytecomparison ownerattested; currentfixsourceWIPnotfrozen/Rootreviewed."
+      }
     },
     "liveCommandPathDocsCorrection": {
       "sourceSha": "d6239ab05345c49f8f855ce9675af6925609742c",
