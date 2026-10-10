@@ -1,0 +1,78 @@
+schema: markitect-coordination-product-queue-closure/v1
+date: '2026-10-10'
+owner: Overseer
+recording_branch: codex/government-assessment
+status: closed_then_paused_by_direct_human_instruction
+scope: Administrative closure of P03-P10; no product implementation or Main change.
+original_queue: docs/work-items/product-readiness/backlog.yaml
+original_queue_at_main: f12ffb00bd6fd7bc45d0014487434a5a58aafadb
+precedence: This source-bound closure supersedes historical in_progress labels for P03-P10; original attempt history is preserved.
+accepted_pr_head: 669cecd2f3594d452a2ea820682ee8d1922d0b1b
+main_sha: f12ffb00bd6fd7bc45d0014487434a5a58aafadb
+main_tree: e32118afb94b03fd4eca84cc4d66117ca9c99a91
+pull_request: https://github.com/Glacius-Labs/Markitect/pull/89
+merged_at_utc: '2026-10-10T14:57:09Z'
+evidence_comment: https://github.com/Glacius-Labs/Markitect/pull/89#issuecomment-6098815673
+required_ci:
+  run: 38057729908
+  head: 669cecd2f3594d452a2ea820682ee8d1922d0b1b
+  linux: success
+  windows: success
+post_merge:
+  source_checkpoint: clean_and_pushed_exact_main
+  binary_sha256: a3566ac044df8e7a1ef838748387a8d9f621083e07160105fc77b1aa65b7205b
+  result_sha256: 3f246a792935b10ac87a5e62f617f9e87d964010596a6fcb2ea84114bc475e88
+  checks: [clean_build, development_install, init_preview_write, codex_onboarding_preview_digest_bound_write, project_check, fixed_main_check]
+  root_verification: Actual remote refs and CI/PR metadata; identical head/Main trees; saved result and binary hashes, clean VCS build metadata, matching Init digests/paths and project/root check outputs inspected. No repeated suite.
+  automatic_main_ci:
+    run: 38061655290
+    head: f12ffb00bd6fd7bc45d0014487434a5a58aafadb
+    status_at_closure: in_progress_not_reported_passed
+items:
+  - id: P03
+    status: done
+    result: Real Git candidate workspaces and full change operations integrated.
+  - id: P04
+    status: done
+    result: Native Codex App Server execution adapter integrated.
+  - id: P05
+    status: done
+    result: MCP adapter over shared Host operations integrated.
+  - id: P06
+    status: done_with_known_nonblocking_limit
+    result: Fresh independent Managers, file-authoring helpers and reviewers integrated; normal technical A01 proof accepted.
+    limit: Helper close failure reconciliation can retain unknown owned state; no automatic replay/reapply/foreign cleanup. This negative path did not occur in accepted Actual28.
+  - id: P07
+    status: done
+    result: Work Item workflow and installed native agent guidance integrated.
+  - id: P08
+    status: done
+    result: Consolidated documentation and src layout integrated.
+  - id: P09
+    status: done
+    result: Required cross-platform CI and combined normal A01 technical proof accepted.
+    a01_source: cdd30b0efc540f151404dabe86b022275dc40d83
+    qualification: A01 proof stays bound to its tested source/binary; no repeated Main A01 or productivity claim.
+  - id: P10
+    status: done
+    result: Regular reviewed PR89 Main merge and exact-Main local closure checks.
+deferred:
+  - id: P11
+    status: deferred_paused
+    main_gate: false
+    title: General read-only and analysis helper returns
+    current_boundary: Native helper is file-authoring only; parent tools and independent review roles remain available.
+  - id: P12
+    status: deferred_paused
+    main_gate: false
+    title: Prospective explicit LF attributes and consistent Git-clean selected basis
+    next: Short decision and focused LF/autocrlf/index/attribute/CAS checks after new human instruction.
+    guarantees: Exact declared candidate bytes and raw target CAS; no arbitrary normalization or alteration of frozen proofs.
+  - id: P13
+    status: deferred_paused
+    main_gate: false
+    title: Stable workspace default outside redirected AppData cache
+    current_boundary: Configured storageRoot exists; empty default uses os.UserCacheDir()/Markitect/workspaces.
+    next: Short default-path decision and focused packaged/unpackaged/recovery checks after new human instruction.
+    guarantees: Preserve persisted identities, ownership, Manager/helper handles and recovery evidence; no active migration.
+stop_boundary: No followup implementation, studies, KG reconciliation, Jev contribution or release. Existing branches, worktrees, WIP and evidence remain preserved. Resume only on new direct human work.
