@@ -27,14 +27,23 @@ func Schema() core.Schema {
 	}
 	boolean := core.Property{Purpose: "Whether the value is explicitly enabled.", Type: core.TypeBoolean, MinCount: 0, MaxCount: 1}
 	pathList := str("Repository-relative exact path or trailing-slash directory prefix.", 0, core.Unbounded)
+	government := core.Property{Purpose: "The optional project-wide authority and bounded model-change mandate.", Type: core.TypeObject, MinCount: 0, MaxCount: 1, Properties: map[string]core.Property{
+		"version":            enum("Government policy contract version.", "v1alpha1"),
+		"owner":              str("Cooperatively confirmed operator principal.", 1, 1),
+		"reviewer":           ref("Manager responsible for independent review.", managerRef, 1, 1),
+		"maxAttempts":        {Purpose: "Finite cumulative attempt limit for this project.", Type: core.TypeInteger, MinCount: 1, MaxCount: 1},
+		"reservedStatements": ref("Statements excluded from delegated model changes.", statementRef, 0, core.Unbounded),
+	}}
 	return core.Schema{
 		APIVersion: api,
 		Purpose:    "A project-owned model of managers, statements, expected artifacts, checks, and decisions.",
 		Kinds: map[string]core.Kind{
 			managerKind: {Purpose: "A manager responsibility and its explicitly delegated repository paths.", Properties: map[string]core.Property{
-				"parent":       ref("The directly responsible parent Manager, when this is not the root Manager.", managerRef, 0, 1),
-				"owns":         pathList,
-				"instructions": str("Local decision and management instructions.", 0, 1),
+				"parent":            ref("The directly responsible parent Manager, when this is not the root Manager.", managerRef, 0, 1),
+				"owns":              pathList,
+				"instructions":      str("Local decision and management instructions.", 0, 1),
+				"government":        government,
+				"modelChangeScope":  ref("Existing Statements this Manager may change by description under the project Government policy.", statementRef, 0, core.Unbounded),
 			}},
 			statementKind: {Purpose: "A typed project concept, rule, use case, architecture statement, or workflow.", Properties: map[string]core.Property{
 				"category":    enum("Statement category.", "concept", "rule", "use-case", "architecture", "workflow"),

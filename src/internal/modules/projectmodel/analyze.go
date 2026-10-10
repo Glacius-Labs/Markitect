@@ -29,7 +29,7 @@ func Analyze(model core.Model, inventory []File) Report {
 		spec := d.Spec
 		parent := refID(spec["parent"])
 		owns := stringsFrom(spec["owns"])
-		r.Managers = append(r.Managers, Manager{ID: d.Identity().Key(), Name: d.Metadata.Name, Namespace: d.Metadata.Namespace, Purpose: d.Purpose, Parent: parent, Owns: owns, Instructions: stringValue(spec["instructions"])})
+		r.Managers = append(r.Managers, Manager{ID: d.Identity().Key(), Name: d.Metadata.Name, Namespace: d.Metadata.Namespace, Purpose: d.Purpose, Parent: parent, Owns: owns, Instructions: stringValue(spec["instructions"]), ModelChangeScope: refIDs(spec["modelChangeScope"])})
 	}
 	sort.Slice(r.Managers, func(i, j int) bool { return r.Managers[i].ID < r.Managers[j].ID })
 	managerByID := map[string]Manager{}
@@ -244,6 +244,8 @@ func Analyze(model core.Model, inventory []File) Report {
 	}
 	sort.Slice(r.Files, func(i, j int) bool { return r.Files[i].Path < r.Files[j].Path })
 	r.Unknown = sortedUnique(r.Unknown)
+	r.Government, governmentFindings := ResolveGovernment(model, r)
+	r.Findings = append(r.Findings, governmentFindings...)
 	for _, f := range r.Findings {
 		if f.Severity == "error" {
 			r.Status = "failed"
@@ -266,7 +268,8 @@ func Analyze(model core.Model, inventory []File) Report {
 		Files                         []FileEntry
 		Findings                      []Finding
 		Unknown                       []string
-	}{r.APIVersion, r.ModelDigest, r.InventoryDigest, r.Status, r.Managers, r.Statements, r.Artifacts, r.Checks, r.Files, r.Findings, r.Unknown})
+		Government                    *GovernancePolicy
+	}{r.APIVersion, r.ModelDigest, r.InventoryDigest, r.Status, r.Managers, r.Statements, r.Artifacts, r.Checks, r.Files, r.Findings, r.Unknown, r.Government})
 	return r
 }
 

@@ -18,13 +18,29 @@ type Finding struct {
 }
 
 type Manager struct {
-	ID           string   `json:"id"`
-	Name         string   `json:"name"`
-	Namespace    string   `json:"namespace"`
-	Purpose      string   `json:"purpose"`
-	Parent       string   `json:"parent,omitempty"`
-	Owns         []string `json:"owns"`
-	Instructions string   `json:"instructions,omitempty"`
+	ID                string   `json:"id"`
+	Name              string   `json:"name"`
+	Namespace         string   `json:"namespace"`
+	Purpose           string   `json:"purpose"`
+	Parent            string   `json:"parent,omitempty"`
+	Owns              []string `json:"owns"`
+	Instructions      string   `json:"instructions,omitempty"`
+	ModelChangeScope  []string `json:"modelChangeScope,omitempty"`
+}
+
+type ModelDelegation struct {
+	Manager   string   `json:"manager"`
+	Statements []string `json:"statements"`
+}
+
+type GovernancePolicy struct {
+	Version            string            `json:"version"`
+	Owner              string            `json:"owner"`
+	Reviewer           string            `json:"reviewer"`
+	MaxAttempts        int               `json:"maxAttempts"`
+	ReservedStatements []string          `json:"reservedStatements"`
+	Delegations        []ModelDelegation `json:"delegations"`
+	Digest             string            `json:"digest"`
 }
 
 type Statement struct {
@@ -86,6 +102,7 @@ type Report struct {
 	Files           []FileEntry `json:"files"`
 	Findings        []Finding   `json:"findings"`
 	Unknown         []string    `json:"unknown"`
+	Government     *GovernancePolicy `json:"government,omitempty"`
 }
 
 type ChangeImpact struct {
