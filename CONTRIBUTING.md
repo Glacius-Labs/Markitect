@@ -70,7 +70,7 @@ go run ./src/cmd/markitect check --repo benchmark/fixtures/v2
 git diff --check
 ```
 
-Tests must not depend on the machine's Git configuration. A package whose tests create repositories or run git, directly or through production code, calls `testkit.Main` from its `TestMain`; it gives the test process a fresh home directory and global Git configuration and keeps the Go caches. New fixtures use `testkit.NewRepo` for repositories with a fixed identity, fixed dates and unchanged line endings, and `testkit.TempDir` for short temporary paths with retried cleanup.
+Tests must not depend on the machine's Git configuration. A package whose tests create repositories or run git, directly or through production code, calls `testkit.Main` from its `TestMain`; it gives the test process a dedicated home directory and global Git configuration and keeps the Go caches. New fixtures use `testkit.NewRepo` for repositories with a fixed identity, fixed dates and unchanged line endings, and `testkit.TempDir` for short temporary paths with retried cleanup.
 
 Full source gates use `-count=1` to require fresh test execution rather than report a cached test success as a new candidate run. This source Project's `go-tests` check declares a 5400-second outer command limit and the explicit Go test-binary limit `-timeout=60m`; focused checks use a ten-minute default, broad package runs thirty minutes and complete suite runs sixty minutes. Outer process/CI windows are at least ninety minutes. Preserve already-running work and original timeout evidence; investigate a real expiry rather than automatically retrying it.
 

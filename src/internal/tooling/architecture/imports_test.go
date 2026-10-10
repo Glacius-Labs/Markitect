@@ -182,4 +182,7 @@ func TestTestkitIsTestOnlyAndStandalone(t *testing.T) {
 	if got := Check([]Edge{{From: "src/internal/testkit", To: "src/internal/core"}}); len(got) != 1 {
 		t.Fatalf("testkit importing a local package: %v", got)
 	}
+	if got := Check([]Edge{{From: "src/internal/host", To: "src/internal/testkit/gitfixture"}}); len(got) != 1 {
+		t.Fatalf("production code importing a testkit subpackage: %v", got)
+	}
 }

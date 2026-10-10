@@ -49,7 +49,7 @@ func layer(p string) (string, string) {
 	case p == "src/internal/tooling" || strings.HasPrefix(p, "src/internal/tooling/") || p == "tools" || strings.HasPrefix(p, "tools/"):
 		return "tooling", "tooling"
 	// Hermetic test fixtures shared by the tests of every layer.
-	case p == "src/internal/testkit":
+	case p == "src/internal/testkit" || strings.HasPrefix(p, "src/internal/testkit/"):
 		return "testkit", p
 	case p == "src/cmd" || strings.HasPrefix(p, "src/cmd/"):
 		return "cli", p

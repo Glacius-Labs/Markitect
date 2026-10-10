@@ -1,9 +1,13 @@
 package testkit
 
 import (
+	"encoding/json"
+	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -33,15 +37,122 @@ func TestNewRepoCommitsAreDeterministic(t *testing.T) {
 
 func TestTempDirIsShortAndCanonical(t *testing.T) {
 	dir := TempDir(t)
-	canonical, err := filepath.EvalSymlinks(dir)
+	tempRoot, err := filepath.EvalSymlinks(os.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if dir != canonical {
-		t.Fatalf("TempDir = %q, canonical spelling %q", dir, canonical)
+	// One short entry ("mk" and at most ten digits) directly below the
+	// canonical spelling of the temporary directory.
+	if parent, base := filepath.Dir(dir), filepath.Base(dir); parent != tempRoot || !strings.HasPrefix(base, "mk") || len(base) > 12 {
+		t.Fatalf("TempDir = %q, want a short entry below %q", dir, tempRoot)
 	}
-	if strings.Contains(dir, t.Name()) {
-		t.Fatalf("TempDir %q contains the test name", dir)
+}
+
+// TestReExecutedChildren runs this test binary again the way fake agents
+// do: with a reduced environment, and with an inherited one.
+func TestReExecutedChildren(t *testing.T) {
+	if os.Getenv("MARKITECT_TESTKIT_CHILD") == "1" {
+		return
+	}
+	run := func(env []string) string {
+		t.Helper()
+		cmd := exec.Command(os.Args[0], "-test.run=^TestReExecutedChildHome$", "-test.v")
+		cmd.Env = append(env, "MARKITECT_TESTKIT_CHILD=1")
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("child failed: %v\n%s", err, out)
+		}
+		_, home, _ := strings.Cut(string(out), "child home=")
+		home, _, _ = strings.Cut(home, "\n")
+		return strings.TrimSpace(home)
+	}
+	// Only what an allowlist typically keeps: no HOME, TEMP or TMP.
+	var reduced []string
+	for _, name := range []string{"PATH", "SystemRoot"} {
+		if value, ok := os.LookupEnv(name); ok {
+			reduced = append(reduced, name+"="+value)
+		}
+	}
+	if home := run(reduced); home != "" {
+		t.Fatalf("child with a reduced environment created home %q", home)
+	}
+	if home := run(os.Environ()); home != os.Getenv("HOME") {
+		t.Fatalf("child home = %q, want the inherited %q", home, os.Getenv("HOME"))
+	}
+}
+
+// TestIsolatedHomeIsSharedAndStable creates the home concurrently, as
+// parallel test binaries do, in a private temporary directory.
+func TestIsolatedHomeIsSharedAndStable(t *testing.T) {
+	temp := t.TempDir()
+	for _, name := range []string{"TMPDIR", "TMP", "TEMP"} {
+		t.Setenv(name, temp)
+	}
+	homes := make(chan string, 8)
+	errs := make(chan error, 8)
+	for range 8 {
+		go func() {
+			home, err := isolatedHome()
+			homes <- home
+			errs <- err
+		}()
+	}
+	first := ""
+	for range 8 {
+		home, err := <-homes, <-errs
+		if err != nil {
+			t.Fatal(err)
+		}
+		if first == "" {
+			first = home
+		} else if home != first {
+			t.Fatalf("isolated homes differ: %q and %q", first, home)
+		}
+	}
+	if data, err := os.ReadFile(filepath.Join(first, ".gitconfig")); err != nil || string(data) != GlobalConfig {
+		t.Fatalf("isolated git config = %q, %v", data, err)
+	}
+	if leftovers, _ := filepath.Glob(filepath.Join(first, ".gitconfig-*")); len(leftovers) != 0 {
+		t.Fatalf("temporary config files left behind: %v", leftovers)
+	}
+}
+
+func TestReExecutedChildHome(t *testing.T) {
+	if os.Getenv("MARKITECT_TESTKIT_CHILD") == "1" {
+		fmt.Printf("child home=%s\n", os.Getenv("HOME"))
+	}
+}
+
+// TestGoLocationsMatchTheGoCommand compares the locations Isolate pins with
+// those the go command derives in a fresh environment.
+func TestGoLocationsMatchTheGoCommand(t *testing.T) {
+	home := t.TempDir()
+	for _, name := range []string{"GOCACHE", "GOMODCACHE", "GOPATH", "GOENV", "XDG_CACHE_HOME", "XDG_CONFIG_HOME"} {
+		t.Setenv(name, "")
+	}
+	t.Setenv("HOME", home)
+	if runtime.GOOS == "windows" {
+		t.Setenv("USERPROFILE", home)
+		t.Setenv("LOCALAPPDATA", filepath.Join(home, "local"))
+		t.Setenv("APPDATA", filepath.Join(home, "roaming"))
+	}
+	envFile := filepath.Join(home, "go.env")
+	if err := os.WriteFile(envFile, []byte("GOPATH="+filepath.Join(home, "gopath")+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GOENV", envFile)
+	cmd := exec.Command("go", "env", "-json", "GOCACHE", "GOMODCACHE", "GOPATH", "GOENV")
+	cmd.Dir = t.TempDir()
+	out, err := cmd.Output()
+	if err != nil {
+		t.Skipf("go command unavailable: %v", err)
+	}
+	want := map[string]string{}
+	if err := json.Unmarshal(out, &want); err != nil {
+		t.Fatal(err)
+	}
+	if got := goLocations(); !maps.Equal(got, want) {
+		t.Fatalf("goLocations = %v, go env = %v", got, want)
 	}
 }
 
@@ -105,6 +216,7 @@ func TestIsolateShieldsGitFromAHostileConfiguration(t *testing.T) {
 	t.Setenv("GIT_CONFIG_PARAMETERS", "'core.autocrlf'='true'")
 	t.Setenv("GIT_DIR", filepath.Join(hostileHome, "missing"))
 	t.Setenv("GIT_AUTHOR_DATE", "garbage")
+	t.Setenv(HomeVariable, "")
 
 	restore, err := Isolate()
 	if err != nil {
