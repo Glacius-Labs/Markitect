@@ -242,9 +242,11 @@ func testConfig() Config {
 		Model:           "test-model",
 		ModelOptions:    json.RawMessage(`{"effort":"high"}`),
 		ProviderVersion: "test-helper/1",
-		Timeout:         3 * time.Second,
-		MaxStdoutBytes:  4096,
-		MaxStderrBytes:  4096,
+		// Generous, because these runs do not test time and a loaded runner
+		// can take seconds to start the helper. Timeout tests set their own.
+		Timeout:        2 * time.Minute,
+		MaxStdoutBytes: 4096,
+		MaxStderrBytes: 4096,
 	}
 }
 
