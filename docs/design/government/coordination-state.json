@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T00:42:18.630375Z",
+  "updatedUtc": "2026-10-10T00:44:53.166345Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18024,7 +18024,10 @@
           "rootVerified": "projectrun/verify.go577-615 requires exactpassedsubjectcoverage and sortedfullEvidenceRefs equality; blanketevidenceRefs[] would fail genuineVerify",
           "ownerDisposition": "Caughtduringreview beforefreshrun; blockedblanketemptyVerifier. OptionalManager/reviewer/helperrefs mayempty; Verifier genuinelyselectsshortrequestboundaliases decodedone-to-one preservingselection/count thenexistingcoveragevalidates. Existingprocessaliasconvention reused, no blindunionfill/coverageweakening.",
           "coordination": "Rootrequestedproviderfree REAL downstreamVerify/validateVerifierCoverage with positivefullcoverage+negativeunknown/duplicate/omittedalias/coverage, not onlylowerDecodeResponse; no new Actor/capabilityphase/permissionmatrix",
-          "status": "RoleawaresemanticboundaryINPROGRESS_NO_NEW_PROVIDER"
+          "status": "RoleawaresemanticboundaryINPROGRESS_NO_NEW_PROVIDER",
+          "requiredVsAllowedReferencesCorrection": "Realconsumer source review: requiredcoverage refs are taggedScopeIDs artifact:<id>/check:<id>; allowedaliasunion also includes plaincheckPolicyIDs. Thus expectedcoverage is declaredsubset of allowedrefs, notwholeallowedunion. Previous wholeunion assumption withdrawn.",
+          "explicitCoverageInput": "Owner adds requiredEvidenceRefs to normalVerifiercontext; modelselectedshortaliases preserveexactsubset/count and existingcoverage checks, no autofillunion.",
+          "actualSentSchemaFixture": "Currentregression reads actualAdapter-generated sentSchema via existingprivate request event; not onlysyntheticclient schema. Sourceimplementation/review ongoing, no newProvider."
         }
       }
     }
