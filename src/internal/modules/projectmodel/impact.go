@@ -256,9 +256,9 @@ func Impact(base, candidate Report) ChangeImpact {
 			requires[s.ID] = appendUnique(requires[s.ID], s.Requires...)
 		}
 	}
-	modelUnprojected := base.ModelDigest != candidate.ModelDigest && len(changed) == 0
+	modelUnprojected := base.ModelDigest != candidate.ModelDigest && (len(changed) == 0 || unprojectedChange(base, candidate, changed))
 	if modelUnprojected {
-		out.Unknown = append(out.Unknown, "model digest changed without a projected definition delta; decision or unprojected definition changes may require review")
+		out.Unknown = append(out.Unknown, "model digest changed beyond the projected definition delta; decision or unprojected definition changes may require review")
 	}
 
 	// Directly changed statements and reverse dependents need their own realizing artifacts.
@@ -273,50 +273,66 @@ func Impact(base, candidate Report) ChangeImpact {
 			}
 		}
 	}
-	for id := range seed {
+	consumers := map[string][]string{}
+	statementOwners := map[string][]string{}
+	for _, r := range []Report{base, candidate} {
+		for _, s := range r.Statements {
+			statementOwners[s.ID] = appendUnique(statementOwners[s.ID], s.Owner)
+			for _, dep := range append(append([]string(nil), s.Uses...), s.Requires...) {
+				consumers[dep] = appendUnique(consumers[dep], s.ID)
+			}
+		}
+	}
+	// The closure grows one distance level at a time and each level is expanded as a whole.
+	// A statement first reached as a consumer gets its realization even when another member
+	// of the same level reaches it only through uses, so seed and report order do not matter.
+	closure := map[string]bool{}
+	level := mapKeys(seed)
+	for _, id := range level {
+		closure[id] = true
 		addCoverage(id)
 	}
-	closure := map[string]bool{}
-	queue := make([]string, 0, len(seed))
-	for id := range seed {
-		closure[id] = true
-		queue = append(queue, id)
-	}
-	for len(queue) > 0 {
-		id := queue[0]
-		queue = queue[1:]
-		// uses adds context and ownership routing. It does not imply implementation coverage.
-		for _, dep := range uses[id] {
-			if !closure[dep] {
-				closure[dep] = true
-				queue = append(queue, dep)
+	for len(level) > 0 {
+		next := map[string]bool{}
+		reachedAsConsumer := map[string]bool{}
+		for _, id := range level {
+			// uses adds context and ownership routing. It does not imply implementation coverage.
+			for _, dep := range uses[id] {
+				if !closure[dep] {
+					next[dep] = true
+				}
+				if s, ok := statementByID[dep]; ok {
+					managers[s.Owner] = true
+				}
 			}
-			if s, ok := statementByID[dep]; ok {
-				managers[s.Owner] = true
+			// requires adds the target contract and its declared artifact/check coverage.
+			for _, dep := range requires[id] {
+				if !closure[dep] {
+					next[dep] = true
+				}
+				addCoverage(dep)
+				if s, ok := statementByID[dep]; ok {
+					managers[s.Owner] = true
+				}
 			}
-		}
-		// requires adds the target contract and its declared artifact/check coverage.
-		for _, dep := range requires[id] {
-			if !closure[dep] {
-				closure[dep] = true
-				queue = append(queue, dep)
-			}
-			addCoverage(dep)
-			if s, ok := statementByID[dep]; ok {
-				managers[s.Owner] = true
-			}
-		}
-		// A changed contract routes every direct consumer; each consumer's own realization is affected too.
-		for _, report := range []Report{base, candidate} {
-			for _, consumer := range report.Statements {
-				if (contains(consumer.Uses, id) || contains(consumer.Requires, id)) && !closure[consumer.ID] {
-					closure[consumer.ID] = true
-					queue = append(queue, consumer.ID)
-					addCoverage(consumer.ID)
-					managers[consumer.Owner] = true
+			// A changed contract routes every direct consumer; each consumer's own realization is affected too.
+			for _, consumer := range consumers[id] {
+				if !closure[consumer] {
+					next[consumer] = true
+					reachedAsConsumer[consumer] = true
 				}
 			}
 		}
+		for id := range reachedAsConsumer {
+			addCoverage(id)
+			for _, owner := range statementOwners[id] {
+				managers[owner] = true
+			}
+		}
+		for id := range next {
+			closure[id] = true
+		}
+		level = mapKeys(next)
 	}
 	for id := range closure {
 		out.AffectedStatements = append(out.AffectedStatements, id)
@@ -479,6 +495,26 @@ func compareChecks(a, b []Check, add func(string)) {
 			add(id)
 		}
 	}
+}
+
+// unprojectedChange reports a definition whose unprojected parts changed while
+// its projection did not, such as a purpose or a Decision. Reports not built by
+// Analyze carry no such digests, so the change cannot be ruled out.
+func unprojectedChange(base, candidate Report, changed map[string]bool) bool {
+	if base.unprojected == nil || candidate.unprojected == nil {
+		return true
+	}
+	for id, d := range base.unprojected {
+		if next, ok := candidate.unprojected[id]; (!ok || next != d) && !changed[id] {
+			return true
+		}
+	}
+	for id := range candidate.unprojected {
+		if _, ok := base.unprojected[id]; !ok && !changed[id] {
+			return true
+		}
+	}
+	return false
 }
 func equal(a, b any) bool { return digest(a) == digest(b) }
 func entryMap(values []FileEntry) map[string]FileEntry {

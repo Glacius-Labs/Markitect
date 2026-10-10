@@ -18,12 +18,13 @@ type definitionIndex struct {
 }
 
 func Analyze(model core.Model, inventory []File) Report {
-	r := Report{APIVersion: APIVersion, ModelDigest: model.Digest, Status: "succeeded"}
+	r := Report{APIVersion: APIVersion, ModelDigest: model.Digest, Status: "succeeded", unprojected: map[string]string{}}
 	idx := definitionIndex{byID: map[string]core.Definition{}, byKind: map[string][]core.Definition{}}
 	for _, d := range model.Definitions {
 		id := d.Identity().Key()
 		idx.byID[id] = d
 		idx.byKind[d.Kind] = append(idx.byKind[d.Kind], d)
+		r.unprojected[id] = unprojectedDigest(d)
 	}
 	for _, d := range idx.byKind[managerKind] {
 		spec := d.Spec
@@ -268,6 +269,22 @@ func Analyze(model core.Model, inventory []File) Report {
 		Unknown                       []string
 	}{r.APIVersion, r.ModelDigest, r.InventoryDigest, r.Status, r.Managers, r.Statements, r.Artifacts, r.Checks, r.Files, r.Findings, r.Unknown})
 	return r
+}
+
+// unprojectedDigest covers the parts of a definition that the report collections
+// do not carry: the purpose of a Statement, Artifact or Check, and whole Decisions.
+func unprojectedDigest(d core.Definition) string {
+	switch d.Kind {
+	case managerKind:
+		return ""
+	case statementKind, artifactKind, checkKind:
+		return digest(d.Purpose)
+	}
+	return digest(struct {
+		Metadata core.Metadata
+		Purpose  string
+		Spec     map[string]any
+	}{d.Metadata, d.Purpose, d.Spec})
 }
 
 func addFinding(r *Report, code, subject, message, severity string) {
