@@ -33,12 +33,13 @@ type BrownfieldInput struct {
 	Resolve     *BrownfieldResolveInput                  `json:"resolve,omitempty"`
 	Plan        *BrownfieldPlanInput                     `json:"plan,omitempty"`
 	Apply       *BrownfieldApplyAdoptionInput            `json:"apply,omitempty"`
+	Run         *BrownfieldManagerRunInput               `json:"run,omitempty"`
 }
 
 func (i BrownfieldInput) present() bool { return i.count() != 0 }
 func (i BrownfieldInput) count() int {
 	n := 0
-	for _, set := range []bool{i.Start != nil, i.Begin != nil, i.Context != nil, i.Proposal != nil, i.Integration != nil, i.Iterate != nil, i.Resolve != nil, i.Plan != nil, i.Apply != nil} {
+	for _, set := range []bool{i.Start != nil, i.Begin != nil, i.Context != nil, i.Proposal != nil, i.Integration != nil, i.Iterate != nil, i.Resolve != nil, i.Plan != nil, i.Apply != nil, i.Run != nil} {
 		if set {
 			n++
 		}
@@ -46,15 +47,12 @@ func (i BrownfieldInput) count() int {
 	return n
 }
 func (r BrownfieldOperation) validate() error {
-	if r.Action == "record-adoption" {
-		return errors.New("caller-supplied adoption receipts are not accepted; use plan, then apply-adoption with the reviewed plan digest")
-	}
 	if err := requireRoot(r.Root); err != nil {
 		return err
 	}
-	valid := map[string]bool{"start": r.Input.Start != nil, "begin": r.Input.Begin != nil, "context": r.Input.Context != nil, "propose": r.Input.Proposal != nil, "integrate": r.Input.Integration != nil, "iterate": r.Input.Iterate != nil, "resolve": r.Input.Resolve != nil, "plan": r.Input.Plan != nil, "apply-adoption": r.Input.Apply != nil, "resume": r.Input.count() == 0}
+	valid := map[string]bool{"start": r.Input.Start != nil, "begin": r.Input.Begin != nil, "context": r.Input.Context != nil, "propose": r.Input.Proposal != nil, "integrate": r.Input.Integration != nil, "iterate": r.Input.Iterate != nil, "resolve": r.Input.Resolve != nil, "plan": r.Input.Plan != nil, "apply": r.Input.Apply != nil, "status": r.Input.count() == 0}
 	match, known := valid[r.Action]
-	if !known || !match || (r.Action != "resume" && r.Input.count() != 1) {
+	if !known || !match || (r.Action != "status" && r.Input.count() != 1) {
 		return errors.New("Brownfield input must contain exactly the typed payload for the selected action")
 	}
 	return nil
@@ -77,8 +75,8 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 	if operation.Write && strings.TrimSpace(operation.ExpectedDigest) == "" {
 		return BrownfieldResult{}, errors.New("Brownfield --write requires --expect with the session digest")
 	}
-	if !operation.Write && operation.ExpectedDigest != "" && operation.Action == "resume" {
-		return BrownfieldResult{}, errors.New("Brownfield resume is read-only and does not accept --expect")
+	if !operation.Write && operation.ExpectedDigest != "" && operation.Action == "status" {
+		return BrownfieldResult{}, errors.New("adopt status is read-only and does not accept --expect")
 	}
 
 	switch operation.Action {
@@ -94,32 +92,33 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 		if err != nil {
 			return BrownfieldResult{}, fmt.Errorf("load fixed target project: %w", err)
 		}
-		session, err := projectadoption.StartBrownfieldSession(sourceRoot, target, request.Discovery, request.ScopeStatuses)
+		discovery, err := projectadoption.Discover(sourceRoot, request.Request)
+		if err != nil {
+			return BrownfieldResult{}, fmt.Errorf("discover the adoption source: %w", err)
+		}
+		session, err := projectadoption.StartBrownfieldSession(sourceRoot, target, discovery, request.ScopeStatuses)
 		if err != nil {
 			return BrownfieldResult{}, err
 		}
 		return finishBrownfield(operation, sourceRoot, "start", "", session, nil)
 
-	case "record-adoption":
-		return BrownfieldResult{}, errors.New("caller-supplied adoption receipts are not accepted; use plan, then apply-adoption with the reviewed plan digest")
-
-	case "begin", "iterate", "propose", "integrate", "resolve", "plan", "apply-adoption", "resume", "context":
+	case "begin", "iterate", "propose", "integrate", "resolve", "plan", "apply", "status", "context":
 		if strings.TrimSpace(operation.SessionID) == "" {
 			return BrownfieldResult{}, fmt.Errorf("Brownfield %s requires --session", operation.Action)
 		}
 		if operation.Revision != "" {
 			return BrownfieldResult{}, errors.New("Brownfield stages use the fixed target revision recorded by the session; start a new session to select another revision")
 		}
-		if operation.Action == "resume" {
+		if operation.Action == "status" {
 			if operation.Input.present() || operation.Write || operation.ExpectedDigest != "" || operation.Revision != "" {
-				return BrownfieldResult{}, errors.New("Brownfield resume accepts only --repo, optional --source-repo, and --session")
+				return BrownfieldResult{}, errors.New("adopt status accepts only --repo, optional --source-repo, and --session")
 			}
 			session, readiness, err := projectadoption.ResumeBrownfieldSession(sourceRoot, operation.Root, operation.SessionID)
 			if err != nil {
 				return BrownfieldResult{}, err
 			}
 			overview := overviewBrownfieldSession(session)
-			return BrownfieldResult{Status: "resumed", Action: "resume", SessionDigest: session.Digest, Session: &overview, Readiness: &readiness}, nil
+			return BrownfieldResult{Status: "status", Action: "status", SessionDigest: session.Digest, Session: &overview, Readiness: &readiness}, nil
 		}
 		if operation.Action == "context" {
 			if !operation.Input.present() || operation.Write || operation.ExpectedDigest != "" {
@@ -166,9 +165,9 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 		if err != nil {
 			return BrownfieldResult{}, fmt.Errorf("reload fixed target project: %w", err)
 		}
-		if operation.Action == "apply-adoption" {
+		if operation.Action == "apply" {
 			if !operation.Write {
-				return BrownfieldResult{}, errors.New("apply-adoption requires --write; use the plan action for preview")
+				return BrownfieldResult{}, errors.New("adopt apply requires --write; preview it with adopt plan")
 			}
 			request := *operation.Input.Apply
 			schemaDigest, buildDigest, bindingErr := projectadoption.CurrentBindings(projectmodel.Schema())
@@ -178,15 +177,15 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 			next, plan, receipt, applyErr := projectadoption.ApplyAndRecordSessionAdoption(sourceRoot, operation.Root, target, prior, request.IterationID, request.ExpectedPlanDigest, schemaDigest, buildDigest)
 			if applyErr != nil {
 				if receipt.CandidateDigest != "" {
-					return BrownfieldResult{}, fmt.Errorf("model adoption was applied (plan %s, receipt candidate %s), but the Brownfield receipt could not be recorded: %w; do not rerun apply-adoption automatically; inspect the target model and session ledger first", plan.PlanDigest, receipt.CandidateDigest, applyErr)
+					return BrownfieldResult{}, fmt.Errorf("model adoption was applied (plan %s, receipt candidate %s), but the Brownfield receipt could not be recorded: %w; do not rerun adopt apply automatically; inspect the target model and session ledger first", plan.PlanDigest, receipt.CandidateDigest, applyErr)
 				}
 				return BrownfieldResult{}, applyErr
 			}
 			if _, err := projectadoption.WriteBrownfieldSession(sourceRoot, next, prior.Digest); err != nil {
-				return BrownfieldResult{}, fmt.Errorf("model adoption was applied (plan %s, receipt candidate %s), but the Brownfield session receipt could not be recorded because its ledger compare-and-swap failed: %w; do not rerun apply-adoption automatically; inspect the target model and session ledger first", plan.PlanDigest, receipt.CandidateDigest, err)
+				return BrownfieldResult{}, fmt.Errorf("model adoption was applied (plan %s, receipt candidate %s), but the Brownfield session receipt could not be recorded because its ledger compare-and-swap failed: %w; do not rerun adopt apply automatically; inspect the target model and session ledger first", plan.PlanDigest, receipt.CandidateDigest, err)
 			}
 			overview := overviewBrownfieldSession(next)
-			return BrownfieldResult{Status: "recorded", Action: "apply-adoption", PriorSessionDigest: prior.Digest, SessionDigest: next.Digest, Session: &overview, Plan: &plan, Receipt: &receipt}, nil
+			return BrownfieldResult{Status: "recorded", Action: "apply", PriorSessionDigest: prior.Digest, SessionDigest: next.Digest, Session: &overview, Plan: &plan, Receipt: &receipt}, nil
 		}
 		var next projectadoption.BrownfieldSession
 		var plan *projectadoption.AdoptionPlan
@@ -211,7 +210,11 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 			}
 		case "resolve":
 			request := *operation.Input.Resolve
-			next, err = projectadoption.RecordSessionResolution(prior, request.IterationID, request.Resolution)
+			var resolution projectadoption.Resolution
+			resolution, err = resolveFromChoices(prior, target, request)
+			if err == nil {
+				next, err = projectadoption.RecordSessionResolution(prior, request.IterationID, resolution)
+			}
 		case "plan":
 			request := *operation.Input.Plan
 			if operation.Write || operation.ExpectedDigest != "" {
@@ -236,7 +239,7 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 		}
 		return finishBrownfield(operation, sourceRoot, operation.Action, prior.Digest, next, plan)
 	default:
-		return BrownfieldResult{}, errors.New("Brownfield action must be start, begin, context, propose, integrate, iterate, resolve, plan, apply-adoption, or resume")
+		return BrownfieldResult{}, errors.New("adopt stage must be start, begin, context, propose, integrate, iterate, run, resolve, plan, apply, or status")
 	}
 }
 
@@ -264,9 +267,11 @@ func finishBrownfield(operation BrownfieldOperation, sourceRoot, action, priorDi
 	return BrownfieldResult{Status: status, Action: action, PriorSessionDigest: priorDigest, SessionDigest: session.Digest, Session: &overview, Plan: plan}, nil
 }
 
+// BrownfieldStartInput is a discovery request: the Host discovers the source
+// repository and seals the result into the new session.
 type BrownfieldStartInput struct {
-	Discovery     projectadoption.Discovery     `json:"discovery"`
-	ScopeStatuses []projectadoption.ScopeStatus `json:"scopeStatuses"`
+	Request       projectadoption.DiscoveryRequest `json:"request"`
+	ScopeStatuses []projectadoption.ScopeStatus    `json:"scopeStatuses"`
 }
 
 type BrownfieldIterateInput struct {
@@ -285,9 +290,11 @@ type BrownfieldIntegrationInput struct {
 	Integration projectadoption.ManagerIntegration `json:"integration"`
 }
 
+// BrownfieldResolveInput holds the human choices for an integrated iteration;
+// the Host builds and seals the Resolution from them.
 type BrownfieldResolveInput struct {
-	IterationID string                     `json:"iterationId"`
-	Resolution  projectadoption.Resolution `json:"resolution"`
+	IterationID string            `json:"iterationId"`
+	Choices     ResolutionChoices `json:"choices"`
 }
 
 type BrownfieldPlanInput struct {

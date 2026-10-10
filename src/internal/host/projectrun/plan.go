@@ -22,6 +22,13 @@ import (
 // runner and runtime configuration. It persists no source changes and starts
 // no external agent.
 func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, error) {
+	return PlanExpecting(host, root, revision, request, "")
+}
+
+// PlanExpecting is Plan with a guard for persisting: when expectedPreview is
+// set, an authorized plan is persisted only if its PlanPreviewDigest still
+// equals the reviewed preview's; otherwise it returns ErrStale.
+func PlanExpecting(host Host, root, revision string, request PlanRequest, expectedPreview string) (PlanRecord, error) {
 	var plan PlanRecord
 	var err error
 	operation, err := NormalizeOperation(request.Operation)
@@ -366,6 +373,15 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	}
 	if !request.ExecuteAuthorized {
 		return plan, nil
+	}
+	if expectedPreview != "" {
+		preview, err := PlanPreviewDigest(plan)
+		if err != nil {
+			return plan, err
+		}
+		if preview != expectedPreview {
+			return plan, ErrStale
+		}
 	}
 	store, err := newRunStore(root)
 	if err != nil {
