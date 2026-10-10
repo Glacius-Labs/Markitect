@@ -93,7 +93,8 @@ python3 tests/smoke_docker.py
 ```
 
 This runs `python3 -m playground host run --manifest examples/fake-roombook.json` into a
-temporary folder and checks the result. Other fake manifests:
+new folder under `$TMPDIR` (default `/tmp`) and checks the result. Set `TMPDIR` to put
+it elsewhere, but not inside a Git checkout. Other fake manifests:
 
 ```
 python3 tests/smoke_docker.py --manifest examples/fake-readinglog2.json      # six waves
@@ -127,8 +128,9 @@ checks in its report fail. That is expected.
 ### Smoke the Markitect arm
 
 Save a manifest like this outside the checkout, for example as
-`~/fake-markitect-roombook.json`. Set `sourceRepo` to your Markitect checkout and
-`commit` to a commit in it (`git -C ~/Markitect rev-parse --short HEAD`):
+`~/fake-markitect-roombook.json`. Set `sourceRepo` to the absolute path of your
+Markitect checkout (no `~`) and `commit` to a commit in it
+(`git -C ~/Markitect rev-parse --short HEAD`):
 
 ```json
 {
@@ -173,6 +175,9 @@ docker run --rm --network none --mount type=bind,source="$PWD",target=/src,reado
 
 ### Assess and compare without a provider (optional)
 
+From `experiments/case-playground`; with `--out`, use that folder instead of
+`~/markitect-playground-runs/fake-roombook-001`:
+
 ```
 python3 -m playground host run --manifest examples/fake-roombook.json
 python3 -m playground assess --run ~/markitect-playground-runs/fake-roombook-001 --fake-reviewers
@@ -180,8 +185,9 @@ python3 -m playground compare ~/markitect-playground-runs/fake-roombook-001 ~/ma
 ```
 
 `--fake-reviewers` replaces both reviewer CLIs with `tests/fake_reviewer.py` and
-throwaway credentials. Comparing a run with itself only shows the format. Remove the run
-folder before you repeat this.
+throwaway credentials. Comparing a run with itself only shows the format. Before you
+repeat this, remove the run folder and the `compare-*.md` file next to it; a repeated
+`compare` overwrites that file without asking.
 
 ## Components
 
