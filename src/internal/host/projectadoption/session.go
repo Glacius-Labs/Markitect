@@ -151,7 +151,9 @@ type Readiness struct {
 }
 
 // StartBrownfieldSession freezes the source Discovery and accepted target
-// model as two independent bases. It performs no model/provider call.
+// model as two independent bases. It performs no model/provider call and
+// returns only a session that ValidateBrownfieldSession accepts, so a
+// previewed start is also writable.
 func StartBrownfieldSession(sourceRoot string, target *projectwork.Project, discovery Discovery, scopeStates []ScopeStatus) (BrownfieldSession, error) {
 	if err := ValidateDiscovery(discovery); err != nil {
 		return BrownfieldSession{}, err
@@ -181,6 +183,12 @@ func StartBrownfieldSession(sourceRoot string, target *projectwork.Project, disc
 		TargetContext: context, Scopes: append([]ScopeStatus{}, scopeStates...), Iterations: []ReverseIteration{}, Adoptions: []SessionAdoption{},
 	}
 	sealSession(&session)
+	if err := ValidateBrownfieldSession(session); err != nil {
+		if len(session.Scopes) > 0 {
+			return BrownfieldSession{}, fmt.Errorf("initial scope statuses require recorded reverse-model proposals; start without scope statuses: %w", err)
+		}
+		return BrownfieldSession{}, err
+	}
 	return session, nil
 }
 
