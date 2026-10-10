@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T09:06:16.514231+00:00",
+  "updatedUtc": "2026-10-10T09:17:44.515686+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integration carries concrete reviewed helper alias fix through genuine product execution and normal Main gates under renewable finite batches. Scientist completed baseline retained and prepares genuine matched adapter/framework once product functional. KG separate.",
+  "nextAction": "Integrator continues current finite Actual22 and reports terminal proof/checkpoint or concrete blocker once; Root verifies exact receipts and gates. Scientist studies remain suspended, KG waits accepted Main. No duplicate dispatch or routine polling.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL21_TERMINAL_ALIAS_PROTOCOL_RECOVER_REVIEW_AND_SCOPED_EVIDENCE_CLOSURE_PENDING",
+    "status": "ACTUAL22_ACTIVE_CLEAN_ALIAS_PROTOCOL_EVIDENCE_FREEZE_ROOT_VERIFIED_FULL_ACCEPTANCE_PENDING",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18740,6 +18740,33 @@
         "timeBounds": "Existing4hbatch1hrole unchanged",
         "history": "Original Actual21runtime retained, newnormalReadinessPlan aftercleanSourcecheckpoint. Exact new runtime hash/freeze still pending, no old refill/plan rewriting."
       }
+    },
+    "fullAuditAliasEvidenceCorrectionFreeze": {
+      "status": "CLEAN_PUBLIC_SOURCE_BINARY_ROOT_VERIFIED_QUALIFIED_OWNER_TESTS_REVIEW",
+      "sourceCommit": "1a84f921846fc573411555d11778999d97fbaa1b",
+      "sourceSha": "443057863ad4d2cb18b69b473033c9b5d5766706",
+      "binarySha256": "368eae53c6e843354eebdb2d89362f7178cb535c62598b712daea94eef9c47f2",
+      "rootVerified": "Clean exact local HEAD/public ls-remote; Go1.27.1 WindowsAMD64 CGO0 VCS44305786 modifiedfalse; exact binary SHA. Source inspected: sorted collision-free request-bound short aliases, strict unknown/duplicate rejection and canonical mapping; semantic verdict fields unchanged; protocol identity advanced for new wire contract. Supporting Artifact.Realizes public Statement/Artifact.Checks definitions/results are same-snapshot explicit context, not additional mandatory audit subjects. Private Statement definitions excluded.",
+      "ownerChecks": "Adapter89.460s before final protocol delta; final Recovery/Alias/Schema delta1.037s; full Manager Verify regressions94.839s; vet/rootcheck/managed/context/impact/duplicate/history PASS; independent bounded source review clear. No Root redundant tests or inferred post-delta full adapter rerun.",
+      "p11": "Backlog current deferred/main_gatefalse wording now expressly preserves future bounded design under existing human mandate; no new read-only helper capability implemented or extra acceptance gate.",
+      "limits": "New normal adopter profile uniform maxEventBytes134217728 for7roles; current4hbatch/1hrole retained; old Actual21 untouched.",
+      "boundary": "Technical correction qualification only; not full native A01/Main/release/study acceptance."
+    },
+    "actual22Preparation": {
+      "status": "ACTIVE_OWNER_REPORTED_EXACT_SOURCE_BINARY_ROOT_BOUND_START_RECEIPTS_PENDING",
+      "freezeRef": "fullAuditAliasEvidenceCorrectionFreeze",
+      "sourceSha": "443057863ad4d2cb18b69b473033c9b5d5766706",
+      "binarySha256": "368eae53c6e843354eebdb2d89362f7178cb535c62598b712daea94eef9c47f2",
+      "batchId": "a01-audit-aliases-0c12e067bcf14f48893688a852269418",
+      "startedUtcOwnerReported": "2026-10-10T09:15:39.9867012Z",
+      "deadlineUtc": "2026-10-10T13:15:39.9867012Z",
+      "planId": "ccd5e731231f4b3198408563ad3ee18c",
+      "planDigestOwnerReportedPrefix": "e26fdd0a",
+      "readinessDigestOwnerReportedPrefix": "a39b2407",
+      "runtimeDigestOwnerReportedPrefix": "052722b3",
+      "adopterCheckpointOwnerReported": "275baa9b830f1eee67cc901321a595002ffe0744",
+      "adopterScopeOwnerReported": "Exactly7 maxEventBytes lines committed via normal Readiness boundary; model/business implementation unchanged, old21 runtime/bindings retained.",
+      "boundary": "Fresh normal finite proof under existing renewable authority; original-root same-build recovery/genuine authoring helper/parallel work/independent reviews. Current native handles/start accounting/result not independently checked yet; no Apply/fullA01/main PASS claimed. No repeated Root order or old21 replay."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
