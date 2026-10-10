@@ -278,7 +278,7 @@ jobs:
           adapter_bin="$RUNNER_TEMP/markitect-adapter-bin-$GITHUB_SHA"
           mkdir -p "$adapter_source" "$adapter_bin"
           unzip -q "$MARKITECT_PACKAGE_DIR/.markitect/tool/source.zip" -d "$adapter_source"
-          (cd "$adapter_source" && go build -trimpath -buildvcs=false -o "$adapter_bin/markitect-adapter-dotnet" ./cmd/markitect-adapter-dotnet)
+          (cd "$adapter_source" && go build -trimpath -buildvcs=false -o "$adapter_bin/markitect-adapter-dotnet" ./src/cmd/markitect-adapter-dotnet)
           echo "$adapter_bin" >> "$GITHUB_PATH"
           export PATH="$adapter_bin:$PATH"
           domain_check_output="$(go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/canonical-engineering")"
@@ -385,7 +385,7 @@ jobs:
           New-Item -ItemType Directory -Path $adapterSource, $adapterBin -Force | Out-Null
           Expand-Archive -LiteralPath (Join-Path $env:MARKITECT_PACKAGE_DIR '.markitect/tool/source.zip') -DestinationPath $adapterSource
           Push-Location $adapterSource
-          go build -trimpath -buildvcs=false -o (Join-Path $adapterBin 'markitect-adapter-dotnet.exe') ./cmd/markitect-adapter-dotnet
+          go build -trimpath -buildvcs=false -o (Join-Path $adapterBin 'markitect-adapter-dotnet.exe') ./src/cmd/markitect-adapter-dotnet
           if ($LASTEXITCODE -ne 0) { throw 'Could not build .NET reference adapter from packaged source' }
           Pop-Location
           $adapterBin >> $env:GITHUB_PATH
