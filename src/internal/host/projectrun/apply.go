@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"bytes"
 	"fmt"
 	"io/fs"
 	"os"
@@ -13,6 +14,7 @@ import (
 	hostwrite "github.com/Glacius-Labs/Markitect/src/internal/host"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
 // ApplyPaths returns the exact candidate delta paths for CLI preflight and
@@ -147,7 +149,7 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if capture.Branch != plan.TargetBranch || capture.Head != plan.TargetHead {
 		return out, ErrStale
 	}
-	if err := compareCaptureToBase(capture, base.Snapshot, paths); err != nil {
+	if err := compareCaptureToBase(root, plan.BaseRevision, capture, base.Snapshot, paths); err != nil {
 		return out, err
 	}
 	target, err := TargetDigest(capture)
@@ -318,7 +320,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if targetDigest != request.ExpectedWorktree {
 		return out, fmt.Errorf("target working-file bytes differ from requested precondition")
 	}
-	if err := compareCaptureToBase(capture, base.Snapshot, paths); err != nil {
+	if err := compareCaptureToBase(root, plan.BaseRevision, capture, base.Snapshot, paths); err != nil {
 		return out, err
 	}
 	changes, err := guardedChanges(candidate, paths)
@@ -407,6 +409,9 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 			if bindingErr = validateFullApplyVerification(plan, freshCandidate, freshCompiled, latestVerify, currentBriefings); bindingErr != nil {
 				return bindingErr
 			}
+		}
+		if err := compareCaptureToBase(root, plan.BaseRevision, capture, base.Snapshot, paths); err != nil {
+			return err
 		}
 		return nil
 	}
@@ -600,21 +605,83 @@ func candidateDeltaPaths(base *Snapshot, c candidateData) []string {
 	sort.Strings(paths)
 	return paths
 }
-func compareCaptureToBase(capture *hostwrite.GuardedWriteCapture, base *Snapshot, paths []string) error {
+func compareCaptureToBase(root, revision string, capture *hostwrite.GuardedWriteCapture, base *Snapshot, paths []string) error {
 	for _, p := range paths {
 		current, ok := capture.Files[p]
 		if !ok {
 			return fmt.Errorf("target capture omitted %s", p)
+		}
+		fixedAttributes, err := source.GitOutput(root, "check-attr", "--source", revision, "-z", "--all", "--", p)
+		if err != nil {
+			return fmt.Errorf("inspect fixed Git attributes for target path %q: %w", p, err)
+		}
+		workingAttributes, err := source.GitOutput(root, "check-attr", "-z", "--all", "--", p)
+		if err != nil {
+			return fmt.Errorf("inspect working Git attributes for target path %q: %w", p, err)
+		}
+		if !bytes.Equal(fixedAttributes, workingAttributes) {
+			return fmt.Errorf("target path %s has Git attributes that differ from fixed revision %q", p, revision)
 		}
 		old, exists := base.Files[p]
 		if exists != current.Exists {
 			return fmt.Errorf("target path %s does not match fixed base existence", p)
 		}
 		if exists {
-			if string(old) != string(current.Bytes) || !captureModeMatchesGit(current.Mode, base.Modes[p]) {
+			if !captureModeMatchesGit(current.Mode, base.Modes[p]) {
 				return fmt.Errorf("target path %s differs from fixed base bytes or mode", p)
 			}
+			if err := compareTargetIndexToBase(root, p, base); err != nil {
+				return err
+			}
+			fixed := &Snapshot{Files: map[string][]byte{p: old}, Modes: map[string]string{p: base.Modes[p]}}
+			working := &Snapshot{Files: map[string][]byte{p: current.Bytes}, Modes: map[string]string{p: base.Modes[p]}}
+			if err := requireCleanSelectedBasisAtRevision(root, revision, fixed, working); err != nil {
+				return fmt.Errorf("target path %s differs from fixed base bytes or mode: %w", p, err)
+			}
+		} else if err := compareTargetIndexToBase(root, p, base); err != nil {
+			return err
 		}
+	}
+	return nil
+}
+
+func compareTargetIndexToBase(root, path string, base *Snapshot) error {
+	output, err := source.GitOutput(root, "--literal-pathspecs", "ls-files", "--stage", "-z", "--", path)
+	if err != nil {
+		return fmt.Errorf("inspect staged target path %q: %w", path, err)
+	}
+	var found bool
+	var stagedMode, stagedOID string
+	for _, record := range bytes.Split(output, []byte{0}) {
+		if len(record) == 0 {
+			continue
+		}
+		tab := bytes.IndexByte(record, '\t')
+		if tab < 0 || string(record[tab+1:]) != path {
+			return fmt.Errorf("staged index returned a malformed target entry for %q", path)
+		}
+		fields := strings.Fields(string(record[:tab]))
+		if len(fields) != 3 || fields[2] != "0" || found {
+			return fmt.Errorf("target path %s has staged conflict or duplicate index entries", path)
+		}
+		found, stagedMode, stagedOID = true, fields[0], fields[1]
+	}
+	fixed, exists := base.Files[path]
+	if exists != found {
+		return fmt.Errorf("target path %s staged index existence differs from fixed base", path)
+	}
+	if !exists {
+		return nil
+	}
+	if stagedMode != base.Modes[path] {
+		return fmt.Errorf("target path %s staged index mode differs from fixed base", path)
+	}
+	fixedOID, err := source.GitOutputInput(root, fixed, "hash-object", "--no-filters", "--stdin")
+	if err != nil {
+		return fmt.Errorf("hash fixed target path %q: %w", path, err)
+	}
+	if strings.TrimSpace(stagedOID) != strings.TrimSpace(string(fixedOID)) {
+		return fmt.Errorf("target path %s staged index content differs from fixed base", path)
 	}
 	return nil
 }

@@ -2057,6 +2057,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectrun/apply.go
       owner: project-world-implementation
+    - path: src/internal/host/projectrun/apply_capture_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectrun/checks.go
       owner: project-world-implementation
     - path: src/internal/host/projectrun/config.go
