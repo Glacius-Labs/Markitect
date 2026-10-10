@@ -205,14 +205,26 @@ class NativeWorkspaceTests(unittest.TestCase):
             with self.assertRaisesRegex(native_work.NativeWorkError, "scan size bound"):
                 native_work.harvest(prepared, [], tool_calls=0)
 
-    def test_posix_mode_classifier_rejects_widening_inputs(self) -> None:
-        for mode_bits, label in ((0o700, "0700"), (0o640, "0640"), (0o4755, "4755")):
-            with self.subTest(mode=label), tempfile.TemporaryDirectory() as temporary:
-                with self.assertRaisesRegex(native_work.NativeWorkError, f"unsupported POSIX mode {label}"):
-                    native_work._posix_mode(mode_bits, "src/main.py")
-        for mode_bits, expected in ((0o600, "0600"), (0o644, "0644"), (0o755, "0755")):
-            with self.subTest(mode=expected):
-                self.assertEqual(native_work._posix_mode(mode_bits, "src/main.py"), expected)
+    def test_posix_mode_classifier_normalizes_regular_files_like_git(self) -> None:
+        cases = (
+            (0o644, "0644"), (0o755, "0755"), (0o640, "0644"), (0o700, "0755"),
+            (0o4755, "0755"), (0o664, "0644"), (0o775, "0755"), (0o600, "0644"),
+        )
+        for mode_bits, expected in cases:
+            with self.subTest(mode=f"{mode_bits:04o}"):
+                self.assertEqual(native_work._posix_mode(mode_bits, None), expected)
+        private = native_work.FileRecord("src/main.py", "0600", b"", native_work._digest(b""))
+        self.assertEqual(native_work._posix_mode(0o600, private), "0600")
+        self.assertEqual(native_work._posix_mode(0o640, private), "0644")
+
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "POSIX FIFOs only")
+    def test_non_regular_candidate_file_is_still_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "candidate"
+            prepared = prepare(root)
+            os.mkfifo(root / "src" / "pipe")
+            with self.assertRaisesRegex(native_work.NativeWorkError, "link or non-regular file: src/pipe"):
+                native_work.harvest(prepared, [], tool_calls=1)
 
     def test_unchanged_private_input_is_allowed_but_private_delta_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -243,14 +255,17 @@ class NativeWorkspaceTests(unittest.TestCase):
                     native_work.harvest(prepared, [], tool_calls=1)
 
     @unittest.skipUnless(os.name == "posix", "POSIX file modes only")
-    def test_unsupported_mode_change_is_a_rejected_delta(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / "candidate"
-            prepared = prepare(root)
-            (root / "src" / "main.py").chmod(0o664)
-            with self.assertRaisesRegex(native_work.SafeDeltaRejected, "unsupported repository mode 0664: src/main.py") as caught:
-                native_work.harvest(prepared, [], tool_calls=1)
-            self.assertEqual(caught.exception.native_work["changedPaths"], ["src/main.py"])
+    def test_chmod_only_change_is_a_delta_only_when_the_git_mode_changes(self) -> None:
+        content = "def value():\n    return 1\n"
+        for chmod, delta_mode in ((0o664, None), (0o640, None), (0o600, None), (0o775, "0755"), (0o700, "0755")):
+            with self.subTest(mode=f"{chmod:04o}"), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary) / "candidate"
+                prepared = prepare(root)
+                (root / "src" / "main.py").chmod(chmod)
+                expected = [] if delta_mode is None else [{"path": "src/main.py", "mode": delta_mode, "content": content}]
+                files, _, _, paths = native_work.harvest(prepared, expected, tool_calls=0)
+                self.assertEqual(files, expected)
+                self.assertEqual(paths, [entry["path"] for entry in expected])
 
 
 class NativeRunnerTests(unittest.TestCase):
@@ -317,7 +332,7 @@ class NativeRunnerTests(unittest.TestCase):
             self.assertNotIn("toolCalls", result["usage"])
 
     @unittest.skipUnless(os.name == "posix", "POSIX file modes only")
-    def test_group_writable_new_file_returns_rejected_delta_with_receipt(self) -> None:
+    def test_new_file_modes_are_proposed_as_git_modes_under_any_umask(self) -> None:
         value = task_invocation()
         content = "def added():\n    return 3\n"
         args = argparse.Namespace(
@@ -325,17 +340,20 @@ class NativeRunnerTests(unittest.TestCase):
             model="gpt-6-luna", codex_executable="codex", codex_script="", codex_version="0.162.0",
             timeout_seconds=20,
         )
-        response = normalized_response(value, [{"path": "src/added.py", "mode": "0644", "content": content}])
-        # umask 002, common on desktop Linux, gives every new file mode 0664.
-        for umask, observed_mode, outcome in ((0o022, 0o644, "proposed"), (0o002, 0o664, "incomplete")):
+        # umask 002, common on desktop Linux, gives new files 0664 and new
+        # scripts 0775; umask 077 gives private 0600 files.
+        cases = ((0o022, 0o666, 0o644, "0644"), (0o002, 0o666, 0o664, "0644"), (0o002, 0o777, 0o775, "0755"), (0o077, 0o666, 0o600, "0644"))
+        for umask, requested_mode, observed_mode, git_mode in cases:
             observed: list[int] = []
+            response = normalized_response(value, [{"path": "src/added.py", "mode": git_mode, "content": content}])
 
             class FakeProcess:
                 def __init__(self, argv, cwd, **kwargs):
                     previous = os.umask(umask)
                     try:
                         target = Path(cwd) / "src" / "added.py"
-                        target.write_text(content, encoding="utf-8")
+                        with os.fdopen(os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, requested_mode), "w", encoding="utf-8") as stream:
+                            stream.write(content)
                     finally:
                         os.umask(previous)
                     observed.append(stat.S_IMODE(target.stat().st_mode))
@@ -353,19 +371,18 @@ class NativeRunnerTests(unittest.TestCase):
                 def kill(self):
                     return None
 
-            with self.subTest(umask=f"{umask:03o}"), tempfile.TemporaryDirectory() as temporary:
+            with self.subTest(umask=f"{umask:03o}", mode=f"{observed_mode:04o}"), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 log = root / "events.jsonl"
                 with patch.object(runner, "resolve_codex", return_value=["codex"]), patch.object(runner, "check_version"), patch.object(runner.subprocess, "Popen", FakeProcess):
                     result = runner.launch_codex(value, args, {"model_reasoning_effort": "high"}, root, log)
                 self.assertEqual(observed, [observed_mode])
-                self.assertEqual(result["outcome"], outcome)
+                self.assertEqual(result["outcome"], "proposed")
+                self.assertEqual(result["candidateFiles"], [{"path": "src/added.py", "mode": git_mode, "content": content}])
                 self.assertEqual(result["nativeWork"]["changedPaths"], ["src/added.py"])
-                if outcome == "proposed":
-                    self.assertEqual(result["candidateFiles"], [{"path": "src/added.py", "mode": "0644", "content": content}])
-                else:
-                    self.assertEqual(result["candidateFiles"], [])
-                    self.assertIn("unsupported repository mode 0664: src/added.py", log.read_text(encoding="utf-8"))
+                # The Host's agentexec nativeDeltaDigest encoding of the proposed candidateFiles.
+                go_delta = '[{"digest":"sha256:%s","mode":"%s","path":"src/added.py"}]' % (hashlib.sha256(content.encode()).hexdigest(), git_mode)
+                self.assertEqual(result["nativeWork"]["deltaDigest"], "sha256:" + hashlib.sha256(go_delta.encode()).hexdigest())
 
     def test_helpers_fail_before_provider_and_native_selection_comes_from_task_context(self) -> None:
         value = task_invocation()
