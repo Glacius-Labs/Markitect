@@ -495,6 +495,8 @@ def resolve_codex(executable: str, script: str) -> list[str]:
 
 
 def check_version(prefix: list[str], expected: str) -> None:
+    if re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", expected) is None:
+        raise AdapterError("configured Codex version must be an exact semantic version")
     try:
         result = subprocess.run(
             [*prefix, "--version"],
@@ -508,7 +510,8 @@ def check_version(prefix: list[str], expected: str) -> None:
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise AdapterError("Codex version check failed") from exc
     output = (result.stdout + b"\n" + result.stderr).decode("utf-8", errors="replace").strip()
-    if result.returncode != 0 or expected not in output:
+    actual = re.search(r"(?<![0-9A-Za-z.])(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)(?![0-9A-Za-z.+-])", output)
+    if result.returncode != 0 or actual is None or actual.group(1) != expected:
         raise AdapterError("Codex version did not match the explicit configured version")
 
 
