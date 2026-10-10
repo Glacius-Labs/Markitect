@@ -59,14 +59,6 @@ spec:
             - .markitect/modules/githooks.config
             - --pipelines
             - .markitect/modules/pipelines.config
-        - name: go-tests
-          run:
-            - go
-            - test
-            - ./...
-            - -count=1
-            - -timeout=60m
-          timeoutSeconds: 5400
         - name: claude-protocol
           run:
             - python

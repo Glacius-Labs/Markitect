@@ -11,9 +11,11 @@ on:
 permissions:
   contents: read
 
+# A new push cancels a pull request's running CI. Every other run, including
+# each main commit, has its own group and always reaches a verdict.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   quality:
@@ -44,7 +46,15 @@ jobs:
         run: go test ./src/internal/tooling/architecture
 
       - name: Test
-        run: go test ./... -count=1 -timeout=60m
+        shell: bash
+        run: |
+          status=0
+          go test ./... -count=1 -timeout=60m -json > "$RUNNER_TEMP/go-test.json" || status=$?
+          report=0
+          python -B scripts/go-test-report.py "$RUNNER_TEMP/go-test.json" --summary "$GITHUB_STEP_SUMMARY" --title "Go tests (${{ matrix.os }})" > "$RUNNER_TEMP/go-test-report.txt" || report=$?
+          cat "$RUNNER_TEMP/go-test-report.txt"
+          if [ "$status" -ne 0 ]; then exit "$status"; fi
+          exit "$report"
 
       - name: Repeat temporary Git fixture cleanup regression (Linux)
         if: runner.os == 'Linux'
@@ -477,11 +487,23 @@ jobs:
           if ($initCheck.status -ne 'succeeded' -or -not $initCheck.coverage.conforming) { throw 'Initialized project did not pass structural and coverage checks' }
           Pop-Location
 
-      - name: Test documentation checker
-        run: python -B -m unittest discover -s scripts -p test_check_docs.py
+      - name: Test repository scripts
+        run: python -B -m unittest discover -s scripts -p 'test_*.py'
 
       - name: Check maintained documentation links
         run: python -B scripts/check-docs.py
+
+      - name: Upload Go test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: go-test-${{ matrix.os }}-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/go-test.json
+            ${{ runner.temp }}/go-test-report.txt
+          if-no-files-found: warn
+          retention-days: 14
+          overwrite: true
 
   publish-source-artifact:
     name: Publish main source artifact
