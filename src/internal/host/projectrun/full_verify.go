@@ -378,8 +378,8 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 			break
 		}
 		children := fullChildAssessments(out.Managers, project.Report, row.ManagerID)
-		parentReviews := fullAuditParentIntegrationReviews(project.Report, row.ManagerID, binding.CheckCandidateID, binding.checkCandidateDigest, binding.freshReviews)
-		assessment, callErr := fullAuditManager(ctx, host, invoker, root, project, runtime, row.ManagerID, row.Strictness, briefingContexts[row.ManagerID], children, relevantManagerChecks(project.Report, row.ManagerID, out.Checks), parentReviews, binding.CheckSource, "full-verify-"+binding.ExpectedSnapshot)
+		integrationReviews := fullAuditIntegrationReviewsForManager(project.Report, row.ManagerID, binding.CheckCandidateID, binding.checkCandidateDigest, binding.freshReviews)
+		assessment, callErr := fullAuditManager(ctx, host, invoker, root, project, runtime, row.ManagerID, row.Strictness, briefingContexts[row.ManagerID], children, relevantManagerChecks(project.Report, row.ManagerID, out.Checks), integrationReviews, binding.CheckSource, "full-verify-"+binding.ExpectedSnapshot)
 		*row = assessment
 		attempted := row.Receipt != nil && row.Receipt.RunID != ""
 		if attempted {
@@ -634,7 +634,7 @@ func fullRunChecks(ctx context.Context, root string, project *projectwork.Projec
 	return results, errors.Join(failures...)
 }
 
-func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root string, project *projectwork.Project, runtime Runtime, managerID string, strictness StrictnessProfile, briefing BriefingContext, childAssessments []fullChildAssessment, checkResults []CheckResult, parentIntegrationReviews []fullReviewEvidence, checkSource bool, ownerRunID string) (FullManagerAssessment, error) {
+func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root string, project *projectwork.Project, runtime Runtime, managerID string, strictness StrictnessProfile, briefing BriefingContext, childAssessments []fullChildAssessment, checkResults []CheckResult, integrationReviews []fullReviewEvidence, checkSource bool, ownerRunID string) (FullManagerAssessment, error) {
 	row := FullManagerAssessment{ManagerID: managerID, Status: "incomplete", Assessments: []FullAssessment{}, Findings: []string{}}
 	manager, ok := runtime.Review.Agents[managerID]
 	if !ok {
@@ -683,23 +683,23 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 		fileRefs = append(fileRefs, reviewFileRef{Path: file.Path, Mode: file.Mode, Digest: file.Digest, Grounding: []string{"file-bytes", "file-mode"}})
 	}
 	contextPayload := struct {
-		Kind                          string                      `json:"kind"`
-		SnapshotDigest                string                      `json:"snapshotDigest"`
-		ProjectDigest                 string                      `json:"projectDigest"`
-		ModelDigest                   string                      `json:"modelDigest"`
-		Manager                       projectmodel.ManagerContext `json:"manager"`
-		SupportingStatements          []projectmodel.Statement    `json:"supportingStatements"`
-		SupportingChecks              []projectmodel.Check        `json:"supportingChecks"`
-		Briefing                      BriefingContext             `json:"briefing"`
-		IntegrationObligations        []fullIntegrationObligation `json:"integrationObligations"`
-		ChildAssessments              []fullChildAssessment       `json:"childAssessments"`
-		CheckResults                  []CheckResult               `json:"checkResults"`
-		FreshParentIntegrationReviews []fullReviewEvidence        `json:"freshParentIntegrationReviews"`
-		Files                         []reviewFileRef             `json:"files"`
-		Subjects                      []string                    `json:"requiredSubjects"`
-		Strictness                    StrictnessProfile           `json:"strictness"`
-		ResponseSchema                json.RawMessage             `json:"responseSchema"`
-	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, supportingStatements, supportingChecks, briefing, children, childAssessments, checkResults, parentIntegrationReviews, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
+		Kind                    string                      `json:"kind"`
+		SnapshotDigest          string                      `json:"snapshotDigest"`
+		ProjectDigest           string                      `json:"projectDigest"`
+		ModelDigest             string                      `json:"modelDigest"`
+		Manager                 projectmodel.ManagerContext `json:"manager"`
+		SupportingStatements    []projectmodel.Statement    `json:"supportingStatements"`
+		SupportingChecks        []projectmodel.Check        `json:"supportingChecks"`
+		Briefing                BriefingContext             `json:"briefing"`
+		IntegrationObligations  []fullIntegrationObligation `json:"integrationObligations"`
+		ChildAssessments        []fullChildAssessment       `json:"childAssessments"`
+		CheckResults            []CheckResult               `json:"checkResults"`
+		FreshIntegrationReviews []fullReviewEvidence        `json:"freshIntegrationReviews"`
+		Files                   []reviewFileRef             `json:"files"`
+		Subjects                []string                    `json:"requiredSubjects"`
+		Strictness              StrictnessProfile           `json:"strictness"`
+		ResponseSchema          json.RawMessage             `json:"responseSchema"`
+	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, supportingStatements, supportingChecks, briefing, children, childAssessments, checkResults, integrationReviews, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
 	contextJSON, err := json.Marshal(contextPayload)
 	if err != nil {
 		return row, err
@@ -958,19 +958,22 @@ func fullChildAssessments(rows []FullManagerAssessment, report projectmodel.Repo
 	return out
 }
 
-func fullAuditParentIntegrationReviews(report projectmodel.Report, managerID, finalCandidateID, finalCandidateDigest string, reviews []fullReviewEvidence) []fullReviewEvidence {
-	var parentID string
+func fullAuditIntegrationReviewsForManager(report projectmodel.Report, managerID, finalCandidateID, finalCandidateDigest string, reviews []fullReviewEvidence) []fullReviewEvidence {
+	var integrationManagerID string
 	for _, manager := range report.Managers {
 		if manager.ID == managerID {
-			parentID = manager.Parent
+			integrationManagerID = manager.Parent
+			if integrationManagerID == "" {
+				integrationManagerID = manager.ID
+			}
 			break
 		}
 	}
-	if parentID == "" {
+	if integrationManagerID == "" {
 		return []fullReviewEvidence{}
 	}
 	for _, review := range reviews {
-		if review.ManagerID == parentID && review.Phase == "integrate" && review.Outcome == "pass" &&
+		if review.ManagerID == integrationManagerID && review.Phase == "integrate" && review.Outcome == "pass" &&
 			review.FinalCandidateID == finalCandidateID && review.FinalCandidateDigest == finalCandidateDigest {
 			return []fullReviewEvidence{review}
 		}

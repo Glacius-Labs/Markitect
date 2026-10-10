@@ -226,7 +226,7 @@ func TestFullVerifyReviewEvidenceIncludesOnlyCurrentParentIntegrationAndPreserve
 		ReviewCandidateID: "candidate-reviewed", ReviewCandidateDigest: "sha256:reviewed",
 		FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest,
 		ScopeDigest: "sha256:scope", InputDigest: "sha256:input", ReceiptRunID: "review-run", Outcome: "pass", Findings: []ReviewFinding{}}
-	got := fullAuditParentIntegrationReviews(project.Report, target.ID, finalCandidateID, finalCandidateDigest, []fullReviewEvidence{
+	got := fullAuditIntegrationReviewsForManager(project.Report, target.ID, finalCandidateID, finalCandidateDigest, []fullReviewEvidence{
 		{ManagerID: target.ID, Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
 		{ManagerID: sibling.ID, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
 		{ManagerID: target.Parent, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
@@ -240,6 +240,17 @@ func TestFullVerifyReviewEvidenceIncludesOnlyCurrentParentIntegrationAndPreserve
 	}
 	if !reflect.DeepEqual(got[0], want) {
 		t.Fatalf("parent review provenance or findings changed: got=%+v want=%+v", got[0], want)
+	}
+	rootReview := want
+	rootReview.TaskID, rootReview.ManagerID, rootReview.ReviewCandidateID = "task-root", target.Parent, "root-reviewed-partial-candidate"
+	rootReview.ReviewCandidateDigest, rootReview.ReceiptRunID = "sha256:root-reviewed", "root-integration-receipt"
+	rootReviews := fullAuditIntegrationReviewsForManager(project.Report, target.Parent, finalCandidateID, finalCandidateDigest, []fullReviewEvidence{
+		rootReview,
+		{ManagerID: target.ID, Phase: "integrate", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: target.Parent, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+	})
+	if len(rootReviews) != 1 || !reflect.DeepEqual(rootReviews[0], rootReview) {
+		t.Fatalf("top-level Manager did not receive its own exact integration review: %+v", rootReviews)
 	}
 }
 
@@ -503,11 +514,11 @@ func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *
 		FinalCandidateID: finalID, FinalCandidateDigest: finalDigest, ScopeDigest: "sha256:scope", InputDigest: "sha256:review-input",
 		ReceiptRunID: "review-receipt", Outcome: "pass", Findings: []ReviewFinding{},
 		ReviewedFiles: []fullReviewFileReference{{Path: "docs/greeting.md", Mode: "0644", ContentDigest: "sha256:docs-content"}}}
-	parentReviews := fullAuditParentIntegrationReviews(project.Report, managerID, finalID, finalDigest, []fullReviewEvidence{parentReview})
+	integrationReviews := fullAuditIntegrationReviewsForManager(project.Report, managerID, finalID, finalDigest, []fullReviewEvidence{parentReview})
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	row, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
-		managerID, StrictnessProfile{}, BriefingContext{}, nil, nil, parentReviews, false, "full-verify-test")
+		managerID, StrictnessProfile{}, BriefingContext{}, nil, nil, integrationReviews, false, "full-verify-test")
 	if err != nil {
 		t.Fatalf("native Manager audit failed: row=%+v err=%v", row, err)
 	}
@@ -525,13 +536,13 @@ func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *
 		t.Fatalf("read-only workspace journal did not retain empty harvested evidence and receipt: %+v", journal)
 	}
 	var captured struct {
-		FreshParentIntegrationReviews []fullReviewEvidence `json:"freshParentIntegrationReviews"`
+		FreshIntegrationReviews []fullReviewEvidence `json:"freshIntegrationReviews"`
 	}
 	if err := json.Unmarshal(invoker.requestContext, &captured); err != nil {
 		t.Fatalf("decode parent review projection: %v", err)
 	}
-	if len(captured.FreshParentIntegrationReviews) != 1 || !reflect.DeepEqual(captured.FreshParentIntegrationReviews[0], parentReview) {
-		t.Fatalf("full audit did not receive the exact parent integration provenance: %+v", captured.FreshParentIntegrationReviews)
+	if len(captured.FreshIntegrationReviews) != 1 || !reflect.DeepEqual(captured.FreshIntegrationReviews[0], parentReview) {
+		t.Fatalf("full audit did not receive the exact parent integration provenance: %+v", captured.FreshIntegrationReviews)
 	}
 }
 
