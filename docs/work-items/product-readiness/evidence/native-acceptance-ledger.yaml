@@ -980,9 +980,9 @@ renewal_policy:
     separate_open_lifecycle_gap_focused_negative_result: passed_5_392s_on_uncommitted_fix_tree; proves_cleanup_pending_and_child_preserved_after_injected_close_failure_only_not_automatic_resume_reconciliation
     separate_open_lifecycle_gap_next: lifecycle_owner_to_supply_follow_up_negative_command_before_investigating_existing_owned_close_recovery
   next_batch:
-    status: actual22_failed_project_verify_host_rejected_subject_alias_no_full_manager_verify_no_apply; fresh_native_revalidation_pending
+    status: actual23_failed_full_verify_source_manager_incomplete_no_apply; bounded_review_context_correction_pending_fresh_native_revalidation_required
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
-    new_batch_pins: actual22_terminal_record_d0d1e41e84d890256bf6786c5eceee3df7966ec51b0ffd2ef6ceb13f748abb81; next_a01_requires_fresh_clean_build_readiness_and_plan
+    new_batch_pins: actual23_terminal_record_769456575159d18d58ca34c7b8c3303e1963fb31cb675e8a920b8fbf75eff7a2; next_a01_requires_fresh_clean_build_readiness_and_plan
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
     no_eighteenth_actual_claimed: false
@@ -990,10 +990,11 @@ renewal_policy:
     no_twentieth_actual_claimed: false
     no_twenty_first_actual_claimed: false
     no_twenty_second_actual_claimed: false
-    no_twenty_third_actual_claimed: true
+    no_twenty_third_actual_claimed: false
+    no_twenty_fourth_actual_claimed: true
     owner_repair_in_progress: true
-    owner_repair_status: Actual22_same_binary_root_recovery_and_resume_integrated_without_replay; three_work_reviews_and_one_integration_review_passed; normal_Verifier_typed_report_passed_but_Host_rejected_four_paraphrased_subjects_including_repository_README; configured_check_passed_but_no_valid_Verifier_pass; no_full_manager_audits_or_Apply; narrow_subject_alias_fix_committed_41a6a0fdd0392f2bf13af1f9576d48eee4e94eb6_independently_reviewed_and_validated_focused_1_080s_full_codexappserver_73_157s_vet_3_295s; fresh_native_A01_revalidation_pending
-    repair: run a fresh normal A01 on a clean binary/readiness/Plan after the committed subject alias correction; do not replay Actual22; retain 4h batch and 1h role bounds; Actual22 remains failed_not_passed
+    owner_repair_status: Actual23_same_binary_root_recovery_and_resume_integrated_without_replay; three_work_reviews_and_one_integration_review_passed; initial_Verifier_passed_and_full_manager_audits_started; Docs_and_Root_passed_but_Source_incomplete_missing_required_independent_documentation_review_context; no_Apply; bounded_source_review_context_correction_pending
+    repair: complete and independently review the bounded source review-context correction; then build a clean candidate and obtain fresh readiness/Plan before another normal A01; do not replay Actual23; retain 4h batch and 1h role bounds; Actual23 remains failed_not_passed
     deferred_helper_followup: P11; outside_current_A01_implementation_allocation; future_bounded_design_under_existing_user_mandate; no_general_readonly_helper_capability_or_framework_implemented
     actual_16_terminal_record_sha256: 0a9db024fba47cde9a9c2ffc34e096205cc9f25927c71ca2ae391a629dfae352
     actual_16_acceptance: not_passed
@@ -1543,7 +1544,7 @@ renewal_policy:
     next_profile_proposal: guarded_existing_profile_mutation_succeeded_max_event_bytes_16_mib_to_128_mib_uniform_across_7_profiles; runtime_sha256_58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574; edit_sha256_8ebb249e3f61f426a7fa6ed432788a433cf26d11c395906a2994338acb2f56bf; no_provider_started; fresh_readiness_and_plan_pending; do_not_retrofit_actual21_plan; retain_existing_4h_batch_and_1h_role_bounds
     deferred_helper_followup: backlog_p11_outside_current_a01_allocation_future_bounded_design_under_existing_user_mandate
     acceptance: not_passed
-  latest_actual:
+  attempt_22:
     batch_id: a01-audit-aliases-0c12e067bcf14f48893688a852269418
     attempt_number: 22
     status: failed_project_verify_host_rejected_subject_alias_no_full_manager_verify_no_apply
@@ -1655,6 +1656,108 @@ renewal_policy:
     prior_native_source_context_alias_fix: committed_and_technically_validated; not_exercised_by_actual22
     current_source_delta: committed_41a6a0fdd0392f2bf13af1f9576d48eee4e94eb6; alias_independent_review_clear; focused_test_passed_1_080s; full_codexappserver_package_passed_73_157s; go_vet_passed_3_295s; native_A01_revalidation_pending
     deferred_helper_followup: backlog_p11_outside_current_a01_allocation_future_bounded_design_under_existing_user_mandate
+  latest_actual:
+    batch_id: a01-verifier-aliases-ba071787d1ba4505a7db63fb9e285ae5
+    attempt_number: 23
+    status: failed_full_verify_incomplete_no_apply
+    private_record_sha256: 769456575159d18d58ca34c7b8c3303e1963fb31cb675e8a920b8fbf75eff7a2
+    terminal_reason: source_manager_full_verify_incomplete_missing_fresh_independent_documentation_review_context
+    allocated_utc: '2026-10-10T09:41:24.2003542Z'
+    hard_deadline_utc: '2026-10-10T13:41:24.2003542Z'
+    source_revision: 7c431d0f1dddaba1c78306ab518ce66d3918e427
+    validated_docs_revision: 7c431d0f1dddaba1c78306ab518ce66d3918e427
+    project_revision: 275baa9b830f1eee67cc901321a595002ffe0744
+    binary_sha256: 5da41661f5f1ff9585e5fa3abeeea929322d25d34c6e951555b0990917308933
+    plan_id: 8efe401c2e3476f2d39b4daa33ca89b8
+    plan_sha256: 5e2925ee2d1a99e64bed7242ba063c69ca6c0eada089488a317f78cbf865dd7f
+    readiness_sha256: 346d2ec45dfb1354d9a42e5b2a085990943cb2440290fcd19b4c26ffc0c224f2
+    runtime_sha256: 0b0bea059d135cf436833a5a8327ddef1d95581cd8483911739e039ded14b9f7
+    runtime_file_sha256: 58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574
+    max_event_bytes: 134217728
+    controller_sha256: c6541846825115d328de2033c01a647644d2ad54c8aa128a934a397a9608265f
+    source_delta_gate_record_sha256: 6db2850aae981f07861ce6ab7a35f0dd21d238f0446ce91d30120ee8dcdc11bf
+    remote_source_checkpoint: 7c431d0f1dddaba1c78306ab518ce66d3918e427
+    observer_id: 49f39c14ea6f4849ae49c02d2d9f19bb
+    observer_record: observer-logs/49f39c14ea6f4849ae49c02d2d9f19bb.observer.json
+    observer_interval_utc: '2026-10-10T09:41:39.5260839Z-2026-10-10T09:46:05.9514167Z'
+    observer_exit_code: 2
+    observer_boundary_and_turn_terminal_observed: true
+    original_root_run_id: 4836b01770672c3cce8063cb8ad8893d
+    original_root_workspace_id: b52ad4d71282688a7e787cda943606ff
+    original_root_session_id: 01a12534-37a9-7da1-9302-3e68aa127c9c
+    original_root_turn_id: 01a12534-38a1-7672-83a4-44a9c89d6ad9
+    original_root_recovery: same_binary_original_turn_completed_and_integrated_without_replay
+    original_root_typed_report_status: complete_integrated
+    original_root_receipt_outcome: proposed
+    original_root_native_interval_utc: '2026-10-10T09:45:42.240812Z-2026-10-10T09:46:04.667922Z'
+    original_root_native_start_requests: 1
+    original_root_recovery_inspection_starts_bytes: 0
+    state_42_revision: 42
+    state_42_role_run_ids: [531e7b4af2e075cb6bc906594f29cba3, 34c490a586b268a36311f6a008eadeaf, 45d373e214d36e2ec54873c4efe7e80b, 4b8c7ef409f281a2562108cbc39b1fa0, fadb03e04c1942c726968c651cfc59a4, 699f5cc229ddd7dcd38bfd9db094f13a, 4836b01770672c3cce8063cb8ad8893d, aeaa2f1b850f85971ad52052c1a0e310, c2cf46fa8664f20650c3dc6d7ca00608, 75b2a13610c012dd63e83ce5e0aa2b07, 87729585a75b0671dfe6106fbad75709, 87f375d59748b6deb54e4ac3f47a8d2b]
+    state_42_status: failed
+    state_42_digest: sha256:d594eb6f683ff0dbebd8e145c8c164b6f5329c62cfbae431ee9517613e3ade97
+    state_42_estimated_cost_micros: 1152434
+    role_start_requests: 12
+    helper_start_requests: 1
+    combined_start_requests: 13
+    native_provider_starts: 13
+    batch_estimated_cost_micros: 1152434
+    cost_accounting: partial_observed_lower_bound_not_invoice; original_root_cost_unknown_zero_row; prior_maximum_retained_not_added_again; helper_child_cost_not_separately_itemized; no_extra_estimate
+    cumulative_combined_start_requests: 122
+    cumulative_native_provider_starts: 118
+    cumulative_estimated_cost_micros: 18404065
+    cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
+    resume_command_id: c82f3b18ba124072a03830c6a4053cb3
+    resume_interval_utc: '2026-10-10T09:46:57.4388974Z-2026-10-10T09:47:40.8285371Z'
+    resume_exit_code: 0
+    resume_started_new_original_root_provider: false
+    original_root_turn_replayed: false
+    resume_state: revision_35_integrated
+    reviews_passed: three_work_reviews_plus_one_integration_review
+    integration_review_id: aeaa2f1b850f85971ad52052c1a0e310
+    integration_review_status: pass
+    source_docs_overlap_seconds: 21.7023022
+    helper_reservation_id: helper-exec-ebaca3e4-c7eb-45a5-a14f-8b8a629454f5
+    helper_protocol_request_id: 6ed84ec32c08e7585435dce74a87559b
+    helper_child_session: 01a12532-7ef7-7e93-ad96-bb61d6fe1d64
+    helper_child_turn: 01a12532-8022-78a1-8438-78ac2a589309
+    helper_path: tests/test_greeting.py
+    helper_delivery_state: applied_and_closed
+    helper_delta_sha256: ccfb0c2041547d137309d245017fa28c0a5ba91072203247affee1e69e1673d2
+    helper_content_sha256: 18d71617a40952fc245c9bac028829382b25a75355a507ba902fd62a428e6260
+    helper_specific_cost: unknown_not_separately_itemized
+    full_verify_command_id: bc736180bce543a98fe5521f74dee30a
+    full_verify_record: observer-logs/bc736180bce543a98fe5521f74dee30a.command.json
+    full_verify_result_log: observer-logs/bc736180bce543a98fe5521f74dee30a.command.stdout.log
+    full_verify_started_utc: '2026-10-10T09:47:54.6984511Z'
+    full_verify_command_ended_utc: '2026-10-10T09:51:27.0142377Z'
+    full_verify_exit_code: 1
+    full_verify_report_status: failed
+    full_verify_manager_status: incomplete
+    full_verify_docs_manager_status: pass
+    full_verify_docs_manager_run_id: 75b2a13610c012dd63e83ce5e0aa2b07
+    full_verify_root_manager_status: pass
+    full_verify_root_manager_run_id: 87f375d59748b6deb54e4ac3f47a8d2b
+    full_verify_source_manager_status: incomplete
+    full_verify_source_manager_run_id: 87729585a75b0671dfe6106fbad75709
+    full_verify_source_briefing_missing_context: briefing-616702d7230037050a17ae8d
+    full_verify_source_incomplete_reason: required_independent_documentation_review_absent_from_supplied_context
+    initial_verifier_receipt_id: c2cf46fa8664f20650c3dc6d7ca00608
+    initial_verifier_subjects: repository-readme; greeting-guide; greeting-code-and-tests; greeting-tests
+    full_verify_initial_verifier_status: passed
+    full_verify_configured_check: passed_one_test_exit_0
+    full_verify_apply_started: false
+    source_docs_native_overlap_seconds: 21.7023022
+    source_run_id: 4b8c7ef409f281a2562108cbc39b1fa0
+    source_native_session: 01a12532-379b-70e0-af40-e801d0aa43fc
+    source_native_turn: 01a12532-3ade-7a53-9082-558838a0694c
+    docs_run_id: 45d373e214d36e2ec54873c4efe7e80b
+    docs_native_session: 01a12532-3edd-7660-aa10-7a963f4cad49
+    docs_native_turn: 01a12532-4027-7652-9034-d49875f4e798
+    source_native_interval_utc: '2026-10-10T09:43:31.7666676Z-09:44:26.2954528Z'
+    docs_native_interval_utc: '2026-10-10T09:43:33.1826689Z-09:43:54.8849711Z'
+    source_review_context_diagnosis: confirmed_missing_required_fresh_independent_documentation_review_context; bounded_source_correction_in_progress_not_yet_validated_or_committed
+    acceptance: not_passed
   provider_free_preparation:
     superseded_owned_project_revision: 89823a90df985ca4451ec3053467fa4b3d12319f
     rejected_role_wall_seconds: 7200
@@ -1682,8 +1785,8 @@ budget_amendments:
     supersedes_prior_cumulative_budget_and_deadline_as_future_blockers: true
     previous_batch_failures_and_source_pins_preserved: true
     next_batch_pins_pending: true
-    next_batch_status: actual21_full_verify_incomplete_source_delta_pending_128mib_fresh_plan_prospective
-    last_actual_status: failed_full_verify_incomplete_no_apply_not_passed_attempt_21
+    next_batch_status: actual23_full_verify_incomplete_source_review_context_fix_pending_fresh_candidate_readiness_plan_required
+    last_actual_status: failed_full_verify_incomplete_no_apply_not_passed_attempt_23
     main_gate_revision_unchanged: combined-normal-smoke-20261009
     release_publication_authorized: false
 allocation_history:
