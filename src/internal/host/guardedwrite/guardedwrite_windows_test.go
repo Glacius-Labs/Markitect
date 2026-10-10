@@ -1,6 +1,6 @@
 //go:build windows
 
-package host
+package guardedwrite
 
 import (
 	"os"
@@ -10,15 +10,15 @@ import (
 
 func TestGuardedWriteAcceptsShortAndLongRootSpellings(t *testing.T) {
 	root, shortRoot := windowsTestPath(t)
-	runWriterGit(t, root, "init", "-b", "codex/short-root")
+	runGit(t, root, "init", "-b", "codex/short-root")
 	for _, captureRoot := range []string{root, shortRoot} {
 		for _, applyRoot := range []string{root, shortRoot} {
 			t.Run(captureRoot+"/"+applyRoot, func(t *testing.T) {
-				capture, err := CaptureGuardedWrite(captureRoot, []string{"result.txt"})
+				capture, err := CaptureFiles(captureRoot, []string{"result.txt"})
 				if err != nil {
 					t.Fatal(err)
 				}
-				if _, err := ApplyGuardedWrite(applyRoot, capture, []GuardedWriteChange{{Path: "result.txt", Bytes: []byte("updated\n"), Mode: 0644}}); err != nil {
+				if _, err := Apply(applyRoot, capture, []Change{{Path: "result.txt", Bytes: []byte("updated\n"), Mode: 0644}}); err != nil {
 					t.Fatalf("apply with equivalent root spelling: %v", err)
 				}
 				if got := string(mustRead(t, filepath.Join(root, "result.txt"))); got != "updated\n" {

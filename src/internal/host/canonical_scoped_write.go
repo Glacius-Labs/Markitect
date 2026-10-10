@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
@@ -31,7 +32,7 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 	if err := validateProjectionWriteModes(outputs, outputModes); err != nil {
 		return nil, err
 	}
-	branch, err := writeBranchName(root)
+	branch, err := guardedwrite.BranchName(root)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +61,7 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 		if !allowed {
 			return nil, fmt.Errorf("candidate is outside inventoried target roots: %s", name)
 		}
-		if _, err := safeDestination(root, name); err != nil {
+		if _, err := guardedwrite.SafeDestination(root, name); err != nil {
 			return nil, err
 		}
 		selected[name] = true
@@ -73,7 +74,7 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 	}
 	sort.Strings(paths)
 	checkHead := func() error {
-		if err := ensureWriteBranch(root, branch); err != nil {
+		if err := guardedwrite.EnsureBranch(root, branch); err != nil {
 			return err
 		}
 		head, err := source.GitOutput(root, "rev-parse", "HEAD")
@@ -108,7 +109,7 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 	if inventory.MetadataDigest != captured.Inventory.MetadataDigest {
 		return nil, errors.New("declared target inventory changed since reviewed plan")
 	}
-	writeRoot, err := openWriteRoot(root)
+	writeRoot, err := guardedwrite.OpenRoot(root)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +148,7 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 		if err := checkHead(); err != nil {
 			return written, err
 		}
-		destination, err := safeDestination(root, name)
+		destination, err := guardedwrite.SafeDestination(root, name)
 		if err != nil {
 			return written, err
 		}
@@ -168,7 +169,7 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 			fileMode = 0755
 		}
 		if err := writeRoot.AtomicWrite(name, outputs[name], fileMode); err != nil {
-			if writeWasPublished(err) {
+			if guardedwrite.WasPublished(err) {
 				written = append(written, name)
 			}
 			return written, err

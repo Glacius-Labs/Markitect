@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	hostwrite "github.com/Glacius-Labs/Markitect/src/internal/host"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 	"go.yaml.in/yaml/v3"
 )
@@ -80,12 +80,12 @@ func Init(root, name string, write bool) (InitPlan, error) {
 		return plan, fmt.Errorf("resolve project root: %w", err)
 	}
 	paths := make([]string, len(files))
-	changes := make([]hostwrite.GuardedWriteChange, len(files))
+	changes := make([]guardedwrite.Change, len(files))
 	for i, file := range files {
 		paths[i] = file.Path
-		changes[i] = hostwrite.GuardedWriteChange{Path: file.Path, Bytes: []byte(file.Content), Mode: 0644}
+		changes[i] = guardedwrite.Change{Path: file.Path, Bytes: []byte(file.Content), Mode: 0644}
 	}
-	capture, err := hostwrite.CaptureGuardedWrite(rootAbs, paths)
+	capture, err := guardedwrite.CaptureFiles(rootAbs, paths)
 	if err != nil {
 		return plan, fmt.Errorf("capture project initialization targets: %w", err)
 	}
@@ -94,7 +94,7 @@ func Init(root, name string, write bool) (InitPlan, error) {
 			return plan, fmt.Errorf("project initialization target already exists: %s", file)
 		}
 	}
-	result, err := hostwrite.ApplyGuardedWrite(capture.Root, capture, changes)
+	result, err := guardedwrite.Apply(capture.Root, capture, changes)
 	plan.Written = append([]string(nil), result.CompletedPaths...)
 	if err != nil {
 		return plan, fmt.Errorf("project initialization was partial after %s: %w", strings.Join(plan.Written, ", "), err)

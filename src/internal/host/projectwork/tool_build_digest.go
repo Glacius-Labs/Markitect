@@ -1,4 +1,4 @@
-package host
+package projectwork
 
 import (
 	"crypto/sha256"

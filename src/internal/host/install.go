@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/tooling/release"
 )
 
@@ -83,13 +84,13 @@ func Install(root string, bundle *release.Bundle, write bool) (*InstallPlan, err
 
 	var branch string
 	var unlock func()
-	var writeRoot *writeRoot
+	var writeRoot *guardedwrite.Root
 	if write {
 		branch, err = installableBranch(rootAbs)
 		if err != nil {
 			return nil, err
 		}
-		writeRoot, err = openWriteRoot(rootAbs)
+		writeRoot, err = guardedwrite.OpenRoot(rootAbs)
 		if err != nil {
 			return nil, err
 		}
@@ -147,11 +148,11 @@ func Install(root string, bundle *release.Bundle, write bool) (*InstallPlan, err
 		if current.exists != before.exists || (current.exists && !bytes.Equal(current.data, before.data)) {
 			return installWriteFailure(plan, state, fmt.Errorf("install target changed during write: %s", file.Path))
 		}
-		if err := ensureWriteBranch(rootAbs, state.branch); err != nil {
+		if err := guardedwrite.EnsureBranch(rootAbs, state.branch); err != nil {
 			return installWriteFailure(plan, state, err)
 		}
 		if err = writeRoot.AtomicWrite(file.Path, bundle.Files[file.Path], 0644); err != nil {
-			if writeWasPublished(err) {
+			if guardedwrite.WasPublished(err) {
 				plan.Written = append(plan.Written, file.Path)
 				data := append([]byte(nil), bundle.Files[file.Path]...)
 				state.files[file.Path] = installFileState{data: data, canonical: canonicalInstallReadback(file.Path, data), exists: true}

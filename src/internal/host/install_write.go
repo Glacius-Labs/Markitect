@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/tooling/release"
 )
@@ -95,7 +96,7 @@ func verifyInstalledBundle(root string, bundle *release.Bundle) error {
 }
 
 func safeInstallDestination(root, name string) (string, error) {
-	dest, err := safeDestination(root, name)
+	dest, err := guardedwrite.SafeDestination(root, name)
 	if err != nil {
 		return "", err
 	}

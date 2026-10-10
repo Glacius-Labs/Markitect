@@ -1,6 +1,6 @@
 //go:build !windows
 
-package host
+package guardedwrite
 
 import (
 	"errors"
@@ -14,20 +14,20 @@ func TestAnchoredExclusiveCreationReportsPublishedObjectsAfterParentSwap(t *test
 		name    string
 		leaf    string
 		wantDir bool
-		call    func(*writeRoot, string, func() error) error
+		call    func(*Root, string, func() error) error
 	}{
 		{
 			name:    "mkdir",
 			leaf:    "new-area",
 			wantDir: true,
-			call: func(root *writeRoot, path string, inject func() error) error {
+			call: func(root *Root, path string, inject func() error) error {
 				return root.mkdirWithHook(path, 0755, inject)
 			},
 		},
 		{
 			name: "exclusive-file",
 			leaf: "new-file",
-			call: func(root *writeRoot, path string, inject func() error) error {
+			call: func(root *Root, path string, inject func() error) error {
 				_, err := root.createExclusiveWithHook(path, 0644, inject)
 				return err
 			},
@@ -52,7 +52,7 @@ func TestAnchoredExclusiveCreationReportsPublishedObjectsAfterParentSwap(t *test
 			if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
 				t.Fatal(err)
 			}
-			root, err := openWriteRoot(rootPath)
+			root, err := OpenRoot(rootPath)
 			if err != nil {
 				t.Fatal(err)
 			}

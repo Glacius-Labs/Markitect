@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
@@ -66,7 +67,7 @@ func TestFormatWriteRefusesStaleSource(t *testing.T) {
 
 func TestEnsureWriteBranchDetectsSameSHABranchSwitch(t *testing.T) {
 	root := installTestRepo(t, "feature/captured")
-	expected, err := writeBranchName(root)
+	expected, err := guardedwrite.BranchName(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +81,7 @@ func TestEnsureWriteBranchDetectsSameSHABranchSwitch(t *testing.T) {
 	if err != nil || string(before) != string(after) {
 		t.Fatalf("branch-switch fixture changed HEAD: before=%q after=%q err=%v", before, after, err)
 	}
-	if err := ensureWriteBranch(root, expected); err == nil || !strings.Contains(err.Error(), "branch changed") {
+	if err := guardedwrite.EnsureBranch(root, expected); err == nil || !strings.Contains(err.Error(), "branch changed") {
 		t.Fatalf("same-SHA branch switch error = %v, want branch-change refusal", err)
 	}
 }

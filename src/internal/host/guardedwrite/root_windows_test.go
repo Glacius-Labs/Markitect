@@ -1,6 +1,6 @@
 //go:build windows
 
-package host
+package guardedwrite
 
 import (
 	"errors"
@@ -14,11 +14,11 @@ import (
 
 func TestSafeDestinationAcceptsShortPathSpelling(t *testing.T) {
 	root, shortRoot := windowsTestPath(t)
-	if _, err := safeDestination(shortRoot, "output/new.md"); err != nil {
-		t.Fatalf("safeDestination rejected valid short root %q: %v", shortRoot, err)
+	if _, err := SafeDestination(shortRoot, "output/new.md"); err != nil {
+		t.Fatalf("SafeDestination rejected valid short root %q: %v", shortRoot, err)
 	}
-	if _, err := safeDestination(root, "output/new.md"); err != nil {
-		t.Fatalf("safeDestination rejected long root %q: %v", root, err)
+	if _, err := SafeDestination(root, "output/new.md"); err != nil {
+		t.Fatalf("SafeDestination rejected long root %q: %v", root, err)
 	}
 }
 
@@ -34,8 +34,8 @@ func TestSafeDestinationRetainsReparseRejectionWithShortPath(t *testing.T) {
 		t.Skipf("directory reparse point creation unavailable: %v", err)
 	}
 	defer os.Remove(link)
-	if _, err := safeDestination(shortRoot, "linked/output.md"); err == nil || (!strings.Contains(strings.ToLower(err.Error()), "symlink") && !strings.Contains(strings.ToLower(err.Error()), "reparse point")) {
-		t.Fatalf("safeDestination through short reparse path was accepted: %v", err)
+	if _, err := SafeDestination(shortRoot, "linked/output.md"); err == nil || (!strings.Contains(strings.ToLower(err.Error()), "symlink") && !strings.Contains(strings.ToLower(err.Error()), "reparse point")) {
+		t.Fatalf("SafeDestination through short reparse path was accepted: %v", err)
 	}
 }
 
@@ -58,7 +58,7 @@ func TestAnchoredAtomicWriteRefusesSwappedJunctionParent(t *testing.T) {
 	if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	anchored, err := openWriteRoot(root)
+	anchored, err := OpenRoot(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +105,7 @@ func TestAnchoredAtomicWriteRefusesReplacedRootJunction(t *testing.T) {
 	if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	anchored, err := openWriteRoot(root)
+	anchored, err := OpenRoot(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +148,7 @@ func TestAnchoredAtomicWriteContainsJunctionSwapAtPreOpenBoundary(t *testing.T) 
 	if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	anchored, err := openWriteRoot(root)
+	anchored, err := OpenRoot(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -210,7 +210,7 @@ func TestAnchoredAtomicWriteDoesNotFollowInRootJunctionAtPreOpenBoundary(t *test
 	if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	anchored, err := openWriteRoot(root)
+	anchored, err := OpenRoot(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -272,7 +272,7 @@ func TestAnchoredAtomicWriteRejectsInRootJunctionAtPreRenameBoundary(t *testing.
 	if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	anchored, err := openWriteRoot(root)
+	anchored, err := OpenRoot(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -323,20 +323,20 @@ func TestAnchoredExclusiveCreationReportsPublishedObjectsAfterParentSwap(t *test
 		name    string
 		leaf    string
 		wantDir bool
-		call    func(*writeRoot, string, func() error) error
+		call    func(*Root, string, func() error) error
 	}{
 		{
 			name:    "mkdir",
 			leaf:    "new-area",
 			wantDir: true,
-			call: func(root *writeRoot, path string, inject func() error) error {
+			call: func(root *Root, path string, inject func() error) error {
 				return root.mkdirWithHook(path, 0755, inject)
 			},
 		},
 		{
 			name: "exclusive-file",
 			leaf: "new-file",
-			call: func(root *writeRoot, path string, inject func() error) error {
+			call: func(root *Root, path string, inject func() error) error {
 				_, err := root.createExclusiveWithHook(path, 0644, inject)
 				return err
 			},
@@ -361,7 +361,7 @@ func TestAnchoredExclusiveCreationReportsPublishedObjectsAfterParentSwap(t *test
 			if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
 				t.Fatal(err)
 			}
-			root, err := openWriteRoot(rootPath)
+			root, err := OpenRoot(rootPath)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -416,11 +416,11 @@ func TestSafeDestinationSupportsLongWindowsPaths(t *testing.T) {
 	if err != nil {
 		t.Skipf("GetShortPathNameW cannot represent the long test path: %v", err)
 	}
-	if _, err := safeDestination(shortRoot, "new.md"); err != nil {
-		t.Fatalf("safeDestination rejected supported long path %q: %v", shortRoot, err)
+	if _, err := SafeDestination(shortRoot, "new.md"); err != nil {
+		t.Fatalf("SafeDestination rejected supported long path %q: %v", shortRoot, err)
 	}
-	if _, err := safeDestination(root, "new.md"); err != nil {
-		t.Fatalf("safeDestination rejected supported long spelling %q: %v", root, err)
+	if _, err := SafeDestination(root, "new.md"); err != nil {
+		t.Fatalf("SafeDestination rejected supported long spelling %q: %v", root, err)
 	}
 }
 

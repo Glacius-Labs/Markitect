@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	hostwrite "github.com/Glacius-Labs/Markitect/src/internal/host"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
@@ -38,9 +38,9 @@ func applyCaptureFixture(t *testing.T) (string, string, *Snapshot, []byte) {
 	return root, revision, fixed, crlf
 }
 
-func captureApplyTarget(t *testing.T, root string) *hostwrite.GuardedWriteCapture {
+func captureApplyTarget(t *testing.T, root string) *guardedwrite.Capture {
 	t.Helper()
-	capture, err := hostwrite.CaptureGuardedWrite(root, []string{"README.md"})
+	capture, err := guardedwrite.CaptureFiles(root, []string{"README.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +128,7 @@ func TestCompareCaptureToBaseRejectsStagedIndexDeletion(t *testing.T) {
 func TestCompareCaptureToBaseRejectsAttributeDriftForAbsentTarget(t *testing.T) {
 	root, revision, fixed, _ := applyCaptureFixture(t)
 	writeE2E(t, root, ".gitattributes", "new.txt text\n")
-	capture, err := hostwrite.CaptureGuardedWrite(root, []string{"new.txt"})
+	capture, err := guardedwrite.CaptureFiles(root, []string{"new.txt"})
 	if err != nil {
 		t.Fatal(err)
 	}
