@@ -1484,7 +1484,7 @@ native_acceptance:
     full_verify_source_manager: pass
     full_verify_root_manager: incomplete_8_of_10_subjects_passed
     full_verify_missing_root_subjects: docs_child_manager_integration_review; source_child_manager_integration_review
-    standalone_owner_integration_review_does_not_satisfy_child_subjects: true
+    standalone_owner_integration_review_not_supplied_to_root_audit_context: true
     apply_started: false
     role_start_requests: 14
     helper_start_requests: 1

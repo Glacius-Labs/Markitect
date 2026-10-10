@@ -1872,7 +1872,7 @@ renewal_policy:
     full_verify_root_manager_status: incomplete
     full_verify_root_passed_subjects: 8_of_10
     full_verify_root_missing_subjects: docs_child_manager_integration_review; source_child_manager_integration_review
-    full_verify_root_incomplete_reason: freshParentIntegrationReviews_empty_in_supplied_audit_snapshot; standalone_project_owner_integration_review_does_not_satisfy_required_child_manager_subjects
+    full_verify_root_incomplete_reason: freshParentIntegrationReviews_empty_in_supplied_audit_snapshot; standalone_project_owner_integration_review_not_supplied_to_root_audit_context
     full_verify_configured_check: passed_one_test_exit_0
     apply_started: false
     root_integration_context_correction_commit: a238100a3760b86cb72a2206971ff60da297ec0a
