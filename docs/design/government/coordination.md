@@ -2295,3 +2295,7 @@ Root cleanlocal/publice99cd669/exactWindows94f4a6cb Go1.27.1VCSe99modifiedfalse 
 ### Actual25 declared helper delta rejected before integration
 
 Owner observerd02f0ed1 ended10:36:14.2961767Z exit2 boundaryfalse: DocsgreetingHelperdeclaredbytes/modecontradictsharvesteddelta, Sourcework/helperinterrupted; noResume/Verify/Apply. Root exactimmutable sharedshortstate17failed bound twoincompleteworkreceiptsb496d066/264b2f15, nointegrate/verifyrows; sourcehelper.go strictdeclared-observedguardretained. Exactbytes-versusmode/rootcause/nativechildrenlifecycle/accounting pendingreadonlyownerdiagnosis; e99/94f4unchanged/no neworder/guardweakening/A01/MainPASS.
+
+### Actual25 LF claim contradicts actual CRLF helper bytes
+
+Owner exactcomparison330LFdeclared versus340CRLFobserved/harvested/modesmatch; strictguardcorrectlyrejectsmodelbyteclaim, no sourcefix/weakening. Docshelpercompletedrejected/Sourcehelperinterruptednodelta/parentsclosedinterrupted/RootworkreviewPASS/nointegrationResumeVerifyApply. Terminalbatchac145188/6new4roles2helpers/cumulative143combined139native20466796partialhelperunitemized, rawcomparison/accountingownerreported versus Rootpriorstate17guardbound. Additivedocs thennewnormalboundedattemptunchangedimplementationpending, failed25retained/Actual24contextfullVerifyvalidationpending/no newRootorder/MainPASS.
