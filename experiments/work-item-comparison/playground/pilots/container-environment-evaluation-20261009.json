@@ -11,7 +11,8 @@
       "Inference: Linux Codex CLI inside a Linux container uses the Linux sandbox path rather than native Windows sandboxing, which could avoid a Windows-specific failure. It changes OS, shell, filesystem, process and helper behavior, so it cannot establish that the Windows failure is fixed.",
       "Docker Desktop on Windows still depends on Windows plus WSL2 or a VM backend, and adds engine, image, mount, resource and lifecycle setup.",
       "Codex ChatGPT-account authentication has official headless/container routes. API-key or Agents API migration is not required."
-    ]
+    ],
+    "appliesTo": "Historical 2026-10-09 decision for the then-ordered Windows Conventional attempt. It does not select the environment for a new comparison; see stabilizationAddendum.recommendationNow for the updated prospective recommendation."
   },
   "findings": {
     "codexAuthentication": {
@@ -108,5 +109,111 @@
     "crossEnvironmentBoundary": "default workspace-write protects .git regardless of Windows vs Linux; container switch would not solve missing Git approval flow",
     "source": "https://learn.chatgpt.com/docs/agent-approvals-security",
     "environmentChanged": false
+  },
+  "stabilizationAddendum": {
+    "observedAt": "2026-10-10",
+    "classification": "Additive observations and prospective recommendation; not an installed environment or a new execution grant.",
+    "causeAssessment": [
+      {
+        "cause": "Git blob LF compared with raw worktree CRLF",
+        "status": "reproduced on the actual A01 README; Git considers it unchanged",
+        "owner": "Markitect source binding",
+        "repair": "Compare fixed revision with worktree through Git clean-filter semantics; capture actual worktree bytes and retain exact preview-to-write CAS.",
+        "linuxEffect": "May avoid this particular checkout conversion; does not repair the source-binding defect."
+      },
+      {
+        "cause": "Legacy Windows sandbox ACL refresh and incomplete child known-folder environment",
+        "status": "historically observed before shell work; later child-local MXC and inherited environment allowed actual coding",
+        "owner": "Runtime setup and child process launch",
+        "repair": "Use one explicit supported platform profile with complete required environment and absolute owned CWD.",
+        "linuxEffect": "Linux-native Codex avoids the native Windows sandbox path."
+      },
+      {
+        "cause": "Shell starts outside intended workspace and an actor switches to a Windows package-cache alias",
+        "status": "observed in prior native attempts; original Host-path native editing worked",
+        "owner": "Runtime workspace identity and tool launch",
+        "repair": "Verify actual tool CWD and keep one canonical workspace identity; preserve shell errors even when process exit is zero.",
+        "linuxEffect": "Removes these Windows-specific aliases if all execution stays on the Linux filesystem."
+      },
+      {
+        "cause": "Windows sharing violation while appending a live journal",
+        "status": "actual append failed; restrictive reader mechanism reproduced on owned scratch; exact live lock holder unknown",
+        "owner": "Product owns journal/append correctness and recovery; Playground/operator owns the non-blocking live-audit reader.",
+        "repair": "Audit with short explicit FileShare.ReadWrite|FileShare.Delete reads, close the handle before parsing; preserve bounded original failure and recovery receipts.",
+        "linuxEffect": "Avoids Windows sharing-mode semantics; journal correctness and recovery still require repair."
+      },
+      {
+        "cause": "Recovery identity/diagnostics, helper cleanup and response-contract defects",
+        "status": "source-backed findings; Product repairs in progress; helper cleanup was not the observed Actual15 cause",
+        "owner": "Markitect product",
+        "repair": "Recover from the original invocation and delta without duplicate application or a fresh provider replay; retain useful bounded diagnostics.",
+        "linuxEffect": "No automatic cure."
+      }
+    ],
+    "localInventory": {
+      "method": "Read-only wsl --list --verbose, docker context ls and short non-login Ubuntu commands; no installs, restart, container creation, credential read or model calls.",
+      "ubuntu": {
+        "state": "running",
+        "wslVersion": 2,
+        "distribution": "Ubuntu 24.04.3 LTS",
+        "kernel": "5.15.167.4-microsoft-standard-WSL2 x86_64",
+        "rootFilesystem": "ext4"
+      },
+      "dockerDesktop": {
+        "wslDistributionState": "running",
+        "selectedContext": "desktop-linux",
+        "daemonReachability": "not checked",
+        "existingWorkloads": "not inventoried or changed"
+      },
+      "inheritedWslCwd": "/mnt/c/Users/Consiliari/Glacius Labs/Markitect",
+      "defaultPathCodex": "/mnt/c/Users/Consiliari/AppData/Roaming/npm/codex",
+      "linuxOnlyPathCheck": {
+        "present": [
+          "/usr/bin/git",
+          "/usr/bin/python3"
+        ],
+        "notFoundOnSelectedPath": [
+          "codex",
+          "claude",
+          "bwrap",
+          "go",
+          "node"
+        ]
+      },
+      "userNamespaceCheck": {
+        "maxUserNamespaces": 126685,
+        "kernelUnprivilegedUsernsCloneFile": "absent; this does not prove namespaces unsupported",
+        "actualSandboxStart": "not tested"
+      },
+      "readyForLinuxStudy": false,
+      "limitations": "PATH inventory does not establish absence from the whole installation; Windows npm starter was not invoked; no login status, model access, sandbox execution or product runtime was tested."
+    },
+    "recommendationNow": {
+      "immediate": "Finish the demonstrated byte-domain and recovery repairs on the preserved Product attempt. Make live audits non-blocking. Use provider-free targeted regressions before another separately authorized native run.",
+      "nextSharedEnvironment": "Prepare WSL2 with native Linux Codex and product/tool binaries; keep repositories, workspaces, temp files, app-server and journals in the Linux filesystem under an owned /home path. Use the same prospective environment for Conventional and Markitect.",
+      "container": "Defer Docker as the immediate rescue. It adds image, engine, mounts, nested sandbox, resource and authentication lifecycle. Revisit a pinned image when repeatable disposable environments or stronger isolation justify that work.",
+      "windowsCoverage": "Preserve historical Windows failures and working MXC evidence. Verify supported Windows behavior with targeted regressions; do not require an extra full scientific comparison merely because a platform option exists.",
+      "studyBoundary": "Do not pool prior Windows and new Linux runs or retrospectively change their outcomes. CLI/MCP/App Server transport choice does not choose the OS; record transport and execution environment separately.",
+      "ownership": "Environment provisioning/preflight belongs to the Playground execution boundary; product install/config/MCP/App Server lifecycle remains variant-owned. All related processes and filesystem identities must stay in the selected environment.",
+      "decisionStatus": "Scientist recommendation for coordination; WSL migration has not been executed or selected by a frozen study order."
+    },
+    "finiteReadinessBeforeModelWork": [
+      "Verify all executable paths resolve to pinned Linux binaries, not /mnt/c wrappers; record actual versions and digests.",
+      "Prepare a disposable public repository under the owned Linux filesystem; confirm CWD, Git filter equivalence and exact preview-to-write bytes.",
+      "Check the selected CLI sandbox can read/write only the declared scratch/workspace and that concurrent auditing does not block append; no provider required.",
+      "As a bounded setup/preflight action, initialize the native App Server and check admission using the selected local configuration; the variant owns created processes/state and shutdown. Protocol readiness remains separate from model/tool access.",
+      "Use a separately established login without reading or publishing credentials; a missing login remains an explicit blocker.",
+      "Run targeted Markitect byte/recovery/helper lifecycle regressions; Linux alone is not acceptance.",
+      "Only then bind a fresh finite execution to both method and environment inputs; this assessment starts no model trajectory."
+    ],
+    "authConclusion": "Codex ChatGPT login has official device-code/headless/container routes, so API-key migration is not required. Claude documents container browser-code login and auth persistence. Neither Linux login was tested here.",
+    "sourcesRefreshed": [
+      "https://learn.chatgpt.com/docs/windows/wsl",
+      "https://learn.chatgpt.com/docs/sandboxing",
+      "https://learn.chatgpt.com/docs/auth",
+      "https://learn.microsoft.com/en-us/windows/wsl/filesystems",
+      "https://docs.docker.com/desktop/features/wsl/best-practices/",
+      "https://code.claude.com/docs/en/devcontainer"
+    ]
   }
 }
