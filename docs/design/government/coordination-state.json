@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T01:12:34.244129+00:00",
+  "updatedUtc": "2026-10-10T03:59:38.817271+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -484,12 +484,9 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:140",
-      "lastObservedStatus": "Preparation completed by material callback; actual clean private checkpoint independently verified. Hold, no Actual allocation.",
-      "activeTurn": {
-        "id": "01a11f01-0b15-7a32-a818-2185b97f07ef",
-        "status": "inProgress"
-      },
+      "afterCursor": "5ff91514-6e73-4172-b94d-2a82e07fb0c5:2",
+      "lastObservedStatus": "active",
+      "activeTurn": "01a123f6-ab28-7cb0-b093-646dd9431a9b",
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac854c570f48191a595d544b5898fd6",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "None after first refinement; later exact stable product/runtime binding, no additional tests or actual starts now",
@@ -12122,9 +12119,9 @@
       "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-integration\\Markitect",
       "branch": "codex/product-integration-20261009",
       "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
-      "afterCursor": "abeb765e-9882-4852-9bc4-08f7cb067370:1",
+      "afterCursor": "fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:2",
       "lastObservedStatus": "active",
-      "activeTurn": "01a121a0-083c-7290-9ede-fed5f31c6c66",
+      "activeTurn": "01a123f6-a629-7151-a41e-4252209ebc74",
       "creationAndPromptDelivered": true,
       "firstSnapshotVerifiedActive": true,
       "nativeProductJobsAuthorizedIndependently": "Existing conditional central grant only"
@@ -12152,9 +12149,9 @@
       "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-app-server\\Markitect",
       "branch": "codex/product-app-server-20261009",
       "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
-      "afterCursor": "7203aae6-2241-4a1f-9fa3-2d6fa89740e7:1",
-      "lastObservedStatus": "active",
-      "activeTurn": "01a121a0-bb2c-7642-91f5-9217e6a22884",
+      "afterCursor": "8eb43e8f-1008-442f-b9e8-c6a6cb88b8dc:1",
+      "lastObservedStatus": "notLoaded",
+      "activeTurn": "01a121c3-e1ab-7b43-8c4e-458bf4bbbdc3",
       "creationAndPromptDelivered": true,
       "firstSnapshotVerifiedActive": true,
       "nativeProductJobsAuthorizedIndependently": false
@@ -12167,9 +12164,9 @@
       "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-mcp\\Markitect",
       "branch": "codex/product-mcp-20261009",
       "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
-      "afterCursor": "be2d6806-8e78-4fbb-82cc-a34732f0d79f:1",
-      "lastObservedStatus": "active",
-      "activeTurn": "01a121a0-c2b3-7663-9f6c-ea9ba4737962",
+      "afterCursor": "0afb10aa-73e6-4f11-869f-9c631c533de4:1",
+      "lastObservedStatus": "notLoaded",
+      "activeTurn": "01a121b7-48f6-7270-b823-d6d7371d05a7",
       "creationAndPromptDelivered": true,
       "firstSnapshotVerifiedActive": true,
       "nativeProductJobsAuthorizedIndependently": false
@@ -17872,7 +17869,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "PHASE_SPECIFIC_WORK_INTEGRATION_REVIEW_FIX_CLEAN_PUBLIC_OWNER_REFRESHING_ACTUAL12",
+    "status": "ACTUAL12_REVIEW_CONTRADICTION_INTERRUPTED_OWNER_REACTIVATED_AND_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18108,5 +18105,116 @@
       "next": "Owner normal final-frozen readiness/Plan refresh then fresh actual12 under existing authority. No new case/release/PR/Main action or RootGo/grant.",
       "fullWorkflowAccepted": false
     }
+  },
+  "restartAfterInterruptedIntegration20261010": {
+    "directHumanInstruction": "Alles ist stehen geblieben. Was ist passiert? Stoße alles wieder entsprechend an",
+    "checkedUtc": "2026-10-10T03:59:38.817271+00:00",
+    "observedCause": "Integration most recent turn interrupted/error null/notLoaded; exact interruption cause unknown. KG completed with accepted Main dependency; Scientist last technical handoff completed. P03/P04/P05 completed, not active unfinished work.",
+    "latestActual12OwnerProgress": "Root Work and Docs reviews completed, Source reviewer status/findings contradictory and strict validator rejects; owner interrupted while investigating original report/helper data. Raw native terminal receipts not independently checked in this turn.",
+    "dispatchesSentOnce": [
+      {
+        "threadId": "01a121a0-0417-71c1-9e4b-be742f8c1146",
+        "work": "Resume actual12 exact own handles/reports/review jobs, targeted contradiction correction, normal genuine A01 then final CI/review/Main; standing renewable authority, no extra Go/grant or blind replay"
+      },
+      {
+        "threadId": "01a12178-5797-7c41-8acc-8e8231084c79",
+        "work": "Separate KG07 full provider-free Evidence-to-Graph CLI/MCP chain with provenance/stale/privacy negatives; no repeated full suite before accepted Main/no KG-to-Main merge"
+      },
+      {
+        "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
+        "work": "Static prepared adapter/playground alignment against integrated normal services/install/runtime/review contexts; only concrete drift repairs/mechanical tests; no new studies until functional product"
+      }
+    ],
+    "snapshots": [
+      {
+        "name": "integration",
+        "threadId": "01a121a0-0417-71c1-9e4b-be742f8c1146",
+        "cursor": "fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:2",
+        "status": {
+          "type": "active",
+          "activeFlags": []
+        },
+        "turn": {
+          "id": "01a123f6-a629-7151-a41e-4252209ebc74",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": 1791604729,
+          "completedAt": null,
+          "durationMs": null
+        }
+      },
+      {
+        "name": "knowledge-graph",
+        "threadId": "01a12178-5797-7c41-8acc-8e8231084c79",
+        "cursor": "eac4ad83-13c1-40fe-8d2d-e19a045ccd22:1",
+        "status": {
+          "type": "active",
+          "activeFlags": []
+        },
+        "turn": {
+          "id": "01a123f6-a9c7-7021-8f53-00dd4f66b95f",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": 1791604730,
+          "completedAt": null,
+          "durationMs": null
+        },
+        "last": "Ich prüfe jetzt die noch offene vollständige Kette von gespeicherten Ausführungsnachweisen bis zu den CLI-/MCP-Abfragen. Dabei teste ich auch Herkunft, veraltete Nachweise und Sichtbarkeitsgrenzen. Der KG-Branch bleibt separat; der kombinierte Volltest wartet weiterhin auf den akzeptierten Main-Stand."
+      },
+      {
+        "name": "Scientist",
+        "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
+        "cursor": "5ff91514-6e73-4172-b94d-2a82e07fb0c5:2",
+        "status": {
+          "type": "active",
+          "activeFlags": []
+        },
+        "turn": {
+          "id": "01a123f6-ab28-7cb0-b093-646dd9431a9b",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": 1791604730,
+          "completedAt": null,
+          "durationMs": null
+        },
+        "last": "Ich gleiche die vorbereitete Anbindung mit dem aktuellen Produktkandidaten ab und korrigiere nur belegte Abweichungen. Conventional und die bisherigen Studienbelege bleiben geschlossen; neue Studienläufe starten erst nach dem funktionalen Produkthandoff."
+      },
+      {
+        "name": "app-server",
+        "threadId": "01a121a0-b660-7403-93c5-a0fc53501177",
+        "cursor": "8eb43e8f-1008-442f-b9e8-c6a6cb88b8dc:1",
+        "status": {
+          "type": "notLoaded"
+        },
+        "turn": {
+          "id": "01a121c3-e1ab-7b43-8c4e-458bf4bbbdc3",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1791567847,
+          "completedAt": 1791568017,
+          "durationMs": 169968
+        },
+        "last": "Recovery-Defekt behoben und gepusht: 8b3f69ec26d7e3d19e61b7de3156dd2ccaf3c2c8 Der ursprüngliche Root und beobachtete Kinder bleiben im Receipt erhalten. Laufende oder fehlende Turns bleiben ungewiss; Recovery startet keinen neuen Turn. Pakettests, Vet und unabhängiger Review bestanden. Integration und Overseer haben den Handoff erhalten. Keine echten Modellstarts."
+      },
+      {
+        "name": "mcp",
+        "threadId": "01a121a0-bee0-7621-943c-c45ea125bf7e",
+        "cursor": "0afb10aa-73e6-4f11-869f-9c631c533de4:1",
+        "status": {
+          "type": "notLoaded"
+        },
+        "turn": {
+          "id": "01a121b7-48f6-7270-b823-d6d7371d05a7",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1791567022,
+          "completedAt": 1791567035,
+          "durationMs": 13425
+        },
+        "last": "Ja. Die vorhandene MCP-Testsuite lässt sich jederzeit erneut ausführen: Set-Location 'C:\\Users\\Consiliari\\.codex\\worktrees\\product-mcp\\Markitect' go test ./internal/host/mcp -count=1 -timeout=2m Sie prüft Handshake, Tool-Discovery, Schemas, ungültige Eingaben, Repository-Bindung, Fehlerdiagnostik, Cancellation und konkurrierende Aufrufe. -count=1 verhindert die Wiederverwendung gecachter Testergebnisse. Das ist ein automatisierter Protokoll- und Adaptertest. Er startet keine Modelle und ersetzt keinen End-to-End-Test mit einem echten MCP-Client. Die Suite kann auch als regulärer CI-Check laufen."
+      }
+    ],
+    "completedOwnerDisposition": "P03/P04/P05 remain finished; retired Worker/Architect/old Designer/Oldschool not restarted. No busywork. Jev deferred until accepted Main, unchanged.",
+    "reporting": "Material callbacks once; three resumed active turns independently confirmed. Exact interruption cause not inferred; studies after functional product."
   }
 }
