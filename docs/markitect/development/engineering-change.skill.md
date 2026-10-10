@@ -15,4 +15,5 @@ Generated Markdown, Codex and Claude files are deterministic projections. AI-mat
 
 - [Rule: module-verification](module-verification.rule.md)
 - [Rule: repository-boundaries](repository-boundaries.rule.md)
+- [Text: document-owners](document-owners.text.md)
 - [Workflow: markitect-first-change](../core/workflow-markitect-first-change.workflow.md)
