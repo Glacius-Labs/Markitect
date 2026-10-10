@@ -198,7 +198,8 @@ func Analyze(model core.Model, inventory []File) Report {
 			matched := false
 			for p, entry := range fileByPath {
 				if selectorMatches(selector, p) {
-					matched = true
+					// An expected-artifact entry left by another absent path is not inventory.
+					matched = matched || entry.Exists
 					entry.Artifacts = appendUnique(entry.Artifacts, a.ID)
 					for _, sid := range a.Realizes {
 						entry.Statements = appendUnique(entry.Statements, sid)
