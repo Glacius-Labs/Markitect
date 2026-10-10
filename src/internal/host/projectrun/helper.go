@@ -29,7 +29,7 @@ const helperToolSchema = `{"type":"object","properties":{"task":{"type":"string"
 // fingerprint before a HelperSession exists.
 func HelperDynamicTool() codexappserver.DynamicTool {
 	return codexappserver.DynamicTool{Type: "function", Name: HelperToolName,
-		Description: "Start one bounded helper in a fresh owned workspace, restricted to a subset of this Manager's write paths.",
+		Description: "Start one bounded helper in a fresh owned workspace, restricted to a subset of this Manager's write paths. Finish any parent workspace edits before calling this tool. Invoke it alone, without parallel workspace-changing tools, and wait for this tool to return before changing any parent workspace files or starting another helper. Inspect the returned result: success proves Host validation and delivery; child turn completion alone is not delivery. After a definitive request rejection, correct the request before a sequential retry. Do not continue when delivery is unknown or interrupted. Changing the parent workspace during this call invalidates the captured baseline and rejects delivery.",
 		InputSchema: json.RawMessage(helperToolSchema)}
 }
 
