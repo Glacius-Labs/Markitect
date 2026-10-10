@@ -702,6 +702,16 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			if len(children) == 0 || task.State == "integrated" || task.State == "complete" {
 				continue
 			}
+			if runtime.Review != nil && hasPendingReworkInSubtree(report.Tasks, task.ManagerID) {
+				// A deeper Manager has already asked for child work. Defer this
+				// ancestor too; the bounded rework loop will rebuild the whole
+				// affected chain from the corrected descendant candidate.
+				task.State = "integration-deferred"
+				if err := persistState(store, &report); err != nil {
+					return empty, err
+				}
+				continue
+			}
 			if err := ctx.Err(); err != nil {
 				return interruptRun(store, report, err)
 			}
@@ -889,6 +899,16 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			}
 			refreshStarts()
 			if runtime.Review != nil {
+				// A candidate that explicitly requests direct-child rework is
+				// known to be stale until that child and this Manager's ancestor
+				// chain have been rerun. Do not spend a review round on it.
+				if len(task.ReworkRequests) > 0 {
+					task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "", "", 0
+					if err := persistState(store, &report); err != nil {
+						return empty, err
+					}
+					continue
+				}
 				candidateProject, compileErr := projectForCandidate(host, root, project.Snapshot, resolved)
 				if compileErr != nil {
 					return failRun(store, report, compileErr)

@@ -93,6 +93,11 @@ func runManagerReworkRounds(ctx context.Context, host Host, invoker Invoker, roo
 			if task == nil {
 				continue
 			}
+			if hasPendingReworkInSubtree(report.Tasks, task.ManagerID) {
+				// A lower ancestor just emitted another valid request. Leave this
+				// higher ancestor for the next existing bounded rework round.
+				continue
+			}
 			if _, err := reintegrateAfterRework(ctx, host, invoker, root, store, dir, plan, runtime, base, report, task, starts, spent); err != nil {
 				return err
 			}
@@ -133,6 +138,29 @@ func takePendingReworkRequests(report *RunReport) ([]queuedManagerRework, error)
 		task.ReworkRequests = nil
 	}
 	return pending, nil
+}
+
+// hasPendingReworkInSubtree reports whether a Manager or any active descendant
+// has an explicit direct-child request waiting for the bounded rework loop.
+// Ancestor integrations must wait too, or they would review a candidate built
+// from the still-stale descendant output.
+func hasPendingReworkInSubtree(tasks []ManagerTask, managerID string) bool {
+	for i := range tasks {
+		if len(tasks[i].ReworkRequests) == 0 {
+			continue
+		}
+		cursor := &tasks[i]
+		for cursor != nil {
+			if cursor.ManagerID == managerID {
+				return true
+			}
+			if cursor.ParentTask == "" {
+				break
+			}
+			cursor = findTask(tasks, cursor.ParentTask)
+		}
+	}
+	return false
 }
 
 func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime Runtime, base *Project, report *RunReport, managerID, goal, reason string, starts *int, spent *int64) error {
@@ -415,6 +443,16 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 	report.Candidate = candidateRef(candidate, false)
 	if err := persistState(store, report); err != nil {
 		return nil, err
+	}
+	if len(task.ReworkRequests) > 0 {
+		// The parent explicitly requested another child correction. This
+		// candidate is not yet the post-rework integration result, so defer its
+		// reviewer until the bounded manager-rework loop has applied the request.
+		task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "", "", 0
+		if err := persistState(store, report); err != nil {
+			return nil, err
+		}
+		return append([]ReworkRequest(nil), parsed.ReworkRequests...), nil
 	}
 	compiled, err := projectForCandidate(host, root, base.Snapshot, candidate)
 	if err != nil {

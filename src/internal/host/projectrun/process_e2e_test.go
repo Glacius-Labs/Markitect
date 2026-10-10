@@ -144,6 +144,17 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 				processExit(2, "unexpected work manager "+contextPayload.Manager.Manager.ID)
 			}
 			files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: content}}
+			if os.Getenv(e2eBehaviorEnv) == "integration-review-child-rework" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
+				files[0].Content = "orders implementation DEFECT v1\n"
+			}
+			if os.Getenv(e2eBehaviorEnv) == "nested-child-rework" && contextPayload.Manager.Manager.ID == e2eManagerID("orders.commerce", "commerce") {
+				switch countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) {
+				case 1:
+					files[0].Content = "commerce implementation DEFECT v1\n"
+				case 2:
+					files[0].Content = "commerce implementation DEFECT v2\n"
+				}
+			}
 			if os.Getenv(e2eBehaviorEnv) == "provenance-escalation" && contextPayload.Manager.Manager.ID == e2eManagerID("orders.commerce", "commerce") {
 				response.Status = "partial"
 				response.Questions = []string{"Commerce deployment question"}
@@ -176,6 +187,20 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 		if (os.Getenv(e2eBehaviorEnv) == "manager-directed-rework" || os.Getenv(e2eBehaviorEnv) == "manager-rework-invalid-noop") && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
 			response.ReworkRequests = []ReworkRequest{{ManagerID: e2eManagerID("orders", "orders"), Goal: "Correct the orders artifact after integration review.", Reason: "The initial orders implementation needs a focused correction."}}
 			files = []agentexec.CandidateFile{{Path: "src/project-integration.txt", Mode: "0644", Content: "parent integration edit survives child rework\n"}}
+		}
+		if os.Getenv(e2eBehaviorEnv) == "integration-review-child-rework" && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") {
+			switch countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) {
+			case 1:
+				files = []agentexec.CandidateFile{{Path: "src/project-integration.txt", Mode: "0644", Content: "parent integration edit survives child rework\n"}}
+			case 2:
+				response.ReworkRequests = []ReworkRequest{{ManagerID: e2eManagerID("orders", "orders"), Goal: "Correct the orders artifact after integration review.", Reason: "The independent integration review found a defect in the orders artifact."}}
+			}
+		}
+		if os.Getenv(e2eBehaviorEnv) == "nested-child-rework" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) <= 2 {
+			response.ReworkRequests = []ReworkRequest{{ManagerID: e2eManagerID("orders.commerce", "commerce"), Goal: "Correct the nested Commerce artifact.", Reason: "The parent found a defect in the nested child output."}}
+		}
+		if os.Getenv(e2eBehaviorEnv) == "nested-child-rework" && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
+			files = []agentexec.CandidateFile{{Path: "src/project-integration.txt", Mode: "0644", Content: "root integration after nested rework\n"}}
 		}
 		if os.Getenv(e2eBehaviorEnv) == "integration-review-fix" && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") {
 			content := "corrected parent integration\n"
@@ -288,6 +313,19 @@ func runE2EReview(invocation agentexec.Invocation) {
 				response.Status = "fail"
 				response.Summary = "parent integration contains a marked defect"
 				response.Findings = []reviewFindingResponse{{Path: artifact.Path, Expectation: "integration must contain the corrected parent summary", Grounding: grounding}}
+			}
+		}
+	}
+	if os.Getenv(e2eBehaviorEnv) == "integration-review-child-rework" && contextPayload.ManagerID == e2eManagerID("", "project-owner") {
+		for _, artifact := range invocation.Request.Artifacts {
+			if artifact.Path == "src/orders/implementation.txt" && strings.Contains(string(artifact.Content), "DEFECT") {
+				grounding := ""
+				if len(contextPayload.AcceptedModel.Statements) > 0 {
+					grounding = "statement:" + contextPayload.AcceptedModel.Statements[0].ID
+				}
+				response.Status = "fail"
+				response.Summary = "integration candidate contains a defect in the orders child artifact"
+				response.Findings = []reviewFindingResponse{{Path: artifact.Path, Expectation: "orders artifact must contain the corrected implementation", Grounding: grounding}}
 			}
 		}
 	}
@@ -637,8 +675,11 @@ func TestManagerDirectedReworkRerunsOnlyRequestedLeafAndReintegratesAncestors(t 
 	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("", "project-owner"), "integrate"); calls != 2 {
 		t.Fatalf("affected root integrations ran %d times, want initial plus reintegration", calls)
 	}
-	if len(run.Reviews) < 5 {
-		t.Fatalf("expected work and reintegration reviews, got %d", len(run.Reviews))
+	if len(run.Reviews) < 4 {
+		t.Fatalf("expected work and fresh reintegration reviews, got %d", len(run.Reviews))
+	}
+	if got := reviewCount(run.Reviews, e2eManagerID("", "project-owner"), "integrate"); got != 1 {
+		t.Fatalf("initial parent candidate with pending child rework consumed %d integration reviews, want only the fresh post-rework review", got)
 	}
 	ordersTask := findTask(run.Tasks, e2eManagerID("orders", "orders"))
 	if ordersTask == nil || ordersTask.State != "worked" {
@@ -776,6 +817,188 @@ func TestIntegrationReviewFindingsRepairAndRereviewParentCandidate(t *testing.T)
 	}
 	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("", "project-owner"), "integrate"); calls != 2 {
 		t.Fatalf("parent integration ran %d times, want initial plus bounded correction", calls)
+	}
+}
+
+func TestIntegrationReviewRoutesChildReworkBeforeFreshParentReview(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	projectPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	projectYAML, err := os.ReadFile(projectPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projectYAML = []byte(strings.Replace(string(projectYAML), "  - .markitect/model/manager.yaml\n", "  - .markitect/model/manager.yaml\n  - .markitect/model/root-statement.yaml\n", 1))
+	writeE2E(t, root, projectwork.ManifestPath, string(projectYAML))
+	writeE2E(t, root, ".markitect/model/root-statement.yaml", "apiVersion: "+projectmodel.APIVersion+"\nkind: Statement\nmetadata:\n  name: integration-quality\n  namespace: \"\"\npurpose: Parent integration must preserve corrected child artifacts.\nspec:\n  category: concept\n  description: Integration candidate must contain corrected child artifacts.\n")
+	gitE2E(t, root, "add", projectwork.ManifestPath, ".markitect/model/root-statement.yaml")
+	gitE2E(t, root, "commit", "--amend", "--no-edit")
+	setupE2EProcess(t, "integration-review-child-rework")
+	updateE2ERuntime(t, root, func(config *Runtime) {
+		config.Review = &ReviewConfig{Agents: map[string]Agent{}, MaxRounds: 3, MaxManagerRounds: 2}
+		for id, agent := range config.Agents {
+			config.Review.Agents[id] = agent
+		}
+		config.Limits.MaxStarts = 32
+	})
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and reconcile the result.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err != nil || run.Status != StatusIntegrated {
+		t.Fatalf("review-directed child correction did not close: status=%s err=%v", run.Status, err)
+	}
+	rootID, ordersID, inventoryID := e2eManagerID("", "project-owner"), e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")
+	if got := countE2EProcessCalls(os.Getenv(e2eLogEnv), rootID, "integrate"); got != 3 {
+		t.Fatalf("root integrated %d times, want initial, request-bearing defer, and post-child reintegration", got)
+	}
+	if got := countE2EProcessCalls(os.Getenv(e2eLogEnv), rootID, "review"); got != 2 {
+		t.Fatalf("root reviewed %d candidates, want failed original and fresh post-rework candidate", got)
+	}
+	if got := countE2EProcessCalls(os.Getenv(e2eLogEnv), ordersID, "work"); got != 2 {
+		t.Fatalf("requested orders child ran %d times, want initial plus targeted repair", got)
+	}
+	if got := countE2EProcessCalls(os.Getenv(e2eLogEnv), inventoryID, "work"); got != 1 {
+		t.Fatalf("unrequested inventory child ran %d times, want one initial run", got)
+	}
+	var rootReviews []ReviewRecord
+	for _, review := range run.Reviews {
+		if review.ManagerID == rootID && review.Phase == "integrate" {
+			rootReviews = append(rootReviews, review)
+		}
+	}
+	if len(rootReviews) != 2 || rootReviews[0].Outcome != "fail" || rootReviews[1].Outcome != "pass" || rootReviews[0].CandidateID == rootReviews[1].CandidateID {
+		t.Fatalf("expected retained failure followed by fresh post-rework pass, got %+v", rootReviews)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err := store.runDir(run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	finalCandidate, err := store.readCandidate(dir, run.Candidate.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := string(finalCandidate.Files["src/project-integration.txt"].Content); got != "parent integration edit survives child rework\n" {
+		t.Fatalf("child correction discarded parent-owned integration edit: %q", got)
+	}
+	if got := string(finalCandidate.Files["src/orders/implementation.txt"].Content); strings.Contains(got, "DEFECT") {
+		t.Fatalf("final candidate retained the reviewed child defect: %q", got)
+	}
+	records, err := readE2ERecords(os.Getenv(e2eLogEnv))
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstFailedRootReview, secondOrdersWork, thirdRootIntegration, finalRootReview := -1, -1, -1, -1
+	rootReviewsSeen, ordersWorkSeen, rootIntegrationsSeen := 0, 0, 0
+	for i, record := range records {
+		manager, _ := record["managerId"].(string)
+		phase, _ := record["phase"].(string)
+		switch {
+		case manager == rootID && phase == "review":
+			rootReviewsSeen++
+			if rootReviewsSeen == 1 {
+				firstFailedRootReview = i
+			} else if rootReviewsSeen == 2 {
+				finalRootReview = i
+			}
+		case manager == ordersID && phase == "work":
+			ordersWorkSeen++
+			if ordersWorkSeen == 2 {
+				secondOrdersWork = i
+			}
+		case manager == rootID && phase == "integrate":
+			rootIntegrationsSeen++
+			if rootIntegrationsSeen == 3 {
+				thirdRootIntegration = i
+			}
+		}
+	}
+	if !(firstFailedRootReview >= 0 && firstFailedRootReview < secondOrdersWork && secondOrdersWork < thirdRootIntegration && thirdRootIntegration < finalRootReview) {
+		t.Fatalf("child correction/fresh reintegration did not precede final parent review: failed=%d child=%d reintegrate=%d final-review=%d", firstFailedRootReview, secondOrdersWork, thirdRootIntegration, finalRootReview)
+	}
+}
+
+func TestNestedReworkDefersEveryAncestorIntegrationAndReview(t *testing.T) {
+	root := makeMultilevelObligationFixture(t)
+	setupE2EProcess(t, "nested-child-rework")
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement nested Commerce behavior and integrate all owned artifacts.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory"), e2eManagerID("orders.commerce", "commerce")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err != nil || run.Status != StatusIntegrated {
+		t.Fatalf("nested child rework did not close: status=%s err=%v", run.Status, err)
+	}
+	rootID, ordersID, commerceID := e2eManagerID("", "project-owner"), e2eManagerID("orders", "orders"), e2eManagerID("orders.commerce", "commerce")
+	if len(run.ManagerReworkRounds) != 2 || run.ManagerReworkRounds[0].Status != "completed" || run.ManagerReworkRounds[1].Status != "completed" {
+		t.Fatalf("nested requests did not use two completed bounded rework rounds: %+v", run.ManagerReworkRounds)
+	}
+	if got := countE2EProcessCalls(os.Getenv(e2eLogEnv), commerceID, "work"); got != 3 {
+		t.Fatalf("nested child work ran %d times, want initial plus two bounded targeted repairs", got)
+	}
+	if got := countE2EProcessCalls(os.Getenv(e2eLogEnv), ordersID, "integrate"); got != 3 {
+		t.Fatalf("requesting parent integrated %d times, want initial request, second request, and fresh integration", got)
+	}
+	if got := countE2EProcessCalls(os.Getenv(e2eLogEnv), rootID, "integrate"); got != 1 {
+		t.Fatalf("root integrated %d times, want only the post-rework candidate", got)
+	}
+	if got := countE2EProcessCalls(os.Getenv(e2eLogEnv), rootID, "review"); got != 1 {
+		t.Fatalf("root reviewed %d times, want only after nested rework", got)
+	}
+	if got := countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("inventory", "inventory"), "work"); got != 1 {
+		t.Fatalf("unrequested sibling work ran %d times, want one initial run", got)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err := store.runDir(run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	finalCandidate, err := store.readCandidate(dir, run.Candidate.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := string(finalCandidate.Files["src/project-integration.txt"].Content); got != "root integration after nested rework\n" {
+		t.Fatalf("nested child rework discarded root-owned integration edit: %q", got)
+	}
+	records, err := readE2ERecords(os.Getenv(e2eLogEnv))
+	if err != nil {
+		t.Fatal(err)
+	}
+	finalCommerceWork, finalOrdersIntegration, rootIntegration, rootReview := -1, -1, -1, -1
+	commerceWorkSeen, ordersIntegrationSeen := 0, 0
+	for i, record := range records {
+		manager, _ := record["managerId"].(string)
+		phase, _ := record["phase"].(string)
+		switch {
+		case manager == commerceID && phase == "work":
+			commerceWorkSeen++
+			if commerceWorkSeen == 3 {
+				finalCommerceWork = i
+			}
+		case manager == ordersID && phase == "integrate":
+			ordersIntegrationSeen++
+			if ordersIntegrationSeen == 3 {
+				finalOrdersIntegration = i
+			}
+		case manager == rootID && phase == "integrate":
+			rootIntegration = i
+		case manager == rootID && phase == "review":
+			rootReview = i
+		}
+	}
+	if !(finalCommerceWork >= 0 && finalCommerceWork < finalOrdersIntegration && finalOrdersIntegration < rootIntegration && rootIntegration < rootReview) {
+		t.Fatalf("ancestor ran before both nested child rework rounds settled: child=%d parent=%d root-integration=%d root-review=%d", finalCommerceWork, finalOrdersIntegration, rootIntegration, rootReview)
 	}
 }
 
