@@ -76,11 +76,11 @@ func Coverage(root, revision string) (projectcoverage.Report, error) {
 // ClassifyCandidate returns candidate, compiled from a snapshot derived from
 // base, with full coverage classified against base's repository census plus
 // the files the candidate adds, replaces or deletes. Ignored, transitional and
-// operational files are absent from snapshots, so a candidate that deletes one
-// names it in deleted; other such files keep their census state, and an
-// unchanged candidate is classified exactly like its base. Files the
-// candidate's policy no longer excludes, such as a transitional file it now
-// models, are read from the base source and compiled into the candidate.
+// operational files keep their census state, so an unchanged candidate is
+// classified exactly like its base. Those files are in no snapshot that review,
+// checks or Apply see, so a candidate that names one in deleted is refused.
+// Files the candidate's policy no longer excludes, such as a transitional file
+// it now models, are read from the base source and compiled into the candidate.
 func ClassifyCandidate(base, candidate *Project, deleted ...string) (*Project, error) {
 	if candidate == nil || candidate.Config.CoverageMode != "full" {
 		return candidate, nil
@@ -88,8 +88,11 @@ func ClassifyCandidate(base, candidate *Project, deleted ...string) (*Project, e
 	if base == nil || base.census == nil || base.Snapshot == nil || candidate.Snapshot == nil {
 		return nil, fmt.Errorf("candidate coverage requires the repository census of its base")
 	}
+	if err := refuseCensusOnlyDeletes(base, deleted); err != nil {
+		return nil, err
+	}
 	options := coverageOptions(candidate.Config)
-	delta := candidateDelta(base.Snapshot, candidate.Snapshot, deleted)
+	delta := candidateDelta(base.Snapshot, candidate.Snapshot)
 	overlaid, err := projectcoverage.Overlay(base.census, delta, options)
 	if err != nil {
 		return nil, fmt.Errorf("classify candidate against the repository census: %w", err)
@@ -112,7 +115,7 @@ func ClassifyCandidate(base, candidate *Project, deleted ...string) (*Project, e
 		if candidate, err = FromSnapshot(base.Root, extended); err != nil {
 			return nil, err
 		}
-		delta = candidateDelta(base.Snapshot, candidate.Snapshot, deleted)
+		delta = candidateDelta(base.Snapshot, candidate.Snapshot)
 	}
 	coverage, err := projectcoverage.ValidateCandidate(base.census, delta, candidate.Report,
 		options, candidate.Config.InventoryRoots, legacyExclusions(candidate.Config.Exclusions))
@@ -128,7 +131,27 @@ func ClassifyCandidate(base, candidate *Project, deleted ...string) (*Project, e
 	return &classified, nil
 }
 
-func candidateDelta(base, candidate *snapshot.Snapshot, deleted []string) []projectcoverage.Delta {
+// refuseCensusOnlyDeletes rejects deleting a current census file that base's
+// snapshot omits. Apply writes only snapshot changes, so accepting the delete
+// would close a candidate whose coverage Apply never produces.
+func refuseCensusOnlyDeletes(base *Project, deleted []string) error {
+	names := make(map[string]bool, len(deleted))
+	for _, file := range deleted {
+		names[file] = true
+	}
+	for _, state := range base.census.Paths {
+		present := state.Worktree.Present
+		if base.census.FixedRevision {
+			present = state.Head.Present
+		}
+		if _, inSnapshot := base.Snapshot.Files[state.Path]; names[state.Path] && present && !inSnapshot {
+			return fmt.Errorf("candidate deletes %s, an ignored, transitional or operational file outside the reviewed snapshot; Apply cannot delete it, so remove it outside the run", state.Path)
+		}
+	}
+	return nil
+}
+
+func candidateDelta(base, candidate *snapshot.Snapshot) []projectcoverage.Delta {
 	var delta []projectcoverage.Delta
 	for file, data := range candidate.Files {
 		mode := candidate.Modes[file]
@@ -144,13 +167,6 @@ func candidateDelta(base, candidate *snapshot.Snapshot, deleted []string) []proj
 	}
 	for file := range base.Files {
 		if _, exists := candidate.Files[file]; !exists {
-			delta = append(delta, projectcoverage.Delta{Path: file, Delete: true})
-		}
-	}
-	for _, file := range uniqueSorted(deleted) {
-		_, inBase := base.Files[file]
-		_, inCandidate := candidate.Files[file]
-		if !inBase && !inCandidate {
 			delta = append(delta, projectcoverage.Delta{Path: file, Delete: true})
 		}
 	}

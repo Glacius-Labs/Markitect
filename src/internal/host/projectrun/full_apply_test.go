@@ -185,16 +185,14 @@ func TestFinalCandidateCoverageUsesRepositoryCensus(t *testing.T) {
 		candidate.Files[documentPath] = File{Path: documentPath, Mode: "100644", Content: []byte(document)}
 		return validateFinalCandidate(host, root, base, candidate, PlanRecord{ModelDigest: compiled.Report.ModelDigest})
 	}
-	const ordersArtifact, ordersFile = ".markitect/model/orders/artifact.yaml", "src/orders/implementation.txt"
-	writeFile := func(path, content string) File { return File{Path: path, Mode: "100644", Content: []byte(content)} }
 	t.Run("rename modelled file", func(t *testing.T) {
 		root := makeFullVerifyFixture(t)
 		base := loadHead(t, root)
 		const renamed = "src/orders/renamed.txt"
 		files := map[string]File{
-			ordersFile:     {Path: ordersFile, Delete: true},
-			renamed:        writeFile(renamed, string(base.Snapshot.Files[ordersFile])),
-			ordersArtifact: writeFile(ordersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", renamed)),
+			fixtureOrdersFile:     {Path: fixtureOrdersFile, Delete: true},
+			renamed:               candidateWrite(renamed, string(base.Snapshot.Files[fixtureOrdersFile])),
+			fixtureOrdersArtifact: candidateWrite(fixtureOrdersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", renamed)),
 		}
 		if err := validateModelChange(t, root, base, files); err != nil {
 			t.Fatalf("rename with its Artifact path moved failed final candidate validation: %v", err)
@@ -203,44 +201,34 @@ func TestFinalCandidateCoverageUsesRepositoryCensus(t *testing.T) {
 	t.Run("delete modelled file", func(t *testing.T) {
 		root := makeFullVerifyFixture(t)
 		const notes = "src/orders/notes.txt"
-		writeE2E(t, root, ordersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", ordersFile+", "+notes))
+		writeE2E(t, root, fixtureOrdersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", fixtureOrdersFile+", "+notes))
 		writeE2E(t, root, notes, "orders notes\n")
-		gitE2E(t, root, "add", ordersArtifact, notes)
+		gitE2E(t, root, "add", fixtureOrdersArtifact, notes)
 		gitE2E(t, root, "commit", "-m", "realize orders notes")
 		base := loadHead(t, root)
 		files := map[string]File{
-			notes:          {Path: notes, Delete: true},
-			ordersArtifact: writeFile(ordersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", ordersFile)),
+			notes:                 {Path: notes, Delete: true},
+			fixtureOrdersArtifact: candidateWrite(fixtureOrdersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", fixtureOrdersFile)),
 		}
 		if err := validateModelChange(t, root, base, files); err != nil {
 			t.Fatalf("delete with its Artifact path dropped failed final candidate validation: %v", err)
 		}
 	})
+	t.Run("transitional file deleted", func(t *testing.T) {
+		root, base, _ := transitionalOrdersFixture(t)
+		candidate := candidateData{ID: "candidate-transitional-delete", Files: map[string]File{fixtureLegacyOrdersFile: {Path: fixtureLegacyOrdersFile, Delete: true}}}
+		// Apply writes only snapshot changes, so closure must not accept a
+		// delete it would never perform.
+		if paths := candidateDeltaPaths(base.Snapshot, candidate); len(paths) != 0 {
+			t.Fatalf("precondition: Apply write set = %v, want none", paths)
+		}
+		if err := validateFinalCandidate(host, root, base, candidate, PlanRecord{ModelDigest: base.Report.ModelDigest}); err == nil || !strings.Contains(err.Error(), "outside the reviewed snapshot") {
+			t.Fatalf("delete that Apply cannot perform passed final candidate validation: %v", err)
+		}
+	})
 	t.Run("transitional file modelled in place", func(t *testing.T) {
-		root := makeFullVerifyFixture(t)
-		manifest, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath)))
-		if err != nil {
-			t.Fatal(err)
-		}
-		const legacy = "src/orders/legacy.txt"
-		transitional := strings.Replace(string(manifest), "exclusions: []\n", "exclusions: []\ntransitionalExclusions:\n  - path: "+legacy+"\n    reason: Existing file awaits explicit modeling\n", 1)
-		if transitional == string(manifest) {
-			t.Fatal("could not add a transitional exclusion")
-		}
-		writeE2E(t, root, projectwork.ManifestPath, transitional)
-		writeE2E(t, root, legacy, "legacy orders bytes\n")
-		gitE2E(t, root, "add", projectwork.ManifestPath, legacy)
-		gitE2E(t, root, "commit", "-m", "mark legacy orders file transitional")
-		base := loadHead(t, root)
-		if base.Coverage == nil || !base.Coverage.Accounted || base.Coverage.Conforming {
-			t.Fatalf("precondition: census must be accounted but nonconforming: %+v", base.Coverage)
-		}
-		files := func() map[string]File {
-			return map[string]File{
-				projectwork.ManifestPath: writeFile(projectwork.ManifestPath, string(manifest)),
-				ordersArtifact:           writeFile(ordersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", ordersFile+", "+legacy)),
-			}
-		}
+		root, base, manifest := transitionalOrdersFixture(t)
+		files := func() map[string]File { return inPlaceModellingFiles(manifest) }
 		if err := validateModelChange(t, root, base, files()); err != nil {
 			t.Fatalf("transitional file modelled in place failed final candidate validation: %v", err)
 		}
@@ -268,6 +256,107 @@ func TestFinalCandidateCoverageUsesRepositoryCensus(t *testing.T) {
 			t.Fatalf("run-generated document did not match the closure compile: %v", err)
 		}
 	})
+}
+
+// Run records reviews and Verify checks them, so both must see a candidate the
+// way closure does. Modelling a transitional file in place adds base bytes to
+// that view; a snapshot-only review view scopes different files, and Verify
+// then finds no fresh passed review.
+func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) {
+	host := Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot}
+	root, base, manifest := transitionalOrdersFixture(t)
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, filepath.FromSlash(RunsPath)), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	const runID = "00000000000000000000000000000001"
+	dir, err := store.createRun(runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidate, err := completeCandidateDocument(host, root, store, dir, base, candidateData{ID: "00000000000000000000000000000002", Files: inPlaceModellingFiles(manifest)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	reviewed, err := finalProjectForCandidate(host, root, base, candidate)
+	if err != nil {
+		t.Fatal(err)
+	}
+	managerID := e2eManagerID("orders", "orders")
+	var artifactID string
+	for _, artifact := range reviewed.Report.Artifacts {
+		if artifact.Owner == managerID {
+			artifactID = artifact.ID
+		}
+	}
+	task := ManagerTask{ID: "task-orders", ManagerID: managerID, Goal: "Model the legacy orders file.", Artifacts: []string{artifactID}}
+	plan := PlanRecord{ID: runID, Goal: "Model the legacy orders file.", Operation: OperationApply, Managers: []ManagerTask{task},
+		BriefingDigests: map[string]string{}, Strictness: map[string]StrictnessProfile{}}
+	run := RunReport{ID: runID, Tasks: []ManagerTask{task}}
+	scope, err := reviewScopeDigest(plan, reviewed, task, "work", run)
+	if err != nil {
+		t.Fatal(err)
+	}
+	run.Reviews = []ReviewRecord{{TaskID: task.ID, ManagerID: managerID, Phase: "work", CandidateID: candidate.ID, CandidateDigest: candidate.Digest,
+		ScopeDigest: scope, InputDigest: "sha256:review-input", Outcome: "pass", Findings: []ReviewFinding{}, Receipt: agentexec.Receipt{RunID: "review-run"}}}
+	runtime := Runtime{Review: &ReviewConfig{}}
+	if err := requireFreshReviews(host, root, store, dir, base, candidate, plan, runtime, run); err != nil {
+		t.Fatalf("Verify's review freshness check rejected a review of the closure view: %v", err)
+	}
+	evidence, err := freshReviewEvidenceForVerify(store, dir, reviewed, candidate, plan, runtime, run)
+	if err != nil || len(evidence) != 1 {
+		t.Fatalf("Verify's review evidence = %+v, err=%v", evidence, err)
+	}
+}
+
+const (
+	fixtureOrdersArtifact   = ".markitect/model/orders/artifact.yaml"
+	fixtureOrdersFile       = "src/orders/implementation.txt"
+	fixtureLegacyOrdersFile = "src/orders/legacy.txt"
+)
+
+// transitionalOrdersFixture commits a full-coverage fixture whose
+// src/orders/legacy.txt is transitional. It returns the root, the fixed base
+// and the manifest as it was before the transitional exclusion.
+func transitionalOrdersFixture(t *testing.T) (string, *Project, string) {
+	t.Helper()
+	root := makeFullVerifyFixture(t)
+	manifest, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	transitional := strings.Replace(string(manifest), "exclusions: []\n", "exclusions: []\ntransitionalExclusions:\n  - path: "+fixtureLegacyOrdersFile+"\n    reason: Existing file awaits explicit modeling\n", 1)
+	if transitional == string(manifest) {
+		t.Fatal("could not add a transitional exclusion")
+	}
+	writeE2E(t, root, projectwork.ManifestPath, transitional)
+	writeE2E(t, root, fixtureLegacyOrdersFile, "legacy orders bytes\n")
+	gitE2E(t, root, "add", projectwork.ManifestPath, fixtureLegacyOrdersFile)
+	gitE2E(t, root, "commit", "-m", "mark legacy orders file transitional")
+	base, err := projectwork.Load(root, gitE2E(t, root, "rev-parse", "HEAD"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if base.Coverage == nil || !base.Coverage.Accounted || base.Coverage.Conforming {
+		t.Fatalf("precondition: census must be accounted but nonconforming: %+v", base.Coverage)
+	}
+	return root, base, string(manifest)
+}
+
+// inPlaceModellingFiles drops the transitional exclusion and adds the
+// unchanged legacy file to the orders Artifact.
+func inPlaceModellingFiles(manifest string) map[string]File {
+	return map[string]File{
+		projectwork.ManifestPath: candidateWrite(projectwork.ManifestPath, manifest),
+		fixtureOrdersArtifact:    candidateWrite(fixtureOrdersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", fixtureOrdersFile+", "+fixtureLegacyOrdersFile)),
+	}
+}
+
+func candidateWrite(path, content string) File {
+	return File{Path: path, Mode: "100644", Content: []byte(content)}
 }
 
 func TestFullApplyRejectsUnclassifiedWorktreeAddedAfterPlan(t *testing.T) {

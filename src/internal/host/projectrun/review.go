@@ -965,7 +965,7 @@ func requireFreshReviews(host Host, root string, store *runStore, dir string, ba
 	if runtime.Review == nil {
 		return nil
 	}
-	finalProject, err := projectForCandidate(host, root, base.Snapshot, candidate)
+	finalProject, err := finalProjectForCandidate(host, root, base, candidate)
 	if err != nil {
 		return err
 	}

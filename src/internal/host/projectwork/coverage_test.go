@@ -220,9 +220,10 @@ func TestCandidateCoverageReadsTransitionalFileModelledInPlace(t *testing.T) {
 	}
 }
 
-// Ignored and transitional files are absent from snapshots, so a candidate
-// that deletes one names it. The named path must leave the census as well.
-func TestCandidateCoverageDropsNamedDeletesOfCensusOnlyFiles(t *testing.T) {
+// Ignored and transitional files are in the census but in no snapshot, so
+// review, checks and Apply never see them. A candidate that deletes one is
+// refused rather than classified as if Apply would remove it.
+func TestCandidateCoverageRefusesDeletesOfCensusOnlyFiles(t *testing.T) {
 	root, head := modelledCoverageFixture(t, []string{"src/legacy.txt"}, map[string]string{"src/a.txt": "a\n", "src/legacy.txt": "legacy\n"}, "src/a.txt")
 	base, err := Load(root, head)
 	if err != nil {
@@ -232,28 +233,13 @@ func TestCandidateCoverageDropsNamedDeletesOfCensusOnlyFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	transitional, err := ClassifyCandidate(base, compiled, "src/legacy.txt")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !transitional.Coverage.Conforming {
-		t.Errorf("deleting the only transitional file left the candidate nonconforming: %+v", transitional.Coverage.Findings)
-	}
-	ignored, err := ClassifyCandidate(base, compiled, "README.md")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, entry := range ignored.Coverage.Entries {
-		if entry.Path == "README.md" {
-			t.Errorf("deleted ignored file is still classified: %+v", entry)
+	for _, file := range []string{"src/legacy.txt", "README.md"} {
+		if _, err := ClassifyCandidate(base, compiled, file); err == nil || !strings.Contains(err.Error(), "outside the reviewed snapshot") {
+			t.Errorf("deleting census-only file %s was not refused: %v", file, err)
 		}
 	}
-	unused := false
-	for _, finding := range ignored.Coverage.Findings {
-		unused = unused || finding.Code == "coverage.ignore-unused" && finding.Path == "README.md"
-	}
-	if !unused {
-		t.Errorf("exact ignore entry for a deleted file was not reported unused: %+v", ignored.Coverage.Findings)
+	if _, err := ClassifyCandidate(base, compiled, "src/never.txt"); err != nil {
+		t.Errorf("deleting an absent path was refused: %v", err)
 	}
 }
 

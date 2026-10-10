@@ -37,7 +37,7 @@ func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker,
 	if err != nil {
 		return err
 	}
-	selected, err := projectForCandidate(host, root, base.Snapshot, candidate)
+	selected, err := finalProjectForCandidate(host, root, base, candidate)
 	if err != nil {
 		return err
 	}

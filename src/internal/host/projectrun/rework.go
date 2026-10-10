@@ -263,7 +263,7 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 		if err := persistState(store, report); err != nil {
 			return err
 		}
-		candidateProject, err := projectForCandidate(host, root, base.Snapshot, candidate)
+		candidateProject, err := finalProjectForCandidate(host, root, base, candidate)
 		if err != nil {
 			return err
 		}
@@ -454,7 +454,7 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 		}
 		return append([]ReworkRequest(nil), parsed.ReworkRequests...), nil
 	}
-	compiled, err := projectForCandidate(host, root, base.Snapshot, candidate)
+	compiled, err := finalProjectForCandidate(host, root, base, candidate)
 	if err != nil {
 		return nil, err
 	}
