@@ -23,7 +23,7 @@ This page owns the current direction: how parallel work is organized, the stream
 - the knowledge-graph branch (old layout);
 - a started Government v1 (docs plus uncommitted code).
 
-**Product Readiness program:** P01 to P10 are complete. Its records stay in [work-items/product-readiness](work-items/product-readiness/README.md) as history. Its open follow-ups now live in the backlog: AGENT-03 replaces R03-F01, and the KG packages replace KG01 to KG03.
+**Product Readiness program:** closed. P01 to P10 are complete. Its records were distilled into the [Product Readiness lessons survey](work-items/surveys/product-readiness-lessons-20261010.md) and the [A01 validation record](validation/a01-native-smoke-20261010.md); git history keeps the originals. Its open follow-ups now live in the backlog: RUN-04 replaces P11, AGENT-03 replaces R03-F01, and the KG packages replace KG01 to KG03.
 
 ## Guiding decisions
 

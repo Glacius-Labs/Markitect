@@ -33,7 +33,7 @@ From the repository root, run:
 
 ```powershell
 python -B scripts/check-docs.py
-python -B scripts/check-docs.py docs/development/baseline.md
+python -B scripts/check-docs.py docs/development/modules.md
 ```
 
 The default corpus is the maintained entry documents listed in [the checker](../../scripts/check-docs.py): root guidance, current workflow and architecture guides, and category maps. Explicit paths check additional revised pages. It checks local targets and heading/explicit HTML anchors, ignores external URLs and code examples, and does not evaluate prose or infer dependencies. Historical reports and generated views are outside the default source corpus; links into them still have their destinations checked. Review changed historical pages explicitly without rewriting their evidence to satisfy a current-status convention.

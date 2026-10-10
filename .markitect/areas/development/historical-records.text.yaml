@@ -5,13 +5,9 @@ metadata:
     namespace: development
 spec:
     text: |
-        These files are history: the completed Product Readiness program, dated design notes and the canonical projection reset. They are not current guidance; the roadmap and the backlog own current work. They are declared here so that their YAML is not read as model resources, and no Skill uses this Text, so they stay out of agent context.
+        These files are history: dated design notes and the canonical projection reset. They are not current guidance; the roadmap and the backlog own current work. They stay declared inputs, and no Skill uses this Text, so they stay out of agent context.
     files:
         - docs/design/canonical-projection-reset.md
         - docs/design/project-capability-skills-20261009.md
         - docs/design/project-native-codex-work-20261009.md
         - docs/design/project-simplification-and-api-direction-20261009.md
-        - docs/work-items/product-readiness/README.md
-        - docs/work-items/product-readiness/backlog.yaml
-        - docs/work-items/product-readiness/evidence/native-acceptance-ledger.yaml
-        - docs/work-items/product-readiness/follow-up-backlog.yaml

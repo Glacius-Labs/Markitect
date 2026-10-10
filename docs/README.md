@@ -23,8 +23,8 @@ Use this map to find the product guide or the document that owns a decision or s
 | Technical behavior and product boundaries | [Architecture](architecture.md) and the task-specific current guides above |
 | Current source scope and future implementation | [Implementation roadmap](implementation-plan.md) |
 | Work-package states, dependencies, owners, and zones | [Backlog](work-items/backlog.yaml), routed through the [work-items map](work-items/README.md) |
-| Native attempt accounting and acceptance limits | [Native acceptance ledger](work-items/product-readiness/evidence/native-acceptance-ledger.yaml) |
-| Integration handoffs and technical findings | [Integration progress](work-items/product-readiness/integration-progress-20261009.md) |
+| Native A01 result, attempt accounting and acceptance limits | [A01 validation record](validation/a01-native-smoke-20261010.md) |
+| Known technical limits and lessons from Product Readiness | [Product Readiness lessons survey](work-items/surveys/product-readiness-lessons-20261010.md) |
 | Source/release evidence for a dated validation | The linked report in the [validation map](validation/README.md), read at its recorded scope and source |
 | Published asset identity and release claims | [Production assessment](production-assessment.md) |
 | Contribution and hosted validation commands | [CONTRIBUTING.md](../CONTRIBUTING.md) |
@@ -48,4 +48,4 @@ The generated [Markitect views](markitect/README.md) are readable outputs of can
 
 [Measurement](measurement.md) owns evaluation procedure. The [core authoring exercise](authoring-assessment.md) is dated 30 September 2026; the [documentation authoring pilot](authoring-pilot.md) and [MCP evaluation](mcp-evaluation.md) are dated 1 October 2026. The [Windows CLI onboarding exercise](onboarding.md) reproduces a v0.5.0 machine-run path. Their outcomes belong to their original inputs and do not update the roadmap.
 
-Use the [design map](design/README.md) for design records, the [research map](research/README.md) for owner-supplied research direction, the [strategy map](strategy/README.md) for original strategy sources, the [validation map](validation/README.md) for fixed reports, and the [history map](history/README.md) for the preserved pre-integration roadmap snapshot. The [Product Readiness backlog](work-items/README.md) routes the current work queue and its separate evidence records.
+Use the [design map](design/README.md) for design records, the [research map](research/README.md) for research direction and research results, the [strategy map](strategy/README.md) for original strategy sources, the [validation map](validation/README.md) for fixed reports, and the [history map](history/README.md) for the preserved pre-integration roadmap snapshot. The [work-items map](work-items/README.md) routes the backlog and its surveys.

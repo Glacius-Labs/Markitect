@@ -1,6 +1,6 @@
 # Experiments and preserved evaluations
 
-This directory holds bounded exercise harnesses and their evidence. Each exercise defines its own source, runtime, input, authority and result limits. Use the [validation map](../docs/validation/README.md) to locate recorded outcomes and the [readiness backlog](../docs/work-items/product-readiness/backlog.yaml) for current product status.
+This directory holds bounded exercise harnesses and their evidence. Each exercise defines its own source, runtime, input, authority and result limits. Use the [validation map](../docs/validation/README.md) to locate recorded outcomes and the [backlog](../docs/work-items/backlog.yaml) for current work status.
 
 ## Project workflow exercise
 
