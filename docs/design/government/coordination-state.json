@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T08:59:24.925081+00:00",
+  "updatedUtc": "2026-10-10T09:06:16.514231+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL21_FULL_MANAGER_VERIFY_INCOMPLETE_ALIAS_EVIDENCE_AND_GENEROUS_EVENT_PROFILE_DIAGNOSIS",
+    "status": "ACTUAL21_TERMINAL_ALIAS_PROTOCOL_RECOVER_REVIEW_AND_SCOPED_EVIDENCE_CLOSURE_PENDING",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18663,7 +18663,7 @@
       }
     },
     "actual21Preparation": {
-      "status": "SAME_BINARY_RECOVERY_PROVEN_VERIFY_INCOMPLETE_FULL_AUDIT_IDENTIFIERS_EVIDENCE_EVENT_LIMIT_DIAGNOSIS_ACTIVE",
+      "status": "TERMINAL_FULL_VERIFY_INCOMPLETE_NO_APPLY_NATIVE_SOURCE_INTERRUPTED_HOST_UNKNOWN_ALIASES_AND_SCOPED_INPUT_FIX_ACTIVE",
       "freezeRef": "authoringHelperCapabilityFreeze",
       "planId": "28d09f0b109003b62d150b68d339bc49",
       "batchId": "a01-authoring-helper-e23d702acbb9459f9abd20907886afed",
@@ -18721,6 +18721,24 @@
         "rootVerified": "Current adopter Runtime all MaxEventBytes16777216/Timeout1h; client65,94,140 cumulative inbound/outbound budget, existing ceiling256MiB; native journal384MiB.",
         "authority": "Direct human instruction generous timeouts/limits and renewable finite product execution budget.",
         "scope": "Next prospective uniform AppServer per-invocation128MiB using existing supported setting, bind new Runtime/Readiness/Plan normally. Inspect actual volume/unnecessarily broad retrieval; preserve4hbatch/1hrole. No old21mutation/refill/replay/new phase; unknown Source lifecycle readback first. Existing exact native aliases with requestbound deterministic canonical return, never fuzzy/changed verdict/missing evidence invention."
+      },
+      "finalAccountingOwnerReported": {
+        "cumulativeStartRequests": 99,
+        "cumulativeProviderStarts": 95,
+        "cumulativePartialEstimatedCostMicros": 16142791,
+        "qualification": "Known partial owner union, exact raw closure receipt audit not Root completed. No invoice/complete token/compute efficiency claim; actual21 incremental implied13starts13providers1236745partial but no new computed receipt asserted."
+      },
+      "sourceAuditDiagnosis": {
+        "nativeReadback": "Owner exact native Sourceaudit turn interrupted/completedAtnull. Host lifecycle remains unknown, workspace preserved, no replay or fabricated completed receipt.",
+        "ownerRawAudit": "Zero toolcalls;64708agentMessage/delta events, shortened quote-rich subject ID followed by370440spaces before16MiB bound. Not evidence shell/CWD permission failed.",
+        "repair": "Narrow existing request-bound alias correction focused tests pending independent protocol-version and Recover fixture closure. Verdicts/Hostcanonicalvalidation remain unchanged.",
+        "docsEvidence": "Explicit public Statement/Check evidence attached within existing required subjects; focused fixture and independent review ownerPASS. No retro new rubric/requirements/private case evidence supplied."
+      },
+      "prospectiveRuntimeOwnerReport": {
+        "setting": "maxEventBytes134217728uniform7roles",
+        "mechanism": "Normal project edit Preview/CASwrite, no providerstart",
+        "timeBounds": "Existing4hbatch1hrole unchanged",
+        "history": "Original Actual21runtime retained, newnormalReadinessPlan aftercleanSourcecheckpoint. Exact new runtime hash/freeze still pending, no old refill/plan rewriting."
       }
     }
   },
