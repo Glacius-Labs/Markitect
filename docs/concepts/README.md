@@ -19,7 +19,7 @@ Accepted and clarified entries are the current basis. Do not reopen them without
 |---|---|
 | [Vision](../vision.md) | The accepted thesis as readable prose. It links here for individual entries. |
 | This record | Individual decisions, promises, assumptions, concepts, enhancements, ideas and open questions, with status and origin |
-| [Roadmap](../implementation-plan.md) and [Product Readiness backlog](../work-items/product-readiness/backlog.yaml) | Scheduling and status of implementation work. A scheduled enhancement's work item links back to its entry here. |
+| [Roadmap](../implementation-plan.md) and [backlog](../work-items/backlog.yaml) | Scheduling and status of implementation work. A scheduled enhancement's work item links back to its entry here. |
 | [Architecture](../architecture.md) and the workflow guides | Implemented behavior |
 | [Measurement](../measurement.md) | Evaluation procedure |
 | [Strategy sources](../strategy/README.md) | Original strategy bundles from earlier phases, kept with their provenance |

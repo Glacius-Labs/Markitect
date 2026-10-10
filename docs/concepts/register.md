@@ -19,6 +19,10 @@ This register records Markitect's long-term vision, product-level decisions, cla
 | [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime) | Endorsed direction | Evaluate the method separately from its execution runtime | Endorsed; plan pending |
 | [DEC-011](#dec-011-detailed-planning-of-future-ideas-waits) | Decision | Detailed planning of future ideas waits | Accepted |
 | [DEC-012](#dec-012-government-ideas-evaluation-commissioned) | Decision | Government ideas evaluation commissioned | Accepted; result not adopted |
+| [DEC-013](#dec-013-linux-first-for-tests-and-the-playground) | Decision | Linux first for tests and the playground | Accepted |
+| [DEC-014](#dec-014-compatibility-does-not-drive-decisions) | Decision | Compatibility does not drive decisions | Accepted |
+| [DEC-015](#dec-015-a-fresh-roadmap-earlier-plans-are-inputs) | Decision | A fresh roadmap; earlier plans are inputs | Accepted |
+| [DEC-016](#dec-016-a-clean-stable-testable-main-and-uniform-structure-first) | Decision | A clean, stable, testable main and uniform structure first | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-005](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -191,7 +195,46 @@ This register records Markitect's long-term vision, product-level decisions, cla
   - Fixed basis at dispatch: `codex/product-integration-20261009` at `fc6d09a234572c344279a342416475e788435f1f`, explicitly not the then-stale `main`.
   - The evaluation does not replace a real acceptance of that basis („Die Forschung ersetzt keine echte Basisabnahme“).
   - Per the Concepts chat's reading, the commission does not lift the planning hold in [DEC-011](#dec-011-detailed-planning-of-future-ideas-waits).
+- **Work item:** GOV-00 in the [backlog](../work-items/backlog.yaml) settles whether and when Government v1 starts.
 - **Result location:** The evaluation lives on branch `codex/government-evaluation-20261009`, not on Main. It is not part of this record and not an adopted design. Record the owner's decision on it here once it is made.
+
+### DEC-013 Linux first for tests and the playground
+
+- **Status:** Accepted, owner, 10 October 2026 ([source](sources/roadmap-planning-20261010.md#windows)).
+- **Statement:**
+  - Tests, CI and the case playground target Linux first.
+  - Windows need not be considered for now if it slows the work or causes too many problems. How to handle Windows is decided later.
+- **Consequences:**
+  - The required pull-request gate runs on Linux. The Windows job is manual or nightly and does not block merges (backlog CI-02).
+  - Windows support is revisited as backlog CI-05.
+
+### DEC-014 Compatibility does not drive decisions
+
+- **Status:** Accepted, owner, 10 October 2026 ([source](sources/roadmap-planning-20261010.md#compatibility)).
+- **Statement:** Markitect is in active development and nobody else uses it. Compatibility is not a driver for decisions or implementation.
+- **Consequences:**
+  - Retained-compatibility surfaces may be removed instead of kept. This covers the earlier Project/Domain command tree, the canonical projection alpha and old example formats.
+  - Commands and MCP tools may be renamed without aliases.
+  - Documents that promise continued support for those surfaces are corrected (backlog ARCH-04, ARCH-09, ARCH-10, CLI-01).
+  - Published releases stay immutable. This is a fact about released files, not a compatibility promise.
+
+### DEC-015 A fresh roadmap; earlier plans are inputs
+
+- **Status:** Accepted, owner, 10 October 2026 ([source](sources/roadmap-planning-20261010.md#a-fresh-roadmap-earlier-plans-are-inputs)).
+- **Statement:**
+  - The roadmap is built fresh from current main, the vision and the owner's topic list.
+  - Plans and roadmaps on other branches or in untracked files are likely based on older states. They are not adopted as they stand.
+  - Their ideas and concepts are checked separately against current main and the vision, then recorded here (backlog IDEA-01).
+
+### DEC-016 A clean, stable, testable main and uniform structure first
+
+- **Status:** Accepted, owner, 10 October 2026 ([source](sources/roadmap-planning-20261010.md#priority-a-clean-stable-and-testable-main) and [structure](sources/roadmap-planning-20261010.md#structure-and-conventions)).
+- **Statement:**
+  - The top priority is a clean, stable and testable main.
+  - Test runs must check Markitect itself, not provider CLI specifics, permissions, line endings or other environment problems.
+  - The repository needs a well-organized structure in which everything has its place and conventions are uniform.
+  - An existing convention is kept only where it is sensible; otherwise it is changed and the affected files are moved.
+- **Consequences:** The roadmap's Waves 0 to 2 serve this priority before feature extensions.
 
 ## Promises
 
@@ -251,7 +294,7 @@ These are the target outcomes Markitect is built to deliver. Each has the status
 
 ## Future enhancements
 
-These entries record agreed or endorsed direction. Recording an enhancement does not schedule it. The [roadmap](../implementation-plan.md) and the [Product Readiness backlog](../work-items/product-readiness/backlog.yaml) own scheduling and status. When an enhancement is scheduled, the entry gains a link to its work item, and the work item links back here.
+These entries record agreed or endorsed direction. Recording an enhancement does not schedule it. The [roadmap](../implementation-plan.md) and the [backlog](../work-items/backlog.yaml) own scheduling and status. When an enhancement is scheduled, the entry gains a link to its work item, and the work item links back here.
 
 ### ENH-001 Observed code dependencies widen impact
 
@@ -263,6 +306,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Observation may widen impact. It never silently narrows it.
   - Core stays free of inferred source-code semantics ([AGENTS.md](../../AGENTS.md), [architecture](../architecture.md)).
 - **Constraint (owner):** These dependencies are specific to each programming language. They cannot be checked the same deterministic way for every kind of file.
+- **Work item:** IDEA-02 in the [backlog](../work-items/backlog.yaml).
 
 ### ENH-002 Model-quality linter and metrics
 
@@ -276,6 +320,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - ambiguous or unowned areas.
 
   Output is findings and recommendations, including AI-assisted ones. They are not hard gates by default ([DEC-005](#dec-005-model-granularity-is-the-authors-responsibility)).
+- **Work item:** IDEA-03 in the [backlog](../work-items/backlog.yaml).
 
 ### ENH-003 Test-to-statement binding and test review
 
@@ -284,6 +329,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Bind tests to the statements or checks they realize.
   - Add a review that asks whether a test actually verifies its statement.
   - Report statements whose only evidence is a test that has not been reviewed ([CPT-002](#cpt-002-tests-are-realizations-too)).
+- **Work item:** IDEA-04 in the [backlog](../work-items/backlog.yaml).
 
 ### ENH-004 Per-role agent configuration and model mixing
 
@@ -297,6 +343,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Configure model, reasoning effort and provider per role (Manager or implementer, helper, reviewer, verifier), and possibly per Manager.
   - Allow mixing, for example one model implements and another reviews.
   - Evaluate combinations as an experimental factor ([ASM-005](#assumptions-and-hypotheses), [OQ-003](#open-questions)).
+- **Work items:** RUN-01 (pull request #92) and PLAY-06 in the [backlog](../work-items/backlog.yaml).
 
 ### ENH-005 Exchangeable executor for the delegated method
 
@@ -320,6 +367,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Expose a stable executor boundary. Through it, Markitect hands each role a deterministic work packet: scope, context, obligations, required checks and required reviews. It then accepts the resulting candidate and review verdict and validates them with the same rules as today.
   - The native Codex adapter becomes one executor among others. Further executors, for example Claude Code, can be added without changing the method.
   - Authority does not change. Scope checks, fixed snapshots and guarded Apply apply to every executor, and submitted reviews remain AI evidence, not human acceptance.
+- **Work items:** RUN-01 (pull request #92), RUN-02 and RUN-03 in the [backlog](../work-items/backlog.yaml).
 
 ## Open questions
 
