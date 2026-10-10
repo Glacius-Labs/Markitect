@@ -7,6 +7,7 @@ Use this map to find the product guide or the document that owns a decision or s
 | If you want to… | Start here |
 |---|---|
 | Work through an ordinary model-first Work Item | [Project workflow](project-workflow.md), [Project operations](project-operations.md), and the [executable Shop example](../examples/project-world/README.md) |
+| Understand what Markitect is for, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings), and the [concept register](concepts/register.md) |
 | Understand the product goal, method, or technical boundaries | [Vision](vision.md), [Operating methodology](operating-methodology.md), [Architecture](architecture.md), and [Measurement](measurement.md) |
 | Contribute source or authoring guidance | [Contribution checks](../CONTRIBUTING.md), [Development coordination](development/README.md), [Markitect-first change guide](markitect-first.md), and [Documentation maintenance](development/documentation.md) |
 | Use a retained Project/Domain command or release-era contract | [Usage](usage.md) and [Operations](operations.md); these retain earlier CLI contracts alongside source and release guidance |
@@ -18,6 +19,7 @@ Use this map to find the product guide or the document that owns a decision or s
 | Subject | Owner |
 |---|---|
 | Product thesis and human/agent responsibilities | [Vision](vision.md) |
+| Product decisions, promises, assumptions, long-term vision, agreed but unscheduled directions, ideas, and open questions, with their origin | [Concept record](concepts/README.md) |
 | Technical behavior and product boundaries | [Architecture](architecture.md) and the task-specific current guides above |
 | Current source scope and future implementation | [Implementation roadmap](implementation-plan.md) |
 | Work-item states, dependencies, owners, and evidence pointers | [Product Readiness backlog](work-items/product-readiness/backlog.yaml), routed through the [work-items map](work-items/README.md) |

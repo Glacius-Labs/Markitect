@@ -48,6 +48,25 @@ Record human interventions where they occur and preserve failures, exclusions, m
 
 The [real-code pilot](validation/real-project-adoption-pilot.md), [matched comparison](validation/agents-md-vs-markitect.md) and [consumer inventory](validation/parallel-wave-konfyra.md) retain contrary evidence and missing instrumentation. They do not establish human-attention reduction. Future studies must allow the simpler baseline to win and ask whether modeling costs more than the consistency work it replaces. This section specifies evaluation, not a telemetry implementation, benchmark run or automatic acceptance policy.
 
+## Evaluating the method separately from its runtime
+
+This is a proposed procedure. Markitect's product owner endorsed it on 10 October 2026, and the plan is still pending ([DEC-010](concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime)). Until the owner decides the plan, studies of the delegated method should follow it.
+
+The object of evaluation is the delegated method: computed scope, bounded Managers, independent review, integration, verification and guarded Apply. One particular execution runtime is not the object. The October 2026 comparison attempts were dominated by environment, runtime and harness failures and allow no conclusion about the method ([DEC-008](concepts/register.md#dec-008-the-delegated-method-has-not-yet-been-tested)). Earlier matched comparisons evaluated earlier product forms; their findings stand.
+
+- **Stable environment.** Use a stable, isolated environment that is the same for every arm. Current evidence points to Linux. Classify failures as follows; neither kind is an outcome of the method:
+  - A failure of Markitect's own runtime is a product finding, recorded with its cause.
+  - A harness or environment failure is a measurement limitation.
+- **The product supplies the method.** A study harness chooses and configures the executors and models that the product offers. It does not reimplement Markitect's scoping, review, integration or verification. This follows the [work-item comparison decision](design/work-item-comparison-20261009.md). The product-side boundary for exchangeable executors is [ENH-005](concepts/register.md#enh-005-exchangeable-executor-for-the-delegated-method).
+- **Change sequences.** Apply the repeated, realistic change sequences required [above](#human-attention-and-delegated-work) to one long-lived project.
+  - Include cross-cutting rules, a refactoring and a late change that touches earlier decisions.
+  - Predeclare ground truth where it is independently knowable: the obligations, files and Managers each change should affect; seeded cross-cutting rules; and hidden holdout checks. Whether to focus on such series is still an open question ([OQ-005](concepts/register.md#open-questions)).
+- **What to score.**
+  - Missed and unnecessary inclusions, rule violations and contradictions between representations.
+  - Regressions, required and unnecessary escalations, and human attention.
+  - Cost as a secondary observation.
+- **Configurations as factors.** Treat executor choice and per-role model choice as explicit experimental factors once the product offers them ([ENH-004](concepts/register.md#enh-004-per-role-agent-configuration-and-model-mixing)). Keep each run's actual configuration fixed and recorded.
+
 ## Correctness first
 
 Use a synthetic project with explicit shared policy and two separately scoped areas. Record expected effects before running the tool. Cover local and shared Rule changes, removed dependencies, Contract-binding changes, and an unmodelled input change. Unknown inputs must remain conservative until they are declared.

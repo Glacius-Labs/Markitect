@@ -1,6 +1,43 @@
 # Product vision
 
-This is the canonical owner of Markitect's product thesis, intended division of responsibility and long-term operating model. [Architecture](architecture.md) owns technical boundaries, the [engineering constitution](engineering-constitution.md) owns kernel invariants, the [roadmap](implementation-plan.md) owns released/source/planned status, and [Operating methodology](operating-methodology.md) owns how the intended process works, and [Measurement](measurement.md) owns staged readiness and how to test benefits. This vision does not authorize a feature, weaken an acceptance gate or establish a measured outcome.
+This is the canonical owner of Markitect's product thesis, intended division of responsibility and long-term operating model. [Architecture](architecture.md) owns technical boundaries, the [engineering constitution](engineering-constitution.md) owns kernel invariants, the [roadmap](implementation-plan.md) owns released/source/planned status, [Operating methodology](operating-methodology.md) owns how the intended process works, [Measurement](measurement.md) owns staged readiness and how to test benefits, and the [concept record](concepts/README.md) owns individual product decisions, promises, assumptions and agreed but unscheduled directions, each with its origin. This vision does not authorize a feature, weaken an acceptance gate or establish a measured outcome.
+
+## Markitect in brief
+
+Read this section first. The rest of this page develops it, and the [concept register](concepts/register.md) holds the individual decisions behind it.
+
+**What it is.**
+- People maintain one authoritative place: the canonical model of the project's intended world. The model holds the project's concepts, rules, boundaries, responsibilities, architecture and way of working.
+- Code, tests, configuration and documentation are realizations of that model.
+- A change of intent is made to the model, usually in conversation with a coding agent. Markitect then has it applied:
+  - It compiles the model and checks that every repository file is accounted for.
+  - It derives which responsibilities, obligations and files the change affects.
+  - It delegates the realization to recursive Managers. Each Manager implements its own slice or delegates parts of it to child Managers.
+  - Independent reviewers with fresh context assess each candidate and each integration result.
+  - The result is verified across the required Manager tree before a guarded Apply.
+- A repair that leaves intent unchanged is realized against the same model, without an invented model edit.
+
+**Why.**
+- Coding agents lose track of relevant files and rules as projects grow. Explicit consistency runs miss things and scale badly.
+- Common practice nevertheless trusts these agents: an agent implements a work item, another AI reviews the pull request, and the required human approval is often given almost blind.
+- So the knowledge of what belongs to what must not depend on an agent's memory. And people cannot read every diff without becoming the bottleneck.
+
+**Expected outcomes, to be validated.**
+- Nothing in the modeled scope is silently forgotten.
+- Rules are applied where they matter.
+- The repository stays consistent, contradiction-free, uniform and clean through many changes, so cleanups and refactorings become dependable.
+- Capable mid-tier models can do most of the delegated work.
+- People concentrate on deciding and modeling while the code reliably reflects the model.
+
+These are [promises](concepts/register.md#promises), not established results.
+
+**How to judge it.**
+- Judge Markitect's trust against today's practice, not against a compiler's guarantees. Comparative studies still use a strong conventional workflow that is allowed to win.
+- "Compiler" names a borrowed idea. The model's structure compiles deterministically, and an invalid or incompletely covered model blocks work. Realization by agents is not deterministic.
+- Markitect's claim is that computed scope, bounded responsibility and independent review make delegated work more trustworthy than unstructured agentic work. [Where trust comes from](#where-trust-comes-from) lists these mechanisms.
+- Delegated realization is central to the product. It is not an optional layer on top of a validator.
+- Markitect's product owner has endorsed separating the method from any particular execution runtime. That design is still pending; today the Codex App Server runs every inner role ([DEC-010](concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime)).
+- [Common misreadings](#common-misreadings) lists the readings to avoid.
 
 ## The thesis
 
@@ -54,6 +91,26 @@ This operating model is not a claim that the published release supports the new 
 
 The target human role is specification and engineering judgment. Being a permanent agent scheduler, prompt supervisor, manual synchronizer or reader of every routine PR should not be necessary merely to keep declared intent consistent. Whether those activities can actually be reduced is a validation question. A project still defines which changes require human acceptance; passing technical checks do not grant authority or authenticate a reviewer.
 
+## Where trust comes from
+
+Markitect does not try to make agents infallible. It changes the structure they work in, which Markitect's product owner calls federalism ([CPT-001](concepts/register.md#cpt-001-federalism)). Each mechanism below replaces something that today's common practice leaves to chance. These are the method's mechanisms. The [roadmap](implementation-plan.md) and backlog record which of them current source implements.
+
+| Markitect mechanism | What it replaces in today's practice |
+|---|---|
+| **Computed scope.** The model, its full file coverage and impact determine which obligations, files and Managers a change affects. | An agent deciding from memory which files might be relevant |
+| **Bounded responsibility.** Each Manager owns a slice of the model, the files that realize it and the context it needs. Its parent keeps the duty to integrate. | One agent holding the whole project in a single context |
+| **Independent review with fresh context.** A Manager, or a helper it starts, implements within the Manager's scope. An independent reviewer then assesses the candidate: the four-eyes principle at the lowest level. Each integration result gets its own independent review. | Self-review in the same thread, or one generic pull-request review |
+| **Rules in the way.** Applicable rules and policies are compiled into the responsible Manager's context, and its reviewers check them. | Rules in a long instruction file that are overlooked when nothing forces the agent to see them |
+| **Verification and guarded Apply.** The exact candidate is verified across the required Manager tree before Apply. Unknown or unchecked areas stay visible. | Approving a pull request because its pipeline is green |
+
+The [operating methodology](operating-methodology.md) calls the implementing and assessing roles Executor and independent Verifier.
+
+Two claims must be kept apart ([CPT-003](concepts/register.md#cpt-003-two-parts-of-the-promise)):
+- **Nothing in the modeled scope is overlooked.** For declared relationships and file coverage this can be computed. Undeclared dependencies in code are a known gap ([ENH-001](concepts/register.md#enh-001-observed-code-dependencies-widen-impact)).
+- **Everything is realized correctly.** This can only be supported by evidence.
+
+Tests belong to the realization. Agents write them, so they can be as wrong as the code. Reviewing tests against the statements they claim to check is an agreed direction ([CPT-002](concepts/register.md#cpt-002-tests-are-realizations-too)).
+
 ## What executable governance means
 
 One canonical owner exists per modeled engineering fact or representation decision. Rationale and guidance may be prose inside the project model. Unadopted narrative, vendor material and specialist observations remain outside accepted intent until explicitly incorporated. The project tree makes responsibility, artifact relationships and decision scope visible; it does not infer source-code semantics or turn every repository file into a model fact.
@@ -82,7 +139,22 @@ These invented numbers describe an aspiration, not a current dashboard or measur
 
 ## Origin of the name
 
-**Markitect = Markdown + Architect.** The project began with architecture and process knowledge in readable documentation, Rules, Skills, Workflows and agent instructions. Its direction is to turn informal engineering knowledge into structured, versioned architecture and policy, then into an executable engineering system. The name records that origin; it does not require Markdown as canonical syntax. Current typed definitions use YAML, while human-readable prose and explicitly selected projections remain useful.
+**Markitect = Markdown + Architect.** The project began with architecture and process knowledge in readable documentation, Rules, Skills, Workflows and agent instructions. Its direction is to turn informal engineering knowledge into structured, versioned architecture and policy, then into an executable engineering system. The name records that origin; it does not require Markdown as canonical syntax. Current typed definitions use YAML, while human-readable prose and explicitly selected projections remain useful. The origin explains the name; it does not limit the product to agent instructions.
+
+## Common misreadings
+
+The readings below came up repeatedly, most recently in the [idea review of 10 October 2026](concepts/sources/2026-10-10-idea-review.md). Check an assessment against this table before treating any of them as a finding.
+
+| Misreading | Correct reading |
+|---|---|
+| Markitect is a linter or context tool for AI instructions such as rules, skills and `AGENTS.md`. | That is where the name comes from. The product is model-first development of the whole project with delegated realization. Agent instructions are one kind of realization among many. |
+| The deterministic parts are the product, and Manager execution is scope creep. | Delegated realization is the purpose, and the deterministic parts make it trustworthy. Separating the method from any particular execution runtime is endorsed but still pending ([DEC-001](concepts/register.md#dec-001-delegated-realization-is-central-to-the-product), [ENH-005](concepts/register.md#enh-005-exchangeable-executor-for-the-delegated-method)). |
+| Without compiler-grade guarantees the idea fails. | The compiler is a borrowed concept, and the trust bar is today's practice ([DEC-002](concepts/register.md#dec-002-trust-is-measured-against-todays-practice), [DEC-003](concepts/register.md#dec-003-the-compiler-is-a-borrowed-concept)). |
+| The Manager hierarchy is the Government experiment. | The Manager hierarchy belongs to the core axis, Model → Repository. Government belongs to a later axis, in which management levels decide model changes within mandates. Results of the former Government experiment arm are not results about the Manager hierarchy ([DEC-004](concepts/register.md#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis)). |
+| "More economical models" means weak models. | It means capable mid-tier models such as Luna or Sonnet, and Haiku only if it proves sufficient ([DEC-007](concepts/register.md#dec-007-more-economical-models-means-capable-mid-tier-models)). |
+| Earlier comparisons showed that conventional agentic coding wins. | Environment, runtime and harness failures dominated the October 2026 comparison attempts, and none of them exercised the delegated method over a series of changes. They allow no conclusion about the concept. Earlier matched comparisons tested an earlier product; their findings, including the cost of model upkeep, stand ([DEC-008](concepts/register.md#dec-008-the-delegated-method-has-not-yet-been-tested)). |
+| The model has to mirror the code, with one definition per file. | Granularity is the author's choice. A file may realize several definitions, and every file must be covered or explicitly ignored ([DEC-005](concepts/register.md#dec-005-model-granularity-is-the-authors-responsibility), [DEC-006](concepts/register.md#dec-006-every-file-is-covered-or-explicitly-ignored)). |
+| Green agent-written tests prove the realization. | Tests are realizations too. Agents write them, so they can be wrong. Reviewing them against the statements they claim to verify is an agreed direction ([CPT-002](concepts/register.md#cpt-002-tests-are-realizations-too)). |
 
 ## Feature decision filter
 
@@ -105,7 +177,9 @@ Reconsider proposals that introduce another manually synchronized truth owner, h
 
 The [real-code adoption pilot](validation/real-project-adoption-pilot.md), [AGENTS.md comparison](validation/agents-md-vs-markitect.md) and [parallel-wave consumer inventory](validation/parallel-wave-konfyra.md) are evidence, not marketing demonstrations. The comparison remains inconclusive: additional model/projection maintenance was observed, and no independent truth owner or concrete human review step was removed. Missing context and broad impact remain meaningful findings. The parallel wave proved bounded subsystem independence, not reduced human coordination cost.
 
-The central evaluation question is: **Does ontology-driven reconciliation preserve intent and project quality more reliably than conventional agentic work, and thereby support less routine human supervision?** [Measurement](measurement.md#human-attention-and-delegated-work) defines future metrics and falsification. A materially simpler owner document plus architecture tests remains a valid alternative.
+These records evaluated earlier product forms, not the delegated Manager method over a series of changes. The October 2026 comparison attempts of the delegated method were dominated by environment, runtime and harness failures. They allow no conclusion about the concept, positive or negative ([DEC-008](concepts/register.md#dec-008-the-delegated-method-has-not-yet-been-tested)). Markitect's product owner has endorsed evaluating the method separately from any single execution runtime; the plan is pending ([DEC-010](concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime)).
+
+The central evaluation question is: **Does ontology-driven reconciliation preserve intent and project quality more reliably than conventional agentic work, and thereby support less routine human supervision?** [Measurement](measurement.md#human-attention-and-delegated-work) defines future metrics and falsification. A materially simpler owner document plus architecture tests remains a valid alternative. Markitect's product owner phrases the same question in [DEC-009](concepts/register.md#dec-009-the-central-evaluation-question): when people develop against a model, can the code reliably reflect that model? Can the repository stay contradiction-free, consistent, uniform and clean? Does agentic coding become meaningfully more trustworthy? Can people concentrate on deciding and modeling?
 
 ## Decisions Markitect deliberately leaves to people
 
