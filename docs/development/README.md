@@ -7,6 +7,7 @@ Start engineering work through the root [AGENTS.md](../../AGENTS.md) and [Markit
 | [Documentation maintenance](documentation.md) | Placement, navigation, canonical owners and evidence preservation |
 | [Shared contracts](shared-contracts.md) | Version-bound seams and coordinator-owned changes; distinguish historical contracts from current project operations |
 | [Modules](modules.md) | Final Core/Host/Module ownership, static composition and mechanical dependency laws |
+| [Code map](code-map.md) | Every Go package with its layer, purpose and owning document; generated and checked by a test |
 | [Architecture consolidation](../validation/clean-architecture-consolidation.md) | Migration decisions, measured dependencies, compatibility and exact gate evidence |
 | [Parallelizability audit](parallelizability.md) | Consolidation findings and the preserved preparation assessment |
 | [Parallel work](parallel-work.md) | Delegation, isolated ownership, validation and integration |

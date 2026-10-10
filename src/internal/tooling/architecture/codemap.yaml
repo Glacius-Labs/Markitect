@@ -1,0 +1,344 @@
+# Code map: one entry per Go package directory in this repository.
+#
+# path:    repository-relative package directory, forward slashes
+# layer:   one of the layers in codemap.go; must agree with the import gate
+# purpose: one short plain sentence
+# doc:     repository-relative owning document, optionally with #anchor
+#
+# Entries are ordered by layer (the order of Layers in codemap.go), then by
+# path. docs/development/code-map.md is generated from this file; regenerate it
+# with: go test ./src/internal/tooling/architecture -run TestCodeMapPage -update
+packages:
+  # --- core ---------------------------------------------------------------
+  - path: src/internal/core
+    layer: core
+    purpose: Compiles explicitly supplied Schemas and Definitions into a pure structural model.
+    doc: src/internal/core/README.md
+  - path: src/internal/core/snapshot
+    layer: core
+    purpose: Fixed sets of source files and deterministic comparisons over them.
+    doc: docs/source-snapshots.md#current-value
+  - path: src/internal/host/projectbriefing
+    layer: core
+    purpose: Records deterministic briefings for accepted model changes from committed history.
+    doc: docs/design/project-world/operation-scopes-and-model-briefings.md
+  - path: src/internal/host/projectcoverage
+    layer: core
+    purpose: Inventories repository paths and classifies how the project model covers them.
+    doc: docs/project-operations.md#ordinary-work-item
+  - path: src/internal/modules/projectmodel
+    layer: core
+    purpose: Derives management, artifact and impact views from the compiled project model.
+    doc: docs/project-workflow.md#model-and-readiness
+
+  # --- infrastructure -----------------------------------------------------
+  - path: src/internal/infrastructure/source
+    layer: infrastructure
+    purpose: Loads fixed snapshots from the working tree or a Git commit with hardened Git processes.
+    doc: docs/source-snapshots.md#adapter-and-use-case-ownership
+
+  # --- application --------------------------------------------------------
+  - path: src/internal/host/mcp
+    layer: application
+    purpose: Local stdio MCP server over the project operations.
+    doc: docs/project-operations.md#mcp-server-and-tool-groups
+  - path: src/internal/host/projectadoption
+    layer: application
+    purpose: Brownfield adoption that checks fixed-snapshot evidence and prepares model-only changes.
+    doc: docs/project-workflow.md#existing-repositories
+  - path: src/internal/host/projectapp
+    layer: application
+    purpose: Shared application facade that the project CLI and MCP server call.
+    doc: docs/architecture.md
+  - path: src/internal/host/projectcli
+    layer: application
+    purpose: The `markitect project` command line.
+    doc: docs/project-operations.md#cli-setup-and-current-roots
+  - path: src/internal/host/projectexplore
+    layer: application
+    purpose: Stores explorations, open decisions, scope readiness and Apply receipts.
+    doc: docs/project-workflow.md#model-and-readiness
+  - path: src/internal/host/projectonboarding
+    layer: application
+    purpose: Writes project-local guidance and skills for Codex and Claude contributors.
+    doc: docs/project-workflow.md#connect-and-inspect
+  - path: src/internal/host/projectwork
+    layer: application
+    purpose: Loads the selected project model and writes model changes under guard.
+    doc: docs/project-workflow.md#model-and-readiness
+  - path: src/internal/host/releasecli
+    layer: application
+    purpose: Command interface of `markitect-release` for preparing or publishing a GitHub release.
+    doc: docs/operations.md#release-operations
+
+  # --- runtime ------------------------------------------------------------
+  - path: src/internal/host/agentexec
+    layer: runtime
+    purpose: Provider-neutral subprocess boundary for one role invocation and its receipt.
+    doc: src/internal/host/agentexec/README.md
+  - path: src/internal/host/codexappserver
+    layer: runtime
+    purpose: Transport to the native Codex App Server for Manager, review and verify roles.
+    doc: docs/provider-adapters.md#inner-role-execution-and-workspace-boundary
+  - path: src/internal/host/projectrun
+    layer: runtime
+    purpose: Runs, resumes, verifies and applies bounded Manager work over fixed snapshots.
+    doc: docs/project-workflow.md#execute-verify-and-apply
+  - path: src/internal/host/projectsetup
+    layer: runtime
+    purpose: Builds the project-local agent runtime proposal for `project setup`.
+    doc: docs/project-operations.md#cli-setup-and-current-roots
+  - path: src/internal/host/projectworkspace
+    layer: runtime
+    purpose: Owned candidate workspaces for bounded runs.
+    doc: docs/project-operations.md#candidate-workspaces-and-recovery
+
+  # --- legacy -------------------------------------------------------------
+  - path: src/internal/host
+    layer: legacy
+    purpose: Host root with Project/Domain commands, the canonical-alpha controller, composition and the guarded writes the product still uses.
+    doc: docs/development/modules.md#responsibility-map
+  - path: src/internal/host/artifactcli
+    layer: legacy
+    purpose: Command interface of `markitect-check-artifacts` for managed-artifact accounting.
+    doc: docs/usage.md#managed-artifact-accounting
+  - path: src/internal/host/assurance
+    layer: legacy
+    purpose: Scoped assurance composition over projection and verification records.
+    doc: src/internal/host/assurance/README.md
+  - path: src/internal/host/authoring
+    layer: legacy
+    purpose: Source YAML model for v0.13 Projects, Domains and resources.
+    doc: docs/usage.md#project-and-resource-model
+  - path: src/internal/host/authoring/contentpackage
+    layer: legacy
+    purpose: Reads and builds deterministic offline content-package archives.
+    doc: docs/content-packages.md
+  - path: src/internal/host/azuredevopscli
+    layer: legacy
+    purpose: Command protocol of the Azure DevOps metadata adapter.
+    doc: docs/workstreams/adapter-azure-devops.md
+  - path: src/internal/host/canonical
+    layer: legacy
+    purpose: Codecs for canonical-alpha source files; the product uses only its codec.
+    doc: docs/canonical-projections.md#inputs-and-ownership
+  - path: src/internal/host/cli
+    layer: legacy
+    purpose: Top-level `markitect` command dispatcher with the legacy verbs.
+    doc: docs/usage.md#commands
+  - path: src/internal/host/compat/v0_13/consumers/agentrules
+    layer: legacy
+    purpose: Historical v0.13 projection of Codex and Claude entrypoints.
+    doc: src/internal/host/compat/v0_13/consumers/agentrules/README.md
+  - path: src/internal/host/compat/v0_13/consumers/agentrules/links
+    layer: legacy
+    purpose: Rewrites Markdown link targets for the v0.13 agent-rules consumer.
+    doc: src/internal/host/compat/v0_13/consumers/agentrules/README.md
+  - path: src/internal/host/compat/v0_13/consumers/artifactcoverage
+    layer: legacy
+    purpose: Historical v0.13 evaluation of managed-artifact ownership.
+    doc: src/internal/host/compat/v0_13/consumers/artifactcoverage/README.md
+  - path: src/internal/host/compat/v0_13/consumers/azuredevops
+    layer: legacy
+    purpose: Historical v0.13 offline comparison of Azure DevOps Git metadata.
+    doc: src/internal/host/compat/v0_13/consumers/azuredevops/README.md
+  - path: src/internal/host/compat/v0_13/consumers/dotnet
+    layer: legacy
+    purpose: Historical v0.13 comparison of MSBuild project files.
+    doc: src/internal/host/compat/v0_13/consumers/dotnet/README.md
+  - path: src/internal/host/compat/v0_13/consumers/githooks
+    layer: legacy
+    purpose: Historical v0.13 bounded Git hook checks.
+    doc: src/internal/host/compat/v0_13/consumers/githooks/README.md
+  - path: src/internal/host/compat/v0_13/consumers/github
+    layer: legacy
+    purpose: Historical v0.13 offline comparison of GitHub repository metadata.
+    doc: src/internal/host/compat/v0_13/consumers/github/README.md
+  - path: src/internal/host/compat/v0_13/consumers/markdown
+    layer: legacy
+    purpose: Historical v0.13 Markdown views of the semantic model.
+    doc: src/internal/host/compat/v0_13/consumers/markdown/README.md
+  - path: src/internal/host/compat/v0_13/consumers/markdown/links
+    layer: legacy
+    purpose: Rewrites Markdown link targets for the v0.13 Markdown consumer.
+    doc: src/internal/host/compat/v0_13/consumers/markdown/README.md
+  - path: src/internal/host/compat/v0_13/consumers/pipelines
+    layer: legacy
+    purpose: Historical v0.13 bounded pipeline checks.
+    doc: src/internal/host/compat/v0_13/consumers/pipelines/README.md
+  - path: src/internal/host/compat/v0_13/consumers/projections
+    layer: legacy
+    purpose: Historical v0.13 projection plan, apply and verify API.
+    doc: src/internal/host/compat/v0_13/consumers/projections/README.md
+  - path: src/internal/host/compat/v0_13/kernel
+    layer: legacy
+    purpose: Historical v0.13 Domain, resource and policy kernel (Go package name `core`).
+    doc: src/internal/host/compat/v0_13/README.md
+  - path: src/internal/host/dotnetcli
+    layer: legacy
+    purpose: Command protocol of the .NET reference adapter.
+    doc: docs/workstreams/adapter-dotnet.md
+  - path: src/internal/host/embedded
+    layer: legacy
+    purpose: Tool-shipped authoring guidance compiled as a Markitect context.
+    doc: docs/architecture.md#authoring-and-queries
+  - path: src/internal/host/githubcli
+    layer: legacy
+    purpose: Command protocol of the GitHub repository-metadata adapter.
+    doc: docs/workstreams/adapter-github.md
+  - path: src/internal/host/inputs
+    layer: legacy
+    purpose: Resolves explicitly declared non-Markitect input files for a v0.13 graph.
+    doc: docs/architecture.md#fixed-inputs-and-evidence
+  - path: src/internal/host/modulecli
+    layer: legacy
+    purpose: Command interface of `markitect-check-modules`.
+    doc: docs/usage.md#independent-module-checks-current-source
+  - path: src/internal/host/projectionengine
+    layer: legacy
+    purpose: Pure evaluation of explicit projection contracts.
+    doc: src/internal/host/projectionengine/README.md
+  - path: src/internal/host/records
+    layer: legacy
+    purpose: Validates and encodes projection and verification records.
+    doc: src/internal/host/records/README.md
+  - path: src/internal/host/recordstore
+    layer: legacy
+    purpose: Persists projection and verification records.
+    doc: src/internal/host/recordstore/README.md
+  - path: src/internal/modules/adoption/capture
+    layer: legacy
+    purpose: Selective-capture handoff for v0.13 Copy Me adoption.
+    doc: src/internal/modules/adoption/README.md
+  - path: src/internal/modules/adoption/review
+    layer: legacy
+    purpose: Copy Me review over a selective-adoption handoff.
+    doc: src/internal/modules/adoption/README.md
+  - path: src/internal/modules/agentrules
+    layer: legacy
+    purpose: Canonical-alpha Codex and Claude projection Module.
+    doc: src/internal/modules/agentrules/README.md
+  - path: src/internal/modules/azurepipelines
+    layer: legacy
+    purpose: Canonical-alpha Azure Pipelines projection Module.
+    doc: src/internal/modules/azurepipelines/README.md
+  - path: src/internal/modules/dotnet
+    layer: legacy
+    purpose: Canonical-alpha .NET projection Module.
+    doc: src/internal/modules/dotnet/README.md
+  - path: src/internal/modules/githooks
+    layer: legacy
+    purpose: Canonical-alpha Git hooks projection Module.
+    doc: docs/development/modules.md#responsibility-map
+  - path: src/internal/modules/markdown
+    layer: legacy
+    purpose: Canonical-alpha Markdown projection Module.
+    doc: src/internal/modules/markdown/README.md
+  - path: src/internal/modules/markdownreference
+    layer: legacy
+    purpose: Canonical-alpha alternative Markdown reference-bundle Module.
+    doc: src/internal/modules/markdownreference/README.md
+
+  # --- cli ----------------------------------------------------------------
+  - path: src/cmd/markitect
+    layer: cli
+    purpose: The `markitect` executable.
+    doc: docs/usage.md#commands
+  - path: src/cmd/markitect-adapter-azure-devops
+    layer: cli
+    purpose: Legacy Azure DevOps metadata adapter executable.
+    doc: src/cmd/markitect-adapter-azure-devops/README.md
+  - path: src/cmd/markitect-adapter-dotnet
+    layer: cli
+    purpose: Legacy .NET reference adapter executable.
+    doc: src/cmd/markitect-adapter-dotnet/README.md
+  - path: src/cmd/markitect-adapter-github
+    layer: cli
+    purpose: Legacy GitHub repository-metadata adapter executable.
+    doc: src/cmd/markitect-adapter-github/README.md
+  - path: src/cmd/markitect-check-architecture
+    layer: cli
+    purpose: Runs the import gate.
+    doc: docs/development/modules.md#mechanical-dependency-gate
+  - path: src/cmd/markitect-check-artifacts
+    layer: cli
+    purpose: Runs managed-artifact accounting.
+    doc: docs/usage.md#managed-artifact-accounting
+  - path: src/cmd/markitect-check-modules
+    layer: cli
+    purpose: Runs the independent Module checks used by the pre-commit hook.
+    doc: docs/usage.md#independent-module-checks-current-source
+  - path: src/cmd/markitect-release
+    layer: cli
+    purpose: Prepares or publishes a GitHub release.
+    doc: docs/operations.md#release-operations
+
+  # --- tooling ------------------------------------------------------------
+  - path: src/internal/tooling/architecture
+    layer: tooling
+    purpose: Import gate and code map checks.
+    doc: docs/development/modules.md#mechanical-dependency-gate
+  - path: src/internal/tooling/licenses
+    layer: tooling
+    purpose: Third-party notices embedded in the CLI.
+    doc: CONTRIBUTING.md#release-work
+  - path: src/internal/tooling/publish
+    layer: tooling
+    purpose: Prepares and, on request, publishes an immutable GitHub release.
+    doc: integration/README.md#owner-publication
+  - path: src/internal/tooling/release
+    layer: tooling
+    purpose: Builds the reproducible source archive and release bundle.
+    doc: integration/README.md#release-contents-and-verification
+
+  # --- bootstrap ----------------------------------------------------------
+  - path: integration
+    layer: bootstrap
+    purpose: Single-file bootstrap copied into consumer repositories to build and run a pinned release.
+    doc: integration/README.md
+
+  # --- harness ------------------------------------------------------------
+  - path: examples/selective-adoption
+    layer: harness
+    purpose: Replays a bounded public Markitect report for the selective-adoption example.
+    doc: examples/selective-adoption/README.md#public-report-replay
+  - path: examples/selective-adoption/pathspell
+    layer: harness
+    purpose: Canonical path spelling for the replay, including Windows short names.
+    doc: examples/selective-adoption/README.md#public-report-replay
+  - path: src/harness/engineering-discovery
+    layer: harness
+    purpose: Evidence helper for the engineering-discovery example.
+    doc: examples/engineering-discovery/README.md
+  - path: src/harness/examples
+    layer: harness
+    purpose: Executable tests over the example fixtures.
+    doc: examples/README.md
+
+  # --- experiment ---------------------------------------------------------
+  - path: experiments/mcp-pilot
+    layer: experiment
+    purpose: Small local MCP stdio pilot kept with its evaluation.
+    doc: experiments/mcp-pilot/README.md
+
+  # --- fixture ------------------------------------------------------------
+  - path: examples/canonical-projection/evidence
+    layer: fixture
+    purpose: Project-owned check program for the canonical projection fixture.
+    doc: examples/README.md#experimental-and-historical-projection-scenarios
+  - path: examples/canonical-workflow/check
+    layer: fixture
+    purpose: Project-owned check program for the canonical workflow example.
+    doc: examples/canonical-workflow/README.md
+  - path: examples/documentation/docs/implementation/src
+    layer: fixture
+    purpose: Ordinary Go source used as a declared artifact input.
+    doc: examples/documentation/README.md
+  - path: runs/c11checktools/original
+    layer: fixture
+    purpose: C11 proof check program for the original Markdown output.
+    doc: docs/repository-layout.md#source-repository-layout
+  - path: runs/c11checktools/replacement
+    layer: fixture
+    purpose: C11 proof check program for the replacement Markdown output.
+    doc: docs/repository-layout.md#source-repository-layout
