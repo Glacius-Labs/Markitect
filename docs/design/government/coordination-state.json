@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T00:14:00.846571Z",
+  "updatedUtc": "2026-10-10T00:20:46.743453Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "REAL_ROLE_CONSTRUCTOR_COMPOSITION_PASS_FRESH_ACTUAL9_PREPARING",
+    "status": "ACTUAL9_NATIVE_WORK_COMPLETED_UNKNOWN_EVIDENCE_REF_REJECTED_SCHEMA_CONTRACT_ALIGNMENT_IN_PROGRESS",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -17969,6 +17969,19 @@
       "actual8LifecycleOwnerReported": "UndispatchedReviewer empty events/start lists/nohandles; own79fb93workspacepreserved, no fabricatedtermination or guessedcleanup",
       "knownHistoricalLedger": "12knownrolecalls/9providers/2982357partialestimate preserved, NOTinvoice",
       "next": "NormalReadiness/Plan/freshactual9 preparing, sameauthorizedA01scope, no newmain/release/privatepublication"
+    },
+    "actual9EvidenceRefFailure": {
+      "source": "86589befc34f84f7d7ff9ed380901f169f114d38",
+      "binary": "c54c4bdf0d15a69e8e52012627bcf94ae2f78973be095036f459fbc7ef065daf",
+      "plan": "400127d902c894c0ddacf84af92030e6",
+      "ownerActual": "Rootnativecompleted/validcompletereportREADMEdelegations; strictoutervalidator rejects invented request.context.globalGoal evidenceRef, otherrefREADME.md",
+      "rootVerifiedSource": "Agentexec.runner.go640-655 exactallowedrefs=Artifactpaths/ScopeIDs/PolicyIDs; generatednative outputSchema390 stillgeneric string refs (currentWIPnotacceptedfinal). Deterministic schema gap, not rights/runtimefailure.",
+      "noLaterPhase": "No reviewer/helper/overlap/Verify/Apply/recovery",
+      "counts": "1newrolecall/native/528776estimate; cumulative13knowncalls/10providers/3511133partialestimate preserved NOTinvoice",
+      "fix": "Owner narrowexactallowedrefenum/outputSchema+explicitprompt, provider supportedbounds/oversizedlegalemptyfallback; decoderunchanged/noevidencefabrication",
+      "rootCoordination": "Once sameboundedrepair: reconcile whole generatedrole contracts with existinglocalvalidator using provider-free representative responses; only supportedkeywords, no newframework/capabilityphase or successiveoneconstraint Actuals",
+      "preservedWorkspace": "Prestart79fb remains preserved honestno-cleanup",
+      "next": "FreshordinaryA01 afterconcretefix/review underexistingauthority, no replay/additionalRootgrant"
     }
   }
 }

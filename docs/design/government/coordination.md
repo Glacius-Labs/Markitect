@@ -2005,3 +2005,9 @@ Root sentoneboundedadditive requirement: singleproviderfreecompositionregression
 ### Real setup-role constructor regression complete; fix secured
 
 Owner aff0b543 zero-toolcallback/limitscleanup+bindingsuffixv2, actualnormalsetup Writer/Reviewer/Verifier/depthoneHelper Adapter.New withhelpersenabled/disabled testedproviderfree. Focusedsetup1.074s/transportconstructor1.291s/buildvetdiffpositive/indepreviewclosed. Root verifiedcleanexactpublic86589bef/sourcefixfiles; frozenbinaryc54c4bdf ownerreported. Actual8undispatchedreviewer empty-events/starts/nohandles proof recorded, own79fb93workspacepreserved, no guessedcleanup/terminationclaim. Knownhistorical12rolecalls/9providers/2982357partialestimate retained. NormalReadiness/Planfreshactual9 next underexistingauthority, noextraRootorder; A01/Mainstillunaccepted.
+
+### Actual9 reveals exact-reference schema omission; reconcile contract together
+
+Rootnativecompleted/README+delegations ownerreported, strict response rejects inventedrequest.context.globalGoal ref. Rootsourceconfirms allowedrefs exactArtifactpaths/ScopeIDs/PolicyIDs while nativegeneratedschema stillunconstrainedstringrefs. No laterphase/providerfault/rightslimitclaim. Actual9 adds1call/native/528776partialestimate; cumulative13/10/3511133preserved.
+
+Owner fixes exactrefenum/prompt, supportedproviderbounds/oversizedoptionalemptyfallback withoutdecoderrelaxation/evidencefabrication. Rootsentboundedcurrent-fix contractalignment across realrole DTOvalidators using provider-free responses, preventing successiveActuals discovering one deterministicconstraint each; no newframework/capabilityphase/unsupportedkeywords. Existingordinaryworkflowauthority, no replay/newgrant. Prestartworkspace79fbpreserved, fullproduct/Mainunproved.
