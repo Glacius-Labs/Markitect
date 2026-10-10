@@ -118,6 +118,10 @@ def slowest_tests(report: Report, count: int):
 
 
 def main(argv: list[str]) -> int:
+    # Test output may hold any character; a redirected stream on Windows
+    # would otherwise use the console code page and fail on it.
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("input", type=Path, help="go test -json output")
     parser.add_argument("--summary", type=Path, help="append a Markdown summary to this file")

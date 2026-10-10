@@ -5,7 +5,10 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -22,6 +25,22 @@ def events(*items: dict) -> list[str]:
 
 
 class GoTestReportTests(unittest.TestCase):
+    def test_non_ascii_failure_output_survives_a_legacy_code_page(self) -> None:
+        failure = "plan → run, got � and ü\n"
+        with tempfile.TemporaryDirectory() as temp:
+            stream = Path(temp) / "events.json"
+            stream.write_text("".join(events(
+                {"Action": "output", "Package": "example/u", "Test": "TestArrow", "Output": failure},
+                {"Action": "fail", "Package": "example/u", "Test": "TestArrow", "Elapsed": 0.1},
+                {"Action": "fail", "Package": "example/u", "Elapsed": 0.2},
+            )), encoding="utf-8")
+            # A Windows runner redirects stdout with its ANSI code page.
+            env = dict(os.environ, PYTHONIOENCODING="cp1252", PYTHONUTF8="0")
+            result = subprocess.run([sys.executable, "-B", str(SCRIPT), str(stream)], capture_output=True, env=env)
+        self.assertEqual(result.returncode, 1, result.stderr.decode("utf-8", "replace"))
+        self.assertNotIn(b"Traceback", result.stderr)
+        self.assertIn(failure.rstrip("\n").encode("utf-8"), result.stdout)
+
     def test_passing_stream_reports_timings_without_test_output(self) -> None:
         report = go_test_report.parse(events(
             {"Action": "run", "Package": "example/a", "Test": "TestFast"},
