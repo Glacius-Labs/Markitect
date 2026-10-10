@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T00:58:44.744588+00:00",
+  "updatedUtc": "2026-10-10T01:00:34.433288+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "FRESH_SEMANTIC_A01_ROOT_REPORT_ACCEPTED_INDEPENDENT_REVIEW_RUNNING_OWNER_REPORTED",
+    "status": "ACTUAL11_SEMANTIC_ROOT_ACCEPTED_REVIEW_PHASE_SCOPE_MISMATCH_TERMINAL_OWNER_CORRECTION",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18078,6 +18078,24 @@
         "original recovery"
       ],
       "next": "Owner continues normal finite A01 autonomously; no repeated order/new gate/grant",
+      "fullWorkflowAccepted": false
+    },
+    "semanticActual11Terminal": {
+      "source": "354b08ff8ea4d80f85959fa62d871ee09bd6a88d",
+      "batch": "a01-semantic-b9d9dc1428754b70a5e8d5cd9e9839e4",
+      "ownerReported": "Root complete report accepted; genuine independent native reviewer completed and affirmed README but judged not-yet-dispatched source/tests/docs artifacts incomplete; compound src/greeting.py; tests/test_greeting.py and docs outside exact root Work candidate. Strict Host rejects ungrounded/outside-scope finding. Terminal before helper/siblings.",
+      "rootSourceObserved": "review.go same reviewerAssessmentGuidance includes delegation coverage for both phases; explicit Phase supplied along with RunGoal/OwnTask/Delegations. Work-vs-Integration obligations not distinguished in guidance. Root did not inspect raw native terminal receipt this callback.",
+      "nativeReviewerRun": "eccf3ff8e07b90fa82fe706d6af7059c",
+      "nativeSession": "01a12350-fb94-7b53-b91e-1a2da545b3b1",
+      "nativeTurn": "01a12350-fce7-7b50-8e44-232bea1359e3",
+      "newRequests": 2,
+      "newNativeStarts": 2,
+      "newPartialEstimateMicros": 748373,
+      "cumulativeRequests": 16,
+      "cumulativeNativeStarts": 13,
+      "cumulativePartialEstimateMicros": 4787145,
+      "costQualification": "Partial estimate, not invoice or efficiency evidence",
+      "next": "Owner bounded phase-specific Work-vs-Integration review context correction under standing authority, preserve strict scope/no fabricated pass/no replay. No repeat Root order or new grant.",
       "fullWorkflowAccepted": false
     }
   }
