@@ -8,6 +8,8 @@ Der Nutzer hat diesen Entwurf beauftragt; damit sind seine Einzelvorschläge noc
 
 Eine [separate C#-Ausarbeitung](csharp-model-design.md) konkretisiert `SoftwareSystem`, `Repository` und ihre Beziehungen am Bibliotheksbeispiel. Sie ist ebenfalls ein Entwurf und legt weder das Autorenformat noch neue Core-Typen fest.
 
+Der [Proposal vom 11. Oktober](canonical-model-proposal.md) entwickelt diese Vorarbeit weiter. Der [neuere Main-Abgleich](canonical-model-main-comparison.md) korrigiert insbesondere die historische Einordnung des Schema-/Projection-Module-Splits. Abschnitt 10 dieses älteren Dokuments bleibt ein Vergleich mit seiner damaligen Basis, kein aktueller Main-Befund.
+
 ## 1. Gegenstand und Bedeutung des Modells
 
 ### 1.1 Der geltende Systemstand

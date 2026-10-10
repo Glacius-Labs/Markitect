@@ -2,6 +2,8 @@
 
 Stand: 10. Oktober 2026. Status: beauftragter Entwurf zur Diskussion, keine angenommene Produktentscheidung und kein implementierter Markitect-Vertrag.
 
+Die neuere Planung steht im [Proposal vom 11. Oktober](canonical-model-proposal.md); der [separate Main-Abgleich](canonical-model-main-comparison.md) verwendet einen frisch abgerufenen festen Stand. Die Bestandsvergleiche dieser C#-Vorarbeit bleiben an ihre unten dokumentierte ältere Basis gebunden.
+
 Dieser Entwurf konkretisiert die [Beschreibungssprache](canonical-model-draft.md) am Bibliotheksbeispiel. Er enthält zwei illustrative C#-Quellen: die [Klassen und Dienstgrenzen](SoftwareProjectModel.cs) und eine [Belegung mit Bibliotheksdefinitionen](LibraryModelExample.cs). Beide liegen ausschließlich in diesem Dokumentationsordner. Sie wurden durch Lesen geprüft, weder kompiliert noch getestet. Es gibt kein neues ausführbares Projekt, keine Studie und keine Änderung am Produktcode.
 
 ## 1. Was diese Klassen repräsentieren
