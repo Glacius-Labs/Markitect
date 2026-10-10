@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T05:58:50.291799+00:00",
+  "updatedUtc": "2026-10-10T06:08:27.587020+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18261,6 +18261,19 @@
       "ownerEvidence": "Frozen focused recovery/Manager Resume/Reviewer/Verifier/empty-artifact suite159.785s PASS; independent review clear; diff checks PASS.",
       "remoteAtInspection": "Public remote still5eed2e262c4c3ffd6c7339740e5efbca53db31ae; owner docs checkpoint/push finalizing, not yet claimed remote backed up.",
       "next": "Owner finishes docs and exact clean Windows source/binary freeze then normal Resume same Actual15 Plan3c41 and original handles; original e10/1329 invocation source remains historical. No new whole plan/replay/Apply/fullA01/Main/release acceptance."
+    },
+    "repairedBuildOriginalPlanStale": {
+      "status": "ORIGINAL_RESUME_PREPROVIDER_STALE_BUILD_BINDING_CONFIRMED_IN_SOURCE_EXACT_STATE_DELTA_OWNER_PENDING",
+      "sourceSha": "04ca4a144f92a9c5f3e446eb82dca18f7e690085",
+      "recoverySourceSha": "621da0126cdbf8cf95eccaaf79de8301af38f8f3",
+      "rootVerified": "Clean product checkout, exact public remote04ca; projectwork.digestProject344-353 includes ToolBuildDigest and ReadBuildInfo; projectrun.run77-92 compares plan base and working project digests. Exact saved Actual15 delta still owner confirmation, not asserted solely from source.",
+      "ownerReported": "Clean Windows binary bc26543c prefix bound04ca; root/managed/context/impact PASS. Earlier a405 duplicate docs key failure preserved. Original Resume f654711f06:05:04-06:05:06 Exit2 stale before provider; no replay/Apply/A01 PASS.",
+      "nextAssignment": {
+        "key": "preserve-stale-original-use-frozen-build-normal-a01-20261010",
+        "sentUtc": "2026-10-10T06:08:27.587020+00:00",
+        "toolAccepted": true,
+        "scope": "Confirm exact original delta once; existing trusted lifecycle-only own handle route if available, otherwise preserve stale original/uncertainty. No hot-upgrade guard weakening/retag/plan rewrite/new broad recovery capability. After exact prior own processes terminal and clean frozen corrected Windows build, normal fresh A01 in existing renewable finite batches. Real Resume proof same binary before/after interruption. No retrospective original PASS or blind replay; old/new starts accounted separately."
+      }
     }
   },
   "restartAfterInterruptedIntegration20261010": {
