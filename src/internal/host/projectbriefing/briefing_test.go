@@ -188,33 +188,8 @@ func TestGenerateChecksAncestryAndNoOpWriteDoesNotAppend(t *testing.T) {
 
 func committedModelFixture(t *testing.T) (root, base, revision string) {
 	t.Helper()
-	_, file, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("locate project briefing fixture")
-	}
-	repository := filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", ".."))
-	sourceRoot := filepath.Join(repository, "examples", "project-world")
 	root = t.TempDir()
-	if err := filepath.WalkDir(sourceRoot, func(sourcePath string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		relative, err := filepath.Rel(sourceRoot, sourcePath)
-		if err != nil || relative == "." {
-			return err
-		}
-		target := filepath.Join(root, relative)
-		if entry.IsDir() {
-			return os.MkdirAll(target, 0755)
-		}
-		data, err := os.ReadFile(sourcePath)
-		if err != nil {
-			return err
-		}
-		return os.WriteFile(target, data, 0644)
-	}); err != nil {
-		t.Fatal(err)
-	}
+	copyProjectWorldTest(t, root)
 	gitTest(t, root, "init", "--initial-branch=feature-briefing")
 	gitTest(t, root, "add", ".")
 	gitCommitTest(t, root, "briefing fixture baseline")
@@ -236,6 +211,37 @@ func committedModelFixture(t *testing.T) (root, base, revision string) {
 	gitCommitTest(t, root, "accepted model change")
 	revision = gitOutputTest(t, root, "rev-parse", "HEAD")
 	return root, base, revision
+}
+
+// copyProjectWorldTest copies the project-world example into root.
+func copyProjectWorldTest(t *testing.T, root string) {
+	t.Helper()
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("locate project briefing fixture")
+	}
+	repository := filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", ".."))
+	sourceRoot := filepath.Join(repository, "examples", "project-world")
+	if err := filepath.WalkDir(sourceRoot, func(sourcePath string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		relative, err := filepath.Rel(sourceRoot, sourcePath)
+		if err != nil || relative == "." {
+			return err
+		}
+		target := filepath.Join(root, relative)
+		if entry.IsDir() {
+			return os.MkdirAll(target, 0755)
+		}
+		data, err := os.ReadFile(sourcePath)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(target, data, 0644)
+	}); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func gitTest(t *testing.T, root string, args ...string) {

@@ -1,6 +1,8 @@
 // Package projectbriefing records deterministic briefings for accepted project
 // model changes. It compares compiled declarations only; it does not infer
-// meaning from prose.
+// meaning from prose. Accepted history is the first-parent line of the
+// checked-out HEAD; briefings, dismissals and resolutions recorded off that
+// line stay provisional until the line contains their commit.
 package projectbriefing
 
 import (

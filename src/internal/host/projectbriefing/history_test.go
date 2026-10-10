@@ -123,48 +123,211 @@ func TestEnsureAcceptedHistorySurvivesCodeOnlyTopicBranchAndNoFFMerge(t *testing
 	}
 }
 
-func TestEnsureAcceptedHistoryRejectsModelChangeAcceptedOnlyOnDivergedTopic(t *testing.T) {
+func TestEnsureAcceptedHistoryKeepsTopicModelChangeProvisionalOnDivergedMain(t *testing.T) {
 	root, _, changed := committedModelFixture(t)
 	mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
 		t.Fatal(err)
 	}
 	gitTest(t, root, "checkout", "-b", "topic")
-	modelPath := filepath.Join(root, ".markitect", "model", "commerce", "sales", "orders", "cancel-before-shipped.yaml")
-	content, err := os.ReadFile(modelPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	topicModel := strings.Replace(string(content), "before shipment", "prior to fulfillment", 1)
-	if topicModel == string(content) {
-		t.Fatal("could not create topic model change")
-	}
-	if err := os.WriteFile(modelPath, []byte(topicModel), 0644); err != nil {
-		t.Fatal(err)
-	}
-	gitTest(t, root, "add", ".markitect/model/commerce/sales/orders/cancel-before-shipped.yaml")
-	gitCommitTest(t, root, "model change accepted only on topic")
-	topic := gitOutputTest(t, root, "rev-parse", "HEAD")
+	topic := commitModelChangeTest(t, root, "before shipment", "prior to fulfillment", "model change accepted only on topic")
 	if receipt, err := EnsureAcceptedHistory(root, topic); err != nil || len(receipt.Bundles) != 1 {
 		t.Fatalf("precondition: topic model change was not briefed: receipt=%#v err=%v", receipt, err)
 	}
 	gitTest(t, root, "checkout", mainBranch)
-	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("Main diverges.\n"), 0644); err != nil {
+	diverged := commitReadmeTest(t, root, "Main diverges.\n", "main diverges")
+	if _, err := EnsureAcceptedHistory(root, diverged); err != nil {
+		t.Fatalf("a model change briefed only on an unmerged topic blocked main: %v", err)
+	}
+	state, _, err := Read(root)
+	if err != nil || len(state.Briefings) != 1 || state.Briefings[0].Revision != changed {
+		t.Fatalf("main counted the topic's provisional briefing: %#v err=%v", state.Briefings, err)
+	}
+	if stored := storedBriefingsTest(t, root); len(stored) != 2 {
+		t.Fatalf("provisional topic briefing was not kept: %d stored", len(stored))
+	}
+	gitTest(t, root, "checkout", "topic")
+	if _, err := EnsureAcceptedHistory(root, topic); err != nil {
+		t.Fatalf("ensure back on the topic: %v", err)
+	}
+	if state, _, err := Read(root); err != nil || len(state.Briefings) != 2 {
+		t.Fatalf("topic lost its own briefing: %#v err=%v", state.Briefings, err)
+	}
+}
+
+func TestEnsureAcceptedHistoryAcceptsMergedTopicModelChangeOnce(t *testing.T) {
+	for _, merge := range []string{"no-ff", "squash", "rebase", "fast-forward"} {
+		t.Run(merge, func(t *testing.T) {
+			root, _, changed := committedModelFixture(t)
+			mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
+			if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+				t.Fatal(err)
+			}
+			gitTest(t, root, "checkout", "-b", "topic")
+			topic := commitModelChangeTest(t, root, "before shipment", "prior to fulfillment", "topic model change")
+			receipt, err := EnsureAcceptedHistory(root, topic)
+			if err != nil || len(receipt.Bundles) != 1 {
+				t.Fatalf("precondition: topic model change was not briefed: receipt=%#v err=%v", receipt, err)
+			}
+			topicDigest := receipt.ModelDigest
+			gitTest(t, root, "checkout", mainBranch)
+			if merge != "fast-forward" {
+				commitReadmeTest(t, root, "Main moves on.\n", "main moves on")
+			}
+			switch merge {
+			case "no-ff":
+				gitTest(t, root, "merge", "--no-ff", "-m", "merge topic", "topic")
+			case "squash":
+				gitTest(t, root, "merge", "--squash", "topic")
+				gitCommitTest(t, root, "squash topic")
+			case "rebase":
+				gitTest(t, root, "checkout", "topic")
+				gitTest(t, root, "rebase", mainBranch)
+				gitTest(t, root, "checkout", mainBranch)
+				gitTest(t, root, "merge", "--ff-only", "topic")
+			case "fast-forward":
+				gitTest(t, root, "merge", "--ff-only", "topic")
+			}
+			merged := gitOutputTest(t, root, "rev-parse", "HEAD")
+			if _, err := EnsureAcceptedHistory(root, merged); err != nil {
+				t.Fatalf("ensure on %s after %s merge: %v", mainBranch, merge, err)
+			}
+			if again, err := EnsureAcceptedHistory(root, merged); err != nil || len(again.Bundles) != 0 {
+				t.Fatalf("repeated ensure after %s merge: receipt=%#v err=%v", merge, again, err)
+			}
+			state, _, err := Read(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var accepted []Bundle
+			for _, bundle := range state.Briefings {
+				if bundle.ModelDigest == topicDigest {
+					accepted = append(accepted, bundle)
+				}
+			}
+			// Only a fast-forward puts the topic commit on main's first-parent
+			// line; every other merge records main's own briefing.
+			wantRevision := merged
+			if merge == "fast-forward" {
+				wantRevision = topic
+			}
+			if len(state.Briefings) != 2 || len(accepted) != 1 || accepted[0].Revision != wantRevision {
+				t.Fatalf("merged model change was not accepted exactly once at %s: %#v", wantRevision, state.Briefings)
+			}
+			wantStored := 3
+			if merge == "fast-forward" {
+				wantStored = 2
+			}
+			if stored := storedBriefingsTest(t, root); len(stored) != wantStored {
+				t.Fatalf("stored briefings = %d, want %d (the topic's stays provisional)", len(stored), wantStored)
+			}
+		})
+	}
+}
+
+func TestEnsureAcceptedHistoryStartsOwnBaselineAfterSquashedProjectInit(t *testing.T) {
+	root := t.TempDir()
+	gitTest(t, root, "init", "--initial-branch=feature-squashed-init")
+	commitReadmeTest(t, root, "Before the project model.\n", "repository before the project")
+	gitTest(t, root, "checkout", "-b", "topic")
+	copyProjectWorldTest(t, root)
+	gitTest(t, root, "add", ".")
+	gitCommitTest(t, root, "introduce the project model on a topic")
+	topic := gitOutputTest(t, root, "rev-parse", "HEAD")
+	if _, err := EnsureAcceptedHistory(root, topic); err != nil {
+		t.Fatalf("precondition: topic baseline: %v", err)
+	}
+	gitTest(t, root, "checkout", "feature-squashed-init")
+	gitTest(t, root, "merge", "--squash", "topic")
+	gitCommitTest(t, root, "squash the project model")
+	squashed := gitOutputTest(t, root, "rev-parse", "HEAD")
+	receipt, err := EnsureAcceptedHistory(root, squashed)
+	if err != nil || receipt.BaselineRevision != squashed || len(receipt.Bundles) != 0 {
+		t.Fatalf("squashed project model did not start its own baseline: receipt=%#v err=%v", receipt, err)
+	}
+}
+
+func TestEnsureAcceptedHistoryRejectsConflictingBriefingOnActiveLine(t *testing.T) {
+	root, base, changed := committedModelFixture(t)
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
 		t.Fatal(err)
 	}
-	gitTest(t, root, "add", "README.md")
-	gitCommitTest(t, root, "main diverges")
-	diverged := gitOutputTest(t, root, "rev-parse", "HEAD")
-	_, before, err := Read(root)
+	third := commitModelChangeTest(t, root, "before shipment", "prior to fulfillment", "third model value")
+	aggregate, err := Generate(root, base, third, testProvenance())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := EnsureAcceptedHistory(root, diverged); !errors.Is(err, ErrAmbiguousHistory) {
-		t.Fatalf("model change accepted only on a diverged topic was dropped or rebased: %v", err)
+	path := filepath.Join(root, filepath.FromSlash(storePath))
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stored Store
+	if err := json.Unmarshal(data, &stored); err != nil {
+		t.Fatal(err)
+	}
+	stored.Briefings = append(stored.Briefings, aggregate)
+	if data, err = json.Marshal(stored); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	_, before, err := Read(root)
+	if err != nil {
+		t.Fatalf("precondition: injected briefing must be a valid store entry: %v", err)
+	}
+	if _, err := EnsureAcceptedHistory(root, third); !errors.Is(err, ErrAmbiguousHistory) {
+		t.Fatalf("briefing that skips a transition on the active line was accepted: %v", err)
 	}
 	if _, after, err := Read(root); err != nil || after != before {
 		t.Fatalf("rejected ambiguous history changed the store: before=%s after=%s err=%v", before, after, err)
 	}
+}
+
+func commitModelChangeTest(t *testing.T, root, old, replacement, message string) string {
+	t.Helper()
+	const relative = ".markitect/model/commerce/sales/orders/cancel-before-shipped.yaml"
+	path := filepath.Join(root, filepath.FromSlash(relative))
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := strings.Replace(string(content), old, replacement, 1)
+	if updated == string(content) {
+		t.Fatalf("could not replace %q in the fixture model", old)
+	}
+	if err := os.WriteFile(path, []byte(updated), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "add", relative)
+	gitCommitTest(t, root, message)
+	return gitOutputTest(t, root, "rev-parse", "HEAD")
+}
+
+func commitReadmeTest(t *testing.T, root, content, message string) string {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "add", "README.md")
+	gitCommitTest(t, root, message)
+	return gitOutputTest(t, root, "rev-parse", "HEAD")
+}
+
+// storedBriefingsTest returns every persisted briefing, provisional ones
+// included, straight from the store file.
+func storedBriefingsTest(t *testing.T, root string) []Bundle {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(storePath)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stored Store
+	if err := json.Unmarshal(data, &stored); err != nil {
+		t.Fatal(err)
+	}
+	return stored.Briefings
 }
 
 func TestEnsureAcceptedHistoryPreservesRevertAndRejectsManualAggregateWrite(t *testing.T) {
@@ -538,6 +701,92 @@ func TestVerifiedResolutionRejectsFutureEventAtOldModelRevision(t *testing.T) {
 	evidence := validResolutionEvidence(futureEvent.ID, oldProject.Report.Managers)
 	if _, err := ResolveVerified(root, firstRevision, oldProject.Model.Digest, evidence, digest); !errors.Is(err, ErrStaleModel) {
 		t.Fatalf("future event was resolved against an older model: %v", err)
+	}
+}
+
+func TestResolutionAndDismissalOnUnmergedTopicStayProvisional(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "checkout", "-b", "topic")
+	topic := commitReadmeTest(t, root, "Code-only topic change.\n", "code-only topic change")
+	if _, err := EnsureAcceptedHistory(root, topic); err != nil {
+		t.Fatal(err)
+	}
+	state, digest, err := Read(root)
+	if err != nil || len(state.Briefings) != 1 {
+		t.Fatalf("topic history state=%#v err=%v", state.Briefings, err)
+	}
+	event := state.Briefings[0].Events[0]
+	if digest, err = Dismiss(root, event.ID, event.AffectedManagers[0], digest); err != nil {
+		t.Fatal(err)
+	}
+	project, err := projectwork.Load(root, topic)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ResolveVerified(root, topic, project.Model.Digest, validResolutionEvidence(event.ID, project.Report.Managers), digest); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "checkout", mainBranch)
+	state, _, err = Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status := EventResolutionStatus(state, event.ID); status.Status != "unresolved" || len(state.Dismissals) != 0 || len(state.Briefings) != 1 {
+		t.Fatalf("unmerged topic resolution or dismissal counted on %s: status=%#v dismissals=%#v", mainBranch, status, state.Dismissals)
+	}
+	gitTest(t, root, "merge", "--no-ff", "-m", "merge topic", "topic")
+	state, _, err = Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status := EventResolutionStatus(state, event.ID); status.Status != "resolved" || status.Resolution.ModelRevision != topic || len(state.Dismissals) != 1 {
+		t.Fatalf("merged topic resolution or dismissal not accepted: status=%#v dismissals=%#v", status, state.Dismissals)
+	}
+}
+
+func TestVerifiedResolutionOnUnmergedTopicDoesNotBlockMain(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "checkout", "-b", "topic")
+	topic := commitReadmeTest(t, root, "Code-only topic change.\n", "code-only topic change")
+	if _, err := EnsureAcceptedHistory(root, topic); err != nil {
+		t.Fatal(err)
+	}
+	state, digest, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := state.Briefings[0].Events[0]
+	project, err := projectwork.Load(root, topic)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ResolveVerified(root, topic, project.Model.Digest, validResolutionEvidence(event.ID, project.Report.Managers), digest); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "checkout", mainBranch)
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	_, digest, err = Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	evidence := validResolutionEvidence(event.ID, project.Report.Managers)
+	evidence.RunID = "run-on-main"
+	if _, err := ResolveVerified(root, changed, project.Model.Digest, evidence, digest); err != nil {
+		t.Fatalf("provisional topic resolution blocked resolving on %s: %v", mainBranch, err)
+	}
+	state, _, err = Read(root)
+	if status := EventResolutionStatus(state, event.ID); err != nil || status.Status != "resolved" || status.Resolution.Evidence.RunID != "run-on-main" {
+		t.Fatalf("main resolution status=%#v err=%v", status, err)
 	}
 }
 
