@@ -17,7 +17,7 @@ import (
 // SupportedProviderVersion pins the generated v1 initialize / v2 thread-turn
 // shapes used here. Advancing this pin requires protocol fixtures and review.
 const SupportedProviderVersion = "codex-cli 0.162.0"
-const protocolIdentity = "codex-app-server/v2/0.162.0/markitect-workspace-output-v2/stable-0bf5254bede109d4ae03ce2e81372e4c93a30b359c0749ec7dce7a9382a7f857/experimental-5c0ee37a723e4672108aa5c68b0c63cd540e17d408ca2f8ac1e7ebf76e737ac2/review-assessment-helper-scope-v1"
+const protocolIdentity = "codex-app-server/v2/0.162.0/markitect-workspace-output-v2/stable-0bf5254bede109d4ae03ce2e81372e4c93a30b359c0749ec7dce7a9382a7f857/experimental-5c0ee37a723e4672108aa5c68b0c63cd540e17d408ca2f8ac1e7ebf76e737ac2/review-assessment-helper-scope-v2"
 
 type processConnection struct {
 	in     io.WriteCloser

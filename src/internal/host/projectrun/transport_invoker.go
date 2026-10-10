@@ -350,6 +350,11 @@ func withoutHelperTool(options codexappserver.Options) codexappserver.Options {
 		}
 	}
 	options.DynamicTools = filtered
+	if len(filtered) == 0 {
+		options.HandleToolCall = nil
+		options.MaxToolCalls = 0
+		options.ToolTimeout = 0
+	}
 	return options
 }
 

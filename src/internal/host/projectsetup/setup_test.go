@@ -3,6 +3,7 @@ package projectsetup
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -106,6 +107,120 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 	}
 	if err := projectrun.ValidateRuntime(config); err != nil {
 		t.Fatalf("generated runtime is invalid: %v", err)
+	}
+}
+
+func TestBuildRuntimeRoleOptionSurfacesConstructNativeAdapters(t *testing.T) {
+	project := setupProjectFixture(t)
+	provider := testTool(t, project.Root, providerName(), true)
+	provider.Version = codexappserver.SupportedProviderVersion
+	options := Options{Provider: "codex", Model: "gpt-6-luna", Effort: "high",
+		InputMicrosPerMillion: 1, OutputMicrosPerMillion: 2, MaxCostMicros: 100}
+	runtimeConfig, err := BuildRuntime(project, options, Discovery{Provider: "codex", ProviderBinary: provider})
+	if err != nil {
+		t.Fatalf("normal setup runtime: %v", err)
+	}
+	managerID := project.Report.Managers[0].ID
+	invoker := projectrun.NewTransportInvoker(codexappserver.Options{})
+
+	for _, helpersEnabled := range []bool{true, false} {
+		name := "helpers-enabled"
+		if !helpersEnabled {
+			name = "helpers-disabled"
+		}
+		t.Run(name, func(t *testing.T) {
+			candidate := runtimeConfig
+			candidate.Agents = make(map[string]projectrun.Agent, len(runtimeConfig.Agents))
+			for id, agent := range runtimeConfig.Agents {
+				settings := *agent.AppServer
+				agent.AppServer = &settings
+				agent.AppServer.Helpers.Enabled = helpersEnabled
+				if !helpersEnabled {
+					agent.AppServer.Helpers.MaxStartRequests = 0
+					agent.AppServer.Helpers.MaxDepth = 0
+				}
+				candidate.Agents[id] = agent
+			}
+			candidate.Review = &projectrun.ReviewConfig{Agents: make(map[string]projectrun.Agent, len(runtimeConfig.Review.Agents)),
+				MaxRounds: runtimeConfig.Review.MaxRounds, MaxManagerRounds: runtimeConfig.Review.MaxManagerRounds}
+			for id, agent := range runtimeConfig.Review.Agents {
+				settings := *agent.AppServer
+				agent.AppServer = &settings
+				agent.AppServer.Helpers.Enabled = helpersEnabled
+				if !helpersEnabled {
+					agent.AppServer.Helpers.MaxStartRequests = 0
+					agent.AppServer.Helpers.MaxDepth = 0
+				}
+				candidate.Review.Agents[id] = agent
+			}
+			verifier := *runtimeConfig.Verifier
+			verifierSettings := *verifier.AppServer
+			verifier.AppServer = &verifierSettings
+			verifier.AppServer.Helpers.Enabled = helpersEnabled
+			if !helpersEnabled {
+				verifier.AppServer.Helpers.MaxStartRequests = 0
+				verifier.AppServer.Helpers.MaxDepth = 0
+			}
+			candidate.Verifier = &verifier
+
+			roles := []struct {
+				name    string
+				agent   projectrun.Agent
+				request agentexec.Request
+				invoker *projectrun.TransportInvoker
+			}{
+				{name: "manager", agent: candidate.Agents[managerID], request: agentexec.Request{Role: agentexec.RoleExecutor,
+					Context: json.RawMessage(`{"kind":"projectrun-task/v1","managerId":"root","phase":"work","allowedWritePaths":["src/"]}`)}},
+				{name: "reviewer", agent: candidate.Review.Agents[managerID], request: agentexec.Request{Role: agentexec.RoleExecutor,
+					Context: json.RawMessage(`{"kind":"projectrun-review/v1"}`)}},
+				{name: "verifier", agent: *candidate.Verifier, request: agentexec.Request{Role: agentexec.RoleVerifier,
+					Context: json.RawMessage(`{"kind":"projectrun-verify/v1"}`)}},
+				{name: "helper", agent: candidate.Agents[managerID], invoker: projectrun.NewTransportInvokerWithoutHostHelpers(codexappserver.Options{}), request: agentexec.Request{Role: agentexec.RoleExecutor,
+					Context: json.RawMessage(`{"kind":"projectrun-helper/v1","managerId":"root","helperDepth":1,"allowedWritePaths":["src/"]}`)}},
+			}
+			for _, role := range roles {
+				config, err := role.agent.AgentConfig()
+				if err != nil {
+					t.Fatalf("%s AgentConfig: %v", role.name, err)
+				}
+				roleInvoker := role.invoker
+				if roleInvoker == nil {
+					roleInvoker = invoker
+				}
+				actual, err := roleInvoker.FingerprintForRequest(config, role.request)
+				if err != nil {
+					t.Fatalf("%s native adapter construction: %v", role.name, err)
+				}
+				planned, err := roleInvoker.Fingerprint(config)
+				if err != nil {
+					t.Fatalf("%s planned fingerprint: %v", role.name, err)
+				}
+				wantPlanMatch := role.name == "manager" || role.name == "helper" || !helpersEnabled
+				if (actual == planned) != wantPlanMatch {
+					t.Fatalf("%s helper surface mismatch: helpersEnabled=%t actual/planned match=%t", role.name, helpersEnabled, actual == planned)
+				}
+				if role.name == "helper" && helpersEnabled {
+					parentAgentConfig, err := candidate.Agents[managerID].AgentConfig()
+					if err != nil {
+						t.Fatal(err)
+					}
+					parentFingerprint, err := invoker.Fingerprint(parentAgentConfig)
+					if err != nil || actual == parentFingerprint {
+						t.Fatalf("depth-one helper retained its parent's Host helper surface: child=%q parent=%q err=%v", actual, parentFingerprint, err)
+					}
+				}
+				if role.name == "manager" && !helpersEnabled {
+					enabledConfig, err := runtimeConfig.Agents[managerID].AgentConfig()
+					if err != nil {
+						t.Fatal(err)
+					}
+					enabledFingerprint, err := invoker.FingerprintForRequest(enabledConfig, role.request)
+					if err != nil || enabledFingerprint == actual {
+						t.Fatalf("disabling helpers did not remove the Manager helper spec: enabled=%q disabled=%q err=%v", enabledFingerprint, actual, err)
+					}
+				}
+			}
+		})
 	}
 }
 

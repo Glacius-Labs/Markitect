@@ -344,6 +344,20 @@ func TestUnboundTransportRejectsHelperAndReviewContextSuppressesHostHelper(t *te
 	if err != nil || reviewActualFingerprint != reviewFingerprint {
 		t.Fatalf("review run/recovery options drifted from request-aware fingerprint: %q/%q err=%v", reviewActualFingerprint, reviewFingerprint, err)
 	}
+	bareTransport := NewTransportInvokerWithHelpers(codexappserver.Options{}, TransportHelperHost{Reserve: fixture.reserver.reserve})
+	bareReviewOptions, bareSession, err := bareTransport.optionsForRequest(config, request, agentexec.RunOptions{})
+	if err != nil || bareSession != nil || len(bareReviewOptions.DynamicTools) != 0 || bareReviewOptions.HandleToolCall != nil || bareReviewOptions.MaxToolCalls != 0 || bareReviewOptions.ToolTimeout != 0 {
+		t.Fatalf("filtering the sole Host helper left invalid dynamic-tool options: %#v session=%v err=%v", bareReviewOptions, bareSession, err)
+	}
+	bareAdapter, err := bareTransport.appServerAdapterWithOptions(config, bareReviewOptions)
+	if err != nil {
+		t.Fatalf("construct native adapter for helper-free reviewer: %v", err)
+	}
+	bareActualFingerprint, err := bareAdapter.Fingerprint(config)
+	bareExpectedFingerprint, fingerprintErr := bareTransport.FingerprintForRequest(config, request)
+	if err != nil || fingerprintErr != nil || bareActualFingerprint != bareExpectedFingerprint {
+		t.Fatalf("adapter construction options differ from reviewer fingerprint: actual=%q expected=%q err=%v/%v", bareActualFingerprint, bareExpectedFingerprint, err, fingerprintErr)
+	}
 }
 
 func TestChildTransportSuppressesOnlyHostHelperTool(t *testing.T) {
