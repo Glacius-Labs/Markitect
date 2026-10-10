@@ -407,7 +407,7 @@ renewal_policy:
     max_start_requests: 256
     max_estimated_cost_micros: 10000000
     max_parallel: 2
-  latest_actual:
+  attempt_8:
     batch_id: a01-review-2694b47f0418432890c4f8d63ac98d7e
     attempt_number: 8
     native_run_numbers: [8, 9]
@@ -472,15 +472,73 @@ renewal_policy:
     run_state_revision: 12
     run_state_sha256: 085c0abbc42eb3447db25f2ef5859ea65af83b4b783dbca8006e6381c2032565
     original_turns_replayed: false
+  latest_actual:
+    batch_id: a01-compose-bfad02aab273447391953a429e2c3980
+    attempt_number: 9
+    native_run_numbers: [10]
+    status: failed_not_passed
+    allocation_utc: '2026-10-10T00:14:54.1329022Z'
+    hard_deadline_utc: '2026-10-10T04:14:54.1329022Z'
+    actual_started_utc: '2026-10-10T00:14:54.3319672Z'
+    actual_ended_utc: '2026-10-10T00:16:44.7534881Z'
+    observer_id: 560aa27b8dcd41e08a4600c47cf514d1
+    observer_record_sha256: b28e4251c48d054ec1060ec879d088b4cc2b9428c72e34822a46a97f926bcc59
+    observer_exit_code: 2
+    observer_boundary_observed: false
+    source_revision: 86589befc34f84f7d7ff9ed380901f169f114d38
+    binary_sha256: c54c4bdf0d15a69e8e52012627bcf94ae2f78973be095036f459fbc7ef065daf
+    owned_project_revision: eaa11e9969db66e6c1a5cd80949cfb757074ce54
+    plan_id: 400127d902c894c0ddacf84af92030e6
+    plan_sha256: fd9654c5d3b30ca60de06ff57ca8fa6ee540315ea1576b0cd03d4ce2744d142a
+    runtime_sha256: f675599cbf116a6126359d525090dd9eef1d93e11077863695a31e0962785a85
+    readiness_sha256: 132ec73f79a6d75dcc9682926e0f54d074a4ee98be4778eed6bd45df1d6df2
+    runtime_file_sha256: 0828f6afd4e897fa0304362e19bb47cd912c2fe353f5b44c58d919daf2fa3e3c
+    private_allocation_record: controller/a01-compose-bfad02aab273447391953a429e2c3980.json
+    private_allocation_record_sha256: 85f30b2838ce39a43c5031b120b97a7dd3bf363a681f946560fceeb202d34024a
+    root_work_invocations: 1
+    root_report_state: completed_but_rejected_by_strict_response_validation
+    root_native_run_ids: [323b67c642202f4a00f7b025376bc587]
+    root_native_sessions: [01a12329-d2db-78e0-8d48-07d8b64a1c26]
+    root_native_turns: [01a12329-d5b7-7dc0-8edf-207787ba4b6c]
+    root_native_states: [completed]
+    root_report_candidate_delta_paths: [README.md]
+    root_report_candidate_integrated: false
+    root_report_delegations_recorded: true
+    rejected_evidence_references: [request.context.globalGoal]
+    workspace_handle_id: dac84ae668ecd9ae1f60f7d113668625
+    workspace_state: closed
+    workspace_delta_paths: [README.md]
+    helper_reservations: 0
+    helper_native_child_starts: 0
+    manager_overlap_observed: false
+    verify_apply_recovery_observed: false
+    failure: strict_response_validation_rejected_evidence_reference_not_supplied_in_request
+    role_start_requests: 1
+    native_provider_starts: 1
+    input_tokens: 520280
+    output_tokens: 4248
+    cached_input_tokens: 462336
+    attempt_estimated_cost_micros: 528776
+    cost_accounting: partial_observed_lower_bound_not_invoice
+    prior_known_cumulative_role_start_requests: 12
+    cumulative_known_role_start_requests: 13
+    prior_known_cumulative_provider_starts: 9
+    cumulative_known_provider_starts: 10
+    prior_known_estimated_cost_micros: 2982357
+    cumulative_known_estimated_cost_micros: 3511133
+    cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
+    run_state_revision: 4
+    run_state_sha256: 273956858c8cc194256a2e794b96f3ff39fd2b9832bbd09535415782a8e146f1
+    original_turns_replayed: false
   next_batch:
-    status: source_fix_integrated_next_batch_pins_pending
+    status: evidence_refs_contract_fix_in_progress_next_pins_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     new_batch_pins: none
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
-    no_ninth_actual_claimed: true
-    owner_repair_in_progress: false
-    repair: reviewer_adapter_zero_tool_cleanup_integrated_and_focused_review_closed
+    no_tenth_actual_claimed: true
+    owner_repair_in_progress: true
+    repair: constrain_native_evidence_refs_to_values_supplied_in_the_request_without_weakening_validation
     next_shared_native_defaults: { memories: false, login: false }
     intended_profile:
       fresh_native_roles: workspace_permission
@@ -511,11 +569,10 @@ renewal_policy:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_after_attempt_8_repair: aff0b543104ba47e4529239ff22bcfa076e0375e
-    source_changes: reviewer_adapter_zero_tool_cleanup_and_setup_composition_regressions
-    focused_projectrun_codexappserver_setup_checks: passed
-    build_vet_diff_check: passed
-    native_acceptance: failed_not_passed_attempt_8
+    source_revision_used_for_latest_attempt: 86589befc34f84f7d7ff9ed380901f169f114d38
+    binary_sha256: c54c4bdf0d15a69e8e52012627bcf94ae2f78973be095036f459fbc7ef065daf
+    native_acceptance: failed_not_passed_attempt_9
+    next_repair: native_evidence_refs_request_binding
     next_batch_pins: pending
   provider_free_preparation:
     superseded_owned_project_revision: 89823a90df985ca4451ec3053467fa4b3d12319f

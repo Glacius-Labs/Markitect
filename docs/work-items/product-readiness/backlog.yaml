@@ -268,7 +268,7 @@ native_acceptance:
     cumulative_known_provider_starts: 7
     cumulative_estimated_cost_micros: 2267844
     cost_accounting: partial_observed_lower_bound_not_invoice
-  latest_actual:
+  attempt_8:
     batch_id: a01-review-2694b47f0418432890c4f8d63ac98d7e
     attempt_number: 8
     native_run_number: 8
@@ -319,16 +319,52 @@ native_acceptance:
     cumulative_known_provider_starts: 9
     cumulative_known_estimated_cost_micros: 2982357
     cost_accounting: partial_observed_lower_bound_not_invoice
+  latest_actual:
+    batch_id: a01-compose-bfad02aab273447391953a429e2c3980
+    attempt_number: 9
+    native_run_number: 10
+    status: failed_not_passed
+    source_revision: 86589befc34f84f7d7ff9ed380901f169f114d38
+    binary_sha256: c54c4bdf0d15a69e8e52012627bcf94ae2f78973be095036f459fbc7ef065daf
+    owned_project_revision: eaa11e9969db66e6c1a5cd80949cfb757074ce54
+    plan_id: 400127d902c894c0ddacf84af92030e6
+    plan_sha256: fd9654c5d3b30ca60de06ff57ca8fa6ee540315ea1576b0cd03d4ce2744d142a
+    observer_id: 560aa27b8dcd41e08a4600c47cf514d1
+    private_record_sha256: 85f30b2838ce39a43c5031b120b97a7dd3bf363a681f946560fceeb202d34024a
+    root_native_session: 01a12329-d2db-78e0-8d48-07d8b64a1c26
+    root_native_turn: 01a12329-d5b7-7dc0-8edf-207787ba4b6c
+    root_report_id: 323b67c642202f4a00f7b025376bc587
+    root_turn_state: completed
+    root_report_acceptance: rejected_by_strict_response_validation
+    rejected_evidence_reference: request.context.globalGoal
+    workspace_id: dac84ae668ecd9ae1f60f7d113668625
+    workspace_state: closed
+    workspace_delta_paths: [README.md]
+    candidate_integrated: false
+    helper_reservations: 0
+    helper_native_child_starts: 0
+    manager_overlap_observed: false
+    verify_apply_recovery_observed: false
+    role_start_requests: 1
+    provider_starts: 1
+    input_tokens: 520280
+    output_tokens: 4248
+    cached_input_tokens: 462336
+    attempt_estimated_cost_micros: 528776
+    cumulative_known_role_start_requests: 13
+    cumulative_known_provider_starts: 10
+    cumulative_estimated_cost_micros: 3511133
+    cost_accounting: partial_observed_lower_bound_not_invoice
   next_batch:
-    status: source_fix_integrated_next_batch_pins_pending
+    status: evidence_refs_contract_fix_in_progress_next_pins_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
     new_batch_pins: none
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
-    no_ninth_actual_claimed: true
-    owner_repair_in_progress: false
-    repair: reviewer_adapter_zero_tool_cleanup_integrated_and_focused_review_closed
+    no_tenth_actual_claimed: true
+    owner_repair_in_progress: true
+    repair: constrain_native_evidence_refs_to_values_supplied_in_the_request_without_weakening_validation
     next_shared_native_defaults: { memories: false, login: false }
     intended_profile:
       fresh_native_roles: workspace_permission
@@ -359,11 +395,10 @@ native_acceptance:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_after_attempt_8_repair: aff0b543104ba47e4529239ff22bcfa076e0375e
-    source_changes: reviewer_adapter_zero_tool_cleanup_and_setup_composition_regressions
-    focused_projectrun_codexappserver_setup_checks: passed
-    build_vet_diff_check: passed
-    native_acceptance: failed_not_passed_attempt_8
+    source_revision_used_for_latest_attempt: 86589befc34f84f7d7ff9ed380901f169f114d38
+    binary_sha256: c54c4bdf0d15a69e8e52012627bcf94ae2f78973be095036f459fbc7ef065daf
+    latest_native_acceptance: failed_not_passed_attempt_9
+    next_repair: native_evidence_refs_request_binding
     next_batch_pins: pending
   prior_batch_history:
     revision: generous-native-limits-20261009
