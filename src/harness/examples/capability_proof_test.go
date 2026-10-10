@@ -18,6 +18,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/cli"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -26,10 +27,9 @@ const proofUnrelatedPath = "unrelated/Billing/review-note.txt"
 // Passing this test reproduces a negative capability result, not C5 success.
 // Keep the frozen v1 protocol and historical observations when changing it.
 func TestCapabilityProofGlobalAcquisitionStopWitness(t *testing.T) {
-	root := filepath.Join(t.TempDir(), "repo")
-	if err := os.MkdirAll(root, 0755); err != nil {
-		t.Fatal(err)
-	}
+	repo := testkit.NewRepo(t)
+	repo.Git("symbolic-ref", "HEAD", "refs/heads/codex/capability-proof")
+	root := repo.Dir
 	copyCanonicalProjectionFixture(t, root)
 	// The new Git repository must not normalize bytes differently by platform.
 	writeFile(t, root, ".gitattributes", []byte("* -text\n"))
@@ -37,9 +37,7 @@ func TestCapabilityProofGlobalAcquisitionStopWitness(t *testing.T) {
 	writeFile(t, root, proofUnrelatedPath, unrelated)
 	writeFile(t, root, "src/Commerce/Existing.cs", []byte("// Unverified operational specimen; no business correctness is claimed.\n"))
 	writeFile(t, root, "docs/represented/index.md", []byte("Unverified operational specimen.\n"))
-	proofGit(t, root, "init", "--template=", "--object-format=sha1", "--initial-branch=codex/capability-proof")
-	proofGit(t, root, "config", "core.autocrlf", "false")
-	baseRevision := proofCommit(t, root, "Freeze capability proof seed")
+	baseRevision := proofCommit(t, repo, "Freeze capability proof seed")
 
 	// This is an actual canonical edit, with unchanged module packages/pins.
 	policyPath := "examples/canonical-projection/definitions/create-order.projection-policy.yaml"
@@ -53,7 +51,7 @@ func TestCapabilityProofGlobalAcquisitionStopWitness(t *testing.T) {
 		t.Fatal("frozen policy mutation no longer matches")
 	}
 	writeFile(t, root, policyPath, bytes.Replace(policy, marker, replacement, 1))
-	candidateRevision := proofCommit(t, root, "Require idempotent use-case representation")
+	candidateRevision := proofCommit(t, repo, "Require idempotent use-case representation")
 	base := proofLoad(t, root, baseRevision)
 	candidate := proofLoad(t, root, candidateRevision)
 	observed, err := source.Load(root, "")
@@ -127,9 +125,9 @@ func TestCapabilityProofGlobalAcquisitionStopWitness(t *testing.T) {
 	// Git ls-tree size preflight can fail before cat-file opens the missing blob.
 	// This control proves whole-tree dependence; the positive snapshots separately
 	// prove the unrelated content was acquired. It is not a blob-open syscall trace.
-	oid := strings.TrimSpace(proofGit(t, root, "rev-parse", candidateRevision+":"+proofUnrelatedPath))
+	oid := repo.Git("rev-parse", candidateRevision+":"+proofUnrelatedPath)
 	for _, name := range candidate.Config.Definitions {
-		if strings.TrimSpace(proofGit(t, root, "rev-parse", candidateRevision+":"+name)) == oid {
+		if repo.Git("rev-parse", candidateRevision+":"+name) == oid {
 			t.Fatal("negative control blob aliases selected canonical bytes")
 		}
 	}
@@ -156,7 +154,7 @@ func TestCapabilityProofGlobalAcquisitionStopWitness(t *testing.T) {
 	negativeCode := cli.Run(args, &output, &diagnostics)
 	negativeDiagnostic := strings.TrimSpace(diagnostics.String())
 	for _, name := range candidate.Config.Definitions {
-		proofGit(t, root, "show", candidateRevision+":"+name)
+		repo.Git("show", candidateRevision+":"+name)
 	}
 	if err := os.WriteFile(objectPath, blob, 0444); err != nil {
 		t.Fatal(err)
@@ -166,7 +164,7 @@ func TestCapabilityProofGlobalAcquisitionStopWitness(t *testing.T) {
 	}
 	// Selected blobs stayed readable, and restoration returns the unchanged plan.
 	for _, name := range candidate.Config.Definitions {
-		proofGit(t, root, "show", candidateRevision+":"+name)
+		repo.Git("show", candidateRevision+":"+name)
 	}
 	output.Reset()
 	diagnostics.Reset()
@@ -269,27 +267,19 @@ func proofActiveRecords(t *testing.T, base *host.CanonicalSource) []records.Proj
 	return active
 }
 
-func proofCommit(t *testing.T, root, message string) string {
+// proofCommit commits every change with the frozen v1 identity and timestamp
+// instead of Repo.Commit's, so the fixture revisions stay comparable with the
+// recorded capability-proof observations.
+func proofCommit(t *testing.T, repo *testkit.Repo, message string) string {
 	t.Helper()
-	proofGit(t, root, "add", "--all")
-	proofGit(t, root, "commit", "-m", message)
-	return strings.TrimSpace(proofGit(t, root, "rev-parse", "HEAD"))
-}
-
-func proofGit(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	prefix := []string{"-C", root, "-c", "core.hooksPath=" + filepath.Join(root, ".git", "proof-empty-hooks"), "-c", "user.name=Capability Proof",
-		"-c", "user.email=capability-proof@example.invalid", "-c", "commit.gpgsign=false", "-c", "core.autocrlf=false",
-		"-c", "maintenance.auto=false", "-c", "maintenance.autoDetach=false", "-c", "gc.auto=0", "-c", "gc.autoDetach=false"}
-	// These short-lived repositories are removed after Git returns; disable automatic
-	// maintenance so a detached worker cannot race t.TempDir cleanup.
-	command := exec.Command("git", append(prefix, args...)...)
-	command.Env = append(source.CleanGitEnv(), "GIT_AUTHOR_DATE=2000-01-01T00:00:00Z", "GIT_COMMITTER_DATE=2000-01-01T00:00:00Z")
-	output, err := command.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %v: %v %s", args, err, output)
+	repo.Git("add", "--all")
+	command := exec.Command("git", "-C", repo.Dir, "-c", "user.name=Capability Proof", "-c", "user.email=capability-proof@example.invalid",
+		"commit", "--quiet", "--no-verify", "--message", message)
+	command.Env = append(testkit.GitEnv(), "GIT_AUTHOR_DATE=2000-01-01T00:00:00Z", "GIT_COMMITTER_DATE=2000-01-01T00:00:00Z")
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("git commit: %v %s", err, output)
 	}
-	return string(output)
+	return repo.Git("rev-parse", "HEAD")
 }
 
 func proofDigest(data []byte) string {

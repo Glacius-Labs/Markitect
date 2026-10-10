@@ -16,6 +16,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 // TestProjectWorldNativeCLIWorkflow runs the built native CLI against a fixed
@@ -39,7 +41,9 @@ func TestProjectWorldNativeCLIWorkflow(t *testing.T) {
 		t.Fatalf("build native CLI: %v\n%s", err, output)
 	}
 
-	root := filepath.Join(t.TempDir(), "shop")
+	repo := testkit.NewRepo(t)
+	repo.Git("symbolic-ref", "HEAD", "refs/heads/feature-project-world")
+	root := repo.Dir
 	if err := copyShopTree(shop, root); err != nil {
 		t.Fatal(err)
 	}
@@ -58,12 +62,7 @@ func TestProjectWorldNativeCLIWorkflow(t *testing.T) {
 	if err := os.WriteFile(manifestPath, manifest, 0644); err != nil {
 		t.Fatal(err)
 	}
-	gitSmoke(t, root, "init", "--initial-branch=feature-project-world")
-	gitSmoke(t, root, "config", "core.autocrlf", "false")
-	gitSmoke(t, root, "config", "user.name", "Markitect source smoke")
-	gitSmoke(t, root, "config", "user.email", "markitect-source-smoke@example.invalid")
-	gitSmoke(t, root, "add", ".")
-	gitSmoke(t, root, "commit", "-m", "Freeze Shop source smoke fixture")
+	repo.Commit("Freeze Shop source smoke fixture")
 	smokeExploreReadiness(t, binary, root)
 
 	for _, action := range [][]string{
@@ -292,16 +291,6 @@ func treeDigest(root string) (string, error) {
 		fmt.Fprintf(h, "%s\x00%s\x00", file, data)
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil
-}
-
-func gitSmoke(t *testing.T, root string, args ...string) {
-	t.Helper()
-	command := exec.Command("git", args...)
-	command.Dir = root
-	command.Env = append(os.Environ(), "GIT_AUTHOR_NAME=Markitect source smoke", "GIT_AUTHOR_EMAIL=markitect-source-smoke@example.invalid", "GIT_COMMITTER_NAME=Markitect source smoke", "GIT_COMMITTER_EMAIL=markitect-source-smoke@example.invalid")
-	if output, err := command.CombinedOutput(); err != nil {
-		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, output)
-	}
 }
 
 func cliSmoke(t *testing.T, binary, root string, args ...string) (stdout []byte, stderr string, code int) {

@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/examples/selective-adoption/pathspell"
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -71,17 +72,15 @@ func TestSelectiveAdoptionCLI(t *testing.T) {
 	root := selectiveRepositoryRoot(t)
 	binary := buildSelectiveCLI(t, root)
 	temp := canonicalSelectiveTemp(t)
-	repo := filepath.Join(temp, "source-repo")
-	if err := os.MkdirAll(filepath.Join(repo, "docs", "validation"), 0755); err != nil {
-		t.Fatal(err)
-	}
-	repo = canonicalSelectivePath(t, repo)
-	writeSelectiveFile(t, repo, "docs/architecture.md", "# Architecture\nA rule is supported by this exact public document.\n")
-	writeSelectiveFile(t, repo, "docs/validation/public-report.md", "# Report\nA counterexample qualifies the proposed rule.\n")
-	writeSelectiveFile(t, repo, "private/secret.md", "DO NOT CAPTURE: private fixture sentinel 67caeec9\n")
-	writeSelectiveFile(t, repo, "docs/unselected.md", "Unselected content must remain outside the handoff.\n")
-	initialCommit := initSelectiveGit(t, repo)
-	initialSourceState := gitSelective(t, repo, "status", "--porcelain")
+	fixture := testkit.NewRepo(t)
+	fixture.Git("symbolic-ref", "HEAD", "refs/heads/fixture")
+	repo := canonicalSelectivePath(t, fixture.Dir)
+	fixture.Write("docs/architecture.md", "# Architecture\nA rule is supported by this exact public document.\n")
+	fixture.Write("docs/validation/public-report.md", "# Report\nA counterexample qualifies the proposed rule.\n")
+	fixture.Write("private/secret.md", "DO NOT CAPTURE: private fixture sentinel 67caeec9\n")
+	fixture.Write("docs/unselected.md", "Unselected content must remain outside the handoff.\n")
+	initialCommit := fixture.Commit("Freeze explicit evidence fixture")
+	initialSourceState := fixture.Git("status", "--porcelain")
 	if initialSourceState != "" {
 		t.Fatalf("fixture source is dirty before preview: %s", initialSourceState)
 	}
@@ -107,7 +106,7 @@ func TestSelectiveAdoptionCLI(t *testing.T) {
 	if got, want := pathsFromPreview(preview1), []string{"docs/architecture.md", "docs/validation/public-report.md"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("selected files = %v, want %v", got, want)
 	}
-	if got := gitSelective(t, repo, "status", "--porcelain"); got != initialSourceState {
+	if got := fixture.Git("status", "--porcelain"); got != initialSourceState {
 		t.Fatalf("prepare changed source state: %q", got)
 	}
 
@@ -194,8 +193,8 @@ func TestSelectiveAdoptionCLI(t *testing.T) {
 
 	// An unrelated commit changes the source revision identity, but not the
 	// selected-only content snapshot. New handoff identity requires new review.
-	writeSelectiveFile(t, repo, "docs/new-unselected-note.md", "A later, unselected file.\n")
-	unselectedCommit := commitSelective(t, repo, "Add an unrelated file")
+	fixture.Write("docs/new-unselected-note.md", "A later, unselected file.\n")
+	unselectedCommit := fixture.Commit("Add an unrelated file")
 	writeSelectiveScope(t, scopePath, repo, unselectedCommit)
 	preview2 := runPreparePreview(t, binary, scopePath, filepath.Join(externalParent, "handoff-unselected"))
 	if preview2.Handoff.Repositories[0].SnapshotDigest != preview1.Handoff.Repositories[0].SnapshotDigest {
@@ -207,8 +206,8 @@ func TestSelectiveAdoptionCLI(t *testing.T) {
 
 	// A selected-byte change requires another preview and invalidates the saved
 	// expected digest before any external workspace can be created.
-	writeSelectiveFile(t, repo, "docs/architecture.md", "# Architecture\nThe selected fact has changed.\n")
-	selectedCommit := commitSelective(t, repo, "Change a selected fact")
+	fixture.Write("docs/architecture.md", "# Architecture\nThe selected fact has changed.\n")
+	selectedCommit := fixture.Commit("Change a selected fact")
 	writeSelectiveScope(t, scopePath, repo, selectedCommit)
 	preview3 := runPreparePreview(t, binary, scopePath, filepath.Join(externalParent, "handoff-stale"))
 	if preview3.Handoff.Repositories[0].SnapshotDigest == preview2.Handoff.Repositories[0].SnapshotDigest {
@@ -222,7 +221,7 @@ func TestSelectiveAdoptionCLI(t *testing.T) {
 	if _, err := os.Lstat(staleDest); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("stale write created destination: %v", err)
 	}
-	if got := gitSelective(t, repo, "status", "--porcelain"); got != "" {
+	if got := fixture.Git("status", "--porcelain"); got != "" {
 		t.Fatalf("prepare/copy-me altered source checkout: %s", got)
 	}
 }
@@ -381,40 +380,6 @@ func runSelectiveCLI(t *testing.T, binary string, args ...string) []byte {
 
 func runSelectiveCLIExpectFailure(binary string, args ...string) ([]byte, error) {
 	return exec.Command(binary, args...).CombinedOutput()
-}
-
-func initSelectiveGit(t *testing.T, root string) string {
-	t.Helper()
-	gitSelective(t, root, "init", "-b", "fixture")
-	gitSelective(t, root, "config", "user.name", "Selective Adoption Fixture")
-	gitSelective(t, root, "config", "user.email", "fixture@example.invalid")
-	return commitSelective(t, root, "Freeze explicit evidence fixture")
-}
-
-func commitSelective(t *testing.T, root, message string) string {
-	t.Helper()
-	gitSelective(t, root, "add", "--all")
-	gitSelective(t, root, "commit", "--allow-empty", "-m", message)
-	return gitSelective(t, root, "rev-parse", "HEAD")
-}
-
-func gitSelective(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	command := exec.Command("git", append([]string{"-C", root}, args...)...)
-	output, err := command.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, output)
-	}
-	return strings.TrimSpace(string(output))
-}
-
-func writeSelectiveFile(t *testing.T, root, relative, contents string) {
-	t.Helper()
-	path := filepath.Join(root, filepath.FromSlash(relative))
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		t.Fatal(err)
-	}
-	writeSelectiveBytes(t, path, []byte(contents))
 }
 
 func writeSelectiveBytes(t *testing.T, path string, contents []byte) {

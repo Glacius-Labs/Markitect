@@ -5,6 +5,8 @@ import (
 	"os/exec"
 	"reflect"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 var batchedGitIdentityArgs = []string{
@@ -12,7 +14,8 @@ var batchedGitIdentityArgs = []string{
 }
 
 func TestIdentifyGitUsesOneMetadataQueryAndRechecksAroundLoad(t *testing.T) {
-	root, revision := selectiveGitFixture(t)
+	repo, revision := selectiveGitFixture(t)
+	root := repo.Dir
 	var identifyCalls [][]string
 	run := func(repo string, args ...string) ([]byte, error) {
 		if reflect.DeepEqual(args, batchedGitIdentityArgs) {
@@ -46,7 +49,8 @@ func TestIdentifyGitUsesOneMetadataQueryAndRechecksAroundLoad(t *testing.T) {
 }
 
 func TestIdentifyGitFallsBackWhenCombinedPathsContainNewlines(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
 	var combinedCalls, individualCalls int
 	run := func(repo string, args ...string) ([]byte, error) {
 		if reflect.DeepEqual(args, batchedGitIdentityArgs) {
@@ -77,8 +81,11 @@ func TestIdentifyGitFallsBackWhenCombinedPathsContainNewlines(t *testing.T) {
 }
 
 func TestIdentifyGitPreservesSHA256ObjectFormat(t *testing.T) {
-	root := t.TempDir()
+	// Run git directly: a Git without SHA-256 support skips the test rather
+	// than failing it.
+	root := testkit.TempDir(t)
 	cmd := exec.Command("git", "init", "-q", "--object-format=sha256", root)
+	cmd.Env = testkit.GitEnv()
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Skipf("installed Git cannot create SHA-256 repositories: %v (%s)", err, output)
 	}

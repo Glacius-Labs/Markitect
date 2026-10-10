@@ -8,22 +8,22 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 func TestLoadSelectedReadsOnlyExactBlobsAfterAllMetadata(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "one.txt", "first")
-	writeTestFile(t, root, "two.txt", "second")
-	writeTestFile(t, root, "unselected.txt", "do not read")
-	gitTest(t, root, "add", "one.txt", "two.txt", "unselected.txt")
-	gitTest(t, root, "commit", "-qm", "selected files")
-	commit := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("one.txt", "first")
+	repo.Write("two.txt", "second")
+	repo.Write("unselected.txt", "do not read")
+	commit := repo.Commit("selected files")
 
 	var events []string
 	var treeArgs [][]string
@@ -78,7 +78,8 @@ func TestLoadSelectedReadsOnlyExactBlobsAfterAllMetadata(t *testing.T) {
 }
 
 func TestSelectedTreePathBatchesBoundCountAndWindowsCommandLength(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
 	commit := strings.Repeat("a", 40)
 	paths := make([]string, maxSelectedTreePathsPerCommand+1)
 	for i := range paths {
@@ -124,16 +125,14 @@ func TestSelectedTreePathBatchesBoundCountAndWindowsCommandLength(t *testing.T) 
 }
 
 func TestLoadSelectedRejectsInvalidPreflightBeforeAnyBlobRead(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "dir/file.txt", "file")
-	writeTestFile(t, root, "link-target.txt", "target")
-	gitTest(t, root, "add", "dir/file.txt", "link-target.txt")
-	gitTest(t, root, "commit", "-qm", "tree and file")
-	commit := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
-	blobOID := strings.Fields(gitTest(t, root, "rev-parse", "HEAD:link-target.txt"))[0]
-	gitTest(t, root, "update-index", "--add", "--cacheinfo", "120000,"+blobOID+",link.txt")
-	gitTest(t, root, "commit", "-qm", "symlink")
-	commit = strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("dir/file.txt", "file")
+	repo.Write("link-target.txt", "target")
+	repo.Commit("tree and file")
+	blobOID := repo.Git("rev-parse", "HEAD:link-target.txt")
+	repo.Git("update-index", "--add", "--cacheinfo", "120000,"+blobOID+",link.txt")
+	commit := commitIndex(repo, "symlink")
 
 	cases := []struct {
 		name string
@@ -170,10 +169,10 @@ func TestLoadSelectedRejectsInvalidPreflightBeforeAnyBlobRead(t *testing.T) {
 }
 
 func TestLoadSelectedRejectsSubmoduleBeforeBlobRead(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	gitTest(t, root, "update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("a", 40)+",module")
-	gitTest(t, root, "commit", "-qm", "submodule entry")
-	commit := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Git("update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("a", 40)+",module")
+	commit := commitIndex(repo, "submodule entry")
 	contentReads := 0
 	_, err := loadSelected(root, commit, []string{"module"}, GitOutput, func(string, []treeFile) (map[string][]byte, error) {
 		contentReads++
@@ -188,11 +187,10 @@ func TestLoadSelectedRejectsSubmoduleBeforeBlobRead(t *testing.T) {
 }
 
 func TestLoadSelectedAllowsExplicitlySelectedNormallyExcludedPath(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "vendor/evidence.txt", "selected evidence")
-	gitTest(t, root, "add", "vendor/evidence.txt")
-	gitTest(t, root, "commit", "-qm", "explicit evidence")
-	commit := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("vendor/evidence.txt", "selected evidence")
+	commit := repo.Commit("explicit evidence")
 	loaded, err := LoadSelected(root, commit, []string{"vendor/evidence.txt"})
 	if err != nil {
 		t.Fatal(err)
@@ -203,11 +201,10 @@ func TestLoadSelectedAllowsExplicitlySelectedNormallyExcludedPath(t *testing.T) 
 }
 
 func TestLoadSelectedRejectsGlobsAndDuplicatesBeforeBlobRead(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "evidence[1].txt", "content")
-	gitTest(t, root, "add", "evidence[1].txt")
-	gitTest(t, root, "commit", "-qm", "bracketed path")
-	commit := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("evidence[1].txt", "content")
+	commit := repo.Commit("bracketed path")
 	for _, paths := range [][]string{{"evidence[1].txt"}, {"seed.txt", "seed.txt"}} {
 		contentReads := 0
 		_, err := loadSelected(root, commit, paths, GitOutput, func(string, []treeFile) (map[string][]byte, error) {
@@ -224,11 +221,10 @@ func TestLoadSelectedRejectsGlobsAndDuplicatesBeforeBlobRead(t *testing.T) {
 }
 
 func TestLoadSelectedVerifiesReturnedBlobBytesAgainstOID(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "evidence.txt", "correct")
-	gitTest(t, root, "add", "evidence.txt")
-	gitTest(t, root, "commit", "-qm", "selected blob")
-	commit := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("evidence.txt", "correct")
+	commit := repo.Commit("selected blob")
 	_, err := loadSelected(root, commit, []string{"evidence.txt"}, GitOutput, func(string, []treeFile) (map[string][]byte, error) {
 		return map[string][]byte{"evidence.txt": []byte("corrupt")}, nil
 	})
@@ -239,12 +235,12 @@ func TestLoadSelectedVerifiesReturnedBlobBytesAgainstOID(t *testing.T) {
 
 func TestLoadSelectedDoesNotFetchPromisorObjectsOrMutateRepository(t *testing.T) {
 	root, commit := partialCloneFixture(t)
-	selectedOID := strings.TrimSpace(gitTest(t, root, "rev-parse", commit+":selected.txt"))
-	unselectedOID := strings.TrimSpace(gitTest(t, root, "rev-parse", commit+":unselected.txt"))
+	selectedOID := testkit.Git(t, root, "rev-parse", commit+":selected.txt")
+	unselectedOID := testkit.Git(t, root, "rev-parse", commit+":unselected.txt")
 	if selectedOID == unselectedOID {
 		t.Fatal("fixture selected and unselected blob IDs unexpectedly match")
 	}
-	missingBefore := gitTest(t, root, "rev-list", "--objects", "--missing=print", commit)
+	missingBefore := testkit.Git(t, root, "rev-list", "--objects", "--missing=print", commit)
 	if !strings.Contains(missingBefore, "?"+selectedOID) || !strings.Contains(missingBefore, "?"+unselectedOID) {
 		t.Fatalf("fixture blobs were not both absent before acquisition: %q", missingBefore)
 	}
@@ -272,7 +268,7 @@ func TestLoadSelectedDoesNotFetchPromisorObjectsOrMutateRepository(t *testing.T)
 	if stateAfter := partialGitState(t, root); !reflect.DeepEqual(stateAfter, stateBefore) {
 		t.Fatalf("LoadSelected changed repository state: before=%v after=%v", stateBefore, stateAfter)
 	}
-	missingAfter := gitTest(t, root, "rev-list", "--objects", "--missing=print", commit)
+	missingAfter := testkit.Git(t, root, "rev-list", "--objects", "--missing=print", commit)
 	if !strings.Contains(missingAfter, "?"+selectedOID) || !strings.Contains(missingAfter, "?"+unselectedOID) {
 		t.Fatalf("selected or unselected promisor blob was fetched: %q", missingAfter)
 	}
@@ -300,28 +296,21 @@ func TestSelectiveGitEnvironmentDisablesLazyFetchAndWrites(t *testing.T) {
 
 func partialCloneFixture(t *testing.T) (string, string) {
 	t.Helper()
-	base := t.TempDir()
-	source := filepath.Join(base, "source")
+	source := testkit.NewRepo(t)
+	source.Write("selected.txt", "selected blob")
+	source.Write("unselected.txt", "unselected blob")
+	source.Commit("promisor source")
+	base := testkit.TempDir(t)
 	remote := filepath.Join(base, "remote.git")
 	partial := filepath.Join(base, "partial")
-	if err := os.Mkdir(source, 0755); err != nil {
-		t.Fatal(err)
-	}
-	gitTest(t, source, "init", "-q", "-b", "main")
-	gitTest(t, source, "config", "user.email", "promisor-test@example.invalid")
-	gitTest(t, source, "config", "user.name", "Promisor Test")
-	writeTestFile(t, source, "selected.txt", "selected blob")
-	writeTestFile(t, source, "unselected.txt", "unselected blob")
-	gitTest(t, source, "add", "selected.txt", "unselected.txt")
-	gitTest(t, source, "commit", "-qm", "promisor source")
-	gitTest(t, base, "init", "--bare", "-q", "--initial-branch=main", remote)
-	gitTest(t, remote, "config", "uploadpack.allowFilter", "true")
-	gitTest(t, source, "remote", "add", "origin", localGitURL(remote))
-	gitTest(t, source, "push", "-q", "origin", "main")
-	gitTest(t, remote, "symbolic-ref", "HEAD", "refs/heads/main")
-	gitTest(t, source, "-c", "protocol.file.allow=always", "clone", "--quiet", "--filter=blob:none", "--no-checkout", "--branch", "main", localGitURL(remote), partial)
-	commit := strings.TrimSpace(gitTest(t, partial, "rev-parse", "HEAD"))
-	config := gitTest(t, partial, "config", "--get-regexp", "remote\\.origin\\.promisor|remote\\.origin\\.partialclonefilter")
+	testkit.Git(t, base, "init", "--bare", "-q", "--initial-branch=main", remote)
+	testkit.Git(t, remote, "config", "uploadpack.allowFilter", "true")
+	source.Git("remote", "add", "origin", localGitURL(remote))
+	source.Git("push", "-q", "origin", "main")
+	testkit.Git(t, remote, "symbolic-ref", "HEAD", "refs/heads/main")
+	source.Git("-c", "protocol.file.allow=always", "clone", "--quiet", "--filter=blob:none", "--no-checkout", "--branch", "main", localGitURL(remote), partial)
+	commit := testkit.Git(t, partial, "rev-parse", "HEAD")
+	config := testkit.Git(t, partial, "config", "--get-regexp", "remote\\.origin\\.promisor|remote\\.origin\\.partialclonefilter")
 	if !strings.Contains(config, "remote.origin.promisor true") || !strings.Contains(config, "remote.origin.partialclonefilter blob:none") {
 		t.Fatalf("partial clone promisor config = %q", config)
 	}
@@ -377,7 +366,8 @@ func partialGitState(t *testing.T, root string) map[string]string {
 }
 
 func TestIdentifyGitRejectsNestedRootAndIdentifiesWorktree(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
+	repo, head := selectiveGitFixture(t)
+	root := repo.Dir
 	if _, err := IdentifyGit(filepath.Join(root, "nested")); err == nil {
 		t.Fatal("nested non-repository root was accepted")
 	}
@@ -388,10 +378,8 @@ func TestIdentifyGitRejectsNestedRootAndIdentifiesWorktree(t *testing.T) {
 	if !samePath(identity.Root, root) || identity.GitDir == "" || identity.CommonDir == "" || identity.Digest != gitIdentityDigest(identity) {
 		t.Fatalf("identity = %#v expectedRoot=%q rootSame=%v digestSame=%v", identity, root, samePath(identity.Root, root), identity.Digest == gitIdentityDigest(identity))
 	}
-	clone := t.TempDir()
-	if err := exec.Command("git", "clone", "--quiet", root, clone).Run(); err != nil {
-		t.Fatal(err)
-	}
+	clone := testkit.TempDir(t)
+	repo.Git("clone", "--quiet", root, clone)
 	cloneIdentity, err := IdentifyGit(clone)
 	if err != nil {
 		t.Fatal(err)
@@ -399,8 +387,8 @@ func TestIdentifyGitRejectsNestedRootAndIdentifiesWorktree(t *testing.T) {
 	if cloneIdentity.Digest == identity.Digest {
 		t.Fatal("independent clone has same repository-location identity digest")
 	}
-	linked := filepath.Join(t.TempDir(), "linked")
-	gitTest(t, root, "worktree", "add", "--detach", linked, strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD")))
+	linked := filepath.Join(testkit.TempDir(t), "linked")
+	repo.Git("worktree", "add", "--detach", linked, head)
 	linkedIdentity, err := IdentifyGit(linked)
 	if err != nil {
 		t.Fatal(err)
@@ -411,7 +399,8 @@ func TestIdentifyGitRejectsNestedRootAndIdentifiesWorktree(t *testing.T) {
 }
 
 func TestLoadSelectedRejectsCommitSelectorsAndRunnerFailure(t *testing.T) {
-	root, commit := selectiveGitFixture(t)
+	repo, commit := selectiveGitFixture(t)
+	root := repo.Dir
 	for _, selector := range []string{"HEAD", commit[:12], strings.ToUpper(commit)} {
 		if _, err := loadSelected(root, selector, nil, GitOutput, func(string, []treeFile) (map[string][]byte, error) { return nil, nil }); err == nil {
 			t.Errorf("accepted non-full-lowercase commit selector %q", selector)
@@ -424,14 +413,11 @@ func TestLoadSelectedRejectsCommitSelectorsAndRunnerFailure(t *testing.T) {
 	}
 }
 
-func selectiveGitFixture(t *testing.T) (string, string) {
+// selectiveGitFixture returns a repository whose first commit holds seed.txt,
+// and that commit.
+func selectiveGitFixture(t *testing.T) (*testkit.Repo, string) {
 	t.Helper()
-	root := t.TempDir()
-	gitTest(t, root, "init", "-q", "-b", "main")
-	gitTest(t, root, "config", "user.email", "selective-test@example.invalid")
-	gitTest(t, root, "config", "user.name", "Selective Test")
-	writeTestFile(t, root, "seed.txt", "seed")
-	gitTest(t, root, "add", "seed.txt")
-	gitTest(t, root, "commit", "-qm", "seed")
-	return root, strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	repo := testkit.NewRepo(t)
+	repo.Write("seed.txt", "seed")
+	return repo, repo.Commit("seed")
 }

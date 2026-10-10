@@ -2,10 +2,10 @@ package source
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 func mapKeys[T any](values map[string]T) []string {
@@ -16,16 +16,12 @@ func mapKeys[T any](values map[string]T) []string {
 	return keys
 }
 
-func gitTest(t *testing.T, dir string, args ...string) string {
-	t.Helper()
-	cmd := exec.Command("git", args...)
-	cmd.Dir = dir
-	cmd.Env = CleanGitEnv()
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %s failed: %v\n%s", strings.Join(args, " "), err, out)
-	}
-	return string(out)
+// commitIndex commits the index as it is and returns the commit. Repo.Commit
+// stages every change first, which would drop entries without a work tree
+// file, such as the symlinks and gitlinks tests add with update-index.
+func commitIndex(repo *testkit.Repo, message string) string {
+	repo.Git("commit", "--quiet", "--no-verify", "--message", message)
+	return repo.Git("rev-parse", "HEAD")
 }
 
 func writeTestFile(t *testing.T, root, name, content string) {

@@ -48,16 +48,10 @@ func NewRepo(t testing.TB) *Repo {
 	return r
 }
 
-// Git runs git in the repository and returns its trimmed standard output. It
-// fails the test when git fails. Git runs without the global and system
-// configuration of the machine and without inherited GIT_* variables.
+// Git runs git in the repository like the package function Git.
 func (r *Repo) Git(args ...string) string {
 	r.t.Helper()
-	out, err := r.run(nil, args...)
-	if err != nil {
-		r.t.Fatalf("git %s: %v", strings.Join(args, " "), err)
-	}
-	return out
+	return Git(r.t, r.Dir, args...)
 }
 
 // Write writes a file relative to the repository root, creating parent
@@ -80,14 +74,28 @@ func (r *Repo) Commit(message string) string {
 	r.Git("add", "--all")
 	when := firstCommitTime.Add(time.Duration(r.commits) * time.Minute).Format(time.RFC3339)
 	r.commits++
-	if _, err := r.run([]string{"GIT_AUTHOR_DATE=" + when, "GIT_COMMITTER_DATE=" + when}, "commit", "--quiet", "--allow-empty", "--no-verify", "--message", message); err != nil {
+	if _, err := runGit(r.Dir, []string{"GIT_AUTHOR_DATE=" + when, "GIT_COMMITTER_DATE=" + when}, "commit", "--quiet", "--allow-empty", "--no-verify", "--message", message); err != nil {
 		r.t.Fatalf("git commit: %v", err)
 	}
 	return r.Git("rev-parse", "HEAD")
 }
 
-func (r *Repo) run(extraEnv []string, args ...string) (string, error) {
-	cmd := exec.Command("git", append([]string{"-C", r.Dir}, args...)...)
+// Git runs git in dir and returns its trimmed standard output. It fails the
+// test with git's standard error when git fails. Git runs without the global
+// and system configuration of the machine and without inherited GIT_*
+// variables. Use it for directories that are not a Repo, such as clones, bare
+// remotes and linked worktrees.
+func Git(t testing.TB, dir string, args ...string) string {
+	t.Helper()
+	out, err := runGit(dir, nil, args...)
+	if err != nil {
+		t.Fatalf("git %s: %v", strings.Join(args, " "), err)
+	}
+	return out
+}
+
+func runGit(dir string, extraEnv []string, args ...string) (string, error) {
+	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
 	cmd.Env = append(GitEnv(), extraEnv...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr

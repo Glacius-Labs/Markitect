@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	core "github.com/Glacius-Labs/Markitect/src/internal/host/compat/v0_13/kernel"
 	"github.com/Glacius-Labs/Markitect/src/internal/host"
+	core "github.com/Glacius-Labs/Markitect/src/internal/host/compat/v0_13/kernel"
 )
 
 func newSoftwareArchitectureV11(t *testing.T) (string, *host.Project) {
@@ -154,10 +154,11 @@ func TestSoftwareArchitectureSameTargetFeatureOwnership(t *testing.T) {
 }
 
 func TestSoftwareArchitectureV11ToV21VersionedPolicyLifecycle(t *testing.T) {
-	root := t.TempDir()
+	repo := softwareArchitectureRepo(t)
+	root := repo.Dir
 	copySoftwareArchitecture(t, root)
 	installSoftwareArchitectureV1_1(t, root)
-	rev1 := initSoftwareArchitectureGit(t, root)
+	rev1 := repo.Commit("Freeze software architecture fixture")
 	v11 := loadSoftwareArchitecture(t, root, rev1)
 	if v11.Snapshot.Provisional || len(v11.Diagnostics) != 0 || v11.Graph.Project.Spec.Packages[0].Version != "1.1.0" {
 		t.Fatalf("frozen v1.1 baseline is not clean/exact: %#v %#v", v11.Snapshot, v11.Diagnostics)
@@ -169,7 +170,7 @@ func TestSoftwareArchitectureV11ToV21VersionedPolicyLifecycle(t *testing.T) {
 	}
 
 	archive := installSoftwareArchitectureV2_1(t, root)
-	rev2 := commitSoftwareArchitecture(t, root, "Select software architecture package v2.1")
+	rev2 := repo.Commit("Select software architecture package v2.1")
 	v21 := loadSoftwareArchitecture(t, root, rev2)
 	if v21.Snapshot.Provisional || v21.Graph.Project.Spec.Packages[0].Version != "2.1.0" {
 		t.Fatalf("v2.1 pin was not captured in an exact fixed snapshot: %#v", v21.Graph.Project.Spec.Packages)
@@ -202,7 +203,7 @@ func TestSoftwareArchitectureV11ToV21VersionedPolicyLifecycle(t *testing.T) {
 		})
 		writeSoftwareResource(t, root, authoring.Resource{Core: authoring.Core{APIVersion: softwareArchitectureAPI, Kind: "Validator", Metadata: core.Metadata{Name: validatorName, Namespace: "engineering"}, Data: map[string]any{"summary": "Validates the selected command input."}}})
 	}
-	rev3 := commitSoftwareArchitecture(t, root, "Complete v2.1 validator policy")
+	rev3 := repo.Commit("Complete v2.1 validator policy")
 	passed := loadSoftwareArchitecture(t, root, rev3)
 	if len(passed.Diagnostics) != 0 {
 		t.Fatalf("implemented Validators should complete the v2.1 lifecycle cleanly: %#v", passed.Diagnostics)

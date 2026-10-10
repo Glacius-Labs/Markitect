@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 // publicExampleFixture creates an immutable source snapshot from one checked-in
@@ -22,21 +24,15 @@ func publicExampleFixture(t *testing.T, fixtureDirectory string) (string, string
 		t.Fatalf("public fixture directory %q is unavailable: %v", sourceDirectory, err)
 	}
 
-	root := filepath.Join(t.TempDir(), "fixture-repository")
-	if err := os.MkdirAll(root, 0755); err != nil {
-		t.Fatal(err)
-	}
-	copyPublicFixtureTree(t, sourceDirectory, filepath.Join(root, filepath.FromSlash(fixtureDirectory)))
-	if err := os.WriteFile(filepath.Join(root, ".gitattributes"), []byte("* -text\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	proofGit(t, root, "init", "--template=", "--object-format=sha1", "--initial-branch=codex/public-example-fixture")
-	proofGit(t, root, "config", "core.autocrlf", "false")
-	revision := proofCommit(t, root, "freeze public example fixture")
+	repo := testkit.NewRepo(t)
+	repo.Git("symbolic-ref", "HEAD", "refs/heads/codex/public-example-fixture")
+	copyPublicFixtureTree(t, sourceDirectory, filepath.Join(repo.Dir, filepath.FromSlash(fixtureDirectory)))
+	repo.Write(".gitattributes", "* -text\n")
+	revision := repo.Commit("freeze public example fixture")
 	if len(revision) != 40 || strings.Trim(revision, "0123456789abcdef") != "" {
 		t.Fatalf("fixture commit is not a full SHA-1 revision: %q", revision)
 	}
-	return root, revision
+	return repo.Dir, revision
 }
 
 // harnessRepositoryRoot locates the checkout by its module and source markers,

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host"
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 func TestEngineeringDiscoveryProjectKeepsDossierOutsideCanonicalGraph(t *testing.T) {
@@ -33,12 +34,10 @@ func TestEngineeringDiscoveryProjectKeepsDossierOutsideCanonicalGraph(t *testing
 
 func TestEngineeringDiscoveryDossierBindsEvidenceAndCandidateToDecision(t *testing.T) {
 	moduleRoot := exampleRepoRoot(t)
-	projectRoot := filepath.Join(t.TempDir(), "project")
+	repo := testkit.NewRepo(t)
+	projectRoot := repo.Dir
 	copyTree(t, filepath.Join(moduleRoot, "examples", "engineering-discovery", "project-template"), projectRoot)
-	git(t, projectRoot, "init", "-q")
-	git(t, projectRoot, "add", "--all")
-	git(t, projectRoot, "-c", "user.name=Discovery Example", "-c", "user.email=example@invalid", "commit", "-m", "freeze selected evidence")
-	revision := strings.TrimSpace(git(t, projectRoot, "rev-parse", "HEAD"))
+	revision := repo.Commit("freeze selected evidence")
 
 	project, err := host.Load(projectRoot, revision)
 	if err != nil {
@@ -177,9 +176,7 @@ func TestEngineeringDiscoveryDossierBindsEvidenceAndCandidateToDecision(t *testi
 	if err := os.WriteFile(filepath.Join(projectRoot, "src", "Refund", "Handler.cs"), []byte("namespace Synthetic.Refund; // changed after review\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	git(t, projectRoot, "add", "--all")
-	git(t, projectRoot, "-c", "user.name=Discovery Example", "-c", "user.email=example@invalid", "commit", "-m", "change selected evidence")
-	newRevision := strings.TrimSpace(git(t, projectRoot, "rev-parse", "HEAD"))
+	newRevision := repo.Commit("change selected evidence")
 	_, stderr, err = runDiscoveryChecker(moduleRoot, projectRoot, newRevision, evidence, candidate, decision)
 	if err == nil || !strings.Contains(stderr, "immutable revision and snapshot digest") {
 		t.Fatalf("changed source snapshot did not invalidate the evidence ledger: err=%v stderr=%s", err, stderr)
@@ -222,16 +219,6 @@ func copyTree(t *testing.T, source, destination string) {
 	}); err != nil {
 		t.Fatalf("copy project template: %v", err)
 	}
-}
-
-func git(t *testing.T, directory string, args ...string) string {
-	t.Helper()
-	command := exec.Command("git", append([]string{"-C", directory}, args...)...)
-	output, err := command.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, output)
-	}
-	return string(output)
 }
 
 func exampleRepoRoot(t *testing.T) string {

@@ -35,6 +35,29 @@ func TestNewRepoCommitsAreDeterministic(t *testing.T) {
 	}
 }
 
+// fatalRecorder records a fatal failure instead of ending the test.
+type fatalRecorder struct {
+	testing.TB
+	message string
+}
+
+func (r *fatalRecorder) Fatalf(format string, args ...any) { r.message = fmt.Sprintf(format, args...) }
+
+func TestGitRunsInDirWithoutInheritedVariables(t *testing.T) {
+	repo := NewRepo(t)
+	repo.Write("file.txt", "content\n")
+	head := repo.Commit("first")
+	t.Setenv("GIT_DIR", filepath.Join(repo.Dir, "missing"))
+	if got := Git(t, repo.Dir, "rev-parse", "HEAD"); got != head || len(got) != 40 {
+		t.Fatalf("Git rev-parse HEAD = %q, want trimmed %q", got, head)
+	}
+	failed := &fatalRecorder{TB: t}
+	Git(failed, repo.Dir, "rev-parse", "--verify", "missing-ref")
+	if !strings.Contains(failed.message, "git rev-parse --verify missing-ref") || !strings.Contains(failed.message, "fatal:") {
+		t.Fatalf("failure = %q, want the command and git's standard error", failed.message)
+	}
+}
+
 func TestTempDirIsShortAndCanonical(t *testing.T) {
 	dir := TempDir(t)
 	tempRoot, err := filepath.EvalSymlinks(os.TempDir())

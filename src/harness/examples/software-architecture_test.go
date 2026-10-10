@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/authoring/contentpackage"
 	core "github.com/Glacius-Labs/Markitect/src/internal/host/compat/v0_13/kernel"
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 const (
@@ -70,29 +70,12 @@ func loadSoftwareArchitecture(t *testing.T, root, revision string) *host.Project
 	return project
 }
 
-func gitSoftwareArchitecture(t *testing.T, root string, args ...string) string {
+// softwareArchitectureRepo returns an empty repository on the fixture branch.
+func softwareArchitectureRepo(t *testing.T) *testkit.Repo {
 	t.Helper()
-	command := exec.Command("git", append([]string{"-C", root}, args...)...)
-	output, err := command.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, output)
-	}
-	return strings.TrimSpace(string(output))
-}
-
-func initSoftwareArchitectureGit(t *testing.T, root string) string {
-	t.Helper()
-	gitSoftwareArchitecture(t, root, "init", "-b", "codex/software-architecture-test")
-	gitSoftwareArchitecture(t, root, "config", "user.name", "Software Architecture Fixture")
-	gitSoftwareArchitecture(t, root, "config", "user.email", "fixture@example.invalid")
-	return commitSoftwareArchitecture(t, root, "Freeze software architecture fixture")
-}
-
-func commitSoftwareArchitecture(t *testing.T, root, message string) string {
-	t.Helper()
-	gitSoftwareArchitecture(t, root, "add", "--all")
-	gitSoftwareArchitecture(t, root, "commit", "--allow-empty", "-m", message)
-	return gitSoftwareArchitecture(t, root, "rev-parse", "HEAD")
+	repo := testkit.NewRepo(t)
+	repo.Git("symbolic-ref", "HEAD", "refs/heads/codex/software-architecture-test")
+	return repo
 }
 
 func readSoftwareArchitectureTree(t *testing.T, root string) map[string][]byte {
@@ -419,17 +402,18 @@ func TestSoftwareArchitecturePackageSourcesAndArchiveAreReproducible(t *testing.
 }
 
 func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testing.T) {
-	root := t.TempDir()
+	repo := softwareArchitectureRepo(t)
+	root := repo.Dir
 	copySoftwareArchitecture(t, root)
 	installSoftwareArchitectureV1(t, root)
-	rev1 := initSoftwareArchitectureGit(t, root)
+	rev1 := repo.Commit("Freeze software architecture fixture")
 	v1 := loadSoftwareArchitecture(t, root, rev1)
 	if v1.Snapshot.Provisional || len(v1.Diagnostics) != 0 {
 		t.Fatalf("frozen v1 consumer is not clean: provisional=%t diagnostics=%#v", v1.Snapshot.Provisional, v1.Diagnostics)
 	}
 
 	v2Archive := installSoftwareArchitectureV2(t, root)
-	rev2 := commitSoftwareArchitecture(t, root, "Select software architecture package v2")
+	rev2 := repo.Commit("Select software architecture package v2")
 	v2 := loadSoftwareArchitecture(t, root, rev2)
 	if v2.Snapshot.Provisional || v2.Graph.Project.Spec.Packages[0].Version != "2.0.0" {
 		t.Fatalf("v2 pin was not captured as an exact fixed snapshot: %#v", v2.Graph.Project.Spec.Packages)
@@ -487,7 +471,7 @@ func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testi
 		ExpiresOn: "2026-11-01",
 	}
 	updateSoftwareProject(t, root, v2, "2026-10-02", []core.PolicyException{exception})
-	rev3 := commitSoftwareArchitecture(t, root, "Record one bounded validator exception")
+	rev3 := repo.Commit("Record one bounded validator exception")
 	waived := loadSoftwareArchitecture(t, root, rev3)
 	if !hasSoftwareDiagnostic(waived, "constraint."+commandValidatorRule) {
 		t.Fatal("waiving one subject incorrectly hid the other selected Command failure")
@@ -505,7 +489,7 @@ func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testi
 		data["validators"] = []any{map[string]any{"kind": "Validator", "name": "invoice-validation", "namespace": "engineering"}}
 	})
 	writeSoftwareResource(t, root, authoring.Resource{Core: authoring.Core{APIVersion: softwareArchitectureAPI, Kind: "Validator", Metadata: core.Metadata{Name: "invoice-validation", Namespace: "engineering"}, Data: map[string]any{"summary": "Validates invoice command input."}}})
-	rev4 := commitSoftwareArchitecture(t, root, "Implement the second selected Command Validator")
+	rev4 := repo.Commit("Implement the second selected Command Validator")
 	cleared := loadSoftwareArchitecture(t, root, rev4)
 	if len(cleared.Diagnostics) != 0 {
 		t.Fatalf("the remaining failure should be cleared while the exact exception remains: %#v", cleared.Diagnostics)
@@ -540,7 +524,7 @@ func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testi
 	})
 	writeSoftwareResource(t, root, authoring.Resource{Core: authoring.Core{APIVersion: softwareArchitectureAPI, Kind: "Validator", Metadata: core.Metadata{Name: "order-validation", Namespace: "engineering"}, Data: map[string]any{"summary": "Validates order command input."}}})
 	updateSoftwareProject(t, root, cleared, "", nil)
-	rev5 := commitSoftwareArchitecture(t, root, "Implement final Validator and remove exception")
+	rev5 := repo.Commit("Implement final Validator and remove exception")
 	passed := loadSoftwareArchitecture(t, root, rev5)
 	if len(passed.Diagnostics) != 0 {
 		t.Fatalf("adding Validators and removing the exception should pass v2: %#v", passed.Diagnostics)
@@ -743,9 +727,10 @@ func TestSoftwareArchitecturePolicyExceptionExpiryAndStalenessAreActionable(t *t
 }
 
 func TestSoftwareArchitectureBoundedHandlerImpactAndReadOnlyReconcile(t *testing.T) {
-	root := t.TempDir()
+	repo := softwareArchitectureRepo(t)
+	root := repo.Dir
 	copySoftwareArchitecture(t, root)
-	baseRevision := initSoftwareArchitectureGit(t, root)
+	baseRevision := repo.Commit("Freeze software architecture fixture")
 	base := loadSoftwareArchitecture(t, root, baseRevision)
 	mutateSoftwareResource(t, root, base, "engineering/architecture.markitect.org/v1alpha1/Handler/create-order-handler", func(data map[string]any) {
 		data["summary"] = "Coordinates the revised order acceptance flow."

@@ -9,19 +9,18 @@ import (
 )
 
 func TestDelegationPoolsAreExplicitAndContextMetadataCarriesNoContent(t *testing.T) {
-	root, sourceCommit := committedRepository(t, map[string]string{
+	repo, sourceCommit := committedRepository(t, map[string]string{
 		"src/root.go":    "package src\nfunc Root() {}\n",
 		"src/child.go":   "package src\nfunc Child() {}\n",
 		"src/leaf.go":    "package src\nfunc Leaf() {}\n",
 		"src/private.go": "package src\nfunc Private() {}\n",
 	})
-	gitRun(t, root, "checkout", "-b", "codex/delegation-pools")
+	root := repo.Dir
+	repo.Git("checkout", "-b", "codex/delegation-pools")
 	if _, err := projectwork.Init(root, "Delegation fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "--all")
-	gitRun(t, root, "commit", "--quiet", "-m", "initialize delegation target")
-	targetRevision := gitRun(t, root, "rev-parse", "HEAD")
+	targetRevision := repo.Commit("initialize delegation target")
 	target, err := projectwork.Load(root, targetRevision)
 	if err != nil {
 		t.Fatal(err)

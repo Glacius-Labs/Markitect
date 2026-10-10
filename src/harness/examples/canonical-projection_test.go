@@ -20,6 +20,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/dotnet"
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -27,9 +28,12 @@ const canonicalProjectionConfigPath = "examples/canonical-projection/canonical.y
 
 func TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair(t *testing.T) {
 	fixtureRoot := canonicalProjectionFixtureRoot(t)
-	tempRoot := t.TempDir()
-	root := filepath.Join(tempRoot, "repo")
-	absoluteTemp, err := filepath.Abs(tempRoot)
+	repo := testkit.NewRepo(t)
+	repo.Git("symbolic-ref", "HEAD", "refs/heads/codex/canonical-projection-e2e")
+	root := repo.Dir
+	// The kit creates the repository directly below the canonical temporary
+	// directory.
+	absoluteTemp, err := filepath.EvalSymlinks(os.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,9 +48,6 @@ func TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair(t *testing.T) {
 	relativeRoot, err := filepath.Rel(absoluteTemp, absoluteRoot)
 	if err != nil || relativeRoot == "." || relativeRoot == ".." || strings.HasPrefix(relativeRoot, ".."+string(filepath.Separator)) || filepath.IsAbs(relativeRoot) || strings.EqualFold(absoluteRoot, absoluteFixture) {
 		t.Fatalf("refusing to use the checked-in fixture as a mutable Git root: temp=%q root=%q fixture=%q err=%v", absoluteTemp, absoluteRoot, absoluteFixture, err)
-	}
-	if err := os.MkdirAll(root, 0755); err != nil {
-		t.Fatal(err)
 	}
 	copyCanonicalProjectionFixture(t, root)
 	writeFile(t, root, "scratch/unclaimed.txt", []byte("explicitly unknown inventory input\n"))
@@ -85,8 +86,7 @@ func TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair(t *testing.T) {
 	}
 	writeFile(t, root, canonicalProjectionConfigPath, configBytes)
 
-	initCanonicalProjectionGit(t, root)
-	sourceRevision := commitCanonicalProjection(t, root, "pin canonical projection fixture")
+	sourceRevision := commitCanonicalProjection(t, repo, "pin canonical projection fixture")
 	fixed, err := host.LoadCanonicalSource(root, sourceRevision, canonicalProjectionConfigPath, true)
 	if err != nil {
 		t.Fatal(err)
@@ -234,7 +234,7 @@ func TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair(t *testing.T) {
 		t.Fatal(err)
 	}
 	initialCanonicalDigest := fixed.Model.Digest
-	finalCommit := commitCanonicalProjection(t, root, "materialize verified projection fixture")
+	finalCommit := commitCanonicalProjection(t, repo, "materialize verified projection fixture")
 	verifySnapshot, err := source.Load(root, finalCommit)
 	if err != nil {
 		t.Fatal(err)
@@ -277,7 +277,7 @@ func TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair(t *testing.T) {
 	}
 	checkerBytes = append(checkerBytes, []byte("\n// changed checker source for evidence binding\n")...)
 	writeFile(t, root, checkerPath, checkerBytes)
-	checkerRevision := commitCanonicalProjection(t, root, "change only checker source for evidence binding")
+	checkerRevision := commitCanonicalProjection(t, repo, "change only checker source for evidence binding")
 	checkerSnapshot, err := source.Load(root, checkerRevision)
 	if err != nil {
 		t.Fatal(err)
@@ -303,7 +303,7 @@ func TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair(t *testing.T) {
 		}
 	}
 	writeFile(t, root, "src/Commerce/EffectAxis.cs", badCandidate)
-	negativeCommit := commitCanonicalProjection(t, root, "record a deliberately inadequate candidate")
+	negativeCommit := commitCanonicalProjection(t, repo, "record a deliberately inadequate candidate")
 	negativeSnapshot, err := source.Load(root, negativeCommit)
 	if err != nil {
 		t.Fatal(err)
@@ -318,7 +318,7 @@ func TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair(t *testing.T) {
 	if checkErr == nil || !strings.Contains(string(checkOutput), "explicit application boundary") {
 		t.Fatalf("bounded checker should explain why the enum-only candidate fails: output=%q err=%v", checkOutput, checkErr)
 	}
-	gitProjection(t, root, "checkout", "codex/canonical-projection-e2e")
+	repo.Git("checkout", "codex/canonical-projection-e2e")
 
 	// Drift changes only a target artifact. Reusing the same fixed canonical
 	// source and model digest demonstrates repair without rewriting intent.
@@ -386,7 +386,7 @@ func TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair(t *testing.T) {
 			t.Fatalf("target repair mutated canonical source %s", path)
 		}
 	}
-	repairCommit := commitCanonicalProjection(t, root, "repair target drift without changing canonical intent")
+	repairCommit := commitCanonicalProjection(t, repo, "repair target drift without changing canonical intent")
 	repairedVerifySnapshot, err := source.Load(root, repairCommit)
 	if err != nil {
 		t.Fatal(err)
@@ -427,35 +427,17 @@ func copyCanonicalProjectionFixture(t *testing.T, root string) {
 	}
 }
 
-func initCanonicalProjectionGit(t *testing.T, root string) {
+func commitCanonicalProjection(t *testing.T, repo *testkit.Repo, message string) string {
 	t.Helper()
-	gitProjection(t, root, "init", "--initial-branch=codex/canonical-projection-e2e")
-	gitProjection(t, root, "config", "core.autocrlf", "false")
-}
-
-func commitCanonicalProjection(t *testing.T, root, message string) string {
-	t.Helper()
-	gitProjection(t, root, "add", "--all")
-	if strings.TrimSpace(gitProjection(t, root, "status", "--porcelain")) == "" {
-		return strings.TrimSpace(gitProjection(t, root, "rev-parse", "HEAD"))
+	repo.Git("add", "--all")
+	if repo.Git("status", "--porcelain") == "" {
+		return repo.Git("rev-parse", "HEAD")
 	}
-	recordDirectory := filepath.Join(root, ".markitect", "projections", "records")
+	recordDirectory := filepath.Join(repo.Dir, ".markitect", "projections", "records")
 	if info, err := os.Stat(recordDirectory); err == nil && info.IsDir() {
-		gitProjection(t, root, "add", "--force", "--all", ".markitect/projections/records")
+		repo.Git("add", "--force", "--all", ".markitect/projections/records")
 	}
-	gitProjection(t, root, "-c", "user.name=Markitect Example", "-c", "user.email=markitect-example@example.invalid", "-c", "commit.gpgsign=false", "commit", "-m", message)
-	return strings.TrimSpace(gitProjection(t, root, "rev-parse", "HEAD"))
-}
-
-func gitProjection(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	commandArgs := append([]string{"-C", root}, args...)
-	command := exec.Command("git", commandArgs...)
-	output, err := command.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, output)
-	}
-	return string(output)
+	return repo.Commit(message)
 }
 
 func candidateEnvelope(t *testing.T, requestDigest string) []byte {
