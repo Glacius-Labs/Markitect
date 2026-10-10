@@ -2219,3 +2219,7 @@ Owner clean6c/bf0dd terminalFAILED07:56:57, noResume/Verify/Apply/boundaryfalse.
 ### Actual19 two diagnoses closed; review semantics preserved
 
 Owner privateterminalclosurece93557c:10requests(8roles2helpers)/9native/1078281partial; cumulative77/73/13784919 ownerunionnotRootrawbound. Observer missedownerRunId=currentPlan filter/historicalequalTaskIDs, twohunkcorrection/offlineindependentclear/newhashpending, historicboundaryfalseunchanged. NativeReview validtypedfail/Finding butouterfailed mismatchedrequiredproposedReport; narrowprojectrun-reviewprompt+twoadapterfiles/regressionsactive, Hostvalidatorunchanged. LegitimateGuideFAIL remainsFAIL/normalrework, no fakePASS/proposedresponsepostprocessing. OwnerfreshsamebinaryA01 aftercleanfreeze/push/currentobserverhash, no old19Replay/newframework/Rootpermissionphase.
+
+### Typed review contract correction public Windows freeze verified
+
+Root cleanlocal/publicfac9131b/exactWindows1fb44841 Go1.27.1VCSfac/modifiedfalse independentlychecked. session.goprojectrun-reviewexplicitouterproposedforallvalidtypedpass/fail, groundedfindingspreserved/readonly/Hostvalidatorunchanged, notforcePASS. Ownerfocused/vet/strict/managed/historyYAML/context-impact/independentreviewsPASS, old6cbinarypreserved. NormalnewReadinessCASbeforePlanpreparing; actualnextbatch/startPlan/deadline/newowner-filterobserverhashpending, oldddfnotassumedcurrent. No old19Replay/Main/studyacceptance/repeatedRootorder.

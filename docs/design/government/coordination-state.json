@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T08:07:26.845222+00:00",
+  "updatedUtc": "2026-10-10T08:13:53.467906+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18577,6 +18577,23 @@
         "cumulativePartialEstimatedCostMicros": 13784919,
         "qualification": "Private terminal closure hash and union ownerreported, exact file/raw receipts not Root bound yet. One helper request rejected before child start remains counted request, not native. Partial caller cost lower bound not actual invoice/complete efficiency."
       }
+    },
+    "typedReviewCorrectionFreeze": {
+      "status": "CLEAN_PUBLIC_SOURCE_AND_WINDOWS_BINARY_ROOT_VERIFIED_NEXT_NORMAL_READINESS_PREPARING",
+      "sourceSha": "fac9131bf60d813a144c563516626f73ea19b969",
+      "binarySha256": "1fb44841cffe622778e22c8811d48f5aa686a1bfb7cfd1e0cfef7d6e2a18c60d",
+      "rootVerified": "Clean local/publicremote exactfac; known Windows FileSHA/Go1.27.1/CGO0/AMD64/VCSfac/modifiedfalse checked. Delta session.go adds projectrun-review scoped readonly typed report guidance; outerproposed for valid review including genuine fail, grounded findings preserved. Hostvalidator unchanged, no forced semantic PASS.",
+      "ownerGates": "Focused tests/vet/strict/managed/YAML history equality/context/impact PASS; independent narrow source/docs reviews clear, prior6c binary archived unchanged ownerreported.",
+      "observer": "Current owner-run selector corrected two hunks and offline reviewed per prior closure, updated controller exact hash still pending next run handoff; oldddf hash not silently reused as current proof.",
+      "boundary": "Actual19 failed retained/no replay/oldPlan rewrite/native proof Main/release/study acceptance."
+    },
+    "actual20Preparation": {
+      "status": "OWNER_NORMAL_FRESH_READINESS_CAS_BEFORE_NEW_PLAN_ZERO_STARTS_NOT_ASSUMED",
+      "freezeRef": "typedReviewCorrectionFreeze",
+      "planId": null,
+      "batchId": null,
+      "controllerSha256": null,
+      "execution": "After normal fresh plan/readiness finite A01 one finalfac binary before/after original Root boundary with current owner-bound observer. Actual allocation/start/deadline/handles not provided yet; counts unknown until receipt."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
