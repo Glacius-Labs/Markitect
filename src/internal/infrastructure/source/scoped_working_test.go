@@ -140,10 +140,11 @@ func TestObserveSelectedWorkingRejectsUnsafeAndAliasedPaths(t *testing.T) {
 }
 
 func TestObserveSelectedWorkingReportsCaseAliasesMissing(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
 	writeTestFile(t, root, "docs/readme.md", "lower")
-	gitTest(t, root, "add", "docs/readme.md")
-	gitTest(t, root, "commit", "-qm", "lower-case readme")
+	repo.Git("add", "docs/readme.md")
+	repo.Git("commit", "-qm", "lower-case readme")
 	// A case-insensitive filesystem opens docs/readme.md for these spellings,
 	// but Git tracks only the on-disk spelling.
 	for _, alias := range []string{"docs/README.md", "Docs/readme.md"} {
@@ -226,7 +227,8 @@ func TestInventoryWorkingRootsReportsUnknownUntrackedAndMissingRoots(t *testing.
 }
 
 func TestInventoryWorkingRootsReportsCaseAliasPrefixMissing(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
 	writeTestFile(t, root, "docs/readme.md", "lower")
 	got, err := InventoryWorkingRoots(root, []string{"Docs"})
 	if err != nil {
@@ -245,7 +247,8 @@ func TestScopedWorkingAPIsReportShortNameAliasesMissing(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		t.Skip("8.3 short names are Windows-only")
 	}
-	root, _ := selectiveGitFixture(t)
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
 	writeTestFile(t, root, "LongDirectoryName/LongFileName.md", "x")
 	if _, err := os.Lstat(filepath.Join(root, "LONGDI~1", "LONGFI~1.MD")); err != nil {
 		t.Skipf("8.3 short names unavailable on this volume: %v", err)
