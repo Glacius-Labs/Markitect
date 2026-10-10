@@ -219,6 +219,21 @@ packages:
     acceptance:
       - A Claude Code executor runs Manager and reviewer roles through the process contract with tools and an owned workspace.
 
+  - id: RUN-04
+    title: Safe read-only and analysis helper returns
+    stream: RUN
+    wave: 3
+    status: proposed
+    owner: runtime
+    depends_on: [RUN-02]
+    zone: runtime
+    note: Former Product Readiness item P11.
+    inputs:
+      - docs/work-items/product-readiness/backlog.yaml (P11)
+      - docs/work-items/product-readiness/integration-progress-20261009.md
+    acceptance:
+      - Helpers can return read-only inspection or analysis results without authoring files, with the same scope and review rules.
+
   # --- CLI and MCP: command and tool surface -----------------------------
   - id: CLI-01
     title: Verb model decision and specification
