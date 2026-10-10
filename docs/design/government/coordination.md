@@ -2291,3 +2291,7 @@ Owner samebinaryoriginalRootrecovery/noReplay/helperclosed/27.1239694sparallel/c
 ### Existing own integration review clean freeze verified; Actual25 active
 
 Root cleanlocal/publice99cd669/exactWindows94f4a6cb Go1.27.1VCSe99modifiedfalse verified. Narrowa2382filediff inspected: top-levelownexistingintegrationreview/directparentforchildren, freshness/finalcandidatepins/refs retained, no forcedverdict/newsubjects. Owner finalfocused/gates/code-docreviewsPASS. FreshPlan85d22b7a/digest6cb46c/readinesscf35/runtime0b0bea unchanged128MiB/adopter275baa9/deadline14:33:31.8300855Z normalactive; currentnative/fullVerify/Applyresultpending. Prior24terminal1366e208/audit67626569 onlyprefixes supplied, failedhistory retained/noReplay/newRootorder/Main/study/releasePASS.
+
+### Actual25 declared helper delta rejected before integration
+
+Owner observerd02f0ed1 ended10:36:14.2961767Z exit2 boundaryfalse: DocsgreetingHelperdeclaredbytes/modecontradictsharvesteddelta, Sourcework/helperinterrupted; noResume/Verify/Apply. Root exactimmutable sharedshortstate17failed bound twoincompleteworkreceiptsb496d066/264b2f15, nointegrate/verifyrows; sourcehelper.go strictdeclared-observedguardretained. Exactbytes-versusmode/rootcause/nativechildrenlifecycle/accounting pendingreadonlyownerdiagnosis; e99/94f4unchanged/no neworder/guardweakening/A01/MainPASS.

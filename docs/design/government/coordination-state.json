@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T10:34:48.751697+00:00",
+  "updatedUtc": "2026-10-10T10:38:20.446835+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator continues finite Actual25 then reports terminal genuine acceptance/blocker once; Root checks exact proof/Apply and ordinary final hosted gates before normalPR89Main. No duplicate Root order, studies suspended/KG separate.",
+  "nextAction": "Integrator completes exact readonly helper response/observed-delta diagnosis and terminal lifecycle/accounting; then bounded ordinary repair or fresh run as warranted underexistingauthority. No duplicate dispatch/guard weakening/Rootproductedit. Studies suspended/KG waits accepted Main.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL25_ACTIVE_TOP_LEVEL_EXISTING_REVIEW_CONTEXT_FREEZE_ROOT_VERIFIED",
+    "status": "ACTUAL25_TERMINAL_HELPER_DECLARED_OBSERVED_DELTA_CONTRADICTION_READONLY_DIAGNOSIS_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18941,7 +18941,7 @@
       "boundary": "Technical freeze only, failed24immutable/noApply/Main/study/releasePASS."
     },
     "actual25Preparation": {
-      "status": "ACTIVE_OWNER_REPORTED_CLEAN_SOURCE_BINARY_REMOTE_ROOT_BOUND_CURRENT_RECEIPTS_PENDING",
+      "status": "TERMINAL_BEFORE_ROOT_INTEGRATION_NO_RESUME_VERIFY_APPLY",
       "freezeRef": "ownIntegrationReviewEvidenceCorrection",
       "sourceSha": "e99cd669a72d1076c4c0edb39c07116c3928e47e",
       "binarySha256": "94f4a6cbc6552b7f772cefc3d944d886296a11271266a9e3155e7f8a709940f4",
@@ -18951,7 +18951,37 @@
       "runtimeDigestOwnerReportedPrefix": "0b0bea",
       "adopterCheckpointOwnerReportedPrefix": "275baa9b",
       "deadlineUtc": "2026-10-10T14:33:31.8300855Z",
-      "boundary": "Fresh normal finite renewableA01/unchanged128MiB profile; currentnativehandles/accounting/terminal/fullVerify/guardedApply pending. Old24failed retained noReplay/retrocredit/newRootorder/framework/gate/studies/release."
+      "boundary": "Fresh normal finite renewableA01/unchanged128MiB profile; currentnativehandles/accounting/terminal/fullVerify/guardedApply pending. Old24failed retained noReplay/retrocredit/newRootorder/framework/gate/studies/release.",
+      "terminalOwnerReport": {
+        "observerId": "d02f0ed16c0b466dbfa0c6af7838c157",
+        "endedUtc": "2026-10-10T10:36:14.2961767Z",
+        "innerExit": 2,
+        "boundary": false,
+        "failure": "Docs helper declared docs/greeting.md bytes or mode contradicted observed child delta; strict Hostguard rejected. Sourcework/helper interrupted afterparallel failure.",
+        "next": "Readonly exactresponse-versus-harvestedbytes/mode diagnosis; sourcee99/binary94f4 unchanged, no guard weakening/newRootorder or retry before diagnosis. Exact terminal accounting pending."
+      },
+      "rootTerminalStateVerified": {
+        "path": "C:/Users/Consiliari/AppData/Local/Temp/markitect-a01-3c5c733388014645b0ca178338078b6a/repo/.markitect/runs/85d22b7a2d1840aa4b17bcc46fd54a43/states/00000017.json",
+        "revision": 17,
+        "status": "failed",
+        "phases": [
+          "work",
+          "review",
+          "work",
+          "work"
+        ],
+        "outcomes": [
+          "proposed",
+          "proposed",
+          "incomplete",
+          "incomplete"
+        ],
+        "incompleteWorkReceipts": [
+          "b496d066a755a4ed4e8c2912c166cb1f",
+          "264b2f15dc3a22198c9506ed3b003ee9"
+        ],
+        "qualification": "Shortsharedcopy/closebeforeparse; no integration/verify/fullaudit invocation rows. Native lifecycle of canceledchildren/rawaccounting still owneraudit pending. Hosthelper.go828/832 retains declared-vs-observedwrite guard, exact cause bytes-vs-mode not yet independently diagnosed."
+      }
     }
   },
   "restartAfterInterruptedIntegration20261010": {
