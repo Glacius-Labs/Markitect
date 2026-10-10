@@ -2315,3 +2315,7 @@ Owner all3Rootreports correctlyboundedDocsrework/candidateFilesempty, childworkA
 ### Child rework sequencing source correction inspected
 
 Root local0c8d3873threefilediff inspected: existingrun/reintegration defersfreshreviewwhileexplicitchildreworkpending, higherancestorsdeferred/persisted, existingboundedloop repairschild/ancestorchain beforefreshindependentreview. Ownership/verdicts/budgetsretained/noframework/arbitrarylimitincrease. Owner4focused94.679s/vetdiffrootmanagedPASS/independentclear includingdeferredstateResume. Threeproductdocsmodified; finalpubliccleanbinary/newActual27pending, old26BLOCKED/noVerifyApply unchanged; no newRootorder/fullnativeacceptance.
+
+### Actual27 recovered original Root integrated; normal Verify active
+
+Root exactWindows4fc1fb00 VCS361c7f1a Go1.27.1modifiedfalse and361threeDocclosure bound; cleanpubliccurrentd623fiveDoccommandpathdiff inspected, proofbinaryunchanged. Root sharedimmutable state35Plan57030e5a integrated/3Work+IntegrationPASS/originalintegrate6774ea4d exactlyone row. Owner genuineRenameRecovery1originalphysical0Replay/helperappliedclosed/27.0056638sparallel. NormalVerify--run--write active; priorunsupported--plan rejectedbeforechecks loggedInvocationError/no credit. FullVerifyApply/usage/deadlineexactreceiptpending, no inferredA01/MainPASS/repeatedRootorder.

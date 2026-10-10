@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T11:16:00.962996+00:00",
+  "updatedUtc": "2026-10-10T11:29:25.546656+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator closes narrow technicaldocs/source/binary/remote freeze then fresh normal finite A01 validating requestedchildrework and originalRootrecovery. Root waits exact callback without repeatedorders/newgates; studies suspended/KG separate.",
+  "nextAction": "Integrator completes normal fixedbinary Actual27Verify/guardedApply and terminal lifecycle/accounting once; Root verifies genuine acceptance then final exactPR89CI/Main normally. Studies suspended/KG separate; no repeatedRootorder/newgate.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "CHILD_REWORK_SEQUENCING_SOURCE_CORRECTION_INSPECTED_FINAL_DOC_BINARY_FREEZE_PENDING",
+    "status": "ACTUAL27_ORIGINAL_RECOVERY_INTEGRATED_ROOT_STATE_VERIFIED_NORMAL_VERIFY_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -19076,11 +19076,42 @@
       }
     },
     "childReworkSequencingCorrection": {
-      "status": "LOCAL_SOURCE_COMMIT_INSPECTED_OWNER_TARGETED_REGRESSIONS_REVIEW_CLEAR_FINAL_FREEZE_PENDING",
+      "status": "SOURCE_DOC_FREEZE_AND_EXACT_BINARY_ROOT_VERIFIED_NATIVE_FULL_ACCEPTANCE_PENDING",
       "sourceCommit": "0c8d38730064e36ab491995578f6ab6d624831ed",
       "rootInspection": "3filecommit. Existingrun/reintegration defers review on explicitdirect-childrequest, clears pendingreviewmetadata/persists; pending subtree defers higherancestors; existingboundedmanagerreworkloop rerunschild andaffectedancestorchain beforefreshreview. Reviewverdicts/ownership/budgets preserved, no newframework or arbitraryreviewlimitincrease. SourceDiff inspected; actual27/nativevalidation pending.",
       "ownerChecks": "Fourfocusedtests94.679s/projectrunvet/diff/rootmanagedPASS; independent source review clear with deferredstate/Resume considered. No Root full suite repeated.",
-      "freezeBoundary": "LocalHEAD0c8d;3productdocsmodified. Finalcleanpublicdoccheckpoint/build/normalnewPlan pending. Actual26historicalBLOCKED/noVerifyApply remains."
+      "freezeBoundary": "LocalHEAD0c8d;3productdocsmodified. Finalcleanpublicdoccheckpoint/build/normalnewPlan pending. Actual26historicalBLOCKED/noVerifyApply remains.",
+      "freezeSha": "361c7f1af10e647833da3034b02064207cd8bf57",
+      "binarySha256": "4fc1fb007112eff26840ce91f52b84ee7c723c3f083bcd9735ae1a30719b655b",
+      "rootFreezeVerification": "BinaryexactSHA/WindowsGo1.27.1CGO0VCS361modifiedfalse;361additive3docclosure stat. Currentcleanpublichead d623 is later5docs-only commandpath correction inspected, ongoingbinary remains361, no hotpatch/Plan rewrite."
+    },
+    "actual27Preparation": {
+      "status": "INTEGRATED_ORIGINAL_ROOT_RECOVERY_VERIFIED_CURRENT_NORMAL_VERIFY_PENDING",
+      "sourceSha": "361c7f1af10e647833da3034b02064207cd8bf57",
+      "binarySha256": "4fc1fb007112eff26840ce91f52b84ee7c723c3f083bcd9735ae1a30719b655b",
+      "planId": "57030e5a979329fe354486544be4a45b",
+      "ownerEvidence": "OriginalRootaftergenuinejournalrename recovered/exact1originalphysical0replayaudited; SourceDocs27.0056638sparallel/genuinehelperappliedclosed; Resumeexit0/state35integrated;3Work+IntegrationReviewPASS. CurrentnormalVerify--run--write active; earlierunsupported--plan rejectedbeforechecks recordedInvocationError, no proofcredit.",
+      "rootStateVerified": {
+        "path": "C:/Users/Consiliari/AppData/Local/Temp/markitect-a01-3c5c733388014645b0ca178338078b6a/repo/.markitect/runs/57030e5a979329fe354486544be4a45b/states/00000035.json",
+        "id": "57030e5a979329fe354486544be4a45b",
+        "revision": 35,
+        "status": "integrated",
+        "workReviewOutcomes": [
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "integrationReviewOutcome": "pass",
+        "originalIntegrationReceipt": "6774ea4da64eb896bf3d8dbd45c9f9cf",
+        "integrationRows": 1,
+        "qualification": "Exactimmutable sharedshortread/closebeforeparse. Native physical/noReplay/helper/parallel union owneraudit not Rootwholetrace repeated. FullVerify/Apply/currentcounts/digest/batchdeadline not yet provided; no inferred PASS."
+      },
+      "boundary": "Existing finite renewable authority/fixed361binary; no unsupportedCLIretrycredit/old26replay/fabricated fullA01/Main/study/release."
+    },
+    "liveCommandPathDocsCorrection": {
+      "sourceSha": "d6239ab05345c49f8f855ce9675af6925609742c",
+      "rootVerified": "ExactcleanHEAD/publiclsremote d623;5docdiff only corrected ./cmd to ./src/cmd and rootCWD wording. Ongoingproof sourcebinary361 preserved.",
+      "ownerChecks": "Independent docsreview/buildtestPASS ownerreported, no change to livebinarybinding."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
