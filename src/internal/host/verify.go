@@ -86,12 +86,6 @@ func verifyRepositoryScoped(p *Project, timeout time.Duration, immutableInputs b
 	return verifySnapshotScoped(p.Snapshot, p.Graph.Project.Spec.Checks, timeout, immutableInputs)
 }
 
-// VerifySnapshotChecks reuses the fixed-snapshot verifier for explicitly supplied
-// checks. It does not authenticate check ownership or prove semantic sufficiency.
-func VerifySnapshotChecks(captured *snapshot.Snapshot, checks []authoring.Check) ([]GateResult, error) {
-	return verifySnapshotScoped(captured, checks, verifyDefaultTime, true)
-}
-
 func verifySnapshotScoped(captured *snapshot.Snapshot, checks []authoring.Check, timeout time.Duration, immutableInputs bool) ([]GateResult, error) {
 	if captured == nil {
 		return nil, &VerifyError{Kind: "incomplete-evidence", Err: errors.New("a source snapshot is required")}

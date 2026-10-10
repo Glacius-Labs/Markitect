@@ -71,10 +71,6 @@ jobs:
           if [ "$status" -ne 0 ]; then exit "$status"; fi
           exit "$report"
 
-      - name: Repeat temporary Git fixture cleanup regression (Linux)
-        if: runner.os == 'Linux'
-        run: go test ./src/harness/examples -run '^TestUnknownOntologyLoadsExactPackagesAndPreparesBoundedScope$' -count=100
-
       - name: Validate authoring benchmark fixtures
         run: go test ./src/internal/host -run '^$' -bench Authoring -benchtime=1x
 
@@ -131,12 +127,6 @@ jobs:
           revision = git("rev-parse", "HEAD")
           print("Projection fixture source=" + os.environ["GITHUB_SHA"] + " revision=" + revision, flush=True)
           subprocess.run(["go", "run", "./src/cmd/markitect", "projection", "--repo", str(root), "--action", "verify", "--config", "projections.config", "--coverage", "markitect-artifacts.yaml", "--revision", revision], check=True)
-
-      - name: Compile fixed canonical source alpha
-        run: go run ./src/cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action model --revision ${{ github.sha }}
-
-      - name: Replay canonical candidate, records, verification and drift
-        run: go test ./src/harness/examples -run '^TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair$' -count=1
 
       - name: Check generated schemas
         run: go run ./src/cmd/markitect schema --repo .

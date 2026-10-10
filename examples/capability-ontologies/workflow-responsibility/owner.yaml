@@ -1,5 +1,0 @@
-apiVersion: responsibility.example.org/v1
-kind: Role
-metadata: {namespace: release, name: owner}
-purpose: Owns completion of the release task.
-spec: {name: Release owner, authority: owner}
