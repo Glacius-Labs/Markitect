@@ -26,6 +26,7 @@ For coordinated parallel work, read the [development guide](docs/development/REA
 | `src/internal/tooling/architecture`, `src/internal/tooling/release`, `src/internal/tooling/publish`, `src/internal/tooling/licenses` | Mechanical import gate, immutable distribution/publication operations, and canonical notices. |
 | `integration` | Standalone public bootstrap/distribution Tooling; copied into installed packages, with no Markitect package imports. |
 | `src/harness` | Imported Go harnesses and executable tests; test-only consumers of production packages. |
+| `src/internal/testkit` | Hermetic test fixtures: Git isolation, repositories with fixed identity and dates, short temporary directories. Only test files import it; it imports only the standard library. |
 | `packaging/winget` | Versioned portable package manifests derived from verified releases. |
 | `docs` | Product architecture, usage, decisions and canonical roadmap. |
 
@@ -68,6 +69,8 @@ go run ./src/cmd/markitect context --repo examples/delivery-target-equality --na
 go run ./src/cmd/markitect check --repo benchmark/fixtures/v2
 git diff --check
 ```
+
+Tests must not depend on the machine's Git configuration. A package whose tests create repositories or run git, directly or through production code, calls `testkit.Main` from its `TestMain`; it gives the test process a fresh home directory and global Git configuration and keeps the Go caches. New fixtures use `testkit.NewRepo` for repositories with a fixed identity, fixed dates and unchanged line endings, and `testkit.TempDir` for short temporary paths with retried cleanup.
 
 Full source gates use `-count=1` to require fresh test execution rather than report a cached test success as a new candidate run. This source Project's `go-tests` check declares a 5400-second outer command limit and the explicit Go test-binary limit `-timeout=60m`; focused checks use a ten-minute default, broad package runs thirty minutes and complete suite runs sixty minutes. Outer process/CI windows are at least ninety minutes. Preserve already-running work and original timeout evidence; investigate a real expiry rather than automatically retrying it.
 

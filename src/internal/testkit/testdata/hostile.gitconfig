@@ -1,0 +1,33 @@
+# A global Git configuration that breaks fixtures which depend on the
+# machine's configuration. testkit tests and the CI hostile run use it.
+[user]
+	useConfigOnly = true
+[init]
+	defaultBranch = hostile
+[core]
+	autocrlf = true
+	safecrlf = true
+	quotePath = false
+[commit]
+	gpgsign = true
+	verbose = true
+[tag]
+	gpgsign = true
+[gpg]
+	program = markitect-hostile-missing-gpg
+[color]
+	ui = always
+[diff]
+	noprefix = true
+	renames = copies
+[log]
+	showSignature = true
+	decorate = full
+[status]
+	showUntrackedFiles = no
+[advice]
+	detachedHead = true
+[merge]
+	conflictStyle = zdiff3
+[pull]
+	rebase = true

@@ -166,3 +166,20 @@ func TestCanonicalWorkflowCheckIsIsolatedAdopterCode(t *testing.T) {
 		}
 	}
 }
+
+func TestTestkitIsTestOnlyAndStandalone(t *testing.T) {
+	if got := Check([]Edge{{From: "src/internal/testkit"}}); len(got) != 0 {
+		t.Fatalf("testkit classification: %v", got)
+	}
+	for _, from := range []string{"src/internal/core", "src/internal/modules/a", "src/internal/host", "src/internal/infrastructure/source", "src/harness/examples"} {
+		if got := Check([]Edge{{From: from, To: "src/internal/testkit", Test: true}}); len(got) != 0 {
+			t.Fatalf("test in %s importing testkit: %v", from, got)
+		}
+		if got := Check([]Edge{{From: from, To: "src/internal/testkit"}}); len(got) != 1 {
+			t.Fatalf("production code in %s importing testkit: %v", from, got)
+		}
+	}
+	if got := Check([]Edge{{From: "src/internal/testkit", To: "src/internal/core"}}); len(got) != 1 {
+		t.Fatalf("testkit importing a local package: %v", got)
+	}
+}
