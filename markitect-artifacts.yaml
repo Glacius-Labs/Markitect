@@ -2379,8 +2379,6 @@ spec:
       owner: project-world-implementation
     - path: docs/work-items/product-readiness/P10-main.md
       owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P12-exchangeable-executor.md
-      owner: project-world-implementation
     - path: docs/work-items/product-readiness/fresh-chat-handoff.md
       owner: project-world-implementation
     - path: docs/work-items/product-readiness/R01-jev.md
