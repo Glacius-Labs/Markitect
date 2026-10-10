@@ -69,8 +69,20 @@ func SafeDestination(root, name string) (string, error) {
 	if !SamePathSpelling(resolvedCanonical, canonical) {
 		return "", fmt.Errorf("output root contains a symlink: %s", root)
 	}
+	// Stored names are listed through an opened root: os.DirFS cannot list "."
+	// below a root spelled \\?\C:\..., and only Windows needs the listing.
+	var listing fs.FS
+	if runtime.GOOS == "windows" {
+		opened, err := os.OpenRoot(absolute)
+		if err != nil {
+			return "", err
+		}
+		defer opened.Close()
+		listing = opened.FS()
+	}
 	current := absolute
-	for _, part := range strings.Split(name, "/") {
+	parts := strings.Split(name, "/")
+	for i, part := range parts {
 		current = filepath.Join(current, part)
 		info, err := os.Lstat(current)
 		if err != nil {
@@ -82,7 +94,11 @@ func SafeDestination(root, name string) (string, error) {
 		if IsReparsePoint(info) {
 			return "", fmt.Errorf("symlink in output path %s", name)
 		}
-		if err := requireStoredName(os.DirFS(filepath.Dir(current)), ".", part); err != nil {
+		parent := "."
+		if i > 0 {
+			parent = strings.Join(parts[:i], "/")
+		}
+		if err := requireStoredName(listing, parent, part); err != nil {
 			return "", fmt.Errorf("unsafe output path %s: %w", name, err)
 		}
 		resolved, err := filepath.EvalSymlinks(current)
