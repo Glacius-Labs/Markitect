@@ -2151,3 +2151,7 @@ Actual15 state23 superseded; owner exactoriginale10projectdigest372e9e5e/a52b767
 ### Fresh same-build Actual16 started, owner report
 
 Owner batcha01-same-build-recovery00a5/newPlan3a6a39ae/digesta47c13/deadline10:21:17.9694365Z, readinessready/blockers[], normal run/Rootinterruption/Resume same clean04ca/binbc26543c previously Rootverified. Controllerddf7b16 ordinary JSONreadsReadWriteDelete/close-beforeparse, targetedRootinterruption unchanged; staticcontroller/currentstartreceipt notRootinspectedthisevent. No newframework/matrix/oldreplay. Actual15superseded6starts retained; currentstarts/usage unknown. No fullA01/Apply/Main/studyacceptance, no repeatedRootorder.
+
+### Actual16 deliberate boundary reached; original native Root completion verified
+
+Owner normalRun06:21:35-06:25:46.6939234Z Exit2 intendedpreparedRootrenameblock workspace05b92176. Root independently read exactnativeRootthread01a1247d02b7/turn01a1247d052f completed/errornull/completedAt1791613545/notLoaded, no HostPASSinferred. Owner3WorkreviewsPASS/genuinehelperappliedclosed/siblingoverlap19.7761311s; same04ca/bc265 normalResume bab416 state32 Rootintegrated/integrationreviewinvoking. Final originalidentity/noReplayjournalcomparison pending; Verify/Apply/overallA01 notcomplete. No Rootblockinglivereads. Ownerfouroldcmd paths sourcezipworkflow boundedfixdelegated, finalCI/release separate/no proofbinarychange.

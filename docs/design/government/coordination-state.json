@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T06:22:33.646498+00:00",
+  "updatedUtc": "2026-10-10T06:28:16.437236+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18307,7 +18307,7 @@
       "boundary": "No new startreceipt/PlanID observed yet, no completion/Main/release/study acceptance."
     },
     "actual16Running": {
-      "status": "OWNER_REPORTED_FRESH_SAME_BINARY_RUN_STARTED_RECEIPT_NOT_ROOT_INSPECTED",
+      "status": "ROOT_INTERRUPTION_REACHED_ORIGINAL_NATIVE_TURN_COMPLETED_RESUME_INTEGRATION_REVIEW_OWNER_RUNNING",
       "batchId": "a01-same-build-recovery-00a5ce211ff2446dab3bad76465b61df",
       "planId": "3a6a39ae59f7cfb18cb39f47b3d346ee",
       "planDigest": "sha256:a47c13a4331d647fc100fa6977277300337208d690d1949db617c29aa716de1a",
@@ -18318,7 +18318,27 @@
       "ownerReadiness": "ready/blockers[]",
       "controllerBoundary": "Owner changed ordinary JSON observer reads to explicit ReadWrite|Delete/close-before-parse; deliberate bounded Root FileShare.Read interruption remains original scenario. No new framework/matrix. Controller hash owner reported, static file not yet Root-bound.",
       "rootVerifiedPrior": "Same clean04ca source/public remote and exact bc26543c binary independently checked before start. Current Plan/start/actual native handles not independently inspected this event; no live blocking journal reads.",
-      "accounting": "Fresh finite renewable product batch, old Actual15 superseded6starts separately; current starts/usage unknown until receipts, not zero. No fullA01/Resume/Apply/Main/release/study acceptance."
+      "accounting": "Fresh finite renewable product batch, old Actual15 superseded6starts separately; current starts/usage unknown until receipts, not zero. No fullA01/Resume/Apply/Main/release/study acceptance.",
+      "progress": {
+        "ownerNormalRunUtc": [
+          "2026-10-10T06:21:35Z",
+          "2026-10-10T06:25:46.6939234Z"
+        ],
+        "normalExit": 2,
+        "deliberateBoundary": "prepared Root workspace05b9217678ba442e478fe18e04fd4e28 rename blocked by original targeted observer scenario",
+        "originalNativeRunId": "a79ae38480ddada0715b58a9ad61907b",
+        "rootNativeLifecycleVerified": {
+          "threadId": "01a1247d-02b7-7353-a61a-73cf9267ac97",
+          "turnId": "01a1247d-052f-7920-98ec-09f7fb59bb1b",
+          "status": "completed",
+          "error": null,
+          "completedAtUnix": 1791613545,
+          "threadStatus": "notLoaded"
+        },
+        "ownerReported": "3 Workreviews PASS, genuine helper applied-and-closed, direct siblings overlap19.7761311s. Same04ca/bc265 normalResume bab416738020470c86c653b83ae473d4 state32 Rootintegrated/integrationReviewinvoking.",
+        "limits": "Root exact native completion independently verified, not Hostreceipt/overall PASS. Original saved journal identity/no replay final comparison pending; Verify/Apply not complete. No blocking live journal/state read."
+      },
+      "ciFollowup": "Owner source review found four old ./cmd adapter build paths in extracted source.zip CI/release workflow; bounded fix delegated. Final exact-head hosted gates separate, no release or proof binary mutation inferred."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
