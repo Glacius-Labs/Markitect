@@ -218,12 +218,13 @@ func TestPreviewSkipsTheDefaultExecutableWhenNoRoleUsesIt(t *testing.T) {
 }
 
 func TestRoleThatSwitchesProviderDoesNotInheritTheCostMode(t *testing.T) {
-	profiles, err := resolveRoleProfiles(Options{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: "C:/tools/executor.exe",
+	executable := filepath.Join(t.TempDir(), "executor.exe")
+	profiles, err := resolveRoleProfiles(Options{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: executable,
 		CostMode: projectrun.CostModeUnmetered, MaxCostMicros: 1, Roles: &RoleOptions{Manager: &RoleProfile{Provider: ProviderCodex, Model: "gpt-6-luna"}}})
 	if err == nil || !strings.Contains(err.Error(), "metered agent requires explicit") {
 		t.Fatalf("a Codex role under an unmetered default must ask for rates, got profiles=%+v err=%v", profiles, err)
 	}
-	profiles, err = resolveRoleProfiles(Options{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: "C:/tools/executor.exe",
+	profiles, err = resolveRoleProfiles(Options{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: executable,
 		CostMode: projectrun.CostModeUnmetered, MaxCostMicros: 1, Roles: &RoleOptions{Manager: &RoleProfile{Provider: ProviderCodex, Model: "gpt-6-luna",
 			InputMicrosPerMillion: int64Ref(1), OutputMicrosPerMillion: int64Ref(2)}}})
 	if err != nil || profiles[RoleManager].costMode != "" || profiles[RoleReviewer].costMode != projectrun.CostModeUnmetered {
