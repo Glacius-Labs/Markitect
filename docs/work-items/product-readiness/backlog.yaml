@@ -460,7 +460,7 @@ native_acceptance:
     cumulative_known_provider_starts: 21
     cumulative_estimated_cost_micros: 6420876
     cost_accounting: partial_observed_lower_bound_not_invoice
-  latest_actual:
+  attempt_13:
     batch_id: a01-verdict-fb7b6fe1d6fe456fa94c9321624d2779
     attempt_number: 13
     status: failed_not_passed
@@ -493,17 +493,56 @@ native_acceptance:
     post_attempt_source_validation: native_focused_test_passed_0_291s_review_focused_test_passed_3_397s_appserver_package_passed_165_576s_before_common_cwd_and_wording_extension
     post_attempt_independent_review: closed
     post_attempt_a01_acceptance: not_established
+  latest_actual:
+    batch_id: a01-grounding-79c0422eee0043e2b9dde1e98ce8484b
+    attempt_number: 14
+    status: failed_not_passed
+    source_revision: b42c6cf0244fc312eb90a75fd00fc63f069a1a8a
+    binary_sha256: c2eff91600845ba65eb5eeff56ddfde9e12fbf33a5d7557767200499ee17320f
+    plan_id: 0582d1280f15469063c2920f7566db83
+    plan_sha256: 2bd63bf2a6db98712405f179978a78f0966098d4b64dcd44e8981004f34c7323
+    private_record_sha256: 6636bf390d462a2ff1034e25f49241fb09ab3432739d1131abdb8e4a858558a3
+    observer_id: 478e306c8b124b4da3809dd0f62ad2c4
+    observer_exit_code: 2
+    observer_boundary_observed: false
+    root_work_and_review: pass
+    docs_work_and_review: pass
+    source_work: complete_report_invalid_after_three_attempts
+    source_task_state_at_terminal: invoking
+    source_report_risks: python_warning_and_git_status_unavailable
+    source_unit_check_run: false
+    source_review: rework_requested_for_missing_helper_delegation_metadata
+    completed_host_helpers: 3
+    helper_results_preserved: true
+    helper_path: tests/test_greeting.py
+    direct_journal_manager_overlap_seconds: 36.484
+    root_candidate_integrated: false
+    verify_apply_recovery_observed: false
+    role_start_requests: 12
+    provider_starts: 12
+    reported_role_invocation_cost_micros: 1631582
+    cost_accounting: partial_lower_bound_excludes_unreported_helper_usage_not_invoice
+    cumulative_known_role_start_requests: 38
+    cumulative_known_provider_starts: 35
+    cumulative_estimated_cost_micros: 8555542
+    acceptance_helper_minimum: at_least_one_genuine_fresh_helper
+    historical_plan_exact_one_helper_wording_preserved: true
+    helper_count_alone_is_failure: false
+    post_attempt_source_correction: 4ee6ab99b17a412d5f642a3eebcf4646b03be1e7
+    post_attempt_validation: protocol_tests_passed_0_502s_fixture_equality_passed_0_463s_independent_reviews_closed
+    post_attempt_a01_acceptance: not_established
   next_batch:
-    status: fresh_clean_binary_readiness_and_plan_pins_pending
+    status: helper_review_evidence_investigation_before_fresh_freeze
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
     new_batch_pins: none
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
-    no_fourteenth_actual_claimed: true
-    owner_repair_in_progress: false
-    owner_repair_status: completed_b8ee4103_with_focused_tests_and_independent_review
-    repair: cleanly freeze the reviewed correction then refresh normal readiness and Plan bindings
+    no_fifteenth_actual_claimed: true
+    owner_repair_in_progress: true
+    owner_repair_status: helper_review_evidence_investigation_open_after_4ee6ab99_fix
+    repair: finish helper review evidence investigation; make and review a narrow source correction if required, then freeze cleanly and refresh normal readiness/Plan
+    prospective_acceptance_helper_minimum: at_least_one_genuine_fresh_helper
     next_shared_native_defaults: { memories: false, login: false }
     intended_profile:
       fresh_native_roles: workspace_permission
@@ -534,14 +573,14 @@ native_acceptance:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_used_for_latest_attempt: 5ad9e069ee6252ba9a9dd66b8986383ecec3b7f4
-    binary_sha256: 88234adb116d7c8b0b6c3eb35ece88704d66c6ac33d7b05aca3aeb4e49efa6ea
-    latest_native_acceptance: failed_not_passed_attempt_13
-    post_attempt_source_correction: b8ee41030ec19c131366ee1f994cc6d3a65ced7c
-    post_attempt_source_validation: native_focused_test_passed_0_291s_review_focused_test_passed_3_397s_appserver_package_passed_165_576s_before_common_cwd_and_wording_extension
-    post_attempt_independent_review: closed
+    source_revision_used_for_latest_attempt: b42c6cf0244fc312eb90a75fd00fc63f069a1a8a
+    binary_sha256: c2eff91600845ba65eb5eeff56ddfde9e12fbf33a5d7557767200499ee17320f
+    latest_native_acceptance: failed_not_passed_attempt_14
+    post_attempt_source_correction: 4ee6ab99b17a412d5f642a3eebcf4646b03be1e7
+    post_attempt_source_validation: protocol_passed_0_502s_fixture_equality_passed_0_463s
+    post_attempt_independent_reviews: protocol_passed_0_452s_fixture_equality_passed_0_474s
     post_attempt_a01_acceptance: not_established
-    next_repair: clean_frozen_build_then_fresh_normal_readiness_and_plan_for_next_bounded_a01
+    next_repair: complete_helper_review_evidence_investigation_before_any_new_frozen_build_and_plan
     next_batch_pins: pending
   prior_batch_history:
     revision: generous-native-limits-20261009
