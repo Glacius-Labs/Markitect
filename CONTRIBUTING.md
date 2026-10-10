@@ -1,6 +1,6 @@
 # Development
 
-Markitect's current product workflow is the model-first `markitect project` surface: a committed recursive Manager model under `.markitect/` owns project intent and artifact responsibility. Draft model changes are proposals; commits and digests bind bytes but do not authenticate human approval. Native instructions and scoped execution operate with caller permissions, not an OS sandbox. Retain mechanisms for their current engineering purpose; remove compatibility-only functions. Published releases and original evidence remain immutable historical records.
+Markitect's current product workflow is the model-first `markitect <verb>` surface: a committed recursive Manager model under `.markitect/` owns project intent and artifact responsibility. Draft model changes are proposals; commits and digests bind bytes but do not authenticate human approval. Native instructions and scoped execution operate with caller permissions, not an OS sandbox. Retain mechanisms for their current engineering purpose; remove compatibility-only functions. Published releases and original evidence remain immutable historical records.
 
 For coordinated parallel work, follow the [roadmap](docs/implementation-plan.md#how-we-work), read the [development guide](docs/development/README.md) and [parallel-work flow](docs/development/parallel-work.md), then record the current fixed base and assigned paths. Shared semantic contracts remain coordinator-owned; the normal gates below apply to every integrated candidate. For documentation placement and ownership, read the [documentation maintenance guide](docs/development/documentation.md).
 
@@ -44,26 +44,26 @@ Begin through the repository's model-first contributor guidance and classify a r
 ```powershell
 go test ./... -count=1 -timeout=60m
 go vet ./...
-go run ./src/cmd/markitect schema --repo .
-go run ./src/cmd/markitect check --repo examples/minimal
-go run ./src/cmd/markitect check --repo examples/repository-layout
-go run ./src/cmd/markitect check --repo examples/canonical-engineering
-go run ./src/cmd/markitect format --repo examples/canonical-engineering
-go run ./src/cmd/markitect model --repo examples/canonical-engineering
-go run ./src/cmd/markitect check --repo examples/engineering-constitution
-go run ./src/cmd/markitect format --repo examples/engineering-constitution
-go run ./src/cmd/markitect model --repo examples/engineering-constitution
-go run ./src/cmd/markitect check --repo examples/engineering-discovery
-go run ./src/cmd/markitect format --repo examples/engineering-discovery
-go run ./src/cmd/markitect check --repo examples/software-architecture
-go run ./src/cmd/markitect format --repo examples/software-architecture
-go run ./src/cmd/markitect model --repo examples/software-architecture
-go run ./src/cmd/markitect context --repo examples/software-architecture --namespace engineering --kind Skill --name implement-order
-go run ./src/cmd/markitect check --repo examples/delivery-target-equality
-go run ./src/cmd/markitect format --repo examples/delivery-target-equality
-go run ./src/cmd/markitect model --repo examples/delivery-target-equality
-go run ./src/cmd/markitect context --repo examples/delivery-target-equality --namespace engineering --kind Skill --name deployment-review
-go run ./src/cmd/markitect check --repo benchmark/fixtures/v2
+go run ./src/cmd/markitect-legacy schema --repo .
+go run ./src/cmd/markitect-legacy check --repo examples/minimal
+go run ./src/cmd/markitect-legacy check --repo examples/repository-layout
+go run ./src/cmd/markitect-legacy check --repo examples/canonical-engineering
+go run ./src/cmd/markitect-legacy format --repo examples/canonical-engineering
+go run ./src/cmd/markitect-legacy model --repo examples/canonical-engineering
+go run ./src/cmd/markitect-legacy check --repo examples/engineering-constitution
+go run ./src/cmd/markitect-legacy format --repo examples/engineering-constitution
+go run ./src/cmd/markitect-legacy model --repo examples/engineering-constitution
+go run ./src/cmd/markitect-legacy check --repo examples/engineering-discovery
+go run ./src/cmd/markitect-legacy format --repo examples/engineering-discovery
+go run ./src/cmd/markitect-legacy check --repo examples/software-architecture
+go run ./src/cmd/markitect-legacy format --repo examples/software-architecture
+go run ./src/cmd/markitect-legacy model --repo examples/software-architecture
+go run ./src/cmd/markitect-legacy context --repo examples/software-architecture --namespace engineering --kind Skill --name implement-order
+go run ./src/cmd/markitect-legacy check --repo examples/delivery-target-equality
+go run ./src/cmd/markitect-legacy format --repo examples/delivery-target-equality
+go run ./src/cmd/markitect-legacy model --repo examples/delivery-target-equality
+go run ./src/cmd/markitect-legacy context --repo examples/delivery-target-equality --namespace engineering --kind Skill --name deployment-review
+go run ./src/cmd/markitect-legacy check --repo benchmark/fixtures/v2
 git diff --check
 ```
 
@@ -81,7 +81,7 @@ Run `python -B scripts/check-docs.py` for local links and heading/HTML anchors i
 
 The standalone checks do not require another repository or an AI model. CI runs the Linux gate on every pull request and the Windows job nightly. A successful source gate establishes only the product checks that ran; it does not establish semantic correctness or an adopting project's acceptance. The import checker at `src/internal/tooling/architecture` statically examines production and test imports, including supported-platform files, and has negative fixtures for forbidden directions. The repository test calls it through `go test ./...`, CI has a named gate step, the explicit Project check delegates through Host, and the release quality job reuses CI. These routes are wired; wiring is not a gate result. Consult the [consolidation report](docs/validation/clean-architecture-consolidation.md) for exact-head status, and do not add an exception allowlist.
 
-Edit validation declarations and regenerate schemas with `schema --repo . --write`. Edit example YAML, then run `format`, `render --repo examples/minimal --write`, and `check`. For package or consumer example changes, also run `go run ./src/cmd/markitect check --repo examples/package-consumer`. Edit core authoring at `src/internal/host/embedded/resources/*.yaml`; its content is canonical for that embedded guidance. Tests compile those resources through the ordinary application API. The model-first project path is specified in [Project workflow](docs/project-workflow.md); compiler commands and immutable release histories are described in [Usage](docs/usage.md#legacy-projectdomain-cli-compatibility). The [roadmap](docs/implementation-plan.md) owns current source status. The v0.3.0 content-package contract and consumer workflow are documented in [Content packages](docs/content-packages.md); executable fixtures live under `examples/content-package` and `examples/package-consumer`.
+Edit validation declarations and regenerate schemas with `schema --repo . --write`. Edit example YAML, then run `format`, `render --repo examples/minimal --write`, and `check`. For package or consumer example changes, also run `go run ./src/cmd/markitect-legacy check --repo examples/package-consumer`. Edit core authoring at `src/internal/host/embedded/resources/*.yaml`; its content is canonical for that embedded guidance. Tests compile those resources through the ordinary application API. The model-first project path is specified in [Project workflow](docs/project-workflow.md); compiler commands and immutable release histories are described in [Usage](docs/usage.md#legacy-projectdomain-cli-compatibility). The [roadmap](docs/implementation-plan.md) owns current source status. The v0.3.0 content-package contract and consumer workflow are documented in [Content packages](docs/content-packages.md); executable fixtures live under `examples/content-package` and `examples/package-consumer`.
 
 ## Legacy Project/Domain checks and rendering
 
@@ -95,7 +95,7 @@ Rendering writes only explicitly selected outputs. Add `markdown` to `spec.targe
 
 ## Published top-level `init` behavior
 
-Published v0.14.1 retains the top-level `markitect init` Project/Domain contract. That command has been removed from current source. New model-first repositories use `markitect project init`, which creates the `.markitect/project.yaml` model tree, runtime, ignore rules and generated readable view. Use the command supported by the selected source or release; do not reinterpret existing Project files as project-model sources or silently convert them.
+Published v0.14.1 retains the top-level `markitect init` Project/Domain contract. That Project/Domain command has been removed from current source. New model-first repositories use the current `markitect init`, which creates the `.markitect/project.yaml` model tree, runtime, ignore rules and generated readable view. Use the command supported by the selected source or release; do not reinterpret existing Project files as project-model sources or silently convert them.
 
 ## Release work
 

@@ -18,7 +18,7 @@ git -C $packageSource add .
 git -C $packageSource commit -m 'Add review guidance package'
 $revision = git -C $packageSource rev-parse HEAD
 $archive = Join-Path $env:TEMP 'review-guidance-1.0.0.zip'
-go run ./src/cmd/markitect pack --repo $packageSource --revision $revision --output $archive
+go run ./src/cmd/markitect-legacy pack --repo $packageSource --revision $revision --output $archive
 ```
 
 `pack` reads only the selected commit. It creates the ZIP only if the output path is absent and prints an exact SHA-256 pin suggestion. The source coordinate is provenance text; Markitect does not fetch it.

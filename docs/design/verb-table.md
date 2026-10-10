@@ -2,7 +2,7 @@
 
 Specification for backlog CLI-01, 10 October 2026, against main `a98921cc`. It implements register [DEC-017](../concepts/register.md#dec-017-command-model-top-level-verbs-from-one-verb-table) and the command consequences of [DEC-014](../concepts/register.md#dec-014-compatibility-does-not-drive-decisions). Its input is the [CLI, MCP and App Server survey](../work-items/surveys/cli-mcp-app-server-20261010.md).
 
-This page is the target contract. Until CLI-02 is merged, [Usage](../usage.md) and the [Project workflow](../project-workflow.md) describe the commands that exist. CLI-02, CLI-03, MCP-01, TEST-02, AGENT-02 and ARCH-08 in the [backlog](../work-items/backlog.yaml) implement it.
+This page is the target contract. CLI-02 implements the verbs, the tools and the `markitect-legacy` split; CLI-03, MCP-01, TEST-02, AGENT-02 and ARCH-08 in the [backlog](../work-items/backlog.yaml) complete it. [Usage](../usage.md) and the [Project workflow](../project-workflow.md) describe the commands as they exist.
 
 ## Summary
 
@@ -39,7 +39,7 @@ This page is the target contract. Until CLI-02 is merged, [Usage](../usage.md) a
 | `model` | `model [--revision R]` | read | `project index` |
 | `context` | `context MANAGER [--revision R]` | read | `project context` |
 | `impact` | `impact --since R1 --revision R2` | read | `project impact` |
-| `docs` | `docs [--revision R] [--expect D --write]` | write | `project document`; gains `--expect` |
+| `docs` | `docs [--revision R] \| docs --expect D --write` | write | `project document`; gains `--expect`; a write uses the working tree |
 | `edit` | `edit --input FILE [--revision R] [--expect D --write]` | write | `project edit` |
 
 ### Work items
@@ -104,12 +104,12 @@ Each argument has one name. The CLI flag is its kebab-case form, and the MCP fie
 | `RUN`, `--run ID` | `run` | Run ID. | `runId` |
 | `--candidate ID` | `candidate` | Integrated candidate. | `candidateId` |
 | `--branch B`, `--head C`, `--worktree DIGEST` | `branch`, `head`, `worktree` | Apply freshness guards from the preflight. | `targetBranch`, `expectedHead`, `expectedWorktree` |
-| `--expect D` | `expect` | The digest a write is bound to; the write fails as stale when the state behind it changed. Usually the digest of the verb's own preview. For `brief dismiss` it is the briefing digest from `brief list`, and for `adopt` it is the session digest (compare and swap). `adopt run` accepts it as an optional precondition. | `expectedDigest`, `expectedVerificationDigest` |
+| `--expect D` | `expect` | The digest a write is bound to; the write fails as stale when the state behind it changed. Usually the digest of the verb's own preview. For `plan` it is the preview's `previewDigest`, which leaves out the run identity that persisting assigns. For `brief dismiss` it is the `stateDigest` from `brief list`. For an `adopt` stage write it is the session digest (compare and swap), and `adopt run --write --execute` requires the run preview's `previewDigest`. | `expectedDigest`, `expectedVerificationDigest` |
 | `--write` | `write` | Persist. | `write`, and `executeAuthorized` on plan and deliver |
 | `--execute` | `execute` | Start agents or configured checks. | new; today part of `--write` |
-| `--input FILE` | `input` | One typed JSON record. The CLI reads it from a `.json` file under `.markitect/drafts/` or `.markitect/runs/`, as every record input today; MCP takes the same object inline. | MCP `record`, `mutation`, `modelEdit`, `options`, `request`, `input` |
+| `--input FILE` | `input` | One typed JSON record. The CLI reads it from a `.json` file under `.markitect/drafts/` or `.markitect/runs/`, as every record input today; MCP takes the same object inline. For `adopt`, the record holds the stage's payload under the stage's key, such as `{"start": {...}}`. | MCP `record`, `mutation`, `modelEdit`, `options`, `request`, `input` |
 | `--session ID` | `session` | Adoption session. | `sessionId` |
-| `--source-repo PATH` | `sourceRepo` | Adoption source repository. Defaults to `--repo`. | `sourceRoot` |
+| `--source-repo PATH` | none | Adoption source repository. Defaults to `--repo`. CLI only: MCP `adopt` uses the server root, because tool arguments cannot redirect the root. | `sourceRoot` |
 | `--acknowledge` | `acknowledge` | Acknowledge the exact proposed structure, with `--actor`, `--authority`, `--decision-ref` and `--acknowledged-at` (fields `actor`, `authority`, `decisionRef`, `acknowledgedAt`). | `--acknowledge-structure`; MCP `acknowledgement` object |
 | `--coverage` | `coverage` | `check` evaluates whole-repository coverage regardless of the project's coverage mode. | `project coverage` |
 | `--read-only` | none | `mcp` only. | new |
@@ -158,7 +158,7 @@ The plan record keeps its `executeAuthorized` field for CLI-02. It then means "p
   - every read verb; `doctor` without its `providerExecutable` field, so a client cannot choose the program it probes;
   - every write verb as a preview-only tool, without the `write` and `expect` fields; `config` also without `providerExecutable`;
   - `brief` with `action` limited to `create` (preview only) and `list`; `dismiss` has no preview;
-  - `adopt` with its read stages and the preview of every write stage, including `adopt run`, without the `write`, `expect` and `execute` fields.
+  - `adopt` with its read stages and the preview of every write stage, including `adopt run`, without the `write`, `expect` and `execute` fields; `adopt apply` has no preview of its own (`adopt plan` is its preview), so it is left out.
 
   It does not register `run`, `resume`, `repair`, `verify` or `deliver`. The server's `initialize` instructions state that it is read-only. A read-only server cannot write or start anything, whatever the client sends.
 - Smaller schemas are MCP-01's work. The table's argument names must not change to achieve them.

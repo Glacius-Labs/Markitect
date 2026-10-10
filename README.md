@@ -16,7 +16,7 @@ You change the model, usually in conversation with your coding agent, and Markit
 
 ## Run the current source
 
-The model-first `markitect project` workflow is available in this development source checkout; it is not included in the published v0.14.1 binary. Building from source does not publish a release or change a project's existing version pin.
+The model-first `markitect <verb>` workflow is available in this development source checkout; it is not included in the published v0.14.1 binary. Building from source does not publish a release or change a project's existing version pin.
 
 For Windows, use Git and Go 1.27.1 or later. From this Markitect source checkout, build a separate development executable:
 
@@ -26,10 +26,10 @@ New-Item -ItemType Directory -Force -Path $toolBin | Out-Null
 go build -o (Join-Path $toolBin 'markitect.exe') ./src/cmd/markitect
 if ($LASTEXITCODE -ne 0) { throw 'Markitect build failed.' }
 $env:PATH = "$toolBin;$env:PATH"
-markitect project --help
+markitect help
 ```
 
-Keep the source checkout for development. Configure the adopting project's runtime with `project setup`, then connect the outer coding client to its repository-local Markitect MCP server. Manager, reviewer and verifier roles use the supported Codex App Server runtime by default. Setup can give each role class its own provider, model, effort and cost mode, including a bring-your-own process executor; an executor that Markitect cannot price runs `unmetered`, and its cost is reported as unknown, not zero. See [Provider adapters](docs/provider-adapters.md) for connection, [role profiles](docs/provider-adapters.md#role-profiles) and execution boundaries.
+Keep the source checkout for development. Configure the adopting project's runtime with `config`, then connect the outer coding client to its repository-local Markitect MCP server. Manager, reviewer and verifier roles use the supported Codex App Server runtime by default. Setup can give each role class its own provider, model, effort and cost mode, including a bring-your-own process executor; an executor that Markitect cannot price runs `unmetered`, and its cost is reported as unknown, not zero. See [Provider adapters](docs/provider-adapters.md) for connection, [role profiles](docs/provider-adapters.md#role-profiles) and execution boundaries.
 
 ## Start a model-first project
 
@@ -38,15 +38,15 @@ Initialize your target Git repository on a feature branch, then create its scaff
 ```powershell
 # Run in the target project, with the development executable on PATH.
 git init -b codex/project-start
-markitect project init --repo . --name my-project
-markitect project init --repo . --name my-project --write
-markitect project onboard --repo . --provider codex
+markitect init --repo . --name my-project
+markitect init --repo . --name my-project --expect INIT_PLAN_DIGEST --write
+markitect onboard --repo . --provider codex
 ```
 
 Review the onboarding preview and apply it with the returned digest:
 
 ```powershell
-markitect project onboard --repo . --provider codex --expect ONBOARDING_PLAN_DIGEST --write
+markitect onboard --repo . --provider codex --expect ONBOARDING_PLAN_DIGEST --write
 ```
 
 Choose `claude` or `both` for those contributors. Onboarding previews repository-local entrypoints and discoverable skills, preserves custom content, and points contributors to the shared workflow. It does not register MCP or change global account/provider settings. Connect the selected client using [Provider adapters](docs/provider-adapters.md).

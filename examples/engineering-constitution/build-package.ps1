@@ -49,7 +49,7 @@ try {
 
     Push-Location $repositoryRoot
     try {
-        go run ./src/cmd/markitect pack --repo $temporaryRoot --revision $revision --output $archivePath
+        go run ./src/cmd/markitect-legacy pack --repo $temporaryRoot --revision $revision --output $archivePath
         if ($LASTEXITCODE -ne 0) { throw 'Markitect could not build the package archive.' }
     }
     finally {
