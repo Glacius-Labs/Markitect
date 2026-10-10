@@ -98,7 +98,7 @@ Native instructions guide cooperation; they do not prevent a process with ordina
 
 ## Status and compatibility
 
-The [roadmap](docs/implementation-plan.md) and dated integration backlog record source status. P07 implementation is in progress; real authenticated native acceptance is **NOT RUN**. Source checks and scripted fixtures are not product acceptance, semantic correctness, human approval, or productivity evidence. The documentation map links dated records with their exact SHAs and evidence boundaries.
+The [roadmap](docs/implementation-plan.md) and dated integration backlog record source status. P07 implementation remains in progress. The combined A01 native smoke passed on source `cdd30b0efc540f151404dabe86b022275dc40d83`; exact-final-head hosted Linux/Windows gates and normal Main integration remain pending. This source-bound result does not establish human semantic acceptance or productivity benefit. The documentation map links the [acceptance ledger](docs/work-items/product-readiness/evidence/native-acceptance-ledger.yaml) and [progress record](docs/work-items/product-readiness/integration-progress-20261009.md), which preserve attempt identities and evidence boundaries.
 
 Earlier Project/Domain and canonical Projection contracts, released examples and historical research are preserved. Existing projects need an explicit migration; the new model is not a silent reinterpretation of old files. Use the [compatibility reference](docs/usage.md#legacy-projectdomain-cli-compatibility) and [distribution guide](integration/README.md) to maintain a released installation.
 
