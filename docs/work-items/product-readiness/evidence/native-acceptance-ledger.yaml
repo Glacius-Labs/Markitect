@@ -24,7 +24,7 @@ renewal_policy:
   authority_record_location: forwarded_external_contract_not_in_this_worktree
   authority_record_sha256: a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7
   issued_utc: '2026-10-09T22:01:37Z'
-  status: active_simplified_a01_actual_20_blocked_root_interrupted_readonly_helper_contract_fix_committed_91ce89_next_pins_pending
+  status: active_simplified_a01_actual_28_native_smoke_passed_exact_final_head_ci_and_main_integration_pending
   prior_hold_checkpoint: docs_checkpoint_20d6db54
   prior_hold_lifted_by_direct_human_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
   cumulative_time_start_and_estimated_cost_cutoff: "none"
@@ -980,9 +980,9 @@ renewal_policy:
     separate_open_lifecycle_gap_focused_negative_result: passed_5_392s_on_uncommitted_fix_tree; proves_cleanup_pending_and_child_preserved_after_injected_close_failure_only_not_automatic_resume_reconciliation
     separate_open_lifecycle_gap_next: lifecycle_owner_to_supply_follow_up_negative_command_before_investigating_existing_owned_close_recovery
   next_batch:
-    status: actual27_full_verify_passed_apply_preflight_blocked_before_write_no_apply_a01_not_passed; apply_fix_technically_validated_fresh_native_candidate_pending
+    status: actual28_a01_passed_full_verify_guarded_apply_and_no_replay_recovery; exact_final_head_ci_and_main_integration_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
-    new_batch_pins: actual27_terminal_record_c8c6fa059af99b5ea41024c1e45f9e8381e3ec9f33b8f72762737c5190eb77cb; next_a01_requires_apply_fix_technical_closure_clean_build_fresh_readiness_and_plan
+    new_batch_pins: actual28_terminal_record_55e73c743ada2b296c68ed2717c869cfba7e53d2e0622265d183e5b0e3d14345; no_new_a01_before_exact_final_head_ci_and_pr89_main_integration
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
     no_eighteenth_actual_claimed: false
@@ -995,10 +995,11 @@ renewal_policy:
     no_twenty_fifth_actual_claimed: false
     no_twenty_sixth_actual_claimed: false
     no_twenty_seventh_actual_claimed: false
-    no_twenty_eighth_actual_claimed: true
-    owner_repair_in_progress: true
-    owner_repair_status: Actual27_Full_Verify_passed_but_Apply_preflight_blocked_before_write; Apply_fix_committed_and_technically_validated; fresh_clean_candidate_and_native_revalidation_pending; no_Apply_or_A01_acceptance
-    repair: Apply fixed-base representation correction is technically validated at a5cd6c9da8110ebfded623f5a52cb492bbb4944c; build a clean candidate and obtain fresh readiness/Plan before any new A01; Actual27 remains not_passed because Apply was blocked before writes; retain 4h batch and 1h role bounds
+    no_twenty_eighth_actual_claimed: false
+    no_twenty_ninth_actual_claimed: true
+    owner_repair_in_progress: false
+    owner_repair_status: Actual28_passed_full_verify_guarded_apply_and_same_binary_no_replay_recovery; exact_final_head_hosted_ci_and_regular_main_integration_pending
+    repair: Apply fixed-base representation correction at a5cd6c9da8110ebfded623f5a52cb492bbb4944c was exercised by Actual28; the exact five-path guarded Apply and original-turn recovery passed on source cdd30b0efc540f151404dabe86b022275dc40d83; complete exact-final-head hosted Linux/Windows checks and normal PR89 integration before queue closure; no release or human-acceptance claim
     deferred_helper_followup: P11; outside_current_A01_implementation_allocation; future_bounded_design_under_existing_user_mandate; no_general_readonly_helper_capability_or_framework_implemented
     actual_16_terminal_record_sha256: 0a9db024fba47cde9a9c2ffc34e096205cc9f25927c71ca2ae391a629dfae352
     actual_16_acceptance: not_passed
@@ -1034,9 +1035,9 @@ renewal_policy:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_used_for_latest_attempt: aafe9d5ca9cd6c8ad87533e02f6bc3f5dcd747b0
-    binary_sha256: 62c78ac43b89edcacc2ffa5eaf7ec480ec155ac547b7c3537508c432c9b003c0
-    native_acceptance: failed_full_verify_incomplete_no_apply_attempt_21
+    source_revision_used_for_latest_attempt: cdd30b0efc540f151404dabe86b022275dc40d83
+    binary_sha256: d56376cfeba3b9c9a1292557ea005a0430ff81f3576e5d2f1d7a2d33cdbbc0ad
+    native_acceptance: passed_a01_actual_28_exact_final_head_ci_and_main_integration_pending
     pre_attempt_host_helper_provenance_correction: 6ce8212af64b350ac0ee7759c394af2303e20e3f
     pre_attempt_focused_test_command: "go test ./src/internal/host/projectrun -run 'TestReview|TestHelper|TestRoleStartBudget' -count=1"
     pre_attempt_focused_test: passed_112_016_seconds
@@ -2069,7 +2070,7 @@ renewal_policy:
     fresh_native_validation: pending_clean_candidate_build_and_readiness_plan
     acceptance: not_passed
 
-  latest_actual:
+  attempt_27:
     batch_id: a01-child-rework-order-084a4573bd4f404c8170863ce5264c58
     attempt_number: 27
     status: full_verify_passed_apply_preflight_blocked_before_write_no_apply_not_a01_passed
@@ -2166,6 +2167,98 @@ renewal_policy:
     cost_accounting: partial_lower_bound_not_invoice
     terminal_batch_status: failed_apply_preflight_no_apply
     acceptance: not_passed
+  latest_actual:
+    batch_id: a01-apply-clean-filter-ae0942d9a6954a759666cb99730a3d67
+    attempt_number: 28
+    status: a01_native_smoke_passed_guarded_apply_and_original_root_recovery; exact_final_head_ci_and_main_integration_pending
+    terminal_batch_record_sha256: 55e73c743ada2b296c68ed2717c869cfba7e53d2e0622265d183e5b0e3d14345
+    lifecycle_audit_path: controller/actual28-readonly-lifecycle-audit.json
+    lifecycle_audit_sha256: 0337a828d3bc362ecb9800dd3346ba4724fbecae4b57dc599190bba870c2beee
+    source_revision: cdd30b0efc540f151404dabe86b022275dc40d83
+    validated_docs_revision: cdd30b0efc540f151404dabe86b022275dc40d83
+    adopter_head: 275baa9b830f1eee67cc901321a595002ffe0744
+    binary_sha256: d56376cfeba3b9c9a1292557ea005a0430ff81f3576e5d2f1d7a2d33cdbbc0ad
+    plan_id: ac57fa274cf4a21dc8c872cff257ab72
+    plan_sha256: 7fc506a435fd38519f450914a1b5096d43ead643b30f9260de182b3747431cd4
+    readiness_sha256: ee0420a136539cd4925bfd762172957dfdc82a03d60f59912cb55a23033ecde5
+    runtime_sha256: 0b0bea059d135cf436833a5a8327ddef1d95581cd8483911739e039ded14b9f7
+    batch_deadline_utc: '2026-10-10T15:51:43.0348585Z'
+    terminal_batch_ended_utc: '2026-10-10T12:10:13.1337579Z'
+    observer_id: 0cbdf7f21eb84355b34b28d042a858b8
+    observer_record_sha256: 76a88218cb224ffa08d8018f0d7ed3985a281bc9956a680cfb872c3d35fd5d56
+    observer_exit_code: 2
+    observer_boundary_observed: true
+    observer_terminal_turn_observed: true
+    state_revision: 42
+    run_status: applied
+    full_verify_status: passed
+    full_verify_command_record: 2f784d5f54a548ca82fe2efaa6bd411e
+    full_verify_started_utc: '2026-10-10T12:01:56.4765103Z'
+    full_verify_ended_utc: '2026-10-10T12:04:40.9676516Z'
+    configured_check: python_-B_-m_unittest_discover_-s_tests_-v
+    configured_check_status: passed_exit_0
+    manager_verification_status: passed
+    full_manager_audits: Docs_3_subjects_Source_5_subjects_Root_10_subjects_all_passed
+    verified_candidate_id: 24c6ac91f957ec8bd8b0be632444c07a
+    candidate_snapshot_digest: 180e893375f02f806c38283897fe1ac323819349dbb4c4075e854905b9f9b8e1
+    verification_digest: 256c0a21e879ca097f7268bb32699b9f0e79d947d94c6d199cc2fea6641ca1c7
+    fresh_work_reviews: Root_pass_Docs_final_pass_after_one_rework_Source_pass
+    distinct_integration_review_run_id: 3ba59e31a47b1bf690e7c94812db2c6a
+    distinct_integration_review_session_id: 01a125af-7d0f-7d32-b6af-b6f9be93dbd9
+    distinct_integration_review_turn_id: 01a125af-7f89-7542-b43d-e7559fa3e227
+    distinct_integration_review_outcome: pass
+    original_root_report_id: 9420d6fd1622a0cb1facb5e4a3e44b46
+    original_root_workspace_id: 1c0447dcbc1712bd5fd6ba905193384d
+    original_root_session_id: 01a125ae-78f9-7121-aba8-402b231b5961
+    original_root_turn_id: 01a125ae-7b9e-7602-886f-abd0c3ad9a6a
+    original_root_physical_start_count: 1
+    original_root_replayed: false
+    original_root_recovery_inspection_starts: 0
+    original_root_resume_command_id: a958afe7d0274457beec4702d8cad976
+    original_root_resume_exit_code: 0
+    helper_call_id: exec-7faf1395-1c85-433f-b4f2-2a1661cb2b69
+    helper_task_id: helper-c416f3251e66eba52eccb552759364fd
+    helper_child_run_id: e93522ca7dde8938951ce8acbe6f887f
+    helper_child_session_id: 01a125aa-b601-7cb1-983f-a12f2f6dfba2
+    helper_child_turn_id: 01a125aa-b6f7-7dd1-8813-f13b3097df94
+    helper_delivery_status: applied_and_closed
+    helper_path: tests/test_greeting.py
+    helper_scope: [tests/test_greeting.py]
+    helper_delta_sha256: ac64e1c869d3d320cb536b0116bef77ef8dba7979f0e165b459af1aab37a13d1
+    helper_file_bytes: 683
+    helper_file_mode: '100644'
+    helper_file_sha256: ec79464490f51e3932dc76f3898d4f0a3d2bf2dcca68653b7c09a80ed1dc7c99
+    helper_matches_source_and_candidate: true
+    source_native_session_id: 01a125aa-0b99-7583-8c9c-d36c03d5dd87
+    source_native_turn_id: 01a125aa-0db4-7ad1-ad61-8a6aee7195da
+    docs_native_session_id: 01a125aa-05e6-7c83-93b0-4b9b58bd86ef
+    docs_native_turn_id: 01a125aa-0c2e-7403-91f3-542e602088ce
+    source_docs_native_overlap_seconds: 34.3782999
+    apply_command_id: 2395403beeb34575a5f5e19c62919e18
+    apply_status: applied_exit_0
+    apply_applied_at_utc: '2026-10-10T12:06:26.8497562Z'
+    apply_paths: [README.md, docs/greeting.md, docs/markitect/project.md, src/greeting.py, tests/test_greeting.py]
+    apply_provider_starts_added: 0
+    applied_candidate_all_disk_hashes_and_modes_match: true
+    role_invocations: 14
+    helper_invocations: 1
+    combined_requests_in_batch: 15
+    provider_starts_in_batch: 15
+    prior_cumulative_combined_requests: 169
+    cumulative_combined_requests: 184
+    prior_cumulative_provider_starts: 165
+    cumulative_provider_starts: 180
+    current_state_cost_micros: 1673728
+    preserved_original_root_max_cost_micros: 99416
+    batch_known_partial_cost_micros: 1773144
+    prior_cumulative_known_partial_cost_micros: 23282065
+    cumulative_known_partial_cost_micros: 25055209
+    helper_cost_separately_itemized: false
+    cost_accounting: partial_observed_lower_bound_not_invoice; helper_child_cost_unknown_not_added; original_Root_max_counted_once
+    terminal_batch_status: passed_applied
+    a01_acceptance: passed
+    hosted_exact_final_head_ci: pending
+    regular_pr89_main_integration: pending
   provider_free_preparation:
     superseded_owned_project_revision: 89823a90df985ca4451ec3053467fa4b3d12319f
     rejected_role_wall_seconds: 7200
@@ -2193,8 +2286,8 @@ budget_amendments:
     supersedes_prior_cumulative_budget_and_deadline_as_future_blockers: true
     previous_batch_failures_and_source_pins_preserved: true
     next_batch_pins_pending: true
-    next_batch_status: actual27_full_verify_passed_apply_preflight_blocked_no_apply_apply_fix_technically_validated_fresh_native_candidate_pending
-    last_actual_status: full_verify_passed_apply_preflight_blocked_before_write_no_apply_not_passed_attempt_27
+    next_batch_status: actual28_a01_passed; exact_final_head_hosted_ci_and_regular_pr89_main_integration_pending
+    last_actual_status: a01_native_smoke_passed_full_verify_guarded_apply_and_original_root_recovery_attempt_28
     main_gate_revision_unchanged: combined-normal-smoke-20261009
     release_publication_authorized: false
 allocation_history:
@@ -2260,7 +2353,8 @@ jobs:
     purpose: Combined normal Main smoke with setup Work Item parallel Managers fresh helper independent review Verify guarded Apply and original-turn workspace recovery
     original_purpose: App Server real authenticated fresh-context tool execution
     main_gate: required
-    status: repairing_for_authorized_continuation
+    status: passed_native_a01_actual_28; exact_final_head_ci_and_regular_main_integration_pending
+    latest_attempt_record: latest_actual
     source:
       revision: f2e5c05bd80b0f118aac554ab45b5292b082bee9
       binary_sha256: 3f1368ec846dfd7609a0bf6c65b29383e66a8969565620f1cf6b82d21ba2e2a1

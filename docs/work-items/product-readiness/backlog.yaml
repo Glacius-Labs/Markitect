@@ -15,7 +15,7 @@ native_acceptance:
   main_required_jobs: [A01]
   deferred_not_main_gate_jobs: [A02, A03]
   renewal_policy_revision: renewable-execution-budget-20261010
-  renewal_policy_status: active_simplified_a01_actual_23_failed_full_verify_source_manager_incomplete_no_apply_fresh_native_revalidation_pending
+  renewal_policy_status: active_simplified_a01_actual_28_native_smoke_passed_exact_final_head_ci_and_main_integration_pending
   renewal_policy_authority_sha256: a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7
   per_batch_limits:
     max_role_wall_seconds: 7200
@@ -670,10 +670,14 @@ native_acceptance:
     separate_open_lifecycle_gap_focused_negative_result: passed_5_392s_on_uncommitted_fix_tree; proves_cleanup_pending_and_child_preserved_after_injected_close_failure_only_not_automatic_resume_reconciliation
     separate_open_lifecycle_gap_next: lifecycle_owner_to_supply_follow_up_negative_command_before_investigating_existing_owned_close_recovery
   next_batch:
-    status: actual27_full_verify_passed_apply_preflight_blocked_before_write_no_apply_a01_not_passed; apply_fix_technically_validated_fresh_native_candidate_pending
+    status: actual28_a01_passed_full_verify_guarded_apply_and_no_replay_recovery; exact_final_head_ci_and_main_integration_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
-    new_batch_pins: actual27_terminal_record_c8c6fa059af99b5ea41024c1e45f9e8381e3ec9f33b8f72762737c5190eb77cb; next_a01_requires_apply_fix_technical_closure_clean_build_fresh_readiness_and_plan
+    new_batch_pins: actual28_terminal_record_55e73c743ada2b296c68ed2717c869cfba7e53d2e0622265d183e5b0e3d14345; next_action_exact_final_head_hosted_ci_then_regular_pr89_review_and_main_integration
+    latest_native_attempt: Actual28_passed_A01_on_source_cdd30b0efc540f151404dabe86b022275dc40d83; ledger_latest_actual_and_progress_log_are_source_bound
+    a01_pass_evidence: FullVerify_all_three_Manager_audits_and_configured_check_passed; same_binary_original_Root_recovery_without_replay; guarded_Apply_wrote_exact_five_expected_paths_and_post_apply_hashes_and_modes_match
+    remaining_p09: nine_required_hosted_Linux_Windows_CI_gates_on_the_exact_final_head
+    remaining_p10: ordinary_reviewed_PR89_integration_into_Main_then_clean_checkout_and_post_merge_evidence
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
     no_eighteenth_actual_claimed: false
@@ -686,10 +690,11 @@ native_acceptance:
     no_twenty_fifth_actual_claimed: false
     no_twenty_sixth_actual_claimed: false
     no_twenty_seventh_actual_claimed: false
-    no_twenty_eighth_actual_claimed: true
-    owner_repair_in_progress: true
-    owner_repair_status: Actual27_Full_Verify_passed_but_Apply_preflight_blocked_before_write; Apply_fix_committed_and_technically_validated; fresh_clean_candidate_and_native_revalidation_pending; no_Apply_or_A01_acceptance
-    repair: Apply fixed-base representation correction is technically validated at a5cd6c9da8110ebfded623f5a52cb492bbb4944c; build a clean candidate and obtain fresh readiness/Plan before any new A01; Actual27 remains not_passed because Apply was blocked before writes; retain 4h batch and 1h role bounds
+    no_twenty_eighth_actual_claimed: false
+    no_twenty_ninth_actual_claimed: true
+    owner_repair_in_progress: false
+    owner_repair_status: Actual28_passed_full_verify_guarded_apply_and_same_binary_no_replay_recovery; exact_final_head_hosted_ci_and_regular_main_integration_pending
+    repair: Apply fixed-base representation correction at a5cd6c9da8110ebfded623f5a52cb492bbb4944c was exercised by Actual28; the exact five-path guarded Apply and original-turn recovery passed on source cdd30b0efc540f151404dabe86b022275dc40d83; complete exact-final-head hosted Linux/Windows checks and normal PR89 integration before queue closure; no release or human-acceptance claim
     deferred_helper_followup: P11; outside_current_A01_implementation_allocation; future_bounded_design_under_existing_user_mandate; no_general_readonly_helper_capability_or_framework_implemented
     actual_16_terminal_record_sha256: 0a9db024fba47cde9a9c2ffc34e096205cc9f25927c71ca2ae391a629dfae352
     actual_16_acceptance: not_passed
@@ -725,9 +730,9 @@ native_acceptance:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_used_for_latest_attempt: aafe9d5ca9cd6c8ad87533e02f6bc3f5dcd747b0
-    binary_sha256: 62c78ac43b89edcacc2ffa5eaf7ec480ec155ac547b7c3537508c432c9b003c0
-    latest_native_acceptance: failed_full_verify_incomplete_no_apply_attempt_21
+    source_revision_used_for_latest_attempt: cdd30b0efc540f151404dabe86b022275dc40d83
+    binary_sha256: d56376cfeba3b9c9a1292557ea005a0430ff81f3576e5d2f1d7a2d33cdbbc0ad
+    latest_native_acceptance: passed_a01_actual_28_exact_final_head_ci_and_main_integration_pending
     pre_attempt_host_helper_provenance_correction: 6ce8212af64b350ac0ee7759c394af2303e20e3f
     pre_attempt_source_validation: focused_projectrun_review_helper_role_budget_tests_passed_112_016s
     pre_attempt_staged_diff_check: passed
@@ -1793,24 +1798,24 @@ items:
     evidence: []
   - id: P09
     title: Required regression/platform gates and combined normal A01 smoke
-    status: blocked
+    status: in_progress
     depends_on: [P07, P08]
     owner: Product Integration
     owner_thread: 01a121a0-0417-71c1-9e4b-be742f8c1146
     branch: codex/product-integration-20261009
     base: 1495e1be7b0046711531fa42c8407fba67b8e814
     document: P09-readiness.md
-    evidence: []
+    evidence: [integration-progress-20261009.md, evidence/native-acceptance-ledger.yaml]
   - id: P10
     title: Reviewed regular PR integration into Main
-    status: blocked
+    status: in_progress
     depends_on: [P01, P02, P03, P04, P05, P06, P07, P08, P09]
     owner: Product Integration
     owner_thread: 01a121a0-0417-71c1-9e4b-be742f8c1146
     branch: codex/product-integration-20261009
     base: 1495e1be7b0046711531fa42c8407fba67b8e814
     document: P10-main.md
-    evidence: []
+    evidence: [integration-progress-20261009.md, evidence/native-acceptance-ledger.yaml]
   - id: P11
     title: Safe read-only and analysis helper returns
     status: deferred
