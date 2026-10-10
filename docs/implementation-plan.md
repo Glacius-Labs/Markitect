@@ -18,6 +18,10 @@ The latest published release is v0.14.1. It preserves the earlier Project/Domain
 
 The prior roadmap, including dated release summaries, proof dispositions, architecture assessments, and their original pinned references, is preserved in the [dated historical roadmap](history/implementation-plan-before-product-integration-20261009.md). Use its linked validation reports for evidence details; those records are not current work status.
 
+## Agreed directions not yet scheduled
+
+The [concept register](concepts/register.md#future-enhancements) lists product enhancements that Markitect's product owner has agreed or endorsed but that no work item schedules yet. When one is scheduled, its backlog item links to the register entry, and the backlog owns its status from then on.
+
 ## Historical roadmap links
 
 These retained anchors route existing references to the corresponding dated historical sections.

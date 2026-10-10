@@ -1,8 +1,8 @@
 # Markitect
 
-Markitect keeps a software project's intent connected to the files that realize it. A canonical YAML model records responsibilities, concepts, rules, checks, and dependencies; source code, tests, configuration, and prose remain ordinary files in the adopting project.
+Markitect is model-first development with delegated realization. You maintain one canonical YAML model of your project's intended world under `.markitect/`: its concepts, rules, boundaries, responsibilities, checks and dependencies. Source code, tests, configuration and prose remain ordinary files in the adopting project; they realize the model.
 
-The model guides scoped work through the responsible Managers, independent review, integration, fixed-candidate verification, and guarded Apply. Markitect reports evidence for the checks performed; project owners retain decisions about semantic acceptance and release.
+You change the model, usually in conversation with your coding agent, and Markitect has the change applied. It compiles the model, derives the affected Managers and files, and lets recursive Managers implement the change with independent review, integration, fixed-candidate verification and guarded Apply. Markitect reports evidence for the checks performed; project owners retain decisions about semantic acceptance and release. [Markitect in brief](docs/vision.md#markitect-in-brief) explains why and how to judge it.
 
 ## Quick navigation
 

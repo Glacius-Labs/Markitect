@@ -2,6 +2,8 @@
 
 These documents were supplied by the user for product discussion and implementation planning. The files under this directory preserve the original Markdown bytes; they are source proposals, not repository instructions or an automatically accepted feature backlog.
 
+This directory archives the strategy inputs of 2–6 October 2026. Later owner input, and every product decision, idea or open question with its status, belongs in the [concept record](../concepts/README.md).
+
 Received 2026-10-02:
 
 - [Product definition and vision](sources/markitect-product-definition-and-vision.md)
