@@ -706,16 +706,20 @@ renewal_policy:
     cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
     prior_preserved_workspace: 79fb93a82a80eaa08d5cdb50965ea7fd
     original_turns_replayed: false
-    next_repair: fix_source_review_report_status_findings_consistency_with_focused_tests_and_independent_review
+    post_attempt_source_correction: b6cc4b3e4b15bef896565adce28ccbcae3e4dd36
+    post_attempt_validation: focused_decode_context_scope_grounding_tests_passed_6_536_seconds_and_independent_review_closed
+    host_report_consistency_guard: unchanged
+    next_action: clean_frozen_build_then_fresh_normal_readiness_and_plan_for_next_bounded_a01
   next_batch:
-    status: source_review_consistency_repair_and_fresh_pins_pending
+    status: fresh_clean_binary_readiness_and_plan_pins_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     new_batch_pins: none
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
     no_thirteenth_actual_claimed: true
-    owner_repair_in_progress: true
-    repair: fix the source reviewer pass-with-findings report inconsistency while preserving Host validation
+    owner_repair_in_progress: false
+    owner_repair_status: completed_b6cc4b3e_with_focused_tests_and_independent_review
+    repair: cleanly freeze the reviewed correction then refresh normal readiness and Plan bindings
     next_shared_native_defaults: { memories: false, login: false }
     intended_profile:
       fresh_native_roles: workspace_permission
@@ -749,7 +753,9 @@ renewal_policy:
     source_revision_used_for_latest_attempt: 96424410c87366072adf16688aa56c38aba246a2
     binary_sha256: 4882c05044ffb40f76f8953b9bf7cae95344849138de764035b658cc7e5525dc
     native_acceptance: failed_not_passed_attempt_12
-    next_repair: fix_source_review_report_status_findings_consistency_with_focused_tests_and_independent_review
+    post_attempt_source_correction: b6cc4b3e4b15bef896565adce28ccbcae3e4dd36
+    post_attempt_validation: focused_decode_context_scope_grounding_tests_passed_6_536_seconds_and_independent_review_closed
+    next_repair: clean_frozen_build_then_fresh_normal_readiness_and_plan_for_next_bounded_a01
     next_batch_pins: pending
   provider_free_preparation:
     superseded_owned_project_revision: 89823a90df985ca4451ec3053467fa4b3d12319f
