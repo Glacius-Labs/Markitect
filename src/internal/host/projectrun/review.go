@@ -152,24 +152,35 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	if err := canonicalizeReviewContext(&request); err != nil {
 		return record, log, err
 	}
-	inputDigest, err := digest(request)
+	ledgerInputDigest, err := digest(request)
 	if err != nil {
 		return record, log, err
 	}
-	log = InvocationLog{TaskID: task.ID, Role: "reviewer", Phase: "review", InputDigest: inputDigest, Outcome: "started"}
-	result, recovered, invokeErr := recoverInvocationOnResume(ctx, host, invoker, root, fmt.Sprintf("%s-review-%s-%d", task.ID, phase, round), config, runtime.Limits, request)
+	protocolInputDigest, err := nativeRequestInputDigest(request)
+	if err != nil {
+		return record, log, err
+	}
+	log = InvocationLog{TaskID: task.ID, Role: "reviewer", Phase: "review", InputDigest: ledgerInputDigest, Outcome: "started"}
+	var recoveryBinding nativeRecoveryBinding
+	if required, _ := ctx.Value(nativeRecoveryRequiredKey{}).(bool); required {
+		recoveryBinding, err = originalNativeRecoveryBinding(report.ID, report.Invocations, task.ID, "reviewer", "review", request)
+		if err != nil {
+			return record, log, err
+		}
+	}
+	result, recovered, invokeErr := recoverInvocationOnResume(ctx, host, invoker, root, fmt.Sprintf("%s-review-%s-%d", task.ID, phase, round), config, runtime.Limits, request, recoveryBinding)
 	if !recovered && invokeErr == nil {
 		if onStart != nil {
 			if err := onStart(log); err != nil {
 				return record, log, fmt.Errorf("persist reviewer start: %w", err)
 			}
 		}
-		result, invokeErr = invokeProjectAgent(ctx, host, invoker, root, project, agent, fmt.Sprintf("%s-review-%s-%d", task.ID, phase, round), nil, nil, runtime.Limits, config, request)
+		result, invokeErr = invokeProjectAgent(ctx, host, invoker, root, project, agent, plan.ID, fmt.Sprintf("%s-review-%s-%d", task.ID, phase, round), nil, nil, runtime.Limits, config, request)
 	}
 	if invokeErr == nil && result.Delta != nil && len(result.Delta.Changes) != 0 {
 		invokeErr = fmt.Errorf("read-only reviewer changed its owned workspace")
 	}
-	log = InvocationLog{TaskID: task.ID, Role: "reviewer", Phase: "review", InputDigest: inputDigest,
+	log = InvocationLog{TaskID: task.ID, Role: "reviewer", Phase: "review", InputDigest: ledgerInputDigest,
 		Receipt: result.Receipt, ReportID: result.Receipt.RunID, Outcome: result.Receipt.Outcome}
 	usageCost, known, overflow := estimateCostDetailed(result.Receipt.Usage, agent.Pricing)
 	log.CostMicros, log.CostKnown, log.CostOverflow = usageCost, known, overflow
@@ -186,7 +197,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	if err := freshBindings(host, invoker, root, plan, runtime); err != nil {
 		return record, log, err
 	}
-	parsed, err := validateReviewerResponse(result.Response, result.Receipt, inputDigest)
+	parsed, err := validateReviewerResponse(result.Response, result.Receipt, protocolInputDigest)
 	if err != nil {
 		return record, log, err
 	}
@@ -199,7 +210,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 		return record, log, err
 	}
 	record = ReviewRecord{TaskID: task.ID, ManagerID: task.ManagerID, Round: round, Phase: phase, CandidateID: candidate.ID,
-		CandidateDigest: candidate.Digest, ScopeDigest: scopeDigest, InputDigest: inputDigest, Outcome: parsed.Status, Findings: findings,
+		CandidateDigest: candidate.Digest, ScopeDigest: scopeDigest, InputDigest: protocolInputDigest, Outcome: parsed.Status, Findings: findings,
 		Receipt: result.Receipt, CostMicros: log.CostMicros, CostKnown: log.CostKnown, CostOverflow: log.CostOverflow, At: time.Now().UTC()}
 	return record, log, nil
 }

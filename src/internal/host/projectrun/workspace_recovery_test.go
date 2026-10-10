@@ -170,6 +170,89 @@ func TestRecoverPreparedWorkspaceWithTrustedDispatchedTurn(t *testing.T) {
 	}
 }
 
+func TestRecoverPreparedWorkspaceWithKnownRunIDAndLegacyEmptyReceipt(t *testing.T) {
+	fixture := newRecoveryWorkspaceFixture(t)
+	fixture.journal.State = "prepared"
+	fixture.journal.OwnerRunID = ""
+	fixture.journal.Receipt = agentexec.Receipt{}
+	if err := persistWorkspaceJournal(fixture.journalPath, fixture.journal); err != nil {
+		t.Fatal(err)
+	}
+	service, err := projectworkspace.NewGitService(fixture.storage, projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := &scriptedNativeRecoverer{result: recoveredWorkspaceResult(fixture, "completed")}
+	binding := nativeRecoveryBinding{RunID: fixture.invocation.RunID, InputDigest: fixture.invocation.InputDigest, OwnerRunID: "fixture-run"}
+	result, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, in,
+		fixture.root, fixture.request.TaskID, agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20},
+		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
+	if err != nil || !found || in.recoverCalls != 1 || in.runCalls != 0 || result.Receipt.RunID != fixture.invocation.RunID {
+		t.Fatalf("known receipt run ID did not bind a legacy prepared journal to its exact trusted handle: result=%+v found=%t err=%v invoker=%+v", result, found, err, in)
+	}
+}
+
+func TestRecoverPreparedWorkspaceWithoutReceiptUsesCurrentOwnerNotOlderSameInput(t *testing.T) {
+	fixture := newRecoveryWorkspaceFixture(t)
+	olderHandleID := addClosedSameInputSibling(t, fixture, "older-run")
+	fixture.journal.State = "prepared"
+	fixture.journal.Receipt = agentexec.Receipt{}
+	if err := persistWorkspaceJournal(fixture.journalPath, fixture.journal); err != nil {
+		t.Fatal(err)
+	}
+	service, err := projectworkspace.NewGitService(fixture.storage, projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := &scriptedNativeRecoverer{result: recoveredWorkspaceResult(fixture, "completed")}
+	binding := nativeRecoveryBinding{InputDigest: fixture.invocation.InputDigest, OwnerRunID: "fixture-run"}
+	result, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, in,
+		fixture.root, fixture.request.TaskID, agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20},
+		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
+	if err != nil || !found || in.recoverCalls != 1 || in.runCalls != 0 || result.Receipt.RunID != fixture.invocation.RunID {
+		t.Fatalf("prepared current-owner turn was not recovered exactly: result=%+v found=%t err=%#v invalidHandle=%t invoker=%+v", result, found, err, errors.Is(err, projectworkspace.ErrInvalidHandle), in)
+	}
+	if old := readWorkspaceJournal(t, fixture.root, olderHandleID); old.State != "closed" {
+		t.Fatalf("older same-input workspace was selected or changed: %+v", old)
+	}
+}
+
+func TestRecoverPreparedWorkspaceWithoutReceiptRejectsMissingCurrentOwnerHandle(t *testing.T) {
+	fixture := newRecoveryWorkspaceFixture(t)
+	fixture.journal.State = "prepared"
+	fixture.journal.Receipt = agentexec.Receipt{}
+	fixture.journal.OwnerRunID = "different-run"
+	if err := persistWorkspaceJournal(fixture.journalPath, fixture.journal); err != nil {
+		t.Fatal(err)
+	}
+	in := &scriptedNativeRecoverer{}
+	binding := nativeRecoveryBinding{InputDigest: fixture.invocation.InputDigest, OwnerRunID: "current-run"}
+	_, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: fixture.service, Load: projectwork.Load}, in,
+		fixture.root, fixture.request.TaskID, agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20},
+		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
+	if err == nil || !found || in.recoverCalls != 0 || in.runCalls != 0 {
+		t.Fatalf("workspace without current-owner provenance was accepted: found=%t err=%v invoker=%+v", found, err, in)
+	}
+}
+
+func TestRecoverPreparedWorkspaceWithoutReceiptRejectsDuplicateCurrentOwner(t *testing.T) {
+	fixture := newRecoveryWorkspaceFixture(t)
+	addClosedSameInputSibling(t, fixture, "fixture-run")
+	fixture.journal.State = "prepared"
+	fixture.journal.Receipt = agentexec.Receipt{}
+	if err := persistWorkspaceJournal(fixture.journalPath, fixture.journal); err != nil {
+		t.Fatal(err)
+	}
+	in := &scriptedNativeRecoverer{}
+	binding := nativeRecoveryBinding{InputDigest: fixture.invocation.InputDigest, OwnerRunID: "fixture-run"}
+	_, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: fixture.service, Load: projectwork.Load}, in,
+		fixture.root, fixture.request.TaskID, agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20},
+		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
+	if err == nil || !found || !strings.Contains(err.Error(), "multiple private workspace journals") || in.recoverCalls != 0 || in.runCalls != 0 {
+		t.Fatalf("duplicate current-owner workspaces were guessed: found=%t err=%v invoker=%+v", found, err, in)
+	}
+}
+
 func TestRecoverPreparedWorkspaceWithoutTrustedDispatchedTurnRemainsBlocked(t *testing.T) {
 	for _, test := range []struct {
 		name   string
@@ -209,8 +292,9 @@ func TestRecoverPreparedWorkspaceWithMismatchedRequestRemainsBlocked(t *testing.
 	request := fixture.invocation.Request
 	request.Context = json.RawMessage(`{"different":true}`)
 	invoker := &scriptedNativeRecoverer{}
+	binding := nativeRecoveryBinding{RunID: fixture.invocation.RunID, InputDigest: fixture.invocation.InputDigest, OwnerRunID: "fixture-run"}
 	_, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: fixture.service, Load: projectwork.Load}, invoker, fixture.root, fixture.request.TaskID,
-		agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20}, Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, request)
+		agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20}, Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, request)
 	if err == nil || !found || invoker.recoverCalls != 0 || invoker.runCalls != 0 {
 		t.Fatalf("prepared workspace with a mismatched request reached native recovery: found=%t err=%v invoker=%+v", found, err, invoker)
 	}
@@ -282,6 +366,177 @@ func TestRecoverProjectAgentRejectsConflictingSavedTurns(t *testing.T) {
 	}
 }
 
+func TestRecoverProjectAgentSelectsExactReceiptAmongRepeatedTaskJournals(t *testing.T) {
+	fixture := newRecoveryWorkspaceFixture(t)
+	for _, text := range []string{`{"prior":"one"}`, `{"prior":"two"}`} {
+		addSiblingRecoveryJournal(t, fixture, text)
+	}
+
+	invoker := &scriptedNativeRecoverer{result: recoveredWorkspaceResult(fixture, "completed")}
+	result, found, err := recoverFixture(t, fixture, invoker)
+	if err != nil || !found || invoker.recoverCalls != 1 || invoker.runCalls != 0 || result.Receipt.RunID != fixture.invocation.RunID {
+		t.Fatalf("exact original receipt did not select its journal: found=%t err=%v result=%+v invoker=%+v", found, err, result, invoker)
+	}
+	if got := readWorkspaceJournal(t, fixture.root, fixture.handle.ID); got.State != "closed" || got.CachedResult == nil {
+		t.Fatalf("selected original workspace was not closed and cached: %+v", got)
+	}
+}
+
+func TestRecoverProjectAgentRequiresExactReceiptWhenTaskJournalsRepeat(t *testing.T) {
+	fixture := newRecoveryWorkspaceFixture(t)
+	addSiblingRecoveryJournal(t, fixture, `{"prior":true}`)
+	invoker := &scriptedNativeRecoverer{}
+	binding := nativeRecoveryBinding{RunID: "another-run", InputDigest: fixture.invocation.InputDigest, OwnerRunID: "other-current-run"}
+	_, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: fixture.service, Load: projectwork.Load}, invoker, fixture.root, fixture.request.TaskID,
+		agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20}, Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
+	if !found || err == nil || !strings.Contains(err.Error(), "no private workspace journal matches") || invoker.recoverCalls != 0 || invoker.runCalls != 0 {
+		t.Fatalf("recovery guessed a repeated task journal without exact run identity: found=%t err=%v invoker=%+v", found, err, invoker)
+	}
+}
+
+func TestRecoverProjectAgentRejectsDuplicateExactReceiptJournals(t *testing.T) {
+	fixture := newRecoveryWorkspaceFixture(t)
+	addDuplicateExactRecoveryJournal(t, fixture)
+	invoker := &scriptedNativeRecoverer{}
+	_, found, err := recoverFixture(t, fixture, invoker)
+	if !found || err == nil || !strings.Contains(err.Error(), "multiple private workspace journals match") || invoker.recoverCalls != 0 || invoker.runCalls != 0 {
+		t.Fatalf("recovery guessed between duplicate exact journals: found=%t err=%v invoker=%+v", found, err, invoker)
+	}
+}
+
+func addSiblingRecoveryJournal(t *testing.T, fixture recoveryWorkspaceFixture, contextJSON string) {
+	t.Helper()
+	request := fixture.invocation.Request
+	request.Context = json.RawMessage(contextJSON)
+	invocation, _, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	overlayDigest, err := projectworkspace.CandidateOverlayDigest(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	handle, err := fixture.service.PrepareCandidate(context.Background(), fixture.request, nil, overlayDigest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	journal, err := newNativeJournal(fixture.privateDir, handle.CWD, handle.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	options := journal.wrapOptions(codexappserver.Options{})
+	if err := options.BeforeStart(context.Background(), agentexec.RoleStartRequest{RequestID: invocation.RunID, Role: agentexec.RoleExecutor}); err != nil {
+		t.Fatal(err)
+	}
+	recoveryHandle := codexappserver.RecoveryHandle{Protocol: "codex-app-server/0.162.0", Fingerprint: "recovery-fingerprint",
+		Invocation: invocation, Workspace: handle, ThreadID: "thread-sibling", SessionID: "session-sibling", TurnID: "turn-sibling", TurnDispatched: true}
+	if err := options.OnHandle(context.Background(), recoveryHandle); err != nil {
+		t.Fatal(err)
+	}
+	delta, err := fixture.service.Harvest(context.Background(), handle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := fixture.service.Close(context.Background(), handle); err != nil {
+		t.Fatal(err)
+	}
+	response := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce,
+		Role: invocation.Request.Role, InputDigest: invocation.InputDigest, Outcome: agentexec.OutcomeProposed,
+		CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}}
+	receipt := agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, InputDigest: invocation.InputDigest,
+		ConfigDigest: "recovery-fingerprint", Outcome: agentexec.OutcomeProposed, Lifecycle: &agentexec.Lifecycle{Provider: TransportCodexAppServer,
+			SessionID: "session-sibling", TurnID: "turn-sibling", State: "completed", StartRequests: []agentexec.RoleStartRequest{{RequestID: invocation.RunID, Role: invocation.Request.Role, State: "completed"}}}}
+	cached := agentexec.RunResult{Response: response, Receipt: receipt, Delta: &delta}
+	state := workspaceJournal{OwnerRunID: "prior-run", Request: fixture.request, Handle: handle, OverlayDigest: overlayDigest, State: "closed", Receipt: receipt, Delta: &delta, CachedResult: &cached}
+	if err := persistWorkspaceJournal(filepath.Join(fixture.privateDir, "workspaces", handle.ID+".json"), state); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func addClosedSameInputSibling(t *testing.T, fixture recoveryWorkspaceFixture, ownerRunID string) string {
+	t.Helper()
+	siblingService, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	invocation, _, err := agentexec.PrepareInvocation(fixture.invocation.Request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	overlayDigest, err := projectworkspace.CandidateOverlayDigest(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	handle, err := siblingService.PrepareCandidate(context.Background(), fixture.request, nil, overlayDigest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	native, err := newNativeJournal(fixture.privateDir, handle.CWD, handle.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	options := native.wrapOptions(codexappserver.Options{})
+	if err := options.BeforeStart(context.Background(), agentexec.RoleStartRequest{RequestID: invocation.RunID, Role: agentexec.RoleExecutor}); err != nil {
+		t.Fatal(err)
+	}
+	recoveryHandle := codexappserver.RecoveryHandle{Protocol: "codex-app-server/0.162.0", Fingerprint: "recovery-fingerprint",
+		Invocation: invocation, Workspace: handle, ThreadID: "older-thread", SessionID: "older-session", TurnID: "older-turn", TurnDispatched: true}
+	if err := options.OnHandle(context.Background(), recoveryHandle); err != nil {
+		t.Fatal(err)
+	}
+	delta, err := siblingService.Harvest(context.Background(), handle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := siblingService.Close(context.Background(), handle); err != nil {
+		t.Fatal(err)
+	}
+	response := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce,
+		Role: agentexec.RoleExecutor, InputDigest: invocation.InputDigest, Outcome: agentexec.OutcomeProposed,
+		CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}}
+	receipt := agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, InputDigest: invocation.InputDigest,
+		ConfigDigest: "recovery-fingerprint", ProviderVersion: "0.162.0", Outcome: agentexec.OutcomeProposed,
+		Lifecycle: &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "older-session", TurnID: "older-turn", State: "completed",
+			StartRequests: []agentexec.RoleStartRequest{{RequestID: invocation.RunID, Role: agentexec.RoleExecutor, State: "completed"}}}}
+	cached := agentexec.RunResult{Response: response, Receipt: receipt, Delta: &delta}
+	state := workspaceJournal{OwnerRunID: ownerRunID, Request: fixture.request, Handle: handle, OverlayDigest: overlayDigest,
+		State: "closed", Receipt: receipt, Delta: &delta, CachedResult: &cached}
+	if err := persistWorkspaceJournal(filepath.Join(fixture.privateDir, "workspaces", handle.ID+".json"), state); err != nil {
+		t.Fatal(err)
+	}
+	return handle.ID
+}
+
+func addDuplicateExactRecoveryJournal(t *testing.T, fixture recoveryWorkspaceFixture) {
+	t.Helper()
+	overlayDigest, err := projectworkspace.CandidateOverlayDigest(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	handle, err := fixture.service.PrepareCandidate(context.Background(), fixture.request, nil, overlayDigest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	journal, err := newNativeJournal(fixture.privateDir, handle.CWD, handle.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	options := journal.wrapOptions(codexappserver.Options{})
+	if err := options.BeforeStart(context.Background(), agentexec.RoleStartRequest{RequestID: fixture.invocation.RunID, Role: agentexec.RoleExecutor}); err != nil {
+		t.Fatal(err)
+	}
+	recoveryHandle := codexappserver.RecoveryHandle{Protocol: "codex-app-server/0.162.0", Fingerprint: "recovery-fingerprint",
+		Invocation: fixture.invocation, Workspace: handle, ThreadID: "thread-duplicate", SessionID: "session-duplicate", TurnID: "turn-duplicate", TurnDispatched: true}
+	if err := options.OnHandle(context.Background(), recoveryHandle); err != nil {
+		t.Fatal(err)
+	}
+	state := workspaceJournal{OwnerRunID: "prior-run", Request: fixture.request, Handle: handle, OverlayDigest: overlayDigest, State: "preserved",
+		Receipt: agentexec.Receipt{RunID: fixture.invocation.RunID, InputDigest: fixture.invocation.InputDigest}}
+	if err := persistWorkspaceJournal(filepath.Join(fixture.privateDir, "workspaces", handle.ID+".json"), state); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSelectRecoveryHandleChoosesMostProgressForOneOriginalInvocation(t *testing.T) {
 	fixture := newRecoveryWorkspaceFixture(t)
 	beforeDispatch := fixture.recoveryHandle
@@ -340,8 +595,8 @@ func newRecoveryWorkspaceFixture(t *testing.T) recoveryWorkspaceFixture {
 	if err := wrapped.OnHandle(context.Background(), recoveryHandle); err != nil {
 		t.Fatal(err)
 	}
-	workspace := workspaceJournal{Request: request, Handle: handle, OverlayDigest: overlayDigest, State: "preserved",
-		Receipt: agentexec.Receipt{RunID: invocation.RunID}}
+	workspace := workspaceJournal{OwnerRunID: "fixture-run", Request: request, Handle: handle, OverlayDigest: overlayDigest, State: "preserved",
+		Receipt: agentexec.Receipt{RunID: invocation.RunID, InputDigest: invocation.InputDigest}}
 	journalPath := filepath.Join(privateDir, "workspaces", handle.ID+".json")
 	if err := persistWorkspaceJournal(journalPath, workspace); err != nil {
 		t.Fatal(err)
@@ -377,8 +632,9 @@ func recoverFixture(t *testing.T, fixture recoveryWorkspaceFixture, invoker *scr
 func recoverWithWorkspaceService(t *testing.T, fixture recoveryWorkspaceFixture, invoker Invoker, service projectworkspace.Service) (agentexec.RunResult, bool, error) {
 	t.Helper()
 	config := agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20}
+	binding := nativeRecoveryBinding{RunID: fixture.invocation.RunID, InputDigest: fixture.invocation.InputDigest, OwnerRunID: "fixture-run"}
 	return RecoverProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, invoker, fixture.root, fixture.request.TaskID,
-		config, Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20})
+		config, Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
 }
 
 func TestRecoverProjectAgentRejectsDifferentCurrentRequestBeforeInspection(t *testing.T) {
@@ -386,8 +642,9 @@ func TestRecoverProjectAgentRejectsDifferentCurrentRequestBeforeInspection(t *te
 	invoker := &scriptedNativeRecoverer{result: recoveredWorkspaceResult(fixture, "completed")}
 	request := fixture.invocation.Request
 	request.SourceRevision = "different-selected-source"
+	binding := nativeRecoveryBinding{RunID: fixture.invocation.RunID, InputDigest: fixture.invocation.InputDigest, OwnerRunID: "fixture-run"}
 	_, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: fixture.service, Load: projectwork.Load}, invoker, fixture.root, fixture.request.TaskID,
-		agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20}, Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, request)
+		agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20}, Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, request)
 	if !found || err == nil || invoker.recoverCalls != 0 || invoker.runCalls != 0 {
 		t.Fatalf("mismatched current request inspected/replayed original: found=%t err=%v invoker=%+v", found, err, invoker)
 	}

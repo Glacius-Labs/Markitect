@@ -44,17 +44,10 @@ func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker,
 	deadline := report.StartedAt.Add(time.Duration(runtime.Limits.MaxDuration))
 	bounded, cancel := context.WithDeadline(ctx, deadline)
 	defer cancel()
-	record, log, err := invokeReviewer(requireNativeRecovery(bounded), host, invoker, root, plan, runtime, selected, *task, phase, task.ReviewRound, candidate, func(InvocationLog) error { return fmt.Errorf("recovery cannot reserve a new reviewer") }, *report)
-	index := -1
-	for i := len(report.Invocations) - 1; i >= 0; i-- {
-		prior := report.Invocations[i]
-		if prior.TaskID == task.ID && prior.Role == "reviewer" && prior.InputDigest == log.InputDigest {
-			index = i
-			break
-		}
-	}
-	if index < 0 {
-		return fmt.Errorf("original reviewer start is absent from the durable ledger")
+	record, log, err := invokeReviewer(requireNativeRecovery(bounded, report.ID, report.Invocations), host, invoker, root, plan, runtime, selected, *task, phase, task.ReviewRound, candidate, func(InvocationLog) error { return fmt.Errorf("recovery cannot reserve a new reviewer") }, *report)
+	index, matchErr := originalInvocationIndex(report.Invocations, log)
+	if matchErr != nil {
+		return fmt.Errorf("reconcile original reviewer start: %w", matchErr)
 	}
 	report.Invocations[index] = retainOriginalReceipt(report.Invocations[index], log)
 	if err != nil {

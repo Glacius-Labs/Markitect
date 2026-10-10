@@ -337,7 +337,6 @@ func seedNativeRun(t *testing.T, phase string, reviewRework bool) nativeResumeRu
 	if err := store.appendState(report); err != nil {
 		t.Fatal(err)
 	}
-
 	baseProject, err := host.Load(root, plan.BaseRevision)
 	if err != nil {
 		t.Fatal(err)
@@ -443,7 +442,6 @@ func seedNativeRun(t *testing.T, phase string, reviewRework bool) nativeResumeRu
 	recovered := agentexec.RunResult{Response: response, Receipt: agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: invocation.RunID,
 		InputDigest: invocation.InputDigest, ConfigDigest: fingerprint, ProviderVersion: configAgent.ProviderVersion,
 		Outcome: agentexec.OutcomeProposed, Usage: response.Usage, Lifecycle: lifecycle}}
-
 	privateDir := filepath.Join(root, ".markitect", "runs", "private")
 	nativeJournal, err := newNativeJournal(privateDir, handle.CWD, handle.ID)
 	if err != nil {
@@ -459,7 +457,8 @@ func seedNativeRun(t *testing.T, phase string, reviewRework bool) nativeResumeRu
 	if err := journalOptions.OnHandle(context.Background(), recoveryHandle); err != nil {
 		t.Fatal(err)
 	}
-	journal := workspaceJournal{Request: workspaceRequest, Handle: handle, Overlay: overlay, OverlayDigest: overlayDigest, State: "preserved"}
+	journal := workspaceJournal{OwnerRunID: plan.ID, Request: workspaceRequest, Handle: handle, Overlay: overlay, OverlayDigest: overlayDigest,
+		State: "preserved"}
 	if err := persistWorkspaceJournal(filepath.Join(privateDir, "workspaces", handle.ID+".json"), journal); err != nil {
 		t.Fatal(err)
 	}

@@ -103,6 +103,8 @@ func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *tes
 	if err == nil || invoker.runCalls != 1 || invoker.request.Role != agentexec.RoleExecutor {
 		t.Fatalf("dry request capture did not reach the scripted invoker: err=%v calls=%d", err, invoker.runCalls)
 	}
+	originalLog.Receipt = agentexec.Receipt{RunID: "original-review-run", InputDigest: originalLog.InputDigest}
+	originalLog.ReportID = originalLog.Receipt.RunID
 	// The dry setup invocation deliberately leaves its private workspace journal;
 	// remove that fixture-owned journal to represent the crash-loss case.
 	privateWorkspaces := filepath.Join(root, ".markitect", "runs", "private", "workspaces")

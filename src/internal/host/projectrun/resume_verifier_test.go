@@ -114,8 +114,8 @@ func TestRunVerifierConsumesClosedOriginalCacheWithoutAnotherStart(t *testing.T)
 	if err := options.OnHandle(context.Background(), recoveryHandle); err != nil {
 		t.Fatal(err)
 	}
-	workspaceState := workspaceJournal{Request: workspaceRequest, Handle: handle, OverlayDigest: overlayDigest, State: "preserved",
-		Receipt: agentexec.Receipt{RunID: invocation.RunID}}
+	workspaceState := workspaceJournal{OwnerRunID: "verifier-run", Request: workspaceRequest, Handle: handle, OverlayDigest: overlayDigest, State: "preserved",
+		Receipt: agentexec.Receipt{RunID: invocation.RunID, InputDigest: invocation.InputDigest}}
 	if err := persistWorkspaceJournal(filepath.Join(privateDir, "workspaces", handle.ID+".json"), workspaceState); err != nil {
 		t.Fatal(err)
 	}
@@ -146,8 +146,10 @@ func TestRunVerifierConsumesClosedOriginalCacheWithoutAnotherStart(t *testing.T)
 	verifier := appServerAgent(t)
 	runtime := Runtime{Verifier: &verifier, Limits: Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
 	starts := 0
-	report, log, err := runVerifier(requireNativeRecovery(context.Background()), Host{Load: projectwork.Load, Workspaces: service}, invoker, root,
-		PlanRecord{}, runtime, project, candidate, []CheckResult{}, func(InvocationLog) error { starts++; return nil })
+	original := InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: invocation.InputDigest,
+		Receipt: agentexec.Receipt{RunID: invocation.RunID, InputDigest: invocation.InputDigest}}
+	report, log, err := runVerifier(requireNativeRecovery(context.Background(), "verifier-run", []InvocationLog{original}), Host{Load: projectwork.Load, Workspaces: service}, invoker, root,
+		PlanRecord{ID: "verifier-run"}, runtime, project, candidate, []CheckResult{}, func(InvocationLog) error { starts++; return nil })
 	if err != nil || report == nil || report.Outcome != agentexec.OutcomePassed {
 		t.Fatalf("closed original verifier result was not consumed: report=%+v err=%v", report, err)
 	}

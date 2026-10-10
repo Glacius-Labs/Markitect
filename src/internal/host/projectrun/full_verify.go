@@ -343,7 +343,7 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 			break
 		}
 		children := fullChildAssessments(out.Managers, project.Report, row.ManagerID)
-		assessment, callErr := fullAuditManager(ctx, host, invoker, root, project, runtime, row.ManagerID, row.Strictness, briefingContexts[row.ManagerID], children, relevantManagerChecks(project.Report, row.ManagerID, out.Checks), binding.CheckSource)
+		assessment, callErr := fullAuditManager(ctx, host, invoker, root, project, runtime, row.ManagerID, row.Strictness, briefingContexts[row.ManagerID], children, relevantManagerChecks(project.Report, row.ManagerID, out.Checks), binding.CheckSource, "full-verify-"+binding.ExpectedSnapshot)
 		*row = assessment
 		attempted := row.Receipt != nil && row.Receipt.RunID != ""
 		if attempted {
@@ -598,7 +598,7 @@ func fullRunChecks(ctx context.Context, root string, project *projectwork.Projec
 	return results, errors.Join(failures...)
 }
 
-func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root string, project *projectwork.Project, runtime Runtime, managerID string, strictness StrictnessProfile, briefing BriefingContext, childAssessments []fullChildAssessment, checkResults []CheckResult, checkSource bool) (FullManagerAssessment, error) {
+func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root string, project *projectwork.Project, runtime Runtime, managerID string, strictness StrictnessProfile, briefing BriefingContext, childAssessments []fullChildAssessment, checkResults []CheckResult, checkSource bool, ownerRunID string) (FullManagerAssessment, error) {
 	row := FullManagerAssessment{ManagerID: managerID, Status: "incomplete", Assessments: []FullAssessment{}, Findings: []string{}}
 	manager, ok := runtime.Review.Agents[managerID]
 	if !ok {
@@ -694,7 +694,7 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 			return row, fmt.Errorf("allocate unique full-verification workspace task: %w", err)
 		}
 		taskID = "full-verify-assessment-" + strings.TrimPrefix(taskID, "readonly-")
-		result, invokeErr = invokeProjectAgent(ctx, host, invoker, root, project, manager, taskID, []string{}, nil, runtime.Limits, config, request)
+		result, invokeErr = invokeProjectAgent(ctx, host, invoker, root, project, manager, ownerRunID, taskID, []string{}, nil, runtime.Limits, config, request)
 	} else {
 		result, invokeErr = invokeAgent(ctx, invoker, config, request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")})
 	}

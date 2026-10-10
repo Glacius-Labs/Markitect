@@ -159,7 +159,8 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			}
 			for _, task := range report.Tasks {
 				if task.ReviewStatus == "invoking" || task.ReviewStatus == "uncertain" {
-					if recoveryErr := recoverPendingNativeReview(ctx, host, invoker, root, store, dir, plan, runtime, project, &report, task.ManagerID); recoveryErr == nil {
+					recoveryErr := recoverPendingNativeReview(ctx, host, invoker, root, store, dir, plan, runtime, project, &report, task.ManagerID)
+					if recoveryErr == nil {
 						pendingReviewRecovered = true
 						continue
 					}
@@ -167,11 +168,11 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 						current.State = "uncertain"
 					}
 					report.Status = StatusBlocked
-					report.Findings = append(report.Findings, "prior native reviewer outcome is uncertain for "+task.ManagerID+"; exact-candidate recovery failed and it will not be replayed automatically")
+					report.Findings = append(report.Findings, "prior native reviewer outcome is uncertain for "+task.ManagerID+"; exact-candidate recovery failed and it will not be replayed automatically: "+boundedRepairDiagnostic(recoveryErr))
 					if err := persistState(store, &report); err != nil {
 						return empty, err
 					}
-					return report, fmt.Errorf("uncertain in-flight manager process requires a new plan: %s", task.ManagerID)
+					return report, fmt.Errorf("uncertain in-flight reviewer recovery remains blocked for %s: %w", task.ManagerID, recoveryErr)
 				}
 				if task.State == "invoking" || task.State == "integrating" || task.State == "uncertain" {
 					phase := task.RepairPhase
@@ -270,7 +271,11 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if requestErr != nil {
 			return blockRun(store, report, fmt.Errorf("native recovery request for %s could not be reconstructed", task.ManagerID))
 		}
-		result, found, recoverErr := RecoverProjectAgent(ctx, host, invoker, root, pending.taskID, config, runtime.Limits, request)
+		binding, bindingErr := originalNativeRecoveryBinding(report.ID, report.Invocations, task.ID, agentexec.RoleExecutor, pending.phase, request)
+		if bindingErr != nil {
+			return blockRun(store, report, fmt.Errorf("native recovery for %s is blocked: %w", task.ManagerID, bindingErr))
+		}
+		result, found, recoverErr := RecoverProjectAgent(ctx, host, invoker, root, pending.taskID, config, runtime.Limits, binding, request)
 		if recoverErr != nil || !found {
 			if result.Receipt.RunID != "" {
 				upsertRecoveredInvocation(&report, invocationLogForResult(*task, pending.phase, result, agent.Pricing))
@@ -1386,7 +1391,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	if config.Transport == TransportCodexAppServer {
 		attemptID = nativeTaskAttemptID(task, phase)
 	}
-	result, err = invokeProjectAgent(ctx, host, invoker, root, project, configAgent, attemptID, writePaths, ignoredPaths, runtime.Limits, config, request)
+	result, err = invokeProjectAgent(ctx, host, invoker, root, project, configAgent, plan.ID, attemptID, writePaths, ignoredPaths, runtime.Limits, config, request)
 	if err != nil {
 		return result, log, err
 	}

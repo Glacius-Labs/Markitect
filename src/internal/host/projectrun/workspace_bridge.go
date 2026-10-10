@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
@@ -22,6 +23,7 @@ type candidateWorkspaceService interface {
 }
 
 type workspaceJournal struct {
+	OwnerRunID    string                    `json:"ownerRunId,omitempty"`
 	Request       projectworkspace.Request  `json:"request"`
 	Handle        projectworkspace.Handle   `json:"handle"`
 	Overlay       []projectworkspace.Change `json:"overlay"`
@@ -35,10 +37,13 @@ type workspaceJournal struct {
 // invokeProjectAgent owns workspace preparation and observation. A model cannot
 // supply a delta. Unknown transport/child termination preserves the private
 // workspace and journal for recovery; it never permits a blind cleanup/replay.
-func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root string, project *Project, agent Agent, taskID string, allowed, excluded []string, limits Limits, cfg agentexec.Config, req agentexec.Request) (agentexec.RunResult, error) {
+func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root string, project *Project, agent Agent, ownerRunID, taskID string, allowed, excluded []string, limits Limits, cfg agentexec.Config, req agentexec.Request) (agentexec.RunResult, error) {
 	opts := agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")}
 	if agent.Transport != TransportCodexAppServer {
 		return invokeAgent(ctx, invoker, cfg, req, opts)
+	}
+	if strings.TrimSpace(ownerRunID) == "" {
+		return agentexec.RunResult{}, errors.New("native invocation requires its owning run identity")
 	}
 	absRoot, rootErr := filepath.Abs(root)
 	if rootErr != nil {
@@ -81,7 +86,7 @@ func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root st
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
-	journal := workspaceJournal{Request: wr, Handle: handle, Overlay: overlay, OverlayDigest: overlayDigest, State: "prepared"}
+	journal := workspaceJournal{OwnerRunID: ownerRunID, Request: wr, Handle: handle, Overlay: overlay, OverlayDigest: overlayDigest, State: "prepared"}
 	journalPath := filepath.Join(opts.PrivateLogDirectory, "workspaces", handle.ID+".json")
 	if err := persistWorkspaceJournal(journalPath, journal); err != nil {
 		return agentexec.RunResult{}, errors.Join(err, service.Close(context.Background(), handle))

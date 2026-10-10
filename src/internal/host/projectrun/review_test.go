@@ -2,6 +2,7 @@ package projectrun
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,92 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
+
+func TestReviewerNormalizesEmptyArtifactForReceiptBoundReport(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	host := projectworkHost()
+	managerID := e2eManagerID("orders", "orders")
+	updateE2ERuntime(t, root, func(runtime *Runtime) {
+		agents := map[string]Agent{}
+		for id, agent := range runtime.Agents {
+			agents[id] = agent
+		}
+		runtime.Review = &ReviewConfig{Agents: agents, MaxRounds: 2, MaxManagerRounds: 2}
+	})
+	revision := identityHead(t, root)
+	plan, err := Plan(host, root, revision, PlanRequest{Goal: "Review the empty artifact.", Managers: []string{managerID}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatalf("plan review fixture: %v", err)
+	}
+	runtime, err := LoadRuntime(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	base, err := host.Load(root, plan.BaseRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const path = "src/orders/implementation.txt"
+	candidate := candidateData{APIVersion: APIVersion, ID: "empty-artifact-candidate", Files: map[string]File{
+		path: {Path: path, Mode: "0644", Content: nil},
+	}}
+	candidate.Digest = candidateSnapshotHash(base.Snapshot, candidate)
+	project, err := projectForCandidate(host, root, base.Snapshot, candidate)
+	if err != nil {
+		t.Fatal(err)
+	}
+	task := findTask(plan.Managers, managerID)
+	if task == nil {
+		t.Fatal("review fixture did not plan the selected Manager")
+	}
+	invoker := &normalizedReviewInvoker{}
+	review, log, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, project, *task, "work", 1, candidate, nil, RunReport{})
+	if err != nil {
+		t.Fatalf("valid response for empty candidate artifact was rejected: %v", err)
+	}
+	if len(invoker.request.Artifacts) != 1 || len(invoker.request.Artifacts[0].Content) != 0 {
+		t.Fatalf("review request did not contain the empty candidate artifact: %+v", invoker.request.Artifacts)
+	}
+	rawDigest, err := digest(invoker.request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if log.InputDigest != rawDigest || log.InputDigest == review.Receipt.InputDigest {
+		t.Fatalf("ledger did not preserve its raw digest separately from the protocol receipt: log=%s raw=%s receipt=%s", log.InputDigest, rawDigest, review.Receipt.InputDigest)
+	}
+	if review.InputDigest != review.Receipt.InputDigest {
+		t.Fatalf("review record is not bound to its normalized receipt: record=%s receipt=%s", review.InputDigest, review.Receipt.InputDigest)
+	}
+	response := agentexec.Response{Role: agentexec.RoleExecutor, InputDigest: review.InputDigest, Outcome: agentexec.OutcomeProposed,
+		ReportJSON: json.RawMessage(`{"status":"pass","summary":"The empty artifact satisfies the scoped contract.","findings":[]}`)}
+	badReceipt := review.Receipt
+	badReceipt.InputDigest = log.InputDigest
+	if _, err := validateReviewerResponse(response, badReceipt, review.InputDigest); err == nil {
+		t.Fatal("mismatched raw receipt digest was accepted for the normalized review response")
+	}
+}
+
+type normalizedReviewInvoker struct{ request agentexec.Request }
+
+func (i *normalizedReviewInvoker) Run(_ context.Context, _ agentexec.Config, request agentexec.Request, _ agentexec.RunOptions) (agentexec.RunResult, error) {
+	i.request = request
+	invocation, _, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	zero := int64(0)
+	return agentexec.RunResult{
+		Response: agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce, Role: agentexec.RoleExecutor,
+			InputDigest: invocation.InputDigest, Outcome: agentexec.OutcomeProposed, CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{},
+			VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}, ReportJSON: json.RawMessage(`{"status":"pass","summary":"The empty artifact satisfies the scoped contract.","findings":[]}`)},
+		Receipt: agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, InputDigest: invocation.InputDigest,
+			Outcome: agentexec.OutcomeProposed, Usage: &agentexec.Usage{InputTokens: &zero, OutputTokens: &zero}},
+	}, nil
+}
+
+func (*normalizedReviewInvoker) Fingerprint(config agentexec.Config) (string, error) {
+	return agentexec.Fingerprint(config)
+}
 
 func TestReviewFindingRequiresExactCandidatePathAndAcceptedGrounding(t *testing.T) {
 	model := projectmodel.ManagerContext{Statements: []projectmodel.Statement{{ID: "accepted-statement"}}, Artifacts: []projectmodel.Artifact{{Paths: []string{"src/orders/result.txt"}}}}

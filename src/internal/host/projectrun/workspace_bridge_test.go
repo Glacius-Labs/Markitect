@@ -137,7 +137,7 @@ func TestInvokeProjectAgentUsesPrivateCandidateWithSourceWIPAndHarvestsByteDelta
 	}}
 	limits := Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}
 	result, runErr := invokeProjectAgent(context.Background(), host, invoker, root, &candidate,
-		workspaceBridgeAgent(t, root), "orders-work", []string{"src/orders"}, nil, limits,
+		workspaceBridgeAgent(t, root), "workspace-owner-run", "orders-work", []string{"src/orders"}, nil, limits,
 		agentexec.Config{Transport: TransportCodexAppServer}, agentexec.Request{Role: agentexec.RoleExecutor})
 	if !errors.Is(runErr, providerErr) {
 		t.Fatalf("original invocation error was not retained: %v", runErr)
@@ -181,7 +181,7 @@ func TestInvokeProjectAgentPreservesUnknownRootOrChildLifecycle(t *testing.T) {
 			root, project, service := workspaceBridgeBase(t)
 			invoker := &workspaceBridgeInvoker{result: agentexec.RunResult{Receipt: agentexec.Receipt{RunID: "unknown-run", Lifecycle: tc.lifecycle}}}
 			result, err := invokeProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project,
-				workspaceBridgeAgent(t, root), "orders-work", []string{"src/orders"}, nil,
+				workspaceBridgeAgent(t, root), "workspace-owner-run", "orders-work", []string{"src/orders"}, nil,
 				Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, agentexec.Config{}, agentexec.Request{Role: agentexec.RoleExecutor})
 			if err == nil || !strings.Contains(err.Error(), "termination is unknown") {
 				t.Fatalf("unknown lifecycle was not reported: %v", err)
@@ -205,7 +205,7 @@ func TestInvokeProjectAgentRejectsReadOnlyNativeBindingBeforeInvocation(t *testi
 	root, project, service := workspaceBridgeBase(t)
 	invoker := &workspaceBridgeInvoker{}
 	_, err := invokeProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project,
-		Agent{Transport: TransportCodexAppServer, WorkspaceMode: ""}, "orders-review", []string{"src/orders"}, nil,
+		Agent{Transport: TransportCodexAppServer, WorkspaceMode: ""}, "workspace-owner-run", "orders-review", []string{"src/orders"}, nil,
 		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, agentexec.Config{}, agentexec.Request{Role: agentexec.RoleExecutor})
 	if err == nil || invoker.called {
 		t.Fatalf("native read-only binding was allowed into a writable Git workspace: called=%t err=%v", invoker.called, err)
@@ -225,7 +225,7 @@ func TestInvokeProjectAgentRejectsForgedHarvestDigestOrBinding(t *testing.T) {
 			service := &tamperingWorkspaceService{candidateWorkspaceServiceAdapter: &candidateWorkspaceServiceAdapter{service: gitService}, mutate: tc.mutate}
 			invoker := &workspaceBridgeInvoker{result: agentexec.RunResult{Receipt: terminalWorkspaceReceipt("forged-run")}}
 			result, err := invokeProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project,
-				workspaceBridgeAgent(t, root), "orders-work", []string{"src/orders"}, nil,
+				workspaceBridgeAgent(t, root), "workspace-owner-run", "orders-work", []string{"src/orders"}, nil,
 				Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, agentexec.Config{}, agentexec.Request{Role: agentexec.RoleExecutor})
 			if err == nil || result.Delta != nil || result.Receipt.RunID != "forged-run" {
 				t.Fatalf("forged harvested delta was accepted or receipt lost: result=%+v err=%v", result, err)

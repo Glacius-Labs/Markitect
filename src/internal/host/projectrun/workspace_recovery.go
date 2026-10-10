@@ -48,9 +48,16 @@ func safeRecoveryError(err error, message string) error {
 // RecoverProjectAgent resumes inspection of the exact saved native turn for a
 // task. It never starts a role or replays a turn. found is true once an exact
 // task journal exists, including when its workspace must be preserved on error.
-func RecoverProjectAgent(ctx context.Context, host Host, invoker Invoker, root, taskID string, config agentexec.Config, limits Limits, expectedRequest ...agentexec.Request) (result agentexec.RunResult, found bool, err error) {
+func RecoverProjectAgent(ctx context.Context, host Host, invoker Invoker, root, taskID string, config agentexec.Config, limits Limits, expected nativeRecoveryBinding, expectedRequest agentexec.Request) (result agentexec.RunResult, found bool, err error) {
 	if ctx == nil || strings.TrimSpace(taskID) == "" || config.Transport != TransportCodexAppServer {
 		return result, false, errors.New("native recovery requires a context, task ID, and codex-app-server transport")
+	}
+	if expected.OwnerRunID == "" || expected.InputDigest == "" {
+		return result, false, errors.New("native recovery requires the current owner run ID, input digest, and request")
+	}
+	expectedInvocation, _, err := agentexec.PrepareInvocation(expectedRequest)
+	if err != nil {
+		return result, false, errors.New("native recovery request cannot be prepared")
 	}
 	root, err = filepath.Abs(root)
 	if err != nil {
@@ -66,10 +73,98 @@ func RecoverProjectAgent(ctx context.Context, host Host, invoker Invoker, root, 
 		return result, false, nil
 	}
 	found = true
-	if len(journals) != 1 {
-		return result, true, errors.New("multiple private workspace journals match this task; recovery is ambiguous")
+	if expectedInvocation.InputDigest != expected.InputDigest {
+		return result, true, errors.New("native recovery request does not match the durable original input digest")
 	}
-	journal, journalPath := journals[0].journal, journals[0].path
+	if invoker == nil {
+		return result, true, errors.New("native recovery invoker is unavailable")
+	}
+	fingerprint, fpErr := fingerprintForRequest(invoker, config, expectedRequest)
+	if fpErr != nil {
+		return result, true, errors.New("native recovery configuration cannot be verified")
+	}
+	type exactJournal struct {
+		candidate taskWorkspaceJournal
+		handle    codexappserver.RecoveryHandle
+	}
+	var exact []exactJournal
+	for _, candidate := range journals {
+		journal := candidate.journal
+		if journal.Request.TaskID != taskID {
+			continue
+		}
+		ownerMatch := journal.OwnerRunID != "" && journal.OwnerRunID == expected.OwnerRunID
+		if expected.RunID == "" {
+			if !ownerMatch {
+				continue
+			}
+			if journal.Receipt.InputDigest != "" && journal.Receipt.InputDigest != expected.InputDigest {
+				return result, true, errors.New("current owner workspace receipt conflicts with the original input digest")
+			}
+		} else {
+			if journal.Receipt.RunID != "" && journal.Receipt.RunID != expected.RunID {
+				if ownerMatch {
+					return result, true, errors.New("current owner workspace receipt conflicts with the durable original run ID")
+				}
+				continue
+			}
+			if journal.Receipt.InputDigest != "" && journal.Receipt.InputDigest != expected.InputDigest {
+				if ownerMatch || journal.Receipt.RunID == expected.RunID {
+					return result, true, errors.New("workspace receipt conflicts with the durable original input digest")
+				}
+				continue
+			}
+			if journal.Receipt.RunID != expected.RunID && !ownerMatch && journal.Receipt.RunID != "" {
+				continue
+			}
+		}
+		closedCache := journal.State == "closed" && journal.CachedResult != nil
+		handles, handleErr := readTrustedRecoveryHandlesForCache(privateDir, journal.Handle.ID, closedCache)
+		if handleErr != nil {
+			return result, true, errors.New("private native recovery handles are unavailable or invalid")
+		}
+		matchingHandles := make([]codexappserver.RecoveryHandle, 0, len(handles))
+		for _, handle := range handles {
+			if handle.Invocation.InputDigest != expected.InputDigest || !requestMatch(expectedRequest, handle.Invocation) {
+				continue
+			}
+			if expected.RunID != "" && handle.Invocation.RunID != expected.RunID {
+				continue
+			}
+			matchingHandles = append(matchingHandles, handle)
+		}
+		if len(matchingHandles) == 0 {
+			if ownerMatch || journal.Receipt.RunID == expected.RunID && expected.RunID != "" {
+				return result, true, errors.New("current owner workspace has no trusted handle for the exact original request")
+			}
+			continue
+		}
+		selected, selectErr := selectRecoveryHandle(matchingHandles, journal.Handle, fingerprint)
+		if selectErr != nil {
+			return result, true, selectErr
+		}
+		if selected.Invocation.InputDigest != expected.InputDigest || expected.RunID != "" && selected.Invocation.RunID != expected.RunID {
+			return result, true, errors.New("trusted native handle does not match the durable original run ID and input digest")
+		}
+		if journal.Receipt.RunID != "" && (journal.Receipt.RunID != selected.Invocation.RunID || journal.Receipt.InputDigest != selected.Invocation.InputDigest) {
+			return result, true, errors.New("private receipt does not match the original native invocation")
+		}
+		if expected.RunID == "" && (!ownerMatch || !selected.TurnDispatched || selected.ThreadID == "" || selected.SessionID == "" || selected.TurnID == "") {
+			return result, true, errors.New("current owner workspace has no trusted dispatched original turn")
+		}
+		exact = append(exact, exactJournal{candidate: candidate, handle: selected})
+	}
+	if len(exact) == 0 {
+		if expected.RunID != "" {
+			return result, true, errors.New("no private workspace journal matches the durable original run ID and input digest")
+		}
+		return result, true, errors.New("no current owner workspace journal matches the exact dispatched request")
+	}
+	if len(exact) != 1 {
+		return result, true, errors.New("multiple private workspace journals match the durable owner, run ID, and input digest")
+	}
+	journal, journalPath := exact[0].candidate.journal, exact[0].candidate.path
+	selected := exact[0].handle
 	if !sameRecoveryPath(journal.Request.RepositoryRoot, root) || journal.Request.TaskID != taskID || journal.Handle.TaskID != taskID || journal.Handle.ID == "" {
 		return result, true, errors.New("private workspace journal does not match the selected task and repository")
 	}
@@ -88,36 +183,18 @@ func RecoverProjectAgent(ctx context.Context, host Host, invoker Invoker, root, 
 	if bindingErr != nil || binding.OverlayDigest != journal.Request.OverlayDigest {
 		return result, true, errors.New("selected source snapshot changed since the native invocation")
 	}
-	if invoker == nil {
-		return result, true, errors.New("native recovery invoker is unavailable")
-	}
-	var fingerprint string
-	var fpErr error
-	if len(expectedRequest) == 1 {
-		fingerprint, fpErr = fingerprintForRequest(invoker, config, expectedRequest[0])
-	} else {
-		fingerprint, fpErr = invoker.Fingerprint(config)
-	}
-	if fpErr != nil {
-		return result, true, errors.New("native recovery configuration cannot be verified")
-	}
 	closedCache := journal.State == "closed" && journal.CachedResult != nil
 	harvestedCache := journal.State == "harvested" && journal.CachedResult != nil
 	if closedCache && !validCachedWorkspacePath(root, privateDir, journal.Handle) {
 		return result, true, errors.New("cached workspace handle path does not match the original private Git workspace")
 	}
-	handles, err := readTrustedRecoveryHandlesForCache(privateDir, journal.Handle.ID, closedCache)
-	if err != nil {
-		return result, true, errors.New("private native recovery handles are unavailable or invalid")
-	}
-	selected, err := selectRecoveryHandle(handles, journal.Handle, fingerprint)
-	if err != nil {
-		return result, true, err
-	}
 	if journal.State == "prepared" && (!selected.TurnDispatched || selected.ThreadID == "" || selected.SessionID == "" || selected.TurnID == "") {
 		return result, true, errors.New("prepared workspace has no trusted dispatched original turn to recover")
 	}
-	if len(expectedRequest) > 1 || (len(expectedRequest) == 1 && !requestMatch(expectedRequest[0], selected.Invocation)) {
+	if expected.RunID != "" && selected.Invocation.RunID != expected.RunID || selected.Invocation.InputDigest != expected.InputDigest {
+		return result, true, errors.New("trusted native handle does not match the durable original run ID and input digest")
+	}
+	if !requestMatch(expectedRequest, selected.Invocation) {
 		return result, true, errors.New("native recovery request does not match the original invocation")
 	}
 	if journal.Receipt.RunID != "" && journal.Receipt.RunID != selected.Invocation.RunID {

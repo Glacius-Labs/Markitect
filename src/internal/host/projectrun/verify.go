@@ -174,7 +174,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 			return fail(checkErr)
 		}
 		out.Checks = priorChecks
-		ctx = requireNativeRecovery(ctx)
+		ctx = requireNativeRecovery(ctx, runID, run.Invocations)
 	}
 	for _, check := range plan.Checks {
 		if recoverVerifier {
@@ -227,14 +227,9 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 			return persistState(s, &run)
 		})
 		if recoverVerifier {
-			for i := len(run.Invocations) - 1; i >= 0; i-- {
-				if run.Invocations[i].Role == agentexec.RoleVerifier && run.Invocations[i].Phase == "verify" && run.Invocations[i].InputDigest == invocation.InputDigest {
-					verifierStartIndex = i
-					break
-				}
-			}
-			if verifierStartIndex < 0 {
-				return fail(fmt.Errorf("original verifier reservation does not match recovered request"))
+			verifierStartIndex, err = originalInvocationIndex(run.Invocations, invocation)
+			if err != nil {
+				return fail(fmt.Errorf("reconcile original verifier reservation: %w", err))
 			}
 		}
 		if verifierStartIndex >= 0 {
@@ -532,7 +527,10 @@ func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, p
 		CheckResults         []CheckResult `json:"checkResults"`
 	}{candidate.Digest, sortedFileKeys(candidate.Files), subjects, refs, checkResults})
 	request := agentexec.Request{Role: agentexec.RoleVerifier, SourceRevision: project.Revision, ModelDigest: project.Report.ModelDigest, ModulePin: project.Report.Digest, ProjectionID: project.Report.Digest, ScopeIDs: refs, PolicyIDs: checks, Context: contextJSON, Artifacts: []agentexec.Artifact{}}
-	inputDigest, _ := digest(request)
+	inputDigest, digestErr := digest(request)
+	if digestErr != nil {
+		return nil, log, digestErr
+	}
 	if deadline, ok := ctx.Deadline(); ok {
 		remaining := time.Until(deadline)
 		if remaining <= 0 {
@@ -543,14 +541,22 @@ func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, p
 		}
 	}
 	log = InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: inputDigest, Outcome: "started"}
-	result, recovered, err := recoverInvocationOnResume(ctx, host, invoker, root, "verifier-"+candidate.ID, config, runtime.Limits, request)
+	var recoveryBinding nativeRecoveryBinding
+	if required, _ := ctx.Value(nativeRecoveryRequiredKey{}).(bool); required {
+		var bindingErr error
+		recoveryBinding, bindingErr = originalNativeRecoveryBinding(plan.ID, nativeRecoveryLedger(ctx), "verifier", agentexec.RoleVerifier, "verify", request)
+		if bindingErr != nil {
+			return nil, log, bindingErr
+		}
+	}
+	result, recovered, err := recoverInvocationOnResume(ctx, host, invoker, root, "verifier-"+candidate.ID, config, runtime.Limits, request, recoveryBinding)
 	if !recovered && err == nil {
 		if onStart != nil {
 			if err := onStart(log); err != nil {
 				return nil, log, fmt.Errorf("persist verifier start: %w", err)
 			}
 		}
-		result, err = invokeProjectAgent(ctx, host, invoker, root, project, *runtime.Verifier, "verifier-"+candidate.ID, nil, nil, runtime.Limits, config, request)
+		result, err = invokeProjectAgent(ctx, host, invoker, root, project, *runtime.Verifier, plan.ID, "verifier-"+candidate.ID, nil, nil, runtime.Limits, config, request)
 	}
 	if err == nil && result.Delta != nil && len(result.Delta.Changes) != 0 {
 		err = fmt.Errorf("read-only verifier changed its owned workspace")
