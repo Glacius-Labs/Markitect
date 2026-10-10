@@ -149,7 +149,9 @@ func TestReExecutedChildHome(t *testing.T) {
 // TestGoLocationsMatchTheGoCommand compares the locations Isolate pins with
 // those the go command derives in a fresh environment.
 func TestGoLocationsMatchTheGoCommand(t *testing.T) {
-	home := t.TempDir()
+	// The go command may leave a background process, such as its telemetry,
+	// writing below the fresh home; TempDir retries the cleanup.
+	home := TempDir(t)
 	for _, name := range []string{"GOCACHE", "GOMODCACHE", "GOPATH", "GOENV", "XDG_CACHE_HOME", "XDG_CONFIG_HOME"} {
 		t.Setenv(name, "")
 	}
@@ -165,7 +167,7 @@ func TestGoLocationsMatchTheGoCommand(t *testing.T) {
 	}
 	t.Setenv("GOENV", envFile)
 	cmd := exec.Command("go", "env", "-json", "GOCACHE", "GOMODCACHE", "GOPATH", "GOENV")
-	cmd.Dir = t.TempDir()
+	cmd.Dir = TempDir(t)
 	out, err := cmd.Output()
 	if err != nil {
 		t.Skipf("go command unavailable: %v", err)
