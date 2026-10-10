@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T05:24:35.161564+00:00",
+  "updatedUtc": "2026-10-10T05:28:57.968237+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18399,5 +18399,15 @@
     "rootDirectionSentOnce": "Record concrete gap/repro/currentOperatorboundaries in existing product queue/problems. Current exactoriginalRecovery/CRLF first, no new reconciler/guard/capability gate now. Existing human stable-correct-usable mandate covers necessary bounded repairs after blockers, no new blanket approval. Prefer minimal existingowned-close path with exacttrustedterminal binding; fundamental publiccapability tradeoff only if concretelyrequired.",
     "mainQualification": "Do not invent new acceptance scenarios or claim unknowncleanup safe; final CI/review/currentactual remain focus",
     "productImplementationByRoot": false
+  },
+  "scientistIntegratorByteBindingFollowup20261010": {
+    "status": "CLOSED_READONLY_ASSESSMENT_PRIVATE_CHECKPOINT_ROOT_VERIFIED",
+    "sourceSha": "6c1487b7cf68a38f972fe0e3fb1d34b3ffb2c77a",
+    "file": "experiments/work-item-comparison/playground/markitect/integrator-byte-binding-followup-20261010.md",
+    "fileSha256": "f00776b11cf0834479ff4b1d1d764ae081e85afe716e97c73cf32fe0648035d3",
+    "rootVerified": "Clean local HEAD equals PRIVATE remote; report working bytes equal exact Git blob. Report read; no live product journal read or repeated product tests.",
+    "findings": "Independent clean README 80 CRLF versus 78 LF confirms revision-bound Explore false positive. Existing Git-filter equality plus exact captured raw worktree CAS remains repair direction. Exact original invocation recovery selector repair active; generic recovery cause loss recorded. Actual15 recorded revision22 blocked, genuine helper applied-and-closed.",
+    "limits": "Scientist scratch FileShare probe establishes possible read interference, not actual locking PID or causality. Snapshot-wide model-only binding breadth requires explicit dependency-closure decision; no automatic weakening of conservative invalidation. Cleanup-pending helper reconciliation is a separate static gap, not Actual15 cause.",
+    "coordination": "Integration already received technical findings; no duplicate dispatch or ACK. Current original recovery and CRLF repairs first. No new models/trials/Main acceptance; Actual15 accounting remains unknown, historical closed totals unchanged."
   }
 }
