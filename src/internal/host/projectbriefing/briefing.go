@@ -7,6 +7,9 @@
 // event's identity is its change's content and the previous event for the
 // same definition, so a change keeps its identity when a topic is merged or
 // squashed, and a change re-applied after a revert gets a new one.
+// Read paths use ReadAcceptedHistory, which computes the accepted history in
+// memory and writes nothing; EnsureAcceptedHistory and the other writers
+// persist it under a store lock that writers wait for.
 package projectbriefing
 
 import (
@@ -93,6 +96,13 @@ type Bundle struct {
 // Generate loads the two explicitly named committed revisions and generates
 // stable global and manager-scoped briefing records.
 func Generate(root, sinceRevision, revision string, provenance Provenance) (Bundle, error) {
+	return generate(root, sinceRevision, revision, provenance, nil)
+}
+
+// generate is Generate with event predecessors taken from state, the
+// in-memory history being reconciled, or from the persisted store when state
+// is nil.
+func generate(root, sinceRevision, revision string, provenance Provenance, state *Store) (Bundle, error) {
 	if strings.TrimSpace(sinceRevision) == "" || strings.TrimSpace(revision) == "" || sinceRevision == revision {
 		return Bundle{}, ErrUncommittedModel
 	}
@@ -110,11 +120,14 @@ func Generate(root, sinceRevision, revision string, provenance Provenance) (Bund
 	if err := requireAncestor(root, before.Revision, after.Revision); err != nil {
 		return Bundle{}, err
 	}
-	state, _, err := readStore(root)
-	if err != nil {
-		return Bundle{}, err
+	if state == nil {
+		stored, _, err := readStore(root)
+		if err != nil {
+			return Bundle{}, err
+		}
+		state = &stored
 	}
-	predecessors, err := lastEvents(root, state, before.Revision)
+	predecessors, err := lastEvents(root, *state, before.Revision)
 	if err != nil {
 		return Bundle{}, err
 	}

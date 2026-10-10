@@ -3,10 +3,12 @@ package projectbriefing
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
@@ -109,8 +111,21 @@ func TestEnsureAcceptedHistorySurvivesCodeOnlyTopicBranchAndNoFFMerge(t *testing
 		t.Fatalf("precondition: ensure on topic: %v", err)
 	}
 	gitTest(t, root, "checkout", mainBranch)
-	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+	_, onTopic, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	view, err := ReadAcceptedHistory(root, changed)
+	if err != nil || view.State.History == nil || view.State.History.Revision != changed || view.PersistedDigest != onTopic {
+		t.Errorf("read-only view did not derive main's cursor: view=%#v err=%v", view.State.History, err)
+	}
+	if _, after, err := Read(root); err != nil || after != onTopic {
+		t.Fatalf("read-only view changed the store: before=%s after=%s err=%v", onTopic, after, err)
+	}
+	if receipt, err := EnsureAcceptedHistory(root, changed); err != nil {
 		t.Errorf("ensure back on %s at unchanged model %s: %v", mainBranch, changed, err)
+	} else if receipt.StoreDigest != view.Receipt.StoreDigest {
+		t.Errorf("ensure persisted %s, read-only view computed %s", receipt.StoreDigest, view.Receipt.StoreDigest)
 	}
 	gitTest(t, root, "merge", "--no-ff", "-m", "merge topic", "topic")
 	merged := gitOutputTest(t, root, "rev-parse", "HEAD")
@@ -136,8 +151,14 @@ func TestEnsureAcceptedHistoryKeepsTopicModelChangeProvisionalOnDivergedMain(t *
 	}
 	gitTest(t, root, "checkout", mainBranch)
 	diverged := commitReadmeTest(t, root, "Main diverges.\n", "main diverges")
-	if _, err := EnsureAcceptedHistory(root, diverged); err != nil {
+	view, err := ReadAcceptedHistory(root, diverged)
+	if err != nil || len(view.State.Briefings) != 1 || view.State.Briefings[0].Revision != changed {
+		t.Fatalf("read-only view counted the topic's provisional briefing or was blocked by it: %#v err=%v", view.State.Briefings, err)
+	}
+	if receipt, err := EnsureAcceptedHistory(root, diverged); err != nil {
 		t.Fatalf("a model change briefed only on an unmerged topic blocked main: %v", err)
+	} else if receipt.StoreDigest != view.Receipt.StoreDigest {
+		t.Fatalf("ensure persisted %s, read-only view computed %s", receipt.StoreDigest, view.Receipt.StoreDigest)
 	}
 	state, _, err := Read(root)
 	if err != nil || len(state.Briefings) != 1 || state.Briefings[0].Revision != changed {
@@ -277,11 +298,259 @@ func TestEnsureAcceptedHistoryRejectsConflictingBriefingOnActiveLine(t *testing.
 	if err != nil {
 		t.Fatalf("precondition: injected briefing must be a valid store entry: %v", err)
 	}
+	if _, err := ReadAcceptedHistory(root, third); !errors.Is(err, ErrAmbiguousHistory) {
+		t.Fatalf("read-only view accepted a briefing that skips a transition on the active line: %v", err)
+	}
 	if _, err := EnsureAcceptedHistory(root, third); !errors.Is(err, ErrAmbiguousHistory) {
 		t.Fatalf("briefing that skips a transition on the active line was accepted: %v", err)
 	}
 	if _, after, err := Read(root); err != nil || after != before {
 		t.Fatalf("rejected ambiguous history changed the store: before=%s after=%s err=%v", before, after, err)
+	}
+}
+
+func TestReadAcceptedHistoryWritesNothingAndMatchesEnsure(t *testing.T) {
+	root, baseline, changed := committedModelFixture(t)
+	stateDir := filepath.Join(root, ".markitect", "state")
+	view, err := ReadAcceptedHistory(root, changed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(stateDir); !os.IsNotExist(err) {
+		t.Fatalf("read-only accepted history created operational state: %v", err)
+	}
+	if view.PersistedDigest != StoreDigest(emptyStore()) || view.Receipt.BaselineRevision != baseline || view.Receipt.Revision != changed || len(view.Receipt.Bundles) != 1 || len(view.State.Briefings) != 1 {
+		t.Fatalf("read-only view of a fresh repository = %#v", view.Receipt)
+	}
+	project, err := projectwork.Load(root, changed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager := view.Receipt.Bundles[0].Events[0].AffectedManagers[0]
+	_, events, viewBinding, err := LoadForManagerFrom(root, view.State, project.Model.Digest, manager, changed)
+	if err != nil || len(events) != 1 {
+		t.Fatalf("manager briefing from the read-only view events=%d err=%v", len(events), err)
+	}
+	receipt, err := EnsureAcceptedHistory(root, changed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hash(receipt) != hash(view.Receipt) {
+		t.Fatalf("ensure persisted a different answer than the read-only view:\nensure=%#v\nview=%#v", receipt, view.Receipt)
+	}
+	state, digest, err := Read(root)
+	if err != nil || digest != view.Receipt.StoreDigest || hash(state) != hash(view.State) {
+		t.Fatalf("persisted history differs from the read-only view: digest=%s view=%s err=%v", digest, view.Receipt.StoreDigest, err)
+	}
+	if _, _, binding, err := LoadForManager(root, project.Model.Digest, manager, changed); err != nil || binding != viewBinding {
+		t.Fatalf("persisted manager briefing %s differs from the read-only view %s: %v", binding, viewBinding, err)
+	}
+	older, err := ReadAcceptedHistory(root, baseline)
+	if err != nil || older.PersistedDigest != digest || older.Receipt.StoreDigest != digest || older.Receipt.Revision != baseline || len(older.Receipt.Bundles) != 0 {
+		t.Fatalf("read-only view behind the persisted cursor = %#v err=%v", older.Receipt, err)
+	}
+	gitTest(t, root, "commit", "--allow-empty", "-m", "code-only change after ensure")
+	head := gitOutputTest(t, root, "rev-parse", "HEAD")
+	newer, err := ReadAcceptedHistory(root, head)
+	if err != nil || newer.PersistedDigest != digest || newer.State.History == nil || newer.State.History.Revision != head || len(newer.Receipt.Bundles) != 0 {
+		t.Fatalf("read-only view ahead of the persisted cursor = %#v err=%v", newer.Receipt, err)
+	}
+	if _, after, err := Read(root); err != nil || after != digest {
+		t.Fatalf("read-only view changed the persisted store: before=%s after=%s err=%v", digest, after, err)
+	}
+	if ensured, err := EnsureAcceptedHistory(root, head); err != nil || ensured.StoreDigest != newer.Receipt.StoreDigest {
+		t.Fatalf("ensure after the read-only view = %#v err=%v, view digest %s", ensured, err, newer.Receipt.StoreDigest)
+	}
+}
+
+func TestReadAcceptedHistoryChainsSuccessiveUnpersistedChangesLikeEnsure(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	first, err := EnsureAcceptedHistory(root, changed)
+	if err != nil || len(first.Bundles) != 1 || len(first.Bundles[0].Events) != 1 {
+		t.Fatalf("precondition: first accepted change receipt=%#v err=%v", first, err)
+	}
+	commitModelChangeTest(t, root, "before shipment", "prior to fulfillment", "second change, not yet persisted")
+	head := commitModelChangeTest(t, root, "prior to fulfillment", "before any dispatch", "third change, not yet persisted")
+	view, err := ReadAcceptedHistory(root, head)
+	if err != nil || len(view.Receipt.Bundles) != 2 {
+		t.Fatalf("read-only view of two unpersisted changes = %#v err=%v", view.Receipt, err)
+	}
+	second, third := view.Receipt.Bundles[0].Events, view.Receipt.Bundles[1].Events
+	if len(second) != 1 || len(third) != 1 || second[0].Predecessor != first.Bundles[0].Events[0].ID || third[0].Predecessor != second[0].ID {
+		t.Fatalf("read-only view did not chain each change to the one before it: second=%#v third=%#v", second, third)
+	}
+	receipt, err := EnsureAcceptedHistory(root, head)
+	if err != nil || hash(receipt) != hash(view.Receipt) {
+		t.Fatalf("ensure persisted other events than the read-only view: ensure=%#v err=%v", receipt, err)
+	}
+	if state, _, err := Read(root); err != nil || hash(state) != hash(view.State) {
+		t.Fatalf("persisted history differs from the read-only view: err=%v", err)
+	}
+	if again, err := EnsureAcceptedHistory(root, head); err != nil || len(again.Bundles) != 0 {
+		t.Fatalf("persisted chain does not validate on the next ensure: receipt=%#v err=%v", again, err)
+	}
+}
+
+func TestReadAcceptedHistorySucceedsInParallelAfterNewCommits(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	_, persisted, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	head := commitNewAcceptedHistoryTest(t, root)
+	const parallel = 6
+	views := make([]AcceptedHistory, parallel)
+	errs := make([]error, parallel)
+	var wait sync.WaitGroup
+	for i := range parallel {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			views[i], errs[i] = ReadAcceptedHistory(root, head)
+		}()
+	}
+	wait.Wait()
+	for i := range parallel {
+		if errs[i] != nil {
+			t.Errorf("parallel read-only accepted history %d failed: %v", i, errs[i])
+			continue
+		}
+		if views[i].Receipt.StoreDigest != views[0].Receipt.StoreDigest || views[i].State.History == nil || views[i].State.History.Revision != head || len(views[i].Receipt.Bundles) != 1 {
+			t.Errorf("parallel read-only view %d = %#v", i, views[i].Receipt)
+		}
+	}
+	if _, after, err := Read(root); err != nil || after != persisted {
+		t.Fatalf("parallel reads changed the persisted store: before=%s after=%s err=%v", persisted, after, err)
+	}
+	assertOnlyBriefingStoreFileTest(t, root)
+}
+
+func TestEnsureAcceptedHistoryParallelWritersConvergeOnOneStore(t *testing.T) {
+	root, _, _ := committedModelFixture(t)
+	head := commitNewAcceptedHistoryTest(t, root)
+	const writers, readers = 6, 2
+	receipts := make([]EnsureReceipt, writers)
+	views := make([]AcceptedHistory, readers)
+	errs := make([]error, writers+readers)
+	var wait sync.WaitGroup
+	for i := range writers {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			receipts[i], errs[i] = EnsureAcceptedHistory(root, head)
+		}()
+	}
+	for i := range readers {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			views[i], errs[writers+i] = ReadAcceptedHistory(root, head)
+		}()
+	}
+	wait.Wait()
+	for i, err := range errs {
+		if err != nil {
+			t.Errorf("parallel accepted-history call %d failed: %v", i, err)
+		}
+	}
+	if t.Failed() {
+		return
+	}
+	state, digest, err := Read(root)
+	if err != nil || state.History == nil || state.History.Revision != head || len(state.Briefings) != 2 {
+		t.Fatalf("parallel writers left history=%#v briefings=%d err=%v", state.History, len(state.Briefings), err)
+	}
+	added := 0
+	for i, receipt := range receipts {
+		if receipt.StoreDigest != digest || receipt.Revision != head {
+			t.Errorf("writer %d receipt digest=%s revision=%s, store digest=%s", i, receipt.StoreDigest, receipt.Revision, digest)
+		}
+		added += len(receipt.Bundles)
+	}
+	if added != len(state.Briefings) {
+		t.Errorf("writers reported %d added briefings, want each of %d exactly once", added, len(state.Briefings))
+	}
+	for i, view := range views {
+		if view.Receipt.StoreDigest != digest {
+			t.Errorf("reader %d computed %s, writers persisted %s", i, view.Receipt.StoreDigest, digest)
+		}
+	}
+	assertOnlyBriefingStoreFileTest(t, root)
+}
+
+func TestBriefingStoreReadersAndWritersSurviveConcurrentReplacement(t *testing.T) {
+	root := t.TempDir()
+	const writers, writes, readers, reads = 4, 25, 4, 250
+	errs := make(chan error, writers*writes+readers*reads)
+	var wait sync.WaitGroup
+	for w := range writers {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			for n := range writes {
+				_, digest, err := readStore(root)
+				if err != nil {
+					errs <- err
+					continue
+				}
+				revision := fmt.Sprintf("%040x", w*writes+n+1)
+				if _, err := update(root, digest, func(state *Store) error {
+					state.History = &HistoryCursor{Policy: acceptedPolicy, BaselineRevision: revision, BaselineModelDigest: "baseline", Revision: revision, ModelDigest: "model"}
+					return nil
+				}); err != nil && !errors.Is(err, ErrStaleStore) {
+					errs <- err
+				}
+			}
+		}()
+	}
+	for range readers {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			for range reads {
+				if _, _, err := readStore(root); err != nil {
+					errs <- err
+				}
+			}
+		}()
+	}
+	wait.Wait()
+	close(errs)
+	for err := range errs {
+		t.Errorf("concurrent store access failed: %v", err)
+	}
+	assertOnlyBriefingStoreFileTest(t, root)
+}
+
+// commitNewAcceptedHistoryTest commits code-only changes around one more
+// accepted model change and returns the new HEAD.
+func commitNewAcceptedHistoryTest(t *testing.T, root string) string {
+	t.Helper()
+	for i := range 3 {
+		gitTest(t, root, "commit", "--allow-empty", "-m", fmt.Sprintf("code-only change %d", i))
+	}
+	commitModelChangeTest(t, root, "before shipment", "prior to fulfillment", "further accepted model change")
+	for i := range 3 {
+		gitTest(t, root, "commit", "--allow-empty", "-m", fmt.Sprintf("later code-only change %d", i))
+	}
+	return gitOutputTest(t, root, "rev-parse", "HEAD")
+}
+
+func assertOnlyBriefingStoreFileTest(t *testing.T, root string) {
+	t.Helper()
+	entries, err := os.ReadDir(filepath.Join(root, ".markitect", "state", "briefings"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].Name() != "history.json" {
+		names := []string{}
+		for _, entry := range entries {
+			names = append(names, entry.Name())
+		}
+		t.Fatalf("briefing store directory holds %v, want only history.json", names)
 	}
 }
 
