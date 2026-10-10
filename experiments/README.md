@@ -2,12 +2,6 @@
 
 This directory holds bounded exercise harnesses and their evidence. Each exercise defines its own source, runtime, input, authority and result limits. Use the [validation map](../docs/validation/README.md) to locate recorded outcomes and the [backlog](../docs/work-items/backlog.yaml) for current work status.
 
-## Project workflow exercise
-
-| Exercise | Scope |
-|---|---|
-| [Live Shop](project-world-live/README.md) | Disposable model-first delivery, Brownfield proposals and independent acceptance checks |
-
 The deterministic [Shop example](../examples/project-world/README.md) and [Project workflow](../docs/project-workflow.md) are the starting points for ordinary use. An exercise description or retained runtime configuration does not start a new provider run.
 
 ## Case studies
