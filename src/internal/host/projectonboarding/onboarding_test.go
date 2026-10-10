@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -653,12 +654,12 @@ func TestModelFirstWorkflowCoversShortWorkItemsReadinessAndBrownfieldAdoption(t 
 	for _, required := range []string{
 		"The selected project is .markitect/project.yaml",
 		"ordinary Work Item",
-		"with explore and write:false",
-		"using ready",
-		"Use edit to preview",
-		"Use adopt and its run stage",
-		"use deliver to advance",
-		"recover with status, resume, or repair",
+		"with `explore` and write:false",
+		"using `ready`",
+		"Use `edit` to preview",
+		"Use `adopt` and its run stage",
+		"use `deliver` to advance",
+		"recover with `status`, `resume`, or `repair`",
 		"committed-model policy",
 		"Initial adoption never changes application source",
 		"Apply does not merge, publish, or deploy",
@@ -687,7 +688,7 @@ func TestRenderedExploreRecordDecodesAndCreatesBoundPreview(t *testing.T) {
 	}
 	workflow := fileFor(t, Plan{Files: files}, workflowPath).Content
 	fence := strings.Repeat(string(rune(96)), 3)
-	marker := "Minimal new exploration input record (pass as input to the explore tool):\n\n" + fence + "json\n"
+	marker := "Minimal new exploration input record (pass as input to the `explore` tool):\n\n" + fence + "json\n"
 	start := strings.Index(workflow, marker)
 	if start < 0 {
 		t.Fatal("shared workflow is missing its minimal Explore JSON example")
@@ -738,7 +739,7 @@ func TestRenderedExploreRecordDecodesAndCreatesBoundPreview(t *testing.T) {
 		t.Fatalf("CreatePreview did not bind the new active record: %#v", preview)
 	}
 	for _, required := range []string{
-		"explore and write:false",
+		"`explore` and write:false",
 		"write:true and expect.",
 		"returned writePlan.digest",
 		"Minimal new exploration input record",
@@ -790,6 +791,36 @@ func TestNativeProviderEntriesRouteOrdinaryWorkToOperationSkills(t *testing.T) {
 		for _, file := range files {
 			if file.Path == path {
 				t.Errorf("root routing still generates obsolete compatibility skill %s", path)
+			}
+		}
+	}
+}
+
+// Runtime pins in generated guidance come from one source. Changing a pin is a
+// deliberate edit of this test, and no other version may appear in the text.
+func TestGeneratedGuidanceTakesRuntimePinsFromOneSource(t *testing.T) {
+	pins := Pins()
+	if pins != (RuntimePins{CodexCLI: "0.162.0", Model: "gpt-6-luna", Effort: "high", ClaudeCode: "2.1.295"}) {
+		t.Fatalf("runtime pins changed: %+v; update the guidance review and this test together", pins)
+	}
+	files, err := Files(Options{Providers: []Provider{Codex, Claude}, DocumentationPath: "docs/markitect/project.md"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var all strings.Builder
+	for _, file := range files {
+		all.WriteString(file.Content)
+	}
+	text := all.String()
+	for _, want := range []string{pins.innerRuntime(), "Claude Code " + pins.ClaudeCode} {
+		if !strings.Contains(text, want) {
+			t.Errorf("generated guidance does not name pin %q", want)
+		}
+	}
+	for _, pattern := range []string{`Codex CLI [0-9][0-9.]*`, `Claude Code [0-9][0-9.]*`, "`gpt-[a-z0-9.-]+`"} {
+		for _, found := range regexp.MustCompile(pattern).FindAllString(text, -1) {
+			if found != "Codex CLI "+pins.CodexCLI && found != "Claude Code "+pins.ClaudeCode && found != "`"+pins.Model+"`" {
+				t.Errorf("generated guidance names %q, which is not a pin", found)
 			}
 		}
 	}

@@ -9,6 +9,10 @@ import (
 const beginMarker = "<!-- BEGIN MARKITECT MODEL-FIRST -->"
 const endMarker = "<!-- END MARKITECT MODEL-FIRST -->"
 
+// Files renders every generated guidance file for options without reading a
+// repository, so other packages can check the generated text.
+func Files(options Options) ([]FileChange, error) { return renderFiles(options) }
+
 func renderFiles(options Options) ([]FileChange, error) {
 	workflow, err := renderWorkflow(options.DocumentationPath)
 	if err != nil {
@@ -40,11 +44,11 @@ This shared guide is for Codex and Claude Code as outer project agents. The sele
 
 ## Start with an ordinary Work Item
 
-For a short issue, bug, feature, or backlog prompt, inspect repository and Git context, then use model, check, and context as needed. Clarify only material intent, scope, acceptance, or authority; otherwise state a bounded assumption and continue. Keep accepted decisions, assumptions, options, unresolved questions, owners, and blockers in the durable exploration record and active task.
+For a short issue, bug, feature, or backlog prompt, inspect repository and Git context, then use «model», «check», and «context» as needed. Clarify only material intent, scope, acceptance, or authority; otherwise state a bounded assumption and continue. Keep accepted decisions, assumptions, options, unresolved questions, owners, and blockers in the durable exploration record and active task.
 
-Create or update the typed one-scope record with explore and write:false. Review its selected-model binding and returned plan.digest; persist that exact plan with write:true and expect. Read the scope using ready. If the structure needs acknowledgement, preview first and write only with the returned writePlan.digest and true actor/provenance. Never impersonate a user or imply identity authentication. A draft or exploration record is not accepted model intent.
+Create or update the typed one-scope record with «explore» and write:false. Review its selected-model binding and returned plan.digest; persist that exact plan with write:true and expect. Read the scope using «ready». If the structure needs acknowledgement, preview first and write only with the returned writePlan.digest and true actor/provenance. Never impersonate a user or imply identity authentication. A draft or exploration record is not accepted model intent.
 
-Minimal new exploration input record (pass as input to the explore tool):
+Minimal new exploration input record (pass as input to the «explore» tool):
 
 %[2]sjson
 {
@@ -60,14 +64,16 @@ Minimal new exploration input record (pass as input to the explore tool):
 }
 %[2]s
 
-Use edit to preview a bounded canonical model mutation and inspect its structural report and impact. Write only with that exact digest. Repair actionable check findings within delegated authority. Under committed-model policy, only the valid selected canonical model at committed HEAD is accepted. Satisfy required checks/review and commit the model on the task branch before readiness and implementation; this does not claim human approval.
+Use «edit» to preview a bounded canonical model mutation and inspect its structural report and impact. Write only with that exact digest. Repair actionable «check» findings within delegated authority. Under committed-model policy, only the valid selected canonical model at committed HEAD is accepted. Satisfy required checks/review and commit the model on the task branch before readiness and implementation; this does not claim human approval.
 
-For existing code, inspect and cite actual files, history, configuration, and checks. Use adopt and its run stage for fixed-source discovery, bounded Manager proposals/integration, explicit decisions, and model-only adoption. Preserve evidence ownership, exact child assignments, uncertainty, and unresolved scopes. Initial adoption never changes application source; cleanup or delivery is a separate authorized operation. Observed code is evidence about implementation, not proof of intended behavior.
+For existing code, inspect and cite actual files, history, configuration, and checks. Use «adopt» and its run stage for fixed-source discovery, bounded Manager proposals/integration, explicit decisions, and model-only adoption. Preserve evidence ownership, exact child assignments, uncertainty, and unresolved scopes. Initial adoption never changes application source; cleanup or delivery is a separate authorized operation. Observed code is evidence about implementation, not proof of intended behavior.
 
-When the scope is ready and the original Work Item authorizes execution, use deliver to advance that same durable scope through planning, Manager work/integration, verification, guarded preflight, and Apply. Inspect every returned stage. For staged work, use plan, run, verify, and apply (preview, then write); recover with status, resume, or repair on the same run after interruption or a known corrected failure. Never create a replacement run or blindly replay an unknown outcome. Apply does not merge, publish, or deploy.
+When the scope is ready and the original Work Item authorizes execution, use «deliver» to advance that same durable scope through planning, Manager work/integration, verification, guarded preflight, and Apply. Inspect every returned stage. For staged work, use «plan», «run», «verify», and «apply» (preview, then write); recover with «status», «resume», or «repair» on the same run after interruption or a known corrected failure. Never create a replacement run or blindly replay an unknown outcome. Apply does not merge, publish, or deploy.
 
 Technical checks, semantic evidence, and human acceptance are distinct. A passing check or successful Apply alone does not establish semantic correctness or acceptance of the requested outcome. The project documentation destination is %[1]q; keep it readable and generated from accepted model intent. Project guidance does not prevent repository writers with ordinary repository write access from bypassing tools; guarded Apply and checks enforce only their declared boundaries. These instructions do not create an operating-system security boundary.
 `, documentationPath, strings.Repeat(string(rune(96)), 3))
+	// «name» marks an MCP tool; it renders as inline code.
+	body = strings.NewReplacer("«", "`", "»", "`").Replace(body)
 	return managedBlock(body), nil
 }
 
@@ -80,12 +86,13 @@ func claudeEntry() string {
 }
 
 func rootEntry(provider, providerFlag string) string {
+	pins := Pins()
 	clientSetup := ""
 	switch provider {
 	case "Codex":
-		clientSetup = "Connect the outer Codex client to this repository's Markitect MCP server with `codex mcp add markitect -- ABSOLUTE_MARKITECT_EXECUTABLE mcp --repo ABSOLUTE_PROJECT_ROOT`; confirm with `codex mcp list` or `/mcp` (see the [Codex MCP guide](https://developers.openai.com/codex/mcp)). Markitect schedules inner Manager and reviewer work, by default through Codex CLI 0.162.0 App Server using `gpt-6-luna` at `high`; `.markitect/runtime.yaml` may select another profile per role, including a process executor. The outer agent must not schedule duplicate Managers."
+		clientSetup = "Connect the outer Codex client to this repository's Markitect MCP server with `codex mcp add markitect -- ABSOLUTE_MARKITECT_EXECUTABLE mcp --repo ABSOLUTE_PROJECT_ROOT`; confirm with `codex mcp list` or `/mcp` (see the [Codex MCP guide](https://developers.openai.com/codex/mcp)). Markitect schedules inner Manager and reviewer work, by default through " + pins.innerRuntime() + "; `.markitect/runtime.yaml` may select another profile per role, including a process executor. The outer agent must not schedule duplicate Managers."
 	case "Claude Code":
-		clientSetup = "For Claude Code 2.1.295 as the outer project agent, connect its MCP client with `claude mcp add --transport stdio markitect -- ABSOLUTE_MARKITECT_EXECUTABLE mcp --repo ABSOLUTE_PROJECT_ROOT`; confirm with `claude mcp list` and `/mcp` (see the [Claude Code MCP guide](https://code.claude.com/docs/en/mcp)). Markitect's default inner Manager and reviewer runtime is Codex CLI 0.162.0 App Server using `gpt-6-luna` at `high`; `.markitect/runtime.yaml` may select process executors per role. Claude Code is not used as an inner worker."
+		clientSetup = "For Claude Code " + pins.ClaudeCode + " as the outer project agent, connect its MCP client with `claude mcp add --transport stdio markitect -- ABSOLUTE_MARKITECT_EXECUTABLE mcp --repo ABSOLUTE_PROJECT_ROOT`; confirm with `claude mcp list` and `/mcp` (see the [Claude Code MCP guide](https://code.claude.com/docs/en/mcp)). Markitect's default inner Manager and reviewer runtime is " + pins.innerRuntime() + "; `.markitect/runtime.yaml` may select process executors per role. Claude Code is not used as an inner worker."
 	}
 	return fmt.Sprintf("This repository uses the selected Markitect model in `.markitect/project.yaml`. For an ordinary issue, bug, feature, or backlog Work Item, start with `markitect-implement`; use `markitect-init`, `markitect-extract`, `markitect-design`, `markitect-suggest`, `markitect-configure`, `markitect-cleanup`, `markitect-verify`, `markitect-apply`, or `markitect-check` when that is the specific task. Follow the shared [project workflow](.markitect/workflows/model-first.md) and use Markitect MCP as the outer project-operation interface. %s Quote executable and repository-root placeholders for your shell; the server fixes its authority to that selected root. For a new project or first setup, preview `markitect init --repo ABSOLUTE_PROJECT_ROOT --name NAME` and write with `--expect` and its returned digest; then preview `markitect onboard --repo ABSOLUTE_PROJECT_ROOT --provider %s` and write only with its returned digest. Onboard does not configure MCP or change global client settings.", clientSetup, providerFlag)
 }

@@ -815,6 +815,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectcli/verbs_model.go
       owner: project-world-implementation
+    - path: src/internal/host/projectcli/guidance_names_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectrun/scheduling.go
       owner: project-world-implementation
     - path: src/internal/host/projectrun/scheduling_test.go
@@ -916,6 +918,8 @@ spec:
     - path: src/internal/host/projectonboarding/testmain_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectonboarding/onboarding_crlf_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectonboarding/pins.go
       owner: project-world-implementation
     - path: src/internal/host/projectrun/coordinator.go
       owner: project-world-implementation
