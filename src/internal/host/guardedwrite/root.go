@@ -139,6 +139,54 @@ func requireStoredName(directory fs.FS, parent, part string) error {
 	return fmt.Errorf("%q names an existing entry stored under another name", part)
 }
 
+// StoredNames applies the stored-name check to write paths below one
+// directory. Writers of private copies use it where they write, after
+// creating parent directories, because an alias can only be resolved on disk.
+// It remembers the directories it has proven, so writing a whole tree lists
+// each directory once; use one value per tree while nothing else renames its
+// entries.
+type StoredNames struct {
+	directory fs.FS
+	proven    map[string]bool
+}
+
+// NewStoredNames returns the check for paths below directory.
+func NewStoredNames(directory fs.FS) *StoredNames {
+	return &StoredNames{directory: directory, proven: map[string]bool{}}
+}
+
+// Require refuses the slash-separated name when one of its existing
+// components is stored under another spelling. It checks up to the first
+// component that does not exist yet and is a no-op outside Windows.
+func (s *StoredNames) Require(name string) error {
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+	parts := strings.Split(name, "/")
+	for i, part := range parts {
+		prefix := strings.Join(parts[:i+1], "/")
+		if s.proven[prefix] {
+			continue
+		}
+		if _, err := fs.Lstat(s.directory, prefix); errors.Is(err, fs.ErrNotExist) {
+			return nil
+		} else if err != nil {
+			return err
+		}
+		parent := "."
+		if i > 0 {
+			parent = strings.Join(parts[:i], "/")
+		}
+		if err := requireStoredName(s.directory, parent, part); err != nil {
+			return fmt.Errorf("unsafe path %s: %w", name, err)
+		}
+		if i < len(parts)-1 {
+			s.proven[prefix] = true
+		}
+	}
+	return nil
+}
+
 // Root pins all output mutations to the identity of the approved project
 // directory. Path checks remain useful for policy, but never authorize a
 // path-based mutation.

@@ -92,7 +92,7 @@ func TestGuardedWriteUseAllowsOnlyTheGuardedAPI(t *testing.T) {
 	}
 	// The coarse gate already forbids guardedwrite's own external test package
 	// from importing it; the selector rule adds no second finding there.
-	const api = "product package may use only the guarded write API (Apply, ApplyChecked, Capture, CaptureFiles, Change, File, Result), not "
+	const api = "product package may use only the guarded write API (Apply, ApplyChecked, Capture, CaptureFiles, Change, File, NewStoredNames, Result, StoredNames), not "
 	want := []string{
 		"src/internal/host/guardedwrite/root_test.go:3: src/internal/host/guardedwrite imports src/internal/host/guardedwrite: self-import is forbidden",
 		"src/internal/host/projectrun/alias_test.go:6: src/internal/host/projectrun imports src/internal/host/guardedwrite: " + api + "guardedwrite.SafeDestination",

@@ -61,6 +61,68 @@ func TestCheckWorkingDirectoryLengthNamesTheWindowsLimit(t *testing.T) {
 	}
 }
 
+// Candidate paths are checked lexically. Windows also resolves an existing
+// entry through its 8.3 short name or another case, so MARKIT~1/project.yaml
+// once overwrote .markitect/project.yaml in the copy that checks run in.
+func TestMaterializeCandidateRefusesWindowsAliasesOfExistingEntries(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("short names and case aliases are resolved by Windows")
+	}
+	base := &Snapshot{
+		Files: map[string][]byte{".markitect/project.yaml": []byte("project\n"), "Docs/guide.md": []byte("guide\n")},
+		Modes: map[string]string{".markitect/project.yaml": "100644", "Docs/guide.md": "100644"},
+	}
+	materialize := func(t *testing.T, path string) (string, error) {
+		t.Helper()
+		dest := t.TempDir()
+		// .markitect exists first, as when its files sort first, and so owns
+		// the short name MARKIT~1 on a volume that generates 8.3 names.
+		if err := os.Mkdir(filepath.Join(dest, ".markitect"), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if strings.HasPrefix(path, "MARKIT~1/") && !resolvesAsShortName(dest, ".markitect", "MARKIT~1") {
+			t.Skip("volume generates no 8.3 short names")
+		}
+		candidate := candidateData{Files: map[string]File{path: {Path: path, Mode: "100644", Content: []byte("alias\n")}}}
+		return dest, materializeCandidate(dest, base, candidate)
+	}
+	// Every NTFS volume resolves case variants, so only the 8.3 case skips.
+	for _, tc := range []struct{ name, path string }{
+		{"8.3 short name", "MARKIT~1/project.yaml"},
+		{"case variant", "docs/guide.md"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dest, err := materialize(t, tc.path)
+			if err == nil {
+				t.Errorf("materializeCandidate accepted alias %s", tc.path)
+			}
+			for name, want := range base.Files {
+				if got, readErr := os.ReadFile(filepath.Join(dest, filepath.FromSlash(name))); readErr != nil || string(got) != string(want) {
+					t.Errorf("alias %s changed %s to %q (%v)", tc.path, name, got, readErr)
+				}
+			}
+		})
+	}
+	// Stored names and new 8.3-shaped names stay writable.
+	for _, path := range []string{"Docs/guide.md", "notes~1/new.md"} {
+		dest, err := materialize(t, path)
+		if err != nil {
+			t.Fatalf("materializeCandidate refused %s: %v", path, err)
+		}
+		if got, readErr := os.ReadFile(filepath.Join(dest, filepath.FromSlash(path))); readErr != nil || string(got) != "alias\n" {
+			t.Fatalf("%s = %q (%v)", path, got, readErr)
+		}
+	}
+}
+
+// resolvesAsShortName reports whether Windows resolves alias in dir to the
+// existing entry long, which needs a volume that generates 8.3 short names.
+func resolvesAsShortName(dir, long, alias string) bool {
+	longInfo, longErr := os.Stat(filepath.Join(dir, long))
+	aliasInfo, aliasErr := os.Stat(filepath.Join(dir, alias))
+	return longErr == nil && aliasErr == nil && os.SameFile(longInfo, aliasInfo)
+}
+
 // A check once killed only its direct child on timeout and set no WaitDelay,
 // so a descendant holding the inherited output pipes kept runCheck blocked
 // past the check timeout (and forever if it never exited). The timeout now

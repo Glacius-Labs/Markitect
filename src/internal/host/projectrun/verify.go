@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
@@ -436,6 +437,9 @@ func materializeCandidate(dest string, base *Snapshot, candidate candidateData) 
 		paths = append(paths, p)
 	}
 	sort.Strings(paths)
+	// Checks run in this copy. An alias such as MARKIT~1 for .markitect
+	// passes the lexical checks but would overwrite another entry here.
+	stored := guardedwrite.NewStoredNames(os.DirFS(dest))
 	for _, p := range paths {
 		target := filepath.Join(dest, filepath.FromSlash(p))
 		if !pathUnder(dest, target) {
@@ -443,6 +447,9 @@ func materializeCandidate(dest string, base *Snapshot, candidate candidateData) 
 		}
 		if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
 			return err
+		}
+		if err := stored.Require(p); err != nil {
+			return fmt.Errorf("materialize candidate: %w", err)
 		}
 		mode := os.FileMode(0o600)
 		if snap.Modes[p] == "100755" {

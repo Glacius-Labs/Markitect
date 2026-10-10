@@ -43,45 +43,55 @@ func TestGuardedWriteRefusesWindowsAliasesOfExistingEntries(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	gitAlias := windowsShortLeaf(t, filepath.Join(root, ".git"))
-	markitectAlias := windowsShortLeaf(t, filepath.Join(root, ".markitect"))
-	protosAlias := windowsShortLeaf(t, filepath.Join(root, "docs", "generated-protos"))
 	hook := filepath.Join(root, ".git", "hooks", "pre-commit")
 	runtimeFile := filepath.Join(root, ".markitect", "runtime.yaml")
 	if _, err := CaptureFiles(root, []string{".git/hooks/pre-commit"}); err == nil {
 		t.Fatal("CaptureFiles accepted the literal .git path")
 	}
-	aliases := []string{
-		gitAlias + "/hooks/pre-commit",
-		markitectAlias + "/runtime.yaml",
-		"docs/" + protosAlias + "/schema.md",
-		"Docs/generated-protos/schema.md",
-		"readme.md",
-	}
-	for _, alias := range aliases {
-		capture, err := CaptureFiles(root, []string{alias})
-		if err == nil {
-			result, applyErr := Apply(root, capture, []Change{{Path: alias, Bytes: []byte("#!/bin/sh\necho alias\n"), Mode: 0755}})
-			t.Errorf("CaptureFiles accepted alias %q; Apply completed %v, err %v", alias, result.CompletedPaths, applyErr)
-		}
-	}
-	// The anchored root refuses them too, also on paths that skip checkPath.
 	writer, err := OpenRoot(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer writer.Close()
-	for _, alias := range aliases {
-		if err := writer.AtomicWrite(alias, []byte("alias\n"), 0644); err == nil {
-			t.Errorf("AtomicWrite accepted alias %q", alias)
+	// One check for the whole tree: a proven directory must not excuse
+	// another spelling of it.
+	stored := NewStoredNames(os.DirFS(root))
+	for _, name := range []string{"README.md", "docs/generated-protos/schema.md", "notes~1/new.md"} {
+		if err := stored.Require(name); err != nil {
+			t.Errorf("StoredNames refused %q: %v", name, err)
 		}
 	}
-	for _, alias := range []string{markitectAlias + "/runtime.yaml", "docs/" + protosAlias + "/schema.md"} {
-		if file, err := writer.CreateExclusive(alias, 0644); err == nil {
-			file.Close()
-			t.Errorf("CreateExclusive accepted alias %q", alias)
+	refuse := func(t *testing.T, aliases []string) {
+		t.Helper()
+		for _, alias := range aliases {
+			capture, err := CaptureFiles(root, []string{alias})
+			if err == nil {
+				result, applyErr := Apply(root, capture, []Change{{Path: alias, Bytes: []byte("#!/bin/sh\necho alias\n"), Mode: 0755}})
+				t.Errorf("CaptureFiles accepted alias %q; Apply completed %v, err %v", alias, result.CompletedPaths, applyErr)
+			}
+			// The anchored root refuses them too, also on paths that skip checkPath.
+			if err := writer.AtomicWrite(alias, []byte("alias\n"), 0644); err == nil {
+				t.Errorf("AtomicWrite accepted alias %q", alias)
+			}
+			if file, err := writer.CreateExclusive(alias, 0644); err == nil {
+				file.Close()
+				t.Errorf("CreateExclusive accepted alias %q", alias)
+			}
+			if err := stored.Require(alias); err == nil {
+				t.Errorf("StoredNames accepted alias %q", alias)
+			}
 		}
 	}
+	// Every NTFS volume resolves case variants, so only the 8.3 cases skip.
+	t.Run("case variants", func(t *testing.T) {
+		refuse(t, []string{"Docs/generated-protos/schema.md", "readme.md"})
+	})
+	t.Run("8.3 short names", func(t *testing.T) {
+		gitAlias := windowsShortLeaf(t, filepath.Join(root, ".git"))
+		markitectAlias := windowsShortLeaf(t, filepath.Join(root, ".markitect"))
+		protosAlias := windowsShortLeaf(t, filepath.Join(root, "docs", "generated-protos"))
+		refuse(t, []string{gitAlias + "/hooks/pre-commit", markitectAlias + "/runtime.yaml", "docs/" + protosAlias + "/schema.md"})
+	})
 	for _, target := range []string{hook, runtimeFile, filepath.Join(root, "docs", "generated-protos", "schema.md")} {
 		if _, err := os.Lstat(target); !os.IsNotExist(err) {
 			t.Errorf("alias write reached %s: %v", target, err)
@@ -105,7 +115,7 @@ func TestGuardedWriteRefusesWindowsAliasesOfExistingEntries(t *testing.T) {
 }
 
 // windowsShortLeaf returns the 8.3 short name of path's final component and
-// skips when the volume generates none.
+// skips the calling subtest when the volume generates none.
 func windowsShortLeaf(t *testing.T, path string) string {
 	t.Helper()
 	short, err := windowsShortPath(path)
