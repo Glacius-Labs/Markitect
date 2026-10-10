@@ -309,14 +309,20 @@ type RunSummary struct {
 // anything. A run without a recorded state is planned; a run whose records do
 // not validate is reported as invalid instead of failing the listing.
 func ListRuns(root string) ([]RunSummary, error) {
-	s, err := newRunStore(root)
+	abs, err := filepath.Abs(root)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("resolve project root: %w", err)
 	}
-	entries, err := os.ReadDir(s.base)
-	if os.IsNotExist(err) {
+	// Listing needs no runtime configuration, only a real runs directory.
+	base := filepath.Join(abs, filepath.FromSlash(RunsPath))
+	if _, statErr := os.Lstat(base); os.IsNotExist(statErr) {
 		return []RunSummary{}, nil
 	}
+	if err := rejectReparsePath(abs, RunsPath); err != nil {
+		return nil, err
+	}
+	s := &runStore{root: abs, base: base}
+	entries, err := os.ReadDir(s.base)
 	if err != nil {
 		return nil, err
 	}

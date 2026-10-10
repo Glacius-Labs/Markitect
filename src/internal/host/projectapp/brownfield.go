@@ -27,8 +27,8 @@ type BrownfieldInput struct {
 	Start       *BrownfieldStartInput                    `json:"start,omitempty"`
 	Begin       *projectadoption.ReverseIterationRequest `json:"begin,omitempty"`
 	Context     *BrownfieldContextInput                  `json:"context,omitempty"`
-	Proposal    *BrownfieldProposalInput                 `json:"proposal,omitempty"`
-	Integration *BrownfieldIntegrationInput              `json:"integration,omitempty"`
+	Proposal    *BrownfieldProposalInput                 `json:"propose,omitempty"`
+	Integration *BrownfieldIntegrationInput              `json:"integrate,omitempty"`
 	Iterate     *BrownfieldIterateInput                  `json:"iterate,omitempty"`
 	Resolve     *BrownfieldResolveInput                  `json:"resolve,omitempty"`
 	Plan        *BrownfieldPlanInput                     `json:"plan,omitempty"`
@@ -53,7 +53,7 @@ func (r BrownfieldOperation) validate() error {
 	valid := map[string]bool{"start": r.Input.Start != nil, "begin": r.Input.Begin != nil, "context": r.Input.Context != nil, "propose": r.Input.Proposal != nil, "integrate": r.Input.Integration != nil, "iterate": r.Input.Iterate != nil, "resolve": r.Input.Resolve != nil, "plan": r.Input.Plan != nil, "apply": r.Input.Apply != nil, "status": r.Input.count() == 0}
 	match, known := valid[r.Action]
 	if !known || !match || (r.Action != "status" && r.Input.count() != 1) {
-		return errors.New("Brownfield input must contain exactly the typed payload for the selected action")
+		return errors.New("adopt input must contain exactly the typed payload for the selected action")
 	}
 	return nil
 }
@@ -70,10 +70,10 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 		sourceRoot = operation.Root
 	}
 	if strings.TrimSpace(operation.Root) == "" || strings.TrimSpace(sourceRoot) == "" {
-		return BrownfieldResult{}, errors.New("Brownfield requires target --repo and a source repository")
+		return BrownfieldResult{}, errors.New("adopt requires target --repo and a source repository")
 	}
 	if operation.Write && strings.TrimSpace(operation.ExpectedDigest) == "" {
-		return BrownfieldResult{}, errors.New("Brownfield --write requires --expect with the session digest")
+		return BrownfieldResult{}, errors.New("adopt --write requires --expect with the session digest")
 	}
 	if !operation.Write && operation.ExpectedDigest != "" && operation.Action == "status" {
 		return BrownfieldResult{}, errors.New("adopt status is read-only and does not accept --expect")
@@ -82,11 +82,11 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 	switch operation.Action {
 	case "start":
 		if operation.SessionID != "" || !operation.Input.present() || operation.Revision == "" {
-			return BrownfieldResult{}, errors.New("Brownfield start requires --revision and --input, and does not accept --session")
+			return BrownfieldResult{}, errors.New("adopt start requires --revision and --input, and does not accept --session")
 		}
 		request := *operation.Input.Start
 		if request.ScopeStatuses == nil {
-			return BrownfieldResult{}, errors.New("Brownfield start input must include scopeStatuses, using an empty array when none apply")
+			return BrownfieldResult{}, errors.New("adopt start input must include scopeStatuses, using an empty array when none apply")
 		}
 		target, err := projectwork.Load(operation.Root, operation.Revision)
 		if err != nil {
@@ -104,10 +104,10 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 
 	case "begin", "iterate", "propose", "integrate", "resolve", "plan", "apply", "status", "context":
 		if strings.TrimSpace(operation.SessionID) == "" {
-			return BrownfieldResult{}, fmt.Errorf("Brownfield %s requires --session", operation.Action)
+			return BrownfieldResult{}, fmt.Errorf("adopt %s requires --session", operation.Action)
 		}
 		if operation.Revision != "" {
-			return BrownfieldResult{}, errors.New("Brownfield stages use the fixed target revision recorded by the session; start a new session to select another revision")
+			return BrownfieldResult{}, errors.New("adopt stages use the fixed target revision recorded by the session; start a new session to select another revision")
 		}
 		if operation.Action == "status" {
 			if operation.Input.present() || operation.Write || operation.ExpectedDigest != "" || operation.Revision != "" {
@@ -122,7 +122,7 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 		}
 		if operation.Action == "context" {
 			if !operation.Input.present() || operation.Write || operation.ExpectedDigest != "" {
-				return BrownfieldResult{}, errors.New("Brownfield context requires --input and is read-only")
+				return BrownfieldResult{}, errors.New("adopt context requires --input and is read-only")
 			}
 			request := *operation.Input.Context
 			session, _, err := projectadoption.ResumeBrownfieldSession(sourceRoot, operation.Root, operation.SessionID)
@@ -144,22 +144,22 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 				}
 				result.IntegrationContext = &integrationContext
 			default:
-				return BrownfieldResult{}, errors.New("Brownfield context phase must be propose or integrate")
+				return BrownfieldResult{}, errors.New("adopt context phase must be propose or integrate")
 			}
 			return result, nil
 		}
 		if !operation.Input.present() {
-			return BrownfieldResult{}, fmt.Errorf("Brownfield %s requires --input", operation.Action)
+			return BrownfieldResult{}, fmt.Errorf("adopt %s requires --input", operation.Action)
 		}
 		prior, readiness, err := projectadoption.ResumeBrownfieldSession(sourceRoot, operation.Root, operation.SessionID)
 		if err != nil {
 			return BrownfieldResult{}, err
 		}
 		if operation.ExpectedDigest != "" && operation.ExpectedDigest != prior.Digest {
-			return BrownfieldResult{}, errors.New("--expect does not match the current Brownfield session digest")
+			return BrownfieldResult{}, errors.New("--expect does not match the current adoption session digest")
 		}
 		if operation.Write && operation.ExpectedDigest != prior.Digest {
-			return BrownfieldResult{}, errors.New("Brownfield stage write requires --expect with the current session digest")
+			return BrownfieldResult{}, errors.New("adopt stage write requires --expect with the current session digest")
 		}
 		target, err := projectwork.Load(operation.Root, prior.Target.Revision)
 		if err != nil {
@@ -218,7 +218,7 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 		case "plan":
 			request := *operation.Input.Plan
 			if operation.Write || operation.ExpectedDigest != "" {
-				return BrownfieldResult{}, errors.New("Brownfield plan is a preview and does not write a session stage")
+				return BrownfieldResult{}, errors.New("adopt plan is a preview and does not write a session stage")
 			}
 			schemaDigest, buildDigest, bindingErr := projectadoption.CurrentBindings(projectmodel.Schema())
 			if bindingErr != nil {
@@ -232,7 +232,7 @@ func (o Operations) Brownfield(operation BrownfieldOperation) (BrownfieldResult,
 			overview := overviewBrownfieldSession(prior)
 			return BrownfieldResult{Status: "preview", Action: "plan", SessionDigest: prior.Digest, Session: &overview, Readiness: &readiness, Plan: plan}, nil
 		default:
-			return BrownfieldResult{}, fmt.Errorf("unsupported Brownfield action %q", operation.Action)
+			return BrownfieldResult{}, fmt.Errorf("unsupported adopt stage %q", operation.Action)
 		}
 		if err != nil {
 			return BrownfieldResult{}, err
@@ -252,11 +252,11 @@ func finishBrownfield(operation BrownfieldOperation, sourceRoot, action, priorDi
 			// creation token and WriteBrownfieldSession verifies it.
 			expected = operation.ExpectedDigest
 			if expected != session.Digest {
-				return BrownfieldResult{}, errors.New("--expect does not match the Brownfield session creation preview digest")
+				return BrownfieldResult{}, errors.New("--expect does not match the adoption session creation preview digest")
 			}
 		}
 		if action != "start" && expected != operation.ExpectedDigest {
-			return BrownfieldResult{}, errors.New("--expect does not match the prior Brownfield session digest")
+			return BrownfieldResult{}, errors.New("--expect does not match the prior adoption session digest")
 		}
 		if _, err := projectadoption.WriteBrownfieldSession(sourceRoot, session, expected); err != nil {
 			return BrownfieldResult{}, err

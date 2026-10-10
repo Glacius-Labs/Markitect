@@ -16,7 +16,11 @@ import (
 )
 
 // Schemas derive from the DTOs actually decoded, avoiding a second operation contract.
-func schema(t reflect.Type) map[string]any {
+func schema(t reflect.Type) map[string]any { return schemaOf(t, map[reflect.Type]bool{}) }
+
+// schemaOf describes a recursive struct type's nested occurrence as any JSON
+// value instead of expanding it forever.
+func schemaOf(t reflect.Type, open map[reflect.Type]bool) map[string]any {
 	// RawMessage emits its underlying JSON value, unlike ordinary []byte's
 	// base64 string. The shared service owns validation of this embedded value.
 	if t == reflect.TypeFor[json.RawMessage]() {
@@ -32,13 +36,18 @@ func schema(t reflect.Type) map[string]any {
 		return map[string]any{"type": "string", "enum": []string{string(projectrun.AppServerEnvironmentModeInherit)}}
 	}
 	if t.Kind() == reflect.Pointer {
-		return map[string]any{"anyOf": []any{schema(t.Elem()), map[string]any{"type": "null"}}}
+		return map[string]any{"anyOf": []any{schemaOf(t.Elem(), open), map[string]any{"type": "null"}}}
 	}
 	if t == reflect.TypeFor[time.Time]() {
 		return map[string]any{"type": "string", "format": "date-time"}
 	}
 	switch t.Kind() {
 	case reflect.Struct:
+		if open[t] {
+			return map[string]any{}
+		}
+		open[t] = true
+		defer delete(open, t)
 		p := map[string]any{}
 		required := []string{}
 		for i := 0; i < t.NumField(); i++ {
@@ -50,7 +59,7 @@ func schema(t reflect.Type) map[string]any {
 			}
 			// encoding/json promotes the fields of an untagged embedded struct.
 			if f.Anonymous && name == "" && f.Type.Kind() == reflect.Struct {
-				embedded := schema(f.Type)
+				embedded := schemaOf(f.Type, open)
 				for key, value := range embedded["properties"].(map[string]any) {
 					p[key] = value
 				}
@@ -63,16 +72,16 @@ func schema(t reflect.Type) map[string]any {
 			if name == "" {
 				name = f.Name
 			}
-			p[name] = schema(f.Type)
+			p[name] = schemaOf(f.Type, open)
 			if !strings.Contains(f.Tag.Get("json"), ",omitempty") {
 				required = append(required, name)
 			}
 		}
 		return map[string]any{"type": "object", "properties": p, "required": required, "additionalProperties": false}
 	case reflect.Map:
-		return map[string]any{"type": []string{"object", "null"}, "additionalProperties": schema(t.Elem())}
+		return map[string]any{"type": []string{"object", "null"}, "additionalProperties": schemaOf(t.Elem(), open)}
 	case reflect.Slice, reflect.Array:
-		return map[string]any{"type": []string{"array", "null"}, "items": schema(t.Elem())}
+		return map[string]any{"type": []string{"array", "null"}, "items": schemaOf(t.Elem(), open)}
 	case reflect.String:
 		return map[string]any{"type": "string"}
 	case reflect.Bool:

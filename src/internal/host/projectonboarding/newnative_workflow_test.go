@@ -12,17 +12,16 @@ func TestGeneratedWorkflowUsesBoundedTypedMCPDelivery(t *testing.T) {
 	}
 	workflow := fileFor(t, Plan{Files: files}, workflowPath).Content
 	for _, tool := range []string{
-		"project_index", "project_check", "project_context", "project_explore", "project_readiness",
-		"project_edit", "project_brownfield", "project_brownfield_run", "project_deliver", "project_plan",
-		"project_run", "project_status", "project_resume", "project_repair", "project_verify",
-		"project_preflight", "project_apply",
+		"use model, check, and context", "with explore and write:false", "using ready", "Use edit to preview",
+		"Use adopt and its run stage", "use deliver to advance", "use plan, run, verify, and apply (preview, then write)",
+		"recover with status, resume, or repair",
 	} {
 		if !strings.Contains(workflow, tool) {
 			t.Errorf("shared workflow does not route through typed MCP tool %s", tool)
 		}
 	}
 	for _, invariant := range []string{
-		"typed and closed", "fixed to the repository root", "write:false", "expectedDigest",
+		"typed and closed", "fixed to the repository root", "write:false", "write:true and expect.",
 		"returned plan.digest", "returned writePlan.digest", "same durable scope",
 		"Never create a replacement run", "Technical checks, semantic evidence, and human acceptance are distinct",
 	} {
@@ -31,7 +30,7 @@ func TestGeneratedWorkflowUsesBoundedTypedMCPDelivery(t *testing.T) {
 		}
 	}
 	for _, obsolete := range []string{
-		"Use the native CLI stages below", "brownfield-action start", "markitect project edit --repo",
+		"Use the native CLI stages below", "brownfield-action start", "markitect project edit --repo", "project_", "project mcp", "expectedDigest",
 		"--execution-mode native-work", "--codex-profile luna-high", "helperLimit", "every --request, --output, and --input",
 	} {
 		if strings.Contains(workflow, obsolete) {

@@ -14,12 +14,31 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectadoption"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
-func TestBrownfieldStartPreviewAndCASWrite(t *testing.T) {
+// adoptInputKey is the --input key of each record-bearing adopt stage.
+var adoptInputKey = map[string]string{
+	"start": "start", "begin": "begin", "context": "context", "propose": "propose", "integrate": "integrate",
+	"iterate": "iterate", "resolve": "resolve", "plan": "plan", "apply": "apply", "run": "run",
+}
+
+// writeAdoptInput writes one stage record under its stage key and returns the
+// repository-relative input path.
+func writeAdoptInput(t *testing.T, repo, stage string, record any) string {
+	t.Helper()
+	data, err := json.Marshal(map[string]any{adoptInputKey[stage]: record})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(data)
+	return writeDraft(t, repo, ".markitect/drafts/"+stage+"-"+hex.EncodeToString(sum[:6])+".json", data)
+}
+
+func TestAdoptStartPreviewAndCASWrite(t *testing.T) {
 	repo := copyProjectWorld(t)
 	selectedPath := filepath.Join(repo, "docs", "cancellation.md")
 	selectedBytes, err := os.ReadFile(selectedPath)
@@ -30,7 +49,7 @@ func TestBrownfieldStartPreviewAndCASWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	runGit(t, repo, "add", "docs/cancellation.md")
-	runGitWithEnv(t, repo, []string{"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.invalid", "GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.invalid"}, "commit", "-m", "add private evidence fixture")
+	runGitWithEnv(t, repo, testCommitEnv, "commit", "-m", "add private evidence fixture")
 	commit := gitOutput(t, repo, "rev-parse", "HEAD")
 	request := projectadoption.DiscoveryRequest{
 		APIVersion: projectadoption.DiscoveryVersion,
@@ -45,86 +64,92 @@ func TestBrownfieldStartPreviewAndCASWrite(t *testing.T) {
 		Exclusions: []projectadoption.PathReason{},
 		Unselected: []projectadoption.PathReason{},
 	}
+	// The Host runs discovery itself; the test computes the same sealed record
+	// only to compare digests.
 	discovery, err := projectadoption.Discover(repo, request)
 	if err != nil {
 		t.Fatal(err)
 	}
-	input, err := json.Marshal(brownfieldStartInput{Discovery: discovery, ScopeStatuses: []projectadoption.ScopeStatus{}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := writeRecord(repo, ".markitect/drafts/brownfield-start.json", input); err != nil {
-		t.Fatal(err)
-	}
+	input := writeAdoptInput(t, repo, "start", projectapp.BrownfieldStartInput{Request: request, ScopeStatuses: []projectadoption.ScopeStatus{}})
 	ledgerPath := filepath.Join(repo, ".markitect", "drafts", "brownfield", discovery.ID, "session.json")
-	args := []string{"project", "brownfield", "--repo", repo, "--source-repo", repo, "--brownfield-action", "start", "--revision", commit, "--input", ".markitect/drafts/brownfield-start.json"}
-	var previewOut, previewErr bytes.Buffer
-	if code := Run(args, &previewOut, &previewErr); code != 0 {
-		t.Fatalf("Brownfield start preview exit=%d stderr=%s", code, previewErr.String())
+	args := []string{"adopt", "start", "--repo", repo, "--revision", commit, "--input", input}
+	code, previewOut, previewErr := runCLI(t, args...)
+	if code != 0 {
+		t.Fatalf("adopt start preview exit=%d stderr=%s", code, previewErr)
 	}
-	var preview brownfieldResult
-	if err := json.Unmarshal(previewOut.Bytes(), &preview); err != nil {
-		t.Fatalf("decode Brownfield preview: %v\n%s", err, previewOut.String())
-	}
+	preview := decodeOutput[projectapp.BrownfieldResult](t, []byte(previewOut))
 	if preview.Status != "preview" || preview.Action != "start" || preview.Session == nil || preview.Session.Digest == "" || preview.SessionDigest != preview.Session.Digest || preview.Session.Source.EvidenceCount != 1 || preview.Session.Source.Digest != discovery.Digest || preview.Session.Target.Revision != commit {
-		t.Fatalf("unexpected Brownfield start preview: %+v", preview)
+		t.Fatalf("unexpected adopt start preview: %+v", preview)
 	}
-	if strings.Contains(previewOut.String(), "PRIVATE_SOURCE_SENTINEL") || strings.Contains(previewOut.String(), "cancellation-document") {
-		t.Fatalf("Brownfield start preview exposed raw source evidence: %s", previewOut.String())
+	if strings.Contains(previewOut, "PRIVATE_SOURCE_SENTINEL") || strings.Contains(previewOut, "cancellation-document") {
+		t.Fatalf("adopt start preview exposed raw source evidence: %s", previewOut)
 	}
 	if _, err := os.Stat(ledgerPath); !os.IsNotExist(err) {
-		t.Fatalf("Brownfield preview wrote the session ledger: %v", err)
+		t.Fatalf("adopt start preview wrote the session ledger: %v", err)
+	}
+	if code, _, errout := runCLI(t, append(args, "--write")...); code != 2 || !strings.Contains(errout, "requires --expect") {
+		t.Fatalf("adopt start write without --expect exit=%d stderr=%s", code, errout)
+	}
+	if code, _, errout := runCLI(t, append(args, "--expect", "sha256:stale", "--write")...); code != 2 || !strings.Contains(errout, "markitect adopt:") {
+		t.Fatalf("adopt start write with a stale digest exit=%d stderr=%s", code, errout)
+	}
+	if _, err := os.Stat(ledgerPath); !os.IsNotExist(err) {
+		t.Fatalf("rejected adopt start write created the session ledger: %v", err)
 	}
 
-	writeArgs := append(append([]string(nil), args...), "--expect", preview.SessionDigest, "--write")
-	var writeOut, writeErr bytes.Buffer
-	if code := Run(writeArgs, &writeOut, &writeErr); code != 0 {
-		t.Fatalf("Brownfield start write exit=%d stderr=%s", code, writeErr.String())
+	code, writeOut, writeErr := runCLI(t, append(args, "--expect", preview.SessionDigest, "--write")...)
+	if code != 0 {
+		t.Fatalf("adopt start write exit=%d stderr=%s", code, writeErr)
 	}
-	var written brownfieldResult
-	if err := json.Unmarshal(writeOut.Bytes(), &written); err != nil {
-		t.Fatalf("decode Brownfield write result: %v\n%s", err, writeOut.String())
-	}
+	written := decodeOutput[projectapp.BrownfieldResult](t, []byte(writeOut))
 	if written.Status != "recorded" || written.SessionDigest != preview.SessionDigest {
-		t.Fatalf("Brownfield start write differs from reviewed preview: %+v", written)
+		t.Fatalf("adopt start write differs from reviewed preview: %+v", written)
 	}
-	if strings.Contains(writeOut.String(), "PRIVATE_SOURCE_SENTINEL") || strings.Contains(writeOut.String(), "cancellation-document") {
-		t.Fatalf("Brownfield start write exposed raw source evidence: %s", writeOut.String())
+	if strings.Contains(writeOut, "PRIVATE_SOURCE_SENTINEL") || strings.Contains(writeOut, "cancellation-document") {
+		t.Fatalf("adopt start write exposed raw source evidence: %s", writeOut)
 	}
 	if _, err := os.Stat(ledgerPath); err != nil {
-		t.Fatalf("Brownfield session was not durably written: %v", err)
+		t.Fatalf("adoption session was not durably written: %v", err)
 	}
 
-	var resumeOut, resumeErr bytes.Buffer
-	resumeArgs := []string{"project", "brownfield", "--repo", repo, "--source-repo", repo, "--brownfield-action", "resume", "--session", discovery.ID}
-	if code := Run(resumeArgs, &resumeOut, &resumeErr); code != 0 {
-		t.Fatalf("Brownfield resume exit=%d stderr=%s", code, resumeErr.String())
+	statusOut := mustCLI(t, "adopt", "status", "--repo", repo, "--session", discovery.ID)
+	status := decodeOutput[projectapp.BrownfieldResult](t, statusOut)
+	if status.Status != "status" || status.SessionDigest != preview.SessionDigest || status.Readiness == nil || !status.Readiness.SourceCurrent || !status.Readiness.TargetCurrent {
+		t.Fatalf("adopt status did not validate both fixed bases: %+v", status)
 	}
-	var resumed brownfieldResult
-	if err := json.Unmarshal(resumeOut.Bytes(), &resumed); err != nil {
-		t.Fatalf("decode Brownfield resume: %v\n%s", err, resumeOut.String())
+	if status.Session == nil || status.Session.Source.Digest != discovery.Digest || status.Session.Target.ProjectDigest == "" || bytes.Contains(statusOut, []byte("PRIVATE_SOURCE_SENTINEL")) {
+		t.Fatalf("adopt status did not return safe fixed-basis metadata or leaked source evidence: %s", statusOut)
 	}
-	if resumed.Status != "resumed" || resumed.SessionDigest != preview.SessionDigest || resumed.Readiness == nil || !resumed.Readiness.SourceCurrent || !resumed.Readiness.TargetCurrent {
-		t.Fatalf("resume did not validate both fixed bases: %+v", resumed)
+	if code, _, errout := runCLI(t, "adopt", "status", "--repo", repo, "--session", discovery.ID, "--expect", preview.SessionDigest); code != 2 || !strings.Contains(errout, "--expect is valid only together with --write or --execute") {
+		t.Fatalf("adopt status accepted --expect: exit=%d stderr=%s", code, errout)
 	}
-	if resumed.Session == nil || resumed.Session.Source.Digest != discovery.Digest || resumed.Session.Target.ProjectDigest == "" || strings.Contains(resumeOut.String(), "PRIVATE_SOURCE_SENTINEL") {
-		t.Fatalf("resume did not return safe fixed-basis metadata or leaked source evidence: %s", resumeOut.String())
+
+	// The project overview lists the open adoption session without writing.
+	summary := decodeOutput[overview](t, mustCLI(t, "status", "--repo", repo))
+	if len(summary.Adoptions) != 1 || summary.Adoptions[0].Session != discovery.ID || summary.Adoptions[0].Stage != "started" {
+		t.Fatalf("status overview adoptions = %+v", summary.Adoptions)
 	}
 }
 
-func TestBrownfieldInputRejectsUnknownAndTrailingJSON(t *testing.T) {
-	var request brownfieldPlanInput
-	for _, input := range []string{`{"iterationId":"iteration-a","unexpected":true}`, `{"iterationId":"iteration-a"}{}`} {
-		if err := decodeClosedProjectJSON([]byte(input), &request); err == nil {
-			t.Fatalf("accepted non-closed Brownfield input: %s", input)
-		}
-	}
-	if err := decodeClosedProjectJSON([]byte(strings.Repeat("x", (32<<20)+1)), &request); err == nil {
-		t.Fatal("accepted oversized Brownfield input")
+func TestAdoptInputRejectsUnknownAndTrailingJSON(t *testing.T) {
+	repo := copyProjectWorld(t)
+	for name, input := range map[string]string{
+		"unknown field":     `{"plan":{"iterationId":"iteration-a","unexpected":true}}`,
+		"unknown stage key": `{"planning":{"iterationId":"iteration-a"}}`,
+		"trailing JSON":     `{"plan":{"iterationId":"iteration-a"}}{}`,
+		"duplicate key":     `{"plan":{"iterationId":"iteration-a","iterationId":"iteration-b"}}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			path := writeDraft(t, repo, ".markitect/drafts/closed-"+strings.ReplaceAll(name, " ", "-")+".json", []byte(input))
+			code, out, errout := runCLI(t, "adopt", "plan", "--repo", repo, "--session", "missing-session", "--input", path)
+			if code != 2 || out != "" || !strings.Contains(errout, "markitect adopt:") || strings.Contains(errout, "missing-session") {
+				t.Fatalf("accepted non-closed adopt input: exit=%d stdout=%s stderr=%s", code, out, errout)
+			}
+		})
 	}
 }
 
-func TestBrownfieldManagerContextIsReadOnlyAndBoundToIteration(t *testing.T) {
+func TestAdoptManagerContextIsReadOnlyAndBoundToIteration(t *testing.T) {
 	repo := copyProjectWorld(t)
 	commit := gitOutput(t, repo, "rev-parse", "HEAD")
 	discovery, err := projectadoption.Discover(repo, projectadoption.DiscoveryRequest{
@@ -155,36 +180,24 @@ func TestBrownfieldManagerContextIsReadOnlyAndBoundToIteration(t *testing.T) {
 	if _, err := projectadoption.WriteBrownfieldSession(repo, session, session.Digest); err != nil {
 		t.Fatal(err)
 	}
-	input, err := json.Marshal(brownfieldContextInput{IterationID: iterationID})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := writeRecord(repo, ".markitect/drafts/brownfield-context.json", input); err != nil {
-		t.Fatal(err)
-	}
-	args := []string{"project", "brownfield", "--repo", repo, "--brownfield-action", "context", "--session", discovery.ID, "--input", ".markitect/drafts/brownfield-context.json"}
-	var out, errOut bytes.Buffer
-	if code := Run(args, &out, &errOut); code != 0 {
-		t.Fatalf("Brownfield context exit=%d stderr=%s", code, errOut.String())
-	}
-	var result brownfieldResult
-	if err := json.Unmarshal(out.Bytes(), &result); err != nil {
-		t.Fatalf("decode Brownfield context: %v\n%s", err, out.String())
-	}
+	input := writeAdoptInput(t, repo, "context", projectapp.BrownfieldContextInput{IterationID: iterationID})
+	result := decodeOutput[projectapp.BrownfieldResult](t, mustCLI(t, "adopt", "context", "--repo", repo, "--session", discovery.ID, "--input", input))
 	if result.Action != "context" || result.ManagerContext == nil || result.ManagerContext.IterationID != iterationID || len(result.ManagerContext.Evidence) != 1 || result.ManagerContext.Evidence[0].EvidenceID != "cancellation-document" || result.ManagerContext.Evidence[0].Classification != "documented-intent" {
 		t.Fatalf("context did not return the exact assigned evidence: %+v", result)
 	}
-	ledgerPath := filepath.Join(repo, ".markitect", "drafts", "brownfield", discovery.ID, "session.json")
+	if code, _, errout := runCLI(t, "adopt", "context", "--repo", repo, "--session", discovery.ID, "--input", input, "--expect", session.Digest, "--write"); code != 2 || !strings.Contains(errout, "read-only") {
+		t.Fatalf("adopt context accepted a write: exit=%d stderr=%s", code, errout)
+	}
 	loaded, err := projectadoption.LoadBrownfieldSession(repo, discovery.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if loaded.Digest != session.Digest {
-		t.Fatalf("read-only context changed session digest: got %s, want %s (ledger %s)", loaded.Digest, session.Digest, ledgerPath)
+		t.Fatalf("read-only context changed session digest: got %s, want %s", loaded.Digest, session.Digest)
 	}
 }
 
-func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T) {
+func TestAdoptStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T) {
 	repo := copyProjectWorld(t)
 	commit := gitOutput(t, repo, "rev-parse", "HEAD")
 	discovery, err := projectadoption.Discover(repo, projectadoption.DiscoveryRequest{
@@ -227,7 +240,7 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 	rootProposal := projectadoption.ManagerProposal{ManagerID: rootID, EvidenceIDs: []string{"cancellation-doc"},
 		Hierarchy:       []projectadoption.ProposedManager{{ID: childID, Name: "Cancellation Owner", Purpose: "Own cancellation implementation", ParentID: rootID, EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}}},
 		PublicContracts: []projectadoption.ManagerPublicContract{}, Report: rootReport}
-	result = runBrownfieldMutation(t, repo, discovery.ID, "propose", brownfieldProposalInput{IterationID: "root-pass", Proposal: rootProposal}, result.SessionDigest)
+	result = runBrownfieldMutation(t, repo, discovery.ID, "propose", projectapp.BrownfieldProposalInput{IterationID: "root-pass", Proposal: rootProposal}, result.SessionDigest)
 
 	childRequest := projectadoption.ReverseIterationRequest{ID: "child-pass", ParentIterationID: "root-pass", ManagerID: childID, EvidenceIDs: []string{"orders-code"}, DelegationEvidenceIDs: []string{}, Purpose: "Model cancellation implementation", Review: "child-pass-review"}
 	result = runBrownfieldMutation(t, repo, discovery.ID, "begin", childRequest, result.SessionDigest)
@@ -244,7 +257,7 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 	childReport := makeStagedDistillation(discovery, target, result.Session.TargetContextDigest, schemaDigest, "child-scope", "child-claim", "orders-code", "observation", "static-source", "PRIVATE_CHILD_REPORT_SENTINEL implementation owns cancellation handling.")
 	contract := projectadoption.ManagerPublicContract{Contract: projectadoption.DistillationTargetContract{ID: "cancellation-api", Name: "Cancellation API", Namespace: "shop.cancellation", Owner: childID, Category: "capability", Description: "Public cancellation operation.", Uses: []string{}, Requires: []string{}}, ClaimIDs: []string{"child-claim"}}
 	childProposal := projectadoption.ManagerProposal{ManagerID: childID, EvidenceIDs: []string{"orders-code"}, Hierarchy: []projectadoption.ProposedManager{}, PublicContracts: []projectadoption.ManagerPublicContract{contract}, Report: childReport}
-	result = runBrownfieldMutation(t, repo, discovery.ID, "propose", brownfieldProposalInput{IterationID: "child-pass", Proposal: childProposal}, result.SessionDigest)
+	result = runBrownfieldMutation(t, repo, discovery.ID, "propose", projectapp.BrownfieldProposalInput{IterationID: "child-pass", Proposal: childProposal}, result.SessionDigest)
 	fullSession, err := projectadoption.LoadBrownfieldSession(repo, discovery.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -259,7 +272,7 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 	integration := projectadoption.ManagerIntegration{ManagerID: rootID, ChildProposalDigests: []string{childDigest},
 		ChildContracts: []projectadoption.IntegratedChildContracts{{ManagerID: childID, ProposalDigest: childDigest, Contracts: []projectadoption.ManagerPublicContract{contract}}},
 		Report:         integrated, Conflicts: []projectadoption.SessionConflict{}}
-	result = runBrownfieldMutation(t, repo, discovery.ID, "integrate", brownfieldIntegrationInput{IterationID: "root-pass", Integration: integration}, result.SessionDigest)
+	runBrownfieldMutation(t, repo, discovery.ID, "integrate", projectapp.BrownfieldIntegrationInput{IterationID: "root-pass", Integration: integration}, result.SessionDigest)
 	fullSession, err = projectadoption.LoadBrownfieldSession(repo, discovery.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -269,8 +282,48 @@ func TestBrownfieldStagedManagerLoopBeginContextProposeAndIntegrate(t *testing.T
 	}
 }
 
-func TestBrownfieldManagerRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.T) {
+func TestAdoptRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.T) {
 	repo := copyProjectWorld(t)
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	initial, err := projectwork.Load(repo, gitOutput(t, repo, "rev-parse", "HEAD"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	initialContext, err := projectadoption.TargetContextForProject(initial)
+	if err != nil {
+		t.Fatal(err)
+	}
+	managerID := initialContext.RootManagerID
+	nativeManager := projectrun.Agent{
+		Command: executable, Args: []string{"NATIVE_MANAGER_ARGUMENT_SENTINEL"}, Model: "native-manager-model", ModelOptions: map[string]any{"secret": "NATIVE_MANAGER_OPTION_SENTINEL"},
+		ProviderVersion: "native-manager-provider-v1", WorkspaceMode: "scoped", InstructionPaths: []string{"AGENTS.md"},
+		Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
+		RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectrun.Pricing{InputMicrosPerMillion: 10, OutputMicrosPerMillion: 20},
+	}
+	readOnlyAgent := projectrun.Agent{
+		Command: executable, Args: []string{"READONLY_ARGUMENT_SENTINEL"}, Model: "readonly-review-model", ModelOptions: map[string]any{"review": "READONLY_OPTION_SENTINEL"},
+		ProviderVersion: "readonly-review-provider-v1", Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
+		RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectrun.Pricing{InputMicrosPerMillion: 40, OutputMicrosPerMillion: 80},
+	}
+	runtimeConfig := projectrun.Runtime{
+		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal,
+		Agents: map[string]projectrun.Agent{managerID: nativeManager},
+		Review: &projectrun.ReviewConfig{Agents: map[string]projectrun.Agent{managerID: readOnlyAgent}, MaxRounds: 1, MaxManagerRounds: 1},
+		Limits: projectrun.Limits{MaxDepth: 4, MaxStarts: 8, MaxRetries: 1, MaxParallel: 1, MaxDuration: projectrun.Duration(5 * time.Minute),
+			MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 8 << 20},
+	}
+	runtimeBytes, err := json.Marshal(runtimeConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, filepath.FromSlash(projectrun.RuntimePath)), runtimeBytes, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, repo, "add", projectrun.RuntimePath)
+	runGitWithEnv(t, repo, testCommitEnv, "commit", "-m", "add manager runtime fixture")
 	commit := gitOutput(t, repo, "rev-parse", "HEAD")
 	discovery, err := projectadoption.Discover(repo, projectadoption.DiscoveryRequest{
 		APIVersion: projectadoption.DiscoveryVersion, ID: "manager-run-preview", Purpose: "Exercise the provider-free manager-run boundary",
@@ -289,7 +342,9 @@ func TestBrownfieldManagerRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	managerID := session.TargetContext.RootManagerID
+	if session.TargetContext.RootManagerID != managerID {
+		t.Fatalf("fixture root Manager = %s, want %s", session.TargetContext.RootManagerID, managerID)
+	}
 	session, err = projectadoption.BeginReverseIteration(repo, target, session, projectadoption.ReverseIterationRequest{
 		ID: "manager-run-root", ManagerID: managerID, EvidenceIDs: []string{"cancellation-doc"}, DelegationEvidenceIDs: []string{},
 		Purpose: "Model selected cancellation behavior", Review: "manager-run-review",
@@ -300,119 +355,53 @@ func TestBrownfieldManagerRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.
 	if _, err := projectadoption.WriteBrownfieldSession(repo, session, session.Digest); err != nil {
 		t.Fatal(err)
 	}
-	executable, err := os.Executable()
-	if err != nil {
-		t.Fatal(err)
+	inputPath := writeAdoptInput(t, repo, "run", projectapp.BrownfieldManagerRunInput{IterationID: "manager-run-root", Phase: "propose", AgentManagerID: managerID})
+	args := []string{"adopt", "run", "--repo", repo, "--session", discovery.ID, "--input", inputPath}
+	code, out, errout := runCLI(t, args...)
+	if code != 0 {
+		t.Fatalf("adopt run preview exit=%d stderr=%s", code, errout)
 	}
-	nativeManager := projectrun.Agent{
-		Command: executable, Args: []string{"NATIVE_MANAGER_ARGUMENT_SENTINEL"}, Model: "native-manager-model", ModelOptions: map[string]any{"secret": "NATIVE_MANAGER_OPTION_SENTINEL"},
-		ProviderVersion: "native-manager-provider-v1", WorkspaceMode: "scoped", InstructionPaths: []string{"AGENTS.md"},
-		Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
-		RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectrun.Pricing{InputMicrosPerMillion: 10, OutputMicrosPerMillion: 20},
-	}
-	readOnlyAgent := projectrun.Agent{
-		Command: executable, Args: []string{"READONLY_ARGUMENT_SENTINEL"}, Model: "readonly-review-model", ModelOptions: map[string]any{"review": "READONLY_OPTION_SENTINEL"},
-		ProviderVersion: "readonly-review-provider-v1", Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
-		RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectrun.Pricing{InputMicrosPerMillion: 40, OutputMicrosPerMillion: 80},
-	}
-	runtime := projectrun.Runtime{
-		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal,
-		Agents: map[string]projectrun.Agent{managerID: nativeManager},
-		Review: &projectrun.ReviewConfig{Agents: map[string]projectrun.Agent{managerID: readOnlyAgent}, MaxRounds: 1, MaxManagerRounds: 1},
-		Limits: projectrun.Limits{MaxDepth: 4, MaxStarts: 8, MaxRetries: 1, MaxParallel: 1, MaxDuration: projectrun.Duration(5 * time.Minute),
-			MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 8 << 20},
-	}
-	runtimeBytes, err := json.Marshal(runtime)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(repo, filepath.FromSlash(projectrun.RuntimePath)), runtimeBytes, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	runGit(t, repo, "add", projectrun.RuntimePath)
-	runGitWithEnv(t, repo, []string{"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.invalid", "GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.invalid"}, "commit", "-m", "add manager runtime fixture")
-	commit = gitOutput(t, repo, "rev-parse", "HEAD")
-	discovery, err = projectadoption.Discover(repo, projectadoption.DiscoveryRequest{
-		APIVersion: projectadoption.DiscoveryVersion, ID: "manager-run-preview-final", Purpose: "Exercise the provider-free manager-run boundary",
-		Review: "owner-review-manager-run-final", Commit: commit, ScopeRoots: []string{"docs"},
-		Selected:   []projectadoption.SelectedPath{{ID: "cancellation-doc", Path: "docs/cancellation.md", Reason: "Selected behavior evidence", Basis: "documentation"}},
-		Exclusions: []projectadoption.PathReason{}, Unselected: []projectadoption.PathReason{},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	target, err = projectwork.Load(repo, commit)
-	if err != nil {
-		t.Fatal(err)
-	}
-	session, err = projectadoption.StartBrownfieldSession(repo, target, discovery, []projectadoption.ScopeStatus{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	session, err = projectadoption.BeginReverseIteration(repo, target, session, projectadoption.ReverseIterationRequest{
-		ID: "manager-run-root", ManagerID: managerID, EvidenceIDs: []string{"cancellation-doc"}, DelegationEvidenceIDs: []string{},
-		Purpose: "Model selected cancellation behavior", Review: "manager-run-review-final",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := projectadoption.WriteBrownfieldSession(repo, session, session.Digest); err != nil {
-		t.Fatal(err)
-	}
-	inputBytes, err := json.Marshal(brownfieldManagerRunInput{IterationID: "manager-run-root", Phase: "propose", AgentManagerID: managerID})
-	if err != nil {
-		t.Fatal(err)
-	}
-	inputPath := ".markitect/drafts/manager-run-preview.json"
-	if _, err := writeRecord(repo, inputPath, inputBytes); err != nil {
-		t.Fatal(err)
-	}
-	args := []string{"project", "brownfield", "--repo", repo, "--brownfield-action", "run", "--session", discovery.ID, "--input", inputPath}
-	var out, errOut bytes.Buffer
-	if code := Run(args, &out, &errOut); code != 0 {
-		t.Fatalf("Brownfield manager-run preview exit=%d stderr=%s", code, errOut.String())
-	}
-	var preview brownfieldManagerRunOutput
-	if err := json.Unmarshal(out.Bytes(), &preview); err != nil {
-		t.Fatalf("decode manager-run preview: %v\n%s", err, out.String())
-	}
+	preview := decodeOutput[projectapp.BrownfieldManagerRunOutput](t, []byte(out))
 	if preview.Status != "preview" || preview.SessionDigest != session.Digest || preview.Preview == nil || preview.PreviewDigest == "" || preview.Preview.PreviewDigest != preview.PreviewDigest || preview.Attempt != nil {
-		t.Fatalf("unexpected Brownfield manager-run preview: %+v", preview)
+		t.Fatalf("unexpected adopt run preview: %+v", preview)
 	}
 	if preview.Preview.Model != readOnlyAgent.Model || preview.Preview.ProviderVersion != readOnlyAgent.ProviderVersion ||
 		preview.Preview.InputPriceMicrosPerMillion != readOnlyAgent.Pricing.InputMicrosPerMillion || preview.Preview.OutputPriceMicrosPerMillion != readOnlyAgent.Pricing.OutputMicrosPerMillion {
-		t.Fatalf("Brownfield preview did not bind the explicit read-only assessment runtime: %+v", preview.Preview)
+		t.Fatalf("adopt run preview did not bind the explicit read-only assessment runtime: %+v", preview.Preview)
 	}
 	for _, secret := range []string{"NATIVE_MANAGER_ARGUMENT_SENTINEL", "NATIVE_MANAGER_OPTION_SENTINEL", "READONLY_ARGUMENT_SENTINEL", "READONLY_OPTION_SENTINEL", "cancellation-doc"} {
-		if strings.Contains(out.String(), secret) {
-			t.Fatalf("manager-run preview exposed private runtime or evidence content %q: %s", secret, out.String())
+		if strings.Contains(out, secret) {
+			t.Fatalf("adopt run preview exposed private runtime or evidence content %q: %s", secret, out)
 		}
 	}
 
+	operations := func(invoker projectrun.Invoker) projectapp.Operations {
+		return projectapp.Operations{Host: projectRunHost(), Invoker: invoker}
+	}
 	invoker := &countingManagerInvoker{}
-	var staleOut bytes.Buffer
-	err = runBrownfieldManagerStage(options{repo: repo, sourceRepo: repo, sessionID: discovery.ID, input: inputPath, write: true, expect: "sha256:stale-preview"}, &staleOut, invoker)
-	if err == nil || !strings.Contains(err.Error(), "does not match") || invoker.runCalls != 0 || staleOut.Len() != 0 {
-		t.Fatalf("stale manager-run preview was not rejected before invocation: err=%v calls=%d output=%s", err, invoker.runCalls, staleOut.String())
+	if code, out, errout := runCLIWith(t, operations(invoker), append(args, "--expect", preview.PreviewDigest, "--write")...); code != 2 || out != "" || !strings.Contains(errout, "requires --execute") || invoker.runCalls != 0 {
+		t.Fatalf("adopt run --write without --execute: exit=%d stdout=%s stderr=%s calls=%d", code, out, errout, invoker.runCalls)
 	}
-	var freshPreviewOut bytes.Buffer
-	if err := runBrownfieldManagerStage(options{repo: repo, sourceRepo: repo, sessionID: discovery.ID, input: inputPath}, &freshPreviewOut, &countingManagerInvoker{}); err != nil {
-		t.Fatalf("refresh exact manager-run preview: %v", err)
+	code, staleOut, staleErr := runCLIWith(t, operations(invoker), append(args, "--expect", "sha256:stale-preview", "--write", "--execute")...)
+	if code != 2 || !strings.Contains(staleErr, "does not match") || invoker.runCalls != 0 || staleOut != "" {
+		t.Fatalf("stale adopt run preview was not rejected before invocation: exit=%d stderr=%s calls=%d output=%s", code, staleErr, invoker.runCalls, staleOut)
 	}
-	if err := json.Unmarshal(freshPreviewOut.Bytes(), &preview); err != nil || preview.Preview == nil {
-		t.Fatalf("decode refreshed manager-run preview: %v %s", err, freshPreviewOut.String())
+	code, freshOut, freshErr := runCLIWith(t, operations(&countingManagerInvoker{}), args...)
+	if code != 0 {
+		t.Fatalf("refresh exact adopt run preview: exit=%d stderr=%s", code, freshErr)
 	}
+	preview = decodeOutput[projectapp.BrownfieldManagerRunOutput](t, []byte(freshOut))
 	invoker = &countingManagerInvoker{}
-	err = runBrownfieldManagerStage(options{repo: repo, sourceRepo: repo, sessionID: discovery.ID, input: inputPath, write: true, expect: preview.PreviewDigest}, new(bytes.Buffer), invoker)
-	if err == nil || invoker.runCalls != 1 {
-		t.Fatalf("typed Brownfield invocation did not reach the mock assessment binding: err=%v calls=%d", err, invoker.runCalls)
+	code, _, _ = runCLIWith(t, operations(invoker), append(args, "--expect", preview.PreviewDigest, "--write", "--execute")...)
+	if code == 0 || invoker.runCalls != 1 {
+		t.Fatalf("typed adopt run invocation did not reach the mock assessment binding: exit=%d calls=%d", code, invoker.runCalls)
 	}
 	if invoker.lastConfig.Model != readOnlyAgent.Model || len(invoker.lastConfig.Args) != 1 || invoker.lastConfig.Args[0] != "READONLY_ARGUMENT_SENTINEL" {
-		t.Fatalf("Brownfield invocation used the native Manager binding: %#v", invoker.lastConfig)
+		t.Fatalf("adopt run used the native Manager binding: %#v", invoker.lastConfig)
 	}
 	var requestContext map[string]any
 	if err := json.Unmarshal(invoker.lastRequest.Context, &requestContext); err != nil || requestContext["kind"] != "projectadoption-manager-proposal/v1" || requestContext["phase"] != "propose" {
-		t.Fatalf("typed Brownfield context did not reach the read-only binding: context=%s err=%v", invoker.lastRequest.Context, err)
+		t.Fatalf("typed adopt run context did not reach the read-only binding: context=%s err=%v", invoker.lastRequest.Context, err)
 	}
 }
 
@@ -433,7 +422,7 @@ func (*countingManagerInvoker) Fingerprint(config agentexec.Config) (string, err
 	return agentexec.Fingerprint(config)
 }
 
-func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.T) {
+func TestAdoptApplyAppliesModelAndRecordsTrustedReceipt(t *testing.T) {
 	repo := copyProjectWorld(t)
 	selectedSource := filepath.Join(repo, "docs", "cancellation.md")
 	selectedBytes, err := os.ReadFile(selectedSource)
@@ -444,7 +433,7 @@ func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.
 		t.Fatal(err)
 	}
 	runGit(t, repo, "add", "docs/cancellation.md")
-	runGitWithEnv(t, repo, []string{"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.invalid", "GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.invalid"}, "commit", "-m", "add coordinator privacy fixture")
+	runGitWithEnv(t, repo, testCommitEnv, "commit", "-m", "add coordinator privacy fixture")
 	commit := gitOutput(t, repo, "rev-parse", "HEAD")
 	discovery, err := projectadoption.Discover(repo, projectadoption.DiscoveryRequest{
 		APIVersion: projectadoption.DiscoveryVersion, ID: "brownfield-real-adoption", Purpose: "Apply a resolved model-only adoption",
@@ -481,36 +470,59 @@ func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.
 		Alternatives: []string{"Documented behavior", "Implementation behavior"}, ClaimIDs: []string{"claim-orders"}, Blocking: &blocking}}
 	projectadoption.SealDistillation(&report)
 	proposal := projectadoption.ManagerProposal{ManagerID: rootID, EvidenceIDs: []string{"cancellation-doc"}, Hierarchy: []projectadoption.ProposedManager{}, PublicContracts: []projectadoption.ManagerPublicContract{}, Report: report}
-	result = runBrownfieldMutation(t, repo, discovery.ID, "propose", brownfieldProposalInput{IterationID: "root-pass", Proposal: proposal}, result.SessionDigest)
+	result = runBrownfieldMutation(t, repo, discovery.ID, "propose", projectapp.BrownfieldProposalInput{IterationID: "root-pass", Proposal: proposal}, result.SessionDigest)
 	integration := projectadoption.ManagerIntegration{ManagerID: rootID, ChildProposalDigests: []string{}, ChildContracts: []projectadoption.IntegratedChildContracts{}, Report: report,
 		Conflicts: []projectadoption.SessionConflict{{ID: "cancellation-intent-conflict", ScopeID: "orders", QuestionID: "clarify-cancellation",
 			Description: "The selected documentation and implementation leave the desired cancellation rule unresolved.", EvidenceIDs: []string{"cancellation-doc"},
 			Disposition: "unresolved", Reason: "Coordinator decision required."}}}
-	result = runBrownfieldMutation(t, repo, discovery.ID, "integrate", brownfieldIntegrationInput{IterationID: "root-pass", Integration: integration}, result.SessionDigest)
-	var resumeOut, resumeErr bytes.Buffer
-	if code := Run([]string{"project", "brownfield", "--repo", repo, "--brownfield-action", "resume", "--session", discovery.ID}, &resumeOut, &resumeErr); code != 0 {
-		t.Fatalf("resume with coordinator blockers exit=%d stderr=%s", code, resumeErr.String())
-	}
-	var resumed brownfieldResult
-	if err := json.Unmarshal(resumeOut.Bytes(), &resumed); err != nil {
-		t.Fatalf("decode coordinator readiness: %v\n%s", err, resumeOut.String())
-	}
-	if resumed.Readiness == nil || len(resumed.Readiness.BlockingQuestions) != 1 || resumed.Readiness.BlockingQuestions[0].Prompt != "Which owner-approved cancellation rule governs?" ||
-		len(resumed.Readiness.UnresolvedConflicts) != 1 || resumed.Readiness.UnresolvedConflicts[0].Description != "The selected documentation and implementation leave the desired cancellation rule unresolved." {
-		t.Fatalf("resume hid actionable coordinator diagnostics: %+v", resumed.Readiness)
+	result = runBrownfieldMutation(t, repo, discovery.ID, "integrate", projectapp.BrownfieldIntegrationInput{IterationID: "root-pass", Integration: integration}, result.SessionDigest)
+	statusOut := mustCLI(t, "adopt", "status", "--repo", repo, "--session", discovery.ID)
+	status := decodeOutput[projectapp.BrownfieldResult](t, statusOut)
+	if status.Readiness == nil || len(status.Readiness.BlockingQuestions) != 1 || status.Readiness.BlockingQuestions[0].Prompt != "Which owner-approved cancellation rule governs?" ||
+		len(status.Readiness.UnresolvedConflicts) != 1 || status.Readiness.UnresolvedConflicts[0].Description != "The selected documentation and implementation leave the desired cancellation rule unresolved." {
+		t.Fatalf("adopt status hid actionable coordinator diagnostics: %+v", status.Readiness)
 	}
 	for _, private := range []string{"PRIVATE_COORDINATOR_SOURCE_SENTINEL", "PRIVATE_COORDINATOR_REPORT_SENTINEL"} {
-		if strings.Contains(resumeOut.String(), private) {
-			t.Fatalf("resume exposed raw source or full manager report %q: %s", private, resumeOut.String())
+		if bytes.Contains(statusOut, []byte(private)) {
+			t.Fatalf("adopt status exposed raw source or full manager report %q: %s", private, statusOut)
 		}
 	}
-	resolution := projectadoption.Resolution{APIVersion: projectadoption.ResolutionVersion, DiscoveryDigest: discovery.Digest,
-		DistillationDigest: report.Digest, ProposalDigest: projectadoption.ProposalDigest(report.Proposal), TargetBasis: target.Digest,
-		SchemaDigest: schemaDigest, BuildDigest: buildDigest, Actor: "user", AuthorityClaim: "Owner authorizes this model-only adoption",
-		DecisionReference: "review-real-adoption", Authenticated: boolPointer(false), Questions: []projectadoption.QuestionResolution{{QuestionID: "clarify-cancellation", ScopeID: "orders", Disposition: "answer", Answer: "Documented behavior governs", Reason: "Owner answered the actionable question"}},
-		Scopes: []projectadoption.ScopeResolution{{ScopeID: "orders", Status: "adopt", Reason: "Owner approved the grounded order scope"}}}
-	projectadoption.SealResolution(&resolution)
-	result = runBrownfieldMutation(t, repo, discovery.ID, "resolve", brownfieldResolveInput{IterationID: "root-pass", Resolution: resolution}, result.SessionDigest)
+
+	// resolve takes only the human choices; the Host builds and seals the
+	// Resolution against the session's own discovery, report and target.
+	choices := projectapp.ResolutionChoices{Actor: "user", AuthorityClaim: "Owner authorizes this model-only adoption", DecisionReference: "review-real-adoption",
+		Questions: []projectadoption.QuestionResolution{{QuestionID: "clarify-cancellation", ScopeID: "orders", Disposition: "answer", Answer: "Documented behavior governs", Reason: "Owner answered the actionable question"}},
+		Scopes:    []projectadoption.ScopeResolution{{ScopeID: "orders", Status: "adopt", Reason: "Owner approved the grounded order scope"}}}
+	incomplete := writeAdoptInput(t, repo, "resolve", map[string]any{"iterationId": "root-pass", "choices": map[string]any{
+		"actor": "user", "authorityClaim": "x", "decisionReference": "d", "questions": nil, "scopes": choices.Scopes}})
+	if code, _, errout := runCLI(t, "adopt", "resolve", "--repo", repo, "--session", discovery.ID, "--input", incomplete); code != 2 || !strings.Contains(errout, "choices must include") {
+		t.Fatalf("adopt resolve accepted choices without questions: exit=%d stderr=%s", code, errout)
+	}
+	unknownActor := choices
+	unknownActor.Actor = "someone-else"
+	if code, _, errout := runCLI(t, "adopt", "resolve", "--repo", repo, "--session", discovery.ID, "--input", writeAdoptInput(t, repo, "resolve", projectapp.BrownfieldResolveInput{IterationID: "root-pass", Choices: unknownActor})); code != 2 || !strings.Contains(errout, "actor must be user or an active Manager ID") {
+		t.Fatalf("adopt resolve accepted an unknown actor: exit=%d stderr=%s", code, errout)
+	}
+	modelPath := filepath.Join(repo, filepath.FromSlash(".markitect/model/commerce/sales/orders/brownfield-cancellation.yaml"))
+	result = runBrownfieldMutation(t, repo, discovery.ID, "resolve", projectapp.BrownfieldResolveInput{IterationID: "root-pass", Choices: choices}, result.SessionDigest)
+	resolved, err := projectadoption.LoadBrownfieldSession(repo, discovery.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolution := resolved.Iterations[0].Resolution
+	if resolution == nil || resolution.Digest == "" || resolution.DiscoveryDigest != discovery.Digest || resolution.DistillationDigest != report.Digest ||
+		resolution.ProposalDigest != projectadoption.ProposalDigest(report.Proposal) || resolution.TargetBasis != target.Digest ||
+		resolution.SchemaDigest != schemaDigest || resolution.BuildDigest != buildDigest || resolution.Authenticated == nil || *resolution.Authenticated ||
+		resolution.Actor != "user" || resolution.DecisionReference != "review-real-adoption" {
+		t.Fatalf("resolution bindings do not match the session and active Host values: %+v", resolution)
+	}
+	if _, err := os.Stat(modelPath); !os.IsNotExist(err) {
+		t.Fatalf("resolve wrote a model proposal to disk: %v", err)
+	}
+	if after, err := projectwork.Load(repo, commit); err != nil || after.Digest != target.Digest {
+		t.Fatalf("resolve changed the fixed project model: err=%v", err)
+	}
+
 	plan, planOutput := runBrownfieldPlanWithOutput(t, repo, discovery.ID, "root-pass")
 	if plan.Plan == nil || plan.Plan.PlanDigest == "" {
 		t.Fatalf("plan preview returned no exact reviewed plan: %+v", plan)
@@ -523,17 +535,20 @@ func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.
 			t.Fatalf("plan preview exposed raw source or full manager report %q: %s", private, planOutput)
 		}
 	}
-	wrongPlanInput, err := json.Marshal(brownfieldApplyAdoptionInput{IterationID: "root-pass", ExpectedPlanDigest: strings.Repeat("0", 64)})
-	if err != nil {
-		t.Fatal(err)
+	wrongPlanInput := writeAdoptInput(t, repo, "apply", projectapp.BrownfieldApplyAdoptionInput{IterationID: "root-pass", ExpectedPlanDigest: strings.Repeat("0", 64)})
+	if code, _, errout := runCLI(t, "adopt", "apply", "--repo", repo, "--session", discovery.ID, "--input", wrongPlanInput, "--expect", result.SessionDigest, "--write"); code != 2 || !strings.Contains(errout, "exact reviewed adoption plan digest") {
+		t.Fatalf("wrong reviewed plan digest was not rejected before mutation: exit=%d stderr=%s", code, errout)
 	}
-	if _, err := writeRecord(repo, ".markitect/drafts/apply-adoption-wrong-plan.json", wrongPlanInput); err != nil {
-		t.Fatal(err)
+	applyInput := writeAdoptInput(t, repo, "apply", projectapp.BrownfieldApplyAdoptionInput{IterationID: "root-pass", ExpectedPlanDigest: plan.Plan.PlanDigest})
+	if code, _, errout := runCLI(t, "adopt", "apply", "--repo", repo, "--session", discovery.ID, "--input", applyInput); code != 2 || !strings.Contains(errout, "requires --write") {
+		t.Fatalf("adopt apply without --write was not rejected: exit=%d stderr=%s", code, errout)
 	}
-	var wrongPlanOut, wrongPlanErr bytes.Buffer
-	wrongPlanArgs := []string{"project", "brownfield", "--repo", repo, "--brownfield-action", "apply-adoption", "--session", discovery.ID, "--input", ".markitect/drafts/apply-adoption-wrong-plan.json", "--expect", result.SessionDigest, "--write"}
-	if code := Run(wrongPlanArgs, &wrongPlanOut, &wrongPlanErr); code == 0 || !strings.Contains(wrongPlanErr.String(), "exact reviewed adoption plan digest") {
-		t.Fatalf("wrong reviewed plan digest was not rejected before mutation: exit=%d stderr=%s", code, wrongPlanErr.String())
+	if _, err := os.Stat(modelPath); !os.IsNotExist(err) {
+		t.Fatalf("rejected apply unexpectedly applied a model file: %v", err)
+	}
+	loadedBeforeApply, err := projectadoption.LoadBrownfieldSession(repo, discovery.ID)
+	if err != nil || loadedBeforeApply.Digest != result.SessionDigest {
+		t.Fatalf("rejected apply changed the session ledger: digest=%q err=%v", loadedBeforeApply.Digest, err)
 	}
 	implementationSource := filepath.Join(repo, "src", "shop", "orders", "order.py")
 	docBefore, err := os.ReadFile(selectedSource)
@@ -544,43 +559,9 @@ func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	forgedInput, err := json.Marshal(map[string]any{"iterationId": "root-pass", "plan": plan.Plan, "receipt": projectadoption.AdoptionReceipt{Status: "adopted", CandidateDigest: strings.Repeat("0", 64)}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := writeRecord(repo, ".markitect/drafts/forged-adoption-receipt.json", forgedInput); err != nil {
-		t.Fatal(err)
-	}
-	var forgedOut, forgedErr bytes.Buffer
-	if code := Run([]string{"project", "brownfield", "--repo", repo, "--brownfield-action", "record-adoption", "--session", discovery.ID, "--input", ".markitect/drafts/forged-adoption-receipt.json", "--expect", result.SessionDigest, "--write"}, &forgedOut, &forgedErr); code == 0 || !strings.Contains(forgedErr.String(), "caller-supplied adoption receipts are not accepted") {
-		t.Fatalf("caller-supplied adoption receipt was not rejected: exit=%d stderr=%s", code, forgedErr.String())
-	}
-	modelPath := filepath.Join(repo, filepath.FromSlash(".markitect/model/commerce/sales/orders/brownfield-cancellation.yaml"))
-	if _, err := os.Stat(modelPath); !os.IsNotExist(err) {
-		t.Fatalf("rejected receipt unexpectedly applied a model file: %v", err)
-	}
-	loadedBeforeApply, err := projectadoption.LoadBrownfieldSession(repo, discovery.ID)
-	if err != nil || loadedBeforeApply.Digest != result.SessionDigest {
-		t.Fatalf("rejected receipt changed the session ledger: digest=%q err=%v", loadedBeforeApply.Digest, err)
-	}
 
-	applyInput, err := json.Marshal(brownfieldApplyAdoptionInput{IterationID: "root-pass", ExpectedPlanDigest: plan.Plan.PlanDigest})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := writeRecord(repo, ".markitect/drafts/apply-adoption.json", applyInput); err != nil {
-		t.Fatal(err)
-	}
-	var applyOut, applyErr bytes.Buffer
-	applyArgs := []string{"project", "brownfield", "--repo", repo, "--brownfield-action", "apply-adoption", "--session", discovery.ID, "--input", ".markitect/drafts/apply-adoption.json", "--expect", result.SessionDigest, "--write"}
-	if code := Run(applyArgs, &applyOut, &applyErr); code != 0 {
-		t.Fatalf("actual apply-adoption exit=%d stderr=%s", code, applyErr.String())
-	}
-	var applied brownfieldResult
-	if err := json.Unmarshal(applyOut.Bytes(), &applied); err != nil {
-		t.Fatalf("decode apply-adoption result: %v\n%s", err, applyOut.String())
-	}
-	if applied.Status != "recorded" || applied.Action != "apply-adoption" || applied.Readiness != nil || applied.Plan == nil || applied.Plan.PlanDigest != plan.Plan.PlanDigest || applied.Receipt == nil || applied.Receipt.Status != "adopted" || applied.Receipt.CandidateDigest != applied.Plan.Edit.CandidateDigest {
+	applied := decodeOutput[projectapp.BrownfieldResult](t, mustCLI(t, "adopt", "apply", "--repo", repo, "--session", discovery.ID, "--input", applyInput, "--expect", result.SessionDigest, "--write"))
+	if applied.Status != "recorded" || applied.Action != "apply" || applied.Readiness != nil || applied.Plan == nil || applied.Plan.PlanDigest != plan.Plan.PlanDigest || applied.Receipt == nil || applied.Receipt.Status != "adopted" || applied.Receipt.CandidateDigest != applied.Plan.Edit.CandidateDigest {
 		t.Fatalf("apply result did not bind actual plan and trusted receipt: %+v", applied)
 	}
 	if _, err := os.Stat(modelPath); err != nil {
@@ -606,31 +587,17 @@ func TestBrownfieldApplyAdoptionAppliesModelAndRecordsTrustedReceipt(t *testing.
 	}
 }
 
-func runBrownfieldPlan(t *testing.T, repo, sessionID, iterationID string) brownfieldResult {
+func runBrownfieldPlan(t *testing.T, repo, sessionID, iterationID string) projectapp.BrownfieldResult {
+	t.Helper()
 	result, _ := runBrownfieldPlanWithOutput(t, repo, sessionID, iterationID)
 	return result
 }
 
-func runBrownfieldPlanWithOutput(t *testing.T, repo, sessionID, iterationID string) (brownfieldResult, string) {
+func runBrownfieldPlanWithOutput(t *testing.T, repo, sessionID, iterationID string) (projectapp.BrownfieldResult, string) {
 	t.Helper()
-	data, err := json.Marshal(brownfieldPlanInput{IterationID: iterationID})
-	if err != nil {
-		t.Fatal(err)
-	}
-	path := ".markitect/drafts/plan-" + iterationID + ".json"
-	if _, err := writeRecord(repo, path, data); err != nil {
-		t.Fatal(err)
-	}
-	var out, errOut bytes.Buffer
-	args := []string{"project", "brownfield", "--repo", repo, "--brownfield-action", "plan", "--session", sessionID, "--input", path}
-	if code := Run(args, &out, &errOut); code != 0 {
-		t.Fatalf("plan preview exit=%d stderr=%s", code, errOut.String())
-	}
-	var result brownfieldResult
-	if err := json.Unmarshal(out.Bytes(), &result); err != nil {
-		t.Fatalf("decode plan preview: %v\n%s", err, out.String())
-	}
-	return result, out.String()
+	path := writeAdoptInput(t, repo, "plan", projectapp.BrownfieldPlanInput{IterationID: iterationID})
+	out := mustCLI(t, "adopt", "plan", "--repo", repo, "--session", sessionID, "--input", path)
+	return decodeOutput[projectapp.BrownfieldResult](t, out), string(out)
 }
 
 func makeApplyableStagedDistillation(discovery projectadoption.Discovery, target *projectwork.Project, contextDigest, schemaDigest string) projectadoption.Distillation {
@@ -648,82 +615,58 @@ func makeApplyableStagedDistillation(discovery projectadoption.Discovery, target
 	return report
 }
 
-func runBrownfieldContext(t *testing.T, repo, sessionID, iterationID, phase string, forbidden ...string) brownfieldResult {
+func runBrownfieldContext(t *testing.T, repo, sessionID, iterationID, phase string, forbidden ...string) projectapp.BrownfieldResult {
 	t.Helper()
-	data, err := json.Marshal(brownfieldContextInput{IterationID: iterationID, Phase: phase})
-	if err != nil {
-		t.Fatal(err)
-	}
-	path := ".markitect/drafts/context-" + iterationID + "-" + phase + ".json"
-	if _, err := writeRecord(repo, path, data); err != nil {
-		t.Fatal(err)
-	}
-	var out, errOut bytes.Buffer
-	args := []string{"project", "brownfield", "--repo", repo, "--brownfield-action", "context", "--session", sessionID, "--input", path}
-	if code := Run(args, &out, &errOut); code != 0 {
-		t.Fatalf("context %s exit=%d stderr=%s", iterationID, code, errOut.String())
-	}
+	path := writeAdoptInput(t, repo, "context", projectapp.BrownfieldContextInput{IterationID: iterationID, Phase: phase})
+	out := mustCLI(t, "adopt", "context", "--repo", repo, "--session", sessionID, "--input", path)
 	for _, sentinel := range forbidden {
-		if sentinel != "" && bytes.Contains(out.Bytes(), []byte(sentinel)) {
-			t.Fatalf("context %s leaked unassigned or private session content %q: %s", iterationID, sentinel, out.String())
+		if sentinel != "" && bytes.Contains(out, []byte(sentinel)) {
+			t.Fatalf("context %s leaked unassigned or private session content %q: %s", iterationID, sentinel, out)
 		}
 	}
-	var result brownfieldResult
-	if err := json.Unmarshal(out.Bytes(), &result); err != nil {
-		t.Fatalf("decode context %s: %v\n%s", iterationID, err, out.String())
-	}
+	result := decodeOutput[projectapp.BrownfieldResult](t, out)
 	if phase == "integrate" && result.IntegrationContext == nil || phase != "integrate" && result.ManagerContext == nil {
-		t.Fatalf("context %s returned no Manager context: %s", iterationID, out.String())
+		t.Fatalf("context %s returned no Manager context: %s", iterationID, out)
 	}
 	if result.Session != nil || result.Readiness != nil {
-		t.Fatalf("context %s returned broad session or readiness data: %s", iterationID, out.String())
+		t.Fatalf("context %s returned broad session or readiness data: %s", iterationID, out)
 	}
 	return result
 }
 
-func runBrownfieldMutation(t *testing.T, repo, sessionID, action string, request any, priorDigest string) brownfieldResult {
+// runBrownfieldMutation previews one adopt stage, then writes it with the
+// prior session digest, and checks that the write equals the preview.
+func runBrownfieldMutation(t *testing.T, repo, sessionID, stage string, request any, priorDigest string) projectapp.BrownfieldResult {
 	t.Helper()
-	data, err := json.Marshal(request)
-	if err != nil {
-		t.Fatal(err)
+	path := writeAdoptInput(t, repo, stage, request)
+	args := []string{"adopt", stage, "--repo", repo, "--session", sessionID, "--input", path}
+	code, previewOut, previewErr := runCLI(t, args...)
+	if code != 0 {
+		t.Fatalf("%s preview exit=%d stderr=%s", stage, code, previewErr)
 	}
-	inputDigest := sha256.Sum256(data)
-	path := ".markitect/drafts/" + action + "-" + sessionID + "-" + hex.EncodeToString(inputDigest[:6]) + ".json"
-	if _, err := writeRecord(repo, path, data); err != nil {
-		t.Fatal(err)
-	}
-	args := []string{"project", "brownfield", "--repo", repo, "--brownfield-action", action, "--session", sessionID, "--input", path}
-	var previewOut, previewErr bytes.Buffer
-	if code := Run(args, &previewOut, &previewErr); code != 0 {
-		t.Fatalf("%s preview exit=%d stderr=%s input=%s", action, code, previewErr.String(), string(data))
-	}
-	var preview brownfieldResult
-	if err := json.Unmarshal(previewOut.Bytes(), &preview); err != nil {
-		t.Fatalf("decode %s preview: %v\n%s", action, err, previewOut.String())
-	}
+	preview := decodeOutput[projectapp.BrownfieldResult](t, []byte(previewOut))
 	if preview.Status != "preview" || preview.Session == nil || preview.Session.ID != sessionID || preview.Session.Digest != preview.SessionDigest || preview.Session.TargetContextDigest == "" || len(preview.Session.Iterations) == 0 || preview.PriorSessionDigest != priorDigest || preview.Readiness != nil {
-		t.Fatalf("unexpected %s preview: %+v", action, preview)
+		t.Fatalf("unexpected %s preview: %+v", stage, preview)
 	}
 	for _, private := range []string{"PRIVATE_MANAGER_REPORT_SENTINEL", "PRIVATE_CHILD_REPORT_SENTINEL", "cancellation-doc", "orders-code"} {
-		if strings.Contains(previewOut.String(), private) {
-			t.Fatalf("%s preview exposed private evidence/report data %q: %s", action, private, previewOut.String())
+		if strings.Contains(previewOut, private) {
+			t.Fatalf("%s preview exposed private evidence/report data %q: %s", stage, private, previewOut)
 		}
 	}
-	writeArgs := append(append([]string(nil), args...), "--expect", priorDigest, "--write")
-	var writeOut, writeErr bytes.Buffer
-	if code := Run(writeArgs, &writeOut, &writeErr); code != 0 {
-		t.Fatalf("%s write exit=%d stderr=%s", action, code, writeErr.String())
+	if loaded, err := projectadoption.LoadBrownfieldSession(repo, sessionID); err != nil || loaded.Digest != priorDigest {
+		t.Fatalf("%s preview changed the session ledger: err=%v", stage, err)
 	}
-	var written brownfieldResult
-	if err := json.Unmarshal(writeOut.Bytes(), &written); err != nil {
-		t.Fatalf("decode %s write result: %v\n%s", action, err, writeOut.String())
+	code, writeOut, writeErr := runCLI(t, append(args, "--expect", priorDigest, "--write")...)
+	if code != 0 {
+		t.Fatalf("%s write exit=%d stderr=%s", stage, code, writeErr)
 	}
+	written := decodeOutput[projectapp.BrownfieldResult](t, []byte(writeOut))
 	if written.Status != "recorded" || written.SessionDigest != preview.SessionDigest || written.Readiness != nil {
-		t.Fatalf("%s write diverged from preview: preview=%s written=%s", action, preview.SessionDigest, written.SessionDigest)
+		t.Fatalf("%s write diverged from preview: preview=%s written=%s", stage, preview.SessionDigest, written.SessionDigest)
 	}
 	for _, private := range []string{"PRIVATE_MANAGER_REPORT_SENTINEL", "PRIVATE_CHILD_REPORT_SENTINEL", "cancellation-doc", "orders-code"} {
-		if strings.Contains(writeOut.String(), private) {
-			t.Fatalf("%s write exposed private evidence/report data %q: %s", action, private, writeOut.String())
+		if strings.Contains(writeOut, private) {
+			t.Fatalf("%s write exposed private evidence/report data %q: %s", stage, private, writeOut)
 		}
 	}
 	return written
@@ -770,7 +713,7 @@ func makeStagedReport(discovery projectadoption.Discovery, target *projectwork.P
 	report := projectadoption.Distillation{APIVersion: projectadoption.DistillationVersion, DiscoveryDigest: discovery.Digest,
 		TargetBasis: target.Digest, TargetRevision: target.Revision, TargetContextDigest: contextDigest, Method: "human-review", SchemaDigest: schemaDigest,
 		Claims: claims, Terms: []projectadoption.Term{}, Contradictions: []projectadoption.Contradiction{}, Questions: []projectadoption.Question{},
-		Scopes: scopes, Proposal: projectadoption.ModelProposal{Goal: "Exercise staged Brownfield CLI", Files: files}}
+		Scopes: scopes, Proposal: projectadoption.ModelProposal{Goal: "Exercise staged adopt CLI", Files: files}}
 	projectadoption.SealDistillation(&report)
 	return report
 }

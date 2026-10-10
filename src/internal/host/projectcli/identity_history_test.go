@@ -1,14 +1,13 @@
 package projectcli
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
@@ -21,14 +20,15 @@ func TestGlobalAndNamedCanonicalEditSupportsBriefingsAndReadiness(t *testing.T) 
 			runGit(t, root, "init", "--initial-branch=feature-identity")
 			cli := func(args ...string) []byte {
 				t.Helper()
-				var out, stderr bytes.Buffer
-				args = append([]string{"project", args[0], "--repo", root}, args[1:]...)
-				if code := Run(args, &out, &stderr); code != 0 {
-					t.Fatalf("%v: exit=%d stderr=%s", args, code, stderr.String())
-				}
-				return out.Bytes()
+				return mustCLI(t, append([]string{args[0], "--repo", root}, args[1:]...)...)
 			}
-			cli("init", "--name", "generic-identity", "--write")
+			writeDocs := func() {
+				t.Helper()
+				preview := decodeOutput[projectapp.DocumentResult](t, cli("docs"))
+				cli("docs", "--expect", preview.Digest, "--write")
+			}
+			initPreview := decodeOutput[projectwork.InitPlan](t, cli("init", "--name", "generic-identity"))
+			cli("init", "--name", "generic-identity", "--expect", initPreview.Digest, "--write")
 			modelPath := ".markitect/model/manager.yaml"
 			path := filepath.Join(root, filepath.FromSlash(modelPath))
 			if namespace != "" {
@@ -52,12 +52,12 @@ func TestGlobalAndNamedCanonicalEditSupportsBriefingsAndReadiness(t *testing.T) 
 					t.Fatal(err)
 				}
 				modelPath, path = selectedPath, newPath
-				cli("document", "--write")
+				writeDocs()
 			}
 			runGit(t, root, "add", ".")
 			commit := func(message string) {
 				t.Helper()
-				runGitWithEnv(t, root, []string{"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.invalid", "GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.invalid"}, "commit", "-m", message)
+				runGitWithEnv(t, root, testCommitEnv, "commit", "-m", message)
 			}
 			commit("generic initial model")
 			project, err := projectwork.Load(root, "")
@@ -82,19 +82,10 @@ func TestGlobalAndNamedCanonicalEditSupportsBriefingsAndReadiness(t *testing.T) 
 			if err != nil {
 				t.Fatal(err)
 			}
-			const editInput = ".markitect/drafts/identity-edit.json"
-			if err := os.MkdirAll(filepath.Join(root, ".markitect", "drafts"), 0755); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(editInput)), proposal, 0600); err != nil {
-				t.Fatal(err)
-			}
-			var preview projectwork.EditPlan
-			if err := json.Unmarshal(cli("edit", "--input", editInput), &preview); err != nil {
-				t.Fatal(err)
-			}
+			editInput := writeDraft(t, root, ".markitect/drafts/identity-edit.json", proposal)
+			preview := decodeOutput[projectwork.EditPlan](t, cli("edit", "--input", editInput))
 			cli("edit", "--input", editInput, "--expect", preview.Digest, "--write")
-			cli("document", "--write")
+			writeDocs()
 			runGit(t, root, "add", modelPath, "docs/markitect/project.md")
 			commit("accepted canonical mandate change")
 			revision := gitOutput(t, root, "rev-parse", "HEAD")
@@ -113,49 +104,30 @@ func TestGlobalAndNamedCanonicalEditSupportsBriefingsAndReadiness(t *testing.T) 
 				Scopes:    []projectexplore.Scope{{ID: "notification", Name: "Notification", Goal: "Implement the declared notification mandate.", Operation: "apply", ManagerIDs: []string{manager}}},
 				Decisions: []projectexplore.Decision{}, Drafts: []projectexplore.DraftProposal{},
 				Acknowledgements: []projectexplore.StructureAcknowledgement{}, Completions: []projectexplore.ApplyReceipt{}}
-			input, err := json.Marshal(record)
-			if err != nil {
-				t.Fatal(err)
+			exploreInput := writeDraft(t, root, ".markitect/drafts/identity-explore.json", record)
+			exploration := decodeOutput[projectapp.ExploreResult](t, cli("explore", "--input", exploreInput))
+			if exploration.Plan == nil {
+				t.Fatalf("explore preview has no write plan: %#v", exploration)
 			}
-			const exploreInput = ".markitect/drafts/identity-explore.json"
-			if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(exploreInput)), input, 0600); err != nil {
-				t.Fatal(err)
-			}
-			var exploration projectexplore.WritePlan
-			if err := json.Unmarshal(cli("explore", "--input", exploreInput), &exploration); err != nil {
-				t.Fatal(err)
-			}
-			cli("explore", "--input", exploreInput, "--expect", exploration.Digest, "--write")
-			var ready struct {
-				Binding   projectexplore.Binding         `json:"binding"`
-				Readiness projectexplore.ReadinessReport `json:"readiness"`
-			}
-			readinessArgs := []string{"readiness", "--exploration", record.ID, "--scope", "notification"}
-			if err := json.Unmarshal(cli(readinessArgs...), &ready); err != nil {
-				t.Fatal(err)
-			}
+			cli("explore", "--input", exploreInput, "--expect", exploration.Plan.Digest, "--write")
+			readyArgs := []string{"ready", "--exploration", record.ID, "--scope", "notification"}
+			ready := decodeOutput[projectapp.ReadinessResult](t, cli(readyArgs...))
 			if !ready.Binding.ModelAccepted || ready.Binding.ModelRevision != revision || ready.Readiness.Ready || len(ready.Readiness.Blockers) == 0 {
 				t.Fatalf("accepted model should bind without inventing structure acknowledgement: %+v", ready)
 			}
-			var overview struct {
-				Notifications []visibleNotification `json:"notifications"`
-			}
-			if err := json.Unmarshal(cli("briefings"), &overview); err != nil {
-				t.Fatal(err)
-			}
-			if len(overview.Notifications) != 1 || overview.Notifications[0].DefinitionID.Namespace != namespace || overview.Notifications[0].ResolutionStatus != "unresolved" {
-				t.Fatalf("legal namespace briefing lost or falsely resolved: %+v", overview)
+			list := decodeOutput[briefListOutput](t, cli("brief", "list"))
+			if len(list.Notifications) != 1 || list.Notifications[0].DefinitionID.Namespace != namespace || list.Notifications[0].ResolutionStatus != "unresolved" {
+				t.Fatalf("legal namespace briefing lost or falsely resolved: %+v", list)
 			}
 			state, digest, err := projectbriefing.Read(root)
 			if err != nil || state.History == nil || state.History.Revision != revision || len(state.Briefings) != 1 {
 				t.Fatalf("CLI history state=%+v err=%v", state, err)
 			}
-			var resumed struct {
-				Readiness projectexplore.ReadinessReport `json:"readiness"`
+			summary := decodeOutput[overview](t, cli("status"))
+			if len(summary.Briefings) == 0 {
+				t.Fatalf("status overview has no pending briefings: %+v", summary)
 			}
-			if err := json.Unmarshal(cli(readinessArgs...), &resumed); err != nil {
-				t.Fatal(err)
-			}
+			resumed := decodeOutput[projectapp.ReadinessResult](t, cli(readyArgs...))
 			_, afterDigest, err := projectbriefing.Read(root)
 			if err != nil || afterDigest != digest || resumed.Readiness.Digest != ready.Readiness.Digest {
 				t.Fatalf("readiness resume changed the immutable history/binding: err=%v", err)

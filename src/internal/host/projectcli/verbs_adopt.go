@@ -23,7 +23,7 @@ type adoptInput struct {
 }
 
 var adoptVerb = define(verb{
-	name: "adopt", group: "Adoption", effect: effectWrite, interrupt: true,
+	name: "adopt", group: "Adoption", effect: effectWrite, interrupt: true, inspect: "adopt status",
 	summary:  "Adopt an existing repository into the project model, one session stage at a time.",
 	synopsis: "adopt STAGE [--session ID] [--source-repo PATH] [--revision R] [--input FILE] [--expect DIGEST] [--write] [--execute]",
 	notes:    "--input holds the stage's record under the stage's key, such as {\"start\": {...}}. Writes compare and swap against the session digest; adopt run --write --execute takes the run preview's previewDigest. MCP uses the server root as the source repository.",

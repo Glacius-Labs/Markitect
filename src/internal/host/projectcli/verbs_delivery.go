@@ -2,6 +2,7 @@ package projectcli
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -18,11 +19,43 @@ const runRecovery = "Inspect the run with `status RUN` and its blockers before r
 // --- Work items -----------------------------------------------------------
 
 type exploreInput struct {
-	Exploration string                 `json:"exploration,omitempty"`
-	Input       *projectexplore.Record `json:"input,omitempty"`
-	Revision    string                 `json:"revision,omitempty"`
-	Expect      string                 `json:"expect,omitempty"`
-	Write       bool                   `json:"write,omitempty"`
+	Exploration string         `json:"exploration,omitempty"`
+	Input       *exploreRecord `json:"input,omitempty"`
+	Revision    string         `json:"revision,omitempty"`
+	Expect      string         `json:"expect,omitempty"`
+	Write       bool           `json:"write,omitempty"`
+}
+
+// exploreRecord is an exploration record as a caller writes it: for a new
+// record the Host fills createdAgainstBindingDigest and digest.
+type exploreRecord struct {
+	APIVersion       string                                    `json:"apiVersion"`
+	ID               string                                    `json:"id"`
+	Status           string                                    `json:"status"`
+	Request          string                                    `json:"request"`
+	CreatedAgainst   string                                    `json:"createdAgainstBindingDigest,omitempty"`
+	Scopes           []projectexplore.Scope                    `json:"scopes"`
+	Decisions        []projectexplore.Decision                 `json:"decisions"`
+	Drafts           []projectexplore.DraftProposal            `json:"drafts"`
+	Acknowledgements []projectexplore.StructureAcknowledgement `json:"structureAcknowledgements"`
+	Completions      []projectexplore.ApplyReceipt             `json:"completions"`
+	Digest           string                                    `json:"digest,omitempty"`
+}
+
+// record validates the input with the exploration package's own input rules.
+func (r *exploreRecord) record() (*projectexplore.Record, error) {
+	if r == nil {
+		return nil, nil
+	}
+	data, err := json.Marshal(r)
+	if err != nil {
+		return nil, err
+	}
+	record, err := projectexplore.DecodeRecordInput(data)
+	if err != nil {
+		return nil, usageError{err}
+	}
+	return &record, nil
 }
 
 var exploreVerb = define(verb{
@@ -38,9 +71,13 @@ var exploreVerb = define(verb{
 	if in.Exploration != "" && in.Input != nil {
 		return projectapp.ExploreResult{}, usagef("use either --exploration or --input")
 	}
+	record, err := in.Input.record()
+	if err != nil {
+		return projectapp.ExploreResult{}, err
+	}
 	return staleOnly(e.ops.Explore(projectapp.ExploreOperation{
 		Selection: projectapp.Selection{Root: e.root, Revision: in.Revision}, ExplorationID: in.Exploration,
-		Record: in.Input, Write: in.Write, ExpectedDigest: in.Expect,
+		Record: record, Write: in.Write, ExpectedDigest: in.Expect,
 	}))
 })
 

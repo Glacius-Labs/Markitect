@@ -14,12 +14,17 @@ func TestBrownfieldRejectsMixedStagePayloadsBeforeReadingRepositories(t *testing
 		{Plan: &BrownfieldPlanInput{}},
 	} {
 		_, err := operations.Brownfield(BrownfieldOperation{Root: t.TempDir(), Action: "start", Input: input})
-		if err == nil || err.Error() != "Brownfield input must contain exactly the typed payload for the selected action" {
+		if err == nil || err.Error() != "adopt input must contain exactly the typed payload for the selected action" {
 			t.Fatalf("mixed or missing stage input reached filesystem: %v", err)
 		}
 	}
-	if _, err := operations.Brownfield(BrownfieldOperation{Root: t.TempDir(), Action: "resume", Input: BrownfieldInput{Plan: &BrownfieldPlanInput{}}}); err == nil {
-		t.Fatal("resume accepted a mutation payload")
+	if _, err := operations.Brownfield(BrownfieldOperation{Root: t.TempDir(), Action: "status", Input: BrownfieldInput{Plan: &BrownfieldPlanInput{}}}); err == nil {
+		t.Fatal("status accepted a mutation payload")
+	}
+	for _, removed := range []string{"resume", "apply-adoption", "record-adoption"} {
+		if _, err := operations.Brownfield(BrownfieldOperation{Root: t.TempDir(), Action: removed}); err == nil {
+			t.Fatalf("removed stage %q accepted", removed)
+		}
 	}
 }
 

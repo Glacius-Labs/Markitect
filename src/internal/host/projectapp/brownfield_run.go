@@ -64,19 +64,19 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 		sourceRoot = operation.Root
 	}
 	if operation.Root == "" || sourceRoot == "" || operation.SessionID == "" {
-		return BrownfieldManagerRunOutput{}, errors.New("Brownfield run requires --repo, --session, and --input")
+		return BrownfieldManagerRunOutput{}, errors.New("adopt run requires --repo, --session, and --input")
 	}
 	if operation.Revision != "" {
-		return BrownfieldManagerRunOutput{}, errors.New("Brownfield run uses the session's fixed target revision; start a new session to select another revision")
+		return BrownfieldManagerRunOutput{}, errors.New("adopt run uses the session's fixed target revision; start a new session to select another revision")
 	}
 	if invoker == nil {
-		return BrownfieldManagerRunOutput{}, errors.New("Brownfield run requires a manager invoker")
+		return BrownfieldManagerRunOutput{}, errors.New("adopt run requires a manager invoker")
 	}
 	if operation.Write && operation.ExpectedDigest == "" {
-		return BrownfieldManagerRunOutput{}, errors.New("Brownfield run --write requires --expect with the exact manager-run preview digest")
+		return BrownfieldManagerRunOutput{}, errors.New("adopt run --write requires --expect with the exact manager-run preview digest")
 	}
 	if request.IterationID == "" || request.Phase == "" || request.AgentManagerID == "" {
-		return BrownfieldManagerRunOutput{}, errors.New("Brownfield manager-run input requires iterationId, phase, and agentManagerId")
+		return BrownfieldManagerRunOutput{}, errors.New("adopt manager-run input requires iterationId, phase, and agentManagerId")
 	}
 	runtime, err := projectrun.LoadRuntime(operation.Root)
 	if err != nil {
@@ -84,12 +84,12 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 	}
 	selectedAgent, err := projectrun.ReadOnlyAgent(runtime, request.AgentManagerID)
 	if err != nil {
-		return BrownfieldManagerRunOutput{}, fmt.Errorf("select read-only Brownfield binding for explicitly selected Manager %q: %w", request.AgentManagerID, err)
+		return BrownfieldManagerRunOutput{}, fmt.Errorf("select read-only adoption binding for explicitly selected Manager %q: %w", request.AgentManagerID, err)
 	}
 	if selectedAgent.Unmetered() {
 		// The Brownfield ledger seals a priced estimate for every attempt. It has
 		// no unmetered accounting yet, so it rejects rather than invent a price.
-		return BrownfieldManagerRunOutput{}, fmt.Errorf("Brownfield manager stages require a metered agent; the read-only binding for Manager %q is unmetered", request.AgentManagerID)
+		return BrownfieldManagerRunOutput{}, fmt.Errorf("adopt manager stages require a metered agent; the read-only binding for Manager %q is unmetered", request.AgentManagerID)
 	}
 	config, err := selectedAgent.AgentConfig()
 	if err != nil {

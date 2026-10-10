@@ -132,7 +132,7 @@ type invocation struct {
 func parseInvocation(v verb, args []string) (invocation, bool, error) {
 	fs := flag.NewFlagSet(v.name, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
-	texts := map[string]*string{}
+	texts := map[string]*singleValue{}
 	bools := map[string]*bool{}
 	lists := map[string]*stringList{}
 	for _, a := range v.args {
@@ -147,7 +147,9 @@ func parseInvocation(v verb, args []string) (invocation, bool, error) {
 			fs.Var(list, a.name, a.help)
 			lists[a.name] = list
 		default:
-			texts[a.name] = fs.String(a.name, "", a.help)
+			text := &singleValue{}
+			fs.Var(text, a.name, a.help)
+			texts[a.name] = text
 		}
 	}
 	help := false
@@ -203,12 +205,12 @@ func parseInvocation(v verb, args []string) (invocation, bool, error) {
 		return invocation{}, false, fmt.Errorf("unexpected argument %q", positionals[0])
 	}
 	e := env{ops: projectOperations()}
-	root, err := absoluteRoot(*textValue(texts, "repo"))
+	root, err := absoluteRoot(textValue(texts, "repo"))
 	if err != nil {
 		return invocation{}, false, err
 	}
 	e.root, e.sourceRoot = root, root
-	if source := *textValue(texts, "source-repo"); source != "" {
+	if source := textValue(texts, "source-repo"); source != "" {
 		if e.sourceRoot, err = absoluteRoot(source); err != nil {
 			return invocation{}, false, err
 		}
@@ -237,22 +239,22 @@ func parseInvocation(v verb, args []string) (invocation, bool, error) {
 		case kindList:
 			fields[field] = []string(*lists[a.name])
 		case kindInt:
-			text := *texts[a.name]
+			text := texts[a.name].value
 			if _, err := strconv.ParseInt(text, 10, 64); err != nil {
 				return invocation{}, false, fmt.Errorf("--%s must be an integer", a.name)
 			}
 			fields[field] = json.Number(text)
 		case kindRecord:
-			data, err := readRecord(recordRoot, *texts[a.name])
+			data, err := readRecord(recordRoot, texts[a.name].value)
 			if err != nil {
 				return invocation{}, false, err
 			}
 			if !json.Valid(data) {
-				return invocation{}, false, fmt.Errorf("--%s %s is not valid JSON", a.name, *texts[a.name])
+				return invocation{}, false, fmt.Errorf("--%s %s is not valid JSON", a.name, texts[a.name].value)
 			}
 			fields[field] = json.RawMessage(data)
 		default:
-			fields[field] = *texts[a.name]
+			fields[field] = texts[a.name].value
 		}
 	}
 	raw, err := json.Marshal(fields)
@@ -262,12 +264,33 @@ func parseInvocation(v verb, args []string) (invocation, bool, error) {
 	return invocation{env: e, raw: raw}, false, nil
 }
 
-func textValue(texts map[string]*string, name string) *string {
+func textValue(texts map[string]*singleValue, name string) string {
 	if value, ok := texts[name]; ok {
-		return value
+		return value.value
 	}
-	empty := ""
-	return &empty
+	return ""
+}
+
+// singleValue is a single-valued flag. A second occurrence is an error, so a
+// repeated flag never silently replaces the first value.
+type singleValue struct {
+	value string
+	set   bool
+}
+
+func (s *singleValue) String() string {
+	if s == nil {
+		return ""
+	}
+	return s.value
+}
+
+func (s *singleValue) Set(value string) error {
+	if s.set {
+		return errors.New("may be given only once")
+	}
+	s.value, s.set = value, true
+	return nil
 }
 
 // absoluteRoot defaults the project root to the current directory.

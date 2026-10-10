@@ -2,9 +2,9 @@ package projectcli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
@@ -228,8 +228,10 @@ var schemaVerb = define(verb{
 	name: "schema", group: "Model", effect: effectRead,
 	summary:  "Print the project model schema.",
 	synopsis: "schema",
-}, func(ctx context.Context, e env, in noInput) (core.Schema, error) {
-	return projectmodel.Schema(), nil
+}, func(ctx context.Context, e env, in noInput) (json.RawMessage, error) {
+	// core.Schema is recursive (a Property has Properties), so it is returned
+	// as raw JSON: the derived MCP output schema stays finite.
+	return json.Marshal(projectmodel.Schema())
 })
 
 type checkInput struct {
