@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 )
 
 func TestCanonicalControllerVerifierFixtureNormalizesShortRepoBeforeCreatingExternalState(t *testing.T) {
@@ -19,7 +21,7 @@ func TestCanonicalControllerVerifierFixtureNormalizesShortRepoBeforeCreatingExte
 	if err != nil {
 		t.Skipf("GetShortPathNameW is unavailable: %v", err)
 	}
-	if samePathSpelling(shortRepo, canonicalRepo) {
+	if guardedwrite.SamePathSpelling(shortRepo, canonicalRepo) {
 		t.Skipf("filesystem did not provide an 8.3 spelling for %q", canonicalRepo)
 	}
 	if _, err := realDirectory(shortRepo); err == nil || !strings.Contains(err.Error(), "canonical path spelling") {
@@ -27,7 +29,7 @@ func TestCanonicalControllerVerifierFixtureNormalizesShortRepoBeforeCreatingExte
 	}
 
 	normalizedRepo := canonicalControllerTestDirectory(t, shortRepo, "repository")
-	if !samePathSpelling(normalizedRepo, canonicalRepo) {
+	if !guardedwrite.SamePathSpelling(normalizedRepo, canonicalRepo) {
 		t.Fatalf("test fixture repo normalization changed the directory: got=%q want=%q", normalizedRepo, canonicalRepo)
 	}
 	externalParent := canonicalControllerTestDirectory(t, filepath.Dir(normalizedRepo), "external parent")

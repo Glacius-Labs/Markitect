@@ -15,6 +15,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/compat/v0_13/consumers/artifactcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/compat/v0_13/consumers/projections"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"go.yaml.in/yaml/v3"
 )
@@ -593,8 +594,8 @@ func WriteProjectionArtifacts(root string, captured *snapshot.Snapshot, contents
 	}
 	branch := ""
 	var err error
-	if hasGitMetadata(root) {
-		branch, err = writeBranchName(root)
+	if guardedwrite.HasGitMetadata(root) {
+		branch, err = guardedwrite.BranchName(root)
 		if err != nil {
 			return nil, err
 		}
@@ -615,11 +616,11 @@ func WriteProjectionArtifacts(root string, captured *snapshot.Snapshot, contents
 		return nil, nil
 	}
 	for _, name := range names {
-		if _, err := safeDestination(root, name); err != nil {
+		if _, err := guardedwrite.SafeDestination(root, name); err != nil {
 			return nil, err
 		}
 	}
-	writeRoot, err := openWriteRoot(root)
+	writeRoot, err := guardedwrite.OpenRoot(root)
 	if err != nil {
 		return nil, err
 	}
@@ -632,11 +633,11 @@ func WriteProjectionArtifacts(root string, captured *snapshot.Snapshot, contents
 	var written []string
 	for _, name := range names {
 		if branch != "" {
-			if err := ensureWriteBranch(root, branch); err != nil {
+			if err := guardedwrite.EnsureBranch(root, branch); err != nil {
 				return written, err
 			}
 		}
-		dest, err := safeDestination(root, name)
+		dest, err := guardedwrite.SafeDestination(root, name)
 		if err != nil {
 			return written, err
 		}
@@ -657,7 +658,7 @@ func WriteProjectionArtifacts(root string, captured *snapshot.Snapshot, contents
 			fileMode = 0755
 		}
 		if err = writeRoot.AtomicWrite(name, contents[name], fileMode); err != nil {
-			if writeWasPublished(err) {
+			if guardedwrite.WasPublished(err) {
 				written = append(written, name)
 			}
 			return written, err
@@ -681,7 +682,7 @@ func WriteProjectionArtifacts(root string, captured *snapshot.Snapshot, contents
 		return written, errors.New("non-target inputs changed during apply; materialization is provisional")
 	}
 	if branch != "" {
-		if err := ensureWriteBranch(root, branch); err != nil {
+		if err := guardedwrite.EnsureBranch(root, branch); err != nil {
 			return written, err
 		}
 	}

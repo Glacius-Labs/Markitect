@@ -11,6 +11,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/compat/v0_13/consumers/artifactcoverage"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
@@ -203,7 +204,7 @@ func reconcileArtifactFindings(report *artifactcoverage.Report, root string) err
 		}
 		full := filepath.Join(absoluteRoot, filepath.FromSlash(finding.Path))
 		info, statErr := os.Lstat(full)
-		if statErr == nil && info.IsDir() && !isReparsePoint(info) {
+		if statErr == nil && info.IsDir() && !guardedwrite.IsReparsePoint(info) {
 			report.Findings = append(report.Findings[:i], report.Findings[i+1:]...)
 			continue
 		}

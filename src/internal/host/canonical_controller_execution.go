@@ -14,6 +14,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/recordstore"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
@@ -299,7 +300,7 @@ func acquireCanonicalControllerLease(cfg CanonicalControllerConfig) (func(), err
 // callers pass nil; tests use it to deterministically replace the path.
 func acquireCanonicalControllerLeaseWithHook(cfg CanonicalControllerConfig, beforeCreate func() error) (func(), error) {
 	path := cfg.RecordStore + ".controller.lock"
-	parent, err := openWriteRoot(filepath.Dir(path))
+	parent, err := guardedwrite.OpenRoot(filepath.Dir(path))
 	if err != nil {
 		return nil, fmt.Errorf("controller lease parent unavailable; inspect %s: %w", path, err)
 	}
@@ -321,7 +322,7 @@ func acquireCanonicalControllerLeaseWithHook(cfg CanonicalControllerConfig, befo
 		_ = parent.Close()
 		return nil, err
 	}
-	if err := parent.checkIdentity(); err != nil {
+	if err := parent.CheckIdentity(); err != nil {
 		_ = file.Close()
 		_ = parent.Close()
 		return nil, fmt.Errorf("controller lease parent changed after creation: %w", err)
@@ -340,17 +341,17 @@ func acquireCanonicalControllerLeaseWithHook(cfg CanonicalControllerConfig, befo
 		once.Do(func() {
 			defer parent.Close()
 			defer file.Close()
-			if parent.checkIdentity() != nil {
+			if parent.CheckIdentity() != nil {
 				return
 			}
 			current, err := parent.Lstat(leaf)
 			if err != nil || !os.SameFile(identity, current) {
 				return
 			}
-			if parent.checkIdentity() != nil {
+			if parent.CheckIdentity() != nil {
 				return
 			}
-			_ = parent.root.Remove(leaf)
+			_ = parent.RemoveRegular(leaf)
 		})
 	}, nil
 }
@@ -461,7 +462,7 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 	// Known branch/platform refusals must not create an empty ledger and stale
 	// an otherwise reviewed run. The scoped writer repeats these checks at the
 	// mutation boundary; failures after initialization remain explicit partials.
-	if _, err := writeBranchName(root); err != nil {
+	if _, err := guardedwrite.BranchName(root); err != nil {
 		return report, err
 	}
 	if err := validateProjectionWriteModes(output, outputModes); err != nil {

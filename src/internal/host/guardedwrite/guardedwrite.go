@@ -1,4 +1,8 @@
-package host
+// Package guardedwrite applies selected working-tree changes only while the
+// repository, branch, HEAD and captured file bytes are unchanged. It also owns
+// the anchored write root those checks build on; the remaining legacy writers
+// in the host root package use that root until they are removed.
+package guardedwrite
 
 import (
 	"bytes"
@@ -17,56 +21,56 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
-// GuardedWriteFile is the exact working-tree state captured for one selected
+// File is the exact working-tree state captured for one selected
 // path. Mode contains permission bits only. An absent path is represented by
 // Exists=false, an empty Bytes slice, and Mode=0.
-type GuardedWriteFile struct {
+type File struct {
 	Exists bool
 	Bytes  []byte
 	Mode   fs.FileMode
 }
 
-// GuardedWriteCapture binds selected working files to one repository identity,
+// Capture binds selected working files to one repository identity,
 // branch and HEAD. Its exported fields are inspectable by Host callers; Apply
-// rejects changes to the capture after CaptureGuardedWrite returns.
-type GuardedWriteCapture struct {
+// rejects changes to the capture after CaptureFiles returns.
+type Capture struct {
 	Root     string
 	Identity source.GitIdentity
 	// Head is a full commit ID, or `unborn:<symbolic-ref>` for a new named
 	// branch with no commit yet. A later first commit invalidates that capture.
 	Head   string
 	Branch string
-	Files  map[string]GuardedWriteFile
+	Files  map[string]File
 
 	rootIdentity os.FileInfo
 	seal         string
 }
 
-// GuardedWriteChange is one selected-path mutation. Delete removes an
+// Change is one selected-path mutation. Delete removes an
 // existing regular file; otherwise Bytes and Mode replace or create it.
-type GuardedWriteChange struct {
+type Change struct {
 	Path   string
 	Bytes  []byte
 	Mode   fs.FileMode
 	Delete bool
 }
 
-// GuardedWriteResult reports mutations that actually completed. It can be
+// Result reports mutations that actually completed. It can be
 // non-empty alongside an error because this API is deliberately not a
 // multi-file transaction.
-type GuardedWriteResult struct {
+type Result struct {
 	CompletedPaths []string
 }
 
-// CaptureGuardedWrite records exact bytes, modes, and missing selected paths
+// CaptureFiles records exact bytes, modes, and missing selected paths
 // from a Git worktree on a writable named branch. Selected paths are an exact
-// allowlist for the later ApplyGuardedWrite call.
-func CaptureGuardedWrite(root string, selectedPaths []string) (*GuardedWriteCapture, error) {
+// allowlist for the later Apply call.
+func CaptureFiles(root string, selectedPaths []string) (*Capture, error) {
 	paths, err := normalizeGuardedPaths(selectedPaths)
 	if err != nil {
 		return nil, err
 	}
-	writer, err := openWriteRoot(root)
+	writer, err := OpenRoot(root)
 	if err != nil {
 		return nil, err
 	}
@@ -75,16 +79,16 @@ func CaptureGuardedWrite(root string, selectedPaths []string) (*GuardedWriteCapt
 	if err != nil {
 		return nil, err
 	}
-	capture := &GuardedWriteCapture{
+	capture := &Capture{
 		Root:         identity.Root,
 		Identity:     identity,
 		Head:         head,
 		Branch:       branch,
-		Files:        make(map[string]GuardedWriteFile, len(paths)),
+		Files:        make(map[string]File, len(paths)),
 		rootIdentity: writer.identity,
 	}
 	for _, name := range paths {
-		if _, err := safeDestination(root, name); err != nil {
+		if _, err := SafeDestination(root, name); err != nil {
 			return nil, err
 		}
 		file, err := readGuardedWriteFile(writer, name)
@@ -93,7 +97,7 @@ func CaptureGuardedWrite(root string, selectedPaths []string) (*GuardedWriteCapt
 		}
 		capture.Files[name] = file
 	}
-	if err := writer.checkIdentity(); err != nil {
+	if err := writer.CheckIdentity(); err != nil {
 		return nil, err
 	}
 	if err := ensureGuardedGitState(root, identity, branch, head); err != nil {
@@ -106,24 +110,24 @@ func CaptureGuardedWrite(root string, selectedPaths []string) (*GuardedWriteCapt
 	return capture, nil
 }
 
-// ApplyGuardedWrite applies only changes to paths selected by capture. It
+// Apply applies only changes to paths selected by capture. It
 // acquires the same Host writer lock as other render/init/format operations,
 // then rechecks repository identity, branch, HEAD and captured bytes before
 // the first mutation and before each changed path.
-func ApplyGuardedWrite(root string, capture *GuardedWriteCapture, changes []GuardedWriteChange) (GuardedWriteResult, error) {
+func Apply(root string, capture *Capture, changes []Change) (Result, error) {
 	return applyGuardedWrite(root, capture, changes, nil, nil)
 }
 
-// ApplyGuardedWriteChecked is ApplyGuardedWrite with an additional caller-owned
+// ApplyChecked is Apply with an additional caller-owned
 // read-only precondition. The callback runs under the shared writer lock after
 // Host rechecks Git identity and captured file state, and before any target is
 // changed. Host then rechecks those bindings again before the first mutation.
-func ApplyGuardedWriteChecked(root string, capture *GuardedWriteCapture, changes []GuardedWriteChange, validate func() error) (GuardedWriteResult, error) {
+func ApplyChecked(root string, capture *Capture, changes []Change, validate func() error) (Result, error) {
 	return applyGuardedWrite(root, capture, changes, validate, nil)
 }
 
-func applyGuardedWrite(root string, capture *GuardedWriteCapture, changes []GuardedWriteChange, validate func() error, beforeTarget func(string) error) (GuardedWriteResult, error) {
-	result := GuardedWriteResult{CompletedPaths: []string{}}
+func applyGuardedWrite(root string, capture *Capture, changes []Change, validate func() error, beforeTarget func(string) error) (Result, error) {
+	result := Result{CompletedPaths: []string{}}
 	if capture == nil || capture.rootIdentity == nil || len(capture.seal) == 0 {
 		return result, errors.New("guarded apply requires an intact Host capture")
 	}
@@ -138,22 +142,22 @@ func applyGuardedWrite(root string, capture *GuardedWriteCapture, changes []Guar
 	// Git canonicalizes the captured root, while Windows callers may retain
 	// an equivalent 8.3 or extended-prefix spelling. Normalize both spellings;
 	// the opened-directory identity and reparse checks below remain required.
-	rootSpelling, err := canonicalPathSpelling(rootAbs)
+	rootSpelling, err := CanonicalPathSpelling(rootAbs)
 	if err != nil {
 		return result, fmt.Errorf("canonicalize guarded apply root spelling: %w", err)
 	}
-	capturedSpelling, err := canonicalPathSpelling(capture.Root)
+	capturedSpelling, err := CanonicalPathSpelling(capture.Root)
 	if err != nil {
 		return result, fmt.Errorf("canonicalize captured repository root spelling: %w", err)
 	}
-	if !samePathSpelling(rootSpelling, capturedSpelling) {
+	if !SamePathSpelling(rootSpelling, capturedSpelling) {
 		return result, errors.New("guarded apply root differs from captured repository root")
 	}
 	normalizedChanges, err := normalizeGuardedChanges(changes, capture.Files)
 	if err != nil {
 		return result, err
 	}
-	writer, err := openWriteRoot(root)
+	writer, err := OpenRoot(root)
 	if err != nil {
 		return result, err
 	}
@@ -179,7 +183,7 @@ func applyGuardedWrite(root string, capture *GuardedWriteCapture, changes []Guar
 		return result, err
 	}
 	defer unlock()
-	if err := writer.checkIdentity(); err != nil {
+	if err := writer.CheckIdentity(); err != nil {
 		return result, err
 	}
 	if !os.SameFile(capture.rootIdentity, writer.identity) {
@@ -199,7 +203,7 @@ func applyGuardedWrite(root string, capture *GuardedWriteCapture, changes []Guar
 		if err != nil || seal != capture.seal {
 			return result, errors.New("guarded write capture changed during precondition validation")
 		}
-		if err := writer.checkIdentity(); err != nil {
+		if err := writer.CheckIdentity(); err != nil {
 			return result, err
 		}
 		if !os.SameFile(capture.rootIdentity, writer.identity) {
@@ -219,7 +223,7 @@ func applyGuardedWrite(root string, capture *GuardedWriteCapture, changes []Guar
 				return result, err
 			}
 		}
-		if err := writer.checkIdentity(); err != nil {
+		if err := writer.CheckIdentity(); err != nil {
 			return result, err
 		}
 		if err := ensureGuardedGitState(root, capture.Identity, capture.Branch, capture.Head); err != nil {
@@ -241,20 +245,20 @@ func applyGuardedWrite(root string, capture *GuardedWriteCapture, changes []Guar
 				continue
 			}
 			if err := writer.RemoveRegular(change.Path); err != nil {
-				if writeWasPublished(err) {
+				if WasPublished(err) {
 					result.CompletedPaths = append(result.CompletedPaths, change.Path)
 				}
 				return result, fmt.Errorf("delete selected path %s: %w", change.Path, err)
 			}
 			result.CompletedPaths = append(result.CompletedPaths, change.Path)
-			expectedFiles[change.Path] = GuardedWriteFile{}
+			expectedFiles[change.Path] = File{}
 			continue
 		}
 		if current.Exists && bytes.Equal(current.Bytes, change.Bytes) && current.Mode == change.Mode.Perm() {
 			continue
 		}
 		if err := writer.AtomicWrite(change.Path, change.Bytes, change.Mode.Perm()); err != nil {
-			if writeWasPublished(err) {
+			if WasPublished(err) {
 				result.CompletedPaths = append(result.CompletedPaths, change.Path)
 			}
 			return result, fmt.Errorf("write selected path %s: %w", change.Path, err)
@@ -294,8 +298,8 @@ func normalizeGuardedPaths(input []string) ([]string, error) {
 	return paths, nil
 }
 
-func normalizeGuardedChanges(changes []GuardedWriteChange, selected map[string]GuardedWriteFile) ([]GuardedWriteChange, error) {
-	result := append([]GuardedWriteChange(nil), changes...)
+func normalizeGuardedChanges(changes []Change, selected map[string]File) ([]Change, error) {
+	result := append([]Change(nil), changes...)
 	paths := make([]string, 0, len(result))
 	seen := make(map[string]struct{}, len(result))
 	for i := range result {
@@ -334,7 +338,7 @@ func guardedGitState(root string) (source.GitIdentity, string, string, error) {
 	if err != nil {
 		return source.GitIdentity{}, "", "", fmt.Errorf("identify guarded write repository: %w", err)
 	}
-	branch, err := writeBranchName(root)
+	branch, err := BranchName(root)
 	if err != nil {
 		return source.GitIdentity{}, "", "", err
 	}
@@ -371,7 +375,7 @@ func ensureGuardedGitState(root string, expectedIdentity source.GitIdentity, exp
 	if identity != expectedIdentity {
 		return errors.New("Git repository identity changed since guarded capture")
 	}
-	if err := ensureWriteBranch(root, expectedBranch); err != nil {
+	if err := EnsureBranch(root, expectedBranch); err != nil {
 		return err
 	}
 	if branch != expectedBranch {
@@ -383,35 +387,35 @@ func ensureGuardedGitState(root string, expectedIdentity source.GitIdentity, exp
 	return nil
 }
 
-func readGuardedWriteFile(writer *writeRoot, name string) (GuardedWriteFile, error) {
+func readGuardedWriteFile(writer *Root, name string) (File, error) {
 	if err := writer.checkPath(name); err != nil {
-		return GuardedWriteFile{}, err
+		return File{}, err
 	}
 	before, err := writer.Lstat(name)
 	if os.IsNotExist(err) {
-		return GuardedWriteFile{}, nil
+		return File{}, nil
 	}
 	if err != nil {
-		return GuardedWriteFile{}, err
+		return File{}, err
 	}
-	if !before.Mode().IsRegular() || isReparsePoint(before) {
-		return GuardedWriteFile{}, fmt.Errorf("selected path is not a regular file: %s", name)
+	if !before.Mode().IsRegular() || IsReparsePoint(before) {
+		return File{}, fmt.Errorf("selected path is not a regular file: %s", name)
 	}
 	contents, err := writer.ReadFile(name)
 	if err != nil {
-		return GuardedWriteFile{}, err
+		return File{}, err
 	}
 	after, err := writer.Lstat(name)
 	if err != nil {
-		return GuardedWriteFile{}, err
+		return File{}, err
 	}
-	if !after.Mode().IsRegular() || isReparsePoint(after) || !os.SameFile(before, after) || before.Size() != after.Size() || before.Mode().Perm() != after.Mode().Perm() {
-		return GuardedWriteFile{}, fmt.Errorf("selected file changed while being captured: %s", name)
+	if !after.Mode().IsRegular() || IsReparsePoint(after) || !os.SameFile(before, after) || before.Size() != after.Size() || before.Mode().Perm() != after.Mode().Perm() {
+		return File{}, fmt.Errorf("selected file changed while being captured: %s", name)
 	}
-	return GuardedWriteFile{Exists: true, Bytes: contents, Mode: after.Mode().Perm()}, nil
+	return File{Exists: true, Bytes: contents, Mode: after.Mode().Perm()}, nil
 }
 
-func compareGuardedFiles(writer *writeRoot, expected map[string]GuardedWriteFile) error {
+func compareGuardedFiles(writer *Root, expected map[string]File) error {
 	paths := make([]string, 0, len(expected))
 	for name := range expected {
 		paths = append(paths, name)
@@ -429,12 +433,12 @@ func compareGuardedFiles(writer *writeRoot, expected map[string]GuardedWriteFile
 	return nil
 }
 
-func equalGuardedWriteFile(left, right GuardedWriteFile) bool {
+func equalGuardedWriteFile(left, right File) bool {
 	return left.Exists == right.Exists && left.Mode.Perm() == right.Mode.Perm() && bytes.Equal(left.Bytes, right.Bytes)
 }
 
-func cloneGuardedWriteFiles(files map[string]GuardedWriteFile) map[string]GuardedWriteFile {
-	clone := make(map[string]GuardedWriteFile, len(files))
+func cloneGuardedWriteFiles(files map[string]File) map[string]File {
+	clone := make(map[string]File, len(files))
 	for name, file := range files {
 		file.Bytes = append([]byte(nil), file.Bytes...)
 		clone[name] = file
@@ -442,13 +446,13 @@ func cloneGuardedWriteFiles(files map[string]GuardedWriteFile) map[string]Guarde
 	return clone
 }
 
-func guardedCaptureSeal(capture *GuardedWriteCapture) (string, error) {
+func guardedCaptureSeal(capture *Capture) (string, error) {
 	data, err := json.Marshal(struct {
 		Root     string
 		Identity source.GitIdentity
 		Head     string
 		Branch   string
-		Files    map[string]GuardedWriteFile
+		Files    map[string]File
 	}{capture.Root, capture.Identity, capture.Head, capture.Branch, capture.Files})
 	if err != nil {
 		return "", err

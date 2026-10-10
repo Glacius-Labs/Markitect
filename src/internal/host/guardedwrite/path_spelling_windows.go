@@ -1,6 +1,6 @@
 //go:build windows
 
-package host
+package guardedwrite
 
 import (
 	"fmt"
@@ -10,10 +10,10 @@ import (
 	"syscall"
 )
 
-// canonicalPathSpelling expands Windows 8.3 components without resolving
-// reparse points. safeDestination compares this spelling with EvalSymlinks
+// CanonicalPathSpelling expands Windows 8.3 components without resolving
+// reparse points. SafeDestination compares this spelling with EvalSymlinks
 // after independently rejecting symlink/reparse ancestors.
-func canonicalPathSpelling(path string) (string, error) {
+func CanonicalPathSpelling(path string) (string, error) {
 	path = longPathAPISpelling(filepath.Clean(path))
 	input, err := syscall.UTF16PtrFromString(path)
 	if err != nil {
@@ -36,11 +36,14 @@ func canonicalPathSpelling(path string) (string, error) {
 	}
 }
 
-func samePathSpelling(left, right string) bool {
+// SamePathSpelling reports whether two canonical spellings name the same path.
+func SamePathSpelling(left, right string) bool {
 	return strings.EqualFold(filepath.Clean(left), filepath.Clean(right))
 }
 
-func isReparsePoint(info os.FileInfo) bool {
+// IsReparsePoint reports whether info describes a symlink or, on Windows, any
+// reparse point.
+func IsReparsePoint(info os.FileInfo) bool {
 	if info == nil || info.Mode()&os.ModeSymlink != 0 {
 		return info != nil && info.Mode()&os.ModeSymlink != 0
 	}

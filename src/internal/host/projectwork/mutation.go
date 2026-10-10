@@ -15,7 +15,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	hostwrite "github.com/Glacius-Labs/Markitect/src/internal/host"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 	"go.yaml.in/yaml/v3"
@@ -403,7 +403,7 @@ func ApplyEdit(root string, plan EditPlan, expected string) (EditPlan, error) {
 	if err != nil {
 		return plan, err
 	}
-	capture, err := hostwrite.CaptureGuardedWrite(rootAbs, paths)
+	capture, err := guardedwrite.CaptureFiles(rootAbs, paths)
 	if err != nil {
 		return plan, fmt.Errorf("capture reviewed project inputs: %w", err)
 	}
@@ -419,7 +419,7 @@ func ApplyEdit(root string, plan EditPlan, expected string) (EditPlan, error) {
 			return plan, fmt.Errorf("prospectively selected inventory changed before guarded write: %s", file)
 		}
 	}
-	changes := make([]hostwrite.GuardedWriteChange, 0, len(plan.Mutation.Files))
+	changes := make([]guardedwrite.Change, 0, len(plan.Mutation.Files))
 	for _, change := range plan.Mutation.Files {
 		actual, found := capture.Files[change.Path]
 		if !found {
@@ -434,9 +434,9 @@ func ApplyEdit(root string, plan EditPlan, expected string) (EditPlan, error) {
 			mode = 0644
 		}
 		if change.Delete {
-			changes = append(changes, hostwrite.GuardedWriteChange{Path: change.Path, Delete: true})
+			changes = append(changes, guardedwrite.Change{Path: change.Path, Delete: true})
 		} else {
-			changes = append(changes, hostwrite.GuardedWriteChange{Path: change.Path, Bytes: []byte(change.Content), Mode: mode})
+			changes = append(changes, guardedwrite.Change{Path: change.Path, Bytes: []byte(change.Content), Mode: mode})
 		}
 	}
 	validateBasis := func() error {
@@ -472,7 +472,7 @@ func ApplyEdit(root string, plan EditPlan, expected string) (EditPlan, error) {
 		}
 		return nil
 	}
-	result, err := hostwrite.ApplyGuardedWriteChecked(capture.Root, capture, changes, validateBasis)
+	result, err := guardedwrite.ApplyChecked(capture.Root, capture, changes, validateBasis)
 	if err != nil {
 		return plan, fmt.Errorf("project edit partially completed at %s: %w", strings.Join(result.CompletedPaths, ", "), err)
 	}

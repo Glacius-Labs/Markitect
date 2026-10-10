@@ -1,4 +1,4 @@
-package host
+package guardedwrite
 
 import (
 	"crypto/rand"
@@ -29,12 +29,17 @@ func (e *publishedWriteError) Error() string {
 
 func (e *publishedWriteError) Unwrap() error { return e.Cause }
 
-func writeWasPublished(err error) bool {
+// WasPublished reports whether err means the mutation was published even
+// though the named destination changed afterwards.
+func WasPublished(err error) bool {
 	var published *publishedWriteError
 	return errors.As(err, &published)
 }
 
-func safeDestination(root, name string) (string, error) {
+// SafeDestination returns the absolute path for a repository-relative output
+// name after rejecting unsafe names and any symlink or reparse point on the
+// root, its ancestors or the existing part of the output path.
+func SafeDestination(root, name string) (string, error) {
 	if err := validateWritePath(name); err != nil {
 		return "", err
 	}
@@ -44,22 +49,22 @@ func safeDestination(root, name string) (string, error) {
 	}
 	// Check the root and every ancestor directly; EvalSymlinks alone does not
 	// identify all Windows reparse tags and textual equality misses short names.
-	if err := rejectReparseAncestors(absolute); err != nil {
+	if err := RejectReparseAncestors(absolute); err != nil {
 		return "", err
 	}
 	resolved, err := filepath.EvalSymlinks(absolute)
 	if err != nil {
 		return "", err
 	}
-	canonical, err := canonicalPathSpelling(absolute)
+	canonical, err := CanonicalPathSpelling(absolute)
 	if err != nil {
 		return "", fmt.Errorf("canonicalize output root spelling: %w", err)
 	}
-	resolvedCanonical, err := canonicalPathSpelling(resolved)
+	resolvedCanonical, err := CanonicalPathSpelling(resolved)
 	if err != nil {
 		return "", fmt.Errorf("canonicalize resolved output root: %w", err)
 	}
-	if !samePathSpelling(resolvedCanonical, canonical) {
+	if !SamePathSpelling(resolvedCanonical, canonical) {
 		return "", fmt.Errorf("output root contains a symlink: %s", root)
 	}
 	current := absolute
@@ -72,22 +77,22 @@ func safeDestination(root, name string) (string, error) {
 			}
 			return "", err
 		}
-		if isReparsePoint(info) {
+		if IsReparsePoint(info) {
 			return "", fmt.Errorf("symlink in output path %s", name)
 		}
 		resolved, err := filepath.EvalSymlinks(current)
 		if err != nil {
 			return "", err
 		}
-		canonical, err := canonicalPathSpelling(current)
+		canonical, err := CanonicalPathSpelling(current)
 		if err != nil {
 			return "", fmt.Errorf("canonicalize output path spelling: %w", err)
 		}
-		resolvedCanonical, err := canonicalPathSpelling(resolved)
+		resolvedCanonical, err := CanonicalPathSpelling(resolved)
 		if err != nil {
 			return "", fmt.Errorf("canonicalize resolved output path: %w", err)
 		}
-		if !samePathSpelling(resolvedCanonical, canonical) {
+		if !SamePathSpelling(resolvedCanonical, canonical) {
 			return "", fmt.Errorf("reparse point in output path %s", name)
 		}
 	}
@@ -106,28 +111,30 @@ func validateWritePath(name string) error {
 	return nil
 }
 
-// writeRoot pins all output mutations to the identity of the approved project
+// Root pins all output mutations to the identity of the approved project
 // directory. Path checks remain useful for policy, but never authorize a
 // path-based mutation.
-type writeRoot struct {
+type Root struct {
 	root     *os.Root
 	absolute string
 	identity os.FileInfo
 }
 
-func openWriteRoot(path string) (*writeRoot, error) {
+// OpenRoot opens path as a write root after checking that it and its
+// ancestors are plain directories.
+func OpenRoot(path string) (*Root, error) {
 	absolute, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
 	}
-	if err := rejectReparseAncestors(absolute); err != nil {
+	if err := RejectReparseAncestors(absolute); err != nil {
 		return nil, err
 	}
 	expected, err := os.Lstat(absolute)
 	if err != nil {
 		return nil, fmt.Errorf("inspect approved write root: %w", err)
 	}
-	if !expected.IsDir() || isReparsePoint(expected) {
+	if !expected.IsDir() || IsReparsePoint(expected) {
 		return nil, fmt.Errorf("approved write root is not a plain directory: %s", path)
 	}
 	root, err := os.OpenRoot(absolute)
@@ -143,12 +150,12 @@ func openWriteRoot(path string) (*writeRoot, error) {
 		root.Close()
 		return nil, fmt.Errorf("approved write root changed while opening: %s", path)
 	}
-	return &writeRoot{root: root, absolute: absolute, identity: actual}, nil
+	return &Root{root: root, absolute: absolute, identity: actual}, nil
 }
 
-func (w *writeRoot) Close() error { return w.root.Close() }
+func (w *Root) Close() error { return w.root.Close() }
 
-func (w *writeRoot) checkPath(name string) error {
+func (w *Root) checkPath(name string) error {
 	if err := validateWritePath(name); err != nil {
 		return err
 	}
@@ -163,7 +170,7 @@ func (w *writeRoot) checkPath(name string) error {
 			}
 			return err
 		}
-		if isReparsePoint(info) {
+		if IsReparsePoint(info) {
 			return fmt.Errorf("symlink or reparse point in output path %s", name)
 		}
 		if i < len(parts)-1 && !info.IsDir() {
@@ -173,12 +180,14 @@ func (w *writeRoot) checkPath(name string) error {
 	return nil
 }
 
-func (w *writeRoot) checkIdentity() error {
-	if err := rejectReparseAncestors(w.absolute); err != nil {
+// CheckIdentity reports an error when the root directory has moved, been
+// replaced or become a symlink or reparse point since it was opened.
+func (w *Root) CheckIdentity() error {
+	if err := RejectReparseAncestors(w.absolute); err != nil {
 		return err
 	}
 	current, err := os.Lstat(w.absolute)
-	if err != nil || !os.SameFile(w.identity, current) || isReparsePoint(current) {
+	if err != nil || !os.SameFile(w.identity, current) || IsReparsePoint(current) {
 		if err != nil {
 			return fmt.Errorf("approved write root moved or changed: %w", err)
 		}
@@ -187,11 +196,11 @@ func (w *writeRoot) checkIdentity() error {
 	return nil
 }
 
-func (w *writeRoot) Mkdir(name string, mode os.FileMode) error {
+func (w *Root) Mkdir(name string, mode os.FileMode) error {
 	return w.mkdirWithHook(name, mode, nil)
 }
 
-func (w *writeRoot) mkdirWithHook(name string, mode os.FileMode, afterCreate func() error) error {
+func (w *Root) mkdirWithHook(name string, mode os.FileMode, afterCreate func() error) error {
 	if err := validateWritePath(name); err != nil {
 		return err
 	}
@@ -201,7 +210,7 @@ func (w *writeRoot) mkdirWithHook(name string, mode os.FileMode, afterCreate fun
 		return err
 	}
 	defer closeParent(parent)
-	if err := w.checkIdentity(); err != nil {
+	if err := w.CheckIdentity(); err != nil {
 		return err
 	}
 	if err := parent.Mkdir(leaf, mode); err != nil {
@@ -218,11 +227,11 @@ func (w *writeRoot) mkdirWithHook(name string, mode os.FileMode, afterCreate fun
 	return nil
 }
 
-func (w *writeRoot) CreateExclusive(name string, mode os.FileMode) (*os.File, error) {
+func (w *Root) CreateExclusive(name string, mode os.FileMode) (*os.File, error) {
 	return w.createExclusiveWithHook(name, mode, nil)
 }
 
-func (w *writeRoot) createExclusiveWithHook(name string, mode os.FileMode, afterCreate func() error) (*os.File, error) {
+func (w *Root) createExclusiveWithHook(name string, mode os.FileMode, afterCreate func() error) (*os.File, error) {
 	if err := validateWritePath(name); err != nil {
 		return nil, err
 	}
@@ -232,7 +241,7 @@ func (w *writeRoot) createExclusiveWithHook(name string, mode os.FileMode, after
 		return nil, err
 	}
 	defer closeParent(parent)
-	if err := w.checkIdentity(); err != nil {
+	if err := w.CheckIdentity(); err != nil {
 		return nil, err
 	}
 	file, err := parent.OpenFile(leaf, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
@@ -261,8 +270,8 @@ func splitWritePath(name string) (string, string) {
 	return dir, leaf
 }
 
-func (w *writeRoot) checkNamedDirectoryIdentity(name string, expected *os.Root) error {
-	if err := w.checkIdentity(); err != nil {
+func (w *Root) checkNamedDirectoryIdentity(name string, expected *os.Root) error {
+	if err := w.CheckIdentity(); err != nil {
 		return err
 	}
 	actualRoot, closeActual, err := w.openDirectory(name, false, 0)
@@ -284,14 +293,14 @@ func (w *writeRoot) checkNamedDirectoryIdentity(name string, expected *os.Root) 
 	return nil
 }
 
-func (w *writeRoot) openDirectory(name string, create bool, mode os.FileMode) (*os.Root, func(*os.Root) error, error) {
+func (w *Root) openDirectory(name string, create bool, mode os.FileMode) (*os.Root, func(*os.Root) error, error) {
 	if name == "" || name == "." {
 		return w.root, func(*os.Root) error { return nil }, nil
 	}
 	if err := validateWritePath(name); err != nil {
 		return nil, nil, err
 	}
-	if err := w.checkIdentity(); err != nil {
+	if err := w.CheckIdentity(); err != nil {
 		return nil, nil, err
 	}
 	var current *os.Root = w.root
@@ -313,7 +322,7 @@ func (w *writeRoot) openDirectory(name string, create bool, mode os.FileMode) (*
 			closeCurrent()
 			return nil, nil, err
 		}
-		if isReparsePoint(info) || !info.IsDir() {
+		if IsReparsePoint(info) || !info.IsDir() {
 			closeCurrent()
 			return nil, nil, fmt.Errorf("non-directory or reparse point in output parent %s", name)
 		}
@@ -343,11 +352,11 @@ func (w *writeRoot) openDirectory(name string, create bool, mode os.FileMode) (*
 	}, nil
 }
 
-func (w *writeRoot) ReadFile(name string) ([]byte, error) {
+func (w *Root) ReadFile(name string) ([]byte, error) {
 	return w.readFileWithHooks(name, nil, nil)
 }
 
-func (w *writeRoot) readFileWithHooks(name string, beforeOpen, beforeAccept func() error) ([]byte, error) {
+func (w *Root) readFileWithHooks(name string, beforeOpen, beforeAccept func() error) ([]byte, error) {
 	if err := validateWritePath(name); err != nil {
 		return nil, err
 	}
@@ -361,7 +370,7 @@ func (w *writeRoot) readFileWithHooks(name string, beforeOpen, beforeAccept func
 	if err != nil {
 		return nil, err
 	}
-	if isReparsePoint(expected) || !expected.Mode().IsRegular() {
+	if IsReparsePoint(expected) || !expected.Mode().IsRegular() {
 		return nil, fmt.Errorf("non-regular file or reparse point in output path %s", name)
 	}
 	if beforeOpen != nil {
@@ -378,7 +387,7 @@ func (w *writeRoot) readFileWithHooks(name string, beforeOpen, beforeAccept func
 	if err != nil {
 		return nil, err
 	}
-	if isReparsePoint(opened) || !opened.Mode().IsRegular() || opened.Size() != expected.Size() || !os.SameFile(expected, opened) {
+	if IsReparsePoint(opened) || !opened.Mode().IsRegular() || opened.Size() != expected.Size() || !os.SameFile(expected, opened) {
 		return nil, fmt.Errorf("output file identity changed while opening: %s", name)
 	}
 	data, err := io.ReadAll(io.LimitReader(file, expected.Size()+1))
@@ -404,7 +413,7 @@ func (w *writeRoot) readFileWithHooks(name string, beforeOpen, beforeAccept func
 	if err != nil {
 		return nil, err
 	}
-	if isReparsePoint(current) || !current.Mode().IsRegular() || current.Size() != expected.Size() || !os.SameFile(opened, current) {
+	if IsReparsePoint(current) || !current.Mode().IsRegular() || current.Size() != expected.Size() || !os.SameFile(opened, current) {
 		return nil, fmt.Errorf("output file identity changed while reading: %s", name)
 	}
 	if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
@@ -413,7 +422,7 @@ func (w *writeRoot) readFileWithHooks(name string, beforeOpen, beforeAccept func
 	return data, nil
 }
 
-func (w *writeRoot) Lstat(name string) (os.FileInfo, error) {
+func (w *Root) Lstat(name string) (os.FileInfo, error) {
 	if err := validateWritePath(name); err != nil {
 		return nil, err
 	}
@@ -427,7 +436,7 @@ func (w *writeRoot) Lstat(name string) (os.FileInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	if isReparsePoint(info) {
+	if IsReparsePoint(info) {
 		return nil, fmt.Errorf("symlink or reparse point in output path %s", name)
 	}
 	return info, nil
@@ -436,7 +445,7 @@ func (w *writeRoot) Lstat(name string) (os.FileInfo, error) {
 // RemoveRegular removes one regular file through its pinned parent directory.
 // It refuses directories, links and reparse points, and reports a published
 // removal if the named parent changes after the mutation.
-func (w *writeRoot) RemoveRegular(name string) error {
+func (w *Root) RemoveRegular(name string) error {
 	if err := w.checkPath(name); err != nil {
 		return err
 	}
@@ -450,10 +459,10 @@ func (w *writeRoot) RemoveRegular(name string) error {
 	if err != nil {
 		return err
 	}
-	if isReparsePoint(info) || !info.Mode().IsRegular() {
+	if IsReparsePoint(info) || !info.Mode().IsRegular() {
 		return fmt.Errorf("refusing to remove non-regular file or reparse point %s", name)
 	}
-	if err := w.checkIdentity(); err != nil {
+	if err := w.CheckIdentity(); err != nil {
 		return err
 	}
 	if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
@@ -463,7 +472,7 @@ func (w *writeRoot) RemoveRegular(name string) error {
 	if err != nil {
 		return err
 	}
-	if isReparsePoint(current) || !current.Mode().IsRegular() || !os.SameFile(info, current) {
+	if IsReparsePoint(current) || !current.Mode().IsRegular() || !os.SameFile(info, current) {
 		return fmt.Errorf("output file changed before removal: %s", name)
 	}
 	if err := parent.Remove(leaf); err != nil {
@@ -475,22 +484,22 @@ func (w *writeRoot) RemoveRegular(name string) error {
 	return nil
 }
 
-func (w *writeRoot) AtomicWrite(name string, data []byte, mode os.FileMode) error {
+func (w *Root) AtomicWrite(name string, data []byte, mode os.FileMode) error {
 	return w.atomicWriteWithHooks(name, data, mode, nil, nil)
 }
 
 // atomicWriteWithHook exposes the final pre-open boundary to focused tests so
 // a directory swap can be injected in the exact former path-based race window.
-func (w *writeRoot) atomicWriteWithHook(name string, data []byte, mode os.FileMode, beforeOpen func() error) error {
+func (w *Root) atomicWriteWithHook(name string, data []byte, mode os.FileMode, beforeOpen func() error) error {
 	return w.atomicWriteWithHooks(name, data, mode, beforeOpen, nil)
 }
 
-func (w *writeRoot) atomicWriteWithHooks(name string, data []byte, mode os.FileMode, beforeOpen, beforeRename func() error) error {
+func (w *Root) atomicWriteWithHooks(name string, data []byte, mode os.FileMode, beforeOpen, beforeRename func() error) error {
 	if err := w.checkPath(name); err != nil {
 		return err
 	}
 	parentName, leaf := splitWritePath(name)
-	if err := w.checkIdentity(); err != nil {
+	if err := w.CheckIdentity(); err != nil {
 		return err
 	}
 	parent, closeParent, err := w.openDirectory(parentName, true, 0755)
@@ -498,7 +507,7 @@ func (w *writeRoot) atomicWriteWithHooks(name string, data []byte, mode os.FileM
 		return err
 	}
 	defer closeParent(parent)
-	if info, err := parent.Lstat(leaf); err == nil && isReparsePoint(info) {
+	if info, err := parent.Lstat(leaf); err == nil && IsReparsePoint(info) {
 		return fmt.Errorf("symlink or reparse point in output path %s", name)
 	} else if err != nil && !os.IsNotExist(err) {
 		return err
@@ -559,7 +568,7 @@ func (w *writeRoot) atomicWriteWithHooks(name string, data []byte, mode os.FileM
 		cleanup()
 		return err
 	}
-	if err := w.checkIdentity(); err != nil {
+	if err := w.CheckIdentity(); err != nil {
 		cleanup()
 		return err
 	}
@@ -579,11 +588,11 @@ func (w *writeRoot) atomicWriteWithHooks(name string, data []byte, mode os.FileM
 	return nil
 }
 
-func (w *writeRoot) LockWriter() (func(), error) {
+func (w *Root) LockWriter() (func(), error) {
 	lockDirectory := ".artifacts/markitect"
 	manifest, err := w.Lstat(".markitect/project.yaml")
 	if err == nil {
-		if isReparsePoint(manifest) || !manifest.Mode().IsRegular() {
+		if IsReparsePoint(manifest) || !manifest.Mode().IsRegular() {
 			return nil, errors.New("project manifest must be a regular file before selecting its writer lock")
 		}
 		lockDirectory = ".markitect"
@@ -596,7 +605,7 @@ func (w *writeRoot) LockWriter() (func(), error) {
 // lockWriterAt acquires the shared write lock at an explicit project-relative
 // directory. It uses the same pinned-root and parent-identity checks as the
 // compatibility LockWriter path.
-func (w *writeRoot) lockWriterAt(lockDirectory, leaf string) (func(), error) {
+func (w *Root) lockWriterAt(lockDirectory, leaf string) (func(), error) {
 	if err := validateWritePath(lockDirectory); err != nil {
 		return nil, fmt.Errorf("unsafe writer lock directory: %w", err)
 	}
@@ -608,7 +617,7 @@ func (w *writeRoot) lockWriterAt(lockDirectory, leaf string) (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := w.checkIdentity(); err != nil {
+	if err := w.CheckIdentity(); err != nil {
 		_ = closeParent(parent)
 		return nil, err
 	}
@@ -631,8 +640,8 @@ func (w *writeRoot) lockWriterAt(lockDirectory, leaf string) (func(), error) {
 	var releaseOnce sync.Once
 	return func() {
 		releaseOnce.Do(func() {
-			if w.checkIdentity() == nil && w.checkNamedDirectoryIdentity(lockDirectory, parent) == nil {
-				if current, err := parent.Lstat(leaf); err == nil && !isReparsePoint(current) && os.SameFile(lockInfo, current) {
+			if w.CheckIdentity() == nil && w.checkNamedDirectoryIdentity(lockDirectory, parent) == nil {
+				if current, err := parent.Lstat(leaf); err == nil && !IsReparsePoint(current) && os.SameFile(lockInfo, current) {
 					_ = parent.Remove(leaf)
 				}
 			}
@@ -642,13 +651,15 @@ func (w *writeRoot) lockWriterAt(lockDirectory, leaf string) (func(), error) {
 	}, nil
 }
 
-func rejectReparseAncestors(path string) error {
+// RejectReparseAncestors rejects path when it or any ancestor is a symlink or
+// reparse point.
+func RejectReparseAncestors(path string) error {
 	for current := filepath.Clean(path); ; current = filepath.Dir(current) {
 		info, err := os.Lstat(current)
 		if err != nil {
 			return fmt.Errorf("inspect output root ancestor %s: %w", current, err)
 		}
-		if isReparsePoint(info) {
+		if IsReparsePoint(info) {
 			return fmt.Errorf("output root contains a symlink or reparse point: %s", current)
 		}
 		parent := filepath.Dir(current)
@@ -658,9 +669,9 @@ func rejectReparseAncestors(path string) error {
 	}
 }
 
-// hasGitMetadata checks the selected directory and its ancestors so nested
+// HasGitMetadata checks the selected directory and its ancestors so nested
 // source roots still receive the same branch guard as repository roots.
-func hasGitMetadata(root string) bool {
+func HasGitMetadata(root string) bool {
 	current := filepath.Clean(root)
 	for {
 		if _, err := os.Lstat(filepath.Join(current, ".git")); err == nil {
@@ -674,13 +685,8 @@ func hasGitMetadata(root string) bool {
 	}
 }
 
-func writableBranch(root string) error {
-	_, err := writeBranchName(root)
-	return err
-}
-
-// writeBranchName returns the named, non-protected Git branch for a write.
-func writeBranchName(root string) (string, error) {
+// BranchName returns the named, non-protected Git branch for a write.
+func BranchName(root string) (string, error) {
 	absolute, err := filepath.Abs(root)
 	if err != nil {
 		return "", err
@@ -696,10 +702,10 @@ func writeBranchName(root string) (string, error) {
 	return name, nil
 }
 
-// ensureWriteBranch catches a branch switch, including one to a different
+// EnsureBranch catches a branch switch, including one to a different
 // branch at the same HEAD, during a multi-file write.
-func ensureWriteBranch(root, expected string) error {
-	current, err := writeBranchName(root)
+func EnsureBranch(root, expected string) error {
+	current, err := BranchName(root)
 	if err != nil {
 		return fmt.Errorf("write branch changed or became protected: %w", err)
 	}
