@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T04:40:41.256291+00:00",
+  "updatedUtc": "2026-10-10T04:49:27.200134+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17870,7 +17870,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL14_REAL_HELPER_AND_OVERLAP_RUNNING_BOUNDED_SOURCE_REPAIR_MINIMUM_HELPER_REQUIREMENT_CLARIFIED",
+    "status": "ACTUAL14_TERMINAL_BEFORE_RECOVERY_TASK_SEMANTICS_FIXED_REVIEW_HELPER_FACTS_IN_PROGRESS",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18166,6 +18166,27 @@
       "rootAcceptanceClarificationSentOnce": "Existing P09-readiness.md7 explicitly at least one fresh real helper. Exactly-one statement is overstrict unsupported; legitimate bounded counted normal repair with secondfreshHelper does not alone invalidate A01. Preserve original claim/erratum/counts, no retroactive PASS. OriginalRecovery separately reuses handles and zero replay from boundary.",
       "execution": "Continue known healthy originalRun to actualterminal/recovery boundary; no restart solelyhelpercount, no new Go/grant, caps unchanged.",
       "actualRawEvidence": "Ownerreported; raw journals not independently read by Root this callback",
+      "fullWorkflowAccepted": false
+    },
+    "actual14Terminal": {
+      "cleanPublicCheckpoint": "d36bfdf8aa6c08414443e2a7100aead195e36012",
+      "rootVerified": "Clean local/exact public d36bfdf8; committed task semantics4ee6ab99 changes protocol descriptions/fixture/targeted regression only. Current helper-context correction not yet a frozen accepted handoff.",
+      "ownerTerminal": "Run failed revision41/observer478e exit2026-10-10T04:41:17Z/boundaryfalse; no originalRootintegrationhandle/Verify/Apply/recovery, no permitted recovery continuation.",
+      "helperProof": "Three real terminal Hosthelpers from normal repairs remain genuine helper evidence; exact-one overstrict statement corrected additively according to existing P09 minimum.",
+      "actualFailures": "Sourcecomplete plus unresolved Pythonwarning/Gitstatusrisk; SourceReview lacks supplied applied-helper provenance because reviewer receives model-child delegations only.",
+      "taskSemanticsFix": "4ee6ab99 targeted/schema/fixture tests PASS/independent review closed ownerreported. Strict outcome/risk validators unchanged.",
+      "newStarts": 12,
+      "newRoles": 9,
+      "newHostHelpers": 3,
+      "newProviders": 12,
+      "newReportEstimatedMicros": 1631582,
+      "cumulativeRequests": 38,
+      "cumulativeProviders": 35,
+      "cumulativeEstimatedMicros": 8555542,
+      "estimateQualification": "Partial lower bound, not invoice; exact native raw terminal not independently read by Root this callback.",
+      "privateBatchSha256OwnerReported": "6636bf390d462a2ff1034e25f49241fb09ab3432739d1131abdb8e4a858558a3",
+      "next": "Minimal Host-authored validated+parent-applied helper facts in review context, current candidate versus repair history separated/scope-input bound; no journalparser/manager-prose trust/authority expansion. Prospective ordinary exploration minimum1 preserves immutable old exactone request. Fresh final-source/binary/readiness/Plan/batch under standing authority.",
+      "fullSuiteQualification": "Local Go allpackages exit0 but sources changed during execution, interim only/no exactSHA gate. Final exact hosted CI required.",
       "fullWorkflowAccepted": false
     }
   },
