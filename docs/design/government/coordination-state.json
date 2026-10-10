@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T05:18:18.278779+00:00",
+  "updatedUtc": "2026-10-10T05:20:57.213305+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17870,7 +17870,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL15_JOURNAL_SHARING_FAILURE_UNCERTAIN_DOCS_NORMAL_RESUME_REJECTED_SAFE_HANDLE_AUDIT_AND_EXPLORE_CRLF_FIX",
+    "status": "ACTUAL15_EXACT_ORIGINAL_RECOVERY_SELECTOR_BUG_SOURCE_CONFIRMED_FIX_IN_PROGRESS",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18231,6 +18231,14 @@
       "historicalClosed": "38requests35providers8555542partial unchanged until full batch accounting",
       "fullWorkflowAccepted": false,
       "next": "Resolve genuine ownhandle uncertainty/eligibility without replay; concrete minimal Explore source-vsrawworktree correction/regression under standing authority; no new Go/grant/study."
+    },
+    "actual15RecoverySelectorBug": {
+      "rootSourceConfirmed": "workspace_recovery.go51-70 scans TaskID workspace journals and rejects multiple matches before original handle/input validation. Request/receipt/ownership checks later cannot disambiguate earlier plans. Read source, no Root live journal read or native model start.",
+      "ownerExactFinding": "Three docs-review-work-1 journals from olderPlans; only original receiptRunID58dc4dcd689bc685fe888b581c9319aa plus InputDigest/current preservedWorkspace matches trusted dispatched session/turn/fingerprint.",
+      "correctionScope": "Exact original RunID+InputDigest journal selection for work/integrate/review, missing/ambiguous remainfailclosed and same originalhandles/no replay; preserve recovery error diagnosis. Current WIP observed resume_invocation, not accepted clean source yet.",
+      "resumeIntent": "After targeted fix/review/frozen recovery binary, ordinary Resume samePlan/originalturns, no newPlan/replay/retagging original invocation; current repair operatorSource recorded separately from original frozenInvocation.",
+      "otherWork": "CRLFExplore uses existing sourcecomparison seam plus separate rawCAS; capturedbyte cleanfilter proof may strengthen TOCTOU/ABA. Distinct helper cleanup-pending resume gap static audit, not actual15 cause.",
+      "safety": "Sharing cause uncertain, no blockinglive journal readers or guessed/foreign cleanup. Original counts/evidence preserved; no completed fullacceptance."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
