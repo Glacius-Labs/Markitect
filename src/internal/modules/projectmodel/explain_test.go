@@ -148,3 +148,53 @@ func TestExplainClassifiesChangeAndContext(t *testing.T) {
 		t.Fatalf("cancel-order is not explained as a direct consumer: %+v", cancel)
 	}
 }
+
+// DEC-023 with DEC-021: an edit that changes only how a statement is written
+// makes that statement and its file change, but not the realization the
+// statement has as transitive context of another change.
+func TestExplainKeepsRewriteFromSpreadingTheChangeClass(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	ref := func(kind, namespace, name string) map[string]any {
+		return map[string]any{"apiVersion": APIVersion, "kind": kind, "namespace": namespace, "name": name}
+	}
+	definitions := append(copyDefinitions(model.Definitions),
+		core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "orders", Name: "s"}, Purpose: "Follows cancellation.", Spec: map[string]any{"category": "rule", "description": "Follow.", "requires": []any{ref(statementKind, "orders", "cancel-order")}}},
+		core.Definition{APIVersion: APIVersion, Kind: artifactKind, Metadata: core.Metadata{Namespace: "orders", Name: "s-code"}, Purpose: "Realizes s.", Spec: map[string]any{"role": "implementation", "realizes": []any{ref(statementKind, "orders", "s")}, "paths": []any{"src/orders/s.go"}}},
+	)
+	files = append(files, File{Path: "src/orders/s.go", Digest: "sha256:s", Mode: "100644"})
+	analyze := func(description string, explicitPrivate bool) Report {
+		changed := copyDefinitions(definitions)
+		for i := range changed {
+			switch changed[i].Metadata.Name {
+			case "release-reservation":
+				changed[i].Spec["description"] = description
+			case "s":
+				if explicitPrivate {
+					changed[i].Spec["public"] = false
+				}
+			}
+		}
+		compiled, diagnostics := core.Compile(model.Schemas, changed, "rewrite-class")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		return Analyze(compiled, files)
+	}
+	base := analyze("Release reservation once.", false)
+	sID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "orders", Name: "s"}).Key()
+	for name, candidate := range map[string]Report{
+		"contract change only":            analyze("Release reservation at most once.", false),
+		"contract change and rewritten s": analyze("Release reservation at most once.", true),
+	} {
+		classes := map[string]string{}
+		for _, e := range Explain(base, candidate).Elements {
+			classes[e.ID] = e.Class
+		}
+		if classes["src/orders/s.go"] != "context" {
+			t.Fatalf("%s: src/orders/s.go is %q, want context", name, classes["src/orders/s.go"])
+		}
+		if name == "contract change and rewritten s" && classes[sID] != "change" {
+			t.Fatalf("%s: rewritten s is %q, want change", name, classes[sID])
+		}
+	}
+}

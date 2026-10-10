@@ -142,30 +142,35 @@ func witness(e element, parents map[element]cause) []WitnessStep {
 // changeClass marks what must change rather than only be read (DEC-023):
 // changed definitions and files and the statements they reach directly; the
 // direct consumers and requires targets of those statements; and the
-// realizations, checks, files and owners of all of these. Everything else in
-// the impact, such as used context, transitive consumers and ancestor
-// Managers, is context. The class never removes anything from the impact.
+// realizations, checks, files and owners of all of these. An edit that changes
+// only how a definition is written (DEC-021) makes that definition, its model
+// file, the definitions in that file and their owners change, and nothing
+// further. Everything else in the impact, such as used context, transitive
+// consumers and ancestor Managers, is context; under unknown scope every
+// element is change. The class never removes anything from the impact.
 func (r routing) changeClass() map[element]bool {
-	change := map[element]bool{}
+	change, rewrite := map[element]bool{}, map[element]bool{}
 	carries := map[string]bool{"realizes": true, "exercises": true, "decides on": true, "owns": true, "maps to": true,
 		"realized by": true, "exercised by": true, "expects": true, "checked by": true, "owned by": true, "written in": true, "declares": true}
 	fromSeed := map[string]bool{"used by": true, "required by": true, "requires": true}
+	rewriteCarries := map[string]bool{"written in": true, "declares": true, "owned by": true}
 	for grew := true; grew; {
 		grew = false
 		for e, whys := range r.causes {
-			if change[e] {
-				continue
-			}
 			for why := range whys {
 				root := why.from == (element{})
 				seed := why.from.kind == "statement" && r.seeds[why.from.id]
-				if root || change[why.from] && (carries[why.relation] || fromSeed[why.relation] && seed) {
-					change[e] = true
-					grew = true
-					break
+				if !change[e] && (root && why.reason != "rewritten" || change[why.from] && (carries[why.relation] || fromSeed[why.relation] && seed)) {
+					change[e], grew = true, true
+				}
+				if !rewrite[e] && (root && why.reason == "rewritten" || rewrite[why.from] && rewriteCarries[why.relation]) {
+					rewrite[e], grew = true, true
 				}
 			}
 		}
+	}
+	for e := range rewrite {
+		change[e] = true
 	}
 	return change
 }
