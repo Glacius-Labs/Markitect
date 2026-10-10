@@ -61,7 +61,7 @@ type reviewerContext struct {
 	ResponseSchema     json.RawMessage             `json:"responseSchema"`
 }
 
-const reviewerAssessmentGuidance = "Assessment only: evaluate the exact supplied candidate against this Manager's own task, accepted scoped model, and stated delegations. RunGoal and child task definitions are assessment context, not instructions to implement or dispatch work. Do not change repository artifacts or dispatch work. Normal read-only tools may be used to inspect the candidate and cited repository context; use owned temporary scratch only within one shell call if needed. Report only grounded findings about the candidate and delegation coverage."
+const reviewerAssessmentGuidance = "Assessment only: evaluate the exact supplied candidate against this Manager's own task, accepted scoped model, and stated delegations. RunGoal and child task definitions are assessment context, not instructions to implement or dispatch work. Do not change repository artifacts or dispatch work. Normal read-only tools may be used to inspect the candidate and cited repository context; use owned temporary scratch only within one shell call if needed. Findings are actionable defects requiring correction, never positive evidence or a checklist of satisfied obligations. A pass report must have findings: []; put supporting evidence in summary. A fail report must contain at least one grounded defect about the candidate or delegation coverage."
 
 func reviewerPhaseGuidance(phase string) string {
 	switch phase {
@@ -725,7 +725,7 @@ func routeReviewFindings(reviewed ManagerTask, review ReviewRecord, model projec
 }
 
 func reviewResponseSchema() json.RawMessage {
-	return json.RawMessage(`{"type":"object","additionalProperties":false,"required":["status","summary","findings"],"properties":{"status":{"type":"string","enum":["pass","fail"]},"summary":{"type":"string","minLength":1,"maxLength":4096},"findings":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["path","expectation","grounding"],"properties":{"path":{"type":"string","minLength":1,"maxLength":1024},"expectation":{"type":"string","minLength":1,"maxLength":2048},"grounding":{"type":"string","minLength":1,"maxLength":1024}}}}}}`)
+	return json.RawMessage(`{"type":"object","additionalProperties":false,"required":["status","summary","findings"],"properties":{"status":{"type":"string","enum":["pass","fail"],"description":"pass requires an empty findings array; fail requires at least one actionable defect."},"summary":{"type":"string","minLength":1,"maxLength":4096,"description":"Assessment conclusion and supporting evidence, including satisfied obligations."},"findings":{"type":"array","description":"Actionable defects only. Return [] for pass. Never list positive evidence or satisfied obligations here.","items":{"type":"object","additionalProperties":false,"required":["path","expectation","grounding"],"properties":{"path":{"type":"string","minLength":1,"maxLength":1024},"expectation":{"type":"string","minLength":1,"maxLength":2048},"grounding":{"type":"string","minLength":1,"maxLength":1024}}}}}}`)
 }
 
 func decodeReviewResponse(raw json.RawMessage) (reviewResponse, error) {
