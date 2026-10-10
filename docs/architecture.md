@@ -6,7 +6,7 @@ Markitect is model-first development with delegated realization ([Markitect in b
 
 - People keep one canonical model of the project under `.markitect/` ([project workflow](project-workflow.md)).
 - An outer Codex or Claude Code client calls typed operations on a local stdio MCP server, or uses the CLI. The server is fixed to one project root at startup; tool arguments cannot change it.
-- The CLI and the MCP server share one set of application operations.
+- The MCP server calls a shared application facade. The CLI uses the same facade for most operations but still calls the runtime directly for runs ([application layer](#application-layer)).
 - Markitect compiles the selected model, binds work to fixed Git snapshots and records plans, runs and receipts.
 - Managers, reviewers and verifiers run as inner roles in owned candidate workspaces. By default every role runs through the Codex App Server; setup can select another profile per role, including a process executor ([provider adapters](provider-adapters.md#role-profiles)).
 - Markitect validates and integrates the candidate deltas, verifies the result and writes the checkout only through guarded Apply.
@@ -47,7 +47,7 @@ Known problems across layers:
 - The gate checks only that product layers do not import legacy packages and use only the guarded write API. It checks no direction between the four product layers. The core and runtime sections below show imports that break the intended direction.
 - Directory names do not show the layer. Most product packages live in `src/internal/host` next to the legacy host root, among them the core packages `projectbriefing` and `projectcoverage` and the infrastructure package `guardedwrite`.
 - Small helpers are copied: `sameStrings` exists in four packages, `equalStrings` in three and `containsString` in five, for example in `core/compile.go` and `projectrun/run.go` (ARCH-05).
-- Four packages keep their own record store with its own file layout and lock: `projectrun` (`store.go`), `projectexplore` (`store.go`), `projectbriefing` (`store.go`) and `projectadoption` (`session.go`, `manager_run_ledger.go`).
+- Four packages keep their own record store, each with its own file layout and write path: `projectrun` (`store.go`), `projectexplore` (`store.go`), `projectbriefing` (`store.go`) and `projectadoption` (`session.go`, `manager_run_ledger.go`).
 
 ## Core layer
 
@@ -111,7 +111,7 @@ The runtime runs Manager, review, integration and verify roles and records what 
 
 Known problems:
 
-- `projectrun` is large: about 16,800 production lines. `run.go` has 2,694 lines, and `runOrResume` alone has 1,103. `Plan` (`plan.go`) and `FullVerifyProject` (`full_verify.go`) also exceed 300 lines (ARCH-06).
+- `projectrun` is large: about 16,800 production lines. `run.go` has about 2,700 lines, and `runOrResume` alone about 1,100. `Plan` (`plan.go`) and `FullVerifyProject` (`full_verify.go`) also exceed 300 lines (ARCH-06).
 - Runtime configuration lives in `projectrun`: `Runtime`, `Agent`, `Limits` and `Pricing` (`types.go`) and `ValidateRuntime` (`config.go`). `projectsetup` and `mcp` import `projectrun` for these types, and the native transport invoker is built there too (ARCH-06).
 - Runtime and application import each other. `projectrun` imports `projectwork` and `projectexplore`, and `projectsetup` imports `projectwork`; `projectapp`, `projectadoption` and `projectcli` import `projectrun`. ARCH-06 works on the same seam.
 - Five functions in `projectrun/run.go` have no callers: `ownedPath`, `addCost`, `estimateCost`, `resolvesConflicts` and `resolveObligations` (ARCH-05).
@@ -123,7 +123,7 @@ Known problems:
   - The exchange adapter has no deadline of its own (`exchangecli/exchange.go`).
   - Declared checks see only the owning agent's environment allowlist (`explicitEnvironment` in `verify.go`).
 - `agentexec/lifecycle.go` and `codexappserver/contracts.go` are not gofmt-formatted. CI runs `go vet` but no gofmt check.
-- Runtime tests run serially. No test calls `t.Parallel`, and the process end-to-end tests re-execute the test binary (for example `projectrun/process_e2e_test.go`). The [tests and CI survey](work-items/surveys/tests-and-ci-20261010.md) measured `projectrun` at 1,467 s on Windows against 112 s on Linux, so Windows runs nightly only ([DEC-013](concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)) (TEST-03, CI-05).
+- Runtime tests run serially. No test calls `t.Parallel`, and the process end-to-end tests re-execute the test binary (for example `projectrun/process_e2e_test.go`). The [tests and CI survey](work-items/surveys/tests-and-ci-20261010.md) measured `projectrun` at 1,467 s on Windows against 112 s on Linux, so the Windows job runs nightly or on demand and does not block merges ([DEC-013](concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)) (TEST-03, CI-05).
 
 ## Legacy line
 
@@ -150,7 +150,8 @@ Markitect treats an adopting project's files, including source code, schemas, co
 
 - A Git commit resolves to one snapshot of paths, modes and bytes. Later working-tree edits do not change it ([source snapshots](source-snapshots.md)).
 - A plan binds its base revision, snapshot and model digest. A changed model, source, runtime or candidate makes it stale and needs a fresh preview.
-- Verify runs the declared checks and the independent review and verify roles against the integrated candidate. Apply writes only the latest verified candidate and requires its verification digest.
+- Independent reviewers assess each candidate and each integration result during the run. Verify then runs the declared checks and the verify role against the integrated candidate.
+- Apply writes only the latest verified integrated candidate and requires its verification digest.
 - A passing check, digest or report establishes its declared scope. It is not human acceptance and does not prove semantic correctness.
 
 ## Distribution and product boundary
