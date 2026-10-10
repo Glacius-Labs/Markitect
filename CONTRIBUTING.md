@@ -31,7 +31,7 @@ Two rules shape every change:
 - Keep examples executable. Every example is run by a test or by one of the checks below.
 - Scope tests to concrete risks and required gates. A test checks Markitect itself, not provider CLI details, permissions, line endings or other environment problems ([DEC-016](docs/concepts/register.md#dec-016-a-clean-stable-testable-main-and-uniform-structure-first)).
 
-Begin through the repository's model-first contributor guidance and classify a requested change as model intent, implementation or both. For an intent change, edit its canonical owner, review the generated readable document, and commit the accepted model before implementation. A passing check, digest or provider report is not human approval. From the repository root with Go 1.27.1 or later:
+Begin through the repository's model-first contributor guidance and classify a requested change as model intent, implementation or both. For an intent change, edit its canonical owner, review the generated readable document, and commit the accepted model before implementation. A passing check, digest or provider report is not human approval. From the repository root with Go 1.27.1 or later and Git 2.40 or later (Explore, Plan and Apply call `git check-attr --source`):
 
 ```powershell
 go test ./... -count=1 -timeout=60m

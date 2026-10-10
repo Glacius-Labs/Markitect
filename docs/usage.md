@@ -4,6 +4,8 @@ This page describes the Project/Domain engineering-resource compiler and histori
 
 The published [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1) preserves Project/Domain behavior and bundles a separate canonical Projection alpha. New projects should not start with these legacy contracts. Current source does not promise executable backwards compatibility. Source changes do not update an installed binary. The [roadmap](implementation-plan.md) owns exact release and evidence status.
 
+Current source needs Git 2.40 or later for the model-first project workflow; see [Project workflow](project-workflow.md#connect-and-inspect).
+
 <a id="legacy-projectdomain-cli-compatibility"></a>
 ## Structural and historical Project/Domain CLI reference
 

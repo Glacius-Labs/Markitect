@@ -4,6 +4,8 @@ Markitect manages an adopting repository through one canonical project model und
 
 ## Connect and inspect
 
+The project workflow needs Git 2.40 or later: Explore, Plan and Apply read fixed Git attributes with `git check-attr --source`, which older Git rejects.
+
 Install project-local guidance with `markitect project onboard`, then register the selected client's MCP server as described in [Provider adapters](provider-adapters.md). The server starts with one explicit repository root. It does not accept a tool argument that changes that root. Use the typed tools and their published schemas; do not invent record fields, IDs, or digests.
 
 For an ordinary issue, bug, feature, or backlog Work Item, inspect the repository and Git state, then use `project_index`, `project_check`, and `project_context` as needed. Clarify only material questions about intent, scope, authority, or acceptance. Record assumptions and unresolved decisions rather than silently promoting them to requirements.
