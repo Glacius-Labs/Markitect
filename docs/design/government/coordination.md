@@ -2359,3 +2359,9 @@ Root7ae874twofilediff inspected: bothOSpackagedPreviewexact5paths/digest/nofilew
 ### Exact current-head Linux full quality success; Windows still running
 
 RootghCI380532head0deb Linuxjob114216598334completedSUCCESS12:56:03Z independentlyverified/Windows114216598160in_progress/PR89OPENdraftsamehead. OwnerfullLinuxlogretained/packageSmokes+selectiveadoptionPASS. No inferredWindows/fullcrossplatform/MainPASS; ownerwaitsremainingqualitythenregularmerge/Mainsmokesunderexistingauthority, no newA01/repeatedRootorder/routineuserreport.
+
+### Human CI stabilization advice dispatched once
+
+On 10 October, the human supplied Claude's concrete diagnosis of cancelled Windows runs and self-referential evidence commits. Root confirmed ref-specific cancel-in-progress concurrency and dispatched once to Integrator: hold PR89 head 0deb37cabae11948ac760ad28ed1c6b397144dcf until Windows in run 38053284145 terminates; collect fixes, use a separate probe branch and available Linux preflight for future changes, and place evidence in PR comments or this coordination branch. Current Linux full Quality already passed; no redundant suite or mandatory-gate waiver. Merge the successfully checked and independently reviewed candidate normally, without another PR evidence commit creating an untested head.
+
+Record systemic followups in the owner's existing queue: explicit LF attributes for adopter/test projects and consistent use of the existing shared Git-clean basis helper; preserve exact candidate byte claims and raw target CAS. Inspect a stable configurable workspace default outside MSIX-redirected AppData: current empty storageRoot uses os.UserCacheDir()/Markitect/workspaces. Preserve original Manager/helper handles and recovery evidence; no immediate relocation or new Main barrier. Root changed coordination only. Integrator active cursor advanced to fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:21; no receipt acknowledgement requested.

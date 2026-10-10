@@ -1,6 +1,22 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T12:57:07.142560+00:00",
+  "updatedUtc": "2026-10-10T13:22:18.1957887Z",
+  "ciStabilizationHumanAdvice20261010": {
+    "status": "DISPATCHED_ONCE_TO_INTEGRATOR_CURRENT_HEAD_FROZEN_UNTIL_WINDOWS_TERMINAL",
+    "authority": "Direct human Claude advice: stop PR pushes while Windows runs, collect fixes, move evidence off PR branch, use Linux preflight or separate probe branch; record systemic CRLF and MSIX workspace-root followups.",
+    "sentUtc": "2026-10-10T13:21:00Z",
+    "sentTimeQualification": "Approximate dispatch time; tool accepted in this turn, no invented exact server receipt clock.",
+    "targetThreadId": "01a121a0-0417-71c1-9e4b-be742f8c1146",
+    "toolAccepted": true,
+    "afterCursor": "fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:21",
+    "targetObservedStatus": "active; current own turn inProgress, latest commentary attests GitHub tested merge commit and PR head same tree",
+    "frozenPrHead": "0deb37cabae11948ac760ad28ed1c6b397144dcf",
+    "ciRunId": 38053284145,
+    "rootVerified": "CI concurrency uses cancel-in-progress true with ref-specific group. Exact current-head Linux full Quality SUCCESS, Windows in_progress; PR89 OPEN Draft. Plan and Apply reuse requireCleanSelectedBasisAtRevision. Workspace storageRoot configurable; empty default uses os.UserCacheDir()/Markitect/workspaces.",
+    "ownerDirection": "No PR pushes including progress/evidence commits until Windows terminal. Collect fixes; future probe branch/Linux preflight where existing tools permit. Evidence in PR comments or Root coordination branch. Merge successful reviewed exact candidate normally, no self-referential evidence-head loop or bypassed mandatory gate. Current Linux success needs no redundant suite.",
+    "followups": "Record adopter/test .gitattributes LF defaults and shared comparison use, preserving exact candidate byte declarations/raw target CAS. Investigate stable default workspace root outside MSIX-redirection, preserving original handles and recovery evidence; not a hot relocation or added Main gate.",
+    "boundaries": "No new source changes by Root, native proof replay, study, release, installation, purchases, WSL platform migration, foreign workload interruption or automatic waiver of gates. Historical failed/cancelled attempts preserved."
+  },
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
