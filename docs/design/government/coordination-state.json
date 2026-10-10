@@ -1,14 +1,26 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T13:22:18.1957887Z",
+  "updatedUtc": "2026-10-10T13:56:00.2257442Z",
   "ciStabilizationHumanAdvice20261010": {
-    "status": "DISPATCHED_ONCE_TO_INTEGRATOR_CURRENT_HEAD_FROZEN_UNTIL_WINDOWS_TERMINAL",
+    "status": "HEAD_REMAINED_FROZEN_WINDOWS_TERMINAL_ONBOARDING_REPLAY_FAILURE_OWNER_REPAIR_ACTIVE",
     "authority": "Direct human Claude advice: stop PR pushes while Windows runs, collect fixes, move evidence off PR branch, use Linux preflight or separate probe branch; record systemic CRLF and MSIX workspace-root followups.",
     "sentUtc": "2026-10-10T13:21:00Z",
     "sentTimeQualification": "Approximate dispatch time; tool accepted in this turn, no invented exact server receipt clock.",
     "targetThreadId": "01a121a0-0417-71c1-9e4b-be742f8c1146",
     "toolAccepted": true,
-    "afterCursor": "fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:21",
+    "afterCursor": "fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:22",
+    "windowsTerminalRootVerified": {
+      "checkedUtc": "2026-10-10T13:56:00.2257442Z",
+      "runId": 38053284145,
+      "headSha": "0deb37cabae11948ac760ad28ed1c6b397144dcf",
+      "linuxConclusion": "success",
+      "windowsConclusion": "failure",
+      "failedStep": "Replay onboarding workflow (step54)",
+      "rawLogRootVerified": "Measure-Adoption.ps1 line86 reports init-preview failed with exit code2; step exits1. Full Go and Fixed-Dogfood PASS ownerreported, not independently rerun.",
+      "prState": "OPEN_DRAFT_SAME_HEAD",
+      "remoteMainSha": "5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e",
+      "next": "Owner saves original logs/artifacts, repairs concrete replay invocation, runs risk-related local check and independent review, then one regular new head/CI. No duplicate Root assignment/proof-only commit/gate bypass/new A01 or merge claim."
+    },
     "targetObservedStatus": "active; current own turn inProgress, latest commentary attests GitHub tested merge commit and PR head same tree",
     "frozenPrHead": "0deb37cabae11948ac760ad28ed1c6b397144dcf",
     "ciRunId": 38053284145,
@@ -17887,7 +17899,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "PR89_EXACT_HEAD0DEB_LINUX_ALL_QUALITY_SUCCESS_WINDOWS_REQUIRED_SUITE_RUNNING",
+    "status": "PR89_EXACT_HEAD0DEB_LINUX_SUCCESS_WINDOWS_ONBOARDING_REPLAY_FAILURE_OWNER_REPAIR_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -19261,7 +19273,7 @@
       "scope": "Complete alreadyhuman-authorized PR89/Main package: coherentfinaldocs/sourcepush, actualintegrationbranch/finalPRhead/titlebody, requiredlocalhostedgatesandindependentreviewonexactcandidate, normalmergeifpositive; returnactualPRCImergeremoteMainSHAorblockeronce. No newA01restartloopwithoutconcretedefect/release/study/KG/go-loop."
     },
     "finalMainIntegration": {
-      "status": "LINUX_FULL_QUALITY_SUCCESS_WINDOWS_RUNNING_NO_MERGE",
+    "status": "LINUX_SUCCESS_WINDOWS_TERMINAL_ONBOARDING_REPLAY_FAILURE_NO_MERGE",
       "finalSourceSha": "0deb37cabae11948ac760ad28ed1c6b397144dcf",
       "productCodeProofSourceSha": "cdd30b0efc540f151404dabe86b022275dc40d83",
       "rootVerified": "CleanexactlocalHEAD51599/publiclsremoteintegrationbranchandPRheadcodex/model-first-operations51599. gitdiffcdd..51599 exactly4docclosurefiles no code delta. ghPR89OPEN Draft baseMain/head51599 correctfinaltitle. Mainlsremote5be48ce unchanged.",
@@ -19275,9 +19287,9 @@
       "ciRunId": 38053284145,
       "ciRunUrl": "https://github.com/Glacius-Labs/Markitect/actions/runs/38053284145",
       "ciHeadShaRootVerified": "0deb37cabae11948ac760ad28ed1c6b397144dcf",
-      "ciStatus": "in_progress",
+      "ciStatus": "completed_failure",
       "requiredQualityJobs": {
-        "Quality (windows-latest)": "in_progress",
+        "Quality (windows-latest)": "failure",
         "Quality (ubuntu-24.04)": "success"
       },
       "remoteMainAtCheck": "5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e",
