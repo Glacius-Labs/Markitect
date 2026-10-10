@@ -329,7 +329,18 @@ func fixture(t *testing.T, mode string, options Options) (*Adapter, agentexec.Co
 func TestNativeTurnSendsBoundOutputSchema(t *testing.T) {
 	for _, role := range []string{agentexec.RoleExecutor, agentexec.RoleVerifier} {
 		t.Run(role, func(t *testing.T) {
-			a, cfg, req, opts := fixture(t, "schema-required", Options{})
+			var handle RecoveryHandle
+			var sent Event
+			a, cfg, req, opts := fixture(t, "schema-required", Options{
+				OnHandle: func(_ context.Context, h RecoveryHandle) error { handle = h; return nil },
+				OnEvent: func(_ context.Context, event Event) error {
+					var frame envelope
+					if event.Method == "rpc/request" && json.Unmarshal(event.Wire, &frame) == nil && frame.Method == "turn/start" {
+						sent = event
+					}
+					return nil
+				},
+			})
 			req.Role = role
 			req.ScopeIDs = []string{"source", "shared"}
 			req.PolicyIDs = []string{"policy"}
@@ -337,7 +348,28 @@ func TestNativeTurnSendsBoundOutputSchema(t *testing.T) {
 			artifactDigest := sha256.Sum256(artifactBytes)
 			req.Artifacts = []agentexec.Artifact{{Path: "README.md", Mode: "0644", Digest: "sha256:" + hex.EncodeToString(artifactDigest[:]), Content: artifactBytes}}
 			if _, err := a.Run(context.Background(), cfg, req, opts); err != nil {
-				t.Fatalf("native turn did not send its nonce-bound output schema: %v", err)
+				t.Fatalf("native turn did not send its semantic output schema: %v", err)
+			}
+			var frame envelope
+			if json.Unmarshal(sent.Wire, &frame) != nil || frame.Method != "turn/start" || string(frame.Params) != string(sent.Params) {
+				t.Fatal("actual adapter turn/start frame was not retained exactly by the journal callback")
+			}
+			var actual struct {
+				OutputSchema map[string]any `json:"outputSchema"`
+			}
+			if err := json.Unmarshal(sent.Params, &actual); err != nil {
+				t.Fatal(err)
+			}
+			wantedWire, err := json.Marshal(nativeTurnOutputSchema(handle.Invocation))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var wanted map[string]any
+			if err := json.Unmarshal(wantedWire, &wanted); err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(actual.OutputSchema, wanted) {
+				t.Fatal("journaled schema differs from the actual adapter-generated role schema")
 			}
 		})
 	}
