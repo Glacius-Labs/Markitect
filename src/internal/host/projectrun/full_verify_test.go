@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -224,11 +225,12 @@ func TestFullVerifyProjectAuditsComposedCandidateBytesWithoutReopeningBaseRevisi
 }
 
 type fullVerifyNativeWorkspaceInvoker struct {
-	root          string
-	called        bool
-	workspace     projectworkspace.Handle
-	roleTimeout   time.Duration
-	requestDigest string
+	root            string
+	called          bool
+	workspace       projectworkspace.Handle
+	roleTimeout     time.Duration
+	requestDigest   string
+	typedIncomplete bool
 }
 
 func (i *fullVerifyNativeWorkspaceInvoker) Run(_ context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
@@ -260,9 +262,17 @@ func (i *fullVerifyNativeWorkspaceInvoker) Run(_ context.Context, config agentex
 	}
 	assessments := make([]FullAssessment, 0, len(payload.RequiredSubjects))
 	for _, subject := range payload.RequiredSubjects {
-		assessments = append(assessments, FullAssessment{Subject: subject, Outcome: "pass", Detail: "fixed audit subject inspected"})
+		outcome := "pass"
+		if i.typedIncomplete && len(assessments) == 0 {
+			outcome = "incomplete"
+		}
+		assessments = append(assessments, FullAssessment{Subject: subject, Outcome: outcome, Detail: "fixed audit subject inspected"})
 	}
-	report, err := json.Marshal(fullAuditResponse{Status: "pass", Summary: "native read-only workspace inspected", Assessments: assessments, Findings: []string{}, Counterexamples: []FullCounterexample{}})
+	status := "pass"
+	if i.typedIncomplete {
+		status = "incomplete"
+	}
+	report, err := json.Marshal(fullAuditResponse{Status: status, Summary: "native read-only workspace inspected", Assessments: assessments, Findings: []string{}, Counterexamples: []FullCounterexample{}})
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
@@ -330,6 +340,43 @@ func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *
 	journal := readWorkspaceJournal(t, root, invoker.workspace.ID)
 	if journal.State != "closed" || journal.Delta == nil || len(journal.Delta.Changes) != 0 || journal.Receipt.RunID != "full-verify-native-run" {
 		t.Fatalf("read-only workspace journal did not retain empty harvested evidence and receipt: %+v", journal)
+	}
+}
+
+func TestFullVerifyTypedIncompleteAuditCannotPass(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	configureWorkspaceBridgeInstructions(t, root)
+	revision := identityHead(t, root)
+	project, err := projectwork.Load(root, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	managerID := project.Report.Managers[0].ID
+	agent := workspaceBridgeAgent(t, root)
+	agent.Command = filepath.Join(t.TempDir(), "codex-app-server")
+	agent.Model = "gpt-6-luna"
+	agent.ProviderVersion = "codex-cli 0.162.0"
+	agent.AppServer = &AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
+	agent.Timeout = Duration(time.Hour)
+	agent.MaxStdoutBytes = 1 << 20
+	agent.MaxStderrBytes = 1 << 20
+	agent.Pricing = Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
+	runtime := Runtime{Agents: map[string]Agent{managerID: agent}, Review: &ReviewConfig{Agents: map[string]Agent{managerID: agent}},
+		Limits: Limits{MaxDepth: 1, MaxStarts: 256, MaxParallel: 2, MaxDuration: Duration(4 * time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
+	invoker := &fullVerifyNativeWorkspaceInvoker{root: root, typedIncomplete: true}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	row, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
+		managerID, StrictnessProfile{}, BriefingContext{}, nil, nil, false)
+	if err == nil || row.Status != "incomplete" {
+		t.Fatalf("typed incomplete audit was accepted: row=%+v err=%v", row, err)
+	}
+	if len(row.Assessments) == 0 || row.Assessments[0].Outcome != "incomplete" || row.Receipt == nil {
+		t.Fatalf("typed incomplete evidence or terminal receipt was not preserved: %+v", row)
 	}
 }
 
@@ -437,6 +484,11 @@ func TestFullVerifyStrictnessRequiresTypedEvidenceAndGroundedCounterexamples(t *
 	if err := validateFullAssessments(missingEvidence, required, 1, required, []string{"src/orders.go"}); err == nil {
 		t.Fatal("missing typed evidence subject was accepted")
 	}
+	inventedSubject := base
+	inventedSubject.Assessments = append(append([]FullAssessment(nil), base.Assessments...), FullAssessment{Subject: "Documentation semantics", Outcome: "pass", Detail: "invented scope"})
+	if err := validateFullAssessments(inventedSubject, required, 1, required, []string{"src/orders.go"}); err == nil {
+		t.Fatal("invented audit subject was accepted")
+	}
 	missingCounterexample := base
 	missingCounterexample.Counterexamples = nil
 	if err := validateFullAssessments(missingCounterexample, required, 1, required, []string{"src/orders.go"}); err == nil {
@@ -446,6 +498,49 @@ func TestFullVerifyStrictnessRequiresTypedEvidenceAndGroundedCounterexamples(t *
 	unbound.Counterexamples = []FullCounterexample{{Expected: "reject negative stock", Observed: "it passed", EvidenceRefs: []string{"unrelated:file"}}}
 	if err := validateFullAssessments(unbound, required, 1, required, []string{"src/orders.go"}); err == nil {
 		t.Fatal("counterexample with out-of-scope evidence was accepted")
+	}
+}
+
+func TestFullVerifyResponseSchemaUsesExactDynamicSubjectEnum(t *testing.T) {
+	want := []string{"statement:orders", "evidence:negative stock case"}
+	var schema struct {
+		Properties struct {
+			Assessments struct {
+				Items struct {
+					Properties struct {
+						Subject struct {
+							Enum        []string `json:"enum"`
+							Description string   `json:"description"`
+						} `json:"subject"`
+						Outcome struct {
+							Description string `json:"description"`
+						} `json:"outcome"`
+						Detail struct {
+							Description string `json:"description"`
+						} `json:"detail"`
+					} `json:"properties"`
+				} `json:"items"`
+			} `json:"assessments"`
+			Status struct {
+				Description string `json:"description"`
+			} `json:"status"`
+		} `json:"properties"`
+	}
+	if err := json.Unmarshal(fullVerifyResponseSchema(want, 0), &schema); err != nil {
+		t.Fatalf("response schema is not valid JSON: %v", err)
+	}
+	if !reflect.DeepEqual(schema.Properties.Assessments.Items.Properties.Subject.Enum, want) {
+		t.Fatalf("subject enum=%q; want exact request subjects %q", schema.Properties.Assessments.Items.Properties.Subject.Enum, want)
+	}
+	for name, description := range map[string]string{
+		"status":  schema.Properties.Status.Description,
+		"subject": schema.Properties.Assessments.Items.Properties.Subject.Description,
+		"outcome": schema.Properties.Assessments.Items.Properties.Outcome.Description,
+		"detail":  schema.Properties.Assessments.Items.Properties.Detail.Description,
+	} {
+		if strings.TrimSpace(description) == "" {
+			t.Errorf("schema %s is missing its contract description", name)
+		}
 	}
 }
 

@@ -659,7 +659,7 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 		Subjects               []string                    `json:"requiredSubjects"`
 		Strictness             StrictnessProfile           `json:"strictness"`
 		ResponseSchema         json.RawMessage             `json:"responseSchema"`
-	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, briefing, children, childAssessments, checkResults, fileRefs, subjects, strictness, fullVerifyResponseSchema(strictness.Counterexamples)}
+	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, briefing, children, childAssessments, checkResults, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
 	contextJSON, err := json.Marshal(contextPayload)
 	if err != nil {
 		return row, err
@@ -951,8 +951,12 @@ func boundedFullCheckOutput(value string) string {
 	return value[:max] + "\n[truncated for Manager context]"
 }
 
-func fullVerifyResponseSchema(counterexamples int) json.RawMessage {
-	return json.RawMessage(fmt.Sprintf(`{"type":"object","additionalProperties":false,"required":["status","summary","assessments","findings","counterexamples"],"properties":{"status":{"type":"string","enum":["pass","fail","incomplete"]},"summary":{"type":"string","minLength":1,"maxLength":4096},"assessments":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["subject","outcome","detail"],"properties":{"subject":{"type":"string","minLength":1,"maxLength":1024},"outcome":{"type":"string","enum":["pass","fail","incomplete"]},"detail":{"type":"string","minLength":1,"maxLength":2048}}}},"findings":{"type":"array","items":{"type":"string","minLength":1,"maxLength":2048}},"counterexamples":{"type":"array","minItems":%d,"items":{"type":"object","additionalProperties":false,"required":["expected","observed","evidenceRefs"],"properties":{"expected":{"type":"string","minLength":1,"maxLength":2048},"observed":{"type":"string","minLength":1,"maxLength":2048},"evidenceRefs":{"type":"array","minItems":1,"items":{"type":"string","minLength":1,"maxLength":1024}}}}}}}`, counterexamples))
+func fullVerifyResponseSchema(subjects []string, counterexamples int) json.RawMessage {
+	encodedSubjects, err := json.Marshal(subjects)
+	if err != nil {
+		return nil
+	}
+	return json.RawMessage(fmt.Sprintf(`{"type":"object","additionalProperties":false,"required":["status","summary","assessments","findings","counterexamples"],"properties":{"status":{"type":"string","enum":["pass","fail","incomplete"],"description":"Semantic result for this bounded audit. Pass only when every required subject is supported by evidence; use fail for contradictory evidence and incomplete when relevant evidence is missing."},"summary":{"type":"string","minLength":1,"maxLength":4096},"assessments":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["subject","outcome","detail"],"properties":{"subject":{"type":"string","minLength":1,"maxLength":1024,"enum":%s,"description":"Copy one value from request.context.requiredSubjects exactly; assess every required subject once and add no others."},"outcome":{"type":"string","enum":["pass","fail","incomplete"],"description":"Evidence result for this required subject; use incomplete when relevant evidence is unavailable."},"detail":{"type":"string","minLength":1,"maxLength":2048,"description":"Concise evidence and reasoning for this subject, grounded in the supplied fixed-snapshot context."}}}},"findings":{"type":"array","items":{"type":"string","minLength":1,"maxLength":2048}},"counterexamples":{"type":"array","minItems":%d,"items":{"type":"object","additionalProperties":false,"required":["expected","observed","evidenceRefs"],"properties":{"expected":{"type":"string","minLength":1,"maxLength":2048},"observed":{"type":"string","minLength":1,"maxLength":2048},"evidenceRefs":{"type":"array","minItems":1,"items":{"type":"string","minLength":1,"maxLength":1024}}}}}}}`, string(encodedSubjects), counterexamples))
 }
 
 func decodeFullAuditResponse(raw json.RawMessage) (fullAuditResponse, error) {

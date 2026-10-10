@@ -339,6 +339,39 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 	}
 }
 
+func TestFullVerifyNativeTurnPromptScopesTypedAudit(t *testing.T) {
+	request := agentexec.Request{
+		Role:           agentexec.RoleExecutor,
+		SourceRevision: strings.Repeat("a", 40),
+		ModelDigest:    "sha256:" + strings.Repeat("b", 64),
+		ModulePin:      "test@1",
+		ProjectionID:   "test",
+		ScopeIDs:       []string{"manager"},
+		PolicyIDs:      []string{},
+		Context:        json.RawMessage(`{"kind":"projectrun-full-verify/v1","requiredSubjects":["statement:orders","evidence:negative stock case"],"responseSchema":{"type":"object","additionalProperties":false}}`),
+		Artifacts:      []agentexec.Artifact{},
+	}
+	inv, wire, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prompt := nativeTurnPrompt(inv, wire)
+	for _, required := range []string{
+		"read-only, bounded Manager audit",
+		"fixed snapshot, model, files, briefing, child assessments, and check results",
+		"copy every subject string verbatim into exactly one assessments[].subject",
+		"no omissions, duplicates, paraphrases, or additional subjects",
+		"Do not gate this scoped audit on unrelated Git inspection, Markitect CLI/MCP availability, or rerunning Host-supplied checks",
+		"outer outcome is proposed; reportJson.status independently expresses pass, fail, or incomplete",
+		"incomplete when relevant evidence for a required subject is unavailable",
+		"put unresolved audit uncertainty outside the typed report",
+	} {
+		if !strings.Contains(prompt, required) {
+			t.Errorf("full verification prompt omits contract clause %q", required)
+		}
+	}
+}
+
 func makeApprovalWorkspace(t *testing.T, taskID string, allowed, excluded []string) (*projectworkspace.GitService, projectworkspace.Request, projectworkspace.Handle) {
 	t.Helper()
 	root := t.TempDir()
