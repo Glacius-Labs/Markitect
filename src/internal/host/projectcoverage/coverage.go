@@ -388,12 +388,12 @@ func validateIgnoreAgainstRequiredArtifacts(ignore IgnoreFile, model projectmode
 }
 
 func validateOptions(options Options) error {
-	seen := map[string]string{}
+	var seen []string
 	for _, value := range options.CanonicalModelPaths {
 		if err := validatePath(value); err != nil || strings.HasSuffix(value, "/") {
 			return fmt.Errorf("canonical model path %q must be an exact normalized file path", value)
 		}
-		if err := addUniquePath(seen, value); err != nil {
+		if err := addUniquePath(&seen, value); err != nil {
 			return err
 		}
 	}
@@ -405,7 +405,7 @@ func validateOptions(options Options) error {
 		if selectorWithin(selector, ".git/") || selector == IgnorePath || selectorWithin(selector, IgnorePath) {
 			return fmt.Errorf("tool path %q overlaps reserved repository metadata", selector)
 		}
-		if err := addUniquePath(seen, selector); err != nil {
+		if err := addUniquePath(&seen, selector); err != nil {
 			return err
 		}
 	}
@@ -414,24 +414,26 @@ func validateOptions(options Options) error {
 		if !ok || selector != exclusion.Path || selectorWithin(selector, ".git/") || selectorWithin(selector, ".markitect/") || strings.TrimSpace(exclusion.Reason) == "" || exclusion.Reason != strings.TrimSpace(exclusion.Reason) {
 			return fmt.Errorf("transitional exclusion %q requires a normalized selector and nonempty reason", exclusion.Path)
 		}
-		if err := addUniquePath(seen, selector); err != nil {
+		if err := addUniquePath(&seen, selector); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func addUniquePath(seen map[string]string, selector string) error {
+func addUniquePath(seen *[]string, selector string) error {
 	key := strings.ToLower(selector)
-	if previous, ok := seen[key]; ok {
-		return fmt.Errorf("path selector %q duplicates or aliases %q", selector, previous)
+	for _, previous := range *seen {
+		if strings.ToLower(previous) == key {
+			return fmt.Errorf("path selector %q duplicates or aliases %q", selector, previous)
+		}
 	}
-	for _, previous := range seen {
+	for _, previous := range *seen {
 		if selectorsOverlap(strings.ToLower(previous), strings.ToLower(selector)) {
 			return fmt.Errorf("path selectors %q and %q overlap", previous, selector)
 		}
 	}
-	seen[key] = selector
+	*seen = append(*seen, selector)
 	return nil
 }
 

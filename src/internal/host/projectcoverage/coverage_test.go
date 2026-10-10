@@ -403,6 +403,29 @@ func TestDecodeIgnoreRejectsPatternsAndAliases(t *testing.T) {
 	}
 }
 
+func TestDecodeIgnoreOverlapNamesFirstEarlierEntry(t *testing.T) {
+	data := []byte("apiVersion: " + IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries:\n" +
+		"  - path: a/x\n    reason: r\n  - path: a/y\n    reason: r\n  - path: a/z\n    reason: r\n  - path: a/\n    reason: r\n")
+	for i := 0; i < 100; i++ {
+		_, err := DecodeIgnore(data)
+		if err == nil || !strings.HasSuffix(err.Error(), `entries "a/x" and "a/" overlap`) {
+			t.Fatalf("run %d: overlap error=%v, want the first earlier entry a/x", i, err)
+		}
+	}
+}
+
+func TestValidateOptionsOverlapNamesFirstEarlierSelector(t *testing.T) {
+	options := Options{Transitional: []TransitionalExclusion{
+		{Path: "a/x", Reason: "r"}, {Path: "a/y", Reason: "r"}, {Path: "a/z", Reason: "r"}, {Path: "a/", Reason: "r"},
+	}}
+	for i := 0; i < 100; i++ {
+		err := validateOptions(options)
+		if err == nil || err.Error() != `path selectors "a/x" and "a/" overlap` {
+			t.Fatalf("run %d: overlap error=%v, want the first earlier selector a/x", i, err)
+		}
+	}
+}
+
 func TestRequiredArtifactCannotClaimCanonicalOrToolOwnedPath(t *testing.T) {
 	model := modelWithRequiredArtifact("AGENTS.md")
 	options := Options{ToolPaths: []ToolPath{{Selector: "AGENTS.md", Owner: "onboarding"}}}
