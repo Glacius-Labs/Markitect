@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T05:33:35.124612+00:00",
+  "updatedUtc": "2026-10-10T05:35:54.789639+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18246,6 +18246,13 @@
       "crlf": "Owner reports projectapp44.424s/projectrun14.047s targeted PASS, independent clear, exact raw CAS unchanged. No clean new candidate accepted by Root yet.",
       "recovery": "Independent reviewer caught prepared-crash path before receipt exists. Existing workspace journal needs durable current run/plan-owner binding before dispatch; exact owner/request/trusted dispatched handle required. Input-only historical fallback rejected. Missing/duplicate original owner/handle stays blocked, no replay. Existing Actual15 exact receipt path retained.",
       "execution": "No new native execution until bounded source/review clears; helper cleanup remains separate queued gap, negative preservation test only."
+    },
+    "crlfCorrectionPublished": {
+      "sourceSha": "5eed2e262c4c3ffd6c7339740e5efbca53db31ae",
+      "status": "PUBLIC_COMMIT_REMOTE_AND_SOURCE_INSPECTED_RECOVERY_WIP_NO_BINARY_FREEZE",
+      "rootVerified": "Exact public remote ref and five-file commit inspected. Captured input clean-filter hash and fixed attribute equivalence retain Git revision identity; Explore/Readiness basis uses captured raw worktree bytes, same-plan working snapshot checked, exact store CAS unchanged. Positive CRLF and substantive/binary/stale write regression source inspected, no redundant test run.",
+      "ownerChecks": "Explore/Readiness44.424s and SelectedBasis14.047s PASS; independent review clear, owner reported.",
+      "limits": "Remaining recovery currentOwnerRunID predispatch journal repair tests/review pending. Source/docs WIP, no clean combined binary freeze or new native calls. Original Actual15 e10/1329 source pin and 09:11Z batch deadline unchanged. Helper cleanup negative test only, future WSL recommendation not migration."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
