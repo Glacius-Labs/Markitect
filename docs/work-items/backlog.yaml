@@ -71,9 +71,10 @@ packages:
     title: Integration routine and contribution rules for parallel work
     stream: OPS
     wave: 0
-    status: proposed
-    owner: integrator
-    note: Pull request 102 added the push rule to the roadmap; CONTRIBUTING and the pull-request template remain.
+    status: done
+    pr: 173
+    owner: cleaner
+    note: Pull request 102 added the push rule; pull request 173 added the CONTRIBUTING rules and the pull-request template.
     zone: docs-entry
     acceptance:
       - CONTRIBUTING states the branch naming, one package per PR, no pushes to a PR head during CI, and the merge order.
@@ -277,6 +278,20 @@ packages:
       - maxCostMicros is optional when every role is unmetered.
       - The next release notes state that setup no longer pins the Codex model and effort.
 
+  - id: RUN-06
+    title: Complete native cost accounting
+    stream: RUN
+    wave: 2
+    status: proposed
+    owner: runtime
+    depends_on: [RUN-01]
+    note: From IDEA-01, native cost is a lower bound because helper and child usage are not counted.
+    zone: runtime
+    inputs:
+      - docs/work-items/surveys/earlier-plans-20261011.md
+    acceptance:
+      - Helper and child usage are counted in cost accounting, so a native run no longer reports unknown cost when the provider reports usage.
+
   # --- CLI and MCP: command and tool surface -----------------------------
   - id: CLI-01
     title: Verb model decision and specification
@@ -298,7 +313,7 @@ packages:
     title: Implement the verb table
     stream: CLI
     wave: 2
-    status: review
+    status: done
     pr: 161
     owner: interface
     depends_on: [CLI-01]
@@ -319,7 +334,7 @@ packages:
     title: One composition root in the application facade
     stream: CLI
     wave: 2
-    status: blocked
+    status: ready
     owner: interface
     depends_on: [CLI-02]
     zone: interface
@@ -409,7 +424,7 @@ packages:
     status: active
     owner: kg
     depends_on: [KG-01]
-    note: Owner decisions DEC-021 to DEC-023 set the routing. The CLI and MCP surfaces follow as a second slice after CLI-02.
+    note: The model-zone part merged as pull requests 165 to 168 (DEC-021 to DEC-023). The CLI and MCP surface slice (impact --explain/--manager, context --trace) follows in the interface zone, lent by the integrator.
     zone: model
     inputs:
       - origin codex/knowledge-graph (projectknowledge core)
@@ -428,6 +443,20 @@ packages:
     zone: free
     acceptance:
       - Same tasks with and without explain/trace; missed must-change files, tokens and time reported.
+
+  - id: KG-04
+    title: Impact recall and width without a model call
+    stream: KG
+    wave: 3
+    status: blocked
+    owner: kg
+    depends_on: [KG-02]
+    note: From IDEA-01. The repository, the author of the frozen must-change list and the thresholds are owner choices.
+    zone: free
+    inputs:
+      - docs/work-items/surveys/earlier-plans-20261011.md
+    acceptance:
+      - For a fixed set of model changes, a must-change list written before seeing Markitect's impact is compared with the impact; recall and width are reported per change, provider-free.
 
   # --- TEST: modular test suite ------------------------------------------
   - id: TEST-01
@@ -545,9 +574,10 @@ packages:
     title: One smoke driver instead of shell scripts
     stream: CI
     wave: 2
-    status: proposed
+    status: active
     owner: qa
     depends_on: [CI-02]
+    note: The integrator retired scripts/onboarding/Measure-Adoption.ps1; the smoke driver and the playground smoke cover onboarding.
     zone: ci
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
@@ -599,6 +629,20 @@ packages:
     acceptance:
       - All Go files are gofmt-clean, and CI fails on an unformatted file.
 
+  - id: CI-07
+    title: Race detector in the Linux gate
+    stream: CI
+    wave: 2
+    status: blocked
+    owner: qa
+    depends_on: [CI-03]
+    note: From IDEA-01, no workflow runs go test -race.
+    zone: ci
+    inputs:
+      - docs/work-items/surveys/earlier-plans-20261011.md
+    acceptance:
+      - The Linux gate runs the suite with -race; races found by the first run are listed and fixed or tracked.
+
   # --- BUG: bug hunting ----------------------------------------------------
   - id: BUG-01
     title: Continuous bug hunt with verified findings
@@ -643,7 +687,7 @@ packages:
     title: Re-render generated agent guidance for the new verbs
     stream: AGENT
     wave: 2
-    status: blocked
+    status: ready
     owner: interface
     depends_on: [CLI-02]
     zone: interface
@@ -815,7 +859,7 @@ packages:
     title: Documentation organized by module and current behavior
     stream: ARCH
     wave: 1
-    status: review
+    status: done
     pr: 162
     owner: cleaner
     depends_on: [ARCH-01]
@@ -956,7 +1000,8 @@ packages:
     title: Check earlier plans and assessments against current main
     stream: IDEA
     wave: 1
-    status: active
+    status: done
+    pr: 171
     owner: cleaner
     zone: free
     inputs:
