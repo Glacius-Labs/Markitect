@@ -133,6 +133,19 @@ func (c *Client) send(ctx context.Context, message any) error {
 		return err
 	}
 	wire = append(wire, '\n')
+	var request envelope
+	isRequest := json.Unmarshal(wire, &request) == nil && len(request.ID) > 0 && request.Method != "" && len(request.Params) > 0
+	if isRequest {
+		c.mu.Lock()
+		if int64(len(wire)) > c.limit-c.used {
+			c.mu.Unlock()
+			return ErrEventLimit
+		}
+		// Reserve before writing so concurrent inbound traffic cannot consume
+		// the evidence budget for a request that is about to be dispatched.
+		c.used += int64(len(wire))
+		c.mu.Unlock()
+	}
 	finished := make(chan error, 1)
 	go func() {
 		c.writeMu.Lock()
@@ -145,13 +158,44 @@ func (c *Client) send(ctx context.Context, message any) error {
 	}()
 	select {
 	case err = <-finished:
+		if observeErr := c.recordOutgoingRequest(wire, request, isRequest, err); observeErr != nil {
+			return observeErr
+		}
 		return err
 	case <-ctx.Done():
 		_ = c.Close()
+		writeErr := <-finished
+		if recordErr := c.recordOutgoingRequest(wire, request, isRequest, writeErr); recordErr != nil {
+			return errors.Join(ctx.Err(), recordErr)
+		}
 		return ctx.Err()
 	case <-c.done:
+		writeErr := <-finished
+		if recordErr := c.recordOutgoingRequest(wire, request, isRequest, writeErr); recordErr != nil {
+			return errors.Join(io.ErrClosedPipe, recordErr)
+		}
 		return io.ErrClosedPipe
 	}
+}
+
+func (c *Client) recordOutgoingRequest(wire []byte, request envelope, isRequest bool, writeErr error) error {
+	if !isRequest {
+		return writeErr
+	}
+	if writeErr != nil {
+		c.mu.Lock()
+		c.used -= int64(len(wire))
+		c.mu.Unlock()
+		return writeErr
+	}
+	c.mu.Lock()
+	_, _ = c.log.Write(wire)
+	c.mu.Unlock()
+	if c.observe == nil {
+		return nil
+	}
+	event := Event{Method: "rpc/request", Params: append(json.RawMessage(nil), request.Params...), Wire: append(json.RawMessage(nil), wire...)}
+	return c.observe(event)
 }
 
 func (c *Client) next(ctx context.Context) (envelope, error) {

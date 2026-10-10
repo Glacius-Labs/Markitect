@@ -121,7 +121,7 @@ func (a *Adapter) Recover(parent context.Context, cfg agentexec.Config, h Recove
 			if s.life.State != "completed" {
 				return result, errors.New("recovered turn did not complete successfully")
 			}
-			result.Response, err = agentexec.DecodeResponse([]byte(s.final), h.Invocation, "")
+			result.Response, err = decodeNativeFinal(s.final, h.Invocation)
 			if err != nil {
 				return result, err
 			}

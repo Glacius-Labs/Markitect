@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -182,6 +183,11 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 	if err != nil {
 		return result, err
 	}
+	if req.Role == agentexec.RoleVerifier {
+		if _, err := nativeVerifierEvidenceAliases(inv); err != nil {
+			return result, err
+		}
+	}
 	ctx, cancel := context.WithTimeout(parent, a.config.Timeout)
 	defer cancel()
 	start := time.Now()
@@ -311,7 +317,7 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 	if s.life.State != "completed" {
 		return result, fmt.Errorf("App Server turn %s", s.life.State)
 	}
-	result.Response, err = agentexec.DecodeResponse([]byte(s.final), inv, "")
+	result.Response, err = decodeNativeFinal(s.final, inv)
 	if err != nil {
 		return result, err
 	}
@@ -327,13 +333,44 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 }
 
 func nativeTurnPrompt(inv agentexec.Invocation, wire []byte) string {
-	contract := "Wire response contract:\n" +
-		"- Return exactly one JSON object and no surrounding Markdown. Copy apiVersion, runId, nonce, inputDigest, and role exactly from this invocation. Do not invent lifecycle, workspace delta, or evidence.\n" +
-		"- Always include candidateFiles, evidenceRefs, verifierObservations, and uncertainty as JSON arrays, including empty arrays when there are no entries. Each verifierObservations entry is an object with exactly subject, outcome, and detail string fields; observation outcome must be passed, failed, incomplete, or escalated. Never use strings in place of observation objects.\n" +
-		"- evidenceRefs may contain only exact strings supplied in request.artifacts[].path, request.scopeIds, or request.policyIds. Do not invent references from context pointers, context field names, unsupplied paths, or unverified test/tool claims. Do not repeat a reference; [] is valid.\n" +
-		"- Do not include nativeWork or usage; the Host owns lifecycle, workspace delta, and provider telemetry when available.\n"
-	if (inv.Request.Role == agentexec.RoleExecutor || inv.Request.Role == agentexec.RoleVerifier) && nativeEvidenceRefsOnlyEmpty(inv) {
-		contract += "- This invocation's constrained schema permits only an empty evidenceRefs array; return [].\n"
+	contract := "Wire response contract:\n"
+	if inv.Request.Role == agentexec.RoleExecutor || inv.Request.Role == agentexec.RoleVerifier {
+		contract += "- Return exactly one JSON object and no surrounding Markdown. Return only the role's semantic properties in the constrained schema; do not include invocation identity fields. The Host binds those from the trusted invocation.\n" +
+			"- Always include candidateFiles, verifierObservations, and uncertainty as JSON arrays, including empty arrays when there are no entries. Each verifierObservations entry is an object with exactly subject, outcome, and detail string fields; observation outcome must be passed, failed, incomplete, or escalated. Never use strings in place of observation objects.\n" +
+			"- Do not invent lifecycle or workspace delta.\n" +
+			"- Do not include nativeWork or usage; the Host owns lifecycle, workspace delta, and provider telemetry when available.\n"
+		if inv.Request.Role == agentexec.RoleVerifier {
+			aliases, err := nativeEvidenceRefAliases(inv)
+			if err == nil {
+				keys := make([]string, 0, len(aliases))
+				for alias := range aliases {
+					keys = append(keys, alias)
+				}
+				sort.Strings(keys)
+				pairs := make([][2]string, 0, len(keys))
+				for _, alias := range keys {
+					pairs = append(pairs, [2]string{alias, aliases[alias]})
+				}
+				mapping, _ := json.Marshal(pairs)
+				required, requiredErr := nativeVerifierEvidenceAliases(inv)
+				if requiredErr == nil {
+					requiredValues := make([]string, 0, len(required))
+					for alias := range required {
+						requiredValues = append(requiredValues, alias)
+					}
+					sort.Strings(requiredValues)
+					requiredJSON, _ := json.Marshal(requiredValues)
+					contract += "- For a verifier response, include exactly these evidenceRefs aliases once: " + string(requiredJSON) + ". The request-bound alias mapping is " + string(mapping) + ". Emit only aliases; never copy canonical reference strings. Listing an alias is bookkeeping, not proof of inspection or support.\n"
+				}
+			}
+		} else {
+			contract += "- Do not include evidenceRefs; the Host supplies an empty array for this executor invocation. Do not invent evidence.\n"
+		}
+	} else {
+		contract += "- Return exactly one JSON object and no surrounding Markdown. Copy apiVersion, runId, nonce, inputDigest, and role exactly from this invocation. Do not invent lifecycle, workspace delta, or evidence.\n" +
+			"- Always include candidateFiles, evidenceRefs, verifierObservations, and uncertainty as JSON arrays, including empty arrays when there are no entries. Each verifierObservations entry is an object with exactly subject, outcome, and detail string fields; observation outcome must be passed, failed, incomplete, or escalated. Never use strings in place of observation objects.\n" +
+			"- evidenceRefs may contain only exact strings supplied in request.artifacts[].path, request.scopeIds, or request.policyIds. Do not invent references from context pointers, context field names, unsupplied paths, or unverified test/tool claims. Do not repeat a reference; [] is valid.\n" +
+			"- Do not include nativeWork or usage; the Host owns lifecycle, workspace delta, and provider telemetry when available.\n"
 	}
 	contract += "- CandidateFile output entries have exactly path, mode, and content; mode is 0644 or 0755 for this Git workspace, and content is plain UTF-8 text, not base64. Input Artifact digest/base64 fields are not the output format. Copy identifiers as decoded JSON string values, without adding escaping characters.\n"
 	switch inv.Request.Role {
@@ -369,7 +406,7 @@ func nativeTurnPrompt(inv agentexec.Invocation, wire []byte) string {
 		}
 	}
 	return opening +
-		"Use a fresh temporary directory you own under the inherited OS temporary directory for test scratch and caches; create, use and clean it up within the same shell call because Windows MXC temp paths can differ between calls. Review and verification must leave repository artifacts unchanged.\n" +
+		"When tests or tools need scratch space or caches, use a fresh directory you own under the inherited OS temporary directory and create, use, and clean it up within the same shell call because Windows temporary paths can differ between calls. Do not create scratch space when it is not needed. Review and verification must leave repository artifacts unchanged.\n" +
 		contract + "\nInvocation:\n" + string(wire)
 }
 
@@ -384,7 +421,6 @@ func nativeTurnOutputSchema(inv agentexec.Invocation) map[string]any {
 	list := func(items any) map[string]any {
 		return map[string]any{"type": "array", "items": items, "maxItems": nativeResponseArrayMaxItems}
 	}
-	fixed := func(value string) map[string]any { return map[string]any{"type": "string", "enum": []string{value}} }
 	candidates := list(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"path", "mode", "content"}, "properties": map[string]any{"path": boundedText, "mode": map[string]any{"type": "string", "enum": []string{"0644", "0755"}}, "content": text}})
 	observations := list(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"subject", "outcome", "detail"}, "properties": map[string]any{"subject": boundedText, "outcome": map[string]any{"type": "string", "enum": []string{"passed", "failed", "incomplete", "escalated"}}, "detail": boundedText}})
 	outcomes := []string{"proposed", "failed", "incomplete", "escalated"}
@@ -394,8 +430,28 @@ func nativeTurnOutputSchema(inv agentexec.Invocation) map[string]any {
 	} else {
 		observations["maxItems"] = 0
 	}
-	properties := map[string]any{"apiVersion": fixed(inv.APIVersion), "runId": fixed(inv.RunID), "nonce": fixed(inv.Nonce), "inputDigest": fixed(inv.InputDigest), "role": fixed(inv.Request.Role), "outcome": map[string]any{"type": "string", "enum": outcomes}, "candidateFiles": candidates, "evidenceRefs": nativeEvidenceRefsSchema(inv), "verifierObservations": observations, "uncertainty": list(boundedText)}
-	required := []string{"apiVersion", "runId", "nonce", "inputDigest", "role", "outcome", "candidateFiles", "evidenceRefs", "verifierObservations", "uncertainty"}
+	properties := map[string]any{"outcome": map[string]any{"type": "string", "enum": outcomes}, "candidateFiles": candidates, "verifierObservations": observations, "uncertainty": list(boundedText)}
+	required := []string{"outcome", "candidateFiles", "verifierObservations", "uncertainty"}
+	if inv.Request.Role == agentexec.RoleVerifier {
+		aliases, err := nativeVerifierEvidenceAliases(inv)
+		if err != nil {
+			return nil
+		}
+		values := make([]string, 0, len(aliases))
+		for alias := range aliases {
+			values = append(values, alias)
+		}
+		sort.Strings(values)
+		items := map[string]any{"type": "string", "minLength": 1, "maxLength": 64}
+		evidence := list(items)
+		if len(values) > 0 {
+			items["enum"] = values
+		} else {
+			evidence["maxItems"] = 0
+		}
+		properties["evidenceRefs"] = evidence
+		required = append(required, "evidenceRefs")
+	}
 	var context struct {
 		ResponseSchema json.RawMessage `json:"responseSchema"`
 	}
@@ -413,67 +469,216 @@ const (
 	// Structured Outputs bounds string characters; agentexec's final decoder
 	// remains authoritative for UTF-8 validity and the 4096-byte wire bound.
 	nativeResponseTextMaxLength = 4096
-
-	// Match the shared response count bound, but keep the constant local because
-	// evidence references are not verifier observations.
-	nativeEvidenceRefMaxItems = 128
-	// OpenAI Structured Outputs supports at most 1000 enum values total and
-	// limits a string enum over 250 values to 15,000 characters. Keep this one
-	// request-derived enum comfortably bounded; larger unions legally fall back
-	// to [] rather than making the native turn schema unrepresentable.
-	nativeEvidenceEnumMaxValues = 250
-	nativeEvidenceEnumMaxBytes  = 15_000
 )
 
-func nativeEvidenceRefs(inv agentexec.Invocation) []string {
-	set := make(map[string]struct{}, len(inv.Request.Artifacts)+len(inv.Request.ScopeIDs)+len(inv.Request.PolicyIDs))
+// decodeNativeFinal treats executor/verifier output as semantic data, with
+// verifier references retained as request-bound aliases for coverage checks.
+// Invocation identity is always Host-owned. Executor evidenceRefs are empty;
+// verifier aliases are mapped back to supplied references before the shared
+// decoder and projectrun's exact-coverage check run.
+func decodeNativeFinal(final string, inv agentexec.Invocation) (agentexec.Response, error) {
+	if inv.Request.Role != agentexec.RoleExecutor && inv.Request.Role != agentexec.RoleVerifier {
+		return agentexec.DecodeResponse([]byte(final), inv, "")
+	}
+	allowed := map[string]bool{"outcome": true, "candidateFiles": true, "verifierObservations": true, "uncertainty": true}
+	var context struct {
+		ResponseSchema json.RawMessage `json:"responseSchema"`
+	}
+	if inv.Request.Role == agentexec.RoleExecutor && json.Unmarshal(inv.Request.Context, &context) == nil && len(context.ResponseSchema) > 0 {
+		allowed["reportJson"] = true
+	}
+	if inv.Request.Role == agentexec.RoleVerifier {
+		allowed["evidenceRefs"] = true
+	}
+	semantic, err := decodeNativeSemanticObject([]byte(final), allowed)
+	if err != nil {
+		return agentexec.Response{}, err
+	}
+	for _, required := range []string{"outcome", "candidateFiles", "verifierObservations", "uncertainty"} {
+		if _, ok := semantic[required]; !ok {
+			return agentexec.Response{}, errors.New("native response omitted a required semantic field")
+		}
+	}
+	if allowed["reportJson"] {
+		if _, ok := semantic["reportJson"]; !ok {
+			return agentexec.Response{}, errors.New("native response omitted the required task report")
+		}
+	}
+	canonicalRefs := []string{}
+	if inv.Request.Role == agentexec.RoleVerifier {
+		refsRaw, ok := semantic["evidenceRefs"]
+		if !ok {
+			return agentexec.Response{}, errors.New("native verifier response omitted evidence references")
+		}
+		var aliases []string
+		if err := json.Unmarshal(refsRaw, &aliases); err != nil || aliases == nil {
+			return agentexec.Response{}, errors.New("native verifier evidence references must be an array")
+		}
+		canonicalRefs, err = decodeNativeEvidenceAliases(inv, aliases)
+		if err != nil {
+			return agentexec.Response{}, err
+		}
+	}
+	full := map[string]json.RawMessage{}
+	for key, value := range semantic {
+		full[key] = value
+	}
+	for key, value := range map[string]string{"apiVersion": inv.APIVersion, "runId": inv.RunID, "nonce": inv.Nonce, "inputDigest": inv.InputDigest, "role": inv.Request.Role} {
+		encoded, _ := json.Marshal(value)
+		full[key] = encoded
+	}
+	refsWire, _ := json.Marshal(canonicalRefs)
+	full["evidenceRefs"] = refsWire
+	composed, err := json.Marshal(full)
+	if err != nil {
+		return agentexec.Response{}, errors.New("native response metadata could not be composed")
+	}
+	return agentexec.DecodeResponse(composed, inv, "")
+}
+
+func nativeEvidenceRefAliases(inv agentexec.Invocation) (map[string]string, error) {
+	set := map[string]struct{}{}
 	for _, artifact := range inv.Request.Artifacts {
-		set[artifact.Path] = struct{}{}
+		if artifact.Path != "" {
+			set[artifact.Path] = struct{}{}
+		}
 	}
-	for _, id := range inv.Request.ScopeIDs {
-		set[id] = struct{}{}
+	for _, value := range inv.Request.ScopeIDs {
+		if value != "" {
+			set[value] = struct{}{}
+		}
 	}
-	for _, id := range inv.Request.PolicyIDs {
-		set[id] = struct{}{}
+	for _, value := range inv.Request.PolicyIDs {
+		if value != "" {
+			set[value] = struct{}{}
+		}
 	}
 	refs := make([]string, 0, len(set))
-	for ref := range set {
-		if ref != "" {
-			refs = append(refs, ref)
-		}
+	for value := range set {
+		refs = append(refs, value)
 	}
 	sort.Strings(refs)
-	return refs
-}
-
-func nativeEvidenceRefsSchema(inv agentexec.Invocation) map[string]any {
-	refs := nativeEvidenceRefs(inv)
-	item := map[string]any{"type": "string", "minLength": 1, "maxLength": nativeResponseTextMaxLength}
-	array := map[string]any{"type": "array", "items": item, "maxItems": nativeEvidenceRefMaxItems}
-	if !nativeEvidenceEnumFits(refs) {
-		array["maxItems"] = 0
-		return array
-	}
-	item["enum"] = refs
-	return array
-}
-
-func nativeEvidenceRefsOnlyEmpty(inv agentexec.Invocation) bool {
-	return !nativeEvidenceEnumFits(nativeEvidenceRefs(inv))
-}
-
-func nativeEvidenceEnumFits(refs []string) bool {
-	if len(refs) == 0 || len(refs) > nativeEvidenceEnumMaxValues {
-		return false
-	}
-	bytes := 0
-	for _, ref := range refs {
-		bytes += len(ref) // byte count is conservative for the provider's character budget
-		if bytes > nativeEvidenceEnumMaxBytes {
-			return false
+	for generation := 0; generation <= len(refs); generation++ {
+		prefix := fmt.Sprintf("evidence-%06d-", generation)
+		aliases := make(map[string]string, len(refs))
+		collision := false
+		for index, ref := range refs {
+			alias := fmt.Sprintf("%s%06d", prefix, index)
+			if _, exists := set[alias]; exists {
+				collision = true
+				break
+			}
+			aliases[alias] = ref
+		}
+		if !collision {
+			return aliases, nil
 		}
 	}
-	return true
+	return nil, errors.New("could not construct a collision-free evidence alias namespace")
+}
+
+// nativeVerifierEvidenceAliases distinguishes allowed evidence identities from
+// the exact references the project verifier must cover. Projectrun supplies
+// requiredEvidenceRefs in its trusted context; other verifier callers retain
+// the bounded compatibility behavior of requiring the full supplied union.
+func nativeVerifierEvidenceAliases(inv agentexec.Invocation) (map[string]string, error) {
+	allowed, err := nativeEvidenceRefAliases(inv)
+	if err != nil {
+		return nil, err
+	}
+	var context struct {
+		RequiredEvidenceRefs *[]string `json:"requiredEvidenceRefs"`
+	}
+	if err := json.Unmarshal(inv.Request.Context, &context); err != nil {
+		return nil, errors.New("native verifier request context is invalid")
+	}
+	refs := make([]string, 0, len(allowed))
+	if context.RequiredEvidenceRefs == nil {
+		for _, ref := range allowed {
+			refs = append(refs, ref)
+		}
+	} else {
+		refs = append(refs, (*context.RequiredEvidenceRefs)...)
+	}
+	if len(refs) > nativeResponseArrayMaxItems {
+		return nil, fmt.Errorf("native verifier required evidence references exceed the supported %d values", nativeResponseArrayMaxItems)
+	}
+	seen := map[string]bool{}
+	result := map[string]string{}
+	for _, ref := range refs {
+		if seen[ref] {
+			return nil, errors.New("native verifier required evidence references contain a duplicate")
+		}
+		seen[ref] = true
+		alias := ""
+		for candidate, canonical := range allowed {
+			if canonical == ref {
+				alias = candidate
+				break
+			}
+		}
+		if alias == "" {
+			return nil, errors.New("native verifier required evidence reference was not supplied")
+		}
+		result[alias] = ref
+	}
+	return result, nil
+}
+
+func decodeNativeEvidenceAliases(inv agentexec.Invocation, aliases []string) ([]string, error) {
+	allowed, err := nativeEvidenceRefAliases(inv)
+	if err != nil {
+		return nil, err
+	}
+	seen := map[string]bool{}
+	refs := make([]string, 0, len(aliases))
+	for _, alias := range aliases {
+		if seen[alias] {
+			return nil, errors.New("native verifier evidence references contain a duplicate alias")
+		}
+		seen[alias] = true
+		ref, ok := allowed[alias]
+		if !ok {
+			return nil, errors.New("native verifier evidence references contain an unknown alias")
+		}
+		refs = append(refs, ref)
+	}
+	return refs, nil
+}
+
+// decodeNativeSemanticObject accepts one closed top-level object and preserves
+// raw nested values for the shared decoder, which checks their duplicate keys
+// and role-specific semantics after Host metadata is composed.
+func decodeNativeSemanticObject(data []byte, allowed map[string]bool) (map[string]json.RawMessage, error) {
+	decoder := json.NewDecoder(strings.NewReader(string(data)))
+	decoder.UseNumber()
+	tok, err := decoder.Token()
+	if err != nil || tok != json.Delim('{') {
+		return nil, errors.New("native response must be one JSON object")
+	}
+	fields := map[string]json.RawMessage{}
+	for decoder.More() {
+		tok, err = decoder.Token()
+		key, ok := tok.(string)
+		if err != nil || !ok || !allowed[key] {
+			return nil, errors.New("native response contains an unsupported semantic field")
+		}
+		if _, exists := fields[key]; exists {
+			return nil, errors.New("native response contains a duplicate semantic field")
+		}
+		var value json.RawMessage
+		if err := decoder.Decode(&value); err != nil {
+			return nil, errors.New("native response contains invalid JSON")
+		}
+		fields[key] = value
+	}
+	if _, err = decoder.Token(); err != nil {
+		return nil, errors.New("native response object is incomplete")
+	}
+	if _, err = decoder.Token(); err != io.EOF {
+		return nil, errors.New("native response contains trailing JSON")
+	}
+	return fields, nil
 }
 
 func (s *session) save() error {

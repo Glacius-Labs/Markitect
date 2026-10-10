@@ -1,11 +1,15 @@
 package codexappserver
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -66,6 +70,116 @@ func TestClientEventBudgetAndRightsEvidence(t *testing.T) {
 	_, err = c.next(ctx)
 	if !errors.Is(err, ErrEventLimit) {
 		t.Fatalf("budget not enforced: %v", err)
+	}
+}
+
+func TestClientRecordsExactSuccessfullyWrittenTurnStartSchema(t *testing.T) {
+	local, remote := net.Pipe()
+	defer remote.Close()
+	var events []Event
+	c, err := NewClient(local, 16<<10, func(e Event) error {
+		events = append(events, e)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	params := map[string]any{
+		"threadId": "thread-1",
+		"input":    []any{map[string]any{"type": "text", "text": "semantic output only"}},
+		"outputSchema": map[string]any{
+			"type": "object", "additionalProperties": false,
+			"required":   []string{"outcome", "candidateFiles", "evidenceRefs"},
+			"properties": map[string]any{"evidenceRefs": map[string]any{"type": "array", "items": map[string]any{"enum": []string{"evidence-000000-000000"}}}},
+		},
+	}
+	gotWire := make(chan []byte, 1)
+	go func() {
+		line, _ := bufio.NewReader(remote).ReadBytes('\n')
+		gotWire <- line
+	}()
+	if err := c.send(context.Background(), map[string]any{"id": 7, "method": "turn/start", "params": params}); err != nil {
+		t.Fatal(err)
+	}
+	wire := <-gotWire
+	if len(events) != 1 || events[0].Method != "rpc/request" {
+		t.Fatalf("successful outgoing request was not journaled: %#v", events)
+	}
+	if string(events[0].Wire) != string(wire) || events[0].Wire[len(events[0].Wire)-1] != '\n' {
+		t.Fatalf("journal did not retain the exact successfully written frame: event=%q wire=%q", events[0].Wire, wire)
+	}
+	var sent envelope
+	if err := json.Unmarshal(wire, &sent); err != nil {
+		t.Fatal(err)
+	}
+	if sent.Method != "turn/start" || !bytes.Equal(events[0].Params, sent.Params) || !bytes.Contains(events[0].Params, []byte(`"outputSchema"`)) {
+		t.Fatalf("captured request differs from transmitted turn/start schema: event=%s sent=%s", events[0].Params, sent.Params)
+	}
+}
+
+func TestClientDoesNotJournalFailedOutgoingRequest(t *testing.T) {
+	local, remote := net.Pipe()
+	remote.Close()
+	var events []Event
+	c, err := NewClient(local, 4096, func(e Event) error {
+		events = append(events, e)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	err = c.send(context.Background(), map[string]any{"id": 1, "method": "turn/start", "params": map[string]any{"outputSchema": map[string]any{"type": "object"}}})
+	if err == nil {
+		t.Fatal("write to closed peer unexpectedly succeeded")
+	}
+	if len(events) != 0 {
+		t.Fatalf("failed outgoing write was represented as dispatched: %#v", events)
+	}
+}
+
+type writeCompletesOnClose struct {
+	started chan struct{}
+	closed  chan struct{}
+	once    sync.Once
+}
+
+func (c *writeCompletesOnClose) Read([]byte) (int, error) {
+	<-c.closed
+	return 0, io.EOF
+}
+func (c *writeCompletesOnClose) Write(p []byte) (int, error) {
+	close(c.started)
+	<-c.closed
+	return len(p), nil
+}
+func (c *writeCompletesOnClose) Close() error {
+	c.once.Do(func() { close(c.closed) })
+	return nil
+}
+
+func TestClientJournalsFullFrameWhenCancellationWinsWriteSelect(t *testing.T) {
+	conn := &writeCompletesOnClose{started: make(chan struct{}), closed: make(chan struct{})}
+	var events []Event
+	c, err := NewClient(conn, 4096, func(e Event) error { events = append(events, e); return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		done <- c.send(ctx, map[string]any{"id": 9, "method": "turn/start", "params": map[string]any{"outputSchema": map[string]any{"type": "object"}}})
+	}()
+	<-conn.started
+	cancel()
+	err = <-done
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("canceled request returned %v", err)
+	}
+	if len(events) != 1 || events[0].Method != "rpc/request" || !bytes.Contains(events[0].Wire, []byte(`"outputSchema"`)) {
+		t.Fatalf("successful write lost its dispatched request evidence when cancellation won select: %#v", events)
 	}
 }
 

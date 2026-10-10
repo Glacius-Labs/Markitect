@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -133,28 +134,31 @@ func serveFixture() {
 				if !ok {
 					return
 				}
-				nonce, ok := properties["nonce"].(map[string]any)
-				if !ok || len(nonce["enum"].([]any)) != 1 || nonce["enum"].([]any)[0] != inv.Nonce {
+				if _, exists := properties["nonce"]; exists {
 					return
 				}
-				evidence, ok := properties["evidenceRefs"].(map[string]any)
-				if !ok || evidence["maxItems"] != float64(nativeEvidenceRefMaxItems) {
+				_, hasEvidenceRefs := properties["evidenceRefs"]
+				if inv.Request.Role == agentexec.RoleVerifier && !hasEvidenceRefs {
 					return
 				}
-				evidenceItems, ok := evidence["items"].(map[string]any)
-				refs, refsOK := evidenceItems["enum"].([]any)
-				wantRefs := nativeEvidenceRefs(inv)
-				if !ok || !refsOK || len(refs) != len(wantRefs) {
+				if inv.Request.Role == agentexec.RoleExecutor && hasEvidenceRefs {
 					return
 				}
-				for i, ref := range wantRefs {
-					if refs[i] != ref {
-						return
-					}
+				if _, ok := properties["outcome"]; !ok {
+					return
 				}
 			}
-			r := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: inv.RunID, Nonce: inv.Nonce, Role: inv.Request.Role, InputDigest: inv.InputDigest, Outcome: agentexec.OutcomeIncomplete, CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}}
-			b, _ := json.Marshal(r)
+			semantic := map[string]any{"outcome": "incomplete", "candidateFiles": []any{}, "verifierObservations": []any{}, "uncertainty": []any{}}
+			if inv.Request.Role == agentexec.RoleVerifier {
+				aliases, _ := nativeEvidenceRefAliases(inv)
+				values := make([]string, 0, len(aliases))
+				for alias := range aliases {
+					values = append(values, alias)
+				}
+				sort.Strings(values)
+				semantic["evidenceRefs"] = values
+			}
+			b, _ := json.Marshal(semantic)
 			response = string(b)
 			if mode == "malformed-response" {
 				response = `{"bad":true}`
@@ -263,11 +267,7 @@ func serveFixture() {
 			}
 			continue
 		case "thread/read":
-			var saved RecoveryHandle
-			_ = json.Unmarshal([]byte(os.Getenv("MARKITECT_P04_RECOVERY")), &saved)
-			inv := saved.Invocation
-			r := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: inv.RunID, Nonce: inv.Nonce, Role: inv.Request.Role, InputDigest: inv.InputDigest, Outcome: agentexec.OutcomeIncomplete, CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}}
-			b, _ := json.Marshal(r)
+			b, _ := json.Marshal(map[string]any{"outcome": agentexec.OutcomeIncomplete, "candidateFiles": []any{}, "verifierObservations": []any{}, "uncertainty": []any{}})
 			status := "completed"
 			items := []item{{ID: "m", Type: "agentMessage", Text: string(b), Phase: "final_answer"}}
 			if mode == "recovery-running" {
@@ -366,7 +366,9 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 		t.Fatal("native report schema must require Host-harvested bytes and preserve the closed task report")
 	}
 	for _, required := range []string{
-		"candidateFiles, evidenceRefs, verifierObservations, and uncertainty as JSON arrays",
+		"candidateFiles, verifierObservations, and uncertainty as JSON arrays",
+		"do not include invocation identity fields",
+		"Do not include evidenceRefs; the Host supplies an empty array for this executor invocation",
 		"object with exactly subject, outcome, and detail string fields",
 		"observation outcome must be passed, failed, incomplete, or escalated",
 		"outer outcome must be one of proposed, failed, incomplete, or escalated",
@@ -379,6 +381,7 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 		"mode is 0644 or 0755 for this Git workspace",
 		"Do not include nativeWork or usage; the Host owns lifecycle, workspace delta, and provider telemetry when available",
 		"Return candidateFiles as an empty array",
+		"Do not create scratch space when it is not needed",
 	} {
 		if !strings.Contains(prompt, required) {
 			t.Errorf("native prompt omits contract clause %q", required)
@@ -413,7 +416,7 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 	}
 }
 
-func TestNativeEvidenceReferencesAreRequestBoundAndUnknownPointersRejected(t *testing.T) {
+func TestNativeSemanticResponseComposesTrustedMetadataAndRejectsModelMetadata(t *testing.T) {
 	content := []byte("README bytes supplied to the invocation\n")
 	digest := sha256.Sum256(content)
 	request := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: strings.Repeat("a", 40),
@@ -427,80 +430,197 @@ func TestNativeEvidenceReferencesAreRequestBoundAndUnknownPointersRejected(t *te
 	}
 	schema := nativeTurnOutputSchema(inv)
 	properties := schema["properties"].(map[string]any)
-	evidence := properties["evidenceRefs"].(map[string]any)
-	if evidence["maxItems"] != nativeEvidenceRefMaxItems {
-		t.Fatalf("evidence reference count is not bounded: %#v", evidence)
-	}
-	items := evidence["items"].(map[string]any)
-	if items["minLength"] != 1 || items["maxLength"] != nativeResponseTextMaxLength {
-		t.Fatalf("evidence strings do not match the shared field bounds: %#v", items)
-	}
-	want := []string{"README.md", "policy-check", "scope-manager"}
-	got, ok := items["enum"].([]string)
-	if !ok || strings.Join(got, "\x00") != strings.Join(want, "\x00") {
-		t.Fatalf("evidence enum must be sorted, unique and request-bound: got=%#v want=%#v", items["enum"], want)
-	}
-	if strings.Contains(string(mustJSON(t, schema)), `"uniqueItems"`) {
-		t.Fatal("evidence schema uses a keyword unsupported by the pinned structured-output contract")
+	for _, key := range []string{"apiVersion", "runId", "nonce", "inputDigest", "role", "evidenceRefs"} {
+		if _, exists := properties[key]; exists {
+			t.Fatalf("schema exposes Host-owned metadata field %q", key)
+		}
 	}
 	prompt := nativeTurnPrompt(inv, []byte(`{"request":{"globalGoal":"Implement greeting support"}}`))
-	for _, clause := range []string{"exact strings supplied in request.artifacts[].path, request.scopeIds, or request.policyIds", "Do not invent references from context pointers, context field names, unsupplied paths", "Do not repeat a reference; [] is valid"} {
+	for _, clause := range []string{"do not include invocation identity fields", "Do not include evidenceRefs; the Host supplies an empty array", "Do not invent lifecycle or workspace delta"} {
 		if !strings.Contains(prompt, clause) {
-			t.Errorf("native prompt omits evidence-reference restriction %q", clause)
+			t.Errorf("native prompt omits semantic transport boundary %q", clause)
 		}
 	}
 
-	response := agentexec.Response{APIVersion: inv.APIVersion, RunID: inv.RunID, Nonce: inv.Nonce, Role: agentexec.RoleExecutor,
-		InputDigest: inv.InputDigest, Outcome: agentexec.OutcomeIncomplete, CandidateFiles: []agentexec.CandidateFile{},
-		EvidenceRefs:         []string{"README.md", "policy-check", "scope-manager"},
-		VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{"Implementation was not assessed."}}
-	valid, err := json.Marshal(response)
+	semantic := `{"outcome":"incomplete","candidateFiles":[],"verifierObservations":[],"uncertainty":["Implementation was not assessed."]}`
+	response, err := decodeNativeFinal(semantic, inv)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("valid semantic response was rejected: %v", err)
 	}
-	if _, err := agentexec.DecodeResponse(valid, inv, ""); err != nil {
-		t.Fatalf("response citing exact request evidence was rejected: %v", err)
+	if response.APIVersion != inv.APIVersion || response.RunID != inv.RunID || response.Nonce != inv.Nonce || response.InputDigest != inv.InputDigest || response.Role != inv.Request.Role {
+		t.Fatal("Host did not bind the exact trusted invocation identity")
 	}
-	response.EvidenceRefs = []string{"request.context.globalGoal"}
-	invalid, err := json.Marshal(response)
-	if err != nil {
-		t.Fatal(err)
+	if response.EvidenceRefs == nil || len(response.EvidenceRefs) != 0 {
+		t.Fatalf("Host must author an empty evidence list, got %#v", response.EvidenceRefs)
 	}
-	if _, err := agentexec.DecodeResponse(invalid, inv, ""); err == nil || !strings.Contains(err.Error(), "evidence reference was not supplied in the request") {
-		t.Fatalf("invented context pointer was not rejected by shared decoder: %v", err)
+	malformed := fmt.Sprintf(`{"apiVersion":%q,"runId":%q,"nonce":%q,"inputDigest":%q,"role":%q,"outcome":"proposed","candidateFiles":[],"evidenceRefs":["README.md","[\"project.mark","[\"project.mark"],"verifierObservations":[],"uncertainty":[]}`,
+		inv.APIVersion, inv.RunID, inv.Nonce, inv.InputDigest, inv.Request.Role)
+	if _, err := decodeNativeFinal(malformed, inv); err == nil || !strings.Contains(err.Error(), "unsupported semantic field") {
+		t.Fatalf("model-authored metadata was silently accepted: %v", err)
+	}
+	if _, err := decodeNativeFinal(`{"outcome":"proposed","outcome":"failed","candidateFiles":[],"verifierObservations":[],"uncertainty":[]}`, inv); err == nil {
+		t.Fatal("duplicate semantic field was accepted")
+	}
+	if _, err := decodeNativeFinal(`{"outcome":"proposed","candidateFiles":[],"verifierObservations":[]}`, inv); err == nil {
+		t.Fatal("missing semantic field was accepted")
 	}
 }
 
-func TestNativeEvidenceReferenceSchemaUsesEmptyOnlyFallbackForOversizedUnions(t *testing.T) {
-	t.Run("empty union", func(t *testing.T) {
-		inv := agentexec.Invocation{Request: agentexec.Request{Role: agentexec.RoleExecutor}}
-		assertEvidenceRefsOnlyEmpty(t, inv)
-		if !strings.Contains(nativeTurnPrompt(inv, []byte(`{}`)), "schema permits only an empty evidenceRefs array") {
-			t.Fatal("empty-union fallback was not explained to the model")
+func TestNativeVerifierEvidenceAliasesPreserveCoverageWithoutHostFilling(t *testing.T) {
+	request := agentexec.Request{Role: agentexec.RoleVerifier, SourceRevision: strings.Repeat("a", 40),
+		ModelDigest: "sha256:" + strings.Repeat("b", 64), ModulePin: "test@1", ProjectionID: "test",
+		ScopeIDs:  []string{"[\"project.markitect.example.org/v1alpha1\",\"Manager\",\"\",\"project-owner\"]", "evidence-000000-000000"},
+		PolicyIDs: []string{"policy/review"}, Context: json.RawMessage(`{}`), Artifacts: []agentexec.Artifact{}}
+	inv, _, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	aliases, err := nativeEvidenceRefAliases(inv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(aliases) != 3 {
+		t.Fatalf("alias map lost request evidence: %#v", aliases)
+	}
+	for alias := range aliases {
+		if alias == "evidence-000000-000000" || len(alias) > 32 {
+			t.Fatalf("alias collision was not avoided or alias is not compact: %q", alias)
 		}
-	})
-	t.Run("too many enum values", func(t *testing.T) {
-		request := agentexec.Request{Role: agentexec.RoleExecutor}
-		for i := 0; i < 128; i++ {
-			request.ScopeIDs = append(request.ScopeIDs, fmt.Sprintf("scope-%03d", i))
+	}
+	pairs := make([]string, 0, len(aliases))
+	values := make([]string, 0, len(aliases))
+	wantRefs := make([]string, 0, len(aliases))
+	for alias, ref := range aliases {
+		pairs = append(pairs, alias)
+		values = append(values, alias)
+		wantRefs = append(wantRefs, ref)
+	}
+	sort.Strings(pairs)
+	sort.Strings(values)
+	sort.Strings(wantRefs)
+	properties := nativeTurnOutputSchema(inv)["properties"].(map[string]any)
+	enum := properties["evidenceRefs"].(map[string]any)["items"].(map[string]any)["enum"].([]string)
+	if strings.Join(enum, "\x00") != strings.Join(values, "\x00") {
+		t.Fatalf("verifier schema enum differs from collision-free request aliases: got=%#v want=%#v", enum, values)
+	}
+	prompt := nativeTurnPrompt(inv, []byte(`{}`))
+	for _, alias := range values {
+		if !strings.Contains(prompt, alias) {
+			t.Fatalf("verifier prompt omitted exact alias %q", alias)
 		}
-		for i := 0; i < 123; i++ {
-			request.PolicyIDs = append(request.PolicyIDs, fmt.Sprintf("policy-%03d", i))
+	}
+	if strings.Contains(prompt, "never copy canonical reference strings") == false {
+		t.Fatal("verifier prompt did not distinguish transport aliases from canonical references")
+	}
+
+	base := map[string]any{"outcome": agentexec.OutcomeIncomplete, "candidateFiles": []any{}, "verifierObservations": []any{}, "uncertainty": []string{"Assessment is incomplete."}, "evidenceRefs": values}
+	wire, _ := json.Marshal(base)
+	decoded, err := decodeNativeFinal(string(wire), inv)
+	if err != nil {
+		t.Fatalf("valid alias set failed decoding: %v", err)
+	}
+	if strings.Join(decoded.EvidenceRefs, "\x00") != strings.Join(wantRefs, "\x00") {
+		t.Fatalf("canonical refs differ from the full model-selected alias union: got=%#v want=%#v", decoded.EvidenceRefs, wantRefs)
+	}
+
+	for name, bad := range map[string][]string{
+		"unknown":   {"unknown-alias"},
+		"canonical": {wantRefs[0]},
+		"duplicate": {values[0], values[0]},
+	} {
+		t.Run(name, func(t *testing.T) {
+			base["evidenceRefs"] = bad
+			wire, _ := json.Marshal(base)
+			if _, err := decodeNativeFinal(string(wire), inv); err == nil {
+				t.Fatalf("invalid alias list was accepted: %#v", bad)
+			}
+		})
+	}
+
+	// A partial model selection stays partial; only the existing verifier
+	// coverage boundary can accept or reject completeness.
+	base["evidenceRefs"] = values[:1]
+	wire, _ = json.Marshal(base)
+	partial, err := decodeNativeFinal(string(wire), inv)
+	if err != nil || len(partial.EvidenceRefs) != 1 {
+		t.Fatalf("adapter filled or rejected a partial model selection: refs=%#v err=%v", partial.EvidenceRefs, err)
+	}
+
+	tooMany := agentexec.Invocation{Request: agentexec.Request{Role: agentexec.RoleVerifier}}
+	for i := 0; i < 129; i++ {
+		tooMany.Request.ScopeIDs = append(tooMany.Request.ScopeIDs, fmt.Sprintf("scope-%03d", i))
+	}
+	if _, err := nativeVerifierEvidenceAliases(tooMany); err == nil {
+		t.Fatal("verifier required reference union over Host bound passed preflight")
+	}
+}
+
+func TestNativeVerifierPromptBindsRequiredSubsetSeparatelyFromAllowedEvidence(t *testing.T) {
+	request := agentexec.Request{Role: agentexec.RoleVerifier, SourceRevision: strings.Repeat("a", 40),
+		ModelDigest: "sha256:" + strings.Repeat("b", 64), ModulePin: "test@1", ProjectionID: "test",
+		ScopeIDs: []string{"artifact:README", "check:unit"}, PolicyIDs: []string{"unit"},
+		Context: json.RawMessage(`{"requiredEvidenceRefs":["artifact:README","check:unit"]}`), Artifacts: []agentexec.Artifact{}}
+	inv, _, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	allowed, err := nativeEvidenceRefAliases(inv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	required, err := nativeVerifierEvidenceAliases(inv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(allowed) != 3 || len(required) != 2 {
+		t.Fatalf("allowed and required evidence sets were conflated: allowed=%#v required=%#v", allowed, required)
+	}
+	prompt := nativeTurnPrompt(inv, []byte(`{}`))
+	requiredValues := make([]string, 0, len(required))
+	for alias := range required {
+		requiredValues = append(requiredValues, alias)
+	}
+	sort.Strings(requiredValues)
+	requiredJSON, _ := json.Marshal(requiredValues)
+	if !strings.Contains(prompt, "include exactly these evidenceRefs aliases once: "+string(requiredJSON)) {
+		t.Fatalf("prompt does not state the exact required verifier subset %s", requiredJSON)
+	}
+	schemaEnum := nativeTurnOutputSchema(inv)["properties"].(map[string]any)["evidenceRefs"].(map[string]any)["items"].(map[string]any)["enum"].([]string)
+	if strings.Join(schemaEnum, "\x00") != strings.Join(requiredValues, "\x00") {
+		t.Fatalf("verifier schema enum differs from exact required subset: got=%#v want=%#v", schemaEnum, requiredValues)
+	}
+	for alias, ref := range required {
+		if !strings.Contains(prompt, alias) || !strings.Contains(prompt, ref) {
+			t.Fatalf("prompt omitted required alias binding %q=%q", alias, ref)
 		}
-		inv := agentexec.Invocation{Request: request}
-		if count := len(nativeEvidenceRefs(inv)); count != 251 {
-			t.Fatalf("test union has %d refs, want 251", count)
+	}
+	for alias, ref := range allowed {
+		if _, ok := required[alias]; !ok && strings.Contains(string(requiredJSON), alias) {
+			t.Fatalf("optional supplied reference was presented as required coverage: %q=%q", alias, ref)
 		}
-		assertEvidenceRefsOnlyEmpty(t, inv)
-	})
-	t.Run("enum strings exceed conservative budget", func(t *testing.T) {
-		request := agentexec.Request{Role: agentexec.RoleExecutor}
-		for i := 0; i < 4; i++ {
-			request.ScopeIDs = append(request.ScopeIDs, strings.Repeat(string(rune('a'+i)), 3998)+fmt.Sprintf("-%d", i))
-		}
-		inv := agentexec.Invocation{Request: request}
-		assertEvidenceRefsOnlyEmpty(t, inv)
-	})
+	}
+	tooManyRequired := make([]string, 128)
+	for i := range tooManyRequired {
+		tooManyRequired[i] = fmt.Sprintf("scope-%03d", i)
+	}
+	request.ScopeIDs = tooManyRequired
+	request.PolicyIDs = []string{"optional-policy"}
+	request.Context, _ = json.Marshal(map[string]any{"requiredEvidenceRefs": tooManyRequired})
+	inv, _, err = agentexec.PrepareInvocation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if selected, err := nativeVerifierEvidenceAliases(inv); err != nil || len(selected) != 128 {
+		t.Fatalf("optional policy reference incorrectly consumed required coverage bound: selected=%d err=%v", len(selected), err)
+	}
+	request.Context = json.RawMessage(`{}`)
+	inv, _, err = agentexec.PrepareInvocation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := nativeVerifierEvidenceAliases(inv); err == nil {
+		t.Fatal("legacy full-union verifier path passed the 128-value bound")
+	}
 }
 
 func TestNativeRoleSchemasStayWithinStrictResponseBounds(t *testing.T) {
@@ -578,11 +698,23 @@ func TestNativeRoleSchemasStayWithinStrictResponseBounds(t *testing.T) {
 					t.Fatalf("native report schema changed the request's closed response contract for %s", tc.name)
 				}
 			}
-			for key, want := range map[string]string{"apiVersion": inv.APIVersion, "runId": inv.RunID, "nonce": inv.Nonce, "inputDigest": inv.InputDigest, "role": inv.Request.Role} {
-				fixed := properties[key].(map[string]any)["enum"].([]string)
-				if len(fixed) != 1 || fixed[0] != want {
-					t.Fatalf("schema %s is not bound to this invocation: %#v", key, fixed)
+			for _, key := range []string{"apiVersion", "runId", "nonce", "inputDigest", "role"} {
+				if _, exists := properties[key]; exists {
+					t.Fatalf("schema exposes Host-owned metadata field %q", key)
 				}
+			}
+			if tc.role == agentexec.RoleVerifier {
+				evidence, ok := properties["evidenceRefs"].(map[string]any)
+				if !ok {
+					t.Fatal("verifier semantic schema omitted evidence alias selection")
+				}
+				items := evidence["items"].(map[string]any)
+				aliases, ok := items["enum"].([]string)
+				if !ok || len(aliases) != 3 {
+					t.Fatalf("verifier schema does not constrain the supplied union to aliases: %#v", evidence)
+				}
+			} else if _, exists := properties["evidenceRefs"]; exists {
+				t.Fatal("executor schema exposed evidenceRefs")
 			}
 			uncertainty := properties["uncertainty"].(map[string]any)
 			if uncertainty["maxItems"] != nativeResponseArrayMaxItems {
@@ -607,60 +739,52 @@ func TestNativeRoleSchemasStayWithinStrictResponseBounds(t *testing.T) {
 				t.Fatalf("executor schema permits verifier observations: %#v", observations)
 			}
 
-			response := agentexec.Response{APIVersion: inv.APIVersion, RunID: inv.RunID, Nonce: inv.Nonce,
-				Role: inv.Request.Role, InputDigest: inv.InputDigest, Outcome: tc.outcome,
-				CandidateFiles: tc.files, EvidenceRefs: []string{"scope-manager"},
-				VerifierObservations: tc.observations, Uncertainty: []string{"The response is bounded to this invocation."}}
-			if response.CandidateFiles == nil {
-				response.CandidateFiles = []agentexec.CandidateFile{}
+			semantic := map[string]any{"outcome": tc.outcome,
+				"candidateFiles": tc.files, "verifierObservations": tc.observations,
+				"uncertainty": []string{"The response is bounded to this invocation."}}
+			if tc.files == nil {
+				semantic["candidateFiles"] = []agentexec.CandidateFile{}
 			}
-			if response.VerifierObservations == nil {
-				response.VerifierObservations = []agentexec.Observation{}
+			if tc.observations == nil {
+				semantic["verifierObservations"] = []agentexec.Observation{}
 			}
 			if tc.responseDTO != "" {
-				response.ReportJSON = json.RawMessage(tc.responseDTO)
+				semantic["reportJson"] = json.RawMessage(tc.responseDTO)
 			}
-			wire, err := json.Marshal(response)
+			var wantEvidenceRefs []string
+			if tc.role == agentexec.RoleVerifier {
+				aliases, err := nativeEvidenceRefAliases(inv)
+				if err != nil {
+					t.Fatal(err)
+				}
+				aliasValues := make([]string, 0, len(aliases))
+				for alias, ref := range aliases {
+					aliasValues = append(aliasValues, alias)
+					wantEvidenceRefs = append(wantEvidenceRefs, ref)
+				}
+				sort.Strings(aliasValues)
+				sort.Strings(wantEvidenceRefs)
+				semantic["evidenceRefs"] = aliasValues
+			}
+			wire, err := json.Marshal(semantic)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if _, err := agentexec.DecodeResponse(wire, inv, ""); err != nil {
-				t.Fatalf("representative response for %s was rejected: %v", tc.name, err)
+			response, err := decodeNativeFinal(string(wire), inv)
+			if err != nil {
+				t.Fatalf("representative semantic response for %s was rejected: %v", tc.name, err)
 			}
-			response.EvidenceRefs = []string{}
-			wire, _ = json.Marshal(response)
-			if _, err := agentexec.DecodeResponse(wire, inv, ""); err != nil {
-				t.Fatalf("empty evidenceRefs must remain valid for %s: %v", tc.name, err)
+			if response.RunID != inv.RunID || response.Nonce != inv.Nonce || response.InputDigest != inv.InputDigest || response.Role != inv.Request.Role || strings.Join(response.EvidenceRefs, "\x00") != strings.Join(wantEvidenceRefs, "\x00") {
+				t.Fatalf("Host metadata composition failed for %s: %#v", tc.name, response)
 			}
-			response.EvidenceRefs = []string{"request.context.globalGoal"}
-			wire, _ = json.Marshal(response)
-			if _, err := agentexec.DecodeResponse(wire, inv, ""); err == nil {
-				t.Fatal("unknown context-derived evidence reference was accepted")
+			if tc.responseDTO != "" && string(response.ReportJSON) != tc.responseDTO {
+				t.Fatalf("semantic report was rewritten for %s: got %s want %s", tc.name, response.ReportJSON, tc.responseDTO)
+			}
+			if _, err := decodeNativeFinal(`{"outcome":"`+tc.outcome+`","candidateFiles":[],"verifierObservations":[],"uncertainty":[],"invented":true}`, inv); err == nil {
+				t.Fatalf("unknown semantic property was accepted for %s", tc.name)
 			}
 		})
 	}
-}
-
-func assertEvidenceRefsOnlyEmpty(t *testing.T, inv agentexec.Invocation) {
-	t.Helper()
-	properties := nativeTurnOutputSchema(inv)["properties"].(map[string]any)
-	evidence := properties["evidenceRefs"].(map[string]any)
-	if evidence["maxItems"] != 0 {
-		t.Fatalf("unrepresentable evidence enum did not restrict output to []: %#v", evidence)
-	}
-	items := evidence["items"].(map[string]any)
-	if _, hasEnum := items["enum"]; hasEnum {
-		t.Fatalf("empty-only fallback retained a partial enum: %#v", items)
-	}
-}
-
-func mustJSON(t *testing.T, value any) []byte {
-	t.Helper()
-	data, err := json.Marshal(value)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return data
 }
 
 func TestNativeReviewPromptKeepsGlobalGoalAndDelegationsAssessmentOnly(t *testing.T) {

@@ -20,6 +20,10 @@ import (
 
 const maxCheckOutputBytes = 256 << 10
 
+// Keep verifier coverage within the shared response evidence-reference bound
+// before persisting a native role-start reservation.
+const maxVerifierCoverageReferences = 128
+
 // Verify executes every planned check as a separate direct argv process in a
 // fresh materialized candidate. An optional AI verifier is another invocation
 // and cannot replace these concrete checks.
@@ -517,12 +521,16 @@ func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, p
 		refs = append(refs, "check:"+id)
 	}
 	sort.Strings(refs)
+	if len(refs) > maxVerifierCoverageReferences {
+		return nil, log, fmt.Errorf("verifier required evidence references exceed the supported %d values", maxVerifierCoverageReferences)
+	}
 	contextJSON, _ := json.Marshal(struct {
-		CandidateDigest  string        `json:"candidateDigest"`
-		CandidateFiles   []string      `json:"candidateFiles"`
-		RequiredSubjects []string      `json:"requiredSubjects"`
-		CheckResults     []CheckResult `json:"checkResults"`
-	}{candidate.Digest, sortedFileKeys(candidate.Files), subjects, checkResults})
+		CandidateDigest      string        `json:"candidateDigest"`
+		CandidateFiles       []string      `json:"candidateFiles"`
+		RequiredSubjects     []string      `json:"requiredSubjects"`
+		RequiredEvidenceRefs []string      `json:"requiredEvidenceRefs"`
+		CheckResults         []CheckResult `json:"checkResults"`
+	}{candidate.Digest, sortedFileKeys(candidate.Files), subjects, refs, checkResults})
 	request := agentexec.Request{Role: agentexec.RoleVerifier, SourceRevision: project.Revision, ModelDigest: project.Report.ModelDigest, ModulePin: project.Report.Digest, ProjectionID: project.Report.Digest, ScopeIDs: refs, PolicyIDs: checks, Context: contextJSON, Artifacts: []agentexec.Artifact{}}
 	inputDigest, _ := digest(request)
 	if deadline, ok := ctx.Deadline(); ok {

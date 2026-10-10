@@ -179,11 +179,12 @@ func verifierRequest(project *Project, candidate candidateData, plan PlanRecord)
 	sort.Strings(subjects)
 	sort.Strings(refs)
 	contextJSON, _ := json.Marshal(struct {
-		CandidateDigest  string        `json:"candidateDigest"`
-		CandidateFiles   []string      `json:"candidateFiles"`
-		RequiredSubjects []string      `json:"requiredSubjects"`
-		CheckResults     []CheckResult `json:"checkResults"`
-	}{candidate.Digest, sortedFileKeys(candidate.Files), subjects, []CheckResult{}})
+		CandidateDigest      string        `json:"candidateDigest"`
+		CandidateFiles       []string      `json:"candidateFiles"`
+		RequiredSubjects     []string      `json:"requiredSubjects"`
+		RequiredEvidenceRefs []string      `json:"requiredEvidenceRefs"`
+		CheckResults         []CheckResult `json:"checkResults"`
+	}{candidate.Digest, sortedFileKeys(candidate.Files), subjects, refs, []CheckResult{}})
 	return agentexec.Request{Role: agentexec.RoleVerifier, SourceRevision: project.Revision, ModelDigest: project.Report.ModelDigest,
 		ModulePin: project.Report.Digest, ProjectionID: project.Report.Digest, ScopeIDs: refs, PolicyIDs: checks, Context: contextJSON,
 		Artifacts: []agentexec.Artifact{}}
