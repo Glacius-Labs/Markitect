@@ -328,6 +328,89 @@ func TestCompleteRequiresSuccessfulVerifiedApplyAndIsIdempotent(t *testing.T) {
 	}
 }
 
+func TestStoredAcknowledgementAndReceiptWithForeignOffsetMatchThemselves(t *testing.T) {
+	for _, offset := range []struct {
+		name    string
+		seconds int
+	}{{"-07:00", -7 * 3600}, {"+05:30", 5*3600 + 30*60}} {
+		t.Run(offset.name, func(t *testing.T) {
+			at := time.Date(2026, 10, 10, 12, 0, 0, 0, time.FixedZone("", offset.seconds))
+			if _, local := at.In(time.Local).Zone(); local == offset.seconds {
+				t.Skipf("machine local offset equals %s; decoding would reuse time.Local", offset.name)
+			}
+			binding := testBinding(t.TempDir(), "", ".markitect/model/work.yaml", false)
+			bindingDigest, err := BindingDigest(binding)
+			if err != nil {
+				t.Fatal(err)
+			}
+			structureDigest, err := StructureDigest(binding)
+			if err != nil {
+				t.Fatal(err)
+			}
+			record := testRecord(binding, []Decision{})
+			record.CreatedAgainst = bindingDigest
+			record.Acknowledgements = []StructureAcknowledgement{{
+				ScopeID: binding.ScopeID, BindingDigest: bindingDigest, StructureDigest: structureDigest,
+				Actor: "reviewer", Authority: "owner", Provenance: "decision-1", RecordedAt: at,
+			}}
+			if err := reseal(&record); err != nil {
+				t.Fatal(err)
+			}
+			encoded, err := EncodeRecord(record)
+			if err != nil {
+				t.Fatal(err)
+			}
+			prior, err := DecodeRecord(encoded)
+			if err != nil {
+				t.Fatal(err)
+			}
+			next, err := DecodeRecord(encoded)
+			if err != nil {
+				t.Fatal(err)
+			}
+			next.Decisions = append(next.Decisions, Decision{ID: "followup", ScopeIDs: []string{binding.ScopeID}, Question: "Which store?", Status: "open"})
+			if err := reseal(&next); err != nil {
+				t.Fatal(err)
+			}
+			if err := validateTransition(prior, next, false); err != nil {
+				t.Fatalf("unchanged acknowledgement was treated as deleted: %v", err)
+			}
+			next.Acknowledgements[0].RecordedAt = at.Add(time.Second)
+			if err := reseal(&next); err != nil {
+				t.Fatal(err)
+			}
+			if err := validateTransition(prior, next, false); err == nil || !strings.Contains(err.Error(), "cannot be deleted") {
+				t.Fatalf("rewritten acknowledgement time error = %v", err)
+			}
+
+			record.Status = StatusCompleted
+			record.Completions = []ApplyReceipt{{
+				ScopeID: binding.ScopeID, BindingDigest: bindingDigest, StructureDigest: structureDigest, Status: "applied",
+				RunID: "run-1", PlanID: "plan-1", PlanDigest: testDigest("plan"), CandidateID: "candidate-1", CandidateDigest: testDigest("candidate"),
+				VerificationID: "verify-1", VerificationStatus: "passed", VerificationDigest: testDigest("verification"), ApplyID: "apply-1", ApplyDigest: testDigest("apply"), AppliedAt: at,
+			}}
+			if err := reseal(&record); err != nil {
+				t.Fatal(err)
+			}
+			encoded, err = EncodeRecord(record)
+			if err != nil {
+				t.Fatal(err)
+			}
+			completed, err := DecodeRecord(encoded)
+			if err != nil {
+				t.Fatal(err)
+			}
+			repeated, err := DecodeRecord(encoded)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := completeScope(&completed, binding.ScopeID, binding, repeated.Completions[0]); err != nil {
+				t.Fatalf("repeating the stored Apply receipt was not idempotent: %v", err)
+			}
+		})
+	}
+}
+
 func TestGenericWriteCannotMintCompletionReceipt(t *testing.T) {
 	root, head, basis := testRepository(t, true)
 	binding := testBinding(root, head, basis, true)

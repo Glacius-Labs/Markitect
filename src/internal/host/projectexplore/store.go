@@ -223,7 +223,7 @@ func Complete(root, id, scopeID string, currentBinding Binding, receipt ApplyRec
 	}
 	if current.Status == StatusCompleted {
 		prior, ok := completionFor(current, scopeID)
-		if ok && prior == receipt {
+		if ok && sameApplyReceipt(prior, receipt) {
 			return current, nil
 		}
 		return Record{}, errors.New("completed exploration cannot be changed by a different Apply receipt")
@@ -422,7 +422,7 @@ func validateTransition(prior, next Record, allowCompletion bool) error {
 	for _, ack := range prior.Acknowledgements {
 		found := false
 		for _, candidate := range next.Acknowledgements {
-			if candidate == ack {
+			if sameAcknowledgement(candidate, ack) {
 				found = true
 				break
 			}
