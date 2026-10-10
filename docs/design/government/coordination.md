@@ -1995,3 +1995,9 @@ Root read helper.go234–280/545–573: safely rejected request returns harderro
 ### Reviewed role correction and recoverable helper feedback secured
 
 Root verified cleanlocal/publicf1b94597, read actualreview-onlyprompt/helpereligibility/safeunsuccessfulToolResult source. Owner independentreviewclosed and meaningfulhelper/transport/review/recovery/prompt/build/vet/canonicalpositive. Frozenbinary9201ab3f, savedrequestexactfingerprintrecovery/nohelperrestart; existingrole/ownershipguardsremain. Actual7 preserved9knownrequests/7providers/2267844partialestimate. NormalReadiness/Planrefreshforfreshactual8 underway; no newactualresult/fullproductcredit. SameordinaryA01/renewableauthority, no newRootorderneeded.
+
+### Actual8 exposes constructor composition gap before reviewer start
+
+Owner root semanticrepair2realstarts succeeds acceptedREADME/delegations afterfirstunresolvedrisk. Freshreviewer failsbeforeNative atAdapter.New: zeroDynamicTools butlefthandler/limits. Minimalzero-toolcleanup+realconstructorregressionunderway; focusedoptions/fingerprintchecks missedcomposition. Invocation genericunknown/reviewerworkspacepreserved, exactno-dispatchreadonlylifecycleauditpending, no guessedcleanup/replay. Estimate714513/newrootstarts2, prestartreviewreservationcountseparate. Rootobservedzero-specWIPresetscallback/limits, notacceptedfinalsource yet.
+
+Root sentoneboundedadditive requirement: singleproviderfreecompositionregression exercising realconstructor withnormalsetup roleoptions andhelperpresence, no newcapability/modelcanary/manualstartgate/rightsframework. Currentrepair/review+safeownlifecycle thenordinaryfreshA01 authorized. No Main/fullworkflowcredit.

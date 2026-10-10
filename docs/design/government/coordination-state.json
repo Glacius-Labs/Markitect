@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T00:03:07.984323Z",
+  "updatedUtc": "2026-10-10T00:08:27.492282Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "REVIEW_AND_RECOVERABLE_TOOL_FEEDBACK_FIXED_FRESH_ACTUAL_PREPARING",
+    "status": "ACTUAL8_REVIEW_CONSTRUCTOR_WIRING_REJECTED_BEFORE_NATIVE_START_FIX_UNDERWAY",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -17946,6 +17946,18 @@
       "binaryOwnerReported": "9201ab3fc0decc706176153d60b6f6df6b19e83a40143b1a169d288b0f3521d0",
       "knownActual7Ledger": "9knownrequests/7providers/2267844partialestimate preserved/backedup",
       "next": "NormalReadiness/Planrefresh/freshactual8 preparing, no newactual claimed yet; sameA01scope/renewableauthority"
+    },
+    "actual8ConstructorFailure": {
+      "ownerReported": "Normalrootsemanticrepair2starts: firstcompletereport hadunresolvedrisk, secondacceptedREADME+twodelegations. Reviewerconstructorrejected leftoverHandler+limits withzeroDynamicTools before nativestart.",
+      "error": "dynamic tool handler requires explicit specs and limits",
+      "knownNewNativeRootStarts": 2,
+      "reviewReservation": "Prestart reservation count verification pending, do not label providerstart",
+      "attemptEstimateMicros": 714513,
+      "lifecycle": "Genericinvocationterminationunknown/reviewerworkspacepreserved, readonlyaudit for exactnondispatch proof; no guessedcleanup",
+      "rootVerified": "Observed currentwithoutHelperTool WIP resets callback/MaxToolCalls/ToolTimeout at zero specs; exactreviewed/source handoffpending",
+      "regressionCoordination": "Sentonce samefix: real normalsetup Writer/Reviewer/Verifier/Helper Adapter.New composition with/withoutHosthelper provider-free, not isolatedoption/fingerprint-only check/newcanary/manualgate",
+      "next": "Targetedfix/tests/review plus exactownundispatchedlifecycle, thenfreshordinaryA01 underexistinghuman/renewableauthority; no replay/rights widening",
+      "fullAcceptance": false
     }
   }
 }
