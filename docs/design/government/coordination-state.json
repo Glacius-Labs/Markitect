@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T07:03:22.024014+00:00",
+  "updatedUtc": "2026-10-10T07:04:22.810000+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18381,7 +18381,7 @@
       "next": "Owner readiness docs freeze, broader targeted regressions, then fresh Windows A01 one final binary before/after Root fault under existing finite renewable authority. Distinct from oldActual16, no replay/study/Main/release acceptance."
     },
     "actual17Preparation": {
-      "status": "CLEAN_LOCAL_SOURCE_BINARY_ROOT_VERIFIED_NORMAL_READINESS_PLAN_PREPARING_ZERO_NEW_PROVIDER_STARTS_OWNER_REPORTED",
+      "status": "PUBLIC_REMOTE_CLEAN_SOURCE_BINARY_VERIFIED_NORMAL_PLAN_READY_NO_PROVIDER_STARTS_OWNER_REPORTED",
       "sourceSha": "4b14e5fc8073f80a84079250d086da5b7b1cda01",
       "binarySha256": "16987dbdaa67d5814a8ac7f86eb72705683e077911f5a882f96623f17731c7ef",
       "rootVerified": "Clean local HEAD4b14 and exact known binary FileSHA/Go1.27.1 WindowsAMD64 VCS4b14/modifiedfalse. Final source docs/coverage closure commitstat read. Public remote still04ca atinspection.",
@@ -18390,9 +18390,16 @@
         "key": "push-clean4b14-product-checkpoint-before-native-20261010",
         "sentUtc": "2026-10-10T07:03:22.024014+00:00",
         "toolAccepted": true,
-        "scope": "Normal coherent product/docs feature push per direct human backup mandate before next native starts, ordinary private/secret review/noForce/noMainRelease. No binary/Plan changes or extra permission/test phase."
+        "scope": "Normal coherent product/docs feature push per direct human backup mandate before next native starts, ordinary private/secret review/noForce/noMainRelease. No binary/Plan changes or extra permission/test phase.",
+        "status": "CLOSED_OWNER_PUSHED_ROOT_LS_REMOTE_EXACT"
       },
-      "execution": "Same frozen binary before/after original Root recovery boundary. Native Actual17 not yet admitted as completed/started by Root, actualPlan/startreceipt pending. Actual16 outcome and technical recovery remain separate."
+      "execution": "Same frozen binary before/after original Root recovery boundary. Native Actual17 not yet admitted as completed/started by Root, actualPlan/startreceipt pending. Actual16 outcome and technical recovery remain separate.",
+      "remoteVerifiedSha": "4b14e5fc8073f80a84079250d086da5b7b1cda01",
+      "planId": "5b4476c0fe09a226b6dcdd0daac4d6ca",
+      "planDigest": "sha256:7a1b08f1defd35d4bc2a0e6dc81f60469f1db6c98d151352e0517ebd43f414ff",
+      "batchId": "a01-bounded-audit-a3d5e30050b446b2b60f0c8778dda6c1",
+      "normalPreparationOwnerReported": "Readiness write and Plan succeeded, finite renewable batch allocated; no provider starts yet, source gates continue. Exact batch deadline receipt pending, no invented time or new Root grant.",
+      "prBoundary": "PR89 branch separately unchanged until final A01 evidence/docs. Feature push only, no Main/release acceptance."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
