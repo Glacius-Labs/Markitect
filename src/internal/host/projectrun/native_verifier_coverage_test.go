@@ -111,9 +111,18 @@ func TestNativeVerifierAliasesReachExactProjectCoverageBoundary(t *testing.T) {
 	selected := []string{aliasFor(refs[0]), aliasFor(refs[1])}
 	sort.Strings(selected)
 
+	// Native verifier responses use aliases on the wire; the adapter maps them
+	// back to these canonical subjects before project coverage is evaluated.
+	requiredSubjects := []string{"spec", "unit"}
+	sortedSubjects := append([]string(nil), requiredSubjects...)
+	sort.Strings(sortedSubjects)
+	subjectAliases := make(map[string]string, len(sortedSubjects))
+	for index, subject := range sortedSubjects {
+		subjectAliases[subject] = fmt.Sprintf("verifier-subject-000000-%06d", index)
+	}
 	observations := []agentexec.Observation{
-		{Subject: "spec", Outcome: "passed", Detail: "Required artifact inspected."},
-		{Subject: "unit", Outcome: "passed", Detail: "Required check inspected."},
+		{Subject: subjectAliases["spec"], Outcome: "passed", Detail: "Required artifact inspected."},
+		{Subject: subjectAliases["unit"], Outcome: "passed", Detail: "Required check inspected."},
 	}
 	makeResponse := func(evidence []string) string {
 		wire, err := json.Marshal(map[string]any{"outcome": "passed", "candidateFiles": []any{}, "verifierObservations": observations, "uncertainty": []any{}, "evidenceRefs": evidence})
@@ -127,10 +136,11 @@ func TestNativeVerifierAliasesReachExactProjectCoverageBoundary(t *testing.T) {
 		name      string
 		evidence  []string
 		wantStage string
+		wantError string
 	}{
 		{name: "complete expected coverage", evidence: selected},
-		{name: "unknown alias rejected by adapter", evidence: []string{"unknown-alias"}, wantStage: "adapter"},
-		{name: "duplicate alias rejected by adapter", evidence: []string{selected[0], selected[0]}, wantStage: "adapter"},
+		{name: "unknown alias rejected by adapter", evidence: []string{"unknown-alias"}, wantStage: "adapter", wantError: "native verifier evidence references contain an unknown alias"},
+		{name: "duplicate alias rejected by adapter", evidence: []string{selected[0], selected[0]}, wantStage: "adapter", wantError: "native verifier evidence references contain a duplicate alias"},
 		{name: "omitted expected reference rejected by coverage", evidence: selected[:1], wantStage: "coverage"},
 		{name: "extra valid policy alias rejected by coverage", evidence: append(append([]string(nil), selected...), aliasFor("unit")), wantStage: "coverage"},
 	}
@@ -154,7 +164,7 @@ func TestNativeVerifierAliasesReachExactProjectCoverageBoundary(t *testing.T) {
 			shared := agentexec.Config{Command: executable, ProviderVersion: config.ProviderVersion, Model: config.Model,
 				Timeout: config.Timeout, MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 16}
 			contextJSON, err := json.Marshal(map[string]any{
-				"kind": "project-verify/v1", "requiredSubjects": []string{"spec", "unit"},
+				"kind": "project-verify/v1", "requiredSubjects": requiredSubjects,
 				"requiredEvidenceRefs": refs,
 			})
 			if err != nil {
@@ -166,8 +176,8 @@ func TestNativeVerifierAliasesReachExactProjectCoverageBoundary(t *testing.T) {
 			workspace := &projectworkspace.Handle{ID: "verify-test", CWD: filepath.Clean(cwd), BaseSHA: sourceRevision}
 			result, err := adapter.Run(context.Background(), shared, request, agentexec.RunOptions{Workspace: workspace})
 			if tc.wantStage == "adapter" {
-				if err == nil {
-					t.Fatal("invalid alias response passed adapter decoding")
+				if err == nil || !strings.Contains(err.Error(), tc.wantError) {
+					t.Fatalf("adapter error = %v, want error containing %q", err, tc.wantError)
 				}
 				return
 			}

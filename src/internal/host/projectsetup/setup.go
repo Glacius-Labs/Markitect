@@ -473,13 +473,18 @@ func inspectFile(raw string) (Tool, error) {
 	if err != nil || currentErr != nil || count != opened.Size() || after.Size() != opened.Size() || after.Mode() != opened.Mode() || !after.ModTime().Equal(opened.ModTime()) || !os.SameFile(opened, current) || current.Mode() != opened.Mode() || current.Size() != opened.Size() {
 		return result, errors.New("runtime asset changed during fingerprinting")
 	}
-	mode := "0644"
-	if info.Mode().Perm()&0111 != 0 {
-		mode = fmt.Sprintf("%04o", info.Mode().Perm())
-	} else if runtime.GOOS != "windows" && strings.HasSuffix(strings.ToLower(path), ".py") {
-		mode = fmt.Sprintf("%04o", info.Mode().Perm())
-	}
+	mode := runtimeFileModeForSetup(info.Mode())
 	return Tool{Path: path, Digest: "sha256:" + hex.EncodeToString(hash.Sum(nil)), Mode: mode}, nil
+}
+
+func runtimeFileModeForSetup(mode fs.FileMode) string {
+	if runtime.GOOS == "windows" {
+		if mode.Perm()&0200 == 0 {
+			return "0444"
+		}
+		return "0644"
+	}
+	return fmt.Sprintf("%04o", mode.Perm())
 }
 
 func isCommandShim(path string) bool {

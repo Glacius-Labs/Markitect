@@ -167,6 +167,7 @@ func TestTargetDigestKeepsRawCaptureCASAcrossLineEndingChange(t *testing.T) {
 func TestPreflightApplyAndApplyPreserveRawCRLFCAS(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "normal")
+	gitE2E(t, root, "config", "core.autocrlf", "true")
 	for _, path := range []string{"src/orders/implementation.txt", "src/inventory/implementation.txt"} {
 		fullPath := filepath.Join(root, filepath.FromSlash(path))
 		baseBytes, err := os.ReadFile(fullPath)

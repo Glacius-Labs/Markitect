@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
@@ -329,7 +330,7 @@ func TestBuildRuntimeDefaultsNativeModelAndBindsInstructions(t *testing.T) {
 			absolute := filepath.Join(root, filepath.FromSlash(path))
 			foundPin := false
 			for _, pin := range agent.RuntimeFiles {
-				if pin.Path == absolute && pin.Mode == "0644" && strings.HasPrefix(pin.Digest, "sha256:") {
+				if pin.Path == absolute && pin.Mode == expectedInstructionRuntimeMode() && strings.HasPrefix(pin.Digest, "sha256:") {
 					foundPin = true
 				}
 			}
@@ -380,7 +381,59 @@ func writeNativeInstructions(t *testing.T, root string) {
 		if err := os.WriteFile(absolute, []byte(content), 0600); err != nil {
 			t.Fatal(err)
 		}
+		if err := os.Chmod(absolute, 0600); err != nil {
+			t.Fatal(err)
+		}
 	}
+}
+
+func TestInspectFilePreservesRuntimeModesAndFingerprint(t *testing.T) {
+	root := t.TempDir()
+	provider := testTool(t, root, providerName(), true)
+	for _, mode := range []os.FileMode{0600, 0444} {
+		t.Run(fmt.Sprintf("%04o", mode), func(t *testing.T) {
+			path := filepath.Join(root, "ordinary.md")
+			if err := os.WriteFile(path, []byte("ordinary runtime instruction\n"), mode); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chmod(path, mode); err != nil {
+				t.Fatal(err)
+			}
+			tool, err := inspectFile(path)
+			if err != nil {
+				t.Fatalf("inspectFile: %v", err)
+			}
+			info, err := os.Stat(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantMode := fmt.Sprintf("%04o", info.Mode().Perm())
+			if runtime.GOOS == "windows" {
+				wantMode = "0644"
+				if info.Mode().Perm()&0200 == 0 {
+					wantMode = "0444"
+				}
+			}
+			if tool.Mode != wantMode {
+				t.Fatalf("inspectFile mode = %s, want runtime mode %s", tool.Mode, wantMode)
+			}
+			config := agentexec.Config{
+				Command: provider.Path, Model: "mode-test-model", ProviderVersion: "codex-cli 0.162.0",
+				Timeout: time.Minute, MaxStdoutBytes: 1024, MaxStderrBytes: 1024,
+				RuntimeFiles: []agentexec.RuntimeFile{runtimeFile(tool)},
+			}
+			if _, err := agentexec.Fingerprint(config); err != nil {
+				t.Fatalf("strict runtime fingerprint rejected inspected mode %s: %v", tool.Mode, err)
+			}
+		})
+	}
+}
+
+func expectedInstructionRuntimeMode() string {
+	if runtime.GOOS == "windows" {
+		return "0644"
+	}
+	return "0600"
 }
 
 func hasRuntimePin(files []agentexec.RuntimeFile, tool Tool) bool {
