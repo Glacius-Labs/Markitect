@@ -30,20 +30,12 @@ The [Project workflow](../docs/project-workflow.md) and [Project operations](../
 
 ## Experimental and historical projection scenarios
 
-These fixtures preserve their own contract and source boundaries. Consult the [design map](../docs/design/README.md) and [validation map](../docs/validation/README.md) before interpreting a recorded result as current readiness.
+These fixtures preserve their own contract and source boundaries. The canonical Projection alpha fixtures were removed with the alpha; the [v0.14.1 tag](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1/examples) retains the ones it shipped. Consult the [design map](../docs/design/README.md) and [validation map](../docs/validation/README.md) before interpreting a recorded result as current readiness.
 
 | Fixture | Purpose |
 |---|---|
-| [Canonical Projection](canonical-projection) | Structural canonical alpha fixtures; see the [design](../docs/design/canonical-projection-reset.md) and [validation record](../docs/validation/canonical-projection-reset.md) |
 | [Projection-first](projection-first/README.md) | Reviewed candidate and verification lifecycle |
-| [Canonical workflow](canonical-workflow/README.md) | Workflow representations and guarded reconciliation |
-| [Capability ontologies](capability-ontologies/README.md) | Explicitly declared engineering vocabularies |
-| [Operating model](operating-model/README.md) | Bounded operating-model contracts |
-| [Recursive assurance](recursive-assurance/README.md) | Hierarchical responsibilities and evidence |
-| [Unknown ontology](unknown-ontology/README.md) | Exact package selection and conservative unknown-input behavior |
-| [Module replacement](module-replacement/README.md) | Replacing a representation implementation under declared contracts |
 | [Selective adoption](selective-adoption/README.md) | Fixed-source capture and project-owned adoption |
-| [Classic Commerce](classic-commerce/README.md) | Historical released Projection example and its pinned source |
 | [Consistency conflict](consistency-conflict/README.md) | Bounded conflicting-intent scenario |
 
 Generated fixture views derive from each fixture's canonical inputs. Preserve expected baselines and immutable workload versions; use a disposable copy for a scenario that writes. The [example harnesses](../src/harness/examples) and [contribution checks](../CONTRIBUTING.md#verify-a-change) own source regression coverage. [Release benchmarks](../benchmark/README.md) measure versioned synthetic CLI workloads separately.
