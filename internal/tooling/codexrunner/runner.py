@@ -238,19 +238,19 @@ class EventCollector:
         self.overflow = False
         self._lock = threading.Lock()
 
-    def record_line(self, line: bytes) -> None:
+    def record_line(self, line: bytes) -> bool:
         with self._lock:
             if self.log_file.tell() + len(line) > MAX_LOG_BYTES:
                 self.overflow = True
-                return
+                return False
             self.log_file.write(line)
             self.log_file.flush()
         try:
             event = strict_loads(line)
         except AdapterError:
-            return
+            return True
         if not isinstance(event, dict):
-            return
+            return True
         event_type = event.get("type")
         item = event.get("item")
         if event_type == "item.started" and isinstance(item, dict):
@@ -268,6 +268,18 @@ class EventCollector:
                     value = usage.get(source_key)
                     if isinstance(value, int) and value >= 0:
                         self.usage[target_key] = value
+        return True
+
+    def record_prompt_submitted(self, invocation: dict[str, Any], prompt: bytes) -> bool:
+        event = {
+            "type": "adapter.prompt-submitted",
+            "runId": invocation["runId"],
+            "inputDigest": invocation["inputDigest"],
+            "promptSha256": "sha256:" + hashlib.sha256(prompt).hexdigest(),
+            "promptBytes": len(prompt),
+        }
+        line = json.dumps(event, ensure_ascii=False, separators=(",", ":")).encode("utf-8") + b"\n"
+        return self.record_line(line)
 
     def record_stderr(self, chunk: bytes) -> None:
         event = json.dumps(
@@ -435,11 +447,25 @@ def launch_codex(
     stdout_thread.start()
     stderr_thread.start()
     prompt = make_prompt(invocation).encode("utf-8")
+    prompt_submission_error: Exception | None = None
     try:
-        process.stdin.write(prompt)
+        written = process.stdin.write(prompt)
+        if written != len(prompt):
+            raise OSError("Codex accepted only part of the prompt")
+        process.stdin.flush()
         process.stdin.close()
-    except (BrokenPipeError, OSError):
-        pass
+    except (BrokenPipeError, OSError, ValueError) as exc:
+        prompt_submission_error = exc
+        try:
+            process.stdin.close()
+        except (BrokenPipeError, OSError, ValueError):
+            pass
+        try:
+            process.terminate()
+        except OSError:
+            pass
+    else:
+        collector.record_prompt_submitted(invocation, prompt)
     timed_out = False
     try:
         return_code = process.wait(timeout=args.timeout_seconds)
@@ -456,6 +482,8 @@ def launch_codex(
     collector.close()
     if drain_errors:
         raise AdapterError("Codex private event log could not be retained")
+    if prompt_submission_error is not None:
+        raise AdapterError("Codex prompt could not be submitted") from prompt_submission_error
     if timed_out:
         return incomplete_response(invocation, "Codex execution timed out.", collector)
     if collector.overflow or stderr_overflow[0]:
