@@ -2115,3 +2115,7 @@ Owner realhelperappliedclosed/SourceDocsoverlap59.8254736/RootreviewPASS then fa
 ### Exact original invocation must disambiguate recovery from historical same TaskIDs
 
 Root read RecoverProjectAgent workspace_recovery.go51-70 confirms TaskID-onlyjournal scan/cardinalityreject precedes exactnativehandle/input checks. Owner threehistoricaldocs-review-work-1journals, originalRunID58dc4dcd/inputdigest/currentworkspace/trusteddispatchedhandle unique. Concretefix exactoriginalRunID+InputDigest selector, ambiguous/missingfailclosed, preserve recoveryError; WIPnotacceptedfreeze. NormalResume sameoriginalPlan/handles after sourcefix/review, no newPlan/replay/retagoriginalInvocation. CRLFsourcecompareexistingseam/rawCASseparate, distinctcleanup-pendinggapnotactualcause; noblockinglivereaders/foreigncleanup. Fullacceptancepending/unknownbatchcountsretained.
+
+### Distinct helper cleanup-pending gap recorded without expanding current blockers
+
+Owner boundedstaticaudit: appliedhelperdelta+Closefailure persistscleanup-pending/unknown, Resume lackshelperjournalreader and currentReopenCandidate parentbaseline mismatch. Notactual15cause; failclosed remains. Rootonceprioritized currentexactOriginalResume/CRLF first; recordexistingqueue/problemsrepro/operatorboundary, smallestexistingowned-close afterblockers ifrequired, no newreconciler/guardcapability/Mainscenario now. Necessaryboundedproductrepair coveredbyexistinghumanmandate, no fresh blanketpermission. No delta reapply/replay/guessedcleanup or hiddenuncertainty.
