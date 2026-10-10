@@ -125,13 +125,23 @@ func Analyze(model core.Model, inventory []File) Report {
 		}
 	}
 	for _, d := range idx.byKind[decisionKind] {
-		if _, ok := statementByID[refID(d.Spec["subject"])]; !ok {
-			addFinding(&r, "reference.decision-subject-missing", d.Identity().Key(), "Decision refers to a missing Statement.", "error")
+		id := d.Identity().Key()
+		owner := nearestManager(d.Metadata.Namespace, r.Managers)
+		if owner == "" {
+			addFinding(&r, "ownership.decision-unmanaged", id, "Decision has no Manager at or above its namespace.", "error")
 		}
-		if _, ok := managerByID[refID(d.Spec["actor"])]; !ok {
-			addFinding(&r, "reference.decision-actor-missing", d.Identity().Key(), "Decision actor is not a declared Manager.", "error")
+		decision := Decision{ID: id, Name: d.Metadata.Name, Namespace: d.Metadata.Namespace, Owner: owner, Subject: refID(d.Spec["subject"]), Actor: refID(d.Spec["actor"]), Decision: stringValue(d.Spec["decision"]), Reason: stringValue(d.Spec["reason"]), Source: d.Source.Path}
+		if subject, ok := statementByID[decision.Subject]; !ok {
+			addFinding(&r, "reference.decision-subject-missing", id, "Decision refers to a missing Statement.", "error")
+		} else if subject.Owner != owner && !subject.Public {
+			addFinding(&r, "reference.private-cross-manager", id, "Decision crosses a Manager boundary to decide on a private Statement.", "error")
 		}
+		if _, ok := managerByID[decision.Actor]; !ok {
+			addFinding(&r, "reference.decision-actor-missing", id, "Decision actor is not a declared Manager.", "error")
+		}
+		r.Decisions = append(r.Decisions, decision)
 	}
+	sort.Slice(r.Decisions, func(i, j int) bool { return r.Decisions[i].ID < r.Decisions[j].ID })
 
 	fileByPath := map[string]FileEntry{}
 	casePaths := map[string]string{}
@@ -270,17 +280,19 @@ func Analyze(model core.Model, inventory []File) Report {
 		Files                         []FileEntry
 		Findings                      []Finding
 		Unknown                       []string
-	}{r.APIVersion, r.ModelDigest, r.InventoryDigest, r.Status, r.Managers, r.Statements, r.Artifacts, r.Checks, r.Files, r.Findings, r.Unknown})
+		// Omitted when empty, so a report without Decisions keeps its digest.
+		Decisions []Decision `json:",omitempty"`
+	}{r.APIVersion, r.ModelDigest, r.InventoryDigest, r.Status, r.Managers, r.Statements, r.Artifacts, r.Checks, r.Files, r.Findings, r.Unknown, r.Decisions})
 	return r
 }
 
 // unprojectedDigest covers the parts of a definition that the report collections
-// do not carry: the purpose of a Statement, Artifact or Check, and whole Decisions.
+// do not carry: the purpose of a Statement, Artifact, Check or Decision.
 func unprojectedDigest(d core.Definition) string {
 	switch d.Kind {
 	case managerKind:
 		return ""
-	case statementKind, artifactKind, checkKind:
+	case statementKind, artifactKind, checkKind, decisionKind:
 		return digest(d.Purpose)
 	}
 	return digest(struct {

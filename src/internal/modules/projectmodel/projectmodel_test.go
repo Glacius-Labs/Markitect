@@ -1,6 +1,7 @@
 package projectmodel
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -161,6 +162,150 @@ func TestAnalyzeTracksManyToManyFileMeaningAndDeterministicDigest(t *testing.T) 
 	}
 	if mapped.Owner == "" {
 		t.Fatalf("file ownership was not resolved: %+v", mapped)
+	}
+}
+
+// decisionFixture adds Decision definitions to the standard fixture.
+func decisionFixture(t *testing.T, decisions ...core.Definition) (Report, core.Model, []File) {
+	t.Helper()
+	model, files := fixture(t, true, true, true)
+	compiled, diagnostics := core.Compile(model.Schemas, append(copyDefinitions(model.Definitions), decisions...), "decisions")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile: %+v", diagnostics)
+	}
+	return Analyze(compiled, files), compiled, files
+}
+
+func decisionDefinition(namespace, name, subjectNamespace, subject, text string) core.Definition {
+	return core.Definition{APIVersion: APIVersion, Kind: decisionKind, Metadata: core.Metadata{Namespace: namespace, Name: name}, Purpose: "A recorded decision.", Spec: map[string]any{
+		"subject":  map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": subjectNamespace, "name": subject},
+		"decision": text,
+		"reason":   "Stock must stay exact.",
+		"actor":    map[string]any{"apiVersion": APIVersion, "kind": managerKind, "namespace": namespace, "name": namespace},
+	}}
+}
+
+// DEC-022: Decisions are in the Report, and a report without them keeps its
+// JSON and digest exactly as before Decisions were projected.
+func TestAnalyzeProjectsDecisionsOnlyWhenDeclared(t *testing.T) {
+	plain, _, _ := decisionFixture(t)
+	data, err := json.Marshal(plain)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), `"decisions"`) {
+		t.Fatalf("a report without Decisions gained a decisions field: %s", data)
+	}
+	before := digest(struct {
+		API, Model, Inventory, Status string
+		Managers                      []Manager
+		Statements                    []Statement
+		Artifacts                     []Artifact
+		Checks                        []Check
+		Files                         []FileEntry
+		Findings                      []Finding
+		Unknown                       []string
+	}{plain.APIVersion, plain.ModelDigest, plain.InventoryDigest, plain.Status, plain.Managers, plain.Statements, plain.Artifacts, plain.Checks, plain.Files, plain.Findings, plain.Unknown})
+	if plain.Digest != before {
+		t.Fatalf("report digest without Decisions changed: %s, was %s", plain.Digest, before)
+	}
+	r, _, _ := decisionFixture(t, decisionDefinition("inventory", "release-once", "inventory", "release-reservation", "Release each reservation exactly once."))
+	inventoryID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "inventory", Name: "inventory"}).Key()
+	contractID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "inventory", Name: "release-reservation"}).Key()
+	if r.Status != "succeeded" || len(r.Decisions) != 1 || r.Decisions[0].Owner != inventoryID || r.Decisions[0].Subject != contractID || r.Decisions[0].Actor != inventoryID || r.Decisions[0].Decision != "Release each reservation exactly once." {
+		t.Fatalf("decision not projected: status=%s decisions=%+v findings=%+v", r.Status, r.Decisions, r.Findings)
+	}
+}
+
+// DEC-022: a Manager's Context shows its own Decisions and the Statements they
+// decide on; another Manager's Decisions stay out of it.
+func TestContextShowsOwnDecisionsAndTheirSubjects(t *testing.T) {
+	r, _, _ := decisionFixture(t,
+		decisionDefinition("inventory", "release-once", "inventory", "release-reservation", "Release each reservation exactly once."),
+		decisionDefinition("orders", "cancel-releases", "inventory", "release-reservation", "Cancellation always releases."),
+	)
+	contractID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "inventory", Name: "release-reservation"}).Key()
+	for namespace, want := range map[string]string{"inventory": "release-once", "orders": "cancel-releases"} {
+		ctx, err := Context(r, (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: namespace, Name: namespace}).Key())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(ctx.Decisions) != 1 || ctx.Decisions[0].Name != want {
+			t.Fatalf("%s sees decisions %+v, want only its own %s", namespace, ctx.Decisions, want)
+		}
+		if namespace == "orders" && (len(ctx.Contracts) != 1 || ctx.Contracts[0].ID != contractID) {
+			t.Fatalf("orders does not see the contract its decision is about: %+v", ctx.Contracts)
+		}
+	}
+}
+
+// DEC-022: a Decision may not decide on another Manager's private Statement,
+// as no other reference may; Context would otherwise reveal it.
+func TestAnalyzeRejectsDecisionOnForeignPrivateStatement(t *testing.T) {
+	r, _, _ := decisionFixture(t, decisionDefinition("inventory", "orders-cancel", "orders", "cancel-order", "Inventory decides on cancellation."))
+	if r.Status != "failed" || !hasFinding(r.Findings, "reference.private-cross-manager") {
+		t.Fatalf("decision on a foreign private statement was accepted: status=%s findings=%+v", r.Status, r.Findings)
+	}
+}
+
+// DEC-022: a Decision change is a change of its subject, routed with the
+// Decision's owner, and no longer widens to the whole project.
+func TestImpactRoutesDecisionChangeThroughItsSubject(t *testing.T) {
+	decision := decisionDefinition("orders", "cancel-releases", "inventory", "release-reservation", "Cancellation always releases.")
+	without, _, _ := decisionFixture(t)
+	base, compiled, files := decisionFixture(t, decision)
+	changedDefinitions := copyDefinitions(compiled.Definitions)
+	for i := range changedDefinitions {
+		if changedDefinitions[i].Kind == decisionKind {
+			changedDefinitions[i].Spec["decision"] = "Cancellation releases unless already released."
+		}
+	}
+	changedModel, diagnostics := core.Compile(compiled.Schemas, changedDefinitions, "decision-changed")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile: %+v", diagnostics)
+	}
+	decisionID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: decisionKind, Namespace: "orders", Name: "cancel-releases"}).Key()
+	contractID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "inventory", Name: "release-reservation"}).Key()
+	ordersID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}).Key()
+	inventoryID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "inventory", Name: "inventory"}).Key()
+	for name, impact := range map[string]ChangeImpact{
+		"decision text changed": Impact(base, Analyze(changedModel, files)),
+		"decision added":        Impact(without, base),
+		"decision removed":      Impact(base, without),
+	} {
+		if len(impact.Unknown) != 0 {
+			t.Fatalf("%s widened to the whole project: %v", name, impact.Unknown)
+		}
+		if !contains(impact.ChangedDefinitions, decisionID) || !contains(impact.AffectedStatements, contractID) || !contains(impact.Managers, ordersID) || !contains(impact.Managers, inventoryID) || !contains(impact.Files, "src/inventory/release.go") || !hasFinding(impact.Findings, "impact.decision-change") {
+			t.Fatalf("%s was not routed through its subject and owner: changed=%v statements=%v managers=%v files=%v", name, impact.ChangedDefinitions, impact.AffectedStatements, impact.Managers, impact.Files)
+		}
+	}
+}
+
+// DEC-022: like a change of the subject itself, a Decision change routes the
+// subject's owner, even when nothing else reaches that Manager.
+func TestImpactRoutesDecisionSubjectOwner(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	definitions := append(copyDefinitions(model.Definitions),
+		core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "inventory", Name: "stock-unit"}, Purpose: "Unit of stock.", Spec: map[string]any{"category": "concept", "description": "Pieces.", "public": true}},
+		decisionDefinition("orders", "count-pieces", "inventory", "stock-unit", "Orders count pieces."),
+	)
+	analyze := func(text string) Report {
+		for i := range definitions {
+			if definitions[i].Kind == decisionKind {
+				definitions[i].Spec["decision"] = text
+			}
+		}
+		compiled, diagnostics := core.Compile(model.Schemas, copyDefinitions(definitions), "subject-owner")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		return Analyze(compiled, files)
+	}
+	impact := Impact(analyze("Orders count pieces."), analyze("Orders count packs."))
+	inventoryID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "inventory", Name: "inventory"}).Key()
+	if len(impact.Unknown) != 0 || !contains(impact.Managers, inventoryID) {
+		t.Fatalf("decision change did not route its subject's owner: managers=%v unknown=%v", impact.Managers, impact.Unknown)
 	}
 }
 

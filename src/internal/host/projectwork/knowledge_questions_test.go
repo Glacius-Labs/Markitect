@@ -84,8 +84,8 @@ func TestShopKnowledgeQuestions(t *testing.T) {
 			"Impact routes consumers, their paths, checks and owners; it returns no reason per element", askShopContractConsumers},
 		{"Q03", "What changes when the relation itself is removed?", questionAnswered,
 			"Impact evaluates the union of base and candidate edges", askShopRemovedRelation},
-		{"Q04", "Which decision supports this rule?", questionGap,
-			"The schema accepts Decisions, but the Shop declares none and the Report projects none", askShopSupportingDecision},
+		{"Q04", "Which decision supports this rule?", questionAnswered,
+			"Report.Decisions by subject and the owning Manager's Context (DEC-022); the Shop declares none", askShopSupportingDecision},
 		{"Q05", "Which accepted work led to an applied change?", questionOutsideModel,
 			"Host run, plan and apply records, not the project model", askShopAppliedWork},
 		{"Q06", "Which required artifact or check is missing?", questionAnswered,
@@ -119,7 +119,7 @@ func TestShopKnowledgeQuestions(t *testing.T) {
 		counts[question.status]++
 		t.Run(question.id, func(t *testing.T) { question.run(t, shop) })
 	}
-	want := map[string]int{questionAnswered: 5, questionPartial: 2, questionGap: 2, questionOutsideModel: 3}
+	want := map[string]int{questionAnswered: 6, questionPartial: 2, questionGap: 1, questionOutsideModel: 3}
 	if !reflect.DeepEqual(counts, want) {
 		t.Fatalf("knowledge question statuses = %v, want %v; change a status only together with its row", counts, want)
 	}
@@ -204,15 +204,56 @@ func askShopRemovedRelation(t *testing.T, shop shopFixture) {
 }
 
 func askShopSupportingDecision(t *testing.T, shop shopFixture) {
-	if _, ok := projectmodel.Schema().Kinds["Decision"]; !ok {
-		t.Fatal("the project schema no longer declares Decision; re-assess Q04")
+	if len(shop.project.Report.Decisions) != 0 {
+		t.Fatalf("the Shop now declares Decisions %+v; re-assess Q04", shop.project.Report.Decisions)
 	}
-	for _, definition := range shop.project.Model.Definitions {
-		if definition.Kind == "Decision" {
-			t.Fatalf("the Shop now declares Decision %s; re-assess Q04", definition.Metadata.Name)
+	// Candidate, not the shipped Shop: inventory records why release is idempotent.
+	const decisionPath = ".markitect/model/commerce/sales/inventory/release-once.yaml"
+	candidate := shop.candidate(t, func(files map[string]string) {
+		files[decisionPath] = `apiVersion: project.markitect.example.org/v1alpha1
+kind: Decision
+metadata:
+  name: release-once
+  namespace: commerce.sales.inventory
+purpose: Records why a reservation is released at most once.
+spec:
+  subject:
+    namespace: commerce.sales.inventory.reservations
+    name: release-reservation
+  decision: Repeating a release never releases quantity twice.
+  reason: A double release would overstate available stock.
+  actor:
+    namespace: commerce.sales.inventory
+    name: inventory
+`
+		replaceInShop(t, files, ManifestPath, "  - .markitect/model/commerce/sales/inventory/manager.yaml\n",
+			"  - .markitect/model/commerce/sales/inventory/manager.yaml\n  - "+decisionPath+"\n", 1)
+	})
+	decision := shopID("Decision", "commerce.sales.inventory", "release-once")
+	var supporting []string
+	for _, d := range candidate.Report.Decisions {
+		if d.Subject == shopReleaseReservation {
+			supporting = append(supporting, d.ID)
+			if d.Owner != shopInventoryManager || d.Actor != shopInventoryManager || d.Reason == "" {
+				t.Fatalf("decision = %+v, want owner and actor inventory with a reason", d)
+			}
 		}
 	}
-	assertNoModelField(t, "Decision")
+	assertSameSet(t, "decisions supporting release-reservation", supporting, decision)
+	var visible []string
+	for _, d := range shopContext(t, candidate.Report, shopInventoryManager).Decisions {
+		visible = append(visible, d.ID)
+	}
+	assertSameSet(t, "inventory's decisions", visible, decision)
+	if others := shopContext(t, candidate.Report, shopOrdersManager).Decisions; len(others) != 0 {
+		t.Fatalf("orders sees inventory's decisions: %+v", others)
+	}
+	// Recording the decision routes its subject and owner, not the whole project.
+	impact := projectmodel.Impact(shop.project.Report, candidate.Report)
+	assertResolvedImpact(t, impact)
+	assertSameSet(t, "changed definitions", impact.ChangedDefinitions, decision)
+	assertContains(t, "affected statements", impact.AffectedStatements, shopReleaseReservation)
+	assertContains(t, "impact managers", impact.Managers, shopInventoryManager)
 }
 
 func askShopAppliedWork(t *testing.T, _ shopFixture) {
@@ -339,7 +380,7 @@ func askShopScopeVisibility(t *testing.T, shop shopFixture) {
 		}
 	}
 	// Gap: Context says what is visible, never why something is hidden.
-	assertFieldNames(t, projectmodel.ManagerContext{}, "Manager", "Statements", "Contracts", "Artifacts", "Checks", "Children", "Findings")
+	assertFieldNames(t, projectmodel.ManagerContext{}, "Manager", "Statements", "Contracts", "Artifacts", "Checks", "Decisions", "Children", "Findings")
 }
 
 func askShopClaimConflicts(t *testing.T, _ shopFixture) {
