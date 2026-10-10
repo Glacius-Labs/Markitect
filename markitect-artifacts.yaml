@@ -2420,6 +2420,10 @@ spec:
       owner: bounded-agent-execution-host
     - path: src/internal/host/codexappserver/evidence.go
       owner: bounded-agent-execution-host
+    - path: src/internal/host/codexappserver/full_verify_subject_aliases.go
+      owner: bounded-agent-execution-host
+    - path: src/internal/host/codexappserver/full_verify_subject_aliases_test.go
+      owner: bounded-agent-execution-host
     - path: src/internal/host/codexappserver/process.go
       owner: bounded-agent-execution-host
     - path: src/internal/host/codexappserver/process_args_test.go

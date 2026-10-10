@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
 const (
@@ -230,12 +232,14 @@ type fullVerifyNativeWorkspaceInvoker struct {
 	workspace       projectworkspace.Handle
 	roleTimeout     time.Duration
 	requestDigest   string
+	requestContext  json.RawMessage
 	typedIncomplete bool
 }
 
 func (i *fullVerifyNativeWorkspaceInvoker) Run(_ context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
 	i.called = true
 	i.roleTimeout = config.Timeout
+	i.requestContext = append(json.RawMessage(nil), request.Context...)
 	if options.Workspace == nil {
 		return agentexec.RunResult{}, errors.New("native assessment received no owned workspace")
 	}
@@ -340,6 +344,123 @@ func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *
 	journal := readWorkspaceJournal(t, root, invoker.workspace.ID)
 	if journal.State != "closed" || journal.Delta == nil || len(journal.Delta.Changes) != 0 || journal.Receipt.RunID != "full-verify-native-run" {
 		t.Fatalf("read-only workspace journal did not retain empty harvested evidence and receipt: %+v", journal)
+	}
+}
+
+func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	configureWorkspaceBridgeInstructions(t, root)
+	revision := identityHead(t, root)
+	project, err := projectwork.Load(root, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(project.Report.Artifacts) == 0 || len(project.Report.Managers) < 2 {
+		t.Fatalf("fixture lacks cross-Manager model definitions: artifacts=%d managers=%d", len(project.Report.Artifacts), len(project.Report.Managers))
+	}
+	managerID := project.Report.Artifacts[0].Owner
+	otherManagerID := ""
+	for _, manager := range project.Report.Managers {
+		if manager.ID != managerID {
+			otherManagerID = manager.ID
+			break
+		}
+	}
+	if otherManagerID == "" {
+		t.Fatal("fixture has no second Manager for cross-Manager evidence")
+	}
+	publicRelation := projectmodel.Statement{ID: "statement:public-relation", Owner: otherManagerID, Public: true, Description: "Public related contract."}
+	privateRelation := projectmodel.Statement{ID: "statement:private-relation", Owner: otherManagerID, Public: false, Description: "Private related detail."}
+	publicStatement := projectmodel.Statement{ID: "statement:public-contract", Owner: otherManagerID, Public: true, Description: "Public contract realized by the artifact.", Uses: []string{publicRelation.ID, privateRelation.ID}}
+	privateStatement := projectmodel.Statement{ID: "statement:private-detail", Owner: otherManagerID, Public: false, Description: "Private implementation detail."}
+	unrelatedStatement := projectmodel.Statement{ID: "statement:unrelated", Owner: otherManagerID, Public: true, Description: "Unrelated public contract."}
+	project.Report.Statements = append(project.Report.Statements, publicRelation, privateRelation, publicStatement, privateStatement, unrelatedStatement)
+	attachedCheck := projectmodel.Check{ID: "check:artifact-check", Owner: otherManagerID, Command: []string{"python", "-m", "unittest"}, Limitation: "Checks the same snapshot."}
+	unrelatedCheck := projectmodel.Check{ID: "check:unrelated", Owner: otherManagerID, Command: []string{"go", "test", "./..."}}
+	project.Report.Checks = append(project.Report.Checks, attachedCheck, unrelatedCheck)
+	for index := range project.Report.Artifacts {
+		if project.Report.Artifacts[index].Owner == managerID {
+			project.Report.Artifacts[index].Realizes = append(project.Report.Artifacts[index].Realizes, publicStatement.ID, privateStatement.ID)
+			project.Report.Artifacts[index].Checks = append(project.Report.Artifacts[index].Checks, attachedCheck.ID)
+			break
+		}
+	}
+	owned, err := projectmodel.Context(project.Report, managerID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantSubjects := fullAuditSubjects(owned, nil)
+
+	service, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assessmentAgent := workspaceBridgeAgent(t, root)
+	assessmentAgent.Command = filepath.Join(t.TempDir(), "codex-app-server")
+	assessmentAgent.Model = "gpt-6-luna"
+	assessmentAgent.ProviderVersion = "codex-cli 0.162.0"
+	assessmentAgent.AppServer = &AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
+	assessmentAgent.Timeout = Duration(time.Hour)
+	assessmentAgent.MaxStdoutBytes = 1 << 20
+	assessmentAgent.MaxStderrBytes = 1 << 20
+	assessmentAgent.Pricing = Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
+	runtime := Runtime{Agents: map[string]Agent{managerID: assessmentAgent}, Review: &ReviewConfig{Agents: map[string]Agent{managerID: assessmentAgent}},
+		Limits: Limits{MaxDepth: 1, MaxStarts: 8, MaxParallel: 1, MaxDuration: Duration(time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
+	invoker := &fullVerifyNativeWorkspaceInvoker{root: root}
+	failedResult := CheckResult{ID: attachedCheck.ID, Outcome: "failed", ExitCode: 1, Stderr: "assertion failed"}
+	results := relevantManagerChecks(project.Report, managerID, []CheckResult{failedResult, {ID: unrelatedCheck.ID, Outcome: "passed"}})
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if _, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
+		managerID, StrictnessProfile{}, BriefingContext{}, nil, results, false, "full-verify-support-test"); err != nil {
+		t.Fatalf("Manager audit failed: %v", err)
+	}
+	var auditContext struct {
+		SupportingStatements []projectmodel.Statement `json:"supportingStatements"`
+		SupportingChecks     []projectmodel.Check     `json:"supportingChecks"`
+		CheckResults         []CheckResult            `json:"checkResults"`
+		RequiredSubjects     []string                 `json:"requiredSubjects"`
+	}
+	if err := json.Unmarshal(invoker.requestContext, &auditContext); err != nil {
+		t.Fatalf("decode captured audit context: %v", err)
+	}
+	if len(auditContext.SupportingStatements) != 1 || auditContext.SupportingStatements[0].ID != publicStatement.ID {
+		t.Fatalf("invocation supporting statements = %+v", auditContext.SupportingStatements)
+	}
+	if !reflect.DeepEqual(auditContext.SupportingStatements[0].Uses, []string{publicRelation.ID}) {
+		t.Fatalf("invocation exposed non-public or unrelated contract references: %v", auditContext.SupportingStatements[0].Uses)
+	}
+	gotSupportingCheckIDs := make([]string, 0, len(auditContext.SupportingChecks))
+	for _, check := range auditContext.SupportingChecks {
+		gotSupportingCheckIDs = append(gotSupportingCheckIDs, check.ID)
+	}
+	checkIDs := map[string]bool{}
+	for _, check := range project.Report.Checks {
+		checkIDs[check.ID] = true
+	}
+	wantSupportingCheckIDs := []string{}
+	attachedCheckExpected := false
+	for _, artifact := range project.Report.Artifacts {
+		if artifact.Owner == managerID {
+			for _, checkID := range artifact.Checks {
+				if checkIDs[checkID] {
+					wantSupportingCheckIDs = append(wantSupportingCheckIDs, checkID)
+					if checkID == attachedCheck.ID {
+						attachedCheckExpected = true
+					}
+				}
+			}
+		}
+	}
+	sort.Strings(wantSupportingCheckIDs)
+	if !reflect.DeepEqual(gotSupportingCheckIDs, wantSupportingCheckIDs) || !attachedCheckExpected {
+		t.Fatalf("invocation supporting checks = %+v", auditContext.SupportingChecks)
+	}
+	if !reflect.DeepEqual(auditContext.CheckResults, []CheckResult{failedResult}) {
+		t.Fatalf("invocation changed the attached check result: %+v", auditContext.CheckResults)
+	}
+	if !reflect.DeepEqual(auditContext.RequiredSubjects, wantSubjects) {
+		t.Fatalf("supporting evidence changed the Manager's owned obligations: got=%v want=%v", auditContext.RequiredSubjects, wantSubjects)
 	}
 }
 

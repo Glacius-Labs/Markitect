@@ -183,6 +183,16 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 	if err != nil {
 		return result, err
 	}
+	if req.Role == agentexec.RoleExecutor {
+		var requestContext struct {
+			ResponseSchema json.RawMessage `json:"responseSchema"`
+		}
+		if json.Unmarshal(req.Context, &requestContext) == nil {
+			if _, schemaErr := nativeFullVerifyReportSchema(inv, requestContext.ResponseSchema); schemaErr != nil {
+				return result, schemaErr
+			}
+		}
+	}
 	if req.Role == agentexec.RoleVerifier {
 		if _, err := nativeVerifierEvidenceAliases(inv); err != nil {
 			return result, err
@@ -381,7 +391,11 @@ func nativeTurnPrompt(inv agentexec.Invocation, wire []byte, workspaceCWD string
 			ResponseSchema json.RawMessage `json:"responseSchema"`
 		}
 		if json.Unmarshal(inv.Request.Context, &context) == nil && len(context.ResponseSchema) > 0 {
-			contract += "- Include reportJson as a JSON object matching request.context.responseSchema exactly; do not encode the object as a string. Return every required property and use arrays for every declared array field.\n"
+			if context.Kind == "projectrun-full-verify/v1" {
+				contract += "- Include reportJson as a JSON object matching the supplied full-verification report shape; do not encode the object as a string. Return every required property and use arrays for every declared array field. assessments[].subject uses the assigned short aliases described below; the Host maps them back to canonical identifiers.\n"
+			} else {
+				contract += "- Include reportJson as a JSON object matching request.context.responseSchema exactly; do not encode the object as a string. Return every required property and use arrays for every declared array field.\n"
+			}
 			contract += "- Return candidateFiles as an empty array for this native report invocation; the Host harvests your actual workspace delta. Do not reproduce file bytes or compute their hashes in the response.\n"
 		} else {
 			contract += "- Omit reportJson unless this invocation supplies request.context.responseSchema. A proposed response needs candidateFiles or reportJson.\n"
@@ -393,7 +407,21 @@ func nativeTurnPrompt(inv agentexec.Invocation, wire []byte, workspaceCWD string
 			contract += "- For projectrun-review/v1, return the exact typed report in reportJson and keep candidateFiles, verifierObservations, and uncertainty empty for this read-only assessment. The outer outcome is always proposed when returning a well-formed typed review report, whether reportJson.status is pass or fail. reportJson.status expresses the review conclusion; a valid fail finding is an assessment result, not an invocation failure. Preserve each actionable grounded finding in reportJson.findings and do not move it to the outer outcome or uncertainty.\n"
 		}
 		if context.Kind == "projectrun-full-verify/v1" {
-			contract += "- For projectrun-full-verify/v1, perform a read-only, bounded Manager audit against the fixed snapshot, model, files, briefing, child assessments, and check results supplied in this invocation. The complete audit scope is exactly request.context.requiredSubjects: copy every subject string verbatim into exactly one assessments[].subject, with no omissions, duplicates, paraphrases, or additional subjects. Treat these strings as identifiers and use the adjacent supplied context to interpret them. Do not gate this scoped audit on unrelated Git inspection, Markitect CLI/MCP availability, or rerunning Host-supplied checks; report a capability limitation only when it prevents assessing a required subject. For a well-formed typed audit report, outer outcome is proposed; reportJson.status independently expresses pass, fail, or incomplete and proposed does not assert a pass. Mark only evidence-supported subjects pass; use fail for contradictory evidence and incomplete when relevant evidence for a required subject is unavailable. Never force pass or invent evidence. Put relevant uncertainty in the typed assessment detail and mark the subject and overall status incomplete when evidence is missing. Keep outer uncertainty empty; return candidateFiles and verifierObservations as empty arrays for this read-only report.\n"
+			contract += "- For projectrun-full-verify/v1, perform a read-only, bounded Manager audit against the fixed snapshot, model, files, briefing, child assessments, and check results supplied in this invocation. The complete audit scope is exactly request.context.requiredSubjects. Use each assigned short alias below exactly once in assessments[].subject; do not omit, duplicate, paraphrase, or add subjects. The Host maps each alias back to its exact canonical subject. Treat canonical identifiers as identifiers and use adjacent supplied context to interpret them. Do not gate this scoped audit on unrelated Git inspection, Markitect CLI/MCP availability, or rerunning Host-supplied checks; report a capability limitation only when it prevents assessing a required subject. For a well-formed typed audit report, outer outcome is proposed; reportJson.status independently expresses pass, fail, or incomplete and proposed does not assert a pass. Mark only evidence-supported subjects pass; use fail for contradictory evidence and incomplete when relevant evidence for a required subject is unavailable. Never force pass or invent evidence. Put relevant uncertainty in the typed assessment detail and mark the subject and overall status incomplete when evidence is missing. Keep outer uncertainty empty; return candidateFiles and verifierObservations as empty arrays for this read-only report.\n"
+			aliases, aliasErr := nativeFullVerifySubjectAliases(inv)
+			if aliasErr == nil && aliases != nil {
+				keys := make([]string, 0, len(aliases))
+				for alias := range aliases {
+					keys = append(keys, alias)
+				}
+				sort.Strings(keys)
+				pairs := make([][2]string, 0, len(keys))
+				for _, alias := range keys {
+					pairs = append(pairs, [2]string{alias, aliases[alias]})
+				}
+				mapping, _ := json.Marshal(pairs)
+				contract += "- Subject alias mapping (alias, canonical identifier): " + string(mapping) + ". Use only the alias in reportJson assessments[].subject; do not copy canonical strings into that field.\n"
+			}
 		}
 	case agentexec.RoleVerifier:
 		contract += "- For verifier responses, outer outcome must be one of passed, failed, incomplete, or escalated. candidateFiles must be empty; omit candidateJson and reportJson. A passed or failed result requires concrete verifierObservations as objects with subject, outcome, and detail.\n"
@@ -490,7 +518,17 @@ func nativeTurnOutputSchema(inv agentexec.Invocation) map[string]any {
 		ResponseSchema json.RawMessage `json:"responseSchema"`
 	}
 	if inv.Request.Role == agentexec.RoleExecutor && json.Unmarshal(inv.Request.Context, &context) == nil && len(context.ResponseSchema) > 0 {
-		properties["reportJson"] = context.ResponseSchema
+		if transformed, err := nativeFullVerifyReportSchema(inv, context.ResponseSchema); err != nil {
+			return nil
+		} else if transformed != nil {
+			var schemaValue any
+			if json.Unmarshal(transformed, &schemaValue) != nil {
+				return nil
+			}
+			properties["reportJson"] = schemaValue
+		} else {
+			properties["reportJson"] = context.ResponseSchema
+		}
 		required = append(required, "reportJson")
 		candidates["maxItems"] = 0
 	}
@@ -516,6 +554,7 @@ func decodeNativeFinal(final string, inv agentexec.Invocation) (agentexec.Respon
 	}
 	allowed := map[string]bool{"outcome": true, "candidateFiles": true, "verifierObservations": true, "uncertainty": true}
 	var context struct {
+		Kind           string          `json:"kind"`
 		ResponseSchema json.RawMessage `json:"responseSchema"`
 	}
 	if inv.Request.Role == agentexec.RoleExecutor && json.Unmarshal(inv.Request.Context, &context) == nil && len(context.ResponseSchema) > 0 {
@@ -536,6 +575,16 @@ func decodeNativeFinal(final string, inv agentexec.Invocation) (agentexec.Respon
 	if allowed["reportJson"] {
 		if _, ok := semantic["reportJson"]; !ok {
 			return agentexec.Response{}, errors.New("native response omitted the required task report")
+		}
+		if context.Kind == "projectrun-full-verify/v1" {
+			aliases, aliasErr := nativeFullVerifySubjectAliases(inv)
+			if aliasErr != nil || aliases == nil {
+				return agentexec.Response{}, errors.New("native full-verification subject bindings are invalid")
+			}
+			semantic["reportJson"], err = decodeNativeFullVerifyReportSubjects(semantic["reportJson"], aliases)
+			if err != nil {
+				return agentexec.Response{}, err
+			}
 		}
 	}
 	canonicalRefs := []string{}

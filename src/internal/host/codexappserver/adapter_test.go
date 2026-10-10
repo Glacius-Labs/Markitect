@@ -268,6 +268,9 @@ func serveFixture() {
 			continue
 		case "thread/read":
 			b, _ := json.Marshal(map[string]any{"outcome": agentexec.OutcomeIncomplete, "candidateFiles": []any{}, "verifierObservations": []any{}, "uncertainty": []any{}})
+			if savedFinal := os.Getenv("MARKITECT_P04_RECOVERY_FINAL"); savedFinal != "" {
+				b = []byte(savedFinal)
+			}
 			status := "completed"
 			items := []item{{ID: "m", Type: "agentMessage", Text: string(b), Phase: "final_answer"}}
 			if mode == "recovery-running" {
@@ -471,8 +474,9 @@ func TestFullVerifyNativeTurnPromptScopesTypedAudit(t *testing.T) {
 		"Run every shell command from the exact Host-owned workspace CWD supplied here: C:\\workspace",
 		"read-only, bounded Manager audit",
 		"fixed snapshot, model, files, briefing, child assessments, and check results",
-		"copy every subject string verbatim into exactly one assessments[].subject",
-		"no omissions, duplicates, paraphrases, or additional subjects",
+		"Use each assigned short alias below exactly once in assessments[].subject",
+		"do not omit, duplicate, paraphrase, or add subjects",
+		"Host maps each alias back to its exact canonical subject",
 		"Do not gate this scoped audit on unrelated Git inspection, Markitect CLI/MCP availability, or rerunning Host-supplied checks",
 		"outer outcome is proposed; reportJson.status independently expresses pass, fail, or incomplete",
 		"incomplete when relevant evidence for a required subject is unavailable",
