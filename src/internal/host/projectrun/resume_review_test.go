@@ -161,6 +161,7 @@ func seedReviewRework(t *testing.T) reviewReworkFixture {
 	t.Helper()
 	root := makeProjectRunFixture(t)
 	enableE2EReviews(t, root, 100000)
+	setupE2EProcess(t, "")
 	host := projectworkHost()
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and review owned artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
@@ -201,19 +202,50 @@ func seedReviewRework(t *testing.T) reviewReworkFixture {
 	return reviewReworkFixture{root: root, host: host, plan: plan, store: store, dir: dir, initial: initial, reviewed: reviewed, report: report}
 }
 
+// reworkDispatchInvoker runs the fixture process and keeps the first work
+// request of one Manager with the durable state persisted for its dispatch.
+type reworkDispatchInvoker struct {
+	inner     Invoker
+	store     *runStore
+	runID     string
+	managerID string
+	request   *agentexec.Request
+	state     RunReport
+	stateErr  error
+}
+
+func (i *reworkDispatchInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	var payload struct {
+		Kind      string `json:"kind"`
+		ManagerID string `json:"managerId"`
+		Phase     string `json:"phase"`
+	}
+	if i.request == nil && json.Unmarshal(request.Context, &payload) == nil && payload.Kind == "projectrun-task/v1" && payload.ManagerID == i.managerID && payload.Phase == "work" {
+		i.request = &request
+		i.state, i.stateErr = i.store.readLatestState(i.runID)
+	}
+	return i.inner.Run(ctx, config, request, options)
+}
+
+func (i *reworkDispatchInvoker) Fingerprint(config agentexec.Config) (string, error) {
+	return i.inner.Fingerprint(config)
+}
+
 // A failed work review persists review-rework-ready before the rework turn
 // starts. Resume must send that turn the reviewed candidate, as the
-// uninterrupted review loop does, not the parent's bytes.
+// uninterrupted review loop does, not the parent's bytes; a crash during the
+// turn must let recovery rebuild the same request; and the reworked candidate
+// must be reviewed again.
 func TestResumedReviewReworkStartsFromReviewedCandidate(t *testing.T) {
 	fixture := seedReviewRework(t)
 	if err := fixture.store.appendState(fixture.report); err != nil {
 		t.Fatal(err)
 	}
-
-	invoker := &resumeReviewInvoker{}
+	ordersID := e2eManagerID("orders", "orders")
+	invoker := &reworkDispatchInvoker{inner: ProcessInvoker{}, store: fixture.store, runID: fixture.plan.ID, managerID: ordersID}
 	resumed, resumeErr := Resume(context.Background(), fixture.host, invoker, fixture.root, fixture.plan.ID)
-	if invoker.runCalls != 1 {
-		t.Fatalf("Resume dispatched %d Manager requests, want the single orders rework request: status=%s err=%v", invoker.runCalls, resumed.Status, resumeErr)
+	if invoker.request == nil || invoker.stateErr != nil {
+		t.Fatalf("Resume did not dispatch the orders rework: status=%s err=%v state=%v", resumed.Status, resumeErr, invoker.stateErr)
 	}
 	got, found := "", false
 	for _, artifact := range invoker.request.Artifacts {
@@ -226,6 +258,58 @@ func TestResumedReviewReworkStartsFromReviewedCandidate(t *testing.T) {
 	}
 	if got != reviewedOrdersBytes {
 		t.Fatalf("resumed review rework input for orders = %q, want the reviewed candidate bytes %q", got, reviewedOrdersBytes)
+	}
+
+	dispatched := findTask(invoker.state.Tasks, ordersID)
+	base, err := fixture.host.Load(fixture.root, fixture.plan.BaseRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bound, err := snapshotWithCandidate(base.Snapshot, fixture.initial)
+	if err != nil {
+		t.Fatal(err)
+	}
+	boundProject, err := fixture.host.FromSnapshot(fixture.root, bound)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dependencies, err := managerDependencies(boundProject.Report, invoker.state.Tasks)
+	if err != nil {
+		t.Fatal(err)
+	}
+	input, children, childReports, conflicts, err := recoveryManagerInput(fixture.store, fixture.dir, fixture.host, fixture.root, base.Snapshot, boundProject.Report,
+		invoker.state, fixture.plan, *dispatched, "work", dependencies[ordersID])
+	if err != nil {
+		t.Fatal(err)
+	}
+	repairRound, repairChecks := repairContext(invoker.state, *dispatched)
+	rebuilt, err := managerInvocationRequest(fixture.root, mustLoadRuntime(t, fixture.root), fixture.plan, input, *dispatched, "work", children, conflicts, childReports,
+		dispatched.RepairDiagnostic, repairRound, repairChecks)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dispatchedDigest, err := nativeRequestInputDigest(*invoker.request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rebuiltDigest, err := nativeRequestInputDigest(rebuilt); err != nil || rebuiltDigest != dispatchedDigest {
+		t.Fatalf("recovery rebuilds rework input digest %s, dispatched %s (err=%v)", rebuiltDigest, dispatchedDigest, err)
+	}
+
+	final, err := fixture.store.readLatestState(fixture.plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rereviewed := false
+	for _, review := range final.Reviews {
+		if review.ManagerID != ordersID || review.Phase != "work" || review.Round != 2 {
+			continue
+		}
+		candidate, readErr := fixture.store.readCandidate(fixture.dir, review.CandidateID)
+		rereviewed = rereviewed || readErr == nil && review.CandidateDigest == candidate.Digest && len(candidate.Parents) == 1 && candidate.Parents[0] == fixture.reviewed.ID
+	}
+	if !rereviewed {
+		t.Fatalf("reworked orders candidate was not reviewed again: reviews=%+v status=%s err=%v", final.Reviews, final.Status, resumeErr)
 	}
 }
 
