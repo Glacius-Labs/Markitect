@@ -670,7 +670,7 @@ native_acceptance:
     separate_open_lifecycle_gap_focused_negative_result: passed_5_392s_on_uncommitted_fix_tree; proves_cleanup_pending_and_child_preserved_after_injected_close_failure_only_not_automatic_resume_reconciliation
     separate_open_lifecycle_gap_next: lifecycle_owner_to_supply_follow_up_negative_command_before_investigating_existing_owned_close_recovery
   next_batch:
-    status: actual23_failed_full_verify_source_manager_incomplete_no_apply; bounded_review_context_correction_pending_fresh_native_revalidation_required
+    status: actual23_failed_full_verify_source_manager_incomplete_no_apply; source_review_context_fix_technically_closed_fresh_native_revalidation_required
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
     new_batch_pins: actual23_terminal_record_769456575159d18d58ca34c7b8c3303e1963fb31cb675e8a920b8fbf75eff7a2; next_a01_requires_fresh_clean_build_readiness_and_plan
@@ -684,8 +684,8 @@ native_acceptance:
     no_twenty_third_actual_claimed: false
     no_twenty_fourth_actual_claimed: true
     owner_repair_in_progress: true
-    owner_repair_status: Actual23_same_binary_root_recovery_and_resume_integrated_without_replay; three_work_reviews_and_one_integration_review_passed; initial_Verifier_passed_and_full_manager_audits_started; Docs_and_Root_passed_but_Source_incomplete_missing_required_independent_documentation_review_context; no_Apply; bounded_source_review_context_correction_pending
-    repair: complete and independently review the bounded source review-context correction; then build a clean candidate and obtain fresh readiness/Plan before another normal A01; do not replay Actual23; retain 4h batch and 1h role bounds; Actual23 remains failed_not_passed
+    owner_repair_status: Actual23_same_binary_root_recovery_and_resume_integrated_without_replay; three_work_reviews_and_one_integration_review_passed; initial_Verifier_passed_and_full_manager_audits_started; Docs_and_Root_passed_but_Source_incomplete_missing_required_independent_documentation_review_context; no_Apply; source_review_context_correction_technically_closed_1745c82a130201857362227ef1e6723124bc4eaa_fresh_native_revalidation_pending
+    repair: source review-context correction is technically closed; build a clean candidate and obtain fresh readiness/Plan before another normal A01; do not replay Actual23; retain 4h batch and 1h role bounds; Actual23 remains failed_not_passed
     deferred_helper_followup: P11; outside_current_A01_implementation_allocation; future_bounded_design_under_existing_user_mandate; no_general_readonly_helper_capability_or_framework_implemented
     actual_16_terminal_record_sha256: 0a9db024fba47cde9a9c2ffc34e096205cc9f25927c71ca2ae391a629dfae352
     actual_16_acceptance: not_passed
@@ -1414,7 +1414,17 @@ native_acceptance:
     cumulative_native_provider_starts: 118
     cumulative_estimated_cost_micros: 18404065
     cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
-    source_review_context_diagnosis: confirmed_missing_required_fresh_independent_documentation_review_context; bounded_source_correction_in_progress_not_yet_validated_or_committed
+    source_review_context_diagnosis: confirmed_missing_required_independent_documentation_review_context_in_source_briefing
+    source_review_context_correction_commit: 1745c82a130201857362227ef1e6723124bc4eaa
+    source_review_context_correction_scope: direct_parent_integrate_review_projection_only; honest_original_and_final_candidate_bindings; exact_reviewed_path_mode_content_digest_references; no_raw_other_manager_bytes_or_extra_subjects; non_full_and_standalone_paths_unchanged
+    source_review_context_independent_final_rereview: clear
+    source_review_context_interim_full_verify_suite: TestFullVerify_passed_85_723s_before_final_refinements
+    source_review_context_final_focused_tests: selector_projection_and_native_context_passed_18_003s
+    source_review_context_final_vet: passed_2_389s
+    source_review_context_final_rootcheck: passed_5_775s
+    source_review_context_final_managed_artifacts: passed_2_118s
+    source_review_context_diff_check: passed
+    source_review_context_technical_status: closed_validated; native_A01_revalidation_pending; Actual23_remains_failed_no_apply
     acceptance: not_passed
   prior_batch_history:
     revision: generous-native-limits-20261009
