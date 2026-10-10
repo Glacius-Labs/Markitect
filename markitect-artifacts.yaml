@@ -1989,6 +1989,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectwork/inventory.go
       owner: project-world-implementation
+    - path: src/internal/host/projectwork/knowledge_questions_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectwork/mutation.go
       owner: project-world-implementation
     - path: src/internal/host/projectwork/project.go
