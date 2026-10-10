@@ -2043,3 +2043,7 @@ RealVerifyconsumer review clarifies requiredrefs taggedartifact/checkScopeIDs ve
 ### Minimal native answer and real Verify coverage correction checked locally
 
 Owner checkpoint b8e34d98 includes real Adapter.Run through unchanged validateVerifierCoverage: full required subset passes despite extra allowed plain PolicyID; unknown/duplicate aliases fail adapter, omitted/extra known refs fail coverage. Root read all five cases, no Root test rerun. Owner reports targeted 0.898/0.524/18.595s PASS and independent schema/journal source review closed. Nine product files remain WIP, full adapter package/build/vet/clean freeze pending; public remote still 8e0d103a. No new native starts or full workflow acceptance. Owner continues existing concrete repair/checks then normal A01 under standing human authority; no repeated order or new grant.
+
+### Corrected native boundary has clean public freeze; normal actual next
+
+Root verified clean exact local/public b4b0c053. Owner reports independently reviewed full native adapter75.192s/real consumer-recovery-cache21.182s/compile/vet/canonical/diff PASS; binary05ad103f same source/modifiedfalse reported. Binary actual path not supplied; guessed product worktree bin/markitect.exe absent, so Root binary verification not claimed. Ordinary readiness/Plan refresh underway then fresh finite A01 under standing authority/no new Go or grant. Actual schema now privately retained; original provider enum cause UNKNOWN. Full workflow/Main acceptance still pending.
