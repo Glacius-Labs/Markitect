@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T08:38:42.061393+00:00",
+  "updatedUtc": "2026-10-10T08:47:59.425777+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL21_NORMAL_WINDOWS_RUNNING_ON_FIXED_AUTHORING_HELPER_CONTRACT_NO_MAIN_ACCEPTANCE",
+    "status": "ACTUAL21_SAME_BINARY_RECOVERY_INTEGRATED_REVIEWS_VERIFIED_VERIFY_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18663,7 +18663,7 @@
       }
     },
     "actual21Preparation": {
-      "status": "OWNER_REPORTED_FRESH_NORMAL_ACTUAL21_RUNNING_UNCHANGED_FREEZE",
+      "status": "ORIGINAL_ROOT_SAME_BINARY_RESUME_INTEGRATED_FOUR_REVIEWS_ROOT_STATE_VERIFIED_VERIFY_ACTIVE",
       "freezeRef": "authoringHelperCapabilityFreeze",
       "planId": "28d09f0b109003b62d150b68d339bc49",
       "batchId": "a01-authoring-helper-e23d702acbb9459f9abd20907886afed",
@@ -18675,7 +18675,35 @@
       "readinessDigestOwnerReported": "b3d87d1ec57060701f8c0a186f272fdeb21cdb7f35a4af59806c2af12941829c",
       "runtimeDigestOwnerReported": "d86962cb65946d9d7c738290d77fcd93b703237811f36db9383f5bfdde872f26",
       "ownerPrestart": "Clean source/binary and no active own Markitect executable checked; readonly independent lifecycle audit/current owner-bound observer. Root earlier exact clean source/remote/binary bound, current start/native handles/usage not yet independently inspected, unknownnotzero.",
-      "p11": "Owner confirmed existing human mandate remains; deferred not current A01 allocation wording next normal docs checkpoint, no currentfreeze/Plan/binary change or extra build."
+      "p11": "Owner confirmed existing human mandate remains; deferred not current A01 allocation wording next normal docs checkpoint, no currentfreeze/Plan/binary change or extra build.",
+      "recoveryProgress": {
+        "ownerObserverPrefix": "164c7af6",
+        "ownerBoundary": true,
+        "ownerOriginalRootNative": "completed2026-10-10T08:41:34.317Z complete/integrated report, only expected journal rename failure",
+        "resumeId": "c272729c355c4271bb2c1d894eef2052",
+        "resumeExit": 0,
+        "rootStateVerified": {
+          "path": "C:/Users/Consiliari/AppData/Local/Temp/markitect-a01-3c5c733388014645b0ca178338078b6a/repo/.markitect/runs/28d09f0b109003b62d150b68d339bc49/states/00000035.json",
+          "revision": 35,
+          "id": "28d09f0b109003b62d150b68d339bc49",
+          "status": "integrated",
+          "originalRootIntegrationReceipt": "512bb637e4f72f8ce4e6004e43681d0b",
+          "integrationOutcome": "proposed",
+          "newIntegrationReviewReceipt": "919a8ccd656c3200936824d636388d04",
+          "workReviews": 3,
+          "allReviewOutcomes": [
+            "pass",
+            "pass",
+            "pass",
+            "pass"
+          ],
+          "rootWorkAttemptsObserved": 1,
+          "rootIntegrationRowsObserved": 1,
+          "method": "Exact immutable state35 short shared ReadWrite|Delete read and stream disposed before JSON parse; no blocking live journals. Null optional top-level candidateId/integrated not treated as proof; explicit status/review rows establish integrated phase."
+        },
+        "noReplayBoundary": "Owner originalRoot row retained/no newRootWork and independent original/recovery handle/protocol noReplay audit underway. Root current state original receipt matches owner original prefix; full original native trace union still pending independent closure.",
+        "currentVerify": "Normal Verify active sameaafe62c/Plan28d; no fullVerify/Apply/A01/Main PASS yet."
+      }
     }
   },
   "restartAfterInterruptedIntegration20261010": {

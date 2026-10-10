@@ -2243,3 +2243,7 @@ Root cleanpublic/local aafe9d5c and exactWindows62c78ac4Go1.27.1VCSaafe/modified
 ### Actual21 normal fixed-contract run active
 
 Owner sameaafe/62c batcha01-authoring-helpere23d/Plan28d09f0b/digest96ab9c/readyb3d87d/runtime d86962/deadline12:37:22.3366157Z active; clean/no ownactiveMarkitectexe prestartchecked, readonlylifecycleaudit/ownerboundobserver. Rootpriorcleanremote/binaryverified, currenthandles/countsunknownnotzero. P11existingmandate/deferredallocationwording acknowledged fornextregulardoccheckpoint, no currentfreezechange/extraBuild/ACKloop. No old20Replay/newRootorder/Main/studyPASS.
+
+### Actual21 recovered original Root and integrated reviews verified
+
+Owner boundary164c/originalRootcompleted08:41:34.317/samebinaryResume c272Exit0. Root exactimmutable state35 sharedshortread/closebeforeparse: ID28d09f0b/statusintegrated, RootintegrationReceipt512bb637e4f72f8ce4e6004e43681d0b/proposed exactlyoneintegraterow+oneworkrow, newintegrationreview919a8ccd656c3200936824d636388d04, threeWorkreviews+integrationreviewallpass. No inferencefromoptionalnulltop-levelcandidate/integrated. Independent exactoriginal/recoveryhandle-protocol/startunionaudit active; originalreceiptmatchesownerprefix, fullnoReplaytraceclosurepending. NormalVerify sameaafe62c active/no fullVerify/Apply/A01/MainPASS.
