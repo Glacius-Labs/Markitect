@@ -43,7 +43,7 @@ var Layers = []MapLayer{
 	{"cli", "Executables", "Thin entrypoints that delegate to Host.", []string{"cli"}},
 	{"tooling", "Tooling", "Maintainer tooling: import gate, release, publication and notices.", []string{"tooling"}},
 	{"bootstrap", "Bootstrap", "Standalone public bootstrap without Markitect imports.", []string{"bootstrap"}},
-	{"harness", "Harnesses", "Executable tests and example programs; not product code.", []string{"harness-tests", "harness-runtime"}},
+	{"harness", "Harnesses", "Executable tests, test support and example programs; not product code.", []string{"harness-tests", "harness-runtime", "testkit"}},
 	{"experiment", "Experiments", "Bounded pilots kept with their evaluation.", []string{"harness-runtime"}},
 	{"fixture", "Fixtures", "Adopting-project code used as test input; it may not import Markitect.", []string{"fixture"}},
 }

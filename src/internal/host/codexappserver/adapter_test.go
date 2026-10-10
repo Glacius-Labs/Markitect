@@ -21,6 +21,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 // TestMain supplies a protocol-only child executable. It does not invoke Codex
@@ -38,7 +39,7 @@ func TestMain(m *testing.M) {
 		serveFixture()
 		os.Exit(0)
 	}
-	os.Exit(m.Run())
+	testkit.Main(m)
 }
 func serveFixture() {
 	mode := os.Getenv("MARKITECT_P04_MODE")

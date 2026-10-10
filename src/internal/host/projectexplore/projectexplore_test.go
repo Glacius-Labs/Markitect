@@ -8,44 +8,21 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 func testRepository(t *testing.T, committed bool) (string, string, string) {
 	t.Helper()
-	root := t.TempDir()
-	for _, args := range [][]string{{"init", "-b", "codex/explore-test"}, {"config", "user.name", "Explore Test"}, {"config", "user.email", "explore@example.invalid"}} {
-		command := exec.Command("git", args...)
-		command.Dir = root
-		if output, err := command.CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v\n%s", args, err, output)
-		}
-	}
+	repo := testkit.NewRepo(t)
+	repo.Git("symbolic-ref", "HEAD", "refs/heads/codex/explore-test")
 	basisPath := ".markitect/model/work.yaml"
-	fullBasis := filepath.Join(root, filepath.FromSlash(basisPath))
-	if err := os.MkdirAll(filepath.Dir(fullBasis), 0755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(fullBasis, []byte("work: initial\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
+	repo.Write(basisPath, "work: initial\n")
 	head := ""
 	if committed {
-		for _, args := range [][]string{{"add", ".markitect/model/work.yaml"}, {"commit", "-m", "initial accepted model"}} {
-			command := exec.Command("git", args...)
-			command.Dir = root
-			if output, err := command.CombinedOutput(); err != nil {
-				t.Fatalf("git %v: %v\n%s", args, err, output)
-			}
-		}
-		command := exec.Command("git", "rev-parse", "HEAD")
-		command.Dir = root
-		output, err := command.Output()
-		if err != nil {
-			t.Fatal(err)
-		}
-		head = strings.TrimSpace(string(output))
+		head = repo.Commit("initial accepted model")
 	}
-	return root, head, basisPath
+	return repo.Dir, head, basisPath
 }
 
 func testBinding(root, head, basisPath string, accepted bool) Binding {

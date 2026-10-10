@@ -15,6 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 const nativeVerifierFixtureEnv = "MARKITECT_PROJECTRUN_NATIVE_VERIFIER_FIXTURE"
@@ -30,7 +31,7 @@ func TestMain(m *testing.M) {
 		serveNativeVerifierFixture()
 		os.Exit(0)
 	}
-	os.Exit(m.Run())
+	testkit.Main(m)
 }
 
 func serveNativeVerifierFixture() {
