@@ -55,3 +55,9 @@ Der Nutzer sieht ein möglicherweise gemeinsames Prinzip:
 - Die vermeintliche Diskrepanz zwischen hierarchischen Verantwortungsbereichen und einem Modellgraphen könnte deshalb demselben Muster folgen.
 
 Status: zu untersuchende Analogie des Nutzers. Noch offen sind die genaue Beziehung zwischen Gliederung, Verantwortung und Abhängigkeiten sowie die Frage, welche Beziehungen aus der Hierarchie abgeleitet und welche ausdrücklich deklariert werden müssen. Eine gemeinsame oder zwingend identische Hierarchie ist noch nicht beschlossen.
+
+## Fortsetzung: Vorgehen und Verify
+
+Der Nutzer hat ausdrücklich gebeten, das anschließend besprochene kombinierte Vorgehen zu behalten: Umfang festlegen, gewöhnliche Dokumentation schreiben, Artefaktfamilien auf Lücken prüfen, aus Aussagen Begriffe und Ausdrucksmittel ableiten und die Beschreibung anhand von Abläufen sowie einem Kontrastbeispiel prüfen. Das Vorgehen steht in Abschnitt 2 des [beauftragten Entwurfs](canonical-model-draft.md).
+
+Als weiteren Gedanken brachte er die Variation einer Beschreibung anhand von Eingaben und erwarteten Ergebnissen ein, ähnlich einem AI-Trainingsansatz. Markitect Verify könnte dafür eine Rückkopplung liefern. Der Entwurf präzisiert diesen Vorschlag in Abschnitt 8; ein positives Ergebnis wird auf die tatsächlich geprüften Aussagen und den jeweiligen Stand begrenzt.

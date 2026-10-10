@@ -29,3 +29,7 @@ Dies ist eine vereinbarte Produktgrundlage aus dem Gespräch, kein Nachweis des 
 ## Zugehörige Arbeitsnotiz
 
 Auf ausdrücklichen Wunsch des Nutzers ist der Arbeitsansatz mit allgemeinen Beschreibungsfragen, einer Bibliotheksverwaltung als Beispiel und seinen Gedanken zu Programmiersprachen sowie Hierarchie und Graph in einer [separaten Notiz](system-description-notes.md) festgehalten. Deren Begriffskandidaten und offene Analogien sind keine zusätzlichen vereinbarten Grundlagen.
+
+## Beauftragter Entwurf
+
+Der [Entwurf der kanonischen Beschreibungssprache](canonical-model-draft.md) beschreibt Inhalte, Ausdrucksmittel, Hierarchie und Beziehungen, Realisierung ohne manuelle Aufzählung jeder Datei sowie Verify als mögliche Rückkopplung. Abschnitt 2 hält das vom Nutzer gewünschte Vorgehen fest. Status: Entwurf zur Diskussion; seine Einzelvorschläge sind noch nicht angenommen.

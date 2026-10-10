@@ -6,7 +6,7 @@ The [Project World package](project-world/README.md) has its own reading order a
 
 ## Product direction and work shape
 
-- [Markitect: vereinbartes Grundmodell](product-model-refinement/README.md) — vereinbarte Produktgrundlage aus dem Gespräch vom 10. Oktober 2026; kein Implementierungsnachweis
+- [Produktmodell: Grundlagen und Entwurf](product-model-refinement/README.md) — vereinbarte Produktgrundlage und beauftragter Entwurf der Beschreibungssprache aus dem Gespräch vom 10. Oktober 2026; kein Implementierungsnachweis
 - [Domain-language pressure test](domain-language-pressure.md)
 - [Goal-led modeling proposal](goal-led-modeling.md)
 - [Product-vision alignment assessment](product-vision-alignment.md)
