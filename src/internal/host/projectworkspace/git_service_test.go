@@ -3,6 +3,7 @@ package projectworkspace
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -272,6 +273,54 @@ func TestGitServiceRequiresSelectedBaseToEqualSourceHead(t *testing.T) {
 	if _, err := InspectRepository(context.Background(), fixture.root, strings.Repeat("0", 40)); err == nil {
 		t.Fatal("repository inspection accepted a selected base other than source HEAD")
 	}
+}
+
+func TestGitServicePrepareComparesStorageWithRepositoryAcrossVolumes(t *testing.T) {
+	fixture := newGitFixture(t)
+	original := fixture.root
+	other := gitFixture{root: substDrive(t, filepath.Dir(original)) + `\adopter`, base: fixture.base}
+	storageRoot := filepath.Join(t.TempDir(), "owned-workspaces")
+	service, request := newGitServiceRequest(t, other, storageRoot, "manager:cross-volume", []string{"docs"}, nil)
+	handle, err := service.Prepare(context.Background(), request)
+	if err != nil {
+		t.Fatalf("storage on another volume than the repository was rejected: %v", err)
+	}
+	t.Cleanup(func() { _ = service.Close(context.Background(), handle) })
+
+	for _, tc := range []struct{ name, repository, storage string }{
+		{name: "same volume", repository: original, storage: filepath.Join(original, "owned-workspaces")},
+		{name: "storage through another drive", repository: original, storage: filepath.Join(other.root, "owned-workspaces")},
+		{name: "repository through another drive", repository: other.root, storage: filepath.Join(original, "owned-workspaces")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			service, request := newGitServiceRequest(t, gitFixture{root: tc.repository, base: fixture.base}, tc.storage, "manager:inside", []string{"docs"}, nil)
+			if _, err := service.Prepare(context.Background(), request); !errors.Is(err, ErrInvalidRequest) || !strings.Contains(err.Error(), "storage lies inside repository") {
+				t.Fatalf("storage inside the repository was not refused: %v", err)
+			}
+		})
+	}
+}
+
+// substDrive maps a free drive letter to dir until the test ends, giving dir a
+// second spelling on another volume name.
+func substDrive(t *testing.T, dir string) string {
+	t.Helper()
+	if runtime.GOOS != "windows" {
+		t.Skip("drive letters exist only on Windows")
+	}
+	for letter := 'Z'; letter >= 'G'; letter-- {
+		drive := string(letter) + ":"
+		if _, err := os.Stat(drive + `\`); err == nil {
+			continue
+		}
+		if err := exec.Command("subst", drive, dir).Run(); err != nil {
+			continue
+		}
+		t.Cleanup(func() { _ = exec.Command("subst", drive, "/D").Run() })
+		return drive
+	}
+	t.Skip("no free drive letter for subst")
+	return ""
 }
 
 func writeFixtureFile(t *testing.T, root, relative string, content []byte, mode os.FileMode) {
