@@ -669,8 +669,10 @@ packages:
     zone: free
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
+      - docs/concepts/register.md#dec-020-markitect-uses-any-library-that-helps
     acceptance:
       - The gate forbids core, application and runtime packages from importing legacy packages; negative fixtures prove it.
+      - Following DEC-020, the gate no longer restricts third-party imports, and the documents that say "standard library only" for Core or Modules (architecture.md, development/modules.md, design/clean-architecture-consolidation.md) are aligned.
 
   - id: ARCH-04
     title: Remove the canonical projection alpha

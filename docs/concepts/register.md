@@ -26,6 +26,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 | [DEC-017](#dec-017-command-model-top-level-verbs-from-one-verb-table) | Decision | Command model: top-level verbs from one verb table | Accepted |
 | [DEC-018](#dec-018-the-knowledge-graph-explains-impact) | Decision | The knowledge graph explains impact | Accepted |
 | [DEC-019](#dec-019-government-code-starts-after-wave-2) | Decision | Government code starts after Wave 2 | Accepted |
+| [DEC-020](#dec-020-markitect-uses-any-library-that-helps) | Decision | Markitect uses any library that helps | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-005](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -280,6 +281,15 @@ This register records Markitect's long-term vision, product-level decisions, cla
   - Model schema changes are coordinated through the roadmap's model zone, which has one active owner at a time.
   - Government documents on main follow the repository's conventions ([DEC-016](#dec-016-a-clean-stable-testable-main-and-uniform-structure-first)).
 - **Work items:** GOV-01 and GOV-02 in the [backlog](../work-items/backlog.yaml).
+
+### DEC-020 Markitect uses any library that helps
+
+- **Status:** Accepted, owner, 10 October 2026 ([source](sources/roadmap-planning-20261010.md#external-libraries)). The question came from a verified BUG-01 finding: the architecture gate checks third-party imports only for Core, two Modules already import a YAML library, and the documents disagree ("standard library only" against "justified external dependencies").
+- **Statement:**
+  - Markitect uses any library that helps it reach its goal. No layer has a standard-library-only rule.
+  - The architecture gate keeps its rules for imports between Markitect's own packages; it does not restrict third-party libraries.
+- **Consequences:** the documents that state "standard library only" for Core or Modules are aligned, and the gate's third-party check for Core is removed.
+- **Work items:** ARCH-03 in the [backlog](../work-items/backlog.yaml).
 
 ## Promises
 
