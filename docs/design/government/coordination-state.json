@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T08:24:05.291594+00:00",
+  "updatedUtc": "2026-10-10T08:28:34.414033+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18588,7 +18588,7 @@
       "boundary": "Actual19 failed retained/no replay/oldPlan rewrite/native proof Main/release/study acceptance."
     },
     "actual20Preparation": {
-      "status": "OWNER_ROOT_BOUNDARY_REACHED_ORIGINAL_PARENT_INTERRUPTED_ON_INTEGRATION_HELPER_RESULT_EXACT_RESUME_ACTIVE",
+      "status": "TERMINAL_BLOCKED_INTERRUPTED_ORIGINAL_ROOT_READONLY_HELPER_UNSUPPORTED_NO_REPLAY_NO_APPLY",
       "freezeRef": "typedReviewCorrectionFreeze",
       "planId": "e70d26667c06334ea81fee279cb28684",
       "batchId": "a01-typed-review-f4d8a3e04442472395c28665acf1bb3c",
@@ -18612,6 +18612,32 @@
         "originalRootOutcome": "Native interrupted, not completed. Root started additional helper during Integration; child completed without accepted proposed Result, missing CandidateFiles/reportJson reported; Host interrupts parent, additional expected journal rename failure. No Root integration claimed.",
         "recovery": "Normal samebinary exact original Resume active without source/Plan change; independent auditor checking original Root/helper/new start union. No replay/success inferred from observer boundary flag alone.",
         "qualification": "Current parent native session/turn IDs, child result/body and exact Host lifecycle receipts not yet supplied/Root-bound; no blocking live reads/new framework/order."
+      },
+      "terminalOwnerClosure": {
+        "resumeId": "4c5c4d5fcc0e46beb013ebd4895fc97f",
+        "resumeEndedUtc": "2026-10-10T08:22:34Z",
+        "resumeExit": 2,
+        "newResumeNativeStarts": 0,
+        "batchSha256": "55d19879f92ff472462e1144d0f906c743f580aedd169a89f78c1244d28c374c",
+        "result": "Original Root preserved incomplete/interrupted/noReport, no integration/Verify/Apply. Boundary correct,3WorkreviewsPASS/Sourcehelperdelivered. Additional Root README-check helper completed empty proposal/noFiles/report unsupported by current file-authoring tool; independent contract audit ownerreported.",
+        "currentRepair": "Narrow helper.go/helpers_test.go guidance for file authoring only; readonly/reports handled by normal parent tools and existing independent review roles. No Reportframework/no-op schema/guard weakening.",
+        "finalAccountingOwnerReported": {
+          "roleStarts": 7,
+          "helperStarts": 2,
+          "startRequests": 9,
+          "nativeStarts": 9,
+          "partialEstimatedCostMicros": 1121127,
+          "cumulativeStartRequests": 86,
+          "cumulativeNativeStarts": 82,
+          "cumulativePartialEstimatedCostMicros": 14906046,
+          "method": "max per original invocation retained across recovery, not later recovery zero; private raw union not Root audited, no actual invoice/efficiency claim."
+        }
+      },
+      "capabilityBoundaryDispatch": {
+        "key": "document-authoring-helper-limit-preserve-readonly-followup-20261010",
+        "sentUtc": "2026-10-10T08:28:34.414033+00:00",
+        "toolAccepted": true,
+        "scope": "Existing helper tool authoring guidance acceptable, public capability limitation explicit; preserve concrete readonly/analysis helper return followup in existing product backlog without new framework/Mainmatrix now. Do not restrict normal parent tools/fresh managers/reviewers/supported authoring helpers or claim general readonly helpers proven. Normal next A01 aftercleanfreeze, old20blocked/no replay."
       }
     }
   },
