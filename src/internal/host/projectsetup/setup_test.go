@@ -472,7 +472,7 @@ func TestDiscoverProviderUsesCurrentWindowsCodexVendorPath(t *testing.T) {
 	}
 }
 
-func TestBuildRuntimeRejectsUnsupportedNativeModelEffortAndProvider(t *testing.T) {
+func TestBuildRuntimeRejectsUnsupportedNativeEffortVersionAndProvider(t *testing.T) {
 	root := t.TempDir()
 	provider := testTool(t, root, "codex.exe", true)
 	provider.Version = "codex-cli 0.162.0"
@@ -483,10 +483,11 @@ func TestBuildRuntimeRejectsUnsupportedNativeModelEffortAndProvider(t *testing.T
 		name   string
 		change func(*Options, *Discovery)
 	}{
-		{"different model", func(o *Options, _ *Discovery) { o.Model = "gpt-6-sol" }},
-		{"different effort", func(o *Options, _ *Discovery) { o.Effort = "medium" }},
+		{"unsupported effort", func(o *Options, _ *Discovery) { o.Effort = "turbo" }},
+		{"effort list is not a single effort", func(o *Options, _ *Discovery) { o.Effort = "low medium" }},
+		{"missing model", func(o *Options, _ *Discovery) { o.Model = "" }},
+		{"model with surrounding whitespace", func(o *Options, _ *Discovery) { o.Model = " gpt-6-luna" }},
 		{"different CLI version", func(_ *Options, d *Discovery) { d.ProviderBinary.Version = "0.161.0" }},
-		{"default must not substitute model", func(o *Options, _ *Discovery) { o.CodexProfile = ""; o.Model = "gpt-6-sol" }},
 		{"unsupported provider version", func(_ *Options, d *Discovery) { d.ProviderBinary.Version = "codex-cli 0.163.0" }},
 		{"Claude native mode", func(o *Options, d *Discovery) { o.Provider = "claude"; d.Provider = "claude" }},
 	}
@@ -662,7 +663,7 @@ func TestBuildRuntimeRejectsNonCodexSetup(t *testing.T) {
 	if _, err := BuildRuntime(project, Options{Provider: "custom", Model: "m", InputMicrosPerMillion: 1, MaxCostMicros: 1}, found); err == nil {
 		t.Fatal("unsupported provider was accepted")
 	}
-	if _, err := BuildRuntime(project, Options{Provider: "claude"}, found); err == nil || !strings.Contains(err.Error(), "native Codex App Server only") {
+	if _, err := BuildRuntime(project, Options{Provider: "claude"}, found); err == nil || !strings.Contains(err.Error(), `unsupported provider "claude"`) {
 		t.Fatalf("Claude setup error = %v", err)
 	}
 }
@@ -674,7 +675,7 @@ func TestDiscoverRejectsCommandShimAndParsesOnlyVersion(t *testing.T) {
 	if match := versionPattern.FindStringSubmatch("codex-cli 0.130.0\n"); len(match) != 2 || match[1] != "0.130.0" {
 		t.Fatalf("version parse = %#v", match)
 	}
-	if _, err := Discover(Options{Provider: "claude"}); err == nil || !strings.Contains(err.Error(), "Codex App Server only") {
+	if _, err := Discover(Options{Provider: "claude"}); err == nil || !strings.Contains(err.Error(), `unsupported provider "claude"`) {
 		t.Fatalf("unsupported provider discovery error = %v", err)
 	}
 }

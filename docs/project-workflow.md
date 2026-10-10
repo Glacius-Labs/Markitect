@@ -1,6 +1,6 @@
 # Project workflow
 
-Markitect manages an adopting repository through one canonical project model under `.markitect/`. The outer coding agent uses typed Markitect MCP operations for project decisions and lifecycle. The Host schedules the model's Managers and reviewers; those inner roles currently run through Codex CLI 0.162.0 App Server with the configured `gpt-6-luna` model at `high` reasoning effort. The published v0.14.1 binary does not include this `markitect project` workflow; use a matching source build.
+Markitect manages an adopting repository through one canonical project model under `.markitect/`. The outer coding agent uses typed Markitect MCP operations for project decisions and lifecycle. The Host schedules the model's Managers and reviewers; by default those inner roles run through Codex CLI 0.162.0 App Server with the `gpt-6-luna` model at `high` reasoning effort, and setup can select another profile per role (see [Provider adapters](provider-adapters.md#role-profiles)). The published v0.14.1 binary does not include this `markitect project` workflow; use a matching source build.
 
 ## Connect and inspect
 
