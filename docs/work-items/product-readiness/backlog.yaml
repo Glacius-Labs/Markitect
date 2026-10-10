@@ -15,7 +15,7 @@ native_acceptance:
   main_required_jobs: [A01]
   deferred_not_main_gate_jobs: [A02, A03]
   renewal_policy_revision: renewable-execution-budget-20261010
-  renewal_policy_status: active_simplified_a01_actual_20_blocked_root_interrupted_readonly_helper_contract_fix_committed_91ce89_next_pins_pending
+  renewal_policy_status: active_simplified_a01_actual_21_failed_full_verify_incomplete_no_apply_source_delta_pending_next_profile_prospective
   renewal_policy_authority_sha256: a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7
   per_batch_limits:
     max_role_wall_seconds: 7200
@@ -670,7 +670,7 @@ native_acceptance:
     separate_open_lifecycle_gap_focused_negative_result: passed_5_392s_on_uncommitted_fix_tree; proves_cleanup_pending_and_child_preserved_after_injected_close_failure_only_not_automatic_resume_reconciliation
     separate_open_lifecycle_gap_next: lifecycle_owner_to_supply_follow_up_negative_command_before_investigating_existing_owned_close_recovery
   next_batch:
-    status: no_followup_batch_allocated_actual_20_blocked_readonly_helper_contract_fix_committed_91ce89_next_pins_pending
+    status: no_followup_batch_allocated_actual_21_full_verify_incomplete_source_delta_pending_next_profile_prospective
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
     new_batch_pins: none
@@ -679,10 +679,12 @@ native_acceptance:
     no_eighteenth_actual_claimed: false
     no_nineteenth_actual_claimed: false
     no_twentieth_actual_claimed: false
-    no_twenty_first_actual_claimed: true
+    no_twenty_first_actual_claimed: false
+    no_twenty_second_actual_claimed: true
     owner_repair_in_progress: false
-    owner_repair_status: actual20_blocked_root_interrupted_no_typed_report; source_helper_applied_closed; readonly_root_helper_returned_empty_candidate_files_without_report_json_no_host_delivery; existing_file_authoring_helper_contract_preserved; bounded_helper_instruction_fix_committed_91ce89; helper_tests_passed_42_558s_final_instruction_stability_tests_passed_1_185s_independent_review_clear_go_vet_passed; technical_fix_closed_not_acceptance
-    repair: obtain a fresh build, readiness, and Plan after the committed helper-instruction correction before any new A01; Actual20 remains blocked_not_passed
+    owner_repair_status: actual21_original_root_recovery_passed_without_replay; three_work_reviews_and_one_integration_review_passed; full_verify_incomplete_docs_and_root_quoted_subjects_truncated_source_event_limit_reached_app_turn_interrupted_host_lifecycle_unknown_preserved; configured_python_check_and_initial_verifier_passed; full_verify_exit_1_no_apply; initial_codexappserver_package_passed_before_final_protocol_test_delta_89_460s_full_verify_projectrun_regressions_passed_94_839s_protocol_alias_recovery_output_schema_focused_tests_passed_1_037s_final_go_vet_passed_3_113s_rootcheck_and_managed_artifacts_passed_full_verify_context_review_clear_protocol_finding_fixed_alias_final_review_clear_source_committed_1a84f921846fc573411555d11778999d97fbaa1b_protocol_finding_closed_generic_compatible
+    repair: prepare a clean candidate build and fresh existing-profile Runtime/readiness/Plan using the separately verified 128MiB event limit (do not retrofit Actual21 Plan), retain 4h batch and 1h role bounds; preserve Actual21 failed_not_passed
+    deferred_helper_followup: P11; outside_current_A01_implementation_allocation; future_bounded_design_under_existing_user_mandate; no_general_readonly_helper_capability_or_framework_implemented
     actual_16_terminal_record_sha256: 0a9db024fba47cde9a9c2ffc34e096205cc9f25927c71ca2ae391a629dfae352
     actual_16_acceptance: not_passed
     actual_16_apply_observed: false
@@ -717,9 +719,9 @@ native_acceptance:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_used_for_latest_attempt: fac9131bf60d813a144c563516626f73ea19b969
-    binary_sha256: 1fb44841cffe622778e22c8811d48f5aa686a1bfb7cfd1e0cfef7d6e2a18c60d
-    latest_native_acceptance: blocked_root_interrupted_no_typed_report_attempt_20
+    source_revision_used_for_latest_attempt: aafe9d5ca9cd6c8ad87533e02f6bc3f5dcd747b0
+    binary_sha256: 62c78ac43b89edcacc2ffa5eaf7ec480ec155ac547b7c3537508c432c9b003c0
+    latest_native_acceptance: failed_full_verify_incomplete_no_apply_attempt_21
     pre_attempt_host_helper_provenance_correction: 6ce8212af64b350ac0ee7759c394af2303e20e3f
     pre_attempt_source_validation: focused_projectrun_review_helper_role_budget_tests_passed_112_016s
     pre_attempt_staged_diff_check: passed
@@ -786,7 +788,7 @@ native_acceptance:
     post_recovery_resume_command_id: f654711fe23248be98401ca21fee61b4
     post_recovery_resume_binary_sha256: bc26543cf097091e5f2d520d3a71c8455e6b0532f984e65b38df84f1f4b03b5d
     post_recovery_resume_new_starts: 0
-    next_repair: fresh_build_readiness_and_plan_after_committed_helper_instruction_fix; preserve_attempt_20_blocked_no_replay_before_any_new_a01
+    next_repair: correct_full_verify_subject_truncation_and_resolve_source_event_limit; validate_source_delta; then_fresh_runtime_readiness_and_plan_at_128mib_without_retrofitting_attempt_21
     next_batch_pins: pending
     next_batch_authorized_or_allocated: false
   attempt_16:
@@ -1060,7 +1062,7 @@ native_acceptance:
     cumulative_estimated_cost_micros: 13784919
     cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
     acceptance: not_passed
-  latest_actual:
+  attempt_20:
     batch_id: a01-typed-review-f4d8a3e04442472395c28665acf1bb3c
     attempt_number: 20
     status: blocked_root_interrupted_same_binary_resume_blocked_no_replay
@@ -1136,6 +1138,98 @@ native_acceptance:
     verify_observed: false
     apply_observed: false
     final_status: blocked_not_passed
+    acceptance: not_passed
+  latest_actual:
+    batch_id: a01-authoring-helper-e23d702acbb9459f9abd20907886afed
+    attempt_number: 21
+    status: failed_full_verify_incomplete_no_apply
+    private_record_sha256: df46c0bbda71e605d94b9f1cb552565b974d115663a1caa613fa24b498f23ccc
+    allocated_utc: '2026-10-10T08:37:22.3366157Z'
+    hard_deadline_utc: '2026-10-10T12:37:22.3366157Z'
+    full_verify_report_finished_utc: '2026-10-10T08:54:30.5789561Z'
+    full_verify_command_ended_utc: '2026-10-10T08:54:30.8053765Z'
+    source_revision: aafe9d5ca9cd6c8ad87533e02f6bc3f5dcd747b0
+    validated_docs_revision: aafe9d5ca9cd6c8ad87533e02f6bc3f5dcd747b0
+    project_revision: eaa11e9969db66e6c1a5cd80949cfb757074ce54
+    binary_sha256: 62c78ac43b89edcacc2ffa5eaf7ec480ec155ac547b7c3537508c432c9b003c0
+    plan_id: 28d09f0b109003b62d150b68d339bc49
+    plan_sha256: 96ab9cdf82969b524f164d367740d90bb8f4fc9382e1b5001ef466d6178210ec
+    readiness_sha256: b3d87d1ec57060701f8c0a186f272fdeb21cdb7f35a4af59806c2af12941829c
+    runtime_sha256: d86962cb65946d9d7c738290d77fcd93b703237811f36db9383f5bfdde872f26
+    runtime_file_sha256: 0828f6afd4e897fa0304362e19bb47cd912c2fe353f5b44c58d919daf2fa3e3c
+    controller_sha256: c6541846825115d328de2033c01a647644d2ad54c8aa128a934a397a9608265f
+    candidate_build_record_sha256: 68b9cebb5188715f95cdb764703b7c083d7ffabf4fa10341f06763c24d41a791
+    source_delta_gate_record_sha256: b3d7ecc2b9d3ecfea1817a6800612f42a49dbace02c9076bbe379880c96856b6
+    remote_source_checkpoint: aafe9d5ca9cd6c8ad87533e02f6bc3f5dcd747b0
+    source_gates: clean4b14_broad_pass_plus_reviewed2950_6c8387e0_fac9131b_aafe9d5c_delta_gates_pass
+    observer_id: 164c7af6b25242c4b5efd0c489ccaa07
+    observer_record: observer-logs/164c7af6b25242c4b5efd0c489ccaa07.observer.json
+    observer_started_utc: '2026-10-10T08:37:31.0540119Z'
+    observer_ended_utc: '2026-10-10T08:41:35.3429696Z'
+    observer_exit_code: 2
+    observer_boundary_observed: true
+    observer_turn_terminal_observed: true
+    original_root_run_id: 512bb637e4f72f8ce4e6004e43681d0b
+    original_root_workspace_id: dd6a92dc269c21d04cef7d39950ff36d
+    original_root_session_id: 01a124f9-5053-75c3-aa6c-dc5938ac11b7
+    original_root_turn_id: 01a124f9-5140-7be3-9139-f771bc4f4919
+    original_root_native_completed: true
+    original_root_provider_starts: 1
+    original_root_recovered_same_binary: true
+    original_root_recovery_replayed_turn: false
+    same_binary_resume_record: observer-logs/c272729c355c4271bb2c1d894eef2052.command.json
+    same_binary_resume_exit_code: 0
+    work_integration_reviews_passed: 4
+    source_native_session: 01a124f7-6160-79a2-852b-ff375f93db24
+    source_native_turn: 01a124f7-63f1-7d92-9028-4909f125f9de
+    source_native_interval_utc: '08:39:15.822Z-08:40:06.734Z'
+    docs_native_session: 01a124f7-6811-7453-8f93-09eecc5edeb6
+    docs_native_turn: 01a124f7-6943-7200-9904-ee3b1392523f
+    docs_native_interval_utc: '08:39:17.820Z-08:39:49.814Z'
+    source_docs_native_overlap_seconds: 31.994
+    helper_reservation_id: helper-exec-394e28c7-47f8-4106-bca0-a94d8768c43b
+    helper_task_id: helper-eeba4fcde68747d062dbcdf86604d046
+    helper_child_session: 01a124f7-a231-7681-8f0b-147a7208fe0e
+    helper_child_turn: 01a124f7-a339-7353-a4ee-739c69b37e3b
+    helper_native_interval_utc: '08:39:31.715Z-08:39:54.311Z'
+    helper_path: tests/test_greeting.py
+    helper_delivery_state: applied_and_closed
+    source_parent_workspace_id: d68f53dcb2692a87cba16dd3967bc2fb
+    helper_delta_sha256: 0a59c5970bc8729c23e951f7c15e963b35aa40fb32029654bbf88972553cc2d0
+    helper_content_sha256: 91bf34e28db9d4c062ce256997863fea408c5a1af2f657bcdffb0b8e52a6feac
+    helper_specific_cost: unknown_not_separately_itemized
+    source_audit_cost: unknown_not_zero
+    state_42_revision: 42
+    state_42_status: failed
+    state_42_estimated_cost_micros: 1139316
+    original_root_max_observed_role_cost_micros: 97429
+    batch_estimated_cost_micros: 1236745
+    cost_method: state_42_cost_plus_preserved_max_observed_root_role_cost; no_double_count
+    cost_accounting: partial_observed_lower_bound_not_invoice; source_audit_unknown_not_zero; helper_usage_not_separately_itemized_no_extra_estimate
+    role_start_requests: 12
+    helper_start_requests: 1
+    combined_start_requests: 13
+    native_provider_starts: 13
+    full_verify_start_counter: 14
+    full_verify_counter_note: includes_one_configured_check_counter_not_an_additional_native_provider_start
+    full_verify_record: observer-logs/fedf1298d93d45aeaf9d08c3ff0158da.command.json
+    full_verify_result_log: observer-logs/fedf1298d93d45aeaf9d08c3ff0158da.command.stdout.log
+    full_verify_result_log_sha256: bb23ef482f563e6cf0e847a97ba4a806e045276208b31633d6573f234296ef1c
+    full_verify_exit_code: 1
+    full_verify_report_status: failed
+    full_verify_manager_status: incomplete
+    full_verify_docs_root_quoted_subjects: truncated
+    full_verify_source_event_limit: reached; app_turn_interrupted; host_lifecycle_unknown_preserved
+    configured_python_check: passed_one_test_exit_0
+    initial_verifier: passed
+    apply_started: false
+    verify_failed_not_acceptance: true
+    cumulative_combined_start_requests: 99
+    cumulative_native_provider_starts: 95
+    cumulative_estimated_cost_micros: 16142791
+    cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
+    source_delta_corrections: committed_1a84f921846fc573411555d11778999d97fbaa1b; alias_independent_review_clear; protocol_finding_closed_generic_compatible; focused_protocol_alias_recover_output_schema_tests_passed_1_037s; initial_codexappserver_package_passed_before_final_protocol_test_delta_89_460s; full_verify_projectrun_regressions_passed_94_839s; final_go_vet_passed_3_113s; rootcheck_and_managed_artifacts_passed; full_verify_context_review_clear
+    next_profile_proposal: guarded_existing_profile_mutation_succeeded_max_event_bytes_16_mib_to_128_mib_uniform_across_7_profiles; runtime_sha256_58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574; edit_sha256_8ebb249e3f61f426a7fa6ed432788a433cf26d11c395906a2994338acb2f56bf; no_provider_started; fresh_readiness_and_plan_pending; do_not_retrofit_actual21_plan; retain_existing_4h_batch_and_1h_role_bounds
     acceptance: not_passed
   prior_batch_history:
     revision: generous-native-limits-20261009
@@ -1264,4 +1358,4 @@ items:
     main_gate: false
     current_capability_boundary: markitect_start_helper_is_file_authoring_only; pure_inspection_uses_parent_tools_or_existing_independent_review_roles
     follow_up: define_safe_genuine_readonly_analysis_helper_returns_and_context_review_benefits
-    authorization_boundary: deferred_no_general_readonly_helper_capability_or_report_framework_authorized
+    authorization_boundary: deferred_outside_current_a01_implementation_allocation; future_bounded_design_under_existing_user_mandate; no_general_readonly_helper_capability_implemented_by_this_item
