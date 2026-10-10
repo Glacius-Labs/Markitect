@@ -392,6 +392,10 @@ spec:
       owner: project-world-implementation
     - path: src/internal/modules/projectmodel/explain_test.go
       owner: project-world-implementation
+    - path: src/internal/modules/projectmodel/graph.go
+      owner: project-world-implementation
+    - path: src/internal/modules/projectmodel/graph_test.go
+      owner: project-world-implementation
     - path: src/internal/modules/projectmodel/impact.go
       owner: project-world-implementation
     - path: src/internal/modules/projectmodel/impact_correctness_test.go

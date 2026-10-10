@@ -72,6 +72,69 @@ func Explain(base, candidate Report) ImpactExplanation {
 	return out
 }
 
+// ExplainForManager is Explain seen from one Manager: only the elements its
+// Context shows in either revision, with each witness starting after the last
+// element it cannot see. Unknown and invisible Managers both fail with
+// ErrManagerNotFound.
+func ExplainForManager(base, candidate Report, managerID string) (ImpactExplanation, error) {
+	visible := map[element]bool{}
+	found := false
+	for _, r := range []Report{base, candidate} {
+		ctx, err := Context(r, managerID)
+		if err != nil {
+			continue
+		}
+		found = true
+		visible[element{"manager", ctx.Manager.ID}] = true
+		for _, child := range ctx.Children {
+			visible[element{"manager", child.ID}] = true
+		}
+		for _, s := range append(append([]Statement(nil), ctx.Statements...), ctx.Contracts...) {
+			visible[element{"statement", s.ID}] = true
+		}
+		for _, a := range ctx.Artifacts {
+			visible[element{"artifact", a.ID}] = true
+			for _, p := range a.Paths {
+				visible[element{"file", p}] = true
+			}
+		}
+		for _, c := range ctx.Checks {
+			visible[element{"check", c.ID}] = true
+		}
+		for _, d := range ctx.Decisions {
+			visible[element{"decision", d.ID}] = true
+		}
+		// A file is visible to the Manager that owns it, as for runs and reviews.
+		for _, f := range r.Files {
+			if f.Owner == ctx.Manager.ID {
+				visible[element{"file", f.Path}] = true
+			}
+		}
+	}
+	if !found {
+		return ImpactExplanation{}, ErrManagerNotFound
+	}
+	full := Explain(base, candidate)
+	out := ImpactExplanation{APIVersion: full.APIVersion, ImpactDigest: full.ImpactDigest, Elements: []ExplainedElement{}}
+	for _, e := range full.Elements {
+		if !visible[element{e.Kind, e.ID}] {
+			continue
+		}
+		for i := len(e.Witness) - 1; i >= 0; i-- {
+			if !visible[element{e.Witness[i].FromKind, e.Witness[i].From}] {
+				e.Witness, e.Partial = e.Witness[i+1:], true
+				break
+			}
+		}
+		out.Elements = append(out.Elements, e)
+	}
+	out.Digest = digest(struct {
+		API, Impact, Manager string
+		Elements             []ExplainedElement
+	}{out.APIVersion, out.ImpactDigest, managerID, out.Elements})
+	return out, nil
+}
+
 // shortestCauses runs a breadth-first search from every root cause over the
 // recorded causes and keeps, for each element, the cause that first reached it.
 // Roots and edges are visited in sorted order, so the choice is deterministic.
