@@ -293,7 +293,12 @@ def _read_candidate(workspace: PreparedWorkspace) -> dict[str, FileRecord]:
             else:
                 # 0600 is a deliberate supported private-file mode from the
                 # request/candidate contract, not a normalization fallback.
-                mode = _posix_mode(mode_bits, normalized)
+                # Other modes (such as 0664 under umask 002) are kept as
+                # observed so harvest rejects them as an unsafe delta.
+                try:
+                    mode = _posix_mode(mode_bits, normalized)
+                except NativeWorkError:
+                    mode = f"{mode_bits:04o}"
             files[normalized] = FileRecord(normalized, mode, raw, _digest(raw))
             if len(files) > MAX_INPUT_FILES + MAX_FILES + 1:
                 raise NativeWorkError("native-work candidate exceeds the total scan file bound")
@@ -344,8 +349,8 @@ def harvest(workspace: PreparedWorkspace, declared_files: Any, tool_calls: int) 
     for path, current in final.items():
         original = workspace.initial.get(path)
         if original is None or current.content != original.content or current.mode != original.mode:
-            if current.mode == "0600":
-                reasons.append(f"native-work candidate uses unsupported repository mode 0600: {path}")
+            if current.mode not in {"0644", "0755"}:
+                reasons.append(f"native-work candidate uses unsupported repository mode {current.mode}: {path}")
             try:
                 _authorize(workspace, path)
             except NativeWorkError as exc:
