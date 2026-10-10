@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T09:42:49.524818+00:00",
+  "updatedUtc": "2026-10-10T09:54:05.993075+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator continues finite Actual23, returns terminal genuine proof or concrete blocker once; Root verifies exact receipts before final hosted gates/normal PR89 Main integration. Scientist studies suspended; KG separate until accepted Main.",
+  "nextAction": "Integrator closes readonly scoped evidence diagnosis preserving actual incomplete verdict, exact terminal accounting then bounded ordinary correction if warranted; no duplicate Root order or new framework/Main gate. Studies suspended/KG waits accepted Main.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL23_ACTIVE_CLEAN_VERIFIER_ALIAS_FREEZE_SOURCE_BINARY_REMOTE_ROOT_VERIFIED",
+    "status": "ACTUAL23_TERMINAL_FULL_AUDIT_SCOPED_REVIEW_EVIDENCE_GAP_DIAGNOSIS_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18814,7 +18814,7 @@
       "rootFreezeVerification": "Exact cleanHEAD/publiclsremote7c431; docsclosure3filesstat; WindowsGo1.27.1 CGO0 VCS7c431 modifiedfalse and SHA bound. Source41a6 alias/protocol/recovery delta inspected earlier; finalhistory/duplicate-aware YAML/independent docsreview ownerPASS."
     },
     "actual23Preparation": {
-      "status": "ACTIVE_OWNER_REPORTED_SOURCE_BINARY_REMOTE_ROOT_BOUND_CURRENT_NATIVE_RECEIPTS_PENDING",
+      "status": "TERMINAL_FULL_MANAGER_AUDIT_SOURCE_INCOMPLETE_NO_APPLY",
       "freezeRef": "initialVerifierSubjectIdentityCorrection",
       "planId": "8efe401c2e3476f2d39b4daa33ca89b8",
       "planDigestOwnerReported": "sha256:5e2925ee2d1a99e64bed7242ba063c69ca6c0eada089488a317f78cbf865dd7f",
@@ -18826,7 +18826,39 @@
       "runtimeDigestOwnerReported": "0b0bea059d135cf436833a5a8327ddef1d95581cd8483911739e039ded14b9f7",
       "adopterCheckpointOwnerReported": "275baa9b830f1eee67cc901321a595002ffe0744",
       "adopterRuntimeFileSha256OwnerReported": "58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574",
-      "boundary": "Normal fresh finite A01, unchanged128MiB runtime/owner-bound observerc654prefix/original-root same-build recovery/genuinehelpers/parallelism/reviews. Source/binary/remote independently verified; current native handles/accounting/proof result pending. No old22replay/Main/study/release/newframework/newgate or repeated Root order."
+      "boundary": "Normal fresh finite A01, unchanged128MiB runtime/owner-bound observerc654prefix/original-root same-build recovery/genuinehelpers/parallelism/reviews. Source/binary/remote independently verified; current native handles/accounting/proof result pending. No old22replay/Main/study/release/newframework/newgate or repeated Root order.",
+      "terminalOwnerReport": {
+        "verifyCommand": "bc736180bce543a98fe5521f74dee30a.command.json",
+        "verifyStartedUtc": "2026-10-10T09:47:54.6984511Z",
+        "verifyEndedUtc": "2026-10-10T09:51:27.0142377Z",
+        "innerExit": 1,
+        "positiveBoundaries": "FreshHelperappliedclosed/SourceDocs21.7023022soverlap/3WorkReviewsPASS/originalRootcompleted/samebinaryResumeintegrated35withoutReplay/separateIntegrationReviewPASS/PythonCheckPASS/initialcanonicalVerifierPASS.",
+        "fullManagerAudits": "All3completed validcanonicalaliasprotocol; DocsPASS/RootPASS/SourceINCOMPLETE: briefing independent docs semantics review for test limitation not supplied in its bounded context, though existing independent Work/Integration reviews did run. No Apply/fullA01PASS.",
+        "next": "Owner readonly narrow freshreview evidence binding diagnosis, no invented verdict/prose-derived dependencies/framework. Exact terminal accounting/lifecycle union pending."
+      },
+      "rootTerminalStateVerified": {
+        "path": "C:/Users/Consiliari/AppData/Local/Temp/markitect-a01-3c5c733388014645b0ca178338078b6a/repo/.markitect/runs/8efe401c2e3476f2d39b4daa33ca89b8/states/00000042.json",
+        "revision": 42,
+        "status": "failed",
+        "workReviewOutcomes": [
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "integrationReviewOutcome": "pass",
+        "originalIntegrationReceipt": "4836b01770672c3cce8063cb8ad8893d",
+        "integrationRows": 1,
+        "integrationReviewReceipt": "aeaa2f1b850f85971ad52052c1a0e310",
+        "checkExitCode": 0,
+        "initialVerifierReceipt": "c2cf46fa8664f20650c3dc6d7ca00608",
+        "initialVerifierRecordedOutcome": "passed",
+        "fullAuditReceiptOutcomes": {
+          "75b2a13610c012dd63e83ce5e0aa2b07": "passed",
+          "87729585a75b0671dfe6106fbad75709": "incomplete",
+          "87f375d59748b6deb54e4ac3f47a8d2b": "passed"
+        },
+        "qualification": "Shortshared ReadWriteDelete copied bytes/stream closed before parsing. Exact terminal failed state and phase receipts bound; no whole original-native/noReplay/helper/parallel/raw accounting union independently repeated, no overall fullVerify/Apply/Main accepted."
+      }
     }
   },
   "restartAfterInterruptedIntegration20261010": {
