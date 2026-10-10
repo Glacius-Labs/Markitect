@@ -478,6 +478,64 @@ func TestContextIncludesDirectPublicContractsAndExcludesSiblingInternals(t *test
 	}
 }
 
+// BUG-01: a foreign public Statement that the Manager's own Check uses or own
+// Artifact realizes is a Contract too, with its private relations hidden.
+func TestContextIncludesContractsOfOwnChecksAndArtifacts(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	contract := map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "inventory", "name": "release-reservation"}
+	cancelOrder := map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "orders", "name": "cancel-order"}
+	contractID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "inventory", Name: "release-reservation"}).Key()
+	ordersID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}).Key()
+	for _, tc := range []struct {
+		name     string
+		edit     func(*core.Definition)
+		contract bool
+	}{
+		{"no reference", func(*core.Definition) {}, false},
+		{"own check uses", func(d *core.Definition) {
+			if d.Kind == checkKind {
+				d.Spec["uses"] = []any{cancelOrder, contract}
+			}
+		}, true},
+		{"own artifact realizes", func(d *core.Definition) {
+			if d.Kind == artifactKind && d.Metadata.Namespace == "orders" {
+				d.Spec["realizes"] = []any{cancelOrder, contract}
+			}
+		}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			definitions := append(copyDefinitions(model.Definitions), core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "inventory", Name: "internal-guard"}, Purpose: "Private implementation detail.", Spec: map[string]any{"category": "rule", "description": "Internal inventory guard."}})
+			for i := range definitions {
+				switch {
+				case definitions[i].Kind == statementKind && definitions[i].Metadata.Name == "cancel-order":
+					delete(definitions[i].Spec, "requires")
+				case definitions[i].Kind == statementKind && definitions[i].Metadata.Name == "release-reservation":
+					definitions[i].Spec["uses"] = []any{map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "inventory", "name": "internal-guard"}}
+				}
+				tc.edit(&definitions[i])
+			}
+			candidate, diagnostics := core.Compile(model.Schemas, definitions, "own-references")
+			if len(diagnostics) != 0 {
+				t.Fatalf("compile: %+v", diagnostics)
+			}
+			r := Analyze(candidate, files)
+			if r.Status != "succeeded" {
+				t.Fatalf("fixture must analyze cleanly: %s %+v", r.Status, r.Findings)
+			}
+			ctx, err := Context(r, ordersID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := len(ctx.Contracts) == 1 && ctx.Contracts[0].ID == contractID; got != tc.contract {
+				t.Fatalf("contracts = %+v, want release-reservation: %v", ctx.Contracts, tc.contract)
+			}
+			if tc.contract && (len(ctx.Contracts[0].Uses) != 0 || len(ctx.Contracts[0].Requires) != 0) {
+				t.Fatalf("contract leaked private relation identities: %+v", ctx.Contracts[0])
+			}
+		})
+	}
+}
+
 func rootManagerKey() string {
 	return (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Name: "root"}).Key()
 }

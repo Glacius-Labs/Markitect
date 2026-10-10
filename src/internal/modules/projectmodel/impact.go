@@ -25,6 +25,18 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 			out.Statements = append(out.Statements, s)
 		}
 	}
+	for _, a := range report.Artifacts {
+		if a.Owner == managerID {
+			out.Artifacts = append(out.Artifacts, a)
+		}
+	}
+	for _, c := range report.Checks {
+		if c.Owner == managerID {
+			out.Checks = append(out.Checks, c)
+		}
+	}
+	// Contracts are the foreign public statements that own statements use or require,
+	// own artifacts realize, or own checks exercise.
 	needed := map[string]bool{}
 	for _, s := range out.Statements {
 		for _, id := range s.Uses {
@@ -34,21 +46,21 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 			needed[id] = true
 		}
 	}
+	for _, a := range out.Artifacts {
+		for _, id := range a.Realizes {
+			needed[id] = true
+		}
+	}
+	for _, c := range out.Checks {
+		for _, id := range c.Uses {
+			needed[id] = true
+		}
+	}
 	for id := range needed {
 		if s, found := statementByID[id]; found && s.Owner != managerID && s.Public {
 			s.Uses = visibleRelations(s.Uses, statementByID)
 			s.Requires = visibleRelations(s.Requires, statementByID)
 			out.Contracts = append(out.Contracts, s)
-		}
-	}
-	for _, a := range report.Artifacts {
-		if a.Owner == managerID {
-			out.Artifacts = append(out.Artifacts, a)
-		}
-	}
-	for _, c := range report.Checks {
-		if c.Owner == managerID {
-			out.Checks = append(out.Checks, c)
 		}
 	}
 	for _, child := range report.Managers {
