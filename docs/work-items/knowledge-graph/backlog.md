@@ -42,6 +42,12 @@ items:
     status: awaiting_exact_accepted_main
     scope: Merge actual accepted main into this branch, resolve conflicts, regressions and independent review.
     owner: parent
+  - id: KG07-E
+    status: complete_targeted_validated_reviewed
+    scope: Fresh actual stored Plan/Run/candidate/check/review/Verification/guarded Apply chain to real CLI and MCP processes; privacy, stale/partial/unknown and read-only negatives.
+    source: f9b8114d91748d52a2f3783e667a461211c75461
+    output: fresh-evidence-chain-20261010.md
+    owner: parent and independent Luna High Reader
   - id: RDF-FIT
     status: assessment_complete_prototype_deferred
     scope: RDF-fit-decision.md records the separate fit assessment and optional RF01-RF06 plan; no canonical migration, engine installation, purchase or study implied.

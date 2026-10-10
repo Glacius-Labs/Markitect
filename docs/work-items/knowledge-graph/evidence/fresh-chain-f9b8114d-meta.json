@@ -1,0 +1,9 @@
+{
+  "sourceSHA": "f9b8114d91748d52a2f3783e667a461211c75461",
+  "startedUTC": "2026-10-10T04:30:30.9191703Z",
+  "finishedUTC": "2026-10-10T04:32:39.2504471Z",
+  "exitCode": 0,
+  "command": "go test ./internal/host/projectrun -run '^TestKnowledgeProcessEndToEndStoredRunEvidence$' -count=1 -timeout=30m -v",
+  "log": "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\markitect-kg-fresh-f9b8114d.log",
+  "receipt": "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\markitect-kg-fresh-f9b8114d.json"
+}

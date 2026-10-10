@@ -187,6 +187,12 @@ spec:
     - examples/project_world_workflow_test.go
     - docs/design/work-item-comparison-20261009.md
   tooling:
+    - path: docs/work-items/knowledge-graph/evidence/fresh-chain-f9b8114d.log
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/evidence/fresh-chain-f9b8114d.json
+      owner: project-knowledge-variant
+    - path: docs/work-items/knowledge-graph/evidence/fresh-chain-f9b8114d-meta.json
+      owner: project-knowledge-variant
     - path: docs/work-items/knowledge-graph/evidence/fresh-chain-development-attempt6-20261010.log
       owner: project-knowledge-variant
     - path: docs/work-items/knowledge-graph/evidence/fresh-chain-development-attempt6-20261010.json
