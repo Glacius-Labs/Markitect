@@ -63,6 +63,13 @@ func FromSnapshot(s *snapshot.Snapshot, options Options) (*Universe, error) {
 // is repository administration and is omitted; nested repositories are opaque
 // boundaries and are never traversed.
 func ObserveWorking(root string, options Options) (*Universe, error) {
+	return observeWorking(root, options, nil)
+}
+
+// observeWorking keeps an internal mutation seam immediately before the final
+// consistency check so tests can exercise concurrent path changes without
+// timing-dependent filesystem races.
+func observeWorking(root string, options Options, beforeRecheck func() error) (*Universe, error) {
 	identity, err := source.IdentifyGit(root)
 	if err != nil {
 		return nil, err
@@ -168,7 +175,12 @@ func ObserveWorking(root string, options Options) (*Universe, error) {
 			state.Head.Digest = sha256Hex(data)
 		}
 	}
-	if err := recheckWorkingUniverse(identity.Root, revision, unbornRef, paths, gitlinks); err != nil {
+	if beforeRecheck != nil {
+		if err := beforeRecheck(); err != nil {
+			return nil, fmt.Errorf("run census recheck mutation: %w", err)
+		}
+	}
+	if err := recheckWorkingUniverse(identity.Root, revision, unbornRef, paths, gitlinks, options); err != nil {
 		return nil, err
 	}
 	result := makeUniverse(revision, identity.Digest, paths, ignoreBytes, options, false)
@@ -429,7 +441,7 @@ func isUnbornRepository(root string) (bool, string, error) {
 	return false, "", fmt.Errorf("inspect symbolic HEAD ref %q: %w", name, err)
 }
 
-func recheckWorkingUniverse(root, revision, unbornRef string, original map[string]*PathState, gitlinks map[string]bool) error {
+func recheckWorkingUniverse(root, revision, unbornRef string, original map[string]*PathState, gitlinks map[string]bool, options Options) error {
 	head, err := source.GitOutput(root, "rev-parse", "--verify", "HEAD^{commit}")
 	if err != nil {
 		unborn, ref, unbornErr := isUnbornRepository(root)
@@ -467,7 +479,7 @@ func recheckWorkingUniverse(root, revision, unbornRef string, original map[strin
 		state.OpaqueBoundary = true
 		state.Worktree = FileState{Present: true, Mode: "opaque-repository"}
 	}
-	if !sameCensusMetadata(original, paths) || !sameLinks(gitlinks, links) {
+	if !sameCensusMetadata(original, paths, options) || !sameLinks(gitlinks, links) {
 		return fmt.Errorf("repository membership, mode, HEAD, or index changed during census")
 	}
 	return nil
@@ -484,15 +496,23 @@ func normalizeWorktreeModes(paths map[string]*PathState, worktreeModes map[strin
 	}
 }
 
-func sameCensusMetadata(left, right map[string]*PathState) bool {
-	if len(left) != len(right) {
-		return false
-	}
+func sameCensusMetadata(left, right map[string]*PathState, options Options) bool {
 	for name, a := range left {
+		if isOperational(name, options) {
+			continue
+		}
 		b := right[name]
 		if b == nil || a.Head.Present != b.Head.Present || a.Head.Mode != b.Head.Mode ||
 			a.Index.Present != b.Index.Present || a.Index.Mode != b.Index.Mode || a.Index.Digest != b.Index.Digest ||
 			a.Worktree.Present != b.Worktree.Present || a.Worktree.Mode != b.Worktree.Mode || a.OpaqueBoundary != b.OpaqueBoundary {
+			return false
+		}
+	}
+	for name := range right {
+		if isOperational(name, options) {
+			continue
+		}
+		if _, exists := left[name]; !exists {
 			return false
 		}
 	}

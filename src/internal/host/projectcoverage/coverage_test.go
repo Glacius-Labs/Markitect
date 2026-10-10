@@ -153,6 +153,140 @@ func TestObserveWorkingPreservesFilesystemModeWhenGitEnablesFileMode(t *testing.
 	}
 }
 
+func TestObserveWorkingRecheckIgnoresOnlyOperationalMembershipChanges(t *testing.T) {
+	options := censusRaceOptions()
+	for _, tc := range []struct {
+		name   string
+		before bool
+		mutate func(*testing.T, string)
+	}{
+		{
+			name: "host state added",
+			mutate: func(t *testing.T, root string) {
+				writeCoverageFile(t, root, ".markitect/runs/run-1/receipt.json", "Host receipt\n")
+			},
+		},
+		{
+			name:   "host state removed",
+			before: true,
+			mutate: func(t *testing.T, root string) {
+				if err := os.Remove(filepath.Join(root, ".markitect", "runs", "run-1", "receipt.json")); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := censusRaceRepo(t)
+			if tc.before {
+				writeCoverageFile(t, root, ".markitect/runs/run-1/receipt.json", "Host receipt\n")
+			}
+			baseline, err := ObserveWorking(root, options)
+			if err != nil {
+				t.Fatal(err)
+			}
+			baselineReport, err := Classify(Request{Universe: baseline, Model: emptyModel(), Options: options})
+			if err != nil {
+				t.Fatal(err)
+			}
+			observed, err := observeWorking(root, options, func() error {
+				tc.mutate(t, root)
+				return nil
+			})
+			if err != nil {
+				t.Fatalf("operational membership change failed the census recheck: %v", err)
+			}
+			observedReport, err := Classify(Request{Universe: observed, Model: emptyModel(), Options: options})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if observed.Digest != baseline.Digest || observedReport.Digest != baselineReport.Digest {
+				t.Fatalf("operational membership changed semantic digests: universe %s != %s, report %s != %s",
+					observed.Digest, baseline.Digest, observedReport.Digest, baselineReport.Digest)
+			}
+		})
+	}
+}
+
+func TestObserveWorkingRecheckStillRejectsNonOperationalChanges(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		mutate func(*testing.T, string)
+	}{
+		{
+			name: "source path added",
+			mutate: func(t *testing.T, root string) {
+				writeCoverageFile(t, root, "src/new.go", "package src\n")
+			},
+		},
+		{
+			name: "source path removed",
+			mutate: func(t *testing.T, root string) {
+				if err := os.Remove(filepath.Join(root, "src", "main.go")); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name: "source worktree mode changed",
+			mutate: func(t *testing.T, root string) {
+				if err := os.Chmod(filepath.Join(root, "src", "main.go"), 0o755); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name: "source index mode changed",
+			mutate: func(t *testing.T, root string) {
+				gitCoverage(t, root, "update-index", "--chmod=+x", "src/main.go")
+			},
+		},
+		{
+			name: "source index content changed",
+			mutate: func(t *testing.T, root string) {
+				writeCoverageFile(t, root, "src/main.go", "package src\n// staged during census\n")
+				gitCoverage(t, root, "add", "src/main.go")
+			},
+		},
+		{
+			name: "non-operational tool-owned view added",
+			mutate: func(t *testing.T, root string) {
+				writeCoverageFile(t, root, ".markitect/views/generated.md", "# View\n")
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.name == "source worktree mode changed" && runtime.GOOS == "windows" {
+				t.Skip("Windows filesystems do not expose POSIX executable mode bits")
+			}
+			root := censusRaceRepo(t)
+			_, err := observeWorking(root, censusRaceOptions(), func() error {
+				tc.mutate(t, root)
+				return nil
+			})
+			if err == nil || !strings.Contains(err.Error(), "repository membership, mode, HEAD, or index changed during census") {
+				t.Fatalf("non-operational change was not rejected by census recheck: %v", err)
+			}
+		})
+	}
+}
+
+func censusRaceRepo(t *testing.T) string {
+	t.Helper()
+	root := initCoverageRepo(t)
+	writeCoverageFile(t, root, "src/main.go", "package src\n")
+	gitCoverage(t, root, "add", "src/main.go")
+	gitCoverage(t, root, "commit", "-m", "census recheck fixture")
+	return root
+}
+
+func censusRaceOptions() Options {
+	return Options{ToolPaths: []ToolPath{
+		{Selector: ".markitect/runs/", Owner: "projectrun", Operational: true},
+		{Selector: ".markitect/views/", Owner: "projectwork"},
+	}}
+}
+
 func TestObserveRevisionDoesNotMixLiveWorkingTree(t *testing.T) {
 	root := initCoverageRepo(t)
 	writeCoverageFile(t, root, "src/required.go", "package src\n")
