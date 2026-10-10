@@ -324,7 +324,7 @@ markitect reconcile --repo . --action apply --adapter markitect-render --plan .a
 markitect reconcile --repo . --action verify --adapter markitect-render --plan .artifacts/markitect/reconcile/plan.yaml
 ```
 
-`observe` and `plan` write results only to standard output. Save the plan in `.artifacts/markitect/reconcile/` before applying. Apply is limited to the working tree and requires the unchanged plan plus explicit `--write`; it rejects stale inputs or changed plan content. Verification checks outputs after application. Plans do not automatically remove stale files. External command adapter inputs, protocol, output limits, and local-authority boundary are detailed in the [adapter contract](provider-adapters.md#supported-command-adapter-contract).
+`observe` and `plan` write results only to standard output. Save the plan in `.artifacts/markitect/reconcile/` before applying. Apply is limited to the working tree and requires the unchanged plan plus explicit `--write`; it rejects stale inputs or changed plan content. Verification checks outputs after application. Plans do not automatically remove stale files. External command adapter inputs, protocol, output limits, and local-authority boundary are detailed in the [adapter contract at v0.14.1](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/provider-adapters.md#supported-command-adapter-contract).
 
 <a id="project-local-projections-current-source-not-yet-released"></a>
 ### Project-local projections (experimental alpha bundled with v0.14.1)
@@ -339,7 +339,7 @@ The canonical controller, completion audit, goal-led modeling and evidence refre
 
 ## Initialize a project
 
-Current source uses `markitect project init`; see the [model-first workflow](project-workflow.md#start-or-adopt-a-project). The top-level initializer has been removed from current source. Versioned release histories retain the commands they actually shipped.
+Current source uses `markitect project init`; see the [model-first commands](project-operations.md#cli-setup-and-current-roots). The top-level initializer has been removed from current source. Versioned release histories retain the commands they actually shipped.
 
 ## Declare verification commands
 
