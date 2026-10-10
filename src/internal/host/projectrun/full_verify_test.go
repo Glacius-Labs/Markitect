@@ -193,6 +193,165 @@ func TestFullVerifyMissingManagerAssessmentCannotPassAndStaleSnapshotRejected(t 
 	}
 }
 
+func TestFullVerifyReviewEvidenceIncludesOnlyCurrentParentIntegrationAndPreservesOriginalBindings(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	project, err := projectwork.Load(root, identityHead(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var target projectmodel.Manager
+	var sibling projectmodel.Manager
+	for _, manager := range project.Report.Managers {
+		if manager.Parent != "" {
+			target = manager
+			break
+		}
+	}
+	if target.ID == "" {
+		t.Fatal("fixture has no child Manager")
+	}
+	for _, manager := range project.Report.Managers {
+		if manager.ID != target.ID && manager.Parent == target.Parent {
+			sibling = manager
+			break
+		}
+	}
+	if sibling.ID == "" {
+		t.Fatal("fixture has no sibling Manager")
+	}
+	project.Report.Managers = append(project.Report.Managers, projectmodel.Manager{ID: "unrelated-manager", Parent: "other-root"})
+	finalCandidateID := "candidate-final"
+	finalCandidateDigest := "sha256:final-candidate"
+	want := fullReviewEvidence{TaskID: "task-parent", ManagerID: target.Parent, Phase: "integrate",
+		ReviewCandidateID: "candidate-reviewed", ReviewCandidateDigest: "sha256:reviewed",
+		FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest,
+		ScopeDigest: "sha256:scope", InputDigest: "sha256:input", ReceiptRunID: "review-run", Outcome: "pass", Findings: []ReviewFinding{}}
+	got := fullAuditParentIntegrationReviews(project.Report, target.ID, finalCandidateID, finalCandidateDigest, []fullReviewEvidence{
+		{ManagerID: target.ID, Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: sibling.ID, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: target.Parent, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: target.Parent, Phase: "integrate", Outcome: "pass", FinalCandidateID: "stale-candidate", FinalCandidateDigest: "sha256:stale"},
+		{ManagerID: target.Parent, Phase: "integrate", Outcome: "fail", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		want,
+		{ManagerID: "unrelated-manager", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+	})
+	if len(got) != 1 {
+		t.Fatalf("review evidence was not limited to the current parent integration review: %+v", got)
+	}
+	if !reflect.DeepEqual(got[0], want) {
+		t.Fatalf("parent review provenance or findings changed: got=%+v want=%+v", got[0], want)
+	}
+}
+
+func TestFreshReviewEvidenceForVerifySelectsCurrentScopeAndRetainsPartialCandidate(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	project, err := projectwork.Load(root, identityHead(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var target projectmodel.Manager
+	var artifactID string
+	for _, artifact := range project.Report.Artifacts {
+		if len(artifact.Paths) != 0 {
+			for _, manager := range project.Report.Managers {
+				if manager.ID == artifact.Owner {
+					target, artifactID = manager, artifact.ID
+					break
+				}
+			}
+		}
+		if target.ID != "" {
+			break
+		}
+	}
+	if target.ID == "" || artifactID == "" {
+		t.Fatal("fixture has no manager-owned artifact for a scoped review")
+	}
+	documentPath := "src/inventory/docs/greeting.md"
+	documentContent := []byte("The greeting is displayed to the caller.\n")
+	project.Snapshot.Files[documentPath] = documentContent
+	project.Snapshot.Modes[documentPath] = "0644"
+	project.Report.Files = append(project.Report.Files, projectmodel.FileEntry{Path: documentPath, Mode: "0644", Owner: target.ID,
+		Class: "documentation", Artifacts: []string{artifactID}, Exists: true})
+	for i := range project.Report.Artifacts {
+		if project.Report.Artifacts[i].ID == artifactID {
+			project.Report.Artifacts[i].Paths = append(project.Report.Artifacts[i].Paths, documentPath)
+			break
+		}
+	}
+	task := ManagerTask{ID: "task-current", ManagerID: target.ID, Goal: "Review the owned artifact.", Artifacts: []string{artifactID}}
+	plan := PlanRecord{ID: "plan-current", Goal: "Complete the project artifact.", Operation: OperationApply,
+		Managers: []ManagerTask{task}, BriefingDigests: map[string]string{}, Strictness: map[string]StrictnessProfile{}}
+	run := RunReport{ID: "0123456789abcdef0123456789abcdef", Tasks: []ManagerTask{task}}
+	currentScope, err := reviewScopeDigest(plan, project, task, "work", run)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err := store.runDir(run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(store.base); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(dir); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(dir, "candidates")); err != nil {
+		t.Fatal(err)
+	}
+	partial := candidateData{ID: "11111111111111111111111111111111", Files: map[string]File{}}
+	if err := store.writeCandidate(dir, partial); err != nil {
+		t.Fatal(err)
+	}
+	partial, err = store.readCandidate(dir, partial.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	final := candidateData{ID: "22222222222222222222222222222222", Files: map[string]File{}}
+	if err := store.writeCandidate(dir, final); err != nil {
+		t.Fatal(err)
+	}
+	final, err = store.readCandidate(dir, final.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	current := ReviewRecord{TaskID: task.ID, ManagerID: task.ManagerID, Phase: "work", CandidateID: partial.ID,
+		CandidateDigest: partial.Digest, ScopeDigest: currentScope, InputDigest: "sha256:review-input", Outcome: "pass",
+		Findings: []ReviewFinding{}, Receipt: agentexec.Receipt{RunID: "review-run-current"}}
+	historical := current
+	historical.CandidateID, historical.CandidateDigest, historical.ScopeDigest, historical.Receipt.RunID = "33333333333333333333333333333333", "sha256:old", "sha256:old-scope", "review-run-old"
+	run.Reviews = []ReviewRecord{current, historical}
+	evidence, err := freshReviewEvidenceForVerify(store, dir, project, final, plan, Runtime{Review: &ReviewConfig{}}, run)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(evidence) != 1 {
+		t.Fatalf("selected review count = %d, want 1: %+v", len(evidence), evidence)
+	}
+	got := evidence[0]
+	if got.ReviewCandidateID != partial.ID || got.ReviewCandidateDigest != partial.Digest || got.FinalCandidateID != final.ID || got.FinalCandidateDigest != final.Digest {
+		t.Fatalf("review and final candidate bindings were collapsed or changed: %+v", got)
+	}
+	if got.ReceiptRunID != current.Receipt.RunID || got.ScopeDigest != currentScope || !reflect.DeepEqual(got.Findings, current.Findings) {
+		t.Fatalf("selected review provenance/findings differ from the exact current-scope record: got=%+v want=%+v", got, current)
+	}
+	documentDigest := rawContentDigest(documentContent)
+	if len(got.ReviewedFiles) != 2 || got.ReviewedFiles[0].Path != documentPath || got.ReviewedFiles[0].Mode != "0644" || got.ReviewedFiles[0].ContentDigest != documentDigest {
+		t.Fatalf("review scope omitted the exact documentation file reference: %+v", got.ReviewedFiles)
+	}
+	tampered := run
+	tampered.Reviews = append([]ReviewRecord(nil), run.Reviews...)
+	tampered.Reviews[0].CandidateDigest = "sha256:wrong-retained-candidate"
+	if _, err := freshReviewEvidenceForVerify(store, dir, project, final, plan, Runtime{Review: &ReviewConfig{}}, tampered); err == nil {
+		t.Fatal("review with a mismatched retained-candidate digest was accepted")
+	}
+}
+
 func TestFullVerifyProjectAuditsComposedCandidateBytesWithoutReopeningBaseRevision(t *testing.T) {
 	root := makeFullVerifyFixture(t)
 	setupFullVerifyProcesses(t)
@@ -313,6 +472,12 @@ func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *
 		t.Fatal(err)
 	}
 	managerID := project.Report.Managers[0].ID
+	for _, manager := range project.Report.Managers {
+		if manager.Parent != "" {
+			managerID = manager.ID
+			break
+		}
+	}
 	assessmentAgent := workspaceBridgeAgent(t, root)
 	assessmentAgent.Command = filepath.Join(t.TempDir(), "codex-app-server")
 	assessmentAgent.Model = "gpt-6-luna"
@@ -325,10 +490,24 @@ func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *
 	runtime := Runtime{Agents: map[string]Agent{managerID: assessmentAgent}, Review: &ReviewConfig{Agents: map[string]Agent{managerID: assessmentAgent}},
 		Limits: Limits{MaxDepth: 1, MaxStarts: 256, MaxParallel: 2, MaxDuration: Duration(4 * time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
 	invoker := &fullVerifyNativeWorkspaceInvoker{root: root}
+	finalID, finalDigest := "final-candidate-id", "sha256:final-candidate"
+	parentID := ""
+	for _, manager := range project.Report.Managers {
+		if manager.ID == managerID {
+			parentID = manager.Parent
+			break
+		}
+	}
+	parentReview := fullReviewEvidence{TaskID: "parent-task", ManagerID: parentID, Phase: "integrate",
+		ReviewCandidateID: "reviewed-partial-candidate", ReviewCandidateDigest: "sha256:partial",
+		FinalCandidateID: finalID, FinalCandidateDigest: finalDigest, ScopeDigest: "sha256:scope", InputDigest: "sha256:review-input",
+		ReceiptRunID: "review-receipt", Outcome: "pass", Findings: []ReviewFinding{},
+		ReviewedFiles: []fullReviewFileReference{{Path: "docs/greeting.md", Mode: "0644", ContentDigest: "sha256:docs-content"}}}
+	parentReviews := fullAuditParentIntegrationReviews(project.Report, managerID, finalID, finalDigest, []fullReviewEvidence{parentReview})
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	row, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
-		managerID, StrictnessProfile{}, BriefingContext{}, nil, nil, false, "full-verify-test")
+		managerID, StrictnessProfile{}, BriefingContext{}, nil, nil, parentReviews, false, "full-verify-test")
 	if err != nil {
 		t.Fatalf("native Manager audit failed: row=%+v err=%v", row, err)
 	}
@@ -344,6 +523,15 @@ func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *
 	journal := readWorkspaceJournal(t, root, invoker.workspace.ID)
 	if journal.State != "closed" || journal.Delta == nil || len(journal.Delta.Changes) != 0 || journal.Receipt.RunID != "full-verify-native-run" {
 		t.Fatalf("read-only workspace journal did not retain empty harvested evidence and receipt: %+v", journal)
+	}
+	var captured struct {
+		FreshParentIntegrationReviews []fullReviewEvidence `json:"freshParentIntegrationReviews"`
+	}
+	if err := json.Unmarshal(invoker.requestContext, &captured); err != nil {
+		t.Fatalf("decode parent review projection: %v", err)
+	}
+	if len(captured.FreshParentIntegrationReviews) != 1 || !reflect.DeepEqual(captured.FreshParentIntegrationReviews[0], parentReview) {
+		t.Fatalf("full audit did not receive the exact parent integration provenance: %+v", captured.FreshParentIntegrationReviews)
 	}
 }
 
@@ -412,7 +600,7 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if _, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
-		managerID, StrictnessProfile{}, BriefingContext{}, nil, results, false, "full-verify-support-test"); err != nil {
+		managerID, StrictnessProfile{}, BriefingContext{}, nil, results, nil, false, "full-verify-support-test"); err != nil {
 		t.Fatalf("Manager audit failed: %v", err)
 	}
 	var auditContext struct {
@@ -492,7 +680,7 @@ func TestFullVerifyTypedIncompleteAuditCannotPass(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	row, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
-		managerID, StrictnessProfile{}, BriefingContext{}, nil, nil, false, "full-verify-incomplete-test")
+		managerID, StrictnessProfile{}, BriefingContext{}, nil, nil, nil, false, "full-verify-incomplete-test")
 	if err == nil || row.Status != "incomplete" {
 		t.Fatalf("typed incomplete audit was accepted: row=%+v err=%v", row, err)
 	}

@@ -31,18 +31,45 @@ type FullVerifyRequest struct {
 // project, including a Run candidate. ExpectedSnapshot is required and lets
 // the caller prevent accidental verification of a different candidate.
 type FullVerifyBinding struct {
-	ExpectedSnapshot  string            `json:"expectedSnapshot"`
-	CheckCandidateID  string            `json:"checkCandidateId,omitempty"`
-	ExpectedBriefings map[string]string `json:"expectedBriefings,omitempty"`
-	Write             bool              `json:"write,omitempty"`
-	CheckSource       bool              `json:"checkSource,omitempty"`
-	StartedAt         time.Time         `json:"startedAt,omitempty"`
+	ExpectedSnapshot     string `json:"expectedSnapshot"`
+	CheckCandidateID     string `json:"checkCandidateId,omitempty"`
+	checkCandidateDigest string
+	freshReviews         []fullReviewEvidence
+	ExpectedBriefings    map[string]string `json:"expectedBriefings,omitempty"`
+	Write                bool              `json:"write,omitempty"`
+	CheckSource          bool              `json:"checkSource,omitempty"`
+	StartedAt            time.Time         `json:"startedAt,omitempty"`
 	// PriorStarts includes starts already consumed by preverified checks.
 	PriorStarts                 int           `json:"priorStarts,omitempty"`
 	PriorCostMicros             int64         `json:"priorCostMicros,omitempty"`
 	PriorKnownCostInvocations   int           `json:"priorKnownCostInvocations,omitempty"`
 	PriorUnknownCostInvocations int           `json:"priorUnknownCostInvocations,omitempty"`
 	PreverifiedChecks           []CheckResult `json:"preverifiedChecks,omitempty"`
+}
+
+// fullReviewEvidence preserves both the reviewed candidate and the final
+// candidate whose current scope was used by the existing freshness gate.
+// These records are supplemental audit context, not Full Verify verdicts.
+type fullReviewEvidence struct {
+	TaskID                string                    `json:"taskId"`
+	ManagerID             string                    `json:"managerId"`
+	Phase                 string                    `json:"phase"`
+	ReviewCandidateID     string                    `json:"reviewCandidateId"`
+	ReviewCandidateDigest string                    `json:"reviewCandidateDigest"`
+	FinalCandidateID      string                    `json:"finalCandidateId"`
+	FinalCandidateDigest  string                    `json:"finalCandidateDigest"`
+	ScopeDigest           string                    `json:"scopeDigest"`
+	InputDigest           string                    `json:"inputDigest"`
+	ReceiptRunID          string                    `json:"receiptRunId"`
+	Outcome               string                    `json:"outcome"`
+	Findings              []ReviewFinding           `json:"findings"`
+	ReviewedFiles         []fullReviewFileReference `json:"reviewedFiles"`
+}
+
+type fullReviewFileReference struct {
+	Path          string `json:"path"`
+	Mode          string `json:"mode"`
+	ContentDigest string `json:"contentDigest"`
 }
 
 type FullVerifyReport struct {
@@ -201,6 +228,14 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 	if binding.CheckCandidateID == "" {
 		binding.CheckCandidateID = project.Snapshot.Digest()
 	}
+	if binding.checkCandidateDigest == "" {
+		binding.checkCandidateDigest = project.Snapshot.Digest()
+	}
+	for _, review := range binding.freshReviews {
+		if review.FinalCandidateID != binding.CheckCandidateID || review.FinalCandidateDigest != binding.checkCandidateDigest || review.Outcome != "pass" {
+			return out, ErrStale
+		}
+	}
 	out.Revision, out.CandidateID, out.SnapshotDigest, out.ProjectDigest = project.Revision, binding.CheckCandidateID, project.Snapshot.Digest(), project.Digest
 	if project.Coverage != nil {
 		out.CoverageDigest = project.Coverage.Digest
@@ -343,7 +378,8 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 			break
 		}
 		children := fullChildAssessments(out.Managers, project.Report, row.ManagerID)
-		assessment, callErr := fullAuditManager(ctx, host, invoker, root, project, runtime, row.ManagerID, row.Strictness, briefingContexts[row.ManagerID], children, relevantManagerChecks(project.Report, row.ManagerID, out.Checks), binding.CheckSource, "full-verify-"+binding.ExpectedSnapshot)
+		parentReviews := fullAuditParentIntegrationReviews(project.Report, row.ManagerID, binding.CheckCandidateID, binding.checkCandidateDigest, binding.freshReviews)
+		assessment, callErr := fullAuditManager(ctx, host, invoker, root, project, runtime, row.ManagerID, row.Strictness, briefingContexts[row.ManagerID], children, relevantManagerChecks(project.Report, row.ManagerID, out.Checks), parentReviews, binding.CheckSource, "full-verify-"+binding.ExpectedSnapshot)
 		*row = assessment
 		attempted := row.Receipt != nil && row.Receipt.RunID != ""
 		if attempted {
@@ -598,7 +634,7 @@ func fullRunChecks(ctx context.Context, root string, project *projectwork.Projec
 	return results, errors.Join(failures...)
 }
 
-func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root string, project *projectwork.Project, runtime Runtime, managerID string, strictness StrictnessProfile, briefing BriefingContext, childAssessments []fullChildAssessment, checkResults []CheckResult, checkSource bool, ownerRunID string) (FullManagerAssessment, error) {
+func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root string, project *projectwork.Project, runtime Runtime, managerID string, strictness StrictnessProfile, briefing BriefingContext, childAssessments []fullChildAssessment, checkResults []CheckResult, parentIntegrationReviews []fullReviewEvidence, checkSource bool, ownerRunID string) (FullManagerAssessment, error) {
 	row := FullManagerAssessment{ManagerID: managerID, Status: "incomplete", Assessments: []FullAssessment{}, Findings: []string{}}
 	manager, ok := runtime.Review.Agents[managerID]
 	if !ok {
@@ -647,22 +683,23 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 		fileRefs = append(fileRefs, reviewFileRef{Path: file.Path, Mode: file.Mode, Digest: file.Digest, Grounding: []string{"file-bytes", "file-mode"}})
 	}
 	contextPayload := struct {
-		Kind                   string                      `json:"kind"`
-		SnapshotDigest         string                      `json:"snapshotDigest"`
-		ProjectDigest          string                      `json:"projectDigest"`
-		ModelDigest            string                      `json:"modelDigest"`
-		Manager                projectmodel.ManagerContext `json:"manager"`
-		SupportingStatements   []projectmodel.Statement    `json:"supportingStatements"`
-		SupportingChecks       []projectmodel.Check        `json:"supportingChecks"`
-		Briefing               BriefingContext             `json:"briefing"`
-		IntegrationObligations []fullIntegrationObligation `json:"integrationObligations"`
-		ChildAssessments       []fullChildAssessment       `json:"childAssessments"`
-		CheckResults           []CheckResult               `json:"checkResults"`
-		Files                  []reviewFileRef             `json:"files"`
-		Subjects               []string                    `json:"requiredSubjects"`
-		Strictness             StrictnessProfile           `json:"strictness"`
-		ResponseSchema         json.RawMessage             `json:"responseSchema"`
-	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, supportingStatements, supportingChecks, briefing, children, childAssessments, checkResults, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
+		Kind                          string                      `json:"kind"`
+		SnapshotDigest                string                      `json:"snapshotDigest"`
+		ProjectDigest                 string                      `json:"projectDigest"`
+		ModelDigest                   string                      `json:"modelDigest"`
+		Manager                       projectmodel.ManagerContext `json:"manager"`
+		SupportingStatements          []projectmodel.Statement    `json:"supportingStatements"`
+		SupportingChecks              []projectmodel.Check        `json:"supportingChecks"`
+		Briefing                      BriefingContext             `json:"briefing"`
+		IntegrationObligations        []fullIntegrationObligation `json:"integrationObligations"`
+		ChildAssessments              []fullChildAssessment       `json:"childAssessments"`
+		CheckResults                  []CheckResult               `json:"checkResults"`
+		FreshParentIntegrationReviews []fullReviewEvidence        `json:"freshParentIntegrationReviews"`
+		Files                         []reviewFileRef             `json:"files"`
+		Subjects                      []string                    `json:"requiredSubjects"`
+		Strictness                    StrictnessProfile           `json:"strictness"`
+		ResponseSchema                json.RawMessage             `json:"responseSchema"`
+	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, supportingStatements, supportingChecks, briefing, children, childAssessments, checkResults, parentIntegrationReviews, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
 	contextJSON, err := json.Marshal(contextPayload)
 	if err != nil {
 		return row, err
@@ -919,6 +956,26 @@ func fullChildAssessments(rows []FullManagerAssessment, report projectmodel.Repo
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ManagerID < out[j].ManagerID })
 	return out
+}
+
+func fullAuditParentIntegrationReviews(report projectmodel.Report, managerID, finalCandidateID, finalCandidateDigest string, reviews []fullReviewEvidence) []fullReviewEvidence {
+	var parentID string
+	for _, manager := range report.Managers {
+		if manager.ID == managerID {
+			parentID = manager.Parent
+			break
+		}
+	}
+	if parentID == "" {
+		return []fullReviewEvidence{}
+	}
+	for _, review := range reviews {
+		if review.ManagerID == parentID && review.Phase == "integrate" && review.Outcome == "pass" &&
+			review.FinalCandidateID == finalCandidateID && review.FinalCandidateDigest == finalCandidateDigest {
+			return []fullReviewEvidence{review}
+		}
+	}
+	return []fullReviewEvidence{}
 }
 
 func relevantManagerChecks(report projectmodel.Report, managerID string, results []CheckResult) []CheckResult {

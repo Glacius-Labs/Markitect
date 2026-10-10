@@ -120,6 +120,13 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if err := requireFreshReviews(host, root, s, dir, base, candidate, plan, runtime, run); err != nil {
 		return out, err
 	}
+	var freshReviews []fullReviewEvidence
+	if compiled.Config.CoverageMode == "full" {
+		freshReviews, err = freshReviewEvidenceForVerify(s, dir, compiled, candidate, plan, runtime, run)
+		if err != nil {
+			return out, err
+		}
+	}
 	if err := requireArtifacts(compiled.Report); err != nil {
 		return out, err
 	}
@@ -252,7 +259,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if compiled.Config.CoverageMode == "full" {
 		knownCostInvocations, unknownCostInvocations := runCostCounts(run)
 		full, auditErr := FullVerifyProject(ctx, host, invoker, root, compiled, runtime, FullVerifyBinding{
-			ExpectedSnapshot: compiled.Snapshot.Digest(), ExpectedBriefings: plan.BriefingDigests, CheckCandidateID: candidate.ID,
+			ExpectedSnapshot: compiled.Snapshot.Digest(), ExpectedBriefings: plan.BriefingDigests, CheckCandidateID: candidate.ID, checkCandidateDigest: candidate.Digest, freshReviews: freshReviews,
 			StartedAt: run.StartedAt, PriorStarts: roleBudget.Accounting().ObservedTotal + len(run.Checks), PriorCostMicros: totalCost(run.Invocations),
 			PriorKnownCostInvocations: knownCostInvocations, PriorUnknownCostInvocations: unknownCostInvocations, PreverifiedChecks: out.Checks,
 		})
@@ -291,6 +298,84 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	// ledger. The VerifyReport above contains this candidate's checks only.
 	if err := persistState(s, &run); err != nil {
 		return out, err
+	}
+	return out, nil
+}
+
+// freshReviewEvidenceForVerify projects the same latest passing review scopes
+// required by requireFreshReviews into Full Verify context. The original
+// review candidate remains distinct from the final candidate whose current
+// scope digest was checked.
+func freshReviewEvidenceForVerify(store *runStore, dir string, finalProject *Project, finalCandidate candidateData, plan PlanRecord, runtime Runtime, run RunReport) ([]fullReviewEvidence, error) {
+	if runtime.Review == nil {
+		return []fullReviewEvidence{}, nil
+	}
+	var selected []fullReviewEvidence
+	for _, planned := range plan.Managers {
+		task := planned
+		if current := findTask(run.Tasks, planned.ManagerID); current != nil {
+			task = *current
+		}
+		phase := "work"
+		if len(activeChildren(run.Tasks, task.ManagerID)) > 0 {
+			phase = "integrate"
+		}
+		if !reviewRequired(finalProject, task) {
+			continue
+		}
+		scopeDigest, err := reviewScopeDigest(plan, finalProject, task, phase, run)
+		if err != nil {
+			return nil, err
+		}
+		found := false
+		for i := len(run.Reviews) - 1; i >= 0; i-- {
+			review := run.Reviews[i]
+			if review.ManagerID != task.ManagerID || review.Phase != phase || review.Outcome != "pass" || review.ScopeDigest != scopeDigest {
+				continue
+			}
+			prior, err := store.readCandidate(dir, review.CandidateID)
+			if err != nil || prior.ID != review.CandidateID || prior.Digest != review.CandidateDigest {
+				return nil, fmt.Errorf("review for Manager %s is not bound to a retained exact candidate", task.ManagerID)
+			}
+			reviewedFiles, err := currentReviewFileReferences(finalProject, plan, task, phase)
+			if err != nil {
+				return nil, err
+			}
+			selected = append(selected, fullReviewEvidence{
+				TaskID: review.TaskID, ManagerID: review.ManagerID, Phase: review.Phase,
+				ReviewCandidateID: review.CandidateID, ReviewCandidateDigest: review.CandidateDigest,
+				FinalCandidateID: finalCandidate.ID, FinalCandidateDigest: finalCandidate.Digest,
+				ScopeDigest: review.ScopeDigest, InputDigest: review.InputDigest,
+				ReceiptRunID: review.Receipt.RunID, Outcome: review.Outcome,
+				Findings: cloneReviewFindings(review.Findings), ReviewedFiles: reviewedFiles,
+			})
+			found = true
+			break
+		}
+		if !found {
+			return nil, fmt.Errorf("Manager %s has no fresh passed %s review for its final candidate scope", task.ManagerID, phase)
+		}
+	}
+	return selected, nil
+}
+
+func cloneReviewFindings(findings []ReviewFinding) []ReviewFinding {
+	if findings == nil {
+		return nil
+	}
+	return append([]ReviewFinding{}, findings...)
+}
+
+func currentReviewFileReferences(project *Project, plan PlanRecord, task ManagerTask, phase string) ([]fullReviewFileReference, error) {
+	files := reviewCandidateFiles(project, task, plan.Managers, phase)
+	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files, phase)
+	if err != nil {
+		return nil, err
+	}
+	refs := reviewFileReferences(project.Report, accepted, files)
+	out := make([]fullReviewFileReference, 0, len(refs))
+	for _, ref := range refs {
+		out = append(out, fullReviewFileReference{Path: ref.Path, Mode: ref.Mode, ContentDigest: ref.Digest})
 	}
 	return out, nil
 }
