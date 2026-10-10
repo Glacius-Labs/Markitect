@@ -154,7 +154,18 @@ func taskResponseSchema(phase string) json.RawMessage {
 	delegations := map[string]any{"type": "array", "items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"managerId", "goal"}, "properties": map[string]any{"managerId": map[string]any{"type": "string", "minLength": 1}, "goal": map[string]any{"type": "string", "minLength": 1, "maxLength": 4096}}}}
 	textList := map[string]any{"type": "array", "items": map[string]any{"type": "string", "minLength": 1, "maxLength": 4096}}
 	reworkItems := map[string]any{"type": "array", "items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"managerId", "goal", "reason"}, "properties": map[string]any{"managerId": map[string]any{"type": "string", "minLength": 1, "maxLength": 128}, "goal": map[string]any{"type": "string", "minLength": 1, "maxLength": 4096}, "reason": map[string]any{"type": "string", "minLength": 1, "maxLength": 2048}}}}
-	properties := map[string]any{"status": map[string]any{"type": "string", "enum": []string{"complete", "partial", "blocked", "failed", "no-op"}}, "summary": map[string]any{"type": "string", "minLength": 1, "maxLength": 4096}, "delegations": delegations, "reworkRequests": reworkItems, "integrated": map[string]any{"type": "boolean", "enum": []bool{phase == "integrate"}}, "questions": textList, "risks": textList, "resolvedQuestions": textList, "resolvedRisks": textList, "escalateTo": map[string]any{"type": "string", "maxLength": 128}}
+	properties := map[string]any{
+		"status":            map[string]any{"type": "string", "enum": []string{"complete", "partial", "blocked", "failed", "no-op"}, "description": "Use partial when an actionable question or risk remains unresolved. Use complete only when this phase's obligations are closed and no questions or risks remain."},
+		"summary":           map[string]any{"type": "string", "minLength": 1, "maxLength": 4096, "description": "Summarize the outcome and supporting evidence. Put informational warnings or caveats from a successful command here; they are not unresolved risks by themselves."},
+		"delegations":       delegations,
+		"reworkRequests":    reworkItems,
+		"integrated":        map[string]any{"type": "boolean", "enum": []bool{phase == "integrate"}},
+		"questions":         map[string]any{"type": "array", "description": "Actionable questions that remain unresolved; use an empty array when none remain. A partial status requires at least one unresolved question or risk.", "items": textList["items"]},
+		"risks":             map[string]any{"type": "array", "description": "Actionable risks that remain unresolved; use an empty array when none remain. Informational warnings from successful work belong in summary, not here.", "items": textList["items"]},
+		"resolvedQuestions": map[string]any{"type": "array", "description": "Copy the exact original question only when supplied current evidence resolves it; otherwise leave it unresolved in questions.", "items": textList["items"]},
+		"resolvedRisks":     map[string]any{"type": "array", "description": "Copy the exact original risk only when supplied current evidence resolves it; otherwise leave it unresolved in risks.", "items": textList["items"]},
+		"escalateTo":        map[string]any{"type": "string", "maxLength": 128},
+	}
 	data, _ := json.Marshal(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"status", "summary", "delegations", "reworkRequests", "integrated", "questions", "risks", "resolvedQuestions", "resolvedRisks", "escalateTo"}, "properties": properties})
 	return data
 }

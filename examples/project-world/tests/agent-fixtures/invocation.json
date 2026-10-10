@@ -18,15 +18,15 @@
         "additionalProperties": false,
         "required": ["status", "summary", "delegations", "reworkRequests", "integrated", "questions", "risks", "resolvedQuestions", "resolvedRisks", "escalateTo"],
         "properties": {
-          "status": {"type": "string", "enum": ["complete", "partial", "blocked", "failed", "no-op"]},
-          "summary": {"type": "string", "minLength": 1, "maxLength": 4096},
+          "status": {"type": "string", "enum": ["complete", "partial", "blocked", "failed", "no-op"], "description": "Use partial when an actionable question or risk remains unresolved. Use complete only when this phase's obligations are closed and no questions or risks remain."},
+          "summary": {"type": "string", "minLength": 1, "maxLength": 4096, "description": "Summarize the outcome and supporting evidence. Put informational warnings or caveats from a successful command here; they are not unresolved risks by themselves."},
           "delegations": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["managerId", "goal"], "properties": {"managerId": {"type": "string", "minLength": 1}, "goal": {"type": "string", "minLength": 1, "maxLength": 4096}}}},
           "reworkRequests": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["managerId", "goal", "reason"], "properties": {"managerId": {"type": "string", "minLength": 1, "maxLength": 128}, "goal": {"type": "string", "minLength": 1, "maxLength": 4096}, "reason": {"type": "string", "minLength": 1, "maxLength": 2048}}}},
           "integrated": {"type": "boolean", "enum": [false]},
-          "questions": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
-          "risks": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
-          "resolvedQuestions": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
-          "resolvedRisks": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
+          "questions": {"type": "array", "description": "Actionable questions that remain unresolved; use an empty array when none remain. A partial status requires at least one unresolved question or risk.", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
+          "risks": {"type": "array", "description": "Actionable risks that remain unresolved; use an empty array when none remain. Informational warnings from successful work belong in summary, not here.", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
+          "resolvedQuestions": {"type": "array", "description": "Copy the exact original question only when supplied current evidence resolves it; otherwise leave it unresolved in questions.", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
+          "resolvedRisks": {"type": "array", "description": "Copy the exact original risk only when supplied current evidence resolves it; otherwise leave it unresolved in risks.", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
           "escalateTo": {"type": "string", "maxLength": 128}
         }
       }

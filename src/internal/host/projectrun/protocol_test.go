@@ -13,6 +13,40 @@ func TestDecodeTaskResponseRejectsDuplicateObligations(t *testing.T) {
 	}
 }
 
+func TestTaskResponseSchemaExplainsActionableObligationSemantics(t *testing.T) {
+	for _, phase := range []string{"work", "integrate"} {
+		t.Run(phase, func(t *testing.T) {
+			raw, err := TaskResponseSchema(phase)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var schema struct {
+				Properties map[string]struct {
+					Description string `json:"description"`
+				} `json:"properties"`
+			}
+			if err := json.Unmarshal(raw, &schema); err != nil {
+				t.Fatalf("decode task response schema: %v", err)
+			}
+			containsAll := func(field string, want ...string) {
+				t.Helper()
+				description := schema.Properties[field].Description
+				for _, phrase := range want {
+					if !strings.Contains(description, phrase) {
+						t.Errorf("%s description %q omits %q", field, description, phrase)
+					}
+				}
+			}
+			containsAll("status", "partial", "actionable question or risk", "complete", "no questions or risks remain")
+			containsAll("summary", "supporting evidence", "successful command", "not unresolved risks by themselves")
+			containsAll("questions", "Actionable", "unresolved", "empty array", "partial status")
+			containsAll("risks", "Actionable", "unresolved", "empty array", "successful work belong in summary")
+			containsAll("resolvedQuestions", "exact original question", "supplied current evidence", "leave it unresolved")
+			containsAll("resolvedRisks", "exact original risk", "supplied current evidence", "leave it unresolved")
+		})
+	}
+}
+
 func TestDecodeTaskResponseBoundsManagerDirectedReworkToDirectChildren(t *testing.T) {
 	valid := `{"status":"complete","summary":"integration complete","delegations":[],"reworkRequests":[{"managerId":"orders","goal":"Correct the one owned artifact.","reason":"The integrated candidate misses its declared output."}],"integrated":true,"questions":[],"risks":[],"resolvedQuestions":[],"resolvedRisks":[],"escalateTo":""}`
 	response, err := decodeTaskResponse(json.RawMessage(valid), "integrate", []string{"orders"})
