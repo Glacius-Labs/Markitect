@@ -164,6 +164,37 @@ func TestAnalyzeTracksManyToManyFileMeaningAndDeterministicDigest(t *testing.T) 
 	}
 }
 
+// BUG-01: a Check that exercises a changed Statement must run again, and its
+// owner is routed, even when no Artifact declares that Check.
+func TestImpactRoutesChecksThatUseAChangedStatement(t *testing.T) {
+	model, files := fixture(t, false, false, true)
+	root := map[string]any{"apiVersion": APIVersion, "kind": managerKind, "namespace": "", "name": "root"}
+	contract := map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "inventory", "name": "release-reservation"}
+	definitions := append(copyDefinitions(model.Definitions),
+		core.Definition{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Namespace: "audit", Name: "audit"}, Purpose: "Audits stock.", Spec: map[string]any{"parent": root, "owns": []any{"src/audit/"}}},
+		core.Definition{APIVersion: APIVersion, Kind: checkKind, Metadata: core.Metadata{Namespace: "audit", Name: "stock-audit"}, Purpose: "Audit released stock.", Spec: map[string]any{"command": []any{"go", "test", "./audit"}, "uses": []any{contract}}},
+	)
+	analyze := func(description string) Report {
+		for i := range definitions {
+			if definitions[i].Metadata.Name == "release-reservation" {
+				definitions[i].Spec["description"] = description
+			}
+		}
+		compiled, diagnostics := core.Compile(model.Schemas, copyDefinitions(definitions), "check-uses")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		return Analyze(compiled, files)
+	}
+	base := analyze("Release reservation once.")
+	impact := Impact(base, analyze("Release reservation at most once."))
+	auditCheck := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: checkKind, Namespace: "audit", Name: "stock-audit"}).Key()
+	auditManager := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "audit", Name: "audit"}).Key()
+	if len(impact.Unknown) != 0 || !contains(impact.Checks, auditCheck) || !contains(impact.Managers, auditManager) {
+		t.Fatalf("check using the changed contract was not routed: unknown=%v checks=%v managers=%v", impact.Unknown, impact.Checks, impact.Managers)
+	}
+}
+
 func TestImpactUsesAddsContextWhileRequiresAddsCoverage(t *testing.T) {
 	baseModel, files := fixture(t, true, true, true)
 	baseDefs := copyDefinitions(baseModel.Definitions)

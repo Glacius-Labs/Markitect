@@ -261,7 +261,9 @@ func Impact(base, candidate Report) ChangeImpact {
 		out.Unknown = append(out.Unknown, "model digest changed beyond the projected definition delta; decision or unprojected definition changes may require review")
 	}
 
-	// Directly changed statements and reverse dependents need their own realizing artifacts.
+	// Directly changed statements and reverse dependents need their own realizing artifacts
+	// and every check that exercises them.
+	allChecks := append(append([]Check(nil), base.Checks...), candidate.Checks...)
 	addCoverage := func(statementID string) {
 		for _, artifact := range allArtifacts {
 			if contains(artifact.Realizes, statementID) {
@@ -270,6 +272,12 @@ func Impact(base, candidate Report) ChangeImpact {
 				for _, checkID := range artifact.Checks {
 					checks[checkID] = true
 				}
+			}
+		}
+		for _, check := range allChecks {
+			if contains(check.Uses, statementID) {
+				managers[check.Owner] = true
+				checks[check.ID] = true
 			}
 		}
 	}
