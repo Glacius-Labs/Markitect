@@ -81,7 +81,6 @@ spec:
     - src/internal/host/projectrun
     - src/internal/host/projectcli
     - examples/project-world
-    - experiments/project-world-live
     - docs/project-workflow.md
     - docs/project-operations.md
     - src/internal/host/cli/project_dispatch_test.go
@@ -604,8 +603,6 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectadoption/runner_test.go
       owner: project-world-implementation
-    - path: experiments/project-world-live/acceptance.py
-      owner: project-world-live-validation
     - path: src/internal/host/projectsetup/setup.go
       owner: project-world-implementation
     - path: src/internal/host/projectsetup/setup_test.go
@@ -654,16 +651,10 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectonboarding/init_test.go
       owner: project-world-implementation
-    - path: experiments/project-world-live/run.py
-      owner: project-world-live-validation
-    - path: experiments/project-world-live/README.md
-      owner: project-world-live-validation
     - path: src/internal/host/projectadoption/target_context.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/resolution_test.go
       owner: project-world-implementation
-    - path: experiments/project-world-live/brownfield.py
-      owner: project-world-live-validation
     - path: src/internal/host/projectcli/schema_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/repair_test.go
