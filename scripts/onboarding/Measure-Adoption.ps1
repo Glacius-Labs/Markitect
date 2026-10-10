@@ -3,6 +3,10 @@ param(
     [Parameter(Mandatory = $true)]
     [string] $MarkitectBinary,
 
+    # markitect-legacy runs the Project/Domain render, check, context, verify and impact steps.
+    [Parameter(Mandatory = $true)]
+    [string] $MarkitectLegacyBinary,
+
     [string] $OutputDirectory
 )
 
@@ -13,6 +17,8 @@ $oraclePath = Join-Path $fixtureRoot 'tasks/expected.yaml'
 $actorPromptPath = Join-Path $fixtureRoot 'tasks/policy-edit-prompt.md'
 $binaryPath = (Resolve-Path -LiteralPath $MarkitectBinary).Path
 $binaryHash = (Get-FileHash -LiteralPath $binaryPath -Algorithm SHA256).Hash.ToLowerInvariant()
+$legacyBinaryPath = (Resolve-Path -LiteralPath $MarkitectLegacyBinary).Path
+$legacyBinaryHash = (Get-FileHash -LiteralPath $legacyBinaryPath -Algorithm SHA256).Hash.ToLowerInvariant()
 
 if (-not $OutputDirectory) {
     $OutputDirectory = Join-Path ([IO.Path]::GetTempPath()) ('markitect-adoption-' + [guid]::NewGuid().ToString('N'))
@@ -116,6 +122,15 @@ function Invoke-Markitect {
     }
 }
 
+function Invoke-MarkitectLegacy {
+    param([string] $Name, [string[]] $Arguments)
+    Invoke-Timed -Name $Name -Action {
+        $commandOutput = & $legacyBinaryPath @Arguments 2>&1 | Out-String
+        $commandExitCode = $LASTEXITCODE
+        return @{ output = $commandOutput; exitCode = $commandExitCode }
+    }
+}
+
 try {
 if (-not (Test-Path -LiteralPath $oraclePath) -or -not (Test-Path -LiteralPath $actorPromptPath)) {
     throw 'The fixed task prompt or expected-results file is missing.'
@@ -144,7 +159,7 @@ $initPaths = @(
     '.markitect/runtime.yaml',
     'docs/markitect/project.md'
 )
-$preview = Invoke-Markitect -Name 'init-preview' -Arguments @('project', 'init', '--repo', $initWorkspace, '--name', 'parcel-support')
+$preview = Invoke-Markitect -Name 'init-preview' -Arguments @('init', '--repo', $initWorkspace, '--name', 'parcel-support')
 $previewPlan = ConvertFrom-Json -InputObject $preview
 if ($previewPlan.apiVersion -ne 'project.markitect.example.org/v1alpha1' -or $previewPlan.name -ne 'parcel-support' -or $previewPlan.digest -notmatch '^[0-9a-f]{64}$') {
     throw 'Initialization preview returned an invalid or unexpected model-first plan.'
@@ -159,7 +174,7 @@ foreach ($path in $initPaths) {
     }
 }
 $outcomes.initPreviewReadOnly = 'passed'
-$write = Invoke-Markitect -Name 'init-write' -Arguments @('project', 'init', '--repo', $initWorkspace, '--name', 'parcel-support', '--write')
+$write = Invoke-Markitect -Name 'init-write' -Arguments @('init', '--repo', $initWorkspace, '--name', 'parcel-support', '--expect', $previewPlan.digest, '--write')
 $writePlan = ConvertFrom-Json -InputObject $write
 if ($writePlan.apiVersion -ne 'project.markitect.example.org/v1alpha1' -or $writePlan.name -ne 'parcel-support' -or $writePlan.digest -ne $previewPlan.digest) {
     throw 'Initialization write did not preserve the preview plan identity.'
@@ -187,15 +202,15 @@ Copy-Item -LiteralPath (Join-Path $fixtureRoot 'scripts') -Destination $workspac
 $null = Invoke-Git -Directory $workspace -Arguments @('init', '--initial-branch=feature/adoption-exercise')
 $null = Invoke-Git -Directory $workspace -Arguments @('config', 'user.name', 'Markitect onboarding exercise')
 $null = Invoke-Git -Directory $workspace -Arguments @('config', 'user.email', 'onboarding@example.invalid')
-$null = Invoke-Markitect -Name 'render-baseline' -Arguments @('render', '--repo', $workspace, '--write')
+$null = Invoke-MarkitectLegacy -Name 'render-baseline' -Arguments @('render', '--repo', $workspace, '--write')
 $null = Invoke-Git -Directory $workspace -Arguments @('add', '.')
 $null = Invoke-Git -Directory $workspace -Arguments @('commit', '-m', 'Baseline parcel support resources')
 $baseSha = Invoke-Git -Directory $workspace -Arguments @('rev-parse', 'HEAD')
 if ($baseSha -notmatch '^[0-9a-f]{40}$') { throw "Baseline is not a full commit SHA: $baseSha" }
 
-$checkBase = Invoke-Markitect -Name 'check-baseline' -Arguments @('check', '--repo', $workspace, '--revision', $baseSha)
+$checkBase = Invoke-MarkitectLegacy -Name 'check-baseline' -Arguments @('check', '--repo', $workspace, '--revision', $baseSha)
 $outcomes.baselineCheck = 'passed'
-$context = Invoke-Markitect -Name 'context-baseline' -Arguments @('context', '--repo', $workspace, '--revision', $baseSha, '--kind', 'Skill', '--namespace', 'support', '--name', 'refund-triage')
+$context = Invoke-MarkitectLegacy -Name 'context-baseline' -Arguments @('context', '--repo', $workspace, '--revision', $baseSha, '--kind', 'Skill', '--namespace', 'support', '--name', 'refund-triage')
 $contextPaths = @([regex]::Matches($context, '(?m)^ {6}path:\s*"?([^"\s]+)"?\s*$') | ForEach-Object { $_.Groups[1].Value })
 Assert-ExactSet -Actual $contextPaths -Expected $expectedContextPaths -Label 'Context input paths'
 $outcomes.contextExpectedPaths = 'passed'
@@ -207,17 +222,17 @@ $oldWindow = 'up to 14 days after delivery'
 if (-not $policySource.Contains($oldWindow)) { throw 'The fixed baseline policy wording has changed; review the task and oracle.' }
 $candidateSource = $policySource.Replace($oldWindow, 'up to 30 days after delivery')
 [IO.File]::WriteAllText($policyPath, $candidateSource, [Text.UTF8Encoding]::new($false))
-$null = Invoke-Markitect -Name 'render-candidate' -Arguments @('render', '--repo', $workspace, '--write')
+$null = Invoke-MarkitectLegacy -Name 'render-candidate' -Arguments @('render', '--repo', $workspace, '--write')
 $null = Invoke-Git -Directory $workspace -Arguments @('add', '.markitect/areas/support/refund-policy.text.yaml', 'docs/markitect/support/refund-policy.text.md')
 $null = Invoke-Git -Directory $workspace -Arguments @('commit', '-m', 'Extend late parcel refund request window')
 $candidateSha = Invoke-Git -Directory $workspace -Arguments @('rev-parse', 'HEAD')
 if ($candidateSha -notmatch '^[0-9a-f]{40}$') { throw "Candidate is not a full commit SHA: $candidateSha" }
 $null = Invoke-Git -Directory $workspace -Arguments @('bundle', 'create', (Join-Path $OutputDirectory 'fixture.bundle'), 'HEAD')
 
-$null = Invoke-Markitect -Name 'check-candidate' -Arguments @('check', '--repo', $workspace, '--revision', $candidateSha)
-$null = Invoke-Markitect -Name 'verify-candidate' -Arguments @('verify', '--repo', $workspace, '--revision', $candidateSha)
+$null = Invoke-MarkitectLegacy -Name 'check-candidate' -Arguments @('check', '--repo', $workspace, '--revision', $candidateSha)
+$null = Invoke-MarkitectLegacy -Name 'verify-candidate' -Arguments @('verify', '--repo', $workspace, '--revision', $candidateSha)
 $outcomes.candidateVerify = 'passed'
-$impact = Invoke-Markitect -Name 'impact-fixed-shas' -Arguments @('impact', '--repo', $workspace, '--base', $baseSha, '--revision', $candidateSha)
+$impact = Invoke-MarkitectLegacy -Name 'impact-fixed-shas' -Arguments @('impact', '--repo', $workspace, '--base', $baseSha, '--revision', $candidateSha)
 Assert-ExactSet -Actual @(Read-YamlSequence -Content $impact -Key 'changed') -Expected $expectedChangedPaths -Label 'Impact changed paths'
 $affectedResources = @(Read-YamlSequence -Content $impact -Key 'affected')
 Assert-ExactSet -Actual $affectedResources -Expected $expectedAffectedResources -Label 'Impact affected resources'
@@ -237,6 +252,7 @@ $endUtc = [DateTime]::UtcNow
 $durationLines = @($metrics.Keys | ForEach-Object { "  ${_}: $($metrics[$_])" })
 $outcomeLines = @($outcomes.Keys | ForEach-Object { "  ${_}: $($outcomes[$_])" })
 $yamlBinaryPath = ConvertTo-Json -InputObject $binaryPath -Compress
+$yamlLegacyBinaryPath = ConvertTo-Json -InputObject $legacyBinaryPath -Compress
 $yamlVersion = ConvertTo-Json -InputObject $versionOutput.Trim() -Compress
 $record = @(
     'schemaVersion: 1',
@@ -246,6 +262,8 @@ $record = @(
     "completedUtc: `"$($endUtc.ToString('o'))`"",
     "binaryPath: $yamlBinaryPath",
     "binarySha256: $binaryHash",
+    "legacyBinaryPath: $yamlLegacyBinaryPath",
+    "legacyBinarySha256: $legacyBinaryHash",
     "versionOutput: $yamlVersion",
     "fixture: examples/onboarding/delivery-service",
     "baseSha: `"$baseSha`"",
