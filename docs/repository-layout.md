@@ -1,72 +1,79 @@
 # Repository layout
 
-A Markitect project keeps its canonical control plane separate from application code. The project selector and policy live in `.markitect/project.yaml`; the canonical model and runtime are selected from that manifest. Managers describe responsibility slices and artifact ownership, while application files remain ordinary project files.
+This page describes two layouts: the recommended layout of a project that adopts Markitect, and the layout of Markitect's own source repository.
 
 ## Recommended target-project layout
+
+A Markitect project keeps its control plane in `.markitect/` and its application files where the project chooses. `markitect project init` writes the manifest, runtime, root Manager, ignore rules and readable view; `markitect project onboard` adds the workflow, instructions and skills.
 
 ```text
 .markitect/
   project.yaml                 selected model, policy, checks and coverage
-  model/                       Manager and owned concept/rule/workflow files
-  runtime.yaml                 local execution roles and finite budgets
-  workflows/model-first.md    installed shared workflow
-  state/                       typed Work Item explorations and decisions
+  model/                       Managers and their concepts, rules and artifacts
+  runtime.yaml                 inner roles, profiles and finite budgets
+  workflows/model-first.md     shared workflow installed by onboarding
+  state/                       explorations, decisions and briefings
   runs/                        plans, candidates, receipts and verification
-.agents/skills/                optional Codex guidance installed by onboarding
-.claude/skills/                optional Claude Code guidance installed by onboarding
-AGENTS.md / CLAUDE.md          repository-owned instructions with managed blocks
-src/                           project-selected application artifacts
-tests/                        project-selected tests
-docs/markitect/project.md     generated readable view of accepted model
+  .gitignore                   keeps cache/, runs/ and views/ out of Git
+.agents/skills/                optional Codex skills installed by onboarding
+.claude/skills/                optional Claude Code skills installed by onboarding
+AGENTS.md / CLAUDE.md          repository instructions with managed blocks
+src/                           project-selected application files
+tests/                         project-selected tests
+docs/markitect/project.md      generated readable view of the accepted model
 ```
 
-These application paths are examples, not language conventions. The model tree follows conceptual ownership rather than mirroring source directories. Give each ordinary artifact one accountable Manager; express shared responsibility and explicit dependencies in the model. Markitect does not infer behavior, dependencies, or ownership from path names or Markdown links.
-
-The generated `docs/markitect/project.md` is a readable view of the canonical model, not an independent source of intent. Keep the model in YAML, review generated views after changes, and commit accepted model changes under the adopting repository's policy before implementation readiness.
+- Application paths are examples, not conventions. The model tree follows conceptual ownership, not the source directories.
+- Each ordinary file has one accountable Manager. Shared responsibility and dependencies are explicit in the model.
+- Markitect does not infer behavior, dependencies or ownership from paths, names or Markdown links.
+- `docs/markitect/project.md` is a view of the model, not a source of intent. Commit accepted model changes under the repository's policy before implementation.
+- Markitect also uses `cache/`, `views/`, `drafts/` and `write.lock` under `.markitect/` while it works.
 
 ## Ownership and boundaries
 
 | Area | Owns |
 |---|---|
-| `.markitect/project.yaml` and selected model paths | Project identity, policy, Managers, concepts, rules, artifact responsibilities, and checks |
-| `.markitect/runtime.yaml` | Explicit local provider/runtime selection, roles, helper policy, and finite budgets |
-| `.markitect/state/` and `.markitect/runs/` | Durable workflow records, proposals, plans, candidates, receipts and verification evidence |
-| `AGENTS.md`, `CLAUDE.md`, `.agents/skills/`, `.claude/skills/` | Repository-local outer-agent guidance and discoverable skills; onboarding preserves custom material outside Markitect-managed blocks |
-| Application paths and `tests/` | Adopting repository implementation, tests, and local acceptance policy |
-| `docs/` | Human-owned docs plus the explicitly configured generated model view |
+| `.markitect/project.yaml` and the model paths | Project identity, policy, Managers, concepts, rules, artifact responsibilities and checks |
+| `.markitect/runtime.yaml` | Local role profiles, helper policy and finite budgets |
+| `.markitect/state/` and `.markitect/runs/` | Durable workflow records, plans, candidates, receipts and verification evidence |
+| `AGENTS.md`, `CLAUDE.md`, `.agents/skills/`, `.claude/skills/` | Outer-agent guidance; onboarding keeps custom text outside its managed blocks |
+| Application paths and `tests/` | The adopting repository's implementation, tests and acceptance policy |
+| `docs/` | Human-owned documents and the configured generated model view |
 
-The MCP server is selected for one explicit project root at startup; tool calls cannot redirect its authority. Local execution uses the caller's permissions. Native workers receive fresh owned candidate workspaces and bounded model/artifact context; only guarded Apply updates the adopting checkout. Candidate workspaces are not an operating-system security boundary.
+The MCP server is fixed to one project root at startup; tool calls cannot redirect it. Inner roles work in owned candidate workspaces, and only guarded Apply updates the checkout. Local execution uses the caller's permissions; workspaces are not an operating-system sandbox.
 
 ## Source repository layout
 
-Markitect source keeps its Go module at the repository root. Production entrypoints and packages live under `src/cmd/` and `src/internal/`; external harnesses that import Host packages live under `src/harness/`. The example fixture data remains at the repository root under `examples/`. Build and test commands run from the repository root, so production package paths include the `src/` prefix. This product-source layout is separate from the target-project example above, where each adopting project chooses its own application paths.
+Markitect's Go module sits at the repository root, so package paths start with `src/`. Build and test commands run from the root.
 
 ```text
 src/
-  cmd/                         executable entrypoints; delegate to Host
+  cmd/                         executable entrypoints
   internal/
-    core/                      structural compiler and normalized values
-    modules/                   separate capability implementations
-    host/                      composition, workflows, CLI and controlled writes
-    infrastructure/            source acquisition and platform operations
-    tooling/                   import checks, provider harnesses and distribution
-  harness/                     executable scenarios and integration tests
-docs/                          guides, design, work queues and dated evidence
-examples/                      synthetic projects and deterministic fixtures
-experiments/                   bounded pilot harnesses and preserved evidence
-benchmark/                     immutable release-comparison workloads
+    core/                      structural compiler and snapshots
+    infrastructure/            Git and working-tree access
+    host/                      product use cases and runtime, and the legacy line
+    modules/                   capability packages: project model, adoption helpers
+    tooling/                   import gate, release, publication, notices, provider runners
+    testkit/                   hermetic fixtures for tests
+  harness/                     executable scenarios over the examples
+docs/                          guides, design, history, validation and work items
+examples/                      example projects and fixtures
+experiments/                   bounded pilots and the case playground
+benchmark/                     release-comparison workloads
 integration/                   standalone distribution bootstrap
 packaging/winget/              versioned portable manifests
 schema/                        generated schema views
-scripts/                       repository maintenance and evaluation helpers
+scripts/                       maintenance and evaluation helpers
 ```
 
-Go tests live beside the package they exercise; cross-package scenarios live in `src/harness/`. Add a file to the package that owns its responsibility before considering a new package. [Contribution checks](../CONTRIBUTING.md#ownership-and-layout) and the [Module guide](development/modules.md) define the import boundaries; directory names alone do not enforce them.
+- A directory does not give a package its layer. `src/internal/host` holds product packages of every layer next to the legacy line. The [code map](development/code-map.md) assigns each package its layer, and [Architecture](architecture.md#layers) describes the layers.
+- Go tests live beside their package; cross-package scenarios live in `src/harness/`.
+- Add a file to the package that owns the responsibility before you create a package.
+- [Modules and static composition](development/modules.md) owns the import rules. The import gate enforces them; directory names do not.
 
-Markitect's own engineering-resource configuration is `markitect.yaml`, with resources under `.markitect/areas/` and module configuration under `.markitect/modules/`. It uses the structural compiler to check this repository's contributor guidance. It is separate from the model-first adopting-project scaffold above. [Managed-artifact accounting](../markitect-artifacts.yaml) declares a bounded source scope, not every file in the checkout.
+This repository's own engineering resources still use the legacy line: `markitect.yaml`, `.markitect/areas/` and `.markitect/modules/`. They render `.agents/skills/`, `.claude/skills/` and `docs/markitect/` and run this repository's checks until ARCH-07 moves Markitect onto its own `.markitect/project.yaml` model. Change their canonical YAML and regenerate the views. [Managed-artifact accounting](../markitect-artifacts.yaml) declares a bounded source scope, not every file.
 
-The root [AGENTS.md](../AGENTS.md) routes engineering tasks. `.agents/skills/`, `.claude/skills/` and `docs/markitect/` are generated guidance views; change their canonical YAML and regenerate the outputs. `.github/` owns hosted workflows and issue/PR templates; `.githooks/` contains configured hook artifacts. New local logs and build outputs belong outside source inputs, as described in [CONTRIBUTING](../CONTRIBUTING.md#release-work).
+The root [AGENTS.md](../AGENTS.md) routes engineering tasks. `.github/` holds the hosted workflows and templates, and `.githooks/` the pre-commit hook. Local logs and build outputs belong outside source inputs ([CONTRIBUTING](../CONTRIBUTING.md#release-work)).
 
-Use the [documentation map](README.md) for current guides and canonical owners, the [examples map](../examples/README.md) for executable fixtures, and the [experiments map](../experiments/README.md) for bounded evaluations. Preserve dated evidence and immutable workload paths when reorganizing navigation; a maintained index can clarify their role without changing their original bytes.
-
-Historical Project/Domain inputs remain versioned compatibility surfaces; canonical Projection inputs belonged to the v0.14.1 alpha, which current source has removed. The currently published v0.14.1 pin retains its own paths and behavior; no in-place migration or automatic removal is implied by this recommended target layout. See the [compatibility reference](usage.md#legacy-projectdomain-cli-compatibility) and [distribution guide](../integration/README.md).
+Use the [documentation map](README.md), the [examples map](../examples/README.md) and the [experiments map](../experiments/README.md) to find current guides, fixtures and evaluations. Keep dated evidence and immutable workload paths when you reorganize navigation.

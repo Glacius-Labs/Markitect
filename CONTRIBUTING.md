@@ -6,38 +6,30 @@ For coordinated parallel work, follow the [roadmap](docs/implementation-plan.md#
 
 ## Ownership and layout
 
-| Path | Final responsibility |
-|---|---|
-| `src/cmd/...` | Thin executable entrypoints. Every CLI imports Host only and delegates to Host runtime functions. |
-| `src/internal/modules/projectmodel`, `src/internal/host/projectwork`, `src/internal/host/projectcli` | Model-first project compiler, repository snapshots/coverage, Manager workflow and the `project` command surface. The model declares semantics and file responsibilities; it does not infer source-language meaning. |
-| `src/internal/host/projectrun`, `src/internal/host/projectadoption`, `src/internal/host/projectbriefing`, `src/internal/host/projectonboarding` | Bounded execution, selected Brownfield proposals, committed-model briefs and native contributor guidance. These do not authenticate human approval or provide OS isolation. |
-| src/internal/core | Structural compiler for Schema, Kind, Property and Definition with pure normalized IR, used by the model-first project model; no legacy policy, authoring source, activation, provider or execution semantics. |
-| src/internal/host | Host frontend and composition; compatibility use cases; model/context/impact; process/check execution, persistence and controlled writes. |
-| src/internal/modules/adoption | New selected capture/review implementation helpers; Go package only, not an installable Module manifest. |
-| src/internal/host/compat/v0_13/consumers | Isolated historical v0.13.0 consumers with unchanged compatibility semantics; new capability packages remain separate. |
-| src/internal/host/compat/v0_13/consumers/agentrules | Historical v0.13 Codex/Claude consumers; compatibility only. |
-| src/internal/host/compat/v0_13/consumers/artifactcoverage | Historical v0.13 artifact accounting consumer; compatibility only. |
-| src/internal/host/compat/v0_13/consumers/githooks and consumers/pipelines | Historical v0.13 bounded artifact checks; compatibility only. |
-| src/internal/host/compat/v0_13/consumers/github and consumers/azuredevops | Historical v0.13 offline consumers; compatibility only. |
-| `src/internal/infrastructure/source` | Git/working-tree acquisition, process hardening and materialization into snapshot values. |
-| `src/internal/tooling/architecture`, `src/internal/tooling/release`, `src/internal/tooling/publish`, `src/internal/tooling/licenses` | Mechanical import gate, immutable distribution/publication operations, and canonical notices. |
-| `integration` | Standalone public bootstrap/distribution Tooling; copied into installed packages, with no Markitect package imports. |
-| `src/harness` | Imported Go harnesses and executable tests; test-only consumers of production packages. |
-| `src/internal/testkit` | Hermetic test fixtures: Git isolation, repositories with fixed identity and dates, short temporary directories. Only test files import it; it imports only the standard library. |
-| `packaging/winget` | Versioned portable package manifests derived from verified releases. |
-| `docs` | Product architecture, usage, decisions and canonical roadmap. |
+Current source has four product layers and the legacy line ([Architecture](docs/architecture.md#layers)):
 
-Root fixture repositories and reference data remain under `examples/`; they are not Go packages. The [architecture overview](docs/architecture.md#go-ownership-and-final-dependency-model) and [Module guide](docs/development/modules.md) define these boundaries. The published v0.14.1 Project/Domain CLI remains a versioned compatibility contract; the canonical Projection alpha it bundled has been removed from current source. The [vision](docs/vision.md) owns the model-first product thesis; exact implementation and gate evidence belong to the [roadmap](docs/implementation-plan.md) and source-bound validation reports.
+- **Core:** the structural compiler, snapshots and project-model views.
+- **Infrastructure:** Git and working-tree access, and guarded writes.
+- **Application:** the use cases and their CLI and MCP surfaces.
+- **Runtime:** the inner roles in owned candidate workspaces.
+- **Legacy:** the earlier Project/Domain line, which ARCH-09 removes.
+
+The [code map](docs/development/code-map.md) lists every package with its layer, purpose and owning document. Read that document before you change a package. [Modules and static composition](docs/development/modules.md) owns the import rules. Executables under `src/cmd` import Host only and delegate to it. Fixture repositories and reference data live under `examples/`; they are not Go packages. The [vision](docs/vision.md) owns the product thesis; implementation and gate evidence belong to the [roadmap](docs/implementation-plan.md) and source-bound validation reports.
 
 Snapshot semantics and the boundary between generic values and Git operations are documented in [Source snapshots](docs/source-snapshots.md). Keep Git resolution and process hardening in `src/internal/infrastructure/source`; keep deterministic comparison over resolved values in `src/internal/core/snapshot`. Repository branch, index, and worktree checks belong to the write use cases that require them. Do not add alternate production providers or a provider framework without a concrete consumer.
 
-Adopting repositories own their content and any import scripts used to bring existing material into the Markitect model. Markitect does not embed a repository-specific migration or renderer policy. Core authoring guidance remains part of the product.
+Adopting repositories own their content and any import scripts used to bring existing material into the Markitect model. Markitect does not embed a repository-specific migration or renderer policy.
 
 The product treats adopting-project files as [declared artifact inputs](docs/architecture.md#project-artifact-boundary), including source code. Its own Go implementation and release tooling do not imply a source-code analysis feature for adopting projects.
 
 Keep source and test files focused on one coherent responsibility. When new functionality introduces an independent responsibility, prefer a new file in the existing package. Keep related types and helpers together; do not add packages or abstractions solely to shorten files.
 
 ## Verify a change
+
+Two rules shape every change:
+
+- Keep examples executable. Every example is run by a test or by one of the checks below.
+- Scope tests to concrete risks and required gates. A test checks Markitect itself, not provider CLI details, permissions, line endings or other environment problems ([DEC-016](docs/concepts/register.md#dec-016-a-clean-stable-testable-main-and-uniform-structure-first)).
 
 Begin through the repository's model-first contributor guidance and classify a requested change as model intent, implementation or both. For an intent change, edit its canonical owner, review the generated readable document, and commit the accepted model before implementation. A passing check, digest or provider report is not human approval. From the repository root with Go 1.27.1 or later:
 
@@ -85,7 +77,7 @@ Edit validation declarations and regenerate schemas with `schema --repo . --writ
 
 ## Legacy Project/Domain checks and rendering
 
-This section preserves the published contract for existing repositories. New projects use the model-first [Project workflow](docs/project-workflow.md).
+These rules apply to the legacy line, which still runs this repository's own checks until ARCH-07. New projects use the model-first [Project workflow](docs/project-workflow.md).
 
 For a Project to produce complete `verify` evidence, declare every required command under `spec.checks`. Each check has a stable `name` and a `run` argument array. The first item must be a bare executable name resolvable through `PATH`; use an interpreter command such as `go run tools/check-docs.go` for a repository script. Markitect passes arguments directly and does not insert a shell. This avoids implicit shell expansion and keeps the executed command visible in the fixed Project snapshot.
 
@@ -95,7 +87,7 @@ Rendering writes only explicitly selected outputs. Add `markdown` to `spec.targe
 
 ## Published top-level `init` behavior
 
-Published v0.14.1 retains the top-level `markitect init` Project/Domain contract. That command has been removed from current source. New model-first repositories use `markitect project init`, which creates the `.markitect/project.yaml` model tree, runtime, ignore rules and generated readable view. Use the command supported by the selected source or release; do not reinterpret existing Project files as project-model sources or silently convert them.
+The published v0.14.1 release has a top-level `markitect init` for the legacy line; current source has removed it. New model-first repositories use `markitect project init`, which creates the `.markitect/project.yaml` model tree, runtime, ignore rules and generated readable view. Use the command supported by the selected source or release; do not reinterpret existing Project files as project-model sources or silently convert them.
 
 ## Release work
 
@@ -107,4 +99,4 @@ If a restricted local environment refuses the default Go build cache, use an exp
 
 ## Canonical Projection alpha (removed)
 
-The experimental canonical Projection alpha bundled with v0.14.1 has been removed from current source; its contracts remain documented at the [v0.14.1 tag](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/canonical-projections.md). `src/internal/core` remains the structural compiler for Schema, Kind, Property and Definition that the model-first project model uses. The historical v0.13.0 Domain/policy kernel and its consumers remain behind Host compatibility; neither is the canonical authoring format for new model-first projects. Do not silently translate their resources into `.markitect/model/`.
+The experimental canonical Projection alpha bundled with v0.14.1 has been removed from current source; its contracts remain documented at the [v0.14.1 tag](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/canonical-projections.md). `src/internal/core` remains the structural compiler for Schema, Kind, Property and Definition that the model-first project model uses. The v0.13 Domain and policy kernel and its consumers stay in current source under `src/internal/host/compat/v0_13` until ARCH-09 removes them; neither is an authoring format for model-first projects. Do not silently translate their resources into `.markitect/model/`.
