@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T08:36:43.753740+00:00",
+  "updatedUtc": "2026-10-10T08:38:42.061393+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL20_NORMAL_WINDOWS_RUNNING_ON_FROZEN_TYPED_REVIEW_CORRECTION_NO_MAIN_ACCEPTANCE",
+    "status": "ACTUAL21_NORMAL_WINDOWS_RUNNING_ON_FIXED_AUTHORING_HELPER_CONTRACT_NO_MAIN_ACCEPTANCE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18663,12 +18663,19 @@
       }
     },
     "actual21Preparation": {
-      "status": "OWNER_NORMAL_READINESS_PLAN_PREPARING_NATIVE_START_RECEIPT_PENDING",
+      "status": "OWNER_REPORTED_FRESH_NORMAL_ACTUAL21_RUNNING_UNCHANGED_FREEZE",
       "freezeRef": "authoringHelperCapabilityFreeze",
-      "planId": null,
-      "batchId": null,
-      "deadlineUtc": null,
-      "boundary": "Existing finite renewable Windows proof authority; no old20Replay. Source aafe/binary62c remain fixed; future P11 semantics separate, no inferred study/Main/release acceptance."
+      "planId": "28d09f0b109003b62d150b68d339bc49",
+      "batchId": "a01-authoring-helper-e23d702acbb9459f9abd20907886afed",
+      "deadlineUtc": "2026-10-10T12:37:22.3366157Z",
+      "boundary": "Existing finite renewable Windows proof authority; no old20Replay. Source aafe/binary62c remain fixed; future P11 semantics separate, no inferred study/Main/release acceptance.",
+      "sourceSha": "aafe9d5ca9cd6c8ad87533e02f6bc3f5dcd747b0",
+      "binarySha256": "62c78ac43b89edcacc2ffa5eaf7ec480ec155ac547b7c3537508c432c9b003c0",
+      "planDigestOwnerReportedHex": "96ab9cdf82969b524f164d367740d90bb8f4fc9382e1b5001ef466d6178210ec",
+      "readinessDigestOwnerReported": "b3d87d1ec57060701f8c0a186f272fdeb21cdb7f35a4af59806c2af12941829c",
+      "runtimeDigestOwnerReported": "d86962cb65946d9d7c738290d77fcd93b703237811f36db9383f5bfdde872f26",
+      "ownerPrestart": "Clean source/binary and no active own Markitect executable checked; readonly independent lifecycle audit/current owner-bound observer. Root earlier exact clean source/remote/binary bound, current start/native handles/usage not yet independently inspected, unknownnotzero.",
+      "p11": "Owner confirmed existing human mandate remains; deferred not current A01 allocation wording next normal docs checkpoint, no currentfreeze/Plan/binary change or extra build."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
