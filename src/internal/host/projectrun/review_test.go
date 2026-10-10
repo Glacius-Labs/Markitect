@@ -370,9 +370,16 @@ func TestReviewerContextSeparatesWorkDelegationFromIntegrationDelivery(t *testin
 			},
 		},
 	}
-	rootTask := ManagerTask{ID: "root-task", ManagerID: rootID, Goal: "Coordinate the greeting feature.", WrittenPaths: []string{readme}, ReportID: "root-work-run", IntegrationReportID: "root-integrate-run", Delegations: []Delegation{{ManagerID: childID, Goal: "Implement greeting behavior and document it."}}}
-	childTask := ManagerTask{ID: "child-task", ManagerID: childID, ParentTask: rootID, Goal: "Implement greeting behavior.", WrittenPaths: []string{source, tests, docs}, ReportID: "child-work-run", State: "integrated"}
-	plan := PlanRecord{Goal: "Implement greeting and provide its usage guide.", Managers: []ManagerTask{rootTask, childTask}}
+	plannedRoot := ManagerTask{ID: "root-task", ManagerID: rootID, Goal: "Coordinate the greeting feature."}
+	plannedChild := ManagerTask{ID: "child-task", ManagerID: childID, ParentTask: rootID, Goal: "Implement greeting behavior."}
+	plan := PlanRecord{Goal: "Implement greeting and provide its usage guide.", Managers: []ManagerTask{plannedRoot, plannedChild}}
+	// Delivery facts exist only on the run report's tasks, never on the plan.
+	rootTask := plannedRoot
+	rootTask.WrittenPaths, rootTask.ReportID, rootTask.IntegrationReportID = []string{readme}, "root-work-run", "root-integrate-run"
+	rootTask.Delegations = []Delegation{{ManagerID: childID, Goal: "Implement greeting behavior and document it."}}
+	childTask := plannedChild
+	childTask.WrittenPaths, childTask.ReportID, childTask.State = []string{source, tests, docs}, "child-work-run", "integrated"
+	run := RunReport{Tasks: []ManagerTask{rootTask, childTask}}
 	candidate := candidateData{ID: "candidate-1", Digest: "digest-1"}
 
 	work, workFiles, _, err := buildReviewerContext(plan, project, rootTask, "work", 1, candidate, BriefingContext{}, RunReport{})
@@ -430,14 +437,14 @@ func TestReviewerContextSeparatesWorkDelegationFromIntegrationDelivery(t *testin
 		}
 	}
 
-	integration, integrationFiles, _, err := buildReviewerContext(plan, project, rootTask, "integrate", 1, candidate, BriefingContext{}, RunReport{})
+	integration, integrationFiles, _, err := buildReviewerContext(plan, project, rootTask, "integrate", 1, candidate, BriefingContext{}, run)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(integration.DelegatedArtifacts) != 0 {
 		t.Fatalf("integration review should treat child outputs as aggregate obligations, not future delegation artifacts: %+v", integration.DelegatedArtifacts)
 	}
-	childHelper := RunReport{RoleStartReservations: []RoleStartReservation{{Key: "child-helper", Kind: "helper", ManagerID: childID, Phase: "work", ParentRunID: childTask.ReportID,
+	childHelper := RunReport{Tasks: run.Tasks, RoleStartReservations: []RoleStartReservation{{Key: "child-helper", Kind: "helper", ManagerID: childID, Phase: "work", ParentRunID: childTask.ReportID,
 		Request:        agentexec.RoleStartRequest{RequestID: "child-helper-request", Role: "helper", ParentSessionID: "child-parent-session", SessionID: "child-helper-session", State: "completed"},
 		HelperDelivery: &HelperDelivery{State: "applied-and-closed", RequestID: "child-helper-request", Task: "write greeting tests", RequestedPaths: []string{tests + "/"}, DeltaDigest: "sha256:" + strings.Repeat("e", 64), Changes: []HelperDeliveryChange{{Kind: "modify", Path: tests + "/greeting_test.go", Mode: "0644", ContentDigest: "sha256:" + strings.Repeat("f", 64)}}}}}}
 	childHelper.RoleStartReservations = append(childHelper.RoleStartReservations, workReport.RoleStartReservations...)
@@ -464,16 +471,114 @@ func TestReviewerContextSeparatesWorkDelegationFromIntegrationDelivery(t *testin
 		t.Fatalf("integration scoped model paths do not bind aggregate candidate: scoped=%v files=%v", got, gotPaths)
 	}
 
-	workDigest, err := reviewScopeDigest(plan, project, rootTask, "work", RunReport{})
+	workDigest, err := reviewScopeDigest(plan, project, rootTask, "work", run)
 	if err != nil {
 		t.Fatal(err)
 	}
-	integrationDigest, err := reviewScopeDigest(plan, project, rootTask, "integrate", RunReport{})
+	integrationDigest, err := reviewScopeDigest(plan, project, rootTask, "integrate", run)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if workDigest == integrationDigest {
 		t.Fatal("phase-specific review obligations and candidate scope did not change the scope digest")
+	}
+}
+
+func TestIntegrationReviewBindsChildDeliveredFileOutsideRequiredArtifacts(t *testing.T) {
+	const (
+		rootID  = "project/root"
+		childID = "project/orders"
+		impl    = "src/orders/implementation.txt"
+		notes   = "src/orders/notes.txt"
+	)
+	newProject := func(notesBytes string) *Project {
+		return &Project{
+			Config: projectwork.Config{InventoryRoots: []string{"src"}},
+			Snapshot: &snapshot.Snapshot{
+				Files: map[string][]byte{impl: []byte("orders implementation v2\n"), notes: []byte(notesBytes)},
+				Modes: map[string]string{impl: snapshot.RegularMode, notes: snapshot.RegularMode},
+			},
+			Report: projectmodel.Report{
+				Managers:  []projectmodel.Manager{{ID: rootID}, {ID: childID, Parent: rootID}},
+				Artifacts: []projectmodel.Artifact{{ID: "orders-code", Owner: childID, Required: true, Paths: []string{impl}}},
+				Files: []projectmodel.FileEntry{
+					{Path: impl, Owner: childID, Class: "source", Artifacts: []string{"orders-code"}},
+					{Path: notes, Owner: childID, Class: "documentation"},
+				},
+			},
+		}
+	}
+	// Planned tasks never carry WrittenPaths/IntegratedPaths; only the run
+	// report's tasks do.
+	plannedRoot := ManagerTask{ID: "root-task", ManagerID: rootID, Goal: "Integrate orders."}
+	plannedChild := ManagerTask{ID: "child-task", ManagerID: childID, ParentTask: rootID, Goal: "Implement orders."}
+	plan := PlanRecord{Goal: "Implement orders.", Managers: []ManagerTask{plannedRoot, plannedChild}}
+	runRoot := plannedRoot
+	runRoot.State, runRoot.IntegratedPaths = "integrated", []string{}
+	runChild := plannedChild
+	runChild.State, runChild.WrittenPaths = "worked", []string{impl, notes}
+	report := RunReport{Tasks: []ManagerTask{runRoot, runChild}}
+	candidate := candidateData{ID: "candidate-1", Digest: "digest-1"}
+
+	project := newProject("orders notes v1\n")
+	reviewContext, files, _, err := buildReviewerContext(plan, project, runRoot, "integrate", 1, candidate, BriefingContext{}, report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if paths := reviewScopePaths(files); !containsString(paths, notes) {
+		t.Errorf("integration review input omitted child-delivered file %s: %v", notes, paths)
+	}
+	if !containsString(reviewContext.ChangedPaths, notes) {
+		t.Errorf("integration review changed paths omitted child-delivered file %s: %v", notes, reviewContext.ChangedPaths)
+	}
+	before, err := reviewScopeDigest(plan, project, runRoot, "integrate", report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	after, err := reviewScopeDigest(plan, newProject("orders notes CHANGED\n"), runRoot, "integrate", report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if before == after {
+		t.Errorf("integration review scope digest did not change when child-delivered %s changed", notes)
+	}
+}
+
+func TestIntegrationReviewExpandsRequiredChildDirectoryArtifact(t *testing.T) {
+	const (
+		rootID  = "project/root"
+		childID = "project/orders"
+		file    = "src/orders/api.txt"
+	)
+	project := &Project{
+		Config: projectwork.Config{InventoryRoots: []string{"src"}},
+		Snapshot: &snapshot.Snapshot{
+			Files: map[string][]byte{file: []byte("orders api v2\n")},
+			Modes: map[string]string{file: snapshot.RegularMode},
+		},
+		Report: projectmodel.Report{
+			Managers:  []projectmodel.Manager{{ID: rootID}, {ID: childID, Parent: rootID}},
+			Artifacts: []projectmodel.Artifact{{ID: "orders-dir", Owner: childID, Required: true, Paths: []string{"src/orders/"}}},
+			Files:     []projectmodel.FileEntry{{Path: file, Owner: childID, Class: "source", Artifacts: []string{"orders-dir"}}},
+		},
+	}
+	rootTask := ManagerTask{ID: "root-task", ManagerID: rootID, Goal: "Integrate orders."}
+	childTask := ManagerTask{ID: "child-task", ManagerID: childID, ParentTask: rootID, Goal: "Implement orders."}
+	plan := PlanRecord{Goal: "Implement orders.", Managers: []ManagerTask{rootTask, childTask}}
+	managerInput, err := scopedArtifacts(project, rootTask, Agent{}, Limits{MaxCandidateFileBytes: 4096, MaxCandidateBytes: 16384}, "integrate", []string{childID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	managerPaths := reviewScopePaths(managerInput)
+	if !containsString(managerPaths, file) {
+		t.Fatalf("Manager integration input did not expand required directory artifact src/orders/: %v", managerPaths)
+	}
+	_, files, _, err := buildReviewerContext(plan, project, rootTask, "integrate", 1, candidateData{ID: "c", Digest: "d"}, BriefingContext{}, RunReport{Tasks: []ManagerTask{rootTask, childTask}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reviewPaths := reviewScopePaths(files); !containsString(reviewPaths, file) {
+		t.Errorf("integration review omitted file %s of required directory artifact src/orders/ (Manager input had %v): %v", file, managerPaths, reviewPaths)
 	}
 }
 
