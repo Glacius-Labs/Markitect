@@ -1,5 +1,7 @@
 # Existing-project adoption boundaries
 
+This note preserves the PR #59 preparation contract and its version-bound examples. Current model-first adoption is documented in the [Brownfield workflow](../project-workflow.md#existing-repositories) and [Project operations](../project-operations.md). Resolve commands against the selected source or release before using the examples below.
+
 This note separates the published Markitect contract, current source-only selective preparation/Copy Me behavior, and adopter-owned adoption. The canonical implementation contract is [Selective adoption handoff](../design/selective-adoption-handoff.md). Published v0.12.0 remains unchanged; source verification and release status are not established by this note. The reviewed historical baseline is integrated PR 59 at `e9550f5c91430c6a65cbbd4ffcdbb49b48272537`.
 
 ## Current behavior

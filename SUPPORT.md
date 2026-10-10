@@ -4,7 +4,7 @@
 
 For general questions about Markitect, open a GitHub issue and describe what you are trying to do. Include the Markitect version, operating system, relevant command, and a minimal example when possible. Remove credentials, secrets, and private repository content before posting.
 
-For unexpected behavior, choose the **Bug report** issue form. For a proposed capability or improvement, choose **Feature request**. Check [Usage](docs/usage.md), [Architecture](docs/architecture.md), and [Operations](docs/operations.md) for the current CLI contract, product boundaries, and development or release process.
+For unexpected behavior, choose the **Bug report** issue form. For a proposed capability or improvement, choose **Feature request**. Start with the [documentation map](docs/README.md). [Project workflow](docs/project-workflow.md) and [Project operations](docs/project-operations.md) describe the model-first source workflow; [Usage](docs/usage.md) covers structural commands and historical release contracts. [Architecture](docs/architecture.md) and [Operations](docs/operations.md) own product boundaries and the development or release process.
 
 ## Project-specific questions
 

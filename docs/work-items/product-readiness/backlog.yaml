@@ -15,7 +15,7 @@ native_acceptance:
   main_required_jobs: [A01]
   deferred_not_main_gate_jobs: [A02, A03]
   renewal_policy_revision: renewable-execution-budget-20261010
-  renewal_policy_status: active_simplified_a01_actual_28_native_smoke_passed_exact_final_head_ci_and_main_integration_pending
+  renewal_policy_status: active_a01_actual28_passed_pr_head_linux_windows_quality_passed_main_f12ffb00_integrated_main_ci_linux_passed_windows_in_progress
   renewal_policy_authority_sha256: a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7
   per_batch_limits:
     max_role_wall_seconds: 7200

@@ -477,6 +477,12 @@ jobs:
           if ($initCheck.status -ne 'succeeded' -or -not $initCheck.coverage.conforming) { throw 'Initialized project did not pass structural and coverage checks' }
           Pop-Location
 
+      - name: Test documentation checker
+        run: python -B -m unittest discover -s scripts -p test_check_docs.py
+
+      - name: Check maintained documentation links
+        run: python -B scripts/check-docs.py
+
   publish-source-artifact:
     name: Publish main source artifact
     needs:

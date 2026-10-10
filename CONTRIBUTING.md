@@ -2,7 +2,7 @@
 
 Markitect's current product workflow is the model-first `markitect project` surface: a committed recursive Manager model under `.markitect/` owns project intent and artifact responsibility. Draft model changes are proposals; commits and digests bind bytes but do not authenticate human approval. Native instructions and scoped execution operate with caller permissions, not an OS sandbox. Retain mechanisms for their current engineering purpose; remove compatibility-only functions. Published releases and original evidence remain immutable historical records.
 
-For coordinated parallel work, read the [development guide](docs/development/README.md), [parallel-work flow](docs/development/parallel-work.md) and your [workstream specification](docs/workstreams/README.md). Shared semantic contracts remain coordinator-owned; the normal gates below apply to every integrated candidate.
+For coordinated parallel work, read the [development guide](docs/development/README.md) and [parallel-work flow](docs/development/parallel-work.md), then record the current fixed base and assigned paths. The [workstream map](docs/workstreams/README.md) preserves earlier bounded specifications; use one only when it is explicitly assigned against the current source. Shared semantic contracts remain coordinator-owned; the normal gates below apply to every integrated candidate. For documentation placement and ownership, read the [documentation maintenance guide](docs/development/documentation.md).
 
 ## Ownership and layout
 
@@ -75,6 +75,8 @@ The hosted quality job has a finite 90-minute limit. Full test commands use a 60
 
 For prose-only changes, validate the fixed candidate with `check`, selected `context` and `impact`, managed-artifact accounting, relevant local links/anchors and any changed command examples, plus independent documentation review. Do not repeat an unchanged full suite locally merely to refresh a prose-only SHA; retain its actual tested revision. Required hosted CI and release gates still apply, and focused documentation checks are not a new full Project Verify result.
 
+Run `python -B scripts/check-docs.py` for local links and heading/HTML anchors in the maintained entry documents. Pass exact repository-relative Markdown paths to check additional changed pages, including historical records. Run `python -B -m unittest discover -s scripts -p test_check_docs.py` when changing the checker. CI runs both commands on Windows and Linux. The [documentation maintenance guide](docs/development/documentation.md) describes scope and placement; this repository check is separate from the optional product documentation-router feature.
+
 The standalone checks do not require another repository or an AI model. CI runs supported Windows and Linux gates. A successful source gate establishes only the product checks that ran; it does not establish semantic correctness or an adopting project's acceptance. The import checker at `src/internal/tooling/architecture` statically examines production and test imports, including supported-platform files, and has negative fixtures for forbidden directions. The repository test calls it through `go test ./...`, CI has a named gate step, the explicit Project check delegates through Host, and the release quality job reuses CI. These routes are wired; wiring is not a gate result. Consult the [consolidation report](docs/validation/clean-architecture-consolidation.md) for exact-head status, and do not add an exception allowlist.
 
 Edit validation declarations and regenerate schemas with `schema --repo . --write`. Edit example YAML, then run `format`, `render --repo examples/minimal --write`, and `check`. For package or consumer example changes, also run `go run ./src/cmd/markitect check --repo examples/package-consumer`. Edit core authoring at `src/internal/host/embedded/resources/*.yaml`; its content is canonical for that embedded guidance. Tests compile those resources through the ordinary application API. The model-first project path is specified in [Project workflow](docs/project-workflow.md); compiler commands and immutable release histories are described in [Usage](docs/usage.md#legacy-projectdomain-cli-compatibility). The [roadmap](docs/implementation-plan.md) owns current source status. The v0.3.0 content-package contract and consumer workflow are documented in [Content packages](docs/content-packages.md); executable fixtures live under `examples/content-package` and `examples/package-consumer`.
@@ -89,9 +91,9 @@ Checks run against a materialized fixed revision within the documented time and 
 
 Rendering writes only explicitly selected outputs. Add `markdown` to `spec.targets` to generate resource views under `docs/markitect/`; add Codex and Claude targets, rule mappings and shared entrypoints for the provider outputs the Project owns. Provider entrypoints link directly to canonical YAML. Only declared outputs are rendered or checked. An adopting repository owns its root navigation, hooks, custom output formats and import scripts.
 
-## Legacy top-level `init` behavior
+## Published top-level `init` behavior
 
-Top-level `markitect init` retains its Project/Domain meaning and layout. New model-first repositories use `markitect project init`, which creates the `.markitect/project.yaml` model tree, runtime, ignore rules and generated readable view. Keep both interfaces explicit; do not reinterpret existing Project files as project-model sources or silently convert them.
+Published v0.14.1 retains the top-level `markitect init` Project/Domain contract. That command has been removed from current source. New model-first repositories use `markitect project init`, which creates the `.markitect/project.yaml` model tree, runtime, ignore rules and generated readable view. Use the command supported by the selected source or release; do not reinterpret existing Project files as project-model sources or silently convert them.
 
 ## Release work
 

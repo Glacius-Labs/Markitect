@@ -1,6 +1,6 @@
-# Workstream assignments
+# Preserved workstream specifications
 
-**Future specifications; this map does not dispatch work by itself.** The [first-wave record](../validation/parallel-development-wave-1.md) owns the explicit narrower assignments and their integration status. Read the [documentation map](../README.md), [constitution](../engineering-constitution.md), [shared contracts](../development/shared-contracts.md), [parallel-work guide](../development/parallel-work.md) and your package. Each assignment records the full verified [baseline commit](../development/baseline.md), exact owned paths and exit criteria. Implementers cannot approve their own shared semantic changes.
+**Preserved preparation specifications; this map does not dispatch work by itself.** The [first-wave record](../validation/parallel-development-wave-1.md) owns the original narrower assignments and their integration status. Read the [documentation map](../README.md), [constitution](../engineering-constitution.md), relevant [shared contracts](../development/shared-contracts.md) and [parallel-work guide](../development/parallel-work.md) before using a specification. The [historical baseline](../development/baseline.md) belongs to that wave; a new assignment records its own full verified current base, exact owned paths and exit criteria. Implementers cannot approve their own shared semantic changes.
 
 | Workstream | Class | Can start after dispatch | Must wait for |
 |---|---|---|---|
@@ -16,7 +16,7 @@
 | [Azure DevOps](adapter-azure-devops.md) | A external | Purpose/mapping and read-only adapter design | Same remote mutation decisions |
 | [Konfyra](konfyra-adoption.md) | B consumer | Owner-scoped inventory in its own checkout | Reviewed evidence/handoff for discovery; coverage/shadow and owner cutover for adoption |
 
-## Connection to the product vision
+## Original alignment with the product vision
 
 Every assignment should identify the human activity it aims to reduce, the intent owner it preserves, its remaining agent freedom and the evidence needed to test the effect. The canonical [vision](../vision.md) owns the thesis; [Measurement](../measurement.md#human-attention-and-delegated-work) owns evaluation. The relationships below are purposes and hypotheses, not measured savings or new implementation authority.
 
@@ -35,7 +35,7 @@ Every assignment should identify the human activity it aims to reduce, the inten
 
 No named bounded stream is rejected solely by this alignment review. Deprioritize expansions without a recurring human task to replace: additional projections/adapters for their own sake, automatic discovery/adoption, a scheduler or background operator, interface proliferation, and speculative Core expressiveness. A broader goal does not remove existing hard dependencies or feature gates.
 
-## Hard and soft dependencies
+## Original hard and soft dependencies
 
 ```mermaid
 flowchart TD
@@ -60,7 +60,7 @@ flowchart TD
 
 Arrows are hard integration/authority gates. They do not require Init implementation to finish before Copy Me research. Soft dependencies: inventory informs scope questions; candidate feedback informs Init UX; adopter gaps prioritize adapters. Risk review, interpretation design and command adapter tests can proceed independently. Native internals may use assigned disjoint new files/tests, while shared switch/ownership edits are serialized. No future Core primitive is assumed.
 
-## Recommended wave and integration
+## Original wave and integration proposal
 
 First wave: risk review, Init handoff design, Copy Me candidate design, Konfyra inventory and adapter contract/target audit. Existing .NET and provider read-only experiments may start on the frozen command protocol after purpose/scope selection. Do not grant Docs/Codex/Claude agents unrestricted concurrent ownership of `internal/render`.
 
