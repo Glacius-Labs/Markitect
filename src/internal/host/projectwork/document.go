@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -181,7 +180,7 @@ func documentText(project *Project) string {
 				fmt.Fprintf(&out, "- Realizes: %s\n", list(artifact.Realizes))
 			}
 			if len(artifact.Paths) > 0 {
-				fmt.Fprintf(&out, "- Expected paths: %s\n", pathList(artifact.Paths))
+				fmt.Fprintf(&out, "- Expected paths: %s\n", pathList(artifact.Paths, sourceLink))
 			} else {
 				out.WriteString("- Expected paths: not assigned\n")
 			}
@@ -274,17 +273,13 @@ func list(values []string) string {
 	return strings.Join(copyValues, ", ")
 }
 
-func pathList(values []string) string {
+func pathList(values []string, link func(string) string) string {
 	copyValues := append([]string(nil), values...)
 	sort.Strings(copyValues)
 	for i, value := range copyValues {
-		copyValues[i] = sourceLink(value)
+		copyValues[i] = link(value)
 	}
 	return strings.Join(copyValues, ", ")
-}
-
-func sourceLink(value string) string {
-	return sourceLinkAt(ViewPath, value)
 }
 
 func sourceLinkAt(destination, value string) string {
@@ -292,12 +287,38 @@ func sourceLinkAt(destination, value string) string {
 	if clean == "." || strings.HasPrefix(clean, "../") || strings.Contains(clean, "\\") {
 		return inline(value)
 	}
-	relative, err := filepath.Rel(filepath.FromSlash(path.Dir(destination)), filepath.FromSlash(clean))
-	if err != nil {
+	relative, ok := relativeSlashPath(path.Dir(destination), clean)
+	if !ok {
 		return inline(value)
 	}
-	relative = filepath.ToSlash(relative)
 	return "[" + inline(value) + "](" + strings.ReplaceAll(relative, " ", "%20") + ")"
+}
+
+// relativeSlashPath works like filepath.Rel on clean repository slash paths but
+// compares names case-sensitively, so links are the same bytes on every OS.
+func relativeSlashPath(base, target string) (string, bool) {
+	for _, value := range []string{base, target} {
+		if strings.HasPrefix(value, "/") || value == ".." || strings.HasPrefix(value, "../") {
+			return "", false
+		}
+	}
+	if base == "." {
+		return target, true
+	}
+	from, to := strings.Split(base, "/"), strings.Split(target, "/")
+	common := 0
+	for common < len(from) && common < len(to) && from[common] == to[common] {
+		common++
+	}
+	parts := make([]string, 0, len(from)-common+len(to)-common)
+	for range from[common:] {
+		parts = append(parts, "..")
+	}
+	parts = append(parts, to[common:]...)
+	if len(parts) == 0 {
+		return ".", true
+	}
+	return strings.Join(parts, "/"), true
 }
 
 func shellDisplay(command []string) string {
