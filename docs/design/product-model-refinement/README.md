@@ -25,3 +25,7 @@ Vereinbart im Markitect-Produktgespräch am 10. Oktober 2026, Chat `01a121f1-b94
 - Ausgangspunkt: `origin/main`, Commit `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`; Worktree beim Anlegen sauber.
 
 Dies ist eine vereinbarte Produktgrundlage aus dem Gespräch, kein Nachweis des implementierten Stands. Die bestehenden kanonischen Produktdokumente bleiben in [Vision](../../vision.md), [Konzeptregister](../../concepts/register.md) und [Architektur](../../architecture.md).
+
+## Zugehörige Arbeitsnotiz
+
+Auf ausdrücklichen Wunsch des Nutzers ist der Arbeitsansatz mit allgemeinen Beschreibungsfragen, einer Bibliotheksverwaltung als Beispiel und seinen Gedanken zu Programmiersprachen sowie Hierarchie und Graph in einer [separaten Notiz](system-description-notes.md) festgehalten. Deren Begriffskandidaten und offene Analogien sind keine zusätzlichen vereinbarten Grundlagen.
