@@ -117,7 +117,7 @@ packages:
     title: Ground truth, hidden holdouts and seeded rules
     stream: PLAY
     wave: 1
-    status: review
+    status: done
     pr: 128
     owner: scientist
     depends_on: [PLAY-01]
@@ -134,7 +134,8 @@ packages:
     title: One architecture page for the playground
     stream: PLAY
     wave: 1
-    status: ready
+    status: done
+    pr: 148
     owner: scientist
     depends_on: [PLAY-01]
     note: PLAY-03 to PLAY-06 share files in experiments/case-playground and run in this order, one at a time.
@@ -149,7 +150,7 @@ packages:
     title: Parametrize and run a study with one command
     stream: PLAY
     wave: 1
-    status: blocked
+    status: active
     owner: scientist
     depends_on: [PLAY-01, PLAY-03]
     zone: free
@@ -374,7 +375,8 @@ packages:
     title: Question catalog and impact correctness tests
     stream: KG
     wave: 1
-    status: active
+    status: done
+    pr: 119
     owner: kg
     depends_on: [KG-00]
     zone: model
@@ -417,10 +419,11 @@ packages:
     title: Hermetic test kit for git and process fixtures
     stream: TEST
     wave: 1
-    status: review
+    status: active
     owner: qa
     branch: dev/hermetic-test-kit
     pr: 99
+    note: Slice 1 merged as pull request 99; slice 2 moves the free-zone packages' git helpers to the test kit.
     zone: free
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
@@ -541,7 +544,8 @@ packages:
     title: Container runtime test tier
     stream: CI
     wave: 2
-    status: blocked
+    status: active
+    pr: 140
     owner: qa
     depends_on: [PLAY-01, CI-02]
     zone: ci
@@ -669,10 +673,10 @@ packages:
     title: Layer rules inside host in the architecture gate
     stream: ARCH
     wave: 1
-    status: blocked
+    status: done
+    pr: 136
     owner: cleaner
     depends_on: [ARCH-02, ARCH-04]
-    note: projectwork imports the codec from host/canonical until ARCH-04 moves it, so the new rule fails on main before then.
     zone: free
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
@@ -685,8 +689,9 @@ packages:
     title: Remove the canonical projection alpha
     stream: ARCH
     wave: 1
-    status: review
+    status: done
     pr: 118
+    note: Pull request 138 removed the remaining unrunnable alpha evidence (runs/c11checktools and five alpha experiments); they remain in v0.14.1 and git history.
     owner: cleaner
     decision: DEC-014
     zone: legacy
@@ -744,6 +749,7 @@ packages:
     owner: cleaner
     depends_on: [CLI-01]
     decision: DEC-014
+    note: Before the next release, publish markitect-legacy as a release asset or retarget release-benchmark.yaml and benchmark/run.ps1, which call legacy check, context and impact on published binaries.
     zone: interface
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
@@ -763,11 +769,24 @@ packages:
     acceptance:
       - Legacy commands, packages, binaries and example directories removed (DEC-014); build, tests and docs consistent.
 
+  - id: ARCH-11
+    title: Repository identity checked once per load
+    stream: ARCH
+    wave: 2
+    status: ready
+    owner: bughunter
+    zone: free
+    note: A projectwork Load asks Git for the same repository identity about eight times; on a loaded Windows host each call costs about 0.5 s, so projectrun tests and real Windows runs are slow (BUG-01 finding).
+    acceptance:
+      - One identity check per Load or snapshot in infrastructure/source and projectwork; no repeated rev-parse for the same root.
+      - Results and diagnostics are unchanged; a test pins the number of Git calls per Load.
+      - The pull request reports before and after timings for the BYO fault-injection test on Linux and Windows.
+
   - id: ARCH-10
     title: Documentation organized by module and current behavior
     stream: ARCH
     wave: 1
-    status: ready
+    status: active
     owner: cleaner
     depends_on: [ARCH-01]
     zone: free
