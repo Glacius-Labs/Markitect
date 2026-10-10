@@ -2175,3 +2175,7 @@ Root ls-remote independentlyexact4b14e5fc publicfeature matchespreviouscleanloca
 ### Actual17 observer started after exact source gates, owner report
 
 Owner clean4b14 terminalsourcegates06:57:14-07:07:13PASS: fourfocusedpackages/selectedprojectrun/vet/architecture/schema/allCONTRIBexamples/root/managedcoverage/context/impact11623269/diff. IndependentpreflightnormalPlan/readiness/runtime/buildbindings ownerclear. ExistingobserverstartedPlan5b4476c0/exact16987dbd/scriptddf7/deadline11:03:34.5443510Z, no sourcechanges. Root earlierexactcleanremote/binaryconfirmed; no repeatgates/currentnativehandleorcountreceipt inspectedthisevent, countsunknown. FinalPRCI/fullA01/Main stillpending/no newRootorder.
+
+### Actual17 initial run stopped at helper adopter-delta guard
+
+Owner observer3977d26807:07:47.725-07:10:20.149 Exit2/boundaryfalse: invalid project workspace delta/adopting checkout changed. RootworkreviewPASS/source-docsparalleltheninterrupted ownerreport. NoRootboundary/Resume/Verify/Apply/newsourceedits. Boundedindependentprivateevidence/sourcecomparisonincludingGitmodebookkeepingactive; exactcauseunknown/no newframework/retryorder. Observerterminal notallchildlifecycleproof, role/provider/costunionpendingnotzero. Old16recoveryproof/fullVerifyfailurepreserved, noMain/studyPASS.

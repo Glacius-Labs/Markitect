@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T07:08:40.105049+00:00",
+  "updatedUtc": "2026-10-10T07:12:34.039524+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18381,7 +18381,7 @@
       "next": "Owner readiness docs freeze, broader targeted regressions, then fresh Windows A01 one final binary before/after Root fault under existing finite renewable authority. Distinct from oldActual16, no replay/study/Main/release acceptance."
     },
     "actual17Preparation": {
-      "status": "OWNER_REPORTED_ACTUAL17_OBSERVER_STARTED_EXACT_SOURCE_GATES_PASS",
+      "status": "INITIAL_RUN_TERMINAL_BEFORE_ROOT_BOUNDARY_HELPER_ADOPTER_DELTA_REJECTED_OWNER_DIAGNOSIS_ACTIVE",
       "sourceSha": "4b14e5fc8073f80a84079250d086da5b7b1cda01",
       "binarySha256": "16987dbdaa67d5814a8ac7f86eb72705683e077911f5a882f96623f17731c7ef",
       "rootVerified": "Clean local HEAD4b14 and exact known binary FileSHA/Go1.27.1 WindowsAMD64 VCS4b14/modifiedfalse. Final source docs/coverage closure commitstat read. Public remote still04ca atinspection.",
@@ -18413,6 +18413,23 @@
         "controllerSha256": "ddf7b16dc0a23b21ac4edd90e18f56e15cdf41478baac873503b18ed90154b36",
         "planId": "5b4476c0fe09a226b6dcdd0daac4d6ca",
         "status": "Existing observer started, no source changes since freeze. Native provider start/handles and current counts not yet independently bound, unknown rather than zero."
+      },
+      "terminalOwnerReport": {
+        "observerId": "3977d268cb0545af9c306f9af6954047",
+        "startedUtc": "2026-10-10T07:07:47.725Z",
+        "endedUtc": "2026-10-10T07:10:20.149Z",
+        "exitCode": 2,
+        "boundaryReached": false,
+        "error": "invalid project workspace delta: adopting checkout changed",
+        "partialProgress": "Root workreviewPASS, Source/Docs parallel then interrupted, owner reported.",
+        "checksNotRun": [
+          "Root recovery boundary",
+          "Resume",
+          "Verify",
+          "Apply"
+        ],
+        "diagnosis": "Bounded independent private evidence/source comparison investigations active to identify exact changed adopter delta including possible Gitmode bookkeeping. Cause not established; no new source edits/native retries/recovery framework from this report.",
+        "lifecycle": "Local initial observer terminal ownerreported, native child terminal states/whole role counts/cost union not yet Root-bound; do not infer all children terminal or zero usage."
       }
     }
   },
