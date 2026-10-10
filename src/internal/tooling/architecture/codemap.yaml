@@ -84,6 +84,10 @@ packages:
     layer: runtime
     purpose: Transport to the native Codex App Server for Manager, review and verify roles.
     doc: docs/provider-adapters.md#inner-role-execution-and-workspace-boundary
+  - path: src/internal/host/exchangecli
+    layer: runtime
+    purpose: Reference bring-your-own executor that hands each role invocation to an external party through request and response files.
+    doc: docs/provider-adapters.md#bring-your-own-executor
   - path: src/internal/host/projectrun
     layer: runtime
     purpose: Runs, resumes, verifies and applies bounded Manager work over fixed snapshots.
@@ -121,7 +125,7 @@ packages:
   - path: src/internal/host/azuredevopscli
     layer: legacy
     purpose: Command protocol of the Azure DevOps metadata adapter.
-    doc: docs/workstreams/adapter-azure-devops.md
+    doc: src/cmd/markitect-adapter-azure-devops/README.md
   - path: src/internal/host/canonical
     layer: legacy
     purpose: Codecs for canonical-alpha source files; the product uses only its codec.
@@ -181,7 +185,7 @@ packages:
   - path: src/internal/host/dotnetcli
     layer: legacy
     purpose: Command protocol of the .NET reference adapter.
-    doc: docs/workstreams/adapter-dotnet.md
+    doc: src/cmd/markitect-adapter-dotnet/README.md
   - path: src/internal/host/embedded
     layer: legacy
     purpose: Tool-shipped authoring guidance compiled as a Markitect context.
@@ -189,7 +193,7 @@ packages:
   - path: src/internal/host/githubcli
     layer: legacy
     purpose: Command protocol of the GitHub repository-metadata adapter.
-    doc: docs/workstreams/adapter-github.md
+    doc: src/cmd/markitect-adapter-github/README.md
   - path: src/internal/host/inputs
     layer: legacy
     purpose: Resolves explicitly declared non-Markitect input files for a v0.13 graph.
@@ -272,6 +276,10 @@ packages:
     layer: cli
     purpose: Runs the independent Module checks used by the pre-commit hook.
     doc: docs/usage.md#independent-module-checks-current-source
+  - path: src/cmd/markitect-exchange-executor
+    layer: cli
+    purpose: The reference bring-your-own executor executable.
+    doc: docs/provider-adapters.md#bring-your-own-executor
   - path: src/cmd/markitect-release
     layer: cli
     purpose: Prepares or publishes a GitHub release.
