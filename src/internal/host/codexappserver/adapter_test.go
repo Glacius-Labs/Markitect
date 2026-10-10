@@ -1204,6 +1204,75 @@ func TestWindowsApprovalAliasRejectsUNCWithoutResolvingIt(t *testing.T) {
 	}
 }
 
+// Windows resolves an 8.3 short name to the excluded directory on disk, while
+// scope authorization sees only the alias text, so the approval must decline.
+func TestFileChangeApprovalDeclinesWindowsShortNameOfExcludedScope(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("8.3 short names are Windows-only")
+	}
+	allowed, excluded := []string{"docs/"}, []string{"docs/generated-protos/"}
+	_, workspaceRequest, handle := makeApprovalWorkspace(t, "approval-short-name", allowed, excluded)
+	excludedFile := filepath.Join(handle.CWD, "docs", "generated-protos", "schema.md")
+	if err := os.MkdirAll(filepath.Dir(excludedFile), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(excludedFile, []byte("generated\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(handle.CWD, "docs", "guide.md"), []byte("guide\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	alias := filepath.Join(handle.CWD, "docs", "GENERA~1", "schema.md")
+	aliasInfo, aliasErr := os.Stat(alias)
+	realInfo, realErr := os.Stat(excludedFile)
+	if aliasErr != nil || realErr != nil || !os.SameFile(aliasInfo, realInfo) {
+		t.Skipf("volume generates no 8.3 short name GENERA~1 for docs/generated-protos (%v, %v)", aliasErr, realErr)
+	}
+	contextJSON, err := json.Marshal(map[string]any{"kind": "projectrun-task/v1", "managerId": "docs-manager", "phase": "work", "allowedWritePaths": allowed, "excludedWritePaths": excluded})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		path, want string
+	}{
+		{alias, "decline"},
+		{filepath.Join(handle.CWD, "Docs", "guide.md"), "decline"},
+		{filepath.Join(handle.CWD, "docs", "guide.md"), "accept"},
+	} {
+		decision, paths := "", []string(nil)
+		options := Options{OnEvent: func(_ context.Context, e Event) error {
+			if e.Method == "markitect/fileChangeApproval/decision" {
+				var value struct {
+					Decision string   `json:"decision"`
+					Paths    []string `json:"paths"`
+				}
+				if err := json.Unmarshal(e.Params, &value); err != nil {
+					return err
+				}
+				decision, paths = value.Decision, value.Paths
+			}
+			return nil
+		}}
+		adapter, shared, request, runOptions := fixture(t, "filechange-accept", options)
+		request.Role = agentexec.RoleExecutor
+		request.SourceRevision = workspaceRequest.BaseSHA
+		request.Context = contextJSON
+		runOptions.Workspace = &handle
+		changes := []fileUpdateChange{{Path: tc.path}}
+		changes[0].Kind.Type = "update"
+		changesJSON, err := json.Marshal(changes)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Setenv("MARKITECT_P04_CHANGES", string(changesJSON))
+		t.Setenv("MARKITECT_P04_APPROVAL_VARIANT", "")
+		_, runErr := adapter.Run(context.Background(), shared, request, runOptions)
+		if decision != tc.want || (tc.want == "decline") != errors.Is(runErr, ErrApprovalRequired) {
+			t.Errorf("approval of %s: decision=%q paths=%v err=%v, want %s", tc.path, decision, paths, runErr, tc.want)
+		}
+	}
+}
+
 func TestAppServerReceiptBindsActualProcessArguments(t *testing.T) {
 	command, err := os.Executable()
 	if err != nil {
