@@ -7,6 +7,13 @@ cost; it never substitutes a Scientist implementation or assumes the product is
 ready. Conventional owns an ordinary project installation without those method
 mechanisms. Both methods need a bound runtime/control surface before work starts.
 
+Current source-bound Markitect setup is in the [96424410 connection plan](markitect/connection-plan-96424410.md).
+Integration owns the generic product install/guidance/authorization flow; Scientist
+or the normal own operator owns public case fixtures and installation/input freezes.
+Windows product setup now defaults to child-local MXC and a shared `:workspace`
+profile for Manager/Review/Verifier; empty-delta guards preserve assessment-only
+roles. Native client MCP registration remains separate from product onboarding.
+
 | Runtime mode | Who starts it | What must be known before dispatch |
 |---|---|---|
 | Ordinary CLI | User/controller | Exact executable/version/bytes, cwd, instructions, model/effort, rights/config/auth source |

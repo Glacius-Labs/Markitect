@@ -65,3 +65,10 @@ that session. Product native attempts exist, but the inspected complete readines
 gate is not passed. A live adapter and matched study await the functional exact
 installation and case bindings; completed Conventional work is not rerun merely
 because execution resources may now be renewed prospectively.
+
+The [96424410 connection plan](markitect/connection-plan-96424410.md) updates the
+static binding to the real shared operations, Windows setup defaults and separate
+Work/Integration Review contracts. Historical source observations remain intact.
+The existing generic factory API needs no source change from this comparison;
+the live Markitect factory and matched scratch assessor entrypoint still require
+the exact functional installation and prospectively bound case/configuration.

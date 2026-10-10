@@ -1,0 +1,146 @@
+{
+  "schema": 1,
+  "recordKind": "static-product-connection-observation",
+  "observedAt": "2026-10-10T04:04:25.936806+00:00",
+  "researchBaseCommit": "cbb6c8f6f43448f030315e1e557d5e7c94e7b792",
+  "previousObservation": "source-contract-20261010.json",
+  "product": {
+    "sourceCommit": "96424410c87366072adf16688aa56c38aba246a2",
+    "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-integration\\Markitect",
+    "sourceFileSha256": {
+      "src/internal/host/projectcli/mcp.go": "7e06160834e95bccfaa1f3ab7d15c3fe4bd1ce57fddce8a6fba8a83138c1af99",
+      "src/internal/host/projectcli/options.go": "69767a8386ed21aed2c41a9173ab22491a6ab4b6fccf8c97f4f194562ba5bad1",
+      "src/internal/host/mcp/tools.go": "12b6e81070a391db9c9643b4d72d14252fde4d2a1c7dc6d252787c107acc440e",
+      "src/internal/host/mcp/schema.go": "2f33a4c4fbfd72553ed96da7d42b4baebeedd8eba35e30727102225f3acb2117",
+      "src/internal/host/mcp/stdio.go": "bb67d1af5e81b5e20c4379ca5bcf902724458e806e717a19563e3a60eccc4bd8",
+      "src/internal/host/projectsetup/setup.go": "fb501b2df6533658b8f9e57e078e47832c8525c209cf5c04e47965b597f994a5",
+      "src/internal/host/projectonboarding/onboarding.go": "ba92d826ebdb6593582f14ba843c455d98e42b5b26df3517d6b6cc9ee0664fb4",
+      "src/internal/host/projectonboarding/render.go": "ceb05f06eb489b7fce6a0ebc9e35da542bd9987be85b3afa004037addba1623a",
+      "src/internal/host/projectapp/exploration.go": "c36477474a0676e85e8250c415e68d2d4791ca98f850ddaa52e22bcbf3ef8a62",
+      "src/internal/host/projectrun/deliver.go": "fbfa2a50f45008c4590635a7db1896b5d434e3cdd9190da6df2c6479d5b9b8d9",
+      "src/internal/host/projectrun/apply.go": "fa5536be980740f253a89d36c5fe2352acd0dc4e6c14efe940ae318fbe6bbbd6",
+      "src/internal/host/projectrun/review.go": "6643b6f72ef61b20ab645c9e970c1f4db90e75f56a3cd2933d9482a7dc7943be",
+      "src/internal/host/projectrun/types.go": "4339b41404b431cbfd471d0fc7be6342e41c310e7ca4769e7770d7ea61c3d7c6",
+      "src/internal/host/projectrun/verify.go": "a88b8b42417fe703ec8472c22c4ec3374d14cb429da8c7f30d4cadb812850821",
+      "src/internal/host/projectrun/transport_invoker.go": "7a21b6a604cf8315626b4907716ebefa95ce836fe982a6d3039f6d168f822944",
+      "src/internal/host/projectrun/workspace_bridge.go": "f4037e0b688807484350a8b1526873d311902dfad8dca58895869c43ce8db0b1",
+      "src/internal/host/codexappserver/contracts.go": "8cb04393d3e3c81ca759ffe3741d2e9e29b789e3b1dd17b5230cecfe2789e123",
+      "src/internal/host/codexappserver/process.go": "98b6ff99926f56e1dce5541ec45c1db69f578f620306b098a9576621c2e340b6",
+      "src/internal/host/codexappserver/process_args_test.go": "a20d534950113de34346d9cfbddbb6fb901f54c4c04769cc243fe2c76cd84355",
+      "src/internal/host/codexappserver/session.go": "4d7ebf100295988ccd82579efad50a1fce80fd0a60efcdb1b05ef00dcccb26ea",
+      "docs/project-workflow.md": "061d897ca31611cdbeafcd61973ed52ab4400a3cfb0983533e147facb85ee3f9",
+      "docs/project-operations.md": "f9709d8895523e298909663b98a93660d453a801155eeafa7fcee686527d0009",
+      "docs/provider-adapters.md": "012121d4ef65ba3ec4aa81891900c4c7b5ba37192ba03f4390d1bfb8c67484f2"
+    },
+    "inboundMCP": {
+      "launchArgs": [
+        "project",
+        "mcp",
+        "--repo",
+        "<own absolute case root>"
+      ],
+      "owner": "configured outer native MCP client; no duplicate prestarted server",
+      "protocolVersion": "2025-11-25",
+      "baseTools": [
+        "project_plan",
+        "project_run",
+        "project_resume",
+        "project_repair",
+        "project_status",
+        "project_verify",
+        "project_full_verify",
+        "project_preflight",
+        "project_apply",
+        "project_deliver"
+      ],
+      "compositionTools": [
+        "project_setup",
+        "project_doctor",
+        "project_onboard",
+        "project_explore",
+        "project_readiness",
+        "project_brownfield",
+        "project_brownfield_run",
+        "project_init",
+        "project_check",
+        "project_index",
+        "project_context",
+        "project_document",
+        "project_edit",
+        "project_impact",
+        "project_coverage"
+      ],
+      "toolCount": 25,
+      "advertisedRuntimeSchemasObserved": false
+    },
+    "normalInstallation": [
+      "project init",
+      "project onboard",
+      "project setup",
+      "project doctor"
+    ],
+    "nativeSetupBuilderChecks": {
+      "provider": "codex",
+      "reportedCLI": "codex-cli 0.162.0",
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "generatedInstructionsRequired": true,
+      "finitePositiveCostEstimateRequired": true,
+      "restrictionScope": "explicit checks in projectsetup.BuildRuntime; not universal transport restriction"
+    },
+    "generatedRuntime": {
+      "windowsSandboxBackend": "mxc default on Windows",
+      "sharedPermissionProfile": ":workspace unless overridden for every role",
+      "environmentMode": "inherit; distinct from check-executable selected-name policy",
+      "reviewAndVerifierArtifactDelta": "must be empty",
+      "innerRoleOwnership": "Product Host"
+    },
+    "reviewContracts": {
+      "work": "current own candidate and delegation adequacy; future child files not required yet",
+      "integrate": "aggregate candidate including delivered child artifacts",
+      "bindings": [
+        "phase",
+        "round",
+        "scopeDigest",
+        "inputDigest",
+        "candidateId",
+        "candidateDigest",
+        "receipt"
+      ]
+    },
+    "functionalReadiness": "A01 not passed at fixed source; current hosted/full-suite status not inferred",
+    "binaryPin": null,
+    "caseInstallationPin": null
+  },
+  "connectionPlan": "connection-plan-96424410.md",
+  "installationOwnership": {
+    "genericProduct": "Product Integration",
+    "publicCaseFixtureInstallationInputFreeze": "Scientist or normal own operator/actor",
+    "businessModelAndAcknowledgement": "genuine normal method workflow/caller authority; no Scientist semantic substitution"
+  },
+  "playground": {
+    "executableMarkitectAdapterExists": false,
+    "runnerChangeRequiredByStaticDelta": false,
+    "completionTarget": "workspace_snapshot",
+    "ordinaryPromptInputsAndPublicAssessment": "unchanged",
+    "freshScratchAssessment": "retained mechanics; existing closed single-use Conventional runner is not a generic matched runner",
+    "tokenTimeAndStartUnknowns": "preserved; no hard billing/full census claim"
+  },
+  "mechanicalValidation": {
+    "providerFreeOnly": true,
+    "test_adapter_contract.py": {
+      "passed": 9,
+      "seconds": 0.257
+    },
+    "test_conventional_adapter.py": {
+      "passed": 13,
+      "seconds": 14.899
+    },
+    "test_final_scratch_assessor.py": {
+      "passed": 12,
+      "seconds": 2.89
+    },
+    "nativeProductOrCodexStarts": 0
+  },
+  "executionPolicy": "No installation, capability probe, model turn, product proof or case-study actor; Conventional and all prior grants/results remain closed; finite allocations renewed prospectively only when needed"
+}
