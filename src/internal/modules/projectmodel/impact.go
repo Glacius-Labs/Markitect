@@ -349,15 +349,16 @@ func route(base, candidate Report) routing {
 			requires[s.ID] = appendUnique(requires[s.ID], s.Requires...)
 		}
 	}
-	// An edit that changes only how a definition is written routes through its model
-	// file alone: the file's owner and the definitions in that file (DEC-021).
-	rewritten := writingChanges(base, candidate)
-	rewrittenStatements := map[string]bool{}
-	for _, id := range rewritten {
-		self := definitionElement(id, base, candidate)
-		rec.add(self, cause{reason: "rewritten"})
+	// A changed definition and an edit that changes only how a definition is written both
+	// route its model file: the file, its owner and the definitions in that file (DEC-021).
+	// A rewrite routes nothing further; a changed definition is also routed by meaning.
+	fileStatements := map[string]bool{}
+	routeModelFile := func(id string, self element) {
 		inFile := []element{self}
-		if path := base.sources[id]; path != "" {
+		for _, path := range sortedUnique([]string{base.sources[id], candidate.sources[id]}) {
+			if path == "" {
+				continue
+			}
 			file := element{"file", path}
 			rec.add(file, cause{"model file", self, "written in"})
 			for _, r := range []Report{base, candidate} {
@@ -373,7 +374,7 @@ func route(base, candidate Report) routing {
 		}
 		for _, e := range inFile {
 			if s, ok := statementByID[e.id]; ok {
-				rewrittenStatements[e.id] = true
+				fileStatements[e.id] = true
 				ownedBy(s.Owner, e)
 			}
 			for _, r := range []Report{base, candidate} {
@@ -394,6 +395,15 @@ func route(base, candidate Report) routing {
 				}
 			}
 		}
+	}
+	rewritten := writingChanges(base, candidate)
+	for _, id := range rewritten {
+		self := definitionElement(id, base, candidate)
+		rec.add(self, cause{reason: "rewritten"})
+		routeModelFile(id, self)
+	}
+	for id := range changed {
+		routeModelFile(id, definitionElement(id, base, candidate))
 	}
 	// A model change that nothing above names, or reports not built by Analyze, still widen.
 	if base.ModelDigest != candidate.ModelDigest && (len(changed) == 0 && len(rewritten) == 0 || !traced(base) || !traced(candidate)) {
@@ -488,7 +498,7 @@ func route(base, candidate Report) routing {
 	for id := range closure {
 		out.AffectedStatements = append(out.AffectedStatements, id)
 	}
-	for id := range rewrittenStatements {
+	for id := range fileStatements {
 		out.AffectedStatements = append(out.AffectedStatements, id)
 	}
 	for _, id := range rec.ids("manager") {

@@ -251,7 +251,8 @@ func TestImpactNeverShrinksWhenChangesCombine(t *testing.T) {
 			artifacts: []generatedArtifact{{realizes: []int{3}}}, digests: []string{"sha256:a"}}
 		check(t, "uses chain", base, []projectEdit{description(0)}, []projectEdit{description(1)})
 	})
-	// A meaning-free edit widens alone, so it widens in every combination too.
+	// A meaning-free edit routes its model file alone, so it does in every
+	// combination too, also when a later edit overwrites it (DEC-021).
 	reversed := func(i int) projectEdit {
 		return func(q *generatedProject) { q.statements[i].reversedUses = true }
 	}
@@ -268,6 +269,8 @@ func TestImpactNeverShrinksWhenChangesCombine(t *testing.T) {
 		check(t, "reorder next to another statement's edit", base, []projectEdit{reversed(0)}, []projectEdit{description(3)})
 		check(t, "explicit default next to an edit of the same statement", base, []projectEdit{implicit(0)}, []projectEdit{description(0)})
 		check(t, "reorder and addition in one list", base, []projectEdit{reversed(0)}, []projectEdit{addUse})
+		makePublic := func(q *generatedProject) { q.statements[0].public = true }
+		check(t, "explicit default overwritten by a change", base, []projectEdit{implicit(0)}, []projectEdit{makePublic})
 		// DEC-021: alone, the reorder routes its statement narrowly; the cases above
 		// would pass vacuously if it routed nothing.
 		statementID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Name: "sa"}).Key()
@@ -491,6 +494,15 @@ func (p generatedProject) analyze(t *testing.T, rng *rand.Rand) Report {
 		}
 		definitions = append(definitions, core.Definition{APIVersion: api, Kind: artifactKind, Metadata: core.Metadata{Namespace: a.namespace, Name: "a" + string(rune('a'+i))}, Purpose: "Artifact.", Spec: spec})
 		files = append(files, File{Path: path, Digest: p.digests[i], Mode: "100644"})
+	}
+	// Each definition lives in a model file of its namespace and kind; two
+	// statements share a file, as several definitions may.
+	for i := range definitions {
+		file := strings.ToLower(definitions[i].Kind)
+		if definitions[i].Kind == statementKind {
+			file += string(rune('a' + (definitions[i].Metadata.Name[1]-'a')/2))
+		}
+		definitions[i].Source.Path = ".markitect/model/" + strings.TrimPrefix(dir(definitions[i].Metadata.Namespace), "src/") + file + ".yaml"
 	}
 	if rng != nil {
 		definitions, files = shuffled(rng, definitions), shuffled(rng, files)

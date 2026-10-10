@@ -76,11 +76,12 @@ func TestManagerGraphHasOneEdgePerContextReference(t *testing.T) {
 	}
 }
 
-// No Manager's graph, trace or explanation shows a Statement that is private
-// to another Manager. Generated projects make such statements, reference them
-// privately and change them.
-func TestManagerViewsNeverShowAnotherManagersPrivateStatements(t *testing.T) {
-	checked := 0
+// No Manager's Context, graph, trace or explanation shows a Statement private
+// to another Manager or another Manager's Decision, and its explanation shows
+// only files it owns or its own Artifacts expect. Generated projects make such
+// statements and decisions, reference them privately and change them.
+func TestManagerViewsShowOnlyWhatTheManagerMaySee(t *testing.T) {
+	checked, decisions := 0, 0
 	for seed := uint64(1); seed <= 150; seed++ {
 		rng := rand.New(rand.NewPCG(seed, 19))
 		project := generateProject(rng)
@@ -93,6 +94,27 @@ func TestManagerViewsNeverShowAnotherManagersPrivateStatements(t *testing.T) {
 					private = append(private, s.ID)
 				}
 			}
+			var hidden []string
+			for _, d := range append(append([]Decision(nil), base.Decisions...), candidate.Decisions...) {
+				if d.Owner != m.ID {
+					hidden = append(hidden, d.ID)
+				}
+			}
+			mayShow := map[string]bool{}
+			for _, r := range []Report{base, candidate} {
+				for _, f := range r.Files {
+					if f.Owner == m.ID {
+						mayShow[f.Path] = true
+					}
+				}
+				for _, a := range r.Artifacts {
+					if a.Owner == m.ID {
+						for _, p := range a.Paths {
+							mayShow[p] = true
+						}
+					}
+				}
+			}
 			ctx, err := Context(candidate, m.ID)
 			if err != nil {
 				t.Fatal(err)
@@ -102,7 +124,23 @@ func TestManagerViewsNeverShowAnotherManagersPrivateStatements(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			views := map[string]any{"graph": graph, "explanation": explanation}
+			views := map[string]any{"context": ctx, "graph": graph, "explanation": explanation}
+			for _, e := range explanation.Elements {
+				files := []string{}
+				if e.Kind == "file" {
+					files = append(files, e.ID)
+				}
+				for _, step := range e.Witness {
+					if step.FromKind == "file" {
+						files = append(files, step.From)
+					}
+				}
+				for _, f := range files {
+					if !mayShow[f] {
+						t.Fatalf("seed %d: %s's explanation shows file %s it neither owns nor expects", seed, m.ID, f)
+					}
+				}
+			}
 			for _, n := range graph.Nodes {
 				trace, err := graph.Trace(TraceRequest{From: n.ID, Direction: "both"})
 				if err != nil {
@@ -112,12 +150,13 @@ func TestManagerViewsNeverShowAnotherManagersPrivateStatements(t *testing.T) {
 			}
 			for name, view := range views {
 				data, _ := json.Marshal(view)
-				for _, id := range private {
+				for _, id := range append(append([]string(nil), private...), hidden...) {
 					if strings.Contains(string(data), jsonText(id)) {
-						t.Fatalf("seed %d: %s's %s shows private statement %s", seed, m.ID, name, id)
+						t.Fatalf("seed %d: %s's %s shows %s, which it may not see", seed, m.ID, name, id)
 					}
 				}
 			}
+			decisions += len(hidden)
 			for _, id := range private {
 				if _, err := graph.Trace(TraceRequest{From: id}); !errors.Is(err, ErrNodeNotFound) {
 					t.Fatalf("seed %d: tracing hidden %s from %s gave %v, want ErrNodeNotFound", seed, id, m.ID, err)
@@ -126,8 +165,8 @@ func TestManagerViewsNeverShowAnotherManagersPrivateStatements(t *testing.T) {
 			}
 		}
 	}
-	if checked < 100 {
-		t.Fatalf("only %d private statements were checked", checked)
+	if checked < 100 || decisions < 100 {
+		t.Fatalf("only %d private statements and %d foreign decisions were checked", checked, decisions)
 	}
 }
 
