@@ -1,6 +1,15 @@
 # Architecture
 
-Markitect's current product path is a fixed-root project Host around one recursively managed model in `.markitect/`. The outer Codex or Claude Code client connects over local stdio MCP and submits typed operations. Host compiles the selected model, binds work to fixed Git snapshots, records durable plans/runs/receipts, schedules model-owned Managers and reviewers, validates candidate deltas, and applies only through guarded write operations.
+Markitect is model-first development with delegated realization ([Markitect in brief](vision.md#markitect-in-brief)). This page describes how current source implements it: the product flow, the layers, what each layer does and its known problems. The [code map](development/code-map.md) lists every package. [Modules and static composition](development/modules.md) owns the dependency rules.
+
+## Product flow
+
+- People keep one canonical model of the project under `.markitect/` ([project workflow](project-workflow.md)).
+- An outer Codex or Claude Code client calls typed operations on a local stdio MCP server, or uses the CLI. The server is fixed to one project root at startup; tool arguments cannot change it.
+- The CLI and the MCP server share one set of application operations.
+- Markitect compiles the selected model, binds work to fixed Git snapshots and records plans, runs and receipts.
+- Managers, reviewers and verifiers run as inner roles in owned candidate workspaces. By default every role runs through the Codex App Server; setup can select another profile per role, including a process executor ([provider adapters](provider-adapters.md#role-profiles)).
+- Markitect validates and integrates the candidate deltas, verifies the result and writes the checkout only through guarded Apply.
 
 ```mermaid
 flowchart LR
@@ -13,223 +22,186 @@ flowchart LR
   Delta -->|guarded Apply| Repo[Adopting repository]
 ```
 
-The current Go module stays at the repository root, with production source under `src/cmd/` and `src/internal/`. Imported test harnesses live under `src/harness/`; fixture repositories remain at the root under `examples/`. Build and test commands run from the module root. This product layout does not impose paths on target projects.
+## Authority and evidence
 
-The project model is the accepted repository specification for its committed revision under the repository's policy. Drafts remain proposals. Git revisions, digests, reports, and caller-supplied provenance bind bytes but do not authenticate human approval. Technical checks, semantic evidence, and owner acceptance are separate.
+- The committed model is the accepted specification for its revision under the repository's policy. Drafts are proposals.
+- Revisions, digests, reports and supplied provenance bind bytes. They do not authenticate human approval.
+- A write that needs a preview is bound to the preview's digest and uses compare-and-swap. `project_deliver` carries an authorized scope through plan, run, verify, preflight and Apply. It grants no merge, release, deployment or acceptance authority.
+- Owned workspaces and agent settings are not an operating-system sandbox. Telemetry of native child processes is partial ([candidate workspaces](project-operations.md#candidate-workspaces-and-recovery)).
+- Technical checks, semantic evidence and owner acceptance stay separate. The [A01 validation record](validation/a01-native-smoke-20261010.md) holds the native result.
 
-The MCP server fixes Host authority to the selected project root at startup; tool arguments cannot redirect it. CLI and MCP compose the same typed application operations. Preview digests and compare-and-swap protect operations that require previewed writes. `project_deliver` carries an already authorized scope through the durable Plan/Run/Verify/Preflight/Apply lifecycle; it does not create merge, release, deployment, or human acceptance authority.
+## Layers
 
-The recorded native workflow uses Codex CLI 0.162.0 App Server with `gpt-6-luna` and `high` effort, which is also the default profile for Manager, reviewer and verifier roles; runtime configuration selects the concrete provider inputs. A project may select another profile per role, including a process executor over `agent-execution/v1alpha1` ([provider adapters](provider-adapters.md#bring-your-own-executor)). Native roles execute in owned candidate workspaces, and a process executor starts in a fresh empty directory and returns candidate files; guarded Apply is the only bridge to the adopting checkout. Native child lifecycle telemetry is partial: the Host records durable root attempts and observed child starts, with child counts a lower bound. Workspace cleanup waits for the root and known observed children to be terminal, but this is not an exhaustive process census, an OS sandbox, a provider identity claim, or hard billing enforcement. Source-bound native results remain distinct from hosted CI, integration, human semantic acceptance and productivity benefit. The [backlog](work-items/backlog.yaml) owns current status; the [A01 validation record](validation/a01-native-smoke-20261010.md) records the native result and its attempt accounting, and the [Product Readiness lessons survey](work-items/surveys/product-readiness-lessons-20261010.md) lists known runtime limits. [Project operations](project-operations.md) owns the runtime interfaces.
+Current source has four product layers and the legacy line:
 
-## Historical Project/Domain and projection compatibility architecture
+- **Core** compiles the model and derives views from fixed inputs.
+- **Infrastructure** reads Git and writes the working tree under guard.
+- **Application** holds the use cases and their CLI and MCP surfaces.
+- **Runtime** runs the inner roles and records what they did.
+- **Legacy** is the earlier Project/Domain line.
 
-The sections below describe versioned Project/Domain compiler contracts retained for existing releases and fixtures. The canonical Projection alpha bundled with v0.14.1 has been removed from current source. They are not the current Work Item product route. The published v0.14.1 binary and its evidence remain pinned to their actual version; source changes do not update an installed release.
-The modeling language is extensible through versioned Domain definitions loaded before resources. A Domain defines resource kinds, their typed fields, relation descriptors, and bounded constraint forms. This lets software architecture, delivery, and AI-working knowledge use one small kernel without making every domain concept a built-in Core kind. The bundled AI-working vocabulary is one supplied Domain. External adapters consume the normalized semantic model and explicit mappings; they do not create canonical domain meaning.
+Executables under `src/cmd`, maintainer tooling, harnesses and fixtures have their own layers in the code map. The import gate checks each package against its layer ([mechanical dependency gate](development/modules.md#mechanical-dependency-gate)). Package IDs below refer to the [backlog](work-items/backlog.yaml), which owns their status. Problems without a package have no owner yet.
 
-## Compiler and evidence model
+Known problems across layers:
 
-The target compilation order is:
+- The gate checks only that product layers do not import legacy packages and use only the guarded write API. It checks no direction between the four product layers. The core and runtime sections below show imports that break the intended direction.
+- Directory names do not show the layer. Most product packages live in `src/internal/host` next to the legacy host root, among them the core packages `projectbriefing` and `projectcoverage` and the infrastructure package `guardedwrite`.
+- Small helpers are copied: `sameStrings` exists in four packages, `equalStrings` in three and `containsString` in five, for example in `core/compile.go` and `projectrun/run.go` (ARCH-05).
+- Four packages keep their own record store with its own file layout and lock: `projectrun` (`store.go`), `projectexplore` (`store.go`), `projectbriefing` (`store.go`) and `projectadoption` (`session.go`, `manager_run_ledger.go`).
 
-```text
-fixed source, Domain definitions, Project configuration, and adapter mappings
-    → validate Domain and resource shapes
-    → resolve typed references and relations
-    → construct normalized semantic IR
-    → evaluate bounded constraints and relation-specific graph rules
-    → compile context, impact, projections, and adapter plans
-    → optionally observe external state, plan changes, apply, and verify
-```
+## Core layer
 
-Domain definitions and mappings are canonical inputs with explicit versions and digests. Constraints operate on declared resources, relations, and explicitly selected sets. They must remain bounded and deterministic; arbitrary code execution, unrestricted query languages, model calls, and inferred source-code semantics are outside the kernel.
+The core turns explicit inputs into deterministic results. The same model and snapshot give the same result, and unknown impact stays conservative.
 
-The semantic IR records qualified kind identity, resource identity and origin, validated values, resolved relation targets, applicable Domain definitions, scope, and source provenance. It is independent of YAML formatting and is the input to consumers. The IR is a normalized statement of what the selected source declares, not a truth oracle about an adopting system.
+- `src/internal/core` compiles explicitly supplied Schemas and Definitions into a structural model with a semantic digest ([Core README](../src/internal/core/README.md)). It has no engineering assertion language, no providers and no I/O.
+- `core/snapshot` holds fixed sets of files and compares them ([source snapshots](source-snapshots.md#current-value)).
+- `modules/projectmodel` derives Manager, artifact and impact views from the compiled model.
+- `projectcoverage` inventories repository paths and classifies how the model covers them.
+- `projectbriefing` derives briefings for accepted model changes from committed history and records their dismissal.
 
-Relations declare their meaning and graph behavior. A `dependsOn` edge, an ownership edge, and a policy scope can differ in context traversal, invalidation, and cycle rules. Context and impact follow those declared semantics. Constraints over sets must also declare the selection boundary so additions and removals can invalidate their result.
+Known problems:
 
-Adapters are explicitly configured with mappings between canonical resources and selected consumer-owned outputs or observed objects. Their lifecycle is `observe → plan → apply → verify`; adapters may expose only the stages they support. Observation is a fixed, named input with its own source and digest. If external state drifts while the canonical model is unchanged, a new observation can detect and plan the discrepancy within that adapter's declared scope. Apply is an explicit action. Command adapters receive only their declared snapshot inputs in a temporary working directory and run with the caller's local authority; this is not an operating-system security sandbox. A plan, successful command, or verification result does not itself grant human approval.
+- `projectbriefing` and `projectcoverage` run Git through `infrastructure/source` (`projectbriefing/store.go`, `projectcoverage/census.go`). `projectbriefing` also imports the application package `projectwork` and writes its own store under `.markitect/state/briefings/`. The code map defines core as free of Git processes and writes.
 
-Every result identifies its fixed source snapshot, Domain and Project configuration, mappings, adapter version, and any observed-state evidence it used. These identify the basis of a result. They do not establish semantic correctness, completeness beyond configured checks, human review, or continuing external truth after observation.
+## Infrastructure layer
 
-## Current implementation boundary
+Infrastructure reads Git and the working tree, and writes the working tree under guard.
 
-The v0.11.0 Domain registry, normalized resource model, relation semantics, projections and adapters remain versioned compatibility contracts, not the current model-first project UX. Their release notes and sections below preserve the historical CLI meaning. They remain finite and structural: they do not interpret source-code semantics, authenticate exception decisions, or establish that modeled prose is true. See the [roadmap](implementation-plan.md) for exact release status and evidence limits.
+- `infrastructure/source` loads fixed snapshots from the working tree or a commit with hardened Git processes ([source snapshots](source-snapshots.md#adapter-and-use-case-ownership)).
+- `host/guardedwrite` applies selected changes only while repository, branch, HEAD and captured bytes are unchanged. Product packages may use only its guarded API: `CaptureFiles`, `Apply` and `ApplyChecked`.
 
-## v0.12.0 bounded resolved-target equality
+<a id="host-write-identity"></a>
+Writes bind the inspected root and parent directories through opened handles; a path check alone does not authorize a write. A partial failure is reported as such, because a multi-file write is not a transaction. The [Host write identity contract](design/host-write-identity.md) defines the details. Guarded writes are not an operating-system sandbox.
 
-The [software architecture stress case](../examples/software-architecture/README.md) uses existing Domain kinds, typed references, relation effects and finite constraints to describe a modular DDD / Vertical Slice consumer. It introduces no kernel architecture kinds, inheritance, implicit policy composition or source-code analysis. The [language-pressure report](design/domain-language-pressure.md) distinguishes enforced assertions from desired statements that need cross-resource comparisons or implementation evidence.
+Known problems:
 
-v0.12.0 adds explicit API-version/name identity to normalized `domainInputs`, so a PolicyResult's API version joins to its exact Domain source, package version and digest. Context records the named incoming relations responsible for inclusion in `inputs[].via`. Impact records changed-input and relation causes in `causes`. Per-resource policy edits can remain bounded by explicit invalidation edges; collection assertions stay conservative across the project. Configuration, inventory and unknown input changes also remain conservative. These original application-level explanation refinements did not change the Domain language.
+- `guardedwrite` still exports low-level primitives such as `Root`, `OpenRoot`, `SafeDestination` and `EnsureBranch` (`root.go`). Only the legacy writers in the host root use them, for example `format.go`, `install_write.go` and `outputs_write.go`. An allowlist in the gate keeps product packages away from them (`tooling/architecture/layers.go`) (ARCH-09).
+- Each selected source call identifies the Git repository at its start and again at its end (`identifyGit` and `confirmGitIdentity` in `source/selective.go`). One `projectwork.Load` makes several such calls (`projectwork/project.go`) (ARCH-11).
 
-The [resolved-target equality experiment](design/resolved-target-equality.md) led to one generic `same-target` assertion in the v0.12.0 release and generated Domain schema. Two statically named paths, each one or two declared relation steps from one selected subject, must resolve a singleton at every step and end at the same canonical GraphKey. Fully resolved inequality is a per-subject policy result; incomplete or ambiguous traversal is structural and cannot be waived. Results carry ordered edge traces; digests bind paths, relation definitions and traversed canonical inputs. Derived policy dependencies invalidate the subject and its consumers independently of context flags. Policy traversal does not introduce agent-context edges. Existing conservative fallbacks remain for inventory, configuration, unknown inputs and legacy policy dependencies that are not derived. Software Feature ownership is enforced only for its explicitly labeled cohort; Aggregate fan-out and other relational pressure points remain unproven. No arbitrary query, Pattern, inheritance or Composition mechanism is introduced. This is the published v0.12.0 contract. It establishes finite singleton-path equality for the selected modeled cases; it does not prove broad real-project adoption or business benefit.
+## Application layer
 
-<a id="policy-failure-analysis-in-current-source"></a>
-## Policy failure analysis in v0.13.0
+The application layer holds the product's use cases and the surfaces that expose them.
 
-The v0.13.0 implementation separates structural validity from policy compliance without changing the Domain language. Parsing, resolution, finite policy evaluation and exception evaluation still produce one graph; `model`, Context and Impact use that same normalized meaning. `validationStatus` keeps its acceptance meaning. The model additionally reports `structuralStatus` and `policyStatus`; structural errors make policy status unknown rather than claiming a partial model is trustworthy.
+- `projectwork` loads the selected model from the working tree or a commit, and plans and writes model edits under guard.
+- `projectexplore` stores explorations, open decisions, scope readiness and Apply receipts.
+- `projectadoption` runs Brownfield adoption: fixed-snapshot evidence, Manager proposals and a model-only adoption plan.
+- `projectonboarding` writes project-local guidance and skills for Codex and Claude Code.
+- `projectapp` is the shared facade over these use cases and the runtime. The MCP server calls only this facade.
+- `projectcli` is the `markitect project` command line, and `mcp` is the stdio MCP server ([project operations](project-operations.md)).
+- `releasecli` is the command interface of `markitect-release`.
 
-Only a diagnostic explicitly associated with an actual failed PolicyResult is an ordinary policy failure. Classification does not rely on diagnostic names: an ordinary constraint can be named `path`, while an invalid `same-target` traversal also uses `constraint.path`. Untagged, unmatched and structural findings remain blockers, including invalid exceptions.
+Known problems:
 
-Explicit `context --analyze-policy-failures` and `impact --analyze-policy-failures` allow read-only inspection of ordinary failures. Their output visibly binds analysis status to fixed snapshot/configuration/model identities, and a completed analysis still exits 1 if either side fails policy. Context retains the normal declared closure; policy-only dependencies do not introduce context edges. Impact exposes direct PolicyResult changes and subjects alongside its existing conservative affected set and causes. This improves explanation without claiming that direct subjects are the whole implementation review set or narrowing conservative invalidation.
+- The CLI composes the runtime itself instead of calling the facade. `projectcli/run.go` calls `projectrun.Run`, `Resume`, `Repair`, `Verify`, `FullVerify` and `Apply` and builds the transport invoker and workspace service. `projectcli/project_deliver.go` calls `projectrun.Deliver` (CLI-03).
+- `runAction` in `projectcli/run.go` has 484 lines (CLI-03).
+- CLI commands (`projectcli/options.go`) and MCP tools (`mcp/tools.go`, `projectcli/mcp.go`) are declared separately, and nothing checks that they agree (CLI-02, TEST-02).
+- Two Brownfield paths exist side by side: the file pipeline (`discover`, `distill`, `resolve`, `adopt`) and the session ledger (`brownfield`). The [verb table](design/verb-table.md#adoption-stages) keeps only the ledger (CLI-02).
+- `projectadoption` runs its Managers through its own stack and ledger on `agentexec` (`manager_run.go`, `manager_run_ledger.go`), separate from `projectrun`.
 
-Check, Verify, reconciliation and mutation remain strict. There is no automatic waiver, alternative compiler or policy evaluator. This capability is part of the published v0.13.0 contract; the immutable v0.12.0 release does not include it. The [focused design](design/policy-failure-analysis.md) owns its state and exit contracts; [Usage](usage.md#read-only-analysis-of-failed-policies-unreleased-source) records invocation and retains the prior heading anchor.
+## Runtime layer
 
-<a id="selective-adoption-preparation-in-current-source"></a>
-## Selective adoption preparation in v0.13.0
+The runtime runs Manager, review, integration and verify roles and records what happened.
 
-Existing-project preparation is separate from greenfield `init` and the semantic compiler. `prepare` consumes an owner-supplied exact-path/full-commit scope, preflights fixed-tree metadata and opens only selected Git blobs. It previews a versioned handoff and writes only with the reviewed digest into an absent, external workspace. Repository identity, selected modes/bytes, review/privacy/retention claims and bounded coverage remain explicit. This preserves generic snapshot digests and adds no graph edges or Domain semantics.
+- `projectrun` plans, runs, resumes, repairs, verifies and applies bounded Manager work over fixed snapshots. It owns the run store under `.markitect/runs/`, the budgets, the review rounds and the Apply preflight.
+- `agentexec` is the provider-neutral process boundary for one role invocation and its receipt.
+- `codexappserver` is the transport to the native Codex App Server.
+- `exchangecli` is the reference bring-your-own executor. It hands each invocation to an outside party through request and response files ([provider adapters](provider-adapters.md#bring-your-own-executor)).
+- `projectworkspace` creates, harvests and recovers owned candidate workspaces.
+- `projectsetup` builds the runtime proposal for `project setup` and the prerequisite report for `project doctor`.
 
-`copy-me` reads that handoff and only its supplied evidence, plus an explicit queue, candidate files and optional decision. The pure validator checks byte/reference consistency, anchors, conflict links, coverage, frequency-claim shape and decision freshness. It never acquires Git content, calls a model, authenticates the reviewer or adopts policy. More evidence is an explicit request for a new owner-selected capture. No Markitect Project or ContextRun is required; optional run/report identities remain supplied evidence. The [handoff design](design/selective-adoption-handoff.md) owns the exact contract and security/retention limits; [Usage](usage.md#selective-adoption-preparation-and-copy-me-unreleased-source) owns invocation and retains the prior heading anchor. This is bounded handoff infrastructure, not a claim of discovery quality or full adopter migration.
+Known problems:
+
+- `projectrun` is large: about 16,800 production lines. `run.go` has 2,694 lines, and `runOrResume` alone has 1,103. `Plan` (`plan.go`) and `FullVerifyProject` (`full_verify.go`) also exceed 300 lines (ARCH-06).
+- Runtime configuration lives in `projectrun`: `Runtime`, `Agent`, `Limits` and `Pricing` (`types.go`) and `ValidateRuntime` (`config.go`). `projectsetup` and `mcp` import `projectrun` for these types, and the native transport invoker is built there too (ARCH-06).
+- Runtime and application import each other. `projectrun` imports `projectwork` and `projectexplore`, and `projectsetup` imports `projectwork`; `projectapp`, `projectadoption` and `projectcli` import `projectrun`. ARCH-06 works on the same seam.
+- Five functions in `projectrun/run.go` have no callers: `ownedPath`, `addCost`, `estimateCost`, `resolvesConflicts` and `resolveObligations` (ARCH-05).
+- Plan and Apply call `git check-attr --source` (`plan.go`, `apply.go`), which needs Git 2.40 or later. No document or check states that requirement.
+- A helper whose Close fails stays `cleanup-pending` (`helper.go`). `validateReportClosure` (`obligations.go`) then blocks Verify and Apply, and nothing reconciles the state (BUG-01).
+- Bring-your-own executor gaps (RUN-05):
+  - `maxCostMicros` is required even when every role is unmetered (`config.go`).
+  - Setup rejects script shims only for the native provider, not for process executors (`discoverProcess` in `projectsetup/setup.go`).
+  - The exchange adapter has no deadline of its own (`exchangecli/exchange.go`).
+  - Declared checks see only the owning agent's environment allowlist (`explicitEnvironment` in `verify.go`).
+- `agentexec/lifecycle.go` and `codexappserver/contracts.go` are not gofmt-formatted. CI runs `go vet` but no gofmt check.
+- Runtime tests run serially. No test calls `t.Parallel`, and the process end-to-end tests re-execute the test binary (for example `projectrun/process_e2e_test.go`). The [tests and CI survey](work-items/surveys/tests-and-ci-20261010.md) measured `projectrun` at 1,467 s on Windows against 112 s on Linux, so Windows runs nightly only ([DEC-013](concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)) (TEST-03, CI-05).
+
+## Legacy line
+
+The legacy line is the earlier Project/Domain product: the verbs such as `check`, `context`, `impact`, `render` and `verify` over `markitect.yaml`, the v0.13 kernel and consumers under `host/compat/v0_13`, the metadata adapters, content packages and Copy Me. Its main packages are the host root, `host/cli`, `host/authoring` and `host/compat/v0_13`; the [code map](development/code-map.md#legacy-and-compatibility) lists all of them. The published v0.14.1 release contains it. It is not developed further ([DEC-014](concepts/register.md#dec-014-compatibility-does-not-drive-decisions)). It still runs this repository's own checks until ARCH-07, and ARCH-09 removes it. Its earlier architecture is kept in a [history record](history/architecture-legacy-sections-20261010.md).
+
+Known problems:
+
+- The `markitect` executable enters through the legacy dispatcher. `src/cmd/markitect/main.go` calls `host/cli`, which routes `project` to `projectcli` and also holds `package`, `bundle`, `install` and `licenses` (`cli_dispatch.go`) (CLI-02, ARCH-08).
+- This repository develops itself on the legacy line: `markitect.yaml` and `.markitect/areas`, the commands in `AGENTS.md`, the pre-commit hook and the 42 `markitect` calls in `ci.yaml`, none of them to `project` (ARCH-07).
+- `markitect-check-architecture` runs the gate through the host root (`host/architecture.go`), so the gate binary links the legacy package (ARCH-09).
+- Only `examples/project-world` uses the model-first format. The other example directories use `markitect.yaml` or the legacy package and Copy Me formats (ARCH-09).
 
 ## Project artifact boundary
 
-The model-first Host workflow supplies recursive Manager execution, whole-repository classification for full-coverage projects, fixed-snapshot verification, model-preserving Cleanup, whole-model Reconcile, model-change briefs and native Codex/Claude onboarding. Full-coverage runs regenerate the configured readable model document from the integrated candidate and verify its exact bytes on the final snapshot. Current source also persists Explore records and scoped readiness acknowledgements, supports staged Brownfield proposal/adoption sessions, and composes Manager execution, integration, Verify and guarded Apply into a resumable delivery. These are bounded protocol and execution capabilities; they do not establish semantic truth, human approval, natural-language discovery quality, or a quality/productivity advantage. Project operations use the caller's local permissions; generated instructions do not constrain arbitrary writers. See [Project operations](project-operations.md), the [native work-item delivery checklist](design/project-world/native-work-item-delivery.md), and the [workflow validation](validation/project-operations-2026-10-09.md).
+Markitect treats an adopting project's files, including source code, schemas, configuration, CI and documentation, as exact paths and opaque bytes.
 
-The generic kernel sees project artifacts—source code, schemas, configuration, infrastructure, CI and documentation—as exact paths and opaque bytes. These roles are not inferred from a filename or syntax and do not make all repository files Markitect-owned. v0.13.0's `inputsField` and `spec.files` paths remain opaque snapshot inputs for context and impact; the shipped Artifact Coverage check accounts only for explicitly configured roots and supplied ownership facts. It does not establish semantic consistency or whole-repository convergence. Current source alpha also accepts exact per-file `targetExclusions` in the canonical controller runtime and reports each exclusion's path, reason, state and available inventory metadata; this does not include target-content hashes or claim whole-repository coverage. Neither this alpha path nor the broader local projection contract changes v0.13.0; see [Project artifact inputs](documentation.md).
-
-A committed `ContextRun` manifest can select additional exact UTF-8 project artifacts under its `sources` field for one fixed task. Those bytes affect that run's context and digest. The selection adds no resource-graph edge; ordinary `impact` still follows declared resource inputs and its conservative rule for unknown files. The field name does not give source code special treatment.
-
-Markitect's core does not parse an adopting project's programming-language structure, infer symbols, call graphs, dependencies or business meaning from its files, or generate documentation from source code. A changed input can establish that dependent knowledge needs review; it cannot establish that the knowledge is wrong or that revised prose is correct. The declared resource graph is not a graph inferred from the internal structure of project artifacts. A configured adapter or project-owned check may use a specialized analyzer, but its behavior and evidence remain explicit and outside the generic kernel. A modeled behavior written as prose is not executable proof; source-level verification must state its finite scope and unsupported cases.
-
-<a id="projection-first-source-direction-in-progress"></a>
-### Projection-first reconciliation (experimental preview)
-
-The earlier [projection-first reconciliation design](design/projection-first-reconciliation.md) established reusable local lifecycle mechanics. The accepted [canonical reset](design/canonical-projection-reset.md) supersedes its no-Core-change implementation direction: the experimental canonical alpha bundled with v0.14.1 introduced a separate structural Core while preserving validated plan/apply/verify safeguards. Current source keeps that Core for the model-first project model and has removed the alpha itself. Human narrative, implementation detail outside modeled contracts, vendor/tool material and external observations keep explicit independent roles. A projection result establishes only the declared representation checks. Deterministic outputs may be compared byte-for-byte; AI materialization is variable candidate content and requires project-owned checks rather than exact-byte identity.
-
-The earlier projection-first implementation remains historical evidence for reusable plan/apply/verify mechanics. The canonical reset and controller were bundled with v0.14.1 as an experimental alpha and have been removed from current source; the historical projection IR is not promoted into a second shared contract. Published v0.13.0 retains its supported contract: explicit resource and artifact inputs, selected existing render targets, configured checks and adapters, and narrow Observe/Plan/Apply/Verify operations. Active source Projects bind exact contracts/coverage and require their selected projections during Verify; inactive Projects retain their previous behavior. There is no repository-wide or universal semantic convergence gate. Context remains declared semantic closure; Impact remains semantic impact with conservative causes, not an exact source-file or target allowlist. A saved plan binds its reviewed inputs and operations but is not owner approval or proof of chronology.
-
-Project-owned commands in `spec.checks` may run external analyzers during `verify`; configured adapters may also consume declared inputs and the normalized model. Markitect reports their bounded result for the selected snapshot; the adopting project chooses the checks and interprets their findings. A specialized integration must preserve this boundary by supplying explicit inputs or project-owned checks, rather than moving domain-specific analysis into the core.
-
-```mermaid
-flowchart LR
-    Intent[Human intent] --> Author[Human or agent authors]
-    Author --> Inputs[Fixed source, Domain, config, mappings]
-    Inputs --> Compile[Validate and resolve]
-    Compile --> IR[Normalized semantic IR]
-    IR --> Constraints[Bounded constraints]
-    IR --> Context[Context and impact]
-    IR --> Project[Configured projections]
-    Inputs --> Observe[Optional named observation]
-    IR --> Plan[Plan configured changes]
-    Observe --> Plan
-    Plan --> Apply[Explicit apply]
-    Apply --> Verify[Verify observed result]
-    Constraints --> Evidence[Input-bound evidence]
-    Context --> Evidence
-    Project --> Evidence
-    Verify --> Evidence
-```
-
-## Resource model
-
-The recommended [repository layout](repository-layout.md) keeps the Project entrypoint at the root, typed knowledge under explicit `.markitect/areas/` paths, and human documentation under `docs/`. Provider projections retain their native paths. This is a convention: configured Areas remain authoritative and existing paths remain valid. Resource Markdown views are generated only when `markdown` is an explicit Project target; they live under `docs/markitect/` and do not own source content.
-
-Bundled AI resources retain local identity `namespace/kind/name`; custom resources use `namespace/apiVersion/kind/name`. Package origin further qualifies imported identities. The Project has identity `kind: Project` in `markitect.yaml`.
-
-| Kind | Responsibility |
-|---|---|
-| Text | Reusable prose or context |
-| Rule | Scoped requirement with an optional check description |
-| Workflow | Procedure and dependencies |
-| Skill | Agent entrypoint to a procedure |
-| Agent | Responsibility and supported provider settings |
-| Contract | Required kind and symbolic input/output signature |
-| Project | Areas, imports, bindings, checks, render configuration, and exact direct package pins |
-| Package | A package archive manifest with areas, exports, a version, and optional package-local bindings |
-
-`rules` declares requirements; `uses` declares concrete dependencies; `needs` requires a Contract; `implements` promises its signature; Project bindings select implementations. `files` declares exact ordinary UTF-8 project artifact inputs. Prose links are navigation and are not inferred dependencies. Area ownership and access follow configured paths and explicit imports; namespaces do not create inheritance.
-
-Optional Project documentation roots enable snapshot-based README router checks. They validate local navigation only; ordinary Markdown remains untyped and router links do not enter the graph. Embedded authoring guidance uses Areas, paths and local routers to help an agent find an existing canonical owner before creating a document. The semantic placement decision remains with the author and reviewer. See [Documentation routers](documentation-routers.md).
-
-The Project may declare `spec.checks` as entries with a name and `run` argument array. A command is an executable plus literal arguments, not a shell expression. This is the project's explicit verification contract. The package may be structurally checked without those entries, but `verify` reports incomplete evidence when no check is declared.
-
-## Deterministic core and adapters
-
-Strict parsing rejects unknown fields, duplicate identities, extra YAML documents, aliases, merge keys, and unsupported tags. Graph checks validate kinds, identities, references, access, bindings, signatures, and cycles. Schemas assist editors; the parser and graph remain authoritative.
-
-The core does not depend on a model API, IDE, provider SDK, or repository-specific policy. The CLI resolves Git selectors through the Git source adapter into a project snapshot. Deterministic application decisions consume that value; they do not execute Git. Filesystem writers, snapshot materialization, release packaging, and explicitly configured output adapters remain boundaries around the core. `verify` executes only the commands declared by the selected Project. It neither chooses a repository profile nor infers a runtime gate from files it happens to find. See [Source snapshots](source-snapshots.md) for the current boundary and its Git-specific contracts.
-
-Ordinary project artifacts stay with their owners and enter context or impact through exact declared inputs. Source code has no special semantic status: Markitect does not parse syntax trees, infer symbols or call graphs, or derive business meaning from code. Domain-specific analysis belongs outside the deterministic core.
-
-<a id="go-implementation-boundaries"></a>
-### Go ownership and final dependency model
-
-The [clean-architecture consolidation decision](design/clean-architecture-consolidation.md) documents the integrated v0.13.0 source layout. The accepted [canonical reset](design/canonical-projection-reset.md) supersedes its kernel ownership for current source: published v0.13.0 remains unchanged; the historical kernel and consumers are isolated below Host compatibility, while `src/internal/core` is the structural compiler that the model-first project model uses. The [consolidation report](validation/clean-architecture-consolidation.md) remains evidence for that earlier source candidate.
-
-| Responsibility | Final owner | Dependency and meaning boundary |
-|---|---|---|
-| Structural Schema/Kind/Property/Definition compilation, pure IR, resolved nominal references, provenance and structural diagnostics | Core: src/internal/core | Receives explicitly selected and decoded inputs from Host. No Domain policy, authoring codecs, project/module activation, Git, providers, paths, execution or persistence. |
-| Historical v0.13.0 Domain/resource/policy kernel and consumers; compatibility codecs/use cases; current authoring, model/context/impact, process execution, persistence and static composition | Host: src/internal/host, including src/internal/host/compat/v0_13/{kernel,consumers} | Preserves historical runtime behavior. New Definitions are not lowered into legacy Resources. |
-| Independent capability implementations: the project model and the adoption capture/review helpers | Host-composed packages: src/internal/modules/<name> | Core plus private subtree among Markitect packages, and any third-party library that helps ([DEC-020](concepts/register.md#dec-020-markitect-uses-any-library-that-helps)); no sibling, Host, compatibility, Infrastructure or Tooling imports. Go implementation packages are not installable manifests. |
-| Git and working-tree acquisition, revision resolution and materialization | Infrastructure: `src/internal/infrastructure/source` | Acquires source and supplies Core snapshot values; it does not interpret canonical policy or adopting-project layout. |
-| Architecture import gate, release, publication, licenses/notices and standalone distribution bootstrap | Tooling: `src/internal/tooling/{architecture,release,publish,licenses}` and `integration` | Maintainer algorithms invoked through Host runtime composition; never a runtime capability Module. |
-| All executable entrypoints, including maintainer commands | `src/cmd/...` thin Host runtimes | CLI packages import Host only, dispatch to Host runtime functions and report results. They do not call Core, Modules, Infrastructure or Tooling directly. |
-| Examples, adopter fixtures and experiments | Harness | Validation code is not a production dependency or an exemption from dependency rules. |
-
-The dependency graph is statically composed; v0.13.0 compatibility consumers remain behind Host and are not dependencies of the new Core:
-
-```mermaid
-flowchart TD
-  CLI[cmd entrypoints] --> Host[Host composition and runtimes]
-  Host --> Core[New structural Core IR]
-  Host --> Modules[Independent Modules]
-  Modules --> Core
-  Host --> Infra[Infrastructure source]
-  Infra --> Core
-  Host --> Tooling[Maintainer Tooling]
-  Tooling --> Core
-```
-
-The historical compatibility kernel receives normalized canonical Resource.Data values and authorized edges through Host, preserving v0.13 behavior. The new structural Core compiles explicitly selected Schema and Definition inputs into its own pure IR. Host decodes and authorizes inputs for both boundaries; neither kernel acquires source or infers adopter-project meaning. No lowering translates new Definitions into legacy Resources.
-
-Host owns the historical public frontend and v0.13 codecs as compatibility contracts, plus explicit Core-input decoding. Content-package archive and legacy Domain/resource validation remain compatibility responsibilities. The new Core does not absorb those input formats.
-
-The new Core computes deterministic semantic model digests over structural contracts and values; source provenance/revision remain separately bound. The compatibility kernel preserves historical policy and exception digests under Host. Generic snapshot values and Git acquisition keep their existing explicit boundary; the new Core does not interpret filesystem modes.
-
-Host composition uses direct typed function calls. There is no dynamic plugin loader, service locator, reflection-based registration, generic Module lifecycle or provider switch in Core. Each Module owns its implementation and private tests; Host owns composition and shared runtime contracts.
-
-Rendering remains limited to explicitly selected outputs. The Markdown and agent-rules compatibility consumers own their projections; provider outputs link to canonical YAML. Source mappings and explicitly quoted consistency assertions remain opt-in and do not infer dependencies or facts from prose. Format, render, schema, install and initialization retain validated-plan and controlled-write behavior; multi-file writes are not a transaction. See [Provider adapters](provider-adapters.md) and [Factual consistency](consistency.md).
-
-Direct offline content packages remain exact pinned archives, with explicit activation, origin-qualified identities and read-only imported content; nested imports and cross-boundary direct references remain rejected. Project initialization remains read-only in preview and recomputes/validates before writing only the planned Project and Area README. It does not select project-owned checks or policy or edit existing content. Structural success without owner-declared checks remains incomplete verification; see [Usage](usage.md) and the [roadmap](implementation-plan.md).
-
-The architecture gate is `src/internal/tooling/architecture`. Its static import check covers supported-platform source and tests and has negative fixtures for forbidden directions. The same gate is included in normal tests, a named CI step, the explicit Project check and release quality workflow. These wiring facts do not claim an exact-head pass; the [consolidation report](validation/clean-architecture-consolidation.md) owns gate results. There is no exception allowlist.
-
-The [code map](development/code-map.md) lists every Go package with its layer, purpose and owning document. A test in `src/internal/tooling/architecture` fails when a package is missing from the map or the map lists one that does not exist.
-## Authoring and queries
-
-Historical v0.13 authoring resources are embedded and compiled through the normal parser, graph, and context pipeline. They explain resource choice, ownership, explicit dependencies, and diagnostics. `authoring`, `find`, and `explain` support an agent or person inspecting the model; they do not interpret natural-language intent or call a model.
-
-`find` performs literal discovery with exact optional filters. `explain` reports direct relationships and their declaration source. `context` follows dependencies from a selected entry and reports included resources and declared-file inputs. `impact` compares old and candidate dependency closures. Semantic relevance and task-to-entry selection remain explicit reasoning outside the deterministic engine.
+- The model declares which Manager is responsible for which files. Markitect does not infer that from file names, syntax, Markdown links or code.
+- When a project selects full coverage, every repository file is covered by the model or explicitly ignored ([DEC-006](concepts/register.md#dec-006-every-file-is-covered-or-explicitly-ignored)).
+- Markitect does not parse an adopting project's programming language, infer symbols, call graphs or dependencies, or generate documentation from code.
+- Project-owned checks may run specialized analyzers. Their result is evidence for their declared scope only.
+- A changed file can show that dependent knowledge needs review. It cannot show that the knowledge is wrong or that revised prose is right.
 
 ## Fixed inputs and evidence
 
-A Git commit resolves to one snapshot with paths, regular-file modes, and bytes. Later working-tree edits do not alter that fixed value. Context fingerprints its selected inputs and tool identity. Impact compares two resolved snapshots, including bytes and modes, then includes old and new consumers of changed dependencies. Unknown or unmodelled inputs conservatively broaden results. Snapshot identity is kept alongside content: the legacy content digest continues to hash sorted paths, mode tokens, and bytes, and does not include the ID or provisional flag. See [Source snapshots](source-snapshots.md) for evidence identity, review compatibility, package provenance, and materialization boundaries.
-
-The optional per-check budget below is an unreleased source follow-up. The published v0.14.1 CLI retains its fixed 600-second check limit and does not accept `timeoutSeconds` on Project checks. The source candidate accepts up to 5400 seconds per check.
-
-`verify --revision COMMIT` checks that exact snapshot. It runs Project-declared commands inside its materialized copy using literal executable arguments and bounded time/output. Each check defaults to 600 seconds; an explicit `timeoutSeconds` selects 1 through 5400 seconds and is bound to the fixed check definition. YAML results include the effective limit as `timeoutMilliseconds`. Inner tool deadlines remain the project's explicit argv responsibility. A missing check declaration, unavailable executable, timeout, or output overflow is incomplete evidence. Commands run with local user authority; snapshot materialization is not an operating-system sandbox.
-
-Review evidence is advisory. Reuse requires matching tool, configuration, context and eligible impact. Markitect can record an actual report and assess whether its declared inputs still match; it does not invoke a reviewer, authenticate its prose, prove completeness, or transfer human acceptance.
+- A Git commit resolves to one snapshot of paths, modes and bytes. Later working-tree edits do not change it ([source snapshots](source-snapshots.md)).
+- A plan binds its base revision, snapshot and model digest. A changed model, source, runtime or candidate makes it stale and needs a fresh preview.
+- Verify runs the declared checks and the independent review and verify roles against the integrated candidate. Apply writes only the latest verified candidate and requires its verification digest.
+- A passing check, digest or report establishes its declared scope. It is not human acceptance and does not prove semantic correctness.
 
 ## Distribution and product boundary
 
-This repository owns Markitect source, schemas, core authoring, generic examples, and release design. An adopting repository owns its content, import scripts, custom output formats, and declared runtime checks. Markitect provides no built-in project-specific migration command.
+This repository owns Markitect's source, schemas, authoring guidance, examples and release process. An adopting repository owns its content, its checks and its approval policy. A source change does not update an installed release; a release is built and published through the [release process](operations.md#release-operations). Published releases stay immutable records.
 
-The immutable `v0.1.0` release and its original package are historical pins. The published `v0.2.0` release removes Project profiles, replaces implicit gates with declared commands, and uses explicit targets and rule adapters for rendering. See the [production assessment](production-assessment.md) for its exact release evidence and [Integration](../integration/README.md) for provisioning and upgrade boundaries.
+## Historical architecture links
+
+These retained anchors route existing links to the [history record](history/architecture-legacy-sections-20261010.md) of the earlier line.
+
+<a id="historical-projectdomain-and-projection-compatibility-architecture"></a>
+The [Project/Domain compatibility architecture](history/architecture-legacy-sections-20261010.md#historical-projectdomain-and-projection-compatibility-architecture) is historical.
+
+<a id="compiler-and-evidence-model"></a>
+The [compiler and evidence model](history/architecture-legacy-sections-20261010.md#compiler-and-evidence-model) of the Domain kernel is historical.
+
+<a id="current-implementation-boundary"></a>
+The [v0.11.0 implementation boundary](history/architecture-legacy-sections-20261010.md#current-implementation-boundary) is historical.
+
+<a id="v0120-bounded-resolved-target-equality"></a>
+The [v0.12.0 resolved-target equality](history/architecture-legacy-sections-20261010.md#v0120-bounded-resolved-target-equality) is historical.
+
+<a id="policy-failure-analysis-in-current-source"></a>
+<a id="policy-failure-analysis-in-v0130"></a>
+The [v0.13.0 policy failure analysis](history/architecture-legacy-sections-20261010.md#policy-failure-analysis-in-v0130) is historical.
+
+<a id="selective-adoption-preparation-in-current-source"></a>
+<a id="selective-adoption-preparation-in-v0130"></a>
+The [v0.13.0 selective adoption preparation](history/architecture-legacy-sections-20261010.md#selective-adoption-preparation-in-v0130) is historical.
+
+<a id="projection-first-source-direction-in-progress"></a>
+<a id="projection-first-reconciliation-experimental-preview"></a>
+The [projection-first reconciliation preview](history/architecture-legacy-sections-20261010.md#projection-first-reconciliation-experimental-preview) is historical.
+
+<a id="resource-model"></a>
+The [v0.13 resource model](history/architecture-legacy-sections-20261010.md#resource-model) is historical.
+
+<a id="deterministic-core-and-adapters"></a>
+The [deterministic core and adapters](history/architecture-legacy-sections-20261010.md#deterministic-core-and-adapters) of the Domain kernel are historical.
+
+<a id="go-implementation-boundaries"></a>
+<a id="go-ownership-and-final-dependency-model"></a>
+The [earlier Go ownership table](history/architecture-legacy-sections-20261010.md#go-ownership-and-final-dependency-model) is historical; current ownership is in [Layers](#layers) and the [code map](development/code-map.md).
+
+<a id="authoring-and-queries"></a>
+The [v0.13 authoring and queries](history/architecture-legacy-sections-20261010.md#authoring-and-queries) are historical.
 
 <a id="markitect-first-and-artifact-coverage-release-candidate"></a>
-## Markitect-first and artifact coverage (published v0.13.0)
-
-The [canonical Change workflow](../src/internal/host/embedded/resources/workflow-markitect-first-change.yaml) separates implementation freedom from engineering-intent changes. The shipped authoring context makes it available provider-neutrally; a project's root guidance routes agents to its version-bound tool and selected Context. Desired intent changes before implementation when the intent changes. Implementation-only tasks cause no invented canonical edits. Markitect's root Project dogfoods that division with generated Codex/Claude Skill entrypoints.
-
-The [artifact check](design/managed-artifact-coverage.md) is a standalone source-package helper selected through existing Project checks. It derives canonical sources, exact inputs and renderer owners and checks literal managed roots, exact tooling ownership and reasoned file exclusions. It adds no Domain operator, graph composition, source-language semantics or SPI change. Direct working-tree coverage can detect new untracked files; fixed Verify binds the same check to the exact materialized candidate. Output-byte drift remains the compiler's separate check. Unmanaged roots remain ordinary project review scope.
-
-Self-dogfood also exposed an output-inventory boundary: independently executable nested Projects outside the parent's Areas/output namespaces must not be mistaken for stale parent projections. The [focused boundary design](design/nested-project-output-boundary.md) owns the correction and its protections. This does not import child models, policies, context or impact into the parent. Whole-snapshot conservative impact remains visible.
+<a id="markitect-first-and-artifact-coverage-published-v0130"></a>
+The [v0.13.0 Markitect-first workflow and artifact coverage](history/architecture-legacy-sections-20261010.md#markitect-first-and-artifact-coverage-published-v0130) are historical.
 
 <a id="canonical-reset-source-only-vnext-boundary"></a>
-## Canonical reset alpha (removed)
-
-The canonical reset and its controller were bundled with v0.14.1 as an experimental alpha and have been removed from current source; the [v0.14.1 architecture](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/architecture.md#canonical-reset-source-only-vnext-boundary) describes them. The structural Core they introduced remains the compiler for the model-first project model. The [accepted reset design](design/canonical-projection-reset.md) stays as a design record.
-
-## Host write identity
-
-Host filesystem mutations bind inspected root and destination-parent identities through opened handles; lexical path validation alone does not authorize a write. Publication, partial failure, current-state observation and verification remain different outcomes. The [Host write identity contract](design/host-write-identity.md) defines the source-alpha boundary and its limitations. This does not extend Core, grant Apply authority, or provide an OS sandbox.
+<a id="canonical-reset-alpha-removed"></a>
+The [canonical reset alpha](history/architecture-legacy-sections-20261010.md#canonical-reset-alpha-removed) was removed from source.
