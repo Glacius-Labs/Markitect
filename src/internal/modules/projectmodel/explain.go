@@ -104,11 +104,10 @@ func ExplainForManager(base, candidate Report, managerID string) (ImpactExplanat
 		for _, d := range ctx.Decisions {
 			visible[element{"decision", d.ID}] = true
 		}
+		// A file is visible to the Manager that owns it, as for runs and reviews.
 		for _, f := range r.Files {
-			for _, selector := range ctx.Manager.Owns {
-				if s, ok := normalizeSelector(selector, true); ok && selectorMatches(s, f.Path) {
-					visible[element{"file", f.Path}] = true
-				}
+			if f.Owner == ctx.Manager.ID {
+				visible[element{"file", f.Path}] = true
 			}
 		}
 	}

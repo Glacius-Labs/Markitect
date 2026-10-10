@@ -239,3 +239,31 @@ func jsonText(s string) string {
 	data, _ := json.Marshal(s)
 	return string(data[1 : len(data)-1])
 }
+
+// A file is visible to the Manager that owns it, as for runs and reviews, not
+// to an ancestor whose wider selector the file falls under.
+func TestExplainForManagerShowsOnlyOwnedFiles(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	definitions := append(copyDefinitions(model.Definitions), core.Definition{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Namespace: "orders.returns", Name: "returns"}, Purpose: "Returns.", Spec: map[string]any{
+		"parent": map[string]any{"apiVersion": APIVersion, "kind": managerKind, "namespace": "orders", "name": "orders"}, "owns": []any{"src/orders/returns/"},
+	}})
+	compiled, diagnostics := core.Compile(model.Schemas, definitions, "returns")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile: %+v", diagnostics)
+	}
+	const secret = "src/orders/returns/secret-refund.go"
+	base := Analyze(compiled, append(append([]File(nil), files...), File{Path: secret, Digest: "sha256:a", Mode: "100644"}))
+	candidate := Analyze(compiled, append(append([]File(nil), files...), File{Path: secret, Digest: "sha256:b", Mode: "100644"}))
+	key := func(namespace, name string) string {
+		return (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: namespace, Name: name}).Key()
+	}
+	for manager, visible := range map[string]bool{key("orders.returns", "returns"): true, key("orders", "orders"): false, rootManagerKey(): false} {
+		explanation, err := ExplainForManager(base, candidate, manager)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if shown := slices.ContainsFunc(explanation.Elements, func(e ExplainedElement) bool { return e.ID == secret }); shown != visible {
+			t.Fatalf("%s sees %s: %v, want %v", manager, secret, shown, visible)
+		}
+	}
+}
