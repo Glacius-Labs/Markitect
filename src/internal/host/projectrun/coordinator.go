@@ -138,8 +138,9 @@ func invokeManagerBatch(ctx context.Context, calls []managerInvocationCall) []ma
 // workCandidate reads the branch a Manager work turn starts from: the run base
 // or the parent's work candidate, except that review rework continues from the
 // reviewed candidate. That candidate must be the one the failed review names,
-// with the bytes its review records assessed. Fresh and recovered turns share
-// it so a resumed run rebuilds the same rework input as the uninterrupted loop.
+// with a recorded failed review and the bytes its review records assessed.
+// Fresh and recovered turns share it so a resumed run rebuilds the same rework
+// input as the uninterrupted loop.
 func workCandidate(store *runStore, dir string, report RunReport, task ManagerTask, baseID string) (candidateData, error) {
 	currentID := baseID
 	if task.ParentTask != "" {
@@ -161,10 +162,18 @@ func workCandidate(store *runStore, dir string, report RunReport, task ManagerTa
 		return candidateData{}, err
 	}
 	if rework {
+		failed := false
 		for _, review := range report.Reviews {
-			if review.ManagerID == task.ManagerID && review.CandidateID == current.ID && review.CandidateDigest != current.Digest {
+			if review.ManagerID != task.ManagerID || review.CandidateID != current.ID {
+				continue
+			}
+			if review.CandidateDigest != current.Digest {
 				return candidateData{}, fmt.Errorf("Manager %s review rework candidate %s differs from the bytes its review assessed", task.ManagerID, current.ID)
 			}
+			failed = failed || review.Outcome == "fail"
+		}
+		if !failed {
+			return candidateData{}, fmt.Errorf("Manager %s review rework candidate %s has no recorded failed review", task.ManagerID, current.ID)
 		}
 	}
 	return current, nil

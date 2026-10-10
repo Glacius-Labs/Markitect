@@ -314,8 +314,9 @@ func TestResumedReviewReworkStartsFromReviewedCandidate(t *testing.T) {
 }
 
 // Review rework continues only from the exact candidate its failed review
-// assessed. A stale review identity or changed reviewed bytes leave no
-// trustworthy rework base, so the fresh and the recovered turn both refuse.
+// assessed. A stale review identity, changed reviewed bytes or a missing failed
+// review leave no trustworthy rework base, so the fresh and the recovered turn
+// both refuse.
 func TestReviewReworkRefusesCandidateOutsideItsFailedReview(t *testing.T) {
 	for _, test := range []struct {
 		name   string
@@ -326,6 +327,7 @@ func TestReviewReworkRefusesCandidateOutsideItsFailedReview(t *testing.T) {
 		{"changed reviewed bytes", func(fixture *reviewReworkFixture, _ *ManagerTask) {
 			fixture.report.Reviews[0].CandidateDigest = fixture.initial.Digest
 		}, "differs from the bytes its review assessed"},
+		{"no failed review record", func(fixture *reviewReworkFixture, _ *ManagerTask) { fixture.report.Reviews = nil }, "has no recorded failed review"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			fixture := seedReviewRework(t)
@@ -349,10 +351,11 @@ func TestReviewReworkRefusesCandidateOutsideItsFailedReview(t *testing.T) {
 }
 
 // nativeFinalReviewInvoker leaves one dispatched native reviewer turn behind
-// and later recovers it as a failed review. Other requests are only recorded;
-// the fixture has no provider for them.
+// and later recovers it as a review failing on findingPath. Other requests are
+// only recorded; the fixture has no provider for them.
 type nativeFinalReviewInvoker struct {
 	seed          bool
+	findingPath   string
 	reviewContext json.RawMessage
 	requests      []agentexec.Request
 	recoverCalls  int
@@ -402,8 +405,8 @@ func (i *nativeFinalReviewInvoker) Recover(_ context.Context, config agentexec.C
 	}
 	findings := []reviewFindingResponse{}
 	for _, file := range reviewContext.CandidateFiles {
-		if file.Path == "src/orders/implementation.txt" && len(file.Grounding) > 0 {
-			findings = append(findings, reviewFindingResponse{Path: file.Path, Expectation: "restore the orders behaviour the integration changed", Grounding: file.Grounding[0]})
+		if file.Path == i.findingPath && len(file.Grounding) > 0 {
+			findings = append(findings, reviewFindingResponse{Path: file.Path, Expectation: "restore the behaviour the integration changed", Grounding: file.Grounding[0]})
 		}
 	}
 	reportJSON, err := json.Marshal(reviewResponse{Status: "fail", Summary: "the integrated orders artifact misses its accepted statement", Findings: findings})
@@ -427,11 +430,19 @@ func (i *nativeFinalReviewInvoker) Recover(_ context.Context, config agentexec.C
 	}, nil
 }
 
-// The final review loop reviews a leaf against the root candidate and routes
-// a failure to the leaf's parent, whose rework round rebuilds the root. A
-// crash during that review must not turn the recovered failure into leaf-only
-// rework: the root would keep its stale candidate and never receive the fix.
-func TestResumedFinalReviewFailureRoutesToParentRework(t *testing.T) {
+type resumedFinalReview struct {
+	report     RunReport
+	err        error
+	invoker    *nativeFinalReviewInvoker
+	integrated candidateData
+}
+
+// resumePendingFinalReview leaves the orders final review of the root
+// candidate dispatched but unobserved, then resumes the run. The recovered
+// review fails with one finding on findingPath, which must be one of the
+// orders review paths: its owned paths plus reviewPaths.
+func resumePendingFinalReview(t *testing.T, findingPath string, reviewPaths []string) resumedFinalReview {
+	t.Helper()
 	root := makeProjectRunFixture(t)
 	configureWorkspaceBridgeInstructions(t, root)
 	rootID, ordersID, inventoryID := e2eManagerID("", "project-owner"), e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")
@@ -487,14 +498,14 @@ func TestResumedFinalReviewFailureRoutesToParentRework(t *testing.T) {
 	inventoryTask.State, inventoryTask.CandidateID, inventoryTask.WorkAttempts, inventoryTask.Attempts, inventoryTask.ReportStatus = "worked", inventory.ID, 1, 1, "complete"
 	inventoryTask.ReviewStatus, inventoryTask.ReviewCandidateID = "not-required", inventory.ID
 	ordersTask.State, ordersTask.CandidateID, ordersTask.WorkAttempts, ordersTask.Attempts, ordersTask.ReportStatus = "worked", orders.ID, 1, 1, "complete"
-	ordersTask.WrittenPaths = []string{"src/orders/implementation.txt"}
+	ordersTask.WrittenPaths, ordersTask.IntegratedPaths = []string{"src/orders/implementation.txt"}, reviewPaths
 	// The final review loop reserved this reviewer start against the root candidate.
 	ordersTask.ReviewStatus, ordersTask.ReviewCandidateID, ordersTask.ReviewRound = "invoking", integrated.ID, 1
 	finalProject, err := projectForCandidate(host, root, base.Snapshot, integrated)
 	if err != nil {
 		t.Fatal(err)
 	}
-	invoker := &nativeFinalReviewInvoker{seed: true}
+	invoker := &nativeFinalReviewInvoker{seed: true, findingPath: findingPath}
 	if _, _, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, finalProject, *ordersTask, "work", 1, integrated, func(started InvocationLog) error {
 		report.Invocations = append(report.Invocations, started)
 		return nil
@@ -520,6 +531,17 @@ func TestResumedFinalReviewFailureRoutesToParentRework(t *testing.T) {
 	if !recovered {
 		t.Fatalf("recovered final review was not recorded: %+v status=%s err=%v", resumed.Reviews, resumed.Status, resumeErr)
 	}
+	return resumedFinalReview{report: resumed, err: resumeErr, invoker: invoker, integrated: integrated}
+}
+
+// The final review loop reviews a leaf against the root candidate and routes
+// a failure to the leaf's parent, whose rework round rebuilds the root. A
+// crash during that review must not turn the recovered failure into leaf-only
+// rework: the root would keep its stale candidate and never receive the fix.
+func TestResumedFinalReviewFailureRoutesToParentRework(t *testing.T) {
+	result := resumePendingFinalReview(t, "src/orders/implementation.txt", nil)
+	resumed, resumeErr, invoker := result.report, result.err, result.invoker
+	rootID, ordersID := e2eManagerID("", "project-owner"), e2eManagerID("orders", "orders")
 	if len(resumed.ManagerReworkRounds) != 1 || len(resumed.ManagerReworkRounds[0].Requests) != 1 ||
 		resumed.ManagerReworkRounds[0].Requests[0].Requester != rootID || resumed.ManagerReworkRounds[0].Requests[0].Request.ManagerID != ordersID {
 		task := findTask(resumed.Tasks, ordersID)
@@ -528,6 +550,29 @@ func TestResumedFinalReviewFailureRoutesToParentRework(t *testing.T) {
 	}
 	if len(invoker.requests) != 1 || !strings.Contains(string(invoker.requests[0].Context), "Manager-directed rework") {
 		t.Fatalf("Resume dispatched %d requests, want only the root-directed orders rework", len(invoker.requests))
+	}
+}
+
+// A recovered final review failure without an empowered rework route blocks
+// the run, as the final review loop does. Its failed outcome is already
+// recorded, so the run reports a failed review, not an uncertain reviewer.
+func TestResumedFinalReviewWithoutRouteBlocksAsFailedReview(t *testing.T) {
+	// A finding on a path owned outside the orders subtree has no parent route.
+	const foreignPath = "src/inventory/implementation.txt"
+	result := resumePendingFinalReview(t, foreignPath, []string{foreignPath})
+	resumed, resumeErr := result.report, result.err
+	reported := "recovered final review for " + e2eManagerID("orders", "orders") + " failed and its findings have no rework route"
+	if resumed.Status != StatusBlocked || resumeErr == nil || !strings.HasPrefix(resumeErr.Error(), reported) {
+		t.Fatalf("unrouted recovered review failure: status=%s err=%v, want blocked with %q", resumed.Status, resumeErr, reported)
+	}
+	if findings := strings.Join(resumed.Findings, "\n"); !strings.Contains(findings, reported) || strings.Contains(findings, "uncertain") {
+		t.Fatalf("run findings report the recorded failed review as uncertain: %q", findings)
+	}
+	if task := findTask(resumed.Tasks, e2eManagerID("orders", "orders")); task == nil || task.State != "worked" || task.ReviewStatus != "fail" {
+		t.Fatalf("orders after its recorded failed final review = %+v, want worked/fail", task)
+	}
+	if len(result.invoker.requests) != 0 {
+		t.Fatalf("Resume dispatched %d requests for an unroutable review failure", len(result.invoker.requests))
 	}
 }
 

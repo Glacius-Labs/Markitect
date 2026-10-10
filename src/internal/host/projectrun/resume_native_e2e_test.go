@@ -529,6 +529,8 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 				t.Fatal(err)
 			}
 			task.CandidateID, task.ReviewCandidateID, task.ReviewStatus, task.WorkAttempts, task.Attempts = reviewed.ID, reviewed.ID, "rework-requested", 2, 2
+			report.Reviews = []ReviewRecord{{TaskID: task.ID, ManagerID: managerID, Round: 1, Phase: "work", CandidateID: reviewed.ID, CandidateDigest: reviewed.Digest, Outcome: "fail",
+				Findings: []ReviewFinding{{Path: "src/project-owner.txt", Expectation: "tighten the reviewed output", Grounding: "statement:project-owner"}}, At: time.Now().UTC()}}
 		}
 	} else {
 		task.State, task.RepairPhase, task.WorkAttempts, task.IntegrationAttempts, task.Attempts = "integrating", "integrate", 1, 1, 2
