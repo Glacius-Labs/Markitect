@@ -223,7 +223,7 @@ func TestTransportInvokerHelperToolFingerprintAndNormalToolRouting(t *testing.T)
 	}
 
 	request := fixture.options.ParentRequest
-	request.Context, _ = json.Marshal(nativeTaskContext{Kind: "projectrun-task/v1", ManagerID: "orders", Phase: "worked",
+	request.Context, _ = json.Marshal(nativeTaskContext{Kind: "projectrun-task/v1", ManagerID: "orders", Phase: "work",
 		AllowedWritePaths: fixture.options.ParentScope.AllowedWritePaths, ExcludedWritePaths: fixture.options.ParentScope.ExcludedWritePaths,
 		ActiveResponsibilities: fixture.options.ParentScope.ActiveResponsibilities})
 	options, session, err := transport.optionsWithHelper(config, request,
@@ -251,7 +251,7 @@ func TestTransportInvokerHelperToolFingerprintAndNormalToolRouting(t *testing.T)
 	}
 }
 
-func TestUnboundTransportRejectsHelperAndUnscopedAttemptIsDurablyFailed(t *testing.T) {
+func TestUnboundTransportRejectsHelperAndReviewContextSuppressesHostHelper(t *testing.T) {
 	config := nativeFingerprintConfig(t)
 	config.TransportConfig = json.RawMessage(`{"reasoningEffort":"high","helpers":{"enabled":true,"maxStartRequests":2,"maxDepth":1},"maxEventBytes":1048576}`)
 	unbound := NewTransportInvoker(codexappserver.Options{})
@@ -268,21 +268,81 @@ func TestUnboundTransportRejectsHelperAndUnscopedAttemptIsDurablyFailed(t *testi
 	}
 
 	fixture := newHelperFixture(t)
-	transport := NewTransportInvokerWithHelpers(codexappserver.Options{}, TransportHelperHost{Reserve: fixture.reserver.reserve})
+	baseOptions := codexappserver.Options{
+		DynamicTools: []codexappserver.DynamicTool{{Type: "function", Name: "native_read", InputSchema: json.RawMessage(`{"type":"object"}`)}},
+		HandleToolCall: func(context.Context, codexappserver.ToolCall) (codexappserver.ToolResult, error) {
+			return codexappserver.ToolResult{Success: true, Text: "read"}, nil
+		},
+	}
+	transport := NewTransportInvokerWithHelpers(baseOptions, TransportHelperHost{Workspaces: fixture.options.Workspaces,
+		Limits: fixture.options.Limits, MaxStartRequests: 256, Reserve: fixture.reserver.reserve})
 	request := agentexec.Request{Context: json.RawMessage(`{"kind":"projectrun-review/v1"}`)}
 	options, session, err := transport.optionsWithHelper(config, request, agentexec.RunOptions{})
 	if err != nil {
-		t.Fatalf("reviewer helper must remain available as a fail-closed tool: %v", err)
+		t.Fatalf("reviewer options: %v", err)
 	}
-	if err := options.OnHandle(context.Background(), codexappserver.RecoveryHandle{Invocation: agentexec.Invocation{RunID: "review-run"}, ThreadID: "review-thread", SessionID: "review-session", TurnID: "review-turn"}); err != nil {
+	if session != nil || helperToolPresent(options.DynamicTools) || len(options.DynamicTools) != 1 || options.DynamicTools[0].Name != "native_read" {
+		t.Fatalf("review context advertised Host delegation or lost its native tool: %#v session=%v", options.DynamicTools, session)
+	}
+	if fixture.reserver.reserveCount != 0 {
+		t.Fatalf("review context reserved a Host helper despite suppressing it: %d", fixture.reserver.reserveCount)
+	}
+	managerWithoutScope := agentexec.Request{Role: agentexec.RoleExecutor}
+	managerWithoutScope.Context, _ = json.Marshal(nativeTaskContext{Kind: "projectrun-task/v1", ManagerID: "orders", Phase: "work"})
+	options, session, err = transport.optionsWithHelper(config, managerWithoutScope, agentexec.RunOptions{})
+	if err != nil || session != nil || helperToolPresent(options.DynamicTools) {
+		t.Fatalf("Manager without a nonempty write scope advertised delegation: tools=%#v session=%v err=%v", options.DynamicTools, session, err)
+	}
+	if fixture.reserver.reserveCount != 0 {
+		t.Fatalf("unscoped Manager context reserved a Host helper: %d", fixture.reserver.reserveCount)
+	}
+	verifierRequest := agentexec.Request{Role: agentexec.RoleVerifier}
+	verifierRequest.Context, _ = json.Marshal(nativeTaskContext{Kind: "projectrun-task/v1", ManagerID: "orders", Phase: "work", AllowedWritePaths: []string{"src/"}})
+	verifierOptions, verifierSession, err := transport.optionsWithHelper(config, verifierRequest, agentexec.RunOptions{})
+	if err != nil || verifierSession != nil || helperToolPresent(verifierOptions.DynamicTools) {
+		t.Fatalf("verifier context advertised a Manager-only Host helper: tools=%#v session=%v err=%v", verifierOptions.DynamicTools, verifierSession, err)
+	}
+	managerRequest := fixture.options.ParentRequest
+	managerRequest.Role = agentexec.RoleExecutor
+	managerRequest.Context, _ = json.Marshal(nativeTaskContext{Kind: "projectrun-task/v1", ManagerID: "orders", Phase: "work",
+		AllowedWritePaths: fixture.options.ParentScope.AllowedWritePaths, ExcludedWritePaths: fixture.options.ParentScope.ExcludedWritePaths,
+		ActiveResponsibilities: fixture.options.ParentScope.ActiveResponsibilities})
+	staticFingerprint, err := transport.Fingerprint(config)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := options.HandleToolCall(context.Background(), codexappserver.ToolCall{ThreadID: "review-thread", TurnID: "review-turn", CallID: "review-helper", Tool: HelperToolName,
-		Arguments: json.RawMessage(`{"task":"write","paths":["src/a.go"]}`)}); err == nil || !strings.Contains(err.Error(), "parent Manager's allowed paths") {
-		t.Fatalf("unscoped helper gained write authority: %v", err)
+	managerFingerprint, err := transport.FingerprintForRequest(config, managerRequest)
+	if err != nil || managerFingerprint != staticFingerprint {
+		t.Fatalf("Manager request fingerprint drifted from planned helper schema: %q/%q err=%v", managerFingerprint, staticFingerprint, err)
 	}
-	if len(session.Requests()) != 1 || session.Requests()[0].State != "failed" || fixture.reserver.reserveCount != 1 || fixture.reserver.requests[0].ManagerID != "" {
-		t.Fatalf("unscoped failed helper attempt was not durably counted without Manager authority: %#v %#v", session.Requests(), fixture.reserver.requests)
+	managerOptions, managerSession, err := transport.optionsWithHelper(config, managerRequest,
+		agentexec.RunOptions{Workspace: &fixture.workspace, PrivateLogDirectory: fixture.private})
+	if err != nil || managerSession == nil {
+		t.Fatalf("scoped Manager helper options: session=%v err=%v", managerSession, err)
+	}
+	managerAdapter, err := transport.appServerAdapterWithOptions(config, managerOptions)
+	if err != nil {
+		t.Fatal(err)
+	}
+	managerActualFingerprint, err := managerAdapter.Fingerprint(config)
+	if err != nil || managerActualFingerprint != managerFingerprint {
+		t.Fatalf("Manager recovery options drifted from request-aware fingerprint: %q/%q err=%v", managerActualFingerprint, managerFingerprint, err)
+	}
+	reviewFingerprint, err := transport.FingerprintForRequest(config, request)
+	if err != nil || reviewFingerprint == staticFingerprint {
+		t.Fatalf("review request fingerprint did not bind suppressed helper tool: %q/%q err=%v", reviewFingerprint, staticFingerprint, err)
+	}
+	reviewOptions, _, err := transport.optionsWithHelper(config, request, agentexec.RunOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	reviewAdapter, err := transport.appServerAdapterWithOptions(config, reviewOptions)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reviewActualFingerprint, err := reviewAdapter.Fingerprint(config)
+	if err != nil || reviewActualFingerprint != reviewFingerprint {
+		t.Fatalf("review run/recovery options drifted from request-aware fingerprint: %q/%q err=%v", reviewActualFingerprint, reviewFingerprint, err)
 	}
 }
 

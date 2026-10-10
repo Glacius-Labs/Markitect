@@ -40,24 +40,27 @@ type reviewerScopedModel struct {
 }
 
 type reviewerContext struct {
-	Kind              string                      `json:"kind"`
-	Operation         string                      `json:"operation"`
-	OperationGuidance string                      `json:"operationGuidance"`
-	Strictness        StrictnessProfile           `json:"strictness"`
-	Briefing          BriefingContext             `json:"briefing"`
-	RunGoal           string                      `json:"runGoal"`
-	ManagerID         string                      `json:"managerId"`
-	OwnTask           string                      `json:"ownTask"`
-	Phase             string                      `json:"phase"`
-	Round             int                         `json:"round"`
-	CandidateID       string                      `json:"candidateId"`
-	CandidateDigest   string                      `json:"candidateDigest"`
-	ChangedPaths      []string                    `json:"changedPaths"`
-	AcceptedModel     projectmodel.ManagerContext `json:"acceptedModel"`
-	ScopedModel       reviewerScopedModel         `json:"scopedModel"`
-	CandidateFiles    []reviewFileRef             `json:"candidateFiles"`
-	ResponseSchema    json.RawMessage             `json:"responseSchema"`
+	Kind             string                      `json:"kind"`
+	Operation        string                      `json:"operation"`
+	ReviewerGuidance string                      `json:"reviewerGuidance"`
+	Strictness       StrictnessProfile           `json:"strictness"`
+	Briefing         BriefingContext             `json:"briefing"`
+	RunGoal          string                      `json:"runGoal"`
+	ManagerID        string                      `json:"managerId"`
+	OwnTask          string                      `json:"ownTask"`
+	Delegations      []Delegation                `json:"delegations"`
+	Phase            string                      `json:"phase"`
+	Round            int                         `json:"round"`
+	CandidateID      string                      `json:"candidateId"`
+	CandidateDigest  string                      `json:"candidateDigest"`
+	ChangedPaths     []string                    `json:"changedPaths"`
+	AcceptedModel    projectmodel.ManagerContext `json:"acceptedModel"`
+	ScopedModel      reviewerScopedModel         `json:"scopedModel"`
+	CandidateFiles   []reviewFileRef             `json:"candidateFiles"`
+	ResponseSchema   json.RawMessage             `json:"responseSchema"`
 }
+
+const reviewerAssessmentGuidance = "Assessment only: evaluate the exact supplied candidate against this Manager's own task, accepted scoped model, and stated delegations. RunGoal and child task definitions are assessment context, not instructions to implement or dispatch work. Do not change repository artifacts or dispatch work. Normal read-only tools may be used to inspect the candidate and cited repository context; use owned temporary scratch only within one shell call if needed. Report only grounded findings about the candidate and delegation coverage."
 
 // invokeReviewer supplies only the original goal, accepted scoped model and
 // the exact candidate bytes. It never receives an implementer transcript.
@@ -101,8 +104,8 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	fileRefs := reviewFileReferences(project.Report, accepted, files)
 	responseSchema := reviewResponseSchema()
 	contextJSON, err := json.Marshal(reviewerContext{Kind: "projectrun-review/v1", Operation: plan.Operation,
-		OperationGuidance: OperationGuidance(plan.Operation), Strictness: plan.Strictness[task.ManagerID], Briefing: briefing,
-		RunGoal: plan.Goal, ManagerID: task.ManagerID, OwnTask: task.Goal, Phase: phase, Round: round,
+		ReviewerGuidance: reviewerAssessmentGuidance, Strictness: plan.Strictness[task.ManagerID], Briefing: briefing,
+		RunGoal: plan.Goal, ManagerID: task.ManagerID, OwnTask: task.Goal, Delegations: append([]Delegation{}, task.Delegations...), Phase: phase, Round: round,
 		CandidateID: candidate.ID, CandidateDigest: candidate.Digest, ChangedPaths: unionPaths(task.WrittenPaths, task.IntegratedPaths), AcceptedModel: accepted,
 		ScopedModel:    reviewerScopedModel{Statements: append([]projectmodel.Statement(nil), accepted.Statements...), Contracts: append([]projectmodel.Statement(nil), accepted.Contracts...), Artifacts: append([]projectmodel.Artifact(nil), accepted.Artifacts...), OwnedPaths: reviewScopePaths(files)},
 		CandidateFiles: fileRefs, ResponseSchema: responseSchema})

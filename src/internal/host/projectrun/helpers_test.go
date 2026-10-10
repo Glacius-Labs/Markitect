@@ -78,16 +78,12 @@ func TestHelperCountsMalformedAndOutOfScopeRequestsBeforeValidation(t *testing.T
 	if err := session.BindHandle(fixture.parentRecoveryHandle()); err != nil {
 		t.Fatal(err)
 	}
-	for _, tc := range []struct {
-		id   string
-		args string
-	}{
-		{id: "bad-json", args: `{"task":`},
-		{id: "out-of-scope", args: `{"task":"change docs","paths":["docs/"]}`},
-	} {
-		if _, err := session.HandleToolCall(context.Background(), helperCall(tc.id, tc.args)); err == nil {
-			t.Fatalf("helper request %s unexpectedly succeeded", tc.id)
-		}
+	if _, err := session.HandleToolCall(context.Background(), helperCall("bad-json", `{"task":`)); err == nil {
+		t.Fatal("malformed helper request unexpectedly succeeded")
+	}
+	denied, err := session.HandleToolCall(context.Background(), helperCall("out-of-scope", `{"task":"change docs","paths":["docs/"]}`))
+	if err != nil || denied.Success || !strings.Contains(denied.Text, "exceeds the parent Manager's allowed paths") {
+		t.Fatalf("out-of-scope request should return a failed tool result: result=%#v err=%v", denied, err)
 	}
 	if invocations != 0 || fixture.reserver.reserveCount != 2 || len(session.Requests()) != 2 {
 		t.Fatalf("invalid requests were not counted before validation: invocations=%d reserves=%d requests=%#v", invocations, fixture.reserver.reserveCount, session.Requests())
@@ -96,6 +92,62 @@ func TestHelperCountsMalformedAndOutOfScopeRequestsBeforeValidation(t *testing.T
 		if request.State != "failed" {
 			t.Fatalf("failed prevalidation request was dropped or left requested: %#v", request)
 		}
+	}
+}
+
+func TestHelperScopeDenialReturnsFeedbackAndSameParentCanCorrectIt(t *testing.T) {
+	fixture := newHelperFixture(t)
+	invocations := 0
+	session := fixture.session(t, func(options codexappserver.Options) Invoker {
+		invocations++
+		return &helperFakeInvoker{options: options, behavior: helperFakeBehavior{path: "src/child.go", content: []byte("package child\n"), mode: "0644"}}
+	})
+	if err := session.BindHandle(fixture.parentRecoveryHandle()); err != nil {
+		t.Fatal(err)
+	}
+
+	denied, err := session.HandleToolCall(context.Background(), helperCall("scope-denied", `{"task":"change docs","paths":["docs/"]}`))
+	if err != nil || denied.Success || !strings.Contains(denied.Text, "exceeds the parent Manager's allowed paths") {
+		t.Fatalf("scope denial should be actionable tool feedback: result=%#v err=%v", denied, err)
+	}
+	if invocations != 0 || fixture.reserver.reserveCount != 1 || len(session.Requests()) != 1 || session.Requests()[0].State != "failed" {
+		t.Fatalf("denied attempt was not durably counted before dispatch: invocations=%d reserves=%d requests=%#v", invocations, fixture.reserver.reserveCount, session.Requests())
+	}
+	if entries, readErr := os.ReadDir(fixture.storage); readErr != nil || len(entries) != 0 {
+		t.Fatalf("denied request created a child workspace: entries=%v err=%v", entries, readErr)
+	}
+
+	corrected, err := session.HandleToolCall(context.Background(), helperCall("scope-corrected", `{"task":"add one helper-owned source file","paths":["src/child.go"]}`))
+	if err != nil || !corrected.Success || !strings.Contains(corrected.Text, "status=proposed") {
+		t.Fatalf("same parent turn could not continue with corrected request: result=%#v err=%v", corrected, err)
+	}
+	requests := session.Requests()
+	if invocations != 1 || fixture.reserver.reserveCount != 2 || len(requests) != 2 || requests[0].RequestID != "helper-scope-denied" || requests[0].State != "failed" || requests[1].RequestID != "helper-scope-corrected" || requests[1].ParentSessionID != "parent-session" || requests[1].State != "completed" {
+		t.Fatalf("corrected request did not reuse the same parent reservation context: invocations=%d reserves=%d requests=%#v", invocations, fixture.reserver.reserveCount, requests)
+	}
+	if len(fixture.reserver.updateStates) != 3 || fixture.reserver.updateStates[0] != "failed" || fixture.reserver.updateStates[1] != "unknown" || fixture.reserver.updateStates[2] != "completed" {
+		t.Fatalf("reservation states do not reflect the denied and corrected attempts: %v", fixture.reserver.updateStates)
+	}
+}
+
+func TestHelperScopeDenialPersistenceFailureRemainsTerminal(t *testing.T) {
+	fixture := newHelperFixture(t)
+	persistErr := errors.New("injected helper reservation update failure")
+	fixture.reserver.updateErr = persistErr
+	invocations := 0
+	session := fixture.session(t, func(options codexappserver.Options) Invoker {
+		invocations++
+		return &helperFakeInvoker{options: options}
+	})
+	if err := session.BindHandle(fixture.parentRecoveryHandle()); err != nil {
+		t.Fatal(err)
+	}
+	result, err := session.HandleToolCall(context.Background(), helperCall("scope-update-fails", `{"task":"change docs","paths":["docs/"]}`))
+	if !errors.Is(err, persistErr) || result.Success || result.Text != "" {
+		t.Fatalf("uncertain failed-reservation persistence was returned as recoverable feedback: result=%#v err=%v", result, err)
+	}
+	if invocations != 0 || fixture.reserver.reserveCount != 1 || len(session.Requests()) != 1 {
+		t.Fatalf("persistence failure dispatched a child or lost its counted attempt: invocations=%d reserves=%d requests=%#v", invocations, fixture.reserver.reserveCount, session.Requests())
 	}
 }
 
@@ -311,8 +363,9 @@ func TestHelperScopeCannotOverlapAnotherActiveManagerOwnership(t *testing.T) {
 	if err := session.BindHandle(fixture.parentRecoveryHandle()); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := session.HandleToolCall(context.Background(), helperCall("foreign-owner", `{"task":"touch path","paths":["src/private/"]}`)); err == nil || !strings.Contains(err.Error(), "active Manager") {
-		t.Fatalf("other Manager's path was accepted: %v", err)
+	result, err := session.HandleToolCall(context.Background(), helperCall("foreign-owner", `{"task":"touch path","paths":["src/private/"]}`))
+	if err != nil || result.Success || !strings.Contains(result.Text, "active Manager") {
+		t.Fatalf("other Manager's path was not rejected with tool feedback: result=%#v err=%v", result, err)
 	}
 	if invocations != 0 || len(session.Requests()) != 1 || session.Requests()[0].State != "failed" {
 		t.Fatalf("ownership conflict was not durably counted before provider start: %d %#v", invocations, session.Requests())

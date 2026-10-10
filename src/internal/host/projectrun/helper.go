@@ -277,7 +277,15 @@ func (s *HelperSession) HandleToolCall(ctx context.Context, call codexappserver.
 		return s.failRequest(ctx, index, reservation, nil, call.CallID, attempt, "failed", parseErr)
 	}
 	if err := validateHelperArgs(args, s.options.ParentScope); err != nil {
-		return s.failRequest(ctx, index, reservation, nil, call.CallID, attempt, "failed", err)
+		// A correctly bound, uniquely identified helper request that fails the
+		// parent's explicit path-scope check is a definitive pre-dispatch
+		// rejection. Keep the reservation as a counted failed attempt, then
+		// return bounded feedback to this same native turn so it may correct its
+		// request. Any persistence uncertainty remains a transport error.
+		if updateErr := s.updateRequest(ctx, index, reservation, "failed", agentexec.Receipt{}, ""); updateErr != nil {
+			return codexappserver.ToolResult{}, errors.Join(err, updateErr)
+		}
+		return codexappserver.ToolResult{Success: false, Text: truncateHelperText(err.Error(), 4096)}, nil
 	}
 	return s.runHelper(ctx, call, parentHandle, index, reservation, attempt, args)
 }

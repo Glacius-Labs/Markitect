@@ -388,6 +388,26 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 	}
 }
 
+func TestNativeReviewPromptKeepsGlobalGoalAndDelegationsAssessmentOnly(t *testing.T) {
+	request := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: strings.Repeat("a", 40), ModelDigest: "sha256:" + strings.Repeat("b", 64),
+		ModulePin: "test@1", ProjectionID: "test", ScopeIDs: []string{"manager"}, PolicyIDs: []string{},
+		Context:   json.RawMessage(`{"kind":"projectrun-review/v1","runGoal":"Implement greeting support","ownTask":"Review the greeting candidate","delegations":[{"managerId":"tests","goal":"Write behavior tests"}]}`),
+		Artifacts: []agentexec.Artifact{}}
+	invocation, wire, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prompt := nativeTurnPrompt(invocation, wire)
+	if !strings.HasPrefix(prompt, "Assess the exact supplied review candidate") ||
+		!strings.Contains(prompt, "assessment only") || !strings.Contains(prompt, "do not implement the overall RunGoal") ||
+		!strings.Contains(prompt, "Manager task, accepted model, and child task definitions are review context only") {
+		t.Fatalf("review prompt does not distinguish assessment from implementation: %s", prompt)
+	}
+	if strings.Contains(prompt, "Implement/assess the supplied Host invocation") {
+		t.Fatal("review prompt retained the generic implementation opening")
+	}
+}
+
 func makeApprovalWorkspace(t *testing.T, taskID string, allowed, excluded []string) (*projectworkspace.GitService, projectworkspace.Request, projectworkspace.Handle) {
 	t.Helper()
 	root := t.TempDir()

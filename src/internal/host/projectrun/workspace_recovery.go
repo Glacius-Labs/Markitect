@@ -91,7 +91,13 @@ func RecoverProjectAgent(ctx context.Context, host Host, invoker Invoker, root, 
 	if invoker == nil {
 		return result, true, errors.New("native recovery invoker is unavailable")
 	}
-	fingerprint, fpErr := invoker.Fingerprint(config)
+	var fingerprint string
+	var fpErr error
+	if len(expectedRequest) == 1 {
+		fingerprint, fpErr = fingerprintForRequest(invoker, config, expectedRequest[0])
+	} else {
+		fingerprint, fpErr = invoker.Fingerprint(config)
+	}
 	if fpErr != nil {
 		return result, true, errors.New("native recovery configuration cannot be verified")
 	}

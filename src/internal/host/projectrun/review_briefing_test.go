@@ -39,8 +39,9 @@ func TestReviewerContextCarriesOperationStrictnessAndAcceptedBriefing(t *testing
 	}
 
 	context := reviewerContext{
-		Kind: "projectrun-review/v1", Operation: plan.Operation, OperationGuidance: OperationGuidance(plan.Operation),
+		Kind: "projectrun-review/v1", Operation: plan.Operation, ReviewerGuidance: reviewerAssessmentGuidance,
 		Strictness: plan.Strictness[managerID], Briefing: briefing, ManagerID: managerID,
+		Delegations: []Delegation{{ManagerID: "child-tests", Goal: "Add focused behavior tests."}},
 	}
 	encoded, err := json.Marshal(context)
 	if err != nil {
@@ -50,8 +51,12 @@ func TestReviewerContextCarriesOperationStrictnessAndAcceptedBriefing(t *testing
 	if err := json.Unmarshal(encoded, &got); err != nil {
 		t.Fatal(err)
 	}
-	if got["operation"] != OperationCleanup || got["operationGuidance"] == "" || got["strictness"] == nil || got["briefing"] == nil {
-		t.Fatalf("reviewer request omitted operation, strictness, or accepted briefing: %s", encoded)
+	guidance, _ := got["reviewerGuidance"].(string)
+	if got["operation"] != OperationCleanup || !strings.Contains(guidance, "Assessment only") || strings.Contains(guidance, "Apply mandate") || got["operationGuidance"] != nil || got["strictness"] == nil || got["briefing"] == nil {
+		t.Fatalf("reviewer request omitted assessment guidance, operation, strictness, or accepted briefing: %s", encoded)
+	}
+	if delegations, ok := got["delegations"].([]any); !ok || len(delegations) != 1 || delegations[0].(map[string]any)["managerId"] != "child-tests" {
+		t.Fatalf("reviewer context omitted the Manager's delegation: %s", encoded)
 	}
 	if got["kind"] != "projectrun-review/v1" {
 		t.Fatalf("reviewer discriminator changed: %v", got["kind"])

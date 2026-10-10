@@ -355,7 +355,16 @@ func nativeTurnPrompt(inv agentexec.Invocation, wire []byte) string {
 	default:
 		contract += "- The request role is unsupported; return incomplete with empty arrays and explain the limitation in uncertainty.\n"
 	}
-	return "Implement/assess the supplied Host invocation in this real workspace using ordinary project tools and guidance.\n" +
+	opening := "Implement/assess the supplied Host invocation in this real workspace using ordinary project tools and guidance.\n"
+	if inv.Request.Role == agentexec.RoleExecutor {
+		var requestContext struct {
+			Kind string `json:"kind"`
+		}
+		if json.Unmarshal(inv.Request.Context, &requestContext) == nil && requestContext.Kind == "projectrun-review/v1" {
+			opening = "Assess the exact supplied review candidate using ordinary read-only project tools and cited context. This is an assessment only; do not implement the overall RunGoal, edit repository artifacts, invoke Host helpers, or dispatch work. The Manager task, accepted model, and child task definitions are review context only.\n"
+		}
+	}
+	return opening +
 		"Use a fresh temporary directory you own under the inherited OS temporary directory for test scratch and caches; create, use and clean it up within the same shell call because Windows MXC temp paths can differ between calls. Review and verification must leave repository artifacts unchanged.\n" +
 		contract + "\nInvocation:\n" + string(wire)
 }

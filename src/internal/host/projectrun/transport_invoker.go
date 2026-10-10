@@ -27,8 +27,8 @@ type TransportInvoker struct {
 // helper calls. Reserve is expected to persist and globally cap each request
 // before returning a permit; the child protocol root attaches to that permit.
 type TransportHelperHost struct {
-	Workspaces       projectworkspace.Service
-	Limits           Limits
+	Workspaces projectworkspace.Service
+	Limits     Limits
 	// MaxStartRequests bounds local Host tool attempts; Reserve enforces the
 	// durable global run limit. Zero selects the supported ceiling of 256.
 	MaxStartRequests int
@@ -69,22 +69,9 @@ func (i *TransportInvoker) Run(ctx context.Context, config agentexec.Config, req
 	case TransportProcess:
 		return (ProcessInvoker{}).Run(ctx, config, request, options)
 	case TransportCodexAppServer:
-		appOptions := i.appServerOptions
-		var helperSession *HelperSession
-		var err error
-		if !i.suppressHostHelper {
-			appOptions, err = i.optionsWithHelperSpec(config, appOptions)
-			if err != nil {
-				return agentexec.RunResult{}, err
-			}
-		}
-		if i.helperHost != nil && !i.suppressHostHelper {
-			appOptions, helperSession, err = i.optionsWithHelper(config, request, options)
-			if err != nil {
-				return agentexec.RunResult{}, err
-			}
-		} else if !i.suppressHostHelper && helperToolPresent(appOptions.DynamicTools) {
-			appOptions = rejectUnboundHelper(appOptions)
+		appOptions, helperSession, err := i.optionsForRequest(config, request, options)
+		if err != nil {
+			return agentexec.RunResult{}, err
 		}
 		if options.Workspace != nil && options.PrivateLogDirectory != "" {
 			journal, err := newNativeJournal(options.PrivateLogDirectory, options.Workspace.CWD, options.Workspace.ID)
@@ -113,22 +100,27 @@ func (i *TransportInvoker) Recover(ctx context.Context, config agentexec.Config,
 	if config.Transport != TransportCodexAppServer {
 		return agentexec.RunResult{}, fmt.Errorf("recovery requires transport %q", TransportCodexAppServer)
 	}
-	appOptions := i.appServerOptions
 	if options.Workspace == nil || options.Workspace.ID != handle.Workspace.ID || options.PrivateLogDirectory == "" {
 		return agentexec.RunResult{}, errors.New("native recovery requires its original owned workspace and private journal")
 	}
-	journal, err := newNativeJournal(options.PrivateLogDirectory, options.Workspace.CWD, options.Workspace.ID)
-	if err != nil {
-		return agentexec.RunResult{}, err
-	}
+	appOptions := i.appServerOptions
+	var err error
 	if !i.suppressHostHelper {
 		appOptions, err = i.optionsWithHelperSpec(config, appOptions)
 		if err != nil {
 			return agentexec.RunResult{}, err
 		}
+		if helperEligibleRequest(handle.Invocation.Request) {
+			if helperToolPresent(appOptions.DynamicTools) {
+				appOptions = rejectUnboundHelper(appOptions)
+			}
+		} else {
+			appOptions = withoutHelperTool(appOptions)
+		}
 	}
-	if !i.suppressHostHelper && helperToolPresent(appOptions.DynamicTools) {
-		appOptions = rejectUnboundHelper(appOptions)
+	journal, err := newNativeJournal(options.PrivateLogDirectory, options.Workspace.CWD, options.Workspace.ID)
+	if err != nil {
+		return agentexec.RunResult{}, err
 	}
 	appOptions = journal.wrapOptions(appOptions)
 	adapter, err := i.appServerAdapterWithOptions(config, appOptions)
@@ -161,6 +153,46 @@ func (i *TransportInvoker) Fingerprint(config agentexec.Config) (string, error) 
 	}
 }
 
+// FingerprintForRequest binds the exact option surface used by one invocation.
+// Static Fingerprint remains the planned Manager/runtime binding, including the
+// configured Host helper contract. Review, verifier and other non-Manager
+// contexts do not advertise that write/delegation tool.
+func (i *TransportInvoker) FingerprintForRequest(config agentexec.Config, request agentexec.Request) (string, error) {
+	if config.Transport == TransportProcess {
+		return (ProcessInvoker{}).Fingerprint(config)
+	}
+	if config.Transport != TransportCodexAppServer {
+		return "", fmt.Errorf("unsupported agent transport %q", config.Transport)
+	}
+	options := i.appServerOptions
+	var err error
+	if !i.suppressHostHelper {
+		options, err = i.optionsWithHelperSpec(config, options)
+		if err != nil {
+			return "", err
+		}
+		if !helperEligibleRequest(request) {
+			options = withoutHelperTool(options)
+		}
+	}
+	adapter, err := i.appServerAdapterWithOptions(config, options)
+	if err != nil {
+		return "", err
+	}
+	return adapter.Fingerprint(config)
+}
+
+type requestFingerprinter interface {
+	FingerprintForRequest(agentexec.Config, agentexec.Request) (string, error)
+}
+
+func fingerprintForRequest(invoker Invoker, config agentexec.Config, request agentexec.Request) (string, error) {
+	if aware, ok := invoker.(requestFingerprinter); ok {
+		return aware.FingerprintForRequest(config, request)
+	}
+	return invoker.Fingerprint(config)
+}
+
 type nativeTaskContext struct {
 	Kind                   string                 `json:"kind"`
 	ManagerID              string                 `json:"managerId"`
@@ -184,12 +216,18 @@ func helperParentMetadata(raw json.RawMessage) (string, string) {
 }
 
 func (i *TransportInvoker) optionsWithHelper(config agentexec.Config, request agentexec.Request, runOptions agentexec.RunOptions) (codexappserver.Options, *HelperSession, error) {
-	settings, err := decodeAppServerSettings(config.TransportConfig)
+	appOptions, err := i.optionsWithHelperSpec(config, i.appServerOptions)
 	if err != nil {
 		return codexappserver.Options{}, nil, err
 	}
-	if !settings.Helpers.Enabled {
-		return i.appServerOptions, nil, nil
+	if !helperToolPresent(appOptions.DynamicTools) {
+		return appOptions, nil, nil
+	}
+	if !helperEligibleRequest(request) {
+		return withoutHelperTool(appOptions), nil, nil
+	}
+	if i.helperHost == nil {
+		return codexappserver.Options{}, nil, errors.New("Host helper reservation is unavailable for this invocation")
 	}
 	if i.helperHost.Reserve == nil {
 		return codexappserver.Options{}, nil, errors.New("Host helpers require a durable reservation callback")
@@ -212,10 +250,6 @@ func (i *TransportInvoker) optionsWithHelper(config agentexec.Config, request ag
 	parentWorkspace := projectworkspace.Handle{}
 	if runOptions.Workspace != nil {
 		parentWorkspace = *runOptions.Workspace
-	}
-	appOptions, err := i.optionsWithHelperSpec(config, i.appServerOptions)
-	if err != nil {
-		return codexappserver.Options{}, nil, err
 	}
 	maxStarts := i.helperHost.MaxStartRequests
 	if maxStarts <= 0 {
@@ -260,6 +294,63 @@ func (i *TransportInvoker) optionsWithHelper(config agentexec.Config, request ag
 		return nil
 	}
 	return appOptions, helperSession, nil
+}
+
+func (i *TransportInvoker) optionsForRequest(config agentexec.Config, request agentexec.Request, runOptions agentexec.RunOptions) (codexappserver.Options, *HelperSession, error) {
+	options := i.appServerOptions
+	if i.suppressHostHelper {
+		return options, nil, nil
+	}
+	var err error
+	options, err = i.optionsWithHelperSpec(config, options)
+	if err != nil {
+		return codexappserver.Options{}, nil, err
+	}
+	if helperEligibleRequest(request) && helperToolPresent(options.DynamicTools) {
+		if i.helperHost != nil {
+			return i.optionsWithHelper(config, request, runOptions)
+		}
+		return rejectUnboundHelper(options), nil, nil
+	}
+	if !helperEligibleRequest(request) {
+		options = withoutHelperTool(options)
+	}
+	return options, nil, nil
+}
+
+func helperEligibleRequest(request agentexec.Request) bool {
+	if request.Role != agentexec.RoleExecutor {
+		return false
+	}
+	var context struct {
+		Kind              string   `json:"kind"`
+		ManagerID         string   `json:"managerId"`
+		Phase             string   `json:"phase"`
+		AllowedWritePaths []string `json:"allowedWritePaths"`
+	}
+	if json.Unmarshal(request.Context, &context) != nil || context.Kind != "projectrun-task/v1" || strings.TrimSpace(context.ManagerID) == "" || strings.TrimSpace(context.ManagerID) != context.ManagerID {
+		return false
+	}
+	if context.Phase != "work" && context.Phase != "integrate" {
+		return false
+	}
+	for _, path := range context.AllowedWritePaths {
+		if strings.TrimSpace(path) != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func withoutHelperTool(options codexappserver.Options) codexappserver.Options {
+	filtered := make([]codexappserver.DynamicTool, 0, len(options.DynamicTools))
+	for _, tool := range options.DynamicTools {
+		if tool.Name != HelperToolName {
+			filtered = append(filtered, tool)
+		}
+	}
+	options.DynamicTools = filtered
+	return options
 }
 
 func (i *TransportInvoker) optionsWithHelperSpec(config agentexec.Config, options codexappserver.Options) (codexappserver.Options, error) {
