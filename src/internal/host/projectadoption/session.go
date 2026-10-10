@@ -408,6 +408,7 @@ func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expect
 		return BrownfieldSession{}, err
 	}
 	if err := atomicReplaceFile(temp, file); err != nil {
+		_ = os.Remove(temp)
 		return BrownfieldSession{}, err
 	}
 	return session, nil
