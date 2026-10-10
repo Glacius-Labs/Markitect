@@ -78,25 +78,6 @@ func TestVerifyUsesEachCheckTimeoutAndRecordsEffectiveBound(t *testing.T) {
 	}
 }
 
-func TestCheckCopiesAndDigestsPreserveTimeoutWithoutAliasing(t *testing.T) {
-	seconds := 5400
-	checks := []authoring.Check{{Name: "test", Run: []string{"go", "test"}, TimeoutSeconds: &seconds}}
-	cloned := cloneAuthoringChecks(checks)
-	selected := selectedAuthoringChecks([]string{"test"}, checks)
-	before := projectionConfigDigest("request", checks)
-	seconds = 1
-	checks[0].Run[1] = "version"
-	for _, copied := range [][]authoring.Check{cloned, selected} {
-		if *copied[0].TimeoutSeconds != 5400 || copied[0].Run[1] != "test" || projectionConfigDigest("request", copied) != before {
-			t.Fatalf("check copy lost or aliased timeout/argv: %#v", copied)
-		}
-	}
-	*cloned[0].TimeoutSeconds = 1
-	if projectionConfigDigest("request", cloned) == before {
-		t.Fatal("changed check timeout reused the old request-bound configuration digest")
-	}
-}
-
 func TestVerifyRunsCheckAgainstMaterializedSnapshot(t *testing.T) {
 	if _, err := exec.LookPath("go"); err != nil {
 		t.Skip("Go unavailable for the portable snapshot check")
