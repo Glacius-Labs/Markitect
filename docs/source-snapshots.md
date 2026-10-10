@@ -17,7 +17,7 @@ type Snapshot struct {
 }
 ```
 
-Paths are slash-separated project-relative names. `Modes` uses the existing regular-file tokens `100644` and `100755`; these preserve executable-bit differences during comparison and materialization. `Provisional` says that the value represents mutable, not-yet-fixed input. It does not identify the adapter that supplied the value.
+Paths are slash-separated project-relative names. `Modes` uses the existing regular-file tokens `100644` and `100755`; these preserve executable-bit differences during comparison and materialization. When Git ignores executable bits (`core.filemode=false`, as Git for Windows sets it), the working-tree reader takes tracked files' modes from the Git index, as Git does. `Provisional` says that the value represents mutable, not-yet-fixed input. It does not identify the adapter that supplied the value.
 
 `Snapshot.Digest()` is a compatibility identity for content. It keeps the existing algorithm: sort paths, then hash each path, mode token, and file bytes using the existing length framing. It deliberately excludes `ID` and `Provisional`. Context and review evidence already depend on this digest, so changing its inputs or encoding requires a separate compatibility decision.
 
