@@ -713,7 +713,7 @@ func TestNativeRoleSchemasStayWithinStrictResponseBounds(t *testing.T) {
 			outcome:        agentexec.OutcomeProposed},
 		{name: "review", role: agentexec.RoleExecutor, kind: "projectrun-review/v1",
 			responseSchema: `{"type":"object","additionalProperties":false,"required":["status","summary","findings"],"properties":{"status":{"type":"string","enum":["pass","fail"]},"summary":{"type":"string","minLength":1,"maxLength":4096},"findings":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["path","expectation","grounding"],"properties":{"path":{"type":"string","minLength":1,"maxLength":1024},"expectation":{"type":"string","minLength":1,"maxLength":2048},"grounding":{"type":"string","minLength":1,"maxLength":1024}}}}}}`,
-			responseDTO:    `{"status":"pass","summary":"The candidate satisfies this Manager's stated contract.","findings":[]}`,
+			responseDTO:    `{"status":"fail","summary":"The example import does not resolve from the repository root.","findings":[{"path":"docs/greeting.md","expectation":"Make the example import work from the repository root, for example by importing src.greeting or documenting how to put src on the Python path.","grounding":"artifact-path:docs/greeting.md"}]}`,
 			outcome:        agentexec.OutcomeProposed},
 		{name: "helper", role: agentexec.RoleExecutor, kind: "projectrun-helper/v1",
 			files: []agentexec.CandidateFile{{Path: "README.md", Mode: "0644", Content: "# Helper change\n"}}, outcome: agentexec.OutcomeProposed},
@@ -862,7 +862,7 @@ func TestNativeRoleSchemasStayWithinStrictResponseBounds(t *testing.T) {
 func TestNativeReviewPromptKeepsGlobalGoalAndDelegationsAssessmentOnly(t *testing.T) {
 	request := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: strings.Repeat("a", 40), ModelDigest: "sha256:" + strings.Repeat("b", 64),
 		ModulePin: "test@1", ProjectionID: "test", ScopeIDs: []string{"manager"}, PolicyIDs: []string{},
-		Context:   json.RawMessage(`{"kind":"projectrun-review/v1","runGoal":"Implement greeting support","ownTask":"Review the greeting candidate","delegations":[{"managerId":"tests","goal":"Write behavior tests"}]}`),
+		Context:   json.RawMessage(`{"kind":"projectrun-review/v1","runGoal":"Implement greeting support","ownTask":"Review the greeting candidate","delegations":[{"managerId":"tests","goal":"Write behavior tests"}],"responseSchema":{"type":"object","additionalProperties":false,"required":["status","summary","findings"],"properties":{"status":{"type":"string","enum":["pass","fail"]},"summary":{"type":"string","minLength":1},"findings":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["path","expectation","grounding"],"properties":{"path":{"type":"string"},"expectation":{"type":"string"},"grounding":{"type":"string"}}}}}}}`),
 		Artifacts: []agentexec.Artifact{}}
 	invocation, wire, err := agentexec.PrepareInvocation(request)
 	if err != nil {
@@ -874,12 +874,33 @@ func TestNativeReviewPromptKeepsGlobalGoalAndDelegationsAssessmentOnly(t *testin
 		!strings.Contains(prompt, "Manager task, accepted model, and child task definitions are review context only") {
 		t.Fatalf("review prompt does not distinguish assessment from implementation: %s", prompt)
 	}
+	for _, required := range []string{
+		"The outer outcome is always proposed when returning a well-formed typed review report",
+		"whether reportJson.status is pass or fail",
+		"reportJson.status expresses the review conclusion; a valid fail finding is an assessment result, not an invocation failure",
+		"Preserve each actionable grounded finding in reportJson.findings",
+		"keep candidateFiles, verifierObservations, and uncertainty empty",
+	} {
+		if !strings.Contains(prompt, required) {
+			t.Errorf("review prompt omits semantic outcome guidance %q", required)
+		}
+	}
 	if strings.Contains(prompt, "Implement/assess the supplied Host invocation") {
 		t.Fatal("review prompt retained the generic implementation opening")
 	}
 	if !strings.Contains(prompt, `Run every shell command from the exact Host-owned workspace CWD supplied here: C:\workspace\repo`) ||
 		strings.Contains(prompt, "scoped shell writes may edit repository files") || strings.Contains(prompt, "prefer the native file-change/editor tool") {
 		t.Fatalf("review prompt lost common workspace guidance or received write guidance: %s", prompt)
+	}
+
+	failure := `{"outcome":"proposed","candidateFiles":[],"verifierObservations":[],"uncertainty":[],"reportJson":{"status":"fail","summary":"The example import does not resolve from the repository root.","findings":[{"path":"docs/greeting.md","expectation":"Make the example import work from the repository root.","grounding":"artifact-path:docs/greeting.md"}]}}`
+	response, err := decodeNativeFinal(failure, invocation)
+	if err != nil || response.Outcome != agentexec.OutcomeProposed || !strings.Contains(string(response.ReportJSON), `"status":"fail"`) {
+		t.Fatalf("valid typed review failure was not preserved under proposed outer outcome: response=%+v err=%v", response, err)
+	}
+	malformed := `{"outcome":"proposed","candidateFiles":[],"verifierObservations":[],"uncertainty":[]}`
+	if _, err := decodeNativeFinal(malformed, invocation); err == nil {
+		t.Fatal("review response without its required typed report was accepted")
 	}
 }
 
