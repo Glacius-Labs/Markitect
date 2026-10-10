@@ -2267,3 +2267,7 @@ Owner exactoriginalRoot/recovery0newstarts/genuineHelperclosed/SourceDocs34.1304
 ### Actual22 terminal accounting and initial Verifier alias source inspected
 
 Owner terminalcontrollerd0d1e41e/10combined-native/cumulative109combined105native/batch1108840partial cumulative17251631; originalRoot/helpercostnotseparatelyknown, whole rawunionnotRootreaudited. Root local41a6 source inspected: explicit trustedrequiredSubjects sortedcollisionfreealias/schema/prompt+strictcanonicalreturn, semantics/EvidenceRefs/Hostcoverageunchanged; protocoladvanced/Recoverprevalidation. Owner focused1.080/fulladapter73.157/vet3.295/rootmanagedPASS/independentclear. Backlog/evidence stillmodified, finalcleanpublicdocs/binaryfreeze pending; no public/currentbinary/A01/Mainacceptance claimed, no repeatedorder.
+
+### Initial verifier alias clean freeze verified and Actual23 active
+
+Root cleanpublic/local7c431d0f, docsclosurestat and exactWindows5da41661 Go1.27.1VCS7c/modifiedfalse verified; source41a6requestboundalias/protocolRecover alreadyinspected. Owner exacthistory/duplicateawareYAML/independentdocsreviewPASS. FreshPlan8efe401c/digest5e2925ee/readiness346d2ec/runtime0b0bea/batcha01-verifier-aliasesba071/deadline13:41:24.2003542Z; sameadopter275baa9/runtime58aee61a128MiB/observerc654/originalrootrecovery, currentnativehandles/counts/fullproofpending. No old22replay/Rootduplicateorder/Main/study/releasePASS.

@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T09:35:30.008140+00:00",
+  "updatedUtc": "2026-10-10T09:42:49.524818+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator closes exact native Observation-ID wire contract and independent protocol/recovery delta review, publishes clean checkpoint then continues normal bounded product proof. No studies, duplicate dispatch, Main promotion or replay.",
+  "nextAction": "Integrator continues finite Actual23, returns terminal genuine proof or concrete blocker once; Root verifies exact receipts before final hosted gates/normal PR89 Main integration. Scientist studies suspended; KG separate until accepted Main.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL22_CLOSED_VERIFIER_ALIAS_SOURCE_REVIEWED_CLEAN_DOC_BINARY_FREEZE_PENDING",
+    "status": "ACTUAL23_ACTIVE_CLEAN_VERIFIER_ALIAS_FREEZE_SOURCE_BINARY_REMOTE_ROOT_VERIFIED",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18804,11 +18804,29 @@
       }
     },
     "initialVerifierSubjectIdentityCorrection": {
-      "status": "LOCAL_SOURCE_COMMIT_INSPECTED_OWNER_CHECKS_REVIEW_CLEAR_FINAL_FREEZE_PENDING",
+      "status": "CLEAN_PUBLIC_DOC_SOURCE_BINARY_FREEZE_ROOT_VERIFIED",
       "sourceCommit": "41a6a0fdd0392f2bf13af1f9576d48eee4e94eb6",
       "rootSourceInspection": "Trusted explicit requiredSubjects only; sorted collision-free deterministic alias enum/prompt, strict closed response unknown/duplicate rejection, exact canonical return; generic verifier callers without field retain free-text behavior. Semantic outcome/detail and EvidenceRefs unchanged; native protocol advanced and Recover prevalidation added. Host canonical coverage checks unchanged.",
       "ownerChecks": "Focused1.080s/full adapter73.157s/vet3.295s/rootcheck/managedPASS, independent review clear. No Root tests repeated.",
-      "freezeBoundary": "LocalHEAD41a6, backlog/evidence docs modified at inspection; no clean-final-checkpoint/currentbinary/publicremote binding claimed. Owner normal additive docs/build/push/freshReadinessPlan next under existing authority, no new Root order or gate."
+      "freezeBoundary": "LocalHEAD41a6, backlog/evidence docs modified at inspection; no clean-final-checkpoint/currentbinary/publicremote binding claimed. Owner normal additive docs/build/push/freshReadinessPlan next under existing authority, no new Root order or gate.",
+      "freezeSha": "7c431d0f1dddaba1c78306ab518ce66d3918e427",
+      "binarySha256": "5da41661f5f1ff9585e5fa3abeeea929322d25d34c6e951555b0990917308933",
+      "rootFreezeVerification": "Exact cleanHEAD/publiclsremote7c431; docsclosure3filesstat; WindowsGo1.27.1 CGO0 VCS7c431 modifiedfalse and SHA bound. Source41a6 alias/protocol/recovery delta inspected earlier; finalhistory/duplicate-aware YAML/independent docsreview ownerPASS."
+    },
+    "actual23Preparation": {
+      "status": "ACTIVE_OWNER_REPORTED_SOURCE_BINARY_REMOTE_ROOT_BOUND_CURRENT_NATIVE_RECEIPTS_PENDING",
+      "freezeRef": "initialVerifierSubjectIdentityCorrection",
+      "planId": "8efe401c2e3476f2d39b4daa33ca89b8",
+      "planDigestOwnerReported": "sha256:5e2925ee2d1a99e64bed7242ba063c69ca6c0eada089488a317f78cbf865dd7f",
+      "sourceSha": "7c431d0f1dddaba1c78306ab518ce66d3918e427",
+      "binarySha256": "5da41661f5f1ff9585e5fa3abeeea929322d25d34c6e951555b0990917308933",
+      "batchId": "a01-verifier-aliases-ba071787d1ba4505a7db63fb9e285ae5",
+      "deadlineUtc": "2026-10-10T13:41:24.2003542Z",
+      "readinessDigestOwnerReported": "346d2ec45dfb1354d9a42e5b2a085990943cb2440290fcd19b4c26ffc0c224f2",
+      "runtimeDigestOwnerReported": "0b0bea059d135cf436833a5a8327ddef1d95581cd8483911739e039ded14b9f7",
+      "adopterCheckpointOwnerReported": "275baa9b830f1eee67cc901321a595002ffe0744",
+      "adopterRuntimeFileSha256OwnerReported": "58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574",
+      "boundary": "Normal fresh finite A01, unchanged128MiB runtime/owner-bound observerc654prefix/original-root same-build recovery/genuinehelpers/parallelism/reviews. Source/binary/remote independently verified; current native handles/accounting/proof result pending. No old22replay/Main/study/release/newframework/newgate or repeated Root order."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
