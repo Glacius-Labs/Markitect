@@ -152,6 +152,59 @@ type ExplainedElement struct {
 	Class   string        `json:"class"`
 	Reason  string        `json:"reason"`
 	Witness []WitnessStep `json:"witness"`
+	// Partial marks a witness cut where it leaves what the Manager can see.
+	Partial bool `json:"partial,omitempty"`
+}
+
+// KnowledgeGraph is a read-only view of model relations, either for the whole
+// project or for one Manager, built from its Context only.
+type KnowledgeGraph struct {
+	Scope  string      `json:"scope"`
+	Digest string      `json:"digest"`
+	Nodes  []GraphNode `json:"nodes"`
+	Edges  []GraphEdge `json:"edges"`
+}
+
+// GraphNode is a definition, a file or an expected path. A reference node is
+// known only as the end of a visible edge and carries no content.
+type GraphNode struct {
+	Kind      string `json:"kind"`
+	ID        string `json:"id"`
+	Name      string `json:"name,omitempty"`
+	Owner     string `json:"owner,omitempty"`
+	Reference bool   `json:"reference,omitempty"`
+}
+
+// GraphEdge is one declared relation, in its declared direction.
+type GraphEdge struct {
+	From     string `json:"from"`
+	Relation string `json:"relation"`
+	To       string `json:"to"`
+}
+
+// TraceRequest selects a start node, a direction ("out", "in" or "both") and
+// limits; zero limits select defaults.
+type TraceRequest struct {
+	From      string `json:"from"`
+	Direction string `json:"direction"`
+	MaxDepth  int    `json:"maxDepth"`
+	MaxNodes  int    `json:"maxNodes"`
+}
+
+// TraceResult lists the nodes a trace reached. Complete is false when a limit
+// stopped it before every reachable node was found.
+type TraceResult struct {
+	Scope    string       `json:"scope"`
+	From     string       `json:"from"`
+	Complete bool         `json:"complete"`
+	Reached  []TracedNode `json:"reached"`
+}
+
+// TracedNode is one reached node with a shortest witness path from the start.
+type TracedNode struct {
+	Node    GraphNode   `json:"node"`
+	Depth   int         `json:"depth"`
+	Witness []GraphEdge `json:"witness"`
 }
 
 // WitnessStep is one model relation on the path from a change to an element.

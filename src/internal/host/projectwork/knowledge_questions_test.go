@@ -93,7 +93,7 @@ func TestShopKnowledgeQuestions(t *testing.T) {
 		{"Q07", "Was a concept renamed or replaced?", questionGap,
 			"Impact lists the old and new identities as separate changes; no continuity fact", askShopRename},
 		{"Q08", "Why is a relationship visible to one scope but hidden from another?", questionPartial,
-			"Context applies ownership, public and direct-use rules; it returns no visibility reason", askShopScopeVisibility},
+			"ManagerGraph shows the Context edge that makes a contract visible; why something is hidden is never shown", askShopScopeVisibility},
 		{"Q09", "Which supplied claims conflict?", questionOutsideModel,
 			"Brownfield claims live in projectadoption, not the project model", askShopClaimConflicts},
 		{"Q10", "Is evidence current, stale, historical, partial, or unknown?", questionOutsideModel,
@@ -393,7 +393,18 @@ func askShopScopeVisibility(t *testing.T, shop shopFixture) {
 			t.Fatalf("child %s carries instructions into its parent's context", child.ID)
 		}
 	}
-	// Gap: Context says what is visible, never why something is hidden.
+	// The Manager's graph, built from its Context alone, shows why a contract is
+	// visible: the edge from its own statement. Hidden things stay absent, so
+	// why something is hidden is never explained.
+	graph := projectmodel.ManagerGraph(orders)
+	if !slices.Contains(graph.Edges, projectmodel.GraphEdge{From: shopCancelOrder, Relation: "requires", To: shopReleaseReservation}) {
+		t.Fatalf("orders' graph lacks the edge that makes release-reservation visible: %+v", graph.Edges)
+	}
+	for _, n := range graph.Nodes {
+		if n.Owner == shopInventoryManager && n.Kind != "contract" {
+			t.Fatalf("orders' graph shows inventory's own %s %s", n.Kind, n.ID)
+		}
+	}
 	assertFieldNames(t, projectmodel.ManagerContext{}, "Manager", "Statements", "Contracts", "Artifacts", "Checks", "Decisions", "Children", "Findings")
 }
 
