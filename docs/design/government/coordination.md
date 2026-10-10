@@ -2227,3 +2227,7 @@ Root cleanlocal/publicfac9131b/exactWindows1fb44841 Go1.27.1VCSfac/modifiedfalse
 ### Actual20 active; Main and PR head independently live checked
 
 Owner batcha01-typed-reviewf4d8/Plane70d2666/digest6ca403/ready9b072e/deadline12:15:03.3868617Z normalfac-1fb run, Rootworkdelivered/firstreviewactive; laterSourceDocs, readonlylifecycleaudit. CurrentownerPlan-boundobserverc6541846prefix/fullhashpendingnotold ddff. Root lsremote verifiesfeaturefac9131b andMain5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e; ghPR89OPEN/Draft/head1495e1be7b0046711531fa42c8407fba67b8e814, oldheadUbuntuWindowsFAIL/publishSKIP. OldCI notcurrentfacfailure or newMainPASS. Actual20counts/receipts/fullA01pending, no repeatedRootorder.
+
+### Actual20 boundary reached but original Root interrupted
+
+Owner observer61cacc boundary/terminaltrue selects exactRoota3a40bee/workspace276b8339. All3workreviewsPASS/genuineSourcehelperappliedclosed/originalsiblingsparallel. OriginalRootnativeinterrupted NOTcompleted: extraIntegrationhelpercompletedwithoutacceptedproposedResult/missingCandidateFilesreportJson, Hostparentinterruptplusexpectedjournalrenamefailure; noRootintegrationinferredfromboundary. NormalsamebinaryoriginalResumeactive/sourcePlanunchanged; readonlyindependentauditRoot/helper/startunion, exactnativeIDs/bodylifecycleRootbindingpending. No replay/PASS/newframework/Rootorder.

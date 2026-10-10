@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T08:17:35.952591+00:00",
+  "updatedUtc": "2026-10-10T08:24:05.291594+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18588,7 +18588,7 @@
       "boundary": "Actual19 failed retained/no replay/oldPlan rewrite/native proof Main/release/study acceptance."
     },
     "actual20Preparation": {
-      "status": "OWNER_REPORTED_ACTUAL20_RUNNING_ROOT_WORK_DELIVERED_FIRST_REVIEW_ACTIVE",
+      "status": "OWNER_ROOT_BOUNDARY_REACHED_ORIGINAL_PARENT_INTERRUPTED_ON_INTEGRATION_HELPER_RESULT_EXACT_RESUME_ACTIVE",
       "freezeRef": "typedReviewCorrectionFreeze",
       "planId": "e70d26667c06334ea81fee279cb28684",
       "batchId": "a01-typed-review-f4d8a3e04442472395c28665acf1bb3c",
@@ -18601,7 +18601,18 @@
       "binarySha256": "1fb44841cffe622778e22c8811d48f5aa686a1bfb7cfd1e0cfef7d6e2a18c60d",
       "controllerHashOwnerReportedPrefix": "c6541846",
       "observer": "Current ownerPlan-bound observer; full hash not yet provided, do not claim oldddf current. Independent lifecycle auditor readonly.",
-      "ownerProgress": "Root Work delivered/firstreviewrunning; Source/Docs later. Actual native handle/countunion pending, usageunknown, no Root fullA01acceptance."
+      "ownerProgress": "Root Work delivered/firstreviewrunning; Source/Docs later. Actual native handle/countunion pending, usageunknown, no Root fullA01acceptance.",
+      "boundaryOwnerReport": {
+        "observerId": "61cacc531b8c48c288fd05db207329ce",
+        "boundaryReached": true,
+        "observerTerminal": true,
+        "originalRootRunId": "a3a40beeb54b138a525578bf8e6bf2a4",
+        "originalRootWorkspaceId": "276b83399790dfe011a396c244107f15",
+        "progress": "All3 WorkreviewsPASS, Source helper genuine applied-and-closed, original Docs/Source parallel.",
+        "originalRootOutcome": "Native interrupted, not completed. Root started additional helper during Integration; child completed without accepted proposed Result, missing CandidateFiles/reportJson reported; Host interrupts parent, additional expected journal rename failure. No Root integration claimed.",
+        "recovery": "Normal samebinary exact original Resume active without source/Plan change; independent auditor checking original Root/helper/new start union. No replay/success inferred from observer boundary flag alone.",
+        "qualification": "Current parent native session/turn IDs, child result/body and exact Host lifecycle receipts not yet supplied/Root-bound; no blocking live reads/new framework/order."
+      }
     }
   },
   "restartAfterInterruptedIntegration20261010": {
