@@ -123,3 +123,52 @@ func TestExchangeStopsWithItsCallerAndRejectsUnsafeInputs(t *testing.T) {
 		t.Fatalf("out-of-range poll interval exit = %d", code)
 	}
 }
+
+const (
+	exchangeProcessEnv = "MARKITECT_EXCHANGE_TEST_PROCESS"
+	exchangeDirEnv     = "MARKITECT_EXCHANGE_TEST_DIR"
+)
+
+// TestExchangeExecutorProcess is re-executed as the process executor.
+func TestExchangeExecutorProcess(t *testing.T) {
+	if os.Getenv(exchangeProcessEnv) != "1" {
+		return
+	}
+	os.Exit(Run([]string{"--dir", os.Getenv(exchangeDirEnv), "--poll", "100ms"}, os.Stdin, os.Stdout, os.Stderr))
+}
+
+func TestExchangeExecutorThroughTheProcessTransport(t *testing.T) {
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	t.Setenv(exchangeProcessEnv, "1")
+	t.Setenv(exchangeDirEnv, dir)
+	allowlist := []string{"PATH", "SystemRoot", exchangeProcessEnv, exchangeDirEnv}
+	config := agentexec.Config{Command: executable, Args: []string{"-test.run=^TestExchangeExecutorProcess$"}, Model: "person", ProviderVersion: "exchange-test",
+		Timeout: time.Minute, MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20, EnvironmentAllowlist: &allowlist}
+	invocation, _ := testInvocation(t, agentexec.RoleExecutor)
+	go func() {
+		// The external party answers the first request that appears.
+		for deadline := time.Now().Add(50 * time.Second); time.Now().Before(deadline); time.Sleep(50 * time.Millisecond) {
+			entries, _ := os.ReadDir(dir)
+			for _, entry := range entries {
+				exchangeDir := filepath.Join(dir, entry.Name())
+				if _, err := os.Stat(filepath.Join(exchangeDir, RequestFile)); err == nil {
+					_ = writeAtomically(filepath.Join(exchangeDir, ResponseFile), []byte(`{"outcome":"proposed","reportJson":{"status":"complete"}}`))
+					return
+				}
+			}
+		}
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	result, err := agentexec.Run(ctx, config, invocation.Request, agentexec.RunOptions{PrivateLogDirectory: filepath.Join(t.TempDir(), "private")})
+	if err != nil {
+		t.Fatalf("process transport rejected the exchange executor: %v", err)
+	}
+	if result.Response.Outcome != agentexec.OutcomeProposed || result.Receipt.Usage != nil || result.Receipt.PrivateLogDigest == "" {
+		t.Fatalf("unexpected exchange result: response=%+v receipt=%+v", result.Response, result.Receipt)
+	}
+}
