@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
@@ -69,9 +70,13 @@ func writeDocument(project *Project, content string) error {
 	if err != nil {
 		return fmt.Errorf("capture generated project view: %w", err)
 	}
+	fileModeEnabled, err := source.GitFileModeEnabled(project.Root)
+	if err != nil {
+		return fmt.Errorf("inspect Git worktree mode policy: %w", err)
+	}
 	for file, data := range current.Snapshot.Files {
 		actual, ok := capture.Files[file]
-		if !ok || !actual.Exists || !bytes.Equal(actual.Bytes, data) || !sameSnapshotMode(actual.Mode, current.Snapshot.Modes[file]) {
+		if !ok || !actual.Exists || !bytes.Equal(actual.Bytes, data) || !sameSnapshotMode(actual.Mode, current.Snapshot.Modes[file], fileModeEnabled) {
 			return fmt.Errorf("selected Project input changed before writing the view: %s", file)
 		}
 	}
