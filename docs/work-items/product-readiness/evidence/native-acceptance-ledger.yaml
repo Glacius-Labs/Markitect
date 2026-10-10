@@ -980,9 +980,9 @@ renewal_policy:
     separate_open_lifecycle_gap_focused_negative_result: passed_5_392s_on_uncommitted_fix_tree; proves_cleanup_pending_and_child_preserved_after_injected_close_failure_only_not_automatic_resume_reconciliation
     separate_open_lifecycle_gap_next: lifecycle_owner_to_supply_follow_up_negative_command_before_investigating_existing_owned_close_recovery
   next_batch:
-    status: actual24_failed_full_verify_root_manager_incomplete_no_apply; root_integration_context_correction_technically_closed_fresh_native_revalidation_required
+    status: actual25_failed_before_root_integration_docs_helper_byte_mismatch_no_apply; fresh_bounded_attempt_pending_no_source_fix_claimed
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
-    new_batch_pins: actual24_terminal_record_1366e20896ae249a30843abb3f6e57781071a57bd2b1ec8b407371879660bf9b; next_a01_requires_fresh_clean_build_readiness_and_plan
+    new_batch_pins: actual25_terminal_record_ac145188f8e8ca13b04b63de1770db02ef61841a08dabdf0870a9724e6a77809; next_a01_requires_fresh_clean_build_readiness_and_plan
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
     no_eighteenth_actual_claimed: false
@@ -992,10 +992,11 @@ renewal_policy:
     no_twenty_second_actual_claimed: false
     no_twenty_third_actual_claimed: false
     no_twenty_fourth_actual_claimed: false
-    no_twenty_fifth_actual_claimed: true
+    no_twenty_fifth_actual_claimed: false
+    no_twenty_sixth_actual_claimed: true
     owner_repair_in_progress: true
-    owner_repair_status: Actual24_same_binary_root_recovery_and_resume_integrated_without_replay; initial_root_work_review_failed_then_noop_repair_passed; final_three_work_reviews_and_standalone_integration_review_passed; Docs_and_Source_managers_passed; Root_full_manager_audit_incomplete_8_of_10_missing_fresh_Docs_and_Source_child_integration_reviews; no_Apply; root_integration_context_correction_technically_closed_a238100a3760b86cb72a2206971ff60da297ec0a_fresh_native_validation_pending
-    repair: Root child-integration-context correction is technically closed; build a clean candidate and obtain fresh readiness/Plan before another normal A01; do not replay Actual24; retain 4h batch and 1h role bounds; Actual24 remains failed_not_passed
+    owner_repair_status: Actual25_failed_before_root_integration_boundary; Root_work_review_passed; Docs_helper_completed_but_Host_rejected_declared_LF_bytes_vs_observed_CRLF_bytes; Source_helper_interrupted_without_delta; no_helper_delta_applied_no_Verify_or_Apply; strict_observation_guard_preserved; no_source_fix_claimed
+    repair: run a fresh bounded A01 after clean candidate build and fresh readiness/Plan on unchanged implementation; no source fix is claimed for Actual25; do not replay Actual25; retain 4h batch and 1h role bounds; Actual25 remains failed_not_passed
     deferred_helper_followup: P11; outside_current_A01_implementation_allocation; future_bounded_design_under_existing_user_mandate; no_general_readonly_helper_capability_or_framework_implemented
     actual_16_terminal_record_sha256: 0a9db024fba47cde9a9c2ffc34e096205cc9f25927c71ca2ae391a629dfae352
     actual_16_acceptance: not_passed
@@ -1380,6 +1381,7 @@ renewal_policy:
     attempt_number: 20
     status: blocked_root_interrupted_same_binary_resume_blocked_no_replay
     private_record_sha256: 55d19879f92ff472462e1144d0f906c743f580aedd169a89f78c1244d28c374c
+    controller_sha256: c6541846825115d328de2033c01a647644d2ad54c8aa128a934a397a9608265f
     allocated_utc: '2026-10-10T08:15:03.3868617Z'
     hard_deadline_utc: '2026-10-10T12:15:03.3868617Z'
     terminal_utc: '2026-10-10T08:22:34.3432947Z'
@@ -1388,7 +1390,6 @@ renewal_policy:
     validated_docs_revision: fac9131bf60d813a144c563516626f73ea19b969
     project_revision: eaa11e9969db66e6c1a5cd80949cfb757074ce54
     binary_sha256: 1fb44841cffe622778e22c8811d48f5aa686a1bfb7cfd1e0cfef7d6e2a18c60d
-    controller_sha256: c6541846825115d328de2033c01a647644d2ad54c8aa128a934a397a9608265f
     plan_id: e70d26667c06334ea81fee279cb28684
     plan_sha256: 6ca403047b90510c0eeefa166cc3bb3b78d8f828cdbaa63d981815b03d98095b
     readiness_sha256: 9b072ed042b00a2942c3339b2ea5099077fa13ea3e8a05d49d159b047546ee25
@@ -1457,6 +1458,7 @@ renewal_policy:
     attempt_number: 21
     status: failed_full_verify_incomplete_no_apply
     private_record_sha256: df46c0bbda71e605d94b9f1cb552565b974d115663a1caa613fa24b498f23ccc
+    controller_sha256: c6541846825115d328de2033c01a647644d2ad54c8aa128a934a397a9608265f
     allocated_utc: '2026-10-10T08:37:22.3366157Z'
     hard_deadline_utc: '2026-10-10T12:37:22.3366157Z'
     full_verify_report_finished_utc: '2026-10-10T08:54:30.5789561Z'
@@ -1470,7 +1472,6 @@ renewal_policy:
     readiness_sha256: b3d87d1ec57060701f8c0a186f272fdeb21cdb7f35a4af59806c2af12941829c
     runtime_sha256: d86962cb65946d9d7c738290d77fcd93b703237811f36db9383f5bfdde872f26
     runtime_file_sha256: 0828f6afd4e897fa0304362e19bb47cd912c2fe353f5b44c58d919daf2fa3e3c
-    controller_sha256: c6541846825115d328de2033c01a647644d2ad54c8aa128a934a397a9608265f
     candidate_build_record_sha256: 68b9cebb5188715f95cdb764703b7c083d7ffabf4fa10341f06763c24d41a791
     source_delta_gate_record_sha256: b3d7ecc2b9d3ecfea1817a6800612f42a49dbace02c9076bbe379880c96856b6
     remote_source_checkpoint: aafe9d5ca9cd6c8ad87533e02f6bc3f5dcd747b0
@@ -1662,6 +1663,7 @@ renewal_policy:
     attempt_number: 23
     status: failed_full_verify_incomplete_no_apply
     private_record_sha256: 769456575159d18d58ca34c7b8c3303e1963fb31cb675e8a920b8fbf75eff7a2
+    controller_sha256: c6541846825115d328de2033c01a647644d2ad54c8aa128a934a397a9608265f
     terminal_reason: source_manager_full_verify_incomplete_missing_fresh_independent_documentation_review_context
     allocated_utc: '2026-10-10T09:41:24.2003542Z'
     hard_deadline_utc: '2026-10-10T13:41:24.2003542Z'
@@ -1675,7 +1677,6 @@ renewal_policy:
     runtime_sha256: 0b0bea059d135cf436833a5a8327ddef1d95581cd8483911739e039ded14b9f7
     runtime_file_sha256: 58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574
     max_event_bytes: 134217728
-    controller_sha256: c6541846825115d328de2033c01a647644d2ad54c8aa128a934a397a9608265f
     source_delta_gate_record_sha256: 6db2850aae981f07861ce6ab7a35f0dd21d238f0446ce91d30120ee8dcdc11bf
     remote_source_checkpoint: 7c431d0f1dddaba1c78306ab518ce66d3918e427
     observer_id: 49f39c14ea6f4849ae49c02d2d9f19bb
@@ -1769,12 +1770,13 @@ renewal_policy:
     source_review_context_diff_check: passed
     source_review_context_technical_status: closed_validated; native_A01_revalidation_pending; Actual23_remains_failed_no_apply
     acceptance: not_passed
-  latest_actual:
+  attempt_24:
     batch_id: a01-review-evidence-b3100b1bd36f4e6887069e3243b8e297
     attempt_number: 24
     status: failed_full_verify_root_manager_incomplete_no_apply
     private_record_sha256: 1366e20896ae249a30843abb3f6e57781071a57bd2b1ec8b407371879660bf9b
     lifecycle_audit_sha256: 67626569eda862a871c6c457ded57987336eb4b5ef8a7727102b82d12340cf4d
+    controller_sha256: c6541846825115d328de2033c01a647644d2ad54c8aa128a934a397a9608265f
     terminal_reason: root_full_manager_audit_incomplete_missing_two_child_integration_review_subjects
     allocated_utc: '2026-10-10T10:10:16.5784089Z'
     hard_deadline_utc: '2026-10-10T14:10:16.5784089Z'
@@ -1788,7 +1790,6 @@ renewal_policy:
     runtime_sha256: 0b0bea059d135cf436833a5a8327ddef1d95581cd8483911739e039ded14b9f7
     runtime_file_sha256: 58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574
     max_event_bytes: 134217728
-    controller_sha256: c6541846825115d328de2033c01a647644d2ad54c8aa128a934a397a9608265f
     source_delta_gate_record_sha256: 9c45c2ec50427c9df95c9dfa70719d13d548414d0415f3d98d62199e72ee284b
     remote_source_checkpoint: 4fe8562bd9e00121eddc40b5d14170dbebb84896
     observer_id: d04368affd29445c8e3d25bca5e1cc88
@@ -1879,6 +1880,80 @@ renewal_policy:
     root_integration_context_correction_validation: independent_review_clear; three_focused_tests_passed_11_894s; projectrun_vet_passed_1_2616117s; diff_check_passed; fresh_native_validation_pending
     root_integration_context_vet_command: "go vet ./src/internal/host/projectrun"
     acceptance: not_passed
+  latest_actual:
+    batch_id: a01-integration-review-scope-ec247e985abd4169b5dc1c1d0997a88a
+    attempt_number: 25
+    status: failed_before_root_integration_docs_helper_observed_bytes_mismatch_no_apply
+    private_record_sha256: ac145188f8e8ca13b04b63de1770db02ef61841a08dabdf0870a9724e6a77809
+    lifecycle_audit_path: controller/actual25-readonly-lifecycle-audit.json
+    lifecycle_audit_sha256: 44d2a0b2bd3300ccc34fa1576f97e7b25f01d92963c53d3b126cb8c2b80ebd73
+    allocated_utc: '2026-10-10T10:33:31.8300855Z'
+    hard_deadline_utc: '2026-10-10T14:33:31.8300855Z'
+    source_revision: e99cd669a72d1076c4c0edb39c07116c3928e47e
+    validated_docs_revision: e99cd669a72d1076c4c0edb39c07116c3928e47e
+    project_revision: 275baa9b830f1eee67cc901321a595002ffe0744
+    binary_sha256: 94f4a6cbc6552b7f772cefc3d944d886296a11271266a9e3155e7f8a709940f4
+    plan_id: 85d22b7a2d1840aa4b17bcc46fd54a43
+    plan_sha256: 6cb46caa4e3fe21a391089c9af0e649fa6060441ff4598f0c10342b6d2d216a1
+    readiness_sha256: cf35d878706fd7118e2d310a2aa3feeaec2362bd13f718f5d30f9f9092529eb4
+    runtime_sha256: 0b0bea059d135cf436833a5a8327ddef1d95581cd8483911739e039ded14b9f7
+    runtime_file_sha256: 58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574
+    max_event_bytes: 134217728
+    observer_id: d02f0ed16c0b466dbfa0c6af7838c157
+    observer_record: observer-logs/d02f0ed16c0b466dbfa0c6af7838c157.observer.json
+    observer_interval_utc: '2026-10-10T10:33:43.4616648Z-2026-10-10T10:36:14.2961767Z'
+    observer_exit_code: 2
+    observer_boundary_observed: false
+    observer_terminal_turn_observed: false
+    state_17_revision: 17
+    state_17_status: failed
+    state_17_updated_utc: '2026-10-10T10:36:13.9964733Z'
+    state_17_file_sha256: a2f27cc990573db5aae6f860fc421a4d300c00f2deffe7e14eed9b0d99651f38
+    state_17_digest: sha256:115b331663d337edf344291d7e4c2ef6154d6d21a6fc2d3ef8d8e49e2ac30da9
+    source_docs_overlap_seconds: 47.5071043
+    docs_source_work_status: interrupted_or_closed_without_accepted_outputs
+    docs_helper_reservation_id: helper-exec-f290b2cc-e35d-478a-80bb-03c57ea710dd
+    docs_helper_task_id: helper-768ffdc62372f80948186b5fe77ced2f
+    docs_helper_child_session: 01a12561-f90d-7840-8aae-c46cac0a0de0
+    docs_helper_child_turn: 01a12561-fa54-7611-bc3f-32ded3011c73
+    docs_helper_child_terminal_status: completed
+    docs_helper_delivery_state: host_rejected_declared_bytes_mismatch
+    docs_helper_declared_path: docs/greeting.md
+    docs_helper_declared_line_endings: LF
+    docs_helper_declared_length_bytes: 330
+    docs_helper_declared_sha256: 10893d916105f0e8a58d963720a75ac8333654b8d58ea7f21e67a39658a2151b
+    docs_helper_observed_line_endings: CRLF
+    docs_helper_observed_length_bytes: 340
+    docs_helper_observed_sha256: 91ab3611f3e68a7b89c5d876b3a48d84e8ad97eac76f34450f57fec5cf80ba70
+    docs_helper_file_mode: '0644'
+    docs_helper_normalized_git_mode: '100644'
+    docs_helper_mode_mismatch: false
+    docs_helper_host_outcome: strict_observation_guard_rejected_declared_bytes_vs_observed_bytes; correct_guard_behavior_no_source_fix_claimed
+    source_helper_reservation_id: helper-exec-476d3a09-3005-4b50-bd17-7da86307b3ce
+    source_helper_child_session: 01a12562-079d-7712-8d11-f0052ae303e4
+    source_helper_child_turn: 01a12562-0936-74a0-9299-d7bd94088601
+    source_helper_child_state: interrupted
+    source_helper_delivery_state: no_delta
+    helper_applied_delta_proof: none
+    role_start_requests: 4
+    helper_start_requests: 2
+    combined_start_requests: 6
+    native_provider_starts: 6
+    batch_estimated_cost_micros: 600736
+    cost_accounting: partial_observed_role_cost_only_not_invoice; helper_cost_not_separately_itemized; no_extra_estimate
+    cumulative_combined_start_requests: 143
+    cumulative_native_provider_starts: 139
+    cumulative_estimated_cost_micros: 20466796
+    cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
+    root_work_review_id: b0c0d9d91cafe97b60ef365942214f27
+    root_work_review_status: pass
+    root_integration_started: false
+    root_resume_started: false
+    initial_verifier_started: false
+    full_manager_audits_started: false
+    apply_started: false
+    source_fix_claimed: false
+    acceptance: not_passed
   provider_free_preparation:
     superseded_owned_project_revision: 89823a90df985ca4451ec3053467fa4b3d12319f
     rejected_role_wall_seconds: 7200
@@ -1906,8 +1981,8 @@ budget_amendments:
     supersedes_prior_cumulative_budget_and_deadline_as_future_blockers: true
     previous_batch_failures_and_source_pins_preserved: true
     next_batch_pins_pending: true
-    next_batch_status: actual24_full_verify_incomplete_root_child_integration_context_fix_technically_closed_fresh_native_validation_pending
-    last_actual_status: failed_full_verify_incomplete_no_apply_not_passed_attempt_24
+    next_batch_status: actual25_pre_root_failure_docs_helper_observed_bytes_mismatch_no_apply_fresh_bounded_a01_pending
+    last_actual_status: failed_before_root_full_verify_no_apply_not_passed_attempt_25
     main_gate_revision_unchanged: combined-normal-smoke-20261009
     release_publication_authorized: false
 allocation_history:
