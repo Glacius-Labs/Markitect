@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T06:38:44.293588+00:00",
+  "updatedUtc": "2026-10-10T06:50:16.608449+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18307,7 +18307,7 @@
       "boundary": "No new startreceipt/PlanID observed yet, no completion/Main/release/study acceptance."
     },
     "actual16Running": {
-      "status": "SAME_BUILD_ORIGINAL_ROOT_RECOVERY_VERIFIED_VERIFY_AUDITS_FAILED_NO_APPLY",
+      "status": "CLOSED_TECHNICAL_ORIGINAL_ROOT_RECOVERY_PROVEN_FULL_VERIFY_FAILED_NO_APPLY",
       "batchId": "a01-same-build-recovery-00a5ce211ff2446dab3bad76465b61df",
       "planId": "3a6a39ae59f7cfb18cb39f47b3d346ee",
       "planDigest": "sha256:a47c13a4331d647fc100fa6977277300337208d690d1949db617c29aa716de1a",
@@ -18354,6 +18354,31 @@
       "packagedWorkflowSource": "4fe7fd7f local committed four adapter build paths corrected; Root two-file commitstat inspected; owner archive Windows/Linuxbuild/independentreview PASS. Remote still04ca atinspection, not yet claimed pushed.",
       "otherOwnerWork": "Remaining active ./examples/docsPRtemplate oldpaths bounded fix assigned. Possible Windows core.filemodefalse tracked100755 vs NTFS0644 false-drift under concrete owned-temp reproduction before sourcefix; not confirmed currentcause or Mainacceptance.",
       "boundary": "Actual16 original04ca/bc265 binary kept, later source commits separate. No release/extra study/new broadmatrix."
+    },
+    "actual16FinalAccountingOwnerReported": {
+      "roleAndHelperStarts": 13,
+      "providerStarts": 13,
+      "pythonChecks": 1,
+      "workRecords": 14,
+      "partialEstimatedCostMicros": 1985727,
+      "cumulativeOwnerReported": {
+        "starts": 57,
+        "providerStarts": 54,
+        "partialEstimatedCostMicros": 11467108
+      },
+      "qualification": "Final union owner reported, source ledger not yet independently bound by Root. Caller partial estimate, no actual token/invoice/compute/human efficiency claim. Historical attempts retain original failures and receipt unknowns."
+    },
+    "postActual16SourceClosures": {
+      "status": "LOCAL_COMMITS_SOURCE_INSPECTED_FINAL_DOCS_FREEZE_AND_NATIVE_PROOF_PENDING",
+      "gitModeSource": "efe015d62cd678a49df265ebb1b64e9ff43ba37b",
+      "recoveryJournalSource": "0e643bd0c5c01301022aec57fd65abec56cbe500",
+      "managerAuditSource": "d50669ec2f11feda6283dc96c6a26558c3d64e4c",
+      "rootInspection": "Git core.filemodefalse uses exact literal stage0 selected Git index modes; true/unset remain filesystem mode; coverage normalizes matching policy. Recovery protocol/fingerprint/original workspace/current exact dispatched handle checked before journal, binds existing Root run/session/turn without BeforeStart/new turn. Full audit exact subject enum/cardinality and scoped readonly guidance; semantic pass/fail/incomplete remains free, Hostvalidator unchanged. Source diffs inspected, no Root redundant tests.",
+      "ownerDiagnosis": "Docs3/3 andRoot10/10 actual subjectsPASS but outerincomplete on unrelated Git/MCP/installedCLI gate; Source invented extra subject/missing briefings. No retrospective Verify/Apply PASS.",
+      "ownerReview": "Independent clear; correct Integration checkout audit tests0.293s/11.041s PASS, broader focused regression/final freeze pending.",
+      "checkoutIncident": "Initial audit patch inadvertently authored in readiness-candidate-fix ea1dbd preexistingWIP checkout; narrowly ported/committed/tested/reviewed in Integration. Foreign WIP preserved, no invasive restore or old checkout test credited to current source.",
+      "remote": "Public ref remains04ca4a144f92a9c5f3e446eb82dca18f7e690085 at Root inspection; new source fixes not yet claimed backed up.",
+      "next": "Owner readiness docs freeze, broader targeted regressions, then fresh Windows A01 one final binary before/after Root fault under existing finite renewable authority. Distinct from oldActual16, no replay/study/Main/release acceptance."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
