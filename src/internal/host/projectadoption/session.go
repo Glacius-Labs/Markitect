@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
@@ -491,7 +492,9 @@ func ResumeBrownfieldSession(sourceRoot, targetRoot, id string) (BrownfieldSessi
 	}
 	coverage := workingTarget.Coverage
 	targetCurrent := false
-	worktreeMatchesHead := acceptedTarget.Snapshot != nil && workingTarget.Snapshot != nil && acceptedTarget.Snapshot.Digest() == workingTarget.Snapshot.Digest()
+	// Compare through Git's clean filters: a clean core.autocrlf checkout has
+	// CRLF worktree bytes while HEAD stores LF.
+	worktreeMatchesHead := projectrun.RequireCleanSelectedBasisAtRevision(targetRoot, headRevision, acceptedTarget.Snapshot, workingTarget.Snapshot) == nil
 	if len(session.Adoptions) == 0 {
 		targetCurrent = acceptedTarget.Digest == session.Target.ProjectDigest && worktreeMatchesHead
 	} else {
