@@ -95,6 +95,43 @@ func TestLoadPinnedCommitIgnoresAmbientGitRepositoryOverrides(t *testing.T) {
 	}
 }
 
+func TestLoadPinnedCommitSkipsGitlinksInExcludedDirectories(t *testing.T) {
+	root, _ := selectiveGitFixture(t)
+	gitTest(t, root, "update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("a", 40)+",vendor/lib")
+	gitTest(t, root, "update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("b", 40)+",node_modules")
+	gitTest(t, root, "commit", "-qm", "excluded gitlinks")
+
+	working, err := Load(root, "")
+	if err != nil {
+		t.Fatalf("working Load: %v", err)
+	}
+	fixed, err := Load(root, "HEAD")
+	if err != nil {
+		t.Fatalf("Load(HEAD) with excluded gitlinks: %v", err)
+	}
+	for _, p := range []string{"vendor/lib", "node_modules"} {
+		if _, ok := working.Files[p]; ok {
+			t.Fatalf("working tree included excluded %s", p)
+		}
+		if _, ok := fixed.Files[p]; ok {
+			t.Fatalf("pinned snapshot included excluded %s", p)
+		}
+	}
+	if got := string(fixed.Files["seed.txt"]); got != "seed" {
+		t.Fatalf("pinned seed.txt = %q, want committed blob", got)
+	}
+}
+
+func TestLoadPinnedCommitRejectsIncludedGitlinkAsSubmodule(t *testing.T) {
+	root, _ := selectiveGitFixture(t)
+	gitTest(t, root, "update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("a", 40)+",lib")
+	gitTest(t, root, "commit", "-qm", "gitlink")
+	_, err := Load(root, "HEAD")
+	if err == nil || !strings.Contains(err.Error(), "submodule") {
+		t.Fatalf("Load(HEAD) error = %v, want submodule rejection", err)
+	}
+}
+
 func TestCleanGitEnvDropsGitVariablesCaseInsensitively(t *testing.T) {
 	t.Setenv("gIt_DiR", "foreign")
 	t.Setenv("GIT_CONFIG_PARAMETERS", "injected")
