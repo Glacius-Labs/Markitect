@@ -2115,6 +2115,10 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectrun/apply_capture_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectrun/check_process_unix.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/check_process_windows.go
+      owner: project-world-implementation
     - path: src/internal/host/projectrun/checks.go
       owner: project-world-implementation
     - path: src/internal/host/projectrun/config.go
