@@ -1,4 +1,4 @@
-"""Hidden holdout checks of the readinglog2 case (EVALUATION.md, "Hidden evaluation files").
+"""Hidden holdout checks of the readinglog2 case (README.md, "Hidden evaluation files").
 
     python3 -I holdout.py --repo DIR --station N [--deadline SECONDS]
 
