@@ -474,7 +474,7 @@ func seedNativeRun(t *testing.T, phase string, reviewRework bool) nativeResumeRu
 			if err != nil {
 				t.Fatal(err)
 			}
-			task.CandidateID, task.ReviewStatus, task.WorkAttempts, task.Attempts = reviewed.ID, "rework-requested", 2, 2
+			task.CandidateID, task.ReviewCandidateID, task.ReviewStatus, task.WorkAttempts, task.Attempts = reviewed.ID, reviewed.ID, "rework-requested", 2, 2
 		}
 	} else {
 		task.State, task.RepairPhase, task.WorkAttempts, task.IntegrationAttempts, task.Attempts = "integrating", "integrate", 1, 1, 2

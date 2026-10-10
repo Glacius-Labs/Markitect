@@ -13,6 +13,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
 // This test exercises the reviewer recovery seam without a provider. A dry
@@ -139,10 +140,24 @@ func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *tes
 	}
 }
 
-// A failed work review persists review-rework-ready before the rework turn
-// starts. Resume must send that turn the reviewed candidate, as the
-// uninterrupted review loop does, not the parent's bytes.
-func TestResumedReviewReworkStartsFromReviewedCandidate(t *testing.T) {
+const reviewedOrdersBytes = "reviewed orders v2\n"
+
+// reviewReworkFixture holds the state the work loop and pending-review
+// recovery persist after a failed orders work review. The report is not yet
+// stored, so a test can change it first.
+type reviewReworkFixture struct {
+	root     string
+	host     Host
+	plan     PlanRecord
+	store    *runStore
+	dir      string
+	initial  candidateData
+	reviewed candidateData
+	report   RunReport
+}
+
+func seedReviewRework(t *testing.T) reviewReworkFixture {
+	t.Helper()
 	root := makeProjectRunFixture(t)
 	enableE2EReviews(t, root, 100000)
 	host := projectworkHost()
@@ -163,19 +178,7 @@ func TestResumedReviewReworkStartsFromReviewedCandidate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const reviewedBytes = "reviewed orders v2\n"
-	reviewed := candidateData{Parents: []string{initial.ID}, Files: map[string]File{
-		"src/orders/implementation.txt": {Path: "src/orders/implementation.txt", Mode: snapshot.RegularMode, Content: []byte(reviewedBytes)},
-	}}
-	if reviewed.ID, err = newID(); err != nil {
-		t.Fatal(err)
-	}
-	if err := store.writeCandidate(dir, reviewed); err != nil {
-		t.Fatal(err)
-	}
-	if reviewed, err = store.readCandidate(dir, reviewed.ID); err != nil {
-		t.Fatal(err)
-	}
+	reviewed := storeReviewFixtureCandidate(t, store, dir, []string{initial.ID}, map[string]string{"src/orders/implementation.txt": reviewedOrdersBytes})
 	rootID, ordersID, inventoryID := e2eManagerID("", "project-owner"), e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")
 	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Operation: plan.Operation, Status: StatusInterrupted, Mode: ModeControlledLocal,
 		StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(), BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot,
@@ -194,12 +197,20 @@ func TestResumedReviewReworkStartsFromReviewedCandidate(t *testing.T) {
 	ordersTask.RepairDiagnostic = "independent review findings: src/orders/implementation.txt: tighten the reviewed implementation (statement:orders-work)"
 	report.Reviews = []ReviewRecord{{TaskID: ordersTask.ID, ManagerID: ordersID, Round: 1, Phase: "work", CandidateID: reviewed.ID, CandidateDigest: reviewed.Digest,
 		Outcome: "fail", Findings: []ReviewFinding{{Path: "src/orders/implementation.txt", Expectation: "tighten the reviewed implementation", Grounding: "statement:orders-work"}}, At: time.Now().UTC()}}
-	if err := store.appendState(report); err != nil {
+	return reviewReworkFixture{root: root, host: host, plan: plan, store: store, dir: dir, initial: initial, reviewed: reviewed, report: report}
+}
+
+// A failed work review persists review-rework-ready before the rework turn
+// starts. Resume must send that turn the reviewed candidate, as the
+// uninterrupted review loop does, not the parent's bytes.
+func TestResumedReviewReworkStartsFromReviewedCandidate(t *testing.T) {
+	fixture := seedReviewRework(t)
+	if err := fixture.store.appendState(fixture.report); err != nil {
 		t.Fatal(err)
 	}
 
 	invoker := &resumeReviewInvoker{}
-	resumed, resumeErr := Resume(context.Background(), host, invoker, root, plan.ID)
+	resumed, resumeErr := Resume(context.Background(), fixture.host, invoker, fixture.root, fixture.plan.ID)
 	if invoker.runCalls != 1 {
 		t.Fatalf("Resume dispatched %d Manager requests, want the single orders rework request: status=%s err=%v", invoker.runCalls, resumed.Status, resumeErr)
 	}
@@ -212,7 +223,61 @@ func TestResumedReviewReworkStartsFromReviewedCandidate(t *testing.T) {
 	if !found {
 		t.Fatalf("orders rework request omitted its owned artifact: %+v", invoker.request.Artifacts)
 	}
-	if got != reviewedBytes {
-		t.Fatalf("resumed review rework input for orders = %q, want the reviewed candidate bytes %q", got, reviewedBytes)
+	if got != reviewedOrdersBytes {
+		t.Fatalf("resumed review rework input for orders = %q, want the reviewed candidate bytes %q", got, reviewedOrdersBytes)
 	}
+}
+
+// Review rework continues only from the exact candidate its failed review
+// assessed. A stale review identity or changed reviewed bytes leave no
+// trustworthy rework base, so the fresh and the recovered turn both refuse.
+func TestReviewReworkRefusesCandidateOutsideItsFailedReview(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		tamper func(*reviewReworkFixture, *ManagerTask)
+		want   string
+	}{
+		{"stale review identity", func(fixture *reviewReworkFixture, task *ManagerTask) { task.ReviewCandidateID = fixture.initial.ID }, "is not the reviewed candidate"},
+		{"changed reviewed bytes", func(fixture *reviewReworkFixture, _ *ManagerTask) {
+			fixture.report.Reviews[0].CandidateDigest = fixture.initial.Digest
+		}, "differs from the bytes its review assessed"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fixture := seedReviewRework(t)
+			task := findTask(fixture.report.Tasks, e2eManagerID("orders", "orders"))
+			test.tamper(&fixture, task)
+			// Recovery refuses before it compiles any input, so no model is needed.
+			_, _, _, _, recoveryErr := recoveryManagerInput(fixture.store, fixture.dir, fixture.host, fixture.root, nil, projectmodel.Report{}, fixture.report, fixture.plan, *task, "work", nil)
+			if recoveryErr == nil || !strings.Contains(recoveryErr.Error(), test.want) {
+				t.Fatalf("recovered rework input error = %v, want %q", recoveryErr, test.want)
+			}
+			if err := fixture.store.appendState(fixture.report); err != nil {
+				t.Fatal(err)
+			}
+			invoker := &resumeReviewInvoker{}
+			resumed, resumeErr := Resume(context.Background(), fixture.host, invoker, fixture.root, fixture.plan.ID)
+			if invoker.runCalls != 0 || resumeErr == nil || !strings.Contains(resumeErr.Error(), test.want) {
+				t.Fatalf("fresh rework turn was not refused: runs=%d status=%s err=%v", invoker.runCalls, resumed.Status, resumeErr)
+			}
+		})
+	}
+}
+
+func storeReviewFixtureCandidate(t *testing.T, store *runStore, dir string, parents []string, files map[string]string) candidateData {
+	t.Helper()
+	candidate := candidateData{Parents: parents, Files: map[string]File{}}
+	for path, content := range files {
+		candidate.Files[path] = File{Path: path, Mode: snapshot.RegularMode, Content: []byte(content)}
+	}
+	var err error
+	if candidate.ID, err = newID(); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.writeCandidate(dir, candidate); err != nil {
+		t.Fatal(err)
+	}
+	if candidate, err = store.readCandidate(dir, candidate.ID); err != nil {
+		t.Fatal(err)
+	}
+	return candidate
 }
