@@ -2191,3 +2191,7 @@ Root5b570 exactsourcepatch onlyHelperDynamicTool description; parenteditfinish/i
 ### Fresh Actual18 normal run started, owner report
 
 Batcha01-serialized-helpere2dcc8/newPlanc3308d42/digestdbfff928/deadline11:28:41.9814205Z normalrun ownerreported. SameRootverifiedpublic2950/bin33c63/scriptddf7; freshReadinessff8d1c ready0blockers/runtime75b341 normaldescriptionfingerprintchange. Currentnativehandles/startunionnotyetRootinspected/usageunknown, Actual17NOTPASSED preserved/no oldPlanrewrite/replay. No repeatedRootorder/newstudy/Main/releasecredit.
+
+### Actual18 census stability rejection under bounded audit
+
+Owner initialobservere36720f107:28:42.158-07:30:39.481Exit2/boundaryfalse/state13failed; Docsobservefullcoverage rejects membership/mode/HEAD/indexchanged duringcensus. RootworkreviewPASS/exact2950-bin33c63unchanged, noResume/Verify/Apply. BoundedindependentCensuscaller/comparison+originalnativeauditactive, causeunknown/no speculativeguardweakening/newframework/Rootretryorder. Currentstarts/lifecycle/costunionunknownnotzero; Actual17helperoverlapdistinctfixpreserved.

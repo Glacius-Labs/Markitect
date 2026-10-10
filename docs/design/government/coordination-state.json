@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T07:29:29.196683+00:00",
+  "updatedUtc": "2026-10-10T07:33:01.948542+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18465,7 +18465,7 @@
       "history": "Old16987binary archived unchanged ownerreported. Actual17 NOTPASSED and actual parent-edit timeline retained in three docs, no oldPlan rewriting or retrospective credit."
     },
     "actual18Preparation": {
-      "status": "OWNER_REPORTED_FRESH_NORMAL_ACTUAL18_RUNNING",
+      "status": "INITIAL_RUN_TERMINAL_BEFORE_ROOT_BOUNDARY_CENSUS_STABILITY_REJECTION_CAUSE_UNDER_BOUNDED_AUDIT",
       "freezeRef": "helperSerializationCorrectionFreeze",
       "planId": "c3308d42c22507438be30eb4de9c1d86",
       "batchId": "a01-serialized-helper-e2dcc8ff334d4e6d8fc56100b41b4305",
@@ -18476,7 +18476,27 @@
       "binarySha256": "33c63c32f5a419fd59ef34a49870ee60239c363b86bc19d5b39ecc2decf6971a",
       "controllerSha256": "ddf7b16dc0a23b21ac4edd90e18f56e15cdf41478baac873503b18ed90154b36",
       "ownerBinding": "Normal Readinessff8d1c prefix ready/no blockers and Runtime75b341 prefix changed normally by fingerprinted helper-description. Same existing observer/current pins. Original states not rewritten/replayed.",
-      "rootBoundary": "Clean exact2950 source/public/binary independently verified prior. Actual native handles/start union not yet independently inspected this event; current usage unknown, not zero. Existing finite renewable product authority, no new study/Main/release credit."
+      "rootBoundary": "Clean exact2950 source/public/binary independently verified prior. Actual native handles/start union not yet independently inspected this event; current usage unknown, not zero. Existing finite renewable product authority, no new study/Main/release credit.",
+      "terminalOwnerReport": {
+        "observerId": "e36720f13b3e4807ae579e11a5be97a3",
+        "startedUtc": "2026-10-10T07:28:42.158Z",
+        "endedUtc": "2026-10-10T07:30:39.481Z",
+        "exitCode": 2,
+        "boundaryReached": false,
+        "stateRevision": 13,
+        "state": "failed",
+        "error": "observe full repository coverage: repository membership, mode, HEAD, or index changed during census",
+        "request": "Docs",
+        "progress": "RootworkreviewPASS ownerreported; exact2950/binary33c63 unchanged.",
+        "notRun": [
+          "Root recovery boundary",
+          "Resume",
+          "Verify",
+          "Apply"
+        ],
+        "next": "Bounded independent Census comparison/caller and original native evidence audit active. Exact cause not established; no speculative guard weakening/general recovery/new retry instructed by Root.",
+        "accounting": "Current whole starts/native child terminal receipt/cost union unknown until owner closure, not zero. Actual17 known parent-helper overlap remains a distinct corrected issue."
+      }
     }
   },
   "restartAfterInterruptedIntegration20261010": {
