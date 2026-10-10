@@ -63,6 +63,18 @@ Beachte bei unserem Playground und tests die wir machen, dass wir Windows zunäc
 Wir sollten ab jetzt die Branches auch mit dev/ oder sinnvollen präfixen wählen statt claude/ und codex/. Damit können wir dann auch die "alten" Branches von den aktuellen unterscheiden und nach und nach aufräumen. Die namen sollten entsprechend sinnvoll gewählt sein und nicht irgendwelche Nummern hinten haben.
 ```
 
+## Push rule
+
+Recorder's note: the integrator proposed this rule after a session waited for a non-required Windows run before pushing a review fix:
+
+> Korrekturen auf einem PR dürfen sofort gepusht werden, auch wenn ein nicht erforderlicher Lauf (Windows) noch läuft. Erforderlich ist nur Linux (DEC-013). Die Regel „kein Push während CI“ gilt weiterhin für den erforderlichen Linux-Lauf.
+
+The owner answered:
+
+```text
+Ja, nimm die Push-Regel so in die Roadmap auf
+```
+
 ## Compatibility
 
 ```text

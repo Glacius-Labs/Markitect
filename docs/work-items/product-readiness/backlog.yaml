@@ -7,6 +7,13 @@ coordinator_thread: 01a11367-a781-7683-a20f-46e12614dcb4
 case_studies: deferred_until_product_ready_for_matched_studies
 main_merge: authorized_after_positive_readiness_and_required_gates
 release_publication: not_authorized
+program_closure:
+  status: closed
+  date: '2026-10-10'
+  basis: Pull request 89 merged the integration candidate into Main at f12ffb00bd6fd7bc45d0014487434a5a58aafadb; hosted Linux and Windows Quality passed on its exact head (run 38057729908).
+  item_statuses: The item statuses below are kept as recorded during the program. P03 to P10 were completed by that integration; their in_progress values are not current status.
+  successor: docs/work-items/backlog.yaml is the current status owner; docs/implementation-plan.md is the roadmap.
+  migrated: P11 became RUN-04; follow-up R03-F01 became AGENT-03; KG01 to KG03 became KG-00 to KG-03.
 native_acceptance:
   grant_id: product-readiness-native-acceptance-20261009
   status: conditional_on_item_readiness
