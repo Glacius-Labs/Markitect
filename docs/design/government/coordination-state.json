@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T04:30:30.099735+00:00",
+  "updatedUtc": "2026-10-10T04:34:57.405176+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12119,7 +12119,7 @@
       "worktree": "C:\\Users\\Consiliari\\.codex\\worktrees\\product-integration\\Markitect",
       "branch": "codex/product-integration-20261009",
       "baseSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
-      "afterCursor": "fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:2",
+      "afterCursor": "fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:5",
       "lastObservedStatus": "active",
       "activeTurn": "01a123f6-a629-7151-a41e-4252209ebc74",
       "creationAndPromptDelivered": true,
@@ -17869,7 +17869,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL13_WINDOWS_ALIAS_SHELL_AND_REVIEW_GROUNDING_FAILURE_OWNER_NARROW_FIX_REVIEW",
+    "status": "NORMAL_TOOL_CWD_AND_GROUNDING_FIX_VERIFIED_ACTUAL14_RUNNING",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18139,6 +18139,24 @@
       "rootAdditiveDirectionSentOnce": "Do not globally restrict repository edits to native editor/remove normal scoped shell file work; actual harvest tool-independent. Editor preferred conditional on observed alias error, same own CWD and ordinary permitted tools remain. Diagnose actual alias from retained original, no general capability probe/rights widening.",
       "next": "Owner concrete CWD/grounding fix focused checks/review then ordinary fresh A01; keep scope/guards and historical evidence, no new Go/grant",
       "fullWorkflowAccepted": false
+    },
+    "actual14Running": {
+      "sourceFix": "b8ee41030ec19c131366ee1f994cc6d3a65ced7c",
+      "frozenSource": "b42c6cf0244fc312eb90a75fd00fc63f069a1a8a",
+      "binarySha256": "c2eff91600845ba65eb5eeff56ddfde9e12fbf33a5d7557767200499ee17320f",
+      "binaryPath": "C:/Users/Consiliari/AppData/Local/Temp/markitect-a01-3c5c733388014645b0ca178338078b6a/bin/markitect.exe",
+      "rootVerified": "Clean exact local/publicb42c; actualdiff preserves permitted scoped shellwrites/editor conditional on alias issues, exactHostCWD allroles and same-entrygrounding. Exact own PID57416 observed running Markitect; processbinarySHA and go-versionVCSb42c modifiedfalse independently verified.",
+      "plan": "0582d1280f15469063c2920f7566db83",
+      "batch": "a01-grounding-79c0422eee0043e2b9dde1e98ce8484b",
+      "startUtcOwnerReported": "2026-10-10T04:33:22Z",
+      "deadlineUtc": "2026-10-10T08:33:22Z",
+      "observer": "478e306c8b124b4da3809dd0f62ad2c4",
+      "pid": 57416,
+      "checksOwnerReported": "Nativefocused0.291s/review3.397s/canonicalPASS; independent correction and bounded lifecycle/Apply review no blocking findings. Two stale NOTRUN doc entries correction final evidence checkpoint.",
+      "actualOutcome": "RUNNING_NO_ACCEPTANCE_OR_RECOVERY_CLAIM",
+      "integrationCursor": "fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:5",
+      "historicalCounts": "Closed26requests23providers6923960partial remain; new active batch not closed/relabelled",
+      "next": "Owner completes ordinary actual14 and reports material terminal outcome; no repeated order/Rootgrant/newstudy."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
