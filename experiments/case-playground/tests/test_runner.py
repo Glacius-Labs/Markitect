@@ -223,6 +223,19 @@ class FakeTrajectoryTests(RunnerTestCase):
         self.assertEqual(state["stopCategory"], "environment")
         self.assertFalse((self.out / "setup").exists())
 
+    def test_results_stay_root_only_even_when_the_agent_owns_the_mount(self):
+        if not codex_agent.container_mode():
+            self.skipTest("needs root and user agent")
+        uid, gid = codex_agent._agent_ids()
+        self.out.mkdir()
+        os.chown(self.out, uid, gid)  # a Linux host user with uid 1000, like the agent
+        seen = []
+        with patch.object(runner._Trajectory, "run", lambda trajectory: seen.append(self.out.stat()) or 0):
+            self.run_trajectory(make_manifest())
+        self.assertEqual((seen[0].st_uid, seen[0].st_mode & 0o777), (0, 0o700))
+        after = self.out.stat()
+        self.assertEqual((after.st_uid, after.st_gid, after.st_mode & 0o777), (uid, gid, 0o755))
+
     def test_runner_error_writes_traceback_and_report(self):
         with patch.object(runner.lifecycle, "prepare", side_effect=RuntimeError("seed exploded")):
             self.assertEqual(self.run_trajectory(make_manifest()), 2)

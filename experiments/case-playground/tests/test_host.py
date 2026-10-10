@@ -47,8 +47,9 @@ class FakeProc:
 class FakeDocker:
     """Stands in for subprocess.run/Popen inside host; records every argv."""
 
-    def __init__(self, wait_effect=None, run_fails=False, existing=False, wait_fails=False):
+    def __init__(self, wait_effect=None, run_fails=False, existing=False, wait_fails=False, inspect_error=None):
         self.calls = []
+        self.inspect_error = inspect_error
         self.wait_effect = wait_effect
         self.run_fails = run_fails
         self.wait_fails = wait_fails
@@ -62,7 +63,12 @@ class FakeDocker:
         elif cmd[:3] == ["docker", "image", "inspect"]:
             out = "sha256:feed"
         elif cmd[:3] == ["docker", "container", "inspect"]:
-            code, out = (1, "") if self.container is None else (0, str(self.container == "running").lower())
+            if self.inspect_error:
+                code, err = 1, self.inspect_error
+            elif self.container is None:
+                code, err = 1, f"Error: No such container: {cmd[-1]}"
+            else:
+                out = str(self.container == "running").lower()
         elif cmd[:2] == ["docker", "run"]:
             if self.run_fails:
                 code, err = 125, "conflict"
@@ -415,40 +421,56 @@ class HandBackTests(unittest.TestCase):
         self.addCleanup(temp.cleanup)
         self.folder = Path(temp.name) / "Glacius Labs" / "results"
         (self.folder / "audit").mkdir(parents=True)
+        (self.folder / "audit" / "run.json").write_text("{}", encoding="utf-8")
         self.owner = self.folder.stat().st_uid
+        self.other = (self.owner + 1, 4242)
 
-    def hand_back(self, operator, docker):
+    def hand_back(self, operator, docker, foreign=None):
         with mock.patch.object(host, "_operator", return_value=operator), \
-                mock.patch.object(host.subprocess, "run", docker.run):
+                mock.patch.object(host.subprocess, "run", docker.run), contextlib.ExitStack() as stack:
+            if foreign is not None:  # entries not owned by the operator, before and after chown
+                stack.enter_context(mock.patch.object(host, "_foreign", side_effect=foreign))
             return host.hand_back("mpg-x", "sha256:feed", self.folder)
+
+    def test_foreign_counts_every_entry_of_another_owner(self):
+        self.assertEqual(host._foreign(self.folder, self.owner), 0)
+        self.assertEqual(host._foreign(self.folder, self.owner + 1), 2)
 
     def test_not_needed_without_operator_or_when_the_operator_owns_the_output(self):
         docker = FakeDocker()
         self.assertEqual(self.hand_back(None, docker), "not-needed")  # Windows or root
-        self.assertEqual(self.hand_back((self.owner, 1000), docker), "not-needed")  # rootless engine
+        self.assertEqual(self.hand_back((self.owner, 1000), docker), "not-needed")  # e.g. rootless engine
         self.assertEqual(docker.calls, [])
 
-    def test_foreign_output_is_given_back_without_following_links(self):
+    def test_output_gets_the_parents_owner_without_following_links(self):
         docker = FakeDocker()
-        self.assertEqual(self.hand_back((self.owner + 1, 4242), docker), "done")
+        self.assertEqual(self.hand_back(self.other, docker, foreign=[2, 0]), "done")
         self.assertEqual(docker.commands(), ["docker container", "docker run"])
         run = docker.calls[1]
         self.assertEqual(run[:3], ["docker", "run", "--rm"])
-        for flag, value in (("--network", "none"), ("--user", "0:0"), ("--entrypoint", "chown"),
-                            ("--mount", host._mount(self.folder, "/handback"))):
+        for flag, value in (("--network", "none"), ("--user", "0:0"), ("--entrypoint", "chown")):
             self.assertEqual(run[run.index(flag) + 1], value)
-        self.assertEqual(run[-5:], ["sha256:feed", "-R", "--no-dereference", f"{self.owner + 1}:4242",
+        mounts = [run[i + 1] for i, arg in enumerate(run) if arg == "--mount"]
+        self.assertEqual(mounts, [host._mount(self.folder.parent, "/reference", readonly=True),
+                                  host._mount(self.folder, "/handback")])
+        self.assertEqual(run[-5:], ["sha256:feed", "-R", "--no-dereference", "--reference=/reference",
                                     "/handback"])
 
-    def test_nothing_is_handed_back_while_the_container_runs(self):
-        docker = FakeDocker()
-        docker.container = "running"  # e.g. docker wait failed; the agent may still be inside
-        self.assertEqual(self.hand_back((self.owner + 1, 4242), docker),
-                         "skipped: container mpg-x is still running")
-        self.assertNotIn("docker run", docker.commands())
+    def test_entries_left_after_chown_are_reported(self):  # e.g. userns-remap
+        self.assertEqual(self.hand_back(self.other, FakeDocker(), foreign=[2, 1]),
+                         "failed: 1 entries still belong to another user")
+
+    def test_nothing_is_handed_back_unless_docker_confirms_the_container_stopped(self):
+        running = FakeDocker()
+        running.container = "running"  # e.g. docker wait failed; the agent may still be inside
+        unknown = FakeDocker(inspect_error="Cannot connect to the Docker daemon")
+        for docker in (running, unknown):
+            self.assertEqual(self.hand_back(self.other, docker, foreign=[2]),
+                             "skipped: container mpg-x may still be running")
+            self.assertNotIn("docker run", docker.commands())
 
     def test_failure_is_reported_not_raised(self):
-        self.assertEqual(self.hand_back((self.owner + 1, 4242), FakeDocker(run_fails=True)), "failed: conflict")
+        self.assertEqual(self.hand_back(self.other, FakeDocker(run_fails=True), foreign=[2]), "failed: conflict")
 
 
 class CleanTests(unittest.TestCase):

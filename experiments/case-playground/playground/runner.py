@@ -451,6 +451,10 @@ def run(manifest: dict, out: Path, *, in_dir: Path = Path("/in"), work_root: Pat
     out.mkdir(parents=True, exist_ok=True)
     hide_results = codex_agent.container_mode()
     if hide_results:
+        # On a Linux host the mounted folder belongs to the host user, who usually shares
+        # uid 1000 with the agent; root takes it over, or 0700 would not keep the agent out.
+        owner = out.stat()
+        os.chown(out, 0, 0)
         os.chmod(out, 0o700)  # check results and audit stay invisible to the agent user
     started = time.monotonic()
     state: dict[str, Any] = {
@@ -489,6 +493,7 @@ def run(manifest: dict, out: Path, *, in_dir: Path = Path("/in"), work_root: Pat
         code = 2
     if hide_results:
         os.chmod(out, 0o755)  # all agent processes are gone; let the host read the results
+        os.chown(out, owner.st_uid, owner.st_gid)
     _log(f"done: {state['status']} (exit {code})")
     return code
 

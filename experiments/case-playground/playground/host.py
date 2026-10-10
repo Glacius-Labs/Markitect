@@ -103,39 +103,63 @@ def _operator() -> tuple[int, int] | None:
     return os.getuid(), os.getgid()
 
 
+def _foreign(folder: Path, uid: int) -> int:
+    """Entries below `folder` not owned by `uid`; a folder that cannot be listed counts."""
+    count = 0
+
+    def unreadable(error: OSError) -> None:
+        nonlocal count
+        count += 1
+
+    for root, dirs, files in os.walk(folder, onerror=unreadable):
+        for name in dirs + files:
+            try:
+                count += os.lstat(os.path.join(root, name)).st_uid != uid
+            except FileNotFoundError:
+                pass
+    return count
+
+
+def _stopped(container: str) -> bool:
+    """True only when Docker confirms that the container has stopped or no longer exists."""
+    done = _call(["docker", "container", "inspect", "--format", "{{.State.Running}}", container],
+                 capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if done.returncode == 0:
+        return done.stdout.strip() == "false"
+    error = (done.stderr or "").lower()
+    return "no such container" in error or "no such object" in error
+
+
 def hand_back(container: str, image: str, folder: Path) -> str:
     """Give a container's output folder back to the host user: "done", "not-needed",
     "skipped: ..." or "failed: ...".
 
     Containers write as root and keep snapshots root-only (0700), so on a Linux host the
     operator could neither read nor delete a run. A short root container in the same
-    image changes the owner, without following links. Nothing is needed on Windows, as
-    root, or when the engine already maps container root to the operator (rootless
-    Docker, Docker Desktop on macOS). The host user usually shares uid 1000 with the
-    container's agent, so nothing is handed back while `container` still runs.
+    image gives everything below `folder`, without following links, the owner of
+    `folder`'s parent, which the host created; that owner maps to the operator under
+    rootless and rootful engines alike. Nothing is needed on Windows, as root, or when
+    the engine already maps container root to the operator. The host user usually shares
+    uid 1000 with the container's agent, so nothing is handed back unless Docker confirms
+    that `container` has stopped.
     """
     operator = _operator()
-    if operator is None:
+    if operator is None or not _foreign(folder, operator[0]):
         return "not-needed"
-    try:
-        foreign = [entry for entry in os.scandir(folder)
-                   if entry.stat(follow_symlinks=False).st_uid != operator[0]]
-    except OSError as exc:
-        return f"failed: {exc}"
-    if not foreign:
-        return "not-needed"
-    if _container_state(container) == "running":
-        return f"skipped: container {container} is still running"
-    cmd =["docker", "run", "--rm", "--label", LABEL, "--network", "none", "--user", "0:0",
+    cmd = ["docker", "run", "--rm", "--label", LABEL, "--network", "none", "--user", "0:0",
+           "--mount", _mount(folder.parent, "/reference", readonly=True),
            "--mount", _mount(folder, "/handback"), "--entrypoint", "chown", image,
-           "-R", "--no-dereference", f"{operator[0]}:{operator[1]}", "/handback"]
+           "-R", "--no-dereference", "--reference=/reference", "/handback"]
     try:
+        if not _stopped(container):
+            return f"skipped: container {container} may still be running"
         done = _call(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
     except (HostError, subprocess.TimeoutExpired) as exc:
         return f"failed: {exc}"
     if done.returncode != 0:
         return f"failed: {(done.stderr or done.stdout).strip() or f'exit {done.returncode}'}"
-    return "done"
+    left = _foreign(folder, operator[0])
+    return f"failed: {left} entries still belong to another user" if left else "done"
 
 
 def _mount(source: Path, target: str, readonly: bool = False) -> str:
@@ -369,11 +393,13 @@ def run(args: argparse.Namespace) -> int:
     finally:
         if record["containerLaunched"]:
             _finish_container(name, record, out, args.keep_container)
+        record["endedAt"] = _now()
+        _write_json(out / "host.json", record)  # first, so an interrupted hand-back keeps the record
+        if record["containerLaunched"]:
             record["handBack"] = hand_back(name, record["image"]["id"] or record["image"]["tag"], results)
+            _write_json(out / "host.json", record)
             if record["handBack"].startswith(("failed", "skipped")):
                 print(f"warning: {results} stays owned by root ({record['handBack']})", file=sys.stderr)
-        record["endedAt"] = _now()
-        _write_json(out / "host.json", record)
     print(f"host record: {out / 'host.json'}")
     print(f"report: {results / 'report.md'}")
     return exit_code

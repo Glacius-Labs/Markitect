@@ -1166,13 +1166,14 @@ def host_assess(args: argparse.Namespace) -> int:
         print(f"error: {exc}", file=sys.stderr)
     finally:
         host._finish_container(name, result, out, args.keep_container)
-        result["handBack"] = host.hand_back(name, image_id, out)
-        if result["handBack"].startswith(("failed", "skipped")):
-            print(f"warning: {out} stays owned by root ({result['handBack']})", file=sys.stderr)
         if throwaway is not None:
             shutil.rmtree(throwaway, ignore_errors=True)
         result["endedAt"] = _utc()
+        _write_json(out / "host.json", result)  # first, so an interrupted hand-back keeps the record
+        result["handBack"] = host.hand_back(name, image_id, out)
         _write_json(out / "host.json", result)
+        if result["handBack"].startswith(("failed", "skipped")):
+            print(f"warning: {out} stays owned by root ({result['handBack']})", file=sys.stderr)
     print(f"assessment: {out / 'report.md'}")
     return exit_code
 
