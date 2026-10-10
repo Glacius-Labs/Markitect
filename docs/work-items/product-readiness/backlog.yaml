@@ -319,7 +319,7 @@ native_acceptance:
     cumulative_known_provider_starts: 9
     cumulative_known_estimated_cost_micros: 2982357
     cost_accounting: partial_observed_lower_bound_not_invoice
-  latest_actual:
+  attempt_9:
     batch_id: a01-compose-bfad02aab273447391953a429e2c3980
     attempt_number: 9
     native_run_number: 10
@@ -355,16 +355,60 @@ native_acceptance:
     cumulative_known_provider_starts: 10
     cumulative_estimated_cost_micros: 3511133
     cost_accounting: partial_observed_lower_bound_not_invoice
+  latest_actual:
+    batch_id: a01-evidence-4d64c087720d415a8194f1ac00cbfe1a
+    attempt_number: 10
+    native_run_number: 11
+    status: failed_not_passed
+    source_revision: 8e0d103a13650036bc8ac98fdca98fcf38ffd98a
+    binary_sha256: 99a13305ce58def97100d700aa6179cdeb3504a1c9cf71d52469f44d82344564
+    owned_project_revision: eaa11e9969db66e6c1a5cd80949cfb757074ce54
+    plan_id: 8b4f3f3a4e1faec36d8d33a909e069f0
+    plan_sha256: e3cdb07b7272d01ca0f1cd310240eac9c1eb9ef4e30a04431fd5d679c53cf183
+    observer_id: a9906b87b64f4318aeb3fe995f3c7935
+    observer_record_sha256: 75698624a7f43886ebcc4dd5bc68088426752a6153658d5ceff6df827d3e6313
+    private_record_sha256: 8ec3a43298cd35b7e8a7d8637473f647ea19a95ade8237c90c18301900fbe815
+    actual_started_utc: '2026-10-10T00:29:26.7387605Z'
+    terminal_utc: '2026-10-10T00:30:27.4449127Z'
+    observer_exit_code: 2
+    observer_boundary_observed: false
+    root_native_run_id: 8023c6419e3c89d8748256f6afd36858
+    root_native_session: 01a12337-2312-7240-baba-57de5058881e
+    root_native_turn: 01a12337-2530-78a3-a02e-cb8113104793
+    root_turn_state: completed
+    root_outer_outcome: proposed
+    root_report_status: partial
+    root_report_acceptance: rejected_by_strict_evidence_reference_validation
+    returned_evidence_refs: ['README.md', '["project.mark', '["project.mark']
+    scratch_cleanup: denied_unconfirmed
+    workspace_id: ae10dbc139950a49e5252e14549eb7a8
+    workspace_state: closed
+    workspace_delta_paths: [README.md]
+    candidate_integrated: false
+    helper_reservations: 0
+    helper_native_child_starts: 0
+    manager_overlap_observed: false
+    verify_apply_recovery_observed: false
+    role_start_requests: 1
+    provider_starts: 1
+    input_tokens: 519039
+    output_tokens: 4300
+    cached_input_tokens: 464384
+    attempt_estimated_cost_micros: 527639
+    cumulative_known_role_start_requests: 14
+    cumulative_known_provider_starts: 11
+    cumulative_estimated_cost_micros: 4038772
+    cost_accounting: partial_observed_lower_bound_not_invoice
   next_batch:
-    status: evidence_refs_contract_fix_in_progress_next_pins_pending
+    status: native_evidence_reference_output_investigation_next_pins_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
     new_batch_pins: none
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
-    no_tenth_actual_claimed: true
+    no_eleventh_actual_claimed: true
     owner_repair_in_progress: true
-    repair: constrain_native_evidence_refs_to_values_supplied_in_the_request_without_weakening_validation
+    repair: investigate_provider_nonconformance_to_request_bound_evidence_enum_without_weakening_validation
     next_shared_native_defaults: { memories: false, login: false }
     intended_profile:
       fresh_native_roles: workspace_permission
@@ -395,10 +439,10 @@ native_acceptance:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_used_for_latest_attempt: 86589befc34f84f7d7ff9ed380901f169f114d38
-    binary_sha256: c54c4bdf0d15a69e8e52012627bcf94ae2f78973be095036f459fbc7ef065daf
-    latest_native_acceptance: failed_not_passed_attempt_9
-    next_repair: native_evidence_refs_request_binding
+    source_revision_used_for_latest_attempt: 8e0d103a13650036bc8ac98fdca98fcf38ffd98a
+    binary_sha256: 99a13305ce58def97100d700aa6179cdeb3504a1c9cf71d52469f44d82344564
+    latest_native_acceptance: failed_not_passed_attempt_10
+    next_repair: investigate_native_evidence_reference_enum_provider_output
     next_batch_pins: pending
   prior_batch_history:
     revision: generous-native-limits-20261009
