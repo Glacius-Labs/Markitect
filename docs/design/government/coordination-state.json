@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T04:09:35.474448+00:00",
+  "updatedUtc": "2026-10-10T04:28:36.979754+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17869,7 +17869,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL12_REAL_HELPER_AND_SIBLING_OVERLAP_REPORTED_REVIEW_FINDINGS_CORRECTION_CLEAN_PUBLIC",
+    "status": "ACTUAL13_WINDOWS_ALIAS_SHELL_AND_REVIEW_GROUNDING_FAILURE_OWNER_NARROW_FIX_REVIEW",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18121,6 +18121,23 @@
       "correction": "Findings actionable defects only; pass requires [], positive evidence in summary. No rewriting verdict or weakening strict validation.",
       "checksOwnerReported": "Decode/context/scope/grounding PASS6.536s; independent review closed",
       "next": "Owner preserve terminal evidence/clean freeze, fresh normal bounded A01 under existing authority; no extra RootGo/grant/case/release",
+      "fullWorkflowAccepted": false
+    },
+    "actual13Terminal": {
+      "sourceSha": "5ad9e069ee6252ba9a9dd66b8986383ecec3b7f4",
+      "plan": "3a021f942d3b80f287ec9000d2af1632",
+      "ownerReported": "Root shell wrote through Package-LocalCache alias AccessDenied; same scope/profile actual12 nativefileChange worked. Reviewer returned prose instead of supplied exact grounding reference, strict guard rejected. No siblings/helper/integration/Verify/Apply/recovery. Scientist independently confirms; cmd.Dir and allow_login_shell=false already set.",
+      "rootObserved": "Public source5ad9 exact; current five-file WIP adds exactHostCWD+nativeedit recommendation and exact grounding guidance, not accepted freeze. Original raw native failure not independently read by Root here; exact alias cause not asserted.",
+      "newRequests": 2,
+      "newProviders": 2,
+      "newPartialEstimateMicros": 503084,
+      "cumulativeRequests": 26,
+      "cumulativeProviders": 23,
+      "cumulativePartialEstimateMicros": 6923960,
+      "costQualification": "Partial lower-bound estimate, not invoice",
+      "sourceSuiteQualification": "Owner explicitly withdraws SHA-fixed full-suite credit: source changed during local full suite. Exact final hosted CI required.",
+      "rootAdditiveDirectionSentOnce": "Do not globally restrict repository edits to native editor/remove normal scoped shell file work; actual harvest tool-independent. Editor preferred conditional on observed alias error, same own CWD and ordinary permitted tools remain. Diagnose actual alias from retained original, no general capability probe/rights widening.",
+      "next": "Owner concrete CWD/grounding fix focused checks/review then ordinary fresh A01; keep scope/guards and historical evidence, no new Go/grant",
       "fullWorkflowAccepted": false
     }
   },
