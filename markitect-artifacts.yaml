@@ -1965,6 +1965,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/guardedwrite/helpers_test.go
       owner: project-world-implementation
+    - path: src/internal/host/guardedwrite/testmain_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectadoption/adopt.go
       owner: project-world-implementation
     - path: src/internal/host/projectadoption/bindings.go
