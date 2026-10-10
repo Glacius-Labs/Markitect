@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T06:28:16.437236+00:00",
+  "updatedUtc": "2026-10-10T06:38:44.293588+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18307,7 +18307,7 @@
       "boundary": "No new startreceipt/PlanID observed yet, no completion/Main/release/study acceptance."
     },
     "actual16Running": {
-      "status": "ROOT_INTERRUPTION_REACHED_ORIGINAL_NATIVE_TURN_COMPLETED_RESUME_INTEGRATION_REVIEW_OWNER_RUNNING",
+      "status": "SAME_BUILD_ORIGINAL_ROOT_RECOVERY_VERIFIED_VERIFY_AUDITS_FAILED_NO_APPLY",
       "batchId": "a01-same-build-recovery-00a5ce211ff2446dab3bad76465b61df",
       "planId": "3a6a39ae59f7cfb18cb39f47b3d346ee",
       "planDigest": "sha256:a47c13a4331d647fc100fa6977277300337208d690d1949db617c29aa716de1a",
@@ -18338,7 +18338,22 @@
         "ownerReported": "3 Workreviews PASS, genuine helper applied-and-closed, direct siblings overlap19.7761311s. Same04ca/bc265 normalResume bab416738020470c86c653b83ae473d4 state32 Rootintegrated/integrationReviewinvoking.",
         "limits": "Root exact native completion independently verified, not Hostreceipt/overall PASS. Original saved journal identity/no replay final comparison pending; Verify/Apply not complete. No blocking live journal/state read."
       },
-      "ciFollowup": "Owner source review found four old ./cmd adapter build paths in extracted source.zip CI/release workflow; bounded fix delegated. Final exact-head hosted gates separate, no release or proof binary mutation inferred."
+      "ciFollowup": "Owner source review found four old ./cmd adapter build paths in extracted source.zip CI/release workflow; bounded fix delegated. Final exact-head hosted gates separate, no release or proof binary mutation inferred.",
+      "recovery": {
+        "ownerResume": "bab416738020470c86c653b83ae473d4 Exit0 ended2026-10-10T06:29:10.8389197Z, state35 integrated candidate494b1e8c92486207f5a1de3dac218283 and integrationreviewPASS; source/docsattempts1",
+        "rootVerified": "Exact original private workspace05b9217678ba442e478fe18e04fd4e28 read with explicit ReadWrite|Delete, stream disposed before JSON parse. Journal stateclosed, ownerRunId3a6a39ae59f7cfb18cb39f47b3d346ee, project-owner-integrate-1, receipt+cached receiptRunIDa79ae38480ddada0715b58a9ad61907b identical to original native completed turn; receipt outcomeproposed/inputDigestsha256:e3aa2d7c0413f80b3494c255c71a3d274ffe778baa3e4006a83400ec1eba4c53. Confirms original result recovered/closed; whole start union audit still pending."
+      },
+      "verificationFailure": {
+        "ownerVerify": "e4e891 prefix2026-10-10T06:29:43.828Z-06:34:59.680Z Exit1/state42failed",
+        "focusedCheck": "python PASS owner reported",
+        "audits": "Docs/root outerincomplete/noaudits; Source proposed but invented Documentation semantics subject and omitted required briefings; strict guard rejected, no Apply/fullPASS.",
+        "next": "Owner bounded exact semantic answer/generic audit guidance/schema diagnosis; no weakening. Counts/cost final union pending."
+      }
+    },
+    "integrationReadinessFollowups": {
+      "packagedWorkflowSource": "4fe7fd7f local committed four adapter build paths corrected; Root two-file commitstat inspected; owner archive Windows/Linuxbuild/independentreview PASS. Remote still04ca atinspection, not yet claimed pushed.",
+      "otherOwnerWork": "Remaining active ./examples/docsPRtemplate oldpaths bounded fix assigned. Possible Windows core.filemodefalse tracked100755 vs NTFS0644 false-drift under concrete owned-temp reproduction before sourcefix; not confirmed currentcause or Mainacceptance.",
+      "boundary": "Actual16 original04ca/bc265 binary kept, later source commits separate. No release/extra study/new broadmatrix."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
