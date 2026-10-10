@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T00:56:02.603602+00:00",
+  "updatedUtc": "2026-10-10T00:58:44.744588+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "FINAL_SCHEMA_JOURNAL_REGRESSION_FROZEN_STALE_PLAN_PREFLIGHT_ZERO_START_OWNER_REFRESHING",
+    "status": "FRESH_SEMANTIC_A01_ROOT_REPORT_ACCEPTED_INDEPENDENT_REVIEW_RUNNING_OWNER_REPORTED",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18060,6 +18060,25 @@
       "preflightRoleRequests": 0,
       "cumulativeUnchanged": "14requests/11starts/4038772partialestimate NOTinvoice",
       "next": "Owner refreshes normal readiness/Plan against final binary then Run within same finite batch. No replay/new Root grant/repeated order, no acceptance claimed."
+    },
+    "freshSemanticActualProgress": {
+      "sourceSha": "354b08ff8ea4d80f85959fa62d871ee09bd6a88d",
+      "binarySha256": "3d5b13477f6d9019e6ed52cf511ed0ec6fd7e806c1d53afa47a301aa70d89bd2",
+      "planId": "f66bc6a666870551adb97dc66b96f774",
+      "planDigest": "sha256:e8f1866a23e195bb6de212c42e4f723494c02502733bfa7861e19996219aa224",
+      "batch": "a01-semantic-b9d9dc1428754b70a5e8d5cd9e9839e4",
+      "ownerReported": "Fresh normal Run: Root Manager valid semantic report accepted reportStatus=complete with README workspace work; independent Review started. No identity/reference decoding failure. Actual private outgoing turn/start frame seq8 records only semantic schema fields.",
+      "evidenceQualification": "Actual raw receipt/frame not independently read by Root this callback; existing clean source/public freeze verified earlier.",
+      "partialNewEstimateMicros": 590796,
+      "historicalLedgerUnchanged": "Previous closed14requests/11starts/4038772partial estimate retained; current running batch not finalized or silently added as closed.",
+      "stillUnproven": [
+        "helper/sibling overlap",
+        "Verify",
+        "Apply",
+        "original recovery"
+      ],
+      "next": "Owner continues normal finite A01 autonomously; no repeated order/new gate/grant",
+      "fullWorkflowAccepted": false
     }
   }
 }

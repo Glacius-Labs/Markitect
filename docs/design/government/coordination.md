@@ -2051,3 +2051,7 @@ Root verified clean exact local/public b4b0c053. Owner reports independently rev
 ### Final sent-schema regression and stale-plan operator correction
 
 Root verified clean exact local/public354b08ff, adapter-test-only delta. Owner reports actual Adapter OnEvent schema assertion0.486s/reviewPASS and rebuilt binary3d5b1347. Prior Plan mistakenly reused after rebuild; normal Run correctly rejected stale preflight with0requests/0providerstarts/no run state. Preserved in same a01-semantic-b9d9 batch/observercd3ff; deadline04:54:36Z unchanged, cumulative14/11/4038772partialunchanged. Owner normal final-binary readiness/Plan refresh then Run, no replay/new Root grant or repeated instruction. Full workflow still unaccepted.
+
+### Fresh normal A01 accepts semantic root report; independent Review started
+
+Owner unchanged354b08ff/binary3d5b fresh Planf66bc6 normal Run accepts complete root report and README work, independent Review starts. Previous identity/reference rejection not observed. Actual private outgoing frame seq8 now captured with semantic-only schema fields; Root has not independently read raw frame/receipt this callback. Current partial590796 estimate separate from closed historical14/11/4038772; helper/sibling overlap/Verify/Apply/original recovery still unproven. Owner continues same ordinary finite batch without repeated Root order or grant.
