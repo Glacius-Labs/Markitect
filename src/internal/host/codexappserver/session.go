@@ -285,7 +285,7 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 	var begun struct {
 		Turn turn `json:"turn"`
 	}
-	prompt := nativeTurnPrompt(inv, wire)
+	prompt := nativeTurnPrompt(inv, wire, opts.Workspace.CWD)
 	turnParams := map[string]any{"threadId": s.h.ThreadID, "input": []any{map[string]any{"type": "text", "text": prompt}}, "model": a.config.Model, "effort": a.config.ReasoningEffort, "cwd": opts.Workspace.CWD}
 	if schema := nativeTurnOutputSchema(inv); schema != nil {
 		turnParams["outputSchema"] = schema
@@ -332,7 +332,7 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 	return result, nil
 }
 
-func nativeTurnPrompt(inv agentexec.Invocation, wire []byte) string {
+func nativeTurnPrompt(inv agentexec.Invocation, wire []byte, workspaceCWD string) string {
 	contract := "Wire response contract:\n"
 	if inv.Request.Role == agentexec.RoleExecutor || inv.Request.Role == agentexec.RoleVerifier {
 		contract += "- Return exactly one JSON object and no surrounding Markdown. Return only the role's semantic properties in the constrained schema; do not include invocation identity fields. The Host binds those from the trusted invocation.\n" +
@@ -405,9 +405,35 @@ func nativeTurnPrompt(inv agentexec.Invocation, wire []byte) string {
 			opening = "Assess the exact supplied review candidate using ordinary read-only project tools and cited context. This is an assessment only; do not implement the overall RunGoal, edit repository artifacts, invoke Host helpers, or dispatch work. The Manager task, accepted model, and child task definitions are review context only.\n"
 		}
 	}
+	opening += "Run every shell command from the exact Host-owned workspace CWD supplied here: " + workspaceCWD + ". Before using a shell to read, check, or write files, explicitly set and verify that working directory; shell processes may start elsewhere.\n"
+	if nativeWritableManagerOrHelper(inv) {
+		opening += "Within allowedWritePaths, ordinary project tools including scoped shell writes may edit repository files. On Windows, prefer the native file-change/editor tool when the workspace alias or a packaged AppData\\Local\\Packages\\...\\LocalCache path causes shell access problems. Do not switch to a path under that LocalCache tree even if a tool prints one. If a shell write is denied, do not retry through another filesystem path or request/add permissions; use the native file-change/editor operation, or report the observed limitation if that operation is unavailable.\n"
+	}
 	return opening +
 		"When tests or tools need scratch space or caches, use a fresh directory you own under the inherited OS temporary directory and create, use, and clean it up within the same shell call because Windows temporary paths can differ between calls. Do not create scratch space when it is not needed. Review and verification must leave repository artifacts unchanged.\n" +
 		contract + "\nInvocation:\n" + string(wire)
+}
+
+func nativeWritableManagerOrHelper(inv agentexec.Invocation) bool {
+	if inv.Request.Role != agentexec.RoleExecutor {
+		return false
+	}
+	var context struct {
+		Kind              string   `json:"kind"`
+		Phase             string   `json:"phase"`
+		AllowedWritePaths []string `json:"allowedWritePaths"`
+	}
+	if json.Unmarshal(inv.Request.Context, &context) != nil || len(context.AllowedWritePaths) == 0 {
+		return false
+	}
+	switch context.Kind {
+	case "projectrun-task/v1":
+		return context.Phase == "work" || context.Phase == "integrate"
+	case "projectrun-helper/v1":
+		return true
+	default:
+		return false
+	}
 }
 
 // Constrain the native final message to the existing closed wire DTO. The Host

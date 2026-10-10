@@ -391,7 +391,7 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	prompt := nativeTurnPrompt(inv, wire)
+	prompt := nativeTurnPrompt(inv, wire, `C:\workspace\repo`)
 	schema := nativeTurnOutputSchema(inv)
 	properties := schema["properties"].(map[string]any)
 	if properties["candidateFiles"].(map[string]any)["maxItems"] != 0 || !strings.Contains(string(properties["reportJson"].(json.RawMessage)), `"additionalProperties":false`) {
@@ -467,7 +467,7 @@ func TestNativeSemanticResponseComposesTrustedMetadataAndRejectsModelMetadata(t 
 			t.Fatalf("schema exposes Host-owned metadata field %q", key)
 		}
 	}
-	prompt := nativeTurnPrompt(inv, []byte(`{"request":{"globalGoal":"Implement greeting support"}}`))
+	prompt := nativeTurnPrompt(inv, []byte(`{"request":{"globalGoal":"Implement greeting support"}}`), `C:\workspace\repo`)
 	for _, clause := range []string{"do not include invocation identity fields", "Do not include evidenceRefs; the Host supplies an empty array", "Do not invent lifecycle or workspace delta"} {
 		if !strings.Contains(prompt, clause) {
 			t.Errorf("native prompt omits semantic transport boundary %q", clause)
@@ -535,7 +535,7 @@ func TestNativeVerifierEvidenceAliasesPreserveCoverageWithoutHostFilling(t *test
 	if strings.Join(enum, "\x00") != strings.Join(values, "\x00") {
 		t.Fatalf("verifier schema enum differs from collision-free request aliases: got=%#v want=%#v", enum, values)
 	}
-	prompt := nativeTurnPrompt(inv, []byte(`{}`))
+	prompt := nativeTurnPrompt(inv, []byte(`{}`), `C:\workspace\repo`)
 	for _, alias := range values {
 		if !strings.Contains(prompt, alias) {
 			t.Fatalf("verifier prompt omitted exact alias %q", alias)
@@ -607,7 +607,7 @@ func TestNativeVerifierPromptBindsRequiredSubsetSeparatelyFromAllowedEvidence(t 
 	if len(allowed) != 3 || len(required) != 2 {
 		t.Fatalf("allowed and required evidence sets were conflated: allowed=%#v required=%#v", allowed, required)
 	}
-	prompt := nativeTurnPrompt(inv, []byte(`{}`))
+	prompt := nativeTurnPrompt(inv, []byte(`{}`), `C:\workspace\repo`)
 	requiredValues := make([]string, 0, len(required))
 	for alias := range required {
 		requiredValues = append(requiredValues, alias)
@@ -828,7 +828,7 @@ func TestNativeReviewPromptKeepsGlobalGoalAndDelegationsAssessmentOnly(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	prompt := nativeTurnPrompt(invocation, wire)
+	prompt := nativeTurnPrompt(invocation, wire, `C:\workspace\repo`)
 	if !strings.HasPrefix(prompt, "Assess the exact supplied review candidate") ||
 		!strings.Contains(prompt, "assessment only") || !strings.Contains(prompt, "do not implement the overall RunGoal") ||
 		!strings.Contains(prompt, "Manager task, accepted model, and child task definitions are review context only") {
@@ -836,6 +836,56 @@ func TestNativeReviewPromptKeepsGlobalGoalAndDelegationsAssessmentOnly(t *testin
 	}
 	if strings.Contains(prompt, "Implement/assess the supplied Host invocation") {
 		t.Fatal("review prompt retained the generic implementation opening")
+	}
+	if !strings.Contains(prompt, `Run every shell command from the exact Host-owned workspace CWD supplied here: C:\workspace\repo`) ||
+		strings.Contains(prompt, "scoped shell writes may edit repository files") || strings.Contains(prompt, "prefer the native file-change/editor tool") {
+		t.Fatalf("review prompt lost common workspace guidance or received write guidance: %s", prompt)
+	}
+}
+
+func TestNativeWorkspaceEditingGuidanceIsLimitedToWritableManagersAndHelpers(t *testing.T) {
+	const workspaceCWD = `C:\owned\workspace\repo`
+	cases := []struct {
+		name      string
+		role      string
+		context   string
+		wantWrite bool
+	}{
+		{name: "manager work", role: agentexec.RoleExecutor, context: `{"kind":"projectrun-task/v1","phase":"work","allowedWritePaths":["README.md"]}`, wantWrite: true},
+		{name: "manager integration", role: agentexec.RoleExecutor, context: `{"kind":"projectrun-task/v1","phase":"integrate","allowedWritePaths":["README.md"]}`, wantWrite: true},
+		{name: "helper", role: agentexec.RoleExecutor, context: `{"kind":"projectrun-helper/v1","allowedWritePaths":["docs/"]}`, wantWrite: true},
+		{name: "manager without write scope", role: agentexec.RoleExecutor, context: `{"kind":"projectrun-task/v1","phase":"work","allowedWritePaths":[]}`},
+		{name: "review", role: agentexec.RoleExecutor, context: `{"kind":"projectrun-review/v1","allowedWritePaths":["README.md"]}`},
+		{name: "verifier", role: agentexec.RoleVerifier, context: `{"kind":"projectrun-task/v1","phase":"work","allowedWritePaths":["README.md"]}`},
+		{name: "inference", role: agentexec.RoleInfer, context: `{"kind":"projectrun-task/v1","phase":"work","allowedWritePaths":["README.md"]}`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			inv := agentexec.Invocation{Request: agentexec.Request{Role: tc.role, Context: json.RawMessage(tc.context)}}
+			prompt := nativeTurnPrompt(inv, []byte(`{}`), workspaceCWD)
+			containsGuidance := strings.Contains(prompt, "scoped shell writes may edit repository files")
+			if containsGuidance != tc.wantWrite {
+				t.Fatalf("writable editing guidance present=%t, want %t: %s", containsGuidance, tc.wantWrite, prompt)
+			}
+			commonCWD := "Run every shell command from the exact Host-owned workspace CWD supplied here: " + workspaceCWD + ". Before using a shell to read, check, or write files, explicitly set and verify that working directory; shell processes may start elsewhere."
+			if !strings.Contains(prompt, commonCWD) {
+				t.Fatalf("invocation prompt omitted common workspace CWD guidance: %s", prompt)
+			}
+			if tc.wantWrite {
+				for _, required := range []string{
+					"ordinary project tools including scoped shell writes may edit repository files",
+					"On Windows, prefer the native file-change/editor tool",
+					"Do not switch to a path under that LocalCache tree",
+					"If a shell write is denied, do not retry through another filesystem path or request/add permissions",
+				} {
+					if !strings.Contains(prompt, required) {
+						t.Errorf("writable invocation prompt omits %q", required)
+					}
+				}
+			} else if strings.Contains(prompt, "scoped shell writes may edit repository files") || strings.Contains(prompt, "prefer the native file-change/editor tool") || strings.Contains(prompt, "AppData\\Local\\Packages") || strings.Contains(prompt, "If a shell write is denied") {
+				t.Fatalf("read-only or non-writable invocation received write guidance: %s", prompt)
+			}
+		})
 	}
 }
 
