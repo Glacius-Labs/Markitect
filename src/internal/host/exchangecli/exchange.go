@@ -103,16 +103,30 @@ func Exchange(ctx context.Context, dir string, poll time.Duration, raw []byte, n
 		case err == nil && previous != nil && info.Size() == previous.Size() && info.ModTime().Equal(previous.ModTime()):
 			// Accept only a file that did not change between two polls, so a
 			// writer that does not rename atomically is not read half-written.
-			response, reason := completeResponse(responsePath, invocation)
+			previous = nil
+			data, readErr := readResponse(responsePath)
+			if readErr != nil {
+				// A writer may still hold the file; try again on the next poll.
+				fmt.Fprintf(notices, "markitect-exchange-executor: response not readable yet: %v\n", readErr)
+				break
+			}
+			var response []byte
+			reason := fmt.Errorf("response exceeds %d bytes", maxResponseBytes)
+			if len(data) <= maxResponseBytes {
+				response, reason = completeResponse(data, invocation)
+			}
 			if reason == nil {
+				// The request holds scoped repository content and the Host keeps
+				// its own records, so the exchange copy is removed.
+				_ = os.RemoveAll(exchangeDir)
 				return response, nil
 			}
-			rejected++
-			if err := rejectResponse(exchangeDir, rejected, reason); err != nil {
-				return nil, err
+			if err := rejectResponse(exchangeDir, rejected+1, reason); err != nil {
+				fmt.Fprintf(notices, "markitect-exchange-executor: could not set the invalid response aside yet: %v\n", err)
+				break
 			}
+			rejected++
 			fmt.Fprintf(notices, "markitect-exchange-executor: rejected response %d: %v\n", rejected, reason)
-			previous = nil
 		case err == nil:
 			previous = info
 		case errors.Is(err, os.ErrNotExist):
@@ -131,19 +145,7 @@ func Exchange(ctx context.Context, dir string, poll time.Duration, raw []byte, n
 // completeResponse fills the envelope and validates the result with the same
 // decoder the Host applies, so the responder learns about errors while the
 // invocation is still waiting.
-func completeResponse(path string, invocation agentexec.Invocation) ([]byte, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	data, err := io.ReadAll(io.LimitReader(file, maxResponseBytes+1))
-	file.Close()
-	if err != nil {
-		return nil, err
-	}
-	if len(data) > maxResponseBytes {
-		return nil, fmt.Errorf("response exceeds %d bytes", maxResponseBytes)
-	}
+func completeResponse(data []byte, invocation agentexec.Invocation) ([]byte, error) {
 	var fields map[string]json.RawMessage
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	if err := decoder.Decode(&fields); err != nil || fields == nil || decoder.More() {
@@ -167,14 +169,31 @@ func completeResponse(path string, invocation agentexec.Invocation) ([]byte, err
 			fields[name] = json.RawMessage("[]")
 		}
 	}
-	completed, err := json.Marshal(fields)
-	if err != nil {
+	// Keep <, > and & unescaped so the output is no larger than necessary.
+	var encoded bytes.Buffer
+	encoder := json.NewEncoder(&encoded)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(fields); err != nil {
 		return nil, err
+	}
+	completed := bytes.TrimSuffix(encoded.Bytes(), []byte("\n"))
+	if len(completed) > maxResponseBytes {
+		return nil, fmt.Errorf("completed response has %d bytes; the process transport accepts at most %d", len(completed), maxResponseBytes)
 	}
 	if _, err := agentexec.DecodeResponse(completed, invocation, ""); err != nil {
 		return nil, err
 	}
 	return completed, nil
+}
+
+// readResponse reads response.json, at most one byte beyond the size bound.
+func readResponse(path string) ([]byte, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	return io.ReadAll(io.LimitReader(file, maxResponseBytes+1))
 }
 
 func rejectResponse(dir string, number int, reason error) error {

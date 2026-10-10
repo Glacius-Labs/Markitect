@@ -86,8 +86,8 @@ type RoleOptions struct {
 }
 
 // RoleProfile changes selected fields of the default profile for one role.
-// Empty fields inherit it. Changing the provider inherits only cost settings,
-// so the role must name its own model and, for a process, its executable.
+// Empty fields inherit it. Changing the provider inherits only the rates, so
+// the role must name its own model and, for a process, its executable.
 type RoleProfile struct {
 	Provider               string   `json:"provider,omitempty"`
 	Model                  string   `json:"model,omitempty"`
@@ -124,8 +124,11 @@ type Discovery struct {
 }
 
 type Preview struct {
-	APIVersion   string               `json:"apiVersion"`
-	Discovery    Discovery            `json:"discovery"`
+	APIVersion string    `json:"apiVersion"`
+	Discovery  Discovery `json:"discovery"`
+	// Roles shows the executable each role class pins when role profiles
+	// override the default; Discovery then describes the Manager profile.
+	Roles        map[string]Discovery `json:"roles,omitempty"`
 	PricingBasis string               `json:"pricingBasis"`
 	Mutation     projectwork.Mutation `json:"mutation"`
 	EditPlan     projectwork.EditPlan `json:"editPlan"`
@@ -159,13 +162,28 @@ func previewEditWithDiscovery(project *projectwork.Project, options Options, dis
 	if err != nil {
 		return result, err
 	}
-	discovery, err := discover(options)
+	profiles, err := resolveRoleProfiles(options)
 	if err != nil {
 		return result, err
 	}
-	runtimeConfig, err := buildRuntime(project, options, cachedDiscovery(options, discovery, discover))
+	// Discover only executables that a role uses, each once, Managers first.
+	discoverOnce := cachedDiscovery(nil, discover)
+	discovery, err := discoverOnce(roleSelection(options, profiles[RoleManager]))
 	if err != nil {
 		return result, err
+	}
+	runtimeConfig, err := buildRuntime(project, options, discoverOnce)
+	if err != nil {
+		return result, err
+	}
+	var roles map[string]Discovery
+	if options.Roles != nil {
+		roles = make(map[string]Discovery, len(profiles))
+		for role, profile := range profiles {
+			if roles[role], err = discoverOnce(roleSelection(options, profile)); err != nil {
+				return result, err
+			}
+		}
 	}
 	content, err := yaml.Marshal(runtimeConfig)
 	if err != nil {
@@ -185,6 +203,7 @@ func previewEditWithDiscovery(project *projectwork.Project, options Options, dis
 	return Preview{
 		APIVersion:   "markitect.example.org/project-setup/v1alpha1",
 		Discovery:    discovery,
+		Roles:        roles,
 		PricingBasis: "Caller-supplied budget estimate; not a provider price quote, invoice, or hard billing cap.",
 		Mutation:     mutation, EditPlan: plan,
 	}, nil
@@ -194,13 +213,16 @@ func previewEditWithDiscovery(project *projectwork.Project, options Options, dis
 // default profile's executable; a role that selects another executable is
 // discovered separately.
 func BuildRuntime(project *projectwork.Project, options Options, found Discovery) (projectrun.Runtime, error) {
-	return buildRuntime(project, options, cachedDiscovery(options, found, Discover))
+	return buildRuntime(project, options, cachedDiscovery(map[string]Discovery{discoveryKey(options): found}, Discover))
 }
 
-// cachedDiscovery discovers each selected executable once and returns found
-// for the default profile's selection.
-func cachedDiscovery(options Options, found Discovery, discover func(Options) (Discovery, error)) func(Options) (Discovery, error) {
-	cache := map[string]Discovery{discoveryKey(options): found}
+// cachedDiscovery discovers each selected executable once, starting from the
+// given known discoveries.
+func cachedDiscovery(known map[string]Discovery, discover func(Options) (Discovery, error)) func(Options) (Discovery, error) {
+	cache := map[string]Discovery{}
+	for key, value := range known {
+		cache[key] = value
+	}
 	return func(selected Options) (Discovery, error) {
 		key := discoveryKey(selected)
 		if cached, ok := cache[key]; ok {
@@ -335,7 +357,9 @@ func resolveRoleProfiles(options Options) (map[string]roleProfile, error) {
 		profile := base
 		if override := role.override; override != nil {
 			if override.Provider != "" && override.Provider != base.provider {
-				profile = roleProfile{provider: override.Provider, costMode: base.costMode, pricing: base.pricing}
+				// A new provider keeps only the default rates; it is metered
+				// unless the role itself declares another cost mode.
+				profile = roleProfile{provider: override.Provider, pricing: base.pricing}
 			}
 			if override.Model != "" {
 				profile.model = override.Model
@@ -395,6 +419,9 @@ func validateRoleProfile(profile *roleProfile) error {
 	}
 	switch profile.provider {
 	case ProviderCodex:
+		if profile.costMode == projectrun.CostModeUnmetered {
+			return errors.New("the Codex App Server reports token usage and must be metered; unmetered applies to process executors")
+		}
 		if profile.effort == "" {
 			profile.effort = DefaultCodexEffort
 		}
@@ -431,14 +458,19 @@ type agentBuilder struct {
 	instructionFiles []agentexec.RuntimeFile
 }
 
-func (b *agentBuilder) agent(role string, profile roleProfile) (projectrun.Agent, error) {
-	selected := b.options
+// roleSelection is the discovery input for one role's executable.
+func roleSelection(options Options, profile roleProfile) Options {
+	selected := options
 	selected.Provider, selected.ProviderExecutable, selected.ProviderVersion, selected.Roles = profile.provider, profile.executable, profile.version, nil
 	if profile.provider == ProviderCodex {
 		// Codex identifies itself through --version; a declared label is not used.
 		selected.ProviderVersion = ""
 	}
-	found, err := b.discover(selected)
+	return selected
+}
+
+func (b *agentBuilder) agent(role string, profile roleProfile) (projectrun.Agent, error) {
+	found, err := b.discover(roleSelection(b.options, profile))
 	if err != nil {
 		return projectrun.Agent{}, fmt.Errorf("%s executor: %w", role, err)
 	}

@@ -51,4 +51,8 @@ func TestCostModeValidationAndUnmeteredCostStaysUnknown(t *testing.T) {
 	if native.requiresReportedUsage() {
 		t.Fatal("native App Server missing usage must stay unknown cost, not a stop")
 	}
+	native.CostMode, native.Pricing = CostModeUnmetered, Pricing{}
+	if err := validateCostMode("manager", native); err == nil || !strings.Contains(err.Error(), "must be metered") {
+		t.Fatalf("unmetered App Server agent error = %v", err)
+	}
 }
