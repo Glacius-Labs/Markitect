@@ -898,7 +898,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				if compileErr != nil {
 					return failRun(store, report, compileErr)
 				}
-				if !reviewRequired(candidateProject, *task) {
+				if !phaseReviewRequired(candidateProject, *task, report.Tasks, "integrate") {
 					task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "not-required", resolved.ID, 0
 					if err := persistState(store, &report); err != nil {
 						return empty, err
@@ -985,7 +985,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			if len(activeChildren(report.Tasks, task.ManagerID)) > 0 {
 				phase = "integrate"
 			}
-			if !reviewRequired(finalProject, *task) {
+			if !phaseReviewRequired(finalProject, *task, report.Tasks, phase) {
 				task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "not-required", finalCandidate.ID, 0
 				if err := persistState(store, &report); err != nil {
 					return empty, err

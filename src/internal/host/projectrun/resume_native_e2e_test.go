@@ -182,14 +182,24 @@ func TestResumeReconstructsReviewReworkFromReviewedCandidate(t *testing.T) {
 // nativeDeltaOnlyInvoker follows the documented App Server contract: the
 // report carries empty candidateFiles and the Host owns the bytes through the
 // harvested workspace delta. A set report replaces the fixture's report, and
-// writes land in the native workspace beside the fixture's own edit.
+// writes land in the native workspace beside the fixture's own edit. Review
+// requests reach the configured process reviewer, which records each request
+// and passes.
 type nativeDeltaOnlyInvoker struct {
-	inner  *nativeResumeFixtureInvoker
-	report *TaskResponse
-	writes map[string]string
+	inner   *nativeResumeFixtureInvoker
+	report  *TaskResponse
+	writes  map[string]string
+	reviews []agentexec.Request
 }
 
 func (i *nativeDeltaOnlyInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	var discriminator struct {
+		Kind string `json:"kind"`
+	}
+	if json.Unmarshal(request.Context, &discriminator) == nil && discriminator.Kind == "projectrun-review/v1" {
+		i.reviews = append(i.reviews, request)
+		return (&normalizedReviewInvoker{}).Run(ctx, config, request, options)
+	}
 	result, err := i.inner.Run(ctx, config, request, options)
 	if err != nil {
 		return result, err
@@ -232,12 +242,16 @@ func TestMainLoopAppliesNativeDeltaWithEmptyCandidateFiles(t *testing.T) {
 }
 
 func TestTargetedReworkAppliesNativeWorkspaceDelta(t *testing.T) {
-	fixture := seedNativeResumeRun(t)
+	fixture := seedNativeReviewedRun(t, "work")
 	fixture.invoker.retry = true
 	report, base, runtime := loadNativeReworkState(t, fixture)
 	starts, spent := 1, int64(0)
-	reworkErr := executeReworkSubtree(context.Background(), fixture.host, &nativeDeltaOnlyInvoker{inner: fixture.invoker}, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report,
+	invoker := &nativeDeltaOnlyInvoker{inner: fixture.invoker}
+	reworkErr := executeReworkSubtree(context.Background(), fixture.host, invoker, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report,
 		fixture.managerID, "Correct the project owner artifact.", "Independent review requested a correction.", &starts, &spent)
+	if reworkErr != nil {
+		t.Fatalf("targeted native rework and its review: %v", reworkErr)
+	}
 	if fixture.invoker.runCalls != 1 {
 		t.Fatalf("targeted rework did not dispatch exactly one native turn: runCalls=%d err=%v", fixture.invoker.runCalls, reworkErr)
 	}
@@ -255,10 +269,11 @@ func TestTargetedReworkAppliesNativeWorkspaceDelta(t *testing.T) {
 	if !containsString(task.WrittenPaths, "src/project-owner.txt") {
 		t.Fatalf("native targeted rework did not record its harvested path as written: %v", task.WrittenPaths)
 	}
+	assertNativeReviewPassed(t, invoker, report, *task, "work", task.CandidateID, map[string]string{"src/project-owner.txt": "bounded native repair output\n"})
 }
 
 func TestTargetedReworkRejectsNativeNoOpWithWorkspaceChanges(t *testing.T) {
-	fixture := seedNativeResumeRun(t)
+	fixture := seedNativeReviewedRun(t, "work")
 	fixture.invoker.retry = true
 	report, base, runtime := loadNativeReworkState(t, fixture)
 	noOp := TaskResponse{Status: "no-op", Summary: "Nothing to change.", Delegations: []Delegation{}, ReworkRequests: []ReworkRequest{},
@@ -285,7 +300,7 @@ func TestReintegrationAfterReworkAppliesNativeWorkspaceDelta(t *testing.T) {
 		{name: "unresolved conflict", conflict: true, wantErr: "did not resolve integration conflict paths"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			fixture := seedNativeIntegrationRun(t)
+			fixture := seedNativeReviewedRun(t, "integrate")
 			fixture.invoker.retry = true
 			report, base, runtime := loadNativeReworkState(t, fixture)
 			task := findTask(report.Tasks, fixture.managerID)
@@ -309,6 +324,9 @@ func TestReintegrationAfterReworkAppliesNativeWorkspaceDelta(t *testing.T) {
 				}
 				return
 			}
+			if reintegrateErr != nil {
+				t.Fatalf("native reintegration and its integration review: %v", reintegrateErr)
+			}
 			if fixture.invoker.runCalls != 1 || task.IntegrationCandidateID == "" || task.IntegrationCandidateID == prior {
 				t.Fatalf("reintegration did not dispatch one native turn and bind a new candidate: runCalls=%d task=%+v err=%v", fixture.invoker.runCalls, task, reintegrateErr)
 			}
@@ -322,18 +340,41 @@ func TestReintegrationAfterReworkAppliesNativeWorkspaceDelta(t *testing.T) {
 			if got := string(candidate.Files["src/project-owner.txt"].Content); got != "bounded native repair output\n" {
 				t.Fatalf("native reintegration lost the parent's harvested workspace edit: %q (err=%v)", got, reintegrateErr)
 			}
+			assertNativeReviewPassed(t, invoker, report, *task, "integrate", task.IntegrationCandidateID,
+				map[string]string{childPath: test.wantBytes, "src/project-owner.txt": "bounded native repair output\n"})
 		})
 	}
 }
 
+// assertNativeReviewPassed checks that the one independent review of a native
+// candidate ran end to end: it passed, bound the exact candidate, and its
+// input carried the candidate's bytes.
+func assertNativeReviewPassed(t *testing.T, invoker *nativeDeltaOnlyInvoker, report RunReport, task ManagerTask, phase, candidateID string, wantFiles map[string]string) {
+	t.Helper()
+	if len(invoker.reviews) != 1 || len(report.Reviews) != 1 {
+		t.Fatalf("native candidate reviews: requests=%d records=%d, want one each", len(invoker.reviews), len(report.Reviews))
+	}
+	review := report.Reviews[0]
+	if review.ManagerID != task.ManagerID || review.Phase != phase || review.Outcome != "pass" || review.CandidateID != candidateID || task.ReviewStatus != "pass" {
+		t.Fatalf("native candidate review = %+v (task review status %q), want a %s pass bound to candidate %s", review, task.ReviewStatus, phase, candidateID)
+	}
+	reviewed := map[string]string{}
+	for _, artifact := range invoker.reviews[0].Artifacts {
+		reviewed[artifact.Path] = string(artifact.Content)
+	}
+	for path, want := range wantFiles {
+		if got, ok := reviewed[path]; !ok || got != want {
+			t.Fatalf("native candidate review input %s = %q (present=%t), want %q", path, got, ok, want)
+		}
+	}
+}
+
 // loadNativeReworkState prepares the persisted run state for a direct targeted
-// rework call. No reviewer agent is configured, so a call may stop at the
-// review step after it has already bound its new candidate.
+// rework call. The planned runtime already binds the reviewers, so the review
+// of the reworked candidate runs end to end.
 func loadNativeReworkState(t *testing.T, fixture nativeResumeRunFixture) (RunReport, *Project, Runtime) {
 	t.Helper()
 	runtime := mustLoadRuntime(t, fixture.root)
-	runtime.Review = &ReviewConfig{Agents: map[string]Agent{}, MaxRounds: 1, MaxManagerRounds: 1}
-	runtime.Limits.MaxStarts = 32
 	report, err := fixture.store.readLatestState(fixture.plan.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -346,18 +387,24 @@ func loadNativeReworkState(t *testing.T, fixture nativeResumeRunFixture) (RunRep
 }
 
 func seedNativeResumeRun(t *testing.T) nativeResumeRunFixture {
-	return seedNativeRun(t, "work", false)
+	return seedNativeRun(t, "work", false, false)
 }
 
 func seedNativeIntegrationRun(t *testing.T) nativeResumeRunFixture {
-	return seedNativeRun(t, "integrate", false)
+	return seedNativeRun(t, "integrate", false, false)
 }
 
 func seedNativeReworkResumeRun(t *testing.T) nativeResumeRunFixture {
-	return seedNativeRun(t, "work", true)
+	return seedNativeRun(t, "work", true, false)
 }
 
-func seedNativeRun(t *testing.T, phase string, reviewRework bool) nativeResumeRunFixture {
+// seedNativeReviewedRun plans with process reviewers for every Manager, so a
+// review of a native candidate is bound to the planned runtime.
+func seedNativeReviewedRun(t *testing.T, phase string) nativeResumeRunFixture {
+	return seedNativeRun(t, phase, false, true)
+}
+
+func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nativeResumeRunFixture {
 	t.Helper()
 	root := makeProjectRunFixture(t)
 	writeE2E(t, root, "AGENTS.md", "native manager instructions\n")
@@ -398,6 +445,13 @@ func seedNativeRun(t *testing.T, phase string, reviewRework bool) nativeResumeRu
 		runtime.Limits.MaxRetries = 1
 		if phase == "integrate" {
 			runtime.Limits.MaxStarts = 3
+		}
+		if reviewed {
+			runtime.Review = &ReviewConfig{Agents: map[string]Agent{}, MaxRounds: 1, MaxManagerRounds: 1}
+			for id, agent := range runtime.Agents {
+				runtime.Review.Agents[id] = agent
+			}
+			runtime.Limits.MaxStarts = 32
 		}
 		agent := runtime.Agents[managerID]
 		native := appServerAgent(t)
