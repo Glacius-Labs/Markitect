@@ -24,7 +24,7 @@ renewal_policy:
   authority_record_location: forwarded_external_contract_not_in_this_worktree
   authority_record_sha256: a6413d76e98eb0086c3f14f2cc56f496d1f6beb86548a135fb430ca560a5c5a7
   issued_utc: '2026-10-09T22:01:37Z'
-  status: active_simplified_a01_actual_18_docs_census_failed_helper_unknown_census_fix_committed_followup_pins_pending
+  status: active_simplified_a01_actual_19_failed_typed_review_fix_committed_86216289_observer_cause_unproven_next_pins_pending
   prior_hold_checkpoint: docs_checkpoint_20d6db54
   prior_hold_lifted_by_direct_human_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
   cumulative_time_start_and_estimated_cost_cutoff: "none"
@@ -980,16 +980,17 @@ renewal_policy:
     separate_open_lifecycle_gap_focused_negative_result: passed_5_392s_on_uncommitted_fix_tree; proves_cleanup_pending_and_child_preserved_after_injected_close_failure_only_not_automatic_resume_reconciliation
     separate_open_lifecycle_gap_next: lifecycle_owner_to_supply_follow_up_negative_command_before_investigating_existing_owned_close_recovery
   next_batch:
-    status: no_followup_batch_allocated_actual_18_docs_census_failed_helper_unknown_census_fix_committed_fresh_candidate_pending
+    status: no_followup_batch_allocated_actual_19_failed_typed_review_fix_committed_86216289_observer_cause_unproven
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     new_batch_pins: none
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
     no_eighteenth_actual_claimed: false
-    no_nineteenth_actual_claimed: true
+    no_nineteenth_actual_claimed: false
+    no_twentieth_actual_claimed: true
     owner_repair_in_progress: false
-    owner_repair_status: operational_census_metadata_recheck_fix_committed_c2fbdf10; projectcoverage_and_projectwork_focused_tests_passed; independent_review_clear; fresh_candidate_pins_pending
-    repair: build fresh and rerun normal readiness/Plan after the committed census correction before any new A01
+    owner_repair_status: actual19_root_integration_review_failed; typed_report_cause_confirmed_grounded_docs_greeting_md; session_go_review_guidance_and_adapter_regression_fix_committed_86216289; focused_technical_tests_and_source_gates_passed; independent_review_clear; observer_cause_reproduced_but_unproven; observer_only_review_clear; technical_fix_closed_not_acceptance
+    repair: obtain fresh build, readiness, and Plan after the committed correction before any new A01; Actual19 remains failed_not_passed
     actual_16_terminal_record_sha256: 0a9db024fba47cde9a9c2ffc34e096205cc9f25927c71ca2ae391a629dfae352
     actual_16_acceptance: not_passed
     actual_16_apply_observed: false
@@ -1024,9 +1025,9 @@ renewal_policy:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_used_for_latest_attempt: 2950bdd6303c24fa9fe7c862c10049eb3b7326ca
-    binary_sha256: 33c63c32f5a419fd59ef34a49870ee60239c363b86bc19d5b39ecc2decf6971a
-    native_acceptance: failed_docs_census_helper_unknown_attempt_18
+    source_revision_used_for_latest_attempt: 6c8387e0a0baf9066cd8617d6d6969aebe54fc2c
+    binary_sha256: bf0dd0d9ea008185a714bcee7b4f30f75a97360f70be97ab4fbec94ed2cc224e
+    native_acceptance: failed_root_integration_review_attempt_19
     pre_attempt_host_helper_provenance_correction: 6ce8212af64b350ac0ee7759c394af2303e20e3f
     pre_attempt_focused_test_command: "go test ./src/internal/host/projectrun -run 'TestReview|TestHelper|TestRoleStartBudget' -count=1"
     pre_attempt_focused_test: passed_112_016_seconds
@@ -1062,6 +1063,11 @@ renewal_policy:
     actual_18_index_mode_blob_and_global_safety_checks: retained_and_tested; global_HEAD_complete_index_parse_conflicts_gitlinks_and_all_walk_safety_retained
     actual_18_operational_metadata_boundary: only_presence_mode_index_recheck_excluded_for_explicit_validated_operational_paths; per_path_metadata_HEAD_index_not_CAS_bound_as_existing_semantic_noninputs
     actual_18_postcapture_worktree_content_comparison: not_added_or_proven; existing_recheck_does_not_detect_pure_postcapture_worktree_byte_change
+    actual_19_typed_review_diagnosis: confirmed_outer_failed_with_inner_fail_valid_grounded_finding_artifact_docs_greeting_md; missing_typed_report_outcome_guidance_for_projectrun_review_prompt_session_go
+    actual_19_typed_review_source_fix: committed_862162890819029b614f1b8de9ed1ac6dd62d767_session_go_guidance_and_adapter_test_regression_only; host_validator_unchanged
+    actual_19_typed_review_focused_tests: codexappserver_prompt_schema_passed_0_279s; projectrun_reviewer_binding_finding_passed_6_796s; go_vet_passed_2_685s; strict_root_check_passed; managed_artifacts_passed_1_667s
+    actual_19_typed_review_independent_review: clear
+    actual_19_native_acceptance_effect: none; attempt_19_remains_failed_not_passed; no_new_a01_allocated
     post_attempt_18_census_source_commit: c2fbdf10b245e7a5ee57f8e5923ef15202a0b6c3
     post_attempt_16_index_mode_source_commit: efe015d62cd678a49df265ebb1b64e9ff43ba37b
     post_attempt_16_recovery_binding_source_commit: 0e643bd0c5c01301022aec57fd65abec56cbe500
@@ -1085,7 +1091,7 @@ renewal_policy:
     post_recovery_resume_command_id: f654711fe23248be98401ca21fee61b4
     post_recovery_resume_binary_sha256: bc26543cf097091e5f2d520d3a71c8455e6b0532f984e65b38df84f1f4b03b5d
     post_recovery_resume_new_starts: 0
-    next_repair: fresh_build_readiness_and_plan_after_committed_census_correction_before_any_new_a01
+    next_repair: fresh_build_readiness_and_plan_after_committed_typed_review_guidance_fix; preserve_actual19_failed_result_before_any_new_a01
     next_batch_pins: pending
     next_batch_authorized_or_allocated: false
   attempt_16:
@@ -1228,7 +1234,7 @@ renewal_policy:
     helper_workspace: retained
     complete_physical_preservation_claimed: false
     acceptance: not_passed
-  latest_actual:
+  attempt_18:
     batch_id: a01-serialized-helper-e2dcc8ff334d4e6d8fc56100b41b4305
     attempt_number: 18
     status: failed_docs_census_helper_unknown
@@ -1291,6 +1297,74 @@ renewal_policy:
     cumulative_estimated_cost_micros: 12706638
     cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
     acceptance: not_passed
+  latest_actual:
+    batch_id: a01-operational-census-d1bf9ab811474c9396080d09dfcc7193
+    attempt_number: 19
+    status: failed_root_integration_review_observer_boundary_unobserved
+    private_record_sha256: ce93557c62e0e9117dabd458e78339c661e87b59752881d39fbc1dbfb102ed16
+    allocated_utc: '2026-10-10T07:51:12.9177985Z'
+    hard_deadline_utc: '2026-10-10T11:51:12.9177985Z'
+    source_revision: 6c8387e0a0baf9066cd8617d6d6969aebe54fc2c
+    binary_sha256: bf0dd0d9ea008185a714bcee7b4f30f75a97360f70be97ab4fbec94ed2cc224e
+    controller_sha256: ddf7b16dc0a23b21ac4edd90e18f56e15cdf41478baac873503b18ed90154b36
+    project_revision: eaa11e9969db66e6c1a5cd80949cfb757074ce54
+    plan_id: c5dfdc81035871cf509fd3495d175dd6
+    plan_sha256: d00d2f0341655c1e5a81b005aa8efc8124455a49a0171a2c11316343fa42c98e
+    readiness_sha256: ee4f8e68c243d22e0925897ebcfce911c0adf23c2b114a325aa4f5433c95f68b
+    runtime_sha256: 75b3416723a55a0f301d77677fcf6f29647889ead4843be9e08117c921c8158d
+    runtime_file_sha256: 0828f6afd4e897fa0304362e19bb47cd912c2fe353f5b44c58d919daf2fa3e3c
+    provider_version: codex-cli_0_162_0
+    provider_sha256: dce685d569526ef4712fa82d20ff20e1309baad5fcd34215e1126698f611242f
+    source_gates: clean_4b14_broad_pass_plus_reviewed_2950_and_6c8387_delta_gates_pass
+    remote_checkpoint: 6c8387e0a0baf9066cd8617d6d6969aebe54fc2c_normal_push_verified
+    candidate_build_record_sha256: 0db9749dd06d431a8a852b6bfeeb1845539ec3164ec41293c6e7dc14a6a31075
+    source_delta_gate_record_sha256: bc4ab4c5ac885c286d503563ac025d41e746180410e39e3a41faea8562e60186
+    observer_id: f766b8a426894b80b80ded34fabacb42
+    observer_record: observer-logs/f766b8a426894b80b80ded34fabacb42.observer.json
+    observer_ended_utc: '2026-10-10T07:56:57.2528491Z'
+    observer_exit_code: 2
+    observer_boundary_observed: false
+    terminal_closed_utc: '2026-10-10T08:03:37.8337523Z'
+    root_work_review: pass
+    source_docs_native_overlap_seconds: 16.826
+    helper_calls: 2
+    helper_start_requests: 2
+    native_provider_starts: 9
+    successful_helper_prefix: 53390f74
+    successful_helper_outcome: applied_and_closed_565_byte_delta
+    successful_helper_delta_sha256_prefix: 77e804
+    successful_helper_content_sha256_prefix: 24092
+    rejected_helper_prefix: 84d29
+    rejected_helper_outcome: scope_rejected_before_child_start
+    rejected_helper_scope: tests/
+    original_root_integration_id_prefix: 15d47ffd
+    original_root_integration_status: native_completed_exactly_once
+    original_root_integration_session: 01a124cf-2f1f-7d40-ae11-2c0313015d15
+    original_root_integration_turn: 01a124cf-315f-7e01-ba2c-50e7fab8a068
+    root_integration_review_id_prefix: 2f21
+    root_integration_review_status: native_completed_fail
+    root_integration_review_finding: guide_import_from_greeting_greet_does_not_resolve_from_repository_root; wrapper_failed; typed_report_outer_outcome_failed_and_inner_fail_is_valid_grounded_finding_at_docs_greeting_md; missing_typed_report_outcome_guidance_for_projectrun_review_prompt_session_go; source_fix_committed_86216289_independent_review_clear
+    observer_diagnosis: strongest_explanation_shared_private_workspace_taskid_collision_without_ownerRunId_equals_PlanId_filter; reproduced_in_current_order_but_original_runtime_order_unrecorded_so_not_proven
+    observer_tracking_failure_diagnostic: overwritten_during_finalization
+    observer_only_correction_sha256: c6541846825115d328de2033c01a647644d2ad54c8aa128a934a397a9608265f
+    observer_only_correction_status: private_controller_only_parse_pass_independent_review_clear
+    observer_validation_record: controller/observer-owner-binding-validation.json
+    observer_review_result: independent_clear; ownerRunId_filter_selects_current_owner; same_owner_duplicates_still_rejected; tracking_failure_detail_preserved
+    observer_interruption_or_recovery: not_observed
+    original_root_integration_replayed: false
+    final_state_status: failed
+    resume_observed: false
+    verify_observed: false
+    apply_observed: false
+    role_start_requests: 8
+    combined_start_requests: 10
+    reported_cost_micros: 1078281
+    cost_accounting: partial_observed_lower_bound_not_invoice_helper_cost_unknown_not_zero
+    cumulative_combined_start_requests: 77
+    cumulative_native_provider_starts: 73
+    cumulative_estimated_cost_micros: 13784919
+    cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
+    acceptance: not_passed
   provider_free_preparation:
     superseded_owned_project_revision: 89823a90df985ca4451ec3053467fa4b3d12319f
     rejected_role_wall_seconds: 7200
@@ -1318,8 +1392,8 @@ budget_amendments:
     supersedes_prior_cumulative_budget_and_deadline_as_future_blockers: true
     previous_batch_failures_and_source_pins_preserved: true
     next_batch_pins_pending: true
-    next_batch_status: actual17_failed_helper_delivery_description_fix_reviewed_followup_plan_pending
-    last_actual_status: failed_helper_delivery_not_passed_attempt_17
+    next_batch_status: actual19_root_integration_review_failed_typed_review_fix_committed_86216289_observer_cause_unproven_next_pins_pending
+    last_actual_status: failed_root_integration_review_not_passed_attempt_19
     main_gate_revision_unchanged: combined-normal-smoke-20261009
     release_publication_authorized: false
 allocation_history:
