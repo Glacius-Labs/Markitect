@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T12:17:12.050971+00:00",
+  "updatedUtc": "2026-10-10T12:21:13.884631+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator awaits owned exacthead51599 run38051318813/requiredLinuxWindowsgates, normalmergePR89ifpositive and reports actualCI/merge/remoteMain/postmergequeueclosure. Root verifies callbackwithoutroutinepolling, KGwaitsacceptedMain/studiesremain suspended.",
+  "nextAction": "Integrator bounded3separatetestfixture repairs retains originalLinuxCIfailure, reviews exactdelta and rerunsnormal requiredCI onfreshhead. Root verifies nextsource/checkpoint/resultcallback, no duplicateorder/A01restart/mergeuntilpositive.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "A01_ACCEPTED_FINAL_PR89_HEAD51599_REMOTE_VERIFIED_REQUIRED_CI_IN_PROGRESS",
+    "status": "PR89_FINAL_HEAD51599_LINUX_TEST_FAILURES_BOUNDED_INDEPENDENT_FIXTURE_CORRECTIONS_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -19245,7 +19245,7 @@
       "scope": "Complete alreadyhuman-authorized PR89/Main package: coherentfinaldocs/sourcepush, actualintegrationbranch/finalPRhead/titlebody, requiredlocalhostedgatesandindependentreviewonexactcandidate, normalmergeifpositive; returnactualPRCImergeremoteMainSHAorblockeronce. No newA01restartloopwithoutconcretedefect/release/study/KG/go-loop."
     },
     "finalMainIntegration": {
-      "status": "FINAL_CLEAN_PUBLIC_HEAD_VERIFIED_REQUIRED_HOSTED_GATES_PENDING_NORMAL_MERGE_AUTHORIZED",
+      "status": "LINUX_QUALITY_FAILED_WINDOWS_RUNNING_NO_MERGE_BOUND_TEST_CORRECTIONS_ACTIVE",
       "finalSourceSha": "51599a8248e77c4ab4059624fde674dfa6998364",
       "productCodeProofSourceSha": "cdd30b0efc540f151404dabe86b022275dc40d83",
       "rootVerified": "CleanexactlocalHEAD51599/publiclsremoteintegrationbranchandPRheadcodex/model-first-operations51599. gitdiffcdd..51599 exactly4docclosurefiles no code delta. ghPR89OPEN Draft baseMain/head51599 correctfinaltitle. Mainlsremote5be48ce unchanged.",
@@ -19262,10 +19262,25 @@
       "ciStatus": "in_progress",
       "requiredQualityJobs": {
         "Quality (windows-latest)": "in_progress",
-        "Quality (ubuntu-24.04)": "in_progress"
+        "Quality (ubuntu-24.04)": "failure"
       },
       "remoteMainAtCheck": "5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e",
-      "boundary": "CurrentCI pendingnotPASS; no merge/release/study/KG claimed. Alreadyauthorized ordinary exactheadgates thennormalmerge, no bypass/further blanketpermission/newA01restart."
+      "boundary": "CurrentCI pendingnotPASS; no merge/release/study/KG claimed. Alreadyauthorized ordinary exactheadgates thennormalmerge, no bypass/further blanketpermission/newA01restart.",
+      "ciFailureRootVerified": {
+        "runId": 38051318813,
+        "headSha": "51599a8248e77c4ab4059624fde674dfa6998364",
+        "linuxJobId": 114210853035,
+        "linuxStatus": "completed",
+        "linuxConclusion": "failure",
+        "windowsJobId": 114210852869,
+        "windowsStatus": "in_progress",
+        "qualification": "CompactghAPIexactjobstatuschecked; concretefailurelogsdiagnoses ownerreported, not yet Rootrawlog/sourcecorrectioninspected."
+      },
+      "ownerCorrectionReport": {
+        "failures": "Linux CRLF-CASfixture inheritsWindowscore.autocrlf withoutpin; VerifierAliasfixture andRuntimemodefixtures investigated separately. OriginalCIlogsretained.",
+        "ownership": "3boundedindependentagents own separatetestfiles, no Rootparallel edits or duplicate reviewers.",
+        "boundary": "No mergeonfailedCI; no weakeningproductguards/newA01run. Exactcorrectionreview/newnormalexactheadCI afterrepair, Windowscontinues."
+      }
     }
   },
   "restartAfterInterruptedIntegration20261010": {

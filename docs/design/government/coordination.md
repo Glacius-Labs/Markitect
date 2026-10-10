@@ -2335,3 +2335,7 @@ Root exactstate50applied/Planac57/candidate24c6/Verifye2bc-digest256c/Apply41f61
 ### Final PR89 source head and CI independently checked
 
 Root cleanlocal51599a82/publicintegrationandcodex-model-first-operations51599 confirmed. Fourdocsclosurecdd→51599 only/no codedelta; ownerfixedrevisiongates/independentDocsexactcandidateReviewCLEAR. ghPR89OPEN/Draft/baseMain/head51599 finaltitleComplete model-first project workflow and consolidate source layout. ExactCI38051318813head51599/LinuxWindowsQualitybothin_progress; notPASS. RemoteMain5be48ceunchanged. OwnercontinuesalreadyauthorizednormalCI→merge→remoteproof/postmergequeueclosure; no duplicateRootorder/newA01loop/release/study/KG/Mainclaim.
+
+### Exact-head Linux quality gate failed; separated fixture repairs active
+
+RootghCI38051318813head51599 Linuxjob114210853035completedFAIL/Windows114210852869in_progress confirmed. Owner savedoriginallog/concreteCRLFfixtureautocrlfpin/Verifieralias/runtime-modefixturediagnoses; threeboundedagents separatetestfiles, sourceguardsnotweakened/noA01restart/noMerge. Exactdeltareview/newnormalCI next, diagnosesstillownerreportednotRootrawsourceverified/no duplicateorder.
