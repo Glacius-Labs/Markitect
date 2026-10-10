@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T09:17:44.515686+00:00",
+  "updatedUtc": "2026-10-10T09:27:35.753556+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator continues current finite Actual22 and reports terminal proof/checkpoint or concrete blocker once; Root verifies exact receipts and gates. Scientist studies remain suspended, KG waits accepted Main. No duplicate dispatch or routine polling.",
+  "nextAction": "Integrator closes exact native Observation-ID wire contract and independent protocol/recovery delta review, publishes clean checkpoint then continues normal bounded product proof. No studies, duplicate dispatch, Main promotion or replay.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL22_ACTIVE_CLEAN_ALIAS_PROTOCOL_EVIDENCE_FREEZE_ROOT_VERIFIED_FULL_ACCEPTANCE_PENDING",
+    "status": "ACTUAL22_TERMINAL_INITIAL_VERIFIER_ID_MISMATCH_NARROW_NATIVE_MAPPING_FIX_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18753,7 +18753,7 @@
       "boundary": "Technical correction qualification only; not full native A01/Main/release/study acceptance."
     },
     "actual22Preparation": {
-      "status": "ACTIVE_OWNER_REPORTED_EXACT_SOURCE_BINARY_ROOT_BOUND_START_RECEIPTS_PENDING",
+      "status": "TERMINAL_INITIAL_VERIFIER_COVERAGE_REJECTED_NO_FULL_AUDIT_OR_APPLY",
       "freezeRef": "fullAuditAliasEvidenceCorrectionFreeze",
       "sourceSha": "443057863ad4d2cb18b69b473033c9b5d5766706",
       "binarySha256": "368eae53c6e843354eebdb2d89362f7178cb535c62598b712daea94eef9c47f2",
@@ -18766,7 +18766,32 @@
       "runtimeDigestOwnerReportedPrefix": "052722b3",
       "adopterCheckpointOwnerReported": "275baa9b830f1eee67cc901321a595002ffe0744",
       "adopterScopeOwnerReported": "Exactly7 maxEventBytes lines committed via normal Readiness boundary; model/business implementation unchanged, old21 runtime/bindings retained.",
-      "boundary": "Fresh normal finite proof under existing renewable authority; original-root same-build recovery/genuine authoring helper/parallel work/independent reviews. Current native handles/start accounting/result not independently checked yet; no Apply/fullA01/main PASS claimed. No repeated Root order or old21 replay."
+      "boundary": "Fresh normal finite proof under existing renewable authority; original-root same-build recovery/genuine authoring helper/parallel work/independent reviews. Current native handles/start accounting/result not independently checked yet; no Apply/fullA01/main PASS claimed. No repeated Root order or old21 replay.",
+      "terminalOwnerReport": {
+        "originalRecovery": "Exactly one original Root turn/start; recovery inspection starts.jsonl empty; same RootID/session/turn closed; new legitimate IntegrationReviewPASS,3WorkReviewsPASS; genuine SourceHelper applied/closed; SourceDocs overlap34.130486s. Full no-replay union owner attested, Root raw union not reaudited.",
+        "verify": "innerexit1; configured CheckPASS; initial native outerpassed,4Observation subjects paraphrased rather than canonical requiredSubjects. Host correctly rejects repository README as unrelated; no validated VerifierPASS/full Manager Audit/Apply/fullA01PASS.",
+        "next": "Owner narrow requestbound observation aliases/schema/canonical return plus protocolidentity and Recoverfixture, unchanged EvidenceRefs/semantics/Hostvalidator. Clean new source/checkpoint and normal fresh ReadinessPlan within existing renewable authority; no duplicate Root dispatch."
+      },
+      "rootTerminalStateVerified": {
+        "path": "C:/Users/Consiliari/AppData/Local/Temp/markitect-a01-3c5c733388014645b0ca178338078b6a/repo/.markitect/runs/ccd5e731231f4b3198408563ad3ee18c/states/00000041.json",
+        "revision": 41,
+        "status": "failed",
+        "workReviews": 3,
+        "integrationReviews": 1,
+        "reviewOutcomes": [
+          "pass",
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "originalIntegrationReceipt": "3a2678aabd3ab5224d97a9c5ee1f8df7",
+        "integrationRows": 1,
+        "newIntegrationReviewReceipt": "078bb63ff48c4d09197ed22a5ff8e0f5",
+        "initialVerifierReceipt": "3a7b9df6caedab20af403228cad20ffd",
+        "nativeOuterOutcome": "passed",
+        "configuredCheckExitCode": 0,
+        "qualification": "Short ReadWriteDelete file copy; stream closed before parsing. Explicit state failed; native outerpassed is not Host-validated verification. Source verify.go coverage rejects unknown/duplicate/missing subjects exactly; no weakening or inferred full audit/Apply."
+      }
     }
   },
   "restartAfterInterruptedIntegration20261010": {
