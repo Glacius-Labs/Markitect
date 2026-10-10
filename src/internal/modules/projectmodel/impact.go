@@ -2,6 +2,7 @@ package projectmodel
 
 import (
 	"errors"
+	"slices"
 	"sort"
 )
 
@@ -25,6 +26,18 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 			out.Statements = append(out.Statements, s)
 		}
 	}
+	for _, a := range report.Artifacts {
+		if a.Owner == managerID {
+			out.Artifacts = append(out.Artifacts, a)
+		}
+	}
+	for _, c := range report.Checks {
+		if c.Owner == managerID {
+			out.Checks = append(out.Checks, c)
+		}
+	}
+	// Contracts are the foreign public statements that own statements use or require,
+	// own artifacts realize, or own checks exercise.
 	needed := map[string]bool{}
 	for _, s := range out.Statements {
 		for _, id := range s.Uses {
@@ -34,21 +47,21 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 			needed[id] = true
 		}
 	}
+	for _, a := range out.Artifacts {
+		for _, id := range a.Realizes {
+			needed[id] = true
+		}
+	}
+	for _, c := range out.Checks {
+		for _, id := range c.Uses {
+			needed[id] = true
+		}
+	}
 	for id := range needed {
 		if s, found := statementByID[id]; found && s.Owner != managerID && s.Public {
 			s.Uses = visibleRelations(s.Uses, statementByID)
 			s.Requires = visibleRelations(s.Requires, statementByID)
 			out.Contracts = append(out.Contracts, s)
-		}
-	}
-	for _, a := range report.Artifacts {
-		if a.Owner == managerID {
-			out.Artifacts = append(out.Artifacts, a)
-		}
-	}
-	for _, c := range report.Checks {
-		if c.Owner == managerID {
-			out.Checks = append(out.Checks, c)
 		}
 	}
 	for _, child := range report.Managers {
@@ -256,12 +269,14 @@ func Impact(base, candidate Report) ChangeImpact {
 			requires[s.ID] = appendUnique(requires[s.ID], s.Requires...)
 		}
 	}
-	modelUnprojected := base.ModelDigest != candidate.ModelDigest && (len(changed) == 0 || unprojectedChange(base, candidate, changed))
+	modelUnprojected := base.ModelDigest != candidate.ModelDigest && (len(changed) == 0 || unprojectedChange(base, candidate, changed) || writingChange(base, candidate))
 	if modelUnprojected {
 		out.Unknown = append(out.Unknown, "model digest changed beyond the projected definition delta; decision or unprojected definition changes may require review")
 	}
 
-	// Directly changed statements and reverse dependents need their own realizing artifacts.
+	// Directly changed statements and reverse dependents need their own realizing artifacts
+	// and every check that exercises them.
+	allChecks := append(append([]Check(nil), base.Checks...), candidate.Checks...)
 	addCoverage := func(statementID string) {
 		for _, artifact := range allArtifacts {
 			if contains(artifact.Realizes, statementID) {
@@ -270,6 +285,12 @@ func Impact(base, candidate Report) ChangeImpact {
 				for _, checkID := range artifact.Checks {
 					checks[checkID] = true
 				}
+			}
+		}
+		for _, check := range allChecks {
+			if contains(check.Uses, statementID) {
+				managers[check.Owner] = true
+				checks[check.ID] = true
 			}
 		}
 	}
@@ -505,6 +526,39 @@ func unprojectedChange(base, candidate Report, changed map[string]bool) bool {
 		}
 	}
 	return false
+}
+
+// writingChange reports an edit that changes only how a property is written,
+// such as list order, a repeated entry or an explicit default. Such an edit
+// widens on its own, so it widens next to other changes too. In a set-like
+// list, the entries kept in both revisions must keep their order and count.
+func writingChange(base, candidate Report) bool {
+	if base.written == nil || candidate.written == nil {
+		return true
+	}
+	for id, properties := range base.written {
+		for name, before := range properties {
+			after, ok := candidate.written[id][name]
+			if !ok {
+				continue
+			}
+			if before.raw != after.raw && before.value == after.value || !slices.Equal(keptElements(before.elements, after.elements), keptElements(after.elements, before.elements)) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// keptElements returns the elements also present in other, in written order.
+func keptElements(elements, other []string) []string {
+	var kept []string
+	for _, e := range elements {
+		if slices.Contains(other, e) {
+			kept = append(kept, e)
+		}
+	}
+	return kept
 }
 func equal(a, b any) bool { return digest(a) == digest(b) }
 func entryMap(values []FileEntry) map[string]FileEntry {

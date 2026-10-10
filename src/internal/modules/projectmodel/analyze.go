@@ -18,13 +18,15 @@ type definitionIndex struct {
 }
 
 func Analyze(model core.Model, inventory []File) Report {
-	r := Report{APIVersion: APIVersion, ModelDigest: model.Digest, Status: "succeeded", unprojected: map[string]string{}}
+	r := Report{APIVersion: APIVersion, ModelDigest: model.Digest, Status: "succeeded", unprojected: map[string]string{}, written: map[string]map[string]writtenProperty{}}
 	idx := definitionIndex{byID: map[string]core.Definition{}, byKind: map[string][]core.Definition{}}
+	kinds := Schema().Kinds
 	for _, d := range model.Definitions {
 		id := d.Identity().Key()
 		idx.byID[id] = d
 		idx.byKind[d.Kind] = append(idx.byKind[d.Kind], d)
 		r.unprojected[id] = unprojectedDigest(d)
+		r.written[id] = writtenProperties(d, kinds[d.Kind])
 	}
 	for _, d := range idx.byKind[managerKind] {
 		spec := d.Spec
@@ -286,6 +288,50 @@ func unprojectedDigest(d core.Definition) string {
 		Purpose  string
 		Spec     map[string]any
 	}{d.Metadata, d.Purpose, d.Spec})
+}
+
+// writtenProperties records each property as written next to the value the
+// report projects from it, so Impact can see an edit that changes only the
+// writing: list order, a repeated entry or an explicit default.
+func writtenProperties(d core.Definition, kind core.Kind) map[string]writtenProperty {
+	out := make(map[string]writtenProperty, len(kind.Properties))
+	for name, p := range kind.Properties {
+		raw := d.Spec[name]
+		var value any
+		var elements []string
+		switch {
+		case p.Type == core.TypeReference && p.MaxCount == 1:
+			value = refID(raw)
+		case p.Type == core.TypeReference:
+			elements = writtenElements(raw, refID)
+			value = sortedUnique(elements)
+		case p.Type == core.TypeString && p.MaxCount != 1 && d.Kind == checkKind && name == "command":
+			value = orderedStrings(raw)
+		case p.Type == core.TypeString && p.MaxCount != 1:
+			elements = writtenElements(raw, stringValue)
+			value = sortedUnique(elements)
+		case p.Type == core.TypeBoolean:
+			value = boolValue(raw)
+		default:
+			value = stringValue(raw)
+		}
+		out[name] = writtenProperty{raw: digest(raw), value: digest(value), elements: elements}
+	}
+	return out
+}
+
+func writtenElements(raw any, key func(any) string) []string {
+	values, ok := raw.([]any)
+	if !ok {
+		values = []any{raw}
+	}
+	out := []string{}
+	for _, v := range values {
+		if k := key(v); k != "" {
+			out = append(out, k)
+		}
+	}
+	return out
 }
 
 func addFinding(r *Report, code, subject, message, severity string) {
