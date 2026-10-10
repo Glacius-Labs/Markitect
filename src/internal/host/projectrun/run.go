@@ -343,11 +343,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 					if task == nil {
 						return failRun(store, report, fmt.Errorf("recovered Manager %s is absent from the run", action.managerID))
 					}
-					currentID, idErr := workCandidateID(report.Tasks, *task, baseCandidateID)
-					if idErr != nil {
-						return failRun(store, report, idErr)
-					}
-					current, readErr := store.readCandidate(dir, currentID)
+					current, readErr := workCandidate(store, dir, report, *task, baseCandidateID)
 					if readErr != nil {
 						return failRun(store, report, readErr)
 					}
@@ -365,11 +361,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				if err := ctx.Err(); err != nil {
 					return interruptRun(store, report, err)
 				}
-				currentID, idErr := workCandidateID(report.Tasks, *task, baseCandidateID)
-				if idErr != nil {
-					return failRun(store, report, idErr)
-				}
-				current, readErr := store.readCandidate(dir, currentID)
+				current, readErr := workCandidate(store, dir, report, *task, baseCandidateID)
 				if readErr != nil {
 					return failRun(store, report, readErr)
 				}

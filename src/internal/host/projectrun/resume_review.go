@@ -21,12 +21,15 @@ func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker,
 	if !ok || agent.Transport != TransportCodexAppServer || task.ReviewCandidateID == "" || task.ReviewRound < 1 {
 		return fmt.Errorf("pending review lacks an exact native candidate and round; replay is prohibited")
 	}
-	phase := "work"
+	phase, final := "work", false
 	switch task.ReviewCandidateID {
 	case task.CandidateID:
 	case task.IntegrationCandidateID:
 		phase = "integrate"
 	case report.Candidate.ID:
+		// Only the final review loop reviews a Manager against the run
+		// candidate instead of its own work or integration candidate.
+		final = true
 		if len(activeChildren(report.Tasks, managerID)) > 0 {
 			phase = "integrate"
 		}
@@ -61,6 +64,25 @@ func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker,
 		if phase == "integrate" {
 			task.State = "integrated"
 		}
+	} else if final {
+		// Rework of this Manager's own branch would never reach the root
+		// candidate the reviewer assessed. Route the findings to the empowered
+		// parent as the final review loop does; the bounded rework rounds then
+		// rebuild the ancestor chain before the final reviews run again.
+		requester, requests, routeErr := routeReviewFindings(*task, record, selected.Report, report.Tasks)
+		parent := findTask(report.Tasks, requester)
+		if routeErr == nil && parent == nil {
+			routeErr = fmt.Errorf("review findings for %s have no empowered direct parent", task.ManagerID)
+		}
+		if routeErr != nil {
+			_ = persistState(store, report)
+			return routeErr
+		}
+		task.State = "worked"
+		if phase == "integrate" {
+			task.State = "integrated"
+		}
+		parent.ReworkRequests = append(parent.ReworkRequests, requests...)
 	} else {
 		var diagnostics []string
 		for _, finding := range record.Findings {

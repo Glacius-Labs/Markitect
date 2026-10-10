@@ -76,11 +76,7 @@ func recoveryManagerInput(store *runStore, dir string, host Host, root string, b
 		if report.ActiveRepairCandidateID != "" {
 			currentID = report.ActiveRepairCandidateID
 		}
-		currentID, err := workCandidateID(report.Tasks, task, currentID)
-		if err != nil {
-			return nil, nil, nil, nil, err
-		}
-		current, err := store.readCandidate(dir, currentID)
+		current, err := workCandidate(store, dir, report, task, currentID)
 		if err != nil {
 			return nil, nil, nil, nil, err
 		}
@@ -139,23 +135,39 @@ func invokeManagerBatch(ctx context.Context, calls []managerInvocationCall) []ma
 	return results
 }
 
-// workCandidateID selects the branch a Manager work turn starts from: the run
-// base or the parent's work candidate, except that review rework continues
-// from the reviewed candidate. Fresh and recovered turns share it so a resumed
-// run rebuilds the same rework input as the uninterrupted review loop.
-func workCandidateID(tasks []ManagerTask, task ManagerTask, baseID string) (string, error) {
+// workCandidate reads the branch a Manager work turn starts from: the run base
+// or the parent's work candidate, except that review rework continues from the
+// reviewed candidate. That candidate must be the one the failed review names,
+// with the bytes its review records assessed. Fresh and recovered turns share
+// it so a resumed run rebuilds the same rework input as the uninterrupted loop.
+func workCandidate(store *runStore, dir string, report RunReport, task ManagerTask, baseID string) (candidateData, error) {
 	currentID := baseID
 	if task.ParentTask != "" {
-		parent := findTask(tasks, task.ParentTask)
+		parent := findTask(report.Tasks, task.ParentTask)
 		if parent == nil || parent.CandidateID == "" {
-			return "", fmt.Errorf("parent Manager %s has no completed work candidate", task.ParentTask)
+			return candidateData{}, fmt.Errorf("parent Manager %s has no completed work candidate", task.ParentTask)
 		}
 		currentID = parent.CandidateID
 	}
-	if task.CandidateID != "" && task.ReviewStatus == "rework-requested" {
+	rework := task.CandidateID != "" && task.ReviewStatus == "rework-requested"
+	if rework {
+		if task.ReviewCandidateID != task.CandidateID {
+			return candidateData{}, fmt.Errorf("Manager %s review rework candidate %q is not the reviewed candidate %q", task.ManagerID, task.CandidateID, task.ReviewCandidateID)
+		}
 		currentID = task.CandidateID
 	}
-	return currentID, nil
+	current, err := store.readCandidate(dir, currentID)
+	if err != nil {
+		return candidateData{}, err
+	}
+	if rework {
+		for _, review := range report.Reviews {
+			if review.ManagerID == task.ManagerID && review.CandidateID == current.ID && review.CandidateDigest != current.Digest {
+				return candidateData{}, fmt.Errorf("Manager %s review rework candidate %s differs from the bytes its review assessed", task.ManagerID, current.ID)
+			}
+		}
+	}
+	return current, nil
 }
 
 func dependencyCandidateID(task ManagerTask) string {
