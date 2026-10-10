@@ -49,6 +49,13 @@ class AssessTest(unittest.TestCase):
         raw = json.loads((self.temp / "S1" / result["stdout"]).read_text(encoding="utf-8"))
         self.assertEqual(len(raw["findings"]), 5)
 
+    def test_the_candidates_own_copy_of_the_checks_never_judges_it(self):
+        (self.candidate / "checks" / "readinglog.py").write_text("def checks(ctx):\n    pass\n", encoding="utf-8")
+        (self.candidate / "STATIONS.json").write_text('{"schema": 1, "case": "readinglog", "stations": []}',
+                                                      encoding="utf-8")
+        result = assess.station(self.candidate, "readinglog", 1, PLAYGROUND, self.temp / "S1")
+        self.assertEqual((result["passed"], result["total"], result["status"]), (3, 5, "fail"))
+
     def test_scratch_copy_has_no_git(self):
         copy = assess.scratch_copy(self.candidate, self.temp / "scratch")
         self.assertTrue((copy / "app.py").is_file())

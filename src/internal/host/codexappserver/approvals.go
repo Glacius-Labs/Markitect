@@ -325,7 +325,7 @@ func verifyApprovalPath(root, relative, kind string) error {
 			// ancestor has already been proven to be a real in-root directory.
 			return nil
 		}
-		if err != nil || info.Mode()&os.ModeSymlink != 0 {
+		if err != nil || info.Mode()&os.ModeSymlink != 0 || !storedName(current) {
 			return projectworkspace.ErrInvalidDelta
 		}
 		if last {
@@ -337,4 +337,26 @@ func verifyApprovalPath(root, relative, kind string) error {
 		}
 	}
 	return nil
+}
+
+// storedName reports whether an existing path's final component is spelled
+// as its directory entry. Windows also resolves an 8.3 short name or another
+// case to the entry, and scope checks only see the requested text, so an
+// alias such as docs/GENERA~1 could otherwise approve a write to an excluded
+// docs/generated-protos. Only stored names appear in a directory listing.
+func storedName(path string) bool {
+	if runtime.GOOS != "windows" {
+		return true
+	}
+	entries, err := os.ReadDir(filepath.Dir(path))
+	if err != nil {
+		return false
+	}
+	name := filepath.Base(path)
+	for _, entry := range entries {
+		if entry.Name() == name {
+			return true
+		}
+	}
+	return false
 }

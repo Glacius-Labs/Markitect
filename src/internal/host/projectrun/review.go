@@ -778,6 +778,15 @@ func reviewRequired(project *Project, task ManagerTask) bool {
 	return project != nil && (len(scopedCandidateFiles(project, task)) > 0 || len(task.Artifacts) > 0 || len(task.WrittenPaths) > 0 || len(task.IntegratedPaths) > 0)
 }
 
+// phaseReviewRequired also makes an integration review mandatory when any
+// direct child delivered paths, even if this Manager owns no files and changed
+// nothing while integrating, so a reviewer always sees the children's outputs
+// together. tasks must be the run report's tasks, because only they carry
+// delivered paths.
+func phaseReviewRequired(project *Project, task ManagerTask, tasks []ManagerTask, phase string) bool {
+	return reviewRequired(project, task) || project != nil && len(reviewChangedPaths(task, tasks, phase)) > 0
+}
+
 func reviewScopePaths(files []agentexec.Artifact) []string {
 	paths := make([]string, 0, len(files))
 	for _, file := range files {
@@ -988,7 +997,7 @@ func requireFreshReviews(host Host, root string, store *runStore, dir string, ba
 		if len(activeChildren(run.Tasks, task.ManagerID)) > 0 {
 			phase = "integrate"
 		}
-		if !reviewRequired(finalProject, task) {
+		if !phaseReviewRequired(finalProject, task, run.Tasks, phase) {
 			continue
 		}
 		scopeDigest, err := reviewScopeDigest(plan, finalProject, task, phase, run)

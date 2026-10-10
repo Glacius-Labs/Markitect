@@ -1,0 +1,55 @@
+name: Flake report
+
+# Reads the Go test results that CI uploads per run attempt and reports tests
+# that passed and failed on the same commit and OS, plus every failing test
+# (backlog TEST-05). It reruns nothing and never changes a CI verdict.
+on:
+  schedule:
+    - cron: '13 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: How many days of CI runs to read (artifacts are kept 14 days)
+        type: number
+        default: 14
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  report:
+    name: Flake report
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download test results
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DAYS: ${{ inputs.days || 14 }}
+        run: |
+          since="$(date -u -d "$DAYS days ago" +%Y-%m-%d)"
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yaml --created ">=$since" --limit 1000 \
+            --json databaseId,headSha,headBranch,event,createdAt,conclusion,attempt > "$RUNNER_TEMP/runs.json"
+          mkdir -p "$RUNNER_TEMP/results"
+          for id in $(jq -r '.[].databaseId' "$RUNNER_TEMP/runs.json"); do
+            # Runs without results (cancelled before the upload, or expired) are skipped.
+            gh run download "$id" --repo "$GITHUB_REPOSITORY" --pattern 'go-test-*' --dir "$RUNNER_TEMP/results/$id" > /dev/null 2>&1 \
+              || rm -rf "$RUNNER_TEMP/results/$id"
+          done
+          echo "runs listed: $(jq length "$RUNNER_TEMP/runs.json"), runs with results: $(find "$RUNNER_TEMP/results" -mindepth 1 -maxdepth 1 -type d | wc -l)"
+
+      - name: Write the report
+        run: python3 -B scripts/flake-report.py --runs "$RUNNER_TEMP/runs.json" --results "$RUNNER_TEMP/results" --summary "$GITHUB_STEP_SUMMARY" > "$RUNNER_TEMP/flake-report.md"
+
+      - name: Upload the report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: flake-report-${{ github.run_id }}
+          path: ${{ runner.temp }}/flake-report.md
+          retention-days: 90

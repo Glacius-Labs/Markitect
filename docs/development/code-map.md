@@ -33,15 +33,15 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 |---|---|---|
 | `src/internal/core` | Compiles explicitly supplied Schemas and Definitions into a pure structural model. | [src/internal/core/README.md](../../src/internal/core/README.md) |
 | `src/internal/core/snapshot` | Fixed sets of source files and deterministic comparisons over them. | [docs/source-snapshots.md](../source-snapshots.md#current-value) |
-| `src/internal/host/projectbriefing` | Records deterministic briefings for accepted model changes from committed history. | [docs/design/project-world/operation-scopes-and-model-briefings.md](../design/project-world/operation-scopes-and-model-briefings.md) |
-| `src/internal/host/projectcoverage` | Inventories repository paths and classifies how the project model covers them. | [docs/project-operations.md](../project-operations.md#ordinary-work-item) |
-| `src/internal/modules/projectmodel` | Derives management, artifact and impact views from the compiled project model. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |
+| `src/internal/host/projectbriefing` | Records deterministic briefings for accepted model changes from committed history. | [docs/architecture.md](../architecture.md#core-layer) |
+| `src/internal/host/projectcoverage` | Inventories repository paths and classifies how the project model covers them. | [docs/architecture.md](../architecture.md#core-layer) |
+| `src/internal/modules/projectmodel` | Derives management, artifact and impact views from the compiled project model. | [docs/architecture.md](../architecture.md#core-layer) |
 
 ## Infrastructure
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `src/internal/host/guardedwrite` | Applies selected working-tree changes only while repository, branch, HEAD and captured bytes are unchanged. | [docs/design/host-write-identity.md](../design/host-write-identity.md#authority-and-object-identity) |
+| `src/internal/host/guardedwrite` | Applies selected working-tree changes only while repository, branch, HEAD and captured bytes are unchanged. | [docs/architecture.md](../architecture.md#infrastructure-layer) |
 | `src/internal/infrastructure/source` | Loads fixed snapshots from the working tree or a Git commit with hardened Git processes. | [docs/source-snapshots.md](../source-snapshots.md#adapter-and-use-case-ownership) |
 
 ## Product application
@@ -50,7 +50,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 |---|---|---|
 | `src/internal/host/mcp` | Local stdio MCP server over the project operations. | [docs/project-operations.md](../project-operations.md#mcp-server-and-tool-groups) |
 | `src/internal/host/projectadoption` | Brownfield adoption that checks fixed-snapshot evidence and prepares model-only changes. | [docs/project-workflow.md](../project-workflow.md#existing-repositories) |
-| `src/internal/host/projectapp` | Shared application facade that the project CLI and MCP server call. | [docs/architecture.md](../architecture.md) |
+| `src/internal/host/projectapp` | Shared application facade that the project CLI and MCP server call. | [docs/architecture.md](../architecture.md#application-layer) |
 | `src/internal/host/projectcli` | The `markitect` verb table, its command line and its MCP tools. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
 | `src/internal/host/projectexplore` | Stores explorations, open decisions, scope readiness and Apply receipts. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |
 | `src/internal/host/projectonboarding` | Writes project-local guidance and skills for Codex and Claude contributors. | [docs/project-workflow.md](../project-workflow.md#connect-and-inspect) |
@@ -72,7 +72,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `src/internal/host` | Host root with the v0.13 Project/Domain commands and their composition. | [docs/development/modules.md](modules.md#responsibility-map) |
+| `src/internal/host` | Host root with the v0.13 Project/Domain commands and their composition. | [docs/architecture.md](../architecture.md#legacy-line) |
 | `src/internal/host/artifactcli` | Command interface of `markitect-check-artifacts` for managed-artifact accounting. | [docs/usage.md](../usage.md#managed-artifact-accounting) |
 | `src/internal/host/authoring` | Source YAML model for v0.13 Projects, Domains and resources. | [docs/usage.md](../usage.md#project-and-resource-model) |
 | `src/internal/host/authoring/contentpackage` | Reads and builds deterministic offline content-package archives. | [docs/content-packages.md](../content-packages.md) |
@@ -91,9 +91,9 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `src/internal/host/compat/v0_13/consumers/projections` | Historical v0.13 projection plan, apply and verify API. | [src/internal/host/compat/v0_13/consumers/projections/README.md](../../src/internal/host/compat/v0_13/consumers/projections/README.md) |
 | `src/internal/host/compat/v0_13/kernel` | Historical v0.13 Domain, resource and policy kernel (Go package name `core`). | [src/internal/host/compat/v0_13/README.md](../../src/internal/host/compat/v0_13/README.md) |
 | `src/internal/host/dotnetcli` | Command protocol of the .NET reference adapter. | [src/cmd/markitect-adapter-dotnet/README.md](../../src/cmd/markitect-adapter-dotnet/README.md) |
-| `src/internal/host/embedded` | Tool-shipped authoring guidance compiled as a Markitect context. | [docs/architecture.md](../architecture.md#authoring-and-queries) |
+| `src/internal/host/embedded` | Tool-shipped authoring guidance compiled as a Markitect context. | [docs/architecture.md](../architecture.md#legacy-line) |
 | `src/internal/host/githubcli` | Command protocol of the GitHub repository-metadata adapter. | [src/cmd/markitect-adapter-github/README.md](../../src/cmd/markitect-adapter-github/README.md) |
-| `src/internal/host/inputs` | Resolves explicitly declared non-Markitect input files for a v0.13 graph. | [docs/architecture.md](../architecture.md#fixed-inputs-and-evidence) |
+| `src/internal/host/inputs` | Resolves explicitly declared non-Markitect input files for a v0.13 graph. | [docs/architecture.md](../architecture.md#legacy-line) |
 | `src/internal/host/modulecli` | Command interface of `markitect-check-modules`. | [docs/usage.md](../usage.md#independent-module-checks-current-source) |
 | `src/internal/host/projectionengine` | Pure evaluation of explicit projection contracts. | [src/internal/host/projectionengine/README.md](../../src/internal/host/projectionengine/README.md) |
 | `src/internal/modules/adoption/capture` | Selective-capture handoff for v0.13 Copy Me adoption. | [src/internal/modules/adoption/README.md](../../src/internal/modules/adoption/README.md) |

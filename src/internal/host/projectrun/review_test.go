@@ -12,6 +12,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
@@ -579,6 +580,120 @@ func TestIntegrationReviewExpandsRequiredChildDirectoryArtifact(t *testing.T) {
 	}
 	if reviewPaths := reviewScopePaths(files); !containsString(reviewPaths, file) {
 		t.Errorf("integration review omitted file %s of required directory artifact src/orders/ (Manager input had %v): %v", file, managerPaths, reviewPaths)
+	}
+}
+
+func TestFileLessParentIntegrationReviewRequiredForDeliveringChildren(t *testing.T) {
+	const (
+		rootID      = "project/root"
+		ordersID    = "project/orders"
+		inventoryID = "project/inventory"
+		ordersNotes = "src/orders/notes.txt"
+		inventory   = "src/inventory/implementation.txt"
+	)
+	project := &Project{
+		Config: projectwork.Config{InventoryRoots: []string{"src"}},
+		Snapshot: &snapshot.Snapshot{
+			Files: map[string][]byte{ordersNotes: []byte("orders notes v2\n"), inventory: []byte("inventory implementation v2\n")},
+			Modes: map[string]string{ordersNotes: snapshot.RegularMode, inventory: snapshot.RegularMode},
+		},
+		Report: projectmodel.Report{
+			Managers: []projectmodel.Manager{{ID: rootID}, {ID: ordersID, Parent: rootID}, {ID: inventoryID, Parent: rootID}},
+			Files: []projectmodel.FileEntry{
+				{Path: ordersNotes, Owner: ordersID, Class: "documentation"},
+				{Path: inventory, Owner: inventoryID, Class: "source"},
+			},
+		},
+	}
+	parent := ManagerTask{ID: "root-task", ManagerID: rootID, Goal: "Integrate orders and inventory.", State: "integrated", IntegratedPaths: []string{}}
+	plannedOrders := ManagerTask{ID: "orders-task", ManagerID: ordersID, ParentTask: rootID, Goal: "Document orders.", State: "worked"}
+	plannedInventory := ManagerTask{ID: "inventory-task", ManagerID: inventoryID, ParentTask: rootID, Goal: "Implement inventory.", State: "worked"}
+	plan := PlanRecord{Goal: "Deliver orders and inventory.", Managers: []ManagerTask{parent, plannedOrders, plannedInventory}}
+	// The native child proposes no candidateFiles; only the Host-harvested
+	// delta carries its file. The process child proposes its file directly.
+	native := agentexec.RunResult{Response: agentexec.Response{CandidateFiles: []agentexec.CandidateFile{}},
+		Delta: &projectworkspace.Delta{Changes: []projectworkspace.Change{{Kind: projectworkspace.ChangeAdd, Path: ordersNotes, Mode: "0644", Content: []byte("orders notes v2\n")}}}}
+	process := agentexec.RunResult{Response: agentexec.Response{CandidateFiles: []agentexec.CandidateFile{{Path: inventory, Mode: "0644", Content: "inventory implementation v2\n"}}}}
+	// Record delivered paths exactly as the main loop and targeted rework do.
+	orders, stock := plannedOrders, plannedInventory
+	orders.WrittenPaths = unionPaths(orders.WrittenPaths, agentCandidatePaths(native))
+	stock.WrittenPaths = unionPaths(stock.WrittenPaths, agentCandidatePaths(process))
+	quiet := []ManagerTask{parent, plannedOrders, plannedInventory}
+	delivered := RunReport{Tasks: []ManagerTask{parent, orders, stock}}
+
+	if reviewRequired(project, parent) {
+		t.Fatal("fixture parent must own no files and change nothing")
+	}
+	if phaseReviewRequired(project, parent, quiet, "integrate") {
+		t.Error("integration review became required although no child delivered anything")
+	}
+	if phaseReviewRequired(project, parent, delivered.Tasks, "work") {
+		t.Error("child deliveries made the delegation-only work review required")
+	}
+	if !phaseReviewRequired(project, parent, delivered.Tasks, "integrate") {
+		t.Fatal("file-less parent skipped its integration review although both children delivered files")
+	}
+	_, files, _, err := buildReviewerContext(plan, project, parent, "integrate", 1, candidateData{ID: "candidate-1", Digest: "digest-1"}, BriefingContext{}, delivered)
+	if err != nil {
+		t.Fatal(err)
+	}
+	paths := reviewScopePaths(files)
+	for _, path := range []string{ordersNotes, inventory} {
+		if !containsString(paths, path) {
+			t.Errorf("integration review input omitted child-delivered %s: %v", path, paths)
+		}
+	}
+}
+
+func TestFullVerifyReviewedFilesBindChildDeliveredFileOutsideRequiredArtifacts(t *testing.T) {
+	const (
+		rootID  = "project/root"
+		childID = "project/orders"
+		impl    = "src/orders/implementation.txt"
+		notes   = "src/orders/notes.txt"
+	)
+	newProject := func(notesBytes string) *Project {
+		return &Project{
+			Config: projectwork.Config{InventoryRoots: []string{"src"}},
+			Snapshot: &snapshot.Snapshot{
+				Files: map[string][]byte{impl: []byte("orders implementation v2\n"), notes: []byte(notesBytes)},
+				Modes: map[string]string{impl: snapshot.RegularMode, notes: snapshot.RegularMode},
+			},
+			Report: projectmodel.Report{
+				Managers:  []projectmodel.Manager{{ID: rootID}, {ID: childID, Parent: rootID}},
+				Artifacts: []projectmodel.Artifact{{ID: "orders-code", Owner: childID, Required: true, Paths: []string{impl}}},
+				Files: []projectmodel.FileEntry{
+					{Path: impl, Owner: childID, Class: "source", Artifacts: []string{"orders-code"}},
+					{Path: notes, Owner: childID, Class: "documentation"},
+				},
+			},
+		}
+	}
+	plannedRoot := ManagerTask{ID: "root-task", ManagerID: rootID, Goal: "Integrate orders."}
+	plannedChild := ManagerTask{ID: "child-task", ManagerID: childID, ParentTask: rootID, Goal: "Implement orders."}
+	plan := PlanRecord{Goal: "Implement orders.", Managers: []ManagerTask{plannedRoot, plannedChild}}
+	runRoot := plannedRoot
+	runRoot.State, runRoot.IntegratedPaths = "integrated", []string{}
+	runChild := plannedChild
+	runChild.State, runChild.WrittenPaths = "worked", []string{impl, notes}
+	run := RunReport{Tasks: []ManagerTask{runRoot, runChild}}
+	notesEvidence := func(project *Project) fullReviewFileReference {
+		t.Helper()
+		refs, err := currentReviewFileReferences(project, plan, runRoot, "integrate", run)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, ref := range refs {
+			if ref.Path == notes {
+				return ref
+			}
+		}
+		t.Fatalf("Full Verify reviewed-files evidence omitted child-delivered %s: %+v", notes, refs)
+		return fullReviewFileReference{}
+	}
+	before, after := notesEvidence(newProject("orders notes v1\n")), notesEvidence(newProject("orders notes CHANGED\n"))
+	if before.ContentDigest == "" || before.ContentDigest == after.ContentDigest {
+		t.Fatalf("Full Verify reviewed-files evidence did not follow child-delivered %s: before=%+v after=%+v", notes, before, after)
 	}
 }
 

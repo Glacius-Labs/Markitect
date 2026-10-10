@@ -1,6 +1,10 @@
 """Run manifest (schema 1): one JSON file describes everything a run needs.
 
-`load(path)` is the only validator; other modules trust its result.
+`load(path)` is the only validator; other modules trust its result. The case must be
+one of the folders `cases.discover()` finds under the playground root (inside the run
+container that is /in). `stations` defaults to the case's count. `markitect.sourceRepo`
+defaults to the Git checkout that holds the playground; the host then records it as an
+absolute path with the full commit (`host.resolve_markitect`).
 """
 
 from __future__ import annotations
@@ -10,9 +14,9 @@ import re
 from pathlib import Path
 from typing import Any
 
+from . import cases
+
 SCHEMA = 1
-# The one list of known cases; each is a folder cases/<case>/ with its STATIONS.json.
-CASES = ("roombook", "readinglog", "readinglog2")
 METHODS = ("conventional", "markitect")
 # "fake" stands in for Codex, "fake-claude" for Claude Code (both provider-free).
 AGENT_KINDS = ("codex", "fake", "claude", "fake-claude")
@@ -33,7 +37,7 @@ class ManifestError(ValueError):
     """The manifest is missing, unreadable or does not match schema 1."""
 
 
-def load(path: Path) -> dict:
+def load(path: Path, *, playground: Path | None = None) -> dict:
     path = Path(path)
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -41,19 +45,36 @@ def load(path: Path) -> dict:
         raise ManifestError(f"cannot read manifest {path}: {exc}") from exc
     except json.JSONDecodeError as exc:
         raise ManifestError(f"manifest {path} is not valid JSON: {exc}") from exc
-    return validate(data)
+    result = validate(data, playground=playground)
+    if "markitect" in result:  # a relative or ~ sourceRepo means: from the manifest's folder
+        source = Path(result["markitect"]["sourceRepo"]).expanduser()
+        result["markitect"]["sourceRepo"] = str(source if source.is_absolute() else path.parent / source)
+    return result
 
 
-def validate(data: Any) -> dict:
-    """Return a normalized copy of a schema-1 manifest (container defaults filled in)."""
+def validate(data: Any, *, playground: Path | None = None) -> dict:
+    """Return a normalized copy of a schema-1 manifest (defaults filled in).
+
+    `playground` is the folder holding `cases/` (default: this playground)."""
     root = _object(data, "manifest", required={"schema", "id", "case", "method", "agent", "limits"},
-                   optional={"container", "markitect"})
+                   optional={"stations", "container", "markitect"})
     if type(root["schema"]) is not int or root["schema"] != SCHEMA:
         raise ManifestError(f"schema: expected {SCHEMA}, got {root['schema']!r}")
+    try:
+        known = cases.discover(playground)
+    except cases.CaseError as exc:
+        raise ManifestError(f"case: {exc}") from exc
+    case = _choice(root["case"], tuple(known), "case")
+    count = known[case].stations
+    # Waves are cumulative, so a run can only take the first N of them.
+    stations = _positive_int(root["stations"], "stations") if "stations" in root else count
+    if stations > count:
+        raise ManifestError(f"stations: case {case} has {count} stations, got {stations}")
     result: dict[str, Any] = {
         "schema": SCHEMA,
         "id": _match(root["id"], _ID, "id"),
-        "case": _choice(root["case"], CASES, "case"),
+        "case": case,
+        "stations": stations,
         "method": _choice(root["method"], METHODS, "method"),
     }
 
@@ -92,9 +113,9 @@ def validate(data: Any) -> dict:
             raise ManifestError("markitect: required when method is 'markitect'")
         # Markitect's inner roles run on Codex. A Codex outer agent shares its model and effort
         # with them; a Claude Code outer agent needs them named here (product setup input).
-        product = _object(root["markitect"], "markitect", required={"sourceRepo", "commit"},
-                          optional={"innerModel", "innerEffort"})
-        source = product["sourceRepo"]
+        product = _object(root["markitect"], "markitect", required={"commit"},
+                          optional={"sourceRepo", "innerModel", "innerEffort"})
+        source = product["sourceRepo"] if "sourceRepo" in product else default_source_repo(playground)
         if not isinstance(source, str) or not source.strip():
             raise ManifestError("markitect.sourceRepo: expected a non-empty path string")
         result["markitect"] = {"sourceRepo": source,
@@ -110,6 +131,16 @@ def validate(data: Any) -> dict:
     elif "markitect" in root:
         raise ManifestError("markitect: only allowed when method is 'markitect'")
     return result
+
+
+def default_source_repo(playground: Path | None = None) -> str:
+    """The Git checkout that holds the playground, as an absolute path."""
+    start = Path(playground or cases.ROOT).resolve()
+    for folder in (start, *start.parents):
+        if (folder / ".git").exists():
+            return str(folder)
+    raise ManifestError(f"markitect.sourceRepo: missing, and no Git checkout holds the playground at {start} "
+                        "to use as the default; give the path of a Markitect checkout")
 
 
 def _object(value: Any, where: str, *, required: set[str] = frozenset(),

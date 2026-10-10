@@ -91,6 +91,17 @@ type Report struct {
 	// above do not carry, so Impact can see changes to them. It is set only by
 	// Analyze and is not part of the JSON contract or Digest.
 	unprojected map[string]string
+	// written maps each definition and property to how it is written, so Impact
+	// can see edits that change only the writing. Set only by Analyze.
+	written map[string]map[string]writtenProperty
+}
+
+// writtenProperty compares the digest of a property as written with the
+// digest of the value projected from it. For a set-like list, elements holds
+// the projected keys in written order, repeats included.
+type writtenProperty struct {
+	raw, value string
+	elements   []string
 }
 
 type ChangeImpact struct {

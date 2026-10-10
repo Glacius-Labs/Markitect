@@ -463,7 +463,7 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 	if err != nil {
 		return nil, err
 	}
-	if !reviewRequired(compiled, *task) {
+	if !phaseReviewRequired(compiled, *task, report.Tasks, "integrate") {
 		task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "not-required", candidate.ID, 0
 		if err := persistState(store, report); err != nil {
 			return nil, err

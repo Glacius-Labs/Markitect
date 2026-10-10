@@ -298,7 +298,8 @@ packages:
     title: Implement the verb table
     stream: CLI
     wave: 2
-    status: active
+    status: review
+    pr: 161
     owner: interface
     depends_on: [CLI-01]
     note: >-
@@ -358,6 +359,20 @@ packages:
       make it testable through the container runtime tier (CI-04) rather than on developer machines.
     acceptance:
       - A short decision note; App Server behavior covered by the container tier.
+
+  - id: CLI-04
+    title: Doctor checks the Git version
+    stream: CLI
+    wave: 2
+    status: blocked
+    owner: interface
+    depends_on: [CLI-02]
+    note: Explore, Plan and Apply call git check-attr --source, which needs Git 2.40 or newer; older Git fails with an unknown-option error.
+    zone: interface
+    inputs:
+      - pull request 162 (ARCH-10 known problems)
+    acceptance:
+      - doctor reports the Git version and fails with a clear diagnostic below 2.40.
 
   # --- KG: knowledge graph variant ---------------------------------------
   - id: KG-00
@@ -480,7 +495,7 @@ packages:
     title: Remove timing-dependent tests
     stream: TEST
     wave: 2
-    status: proposed
+    status: active
     owner: qa
     depends_on: [TEST-01]
     zone: runtime
@@ -569,6 +584,20 @@ packages:
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
     acceptance:
       - Owner decides how Windows is supported (smoke tier, nightly full suite or none) based on the Linux-first results.
+
+  - id: CI-06
+    title: Formatting gate for Go sources
+    stream: CI
+    wave: 2
+    status: blocked
+    owner: qa
+    depends_on: [CLI-02]
+    note: agentexec/lifecycle.go and codexappserver/contracts.go are not gofmt-clean, and CI has no formatting step.
+    zone: ci
+    inputs:
+      - pull request 162 (ARCH-10 known problems)
+    acceptance:
+      - All Go files are gofmt-clean, and CI fails on an unformatted file.
 
   # --- BUG: bug hunting ----------------------------------------------------
   - id: BUG-01
@@ -786,7 +815,8 @@ packages:
     title: Documentation organized by module and current behavior
     stream: ARCH
     wave: 1
-    status: active
+    status: review
+    pr: 162
     owner: cleaner
     depends_on: [ARCH-01]
     zone: free
@@ -794,6 +824,76 @@ packages:
       - docs/work-items/surveys/code-architecture-20261010.md
     acceptance:
       - Architecture, repository layout and constitution describe the current product; statements that legacy surfaces remain supported are removed (DEC-014); known problems are listed per module.
+
+  - id: ARCH-12
+    title: Layer direction in the architecture gate
+    stream: ARCH
+    wave: 3
+    status: blocked
+    owner: cleaner
+    depends_on: [ARCH-13]
+    note: The gate forbids only product-to-legacy imports and restricts guardedwrite use; it checks no direction between the product layers (layers.go CheckMapLayers).
+    zone: free
+    inputs:
+      - pull request 162 (ARCH-10 known problems)
+    acceptance:
+      - The gate enforces the direction between the product layers from the code map; negative fixtures prove each rule.
+
+  - id: ARCH-13
+    title: Dependencies point inward
+    stream: ARCH
+    wave: 3
+    status: blocked
+    owner: cleaner
+    depends_on: [ARCH-06, CLI-02, KG-02]
+    note: projectbriefing and projectcoverage run Git and write state; projectbriefing imports projectwork; runtime and application packages import each other (projectrun, projectsetup, projectapp, projectadoption, projectcli).
+    zone: model
+    inputs:
+      - pull request 162 (ARCH-10 known problems)
+    acceptance:
+      - Core packages run no Git and write no state; core imports no application package; runtime and application packages no longer import each other in both directions.
+
+  - id: ARCH-14
+    title: One record store
+    stream: ARCH
+    wave: 3
+    status: blocked
+    owner: cleaner
+    depends_on: [ARCH-06]
+    note: Runs, explorations, briefings and adoption sessions keep four stores with their own layouts and write paths.
+    zone: runtime
+    inputs:
+      - pull request 162 (ARCH-10 known problems)
+    acceptance:
+      - The four record kinds share one store layout and one guarded write path.
+
+  - id: ARCH-15
+    title: Adoption runs Managers through the run engine
+    stream: ARCH
+    wave: 3
+    status: blocked
+    owner: cleaner
+    depends_on: [ARCH-06]
+    note: projectadoption has its own Manager-run stack on agentexec (manager_run.go), separate from projectrun.
+    zone: runtime
+    inputs:
+      - pull request 162 (ARCH-10 known problems)
+    acceptance:
+      - Brownfield Manager stages run through the same run engine as project runs, with the same review and evidence rules.
+
+  - id: ARCH-16
+    title: Package directories show their layer
+    stream: ARCH
+    wave: 3
+    status: blocked
+    owner: cleaner
+    depends_on: [ARCH-13, ARCH-09]
+    note: Product core and infrastructure packages (projectbriefing, projectcoverage, guardedwrite) live in src/internal/host next to the legacy root.
+    zone: free
+    inputs:
+      - pull request 162 (ARCH-10 known problems)
+    acceptance:
+      - Each package lives under a directory that names its layer; the code map and imports follow.
 
   # --- GOV: Government, organization, cockpit and monitoring --------------
   - id: GOV-00
@@ -856,8 +956,8 @@ packages:
     title: Check earlier plans and assessments against current main
     stream: IDEA
     wave: 1
-    status: ready
-    owner: integrator
+    status: active
+    owner: cleaner
     zone: free
     inputs:
       - origin archive/wip/government-assessment-untracked-docs-20261010 (refinement plan, independent assessment, knowledge-graph plan)

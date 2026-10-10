@@ -898,7 +898,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				if compileErr != nil {
 					return failRun(store, report, compileErr)
 				}
-				if !reviewRequired(candidateProject, *task) {
+				if !phaseReviewRequired(candidateProject, *task, report.Tasks, "integrate") {
 					task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "not-required", resolved.ID, 0
 					if err := persistState(store, &report); err != nil {
 						return empty, err
@@ -985,7 +985,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			if len(activeChildren(report.Tasks, task.ManagerID)) > 0 {
 				phase = "integrate"
 			}
-			if !reviewRequired(finalProject, *task) {
+			if !phaseReviewRequired(finalProject, *task, report.Tasks, phase) {
 				task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "not-required", finalCandidate.ID, 0
 				if err := persistState(store, &report); err != nil {
 					return empty, err
@@ -1970,6 +1970,13 @@ func applyProposal(base candidateData, proposals []agentexec.CandidateFile, conf
 
 func forbiddenRuntimePath(path string) bool {
 	lower := strings.ToLower(path)
+	for _, component := range strings.Split(lower, "/") {
+		// git~1 is the usual Windows 8.3 short name of .git; Git's
+		// core.protectNTFS refuses it on every platform.
+		if component == ".git" || component == "git~1" {
+			return true
+		}
+	}
 	return lower == ".markitect" || strings.HasPrefix(lower, ".markitect/")
 }
 

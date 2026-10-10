@@ -1,10 +1,10 @@
 # Modules and static composition
 
-This document records current source module ownership and labels the clean-architecture consolidation as historical compatibility structure. The canonical Projection alpha bundled with v0.14.1, with its installable Modules and capability packages, has been removed from current source; the [v0.14.1 module guide](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/development/modules.md) describes it. The validated projection lifecycle informs the accepted canonical reset without changing the preserved v0.13.0 contract. The [consolidation report](../validation/clean-architecture-consolidation.md) records dated migration evidence; each subsequent source change requires its own candidate validation and does not update the published binary. The [product vision](../vision.md) remains the owner of product intent and human/agent responsibilities; this document records technical ownership without copying or revising that thesis.
+This page owns the dependency rules between Markitect's packages and how they are composed. The [code map](code-map.md) lists every package with its layer, purpose and owning document. [Architecture](../architecture.md#layers) describes what each layer does and its known problems. The [clean-architecture consolidation decision](../design/clean-architecture-consolidation.md) records how this structure was introduced.
 
-## Installable Modules and Go capability packages
+## Go capability packages
 
-Installable Schema and Projection Modules belonged to the canonical Projection alpha and have been removed from current source. Go capability packages under internal/modules/<name> are implementation units, not installable manifests: currently the project model (`projectmodel`) and the adoption capture/review helpers (`adoption`). The responsibility map below describes current source ownership; rows marked historical retain v0.13.0 compatibility behavior.
+Go packages under `internal/modules/<name>` are implementation units, not installable manifests. Today they are the project model (`projectmodel`, in the core layer) and the adoption capture and review helpers of the legacy line (`adoption`).
 
 ## Dependency direction
 
@@ -26,40 +26,25 @@ Each new capability package under internal/modules/<name> imports only the new C
 
 ## Responsibility map
 
-| Final package/responsibility | Owns | Does not own |
-|---|---|---|
-| New Core: internal/core | Pure Schema/Kind/Property/Definition structural compiler, resolved references and normalized IR | Domain policy, Project/Module loading, source acquisition, paths, providers, execution or persistence |
-| Host: internal/host | Compatibility source frontend, explicit input selection, static composition, model/context/impact, execution, persistence and guarded writes | Core semantic expansion, dynamic plugin loading, source acquisition or independent policy interpretation |
-| Adoption implementation package: internal/modules/adoption | Selected capture/review implementation helpers; implementation package only, not an installable Module manifest | Automatic discovery, expanded selection, reviewer authentication or adoption authority |
-| Historical agent-rules consumer: internal/host/compat/v0_13/consumers/agentrules | Preserved v0.13 Codex/Claude outputs and behavior under Host compatibility | New Core semantics or provider/model calls |
-| Historical artifact-coverage consumer: internal/host/compat/v0_13/consumers/artifactcoverage | Preserved v0.13 coverage behavior under Host compatibility | Whole-repository proof or inferred ownership |
-| Historical Git-hooks consumer: internal/host/compat/v0_13/consumers/githooks | Preserved v0.13 bounded artifact checks under Host compatibility | Shell interpretation or implicit installation |
-| Historical Pipelines consumer: internal/host/compat/v0_13/consumers/pipelines | Preserved v0.13 bounded artifact checks under Host compatibility | Pipeline execution or inferred provider state |
-| Historical GitHub consumer: internal/host/compat/v0_13/consumers/github | Preserved offline v0.13 behavior under Host compatibility | Live provider reads/writes or Apply |
-| Historical Azure DevOps consumer: internal/host/compat/v0_13/consumers/azuredevops | Preserved offline v0.13 behavior under Host compatibility | Live provider reads/writes or Apply |
-| Historical Projections consumer: internal/host/compat/v0_13/consumers/projections | Preserved validated plan/apply/verify mechanics and regression behavior | New shared IR or a parallel projection engine |
-| Infrastructure: internal/infrastructure/source | Git revision and working-tree acquisition, process hardening for acquisition, and materialization | Semantic decisions, Project layout, or policy interpretation |
-| Tooling: `internal/tooling` | Release, publication, license/notice operations and static architecture import analysis | Runtime adoption capabilities or a Module dependency |
+The [code map](code-map.md) owns the package list. In short:
 
-Host owns static composition, as well as the historical v0.13 authoring codecs and compatibility use cases. New Core source types are transient inputs to structural compilation. Host owns target path authorization, execution, persistence and guarded writes.
+- **Core:** the structural compiler, snapshots and project-model views. The compiler receives explicitly selected, decoded inputs and returns structural results only.
+- **Infrastructure:** Git and working-tree access, fixed snapshots and guarded writes. It owns Git acquisition and file-mode conversion.
+- **Application:** the product's use cases and their CLI and MCP surfaces.
+- **Runtime:** the inner roles in owned candidate workspaces.
+- **Legacy:** the earlier Project/Domain line. Product layers may not import it; ARCH-09 removes it.
+- **Executables, tooling, bootstrap, harnesses, experiments and fixtures** complete the map.
 
-The new Core receives explicitly selected, decoded Schemas and Definitions from Host and produces structural IR only. The historical v0.13 kernel, Resource.Data, graph policy and consumer semantics live under internal/host/compat/v0_13 and preserve their existing contracts; they are not the new Core API. Host compatibility adapters own any conversion required to keep legacy commands working, and new Definitions are not lowered into legacy Resources.
+The earlier map with its v0.13 compatibility rows is in the [history record](../history/development-modules-legacy-sections-20261010.md#responsibility-map).
 
-New Core digests bind structural Schemas and Definition values; source location and exact captured provenance remain separate. The Host compatibility kernel preserves its historical model, policy and exception digests. Infrastructure owns Git acquisition and mode conversion; the new Core does not interpret file modes.
+<a id="adding-changing-or-removing-a-module"></a>
+## Adding, changing or removing a capability package
 
-All artifact inputs remain opaque exact paths/modes/bytes at the generic boundary. Specialized Modules may inspect only their explicitly declared formats and captured bytes under their bounded contracts. They must not infer domain meaning from prose or source code, expand input selection, claim semantic truth, or turn machine output into human acceptance. The earlier Projections Module is preserved under Host compatibility as validated implementation evidence, not as the new shared IR or a parallel engine. Host remains responsible for loading snapshots, executing configured checks, accounting for artifact ownership, and guarding writes. Deterministic renderer output and variable AI candidate bytes remain distinct evidence cases; candidate presence alone cannot establish convergence. Explicit projection dependencies propagate drift or incomplete evidence to dependent contracts, without scheduling materialization. Existing strict check/verify behavior, explicit exceptions, conservative impact, fixed-snapshot evidence and observe/plan/apply/verify trust boundaries remain in force.
+Create a capability package only for an independently owned capability with clear inputs, outputs and validation that does not belong in the semantic kernel or Host's shared orchestration. Before implementation, record its owner, exact subtree, Core-facing types, configuration, artifact-byte contract, tests, unsupported behavior and output ownership. Keep the implementation and unit tests inside that subtree. Request coordinator-owned Host wiring; do not edit shared DTOs, Core, Infrastructure, Tooling, CI or another capability package in such an assignment.
 
-## Module-owned proposal contracts
+A capability package's concrete generic limitation is a request to the coordinator, not permission to edit Core. Include at least two concrete cases from distinct vocabularies, the current expression and exact failure, finite normalization/check/adapter alternatives, affected consumers, exact version/input behavior, diagnostics, digest/context/impact effects and a deterministic test. The coordinator decides whether shared semantics change and owns any Core edit before dependent package work proceeds.
 
-Module-owned proposal contracts, their Host registrations and the module-replacement example belonged to the canonical Projection alpha and have been removed from current source; the [v0.14.1 module guide](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/development/modules.md#module-owned-proposal-contracts) describes them.
-
-## Adding, changing or removing a Module
-
-Create a Module only for an independently owned capability with clear inputs, outputs and validation that does not belong in the semantic kernel or Host's shared orchestration. Before implementation, record its owner, exact subtree, Core-facing types, configuration, artifact-byte contract, tests, unsupported behavior and output ownership. Keep the implementation and unit tests inside that subtree. Request coordinator-owned Host wiring; do not edit shared DTOs, Core, Infrastructure, Tooling, CI or another Module in a Module assignment.
-
-A Module's concrete generic limitation is a request to the coordinator, not permission to edit Core. Include at least two concrete cases from distinct vocabularies, the current expression and exact failure, finite normalization/check/adapter alternatives, affected consumers, exact version/input behavior, diagnostics, digest/context/impact effects and a deterministic test. The coordinator decides whether shared semantics change and owns any Core edit before dependent Module work proceeds.
-
-Remove a Module only after its Host wiring, Project references, generated-output ownership, tests and documentation are accounted for. Delete its private implementation and fixtures together, verify that no production or test imports remain, and rerun the architecture gate. Do not leave an empty package, stale generated output or an unused generic Core primitive simply because the Module was removed.
+Remove a capability package only after its Host wiring, Project references, generated-output ownership, tests and documentation are accounted for. Delete its private implementation and fixtures together, verify that no production or test imports remain, and rerun the architecture gate. Do not leave an empty package, stale generated output or an unused generic Core primitive simply because the package was removed.
 
 ## Mechanical dependency gate
 
@@ -67,8 +52,17 @@ The checker is at `internal/tooling/architecture`. It parses Go imports without 
 
 The gate also reads the layers of the [code map](code-map.md) from the checked repository. Core, infrastructure, application and runtime packages may not import legacy packages, in production or test code. Legacy packages may still import them. These product packages may use only the guarded API of `src/internal/host/guardedwrite`: `CaptureFiles`, `Apply`, `ApplyChecked` and the types `Capture`, `Change`, `File` and `Result`. Its other exports are low-level primitives for the remaining legacy writers. The gate parses each product file that imports the package and reports every other name the file uses from it, and every dot import. The gate lists the permitted names, so a new export stays forbidden to product packages until it is added to that list. Negative fixtures cover each product layer and each form of the guarded-write rule.
 
-`TestRepositoryArchitecture` makes `go test ./...` exercise the repository scan. The named CI step runs the package gate, the explicit `architecture-imports` Project check delegates through Host, and the release workflow runs the same CI through its reusable quality job. This wiring does not establish a passing result; exact-head gate outcomes and migration status remain for the coordinator's report. A migration candidate is complete only after the same gate passes at the exact head and independent review confirms the full diff. This does not claim that v0.13.0 has the final package layout.
+`TestRepositoryArchitecture` makes `go test ./...` exercise the repository scan. The named CI step runs the package gate, the explicit `architecture-imports` Project check delegates through Host, and the release workflow runs the same CI through its reusable quality job. This wiring does not establish a passing result; exact-head gate outcomes and migration status remain for the coordinator's report. A migration candidate is complete only after the same gate passes at the exact head and independent review confirms the full diff.
 
-## Operational projection evidence
+## Historical module links
 
-Operational ProjectionRecords, VerificationResults and the records package belonged to the canonical Projection alpha and have been removed from current source; the [v0.14.1 module guide](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/development/modules.md#operational-projection-evidence) describes them.
+These retained anchors route existing links to the [history record](../history/development-modules-legacy-sections-20261010.md).
+
+<a id="installable-modules-and-go-capability-packages"></a>
+[Installable Modules](../history/development-modules-legacy-sections-20261010.md#installable-modules-and-go-capability-packages) belonged to the removed canonical alpha.
+
+<a id="module-owned-proposal-contracts"></a>
+[Module-owned proposal contracts](../history/development-modules-legacy-sections-20261010.md#module-owned-proposal-contracts) belonged to the removed canonical alpha.
+
+<a id="operational-projection-evidence"></a>
+[Operational projection evidence](../history/development-modules-legacy-sections-20261010.md#operational-projection-evidence) belonged to the removed canonical alpha.

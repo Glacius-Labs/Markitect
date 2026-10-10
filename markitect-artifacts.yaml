@@ -171,6 +171,8 @@ spec:
       owner: release-workflow
     - path: .github/workflows/release-benchmark.yaml
       owner: release-benchmark-workflow
+    - path: .github/workflows/flake-report.yaml
+      owner: flake-report-workflow
     - path: .github/workflows/playground-smoke.yaml
       owner: playground-smoke-workflow
     - path: .github/workflows/winget-validation.yaml

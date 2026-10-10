@@ -511,13 +511,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: go-test-${{ matrix.os }}-${{ github.sha }}
+          # One artifact per attempt: a re-run must not replace the results of
+          # a failed attempt, or the flake report would never see the failure.
+          name: go-test-${{ matrix.os }}-${{ github.sha }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/go-test.json
             ${{ runner.temp }}/go-test-report.txt
           if-no-files-found: warn
           retention-days: 14
-          overwrite: true
 
   publish-source-artifact:
     name: Publish main source artifact

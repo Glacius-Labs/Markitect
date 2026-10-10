@@ -326,7 +326,7 @@ func freshReviewEvidenceForVerify(store *runStore, dir string, finalProject *Pro
 		if len(activeChildren(run.Tasks, task.ManagerID)) > 0 {
 			phase = "integrate"
 		}
-		if !reviewRequired(finalProject, task) {
+		if !phaseReviewRequired(finalProject, task, run.Tasks, phase) {
 			continue
 		}
 		scopeDigest, err := reviewScopeDigest(plan, finalProject, task, phase, run)
