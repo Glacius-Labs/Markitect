@@ -12,6 +12,7 @@
     }
   ],
   "fails": [
+    "b01-stored-array-format",
     "b08-export-tags-column"
   ]
 }

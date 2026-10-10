@@ -21,6 +21,17 @@ must not test these:
 
 - CSV import: whitespace or a byte-order mark in the header row; which error wins when
   a file has several bad rows.
+- CSV import once B13 is released: a row or a header without the `pages` column (an
+  omitted value means unknown, yet a row with too few columns is invalid; the reference
+  rejects both as `invalid_input`).
+- Lines holding only whitespace in an import file ("Empty lines are ignored" does not
+  say whether they are empty; the reference rejects them as rows with too few columns).
+- `--pages` given with no value at all once B13 is released (the reference treats it as
+  a usage error, `invalid_input`).
+- An empty `--author` or `--tag` filter value, such as `""` or only whitespace (the
+  reference rejects it as `invalid_input`).
+- Version 2 records without `tags` (B08 keeps books stored before tags existed readable,
+  but version 2 came after tags; the reference reads them as books without tags).
 - `list --tag` with a value containing `;` (the reference rejects it as `invalid_input`).
 - Which error wins when one call has several problems, such as an invalid tag for an
   unknown ID.

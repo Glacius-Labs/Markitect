@@ -74,7 +74,8 @@ def _fmt(value: Any) -> str:
 def _pair(block: dict | None) -> str:
     if not block or (block.get("passed") is None and block.get("total") is None):
         return "n/a"
-    return f"{_fmt(block.get('passed'))}/{_fmt(block.get('total'))}"
+    text = f"{_fmt(block.get('passed'))}/{_fmt(block.get('total'))}"
+    return text + (f" +{block['errors']} not judged" if block.get("errors") else "")
 
 
 def _lines(diff: dict | None, category: str | None = None) -> str:

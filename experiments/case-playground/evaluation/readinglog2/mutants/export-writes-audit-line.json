@@ -15,6 +15,7 @@
     }
   ],
   "fails": [
+    "b01-stored-array-format",
     "b06-export-empty-database",
     "b06-export-read-only",
     "b08-untagged-stored-books"
