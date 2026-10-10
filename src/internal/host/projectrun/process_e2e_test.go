@@ -914,6 +914,40 @@ func TestIntegrationReviewFindingsRepairAndRereviewParentCandidate(t *testing.T)
 	}
 }
 
+func TestExhaustedIntegrationReviewBlocksBeforeInvokingManager(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	projectPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	projectYAML, err := os.ReadFile(projectPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projectYAML = []byte(strings.Replace(string(projectYAML), "  - .markitect/model/manager.yaml\n", "  - .markitect/model/manager.yaml\n  - .markitect/model/root-statement.yaml\n", 1))
+	writeE2E(t, root, projectwork.ManifestPath, string(projectYAML))
+	writeE2E(t, root, ".markitect/model/root-statement.yaml", "apiVersion: "+projectmodel.APIVersion+"\nkind: Statement\nmetadata:\n  name: integration-quality\n  namespace: \"\"\npurpose: Parent integration must produce a clean summary.\nspec:\n  category: concept\n  description: Parent-owned integration files contain the corrected summary.\n")
+	gitE2E(t, root, "add", projectwork.ManifestPath, ".markitect/model/root-statement.yaml")
+	gitE2E(t, root, "commit", "--amend", "--no-edit")
+	setupE2EProcess(t, "integration-review-fix")
+	enableE2EReviews(t, root, 100000)
+	updateE2ERuntime(t, root, func(config *Runtime) { config.Review.MaxRounds = 1 })
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and reconcile the two owned artifacts.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err == nil || run.Status != StatusBlocked || !strings.Contains(err.Error(), "exhausted the cumulative integration review round limit") {
+		t.Fatalf("exhausted integration review did not block on its round limit: status=%s err=%v", run.Status, err)
+	}
+	rootID := e2eManagerID("", "project-owner")
+	if got := reviewCount(run.Reviews, rootID, "integrate"); got != 1 {
+		t.Fatalf("root integration reviews=%d, want exactly the single allowed round", got)
+	}
+	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), rootID, "integrate"); calls != 1 {
+		t.Fatalf("root integration Manager ran %d times with MaxRounds=1; a candidate after the last failed review can never be reviewed", calls)
+	}
+}
+
 func TestIntegrationReviewRoutesChildReworkBeforeFreshParentReview(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	projectPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
