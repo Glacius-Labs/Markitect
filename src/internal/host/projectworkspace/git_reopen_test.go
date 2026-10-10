@@ -3,6 +3,8 @@ package projectworkspace
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -85,6 +87,71 @@ func TestValidateOwnedWorkspaceAcceptsManagerAndHelperHandlesAndRejectsForgedMar
 			}
 			if err := ValidateOwnedWorkspace(request, handle); err == nil {
 				t.Fatal("forged ownership marker was accepted")
+			}
+		})
+	}
+}
+
+func TestValidateOwnedWorkspaceAndReopenCompareStorageWithRepositoryAcrossVolumes(t *testing.T) {
+	fixture := newGitFixture(t)
+	storageParent := t.TempDir()
+	storageRoot := filepath.Join(storageParent, "owned-workspaces")
+	service, request := newGitServiceRequest(t, fixture, storageRoot, "manager:cross-volume-reopen", []string{"docs"}, nil)
+	handle, err := service.Prepare(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = service.Close(context.Background(), handle) })
+	recordPath := filepath.Join(filepath.Dir(handle.CWD), ownershipRecordName)
+	original, err := os.ReadFile(recordPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.WriteFile(recordPath, original, 0600) })
+
+	for _, tc := range []struct {
+		name   string
+		root   func(t *testing.T) string
+		inside bool
+	}{
+		{name: "repository on another volume", root: func(t *testing.T) string {
+			return substDrive(t, filepath.Dir(fixture.root)) + `\adopter`
+		}},
+		{name: "storage inside repository through another drive", inside: true, root: func(t *testing.T) string {
+			return substDrive(t, filepath.Dir(storageParent)) + `\` + filepath.Base(storageParent)
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Rebind the ownership record so that only the storage guard differs.
+			root := tc.root(t)
+			var record ownershipRecord
+			if err := json.Unmarshal(original, &record); err != nil {
+				t.Fatal(err)
+			}
+			record.Request.RepositoryRoot, record.Handle.RepositoryRoot = root, root
+			content, err := json.Marshal(record)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(recordPath, content, 0600); err != nil {
+				t.Fatal(err)
+			}
+			rebound, reboundHandle := request, handle
+			rebound.RepositoryRoot, reboundHandle.RepositoryRoot = root, root
+			restarted, err := NewGitService(storageRoot, gitServiceTestLimits)
+			if err != nil {
+				t.Fatal(err)
+			}
+			validateErr := ValidateOwnedWorkspace(rebound, reboundHandle)
+			reopenErr := restarted.ReopenCandidate(context.Background(), rebound, reboundHandle, nil, "", true)
+			if tc.inside {
+				if !errors.Is(validateErr, ErrInvalidHandle) || !errors.Is(reopenErr, ErrInvalidHandle) {
+					t.Fatalf("storage inside the repository was not refused: validate=%v reopen=%v", validateErr, reopenErr)
+				}
+				return
+			}
+			if validateErr != nil || reopenErr != nil {
+				t.Fatalf("storage on another volume than the repository was rejected: validate=%v reopen=%v", validateErr, reopenErr)
 			}
 		})
 	}
