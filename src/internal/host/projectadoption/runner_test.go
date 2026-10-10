@@ -470,8 +470,9 @@ func TestSelectedEvidenceLineGuidePreservesLineEndingsAndBounds(t *testing.T) {
 }
 
 func TestTargetContextRejectsUncommittedProject(t *testing.T) {
-	root, _ := committedRepository(t, map[string]string{"README.md": "target\n"})
-	gitRun(t, root, "checkout", "-b", "codex/project-adoption-provisional-target")
+	repo, _ := committedRepository(t, map[string]string{"README.md": "target\n"})
+	root := repo.Dir
+	repo.Git("checkout", "-b", "codex/project-adoption-provisional-target")
 	if _, err := projectwork.Init(root, "Provisional target", true); err != nil {
 		t.Fatal(err)
 	}
@@ -486,7 +487,8 @@ func TestTargetContextRejectsUncommittedProject(t *testing.T) {
 
 func distillationDiscovery(t *testing.T) (string, Discovery, DistillationTargetContext, *projectwork.Project) {
 	t.Helper()
-	root, commit := committedRepository(t, map[string]string{"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n"})
+	repo, commit := committedRepository(t, map[string]string{"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n"})
+	root := repo.Dir
 	discovery, err := Discover(root, DiscoveryRequest{
 		APIVersion: DiscoveryVersion, ID: "runner-discovery", Purpose: "Assess the selected order source", Review: "review-52",
 		Commit: commit, ScopeRoots: []string{"src/orders"},
@@ -496,14 +498,13 @@ func distillationDiscovery(t *testing.T) (string, Discovery, DistillationTargetC
 	if err != nil {
 		t.Fatal(err)
 	}
-	targetRoot, _ := committedRepository(t, map[string]string{"README.md": "accepted target\n"})
-	gitRun(t, targetRoot, "checkout", "-b", "codex/project-adoption-target-fixture")
+	targetRepo, _ := committedRepository(t, map[string]string{"README.md": "accepted target\n"})
+	targetRoot := targetRepo.Dir
+	targetRepo.Git("checkout", "-b", "codex/project-adoption-target-fixture")
 	if _, err := projectwork.Init(targetRoot, "Target fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, targetRoot, "add", "--all")
-	gitRun(t, targetRoot, "commit", "--quiet", "-m", "initialize target project")
-	targetRevision := gitRun(t, targetRoot, "rev-parse", "HEAD")
+	targetRevision := targetRepo.Commit("initialize target project")
 	targetProject, err := projectwork.Load(targetRoot, targetRevision)
 	if err != nil {
 		t.Fatal(err)

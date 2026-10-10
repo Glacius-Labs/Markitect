@@ -7,15 +7,14 @@ import (
 )
 
 func TestRevisionInventorySelectsMetadataAtExactCommit(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "src/orders.py", "original")
-	writeTestFile(t, root, "src/nested/stock.py", "stock")
-	writeTestFile(t, root, "outside.txt", "unselected")
-	gitTest(t, root, "add", ".")
-	gitTest(t, root, "commit", "-qm", "inventory")
-	commit := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
-	writeTestFile(t, root, "src/orders.py", "changed working bytes")
-	writeTestFile(t, root, "src/untracked.py", "untracked")
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("src/orders.py", "original")
+	repo.Write("src/nested/stock.py", "stock")
+	repo.Write("outside.txt", "unselected")
+	commit := repo.Commit("inventory")
+	repo.Write("src/orders.py", "changed working bytes")
+	repo.Write("src/untracked.py", "untracked")
 	queries := 0
 	run := func(repo string, args ...string) ([]byte, error) {
 		for _, arg := range args {
@@ -49,7 +48,8 @@ func TestRevisionInventorySelectsMetadataAtExactCommit(t *testing.T) {
 }
 
 func TestRevisionInventoryRejectsUnfixedOrUnsafeScope(t *testing.T) {
-	root, commit := selectiveGitFixture(t)
+	repo, commit := selectiveGitFixture(t)
+	root := repo.Dir
 	for _, revision := range []string{"HEAD", commit[:12], "-bad", strings.ToUpper(commit)} {
 		if _, err := InventoryRevisionRoots(root, revision, []string{"src"}); err == nil {
 			t.Errorf("accepted revision %q", revision)
@@ -63,14 +63,13 @@ func TestRevisionInventoryRejectsUnfixedOrUnsafeScope(t *testing.T) {
 }
 
 func TestRevisionInventoryRejectsSymlinkMetadataWithoutOpeningContent(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "target.txt", "outside")
-	gitTest(t, root, "add", "target.txt")
-	gitTest(t, root, "commit", "-qm", "target")
-	oid := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD:target.txt"))
-	gitTest(t, root, "update-index", "--add", "--cacheinfo", "120000,"+oid+",selected/link")
-	gitTest(t, root, "commit", "-qm", "symlink metadata")
-	commit := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("target.txt", "outside")
+	repo.Commit("target")
+	oid := repo.Git("rev-parse", "HEAD:target.txt")
+	repo.Git("update-index", "--add", "--cacheinfo", "120000,"+oid+",selected/link")
+	commit := commitIndex(repo, "symlink metadata")
 	if _, err := InventoryRevisionRoots(root, commit, []string{"selected"}); err == nil {
 		t.Fatal("accepted symlink")
 	}

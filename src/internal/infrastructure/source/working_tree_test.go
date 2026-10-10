@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 func TestWorkingTreeDigestTracksAddedAndDeletedFiles(t *testing.T) {
@@ -67,10 +69,8 @@ func TestWorkingTreeExclusionsAndMaterialize(t *testing.T) {
 }
 
 func TestProtectedDocumentationAndProviderTreesMatchAcrossSnapshotModes(t *testing.T) {
-	root := t.TempDir()
-	gitTest(t, root, "init", "-q")
-	gitTest(t, root, "config", "user.email", "source-test@example.invalid")
-	gitTest(t, root, "config", "user.name", "Source Test")
+	repo := testkit.NewRepo(t)
+	root := repo.Dir
 	visible := map[string]string{
 		"docs/general/rules/vendor/policy.md": "policy",
 		"docs/customers/x/obj/agent.md":       "customer agent",
@@ -80,7 +80,7 @@ func TestProtectedDocumentationAndProviderTreesMatchAcrossSnapshotModes(t *testi
 		".codex/bin/provider.md":              "codex config",
 	}
 	for p, content := range visible {
-		writeTestFile(t, root, p, content)
+		repo.Write(p, content)
 	}
 	for _, p := range []string{
 		"vendor/dependency.go",
@@ -90,7 +90,7 @@ func TestProtectedDocumentationAndProviderTreesMatchAcrossSnapshotModes(t *testi
 		"nested/obj/generated/cache.bin",
 		"app/node_modules/pkg/index.js",
 	} {
-		writeTestFile(t, root, p, "excluded")
+		repo.Write(p, "excluded")
 	}
 
 	working, err := Load(root, "")
@@ -108,9 +108,7 @@ func TestProtectedDocumentationAndProviderTreesMatchAcrossSnapshotModes(t *testi
 		}
 	}
 
-	gitTest(t, root, "add", "-A")
-	gitTest(t, root, "commit", "-qm", "initial")
-	revision := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	revision := repo.Commit("initial")
 	fixed, err := Load(root, revision)
 	if err != nil {
 		t.Fatal(err)

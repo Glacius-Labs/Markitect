@@ -13,14 +13,13 @@ import (
 )
 
 func TestBrownfieldSessionPersistsAndResumesWithoutReplayingStages(t *testing.T) {
-	root, commit := committedRepository(t, map[string]string{"src/orders.go": "package src\nfunc Order() {}\n"})
-	gitRun(t, root, "checkout", "-b", "codex/brownfield-session-fixture")
+	repo, commit := committedRepository(t, map[string]string{"src/orders.go": "package src\nfunc Order() {}\n"})
+	root := repo.Dir
+	repo.Git("checkout", "-b", "codex/brownfield-session-fixture")
 	if _, err := projectwork.Init(root, "Target fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "--all")
-	gitRun(t, root, "commit", "--quiet", "-m", "initialize target")
-	targetRevision := gitRun(t, root, "rev-parse", "HEAD")
+	targetRevision := repo.Commit("initialize target")
 	target, err := projectwork.Load(root, targetRevision)
 	if err != nil {
 		t.Fatal(err)
@@ -72,14 +71,13 @@ func TestBrownfieldSessionPersistsAndResumesWithoutReplayingStages(t *testing.T)
 // A clean core.autocrlf=true checkout has CRLF worktree bytes while HEAD
 // stores LF. Git reports no change, so the target worktree matches HEAD.
 func TestBrownfieldResumeTreatsCleanAutoCRLFCheckoutAsTargetCurrent(t *testing.T) {
-	root, commit := committedRepository(t, map[string]string{"src/orders.go": "package src\nfunc Order() {}\n"})
-	gitRun(t, root, "checkout", "-b", "codex/brownfield-crlf-fixture")
+	repo, commit := committedRepository(t, map[string]string{"src/orders.go": "package src\nfunc Order() {}\n"})
+	root := repo.Dir
+	repo.Git("checkout", "-b", "codex/brownfield-crlf-fixture")
 	if _, err := projectwork.Init(root, "Target fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "--all")
-	gitRun(t, root, "commit", "--quiet", "-m", "initialize target")
-	targetRevision := gitRun(t, root, "rev-parse", "HEAD")
+	targetRevision := repo.Commit("initialize target")
 	target, err := projectwork.Load(root, targetRevision)
 	if err != nil {
 		t.Fatal(err)
@@ -104,19 +102,19 @@ func TestBrownfieldResumeTreatsCleanAutoCRLFCheckoutAsTargetCurrent(t *testing.T
 	}
 
 	// Re-checkout every tracked file with core.autocrlf=true.
-	gitRun(t, root, "config", "core.autocrlf", "true")
-	for _, name := range strings.Split(gitRun(t, root, "ls-files"), "\n") {
+	repo.Git("config", "core.autocrlf", "true")
+	for _, name := range strings.Split(repo.Git("ls-files"), "\n") {
 		if err := os.Remove(filepath.Join(root, filepath.FromSlash(name))); err != nil {
 			t.Fatal(err)
 		}
 	}
-	gitRun(t, root, "checkout", "--", ".")
+	repo.Git("checkout", "--", ".")
 	manifestPath := filepath.Join(root, projectwork.ManifestPath)
 	manifest, err := os.ReadFile(manifestPath)
 	if err != nil || !strings.Contains(string(manifest), "\r\n") {
 		t.Fatalf("precondition: manifest not CRLF after autocrlf checkout (err=%v)", err)
 	}
-	if status := gitRun(t, root, "status", "--porcelain", "--untracked-files=no"); status != "" {
+	if status := repo.Git("status", "--porcelain", "--untracked-files=no"); status != "" {
 		t.Fatalf("precondition: tracked worktree not clean: %q", status)
 	}
 	_, ready, err := ResumeBrownfieldSession(root, root, session.ID)
@@ -137,14 +135,13 @@ func TestBrownfieldResumeTreatsCleanAutoCRLFCheckoutAsTargetCurrent(t *testing.T
 }
 
 func TestReverseIterationRejectsStaleSourceAndTarget(t *testing.T) {
-	root, commit := committedRepository(t, map[string]string{"src/orders.go": "package src\nfunc Order() {}\n"})
-	gitRun(t, root, "checkout", "-b", "codex/brownfield-stale-fixture")
+	repo, commit := committedRepository(t, map[string]string{"src/orders.go": "package src\nfunc Order() {}\n"})
+	root := repo.Dir
+	repo.Git("checkout", "-b", "codex/brownfield-stale-fixture")
 	if _, err := projectwork.Init(root, "Target fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "--all")
-	gitRun(t, root, "commit", "--quiet", "-m", "initialize target")
-	targetRevision := gitRun(t, root, "rev-parse", "HEAD")
+	targetRevision := repo.Commit("initialize target")
 	target, err := projectwork.Load(root, targetRevision)
 	if err != nil {
 		t.Fatal(err)
@@ -178,14 +175,13 @@ func TestReverseIterationRejectsStaleSourceAndTarget(t *testing.T) {
 }
 
 func TestReadinessDoesNotPromoteTransitionalCoverage(t *testing.T) {
-	root, commit := committedRepository(t, map[string]string{"src/orders.go": "package src\n"})
-	gitRun(t, root, "checkout", "-b", "codex/brownfield-readiness-fixture")
+	repo, commit := committedRepository(t, map[string]string{"src/orders.go": "package src\n"})
+	root := repo.Dir
+	repo.Git("checkout", "-b", "codex/brownfield-readiness-fixture")
 	if _, err := projectwork.Init(root, "Target fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "--all")
-	gitRun(t, root, "commit", "--quiet", "-m", "initialize target")
-	revision := gitRun(t, root, "rev-parse", "HEAD")
+	revision := repo.Commit("initialize target")
 	target, err := projectwork.Load(root, revision)
 	if err != nil {
 		t.Fatal(err)
@@ -227,7 +223,8 @@ func TestBrownfieldStartRefusesScopeStatusesWithoutProposals(t *testing.T) {
 }
 
 func TestSessionLedgerRejectsSymlinkedControlPlane(t *testing.T) {
-	root, _ := committedRepository(t, map[string]string{"src/main.go": "package src\n"})
+	repo, _ := committedRepository(t, map[string]string{"src/main.go": "package src\n"})
+	root := repo.Dir
 	markitect := filepath.Join(root, ".markitect")
 	if err := os.RemoveAll(markitect); err != nil {
 		t.Fatal(err)
@@ -241,17 +238,16 @@ func TestSessionLedgerRejectsSymlinkedControlPlane(t *testing.T) {
 }
 
 func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t *testing.T) {
-	root, sourceCommit := committedRepository(t, map[string]string{
+	repo, sourceCommit := committedRepository(t, map[string]string{
 		"src/orders.go":  "package orders\nfunc Order() {}\n// another valid source line\n",
 		"docs/orders.md": "Orders are managed by the order module.\n",
 	})
-	gitRun(t, root, "checkout", "-b", "codex/brownfield-manager-fixture")
+	root := repo.Dir
+	repo.Git("checkout", "-b", "codex/brownfield-manager-fixture")
 	if _, err := projectwork.Init(root, "Manager fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "--all")
-	gitRun(t, root, "commit", "--quiet", "-m", "initialize manager tree")
-	targetRevision := gitRun(t, root, "rev-parse", "HEAD")
+	targetRevision := repo.Commit("initialize manager tree")
 	target, err := projectwork.Load(root, targetRevision)
 	if err != nil {
 		t.Fatal(err)
@@ -565,8 +561,9 @@ func sessionReport(discovery Discovery, evidenceID, scopeID, excerpt, statement 
 }
 
 func TestAcceptedManagerTreeRequiresParentAssignmentAndIntegratesRecursively(t *testing.T) {
-	root, sourceCommit := committedRepository(t, map[string]string{"src/orders.go": "package orders\nfunc Order() {}\n", "docs/orders.md": "Orders are managed by the order module.\n"})
-	gitRun(t, root, "checkout", "-b", "codex/brownfield-accepted-tree")
+	repo, sourceCommit := committedRepository(t, map[string]string{"src/orders.go": "package orders\nfunc Order() {}\n", "docs/orders.md": "Orders are managed by the order module.\n"})
+	root := repo.Dir
+	repo.Git("checkout", "-b", "codex/brownfield-accepted-tree")
 	if _, err := projectwork.Init(root, "Accepted tree fixture", true); err != nil {
 		t.Fatal(err)
 	}
@@ -595,9 +592,7 @@ func TestAcceptedManagerTreeRequiresParentAssignmentAndIntegratesRecursively(t *
 	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(childPath)), []byte(managerYAML), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "--all")
-	gitRun(t, root, "commit", "--quiet", "-m", "add accepted order Manager")
-	targetRevision := gitRun(t, root, "rev-parse", "HEAD")
+	targetRevision := repo.Commit("add accepted order Manager")
 	target, err := projectwork.Load(root, targetRevision)
 	if err != nil {
 		t.Fatal(err)

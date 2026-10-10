@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -13,15 +12,17 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 func TestDiscoveryUsesOnlySelectedBlobsAtFullCommit(t *testing.T) {
-	root, commit := committedRepository(t, map[string]string{
+	repo, commit := committedRepository(t, map[string]string{
 		"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n",
 		"docs/order.md":        "Cancellation is permitted before dispatch.\n",
 		"runtime/test.log":     testRuntimeRecord("package orders\nfunc Cancel() {}\n"),
 		"docs/unselected.md":   "not evidence for this review\n",
 	})
+	root := repo.Dir
 	request := DiscoveryRequest{
 		APIVersion: DiscoveryVersion, ID: "discovery-1", Purpose: "Assess order cancellation model",
 		Review: "review-17", Commit: commit, ScopeRoots: []string{"."},
@@ -126,11 +127,12 @@ func TestFilesystemPathComparisonUsesDirectoryIdentity(t *testing.T) {
 }
 
 func TestDistillationPreservesContradictionsAndSeparatesEvidenceMethods(t *testing.T) {
-	root, commit := committedRepository(t, map[string]string{
+	repo, commit := committedRepository(t, map[string]string{
 		"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n",
 		"docs/order.md":        "Cancellation is permitted before dispatch.\n",
 		"runtime/test.log":     testRuntimeRecord("package orders\nfunc Cancel() {}\n"),
 	})
+	root := repo.Dir
 	request := DiscoveryRequest{
 		APIVersion: DiscoveryVersion, ID: "discovery-2", Purpose: "Assess cancellation", Review: "review-18",
 		Commit: commit, ScopeRoots: []string{"."},
@@ -245,11 +247,12 @@ func TestDistillationPreservesContradictionsAndSeparatesEvidenceMethods(t *testi
 }
 
 func TestResolutionRequiresExplicitPerScopeDecisionAndAnswers(t *testing.T) {
-	root, commit := committedRepository(t, map[string]string{
+	repo, commit := committedRepository(t, map[string]string{
 		"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n",
 		"docs/order.md":        "Cancellation is permitted before dispatch.\n",
 		"runtime/test.log":     testRuntimeRecord("package orders\nfunc Cancel() {}\n"),
 	})
+	root := repo.Dir
 	discovery, err := Discover(root, DiscoveryRequest{
 		APIVersion: DiscoveryVersion, ID: "discovery-3", Purpose: "Assess cancellation", Review: "review-19",
 		Commit: commit, ScopeRoots: []string{"."}, Selected: []SelectedPath{
@@ -282,18 +285,17 @@ func TestResolutionRequiresExplicitPerScopeDecisionAndAnswers(t *testing.T) {
 }
 
 func TestPlanAndApplyAdoptOnlyResolvedModelScope(t *testing.T) {
-	root, _ := committedRepository(t, map[string]string{
+	repo, _ := committedRepository(t, map[string]string{
 		"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n",
 		"docs/order.md":        "Cancellation is permitted before dispatch.\n",
 		"runtime/test.log":     testRuntimeRecord("package orders\nfunc Cancel() {}\n"),
 	})
-	gitRun(t, root, "checkout", "-b", "codex/project-adoption-test")
+	root := repo.Dir
+	repo.Git("checkout", "-b", "codex/project-adoption-test")
 	if _, err := projectwork.Init(root, "Brownfield fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "--all")
-	gitRun(t, root, "commit", "--quiet", "-m", "initialize Markitect project")
-	commit := gitRun(t, root, "rev-parse", "HEAD")
+	commit := repo.Commit("initialize Markitect project")
 	codeBefore, err := os.ReadFile(filepath.Join(root, "src", "orders", "cancel.go"))
 	if err != nil {
 		t.Fatal(err)
@@ -595,43 +597,13 @@ func runtimeObservationFromEvidence(evidence Evidence, discoveryCommit string) *
 func boolValue(value bool) *bool { return &value }
 func intValue(value int) *int    { return &value }
 
-func committedRepository(t *testing.T, files map[string]string) (string, string) {
+// committedRepository returns a repository on branch main whose first commit
+// holds files, and that commit.
+func committedRepository(t *testing.T, files map[string]string) (*testkit.Repo, string) {
 	t.Helper()
-	root := t.TempDir()
-	run := func(args ...string) string {
-		t.Helper()
-		command := exec.Command("git", args...)
-		command.Dir = root
-		output, err := command.CombinedOutput()
-		if err != nil {
-			t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, output)
-		}
-		return strings.TrimSpace(string(output))
-	}
-	run("init", "--quiet")
-	run("config", "user.email", "test@example.invalid")
-	run("config", "user.name", "Project Adoption Test")
+	repo := testkit.NewRepo(t)
 	for name, content := range files {
-		full := filepath.Join(root, filepath.FromSlash(name))
-		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(full, []byte(content), 0o644); err != nil {
-			t.Fatal(err)
-		}
+		repo.Write(name, content)
 	}
-	run("add", "--all")
-	run("commit", "--quiet", "-m", "fixture")
-	return root, run("rev-parse", "HEAD")
-}
-
-func gitRun(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	commandArgs := append([]string{"-C", root}, args...)
-	command := exec.Command("git", commandArgs...)
-	output, err := command.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %s: %v\n%s", strings.Join(commandArgs, " "), err, output)
-	}
-	return strings.TrimSpace(string(output))
+	return repo, repo.Commit("fixture")
 }

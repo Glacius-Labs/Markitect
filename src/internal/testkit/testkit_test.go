@@ -35,6 +35,29 @@ func TestNewRepoCommitsAreDeterministic(t *testing.T) {
 	}
 }
 
+// fatalRecorder records a fatal failure instead of ending the test.
+type fatalRecorder struct {
+	testing.TB
+	message string
+}
+
+func (r *fatalRecorder) Fatalf(format string, args ...any) { r.message = fmt.Sprintf(format, args...) }
+
+func TestGitRunsInDirWithoutInheritedVariables(t *testing.T) {
+	repo := NewRepo(t)
+	repo.Write("file.txt", "content\n")
+	head := repo.Commit("first")
+	t.Setenv("GIT_DIR", filepath.Join(repo.Dir, "missing"))
+	if got := Git(t, repo.Dir, "rev-parse", "HEAD"); got != head || len(got) != 40 {
+		t.Fatalf("Git rev-parse HEAD = %q, want trimmed %q", got, head)
+	}
+	failed := &fatalRecorder{TB: t}
+	Git(failed, repo.Dir, "rev-parse", "--verify", "missing-ref")
+	if !strings.Contains(failed.message, "git rev-parse --verify missing-ref") || !strings.Contains(failed.message, "fatal:") {
+		t.Fatalf("failure = %q, want the command and git's standard error", failed.message)
+	}
+}
+
 func TestTempDirIsShortAndCanonical(t *testing.T) {
 	dir := TempDir(t)
 	tempRoot, err := filepath.EvalSymlinks(os.TempDir())
@@ -126,7 +149,9 @@ func TestReExecutedChildHome(t *testing.T) {
 // TestGoLocationsMatchTheGoCommand compares the locations Isolate pins with
 // those the go command derives in a fresh environment.
 func TestGoLocationsMatchTheGoCommand(t *testing.T) {
-	home := t.TempDir()
+	// The go command may leave a background process, such as its telemetry,
+	// writing below the fresh home; TempDir retries the cleanup.
+	home := TempDir(t)
 	for _, name := range []string{"GOCACHE", "GOMODCACHE", "GOPATH", "GOENV", "XDG_CACHE_HOME", "XDG_CONFIG_HOME"} {
 		t.Setenv(name, "")
 	}
@@ -142,7 +167,7 @@ func TestGoLocationsMatchTheGoCommand(t *testing.T) {
 	}
 	t.Setenv("GOENV", envFile)
 	cmd := exec.Command("go", "env", "-json", "GOCACHE", "GOMODCACHE", "GOPATH", "GOENV")
-	cmd.Dir = t.TempDir()
+	cmd.Dir = TempDir(t)
 	out, err := cmd.Output()
 	if err != nil {
 		t.Skipf("go command unavailable: %v", err)

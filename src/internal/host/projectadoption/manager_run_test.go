@@ -541,11 +541,12 @@ func TestManagerRequestContractDigestCoversStaticInputsAndIgnoresOnlyRemainingBu
 }
 
 func TestManagerIntegrationRequestCarriesChildReportWithoutUnassignedEvidence(t *testing.T) {
-	root, sourceCommit := committedRepository(t, map[string]string{
+	repo, sourceCommit := committedRepository(t, map[string]string{
 		"src/orders.go":          "package orders\nfunc Order() {}\n",
 		"docs/orders.md":         "Orders are managed by the order module.\n",
 		"private/unassigned.txt": "UNASSIGNED-PRIVATE-EVIDENCE-SENTINEL\n",
 	})
+	root := repo.Dir
 	discovery, err := Discover(root, DiscoveryRequest{APIVersion: DiscoveryVersion, ID: "manager-integration-context", Purpose: "Map order behavior", Review: "review-context",
 		Commit: sourceCommit, ScopeRoots: []string{"."}, Selected: []SelectedPath{
 			{ID: "orders-code", Path: "src/orders.go", Reason: "Implementation evidence", Basis: "code"},
@@ -555,14 +556,13 @@ func TestManagerIntegrationRequestCarriesChildReportWithoutUnassignedEvidence(t 
 	if err != nil {
 		t.Fatal(err)
 	}
-	targetRoot, _ := committedRepository(t, map[string]string{"README.md": "target\n"})
-	gitRun(t, targetRoot, "checkout", "-b", "codex/manager-run-context-target")
+	targetRepo, _ := committedRepository(t, map[string]string{"README.md": "target\n"})
+	targetRoot := targetRepo.Dir
+	targetRepo.Git("checkout", "-b", "codex/manager-run-context-target")
 	if _, err := projectwork.Init(targetRoot, "Manager context target", true); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, targetRoot, "add", "--all")
-	gitRun(t, targetRoot, "commit", "--quiet", "-m", "initialize target")
-	revision := gitRun(t, targetRoot, "rev-parse", "HEAD")
+	revision := targetRepo.Commit("initialize target")
 	target, err := projectwork.Load(targetRoot, revision)
 	if err != nil {
 		t.Fatal(err)

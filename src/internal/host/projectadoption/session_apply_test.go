@@ -12,8 +12,9 @@ import (
 )
 
 func TestApplyAndRecordSessionAdoptionRequiresReviewedPlanAndRecordsGuardedResult(t *testing.T) {
-	root, sourceCommit := committedRepository(t, map[string]string{"src/orders.go": "package orders\nfunc Order() {}\n"})
-	gitRun(t, root, "checkout", "-b", "codex/session-adoption-fixture")
+	repo, sourceCommit := committedRepository(t, map[string]string{"src/orders.go": "package orders\nfunc Order() {}\n"})
+	root := repo.Dir
+	repo.Git("checkout", "-b", "codex/session-adoption-fixture")
 	if _, err := projectwork.Init(root, "Session adoption fixture", true); err != nil {
 		t.Fatal(err)
 	}
@@ -34,9 +35,7 @@ func TestApplyAndRecordSessionAdoptionRequiresReviewedPlanAndRecordsGuardedResul
 	if err := os.WriteFile(manifestPath, manifestBytes, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "--all")
-	gitRun(t, root, "commit", "--quiet", "-m", "initialize target project")
-	targetRevision := gitRun(t, root, "rev-parse", "HEAD")
+	targetRevision := repo.Commit("initialize target project")
 	target, err := projectwork.Load(root, targetRevision)
 	if err != nil {
 		t.Fatal(err)
@@ -126,9 +125,7 @@ func TestApplyAndRecordSessionAdoptionRequiresReviewedPlanAndRecordsGuardedResul
 	if readiness.TargetCurrent || readiness.Ready {
 		t.Fatal("an applied but uncommitted model candidate cannot be reported as accepted or ready")
 	}
-	gitRun(t, root, "add", "--all")
-	gitRun(t, root, "commit", "--quiet", "-m", "accept adopted order model")
-	acceptedRevision := gitRun(t, root, "rev-parse", "HEAD")
+	acceptedRevision := repo.Commit("accept adopted order model")
 	acceptedTarget, err := projectwork.Load(root, acceptedRevision)
 	if err != nil {
 		t.Fatal(err)

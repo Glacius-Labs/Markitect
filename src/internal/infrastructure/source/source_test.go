@@ -5,26 +5,24 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 func TestLoadPinnedCommitIgnoresWorkingTreeChanges(t *testing.T) {
-	root := t.TempDir()
-	gitTest(t, root, "init", "-q")
-	gitTest(t, root, "config", "user.email", "source-test@example.invalid")
-	gitTest(t, root, "config", "user.name", "Source Test")
-	writeTestFile(t, root, "keep.txt", "committed")
-	writeTestFile(t, root, "delete.txt", "gone")
-	writeTestFile(t, root, "vendor/generated.txt", "excluded")
-	writeTestFile(t, root, ".worktrees/local/generated.txt", "excluded")
-	gitTest(t, root, "add", "keep.txt", "delete.txt", "vendor/generated.txt", ".worktrees/local/generated.txt")
-	gitTest(t, root, "commit", "-qm", "initial")
-	revision := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	repo := testkit.NewRepo(t)
+	root := repo.Dir
+	repo.Write("keep.txt", "committed")
+	repo.Write("delete.txt", "gone")
+	repo.Write("vendor/generated.txt", "excluded")
+	repo.Write(".worktrees/local/generated.txt", "excluded")
+	revision := repo.Commit("initial")
 
-	writeTestFile(t, root, "keep.txt", "dirty working copy")
+	repo.Write("keep.txt", "dirty working copy")
 	if err := os.Remove(filepath.Join(root, "delete.txt")); err != nil {
 		t.Fatal(err)
 	}
-	writeTestFile(t, root, "added.txt", "uncommitted")
+	repo.Write("added.txt", "uncommitted")
 
 	s, err := Load(root, revision)
 	if err != nil {
@@ -54,25 +52,19 @@ func TestLoadPinnedCommitIgnoresWorkingTreeChanges(t *testing.T) {
 }
 
 func TestLoadPinnedCommitIgnoresAmbientGitRepositoryOverrides(t *testing.T) {
-	selected := t.TempDir()
-	gitTest(t, selected, "init", "-q", "-b", "selected")
-	gitTest(t, selected, "config", "user.email", "source-test@example.invalid")
-	gitTest(t, selected, "config", "user.name", "Source Test")
-	writeTestFile(t, selected, "selected.txt", "selected repository")
-	gitTest(t, selected, "add", "selected.txt")
-	gitTest(t, selected, "commit", "-qm", "selected")
-	selectedRevision := strings.TrimSpace(gitTest(t, selected, "rev-parse", "HEAD"))
+	selectedRepo := testkit.NewRepo(t)
+	selectedRepo.Git("symbolic-ref", "HEAD", "refs/heads/selected")
+	selectedRepo.Write("selected.txt", "selected repository")
+	selectedRevision := selectedRepo.Commit("selected")
+	selected := selectedRepo.Dir
 
-	foreign := t.TempDir()
-	gitTest(t, foreign, "init", "-q", "-b", "foreign")
-	gitTest(t, foreign, "config", "user.email", "source-test@example.invalid")
-	gitTest(t, foreign, "config", "user.name", "Source Test")
-	writeTestFile(t, foreign, "foreign.txt", "foreign repository")
-	gitTest(t, foreign, "add", "foreign.txt")
-	gitTest(t, foreign, "commit", "-qm", "foreign")
-	foreignRevision := strings.TrimSpace(gitTest(t, foreign, "rev-parse", "HEAD"))
-	gitTest(t, selected, "fetch", foreign, "foreign")
-	gitTest(t, selected, "update-ref", "refs/replace/"+selectedRevision, foreignRevision)
+	foreignRepo := testkit.NewRepo(t)
+	foreignRepo.Git("symbolic-ref", "HEAD", "refs/heads/foreign")
+	foreignRepo.Write("foreign.txt", "foreign repository")
+	foreignRevision := foreignRepo.Commit("foreign")
+	foreign := foreignRepo.Dir
+	selectedRepo.Git("fetch", foreign, "foreign")
+	selectedRepo.Git("update-ref", "refs/replace/"+selectedRevision, foreignRevision)
 
 	t.Setenv("GIT_DIR", filepath.Join(foreign, ".git"))
 	t.Setenv("GIT_WORK_TREE", foreign)
@@ -96,10 +88,11 @@ func TestLoadPinnedCommitIgnoresAmbientGitRepositoryOverrides(t *testing.T) {
 }
 
 func TestLoadPinnedCommitSkipsGitlinksInExcludedDirectories(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	gitTest(t, root, "update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("a", 40)+",vendor/lib")
-	gitTest(t, root, "update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("b", 40)+",node_modules")
-	gitTest(t, root, "commit", "-qm", "excluded gitlinks")
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Git("update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("a", 40)+",vendor/lib")
+	repo.Git("update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("b", 40)+",node_modules")
+	commitIndex(repo, "excluded gitlinks")
 
 	working, err := Load(root, "")
 	if err != nil {
@@ -123,10 +116,10 @@ func TestLoadPinnedCommitSkipsGitlinksInExcludedDirectories(t *testing.T) {
 }
 
 func TestLoadPinnedCommitRejectsIncludedGitlinkAsSubmodule(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	gitTest(t, root, "update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("a", 40)+",lib")
-	gitTest(t, root, "commit", "-qm", "gitlink")
-	_, err := Load(root, "HEAD")
+	repo, _ := selectiveGitFixture(t)
+	repo.Git("update-index", "--add", "--cacheinfo", "160000,"+strings.Repeat("a", 40)+",lib")
+	commitIndex(repo, "gitlink")
+	_, err := Load(repo.Dir, "HEAD")
 	if err == nil || !strings.Contains(err.Error(), "submodule") {
 		t.Fatalf("Load(HEAD) error = %v, want submodule rejection", err)
 	}

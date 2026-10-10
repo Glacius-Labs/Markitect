@@ -9,13 +9,16 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 func TestObserveSelectedWorkingReadsExactPathsAndReportsMissing(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "selected/data.txt", "selected bytes")
-	writeTestFile(t, root, "selected/extra.txt", "unselected bytes")
-	writeTestFile(t, root, "outside.txt", "outside bytes")
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("selected/data.txt", "selected bytes")
+	repo.Write("selected/extra.txt", "unselected bytes")
+	repo.Write("outside.txt", "outside bytes")
 	got, err := ObserveSelectedWorking(root, []string{"selected/data.txt", "missing.txt"})
 	if err != nil {
 		t.Fatal(err)
@@ -35,11 +38,12 @@ func TestObserveSelectedWorkingReadsExactPathsAndReportsMissing(t *testing.T) {
 }
 
 func TestObserveSelectedWorkingUsesIndexModeWhenGitDisablesFileMode(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "selected/tool.sh", "#!/bin/sh\n")
-	gitTest(t, root, "add", "selected/tool.sh")
-	gitTest(t, root, "update-index", "--chmod=+x", "selected/tool.sh")
-	gitTest(t, root, "config", "core.filemode", "false")
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("selected/tool.sh", "#!/bin/sh\n")
+	repo.Git("add", "selected/tool.sh")
+	repo.Git("update-index", "--chmod=+x", "selected/tool.sh")
+	repo.Git("config", "core.filemode", "false")
 	indexModes, err := selectedIndexModes(root, []string{"selected/tool.sh"})
 	if err != nil || indexModes["selected/tool.sh"] != "100755" {
 		t.Fatalf("selected Git index modes = %#v, err=%v", indexModes, err)
@@ -52,7 +56,7 @@ func TestObserveSelectedWorkingUsesIndexModeWhenGitDisablesFileMode(t *testing.T
 		t.Fatalf("tracked worktree mode = %q, want Git index mode 100755", got.Snapshot.Modes["selected/tool.sh"])
 	}
 
-	writeTestFile(t, root, "selected/untracked.sh", "#!/bin/sh\n")
+	repo.Write("selected/untracked.sh", "#!/bin/sh\n")
 	if err := os.Chmod(filepath.Join(root, "selected", "untracked.sh"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -70,14 +74,15 @@ func TestObserveSelectedWorkingUsesIndexModeWhenGitDisablesFileMode(t *testing.T
 }
 
 func TestObserveSelectedWorkingDefaultsToFilesystemModeWhenFileModeIsUnset(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "selected/tool.sh", "#!/bin/sh\n")
-	gitTest(t, root, "add", "selected/tool.sh")
-	gitTest(t, root, "update-index", "--chmod=+x", "selected/tool.sh")
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("selected/tool.sh", "#!/bin/sh\n")
+	repo.Git("add", "selected/tool.sh")
+	repo.Git("update-index", "--chmod=+x", "selected/tool.sh")
 	// Ensure the key exists before removing it, then verify no system/global
 	// setting shadows Git's documented default in this test environment.
-	gitTest(t, root, "config", "--local", "core.filemode", "true")
-	gitTest(t, root, "config", "--local", "--unset-all", "core.filemode")
+	repo.Git("config", "--local", "core.filemode", "true")
+	repo.Git("config", "--local", "--unset-all", "core.filemode")
 	cmd := exec.Command("git", "--no-replace-objects", "-C", root, "config", "--show-origin", "--get", "core.filemode")
 	cmd.Env = CleanGitEnv()
 	if output, err := cmd.CombinedOutput(); err == nil {
@@ -106,11 +111,12 @@ func TestObserveSelectedWorkingPreservesFilesystemModeWhenGitEnablesFileMode(t *
 	if runtime.GOOS == "windows" {
 		t.Skip("Windows filesystems do not expose POSIX executable mode bits")
 	}
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "tool.sh", "#!/bin/sh\n")
-	gitTest(t, root, "add", "tool.sh")
-	gitTest(t, root, "update-index", "--chmod=+x", "tool.sh")
-	gitTest(t, root, "config", "core.filemode", "true")
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("tool.sh", "#!/bin/sh\n")
+	repo.Git("add", "tool.sh")
+	repo.Git("update-index", "--chmod=+x", "tool.sh")
+	repo.Git("config", "core.filemode", "true")
 	if err := os.Chmod(filepath.Join(root, "tool.sh"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +130,8 @@ func TestObserveSelectedWorkingPreservesFilesystemModeWhenGitEnablesFileMode(t *
 }
 
 func TestObserveSelectedWorkingRejectsUnsafeAndAliasedPaths(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
 	for _, paths := range [][]string{{"../escape"}, {".git/config"}, {".GIT/config"}, {"A.txt", "a.txt"}} {
 		if _, err := ObserveSelectedWorking(root, paths); err == nil {
 			t.Errorf("accepted unsafe selected paths %#v", paths)
@@ -133,13 +140,12 @@ func TestObserveSelectedWorkingRejectsUnsafeAndAliasedPaths(t *testing.T) {
 }
 
 func TestLoadSelectedDoesNotRequireUnselectedBlobContent(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "selected.txt", "selected bytes")
-	writeTestFile(t, root, "unselected.txt", "unselected bytes")
-	gitTest(t, root, "add", "selected.txt", "unselected.txt")
-	gitTest(t, root, "commit", "-qm", "selected and unrelated content")
-	commit := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
-	unselectedOID := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD:unselected.txt"))
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("selected.txt", "selected bytes")
+	repo.Write("unselected.txt", "unselected bytes")
+	commit := repo.Commit("selected and unrelated content")
+	unselectedOID := repo.Git("rev-parse", "HEAD:unselected.txt")
 	objectPath := filepath.Join(root, ".git", "objects", unselectedOID[:2], unselectedOID[2:])
 	if err := os.Remove(objectPath); err != nil {
 		t.Fatalf("remove unselected loose blob %q: %v", objectPath, err)
@@ -154,10 +160,11 @@ func TestLoadSelectedDoesNotRequireUnselectedBlobContent(t *testing.T) {
 }
 
 func TestInventoryWorkingRootsIsMetadataOnlyAndBoundedToExactRoots(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "target/known.txt", "known bytes")
-	writeTestFile(t, root, "target/nested/untracked.bin", "untracked bytes")
-	writeTestFile(t, root, "other/ignored.txt", "outside exact prefix")
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
+	repo.Write("target/known.txt", "known bytes")
+	repo.Write("target/nested/untracked.bin", "untracked bytes")
+	repo.Write("other/ignored.txt", "outside exact prefix")
 	got, err := InventoryWorkingRoots(root, []string{"target"})
 	if err != nil {
 		t.Fatal(err)
@@ -185,9 +192,9 @@ func TestInventoryWorkingRootsIsMetadataOnlyAndBoundedToExactRoots(t *testing.T)
 }
 
 func TestInventoryWorkingRootsReportsUnknownUntrackedAndMissingRoots(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	writeTestFile(t, root, "outputs/generated.txt", "generated")
-	got, err := InventoryWorkingRoots(root, []string{"outputs", "absent"})
+	repo, _ := selectiveGitFixture(t)
+	repo.Write("outputs/generated.txt", "generated")
+	got, err := InventoryWorkingRoots(repo.Dir, []string{"outputs", "absent"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,9 +204,9 @@ func TestInventoryWorkingRootsReportsUnknownUntrackedAndMissingRoots(t *testing.
 }
 
 func TestScopedWorkingAPIsSupportLinkedWorktreeIdentity(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
-	linked := filepath.Join(t.TempDir(), "linked")
-	gitTest(t, root, "worktree", "add", "--detach", linked, strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD")))
+	repo, head := selectiveGitFixture(t)
+	linked := filepath.Join(testkit.TempDir(t), "linked")
+	repo.Git("worktree", "add", "--detach", linked, head)
 	writeTestFile(t, linked, "observed.txt", "working copy")
 	got, err := ObserveSelectedWorking(linked, []string{"observed.txt"})
 	if err != nil {
@@ -211,7 +218,8 @@ func TestScopedWorkingAPIsSupportLinkedWorktreeIdentity(t *testing.T) {
 }
 
 func TestInventoryWorkingRootsRejectsOverlapsAndSymlinks(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
 	if _, err := InventoryWorkingRoots(root, []string{"target", "target/nested"}); err == nil {
 		t.Fatal("accepted overlapping inventory prefixes")
 	}
