@@ -2207,3 +2207,7 @@ Localc2fbdf10 exactly2files Rootdiff inspected: existingOperationalpredicate onl
 ### Census correction clean public Windows freeze verified
 
 Root cleanlocal/public6c8387e0/docclosurestat + exactWindowsbf0dd0d9 Go1.27.1 VCS6c/modifiedfalse checked. Sourcec2fb narrowOperationalpredicate and failed18history/unknownhelperretained. Ownerpost-censuscoverage22.067/projectwork21.189/vet/root/managed/YAML/diff/context/impact2950to6cPASS/old33c63archiveimmutable. Actual19 normalfreshReadinessPlan preparing0nativeownerreported; actualPlan/batch/deadline/startreceiptpending, no oldPlanrewrite/unknownhelperResume/generalframework or Main/studyPASS. No repeatedRootorder.
+
+### Fresh Actual19 normal run allocated and active, owner report
+
+Batcha01-operational-censusd1bf9/Planc5dfdc81/digestd00d2f/deadline11:51:12.9177985Z/readynormal ee4f8e0blockers/runtime75b341, existingobserverddf7/same6c-bf0dd binary. Rootpriorcleanpublic/binaryfreezeverified; currentnativehandles/startunionpending/usageunknown. Prior18nativehelperinterrupted/ownprocessesgonebeforeallocation, unknownHostjournal-workspacespreservedno replay/cleanup. No newRootorder/framework/Mainmatrix/studyPASS.

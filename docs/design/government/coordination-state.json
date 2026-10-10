@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T07:50:14.026772+00:00",
+  "updatedUtc": "2026-10-10T07:52:09.554313+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18532,15 +18532,19 @@
       "publicFreezeSha": "6c8387e0a0baf9066cd8617d6d6969aebe54fc2c"
     },
     "actual19Preparation": {
-      "status": "NORMAL_FRESH_READINESS_PLAN_OWNER_PREPARING_ZERO_NATIVE_STARTS_OWNER_REPORTED",
+      "status": "OWNER_REPORTED_FRESH_NORMAL_ACTUAL19_RUNNING",
       "sourceSha": "6c8387e0a0baf9066cd8617d6d6969aebe54fc2c",
       "binarySha256": "bf0dd0d9ea008185a714bcee7b4f30f75a97360f70be97ab4fbec94ed2cc224e",
       "rootVerified": "Clean local HEAD/publicremote6c8387e0 exact, three-file documentation closure stat read; known Windows binary FileSHA/Go1.27.1 AMD64/CGO0/VCS6c8387/modifiedfalse verified.",
       "ownerChecks": "Post-census coverage22.067s/projectwork21.189s/vet/root/managedcoverage/duplicateYAML/diff/context/impact2950to6c8387 PASS. Previous33c63binary archived unchanged, owner reported.",
-      "planId": null,
-      "batchId": null,
-      "deadlineUtc": null,
-      "boundary": "Same normal frozen binary for next original Root fault and Resume, existing finite renewable product authority. No native startreceipt/currentcounts observed yet. Original unknown helper and failed Actual18 retained; no oldPlan rewrite/replay/newframework/Main/study/release acceptance."
+      "planId": "c5dfdc81035871cf509fd3495d175dd6",
+      "batchId": "a01-operational-census-d1bf9ab811474c9396080d09dfcc7193",
+      "deadlineUtc": "2026-10-10T11:51:12.9177985Z",
+      "boundary": "Same normal frozen binary for next original Root fault and Resume, existing finite renewable product authority. No native startreceipt/currentcounts observed yet. Original unknown helper and failed Actual18 retained; no oldPlan rewrite/replay/newframework/Main/study/release acceptance.",
+      "planDigest": "sha256:d00d2f0341655c1e5a81b005aa8efc8124455a49a0171a2c11316343fa42c98e",
+      "controllerSha256": "ddf7b16dc0a23b21ac4edd90e18f56e15cdf41478baac873503b18ed90154b36",
+      "ownerBinding": "Fresh normal readinessee4f8e prefix ready/0blockers, Runtime75b341 prefix; same clean6c8387e0/bf0dd binary before/after recovery, existing observer unchanged. Prior18nativehelper interrupted/notLoaded and ownprocessesgone before allocation; unknown original Hostjournal/workspaces preserved/no replay or cleanup.",
+      "rootBoundary": "Earlier clean exact public source/binary verified; fresh current native handles/start union not yet independently inspected. Current counts/usage unknown, not zero; no new Mainmatrix/framework/study/release acceptance."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
