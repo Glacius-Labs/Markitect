@@ -130,14 +130,15 @@ func TestWorkingTreeCollisionDiagnosticDoesNotDependOnMapOrder(t *testing.T) {
 }
 
 func TestWorkingTreeTakesTrackedModesFromIndexWhenGitIgnoresFileMode(t *testing.T) {
-	root, _ := selectiveGitFixture(t)
+	repo, _ := selectiveGitFixture(t)
+	root := repo.Dir
 	// Git for Windows sets this; setting it here also covers other platforms.
-	gitTest(t, root, "config", "core.filemode", "false")
+	repo.Git("config", "core.filemode", "false")
 	writeTestFile(t, root, "tool.sh", "#!/bin/sh\n")
-	gitTest(t, root, "add", "tool.sh")
-	gitTest(t, root, "update-index", "--chmod=+x", "tool.sh")
-	gitTest(t, root, "commit", "-qm", "executable tool")
-	if status := strings.TrimSpace(gitTest(t, root, "status", "--porcelain")); status != "" {
+	repo.Git("add", "tool.sh")
+	repo.Git("update-index", "--chmod=+x", "tool.sh")
+	repo.Git("commit", "-qm", "executable tool")
+	if status := strings.TrimSpace(repo.Git("status", "--porcelain")); status != "" {
 		t.Fatalf("precondition: worktree not clean: %q", status)
 	}
 	working, err := Load(root, "")
