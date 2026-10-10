@@ -4,8 +4,8 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
-| [Owner product description](2026-10-09-owner-product-description.md) | Captured by the Concepts chat on 9 October 2026; copied on 10 October 2026 | The owner's original description of the idea |
-| [Idea review](2026-10-10-idea-review.md) | Claude Code review session, 10 October 2026 | Owner correction, the confirmed message and owner dispositions |
+| [Owner product description](owner-product-description-20261009.md) | Captured by the Concepts chat on 9 October 2026; copied on 10 October 2026 | The owner's original description of the idea |
+| [Idea review](idea-review-20261010.md) | Claude Code review session, 10 October 2026 | Owner correction, the confirmed message and owner dispositions |
 | [Concepts chat collection](concepts-chat-20261009/README.md) | Snapshot of the Concepts chat's notes, 9 October 2026 | Owner contributions `USER-20261009-01` to `-07` as the product chat handed them over, plus the Concepts chat's structured notes C01 to C34. Most handed-over blocks end with the product chat's own classification (Einordnung, Konzeptbezug, Status). `-05` and `-07` are written in the product chat's voice. |
 | [Ideas chat register](ideas-register-20261009.md) | Snapshot of the Ideas chat's register, 9 October 2026 | `IDEA-20261009-001` to `-018`, `EVAL-20261009-001` and one Historian finding |
 
@@ -22,7 +22,7 @@ The interpretation inside the two collections belongs to the chats that wrote th
   - `../standard-operating-model.md` became `../../../design/standard-operating-model.md`.
 
   The changed links are in `README.md` and `canonical-model-and-delegated-development.md`. All other bytes are unchanged.
-- **Duplicate owner text:** `user-description-20261009.md` contains the same verbatim owner text as the [owner product description](2026-10-09-owner-product-description.md).
+- **Duplicate owner text:** `user-description-20261009.md` contains the same verbatim owner text as the [owner product description](owner-product-description-20261009.md).
 
 SHA-256 of the original files before import:
 

@@ -23,7 +23,7 @@ Accepted and clarified entries are the current basis. Do not reopen them without
 | [Architecture](../architecture.md) and the workflow guides | Implemented behavior |
 | [Measurement](../measurement.md) | Evaluation procedure |
 | [Strategy sources](../strategy/README.md) | Original strategy bundles from earlier phases, kept with their provenance |
-| [Design records](../design/) | Proposals, assessments and design evidence from different stages |
+| [Design records](../design/README.md) | Proposals, assessments and design evidence from different stages |
 
 Summaries in the vision and other documents may restate entries. If a summary differs from an entry, the entry and its source govern; correct the summary.
 

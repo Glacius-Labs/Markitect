@@ -145,7 +145,7 @@ Markitect's product owner describes a longer-term picture beyond this thesis: a 
 
 ## Common misreadings
 
-The readings below came up repeatedly, most recently in the [idea review of 10 October 2026](concepts/sources/2026-10-10-idea-review.md). Check an assessment against this table before treating any of them as a finding.
+The readings below came up repeatedly, most recently in the [idea review of 10 October 2026](concepts/sources/idea-review-20261010.md). Check an assessment against this table before treating any of them as a finding.
 
 | Misreading | Correct reading |
 |---|---|

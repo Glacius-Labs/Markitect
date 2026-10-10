@@ -62,7 +62,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ### DEC-001 Delegated realization is central to the product
 
-- **Status:** Accepted. The owner confirmed this reading on 10 October 2026 ([confirmed summary](sources/2026-10-10-idea-review.md#summary-confirmed-by-the-owner)). It matches the [vision](../vision.md) and the [owner description](sources/2026-10-09-owner-product-description.md).
+- **Status:** Accepted. The owner confirmed this reading on 10 October 2026 ([confirmed summary](sources/idea-review-20261010.md#summary-confirmed-by-the-owner)). It matches the [vision](../vision.md) and the [owner description](sources/owner-product-description-20261009.md).
 - **Statement:** Markitect is model-first development with delegated realization.
   - People maintain the canonical model.
   - Markitect compiles the model and derives the affected responsibilities, obligations and files.
@@ -75,7 +75,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ### DEC-002 Trust is measured against today's practice
 
-- **Status:** Accepted, owner, 10 October 2026 ([owner response, point 1](sources/2026-10-10-idea-review.md#owner-response-to-the-five-points)).
+- **Status:** Accepted, owner, 10 October 2026 ([owner response, point 1](sources/idea-review-20261010.md#owner-response-to-the-five-points)).
 - **Statement:** The baseline for trust is today's common practice:
   - an agent implements a work item;
   - another AI reviews the pull request;
@@ -89,7 +89,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ### DEC-003 The compiler is a borrowed concept
 
-- **Status:** Accepted, owner, 10 October 2026 ([owner response, point 1](sources/2026-10-10-idea-review.md#owner-response-to-the-five-points)).
+- **Status:** Accepted, owner, 10 October 2026 ([owner response, point 1](sources/idea-review-20261010.md#owner-response-to-the-five-points)).
 - **Statement:** "Compiler" names the idea, not a guarantee.
   - Structural compilation of the model is deterministic: types, identities and references. Together with whole-repository coverage ([DEC-006](#dec-006-every-file-is-covered-or-explicitly-ignored)), an invalid or incomplete model blocks work before "runtime".
   - Realization by agents is not deterministic. Markitect claims no compiler-equivalent semantic guarantee for it.
@@ -99,7 +99,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ### DEC-004 The Manager hierarchy is core; Government belongs to a later axis
 
-- **Status:** Clarified. On 10 October 2026 the owner confirmed the review's corrected reading, which separates the Government experiment from the Manager hierarchy ([confirmed message](sources/2026-10-10-idea-review.md#summary-confirmed-by-the-owner)). Consistent with the [main-line design for operation scopes](../design/project-world/operation-scopes-and-model-briefings.md) and the [work-item comparison decision](../design/work-item-comparison-20261009.md) of 9 October 2026.
+- **Status:** Clarified. On 10 October 2026 the owner confirmed the review's corrected reading, which separates the Government experiment from the Manager hierarchy ([confirmed message](sources/idea-review-20261010.md#summary-confirmed-by-the-owner)). Consistent with the [main-line design for operation scopes](../design/project-world/operation-scopes-and-model-briefings.md) and the [work-item comparison decision](../design/work-item-comparison-20261009.md) of 9 October 2026.
 - **Statement:**
   - The first axis, Model → Repository, is part of the core idea. It consists of:
     - the recursive Manager hierarchy;
@@ -111,12 +111,12 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ### DEC-005 Model granularity is the author's responsibility
 
-- **Status:** Accepted, owner, 10 October 2026 ([owner response, point 2](sources/2026-10-10-idea-review.md#owner-response-to-the-five-points)).
+- **Status:** Accepted, owner, 10 October 2026 ([owner response, point 2](sources/idea-review-20261010.md#owner-response-to-the-five-points)).
 - **Statement:** How finely the model is written is the developer's decision. A model can be under- or over-specified, just like work items, prompts, documentation and code. Markitect does not impose a granularity. It can support authors with checks, evaluation and recommendations, including AI-assisted ones ([ENH-002](#enh-002-model-quality-linter-and-metrics)).
 
 ### DEC-006 Every file is covered or explicitly ignored
 
-- **Status:** Accepted, owner, 10 October 2026 ([owner response, point 3](sources/2026-10-10-idea-review.md#owner-response-to-the-five-points)).
+- **Status:** Accepted, owner, 10 October 2026 ([owner response, point 3](sources/idea-review-20261010.md#owner-response-to-the-five-points)).
 - **Current source:**
   - This is enforced through whole-repository coverage, not inside the structural model compiler.
   - With `coverageMode: full`, the `project init` default, an unclassified file fails `project check`, Plan and full Verify.
@@ -129,7 +129,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ### DEC-007 "More economical models" means capable mid-tier models
 
-- **Status:** Clarified, owner, 10 October 2026 ([owner response, point 4](sources/2026-10-10-idea-review.md#owner-response-to-the-five-points)).
+- **Status:** Clarified, owner, 10 October 2026 ([owner response, point 4](sources/idea-review-20261010.md#owner-response-to-the-five-points)).
 - **Statement:**
   - The cost hypothesis targets capable mid-tier models such as Luna and Sonnet. Haiku is a candidate for cost-sensitive use if it proves sufficient.
   - These models are not weak. The owner distinguishes them from the high-end tier: Fable, Opus and Astra.
@@ -137,7 +137,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ### DEC-008 The delegated method has not yet been tested
 
-- **Status:** Accepted, owner, 10 October 2026 ([owner response, point 5](sources/2026-10-10-idea-review.md#owner-response-to-the-five-points)).
+- **Status:** Accepted, owner, 10 October 2026 ([owner response, point 5](sources/idea-review-20261010.md#owner-response-to-the-five-points)).
 - **Statement:**
   - The value of the delegated method has not yet been measured.
   - The comparative attempts of October 2026 (the work-item, Government and Luna comparisons) were dominated by setup, dependency and environment problems and by harness defects. Examples: Windows paths, CRLF line endings, permissions, the Codex CLI.
@@ -146,7 +146,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ### DEC-009 The central evaluation question
 
-- **Status:** Accepted, owner, 10 October 2026 ([owner response, point 5](sources/2026-10-10-idea-review.md#owner-response-to-the-five-points)). [Measurement](../measurement.md) owns the procedure.
+- **Status:** Accepted, owner, 10 October 2026 ([owner response, point 5](sources/idea-review-20261010.md#owner-response-to-the-five-points)). [Measurement](../measurement.md) owns the procedure.
 - **Statement (translated from the owner's words):** When people develop against a model or world view:
   - can it be realized reliably in a repository, and can that be checked?
   - can the repository stay contradiction-free, consistent, uniform and clean?
@@ -157,7 +157,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ### DEC-010 Evaluate the method separately from its execution runtime
 
-- **Status:** The owner endorsed the review's proposal on 10 October 2026: „klingt sehr interessant und sinnvoll“ ("sounds very interesting and sensible"; [follow-up dispositions](sources/2026-10-10-idea-review.md#follow-up-proposals-and-owner-dispositions)). The plan is pending. The product side is [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method); the proposed procedure is in [Measurement](../measurement.md#evaluating-the-method-separately-from-its-runtime).
+- **Status:** The owner endorsed the review's proposal on 10 October 2026: „klingt sehr interessant und sinnvoll“ ("sounds very interesting and sensible"; [follow-up dispositions](sources/idea-review-20261010.md#follow-up-proposals-and-owner-dispositions)). The plan is pending. The product side is [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method); the proposed procedure is in [Measurement](../measurement.md#evaluating-the-method-separately-from-its-runtime).
 - **Proposal:**
   - The object of evaluation is the delegated method: computed scope, bounded Managers, independent review, integration, verification and guarded Apply. A particular execution runtime is not the object.
   - A failure of Markitect's own runtime is a product finding. A harness or environment failure is a measurement limitation. Neither is an outcome of the method.
@@ -195,7 +195,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ## Promises
 
-These are the target outcomes Markitect is built to deliver. Each has the status **Target**: it is to be validated under [DEC-009](#dec-009-the-central-evaluation-question), and none is an established result. Sources are the [owner description](sources/2026-10-09-owner-product-description.md) and the [confirmed summary](sources/2026-10-10-idea-review.md#summary-confirmed-by-the-owner).
+These are the target outcomes Markitect is built to deliver. Each has the status **Target**: it is to be validated under [DEC-009](#dec-009-the-central-evaluation-question), and none is an established result. Sources are the [owner description](sources/owner-product-description-20261009.md) and the [confirmed summary](sources/idea-review-20261010.md#summary-confirmed-by-the-owner).
 
 | ID | Promise |
 |---|---|
@@ -211,17 +211,17 @@ These are the target outcomes Markitect is built to deliver. Each has the status
 
 | ID | Assumption | Status and origin |
 |---|---|---|
-| ASM-001 | Agents overlook more relevant files and rules as projects grow. Explicit consistency runs miss things, take ever longer and struggle to resolve contradictions. | Owner experience ([description](sources/2026-10-09-owner-product-description.md)); not measured here |
-| ASM-002 | A reviewer with fresh context is more critical than self-review in the same thread, even with the same model. | Owner observation, backed by an Anthropic talk and papers the owner cited without recording references ([point 4](sources/2026-10-10-idea-review.md#owner-response-to-the-five-points)) |
+| ASM-001 | Agents overlook more relevant files and rules as projects grow. Explicit consistency runs miss things, take ever longer and struggle to resolve contradictions. | Owner experience ([description](sources/owner-product-description-20261009.md)); not measured here |
+| ASM-002 | A reviewer with fresh context is more critical than self-review in the same thread, even with the same model. | Owner observation, backed by an Anthropic talk and papers the owner cited without recording references ([point 4](sources/idea-review-20261010.md#owner-response-to-the-five-points)) |
 | ASM-003 | Bounded scope and compiled context let capable mid-tier models do most implementation and review work. Total cost can then fall even after coordination and review. | Hypothesis; untested |
-| ASM-004 | Abstraction and management structures proven in human organizations transfer to agents. Pairing an implementer with a reviewer at the lowest level mirrors how teams already work today. | Owner hypothesis ([point 4](sources/2026-10-10-idea-review.md#owner-response-to-the-five-points)); not yet properly evaluated for agents |
+| ASM-004 | Abstraction and management structures proven in human organizations transfer to agents. Pairing an implementer with a reviewer at the lowest level mirrors how teams already work today. | Owner hypothesis ([point 4](sources/idea-review-20261010.md#owner-response-to-the-five-points)); not yet properly evaluated for agents |
 | ASM-005 | Reviewers that differ from the implementer in model, not only in context, find more defects, because reviewers on the same model share blind spots. | Review proposal, endorsed for evaluation ("Modelle variieren und kombinieren und evaluieren"); to be tested with [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) |
 
 ## Concepts
 
 ### CPT-001 Federalism
 
-- **Status:** Accepted. The term is the owner's ([point 1](sources/2026-10-10-idea-review.md#owner-response-to-the-five-points)); the structure comes from the [owner description](sources/2026-10-09-owner-product-description.md).
+- **Status:** Accepted. The term is the owner's ([point 1](sources/idea-review-20261010.md#owner-response-to-the-five-points)); the structure comes from the [owner description](sources/owner-product-description-20261009.md).
 - **Statement:**
   - Responsibility is spread over bounded areas, each with its own Manager, scope and context.
   - Each candidate and each integration result is assessed by an independent reviewer.
@@ -231,7 +231,7 @@ These are the target outcomes Markitect is built to deliver. Each has the status
 
 ### CPT-002 Tests are realizations too
 
-- **Status:** Accepted, owner, 10 October 2026 ([point 1](sources/2026-10-10-idea-review.md#owner-response-to-the-five-points)).
+- **Status:** Accepted, owner, 10 October 2026 ([point 1](sources/idea-review-20261010.md#owner-response-to-the-five-points)).
 - **Statement:** Tests are one form in which the model is expressed. Agents write them, so they can be as wrong as the code. A green agent-written test is evidence, not proof.
 - **Agreed direction:** Review tests against the statements they claim to check ([ENH-003](#enh-003-test-to-statement-binding-and-test-review)). Whether that becomes a variant or is built in is still open.
 
@@ -244,7 +244,7 @@ These are the target outcomes Markitect is built to deliver. Each has the status
 
 ### CPT-004 The specification stays effective
 
-- **Status:** The concept is clarified: the owner confirmed it on 10 October 2026 as part of the [confirmed summary](sources/2026-10-10-idea-review.md#summary-confirmed-by-the-owner). The mechanism below is a proposal from the original product chat, not an owner decision ([discussion impulse](sources/concepts-chat-20261009/discussion-impulse-20261009-01.md); Concepts note C17).
+- **Status:** The concept is clarified: the owner confirmed it on 10 October 2026 as part of the [confirmed summary](sources/idea-review-20261010.md#summary-confirmed-by-the-owner). The mechanism below is a proposal from the original product chat, not an owner decision ([discussion impulse](sources/concepts-chat-20261009/discussion-impulse-20261009-01.md); Concepts note C17).
 - **Statement:** The specification is not a one-off feature document. Every change has to cover the new intent and also keep all obligations that still apply in view.
 - **Proposed mechanism:** Each affected modeled obligation gets a responsible party and an explicit verification or fulfillment state, so that no work silently drops out of consideration.
 - **Related:** [PRM-001](#promises), [CPT-003](#cpt-003-two-parts-of-the-promise), [OQ-006](#open-questions).
@@ -255,7 +255,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 
 ### ENH-001 Observed code dependencies widen impact
 
-- **Status:** The problem is accepted (owner, 10 October 2026); the approach is open. The owner: „wir sollten das verfolgen und uns hier etwas einfallen lassen“ ("we should pursue this and come up with something"; [follow-up dispositions](sources/2026-10-10-idea-review.md#follow-up-proposals-and-owner-dispositions)).
+- **Status:** The problem is accepted (owner, 10 October 2026); the approach is open. The owner: „wir sollten das verfolgen und uns hier etwas einfallen lassen“ ("we should pursue this and come up with something"; [follow-up dispositions](sources/idea-review-20261010.md#follow-up-proposals-and-owner-dispositions)).
 - **Problem:** Declared mappings do not contain dependencies between files in code: calls, imports and shared types. Suppose one Manager changes a shared function that another Manager's realization calls. The second Manager's obligations can then be affected without appearing in impact.
 - **Direction (proposal):**
   - Optional, language-specific tools or plugins observe such dependencies.
