@@ -4,7 +4,7 @@ This page describes two layouts: the recommended layout of a project that adopts
 
 ## Recommended target-project layout
 
-A Markitect project keeps its control plane in `.markitect/` and its application files where the project chooses. `markitect project init` writes the manifest, runtime, root Manager, ignore rules and readable view; `markitect project onboard` adds the workflow, instructions and skills.
+A Markitect project keeps its control plane in `.markitect/` and its application files where the project chooses. `markitect init` writes the manifest, runtime, root Manager, ignore rules and readable view; `markitect project onboard` adds the workflow, instructions and skills.
 
 ```text
 .markitect/

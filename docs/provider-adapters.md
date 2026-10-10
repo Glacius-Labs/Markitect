@@ -1,18 +1,18 @@
 # Provider adapters
 
-The current project workflow has two provider boundaries. The outer coding client (Codex or Claude Code) connects to Markitect's repository-local MCP server and coordinates the Work Item conversation. Markitect Host schedules inner Manager, reviewer and verifier roles. By default they run through Codex CLI 0.162.0 App Server using the `gpt-6-luna` model and `high` reasoning effort. `project setup` can give each role class its own provider, model, effort and cost mode, including a [bring-your-own process executor](#bring-your-own-executor). Claude Code 2.1.295 is supported as an outer MCP client, not yet as an inner worker runtime.
+The current project workflow has two provider boundaries. The outer coding client (Codex or Claude Code) connects to Markitect's repository-local MCP server and coordinates the Work Item conversation. Markitect Host schedules inner Manager, reviewer and verifier roles. By default they run through Codex CLI 0.162.0 App Server using the `gpt-6-luna` model and `high` reasoning effort. `config` can give each role class its own provider, model, effort and cost mode, including a [bring-your-own process executor](#bring-your-own-executor). Claude Code 2.1.295 is supported as an outer MCP client, not yet as an inner worker runtime.
 
 ## Connect the outer client
 
 Build or select the Markitect executable for this source checkout. From the project root, register its stdio server with the exact absolute executable and root paths:
 
 ```powershell
-codex mcp add markitect -- C:\absolute\path\to\markitect.exe project mcp --repo C:\absolute\path\to\project
+codex mcp add markitect -- C:\absolute\path\to\markitect.exe mcp --repo C:\absolute\path\to\project
 codex mcp list
 ```
 
 ```powershell
-claude mcp add --transport stdio markitect -- C:\absolute\path\to\markitect.exe project mcp --repo C:\absolute\path\to\project
+claude mcp add --transport stdio markitect -- C:\absolute\path\to\markitect.exe mcp --repo C:\absolute\path\to\project
 claude mcp list
 ```
 
@@ -22,7 +22,7 @@ The MCP server advertises closed typed schemas. The outer agent should use those
 
 ## Inner role execution and workspace boundary
 
-`project setup` configures the native Codex App Server runtime by default and pins its resolved executable/configuration. `project_doctor` inspects local tools and authentication prerequisites without starting roles. Authentication is not established by setup or doctor; only a real provider invocation can exercise it. Setup does not configure Claude, global MCP, editor, hooks, plugins, or account settings.
+`config` configures the native Codex App Server runtime by default and pins its resolved executable/configuration. `doctor` inspects local tools and authentication prerequisites without starting roles. Authentication is not established by setup or doctor; only a real provider invocation can exercise it. Setup does not configure Claude, global MCP, editor, hooks, plugins, or account settings.
 
 On Windows, setup defaults to `appServer.windowsSandboxBackend: mxc`; `--windows-sandbox-backend mxc` can also be specified explicitly. The adapter starts only its child Codex process with the documented `-c windows.sandbox=mxc` override before `app-server`; it does not change global Codex configuration. Windows Managed Policy remains in force. Receipts record the requested backend, while effective backend remains unavailable unless Codex provides an authoritative readback. Unsupported values and non-Windows execution fail closed without a fallback.
 
@@ -54,7 +54,7 @@ The workspace candidate is bound to the fixed accepted project revision and perm
 
 ## Role profiles
 
-`project setup` writes one profile for every Manager, one for every Manager's independent reviewer, and one for the verifier. The flags `--provider`, `--model`, `--effort`, `--cost-mode` and the rates select the default profile, which applies to all three role classes. To give role classes different profiles, pass one complete options record with `--input .markitect/drafts/SETUP.json`; the MCP `project_setup` tool takes the same record as `options`. Its optional `roles.manager`, `roles.reviewer` and `roles.verifier` entries override fields of the default. A role that changes the provider inherits only the rates; it is metered unless it declares a cost mode, and it must name its own model and, for a process, its executable. The preview lists the executable each role pins.
+`config` writes one profile for every Manager, one for every Manager's independent reviewer, and one for the verifier. The flags `--provider`, `--model`, `--effort`, `--cost-mode` and the rates select the default profile, which applies to all three role classes. To give role classes different profiles, pass one complete options record with `--input .markitect/drafts/SETUP.json`; the MCP `config` tool takes the same record as `input`. Its optional `roles.manager`, `roles.reviewer` and `roles.verifier` entries override fields of the default. A role that changes the provider inherits only the rates; it is metered unless it declares a cost mode, and it must name its own model and, for a process, its executable. The preview lists the executable each role pins.
 
 ```json
 {

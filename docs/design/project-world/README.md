@@ -4,7 +4,7 @@ Stand: 9. Oktober 2026, Europe/Berlin.
 
 ## Auftrag und Status
 
-Dieses Paket hält die direkte Produktdiskussion und den anschließend erteilten Umsetzungsauftrag fest. Die neue experimentelle Sourceoberfläche heißt `markitect project ...`; ihr verbindlicher technischer Stand steht im [Umsetzungsvertrag](delivery-contract.md). Der [Arbeitsablauf](../../project-workflow.md) und das [ausführbare Shop-Projekt](../../../examples/project-world/README.md) zeigen die konkrete Bedienung und Dateistruktur. Umsetzung und Prüfung erfolgen in einem eigenen Worktree auf `codex/model-driven-delivery`; eine Veröffentlichung ist damit nicht verbunden.
+Dieses Paket hält die direkte Produktdiskussion und den anschließend erteilten Umsetzungsauftrag fest. Die neue experimentelle Sourceoberfläche heißt `markitect <verb> ...`; ihr verbindlicher technischer Stand steht im [Umsetzungsvertrag](delivery-contract.md). Der [Arbeitsablauf](../../project-workflow.md) und das [ausführbare Shop-Projekt](../../../examples/project-world/README.md) zeigen die konkrete Bedienung und Dateistruktur. Umsetzung und Prüfung erfolgen in einem eigenen Worktree auf `codex/model-driven-delivery`; eine Veröffentlichung ist damit nicht verbunden.
 
 Die [Nutzerpräzisierung vom 9. Oktober](model-first-user-workflow.md) definiert den nächsten Produktstand: kanonisches Systemmodell mit verschiedenen Realisierungen, Provider-Onboarding für Beitragende, Explore bis zum ersten erfolgreichen Apply, konfigurierbare Manager, standardmäßige Dokumentation unter `docs/`, vollständige Dateiklassifikation vor Apply und iterative Brownfield-Rückführung vor einem gesonderten Aufräumauftrag. Sie hat bei abweichenden älteren Zielvorschlägen Vorrang; ihre Anforderungen sind nicht automatisch implementiert.
 

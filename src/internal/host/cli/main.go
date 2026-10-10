@@ -6,7 +6,6 @@ import (
 	"runtime"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcli"
 )
 
 // Run dispatches a Markitect CLI invocation and returns its process exit code.
@@ -25,9 +24,6 @@ func Run(args []string, out, errout io.Writer) int {
 		}
 		fmt.Fprintln(errout, "help accepts at most one command")
 		return 2
-	}
-	if args[0] == "project" {
-		return projectcli.Run(args[1:], out, errout)
 	}
 	command := args[0]
 	allowed, known := commandFlags(command)

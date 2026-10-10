@@ -43,7 +43,7 @@ func (o Operations) Explore(operation ExploreOperation) (ExploreResult, error) {
 	}
 	if operation.Record == nil {
 		if operation.Write || operation.ExpectedDigest != "" {
-			return ExploreResult{}, errors.New("project explore write requires --input with a record to preview")
+			return ExploreResult{}, errors.New("explore --write requires --input with a record to preview")
 		}
 		if operation.ExplorationID != "" {
 			record, err := projectexplore.Load(operation.Selection.Root, operation.ExplorationID)
@@ -158,12 +158,12 @@ func (o Operations) Readiness(operation ReadinessOperation) (ReadinessResult, er
 		return ReadinessResult{}, err
 	}
 	if operation.Write && operation.Acknowledgement == nil {
-		return ReadinessResult{}, errors.New("project readiness --write requires --acknowledge-structure")
+		return ReadinessResult{}, errors.New("ready --write requires --acknowledge")
 	}
 	if operation.Acknowledgement != nil {
 		ack := operation.Acknowledgement
 		if strings.TrimSpace(ack.Actor) == "" || strings.TrimSpace(ack.Authority) == "" || strings.TrimSpace(ack.Provenance) == "" {
-			return ReadinessResult{}, errors.New("--acknowledge-structure requires --actor, --authority, and --decision-ref")
+			return ReadinessResult{}, errors.New("--acknowledge requires --actor, --authority, and --decision-ref")
 		}
 		if ack.RecordedAt.IsZero() {
 			return ReadinessResult{}, errors.New("--acknowledged-at must be an explicit RFC3339 timestamp")

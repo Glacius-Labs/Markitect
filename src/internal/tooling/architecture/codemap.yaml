@@ -56,7 +56,7 @@ packages:
     doc: docs/architecture.md#application-layer
   - path: src/internal/host/projectcli
     layer: application
-    purpose: The `markitect project` command line.
+    purpose: The `markitect` verb table, its command line and its MCP tools.
     doc: docs/project-operations.md#cli-setup-and-current-roots
   - path: src/internal/host/projectexplore
     layer: application
@@ -210,7 +210,7 @@ packages:
   # --- cli ----------------------------------------------------------------
   - path: src/cmd/markitect
     layer: cli
-    purpose: The `markitect` executable.
+    purpose: The `markitect` executable with the top-level verbs.
     doc: docs/usage.md#commands
   - path: src/cmd/markitect-adapter-azure-devops
     layer: cli
@@ -240,6 +240,10 @@ packages:
     layer: cli
     purpose: The reference bring-your-own executor executable.
     doc: docs/provider-adapters.md#bring-your-own-executor
+  - path: src/cmd/markitect-legacy
+    layer: cli
+    purpose: Temporary executable for the legacy Project/Domain commands until ARCH-09 removes them.
+    doc: docs/design/verb-table.md#what-leaves-the-product-binary
   - path: src/cmd/markitect-release
     layer: cli
     purpose: Prepares or publishes a GitHub release.

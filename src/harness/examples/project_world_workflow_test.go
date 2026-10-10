@@ -66,22 +66,25 @@ func TestProjectWorldNativeCLIWorkflow(t *testing.T) {
 	smokeExploreReadiness(t, binary, root)
 
 	for _, action := range [][]string{
-		{"check"}, {"index"}, {"coverage"},
+		{"check"}, {"model"}, {"check", "--coverage"},
 	} {
 		stdout, stderr, code := cliSmoke(t, binary, root, action...)
 		if code != 0 {
-			t.Fatalf("project %s exit=%d: %s", action[0], code, stderr)
+			t.Fatalf("%s exit=%d: %s", strings.Join(action, " "), code, stderr)
 		}
-		if action[0] == "coverage" {
+		if len(action) > 1 {
 			var report struct {
-				Conforming bool     `json:"conforming"`
-				Unknown    []string `json:"unknown"`
+				Status   string   `json:"status"`
+				Unknown  []string `json:"unknown"`
+				Coverage struct {
+					Conforming bool `json:"conforming"`
+				} `json:"coverage"`
 			}
-			if err := json.Unmarshal(stdout, &report); err != nil || !report.Conforming || len(report.Unknown) != 0 {
+			if err := json.Unmarshal(stdout, &report); err != nil || report.Status != "succeeded" || !report.Coverage.Conforming || len(report.Unknown) != 0 {
 				t.Fatalf("full Shop coverage report=%s err=%v", stdout, err)
 			}
-		} else if action[0] == "index" && !bytes.Contains(stdout, []byte(`"status": "succeeded"`)) {
-			t.Fatalf("project index did not report succeeded: %s", stdout)
+		} else if action[0] == "model" && !bytes.Contains(stdout, []byte(`"status": "succeeded"`)) {
+			t.Fatalf("model did not report succeeded: %s", stdout)
 		}
 	}
 
@@ -89,19 +92,25 @@ func TestProjectWorldNativeCLIWorkflow(t *testing.T) {
 		{`["project.markitect.example.org/v1alpha1","Manager","","shop"]`, `"name": "commerce"`},
 		{`["project.markitect.example.org/v1alpha1","Manager","commerce.sales.orders","orders"]`, "cancel-before-shipped"},
 	} {
-		stdout, stderr, code := cliSmoke(t, binary, root, "context", "--manager", test.manager)
+		stdout, stderr, code := cliSmoke(t, binary, root, "context", test.manager)
 		if code != 0 || !bytes.Contains(stdout, []byte(test.contains)) {
-			t.Fatalf("project context manager=%s exit=%d stderr=%s output=%s", test.manager, code, stderr, stdout)
+			t.Fatalf("context manager=%s exit=%d stderr=%s output=%s", test.manager, code, stderr, stdout)
 		}
 	}
 
+	// docs previews the readable document as JSON; the write is bound to its digest.
 	viewPath := filepath.Join(root, "docs", "markitect", "project.md")
-	wantView, stderr, code := cliSmoke(t, binary, root, "document")
-	if code != 0 || !bytes.Contains(wantView, []byte("cancel-before-shipped")) {
-		t.Fatalf("project document preview exit=%d stderr=%s", code, stderr)
+	docsPreview, stderr, code := cliSmoke(t, binary, root, "docs")
+	var docs struct {
+		Digest  string `json:"digest"`
+		Content string `json:"content"`
 	}
-	if _, stderr, code := cliSmoke(t, binary, root, "document", "--write"); code != 0 {
-		t.Fatalf("project document --write exit=%d: %s", code, stderr)
+	if code != 0 || json.Unmarshal(docsPreview, &docs) != nil || docs.Digest == "" || !strings.Contains(docs.Content, "cancel-before-shipped") {
+		t.Fatalf("docs preview exit=%d stderr=%s output=%s", code, stderr, docsPreview)
+	}
+	wantView := []byte(docs.Content)
+	if _, stderr, code := cliSmoke(t, binary, root, "docs", "--expect", docs.Digest, "--write"); code != 0 {
+		t.Fatalf("docs --write exit=%d: %s", code, stderr)
 	}
 	gotView, err := os.ReadFile(viewPath)
 	if err != nil || !bytes.Equal(gotView, wantView) || !bytes.Contains(gotView, []byte("cancel-before-shipped")) {
@@ -187,31 +196,37 @@ func smokeExploreReadiness(t *testing.T, binary, root string) {
 	if code != 0 {
 		t.Fatalf("Explore preview exit=%d: %s", code, stderr)
 	}
-	var explorationPlan struct {
-		Digest string `json:"digest"`
+	var explorationPreview struct {
+		Plan struct {
+			Digest string `json:"digest"`
+		} `json:"plan"`
 	}
-	if err := json.Unmarshal(preview, &explorationPlan); err != nil || explorationPlan.Digest == "" {
+	if err := json.Unmarshal(preview, &explorationPreview); err != nil || explorationPreview.Plan.Digest == "" {
 		t.Fatalf("Explore preview=%s err=%v", preview, err)
 	}
-	if _, stderr, code := cliSmoke(t, binary, root, "explore", "--input", filepath.ToSlash(inputRelative), "--expect", explorationPlan.Digest, "--write"); code != 0 {
+	if _, stderr, code := cliSmoke(t, binary, root, "explore", "--input", filepath.ToSlash(inputRelative), "--expect", explorationPreview.Plan.Digest, "--write"); code != 0 {
 		t.Fatalf("Explore write exit=%d: %s", code, stderr)
 	}
 	status, stderr, code := cliSmoke(t, binary, root, "explore", "--exploration", "native-shop-smoke")
 	if code != 0 {
 		t.Fatalf("Explore status exit=%d: %s", code, stderr)
 	}
-	var statusRecord struct {
-		Status    string `json:"status"`
-		Decisions []struct {
-			ID       string `json:"id"`
-			Blocking bool   `json:"blocking"`
-			Status   string `json:"status"`
-		} `json:"decisions"`
+	var statusOutput struct {
+		Record struct {
+			Status    string `json:"status"`
+			Decisions []struct {
+				ID       string `json:"id"`
+				Blocking bool   `json:"blocking"`
+				Status   string `json:"status"`
+			} `json:"decisions"`
+		} `json:"record"`
 	}
-	if err := json.Unmarshal(status, &statusRecord); err != nil || statusRecord.Status != "active" || len(statusRecord.Decisions) != 1 || statusRecord.Decisions[0].ID != "public-outcome" || !statusRecord.Decisions[0].Blocking || statusRecord.Decisions[0].Status != "open" {
+	err = json.Unmarshal(status, &statusOutput)
+	statusRecord := statusOutput.Record
+	if err != nil || statusRecord.Status != "active" || len(statusRecord.Decisions) != 1 || statusRecord.Decisions[0].ID != "public-outcome" || !statusRecord.Decisions[0].Blocking || statusRecord.Decisions[0].Status != "open" {
 		t.Fatalf("Explore status did not retain open blocking decision: output=%s err=%v", status, err)
 	}
-	_, readinessErr, readinessCode := cliSmoke(t, binary, root, "readiness", "--exploration", "native-shop-smoke", "--scope", "cancel")
+	_, readinessErr, readinessCode := cliSmoke(t, binary, root, "ready", "--exploration", "native-shop-smoke", "--scope", "cancel")
 	if readinessCode == 0 || !strings.Contains(strings.ToLower(readinessErr), "runtime") {
 		t.Fatalf("readiness must require configured runtime; exit=%d stderr=%s", readinessCode, readinessErr)
 	}
@@ -297,7 +312,7 @@ func cliSmoke(t *testing.T, binary, root string, args ...string) (stdout []byte,
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
-	commandArgs := []string{"project", args[0], "--repo", root}
+	commandArgs := []string{args[0], "--repo", root}
 	commandArgs = append(commandArgs, args[1:]...)
 	command := exec.CommandContext(ctx, binary, commandArgs...)
 	command.Dir = root
@@ -305,14 +320,14 @@ func cliSmoke(t *testing.T, binary, root string, args ...string) (stdout []byte,
 	command.Stderr = &errout
 	stdout, err := command.Output()
 	if ctx.Err() != nil {
-		t.Fatalf("markitect project %s timed out: %v", strings.Join(args, " "), ctx.Err())
+		t.Fatalf("markitect %s timed out: %v", strings.Join(args, " "), ctx.Err())
 	}
 	if err == nil {
 		return stdout, errout.String(), 0
 	}
 	var exit *exec.ExitError
 	if !errors.As(err, &exit) {
-		t.Fatalf("start markitect project %s: %v", strings.Join(args, " "), err)
+		t.Fatalf("start markitect %s: %v", strings.Join(args, " "), err)
 	}
 	return stdout, errout.String(), exit.ExitCode()
 }

@@ -1,11 +1,14 @@
 package projectapp
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
@@ -14,9 +17,12 @@ type InitOperation struct {
 	Root  string `json:"root"`
 	Name  string `json:"name"`
 	Write bool   `json:"write,omitempty"`
+	// ExpectedDigest binds a write to the reviewed preview's digest.
+	ExpectedDigest string `json:"expectedDigest,omitempty"`
 }
 
 type CheckSource struct {
+	Name          string `json:"name"`
 	ProjectDigest string `json:"projectDigest"`
 	Revision      string `json:"revision"`
 	Provisional   bool   `json:"provisional"`
@@ -39,8 +45,9 @@ type ContextOperation struct {
 }
 
 type DocumentOperation struct {
-	Selection Selection `json:"selection"`
-	Write     bool      `json:"write,omitempty"`
+	Selection      Selection `json:"selection"`
+	Write          bool      `json:"write,omitempty"`
+	ExpectedDigest string    `json:"expectedDigest,omitempty"`
 }
 
 type EditOperation struct {
@@ -60,6 +67,15 @@ func (o Operations) Init(operation InitOperation) (projectwork.InitPlan, error) 
 	if err := requireRoot(operation.Root); err != nil {
 		return projectwork.InitPlan{}, err
 	}
+	if operation.Write && operation.ExpectedDigest != "" {
+		preview, err := projectwork.Init(operation.Root, operation.Name, false)
+		if err != nil {
+			return projectwork.InitPlan{}, err
+		}
+		if preview.Digest != operation.ExpectedDigest {
+			return projectwork.InitPlan{}, staleError("the init preview changed; review the new preview and its digest")
+		}
+	}
 	return projectwork.Init(operation.Root, operation.Name, operation.Write)
 }
 
@@ -69,7 +85,7 @@ func (o Operations) Check(selection Selection) (CheckResult, error) {
 		return CheckResult{}, err
 	}
 	return CheckResult{
-		Source: CheckSource{ProjectDigest: project.Digest, Revision: project.Revision, Provisional: project.Provisional, CoverageMode: project.Config.CoverageMode},
+		Source: CheckSource{Name: project.Config.Name, ProjectDigest: project.Digest, Revision: project.Revision, Provisional: project.Provisional, CoverageMode: project.Config.CoverageMode},
 		Report: project.Report, Findings: project.Report.Findings, Unknown: project.Report.Unknown, Coverage: project.Coverage,
 	}, nil
 }
@@ -95,12 +111,49 @@ func (o Operations) Context(operation ContextOperation) (projectmodel.ManagerCon
 	return projectmodel.Context(project.Report, operation.ManagerID)
 }
 
-func (o Operations) Document(operation DocumentOperation) (string, error) {
+// DocumentResult is the readable model document with its destination and
+// digest, so a write can be bound to the reviewed preview.
+type DocumentResult struct {
+	Path    string `json:"path"`
+	Digest  string `json:"digest"`
+	Content string `json:"content"`
+	Written bool   `json:"written"`
+}
+
+func (o Operations) Document(operation DocumentOperation) (DocumentResult, error) {
 	project, err := loadSelectedProject(operation.Selection)
 	if err != nil {
-		return "", err
+		return DocumentResult{}, err
 	}
-	return projectwork.Document(project, operation.Write)
+	content, err := projectwork.Document(project, false)
+	if err != nil {
+		return DocumentResult{}, err
+	}
+	result := DocumentResult{Path: projectwork.DocumentPath(project.Config), Digest: contentDigest(content), Content: content}
+	if !operation.Write {
+		return result, nil
+	}
+	if operation.ExpectedDigest != "" && operation.ExpectedDigest != result.Digest {
+		return DocumentResult{}, staleError("the document preview changed; review the new preview and its digest")
+	}
+	written, err := projectwork.Document(project, true)
+	if err != nil {
+		return DocumentResult{}, err
+	}
+	result.Content, result.Digest, result.Written = written, contentDigest(written), true
+	return result, nil
+}
+
+// staleError reports a write whose reviewed preview no longer matches; it
+// matches projectrun.ErrStale for adapters that classify stale writes.
+type staleError string
+
+func (e staleError) Error() string        { return string(e) }
+func (e staleError) Is(target error) bool { return target == projectrun.ErrStale }
+
+func contentDigest(content string) string {
+	sum := sha256.Sum256([]byte(content))
+	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
 func (o Operations) Edit(operation EditOperation) (projectwork.EditPlan, error) {

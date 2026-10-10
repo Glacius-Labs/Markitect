@@ -75,11 +75,11 @@ LOG, FAIL, RUNTIME = __LOG__, __FAIL__, __RUNTIME__
 args = sys.argv[1:]
 with open(LOG, "a", encoding="utf-8") as handle:
     handle.write(json.dumps(args) + "\n")
-action = args[1]
+action = args[0]
 def opt(name):
     return args[args.index(name) + 1] if name in args else None
 def stop(message):
-    sys.stderr.write(f"markitect project {action}: {message}\n")
+    sys.stderr.write(f"markitect {action}: {message}\n")
     sys.exit(2)
 repo, write = pathlib.Path(opt("--repo")), "--write" in args
 if action == FAIL:
@@ -88,8 +88,8 @@ if write:
     branch = subprocess.run(["git", "branch", "--show-current"], cwd=repo, capture_output=True, text=True).stdout.strip()
     if branch in ("", "main", "master"):
         stop("writing requires an isolated non-protected Git branch")
-digests = {"init": "a" * 64, "onboard": "b" * 64, "setup": "c" * 64}
-if write and action in ("onboard", "setup") and opt("--expect") != digests[action]:
+digests = {"init": "a" * 64, "onboard": "b" * 64, "config": "c" * 64}
+if write and opt("--expect") != digests.get(action):
     stop("expected digest does not match")
 if action == "init":
     if write:
@@ -102,10 +102,10 @@ elif action == "onboard":
         with open(repo / "AGENTS.md", "a", encoding="utf-8") as handle:
             handle.write("\n## Markitect\n\nUse the project MCP tools.\n")
     print(json.dumps({"apiVersion": "onboarding/v1", "digest": digests["onboard"], "files": []}))
-elif action == "setup":
+elif action == "config":
     if write:
         (repo / ".markitect" / "runtime.yaml").write_text(RUNTIME, encoding="utf-8")
-    print(json.dumps({"apiVersion": "setup/v1", "editPlan": {"digest": digests["setup"]},
+    print(json.dumps({"apiVersion": "setup/v1", "editPlan": {"digest": digests["config"]},
                       "mutation": {"files": [{"path": ".markitect/runtime.yaml", "content": RUNTIME}]}}))
 elif action == "check":
     print(json.dumps({"status": "succeeded", "findings": None, "coverage": {"conforming": False}}))
@@ -230,20 +230,20 @@ class MarkitectSetupTest(unittest.TestCase):
         result = self.run_setup()
         self.assertEqual((result["status"], result["error"]), ("ready", None))
         repo = str(self.repo.resolve())
-        setup = ["setup", "--repo", repo, "--provider", "codex", "--model", "gpt-6-luna", "--effort", "high",
+        setup = ["config", "--repo", repo, "--provider", "codex", "--model", "gpt-6-luna", "--effort", "high",
                  "--provider-executable", str(self.codex), "--input-micros-per-million", "1000000",
                  "--output-micros-per-million", "1000000", "--max-cost-micros", str(14400 * 50_000)]
         self.assertEqual(self.calls(), [
-            ["project", "init", "--repo", repo, "--name", "readinglog"],
-            ["project", "init", "--repo", repo, "--name", "readinglog", "--write"],
-            ["project", "onboard", "--repo", repo, "--provider", "codex"],
-            ["project", "onboard", "--repo", repo, "--provider", "codex", "--expect", "b" * 64, "--write"],
-            ["project", *setup],
-            ["project", *setup, "--expect", "c" * 64, "--write"],
-            ["project", "check", "--repo", repo],
+            ["init", "--repo", repo, "--name", "readinglog"],
+            ["init", "--repo", repo, "--name", "readinglog", "--expect", "a" * 64, "--write"],
+            ["onboard", "--repo", repo, "--provider", "codex"],
+            ["onboard", "--repo", repo, "--provider", "codex", "--expect", "b" * 64, "--write"],
+            setup,
+            [*setup, "--expect", "c" * 64, "--write"],
+            ["check", "--repo", repo],
         ])
         self.assertEqual(result["mcpServers"], {"markitect": {
-            "command": str(self.installed), "args": ["project", "mcp", "--repo", repo]}})
+            "command": str(self.installed), "args": ["mcp", "--repo", repo]}})
         self.assertEqual(git(self.repo, "branch", "--show-current"), "main")
         self.assertEqual(git(self.repo, "branch", "--list", methods.MARKITECT_BRANCH), "")
         self.assertEqual(git(self.repo, "log", "-1", "--format=%s"), "Install Markitect project workflow")
@@ -265,10 +265,10 @@ class MarkitectSetupTest(unittest.TestCase):
         result = self.run_setup(kind="claude")
         self.assertEqual((result["status"], result["error"]), ("ready", None))
         repo = str(self.repo.resolve())
-        onboard = [call for call in self.calls() if call[1] == "onboard"]
-        self.assertEqual(onboard[0], ["project", "onboard", "--repo", repo, "--provider", "both"])
+        onboard = [call for call in self.calls() if call[0] == "onboard"]
+        self.assertEqual(onboard[0], ["onboard", "--repo", repo, "--provider", "both"])
         self.assertEqual(result["notes"]["onboardProvider"], "both")
-        setup = next(call for call in self.calls() if call[1] == "setup")
+        setup = next(call for call in self.calls() if call[0] == "config")
         self.assertEqual(setup[setup.index("--provider") + 1], "codex")  # inner roles stay on Codex
         self.assertEqual((setup[setup.index("--model") + 1], setup[setup.index("--effort") + 1]),
                          ("gpt-6-luna", "high"))
@@ -278,7 +278,7 @@ class MarkitectSetupTest(unittest.TestCase):
         self.assertEqual(len(result["roles"]), 3)
 
     def test_failure_sources(self):
-        self.assertEqual(self.run_setup(fail="setup")["blockedBy"], "product")
+        self.assertEqual(self.run_setup(fail="config")["blockedBy"], "product")
         assess._rmtree(self.root / "in")
         missing = self.run_setup(binary=False)
         self.assertEqual((missing["status"], missing["blockedBy"]), ("blocked", "harness"))

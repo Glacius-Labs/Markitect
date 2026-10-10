@@ -1,9 +1,12 @@
 package projectapp
 
 import (
+	"errors"
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
@@ -31,8 +34,8 @@ func TestModelOperationsDelegateProjectServices(t *testing.T) {
 		t.Fatalf("Context = %#v, err=%v", managerContext, err)
 	}
 	document, err := operations.Document(DocumentOperation{Selection: selection})
-	if err != nil || !strings.Contains(document, "# Facade fixture") {
-		t.Fatalf("Document length=%d, err=%v", len(document), err)
+	if err != nil || !strings.Contains(document.Content, "# Facade fixture") || document.Path == "" || !strings.HasPrefix(document.Digest, "sha256:") || document.Written {
+		t.Fatalf("Document = %+v, err=%v", document, err)
 	}
 	coverage, err := operations.Coverage(selection)
 	if err != nil || coverage.Digest == "" {
@@ -54,8 +57,27 @@ func TestInitAndEditOperationsPreservePreviewAndExpectedDigestGuards(t *testing.
 	if err != nil || initPlan.Digest == "" || initPlan.Written != nil {
 		t.Fatalf("Init preview = %#v, err=%v", initPlan, err)
 	}
-	if _, err := operations.Init(InitOperation{Root: root, Name: "Facade Init", Write: true}); err != nil {
-		t.Fatalf("Init write: %v", err)
+	if _, err := operations.Init(InitOperation{Root: root, Name: "Facade Init", Write: true, ExpectedDigest: "stale"}); !errors.Is(err, projectrun.ErrStale) {
+		t.Fatalf("Init write with a stale digest = %v, want ErrStale", err)
+	}
+	if entries, _ := os.ReadDir(root); len(entries) != 1 {
+		t.Fatalf("stale Init write changed the repository: %d entries", len(entries))
+	}
+	written, err := operations.Init(InitOperation{Root: root, Name: "Facade Init", Write: true, ExpectedDigest: initPlan.Digest})
+	if err != nil || written.Digest != initPlan.Digest {
+		t.Fatalf("Init write = %#v, err=%v", written, err)
+	}
+	runGit(t, root, "add", "--all")
+	runGit(t, root, "commit", "-m", "init")
+	document, err := operations.Document(DocumentOperation{Selection: Selection{Root: root}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := operations.Document(DocumentOperation{Selection: Selection{Root: root}, Write: true, ExpectedDigest: "sha256:stale"}); !errors.Is(err, projectrun.ErrStale) {
+		t.Fatalf("Document write with a stale digest = %v, want ErrStale", err)
+	}
+	if rewritten, err := operations.Document(DocumentOperation{Selection: Selection{Root: root}, Write: true, ExpectedDigest: document.Digest}); err != nil || !rewritten.Written || rewritten.Digest != document.Digest {
+		t.Fatalf("Document write = %+v, err=%v", rewritten, err)
 	}
 
 	fixture := makePlanFixture(t)
@@ -75,9 +97,9 @@ func TestInitAndEditOperationsPreservePreviewAndExpectedDigestGuards(t *testing.
 	if _, err := operations.Edit(EditOperation{Selection: selection, Mutation: mutation, Write: true, ExpectedDigest: "sha256:stale"}); err == nil || !strings.Contains(err.Error(), "exact edit plan digest") {
 		t.Fatalf("stale Edit write error = %v", err)
 	}
-	written, err := operations.Edit(EditOperation{Selection: selection, Mutation: mutation, Write: true, ExpectedDigest: preview.Digest})
-	if err != nil || written.Digest != preview.Digest {
-		t.Fatalf("Edit write = %#v, err=%v", written, err)
+	edited, err := operations.Edit(EditOperation{Selection: selection, Mutation: mutation, Write: true, ExpectedDigest: preview.Digest})
+	if err != nil || edited.Digest != preview.Digest {
+		t.Fatalf("Edit write = %#v, err=%v", edited, err)
 	}
 }
 

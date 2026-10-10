@@ -164,10 +164,10 @@ def _unittest_counts(text: str) -> dict:
 
 
 def _conformance(candidate_dir: Path, in_dir: Path, out_dir: Path, markitect_cmd: list[str] | None) -> dict:
-    """`markitect project check` on a scratch Git repository holding the frozen files
+    """`markitect check` on a scratch Git repository holding the frozen files
     (the product reads the project through Git). `errorSource` says whose failure an
     `error` is: "harness" (binary or scratch repository) or "product" (the command)."""
-    result: dict[str, Any] = {"command": "markitect project check", "status": "error", "exitCode": None,
+    result: dict[str, Any] = {"command": "markitect check", "status": "error", "exitCode": None,
                               "reportStatus": None, "coverageConforming": None, "findings": None, "error": None,
                               "errorSource": None}
     command = markitect_cmd or _markitect_command(in_dir)
@@ -181,11 +181,11 @@ def _conformance(candidate_dir: Path, in_dir: Path, out_dir: Path, markitect_cmd
             if git["exitCode"] != 0:
                 result.update(error=f"scratch git {args[0]} failed", errorSource="harness")
                 return result
-        run = _run([*command, "project", "check", "--repo", str(copy)], copy, PRODUCT_TIMEOUT,
+        run = _run([*command, "check", "--repo", str(copy)], copy, PRODUCT_TIMEOUT,
                    out_dir, "conformance", env)
     result.update(run)
     if run["timedOut"] or run["exitCode"] is None:
-        result.update(error="markitect project check did not finish", errorSource="product")
+        result.update(error="markitect check did not finish", errorSource="product")
         return result
     try:
         report = json.loads(_read(out_dir / run["stdout"]))

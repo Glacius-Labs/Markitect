@@ -26,7 +26,7 @@
 Checks run:
 
 ```text
-<!-- e.g. go test ./..., go vet ./..., go run ./src/cmd/markitect schema --repo ., go run ./src/cmd/markitect check --repo examples/minimal -->
+<!-- e.g. go test ./..., go vet ./..., go run ./src/cmd/markitect-legacy schema --repo ., go run ./src/cmd/markitect-legacy check --repo examples/minimal -->
 ```
 
 ## Findings and owner decisions

@@ -263,7 +263,7 @@ func buildSelectiveCLI(t *testing.T, root string) string {
 		name += ".exe"
 	}
 	binary := filepath.Join(t.TempDir(), name)
-	cmd := exec.Command("go", "build", "-o", binary, "./src/cmd/markitect")
+	cmd := exec.Command("go", "build", "-o", binary, "./src/cmd/markitect-legacy")
 	cmd.Dir = harnessRepositoryRoot(t)
 	cmd.Env = append(os.Environ(), "GOCACHE="+filepath.Join(t.TempDir(), "go-cache"))
 	output, err := cmd.CombinedOutput()

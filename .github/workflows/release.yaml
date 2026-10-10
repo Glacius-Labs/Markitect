@@ -58,7 +58,7 @@ jobs:
           [[ "$TAG" == "v$source_version" ]] || { echo "release tag $TAG does not match source version $source_version" >&2; exit 1; }
 
           bundle_path="$RUNNER_TEMP/markitect-$TAG-bundle.zip"
-          go run ./src/cmd/markitect bundle --repo . --revision "$SOURCE_SHA" --output "$bundle_path"
+          go run ./src/cmd/markitect-legacy bundle --repo . --revision "$SOURCE_SHA" --output "$bundle_path"
           bundle_sha256="$(sha256sum "$bundle_path" | cut -d ' ' -f 1)"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$source_version" >> "$GITHUB_OUTPUT"
@@ -124,7 +124,7 @@ jobs:
         run: |
           set -euo pipefail
           bundle_path="$RUNNER_TEMP/markitect-$RELEASE_TAG-bundle.zip"
-          go run ./src/cmd/markitect bundle --repo . --revision "$GITHUB_SHA" --output "$bundle_path"
+          go run ./src/cmd/markitect-legacy bundle --repo . --revision "$GITHUB_SHA" --output "$bundle_path"
           actual_sha256="$(sha256sum "$bundle_path" | cut -d ' ' -f 1)"
           [[ "$actual_sha256" == "$EXPECTED_BUNDLE_SHA256" ]] || { echo "bundle is not deterministic across release jobs" >&2; exit 1; }
 
@@ -137,36 +137,38 @@ jobs:
           git -C "$consumer" add .
           git -C "$consumer" commit -m "Create isolated Markitect release smoke fixture"
 
-          go run ./src/cmd/markitect install --repo "$consumer" --bundle "$bundle_path" --sha256 "$actual_sha256" --write
+          go run ./src/cmd/markitect-legacy install --repo "$consumer" --bundle "$bundle_path" --sha256 "$actual_sha256" --write
           cd "$consumer"
           go test .markitect/bootstrap/run.go .markitect/bootstrap/run_test.go
-          authoring_output="$(go run .markitect/bootstrap/run.go authoring)"
-          grep -Fq 'core/Skill/authoring' <<< "$authoring_output"
           notices="$(go run .markitect/bootstrap/run.go licenses)"
           grep -Fq 'Copyright 2009 The Go Authors.' <<< "$notices"
           grep -Fq 'END OF TERMS AND CONDITIONS' <<< "$notices"
           adapter_source="$RUNNER_TEMP/markitect-adapter-source-$GITHUB_RUN_ID"
           adapter_bin="$RUNNER_TEMP/markitect-adapter-bin-$GITHUB_RUN_ID"
+          legacy_binary="$RUNNER_TEMP/markitect-legacy-$GITHUB_RUN_ID"
           mkdir -p "$adapter_source" "$adapter_bin"
           unzip -q "$consumer/.markitect/tool/source.zip" -d "$adapter_source"
           (cd "$adapter_source" && go build -trimpath -buildvcs=false -o "$adapter_bin/markitect-adapter-dotnet" ./src/cmd/markitect-adapter-dotnet)
+          (cd "$adapter_source" && go build -trimpath -buildvcs=false -o "$legacy_binary" ./src/cmd/markitect-legacy)
           echo "$adapter_bin" >> "$GITHUB_PATH"
           export PATH="$adapter_bin:$PATH"
-          example_output="$(go run .markitect/bootstrap/run.go check --repo "$consumer")"
+          authoring_output="$("$legacy_binary" authoring)"
+          grep -Fq 'core/Skill/authoring' <<< "$authoring_output"
+          example_output="$("$legacy_binary" check --repo "$consumer")"
           grep -Eq '^status: passed$' <<< "$example_output"
-          domain_output="$(go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/canonical-engineering")"
+          domain_output="$("$legacy_binary" check --repo "$GITHUB_WORKSPACE/examples/canonical-engineering")"
           grep -Eq '^status: passed$' <<< "$domain_output"
-          go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/canonical-engineering" --kind Skill --name architecture-review --namespace engineering
-          go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/canonical-engineering"
-          go run .markitect/bootstrap/run.go format --repo "$GITHUB_WORKSPACE/examples/canonical-engineering"
-          go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/engineering-constitution"
-          go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/engineering-constitution"
-          go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/engineering-constitution" --namespace engineering --kind Skill --name add-order
-          go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/engineering-discovery"
-          go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/software-architecture"
-          go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/software-architecture"
-          go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/software-architecture" --namespace engineering --kind Skill --name implement-order
-          go run .markitect/bootstrap/run.go format --repo "$GITHUB_WORKSPACE/examples/software-architecture"
+          "$legacy_binary" context --repo "$GITHUB_WORKSPACE/examples/canonical-engineering" --kind Skill --name architecture-review --namespace engineering
+          "$legacy_binary" model --repo "$GITHUB_WORKSPACE/examples/canonical-engineering"
+          "$legacy_binary" format --repo "$GITHUB_WORKSPACE/examples/canonical-engineering"
+          "$legacy_binary" check --repo "$GITHUB_WORKSPACE/examples/engineering-constitution"
+          "$legacy_binary" model --repo "$GITHUB_WORKSPACE/examples/engineering-constitution"
+          "$legacy_binary" context --repo "$GITHUB_WORKSPACE/examples/engineering-constitution" --namespace engineering --kind Skill --name add-order
+          "$legacy_binary" check --repo "$GITHUB_WORKSPACE/examples/engineering-discovery"
+          "$legacy_binary" check --repo "$GITHUB_WORKSPACE/examples/software-architecture"
+          "$legacy_binary" model --repo "$GITHUB_WORKSPACE/examples/software-architecture"
+          "$legacy_binary" context --repo "$GITHUB_WORKSPACE/examples/software-architecture" --namespace engineering --kind Skill --name implement-order
+          "$legacy_binary" format --repo "$GITHUB_WORKSPACE/examples/software-architecture"
           domain_repo="$RUNNER_TEMP/markitect-canonical-engineering-$GITHUB_RUN_ID"
           mkdir -p "$domain_repo"
           cp -R "$GITHUB_WORKSPACE/examples/canonical-engineering/." "$domain_repo/"
@@ -175,16 +177,16 @@ jobs:
           git -C "$domain_repo" config user.email 'markitect-release-ci@users.noreply.github.com'
           git -C "$domain_repo" add .
           git -C "$domain_repo" commit -m 'Create isolated canonical engineering fixture'
-          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action observe --adapter markitect-render
+          "$legacy_binary" reconcile --repo "$domain_repo" --action observe --adapter markitect-render
           mkdir -p "$domain_repo/.artifacts/markitect/reconcile"
           domain_plan="$domain_repo/.artifacts/markitect/reconcile/plan.yaml"
-          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action plan --adapter markitect-render > "$domain_plan"
-          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action apply --adapter markitect-render --plan "$domain_plan" --write
-          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action verify --adapter markitect-render --plan "$domain_plan"
+          "$legacy_binary" reconcile --repo "$domain_repo" --action plan --adapter markitect-render > "$domain_plan"
+          "$legacy_binary" reconcile --repo "$domain_repo" --action apply --adapter markitect-render --plan "$domain_plan" --write
+          "$legacy_binary" reconcile --repo "$domain_repo" --action verify --adapter markitect-render --plan "$domain_plan"
           adapter_plan="$domain_repo/.artifacts/markitect/reconcile/dotnet-plan.yaml"
-          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action observe --adapter dotnet-dependencies
-          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action plan --adapter dotnet-dependencies > "$adapter_plan"
-          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action verify --adapter dotnet-dependencies --plan "$adapter_plan"
+          "$legacy_binary" reconcile --repo "$domain_repo" --action observe --adapter dotnet-dependencies
+          "$legacy_binary" reconcile --repo "$domain_repo" --action plan --adapter dotnet-dependencies > "$adapter_plan"
+          "$legacy_binary" reconcile --repo "$domain_repo" --action verify --adapter dotnet-dependencies --plan "$adapter_plan"
 
       - name: Install bundle and verify bootstrap (Windows)
         if: runner.os == 'Windows'
@@ -194,7 +196,7 @@ jobs:
           RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
         run: |
           $bundlePath = Join-Path $env:RUNNER_TEMP "markitect-$env:RELEASE_TAG-bundle.zip"
-          go run ./src/cmd/markitect bundle --repo . --revision $env:GITHUB_SHA --output $bundlePath
+          go run ./src/cmd/markitect-legacy bundle --repo . --revision $env:GITHUB_SHA --output $bundlePath
           if ($LASTEXITCODE -ne 0) { throw "Bundle creation failed with exit code $LASTEXITCODE" }
           $actualSha256 = (Get-FileHash -LiteralPath $bundlePath -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($actualSha256 -ne $env:EXPECTED_BUNDLE_SHA256) { throw 'Bundle is not deterministic across release jobs' }
@@ -210,57 +212,60 @@ jobs:
           git -C $consumer commit -m 'Create isolated Markitect release smoke fixture'
           if ($LASTEXITCODE -ne 0) { throw 'Could not commit the isolated feature fixture' }
 
-          go run ./src/cmd/markitect install --repo $consumer --bundle $bundlePath --sha256 $actualSha256 --write
+          go run ./src/cmd/markitect-legacy install --repo $consumer --bundle $bundlePath --sha256 $actualSha256 --write
           if ($LASTEXITCODE -ne 0) { throw "Bundle installation failed with exit code $LASTEXITCODE" }
           Push-Location $consumer
           go test .markitect/bootstrap/run.go .markitect/bootstrap/run_test.go
           if ($LASTEXITCODE -ne 0) { throw 'Installed bootstrap tests failed' }
-          $authoring = go run .markitect/bootstrap/run.go authoring
-          if ($LASTEXITCODE -ne 0) { throw 'Installed authoring command failed' }
-          if (($authoring -join "`n") -notmatch 'core/Skill/authoring') { throw 'Installed bundle omitted the authoring Skill' }
           $notices = go run .markitect/bootstrap/run.go licenses
           if ($LASTEXITCODE -ne 0) { throw 'Installed third-party notices failed' }
           if (($notices -join "`n") -notmatch 'Copyright 2009 The Go Authors.' -or ($notices -join "`n") -notmatch 'END OF TERMS AND CONDITIONS') { throw 'Installed bundle omitted third-party notices' }
           $adapterSource = Join-Path $env:RUNNER_TEMP "markitect-adapter-source-$env:GITHUB_RUN_ID"
           $adapterBin = Join-Path $env:RUNNER_TEMP "markitect-adapter-bin-$env:GITHUB_RUN_ID"
+          $legacyBinary = Join-Path $env:RUNNER_TEMP "markitect-legacy-$env:GITHUB_RUN_ID.exe"
           New-Item -ItemType Directory -Path $adapterSource, $adapterBin -Force | Out-Null
           Expand-Archive -LiteralPath (Join-Path $consumer '.markitect/tool/source.zip') -DestinationPath $adapterSource
           Push-Location $adapterSource
           go build -trimpath -buildvcs=false -o (Join-Path $adapterBin 'markitect-adapter-dotnet.exe') ./src/cmd/markitect-adapter-dotnet
           if ($LASTEXITCODE -ne 0) { throw 'Could not build .NET reference adapter from installed source bundle' }
+          go build -trimpath -buildvcs=false -o $legacyBinary ./src/cmd/markitect-legacy
+          if ($LASTEXITCODE -ne 0) { throw 'Could not build markitect-legacy from installed source bundle' }
           Pop-Location
           $adapterBin >> $env:GITHUB_PATH
           $env:PATH = "$adapterBin;$env:PATH"
-          $example = go run .markitect/bootstrap/run.go check --repo $consumer
+          $authoring = & $legacyBinary authoring
+          if ($LASTEXITCODE -ne 0) { throw 'Installed authoring command failed' }
+          if (($authoring -join "`n") -notmatch 'core/Skill/authoring') { throw 'Installed bundle omitted the authoring Skill' }
+          $example = & $legacyBinary check --repo $consumer
           if ($LASTEXITCODE -ne 0) { throw 'Installed example check failed' }
           if (($example -join "`n") -notmatch '(?m)^status: passed$') { throw 'Installed bundle did not pass the minimal example check' }
           $domainExample = Join-Path $env:GITHUB_WORKSPACE 'examples/canonical-engineering'
-          $domainCheck = go run .markitect/bootstrap/run.go check --repo $domainExample
+          $domainCheck = & $legacyBinary check --repo $domainExample
           if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering check failed' }
           if (($domainCheck -join "`n") -notmatch '(?m)^status: passed$') { throw 'Installed bundle did not pass the canonical engineering example check' }
-          go run .markitect/bootstrap/run.go context --repo $domainExample --kind Skill --name architecture-review --namespace engineering
+          & $legacyBinary context --repo $domainExample --kind Skill --name architecture-review --namespace engineering
           if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering context failed' }
-          go run .markitect/bootstrap/run.go model --repo $domainExample
+          & $legacyBinary model --repo $domainExample
           if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering model failed' }
-          go run .markitect/bootstrap/run.go format --repo $domainExample
+          & $legacyBinary format --repo $domainExample
           if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering format failed' }
           $constitutionExample = Join-Path $env:GITHUB_WORKSPACE 'examples/engineering-constitution'
-          go run .markitect/bootstrap/run.go check --repo $constitutionExample
+          & $legacyBinary check --repo $constitutionExample
           if ($LASTEXITCODE -ne 0) { throw 'Installed bundle constitution check failed' }
-          go run .markitect/bootstrap/run.go model --repo $constitutionExample
+          & $legacyBinary model --repo $constitutionExample
           if ($LASTEXITCODE -ne 0) { throw 'Installed bundle constitution model failed' }
-          go run .markitect/bootstrap/run.go context --repo $constitutionExample --namespace engineering --kind Skill --name add-order
+          & $legacyBinary context --repo $constitutionExample --namespace engineering --kind Skill --name add-order
           if ($LASTEXITCODE -ne 0) { throw 'Installed bundle constitution context failed' }
-          go run .markitect/bootstrap/run.go check --repo (Join-Path $env:GITHUB_WORKSPACE 'examples/engineering-discovery')
+          & $legacyBinary check --repo (Join-Path $env:GITHUB_WORKSPACE 'examples/engineering-discovery')
           if ($LASTEXITCODE -ne 0) { throw 'Packaged binary engineering discovery check failed' }
           $architectureExample = Join-Path $env:GITHUB_WORKSPACE 'examples/software-architecture'
-          go run .markitect/bootstrap/run.go check --repo $architectureExample
+          & $legacyBinary check --repo $architectureExample
           if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture check failed' }
-          go run .markitect/bootstrap/run.go model --repo $architectureExample
+          & $legacyBinary model --repo $architectureExample
           if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture model failed' }
-          go run .markitect/bootstrap/run.go context --repo $architectureExample --namespace engineering --kind Skill --name implement-order
+          & $legacyBinary context --repo $architectureExample --namespace engineering --kind Skill --name implement-order
           if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture context failed' }
-          go run .markitect/bootstrap/run.go format --repo $architectureExample
+          & $legacyBinary format --repo $architectureExample
           if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture format failed' }
           $domainRepo = Join-Path $env:RUNNER_TEMP "markitect-canonical-engineering-$env:GITHUB_RUN_ID"
           New-Item -ItemType Directory -Path $domainRepo | Out-Null
@@ -276,23 +281,23 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Could not stage canonical engineering fixture' }
           git -C $domainRepo commit -m 'Create isolated canonical engineering fixture'
           if ($LASTEXITCODE -ne 0) { throw 'Could not commit canonical engineering fixture' }
-          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action observe --adapter markitect-render
+          & $legacyBinary reconcile --repo $domainRepo --action observe --adapter markitect-render
           if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering observe failed' }
           $evidenceDir = Join-Path $domainRepo '.artifacts/markitect/reconcile'
           New-Item -ItemType Directory -Path $evidenceDir -Force | Out-Null
           $domainPlan = Join-Path $evidenceDir 'plan.yaml'
-          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action plan --adapter markitect-render | Set-Content -LiteralPath $domainPlan -Encoding utf8
+          & $legacyBinary reconcile --repo $domainRepo --action plan --adapter markitect-render | Set-Content -LiteralPath $domainPlan -Encoding utf8
           if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering plan failed' }
-          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action apply --adapter markitect-render --plan $domainPlan --write
+          & $legacyBinary reconcile --repo $domainRepo --action apply --adapter markitect-render --plan $domainPlan --write
           if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering apply failed' }
-          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action verify --adapter markitect-render --plan $domainPlan
+          & $legacyBinary reconcile --repo $domainRepo --action verify --adapter markitect-render --plan $domainPlan
           if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering verify failed' }
           $adapterPlan = Join-Path $evidenceDir 'dotnet-plan.yaml'
-          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action observe --adapter dotnet-dependencies
+          & $legacyBinary reconcile --repo $domainRepo --action observe --adapter dotnet-dependencies
           if ($LASTEXITCODE -ne 0) { throw 'Installed .NET adapter observe failed' }
-          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action plan --adapter dotnet-dependencies | Set-Content -LiteralPath $adapterPlan -Encoding utf8
+          & $legacyBinary reconcile --repo $domainRepo --action plan --adapter dotnet-dependencies | Set-Content -LiteralPath $adapterPlan -Encoding utf8
           if ($LASTEXITCODE -ne 0) { throw 'Installed .NET adapter plan failed' }
-          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action verify --adapter dotnet-dependencies --plan $adapterPlan
+          & $legacyBinary reconcile --repo $domainRepo --action verify --adapter dotnet-dependencies --plan $adapterPlan
           if ($LASTEXITCODE -ne 0) { throw 'Installed .NET adapter verify failed' }
           Pop-Location
 
@@ -336,7 +341,7 @@ jobs:
           out="$RUNNER_TEMP/markitect-release-$GITHUB_SHA"
           mkdir -p "$out"
           bundle="$out/markitect-$TAG-bundle.zip"
-          go run ./src/cmd/markitect bundle --repo . --revision "$SOURCE_SHA" --output "$bundle"
+          go run ./src/cmd/markitect-legacy bundle --repo . --revision "$SOURCE_SHA" --output "$bundle"
           bundle_sha256="$(sha256sum "$bundle" | cut -d ' ' -f 1)"
           [[ "$bundle_sha256" == "$EXPECTED_BUNDLE_SHA256" ]] || { echo "release bundle differs from the bundle tested on both platforms" >&2; exit 1; }
 

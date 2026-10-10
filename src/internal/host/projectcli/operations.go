@@ -3,17 +3,13 @@ package projectcli
 import (
 	"encoding/hex"
 	"fmt"
-	"io"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectonboarding"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
@@ -36,92 +32,6 @@ type managerEvent struct {
 	projectbriefing.Event
 	ResolutionStatus string                      `json:"resolutionStatus"`
 	Resolution       *projectbriefing.Resolution `json:"resolution,omitempty"`
-}
-
-func runBriefing(opts options, out io.Writer) error {
-	if opts.action == "briefings" {
-		revision, err := gitHeadRevision(opts.repo)
-		if err != nil {
-			return err
-		}
-		project, err := projectwork.Load(opts.repo, revision)
-		if err != nil {
-			return err
-		}
-		if project.Config.WorkflowMode == "guided" {
-			if _, err := projectbriefing.EnsureAcceptedHistory(opts.repo, revision); err != nil {
-				return err
-			}
-		}
-	}
-	state, stateDigest, err := projectbriefing.Read(opts.repo)
-	if err != nil {
-		return err
-	}
-	if opts.action == "dismiss" {
-		binding, err := projectbriefing.Dismiss(opts.repo, opts.event, opts.manager, opts.expect)
-		if err != nil {
-			return err
-		}
-		return writeJSON(out, struct {
-			StateDigest string `json:"stateDigest"`
-			Note        string `json:"note"`
-		}{binding, "Dismissal affects visibility only; the event remains unresolved and available in manager briefings."})
-	}
-	if opts.action == "briefings" {
-		if opts.manager == "" {
-			notifications, hidden, err := visibleBriefings(opts.repo, state)
-			if err != nil {
-				return err
-			}
-			return writeJSON(out, struct {
-				Notifications        []visibleNotification `json:"notifications"`
-				HiddenDismissedCount int                   `json:"hiddenDismissedCount"`
-				StateDigest          string                `json:"stateDigest"`
-			}{notifications, hidden, stateDigest})
-		}
-		revision, err := gitHeadRevision(opts.repo)
-		if err != nil {
-			return fmt.Errorf("resolve the committed model revision for manager briefing: %w", err)
-		}
-		project, err := projectwork.Load(opts.repo, revision)
-		if err != nil {
-			return err
-		}
-		briefings, events, binding, err := projectbriefing.LoadForManager(opts.repo, project.Report.ModelDigest, opts.manager, project.Revision)
-		if err != nil {
-			return err
-		}
-		withStatus := make([]managerEvent, 0, len(events))
-		for _, event := range events {
-			resolution := projectbriefing.EventResolutionStatus(state, event.ID)
-			withStatus = append(withStatus, managerEvent{Event: event, ResolutionStatus: resolution.Status, Resolution: resolution.Resolution})
-		}
-		return writeJSON(out, struct {
-			Briefings     []projectbriefing.Briefing `json:"briefings"`
-			Events        []managerEvent             `json:"events"`
-			ContextDigest string                     `json:"contextDigest"`
-			StateDigest   string                     `json:"stateDigest"`
-		}{briefings, withStatus, binding, stateDigest})
-	}
-	bundle, err := projectbriefing.Generate(opts.repo, opts.since, opts.revision, projectbriefing.Provenance{
-		DecisionReference: opts.provenance,
-		Actor:             "cli-caller",
-		Authority:         "explicit caller declaration; identity is not authenticated",
-	})
-	if err != nil {
-		return err
-	}
-	if opts.write {
-		stateDigest, err = projectbriefing.Write(opts.repo, bundle, opts.expect)
-		if err != nil {
-			return err
-		}
-	}
-	return writeJSON(out, struct {
-		Bundle      projectbriefing.Bundle `json:"bundle"`
-		StateDigest string                 `json:"stateDigest"`
-	}{bundle, stateDigest})
 }
 
 func visibleBriefings(root string, state projectbriefing.Store) ([]visibleNotification, int, error) {
@@ -245,24 +155,4 @@ func gitHeadRevision(root string) (string, error) {
 		return "", fmt.Errorf("Git returned a non-hexadecimal commit ID: %w", err)
 	}
 	return revision, nil
-}
-
-func runOnboarding(opts options, out io.Writer) error {
-	var providers []projectonboarding.Provider
-	switch opts.provider {
-	case "codex":
-		providers = []projectonboarding.Provider{projectonboarding.Codex}
-	case "claude":
-		providers = []projectonboarding.Provider{projectonboarding.Claude}
-	case "both":
-		providers = []projectonboarding.Provider{projectonboarding.Codex, projectonboarding.Claude}
-	default:
-		return fmt.Errorf("provider must be codex, claude or both")
-	}
-	plan, err := projectOperations().Onboard(projectapp.OnboardOperation{Root: opts.repo, Options: projectonboarding.Options{Providers: providers, DocumentationPath: opts.documentPath}, Write: opts.write, ExpectedDigest: opts.expect})
-	if err != nil {
-		return err
-	}
-
-	return writeJSON(out, plan)
 }

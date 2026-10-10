@@ -3,8 +3,8 @@
 
 These documents own current direction and contracts. Read the owner before you change what it owns.
 
-- `docs/vision.md`: the product thesis and the responsibilities of people and agents.
-- `docs/operating-methodology.md` and `docs/design/standard-operating-model.md`: the intended process.
+- `docs/vision.md`: the product thesis, the responsibilities of people and agents, and the delegated method.
+- `docs/design/standard-operating-model.md`: the standard operating model design.
 - `docs/measurement.md`: readiness stages and how the method is evaluated.
 - `docs/architecture.md` and `docs/engineering-constitution.md`: technical boundaries and contracts.
 - `docs/design/project-world/`: the project model, adoption and delivery contracts.

@@ -2,8 +2,7 @@ package projectcli
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -27,49 +26,31 @@ func TestRecordPathIsConfinedToMarkitectDraftsAndRuns(t *testing.T) {
 	}
 }
 
-func TestWriteRecordCreatesOnlyAbsentMarkitectRecord(t *testing.T) {
+func TestInputRecordsAreReadOnlyFromConfinedExistingJSON(t *testing.T) {
 	repo := copyProjectWorld(t)
-	path := ".markitect/drafts/one.json"
 	want := []byte("{\"ok\":true}\n")
-	if _, err := writeRecord(repo, path, want); err != nil {
-		t.Fatal(err)
-	}
-	got, err := os.ReadFile(filepath.Join(repo, filepath.FromSlash(path)))
-	if err != nil || !bytes.Equal(got, want) {
-		t.Fatalf("written record = %q, err=%v", got, err)
-	}
-	if _, err := writeRecord(repo, path, []byte("replacement")); err == nil {
-		t.Fatal("writeRecord replaced an existing record")
-	}
-	got, err = readRecord(repo, path)
+	path := writeDraft(t, repo, ".markitect/drafts/one.json", want)
+	got, err := readRecord(repo, path)
 	if err != nil || !bytes.Equal(got, want) {
 		t.Fatalf("readRecord = %q, err=%v", got, err)
 	}
-}
-
-func TestWriteRecordsCreatesRelatedReportAndReceiptWithoutPartialOverwrite(t *testing.T) {
-	repo := copyProjectWorld(t)
-	reportPath := ".markitect/drafts/report.json"
-	receiptPath := ".markitect/drafts/report.receipt.json"
-	records := map[string][]byte{reportPath: []byte(`{"report":true}`), receiptPath: []byte(`{"receipt":true}`)}
-	digests, err := writeRecords(repo, records)
-	if err != nil {
-		t.Fatal(err)
+	if _, err := readRecord(repo, ".markitect/drafts/missing.json"); err == nil || !strings.Contains(err.Error(), "does not exist") {
+		t.Fatalf("readRecord of a missing record = %v", err)
 	}
-	for path, want := range records {
-		got, err := os.ReadFile(filepath.Join(repo, filepath.FromSlash(path)))
-		if err != nil || !bytes.Equal(got, want) || digests[path] == "" {
-			t.Fatalf("record %s = %q digest=%q err=%v", path, got, digests[path], err)
+	invalid := writeDraft(t, repo, ".markitect/drafts/invalid.json", []byte("{"))
+	for _, tc := range []struct {
+		input string
+		fail  string
+	}{
+		{"docs/cancellation.md", "Markitect transport records must use the .json extension"},
+		{"proposal.json", "Markitect records may be read or written only under .markitect/drafts/ or .markitect/runs/"},
+		{".markitect/drafts/../outside.json", "record path must be a normalized repository-relative slash path"},
+		{".markitect/drafts/missing.json", "does not exist"},
+		{invalid, "--input " + invalid + " is not valid JSON"},
+	} {
+		code, out, errout := runCLI(t, "edit", "--repo", repo, "--input", tc.input)
+		if code != 2 || out != "" || !strings.Contains(errout, "markitect edit: ") || !strings.Contains(errout, tc.fail) {
+			t.Fatalf("edit --input %s exit=%d stdout=%q stderr=%q, want %q", tc.input, code, out, errout, tc.fail)
 		}
-	}
-	collisionRepo := copyProjectWorld(t)
-	if _, err := writeRecord(collisionRepo, receiptPath, []byte(`{"existing":true}`)); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := writeRecords(collisionRepo, records); err == nil {
-		t.Fatal("grouped write overwrote an existing receipt")
-	}
-	if _, err := os.Stat(filepath.Join(collisionRepo, filepath.FromSlash(reportPath))); !os.IsNotExist(err) {
-		t.Fatalf("report was partially written despite a receipt collision: %v", err)
 	}
 }

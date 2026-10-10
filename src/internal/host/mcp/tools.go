@@ -14,7 +14,6 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 )
 
@@ -47,17 +46,22 @@ type CallResult struct {
 type binding struct {
 	tool     Tool
 	mutation bool
+	recovery string
 	call     func(context.Context, json.RawMessage) (CallResult, error)
 }
 type Server struct {
-	root     string
-	tools    map[string]binding
-	mutation sync.Mutex
+	root         string
+	instructions string
+	tools        map[string]binding
+	mutation     sync.Mutex
 }
 
-// New binds a server to one explicit root. Tool arguments cannot redirect Host authority.
-// Register and Serve must not execute concurrently; composition owns registration.
-func New(root string, o projectapp.Operations) (*Server, error) {
+const defaultInstructions = "Tools use the explicitly selected repository and existing caller authority. Preserve durable run IDs; protocol request IDs are not product run IDs. Only listed shared operations are available."
+
+// New binds a server to one explicit root. Tool arguments cannot redirect Host
+// authority. The server registers no tools itself: composition registers each
+// operation, and Register and Serve must not execute concurrently.
+func New(root string) (*Server, error) {
 	if strings.TrimSpace(root) == "" {
 		return nil, errors.New("MCP requires an explicit project root")
 	}
@@ -65,88 +69,137 @@ func New(root string, o projectapp.Operations) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &Server{root: filepath.Clean(root), tools: map[string]binding{}}
-	Register(s, "project_plan", "Plan against an explicit base; executeAuthorized records existing caller authority.", true, func(ctx context.Context, r projectrun.PlanRequest) (projectrun.PlanRecord, error) {
-		return o.Plan(projectapp.PlanOperation{Selection: projectapp.Selection{Root: s.root, Revision: r.BaseRevision}, Request: r})
-	})
-	Register(s, "project_run", "Run an existing durable plan. Use its runId with status/resume/repair after interruption.", true, func(ctx context.Context, r runInput) (projectrun.RunReport, error) { return o.Run(ctx, s.run(r)) })
-	Register(s, "project_resume", "Resume the same durable run without creating a replacement plan.", true, func(ctx context.Context, r runInput) (projectrun.RunReport, error) { return o.Resume(ctx, s.run(r)) })
-	Register(s, "project_repair", "Repair the same durable run using existing Host repair semantics.", true, func(ctx context.Context, r runInput) (projectrun.RunReport, error) { return o.Repair(ctx, s.run(r)) })
-	Register(s, "project_status", "Read the durable state of a selected run.", false, func(ctx context.Context, r runInput) (projectrun.StatusReport, error) { return o.Status(s.run(r)) })
-	Register(s, "project_verify", "Verify the selected run and persist actual Host evidence.", true, func(ctx context.Context, r runInput) (projectrun.VerifyReport, error) { return o.Verify(ctx, s.run(r)) })
-	Register(s, "project_full_verify", "Verify a selected revision; write selects persistence of evidence.", true, func(ctx context.Context, r projectrun.FullVerifyRequest) (projectrun.FullVerifyReport, error) {
-		return o.FullVerify(ctx, projectapp.FullVerifyOperation{Root: s.root, Request: r})
-	})
-	Register(s, "project_preflight", "Read exact guarded Apply inputs for a selected run and candidate.", false, func(ctx context.Context, r preflightInput) (projectrun.ApplyPreflight, error) {
-		return o.PreflightApply(projectapp.PreflightOperation{Root: s.root, RunID: r.RunID, CandidateID: r.CandidateID})
-	})
-	Register(s, "project_apply", "Apply only the exact reviewed, verified candidate with all freshness guards.", true, func(ctx context.Context, r projectrun.ApplyRequest) (projectrun.ApplyReport, error) {
-		return o.Apply(projectapp.ApplyOperation{Root: s.root, Request: r})
-	})
-	Register(s, "project_deliver", "Advance acknowledged scope through existing durable delivery operations.", true, func(ctx context.Context, r projectrun.DeliverRequest) (projectrun.DeliverReport, error) {
-		return o.Deliver(ctx, projectapp.DeliverOperation{Root: s.root, Request: r})
-	})
-	return s, nil
+	return &Server{root: filepath.Clean(root), instructions: defaultInstructions, tools: map[string]binding{}}, nil
 }
 
-type runInput struct {
-	RunID string `json:"runId"`
-}
-type preflightInput struct {
-	RunID       string `json:"runId"`
-	CandidateID string `json:"candidateId"`
-}
+// Root is the server's fixed project root.
+func (s *Server) Root() string { return s.root }
 
-func (s *Server) run(r runInput) projectapp.RunOperation {
-	return projectapp.RunOperation{Root: s.root, RunID: r.RunID}
-}
+// SetInstructions replaces the initialize instructions, for example to state a
+// read-only tool set.
+func (s *Server) SetInstructions(text string) { s.instructions = text }
 
-// Register adds a typed shared operation at composition time, for example setup
-// once its application seam exists. It never executes a CLI subprocess.
 // PublicErrorMapper is a composition-owned translation of known application
 // errors into intentionally public diagnostics. Never return err.Error(), raw
 // provider/check output, credentials or local machine paths from this callback.
 // Return nil for unknown errors to retain the adapter's safe fallback.
 type PublicErrorMapper func(error) *Diagnostic
 
-func Register[T, R any](s *Server, name, description string, mutation bool, call func(context.Context, T) (R, error), publicError ...PublicErrorMapper) {
-	if len(publicError) > 1 {
-		panic("only one MCP public error mapper is supported")
+// Option adjusts one registration.
+type Option func(*registration)
+
+type registration struct {
+	publicError PublicErrorMapper
+	omit        []string
+	enums       map[string][]string
+	recovery    string
+}
+
+// WithPublicError adds application error classifications.
+func WithPublicError(mapper PublicErrorMapper) Option {
+	return func(r *registration) { r.publicError = mapper }
+}
+
+// WithOmit removes top-level input fields from the closed schema, so calls that
+// send them are rejected.
+func WithOmit(fields ...string) Option {
+	return func(r *registration) { r.omit = append(r.omit, fields...) }
+}
+
+// WithEnum restricts a top-level string field to the given values.
+func WithEnum(field string, values ...string) Option {
+	return func(r *registration) {
+		if r.enums == nil {
+			r.enums = map[string][]string{}
+		}
+		r.enums[field] = append([]string(nil), values...)
 	}
+}
+
+// WithRecovery sets the operation-specific recovery guidance of diagnostics.
+func WithRecovery(text string) Option {
+	return func(r *registration) { r.recovery = text }
+}
+
+// Register adds a typed shared operation at composition time. It never
+// executes a CLI subprocess.
+func Register[T, R any](s *Server, name, description string, mutation bool, call func(context.Context, T) (R, error), options ...Option) {
 	if _, exists := s.tools[name]; exists {
 		panic("duplicate MCP tool: " + name)
 	}
-	input := schema(reflect.TypeFor[T]())
-	b := binding{tool: Tool{Name: name, Description: description, InputSchema: input, OutputSchema: schema(reflect.TypeFor[Outcome[R]]()), Annotations: map[string]bool{"readOnlyHint": !mutation, "destructiveHint": mutation, "openWorldHint": false}}, mutation: mutation}
+	var reg registration
+	for _, option := range options {
+		option(&reg)
+	}
+	if reg.recovery == "" {
+		reg.recovery = genericRecovery
+	}
+	input := restrict(schema(reflect.TypeFor[T]()), reg.omit, reg.enums)
+	b := binding{tool: Tool{Name: name, Description: description, InputSchema: input, OutputSchema: schema(reflect.TypeFor[Outcome[R]]()), Annotations: map[string]bool{"readOnlyHint": !mutation, "destructiveHint": mutation, "openWorldHint": false}}, mutation: mutation, recovery: reg.recovery}
 	b.call = func(ctx context.Context, raw json.RawMessage) (CallResult, error) {
 		var r T
 		if err := decodeTyped(raw, input, &r); err != nil {
 			return CallResult{}, err
 		}
 		if err := ctx.Err(); err != nil {
-			return outcome[R](name, nil, "cancelled"), nil
+			return outcome[R](name, nil, "cancelled", reg.recovery), nil
 		}
 		data, err := call(ctx, r)
 		if err != nil {
 			// Partial Host reports retain durable run/candidate handles after failure.
-			diagnostic := classifyError(name, err)
+			diagnostic := classifyError(err, reg.recovery)
 			// Cancellation and shared sentinel classifications cannot be hidden by
 			// a custom mapper; it supplies additional application classifications.
-			if diagnostic.Code == "host_rejected" && len(publicError) == 1 && publicError[0] != nil {
-				if mapped := publicError[0](err); validPublicDiagnostic(mapped) {
+			if diagnostic.Code == "host_rejected" && reg.publicError != nil {
+				if mapped := reg.publicError(err); validPublicDiagnostic(mapped) {
 					diagnostic = *mapped
 				}
 			}
 			return diagnosticOutcome(name, &data, &diagnostic), nil
 		}
-		return outcome(name, &data, ""), nil
+		return outcome(name, &data, "", reg.recovery), nil
 	}
 	s.tools[name] = b
 }
-func outcome[R any](name string, data *R, code string) CallResult {
+
+// DecodeArguments decodes tool arguments with the same closed-schema rules as
+// a registered tool, so another adapter can accept exactly the same inputs.
+func DecodeArguments[T any](raw json.RawMessage) (T, error) {
+	var out T
+	err := decodeTyped(raw, schema(reflect.TypeFor[T]()), &out)
+	return out, err
+}
+
+func restrict(input map[string]any, omit []string, enums map[string][]string) map[string]any {
+	if len(omit) == 0 && len(enums) == 0 {
+		return input
+	}
+	properties, _ := input["properties"].(map[string]any)
+	for _, field := range omit {
+		if _, ok := properties[field]; !ok {
+			panic("MCP omit names an unknown field: " + field)
+		}
+		delete(properties, field)
+		required := []string{}
+		for _, name := range toStrings(input["required"]) {
+			if name != field {
+				required = append(required, name)
+			}
+		}
+		input["required"] = required
+	}
+	for field, values := range enums {
+		if _, ok := properties[field]; !ok {
+			panic("MCP enum names an unknown field: " + field)
+		}
+		properties[field] = map[string]any{"type": "string", "enum": values}
+	}
+	return input
+}
+func outcome[R any](name string, data *R, code, recovery string) CallResult {
 	var diagnostic *Diagnostic
 	if code != "" {
-		d := diagnosticFor(name, code)
+		d := diagnosticFor(code, recovery)
 		diagnostic = &d
 	}
 	return diagnosticOutcome(name, data, diagnostic)
@@ -155,7 +208,7 @@ func diagnosticOutcome[R any](name string, data *R, diagnostic *Diagnostic) Call
 	out := Outcome[R]{Operation: name, Data: data, Diagnostic: diagnostic}
 	raw, err := json.Marshal(out)
 	if err != nil {
-		d := diagnosticFor(name, "encoding_failed")
+		d := diagnosticFor("encoding_failed", genericRecovery)
 		out = Outcome[R]{Operation: name, Diagnostic: &d}
 		raw, _ = json.Marshal(out)
 	}
@@ -218,7 +271,7 @@ func (s *Server) Call(ctx context.Context, name string, args json.RawMessage) (C
 	}
 	if b.mutation {
 		if !s.mutation.TryLock() {
-			return outcome[struct{}](name, nil, "busy"), nil
+			return outcome[struct{}](name, nil, "busy", b.recovery), nil
 		}
 		defer s.mutation.Unlock()
 	}
@@ -228,7 +281,7 @@ func (s *Server) Call(ctx context.Context, name string, args json.RawMessage) (C
 // Classifications inspect known sentinels and a small set of product-owned
 // boundary messages. None forwards the cause's text. They guide repair; Host
 // validation and guards remain the authority for any later operation.
-func classifyError(operation string, err error) Diagnostic {
+func classifyError(err error, recovery string) Diagnostic {
 	code := "host_rejected"
 	switch {
 	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
@@ -263,10 +316,10 @@ func classifyError(operation string, err error) Diagnostic {
 			}
 		}
 	}
-	return diagnosticFor(operation, code)
+	return diagnosticFor(code, recovery)
 }
 
-func diagnosticFor(operation, code string) Diagnostic {
+func diagnosticFor(code, recovery string) Diagnostic {
 	messages := map[string]string{
 		"host_rejected":       "The shared Host rejected this operation; inspect its structured validation report and selected inputs.",
 		"stale":               "The saved operation no longer matches the selected project inputs or target state.",
@@ -281,7 +334,6 @@ func diagnosticFor(operation, code string) Diagnostic {
 		"precondition_failed": "Required operation inputs, snapshot, verification or candidate bindings do not match.",
 		"encoding_failed":     "The Host result could not be encoded; completion must be checked before retrying.",
 	}
-	recovery := operationRecovery(operation)
 	switch code {
 	case "locked", "busy":
 		recovery = "Let the active writer finish or cancel that request, then inspect current state before retrying. Do not delete a Host lock to bypass it. " + recovery
@@ -289,9 +341,6 @@ func diagnosticFor(operation, code string) Diagnostic {
 		recovery = "Refresh the operation preview and its expected digest against current inputs; preserve completed work. " + recovery
 	case "notfound":
 		recovery = "Check the selected repository and the supplied existing record IDs or file inputs. " + recovery
-		if operation == "project_status" {
-			recovery = "Check the selected repository and supplied runId against existing durable records; use a confirmed existing ID before requesting status again."
-		}
 	case "notrunnable":
 		recovery = "Resolve the returned execution preconditions before retrying. " + recovery
 	case "selection_failed":
@@ -304,30 +353,9 @@ func diagnosticFor(operation, code string) Diagnostic {
 	return Diagnostic{Code: code, Message: messages[code], Recovery: recovery}
 }
 
-func operationRecovery(operation string) string {
-	switch operation {
-	case "project_run", "project_resume", "project_repair", "project_status", "project_verify":
-		return "Inspect project_status with the existing runId and its blockers before resuming or repairing the same run."
-	case "project_apply", "project_preflight":
-		return "Inspect project_status with the existing runId; obtain current preflight inputs and matching successful verification/review before Apply."
-	case "project_deliver":
-		return "If the partial report contains a runId, inspect that existing run with project_status. Otherwise check the acknowledged exploration/scope and refresh delivery inputs before retrying."
-	case "project_plan":
-		return "Check the selected base, bounded goal, model/runtime and any exploration/scope bindings; refresh the plan preview before authorized execution."
-	case "project_full_verify":
-		return "Check the selected revision, model and configured checks; correct their validation findings and repeat verification for the intended fixed snapshot."
-	}
-	if strings.Contains(operation, "setup") || strings.Contains(operation, "doctor") {
-		return "Inspect setup/doctor findings and selected configuration; correct required inputs, refresh the setup preview and its digest before writing."
-	}
-	if strings.Contains(operation, "brownfield") {
-		return "Inspect the existing session and stage report; correct source/base and stage preconditions, then refresh that stage preview and expected digest."
-	}
-	if strings.Contains(operation, "explor") || strings.Contains(operation, "readiness") {
-		return "Inspect the selected exploration/scope and structure findings; correct or acknowledge required inputs and refresh the preview/digest before writing."
-	}
-	return "Inspect the returned structured validation report, correct the selected model/configuration and required inputs, then refresh this operation's preview and expected digest before writing."
-}
+// genericRecovery applies when a registration names no operation-specific
+// recovery.
+const genericRecovery = "Inspect the returned structured validation report, correct the selected model/configuration and required inputs, then refresh this operation's preview and expected digest before writing."
 
 func validPublicDiagnostic(d *Diagnostic) bool {
 	if d == nil || len(d.Code) == 0 || len(d.Code) > 64 || len(d.Message) == 0 || len(d.Message) > 512 || len(d.Recovery) == 0 || len(d.Recovery) > 1024 {

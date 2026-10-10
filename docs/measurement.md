@@ -1,6 +1,6 @@
 # Measurement
 
-This document defines measurement procedure for Markitect product work. The [vision](vision.md) owns the quality and intent-fidelity thesis, and [operating methodology](operating-methodology.md) owns the intended working process; the [roadmap](implementation-plan.md) owns delivery order. Product tests and measurement fixtures use Go; any Markitect-owned persisted measurement record uses YAML.
+This document defines measurement procedure for Markitect product work. The [vision](vision.md) owns the quality and intent-fidelity thesis and the [delegated method](vision.md#the-delegated-method); the [roadmap](implementation-plan.md) owns delivery order. Product tests and measurement fixtures use Go; any Markitect-owned persisted measurement record uses YAML.
 
 ## Staged method readiness
 

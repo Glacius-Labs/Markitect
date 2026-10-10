@@ -135,7 +135,7 @@ func (s *Server) Serve(ctx context.Context, in io.Reader, out io.Writer) error {
 				version = p.ProtocolVersion
 			}
 			initialized = true
-			emit(response{JSONRPC: "2.0", ID: r.ID, Result: map[string]any{"protocolVersion": version, "capabilities": map[string]any{"tools": map[string]any{}}, "serverInfo": map[string]string{"name": "markitect", "version": "source"}, "instructions": "Tools use the explicitly selected repository and existing caller authority. Preserve durable run IDs; protocol request IDs are not product run IDs. Only listed shared operations are available."}})
+			emit(response{JSONRPC: "2.0", ID: r.ID, Result: map[string]any{"protocolVersion": version, "capabilities": map[string]any{"tools": map[string]any{}}, "serverInfo": map[string]string{"name": "markitect", "version": "source"}, "instructions": s.instructions}})
 			continue
 		}
 		if !ready {

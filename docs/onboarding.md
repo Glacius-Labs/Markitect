@@ -18,11 +18,12 @@ The release binary is already installed when the measurement script receives `-M
 
 The synthetic [parcel-support fixture](../examples/onboarding/delivery-service/README.md) contains shared customer-data guidance, a policy, workflow, contract, agent, and Skill entrypoint. `tasks/query-only-prompt.md` with `tasks/query-only-expected.yaml` is the shared read-only task for MCP/CLI find, explain, and context parity. `tasks/policy-edit-prompt.md` with `tasks/expected.yaml` is a separate CLI-only mutation task that also exercises verification and fixed-SHA impact. Oracle and prompt files are excluded from the measured project's Git snapshots.
 
-Run the repeatable CLI exercise with the installed executable:
+Run the repeatable CLI exercise with the installed executable. Its legacy steps need the temporary `markitect-legacy` executable built from the same source (`go build -o $legacyBinary ./src/cmd/markitect-legacy`) until ARCH-09 removes them:
 
 ```powershell
 pwsh -NoProfile -File scripts/onboarding/Measure-Adoption.ps1 `
   -MarkitectBinary $binary `
+  -MarkitectLegacyBinary $legacyBinary `
   -OutputDirectory (Join-Path $env:TEMP ('markitect-onboarding-' + [guid]::NewGuid().ToString('N')))
 ```
 

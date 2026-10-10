@@ -48,7 +48,7 @@ The lifecycle is inspect, explore, edit, readiness, plan, run, verify, preflight
 
 ## Executor, candidate and independent Verifier
 
-- The method separates the Executor, its candidate and an independent Verifier ([operating methodology](operating-methodology.md#one-authority-model-distinct-responsibilities)).
+- The method separates the Executor, its candidate and an independent Verifier ([delegated method](vision.md#the-delegated-method)).
 - In current source a Manager, or a helper it starts, produces a candidate. An independent reviewer with fresh context assesses each candidate and each integration result, and the verify role checks the integrated candidate.
 - Review and verify roles return no file changes.
 - Tests the Executor wrote are realizations too; they are not independent assurance on their own ([CPT-002](concepts/register.md#cpt-002-tests-are-realizations-too)).

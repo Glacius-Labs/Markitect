@@ -32,7 +32,7 @@ MARKITECT_BINARY = Path("/usr/local/bin/markitect")
 MARKITECT_BRANCH = "markitect-setup"
 RUNTIME_PATH = ".markitect/runtime.yaml"
 RUNTIME_LIMIT = 4 << 20
-# `markitect project setup` requires caller-supplied cost weights and a cost cap.
+# `markitect config` requires caller-supplied cost weights and a cost cap.
 # Each token weighs one micro-unit (1,000,000 per million), so the product's cost
 # counter equals its token count. The cap scales with the manifest's wall-clock
 # budget and is set high enough that it cannot bind before that shared time limit.
@@ -151,7 +151,7 @@ def _markitect(recorder: _Recorder, ctx: dict, result: dict) -> None:
     notes.update(providerExecutable=str(codex), budget=budget)
 
     def product(name: str, *args: str, allow_failure: bool = False) -> tuple[dict, dict | None]:
-        record, stdout = recorder.step(name, [str(binary), "project", *args], timeout=PRODUCT_TIMEOUT,
+        record, stdout = recorder.step(name, [str(binary), *args], timeout=PRODUCT_TIMEOUT,
                                        allow_failure=allow_failure, source="product")
         try:
             return record, json.loads(stdout)
@@ -170,7 +170,7 @@ def _markitect(recorder: _Recorder, ctx: dict, result: dict) -> None:
     init_args = [*base, "--name", ctx["case"]]
     _, preview = product("init-preview", "init", *init_args)
     init_digest = _digest(preview, "init-preview")
-    _, written = product("init-write", "init", *init_args, "--write")
+    _, written = product("init-write", "init", *init_args, "--expect", init_digest, "--write")
     if _digest(written, "init-write") != init_digest:
         raise SetupBlocked("init plan changed between preview and write")
 
@@ -192,9 +192,9 @@ def _markitect(recorder: _Recorder, ctx: dict, result: dict) -> None:
                   "--input-micros-per-million", str(budget["inputMicrosPerMillion"]),
                   "--output-micros-per-million", str(budget["outputMicrosPerMillion"]),
                   "--max-cost-micros", str(budget["maxCostMicros"])]
-    _, preview = product("setup-preview", "setup", *setup_args)
+    _, preview = product("setup-preview", "config", *setup_args)
     setup_digest = _digest(preview, "setup-preview", "editPlan")
-    _, written = product("setup-write", "setup", *setup_args, "--expect", setup_digest, "--write")
+    _, written = product("setup-write", "config", *setup_args, "--expect", setup_digest, "--write")
     notes["digests"] = {"init": init_digest, "onboard": onboard_digest, "setup": setup_digest}
     text, notes["runtimeSource"] = _runtime_text(written, recorder.repo)
     result["roles"] = runtime_roles(text) if text is not None else None
@@ -213,7 +213,7 @@ def _markitect(recorder: _Recorder, ctx: dict, result: dict) -> None:
     notes["initialCheck"] = {"exitCode": record["exitCode"],
                              "status": (report or {}).get("status"),
                              "coverageConforming": ((report or {}).get("coverage") or {}).get("conforming")}
-    result["mcpServers"] = {"markitect": {"command": str(binary), "args": ["project", "mcp", *base]}}
+    result["mcpServers"] = {"markitect": {"command": str(binary), "args": ["mcp", *base]}}
 
 
 def find_native_codex() -> str | None:

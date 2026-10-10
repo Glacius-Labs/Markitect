@@ -28,6 +28,9 @@ type Selection struct {
 type PlanOperation struct {
 	Selection Selection              `json:"selection"`
 	Request   projectrun.PlanRequest `json:"request"`
+	// ExpectedPreviewDigest binds persisting to the reviewed preview's
+	// projectrun.PlanPreviewDigest.
+	ExpectedPreviewDigest string `json:"expectedPreviewDigest,omitempty"`
 }
 
 type RunOperation struct {
@@ -67,7 +70,7 @@ func (o Operations) Plan(operation PlanOperation) (projectrun.PlanRecord, error)
 	// projectrun.Plan uses Request.BaseRevision when set and otherwise falls
 	// back to Selection.Revision. The conflict check above prevents that
 	// existing precedence from silently hiding a second explicit selection.
-	return projectrun.Plan(o.Host, operation.Selection.Root, operation.Selection.Revision, operation.Request)
+	return projectrun.PlanExpecting(o.Host, operation.Selection.Root, operation.Selection.Revision, operation.Request, operation.ExpectedPreviewDigest)
 }
 
 func (o Operations) Run(ctx context.Context, operation RunOperation) (projectrun.RunReport, error) {
