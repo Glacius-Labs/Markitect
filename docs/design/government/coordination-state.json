@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T03:59:38.817271+00:00",
+  "updatedUtc": "2026-10-10T04:03:12.924325+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17869,7 +17869,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL12_REVIEW_CONTRADICTION_INTERRUPTED_OWNER_REACTIVATED_AND_ACTIVE",
+    "status": "ACTUAL12_REAL_HELPER_AND_SIBLING_OVERLAP_REPORTED_REVIEW_FINDINGS_CORRECTION_CLEAN_PUBLIC",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18103,6 +18103,24 @@
       "binarySha256OwnerReported": "4882c05044ffb40f76f8953b9bf7cae95344849138de764035b658cc7e5525dc",
       "historyPreserved": "Actual11 terminal16requests/13native/4787145partial estimate, no helper/sibling/Verify/Apply/recovery.",
       "next": "Owner normal final-frozen readiness/Plan refresh then fresh actual12 under existing authority. No new case/release/PR/Main action or RootGo/grant.",
+      "fullWorkflowAccepted": false
+    },
+    "resumedActual12Checkpoint": {
+      "sourceSha": "b6cc4b3e4b15bef896565adce28ccbcae3e4dd36",
+      "rootVerified": "Clean local/exact public SHA and narrow review.go prompt/schema-description-only diff. Strict verdict/finding/scope validators untouched.",
+      "ownerActualEvidence": "Original actual12 completed, no pending turns to replay; genuine source Hosthelper markitect_start_helper seq10046 only tests/test_greeting.py, child01a12361-529f completed; native Source/Docs overlap102.728s from direct start/completed events. Root and Docs Workreviews PASS. Source reviewer status pass with two positive findings rejected as inconsistent. No integration/Verify/Apply/recovery.",
+      "rawEvidenceQualification": "Exact original native raw frames/receipts not independently read by Root this event; terminal checkpoint owner preserving.",
+      "newKnownStarts": 8,
+      "newRoles": 6,
+      "newHostHelpers": 2,
+      "newPartialEstimateMicros": 1633731,
+      "cumulativeRequests": 24,
+      "cumulativeProviders": 21,
+      "cumulativePartialEstimateMicros": 6420876,
+      "costQualification": "Partial lower-bound caller estimate, not invoice or efficiency proof",
+      "correction": "Findings actionable defects only; pass requires [], positive evidence in summary. No rewriting verdict or weakening strict validation.",
+      "checksOwnerReported": "Decode/context/scope/grounding PASS6.536s; independent review closed",
+      "next": "Owner preserve terminal evidence/clean freeze, fresh normal bounded A01 under existing authority; no extra RootGo/grant/case/release",
       "fullWorkflowAccepted": false
     }
   },
