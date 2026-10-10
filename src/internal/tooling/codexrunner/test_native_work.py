@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import os
+import stat
 import tempfile
 import unittest
 from pathlib import Path
@@ -241,6 +242,16 @@ class NativeWorkspaceTests(unittest.TestCase):
                 with patch.object(native_work, "_read_candidate", return_value=final):
                     native_work.harvest(prepared, [], tool_calls=1)
 
+    @unittest.skipUnless(os.name == "posix", "POSIX file modes only")
+    def test_unsupported_mode_change_is_a_rejected_delta(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "candidate"
+            prepared = prepare(root)
+            (root / "src" / "main.py").chmod(0o664)
+            with self.assertRaisesRegex(native_work.SafeDeltaRejected, "unsupported repository mode 0664: src/main.py") as caught:
+                native_work.harvest(prepared, [], tool_calls=1)
+            self.assertEqual(caught.exception.native_work["changedPaths"], ["src/main.py"])
+
 
 class NativeRunnerTests(unittest.TestCase):
     def test_prompt_and_cli_enable_native_file_shell_and_test_work_without_helper_launch(self) -> None:
@@ -304,6 +315,57 @@ class NativeRunnerTests(unittest.TestCase):
             self.assertEqual(result["nativeWork"]["helperStarts"], 0)
             self.assertEqual(result["nativeWork"]["helperAccounting"], "disabled")
             self.assertNotIn("toolCalls", result["usage"])
+
+    @unittest.skipUnless(os.name == "posix", "POSIX file modes only")
+    def test_group_writable_new_file_returns_rejected_delta_with_receipt(self) -> None:
+        value = task_invocation()
+        content = "def added():\n    return 3\n"
+        args = argparse.Namespace(
+            native_helper_limit=0, codex_profile="luna-high",
+            model="gpt-6-luna", codex_executable="codex", codex_script="", codex_version="0.162.0",
+            timeout_seconds=20,
+        )
+        response = normalized_response(value, [{"path": "src/added.py", "mode": "0644", "content": content}])
+        # umask 002, common on desktop Linux, gives every new file mode 0664.
+        for umask, observed_mode, outcome in ((0o022, 0o644, "proposed"), (0o002, 0o664, "incomplete")):
+            observed: list[int] = []
+
+            class FakeProcess:
+                def __init__(self, argv, cwd, **kwargs):
+                    previous = os.umask(umask)
+                    try:
+                        target = Path(cwd) / "src" / "added.py"
+                        target.write_text(content, encoding="utf-8")
+                    finally:
+                        os.umask(previous)
+                    observed.append(stat.S_IMODE(target.stat().st_mode))
+                    Path(argv[argv.index("--output-last-message") + 1]).write_text(json.dumps(response), encoding="utf-8")
+                    self.stdin = io.BytesIO()
+                    self.stdout = io.BytesIO(b'{"type":"turn.completed","usage":{"input_tokens":1,"output_tokens":1}}\n')
+                    self.stderr = io.BytesIO()
+
+                def wait(self, timeout=None):
+                    return 0
+
+                def terminate(self):
+                    return None
+
+                def kill(self):
+                    return None
+
+            with self.subTest(umask=f"{umask:03o}"), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                log = root / "events.jsonl"
+                with patch.object(runner, "resolve_codex", return_value=["codex"]), patch.object(runner, "check_version"), patch.object(runner.subprocess, "Popen", FakeProcess):
+                    result = runner.launch_codex(value, args, {"model_reasoning_effort": "high"}, root, log)
+                self.assertEqual(observed, [observed_mode])
+                self.assertEqual(result["outcome"], outcome)
+                self.assertEqual(result["nativeWork"]["changedPaths"], ["src/added.py"])
+                if outcome == "proposed":
+                    self.assertEqual(result["candidateFiles"], [{"path": "src/added.py", "mode": "0644", "content": content}])
+                else:
+                    self.assertEqual(result["candidateFiles"], [])
+                    self.assertIn("unsupported repository mode 0664: src/added.py", log.read_text(encoding="utf-8"))
 
     def test_helpers_fail_before_provider_and_native_selection_comes_from_task_context(self) -> None:
         value = task_invocation()
