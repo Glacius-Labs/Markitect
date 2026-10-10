@@ -29,7 +29,7 @@ $env:PATH = "$toolBin;$env:PATH"
 markitect project --help
 ```
 
-Keep the source checkout for development. Configure the adopting project's runtime with `project setup`, then connect the outer coding client to its repository-local Markitect MCP server. Manager and reviewer execution uses the supported Codex App Server runtime. See [Provider adapters](docs/provider-adapters.md) for connection and execution boundaries.
+Keep the source checkout for development. Configure the adopting project's runtime with `project setup`, then connect the outer coding client to its repository-local Markitect MCP server. Manager, reviewer and verifier roles use the supported Codex App Server runtime by default. Setup can give each role class its own provider, model, effort and cost mode, including a bring-your-own process executor; an executor that Markitect cannot price runs `unmetered`, and its cost is reported as unknown, not zero. See [Provider adapters](docs/provider-adapters.md) for connection, [role profiles](docs/provider-adapters.md#role-profiles) and execution boundaries.
 
 ## Start a model-first project
 

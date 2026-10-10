@@ -44,7 +44,7 @@ func projectMCP(root string, o projectapp.Operations) (*mcp.Server, error) {
 		return nil, err
 	}
 	// Selection roots are fixed by this composition, never accepted from tool args.
-	mcp.Register(server, "project_setup", "Preview or apply a digest-bound native runtime edit. Independent roles share the owned workspace default; Windows defaults to child-local MXC.", true, func(ctx context.Context, r mcpSetupInput) (projectsetup.Preview, error) {
+	mcp.Register(server, "project_setup", "Preview or apply a digest-bound runtime edit. The default profile is the native Codex App Server; roles may select other models, efforts, cost modes or a process executor (agent-execution/v1alpha1). Native roles share the owned workspace default; Windows defaults to child-local MXC.", true, func(ctx context.Context, r mcpSetupInput) (projectsetup.Preview, error) {
 		return o.Setup(projectapp.SetupOperation{Root: root, Options: r.Options, Write: r.Write, ExpectedDigest: r.ExpectedDigest})
 	})
 	mcp.Register(server, "project_doctor", "Inspect selected local tools and authentication prerequisites without starting roles.", false, func(ctx context.Context, r mcpDoctorInput) (projectsetup.DoctorReport, error) {

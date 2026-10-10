@@ -182,13 +182,13 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	}
 	log = InvocationLog{TaskID: task.ID, Role: "reviewer", Phase: "review", InputDigest: ledgerInputDigest,
 		Receipt: result.Receipt, ReportID: result.Receipt.RunID, Outcome: result.Receipt.Outcome}
-	usageCost, known, overflow := estimateCostDetailed(result.Receipt.Usage, agent.Pricing)
+	usageCost, known, overflow := estimateAgentCost(result.Receipt.Usage, agent)
 	log.CostMicros, log.CostKnown, log.CostOverflow = usageCost, known, overflow
 	if overflow {
 		return record, log, fmt.Errorf("reviewer cost estimate exceeds the supported int64 range")
 	}
 	if known {
-	} else if invokeErr == nil && config.Transport != TransportCodexAppServer {
+	} else if invokeErr == nil && agent.requiresReportedUsage() {
 		return record, log, fmt.Errorf("reviewer usage is missing; bounded cost cannot be asserted")
 	}
 	if invokeErr != nil {

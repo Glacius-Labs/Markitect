@@ -13,7 +13,8 @@ type options struct {
 	provider, model, effort                                             string
 	codexProfile                                                        string
 	windowsSandboxBackend                                               string
-	providerExecutable                                                  string
+	providerExecutable, providerVersion, costMode                       string
+	providerArgs                                                        []string
 	inputMicros, outputMicros                                           string
 	maxCost, since                                                      string
 	operation, provenance, event, documentPath                          string
@@ -68,8 +69,8 @@ var actionSpecs = map[string]actionSpec{
 	"dismiss":    {usage: "dismiss --repo PATH --event ID --manager ID --expect STATE_DIGEST --write", flags: []string{"repo", "event", "manager", "expect", "write"}, required: []string{"repo", "event", "manager", "expect", "write"}, write: true},
 	"onboard":    {usage: "onboard --repo PATH --provider codex|claude|both [--document-path PATH] [--expect PLAN_DIGEST --write]", flags: []string{"repo", "provider", "document-path", "expect", "write"}, required: []string{"repo", "provider"}, write: true},
 	"apply":      {usage: "apply --repo PATH --plan PLAN_ID --run RUN_ID --candidate ID [--branch BRANCH --head COMMIT --worktree DIGEST --expect VERIFY_DIGEST --write]", flags: []string{"repo", "plan", "run", "candidate", "branch", "head", "worktree", "expect", "write"}, required: []string{"repo", "plan", "run", "candidate"}, write: true},
-	"setup":      {usage: "setup --repo PATH --provider codex --model gpt-6-luna [--effort high] [--codex-profile PROFILE] [--windows-sandbox-backend mxc] --input-micros-per-million N --output-micros-per-million N --max-cost-micros N [--provider-executable PATH] [--expect EDIT_DIGEST --write] (shared workspace default for independent roles; Windows defaults to process-local MXC)", flags: []string{"repo", "provider", "model", "effort", "codex-profile", "windows-sandbox-backend", "provider-executable", "input-micros-per-million", "output-micros-per-million", "max-cost-micros", "expect", "write"}, required: []string{"repo", "provider", "model", "input-micros-per-million", "output-micros-per-million", "max-cost-micros"}, write: true},
-	"doctor":     {usage: "doctor --repo PATH --provider codex|claude [--provider-executable PATH]", flags: []string{"repo", "provider", "provider-executable"}, required: []string{"repo", "provider"}},
+	"setup":      {usage: "setup --repo PATH (--input .markitect/drafts/SETUP.json | --provider codex|process --model MODEL [--effort EFFORT] [--codex-profile PROFILE] [--windows-sandbox-backend mxc] [--provider-executable PATH] [--provider-arg ARG ...] [--provider-version TEXT] [--cost-mode metered|unmetered] [--input-micros-per-million N --output-micros-per-million N] --max-cost-micros N) [--expect EDIT_DIGEST --write] (standard profile: --provider codex --model gpt-6-luna, Codex effort defaults to high; --input selects per-role profiles; metered agents need rates; unmetered is for process executors; Windows defaults to process-local MXC)", flags: []string{"repo", "input", "provider", "model", "effort", "codex-profile", "windows-sandbox-backend", "provider-executable", "provider-arg", "provider-version", "cost-mode", "input-micros-per-million", "output-micros-per-million", "max-cost-micros", "expect", "write"}, required: []string{"repo"}, write: true},
+	"doctor":     {usage: "doctor --repo PATH --provider codex|process [--provider-executable PATH]", flags: []string{"repo", "provider", "provider-executable"}, required: []string{"repo", "provider"}},
 	"resolve":    {usage: "resolve --repo TARGET --source-repo SOURCE --revision TARGET_COMMIT --discovery DISCOVERY.json --report DISTILLATION.json --input CHOICES.json [--output RESOLUTION.json]", flags: []string{"repo", "source-repo", "revision", "discovery", "report", "input", "output"}, required: []string{"repo", "source-repo", "revision", "discovery", "report", "input"}},
 }
 
@@ -98,7 +99,7 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 		switch name {
 		case "write", "generate", "acknowledge-structure":
 			continue
-		case "manager":
+		case "manager", "provider-arg":
 			continue
 		default:
 			values[name] = fs.String(name, "", "")
@@ -107,6 +108,10 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	var managers stringList
 	if contains(spec.flags, "manager") {
 		fs.Var(&managers, "manager", "manager ID (repeatable)")
+	}
+	var providerArgs stringList
+	if contains(spec.flags, "provider-arg") {
+		fs.Var(&providerArgs, "provider-arg", "process executor argument (repeatable)")
 	}
 	write := false
 	if contains(spec.flags, "write") {
@@ -222,7 +227,7 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 			}
 		}
 	}
-	o := options{action: action, write: write, generate: generate, acknowledgeStructure: acknowledgeStructure, managers: append([]string(nil), managers...)}
+	o := options{action: action, write: write, generate: generate, acknowledgeStructure: acknowledgeStructure, managers: append([]string(nil), managers...), providerArgs: append([]string(nil), providerArgs...)}
 	if len(managers) > 0 {
 		o.manager = managers[0]
 	}
@@ -243,6 +248,8 @@ func parse(args []string, errout io.Writer) (options, bool, error) {
 	assign("codex-profile", &o.codexProfile)
 	assign("windows-sandbox-backend", &o.windowsSandboxBackend)
 	assign("provider-executable", &o.providerExecutable)
+	assign("provider-version", &o.providerVersion)
+	assign("cost-mode", &o.costMode)
 	assign("input-micros-per-million", &o.inputMicros)
 	assign("output-micros-per-million", &o.outputMicros)
 	assign("max-cost-micros", &o.maxCost)

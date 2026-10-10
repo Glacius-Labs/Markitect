@@ -86,6 +86,11 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 	if err != nil {
 		return BrownfieldManagerRunOutput{}, fmt.Errorf("select read-only Brownfield binding for explicitly selected Manager %q: %w", request.AgentManagerID, err)
 	}
+	if selectedAgent.Unmetered() {
+		// The Brownfield ledger seals a priced estimate for every attempt. It has
+		// no unmetered accounting yet, so it rejects rather than invent a price.
+		return BrownfieldManagerRunOutput{}, fmt.Errorf("Brownfield manager stages require a metered agent; the read-only binding for Manager %q is unmetered", request.AgentManagerID)
+	}
 	config, err := selectedAgent.AgentConfig()
 	if err != nil {
 		return BrownfieldManagerRunOutput{}, err
