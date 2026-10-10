@@ -228,7 +228,7 @@ class StudyFileTests(unittest.TestCase):
                     loaded = study.load(path)
                     self.assertEqual(loaded["arms"], ["conventional", "markitect"])
                     self.assertNotIn("sourceRepo", json.loads(path.read_text(encoding="utf-8"))["markitect"])
-        fake = study.load(PLAYGROUND / "examples" / "study-fake-roombook.json")
+            fake = study.load(PLAYGROUND / "examples" / "study-fake-roombook.json")
         self.assertEqual((fake["agent"]["kind"], fake["stations"], fake["case"]), ("fake", 2, "roombook"))
 
 
