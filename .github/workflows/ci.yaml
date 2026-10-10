@@ -314,12 +314,18 @@ jobs:
           go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action verify --adapter dotnet-dependencies --plan "$adapter_plan"
           init_dir="$RUNNER_TEMP/markitect-init-$GITHUB_SHA"
           git init -b feature/authoring "$init_dir"
-          go run .markitect/bootstrap/run.go init --repo "$init_dir" --name started-project --namespace engineering
+          init_preview="$(go run .markitect/bootstrap/run.go project init --repo "$init_dir" --name started-project)"
+          jq -e '.apiVersion == "project.markitect.example.org/v1alpha1" and .name == "started-project" and (.digest | test("^[0-9a-f]{64}$")) and ([.files[].path] == [".markitect/.gitignore", ".markitect/model/manager.yaml", ".markitect/project.yaml", ".markitect/runtime.yaml", "docs/markitect/project.md"])' <<< "$init_preview" >/dev/null
+          for path in .markitect/.gitignore .markitect/model/manager.yaml .markitect/project.yaml .markitect/runtime.yaml docs/markitect/project.md; do test ! -e "$init_dir/$path"; done
+          init_write="$(go run .markitect/bootstrap/run.go project init --repo "$init_dir" --name started-project --write)"
+          jq -e '.apiVersion == "project.markitect.example.org/v1alpha1" and .name == "started-project" and ([.written[]] == [".markitect/.gitignore", ".markitect/model/manager.yaml", ".markitect/project.yaml", ".markitect/runtime.yaml", "docs/markitect/project.md"])' <<< "$init_write" >/dev/null
+          test -f "$init_dir/.markitect/project.yaml"
+          test -f "$init_dir/.markitect/model/manager.yaml"
+          test -f "$init_dir/.markitect/runtime.yaml"
+          test -f "$init_dir/docs/markitect/project.md"
           test ! -e "$init_dir/markitect.yaml"
-          go run .markitect/bootstrap/run.go init --repo "$init_dir" --name started-project --namespace engineering --write
-          test -f "$init_dir/.markitect/areas/engineering/README.md"
-          init_check="$(go run .markitect/bootstrap/run.go check --repo "$init_dir")"
-          grep -Eq '^status: passed$' <<< "$init_check"
+          init_check="$(go run .markitect/bootstrap/run.go project check --repo "$init_dir")"
+          jq -e '.status == "succeeded" and .coverage.conforming == true' <<< "$init_check" >/dev/null
 
       - name: Replay selective adoption with packaged CLI (Unix)
         if: runner.os != 'Windows'
@@ -453,15 +459,22 @@ jobs:
           $initDir = Join-Path $env:RUNNER_TEMP "markitect-init-$env:GITHUB_SHA"
           git init -b feature/authoring $initDir
           if ($LASTEXITCODE -ne 0) { throw 'Could not initialize the smoke repository' }
-          go run .markitect/bootstrap/run.go init --repo $initDir --name started-project --namespace engineering
+          $initPreviewJson = go run .markitect/bootstrap/run.go project init --repo $initDir --name started-project
           if ($LASTEXITCODE -ne 0) { throw 'Packaged initialization preview failed' }
-          if (Test-Path (Join-Path $initDir 'markitect.yaml')) { throw 'Initialization preview changed the destination' }
-          go run .markitect/bootstrap/run.go init --repo $initDir --name started-project --namespace engineering --write
+          $initPreview = ConvertFrom-Json ($initPreviewJson -join "`n")
+          $initPaths = @('.markitect/.gitignore', '.markitect/model/manager.yaml', '.markitect/project.yaml', '.markitect/runtime.yaml', 'docs/markitect/project.md')
+          if ($initPreview.apiVersion -ne 'project.markitect.example.org/v1alpha1' -or $initPreview.name -ne 'started-project' -or $initPreview.digest -notmatch '^[0-9a-f]{64}$' -or (@($initPreview.files | ForEach-Object { $_.path }) -join "`n") -ne ($initPaths -join "`n")) { throw 'Initialization preview did not return the expected model-first plan' }
+          foreach ($path in $initPaths) { if (Test-Path (Join-Path $initDir $path)) { throw "Initialization preview created $path" } }
+          $initWriteJson = go run .markitect/bootstrap/run.go project init --repo $initDir --name started-project --write
           if ($LASTEXITCODE -ne 0) { throw 'Packaged initialization failed' }
-          if (-not (Test-Path (Join-Path $initDir '.markitect/areas/engineering/README.md'))) { throw 'Default canonical area README is missing' }
-          $initCheck = go run .markitect/bootstrap/run.go check --repo $initDir
+          $initWrite = ConvertFrom-Json ($initWriteJson -join "`n")
+          if ($initWrite.apiVersion -ne 'project.markitect.example.org/v1alpha1' -or $initWrite.name -ne 'started-project' -or (@($initWrite.written) -join "`n") -ne ($initPaths -join "`n")) { throw 'Initialization write did not report the expected model-owned paths' }
+          foreach ($path in $initPaths) { if (-not (Test-Path (Join-Path $initDir $path) -PathType Leaf)) { throw "Initialized project is missing $path" } }
+          if (Test-Path (Join-Path $initDir 'markitect.yaml')) { throw 'Initialization created a retired top-level model' }
+          $initCheckJson = go run .markitect/bootstrap/run.go project check --repo $initDir
           if ($LASTEXITCODE -ne 0) { throw 'Initialized project failed structural checks' }
-          if (($initCheck -join "`n") -notmatch '(?m)^status: passed$') { throw 'Initialized project did not pass structural checks' }
+          $initCheck = ConvertFrom-Json ($initCheckJson -join "`n")
+          if ($initCheck.status -ne 'succeeded' -or -not $initCheck.coverage.conforming) { throw 'Initialized project did not pass structural and coverage checks' }
           Pop-Location
 
   publish-source-artifact:
