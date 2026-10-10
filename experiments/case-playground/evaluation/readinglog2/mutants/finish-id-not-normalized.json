@@ -1,0 +1,17 @@
+{
+  "id": "finish-id-not-normalized",
+  "base": "S1",
+  "item": "B01",
+  "rule": "R3",
+  "violates": "finish looks up the --id value without normalization.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    book_id = text_value(\"id\", raw_id)",
+      "new": "    book_id = raw_id if raw_id.strip() else text_value(\"id\", raw_id)"
+    }
+  ],
+  "fails": [
+    "b01-finish-normalized-id"
+  ]
+}

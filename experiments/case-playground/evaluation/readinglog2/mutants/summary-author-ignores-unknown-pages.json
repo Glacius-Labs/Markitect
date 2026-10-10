@@ -1,0 +1,17 @@
+{
+  "id": "summary-author-ignores-unknown-pages",
+  "base": "S5",
+  "item": "B13",
+  "rule": null,
+  "violates": "summary --author does not count unknownPages.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "            entry[\"unknownPages\"] += 1",
+      "new": "            entry[\"unknownPages\"] += 0 if args.author is not None else 1"
+    }
+  ],
+  "fails": [
+    "b13-summary-author-unknown-pages"
+  ]
+}

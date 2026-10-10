@@ -1,0 +1,29 @@
+{
+  "id": "version1-rewritten-on-read",
+  "base": "S4",
+  "item": "B11",
+  "rule": "R1",
+  "violates": "Reading a version 1 file rewrites it as version 2 (migration on read).",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": [
+        "    for book in books:",
+        "        book.setdefault(\"tags\", [])",
+        "    return books"
+      ],
+      "new": [
+        "    for book in books:",
+        "        book.setdefault(\"tags\", [])",
+        "    if isinstance(json.loads(db.read_text(encoding=\"utf-8\")), list):",
+        "        save(db, books)",
+        "    return books"
+      ]
+    }
+  ],
+  "fails": [
+    "b08-untagged-stored-books",
+    "b11-failed-mutation-keeps-v1",
+    "b11-v1-read-only-everywhere"
+  ]
+}

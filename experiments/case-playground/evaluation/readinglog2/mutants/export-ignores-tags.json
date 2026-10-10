@@ -1,0 +1,17 @@
+{
+  "id": "export-ignores-tags",
+  "base": "S3",
+  "item": "B08",
+  "rule": null,
+  "violates": "export writes an empty tags column for every book.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "                                 TAG_SEPARATOR.join(book[\"tags\"])])",
+      "new": "                                 \"\"])"
+    }
+  ],
+  "fails": [
+    "b08-export-tags-column"
+  ]
+}

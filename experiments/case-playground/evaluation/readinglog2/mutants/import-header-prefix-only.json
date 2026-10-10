@@ -1,0 +1,17 @@
+{
+  "id": "import-header-prefix-only",
+  "base": "S2",
+  "item": "B02",
+  "rule": "R2",
+  "violates": "A header that only starts with id,title,author,pages is accepted.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    if not rows or rows[0] != CSV_COLUMNS:",
+      "new": "    if not rows or rows[0][:4] != CSV_COLUMNS:"
+    }
+  ],
+  "fails": [
+    "b02-import-bad-file"
+  ]
+}

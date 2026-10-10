@@ -1,0 +1,17 @@
+{
+  "id": "summary-author-not-normalized",
+  "base": "S3",
+  "item": "B07",
+  "rule": "R3",
+  "violates": "summary --author compares the raw value without normalization.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    for book in matching(books, args):",
+      "new": "    for book in [book for book in books if args.author is None or book[\"author\"] == args.author]:"
+    }
+  ],
+  "fails": [
+    "b07-summary-author"
+  ]
+}

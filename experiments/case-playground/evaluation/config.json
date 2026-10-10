@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "reviewers": {
+    "codex": {"model": "gpt-6.1-sol", "effort": "high", "timeoutSeconds": 2700},
+    "claude": {"model": "claude-opus-5-5", "effort": "high", "timeoutSeconds": 2700}
+  },
+  "promptMaxBytes": 100000,
+  "holdoutTimeoutSeconds": 600
+}

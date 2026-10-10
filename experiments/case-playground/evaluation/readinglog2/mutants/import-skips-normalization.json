@@ -1,0 +1,18 @@
+{
+  "id": "import-skips-normalization",
+  "base": "S2",
+  "item": "B02",
+  "rule": "R3",
+  "violates": "Imported IDs, titles and authors are stored without normalization.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "            book = new_book(*row)",
+      "new": "            book = dict(new_book(*row), id=row[0], title=row[1], author=row[2])"
+    }
+  ],
+  "fails": [
+    "b02-import-duplicates",
+    "b02-import-normalization"
+  ]
+}

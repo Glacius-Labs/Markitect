@@ -1,0 +1,18 @@
+{
+  "id": "author-filter-ignores-case",
+  "base": "S3",
+  "item": "B05",
+  "rule": "R3",
+  "violates": "The author filter compares case-insensitively although comparisons are exact after normalization.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "        books = [book for book in books if book[\"author\"] == author]",
+      "new": "        books = [book for book in books if book[\"author\"].casefold() == author.casefold()]"
+    }
+  ],
+  "fails": [
+    "b05-author-filter",
+    "b07-summary-author"
+  ]
+}

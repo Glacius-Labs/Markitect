@@ -1,0 +1,28 @@
+{
+  "id": "finish-repeat-skips-audit-line",
+  "base": "S1",
+  "item": "B01",
+  "rule": "R1",
+  "violates": "Finishing an already finished book succeeds without saving or logging.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": [
+        "def finish(books, args):",
+        "    book = find(books, args.id)",
+        "    book[\"status\"] = \"finished\""
+      ],
+      "new": [
+        "def finish(books, args):",
+        "    book = find(books, args.id)",
+        "    if book[\"status\"] == \"finished\":",
+        "        print(json.dumps(book))",
+        "        sys.exit(0)",
+        "    book[\"status\"] = \"finished\""
+      ]
+    }
+  ],
+  "fails": [
+    "b01-finish-repeat-logs-again"
+  ]
+}

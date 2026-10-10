@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "case": "readinglog",
+  "totalItems": 12,
+  "stations": [
+    {
+      "id": "S1",
+      "items": [
+        "B01"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S2",
+      "items": [
+        "B02",
+        "B03",
+        "B04"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S3",
+      "items": [
+        "B05",
+        "B06",
+        "B07",
+        "B08",
+        "B09",
+        "B10",
+        "B11"
+      ],
+      "requiresTeam": true
+    },
+    {
+      "id": "S4",
+      "items": [
+        "B12"
+      ],
+      "requiresTeam": false
+    }
+  ]
+}

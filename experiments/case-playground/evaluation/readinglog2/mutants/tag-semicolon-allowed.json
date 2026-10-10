@@ -1,0 +1,17 @@
+{
+  "id": "tag-semicolon-allowed",
+  "base": "S3",
+  "item": "B08",
+  "rule": "R2",
+  "violates": "A tag containing ; is accepted.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    if TAG_SEPARATOR in tag:",
+      "new": "    if TAG_SEPARATOR in tag and False:"
+    }
+  ],
+  "fails": [
+    "b08-tag-invalid"
+  ]
+}

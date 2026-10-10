@@ -1,0 +1,48 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["findings", "obligations", "notes"],
+  "properties": {
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["category", "severity", "item", "rule", "evidence", "detail"],
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": ["missed_obligation", "unnecessary_change", "rule_violation", "contradiction",
+                     "regression", "false_claim", "escalation_needed", "escalation_unneeded"]
+          },
+          "severity": {"type": "string", "enum": ["high", "medium", "low"]},
+          "item": {"type": ["string", "null"]},
+          "rule": {"type": ["string", "null"]},
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "line"],
+              "properties": {
+                "path": {"type": "string"},
+                "line": {"type": ["integer", "null"]}
+              }
+            }
+          },
+          "detail": {"type": "string"}
+        }
+      }
+    },
+    "obligations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["covered", "total"],
+      "properties": {
+        "covered": {"type": "integer", "minimum": 0},
+        "total": {"type": "integer", "minimum": 0}
+      }
+    },
+    "notes": {"type": "string"}
+  }
+}

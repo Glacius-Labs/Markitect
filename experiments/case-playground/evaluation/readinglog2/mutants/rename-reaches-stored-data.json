@@ -1,0 +1,36 @@
+{
+  "id": "rename-reaches-stored-data",
+  "base": "S6",
+  "item": "B15",
+  "rule": null,
+  "violates": "The rename also renames the stored records key to entries.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    content = {\"schemaVersion\": SCHEMA_VERSION, \"records\": entries}",
+      "new": "    content = {\"schemaVersion\": SCHEMA_VERSION, \"entries\": entries}"
+    },
+    {
+      "file": "app.py",
+      "old": "    if (isinstance(data, dict) and set(data) == {\"schemaVersion\", \"records\"}",
+      "new": "    if (isinstance(data, dict) and set(data) in ({\"schemaVersion\", \"records\"}, {\"schemaVersion\", \"entries\"})"
+    },
+    {
+      "file": "app.py",
+      "old": "        return data[\"records\"]",
+      "new": "        return data.get(\"records\", data.get(\"entries\"))"
+    }
+  ],
+  "fails": [
+    "b11-new-database-is-v2",
+    "b11-noop-mutation-writes-v2",
+    "b11-v1-add-writes-v2",
+    "b11-v1-finish-writes-v2",
+    "b11-v1-import-writes-v2",
+    "b11-v1-tag-writes-v2",
+    "b13-add-unknown-pages",
+    "b13-unknown-pages-survive-changes",
+    "b13-unknown-pages-version-1",
+    "b15-stored-data-unchanged"
+  ]
+}

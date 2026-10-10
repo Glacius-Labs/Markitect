@@ -1,0 +1,18 @@
+{
+  "id": "tag-not-nfc-normalized",
+  "base": "S3",
+  "item": "B08",
+  "rule": "R3",
+  "violates": "Tag values are stripped and collapsed but not NFC normalized.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    tag = text_value(\"tag\", value)",
+      "new": "    tag = \" \".join(value.split()) or text_value(\"tag\", value)"
+    }
+  ],
+  "fails": [
+    "b08-list-tag-filters",
+    "b08-tag-order-and-normalization"
+  ]
+}

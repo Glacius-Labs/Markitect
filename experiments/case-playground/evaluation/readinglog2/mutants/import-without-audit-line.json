@@ -1,0 +1,18 @@
+{
+  "id": "import-without-audit-line",
+  "base": "S2",
+  "item": "B02",
+  "rule": "R1",
+  "violates": "A successful import saves but appends no audit line.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "            commit(args.db, books, args.command, ids)",
+      "new": "            save(args.db, books) if args.command == \"import\" else commit(args.db, books, args.command, ids)"
+    }
+  ],
+  "fails": [
+    "b02-import-header-only",
+    "b02-import-log"
+  ]
+}

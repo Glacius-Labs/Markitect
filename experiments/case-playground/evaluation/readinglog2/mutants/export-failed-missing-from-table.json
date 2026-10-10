@@ -1,0 +1,18 @@
+{
+  "id": "export-failed-missing-from-table",
+  "base": "S3",
+  "item": "B06",
+  "rule": "R2",
+  "violates": "The README error-code table does not list export_failed.",
+  "edits": [
+    {
+      "file": "README.md",
+      "old": "| `export_failed` | The export destination cannot be written. |\n",
+      "new": ""
+    }
+  ],
+  "fails": [
+    "b06-error-code-table",
+    "r2-error-table-complete"
+  ]
+}
