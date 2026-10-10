@@ -56,8 +56,8 @@ The core turns explicit inputs into deterministic results. The same model and sn
 - `src/internal/core` compiles explicitly supplied Schemas and Definitions into a structural model with a semantic digest ([Core README](../src/internal/core/README.md)). It has no engineering assertion language, no providers and no I/O.
 - `core/snapshot` holds fixed sets of files and compares them ([source snapshots](source-snapshots.md#current-value)).
 - `modules/projectmodel` derives Manager, artifact and impact views from the compiled model.
-- `projectcoverage` inventories repository paths and classifies how the model covers them.
-- `projectbriefing` derives briefings for accepted model changes from committed history and records their dismissal.
+- `projectcoverage` inventories repository paths and classifies how the model covers them ([DEC-006](concepts/register.md#dec-006-every-file-is-covered-or-explicitly-ignored)).
+- `projectbriefing` derives briefings for accepted model changes from committed history and records their dismissal ([briefing design](design/project-world/operation-scopes-and-model-briefings.md)).
 
 Known problems:
 
