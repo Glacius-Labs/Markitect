@@ -23,6 +23,9 @@ This register records Markitect's long-term vision, product-level decisions, cla
 | [DEC-014](#dec-014-compatibility-does-not-drive-decisions) | Decision | Compatibility does not drive decisions | Accepted |
 | [DEC-015](#dec-015-a-fresh-roadmap-earlier-plans-are-inputs) | Decision | A fresh roadmap; earlier plans are inputs | Accepted |
 | [DEC-016](#dec-016-a-clean-stable-testable-main-and-uniform-structure-first) | Decision | A clean, stable, testable main and uniform structure first | Accepted |
+| [DEC-017](#dec-017-command-model-top-level-verbs-from-one-verb-table) | Decision | Command model: top-level verbs from one verb table | Accepted |
+| [DEC-018](#dec-018-the-knowledge-graph-explains-impact) | Decision | The knowledge graph explains impact | Accepted |
+| [DEC-019](#dec-019-government-code-starts-after-wave-2) | Decision | Government code starts after Wave 2 | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-005](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -169,7 +172,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ### DEC-011 Detailed planning of future ideas waits
 
-- **Status:** Accepted, owner, 9 October 2026 ([planning boundary](sources/concepts-chat-20261009/discussion-boundaries-20261009.md)). The owner's wording is in `USER-20261009-01`. The product chat restated the hold in the notes it attached to `-02`, `-03`, `-04` and `-06`.
+- **Status:** Accepted, owner, 9 October 2026 ([planning boundary](sources/concepts-chat-20261009/discussion-boundaries-20261009.md)). For Government, [DEC-019](#dec-019-government-code-starts-after-wave-2) supersedes these conditions. The owner's wording is in `USER-20261009-01`. The product chat restated the hold in the notes it attached to `-02`, `-03`, `-04` and `-06`.
 - **Statement:**
   - The owner wants to discuss Markitect as if it were finished. Topics:
     - how it can be used;
@@ -235,6 +238,47 @@ This register records Markitect's long-term vision, product-level decisions, cla
   - The repository needs a well-organized structure in which everything has its place and conventions are uniform.
   - An existing convention is kept only where it is sensible; otherwise it is changed and the affected files are moved.
 - **Consequences:** The roadmap's Waves 0 to 2 serve this priority before feature extensions.
+
+### DEC-017 Command model: top-level verbs from one verb table
+
+- **Status:** Accepted, owner, 10 October 2026. The owner approved the roadmap's recommendations for CLI-01 ([roadmap](../implementation-plan.md#owner-decisions)). D1, D4 and D6 follow from [DEC-014](#dec-014-compatibility-does-not-drive-decisions).
+- **Statement:**
+  - **D2:** The `project` noun is dropped. Commands are top-level verbs in the style of kubectl, terraform and git, for example `markitect plan` and `markitect apply`, plus convenience verbs.
+  - **One verb table:** a single table drives CLI help, dispatch and MCP registration. MCP tools carry the verb names without a `project_` prefix, and MCP fields are the same arguments as the CLI flags.
+  - **D3:** One brownfield path remains, as positional `adopt` stages.
+  - **D5:** `--write` only persists. Starting agents needs a separate `--execute`.
+  - **D7:** `status` shows a project overview by default, and `status RUN` shows one run.
+  - **D8:** MCP gets a read-only server mode.
+  - **D9:** Release tooling lives in the separate release binary.
+- **Work items:** CLI-01 (verb-table specification), CLI-02, CLI-03, MCP-01, TEST-02, AGENT-02 and ARCH-08 in the [backlog](../work-items/backlog.yaml).
+- **Detail delegated to the specification:**
+  - which of today's two brownfield paths survives;
+  - the exact verb names;
+  - which convenience verbs exist.
+
+  The specification records these choices; anything that changes this decision's direction returns to the owner.
+
+### DEC-018 The knowledge graph explains impact
+
+- **Status:** Accepted, owner, 10 October 2026, approving the roadmap's recommendation for KG-00.
+- **Statement:**
+  - The knowledge graph's role is to explain impact: why something is affected, and which statements, decisions and owners connect a change to its consequences. It is not a separate query product.
+  - A reduced core is ported to current main. The branch `codex/knowledge-graph` is not revived; it stays as a frozen reference.
+  - The existing MCP surface is used. There is no separate knowledge server.
+  - The YAML model stays canonical.
+  - Whether Decisions become first-class model entries is proposed in KG-01 and KG-02, not decided here.
+- **Work items:** KG-01 to KG-03 in the [backlog](../work-items/backlog.yaml).
+
+### DEC-019 Government code starts after Wave 2
+
+- **Status:** Accepted, owner, 10 October 2026, approving the roadmap's recommendation for GOV-00. For Government, this supersedes the evidence conditions of [DEC-011](#dec-011-detailed-planning-of-future-ideas-waits).
+- **Statement:**
+  - Design work on Government may continue.
+  - Government code starts once Wave 2 has settled the interface zone (CLI-02) and the runtime zone (ARCH-06).
+  - Until then, uncommitted model changes on the Government branch are not integrated.
+  - Model schema changes are coordinated through the roadmap's model zone, which has one active owner at a time.
+  - Government documents on main follow the repository's conventions ([DEC-016](#dec-016-a-clean-stable-testable-main-and-uniform-structure-first)).
+- **Work items:** GOV-01 and GOV-02 in the [backlog](../work-items/backlog.yaml).
 
 ## Promises
 
@@ -391,7 +435,7 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 
 ### IDEA-002 Government: delegated model maintenance
 
-- **Status:** Owner idea (Concepts `USER-20261009-02`; notes C20 to C22). The owner describes it as an earlier idea with a relatively immature implementation somewhere on a branch. An evaluation was commissioned ([DEC-012](#dec-012-government-ideas-evaluation-commissioned)). [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis) places it on the later axis.
+- **Status:** Owner idea (Concepts `USER-20261009-02`; notes C20 to C22). The owner describes it as an earlier idea with a relatively immature implementation somewhere on a branch. An evaluation was commissioned ([DEC-012](#dec-012-government-ideas-evaluation-commissioned)). [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis) places it on the later axis. Implementation is planned as GOV-01 after Wave 2 ([DEC-019](#dec-019-government-code-starts-after-wave-2)).
 - **Aim (owner):** As much trust in coding agents as possible, and through that as much AI autonomy as possible, without the repository ending up chaotic and hard to follow.
 - **Idea:**
   - If the model can be changed and its realization then relatively reliably checked and applied, the user's task becomes maintaining the model. Attention shifts to every change of the model.

@@ -57,6 +57,12 @@ Nimm keine Roadmap eines anderen Branches einfach an. Die Wahrscheinlichkeit ist
 Beachte bei unserem Playground und tests die wir machen, dass wir Windows zunächst erstmal nicht wirklich berücksichtigen müssen falls es uns zu sehr bremst oder zu viele Probleme bereitet. Wir könnten später überlegen wie wir damit umgehen.
 ```
 
+## Branch names
+
+```text
+Wir sollten ab jetzt die Branches auch mit dev/ oder sinnvollen präfixen wählen statt claude/ und codex/. Damit können wir dann auch die "alten" Branches von den aktuellen unterscheiden und nach und nach aufräumen. Die namen sollten entsprechend sinnvoll gewählt sein und nicht irgendwelche Nummern hinten haben.
+```
+
 ## Compatibility
 
 ```text

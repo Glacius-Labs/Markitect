@@ -37,18 +37,31 @@ This page owns the current direction: how parallel work is organized, the stream
 
 ### Sessions
 
-| Session | Role | Streams now |
-|---|---|---|
-| Integrator (Claude) | Roadmap and backlog, register decisions, review and merge order, repository hygiene | OPS |
-| Runtime (Claude) | Exchangeable executor | RUN |
-| Scientist (Claude) | Case playground and studies | PLAY |
-| Cleaner (Codex) | Code and documentation cleanup | ARCH |
-| QA (new) | Pipeline, test kit, runtime tests | CI, TEST |
-| Bug hunter (new) | Verified findings and small fixes | BUG |
-| Interface (new, after CLI-01) | One verb table for CLI and MCP | CLI, MCP, AGENT-02, TEST-02 |
-| Government (Codex) | Paused until GOV-00 | GOV |
+A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. The earlier sessions have ended. Their work is preserved and listed in the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md).
 
-No more than six sessions change code at the same time. Research packages without code (IDEA-01, LEARN-01) can run alongside.
+| Role | Streams | Starts |
+|---|---|---|
+| integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | running |
+| qa | CI, TEST | Wave 0 |
+| cleaner | ARCH, AGENT-01 | Wave 0 |
+| runtime | RUN, MCP-02, ARCH-06 | Wave 0 |
+| scientist | PLAY | Wave 0 |
+| interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | Wave 0 (specification first) |
+| bughunter | BUG | Wave 1 |
+| kg | KG | Wave 1 |
+| government | GOV | after Wave 2 (DEC-019) |
+
+No more than six sessions change code at the same time. Each session uses subagents and workflows inside its own packages as it sees fit.
+
+### Starting a session
+
+Start every session with the same prompt; only the role changes:
+
+```text
+You are the <role> session for Markitect, working in this repository. Read AGENTS.md, docs/implementation-plan.md (the roadmap) and docs/work-items/backlog.yaml. Work on the packages whose owner is <role>, in wave and dependency order, starting with those marked ready. For each package, first read its inputs and the matching survey under docs/work-items/surveys/, so you do not repeat earlier analysis. Follow the roadmap's rules: a branch with a meaningful prefix from current origin/main, changes only inside the package's zone, one pull request per package with the package ID in the title, and no pushes to a pull-request head while CI runs. Do not edit the backlog, the roadmap or the concept register; report status, findings and needed owner decisions in the pull request. Use subagents and workflows inside your packages as you see fit. Ask the owner when a decision is genuinely theirs.
+```
+
+The integrator merges pull requests in dependency order, updates the backlog and the register, and assigns zones.
 
 ### Work packages
 
@@ -62,10 +75,20 @@ The [backlog](work-items/backlog.yaml) holds all of them. A package is done when
 
 ### Branch names
 
-- New work uses `wp/<id>-<slug>` in lower case, for example `wp/ci-01-quick-fixes`. It starts from current `origin/main`. Name the worktree folder after the package ID.
-- Tool prefixes such as `codex/` and `claude/` are not used for new work. Branches opened before this roadmap keep their names until they are merged.
-- Throwaway experiments use `exp/<slug>`. An urgent fix outside a package uses `fix/<slug>`.
-- Old branches become `archive/<name>` tags before they are deleted (OPS-03).
+New branches start from current `origin/main`. Each has a meaningful lower-case name and a prefix that says what kind of work it holds:
+
+| Prefix | Use | Example |
+|---|---|---|
+| `dev/` | Development: features, refactoring, tests, CI | `dev/linux-ci-gate`, `dev/verb-table` |
+| `fix/` | A bug fix | `fix/impact-order-independence` |
+| `docs/` | Documentation only | `docs/roadmap` |
+| `exp/` | A throwaway experiment | `exp/graph-explain-spike` |
+| `archive/` | A preserved old branch or a snapshot of work in progress | `archive/codex/knowledge-graph` |
+
+- The name says what the work is.
+- It contains no tool name (`codex/`, `claude/`), no date, no version suffix and no number.
+- The package ID goes into the pull-request title and into the backlog's `branch` field, which links the two.
+- Branches with the old `codex/` and `claude/` prefixes are earlier work. They are archived step by step (OPS-03).
 
 ### Zones
 
@@ -146,25 +169,22 @@ These wait for the conditions in [DEC-011](concepts/register.md#dec-011-detailed
 - IDEA-02 to IDEA-04: the register's enhancements ENH-001 to ENH-003.
 - Follow-ups selected from LEARN-01.
 
-## Open owner decisions
+## Owner decisions
 
-| Decision | Question | Blocks | Recommendation |
-|---|---|---|---|
-| CLI-01 D2 | Drop the `project` noun? | CLI-02 and the rest of Wave 2's interface zone | Yes: top-level verbs such as `markitect plan` and `markitect apply` |
-| CLI-01 D3 | Which brownfield path stays? | CLI-02 | One path as `adopt` stages; remove the other |
-| CLI-01 D5 | Separate `--write` (persist) from `--execute` (start agents)? | CLI-02 | Yes |
-| CLI-01 D7 | What does `status` show? | CLI-02 | A project overview by default; `status RUN` for one run |
-| CLI-01 D8 | Read-only MCP mode or separate preview tools? | MCP-01 | A read-only server mode |
-| CLI-01 D9 | Where does release tooling live? | ARCH-08 | The separate release binary |
-| KG-00 | Role and form of the knowledge graph | KG-01 onward | An explanation of impact; port a reduced core; use the existing MCP surface |
-| GOV-00 | Start Government v1 now or later; who owns model schema changes | GOV-01, model zone | Keep designing; start code after the interface and runtime zones settle in Wave 2 |
-| OPS-02 | Where unpushed branches go | OPS-03 | Push to origin under an `archive/` prefix |
-| OPS-03 | Approve the archive list | Repository hygiene | Approve the generated list |
+Markitect's product owner approved the roadmap and its recommendations on 10 October 2026:
+- [DEC-017](concepts/register.md#dec-017-command-model-top-level-verbs-from-one-verb-table): commands.
+  - Top-level verbs come from one verb table, and the `project` noun is dropped.
+  - One brownfield path remains, as `adopt` stages.
+  - `--write` and `--execute` are separate.
+  - `status` shows a project overview.
+  - MCP gets a read-only mode.
+  - Release tooling lives in its own binary.
+- [DEC-014](concepts/register.md#dec-014-compatibility-does-not-drive-decisions): the legacy tree is removed, tools may be renamed, and no aliases are kept.
+- [DEC-018](concepts/register.md#dec-018-the-knowledge-graph-explains-impact): the knowledge graph explains impact. A reduced core is ported, and the existing MCP surface is used.
+- [DEC-019](concepts/register.md#dec-019-government-code-starts-after-wave-2): Government code starts after Wave 2; design work may continue.
+- OPS-02 and OPS-03: earlier work is preserved as archive references, and the archive list is approved.
 
-[DEC-014](concepts/register.md#dec-014-compatibility-does-not-drive-decisions) already settles three earlier questions:
-- D1: the legacy command tree is removed.
-- D4: MCP tools may be renamed.
-- D6: no compatibility aliases are kept.
+Decisions still to come are listed per package as `needs_owner` in the backlog, for example the protocol of the first method study (PLAY-07).
 
 ## Releases and historical evidence
 

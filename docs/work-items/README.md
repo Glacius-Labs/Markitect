@@ -6,6 +6,7 @@ This directory holds the current backlog and the records of completed work progr
 
 - [Backlog](backlog.yaml): the single owner of work-package status, owners, branches, zones, dependencies and acceptance criteria.
 - [Roadmap](../implementation-plan.md): streams, waves, zones, branch names and the integration rules the backlog follows.
+- [Surveys](surveys/README.md): read-only surveys of 10 October 2026 that list facts, earlier work and collision zones per area, so that sessions do not repeat the analysis.
 
 ## Completed: Product Readiness (P01 to P10)
 
