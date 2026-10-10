@@ -16,6 +16,10 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 )
 
+// pipeTestTimeout bounds the in-process pipe tests below. They do not test
+// time, so the bound is generous enough for a loaded runner.
+const pipeTestTimeout = 30 * time.Second
+
 func TestClientEnvelopeGuards(t *testing.T) {
 	for _, wire := range []string{`{"id":7,"result":{}}`, `{"result":{}}`, `{"id":1,"result":{},"error":{}}`, `{"id":1}`, `{broken`, `{"method":"turn/started"}`} {
 		t.Run(wire, func(t *testing.T) {
@@ -31,7 +35,7 @@ func TestClientEnvelopeGuards(t *testing.T) {
 				_ = json.NewDecoder(remote).Decode(&request)
 				_, _ = remote.Write([]byte(wire + "\n"))
 			}()
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), pipeTestTimeout)
 			defer cancel()
 			if err = c.call(ctx, "initialize", map[string]any{}, nil); err == nil {
 				t.Fatal("malformed/mismatched envelope accepted")
@@ -59,7 +63,7 @@ func TestClientEventBudgetAndRightsEvidence(t *testing.T) {
 		_ = json.NewEncoder(remote).Encode(map[string]any{"id": 1, "result": map[string]any{"approvalPolicy": "never", "sandbox": map[string]string{"type": "workspaceWrite"}}})
 		_, _ = remote.Write([]byte(strings.Repeat("x", 1024) + "\n"))
 	}()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), pipeTestTimeout)
 	defer cancel()
 	if err = c.call(ctx, "thread/start", map[string]any{}, nil); err != nil {
 		t.Fatal(err)

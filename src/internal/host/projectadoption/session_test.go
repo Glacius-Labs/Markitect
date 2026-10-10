@@ -532,6 +532,82 @@ func TestChildIterationCannotProposeUnderIntegratedParent(t *testing.T) {
 	}
 }
 
+func TestLeafChildCannotIntegrateUnderIntegratedParent(t *testing.T) {
+	for _, order := range []string{"leaf-before-parent", "leaf-after-parent"} {
+		t.Run(order, func(t *testing.T) {
+			_, _, session, report := leafChildSession(t)
+			integrateLeaf := func(s BrownfieldSession) (BrownfieldSession, error) {
+				return IntegrateManagerProposal(s, "orders-pass", "orders-manager", ManagerIntegration{ManagerID: "orders-manager", ChildProposalDigests: []string{},
+					ChildContracts: []IntegratedChildContracts{}, Report: report, Conflicts: []SessionConflict{}})
+			}
+			var err error
+			if order == "leaf-before-parent" {
+				if session, err = integrateLeaf(session); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := integrateLeafParent(session, report); err != nil {
+					t.Fatalf("a parent must bind its already integrated leaf child: %v", err)
+				}
+				return
+			}
+			if session, err = integrateLeafParent(session, report); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := integrateLeaf(session); err == nil {
+				t.Fatal("a leaf integration the parent integration does not bind must be refused instead of producing an invalid session")
+			}
+		})
+	}
+}
+
+// leafChildSession records a root proposal that assigns one leaf child and
+// that child's proposal, leaving both integrations open.
+func leafChildSession(t *testing.T) (string, *projectwork.Project, BrownfieldSession, Distillation) {
+	t.Helper()
+	root, discovery, _, target := distillationDiscovery(t)
+	session, err := StartBrownfieldSession(root, target, discovery, []ScopeStatus{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rootID := session.TargetContext.RootManagerID
+	child := ProposedManager{ID: "orders-manager", Name: "Orders Manager", Purpose: "Model order cancellation", ParentID: rootID,
+		EvidenceIDs: []string{"implementation"}, DelegationEvidenceIDs: []string{}}
+	report := sessionReport(discovery, "implementation", "orders", "func Cancel() {}", "The selected source declares cancellation.")
+	session, err = BeginReverseIteration(root, target, session, ReverseIterationRequest{ID: "root-pass", ManagerID: rootID,
+		EvidenceIDs: []string{"implementation"}, DelegationEvidenceIDs: []string{}, Purpose: "Propose order structure", Review: "review-1"})
+	if err == nil {
+		session, err = RecordManagerProposal(session, "root-pass", ManagerProposal{ManagerID: rootID, EvidenceIDs: []string{"implementation"},
+			Hierarchy: []ProposedManager{child}, PublicContracts: []ManagerPublicContract{}, Report: report})
+	}
+	if err == nil {
+		session, err = BeginReverseIteration(root, target, session, ReverseIterationRequest{ID: "orders-pass", ParentIterationID: "root-pass", ManagerID: child.ID,
+			EvidenceIDs: child.EvidenceIDs, DelegationEvidenceIDs: []string{}, Purpose: child.Purpose, Review: "child-review"})
+	}
+	if err == nil {
+		session, err = RecordManagerProposal(session, "orders-pass", ManagerProposal{ManagerID: child.ID, EvidenceIDs: child.EvidenceIDs,
+			Hierarchy: []ProposedManager{}, PublicContracts: []ManagerPublicContract{}, Report: report})
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	return root, target, session, report
+}
+
+// integrateLeafParent integrates the leafChildSession root over its child,
+// binding the child's integration when one is recorded.
+func integrateLeafParent(session BrownfieldSession, report Distillation) (BrownfieldSession, error) {
+	rootID := session.TargetContext.RootManagerID
+	child, _ := findIteration(session, "orders-pass")
+	integration := ManagerIntegration{ManagerID: rootID, ChildProposalDigests: []string{child.Proposal.Digest},
+		ChildContracts: []IntegratedChildContracts{{ManagerID: child.ManagerID, ProposalDigest: child.Proposal.Digest, Contracts: []ManagerPublicContract{}}},
+		Report:         report, Conflicts: []SessionConflict{}}
+	if child.Integration != nil {
+		integration.ChildIntegrationDigests = []ChildIntegrationDigest{{ManagerID: child.ManagerID, ProposalDigest: child.Proposal.Digest,
+			IntegrationDigest: child.Integration.Digest, ReportDigest: child.Integration.Report.Digest}}
+	}
+	return IntegrateManagerProposal(session, "root-pass", rootID, integration)
+}
+
 func sessionReport(discovery Discovery, evidenceID, scopeID, excerpt, statement string) Distillation {
 	evidence := discoveryEvidence(discovery, evidenceID)
 	line := 0

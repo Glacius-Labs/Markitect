@@ -76,15 +76,9 @@ func recoveryManagerInput(store *runStore, dir string, host Host, root string, b
 		if report.ActiveRepairCandidateID != "" {
 			currentID = report.ActiveRepairCandidateID
 		}
-		if task.ParentTask != "" {
-			parent := findTask(report.Tasks, task.ParentTask)
-			if parent == nil || parent.CandidateID == "" {
-				return nil, nil, nil, nil, fmt.Errorf("parent Manager %s has no completed work candidate", task.ParentTask)
-			}
-			currentID = parent.CandidateID
-		}
-		if task.CandidateID != "" && task.ReviewStatus == "rework-requested" {
-			currentID = task.CandidateID
+		currentID, err := workCandidateID(report.Tasks, task, currentID)
+		if err != nil {
+			return nil, nil, nil, nil, err
 		}
 		current, err := store.readCandidate(dir, currentID)
 		if err != nil {
@@ -143,6 +137,25 @@ func invokeManagerBatch(ctx context.Context, calls []managerInvocationCall) []ma
 	}
 	wg.Wait()
 	return results
+}
+
+// workCandidateID selects the branch a Manager work turn starts from: the run
+// base or the parent's work candidate, except that review rework continues
+// from the reviewed candidate. Fresh and recovered turns share it so a resumed
+// run rebuilds the same rework input as the uninterrupted review loop.
+func workCandidateID(tasks []ManagerTask, task ManagerTask, baseID string) (string, error) {
+	currentID := baseID
+	if task.ParentTask != "" {
+		parent := findTask(tasks, task.ParentTask)
+		if parent == nil || parent.CandidateID == "" {
+			return "", fmt.Errorf("parent Manager %s has no completed work candidate", task.ParentTask)
+		}
+		currentID = parent.CandidateID
+	}
+	if task.CandidateID != "" && task.ReviewStatus == "rework-requested" {
+		currentID = task.CandidateID
+	}
+	return currentID, nil
 }
 
 func dependencyCandidateID(task ManagerTask) string {

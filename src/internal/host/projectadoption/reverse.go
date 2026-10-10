@@ -362,6 +362,9 @@ func RecordManagerProposal(session BrownfieldSession, iterationID string, propos
 
 // IntegrateManagerProposal binds child public proposal digests into a parent
 // report. Conflicts remain explicit until an owner resolution records them.
+// It refuses an integration the resulting session would reject, such as a
+// leaf child's after its parent already integrated, so an accepted
+// integration can always be persisted.
 func IntegrateManagerProposal(session BrownfieldSession, iterationID, managerID string, integration ManagerIntegration) (BrownfieldSession, error) {
 	if err := ValidateBrownfieldSession(session); err != nil {
 		return BrownfieldSession{}, err
@@ -388,6 +391,9 @@ func IntegrateManagerProposal(session BrownfieldSession, iterationID, managerID 
 		}
 	}
 	sealSession(&result)
+	if err := ValidateBrownfieldSession(result); err != nil {
+		return BrownfieldSession{}, fmt.Errorf("Manager integration cannot be recorded: %w", err)
+	}
 	return result, nil
 }
 

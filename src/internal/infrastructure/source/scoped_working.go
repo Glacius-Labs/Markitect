@@ -76,8 +76,9 @@ func ObserveSelectedWorking(root string, paths []string) (*SelectedWorkingSnapsh
 		Requested: append([]string(nil), clean...),
 	}
 	var total int64
+	names := exactNames{}
 	for _, repoPath := range clean {
-		data, mode, present, err := readScopedWorkingFile(rootFS, repoPath)
+		data, mode, present, err := readScopedWorkingFile(rootFS, repoPath, names)
 		if err != nil {
 			return nil, err
 		}
@@ -231,8 +232,9 @@ func InventoryWorkingRoots(root string, exactPrefixes []string) (*WorkingRootInv
 	result := &WorkingRootInventory{Identity: identity, Prefixes: prefixes, Entries: []WorkingFileMetadata{}, MissingPrefixes: []string{}}
 	var total int64
 	visited := 0
+	names := exactNames{}
 	for _, prefix := range prefixes {
-		info, present, err := scopedLstat(rootFS, prefix)
+		info, present, err := scopedLstat(rootFS, prefix, names)
 		if err != nil {
 			return nil, err
 		}
@@ -282,13 +284,13 @@ func InventoryWorkingRoots(root string, exactPrefixes []string) (*WorkingRootInv
 	return result, nil
 }
 
-func readScopedWorkingFile(root *os.Root, repoPath string) ([]byte, string, bool, error) {
+func readScopedWorkingFile(root *os.Root, repoPath string, names exactNames) ([]byte, string, bool, error) {
 	parent, name := path.Split(repoPath)
 	parent = strings.TrimSuffix(parent, "/")
 	parentRoot := root
 	ownedParent := false
 	if parent != "" {
-		info, present, err := scopedLstat(root, parent)
+		info, present, err := scopedLstat(root, parent, names)
 		if err != nil {
 			return nil, "", false, err
 		}
@@ -313,6 +315,9 @@ func readScopedWorkingFile(root *os.Root, repoPath string) ([]byte, string, bool
 	}
 	if err != nil {
 		return nil, "", false, fmt.Errorf("stat selected working file %q: %w", repoPath, err)
+	}
+	if exact, err := names.lists(root, parent, name); err != nil || !exact {
+		return nil, "", false, err
 	}
 	if isSymlink(info) {
 		return nil, "", false, fmt.Errorf("refusing to read symlink or reparse point %q", repoPath)
@@ -395,7 +400,7 @@ func scopedPrefixesOverlap(left, right string) bool {
 	return true
 }
 
-func scopedLstat(root *os.Root, repoPath string) (os.FileInfo, bool, error) {
+func scopedLstat(root *os.Root, repoPath string, names exactNames) (os.FileInfo, bool, error) {
 	parts := strings.Split(repoPath, "/")
 	for i := range parts {
 		current := strings.Join(parts[:i+1], "/")
@@ -405,6 +410,9 @@ func scopedLstat(root *os.Root, repoPath string) (os.FileInfo, bool, error) {
 		}
 		if err != nil {
 			return nil, false, fmt.Errorf("stat scoped working path %q: %w", current, err)
+		}
+		if exact, err := names.lists(root, strings.Join(parts[:i], "/"), parts[i]); err != nil || !exact {
+			return nil, false, err
 		}
 		if isSymlink(info) {
 			return nil, false, fmt.Errorf("refusing to traverse symlink or reparse point %q", current)
@@ -417,6 +425,40 @@ func scopedLstat(root *os.Root, repoPath string) (os.FileInfo, bool, error) {
 		}
 	}
 	return nil, false, errors.New("empty scoped working path")
+}
+
+// exactNames caches directory entry names by repository-relative directory
+// for one acquisition. Case-insensitive and Windows 8.3 lookups also find an
+// entry through an alias spelling that Git does not track, so a requested
+// name counts as present only when its directory lists that exact name.
+type exactNames map[string]map[string]bool
+
+func (names exactNames) lists(root *os.Root, dir, name string) (bool, error) {
+	listed, cached := names[dir]
+	if !cached {
+		open := dir
+		if open == "" {
+			open = "."
+		}
+		directory, err := root.Open(open)
+		if err != nil {
+			return false, fmt.Errorf("read scoped directory %q: %w", open, err)
+		}
+		entries, err := directory.Readdirnames(DefaultMaxFiles + 1)
+		_ = directory.Close()
+		if err != nil && !errors.Is(err, io.EOF) {
+			return false, fmt.Errorf("read scoped directory %q: %w", open, err)
+		}
+		if len(entries) > DefaultMaxFiles {
+			return false, fmt.Errorf("scoped directory %q exceeds entry-count limit of %d", open, DefaultMaxFiles)
+		}
+		listed = make(map[string]bool, len(entries))
+		for _, entry := range entries {
+			listed[entry] = true
+		}
+		names[dir] = listed
+	}
+	return listed[name], nil
 }
 
 func openScopedDirectory(parent *os.Root, repoPath string, expected os.FileInfo) (*os.Root, error) {
