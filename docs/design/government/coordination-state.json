@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T12:50:17.120174+00:00",
+  "updatedUtc": "2026-10-10T12:57:07.142560+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator awaits exacthead0deb CI38053284145/allrequiredLinuxWindowsgates, normalmergeifpositive andreportsactualRemoteMain/proof. Root awaits callback withoutpolling/neworder/CaseStudy/KG/release.",
+  "nextAction": "Integrator awaits remaining ownedWindowsrequiredqualityjob114216598160 on0deb thennormalmerge/Mainsmokesifpositive; no newA01/callbackloop. Root verifies actualfinalgates/remoteMain whenreported, KGseparate/studies suspended.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "PR89_HEAD0DEB_PACKAGED_PROJECT_INIT_SMOKES_ROOT_VERIFIED_CURRENT_CI_ACTIVE",
+    "status": "PR89_EXACT_HEAD0DEB_LINUX_ALL_QUALITY_SUCCESS_WINDOWS_REQUIRED_SUITE_RUNNING",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -19245,7 +19245,7 @@
       "scope": "Complete alreadyhuman-authorized PR89/Main package: coherentfinaldocs/sourcepush, actualintegrationbranch/finalPRhead/titlebody, requiredlocalhostedgatesandindependentreviewonexactcandidate, normalmergeifpositive; returnactualPRCImergeremoteMainSHAorblockeronce. No newA01restartloopwithoutconcretedefect/release/study/KG/go-loop."
     },
     "finalMainIntegration": {
-      "status": "CURRENT_CLEAN_HEAD0DEB_REQUIRED_LINUX_WINDOWS_CI_IN_PROGRESS_NO_MERGE",
+      "status": "LINUX_FULL_QUALITY_SUCCESS_WINDOWS_RUNNING_NO_MERGE",
       "finalSourceSha": "0deb37cabae11948ac760ad28ed1c6b397144dcf",
       "productCodeProofSourceSha": "cdd30b0efc540f151404dabe86b022275dc40d83",
       "rootVerified": "CleanexactlocalHEAD51599/publiclsremoteintegrationbranchandPRheadcodex/model-first-operations51599. gitdiffcdd..51599 exactly4docclosurefiles no code delta. ghPR89OPEN Draft baseMain/head51599 correctfinaltitle. Mainlsremote5be48ce unchanged.",
@@ -19262,7 +19262,7 @@
       "ciStatus": "in_progress",
       "requiredQualityJobs": {
         "Quality (windows-latest)": "in_progress",
-        "Quality (ubuntu-24.04)": "in_progress"
+        "Quality (ubuntu-24.04)": "success"
       },
       "remoteMainAtCheck": "5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e",
       "boundary": "CurrentCI pendingnotPASS; no merge/release/study/KG claimed. Alreadyauthorized ordinary exactheadgates thennormalmerge, no bypass/further blanketpermission/newA01restart.",
@@ -19311,6 +19311,19 @@
         "closureSha": "0deb37cabae11948ac760ad28ed1c6b397144dcf",
         "rootInspection": "Exactly2filecommit. BothUnix/Windowspackagedbootstrap smoke now projectinitPreview/checkexact5paths+digest/Previewnoleaves; projectinitwrite/exactwrittenpaths+files/no retiredtop-levelmarkitect.yaml; projectcheck succeededandcoverageconforming. Existingmatrix/gatespreserved/noLegacycommand restored. Canonical rawHEADCIblobSHAdeb66a2454f3a9871d6ab5847863d0427874734870e8132eed294e3968fcf861 equalsconfigpin.",
         "ownerChecks": "ActualWindowspackagedsmoke/2focusedCLItestsPASS/independentworkflowDocsreviewsCLEAR. Currentfullhostedgatespending; oldLinuxFAIL/WindowsCANCELLEDlogsretainednotPASS; noNativeRestart."
+      },
+      "linuxCompletionRootVerified": {
+        "ciRunId": 38053284145,
+        "headSha": "0deb37cabae11948ac760ad28ed1c6b397144dcf",
+        "linuxJobId": 114216598334,
+        "linuxConclusion": "success",
+        "linuxCompletedAtUtc": "2026-10-10T12:56:03Z",
+        "windowsJobId": 114216598160,
+        "windowsStatus": "in_progress",
+        "prState": "OPEN",
+        "prDraft": true,
+        "prHeadRootChecked": "0deb37cabae11948ac760ad28ed1c6b397144dcf",
+        "qualification": "Rootcompactgh exactfullLinuxjobSUCCESS/Windowsrequiredpending/actualPRhead verified. OwnerLinuxfulllogretainedinclnewpackagedsmokes/selectiveadoption; no inferenceofWindowsPASS/Mainmerge/fullcrossplatformacceptance."
       }
     }
   },
