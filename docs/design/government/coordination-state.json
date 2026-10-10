@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T11:53:45.586352+00:00",
+  "updatedUtc": "2026-10-10T12:13:51.376467+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator continues finite Actual28 and reports genuine originalRootRecovery/fullVerify/guardedApply terminal receipts; Root independently verifies final proof and ordinary exactPR89CI before Main. Studies suspended/KG waits acceptedMain, no repeatedorder.",
+  "nextAction": "A01technicalaccepted: Integrator now completes ordinary exactfinalPR89CI/review/Mainmerge; Root checks actualremote/head/gate/mergeevidence. KG onlyMain-to-KG afteracceptedMain; Scientiststudiesremain suspended/separateauthority.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL28_ACTIVE_APPLY_GIT_CLEAN_CAPTURE_CORRECTION_FREEZE_ROOT_VERIFIED",
+    "status": "A01_TECHNICAL_PRODUCT_PROOF_ACCEPTED_ROOT_VERIFIED_NORMAL_PR89_FINAL_GATES_MAIN_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -19160,15 +19160,89 @@
       "boundary": "Actual27fullVerifyPASS/noApplyhistorical preserved, newnormalnativefullacceptance pending. Not Main/release/studyPASS."
     },
     "actual28Preparation": {
-      "status": "ACTIVE_OWNER_REPORTED_SOURCE_BINARY_REMOTE_ROOT_BOUND_CURRENT_RECEIPTS_PENDING",
+      "status": "PASSED_APPLIED_TECHNICAL_A01_ROOT_VERIFIED",
       "sourceSha": "cdd30b0efc540f151404dabe86b022275dc40d83",
       "binarySha256": "d56376cfeba3b9c9a1292557ea005a0430ff81f3576e5d2f1d7a2d33cdbbc0ad",
       "freezeRef": "applyCapturedBasisCorrection",
       "planId": "ac57fa274cf4a21dc8c872cff257ab72",
       "batchId": "a01-apply-clean-filter-ae0942d9a6954a759666cb99730a3d67",
-      "deadlineUtcOwnerReported": "2026-10-10T15:51:43Z",
+      "deadlineUtcOwnerReported": "2026-10-10T15:51:43.0348585Z",
       "runtimeBoundary": "Originalgoal/runtime/modelunchanged ownerreported/finite4hnormalbatch; exactfractionaldeadline/digests/nativehandles/terminal/accounting notyetprovided.",
-      "boundary": "Freshnormalfiniteauthority/fixedbinarythroughoriginalRootRecovery/fullVerify/guardedApply; no old27replay/retrocredit/sourcehotpatch/newgate/framework/studies/release/MainPASS."
+      "boundary": "Freshnormalfiniteauthority/fixedbinarythroughoriginalRootRecovery/fullVerify/guardedApply; no old27replay/retrocredit/sourcehotpatch/newgate/framework/studies/release/MainPASS.",
+      "planDigestRootBound": "sha256:7fc506a435fd38519f450914a1b5096d43ead643b30f9260de182b3747431cd4",
+      "readinessDigestRootBound": "sha256:ee0420a136539cd4925bfd762172957dfdc82a03d60f59912cb55a23033ecde5",
+      "runtimeDigestRootBound": "sha256:0b0bea059d135cf436833a5a8327ddef1d95581cd8483911739e039ded14b9f7",
+      "rootTechnicalAcceptance": {
+        "statePath": "C:/Users/Consiliari/AppData/Local/Temp/markitect-a01-3c5c733388014645b0ca178338078b6a/repo/.markitect/runs/ac57fa274cf4a21dc8c872cff257ab72/states/00000050.json",
+        "revision": 50,
+        "status": "applied",
+        "candidateId": "24c6ac91f957ec8bd8b0be632444c07a",
+        "candidateDigest": "sha256:180e893375f02f806c38283897fe1ac323819349dbb4c4075e854905b9f9b8e1",
+        "verificationPath": "verification/e2bc09014fbca314f528913d4e74daf2.json",
+        "verificationDigest": "sha256:256c0a21e879ca097f7268bb32699b9f0e79d947d94c6d199cc2fea6641ca1c7",
+        "verificationStatus": "verified",
+        "initialVerifierReceipt": "10cd39ed1822f694c70399c50d72cb0d",
+        "fullManagerReceipts": [
+          "bb38105dd8404c47cd710044a15a8f13",
+          "55d27f73b5496d48e5a7e1128471d6e0",
+          "b8ab65f861e21efc677492552f535b04"
+        ],
+        "allAuditsPassed": true,
+        "configuredCheckExitCode": 0,
+        "reviewHistory": [
+          "work-pass",
+          "work-fail",
+          "work-pass",
+          "work-pass",
+          "integrate-pass"
+        ],
+        "applyRecordPath": "apply/41f6106e7241a2d6dbaed4c6cdde52ce.json",
+        "applyStatus": "applied",
+        "appliedAtUtc": "2026-10-10T12:06:26.8497562Z",
+        "verifyCommandId": "2f784d5f54a548ca82fe2efaa6bd411e",
+        "applyCommandId": "2395403beeb34575a5f5e19c62919e18",
+        "bothCommandExitCodes": 0,
+        "appliedFilesWithRootActualByteHashMatches": [
+          "README.md",
+          "docs/greeting.md",
+          "docs/markitect/project.md",
+          "src/greeting.py",
+          "tests/test_greeting.py"
+        ],
+        "candidateDeclaredModes": "All100644; owner guardedApply allbytes/modes audit; Root independently compared fiveactualrawfileSHA256 againstsavedverifiedcandidate/state, no cross-platformPOSIXmodeclaim.",
+        "rootJournalPath": "private/workspaces/1c0447dcbc1712bd5fd6ba905193384d.json",
+        "rootJournalState": "closed",
+        "originalReceiptAndCacheRunId": "9420d6fd1622a0cb1facb5e4a3e44b46",
+        "rootJournalOwnerPlan": "ac57fa274cf4a21dc8c872cff257ab72",
+        "method": "Exactimmutable/shortsharedReadWriteDelete journalcopy, disposebeforeparse; savedVerify/Candidate/Apply/commands andfivecurrentbytes checked; not synthetic or guessed PASS."
+      },
+      "lifecycleAuditRootBound": {
+        "terminalBatchSha256": "55e73c743ada2b296c68ed2717c869cfba7e53d2e0622265d183e5b0e3d14345",
+        "auditSha256": "0337a828d3bc362ecb9800dd3346ba4724fbecae4b57dc599190bba870c2beee",
+        "rootVerified": "Exactbothfilehashes matchowner; auditmetadata examined withspecificfreshsession-turn/Helper/parallel/originalrecoverysinglephysicalstart0inspectionstarts/closure. Independentownerreadonlyauditunderlyingtrace union, notprovider-globalcontainmentclaim.",
+        "nativeSourceDocsOverlapSeconds": 34.3782999,
+        "helperRunId": "e93522ca7dde8938951ce8acbe6f887f",
+        "helperSessionId": "01a125aa-b601-7cb1-983f-a12f2f6dfba2",
+        "helperTurnId": "01a125aa-b6f7-7dd1-8813-f13b3097df94",
+        "helperJournalState": "closed",
+        "helperBytes": 683,
+        "helperPath": "tests/test_greeting.py",
+        "helperContentSha256": "ec79464490f51e3932dc76f3898d4f0a3d2bf2dcca68653b7c09a80ed1dc7c99",
+        "originalRootSessionId": "01a125ae-78f9-7121-aba8-402b231b5961",
+        "originalRootTurnId": "01a125ae-7b9e-7602-886f-abd0c3ad9a6a",
+        "originalPhysicalStartsAudit": 1,
+        "recoveryInspectionStartsAudit": 0,
+        "distinctIntegrationReviewReceipt": "3ba59e31a47b1bf690e7c94812db2c6a",
+        "ownedActiveChildrenAudit": 0,
+        "costQualification": "Cumulative184combined180providers25055209partialknownlowerbound ownerunion; originalRoot99416maximumcountedonce despite recovered receipt unknownzero; helpersnotseparatelyitemized/noinvoiceorcompleteefficiencyclaim."
+      },
+      "acceptanceBoundary": "Technical A01 normalnative productworkflow/recovery/parallel/helper/reviews/fullVerify/guardedApply accepted forfixedcdd30/d563 candidate. Earlierfailurehistory preserved. Not complete usability/general semantic quality guarantee, external humanacceptance,method/studywinner,Mainmerge,Release orKGintegration."
+    },
+    "a01AcceptedMainIntegrationDispatch": {
+      "sentUtc": "2026-10-10T12:13:51.376456+00:00",
+      "threadId": "01a121a0-0417-71c1-9e4b-be742f8c1146",
+      "toolAccepted": true,
+      "scope": "Complete alreadyhuman-authorized PR89/Main package: coherentfinaldocs/sourcepush, actualintegrationbranch/finalPRhead/titlebody, requiredlocalhostedgatesandindependentreviewonexactcandidate, normalmergeifpositive; returnactualPRCImergeremoteMainSHAorblockeronce. No newA01restartloopwithoutconcretedefect/release/study/KG/go-loop."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
