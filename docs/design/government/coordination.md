@@ -2195,3 +2195,7 @@ Batcha01-serialized-helpere2dcc8/newPlanc3308d42/digestdbfff928/deadline11:28:41
 ### Actual18 census stability rejection under bounded audit
 
 Owner initialobservere36720f107:28:42.158-07:30:39.481Exit2/boundaryfalse/state13failed; Docsobservefullcoverage rejects membership/mode/HEAD/indexchanged duringcensus. RootworkreviewPASS/exact2950-bin33c63unchanged, noResume/Verify/Apply. BoundedindependentCensuscaller/comparison+originalnativeauditactive, causeunknown/no speculativeguardweakening/newframework/Rootretryorder. Currentstarts/lifecycle/costunionunknownnotzero; Actual17helperoverlapdistinctfixpreserved.
+
+### Actual18 operational census discrepancy and helper lifecycle
+
+Owner Docscompleted07:30:34.503 thenfreshCensusfailednearSourcehelperstart37.785; genericerrorcannotidentifychangedpath/crossworkspacecause. Root frozen2950 census470/487 allmembership vs576/588 existingoperationalcontentexclusion confirmedinconsistency, notactualpathproof. NarrowexistingOperationalmetadatafix/testactive retainingnonoperationalSource/toolowned/HEAD/index/gitlinks/safety. Root exactnativehelper01a124b88c9b/turn8ef5 interrupted/errornull/completedAtnull/notLoaded; owner ownprocessesabsent/unknownjournals-workspacespreserved. Nohelperdelivery/Rootintegration/Resume/Verify/Apply. Fiveproviders/638487partialhelpercostunknown; cumulative67/64/12706638 ownerunionnotRootrawchecked/noinvoiceclaim. No newRootorder/replay.

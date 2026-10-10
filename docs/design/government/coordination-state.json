@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T07:33:01.948542+00:00",
+  "updatedUtc": "2026-10-10T07:37:10.602657+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18465,7 +18465,7 @@
       "history": "Old16987binary archived unchanged ownerreported. Actual17 NOTPASSED and actual parent-edit timeline retained in three docs, no oldPlan rewriting or retrospective credit."
     },
     "actual18Preparation": {
-      "status": "INITIAL_RUN_TERMINAL_BEFORE_ROOT_BOUNDARY_CENSUS_STABILITY_REJECTION_CAUSE_UNDER_BOUNDED_AUDIT",
+      "status": "TERMINAL_CENSUS_OPERATIONAL_MEMBERSHIP_INCONSISTENCY_FIX_ACTIVE_EXACT_ERROR_PATH_UNPROVEN",
       "freezeRef": "helperSerializationCorrectionFreeze",
       "planId": "c3308d42c22507438be30eb4de9c1d86",
       "batchId": "a01-serialized-helper-e2dcc8ff334d4e6d8fc56100b41b4305",
@@ -18496,6 +18496,30 @@
         ],
         "next": "Bounded independent Census comparison/caller and original native evidence audit active. Exact cause not established; no speculative guard weakening/general recovery/new retry instructed by Root.",
         "accounting": "Current whole starts/native child terminal receipt/cost union unknown until owner closure, not zero. Actual17 known parent-helper overlap remains a distinct corrected issue."
+      },
+      "censusAudit": {
+        "ownerTimeline": "Docs native completed07:30:34.503Z then fresh fullCensus failed while sibling Source helper starting about07:30:37.785Z. Generic error does not identify exact changed path; no inferred cross-workspace source edit.",
+        "rootSourceInspection": "Frozen2950 census.go470 and487 compare all path membership/modes; selectedContentPaths and selectedHeadContentPaths576/588 already exclude isOperational(name,options). Concrete operational membership/content-binding inconsistency source confirmed, not proof exact actual failure path.",
+        "ownerRepair": "Existing Operational predicate only for semantic metadata comparison; retain source/nonoperational tool-owned/HEAD/index/gitlink/safety guards. Narrow two-file fix/test in progress, no new framework or general bypass.",
+        "nativeHelperRootVerified": {
+          "threadId": "01a124b8-8c9b-7b41-9e4f-be096b036f0b",
+          "turnId": "01a124b8-8ef5-73d1-9bf7-216ef7db07c6",
+          "status": "interrupted",
+          "error": null,
+          "completedAt": null,
+          "threadStatus": "notLoaded"
+        },
+        "ownerLifecycle": "Own Run/helper Codex processes absent, preexisting UI untouched. Original uncertain journals/workspaces preserved, no delivered helper or Rootintegration/Resume/Verify/Apply."
+      },
+      "finalAccountingOwnerReported": {
+        "combinedStarts": 5,
+        "providerStarts": 5,
+        "partialEstimatedCostMicros": 638487,
+        "helperCost": "unknown",
+        "cumulativeCombinedStarts": 67,
+        "cumulativeProviderStarts": 64,
+        "cumulativePartialEstimatedCostMicros": 12706638,
+        "qualification": "Owner union, Root raw receipt binding pending; incomplete cost coverage never treated zero/actual invoice/efficiency."
       }
     }
   },
