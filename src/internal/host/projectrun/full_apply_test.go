@@ -168,6 +168,106 @@ func TestFinalCandidateCoverageUsesRepositoryCensus(t *testing.T) {
 			t.Fatalf("transitional path did not block final candidate validation: %v", err)
 		}
 	})
+	// The remaining candidates change the model, so they carry the regenerated
+	// document the run adds before closure.
+	validateModelChange := func(t *testing.T, root string, base *Project, files map[string]File) error {
+		t.Helper()
+		candidate := candidateData{ID: "candidate-model-change", Files: files}
+		compiled, err := finalProjectForCandidate(host, root, base, candidate)
+		if err != nil {
+			return err
+		}
+		document, err := projectwork.Document(compiled, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		documentPath := projectwork.DocumentPath(compiled.Config)
+		candidate.Files[documentPath] = File{Path: documentPath, Mode: "100644", Content: []byte(document)}
+		return validateFinalCandidate(host, root, base, candidate, PlanRecord{ModelDigest: compiled.Report.ModelDigest})
+	}
+	const ordersArtifact, ordersFile = ".markitect/model/orders/artifact.yaml", "src/orders/implementation.txt"
+	writeFile := func(path, content string) File { return File{Path: path, Mode: "100644", Content: []byte(content)} }
+	t.Run("rename modelled file", func(t *testing.T) {
+		root := makeFullVerifyFixture(t)
+		base := loadHead(t, root)
+		const renamed = "src/orders/renamed.txt"
+		files := map[string]File{
+			ordersFile:     {Path: ordersFile, Delete: true},
+			renamed:        writeFile(renamed, string(base.Snapshot.Files[ordersFile])),
+			ordersArtifact: writeFile(ordersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", renamed)),
+		}
+		if err := validateModelChange(t, root, base, files); err != nil {
+			t.Fatalf("rename with its Artifact path moved failed final candidate validation: %v", err)
+		}
+	})
+	t.Run("delete modelled file", func(t *testing.T) {
+		root := makeFullVerifyFixture(t)
+		const notes = "src/orders/notes.txt"
+		writeE2E(t, root, ordersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", ordersFile+", "+notes))
+		writeE2E(t, root, notes, "orders notes\n")
+		gitE2E(t, root, "add", ordersArtifact, notes)
+		gitE2E(t, root, "commit", "-m", "realize orders notes")
+		base := loadHead(t, root)
+		files := map[string]File{
+			notes:          {Path: notes, Delete: true},
+			ordersArtifact: writeFile(ordersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", ordersFile)),
+		}
+		if err := validateModelChange(t, root, base, files); err != nil {
+			t.Fatalf("delete with its Artifact path dropped failed final candidate validation: %v", err)
+		}
+	})
+	t.Run("transitional file modelled in place", func(t *testing.T) {
+		root := makeFullVerifyFixture(t)
+		manifest, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		const legacy = "src/orders/legacy.txt"
+		transitional := strings.Replace(string(manifest), "exclusions: []\n", "exclusions: []\ntransitionalExclusions:\n  - path: "+legacy+"\n    reason: Existing file awaits explicit modeling\n", 1)
+		if transitional == string(manifest) {
+			t.Fatal("could not add a transitional exclusion")
+		}
+		writeE2E(t, root, projectwork.ManifestPath, transitional)
+		writeE2E(t, root, legacy, "legacy orders bytes\n")
+		gitE2E(t, root, "add", projectwork.ManifestPath, legacy)
+		gitE2E(t, root, "commit", "-m", "mark legacy orders file transitional")
+		base := loadHead(t, root)
+		if base.Coverage == nil || !base.Coverage.Accounted || base.Coverage.Conforming {
+			t.Fatalf("precondition: census must be accounted but nonconforming: %+v", base.Coverage)
+		}
+		files := func() map[string]File {
+			return map[string]File{
+				projectwork.ManifestPath: writeFile(projectwork.ManifestPath, string(manifest)),
+				ordersArtifact:           writeFile(ordersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", ordersFile+", "+legacy)),
+			}
+		}
+		if err := validateModelChange(t, root, base, files()); err != nil {
+			t.Fatalf("transitional file modelled in place failed final candidate validation: %v", err)
+		}
+		// The run renders its document from the same closure compile.
+		store, err := newRunStore(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.MkdirAll(filepath.Join(root, filepath.FromSlash(RunsPath)), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		dir, err := store.createRun("00000000000000000000000000000001")
+		if err != nil {
+			t.Fatal(err)
+		}
+		completed, err := completeCandidateDocument(host, root, store, dir, base, candidateData{ID: "00000000000000000000000000000002", Files: files()})
+		if err != nil {
+			t.Fatal(err)
+		}
+		compiled, err := finalProjectForCandidate(host, root, base, completed)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := validateFinalCandidate(host, root, base, completed, PlanRecord{ModelDigest: compiled.Report.ModelDigest}); err != nil {
+			t.Fatalf("run-generated document did not match the closure compile: %v", err)
+		}
+	})
 }
 
 func TestFullApplyRejectsUnclassifiedWorktreeAddedAfterPlan(t *testing.T) {

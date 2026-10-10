@@ -23,8 +23,10 @@ func requireFullCoverage(project *Project) error {
 
 // The Host owns its readable model view. It is added after implementation
 // integration, then verified at the same immutable snapshot as every other file.
-func completeCandidateDocument(host Host, root string, store *runStore, dir string, base *Snapshot, candidate candidateData) (candidateData, error) {
-	project, err := projectForCandidate(host, root, base, candidate)
+// It renders the closure compile, which may bind census files the candidate
+// now models, so validateCandidateDocument sees the same view.
+func completeCandidateDocument(host Host, root string, store *runStore, dir string, base *Project, candidate candidateData) (candidateData, error) {
+	project, err := finalProjectForCandidate(host, root, base, candidate)
 	if err != nil {
 		return candidate, err
 	}

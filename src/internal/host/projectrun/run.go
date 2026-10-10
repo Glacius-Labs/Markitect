@@ -1108,7 +1108,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 	if err := validateReportClosure(report); err != nil {
 		return blockRun(store, report, err)
 	}
-	finalCandidate, err = completeCandidateDocument(host, root, store, dir, project.Snapshot, finalCandidate)
+	finalCandidate, err = completeCandidateDocument(host, root, store, dir, project, finalCandidate)
 	if err != nil {
 		return blockRun(store, report, err)
 	}
@@ -2111,7 +2111,13 @@ func finalProjectForCandidate(host Host, root string, base *Project, c candidate
 	if err != nil {
 		return nil, err
 	}
-	return projectwork.ClassifyCandidate(base, compiled)
+	var deleted []string
+	for _, path := range sortedFileKeys(c.Files) {
+		if c.Files[path].Delete {
+			deleted = append(deleted, path)
+		}
+	}
+	return projectwork.ClassifyCandidate(base, compiled, deleted...)
 }
 func candidateSnapshotHash(base *Snapshot, c candidateData) string {
 	snap, err := snapshotWithCandidate(base, c)

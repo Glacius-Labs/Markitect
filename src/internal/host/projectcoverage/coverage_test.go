@@ -364,6 +364,33 @@ func TestRequiredArtifactCannotBeHiddenOrDeleted(t *testing.T) {
 	}
 }
 
+func TestCandidateDeleteLeavesTheUniverse(t *testing.T) {
+	universe := testUniverse(PathState{Path: "src/old.go", Head: FileState{Present: true, Mode: "100644", Digest: "old"}})
+	universe.FixedRevision = true
+	candidate, err := ValidateCandidate(universe, []Delta{{Path: "src/old.go", Delete: true}, {Path: "src/never.go", Delete: true}}, emptyModel(), Options{}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !candidate.Accounted || !candidate.Conforming || len(candidate.Entries) != 0 {
+		t.Fatalf("deleted paths remained in the candidate universe: %+v", candidate)
+	}
+}
+
+func TestUnboundPathsListOnlyNewlyAdmittedUnreadFiles(t *testing.T) {
+	universe := testUniverse(
+		PathState{Path: "legacy/old.txt", Worktree: FileState{Present: true, Mode: "100644"}},
+		PathState{Path: "src/read.go", Worktree: FileState{Present: true, Mode: "100644", Digest: "read"}},
+		PathState{Path: "src/gone.go", Head: FileState{Present: true, Mode: "100644"}},
+	)
+	transitional := Options{Transitional: []TransitionalExclusion{{Path: "legacy/", Reason: "awaits modeling"}}}
+	if paths, err := UnboundPaths(universe, transitional); err != nil || len(paths) != 0 {
+		t.Fatalf("excluded or read files listed as unbound: %v %v", paths, err)
+	}
+	if paths, err := UnboundPaths(universe, Options{}); err != nil || len(paths) != 1 || paths[0] != "legacy/old.txt" {
+		t.Fatalf("newly admitted unread file = %v %v", paths, err)
+	}
+}
+
 func TestOperationalToolStateIsExplicitAndDoesNotChangeStableDigest(t *testing.T) {
 	options := Options{ToolPaths: []ToolPath{{Selector: ".markitect/runs/", Owner: "projectrun", Operational: true}}}
 	first := testUniverse(PathState{Path: ".markitect/runs/run-1/state.json", Worktree: FileState{Present: true, Mode: "100644"}})

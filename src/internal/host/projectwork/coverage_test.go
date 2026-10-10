@@ -165,6 +165,153 @@ func TestCandidateCoverageKeepsTransitionalPathsNonconforming(t *testing.T) {
 	}
 }
 
+// A path the candidate deletes leaves the census. Renaming or deleting a
+// modelled file together with its Artifact path must not leave the old path
+// behind as unclassified.
+func TestCandidateCoverageDropsRenamedAndDeletedPaths(t *testing.T) {
+	root, head := modelledCoverageFixture(t, nil, map[string]string{"src/a.txt": "a\n", "src/b.txt": "b\n"}, "src/a.txt", "src/b.txt")
+	for _, revision := range []string{"", head} {
+		base, err := Load(root, revision)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if base.Coverage == nil || !base.Coverage.Conforming {
+			t.Fatalf("precondition (revision %q): census not conforming: %+v", revision, base.Coverage)
+		}
+		cases := map[string]*snapshot.Snapshot{
+			"rename": changedSnapshot(base.Snapshot, map[string]string{"src/c.txt": "b\n", coverageArtifactPath: coverageArtifact("src/a.txt", "src/c.txt")}, "src/b.txt"),
+			"delete": changedSnapshot(base.Snapshot, map[string]string{coverageArtifactPath: coverageArtifact("src/a.txt")}, "src/b.txt"),
+		}
+		for name, s := range cases {
+			candidate := classifiedCandidate(t, base, s)
+			if !candidate.Coverage.Conforming {
+				t.Errorf("revision %q %s: candidate not conforming: %+v", revision, name, candidate.Coverage.Findings)
+			}
+			for _, entry := range candidate.Coverage.Entries {
+				if entry.Path == "src/b.txt" {
+					t.Errorf("revision %q %s: deleted path is still classified: %+v", revision, name, entry)
+				}
+			}
+		}
+	}
+}
+
+// Modelling a transitional file in place drops its exclusion and adds it to
+// an Artifact without rewriting it. The census never read its bytes, so they
+// are read on demand from the base source instead of reported unavailable.
+func TestCandidateCoverageReadsTransitionalFileModelledInPlace(t *testing.T) {
+	root, head := modelledCoverageFixture(t, []string{"src/legacy.txt"}, map[string]string{"src/a.txt": "a\n", "src/legacy.txt": "legacy\n"}, "src/a.txt")
+	for _, revision := range []string{"", head} {
+		base, err := Load(root, revision)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if base.Coverage == nil || !base.Coverage.Accounted || base.Coverage.Conforming {
+			t.Fatalf("precondition (revision %q): census must be accounted but nonconforming: %+v", revision, base.Coverage)
+		}
+		s := changedSnapshot(base.Snapshot, map[string]string{ManifestPath: coverageManifest(), coverageArtifactPath: coverageArtifact("src/a.txt", "src/legacy.txt")})
+		candidate := classifiedCandidate(t, base, s)
+		if !candidate.Coverage.Conforming {
+			t.Errorf("revision %q: in-place modelled transitional file is not conforming: status=%s findings=%+v", revision, candidate.Report.Status, candidate.Coverage.Findings)
+		}
+		if string(candidate.Snapshot.Files["src/legacy.txt"]) != "legacy\n" {
+			t.Errorf("revision %q: candidate did not bind the modelled file's base bytes", revision)
+		}
+	}
+}
+
+// Ignored and transitional files are absent from snapshots, so a candidate
+// that deletes one names it. The named path must leave the census as well.
+func TestCandidateCoverageDropsNamedDeletesOfCensusOnlyFiles(t *testing.T) {
+	root, head := modelledCoverageFixture(t, []string{"src/legacy.txt"}, map[string]string{"src/a.txt": "a\n", "src/legacy.txt": "legacy\n"}, "src/a.txt")
+	base, err := Load(root, head)
+	if err != nil {
+		t.Fatal(err)
+	}
+	compiled, err := FromSnapshot(base.Root, base.Snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	transitional, err := ClassifyCandidate(base, compiled, "src/legacy.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !transitional.Coverage.Conforming {
+		t.Errorf("deleting the only transitional file left the candidate nonconforming: %+v", transitional.Coverage.Findings)
+	}
+	ignored, err := ClassifyCandidate(base, compiled, "README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range ignored.Coverage.Entries {
+		if entry.Path == "README.md" {
+			t.Errorf("deleted ignored file is still classified: %+v", entry)
+		}
+	}
+	unused := false
+	for _, finding := range ignored.Coverage.Findings {
+		unused = unused || finding.Code == "coverage.ignore-unused" && finding.Path == "README.md"
+	}
+	if !unused {
+		t.Errorf("exact ignore entry for a deleted file was not reported unused: %+v", ignored.Coverage.Findings)
+	}
+}
+
+const coverageArtifactPath = ModelRoot + "/code.yaml"
+
+// modelledCoverageFixture commits a full-coverage project whose required
+// Artifact realizes artifactPaths, with the readme ignored and the given
+// transitional exclusions and files.
+func modelledCoverageFixture(t *testing.T, transitional []string, files map[string]string, artifactPaths ...string) (string, string) {
+	t.Helper()
+	root := testGitRoot(t)
+	if _, err := Init(root, "Coverage fixture", true); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, root, ManifestPath, coverageManifest(transitional...))
+	writeFile(t, root, projectcoverage.IgnorePath, "apiVersion: "+projectcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries:\n  - path: README.md\n    reason: Fixture readme outside the model\n")
+	writeFile(t, root, ModelRoot+"/goal.yaml", statementDefinition("Realize the fixture."))
+	writeFile(t, root, coverageArtifactPath, coverageArtifact(artifactPaths...))
+	for name, content := range files {
+		writeFile(t, root, name, content)
+	}
+	gitTest(t, root, "add", ".")
+	gitTest(t, root, "commit", "-m", "modelled coverage fixture")
+	return root, strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+}
+
+func coverageManifest(transitional ...string) string {
+	text := "apiVersion: " + APIVersion + "\nname: Coverage fixture\ncoverageMode: full\ndocumentPath: " + DefaultDocumentPath +
+		"\nmodelFiles:\n  - " + initManagerPath + "\n  - " + ModelRoot + "/goal.yaml\n  - " + coverageArtifactPath + "\ninventoryRoots: []\nexclusions: []\n"
+	if len(transitional) > 0 {
+		text += "transitionalExclusions:\n"
+		for _, path := range transitional {
+			text += "  - path: " + path + "\n    reason: Existing file awaits explicit modeling\n"
+		}
+	}
+	return text
+}
+
+func coverageArtifact(paths ...string) string {
+	return "apiVersion: " + APIVersion + "\nkind: Artifact\nmetadata:\n  name: project-code\n  namespace: \"\"\npurpose: Realizes the project goal.\nspec:\n  role: implementation\n  realizes:\n    - apiVersion: " + APIVersion +
+		"\n      kind: Statement\n      namespace: \"\"\n      name: project-goal\n  paths: [" + strings.Join(paths, ", ") + "]\n  required: true\n"
+}
+
+func changedSnapshot(base *snapshot.Snapshot, writes map[string]string, deletes ...string) *snapshot.Snapshot {
+	result := &snapshot.Snapshot{ID: base.ID, Provisional: base.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
+	for file, data := range base.Files {
+		result.Files[file], result.Modes[file] = append([]byte(nil), data...), base.Modes[file]
+	}
+	for file, content := range writes {
+		result.Files[file], result.Modes[file] = []byte(content), snapshot.RegularMode
+	}
+	for _, file := range deletes {
+		delete(result.Files, file)
+		delete(result.Modes, file)
+	}
+	return result
+}
+
 func classifiedCandidate(t *testing.T, base *Project, s *snapshot.Snapshot) *Project {
 	t.Helper()
 	compiled, err := FromSnapshot(base.Root, s)

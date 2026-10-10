@@ -76,17 +76,46 @@ func Coverage(root, revision string) (projectcoverage.Report, error) {
 // ClassifyCandidate returns candidate, compiled from a snapshot derived from
 // base, with full coverage classified against base's repository census plus
 // the files the candidate adds, replaces or deletes. Ignored, transitional and
-// operational paths absent from both snapshots keep their census state, so an
-// unchanged candidate is classified exactly like its base.
-func ClassifyCandidate(base, candidate *Project) (*Project, error) {
+// operational files are absent from snapshots, so a candidate that deletes one
+// names it in deleted; other such files keep their census state, and an
+// unchanged candidate is classified exactly like its base. Files the
+// candidate's policy no longer excludes, such as a transitional file it now
+// models, are read from the base source and compiled into the candidate.
+func ClassifyCandidate(base, candidate *Project, deleted ...string) (*Project, error) {
 	if candidate == nil || candidate.Config.CoverageMode != "full" {
 		return candidate, nil
 	}
 	if base == nil || base.census == nil || base.Snapshot == nil || candidate.Snapshot == nil {
 		return nil, fmt.Errorf("candidate coverage requires the repository census of its base")
 	}
-	coverage, err := projectcoverage.ValidateCandidate(base.census, candidateDelta(base.Snapshot, candidate.Snapshot), candidate.Report,
-		coverageOptions(candidate.Config), candidate.Config.InventoryRoots, legacyExclusions(candidate.Config.Exclusions))
+	options := coverageOptions(candidate.Config)
+	delta := candidateDelta(base.Snapshot, candidate.Snapshot, deleted)
+	overlaid, err := projectcoverage.Overlay(base.census, delta, options)
+	if err != nil {
+		return nil, fmt.Errorf("classify candidate against the repository census: %w", err)
+	}
+	unbound, err := projectcoverage.UnboundPaths(overlaid, options)
+	if err != nil {
+		return nil, err
+	}
+	if len(unbound) > 0 {
+		read, readErr := readCensusFiles(base, unbound)
+		if readErr != nil {
+			return nil, readErr
+		}
+		extended := &snapshot.Snapshot{ID: candidate.Snapshot.ID, Provisional: candidate.Snapshot.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
+		for _, input := range []*snapshot.Snapshot{candidate.Snapshot, read} {
+			for file, data := range input.Files {
+				extended.Files[file], extended.Modes[file] = data, input.Modes[file]
+			}
+		}
+		if candidate, err = FromSnapshot(base.Root, extended); err != nil {
+			return nil, err
+		}
+		delta = candidateDelta(base.Snapshot, candidate.Snapshot, deleted)
+	}
+	coverage, err := projectcoverage.ValidateCandidate(base.census, delta, candidate.Report,
+		options, candidate.Config.InventoryRoots, legacyExclusions(candidate.Config.Exclusions))
 	if err != nil {
 		return nil, fmt.Errorf("classify candidate against the repository census: %w", err)
 	}
@@ -99,7 +128,7 @@ func ClassifyCandidate(base, candidate *Project) (*Project, error) {
 	return &classified, nil
 }
 
-func candidateDelta(base, candidate *snapshot.Snapshot) []projectcoverage.Delta {
+func candidateDelta(base, candidate *snapshot.Snapshot, deleted []string) []projectcoverage.Delta {
 	var delta []projectcoverage.Delta
 	for file, data := range candidate.Files {
 		mode := candidate.Modes[file]
@@ -118,8 +147,35 @@ func candidateDelta(base, candidate *snapshot.Snapshot) []projectcoverage.Delta 
 			delta = append(delta, projectcoverage.Delta{Path: file, Delete: true})
 		}
 	}
+	for _, file := range uniqueSorted(deleted) {
+		_, inBase := base.Files[file]
+		_, inCandidate := candidate.Files[file]
+		if !inBase && !inCandidate {
+			delta = append(delta, projectcoverage.Delta{Path: file, Delete: true})
+		}
+	}
 	sort.Slice(delta, func(i, j int) bool { return delta[i].Path < delta[j].Path })
 	return delta
+}
+
+// readCensusFiles reads files the census skipped from the same source it
+// observed: the fixed revision, or the working tree with an unchanged identity.
+func readCensusFiles(base *Project, paths []string) (*snapshot.Snapshot, error) {
+	if base.census.FixedRevision {
+		selected, err := source.LoadSelected(base.Root, base.census.Revision, paths)
+		if err != nil {
+			return nil, fmt.Errorf("read census files the candidate now models: %w", err)
+		}
+		return selected.Snapshot, nil
+	}
+	observed, err := source.ObserveSelectedWorking(base.Root, paths)
+	if err != nil {
+		return nil, fmt.Errorf("read census files the candidate now models: %w", err)
+	}
+	if observed.Identity.Digest != base.census.IdentityDigest || len(observed.MissingPaths) != 0 {
+		return nil, fmt.Errorf("repository changed since its census; reload the project")
+	}
+	return observed.Snapshot, nil
 }
 
 func ToolPaths(config Config) []projectcoverage.ToolPath {
