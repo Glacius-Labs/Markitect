@@ -2339,3 +2339,7 @@ Root cleanlocal51599a82/publicintegrationandcodex-model-first-operations51599 co
 ### Exact-head Linux quality gate failed; separated fixture repairs active
 
 RootghCI38051318813head51599 Linuxjob114210853035completedFAIL/Windows114210852869in_progress confirmed. Owner savedoriginallog/concreteCRLFfixtureautocrlfpin/Verifieralias/runtime-modefixturediagnoses; threeboundedagents separatetestfiles, sourceguardsnotweakened/noA01restart/noMerge. Exactdeltareview/newnormalCI next, diagnosesstillownerreportednotRootrawsourceverified/no duplicateorder.
+
+### Portability correction inspected; exact new-head CI active
+
+Root cleanlocal/publicbothrefs8c22ee22/Main5be48ce/newCI38051856305head8c22LinuxWindowsin_progress verified. Source930c4filecommit/setupdiff inspected: POSIXexactpermissions/Windowsreadonly-writablematchingAgentExec; strictfingerprint/raceguards retained; real0600/0444tests+CRLFautocrlfpinned/wirealiasesprecisenegatives. OwnerFullSetup7.055/CRLF38.958/aliases0.934/vetfixedroot-artifacts-context-impact/reviewsPASS. PreviousCI380513LinuxFAILpreserved/WindowsconcurrencycancelpartiallognotPASS; A01fixedcdd-d563sourceboundnotfresh8cproof. Currenthostedgatespending/noMerge/MainPASS/newnativeRestart/newRootorder.
