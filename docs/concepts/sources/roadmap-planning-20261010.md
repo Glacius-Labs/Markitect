@@ -88,3 +88,13 @@ Recorder's note: the integrator asked which third-party libraries Markitect's in
 ```text
 Markitect should use any library that helps to achieve its goal. We shouldnt be unnecessarily strict about it 
 ```
+
+## Knowledge graph impact routing
+
+Recorder's note: for KG-02 the integrator put three questions to the owner as a multiple-choice form, each with a recommended option. The owner selected these options (labels as shown, German):
+
+```text
+Q1 (purpose and meaning-free edits widen impact to the whole project): "Eng routen (Empfohlen)"
+Q2 (Decisions invisible; any change triggers a full review): "Sichtbar + eng (Empfohlen)"
+Q3 (mark impact elements as change or context): "Markieren, nichts weglassen (Empfohlen)"
+```
