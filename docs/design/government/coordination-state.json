@@ -1,6 +1,23 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T13:56:00.2257442Z",
+  "updatedUtc": "2026-10-10T14:01:38Z",
+  "onboardingReplayCorrection20261010": {
+    "status": "SOURCE_DELTA_AND_PUBLIC_REFS_ROOT_VERIFIED_EXACT_NEW_HEAD_CI_RUNNING",
+    "checkedUtc": "2026-10-10T14:01:38Z",
+    "sourceSha": "669cecd2f3594d452a2ea820682ee8d1922d0b1b",
+    "rootVerified": "Clean exact local Integration HEAD and both public product refs; exactly one script changed. Diff replaces retired init with project init, validates apiVersion/name/digest/exact five ordered Preview/Write paths/read-only Preview/all written leaves/no retired top-level model. Remaining check/context/render/Verify/Impact code unchanged. No workflow/matrix/gate change.",
+    "ciRunId": 38057729908,
+    "ciStatus": "in_progress_both_platforms",
+    "prState": "OPEN_DRAFT_EXACT_669CE_HEAD",
+    "remoteMainSha": "5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e",
+    "mergeCommit": "a5140cc446388f4156fd05c11a20a107bbd9e5af",
+    "sameTreeRootVerified": "e32118afb94b03fd4eca84cc4d66117ca9c99a91",
+    "ownerValidation": "Independent review CLEAR and all six local Windows Replay outcomes PASS on exact clean669ce build/vcs.modified=false/binary da3258dd1b7554eaef3bdf4ed3bd23d234ac9302a755369f99ed8d2758b5adc5; fixedRoot/artifact/diff PASS. Root inspected source and public comment, did not repeat suite or inspect binary/test payload.",
+    "publicEvidenceComment": "https://github.com/Glacius-Labs/Markitect/pull/89#issuecomment-6098244897",
+    "originalFailedLogSha256OwnerAttestedInComment": "784acb29b95a6e83c8f7578aa6185c3c42bc7c9fa7b7f061f048d098d81dab2d",
+    "afterCursor": "fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:23",
+    "next": "Owner holds head until actual terminal gates, then regular authorized merge and Main smoke if positive. No duplicate Root instruction, proof-only PR commit, new A01, release or studies. Prior failed/cancelled CI preserved."
+  },
   "ciStabilizationHumanAdvice20261010": {
     "status": "HEAD_REMAINED_FROZEN_WINDOWS_TERMINAL_ONBOARDING_REPLAY_FAILURE_OWNER_REPAIR_ACTIVE",
     "authority": "Direct human Claude advice: stop PR pushes while Windows runs, collect fixes, move evidence off PR branch, use Linux preflight or separate probe branch; record systemic CRLF and MSIX workspace-root followups.",
@@ -17899,7 +17916,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "PR89_EXACT_HEAD0DEB_LINUX_SUCCESS_WINDOWS_ONBOARDING_REPLAY_FAILURE_OWNER_REPAIR_ACTIVE",
+    "status": "PR89_EXACT_HEAD669CE_ONBOARDING_CORRECTION_VERIFIED_BOTH_REQUIRED_CI_JOBS_RUNNING",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -19273,8 +19290,8 @@
       "scope": "Complete alreadyhuman-authorized PR89/Main package: coherentfinaldocs/sourcepush, actualintegrationbranch/finalPRhead/titlebody, requiredlocalhostedgatesandindependentreviewonexactcandidate, normalmergeifpositive; returnactualPRCImergeremoteMainSHAorblockeronce. No newA01restartloopwithoutconcretedefect/release/study/KG/go-loop."
     },
     "finalMainIntegration": {
-    "status": "LINUX_SUCCESS_WINDOWS_TERMINAL_ONBOARDING_REPLAY_FAILURE_NO_MERGE",
-      "finalSourceSha": "0deb37cabae11948ac760ad28ed1c6b397144dcf",
+      "status": "EXACT_HEAD669CE_BOTH_PLATFORM_CI_RUNNING_NO_MERGE",
+      "finalSourceSha": "669cecd2f3594d452a2ea820682ee8d1922d0b1b",
       "productCodeProofSourceSha": "cdd30b0efc540f151404dabe86b022275dc40d83",
       "rootVerified": "CleanexactlocalHEAD51599/publiclsremoteintegrationbranchandPRheadcodex/model-first-operations51599. gitdiffcdd..51599 exactly4docclosurefiles no code delta. ghPR89OPEN Draft baseMain/head51599 correctfinaltitle. Mainlsremote5be48ce unchanged.",
       "ownerChecks": "Finalfixedrevisionroot/managed/context/impact/YAML/diffPASS/independentDocsandfinalexactcandidateReviewCLEAR ownerreported; no Root redundanttests or finalCI PASS inferred.",
@@ -19284,13 +19301,13 @@
       "title": "Complete model-first project workflow and consolidate source layout",
       "isDraftAtCheck": true,
       "mergeStateAtCheck": "UNSTABLE",
-      "ciRunId": 38053284145,
-      "ciRunUrl": "https://github.com/Glacius-Labs/Markitect/actions/runs/38053284145",
-      "ciHeadShaRootVerified": "0deb37cabae11948ac760ad28ed1c6b397144dcf",
-      "ciStatus": "completed_failure",
+      "ciRunId": 38057729908,
+      "ciRunUrl": "https://github.com/Glacius-Labs/Markitect/actions/runs/38057729908",
+      "ciHeadShaRootVerified": "669cecd2f3594d452a2ea820682ee8d1922d0b1b",
+      "ciStatus": "in_progress",
       "requiredQualityJobs": {
-        "Quality (windows-latest)": "failure",
-        "Quality (ubuntu-24.04)": "success"
+        "Quality (windows-latest)": "in_progress",
+        "Quality (ubuntu-24.04)": "in_progress"
       },
       "remoteMainAtCheck": "5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e",
       "boundary": "CurrentCI pendingnotPASS; no merge/release/study/KG claimed. Alreadyauthorized ordinary exactheadgates thennormalmerge, no bypass/further blanketpermission/newA01restart.",
