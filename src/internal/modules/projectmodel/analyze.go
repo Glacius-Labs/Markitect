@@ -525,7 +525,11 @@ func fileOwner(file string, managers []Manager) string {
 		for _, raw := range m.Owns {
 			s, ok := normalizeSelector(raw, true)
 			if ok && selectorMatches(s, file) {
-				depth := strings.Count(m.Namespace, ".") + 1
+				// The root namespace is shallower than any top-level one.
+				depth := 0
+				if m.Namespace != "" {
+					depth = strings.Count(m.Namespace, ".") + 1
+				}
 				if len(s) > bestLen || len(s) == bestLen && depth > bestDepth {
 					best, bestLen, bestDepth = m.ID, len(s), depth
 				}
