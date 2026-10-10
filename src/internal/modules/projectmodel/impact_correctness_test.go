@@ -126,10 +126,10 @@ func TestImpactSeesEveryDefinitionPropertyChange(t *testing.T) {
 		"Check.uses":            {true, func(d *core.Definition) { d.Spec["uses"] = []any{contract} }},
 		"Check.limitation":      {true, func(d *core.Definition) { d.Spec["limitation"] = "Does not prove refunds." }},
 		"Decision.purpose":      {false, func(d *core.Definition) { d.Purpose = "Why release is idempotent." }},
-		"Decision.subject":      {false, func(d *core.Definition) { d.Spec["subject"] = ref(statementKind, "orders", "cancel-order") }},
-		"Decision.decision":     {false, func(d *core.Definition) { d.Spec["decision"] = "Release at most once." }},
-		"Decision.reason":       {false, func(d *core.Definition) { d.Spec["reason"] = "Stock must stay exact." }},
-		"Decision.actor":        {false, func(d *core.Definition) { d.Spec["actor"] = ref(managerKind, "orders", "orders") }},
+		"Decision.subject":      {true, func(d *core.Definition) { d.Spec["subject"] = ref(statementKind, "orders", "cancel-order") }},
+		"Decision.decision":     {true, func(d *core.Definition) { d.Spec["decision"] = "Release at most once." }},
+		"Decision.reason":       {true, func(d *core.Definition) { d.Spec["reason"] = "Stock must stay exact." }},
+		"Decision.actor":        {true, func(d *core.Definition) { d.Spec["actor"] = ref(managerKind, "orders", "orders") }},
 	}
 	// A new schema property needs a row here, so it cannot be silently unprojected.
 	for kind, k := range Schema().Kinds {
@@ -305,6 +305,13 @@ type generatedProject struct {
 	checks     []string
 	command    []string
 	digests    []string
+	decisions  []generatedDecision
+}
+
+// generatedDecision is a Decision by the Manager of namespace about statement subject.
+type generatedDecision struct {
+	namespace, text string
+	subject         int
 }
 
 func generateProject(rng *rand.Rand) generatedProject {
@@ -342,6 +349,12 @@ func generateProject(rng *rand.Rand) generatedProject {
 			p.digests = append(p.digests, "sha256:a")
 		}
 	}
+	for n := rng.IntN(3); n > 0; n-- {
+		namespace, subject := p.managers[rng.IntN(len(p.managers))], rng.IntN(len(p.statements))
+		if p.statements[subject].public || p.statements[subject].namespace == namespace {
+			p.decisions = append(p.decisions, generatedDecision{namespace: namespace, text: "Decided.", subject: subject})
+		}
+	}
 	return p
 }
 
@@ -358,7 +371,7 @@ func randomEdits(rng *rand.Rand, p generatedProject) []projectEdit {
 	var edits []projectEdit
 	for n := 1 + rng.IntN(3); n > 0; n-- {
 		i, j, k := rng.IntN(len(p.statements)), rng.IntN(len(p.statements)), rng.Int()
-		switch rng.IntN(6) {
+		switch rng.IntN(7) {
 		case 0:
 			edits = append(edits, func(q *generatedProject) { q.statements[i].description = "Changed rule." })
 		case 1:
@@ -383,6 +396,12 @@ func randomEdits(rng *rand.Rand, p generatedProject) []projectEdit {
 					q.digests[k%len(q.digests)] = "sha256:b"
 				}
 			})
+		case 6:
+			edits = append(edits, func(q *generatedProject) {
+				if len(q.decisions) > 0 {
+					q.decisions[k%len(q.decisions)].text = "Decided again."
+				}
+			})
 		}
 	}
 	return edits
@@ -398,6 +417,7 @@ func (p generatedProject) with(edits ...projectEdit) generatedProject {
 	}
 	q.command = append([]string(nil), p.command...)
 	q.digests = append([]string(nil), p.digests...)
+	q.decisions = append([]generatedDecision(nil), p.decisions...)
 	for _, edit := range edits {
 		edit(&q)
 	}
@@ -454,6 +474,11 @@ func (p generatedProject) analyze(t *testing.T, rng *rand.Rand) Report {
 	}
 	for i, namespace := range p.checks {
 		definitions = append(definitions, core.Definition{APIVersion: api, Kind: checkKind, Metadata: core.Metadata{Namespace: namespace, Name: "check"}, Purpose: "Check.", Spec: map[string]any{"command": []any{"go", p.command[i]}}})
+	}
+	for i, d := range p.decisions {
+		definitions = append(definitions, core.Definition{APIVersion: api, Kind: decisionKind, Metadata: core.Metadata{Namespace: d.namespace, Name: "d" + string(rune('a'+i))}, Purpose: "Decision.", Spec: map[string]any{
+			"subject": ref(statementKind, p.statements[d.subject].namespace, "s"+string(rune('a'+d.subject))), "decision": d.text, "reason": "Because.", "actor": ref(managerKind, d.namespace, managerName(d.namespace)),
+		}})
 	}
 	files := []File{{Path: ".markitect/project.yaml", Digest: "sha256:manifest", Mode: "100644"}}
 	for i, a := range p.artifacts {

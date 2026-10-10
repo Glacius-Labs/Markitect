@@ -61,6 +61,20 @@ type Check struct {
 	Limitation string   `json:"limitation"`
 }
 
+// Decision records a Manager's decision about a Statement. Its Owner is the
+// nearest Manager at or above its namespace; Actor is provenance, not authority.
+type Decision struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Owner     string `json:"owner"`
+	Subject   string `json:"subject"`
+	Actor     string `json:"actor"`
+	Decision  string `json:"decision"`
+	Reason    string `json:"reason"`
+	Source    string `json:"source"`
+}
+
 type FileEntry struct {
 	Path       string   `json:"path"`
 	Digest     string   `json:"digest,omitempty"`
@@ -83,6 +97,7 @@ type Report struct {
 	Statements      []Statement `json:"statements"`
 	Artifacts       []Artifact  `json:"artifacts"`
 	Checks          []Check     `json:"checks"`
+	Decisions       []Decision  `json:"decisions,omitempty"`
 	Files           []FileEntry `json:"files"`
 	Findings        []Finding   `json:"findings"`
 	Unknown         []string    `json:"unknown"`
@@ -124,6 +139,7 @@ type ManagerContext struct {
 	Contracts  []Statement `json:"contracts"`
 	Artifacts  []Artifact  `json:"artifacts"`
 	Checks     []Check     `json:"checks"`
+	Decisions  []Decision  `json:"decisions,omitempty"`
 	Children   []Manager   `json:"children"`
 	Findings   []Finding   `json:"findings"`
 }

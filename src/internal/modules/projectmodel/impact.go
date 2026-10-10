@@ -36,8 +36,13 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 			out.Checks = append(out.Checks, c)
 		}
 	}
+	for _, d := range report.Decisions {
+		if d.Owner == managerID {
+			out.Decisions = append(out.Decisions, d)
+		}
+	}
 	// Contracts are the foreign public statements that own statements use or require,
-	// own artifacts realize, or own checks exercise.
+	// own artifacts realize, own checks exercise, or own decisions decide on.
 	needed := map[string]bool{}
 	for _, s := range out.Statements {
 		for _, id := range s.Uses {
@@ -56,6 +61,9 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 		for _, id := range c.Uses {
 			needed[id] = true
 		}
+	}
+	for _, d := range out.Decisions {
+		needed[d.Subject] = true
 	}
 	for id := range needed {
 		if s, found := statementByID[id]; found && s.Owner != managerID && s.Public {
@@ -79,6 +87,7 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 	sort.Slice(out.Contracts, func(i, j int) bool { return out.Contracts[i].ID < out.Contracts[j].ID })
 	sort.Slice(out.Artifacts, func(i, j int) bool { return out.Artifacts[i].ID < out.Artifacts[j].ID })
 	sort.Slice(out.Checks, func(i, j int) bool { return out.Checks[i].ID < out.Checks[j].ID })
+	sort.Slice(out.Decisions, func(i, j int) bool { return out.Decisions[i].ID < out.Decisions[j].ID })
 	sort.Slice(out.Children, func(i, j int) bool { return out.Children[i].ID < out.Children[j].ID })
 	out.Findings = sortedFindings(out.Findings)
 	return out, nil
@@ -110,6 +119,11 @@ func findingTouchesManager(f Finding, managerID string, r Report) bool {
 			return true
 		}
 	}
+	for _, d := range r.Decisions {
+		if d.ID == f.Subject && d.Owner == managerID {
+			return true
+		}
+	}
 	return false
 }
 
@@ -125,6 +139,7 @@ func Impact(base, candidate Report) ChangeImpact {
 	compareStatements(base.Statements, candidate.Statements, addChanged)
 	compareArtifacts(base.Artifacts, candidate.Artifacts, addChanged)
 	compareChecks(base.Checks, candidate.Checks, addChanged)
+	compareDecisions(base.Decisions, candidate.Decisions, addChanged)
 	for id := range changed {
 		out.ChangedDefinitions = append(out.ChangedDefinitions, id)
 	}
@@ -183,6 +198,13 @@ func Impact(base, candidate Report) ChangeImpact {
 						seed[sid] = true
 					}
 					checks[id] = true
+				}
+			}
+			// A changed Decision is a change of its subject, routed with the Decision's owner.
+			for _, d := range report.Decisions {
+				if d.ID == id {
+					managers[d.Owner] = true
+					seed[d.Subject] = true
 				}
 			}
 			for _, m := range report.Managers {
@@ -412,6 +434,13 @@ func Impact(base, candidate Report) ChangeImpact {
 			out.Findings = append(out.Findings, Finding{Code: "impact.statement-change", Subject: id, Message: "Statement definition changed.", Severity: "info"})
 		}
 	}
+	for _, r := range []Report{base, candidate} {
+		for _, d := range r.Decisions {
+			if changed[d.ID] {
+				out.Findings = append(out.Findings, Finding{Code: "impact.decision-change", Subject: d.ID, Message: "Decision changed; it is routed through its subject.", Severity: "info"})
+			}
+		}
+	}
 	out.Findings = sortedFindings(out.Findings)
 	out.ChangedDefinitions = sortedUnique(out.ChangedDefinitions)
 	out.AffectedStatements = sortedUnique(out.AffectedStatements)
@@ -467,6 +496,27 @@ func compareStatements(a, b []Statement, add func(string)) {
 func compareArtifacts(a, b []Artifact, add func(string)) {
 	am := map[string]Artifact{}
 	bm := map[string]Artifact{}
+	for _, v := range a {
+		am[v.ID] = v
+	}
+	for _, v := range b {
+		bm[v.ID] = v
+	}
+	for id, v := range am {
+		w, ok := bm[id]
+		if !ok || !equal(v, w) {
+			add(id)
+		}
+	}
+	for id := range bm {
+		if _, ok := am[id]; !ok {
+			add(id)
+		}
+	}
+}
+func compareDecisions(a, b []Decision, add func(string)) {
+	am := map[string]Decision{}
+	bm := map[string]Decision{}
 	for _, v := range a {
 		am[v.ID] = v
 	}
