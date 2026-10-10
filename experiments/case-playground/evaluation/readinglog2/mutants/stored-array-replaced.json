@@ -1,0 +1,25 @@
+{
+  "id": "stored-array-replaced",
+  "base": "S2",
+  "item": "B01",
+  "rule": null,
+  "violates": "Before B11, a change saves the database as a wrapped object instead of the array of book records.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "        books = json.loads(db.read_text(encoding=\"utf-8\"))",
+      "new": [
+        "        books = json.loads(db.read_text(encoding=\"utf-8\"))",
+        "        books = books.get(\"records\") if isinstance(books, dict) else books"
+      ]
+    },
+    {
+      "file": "app.py",
+      "old": "json.dumps(books, ensure_ascii=False, indent=2)",
+      "new": "json.dumps({\"schemaVersion\": 2, \"records\": books}, ensure_ascii=False, indent=2)"
+    }
+  ],
+  "fails": [
+    "b01-stored-array-format"
+  ]
+}

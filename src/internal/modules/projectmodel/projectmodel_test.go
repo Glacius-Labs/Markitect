@@ -312,6 +312,25 @@ func TestAnalyzeRejectsSiblingOverlapAndUnsafePaths(t *testing.T) {
 	}
 }
 
+// BUG-01: "./" is not the whole-repository selector "." and matches no file,
+// so it must be rejected rather than leave every file unowned.
+func TestAnalyzeRejectsDotSlashSelectors(t *testing.T) {
+	model, files := fixture(t, true, false, true)
+	for i := range model.Definitions {
+		if model.Definitions[i].Kind == managerKind && model.Definitions[i].Metadata.Namespace == "" {
+			model.Definitions[i].Spec["owns"] = []any{"./"}
+		}
+		if model.Definitions[i].Kind == artifactKind && model.Definitions[i].Metadata.Namespace == "orders" {
+			model.Definitions[i].Spec["paths"] = []any{"./"}
+		}
+	}
+	// Core Model is immutable by contract; this deliberate corruption exercises fail-closed analysis.
+	r := Analyze(model, files)
+	if r.Status != "failed" || !hasFinding(r.Findings, "path.ownership-invalid") || !hasFinding(r.Findings, "path.artifact-invalid") {
+		t.Fatalf("\"./\" selectors were accepted: status=%s unknown=%v findings=%+v", r.Status, r.Unknown, r.Findings)
+	}
+}
+
 func TestAnalyzeRejectsPrivateCrossManagerReference(t *testing.T) {
 	model, files := fixture(t, false, false, true)
 	for i := range model.Definitions {

@@ -1,0 +1,30 @@
+{
+  "id": "import-duplicates-casefold",
+  "base": "S2",
+  "item": "B02",
+  "rule": "R3",
+  "violates": "Import duplicate detection ignores case, so Dune and dune count as the same ID.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    taken = {book[\"id\"] for book in books}",
+      "new": "    taken = {book[\"id\"].casefold() for book in books}"
+    },
+    {
+      "file": "app.py",
+      "old": [
+        "        if book[\"id\"] in taken:",
+        "            raise CommandError(\"duplicate\", f\"row {number}: id {book['id']!r} is already taken\")",
+        "        taken.add(book[\"id\"])"
+      ],
+      "new": [
+        "        if book[\"id\"].casefold() in taken:",
+        "            raise CommandError(\"duplicate\", f\"row {number}: id {book['id']!r} is already taken\")",
+        "        taken.add(book[\"id\"].casefold())"
+      ]
+    }
+  ],
+  "fails": [
+    "b02-import-duplicates"
+  ]
+}

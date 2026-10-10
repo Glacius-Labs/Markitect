@@ -25,6 +25,7 @@ HOLDOUT = '''import argparse, json, pathlib
 parser = argparse.ArgumentParser()
 parser.add_argument("--repo")
 parser.add_argument("--station", type=int)
+parser.add_argument("--deadline", type=float)
 args = parser.parse_args()
 repo = pathlib.Path(args.repo)
 checks = [{"id": "app-exists", "status": "PASS" if (repo / "app.py").is_file() else "FAIL", "item": "B01",
@@ -237,8 +238,8 @@ class AssessRunTests(unittest.TestCase):
         self.assertEqual((s2["passed"], s2["total"], s2["status"]), (2, 3, "fail"))
         self.assertEqual(s2["failures"], [{"id": "audit-line", "status": "FAIL", "item": "B02", "rule": "R1",
                                            "detail": "no audit line"}])
-        self.assertEqual(s2["byRule"]["R1"], {"passed": 0, "total": 1})
-        self.assertEqual(self.report["totals"]["holdouts"], {"passed": 4, "total": 5})
+        self.assertEqual(s2["byRule"]["R1"], {"passed": 0, "total": 1, "errors": 0})
+        self.assertEqual(self.report["totals"]["holdouts"], {"passed": 4, "total": 5, "errors": 0})
         self.assertEqual(self.station("S1")["groundTruthObligations"], 3)
 
     def test_public_checks_run_again(self):
@@ -327,6 +328,34 @@ class V1RunTests(unittest.TestCase):
             self.assertEqual((report["run"]["stratum"], report["run"]["roles"]), ("outer=codex", None))
             self.assertIn("did not use Markitect",
                           (run / "assessment" / "product-findings.md").read_text(encoding="utf-8"))
+
+
+class HoldoutVerdictTests(unittest.TestCase):
+    def run_checks(self, statuses: list[str], timeout: float = 60) -> dict:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            os.chmod(root, 0o755)
+            write(root / "candidate" / "app.py", "")
+            checks = [{"id": f"c{n}", "status": status, "item": "B01", "rule": "R1", "detail": ""}
+                      for n, status in enumerate(statuses)]
+            checks.append({"id": "argv", "status": "PASS", "item": None, "rule": None, "detail": "ARGV"})
+            write(root / "holdout.py", "import json, sys\n"
+                  f"checks = {checks!r}\nchecks[-1]['detail'] = ' '.join(sys.argv[1:])\n"
+                  "print(json.dumps({'station': 1, 'checks': checks}))\n")
+            return evaluate.run_holdouts(root / "candidate", root / "holdout.py", 1, root / "out", timeout)
+
+    def test_holdout_gets_a_deadline_before_the_hard_timeout(self):
+        argv = next(c for c in self.run_checks([], timeout=600)["checks"] if c["id"] == "argv")["detail"]
+        self.assertTrue(argv.endswith("--station 1 --deadline 510"), argv)
+
+    def test_error_is_not_judged_and_never_a_candidate_failure(self):
+        result = self.run_checks(["PASS", "ERROR"])  # plus the argv check, a PASS without item
+        self.assertEqual((result["passed"], result["total"], result["errors"], result["status"]), (2, 2, 1, "error"))
+        self.assertEqual(result["byItem"]["B01"], {"passed": 1, "total": 1, "errors": 1})
+        self.assertIn("could not judge", result["error"])
+        self.assertEqual(self.run_checks(["PASS", "FAIL", "ERROR"])["status"], "fail")
+        self.assertEqual(self.run_checks(["PASS", "PASS"])["status"], "pass")
+        self.assertEqual(evaluate._pair(result), "2/2 +1 not judged (error)")
 
 
 class UnitTests(unittest.TestCase):

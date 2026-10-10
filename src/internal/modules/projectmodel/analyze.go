@@ -469,7 +469,8 @@ func normalizeSelector(raw string, allowRoot bool) (string, bool) {
 	}
 	prefix := strings.HasSuffix(raw, "/")
 	body := strings.TrimSuffix(raw, "/")
-	if body == "" || path.Clean(body) != body || body == ".." || strings.HasPrefix(body, "../") {
+	// "./" cleans to itself but matches no file; only "." selects the whole repository.
+	if body == "" || path.Clean(body) != body || body == "." || body == ".." || strings.HasPrefix(body, "../") {
 		return "", false
 	}
 	if prefix {

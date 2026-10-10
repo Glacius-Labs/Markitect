@@ -23,7 +23,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `cli` | Thin entrypoints that delegate to Host. | `cli` | 9 |
 | `tooling` | Maintainer tooling: import gate, release, publication and notices. | `tooling` | 4 |
 | `bootstrap` | Standalone public bootstrap without Markitect imports. | `bootstrap` | 1 |
-| `harness` | Executable tests and example programs; not product code. | `harness-tests`, `harness-runtime` | 4 |
+| `harness` | Executable tests, test support and example programs; not product code. | `harness-tests`, `harness-runtime`, `testkit` | 5 |
 | `experiment` | Bounded pilots kept with their evaluation. | `harness-runtime` | 1 |
 | `fixture` | Adopting-project code used as test input; it may not import Markitect. | `fixture` | 3 |
 
@@ -136,6 +136,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `examples/selective-adoption/pathspell` | Canonical path spelling for the replay, including Windows short names. | [examples/selective-adoption/README.md](../../examples/selective-adoption/README.md#public-report-replay) |
 | `src/harness/engineering-discovery` | Evidence helper for the engineering-discovery example. | [examples/engineering-discovery/README.md](../../examples/engineering-discovery/README.md) |
 | `src/harness/examples` | Executable tests over the example fixtures. | [examples/README.md](../../examples/README.md) |
+| `src/internal/testkit` | Hermetic Git and temporary-directory fixtures that only tests import. | [CONTRIBUTING.md](../../CONTRIBUTING.md#verify-a-change) |
 
 ## Experiments
 

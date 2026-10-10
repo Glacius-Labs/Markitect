@@ -38,6 +38,7 @@ func cloneRoleStartDeliveries(report RunReport) RunReport {
 // RoleStartBudget serializes request reservation and state updates. Snapshot
 // and Persist callbacks belong to the coordinator and must read/update the
 // durable RunReport; Persist must upsert by reservation Key and durably save it.
+// The limit is the run's maxStarts, which recorded checks also consume.
 // Generic native observations remain a lower bound when their accounting is
 // partial; this cannot impose a provider-side hard cap on unobserved starts.
 type RoleStartBudget struct {
@@ -116,7 +117,8 @@ func (b *RoleStartBudget) reserve(ctx context.Context, record RoleStartReservati
 	if record.RecordedAt.IsZero() {
 		record.RecordedAt = time.Now().UTC()
 	}
-	if b.accounting(report).ObservedTotal >= b.limit {
+	// Checks are not role starts, but they consume the run's shared start limit.
+	if b.accounting(report).ObservedTotal+len(report.Checks) >= b.limit {
 		record.Request.State = "failed"
 		if err := b.persist(cloneRoleStartReservation(record)); err != nil {
 			return nil, errors.Join(ErrRoleStartBudgetExceeded, fmt.Errorf("persist rejected role-start request: %w", err))

@@ -286,6 +286,10 @@ packages:
     layer: harness
     purpose: Executable tests over the example fixtures.
     doc: examples/README.md
+  - path: src/internal/testkit
+    layer: harness
+    purpose: Hermetic Git and temporary-directory fixtures that only tests import.
+    doc: CONTRIBUTING.md#verify-a-change
 
   # --- experiment ---------------------------------------------------------
   - path: experiments/mcp-pilot

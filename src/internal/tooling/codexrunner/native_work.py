@@ -249,10 +249,16 @@ def _reparse(st: os.stat_result) -> bool:
     return bool(getattr(st, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400))
 
 
-def _posix_mode(mode_bits: int, path: str) -> str:
-    if mode_bits not in {0o600, 0o644, 0o755}:
-        raise NativeWorkError(f"native-work candidate has unsupported POSIX mode {mode_bits:04o}: {path}")
-    return f"{mode_bits:04o}"
+def _posix_mode(mode_bits: int, original: FileRecord | None) -> str:
+    # 0600 is a deliberate supported private-file mode from the
+    # request/candidate contract. An input staged with it keeps it while its
+    # bits are untouched, so it is no delta; harvest rejects a changed one.
+    if original is not None and original.mode == "0600" and mode_bits == 0o600:
+        return "0600"
+    # Like Git, map every other regular file to 0755 when the owner execute
+    # bit is set and to 0644 otherwise, so umask or chmod noise (0664, 0775,
+    # 0700, setuid) is no unsupported mode and no mode-only delta.
+    return "0755" if mode_bits & stat.S_IXUSR else "0644"
 
 
 def _read_candidate(workspace: PreparedWorkspace) -> dict[str, FileRecord]:
@@ -291,14 +297,7 @@ def _read_candidate(workspace: PreparedWorkspace) -> dict[str, FileRecord]:
                 # portable observation for the executable bit.
                 mode = original.mode if original is not None else "0644"
             else:
-                # 0600 is a deliberate supported private-file mode from the
-                # request/candidate contract, not a normalization fallback.
-                # Other modes (such as 0664 under umask 002) are kept as
-                # observed so harvest rejects them as an unsafe delta.
-                try:
-                    mode = _posix_mode(mode_bits, normalized)
-                except NativeWorkError:
-                    mode = f"{mode_bits:04o}"
+                mode = _posix_mode(mode_bits, original)
             files[normalized] = FileRecord(normalized, mode, raw, _digest(raw))
             if len(files) > MAX_INPUT_FILES + MAX_FILES + 1:
                 raise NativeWorkError("native-work candidate exceeds the total scan file bound")

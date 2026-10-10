@@ -219,7 +219,8 @@ func gitTest(t *testing.T, repo string, args ...string) string {
 	t.Helper()
 	argv := append([]string{"-C", repo}, args...)
 	cmd := exec.Command("git", argv...)
-	cmd.Env = cleanGitEnv()
+	// Fixtures ignore the machine's global and system Git configuration.
+	cmd.Env = append(cleanGitEnv(), "GIT_CONFIG_GLOBAL="+os.DevNull, "GIT_CONFIG_NOSYSTEM=1")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("git %v failed: %v\n%s", argv, err, output)
