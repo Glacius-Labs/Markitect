@@ -488,6 +488,16 @@ func TestBindingDigestCanonicalizesUnorderedSelectionInputs(t *testing.T) {
 	}
 }
 
+func TestBindingDigestNamesInvalidDigestFieldsInFixedOrder(t *testing.T) {
+	binding := testBinding(t.TempDir(), "", ".markitect/model/work.yaml", false)
+	binding.ProjectDigest, binding.ModelDigest, binding.SnapshotDigest, binding.SelectionDigest = "bad", "bad", "bad", "bad"
+	for i := 0; i < 100; i++ {
+		if _, err := BindingDigest(binding); err == nil || err.Error() != "binding projectDigest is not a sha256 digest" {
+			t.Fatalf("BindingDigest error = %v, want the first invalid field in declaration order", err)
+		}
+	}
+}
+
 func TestBindingDigestPreservesExplicitEmptyScopeArrays(t *testing.T) {
 	root, head, _ := testRepository(t, true)
 	binding := testBinding(root, head, ".markitect/model/work.yaml", true)

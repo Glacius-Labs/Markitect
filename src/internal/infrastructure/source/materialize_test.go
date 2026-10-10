@@ -24,6 +24,20 @@ func TestUnsafePathsRejectedBeforeMaterialize(t *testing.T) {
 	}
 }
 
+func TestMaterializeDiagnosticsDoNotDependOnMapOrder(t *testing.T) {
+	destination := filepath.Join(t.TempDir(), "destination")
+	collision := &snapshot.Snapshot{
+		Files: map[string][]byte{"Docs/a.md": []byte("a"), "docs/b.md": []byte("b")},
+		Modes: map[string]string{"Docs/a.md": snapshot.RegularMode, "docs/b.md": snapshot.RegularMode},
+	}
+	requireSameError(t, func() error { return Materialize(collision, destination) }, `between "Docs" and "docs"`)
+	unsafe := &snapshot.Snapshot{
+		Files: map[string][]byte{"a/../x": nil, "b:c": nil, "d\\e": nil},
+		Modes: map[string]string{"a/../x": snapshot.RegularMode, "b:c": snapshot.RegularMode, "d\\e": snapshot.RegularMode},
+	}
+	requireSameError(t, func() error { return Materialize(unsafe, destination) }, `"a/../x"`)
+}
+
 func TestValidateRepoPathRejectsWindowsUnsafeNames(t *testing.T) {
 	for _, p := range []string{"C:/outside", "a\\b", "CON.txt", "nested/NUL", "trailing.", "trailing ", "../x", "a/./b"} {
 		if err := validateRepoPath(p); err == nil {
