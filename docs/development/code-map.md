@@ -18,14 +18,14 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `infrastructure` | Git and working-tree access: fixed snapshots and guarded writes. | `infrastructure`, `host` | 2 |
 | `application` | Current product use cases and their command and MCP surfaces. | `host` | 8 |
 | `runtime` | Runs Manager, review and verify roles in owned workspaces. | `host` | 6 |
-| `legacy` | Published Project/Domain and canonical-alpha surfaces. DEC-014 allows removing them. | `host`, `module` | 36 |
+| `legacy` | The published v0.13 Project/Domain surfaces. DEC-014 allows removing them. | `host`, `module` | 26 |
 | `module` | Independent capability packages that import only Core. | `module` | 0 |
 | `cli` | Thin entrypoints that delegate to Host. | `cli` | 9 |
 | `tooling` | Maintainer tooling: import gate, release, publication and notices. | `tooling` | 4 |
 | `bootstrap` | Standalone public bootstrap without Markitect imports. | `bootstrap` | 1 |
 | `harness` | Executable tests and example programs; not product code. | `harness-tests`, `harness-runtime` | 4 |
 | `experiment` | Bounded pilots kept with their evaluation. | `harness-runtime` | 1 |
-| `fixture` | Adopting-project code used as test input; it may not import Markitect. | `fixture` | 5 |
+| `fixture` | Adopting-project code used as test input; it may not import Markitect. | `fixture` | 3 |
 
 ## Deterministic core
 
@@ -72,13 +72,11 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `src/internal/host` | Host root with Project/Domain commands, the canonical-alpha controller and their composition. | [docs/development/modules.md](modules.md#responsibility-map) |
+| `src/internal/host` | Host root with the v0.13 Project/Domain commands and their composition. | [docs/development/modules.md](modules.md#responsibility-map) |
 | `src/internal/host/artifactcli` | Command interface of `markitect-check-artifacts` for managed-artifact accounting. | [docs/usage.md](../usage.md#managed-artifact-accounting) |
-| `src/internal/host/assurance` | Scoped assurance composition over projection and verification records. | [src/internal/host/assurance/README.md](../../src/internal/host/assurance/README.md) |
 | `src/internal/host/authoring` | Source YAML model for v0.13 Projects, Domains and resources. | [docs/usage.md](../usage.md#project-and-resource-model) |
 | `src/internal/host/authoring/contentpackage` | Reads and builds deterministic offline content-package archives. | [docs/content-packages.md](../content-packages.md) |
 | `src/internal/host/azuredevopscli` | Command protocol of the Azure DevOps metadata adapter. | [src/cmd/markitect-adapter-azure-devops/README.md](../../src/cmd/markitect-adapter-azure-devops/README.md) |
-| `src/internal/host/canonical` | Codecs for canonical-alpha source files; the product uses only its codec. | [docs/canonical-projections.md](../canonical-projections.md#inputs-and-ownership) |
 | `src/internal/host/cli` | Top-level `markitect` command dispatcher with the legacy verbs. | [docs/usage.md](../usage.md#commands) |
 | `src/internal/host/compat/v0_13/consumers/agentrules` | Historical v0.13 projection of Codex and Claude entrypoints. | [src/internal/host/compat/v0_13/consumers/agentrules/README.md](../../src/internal/host/compat/v0_13/consumers/agentrules/README.md) |
 | `src/internal/host/compat/v0_13/consumers/agentrules/links` | Rewrites Markdown link targets for the v0.13 agent-rules consumer. | [src/internal/host/compat/v0_13/consumers/agentrules/README.md](../../src/internal/host/compat/v0_13/consumers/agentrules/README.md) |
@@ -98,16 +96,8 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `src/internal/host/inputs` | Resolves explicitly declared non-Markitect input files for a v0.13 graph. | [docs/architecture.md](../architecture.md#fixed-inputs-and-evidence) |
 | `src/internal/host/modulecli` | Command interface of `markitect-check-modules`. | [docs/usage.md](../usage.md#independent-module-checks-current-source) |
 | `src/internal/host/projectionengine` | Pure evaluation of explicit projection contracts. | [src/internal/host/projectionengine/README.md](../../src/internal/host/projectionengine/README.md) |
-| `src/internal/host/records` | Validates and encodes projection and verification records. | [src/internal/host/records/README.md](../../src/internal/host/records/README.md) |
-| `src/internal/host/recordstore` | Persists projection and verification records. | [src/internal/host/recordstore/README.md](../../src/internal/host/recordstore/README.md) |
 | `src/internal/modules/adoption/capture` | Selective-capture handoff for v0.13 Copy Me adoption. | [src/internal/modules/adoption/README.md](../../src/internal/modules/adoption/README.md) |
 | `src/internal/modules/adoption/review` | Copy Me review over a selective-adoption handoff. | [src/internal/modules/adoption/README.md](../../src/internal/modules/adoption/README.md) |
-| `src/internal/modules/agentrules` | Canonical-alpha Codex and Claude projection Module. | [src/internal/modules/agentrules/README.md](../../src/internal/modules/agentrules/README.md) |
-| `src/internal/modules/azurepipelines` | Canonical-alpha Azure Pipelines projection Module. | [src/internal/modules/azurepipelines/README.md](../../src/internal/modules/azurepipelines/README.md) |
-| `src/internal/modules/dotnet` | Canonical-alpha .NET projection Module. | [src/internal/modules/dotnet/README.md](../../src/internal/modules/dotnet/README.md) |
-| `src/internal/modules/githooks` | Canonical-alpha Git hooks projection Module. | [docs/development/modules.md](modules.md#responsibility-map) |
-| `src/internal/modules/markdown` | Canonical-alpha Markdown projection Module. | [src/internal/modules/markdown/README.md](../../src/internal/modules/markdown/README.md) |
-| `src/internal/modules/markdownreference` | Canonical-alpha alternative Markdown reference-bundle Module. | [src/internal/modules/markdownreference/README.md](../../src/internal/modules/markdownreference/README.md) |
 
 ## Executables
 
@@ -157,8 +147,6 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `examples/canonical-projection/evidence` | Project-owned check program for the canonical projection fixture. | [examples/README.md](../../examples/README.md#experimental-and-historical-projection-scenarios) |
-| `examples/canonical-workflow/check` | Project-owned check program for the canonical workflow example. | [examples/canonical-workflow/README.md](../../examples/canonical-workflow/README.md) |
 | `examples/documentation/docs/implementation/src` | Ordinary Go source used as a declared artifact input. | [examples/documentation/README.md](../../examples/documentation/README.md) |
 | `runs/c11checktools/original` | C11 proof check program for the original Markdown output. | [docs/repository-layout.md](../repository-layout.md#source-repository-layout) |
 | `runs/c11checktools/replacement` | C11 proof check program for the replacement Markdown output. | [docs/repository-layout.md](../repository-layout.md#source-repository-layout) |

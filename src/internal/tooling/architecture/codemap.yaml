@@ -104,16 +104,12 @@ packages:
   # --- legacy -------------------------------------------------------------
   - path: src/internal/host
     layer: legacy
-    purpose: Host root with Project/Domain commands, the canonical-alpha controller and their composition.
+    purpose: Host root with the v0.13 Project/Domain commands and their composition.
     doc: docs/development/modules.md#responsibility-map
   - path: src/internal/host/artifactcli
     layer: legacy
     purpose: Command interface of `markitect-check-artifacts` for managed-artifact accounting.
     doc: docs/usage.md#managed-artifact-accounting
-  - path: src/internal/host/assurance
-    layer: legacy
-    purpose: Scoped assurance composition over projection and verification records.
-    doc: src/internal/host/assurance/README.md
   - path: src/internal/host/authoring
     layer: legacy
     purpose: Source YAML model for v0.13 Projects, Domains and resources.
@@ -126,10 +122,6 @@ packages:
     layer: legacy
     purpose: Command protocol of the Azure DevOps metadata adapter.
     doc: src/cmd/markitect-adapter-azure-devops/README.md
-  - path: src/internal/host/canonical
-    layer: legacy
-    purpose: Codecs for canonical-alpha source files; the product uses only its codec.
-    doc: docs/canonical-projections.md#inputs-and-ownership
   - path: src/internal/host/cli
     layer: legacy
     purpose: Top-level `markitect` command dispatcher with the legacy verbs.
@@ -206,14 +198,6 @@ packages:
     layer: legacy
     purpose: Pure evaluation of explicit projection contracts.
     doc: src/internal/host/projectionengine/README.md
-  - path: src/internal/host/records
-    layer: legacy
-    purpose: Validates and encodes projection and verification records.
-    doc: src/internal/host/records/README.md
-  - path: src/internal/host/recordstore
-    layer: legacy
-    purpose: Persists projection and verification records.
-    doc: src/internal/host/recordstore/README.md
   - path: src/internal/modules/adoption/capture
     layer: legacy
     purpose: Selective-capture handoff for v0.13 Copy Me adoption.
@@ -222,30 +206,6 @@ packages:
     layer: legacy
     purpose: Copy Me review over a selective-adoption handoff.
     doc: src/internal/modules/adoption/README.md
-  - path: src/internal/modules/agentrules
-    layer: legacy
-    purpose: Canonical-alpha Codex and Claude projection Module.
-    doc: src/internal/modules/agentrules/README.md
-  - path: src/internal/modules/azurepipelines
-    layer: legacy
-    purpose: Canonical-alpha Azure Pipelines projection Module.
-    doc: src/internal/modules/azurepipelines/README.md
-  - path: src/internal/modules/dotnet
-    layer: legacy
-    purpose: Canonical-alpha .NET projection Module.
-    doc: src/internal/modules/dotnet/README.md
-  - path: src/internal/modules/githooks
-    layer: legacy
-    purpose: Canonical-alpha Git hooks projection Module.
-    doc: docs/development/modules.md#responsibility-map
-  - path: src/internal/modules/markdown
-    layer: legacy
-    purpose: Canonical-alpha Markdown projection Module.
-    doc: src/internal/modules/markdown/README.md
-  - path: src/internal/modules/markdownreference
-    layer: legacy
-    purpose: Canonical-alpha alternative Markdown reference-bundle Module.
-    doc: src/internal/modules/markdownreference/README.md
 
   # --- cli ----------------------------------------------------------------
   - path: src/cmd/markitect
@@ -334,14 +294,6 @@ packages:
     doc: experiments/mcp-pilot/README.md
 
   # --- fixture ------------------------------------------------------------
-  - path: examples/canonical-projection/evidence
-    layer: fixture
-    purpose: Project-owned check program for the canonical projection fixture.
-    doc: examples/README.md#experimental-and-historical-projection-scenarios
-  - path: examples/canonical-workflow/check
-    layer: fixture
-    purpose: Project-owned check program for the canonical workflow example.
-    doc: examples/canonical-workflow/README.md
   - path: examples/documentation/docs/implementation/src
     layer: fixture
     purpose: Ordinary Go source used as a declared artifact input.
