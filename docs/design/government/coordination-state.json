@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T04:03:12.924325+00:00",
+  "updatedUtc": "2026-10-10T04:09:35.474448+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -485,7 +485,7 @@
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
       "afterCursor": "5ff91514-6e73-4172-b94d-2a82e07fb0c5:2",
-      "lastObservedStatus": "active",
+      "lastObservedStatus": "Static alignment completed by exact verified private handoff; awaiting functional product, no Actuals.",
       "activeTurn": "01a123f6-ab28-7cb0-b093-646dd9431a9b",
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac854c570f48191a595d544b5898fd6",
       "initialAssignmentDispatched": true,
@@ -18234,5 +18234,19 @@
     ],
     "completedOwnerDisposition": "P03/P04/P05 remain finished; retired Worker/Architect/old Designer/Oldschool not restarted. No busywork. Jev deferred until accepted Main, unchanged.",
     "reporting": "Material callbacks once; three resumed active turns independently confirmed. Exact interruption cause not inferred; studies after functional product."
+  },
+  "scientistStaticConnectionRefresh20261010": {
+    "status": "CLOSED_QUALIFIED_STATIC_PREPARATION_PRIVATE_BACKUP_ROOT_VERIFIED_WAIT_FUNCTIONAL_PRODUCT",
+    "sourceCommit": "b4ad107ca781895bc1f7ed148405e8b4883de842",
+    "rootVerified": "Clean exact PRIVATE research-backup remote; six documentation/evidence files working/raw-Git equal; both handoff hashes and23 fixed-product Gitblob hashes verified. No Runner/product source or normal inputs/results changed.",
+    "connectionPlanSha256": "f48d404bd460fc46fca1f521bf34fc69e81bc50395a79207d1aa8ac90df31bb9",
+    "sourceContractSha256": "a25399875fff96ec4280061800a72b77c18f9370bdc9c45ea819e8411e74626c",
+    "observedProductCommit": "96424410c87366072adf16688aa56c38aba246a2",
+    "observationNotStudyFreeze": true,
+    "ownerChecks": "34 provider-free tests PASS (9adapter/13facade/12scratch); independent source/doc review no findings; own canonical checks/impact/diff positive. Not independently rerun by Root.",
+    "connection": "Normal product init/onboard/setup and one client-owned stdio MCP server,25tools; inherited env/WindowsMXC/normal shared workspace; role assessment emptydelta and phase-specific Work/Integration preserved. Final binary/installation/runtime/client/schema tuple still needs functional handoff.",
+    "versionBoundary": "BuildRuntime explicitly stable codex-cli0.162.0/Luna high; not universal transport constraint. Prior Conventional alpha.2 history closed and distinct; matched actual tuple must align or disclose variance.",
+    "execution": "Zero cases/productproofs/installation/native probes/modelturns. Existing scratch final assessor preserved; arm-specific Single-Use supplement is not generic Pairrunner. No automatic Conventional repeat.",
+    "next": "Await exact functional product handoff then rebind final source/runtime/installation and prospectively matched resources; no busywork/new Go/grant/start barrier. Tokens/cost/timing unknowns preserved."
   }
 }
