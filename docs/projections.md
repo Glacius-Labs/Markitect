@@ -24,7 +24,7 @@ Paths are explicit and normalized; they are not globs. The contract file uses `a
 The CLI requires `--config` and `--coverage` on each `projection` action. When the Project has the adapter registered, both values must match its paths exactly:
 
 ```powershell
-markitect projection --repo . --config projections.config --coverage markitect-artifacts.yaml --action observe
+markitect-legacy projection --repo . --config projections.config --coverage markitect-artifacts.yaml --action observe
 ```
 
 ## Observe and plan
@@ -33,7 +33,7 @@ markitect projection --repo . --config projections.config --coverage markitect-a
 
 ```powershell
 New-Item -ItemType Directory -Force .artifacts/projections | Out-Null
-markitect projection --repo . --config projections.config --coverage markitect-artifacts.yaml --action plan > .artifacts/projections/plan.yaml
+markitect-legacy projection --repo . --config projections.config --coverage markitect-artifacts.yaml --action plan > .artifacts/projections/plan.yaml
 ```
 
 The plan is a work description, not a claim that targets are converged. Inspect it and any AI materialization record before authorizing writes. The reviewed digest is evidence about the record's exact file bytes; it is not an identity or authentication of the reviewer.
@@ -44,7 +44,7 @@ Apply is working-tree-only and requires a named non-protected branch for Git che
 
 ```powershell
 (Get-FileHash .artifacts/projections/candidate.yaml -Algorithm SHA256).Hash.ToLowerInvariant()
-markitect projection --repo . --config projections.config --coverage markitect-artifacts.yaml --action apply --plan .artifacts/projections/plan.yaml --report .artifacts/projections/candidate.yaml --expect <RAW_RECORD_SHA256> --write
+markitect-legacy projection --repo . --config projections.config --coverage markitect-artifacts.yaml --action apply --plan .artifacts/projections/plan.yaml --report .artifacts/projections/candidate.yaml --expect <RAW_RECORD_SHA256> --write
 ```
 
 `--report` supplies the candidate record for projection apply; it is paired with `--expect`. For deterministic-only contracts, omit both `--report` and `--expect`. Apply writes only declared targets and returns `materialized-unverified`. A successful write is not verification: commit the resulting candidate, then verify that full immutable commit ID.
@@ -56,7 +56,7 @@ Writes are sequential, not a multi-file transaction. If a later target write fai
 Projection verification requires a full immutable Git commit ID (40 or 64 lowercase hexadecimal characters), not a branch, tag, or working tree. It compares the declared projections at that snapshot and runs the Project checks explicitly listed in `Project.spec.checks`. Each contract’s `verificationChecks` selects which of those check results is attached as evidence for that contract.
 
 ```powershell
-markitect projection --repo . --revision <FULL_IMMUTABLE_COMMIT_ID> --config projections.config --coverage markitect-artifacts.yaml --action verify
+markitect-legacy projection --repo . --revision <FULL_IMMUTABLE_COMMIT_ID> --config projections.config --coverage markitect-artifacts.yaml --action verify
 ```
 
 The ordinary repository verification command also activates projection verification when the Project registers the adapter:

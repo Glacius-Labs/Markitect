@@ -122,7 +122,7 @@ The remaining verb-specific flags keep their names and gain matching fields: `--
 
 Every verb, and every `adopt` stage, has one effect class in the table.
 
-- **read** never changes project state. It starts nothing except Git and, for `doctor` and the `config` preview, a bounded `--version` probe of the provider executable.
+- **read** never changes project state. It starts nothing except Git and, for `doctor` and the `config` preview, a bounded `--version` probe of the provider executable. Known gap until the read-only accepted-history API lands: in a guided project, `context`, `brief list` and the `plan` and `ready` previews still record accepted briefing history under `.markitect/state`; read-only MCP has the same gap and says so in its instructions.
 - **write** previews by default. The preview is read-only and returns a digest. `--write --expect D` persists exactly what `D` was taken from; if that changed, the write fails as stale. `--expect` is valid only together with `--write` or `--execute`.
 - **execute** starts agents or the project's configured checks, and only with `--execute`. Without it, the verb fails with exit code 2 and names `--execute` and the read-only verb to inspect first. What an execution records about itself (its run journal, attempts and receipts, and the evidence of `verify RUN`) is part of the execution and needs no `--write`.
 - **execute and write** verbs need both flags. `deliver` runs agents and applies the result to the target branch. `verify --revision` persists its standalone verification record only with `--write`; without it, it runs the checks and reports.

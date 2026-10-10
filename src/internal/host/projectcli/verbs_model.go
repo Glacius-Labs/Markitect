@@ -228,6 +228,7 @@ var schemaVerb = define(verb{
 	name: "schema", group: "Model", effect: effectRead,
 	summary:  "Print the project model schema.",
 	synopsis: "schema",
+	args:     []arg{argRepo},
 }, func(ctx context.Context, e env, in noInput) (json.RawMessage, error) {
 	// core.Schema is recursive (a Property has Properties), so it is returned
 	// as raw JSON: the derived MCP output schema stays finite.
