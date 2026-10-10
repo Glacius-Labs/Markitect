@@ -343,7 +343,7 @@ func freshReviewEvidenceForVerify(store *runStore, dir string, finalProject *Pro
 			if err != nil || prior.ID != review.CandidateID || prior.Digest != review.CandidateDigest {
 				return nil, fmt.Errorf("review for Manager %s is not bound to a retained exact candidate", task.ManagerID)
 			}
-			reviewedFiles, err := currentReviewFileReferences(finalProject, plan, task, phase)
+			reviewedFiles, err := currentReviewFileReferences(finalProject, plan, task, phase, run)
 			if err != nil {
 				return nil, err
 			}
@@ -372,8 +372,8 @@ func cloneReviewFindings(findings []ReviewFinding) []ReviewFinding {
 	return append([]ReviewFinding{}, findings...)
 }
 
-func currentReviewFileReferences(project *Project, plan PlanRecord, task ManagerTask, phase string) ([]fullReviewFileReference, error) {
-	files := reviewCandidateFiles(project, task, plan.Managers, phase)
+func currentReviewFileReferences(project *Project, plan PlanRecord, task ManagerTask, phase string, run RunReport) ([]fullReviewFileReference, error) {
+	files := reviewCandidateFiles(project, task, run.Tasks, phase)
 	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files, phase)
 	if err != nil {
 		return nil, err

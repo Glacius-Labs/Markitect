@@ -216,7 +216,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 }
 
 func buildReviewerContext(plan PlanRecord, project *Project, task ManagerTask, phase string, round int, candidate candidateData, briefing BriefingContext, report RunReport) (reviewerContext, []agentexec.Artifact, []reviewFileRef, error) {
-	files := reviewCandidateFiles(project, task, plan.Managers, phase)
+	files := reviewCandidateFiles(project, task, report.Tasks, phase)
 	if len(files) == 0 {
 		// Keep the empty list explicit for a legitimate no-op candidate.
 		files = []agentexec.Artifact{}
@@ -233,7 +233,7 @@ func buildReviewerContext(plan PlanRecord, project *Project, task ManagerTask, p
 	return reviewerContext{Kind: "projectrun-review/v1", Operation: plan.Operation,
 		ReviewerGuidance: reviewerAssessmentGuidance + " " + reviewerPhaseGuidance(phase), Strictness: plan.Strictness[task.ManagerID], Briefing: briefing,
 		RunGoal: plan.Goal, ManagerID: task.ManagerID, OwnTask: task.Goal, Delegations: append([]Delegation{}, task.Delegations...), DelegatedArtifacts: reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), HostHelperResults: helperResults, Phase: phase, Round: round,
-		CandidateID: candidate.ID, CandidateDigest: candidate.Digest, ChangedPaths: reviewChangedPaths(task, plan.Managers, phase), AcceptedModel: accepted,
+		CandidateID: candidate.ID, CandidateDigest: candidate.Digest, ChangedPaths: reviewChangedPaths(task, report.Tasks, phase), AcceptedModel: accepted,
 		ScopedModel:    reviewerScopedModel{Statements: append([]projectmodel.Statement(nil), accepted.Statements...), Contracts: append([]projectmodel.Statement(nil), accepted.Contracts...), Artifacts: append([]projectmodel.Artifact(nil), accepted.Artifacts...), OwnedPaths: reviewScopePaths(files)},
 		CandidateFiles: fileRefs, ResponseSchema: reviewResponseSchema()}, files, fileRefs, nil
 }
@@ -290,7 +290,7 @@ func canonicalizeReviewContext(request *agentexec.Request) error {
 // It includes the accepted local contract, task goal, review phase and every
 // actual owned file byte and mode supplied to the reviewer.
 func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phase string, report RunReport) (string, error) {
-	files := reviewCandidateFiles(project, task, plan.Managers, phase)
+	files := reviewCandidateFiles(project, task, report.Tasks, phase)
 	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files, phase)
 	if err != nil {
 		return "", err
@@ -318,7 +318,7 @@ func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phas
 		ChangedPaths       []string                    `json:"changedPaths"`
 		Files              []agentexec.Artifact        `json:"files"`
 		FileRefs           []reviewFileRef             `json:"fileRefs"`
-	}{"projectrun-review/v3", plan.Operation, plan.Strictness[task.ManagerID], plan.BriefingDigests[task.ManagerID], plan.Goal, task.ManagerID, task.Goal, append([]Delegation(nil), task.Delegations...), reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), helperResults, reviewerAssessmentGuidance + " " + reviewerPhaseGuidance(phase), phase, accepted, append([]string(nil), task.Checks...), reviewChangedPaths(task, plan.Managers, phase), files, fileRefs})
+	}{"projectrun-review/v3", plan.Operation, plan.Strictness[task.ManagerID], plan.BriefingDigests[task.ManagerID], plan.Goal, task.ManagerID, task.Goal, append([]Delegation(nil), task.Delegations...), reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), helperResults, reviewerAssessmentGuidance + " " + reviewerPhaseGuidance(phase), phase, accepted, append([]string(nil), task.Checks...), reviewChangedPaths(task, report.Tasks, phase), files, fileRefs})
 }
 
 func reviewerHelperResults(report RunReport, tasks []ManagerTask, task ManagerTask, phase string, files []agentexec.Artifact) ([]reviewerHelperEvidence, error) {
@@ -606,7 +606,8 @@ func reviewDelegatedArtifacts(report projectmodel.Report, tasks []ManagerTask, m
 }
 
 // reviewCandidateFiles expands an integration review to include the actual
-// delivered paths from direct children. Work reviews stay limited to this
+// delivered paths from direct children. tasks must be the run report's tasks,
+// because only they carry delivered paths. Work reviews stay limited to this
 // Manager's current candidate.
 func reviewCandidateFiles(project *Project, task ManagerTask, tasks []ManagerTask, phase string) []agentexec.Artifact {
 	files := scopedCandidateFiles(project, task)
@@ -633,7 +634,16 @@ func reviewCandidateFiles(project *Project, task ManagerTask, tasks []ManagerTas
 	}
 	for _, artifact := range requiredChildArtifacts(project.Report, activeChildren(tasks, task.ManagerID)) {
 		for _, path := range artifact.Paths {
-			addExisting(path)
+			// Expand a directory artifact as the Manager's integration input does.
+			if strings.HasSuffix(path, "/") {
+				for existing := range project.Snapshot.Files {
+					if strings.HasPrefix(existing, path) {
+						addExisting(existing)
+					}
+				}
+			} else {
+				addExisting(path)
+			}
 		}
 	}
 	paths := make([]string, 0, len(selected))
