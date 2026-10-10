@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T06:50:16.608449+00:00",
+  "updatedUtc": "2026-10-10T07:03:22.024014+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18379,6 +18379,20 @@
       "checkoutIncident": "Initial audit patch inadvertently authored in readiness-candidate-fix ea1dbd preexistingWIP checkout; narrowly ported/committed/tested/reviewed in Integration. Foreign WIP preserved, no invasive restore or old checkout test credited to current source.",
       "remote": "Public ref remains04ca4a144f92a9c5f3e446eb82dca18f7e690085 at Root inspection; new source fixes not yet claimed backed up.",
       "next": "Owner readiness docs freeze, broader targeted regressions, then fresh Windows A01 one final binary before/after Root fault under existing finite renewable authority. Distinct from oldActual16, no replay/study/Main/release acceptance."
+    },
+    "actual17Preparation": {
+      "status": "CLEAN_LOCAL_SOURCE_BINARY_ROOT_VERIFIED_NORMAL_READINESS_PLAN_PREPARING_ZERO_NEW_PROVIDER_STARTS_OWNER_REPORTED",
+      "sourceSha": "4b14e5fc8073f80a84079250d086da5b7b1cda01",
+      "binarySha256": "16987dbdaa67d5814a8ac7f86eb72705683e077911f5a882f96623f17731c7ef",
+      "rootVerified": "Clean local HEAD4b14 and exact known binary FileSHA/Go1.27.1 WindowsAMD64 VCS4b14/modifiedfalse. Final source docs/coverage closure commitstat read. Public remote still04ca atinspection.",
+      "ownerGates": "Exact four broad packages infrastructure/source,projectcoverage,codexappserver,projectapp PASS; selected projectrun and remaining documented gates running, normal fresh Readiness ready/blockers[], write/Plan in progress. No Actual17provider starts yet, owner reported.",
+      "backupDispatch": {
+        "key": "push-clean4b14-product-checkpoint-before-native-20261010",
+        "sentUtc": "2026-10-10T07:03:22.024014+00:00",
+        "toolAccepted": true,
+        "scope": "Normal coherent product/docs feature push per direct human backup mandate before next native starts, ordinary private/secret review/noForce/noMainRelease. No binary/Plan changes or extra permission/test phase."
+      },
+      "execution": "Same frozen binary before/after original Root recovery boundary. Native Actual17 not yet admitted as completed/started by Root, actualPlan/startreceipt pending. Actual16 outcome and technical recovery remain separate."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
