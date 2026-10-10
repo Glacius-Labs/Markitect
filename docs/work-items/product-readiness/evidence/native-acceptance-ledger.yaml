@@ -1055,6 +1055,12 @@ renewal_policy:
     post_attempt_16_docs_workflow_validation: six_scenarios_passed_37_245s_source_cli_checks_passed_independent_review_clear
     post_attempt_16_source_fixes_independent_reviews: clear
     post_attempt_16_final_source_head: d50669ec2f11feda6283dc96c6a26558c3d64e4c
+    post_docs_commit_managed_coverage_prior_result: failed_unmanaged_recovery_test
+    post_docs_commit_managed_coverage_affected_path: src/internal/host/codexappserver/recovery_test.go
+    post_docs_commit_ownership_source_commit: 1162326946a8ca7b5f523c32f215e085a12ee945
+    post_docs_commit_ownership_review: independent_clear_test_is_adjacent_to_recovery_implementation_and_owned_by_bounded_agent_execution_host
+    post_docs_commit_managed_coverage_recheck: passed_findings_empty
+    post_docs_commit_managed_coverage_diff_check: passed
     corrected_normal_resume_of_attempt_15: attempted_stale_before_state_recovery_no_new_start_state_23_superseded
     post_recovery_resume_command_id: f654711fe23248be98401ca21fee61b4
     post_recovery_resume_binary_sha256: bc26543cf097091e5f2d520d3a71c8455e6b0532f984e65b38df84f1f4b03b5d
