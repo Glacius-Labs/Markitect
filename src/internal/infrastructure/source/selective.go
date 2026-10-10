@@ -92,6 +92,10 @@ func beginAcquisition(root string, run gitOutputFunc) (*Acquisition, error) {
 	return &Acquisition{identity: identity, stats: stats, run: run}, nil
 }
 
+// Identity returns the repository identity established by BeginAcquisition.
+// Callers that run their own Git commands run them against Identity().Root.
+func (a *Acquisition) Identity() GitIdentity { return a.identity }
+
 // Confirm rechecks that root still has the identity established by
 // BeginAcquisition, including the same root, Git and common directories.
 func (a *Acquisition) Confirm() error {
@@ -150,9 +154,9 @@ func (a *Acquisition) verifyCommit(fullCommit string) (string, error) {
 	return resolved, nil
 }
 
-// fileModeEnabled reads Git's core.filemode once per acquisition, so all
+// FileModeEnabled is GitFileModeEnabled read once per acquisition, so all
 // working reads in it apply the same mode policy.
-func (a *Acquisition) fileModeEnabled() (bool, error) {
+func (a *Acquisition) FileModeEnabled() (bool, error) {
 	if a.fileMode == nil {
 		enabled, err := GitFileModeEnabled(a.identity.Root)
 		if err != nil {

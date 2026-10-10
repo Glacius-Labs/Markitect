@@ -52,7 +52,7 @@ func Load(root, revision string) (*Project, error) {
 		fullOptions = coverageOptions(config)
 		expectedManifest = append([]byte(nil), manifestCapture.Snapshot.Files[ManifestPath]...)
 		if config.CoverageMode == "full" {
-			fullUniverse, err = projectcoverage.ObserveWorking(root, fullOptions)
+			fullUniverse, err = projectcoverage.ObserveWorkingIn(acquisition, fullOptions)
 			if err != nil {
 				return nil, fmt.Errorf("observe full repository coverage: %w", err)
 			}
@@ -70,7 +70,7 @@ func Load(root, revision string) (*Project, error) {
 		fullOptions = coverageOptions(config)
 		expectedManifest = append([]byte(nil), manifestCapture.Snapshot.Files[ManifestPath]...)
 		if config.CoverageMode == "full" {
-			fullUniverse, err = projectcoverage.ObserveRevision(root, manifestCapture.Snapshot.ID, fullOptions)
+			fullUniverse, err = projectcoverage.ObserveRevisionIn(acquisition, manifestCapture.Snapshot.ID, fullOptions)
 			if err != nil {
 				return nil, fmt.Errorf("observe fixed revision coverage: %w", err)
 			}

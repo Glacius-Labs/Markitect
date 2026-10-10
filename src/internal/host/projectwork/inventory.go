@@ -17,9 +17,29 @@ func loadConfiguredInventory(root, revision string, provisional bool, config Con
 	if len(config.InventoryRoots) == 0 {
 		return selected, nil
 	}
+	tree := "fixed"
+	if provisional {
+		tree = "working"
+	}
+	// One repository identity check covers both the listing and the read.
+	acquisition, err := source.BeginAcquisition(root)
+	if err != nil {
+		return nil, fmt.Errorf("list %s inventory roots: %w", tree, err)
+	}
+	inventory, err := readConfiguredInventory(acquisition, revision, provisional, config, selected)
+	if err != nil {
+		return nil, err
+	}
+	if err := acquisition.Confirm(); err != nil {
+		return nil, fmt.Errorf("read %s inventory selection: %w", tree, err)
+	}
+	return inventory, nil
+}
+
+func readConfiguredInventory(acquisition *source.Acquisition, revision string, provisional bool, config Config, selected *snapshot.Snapshot) (*snapshot.Snapshot, error) {
 	var paths []string
 	if provisional {
-		metadata, err := source.InventoryWorkingRoots(root, config.InventoryRoots)
+		metadata, err := acquisition.InventoryWorkingRoots(config.InventoryRoots)
 		if err != nil {
 			return nil, fmt.Errorf("list working inventory roots: %w", err)
 		}
@@ -31,7 +51,7 @@ func loadConfiguredInventory(root, revision string, provisional bool, config Con
 		if len(paths) == 0 {
 			return selected, nil
 		}
-		observed, err := source.ObserveSelectedWorking(root, paths)
+		observed, err := acquisition.ObserveSelectedWorking(paths)
 		if err != nil {
 			return nil, fmt.Errorf("read working inventory selection: %w", err)
 		}
@@ -40,7 +60,7 @@ func loadConfiguredInventory(root, revision string, provisional bool, config Con
 		}
 		return observed.Snapshot, nil
 	}
-	metadata, err := source.InventoryRevisionRoots(root, revision, config.InventoryRoots)
+	metadata, err := acquisition.InventoryRevisionRoots(revision, config.InventoryRoots)
 	if err != nil {
 		return nil, fmt.Errorf("list fixed inventory roots: %w", err)
 	}
@@ -52,7 +72,7 @@ func loadConfiguredInventory(root, revision string, provisional bool, config Con
 	if len(paths) == 0 {
 		return selected, nil
 	}
-	fixed, err := source.LoadSelected(root, revision, paths)
+	fixed, err := acquisition.LoadSelected(revision, paths)
 	if err != nil {
 		return nil, fmt.Errorf("read fixed inventory selection: %w", err)
 	}

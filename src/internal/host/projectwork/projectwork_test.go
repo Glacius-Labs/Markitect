@@ -250,16 +250,16 @@ func TestLoadChecksRepositoryIdentityOnceAndPinsGitStarts(t *testing.T) {
 		gitTest(t, root, "config", "core.filemode", "false")
 	}
 	gitCalls := countGitStarts(t)
-	// Full coverage also counts the repository census, which still identifies
-	// the repository for each of its own selected reads.
+	// Full coverage includes the repository census, which reads through the
+	// same acquisition and rechecks HEAD, index and file-mode policy itself.
 	for _, tc := range []struct {
 		name, root, revision string
 		starts, identities   int
 	}{
 		{"selected working tree", selectedRoot, "", 6, 2},
 		{"selected fixed revision", selectedRoot, selectedRevision, 9, 2},
-		{"full working tree", fullRoot, "", 25, 9},
-		{"full fixed revision", fullRoot, fullRevision, 13, 5},
+		{"full working tree", fullRoot, "", 15, 2},
+		{"full fixed revision", fullRoot, fullRevision, 9, 2},
 	} {
 		calls := gitCalls(func() {
 			if _, err := Load(tc.root, tc.revision); err != nil {

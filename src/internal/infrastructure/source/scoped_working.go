@@ -114,7 +114,7 @@ func (a *Acquisition) observeWorkingPaths(clean []string) (*SelectedWorkingSnaps
 		result.Snapshot.Files[repoPath] = data
 		result.Snapshot.Modes[repoPath] = mode
 	}
-	fileModeEnabled, err := a.fileModeEnabled()
+	fileModeEnabled, err := a.FileModeEnabled()
 	if err != nil {
 		return nil, fmt.Errorf("inspect Git worktree mode policy: %w", err)
 	}
