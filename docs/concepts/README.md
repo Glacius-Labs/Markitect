@@ -1,12 +1,11 @@
 # Concept record
 
-This is the home of Markitect's product-level decisions, clarifications, promises, assumptions, concepts, future enhancements, ideas and open questions. Each is kept with its origin and status. The record exists so that owner decisions are not lost in chats, and so that each new session or reviewer does not have to derive them again. In this record, "owner" means Markitect's product owner, not the owner of an adopting project.
+This is the home of Markitect's long-term vision, product-level decisions, clarifications, promises, assumptions, concepts, future enhancements, ideas and open questions. Each is kept with its origin and status. The record exists so that owner decisions are not lost in chats, and so that each new session or reviewer does not have to derive them again. In this record, "owner" means Markitect's product owner, not the owner of an adopting project.
 
 | Document | Content |
 |---|---|
-| [Register](register.md) | All entries, with ID, status, origin and links |
-| [Owner product description, 9 October 2026](sources/2026-10-09-owner-product-description.md) | The owner's original description of the idea, verbatim |
-| [Idea review, 10 October 2026](sources/2026-10-10-idea-review.md) | Owner correction, confirmed summary, review points and owner dispositions, verbatim where quoted |
+| [Register](register.md) | All entries with ID, status, origin and links, and the mapping of earlier collections |
+| [Sources](sources/README.md) | Owner statements kept verbatim, with their provenance: the owner product description (9 October 2026), the idea review (10 October 2026), and snapshots of the Concepts and Ideas chats' collections (9 October 2026) |
 
 ## Before assessing or redirecting Markitect
 
@@ -32,6 +31,7 @@ Summaries in the vision and other documents may restate entries. If a summary di
 
 | Prefix | Type | Meaning |
 |---|---|---|
+| `VIS` | Long-term vision | A picture of where the owner wants Markitect to go, beyond the current thesis. Planning follows the decisions that govern it. |
 | `DEC` | Decision, clarification or endorsed direction | The owner has decided something, confirmed how the idea is to be read, or endorsed a direction whose plan is still pending. The status says which. |
 | `PRM` | Promise | A target outcome Markitect is built to deliver. It is to be validated, not assumed. |
 | `ASM` | Assumption or hypothesis | Something the idea relies on, with its evidence status. |
@@ -50,6 +50,9 @@ Summaries in the vision and other documents may restate entries. If a summary di
 | Accepted direction | Agreed product direction |
 | Accepted problem; approach open | The problem is agreed; the solution is still open |
 | Proposed | Suggested by an agent or reviewer; the owner has not evaluated it yet |
+| Owner idea | Raised by the owner; not yet evaluated |
+| Owner statement | Said by the owner, possibly relayed by another chat; the entry names the relay |
+| Parked | Recorded under the planning hold in DEC-011; not planned |
 | Target | A promise to validate |
 | Hypothesis, Owner experience, Owner observation | The evidence status of an assumption |
 | Open | Not yet answered |
