@@ -1,0 +1,17 @@
+{
+  "id": "schema-version-not-checked",
+  "base": "S4",
+  "item": "B11",
+  "rule": "R2",
+  "violates": "A database object with any schemaVersion (3, \"2\") is read as version 2 instead of failing with storage.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "            and type(data[\"schemaVersion\"]) is int and data[\"schemaVersion\"] == SCHEMA_VERSION):",
+      "new": "            and \"schemaVersion\" in data):"
+    }
+  ],
+  "fails": [
+    "b11-v2-malformed"
+  ]
+}

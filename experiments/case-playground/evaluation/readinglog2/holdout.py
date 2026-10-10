@@ -1,10 +1,20 @@
 """Hidden holdout checks of the readinglog2 case (EVALUATION.md, "Hidden evaluation files").
 
-    python3 -I holdout.py --repo DIR --station N
+    python3 -I holdout.py --repo DIR --station N [--deadline SECONDS]
 
 Runs every holdout released up to station N against `DIR/app.py`, each on fresh
 temporary data, and prints `{"station": N, "checks": [{"id", "status", "item", "rule",
 "detail", "source"}]}`. Exits 0 even when checks fail.
+
+A status is PASS or FAIL when the holdout could judge the candidate, and ERROR only when
+it could not (a problem of the evaluation itself, or the deadline). The app runs with
+TZ=Etc/GMT-14, so a local time written with a `Z` suffix is not the UTC time.
+
+--deadline SECONDS (optional) bounds the run, counted from the start of holdout.py: once
+it has passed, every check not yet run is reported as ERROR with the detail "holdout
+deadline reached" without running; a running check's app calls get at most the time
+left (and at most APP_TIMEOUT each) and turn that check into ERROR when the time is up.
+The JSON is printed once at the end, shortly after the deadline at the latest.
 
 A holdout tests only what the public README.md and BACKLOG.md of the case already say:
 hidden cases, never hidden requirements. Each one names its backlog item ("baseline"
@@ -14,23 +24,33 @@ are not tested. Standard library only.
 """
 import argparse
 import csv
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 import os
 from pathlib import Path
 import re
+import signal
 import subprocess
 import sys
 import tempfile
 import time
 import unicodedata
 
+STARTED = time.monotonic()
 STATIONS = 6
 APP_TIMEOUT = 30
+APP_TZ = "Etc/GMT-14"  # UTC+14 (POSIX sign): local time is far from UTC
 IMPORT_HEADER = "id,title,author,pages\n"
 EXPORT_HEADER = ["id", "title", "author", "pages", "status", "tags"]
-AT_FORMAT = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z")
+# README R1: `at` is the UTC time with a `Z` suffix. ISO 8601 UTC, extended or basic
+# format, seconds optional, an optional decimal fraction with `.` or `,`.
+AT_FORMATS = (
+    re.compile(r"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?(?:[.,](\d+))?Z"),
+    re.compile(r"(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?(?:[.,](\d+))?Z"),
+)
 LOG_KEYS = {"op", "ids", "at"}
+ORDER_SOURCE = ("README Records: Books keep the order in which they were added (insertion order). Listings use "
+                "that order.")
 
 R1_SOURCE = ("README R1: Every successful mutating command appends exactly one JSON line to <db>.log: "
              "{op: COMMAND, ids: [IDS in processing order], at: UTC ISO-8601}.")
@@ -44,6 +64,9 @@ R2_TABLE = "README R2: Codes come from the error-code table. A new code must be 
 R3_SOURCE = ("README R3: All text input, from arguments or files, is Unicode NFC normalized, stripped, and internal "
              "whitespace runs collapse to one space. IDs are case-sensitive after normalization.")
 R3_PATHS = "README R3: File paths such as --db are used exactly as given."
+PAGES_SOURCE = ("README Records: pages: Page count, at least 1. Given as ASCII digits, for example 412. README error "
+                "codes: invalid_input: A command, option or value is missing, empty after normalization or not "
+                "allowed, for example pages that are not a positive integer.")
 MALFORMED = ("README Storage: a file that is not valid UTF-8 JSON, does not have the expected shape or holds an "
              "invalid record is malformed. Every command then fails with storage, and the file is never overwritten.")
 
@@ -52,6 +75,10 @@ EMITTED_CODES = set()  # every error code the CLI printed during this run (for t
 
 class Fail(Exception):
     """The candidate violates a public requirement."""
+
+
+class DeadlineReached(Exception):
+    """The --deadline ran out: the holdout cannot judge (ERROR, not FAIL)."""
 
 
 def shown(value, limit=240):
@@ -83,37 +110,66 @@ def log_path(db):
     return db.with_name(db.name + ".log")
 
 
+def run_app(command, cwd, env, timeout):
+    """Run one app call; on timeout kill it with everything it started, then re-raise.
+    Returns (exit code, stdout bytes, stderr bytes)."""
+    posix = os.name == "posix"
+    with subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE, start_new_session=posix) as proc:
+        try:
+            out, err = proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL) if posix else proc.kill()
+            except OSError:
+                pass
+            try:
+                proc.communicate(timeout=5)
+            except subprocess.TimeoutExpired:  # a stray process still holds the pipes: stop reading
+                pass
+            raise
+        return proc.returncode, out, err
+
+
 class Trial:
     """One holdout's fresh temporary folder and the CLI calls it makes there."""
 
-    def __init__(self, repo, station, folder):
+    def __init__(self, repo, station, folder, stop=None):
         self.repo, self.station, self.folder = repo, station, folder
+        self.stop = stop  # time.monotonic() value of the --deadline, or None
         self.db = folder / "state.json"
         self.key = "entries" if station >= 6 else "books"
-        self.started = time.time()
+        self.started = time.time()  # wall clock (UTC epoch seconds) for the audit-line window
 
     # --- running the CLI ---------------------------------------------------------------
 
     def call(self, args, db=None):
         db = self.db if db is None else db
         command = [sys.executable, "-B", str(self.repo / "app.py"), "--db", str(db), *args]
-        env = dict(os.environ, PYTHONIOENCODING="utf-8")
+        env = dict(os.environ, PYTHONIOENCODING="utf-8", TZ=APP_TZ)
+        timeout = APP_TIMEOUT
+        if self.stop is not None:
+            timeout = min(APP_TIMEOUT, self.stop - time.monotonic())
+            if timeout <= 0:
+                raise DeadlineReached()
         try:
-            proc = subprocess.run(command, cwd=self.repo, capture_output=True, timeout=APP_TIMEOUT, env=env)
+            status, out, err = run_app(command, self.repo, env, timeout)
         except subprocess.TimeoutExpired:
+            if timeout < APP_TIMEOUT:  # cut short by the deadline, not by the candidate's own slowness
+                raise DeadlineReached() from None
             raise Fail(f"timed out after {APP_TIMEOUT}s: {shown(list(args))}") from None
         try:
-            value = json.loads(proc.stdout.decode("utf-8"))
+            value = json.loads(out.decode("utf-8"))
         except (UnicodeError, ValueError):
-            raise Fail(f"stdout is not one UTF-8 JSON object: args={shown(list(args))} exit={proc.returncode} "
-                       f"stdout={shown(proc.stdout.decode('utf-8', 'replace'))} "
-                       f"stderr={shown(proc.stderr.decode('utf-8', 'replace')[-300:])}") from None
+            raise Fail(f"stdout is not one UTF-8 JSON object: args={shown(list(args))} exit={status} "
+                       f"stdout={shown(out.decode('utf-8', 'replace'))} "
+                       f"stderr={shown(err.decode('utf-8', 'replace')[-300:])}") from None
         if not isinstance(value, dict):
             raise Fail(f"response is not a JSON object: args={shown(list(args))} value={shown(value)}")
         error = value.get("error")
-        if proc.returncode != 0 and isinstance(error, dict) and isinstance(error.get("code"), str):
+        if status != 0 and isinstance(error, dict) and isinstance(error.get("code"), str):
             EMITTED_CODES.add(error["code"])
-        return proc.returncode, value
+        return status, value
 
     def ok(self, *args, db=None):
         """A successful command: exit 0 and its JSON object."""
@@ -238,14 +294,10 @@ class Trial:
         if not isinstance(entry["op"], str) or not (isinstance(entry["ids"], list)
                                                     and all(isinstance(i, str) for i in entry["ids"])):
             raise Fail(f"audit line op must be a string and ids a list of strings: {shown(text)}")
-        at = entry["at"]
-        if not (isinstance(at, str) and AT_FORMAT.fullmatch(at)):
-            raise Fail(f"audit line at is not UTC ISO-8601 with Z: {shown(text)}")
-        try:
-            moment = datetime.strptime(at[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc).timestamp()
-        except ValueError:
-            raise Fail(f"audit line at is not a valid time: {shown(text)}") from None
-        if not self.started - 5 <= moment <= time.time() + 5:
+        moment, unit = utc_moment(entry["at"], text)
+        # `at` names the interval of its last given unit (a second or a minute): accept it
+        # when that interval, truncated or rounded, overlaps this check's run (UTC).
+        if not (moment - unit <= time.time() + 5 and moment + unit >= self.started - 5):
             raise Fail(f"audit line at is not the current UTC time: {shown(text)}")
         return entry
 
@@ -265,6 +317,24 @@ class Trial:
             raise Fail(f"README.md does not mention {missing}")
 
 
+def utc_moment(at, text):
+    """The epoch seconds of an R1 `at` value and the length of its last unit (1 or 60)."""
+    match = isinstance(at, str) and next((m for m in (f.fullmatch(at) for f in AT_FORMATS) if m), None)
+    if not match:
+        raise Fail(f"audit line at is not UTC ISO-8601 with Z: {shown(text)}")
+    year, month, day, hour, minute, second, fraction = match.groups()
+    try:
+        moment = datetime(int(year), int(month), int(day), int(hour), int(minute), int(second or 0),
+                          tzinfo=timezone.utc)
+    except ValueError:
+        raise Fail(f"audit line at is not a valid time: {shown(text)}") from None
+    unit = 1 if second is not None else 60
+    if fraction:
+        fraction = fraction[:9]
+        moment += timedelta(seconds=unit * int(fraction) / 10 ** len(fraction))
+    return moment.timestamp(), unit
+
+
 def read_csv(path):
     if not path.is_file():
         raise Fail(f"{path.name} was not written")
@@ -272,22 +342,47 @@ def read_csv(path):
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as error:
         raise Fail(f"{path.name} is not UTF-8: {error}") from None
-    return list(csv.reader(text.removeprefix("\ufeff").splitlines(keepends=True)))
+    try:
+        return list(csv.reader(text.removeprefix("\ufeff").splitlines(keepends=True)))
+    except csv.Error as error:
+        raise Fail(f"{path.name} is not a readable CSV file: {error}") from None
+
+
+CODE_HEADER = re.compile(r"(?<!en)(?<!de)code", re.IGNORECASE)  # "Code", "Error code", "error_code"; not "Encoded"
+BARE_CODE = re.compile(r"[a-z_]+")
+
+
+def table_cells(row):
+    return [cell.strip() for cell in re.split(r"(?<!\\)\|", row.strip().strip("|"))]
+
+
+def codes_in_cell(cell):
+    """Backticked codes, or else a bare identifier leading the cell; decorations such as
+    "(S3)" or bold markers around it are tolerated."""
+    quoted = [code.strip() for code in re.findall(r"`([^`]+)`", cell) if code.strip()]
+    if quoted:
+        return set(quoted)
+    words = cell.replace("*", " ").split()
+    first = words[0].strip(".,;:") if words else ""
+    return {first} if BARE_CODE.fullmatch(first) else set()
 
 
 def error_codes_in_readme(text):
-    """Codes in the first column of every Markdown table whose header names a code."""
+    """Codes in every column whose header cell names a code ("Code", "Error code", ...)
+    of every Markdown table. Other columns, such as a meaning, are never read."""
     codes, block = set(), []
     for raw in text.splitlines() + [""]:
         line = raw.strip()
         if line.startswith("|"):
             block.append(line)
             continue
-        if block and any("code" in cell.lower() for cell in block[0].strip("|").split("|")):
+        if block:
+            columns = [index for index, cell in enumerate(table_cells(block[0])) if CODE_HEADER.search(cell)]
             for row in block[1:]:
-                cell = row.strip("|").split("|")[0].strip().strip("`").strip()
-                if cell and not set(cell) <= set("-: "):
-                    codes.add(cell)
+                cells = table_cells(row)
+                for index in columns:
+                    if index < len(cells):
+                        codes |= codes_in_cell(cells[index])
         block = []
     return codes
 
@@ -317,9 +412,7 @@ def released(station):
 BAD_PAGES = ("0", "-3", "1.5", "+5", "1_000", "abc", "12 3", "\u0663", "\uff11\uff12")
 
 
-@holdout("base-pages-validation", 1, "baseline", "R2",
-         "README Records: pages is a page count, at least 1, given as ASCII digits. "
-         "BACKLOG B13: a given value must still be a positive integer.")
+@holdout("base-pages-validation", 1, "baseline", "R2", PAGES_SOURCE)
 def _(t):
     for bad in BAD_PAGES[:3]:
         t.fails("invalid_input", "add", "--id", "x", "--title", "T", "--author", "A", "--pages", bad)
@@ -424,15 +517,15 @@ def _(t):
 
 @holdout("b01-status-filter-order", 1, "B01", None,
          "B01: list --status unread|finished lists only books with that status, in insertion order; list without "
-         "--status stays unchanged.")
+         "--status stays unchanged. " + ORDER_SOURCE)
 def _(t):
-    for book_id in "abcd":
+    for book_id in "dbac":  # insertion order differs from ID order
         t.add(book_id)
+    t.ok("finish", "--id", "c")
     t.ok("finish", "--id", "d")
-    t.ok("finish", "--id", "b")
-    expect(t.ids("--status", "finished"), ["b", "d"], "finished books")
-    expect(t.ids("--status", "unread"), ["a", "c"], "unread books")
-    expect(t.list(), [t.rec("a"), t.rec("b", status="finished"), t.rec("c"), t.rec("d", status="finished")],
+    expect(t.ids("--status", "finished"), ["d", "c"], "finished books")
+    expect(t.ids("--status", "unread"), ["b", "a"], "unread books")
+    expect(t.list(), [t.rec("d", status="finished"), t.rec("b"), t.rec("a"), t.rec("c", status="finished")],
            "list without --status")
 
 
@@ -477,7 +570,10 @@ def _(t):
     after = log.read_bytes()
     if not after.startswith(before):
         raise Fail("finish rewrote the existing log instead of appending")
-    added = after[len(before):].decode("utf-8").splitlines()
+    try:
+        added = after[len(before):].decode("utf-8").splitlines()
+    except UnicodeError as error:
+        raise Fail(f"the line appended by finish is not UTF-8: {error}") from None
     expect(len(added), 1, "lines appended by finish")
     entry = t.log_entry(added[0])
     expect((entry["op"], entry["ids"]), ("finish", ["a"]), "appended line")
@@ -488,6 +584,47 @@ def _(t):
     for content in ("{broken", '[{"id": "a"}]'):
         t.db.write_text(content, encoding="utf-8")
         t.fails("storage", "finish", "--id", "a")
+
+
+@holdout("b01-stored-array-format", 1, "B01", None,
+         "README Storage: The database is one UTF-8 JSON file holding an array of book records in insertion order. "
+         "BACKLOG: Keep the working add/list baseline and stored books working.", until=3)
+def _(t):
+    """Until B11 (S4) changes the format, every released command reads the array file and
+    every change keeps it an array of the records in insertion order."""
+    books = [t.rec("m", "Mid", "Ann", 30), t.rec("c", "Cee", "Bob", 20, "finished"), t.rec("x", "Ex", "Ann", 10)]
+    t.write_db(books, 1)
+
+    def still_array(after):
+        data = t.stored()
+        if not isinstance(data, list):
+            raise Fail(f"after {after} the database is no longer a JSON array of book records: {shown(data)}")
+        expect(data, books, f"stored array after {after}")
+
+    expect(t.readonly("list"), {t.key: books}, "list of the stored array")
+    books.append(t.rec("a", "Aye", "Bob", 5))
+    expect(t.add("a", "Aye", "Bob", "5"), books[3], "add response")
+    still_array("add")
+    books[2] = t.rec("x", "Ex", "Ann", 10, "finished")
+    expect(t.ok("finish", "--id", "x"), books[2], "finish response")
+    still_array("finish")
+    expect(t.readonly("list", "--status", "finished"), {t.key: [books[1], books[2]]}, "list --status finished")
+    if t.station >= 2:
+        books += [t.rec("k", "Kay", "Ann", 7), t.rec("b", "Bee", "Cid", 1)]
+        expect(t.import_text(IMPORT_HEADER + "k,Kay,Ann,7\nb,Bee,Cid,1\n"), {"imported": 2}, "import response")
+        still_array("import")
+        expect(t.readonly("summary"), {"authors": [t.line("Ann", 3, 1, 47), t.line("Bob", 2, 1, 25),
+                                                   t.line("Cid", 1, 0, 1)]}, "summary")
+    if t.station >= 3:
+        expect(t.readonly("list", "--author", "Ann"), {t.key: [books[0], books[2], books[4]]}, "list --author Ann")
+        expect(t.readonly("summary", "--author", "Bob"), {"authors": [t.line("Bob", 2, 1, 25)]}, "summary --author")
+        books[0] = t.rec("m", "Mid", "Ann", 30, tags=["sf"])
+        expect(t.ok("tag", "--id", "m", "--add", "sf"), books[0], "tag response")
+        still_array("tag")
+        expect(t.readonly("list", "--tag", "sf"), {t.key: [books[0]]}, "list --tag sf")
+        expect(t.export_rows(readonly=True)[1],
+               [EXPORT_HEADER] + [[book["id"], book["title"], book["author"], str(book["pages"]), book["status"],
+                                   ";".join(book["tags"])] for book in books], "exported rows")
 
 
 @holdout("b01-readme-documents-finish", 1, "B01", None,
@@ -543,7 +680,8 @@ def _(t):
 
 
 @holdout("b02-import-duplicates", 2, "B02", "R3",
-         "B02: no ID may appear twice in the file or exist already. README error codes: duplicate. " + R3_SOURCE)
+         "B02: no ID may appear twice in the file or exist already. README error codes: duplicate. " + R3_SOURCE
+         + " README R3: Comparisons are exact after normalization: Dune and dune are different IDs.")
 def _(t):
     t.add("caf\u00e9")
     for index, rows in enumerate(("x,One,Ann,1\n x\u00a0,Two,Ann,2\n", "y,One,Ann,1\ncafe\u0301,Two,Ann,2\n",
@@ -551,13 +689,17 @@ def _(t):
         path = t.csv_file(f"dup{index}.csv", IMPORT_HEADER + rows)
         t.fails("duplicate", "import", "--csv", str(path))
     expect(t.ids(), ["caf\u00e9"], "stored IDs")
+    # IDs that differ only in case are different IDs, in the file and against stored books
+    expect(t.import_text(IMPORT_HEADER + "Dune,One,Ann,1\ndune,Two,Ann,2\nCaf\u00e9,Three,Ann,3\n", "case.csv"),
+           {"imported": 3}, "import of Dune, dune and Caf\u00e9")
+    expect(t.ids(), ["caf\u00e9", "Dune", "dune", "Caf\u00e9"], "stored IDs after importing case variants")
 
 
 @holdout("b02-import-all-or-nothing", 2, "B02", "R2",
          "B02: Every row follows the rules of add ... The import is all or nothing: if any row is invalid, nothing "
          "is imported. A row with too few or too many columns is invalid input.")
 def _(t):
-    bad_rows = ("b,Beta,Ann,0", "b, \t,Ann,10", "b,Beta,\u00a0,10", " ,Beta,Ann,10", "b,Beta,Ann,ten", "b,Beta,Ann",
+    bad_rows = ("b,Beta,Ann,0", "b, \t,Ann,10", "b,Beta,\u00a0,10", " ,Beta,Ann,10", "b,Beta,Ann,ten", "b,Beta",
                 "b,Beta,Ann,10,extra")
     for index, row in enumerate(bad_rows):
         path = t.csv_file(f"bad{index}.csv", IMPORT_HEADER + "a,Alpha,Ann,10\n" + row + "\n")
@@ -569,9 +711,7 @@ def _(t):
     expect(t.ids(), ["z"], "stored IDs")
 
 
-@holdout("b02-import-pages-validation", 2, "B02", "R2",
-         "B02: Every row follows the rules of add. README Records: pages ... at least 1, given as ASCII digits. "
-         "B13: a given value must still be a positive integer.")
+@holdout("b02-import-pages-validation", 2, "B02", "R2", "B02: Every row follows the rules of add. " + PAGES_SOURCE)
 def _(t):
     t.add("z")
     for index, bad in enumerate(BAD_PAGES):
@@ -597,7 +737,7 @@ def _(t):
     (t.folder / "folder.csv").mkdir()
     files = [t.folder / "missing.csv", t.folder / "folder.csv",
              t.csv_file("empty.csv", ""),
-             t.csv_file("short-header.csv", "id,title,author\na,Alpha,Ann\n"),
+             t.csv_file("short-header.csv", "id,title\na,Alpha\n"),
              t.csv_file("order.csv", "title,id,author,pages\nAlpha,a,Ann,10\n"),
              t.csv_file("extra-header.csv", "id,title,author,pages,status\n"),
              t.csv_file("case-header.csv", "ID,Title,Author,Pages\na,Alpha,Ann,10\n"),
@@ -671,16 +811,19 @@ def _(t):
 
 @holdout("b05-author-filter", 3, "B05", "R3",
          "B05: list --author NAME lists only that author's books, in insertion order, and combines with --status. "
-         + R3_SOURCE)
+         + R3_SOURCE + " " + ORDER_SOURCE)
 def _(t):
-    for book_id, author in (("1", "Ann Lee"), ("2", "Bob"), ("3", "ann lee"), ("4", "Ann Lee"), ("5", "Zo\u00eb")):
+    # insertion order differs from ID order
+    for book_id, author in (("4", "Ann Lee"), ("2", "Bob"), ("3", "ann lee"), ("1", "Ann Lee"), ("6", "Ann Lee"),
+                            ("5", "Zo\u00eb")):
         t.add(book_id, author=author)
+    t.ok("finish", "--id", "1")
     t.ok("finish", "--id", "4")
-    expect(t.ids("--author", " Ann\u00a0\tLee "), ["1", "4"], "list --author ' Ann  Lee '")
+    expect(t.ids("--author", " Ann\u00a0\tLee "), ["4", "1", "6"], "list --author ' Ann  Lee '")
     expect(t.ids("--author", "ann lee"), ["3"], "list --author 'ann lee'")
     expect(t.ids("--author", "Zoe\u0308"), ["5"], "list --author with a combining accent")
-    expect(t.ids("--author", "Ann Lee", "--status", "finished"), ["4"], "list --author --status finished")
-    expect(t.ids("--status", "unread", "--author", "Ann Lee"), ["1"], "list --status unread --author")
+    expect(t.ids("--author", "Ann Lee", "--status", "finished"), ["4", "1"], "list --author --status finished")
+    expect(t.ids("--status", "unread", "--author", "Ann Lee"), ["6"], "list --status unread --author")
     expect(t.ids("--author", "Nobody"), [], "list --author of an unknown author")
 
 
@@ -727,7 +870,8 @@ def _(t):
 
 
 @holdout("b06-export-empty-database", 3, "B06", "R1",
-         "B09: export ... empty database. " + R1_READ_ONLY)
+         "B06: export --csv PATH writes every book to a UTF-8 CSV file with the header id,title,author,pages,status "
+         "... and prints {exported: COUNT}. README Storage: A missing file is an empty database. " + R1_READ_ONLY)
 def _(t):
     value, rows = t.export_rows(readonly=True)
     expect((value, rows), ({"exported": 0}, [EXPORT_HEADER]), "export of a missing database")
@@ -855,20 +999,22 @@ def _(t):
 
 @holdout("b08-list-tag-filters", 3, "B08", "R3",
          "B08: list --tag TAG lists only books with that tag and combines with every other list filter. "
-         + R3_SOURCE)
+         + R3_SOURCE + " " + ORDER_SOURCE)
 def _(t):
-    for book_id, author in (("1", "Ann"), ("2", "Bob"), ("3", "Ann"), ("4", "Ann")):
+    # insertion order differs from ID order
+    for book_id, author in (("5", "Ann"), ("2", "Bob"), ("3", "Ann"), ("4", "Ann"), ("1", "Ann")):
         t.add(book_id, author=author)
-    for book_id, tag in (("1", "sf"), ("2", "sf"), ("3", "sf"), ("4", "SF"), ("2", "caf\u00e9")):
+    for book_id, tag in (("5", "sf"), ("2", "sf"), ("3", "sf"), ("4", "SF"), ("1", "sf"), ("2", "caf\u00e9")):
         t.ok("tag", "--id", book_id, "--add", tag)
     t.ok("finish", "--id", "3")
-    expect(t.ids("--tag", "sf"), ["1", "2", "3"], "list --tag sf")
-    expect(t.ids("--tag", "\tsf "), ["1", "2", "3"], "list --tag ' sf '")
+    t.ok("finish", "--id", "1")
+    expect(t.ids("--tag", "sf"), ["5", "2", "3", "1"], "list --tag sf")
+    expect(t.ids("--tag", "\tsf "), ["5", "2", "3", "1"], "list --tag ' sf '")
     expect(t.ids("--tag", "SF"), ["4"], "list --tag SF")
     expect(t.ids("--tag", "cafe\u0301"), ["2"], "list --tag with a combining accent")
-    expect(t.ids("--tag", "sf", "--author", "Ann"), ["1", "3"], "list --tag --author")
-    expect(t.ids("--tag", "sf", "--status", "finished"), ["3"], "list --tag --status")
-    expect(t.ids("--author", "Ann", "--tag", "sf", "--status", "unread"), ["1"], "list --author --tag --status")
+    expect(t.ids("--tag", "sf", "--author", "Ann"), ["5", "3", "1"], "list --tag --author")
+    expect(t.ids("--tag", "sf", "--status", "finished"), ["3", "1"], "list --tag --status")
+    expect(t.ids("--author", "Ann", "--tag", "sf", "--status", "unread"), ["5"], "list --author --tag --status")
     expect(t.ids("--tag", "none"), [], "list --tag of an unused tag")
 
 
@@ -925,12 +1071,14 @@ def _(t):
 
 # --- S3: B10 integration ---------------------------------------------------------------------
 
-@holdout("b10-teamwork-record", 3, "B10", None,
+@holdout("b10-teamwork-file-present", 3, "B10", None,
          "S3: Keep TEAMWORK.md with identities, time intervals, commit SHAs, merges and conflicts.")
 def _(t):
+    """Presence only: a nonempty TEAMWORK.md exists. Whether it records a real team is the
+    reviewers' judgment, not this check's."""
     found = [path for path in t.repo.rglob("TEAMWORK.md") if ".git" not in path.parts and path.is_file()]
     if not any(path.read_text(encoding="utf-8", errors="replace").strip() for path in found):
-        raise Fail("no nonempty TEAMWORK.md in the repository")
+        raise Fail("no nonempty TEAMWORK.md in the repository (this check tests presence only)")
 
 
 @holdout("b10-readme-documents-commands", 3, "B10", None,
@@ -1038,14 +1186,24 @@ def _(t):
 @holdout("b11-v2-malformed", 4, "B11", "R2", MALFORMED + " B11: The database file becomes {schemaVersion: 2, "
          "records: [...]}.")
 def _(t):
+    """Every released command that reads the database fails with storage on a malformed
+    version 2 file (bad records, a wrong records value, another schemaVersion) and leaves
+    it and its log byte for byte unchanged."""
     bad_records = [dict(STORED[0], pages=0), {k: v for k, v in STORED[0].items() if k != "title"},
                    dict(STORED[0], status="done"), dict(STORED[0], pages="10")]
     contents = [{"schemaVersion": 2, "records": [record]} for record in bad_records]
-    contents += [{"schemaVersion": 2, "records": STORED + [STORED[0]]}, {"schemaVersion": 2, "records": {"a": 1}}]
+    contents += [{"schemaVersion": 2, "records": STORED + [STORED[0]]}, {"schemaVersion": 2, "records": {"a": 1}},
+                 {"schemaVersion": 3, "records": STORED}, {"schemaVersion": "2", "records": STORED}]
+    source = t.csv_file("in.csv", IMPORT_HEADER + "c,Gamma,Cid,30\n")
+    commands = [("list",), ("add", "--id", "c", "--title", "T", "--author", "A", "--pages", "1"),
+                ("finish", "--id", "a"), ("import", "--csv", str(source)), ("summary",),
+                ("export", "--csv", str(t.folder / "out.csv")), ("tag", "--id", "a", "--add", "y")]
+    if t.station >= 6:
+        commands += [("list", "--legacy"), ("summary", "--legacy")]
     for content in contents:
         t.db.write_text(json.dumps(content), encoding="utf-8")
-        t.fails("storage", "list")
-        t.fails("storage", "add", "--id", "c", "--title", "T", "--author", "A", "--pages", "1")
+        for command in commands:
+            t.fails("storage", *command)
 
 
 @holdout("b12-readme-documents-formats", 4, "B12", None, "B12: README docs of both formats.")
@@ -1154,11 +1312,12 @@ def _(t):
 # --- S6: B15 rename book -> entry -------------------------------------------------------------
 
 def rename_library(t):
-    for book_id, author, tag in (("1", "Ann", "sf"), ("2", "Bob", "sf"), ("3", "Ann", None), ("4", "Ann", "sf")):
+    # insertion order differs from ID order
+    for book_id, author, tag in (("4", "Ann", "sf"), ("2", "Bob", "sf"), ("3", "Ann", None), ("1", "Ann", "sf")):
         t.add(book_id, author=author, pages="10")
         if tag:
             t.ok("tag", "--id", book_id, "--add", tag)
-    t.ok("finish", "--id", "1")
+    t.ok("finish", "--id", "4")
 
 
 @holdout("b15-entries-responses", 6, "B15", None, "B15: Responses say entries where they said books.")
@@ -1174,12 +1333,12 @@ def _(t):
 
 @holdout("b15-legacy-list-filters", 6, "B15", None,
          "B15: --legacy returns the previous response shape wherever a response changed, and combines with all "
-         "filters of that command.")
+         "filters of that command. " + ORDER_SOURCE)
 def _(t):
     rename_library(t)
-    for filters, wanted in (((), ["1", "2", "3", "4"]), (("--status", "finished"), ["1"]),
-                            (("--author", " Ann "), ["1", "3", "4"]), (("--tag", "sf"), ["1", "2", "4"]),
-                            (("--tag", "sf", "--author", "Ann", "--status", "unread"), ["4"])):
+    for filters, wanted in (((), ["4", "2", "3", "1"]), (("--status", "finished"), ["4"]),
+                            (("--author", " Ann "), ["4", "3", "1"]), (("--tag", "sf"), ["4", "2", "1"]),
+                            (("--tag", "sf", "--author", "Ann", "--status", "unread"), ["1"])):
         current = t.list(*filters)
         expect([entry["id"] for entry in current], wanted, f"list {' '.join(filters)}")
         expect(t.list("--legacy", *filters, legacy=True), current, f"list --legacy {' '.join(filters)}")
@@ -1262,22 +1421,33 @@ def _(t):
 
 # --- runner -------------------------------------------------------------------------------------
 
-def run(repo, station):
+DEADLINE_DETAIL = "holdout deadline reached"
+
+
+def run(repo, station, deadline=None):
+    """Run the released holdouts; `deadline` is in seconds since this module started."""
     EMITTED_CODES.clear()
+    stop = None if deadline is None else STARTED + deadline
     checks = []
     entrypoint = (repo / "app.py").is_file()
     for entry in released(station):
         status, detail = "PASS", ""
-        if not entrypoint:
+        if stop is not None and time.monotonic() >= stop:
+            status, detail = "ERROR", DEADLINE_DETAIL
+        elif not entrypoint:
             status, detail = "FAIL", "app.py is missing"
         else:
             with tempfile.TemporaryDirectory(prefix="rl2-holdout-", ignore_cleanup_errors=True) as folder:
                 try:
-                    entry["body"](Trial(repo, station, Path(folder)))
+                    entry["body"](Trial(repo, station, Path(folder), stop))
                 except Fail as error:
                     status, detail = "FAIL", str(error)
+                except DeadlineReached:
+                    status, detail = "ERROR", DEADLINE_DETAIL
                 except (KeyError, TypeError, IndexError, AttributeError) as error:
                     status, detail = "FAIL", f"unexpected response shape: {type(error).__name__}: {shown(str(error))}"
+                except (UnicodeError, csv.Error) as error:  # candidate output that cannot be decoded or parsed
+                    status, detail = "FAIL", f"unreadable candidate output: {type(error).__name__}: {shown(str(error))}"
                 except Exception as error:  # an evaluation problem, not a verdict on the candidate
                     status, detail = "ERROR", f"{type(error).__name__}: {shown(str(error))}"
         checks.append({"id": entry["id"], "status": status, "item": entry["item"], "rule": entry["rule"],
@@ -1289,8 +1459,11 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Run the hidden readinglog2 holdouts against one repository.")
     parser.add_argument("--repo", type=Path, default=Path.cwd())
     parser.add_argument("--station", type=int, choices=range(1, STATIONS + 1), required=True)
+    parser.add_argument("--deadline", type=float, default=None, metavar="SECONDS",
+                        help="report the checks not run when this many seconds have passed as ERROR")
     args = parser.parse_args(argv)
-    print(json.dumps(run(args.repo.resolve(), args.station), indent=2))  # ASCII: any stdout encoding works
+    result = run(args.repo.resolve(), args.station, args.deadline)
+    print(json.dumps(result, indent=2))  # ASCII: any stdout encoding works
     return 0
 
 

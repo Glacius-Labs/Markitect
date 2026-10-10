@@ -1,0 +1,28 @@
+{
+  "id": "filtered-list-sorted-by-id",
+  "base": "S3",
+  "item": "B05",
+  "rule": null,
+  "violates": "A filtered list (--status, --author or --tag) is sorted by ID instead of keeping insertion order.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": [
+        "def list_books(books, args):",
+        "    return {\"books\": matching(books, args)}"
+      ],
+      "new": [
+        "def list_books(books, args):",
+        "    filtered = any(getattr(args, name) is not None for name in (\"status\", \"author\", \"tag\"))",
+        "    books = matching(books, args)",
+        "    return {\"books\": sorted(books, key=lambda book: book[\"id\"]) if filtered else books}"
+      ]
+    }
+  ],
+  "fails": [
+    "b01-status-filter-order",
+    "b01-stored-array-format",
+    "b05-author-filter",
+    "b08-list-tag-filters"
+  ]
+}
