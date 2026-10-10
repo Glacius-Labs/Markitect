@@ -1,6 +1,42 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T14:01:38Z",
+  "updatedUtc": "2026-10-10T14:02:47Z",
+  "mainThenCollectiveStopDecision20261010": {
+    "status": "ACTIVE_INTEGRATION_ONLY_STOP_AFTER_VERIFIED_MAIN_CLOSURE",
+    "authority": "Direct human: all budgets free, necessary A01 must not be blocked by budget, unnecessary A01 avoided; concentrate on stable clean Integration/Main, then stop everything and regroup.",
+    "effectiveUtc": "2026-10-10T14:02:47Z",
+    "budgetDecision": "Prior numeric budgets/expired-grant ceilings do not block necessary product stabilization or justified A01 under the existing product mandate. Integrator may autonomously extend generous resources; retain actual usage, failures and unknowns. Controllable process timeouts remain operational safeguards, not artificial project deadlines. No new studies from this budget change.",
+    "a01Decision": "Already technically accepted. Repetition only for concrete defect or materially unproven runtime impact, not routine budget consumption or new acceptance barrier.",
+    "completionBoundary": "Positive required exact-candidate gates and independent review, regular PR89 merge, actual Remote-Main binding, necessary Main closure checks and clean pushed checkpoint. Then owner work ends and Root delivers closure. No automatic improvement block, studies, release, Main-to-KG merge or Jev contribution; older after-Main followups deferred until renewed direct instruction.",
+    "dispatches": [
+      {
+        "threadId": "01a121a0-0417-71c1-9e4b-be742f8c1146",
+        "name": "Integrator",
+        "toolAccepted": true,
+        "scope": "Stabilize and merge, budgets not blocker, hold current CI head, report real Main closure then stop",
+        "afterCursor": "fbacb22c-8d63-4dcd-8c65-43c1bb8ac01a:24",
+        "observed": "active on existing integration turn"
+      },
+      {
+        "threadId": "01a12178-5797-7c41-8acc-8e8231084c79",
+        "name": "Knowledge Graph",
+        "toolAccepted": true,
+        "scope": "Preserve pushed checkpoint; previous automatic Main-to-KG continuation revoked, hold until new direct work",
+        "afterCursor": "eac4ad83-13c1-40fe-8d2d-e19a045ccd22:5",
+        "observed": "idle with completed handoff before this change"
+      },
+      {
+        "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
+        "name": "Scientist",
+        "toolAccepted": true,
+        "scope": "Preserve private backup; no automatic studies or Playground continuation after Main",
+        "afterCursor": "5ff91514-6e73-4172-b94d-2a82e07fb0c5:4",
+        "observed": "idle with completed Windows-choice communication"
+      }
+    ],
+    "otherOwners": "Completed P03/P04/P05 and retired Architect/Worker/old Designer/Oldschool remain stopped. No reactivation or ACK loops.",
+    "rootScope": "Coordination only, no duplicate product edits or suites. Preserve all original evidence, WIP, worktrees, public product refs and private study data."
+  },
   "onboardingReplayCorrection20261010": {
     "status": "SOURCE_DELTA_AND_PUBLIC_REFS_ROOT_VERIFIED_EXACT_NEW_HEAD_CI_RUNNING",
     "checkedUtc": "2026-10-10T14:01:38Z",
