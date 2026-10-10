@@ -72,11 +72,11 @@ func TestInspectAllPlatformsAndTests(t *testing.T) {
 	}
 }
 func TestRepositoryArchitecture(t *testing.T) {
-	edges, err := Inspect(filepath.Join("..", "..", "..", ".."))
+	violations, err := CheckRepository(repositoryRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, v := range Check(edges) {
+	for _, v := range violations {
 		t.Error(v.String())
 	}
 }
