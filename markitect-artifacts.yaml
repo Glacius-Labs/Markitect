@@ -366,6 +366,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectwork/inventory.go
       owner: project-world-implementation
+    - path: src/internal/host/projectwork/knowledge_questions_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectwork/mutation.go
       owner: project-world-implementation
     - path: src/internal/host/projectwork/project.go
@@ -385,6 +387,8 @@ spec:
     - path: src/internal/modules/projectmodel/analyze.go
       owner: project-world-implementation
     - path: src/internal/modules/projectmodel/impact.go
+      owner: project-world-implementation
+    - path: src/internal/modules/projectmodel/impact_correctness_test.go
       owner: project-world-implementation
     - path: src/internal/modules/projectmodel/projectmodel.go
       owner: project-world-implementation

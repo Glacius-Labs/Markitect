@@ -86,6 +86,11 @@ type Report struct {
 	Files           []FileEntry `json:"files"`
 	Findings        []Finding   `json:"findings"`
 	Unknown         []string    `json:"unknown"`
+
+	// unprojected maps each definition to a digest of the parts the collections
+	// above do not carry, so Impact can see changes to them. It is set only by
+	// Analyze and is not part of the JSON contract or Digest.
+	unprojected map[string]string
 }
 
 type ChangeImpact struct {
