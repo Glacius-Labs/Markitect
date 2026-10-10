@@ -1,0 +1,17 @@
+{
+  "id": "status-filter-not-normalized",
+  "base": "S1",
+  "item": "B01",
+  "rule": "R3",
+  "violates": "The --status filter value is compared without normalization.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    status = normalize(value)",
+      "new": "    status = value"
+    }
+  ],
+  "fails": [
+    "b01-status-normalized"
+  ]
+}

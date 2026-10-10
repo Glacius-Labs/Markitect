@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "case": "readinglog2",
+  "totalItems": 15,
+  "stations": [
+    {
+      "id": "S1",
+      "items": [
+        "B01"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S2",
+      "items": [
+        "B02",
+        "B03",
+        "B04"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S3",
+      "items": [
+        "B05",
+        "B06",
+        "B07",
+        "B08",
+        "B09",
+        "B10"
+      ],
+      "requiresTeam": true
+    },
+    {
+      "id": "S4",
+      "items": [
+        "B11",
+        "B12"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S5",
+      "items": [
+        "B13",
+        "B14"
+      ],
+      "requiresTeam": false
+    },
+    {
+      "id": "S6",
+      "items": [
+        "B15"
+      ],
+      "requiresTeam": false
+    }
+  ]
+}

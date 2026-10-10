@@ -24,7 +24,6 @@ spec:
     - src/internal/host/projectworkspace
     - src/internal/host/projectapp
     - src/internal/host/codexappserver
-    - docs/work-items/product-readiness
     - docs/validation/classic-commerce-entrypoint.md
     - examples/classic-commerce
     - src/internal/host/canonical_controller_apply_receipt.go
@@ -46,10 +45,8 @@ spec:
     - src/internal/host/install.go
     - src/internal/host/outputs_write.go
     - src/internal/host/projections.go
-    - src/internal/host/write_safety.go
+    - src/internal/host/guardedwrite
     - src/internal/host/writers_test.go
-    - src/internal/host/writers_windows_test.go
-    - src/internal/host/writers_nonwindows_test.go
     - src/internal/infrastructure/source/selective_identity_test.go
     - src/internal/host/canonical_controller_assurance_preflight_test.go
     - docs/validation/proof-capability-checkpoint-2026-10-06.md
@@ -174,10 +171,6 @@ spec:
     - src/internal/host/projectbriefing
     - src/internal/host/projectonboarding
     - src/internal/tooling/clauderunner
-    - src/internal/host/project_guarded_write.go
-    - src/internal/host/project_guarded_write_test.go
-    - src/internal/host/tool_build_digest.go
-    - src/internal/host/tool_build_digest_test.go
     - src/internal/infrastructure/source/scoped_revision.go
     - src/internal/infrastructure/source/scoped_revision_test.go
     - src/internal/host/projectrun
@@ -329,13 +322,19 @@ spec:
       owner: anchored-host-write-boundary
     - path: src/internal/host/projections.go
       owner: anchored-host-write-boundary
-    - path: src/internal/host/write_safety.go
+    - path: src/internal/host/guardedwrite/path_spelling_other.go
+      owner: anchored-host-write-boundary
+    - path: src/internal/host/guardedwrite/path_spelling_windows.go
+      owner: anchored-host-write-boundary
+    - path: src/internal/host/guardedwrite/root.go
+      owner: anchored-host-write-boundary
+    - path: src/internal/host/guardedwrite/root_nonwindows_test.go
+      owner: anchored-host-write-boundary
+    - path: src/internal/host/guardedwrite/root_test.go
+      owner: anchored-host-write-boundary
+    - path: src/internal/host/guardedwrite/root_windows_test.go
       owner: anchored-host-write-boundary
     - path: src/internal/host/writers_test.go
-      owner: anchored-host-write-boundary
-    - path: src/internal/host/writers_windows_test.go
-      owner: anchored-host-write-boundary
-    - path: src/internal/host/writers_nonwindows_test.go
       owner: anchored-host-write-boundary
     - path: experiments/operating-model-proof/runs/c8-orders-auditall-control-01/attempt-01-outcome.json
       owner: c8-invalid-harness-preflight-evidence
@@ -1956,9 +1955,13 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/agentexec/private_log_windows_test.go
       owner: project-world-implementation
-    - path: src/internal/host/project_guarded_write.go
+    - path: src/internal/host/guardedwrite/guardedwrite.go
       owner: project-world-implementation
-    - path: src/internal/host/project_guarded_write_test.go
+    - path: src/internal/host/guardedwrite/guardedwrite_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/guardedwrite/guardedwrite_windows_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/guardedwrite/helpers_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectadoption/adopt.go
       owner: project-world-implementation
@@ -1992,11 +1995,11 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectwork/projectwork_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectwork/tool_build_digest.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectwork/tool_build_digest_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectwork/types.go
-      owner: project-world-implementation
-    - path: src/internal/host/tool_build_digest.go
-      owner: project-world-implementation
-    - path: src/internal/host/tool_build_digest_test.go
       owner: project-world-implementation
     - path: src/internal/infrastructure/source/scoped_revision.go
       owner: project-world-implementation
@@ -2093,6 +2096,8 @@ spec:
     - path: src/internal/host/projectcli/options.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/options_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/setup_options_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/project_e2e_test.go
       owner: project-world-implementation
@@ -2194,6 +2199,12 @@ spec:
       owner: project-world-validation
     - path: src/internal/host/projectrun/process_e2e_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectrun/byo_executor_e2e_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/check_directory_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/cost_mode_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectadoption/runner.go
       owner: project-world-implementation
     - path: src/internal/host/projectadoption/runner_test.go
@@ -2203,6 +2214,8 @@ spec:
     - path: src/internal/host/projectsetup/setup.go
       owner: project-world-implementation
     - path: src/internal/host/projectsetup/setup_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectsetup/roles_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectcoverage/types.go
       owner: project-world-implementation
@@ -2349,38 +2362,6 @@ spec:
       owner: project-world-validation
     - path: src/internal/host/shared_helpers.go
       owner: host-write-identity
-    - path: docs/work-items/product-readiness/P01-current-checkpoint.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P02-shared-contracts.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P03-workspaces.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P04-app-server.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P05-mcp.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P06-agent-lifecycle.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P07-user-workflow.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P08-repository.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P09-readiness.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P10-main.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/fresh-chat-handoff.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/R01-jev.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/R02-knowledge-graph.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/R03-agent-guidance.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/research-results-20261009.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/source-handoff-20261009.md
-      owner: project-world-implementation
     - path: src/internal/host/projectworkspace/contracts.go
       owner: project-world-implementation
     - path: src/internal/host/projectworkspace/contracts_test.go
@@ -2413,8 +2394,6 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectapp/setup.go
       owner: project-world-implementation
-    - path: docs/work-items/product-readiness/integration-progress-20261009.md
-      owner: project-world-implementation
     - path: src/internal/host/projectapp/model.go
       owner: project-world-implementation
     - path: src/internal/host/projectapp/model_test.go
@@ -2437,8 +2416,6 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/mcp/mcp_test.go
       owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P05-mcp-handoff-20261009.md
-      owner: project-world-implementation
     - path: src/internal/host/projectworkspace/git_service.go
       owner: project-world-implementation
     - path: src/internal/host/projectworkspace/git_inventory.go
@@ -2454,10 +2431,6 @@ spec:
     - path: src/internal/host/projectworkspace/git_hardening_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectworkspace/git_recovery_test.go
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P03-workspaces-handoff-20261009.md
-      owner: project-world-implementation
-    - path: docs/work-items/product-readiness/P04-adapter-handoff-20261009.md
       owner: project-world-implementation
     - path: src/internal/host/projectrun/transport_config_test.go
       owner: project-world-implementation

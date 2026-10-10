@@ -1,6 +1,6 @@
 # Parallel-wave risk triage
 
-**Assessed source:** `0ba7a7218f2ceae65b8db90bb8133c2ffa583ada` (the frozen preparation baseline supplied for this wave). **Published release:** v0.12.0. This report classifies the 18 concerns in the [development risk register](../development/risk-register.md); it does not convert them into a product backlog or alter that register. The source baseline includes unreleased read-only policy-failure analysis, which must not be attributed to v0.12.0.
+**Assessed source:** `0ba7a7218f2ceae65b8db90bb8133c2ffa583ada` (the frozen preparation baseline supplied for this wave). **Published release:** v0.12.0. This report classifies the 18 concerns in the development risk register (retired on 10 October 2026; this report keeps its classifications, and git history keeps the register); it does not convert them into a product backlog or alter that register. The source baseline includes unreleased read-only policy-failure analysis, which must not be attributed to v0.12.0.
 
 ## Findings
 

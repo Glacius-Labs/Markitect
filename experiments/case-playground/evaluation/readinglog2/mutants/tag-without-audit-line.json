@@ -1,0 +1,18 @@
+{
+  "id": "tag-without-audit-line",
+  "base": "S3",
+  "item": "B08",
+  "rule": "R1",
+  "violates": "A successful tag saves but appends no audit line.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "            commit(args.db, books, args.command, ids)",
+      "new": "            save(args.db, books) if args.command == \"tag\" else commit(args.db, books, args.command, ids)"
+    }
+  ],
+  "fails": [
+    "b08-tag-record-and-log",
+    "b08-tag-repeat-logs-again"
+  ]
+}

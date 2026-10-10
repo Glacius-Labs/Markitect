@@ -1,0 +1,25 @@
+{
+  "id": "import-not-atomic",
+  "base": "S2",
+  "item": "B02",
+  "rule": "R2",
+  "violates": "An import with an invalid row stores the rows before it (not all or nothing).",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": [
+        "        except CommandError as error:",
+        "            raise CommandError(error.code, f\"row {number}: {error}\") from None"
+      ],
+      "new": [
+        "        except CommandError as error:",
+        "            save(args.db, books + imported)",
+        "            raise CommandError(error.code, f\"row {number}: {error}\") from None"
+      ]
+    }
+  ],
+  "fails": [
+    "b02-import-all-or-nothing",
+    "b02-import-pages-validation"
+  ]
+}

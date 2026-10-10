@@ -1,0 +1,24 @@
+{
+  "id": "unchanged-mutation-skips-save",
+  "base": "S4",
+  "item": "B11",
+  "rule": "R1",
+  "violates": "A successful mutation that changes no book does not save, so a version 1 file stays version 1.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": [
+        "    save(db, books)",
+        "    append_log(db, op, ids)"
+      ],
+      "new": [
+        "    if load(db) != books:",
+        "        save(db, books)",
+        "    append_log(db, op, ids)"
+      ]
+    }
+  ],
+  "fails": [
+    "b11-noop-mutation-writes-v2"
+  ]
+}

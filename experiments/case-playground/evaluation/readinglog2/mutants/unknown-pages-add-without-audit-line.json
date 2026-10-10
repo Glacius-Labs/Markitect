@@ -1,0 +1,17 @@
+{
+  "id": "unknown-pages-add-without-audit-line",
+  "base": "S5",
+  "item": "B13",
+  "rule": "R1",
+  "violates": "add without a page count saves but appends no audit line.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "            commit(args.db, books, args.command, ids)",
+      "new": "            save(args.db, books) if args.command == \"add\" and result[\"pages\"] is None else commit(args.db, books, args.command, ids)"
+    }
+  ],
+  "fails": [
+    "b13-add-unknown-pages"
+  ]
+}

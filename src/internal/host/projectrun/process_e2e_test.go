@@ -29,6 +29,10 @@ const (
 	e2eLogEnv      = "MARKITECT_E2E_LOG"
 	e2eBehaviorEnv = "MARKITECT_E2E_BEHAVIOR"
 	e2eRootEnv     = "MARKITECT_E2E_ROOT"
+	// e2eOmitUsageEnv lists the fixture phases (work, review, verify) whose
+	// responses omit provider usage, like an executor that cannot report it.
+	e2eOmitUsageEnv        = "MARKITECT_E2E_OMIT_USAGE"
+	e2eIntegrationCheckEnv = "MARKITECT_E2E_INTEGRATION_CHECK"
 )
 
 // These process entry points are re-executed by ProcessInvoker and by the
@@ -46,6 +50,10 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 	var invocation agentexec.Invocation
 	if err := json.Unmarshal(raw, &invocation); err != nil {
 		processExit(2, "decode invocation: "+err.Error())
+	}
+	if invocation.Request.Role == agentexec.RoleVerifier {
+		runE2EVerifier(invocation)
+		return
 	}
 	var discriminator struct {
 		Kind string `json:"kind"`
@@ -103,6 +111,7 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 		"policyIds": invocation.Request.PolicyIDs, "artifacts": invocation.Request.Artifacts,
 		"managerPurpose": contextPayload.Manager.Manager.Purpose, "managerOwns": contextPayload.Manager.Manager.Owns,
 		"contextDigest": rawContentDigest(invocation.Request.Context), "inputDigest": invocation.InputDigest,
+		"agentModel": e2eAgentModel(),
 	}); err != nil {
 		processExit(2, "record invocation: "+err.Error())
 	}
@@ -176,8 +185,21 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 			if os.Getenv(e2eBehaviorEnv) == "out-of-scope" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") {
 				files = []agentexec.CandidateFile{{Path: "src/inventory/foreign.txt", Mode: "0644", Content: "unauthorized"}}
 			}
+			if os.Getenv(e2eBehaviorEnv) == "forgotten-file" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") && contextPayload.RepairRound == 0 {
+				// The executor reports completion but forgets its owned artifact.
+				files = []agentexec.CandidateFile{}
+			}
 		}
 	case "integrate":
+		if os.Getenv(e2eBehaviorEnv) == "integration-stale-summary" && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") {
+			// Both children are correct, but the first integration summarizes the
+			// base revision instead of the integrated child outputs.
+			summary := "orders implementation v1\ninventory implementation v1\n"
+			if contextPayload.RepairRound > 0 {
+				summary = "orders implementation v2\ninventory implementation v2\n"
+			}
+			files = []agentexec.CandidateFile{{Path: "src/project-integration.txt", Mode: "0644", Content: summary}}
+		}
 		if len(contextPayload.ChildReports) != len(contextPayload.DirectChildren) {
 			processExit(2, fmt.Sprintf("Manager integration saw %d child reports, want %d", len(contextPayload.ChildReports), len(contextPayload.DirectChildren)))
 		}
@@ -241,7 +263,7 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 	result := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: nonce,
 		Role: agentexec.RoleExecutor, InputDigest: invocation.InputDigest, Outcome: outcome,
 		CandidateFiles: files, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{},
-		ReportJSON: reportJSON, Uncertainty: []string{}, Usage: &agentexec.Usage{Source: "provider-reported", InputTokens: &inputTokens, OutputTokens: &outputTokens}}
+		ReportJSON: reportJSON, Uncertainty: []string{}, Usage: e2eUsage("work", inputTokens, outputTokens)}
 	encoded, err := json.Marshal(result)
 	if err != nil {
 		processExit(2, "encode response: "+err.Error())
@@ -268,6 +290,7 @@ func runE2EReview(invocation agentexec.Invocation) {
 		"candidateId": contextPayload.CandidateID, "candidateDigest": contextPayload.CandidateDigest,
 		"candidateFiles": contextPayload.CandidateFiles, "artifacts": invocation.Request.Artifacts,
 		"scopeIds": invocation.Request.ScopeIDs, "inputDigest": invocation.InputDigest, "schema": contextPayload.ResponseSchema,
+		"agentModel": e2eAgentModel(),
 	}); err != nil {
 		processExit(2, "record review invocation: "+err.Error())
 	}
@@ -362,7 +385,7 @@ func runE2EReview(invocation agentexec.Invocation) {
 	result := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce,
 		Role: agentexec.RoleExecutor, InputDigest: invocation.InputDigest, Outcome: outcome,
 		CandidateFiles: candidateFiles, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{},
-		ReportJSON: report, Uncertainty: []string{}, Usage: &agentexec.Usage{Source: "provider-reported", InputTokens: &inputTokens, OutputTokens: &outputTokens}}
+		ReportJSON: report, Uncertainty: []string{}, Usage: e2eUsage("review", inputTokens, outputTokens)}
 	encoded, err := json.Marshal(result)
 	if err != nil {
 		processExit(2, "encode review response: "+err.Error())
@@ -383,7 +406,78 @@ func TestProjectRunCheckProcess(t *testing.T) {
 	if err != nil || string(inventory) != "inventory implementation v2\n" {
 		processExit(1, fmt.Sprintf("inventory check failed: content=%q error=%v", inventory, err))
 	}
+	if wd, err := os.Getwd(); err == nil {
+		fmt.Println("check cwd: " + wd)
+	}
 	processExit(0, "")
+}
+
+// TestProjectRunIntegrationCheckProcess is a root-owned declared check: the
+// integration summary must match the integrated child artifacts.
+func TestProjectRunIntegrationCheckProcess(t *testing.T) {
+	if os.Getenv(e2eIntegrationCheckEnv) != "1" {
+		return
+	}
+	var expected strings.Builder
+	for _, path := range []string{"src/orders/implementation.txt", "src/inventory/implementation.txt"} {
+		content, err := os.ReadFile(path)
+		if err != nil {
+			processExit(1, "integration check could not read "+path)
+		}
+		expected.Write(content)
+	}
+	summary, err := os.ReadFile("src/project-integration.txt")
+	if err != nil || string(summary) != expected.String() {
+		processExit(1, fmt.Sprintf("integration summary %q does not match the integrated child artifacts %q", summary, expected.String()))
+	}
+	processExit(0, "")
+}
+
+// runE2EVerifier passes every required subject with the exact required
+// evidence references, like a verifier that accepts the declared checks.
+func runE2EVerifier(invocation agentexec.Invocation) {
+	var contextPayload struct {
+		RequiredSubjects     []string `json:"requiredSubjects"`
+		RequiredEvidenceRefs []string `json:"requiredEvidenceRefs"`
+	}
+	if err := json.Unmarshal(invocation.Request.Context, &contextPayload); err != nil || len(contextPayload.RequiredSubjects) == 0 {
+		processExit(2, "verifier request omitted its required subjects")
+	}
+	if err := appendE2ELog(os.Getenv(e2eLogEnv), map[string]any{"phase": "verify", "managerId": "verifier", "agentModel": e2eAgentModel(), "inputDigest": invocation.InputDigest}); err != nil {
+		processExit(2, "record verifier invocation: "+err.Error())
+	}
+	observations := make([]agentexec.Observation, 0, len(contextPayload.RequiredSubjects))
+	for _, subject := range contextPayload.RequiredSubjects {
+		observations = append(observations, agentexec.Observation{Subject: subject, Outcome: agentexec.OutcomePassed, Detail: "fixture verifier accepted the declared subject"})
+	}
+	result := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce,
+		Role: agentexec.RoleVerifier, InputDigest: invocation.InputDigest, Outcome: agentexec.OutcomePassed,
+		CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: contextPayload.RequiredEvidenceRefs, VerifierObservations: observations,
+		Uncertainty: []string{}, Usage: e2eUsage("verify", 17, 5)}
+	encoded, err := json.Marshal(result)
+	if err != nil {
+		processExit(2, "encode verifier response: "+err.Error())
+	}
+	_, _ = os.Stdout.Write(encoded)
+	processExit(0, "")
+}
+
+// e2eAgentModel reports the model the Host configured for this role.
+func e2eAgentModel() string {
+	var config struct {
+		Model string `json:"model"`
+	}
+	_ = json.Unmarshal([]byte(os.Getenv("MARKITECT_AGENT_CONFIG_JSON")), &config)
+	return config.Model
+}
+
+func e2eUsage(phase string, inputTokens, outputTokens int64) *agentexec.Usage {
+	for _, omitted := range strings.Split(os.Getenv(e2eOmitUsageEnv), ",") {
+		if omitted == phase {
+			return nil
+		}
+	}
+	return &agentexec.Usage{Source: "provider-reported", InputTokens: &inputTokens, OutputTokens: &outputTokens}
 }
 
 func TestProjectRunProcessEndToEndResumeVerifyApply(t *testing.T) {
@@ -1375,7 +1469,7 @@ func makeProjectRunFixture(t *testing.T) string {
 	checkArgs := []string{"-test.run=^TestProjectRunCheckProcess$"}
 	buildAgent := func() Agent {
 		return Agent{Command: executable, Args: args, Model: "fixture-model", ProviderVersion: "e2e-process-v1", Timeout: Duration(30 * time.Second),
-			MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20, Environment: []string{"PATH", e2eExecutorEnv, e2eCheckEnv, e2eLogEnv, e2eBehaviorEnv, e2eRootEnv},
+			MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20, Environment: []string{"PATH", e2eExecutorEnv, e2eCheckEnv, e2eLogEnv, e2eBehaviorEnv, e2eRootEnv, e2eOmitUsageEnv, e2eIntegrationCheckEnv},
 			Pricing: Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}}
 	}
 	config := Runtime{APIVersion: APIVersion, Mode: ModeControlledLocal, Agents: map[string]Agent{

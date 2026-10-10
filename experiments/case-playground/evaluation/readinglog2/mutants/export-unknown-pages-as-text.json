@@ -1,0 +1,18 @@
+{
+  "id": "export-unknown-pages-as-text",
+  "base": "S5",
+  "item": "B13",
+  "rule": null,
+  "violates": "export writes an unknown page count as the text None instead of an empty cell.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "                pages = \"\" if book[\"pages\"] is None else book[\"pages\"]",
+      "new": "                pages = str(book[\"pages\"])"
+    }
+  ],
+  "fails": [
+    "b13-export-empty-pages-cell",
+    "b13-unknown-pages-version-1"
+  ]
+}

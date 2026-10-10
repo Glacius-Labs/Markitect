@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/tooling/release"
 )
@@ -235,7 +236,7 @@ func allInstallBytesMatch(current map[string]installFileState, target map[string
 }
 
 func installableBranch(root string) (string, error) {
-	branch, err := writeBranchName(root)
+	branch, err := guardedwrite.BranchName(root)
 	if err != nil {
 		return "", fmt.Errorf("install requires a Git worktree on a named non-protected branch: %w", err)
 	}

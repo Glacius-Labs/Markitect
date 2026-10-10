@@ -1,0 +1,402 @@
+{
+  "case": "readinglog2",
+  "schema": 1,
+  "source": "Derived only from the public cases/readinglog2/README.md and BACKLOG.md. Areas are behaviors and documentation sections, not files.",
+  "rules": [
+    {
+      "id": "R1",
+      "text": "Audit log. Every successful mutating command appends exactly one JSON line to `<db>.log`: `{\"op\": COMMAND, \"ids\": [IDS in processing order], \"at\": UTC ISO-8601}`. Failed commands and read-only commands append nothing. (`<db>.log` is the database path with `.log` appended; a command is mutating when it can change stored books, read-only when it only reads books, even when it writes another file; `ids` is `[]` when no book was processed; `at` has a `Z` suffix; a successful mutating command saves and logs even when no book changed; the tool only appends to the log.)"
+    },
+    {
+      "id": "R2",
+      "text": "Error contract. Every domain/input error prints `{\"error\": {\"code\": CODE, \"message\": TEXT}}` and exits 2 without any mutation. Codes come from the README's error-code table (baseline: `invalid_input`, `duplicate`, `not_found`, `storage`). A new code must be added to that table. (Usage errors included; the database and its log stay byte for byte as they were and a missing database is not created.)"
+    },
+    {
+      "id": "R3",
+      "text": "Text normalization. All text input, from arguments or files, is Unicode NFC normalized, stripped, and internal whitespace runs collapse to one space. IDs are case-sensitive after normalization. (Covers IDs, titles, authors, page counts, statuses and filter values; file paths are used exactly as given; any Unicode whitespace counts; a value that must not be empty is invalid when empty after normalization; comparisons are exact after normalization.)"
+    }
+  ],
+  "waves": [
+    {
+      "station": "S1",
+      "items": [
+        {
+          "id": "B01",
+          "obligations": [
+            "`finish --id ID` sets the book's status to `finished` and prints the full updated record.",
+            "Finishing a book that is already finished succeeds again and prints the same record.",
+            "`finish` with an ID that no book has fails with `not_found`.",
+            "`list --status unread|finished` lists only the books with that status, in insertion order.",
+            "Any other `--status` value fails with `invalid_input`.",
+            "`list` without `--status` is unchanged.",
+            "Tests for `finish` and `list --status` that run the CLI.",
+            "README usage and failure documentation for `finish` and `list --status`."
+          ],
+          "areas": [
+            "command finish",
+            "command list: --status filter",
+            "audit log",
+            "error contract and README error-code table",
+            "README usage",
+            "CLI tests"
+          ],
+          "rules": [
+            {"id": "R1", "expectation": "Every successful `finish`, including a repeated one that changes nothing, saves the database and appends exactly one line with op `finish` and ids `[ID]`. A failed `finish` and every `list` call append nothing."},
+            {"id": "R2", "expectation": "Unknown ID gives `not_found`; a missing `--id`, an ID that is empty after normalization and an invalid status give `invalid_input`. All exit 2 with the error object, leave the database and log byte-identical and do not create a missing database."},
+            {"id": "R3", "expectation": "`--id` and `--status` values are normalized before matching; matching is exact after normalization, so IDs and statuses are case-sensitive."}
+          ],
+          "mustNotChange": [
+            "`add` and `list` behavior and output",
+            "the stored database format and books already stored",
+            "the audit-log line format and the `<db>.log` path",
+            "the existing error codes"
+          ]
+        }
+      ]
+    },
+    {
+      "station": "S2",
+      "items": [
+        {
+          "id": "B02",
+          "obligations": [
+            "`import --csv PATH` reads a UTF-8 CSV file whose header row is exactly `id,title,author,pages`.",
+            "Every row follows the rules of `add`: nonempty ID, title and author, pages a positive integer in ASCII digits.",
+            "No ID may appear twice in the file or exist already; such an ID fails with `duplicate`.",
+            "The import is all or nothing: one invalid row rejects the whole file and changes nothing.",
+            "On success the books are appended as unread in file order and the command prints `{\"imported\": COUNT}`.",
+            "A file with only the header imports nothing and succeeds.",
+            "Empty lines are ignored.",
+            "A missing or unreadable file, a missing or different header, or a row with too few or too many columns fails with `invalid_input`."
+          ],
+          "areas": [
+            "command import",
+            "CSV input parsing and validation",
+            "audit log",
+            "error contract",
+            "text normalization of file input"
+          ],
+          "rules": [
+            {"id": "R1", "expectation": "A successful import, including a header-only one, appends exactly one line with op `import` and the imported IDs in file order (`[]` when none). A rejected import appends nothing."},
+            {"id": "R2", "expectation": "Every rejected import exits 2 with `invalid_input` or `duplicate`, leaves the database and log byte-identical and does not create a missing database."},
+            {"id": "R3", "expectation": "Every CSV cell (ID, title, author, pages) is NFC-normalized, stripped and whitespace-collapsed, including line breaks inside quoted cells; duplicate detection compares normalized IDs; the `--csv` path is used exactly as given."}
+          ],
+          "mustNotChange": [
+            "`add`, `finish` and `list` behavior and output",
+            "books already stored",
+            "the audit-log format"
+          ]
+        },
+        {
+          "id": "B03",
+          "obligations": [
+            "`summary` prints `{\"authors\": [{\"author\": NAME, \"books\": COUNT, \"finished\": COUNT, \"pages\": TOTAL}, ...]}`, one object per author.",
+            "Authors are ordered by name in plain code-point order.",
+            "`books` and `pages` count all of the author's books, `finished` only the finished ones.",
+            "An empty database gives `{\"authors\": []}`."
+          ],
+          "areas": [
+            "command summary",
+            "audit log (read-only command)",
+            "storage (read-only command)"
+          ],
+          "rules": [
+            {"id": "R1", "expectation": "`summary` is read-only: it appends no log line, never changes the database and does not create a missing one."},
+            {"id": "R2", "expectation": "Unknown options of `summary` fail with `invalid_input`; a malformed database fails with `storage`."},
+            {"id": "R3", "expectation": "Books group by their stored, normalized author; the order compares code points of those names."}
+          ],
+          "mustNotChange": [
+            "`add`, `finish`, `list` and `import` behavior and output",
+            "stored books"
+          ]
+        },
+        {
+          "id": "B04",
+          "obligations": [
+            "Regression tests for the baseline commands and for `finish`, `list --status`, `import` and `summary`.",
+            "README usage documentation for the new commands.",
+            "README failure documentation: which errors the new commands report.",
+            "README stored-state documentation: what the new commands store and what they leave unchanged."
+          ],
+          "areas": [
+            "CLI tests",
+            "README usage",
+            "README error documentation and error-code table",
+            "README storage documentation"
+          ],
+          "rules": [
+            {"id": "R2", "expectation": "The README error-code table lists every code the CLI emits."}
+          ],
+          "mustNotChange": [
+            "behavior of released commands"
+          ]
+        }
+      ]
+    },
+    {
+      "station": "S3",
+      "items": [
+        {
+          "id": "B05",
+          "obligations": [
+            "`list --author NAME` lists only that author's books, in insertion order.",
+            "`--author` combines with `--status`."
+          ],
+          "areas": [
+            "command list: --author filter and filter combination"
+          ],
+          "rules": [
+            {"id": "R1", "expectation": "`list --author` appends nothing and never changes the database."},
+            {"id": "R3", "expectation": "The author filter value is normalized; matching is exact after normalization (case-sensitive)."}
+          ],
+          "mustNotChange": [
+            "`list` without `--author` and `list --status`"
+          ]
+        },
+        {
+          "id": "B06",
+          "obligations": [
+            "`export --csv PATH` writes every book to a UTF-8 CSV file with the header `id,title,author,pages,status` (plus the `tags` column of B08), in insertion order, with standard CSV quoting.",
+            "`export` prints `{\"exported\": COUNT}`.",
+            "`export` never changes the database.",
+            "A destination that cannot be written fails with the new error code `export_failed`.",
+            "`export_failed` is added to the README error-code table."
+          ],
+          "areas": [
+            "command export",
+            "CSV output",
+            "error contract and README error-code table",
+            "audit log (read-only command)"
+          ],
+          "rules": [
+            {"id": "R1", "expectation": "`export` is read-only even though it writes a file: no log line, the database is unchanged and a missing database is not created."},
+            {"id": "R2", "expectation": "An unwritable destination exits 2 with `export_failed` and no mutation; `export_failed` appears in the README error-code table; a missing `--csv` is `invalid_input`."},
+            {"id": "R3", "expectation": "The `--csv` path is used exactly as given."}
+          ],
+          "mustNotChange": [
+            "the database file and its log",
+            "the other commands"
+          ]
+        },
+        {
+          "id": "B07",
+          "obligations": [
+            "`summary --author NAME` reports only that author.",
+            "An unknown author gives `{\"authors\": []}`.",
+            "`summary` without `--author` stays unchanged."
+          ],
+          "areas": [
+            "command summary: --author filter"
+          ],
+          "rules": [
+            {"id": "R1", "expectation": "`summary --author` is read-only."},
+            {"id": "R3", "expectation": "The author value is normalized; matching is exact after normalization."}
+          ],
+          "mustNotChange": [
+            "`summary` without `--author`"
+          ]
+        },
+        {
+          "id": "B08",
+          "obligations": [
+            "`tag --id ID --add TAG` or `tag --id ID --remove TAG`, exactly one of the two, changes one book's tags and prints the updated record.",
+            "Adding a tag the book already has, or removing one it does not have, succeeds without a change.",
+            "Records gain the field `tags`: the book's distinct tags in code-point order, `[]` for new books (added or imported).",
+            "A tag is nonempty, may not contain `;` and is case-sensitive; an invalid tag is `invalid_input`; an unknown ID is `not_found`.",
+            "`list --tag TAG` lists only books with that tag and combines with every other `list` filter.",
+            "`export` gains a last column `tags` holding the book's tags joined by `;`.",
+            "Books stored before tags existed stay readable as books without tags, and reading them never rewrites the file."
+          ],
+          "areas": [
+            "command tag",
+            "record shape: tags field",
+            "command list: --tag filter and filter combination",
+            "command export: tags column",
+            "storage: records without tags",
+            "audit log",
+            "error contract"
+          ],
+          "rules": [
+            {"id": "R1", "expectation": "Every successful `tag`, including one that changes nothing, appends exactly one line with op `tag` and ids `[ID]`; failed `tag` and `list --tag` append nothing."},
+            {"id": "R2", "expectation": "Neither or both of `--add`/`--remove`, an empty tag and a tag with `;` give `invalid_input`, an unknown ID gives `not_found`; no mutation."},
+            {"id": "R3", "expectation": "Tag values from `--add`, `--remove` and `--tag` are normalized; tags compare exactly after normalization (case-sensitive)."}
+          ],
+          "mustNotChange": [
+            "stored books written before tags existed (no rewrite on read)",
+            "existing list filters and their order",
+            "the other export columns"
+          ]
+        },
+        {
+          "id": "B09",
+          "obligations": [
+            "Query tests: filter combinations and order across processes.",
+            "Export tests: quoting, tags column, empty database, unchanged database and an unwritable destination.",
+            "Reporting tests: summary for one author and for unknown authors.",
+            "Tags tests: repeated tagging, unknown IDs, invalid tags and books stored without tags."
+          ],
+          "areas": [
+            "CLI tests"
+          ],
+          "rules": [],
+          "mustNotChange": [
+            "earlier regression tests"
+          ]
+        },
+        {
+          "id": "B10",
+          "obligations": [
+            "All four groups are integrated on `main` with regression tests.",
+            "README docs for `list --author`, `export`, `summary --author`, `tag`, `list --tag`, the tags field and `export_failed`.",
+            "TEAMWORK.md records the real team: identities, time intervals, commit SHAs, merges and conflicts.",
+            "At least two executing agents overlapped in time on independent groups and both contributions are merged."
+          ],
+          "areas": [
+            "README usage, records and error-code table",
+            "CLI tests",
+            "team evidence (TEAMWORK.md)"
+          ],
+          "rules": [
+            {"id": "R2", "expectation": "The README error-code table lists every code the CLI emits, including `export_failed`."}
+          ],
+          "mustNotChange": [
+            "behavior of released commands"
+          ]
+        }
+      ]
+    },
+    {
+      "station": "S4",
+      "items": [
+        {
+          "id": "B11",
+          "obligations": [
+            "The database file becomes `{\"schemaVersion\": 2, \"records\": [...]}`.",
+            "Files in the version 1 array format stay readable by every command.",
+            "Read-only commands never rewrite a file, in either format.",
+            "The first successful mutation writes version 2, also for a version 1 file and also when it changes no book.",
+            "Command output stays unchanged and is the same for both formats."
+          ],
+          "areas": [
+            "storage format and validation",
+            "every command reading version 1 and version 2 files",
+            "audit log on the first mutation",
+            "error contract (malformed version 2 files)"
+          ],
+          "rules": [
+            {"id": "R1", "expectation": "The mutation that upgrades a version 1 file appends exactly the one line of that command (its own op and ids), nothing else; read-only commands on a version 1 file append nothing."},
+            {"id": "R2", "expectation": "A failed command on a version 1 file leaves it byte-identical (still version 1); a malformed version 2 file fails every command with `storage` and is never overwritten."}
+          ],
+          "mustNotChange": [
+            "command output",
+            "the record fields",
+            "audit-log op names and format",
+            "CSV import and export formats"
+          ]
+        },
+        {
+          "id": "B12",
+          "obligations": [
+            "Tests that run every command against version 1 files.",
+            "README documentation of both storage formats."
+          ],
+          "areas": [
+            "CLI tests on version 1 fixtures",
+            "README storage documentation"
+          ],
+          "rules": [],
+          "mustNotChange": [
+            "behavior of released commands"
+          ]
+        }
+      ]
+    },
+    {
+      "station": "S5",
+      "items": [
+        {
+          "id": "B13",
+          "obligations": [
+            "A book may have an unknown page count, stored and shown as `\"pages\": null`.",
+            "`add` without `--pages` or with an empty value stores an unknown page count.",
+            "An empty `pages` cell in an import file stores an unknown page count.",
+            "A given page count must still be a positive integer in ASCII digits.",
+            "`summary` (with and without `--author`) sums only known pages and reports `unknownPages` per author, the number of the author's books without a page count.",
+            "`export` writes an unknown page count as an empty cell.",
+            "Unknown page counts are accepted in both storage formats and survive later changes such as `finish` and `tag`."
+          ],
+          "areas": [
+            "command add: optional pages",
+            "command import: empty pages cell",
+            "command summary and summary --author: unknownPages",
+            "command export: empty pages cell",
+            "record shape and storage validation for null pages",
+            "audit log"
+          ],
+          "rules": [
+            {"id": "R1", "expectation": "`add` without pages and `import` with empty pages cells append their normal single line."},
+            {"id": "R2", "expectation": "A given but invalid page count (zero, negative, signed, decimal, non-ASCII digits) still fails with `invalid_input` and no mutation."},
+            {"id": "R3", "expectation": "A page value that is empty after normalization (for example only whitespace) means unknown."}
+          ],
+          "mustNotChange": [
+            "validation of given page counts",
+            "the other summary fields and their order",
+            "the CSV headers"
+          ]
+        },
+        {
+          "id": "B14",
+          "obligations": [
+            "Tests for unknown page counts across every affected command (add, import, summary, summary --author, export, list) and both storage formats.",
+            "README documentation of optional pages, `null` and `unknownPages`."
+          ],
+          "areas": [
+            "CLI tests",
+            "README usage, records and storage documentation"
+          ],
+          "rules": [],
+          "mustNotChange": [
+            "behavior of released commands"
+          ]
+        }
+      ]
+    },
+    {
+      "station": "S6",
+      "items": [
+        {
+          "id": "B15",
+          "obligations": [
+            "The active domain term book becomes entry in interfaces, code, tests and docs.",
+            "`list` responds `{\"entries\": [...]}` and each `summary` author object counts `entries` instead of `books`.",
+            "`--legacy` on `list` and `summary` returns exactly the previous response shape for one compatibility period.",
+            "`--legacy` combines with all filters of that command: `--status`, `--author` and `--tag` for `list`, `--author` for `summary`.",
+            "Stored data, audit-log operation names and CSV headers stay unchanged.",
+            "The compatibility plan is explained before it is implemented.",
+            "Tests of the new and the legacy shapes against data written before the rename, in both storage formats."
+          ],
+          "areas": [
+            "responses of list and summary",
+            "--legacy compatibility option and filter composition",
+            "storage format (unchanged)",
+            "audit log op names (unchanged)",
+            "CSV import and export headers (unchanged)",
+            "README usage and compatibility documentation",
+            "CLI tests"
+          ],
+          "rules": [
+            {"id": "R1", "expectation": "Audit lines keep the op names `add`, `finish`, `import` and `tag`."},
+            {"id": "R2", "expectation": "Error codes are unchanged; `--legacy` with an invalid filter value still fails with `invalid_input`."},
+            {"id": "R3", "expectation": "Filter values combined with `--legacy` are normalized like without it."}
+          ],
+          "mustNotChange": [
+            "stored data in both formats (`schemaVersion`, `records`, record fields)",
+            "audit-log operation names",
+            "CSV headers of import and export",
+            "responses that did not say books (records, imported, exported, error objects)"
+          ]
+        }
+      ]
+    }
+  ]
+}

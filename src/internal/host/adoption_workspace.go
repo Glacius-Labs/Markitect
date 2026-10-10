@@ -10,6 +10,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/adoption/capture"
 )
@@ -48,7 +49,7 @@ func writeAdoptionWorkspace(result *AdoptionPreparation, parent, destination str
 			}
 		} else {
 			current, err := os.Lstat(destination)
-			if err != nil || !current.IsDir() || isReparsePoint(current) || !os.SameFile(workspaceInfo, current) {
+			if err != nil || !current.IsDir() || guardedwrite.IsReparsePoint(current) || !os.SameFile(workspaceInfo, current) {
 				return errors.New("adoption workspace identity changed during preparation")
 			}
 		}
@@ -67,7 +68,7 @@ func writeAdoptionWorkspace(result *AdoptionPreparation, parent, destination str
 	}
 	result.CreatedDirectories = append(result.CreatedDirectories, ".")
 	workspaceInfo, err = os.Lstat(destination)
-	if err != nil || !workspaceInfo.IsDir() || isReparsePoint(workspaceInfo) {
+	if err != nil || !workspaceInfo.IsDir() || guardedwrite.IsReparsePoint(workspaceInfo) {
 		return fail(errors.New("adoption workspace became unsafe after creation"))
 	}
 
@@ -96,7 +97,7 @@ func writeAdoptionWorkspace(result *AdoptionPreparation, parent, destination str
 		if err := validate(directory); err != nil {
 			return fail(fmt.Errorf("revalidate before directory create %s: %w", directory, err))
 		}
-		path, err := safeDestination(destination, directory)
+		path, err := guardedwrite.SafeDestination(destination, directory)
 		if err != nil {
 			return fail(fmt.Errorf("unsafe adoption directory %s: %w", directory, err))
 		}
@@ -136,7 +137,7 @@ func writeAdoptionFile(result *AdoptionPreparation, root, relative string, data 
 	if err := validate(relative); err != nil {
 		return fmt.Errorf("revalidate before file create %s: %w", relative, err)
 	}
-	destination, err := safeDestination(root, relative)
+	destination, err := guardedwrite.SafeDestination(root, relative)
 	if err != nil {
 		return fmt.Errorf("unsafe adoption file %s: %w", relative, err)
 	}
@@ -160,10 +161,10 @@ func writeAdoptionFile(result *AdoptionPreparation, root, relative string, data 
 
 func revalidateAdoptionWrite(parent, destination string, parentInfo os.FileInfo, prepared *preparedEvidence) error {
 	parentNow, err := os.Lstat(parent)
-	if err != nil || !parentNow.IsDir() || isReparsePoint(parentNow) || !os.SameFile(parentInfo, parentNow) {
+	if err != nil || !parentNow.IsDir() || guardedwrite.IsReparsePoint(parentNow) || !os.SameFile(parentInfo, parentNow) {
 		return errors.New("adoption destination parent changed during preparation")
 	}
-	if err := rejectReparseAncestors(parent); err != nil {
+	if err := guardedwrite.RejectReparseAncestors(parent); err != nil {
 		return fmt.Errorf("unsafe destination parent: %w", err)
 	}
 	for _, id := range sortedRepoIDs(prepared.ids) {
@@ -185,7 +186,7 @@ func revalidateAdoptionWrite(parent, destination string, parentInfo os.FileInfo,
 		// Once created, the workspace itself is expected to exist; the caller
 		// confirms its identity through path traversal checks. Before creation,
 		// existence is rejected by the exclusive mkdir.
-		if err := rejectReparseAncestors(destination); err != nil {
+		if err := guardedwrite.RejectReparseAncestors(destination); err != nil {
 			return fmt.Errorf("unsafe adoption workspace: %w", err)
 		}
 	} else if !os.IsNotExist(err) {
@@ -201,7 +202,7 @@ func ReadAdoptionWorkspace(directory string) ([]byte, map[string][]byte, error) 
 	if err != nil {
 		return nil, nil, err
 	}
-	manifestPath, err := safeDestination(root, "handoff.yaml")
+	manifestPath, err := guardedwrite.SafeDestination(root, "handoff.yaml")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -236,7 +237,7 @@ func ReadAdoptionWorkspace(directory string) ([]byte, map[string][]byte, error) 
 	for _, repo := range handoff.Repositories {
 		for _, file := range repo.Files {
 			relative := filepath.ToSlash(filepath.Join("evidence", repo.ID, filepath.FromSlash(file.Path)))
-			path, err := safeDestination(root, relative)
+			path, err := guardedwrite.SafeDestination(root, relative)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -279,7 +280,7 @@ func ReadAdoptionCandidate(queueDirectory, exactRelativePath string) ([]byte, er
 	if err != nil {
 		return nil, err
 	}
-	path, err := safeDestination(root, exactRelativePath)
+	path, err := guardedwrite.SafeDestination(root, exactRelativePath)
 	if err != nil {
 		return nil, err
 	}
@@ -301,11 +302,11 @@ func readExplicitRecord(path string, max int64) ([]byte, error) {
 		return nil, err
 	}
 	abs = filepath.Clean(abs)
-	if err := rejectReparseAncestors(filepath.Dir(abs)); err != nil {
+	if err := guardedwrite.RejectReparseAncestors(filepath.Dir(abs)); err != nil {
 		return nil, fmt.Errorf("unsafe record path: %w", err)
 	}
 	canonical, err := canonicalUserPath(abs)
-	if err != nil || !samePathSpelling(abs, canonical) {
+	if err != nil || !guardedwrite.SamePathSpelling(abs, canonical) {
 		return nil, fmt.Errorf("record path must use canonical spelling: %s", abs)
 	}
 	if err := rejectCaseAliases(filepath.Dir(abs)); err != nil {
@@ -326,11 +327,11 @@ func realDirectory(directory string) (string, error) {
 		return "", err
 	}
 	abs = filepath.Clean(abs)
-	if err := rejectReparseAncestors(abs); err != nil {
+	if err := guardedwrite.RejectReparseAncestors(abs); err != nil {
 		return "", fmt.Errorf("unsafe directory: %w", err)
 	}
 	info, err := os.Lstat(abs)
-	if err != nil || !info.IsDir() || isReparsePoint(info) {
+	if err != nil || !info.IsDir() || guardedwrite.IsReparsePoint(info) {
 		return "", fmt.Errorf("expected a real directory: %s", abs)
 	}
 	resolved, err := filepath.EvalSymlinks(abs)
@@ -338,7 +339,7 @@ func realDirectory(directory string) (string, error) {
 		return "", err
 	}
 	canonical, err := canonicalUserPath(resolved)
-	if err != nil || !samePathSpelling(abs, canonical) {
+	if err != nil || !guardedwrite.SamePathSpelling(abs, canonical) {
 		return "", fmt.Errorf("directory must use canonical path spelling: %s", abs)
 	}
 	if err := rejectCaseAliases(abs); err != nil {
@@ -352,7 +353,7 @@ func readBoundedRegular(path string, limit int64, requireUTF8 bool) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
-	if !before.Mode().IsRegular() || isReparsePoint(before) || before.Size() < 0 || before.Size() > limit {
+	if !before.Mode().IsRegular() || guardedwrite.IsReparsePoint(before) || before.Size() < 0 || before.Size() > limit {
 		return nil, fmt.Errorf("expected regular file no larger than %d bytes: %s", limit, path)
 	}
 	f, err := os.Open(path)
@@ -397,7 +398,7 @@ func validateWorkspaceTree(root string, expected, expectedDirectories map[string
 			rel := filepath.ToSlash(filepath.Join(relative, name))
 			path := filepath.Join(directory, name)
 			info, err := os.Lstat(path)
-			if err != nil || isReparsePoint(info) {
+			if err != nil || guardedwrite.IsReparsePoint(info) {
 				return fmt.Errorf("workspace contains unsafe entry %s", rel)
 			}
 			if info.IsDir() {

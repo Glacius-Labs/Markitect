@@ -1,6 +1,7 @@
 package projectcli
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -553,17 +554,75 @@ func projectOperations() projectapp.Operations {
 	return projectapp.Operations{Host: projectRunHost(), Invoker: projectRunInvoker()}
 }
 
+// setupOptions reads either one complete options record (the same shape as the
+// MCP project_setup options, including per-role profiles) or the default
+// profile flags.
 func setupOptions(opts options) (projectsetup.Options, error) {
+	if opts.input != "" {
+		for _, flagValue := range []string{opts.provider, opts.model, opts.effort, opts.codexProfile, opts.windowsSandboxBackend, opts.providerExecutable,
+			opts.providerVersion, opts.costMode, opts.inputMicros, opts.outputMicros, opts.maxCost} {
+			if flagValue != "" {
+				return projectsetup.Options{}, errors.New("project setup --input carries the complete options; do not combine it with profile flags")
+			}
+		}
+		if len(opts.providerArgs) != 0 {
+			return projectsetup.Options{}, errors.New("project setup --input carries the complete options; do not combine it with profile flags")
+		}
+		data, err := readRecord(opts.repo, opts.input)
+		if err != nil {
+			return projectsetup.Options{}, err
+		}
+		decoder := json.NewDecoder(bytes.NewReader(data))
+		decoder.DisallowUnknownFields()
+		var options projectsetup.Options
+		if err := decoder.Decode(&options); err != nil {
+			return projectsetup.Options{}, fmt.Errorf("decode setup options %s: %w", opts.input, err)
+		}
+		if decoder.More() {
+			return projectsetup.Options{}, fmt.Errorf("setup options %s must contain exactly one JSON object", opts.input)
+		}
+		return options, nil
+	}
+	if opts.provider == "" || opts.model == "" {
+		return projectsetup.Options{}, errors.New("project setup requires --provider and --model, or --input with complete options")
+	}
+	if opts.maxCost == "" {
+		return projectsetup.Options{}, errors.New("project setup requires --max-cost-micros")
+	}
+	options := projectsetup.Options{
+		Provider: opts.provider, Model: opts.model, Effort: opts.effort, CodexProfile: opts.codexProfile,
+		WindowsSandboxBackend: codexappserver.WindowsSandboxBackend(opts.windowsSandboxBackend),
+		ProviderExecutable:    opts.providerExecutable, ProviderArgs: append([]string(nil), opts.providerArgs...),
+		ProviderVersion: opts.providerVersion, CostMode: opts.costMode,
+	}
+	if opts.costMode == projectrun.CostModeUnmetered {
+		if opts.inputMicros != "" || opts.outputMicros != "" {
+			return projectsetup.Options{}, errors.New("--cost-mode unmetered declares no price; omit the input/output rates")
+		}
+		maxCost, err := parseMaxCost(opts.maxCost)
+		if err != nil {
+			return projectsetup.Options{}, err
+		}
+		options.MaxCostMicros = maxCost
+		return options, nil
+	}
+	if opts.inputMicros == "" || opts.outputMicros == "" {
+		return projectsetup.Options{}, errors.New("metered project setup requires --input-micros-per-million and --output-micros-per-million")
+	}
 	rates, err := parsePositiveRates(opts.inputMicros, opts.outputMicros, opts.maxCost)
 	if err != nil {
 		return projectsetup.Options{}, err
 	}
-	return projectsetup.Options{
-		Provider: opts.provider, Model: opts.model, Effort: opts.effort, CodexProfile: opts.codexProfile,
-		WindowsSandboxBackend: codexappserver.WindowsSandboxBackend(opts.windowsSandboxBackend),
-		ProviderExecutable: opts.providerExecutable, InputMicrosPerMillion: rates.input,
-		OutputMicrosPerMillion: rates.output, MaxCostMicros: rates.maxCost,
-	}, nil
+	options.InputMicrosPerMillion, options.OutputMicrosPerMillion, options.MaxCostMicros = rates.input, rates.output, rates.maxCost
+	return options, nil
+}
+
+func parseMaxCost(text string) (int64, error) {
+	parsed, err := strconv.ParseInt(text, 10, 64)
+	if err != nil || parsed <= 0 || parsed > 1_000_000_000_000 {
+		return 0, errors.New("--max-cost-micros must be between 1 and 1000000000000")
+	}
+	return parsed, nil
 }
 
 type rateOptions struct{ input, output, maxCost int64 }

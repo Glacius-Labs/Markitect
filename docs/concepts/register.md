@@ -37,7 +37,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 | [ENH-003](#enh-003-test-to-statement-binding-and-test-review) | Enhancement | Test-to-statement binding and test review | Accepted direction |
 | [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) | Enhancement | Per-role agent configuration and model mixing | Accepted direction |
 | [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) | Enhancement | Exchangeable executor for the delegated method | Endorsed; design pending |
-| [OQ-001 to OQ-006](#open-questions) | Open question | Open questions | Open |
+| [OQ-001 to OQ-007](#open-questions) | Open question | Open questions | Open |
 | [IDEA-001](#idea-001-the-model-as-institutional-memory-for-stateless-agents) | Idea | The model as institutional memory for stateless agents | Proposed |
 | [IDEA-002](#idea-002-government-delegated-model-maintenance) | Idea | Government: delegated model maintenance | Owner idea; parked |
 | [IDEA-003](#idea-003-degree-of-freedom-per-manager-and-rule-strictness) | Idea | Degree of freedom per Manager and rule strictness | Owner idea; parked |
@@ -53,6 +53,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 | [IDEA-013](#idea-013-gamification) | Idea | Gamification | Owner idea; parked |
 | [IDEA-014](#idea-014-shared-evidence-bound-events) | Idea | Shared evidence-bound events | Proposed by the product chat; parked |
 | [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) | Idea | Cockpit with a conversational personal agent | Owner idea; parked |
+| [IDEA-016](#idea-016-optional-offline-claim-and-evidence-classifier) | Idea | Optional offline claim and evidence classifier | Proposed (research R01) |
 
 ## Long-term vision
 
@@ -267,7 +268,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
   - The existing MCP surface is used. There is no separate knowledge server.
   - The YAML model stays canonical.
   - Whether Decisions become first-class model entries is proposed in KG-01 and KG-02, not decided here.
-- **Work items:** KG-01 to KG-03 in the [backlog](../work-items/backlog.yaml).
+- **Work items:** KG-01 to KG-03 in the [backlog](../work-items/backlog.yaml). The earlier research item R02 is summarized on the [research page](../research/optional-research-r01-r03-20261009.md).
 
 ### DEC-019 Government code starts after Wave 2
 
@@ -422,6 +423,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 | OQ-003 | Which model tiers suffice for which roles, and does total cost actually fall? | [ASM-003](#assumptions-and-hypotheses), [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) |
 | OQ-004 | How much independence does a different reviewer model add beyond fresh context? | [ASM-005](#assumptions-and-hypotheses) |
 | OQ-005 | Should evaluation focus on a series of changes on a long-lived project? If so, what ground truth makes "nothing forgotten" measurable there, for example predeclared affected sets, seeded cross-cutting rules and hidden holdout checks? | [DEC-009](#dec-009-the-central-evaluation-question), [PRM-001](#promises) |
+| OQ-007 | How reliable is the native delivery path? The combined A01 native smoke passed once (Actual28, on a Windows host) after 27 failed attempts, was not repeated, and never ran on Linux ([A01 record](../validation/a01-native-smoke-20261010.md)). | [DEC-013](#dec-013-linux-first-for-tests-and-the-playground), [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) |
 | OQ-006 | How much current-state context does a bounded Manager need, so that limited responsibility does not become artificial blindness? The original product chat's hypothesis: shared contracts, plus current-state context on demand (Concepts note C19). | [CPT-001](#cpt-001-federalism), [CPT-004](#cpt-004-the-specification-stays-effective) |
 
 ## Ideas
@@ -559,6 +561,12 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 
   The Concepts chat records this as a provisional derivation by the owner („vorläufige Nutzerableitung“). The Ideas chat records it as the Concepts chat's interpretation. No verbatim owner wording for it exists.
 - **Source:** [personal agent cockpit](sources/concepts-chat-20261009/personal-agent-cockpit-20261009.md)
+
+### IDEA-016 Optional offline claim and evidence classifier
+
+- **Status:** Proposed by the research item R01 (9 October 2026); not evaluated by the owner.
+- **Idea:** The R01 research assessed a strongly typed AI tool for Markitect. It recommended against using it to replace the compiler or Manager gates. An optional, offline classifier of claims and evidence could be examined later.
+- **Source:** [optional research R01 to R03](../research/optional-research-r01-r03-20261009.md).
 
 ## Imported collections
 

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/adoption/capture"
 )
@@ -179,7 +180,7 @@ func statSourceIdentity(identity source.GitIdentity) (sourceDirectoryStats, erro
 		dst  *os.FileInfo
 	}{{identity.Root, &result.root}, {identity.GitDir, &result.git}, {identity.CommonDir, &result.common}} {
 		info, err := os.Lstat(item.path)
-		if err != nil || !info.IsDir() || isReparsePoint(info) {
+		if err != nil || !info.IsDir() || guardedwrite.IsReparsePoint(info) {
 			return sourceDirectoryStats{}, fmt.Errorf("source identity path is no longer a real directory: %s", item.path)
 		}
 		*item.dst = info
@@ -199,22 +200,22 @@ func validateAdoptionDestination(destination string, repositories []capture.Repo
 	abs = filepath.Clean(abs)
 	parent := filepath.Dir(abs)
 	parentInfo, err := os.Lstat(parent)
-	if err != nil || !parentInfo.IsDir() || isReparsePoint(parentInfo) {
+	if err != nil || !parentInfo.IsDir() || guardedwrite.IsReparsePoint(parentInfo) {
 		return "", "", nil, fmt.Errorf("adoption destination parent must be an existing real directory: %s", parent)
 	}
-	if err := rejectReparseAncestors(parent); err != nil {
+	if err := guardedwrite.RejectReparseAncestors(parent); err != nil {
 		return "", "", nil, fmt.Errorf("unsafe adoption destination parent: %w", err)
 	}
 	canonicalParent, err := filepath.EvalSymlinks(parent)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("canonicalize adoption destination parent: %w", err)
 	}
-	canonicalParent, err = canonicalPathSpelling(canonicalParent)
+	canonicalParent, err = guardedwrite.CanonicalPathSpelling(canonicalParent)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("canonicalize adoption destination spelling: %w", err)
 	}
 	canonicalParent = stripWindowsLongPathPrefix(canonicalParent)
-	if !samePathSpelling(filepath.Clean(parent), filepath.Clean(canonicalParent)) {
+	if !guardedwrite.SamePathSpelling(filepath.Clean(parent), filepath.Clean(canonicalParent)) {
 		return "", "", nil, fmt.Errorf("adoption destination parent must use its canonical path spelling: %s", parent)
 	}
 	if err := rejectCaseAliases(parent); err != nil {
@@ -238,7 +239,7 @@ func validateAdoptionDestination(destination string, repositories []capture.Repo
 	// The leaf is required absent, so Windows cannot resolve it through an
 	// existing 8.3 alias. Build it from the already canonicalized parent.
 	canonicalDest := filepath.Join(canonicalParent, name)
-	if !samePathSpelling(abs, canonicalDest) {
+	if !guardedwrite.SamePathSpelling(abs, canonicalDest) {
 		return "", "", nil, fmt.Errorf("adoption destination must use its canonical path spelling: %s", abs)
 	}
 	for _, repo := range repositories {
@@ -252,7 +253,7 @@ func validateAdoptionDestination(destination string, repositories []capture.Repo
 }
 
 func canonicalUserPath(path string) (string, error) {
-	canonical, err := canonicalPathSpelling(path)
+	canonical, err := guardedwrite.CanonicalPathSpelling(path)
 	if err != nil {
 		return "", err
 	}
