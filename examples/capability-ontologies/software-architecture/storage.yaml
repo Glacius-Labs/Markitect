@@ -1,5 +1,0 @@
-apiVersion: architecture.example.org/v1
-kind: Component
-metadata: {namespace: shop, name: catalog-db}
-purpose: Stores catalog records.
-spec: {name: Catalog database, layer: infrastructure}

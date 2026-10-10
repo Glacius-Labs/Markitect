@@ -1,5 +1,0 @@
-apiVersion: responsibility.example.org/v1
-kind: Role
-metadata: {namespace: release, name: approver}
-purpose: Reviews the release task before completion.
-spec: {name: Release approver, authority: approver}
