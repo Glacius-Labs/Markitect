@@ -1,12 +1,49 @@
-# Examples
+# Examples and executable fixtures
 
-- [Minimal rollback review](minimal/README.md) is a runnable synthetic fixture with the explicit Markdown target enabled.
-- [Repository layout](repository-layout/README.md) demonstrates canonical Areas, human documentation and native provider output with Markdown views disabled.
-- [Markdown navigation](markdown-navigation/README.md) checks source-relative typed and ordinary links, images, references and unchanged code examples in relocated views.
-- [Code and documentation](documentation/README.md) links ordinary Go input to a focused documentation resource and its review workflow.
-- [Documentation placement](documentation-placement/README.md) is a small authoring exercise with an existing canonical owner and optional router validation.
-- [Content package](content-package/README.md) supplies a small versioned set of exported resources.
-- [Package consumer](package-consumer/README.md) pins that archive and composes its exports explicitly.
-- [Canonical engineering model](canonical-engineering/README.md) registers project-owned Software and Delivery vocabularies, checks structured policy, compiles Skill context, and exercises local render reconciliation.
+Start with the model-first [Shop example](project-world/README.md) for the current project workflow. Other directories exercise particular structural, authoring or experimental contracts. Run each fixture with the source or release named by its guide; a historical fixture is not a promise that every old command remains in current source.
 
-Examples with generated Markdown opt in through `spec.targets: [markdown]`; `package-consumer` also demonstrates provider output linking straight to canonical YAML. The minimal fixture's regression test lives in [example_test.go](../src/harness/examples/example_test.go). The [documentation scenario](../src/internal/host/documentation_scenario_test.go) checks exact context, impact and review eligibility when its declared source input changes.
+## Model-first project workflow
+
+| Example | Purpose |
+|---|---|
+| [Shop](project-world/README.md) | Recursive Managers, model intent, artifact ownership and deterministic application checks |
+
+The [Project workflow](../docs/project-workflow.md) and [Project operations](../docs/project-operations.md) describe normal usage. Live provider exercises and their dated evidence are indexed under [experiments](../experiments/README.md).
+
+## Structural resources, navigation and packages
+
+| Fixture | Purpose |
+|---|---|
+| [Minimal rollback review](minimal/README.md) | Small synthetic Project with generated Markdown |
+| [Repository layout](repository-layout/README.md) | Canonical Areas, human docs and native guidance with Markdown views disabled |
+| [Markdown navigation](markdown-navigation/README.md) | Links, images, references and code examples in relocated generated views |
+| [Code and documentation](documentation/README.md) | Ordinary Go input connected to a resource and review workflow |
+| [Documentation placement](documentation-placement/README.md) | Canonical document ownership and optional router validation |
+| [Content package](content-package/README.md) | Versioned exported resources |
+| [Package consumer](package-consumer/README.md) | Exact package pins and explicit export composition |
+| [Canonical engineering](canonical-engineering/README.md) | Project-owned Software/Delivery vocabularies, policy, context and rendering |
+| [Engineering constitution](engineering-constitution/README.md) | Executable reusable engineering constraints |
+| [Engineering discovery](engineering-discovery/README.md) | Selected evidence and review before canonical adoption |
+| [Software architecture](software-architecture/README.md) | Structural architecture and policy stress cases |
+| [Delivery target equality](delivery-target-equality/README.md) | Bounded same-target constraint examples |
+| [Published onboarding exercise](onboarding/delivery-service/README.md) | Fixed synthetic parcel-support task and dated measurement |
+
+## Experimental and historical projection scenarios
+
+These fixtures preserve their own contract and source boundaries. Consult the [design map](../docs/design/README.md) and [validation map](../docs/validation/README.md) before interpreting a recorded result as current readiness.
+
+| Fixture | Purpose |
+|---|---|
+| [Canonical Projection](canonical-projection) | Structural canonical alpha fixtures; see the [design](../docs/design/canonical-projection-reset.md) and [validation record](../docs/validation/canonical-projection-reset.md) |
+| [Projection-first](projection-first/README.md) | Reviewed candidate and verification lifecycle |
+| [Canonical workflow](canonical-workflow/README.md) | Workflow representations and guarded reconciliation |
+| [Capability ontologies](capability-ontologies/README.md) | Explicitly declared engineering vocabularies |
+| [Operating model](operating-model/README.md) | Bounded operating-model contracts |
+| [Recursive assurance](recursive-assurance/README.md) | Hierarchical responsibilities and evidence |
+| [Unknown ontology](unknown-ontology/README.md) | Exact package selection and conservative unknown-input behavior |
+| [Module replacement](module-replacement/README.md) | Replacing a representation implementation under declared contracts |
+| [Selective adoption](selective-adoption/README.md) | Fixed-source capture and project-owned adoption |
+| [Classic Commerce](classic-commerce/README.md) | Historical released Projection example and its pinned source |
+| [Consistency conflict](consistency-conflict/README.md) | Bounded conflicting-intent scenario |
+
+Generated fixture views derive from each fixture's canonical inputs. Preserve expected baselines and immutable workload versions; use a disposable copy for a scenario that writes. The [example harnesses](../src/harness/examples) and [contribution checks](../CONTRIBUTING.md#verify-a-change) own source regression coverage. [Release benchmarks](../benchmark/README.md) measure versioned synthetic CLI workloads separately.

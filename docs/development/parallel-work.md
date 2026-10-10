@@ -1,6 +1,6 @@
 # Parallel work guide
 
-Read [shared contracts](shared-contracts.md), the [audit](parallelizability.md), [risk register](risk-register.md) and your [workstream specification](../workstreams/README.md) after the canonical entry documents. These prepare future assignments; they do not launch product implementation.
+Read the canonical entry documents, select a fixed current base, and record the bounded assignment. Consult [shared contracts](shared-contracts.md) for relevant version-bound seams and the [audit](parallelizability.md) for recorded coordination risks. The [risk register](risk-register.md) and [workstream specifications](../workstreams/README.md) preserve earlier preparation; use their findings where they apply to the selected source. They do not dispatch a new assignment.
 
 The coordinator owns semantic decisions, cross-workstream compatibility, shared-file changes, integration and release readiness. An implementer owns a bounded subsystem, its tests and evidence. Class A adapters should evolve without editing another adapter; Class B adoption/authoring work uses explicit shared handoffs; Class C compiler semantics require joint review. An avoidable central switch is an audit finding, not permission for each agent to refactor it.
 
@@ -14,7 +14,7 @@ Implement only the assigned slice. Report source-selection/privacy/permissions g
 
 ## Module assignments
 
-A Module assignment owns one `internal/modules/<name>` subtree, including its private tests and bounded design/evidence files. It may consume Core IR and explicit Host-supplied configuration or artifact bytes, but must not edit Core, Host, Infrastructure, Tooling, a sibling Module or shared wiring. Host composition, shared DTOs, `go.mod`, CI workflows, and the import gate remain coordinator-owned. The [Module guide](modules.md) defines when to add or remove a Module and the exact static dependency law.
+A Module assignment owns one `src/internal/modules/<name>` subtree, including its private tests and bounded design/evidence files. It may consume Core IR and explicit Host-supplied configuration or artifact bytes, but must not edit Core, Host, Infrastructure, Tooling, a sibling Module or shared wiring. Host composition, shared DTOs, `go.mod`, CI workflows, and the import gate remain coordinator-owned. The [Module guide](modules.md) defines when to add or remove a Module and the exact static dependency law.
 
 A request to change Core must describe a generic invariant with concrete cases from at least two distinct vocabularies, the current expression and its failure, a finite normalization/check/adapter alternative, consumers, exact input/version behavior, diagnostics, digest/context/impact consequences, and deterministic tests. Submit the request to the coordinator before editing Core. A Module is never its own authority to add a Core primitive.
 ## Shared-file requests
@@ -27,7 +27,7 @@ Escalation includes the desired engineering statement, two concrete cases if req
 
 ## Integration and evidence
 
-1. Implement and run focused Module tests and compatibility cases, then the normal contribution gates. The architecture import gate at `internal/tooling/architecture` statically checks supported-platform files and tests and exercises negative dependency fixtures. It is included in `go test ./...`, a named CI step, the explicit Project check and the release quality job through reusable CI. These routes do not imply an exact-head pass; the coordinator reports evidence separately.
+1. Implement and run focused Module tests and compatibility cases, then the normal contribution gates. The architecture import gate at `src/internal/tooling/architecture` statically checks supported-platform files and tests and exercises negative dependency fixtures. It is included in `go test ./...`, a named CI step, the explicit Project check and the release quality job through reusable CI. These routes do not imply an exact-head pass; the coordinator reports evidence separately.
 2. Commit a complete candidate. Open a focused PR stating before/after behavior, owned scope, non-goals, evidence, limitations and any shared-contract request.
 3. Run [Windows/Linux CI](../../.github/workflows/ci.yaml) on that exact head; changed head invalidates the earlier integration evidence.
 4. Obtain independent complete-diff review. The coordinator checks shared contract compatibility, target ownership, conflicts with parallel candidates and the consumer authority boundary.

@@ -1,6 +1,6 @@
 # Distribution and integration
 
-Markitect's distribution unit is a versioned, immutable GitHub Release. Source files and release assets are never retagged or overwritten. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available versions and verify the exact tag, source commit, and assets before use. The current source model and upgrade notes are in [Usage](../docs/usage.md); the [roadmap](../docs/implementation-plan.md) records current source scope.
+Markitect's distribution unit is a versioned, immutable GitHub Release. Source files and release assets are never retagged or overwritten. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available versions and verify the exact tag, source commit, and assets before use. [Usage](../docs/usage.md) describes structural commands and historical release contracts. For the model-first development source, use [Project workflow](../docs/project-workflow.md) and [Project operations](../docs/project-operations.md); the [roadmap](../docs/implementation-plan.md) records source status.
 
 ## Release contents and verification
 

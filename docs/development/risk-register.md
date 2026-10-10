@@ -1,5 +1,7 @@
 # Development risk register
 
+The risk classifications below belong to the recorded preparation baseline. Use the [architecture](../architecture.md), [source layout](../repository-layout.md#source-repository-layout) and [readiness backlog](../work-items/product-readiness/backlog.yaml) for the current contracts and work queue; historical path and release statements here are evidence of that assessment.
+
 **Status:** preparation evidence and triage, updated 2026-10-03. This document classifies risks for coordinator planning; it is not a product roadmap, a new policy contract, or authorization to implement one feature per risk. The [engineering constitution](../engineering-constitution.md) remains the canonical owner of adopted invariants. A future product change needs a separate concrete case, owner, and decision.
 
 The preparation baseline assessment below is preserved. Current package ownership and mechanically enforced independence are recorded in the [consolidation report](../validation/clean-architecture-consolidation.md); current release status is owned by the roadmap.

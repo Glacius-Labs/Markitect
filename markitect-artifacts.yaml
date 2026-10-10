@@ -2,6 +2,20 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - README.md
+    - SUPPORT.md
+    - docs/README.md
+    - docs/repository-layout.md
+    - docs/development/documentation.md
+    - docs/design/README.md
+    - docs/history/README.md
+    - docs/validation/README.md
+    - docs/work-items/README.md
+    - examples/README.md
+    - experiments/README.md
+    - integration/README.md
+    - scripts/check-docs.py
+    - scripts/test_check_docs.py
     - docs/history/implementation-plan-before-product-integration-20261009.md
     - src/internal/host/mcp
     - src/internal/host/projectworkspace
@@ -182,6 +196,34 @@ spec:
     - src/harness/examples/project_world_workflow_test.go
     - docs/design/work-item-comparison-20261009.md
   tooling:
+    - path: README.md
+      owner: repository-documentation-navigation
+    - path: SUPPORT.md
+      owner: repository-documentation-navigation
+    - path: docs/README.md
+      owner: repository-documentation-navigation
+    - path: docs/repository-layout.md
+      owner: repository-documentation-navigation
+    - path: docs/development/documentation.md
+      owner: repository-documentation-navigation
+    - path: docs/design/README.md
+      owner: repository-documentation-navigation
+    - path: docs/history/README.md
+      owner: repository-documentation-navigation
+    - path: docs/validation/README.md
+      owner: repository-documentation-navigation
+    - path: docs/work-items/README.md
+      owner: repository-documentation-navigation
+    - path: examples/README.md
+      owner: repository-documentation-navigation
+    - path: experiments/README.md
+      owner: repository-documentation-navigation
+    - path: integration/README.md
+      owner: repository-documentation-navigation
+    - path: scripts/check-docs.py
+      owner: repository-documentation-checks
+    - path: scripts/test_check_docs.py
+      owner: repository-documentation-checks
     - path: docs/validation/classic-commerce-entrypoint.md
       owner: classic-commerce-public-example-validation
     - path: examples/classic-commerce/NuGet.Config

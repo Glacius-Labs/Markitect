@@ -1,5 +1,7 @@
 # Parallel development baseline
 
+This is the preserved PR #60 preparation baseline. Its release labels, source paths and dispatch conditions describe that wave. For a new assignment, select the current integrated source and record its full commit as described in the [parallel-work guide](parallel-work.md); use the [roadmap](../implementation-plan.md) and [Product Readiness backlog](../work-items/product-readiness/backlog.yaml) for current status.
+
 This preparation starts from integrated `main` commit `e9550f5c91430c6a65cbbd4ffcdbb49b48272537`, the merge of [PR 59](https://github.com/Glacius-Labs/Markitect/pull/59). It follows the real-code pilot in PR 57 and policy-failure analysis in [PR 58](https://github.com/Glacius-Labs/Markitect/pull/58). No unfinished product migration was identified by the preparation audits. The comparison remains inconclusive; neither its negative findings nor historical pilot evidence is rewritten.
 
 The **PARALLEL DEVELOPMENT BASELINE** is the exact integration commit of this preparation, including these documents, after both quality jobs pass. The coordinator records that full commit and its gate URLs when integrating/dispatching; implementers must copy the full commit into their assignment and branch from it, rather than resolve moving `main` later. This document cannot embed its own future integration hash. Before integration this is a preparation candidate, not an established baseline.
