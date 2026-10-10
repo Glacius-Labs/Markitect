@@ -5,6 +5,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -356,6 +357,92 @@ func TestApplyStaleUnderWriterLockIsRejectedLikeEarlyStaleness(t *testing.T) {
 	if err != nil || retry.Status != StatusApplied {
 		t.Fatalf("retry after reverting the transient edit did not apply: status=%s err=%v", retry.Status, err)
 	}
+}
+
+func TestApplyGenuinePartialWriteFailsRunAndKeepsReceipt(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root ignores the read-only directory that blocks the second target")
+	}
+	root := makeProjectRunFixture(t)
+	setupE2EProcess(t, "normal")
+	host := projectworkHost()
+	plan, request := verifiedApplyRequest(t, host, root)
+	paths, err := ApplyPaths(host, root, plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) != 2 {
+		t.Fatalf("partial-write fixture needs two sorted targets, got %v", paths)
+	}
+	first, second := paths[0], paths[1]
+	secondTarget := filepath.Join(root, filepath.FromSlash(second))
+	original, err := os.ReadFile(secondTarget)
+	if err != nil {
+		t.Fatal(err)
+	}
+	blockApplyTargetReplace(t, secondTarget)
+	report, applyErr := Apply(host, ProcessInvoker{}, root, request)
+	if applyErr == nil || report.Status != "partial" || report.Error == "" ||
+		!stringSlicesEqual(report.Written, []string{first}) || !stringSlicesEqual(report.Journal, []string{first}) {
+		t.Fatalf("Apply that wrote only %s did not report a partial write: report=%+v err=%v", first, report, applyErr)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err := store.readLatestState(plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.Status != StatusFailed {
+		t.Fatalf("partial Apply left run %s instead of failed", state.Status)
+	}
+	dir, err := store.runDir(plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipts, err := os.ReadDir(filepath.Join(dir, "apply"))
+	if err != nil || len(receipts) != 1 {
+		t.Fatalf("partial Apply did not journal exactly one Apply receipt: receipts=%d err=%v", len(receipts), err)
+	}
+	var receipt ApplyReport
+	if err := readJSON(filepath.Join(dir, "apply", receipts[0].Name()), &receipt); err != nil {
+		t.Fatal(err)
+	}
+	if receipt.Status != "partial" || !stringSlicesEqual(receipt.Written, []string{first}) {
+		t.Fatalf("journaled Apply receipt does not name the written path: %+v", receipt)
+	}
+	candidate, err := store.readCandidate(dir, request.CandidateID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	written, ok := candidate.Files[first]
+	if !ok || written.Delete {
+		t.Fatalf("candidate does not write %s", first)
+	}
+	assertFileContents(t, root, first, string(written.Content))
+	assertFileContents(t, root, second, string(original))
+}
+
+// blockApplyTargetReplace makes the guarded write fail on target while
+// earlier sorted targets stay writable. On Windows an open handle without
+// FILE_SHARE_DELETE (as os.Open opens it) blocks the rename over the target;
+// elsewhere a read-only parent directory blocks the temporary file beside it.
+func blockApplyTargetReplace(t *testing.T, target string) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		held, err := os.Open(target)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = held.Close() })
+		return
+	}
+	parent := filepath.Dir(target)
+	if err := os.Chmod(parent, 0o555); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(parent, 0o755) })
 }
 
 func verifiedApplyRequest(t *testing.T, host Host, root string) (PlanRecord, ApplyRequest) {

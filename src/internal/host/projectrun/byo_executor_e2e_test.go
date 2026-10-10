@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
@@ -44,6 +45,9 @@ func configureMixedRoleRuntime(t *testing.T, root string) {
 		config.Limits.MaxStarts = 64
 		// One bounded repair round for check failures found by Verify.
 		config.Limits.MaxRetries = 1
+		// A loaded Windows host needs minutes per scenario for its Git calls;
+		// no scenario here tests the duration budget.
+		config.Limits.MaxDuration = Duration(30 * time.Minute)
 	})
 	t.Setenv(e2eOmitUsageEnv, "review,verify")
 }
