@@ -76,9 +76,9 @@ conformance are recorded as method conformance, separate from the public checks.
 
 - `docs/project-workflow.md`: onboard, then register the MCP server; preview/write
   with returned digests.
-- `docs/project-operations.md`: `project mcp --repo ABSOLUTE_ROOT`, setup rules, cost
+- `docs/project-operations.md`: `mcp --repo ABSOLUTE_ROOT`, setup rules, cost
   weights.
-- `docs/provider-adapters.md`: `codex mcp add markitect -- ... project mcp --repo ...`.
+- `docs/provider-adapters.md`: `codex mcp add markitect -- ... mcp --repo ...`.
 - `docs/usage.md` ("Initialize a project") and `docs/onboarding.md` with
   `scripts/onboarding/Measure-Adoption.ps1`: init preview, then write, on a feature
   branch.
