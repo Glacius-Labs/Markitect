@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 
@@ -203,5 +205,46 @@ func TestRoleStartBudgetDoesNotDispatchWhenDurableReservationFails(t *testing.T)
 	permit, err := budget.ReserveRoot(context.Background(), "orders-work", "work", agentexec.RoleStartRequest{RequestID: "root", Role: agentexec.RoleExecutor})
 	if err == nil || permit != nil {
 		t.Fatalf("root dispatch could proceed without durable reservation: permit=%v err=%v", permit, err)
+	}
+}
+
+func TestRunHelperBudgetCountsRecordedChecksAgainstMaxStarts(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, filepath.FromSlash(RunsPath)), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	writeE2E(t, root, RuntimePath, "apiVersion: "+APIVersion+"\n")
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const runID = "00000000000000000000000000000b01"
+	if _, err := store.createRun(runID); err != nil {
+		t.Fatal(err)
+	}
+	report := RunReport{APIVersion: APIVersion, ID: runID, PlanID: runID, Status: StatusRunning, Revision: 1,
+		Tasks:  []ManagerTask{{ID: "orders-task", ManagerID: "orders", WorkAttempts: 1, Attempts: 1}},
+		Checks: []CheckResult{{ID: "check-1", Outcome: "failed", ExitCode: 1}}}
+	const maxStarts = 4
+	_, budget, err := bindRunHelperBudget(ProcessInvoker{}, Host{}, Limits{MaxStarts: maxStarts}, store, &report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A check recorded after binding must also count: the budget reads the live report.
+	report.Checks = append(report.Checks, CheckResult{ID: "check-2", Outcome: "passed"})
+	ledger := budget.Accounting().ObservedTotal + len(report.Checks) // the run's shared start ledger
+	granted := 0
+	for i := 0; i < maxStarts; i++ {
+		_, reserveErr := budget.ReserveHelper(context.Background(), HelperStartAttempt{
+			Request:   agentexec.RoleStartRequest{RequestID: fmt.Sprintf("helper-%d", i), ParentSessionID: "parent-session", Role: "helper"},
+			ManagerID: "orders", Phase: "work", ParentRunID: "parent-run"})
+		if reserveErr == nil {
+			granted++
+		} else if !errors.Is(reserveErr, ErrRoleStartBudgetExceeded) {
+			t.Fatal(reserveErr)
+		}
+	}
+	if total := ledger + granted; total != maxStarts {
+		t.Errorf("helper budget granted %d helper starts after a shared ledger of %d (1 root + %d checks): total starts %d, want exactly MaxStarts %d", granted, ledger, len(report.Checks), total, maxStarts)
 	}
 }
