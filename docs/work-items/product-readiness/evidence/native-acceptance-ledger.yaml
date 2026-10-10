@@ -588,7 +588,7 @@ renewal_policy:
     prior_known_estimated_cost_micros: 3511133
     cumulative_known_estimated_cost_micros: 4038772
     cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
-  latest_actual:
+  attempt_11:
     batch_id: a01-semantic-b9d9dc1428754b70a5e8d5cd9e9839e4
     attempt_number: 11
     native_run_numbers: [12, 13]
@@ -651,15 +651,71 @@ renewal_policy:
     original_turns_replayed: false
     run_state_revision: 4
     run_state_sha256: 62fed9a36ee3b2f2f7bb21123b076c4ee2525c93984eef6aa74f6a6024e763e9
+  latest_actual:
+    batch_id: a01-phase-d65ac77af6bc4cb9b6eb3092c040655b
+    attempt_number: 12
+    status: failed_not_passed
+    allocation_utc: '2026-10-10T01:13:47.5041520Z'
+    hard_deadline_utc: '2026-10-10T05:13:47.5041520Z'
+    actual_started_utc: '2026-10-10T01:13:47.6855857Z'
+    actual_ended_utc: '2026-10-10T01:18:23.4603497Z'
+    observer_id: 1a65fb19cc6a4f2ea785392b22ea70ed
+    observer_record_sha256: c78b6f696f2283abfdce4710e588b15d2941463a94f2ebe2ff06fc0f8d2badb6
+    observer_exit_code: 2
+    observer_boundary_observed: false
+    source_revision: 96424410c87366072adf16688aa56c38aba246a2
+    binary_sha256: 4882c05044ffb40f76f8953b9bf7cae95344849138de764035b658cc7e5525dc
+    owned_project_revision: eaa11e9969db66e6c1a5cd80949cfb757074ce54
+    plan_id: b2085f5143608cd8e464ddc4cb496d69
+    plan_sha256: 6fccd54898e2ee09e72b886306a5d2f99bfa563a0b82ef37c2462c44e07623f3
+    runtime_sha256: eb588e4e857547d8cac1fb60377ea7741bdd2e7cd41803786136ec4c987e03a2
+    readiness_sha256: 45f58411fe5c5394411b8ea1bbde9e4760d1858093e5ef213e1731632ce522c3
+    runtime_file_sha256: 0828f6afd4e897fa0304362e19bb47cd912c2fe353f5b44c58d919daf2fa3e3c
+    private_allocation_record: controller/a01-phase-d65ac77af6bc4cb9b6eb3092c040655b.json
+    private_allocation_record_sha256: d8c7388c71f9f094620fdb8a36c5d9a3b0ea29229d6886f67759272db36a9bae
+    run_state_revision: 29
+    run_state_sha256: ec7e867e0a8e7c15a9d9a820f69e188467930b4b888cd48e4d188bb340c5887a
+    root_report_acceptance: accepted
+    root_candidate_integrated: false
+    docs_work_and_review: pass
+    source_work: complete
+    source_candidate_id: 78757e49579cd27b7d7e75249d9b6f68
+    source_review_native_run_id: 701479fd969208d15da5d232a4c0b103
+    source_review_native_session: 01a12363-3e67-7512-b7fd-1dc36a386668
+    source_review_native_turn: 01a12363-3fa8-70e0-bac4-afca3e3049b2
+    source_review_provider_status: pass_with_two_findings
+    source_review_acceptance: rejected_by_host_report_status_findings_consistency
+    source_review_failure: reviewer report status does not match its findings
+    helper_reservations: 2
+    helper_native_child_starts: 2
+    source_helper_reservation: exec-5ba4536a-2900-4d88-b36a-daeda205a7e9
+    source_helper_path: tests/test_greeting.py
+    manager_overlap_observed: true
+    manager_overlap_seconds: 102.7280776
+    root_candidate_integrated_by_apply: false
+    verify_apply_recovery_observed: false
+    role_start_requests: 8
+    native_provider_starts: 8
+    manager_reviewer_start_requests: 6
+    helper_start_requests: 2
+    attempt_estimated_cost_micros: 1633731
+    cost_accounting: partial_observed_lower_bound_not_invoice
+    cumulative_known_role_start_requests: 24
+    cumulative_known_provider_starts: 21
+    cumulative_known_estimated_cost_micros: 6420876
+    cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
+    prior_preserved_workspace: 79fb93a82a80eaa08d5cdb50965ea7fd
+    original_turns_replayed: false
+    next_repair: fix_source_review_report_status_findings_consistency_with_focused_tests_and_independent_review
   next_batch:
-    status: reviewer_candidate_scope_investigation_next_pins_pending
+    status: source_review_consistency_repair_and_fresh_pins_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     new_batch_pins: none
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
-    no_twelfth_actual_claimed: true
+    no_thirteenth_actual_claimed: true
     owner_repair_in_progress: true
-    repair: investigate reviewer scope grounding against the exact root candidate without widening scope validation
+    repair: fix the source reviewer pass-with-findings report inconsistency while preserving Host validation
     next_shared_native_defaults: { memories: false, login: false }
     intended_profile:
       fresh_native_roles: workspace_permission
@@ -690,10 +746,10 @@ renewal_policy:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_used_for_latest_attempt: 354b08ff8ea4d80f85959fa62d871ee09bd6a88d
-    binary_sha256: 3d5b13477f6d9019e6ed52cf511ed0ec6fd7e806c1d53afa47a301aa70d89bd2
-    native_acceptance: failed_not_passed_attempt_11
-    next_repair: investigate_reviewer_scope_grounding_against_exact_candidate
+    source_revision_used_for_latest_attempt: 96424410c87366072adf16688aa56c38aba246a2
+    binary_sha256: 4882c05044ffb40f76f8953b9bf7cae95344849138de764035b658cc7e5525dc
+    native_acceptance: failed_not_passed_attempt_12
+    next_repair: fix_source_review_report_status_findings_consistency_with_focused_tests_and_independent_review
     next_batch_pins: pending
   provider_free_preparation:
     superseded_owned_project_revision: 89823a90df985ca4451ec3053467fa4b3d12319f

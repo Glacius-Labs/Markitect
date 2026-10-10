@@ -478,10 +478,10 @@ native_acceptance:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_used_for_latest_attempt: 354b08ff8ea4d80f85959fa62d871ee09bd6a88d
-    binary_sha256: 3d5b13477f6d9019e6ed52cf511ed0ec6fd7e806c1d53afa47a301aa70d89bd2
-    latest_native_acceptance: failed_not_passed_attempt_11
-    next_repair: investigate_reviewer_scope_grounding_against_exact_candidate
+    source_revision_used_for_latest_attempt: 96424410c87366072adf16688aa56c38aba246a2
+    binary_sha256: 4882c05044ffb40f76f8953b9bf7cae95344849138de764035b658cc7e5525dc
+    latest_native_acceptance: failed_not_passed_attempt_12
+    next_repair: fix_source_review_report_status_findings_consistency_with_focused_tests_and_independent_review
     next_batch_pins: pending
   prior_batch_history:
     revision: generous-native-limits-20261009
