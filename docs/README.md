@@ -22,7 +22,7 @@ Use this map to find the product guide or the document that owns a decision or s
 | Product decisions, promises, assumptions, long-term vision, agreed but unscheduled directions, ideas, and open questions, with their origin | [Concept record](concepts/README.md) |
 | Technical behavior and product boundaries | [Architecture](architecture.md) and the task-specific current guides above |
 | Current source scope and future implementation | [Implementation roadmap](implementation-plan.md) |
-| Work-item states, dependencies, owners, and evidence pointers | [Product Readiness backlog](work-items/product-readiness/backlog.yaml), routed through the [work-items map](work-items/README.md) |
+| Work-package states, dependencies, owners, and zones | [Backlog](work-items/backlog.yaml), routed through the [work-items map](work-items/README.md) |
 | Native attempt accounting and acceptance limits | [Native acceptance ledger](work-items/product-readiness/evidence/native-acceptance-ledger.yaml) |
 | Integration handoffs and technical findings | [Integration progress](work-items/product-readiness/integration-progress-20261009.md) |
 | Source/release evidence for a dated validation | The linked report in the [validation map](validation/README.md), read at its recorded scope and source |

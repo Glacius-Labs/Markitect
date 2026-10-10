@@ -10,6 +10,7 @@ spec:
     - docs/design/README.md
     - docs/concepts/README.md
     - docs/concepts/sources/README.md
+    - docs/work-items/surveys/README.md
     - docs/history/README.md
     - docs/validation/README.md
     - docs/work-items/README.md
@@ -213,6 +214,8 @@ spec:
     - path: docs/concepts/README.md
       owner: repository-documentation-navigation
     - path: docs/concepts/sources/README.md
+      owner: repository-documentation-navigation
+    - path: docs/work-items/surveys/README.md
       owner: repository-documentation-navigation
     - path: docs/history/README.md
       owner: repository-documentation-navigation

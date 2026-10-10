@@ -1,0 +1,771 @@
+schema: markitect-roadmap-backlog/v1
+updated: '2026-10-10'
+roadmap: docs/implementation-plan.md
+main_basis: 02c7e5297defd66e2635c2b590de5ebb0fd4b388
+
+# Single owner of work-package status. The roadmap explains streams, waves,
+# zones and rules; this file records each package's current state.
+#
+# status: proposed | ready | active | review | done | blocked | parked
+#   proposed  scope written, not yet started; may still need an owner decision
+#   ready     unblocked and waiting for a session
+#   active    a session works on it on the named branch
+#   review    a pull request is open
+#   done      merged to main and documentation updated
+#   blocked   waits for the listed dependency or owner decision
+#   parked    recorded under the planning hold (register DEC-011) or deferred
+# zone: the code zone the package holds while active (see roadmap "Zones");
+#   free means it does not hold a zone.
+# owner: the session that works on the package, or unassigned.
+
+packages:
+
+  # --- OPS: roadmap, integration and repository hygiene -----------------
+  - id: OPS-01
+    title: Fresh roadmap and lean backlog on main
+    stream: OPS
+    wave: 0
+    status: review
+    owner: integrator
+    branch: docs/roadmap
+    zone: docs-entry
+    acceptance:
+      - docs/implementation-plan.md is the roadmap; this file is the single status owner.
+      - Product Readiness is recorded as a completed program; its open follow-ups are migrated here.
+      - Owner decisions this roadmap needs are listed and linked to the concept register.
+
+  - id: OPS-02
+    title: Secure work that exists only on this machine
+    stream: OPS
+    wave: 0
+    status: done
+    owner: integrator
+    note: Done 10 October 2026. Archive references are listed in the branch survey; the playground branch is on the research-backup remote, which already holds its research base. Refresh the playground snapshot once that session has stopped.
+    zone: free
+    scope: >-
+      Push or bundle the branches with unique unmerged work that have no remote:
+      claude/case-playground-v2, codex/government-implementation-20261010,
+      codex/markitect-historian-working-history, codex/astra-assessment-snapshot,
+      codex/vision-method-alignment. Untracked files in live worktrees stay with their sessions.
+    acceptance:
+      - Every branch with unique work has a remote copy or a verified git bundle.
+
+  - id: OPS-03
+    title: Archive merged and superseded branches and stale worktrees
+    stream: OPS
+    wave: 1
+    status: ready
+    owner: integrator
+    note: Owner approved the archive list on 10 October 2026.
+    depends_on: [OPS-02]
+    zone: free
+    inputs:
+      - docs/work-items/surveys/branches-and-worktrees-20261010.md
+    acceptance:
+      - Each archived branch has an archive/<name> tag; branches are deleted only after approval.
+      - Empty and stale worktree folders are removed; live worktrees are untouched.
+      - Besides main, only branches with the current prefixes (dev/, fix/, docs/, exp/) and archive references remain.
+
+  - id: OPS-04
+    title: Integration routine and contribution rules for parallel work
+    stream: OPS
+    wave: 0
+    status: proposed
+    owner: integrator
+    zone: docs-entry
+    acceptance:
+      - CONTRIBUTING states the branch naming, one package per PR, no pushes to a PR head during CI, and the merge order.
+      - The pull-request template asks for the package ID, zone and acceptance evidence.
+
+  # --- PLAY: case studies and playground --------------------------------
+  - id: PLAY-01
+    title: Commit the playground and bring it onto main
+    stream: PLAY
+    wave: 0
+    status: ready
+    owner: scientist
+    zone: free
+    inputs:
+      - research-backup claude/case-playground-v2 (committed harness)
+      - research-backup archive/wip/case-playground-v2-20261010 (work in progress)
+      - docs/work-items/surveys/case-playground-20261010.md
+    scope: >-
+      Commit the in-progress harness work, then move only experiments/case-playground/
+      onto a branch from current main (cherry-pick or copy). The old research history
+      and experiments/work-item-comparison stay out of main.
+    acceptance:
+      - main contains experiments/case-playground with its unit tests passing.
+      - The provider-free fake-agent smoke passes from a clean checkout.
+
+  - id: PLAY-02
+    title: Ground truth, hidden holdouts and seeded rules
+    stream: PLAY
+    wave: 1
+    status: blocked
+    owner: scientist
+    depends_on: [PLAY-01]
+    zone: free
+    inputs:
+      - research-backup archive/wip/case-playground-v2-20261010 (case readinglog2 and reference)
+      - docs/work-items/surveys/case-playground-20261010.md
+    acceptance:
+      - Each wave of the long-running case declares what it should affect.
+      - The reference implementation passes every holdout; each named mutant fails its intended holdout.
+
+  - id: PLAY-03
+    title: One architecture page for the playground
+    stream: PLAY
+    wave: 1
+    status: proposed
+    owner: scientist
+    depends_on: [PLAY-01]
+    zone: free
+    inputs:
+      - docs/work-items/surveys/case-playground-20261010.md
+    acceptance:
+      - One current page with components, data flow and a parameter table supersedes the overlapping README, STUDY, BLUEPRINT and EVALUATION content.
+      - A newcomer can run the smoke from that page alone.
+
+  - id: PLAY-04
+    title: Parametrize and run a study with one command
+    stream: PLAY
+    wave: 1
+    status: proposed
+    owner: scientist
+    depends_on: [PLAY-01]
+    zone: free
+    inputs:
+      - docs/work-items/surveys/case-playground-20261010.md
+    acceptance:
+      - Cases are discovered from their directories; stations, arms and models are parameters.
+      - A single command runs both arms, then assessment and comparison, after a preflight that names each missing prerequisite.
+      - Each run uses its own credential copy.
+
+  - id: PLAY-05
+    title: Harden the playground
+    stream: PLAY
+    wave: 1
+    status: proposed
+    owner: scientist
+    depends_on: [PLAY-01]
+    zone: free
+    inputs:
+      - docs/work-items/surveys/case-playground-20261010.md
+    acceptance:
+      - The base image is pinned by digest; the same manifest twice yields the same image.
+      - Exit codes distinguish product, harness and environment failures.
+
+  - id: PLAY-06
+    title: Executor and model per role in study manifests
+    stream: PLAY
+    wave: 2
+    status: blocked
+    owner: scientist
+    depends_on: [RUN-01]
+    zone: free
+    acceptance:
+      - A manifest selects executor, model and effort per role; runs record the effective configuration.
+
+  - id: PLAY-07
+    title: First method study over a change series
+    stream: PLAY
+    wave: 4
+    status: parked
+    owner: scientist
+    depends_on: [PLAY-02, PLAY-04, PLAY-05]
+    needs_owner: Freeze of the study protocol, cases and budget.
+    zone: free
+    acceptance:
+      - Results answer the register's central evaluation question (DEC-009) for the chosen case, with failure classes separated.
+
+  # --- RUN: runtime and exchangeable executor ---------------------------
+  - id: RUN-01
+    title: Exchangeable executor, increment 1
+    stream: RUN
+    wave: 0
+    status: review
+    owner: integrator
+    branch: claude/byo-executor-role-config
+    pr: 92
+    note: The runtime session that opened the pull request has ended; the integrator reviews, rebases and merges it.
+    zone: runtime
+    acceptance:
+      - Rebased on current main; independent review addressed; Linux CI green; merged.
+      - Concept register ENH-004 and ENH-005 link to this package.
+
+  - id: RUN-02
+    title: Exchangeable executor, increment 2 (asynchronous boundary)
+    stream: RUN
+    wave: 2
+    status: proposed
+    owner: runtime
+    depends_on: [RUN-01]
+    zone: runtime
+    inputs:
+      - docs/concepts/register.md#enh-005-exchangeable-executor-for-the-delegated-method
+      - docs/work-items/surveys/tests-and-ci-20261010.md
+    acceptance:
+      - Work packets can be exported and external candidates and review verdicts submitted, with the same validation as in-process results.
+      - Git candidates can include deletions; plans no longer depend on executor fingerprints.
+
+  - id: RUN-03
+    title: Claude Code as an inner executor
+    stream: RUN
+    wave: 3
+    status: proposed
+    owner: runtime
+    depends_on: [RUN-02]
+    zone: runtime
+    acceptance:
+      - A Claude Code executor runs Manager and reviewer roles through the process contract with tools and an owned workspace.
+
+  # --- CLI and MCP: command and tool surface -----------------------------
+  - id: CLI-01
+    title: Verb model decision and specification
+    stream: CLI
+    wave: 0
+    status: ready
+    owner: interface
+    decision: DEC-017
+    zone: free
+    inputs:
+      - docs/work-items/surveys/cli-mcp-app-server-20261010.md
+      - docs/concepts/register.md#dec-017-command-model-top-level-verbs-from-one-verb-table
+    acceptance:
+      - A verb-table specification under docs/design implements DEC-017; open details it settles are listed there.
+
+  - id: CLI-02
+    title: Implement the verb table
+    stream: CLI
+    wave: 2
+    status: blocked
+    owner: interface
+    depends_on: [CLI-01]
+    zone: interface
+    inputs:
+      - docs/work-items/surveys/cli-mcp-app-server-20261010.md
+    acceptance:
+      - CLI help, command dispatch and MCP registration come from one verb table; a parity test fails on drift.
+      - Help lists every verb; every write follows preview, digest, then write.
+
+  - id: CLI-03
+    title: One composition root in the application facade
+    stream: CLI
+    wave: 2
+    status: blocked
+    owner: interface
+    depends_on: [CLI-02]
+    zone: interface
+    inputs:
+      - docs/work-items/surveys/code-architecture-20261010.md
+    acceptance:
+      - The CLI calls only the application facade; no CLI function exceeds 300 lines.
+
+  - id: MCP-01
+    title: MCP parity, read-only mode and smaller schemas
+    stream: MCP
+    wave: 2
+    status: blocked
+    owner: interface
+    depends_on: [CLI-02]
+    zone: interface
+    inputs:
+      - docs/work-items/surveys/cli-mcp-app-server-20261010.md
+    acceptance:
+      - Tool and argument names follow the verb table; a read-only server mode exists; tools/list shrinks substantially without losing typed results.
+      - The stale MCP evaluation document is updated or archived.
+
+  - id: MCP-02
+    title: App Server path review and runtime-level tests
+    stream: MCP
+    wave: 1
+    status: proposed
+    owner: runtime
+    zone: free
+    inputs:
+      - origin archive/wip/readiness-candidate-fix-20261010 (uncommitted App Server and full-verify changes)
+      - docs/work-items/surveys/cli-mcp-app-server-20261010.md
+    scope: >-
+      The product branches for App Server, MCP and workspaces are already on main. Review whether the
+      Codex App Server path remains the right inner transport next to the exchangeable executor, and
+      make it testable through the container runtime tier (CI-04) rather than on developer machines.
+    acceptance:
+      - A short decision note; App Server behavior covered by the container tier.
+
+  # --- KG: knowledge graph variant ---------------------------------------
+  - id: KG-00
+    title: Knowledge graph decision
+    stream: KG
+    wave: 0
+    status: done
+    owner: integrator
+    decision: DEC-018
+    zone: free
+    acceptance:
+      - Decision recorded as a register entry; codex/knowledge-graph frozen as reference.
+
+  - id: KG-01
+    title: Question catalog and impact correctness tests
+    stream: KG
+    wave: 1
+    status: ready
+    owner: kg
+    depends_on: [KG-00]
+    zone: model
+    inputs:
+      - origin codex/knowledge-graph (reference only)
+      - origin archive/wip/government-assessment-untracked-docs-20261010 (knowledge-graph assessment and refinement plan)
+      - docs/work-items/surveys/knowledge-graph-and-government-20261010.md
+    acceptance:
+      - The knowledge questions run as table tests on main; impact results are identical under input permutation and repetition.
+
+  - id: KG-02
+    title: Port the reduced knowledge core and explain
+    stream: KG
+    wave: 2
+    status: blocked
+    owner: kg
+    depends_on: [KG-01]
+    zone: model
+    inputs:
+      - origin codex/knowledge-graph (projectknowledge core)
+      - docs/work-items/surveys/knowledge-graph-and-government-20261010.md
+    acceptance:
+      - The graph view is derived from Manager context only; CLI and MCP return equal results; no visibility leaks.
+
+  - id: KG-03
+    title: Evaluate the knowledge graph as a variant in the playground
+    stream: KG
+    wave: 4
+    status: parked
+    owner: kg
+    depends_on: [KG-02, PLAY-04]
+    zone: free
+    acceptance:
+      - Same tasks with and without explain/trace; missed must-change files, tokens and time reported.
+
+  # --- TEST: modular test suite ------------------------------------------
+  - id: TEST-01
+    title: Hermetic test kit for git and process fixtures
+    stream: TEST
+    wave: 1
+    status: ready
+    owner: qa
+    zone: free
+    inputs:
+      - docs/work-items/surveys/tests-and-ci-20261010.md
+    acceptance:
+      - One fixture helper with isolated git configuration, fixed identity and dates, short temporary paths and retrying cleanup replaces the per-package helpers.
+      - The suite passes under a hostile global git configuration and in 20 consecutive runs.
+
+  - id: TEST-02
+    title: CLI and MCP contract suite with a completeness check
+    stream: TEST
+    wave: 2
+    status: blocked
+    owner: interface
+    depends_on: [CLI-02]
+    zone: interface
+    inputs:
+      - docs/work-items/surveys/tests-and-ci-20261010.md
+      - docs/work-items/surveys/cli-mcp-app-server-20261010.md
+    acceptance:
+      - Every verb and MCP tool has help, bad-flag, happy-path and no-write-without-flag cases; a test fails when one is missing.
+
+  - id: TEST-03
+    title: Split and parallelize the runtime end-to-end tests
+    stream: TEST
+    wave: 2
+    status: blocked
+    owner: qa
+    depends_on: [RUN-01, TEST-01]
+    zone: runtime
+    inputs:
+      - docs/work-items/surveys/tests-and-ci-20261010.md
+    acceptance:
+      - Runtime end-to-end tests live in their own package or tag, share a fixture template and run in parallel.
+
+  - id: TEST-04
+    title: Method end-to-end tests through the exchange executor
+    stream: TEST
+    wave: 2
+    status: blocked
+    owner: qa
+    depends_on: [RUN-01]
+    zone: runtime
+    inputs:
+      - docs/work-items/surveys/tests-and-ci-20261010.md
+      - pull request 92 (exchange executor and fault-injection tests)
+    acceptance:
+      - Scripted scenarios drive the real binary through plan, run, review, repair, verify and apply, including fault injection (out-of-scope write, forgotten file, integration defect) and resume after a kill.
+
+  - id: TEST-05
+    title: Remove timing-dependent tests
+    stream: TEST
+    wave: 2
+    status: proposed
+    owner: qa
+    depends_on: [TEST-01]
+    zone: runtime
+    inputs:
+      - docs/work-items/surveys/tests-and-ci-20261010.md
+    acceptance:
+      - Timers are injected or faked; a flake report comes from test results without automatic retries that hide failures.
+
+  # --- CI: pipeline, smoke and runtime tests -----------------------------
+  - id: CI-01
+    title: CI quick fixes
+    stream: CI
+    wave: 0
+    status: ready
+    owner: qa
+    zone: ci
+    inputs:
+      - docs/work-items/surveys/tests-and-ci-20261010.md
+    acceptance:
+      - The dogfood verify no longer runs the Go suite a second time.
+      - Only pull-request runs cancel in-progress runs; every main commit gets a verdict.
+      - Test timings and results are uploaded as artifacts.
+
+  - id: CI-02
+    title: Linux-first pipeline; Windows not blocking
+    stream: CI
+    wave: 1
+    status: ready
+    owner: qa
+    depends_on: [CI-01]
+    zone: ci
+    inputs:
+      - docs/work-items/surveys/tests-and-ci-20261010.md
+    decision: DEC-013
+    acceptance:
+      - The required pull-request gate runs on Linux and stays under about 15 minutes.
+      - The Windows job is manual or nightly and does not block merges until the Windows decision is revisited.
+
+  - id: CI-03
+    title: One smoke driver instead of shell scripts
+    stream: CI
+    wave: 2
+    status: proposed
+    owner: qa
+    depends_on: [CI-02]
+    zone: ci
+    inputs:
+      - docs/work-items/surveys/tests-and-ci-20261010.md
+    acceptance:
+      - Packaged, bundle and onboarding smoke run from one Go driver in CI and release workflows; the duplicated bash and PowerShell steps are removed.
+
+  - id: CI-04
+    title: Container runtime test tier
+    stream: CI
+    wave: 2
+    status: blocked
+    owner: qa
+    depends_on: [PLAY-01, CI-02]
+    zone: ci
+    inputs:
+      - docs/work-items/surveys/tests-and-ci-20261010.md
+      - docs/work-items/surveys/case-playground-20261010.md
+    acceptance:
+      - The playground's provider-free smoke runs nightly in a Linux container against the main build.
+      - A real-provider smoke is available manually with a cost cap; no secrets on pull requests.
+
+  - id: CI-05
+    title: Revisit Windows support
+    stream: CI
+    wave: 3
+    status: parked
+    owner: qa
+    decision: DEC-013
+    zone: ci
+    acceptance:
+      - Owner decides how Windows is supported (smoke tier, nightly full suite or none) based on the Linux-first results.
+
+  # --- BUG: bug hunting ----------------------------------------------------
+  - id: BUG-01
+    title: Continuous bug hunt with verified findings
+    stream: BUG
+    wave: 1
+    status: ready
+    owner: bughunter
+    zone: free
+    inputs:
+      - docs/work-items/surveys/code-architecture-20261010.md
+      - docs/work-items/surveys/tests-and-ci-20261010.md
+      - origin archive/wip/readiness-candidate-fix-20261010
+    scope: >-
+      Read-only sweeps with subagents per area; every finding is independently verified before it is
+      reported; fixes go out as small packages that respect zone ownership. Inputs include the suspected
+      order dependence in impact and the dead-code list from the architecture survey.
+    acceptance:
+      - Findings land as backlog packages with reproduction; each fix PR adds a regression test.
+
+  # --- AGENT: agent-facing files ------------------------------------------
+  - id: AGENT-01
+    title: Slim the repository's agent entry files
+    stream: AGENT
+    wave: 1
+    status: ready
+    owner: cleaner
+    zone: docs-entry
+    inputs:
+      - docs/work-items/surveys/agent-files-20261010.md
+    acceptance:
+      - AGENTS.md is a short router with one command path; CLAUDE.md points to it; the repository-boundaries rule holds rules only.
+      - Runtime pins in generated onboarding text come from one data source.
+
+  - id: AGENT-02
+    title: Re-render generated agent guidance for the new verbs
+    stream: AGENT
+    wave: 2
+    status: blocked
+    owner: interface
+    depends_on: [CLI-02]
+    zone: interface
+    inputs:
+      - docs/work-items/surveys/agent-files-20261010.md
+    acceptance:
+      - Generated AGENTS.md, CLAUDE.md and skills use the new verbs; a test fails if generated text names a command or tool that does not exist.
+
+  - id: AGENT-03
+    title: Product defaults for provider guidance
+    stream: AGENT
+    wave: 3
+    status: parked
+    owner: interface
+    depends_on: [AGENT-02]
+    zone: interface
+    note: Former follow-up R03-F01.
+    acceptance:
+      - Versioned defaults drive generated provider guidance with model-to-output coverage.
+
+  # --- ARCH: code and architecture cleanup, documentation map ------------
+  - id: ARCH-01
+    title: Code map and package gate
+    stream: ARCH
+    wave: 1
+    status: ready
+    owner: cleaner
+    zone: free
+    inputs:
+      - docs/work-items/surveys/code-architecture-20261010.md
+    acceptance:
+      - One page lists every package with layer, purpose and owning document; a test fails when a package is missing or extra.
+
+  - id: ARCH-02
+    title: Move guarded writes out of the legacy host package
+    stream: ARCH
+    wave: 1
+    status: ready
+    owner: cleaner
+    zone: legacy
+    inputs:
+      - docs/work-items/surveys/code-architecture-20261010.md
+    acceptance:
+      - No product package imports the legacy host root package; CI green.
+
+  - id: ARCH-03
+    title: Layer rules inside host in the architecture gate
+    stream: ARCH
+    wave: 1
+    status: blocked
+    owner: cleaner
+    depends_on: [ARCH-02]
+    zone: free
+    inputs:
+      - docs/work-items/surveys/code-architecture-20261010.md
+    acceptance:
+      - The gate forbids core, application and runtime packages from importing legacy packages; negative fixtures prove it.
+
+  - id: ARCH-04
+    title: Remove the canonical projection alpha
+    stream: ARCH
+    wave: 1
+    status: ready
+    owner: cleaner
+    decision: DEC-014
+    zone: legacy
+    inputs:
+      - docs/work-items/surveys/code-architecture-20261010.md
+    acceptance:
+      - The canonical command and its packages are gone except what the current product uses; build and tests green.
+
+  - id: ARCH-05
+    title: Dead code and duplicate helpers
+    stream: ARCH
+    wave: 2
+    status: blocked
+    owner: cleaner
+    depends_on: [RUN-01]
+    zone: runtime
+    inputs:
+      - docs/work-items/surveys/code-architecture-20261010.md
+    acceptance:
+      - Unreferenced functions removed; duplicated helpers consolidated; no behavior change.
+
+  - id: ARCH-06
+    title: Separate method and runtime inside projectrun
+    stream: ARCH
+    wave: 2
+    status: blocked
+    owner: runtime
+    depends_on: [RUN-01, TEST-04]
+    zone: runtime
+    inputs:
+      - docs/work-items/surveys/code-architecture-20261010.md
+    acceptance:
+      - Runtime configuration and the native transport live behind the executor boundary in their own packages; no function exceeds 300 lines; end-to-end tests unchanged and green.
+
+  - id: ARCH-07
+    title: Markitect develops itself with its own model
+    stream: ARCH
+    wave: 3
+    status: blocked
+    owner: cleaner
+    depends_on: [CLI-02, AGENT-02]
+    zone: ci
+    inputs:
+      - docs/work-items/surveys/agent-files-20261010.md
+      - docs/work-items/surveys/code-architecture-20261010.md
+    acceptance:
+      - The repository has a .markitect/project.yaml model that checks green; AGENTS.md, CI and hooks use only current verbs.
+
+  - id: ARCH-08
+    title: Move distribution commands to release tooling
+    stream: ARCH
+    wave: 3
+    status: blocked
+    owner: cleaner
+    depends_on: [CLI-01]
+    decision: DEC-014
+    zone: interface
+    inputs:
+      - docs/work-items/surveys/code-architecture-20261010.md
+    acceptance:
+      - Package, bundle, install, version and licenses no longer need the legacy dispatcher; release workflow green.
+
+  - id: ARCH-09
+    title: Remove the v0.13 Project/Domain line
+    stream: ARCH
+    wave: 3
+    status: blocked
+    owner: cleaner
+    depends_on: [ARCH-07, ARCH-08]
+    zone: legacy
+    inputs:
+      - docs/work-items/surveys/code-architecture-20261010.md
+    acceptance:
+      - Legacy commands, packages, binaries and example directories removed (DEC-014); build, tests and docs consistent.
+
+  - id: ARCH-10
+    title: Documentation organized by module and current behavior
+    stream: ARCH
+    wave: 1
+    status: proposed
+    owner: cleaner
+    depends_on: [ARCH-01]
+    zone: free
+    inputs:
+      - docs/work-items/surveys/code-architecture-20261010.md
+    acceptance:
+      - Architecture, repository layout and constitution describe the current product; statements that legacy surfaces remain supported are removed (DEC-014); known problems are listed per module.
+
+  # --- GOV: Government, organization, cockpit and monitoring --------------
+  - id: GOV-00
+    title: Government decision and register reconciliation
+    stream: GOV
+    wave: 0
+    status: done
+    owner: integrator
+    decision: DEC-019
+    zone: free
+    acceptance:
+      - Decision recorded as a register entry; DEC-011, DEC-012 and IDEA-002 updated accordingly.
+
+  - id: GOV-01
+    title: Government v1 implementation
+    stream: GOV
+    wave: 3
+    status: blocked
+    owner: government
+    depends_on: [GOV-00, CLI-02, ARCH-06]
+    zone: model
+    inputs:
+      - origin codex/government-implementation-20261010 (v1 contract and concept docs)
+      - origin archive/wip/government-implementation-20261010 (model changes in progress; does not compile)
+      - codex/government-p1 (old G1-G5 code, reference only)
+      - docs/work-items/surveys/knowledge-graph-and-government-20261010.md
+    acceptance:
+      - Follows the v1 contract on that branch; projects that do not activate Government keep identical results and digests.
+
+  - id: GOV-02
+    title: Cockpit, briefings and monitoring design
+    stream: GOV
+    wave: 4
+    status: parked
+    owner: unassigned
+    depends_on: [GOV-00]
+    zone: free
+    inputs:
+      - docs/work-items/surveys/knowledge-graph-and-government-20261010.md
+      - docs/concepts/sources/concepts-chat-20261009/
+    acceptance:
+      - A design that builds on existing briefings and run records; ideas IDEA-009 to IDEA-015 dispositioned.
+
+  # --- LEARN and IDEA: learning effects and further ideas -----------------
+  - id: LEARN-01
+    title: Learning effects survey
+    stream: LEARN
+    wave: 1
+    status: proposed
+    owner: integrator
+    zone: free
+    inputs:
+      - origin archive/codex/markitect-historian-working-history
+      - docs/concepts/register.md (IDEA-005, ENH-002, ENH-003)
+    acceptance:
+      - Options for learning across runs and projects (precedents, model-quality signals, study feedback) recorded as register ideas with evidence needs; owner selects follow-ups.
+
+  - id: IDEA-01
+    title: Check earlier plans and assessments against current main
+    stream: IDEA
+    wave: 1
+    status: ready
+    owner: integrator
+    zone: free
+    inputs:
+      - origin archive/wip/government-assessment-untracked-docs-20261010 (refinement plan, independent assessment, knowledge-graph plan)
+      - origin archive/wip/marketing-notes-20261010 (marketing research log)
+      - origin archive/codex/markitect-historian-working-history
+    scope: >-
+      Earlier plans, assessments and logs that are not on main (refinement plan, independent assessment,
+      knowledge-graph plan, marketing log, historian notes) are inputs only. Check each idea against
+      current main and the vision and record it in the concept register; confirmed defects become BUG packages.
+    acceptance:
+      - Every checked idea has a register entry or a recorded reason for dropping it.
+
+  - id: IDEA-02
+    title: Observed code dependencies widen impact (ENH-001)
+    stream: IDEA
+    wave: 4
+    status: parked
+    owner: unassigned
+    zone: model
+    acceptance:
+      - Design spike for language-specific dependency observation as a fixed input to impact.
+
+  - id: IDEA-03
+    title: Model-quality linter and metrics (ENH-002)
+    stream: IDEA
+    wave: 4
+    status: parked
+    owner: unassigned
+    zone: model
+
+  - id: IDEA-04
+    title: Test-to-statement binding and test review (ENH-003)
+    stream: IDEA
+    wave: 4
+    status: parked
+    owner: unassigned
+    zone: model

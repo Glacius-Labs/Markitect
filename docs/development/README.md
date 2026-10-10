@@ -1,6 +1,6 @@
 # Development coordination
 
-Start engineering work through the root [AGENTS.md](../../AGENTS.md) and [Markitect-first change guide](../markitect-first.md), using a fixed base and the relevant canonical owner. [CONTRIBUTING](../../CONTRIBUTING.md) owns commands and validation; [Architecture](../architecture.md) and [Repository layout](../repository-layout.md#source-repository-layout) explain the source boundaries. The [roadmap](../implementation-plan.md) and [Product Readiness backlog](../work-items/product-readiness/backlog.yaml) own current delivery status. This directory owns implementation coordination.
+Start engineering work through the root [AGENTS.md](../../AGENTS.md) and [Markitect-first change guide](../markitect-first.md), using a fixed base and the relevant canonical owner. [CONTRIBUTING](../../CONTRIBUTING.md) owns commands and validation; [Architecture](../architecture.md) and [Repository layout](../repository-layout.md#source-repository-layout) explain the source boundaries. The [roadmap](../implementation-plan.md) and [backlog](../work-items/backlog.yaml) own current delivery status. This directory owns implementation coordination.
 
 | Document | Owns |
 |---|---|

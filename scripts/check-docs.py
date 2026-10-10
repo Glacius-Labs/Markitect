@@ -52,6 +52,7 @@ DEFAULT_DOCUMENTS = (
     "docs/concepts/README.md",
     "docs/concepts/register.md",
     "docs/concepts/sources/README.md",
+    "docs/work-items/surveys/README.md",
     "docs/design/project-world/README.md",
     "docs/work-items/product-readiness/README.md",
     "examples/README.md",
