@@ -34,6 +34,7 @@ class ReportTests(unittest.TestCase):
                     "agent": {"kind": "codex", "model": "m", "effort": "high", "maxSubagents": 2}}
         write(self.out / "runner.json", {
             "manifest": manifest, "status": "completed", "exitCode": 0, "stopReason": None,
+            "stationsPlanned": 2, "caseStations": 4, "hostPlatform": {"system": "Linux", "machine": "x86_64"},
             "wallSeconds": 100.5, "versions": {"codex": "0.162.0", "imageId": "sha256:abc",
                                                "markitectCommit": None, "markitectSha256": None}})
         write(self.out / "setup" / "setup.json", {
@@ -61,6 +62,9 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(result["totals"]["tokensAllSessions"], {"input": 600, "cachedInput": 100, "output": 60})
         self.assertEqual(result["totals"]["agentSeconds"], 30.0)
         self.assertEqual(result["fairness"]["model"], "m")
+        self.assertEqual(result["fairness"]["stationsPlanned"], 2)
+        self.assertEqual(result["fairness"]["hostPlatform"], {"system": "Linux", "machine": "x86_64"})
+        self.assertEqual(result["totals"]["caseStations"], 4)
         self.assertEqual(len(result["setup"]["notes"]), 2)
         self.assertEqual(result["final"]["ownTests"]["ran"], 7)
         self.assertNotIn("checks", result["final"])
@@ -73,6 +77,8 @@ class ReportTests(unittest.TestCase):
         self.assertIn("git-diff-check exited 2 (tolerated)", text)
         self.assertIn("Resume started a new session at S2", text)
         self.assertIn("Fairness", text)
+        self.assertIn("- Stations: 2 of 2 ran (the first 2 of the case's 4).", text)
+        self.assertIn("stations 2; host Linux x86_64;", text)
 
     def test_unknown_values_stay_null_never_zero(self):
         folder = self.out / "stations" / "S1"

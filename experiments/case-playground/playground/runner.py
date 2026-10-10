@@ -3,9 +3,9 @@
 Runs as root inside the run container (`python3 -m playground run --manifest M --out /out`).
 On a host without root it runs everything as the current user, which the tests use.
 
-The stations come from the case's STATIONS.json. The time limits count agent time
-only: checks, snapshots and other harness work between waves are not charged to the
-agent.
+The stations are the first `stations` waves of the case's STATIONS.json (the manifest
+default is all). The time limits count agent time only: checks, snapshots and other
+harness work between waves are not charged to the agent.
 
 The outer agent is Codex (`codex_agent`) or Claude Code (`claude_agent`), or a fake
 stand-in for either. Claude Code gets the operator's token only in the environment of
@@ -104,6 +104,12 @@ def _versions(manifest: dict, agent_home: Path) -> dict[str, Any]:
                             or (manifest.get("markitect") or {}).get("commit")),
         "markitectSha256": os.environ.get("MPG_MARKITECT_SHA256") or None,
     }
+
+
+def _host_platform() -> dict[str, str] | None:
+    """The host's OS and architecture, as the host passed them in; never the container's own."""
+    system, machine = os.environ.get("MPG_HOST_SYSTEM"), os.environ.get("MPG_HOST_MACHINE")
+    return {"system": system, "machine": machine} if system and machine else None
 
 
 def _assess(func: Callable[..., dict], *args: Any, **kwargs: Any) -> dict:
@@ -214,8 +220,9 @@ class _Trajectory:
         # 2. Fresh case repository, owned by the agent.
         _log(f"prepare {self.case} ({self.method})")
         prepared = lifecycle.prepare(self.in_dir / "cases", self.repo, self.audit, case=self.case,
-                                     method=self.method)
+                                     method=self.method, stations=self.manifest.get("stations"))
         self.stations_planned = self.state["stationsPlanned"] = len(prepared["stationPlan"])
+        self.state["caseStations"] = prepared["caseStations"]
         codex_agent.give_to_agent(self.work_root, recursive=True)
         self.save_state()
 
@@ -460,7 +467,8 @@ def run(manifest: dict, out: Path, *, in_dir: Path = Path("/in"), work_root: Pat
     state: dict[str, Any] = {
         "schema": 1, "manifest": manifest, "status": "running", "exitCode": None, "stopReason": None,
         "stopCategory": None, "startedAt": _utc(), "endedAt": None, "wallSeconds": None,
-        "stationsPlanned": None, "stationsRun": 0, "authInstalled": None, "codexLoginChanged": None,
+        "stationsPlanned": None, "caseStations": None, "stationsRun": 0, "hostPlatform": _host_platform(),
+        "authInstalled": None, "codexLoginChanged": None,
         "claudeTokenProvided": None, "tokenRedactions": 0, "versions": _versions(manifest, agent_home),
     }
     trajectory = _Trajectory(manifest, out, state, in_dir=in_dir, work_root=work_root,

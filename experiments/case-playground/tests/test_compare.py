@@ -21,7 +21,11 @@ def summary(findings: int, high: int, covered: int, total: int) -> dict:
             "obligations": {"covered": covered, "total": total}}
 
 
-def report(run_id: str, method: str, *, stations: int = 2, image: str = "sha256:img") -> dict:
+LINUX = {"system": "Linux", "machine": "x86_64"}
+
+
+def report(run_id: str, method: str, *, stations: int = 2, image: str = "sha256:img", planned: int = 2,
+           host_os: dict | None = LINUX) -> dict:
     entries = []
     for number in range(1, stations + 1):
         entries.append({
@@ -40,8 +44,9 @@ def report(run_id: str, method: str, *, stations: int = 2, image: str = "sha256:
     return {
         "schema": 1, "kind": "assessment",
         "run": {"id": run_id, "case": "readinglog2", "method": method, "outerProvider": "codex",
-                "fairness": {"case": "readinglog2", "codex": "0.162.0", "imageId": image, "model": "m",
-                             "effort": "high", "limits": {"stationSeconds": 60}, "container": {"cpus": 4}},
+                "fairness": {"case": "readinglog2", "stationsPlanned": planned, "codex": "0.162.0", "imageId": image,
+                             "model": "m", "effort": "high", "limits": {"stationSeconds": 60}, "container": {"cpus": 4},
+                             "hostPlatform": host_os},
                 "totals": {"agentSeconds": 100.5, "tokens": {"input": 10, "cachedInput": 5, "output": 1}}},
         "evaluation": {"files": {"groundTruth": {"sha256": "aa"}, "reviewerPrompt": {"sha256": "bb"}}},
         "reviewers": {"codex": {"model": "gpt-6.1-sol", "effort": "high"},
@@ -106,10 +111,34 @@ class CompareTests(unittest.TestCase):
         self.assertTrue(text.split("\n", 2)[2].startswith("**Fairness mismatch"))
         self.assertIn("`fairness.imageId`: sha256:img vs sha256:other", text)
 
+    def test_different_station_counts_are_a_fairness_mismatch(self):
+        a = self.save("a", report("a-1", "conventional"))
+        b = self.save("b", report("b-1", "markitect", planned=4))
+        code, err = self.main(str(a), str(b))
+        self.assertEqual(code, 2)
+        self.assertIn("fairness.stationsPlanned: 2 vs 4", err)
+        self.assertEqual(self.main(str(a), str(b), "--allow-mismatch")[0], 0)
+
+    def test_runs_from_different_host_platforms_are_a_fairness_mismatch(self):
+        a = self.save("a", report("a-1", "conventional"))
+        b = self.save("b", report("b-1", "markitect", host_os={"system": "Windows", "machine": "AMD64"}))
+        code, err = self.main(str(a), str(b))
+        self.assertEqual(code, 2)
+        self.assertIn("fairness.hostPlatform", err)
+        self.assertFalse(list(self.root.glob("compare-*.md")))
+        self.assertEqual(self.main(str(a), str(b), "--allow-mismatch")[0], 0)
+        # a run from before the platform was recorded is the same kind of mismatch
+        old = self.save("old", report("old-1", "markitect", host_os=None))
+        code, err = self.main(str(a), str(old))
+        self.assertEqual(code, 2)
+        self.assertIn("fairness.hostPlatform", err)
+        self.assertEqual(self.main(str(a), str(old), "--allow-mismatch")[0], 0)
+
     def test_fairness_fields_cover_the_required_set(self):
         fields = compare.fairness_fields(report("x", "conventional"))
         for key in ("case", "outerProvider", "fairness.imageId", "fairness.model", "fairness.effort",
-                    "fairness.limits", "fairness.container", "evaluation.groundTruth", "reviewer.codex"):
+                    "fairness.limits", "fairness.container", "fairness.stationsPlanned", "fairness.hostPlatform",
+                    "evaluation.groundTruth", "reviewer.codex"):
             self.assertIn(key, fields)
         same = copy.deepcopy(report("y", "markitect"))
         self.assertEqual(compare.mismatches(report("x", "conventional"), same), [])

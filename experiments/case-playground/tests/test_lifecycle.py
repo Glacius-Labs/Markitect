@@ -40,6 +40,8 @@ def make_seed(root: Path) -> Path:
         value = {"schema": 1, "case": case, "totalItems": 12,
                  "stations": [{"id": f"S{i}", "items": wave} for i, wave in enumerate(stations, 1)]}
         (folder / "STATIONS.json").write_text(json.dumps(value), encoding="utf-8", newline="\n")
+        (folder / "checks").mkdir()
+        (folder / "checks" / f"{case}.py").write_bytes(b"# public checks of this case\n")
         if case == "readinglog":
             (folder / "app.py").write_bytes(b"# baseline\n")
     return seed
@@ -215,6 +217,7 @@ class LifecycleTests(unittest.TestCase):
         folder = self.seed / case
         if not folder.exists():
             shutil.copytree(self.seed / "readinglog", folder)
+            (folder / "checks" / "readinglog.py").rename(folder / "checks" / f"{case}.py")
         value = {"schema": 1, "case": case, **extra,
                  "stations": [{"id": f"S{i}", "items": wave} for i, wave in enumerate(waves, 1)]}
         (folder / "STATIONS.json").write_text(json.dumps(value), encoding="utf-8", newline="\n")
@@ -253,15 +256,44 @@ class LifecycleTests(unittest.TestCase):
         with self.assertRaises(lifecycle.LifecycleError):
             lifecycle.prepare(self.seed, self.repo, self.audit, case="not-a-case", method="conventional")
 
+    def prepare_case(self, case):
+        return lifecycle.prepare(self.seed, self.root / "w" / case, self.root / "a" / case, case=case, method="m")
+
+    def test_stations_keep_the_first_waves_and_record_the_case_count(self):
+        for bad in (0, 5, True, "2"):
+            with self.subTest(stations=bad), self.assertRaisesRegex(lifecycle.LifecycleError, "stations must be 1 to 4"):
+                lifecycle.prepare(self.seed, self.repo, self.audit, case="readinglog", method="m", stations=bad)
+        self.assertFalse(self.repo.exists())
+        run = lifecycle.prepare(self.seed, self.repo, self.audit, case="readinglog", method="m", stations=2)
+        self.assertEqual((run["stationPlan"], run["caseStations"]), ([["B01"], ["B02", "B03", "B04"]], 4))
+        self.assertEqual(json.loads((self.audit / "run.json").read_text(encoding="utf-8"))["caseStations"], 4)
+        lifecycle.snapshot(self.repo, self.audit)
+        lifecycle.advance(self.repo, self.audit)
+        lifecycle.snapshot(self.repo, self.audit)
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "S2 is the final station"):
+            lifecycle.advance(self.repo, self.audit)
+        self.assertEqual(len(self.prepare_case("roombook")["stationPlan"]), 4)  # default: every wave
+
+    def test_case_seed_needs_its_own_public_checks(self):
+        (self.seed / "roombook" / "checks" / "roombook.py").unlink()
+        with self.assertRaisesRegex(lifecycle.LifecycleError, "checks/roombook.py"):
+            self.prepare_case("roombook")
+        for name in ("common", "../roombook", "Roombook"):
+            with self.subTest(case=name), self.assertRaisesRegex(lifecycle.LifecycleError, "unsupported case"):
+                self.prepare_case(name)
+
     def test_actual_case_seed_is_copied_flat(self):
         seed = PLAYGROUND / "cases"
         if not (seed / "readinglog" / "STATIONS.json").is_file():
             self.skipTest("cases/ not present yet")
         lifecycle.prepare(seed, self.repo, self.audit, case="readinglog", method="conventional")
-        for relative in ("AGENTS.md", "QUALITY.md", "checks/acceptance.py", "README.md",
+        for relative in ("AGENTS.md", "QUALITY.md", "checks/acceptance.py", "checks/readinglog.py", "README.md",
                          "BACKLOG.md", "STATIONS.json", "app.py"):
             self.assertTrue((self.repo / relative).is_file(), relative)
         self.assertFalse((self.repo / "task-prompt.txt").exists())
+        # only this case's public checks are seeded
+        self.assertEqual(sorted(path.name for path in (self.repo / "checks").iterdir()),
+                         ["acceptance.py", "readinglog.py"])
 
     def test_actor_branch_main_and_detached_head_are_capturable(self):
         self.prepare()
@@ -377,8 +409,10 @@ class LifecycleTests(unittest.TestCase):
         quiet.enter_context(contextlib.redirect_stderr(io.StringIO()))
         self.addCleanup(quiet.close)
         code = lifecycle._cli(["prepare", "--seed", str(self.seed), "--repo", str(self.repo),
-                               "--audit", str(self.audit), "--case", "roombook", "--method", "manual"])
+                               "--audit", str(self.audit), "--case", "roombook", "--method", "manual",
+                               "--stations", "3"])
         self.assertEqual(code, 0)
+        self.assertEqual(len(json.loads((self.audit / "run.json").read_text(encoding="utf-8"))["stationPlan"]), 3)
         self.assertEqual(lifecycle._cli(["snapshot", "--repo", str(self.repo), "--audit", str(self.audit)]), 0)
         self.assertEqual(lifecycle._cli(["advance", "--repo", str(self.root), "--audit", str(self.audit)]), 2)
 

@@ -2,6 +2,8 @@ import contextlib
 import csv
 import io
 import json
+import os
+import platform
 import shutil
 import subprocess
 import tempfile
@@ -15,6 +17,21 @@ def station_plan(case: str, sizes: tuple[int, ...]) -> str:
     ids = iter(f"X{i:02d}" for i in range(1, 100))
     return json.dumps({"schema": 1, "case": case, "stations": [
         {"id": f"S{n}", "items": [next(ids) for _ in range(size)]} for n, size in enumerate(sizes, 1)]})
+
+
+def make_case(root: Path, case: str, sizes: tuple[int, ...]) -> None:
+    """A case folder that discovery accepts."""
+    folder = root / "cases" / case
+    (folder / "checks").mkdir(parents=True)
+    for name in ("README.md", "BACKLOG.md"):
+        (folder / name).write_text(f"{case}\n", encoding="utf-8")
+    (folder / "STATIONS.json").write_text(station_plan(case, sizes), encoding="utf-8")
+    (folder / "checks" / f"{case}.py").write_text("def checks(ctx):\n    pass\n", encoding="utf-8")
+
+
+def resolved(product: dict) -> dict:
+    """Stands in for host.resolve_markitect (no Git checkout in the tests)."""
+    return {**product, "sourceRepo": str(Path(product["sourceRepo"]).resolve()), "commit": "669cecd2" + "0" * 32}
 
 
 MANIFEST = {
@@ -102,9 +119,11 @@ class HostTestBase(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.base = Path(self.temp.name) / "Glacius Labs"
         root = self.base / "root"
-        for name in ("playground/__pycache__", "cases/common", "cases/roombook", "cases/readinglog",
-                     "methods/conventional", "methods/markitect", "tests", "container"):
+        for name in ("playground/__pycache__", "cases/common", "methods/conventional", "methods/markitect",
+                     "tests", "container"):
             (root / name).mkdir(parents=True)
+        make_case(root, "roombook", (1, 3, 7, 1))
+        make_case(root, "readinglog", (1, 3, 7, 1))
         (root / "cases" / "task-prompt.txt").write_text("prompt\n", encoding="utf-8")
         (root / "methods" / "conventional" / "AGENTS.fragment.md").write_text("fragment\n", encoding="utf-8")
         (root / "methods" / "markitect" / "README.md").write_text("notes for people\n", encoding="utf-8")
@@ -112,8 +131,6 @@ class HostTestBase(unittest.TestCase):
         (root / "playground" / "__pycache__" / "x.pyc").write_bytes(b"")
         (root / "tests" / "fake_agent.py").write_text("", encoding="utf-8")
         (root / "tests" / "fake_claude.py").write_text("", encoding="utf-8")
-        (root / "cases" / "roombook" / "STATIONS.json").write_text(station_plan("roombook", (1, 3, 7, 1)),
-                                                                   encoding="utf-8")
         self.manifest_path = self.base / "manifest.json"
         self.manifest_path.write_text(json.dumps(MANIFEST), encoding="utf-8")
         self.out = self.base / "runs" / "one, two"
@@ -126,6 +143,9 @@ class HostTestBase(unittest.TestCase):
         data = json.loads(json.dumps(MANIFEST))
         for key, value in changes.items():
             target = data["agent"] if key in ("kind", "claudeVersion", "model") else data
+            if value is ...:
+                del target[key]
+                continue
             target[key] = value
         path = self.base / name
         path.write_text(json.dumps(data), encoding="utf-8")
@@ -172,6 +192,10 @@ class MountTests(unittest.TestCase):
                                 "MPG_MARKITECT_SHA256=abc"])
         self.assertEqual(argv[-9:], ["img:1", "python3", "-m", "playground", "run", "--manifest",
                                      "/in/manifest.json", "--out", "/out"])
+        argv = host.docker_run_argv(MANIFEST, name="n", image="i", image_id="d", inputs=Path("/i"), results=Path("/r"),
+                                    auth=None, markitect=None, host_os={"system": "Linux", "machine": "x86_64"})
+        envs = [argv[i + 1] for i, arg in enumerate(argv) if arg == "--env"]
+        self.assertEqual(envs, ["MPG_IMAGE_ID=d", "MPG_HOST_SYSTEM=Linux", "MPG_HOST_MACHINE=x86_64"])
 
     def test_no_auth_mount_for_fake(self):
         argv = host.docker_run_argv(MANIFEST, name="n", image="i", image_id="d", inputs=Path("/i"),
@@ -192,13 +216,20 @@ class RunTests(HostTestBase):
         self.assertEqual(record["stations"], 4)
         self.assertEqual(record["secrets"], {"codexAuth": False, "claudeToken": False})
         self.assertEqual(record["dockerVersion"], "29.4.1")
+        self.assertEqual(record["hostPlatform"], {"system": platform.system(), "machine": platform.machine()})
+        self.assertEqual(record["hostPlatform"], host.host_platform())
+        run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
+        self.assertIn(f"MPG_HOST_SYSTEM={platform.system()}", run)
+        self.assertIn(f"MPG_HOST_MACHINE={platform.machine()}", run)
         inputs = self.out / "inputs"
-        self.assertTrue((inputs / "manifest.json").is_file())
+        # the container gets the normalized manifest that host.json records
+        self.assertEqual(json.loads((inputs / "manifest.json").read_text(encoding="utf-8")), record["manifest"])
+        self.assertEqual(record["manifest"]["stations"], 4)
         self.assertTrue((inputs / "tests" / "fake_agent.py").is_file())
         self.assertTrue((inputs / "playground" / "runner.py").is_file())
         self.assertFalse((inputs / "playground" / "__pycache__").exists())
         self.assertTrue((inputs / "cases" / "common").is_dir())
-        self.assertTrue((inputs / "cases" / "roombook").is_dir())
+        self.assertTrue((inputs / "cases" / "roombook" / "checks" / "roombook.py").is_file())
         self.assertTrue((inputs / "cases" / "task-prompt.txt").is_file())
         self.assertTrue((inputs / "methods" / "conventional" / "AGENTS.fragment.md").is_file())
         # The agent can read /in: the other case and the other arm's method are not staged.
@@ -323,25 +354,60 @@ class RunTests(HostTestBase):
         docker = FakeDocker()
         built = {"commit": "669cecd2" + "0" * 32, "sha256": "f" * 64}
         with mock.patch.object(host.shutil, "which", return_value="go"), \
+                mock.patch.object(host, "resolve_markitect", side_effect=resolved), \
                 mock.patch.object(host, "build_markitect", return_value=built) as build:
             self.run_host(docker, manifest=manifest)
         self.assertEqual(build.call_args.args[1], self.out.resolve() / "inputs" / "bin" / "markitect")
         self.assertEqual(self.host_record()["markitect"], built)
+        recorded = self.host_record()["manifest"]["markitect"]
+        self.assertEqual(recorded, {"sourceRepo": str(Path("/src").resolve()), "commit": built["commit"]})
+        self.assertEqual(build.call_args.args[0], recorded)
+        staged = json.loads((self.out / "inputs" / "manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(staged["markitect"], recorded)
         run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
         self.assertIn("MPG_MARKITECT_SHA256=" + "f" * 64, run)
         self.assertIn("MPG_MARKITECT_COMMIT=" + built["commit"], run)
         self.assertFalse((self.out / "inputs" / "methods").exists())  # notes for people stay on the host
 
     def test_station_count_sets_the_safety_timeout(self):
-        (host.ROOT / "cases" / "readinglog2").mkdir()
-        (host.ROOT / "cases" / "readinglog2" / "STATIONS.json").write_text(
-            station_plan("readinglog2", (1, 3, 6, 2, 2, 1)), encoding="utf-8")
+        make_case(host.ROOT, "readinglog2", (1, 3, 6, 2, 2, 1))
         self.run_host(FakeDocker(), manifest=self.write_manifest("six.json", case="readinglog2"))
         record = self.host_record()
         self.assertEqual(record["stations"], 6)
         self.assertEqual(record["hostTimeoutSeconds"], host.host_timeout(MANIFEST, 6))
         self.assertGreater(host.host_timeout(MANIFEST, 6), host.host_timeout(MANIFEST, 4))
         self.assertTrue((self.out / "inputs" / "cases" / "readinglog2" / "STATIONS.json").is_file())
+
+    def test_stations_truncate_the_run_and_its_safety_timeout(self):
+        self.run_host(FakeDocker(), manifest=self.write_manifest("two.json", stations=2))
+        record = self.host_record()
+        self.assertEqual((record["stations"], record["manifest"]["stations"]), (2, 2))
+        self.assertEqual(record["hostTimeoutSeconds"], host.host_timeout(MANIFEST, 2))
+        self.assertEqual(host.station_count({"case": "roombook", "stations": 3}), 3)
+        self.assertEqual(host.station_count({"case": "roombook"}), 4)
+        with self.assertRaisesRegex(host.HostError, "unknown case 'nothing'"):
+            host.station_count({"case": "nothing"})
+        docker = FakeDocker()
+        self.out = self.base / "runs" / "too-many"
+        self.assertEqual(self.run_host(docker, manifest=self.write_manifest("five.json", stations=5)), 2)
+        self.assertEqual(docker.calls, [])
+
+    def test_source_repo_defaults_to_the_checkout_holding_the_playground(self):
+        data = {**MANIFEST, "method": "markitect", "markitect": {"commit": "669cecd2"}}
+        manifest = self.base / "mk-default.json"
+        manifest.write_text(json.dumps(data), encoding="utf-8")
+        docker = FakeDocker()
+        with mock.patch.object(host.shutil, "which", return_value="go"):
+            self.assertEqual(self.run_host(docker, manifest=manifest), 2)  # no checkout holds the fake root
+        self.assertEqual(docker.calls, [])
+        (host.ROOT / ".git").mkdir()  # the playground's checkout (the run folder stays outside it)
+        built = {"commit": "669cecd2" + "0" * 32, "sha256": "f" * 64}
+        with mock.patch.object(host.shutil, "which", return_value="go"), \
+                mock.patch.object(host, "resolve_markitect", side_effect=resolved) as resolve, \
+                mock.patch.object(host, "build_markitect", return_value=built):
+            self.run_host(docker, manifest=manifest)
+        self.assertEqual(resolve.call_args.args[0]["sourceRepo"], str(host.ROOT.resolve()))
+        self.assertEqual(self.host_record()["manifest"]["markitect"]["sourceRepo"], str(host.ROOT.resolve()))
 
     def test_case_without_station_plan_fails_before_docker(self):
         (host.ROOT / "cases" / "roombook" / "STATIONS.json").unlink()
@@ -388,6 +454,7 @@ class RunTests(HostTestBase):
         auth.write_text("fixture", encoding="utf-8")
         built = {"commit": "669cecd2" + "0" * 32, "sha256": "f" * 64}
         with mock.patch.object(host.shutil, "which", return_value="go"), \
+                mock.patch.object(host, "resolve_markitect", side_effect=resolved), \
                 mock.patch.object(host, "build_markitect", return_value=built):
             self.run_host(docker, "--claude-token", str(token), "--codex-auth", str(auth), manifest=manifest)
         run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
@@ -506,6 +573,33 @@ class BuildMarkitectTests(unittest.TestCase):
             self.assertEqual(target.read_bytes()[:4], b"\x7fELF")
             self.assertEqual(len(result["sha256"]), 64)
             self.assertTrue(result["go"].startswith("go1."))
+
+
+@unittest.skipUnless(shutil.which("git"), "needs git")
+class ResolveMarkitectTests(unittest.TestCase):
+    def test_absolute_source_and_full_commit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            repo = Path(temp) / "product repo"
+            repo.mkdir()
+            (repo / "README.md").write_text("x\n", encoding="utf-8")
+            git = ["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t.invalid"]
+            subprocess.run([*git, "init", "-q"], check=True)
+            subprocess.run([*git, "add", "."], check=True)
+            subprocess.run([*git, "commit", "-q", "-m", "seed"], check=True)
+            full = subprocess.run([*git, "rev-parse", "HEAD"], check=True, capture_output=True,
+                                  text=True).stdout.strip()
+            cwd = os.getcwd()
+            os.chdir(temp)
+            try:
+                result = host.resolve_markitect({"sourceRepo": "product repo", "commit": full[:8],
+                                                 "innerModel": "m"})
+            finally:
+                os.chdir(cwd)
+            self.assertEqual(result, {"sourceRepo": str(repo.resolve()), "commit": full, "innerModel": "m"})
+            with self.assertRaisesRegex(host.HostError, "is not a commit in"):
+                host.resolve_markitect({"sourceRepo": str(repo), "commit": "deadbeef"})
+            with self.assertRaisesRegex(host.HostError, "is not a folder"):
+                host.resolve_markitect({"sourceRepo": str(repo / "missing"), "commit": full})
 
 
 if __name__ == "__main__":
