@@ -330,7 +330,11 @@ func nativeTurnPrompt(inv agentexec.Invocation, wire []byte) string {
 	contract := "Wire response contract:\n" +
 		"- Return exactly one JSON object and no surrounding Markdown. Copy apiVersion, runId, nonce, inputDigest, and role exactly from this invocation. Do not invent lifecycle, workspace delta, or evidence.\n" +
 		"- Always include candidateFiles, evidenceRefs, verifierObservations, and uncertainty as JSON arrays, including empty arrays when there are no entries. Each verifierObservations entry is an object with exactly subject, outcome, and detail string fields; observation outcome must be passed, failed, incomplete, or escalated. Never use strings in place of observation objects.\n" +
-		"- Do not include nativeWork; the Host owns that metadata. Include usage only when provider-reported telemetry is available.\n"
+		"- evidenceRefs may contain only exact strings supplied in request.artifacts[].path, request.scopeIds, or request.policyIds. Do not invent references from context pointers, context field names, unsupplied paths, or unverified test/tool claims. Do not repeat a reference; [] is valid.\n" +
+		"- Do not include nativeWork or usage; the Host owns lifecycle, workspace delta, and provider telemetry when available.\n"
+	if (inv.Request.Role == agentexec.RoleExecutor || inv.Request.Role == agentexec.RoleVerifier) && nativeEvidenceRefsOnlyEmpty(inv) {
+		contract += "- This invocation's constrained schema permits only an empty evidenceRefs array; return [].\n"
+	}
 	contract += "- CandidateFile output entries have exactly path, mode, and content; mode is 0644 or 0755 for this Git workspace, and content is plain UTF-8 text, not base64. Input Artifact digest/base64 fields are not the output format. Copy identifiers as decoded JSON string values, without adding escaping characters.\n"
 	switch inv.Request.Role {
 	case agentexec.RoleExecutor:
@@ -376,10 +380,13 @@ func nativeTurnOutputSchema(inv agentexec.Invocation) map[string]any {
 		return nil
 	}
 	text := map[string]any{"type": "string"}
-	list := func(items any) map[string]any { return map[string]any{"type": "array", "items": items} }
+	boundedText := map[string]any{"type": "string", "minLength": 1, "maxLength": nativeResponseTextMaxLength}
+	list := func(items any) map[string]any {
+		return map[string]any{"type": "array", "items": items, "maxItems": nativeResponseArrayMaxItems}
+	}
 	fixed := func(value string) map[string]any { return map[string]any{"type": "string", "enum": []string{value}} }
-	candidates := list(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"path", "mode", "content"}, "properties": map[string]any{"path": text, "mode": map[string]any{"type": "string", "enum": []string{"0644", "0755"}}, "content": text}})
-	observations := list(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"subject", "outcome", "detail"}, "properties": map[string]any{"subject": text, "outcome": map[string]any{"type": "string", "enum": []string{"passed", "failed", "incomplete", "escalated"}}, "detail": text}})
+	candidates := list(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"path", "mode", "content"}, "properties": map[string]any{"path": boundedText, "mode": map[string]any{"type": "string", "enum": []string{"0644", "0755"}}, "content": text}})
+	observations := list(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"subject", "outcome", "detail"}, "properties": map[string]any{"subject": boundedText, "outcome": map[string]any{"type": "string", "enum": []string{"passed", "failed", "incomplete", "escalated"}}, "detail": boundedText}})
 	outcomes := []string{"proposed", "failed", "incomplete", "escalated"}
 	if inv.Request.Role == agentexec.RoleVerifier {
 		outcomes = []string{"passed", "failed", "incomplete", "escalated"}
@@ -387,7 +394,7 @@ func nativeTurnOutputSchema(inv agentexec.Invocation) map[string]any {
 	} else {
 		observations["maxItems"] = 0
 	}
-	properties := map[string]any{"apiVersion": fixed(inv.APIVersion), "runId": fixed(inv.RunID), "nonce": fixed(inv.Nonce), "inputDigest": fixed(inv.InputDigest), "role": fixed(inv.Request.Role), "outcome": map[string]any{"type": "string", "enum": outcomes}, "candidateFiles": candidates, "evidenceRefs": list(text), "verifierObservations": observations, "uncertainty": list(text)}
+	properties := map[string]any{"apiVersion": fixed(inv.APIVersion), "runId": fixed(inv.RunID), "nonce": fixed(inv.Nonce), "inputDigest": fixed(inv.InputDigest), "role": fixed(inv.Request.Role), "outcome": map[string]any{"type": "string", "enum": outcomes}, "candidateFiles": candidates, "evidenceRefs": nativeEvidenceRefsSchema(inv), "verifierObservations": observations, "uncertainty": list(boundedText)}
 	required := []string{"apiVersion", "runId", "nonce", "inputDigest", "role", "outcome", "candidateFiles", "evidenceRefs", "verifierObservations", "uncertainty"}
 	var context struct {
 		ResponseSchema json.RawMessage `json:"responseSchema"`
@@ -398,6 +405,75 @@ func nativeTurnOutputSchema(inv agentexec.Invocation) map[string]any {
 		candidates["maxItems"] = 0
 	}
 	return map[string]any{"type": "object", "additionalProperties": false, "required": required, "properties": properties}
+}
+
+const (
+	// Keep native response-schema bounds aligned with agentexec's wire limits.
+	nativeResponseArrayMaxItems = 128
+	// Structured Outputs bounds string characters; agentexec's final decoder
+	// remains authoritative for UTF-8 validity and the 4096-byte wire bound.
+	nativeResponseTextMaxLength = 4096
+
+	// Match the shared response count bound, but keep the constant local because
+	// evidence references are not verifier observations.
+	nativeEvidenceRefMaxItems = 128
+	// OpenAI Structured Outputs supports at most 1000 enum values total and
+	// limits a string enum over 250 values to 15,000 characters. Keep this one
+	// request-derived enum comfortably bounded; larger unions legally fall back
+	// to [] rather than making the native turn schema unrepresentable.
+	nativeEvidenceEnumMaxValues = 250
+	nativeEvidenceEnumMaxBytes  = 15_000
+)
+
+func nativeEvidenceRefs(inv agentexec.Invocation) []string {
+	set := make(map[string]struct{}, len(inv.Request.Artifacts)+len(inv.Request.ScopeIDs)+len(inv.Request.PolicyIDs))
+	for _, artifact := range inv.Request.Artifacts {
+		set[artifact.Path] = struct{}{}
+	}
+	for _, id := range inv.Request.ScopeIDs {
+		set[id] = struct{}{}
+	}
+	for _, id := range inv.Request.PolicyIDs {
+		set[id] = struct{}{}
+	}
+	refs := make([]string, 0, len(set))
+	for ref := range set {
+		if ref != "" {
+			refs = append(refs, ref)
+		}
+	}
+	sort.Strings(refs)
+	return refs
+}
+
+func nativeEvidenceRefsSchema(inv agentexec.Invocation) map[string]any {
+	refs := nativeEvidenceRefs(inv)
+	item := map[string]any{"type": "string", "minLength": 1, "maxLength": nativeResponseTextMaxLength}
+	array := map[string]any{"type": "array", "items": item, "maxItems": nativeEvidenceRefMaxItems}
+	if !nativeEvidenceEnumFits(refs) {
+		array["maxItems"] = 0
+		return array
+	}
+	item["enum"] = refs
+	return array
+}
+
+func nativeEvidenceRefsOnlyEmpty(inv agentexec.Invocation) bool {
+	return !nativeEvidenceEnumFits(nativeEvidenceRefs(inv))
+}
+
+func nativeEvidenceEnumFits(refs []string) bool {
+	if len(refs) == 0 || len(refs) > nativeEvidenceEnumMaxValues {
+		return false
+	}
+	bytes := 0
+	for _, ref := range refs {
+		bytes += len(ref) // byte count is conservative for the provider's character budget
+		if bytes > nativeEvidenceEnumMaxBytes {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *session) save() error {

@@ -3,12 +3,15 @@ package codexappserver
 import (
 	"bufio"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -133,6 +136,21 @@ func serveFixture() {
 				nonce, ok := properties["nonce"].(map[string]any)
 				if !ok || len(nonce["enum"].([]any)) != 1 || nonce["enum"].([]any)[0] != inv.Nonce {
 					return
+				}
+				evidence, ok := properties["evidenceRefs"].(map[string]any)
+				if !ok || evidence["maxItems"] != float64(nativeEvidenceRefMaxItems) {
+					return
+				}
+				evidenceItems, ok := evidence["items"].(map[string]any)
+				refs, refsOK := evidenceItems["enum"].([]any)
+				wantRefs := nativeEvidenceRefs(inv)
+				if !ok || !refsOK || len(refs) != len(wantRefs) {
+					return
+				}
+				for i, ref := range wantRefs {
+					if refs[i] != ref {
+						return
+					}
 				}
 			}
 			r := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: inv.RunID, Nonce: inv.Nonce, Role: inv.Request.Role, InputDigest: inv.InputDigest, Outcome: agentexec.OutcomeIncomplete, CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}}
@@ -313,6 +331,11 @@ func TestNativeTurnSendsBoundOutputSchema(t *testing.T) {
 		t.Run(role, func(t *testing.T) {
 			a, cfg, req, opts := fixture(t, "schema-required", Options{})
 			req.Role = role
+			req.ScopeIDs = []string{"source", "shared"}
+			req.PolicyIDs = []string{"policy"}
+			artifactBytes := []byte("schema-bound artifact\n")
+			artifactDigest := sha256.Sum256(artifactBytes)
+			req.Artifacts = []agentexec.Artifact{{Path: "README.md", Mode: "0644", Digest: "sha256:" + hex.EncodeToString(artifactDigest[:]), Content: artifactBytes}}
 			if _, err := a.Run(context.Background(), cfg, req, opts); err != nil {
 				t.Fatalf("native turn did not send its nonce-bound output schema: %v", err)
 			}
@@ -353,6 +376,8 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 		"if escalateTo is nonempty, outer outcome is escalated",
 		"Never copy reportJson.status into outer outcome",
 		"content is plain UTF-8 text, not base64",
+		"mode is 0644 or 0755 for this Git workspace",
+		"Do not include nativeWork or usage; the Host owns lifecycle, workspace delta, and provider telemetry when available",
 		"Return candidateFiles as an empty array",
 	} {
 		if !strings.Contains(prompt, required) {
@@ -386,6 +411,256 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 	if parsed.Outcome != agentexec.OutcomeProposed || len(parsed.ReportJSON) == 0 || len(parsed.VerifierObservations) != 0 {
 		t.Fatalf("corrected response contract was not preserved: outcome=%q report=%s observations=%#v", parsed.Outcome, parsed.ReportJSON, parsed.VerifierObservations)
 	}
+}
+
+func TestNativeEvidenceReferencesAreRequestBoundAndUnknownPointersRejected(t *testing.T) {
+	content := []byte("README bytes supplied to the invocation\n")
+	digest := sha256.Sum256(content)
+	request := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: strings.Repeat("a", 40),
+		ModelDigest: "sha256:" + strings.Repeat("b", 64), ModulePin: "test@1", ProjectionID: "test",
+		ScopeIDs: []string{"scope-manager", "README.md"}, PolicyIDs: []string{"policy-check", "scope-manager"},
+		Context:   json.RawMessage(`{"globalGoal":"Implement greeting support"}`),
+		Artifacts: []agentexec.Artifact{{Path: "README.md", Mode: "0644", Digest: "sha256:" + hex.EncodeToString(digest[:]), Content: content}}}
+	inv, _, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	schema := nativeTurnOutputSchema(inv)
+	properties := schema["properties"].(map[string]any)
+	evidence := properties["evidenceRefs"].(map[string]any)
+	if evidence["maxItems"] != nativeEvidenceRefMaxItems {
+		t.Fatalf("evidence reference count is not bounded: %#v", evidence)
+	}
+	items := evidence["items"].(map[string]any)
+	if items["minLength"] != 1 || items["maxLength"] != nativeResponseTextMaxLength {
+		t.Fatalf("evidence strings do not match the shared field bounds: %#v", items)
+	}
+	want := []string{"README.md", "policy-check", "scope-manager"}
+	got, ok := items["enum"].([]string)
+	if !ok || strings.Join(got, "\x00") != strings.Join(want, "\x00") {
+		t.Fatalf("evidence enum must be sorted, unique and request-bound: got=%#v want=%#v", items["enum"], want)
+	}
+	if strings.Contains(string(mustJSON(t, schema)), `"uniqueItems"`) {
+		t.Fatal("evidence schema uses a keyword unsupported by the pinned structured-output contract")
+	}
+	prompt := nativeTurnPrompt(inv, []byte(`{"request":{"globalGoal":"Implement greeting support"}}`))
+	for _, clause := range []string{"exact strings supplied in request.artifacts[].path, request.scopeIds, or request.policyIds", "Do not invent references from context pointers, context field names, unsupplied paths", "Do not repeat a reference; [] is valid"} {
+		if !strings.Contains(prompt, clause) {
+			t.Errorf("native prompt omits evidence-reference restriction %q", clause)
+		}
+	}
+
+	response := agentexec.Response{APIVersion: inv.APIVersion, RunID: inv.RunID, Nonce: inv.Nonce, Role: agentexec.RoleExecutor,
+		InputDigest: inv.InputDigest, Outcome: agentexec.OutcomeIncomplete, CandidateFiles: []agentexec.CandidateFile{},
+		EvidenceRefs:         []string{"README.md", "policy-check", "scope-manager"},
+		VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{"Implementation was not assessed."}}
+	valid, err := json.Marshal(response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := agentexec.DecodeResponse(valid, inv, ""); err != nil {
+		t.Fatalf("response citing exact request evidence was rejected: %v", err)
+	}
+	response.EvidenceRefs = []string{"request.context.globalGoal"}
+	invalid, err := json.Marshal(response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := agentexec.DecodeResponse(invalid, inv, ""); err == nil || !strings.Contains(err.Error(), "evidence reference was not supplied in the request") {
+		t.Fatalf("invented context pointer was not rejected by shared decoder: %v", err)
+	}
+}
+
+func TestNativeEvidenceReferenceSchemaUsesEmptyOnlyFallbackForOversizedUnions(t *testing.T) {
+	t.Run("empty union", func(t *testing.T) {
+		inv := agentexec.Invocation{Request: agentexec.Request{Role: agentexec.RoleExecutor}}
+		assertEvidenceRefsOnlyEmpty(t, inv)
+		if !strings.Contains(nativeTurnPrompt(inv, []byte(`{}`)), "schema permits only an empty evidenceRefs array") {
+			t.Fatal("empty-union fallback was not explained to the model")
+		}
+	})
+	t.Run("too many enum values", func(t *testing.T) {
+		request := agentexec.Request{Role: agentexec.RoleExecutor}
+		for i := 0; i < 128; i++ {
+			request.ScopeIDs = append(request.ScopeIDs, fmt.Sprintf("scope-%03d", i))
+		}
+		for i := 0; i < 123; i++ {
+			request.PolicyIDs = append(request.PolicyIDs, fmt.Sprintf("policy-%03d", i))
+		}
+		inv := agentexec.Invocation{Request: request}
+		if count := len(nativeEvidenceRefs(inv)); count != 251 {
+			t.Fatalf("test union has %d refs, want 251", count)
+		}
+		assertEvidenceRefsOnlyEmpty(t, inv)
+	})
+	t.Run("enum strings exceed conservative budget", func(t *testing.T) {
+		request := agentexec.Request{Role: agentexec.RoleExecutor}
+		for i := 0; i < 4; i++ {
+			request.ScopeIDs = append(request.ScopeIDs, strings.Repeat(string(rune('a'+i)), 3998)+fmt.Sprintf("-%d", i))
+		}
+		inv := agentexec.Invocation{Request: request}
+		assertEvidenceRefsOnlyEmpty(t, inv)
+	})
+}
+
+func TestNativeRoleSchemasStayWithinStrictResponseBounds(t *testing.T) {
+	cases := []struct {
+		name           string
+		role           string
+		kind           string
+		phase          string
+		responseSchema string
+		responseDTO    string
+		outcome        string
+		files          []agentexec.CandidateFile
+		observations   []agentexec.Observation
+	}{
+		{name: "manager-work", role: agentexec.RoleExecutor, kind: "projectrun-task/v1", phase: "work",
+			responseSchema: `{"type":"object","additionalProperties":false,"required":["status","summary","delegations","reworkRequests","integrated","questions","risks","resolvedQuestions","resolvedRisks","escalateTo"],"properties":{"status":{"type":"string","enum":["complete","partial","blocked","failed","no-op"]},"summary":{"type":"string","minLength":1,"maxLength":4096},"delegations":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["managerId","goal"],"properties":{"managerId":{"type":"string","minLength":1},"goal":{"type":"string","minLength":1,"maxLength":4096}}}},"reworkRequests":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["managerId","goal","reason"],"properties":{"managerId":{"type":"string","minLength":1,"maxLength":128},"goal":{"type":"string","minLength":1,"maxLength":4096},"reason":{"type":"string","minLength":1,"maxLength":2048}}}},"integrated":{"type":"boolean","enum":[false]},"questions":{"type":"array","items":{"type":"string","minLength":1,"maxLength":4096}},"risks":{"type":"array","items":{"type":"string","minLength":1,"maxLength":4096}},"resolvedQuestions":{"type":"array","items":{"type":"string","minLength":1,"maxLength":4096}},"resolvedRisks":{"type":"array","items":{"type":"string","minLength":1,"maxLength":4096}},"escalateTo":{"type":"string","maxLength":128}}}`,
+			responseDTO:    `{"status":"complete","summary":"Manager-owned work and required delegations are complete.","delegations":[],"reworkRequests":[],"integrated":false,"questions":[],"risks":[],"resolvedQuestions":[],"resolvedRisks":[],"escalateTo":""}`,
+			outcome:        agentexec.OutcomeProposed},
+		{name: "review", role: agentexec.RoleExecutor, kind: "projectrun-review/v1",
+			responseSchema: `{"type":"object","additionalProperties":false,"required":["status","summary","findings"],"properties":{"status":{"type":"string","enum":["pass","fail"]},"summary":{"type":"string","minLength":1,"maxLength":4096},"findings":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["path","expectation","grounding"],"properties":{"path":{"type":"string","minLength":1,"maxLength":1024},"expectation":{"type":"string","minLength":1,"maxLength":2048},"grounding":{"type":"string","minLength":1,"maxLength":1024}}}}}}`,
+			responseDTO:    `{"status":"pass","summary":"The candidate satisfies this Manager's stated contract.","findings":[]}`,
+			outcome:        agentexec.OutcomeProposed},
+		{name: "helper", role: agentexec.RoleExecutor, kind: "projectrun-helper/v1",
+			files: []agentexec.CandidateFile{{Path: "README.md", Mode: "0644", Content: "# Helper change\n"}}, outcome: agentexec.OutcomeProposed},
+		{name: "verifier", role: agentexec.RoleVerifier,
+			observations: []agentexec.Observation{{Subject: "candidate contract", Outcome: agentexec.OutcomePassed, Detail: "The required candidate behavior is present."}},
+			outcome:      agentexec.OutcomePassed},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			contextValue := map[string]any{}
+			if tc.kind != "" {
+				contextValue["kind"] = tc.kind
+			}
+			if tc.kind == "projectrun-helper/v1" {
+				contextValue["guidance"] = "Independent helper for the task within the explicit allowed paths."
+				contextValue["helperDepth"] = 1
+				contextValue["helperAccounting"] = "partial"
+				contextValue["managerId"] = "manager-one"
+				contextValue["task"] = "Make the requested bounded README change."
+				contextValue["allowedWritePaths"] = []string{"README.md"}
+				contextValue["excludedWritePaths"] = []string{}
+				contextValue["activeResponsibilities"] = []any{}
+				contextValue["parentContext"] = json.RawMessage(`{"kind":"projectrun-task/v1"}`)
+			}
+			if tc.phase != "" {
+				contextValue["phase"] = tc.phase
+			}
+			if tc.responseSchema != "" {
+				contextValue["responseSchema"] = json.RawMessage(tc.responseSchema)
+			}
+			contextWire, err := json.Marshal(contextValue)
+			if err != nil {
+				t.Fatal(err)
+			}
+			request := agentexec.Request{Role: tc.role, SourceRevision: strings.Repeat("a", 40),
+				ModelDigest: "sha256:" + strings.Repeat("b", 64), ModulePin: "test@1", ProjectionID: "test",
+				ScopeIDs: []string{"scope-manager", "scope-verified"}, PolicyIDs: []string{"policy-review"},
+				Context: contextWire, Artifacts: []agentexec.Artifact{}}
+			inv, _, err := agentexec.PrepareInvocation(request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			schema := nativeTurnOutputSchema(inv)
+			properties := schema["properties"].(map[string]any)
+			if tc.responseSchema != "" {
+				var gotSchema, wantSchema any
+				if err := json.Unmarshal(properties["reportJson"].(json.RawMessage), &gotSchema); err != nil {
+					t.Fatal(err)
+				}
+				if err := json.Unmarshal([]byte(tc.responseSchema), &wantSchema); err != nil {
+					t.Fatal(err)
+				}
+				if !reflect.DeepEqual(gotSchema, wantSchema) {
+					t.Fatalf("native report schema changed the request's closed response contract for %s", tc.name)
+				}
+			}
+			for key, want := range map[string]string{"apiVersion": inv.APIVersion, "runId": inv.RunID, "nonce": inv.Nonce, "inputDigest": inv.InputDigest, "role": inv.Request.Role} {
+				fixed := properties[key].(map[string]any)["enum"].([]string)
+				if len(fixed) != 1 || fixed[0] != want {
+					t.Fatalf("schema %s is not bound to this invocation: %#v", key, fixed)
+				}
+			}
+			uncertainty := properties["uncertainty"].(map[string]any)
+			if uncertainty["maxItems"] != nativeResponseArrayMaxItems {
+				t.Fatalf("uncertainty array exceeds/ignores response bound: %#v", uncertainty)
+			}
+			uncertaintyItem := uncertainty["items"].(map[string]any)
+			if uncertaintyItem["minLength"] != 1 || uncertaintyItem["maxLength"] != nativeResponseTextMaxLength {
+				t.Fatalf("uncertainty text does not match strict response bounds: %#v", uncertaintyItem)
+			}
+			observations := properties["verifierObservations"].(map[string]any)
+			candidates := properties["candidateFiles"].(map[string]any)
+			candidateProperties := candidates["items"].(map[string]any)["properties"].(map[string]any)
+			modes := candidateProperties["mode"].(map[string]any)["enum"].([]string)
+			if strings.Join(modes, ",") != "0644,0755" {
+				t.Fatalf("candidate modes do not match the native Git workspace contract: %#v", modes)
+			}
+			if tc.role == agentexec.RoleVerifier {
+				if observations["maxItems"] != nativeResponseArrayMaxItems || candidates["maxItems"] != 0 {
+					t.Fatalf("verifier schema permits non-verifier outputs or misses bounds: %#v", properties)
+				}
+			} else if observations["maxItems"] != 0 {
+				t.Fatalf("executor schema permits verifier observations: %#v", observations)
+			}
+
+			response := agentexec.Response{APIVersion: inv.APIVersion, RunID: inv.RunID, Nonce: inv.Nonce,
+				Role: inv.Request.Role, InputDigest: inv.InputDigest, Outcome: tc.outcome,
+				CandidateFiles: tc.files, EvidenceRefs: []string{"scope-manager"},
+				VerifierObservations: tc.observations, Uncertainty: []string{"The response is bounded to this invocation."}}
+			if response.CandidateFiles == nil {
+				response.CandidateFiles = []agentexec.CandidateFile{}
+			}
+			if response.VerifierObservations == nil {
+				response.VerifierObservations = []agentexec.Observation{}
+			}
+			if tc.responseDTO != "" {
+				response.ReportJSON = json.RawMessage(tc.responseDTO)
+			}
+			wire, err := json.Marshal(response)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := agentexec.DecodeResponse(wire, inv, ""); err != nil {
+				t.Fatalf("representative response for %s was rejected: %v", tc.name, err)
+			}
+			response.EvidenceRefs = []string{}
+			wire, _ = json.Marshal(response)
+			if _, err := agentexec.DecodeResponse(wire, inv, ""); err != nil {
+				t.Fatalf("empty evidenceRefs must remain valid for %s: %v", tc.name, err)
+			}
+			response.EvidenceRefs = []string{"request.context.globalGoal"}
+			wire, _ = json.Marshal(response)
+			if _, err := agentexec.DecodeResponse(wire, inv, ""); err == nil {
+				t.Fatal("unknown context-derived evidence reference was accepted")
+			}
+		})
+	}
+}
+
+func assertEvidenceRefsOnlyEmpty(t *testing.T, inv agentexec.Invocation) {
+	t.Helper()
+	properties := nativeTurnOutputSchema(inv)["properties"].(map[string]any)
+	evidence := properties["evidenceRefs"].(map[string]any)
+	if evidence["maxItems"] != 0 {
+		t.Fatalf("unrepresentable evidence enum did not restrict output to []: %#v", evidence)
+	}
+	items := evidence["items"].(map[string]any)
+	if _, hasEnum := items["enum"]; hasEnum {
+		t.Fatalf("empty-only fallback retained a partial enum: %#v", items)
+	}
+}
+
+func mustJSON(t *testing.T, value any) []byte {
+	t.Helper()
+	data, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
 }
 
 func TestNativeReviewPromptKeepsGlobalGoalAndDelegationsAssessmentOnly(t *testing.T) {
