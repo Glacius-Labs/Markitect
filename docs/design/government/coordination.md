@@ -2347,3 +2347,7 @@ Root cleanlocal/publicbothrefs8c22ee22/Main5be48ce/newCI38051856305head8c22Linux
 ### Canonical CI pipeline digest pin verified; current-head gates active
 
 Root c75221singleconfigdigestline inspected/exactHEADCIblobSHA82020a000ddce2e9c164fcfb1cd94c31b2187c22f4fabba1a5066e65bcdbcf62 equalsnewpin, workflow/6pointersunchanged. Ownerfixedworkingmodules/fixedroot-artifacts-context-impact/independentpinreviewPASS. PriorCI380518head8c22LinuxfailedCheckconfiguredmodules/Windows+Publishcancelled Rootghverified/notPASS. Cleanpublicbothrefs46f60eb5/Main5be48ce/latestCI38052420644head46f60LinuxWindowsin_progress Rootbound; noMerge/A01restart/Main/study/release/newRootorder.
+
+### Packaged Unix smoke still calls removed legacy init
+
+RootCI380524head46f60LinuxFAIL atTeststandalonebootstrapandpackagedcommandsUnix/Windowsin_progress confirmed. Owner precedingtests/modules/Dogfood/schema-examples-onboarding/packagebuildPASS/obsoleteinitversuscurrentprojectinit diagnosis; originallogsretained. Singleboundedagent bothplatformSmokes/canonicalCIpin/actualWindowspackagecheckactive, noLegacyrestoration/gateremoval/A01restart/merge. SourcefixnotyetRootreviewed/frozen/no duplicateorder.
