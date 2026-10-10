@@ -113,7 +113,7 @@ Tests belong to the realization. Agents write them, so they can be as wrong as t
 
 ## The delegated method
 
-The method has three responsibilities. They are responsibilities, not three Core primitives or three people.
+The method has three responsibilities. They are responsibilities, not three Core primitives or three people. The delegated method has not yet been tested over a series of changes ([DEC-008](concepts/register.md#dec-008-the-delegated-method-has-not-yet-been-tested)); see [current basis and unproven benefit](#current-basis-and-unproven-benefit).
 
 | Responsibility | What it does |
 |---|---|
@@ -132,7 +132,7 @@ In current source a Manager, or a helper it starts, executes, and independent re
 3. **Plan the affected work.** Derive it from the model change, declared relationships, observed drift and the obligations of each representation. Unknown impact stays in the plan as conservative scope.
 4. **Execute bounded candidates.** Each Executor receives the obligations and freedom for its scope.
 5. **Verify and compose.** Verify each candidate against its own obligations. Compose child results into the parent candidate and verify the parent's own obligations; passing children do not prove that the integration is correct. A failed candidate goes back for bounded repair. Unresolved intent, ownership or authority goes back to its owner.
-6. **Apply and account.** Apply only a verified candidate whose inputs and scope are still current, through the guarded write boundary. A final check compares what actually changed with the intent, ownership, plan and evidence. Stale plans, unexplained changes and missing required evidence leave the result failing or incomplete; they are never reported as complete.
+6. **Apply and account.** Apply only a verified candidate whose inputs and scope are still current, through the guarded write boundary. A final check compares what actually changed with the intent, ownership, plan and evidence. Stale plans, unexplained changes and missing required evidence leave the result failing or incomplete; they are never reported as complete. This is the target completion rule; current commands enforce only the boundaries that [Project workflow](project-workflow.md) describes.
 7. **Repair drift, evolve intent.** When files depart from unchanged intent, repair them against that intent. A change of intent starts a new cycle.
 
 **The same method at every scope.** The cycle applies to a single file, a vertical slice, a subsystem and the whole project. A parent coordinates its children and verifies its own contracts and their integration; it does not just collect green child reports. Decompose by ownership, dependencies and concrete obligations, and do not force a tiny edit through a deep hierarchy. A declared relationship, a rule that requires a broader surface and an unexplained changed file are different signals. Keep each one instead of inferring dependencies from links.
