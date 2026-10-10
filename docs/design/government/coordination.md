@@ -2135,3 +2135,7 @@ Scientist PRIVATE5ef17d73 assessment669ab562 Root clean/remote/rawGit verified: 
 ### New direct human decision: retain Windows
 
 Scientist relays direct human decision: "Wir versuchen es auf Windows hinzukriegen. Sag den anderen bescheid." Windows remains current execution platform; earlier WSL recommendation deferred, no migration/container setup. Scientist directly informs Integrator, no duplicate Root dispatch. Existing bounded renewable product work continues on concrete CRLF/Git-filter, exact original recovery, canonical actual CWD/environment and append-compatible audit readers. Historical results and no-replay identity preserved; this decision adds no study/model quota or automatic replay. KG separate, no unrelated platform task.
+
+### Exact recovery correction committed, final freeze pending
+
+621da012 local16-file commit Root source inspected: exactknownRunID/Input plus legacypreparedreceipt, durable currentOwnerRunID privatejournalbeforedispatch for no-receiptpath, missing/duplicate ownerhandle failclosed; ledger rawdigest distinctnormalizedreviewer/Verifybinding. Specificnegative/legacy/current-ownerregression source read; owner frozenfocused159.785s PASS/independentclear. Publicremote remains5eed atinspection, docs/push/buildfreeze pending; do not claim recoverycommit backed up yet. Next sameActual15Plan3c41/originalhandles normalResume after cleanWindowsfreeze, no newwholePlan/replay/Apply/A01/Main/releaseacceptance.

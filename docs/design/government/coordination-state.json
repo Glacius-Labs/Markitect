@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T05:37:25.654425+00:00",
+  "updatedUtc": "2026-10-10T05:58:50.291799+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18253,6 +18253,14 @@
       "rootVerified": "Exact public remote ref and five-file commit inspected. Captured input clean-filter hash and fixed attribute equivalence retain Git revision identity; Explore/Readiness basis uses captured raw worktree bytes, same-plan working snapshot checked, exact store CAS unchanged. Positive CRLF and substantive/binary/stale write regression source inspected, no redundant test run.",
       "ownerChecks": "Explore/Readiness44.424s and SelectedBasis14.047s PASS; independent review clear, owner reported.",
       "limits": "Remaining recovery currentOwnerRunID predispatch journal repair tests/review pending. Source/docs WIP, no clean combined binary freeze or new native calls. Original Actual15 e10/1329 source pin and 09:11Z batch deadline unchanged. Helper cleanup negative test only, future WSL recommendation not migration."
+    },
+    "exactRecoveryCorrectionCommitted": {
+      "sourceSha": "621da0126cdbf8cf95eccaaf79de8301af38f8f3",
+      "status": "LOCAL_COMMIT_SOURCE_INSPECTED_DOCS_PUSH_BUILD_FREEZE_PENDING",
+      "rootVerified": "16-file commit inspected; original run/input matching and prepared current owner stamped before dispatch in private workspace journal; raw durable ledger versus normalized protocol response binding separated. Regression source names cover repeated historical task IDs, legacy blank receipt, current-owner/no-receipt crash, missing/duplicate owner handles, no-dispatch/no-replay and Reviewer/Verifier digest boundaries. No Root tests repeated.",
+      "ownerEvidence": "Frozen focused recovery/Manager Resume/Reviewer/Verifier/empty-artifact suite159.785s PASS; independent review clear; diff checks PASS.",
+      "remoteAtInspection": "Public remote still5eed2e262c4c3ffd6c7339740e5efbca53db31ae; owner docs checkpoint/push finalizing, not yet claimed remote backed up.",
+      "next": "Owner finishes docs and exact clean Windows source/binary freeze then normal Resume same Actual15 Plan3c41 and original handles; original e10/1329 invocation source remains historical. No new whole plan/replay/Apply/fullA01/Main/release acceptance."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
