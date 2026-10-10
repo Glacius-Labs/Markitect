@@ -1,9 +1,12 @@
 package source
 
 import (
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -28,6 +31,95 @@ func TestObserveSelectedWorkingReadsExactPathsAndReportsMissing(t *testing.T) {
 	}
 	if got.Snapshot.Modes["selected/data.txt"] != "100644" {
 		t.Fatalf("mode = %q, want regular-file mode", got.Snapshot.Modes["selected/data.txt"])
+	}
+}
+
+func TestObserveSelectedWorkingUsesIndexModeWhenGitDisablesFileMode(t *testing.T) {
+	root, _ := selectiveGitFixture(t)
+	writeTestFile(t, root, "selected/tool.sh", "#!/bin/sh\n")
+	gitTest(t, root, "add", "selected/tool.sh")
+	gitTest(t, root, "update-index", "--chmod=+x", "selected/tool.sh")
+	gitTest(t, root, "config", "core.filemode", "false")
+	indexModes, err := selectedIndexModes(root, []string{"selected/tool.sh"})
+	if err != nil || indexModes["selected/tool.sh"] != "100755" {
+		t.Fatalf("selected Git index modes = %#v, err=%v", indexModes, err)
+	}
+	got, err := ObserveSelectedWorking(root, []string{"selected/tool.sh"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Snapshot.Modes["selected/tool.sh"] != "100755" {
+		t.Fatalf("tracked worktree mode = %q, want Git index mode 100755", got.Snapshot.Modes["selected/tool.sh"])
+	}
+
+	writeTestFile(t, root, "selected/untracked.sh", "#!/bin/sh\n")
+	if err := os.Chmod(filepath.Join(root, "selected", "untracked.sh"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	untracked, err := ObserveSelectedWorking(root, []string{"selected/untracked.sh"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "100644"
+	if runtime.GOOS != "windows" {
+		want = "100755"
+	}
+	if untracked.Snapshot.Modes["selected/untracked.sh"] != want {
+		t.Fatalf("untracked mode = %q, want filesystem mode %q", untracked.Snapshot.Modes["selected/untracked.sh"], want)
+	}
+}
+
+func TestObserveSelectedWorkingDefaultsToFilesystemModeWhenFileModeIsUnset(t *testing.T) {
+	root, _ := selectiveGitFixture(t)
+	writeTestFile(t, root, "selected/tool.sh", "#!/bin/sh\n")
+	gitTest(t, root, "add", "selected/tool.sh")
+	gitTest(t, root, "update-index", "--chmod=+x", "selected/tool.sh")
+	// Ensure the key exists before removing it, then verify no system/global
+	// setting shadows Git's documented default in this test environment.
+	gitTest(t, root, "config", "--local", "core.filemode", "true")
+	gitTest(t, root, "config", "--local", "--unset-all", "core.filemode")
+	cmd := exec.Command("git", "--no-replace-objects", "-C", root, "config", "--show-origin", "--get", "core.filemode")
+	cmd.Env = CleanGitEnv()
+	if output, err := cmd.CombinedOutput(); err == nil {
+		t.Skipf("core.filemode is set outside the local test repository: %s", strings.TrimSpace(string(output)))
+	} else {
+		var exitErr *exec.ExitError
+		if !errors.As(err, &exitErr) || exitErr.ExitCode() != 1 {
+			t.Fatalf("inspect inherited core.filemode: %v\n%s", err, output)
+		}
+	}
+
+	enabled, err := GitFileModeEnabled(root)
+	if err != nil || !enabled {
+		t.Fatalf("unset core.filemode = %v, err=%v; want Git default true", enabled, err)
+	}
+	got, err := ObserveSelectedWorking(root, []string{"selected/tool.sh"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Snapshot.Modes["selected/tool.sh"] != "100644" {
+		t.Fatalf("tracked worktree mode = %q, want observed filesystem mode 100644 when core.filemode is unset", got.Snapshot.Modes["selected/tool.sh"])
+	}
+}
+
+func TestObserveSelectedWorkingPreservesFilesystemModeWhenGitEnablesFileMode(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows filesystems do not expose POSIX executable mode bits")
+	}
+	root, _ := selectiveGitFixture(t)
+	writeTestFile(t, root, "tool.sh", "#!/bin/sh\n")
+	gitTest(t, root, "add", "tool.sh")
+	gitTest(t, root, "update-index", "--chmod=+x", "tool.sh")
+	gitTest(t, root, "config", "core.filemode", "true")
+	if err := os.Chmod(filepath.Join(root, "tool.sh"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, err := ObserveSelectedWorking(root, []string{"tool.sh"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Snapshot.Modes["tool.sh"] != "100644" {
+		t.Fatalf("tracked worktree mode = %q, want filesystem mode 100644", got.Snapshot.Modes["tool.sh"])
 	}
 }
 

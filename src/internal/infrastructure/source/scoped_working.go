@@ -1,6 +1,7 @@
 package source
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
@@ -8,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"sort"
@@ -90,8 +92,119 @@ func ObserveSelectedWorking(root string, paths []string) (*SelectedWorkingSnapsh
 		result.Snapshot.Files[repoPath] = data
 		result.Snapshot.Modes[repoPath] = mode
 	}
+	fileModeEnabled, err := GitFileModeEnabled(identity.Root)
+	if err != nil {
+		return nil, fmt.Errorf("inspect Git worktree mode policy: %w", err)
+	}
+	if !fileModeEnabled && len(result.Snapshot.Files) > 0 {
+		present := make([]string, 0, len(result.Snapshot.Files))
+		for repoPath := range result.Snapshot.Files {
+			present = append(present, repoPath)
+		}
+		indexModes, err := selectedIndexModes(identity.Root, present)
+		if err != nil {
+			return nil, fmt.Errorf("inspect selected Git index modes: %w", err)
+		}
+		for repoPath, mode := range indexModes {
+			result.Snapshot.Modes[repoPath] = mode
+		}
+	}
 	if err := confirmGitIdentity(identity, initialStats, selectiveGitOutput); err != nil {
 		return nil, err
+	}
+	return result, nil
+}
+
+// GitFileModeEnabled returns Git's effective core.filemode setting. When the
+// setting is absent, Git defaults it on for all platforms.
+func GitFileModeEnabled(root string) (bool, error) {
+	output, err := GitOutput(root, "config", "--bool", "--get", "core.filemode")
+	if err == nil {
+		switch strings.TrimSpace(string(output)) {
+		case "true":
+			return true, nil
+		case "false":
+			return false, nil
+		default:
+			return false, fmt.Errorf("Git returned an invalid core.filemode value %q", strings.TrimSpace(string(output)))
+		}
+	}
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+		return true, nil
+	}
+	return false, err
+}
+
+// selectedIndexModes returns stage-zero Git modes for the exact requested
+// paths. Paths are passed as literal pathspecs in bounded commands so this
+// metadata lookup does not widen selected working-file reads.
+func selectedIndexModes(root string, paths []string) (map[string]string, error) {
+	clean := append([]string(nil), paths...)
+	sort.Strings(clean)
+	if len(clean) == 0 {
+		return map[string]string{}, nil
+	}
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return nil, fmt.Errorf("resolve Git root for index modes: %w", err)
+	}
+	baseArgs := []string{"git", "--no-replace-objects", "-c", "safe.directory=" + filepath.ToSlash(abs), "-C", abs, "--literal-pathspecs", "ls-files", "--stage", "-z", "--"}
+	baseUnits := windowsCommandLineUnits(baseArgs)
+	if baseUnits > maxSelectedTreeCommandUnits {
+		return nil, errors.New("Git command base exceeds selected index-mode command-line limit")
+	}
+	result := make(map[string]string, len(clean))
+	requested := make(map[string]bool, len(clean))
+	for _, path := range clean {
+		requested[path] = true
+	}
+	for start := 0; start < len(clean); {
+		args := []string{"--literal-pathspecs", "ls-files", "--stage", "-z", "--"}
+		units := baseUnits
+		end := start
+		for end < len(clean) {
+			pathspec := clean[end]
+			pathUnits := windowsCommandLineArgUnits(pathspec) + 1
+			if baseUnits+pathUnits > maxSelectedTreeCommandUnits {
+				return nil, fmt.Errorf("selected path %q exceeds Git command-line limit", clean[end])
+			}
+			if end > start && (end-start >= maxSelectedTreePathsPerCommand || units+pathUnits > maxSelectedTreeCommandUnits) {
+				break
+			}
+			args = append(args, pathspec)
+			units += pathUnits
+			end++
+		}
+		output, err := GitOutput(root, args...)
+		if err != nil {
+			return nil, err
+		}
+		for _, record := range bytes.Split(output, []byte{0}) {
+			if len(record) == 0 {
+				continue
+			}
+			header, name, ok := bytes.Cut(record, []byte{'\t'})
+			if !ok {
+				return nil, errors.New("malformed Git index mode record")
+			}
+			fields := strings.Fields(string(header))
+			if len(fields) != 3 || fields[2] != "0" {
+				return nil, fmt.Errorf("selected path %q has an unresolved or malformed Git index entry", string(name))
+			}
+			path := string(name)
+			if !requested[path] {
+				return nil, fmt.Errorf("Git returned unselected index path %q", path)
+			}
+			if fields[0] != snapshot.RegularMode && fields[0] != snapshot.ExecutableMode {
+				return nil, fmt.Errorf("selected path %q has unsupported Git index mode %q", path, fields[0])
+			}
+			if _, duplicate := result[path]; duplicate {
+				return nil, fmt.Errorf("selected path %q has multiple Git index entries", path)
+			}
+			result[path] = fields[0]
+		}
+		start = end
 	}
 	return result, nil
 }

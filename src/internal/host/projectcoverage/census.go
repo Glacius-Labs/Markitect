@@ -95,10 +95,15 @@ func ObserveWorking(root string, options Options) (*Universe, error) {
 	if err := addIndexPaths(identity.Root, paths, gitlinks); err != nil {
 		return nil, err
 	}
+	fileModeEnabled, err := source.GitFileModeEnabled(identity.Root)
+	if err != nil {
+		return nil, fmt.Errorf("inspect Git worktree mode policy: %w", err)
+	}
 	boundaries, worktreeModes, err := walkWorking(identity.Root, gitlinks)
 	if err != nil {
 		return nil, err
 	}
+	normalizeWorktreeModes(paths, worktreeModes, fileModeEnabled)
 	for name, mode := range worktreeModes {
 		state := pathState(paths, name)
 		state.Worktree = FileState{Present: true, Mode: mode}
@@ -444,10 +449,15 @@ func recheckWorkingUniverse(root, revision, unbornRef string, original map[strin
 	if err := addIndexPaths(root, paths, links); err != nil {
 		return err
 	}
+	fileModeEnabled, err := source.GitFileModeEnabled(root)
+	if err != nil {
+		return fmt.Errorf("recheck Git worktree mode policy: %w", err)
+	}
 	boundaries, modes, err := walkWorking(root, links)
 	if err != nil {
 		return err
 	}
+	normalizeWorktreeModes(paths, modes, fileModeEnabled)
 	for name, mode := range modes {
 		state := pathState(paths, name)
 		state.Worktree = FileState{Present: true, Mode: mode}
@@ -461,6 +471,17 @@ func recheckWorkingUniverse(root, revision, unbornRef string, original map[strin
 		return fmt.Errorf("repository membership, mode, HEAD, or index changed during census")
 	}
 	return nil
+}
+
+func normalizeWorktreeModes(paths map[string]*PathState, worktreeModes map[string]string, fileModeEnabled bool) {
+	if fileModeEnabled {
+		return
+	}
+	for name := range worktreeModes {
+		if state := paths[name]; state != nil && state.Index.Present {
+			worktreeModes[name] = state.Index.Mode
+		}
+	}
 }
 
 func sameCensusMetadata(left, right map[string]*PathState) bool {

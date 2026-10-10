@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -98,6 +99,57 @@ func TestObserveWorkingFindsUntrackedOutsideSelectedRoot(t *testing.T) {
 	}
 	if report.Accounted {
 		t.Fatalf("untracked unknown path was accepted: %+v", report)
+	}
+}
+
+func TestObserveWorkingUsesGitIndexModeWhenFileModeIsDisabled(t *testing.T) {
+	root := initCoverageRepo(t)
+	writeCoverageFile(t, root, "tools/run.sh", "#!/bin/sh\n")
+	gitCoverage(t, root, "add", "tools/run.sh")
+	gitCoverage(t, root, "update-index", "--chmod=+x", "tools/run.sh")
+	gitCoverage(t, root, "config", "core.filemode", "false")
+	gitCoverage(t, root, "commit", "-m", "track executable tool")
+	if err := os.Chmod(filepath.Join(root, "tools", "run.sh"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if status := strings.TrimSpace(runGitCoverage(t, root, "status", "--porcelain")); status != "" {
+		t.Fatalf("Git considered the core.filemode=false checkout dirty: %s", status)
+	}
+
+	universe, err := ObserveWorking(root, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := findState(universe, "tools/run.sh")
+	if state == nil || state.Head.Mode != "100755" || state.Index.Mode != "100755" || state.Worktree.Mode != "100755" {
+		t.Fatalf("tracked executable modes = %#v; want HEAD/index/worktree all 100755 under Git's disabled mode tracking", state)
+	}
+	if universe.Snapshot == nil || universe.Snapshot.Modes["tools/run.sh"] != "100755" {
+		t.Fatalf("captured selected mode = %#v; want Git index mode 100755", universe.Snapshot)
+	}
+}
+
+func TestObserveWorkingPreservesFilesystemModeWhenGitEnablesFileMode(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows filesystems do not expose POSIX executable mode bits")
+	}
+	root := initCoverageRepo(t)
+	writeCoverageFile(t, root, "tools/run.sh", "#!/bin/sh\n")
+	gitCoverage(t, root, "add", "tools/run.sh")
+	gitCoverage(t, root, "update-index", "--chmod=+x", "tools/run.sh")
+	gitCoverage(t, root, "config", "core.filemode", "true")
+	gitCoverage(t, root, "commit", "-m", "track executable tool")
+	if err := os.Chmod(filepath.Join(root, "tools", "run.sh"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	universe, err := ObserveWorking(root, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := findState(universe, "tools/run.sh")
+	if state == nil || state.Head.Mode != "100755" || state.Index.Mode != "100755" || state.Worktree.Mode != "100644" {
+		t.Fatalf("tracked mode change = %#v; want HEAD/index 100755 and worktree 100644", state)
 	}
 }
 
