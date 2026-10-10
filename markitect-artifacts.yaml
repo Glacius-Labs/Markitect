@@ -2043,6 +2043,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectcli/options_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectcli/setup_options_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectcli/project_e2e_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/records.go
@@ -2143,6 +2145,12 @@ spec:
       owner: project-world-validation
     - path: src/internal/host/projectrun/process_e2e_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectrun/byo_executor_e2e_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/check_directory_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/cost_mode_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectadoption/runner.go
       owner: project-world-implementation
     - path: src/internal/host/projectadoption/runner_test.go
@@ -2152,6 +2160,8 @@ spec:
     - path: src/internal/host/projectsetup/setup.go
       owner: project-world-implementation
     - path: src/internal/host/projectsetup/setup_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectsetup/roles_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectcoverage/types.go
       owner: project-world-implementation
@@ -2317,6 +2327,8 @@ spec:
     - path: docs/work-items/product-readiness/P09-readiness.md
       owner: project-world-implementation
     - path: docs/work-items/product-readiness/P10-main.md
+      owner: project-world-implementation
+    - path: docs/work-items/product-readiness/P12-exchangeable-executor.md
       owner: project-world-implementation
     - path: docs/work-items/product-readiness/fresh-chat-handoff.md
       owner: project-world-implementation

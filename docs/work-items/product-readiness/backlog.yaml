@@ -1828,3 +1828,17 @@ items:
     current_capability_boundary: markitect_start_helper_is_file_authoring_only; pure_inspection_uses_parent_tools_or_existing_independent_review_roles
     follow_up: define_safe_genuine_readonly_analysis_helper_returns_and_context_review_benefits
     authorization_boundary: deferred_outside_current_a01_implementation_allocation; future_bounded_design_under_existing_user_mandate; no_general_readonly_helper_capability_implemented_by_this_item
+  - id: P12
+    title: Exchangeable executor and per-role configuration
+    status: in_progress
+    depends_on: [P04, P06]
+    owner: Executor Boundary
+    branch: claude/byo-executor-role-config
+    base: f12ffb00bd6fd7bc45d0014487434a5a58aafadb
+    document: P12-exchangeable-executor.md
+    evidence: []
+    main_gate: false
+    concept_register: [ENH-004, ENH-005]
+    current_increment: process_executor_cost_modes_and_role_profiles
+    later_increments: [external_packet_submit_and_git_intake, claude_code_inner_executor]
+    release_publication: not_authorized

@@ -32,7 +32,7 @@ $env:PATH = "$toolBin;$env:PATH"
 markitect project --help
 ```
 
-Keep the source checkout for development. The current runtime is configured through `project setup`; the outer coding client connects to the repository-local Markitect MCP server. Manager and reviewer execution uses the supported Codex App Server runtime. No Python install or global client configuration is required. See [Provider adapters](docs/provider-adapters.md) for client connection and execution boundaries.
+Keep the source checkout for development. The current runtime is configured through `project setup`; the outer coding client connects to the repository-local Markitect MCP server. Manager and reviewer execution uses the supported Codex App Server runtime by default; process executors can be selected per role. No Python install or global client configuration is required. See [Provider adapters](docs/provider-adapters.md) for client connection and execution boundaries.
 
 ## Start a model-first project
 

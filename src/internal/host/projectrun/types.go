@@ -90,7 +90,11 @@ type Agent struct {
 	MaxStderrBytes   int                     `json:"maxStderrBytes" yaml:"maxStderrBytes"`
 	RuntimeFiles     []agentexec.RuntimeFile `json:"runtimeFiles" yaml:"runtimeFiles"`
 	Environment      []string                `json:"environment,omitempty" yaml:"environment,omitempty"`
-	Pricing          Pricing                 `json:"pricing" yaml:"pricing"`
+	// CostMode is empty or "metered" for a priced agent and "unmetered" for an
+	// executor whose invocations Markitect cannot price, such as a script or a
+	// person behind an exchange adapter.
+	CostMode string  `json:"costMode,omitempty" yaml:"costMode,omitempty"`
+	Pricing  Pricing `json:"pricing" yaml:"pricing"`
 }
 
 const (
