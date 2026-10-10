@@ -135,6 +135,34 @@ type ChangeImpact struct {
 	Findings           []Finding `json:"findings"`
 }
 
+// ImpactExplanation explains each element of one ChangeImpact (DEC-023).
+type ImpactExplanation struct {
+	APIVersion   string             `json:"apiVersion"`
+	ImpactDigest string             `json:"impactDigest"`
+	Digest       string             `json:"digest"`
+	Elements     []ExplainedElement `json:"elements"`
+}
+
+// ExplainedElement says why one impact element is included and whether it
+// must change ("change") or is only context to read ("context"). The class is
+// a priority signal; every element stays in the impact.
+type ExplainedElement struct {
+	Kind    string        `json:"kind"`
+	ID      string        `json:"id"`
+	Class   string        `json:"class"`
+	Reason  string        `json:"reason"`
+	Witness []WitnessStep `json:"witness"`
+}
+
+// WitnessStep is one model relation on the path from a change to an element.
+type WitnessStep struct {
+	FromKind string `json:"fromKind"`
+	From     string `json:"from"`
+	Relation string `json:"relation"`
+	ToKind   string `json:"toKind"`
+	To       string `json:"to"`
+}
+
 type ManagerContext struct {
 	Manager    Manager     `json:"manager"`
 	Statements []Statement `json:"statements"`
