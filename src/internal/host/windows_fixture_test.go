@@ -34,14 +34,14 @@ func windowsShortPath(longPath string) (string, error) {
 }
 
 func windowsLongPathAPISpelling(path string) string {
-	if strings.HasPrefix(path, `\?\`) || strings.HasPrefix(path, `\.\`) {
+	if strings.HasPrefix(path, `\\?\`) || strings.HasPrefix(path, `\\.\`) {
 		return path
 	}
-	if strings.HasPrefix(path, `\`) {
-		return `\?\UNC\` + strings.TrimPrefix(path, `\`)
+	if strings.HasPrefix(path, `\\`) {
+		return `\\?\UNC\` + strings.TrimPrefix(path, `\\`)
 	}
 	if filepath.IsAbs(path) && filepath.VolumeName(path) != "" {
-		return `\?\` + path
+		return `\\?\` + path
 	}
 	return path
 }
