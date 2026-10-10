@@ -8,12 +8,10 @@ import (
 )
 
 // legacySteps checks the published Project/Domain line through the
-// markitect-legacy tool built from the packaged source. ARCH-09 removes that
-// line; delete this file and its call in source with it.
-func (s *smoke) legacySteps() []struct {
-	name  string
-	check func() error
-} {
+// markitect-legacy tool built from the packaged source, including a check of
+// minimalRepo. ARCH-09 removes that line; delete this file and its call in
+// distributionChecks with it.
+func (s *smoke) legacySteps(minimalRepo string) []check {
 	legacy := func(args ...string) (string, error) { return s.run(s.repo, nil, s.tool("markitect-legacy"), args...) }
 	example := func(name string) string { return filepath.Join(s.repo, "examples", name) }
 	passed := regexp.MustCompile(`(?m)^status: passed$`)
@@ -27,10 +25,7 @@ func (s *smoke) legacySteps() []struct {
 		}
 		return nil
 	}
-	return []struct {
-		name  string
-		check func() error
-	}{
+	return []check{
 		{"legacy: authoring Skill is embedded", func() error {
 			out, err := legacy("authoring")
 			if err != nil {
@@ -38,16 +33,21 @@ func (s *smoke) legacySteps() []struct {
 			}
 			return requireContains(out, "core/Skill/authoring")
 		}},
-		{"legacy: minimal example passes check", func() error { return checkPasses(example("minimal")) }},
+		{"legacy: minimal example passes check", func() error { return checkPasses(minimalRepo) }},
 		{"legacy: canonical examples check, compile and format", func() error {
 			for _, c := range []struct{ example, namespace, skill string }{
 				{"canonical-engineering", "engineering", "architecture-review"},
 				{"software-architecture", "engineering", "implement-order"},
 				{"delivery-target-equality", "engineering", "deployment-review"},
+				{"engineering-constitution", "engineering", "add-order"},
+				{"engineering-discovery", "", ""},
 			} {
 				repo := example(c.example)
 				if err := checkPasses(repo); err != nil {
 					return err
+				}
+				if c.skill == "" {
+					continue
 				}
 				for _, args := range [][]string{
 					{"context", "--repo", repo, "--namespace", c.namespace, "--kind", "Skill", "--name", c.skill},
