@@ -173,6 +173,19 @@ class ManifestTests(unittest.TestCase):
             given = manifest.validate(variant(method="markitect", markitect=MARKITECT), playground=playground)
             self.assertEqual(given["markitect"]["sourceRepo"], MARKITECT["sourceRepo"])  # the host resolves it
 
+    def test_load_resolves_a_relative_source_repo_from_the_manifest_folder(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "studies" / "m.json"
+            path.parent.mkdir()
+            for given, expected in (("../Markitect", path.parent / ".." / "Markitect"),
+                                    ("~/Markitect", Path.home() / "Markitect"),
+                                    (str(Path(folder).resolve() / "abs"), Path(folder).resolve() / "abs")):
+                with self.subTest(given=given):
+                    path.write_text(json.dumps(variant(method="markitect",
+                                                       markitect={"sourceRepo": given, "commit": "669cecd2"})),
+                                    encoding="utf-8")
+                    self.assertEqual(manifest.load(path)["markitect"]["sourceRepo"], str(expected))
+
     def test_claude_with_markitect_names_the_inner_roles_model(self):
         claude = {"agent__kind": "claude", "agent__claudeVersion": "2.1.296", "agent__model": "claude-opus-5-5",
                   "method": "markitect"}

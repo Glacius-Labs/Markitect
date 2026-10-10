@@ -328,7 +328,7 @@ Unknown fields are rejected at every level.
 | `container.memory` | `[1-9][0-9]*[bkmg]?` | `8g` | `docker run --memory`. |
 | `container.pidsLimit` | positive integer | `2048` | `docker run --pids-limit`. |
 | `markitect` | object | required for `markitect`, forbidden otherwise | The product to install. |
-| `markitect.sourceRepo` | non-empty path | the checkout holding the playground | Local Markitect checkout to build from; recorded as an absolute path. |
+| `markitect.sourceRepo` | non-empty path | the checkout holding the playground | Local Markitect checkout to build from. A relative path or `~` counts from the manifest's folder; recorded as an absolute path. |
 | `markitect.commit` | 7 to 40 lowercase hex | required | Commit to build; the full hash is recorded. |
 | `markitect.innerModel` | like `agent.model` | `agent.model`; required for Claude kinds | Model of Markitect's inner roles. |
 | `markitect.innerEffort` | like `agent.effort` | `agent.effort`; required for Claude kinds | Effort of Markitect's inner roles. |

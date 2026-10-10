@@ -45,7 +45,11 @@ def load(path: Path, *, playground: Path | None = None) -> dict:
         raise ManifestError(f"cannot read manifest {path}: {exc}") from exc
     except json.JSONDecodeError as exc:
         raise ManifestError(f"manifest {path} is not valid JSON: {exc}") from exc
-    return validate(data, playground=playground)
+    result = validate(data, playground=playground)
+    if "markitect" in result:  # a relative or ~ sourceRepo means: from the manifest's folder
+        source = Path(result["markitect"]["sourceRepo"]).expanduser()
+        result["markitect"]["sourceRepo"] = str(source if source.is_absolute() else path.parent / source)
+    return result
 
 
 def validate(data: Any, *, playground: Path | None = None) -> dict:

@@ -210,7 +210,7 @@ def resolve_markitect(product: dict) -> dict:
                            f"{product['commit']}^{{commit}}"])
     except HostError as exc:
         raise HostError(f"markitect.commit {product['commit']} is not a commit in {source} "
-                        "(is it a Git checkout, and is the commit fetched?)") from exc
+                        f"(is it a Git checkout, and is the commit fetched?): {exc}") from exc
     return {**product, "sourceRepo": str(source), "commit": commit}
 
 

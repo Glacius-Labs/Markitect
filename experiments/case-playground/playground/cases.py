@@ -10,6 +10,7 @@ skipped silently. Files directly in `cases/` (the task prompt) are not cases.
 from __future__ import annotations
 
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -63,6 +64,8 @@ def _case(root: Path, path: Path) -> Case:
         raise CaseError(f"{where}: a case folder name must match {NAME.pattern}")
     if name in RESERVED:
         raise CaseError(f"{where}: the name {name!r} is reserved")
+    if name.replace("-", "_") in sys.stdlib_module_names:  # checks/<name>.py would shadow it in the seed
+        raise CaseError(f"{where}: the name {name!r} is a Python standard-library module")
     for required in ("README.md", "BACKLOG.md", "STATIONS.json"):
         if not (path / required).is_file():
             raise CaseError(f"{where}: {required} is missing")

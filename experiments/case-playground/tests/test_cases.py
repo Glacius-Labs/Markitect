@@ -79,6 +79,7 @@ class DiscoveryTests(unittest.TestCase):
         rules = {
             "Bad_Name": (lambda folder: None, "cases/Bad_Name: a case folder name must match"),
             "acceptance": (lambda folder: None, "cases/acceptance: the name 'acceptance' is reserved"),
+            "random": (lambda folder: None, "cases/random: the name 'random' is a Python standard-library module"),
             "no-readme": (lambda folder: (folder / "README.md").unlink(), "cases/no-readme: README.md is missing"),
             "no-backlog": (lambda folder: (folder / "BACKLOG.md").unlink(), "cases/no-backlog: BACKLOG.md is missing"),
             "no-plan": (lambda folder: (folder / "STATIONS.json").unlink(), "cases/no-plan: STATIONS.json is missing"),
