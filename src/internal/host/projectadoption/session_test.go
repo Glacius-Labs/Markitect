@@ -396,6 +396,59 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 	}
 }
 
+func TestChildIterationCannotProposeUnderIntegratedParent(t *testing.T) {
+	for _, order := range []string{"begin-after-integration", "begin-before-integration"} {
+		t.Run(order, func(t *testing.T) {
+			root, discovery, _, target := distillationDiscovery(t)
+			session, err := StartBrownfieldSession(root, target, discovery, []ScopeStatus{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			rootID := session.TargetContext.RootManagerID
+			session, err = BeginReverseIteration(root, target, session, ReverseIterationRequest{ID: "root-pass", ManagerID: rootID,
+				EvidenceIDs: []string{"implementation"}, DelegationEvidenceIDs: []string{}, Purpose: "Propose order structure", Review: "review-1"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			child := ProposedManager{ID: "orders-manager", Name: "Orders Manager", Purpose: "Model order cancellation", ParentID: rootID,
+				EvidenceIDs: []string{"implementation"}, DelegationEvidenceIDs: []string{}}
+			report := sessionReport(discovery, "implementation", "orders", "func Cancel() {}", "The selected source declares cancellation.")
+			session, err = RecordManagerProposal(session, "root-pass", ManagerProposal{ManagerID: rootID, EvidenceIDs: []string{"implementation"},
+				Hierarchy: []ProposedManager{child}, PublicContracts: []ManagerPublicContract{}, Report: report})
+			if err != nil {
+				t.Fatal(err)
+			}
+			beginChild := func(s BrownfieldSession) (BrownfieldSession, error) {
+				return BeginReverseIteration(root, target, s, ReverseIterationRequest{ID: "orders-pass", ParentIterationID: "root-pass", ManagerID: child.ID,
+					EvidenceIDs: child.EvidenceIDs, DelegationEvidenceIDs: []string{}, Purpose: child.Purpose, Review: "child-review"})
+			}
+			integrate := func(s BrownfieldSession) (BrownfieldSession, error) {
+				return IntegrateManagerProposal(s, "root-pass", rootID, ManagerIntegration{ManagerID: rootID, ChildProposalDigests: []string{},
+					ChildContracts: []IntegratedChildContracts{}, Report: report, Conflicts: []SessionConflict{}})
+			}
+			if order == "begin-after-integration" {
+				if session, err = integrate(session); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := beginChild(session); err == nil {
+					t.Fatal("a child iteration cannot start under a parent whose integration is already recorded")
+				}
+				return
+			}
+			if session, err = beginChild(session); err != nil {
+				t.Fatal(err)
+			}
+			if session, err = integrate(session); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := RecordManagerProposal(session, "orders-pass", ManagerProposal{ManagerID: child.ID, EvidenceIDs: child.EvidenceIDs,
+				Hierarchy: []ProposedManager{}, PublicContracts: []ManagerPublicContract{}, Report: report}); err == nil {
+				t.Fatal("a child proposal the parent integration does not bind must be refused instead of producing an invalid session")
+			}
+		})
+	}
+}
+
 func sessionReport(discovery Discovery, evidenceID, scopeID, excerpt, statement string) Distillation {
 	evidence := discoveryEvidence(discovery, evidenceID)
 	line := 0
