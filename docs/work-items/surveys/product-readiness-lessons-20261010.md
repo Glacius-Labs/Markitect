@@ -41,7 +41,7 @@ Its open follow-ups moved to the backlog: P11 became RUN-04, R03-F01 became AGEN
 
 ## Model output contract: the most frequent A01 failure cause
 
-Seven of the 27 failed A01 attempts ended because a role's output did not match the strict decoder. Several more ended on review grounding. The Host validator was never weakened. Each fix moved more of the contract into the request:
+Six of the 27 failed A01 attempts (4, 6, 9, 10, 19 and 22) ended because a role's output did not match the strict decoder. Several more ended on review grounding. The Host validator was never weakened. Each fix moved more of the contract into the request:
 
 - Final messages use `turn/start.outputSchema`.
 - The Host supplies executor `evidenceRefs`.
@@ -78,6 +78,7 @@ Each observed provider error deserves a regression case:
   - `ReopenCandidate` fails its baseline check, because the parent already holds the change.
 
   The guard blocks the unknown state, and the negative test `TestHelperAppliedDeltaCleanupAndPersistenceFailuresRemainRecoverable` covers only that block. [BUG-01, RUN-02, TEST-04]
+- **Smaller limits.** Instruction sources are limited to 64 paths, 4 MiB each and 16 MiB in total, with a stability check after the turn. `OnEvent` keeps private raw wire bytes, which can contain project content. A root helper must be reserved once, not in both the tool handler and `BeforeStart`. Source capture excludes only `.markitect/runs`, and any candidate write under it is rejected as a control write. [RUN-02, BUG-01]
 - **No adoption across processes.** Reopening a workspace requires a journal-confirmed terminal turn and every tracked child terminal. Nothing discovers workspaces automatically. [RUN-02]
 
 ## Recovery and resume
@@ -120,7 +121,7 @@ Each observed provider error deserves a regression case:
 
 ## Tests, CI and records
 
-- **Timing under load.** On Windows the full suite took about 30 minutes, with projectrun at 1,400 to 1,800 seconds. Several tests broke under that load:
+- **Timing under load.** On Windows the full suite took about 30 minutes. Several tests broke under that load:
   - a Delivery end-to-end test needed a 15-minute window;
   - App Server timeout subtests expired during the version probe;
   - a process fixture was cancelled between subprocess completion and durable result consumption.
