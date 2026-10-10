@@ -2171,3 +2171,7 @@ Root cleanlocal4b14e5fc and exactbinary16987dbd Go1.27.1 Windows/VCS4b14/modifie
 ### Product checkpoint remote confirmed; normal Actual17 Plan ready
 
 Root ls-remote independentlyexact4b14e5fc publicfeature matchespreviouscleanlocal/binary freeze; checkpointpush taskclosed/noACK. Owner normalReadinesswrite/Plan5b4476c0/digest7a1b08/batcha01-bounded-audita3d5 prepared,0providersreported/sourcegatescontinue. Deadline/startreceipt notyetprovided; no fabricatedtime/Rootgrant/nativePASS. PR89branch separateunchanged pendingfinalevidence/docs, noMain/release.
+
+### Actual17 observer started after exact source gates, owner report
+
+Owner clean4b14 terminalsourcegates06:57:14-07:07:13PASS: fourfocusedpackages/selectedprojectrun/vet/architecture/schema/allCONTRIBexamples/root/managedcoverage/context/impact11623269/diff. IndependentpreflightnormalPlan/readiness/runtime/buildbindings ownerclear. ExistingobserverstartedPlan5b4476c0/exact16987dbd/scriptddf7/deadline11:03:34.5443510Z, no sourcechanges. Root earlierexactcleanremote/binaryconfirmed; no repeatgates/currentnativehandleorcountreceipt inspectedthisevent, countsunknown. FinalPRCI/fullA01/Main stillpending/no newRootorder.

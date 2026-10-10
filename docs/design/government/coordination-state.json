@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T07:04:22.810000+00:00",
+  "updatedUtc": "2026-10-10T07:08:40.105049+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18381,7 +18381,7 @@
       "next": "Owner readiness docs freeze, broader targeted regressions, then fresh Windows A01 one final binary before/after Root fault under existing finite renewable authority. Distinct from oldActual16, no replay/study/Main/release acceptance."
     },
     "actual17Preparation": {
-      "status": "PUBLIC_REMOTE_CLEAN_SOURCE_BINARY_VERIFIED_NORMAL_PLAN_READY_NO_PROVIDER_STARTS_OWNER_REPORTED",
+      "status": "OWNER_REPORTED_ACTUAL17_OBSERVER_STARTED_EXACT_SOURCE_GATES_PASS",
       "sourceSha": "4b14e5fc8073f80a84079250d086da5b7b1cda01",
       "binarySha256": "16987dbdaa67d5814a8ac7f86eb72705683e077911f5a882f96623f17731c7ef",
       "rootVerified": "Clean local HEAD4b14 and exact known binary FileSHA/Go1.27.1 WindowsAMD64 VCS4b14/modifiedfalse. Final source docs/coverage closure commitstat read. Public remote still04ca atinspection.",
@@ -18399,7 +18399,21 @@
       "planDigest": "sha256:7a1b08f1defd35d4bc2a0e6dc81f60469f1db6c98d151352e0517ebd43f414ff",
       "batchId": "a01-bounded-audit-a3d5e30050b446b2b60f0c8778dda6c1",
       "normalPreparationOwnerReported": "Readiness write and Plan succeeded, finite renewable batch allocated; no provider starts yet, source gates continue. Exact batch deadline receipt pending, no invented time or new Root grant.",
-      "prBoundary": "PR89 branch separately unchanged until final A01 evidence/docs. Feature push only, no Main/release acceptance."
+      "prBoundary": "PR89 branch separately unchanged until final A01 evidence/docs. Feature push only, no Main/release acceptance.",
+      "deadlineUtc": "2026-10-10T11:03:34.5443510Z",
+      "sourceGateReport": {
+        "sourceSha": "4b14e5fc8073f80a84079250d086da5b7b1cda01",
+        "startUtc": "2026-10-10T06:57:14Z",
+        "endUtc": "2026-10-10T07:07:13Z",
+        "ownerReported": "Four focused packages/selected projectrun regressions/vet/architecture/schema/all CONTRIBUTING examples/strict root/managed coverage/selected context/valid impact11623269 to4b14/diff-check PASS. Independent Actual17 preflight binds normal plan/readiness/runtime/build.",
+        "qualification": "Root earlier exact clean source/public remote/binary inspection; terminal gate artifacts not independently reread this event, no redundant full suite. Not final PR-head hostedCI/full A01/Main/release acceptance."
+      },
+      "observerOwnerReport": {
+        "binarySha256": "16987dbdaa67d5814a8ac7f86eb72705683e077911f5a882f96623f17731c7ef",
+        "controllerSha256": "ddf7b16dc0a23b21ac4edd90e18f56e15cdf41478baac873503b18ed90154b36",
+        "planId": "5b4476c0fe09a226b6dcdd0daac4d6ca",
+        "status": "Existing observer started, no source changes since freeze. Native provider start/handles and current counts not yet independently bound, unknown rather than zero."
+      }
     }
   },
   "restartAfterInterruptedIntegration20261010": {
