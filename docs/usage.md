@@ -9,38 +9,8 @@ The published [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releas
 
 The compiler, check, schema, render and artifact-accounting commands serve Markitect's own canonical engineering resources. Versioned histories preserve what older releases shipped; historical age alone is not a reason to retain a function. Do not combine `markitect.yaml` / `.markitect/areas/` resources with the current `.markitect/project.yaml` / `.markitect/model/` project model. No automatic conversion is implied; migration is an explicit project-owned activity with reviewed meaning and ownership.
 
-The experimental canonical Projection preview bundled with v0.14.1 is a historical release capability. The [historical Commerce example](../examples/classic-commerce/README.md#obtain-the-example-source) covers its initial intent, materialization, later rule change and fresh verification. Its example files come from a separate pinned source checkout; the native runtime remains v0.14.1.
-
 <a id="canonical-brownfield-adoption-unreleased-source"></a>
-### Canonical brownfield adoption (experimental alpha)
-
-For a repository that already contains a valid representation, canonical adoption records that exact state as a managed baseline without regenerating its files. It is an explicit owner-reviewed operation, not inference authority: the source revision supplies the canonical model, the target revision supplies the existing artifacts, and the selection report names the exact artifact paths, the current active record set (explicitly `[]` when empty), and an owner review reference. The plan also lists unselected files within the target surface as unmatched; adoption does not claim ownership of them.
-
-Brownfield inference is a separate bounded Host operation over an already prepared handoff, its selected blobs and an evidence queue with no existing candidates. The experimental v0.14.1 CLI exposes it as `copy-me --action infer`; it returns a candidate intent proposal, uncertainty and invocation/input bindings. For example: `go run ./src/cmd/markitect copy-me --action infer --workspace HANDOFF --queue QUEUE.json --runtime INFERENCE-RUNTIME.json`. The runtime JSON has `apiVersion`, an `agent` runner object (`command`, string-array `args`, `model`, JSON `modelOptions`, `providerVersion`, integer `timeoutSeconds`, integer output-byte limits and `runtimeFiles` entries with string `path`, `mode` and `digest`), plus `tempParent` and `privateLogs` strings. The closed JSON action emits one flat JSON result and rejects `--decision`. It cannot adopt the candidate, change canonical resources or select active records; owner review and an explicit canonical change remain required.
-
-Create a bounded JSON selection, for example:
-
-```json
-{
-  "artifacts": ["src/Commerce/CreateOrderHandler.cs", "src/Commerce/EffectAxis.cs"],
-  "activeRecords": [],
-  "reviewReference": "architecture-review-2026-10-06"
-}
-```
-
-Plan and inspect the exact record proposal first. Both revisions must be full commit IDs; `--base` selects the canonical source and `--revision` selects the fixed target tree. The identity flags select one exact Projection Definition from that source:
-
-```powershell
-markitect canonical --action adopt-plan --repo . --config examples/canonical-projection/canonical.yaml --base CANONICAL_SOURCE_COMMIT --revision EXISTING_TARGET_COMMIT --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report C:/review/dotnet-selection.json
-```
-
-Review the returned `plan.planDigest`, then approve that exact proposal by supplying its digest:
-
-```powershell
-markitect canonical --action adopt --repo . --config examples/canonical-projection/canonical.yaml --base CANONICAL_SOURCE_COMMIT --revision EXISTING_TARGET_COMMIT --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report C:/review/dotnet-selection.json --expect REVIEWED_PLAN_DIGEST
-```
-
-`adopt` is read-only. It rechecks the source, target bytes and modes, selected artifacts, review reference, runtime Module binding and declared fixed checks. It emits a Projection Record only when those checks pass; failed or incomplete checks emit verification evidence without a Record. The approved digest becomes stale if any bound input changes. No target files or record ledger are written by these commands, and `reviewReference` is a supplied traceability value rather than authenticated reviewer identity.
+The experimental canonical Projection alpha bundled with v0.14.1, including canonical brownfield adoption and `copy-me --action infer`, has been removed from current source. Its guide remains at the [v0.14.1 tag](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/canonical-projections.md).
 
 <a id="selective-adoption-preparation-and-copy-me-unreleased-source"></a>
 ## Selective adoption preparation and Copy Me (v0.13.0)
@@ -360,78 +330,10 @@ markitect reconcile --repo . --action verify --adapter markitect-render --plan .
 A Project can register one `local-projection` adapter to bind exact contract and artifact-coverage configuration paths. The `projection` command observes and plans those declared representations, applies a reviewed candidate only with explicit write authorization, and verifies them at an immutable revision. `markitect check` can report structural and observed projection state, but it does not establish AI semantics or replace the configured verification checks. See the [projection guide](projections.md) for registration, complete AI candidates, digest review, verification, and partial-write recovery. This API is bundled in v0.14.1 as an experimental alpha capability; it is not part of stable support.
 
 <a id="canonical-controller-actions-source-only-alpha"></a>
-#### Canonical controller actions (experimental alpha bundled with v0.14.1)
-
-The experimental canonical alpha bundled in v0.14.1 exposes `controller-propose`, `controller-execute`, `controller-apply`, `controller-verify`, `controller-audit`, `controller-refresh-propose` and `controller-refresh-apply`. All require `--config` and a closed JSON `--runtime` file. Supply full immutable Git commit IDs for `--base` and `--revision`, or, for `controller-verify` only, use `--apply-result FILE` instead of both revision flags as described below. Proposal is read-only. Execute invokes the configured Executor and returns a digest-bound reviewed run; it does not run project fixed checks. Save its exact JSON output, review the candidate outputs and digest, then pass that same file and digest to Apply. Apply requires `--write`; it refreshes the proposal against current source and selected target evidence, validates runtime fingerprints, active-ledger head, plan, candidate preimages and aggregate write set before materializing. Its `materialized-unverified` status means verification has not yet been established. These actions remain experimental alpha capabilities and do not extend stable v0.14.1 support.
-
-```powershell
-$config = "examples/canonical-projection/canonical.yaml"
-$runtime = "C:/review/controller-runtime.json"
-$run = "C:/review/controller-run.json"
-go run ./src/cmd/markitect canonical --repo . --config $config --runtime $runtime --action controller-propose --base BASE --revision REVISION
-$executeArgs = @("run", "./src/cmd/markitect", "canonical", "--repo", ".", "--config", $config, "--runtime", $runtime, "--action", "controller-execute", "--base", "BASE", "--revision", "REVISION")
-$process = Start-Process -FilePath "go" -ArgumentList $executeArgs -NoNewWindow -Wait -PassThru -RedirectStandardOutput $run
-# Review the saved JSON run's status, digest, work, candidate outputs and escalations.
-go run ./src/cmd/markitect canonical --repo . --config $config --runtime $runtime --action controller-apply --base BASE --revision REVISION --plan $run --expect REVIEWED_RUN_DIGEST --write
-```
-
-Successful controller Apply creates an object-only immutable evidence commit and returns its `evidenceRevision`; it does not move HEAD or modify the index. Run `controller-verify` with `--base` set to the immutable canonical source commit and `--revision` set to that returned evidence revision. No manual commit of materialized outputs is required for this verification. It runs the declared fixed checks and a separately configured fresh Verifier; optional `--write` appends the verification result to the external ledger. Before Propose, Execute, Apply or Verify can proceed, Host requires every assurance-scope check to match a check declared by the selected source configuration. An undeclared or mismatched check returns `incomplete` before provider invocation. The Verifier request binds selected scope and policy identities, all supplied artifact bytes (including check inputs), and fixed-check identities; Host requires exact evidence references and one passing typed observation for each required subject before recording a pass. This is response-coverage validation, not proof of semantic truth, understanding, provider identity or acceptance. For example: `go run ./src/cmd/markitect canonical --repo . --config $config --runtime $runtime --action controller-verify --base REVISION --revision EVIDENCE_REVISION --write`. The regular `markitect verify --revision EVIDENCE` command remains the Project's configured-check lifecycle and is not replaced by candidate preparation. Passing checks and Verifier receipts are technical evidence, not semantic acceptance. Commands run with the caller's local authority; fresh runner directories and read-only declarations do not provide an OS sandbox, credential filter or provider privacy guarantee.
-
-The runtime JSON top-level fields are `apiVersion` (string; `markitect.canonical/controller/v1alpha1`), `recordStore` and `privateLogs` (absolute external path strings, disjoint from source/Git/target roots and each other), `referenceDepth` (integer, 0â€“2), `auditAll` (boolean), `checkInputs` (array of exact path strings), `executor` and `verifier` (runner objects), `assuranceRoots` (array of scope ID strings) and `assuranceScopes` (array of scope objects). It may also include `targetExclusions`, an array of exact `{path, reason}` string objects. Each runner has `command` (string), `args` (array of strings), `model` (string), `modelOptions` (JSON value), `providerVersion` (string), `timeoutSeconds` (integer, 1â€“600), `maxStdoutBytes` and `maxStderrBytes` (integers), and `runtimeFiles` (array of `{path, mode, digest}` objects with string fields). Each scope has `id` and `projectionId` strings, `children` (array of scope ID strings), `checks` (array of `{name, run}` objects where `name` is a string and `run` is an argument-string array), and `checkInputs` (array of exact path strings). Roots and scopes are supplied together; each configured scope has its own declared checks. The record store is created exclusively during the first Apply with materialization work. Known branch and unsupported file-mode refusals occur before store initialization. A failure after initialization can leave an empty store or recorded partial attempt for explicit review; the controller does not delete or roll it back automatically.
-
-When `auditAll` is explicitly enabled, Propose may reuse a previously passed controller VerificationResult only after reacquiring the exact immutable evidence and comparing current artifact bytes/modes, source/model, checks, runtime/configuration and child-result identities. Reuse is read-only and runs no check or agent. Missing provenance and any stale or failed input remain conservative; ordinary `auditAll=false` planning does not widen observation to look for cached passes. An unobserved projection is not a passing no-op. The reuse implementation exists, but real repeated fresh-agent convergence has not been demonstrated. See [verification reuse provenance](design/canonical-verification-refresh.md).
-
-Each controller action emits one JSON object on stdout, including when it returns a nonzero status. Controller actions exit 0 for `complete`, `planned`, `refreshed`, `passed`, `materialized-unverified` or `no-materialization-work`; 1 for `failed`, `blocked`, `escalated`, `refused` or `partial-failure`; and 2 for `incomplete`, invalid invocation/configuration or another unrecognized status. A stale/refused refresh Apply reports its bounded JSON and exits 2. Preserve stdout on nonzero exits because it can contain the bounded report. These actions are experimental alpha capabilities bundled with v0.14.1; they do not extend the stable command contract.
-
 <a id="declared-scope-completion-audit-source-only-alpha"></a>
-#### Declared-scope completion audit (experimental alpha bundled with v0.14.1)
-
-A successful materializing `controller-apply` emits both `sourceRevision` and `evidenceRevision`. Save its JSON output and continue in a fresh process without copying those values:
-
-```powershell
-go run ./src/cmd/markitect canonical --repo . --config $config --runtime $runtime --action controller-verify --apply-result APPLY_RESULT.json --write
-```
-
-`--apply-result` is supported only by `controller-verify` and cannot be combined with `--base` or `--revision`, even when those flags are explicitly empty. It accepts a bounded, closed JSON report from a successful `materialized-unverified` Apply with full source/evidence commits and valid records that share the source. Partial, refused, no-materialization or inconsistent reports are rejected before verification. Retained projections needing fresh assurance remain subject to the ordinary Verify checks. The saved file selects revisions; it is not proof of review, authorization or freshness. Verify still reconstructs current runtime, ledger selection, target evidence and required checks. Old Apply reports without `sourceRevision` remain usable through the explicit revision form above. Saving a report does not automatically apply or retry anything.
-
-After materialization and recorded verification, use `controller-audit` to inspect whether the declared model and target scope is complete. Use the same fixed base/source revisions as proposal and the same runtime configuration, with `auditAll` already enabled:
-
-```powershell
-go run ./src/cmd/markitect canonical --repo . --config $config --runtime $runtime --action controller-audit --base BASE_REVISION --revision SOURCE_REVISION
-```
-
-The audit reads current target content and the external ledger without invoking the Executor, Verifier or fixed checks. It writes neither artifacts nor records. It requires the runtime's existing `auditAll: true`; changing that setting changes the configuration binding and can require new evidence. Mutation, saved-plan, report and target-selection flags are not accepted by this action.
-
-The JSON report accounts for every canonical Projection in the selected source, its canonical scope and policy references, assurance scopes, owned artifacts and current record/result identities. It reports missing selection or evidence, stale or failed verification, unfinished work and target-ownership problems. Fresh passing child results do not replace the parent's own composition result. Exact target-path exclusions remain visible with their reasons outside the managed claim; they do not remove canonical Projection obligations.
-
-`complete` exits 0 only when the declared scope has no remaining work or unknown targets and all required local and parent verification is current and passing. `incomplete` exits 2 with findings and next actions. Preserve the JSON even on a nonzero exit. The result binds one observed state; later source, target, runtime or ledger changes can invalidate it. It is not a claim about undeclared repository content, semantic sufficiency or human acceptance. The [standard operating model](design/standard-operating-model.md) defines this bounded completion contract and the later continuous-runtime direction.
-
 <a id="goal-led-modeling-cli-source-only-alpha"></a>
-#### Goal-led modeling CLI (experimental alpha bundled with v0.14.1)
-
-The separate `canonical` actions `goal-recommend` and `goal-propose` use explicitly supplied goal/package input and runner configuration; they do not scan a repository or write canonical files. The closed `--goal-input` JSON has a `goal` string, optional caller-supplied `decisionReferenceClaim` string, and `packages` array. Each package supplies its manifest as a string and a `files` object mapping exact package paths to UTF-8 content strings. `goal-recommend` requires `--goal-input` and `--runtime`; it emits recommendation IDs with their supplied-package basis and uncertainty. `goal-propose` additionally requires the exact saved recommendation result in `--goal-recommendations` and a `--goal-selection` JSON object containing `selectedRecommendationIds` (a string array). It compiles only the selected supplied pins and returns candidate JSON and digest with uncertainty. Both emit flat JSON with `accepted: false` and `adopted: false`; a structurally compiled proposal is still noncanonical and does not establish goal completeness, design quality or human approval. See the [goal-led modeling design](design/goal-led-modeling.md).
-
-```powershell
-go run ./src/cmd/markitect canonical --action goal-recommend --goal-input GOAL.json --runtime GOAL-RUNTIME.json
-go run ./src/cmd/markitect canonical --action goal-propose --goal-input GOAL.json --goal-recommendations RECOMMENDATIONS.json --goal-selection SELECTION.json --runtime GOAL-RUNTIME.json
-```
-
-The goal runtime is closed JSON with `apiVersion` `markitect.brownfield/inference-runtime/v1alpha1`, an `agent` object using the runner fields above, and `tempParent` and `privateLogs` strings. Runner timeout is an integer number of seconds from 1 through 600. The caller selects which package bytes cross this boundary; the supplied decision-reference text is a claim, not authenticated authority. Successful `proposed` results exit 0; non-proposed outcomes exit 1, while incomplete, invalid invocation or input exits 2. Preserve the flat JSON on nonzero exits for diagnosis.
-
 <a id="retained-evidence-refresh-source-only-alpha"></a>
-#### Retained evidence refresh (experimental alpha bundled with v0.14.1)
-
-`controller-refresh-propose` reviews an explicit cohort of active Projection IDs for evidence-only refresh. It requires `--config`, closed JSON `--runtime`, full immutable `--base` (canonical source) and `--revision` (evidence) commits, and `--report` naming a JSON array of exact Projection ID strings. It is read-only and emits the proposed refresh as flat JSON. A proposal is eligible only when the active records are stale complete materializations, the selected canonical contract and runtime binding remain unchanged, and the exact owned artifacts and required check inputs match at the chosen immutable evidence revision; selected canonical bytes at the evidence revision must also match the source revision. Ineligible records produce findings. Any other stale active Projection IDs are reported separately and remain outstanding until handled. No Executor, Module or Verifier runs.
-
-Save the exact proposal output and review its digest before applying:
-
-```powershell
-go run ./src/cmd/markitect canonical --repo . --config $config --runtime $runtime --action controller-refresh-propose --base SOURCE_REVISION --revision EVIDENCE_REVISION --report PROJECTION_IDS.json
-# Save stdout as REFRESH.json and review its status, selected IDs, findings and digest.
-go run ./src/cmd/markitect canonical --repo . --config $config --runtime $runtime --action controller-refresh-apply --base SOURCE_REVISION --revision EVIDENCE_REVISION --plan REFRESH.json --expect REVIEWED_REFRESH_DIGEST --write
-```
-
-Apply requires the same `--base` and `--revision` as the saved proposal and rechecks its exact digest, source/evidence bytes, ledger head and active selection before appending retained records and replacing the selected active IDs. It writes no target artifacts. New records are `materialized-unverified`; old records and verification results remain immutable, and an old PASS is never replayed onto a refreshed record. Run `controller-verify` separately against the same current source/evidence revisions, with the declared current checks and fresh Verifier for every required active assurance scope; append its results only with explicit `--write`. Strict freshness remains in force, so other stale active records in the verification set must first be rematerialized or explicitly refreshed. The proposal/apply status and eligibility rules are detailed in the [evidence refresh design](design/projection-evidence-refresh.md); this path is not proof that refresh succeeds for any particular record or that semantic acceptance occurred. Refresh actions emit flat JSON; `planned`/`refreshed` return 0, blocked findings return 1, and incomplete, invalid, stale or refused Apply returns 2. Preserve stdout on nonzero exits.
+The canonical controller, completion audit, goal-led modeling and evidence refresh actions belonged to the canonical Projection alpha bundled with v0.14.1 and have been removed from current source; the [v0.14.1 usage guide](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/usage.md#canonical-controller-actions-source-only-alpha) describes them.
 
 ## Initialize a project
 
@@ -443,7 +345,7 @@ Current source uses `markitect project init`; see the [model-first workflow](pro
 
 The optional per-check budget below is an unreleased source follow-up. The published v0.14.1 CLI retains its fixed 600-second check limit and does not accept `timeoutSeconds` on Project checks. The source candidate accepts up to 5400 seconds per check.
 
-Each check has a stable name and a `run` argv list. Its optional integer `timeoutSeconds` selects 1 through 5400 seconds, with 600 seconds when omitted. For example, `{name: go-tests, timeoutSeconds: 5400, run: [go, test, ./..., -count=1, -timeout=60m]}` explicitly bounds both Markitect's check process and Go's test binaries. Each YAML result reports the effective `timeoutMilliseconds` (canonical controller JSON: `TimeoutMilliseconds`); timeout remains incomplete evidence. The first argv element is a bare executable name resolved through `PATH`; it cannot be a path. Use an interpreter as the executable for repository scripts, for example `[go, run, tools/check-docs.go]`. Arguments are passed directly; no shell parses variables, pipes, redirects, wildcards, or command chaining. Declare the gates needed for the project's verification question. `verify --revision COMMIT` materializes and runs the exact committed Project and commands within the execution limits in [Operations](operations.md).
+Each check has a stable name and a `run` argv list. Its optional integer `timeoutSeconds` selects 1 through 5400 seconds, with 600 seconds when omitted. For example, `{name: go-tests, timeoutSeconds: 5400, run: [go, test, ./..., -count=1, -timeout=60m]}` explicitly bounds both Markitect's check process and Go's test binaries. Each YAML result reports the effective `timeoutMilliseconds`; timeout remains incomplete evidence. The first argv element is a bare executable name resolved through `PATH`; it cannot be a path. Use an interpreter as the executable for repository scripts, for example `[go, run, tools/check-docs.go]`. Arguments are passed directly; no shell parses variables, pipes, redirects, wildcards, or command chaining. Declare the gates needed for the project's verification question. `verify --revision COMMIT` materializes and runs the exact committed Project and commands within the execution limits in [Operations](operations.md).
 
 Commands run with the caller's local authority. Snapshot isolation fixes the input tree but is not an operating-system sandbox. Checks should be read-only and limited to the intended project.
 
