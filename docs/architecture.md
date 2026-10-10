@@ -195,6 +195,8 @@ Rendering remains limited to explicitly selected outputs. The Markdown and agent
 Direct offline content packages remain exact pinned archives, with explicit activation, origin-qualified identities and read-only imported content; nested imports and cross-boundary direct references remain rejected. Project initialization remains read-only in preview and recomputes/validates before writing only the planned Project and Area README. It does not select project-owned checks or policy or edit existing content. Structural success without owner-declared checks remains incomplete verification; see [Usage](usage.md) and the [roadmap](implementation-plan.md).
 
 The architecture gate is `src/internal/tooling/architecture`. Its static import check covers supported-platform source and tests and has negative fixtures for forbidden directions. The same gate is included in normal tests, a named CI step, the explicit Project check and release quality workflow. These wiring facts do not claim an exact-head pass; the [consolidation report](validation/clean-architecture-consolidation.md) owns gate results. There is no exception allowlist.
+
+The [code map](development/code-map.md) lists every Go package with its layer, purpose and owning document. A test in `src/internal/tooling/architecture` fails when a package is missing from the map or the map lists one that does not exist.
 ## Authoring and queries
 
 Historical v0.13 authoring resources are embedded and compiled through the normal parser, graph, and context pipeline. They explain resource choice, ownership, explicit dependencies, and diagnostics. `authoring`, `find`, and `explain` support an agent or person inspecting the model; they do not interpret natural-language intent or call a model.
