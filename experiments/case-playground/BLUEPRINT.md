@@ -2,8 +2,8 @@
 
 This is the build plan for a lean rebuild of the case-study playground that compares
 **Conventional** agentic coding with **Markitect** on the same staged backlog. It
-replaces `experiments/work-item-comparison/playground` for new runs. Leave the old
-folder untouched as an archive.
+replaces `experiments/work-item-comparison/playground` for new runs; that old folder
+is not on main and stays as an archive on the research-backup remote.
 
 ## Why a rebuild
 

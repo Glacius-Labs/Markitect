@@ -1166,6 +1166,9 @@ def host_assess(args: argparse.Namespace) -> int:
         print(f"error: {exc}", file=sys.stderr)
     finally:
         host._finish_container(name, result, out, args.keep_container)
+        result["handBack"] = host.hand_back(image_id, out)
+        if result["handBack"].startswith("failed"):
+            print(f"warning: {out} stays owned by root ({result['handBack']})", file=sys.stderr)
         if throwaway is not None:
             shutil.rmtree(throwaway, ignore_errors=True)
         result["endedAt"] = _utc()

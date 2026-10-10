@@ -96,6 +96,45 @@ def needs_codex_auth(manifest: dict) -> bool:
     return kind == "codex" or (kind == "claude" and manifest["method"] == "markitect")
 
 
+def _operator() -> tuple[int, int] | None:
+    """The host user's uid and gid on a POSIX host that does not run as root."""
+    if not hasattr(os, "geteuid") or os.geteuid() == 0:
+        return None
+    return os.getuid(), os.getgid()
+
+
+def hand_back(image: str, folder: Path) -> str:
+    """Give a container's output folder back to the host user: "done", "not-needed" or
+    "failed: ...".
+
+    Containers write as root and keep snapshots root-only (0700), so on a Linux host the
+    operator could neither read nor delete a run. A short root container in the same
+    image changes the owner, without following links. Nothing is needed on Windows, as
+    root, or when the engine already maps container root to the operator (rootless
+    Docker, Docker Desktop on macOS).
+    """
+    operator = _operator()
+    if operator is None:
+        return "not-needed"
+    try:
+        foreign = [entry for entry in os.scandir(folder)
+                   if entry.stat(follow_symlinks=False).st_uid != operator[0]]
+    except OSError as exc:
+        return f"failed: {exc}"
+    if not foreign:
+        return "not-needed"
+    cmd = ["docker", "run", "--rm", "--label", LABEL, "--network", "none", "--user", "0:0",
+           "--mount", _mount(folder, "/handback"), "--entrypoint", "chown", image,
+           "-R", "--no-dereference", f"{operator[0]}:{operator[1]}", "/handback"]
+    try:
+        done = _call(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
+    except (HostError, subprocess.TimeoutExpired) as exc:
+        return f"failed: {exc}"
+    if done.returncode != 0:
+        return f"failed: {(done.stderr or done.stdout).strip() or f'exit {done.returncode}'}"
+    return "done"
+
+
 def _mount(source: Path, target: str, readonly: bool = False) -> str:
     # --mount is a CSV field list; csv quotes a source containing commas or quotes.
     fields = ["type=bind", f"source={source}", f"target={target}"] + (["readonly"] if readonly else [])
@@ -327,6 +366,9 @@ def run(args: argparse.Namespace) -> int:
     finally:
         if record["containerLaunched"]:
             _finish_container(name, record, out, args.keep_container)
+            record["handBack"] = hand_back(record["image"]["id"] or record["image"]["tag"], results)
+            if record["handBack"].startswith("failed"):
+                print(f"warning: {results} stays owned by root ({record['handBack']})", file=sys.stderr)
         record["endedAt"] = _now()
         _write_json(out / "host.json", record)
     print(f"host record: {out / 'host.json'}")

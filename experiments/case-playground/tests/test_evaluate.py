@@ -533,6 +533,14 @@ class HostAssessTests(unittest.TestCase):
         self.assertNotIn("LOGIN-CONTENT", everything)
         self.assertIn(["docker", "rm", "-f", "mpg-assess-conv-x"], docker.calls)
 
+    def test_assessment_is_handed_back_after_the_container_ends(self):
+        docker = FakeDocker()
+        with mock.patch.object(host, "hand_back", return_value="done") as hand_back:
+            self.assertEqual(self.assess(docker), 0)
+        out = self.run_dir / "assessment"
+        hand_back.assert_called_once_with("sha256:img", out)
+        self.assertEqual(json.loads((out / "host.json").read_text(encoding="utf-8"))["handBack"], "done")
+
     def test_refuses_existing_assessment_unless_forced(self):
         (self.run_dir / "assessment").mkdir()
         write(self.run_dir / "assessment" / "old.txt", "old")

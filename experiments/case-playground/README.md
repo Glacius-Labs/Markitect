@@ -10,7 +10,8 @@ each wave. [STUDY.md](STUDY.md) explains what the comparison is for;
 
 ## Prerequisites
 
-- Docker Desktop with the Linux engine.
+- Docker with a Linux engine. Linux hosts are the reference (register DEC-013); Docker
+  Desktop on Windows also works.
 - Python 3.11 or newer on the host (standard library only).
 - Go, only for Markitect runs: the host builds a Linux `markitect` binary from the
   product repository and commit named in the manifest.
@@ -59,6 +60,9 @@ workspaces), `final/` (final checks, the candidate's own tests, Markitect confor
 `audit/` (Git snapshots of every station) and `evidence/` (session records and
 Markitect's cache). The agent never sees check results. The report classifies the run
 outcome (`harness`, `environment`, `product` or `none`) and lists Markitect's roles.
+Containers write as root; on a Linux host the host then gives `results/` (and an
+assessment's folder) back to the calling user and records this as `handBack` in
+`host.json`.
 
 ## Assessment and comparison
 
@@ -112,5 +116,5 @@ python -B -m unittest discover -s tests -t .
   says when Codex rewrote its login inside a run.
 - Never commit run outputs; keep them outside the repository (`runs/` is ignored as a
   safety net).
-- `experiments/work-item-comparison/playground` is the old host-based harness. It is
-  kept as an archive only; do not use it for new runs.
+- The old host-based harness (`experiments/work-item-comparison/playground`) is not on
+  main; it stays as an archive on the research-backup remote. Do not use it for new runs.

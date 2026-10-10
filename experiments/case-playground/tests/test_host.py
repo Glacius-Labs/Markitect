@@ -212,6 +212,13 @@ class RunTests(HostTestBase):
         self.assertNotIn("docker kill", commands)
         self.assertIsNone(docker.container)
 
+    def test_results_are_handed_back_after_the_container_ends(self):
+        docker = FakeDocker()
+        with mock.patch.object(host, "hand_back", return_value="done") as hand_back:
+            self.run_host(docker)
+        hand_back.assert_called_once_with("sha256:feed", self.out.resolve() / "results")
+        self.assertEqual(self.host_record()["handBack"], "done")
+
     def test_timeout_kills_and_records(self):
         docker = FakeDocker(wait_effect=subprocess.TimeoutExpired(["docker", "wait"], 1200))
         self.assertEqual(self.run_host(docker), 124)
@@ -233,6 +240,7 @@ class RunTests(HostTestBase):
         record = self.host_record()
         self.assertEqual((record["status"], record["containerLaunched"]), ("setup-failed", False))
         self.assertIn("already exists", record["error"])
+        self.assertNotIn("handBack", record)
         self.assertNotIn("docker build", docker.commands())
         self.assertNotIn("docker rm", docker.commands())
 
@@ -399,6 +407,41 @@ class RunTests(HostTestBase):
         with mock.patch.object(host.shutil, "which", return_value=None):
             with self.assertRaisesRegex(host.HostError, "Go is required"):
                 host.build_markitect({"sourceRepo": "/src", "commit": "abc1234"}, self.base / "bin")
+
+
+class HandBackTests(unittest.TestCase):
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.folder = Path(temp.name) / "Glacius Labs" / "results"
+        (self.folder / "audit").mkdir(parents=True)
+        self.owner = self.folder.stat().st_uid
+
+    def hand_back(self, operator, docker):
+        with mock.patch.object(host, "_operator", return_value=operator), \
+                mock.patch.object(host.subprocess, "run", docker.run):
+            return host.hand_back("sha256:feed", self.folder)
+
+    def test_not_needed_without_operator_or_when_the_operator_owns_the_output(self):
+        docker = FakeDocker()
+        self.assertEqual(self.hand_back(None, docker), "not-needed")  # Windows or root
+        self.assertEqual(self.hand_back((self.owner, 1000), docker), "not-needed")  # rootless engine
+        self.assertEqual(docker.calls, [])
+
+    def test_foreign_output_is_given_back_without_following_links(self):
+        docker = FakeDocker()
+        self.assertEqual(self.hand_back((self.owner + 1, 4242), docker), "done")
+        self.assertEqual(len(docker.calls), 1)
+        run = docker.calls[0]
+        self.assertEqual(run[:3], ["docker", "run", "--rm"])
+        for flag, value in (("--network", "none"), ("--user", "0:0"), ("--entrypoint", "chown"),
+                            ("--mount", host._mount(self.folder, "/handback"))):
+            self.assertEqual(run[run.index(flag) + 1], value)
+        self.assertEqual(run[-5:], ["sha256:feed", "-R", "--no-dereference", f"{self.owner + 1}:4242",
+                                    "/handback"])
+
+    def test_failure_is_reported_not_raised(self):
+        self.assertEqual(self.hand_back((self.owner + 1, 4242), FakeDocker(run_fails=True)), "failed: conflict")
 
 
 class CleanTests(unittest.TestCase):
