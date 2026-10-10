@@ -9,52 +9,150 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectsetup"
 )
 
+type fixtureRun struct {
+	Run string `json:"run"`
+}
+
+type fixtureReport struct {
+	Run string `json:"run"`
+}
+
+type fixtureWrite struct {
+	Action string `json:"action,omitempty"`
+	Name   string `json:"name"`
+	Expect string `json:"expect,omitempty"`
+	Write  bool   `json:"write,omitempty"`
+}
+
+func fixtureServer(t *testing.T) *Server {
+	t.Helper()
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	Register(s, "status", "fixture status", false, func(ctx context.Context, r fixtureRun) (fixtureReport, error) {
+		if r.Run == "missing" {
+			return fixtureReport{}, projectrun.ErrNotFound
+		}
+		return fixtureReport{r.Run}, nil
+	})
+	return s
+}
+
 func TestClosedSchemasAndAuthority(t *testing.T) {
-	s, _ := New(t.TempDir(), projectapp.Operations{})
-	if _, err := New("", projectapp.Operations{}); err == nil {
+	s := fixtureServer(t)
+	if _, err := New(""); err == nil {
 		t.Fatal("implicit root accepted")
 	}
-	tools := s.Tools()
-	if len(tools) != 10 {
-		t.Fatalf("tools: %d", len(tools))
+	if len(s.Tools()) != 1 {
+		t.Fatalf("New registered tools of its own: %+v", s.Tools())
 	}
-	for _, tool := range tools {
+	for _, tool := range s.Tools() {
 		if tool.InputSchema.(map[string]any)["additionalProperties"] != false {
 			t.Fatalf("open %s", tool.Name)
 		}
 	}
-	for _, args := range []string{`{"runId":"r","root":"elsewhere"}`, `{"runId":"r","repo":"elsewhere"}`, `{"runId":"r","runId":"other"}`, `{"RunID":"r"}`, `{"runId":null}`, `{}`, `[]`} {
-		if _, err := s.Call(context.Background(), "project_status", []byte(args)); err == nil {
+	for _, args := range []string{`{"run":"r","root":"elsewhere"}`, `{"run":"r","repo":"elsewhere"}`, `{"run":"r","run":"other"}`, `{"Run":"r"}`, `{"run":null}`, `{}`, `[]`} {
+		if _, err := s.Call(context.Background(), "status", []byte(args)); err == nil {
 			t.Fatalf("accepted %s", args)
 		}
 	}
-	for _, name := range []string{"project_setup", "project_explore", "project_brownfield", "unknown"} {
-		if _, err := s.Call(context.Background(), name, []byte(`{}`)); err == nil {
-			t.Fatalf("invented %s", name)
-		}
+	if _, err := s.Call(context.Background(), "unknown", []byte(`{}`)); err == nil {
+		t.Fatal("invented a tool")
 	}
-	for _, args := range []string{`{"goal":"g","executeAuthorized":false,"modelEdit":{"unknown":true}}`, `{"goal":"g","executeAuthorized":false,"executeAuthorized":true}`} {
-		if _, err := s.Call(context.Background(), "project_plan", []byte(args)); err == nil {
+	if result, err := s.Call(context.Background(), "status", []byte(`{"run":"r"}`)); err != nil || result.IsError {
+		t.Fatalf("valid call failed: %+v %v", result, err)
+	}
+}
+
+func TestOmitAndEnumRestrictTheClosedSchema(t *testing.T) {
+	s, _ := New(t.TempDir())
+	calls := 0
+	Register(s, "fixture", "write fixture", false, func(ctx context.Context, r fixtureWrite) (fixtureReport, error) {
+		calls++
+		return fixtureReport{r.Name}, nil
+	}, WithOmit("write", "expect"), WithEnum("action", "create", "list"))
+	properties := s.Tools()[0].InputSchema.(map[string]any)["properties"].(map[string]any)
+	if _, ok := properties["write"]; ok {
+		t.Fatalf("omitted field still in schema: %+v", properties)
+	}
+	if !reflect.DeepEqual(properties["action"].(map[string]any)["enum"], []string{"create", "list"}) {
+		t.Fatalf("enum not applied: %+v", properties["action"])
+	}
+	for _, args := range []string{`{"name":"n","write":true}`, `{"name":"n","expect":"d"}`, `{"name":"n","action":"dismiss"}`} {
+		if _, err := s.Call(context.Background(), "fixture", []byte(args)); err == nil {
 			t.Fatalf("accepted %s", args)
 		}
 	}
-	for _, args := range []string{`{"runId":"r"}`, `{"runId":"r","planId":"p","candidateId":"c","expectedVerificationDigest":null,"targetBranch":"b","expectedHead":"h","expectedWorktree":"w"}`} {
-		if _, err := s.Call(context.Background(), "project_apply", []byte(args)); err == nil {
-			t.Fatalf("Apply guards omitted: %s", args)
+	if _, err := s.Call(context.Background(), "fixture", []byte(`{"name":"n","action":"list"}`)); err != nil || calls != 1 {
+		t.Fatalf("restricted call failed: %v (%d calls)", err, calls)
+	}
+	defer func() {
+		if recover() == nil {
+			t.Fatal("omitting an unknown field did not panic")
 		}
+	}()
+	Register(s, "fixture_bad_omit", "bad omit", false, func(ctx context.Context, r fixtureWrite) (fixtureReport, error) { return fixtureReport{}, nil }, WithOmit("missing"))
+}
+
+func TestDecodeArgumentsMatchesToolDecodingAndNamesTheField(t *testing.T) {
+	in, err := DecodeArguments[fixtureWrite](json.RawMessage(`{"name":"n","write":true,"expect":"d"}`))
+	if err != nil || in.Name != "n" || !in.Write || in.Expect != "d" {
+		t.Fatalf("decode: %+v %v", in, err)
+	}
+	for args, want := range map[string]string{
+		`{"write":true}`:          "name is required",
+		`{"name":"n","extra":1}`:  "extra is not a known field",
+		`{"name":1}`:              "name must be a string",
+		`{"name":"n","name":"m"}`: "invalid JSON arguments",
+	} {
+		if _, err := DecodeArguments[fixtureWrite](json.RawMessage(args)); err == nil || !strings.Contains(err.Error(), want) {
+			t.Fatalf("%s: error %v, want %q", args, err, want)
+		}
+	}
+}
+
+func TestEmbeddedStructFieldsArePromotedInSchemas(t *testing.T) {
+	type report struct {
+		projectrun.RunSummary
+		Next string `json:"next"`
+	}
+	raw, _ := json.Marshal(report{RunSummary: projectrun.RunSummary{ID: "r", Status: "planned"}, Next: "run"})
+	var decoded any
+	d := json.NewDecoder(bytes.NewReader(raw))
+	d.UseNumber()
+	if err := d.Decode(&decoded); err != nil {
+		t.Fatal(err)
+	}
+	if err := validate(decoded, schema(reflect.TypeFor[report]()), ""); err != nil {
+		t.Fatalf("embedded fields not promoted: %v", err)
+	}
+}
+
+func TestRecursiveTypesHaveFiniteSchemas(t *testing.T) {
+	type node struct {
+		Name     string `json:"name"`
+		Children []node `json:"children"`
+		Parent   *node  `json:"parent,omitempty"`
+	}
+	raw, _ := json.Marshal(node{Name: "root", Children: []node{{Name: "leaf", Children: []node{}}}})
+	var decoded any
+	d := json.NewDecoder(bytes.NewReader(raw))
+	d.UseNumber()
+	if err := d.Decode(&decoded); err != nil {
+		t.Fatal(err)
+	}
+	if err := validate(decoded, schema(reflect.TypeFor[node]()), ""); err != nil {
+		t.Fatalf("recursive value rejected: %v", err)
 	}
 }
 
@@ -65,10 +163,10 @@ func TestSetupSchemaExposesClosedWindowsSandboxBackendEnum(t *testing.T) {
 	if backendSchema["type"] != "string" || !reflect.DeepEqual(backendSchema["enum"], []string{"mxc"}) {
 		t.Fatalf("Windows sandbox backend schema = %#v, want optional closed enum mxc", backendSchema)
 	}
-	if err := validate("mxc", backendSchema); err != nil {
+	if err := validate("mxc", backendSchema, ""); err != nil {
 		t.Fatalf("valid mxc backend rejected by schema: %v", err)
 	}
-	if err := validate("unsupported", backendSchema); err == nil {
+	if err := validate("unsupported", backendSchema, ""); err == nil {
 		t.Fatal("unsupported Windows sandbox backend passed the MCP schema")
 	}
 }
@@ -78,66 +176,36 @@ func TestAppServerEnvironmentModeSchemaIsClosed(t *testing.T) {
 	if modeSchema["type"] != "string" || !reflect.DeepEqual(modeSchema["enum"], []string{"inherit"}) {
 		t.Fatalf("App Server environment mode schema = %#v, want closed inherit enum", modeSchema)
 	}
-	if err := validate("inherit", modeSchema); err != nil {
+	if err := validate("inherit", modeSchema, ""); err != nil {
 		t.Fatalf("valid inherited environment mode rejected: %v", err)
 	}
-	if err := validate("all", modeSchema); err == nil {
+	if err := validate("all", modeSchema, ""); err == nil {
 		t.Fatal("unsupported environment mode passed the schema")
 	}
 }
 
-func TestRealHostPlanSelectionAndRedactedFailure(t *testing.T) {
-	root := t.TempDir()
-	git := func(args ...string) string {
-		t.Helper()
-		cmd := exec.Command("git", args...)
-		cmd.Dir = root
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			t.Fatalf("git: %s %v", out, err)
-		}
-		return strings.TrimSpace(string(out))
-	}
-	git("init", "-b", "mcp-fixture")
-	git("config", "user.email", "mcp@example.test")
-	git("config", "user.name", "MCP Fixture")
-	os.WriteFile(filepath.Join(root, "README.md"), []byte("fixture"), 0600)
-	git("add", "README.md")
-	git("commit", "-m", "fixture")
-	base := git("rev-parse", "HEAD")
-	var gotRoot, gotBase string
-	calls := 0
-	o := projectapp.Operations{Host: projectrun.Host{FromSnapshot: func(string, *projectrun.Snapshot) (*projectrun.Project, error) {
-		return nil, errors.New("unexpected snapshot")
-	}, PlanEdit: func(*projectrun.Project, projectrun.Mutation) (projectrun.EditPlan, error) {
-		return projectrun.EditPlan{}, errors.New("unexpected edit")
-	}, Load: func(r, b string) (*projectrun.Project, error) {
-		calls++
-		gotRoot, gotBase = r, b
-		return nil, errors.New("secret credential value at private path")
-	}}}
-	s, _ := New(root, o)
-	args, _ := json.Marshal(projectrun.PlanRequest{Goal: "bounded", BaseRevision: base, ExecuteAuthorized: false})
-	result, err := s.Call(context.Background(), "project_plan", args)
-	if err != nil || !result.IsError || calls != 1 || gotRoot != root || gotBase != base {
-		t.Fatalf("mapping: %+v %v %d %s %s", result, err, calls, gotRoot, gotBase)
+func TestHostErrorTextIsNotForwarded(t *testing.T) {
+	s, _ := New(t.TempDir())
+	Register(s, "fixture_plan", "fixture plan", true, func(ctx context.Context, r fixtureRun) (fixtureReport, error) {
+		return fixtureReport{}, errors.New("secret credential value at private path")
+	})
+	result, err := s.Call(context.Background(), "fixture_plan", []byte(`{"run":"r"}`))
+	if err != nil || !result.IsError {
+		t.Fatalf("failure was success: %+v %v", result, err)
 	}
 	encoded, _ := json.Marshal(result)
-	if bytes.Contains(encoded, []byte("secret")) {
-		t.Fatal("Host error leaked")
+	if bytes.Contains(encoded, []byte("secret")) || bytes.Contains(encoded, []byte("private")) {
+		t.Fatalf("Host error leaked: %s", encoded)
 	}
-	_, err = o.Plan(projectapp.PlanOperation{Selection: projectapp.Selection{Root: root, Revision: base}, Request: projectrun.PlanRequest{Goal: "bounded", BaseRevision: base}})
-	if err == nil || calls != 2 {
-		t.Fatal("shared Host parity failed")
-	}
-	result, err = s.Call(context.Background(), "project_status", []byte(`{"runId":"missing"}`))
-	if err != nil || !result.IsError {
-		t.Fatal("missing durable run was success")
+	result, err = fixtureServer(t).Call(context.Background(), "status", []byte(`{"run":"missing"}`))
+	if err != nil || !result.IsError || !strings.Contains(result.Content[0].Text, `"code":"notfound"`) {
+		t.Fatalf("missing durable run was success: %+v %v", result, err)
 	}
 }
 
 func TestStdioHandshakeCallCancellationAndStatus(t *testing.T) {
-	s, _ := New(t.TempDir(), projectapp.Operations{})
+	s, _ := New(t.TempDir())
+	s.SetInstructions("fixture instructions")
 	started := make(chan struct{})
 	cancelled := make(chan struct{})
 	type input struct {
@@ -194,9 +262,12 @@ func TestStdioHandshakeCallCancellationAndStatus(t *testing.T) {
 	if result["protocolVersion"] != ProtocolVersion || result["capabilities"].(map[string]any)["tasks"] != nil {
 		t.Fatal("false capabilities")
 	}
+	if result["instructions"] != "fixture instructions" {
+		t.Fatalf("instructions: %v", result["instructions"])
+	}
 	send(`{"jsonrpc":"2.0","method":"notifications/initialized"}`)
 	send(`{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}`)
-	if len(receive()["result"].(map[string]any)["tools"].([]any)) != 12 {
+	if len(receive()["result"].(map[string]any)["tools"].([]any)) != 2 {
 		t.Fatal("discovery")
 	}
 	send(`{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"fixture_wait","arguments":{"runId":"durable-1"}}}`)
@@ -235,8 +306,8 @@ func TestStdioHandshakeCallCancellationAndStatus(t *testing.T) {
 }
 
 func TestOutputSchemaMatchesStructuredJSON(t *testing.T) {
-	s, _ := New(t.TempDir(), projectapp.Operations{})
-	result, err := s.Call(context.Background(), "project_status", []byte(`{"runId":"missing"}`))
+	s := fixtureServer(t)
+	result, err := s.Call(context.Background(), "status", []byte(`{"run":"missing"}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -246,17 +317,17 @@ func TestOutputSchemaMatchesStructuredJSON(t *testing.T) {
 	if err = d.Decode(&decoded); err != nil {
 		t.Fatal(err)
 	}
-	if err = validate(decoded, s.tools["project_status"].tool.OutputSchema.(map[string]any)); err != nil {
+	if err = validate(decoded, s.tools["status"].tool.OutputSchema.(map[string]any), ""); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestPartialDurableReportSanitization(t *testing.T) {
-	s, _ := New(t.TempDir(), projectapp.Operations{})
-	Register(s, "fixture_partial", "partial shared report", true, func(context.Context, runInput) (projectrun.VerifyReport, error) {
+	s, _ := New(t.TempDir())
+	Register(s, "fixture_partial", "partial shared report", true, func(context.Context, fixtureRun) (projectrun.VerifyReport, error) {
 		return projectrun.VerifyReport{RunID: "durable-id", CandidateID: "candidate", Checks: []projectrun.CheckResult{{Stdout: "secret-out", Stderr: "secret-err", Error: "secret-error", Command: []string{"token=secret"}, ExecutablePath: "private-path"}}}, errors.New("secret-host")
 	})
-	result, err := s.Call(context.Background(), "fixture_partial", []byte(`{"runId":"durable-id"}`))
+	result, err := s.Call(context.Background(), "fixture_partial", []byte(`{"run":"durable-id"}`))
 	if err != nil || !result.IsError {
 		t.Fatal("partial failure lost")
 	}
@@ -268,7 +339,7 @@ func TestPartialDurableReportSanitization(t *testing.T) {
 	d := json.NewDecoder(strings.NewReader(result.Content[0].Text))
 	d.UseNumber()
 	d.Decode(&decoded)
-	if err := validate(decoded, s.tools["fixture_partial"].tool.OutputSchema.(map[string]any)); err != nil {
+	if err := validate(decoded, s.tools["fixture_partial"].tool.OutputSchema.(map[string]any), ""); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -283,17 +354,17 @@ func TestAllLifecycleOutputSchemas(t *testing.T) {
 		d := json.NewDecoder(bytes.NewReader(raw))
 		d.UseNumber()
 		d.Decode(&decoded)
-		if err := validate(decoded, schema(reflect.TypeOf(v))); err != nil {
+		if err := validate(decoded, schema(reflect.TypeOf(v)), ""); err != nil {
 			t.Fatalf("%T schema: %v", v, err)
 		}
 	}
 }
 
 func TestUnsignedOutputSchema(t *testing.T) {
-	if err := validate(json.Number("18446744073709551615"), schema(reflect.TypeFor[uint64]())); err != nil {
+	if err := validate(json.Number("18446744073709551615"), schema(reflect.TypeFor[uint64]()), ""); err != nil {
 		t.Fatal(err)
 	}
-	if err := validate(json.Number("18446744073709551616"), schema(reflect.TypeFor[uint64]())); err == nil {
+	if err := validate(json.Number("18446744073709551616"), schema(reflect.TypeFor[uint64]()), ""); err == nil {
 		t.Fatal("out of range integer accepted")
 	}
 }
@@ -322,7 +393,7 @@ func TestRawMessageJSONValueAndByteBase64Schemas(t *testing.T) {
 		if err := d.Decode(&output); err != nil {
 			t.Fatal(err)
 		}
-		if err := validate(output, schema(reflect.TypeFor[dto]())); err != nil {
+		if err := validate(output, schema(reflect.TypeFor[dto]()), ""); err != nil {
 			t.Fatalf("encoded output schema mismatch: %v", err)
 		}
 		if !bytes.Contains(raw, []byte(`"bytes":"AP8B"`)) {
@@ -354,48 +425,51 @@ func TestSafeHostClassificationAndOperationRecovery(t *testing.T) {
 		{errors.New("provider secret"), "host_rejected"},
 	} {
 		t.Run(tc.code, func(t *testing.T) {
-			d := classifyError("project_run", fmt.Errorf("outer private detail: %w", tc.err))
+			d := classifyError(fmt.Errorf("outer private detail: %w", tc.err), "Fixture recovery.")
 			if d.Code != tc.code || strings.Contains(d.Message, "secret") || strings.Contains(d.Recovery, "private") {
 				t.Fatalf("unsafe or flattened diagnostic: %+v", d)
 			}
 		})
 	}
-	for _, operation := range []string{"project_setup", "project_doctor", "project_edit", "project_explore", "project_readiness", "project_brownfield_accept", "project_plan", "project_full_verify"} {
-		for _, code := range []string{"host_rejected", "cancelled", "busy", "encoding_failed", "stale", "notfound", "notrunnable"} {
-			d := diagnosticFor(operation, code)
-			if strings.Contains(d.Recovery, "project_status") || strings.Contains(d.Recovery, "runId") {
-				t.Fatalf("pre-run action invented handle: %s %+v", operation, d)
-			}
+	for _, code := range []string{"host_rejected", "cancelled", "busy", "encoding_failed", "stale", "notfound", "notrunnable", "locked"} {
+		if d := diagnosticFor(code, "Fixture recovery."); !strings.Contains(d.Recovery, "Fixture recovery.") {
+			t.Fatalf("%s lost the operation recovery: %+v", code, d)
 		}
 	}
-	if !strings.Contains(diagnosticFor("project_apply", "stale").Recovery, "preflight") {
-		t.Fatal("Apply freshness recovery omitted")
+	s, _ := New(t.TempDir())
+	Register(s, "fixture_recovery", "recovery fixture", true, func(context.Context, fixtureRun) (fixtureReport, error) {
+		return fixtureReport{}, errors.New("private")
+	}, WithRecovery("Inspect the fixture with status."))
+	Register(s, "fixture_default", "default recovery", true, func(context.Context, fixtureRun) (fixtureReport, error) {
+		return fixtureReport{}, errors.New("private")
+	})
+	result, _ := s.Call(context.Background(), "fixture_recovery", []byte(`{"run":"r"}`))
+	if !strings.Contains(result.Content[0].Text, "Inspect the fixture with status.") {
+		t.Fatalf("registered recovery missing: %s", result.Content[0].Text)
 	}
-	if strings.Contains(diagnosticFor("project_status", "notfound").Recovery, "Inspect project_status") {
-		t.Fatal("notfound status recovery loops")
-	}
-	if !strings.Contains(diagnosticFor("project_deliver", "host_rejected").Recovery, "If the partial report contains a runId") {
-		t.Fatal("delivery invented run")
+	result, _ = s.Call(context.Background(), "fixture_default", []byte(`{"run":"r"}`))
+	if !strings.Contains(result.Content[0].Text, "refresh this operation") || strings.Contains(result.Content[0].Text, "project_") {
+		t.Fatalf("generic recovery missing or names a removed tool: %s", result.Content[0].Text)
 	}
 }
 
 func TestPublicErrorMapperAndRetainedStructuredValidation(t *testing.T) {
-	s, _ := New(t.TempDir(), projectapp.Operations{})
+	s, _ := New(t.TempDir())
 	type report struct {
 		SessionID string   `json:"sessionId"`
 		Findings  []string `json:"findings"`
 		Error     string   `json:"error,omitempty"`
 	}
 	sentinel := errors.New("private selected-model detail")
-	Register(s, "project_brownfield_fixture", "typed application error fixture", true, func(context.Context, runInput) (report, error) {
+	Register(s, "adopt_fixture", "typed application error fixture", true, func(context.Context, fixtureRun) (report, error) {
 		return report{SessionID: "existing-session", Findings: []string{"missing owner for declared artifact"}, Error: "provider secret"}, sentinel
-	}, func(err error) *Diagnostic {
+	}, WithPublicError(func(err error) *Diagnostic {
 		if errors.Is(err, sentinel) {
 			return &Diagnostic{Code: "stage_precondition", Message: "The acceptance stage needs reviewed ownership.", Recovery: "Correct the session's ownership findings, refresh its preview and expected digest, then accept the same session."}
 		}
 		return nil
-	})
-	result, err := s.Call(context.Background(), "project_brownfield_fixture", []byte(`{"runId":"fixture-input"}`))
+	}))
+	result, err := s.Call(context.Background(), "adopt_fixture", []byte(`{"run":"fixture-input"}`))
 	if err != nil || !result.IsError {
 		t.Fatal("mapped failure lost")
 	}
@@ -405,18 +479,18 @@ func TestPublicErrorMapperAndRetainedStructuredValidation(t *testing.T) {
 			t.Fatalf("missing %s: %s", want, raw)
 		}
 	}
-	for _, bad := range []string{"private", "provider secret", "project_status", "runId"} {
+	for _, bad := range []string{"private", "provider secret"} {
 		if strings.Contains(raw, bad) {
-			t.Fatalf("leaked or invented %s: %s", bad, raw)
+			t.Fatalf("leaked %s: %s", bad, raw)
 		}
 	}
-	Register(s, "fixture_bad_mapper", "unsafe shape rejected", true, func(context.Context, runInput) (report, error) { return report{}, sentinel }, func(error) *Diagnostic { return &Diagnostic{Code: "bad code", Message: "message", Recovery: "repair"} })
-	result, _ = s.Call(context.Background(), "fixture_bad_mapper", []byte(`{"runId":"fixture"}`))
+	Register(s, "fixture_bad_mapper", "unsafe shape rejected", true, func(context.Context, fixtureRun) (report, error) { return report{}, sentinel }, WithPublicError(func(error) *Diagnostic { return &Diagnostic{Code: "bad code", Message: "message", Recovery: "repair"} }))
+	result, _ = s.Call(context.Background(), "fixture_bad_mapper", []byte(`{"run":"fixture"}`))
 	if !strings.Contains(result.Content[0].Text, "host_rejected") || strings.Contains(result.Content[0].Text, "bad code") {
 		t.Fatal("invalid callback escaped")
 	}
-	Register(s, "fixture_sentinel_mapper", "sentinel cannot be hidden", true, func(context.Context, runInput) (report, error) { return report{}, projectrun.ErrStale }, func(error) *Diagnostic { t.Error("known sentinel reached custom mapper"); return nil })
-	result, _ = s.Call(context.Background(), "fixture_sentinel_mapper", []byte(`{"runId":"fixture"}`))
+	Register(s, "fixture_sentinel_mapper", "sentinel cannot be hidden", true, func(context.Context, fixtureRun) (report, error) { return report{}, projectrun.ErrStale }, WithPublicError(func(error) *Diagnostic { t.Error("known sentinel reached custom mapper"); return nil }))
+	result, _ = s.Call(context.Background(), "fixture_sentinel_mapper", []byte(`{"run":"fixture"}`))
 	if !strings.Contains(result.Content[0].Text, `"code":"stale"`) {
 		t.Fatal("stale classification lost")
 	}

@@ -1,14 +1,13 @@
 package projectcli
 
 import (
-	"bytes"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
@@ -28,10 +27,6 @@ func TestExplorePreviewWriteStatusAndList(t *testing.T) {
 	if len(project.Report.Managers) == 0 {
 		t.Fatal("fixture has no Managers")
 	}
-	input := ".markitect/drafts/exploration.json"
-	if err := os.MkdirAll(filepath.Join(repo, ".markitect", "drafts"), 0755); err != nil {
-		t.Fatal(err)
-	}
 	inputRecord := projectexplore.Record{
 		APIVersion: projectexplore.APIVersion,
 		ID:         "first-order-work",
@@ -44,83 +39,65 @@ func TestExplorePreviewWriteStatusAndList(t *testing.T) {
 		Decisions: []projectexplore.Decision{}, Drafts: []projectexplore.DraftProposal{},
 		Acknowledgements: []projectexplore.StructureAcknowledgement{}, Completions: []projectexplore.ApplyReceipt{},
 	}
-	data, err := json.Marshal(inputRecord)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(repo, filepath.FromSlash(input)), data, 0600); err != nil {
-		t.Fatal(err)
-	}
+	input := writeDraft(t, repo, ".markitect/drafts/exploration.json", inputRecord)
 
-	var previewOut bytes.Buffer
-	if err := runExplore(options{repo: repo, input: input}, &previewOut); err != nil {
-		t.Fatalf("preview: %v", err)
-	}
-	var preview projectexplore.WritePlan
-	if err := json.Unmarshal(previewOut.Bytes(), &preview); err != nil {
-		t.Fatalf("decode preview: %v", err)
-	}
-	if preview.Digest == "" || preview.Next.ID != inputRecord.ID || preview.Target.Exists {
+	preview := decodeOutput[projectapp.ExploreResult](t, mustCLI(t, "explore", "--repo", repo, "--input", input))
+	if preview.Plan == nil || preview.Plan.Digest == "" || preview.Plan.Next.ID != inputRecord.ID || preview.Plan.Target.Exists || preview.Persisted != nil {
 		t.Fatalf("unexpected preview: %#v", preview)
 	}
 	if _, err := projectexplore.Load(repo, inputRecord.ID); err == nil {
 		t.Fatal("read-only preview persisted the exploration")
 	}
-
-	var writeOut bytes.Buffer
-	if err := runExplore(options{repo: repo, input: input, write: true, expect: preview.Digest}, &writeOut); err != nil {
-		t.Fatalf("write: %v", err)
+	if code, _, errout := runCLI(t, "explore", "--repo", repo, "--input", input, "--expect", "sha256:stale", "--write"); code != 2 || !strings.Contains(errout, "exact exploration write-plan digest") {
+		t.Fatalf("explore write with a stale digest exit=%d stderr=%s", code, errout)
 	}
+	if _, err := projectexplore.Load(repo, inputRecord.ID); err == nil {
+		t.Fatal("stale explore write persisted the exploration")
+	}
+
+	written := decodeOutput[projectapp.ExploreResult](t, mustCLI(t, "explore", "--repo", repo, "--input", input, "--expect", preview.Plan.Digest, "--write"))
 	persisted, err := projectexplore.Load(repo, inputRecord.ID)
-	if err != nil || persisted.Digest == "" || persisted.CreatedAgainst == "" {
+	if err != nil || persisted.Digest == "" || persisted.CreatedAgainst == "" || written.Persisted == nil || written.Persisted.Digest != persisted.Digest {
 		t.Fatalf("persisted record = %#v err=%v", persisted, err)
 	}
 	inputRecord.Decisions = []projectexplore.Decision{{
 		ID: "fulfillment-boundary", ScopeIDs: []string{"cancellation"}, Question: "Does this exclude shipped orders?",
 		Status: "answered", Answer: "Yes, shipped orders are excluded.", Authority: "explicit caller decision", Provenance: "request-17",
 	}}
-	data, err = json.Marshal(inputRecord)
-	if err != nil {
-		t.Fatal(err)
+	writeDraft(t, repo, input, inputRecord)
+	updatePreview := decodeOutput[projectapp.ExploreResult](t, mustCLI(t, "explore", "--repo", repo, "--input", input))
+	if updatePreview.Plan == nil || updatePreview.Plan.ExpectedStateDigest != persisted.Digest || len(updatePreview.Plan.Next.Decisions) != 1 {
+		t.Fatalf("update preview is not bound to current record state: %#v", updatePreview.Plan)
 	}
-	if err := os.WriteFile(filepath.Join(repo, filepath.FromSlash(input)), data, 0600); err != nil {
-		t.Fatal(err)
-	}
-	var updatePreviewOut bytes.Buffer
-	if err := runExplore(options{repo: repo, input: input}, &updatePreviewOut); err != nil {
-		t.Fatalf("update preview: %v", err)
-	}
-	var updatePreview projectexplore.WritePlan
-	if err := json.Unmarshal(updatePreviewOut.Bytes(), &updatePreview); err != nil {
-		t.Fatalf("decode update preview: %v", err)
-	}
-	if updatePreview.ExpectedStateDigest != persisted.Digest || len(updatePreview.Next.Decisions) != 1 {
-		t.Fatalf("update preview is not bound to current record state: %#v", updatePreview)
-	}
-	var updateOut bytes.Buffer
-	if err := runExplore(options{repo: repo, input: input, write: true, expect: updatePreview.Digest}, &updateOut); err != nil {
-		t.Fatalf("update write: %v", err)
-	}
+	mustCLI(t, "explore", "--repo", repo, "--input", input, "--expect", updatePreview.Plan.Digest, "--write")
 	persisted, err = projectexplore.Load(repo, inputRecord.ID)
 	if err != nil || len(persisted.Decisions) != 1 || persisted.Decisions[0].ID != "fulfillment-boundary" {
 		t.Fatalf("updated record = %#v err=%v", persisted, err)
 	}
 
-	var statusOut bytes.Buffer
-	if err := runExplore(options{repo: repo, explorationID: inputRecord.ID}, &statusOut); err != nil {
-		t.Fatalf("status: %v", err)
+	status := decodeOutput[projectapp.ExploreResult](t, mustCLI(t, "explore", "--repo", repo, "--exploration", inputRecord.ID))
+	if status.Record == nil || status.Record.Digest != persisted.Digest {
+		t.Fatalf("status = %#v", status)
 	}
-	var status projectexplore.Record
-	if err := json.Unmarshal(statusOut.Bytes(), &status); err != nil || status.Digest != persisted.Digest {
-		t.Fatalf("status = %#v err=%v", status, err)
+	list := decodeOutput[projectapp.ExploreResult](t, mustCLI(t, "explore", "--repo", repo))
+	if len(list.Records) != 1 || list.Records[0].ID != inputRecord.ID {
+		t.Fatalf("list = %#v", list)
 	}
-	var listOut bytes.Buffer
-	if err := runExplore(options{repo: repo}, &listOut); err != nil {
-		t.Fatalf("list: %v", err)
+}
+
+// The project overview is read-only and must also work for a project that has
+// no runtime configuration yet.
+func TestStatusOverviewNeedsNoRuntimeConfiguration(t *testing.T) {
+	repo := copyProjectWorld(t)
+	if err := os.Remove(filepath.Join(repo, ".markitect", "runtime.yaml")); err != nil {
+		t.Fatal(err)
 	}
-	var records []projectexplore.Record
-	if err := json.Unmarshal(listOut.Bytes(), &records); err != nil || len(records) != 1 || records[0].ID != inputRecord.ID {
-		t.Fatalf("list = %#v err=%v", records, err)
+	summary := decodeOutput[overview](t, mustCLI(t, "status", "--repo", repo))
+	if summary.Runtime.Configured || len(summary.Runs) != 0 || summary.Project.Name != "shop-cancellation" {
+		t.Fatalf("status overview without runtime = %+v", summary)
+	}
+	if _, err := os.Stat(filepath.Join(repo, ".markitect", "runs")); !os.IsNotExist(err) {
+		t.Fatalf("status overview created runtime state: %v", err)
 	}
 }
 
@@ -155,10 +132,10 @@ func writeExploreTestRuntime(t *testing.T, repo string, managers []projectmodel.
 		t.Fatal(err)
 	}
 	runGit(t, repo, "add", ".markitect/runtime.yaml")
-	runGitWithEnv(t, repo, []string{"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.invalid", "GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.invalid"}, "commit", "-m", "configure fixture runtime")
+	runGitWithEnv(t, repo, testCommitEnv, "commit", "-m", "configure fixture runtime")
 }
 
-func TestReadinessShowsExactBindingAndPreviewsExplicitAcknowledgement(t *testing.T) {
+func TestReadyShowsExactBindingAndPreviewsExplicitAcknowledgement(t *testing.T) {
 	repo := copyProjectWorld(t)
 	configureReadinessTestModel(t, repo)
 	project, err := projectwork.Load(repo, "")
@@ -173,68 +150,46 @@ func TestReadinessShowsExactBindingAndPreviewsExplicitAcknowledgement(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
-	managerIDs := []string{project.Report.Managers[0].ID}
 	inputRecord := projectexplore.Record{
 		APIVersion: projectexplore.APIVersion, ID: "readiness-work", Status: projectexplore.StatusActive,
 		Request:   "Implement a bounded change.",
-		Scopes:    []projectexplore.Scope{{ID: "bounded-change", Name: "Bounded change", Goal: "Implement the bounded change.", Operation: "apply", ManagerIDs: managerIDs}},
+		Scopes:    []projectexplore.Scope{{ID: "bounded-change", Name: "Bounded change", Goal: "Implement the bounded change.", Operation: "apply", ManagerIDs: []string{project.Report.Managers[0].ID}}},
 		Decisions: []projectexplore.Decision{}, Drafts: []projectexplore.DraftProposal{},
 		Acknowledgements: []projectexplore.StructureAcknowledgement{}, Completions: []projectexplore.ApplyReceipt{},
 	}
-	data, err := json.Marshal(inputRecord)
-	if err != nil {
-		t.Fatal(err)
+	input := writeDraft(t, repo, ".markitect/drafts/readiness-exploration.json", inputRecord)
+	created := decodeOutput[projectapp.ExploreResult](t, mustCLI(t, "explore", "--repo", repo, "--input", input))
+	if created.Plan == nil {
+		t.Fatalf("explore preview has no write plan: %#v", created)
 	}
-	input := ".markitect/drafts/readiness-exploration.json"
-	if err := os.MkdirAll(filepath.Join(repo, ".markitect", "drafts"), 0755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(repo, filepath.FromSlash(input)), data, 0600); err != nil {
-		t.Fatal(err)
-	}
-	var createOut bytes.Buffer
-	if err := runExplore(options{repo: repo, input: input}, &createOut); err != nil {
-		t.Fatal(err)
-	}
-	var createPlan projectexplore.WritePlan
-	if err := json.Unmarshal(createOut.Bytes(), &createPlan); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := projectexplore.Write(repo, createPlan, createPlan.Digest, createPlan.Binding); err != nil {
+	if _, err := projectexplore.Write(repo, *created.Plan, created.Plan.Digest, created.Plan.Binding); err != nil {
 		t.Fatalf("persist initial exploration: %v", err)
 	}
 
-	var readinessOut bytes.Buffer
-	ackOptions := options{repo: repo, explorationID: inputRecord.ID, scope: "bounded-change", acknowledgeStructure: true,
-		actor: "caller", authority: "explicit user decision", decisionRef: "request-17", acknowledgedAt: "2026-10-09T12:00:00Z"}
-	if err := runReadiness(ackOptions, &readinessOut); err != nil {
-		t.Fatalf("readiness preview: %v", err)
-	}
-	var response struct {
-		Binding   projectexplore.Binding         `json:"binding"`
-		Readiness projectexplore.ReadinessReport `json:"readiness"`
-		WritePlan *projectexplore.WritePlan      `json:"writePlan"`
-	}
-	if err := json.Unmarshal(readinessOut.Bytes(), &response); err != nil {
-		t.Fatalf("decode readiness: %v", err)
-	}
+	const acknowledgedAt = "2026-10-09T12:00:00Z"
+	args := []string{"ready", "--repo", repo, "--exploration", inputRecord.ID, "--scope", "bounded-change", "--acknowledge",
+		"--actor", "caller", "--authority", "explicit user decision", "--decision-ref", "request-17", "--acknowledged-at", acknowledgedAt}
+	response := decodeOutput[projectapp.ReadinessResult](t, mustCLI(t, args...))
 	if response.WritePlan == nil || response.Readiness.StructureDigest == "" || response.Readiness.BindingDigest == "" {
 		t.Fatalf("readiness response omitted its exact binding/ack plan: %#v", response)
 	}
 	if len(response.Binding.FileStructure) == 0 {
 		t.Fatalf("readiness response omitted exact file structure: %#v", response.Binding)
 	}
-	if _, err := projectexplore.Load(repo, inputRecord.ID); err != nil {
+	if persisted, err := projectexplore.Load(repo, inputRecord.ID); err != nil || len(persisted.Acknowledgements) != 0 {
 		t.Fatalf("read-only readiness preview mutated durable record: %v", err)
 	}
-	ackOptions.write, ackOptions.expect = true, response.WritePlan.Digest
-	var writtenOut bytes.Buffer
-	if err := runReadiness(ackOptions, &writtenOut); err != nil {
-		t.Fatalf("write exact previewed acknowledgement: %v", err)
+	if code, _, errout := runCLI(t, append(args, "--expect", "sha256:stale", "--write")...); code != 2 || !strings.Contains(errout, "markitect ready:") {
+		t.Fatalf("ready write with a stale digest exit=%d stderr=%s", code, errout)
 	}
+	written := decodeOutput[projectapp.ReadinessResult](t, mustCLI(t, append(args, "--expect", response.WritePlan.Digest, "--write")...))
 	persisted, err := projectexplore.Load(repo, inputRecord.ID)
-	if err != nil || len(persisted.Acknowledgements) != 1 || persisted.Acknowledgements[0].RecordedAt.Format(time.RFC3339) != ackOptions.acknowledgedAt {
+	if err != nil || len(persisted.Acknowledgements) != 1 || persisted.Acknowledgements[0].RecordedAt.Format(time.RFC3339) != acknowledgedAt || written.Persisted == nil {
 		t.Fatalf("persisted acknowledgement = %#v err=%v", persisted.Acknowledgements, err)
+	}
+	summary := decodeOutput[overview](t, mustCLI(t, "status", "--repo", repo))
+	if len(summary.Explorations) != 1 || len(summary.Explorations[0].Scopes) != 1 || !summary.Explorations[0].Scopes[0].Acknowledged {
+		t.Fatalf("status overview does not show the acknowledged scope: %+v", summary.Explorations)
 	}
 }
 
@@ -255,5 +210,5 @@ func configureReadinessTestModel(t *testing.T, repo string) {
 		t.Fatal(err)
 	}
 	runGit(t, repo, "add", ".markitect/model/project-artifacts.yaml")
-	runGitWithEnv(t, repo, []string{"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.invalid", "GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.invalid"}, "commit", "--amend", "--no-edit")
+	runGitWithEnv(t, repo, testCommitEnv, "commit", "--amend", "--no-edit")
 }

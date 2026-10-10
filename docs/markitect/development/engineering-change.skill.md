@@ -3,7 +3,7 @@
 
 **Description:** Begin Markitect repository changes from fixed engineering context and finish with accounted artifacts and verification.
 
-Follow the canonical Markitect-first Change workflow for each task in this repository. Use `go run ./src/cmd/markitect` while developing the candidate; an installed release is a different input. Resolve BASE to the full immutable source commit before compiling context. Begin with `go run ./src/cmd/markitect check --repo . --revision BASE` and `go run ./src/cmd/markitect context --repo . --revision BASE --namespace development --kind Skill --name engineering-change`.
+Follow the canonical Markitect-first Change workflow for each task in this repository. Use `go run ./src/cmd/markitect-legacy` while developing the candidate; an installed release is a different input. Resolve BASE to the full immutable source commit before compiling context. Begin with `go run ./src/cmd/markitect-legacy check --repo . --revision BASE` and `go run ./src/cmd/markitect-legacy context --repo . --revision BASE --namespace development --kind Skill --name engineering-change`.
 
 Classify the task before implementation. Representation repairs use unchanged desired state and do not require invented model edits. Every governed change starts from Markitect; intent changes re-plan before materialization. Engineering-intent changes update the canonical owner before the implementation and compare the committed intent candidate to BASE with impact. Ordinary failed policies may be inspected only through explicit read-only analysis; structural failures remain blockers.
 

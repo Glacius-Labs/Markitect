@@ -20,7 +20,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `runtime` | Runs Manager, review and verify roles in owned workspaces. | `host` | 6 |
 | `legacy` | The published v0.13 Project/Domain surfaces. DEC-014 allows removing them. | `host`, `module` | 26 |
 | `module` | Independent capability packages that import only Core. | `module` | 0 |
-| `cli` | Thin entrypoints that delegate to Host. | `cli` | 9 |
+| `cli` | Thin entrypoints that delegate to Host. | `cli` | 10 |
 | `tooling` | Maintainer tooling: import gate, release, publication and notices. | `tooling` | 4 |
 | `bootstrap` | Standalone public bootstrap without Markitect imports. | `bootstrap` | 1 |
 | `harness` | Executable tests, test support and example programs; not product code. | `harness-tests`, `harness-runtime`, `testkit` | 5 |
@@ -51,7 +51,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `src/internal/host/mcp` | Local stdio MCP server over the project operations. | [docs/project-operations.md](../project-operations.md#mcp-server-and-tool-groups) |
 | `src/internal/host/projectadoption` | Brownfield adoption that checks fixed-snapshot evidence and prepares model-only changes. | [docs/project-workflow.md](../project-workflow.md#existing-repositories) |
 | `src/internal/host/projectapp` | Shared application facade that the project CLI and MCP server call. | [docs/architecture.md](../architecture.md#application-layer) |
-| `src/internal/host/projectcli` | The `markitect project` command line. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
+| `src/internal/host/projectcli` | The `markitect` verb table, its command line and its MCP tools. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
 | `src/internal/host/projectexplore` | Stores explorations, open decisions, scope readiness and Apply receipts. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |
 | `src/internal/host/projectonboarding` | Writes project-local guidance and skills for Codex and Claude contributors. | [docs/project-workflow.md](../project-workflow.md#connect-and-inspect) |
 | `src/internal/host/projectwork` | Loads the selected project model and writes model changes under guard. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |
@@ -103,7 +103,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `src/cmd/markitect` | The `markitect` executable. | [docs/usage.md](../usage.md#commands) |
+| `src/cmd/markitect` | The `markitect` executable with the top-level verbs. | [docs/usage.md](../usage.md#commands) |
 | `src/cmd/markitect-adapter-azure-devops` | Legacy Azure DevOps metadata adapter executable. | [src/cmd/markitect-adapter-azure-devops/README.md](../../src/cmd/markitect-adapter-azure-devops/README.md) |
 | `src/cmd/markitect-adapter-dotnet` | Legacy .NET reference adapter executable. | [src/cmd/markitect-adapter-dotnet/README.md](../../src/cmd/markitect-adapter-dotnet/README.md) |
 | `src/cmd/markitect-adapter-github` | Legacy GitHub repository-metadata adapter executable. | [src/cmd/markitect-adapter-github/README.md](../../src/cmd/markitect-adapter-github/README.md) |
@@ -111,6 +111,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `src/cmd/markitect-check-artifacts` | Runs managed-artifact accounting. | [docs/usage.md](../usage.md#managed-artifact-accounting) |
 | `src/cmd/markitect-check-modules` | Runs the independent Module checks used by the pre-commit hook. | [docs/usage.md](../usage.md#independent-module-checks-current-source) |
 | `src/cmd/markitect-exchange-executor` | The reference bring-your-own executor executable. | [docs/provider-adapters.md](../provider-adapters.md#bring-your-own-executor) |
+| `src/cmd/markitect-legacy` | Temporary executable for the legacy Project/Domain commands until ARCH-09 removes them. | [docs/design/verb-table.md](../design/verb-table.md#what-leaves-the-product-binary) |
 | `src/cmd/markitect-release` | Prepares or publishes a GitHub release. | [docs/operations.md](../operations.md#release-operations) |
 
 ## Tooling

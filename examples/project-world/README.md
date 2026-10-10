@@ -2,7 +2,7 @@
 
 This fixture demonstrates project-owned Markitect files under `.markitect/`, a recursive Manager tree, vertical Sales/Orders/Inventory slices, explicit file ownership and realization, and a runnable cancellation example using Python's standard library and SQLite.
 
-The fixture is intentionally small. It ships without a provider runner or credentials, and no agent starts automatically. The empty `.markitect/runtime.yaml` remains unchanged by the fixture tests. To configure a runner in a disposable copy, use `project setup` from the Markitect source candidate; it creates a reviewed edit proposal without hand-authored YAML and never probes account credentials.
+The fixture is intentionally small. It ships without a provider runner or credentials, and no agent starts automatically. The empty `.markitect/runtime.yaml` remains unchanged by the fixture tests. To configure a runner in a disposable copy, use `config` from the Markitect source candidate; it creates a reviewed edit proposal without hand-authored YAML and never probes account credentials.
 
 See the repository guide at [docs/project-workflow.md](../../docs/project-workflow.md) for the project CLI lifecycle.
 
@@ -24,41 +24,42 @@ python -B -m unittest discover -s tests -v
 Pop-Location
 
 Push-Location $markitectRoot
-go run ./src/cmd/markitect project check --repo $fixtureRepo
-go run ./src/cmd/markitect project coverage --repo $fixtureRepo
-go run ./src/cmd/markitect project index --repo $fixtureRepo
-go run ./src/cmd/markitect project context --repo $fixtureRepo --manager '["project.markitect.example.org/v1alpha1","Manager","","shop"]'
-go run ./src/cmd/markitect project context --repo $fixtureRepo --manager '["project.markitect.example.org/v1alpha1","Manager","commerce.sales.orders","orders"]'
-go run ./src/cmd/markitect project document --repo $fixtureRepo
+go run ./src/cmd/markitect check --repo $fixtureRepo
+go run ./src/cmd/markitect check --repo $fixtureRepo --coverage
+go run ./src/cmd/markitect model --repo $fixtureRepo
+go run ./src/cmd/markitect context --repo $fixtureRepo '["project.markitect.example.org/v1alpha1","Manager","","shop"]'
+go run ./src/cmd/markitect context --repo $fixtureRepo '["project.markitect.example.org/v1alpha1","Manager","commerce.sales.orders","orders"]'
+go run ./src/cmd/markitect docs --repo $fixtureRepo
 Pop-Location
 ```
 
-`coverage` classifies every repository file. The fixture has no broad ignore rules: its README, package modules, transaction coordinator, tests, cancellation guide, and protocol fixtures under `tests/agent-fixtures/` are mapped to their owning Managers through Artifacts. The generated project document is explicitly owned at `docs/markitect/project.md` and does not enter the semantic inventory. The empty runtime keeps conversational execution unconfigured.
+`check --coverage` classifies every repository file. The fixture has no broad ignore rules: its README, package modules, transaction coordinator, tests, cancellation guide, and protocol fixtures under `tests/agent-fixtures/` are mapped to their owning Managers through Artifacts. The generated project document is explicitly owned at `docs/markitect/project.md` and does not enter the semantic inventory. The empty runtime keeps conversational execution unconfigured.
 
 The CLI also exposes an onboarding preview and briefing ledger inspection. The onboarding command only prints a reviewed file plan; applying one requires reviewing its digest and passing it back with `--expect PLAN_DIGEST --write`. Briefings are generated only when two committed model revisions and explicit provenance exist; this single-commit fixture intentionally does not fabricate briefing history.
 
 ```powershell
 Push-Location $markitectRoot
-go run ./src/cmd/markitect project onboard --repo $fixtureRepo --provider both
-go run ./src/cmd/markitect project briefings --repo $fixtureRepo
+go run ./src/cmd/markitect onboard --repo $fixtureRepo --provider both
+go run ./src/cmd/markitect brief list --repo $fixtureRepo
 Pop-Location
 ```
 
-An empty briefing ledger is not evidence of prior accepted changes. The check, coverage, index, context, document, briefing-list, and onboarding-preview commands above do not invoke a provider. Cleanup and Reconcile likewise only print plan previews.
+An empty briefing ledger is not evidence of prior accepted changes. The check, model, context, docs, brief-list, and onboarding-preview commands above do not invoke a provider. Cleanup and Reconcile likewise only print plan previews.
 
 To prepare that disposable copy for a conversational run, first check local prerequisites. The doctor report deliberately reports authentication as `not-verified`; it never runs a login-status command or reads auth files. The setup preview requires the caller to select the model and explicit cost-estimation weights for their own budget policy:
 
 ```powershell
 Push-Location $markitectRoot
-go run ./src/cmd/markitect project doctor --repo $fixtureRepo --tool-root $markitectRoot --provider codex
-go run ./src/cmd/markitect project setup --repo $fixtureRepo --tool-root $markitectRoot --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET
+go run ./src/cmd/markitect doctor --repo $fixtureRepo --provider codex
+go run ./src/cmd/markitect config --repo $fixtureRepo --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET
 ```
 
 Review `editPlan.digest` and the exact native executable/adapter pins in the preview before applying that same deterministic runtime edit:
 
 ```powershell
-go run ./src/cmd/markitect project setup --repo $fixtureRepo --tool-root $markitectRoot --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET --expect EDIT_PLAN_DIGEST --write
-go run ./src/cmd/markitect project document --repo $fixtureRepo --write
+go run ./src/cmd/markitect config --repo $fixtureRepo --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET --expect EDIT_PLAN_DIGEST --write
+go run ./src/cmd/markitect docs --repo $fixtureRepo
+go run ./src/cmd/markitect docs --repo $fixtureRepo --expect DOCS_DIGEST --write
 Pop-Location
 Push-Location $fixtureRepo
 git add .markitect/runtime.yaml docs/markitect/project.md
@@ -66,10 +67,10 @@ git commit -m "Configure project-local Markitect runtime"
 $verifiedRevision = (git rev-parse HEAD).Trim()
 Pop-Location
 Push-Location $markitectRoot
-go run ./src/cmd/markitect project verify --repo $fixtureRepo --revision $verifiedRevision --write
-go run ./src/cmd/markitect project cleanup --repo $fixtureRepo --goal "Improve Shop implementations while preserving the accepted model"
-go run ./src/cmd/markitect project reconcile --repo $fixtureRepo --goal "Reconcile every Shop responsibility against its repository files"
-go run ./src/cmd/markitect project plan --repo $fixtureRepo --goal "Cancel confirmed orders and release their reservation atomically" --since $modelBasis
+go run ./src/cmd/markitect verify --repo $fixtureRepo --revision $verifiedRevision --execute --write
+go run ./src/cmd/markitect plan --repo $fixtureRepo --operation cleanup --goal "Improve Shop implementations while preserving the accepted model"
+go run ./src/cmd/markitect plan --repo $fixtureRepo --operation reconcile --goal "Reconcile every Shop responsibility against its repository files"
+go run ./src/cmd/markitect plan --repo $fixtureRepo --goal "Cancel confirmed orders and release their reservation atomically" --since $modelBasis
 Pop-Location
 ```
 

@@ -273,7 +273,7 @@ func TestReadinessRequiresExplicitAcknowledgementForWrite(t *testing.T) {
 		return nil, nil
 	}}}
 	_, err := operations.Readiness(ReadinessOperation{Selection: Selection{Root: t.TempDir()}, Write: true})
-	if err == nil || err.Error() != "project readiness --write requires --acknowledge-structure" {
+	if err == nil || err.Error() != "ready --write requires --acknowledge" {
 		t.Fatalf("Readiness write without acknowledgement error = %v", err)
 	}
 	if loads != 0 {

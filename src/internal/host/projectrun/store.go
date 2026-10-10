@@ -38,6 +38,16 @@ type File struct {
 	Delete  bool   `json:"delete,omitempty"`
 }
 
+// PlanPreviewDigest identifies a plan independent of the run identity,
+// initial candidate identity and authorization that persisting assigns, so a
+// write can be bound to the reviewed preview.
+func PlanPreviewDigest(plan PlanRecord) (string, error) {
+	stable := plan
+	stable.ID, stable.Status, stable.InitialCandidateID = "", "", ""
+	stable.ExecuteAuthorized = false
+	return planDigest(stable)
+}
+
 func planDigest(plan PlanRecord) (string, error) {
 	base, err := digest(struct {
 		APIVersion              string                       `json:"apiVersion"`
@@ -284,6 +294,65 @@ func (s *runStore) createRun(id string) (string, error) {
 		return "", err
 	}
 	return dir, nil
+}
+
+// RunSummary is one durable run as the project overview shows it.
+type RunSummary struct {
+	ID        string    `json:"id"`
+	Goal      string    `json:"goal"`
+	Operation string    `json:"operation"`
+	Status    string    `json:"status"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// ListRuns reads the recorded runs without taking the writer lock or changing
+// anything. A run without a recorded state is planned; a run whose records do
+// not validate is reported as invalid instead of failing the listing.
+func ListRuns(root string) ([]RunSummary, error) {
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return nil, fmt.Errorf("resolve project root: %w", err)
+	}
+	// Listing needs no runtime configuration, only a real runs directory.
+	base := filepath.Join(abs, filepath.FromSlash(RunsPath))
+	if _, statErr := os.Lstat(base); os.IsNotExist(statErr) {
+		return []RunSummary{}, nil
+	}
+	if err := rejectReparsePath(abs, RunsPath); err != nil {
+		return nil, err
+	}
+	s := &runStore{root: abs, base: base}
+	entries, err := os.ReadDir(s.base)
+	if err != nil {
+		return nil, err
+	}
+	runs := []RunSummary{}
+	for _, entry := range entries {
+		if !entry.IsDir() || !validID(entry.Name()) {
+			continue
+		}
+		plan, err := s.readPlan(entry.Name())
+		if err != nil {
+			runs = append(runs, RunSummary{ID: entry.Name(), Status: "invalid"})
+			continue
+		}
+		summary := RunSummary{ID: plan.ID, Goal: plan.Goal, Operation: plan.Operation, Status: StatusPlanned, UpdatedAt: plan.PlannedAt}
+		state, err := s.readLatestState(plan.ID)
+		switch {
+		case err == nil:
+			summary.Status, summary.UpdatedAt = state.Status, state.UpdatedAt
+		case !errors.Is(err, ErrNotFound):
+			summary.Status = "invalid"
+		}
+		runs = append(runs, summary)
+	}
+	sort.Slice(runs, func(i, j int) bool {
+		if !runs[i].UpdatedAt.Equal(runs[j].UpdatedAt) {
+			return runs[i].UpdatedAt.After(runs[j].UpdatedAt)
+		}
+		return runs[i].ID < runs[j].ID
+	})
+	return runs, nil
 }
 
 func validID(id string) bool {

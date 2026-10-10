@@ -1,6 +1,6 @@
 # Using Markitect
 
-This page describes the Project/Domain engineering-resource compiler and historical versioned CLI contracts. Explicit source additions and removals are labelled below; published releases retain their actual immutable bytes. It is not the recommended path for new model-first projects. Start with the [model-first project workflow](project-workflow.md); it documents the current `markitect project` source surface, its source-versus-release distinction, implemented commands and planned journey stages. The project model in a committed revision is the accepted repository specification Markitect uses for that revision; a draft is a proposal, and a commit or digest does not authenticate human approval.
+This page describes the Project/Domain engineering-resource compiler and historical versioned CLI contracts. Explicit source additions and removals are labelled below; published releases retain their actual immutable bytes. It is not the recommended path for new model-first projects. Start with the [model-first project workflow](project-workflow.md); it documents the current `markitect <verb>` source surface, its source-versus-release distinction, implemented commands and planned journey stages. The project model in a committed revision is the accepted repository specification Markitect uses for that revision; a draft is a proposal, and a commit or digest does not authenticate human approval.
 
 The published [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1) preserves Project/Domain behavior and bundles a separate canonical Projection alpha. New projects should not start with these legacy contracts. Current source does not promise executable backwards compatibility. Source changes do not update an installed binary. The [roadmap](implementation-plan.md) owns exact release and evidence status.
 
@@ -253,7 +253,7 @@ $runRoot = Join-Path $env:TEMP ("markitect-v011-" + [guid]::NewGuid().ToString("
 $null = New-Item -ItemType Directory -Path $runRoot
 $constitution = Join-Path $runRoot "engineering-constitution"
 Copy-Item -Recurse .\examples\engineering-constitution $constitution
-go run ./src/cmd/markitect check --repo $constitution
+go run ./src/cmd/markitect-legacy check --repo $constitution
 
 $discoveryProject = Join-Path $runRoot "engineering-discovery-project"
 $discoveryDossier = Join-Path $runRoot "engineering-discovery-dossier"
@@ -339,7 +339,7 @@ The canonical controller, completion audit, goal-led modeling and evidence refre
 
 ## Initialize a project
 
-Current source uses `markitect project init`; see the [model-first commands](project-operations.md#cli-setup-and-current-roots). The top-level initializer has been removed from current source. Versioned release histories retain the commands they actually shipped.
+Current source uses `markitect init`; see the [model-first commands](project-operations.md#cli-setup-and-current-roots). The Project/Domain initializer has been removed from current source. Versioned release histories retain the commands they actually shipped.
 
 ## Declare verification commands
 

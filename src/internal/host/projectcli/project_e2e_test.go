@@ -2,7 +2,9 @@ package projectcli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -11,12 +13,85 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectadoption"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"go.yaml.in/yaml/v3"
 )
+
+var testCommitEnv = []string{"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.invalid", "GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.invalid"}
+
+// runCLI runs one product CLI invocation exactly as the binary does.
+func runCLI(t *testing.T, args ...string) (int, string, string) {
+	t.Helper()
+	var out, errout bytes.Buffer
+	code := Main(args, &out, &errout, "test")
+	return code, out.String(), errout.String()
+}
+
+// runCLIWith runs the CLI path with replaced operations, such as a counting
+// agent invoker, from parsing through the exit-code mapping.
+func runCLIWith(t *testing.T, ops projectapp.Operations, args ...string) (int, string, string) {
+	t.Helper()
+	v, ok := lookupVerb(args[0])
+	if !ok {
+		t.Fatalf("unknown verb %q", args[0])
+	}
+	inv, help, err := parseInvocation(v, args[1:])
+	if err != nil || help {
+		t.Fatalf("parse %v: help=%v err=%v", args, help, err)
+	}
+	inv.env.ops = ops
+	var out, errout bytes.Buffer
+	result, err := v.invoke(context.Background(), inv.env, inv.raw)
+	code := finish(v, result, err, &out, &errout)
+	return code, out.String(), errout.String()
+}
+
+// mustCLI runs an invocation that must exit 0 and returns its stdout.
+func mustCLI(t *testing.T, args ...string) []byte {
+	t.Helper()
+	code, out, errout := runCLI(t, args...)
+	if code != 0 {
+		t.Fatalf("%v: exit=%d stderr=%s stdout=%s", args, code, errout, out)
+	}
+	return []byte(out)
+}
+
+func decodeOutput[T any](t *testing.T, data []byte) T {
+	t.Helper()
+	var value T
+	if err := json.Unmarshal(data, &value); err != nil {
+		t.Fatalf("decode output: %v\n%s", err, data)
+	}
+	return value
+}
+
+// writeDraft writes one --input record below the repository and returns its
+// repository-relative path. A value that is not []byte is encoded as JSON.
+func writeDraft(t *testing.T, repo, path string, value any) string {
+	t.Helper()
+	data, ok := value.([]byte)
+	if !ok {
+		var err error
+		if data, err = json.Marshal(value); err != nil {
+			t.Fatal(err)
+		}
+	}
+	target := filepath.Join(repo, filepath.FromSlash(path))
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(target, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
 
 func TestProjectAgentFixtureMatchesClosedWorkResponseContract(t *testing.T) {
 	_, file, _, ok := runtime.Caller(0)
@@ -81,23 +156,33 @@ func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 		t.Fatalf("fixture report counts = managers:%d artifacts:%d checks:%d", len(initial.Report.Managers), len(initial.Report.Artifacts), len(initial.Report.Checks))
 	}
 
-	var checkOut, checkErr bytes.Buffer
-	if code := Run([]string{"project", "check", "--repo", repo}, &checkOut, &checkErr); code != 0 {
-		t.Fatalf("project check exit=%d stderr=%s", code, checkErr.String())
+	report := decodeOutput[checkReport](t, mustCLI(t, "check", "--repo", repo))
+	if report.Status != "succeeded" || report.ProjectDigest != initial.Digest {
+		t.Fatalf("check output report=%+v", report)
 	}
-	var report struct {
-		Status string `json:"status"`
+
+	// docs previews, then writes exactly the reviewed preview.
+	viewPath := filepath.Join(repo, "docs", "markitect", "project.md")
+	assertNoView := func(stage string) {
+		t.Helper()
+		if _, err := os.Stat(viewPath); !os.IsNotExist(err) {
+			t.Fatalf("%s wrote the document: %v", stage, err)
+		}
 	}
-	if err := json.Unmarshal(checkOut.Bytes(), &report); err != nil || report.Status != "succeeded" {
-		t.Fatalf("check output report=%+v err=%v", report, err)
+	assertNoView("fixture")
+	preview := decodeOutput[projectapp.DocumentResult](t, mustCLI(t, "docs", "--repo", repo))
+	if preview.Written || preview.Path != "docs/markitect/project.md" || preview.Digest == "" || !strings.Contains(preview.Content, "cancel-before-shipped") {
+		t.Fatalf("docs preview = path %q digest %q written %v", preview.Path, preview.Digest, preview.Written)
 	}
-	var documentOut, documentErr bytes.Buffer
-	if code := Run([]string{"project", "document", "--repo", repo, "--write"}, &documentOut, &documentErr); code != 0 {
-		t.Fatalf("project document --write exit=%d stderr=%s", code, documentErr.String())
+	assertNoView("docs preview")
+	if code, out, errout := runCLI(t, "docs", "--repo", repo, "--expect", "sha256:stale", "--write"); code != 2 || out != "" || !strings.Contains(errout, "markitect docs:") {
+		t.Fatalf("docs write with a stale digest exit=%d stdout=%s stderr=%s", code, out, errout)
 	}
-	view, err := os.ReadFile(filepath.Join(repo, "docs", "markitect", "project.md"))
-	if err != nil || !bytes.Contains(view, []byte("cancel-before-shipped")) {
-		t.Fatalf("generated project view omitted selected model: err=%v", err)
+	assertNoView("stale docs write")
+	written := decodeOutput[projectapp.DocumentResult](t, mustCLI(t, "docs", "--repo", repo, "--expect", preview.Digest, "--write"))
+	view, err := os.ReadFile(viewPath)
+	if err != nil || !written.Written || written.Digest != preview.Digest || !bytes.Contains(view, []byte("cancel-before-shipped")) {
+		t.Fatalf("docs write = written %v digest %q err=%v", written.Written, written.Digest, err)
 	}
 	editBasis, err := projectwork.Load(repo, "")
 	if err != nil {
@@ -113,12 +198,8 @@ func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 	if manager == "" {
 		t.Fatal("orders manager identity was not present in the fixture report")
 	}
-	var contextOut, contextErr bytes.Buffer
-	if code := Run([]string{"project", "context", "--repo", repo, "--manager", manager}, &contextOut, &contextErr); code != 0 {
-		t.Fatalf("project context exit=%d stderr=%s", code, contextErr.String())
-	}
-	if !bytes.Contains(contextOut.Bytes(), []byte("cancel-before-shipped")) {
-		t.Fatalf("orders context omitted its cancellation rule: %s", contextOut.String())
+	if contextOut := mustCLI(t, "context", manager, "--repo", repo); !bytes.Contains(contextOut, []byte("cancel-before-shipped")) {
+		t.Fatalf("orders context omitted its cancellation rule: %s", contextOut)
 	}
 
 	const rulePath = ".markitect/model/commerce/sales/orders/cancel-before-shipped.yaml"
@@ -144,21 +225,10 @@ func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	proposalPath := filepath.Join(repo, ".markitect", "drafts", "cancel-rule.json")
-	if err := os.MkdirAll(filepath.Dir(proposalPath), 0755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(proposalPath, proposalBytes, 0644); err != nil {
-		t.Fatal(err)
-	}
-	input := filepath.ToSlash(strings.TrimPrefix(proposalPath, repo+string(filepath.Separator)))
-	var previewOut, previewErr bytes.Buffer
-	if code := Run([]string{"project", "edit", "--repo", repo, "--input", input}, &previewOut, &previewErr); code != 0 {
-		t.Fatalf("edit preview exit=%d stderr=%s", code, previewErr.String())
-	}
-	var preview projectwork.EditPlan
-	if err := json.Unmarshal(previewOut.Bytes(), &preview); err != nil || preview.Digest != plan.Digest {
-		t.Fatalf("preview digest=%q want %q err=%v", preview.Digest, plan.Digest, err)
+	input := writeDraft(t, repo, ".markitect/drafts/cancel-rule.json", proposalBytes)
+	editPreview := decodeOutput[projectwork.EditPlan](t, mustCLI(t, "edit", "--repo", repo, "--input", input))
+	if editPreview.Digest != plan.Digest {
+		t.Fatalf("preview digest=%q want %q", editPreview.Digest, plan.Digest)
 	}
 
 	changed := mutation
@@ -167,25 +237,17 @@ func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(proposalPath, changedBytes, 0644); err != nil {
-		t.Fatal(err)
-	}
-	var staleOut, staleErr bytes.Buffer
-	if code := Run([]string{"project", "edit", "--repo", repo, "--input", input, "--expect", plan.Digest, "--write"}, &staleOut, &staleErr); code == 0 || !strings.Contains(staleErr.String(), "exact edit plan digest") {
-		t.Fatalf("changed proposal unexpectedly passed reviewed digest: exit=%d stderr=%s", code, staleErr.String())
+	writeDraft(t, repo, input, changedBytes)
+	if code, _, errout := runCLI(t, "edit", "--repo", repo, "--input", input, "--expect", plan.Digest, "--write"); code != 2 || !strings.Contains(errout, "exact edit plan digest") {
+		t.Fatalf("changed proposal unexpectedly passed reviewed digest: exit=%d stderr=%s", code, errout)
 	}
 	current, err := os.ReadFile(filepath.Join(repo, filepath.FromSlash(rulePath)))
 	if err != nil || !bytes.Equal(current, content) {
 		t.Fatalf("stale proposal changed model bytes: err=%v", err)
 	}
 
-	if err := os.WriteFile(proposalPath, proposalBytes, 0644); err != nil {
-		t.Fatal(err)
-	}
-	var applyOut, applyErr bytes.Buffer
-	if code := Run([]string{"project", "edit", "--repo", repo, "--input", input, "--expect", plan.Digest, "--write"}, &applyOut, &applyErr); code != 0 {
-		t.Fatalf("reviewed edit exit=%d stderr=%s", code, applyErr.String())
-	}
+	writeDraft(t, repo, input, proposalBytes)
+	mustCLI(t, "edit", "--repo", repo, "--input", input, "--expect", plan.Digest, "--write")
 	updated, err := os.ReadFile(filepath.Join(repo, filepath.FromSlash(rulePath)))
 	if err != nil || bytes.Equal(updated, content) || !bytes.Contains(updated, []byte("before shipment")) {
 		t.Fatalf("reviewed edit was not applied: err=%v content=%s", err, updated)
@@ -212,25 +274,12 @@ func TestProjectRuntimeSetupUsesReviewedEditWithoutHandEditing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := ".markitect/drafts/runtime-edit.json"
-	if _, err := writeRecord(repo, path, encoded); err != nil {
-		t.Fatal(err)
-	}
-	var previewOut, previewErr bytes.Buffer
-	if code := Run([]string{"project", "edit", "--repo", repo, "--input", path}, &previewOut, &previewErr); code != 0 {
-		t.Fatalf("runtime edit preview exit=%d stderr=%s", code, previewErr.String())
-	}
-	var plan projectwork.EditPlan
-	if err := json.Unmarshal(previewOut.Bytes(), &plan); err != nil {
-		t.Fatal(err)
-	}
+	path := writeDraft(t, repo, ".markitect/drafts/runtime-edit.json", encoded)
+	plan := decodeOutput[projectwork.EditPlan](t, mustCLI(t, "edit", "--repo", repo, "--input", path))
 	if plan.CandidateDigest == project.Digest || plan.Report.Digest != project.Report.Digest || len(plan.Mutation.Files) != 1 || plan.Mutation.Files[0].Path != projectwork.RuntimePath {
 		t.Fatalf("runtime edit preview changed unexpected project data: %+v", plan)
 	}
-	var applyOut, applyErr bytes.Buffer
-	if code := Run([]string{"project", "edit", "--repo", repo, "--input", path, "--expect", plan.Digest, "--write"}, &applyOut, &applyErr); code != 0 {
-		t.Fatalf("runtime edit apply exit=%d stderr=%s", code, applyErr.String())
-	}
+	mustCLI(t, "edit", "--repo", repo, "--input", path, "--expect", plan.Digest, "--write")
 	updated, err := os.ReadFile(filepath.Join(repo, filepath.FromSlash(projectwork.RuntimePath)))
 	if err != nil || string(updated) != mutation.Files[0].Content {
 		t.Fatalf("runtime edit bytes=%q err=%v", updated, err)
@@ -240,18 +289,25 @@ func TestProjectRuntimeSetupUsesReviewedEditWithoutHandEditing(t *testing.T) {
 func TestProjectInitCreatesControlPlaneAndReadableDocumentationOnUnbornFeatureBranch(t *testing.T) {
 	repo := t.TempDir()
 	runGit(t, repo, "init", "--initial-branch=feature-init")
-	var out, errout bytes.Buffer
-	if code := Run([]string{"project", "init", "--repo", repo, "--name", "new-shop"}, &out, &errout); code != 0 {
-		t.Fatalf("init preview exit=%d stderr=%s", code, errout.String())
+	assertOnlyGit := func(stage string) {
+		t.Helper()
+		if entries, err := os.ReadDir(repo); err != nil || len(entries) != 1 || entries[0].Name() != ".git" {
+			t.Fatalf("%s wrote files: entries=%v err=%v", stage, entries, err)
+		}
 	}
-	if entries, err := os.ReadDir(repo); err != nil || len(entries) != 1 || entries[0].Name() != ".git" {
-		t.Fatalf("init preview wrote files: entries=%v err=%v", entries, err)
+	preview := decodeOutput[projectwork.InitPlan](t, mustCLI(t, "init", "--repo", repo, "--name", "new-shop"))
+	if preview.Digest == "" || len(preview.Written) != 0 {
+		t.Fatalf("init preview = %+v", preview)
 	}
-	out.Reset()
-	errout.Reset()
-	if code := Run([]string{"project", "init", "--repo", repo, "--name", "new-shop", "--write"}, &out, &errout); code != 0 {
-		t.Fatalf("init write exit=%d stderr=%s", code, errout.String())
+	assertOnlyGit("init preview")
+	if again := decodeOutput[projectwork.InitPlan](t, mustCLI(t, "init", "--repo", repo, "--name", "new-shop")); again.Digest != preview.Digest {
+		t.Fatalf("init preview digest is not stable: %s != %s", again.Digest, preview.Digest)
 	}
+	if code, out, errout := runCLI(t, "init", "--repo", repo, "--name", "other-shop", "--expect", preview.Digest, "--write"); code != 2 || out != "" || !strings.Contains(errout, "markitect init:") {
+		t.Fatalf("init write bound to another preview exit=%d stdout=%s stderr=%s", code, out, errout)
+	}
+	assertOnlyGit("stale init write")
+	mustCLI(t, "init", "--repo", repo, "--name", "new-shop", "--expect", preview.Digest, "--write")
 	for _, path := range []string{
 		".markitect/project.yaml",
 		".markitect/runtime.yaml",
@@ -288,14 +344,10 @@ func TestProjectPlanRejectsUncommittedSelectedInputs(t *testing.T) {
 	if err := os.WriteFile(sourceFile, append(contents, []byte("\n# uncommitted selected change\n")...), 0644); err != nil {
 		t.Fatal(err)
 	}
-	var out, errout bytes.Buffer
-	args := []string{
-		"project", "plan", "--repo", repo,
-		"--goal", "Implement a bounded order change",
-		"--manager", `["project.markitect.example.org/v1alpha1","Manager","commerce.sales.orders","orders"]`,
-	}
-	if code := Run(args, &out, &errout); code != 2 || !strings.Contains(errout.String(), "selected project inputs differ from fixed base revision; commit accepted selected changes before planning") {
-		t.Fatalf("dirty plan exit=%d stderr=%s", code, errout.String())
+	code, _, errout := runCLI(t, "plan", "--repo", repo, "--goal", "Implement a bounded order change",
+		"--manager", `["project.markitect.example.org/v1alpha1","Manager","commerce.sales.orders","orders"]`)
+	if code != 2 || !strings.Contains(errout, "selected project inputs differ from fixed base revision; commit accepted selected changes before planning") {
+		t.Fatalf("dirty plan exit=%d stderr=%s", code, errout)
 	}
 	if _, err := os.Stat(filepath.Join(repo, ".markitect", "runs")); !os.IsNotExist(err) {
 		t.Fatalf("rejected read-only plan created persisted run state: %v", err)
@@ -307,55 +359,27 @@ func TestCheckReportsIncompleteCoverageWithNonzeroExit(t *testing.T) {
 	if err := os.Remove(filepath.Join(repo, "docs", "cancellation.md")); err != nil {
 		t.Fatal(err)
 	}
-	var out, errout bytes.Buffer
-	code := Run([]string{"project", "check", "--repo", repo}, &out, &errout)
-	if code != 1 {
-		t.Fatalf("incomplete project check exit=%d, want 1; stderr=%s", code, errout.String())
+	code, out, errout := runCLI(t, "check", "--repo", repo)
+	if code != 1 || !strings.Contains(errout, "markitect check:") {
+		t.Fatalf("incomplete project check exit=%d, want 1; stderr=%s", code, errout)
 	}
-	var result struct {
-		Status string `json:"status"`
-	}
-	if err := json.Unmarshal(out.Bytes(), &result); err != nil || result.Status != "incomplete" {
-		t.Fatalf("incomplete check result=%+v err=%v", result, err)
+	if result := decodeOutput[checkReport](t, []byte(out)); result.Status != "incomplete" {
+		t.Fatalf("incomplete check result=%+v", result)
 	}
 }
 
-func TestProjectAdoptionCommandsKeepDeferredScopeOutOfModel(t *testing.T) {
+func TestAdoptStagesKeepDeferredScopeOutOfModel(t *testing.T) {
 	repo := copyProjectWorld(t)
 	commit := gitOutput(t, repo, "rev-parse", "HEAD")
-	bindingsSchema, bindingsBuild, err := projectadoption.CurrentBindings(projectmodel.Schema())
-	if err != nil {
-		t.Fatal(err)
-	}
 	request := projectadoption.DiscoveryRequest{
-		APIVersion: projectadoption.DiscoveryVersion,
-		ID:         "cancel-scope-review",
-		Purpose:    "Capture cancellation documentation for initial model adoption",
-		Review:     "owner-review-2026-10-08",
-		Commit:     commit,
-		ScopeRoots: []string{"docs"},
-		Selected: []projectadoption.SelectedPath{{
-			ID: "cancellation-doc", Path: "docs/cancellation.md", Reason: "Owner-selected current behavior documentation", Basis: "documentation",
-		}},
-		Exclusions: []projectadoption.PathReason{},
-		Unselected: []projectadoption.PathReason{},
+		APIVersion: projectadoption.DiscoveryVersion, ID: "cancel-scope-review",
+		Purpose: "Capture cancellation documentation for initial model adoption", Review: "owner-review-2026-10-08",
+		Commit: commit, ScopeRoots: []string{"docs"},
+		Selected:   []projectadoption.SelectedPath{{ID: "cancellation-doc", Path: "docs/cancellation.md", Reason: "Owner-selected current behavior documentation", Basis: "documentation"}},
+		Exclusions: []projectadoption.PathReason{}, Unselected: []projectadoption.PathReason{},
 	}
-	requestBytes, err := projectadoption.EncodeDiscoveryRequest(request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := writeRecord(repo, ".markitect/drafts/discovery-request.json", requestBytes); err != nil {
-		t.Fatal(err)
-	}
-	var discoveryOut, discoveryErr bytes.Buffer
-	if code := Run([]string{"project", "discover", "--repo", repo, "--request", ".markitect/drafts/discovery-request.json", "--output", ".markitect/drafts/discovery.json"}, &discoveryOut, &discoveryErr); code != 0 {
-		t.Fatalf("discover exit=%d stderr=%s", code, discoveryErr.String())
-	}
-	discoveryBytes, err := readRecord(repo, ".markitect/drafts/discovery.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	discovery, err := projectadoption.DecodeDiscovery(discoveryBytes)
+	session := adoptStart(t, repo, commit, request)
+	discovery, err := projectadoption.Discover(repo, request)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -363,85 +387,55 @@ func TestProjectAdoptionCommandsKeepDeferredScopeOutOfModel(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	proposal := projectadoption.ModelProposal{
-		Goal: "Adopt confirmed order cancellation while deferring inventory scope",
-		Files: []projectadoption.ProposedFile{
-			{ScopeID: "orders", Path: ".markitect/model/commerce/sales/orders/adopted-intent.yaml", Content: "apiVersion: project.markitect.example.org/v1alpha1\nkind: Statement\nmetadata:\n  name: adopted-intent\n  namespace: commerce.sales.orders\npurpose: Records owner-adopted cancellation intent.\nspec:\n  category: rule\n  description: A confirmed order may be cancelled before shipment.\n  public: true\n  uses: []\n  requires: []\n"},
-			{ScopeID: "inventory", Path: ".markitect/model/commerce/sales/inventory/adopted-intent.yaml", Content: "apiVersion: project.markitect.example.org/v1alpha1\nkind: Statement\nmetadata:\n  name: adopted-intent\n  namespace: commerce.sales.inventory\npurpose: Proposed but deferred inventory scope.\nspec:\n  category: concept\n  description: Inventory responsibilities remain unadopted.\n  public: true\n  uses: []\n  requires: []\n"},
-		},
-	}
-	report := projectadoption.Distillation{
-		APIVersion:      projectadoption.DistillationVersion,
-		DiscoveryDigest: discovery.Digest,
-		Method:          "human-review",
-		SchemaDigest:    bindingsSchema,
-		Claims: []projectadoption.Claim{
-			{ID: "documented-cancellation", ScopeID: "orders", Kind: "documented-intent", Method: "documentation", Statement: "The selected documentation allows cancellation before shipment.", Evidence: []projectadoption.EvidenceRef{{EvidenceID: "cancellation-doc", StartLine: 3, EndLine: 3, Excerpt: "A confirmed order can be cancelled before shipment only when exactly one active inventory reservation exists."}}, Uncertainty: []string{}},
-			{ID: "inventory-deferred", ScopeID: "inventory", Kind: "hypothesis", Method: "synthesis", Statement: "Inventory may be considered as a separate adoption scope.", Evidence: []projectadoption.EvidenceRef{{EvidenceID: "cancellation-doc", StartLine: 3, EndLine: 3, Excerpt: "A confirmed order can be cancelled before shipment only when exactly one active inventory reservation exists."}}, Uncertainty: []string{"No inventory-specific evidence was selected."}},
-		},
-		Terms:          []projectadoption.Term{},
-		Contradictions: []projectadoption.Contradiction{},
-		Questions:      []projectadoption.Question{},
-		Scopes: []projectadoption.ScopeProposal{
-			{ID: "orders", Name: "Orders", ClaimIDs: []string{"documented-cancellation"}},
-			{ID: "inventory", Name: "Inventory", ClaimIDs: []string{"inventory-deferred"}},
-		},
-		Proposal: proposal,
-	}
-	projectadoption.SealDistillation(&report)
-	reportBytes, err := projectadoption.EncodeDistillation(report)
+	schemaDigest, _, err := projectadoption.CurrentBindings(projectmodel.Schema())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := writeRecord(repo, ".markitect/drafts/distillation.json", reportBytes); err != nil {
+	loaded, err := projectadoption.LoadBrownfieldSession(repo, discovery.ID)
+	if err != nil {
 		t.Fatal(err)
 	}
-	var distillOut, distillErr bytes.Buffer
-	if code := Run([]string{"project", "distill", "--repo", repo, "--discovery", ".markitect/drafts/discovery.json", "--report", ".markitect/drafts/distillation.json", "--output", ".markitect/drafts/validated-distillation.json"}, &distillOut, &distillErr); code != 0 {
-		t.Fatalf("distill exit=%d stderr=%s", code, distillErr.String())
+	managerID := loaded.TargetContext.RootManagerID
+	line := strings.Split(strings.ReplaceAll(discovery.Evidence[0].Content, "\r\n", "\n"), "\n")[0]
+	evidence := []projectadoption.EvidenceRef{{EvidenceID: "cancellation-doc", StartLine: 1, EndLine: 1, Excerpt: line}}
+	report := makeStagedReport(discovery, target, session.Session.TargetContextDigest, schemaDigest,
+		[]projectadoption.Claim{
+			{ID: "documented-cancellation", ScopeID: "orders", Kind: "documented-intent", Method: "documentation", Statement: "The selected documentation allows cancellation before shipment.", Evidence: evidence, Uncertainty: []string{}},
+			{ID: "inventory-deferred", ScopeID: "inventory", Kind: "hypothesis", Method: "synthesis", Statement: "Inventory may be considered as a separate adoption scope.", Evidence: evidence, Uncertainty: []string{"No inventory-specific evidence was selected."}},
+		},
+		[]projectadoption.ScopeProposal{
+			{ID: "orders", Name: "Orders", ClaimIDs: []string{"documented-cancellation"}},
+			{ID: "inventory", Name: "Inventory", ClaimIDs: []string{"inventory-deferred"}},
+		},
+		[]projectadoption.ProposedFile{
+			{ScopeID: "orders", Path: ".markitect/model/commerce/sales/orders/adopted-intent.yaml", Content: "apiVersion: project.markitect.example.org/v1alpha1\nkind: Statement\nmetadata:\n  name: adopted-intent\n  namespace: commerce.sales.orders\npurpose: Records owner-adopted cancellation intent.\nspec:\n  category: rule\n  description: A confirmed order may be cancelled before shipment.\n  public: true\n  uses: []\n  requires: []\n"},
+			{ScopeID: "inventory", Path: ".markitect/model/commerce/sales/inventory/adopted-intent.yaml", Content: "apiVersion: project.markitect.example.org/v1alpha1\nkind: Statement\nmetadata:\n  name: adopted-intent\n  namespace: commerce.sales.inventory\npurpose: Proposed but deferred inventory scope.\nspec:\n  category: concept\n  description: Inventory responsibilities remain unadopted.\n  public: true\n  uses: []\n  requires: []\n"},
+		})
+	iterate := projectapp.BrownfieldIterateInput{
+		Request:  projectadoption.ReverseIterationRequest{ID: "root-pass", ManagerID: managerID, EvidenceIDs: []string{"cancellation-doc"}, DelegationEvidenceIDs: []string{}, Purpose: "Model cancellation intent", Review: "manager-review-adoption"},
+		Proposal: projectadoption.ManagerProposal{ManagerID: managerID, EvidenceIDs: []string{"cancellation-doc"}, Hierarchy: []projectadoption.ProposedManager{}, PublicContracts: []projectadoption.ManagerPublicContract{}, Report: report},
+		Integration: &projectadoption.ManagerIntegration{ManagerID: managerID, ChildProposalDigests: []string{}, ChildContracts: []projectadoption.IntegratedChildContracts{},
+			Report: report, Conflicts: []projectadoption.SessionConflict{}},
 	}
-	resolution := projectadoption.Resolution{
-		APIVersion: projectadoption.ResolutionVersion, DiscoveryDigest: discovery.Digest,
-		DistillationDigest: report.Digest, ProposalDigest: projectadoption.ProposalDigest(proposal),
-		TargetBasis: target.Digest, SchemaDigest: bindingsSchema, BuildDigest: bindingsBuild,
-		Actor: "user", AuthorityClaim: "Project owner directed adoption of Orders",
-		DecisionReference: "review-2026-10-08", Authenticated: boolPointer(false),
+	result := runBrownfieldMutation(t, repo, discovery.ID, "iterate", iterate, session.SessionDigest)
+	if len(result.Session.Iterations) != 1 || result.Session.Iterations[0].IntegrationDigest == "" {
+		t.Fatalf("iterate did not begin, propose and integrate in one step: %+v", result.Session.Iterations)
+	}
+	choices := projectapp.BrownfieldResolveInput{IterationID: "root-pass", Choices: projectapp.ResolutionChoices{
+		Actor: "user", AuthorityClaim: "Project owner directed adoption of Orders", DecisionReference: "review-2026-10-08",
 		Questions: []projectadoption.QuestionResolution{},
 		Scopes: []projectadoption.ScopeResolution{
 			{ScopeID: "orders", Status: "adopt", Reason: "Owner confirmed documented cancellation intent"},
 			{ScopeID: "inventory", Status: "defer", Reason: "No inventory-specific evidence selected"},
 		},
+	}}
+	result = runBrownfieldMutation(t, repo, discovery.ID, "resolve", choices, result.SessionDigest)
+	plan := runBrownfieldPlan(t, repo, discovery.ID, "root-pass")
+	if plan.Plan == nil || plan.Plan.Status != "partial" || len(plan.Plan.AdoptedScopes) != 1 || plan.Plan.AdoptedScopes[0] != "orders" || len(plan.Plan.DeferredScopes) != 1 || plan.Plan.DeferredScopes[0] != "inventory" {
+		t.Fatalf("adoption plan did not preserve partial scope decision: %+v", plan.Plan)
 	}
-	projectadoption.SealResolution(&resolution)
-	resolutionBytes, err := projectadoption.EncodeResolution(resolution)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := writeRecord(repo, ".markitect/drafts/resolution.json", resolutionBytes); err != nil {
-		t.Fatal(err)
-	}
-	args := []string{"project", "adopt", "--repo", repo, "--source-repo", repo, "--revision", commit, "--discovery", ".markitect/drafts/discovery.json", "--report", ".markitect/drafts/distillation.json", "--resolution", ".markitect/drafts/resolution.json"}
-	var previewOut, previewErr bytes.Buffer
-	previewArgs := append(append([]string(nil), args...), "--output", ".markitect/drafts/adoption-plan.json")
-	if code := Run(previewArgs, &previewOut, &previewErr); code != 0 {
-		t.Fatalf("adoption preview exit=%d stderr=%s", code, previewErr.String())
-	}
-	planBytes, err := readRecord(repo, ".markitect/drafts/adoption-plan.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	plan, err := projectadoption.DecodeAdoptionPlan(planBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if plan.Status != "partial" || len(plan.AdoptedScopes) != 1 || plan.AdoptedScopes[0] != "orders" || len(plan.DeferredScopes) != 1 || plan.DeferredScopes[0] != "inventory" {
-		t.Fatalf("adoption plan did not preserve partial scope decision: %+v", plan)
-	}
-	applyArgs := append(append([]string(nil), args...), "--plan", ".markitect/drafts/adoption-plan.json", "--expect", plan.PlanDigest, "--write")
-	var applyOut, applyErr bytes.Buffer
-	if code := Run(applyArgs, &applyOut, &applyErr); code != 0 {
-		t.Fatalf("adoption apply exit=%d stderr=%s", code, applyErr.String())
-	}
+	apply := writeDraft(t, repo, ".markitect/drafts/apply-partial.json", map[string]any{"apply": projectapp.BrownfieldApplyAdoptionInput{IterationID: "root-pass", ExpectedPlanDigest: plan.Plan.PlanDigest}})
+	mustCLI(t, "adopt", "apply", "--repo", repo, "--session", discovery.ID, "--input", apply, "--expect", result.SessionDigest, "--write")
 	if _, err := os.Stat(filepath.Join(repo, ".markitect", "model", "commerce", "sales", "orders", "adopted-intent.yaml")); err != nil {
 		t.Fatalf("adopted Orders model missing: %v", err)
 	}
@@ -450,7 +444,157 @@ func TestProjectAdoptionCommandsKeepDeferredScopeOutOfModel(t *testing.T) {
 	}
 }
 
-func boolPointer(value bool) *bool { return &value }
+// adoptStart previews and writes `adopt start` from a discovery request, so
+// the Host runs discovery itself, and returns the written result.
+func adoptStart(t *testing.T, repo, commit string, request projectadoption.DiscoveryRequest) projectapp.BrownfieldResult {
+	t.Helper()
+	input := writeDraft(t, repo, ".markitect/drafts/start-"+request.ID+".json", map[string]any{"start": projectapp.BrownfieldStartInput{Request: request, ScopeStatuses: []projectadoption.ScopeStatus{}}})
+	args := []string{"adopt", "start", "--repo", repo, "--revision", commit, "--input", input}
+	preview := decodeOutput[projectapp.BrownfieldResult](t, mustCLI(t, args...))
+	if preview.Status != "preview" || preview.Session == nil || preview.SessionDigest == "" {
+		t.Fatalf("adopt start preview = %+v", preview)
+	}
+	written := decodeOutput[projectapp.BrownfieldResult](t, mustCLI(t, append(args, "--expect", preview.SessionDigest, "--write")...))
+	if written.Status != "recorded" || written.SessionDigest != preview.SessionDigest || written.Session == nil {
+		t.Fatalf("adopt start write = %+v", written)
+	}
+	return written
+}
+
+const failingManagerEnv = "MARKITECT_FAILING_MANAGER_HELPER"
+
+// TestFailingManagerHelperProcess is the process executor that stands in for a
+// failed Manager; it does nothing in an ordinary test run.
+func TestFailingManagerHelperProcess(t *testing.T) {
+	if os.Getenv(failingManagerEnv) != "1" {
+		return
+	}
+	fmt.Fprintln(os.Stderr, "helper: simulated Manager failure")
+	os.Exit(3)
+}
+
+// failingManagerRepo is a committed staged project whose only Manager runs the
+// failing helper process.
+func failingManagerRepo(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	initPlan, err := projectwork.Init(root, "failing-manager", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range initPlan.Files {
+		content := file.Content
+		if file.Path == projectwork.ManifestPath {
+			content = strings.Replace(content, "coverageMode: full", "coverageMode: selected", 1)
+			// Staged (non-guided) mode: plan without an exploration scope.
+			content = strings.Replace(content, "workflowMode: guided", "workflowMode: empty", 1)
+		}
+		path := filepath.Join(root, filepath.FromSlash(file.Path))
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	managerID := core.DefinitionIdentity{APIVersion: projectmodel.APIVersion, Kind: "Manager", Name: "project-owner"}.Key()
+	runtimeConfig := projectrun.Runtime{
+		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal,
+		Agents: map[string]projectrun.Agent{managerID: {
+			Command: executable, Args: []string{"-test.run=^TestFailingManagerHelperProcess$"},
+			Model: "failing-model", ProviderVersion: "failing/1", Environment: []string{failingManagerEnv},
+			Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20,
+			Pricing: projectrun.Pricing{InputMicrosPerMillion: 1},
+		}},
+		Limits: projectrun.Limits{MaxDepth: 2, MaxStarts: 4, MaxParallel: 1, MaxDuration: projectrun.Duration(time.Minute), MaxCostMicros: 1000,
+			MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 1 << 20},
+	}
+	encoded, err := yaml.Marshal(runtimeConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(projectwork.RuntimePath)), encoded, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, root, "init", "--initial-branch=feature-failing-manager")
+	runGit(t, root, "add", "--all")
+	runGitWithEnv(t, root, testCommitEnv, "commit", "-m", "fixture")
+	return root
+}
+
+// A run whose Manager fails has completed with a durable outcome: the CLI
+// prints the partial RunReport and exits 1, not with the usage code 2.
+func TestRunPrintsPartialReportWhenAManagerFails(t *testing.T) {
+	root := failingManagerRepo(t)
+	t.Setenv(failingManagerEnv, "1") // bound into the runtime fingerprint at plan time
+	preview := decodeOutput[planReport](t, mustCLI(t, "plan", "--repo", root, "--goal", "Exercise a failing Manager"))
+	plan := decodeOutput[planReport](t, mustCLI(t, "plan", "--repo", root, "--goal", "Exercise a failing Manager", "--expect", preview.PreviewDigest, "--write"))
+	if plan.ID == "" || !plan.ExecuteAuthorized {
+		t.Fatalf("plan output: %+v", plan.PlanRecord)
+	}
+	code, out, errout := runCLI(t, "run", plan.ID, "--repo", root, "--execute")
+	status, err := projectOperations().Status(projectapp.RunOperation{Root: root, RunID: plan.ID})
+	if err != nil || (status.Run.Status != projectrun.StatusFailed && status.Run.Status != projectrun.StatusBlocked) {
+		t.Fatalf("durable run is not failed/blocked; fixture problem: %+v %v (run exit=%d stderr=%s)", status.Run.Status, err, code, errout)
+	}
+	if report := decodeOutput[projectrun.RunReport](t, []byte(out)); report.ID != plan.ID || report.Status != status.Run.Status {
+		t.Fatalf("partial report id=%q status=%q, want %q %q", report.ID, report.Status, plan.ID, status.Run.Status)
+	}
+	if code != 1 || !strings.Contains(errout, "markitect run:") {
+		t.Fatalf("failed Manager run exit=%d stderr=%s, want 1 with the error on stderr", code, errout)
+	}
+
+	summary := decodeOutput[overview](t, mustCLI(t, "status", "--repo", root))
+	if len(summary.Runs) != 1 || summary.Runs[0].ID != plan.ID || summary.Runs[0].Status != status.Run.Status || summary.Runs[0].Next != "repair" {
+		t.Fatalf("status overview runs = %+v", summary.Runs)
+	}
+	if summary.Project.Name != "failing-manager" || summary.Project.Status != "succeeded" || !summary.Runtime.Configured {
+		t.Fatalf("status overview project=%+v runtime=%+v", summary.Project, summary.Runtime)
+	}
+	if one := decodeOutput[projectrun.StatusReport](t, mustCLI(t, "status", plan.ID, "--repo", root)); one.Plan.ID != plan.ID || one.Run.Status != status.Run.Status {
+		t.Fatalf("status RUN = plan %q run %q", one.Plan.ID, one.Run.Status)
+	}
+}
+
+// plan --write persists exactly the reviewed preview: the previewDigest is
+// stable across previews, and a different digest fails as stale.
+func TestPlanWriteIsBoundToThePreviewDigest(t *testing.T) {
+	root := failingManagerRepo(t)
+	args := []string{"plan", "--repo", root, "--goal", "Bind the plan to its preview"}
+	first := decodeOutput[planReport](t, mustCLI(t, args...))
+	second := decodeOutput[planReport](t, mustCLI(t, args...))
+	if first.PreviewDigest == "" || first.PreviewDigest != second.PreviewDigest {
+		t.Fatalf("previewDigest is not stable across previews: %q != %q", first.PreviewDigest, second.PreviewDigest)
+	}
+	if first.ExecuteAuthorized {
+		t.Fatalf("preview is marked as persisted by an authorized caller: %+v", first.PlanRecord)
+	}
+	assertRuns := func(want int) []projectrun.RunSummary {
+		t.Helper()
+		runs, err := projectrun.ListRuns(root)
+		if err != nil || len(runs) != want {
+			t.Fatalf("persisted runs = %+v err=%v, want %d", runs, err, want)
+		}
+		return runs
+	}
+	assertRuns(0)
+	code, out, errout := runCLI(t, append(args, "--expect", "sha256:"+strings.Repeat("0", 64), "--write")...)
+	if code != 2 || out != "" || !strings.Contains(errout, "markitect plan:") || !strings.Contains(errout, "stale") {
+		t.Fatalf("plan write with a wrong digest exit=%d stdout=%s stderr=%s", code, out, errout)
+	}
+	assertRuns(0)
+	written := decodeOutput[planReport](t, mustCLI(t, append(args, "--expect", first.PreviewDigest, "--write")...))
+	if written.ID == "" || !written.ExecuteAuthorized || written.PreviewDigest != first.PreviewDigest {
+		t.Fatalf("plan write = id %q authorized %v previewDigest %q", written.ID, written.ExecuteAuthorized, written.PreviewDigest)
+	}
+	if runs := assertRuns(1); runs[0].ID != written.ID || runs[0].Status != projectrun.StatusPlanned {
+		t.Fatalf("persisted run = %+v, want plan %s", runs[0], written.ID)
+	}
+}
 
 func gitOutput(t *testing.T, root string, args ...string) string {
 	t.Helper()
@@ -498,7 +642,7 @@ func copyProjectWorld(t *testing.T) string {
 	}
 	runGit(t, destination, "init", "--initial-branch=feature-project")
 	runGit(t, destination, "add", ".")
-	runGitWithEnv(t, destination, []string{"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.invalid", "GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.invalid"}, "commit", "-m", "fixture")
+	runGitWithEnv(t, destination, testCommitEnv, "commit", "-m", "fixture")
 	return destination
 }
 

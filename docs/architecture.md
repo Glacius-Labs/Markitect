@@ -26,7 +26,7 @@ flowchart LR
 
 - The committed model is the accepted specification for its revision under the repository's policy. Drafts are proposals.
 - Revisions, digests, reports and supplied provenance bind bytes. They do not authenticate human approval.
-- A write that needs a preview is bound to the preview's digest and uses compare-and-swap. `project_deliver` carries an authorized scope through plan, run, verify, preflight and Apply. It grants no merge, release, deployment or acceptance authority.
+- A write that needs a preview is bound to the preview's digest and uses compare-and-swap. `deliver` carries an authorized scope through plan, run, verify, preflight and Apply. It grants no merge, release, deployment or acceptance authority.
 - Owned workspaces and agent settings are not an operating-system sandbox. Telemetry of native child processes is partial ([candidate workspaces](project-operations.md#candidate-workspaces-and-recovery)).
 - Technical checks, semantic evidence and owner acceptance stay separate. The [A01 validation record](validation/a01-native-smoke-20261010.md) holds the native result.
 
@@ -87,15 +87,11 @@ The application layer holds the product's use cases and the surfaces that expose
 - `projectadoption` runs Brownfield adoption: fixed-snapshot evidence, Manager proposals and a model-only adoption plan.
 - `projectonboarding` writes project-local guidance and skills for Codex and Claude Code.
 - `projectapp` is the shared facade over these use cases and the runtime. The MCP server calls only this facade.
-- `projectcli` is the `markitect project` command line, and `mcp` is the stdio MCP server ([project operations](project-operations.md)).
+- `projectcli` holds the verb table behind the `markitect` command line and its MCP tools, and `mcp` is the stdio MCP adapter ([project operations](project-operations.md)).
 - `releasecli` is the command interface of `markitect-release`.
 
 Known problems:
 
-- The CLI composes the runtime itself instead of calling the facade. `projectcli/run.go` calls `projectrun.Run`, `Resume`, `Repair`, `Verify`, `FullVerify` and `Apply` and builds the transport invoker and workspace service. `projectcli/project_deliver.go` calls `projectrun.Deliver` (CLI-03).
-- `runAction` in `projectcli/run.go` has almost 500 lines (CLI-03).
-- CLI commands (`projectcli/options.go`) and MCP tools (`mcp/tools.go`, `projectcli/mcp.go`) are declared separately, and nothing checks that they agree (CLI-02, TEST-02).
-- Two Brownfield paths exist side by side: the file pipeline (`discover`, `distill`, `resolve`, `adopt`) and the session ledger (`brownfield`). The [verb table](design/verb-table.md#adoption-stages) keeps only the ledger (CLI-02).
 - `projectadoption` runs its Managers through its own stack and ledger on `agentexec` (`manager_run.go`, `manager_run_ledger.go`), separate from `projectrun` (ARCH-15).
 
 ## Runtime layer

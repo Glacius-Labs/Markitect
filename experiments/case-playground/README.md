@@ -21,7 +21,7 @@ code is to change and continue, and how much work it took.
 - **Conventional** gets clear project rules (`AGENTS.md` plus a short working-method
   fragment) and works with planning, tests, native subagents, review and repair. It is
   not weakened and does not imitate Markitect.
-- **Markitect** gets the product installed as a user would (project init, onboarding,
+- **Markitect** gets the product installed as a user would (init, onboarding,
   runtime setup, MCP server) and works with its normal workflow, including the inner
   roles it schedules. Their cost counts. The agent, not the harness, writes the project
   model.
@@ -59,7 +59,7 @@ observed facts, likely explanations and untested ideas apart.
 | Evidence | Stands for |
 |---|---|
 | Public checks per wave and at the end; the candidate's own tests | Outcome quality, the same for both arms |
-| `markitect project check` on the final state | Markitect conformance, reported apart; a valid model is not correct software |
+| `markitect check` on the final state | Markitect conformance, reported apart; a valid model is not correct software |
 | Setup time and every setup command | Cost of installing the method |
 | Agent time, exit, timeouts, commands, MCP and subagent calls, commits on `main` | Effort per wave; unknown stays unknown, never zero |
 | Tokens per wave: outer session and all recorded sessions (subagents, inner roles) | Cost; "all" is a lower bound |
@@ -119,7 +119,7 @@ The last line reads `smoke: passed` when every check above it is `[ok]`:
 - `fake`: the agent could not open the results folder in any wave;
 - `fake-claude`: a throwaway token reached the agent, was redacted where the fake printed
   it and is nowhere in the run folder; the `CLAUDE.md` router was added;
-- Markitect: `markitect project check` ran at the end, the roles were read from
+- Markitect: `markitect check` ran at the end, the roles were read from
   `.markitect/runtime.yaml`, and `host.json` holds the resolved `sourceRepo` and commit.
 
 It says nothing about quality. The fake agent only writes `FAKE_S<n>.md`, so the public
@@ -202,7 +202,7 @@ repeat this, remove the run folder and the `compare-*.md` file next to it; a rep
 | `playground/methods.py` | Installs the method: the Conventional fragment or the Markitect product setup. Reads Markitect's roles from `.markitect/runtime.yaml`. |
 | `playground/codex_agent.py` | Codex as outer agent (config, command, events, session records), and the runner for every process as user `agent`, including kill-all. |
 | `playground/claude_agent.py` | Claude Code as outer agent: command, MCP config, token in the environment only, redaction, stream and transcript parsing. |
-| `playground/assess.py` | Public checks on a scratch copy without `.git`; the final assessment adds the candidate's own tests and `markitect project check`. |
+| `playground/assess.py` | Public checks on a scratch copy without `.git`; the final assessment adds the candidate's own tests and `markitect check`. |
 | `playground/report.py` | A run's `report.json` and `report.md`. `python3 -m playground.report <results>` rebuilds them. |
 | `playground/evaluate.py` | `assess`: starts the assessment container; inside, checks, holdouts, diff profile, classification, product findings and reviews. |
 | `playground/reviewers.py` | Codex and Claude reviewers: prompt, input bundle, commands, schema validation, agreement. |
@@ -234,7 +234,7 @@ RUN CONTAINER mpg-<id>    /in = inputs (read-only)    /out = <out>/results
   |     snapshot          -> audit/snapshot-S<n>
   |     public checks     -> stations/S<n>/checks.json   (hidden from the agent)
   |     release next wave (rewrite .study/station.json)
-  |  freeze; final checks, own tests, markitect project check; report
+  |  freeze; final checks, own tests, markitect check; report
   v
 HOST  remove container; hand results/ back to you; write host.json
 
@@ -416,7 +416,7 @@ The run report classifies the run; the assessment classifies the run and each wa
 |---|---|---|
 | `harness` | Our code | Runner error, failed snapshot or wave release, harness error files, host timeout or interruption. |
 | `environment` | Docker, network, provider, logins | Missing login, no session id, auth or rate-limit errors, a wave without any agent activity, a failed container start or wait. |
-| `product` | Markitect | Setup blocked by a product command, an MCP call that never finished, `markitect project check` that could not run. |
+| `product` | Markitect | Setup blocked by a product command, an MCP call that never finished, `markitect check` that could not run. |
 | `none` | No infrastructure cause | Completed, or the time budget was used up. |
 
 With several causes, `harness` wins over `environment`, which wins over `product`; the

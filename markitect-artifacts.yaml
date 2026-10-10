@@ -484,8 +484,6 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/cli/project_dispatch_test.go
       owner: project-world-implementation
-    - path: src/internal/host/projectcli/options.go
-      owner: project-world-implementation
     - path: src/internal/host/projectcli/options_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/setup_options_test.go
@@ -662,19 +660,13 @@ spec:
       owner: project-world-live-validation
     - path: src/internal/host/projectadoption/target_context.go
       owner: project-world-implementation
-    - path: src/internal/host/projectcli/resolution.go
-      owner: project-world-implementation
     - path: src/internal/host/projectcli/resolution_test.go
       owner: project-world-implementation
     - path: experiments/project-world-live/brownfield.py
       owner: project-world-live-validation
-    - path: src/internal/host/projectcli/distill_basis_test.go
-      owner: project-world-implementation
     - path: src/internal/host/projectcli/schema_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/repair_test.go
-      owner: project-world-implementation
-    - path: src/internal/host/projectcli/distill_receipt_test.go
       owner: project-world-implementation
     - path: docs/design/project-world/native-work-item-delivery.md
       owner: project-world-implementation
@@ -696,13 +688,7 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectbriefing/testmain_test.go
       owner: project-world-implementation
-    - path: src/internal/host/projectcli/project_brownfield.go
-      owner: project-world-implementation
     - path: src/internal/host/projectcli/project_brownfield_test.go
-      owner: project-world-implementation
-    - path: src/internal/host/projectcli/project_deliver.go
-      owner: project-world-implementation
-    - path: src/internal/host/projectcli/project_explore.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/project_explore_test.go
       owner: project-world-implementation
@@ -743,8 +729,6 @@ spec:
     - path: src/internal/host/projectadoption/process_lock_unix.go
       owner: project-world-implementation
     - path: src/internal/host/projectadoption/process_lock_windows.go
-      owner: project-world-implementation
-    - path: src/internal/host/projectcli/project_brownfield_run.go
       owner: project-world-implementation
     - path: docs/validation/project-native-delivery-2026-10-09.md
       owner: project-world-validation
@@ -811,11 +795,25 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectapp/onboarding.go
       owner: project-world-implementation
-    - path: src/internal/host/projectcli/mcp.go
+    - path: src/internal/host/projectapp/adoption_resolution.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectapp/adoption_resolution_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/mcp_integration_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/testmain_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/main.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/status.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/verbs.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/verbs_adopt.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/verbs_delivery.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/verbs_model.go
       owner: project-world-implementation
     - path: src/internal/host/projectrun/scheduling.go
       owner: project-world-implementation
@@ -916,6 +914,8 @@ spec:
     - path: src/internal/host/projectonboarding/newnative_workflow_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectonboarding/testmain_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectonboarding/onboarding_crlf_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectrun/coordinator.go
       owner: project-world-implementation

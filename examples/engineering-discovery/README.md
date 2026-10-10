@@ -22,7 +22,7 @@ git -c user.name='Discovery Example' -c user.email='example@invalid' commit -m '
 $revision = git rev-parse HEAD
 Pop-Location
 
-go run ./src/cmd/markitect context --repo $project --revision $revision --run context-run.yaml > .\context-report.yaml
+go run ./src/cmd/markitect-legacy context --repo $project --revision $revision --run context-run.yaml > .\context-report.yaml
 ```
 
 The report contains the tool version and digest, full revision, snapshot digest, ContextRun manifest hash, selection hash, and a hash/status for each selected path. Copy those exact values into `evidence.yaml`; the helper uses the recorded tool identity to recompute the same context digest. Review the captured source excerpts before using them. For another repository, create a separate run and keep its source identity and hashes separate in the outer ledger. Review comments or conversations are eligible only as explicitly exported redacted UTF-8 evidence with an immutable source URL/ID and date; this example makes no provider calls.

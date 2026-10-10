@@ -8,12 +8,12 @@ Markitect is model-first development with delegated realization. People maintain
 2. Resolve a fixed BASE commit and load this repository's engineering context:
 
    ```text
-   go run ./src/cmd/markitect check --repo . --revision BASE
-   go run ./src/cmd/markitect context --repo . --revision BASE --namespace development --kind Skill --name engineering-change
+   go run ./src/cmd/markitect-legacy check --repo . --revision BASE
+   go run ./src/cmd/markitect-legacy context --repo . --revision BASE --namespace development --kind Skill --name engineering-change
    ```
 
    The context contains the [engineering-change Skill](.markitect/areas/development/engineering-change.skill.yaml), the [Markitect-first Change workflow](src/internal/host/embedded/resources/workflow-markitect-first-change.yaml), the [repository rules](.markitect/areas/development/repository-boundaries.rule.yaml) and the [document owners](.markitect/areas/development/document-owners.text.yaml). [The workflow guide](docs/markitect-first.md) explains how to classify and complete a change. Implementation-only work needs no model change.
-3. If you change a file under `.markitect/`, regenerate its views with `go run ./src/cmd/markitect render --repo . --write`. Do not edit generated files.
+3. If you change a file under `.markitect/`, regenerate its views with `go run ./src/cmd/markitect-legacy render --repo . --write`. Do not edit generated files.
 4. Before you open a pull request, run the checks in [CONTRIBUTING](CONTRIBUTING.md#verify-a-change).
 
 These commands belong to the earlier Project/Domain line, which still runs this repository's own checks. ARCH-07 moves Markitect onto its own project model.

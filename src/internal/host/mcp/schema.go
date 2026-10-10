@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"reflect"
 	"strconv"
@@ -15,7 +16,11 @@ import (
 )
 
 // Schemas derive from the DTOs actually decoded, avoiding a second operation contract.
-func schema(t reflect.Type) map[string]any {
+func schema(t reflect.Type) map[string]any { return schemaOf(t, map[reflect.Type]bool{}) }
+
+// schemaOf describes a recursive struct type's nested occurrence as any JSON
+// value instead of expanding it forever.
+func schemaOf(t reflect.Type, open map[reflect.Type]bool) map[string]any {
 	// RawMessage emits its underlying JSON value, unlike ordinary []byte's
 	// base64 string. The shared service owns validation of this embedded value.
 	if t == reflect.TypeFor[json.RawMessage]() {
@@ -31,38 +36,52 @@ func schema(t reflect.Type) map[string]any {
 		return map[string]any{"type": "string", "enum": []string{string(projectrun.AppServerEnvironmentModeInherit)}}
 	}
 	if t.Kind() == reflect.Pointer {
-		return map[string]any{"anyOf": []any{schema(t.Elem()), map[string]any{"type": "null"}}}
+		return map[string]any{"anyOf": []any{schemaOf(t.Elem(), open), map[string]any{"type": "null"}}}
 	}
 	if t == reflect.TypeFor[time.Time]() {
 		return map[string]any{"type": "string", "format": "date-time"}
 	}
 	switch t.Kind() {
 	case reflect.Struct:
+		if open[t] {
+			return map[string]any{}
+		}
+		open[t] = true
+		defer delete(open, t)
 		p := map[string]any{}
 		required := []string{}
 		for i := 0; i < t.NumField(); i++ {
 			f := t.Field(i)
-			if !f.IsExported() {
-				continue
-			}
 			tag := strings.Split(f.Tag.Get("json"), ",")
 			name := tag[0]
 			if name == "-" {
 				continue
 			}
+			// encoding/json promotes the fields of an untagged embedded struct.
+			if f.Anonymous && name == "" && f.Type.Kind() == reflect.Struct {
+				embedded := schemaOf(f.Type, open)
+				for key, value := range embedded["properties"].(map[string]any) {
+					p[key] = value
+				}
+				required = append(required, toStrings(embedded["required"])...)
+				continue
+			}
+			if !f.IsExported() {
+				continue
+			}
 			if name == "" {
 				name = f.Name
 			}
-			p[name] = schema(f.Type)
+			p[name] = schemaOf(f.Type, open)
 			if !strings.Contains(f.Tag.Get("json"), ",omitempty") {
 				required = append(required, name)
 			}
 		}
 		return map[string]any{"type": "object", "properties": p, "required": required, "additionalProperties": false}
 	case reflect.Map:
-		return map[string]any{"type": []string{"object", "null"}, "additionalProperties": schema(t.Elem())}
+		return map[string]any{"type": []string{"object", "null"}, "additionalProperties": schemaOf(t.Elem(), open)}
 	case reflect.Slice, reflect.Array:
-		return map[string]any{"type": []string{"array", "null"}, "items": schema(t.Elem())}
+		return map[string]any{"type": []string{"array", "null"}, "items": schemaOf(t.Elem(), open)}
 	case reflect.String:
 		return map[string]any{"type": "string"}
 	case reflect.Bool:
@@ -88,7 +107,7 @@ func decodeTyped(raw []byte, s map[string]any, out any) error {
 	if _, err = d.Token(); err != io.EOF {
 		return errors.New("trailing JSON arguments")
 	}
-	if err = validate(v, s); err != nil {
+	if err = validate(v, s, ""); err != nil {
 		return err
 	}
 	d = json.NewDecoder(bytes.NewReader(raw))
@@ -143,14 +162,17 @@ func uniqueValue(d *json.Decoder) (any, error) {
 	}
 	return nil, errors.New("invalid JSON delimiter")
 }
-func validate(v any, s map[string]any) error {
+
+// validate reports the failing field path; adapters decide whether the text
+// is shown, and it never contains argument values.
+func validate(v any, s map[string]any, path string) error {
 	if variants, ok := s["anyOf"].([]any); ok {
 		for _, x := range variants {
-			if validate(v, x.(map[string]any)) == nil {
+			if validate(v, x.(map[string]any), path) == nil {
 				return nil
 			}
 		}
-		return errors.New("invalid nullable value")
+		return schemaError(path, "has an invalid value")
 	}
 	typ, _ := s["type"].(string)
 	if types, ok := s["type"].([]string); ok {
@@ -159,81 +181,95 @@ func validate(v any, s map[string]any) error {
 		}
 		typ = types[0]
 	}
-	bad := errors.New("arguments do not match closed tool schema")
 	if values, ok := s["enum"].([]string); ok {
 		text, ok := v.(string)
 		if !ok {
-			return bad
+			return schemaError(path, "must be one of "+strings.Join(values, ", "))
 		}
 		for _, value := range values {
 			if text == value {
 				return nil
 			}
 		}
-		return bad
+		return schemaError(path, "must be one of "+strings.Join(values, ", "))
 	}
 	switch typ {
 	case "object":
 		m, ok := v.(map[string]any)
 		if !ok {
-			return bad
+			return schemaError(path, "must be an object")
 		}
 		p, _ := s["properties"].(map[string]any)
 		for _, r := range toStrings(s["required"]) {
 			if _, ok := m[r]; !ok {
-				return bad
+				return schemaError(join(path, r), "is required")
 			}
 		}
 		for k, x := range m {
 			if child, ok := p[k]; ok {
-				if err := validate(x, child.(map[string]any)); err != nil {
+				if err := validate(x, child.(map[string]any), join(path, k)); err != nil {
 					return err
 				}
 			} else if child, ok := s["additionalProperties"].(map[string]any); ok {
-				if err := validate(x, child); err != nil {
+				if err := validate(x, child, join(path, k)); err != nil {
 					return err
 				}
 			} else {
-				return bad
+				return schemaError(join(path, k), "is not a known field")
 			}
 		}
 	case "array":
 		a, ok := v.([]any)
 		if !ok {
-			return bad
+			return schemaError(path, "must be an array")
 		}
-		for _, x := range a {
-			if err := validate(x, s["items"].(map[string]any)); err != nil {
+		for i, x := range a {
+			if err := validate(x, s["items"].(map[string]any), path+"["+strconv.Itoa(i)+"]"); err != nil {
 				return err
 			}
 		}
 	case "string":
 		if _, ok := v.(string); !ok {
-			return bad
+			return schemaError(path, "must be a string")
 		}
 	case "boolean":
 		if _, ok := v.(bool); !ok {
-			return bad
+			return schemaError(path, "must be a boolean")
 		}
 	case "integer":
 		n, ok := v.(json.Number)
 		if !ok {
-			return bad
+			return schemaError(path, "must be an integer")
 		}
 		if _, err := n.Int64(); err != nil {
 			if _, err := strconv.ParseUint(string(n), 10, 64); err != nil {
-				return bad
+				return schemaError(path, "must be an integer")
 			}
 		}
 	case "number":
 		if _, ok := v.(json.Number); !ok {
-			return bad
+			return schemaError(path, "must be a number")
 		}
 	case "null":
 		if v != nil {
-			return bad
+			return schemaError(path, "must be null")
 		}
 	}
 	return nil
 }
+
+func join(path, field string) string {
+	if path == "" {
+		return field
+	}
+	return path + "." + field
+}
+
+func schemaError(path, problem string) error {
+	if path == "" {
+		path = "arguments"
+	}
+	return fmt.Errorf("arguments do not match closed tool schema: %s %s", path, problem)
+}
+
 func toStrings(v any) []string { r, _ := v.([]string); return r }

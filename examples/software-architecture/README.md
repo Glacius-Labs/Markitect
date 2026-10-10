@@ -15,10 +15,10 @@ The package 1.0.0 and 1.1.0 archives are checked in and pinned by exact version,
 From the Markitect repository root:
 
 ```powershell
-go run ./src/cmd/markitect format --repo examples/software-architecture
-go run ./src/cmd/markitect check --repo examples/software-architecture
-go run ./src/cmd/markitect model --repo examples/software-architecture
-go run ./src/cmd/markitect context --repo examples/software-architecture --namespace engineering --kind Skill --name implement-order
+go run ./src/cmd/markitect-legacy format --repo examples/software-architecture
+go run ./src/cmd/markitect-legacy check --repo examples/software-architecture
+go run ./src/cmd/markitect-legacy model --repo examples/software-architecture
+go run ./src/cmd/markitect-legacy context --repo examples/software-architecture --namespace engineering --kind Skill --name implement-order
 go test ./src/harness/examples -run SoftwareArchitecture -count=1
 ```
 

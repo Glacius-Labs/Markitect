@@ -653,13 +653,12 @@ func TestModelFirstWorkflowCoversShortWorkItemsReadinessAndBrownfieldAdoption(t 
 	for _, required := range []string{
 		"The selected project is .markitect/project.yaml",
 		"ordinary Work Item",
-		"project_explore",
-		"project_readiness",
-		"project_edit",
-		"project_brownfield",
-		"project_brownfield_run",
-		"project_deliver",
-		"project_status",
+		"with explore and write:false",
+		"using ready",
+		"Use edit to preview",
+		"Use adopt and its run stage",
+		"use deliver to advance",
+		"recover with status, resume, or repair",
 		"committed-model policy",
 		"Initial adoption never changes application source",
 		"Apply does not merge, publish, or deploy",
@@ -670,7 +669,7 @@ func TestModelFirstWorkflowCoversShortWorkItemsReadinessAndBrownfieldAdoption(t 
 			t.Errorf("shared workflow is missing required guidance %q", required)
 		}
 	}
-	for _, obsolete := range []string{"Use the native CLI stages below", "brownfield-action start", "markitect project deliver --repo", "--execution-mode native-work", "helperLimit"} {
+	for _, obsolete := range []string{"Use the native CLI stages below", "brownfield-action start", "markitect project deliver --repo", "--execution-mode native-work", "helperLimit", "project_", "project mcp"} {
 		if strings.Contains(workflow, obsolete) {
 			t.Errorf("shared workflow retains obsolete CLI/worker guidance %q", obsolete)
 		}
@@ -688,7 +687,7 @@ func TestRenderedExploreRecordDecodesAndCreatesBoundPreview(t *testing.T) {
 	}
 	workflow := fileFor(t, Plan{Files: files}, workflowPath).Content
 	fence := strings.Repeat(string(rune(96)), 3)
-	marker := "Minimal new exploration input record (pass as record to project_explore):\n\n" + fence + "json\n"
+	marker := "Minimal new exploration input record (pass as input to the explore tool):\n\n" + fence + "json\n"
 	start := strings.Index(workflow, marker)
 	if start < 0 {
 		t.Fatal("shared workflow is missing its minimal Explore JSON example")
@@ -739,8 +738,8 @@ func TestRenderedExploreRecordDecodesAndCreatesBoundPreview(t *testing.T) {
 		t.Fatalf("CreatePreview did not bind the new active record: %#v", preview)
 	}
 	for _, required := range []string{
-		"project_explore and write:false",
-		"write:true and expectedDigest",
+		"explore and write:false",
+		"write:true and expect.",
 		"returned writePlan.digest",
 		"Minimal new exploration input record",
 		"Technical checks, semantic evidence, and human acceptance are distinct",
