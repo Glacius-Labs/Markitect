@@ -92,6 +92,81 @@ func TestEnsureAcceptedHistoryAdvancesCodeOnlyAndIgnoresWorkingDraft(t *testing.
 	}
 }
 
+func TestEnsureAcceptedHistorySurvivesCodeOnlyTopicBranchAndNoFFMerge(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "checkout", "-b", "topic")
+	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("Code-only topic change.\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "add", "README.md")
+	gitCommitTest(t, root, "code-only topic change")
+	topic := gitOutputTest(t, root, "rev-parse", "HEAD")
+	if _, err := EnsureAcceptedHistory(root, topic); err != nil {
+		t.Fatalf("precondition: ensure on topic: %v", err)
+	}
+	gitTest(t, root, "checkout", mainBranch)
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Errorf("ensure back on %s at unchanged model %s: %v", mainBranch, changed, err)
+	}
+	gitTest(t, root, "merge", "--no-ff", "-m", "merge topic", "topic")
+	merged := gitOutputTest(t, root, "rev-parse", "HEAD")
+	if _, err := EnsureAcceptedHistory(root, merged); err != nil {
+		t.Errorf("ensure after --no-ff merge %s: %v", merged, err)
+	}
+	state, _, err := Read(root)
+	if err != nil || state.History == nil || state.History.Revision != merged || len(state.Briefings) != 1 {
+		t.Fatalf("merged cursor state=%#v err=%v", state.History, err)
+	}
+}
+
+func TestEnsureAcceptedHistoryRejectsModelChangeAcceptedOnlyOnDivergedTopic(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "checkout", "-b", "topic")
+	modelPath := filepath.Join(root, ".markitect", "model", "commerce", "sales", "orders", "cancel-before-shipped.yaml")
+	content, err := os.ReadFile(modelPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	topicModel := strings.Replace(string(content), "before shipment", "prior to fulfillment", 1)
+	if topicModel == string(content) {
+		t.Fatal("could not create topic model change")
+	}
+	if err := os.WriteFile(modelPath, []byte(topicModel), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "add", ".markitect/model/commerce/sales/orders/cancel-before-shipped.yaml")
+	gitCommitTest(t, root, "model change accepted only on topic")
+	topic := gitOutputTest(t, root, "rev-parse", "HEAD")
+	if receipt, err := EnsureAcceptedHistory(root, topic); err != nil || len(receipt.Bundles) != 1 {
+		t.Fatalf("precondition: topic model change was not briefed: receipt=%#v err=%v", receipt, err)
+	}
+	gitTest(t, root, "checkout", mainBranch)
+	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("Main diverges.\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "add", "README.md")
+	gitCommitTest(t, root, "main diverges")
+	diverged := gitOutputTest(t, root, "rev-parse", "HEAD")
+	_, before, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := EnsureAcceptedHistory(root, diverged); !errors.Is(err, ErrAmbiguousHistory) {
+		t.Fatalf("model change accepted only on a diverged topic was dropped or rebased: %v", err)
+	}
+	if _, after, err := Read(root); err != nil || after != before {
+		t.Fatalf("rejected ambiguous history changed the store: before=%s after=%s err=%v", before, after, err)
+	}
+}
+
 func TestEnsureAcceptedHistoryPreservesRevertAndRejectsManualAggregateWrite(t *testing.T) {
 	root, baseline, changed := committedModelFixture(t)
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
