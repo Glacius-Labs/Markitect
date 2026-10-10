@@ -6,6 +6,8 @@ Stand: 10. Oktober 2026. Version: Entwurf 0.1. Status: zur gemeinsamen Diskussio
 
 Der Nutzer hat diesen Entwurf beauftragt; damit sind seine Einzelvorschläge noch nicht angenommen. Er entwickelt das [vereinbarte Grundmodell](README.md) und die [Arbeitsnotiz](system-description-notes.md) weiter. Er ersetzt weder [Vision](../../vision.md), [Architektur](../../architecture.md), [Konzeptregister](../../concepts/register.md) noch ein vorhandenes Schema. Es wurden keine Produktfunktionen implementiert, Tests oder Studien gestartet.
 
+Eine [separate C#-Ausarbeitung](csharp-model-design.md) konkretisiert `SoftwareSystem`, `Repository` und ihre Beziehungen am Bibliotheksbeispiel. Sie ist ebenfalls ein Entwurf und legt weder das Autorenformat noch neue Core-Typen fest.
+
 ## 1. Gegenstand und Bedeutung des Modells
 
 ### 1.1 Der geltende Systemstand

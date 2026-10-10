@@ -33,3 +33,5 @@ Auf ausdrücklichen Wunsch des Nutzers ist der Arbeitsansatz mit allgemeinen Bes
 ## Beauftragter Entwurf
 
 Der [Entwurf der kanonischen Beschreibungssprache](canonical-model-draft.md) beschreibt Inhalte, Ausdrucksmittel, Hierarchie und Beziehungen, Realisierung ohne manuelle Aufzählung jeder Datei sowie Verify als mögliche Rückkopplung. Abschnitt 2 hält das vom Nutzer gewünschte Vorgehen fest. Status: Entwurf zur Diskussion; seine Einzelvorschläge sind noch nicht angenommen.
+
+Der [konkrete C#-Modellierungsentwurf](csharp-model-design.md) arbeitet `SoftwareSystem` und `Repository` am Bibliotheksbeispiel aus. Er enthält ihre Unterobjekte, Beziehungen, Invarianten, vorgeschlagene Dienstgrenzen und Patterns sowie die Ableitung eines Modellvertrags und einer Marketingbotschaft. Die zugehörigen C#-Dateien sind illustrative Dokumentationsartefakte, kein Produktcode. Auch diese Vorschläge sind noch nicht angenommen.
