@@ -399,7 +399,7 @@ native_acceptance:
     cumulative_known_provider_starts: 11
     cumulative_estimated_cost_micros: 4038772
     cost_accounting: partial_observed_lower_bound_not_invoice
-  latest_actual:
+  attempt_11:
     batch_id: a01-semantic-b9d9dc1428754b70a5e8d5cd9e9839e4
     attempt_number: 11
     native_run_numbers: [12, 13]
@@ -438,6 +438,61 @@ native_acceptance:
     cumulative_known_provider_starts: 13
     cumulative_estimated_cost_micros: 4787145
     cost_accounting: partial_observed_lower_bound_not_invoice
+  attempt_12:
+    batch_id: a01-phase-d65ac77af6bc4cb9b6eb3092c040655b
+    attempt_number: 12
+    status: failed_not_passed
+    source_revision: 96424410c87366072adf16688aa56c38aba246a2
+    binary_sha256: 4882c05044ffb40f76f8953b9bf7cae95344849138de764035b658cc7e5525dc
+    plan_id: b2085f5143608cd8e464ddc4cb496d69
+    private_record_sha256: d8c7388c71f9f094620fdb8a36c5d9a3b0ea29229d6886f67759272db36a9bae
+    root_and_docs_work_reviews: pass
+    source_work: complete
+    source_review: rejected_by_host_report_status_findings_consistency
+    source_review_provider_status: pass_with_two_findings
+    helper_starts: 2
+    manager_overlap_seconds: 102.7280776
+    verify_apply_recovery_observed: false
+    role_start_requests: 8
+    provider_starts: 8
+    attempt_estimated_cost_micros: 1633731
+    cumulative_known_role_start_requests: 24
+    cumulative_known_provider_starts: 21
+    cumulative_estimated_cost_micros: 6420876
+    cost_accounting: partial_observed_lower_bound_not_invoice
+  latest_actual:
+    batch_id: a01-verdict-fb7b6fe1d6fe456fa94c9321624d2779
+    attempt_number: 13
+    status: failed_not_passed
+    source_revision: 5ad9e069ee6252ba9a9dd66b8986383ecec3b7f4
+    binary_sha256: 88234adb116d7c8b0b6c3eb35ece88704d66c6ac33d7b05aca3aeb4e49efa6ea
+    plan_id: 3a021f942d3b80f287ec9000d2af1632
+    plan_sha256: 309a8e85f390fbb14a3d448a1e96e16bf61286fa1ed7f7570e99791a5863e374
+    private_record_sha256: 3dc8f9b4e57d3a1687062e5be9fe4cb28651eb003d780c4e8690c60d66c128c3
+    observer_id: d8fe20710f634e65aaf993885e406ce8
+    observer_exit_code: 2
+    observer_boundary_observed: false
+    root_report: partial
+    root_write_failure: README write denied by Package LocalCache path
+    reviewer_failure: prose finding lacked an exact supplied token; strict candidate-scope guard correctly rejected it
+    child_manager_starts: 0
+    helper_starts: 0
+    tests_run: false
+    verify_apply_recovery_observed: false
+    role_start_requests: 2
+    provider_starts: 2
+    input_tokens: 494826
+    output_tokens: 4129
+    cached_input_tokens: 401920
+    attempt_estimated_cost_micros: 503084
+    cumulative_known_role_start_requests: 26
+    cumulative_known_provider_starts: 23
+    cumulative_estimated_cost_micros: 6923960
+    cost_accounting: partial_observed_lower_bound_not_invoice
+    post_attempt_source_correction: b8ee41030ec19c131366ee1f994cc6d3a65ced7c
+    post_attempt_source_validation: native_focused_test_passed_0_291s_review_focused_test_passed_3_397s_appserver_package_passed_165_576s_before_common_cwd_and_wording_extension
+    post_attempt_independent_review: closed
+    post_attempt_a01_acceptance: not_established
   next_batch:
     status: fresh_clean_binary_readiness_and_plan_pins_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
@@ -445,9 +500,9 @@ native_acceptance:
     new_batch_pins: none
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
-    no_thirteenth_actual_claimed: true
+    no_fourteenth_actual_claimed: true
     owner_repair_in_progress: false
-    owner_repair_status: completed_b6cc4b3e_with_focused_tests_and_independent_review
+    owner_repair_status: completed_b8ee4103_with_focused_tests_and_independent_review
     repair: cleanly freeze the reviewed correction then refresh normal readiness and Plan bindings
     next_shared_native_defaults: { memories: false, login: false }
     intended_profile:
@@ -479,11 +534,13 @@ native_acceptance:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_used_for_latest_attempt: 96424410c87366072adf16688aa56c38aba246a2
-    binary_sha256: 4882c05044ffb40f76f8953b9bf7cae95344849138de764035b658cc7e5525dc
-    latest_native_acceptance: failed_not_passed_attempt_12
-    post_attempt_source_correction: b6cc4b3e4b15bef896565adce28ccbcae3e4dd36
-    post_attempt_validation: focused_decode_context_scope_grounding_tests_passed_6_536_seconds_and_independent_review_closed
+    source_revision_used_for_latest_attempt: 5ad9e069ee6252ba9a9dd66b8986383ecec3b7f4
+    binary_sha256: 88234adb116d7c8b0b6c3eb35ece88704d66c6ac33d7b05aca3aeb4e49efa6ea
+    latest_native_acceptance: failed_not_passed_attempt_13
+    post_attempt_source_correction: b8ee41030ec19c131366ee1f994cc6d3a65ced7c
+    post_attempt_source_validation: native_focused_test_passed_0_291s_review_focused_test_passed_3_397s_appserver_package_passed_165_576s_before_common_cwd_and_wording_extension
+    post_attempt_independent_review: closed
+    post_attempt_a01_acceptance: not_established
     next_repair: clean_frozen_build_then_fresh_normal_readiness_and_plan_for_next_bounded_a01
     next_batch_pins: pending
   prior_batch_history:

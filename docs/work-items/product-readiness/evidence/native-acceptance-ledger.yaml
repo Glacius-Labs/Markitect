@@ -651,7 +651,7 @@ renewal_policy:
     original_turns_replayed: false
     run_state_revision: 4
     run_state_sha256: 62fed9a36ee3b2f2f7bb21123b076c4ee2525c93984eef6aa74f6a6024e763e9
-  latest_actual:
+  attempt_12:
     batch_id: a01-phase-d65ac77af6bc4cb9b6eb3092c040655b
     attempt_number: 12
     status: failed_not_passed
@@ -710,15 +710,74 @@ renewal_policy:
     post_attempt_validation: focused_decode_context_scope_grounding_tests_passed_6_536_seconds_and_independent_review_closed
     host_report_consistency_guard: unchanged
     next_action: clean_frozen_build_then_fresh_normal_readiness_and_plan_for_next_bounded_a01
+  latest_actual:
+    batch_id: a01-verdict-fb7b6fe1d6fe456fa94c9321624d2779
+    attempt_number: 13
+    status: failed_not_passed
+    allocation_utc: '2026-10-10T04:13:18.6234137Z'
+    hard_deadline_utc: '2026-10-10T08:13:18.6234137Z'
+    actual_started_utc: '2026-10-10T04:13:19.1132962Z'
+    actual_ended_utc: '2026-10-10T04:15:52.3300071Z'
+    observer_id: d8fe20710f634e65aaf993885e406ce8
+    observer_record_sha256: 4257b32938b5ec55e4dcaacc6b5e227499c06b5d2c64a02602dc2496f9f620fb
+    observer_exit_code: 2
+    observer_boundary_observed: false
+    source_revision: 5ad9e069ee6252ba9a9dd66b8986383ecec3b7f4
+    binary_sha256: 88234adb116d7c8b0b6c3eb35ece88704d66c6ac33d7b05aca3aeb4e49efa6ea
+    owned_project_revision: eaa11e9969db66e6c1a5cd80949cfb757074ce54
+    plan_id: 3a021f942d3b80f287ec9000d2af1632
+    plan_sha256: 309a8e85f390fbb14a3d448a1e96e16bf61286fa1ed7f7570e99791a5863e374
+    runtime_sha256: 0a625153184104043c784d5200596da30b4c999190378fd06ae913855e222808
+    readiness_sha256: 057b4523e98246f2b24222cd48561f058f955630a1f3df9fe722e8592af4e9ef
+    runtime_file_sha256: 0828f6afd4e897fa0304362e19bb47cd912c2fe353f5b44c58d919daf2fa3e3c
+    private_allocation_record: controller/a01-verdict-fb7b6fe1d6fe456fa94c9321624d2779.json
+    private_allocation_record_sha256: 3dc8f9b4e57d3a1687062e5be9fe4cb28651eb003d780c4e8690c60d66c128c3
+    run_state_revision: 9
+    run_state_sha256: 1cc3c9564a35ca5e376a732d36b42fc43fd234af582dffc09e98ff42e874ad6e
+    root_native_run_id: f2e3dbd6aa839d77d7236a4f9a621596
+    root_native_session: 01a12404-91ce-7be3-8831-23596af642af
+    root_native_turn: 01a12404-94d9-7911-a763-771858561f6b
+    root_report_state: partial
+    root_candidate_id: 13804e955e4984c3168c24c3d236d5c2
+    root_candidate_integrated: false
+    root_write_failure: README write denied by Package LocalCache path
+    root_delegations_recorded: 2
+    reviewer_native_run_id: 5b5eef83a7b234d2b5c535f22071cba5
+    reviewer_native_session: 01a12405-9862-74e0-83f2-f73baf5203f3
+    reviewer_native_turn: 01a12405-9c6c-7483-a680-0941f053e42f
+    reviewer_state: completed
+    reviewer_acceptance: rejected_by_exact_candidate_grounding_validation
+    reviewer_failure: prose finding did not use an exact supplied token; Host strict guard correctly rejected it
+    child_manager_starts: 0
+    helper_reservations: 0
+    helper_native_child_starts: 0
+    tests_run: false
+    verify_apply_recovery_observed: false
+    role_start_requests: 2
+    native_provider_starts: 2
+    input_tokens: 494826
+    output_tokens: 4129
+    cached_input_tokens: 401920
+    attempt_estimated_cost_micros: 503084
+    cost_accounting: partial_observed_lower_bound_not_invoice
+    cumulative_known_role_start_requests: 26
+    cumulative_known_provider_starts: 23
+    cumulative_known_estimated_cost_micros: 6923960
+    cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
+    original_turns_replayed: false
+    post_attempt_source_correction: b8ee41030ec19c131366ee1f994cc6d3a65ced7c
+    post_attempt_source_validation: native_focused_test_passed_0_291s_review_focused_test_passed_3_397s_appserver_package_passed_165_576s_before_common_cwd_and_wording_extension
+    post_attempt_independent_review: closed
+    post_attempt_a01_acceptance: not_established
   next_batch:
     status: fresh_clean_binary_readiness_and_plan_pins_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     new_batch_pins: none
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
-    no_thirteenth_actual_claimed: true
+    no_fourteenth_actual_claimed: true
     owner_repair_in_progress: false
-    owner_repair_status: completed_b6cc4b3e_with_focused_tests_and_independent_review
+    owner_repair_status: completed_b8ee4103_with_focused_tests_and_independent_review
     repair: cleanly freeze the reviewed correction then refresh normal readiness and Plan bindings
     next_shared_native_defaults: { memories: false, login: false }
     intended_profile:
@@ -750,11 +809,13 @@ renewal_policy:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_used_for_latest_attempt: 96424410c87366072adf16688aa56c38aba246a2
-    binary_sha256: 4882c05044ffb40f76f8953b9bf7cae95344849138de764035b658cc7e5525dc
-    native_acceptance: failed_not_passed_attempt_12
-    post_attempt_source_correction: b6cc4b3e4b15bef896565adce28ccbcae3e4dd36
-    post_attempt_validation: focused_decode_context_scope_grounding_tests_passed_6_536_seconds_and_independent_review_closed
+    source_revision_used_for_latest_attempt: 5ad9e069ee6252ba9a9dd66b8986383ecec3b7f4
+    binary_sha256: 88234adb116d7c8b0b6c3eb35ece88704d66c6ac33d7b05aca3aeb4e49efa6ea
+    native_acceptance: failed_not_passed_attempt_13
+    post_attempt_source_correction: b8ee41030ec19c131366ee1f994cc6d3a65ced7c
+    post_attempt_source_validation: native_focused_test_passed_0_291s_review_focused_test_passed_3_397s_appserver_package_passed_165_576s_before_common_cwd_and_wording_extension
+    post_attempt_independent_review: closed
+    post_attempt_a01_acceptance: not_established
     next_repair: clean_frozen_build_then_fresh_normal_readiness_and_plan_for_next_bounded_a01
     next_batch_pins: pending
   provider_free_preparation:
