@@ -2434,6 +2434,8 @@ spec:
       owner: bounded-agent-execution-host
     - path: src/internal/host/codexappserver/recovery.go
       owner: bounded-agent-execution-host
+    - path: src/internal/host/codexappserver/recovery_test.go
+      owner: bounded-agent-execution-host
     - path: src/internal/host/codexappserver/session.go
       owner: bounded-agent-execution-host
     - path: src/internal/host/codexappserver/tools.go
