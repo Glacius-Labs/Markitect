@@ -1,0 +1,22 @@
+{
+  "id": "export-writes-audit-line",
+  "base": "S3",
+  "item": "B06",
+  "rule": "R1",
+  "violates": "export, a read-only command, appends an audit line.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    return {\"exported\": len(books)}",
+      "new": [
+        "    append_log(args.db, \"export\", [])",
+        "    return {\"exported\": len(books)}"
+      ]
+    }
+  ],
+  "fails": [
+    "b06-export-empty-database",
+    "b06-export-read-only",
+    "b08-untagged-stored-books"
+  ]
+}

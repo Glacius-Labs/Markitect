@@ -1,0 +1,22 @@
+{
+  "id": "import-requires-pages",
+  "base": "S5",
+  "item": "B13",
+  "rule": null,
+  "violates": "import still rejects an empty pages cell.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "            book = new_book(*row)",
+      "new": [
+        "            book = new_book(*row)",
+        "            if book[\"pages\"] is None:",
+        "                raise CommandError(\"invalid_input\", \"pages are required\")"
+      ]
+    }
+  ],
+  "fails": [
+    "b13-export-empty-pages-cell",
+    "b13-import-unknown-pages"
+  ]
+}

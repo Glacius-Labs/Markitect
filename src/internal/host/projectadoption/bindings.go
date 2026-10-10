@@ -5,7 +5,7 @@ import (
 	"runtime/debug"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
-	"github.com/Glacius-Labs/Markitect/src/internal/host"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
 // CurrentBindings derives the two adoption bindings from the active schema
@@ -19,7 +19,7 @@ func CurrentBindings(activeSchema core.Schema) (schemaDigest, buildDigest string
 	if !ok || info == nil || info.Main.Path == "" {
 		return "", "", errors.New("running Markitect build identity is unavailable")
 	}
-	executableDigest, err := host.ToolBuildDigest()
+	executableDigest, err := projectwork.ToolBuildDigest()
 	if err != nil {
 		return "", "", err
 	}

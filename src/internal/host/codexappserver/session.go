@@ -65,10 +65,20 @@ func NewAdapter(cfg Config, options Options) (*Adapter, error) {
 	for i := range options.DynamicTools {
 		options.DynamicTools[i].InputSchema = append(json.RawMessage(nil), options.DynamicTools[i].InputSchema...)
 	}
-	if !strings.Contains(" minimal low medium high xhigh max ultra ", " "+cfg.ReasoningEffort+" ") {
+	if !SupportedReasoningEffort(cfg.ReasoningEffort) {
 		return nil, errors.New("unsupported reasoning effort")
 	}
 	return &Adapter{cfg, options}, nil
+}
+
+// SupportedReasoningEffort reports whether the adapter passes this reasoning
+// effort to the App Server. The provider may still reject it for a model.
+func SupportedReasoningEffort(effort string) bool {
+	switch effort {
+	case "minimal", "low", "medium", "high", "xhigh", "max", "ultra":
+		return true
+	}
+	return false
 }
 
 func (a *Adapter) Fingerprint(cfg agentexec.Config) (string, error) {

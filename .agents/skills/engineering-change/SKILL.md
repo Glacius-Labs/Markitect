@@ -11,4 +11,5 @@ Read the [canonical Skill YAML](../../../.markitect/areas/development/engineerin
 
 - [Rule: module-verification](../../../.markitect/areas/development/module-verification.rule.yaml)
 - [Rule: repository-boundaries](../../../.markitect/areas/development/repository-boundaries.rule.yaml)
+- [Text: document-owners](../../../.markitect/areas/development/document-owners.text.yaml)
 - [Workflow: markitect-first-change](../../../src/internal/host/embedded/resources/workflow-markitect-first-change.yaml)

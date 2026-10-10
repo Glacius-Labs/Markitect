@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
@@ -300,7 +301,7 @@ func snapshotFilesUnchanged(captured *snapshot.Snapshot, directory string) error
 	}
 	sort.Strings(names)
 	for _, name := range names {
-		dest, err := safeDestination(directory, name)
+		dest, err := guardedwrite.SafeDestination(directory, name)
 		if err != nil {
 			return fmt.Errorf("check replaced snapshot path %s: %w", name, err)
 		}

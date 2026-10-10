@@ -2,7 +2,7 @@
 
 Markitect's current product workflow is the model-first `markitect project` surface: a committed recursive Manager model under `.markitect/` owns project intent and artifact responsibility. Draft model changes are proposals; commits and digests bind bytes but do not authenticate human approval. Native instructions and scoped execution operate with caller permissions, not an OS sandbox. Retain mechanisms for their current engineering purpose; remove compatibility-only functions. Published releases and original evidence remain immutable historical records.
 
-For coordinated parallel work, read the [development guide](docs/development/README.md) and [parallel-work flow](docs/development/parallel-work.md), then record the current fixed base and assigned paths. The [workstream map](docs/workstreams/README.md) preserves earlier bounded specifications; use one only when it is explicitly assigned against the current source. Shared semantic contracts remain coordinator-owned; the normal gates below apply to every integrated candidate. For documentation placement and ownership, read the [documentation maintenance guide](docs/development/documentation.md).
+For coordinated parallel work, follow the [roadmap](docs/implementation-plan.md#how-we-work), read the [development guide](docs/development/README.md) and [parallel-work flow](docs/development/parallel-work.md), then record the current fixed base and assigned paths. Shared semantic contracts remain coordinator-owned; the normal gates below apply to every integrated candidate. For documentation placement and ownership, read the [documentation maintenance guide](docs/development/documentation.md).
 
 ## Ownership and layout
 

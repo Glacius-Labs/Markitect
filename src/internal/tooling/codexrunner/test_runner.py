@@ -1388,6 +1388,28 @@ class CodexRunnerTests(unittest.TestCase):
         self.assertEqual(response["role"], "infer")
         self.assertEqual(response["inputDigest"], invocation("infer")["inputDigest"])
 
+    def test_version_check_requires_the_exact_configured_version(self) -> None:
+        def check(reported: str, configured: str) -> None:
+            completed = subprocess.CompletedProcess(["codex", "--version"], 0, reported.encode("utf-8") + b"\n", b"")
+            with patch.object(runner.subprocess, "run", return_value=completed):
+                runner.check_version(["codex"], configured)
+
+        check("codex-cli 0.162.0", "0.162.0")
+        check("codex-cli 0.162.0-alpha.2", "0.162.0-alpha.2")
+        for reported, configured in (
+            ("codex-cli 0.162.0-alpha.2", "0.162.0"),
+            ("codex-cli 0.162.0", "0.162.0-alpha.2"),
+            ("codex-cli 10.162.0", "0.162.0"),
+            ("codex-cli 0.162.01", "0.162.0"),
+        ):
+            with self.subTest(reported=reported, configured=configured):
+                with self.assertRaisesRegex(runner.AdapterError, "did not match"):
+                    check(reported, configured)
+        for configured in ("", "1.0", "0.16", "v0.162.0", " 0.162.0"):
+            with self.subTest(configured=configured):
+                with self.assertRaisesRegex(runner.AdapterError, "exact semantic version"):
+                    check("codex-cli 0.162.0", configured)
+
 
 if __name__ == "__main__":
     unittest.main()

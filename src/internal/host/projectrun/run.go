@@ -278,7 +278,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		result, found, recoverErr := RecoverProjectAgent(ctx, host, invoker, root, pending.taskID, config, runtime.Limits, binding, request)
 		if recoverErr != nil || !found {
 			if result.Receipt.RunID != "" {
-				upsertRecoveredInvocation(&report, invocationLogForResult(*task, pending.phase, result, agent.Pricing))
+				upsertRecoveredInvocation(&report, invocationLogForResult(*task, pending.phase, result, agent))
 			}
 			if current := findTask(report.Tasks, task.ManagerID); current != nil {
 				current.State = "uncertain"
@@ -286,7 +286,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			cause := fmt.Errorf("native invocation for %s could not be safely recovered", task.ManagerID)
 			return blockRun(store, report, errors.Join(cause, recoverErr))
 		}
-		invocation := invocationLogForResult(*task, pending.phase, result, agent.Pricing)
+		invocation := invocationLogForResult(*task, pending.phase, result, agent)
 		upsertRecoveredInvocation(&report, invocation)
 		recoveredResults[taskActionKey(task.ManagerID, pending.phase)] = managerInvocationResult{managerID: task.ManagerID, result: result, log: invocation}
 		if pending.phase == "integrate" {
@@ -1301,7 +1301,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 		if result.Receipt.RunID == "" {
 			return
 		}
-		cost, known, overflow := estimateCostDetailed(result.Receipt.Usage, configAgent.Pricing)
+		cost, known, overflow := estimateAgentCost(result.Receipt.Usage, configAgent)
 		if !known {
 			cost = 0
 		}
@@ -1443,11 +1443,11 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	if plan.RuntimeAgents[task.ManagerID] != configFingerprint {
 		return result, log, ErrStale
 	}
-	_, known, overflow := estimateCostDetailed(result.Receipt.Usage, configAgent.Pricing)
+	_, known, overflow := estimateAgentCost(result.Receipt.Usage, configAgent)
 	if overflow {
 		return result, log, fmt.Errorf("agent cost estimate exceeds the supported int64 range")
 	}
-	if !known && config.Transport != TransportCodexAppServer {
+	if !known && configAgent.requiresReportedUsage() {
 		return result, log, fmt.Errorf("agent usage is missing; bounded cost cannot be asserted")
 	}
 	return result, log, nil
@@ -1550,8 +1550,8 @@ func appendInvocationReceipt(report *RunReport, invocation InvocationLog) bool {
 	return true
 }
 
-func invocationLogForResult(task ManagerTask, phase string, result agentexec.RunResult, pricing Pricing) InvocationLog {
-	cost, known, overflow := estimateCostDetailed(result.Receipt.Usage, pricing)
+func invocationLogForResult(task ManagerTask, phase string, result agentexec.RunResult, agent Agent) InvocationLog {
+	cost, known, overflow := estimateAgentCost(result.Receipt.Usage, agent)
 	if !known {
 		cost = 0
 	}

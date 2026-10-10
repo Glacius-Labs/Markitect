@@ -1,0 +1,19 @@
+{
+  "id": "not-found-code-missing-from-table",
+  "base": "S1",
+  "item": "B01",
+  "rule": "R2",
+  "violates": "An unknown ID reports a code that is not in the README error-code table.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    raise CommandError(\"not_found\", f\"no book with id {book_id!r}\")",
+      "new": "    raise CommandError(\"unknown_id\", f\"no book with id {book_id!r}\")"
+    }
+  ],
+  "fails": [
+    "b01-finish-normalized-id",
+    "b01-finish-unknown-id",
+    "r2-error-table-complete"
+  ]
+}

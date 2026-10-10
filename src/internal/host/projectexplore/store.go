@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	hostwrite "github.com/Glacius-Labs/Markitect/src/internal/host"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 )
 
 const recordsDirectory = ".markitect/state/explorations"
@@ -200,7 +200,7 @@ func Write(root string, plan WritePlan, expectPlanDigest string, currentBinding 
 	if err != nil {
 		return Record{}, err
 	}
-	_, err = hostwrite.ApplyGuardedWriteChecked(capture.Root, capture, []hostwrite.GuardedWriteChange{{Path: plan.Path, Bytes: encoded, Mode: 0o600}}, func() error {
+	_, err = guardedwrite.ApplyChecked(capture.Root, capture, []guardedwrite.Change{{Path: plan.Path, Bytes: encoded, Mode: 0o600}}, func() error {
 		if digest, bindErr := BindingDigest(currentBinding); bindErr != nil || digest != plan.BindingDigest {
 			return errors.New("current exploration binding changed during guarded write")
 		}
@@ -271,7 +271,7 @@ func Load(root, id string) (Record, error) {
 	if err != nil {
 		return empty, err
 	}
-	capture, err := hostwrite.CaptureGuardedWrite(root, []string{path})
+	capture, err := guardedwrite.CaptureFiles(root, []string{path})
 	if err != nil {
 		return empty, err
 	}
@@ -314,7 +314,7 @@ func List(root string) ([]Record, error) {
 	return records, nil
 }
 
-func captureBinding(root string, binding Binding, targetPath string, verifyBasis bool) (*hostwrite.GuardedWriteCapture, error) {
+func captureBinding(root string, binding Binding, targetPath string, verifyBasis bool) (*guardedwrite.Capture, error) {
 	paths := make([]string, 0, len(binding.BasisFiles)+1)
 	for _, basis := range binding.BasisFiles {
 		if basis.Path == targetPath {
@@ -323,7 +323,7 @@ func captureBinding(root string, binding Binding, targetPath string, verifyBasis
 		paths = append(paths, basis.Path)
 	}
 	paths = append(paths, targetPath)
-	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
+	capture, err := guardedwrite.CaptureFiles(root, paths)
 	if err != nil {
 		return nil, fmt.Errorf("capture exploration binding: %w", err)
 	}

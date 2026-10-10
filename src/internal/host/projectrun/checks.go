@@ -9,7 +9,25 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"unicode/utf16"
 )
+
+// maxWindowsWorkingDirectory is the longest process working directory Windows
+// CreateProcess accepts (MAX_PATH - 2 UTF-16 units). A longer directory fails
+// with the opaque error "The directory name is invalid".
+const maxWindowsWorkingDirectory = 258
+
+// checkWorkingDirectoryLength reports an over-long check directory before the
+// process starts, with the cause instead of the platform's opaque error.
+func checkWorkingDirectoryLength(dir string) error {
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+	if length := len(utf16.Encode([]rune(dir))); length > maxWindowsWorkingDirectory {
+		return fmt.Errorf("check working directory has %d characters; Windows starts processes only from directories of at most %d characters: %s", length, maxWindowsWorkingDirectory, dir)
+	}
+	return nil
+}
 
 func bindCheckExecutables(checks []CheckPlan, config Runtime) ([]CheckPlan, []string, error) {
 	var findings []string

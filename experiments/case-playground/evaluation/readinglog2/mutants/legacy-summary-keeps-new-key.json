@@ -1,0 +1,18 @@
+{
+  "id": "legacy-summary-keeps-new-key",
+  "base": "S6",
+  "item": "B15",
+  "rule": null,
+  "violates": "summary --legacy still counts entries instead of books.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    count_key = entries_key(args)",
+      "new": "    count_key = ENTRIES_KEY"
+    }
+  ],
+  "fails": [
+    "b15-legacy-summary",
+    "b15-pre-rename-data"
+  ]
+}

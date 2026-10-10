@@ -26,6 +26,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 | [DEC-017](#dec-017-command-model-top-level-verbs-from-one-verb-table) | Decision | Command model: top-level verbs from one verb table | Accepted |
 | [DEC-018](#dec-018-the-knowledge-graph-explains-impact) | Decision | The knowledge graph explains impact | Accepted |
 | [DEC-019](#dec-019-government-code-starts-after-wave-2) | Decision | Government code starts after Wave 2 | Accepted |
+| [DEC-020](#dec-020-markitect-uses-any-library-that-helps) | Decision | Markitect uses any library that helps | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-005](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -36,8 +37,8 @@ This register records Markitect's long-term vision, product-level decisions, cla
 | [ENH-002](#enh-002-model-quality-linter-and-metrics) | Enhancement | Model-quality linter and metrics | Accepted direction |
 | [ENH-003](#enh-003-test-to-statement-binding-and-test-review) | Enhancement | Test-to-statement binding and test review | Accepted direction |
 | [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) | Enhancement | Per-role agent configuration and model mixing | Accepted direction |
-| [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) | Enhancement | Exchangeable executor for the delegated method | Endorsed; design pending |
-| [OQ-001 to OQ-006](#open-questions) | Open question | Open questions | Open |
+| [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) | Enhancement | Exchangeable executor for the delegated method | Endorsed; increment 1 merged |
+| [OQ-001 to OQ-007](#open-questions) | Open question | Open questions | Open |
 | [IDEA-001](#idea-001-the-model-as-institutional-memory-for-stateless-agents) | Idea | The model as institutional memory for stateless agents | Proposed |
 | [IDEA-002](#idea-002-government-delegated-model-maintenance) | Idea | Government: delegated model maintenance | Owner idea; parked |
 | [IDEA-003](#idea-003-degree-of-freedom-per-manager-and-rule-strictness) | Idea | Degree of freedom per Manager and rule strictness | Owner idea; parked |
@@ -53,6 +54,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 | [IDEA-013](#idea-013-gamification) | Idea | Gamification | Owner idea; parked |
 | [IDEA-014](#idea-014-shared-evidence-bound-events) | Idea | Shared evidence-bound events | Proposed by the product chat; parked |
 | [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) | Idea | Cockpit with a conversational personal agent | Owner idea; parked |
+| [IDEA-016](#idea-016-optional-offline-claim-and-evidence-classifier) | Idea | Optional offline claim and evidence classifier | Proposed (research R01) |
 
 ## Long-term vision
 
@@ -140,7 +142,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
 - **Statement:**
   - The cost hypothesis targets capable mid-tier models such as Luna and Sonnet. Haiku is a candidate for cost-sensitive use if it proves sufficient.
   - These models are not weak. The owner distinguishes them from the high-end tier: Fable, Opus and Astra.
-- **Current source:** Every inner role runs on Luna. Using Sonnet or Haiku for inner roles requires [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) and [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method).
+- **Current source:** By default every inner role runs on Luna. Since RUN-01 a role can use another model through a process executor ([ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing), [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method)); a Claude executor for Sonnet or Haiku is RUN-03.
 
 ### DEC-008 The delegated method has not yet been tested
 
@@ -267,7 +269,7 @@ This register records Markitect's long-term vision, product-level decisions, cla
   - The existing MCP surface is used. There is no separate knowledge server.
   - The YAML model stays canonical.
   - Whether Decisions become first-class model entries is proposed in KG-01 and KG-02, not decided here.
-- **Work items:** KG-01 to KG-03 in the [backlog](../work-items/backlog.yaml).
+- **Work items:** KG-01 to KG-03 in the [backlog](../work-items/backlog.yaml). The earlier research item R02 is summarized on the [research page](../research/optional-research-r01-r03-20261009.md).
 
 ### DEC-019 Government code starts after Wave 2
 
@@ -279,6 +281,15 @@ This register records Markitect's long-term vision, product-level decisions, cla
   - Model schema changes are coordinated through the roadmap's model zone, which has one active owner at a time.
   - Government documents on main follow the repository's conventions ([DEC-016](#dec-016-a-clean-stable-testable-main-and-uniform-structure-first)).
 - **Work items:** GOV-01 and GOV-02 in the [backlog](../work-items/backlog.yaml).
+
+### DEC-020 Markitect uses any library that helps
+
+- **Status:** Accepted, owner, 10 October 2026 ([source](sources/roadmap-planning-20261010.md#external-libraries)). The question came from a verified BUG-01 finding: the architecture gate checks third-party imports only for Core, two Modules already import a YAML library, and the documents disagree ("standard library only" against "justified external dependencies").
+- **Statement:**
+  - Markitect uses any library that helps it reach its goal. No layer has a standard-library-only rule.
+  - The architecture gate keeps its rules for imports between Markitect's own packages; it does not restrict third-party libraries.
+- **Consequences:** the documents that state "standard library only" for Core or Modules are aligned, and the gate's third-party check for Core is removed.
+- **Work items:** ARCH-03 in the [backlog](../work-items/backlog.yaml).
 
 ## Promises
 
@@ -380,27 +391,26 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 - **Status:** Accepted direction, owner, 10 October 2026. A separate configuration for every agent role was already planned.
 - **Current source:**
   - `.markitect/runtime.yaml` binds one executor and one reviewer per Manager. Each binding has its own model, plus a reasoning effort for the App Server or model options for the process transport. One verifier is configured globally.
-  - `project setup` generates a single profile and uses it for every role: Codex App Server, `gpt-6-luna`, `high` effort ([provider adapters](../provider-adapters.md#inner-role-execution-and-workspace-boundary)).
+  - `project setup` generates a default profile for every role: Codex App Server, `gpt-6-luna`, `high` effort. Since RUN-01, a setup options record gives Managers, reviewers and the verifier their own provider (`codex` or `process`), model, effort and cost mode, and profiles can be mixed ([role profiles](../provider-adapters.md#role-profiles)).
   - Helpers inherit their parent's configuration.
   - The Manager implements its own slice; there is no separate implementer role.
 - **Direction:**
   - Configure model, reasoning effort and provider per role (Manager or implementer, helper, reviewer, verifier), and possibly per Manager.
   - Allow mixing, for example one model implements and another reviews.
   - Evaluate combinations as an experimental factor ([ASM-005](#assumptions-and-hypotheses), [OQ-003](#open-questions)).
-- **Work items:** RUN-01 (pull request #92) and PLAY-06 in the [backlog](../work-items/backlog.yaml).
+- **Work items:** RUN-01 (merged as pull request #104) and PLAY-06 in the [backlog](../work-items/backlog.yaml).
 
 ### ENH-005 Exchangeable executor for the delegated method
 
-- **Status:** Endorsed by the owner on 10 October 2026; the design is pending. This is the product side of [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime).
+- **Status:** Endorsed by the owner on 10 October 2026. Increment 1 is merged (RUN-01); the asynchronous boundary is pending (RUN-02). This is the product side of [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime).
 - **Problem:** In practice every delegated role runs through one native runtime, the Codex App Server adapter. Runtime and environment failures therefore block both product use and evaluation of the method.
 - **Current source:**
   - Run invokes every role through the `projectrun.Invoker` interface. That interface has two transports:
     - a hand-configurable process transport with a versioned JSON protocol (`agent-execution/v1alpha1`);
     - the native Codex App Server transport.
   - Repository end-to-end tests drive Plan, Run, Review, Verify and guarded Apply through a scripted, model-free process executor.
+  - Since RUN-01, `project setup` selects a process executor per role, `costMode: unmetered` covers executors that cannot report token usage, such as scripts or people, and `markitect-exchange-executor` is a reference adapter that hands each invocation to a person, a script or another session through files ([bring your own executor](../provider-adapters.md#bring-your-own-executor)).
   - What is missing is product surface:
-    - setup for executors other than the native one;
-    - executors that cannot report provider token usage, such as scripts or people (process executors must report it today);
     - export of work packets;
     - submission of external candidates and review verdicts;
     - plans that do not depend on executor fingerprints.
@@ -411,7 +421,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Expose a stable executor boundary. Through it, Markitect hands each role a deterministic work packet: scope, context, obligations, required checks and required reviews. It then accepts the resulting candidate and review verdict and validates them with the same rules as today.
   - The native Codex adapter becomes one executor among others. Further executors, for example Claude Code, can be added without changing the method.
   - Authority does not change. Scope checks, fixed snapshots and guarded Apply apply to every executor, and submitted reviews remain AI evidence, not human acceptance.
-- **Work items:** RUN-01 (pull request #92), RUN-02 and RUN-03 in the [backlog](../work-items/backlog.yaml).
+- **Work items:** RUN-01 (merged as pull request #104), RUN-02, RUN-03 and RUN-05 in the [backlog](../work-items/backlog.yaml).
 
 ## Open questions
 
@@ -422,6 +432,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 | OQ-003 | Which model tiers suffice for which roles, and does total cost actually fall? | [ASM-003](#assumptions-and-hypotheses), [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) |
 | OQ-004 | How much independence does a different reviewer model add beyond fresh context? | [ASM-005](#assumptions-and-hypotheses) |
 | OQ-005 | Should evaluation focus on a series of changes on a long-lived project? If so, what ground truth makes "nothing forgotten" measurable there, for example predeclared affected sets, seeded cross-cutting rules and hidden holdout checks? | [DEC-009](#dec-009-the-central-evaluation-question), [PRM-001](#promises) |
+| OQ-007 | How reliable is the native delivery path? The combined A01 native smoke passed once (Actual28, on a Windows host) after 27 failed attempts, was not repeated, and never ran on Linux ([A01 record](../validation/a01-native-smoke-20261010.md)). | [DEC-013](#dec-013-linux-first-for-tests-and-the-playground), [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) |
 | OQ-006 | How much current-state context does a bounded Manager need, so that limited responsibility does not become artificial blindness? The original product chat's hypothesis: shared contracts, plus current-state context on demand (Concepts note C19). | [CPT-001](#cpt-001-federalism), [CPT-004](#cpt-004-the-specification-stays-effective) |
 
 ## Ideas
@@ -559,6 +570,12 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 
   The Concepts chat records this as a provisional derivation by the owner („vorläufige Nutzerableitung“). The Ideas chat records it as the Concepts chat's interpretation. No verbatim owner wording for it exists.
 - **Source:** [personal agent cockpit](sources/concepts-chat-20261009/personal-agent-cockpit-20261009.md)
+
+### IDEA-016 Optional offline claim and evidence classifier
+
+- **Status:** Proposed by the research item R01 (9 October 2026); not evaluated by the owner.
+- **Idea:** The R01 research assessed a strongly typed AI tool for Markitect. It recommended against using it to replace the compiler or Manager gates. An optional, offline classifier of claims and evidence could be examined later.
+- **Source:** [optional research R01 to R03](../research/optional-research-r01-r03-20261009.md).
 
 ## Imported collections
 

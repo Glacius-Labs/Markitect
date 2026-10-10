@@ -14,6 +14,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/authoring"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectionengine"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/recordstore"
@@ -257,7 +258,7 @@ func validateControllerExternalPath(value string, forbidden []string) error {
 		return errors.New("controller destination uses a path alias")
 	}
 	if info, err := os.Lstat(value); err == nil {
-		if !info.IsDir() || isReparsePoint(info) {
+		if !info.IsDir() || guardedwrite.IsReparsePoint(info) {
 			return errors.New("controller external path is not a real directory")
 		}
 		if _, err = realDirectory(value); err != nil {

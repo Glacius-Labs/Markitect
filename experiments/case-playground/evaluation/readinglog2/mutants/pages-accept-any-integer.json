@@ -1,0 +1,19 @@
+{
+  "id": "pages-accept-any-integer",
+  "base": "S5",
+  "item": "B13",
+  "rule": "R2",
+  "violates": "Given page counts are parsed leniently (sign, underscores, non-ASCII digits).",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    if not (text.isascii() and text.isdigit()) or int(text) < 1:",
+      "new": "    if not text.lstrip(\"+\").replace(\"_\", \"\").isdigit() or int(text) < 1:"
+    }
+  ],
+  "fails": [
+    "b02-import-pages-validation",
+    "b13-given-pages-still-validated",
+    "base-pages-validation"
+  ]
+}

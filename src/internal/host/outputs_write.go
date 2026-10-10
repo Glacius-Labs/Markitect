@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
@@ -43,16 +44,16 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 		return nil, err
 	}
 	branch := ""
-	if hasGitMetadata(rootAbs) {
-		branch, err = writeBranchName(rootAbs)
+	if guardedwrite.HasGitMetadata(rootAbs) {
+		branch, err = guardedwrite.BranchName(rootAbs)
 		if err != nil {
 			return nil, err
 		}
 	}
-	if _, err = safeDestination(rootAbs, ".artifacts/markitect/write.lock"); err != nil {
+	if _, err = guardedwrite.SafeDestination(rootAbs, ".artifacts/markitect/write.lock"); err != nil {
 		return nil, err
 	}
-	writeRoot, err := openWriteRoot(rootAbs)
+	writeRoot, err := guardedwrite.OpenRoot(rootAbs)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,7 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 	}
 	defer release()
 	if branch != "" {
-		if err := ensureWriteBranch(rootAbs, branch); err != nil {
+		if err := guardedwrite.EnsureBranch(rootAbs, branch); err != nil {
 			return nil, err
 		}
 	}
@@ -102,11 +103,11 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 	// Validate the entire plan and reject concurrent edits before writing anything.
 	for _, name := range names {
 		if branch != "" {
-			if err := ensureWriteBranch(rootAbs, branch); err != nil {
+			if err := guardedwrite.EnsureBranch(rootAbs, branch); err != nil {
 				return nil, err
 			}
 		}
-		dest, err := safeDestination(root, name)
+		dest, err := guardedwrite.SafeDestination(root, name)
 		if err != nil {
 			return nil, err
 		}
@@ -148,7 +149,7 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 	}
 	sort.Strings(physicalSources)
 	for _, name := range physicalSources {
-		dest, err := safeDestination(root, name)
+		dest, err := guardedwrite.SafeDestination(root, name)
 		if err != nil {
 			return nil, err
 		}
@@ -160,17 +161,17 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 	var written []string
 	for _, name := range names {
 		if branch != "" {
-			if err := ensureWriteBranch(rootAbs, branch); err != nil {
+			if err := guardedwrite.EnsureBranch(rootAbs, branch); err != nil {
 				return written, err
 			}
 		}
-		dest, err := safeDestination(root, name)
+		dest, err := guardedwrite.SafeDestination(root, name)
 		if err != nil {
 			return written, err
 		}
 		// The author must hold a single-writer worktree. Revalidation reduces accidental
 		// races; a filesystem cannot provide a multi-file transaction here.
-		if _, err = safeDestination(root, name); err != nil {
+		if _, err = guardedwrite.SafeDestination(root, name); err != nil {
 			return written, err
 		}
 		current, readErr := os.ReadFile(dest)
@@ -182,12 +183,12 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 			return written, fmt.Errorf("output appeared during render: %s", name)
 		}
 		if branch != "" {
-			if err := ensureWriteBranch(rootAbs, branch); err != nil {
+			if err := guardedwrite.EnsureBranch(rootAbs, branch); err != nil {
 				return written, err
 			}
 		}
 		if err = writeRoot.AtomicWrite(name, outputs[name], 0644); err != nil {
-			if writeWasPublished(err) {
+			if guardedwrite.WasPublished(err) {
 				written = append(written, name)
 			}
 			return written, err
@@ -209,7 +210,7 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 		return written, fmt.Errorf("source changed during rendering; outputs are provisional, rerun check")
 	}
 	if branch != "" {
-		if err := ensureWriteBranch(rootAbs, branch); err != nil {
+		if err := guardedwrite.EnsureBranch(rootAbs, branch); err != nil {
 			return written, err
 		}
 	}
@@ -222,8 +223,8 @@ func verifyNoopWrite(root string, p *Project) ([]string, error) {
 		return nil, err
 	}
 	branch := ""
-	if hasGitMetadata(rootAbs) {
-		branch, err = writeBranchName(rootAbs)
+	if guardedwrite.HasGitMetadata(rootAbs) {
+		branch, err = guardedwrite.BranchName(rootAbs)
 		if err != nil {
 			return nil, err
 		}
@@ -236,7 +237,7 @@ func verifyNoopWrite(root string, p *Project) ([]string, error) {
 		return nil, fmt.Errorf("source inventory changed since capture; reload before rendering")
 	}
 	if branch != "" {
-		if err := ensureWriteBranch(rootAbs, branch); err != nil {
+		if err := guardedwrite.EnsureBranch(rootAbs, branch); err != nil {
 			return nil, err
 		}
 	}
@@ -247,14 +248,14 @@ func verifyNoopWrite(root string, p *Project) ([]string, error) {
 // protects standalone tool checkouts that do not yet have Git metadata.
 func WriteSchemas(root string, outputs map[string][]byte) error {
 	branch := ""
-	writeRoot, err := openWriteRoot(root)
+	writeRoot, err := guardedwrite.OpenRoot(root)
 	if err != nil {
 		return err
 	}
 	defer writeRoot.Close()
 	var unlock func()
 	if _, err := os.Lstat(filepath.Join(root, ".git")); err == nil {
-		branch, err = writeBranchName(root)
+		branch, err = guardedwrite.BranchName(root)
 		if err != nil {
 			return err
 		}
@@ -263,7 +264,7 @@ func WriteSchemas(root string, outputs map[string][]byte) error {
 			return err
 		}
 		defer unlock()
-		if err := ensureWriteBranch(root, branch); err != nil {
+		if err := guardedwrite.EnsureBranch(root, branch); err != nil {
 			return err
 		}
 	}
@@ -271,7 +272,7 @@ func WriteSchemas(root string, outputs map[string][]byte) error {
 		if !strings.HasPrefix(name, "schema/") {
 			return fmt.Errorf("invalid schema target %s", name)
 		}
-		dest, err := safeDestination(root, name)
+		dest, err := guardedwrite.SafeDestination(root, name)
 		if err != nil {
 			return err
 		}
@@ -285,24 +286,24 @@ func WriteSchemas(root string, outputs map[string][]byte) error {
 	}
 	for _, name := range sortedFiles(outputs) {
 		if branch != "" {
-			if err := ensureWriteBranch(root, branch); err != nil {
+			if err := guardedwrite.EnsureBranch(root, branch); err != nil {
 				return err
 			}
 		}
 		if branch != "" {
-			if err := ensureWriteBranch(root, branch); err != nil {
+			if err := guardedwrite.EnsureBranch(root, branch); err != nil {
 				return err
 			}
 		}
 		if err = writeRoot.AtomicWrite(name, outputs[name], 0644); err != nil {
-			if writeWasPublished(err) {
+			if guardedwrite.WasPublished(err) {
 				return fmt.Errorf("write schema %s: %w", name, err)
 			}
 			return err
 		}
 	}
 	if branch != "" {
-		if err := ensureWriteBranch(root, branch); err != nil {
+		if err := guardedwrite.EnsureBranch(root, branch); err != nil {
 			return err
 		}
 	}

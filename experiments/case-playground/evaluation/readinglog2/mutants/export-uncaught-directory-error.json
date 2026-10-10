@@ -1,0 +1,23 @@
+{
+  "id": "export-uncaught-directory-error",
+  "base": "S3",
+  "item": "B06",
+  "rule": "R2",
+  "violates": "export reports export_failed only for a missing directory; other unwritable destinations crash.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": [
+        "    except OSError as error:",
+        "        raise CommandError(\"export_failed\""
+      ],
+      "new": [
+        "    except FileNotFoundError as error:",
+        "        raise CommandError(\"export_failed\""
+      ]
+    }
+  ],
+  "fails": [
+    "b06-export-failed"
+  ]
+}

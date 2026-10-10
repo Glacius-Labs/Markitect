@@ -1,0 +1,22 @@
+{
+  "id": "tag-repeat-skips-audit-line",
+  "base": "S3",
+  "item": "B08",
+  "rule": "R1",
+  "violates": "A tag change that changes nothing succeeds without saving or logging.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    book[\"tags\"] = sorted(tags)",
+      "new": [
+        "    if sorted(tags) == book[\"tags\"]:",
+        "        print(json.dumps(book))",
+        "        sys.exit(0)",
+        "    book[\"tags\"] = sorted(tags)"
+      ]
+    }
+  ],
+  "fails": [
+    "b08-tag-repeat-logs-again"
+  ]
+}

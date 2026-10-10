@@ -8,6 +8,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/authoring"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
@@ -54,11 +55,11 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 	if !p.Snapshot.Provisional {
 		return nil, fmt.Errorf("format writes require an isolated working tree")
 	}
-	branch, err := writeBranchName(root)
+	branch, err := guardedwrite.BranchName(root)
 	if err != nil {
 		return nil, err
 	}
-	writeRoot, err := openWriteRoot(root)
+	writeRoot, err := guardedwrite.OpenRoot(root)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +69,7 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 		return nil, err
 	}
 	defer unlock()
-	if err := ensureWriteBranch(root, branch); err != nil {
+	if err := guardedwrite.EnsureBranch(root, branch); err != nil {
 		return nil, err
 	}
 	current, err := source.Load(root, "")
@@ -80,7 +81,7 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 	}
 	// Validate the full plan before any source is replaced.
 	for _, name := range names {
-		dest, err := safeDestination(root, name)
+		dest, err := guardedwrite.SafeDestination(root, name)
 		if err != nil {
 			return nil, err
 		}
@@ -91,10 +92,10 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 	}
 	written := make([]string, 0, len(names))
 	for _, name := range names {
-		if err := ensureWriteBranch(root, branch); err != nil {
+		if err := guardedwrite.EnsureBranch(root, branch); err != nil {
 			return written, err
 		}
-		dest, err := safeDestination(root, name)
+		dest, err := guardedwrite.SafeDestination(root, name)
 		if err != nil {
 			return written, err
 		}
@@ -102,7 +103,7 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 		if err != nil || !bytes.Equal(data, p.Snapshot.Files[name]) {
 			return written, fmt.Errorf("source changed during formatting: %s", name)
 		}
-		if err := ensureWriteBranch(root, branch); err != nil {
+		if err := guardedwrite.EnsureBranch(root, branch); err != nil {
 			return written, err
 		}
 		mode := os.FileMode(0644)
@@ -110,7 +111,7 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 			mode = 0755
 		}
 		if err = writeRoot.AtomicWrite(name, changed[name], mode); err != nil {
-			if writeWasPublished(err) {
+			if guardedwrite.WasPublished(err) {
 				written = append(written, name)
 			}
 			return written, err
@@ -132,7 +133,7 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 	if final.Digest() != expected.Digest() {
 		return written, fmt.Errorf("source changed during formatting; reload and format the complete candidate")
 	}
-	if err := ensureWriteBranch(root, branch); err != nil {
+	if err := guardedwrite.EnsureBranch(root, branch); err != nil {
 		return written, err
 	}
 	return written, nil
