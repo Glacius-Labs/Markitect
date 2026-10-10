@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T08:13:53.467906+00:00",
+  "updatedUtc": "2026-10-10T08:17:35.952591+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL15_EXACT_ORIGINAL_RECOVERY_SELECTOR_BUG_SOURCE_CONFIRMED_FIX_IN_PROGRESS",
+    "status": "ACTUAL20_NORMAL_WINDOWS_RUNNING_ON_FROZEN_TYPED_REVIEW_CORRECTION_NO_MAIN_ACCEPTANCE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18588,12 +18588,20 @@
       "boundary": "Actual19 failed retained/no replay/oldPlan rewrite/native proof Main/release/study acceptance."
     },
     "actual20Preparation": {
-      "status": "OWNER_NORMAL_FRESH_READINESS_CAS_BEFORE_NEW_PLAN_ZERO_STARTS_NOT_ASSUMED",
+      "status": "OWNER_REPORTED_ACTUAL20_RUNNING_ROOT_WORK_DELIVERED_FIRST_REVIEW_ACTIVE",
       "freezeRef": "typedReviewCorrectionFreeze",
-      "planId": null,
-      "batchId": null,
+      "planId": "e70d26667c06334ea81fee279cb28684",
+      "batchId": "a01-typed-review-f4d8a3e04442472395c28665acf1bb3c",
       "controllerSha256": null,
-      "execution": "After normal fresh plan/readiness finite A01 one finalfac binary before/after original Root boundary with current owner-bound observer. Actual allocation/start/deadline/handles not provided yet; counts unknown until receipt."
+      "execution": "After normal fresh plan/readiness finite A01 one finalfac binary before/after original Root boundary with current owner-bound observer. Actual allocation/start/deadline/handles not provided yet; counts unknown until receipt.",
+      "deadlineUtc": "2026-10-10T12:15:03.3868617Z",
+      "planDigestOwnerReportedHex": "6ca403047b90510c0eeefa166cc3bb3b78d8f828cdbaa63d981815b03d98095b",
+      "readinessDigestOwnerReported": "9b072ed042b00a2942c3339b2ea5099077fa13ea3e8a05d49d159b047546ee25",
+      "sourceSha": "fac9131bf60d813a144c563516626f73ea19b969",
+      "binarySha256": "1fb44841cffe622778e22c8811d48f5aa686a1bfb7cfd1e0cfef7d6e2a18c60d",
+      "controllerHashOwnerReportedPrefix": "c6541846",
+      "observer": "Current ownerPlan-bound observer; full hash not yet provided, do not claim oldddf current. Independent lifecycle auditor readonly.",
+      "ownerProgress": "Root Work delivered/firstreviewrunning; Source/Docs later. Actual native handle/countunion pending, usageunknown, no Root fullA01acceptance."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
@@ -18782,5 +18790,20 @@
     "scope": "Stabilize existing Windows Git-filter/CRLF binding, exact original invocation recovery, inherited process environment/canonical actual CWD and non-blocking live-audit readers. No WSL migration or Docker setup from prior research advice.",
     "coordination": "Scientist expressly informing Integrator directly; no duplicate Root message. KG remains independent and does not own shared runtime migration; no unrelated assignment.",
     "executionBoundary": "Decision itself adds no model/replay/study allocation and does not alter historical outcomes. Existing renewable finite product execution authority remains, source-bound checks and no-replay recovery rules preserved."
+  },
+  "liveMainPrBoundary20261010": {
+    "checkedUtc": "2026-10-10T08:17:35.952591+00:00",
+    "rootVerifiedPublicFeatureSha": "fac9131bf60d813a144c563516626f73ea19b969",
+    "rootVerifiedRemoteMainSha": "5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e",
+    "prUrl": "https://github.com/Glacius-Labs/Markitect/pull/89",
+    "prState": "OPEN",
+    "isDraft": true,
+    "headSha": "1495e1be7b0046711531fa42c8407fba67b8e814",
+    "checksAtPrHead": {
+      "ubuntuQuality": "FAILURE",
+      "windowsQuality": "FAILURE",
+      "publishMainSource": "SKIPPED"
+    },
+    "boundary": "Actual live ghPRview/lsremote checked. These checks belong old1495 head, not currentfac product branch. No newhead CI/Mainpromotion claimed; final proof/source/docs regular integration pending."
   }
 }
