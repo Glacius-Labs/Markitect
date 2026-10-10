@@ -1,5 +1,0 @@
-apiVersion: architecture.example.org/v1
-kind: Component
-metadata: {namespace: shop, name: catalog}
-purpose: Publishes product catalog behavior.
-spec: {name: Catalog, layer: domain}

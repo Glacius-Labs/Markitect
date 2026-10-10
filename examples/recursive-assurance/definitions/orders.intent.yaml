@@ -1,7 +1,0 @@
-apiVersion: commerce.recursive-assurance/v1
-kind: OrderRules
-metadata:
-  namespace: orders
-  name: calculate-line-total
-purpose: Calculate a line total only when quantity is positive and unit price is nonnegative.
-spec: {}

@@ -1,5 +1,0 @@
-apiVersion: delivery.example.org/v1
-kind: Deployment
-metadata: {namespace: payments, name: production}
-purpose: Describes the production payments service.
-spec: {service: payments-api, environment: production, replicas: 3}
