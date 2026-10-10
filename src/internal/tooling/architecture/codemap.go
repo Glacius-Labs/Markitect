@@ -35,7 +35,7 @@ type MapLayer struct {
 // Layers is ordered; code-map entries follow this order, then their path.
 var Layers = []MapLayer{
 	{"core", "Deterministic core", "Structural compiler, snapshots and project-model views. No providers, Git processes or writes.", []string{"core", "host", "module"}},
-	{"infrastructure", "Infrastructure", "Source acquisition from Git and the working tree.", []string{"infrastructure"}},
+	{"infrastructure", "Infrastructure", "Git and working-tree access: fixed snapshots and guarded writes.", []string{"infrastructure", "host"}},
 	{"application", "Product application", "Current product use cases and their command and MCP surfaces.", []string{"host"}},
 	{"runtime", "Execution runtime", "Runs Manager, review and verify roles in owned workspaces.", []string{"host"}},
 	{"legacy", "Legacy and compatibility", "Published Project/Domain and canonical-alpha surfaces. DEC-014 allows removing them.", []string{"host", "module"}},

@@ -32,6 +32,10 @@ packages:
     doc: docs/project-workflow.md#model-and-readiness
 
   # --- infrastructure -----------------------------------------------------
+  - path: src/internal/host/guardedwrite
+    layer: infrastructure
+    purpose: Applies selected working-tree changes only while repository, branch, HEAD and captured bytes are unchanged.
+    doc: docs/design/host-write-identity.md#authority-and-object-identity
   - path: src/internal/infrastructure/source
     layer: infrastructure
     purpose: Loads fixed snapshots from the working tree or a Git commit with hardened Git processes.
@@ -96,7 +100,7 @@ packages:
   # --- legacy -------------------------------------------------------------
   - path: src/internal/host
     layer: legacy
-    purpose: Host root with Project/Domain commands, the canonical-alpha controller, composition and the guarded writes the product still uses.
+    purpose: Host root with Project/Domain commands, the canonical-alpha controller and their composition.
     doc: docs/development/modules.md#responsibility-map
   - path: src/internal/host/artifactcli
     layer: legacy

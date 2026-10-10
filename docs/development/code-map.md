@@ -15,7 +15,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | Layer | Meaning | Import gate layers | Packages |
 |---|---|---|---|
 | `core` | Structural compiler, snapshots and project-model views. No providers, Git processes or writes. | `core`, `host`, `module` | 5 |
-| `infrastructure` | Source acquisition from Git and the working tree. | `infrastructure` | 1 |
+| `infrastructure` | Git and working-tree access: fixed snapshots and guarded writes. | `infrastructure`, `host` | 2 |
 | `application` | Current product use cases and their command and MCP surfaces. | `host` | 8 |
 | `runtime` | Runs Manager, review and verify roles in owned workspaces. | `host` | 5 |
 | `legacy` | Published Project/Domain and canonical-alpha surfaces. DEC-014 allows removing them. | `host`, `module` | 36 |
@@ -41,6 +41,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 
 | Package | Purpose | Owning document |
 |---|---|---|
+| `src/internal/host/guardedwrite` | Applies selected working-tree changes only while repository, branch, HEAD and captured bytes are unchanged. | [docs/design/host-write-identity.md](../design/host-write-identity.md#authority-and-object-identity) |
 | `src/internal/infrastructure/source` | Loads fixed snapshots from the working tree or a Git commit with hardened Git processes. | [docs/source-snapshots.md](../source-snapshots.md#adapter-and-use-case-ownership) |
 
 ## Product application
@@ -70,7 +71,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `src/internal/host` | Host root with Project/Domain commands, the canonical-alpha controller, composition and the guarded writes the product still uses. | [docs/development/modules.md](modules.md#responsibility-map) |
+| `src/internal/host` | Host root with Project/Domain commands, the canonical-alpha controller and their composition. | [docs/development/modules.md](modules.md#responsibility-map) |
 | `src/internal/host/artifactcli` | Command interface of `markitect-check-artifacts` for managed-artifact accounting. | [docs/usage.md](../usage.md#managed-artifact-accounting) |
 | `src/internal/host/assurance` | Scoped assurance composition over projection and verification records. | [src/internal/host/assurance/README.md](../../src/internal/host/assurance/README.md) |
 | `src/internal/host/authoring` | Source YAML model for v0.13 Projects, Domains and resources. | [docs/usage.md](../usage.md#project-and-resource-model) |
