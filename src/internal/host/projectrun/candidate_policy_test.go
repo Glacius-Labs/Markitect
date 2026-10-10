@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
@@ -30,5 +31,25 @@ func TestFullProposalCannotWriteIgnoredPathWithinOwnedArtifactScope(t *testing.T
 	accepted, err := applyProposal(base, []agentexec.CandidateFile{{Path: "src/realization.txt", Mode: "0644", Content: "allowed outside old roots"}}, config, report, task, "work", nil, limits, input)
 	if err != nil || accepted.Files["src/realization.txt"].Path == "" {
 		t.Fatalf("nonignored realization should be writable: %v", err)
+	}
+}
+
+// BUG-01: a top-level Manager delegated exactly its root's selector owns, and
+// may write, the files under it.
+func TestTopLevelDelegateWritesFilesUnderItsRootSelector(t *testing.T) {
+	api := projectmodel.APIVersion
+	parent := map[string]any{"apiVersion": api, "kind": "Manager", "namespace": "", "name": "root"}
+	model, diagnostics := core.Compile([]core.Schema{projectmodel.Schema()}, []core.Definition{
+		{APIVersion: api, Kind: "Manager", Metadata: core.Metadata{Name: "root"}, Purpose: "Root manager.", Spec: map[string]any{"owns": []any{"src/", "docs/"}}},
+		{APIVersion: api, Kind: "Manager", Metadata: core.Metadata{Namespace: "backend", Name: "backend"}, Purpose: "Backend manager.", Spec: map[string]any{"parent": parent, "owns": []any{"src/"}}},
+	}, "delegated-root-selector")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile: %+v", diagnostics)
+	}
+	report := projectmodel.Analyze(model, []projectmodel.File{{Path: "src/main.go", Digest: "sha256:main", Mode: "100644"}})
+	backend := core.DefinitionIdentity{APIVersion: api, Kind: "Manager", Namespace: "backend", Name: "backend"}.Key()
+	allowed := allowedWritePaths(Config{InventoryRoots: []string{"src", "docs"}}, report, ManagerTask{ManagerID: backend}, "work", nil)
+	if !containsString(allowed, "src/main.go") {
+		t.Fatalf("backend cannot write its own src/main.go: allowed=%v files=%+v", allowed, report.Files)
 	}
 }
