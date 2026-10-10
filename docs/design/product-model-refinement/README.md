@@ -30,6 +30,8 @@ Dies ist eine vereinbarte Produktgrundlage aus dem Gespräch, kein Nachweis des 
 
 Auf ausdrücklichen Wunsch des Nutzers ist der Arbeitsansatz mit allgemeinen Beschreibungsfragen, einer Bibliotheksverwaltung als Beispiel und seinen Gedanken zu Programmiersprachen sowie Hierarchie und Graph in einer [separaten Notiz](system-description-notes.md) festgehalten. Deren Begriffskandidaten und offene Analogien sind keine zusätzlichen vereinbarten Grundlagen.
 
+Die Notiz hält zuerst die [zentrale Leitfrage](system-description-notes.md#leitfrage) fest: Wie beschreibt man ein Repository für ein Softwaresystem? Anschließend folgt der [abgeleitete Arbeitsstand](system-description-notes.md#abgeleiteter-arbeitsstand) mit Beschreibungsfragen, Artefaktbeiträgen, einem vorgeschlagenen Maßstab für ausreichende Beschreibung und dem weiteren Vorgehen.
+
 ## Beauftragter Entwurf
 
 Der [Entwurf der kanonischen Beschreibungssprache](canonical-model-draft.md) beschreibt Inhalte, Ausdrucksmittel, Hierarchie und Beziehungen, Realisierung ohne manuelle Aufzählung jeder Datei sowie Verify als mögliche Rückkopplung. Abschnitt 2 hält das vom Nutzer gewünschte Vorgehen fest. Status: Entwurf zur Diskussion; seine Einzelvorschläge sind noch nicht angenommen.

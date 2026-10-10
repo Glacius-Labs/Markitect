@@ -2,7 +2,88 @@
 
 Datum: 10. Oktober 2026. Quelle: Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`.
 
+Ergänzt am 11. Oktober 2026: ausdrücklicher Auftrag, zuerst die zentrale Frage und danach den daraus abgeleiteten Arbeitsstand festzuhalten.
+
 Der Nutzer hat ausdrücklich darum gebeten, den Ansatz mit einem klassischen Beispiel und allgemeinen Beschreibungsfragen als Notiz festzuhalten. Diese Notiz bewahrt diesen Arbeitsansatz und die anschließend eingebrachten Gedanken. Die genannten Begriffe sind Kandidaten, keine beschlossene Ontologie, Modelltypen oder Implementierungsvorgaben. Das [vereinbarte Grundmodell](README.md) bleibt getrennt davon; dort stehen auch Worktree, Branch und Ausgangsrevision.
+
+## Leitfrage
+
+Die zentrale Frage des Nutzers lautet:
+
+> Wie beschreibt man ein Repository für ein Softwaresystem?
+
+Weitere Formulierungen des Nutzers:
+
+- Woraus besteht ein Repository für ein Software System?
+- Was macht ein Software System aus?
+- Was ist ein Software System? Wie lässt es sich beschreiben? Reicht die Beschreibung aus um daraus ein Repository dafür aufzubauen?
+
+Alle bisherigen Überlegungen, Beispiele, Begriffe und C#-Skizzen sollen dieser Frage dienen. Ihre Eignung wird daran beurteilt, ob sie zu einer ausreichenden Beschreibung beitragen. Die Festlegung der Leitfrage ist der gemeinsame Arbeitsauftrag; die folgenden Ableitungen sind der auf ausdrücklichen Wunsch festgehaltene Arbeitsstand.
+
+## Abgeleiteter Arbeitsstand
+
+### Drei Seiten derselben Untersuchung
+
+| Frage | Gegenstand der Untersuchung |
+| --- | --- |
+| Was macht ein Softwaresystem aus? | Seine Bedeutung, Fähigkeiten, Strukturen und Regeln. |
+| Woraus besteht sein Repository? | Artefakte, die diese Inhalte realisieren und Entwicklung sowie Betrieb ermöglichen. |
+| Wie beschreibt man es ausreichend? | Die Festlegungen, die ein Umsetzer für eine passende Realisierung benötigt. |
+
+Das Arbeitsziel ist eine Beschreibung eines Softwareprojekts, die für einen erklärten Umfang ausreichend ist, um daraus ein passendes Repository aufzubauen, ohne jede Datei einzeln vorgeben zu müssen.
+
+### Vorläufige Definition und Beschreibungsfragen
+
+> Ein Softwaresystem ist eine abgegrenzte, softwarebasierte Lösung, deren zusammenwirkende Bestandteile bestimmte Fähigkeiten unter bestimmten Regeln und Bedingungen bereitstellen.
+
+Um es zu beschreiben, müssen folgende Fragen beantwortbar sein:
+
+- **Wofür existiert es?** Problem, Nutzer, Nutzen und Systemgrenze.
+- **Wovon handelt es?** Relevante Begriffe, Informationen, Zustände und Beziehungen.
+- **Was tut es?** Fähigkeiten, Abläufe, Ergebnisse, Fehler und Zustandsänderungen.
+- **Was muss dabei gelten?** Invarianten, Qualitätsanforderungen und Einschränkungen.
+- **Wie wirken seine Bestandteile zusammen?** Gliederung, Schnittstellen und Abhängigkeiten.
+- **Unter welchen Bedingungen funktioniert es?** Umgebung, Konfiguration, externe Systeme und Betriebsbedingungen.
+
+Diese Fragen sind eine Orientierung für die Untersuchung. Welche davon eigene Modellbegriffe benötigen, soll aus konkreten Beschreibungen abgeleitet werden.
+
+### Vom System zum Repository
+
+Das Repository enthält Artefakte mit unterschiedlichen Beiträgen zur Beschreibung: Code realisiert Verhalten und Datenstrukturen; Tests realisieren Prüfungen; Konfiguration legt Betriebsparameter fest; Infrastruktur und Pipelines ermöglichen Bereitstellung und Verfahren; Dokumentation vermittelt Wissen; Skills und Arbeitsanweisungen beschreiben die Arbeit am Projekt.
+
+Eine Systembeschreibung bestimmt noch nicht alle Eigenschaften eines Repositorys. Hinzukommen können technische Realisierungsvorgaben und Regeln für die Projektarbeit. Dieselbe Bibliotheksfunktion kann beispielsweise als Desktopanwendung, Webanwendung oder CLI realisiert werden. Eine solche Entscheidung muss festgelegt oder ausdrücklich freigegeben sein.
+
+### Vorgeschlagener Arbeitsmaßstab für eine ausreichende Beschreibung
+
+> Eine Beschreibung ist für ihren erklärten Umfang ausreichend, wenn ein kompetenter Umsetzer daraus eine passende Realisierung entwickeln kann, ohne wesentliche fachliche oder projektrelevante Entscheidungen unbemerkt selbst erfinden zu müssen.
+
+Unterschiedliche Implementierungen können dieselbe Beschreibung erfüllen. Erkennbar sein muss:
+
+1. Was verbindlich festgelegt ist.
+2. Was bei der Umsetzung entschieden werden darf.
+3. Woran eine passende Realisierung erkannt wird.
+
+Die ausreichende Beschreibung ist damit auf Umfang und bewusst zugelassene Spielräume bezogen. Dieser Maßstab ist noch kein Nachweis, dass eine konkrete Beschreibung vollständig ist.
+
+### Vorgehen zum Finden fehlender Ausdrucksmöglichkeiten
+
+1. Eine gewöhnliche, zusammenhängende Beschreibung der Bibliothekssoftware schreiben.
+2. Die Perspektive eines Umsetzers einnehmen: Kann daraus eine passende Lösung entstehen? Welche Entscheidung fehlt? Ist sie bewusst frei?
+3. Typische Repository-Artefakte betrachten: Welche Aussage begründet das Artefakt, und welche Information benötigt es?
+4. Aus gefundenen Lücken benötigte Aussagen, Begriffe und Ausdrucksmöglichkeiten ableiten.
+
+„Die Software verleiht Bücher“ lässt beispielsweise offen, ob Titel oder Exemplare verliehen werden, wer ausleihen darf, wann ein Exemplar verfügbar ist, wie konkurrierende Anfragen behandelt werden, wann eine Ausleihe endet und welche Informationen erhalten bleiben. Die Antworten liefern konkrete Beschreibungsbedarfe.
+
+Der [C#-Entwurf](csharp-model-design.md) ist eine erste Hypothese zur Organisation solcher Aussagen. Verify könnte später Rückmeldung über benannte Anforderungen und Prüfungen liefern. Ob die Beschreibung die richtigen und relevanten Anforderungen enthält, muss zusätzlich untersucht werden. Die Leitfrage betrifft deshalb sowohl die Ausdrucksfähigkeit des Modells als auch die Angemessenheit und ausreichende Festlegung der jeweiligen Beschreibung.
+
+### Herkunft dieser Ergänzung
+
+- Worktree: `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`.
+- Branch: `docs/product-model-concepts`.
+- Dokumentationsstand vor dieser Ergänzung: `4c2792e35deb4831256199ad2ee928a3e773ef76`; Worktree beim Beginn sauber.
+- Produktbasis bleibt `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
+- Quelle: Klarstellung und Festhalteauftrag des Nutzers im oben genannten Produktgespräch; die Ableitungen stammen aus der unmittelbar vorausgehenden Antwort.
+- Umfang: Dokumentationsnotiz und Navigation; keine Änderung an Produktcode oder Modellverträgen, keine Tests oder Studien.
 
 ## Arbeitsansatz
 
