@@ -20,12 +20,56 @@ import (
 
 func TestHelperDynamicToolIsStableAndStrict(t *testing.T) {
 	first, second := HelperDynamicTool(), HelperDynamicTool()
-	if first.Name != HelperToolName || first.Name != second.Name || first.Type != "function" || string(first.InputSchema) != string(second.InputSchema) {
+	if first.Name != HelperToolName || first.Name != second.Name || first.Type != "function" || first.Description != second.Description || string(first.InputSchema) != string(second.InputSchema) {
 		t.Fatalf("helper tool schema is not stable: %#v %#v", first, second)
+	}
+	for _, phrase := range []string{
+		"Use this tool only for bounded file authoring",
+		"expected to produce validated, scoped file changes",
+		"Do not use it for standalone inspection, research, verification, report-only work",
+		"ordinary read-only tools and returns the required typed report",
+		"An authoring helper may inspect and check its own changes with ordinary tools",
+		"Never manufacture edits to justify a proposal",
+		"Invoke it alone, without parallel workspace-changing tools",
+		"After a definitive request rejection, correct the request before a sequential retry",
+		"Do not continue when delivery is unknown or interrupted",
+	} {
+		if !strings.Contains(first.Description, phrase) {
+			t.Errorf("helper tool guidance is missing %q: %s", phrase, first.Description)
+		}
 	}
 	var schema map[string]any
 	if err := json.Unmarshal(first.InputSchema, &schema); err != nil || schema["type"] != "object" || schema["additionalProperties"] != false {
 		t.Fatalf("helper schema is not a strict object: %#v err=%v", schema, err)
+	}
+}
+
+func TestHelperChildGuidancePreservesExactChangeAndReadonlyBoundaries(t *testing.T) {
+	fixture := newHelperFixture(t)
+	session := fixture.session(t, func(codexappserver.Options) Invoker { return nil })
+	request, err := session.childRequest(helperToolArgs{Task: "author the scoped update", Paths: []string{"src/"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var child helperContext
+	if err := json.Unmarshal(request.Context, &child); err != nil {
+		t.Fatal(err)
+	}
+	for _, phrase := range []string{
+		"bounded file authoring",
+		"expected to produce validated, scoped file changes",
+		"CandidateFiles, if supplied, assert only exact bytes and modes actually written",
+		"Use ordinary native file, shell and test tools for this bounded authoring task, including checks of changes you make",
+		"If the task is standalone inspection, research, verification, report-only, or no change is warranted",
+		"do not invent edits or claim a proposed change",
+		"the parent handles that work with normal tools and its typed report",
+	} {
+		if !strings.Contains(child.Guidance, phrase) {
+			t.Errorf("child guidance is missing %q: %s", phrase, child.Guidance)
+		}
+	}
+	if !strings.Contains(child.Guidance, "ParentContext is read-only") || !strings.Contains(child.Guidance, "write outside the explicit helper scope") {
+		t.Fatalf("child guidance lost its existing authority/scope boundaries: %s", child.Guidance)
 	}
 }
 
