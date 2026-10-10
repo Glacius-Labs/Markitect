@@ -20,3 +20,5 @@ spec:
         - kind: Workflow
           name: markitect-first-change
           namespace: core
+        - kind: Text
+          name: document-owners

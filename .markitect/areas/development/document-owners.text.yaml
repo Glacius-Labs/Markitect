@@ -1,0 +1,30 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Text
+metadata:
+    name: document-owners
+    namespace: development
+spec:
+    text: |
+        These documents own current direction and contracts. Read the owner before you change what it owns.
+
+        - `docs/vision.md`: the product thesis and the responsibilities of people and agents.
+        - `docs/operating-methodology.md` and `docs/design/standard-operating-model.md`: the intended process.
+        - `docs/measurement.md`: readiness stages and how the method is evaluated.
+        - `docs/architecture.md` and `docs/engineering-constitution.md`: technical boundaries and contracts.
+        - `docs/design/project-world/`: the project model, adoption and delivery contracts.
+        - `docs/implementation-plan.md`: the roadmap, with streams, waves, zones, branch names and integration rules.
+        - `docs/work-items/backlog.yaml`: the status of each work package.
+        - `docs/concepts/register.md`: accepted decisions. Do not reopen an accepted entry without new evidence; record such evidence as an open question there.
+        - `CONTRIBUTING.md`: the contribution checks.
+    files:
+        - docs/vision.md
+        - docs/operating-methodology.md
+        - docs/design/standard-operating-model.md
+        - docs/measurement.md
+        - docs/engineering-constitution.md
+        - docs/design/project-world/README.md
+        - docs/design/project-world/project-contract.md
+        - docs/design/project-world/adoption-and-agent-boundary.md
+        - docs/design/project-world/delivery-contract.md
+        - docs/implementation-plan.md
+        - docs/work-items/backlog.yaml

@@ -5,34 +5,17 @@ metadata:
     namespace: development
 spec:
     text: |
-        Keep Markitect Core generic and independent of Modules, Host and CLI. Each capability Module depends only on Core and its own private implementation; never import sibling Modules or Host. Host composes Modules and supplies explicit normalized model/configuration/artifacts. CLI delegates to Host. The Go import gate mechanically enforces these directions. Keep Markitect Core independent of adopting repositories and model providers. Project artifacts remain opaque declared bytes; specialized checks/adapters own implementation-specific interpretation. Relationships and input scope are explicit, fixed-snapshot results are deterministic, unknown impact stays conservative, and generated projections have one canonical owner.
-
-        The accepted canonical projection reset makes the new Core a structural Schema/Kind/Property/Definition compiler. Engineering policies and execution live above it. Preserve validated projection-first contracts, normalized inputs, guarded lifecycle, immutable checks, accounting, provenance and drift/impact mechanics through deliberate migration; do not replace them merely because the foundation changes. Every installable Module is exactly a Schema Module or a Projection Module, never both. Schema Modules provide canonical language and may not depend on Projection Modules. Projection Modules provide target expertise and tools. Installation registers capabilities only. A canonical Projection explicitly binds semantic scope, desired representation type, target and selected representation policies; project configuration resolves the exact installed Projection Module; no automatic materialization follows installation. Host resolves a unique internal execution entrypoint. Users change canonical intent; Markitect derives affected reconciliation work. Concrete execution bindings remain configuration, not canonical ontology. All projections follow Executor, candidate and independent Verifier roles; deterministic renderers and checks are tools within that process, never a second authority model. Operational projection records and verification are separate from canonical intent.
-
-        Preserve strict check/verify acceptance, read-only failed-policy analysis, explicit exceptions and observe/plan/apply/verify trust boundaries. Desired, observed, inferred, candidate and generated state remain distinct. AI evidence is not owner acceptance. Follow the declared contribution checks; a source change does not update a published immutable release. Vision owns the quality and intent-fidelity goal; operating-methodology owns the intended reconciliation process; measurement owns staged readiness and comparison. Architecture and engineering-constitution retain technical contract ownership. The implementation-plan owns current source status, Astra finding dispositions and the next bounded method/handoff checkpoint. Preserve the frozen assessment and close or defer its findings explicitly with evidence and reasons. Read these owners before changing the method or its proof program; this rule routes their exact bytes into development context.
-
-        The direct user-authorized project-world extension introduces a separate project command facade over the unchanged structural Core: recursively managed conceptual slices, persisted artifact obligations and ownership, explicit Brownfield distillation, and controlled proposal/candidate/apply work. Its contracts are in docs/design/project-world. New model path semantics are a deliberate Host authoring convention, not source-language inference in Core. Current product purpose determines retention: delete functions, modes and fallbacks retained solely for compatibility; no existing-user compatibility requirement remains. Preserve immutable historical releases, pins and original evidence as records, not executable compatibility promises. Retain compiler, schema, rendering, ownership, independent review and guarded lifecycle mechanisms where they serve current engineering work. New projects use the recursively managed project workflow; do not mechanically rename useful technical contracts. Typed YAML is the sole canonical project model; generated Markdown is its readable view. Required provider SKILL.md frontmatter is discovery metadata, not another canonical authoring format. The active model revision determines manager authority; local agent settings do not prove OS isolation. Follow the roadmap in docs/implementation-plan.md and its backlog in docs/work-items/backlog.yaml for current direction, work packages, zones, branch names and integration rules; the product-readiness program is complete and its records are history. Keep actual role starts and budgets explicit and preserve closed proof evidence. Follow reviewed delivery contracts and isolated Luna High assignments.
+        - Core stays generic. It does not depend on Modules, Host, CLI, adopting repositories or model providers. A capability Module imports only Core and its own subtree. Host composes; CLI entrypoints delegate to Host. The import gate in `src/internal/tooling/architecture` enforces these directions; do not add exceptions to it.
+        - Product packages do not import legacy packages: the host root package, `compat/v0_13`, the canonical projection alpha and their helpers. Change the legacy lines only to remove them. Compatibility is not a reason to keep a function, mode or fallback (DEC-014).
+        - Adopting-project files are declared inputs. Markitect may track their exact paths and bytes but does not infer their structure or meaning; specialized checks and adapters own that interpretation.
+        - Relationships and input scope are explicit. Do not infer dependencies from prose, README links or paths. Fixed-snapshot results are deterministic, unknown impact stays conservative, and every generated output has one canonical owner.
+        - Typed YAML is the canonical model; generated Markdown, Codex and Claude files are its views. Change the canonical source and regenerate the views; do not edit generated files.
+        - Keep desired, observed, inferred, candidate and generated state distinct. Keep preview before write, digest-bound writes, stale-plan rejection, independent review and guarded Apply.
+        - AI evidence, passing checks and digests are not human acceptance. Agent settings and owned workspaces are not an operating-system sandbox.
+        - Keep project-local policy in the project that owns it unless a deliberate product decision makes it a general rule. Changes to an adopting project belong in its checkout and follow its instructions.
+        - A source change does not update a published release. Published releases, pins and original evidence stay immutable records.
     files:
-        - docs/vision.md
-        - docs/operating-methodology.md
-        - docs/design/standard-operating-model.md
-        - docs/measurement.md
-        - docs/implementation-plan.md
         - docs/architecture.md
-        - docs/engineering-constitution.md
         - CONTRIBUTING.md
-        - docs/design/managed-artifact-coverage.md
         - docs/design/clean-architecture-consolidation.md
-        - docs/design/canonical-projection-reset.md
-        - docs/design/project-world/README.md
-        - docs/design/project-world/project-contract.md
-        - docs/design/project-world/adoption-and-agent-boundary.md
-        - docs/design/project-world/delivery-contract.md
-        - docs/design/project-native-codex-work-20261009.md
-        - docs/design/project-capability-skills-20261009.md
-        - docs/design/project-simplification-and-api-direction-20261009.md
-        - docs/work-items/product-readiness/README.md
-        - docs/work-items/product-readiness/backlog.yaml
-        - docs/work-items/product-readiness/evidence/native-acceptance-ledger.yaml
-        - docs/work-items/product-readiness/follow-up-backlog.yaml
-        - docs/work-items/backlog.yaml
+        - docs/design/managed-artifact-coverage.md
