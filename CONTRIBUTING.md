@@ -69,7 +69,7 @@ go run ./src/cmd/markitect check --repo benchmark/fixtures/v2
 git diff --check
 ```
 
-Full source gates use `-count=1` to require fresh test execution rather than report a cached test success as a new candidate run. This source Project's `go-tests` check declares a 5400-second outer command limit and the explicit Go test-binary limit `-timeout=60m`; focused checks use a ten-minute default, broad package runs thirty minutes and complete suite runs sixty minutes. Outer process/CI windows are at least ninety minutes. Preserve already-running work and original timeout evidence; investigate a real expiry rather than automatically retrying it.
+Full source gates use `-count=1` to require fresh test execution rather than report a cached test success as a new candidate run. The complete suite runs once, as `go test ./... -count=1 -timeout=60m`; this source Project's `verify` does not declare it as a check, so the dogfood Verify does not run it a second time. Focused checks use a ten-minute default, broad package runs thirty minutes and complete suite runs sixty minutes. Outer process/CI windows are at least ninety minutes. Preserve already-running work and original timeout evidence; investigate a real expiry rather than automatically retrying it.
 
 The hosted quality job has a finite 90-minute limit. Full test commands use a 60-minute test-binary limit; the job also executes the package, adapter, schema and example gates and the fixed-revision dogfood Verify.
 
