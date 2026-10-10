@@ -2211,3 +2211,7 @@ Root cleanlocal/public6c8387e0/docclosurestat + exactWindowsbf0dd0d9 Go1.27.1 VC
 ### Fresh Actual19 normal run allocated and active, owner report
 
 Batcha01-operational-censusd1bf9/Planc5dfdc81/digestd00d2f/deadline11:51:12.9177985Z/readynormal ee4f8e0blockers/runtime75b341, existingobserverddf7/same6c-bf0dd binary. Rootpriorcleanpublic/binaryfreezeverified; currentnativehandles/startunionpending/usageunknown. Prior18nativehelperinterrupted/ownprocessesgonebeforeallocation, unknownHostjournal-workspacespreservedno replay/cleanup. No newRootorder/framework/Mainmatrix/studyPASS.
+
+### Actual19 terminal review failure and observer distinction
+
+Owner clean6c/bf0dd terminalFAILED07:56:57, noResume/Verify/Apply/boundaryfalse. Source-docsparallel16.826s/helpergenuineappliedclosedtests/test_greeting.py; earlierScopeRequestpredispatchrejectpreserved. OriginalRootintegrationoncecompleted; nativeRootreviewcompletedFAILunresolvableimportdocs/greeting.md; wrappermissingproposedtypedreport. Independentboundedtwoquestions: possibleobserverhistoricTaskID/currentPlanmixvsActual16, and legitimateartifactfailureversusoutertypedreviewcontract. No fabricatedPASS/proposed/replay/sourceproviderparallel; batch frozenuntilterminalclosure. RootexactnativeIDs/wholecounts-costunionnotyetprovided, unknownnotzero. No repeatedRootorder/newframework.

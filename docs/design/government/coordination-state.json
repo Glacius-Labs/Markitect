@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T07:52:09.554313+00:00",
+  "updatedUtc": "2026-10-10T08:04:26.942136+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18532,7 +18532,7 @@
       "publicFreezeSha": "6c8387e0a0baf9066cd8617d6d6969aebe54fc2c"
     },
     "actual19Preparation": {
-      "status": "OWNER_REPORTED_FRESH_NORMAL_ACTUAL19_RUNNING",
+      "status": "OWNER_REPORTED_TERMINAL_FAILED_ROOT_REVIEW_ARTIFACT_AND_WRAPPER_OBSERVER_DIAGNOSES_ACTIVE",
       "sourceSha": "6c8387e0a0baf9066cd8617d6d6969aebe54fc2c",
       "binarySha256": "bf0dd0d9ea008185a714bcee7b4f30f75a97360f70be97ab4fbec94ed2cc224e",
       "rootVerified": "Clean local HEAD/publicremote6c8387e0 exact, three-file documentation closure stat read; known Windows binary FileSHA/Go1.27.1 AMD64/CGO0/VCS6c8387/modifiedfalse verified.",
@@ -18544,7 +18544,22 @@
       "planDigest": "sha256:d00d2f0341655c1e5a81b005aa8efc8124455a49a0171a2c11316343fa42c98e",
       "controllerSha256": "ddf7b16dc0a23b21ac4edd90e18f56e15cdf41478baac873503b18ed90154b36",
       "ownerBinding": "Fresh normal readinessee4f8e prefix ready/0blockers, Runtime75b341 prefix; same clean6c8387e0/bf0dd binary before/after recovery, existing observer unchanged. Prior18nativehelper interrupted/notLoaded and ownprocessesgone before allocation; unknown original Hostjournal/workspaces preserved/no replay or cleanup.",
-      "rootBoundary": "Earlier clean exact public source/binary verified; fresh current native handles/start union not yet independently inspected. Current counts/usage unknown, not zero; no new Mainmatrix/framework/study/release acceptance."
+      "rootBoundary": "Earlier clean exact public source/binary verified; fresh current native handles/start union not yet independently inspected. Current counts/usage unknown, not zero; no new Mainmatrix/framework/study/release acceptance.",
+      "terminalOwnerReport": {
+        "endedUtc": "2026-10-10T07:56:57Z",
+        "state": "failed",
+        "boundaryObserved": false,
+        "progress": "Source/Docs original parallel16.826s; genuine fresh helper applied-and-closed tests/test_greeting.py. Earlier scope request rejected before child start, preserved counted failure. Original Rootintegration ran once/nativecompleted; Rootreview nativecompleted FAIL on unresolvable import example docs/greeting.md.",
+        "wrapper": "Missing proposed typed Report; exact typed semantic versus outer wrapper error distinction under independent audit, no invented proposed/PASS.",
+        "observer": "Possible historical same TaskID journal/currentPlan mixing with old16; current boundaryfalse remains original fact, cause pending. Operator proof observer separate from product actual review defect.",
+        "notRun": [
+          "Resume",
+          "Verify",
+          "Apply"
+        ],
+        "execution": "No new source/provider parallel; batch frozen until demonstrated terminal closure. Same6c/bf0dd unchanged, no replay or new acceptance.",
+        "accounting": "Current complete requests/provider/cost union unknown pending closure, scope rejection before child remains failed request/no native child. Raw native Root/Reviewer identities not yet provided/independently bound this event."
+      }
     }
   },
   "restartAfterInterruptedIntegration20261010": {
