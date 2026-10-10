@@ -448,6 +448,46 @@ func TestNativeTurnPromptAndStrictTaskResponseContract(t *testing.T) {
 	}
 }
 
+func TestFullVerifyNativeTurnPromptScopesTypedAudit(t *testing.T) {
+	request := agentexec.Request{
+		Role:           agentexec.RoleExecutor,
+		SourceRevision: strings.Repeat("a", 40),
+		ModelDigest:    "sha256:" + strings.Repeat("b", 64),
+		ModulePin:      "test@1",
+		ProjectionID:   "test",
+		ScopeIDs:       []string{"manager"},
+		PolicyIDs:      []string{},
+		Context:        json.RawMessage(`{"kind":"projectrun-full-verify/v1","requiredSubjects":["statement:orders","evidence:negative stock case"],"responseSchema":{"type":"object","additionalProperties":false}}`),
+		Artifacts:      []agentexec.Artifact{},
+	}
+	inv, wire, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prompt := nativeTurnPrompt(inv, wire, `C:\workspace`)
+	for _, required := range []string{
+		"Perform only the read-only, bounded full-verification audit defined by the supplied requiredSubjects and fixed Host context",
+		"Do not edit repository artifacts, invoke Host helpers, or dispatch work",
+		"Run every shell command from the exact Host-owned workspace CWD supplied here: C:\\workspace",
+		"read-only, bounded Manager audit",
+		"fixed snapshot, model, files, briefing, child assessments, and check results",
+		"copy every subject string verbatim into exactly one assessments[].subject",
+		"no omissions, duplicates, paraphrases, or additional subjects",
+		"Do not gate this scoped audit on unrelated Git inspection, Markitect CLI/MCP availability, or rerunning Host-supplied checks",
+		"outer outcome is proposed; reportJson.status independently expresses pass, fail, or incomplete",
+		"incomplete when relevant evidence for a required subject is unavailable",
+		"Put relevant uncertainty in the typed assessment detail and mark the subject and overall status incomplete when evidence is missing",
+		"Keep outer uncertainty empty",
+	} {
+		if !strings.Contains(prompt, required) {
+			t.Errorf("full verification prompt omits contract clause %q", required)
+		}
+	}
+	if strings.Contains(prompt, "use empty candidateFiles, evidenceRefs") {
+		t.Fatal("full verification guidance contradicts the native executor evidenceRefs contract")
+	}
+}
+
 func TestNativeSemanticResponseComposesTrustedMetadataAndRejectsModelMetadata(t *testing.T) {
 	content := []byte("README bytes supplied to the invocation\n")
 	digest := sha256.Sum256(content)
