@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T10:47:40.061557+00:00",
+  "updatedUtc": "2026-10-10T10:58:45.721785+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator continues finite Actual26 and reports genuine terminal proof/blocker once; Root verifies exact receipts before ordinary hosted gates/PR89Main. Studies remain suspended/KG separate, no repeated Root order.",
+  "nextAction": "Integrator diagnoses exact descendant ownership/rework and legitimate review findings before bounded ordinary nextaction; preserve strict reviews and separate original-recovery from genuine semanticrepairs. No duplicateRootorder/arbitrary review bypass/studies/Main.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL26_ACTIVE_UNCHANGED_IMPLEMENTATION_DOC_FREEZE_SOURCE_BINARY_REMOTE_ROOT_VERIFIED",
+    "status": "ACTUAL26_BLOCKED_INTEGRATION_REVIEW_LIMIT_GENUINE_DOC_DEFECT_REWORK_DIAGNOSIS_ACTIVE",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -19008,7 +19008,7 @@
       "terminalAuditSha256OwnerReportedPrefix": "44d2a0b2"
     },
     "actual26Preparation": {
-      "status": "ACTIVE_OWNER_REPORTED_SOURCE_BINARY_REMOTE_ROOT_BOUND_CURRENT_NATIVE_RECEIPTS_PENDING",
+      "status": "TERMINAL_BLOCKED_AFTER_ORIGINAL_RECOVERY_AND_TWO_DISTINCT_SEMANTIC_REPAIRS_NO_VERIFY_APPLY",
       "sourceSha": "325f98182771cae4ee4f798106e53e96979d55be",
       "binarySha256": "49c0df895a2d6d3b29b4e01ccb2d1d06fe8529850695889170acb0bcc37e2271",
       "implementationCorrectionRef": "ownIntegrationReviewEvidenceCorrection",
@@ -19019,7 +19019,52 @@
       "runtimeDigestOwnerReportedPrefix": "0b0bea",
       "adopterCheckpointOwnerReportedPrefix": "275baa9b",
       "deadlineUtc": "2026-10-10T14:46:28.5596881Z",
-      "boundary": "Fresh normal finite renewableA01/unchanged128MiB profile and implementation; currentnativehandles/accounting/originalRootrecovery/fullVerify/guardedApply pending. Priorfailed25 retained/noReplay/retrocredit/newRootorder/framework/gate/study/release."
+      "boundary": "Fresh normal finite renewableA01/unchanged128MiB profile and implementation; currentnativehandles/accounting/originalRootrecovery/fullVerify/guardedApply pending. Priorfailed25 retained/noReplay/retrocredit/newRootorder/framework/gate/study/release.",
+      "terminalOwnerReport": {
+        "originalRecovery": "Samebinary originalRootexactlyonephysicalstart/noReplay; actualSourcehelperappliedclosed tests/test_greeting.py; DocsSource32.081275soverlap/3WorkReviewPASS.",
+        "blocker": "Three distinctIntegrationReviewFAIL for docs/greeting.md from greeting import greet versus actualsrc/greeting.py layout; two legitimate newRootsemanticrepair starts afteroriginal00ea, not original replay. Cumulativeintegrationreviewroundlimit reached; bounded exactrepairreport/descendantownership-rework contract diagnosis before nextaction; strictreviews preserved.",
+        "resumeCommand": "0719ae4c1c1f48f4a136a571464daf56.command.json",
+        "resumeEndedUtc": "2026-10-10T10:56:16.5326677Z",
+        "resumeInnerExit": 2,
+        "noVerifyOrApply": true
+      },
+      "rootTerminalStateVerified": {
+        "path": "C:/Users/Consiliari/AppData/Local/Temp/markitect-a01-3c5c733388014645b0ca178338078b6a/repo/.markitect/runs/bcf3c796ea5da8ac0bff569ae577dbbd/states/00000044.json",
+        "revision": 44,
+        "status": "blocked",
+        "workReviewOutcomes": [
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "integrationReviewRoundsOutcomes": {
+          "1": "fail",
+          "2": "fail",
+          "3": "fail"
+        },
+        "originalIntegrationReceipt": "00ea0256ff6c7ed3dd5c76fb2599f46d",
+        "newSemanticRepairIntegrationReceipts": [
+          "f61a638693b09c79ad1b1ee80355258c",
+          "03795adbe942c74ef7124e1b2d9474bb"
+        ],
+        "phases": [
+          "work",
+          "review",
+          "integrate"
+        ],
+        "qualification": "Sharedshortcopy/closebeforeparse; actual3separateintegrationreceipts/3failedreviewrounds observed, originalnativephysical/noReplay/helper/paralleltrace ownerattested not Rootwholeunion reaudited; noVerify/Applyphase."
+      },
+      "finalAccountingOwnerReported": {
+        "roleStarts": 12,
+        "helperStarts": 1,
+        "newCombinedAndProviderStarts": 13,
+        "cumulativeCombinedStarts": 156,
+        "cumulativeProviderStarts": 152,
+        "batchPartialEstimatedCostMicros": 1483575,
+        "cumulativePartialEstimatedCostMicros": 21950371,
+        "originalRootKnownMaximumCostMicrosCountedOnce": 150928,
+        "qualification": "Partial known estimates, exactrawunionnotRootreaudited; no complete invoice/efficiency claim."
+      }
     }
   },
   "restartAfterInterruptedIntegration20261010": {
