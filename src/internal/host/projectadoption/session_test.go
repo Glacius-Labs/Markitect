@@ -139,6 +139,26 @@ func TestReadinessDoesNotPromoteTransitionalCoverage(t *testing.T) {
 	}
 }
 
+func TestBrownfieldStartRefusesScopeStatusesWithoutProposals(t *testing.T) {
+	root, discovery, _, target := distillationDiscovery(t)
+	session, err := StartBrownfieldSession(root, target, discovery, []ScopeStatus{{ScopeID: "orders", Status: "observed", Reason: "Owner already tracks this area"}})
+	if err == nil {
+		validateErr := ValidateBrownfieldSession(session)
+		_, writeErr := WriteBrownfieldSession(root, session, session.Digest)
+		t.Fatalf("start accepted initial scope statuses as session %s that fails validation (%v) and cannot be written (%v)", session.Digest, validateErr, writeErr)
+	}
+	if !strings.Contains(err.Error(), "initial scope statuses require recorded reverse-model proposals") {
+		t.Fatalf("start refused initial scope statuses without saying they need recorded proposals: %v", err)
+	}
+	session, err = StartBrownfieldSession(root, target, discovery, []ScopeStatus{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := WriteBrownfieldSession(root, session, session.Digest); err != nil {
+		t.Fatalf("a start without scope statuses must stay writable: %v", err)
+	}
+}
+
 func TestSessionLedgerRejectsSymlinkedControlPlane(t *testing.T) {
 	root, _ := committedRepository(t, map[string]string{"src/main.go": "package src\n"})
 	markitect := filepath.Join(root, ".markitect")
