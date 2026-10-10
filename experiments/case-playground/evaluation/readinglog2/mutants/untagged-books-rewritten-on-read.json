@@ -1,0 +1,28 @@
+{
+  "id": "untagged-books-rewritten-on-read",
+  "base": "S3",
+  "item": "B08",
+  "rule": null,
+  "violates": "Reading books stored without tags rewrites the file with tags.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": [
+        "    for book in books:",
+        "        book.setdefault(\"tags\", [])",
+        "    return books"
+      ],
+      "new": [
+        "    rewrite = any(\"tags\" not in book for book in books)",
+        "    for book in books:",
+        "        book.setdefault(\"tags\", [])",
+        "    if rewrite:",
+        "        save(db, books)",
+        "    return books"
+      ]
+    }
+  ],
+  "fails": [
+    "b08-untagged-stored-books"
+  ]
+}

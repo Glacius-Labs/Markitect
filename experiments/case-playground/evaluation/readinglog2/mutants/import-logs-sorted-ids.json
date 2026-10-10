@@ -1,0 +1,17 @@
+{
+  "id": "import-logs-sorted-ids",
+  "base": "S2",
+  "item": "B02",
+  "rule": "R1",
+  "violates": "The import audit line lists the IDs sorted instead of in processing (file) order.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    return {\"imported\": len(imported)}, [book[\"id\"] for book in imported]",
+      "new": "    return {\"imported\": len(imported)}, sorted(book[\"id\"] for book in imported)"
+    }
+  ],
+  "fails": [
+    "b02-import-log"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "version2-records-not-validated",
+  "base": "S4",
+  "item": "B11",
+  "rule": "R2",
+  "violates": "Records of a version 2 file are not validated, so a malformed file is used and overwritten.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "        books = stored_records(json.loads(db.read_text(encoding=\"utf-8\")))",
+      "new": [
+        "        data = json.loads(db.read_text(encoding=\"utf-8\"))",
+        "        books = stored_records(data)",
+        "        if isinstance(data, dict) and isinstance(books, list):",
+        "            return books"
+      ]
+    }
+  ],
+  "fails": [
+    "b11-v2-malformed"
+  ]
+}

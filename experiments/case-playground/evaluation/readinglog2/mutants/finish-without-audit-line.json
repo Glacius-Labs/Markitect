@@ -1,0 +1,19 @@
+{
+  "id": "finish-without-audit-line",
+  "base": "S1",
+  "item": "B01",
+  "rule": "R1",
+  "violates": "A successful finish saves but appends no audit line.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "            commit(args.db, books, args.command, ids)",
+      "new": "            save(args.db, books) if args.command == \"finish\" else commit(args.db, books, args.command, ids)"
+    }
+  ],
+  "fails": [
+    "b01-finish-record-and-log",
+    "b01-finish-repeat-logs-again",
+    "b01-log-append-only"
+  ]
+}

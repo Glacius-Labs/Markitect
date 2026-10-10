@@ -1,0 +1,17 @@
+{
+  "id": "summary-casefold-order",
+  "base": "S2",
+  "item": "B03",
+  "rule": null,
+  "violates": "summary orders authors case-insensitively instead of by code point.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    return {\"authors\": [authors[name] for name in sorted(authors)]}",
+      "new": "    return {\"authors\": [authors[name] for name in sorted(authors, key=str.casefold)]}"
+    }
+  ],
+  "fails": [
+    "b03-summary-order-and-counts"
+  ]
+}

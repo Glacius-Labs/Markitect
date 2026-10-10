@@ -1,0 +1,21 @@
+{
+  "id": "version1-mutation-keeps-array",
+  "base": "S4",
+  "item": "B11",
+  "rule": null,
+  "violates": "A mutation of a version 1 file saves it as version 1 again.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "    content = {\"schemaVersion\": SCHEMA_VERSION, \"records\": books}",
+      "new": "    content = books if db.exists() and db.read_text(encoding=\"utf-8\").lstrip().startswith(\"[\") else {\"schemaVersion\": SCHEMA_VERSION, \"records\": books}"
+    }
+  ],
+  "fails": [
+    "b11-noop-mutation-writes-v2",
+    "b11-v1-add-writes-v2",
+    "b11-v1-finish-writes-v2",
+    "b11-v1-import-writes-v2",
+    "b11-v1-tag-writes-v2"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "migration-logs-extra-line",
+  "base": "S4",
+  "item": "B11",
+  "rule": "R1",
+  "violates": "Upgrading a version 1 file appends an extra migrate audit line.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": [
+        "def commit(db, books, op, ids):",
+        "    \"\"\"Save a successful change and record it in the audit log.\"\"\"",
+        "    save(db, books)"
+      ],
+      "new": [
+        "def commit(db, books, op, ids):",
+        "    \"\"\"Save a successful change and record it in the audit log.\"\"\"",
+        "    if db.exists() and isinstance(json.loads(db.read_text(encoding=\"utf-8\")), list):",
+        "        append_log(db, \"migrate\", [book[\"id\"] for book in books])",
+        "    save(db, books)"
+      ]
+    }
+  ],
+  "fails": [
+    "b11-noop-mutation-writes-v2",
+    "b11-v1-add-writes-v2",
+    "b11-v1-finish-writes-v2",
+    "b11-v1-import-writes-v2",
+    "b11-v1-tag-writes-v2"
+  ]
+}
