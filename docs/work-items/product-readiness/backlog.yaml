@@ -493,7 +493,7 @@ native_acceptance:
     post_attempt_source_validation: native_focused_test_passed_0_291s_review_focused_test_passed_3_397s_appserver_package_passed_165_576s_before_common_cwd_and_wording_extension
     post_attempt_independent_review: closed
     post_attempt_a01_acceptance: not_established
-  latest_actual:
+  attempt_14:
     batch_id: a01-grounding-79c0422eee0043e2b9dde1e98ce8484b
     attempt_number: 14
     status: failed_not_passed
@@ -538,17 +538,124 @@ native_acceptance:
     post_attempt_independent_reviews: lifecycle_and_provider_adapter_docs_clear
     provenance_implementation_repair: closed
     combined_a01_acceptance: pending
+  latest_actual:
+    batch_id: a01-helper-evidence-30a1a1683c534d68b5fa7958dcbd83d7
+    attempt_number: 15
+    status: failed_not_passed
+    source_revision: e10ad79a8fb238f016fa9026796fc38df8a35a82
+    binary_sha256: 1329ed6f027867b018af777ca004e5a7f90a5e6047999bbbdf9e825140c7f780
+    exploration_id: greeting-feature-renewed
+    plan_id: 3c41c26278ec1b579077ebe03b667f6d
+    plan_sha256: 15e6159ed361ef615b11ce74a6fdc796c3b888ad05c803ea5d564b37209befc3
+    readiness_sha256: 5e3a068dc7219cc6bfc33d86b00ae7058f58801c5649c6a2796669ef872d66bc
+    runtime_sha256: b6c8ff8a2fe58179b069c68b5ce2a4c25c2c2c177540b64303e32bf5608f249d
+    owned_project_revision: eaa11e9969db66e6c1a5cd80949cfb757074ce54
+    observer_id: 741392ec2c04437db31d29f6e821d3c6
+    observer_record_sha256: 29d7f21a26372824ddd6310ff7e1cd89a1846e8c12e45c8dad7fbe02c7de149
+    observer_pid: 66624
+    observer_started_utc: '2026-10-10T05:11:26.9195092Z'
+    observer_ended_utc: '2026-10-10T05:14:50.6111122Z'
+    observer_exit_code: 2
+    observer_boundary_observed: false
+    private_record_sha256: 135876f6e5436e3f685a1241028f7e025cbc1d3624c028e7a024ac2aa4f5f702
+    initial_run_state_revision: 20
+    initial_run_state_status: failed
+    initial_run_state_sha256: 8161de6074d65fa6f2a4f0ebabe44dc41ce88b93bf7d9c957315bf51d507fd9b
+    normal_resume_command_id: 43f706ea234f42f896d24fac6bef482f
+    normal_resume_command_record_sha256: 94084a50ff94ee27f67d12af254cc9ee4c3dd8557f5eb43f41955517a6e61b95
+    normal_resume_exit_code: 2
+    normal_resume_started_utc: '2026-10-10T05:16:19.1404235Z'
+    normal_resume_ended_utc: '2026-10-10T05:16:26.4822090Z'
+    normal_resume_new_provider_start: false
+    normal_resume_rejection: uncertain_in_flight_docs_manager_requires_new_plan
+    terminal_run_state_revision: 22
+    terminal_run_state_status: blocked
+    terminal_run_state_sha256: cfefdcabeff7ce9100ab2fc6de2251af635bf7b32659ada1728262c90e456af4
+    terminal_run_state_digest: 3af3f544431f422b7b345a82255783e789eae1a233f7d81f60ff26cc9ca13fa5
+    root_work_and_review: pass
+    docs_work: complete
+    source_native_turn: complete
+    source_durable_task_state: invoking
+    source_review_observed: false
+    docs_review_native_run_id: 58dc4dcd689bc685fe888b581c9319aa
+    docs_review_native_session: 01a1243b-8145-7f80-b1e9-c110abc520cf
+    docs_review_native_turn: 01a1243b-8394-7e32-af9f-07476c8f524a
+    docs_review_journal_append: sharing_violation
+    docs_review_termination: unknown
+    docs_review_cost_known: false
+    docs_review_workspace_preserved: true
+    source_native_session: 01a1243a-4c59-7e11-90dd-8d820daaa9d9
+    source_native_turn: 01a1243a-4eb7-7951-b1e5-7ab686b925b1
+    docs_native_session: 01a1243a-5306-7ef0-9289-7e0f01ee9540
+    docs_native_turn: 01a1243a-5437-7d23-9ea4-ab078aa6ec02
+    source_docs_manager_overlap_seconds: 59.8254736
+    source_reported_unit_check: passed_one_test
+    source_reported_python_location_warning: true
+    source_reported_git_status_diff_unavailable: true
+    normal_autocrlf_git_status_confirmed_clean: true
+    exploration_crlf_false_positive: confirmed
+    root_candidate_integrated: false
+    verify_apply_observed: false
+    original_turn_recovery_handle_valid: true
+    original_turn_recovery_lookup: three_historical_canonical_task_journals_found_and_rejected_before_handle_binding
+    original_turn_recovery_exact_binding_needed: receipt_run_id_and_input_digest_plus_concrete_cause
+    original_turn_replayed: false
+    completed_host_helper_calls: 1
+    helper_call_id: helper-exec-c6f41f41-ff0f-4036-815c-4a46512f6266
+    helper_run_id: 161777c3785e2881fa8fb24778cdf0bf
+    helper_input_digest: sha256:7c7aaa66685008c79fdc0b1a4bcff21c5e008fb1787fe5b2323e3ab3ca2cba32
+    helper_child_session: 01a1243a-8729-73e1-9424-badd9f930ff7
+    helper_child_turn: 01a1243a-8998-7513-bf0f-51c1543081db
+    helper_path: tests/test_greeting.py
+    helper_delta_state: applied_and_closed
+    helper_delta_digest: sha256:57f1903fc70c74045810a8c5a2aef796eebde93eed1ab03cb6f571be6fbd1a60
+    helper_journal: repo/.markitect/runs/private/codex-app-server/07832213df5d91930cf9397cd5d3e97072897fa6a0ba5493d6f774c6eea428ac/9cfa3baf2a95a6ac1ad05285ed7796d1/helpers.jsonl
+    role_start_requests: 6
+    native_provider_starts: 6
+    manager_reviewer_starts: 5
+    helper_start_requests: 1
+    reported_role_invocation_cost_micros: 925839
+    cost_accounting: partial_lower_bound_docs_review_cost_unknown_not_invoice
+    cumulative_known_role_start_requests: 44
+    cumulative_known_provider_starts: 41
+    cumulative_estimated_cost_micros: 9481381
+    cumulative_cost_accounting: partial_observed_lower_bound_not_invoice
+    acceptance_helper_minimum: at_least_one_genuine_fresh_helper
+    historical_plan_exact_one_helper_wording_preserved: true
+    helper_count_alone_is_failure: false
+    source_fixes_in_progress: []
+    post_attempt_crlf_source_correction: 5eed2e262c4c3ffd6c7339740e5efbca53db31ae
+    post_attempt_crlf_independent_review: clear
+    post_attempt_crlf_validation: projectapp_explore_readiness_focused_passed_44_424s_projectrun_selectedbasis_focused_passed_14_047s
+    post_attempt_crlf_staged_diff_check: passed
+    original_recovery_fix_status: closed_technical_only
+    original_recovery_interim_validation: recovery_suite_47220_passed_185_208s_before_final_narrow_followups_not_final_certification
+    original_recovery_identity_rules: split_raw_ledger_digest_from_normalized_reviewer_protocol_and_reviewrecord_digest; reconcile_prior_ledger_rows_by_exact_receipt_run_id_and_task_role_phase; retain_exact_known_legacy_receipt_plus_current_owner_no_receipt_fallback
+    original_recovery_final_test_command: "go test ./src/internal/host/projectrun -run 'TestOriginal(NativeRecoveryBinding|InvocationIndex)|TestRecoverProjectAgent|TestRecoverPreparedWorkspace|TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning|TestReviewerNormalizesEmptyArtifactForReceiptBoundReport|TestResume(ConsumesExactNativeWorkAttemptWithoutReplay|RepairsRecoveredInvalidResponseWithOneNewAttempt|RechecksSameNativeTurnAfterUnknownLifecycle|ConsumesAlreadyReservedIntegrationAtExactStartLimit|ReconstructsReviewReworkFromReviewedCandidate)|TestRunVerifierConsumesClosedOriginalCacheWithoutAnotherStart|TestRunVerifierRecovers' -count=1"
+    original_recovery_final_test_status: frozen_recovery_suite_passed_159_785s
+    original_recovery_review_status: independent_code_review_clear_final_comment_read_comment_clarification_only_no_behavior_change
+    original_recovery_source_commit_sha: 621da0126cdbf8cf95eccaaf79de8301af38f8f3
+    corrected_normal_resume_of_attempt_15: not_yet_attempted
+    original_recovery_staged_diff_check: passed
+    product_acceptance_claimed: false
+    separate_open_lifecycle_gap: helper_close_failure_resume_reconciliation
+    separate_open_lifecycle_gap_status: not_exercised_by_attempt_15_helper; open_follow_up_after_crlf_and_exact_recovery_fixes
+    separate_open_lifecycle_gap_evidence: helper_close_failure_after_validated_applied_delta_records_cleanup_pending_handle_receipt_delta_and_unknown_reservation; Resume_has_no_helper_journal_reader; GitService_Close_requires_lost_in_memory_state; ReopenCandidate_baseline_fails_after_parent_mutation
+    separate_open_lifecycle_gap_guard: unknown_state_is_blocked; do_not_replay_reapply_or_cleanup_foreign_state; preserve_owned_workspace_and_records
+    separate_open_lifecycle_gap_focused_negative_command: "go test ./src/internal/host/projectrun -run '^TestHelperAppliedDeltaCleanupAndPersistenceFailuresRemainRecoverable$' -count=1 -timeout=10m"
+    separate_open_lifecycle_gap_focused_negative_result: passed_5_392s_on_uncommitted_fix_tree; proves_cleanup_pending_and_child_preserved_after_injected_close_failure_only_not_automatic_resume_reconciliation
+    separate_open_lifecycle_gap_next: lifecycle_owner_to_supply_follow_up_negative_command_before_investigating_existing_owned_close_recovery
   next_batch:
-    status: fresh_pinned_build_and_new_normal_exploration_readiness_plan_pending
+    status: original_recovery_fix_closed_before_original_resume
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
     direct_instruction: "Ja vereinfache es, wir müssen nicht alles bis ins Detail mit Rechten zumüllen. Erstmal ist wichtig dass es funktioniert und dass wir testen können."
     new_batch_pins: none
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
-    no_fifteenth_actual_claimed: true
+    no_sixteenth_actual_claimed: true
     owner_repair_in_progress: false
-    owner_repair_status: host_helper_provenance_correction_committed_and_reviewed_6ce8212a
-    repair: freeze the reviewed correction, then run new normal exploration/readiness and Plan with at least one genuine fresh helper
+    owner_repair_status: exact_native_invocation_recovery_committed_and_independently_reviewed_621da012; final_focused_recovery_suite_passed_159_785s
+    repair: attempt normal Resume of the original Actual15 plan and handles; if A01 remains incomplete, build fresh and run new normal exploration/readiness/Plan with at least one genuine fresh helper
     prospective_acceptance_helper_minimum: at_least_one_genuine_fresh_helper
     next_shared_native_defaults: { memories: false, login: false }
     intended_profile:
@@ -580,16 +687,25 @@ native_acceptance:
     native_acceptance: not_passed
     source_or_runtime_pins_for_next_attempt: none
   current_source_checkpoint:
-    source_revision_used_for_latest_attempt: b42c6cf0244fc312eb90a75fd00fc63f069a1a8a
-    binary_sha256: c2eff91600845ba65eb5eeff56ddfde9e12fbf33a5d7557767200499ee17320f
-    latest_native_acceptance: failed_not_passed_attempt_14
-    post_attempt_source_correction: 6ce8212af64b350ac0ee7759c394af2303e20e3f
-    post_attempt_source_validation: focused_projectrun_review_helper_role_budget_tests_passed_112_016s
-    post_attempt_staged_diff_check: passed
-    post_attempt_independent_reviews: lifecycle_and_provider_adapter_docs_clear
-    post_attempt_a01_acceptance: not_established
+    source_revision_used_for_latest_attempt: e10ad79a8fb238f016fa9026796fc38df8a35a82
+    binary_sha256: 1329ed6f027867b018af777ca004e5a7f90a5e6047999bbbdf9e825140c7f780
+    latest_native_acceptance: failed_not_passed_attempt_15
+    pre_attempt_host_helper_provenance_correction: 6ce8212af64b350ac0ee7759c394af2303e20e3f
+    pre_attempt_source_validation: focused_projectrun_review_helper_role_budget_tests_passed_112_016s
+    pre_attempt_staged_diff_check: passed
+    pre_attempt_independent_reviews: lifecycle_and_provider_adapter_docs_clear
     provenance_implementation_repair: closed
-    next_repair: fresh_pinned_build_then_new_normal_exploration_readiness_and_plan_with_at_least_one_genuine_fresh_helper
+    post_attempt_crlf_source_correction: 5eed2e262c4c3ffd6c7339740e5efbca53db31ae
+    post_attempt_crlf_independent_review: clear
+    post_attempt_crlf_validation: projectapp_explore_readiness_focused_passed_44_424s_projectrun_selectedbasis_focused_passed_14_047s
+    post_attempt_crlf_staged_diff_check: passed
+    post_attempt_original_recovery_source_correction: 621da0126cdbf8cf95eccaaf79de8301af38f8f3
+    post_attempt_original_recovery_test_command: "go test ./src/internal/host/projectrun -run 'TestOriginal(NativeRecoveryBinding|InvocationIndex)|TestRecoverProjectAgent|TestRecoverPreparedWorkspace|TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning|TestReviewerNormalizesEmptyArtifactForReceiptBoundReport|TestResume(ConsumesExactNativeWorkAttemptWithoutReplay|RepairsRecoveredInvalidResponseWithOneNewAttempt|RechecksSameNativeTurnAfterUnknownLifecycle|ConsumesAlreadyReservedIntegrationAtExactStartLimit|ReconstructsReviewReworkFromReviewedCandidate)|TestRunVerifierConsumesClosedOriginalCacheWithoutAnotherStart|TestRunVerifierRecovers' -count=1"
+    post_attempt_original_recovery_test: passed_159_785s
+    post_attempt_original_recovery_independent_review: clear
+    post_attempt_original_recovery_staged_diff_check: passed
+    corrected_normal_resume_of_attempt_15: not_yet_attempted
+    next_repair: normal_resume_original_attempt_15_plan_and_handles; if_a01_remains_incomplete_then_fresh_build_and_new_normal_exploration_readiness_plan
     next_batch_pins: pending
   prior_batch_history:
     revision: generous-native-limits-20261009
@@ -664,6 +780,9 @@ items:
     base: 1495e1be7b0046711531fa42c8407fba67b8e814
     document: P06-agent-lifecycle.md
     evidence: [integration-progress-20261009.md]
+    known_follow_up: helper_close_failure_resume_reconciliation
+    known_follow_up_status: investigation_pending_after_current_recovery_and_crlf_fixes
+    known_follow_up_boundary: preserve_unknown_state_and_owned_records; no_replay_reapply_or_foreign_cleanup
   - id: P07
     title: Normal autonomous Work Item workflow and installed guidance
     status: in_progress
