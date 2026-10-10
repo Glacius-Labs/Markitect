@@ -132,6 +132,28 @@ func TestObserveSelectedWorkingRejectsUnsafeAndAliasedPaths(t *testing.T) {
 	}
 }
 
+func TestObserveSelectedWorkingReportsCaseAliasesMissing(t *testing.T) {
+	root, _ := selectiveGitFixture(t)
+	writeTestFile(t, root, "docs/readme.md", "lower")
+	gitTest(t, root, "add", "docs/readme.md")
+	gitTest(t, root, "commit", "-qm", "lower-case readme")
+	// A case-insensitive filesystem opens docs/readme.md for these spellings,
+	// but Git tracks only the on-disk spelling.
+	for _, alias := range []string{"docs/README.md", "Docs/readme.md"} {
+		got, err := ObserveSelectedWorking(root, []string{alias})
+		if err != nil {
+			t.Fatalf("observe %q: %v", alias, err)
+		}
+		if len(got.Snapshot.Files) != 0 || !reflect.DeepEqual(got.MissingPaths, []string{alias}) {
+			t.Fatalf("%q observed as %v (missing=%v); Git tracks only docs/readme.md", alias, mapKeys(got.Snapshot.Files), got.MissingPaths)
+		}
+	}
+	exact, err := ObserveSelectedWorking(root, []string{"docs/readme.md"})
+	if err != nil || len(exact.MissingPaths) != 0 || string(exact.Snapshot.Files["docs/readme.md"]) != "lower" {
+		t.Fatalf("exact spelling observation = %#v, %v", exact, err)
+	}
+}
+
 func TestLoadSelectedDoesNotRequireUnselectedBlobContent(t *testing.T) {
 	root, _ := selectiveGitFixture(t)
 	writeTestFile(t, root, "selected.txt", "selected bytes")
@@ -193,6 +215,49 @@ func TestInventoryWorkingRootsReportsUnknownUntrackedAndMissingRoots(t *testing.
 	}
 	if len(got.Entries) != 1 || got.Entries[0].Path != "outputs/generated.txt" || !reflect.DeepEqual(got.MissingPrefixes, []string{"absent"}) {
 		t.Fatalf("inventory = %#v", got)
+	}
+}
+
+func TestInventoryWorkingRootsReportsCaseAliasPrefixMissing(t *testing.T) {
+	root, _ := selectiveGitFixture(t)
+	writeTestFile(t, root, "docs/readme.md", "lower")
+	got, err := InventoryWorkingRoots(root, []string{"Docs"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Entries) != 0 || !reflect.DeepEqual(got.MissingPrefixes, []string{"Docs"}) {
+		t.Fatalf("prefix Docs listed %#v (missing=%v); on-disk directory is docs", got.Entries, got.MissingPrefixes)
+	}
+	exact, err := InventoryWorkingRoots(root, []string{"docs"})
+	if err != nil || len(exact.Entries) != 1 || exact.Entries[0].Path != "docs/readme.md" {
+		t.Fatalf("exact prefix inventory = %#v, %v", exact, err)
+	}
+}
+
+func TestScopedWorkingAPIsReportShortNameAliasesMissing(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("8.3 short names are Windows-only")
+	}
+	root, _ := selectiveGitFixture(t)
+	writeTestFile(t, root, "LongDirectoryName/LongFileName.md", "x")
+	if _, err := os.Lstat(filepath.Join(root, "LONGDI~1", "LONGFI~1.MD")); err != nil {
+		t.Skipf("8.3 short names unavailable on this volume: %v", err)
+	}
+	inventory, err := InventoryWorkingRoots(root, []string{"LONGDI~1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(inventory.Entries) != 0 || !reflect.DeepEqual(inventory.MissingPrefixes, []string{"LONGDI~1"}) {
+		t.Fatalf("8.3 prefix LONGDI~1 listed %#v (missing=%v)", inventory.Entries, inventory.MissingPrefixes)
+	}
+	for _, alias := range []string{"LONGDI~1/LongFileName.md", "LongDirectoryName/LONGFI~1.MD"} {
+		observed, err := ObserveSelectedWorking(root, []string{alias})
+		if err != nil {
+			t.Fatalf("observe %q: %v", alias, err)
+		}
+		if len(observed.Snapshot.Files) != 0 || !reflect.DeepEqual(observed.MissingPaths, []string{alias}) {
+			t.Fatalf("8.3 path %q observed as %v (missing=%v)", alias, mapKeys(observed.Snapshot.Files), observed.MissingPaths)
+		}
 	}
 }
 
