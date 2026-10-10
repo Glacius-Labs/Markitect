@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T06:08:27.587020+00:00",
+  "updatedUtc": "2026-10-10T06:19:10.708917+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18274,6 +18274,37 @@
         "toolAccepted": true,
         "scope": "Confirm exact original delta once; existing trusted lifecycle-only own handle route if available, otherwise preserve stale original/uncertainty. No hot-upgrade guard weakening/retag/plan rewrite/new broad recovery capability. After exact prior own processes terminal and clean frozen corrected Windows build, normal fresh A01 in existing renewable finite batches. Real Resume proof same binary before/after interruption. No retrospective original PASS or blind replay; old/new starts accounted separately."
       }
+    },
+    "actual15SupersededClosure": {
+      "status": "SUPERSEDED_OLD_BUILD_PLAN_NATIVE_REVIEW_INTERRUPTED_NO_PASS",
+      "planId": "3c41c26278ec1b579077ebe03b667f6d",
+      "stateRevision": 23,
+      "ownerExactBinding": "Saved BaseProjectDigest372e9e5e prefix/a52b7672 suffix matches original e10/fixed eaa11e99; corrected04ca same fixed input gives4df4636c prefix/ed597e2c suffix. Readiness/exploration and11rawbasis hashes unchanged. Exact file bindings owner verified; Root source confirms build digest participation.",
+      "rootNativeLifecycleVerified": {
+        "threadId": "01a1243b-8145-7f80-b1e9-c110abc520cf",
+        "turnId": "01a1243b-8394-7e32-af9f-07476c8f524a",
+        "turnStatus": "interrupted",
+        "error": null,
+        "threadStatus": "notLoaded",
+        "completedAt": null,
+        "boundary": "Native state inspection only; no Hostreceipt or successful completion inferred."
+      },
+      "ownerProcesses": "Original runner66624, Resume53272 and direct own children absent, owner checked. No foreign cleanup.",
+      "ownerStarts": 6,
+      "resumeAttempts": {
+        "count": 2,
+        "newStarts": 0
+      },
+      "accountingLimits": "Six starts owner reported, no complete final receipt audit/cost total yet. Historical38known requests/35native/8555542partial estimate preserved separately; absent latest usage is unknown, not zero.",
+      "result": "Rootworkreview/helper/source-docs overlap succeeded; Docs append sharing failure plus rejected original resumes; no Integration/Verify/Apply/fullA01 PASS. No safe lifecycle-only public route around freshness, no weakening proposed."
+    },
+    "correctedWindowsBinaryFreeze": {
+      "sourceSha": "04ca4a144f92a9c5f3e446eb82dca18f7e690085",
+      "binarySha256": "bc26543cf097091e5f2d520d3a71c8455e6b0532f984e65b38df84f1f4b03b5d",
+      "path": "C:/Users/Consiliari/AppData/Local/Temp/markitect-a01-3c5c733388014645b0ca178338078b6a/bin/markitect.exe",
+      "rootVerified": "FileSHA and go version -m: Go1.27.1/WindowsAMD64/CGO0/vcs04ca/modifiedfalse; previous clean public remote04ca checked. Owner starts next fresh ordinary A01 using exactly this binary across interruption/resume.",
+      "status": "CLEAN_BINARY_VERIFIED_FRESH_RUN_OWNER_START_PENDING_NEW_RECEIPT",
+      "boundary": "No new startreceipt/PlanID observed yet, no completion/Main/release/study acceptance."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
