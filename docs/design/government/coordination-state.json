@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T00:39:35.735265Z",
+  "updatedUtc": "2026-10-10T00:42:18.630375Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18019,7 +18019,13 @@
         "recovery": "Invoke/OriginalRecover sharedecoder/no replay; legacyInfer branch Rootsourceobservedpreserved",
         "checks": "Bounded4role success/rejection/protocol/recovery +indepreview beforefreshordinaryA01",
         "observabilityCoordination": "Rootaskedonce captureactualoutboundRPC/schema inexistingprivateeventjournal as normaldiagnostics, notnewcontroller/probe/manualgate/publicdata",
-        "status": "IMPLEMENTING_NO_NEW_BATCH_UNTIL_FIX_REVIEW"
+        "status": "IMPLEMENTING_NO_NEW_BATCH_UNTIL_FIX_REVIEW",
+        "verifierCoverageQualification": {
+          "rootVerified": "projectrun/verify.go577-615 requires exactpassedsubjectcoverage and sortedfullEvidenceRefs equality; blanketevidenceRefs[] would fail genuineVerify",
+          "ownerDisposition": "Caughtduringreview beforefreshrun; blockedblanketemptyVerifier. OptionalManager/reviewer/helperrefs mayempty; Verifier genuinelyselectsshortrequestboundaliases decodedone-to-one preservingselection/count thenexistingcoveragevalidates. Existingprocessaliasconvention reused, no blindunionfill/coverageweakening.",
+          "coordination": "Rootrequestedproviderfree REAL downstreamVerify/validateVerifierCoverage with positivefullcoverage+negativeunknown/duplicate/omittedalias/coverage, not onlylowerDecodeResponse; no new Actor/capabilityphase/permissionmatrix",
+          "status": "RoleawaresemanticboundaryINPROGRESS_NO_NEW_PROVIDER"
+        }
       }
     }
   }
