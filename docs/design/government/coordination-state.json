@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T10:06:51.415305+00:00",
+  "updatedUtc": "2026-10-10T10:12:13.865456+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12173,7 +12173,7 @@
       "nativeProductJobsAuthorizedIndependently": false
     }
   ],
-  "nextAction": "Integrator completes ordinary clean docs/source/binary/remote checkpoint then bounded fresh proof with actual existing review context; Root binds freeze/terminal evidence. Studies suspended/KG waits Main; no repeated dispatch/new permission gate.",
+  "nextAction": "Integrator continues finite Actual24 and returns genuine terminal proof/blocker once, Root verifies exact native/Apply evidence and then ordinary final hosted gates/PR89 Main integration if positive. Studies suspended, KG separate waiting accepted Main.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -17871,7 +17871,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL23_CLOSED_FRESH_PARENT_REVIEW_CONTEXT_SOURCE_INSPECTED_FINAL_FREEZE_PENDING",
+    "status": "ACTUAL24_ACTIVE_FRESH_PARENT_REVIEW_EVIDENCE_FREEZE_SOURCE_BINARY_REMOTE_ROOT_VERIFIED",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18870,11 +18870,29 @@
       }
     },
     "freshParentReviewEvidenceCorrection": {
-      "status": "LOCAL_CLEAN_SOURCE_INSPECTED_OWNER_FINAL_FOCUSED_TESTS_REVIEW_CLEAR_FINAL_PUBLIC_BINARY_FREEZE_PENDING",
+      "status": "CLEAN_PUBLIC_SOURCE_DOCS_BINARY_FREEZE_ROOT_VERIFIED",
       "sourceCommit": "1745c82a130201857362227ef1e6723124bc4eaa",
       "rootInspection": "3filelocalcommit clean. Full-mode Run Verify reuses existing requireFreshReviews then selects latest passing identical scoped review, retained candidate ID/digest validated. Original reviewed candidate distinct from final ID/digest; direct-parent integrate review only delivered to child fullaudit with file path/mode/contentDigest refs, no raw foreign Manager bytes, requiredsubjects unchanged/no verdictshortcut. Non-full and standalone FullVerify keep empty freshreviewcontext. Root inspectedfull_verify.go/verify.go, no parallel product edits.",
       "ownerValidation": "Finalfocused18.003s/vet2.389/rootcheck/managed/diffPASS/independentfinalreviewclear. InterimallFullVerify85.723s precededfinalrefinements, notfinalbroadgate.",
-      "boundary": "Additive final docs/build/normalpush/freshReadinessPlan next under existing finite renewableauthority; no actual24 start or final remote/binary freeze yet claimed. Failed23 preserved/noApply/fullA01/MainPASS/newgate/framework."
+      "boundary": "Additive final docs/build/normalpush/freshReadinessPlan next under existing finite renewableauthority; no actual24 start or final remote/binary freeze yet claimed. Failed23 preserved/noApply/fullA01/MainPASS/newgate/framework.",
+      "freezeSha": "4fe8562bd9e00121eddc40b5d14170dbebb84896",
+      "binarySha256": "401e15711827d1b84a3a79ca2848505b8a5b2c679da779c6d2b01c34e0dd908b",
+      "rootFreezeVerification": "Clean exact localHEAD/publiclsremote4fe; final3docclosurestat; binaryexactSHA and WindowsGo1.27.1 CGO0 VCS4fe modifiedfalse. Source1745 bounded direct-parent freshreview projection already inspected; finalfocused/independentreviews ownerPASS, not retro interimbroadPASS."
+    },
+    "actual24Preparation": {
+      "status": "ACTIVE_OWNER_REPORTED_SOURCE_BINARY_REMOTE_ROOT_BOUND_CURRENT_NATIVE_RECEIPTS_PENDING",
+      "freezeRef": "freshParentReviewEvidenceCorrection",
+      "sourceSha": "4fe8562bd9e00121eddc40b5d14170dbebb84896",
+      "binarySha256": "401e15711827d1b84a3a79ca2848505b8a5b2c679da779c6d2b01c34e0dd908b",
+      "planId": "aefe06c61a22ecc6067f9b844eece8b3",
+      "planDigestOwnerReported": "369e38150a2e16306d736859a8a6cc46eeef377276d85c651a15f10a2f5b0fbf",
+      "readinessDigestOwnerReported": "d3b8b2228f6139a555d607d8994badc36d87cbd20f3f69fcc58d421b92657742",
+      "runtimeDigestOwnerReported": "0b0bea059d135cf436833a5a8327ddef1d95581cd8483911739e039ded14b9f7",
+      "adopterCheckpointOwnerReported": "275baa9b830f1eee67cc901321a595002ffe0744",
+      "adopterRuntimeFileSha256OwnerReported": "58aee61a4ceaf73db78ffee9cc8cab06d4116721cf3f546a131dfd6142e9b574",
+      "batchId": "a01-review-evidence-b3100b1bd36f4e6887069e3243b8e297",
+      "deadlineUtc": "2026-10-10T14:10:16.5784089Z",
+      "boundary": "Fresh normal4hfiniteproof/128MiB runtime; originalRootsamebinaryrecovery/realhelper/parallelwork/independentreviews/fullVerify/guardedApply pending. Failed23 preserved, no replay/retrocredit/newframework/newgate/studies/release or repeated Root order."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
