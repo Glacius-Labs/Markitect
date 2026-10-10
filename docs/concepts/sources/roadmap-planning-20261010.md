@@ -80,3 +80,11 @@ Ja, nimm die Push-Regel so in die Roadmap auf
 ```text
 Kompatibilität ist auch kein Thema. Wir entwickeln noch aktiv und niemand sonst benutzt Markitect. Also Kompatibilität soll kein Driver für Entscheidungen oder Implementierung sein
 ```
+
+## External libraries
+
+Recorder's note: the integrator asked which third-party libraries Markitect's inner layers (Core, Modules, CLI) may use. It offered three options: an explicit allowlist enforced by the architecture gate, standard library only, or no rule. The owner answered in English:
+
+```text
+Markitect should use any library that helps to achieve its goal. We shouldnt be unnecessarily strict about it 
+```
