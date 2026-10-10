@@ -2,10 +2,12 @@ package projectadoption
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 
@@ -409,6 +411,97 @@ func TestPlanAndApplyAdoptOnlyResolvedModelScope(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(".markitect/model/inventory/statement.yaml"))); !os.IsNotExist(err) {
 		t.Fatalf("deferred inventory scope was written: %v", err)
+	}
+}
+
+func TestAdoptionValidationErrorsAreDeterministic(t *testing.T) {
+	root, discovery, _, target := distillationDiscovery(t)
+	schemaDigest, buildDigest, err := CurrentBindings(projectmodel.Schema())
+	if err != nil {
+		t.Fatal(err)
+	}
+	report := multiScopeDistillation(discovery, schemaDigest, []string{"alpha", "beta"}, true, []string{"alpha", "beta"})
+	if err := ValidateDistillation(discovery, report); err != nil {
+		t.Fatalf("precondition: two-scope report should be valid: %v", err)
+	}
+	adoptAll := func(r Distillation, scopes []string, basis string) Resolution {
+		resolution := Resolution{APIVersion: ResolutionVersion, DiscoveryDigest: discovery.Digest, DistillationDigest: r.Digest, ProposalDigest: ProposalDigest(r.Proposal),
+			TargetBasis: basis, SchemaDigest: r.SchemaDigest, BuildDigest: buildDigest, Actor: "user", AuthorityClaim: "Project owner",
+			DecisionReference: "decision-determinism", Authenticated: boolValue(false), Questions: []QuestionResolution{}, Scopes: []ScopeResolution{}}
+		for _, id := range scopes {
+			resolution.Scopes = append(resolution.Scopes, ScopeResolution{ScopeID: id, Status: "adopt", Reason: "Owner adopts " + id})
+		}
+		SealResolution(&resolution)
+		return resolution
+	}
+
+	t.Run("ValidateResolution unanswered questions", func(t *testing.T) {
+		resolution := adoptAll(report, []string{"alpha", "beta"}, strings.Repeat("b", 64))
+		assertSameErrorEveryRun(t, 200, func() error { return ValidateResolution(discovery, report, resolution) })
+	})
+	t.Run("validateScopeTree unknown parents", func(t *testing.T) {
+		broken := multiScopeDistillation(discovery, schemaDigest, []string{"alpha", "beta"}, false, []string{"alpha", "beta"})
+		broken.Scopes[0].ParentID, broken.Scopes[1].ParentID = "missing-a", "missing-b"
+		SealDistillation(&broken)
+		assertSameErrorEveryRun(t, 200, func() error { return ValidateDistillation(discovery, broken) })
+	})
+	t.Run("ValidateDistillation scopes without claims", func(t *testing.T) {
+		broken := multiScopeDistillation(discovery, schemaDigest, []string{"alpha", "beta", "gamma"}, false, []string{"alpha", "beta", "gamma"})
+		broken.Claims = broken.Claims[:1]
+		broken.Scopes[1].ClaimIDs, broken.Scopes[2].ClaimIDs = []string{}, []string{}
+		SealDistillation(&broken)
+		assertSameErrorEveryRun(t, 200, func() error { return ValidateDistillation(discovery, broken) })
+	})
+	t.Run("PlanAdoption adopted scopes without files", func(t *testing.T) {
+		planned := multiScopeDistillation(discovery, schemaDigest, []string{"alpha", "beta", "gamma"}, false, []string{"alpha"})
+		resolution := adoptAll(planned, []string{"alpha", "beta", "gamma"}, target.Digest)
+		assertSameErrorEveryRun(t, 40, func() error {
+			_, err := PlanAdoption(root, target, discovery, planned, resolution, schemaDigest, buildDigest)
+			return err
+		})
+	})
+}
+
+func multiScopeDistillation(discovery Discovery, schemaDigest string, scopes []string, withQuestions bool, fileScopes []string) Distillation {
+	evidence := discoveryEvidence(discovery, "implementation")
+	report := Distillation{APIVersion: DistillationVersion, DiscoveryDigest: discovery.Digest, Method: "human-review", SchemaDigest: schemaDigest,
+		Claims: []Claim{}, Terms: []Term{}, Contradictions: []Contradiction{}, Questions: []Question{}, Scopes: []ScopeProposal{},
+		Proposal: ModelProposal{Goal: "Represent observed scopes", Files: []ProposedFile{}}}
+	for _, id := range scopes {
+		claimID := id + "-claim"
+		report.Claims = append(report.Claims, Claim{ID: claimID, ScopeID: id, Kind: "observation", Method: "static-source", Statement: "Source declares " + id + ".",
+			Evidence: []EvidenceRef{{EvidenceID: evidence.ID, StartLine: 2, EndLine: 2, Excerpt: "func Cancel() {}"}}, Uncertainty: []string{}})
+		report.Scopes = append(report.Scopes, ScopeProposal{ID: id, Name: "Scope " + id, ClaimIDs: []string{claimID}})
+		if withQuestions {
+			report.Questions = append(report.Questions, Question{ID: id + "-question", ScopeID: id, Prompt: "Which " + id + " behavior is intended?",
+				Alternatives: []string{"implementation", "documentation"}, ClaimIDs: []string{claimID}, Blocking: boolValue(false)})
+		}
+	}
+	for _, id := range fileScopes {
+		report.Proposal.Files = append(report.Proposal.Files, ProposedFile{ScopeID: id, Path: ".markitect/model/" + id + "/statement.yaml",
+			Content: "apiVersion: " + projectwork.APIVersion + "\nkind: Statement\nmetadata:\n  name: " + id + "\n  namespace: " + id + "\npurpose: Scope " + id + "\nspec:\n  category: concept\n  description: Scope " + id + "\n  public: false\n  uses: []\n  requires: []\n"})
+	}
+	SealDistillation(&report)
+	return report
+}
+
+func assertSameErrorEveryRun(t *testing.T, runs int, call func() error) {
+	t.Helper()
+	seen := map[string]int{}
+	for i := 0; i < runs; i++ {
+		err := call()
+		if err == nil {
+			t.Fatal("precondition: call should fail")
+		}
+		seen[err.Error()]++
+	}
+	if len(seen) != 1 {
+		messages := make([]string, 0, len(seen))
+		for message, count := range seen {
+			messages = append(messages, fmt.Sprintf("%s (x%d)", message, count))
+		}
+		sort.Strings(messages)
+		t.Errorf("same input produced %d distinct errors over %d runs:\n  %s", len(seen), runs, strings.Join(messages, "\n  "))
 	}
 }
 

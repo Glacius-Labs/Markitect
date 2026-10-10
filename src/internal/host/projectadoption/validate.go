@@ -58,7 +58,7 @@ func ValidateDistillation(discovery Discovery, report Distillation) error {
 	if len(scopes) == 0 {
 		return errors.New("distillation requires at least one proposed adoption scope")
 	}
-	if err := validateScopeTree(scopes); err != nil {
+	if err := validateScopeTree(report.Scopes, scopes); err != nil {
 		return err
 	}
 	claims := make(map[string]Claim, len(report.Claims))
@@ -83,7 +83,7 @@ func ValidateDistillation(discovery Discovery, report Distillation) error {
 	if len(claims) == 0 {
 		return errors.New("distillation requires at least one grounded claim")
 	}
-	for _, scope := range scopes {
+	for _, scope := range report.Scopes {
 		if err := validateClaimIDs(scope.ClaimIDs, claims, scope.ID, true); err != nil {
 			return fmt.Errorf("scope %q: %w", scope.ID, err)
 		}
@@ -381,8 +381,8 @@ func validateClaimIDs(ids []string, claims map[string]Claim, scopeID string, uni
 	return nil
 }
 
-func validateScopeTree(scopes map[string]ScopeProposal) error {
-	for _, scope := range scopes {
+func validateScopeTree(ordered []ScopeProposal, scopes map[string]ScopeProposal) error {
+	for _, scope := range ordered {
 		if scope.ParentID != "" {
 			if scope.ParentID == scope.ID {
 				return fmt.Errorf("scope %q cannot parent itself", scope.ID)
@@ -488,7 +488,8 @@ func ValidateResolution(discovery Discovery, report Distillation, resolution Res
 		}
 		answers[answer.QuestionID] = answer
 	}
-	for id, question := range questions {
+	for _, question := range report.Questions {
+		id := question.ID
 		choice := resolutionScopes[question.ScopeID]
 		answer, exists := answers[id]
 		if choice.Status == "adopt" && (!exists || answer.Disposition != "answer") {

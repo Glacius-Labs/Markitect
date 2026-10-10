@@ -74,7 +74,7 @@ func PlanAdoption(sourceRoot string, target *projectwork.Project, discovery Disc
 	if len(selectedScopes) == 0 {
 		return AdoptionPlan{}, errors.New("resolution defers every scope; there is no adoption plan")
 	}
-	for id := range selectedScopes {
+	for _, id := range sortedMapKeys(selectedScopes) {
 		found := false
 		for _, proposed := range report.Proposal.Files {
 			if proposed.ScopeID == id {
