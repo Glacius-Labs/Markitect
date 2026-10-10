@@ -62,7 +62,7 @@ jobs:
         run: |
           # The event stream goes to a file; the live log shows each finished package.
           set +e
-          go test ./... -count=1 -timeout=60m -json | tee "$RUNNER_TEMP/go-test.json" | grep --line-buffered -E '"Action":"(pass|fail)","Package":"[^"]*","Elapsed"' | sed -u -E 's/.*"Action":"([a-z]+)","Package":"([^"]*)","Elapsed":([0-9.]+).*/\1 \3s \2/'
+          go test ./... -count=1 -timeout=${{ matrix.os == 'windows-latest' && '60m' || '20m' }} -json | tee "$RUNNER_TEMP/go-test.json" | grep --line-buffered -E '"Action":"(pass|fail)","Package":"[^"]*","Elapsed"' | sed -u -E 's/.*"Action":"([a-z]+)","Package":"([^"]*)","Elapsed":([0-9.]+).*/\1 \3s \2/'
           status=${PIPESTATUS[0]}
           set -e
           report=0
