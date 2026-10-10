@@ -2508,6 +2508,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectrun/resume_verifier_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectrun/native_verifier_coverage_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectrun/resume_invocation_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectrun/resume_native_e2e_test.go
