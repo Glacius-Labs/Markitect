@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T04:49:27.200134+00:00",
+  "updatedUtc": "2026-10-10T05:10:09.312590+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17870,7 +17870,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL14_TERMINAL_BEFORE_RECOVERY_TASK_SEMANTICS_FIXED_REVIEW_HELPER_FACTS_IN_PROGRESS",
+    "status": "VALIDATED_APPLIED_HELPER_REVIEW_FACTS_CLEAN_FROZEN_ORDINARY_A01_PREPARATION",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18188,6 +18188,19 @@
       "next": "Minimal Host-authored validated+parent-applied helper facts in review context, current candidate versus repair history separated/scope-input bound; no journalparser/manager-prose trust/authority expansion. Prospective ordinary exploration minimum1 preserves immutable old exactone request. Fresh final-source/binary/readiness/Plan/batch under standing authority.",
       "fullSuiteQualification": "Local Go allpackages exit0 but sources changed during execution, interim only/no exactSHA gate. Final exact hosted CI required.",
       "fullWorkflowAccepted": false
+    },
+    "helperProvenanceCorrectionFreeze": {
+      "sourceFix": "6ce8212af64b350ac0ee7759c394af2303e20e3f",
+      "publicFrozenSha": "e10ad79a8fb238f016fa9026796fc38df8a35a82",
+      "binarySha256": "1329ed6f027867b018af777ca004e5a7f90a5e6047999bbbdf9e825140c7f780",
+      "rootVerified": "Clean exact local/public e10; known product-rootbinary hash and go-versionVCS exacte10 modifiedfalse verified. Read actual helper validate/apply/Close then atomic completed delivery; unresolved/persistence errors remain unknown, review selects exact parent/session/request/currentcandidate byte-mode facts from durable Host reservations.",
+      "behavior": "Reviewer gets genuine Host-applied helper facts separate from Managerchild delegation and repair history; empty-delta success retained, current candidate byte/mode presence bound; no universal count policy/journal parsing/authority expansion.",
+      "checksOwnerReported": "Focused TestReview|TestHelper|TestRoleStartBudget112.016s PASS, independent lifecycle/provider-docreview clear; exactfreeze vet/schema/allCONTRIBUTINGexamples/artifact/import/source gates PASS. No Root redundant product tests.",
+      "normalPreparation": "New greeting-feature-renewed exploration at least1 preview/expected-CAS write, immutable historical old exploration retained; normal Readiness ack underway then final-frozen Plan and fresh4hbatch/existingobserver.",
+      "fullGate": "Final exact PRhead hosted fullCI required; previous movingWIP localfullsuite remains interim only.",
+      "fullWorkflowAccepted": false,
+      "newStudyOrRelease": false,
+      "next": "Owner ordinary A01/real Recovery/Verify/Apply, final CI/review/Main under standing authority; no repeated Root order or grant."
     }
   },
   "restartAfterInterruptedIntegration20261010": {
