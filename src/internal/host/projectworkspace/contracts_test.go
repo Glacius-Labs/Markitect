@@ -137,6 +137,7 @@ func TestDeltaRejectsUnsafePathsAliasesModesAndAmbiguousOperations(t *testing.T)
 		{"windows device name", []Change{{Kind: ChangeAdd, Path: "src/CON.txt", Mode: "100644", Content: []byte("x")}}},
 		{"invalid utf8", []Change{{Kind: ChangeAdd, Path: string([]byte{'s', 'r', 'c', '/', 0xff}), Mode: "100644", Content: []byte("x")}}},
 		{"nested git metadata", []Change{{Kind: ChangeAdd, Path: "src/.GIT/config", Mode: "100644", Content: []byte("x")}}},
+		{"git metadata short name", []Change{{Kind: ChangeAdd, Path: "src/GIT~1/config", Mode: "100644", Content: []byte("x")}}},
 		{"unsupported mode", []Change{{Kind: ChangeAdd, Path: "src/file.go", Mode: "1007555", Content: []byte("x")}}},
 		{"delete carries content", []Change{{Kind: ChangeDelete, Path: "src/file.go", Content: []byte{}}}},
 		{"rename lacks old path", []Change{{Kind: ChangeRename, Path: "src/file.go", Mode: "100644", Content: []byte("x")}}},
@@ -150,6 +151,9 @@ func TestDeltaRejectsUnsafePathsAliasesModesAndAmbiguousOperations(t *testing.T)
 				t.Fatal("invalid delta was accepted")
 			}
 		})
+	}
+	if _, err := NormalizeDelta(r, h, []Change{{Kind: ChangeAdd, Path: "src/notes~1/file.go", Mode: "100644", Content: []byte("x")}}, testLimits); err != nil {
+		t.Fatalf("an ordinary name with ~1 was refused: %v", err)
 	}
 }
 

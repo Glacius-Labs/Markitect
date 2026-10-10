@@ -256,7 +256,9 @@ func portablePath(value string) (string, error) {
 		}
 	}
 	for _, part := range parts {
-		if strings.EqualFold(part, ".git") {
+		// git~1 is the usual Windows 8.3 short name of .git; Git's
+		// core.protectNTFS refuses it on every platform.
+		if strings.EqualFold(part, ".git") || strings.EqualFold(part, "git~1") {
 			return "", fmt.Errorf("%w: Git metadata paths are not workspace data", ErrInvalidDelta)
 		}
 	}

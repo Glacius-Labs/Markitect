@@ -120,3 +120,22 @@ func TestApplyWorkspaceDeltaEnforcesByteLimits(t *testing.T) {
 		t.Fatal("oversized workspace delta was accepted")
 	}
 }
+
+// A Manager owning "." in full coverage must still not reach Git metadata,
+// neither literally nor through git~1, the usual Windows 8.3 short name of
+// .git that Git's core.protectNTFS refuses on every platform.
+func TestWorkspaceWritePathRefusesGitMetadataAndItsShortName(t *testing.T) {
+	config := projectwork.Config{CoverageMode: "full"}
+	report := projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root", Owns: []string{"."}}}}
+	task := ManagerTask{ManagerID: "root"}
+	for _, path := range []string{".git/hooks/pre-commit", "GIT~1/hooks/pre-commit", "src/git~1/config", ".markitect/runtime.yaml"} {
+		if err := validateWorkspaceWritePath(path, config, report, task, "work", map[string]bool{}, nil); err == nil {
+			t.Errorf("workspace delta gate accepted %q", path)
+		}
+	}
+	for _, path := range []string{"src/notes~1/file.md", "docs/git~2/file.md"} {
+		if err := validateWorkspaceWritePath(path, config, report, task, "work", map[string]bool{}, nil); err != nil {
+			t.Errorf("workspace delta gate refused ordinary path %q: %v", path, err)
+		}
+	}
+}

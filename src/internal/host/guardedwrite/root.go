@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -80,6 +82,9 @@ func SafeDestination(root, name string) (string, error) {
 		if IsReparsePoint(info) {
 			return "", fmt.Errorf("symlink in output path %s", name)
 		}
+		if err := requireStoredName(os.DirFS(filepath.Dir(current)), ".", part); err != nil {
+			return "", fmt.Errorf("unsafe output path %s: %w", name, err)
+		}
 		resolved, err := filepath.EvalSymlinks(current)
 		if err != nil {
 			return "", err
@@ -104,11 +109,34 @@ func validateWritePath(name string) error {
 		return fmt.Errorf("unsafe output path %q", name)
 	}
 	for _, part := range strings.Split(name, "/") {
-		if part == "" || part == "." || part == ".." || strings.EqualFold(part, ".git") {
+		// Like Git's core.protectNTFS, refuse git~1 too: it is the usual
+		// Windows 8.3 short name of .git.
+		if part == "" || part == "." || part == ".." || strings.EqualFold(part, ".git") || strings.EqualFold(part, "git~1") {
 			return fmt.Errorf("unsafe output path %q", name)
 		}
 	}
 	return nil
+}
+
+// requireStoredName refuses an existing path component that Windows resolved
+// through another spelling: an 8.3 short name such as GIT~1 for .git, or a
+// case variant. Lexical checks see only the requested text, so a write through
+// such an alias would reach a path they never authorized. Only stored names
+// appear in a directory listing.
+func requireStoredName(directory fs.FS, parent, part string) error {
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+	entries, err := fs.ReadDir(directory, parent)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.Name() == part {
+			return nil
+		}
+	}
+	return fmt.Errorf("%q names an existing entry stored under another name", part)
 }
 
 // Root pins all output mutations to the identity of the approved project
@@ -172,6 +200,13 @@ func (w *Root) checkPath(name string) error {
 		}
 		if IsReparsePoint(info) {
 			return fmt.Errorf("symlink or reparse point in output path %s", name)
+		}
+		parent := "."
+		if i > 0 {
+			parent = strings.Join(parts[:i], "/")
+		}
+		if err := requireStoredName(w.root.FS(), parent, part); err != nil {
+			return fmt.Errorf("unsafe output path %s: %w", name, err)
 		}
 		if i < len(parts)-1 && !info.IsDir() {
 			return fmt.Errorf("non-directory component in output path %s", name)
@@ -325,6 +360,12 @@ func (w *Root) openDirectory(name string, create bool, mode os.FileMode) (*os.Ro
 		if IsReparsePoint(info) || !info.IsDir() {
 			closeCurrent()
 			return nil, nil, fmt.Errorf("non-directory or reparse point in output parent %s", name)
+		}
+		// Check after any create: a component missing from checkPath's view
+		// may since have resolved to an existing entry through an alias.
+		if err := requireStoredName(current.FS(), ".", part); err != nil {
+			closeCurrent()
+			return nil, nil, fmt.Errorf("unsafe output parent %s: %w", name, err)
 		}
 		next, err := current.OpenRoot(part)
 		if err != nil {

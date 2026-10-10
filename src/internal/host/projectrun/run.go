@@ -1970,6 +1970,13 @@ func applyProposal(base candidateData, proposals []agentexec.CandidateFile, conf
 
 func forbiddenRuntimePath(path string) bool {
 	lower := strings.ToLower(path)
+	for _, component := range strings.Split(lower, "/") {
+		// git~1 is the usual Windows 8.3 short name of .git; Git's
+		// core.protectNTFS refuses it on every platform.
+		if component == ".git" || component == "git~1" {
+			return true
+		}
+	}
 	return lower == ".markitect" || strings.HasPrefix(lower, ".markitect/")
 }
 
