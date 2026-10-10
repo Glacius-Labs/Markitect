@@ -282,6 +282,33 @@ func TestImpactRoutesDecisionChangeThroughItsSubject(t *testing.T) {
 	}
 }
 
+// DEC-022: like a change of the subject itself, a Decision change routes the
+// subject's owner, even when nothing else reaches that Manager.
+func TestImpactRoutesDecisionSubjectOwner(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	definitions := append(copyDefinitions(model.Definitions),
+		core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "inventory", Name: "stock-unit"}, Purpose: "Unit of stock.", Spec: map[string]any{"category": "concept", "description": "Pieces.", "public": true}},
+		decisionDefinition("orders", "count-pieces", "inventory", "stock-unit", "Orders count pieces."),
+	)
+	analyze := func(text string) Report {
+		for i := range definitions {
+			if definitions[i].Kind == decisionKind {
+				definitions[i].Spec["decision"] = text
+			}
+		}
+		compiled, diagnostics := core.Compile(model.Schemas, copyDefinitions(definitions), "subject-owner")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		return Analyze(compiled, files)
+	}
+	impact := Impact(analyze("Orders count pieces."), analyze("Orders count packs."))
+	inventoryID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "inventory", Name: "inventory"}).Key()
+	if len(impact.Unknown) != 0 || !contains(impact.Managers, inventoryID) {
+		t.Fatalf("decision change did not route its subject's owner: managers=%v unknown=%v", impact.Managers, impact.Unknown)
+	}
+}
+
 // BUG-01: a Check that exercises a changed Statement must run again, and its
 // owner is routed, even when no Artifact declares that Check.
 func TestImpactRoutesChecksThatUseAChangedStatement(t *testing.T) {

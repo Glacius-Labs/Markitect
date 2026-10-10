@@ -205,6 +205,9 @@ func Impact(base, candidate Report) ChangeImpact {
 				if d.ID == id {
 					managers[d.Owner] = true
 					seed[d.Subject] = true
+					if s, ok := statementByID[d.Subject]; ok {
+						managers[s.Owner] = true
+					}
 				}
 			}
 			for _, m := range report.Managers {
