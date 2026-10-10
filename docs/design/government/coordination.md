@@ -2131,3 +2131,7 @@ Scientist PRIVATE5ef17d73 assessment669ab562 Root clean/remote/rawGit verified: 
 ### Published CRLF correction inspected
 
 5eed2e26 exact public remote Root checked; five-file source/test diff inspected. Captured working bytes compared through Git clean filters with fixed/working attribute equivalence, raw Explore/Readiness CAS preserved and same-plan snapshot checked. Positive clean CRLF plus substantive/binary/stale-write regression source read; owner targeted44.424s/14.047s and independent review clear, not tests repeated by Root. Recovery currentOwnerRunID predispatch binding remains WIP/tests/review pending, no combined binary freeze/native calls. Original Actual15 source e10/bin1329 and batch09:11Z unchanged; helper cleanup negative only.
+
+### New direct human decision: retain Windows
+
+Scientist relays direct human decision: "Wir versuchen es auf Windows hinzukriegen. Sag den anderen bescheid." Windows remains current execution platform; earlier WSL recommendation deferred, no migration/container setup. Scientist directly informs Integrator, no duplicate Root dispatch. Existing bounded renewable product work continues on concrete CRLF/Git-filter, exact original recovery, canonical actual CWD/environment and append-compatible audit readers. Historical results and no-replay identity preserved; this decision adds no study/model quota or automatic replay. KG separate, no unrelated platform task.
