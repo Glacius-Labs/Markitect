@@ -980,9 +980,9 @@ renewal_policy:
     separate_open_lifecycle_gap_focused_negative_result: passed_5_392s_on_uncommitted_fix_tree; proves_cleanup_pending_and_child_preserved_after_injected_close_failure_only_not_automatic_resume_reconciliation
     separate_open_lifecycle_gap_next: lifecycle_owner_to_supply_follow_up_negative_command_before_investigating_existing_owned_close_recovery
   next_batch:
-    status: actual26_blocked_after_three_failed_integration_reviews_no_verify_no_apply; sequencing_correction_technically_validated_fresh_native_candidate_pending
+    status: actual27_full_verify_passed_apply_preflight_blocked_before_write_no_apply_a01_not_passed; apply_fix_technically_validated_fresh_native_candidate_pending
     authorization: direct_human_lifted_hold_and_authorized_simplification_plus_normal_a01
-    new_batch_pins: actual26_terminal_record_c6cad360a2a22a62e2022930a5d50297922f51f80ed8b6e193d4569cdcce29d0; next_a01_requires_technical_closure_clean_build_fresh_readiness_and_plan
+    new_batch_pins: actual27_terminal_record_c8c6fa059af99b5ea41024c1e45f9e8381e3ec9f33b8f72762737c5190eb77cb; next_a01_requires_apply_fix_technical_closure_clean_build_fresh_readiness_and_plan
     execution_requires_fresh_readiness_and_exact_batch_pins: true
     failed_batch_replay_or_retry: false
     no_eighteenth_actual_claimed: false
@@ -994,10 +994,11 @@ renewal_policy:
     no_twenty_fourth_actual_claimed: false
     no_twenty_fifth_actual_claimed: false
     no_twenty_sixth_actual_claimed: false
-    no_twenty_seventh_actual_claimed: true
+    no_twenty_seventh_actual_claimed: false
+    no_twenty_eighth_actual_claimed: true
     owner_repair_in_progress: true
-    owner_repair_status: Actual26_blocked_after_three_failed_integration_reviews; original_Root_integration_completed_and_same_binary_resume_did_not_replay; helper_delta_applied_and_closed; three_work_reviews_passed; three_integration_reviews_failed_on_docs_import; queued_Docs_child_rework_not_executed_before_Root_review_recheck; sequencing_correction_committed_and_technically_validated; fresh_native_candidate_pending; no_Verify_or_Apply
-    repair: sequencing correction is technically validated at 0c8d38730064e36ab491995578f6ab6d624831ed; build a clean candidate and obtain fresh readiness/Plan before a new bounded A01; do not resume blocked Actual26; retain 4h batch and 1h role bounds; Actual26 remains blocked_not_passed
+    owner_repair_status: Actual27_Full_Verify_passed_but_Apply_preflight_blocked_before_write; Apply_fix_committed_and_technically_validated; fresh_clean_candidate_and_native_revalidation_pending; no_Apply_or_A01_acceptance
+    repair: Apply fixed-base representation correction is technically validated at a5cd6c9da8110ebfded623f5a52cb492bbb4944c; build a clean candidate and obtain fresh readiness/Plan before any new A01; Actual27 remains not_passed because Apply was blocked before writes; retain 4h batch and 1h role bounds
     deferred_helper_followup: P11; outside_current_A01_implementation_allocation; future_bounded_design_under_existing_user_mandate; no_general_readonly_helper_capability_or_framework_implemented
     actual_16_terminal_record_sha256: 0a9db024fba47cde9a9c2ffc34e096205cc9f25927c71ca2ae391a629dfae352
     actual_16_acceptance: not_passed
@@ -1956,7 +1957,7 @@ renewal_policy:
     source_fix_claimed: false
     acceptance: not_passed
 
-  latest_actual:
+  attempt_26:
     batch_id: a01-helper-byte-retry-ffe3b64e818349acaa170d672aecbdf2
     attempt_number: 26
     status: blocked_after_three_failed_integration_reviews_no_verify_no_apply
@@ -2067,6 +2068,104 @@ renewal_policy:
     sequencing_correction_test_names: "TestIntegrationReviewRoutesChildReworkBeforeFreshParentReview, TestNestedReworkDefersEveryAncestorIntegrationAndReview, TestManagerDirectedReworkRerunsOnlyRequestedLeafAndReintegratesAncestors, TestIntegrationReviewFindingsRepairAndRereviewParentCandidate"
     fresh_native_validation: pending_clean_candidate_build_and_readiness_plan
     acceptance: not_passed
+
+  latest_actual:
+    batch_id: a01-child-rework-order-084a4573bd4f404c8170863ce5264c58
+    attempt_number: 27
+    status: full_verify_passed_apply_preflight_blocked_before_write_no_apply_not_a01_passed
+    terminal_batch_record_sha256: c8c6fa059af99b5ea41024c1e45f9e8381e3ec9f33b8f72762737c5190eb77cb
+    lifecycle_audit_path: controller/actual27-readonly-lifecycle-audit.json
+    lifecycle_audit_sha256: 72bb9cf42ea81ef2cd29a594739b370c94d7381a36e9c03f9af368bc27d7dc17
+    source_revision: 361c7f1af10e647833da3034b02064207cd8bf57
+    validated_docs_revision: 361c7f1af10e647833da3034b02064207cd8bf57
+    project_revision: 275baa9b830f1eee67cc901321a595002ffe0744
+    binary_sha256: 4fc1fb007112eff26840ce91f52b84ee7c723c3f083bcd9735ae1a30719b655b
+    plan_id: 57030e5a979329fe354486544be4a45b
+    plan_sha256: c8677e6df4a8cadafdf18e365d72185f9d467a8ba8a4a0171c2d4aa518303cfd
+    readiness_sha256: 9893525994a226f67a68d57c5bb0e2ec19ff5dabda87e8db6972e10ff5a8d2f3
+    runtime_sha256: 0b0bea059d135cf436833a5a8327ddef1d95581cd8483911739e039ded14b9f7
+    hard_deadline_utc: '2026-10-10T15:18:20.5257296Z'
+    terminal_batch_ended_utc: '2026-10-10T11:35:56.5294169Z'
+    observer_id: c4152c101e57491db1634dfc522c6ace
+    observer_record_sha256: b31997a67e4330ec48368fc61be1182293e0ec08e99c16da03abd7d8755d4414
+    observer_ended_utc: '2026-10-10T11:23:52.3850653Z'
+    observer_exit_code: 2
+    observer_boundary_observed: true
+    observer_terminal_turn_observed: true
+    state_revision: 42
+    state_path: repo/.markitect/runs/57030e5a979329fe354486544be4a45b/states/00000042.json
+    state_digest: 20bf40812c232a9500e15479c537e1e4e563f05605ddda2f93dc09b6d00a76f8
+    state_file_sha256: c7e0c705de1b518f7f7a9e55f455e06eb6705e5c51563be91426506976a18ea6
+    run_status: verified
+    full_verify_status: passed
+    full_verify_candidate_id: 0a4fec9c962e3d9aef0d2d18a3ff7be5
+    candidate_snapshot_digest: c499d6a55ecb7a95fb401ed2c8ff1e5a87437ab313ab578db993a4c460f04ea6
+    verification_digest: 1105f24e7d07f5bd58bfc51683012c9e89805f3254dd1ae43e4562b072c324e5
+    configured_check_command: python -B -m unittest discover -s tests -v
+    configured_check_status: passed_exit_0
+    invalid_verify_invocation_record: dc2e1cc4aa994a06859af9800c5a1e5e
+    invalid_verify_invocation_result: unsupported_plan_option_rejected_before_provider_or_check_start
+    corrected_verify_command_record: fe642a5d9d134afb8f262fba777500fe
+    corrected_verify_started_utc: '2026-10-10T11:26:42.0937139Z'
+    corrected_verify_ended_utc: '2026-10-10T11:29:31.1176615Z'
+    corrected_verify_exit_code: 0
+    initial_verifier_status: passed
+    full_manager_audits: Docs_Source_ProjectOwner_all_pass
+    work_reviews_passed: 3
+    integration_reviews_passed: 1
+    original_root_protocol_run_id: 6774ea4da64eb896bf3d8dbd45c9f9cf
+    original_root_session_id: 01a1258d-e0d6-7d61-96d8-fee794baa587
+    original_root_turn_id: 01a1258d-e247-72e0-b659-6f9c7e3c9a1b
+    original_root_physical_start_id: native-2addef1e9786bf21daddba0f3fb02a18
+    original_root_physical_start_count: 1
+    original_root_replayed: false
+    original_root_recovery_inspection_starts: 0
+    resume_command_id: e4993d288a7548deb06a6873e9ac1424
+    resume_exit_code: 0
+    resume_new_normal_role_starts: 1_integration_review_only
+    helper_call_id: exec-3c83b446-0c6f-489c-95a6-479b652ef66b
+    helper_child_protocol_run_id: 5ebbef5eb892d83cd4ab72723a0f821f
+    helper_child_session_id: 01a1258b-6560-7322-9da8-d0fe074e042d
+    helper_child_turn_id: 01a1258b-6660-7e92-a4fc-da1fcb1e1045
+    helper_delivery_status: applied_and_closed
+    helper_changed_path: tests/test_greeting.py
+    helper_changed_bytes: 585
+    helper_changed_mode: '100644'
+    helper_file_sha256: 99c8faf08088c71d4b83a982fac7a853ae97fc61ee872ffb7348c02125685179
+    helper_delta_sha256: ce1df4572666e602fde84079c28768737ba59f5493562c69b6fae19c3c818bd7
+    docs_source_overlap_seconds: 27.0056638
+    apply_started: false
+    apply_write_status: blocked_before_write
+    apply_diagnostic: README_md_fixed_base_git_bytes_LF_78_vs_clean_disk_CRLF_80_core_autocrlf_true_mode_100644
+    apply_read_only_diagnosis: clean_git_filter_representation_mismatch
+    apply_diagnostic_evidence_note: controller_actual27_apply_preflight_json_is_zero_bytes_and_not_evidence
+    apply_fix_status_at_actual27_termination: pending_technical_validation_and_review
+    apply_fix_commit_sha: a5cd6c9da8110ebfded623f5a52cb492bbb4944c
+    apply_fix_focused_tests: 8_passed_69_013s_count_1_timeout_4m
+    apply_fix_final_vet_and_diff: passed
+    apply_fix_root_check: passed_5_5456466s
+    apply_fix_artifact_check: corrected_canonical_registry_entry_then_passed_findings_empty; initial_missing_test_registry_entry_corrected
+    apply_fix_independent_review: clear_attributes_all_paths_index_CAS_and_final_write_callback
+    apply_fix_technical_status: closed
+    fresh_native_validation: pending_clean_candidate_readiness_and_plan
+    role_invocations: 12
+    helper_invocations: 1
+    combined_requests_in_batch: 13
+    provider_starts_in_batch: 13
+    prior_cumulative_combined_requests: 156
+    cumulative_combined_requests: 169
+    prior_cumulative_provider_starts: 152
+    cumulative_provider_starts: 165
+    current_state_cost_micros: 1232672
+    preserved_original_root_max_cost_micros: 99022
+    original_root_max_source_state: '00000027.json'
+    batch_known_partial_cost_micros: 1331694
+    prior_cumulative_known_partial_cost_micros: 21950371
+    cumulative_known_partial_cost_micros: 23282065
+    helper_cost_separately_itemized: false
+    cost_accounting: partial_lower_bound_not_invoice
+    terminal_batch_status: failed_apply_preflight_no_apply
+    acceptance: not_passed
   provider_free_preparation:
     superseded_owned_project_revision: 89823a90df985ca4451ec3053467fa4b3d12319f
     rejected_role_wall_seconds: 7200
@@ -2094,8 +2193,8 @@ budget_amendments:
     supersedes_prior_cumulative_budget_and_deadline_as_future_blockers: true
     previous_batch_failures_and_source_pins_preserved: true
     next_batch_pins_pending: true
-    next_batch_status: actual26_blocked_no_verify_apply_sequencing_fix_technically_validated_fresh_native_plan_pending
-    last_actual_status: blocked_after_three_failed_integration_reviews_no_verify_apply_not_passed_attempt_26
+    next_batch_status: actual27_full_verify_passed_apply_preflight_blocked_no_apply_apply_fix_technically_validated_fresh_native_candidate_pending
+    last_actual_status: full_verify_passed_apply_preflight_blocked_before_write_no_apply_not_passed_attempt_27
     main_gate_revision_unchanged: combined-normal-smoke-20261009
     release_publication_authorized: false
 allocation_history:
