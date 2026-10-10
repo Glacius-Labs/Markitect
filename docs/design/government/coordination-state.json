@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T00:20:46.743453Z",
+  "updatedUtc": "2026-10-10T00:29:00.261122Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "ACTUAL9_NATIVE_WORK_COMPLETED_UNKNOWN_EVIDENCE_REF_REJECTED_SCHEMA_CONTRACT_ALIGNMENT_IN_PROGRESS",
+    "status": "WHOLE_NATIVE_OUTPUT_CONTRACT_CHECKED_FRESH_ACTUAL10_PREPARING",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -17982,6 +17982,15 @@
       "rootCoordination": "Once sameboundedrepair: reconcile whole generatedrole contracts with existinglocalvalidator using provider-free representative responses; only supportedkeywords, no newframework/capabilityphase or successiveoneconstraint Actuals",
       "preservedWorkspace": "Prestart79fb remains preserved honestno-cleanup",
       "next": "FreshordinaryA01 afterconcretefix/review underexistingauthority, no replay/additionalRootgrant"
+    },
+    "wholeWireContractRepair": {
+      "source": "8e0d103a13650036bc8ac98fdca98fcf38ffd98a",
+      "rootVerified": "Cleanlocal/exactpublicremote verified; transmittedschema/strictdecoder tests and independentreview ownerreported, not independentlyreexecuted",
+      "binary": "99a13305ce58def97100d700aa6179cdeb3504a1c9cf71d52469f44d82344564",
+      "behavior": "ExactsortedArtifact/Scope/Policyrefenum; optionalempty-onlyfallbackforboundedoversize; promptavoidsinventedrefs/usage/nativeWork; NativeGit0644/0755 retained. Wholeclosed shape/count/stringceilings compared to actualtransmittedschema/strictdecoder across completeWriter/passReviewer/plaintextHelper/passVerifier. Byte/semantic/delta validation remains authoritative.",
+      "checksOwnerReported": "Fullnative75.041s/finalfocused0.538s/buildvetcanonicaldiffPASS/independentsourcedocreviewclosed",
+      "historicalLedger": "Attempt9/c202/13calls/10providers/3511133partialestimate preserved",
+      "next": "NormalReadiness/Plan refresh/freshactual10, no newRootgate/Mainrelease/study/foreigncleanup. A01notpassed yet."
     }
   }
 }
