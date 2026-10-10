@@ -1,6 +1,6 @@
 # Product vision
 
-This is the canonical owner of Markitect's product thesis, intended division of responsibility and long-term operating model. [Architecture](architecture.md) owns technical boundaries, the [engineering constitution](engineering-constitution.md) owns kernel invariants, the [roadmap](implementation-plan.md) owns released/source/planned status, [Operating methodology](operating-methodology.md) owns how the intended process works, [Measurement](measurement.md) owns staged readiness and how to test benefits, and the [concept record](concepts/README.md) owns individual product decisions, promises, assumptions and agreed but unscheduled directions, each with its origin. This vision does not authorize a feature, weaken an acceptance gate or establish a measured outcome.
+This is the canonical owner of Markitect's product thesis, intended division of responsibility, delegated method and long-term operating model. [Architecture](architecture.md) owns technical boundaries, the [engineering constitution](engineering-constitution.md) owns kernel invariants, the [roadmap](implementation-plan.md) owns released/source/planned status, [Measurement](measurement.md) owns staged readiness and how to test benefits, and the [concept record](concepts/README.md) owns individual product decisions, promises, assumptions and agreed but unscheduled directions, each with its origin. This vision does not authorize a feature, weaken an acceptance gate or establish a measured outcome.
 
 ## Markitect in brief
 
@@ -43,7 +43,7 @@ These are [promises](concepts/register.md#promises), not established results.
 
 > **Define the desired project world once. Reconcile its representations without losing intent.**
 
-The primary goal is quality and consistency during autonomous engineering: fewer forgotten obligations, overlooked consequences, conflicting representations and ignored rules. The project ontology expresses accepted concepts, relationships, purpose and constraints; the governed repository is its representation. A change to that world should drive impact, fanout, reconciliation and independent verification. The [operating methodology](operating-methodology.md) defines that cycle.
+The primary goal is quality and consistency during autonomous engineering: fewer forgotten obligations, overlooked consequences, conflicting representations and ignored rules. The project ontology expresses accepted concepts, relationships, purpose and constraints; the governed repository is its representation. A change to that world should drive impact, fanout, reconciliation and independent verification. [The delegated method](#the-delegated-method) defines that cycle.
 
 Human attention is scarce. Better independent evidence and explicit delegation should reduce routine supervision while preserving human ownership of meaningful decisions. Saving tokens or elapsed time is a secondary possible benefit, not the primary purpose or a prerequisite for the idea to be useful.
 
@@ -103,13 +103,43 @@ Markitect does not try to make agents infallible. It changes the structure they 
 | **Rules in the way.** Applicable rules and policies are compiled into the responsible Manager's context, and its reviewers check them. | Rules in a long instruction file that are overlooked when nothing forces the agent to see them |
 | **Verification and guarded Apply.** The exact candidate is verified across the required Manager tree before Apply. Unknown or unchecked areas stay visible. | Approving a pull request because its pipeline is green |
 
-The [operating methodology](operating-methodology.md) calls the implementing and assessing roles Executor and independent Verifier.
+[The delegated method](#the-delegated-method) calls the implementing and assessing roles Executor and independent Verifier.
 
 Two claims must be kept apart ([CPT-003](concepts/register.md#cpt-003-two-parts-of-the-promise)):
 - **Nothing in the modeled scope is overlooked.** For declared relationships and file coverage this can be computed. Undeclared dependencies in code are a known gap ([ENH-001](concepts/register.md#enh-001-observed-code-dependencies-widen-impact)).
 - **Everything is realized correctly.** This can only be supported by evidence.
 
 Tests belong to the realization. Agents write them, so they can be as wrong as the code. Reviewing tests against the statements they claim to check is an agreed direction ([CPT-002](concepts/register.md#cpt-002-tests-are-realizations-too)).
+
+## The delegated method
+
+The method has three responsibilities. They are responsibilities, not three Core primitives or three people.
+
+| Responsibility | What it does |
+|---|---|
+| Intent ownership | Accepts the concepts, rules, purpose and allowed freedom. Decides real intent changes, unresolved conflicts and exceptions. |
+| Execution | Takes the applicable context, implements the affected work as a bounded candidate, and repairs failed representations without redefining success. |
+| Independent verification | Checks the candidate against the accepted obligations with evidence suited to the target. Exposes violations, missing coverage and uncertainty, and returns pass, repair or an owner decision. |
+
+In current source a Manager, or a helper it starts, executes, and independent reviewers and the verify role verify ([where trust comes from](#where-trust-comes-from)). An Executor is never the sole judge of its own success. A Verifier needs the accepted obligations and evidence about the candidate, including its integration, not only the tests the Executor wrote. Deterministic tools can add evidence. An agent label or a second model call alone does not make verification independent.
+
+**Valid representations.** Code, documentation, agent instructions and other files represent the accepted intent; they do not hold their own copies of its rules. A representation is correct when it is one of the valid representations of that intent. Different structures or names can be equally valid where the policy allows them, so the allowed freedom is explicit. Byte equality applies only to targets with an exact deterministic contract. Keep representations that are already valid instead of rewriting them to an agent's taste.
+
+**The change cycle.** This is the target process. [Project workflow](project-workflow.md) describes what current source implements.
+
+1. **Fix the starting point.** Resolve the fixed revision and the relevant model, ownership and checks. Classify the task as an intent change, an implementation or repair against unchanged intent, or an open owner decision. A bug fix needs no invented model edit.
+2. **Change intent first.** A real intent change updates the model before its implementation: edit, check, inspect impact and conflicts, and obtain the decisions the delegation policy requires. Observed artifacts may inform a proposal, but they never become accepted intent on their own.
+3. **Plan the affected work.** Derive it from the model change, declared relationships, observed drift and the obligations of each representation. Unknown impact stays in the plan as conservative scope.
+4. **Execute bounded candidates.** Each Executor receives the obligations and freedom for its scope.
+5. **Verify and compose.** Verify each candidate against its own obligations. Compose child results into the parent candidate and verify the parent's own obligations; passing children do not prove that the integration is correct. A failed candidate goes back for bounded repair. Unresolved intent, ownership or authority goes back to its owner.
+6. **Apply and account.** Apply only a verified candidate whose inputs and scope are still current, through the guarded write boundary. A final check compares what actually changed with the intent, ownership, plan and evidence. Stale plans, unexplained changes and missing required evidence leave the result failing or incomplete; they are never reported as complete.
+7. **Repair drift, evolve intent.** When files depart from unchanged intent, repair them against that intent. A change of intent starts a new cycle.
+
+**The same method at every scope.** The cycle applies to a single file, a vertical slice, a subsystem and the whole project. A parent coordinates its children and verifies its own contracts and their integration; it does not just collect green child reports. Decompose by ownership, dependencies and concrete obligations, and do not force a tiny edit through a deep hierarchy. A declared relationship, a rule that requires a broader surface and an unexplained changed file are different signals. Keep each one instead of inferring dependencies from links.
+
+**Rules, process and evidence.** A precise rule can have a deterministic check. A broad rule, such as consistent error handling, needs a declared surface, a concrete interpretation and independent evidence; a few examples do not prove it everywhere. Check the agent's process as well as its files: a compliant final file does not prove that the agent started from the model, used its context or handled intent first. A planted defect shows only that a check catches that defect. How often the method works needs repeated real tasks ([measurement](measurement.md)).
+
+**Adoption.** For an existing project, inferred intent is a proposal ([product definition](#product-definition)). Keep valid bytes, record unknown ownership and missing evidence, and never change the model just to bless accidental drift.
 
 ## What executable governance means
 
