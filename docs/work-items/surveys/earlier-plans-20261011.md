@@ -40,7 +40,7 @@ Input: `independent-assessment-20261010.md` on `archive/wip/government-assessmen
 | Real runs only on one provider; Claude adapter had no tools (U3) | still relevant | RUN-03; process executor done (RUN-01, PR 104) | |
 | Integration and agent behavior, not mechanics, are the bottleneck; A01 passed after 27 failures (U4, claim 19, UX2, P7) | still relevant | Register OQ-007; TEST-04, CI-04 | DEC-010 separates method and runtime. |
 | Three execution stacks (U1, rec 12) | still relevant | ARCH-04 done (PR 118); ARCH-09, ARCH-15; Government code is reference only (GOV-01) | |
-| `runOrResume` has about 1,100 lines (U7) | still relevant | ARCH-06, CLI-03 | PR 162 confirms more than 1,000 lines on main. |
+| `runOrResume` has about 1,100 lines (U7) | still relevant | ARCH-06, CLI-03 | The merged PR 162 confirms more than 1,000 lines on main. |
 | Markitect does not model itself (UX3) | still relevant | ARCH-07 | |
 | Government overbuilt: unanimity, cabinet, court, queue without continuous operation, configuration load (A2 to A6, E8, K13, claims 11 and 12) | obsolete | DEC-004 (the former arm is not retested; departments are later designs); DEC-019 | The v1 contract has no courts. Continuous operation stays VIS-001, parked. |
 | Government package not marked historical; `docs/README.md` called it current (A1, A7, AX1, AX3, rec 2) | done on main | The Government design package is not on main; status in DEC-012 and DEC-019 | |
@@ -53,7 +53,7 @@ Input: `independent-assessment-20261010.md` on `archive/wip/government-assessmen
 | Evidence commits on PR heads broke CI; slow Windows gate (P2, U11, rec 4) | still relevant | CI-01 (PR 95) and CI-02 (PR 113) done; CONTRIBUTING lacks the push rule: OPS-04 | The roadmap's Integration rule 2 has it. |
 | A `STATUS.md` of at most 40 lines (rec 4) | obsolete | The backlog is the single status owner (OPS-05) | |
 | Branch and worktree sprawl; binary evidence in Git (U9, P11, rec 13) | done on main | OPS-02, OPS-03 (archive tags) | |
-| Convention drift in language, headings and prefixes (P13) | still relevant | ARCH-10 (PR 162 in review); roadmap branch names; DEC-016 | |
+| Convention drift in language, headings and prefixes (P13) | still relevant | ARCH-10 (PR 162 merged); roadmap branch names; DEC-016 | |
 | Owner questions decided: departments (1), granularity (2), thesis test before features (6) | done on main | DEC-004, DEC-005, DEC-016 | Main chose a clean main first. |
 | Owner questions open: may agents change the model (3), test repository (4), acceptable cost and review time (5) | still relevant | GOV-01 (IDEA-002); NEW 1; PLAY-07 | |
 
@@ -160,7 +160,7 @@ Input: the [Product Readiness lessons survey](product-readiness-lessons-20261010
 | Runtime limits: pinned `codex-cli 0.162.0`, no hard helper-depth cap, unknown loaded instructions, explicit permissions, fingerprints in plans | still relevant | RUN-02, MCP-02, RUN-03 | Pin in `codexappserver/process.go`; only `agents.max_concurrent_threads_per_session` is sent. |
 | `go test -race` never ran | still relevant | NEW 3 | No workflow passes `-race`. |
 | One regression case per observed provider output error | still relevant | TEST-04, RUN-02, BUG-01 | |
-| Helper stays `cleanup-pending` after a failed Close | still relevant | BUG-01 | PR 162 confirms it on main. |
+| Helper stays `cleanup-pending` after a failed Close | still relevant | BUG-01 | The merged PR 162 confirms it on main. |
 | Workspace, helper and recovery limits | still relevant | RUN-02, RUN-04, TEST-04 | |
 | Parent integration review ran before queued child rework | done on main | Commit `0c8d3873` | |
 | Verify audits lacked review evidence; calling agents used unknown flags | still relevant | TEST-04; TEST-02, AGENT-02 | |
