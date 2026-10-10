@@ -301,11 +301,11 @@ func askShopScopeVisibility(t *testing.T, shop shopFixture) {
 	assertSameSet(t, "orders checks", checkIDs(orders.Checks))
 	// inventory's statements use no orders statement, so none is visible there.
 	assertSameSet(t, "inventory contracts", statementIDs(shopContext(t, report, shopInventoryManager).Contracts))
-	// Only statement edges select contracts: engineering's own Check uses
-	// cancel-order and release-reservation, yet neither is visible to engineering.
+	// Own checks select contracts too: change-delivery uses cancellation-transaction,
+	// and engineering's own Check exercises cancel-order and release-reservation.
 	engineering := shopContext(t, report, shopEngineeringManager)
 	assertSameSet(t, "engineering checks", checkIDs(engineering.Checks), shopCancellationTests)
-	assertSameSet(t, "engineering contracts", statementIDs(engineering.Contracts), shopTransaction)
+	assertSameSet(t, "engineering contracts", statementIDs(engineering.Contracts), shopTransaction, shopCancelOrder, shopReleaseReservation)
 
 	// Candidate, not the shipped Shop: order becomes private and commerce gets
 	// instructions, because the Shop has neither a private statement nor a

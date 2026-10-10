@@ -252,11 +252,34 @@ func TestImpactNeverShrinksWhenChangesCombine(t *testing.T) {
 			artifacts: []generatedArtifact{{realizes: []int{3}}}, digests: []string{"sha256:a"}}
 		check(t, "uses chain", base, []projectEdit{description(0)}, []projectEdit{description(1)})
 	})
+	// A meaning-free edit widens alone, so it widens in every combination too.
+	reversed := func(i int) projectEdit {
+		return func(q *generatedProject) { q.statements[i].reversedUses = true }
+	}
+	implicit := func(i int) projectEdit {
+		return func(q *generatedProject) { q.statements[i].implicitPublic = true }
+	}
+	t.Run("meaning-free edits", func(t *testing.T) {
+		statement := func(uses ...int) generatedStatement {
+			return generatedStatement{description: "Rule.", purpose: "Statement.", uses: uses}
+		}
+		base := generatedProject{managers: []string{""}, statements: []generatedStatement{statement(1, 2), statement(), statement(), statement()},
+			artifacts: []generatedArtifact{{realizes: []int{3}}}, digests: []string{"sha256:a"}}
+		addUse := func(q *generatedProject) { q.statements[0].uses = append(q.statements[0].uses, 3) }
+		check(t, "reorder next to another statement's edit", base, []projectEdit{reversed(0)}, []projectEdit{description(3)})
+		check(t, "explicit default next to an edit of the same statement", base, []projectEdit{implicit(0)}, []projectEdit{description(0)})
+		check(t, "reorder and addition in one list", base, []projectEdit{reversed(0)}, []projectEdit{addUse})
+		if alone := Impact(base.analyze(t, nil), base.with(reversed(0)).analyze(t, nil)); len(alone.Unknown) == 0 {
+			t.Fatal("a reordered uses list alone no longer widens; the cases above would pass vacuously")
+		}
+	})
 	t.Run("generated projects", func(t *testing.T) {
 		for seed := uint64(1); seed <= 200; seed++ {
 			rng := rand.New(rand.NewPCG(seed, 11))
 			base := generateProject(rng)
+			meaningFree := []projectEdit{reversed(rng.IntN(len(base.statements))), implicit(rng.IntN(len(base.statements)))}[rng.IntN(2)]
 			check(t, fmt.Sprintf("seed %d", seed), base, randomEdits(rng, base), randomEdits(rng, base))
+			check(t, fmt.Sprintf("seed %d, meaning-free", seed), base, randomEdits(rng, base), []projectEdit{meaningFree})
 		}
 	})
 }
@@ -265,6 +288,8 @@ type generatedStatement struct {
 	namespace, description, purpose string
 	public                          bool
 	uses, requires                  []int
+	// Meaning-free writing: omit public when false, write uses in reverse order.
+	implicitPublic, reversedUses bool
 }
 
 type generatedArtifact struct {
@@ -418,7 +443,14 @@ func (p generatedProject) analyze(t *testing.T, rng *rand.Rand) Report {
 		definitions = append(definitions, core.Definition{APIVersion: api, Kind: managerKind, Metadata: core.Metadata{Namespace: namespace, Name: managerName(namespace)}, Purpose: "Manager.", Spec: spec})
 	}
 	for i, s := range p.statements {
-		definitions = append(definitions, core.Definition{APIVersion: api, Kind: statementKind, Metadata: core.Metadata{Namespace: s.namespace, Name: "s" + string(rune('a'+i))}, Purpose: s.purpose, Spec: map[string]any{"category": "rule", "description": s.description, "public": s.public, "uses": statementRefs(s.uses), "requires": statementRefs(s.requires)}})
+		spec := map[string]any{"category": "rule", "description": s.description, "public": s.public, "uses": statementRefs(s.uses), "requires": statementRefs(s.requires)}
+		if s.implicitPublic && !s.public {
+			delete(spec, "public")
+		}
+		if s.reversedUses {
+			slices.Reverse(spec["uses"].([]any))
+		}
+		definitions = append(definitions, core.Definition{APIVersion: api, Kind: statementKind, Metadata: core.Metadata{Namespace: s.namespace, Name: "s" + string(rune('a'+i))}, Purpose: s.purpose, Spec: spec})
 	}
 	for i, namespace := range p.checks {
 		definitions = append(definitions, core.Definition{APIVersion: api, Kind: checkKind, Metadata: core.Metadata{Namespace: namespace, Name: "check"}, Purpose: "Check.", Spec: map[string]any{"command": []any{"go", p.command[i]}}})

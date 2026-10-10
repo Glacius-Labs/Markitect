@@ -164,6 +164,37 @@ func TestAnalyzeTracksManyToManyFileMeaningAndDeterministicDigest(t *testing.T) 
 	}
 }
 
+// BUG-01: a Check that exercises a changed Statement must run again, and its
+// owner is routed, even when no Artifact declares that Check.
+func TestImpactRoutesChecksThatUseAChangedStatement(t *testing.T) {
+	model, files := fixture(t, false, false, true)
+	root := map[string]any{"apiVersion": APIVersion, "kind": managerKind, "namespace": "", "name": "root"}
+	contract := map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "inventory", "name": "release-reservation"}
+	definitions := append(copyDefinitions(model.Definitions),
+		core.Definition{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Namespace: "audit", Name: "audit"}, Purpose: "Audits stock.", Spec: map[string]any{"parent": root, "owns": []any{"src/audit/"}}},
+		core.Definition{APIVersion: APIVersion, Kind: checkKind, Metadata: core.Metadata{Namespace: "audit", Name: "stock-audit"}, Purpose: "Audit released stock.", Spec: map[string]any{"command": []any{"go", "test", "./audit"}, "uses": []any{contract}}},
+	)
+	analyze := func(description string) Report {
+		for i := range definitions {
+			if definitions[i].Metadata.Name == "release-reservation" {
+				definitions[i].Spec["description"] = description
+			}
+		}
+		compiled, diagnostics := core.Compile(model.Schemas, copyDefinitions(definitions), "check-uses")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		return Analyze(compiled, files)
+	}
+	base := analyze("Release reservation once.")
+	impact := Impact(base, analyze("Release reservation at most once."))
+	auditCheck := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: checkKind, Namespace: "audit", Name: "stock-audit"}).Key()
+	auditManager := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "audit", Name: "audit"}).Key()
+	if len(impact.Unknown) != 0 || !contains(impact.Checks, auditCheck) || !contains(impact.Managers, auditManager) {
+		t.Fatalf("check using the changed contract was not routed: unknown=%v checks=%v managers=%v", impact.Unknown, impact.Checks, impact.Managers)
+	}
+}
+
 func TestImpactUsesAddsContextWhileRequiresAddsCoverage(t *testing.T) {
 	baseModel, files := fixture(t, true, true, true)
 	baseDefs := copyDefinitions(baseModel.Definitions)
@@ -514,6 +545,64 @@ func TestContextIncludesDirectPublicContractsAndExcludesSiblingInternals(t *test
 	}
 	if _, err = Context(r, "missing"); err != ErrManagerNotFound {
 		t.Fatalf("missing manager error=%v", err)
+	}
+}
+
+// BUG-01: a foreign public Statement that the Manager's own Check uses or own
+// Artifact realizes is a Contract too, with its private relations hidden.
+func TestContextIncludesContractsOfOwnChecksAndArtifacts(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	contract := map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "inventory", "name": "release-reservation"}
+	cancelOrder := map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "orders", "name": "cancel-order"}
+	contractID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "inventory", Name: "release-reservation"}).Key()
+	ordersID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}).Key()
+	for _, tc := range []struct {
+		name     string
+		edit     func(*core.Definition)
+		contract bool
+	}{
+		{"no reference", func(*core.Definition) {}, false},
+		{"own check uses", func(d *core.Definition) {
+			if d.Kind == checkKind {
+				d.Spec["uses"] = []any{cancelOrder, contract}
+			}
+		}, true},
+		{"own artifact realizes", func(d *core.Definition) {
+			if d.Kind == artifactKind && d.Metadata.Namespace == "orders" {
+				d.Spec["realizes"] = []any{cancelOrder, contract}
+			}
+		}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			definitions := append(copyDefinitions(model.Definitions), core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "inventory", Name: "internal-guard"}, Purpose: "Private implementation detail.", Spec: map[string]any{"category": "rule", "description": "Internal inventory guard."}})
+			for i := range definitions {
+				switch {
+				case definitions[i].Kind == statementKind && definitions[i].Metadata.Name == "cancel-order":
+					delete(definitions[i].Spec, "requires")
+				case definitions[i].Kind == statementKind && definitions[i].Metadata.Name == "release-reservation":
+					definitions[i].Spec["uses"] = []any{map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "inventory", "name": "internal-guard"}}
+				}
+				tc.edit(&definitions[i])
+			}
+			candidate, diagnostics := core.Compile(model.Schemas, definitions, "own-references")
+			if len(diagnostics) != 0 {
+				t.Fatalf("compile: %+v", diagnostics)
+			}
+			r := Analyze(candidate, files)
+			if r.Status != "succeeded" {
+				t.Fatalf("fixture must analyze cleanly: %s %+v", r.Status, r.Findings)
+			}
+			ctx, err := Context(r, ordersID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := len(ctx.Contracts) == 1 && ctx.Contracts[0].ID == contractID; got != tc.contract {
+				t.Fatalf("contracts = %+v, want release-reservation: %v", ctx.Contracts, tc.contract)
+			}
+			if tc.contract && (len(ctx.Contracts[0].Uses) != 0 || len(ctx.Contracts[0].Requires) != 0) {
+				t.Fatalf("contract leaked private relation identities: %+v", ctx.Contracts[0])
+			}
+		})
 	}
 }
 
