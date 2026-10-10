@@ -2015,3 +2015,9 @@ Owner fixes exactrefenum/prompt, supportedproviderbounds/oversizedoptionalemptyf
 ### Closed wire contract compared across all used roles
 
 Root cleanlocal/exactpublic8e0d103a verified, frozenbinary99a13305 ownerreported. Exactrequestrefenum/oversizeoptionalemptyfallback, promptnoinventedrefs/usage/nativeWork; transmittedschemafixture+strictdecoderrepresentativeresponses acrossWriter/Reviewer/Helper/Verifier and closedshape/count/stringceilings positive ownerreported. Remainingsemantic/byte/deltavalidatorsauthoritative. Nativefull75.041s/finalfocused0.538/buildvetcanonicaldiff/indepreviewpositive. Originalattempt9/c202/13calls/10providers/3511133partialestimate unchanged. Normalfreshactual10 nextunderexistingauthority, no newRootgate; A01/Mainstillunaccepted.
+
+### Actual10 repeats schema-covered ref error; real wire comparison required
+
+Owner source8e0/bin99a1/normalPlan8b4 actual10rootnativecompleted butsame evidenceRefrejection persists. No boundary/laterroles/VerifyApplyRecovery; cumulative14knowncalls/11providers/4038772partialestimate preserved. This disproves sufficiency of currentproviderfreecontractcheck, not proof of exact parser/providercause.
+
+Root sent boundedretainedwire comparison: actualtransmittedoutputSchema+request projection, exactfinalmessage/extractor, originalHostallowedrefset. No nextsamefailurefreshbatch or prompt-onlytweak before concretecausefix; no newcapabilityActor/generalframework. Host should own callerknownIDs/nonces/hash/realfiledelta, AI owns semanticreport/reviewjudgement; minimaladaptercomposition if genuinelyneeded, no fabricatedverdict/ref/evidence or silentnormalization. Ownerdiagnosisactiveunderexistingauthority; next meaningfulcause/correction/blocker once.

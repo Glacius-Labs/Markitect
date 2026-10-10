@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T00:29:00.261122Z",
+  "updatedUtc": "2026-10-10T00:34:03.600323Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17872,7 +17872,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "WHOLE_NATIVE_OUTPUT_CONTRACT_CHECKED_FRESH_ACTUAL10_PREPARING",
+    "status": "ACTUAL10_SAME_REF_REJECTION_DESPITE_SCHEMA_STOP_UNCHANGED_RETRY_DIAGNOSE_REAL_WIRE_BINDING",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -17991,6 +17991,19 @@
       "checksOwnerReported": "Fullnative75.041s/finalfocused0.538s/buildvetcanonicaldiffPASS/independentsourcedocreviewclosed",
       "historicalLedger": "Attempt9/c202/13calls/10providers/3511133partialestimate preserved",
       "next": "NormalReadiness/Plan refresh/freshactual10, no newRootgate/Mainrelease/study/foreigncleanup. A01notpassed yet."
+    },
+    "actual10RepeatedEvidenceFailure": {
+      "source": "8e0d103a13650036bc8ac98fdca98fcf38ffd98a",
+      "binary": "99a13305ce58def97100d700aa6179cdeb3504a1c9cf71d52469f44d82344564",
+      "batch": "a01-evidence-4d64c087720d415a8194f1ac00cbfe1a",
+      "plan": "8b4f3f3a4e1faec36d8d33a909e069f0",
+      "nativeTurn": "01a12337-2530-78a3-a02e-cb8113104793",
+      "ownerResult": "Rootnativecompleted; exactevidenceRefrejectionpersists despite exactenum schema/sourcechecks, beforeboundary. No laterreview/helper/parallel/VerifyApplyRecovery.",
+      "resources": "1request/1provider/527639partialestimate; cumulative14/11/4038772 NOTinvoice",
+      "nextActionSentOnce": "Before freshbatch use retainedraw to compare actual transmittedoutputSchema/finalmessage extraction/originalHostvalidator allowedrefset; establish projection/provider/runtime mismatch and concretefix, no extra prompt-only correction/newcapabilityActor.",
+      "designPrinciple": "Host authors callerknownprotocolmetadata and observedfiledelta; AI semanticreport/judgement stays genuine. Minimal composition if needed, no fakeverdict/refinventing/silentinvalidjudgementnormalization/generalframework.",
+      "rootActualEvidence": "Ownerreported; rawwire exactcausereadpending, no claim provider ignoredschema or parserwrong yet",
+      "authority": "Existingdirectsimplify/renewablegoal; no unchangedretry untilcausalfix, no perattemptRootGo"
     }
   }
 }
