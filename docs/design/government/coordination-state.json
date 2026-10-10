@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T05:10:09.312590+00:00",
+  "updatedUtc": "2026-10-10T05:12:40.367719+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -17870,7 +17870,7 @@
   },
   "nativeRuntimeSimplification20261010": {
     "authority": "Direct user: simplify permissions detail; first working usable product and ability to test",
-    "status": "VALIDATED_APPLIED_HELPER_REVIEW_FACTS_CLEAN_FROZEN_ORDINARY_A01_PREPARATION",
+    "status": "ACTUAL15_NORMAL_FROZEN_RUN_ACTIVE_OWNER_REPORTED",
     "designPath": "docs/design/native-runtime-simplification-20261010.md",
     "integrationDispatch": "SENT_ONCE",
     "sourceBaseline": "01de5b3003aa17a9f20e79204e9bd3d01b4b962b",
@@ -18201,6 +18201,24 @@
       "fullWorkflowAccepted": false,
       "newStudyOrRelease": false,
       "next": "Owner ordinary A01/real Recovery/Verify/Apply, final CI/review/Main under standing authority; no repeated Root order or grant."
+    },
+    "actual15Running": {
+      "batch": "a01-helper-evidence-30a1a1683c534d68b5fa7958dcbd83d7",
+      "allocatedUtc": "2026-10-10T05:11:20.4396594Z",
+      "deadlineUtc": "2026-10-10T09:11:20.4396594Z",
+      "plan": "3c41c26278ec1b579077ebe03b667f6d",
+      "planDigest": "sha256:15e6159ed361ef615b11ce74a6fdc796c3b888ad05c803ea5d564b37209befc3",
+      "sourceSha": "e10ad79a8fb238f016fa9026796fc38df8a35a82",
+      "binarySha256": "1329ed6f027867b018af777ca004e5a7f90a5e6047999bbbdf9e825140c7f780",
+      "readinessPrefix": "5e3a068d",
+      "exploration": "greeting-feature-renewed, at least1 genuine helper",
+      "observer": "741392ec2c04437db31d29f6e821d3c6",
+      "pidOwnerReported": 66624,
+      "ownerReported": "Normal Run active/rootworkinvoking/boundaryfalse; source frozen, independent lifecycle audit read-only. Normal repo-relative exploration input copied from immutable prepared bytes, workingtree CAS succeeds; old revision-bound preview rejected README byte mismatch, no bypass.",
+      "rootQualification": "Same clean source/binary independently verified earlier; raw actual-start receipt/PID not independently checked this event.",
+      "historicalLedger": "Closed38requests35providers8555542partial retained; current batch separate",
+      "fullWorkflowAccepted": false,
+      "next": "Owner continues normal Run/recovery/Verify/Apply within finite budget, material outcome once; no repeated Go/grant/newstudy."
     }
   },
   "restartAfterInterruptedIntegration20261010": {

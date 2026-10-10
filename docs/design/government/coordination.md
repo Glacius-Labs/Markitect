@@ -2103,3 +2103,7 @@ Owner rev41/observer478e exit04:41:17Z/boundaryfalse, no Rootintegrationhandle/V
 ### Host-applied helper evidence correction clean frozen and reviewed
 
 Root cleanexactpublice10/source6ce verified; actualknownbin1329/goVCSexacte10 modifiedfalse verified. Source read validate/apply/Close then atomic completedHelperDelivery onexistingreservation; errors/unresolved stayunknown, parent/session/request/scope/currentcandidatebytesmodesbound forreview, no countpolicy/journalparser/authority expansion. Owner focused112.016/lifecycleproviderreviews/exactfreezevet-schema-allCONTRIBUTINGexamples-artifact-import-sourcegatesPASS. Newprospectiveordinaryexplorationatleast1 CASwrite/historicalimmutablepreserved, readinessackrunning thennormalfreshPlan/4hbatch. FinalexactPRheadfullCIpending; no newActualresult/fullacceptance/release/study/Rootgrant.
+
+### Actual15 normal fresh run allocated and active
+
+Owner samefrozene10/binary1329 normalPlan3c41/digest15e615/readiness5e3a/newordinaryexplorationminimum1 starts batcha01-helper-evidence30a1 allocated05:11:20.4396594Z deadline09:11:20.4396594Z. Observer741392/PID66624 ownerreportedrootworkinvoking/boundaryfalse; rawstartnotRootcheckedthisevent, sourcebinaryverifiedprior. Immutablepreparedexploration copiednormalreporelativeinput, workingtreeCASsucceeds; revisionpreviewREADMEbyte mismatchreject preservedno bypass. Historical38/35/8555542partial closedunchanged/currentbatchseparate. OwnercontinueswithoutRootGo/newgrant, no acceptanceyet.
