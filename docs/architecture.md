@@ -40,14 +40,14 @@ Current source has four product layers and the legacy line:
 - **Runtime** runs the inner roles and records what they did.
 - **Legacy** is the earlier Project/Domain line.
 
-Executables under `src/cmd`, maintainer tooling, harnesses and fixtures have their own layers in the code map. The import gate checks each package against its layer ([mechanical dependency gate](development/modules.md#mechanical-dependency-gate)). Package IDs below refer to the [backlog](work-items/backlog.yaml), which owns their status. Problems without a package have no owner yet.
+Executables under `src/cmd`, maintainer tooling, harnesses and fixtures have their own layers in the code map. The import gate checks each package against its layer ([mechanical dependency gate](development/modules.md#mechanical-dependency-gate)). Package IDs below refer to the [backlog](work-items/backlog.yaml), which owns their status.
 
 Known problems across layers:
 
-- The gate checks only that product layers do not import legacy packages and use only the guarded write API. It checks no direction between the four product layers. The core and runtime sections below show imports that break the intended direction.
-- Directory names do not show the layer. Most product packages live in `src/internal/host` next to the legacy host root, among them the core packages `projectbriefing` and `projectcoverage` and the infrastructure package `guardedwrite`.
+- The gate checks only that product layers do not import legacy packages and use only the guarded write API. It checks no direction between the four product layers. The core and runtime sections below show imports that break the intended direction (ARCH-12).
+- Directory names do not show the layer. Most product packages live in `src/internal/host` next to the legacy host root, among them the core packages `projectbriefing` and `projectcoverage` and the infrastructure package `guardedwrite` (ARCH-16).
 - Small helpers are copied: `sameStrings` exists in four packages, `equalStrings` in three and `containsString` in five, for example in `core/compile.go` and `projectrun/run.go` (ARCH-05).
-- Four packages keep their own record store, each with its own file layout and write path: `projectrun` (`store.go`), `projectexplore` (`store.go`), `projectbriefing` (`store.go`) and `projectadoption` (`session.go`, `manager_run_ledger.go`).
+- Four packages keep their own record store, each with its own file layout and write path: `projectrun` (`store.go`), `projectexplore` (`store.go`), `projectbriefing` (`store.go`) and `projectadoption` (`session.go`, `manager_run_ledger.go`) (ARCH-14).
 
 ## Core layer
 
@@ -61,7 +61,7 @@ The core turns explicit inputs into deterministic results. The same model and sn
 
 Known problems:
 
-- `projectbriefing` and `projectcoverage` run Git through `infrastructure/source` (`projectbriefing/store.go`, `projectcoverage/census.go`). `projectbriefing` also imports the application package `projectwork` and writes its own store under `.markitect/state/briefings/`. The code map defines core as free of Git processes and writes.
+- `projectbriefing` and `projectcoverage` run Git through `infrastructure/source` (`projectbriefing/store.go`, `projectcoverage/census.go`). `projectbriefing` also imports the application package `projectwork` and writes its own store under `.markitect/state/briefings/`. The code map defines core as free of Git processes and writes (ARCH-13).
 
 ## Infrastructure layer
 
@@ -93,10 +93,10 @@ The application layer holds the product's use cases and the surfaces that expose
 Known problems:
 
 - The CLI composes the runtime itself instead of calling the facade. `projectcli/run.go` calls `projectrun.Run`, `Resume`, `Repair`, `Verify`, `FullVerify` and `Apply` and builds the transport invoker and workspace service. `projectcli/project_deliver.go` calls `projectrun.Deliver` (CLI-03).
-- `runAction` in `projectcli/run.go` has 484 lines (CLI-03).
+- `runAction` in `projectcli/run.go` has almost 500 lines (CLI-03).
 - CLI commands (`projectcli/options.go`) and MCP tools (`mcp/tools.go`, `projectcli/mcp.go`) are declared separately, and nothing checks that they agree (CLI-02, TEST-02).
 - Two Brownfield paths exist side by side: the file pipeline (`discover`, `distill`, `resolve`, `adopt`) and the session ledger (`brownfield`). The [verb table](design/verb-table.md#adoption-stages) keeps only the ledger (CLI-02).
-- `projectadoption` runs its Managers through its own stack and ledger on `agentexec` (`manager_run.go`, `manager_run_ledger.go`), separate from `projectrun`.
+- `projectadoption` runs its Managers through its own stack and ledger on `agentexec` (`manager_run.go`, `manager_run_ledger.go`), separate from `projectrun` (ARCH-15).
 
 ## Runtime layer
 
@@ -111,18 +111,18 @@ The runtime runs Manager, review, integration and verify roles and records what 
 
 Known problems:
 
-- `projectrun` is large: about 16,800 production lines. `run.go` has about 2,700 lines, and `runOrResume` alone about 1,100. `Plan` (`plan.go`) and `FullVerifyProject` (`full_verify.go`) also exceed 300 lines (ARCH-06).
+- `projectrun` is large: well over 15,000 production lines. `run.go` alone has more than 2,500 lines, and `runOrResume` more than 1,000. `Plan` (`plan.go`) and `FullVerifyProject` (`full_verify.go`) also exceed 300 lines (ARCH-06).
 - Runtime configuration lives in `projectrun`: `Runtime`, `Agent`, `Limits` and `Pricing` (`types.go`) and `ValidateRuntime` (`config.go`). `projectsetup` and `mcp` import `projectrun` for these types, and the native transport invoker is built there too (ARCH-06).
-- Runtime and application import each other. `projectrun` imports `projectwork` and `projectexplore`, and `projectsetup` imports `projectwork`; `projectapp`, `projectadoption` and `projectcli` import `projectrun`. ARCH-06 works on the same seam.
+- Runtime and application import each other. `projectrun` imports `projectwork` and `projectexplore`, and `projectsetup` imports `projectwork`; `projectapp`, `projectadoption` and `projectcli` import `projectrun` (ARCH-13; ARCH-06 works on the same seam).
 - Five functions in `projectrun/run.go` have no callers: `ownedPath`, `addCost`, `estimateCost`, `resolvesConflicts` and `resolveObligations` (ARCH-05).
-- Plan and Apply call `git check-attr --source` (`plan.go`, `apply.go`), which needs Git 2.40 or later. No document or check states that requirement.
+- Plan and Apply call `git check-attr --source` (`plan.go`, `apply.go`), which needs Git 2.40 or later. CONTRIBUTING and the [project workflow](project-workflow.md#connect-and-inspect) state the requirement, but no check enforces it (CLI-04).
 - A helper whose Close fails stays `cleanup-pending` (`helper.go`). `validateReportClosure` (`obligations.go`) then blocks Verify and Apply, and nothing reconciles the state (BUG-01).
 - Bring-your-own executor gaps (RUN-05):
   - `maxCostMicros` is required even when every role is unmetered (`config.go`).
   - Setup rejects script shims only for the native provider, not for process executors (`discoverProcess` in `projectsetup/setup.go`).
   - The exchange adapter has no deadline of its own (`exchangecli/exchange.go`).
   - Declared checks see only the owning agent's environment allowlist (`explicitEnvironment` in `verify.go`).
-- `agentexec/lifecycle.go` and `codexappserver/contracts.go` are not gofmt-formatted. CI runs `go vet` but no gofmt check.
+- `agentexec/lifecycle.go` and `codexappserver/contracts.go` are not gofmt-formatted. CI runs `go vet` but no gofmt check (CI-06).
 - Runtime tests run serially. No test calls `t.Parallel`, and the process end-to-end tests re-execute the test binary (for example `projectrun/process_e2e_test.go`). The [tests and CI survey](work-items/surveys/tests-and-ci-20261010.md) measured `projectrun` at 1,467 s on Windows against 112 s on Linux, so the Windows job runs nightly or on demand and does not block merges ([DEC-013](concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)) (TEST-03, CI-05).
 
 ## Legacy line
@@ -132,7 +132,7 @@ The legacy line is the earlier Project/Domain product: the verbs such as `check`
 Known problems:
 
 - The `markitect` executable enters through the legacy dispatcher. `src/cmd/markitect/main.go` calls `host/cli`, which routes `project` to `projectcli` and also holds `package`, `bundle`, `install` and `licenses` (`cli_dispatch.go`) (CLI-02, ARCH-08).
-- This repository develops itself on the legacy line: `markitect.yaml` and `.markitect/areas`, the commands in `AGENTS.md`, the pre-commit hook and the 42 `markitect` calls in `ci.yaml`, none of them to `project` (ARCH-07).
+- This repository develops itself on the legacy line: `markitect.yaml` and `.markitect/areas`, the commands in `AGENTS.md`, the pre-commit hook and the many `markitect` calls in `ci.yaml`, none of them to `project` (ARCH-07).
 - `markitect-check-architecture` runs the gate through the host root (`host/architecture.go`), so the gate binary links the legacy package (ARCH-09).
 - Only `examples/project-world` uses the model-first format. The other example directories use `markitect.yaml` or the legacy package and Copy Me formats (ARCH-09).
 

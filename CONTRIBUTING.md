@@ -14,6 +14,12 @@ Current source has four product layers and the legacy line ([Architecture](docs/
 - **Runtime:** the inner roles in owned candidate workspaces.
 - **Legacy:** the earlier Project/Domain line, which ARCH-09 removes.
 
+Outside the layers:
+
+- `src/internal/testkit` holds hermetic test fixtures: Git isolation, repositories with fixed identity and dates, and short temporary directories. Only test files import it, and it imports no other Markitect package; the import gate enforces both.
+- `integration` holds the standalone public bootstrap that is copied into installed packages. It imports no Markitect package.
+- `packaging/winget` holds versioned portable package manifests derived from verified releases.
+
 The [code map](docs/development/code-map.md) lists every package with its layer, purpose and owning document. Read that document before you change a package. [Modules and static composition](docs/development/modules.md) owns the import rules. Executables under `src/cmd` import Host only and delegate to it. Fixture repositories and reference data live under `examples/`; they are not Go packages. The [vision](docs/vision.md) owns the product thesis; implementation and gate evidence belong to the [roadmap](docs/implementation-plan.md) and source-bound validation reports.
 
 Snapshot semantics and the boundary between generic values and Git operations are documented in [Source snapshots](docs/source-snapshots.md). Keep Git resolution and process hardening in `src/internal/infrastructure/source`; keep deterministic comparison over resolved values in `src/internal/core/snapshot`. Repository branch, index, and worktree checks belong to the write use cases that require them. Do not add alternate production providers or a provider framework without a concrete consumer.
