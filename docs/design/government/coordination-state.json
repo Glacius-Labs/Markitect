@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-10T06:19:10.708917+00:00",
+  "updatedUtc": "2026-10-10T06:22:33.646498+00:00",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18305,6 +18305,20 @@
       "rootVerified": "FileSHA and go version -m: Go1.27.1/WindowsAMD64/CGO0/vcs04ca/modifiedfalse; previous clean public remote04ca checked. Owner starts next fresh ordinary A01 using exactly this binary across interruption/resume.",
       "status": "CLEAN_BINARY_VERIFIED_FRESH_RUN_OWNER_START_PENDING_NEW_RECEIPT",
       "boundary": "No new startreceipt/PlanID observed yet, no completion/Main/release/study acceptance."
+    },
+    "actual16Running": {
+      "status": "OWNER_REPORTED_FRESH_SAME_BINARY_RUN_STARTED_RECEIPT_NOT_ROOT_INSPECTED",
+      "batchId": "a01-same-build-recovery-00a5ce211ff2446dab3bad76465b61df",
+      "planId": "3a6a39ae59f7cfb18cb39f47b3d346ee",
+      "planDigest": "sha256:a47c13a4331d647fc100fa6977277300337208d690d1949db617c29aa716de1a",
+      "sourceSha": "04ca4a144f92a9c5f3e446eb82dca18f7e690085",
+      "binarySha256": "bc26543cf097091e5f2d520d3a71c8455e6b0532f984e65b38df84f1f4b03b5d",
+      "deadlineUtc": "2026-10-10T10:21:17.9694365Z",
+      "controllerSha256": "ddf7b16dc0a23b21ac4edd90e18f56e15cdf41478baac873503b18ed90154b36",
+      "ownerReadiness": "ready/blockers[]",
+      "controllerBoundary": "Owner changed ordinary JSON observer reads to explicit ReadWrite|Delete/close-before-parse; deliberate bounded Root FileShare.Read interruption remains original scenario. No new framework/matrix. Controller hash owner reported, static file not yet Root-bound.",
+      "rootVerifiedPrior": "Same clean04ca source/public remote and exact bc26543c binary independently checked before start. Current Plan/start/actual native handles not independently inspected this event; no live blocking journal reads.",
+      "accounting": "Fresh finite renewable product batch, old Actual15 superseded6starts separately; current starts/usage unknown until receipts, not zero. No fullA01/Resume/Apply/Main/release/study acceptance."
     }
   },
   "restartAfterInterruptedIntegration20261010": {

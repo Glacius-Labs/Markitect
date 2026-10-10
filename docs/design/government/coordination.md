@@ -2147,3 +2147,7 @@ Root clean public04ca4a14 confirms recovery621da012/docs published. Source diges
 ### Old native turn terminal; corrected Windows binary independently bound
 
 Actual15 state23 superseded; owner exactoriginale10projectdigest372e9e5e/a52b7672 vs corrected04ca4df4636c/ed597e2c, samefixed inputs/11basis/readiness. Root native read_thread exactDocs01a1243b8145/turn01a1243b8394 interrupted/errornull/notLoaded/completedAtnull, not Hostreceipt/PASS. Owner ownrunner66624/Resume53272/directchildren absent. SixActual15 starts ownerreported, twoResume0starts; finalusage unknown, historical38/35/8555542 not overwritten. Root knownbinary bc26543cf097091e5f2d520d3a71c8455e6b0532f984e65b38df84f1f4b03b5d verified Go1.27.1/Windows/vcs04ca/modifiedfalse. Owner now proceeds freshsamebinaryA01 per existingbounded instruction/budget; newPlan/startreceipt pending, no newduplicateRootorder/oldreplay/MainPASS.
+
+### Fresh same-build Actual16 started, owner report
+
+Owner batcha01-same-build-recovery00a5/newPlan3a6a39ae/digesta47c13/deadline10:21:17.9694365Z, readinessready/blockers[], normal run/Rootinterruption/Resume same clean04ca/binbc26543c previously Rootverified. Controllerddf7b16 ordinary JSONreadsReadWriteDelete/close-beforeparse, targetedRootinterruption unchanged; staticcontroller/currentstartreceipt notRootinspectedthisevent. No newframework/matrix/oldreplay. Actual15superseded6starts retained; currentstarts/usage unknown. No fullA01/Apply/Main/studyacceptance, no repeatedRootorder.
