@@ -19,5 +19,5 @@ go run ./src/cmd/markitect format --repo examples/delivery-target-equality
 go run ./src/cmd/markitect check --repo examples/delivery-target-equality
 go run ./src/cmd/markitect model --repo examples/delivery-target-equality
 go run ./src/cmd/markitect context --repo examples/delivery-target-equality --namespace engineering --kind Skill --name deployment-review
-go test ./examples -run DeliveryTargetEquality -count=1
+go test ./src/harness/examples -run DeliveryTargetEquality -count=1
 ```

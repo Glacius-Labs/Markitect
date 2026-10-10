@@ -11,7 +11,7 @@ From the Markitect source repository root:
 ```powershell
 go run ./src/cmd/markitect check --repo examples/markdown-navigation
 go run ./src/cmd/markitect render --repo examples/markdown-navigation --write
-go test ./examples -run MarkdownNavigation -count=1
+go test ./src/harness/examples -run MarkdownNavigation -count=1
 ```
 
 Generated companion views live under `docs/markitect/general/`. The fixture has no dependencies inferred from its prose links.

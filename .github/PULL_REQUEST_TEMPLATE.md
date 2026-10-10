@@ -13,7 +13,7 @@
 Checks run:
 
 ```text
-<!-- e.g. go test ./..., go vet ./..., go run ./cmd/markitect schema --repo ., go run ./cmd/markitect check --repo examples/minimal -->
+<!-- e.g. go test ./..., go vet ./..., go run ./src/cmd/markitect schema --repo ., go run ./src/cmd/markitect check --repo examples/minimal -->
 ```
 
 See [CONTRIBUTING.md](https://github.com/Glacius-Labs/Markitect/blob/main/CONTRIBUTING.md) for the full development checks.

@@ -19,7 +19,7 @@ go run ./src/cmd/markitect format --repo examples/software-architecture
 go run ./src/cmd/markitect check --repo examples/software-architecture
 go run ./src/cmd/markitect model --repo examples/software-architecture
 go run ./src/cmd/markitect context --repo examples/software-architecture --namespace engineering --kind Skill --name implement-order
-go test ./examples -run SoftwareArchitecture -count=1
+go test ./src/harness/examples -run SoftwareArchitecture -count=1
 ```
 
 Regenerate the local package archive only when intentionally changing the matching versioned package source:
