@@ -1151,6 +1151,10 @@ def launch_codex(
     if drain_errors:
         raise AdapterError("Codex private event log could not be retained")
     if prompt_submission_error[0] is not None and not timed_out:
+        # A CLI that rejects its invocation exits before reading stdin; keep its diagnostic independent of prompt size.
+        diagnostic = provider_failure_diagnostic(bytes(stderr), collector) if return_code != 0 else None
+        if diagnostic is not None:
+            return incomplete_response(invocation, diagnostic, collector)
         raise AdapterError("Codex prompt could not be submitted") from prompt_submission_error[0]
     if timed_out:
         return incomplete_response(invocation, "Codex execution timed out.", collector, native_mode=native_mode)

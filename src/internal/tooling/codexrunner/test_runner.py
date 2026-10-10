@@ -1382,6 +1382,38 @@ class CodexRunnerTests(unittest.TestCase):
             private_log = (cwd / "events.jsonl").read_text(encoding="utf-8")
             self.assertNotIn("adapter.prompt-submitted", private_log)
 
+    def test_cli_rejection_diagnostic_is_independent_of_prompt_size(self) -> None:
+        def launch_rejecting_cli(message: str, context_bytes: int) -> dict:
+            value = invocation()
+            if context_bytes:
+                value["request"]["context"] = {"largeBoundedPrompt": "x" * context_bytes}
+            with tempfile.TemporaryDirectory() as directory:
+                cwd = Path(directory)
+                script = cwd / "rejecting-codex.py"
+                script.write_text(
+                    f"import sys\nsys.stderr.write({message!r} + '\\n')\nsys.stderr.flush()\nsys.exit(2)\n",
+                    encoding="utf-8",
+                )
+                args = argparse.Namespace(
+                    codex_executable=runner.sys.executable,
+                    codex_script=str(script),
+                    codex_version="0.130.0",
+                    model="gpt-5.5",
+                    timeout_seconds=20,
+                )
+                with patch.object(runner, "resolve_codex", return_value=[runner.sys.executable, str(script)]), \
+                     patch.object(runner, "check_version"):
+                    return runner.launch_codex(value, args, {}, cwd, cwd / "events.jsonl")
+
+        # The CLI rejects its argv and exits 2 without reading stdin; only the prompt size differs.
+        for label, size in (("small", 0), ("larger than the pipe buffer", 2 * 1024 * 1024)):
+            with self.subTest(prompt=label):
+                response = launch_rejecting_cli("error: unexpected argument '--disable' found", size)
+                self.assertEqual(response["outcome"], "incomplete")
+                self.assertEqual(response["uncertainty"], [runner.CODEX_FAILURE_DIAGNOSTICS["cli_incompatible"]])
+        with self.assertRaisesRegex(runner.AdapterError, "prompt could not be submitted"):
+            launch_rejecting_cli("error: private unrecognized failure", 2 * 1024 * 1024)
+
     def test_incomplete_wrapper_timeout_echoes_bound_invocation(self) -> None:
         response = runner.incomplete_response(invocation("infer"), "timeout", type("Collector", (), {"telemetry": lambda self: None})())
         self.assertEqual(response["outcome"], "incomplete")
