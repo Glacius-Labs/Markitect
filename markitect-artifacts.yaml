@@ -2444,6 +2444,10 @@ spec:
       owner: bounded-agent-execution-host
     - path: src/internal/host/codexappserver/tools.go
       owner: bounded-agent-execution-host
+    - path: src/internal/host/codexappserver/verifier_subject_aliases.go
+      owner: bounded-agent-execution-host
+    - path: src/internal/host/codexappserver/verifier_subject_aliases_test.go
+      owner: bounded-agent-execution-host
     - path: src/internal/host/projectrun/local_workspaces.go
       owner: project-world-implementation
     - path: src/internal/host/projectrun/local_workspaces_test.go

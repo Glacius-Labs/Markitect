@@ -34,6 +34,11 @@ func (a *Adapter) Recover(parent context.Context, cfg agentexec.Config, h Recove
 	if protocolErr := ValidateRecoveryProtocol(h); protocolErr != nil || h.Fingerprint != fp || h.ThreadID == "" || h.SessionID == "" || !filepath.IsAbs(h.Workspace.CWD) || h.Workspace.BaseSHA != h.Invocation.Request.SourceRevision || !h.TurnDispatched {
 		return result, errors.New("recovery handle does not match the owned invocation/configuration")
 	}
+	if h.Invocation.Request.Role == agentexec.RoleVerifier {
+		if _, err := nativeVerifierSubjectAliases(h.Invocation); err != nil {
+			return result, err
+		}
+	}
 	// Validate the saved invocation binding without allocating a new identity.
 	b, _ := json.Marshal(h.Invocation)
 	var cloned RecoveryHandle

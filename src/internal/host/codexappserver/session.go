@@ -197,6 +197,9 @@ func (a *Adapter) Run(parent context.Context, cfg agentexec.Config, req agentexe
 		if _, err := nativeVerifierEvidenceAliases(inv); err != nil {
 			return result, err
 		}
+		if _, err := nativeVerifierSubjectAliases(inv); err != nil {
+			return result, err
+		}
 	}
 	ctx, cancel := context.WithTimeout(parent, a.config.Timeout)
 	defer cancel()
@@ -350,6 +353,19 @@ func nativeTurnPrompt(inv agentexec.Invocation, wire []byte, workspaceCWD string
 			"- Do not invent lifecycle or workspace delta.\n" +
 			"- Do not include nativeWork or usage; the Host owns lifecycle, workspace delta, and provider telemetry when available.\n"
 		if inv.Request.Role == agentexec.RoleVerifier {
+			if subjectAliases, aliasErr := nativeVerifierSubjectAliases(inv); aliasErr == nil && subjectAliases != nil {
+				keys := make([]string, 0, len(subjectAliases))
+				for alias := range subjectAliases {
+					keys = append(keys, alias)
+				}
+				sort.Strings(keys)
+				pairs := make([][2]string, 0, len(keys))
+				for _, alias := range keys {
+					pairs = append(pairs, [2]string{alias, subjectAliases[alias]})
+				}
+				mapping, _ := json.Marshal(pairs)
+				contract += "- This request has an exact required verifier subject set. Use the assigned aliases in verifierObservations[].subject exactly once each; do not omit, duplicate, paraphrase, or add subjects. The Host restores canonical subjects before its coverage check. Subject alias mapping (alias, canonical identifier): " + string(mapping) + ". Keep each observation's outcome and detail faithful to your assessment.\n"
+			}
 			aliases, err := nativeEvidenceRefAliases(inv)
 			if err == nil {
 				keys := make([]string, 0, len(aliases))
@@ -489,6 +505,23 @@ func nativeTurnOutputSchema(inv agentexec.Invocation) map[string]any {
 	if inv.Request.Role == agentexec.RoleVerifier {
 		outcomes = []string{"passed", "failed", "incomplete", "escalated"}
 		candidates["maxItems"] = 0
+		aliases, err := nativeVerifierSubjectAliases(inv)
+		if err != nil {
+			return nil
+		}
+		if aliases != nil {
+			subject := observations["items"].(map[string]any)["properties"].(map[string]any)["subject"].(map[string]any)
+			values := make([]string, 0, len(aliases))
+			for alias := range aliases {
+				values = append(values, alias)
+			}
+			sort.Strings(values)
+			if len(values) == 0 {
+				observations["maxItems"] = 0
+			} else {
+				subject["enum"] = values
+			}
+		}
 	} else {
 		observations["maxItems"] = 0
 	}
@@ -600,6 +633,20 @@ func decodeNativeFinal(final string, inv agentexec.Invocation) (agentexec.Respon
 		canonicalRefs, err = decodeNativeEvidenceAliases(inv, aliases)
 		if err != nil {
 			return agentexec.Response{}, err
+		}
+		subjectAliases, aliasErr := nativeVerifierSubjectAliases(inv)
+		if aliasErr != nil {
+			return agentexec.Response{}, aliasErr
+		}
+		if subjectAliases != nil {
+			observationRaw, ok := semantic["verifierObservations"]
+			if !ok {
+				return agentexec.Response{}, errors.New("native verifier response omitted observations")
+			}
+			semantic["verifierObservations"], err = decodeNativeVerifierObservationSubjects(observationRaw, subjectAliases)
+			if err != nil {
+				return agentexec.Response{}, err
+			}
 		}
 	}
 	full := map[string]json.RawMessage{}
