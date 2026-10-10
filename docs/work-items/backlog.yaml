@@ -342,7 +342,7 @@ packages:
     title: Question catalog and impact correctness tests
     stream: KG
     wave: 1
-    status: ready
+    status: active
     owner: kg
     depends_on: [KG-00]
     zone: model
@@ -536,7 +536,7 @@ packages:
     title: Continuous bug hunt with verified findings
     stream: BUG
     wave: 1
-    status: ready
+    status: active
     owner: bughunter
     zone: free
     inputs:
@@ -643,7 +643,7 @@ packages:
     title: Remove the canonical projection alpha
     stream: ARCH
     wave: 1
-    status: ready
+    status: active
     owner: cleaner
     decision: DEC-014
     zone: legacy
