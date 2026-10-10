@@ -334,6 +334,11 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 	if len(children) == 0 {
 		return nil, nil
 	}
+	// A reintegrated candidate can be accepted only through another integration
+	// review, so stop before spending a Manager start on one that cannot get it.
+	if reviewCount(report.Reviews, task.ManagerID, "integrate") >= runtime.Review.MaxRounds {
+		return nil, fmt.Errorf("manager %s exhausted the cumulative integration review round limit", task.ManagerID)
+	}
 	merged, conflicts, err := mergeChildCandidates(store, dir, report.Tasks, *task, children)
 	if err != nil {
 		return nil, err
@@ -466,9 +471,6 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 		return append([]ReworkRequest(nil), parsed.ReworkRequests...), nil
 	}
 	reviewRound := reviewCount(report.Reviews, task.ManagerID, "integrate") + 1
-	if reviewRound > runtime.Review.MaxRounds {
-		return nil, fmt.Errorf("manager %s exhausted the cumulative integration review round limit", task.ManagerID)
-	}
 	task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "invoking", candidate.ID, reviewRound
 	if err := persistState(store, report); err != nil {
 		return nil, err
