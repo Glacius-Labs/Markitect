@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -86,6 +87,37 @@ func samePath(a, b string) bool {
 		return strings.EqualFold(a, b)
 	}
 	return a == b
+}
+
+// withinRepository reports whether path is the resolved repository root or lies
+// below it. On one volume the lexical relation decides. filepath.Rel cannot
+// relate two Windows volumes, and a subst drive or junction can spell the same
+// directory on another one, so there an ancestor of path that is the root by
+// file identity decides. projectadoption keeps the same helper.
+func withinRepository(root, path string) (bool, error) {
+	if strings.EqualFold(filepath.VolumeName(root), filepath.VolumeName(path)) {
+		relative, err := filepath.Rel(root, path)
+		if err != nil {
+			return false, err
+		}
+		return relative == "." || relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)), nil
+	}
+	rootInfo, err := os.Stat(root)
+	if err != nil {
+		return false, err
+	}
+	for current := filepath.Clean(path); ; current = filepath.Dir(current) {
+		info, err := os.Stat(current)
+		if err == nil && os.SameFile(rootInfo, info) {
+			return true, nil
+		}
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return false, err
+		}
+		if filepath.Dir(current) == current {
+			return false, nil
+		}
+	}
 }
 
 // InspectRepository must be called on the explicit selected source checkout.

@@ -1,5 +1,0 @@
-apiVersion: filing.example.org/v1
-kind: Filing
-metadata: {namespace: vendor-a, name: dossier-17}
-purpose: Records the dossier submitted by vendor A.
-spec: {title: Data processing dossier, status: submitted}

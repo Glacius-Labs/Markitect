@@ -54,11 +54,11 @@ func TestProjectionPrimitivesPreserveTrustBoundaries(t *testing.T) {
 		t.Fatal("unsafe path accepted")
 	}
 	for _, captured := range []*snapshot.Snapshot{nil, {Provisional: true}} {
-		if _, err := VerifySnapshotChecks(captured, []authoring.Check{{Name: "check", Run: []string{"go", "version"}}}); err == nil {
+		if _, err := verifySnapshotScoped(captured, []authoring.Check{{Name: "check", Run: []string{"go", "version"}}}, verifyDefaultTime, true); err == nil {
 			t.Fatal("verification accepted absent or provisional snapshot")
 		}
 	}
-	if _, err := VerifySnapshotChecks(&snapshot.Snapshot{}, nil); err == nil {
+	if _, err := verifySnapshotScoped(&snapshot.Snapshot{}, nil, verifyDefaultTime, true); err == nil {
 		t.Fatal("no-check verification accepted")
 	}
 }

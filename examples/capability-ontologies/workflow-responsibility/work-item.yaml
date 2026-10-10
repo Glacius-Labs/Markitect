@@ -1,8 +1,0 @@
-apiVersion: responsibility.example.org/v1
-kind: WorkItem
-metadata: {namespace: release, name: publish-candidate}
-purpose: Assigns ownership and review for publishing a candidate.
-spec:
-  title: Publish the candidate
-  accountable: {namespace: release, name: owner}
-  reviewers: [{namespace: release, name: approver}]

@@ -77,9 +77,11 @@ small visible set per wave, like v1. They do not cover the rules exhaustively.
   "mustNotChange": [text]}]}]}`. Areas are behavioral and documentary areas
   (commands, README sections, error-code table, storage validation, tests), not file
   names, so they fit any architecture.
-- `holdout.py`: `python3 holdout.py --repo DIR --station N` prints one JSON object
-  `{"station": N, "checks": [{"id", "status": "PASS"|"FAIL"|"ERROR", "item", "rule",
-  "detail"}]}` and exits 0 even when checks fail. It runs the CLI on fresh temp data
+- `holdout.py`: `python3 holdout.py --repo DIR --station N [--deadline SECONDS]` prints
+  one JSON object `{"station": N, "checks": [{"id", "status": "PASS"|"FAIL"|"ERROR",
+  "item", "rule", "detail"}]}` and exits 0 even when checks fail. ERROR means the
+  holdout could not judge (for example its deadline passed); the assessment counts it
+  apart, never as a failure of the candidate. It runs the CLI on fresh temp data
   like `acceptance.py`. Station N runs every holdout released up to N, so earlier
   waves are re-checked for regressions. Every holdout names the public sentence it
   derives from (item or rule id).

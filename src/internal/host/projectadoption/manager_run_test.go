@@ -35,7 +35,8 @@ func TestManagerRunExecutorHelper(t *testing.T) {
 	var contextData struct {
 		Phase          string `json:"phase"`
 		ManagerContext struct {
-			Evidence []ManagerReverseEvidence `json:"evidence"`
+			Manager  DistillationTargetManager `json:"manager"`
+			Evidence []ManagerReverseEvidence  `json:"evidence"`
 		} `json:"managerContext"`
 	}
 	if err := json.Unmarshal(invocation.Request.Context, &contextData); err != nil || len(contextData.ManagerContext.Evidence) != 1 {
@@ -73,9 +74,20 @@ func TestManagerRunExecutorHelper(t *testing.T) {
 		Proposal: ModelProposal{Goal: "Represent observed order behavior", Files: []ProposedFile{{ScopeID: scopeID, Path: ".markitect/model/orders/statement.yaml",
 			Content: "apiVersion: " + projectwork.APIVersion + "\nkind: Statement\nmetadata:\n  name: orders\n  namespace: orders\npurpose: Order behavior\nspec:\n  category: concept\n  description: Order behavior\n  public: false\n  uses: []\n  requires: []\n"}}},
 	}
+	// These modes return a child that passes proposal checks but that the
+	// session ledger rejects: an invalid ID, or an accepted Manager ID whose
+	// fixed parent differs.
+	hierarchy := []ProposedManager{}
+	parentID := contextData.ManagerContext.Manager.ID
+	switch os.Getenv(managerRunModeEnv) {
+	case "invalid-child-id":
+		hierarchy = []ProposedManager{{ID: "Orders_Manager", Name: "Orders Manager", Purpose: "Model order behavior", ParentID: parentID, EvidenceIDs: []string{evidence.EvidenceID}, DelegationEvidenceIDs: []string{}}}
+	case "accepted-child-mismatch":
+		hierarchy = []ProposedManager{{ID: parentID, Name: "Orders Manager", Purpose: "Model order behavior", ParentID: parentID, EvidenceIDs: []string{evidence.EvidenceID}, DelegationEvidenceIDs: []string{}}}
+	}
 	var report any
 	if contextData.Phase == ManagerRunPhasePropose {
-		report = ManagerProposalDraft{Report: draft, Hierarchy: []ProposedManager{}, PublicContracts: []ManagerPublicContract{}}
+		report = ManagerProposalDraft{Report: draft, Hierarchy: hierarchy, PublicContracts: []ManagerPublicContract{}}
 	} else {
 		report = ManagerIntegrationDraft{Report: draft, Conflicts: []SessionConflict{}}
 	}
@@ -293,6 +305,51 @@ func TestManagerRunStalePreviewAndExplicitFailureRetry(t *testing.T) {
 			t.Fatalf("explicit retry invocation count=%q", b)
 		}
 	})
+}
+
+func TestManagerRunUnrecordableHierarchyIsRetryableFailure(t *testing.T) {
+	for _, mode := range []string{"invalid-child-id", "accepted-child-mismatch"} {
+		t.Run(mode, func(t *testing.T) {
+			root, targetRoot, session, iterationID := managerRunFixture(t)
+			counter := filepath.Join(t.TempDir(), "calls.txt")
+			config := managerRunTestConfig(t, counter)
+			limits := managerRunTestLimits()
+			t.Setenv(managerRunModeEnv, mode)
+			rootID := session.TargetContext.RootManagerID
+			preview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, rootID, session.Digest, "", config, limits)
+			if err != nil {
+				t.Fatal(err)
+			}
+			failed, err := RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
+				rootID, preview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
+			if err == nil || failed.Status != "failed" || failed.AttemptStatus != "failed" || failed.Execution == nil {
+				t.Fatalf("a hierarchy the session rejects must seal a failed attempt with its receipt: %+v err=%v", failed, err)
+			}
+			ledgerDir, _ := sessionDirectory(root, session.ID, false)
+			ledger, err := loadManagerRunLedger(ledgerDir, session.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(ledger.Events) != 2 || ledger.Events[1].SafeFailure != "invalid-manager-report" || ledger.Events[1].Proposal != nil {
+				t.Fatalf("failed attempt must be recorded as invalid-manager-report without a recoverable proposal: %+v", ledger.Events)
+			}
+			replayPreview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, rootID, session.Digest, "", config, limits)
+			if err != nil {
+				t.Fatal(err)
+			}
+			replayed, err := RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
+				rootID, replayPreview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
+			if err == nil || replayed.Status != "attempt-exists" {
+				t.Fatalf("plain re-run must report the failed attempt, not recover it: %+v err=%v", replayed, err)
+			}
+			if _, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, rootID, session.Digest, failed.AttemptID, config, limits); err != nil {
+				t.Fatalf("explicit retry of the failed attempt must be allowed: %v", err)
+			}
+			if b, _ := os.ReadFile(counter); string(b) != "x" {
+				t.Fatalf("invocation count=%q", b)
+			}
+		})
+	}
 }
 
 func TestManagerRunLedgerChangeInvalidatesPreview(t *testing.T) {

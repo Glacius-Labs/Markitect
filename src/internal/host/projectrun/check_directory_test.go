@@ -2,11 +2,18 @@ package projectrun
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
+
+const checkDescendantHelperEnv = "MARKITECT_PROJECTRUN_CHECK_DESCENDANT"
 
 // Declared checks once ran in a materialized candidate under the repository's
 // run store. Below a deep repository (or GOTMPDIR) that directory exceeded the
@@ -51,5 +58,80 @@ func TestCheckWorkingDirectoryLengthNamesTheWindowsLimit(t *testing.T) {
 	}
 	if err == nil || !strings.Contains(err.Error(), "at most 258 characters") {
 		t.Fatalf("over-long directory error = %v", err)
+	}
+}
+
+// A check once killed only its direct child on timeout and set no WaitDelay,
+// so a descendant holding the inherited output pipes kept runCheck blocked
+// past the check timeout (and forever if it never exited). The timeout now
+// stops the whole process tree.
+func TestCheckTimeoutStopsDescendantsHoldingOutput(t *testing.T) {
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolved, raw, err := readPinnedExecutable(executable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(checkDescendantHelperEnv, "spawn")
+	check := CheckPlan{ID: "descendant-timeout", Owner: "orders", Required: true,
+		Command:        []string{filepath.Base(executable), "-test.run=^TestCheckDescendantHelperProcess$"},
+		ExecutablePath: resolved, ExecutableDigest: rawContentDigest(raw)}
+	agent := Agent{Timeout: Duration(time.Second), Environment: []string{checkDescendantHelperEnv, "PATH", "SystemRoot"}}
+	started := time.Now()
+	result := runCheck(context.Background(), t.TempDir(), check, agent, Duration(time.Minute), nil)
+	elapsed := time.Since(started)
+	if result.Outcome != "failed" || result.Error != "check timed out" {
+		t.Fatalf("timed-out check = outcome %q error %q, want failed / check timed out", result.Outcome, result.Error)
+	}
+	if elapsed > 3*time.Second {
+		t.Fatalf("runCheck with a 1s check timeout returned after %s; a descendant holding its output kept it blocked", elapsed.Round(10*time.Millisecond))
+	}
+	_, pidText, found := strings.Cut(strings.TrimSpace(result.Stdout), "spawned descendant ")
+	pid, err := strconv.Atoi(pidText)
+	if !found || err != nil {
+		t.Fatalf("check did not report its descendant: stdout=%q stderr=%q", result.Stdout, result.Stderr)
+	}
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		alive, err := processAlive(pid)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !alive {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("check descendant %d outlived the check timeout", pid)
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
+// TestCheckDescendantHelperProcess is the re-executed check for
+// TestCheckTimeoutStopsDescendantsHoldingOutput. It is a no-op unless the
+// helper environment selects a role.
+func TestCheckDescendantHelperProcess(t *testing.T) {
+	switch os.Getenv(checkDescendantHelperEnv) {
+	case "spawn":
+		executable, err := os.Executable()
+		if err != nil {
+			os.Exit(3)
+		}
+		descendant := exec.Command(executable, "-test.run=^TestCheckDescendantHelperProcess$")
+		descendant.Env = append(os.Environ(), checkDescendantHelperEnv+"=descendant")
+		descendant.Stdout = os.Stdout
+		descendant.Stderr = os.Stderr
+		if err := descendant.Start(); err != nil {
+			fmt.Fprintln(os.Stderr, "start descendant:", err)
+			os.Exit(3)
+		}
+		fmt.Println("spawned descendant", descendant.Process.Pid)
+		time.Sleep(30 * time.Second)
+		os.Exit(0)
+	case "descendant":
+		time.Sleep(8 * time.Second)
+		os.Exit(0)
 	}
 }

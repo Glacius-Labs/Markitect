@@ -23,13 +23,8 @@ These directories preserve earlier contracts and outcomes. Their commands requir
 | Exercise | Scope |
 |---|---|
 | [AGENTS.md comparison](agents-md-comparison/README.md) | Matched task observations and a frozen independent evaluation |
-| [Capability proof](capability-proof/README.md) | Canonical-reset checkpoint and explicit proof limits |
 | [MCP read-only pilot](mcp-pilot/README.md) | Earlier read-only tool protocol; separate from current product MCP |
 | [Projection-first](projection-first/README.md) | Bounded materialization and candidate checks |
-| [Operating-model proof](operating-model-proof/README.md) | Finite controller proof driver and preserved attempts |
-| [Live operating pilot](live-operating-pilot/README.md) | Fixed-source operating-model exercise |
-| [Sequential operating pilot](sequential-operating-pilot/README.md) | Sequential lifecycle exercise |
-| [Two-area operating pilot](two-area-operating-pilot/README.md) | Cross-area lifecycle and attempt history |
 | [Policy-failure analysis](policy-failure-analysis/README.md) | Explicit read-only analysis replay |
 | [Real-project adoption](real-project-adoption/README.md) | Selected project evidence and offline replay |
 

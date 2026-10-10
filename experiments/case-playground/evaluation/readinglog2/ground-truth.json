@@ -42,12 +42,12 @@
           ],
           "rules": [
             {"id": "R1", "expectation": "Every successful `finish`, including a repeated one that changes nothing, saves the database and appends exactly one line with op `finish` and ids `[ID]`. A failed `finish` and every `list` call append nothing."},
-            {"id": "R2", "expectation": "Unknown ID gives `not_found`; a missing `--id`, an ID that is empty after normalization and an invalid status give `invalid_input`. All exit 2 with the error object, leave the database and log byte-identical and do not create a missing database."},
+            {"id": "R2", "expectation": "Unknown ID gives `not_found`; a missing `--id`, an ID that is empty after normalization and an invalid status give `invalid_input`. All exit 2 with the error object, leave the database and log byte-identical and do not create a missing database; a malformed database fails with `storage` and is never overwritten."},
             {"id": "R3", "expectation": "`--id` and `--status` values are normalized before matching; matching is exact after normalization, so IDs and statuses are case-sensitive."}
           ],
           "mustNotChange": [
             "`add` and `list` behavior and output",
-            "the stored database format and books already stored",
+            "the stored database format (one JSON array of book records in insertion order) and books already stored",
             "the audit-log line format and the `<db>.log` path",
             "the existing error codes"
           ]
@@ -78,8 +78,8 @@
           ],
           "rules": [
             {"id": "R1", "expectation": "A successful import, including a header-only one, appends exactly one line with op `import` and the imported IDs in file order (`[]` when none). A rejected import appends nothing."},
-            {"id": "R2", "expectation": "Every rejected import exits 2 with `invalid_input` or `duplicate`, leaves the database and log byte-identical and does not create a missing database."},
-            {"id": "R3", "expectation": "Every CSV cell (ID, title, author, pages) is NFC-normalized, stripped and whitespace-collapsed, including line breaks inside quoted cells; duplicate detection compares normalized IDs; the `--csv` path is used exactly as given."}
+            {"id": "R2", "expectation": "Every rejected import exits 2 with `invalid_input` or `duplicate`, leaves the database and log byte-identical and does not create a missing database; a malformed database fails with `storage` and is never overwritten."},
+            {"id": "R3", "expectation": "Every CSV cell (ID, title, author, pages) is NFC-normalized, stripped and whitespace-collapsed, including line breaks inside quoted cells; duplicate detection compares normalized IDs exactly, so IDs that differ only in case (`Dune`, `dune`) are different; the `--csv` path is used exactly as given."}
           ],
           "mustNotChange": [
             "`add`, `finish` and `list` behavior and output",
@@ -170,7 +170,7 @@
           ],
           "rules": [
             {"id": "R1", "expectation": "`export` is read-only even though it writes a file: no log line, the database is unchanged and a missing database is not created."},
-            {"id": "R2", "expectation": "An unwritable destination exits 2 with `export_failed` and no mutation; `export_failed` appears in the README error-code table; a missing `--csv` is `invalid_input`."},
+            {"id": "R2", "expectation": "An unwritable destination exits 2 with `export_failed` and no mutation; `export_failed` appears in the README error-code table; a missing `--csv` is `invalid_input`; a malformed database fails with `storage`."},
             {"id": "R3", "expectation": "The `--csv` path is used exactly as given."}
           ],
           "mustNotChange": [
@@ -203,7 +203,7 @@
             "Adding a tag the book already has, or removing one it does not have, succeeds without a change.",
             "Records gain the field `tags`: the book's distinct tags in code-point order, `[]` for new books (added or imported).",
             "A tag is nonempty, may not contain `;` and is case-sensitive; an invalid tag is `invalid_input`; an unknown ID is `not_found`.",
-            "`list --tag TAG` lists only books with that tag and combines with every other `list` filter.",
+            "`list --tag TAG` lists only books with that tag, in insertion order, and combines with every other `list` filter.",
             "`export` gains a last column `tags` holding the book's tags joined by `;`.",
             "Books stored before tags existed stay readable as books without tags, and reading them never rewrites the file."
           ],
@@ -218,7 +218,7 @@
           ],
           "rules": [
             {"id": "R1", "expectation": "Every successful `tag`, including one that changes nothing, appends exactly one line with op `tag` and ids `[ID]`; failed `tag` and `list --tag` append nothing."},
-            {"id": "R2", "expectation": "Neither or both of `--add`/`--remove`, an empty tag and a tag with `;` give `invalid_input`, an unknown ID gives `not_found`; no mutation."},
+            {"id": "R2", "expectation": "Neither or both of `--add`/`--remove`, an empty tag and a tag with `;` give `invalid_input`, an unknown ID gives `not_found`; no mutation; a malformed database fails with `storage` and is never overwritten."},
             {"id": "R3", "expectation": "Tag values from `--add`, `--remove` and `--tag` are normalized; tags compare exactly after normalization (case-sensitive)."}
           ],
           "mustNotChange": [

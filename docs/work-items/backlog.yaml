@@ -55,9 +55,9 @@ packages:
     title: Archive merged and superseded branches and stale worktrees
     stream: OPS
     wave: 1
-    status: ready
+    status: done
     owner: integrator
-    note: Owner approved the archive list on 10 October 2026.
+    note: Done 10 October 2026. Every removed branch has an archive/<name> tag on origin, including local-only branches; draft PR 78 was closed as obsolete and kept as archive/codex/autonomous-ab-gauntlet.
     depends_on: [OPS-02]
     zone: free
     inputs:
@@ -117,7 +117,8 @@ packages:
     title: Ground truth, hidden holdouts and seeded rules
     stream: PLAY
     wave: 1
-    status: ready
+    status: review
+    pr: 128
     owner: scientist
     depends_on: [PLAY-01]
     note: PLAY-01 found that the snapshot already holds ground-truth.json, holdout.py and 36 mutants, and validate.py passes; this package can shrink to a review of those files.
@@ -133,9 +134,10 @@ packages:
     title: One architecture page for the playground
     stream: PLAY
     wave: 1
-    status: proposed
+    status: ready
     owner: scientist
     depends_on: [PLAY-01]
+    note: PLAY-03 to PLAY-06 share files in experiments/case-playground and run in this order, one at a time.
     zone: free
     inputs:
       - docs/work-items/surveys/case-playground-20261010.md
@@ -147,9 +149,9 @@ packages:
     title: Parametrize and run a study with one command
     stream: PLAY
     wave: 1
-    status: proposed
+    status: blocked
     owner: scientist
-    depends_on: [PLAY-01]
+    depends_on: [PLAY-01, PLAY-03]
     zone: free
     inputs:
       - docs/work-items/surveys/case-playground-20261010.md
@@ -162,9 +164,9 @@ packages:
     title: Harden the playground
     stream: PLAY
     wave: 1
-    status: proposed
+    status: blocked
     owner: scientist
-    depends_on: [PLAY-01]
+    depends_on: [PLAY-01, PLAY-04]
     zone: free
     inputs:
       - docs/work-items/surveys/case-playground-20261010.md
@@ -178,7 +180,7 @@ packages:
     wave: 2
     status: blocked
     owner: scientist
-    depends_on: [RUN-01]
+    depends_on: [RUN-01, PLAY-05]
     zone: free
     acceptance:
       - A manifest selects executor, model and effort per role; runs record the effective configuration.
@@ -277,7 +279,7 @@ packages:
     title: Verb model decision and specification
     stream: CLI
     wave: 0
-    status: review
+    status: done
     owner: interface
     branch: docs/cli-01-verb-table
     pr: 96
@@ -293,7 +295,7 @@ packages:
     title: Implement the verb table
     stream: CLI
     wave: 2
-    status: blocked
+    status: active
     owner: interface
     depends_on: [CLI-01]
     note: >-
@@ -388,6 +390,7 @@ packages:
     status: blocked
     owner: kg
     depends_on: [KG-01]
+    note: Narrower routing of unprojected changes (instead of widening to the whole project) needs an owner decision when KG-02 starts; until then any unprojected change widens impact.
     zone: model
     inputs:
       - origin codex/knowledge-graph (projectknowledge core)
@@ -486,7 +489,7 @@ packages:
     title: CI quick fixes
     stream: CI
     wave: 0
-    status: review
+    status: done
     owner: qa
     branch: dev/ci-quick-fixes
     pr: 95
@@ -502,11 +505,12 @@ packages:
     title: Linux-first pipeline; Windows not blocking
     stream: CI
     wave: 1
-    status: review
+    status: done
     owner: qa
     branch: dev/linux-ci-gate
     pr: 101
     depends_on: [CI-01]
+    note: Pull request 101 merged into its stacked base by mistake; pull request 113 carried it onto main.
     zone: ci
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
@@ -633,7 +637,7 @@ packages:
     title: Code map and package gate
     stream: ARCH
     wave: 1
-    status: review
+    status: done
     owner: cleaner
     branch: dev/code-map
     pr: 98
@@ -648,7 +652,7 @@ packages:
     title: Move guarded writes out of the legacy host package
     stream: ARCH
     wave: 1
-    status: review
+    status: done
     owner: cleaner
     branch: dev/guarded-write-package
     pr: 97
@@ -678,7 +682,8 @@ packages:
     title: Remove the canonical projection alpha
     stream: ARCH
     wave: 1
-    status: active
+    status: review
+    pr: 118
     owner: cleaner
     decision: DEC-014
     zone: legacy
@@ -759,7 +764,7 @@ packages:
     title: Documentation organized by module and current behavior
     stream: ARCH
     wave: 1
-    status: proposed
+    status: ready
     owner: cleaner
     depends_on: [ARCH-01]
     zone: free
@@ -819,6 +824,7 @@ packages:
     owner: integrator
     zone: free
     inputs:
+      - tag archive/codex/autonomous-ab-gauntlet (frozen A/B evidence of the earlier projection-first direction)
       - origin archive/codex/markitect-historian-working-history
       - docs/concepts/register.md (IDEA-005, ENH-002, ENH-003)
     acceptance:

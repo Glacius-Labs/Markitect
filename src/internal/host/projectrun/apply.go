@@ -416,6 +416,12 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		return nil
 	}
 	result, applyErr := guardedwrite.ApplyChecked(capture.Root, capture, changes, validate)
+	if applyErr != nil && len(result.CompletedPaths) == 0 {
+		// Nothing was written (for example a held writer lock or staleness
+		// seen under it), so this is the same rejection as the checks above:
+		// the run stays verified and no apply receipt is journaled.
+		return out, applyErr
+	}
 	out.Written = append([]string(nil), result.CompletedPaths...)
 	out.Journal = append([]string(nil), result.CompletedPaths...)
 	out.AppliedAt = time.Now().UTC()

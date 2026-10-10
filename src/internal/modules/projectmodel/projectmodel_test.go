@@ -334,6 +334,38 @@ func TestAnalyzeGivesEqualSelectorToTheDelegateBelowRoot(t *testing.T) {
 	}
 }
 
+// BUG-01: an absent optional Artifact path leaves an expected-artifact entry.
+// That entry is not inventory and must not satisfy a required Artifact that
+// expects the same path or a prefix covering it, whichever Artifact sorts first.
+func TestAnalyzeReportsRequiredArtifactBehindAbsentOptionalPath(t *testing.T) {
+	model, files := fixture(t, false, false, false)
+	artifact := func(name string, required bool, path string) core.Definition {
+		return core.Definition{APIVersion: APIVersion, Kind: artifactKind, Metadata: core.Metadata{Namespace: "orders", Name: name}, Purpose: "Expected orders artifact.", Spec: map[string]any{"role": "implementation", "paths": []any{path}, "required": required}}
+	}
+	for _, tc := range []struct{ name, optional, required, optionalPath, requiredSelector string }{
+		{"same path, optional first", "a-optional", "b-required", "src/orders/missing.go", "src/orders/missing.go"},
+		{"same path, required first", "b-optional", "a-required", "src/orders/missing.go", "src/orders/missing.go"},
+		{"covering prefix, optional first", "a-optional", "b-required", "src/orders/gen/x.go", "src/orders/gen/"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			definitions := append(copyDefinitions(model.Definitions), artifact(tc.optional, false, tc.optionalPath), artifact(tc.required, true, tc.requiredSelector))
+			candidate, diagnostics := core.Compile(model.Schemas, definitions, "optional-and-required")
+			if len(diagnostics) != 0 {
+				t.Fatalf("compile: %+v", diagnostics)
+			}
+			r := Analyze(candidate, files)
+			requiredID := core.DefinitionIdentity{APIVersion: APIVersion, Kind: artifactKind, Namespace: "orders", Name: tc.required}.Key()
+			missing := false
+			for _, f := range r.Findings {
+				missing = missing || f.Code == "coverage.required-artifact-missing" && f.Subject == requiredID
+			}
+			if r.Status != "incomplete" || !missing {
+				t.Fatalf("required %s is absent but not reported: status=%s findings=%+v", tc.requiredSelector, r.Status, r.Findings)
+			}
+		})
+	}
+}
+
 func TestAnalyzeRejectsSiblingOverlapAndUnsafePaths(t *testing.T) {
 	model, files := fixture(t, false, false, false)
 	for i := range model.Definitions {
@@ -348,6 +380,25 @@ func TestAnalyzeRejectsSiblingOverlapAndUnsafePaths(t *testing.T) {
 	r := Analyze(model, append(files, File{Path: "src\\bad.go"}))
 	if r.Status != "failed" || !hasFinding(r.Findings, "ownership.sibling-overlap") || !hasFinding(r.Findings, "path.ownership-invalid") || !hasFinding(r.Findings, "path.inventory-invalid") {
 		t.Fatalf("unsafe ownership was not rejected: status=%s findings=%+v", r.Status, r.Findings)
+	}
+}
+
+// BUG-01: "./" is not the whole-repository selector "." and matches no file,
+// so it must be rejected rather than leave every file unowned.
+func TestAnalyzeRejectsDotSlashSelectors(t *testing.T) {
+	model, files := fixture(t, true, false, true)
+	for i := range model.Definitions {
+		if model.Definitions[i].Kind == managerKind && model.Definitions[i].Metadata.Namespace == "" {
+			model.Definitions[i].Spec["owns"] = []any{"./"}
+		}
+		if model.Definitions[i].Kind == artifactKind && model.Definitions[i].Metadata.Namespace == "orders" {
+			model.Definitions[i].Spec["paths"] = []any{"./"}
+		}
+	}
+	// Core Model is immutable by contract; this deliberate corruption exercises fail-closed analysis.
+	r := Analyze(model, files)
+	if r.Status != "failed" || !hasFinding(r.Findings, "path.ownership-invalid") || !hasFinding(r.Findings, "path.artifact-invalid") {
+		t.Fatalf("\"./\" selectors were accepted: status=%s unknown=%v findings=%+v", r.Status, r.Unknown, r.Findings)
 	}
 }
 

@@ -48,11 +48,14 @@ func layer(p string) (string, string) {
 		return "infrastructure", "infrastructure"
 	case p == "src/internal/tooling" || strings.HasPrefix(p, "src/internal/tooling/") || p == "tools" || strings.HasPrefix(p, "tools/"):
 		return "tooling", "tooling"
+	// Hermetic test fixtures shared by the tests of every layer.
+	case p == "src/internal/testkit" || strings.HasPrefix(p, "src/internal/testkit/"):
+		return "testkit", p
 	case p == "src/cmd" || strings.HasPrefix(p, "src/cmd/"):
 		return "cli", p
 	// This isolated adopting-code fixture is compiled by Go, but is not a
 	// Markitect capability. It cannot import any Markitect product package.
-	case p == "examples/documentation/docs/implementation/src" || p == "examples/canonical-projection/evidence" || p == "examples/canonical-workflow/check" || p == "runs/c11checktools/original" || p == "runs/c11checktools/replacement":
+	case p == "examples/documentation/docs/implementation/src":
 		return "fixture", p
 	case p == "integration":
 		return "bootstrap", "bootstrap"
@@ -88,6 +91,11 @@ func Check(edges []Edge) []Violation {
 			rule = "self-import is forbidden"
 		case strings.HasPrefix(to, "harness") && !strings.HasPrefix(from, "harness"):
 			rule = "product may not import test/example Harness"
+		case from == "testkit":
+			rule = "testkit may import only the standard library"
+		case to == "testkit" && !e.Test:
+			rule = "only test files may import testkit"
+		case to == "testkit":
 		case from == "harness-tests" && !e.Test:
 			rule = "Harness root may contain only test code"
 		case from == "harness-runtime" && to != "host" && !(strings.HasPrefix(to, "harness") && strings.HasPrefix(e.To, strings.TrimSuffix(e.From, "/pathspell"))):
@@ -141,7 +149,7 @@ func Inspect(root string) ([]Edge, error) {
 		}
 		rel = filepath.ToSlash(rel)
 		// Only product source and explicitly classified test/tool harnesses.
-		if !strings.HasPrefix(rel, "src/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "integration/") && !strings.HasPrefix(rel, "experiments/") && !strings.HasPrefix(rel, "benchmark/") && !strings.HasPrefix(rel, "runs/") {
+		if !strings.HasPrefix(rel, "src/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "integration/") && !strings.HasPrefix(rel, "experiments/") && !strings.HasPrefix(rel, "benchmark/") {
 			return nil
 		}
 		packagePath := filepath.ToSlash(filepath.Dir(rel))

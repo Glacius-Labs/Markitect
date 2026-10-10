@@ -78,11 +78,11 @@ func ValidateOwnedWorkspace(r Request, h Handle) error {
 	if err != nil {
 		return err
 	}
-	relative, err := filepath.Rel(sourceRoot, storage)
+	inside, err := withinRepository(sourceRoot, storage)
 	if err != nil {
 		return err
 	}
-	if relative == "." || (relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator))) {
+	if inside {
 		return ErrInvalidHandle
 	}
 	_, err = readOwnedWorkspaceRecord(storage, r, h)
@@ -176,15 +176,11 @@ func (s *GitService) ReopenCandidate(ctx context.Context, r Request, h Handle, o
 	if err != nil {
 		return err
 	}
-	relative, err := filepath.Rel(sourceRoot, storage)
+	inside, err := withinRepository(sourceRoot, storage)
 	if err != nil {
 		return err
 	}
-	if relative == "." || relative == ".." {
-		if relative == "." {
-			return ErrInvalidHandle
-		}
-	} else if !strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+	if inside {
 		return ErrInvalidHandle
 	}
 	record, err := readOwnedWorkspaceRecord(storage, r, h)

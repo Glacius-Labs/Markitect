@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
-	"strings"
 	"sync"
 )
 
@@ -65,11 +64,11 @@ func (s *GitService) PrepareCandidate(ctx context.Context, r Request, overlay []
 	if err != nil {
 		return Handle{}, err
 	}
-	rel, err := filepath.Rel(sourceRoot, s.root)
+	inside, err := withinRepository(sourceRoot, s.root)
 	if err != nil {
 		return Handle{}, err
 	}
-	if rel == "." || (!strings.HasPrefix(rel, ".."+string(filepath.Separator)) && rel != "..") {
+	if inside {
 		return Handle{}, fmt.Errorf("%w: storage lies inside repository", ErrInvalidRequest)
 	}
 	r.AllowedPaths = append([]string(nil), r.AllowedPaths...)

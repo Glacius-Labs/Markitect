@@ -54,6 +54,7 @@ COPY_IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc")
 CASE_IGNORE = shutil.ignore_patterns("reference", "mutants", "validate.py", "__pycache__", "*.pyc")
 GIT_TIMEOUT = 300
 HOLDOUT_TIMEOUT = 600
+HOLDOUT_MARGIN = 90  # seconds between holdout.py's own deadline and the hard timeout
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 DIFF_FLAGS = ("--no-renames", "--no-ext-diff", "--no-textconv", "--no-color")
 NOT_AGENT_WORK = ("--", ":(top,exclude).study")  # the harness releases waves there
@@ -271,8 +272,12 @@ def run_holdouts(candidate: Path, script: Path, station: int, out_dir: Path, tim
         env = {"HOME": str(home), "TMPDIR": str(home / "tmp"), "GIT_CONFIG_GLOBAL": os.devnull,
                "GIT_CONFIG_NOSYSTEM": "1"}
         stdout, stderr = out_dir / "holdout.stdout.txt", out_dir / "holdout.stderr.txt"
+        # The holdout's own deadline leaves room for one more app call and the JSON, so a
+        # slow candidate loses only the checks not yet run, not the whole station.
+        deadline = int(timeout - min(HOLDOUT_MARGIN, timeout / 4))
         run = codex_agent.run_as_agent([sys.executable, "-I", "-B", str(script), "--repo", str(copy),
-                                        "--station", str(station)], copy, timeout, stdout, stderr, extra_env=env)
+                                        "--station", str(station), "--deadline", str(deadline)],
+                                       copy, timeout, stdout, stderr, extra_env=env)
         result.update(exitCode=run.get("exitCode"), timedOut=bool(run.get("timedOut")), seconds=run.get("seconds"),
                       leftoverProcessesKilled=codex_agent.kill_all_agent_processes() + (run.get("killedOnTimeout") or 0))
     finally:
@@ -285,21 +290,31 @@ def run_holdouts(candidate: Path, script: Path, station: int, out_dir: Path, tim
         result["error"] = "holdouts timed out" if result["timedOut"] else f"holdout output could not be parsed: {exc}"
         return result
     result["checks"] = checks
-    result["passed"], result["total"] = sum(1 for c in checks if c["status"] == "PASS"), len(checks)
+    # PASS and FAIL are verdicts on the candidate; anything else (ERROR) means the holdout
+    # could not judge, so it is counted apart and never as a candidate failure.
+    judged = [c for c in checks if c["status"] in ("PASS", "FAIL")]
+    result["passed"], result["total"] = sum(1 for c in judged if c["status"] == "PASS"), len(judged)
+    result["errors"] = len(checks) - len(judged)
     result["failures"] = [{"id": c.get("id"), "status": c.get("status"), "item": c.get("item"),
                            "rule": c.get("rule"), "detail": _short(c.get("detail") or "")}
                           for c in checks if c["status"] != "PASS"]
     for key, field in (("byItem", "item"), ("byRule", "rule")):
         groups: dict[str, dict] = {}
         for check in checks:
-            group = groups.setdefault(str(check.get(field) or "-"), {"passed": 0, "total": 0})
-            group["total"] += 1
-            group["passed"] += check["status"] == "PASS"
+            group = groups.setdefault(str(check.get(field) or "-"), {"passed": 0, "total": 0, "errors": 0})
+            if check["status"] in ("PASS", "FAIL"):
+                group["total"] += 1
+                group["passed"] += check["status"] == "PASS"
+            else:
+                group["errors"] += 1
         result[key] = dict(sorted(groups.items()))
     crashed = result["exitCode"] != 0
-    result["status"] = "error" if crashed else "pass" if result["passed"] == result["total"] else "fail"
+    result["status"] = ("error" if crashed else "fail" if result["passed"] < result["total"]
+                        else "error" if result["errors"] else "pass")
     if crashed:
         result["error"] = f"holdout.py exited {result['exitCode']}"
+    elif result["errors"]:
+        result["error"] = f"{result['errors']} holdout(s) could not judge (ERROR)"
     return result
 
 
@@ -571,7 +586,8 @@ def _station_phase(station: dict, ctx: dict) -> dict:
             holdouts = {"passed": None, "total": None, "status": "error", "failures": [], "error": "no merged main"}
         _write_json(folder / "holdouts" / "holdouts.json", holdouts)
     entry["holdouts"] = None if holdouts is None else {key: holdouts.get(key) for key in
-                                                      ("passed", "total", "status", "failures", "byItem", "byRule", "error")}
+                                                      ("passed", "total", "errors", "status", "failures", "byItem",
+                                                       "byRule", "error")}
     diff = diff_profile(ctx["history"], ctx["base"], station["mainCommit"], folder)
     entry["diff"] = {key: value for key, value in diff.items() if key != "paths"}
     analysis = analyze_events(station["folder"])
@@ -770,7 +786,8 @@ def _report(run_dir, out_dir, manifest, host_record, run_report, runner_state, s
         "classification": classify_run(host_record, runner_state, setup, results, entries),
         "totals": {
             "publicChecks": _sum_pairs([e["publicChecks"] for e in entries]),
-            "holdouts": _sum_pairs(holdout_entries) if holdout_entries else None,
+            "holdouts": ({**_sum_pairs(holdout_entries), "errors": _sum_known([e.get("errors") for e in holdout_entries])}
+                         if holdout_entries else None),
             "reviewers": totals_reviewers,
             "diff": {"files": _sum_known([(e["diff"] or {}).get("files") for e in entries]),
                      "added": _sum_known([(e["diff"] or {}).get("added") for e in entries]),
@@ -816,6 +833,8 @@ def _pair(block: dict | None, status: bool = True) -> str:
     if not block:
         return "n/a"
     text = f"{_fmt(block.get('passed'))}/{_fmt(block.get('total'))}"
+    if block.get("errors"):
+        text += f" +{block['errors']} not judged"
     return text + (f" ({block['status']})" if status and block.get("status") else "")
 
 

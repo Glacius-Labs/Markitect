@@ -10,7 +10,7 @@ Baseline: source commit `75031b8eca8161b0a247414741828bfb2e1d9069`. This matrix 
 | C2 | Strict Module isolation | Disjoint Schema/Projection contracts, dependency rejection, and import gate. | PARTIAL; trial NOT RUN | Demonstrate shared meaning through canonical inputs without sibling-artifact authority or pairwise Module synchronization. |
 | C3 | Source-ontology-agnostic projection | Unknown-Kind helper tests; missing .NET guidance escalates. No AI runtime. | PARTIAL; trial NOT RUN | New Mission/EffectAxis/Capability Schema plus sufficient target policy; negative case removes key intent and must escalate. |
 | C4 | Reconcile-first operation | Read-only Host reconcile planner derives bounded work proposals; Executor/Verifier automation is absent. | PARTIAL; trial NOT RUN | Canonical change through Executor, independent checks, recursive verification, and convergence. |
-| C5 | Minimal impact | Planner exposes scoped work and conservative freshness separately. | FAIL for targeted-read claim; three-projection trial NOT RUN | See the owner-maintained [C5 experiment checkpoint](../../experiments/capability-proof/README.md) for the sole stop witness and pending runtime witness. |
+| C5 | Minimal impact | Planner exposes scoped work and conservative freshness separately. | FAIL for targeted-read claim; three-projection trial NOT RUN | See the owner-maintained [C5 experiment checkpoint](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/experiments/capability-proof/README.md) for the sole stop witness and pending runtime witness. |
 | C6 | Artifact provenance and ownership | Records and ownership index represent supplied artifacts and owners. | PARTIAL; trial NOT RUN | Bidirectional scope/record/artifact proof, including shared and one-to-many artifacts across realistic target state. |
 | C7 | Unknown artifact detection | Unknowns under configured targets are visible and escalated. | PARTIAL; trial NOT RUN | Frozen unowned behavior file plus explicit exclusion; prove both stay visible in reporting. |
 | C8 | Drift repair | Bounded Git-backed repair and prior fixed corruption/repair evidence. | PARTIAL; trial NOT RUN | Reproduce on the accepted current source path and report exact scope and bytes. |
@@ -22,13 +22,13 @@ Baseline: source commit `75031b8eca8161b0a247414741828bfb2e1d9069`. This matrix 
 
 ## Stop and sequencing
 
-C5 is the current proof-phase stop: the owner-maintained [experiment checkpoint](../../experiments/capability-proof/README.md) records a FAIL for the targeted-read claim and says the runtime witness is pending. The three-projection minimal-impact trial was not run.
+C5 is the current proof-phase stop: the owner-maintained [experiment checkpoint](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/experiments/capability-proof/README.md) records a FAIL for the targeted-read claim and says the runtime witness is pending. The three-projection minimal-impact trial was not run.
 
 Per the proof-program gate, all new C1–C13 trials are **NOT RUN**. In particular, fresh C3, C9, C10, C12, C13, the 30–50 change human-attention comparison, concurrency stress, and technology re-projection remain halted while this stop remains unresolved. Existing bounded evidence remains historical input and must not be rewritten as a new trial.
 
-The [executed checkpoint](../../experiments/capability-proof/results.md) reproduces one scoped proposal alongside complete base/candidate/working snapshot contents. The missing-object control refuses at full-tree metadata; positive snapshots separately contain the unrelated bytes. This is C5 FAIL for targeted acquisition, not a full three-projection execution trial.
+The [executed checkpoint](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/experiments/capability-proof/results.md) reproduces one scoped proposal alongside complete base/candidate/working snapshot contents. The missing-object control refuses at full-tree metadata; positive snapshots separately contain the unrelated bytes. This is C5 FAIL for targeted acquisition, not a full three-projection execution trial.
 
-See the [implemented inventory](implemented-capability-inventory.md), the [proof program](proof-program.md), and the [experiment workspace](../../experiments/capability-proof/README.md) for details and frozen trial records. Readiness remains paused at C5; the proof phase is not complete. No broad capability claim, human-attention benefit, or semantic assurance is established here.
+See the [implemented inventory](implemented-capability-inventory.md), the [proof program](proof-program.md), and the [experiment workspace](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/experiments/capability-proof/README.md) for details and frozen trial records. Readiness remains paused at C5; the proof phase is not complete. No broad capability claim, human-attention benefit, or semantic assurance is established here.
 
 
 

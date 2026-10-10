@@ -20,6 +20,10 @@ import (
 
 const maxCheckOutputBytes = 256 << 10
 
+// checkWaitDelay bounds how long a stopped or finished check may keep its
+// output pipes open through a descendant that escaped its process tree.
+const checkWaitDelay = 2 * time.Second
+
 // Keep verifier coverage within the shared response evidence-reference bound
 // before persisting a native role-start reservation.
 const maxVerifierCoverageReferences = 128
@@ -512,13 +516,14 @@ func runCheck(parent context.Context, dir string, check CheckPlan, agent Agent, 
 	stderr.max = maxCheckOutputBytes
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+	cmd.WaitDelay = checkWaitDelay
 	if onStart != nil {
 		if err := onStart(out); err != nil {
 			out.Error = "could not persist check start"
 			return out
 		}
 	}
-	err := cmd.Run()
+	err := runCheckProcess(cmd)
 	out.Duration = time.Since(out.StartedAt).String()
 	out.Stdout = stdout.buf.String()
 	out.Stderr = stderr.buf.String()

@@ -1,8 +1,0 @@
-{
-  "classification": "CORRECTION",
-  "cliExitCode": null,
-  "corrects": "invalid-f33344fb2a544399a75553f751181c19.json",
-  "expectedCliExitCodeFromBoundSource": 2,
-  "protocol": "operating-model-proof/v3",
-  "reason": "The failed harness did not persist its subprocess return code. Earlier 2 was source-derived, not measured. Raw stdout/stderr remain exact; outcome stays INVALID."
-}

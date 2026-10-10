@@ -155,14 +155,22 @@ func TestStandaloneBootstrapToolingHasNoProductDependencies(t *testing.T) {
 	}
 }
 
-func TestCanonicalWorkflowCheckIsIsolatedAdopterCode(t *testing.T) {
-	if findings := Check([]Edge{{From: "examples/canonical-workflow/check"}}); len(findings) != 0 {
-		t.Fatal(findings)
+func TestTestkitIsTestOnlyAndStandalone(t *testing.T) {
+	if got := Check([]Edge{{From: "src/internal/testkit"}}); len(got) != 0 {
+		t.Fatalf("testkit classification: %v", got)
 	}
-	for _, target := range []string{"src/internal/core", "src/internal/host", "src/internal/modules/githooks"} {
-		findings := Check([]Edge{{From: "examples/canonical-workflow/check", To: target}})
-		if len(findings) != 1 || findings[0].Rule != "adopting-code fixture may not import Markitect product packages" {
-			t.Fatalf("project-owned check acquired product coupling: %v", findings)
+	for _, from := range []string{"src/internal/core", "src/internal/modules/a", "src/internal/host", "src/internal/infrastructure/source", "src/harness/examples"} {
+		if got := Check([]Edge{{From: from, To: "src/internal/testkit", Test: true}}); len(got) != 0 {
+			t.Fatalf("test in %s importing testkit: %v", from, got)
 		}
+		if got := Check([]Edge{{From: from, To: "src/internal/testkit"}}); len(got) != 1 {
+			t.Fatalf("production code in %s importing testkit: %v", from, got)
+		}
+	}
+	if got := Check([]Edge{{From: "src/internal/testkit", To: "src/internal/core"}}); len(got) != 1 {
+		t.Fatalf("testkit importing a local package: %v", got)
+	}
+	if got := Check([]Edge{{From: "src/internal/host", To: "src/internal/testkit/gitfixture"}}); len(got) != 1 {
+		t.Fatalf("production code importing a testkit subpackage: %v", got)
 	}
 }

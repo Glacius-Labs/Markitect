@@ -1,0 +1,19 @@
+{
+  "id": "at-local-time-with-z",
+  "base": "S1",
+  "item": "B01",
+  "rule": "R1",
+  "violates": "The audit line's at is the local time with a Z suffix instead of the UTC time.",
+  "edits": [
+    {
+      "file": "app.py",
+      "old": "datetime.now(timezone.utc).strftime(\"%Y-%m-%dT%H:%M:%SZ\")",
+      "new": "datetime.now().strftime(\"%Y-%m-%dT%H:%M:%SZ\")"
+    }
+  ],
+  "fails": [
+    "b01-finish-record-and-log",
+    "b01-finish-repeat-logs-again",
+    "b01-log-append-only"
+  ]
+}
