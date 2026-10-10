@@ -211,7 +211,7 @@ packages:
   - path: src/cmd/markitect
     layer: cli
     purpose: The `markitect` executable with the top-level verbs.
-    doc: docs/usage.md#commands
+    doc: docs/project-operations.md#cli-setup-and-current-roots
   - path: src/cmd/markitect-adapter-azure-devops
     layer: cli
     purpose: Legacy Azure DevOps metadata adapter executable.

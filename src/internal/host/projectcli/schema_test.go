@@ -19,6 +19,10 @@ func TestSchemaNeedsNoRepositoryAndWritesNoFiles(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("schema exit=%d stderr=%s", code, errout)
 	}
+	// Like every repository verb, schema accepts --repo, which it ignores.
+	if withRepo, sameOut, repoErr := runCLI(t, "schema", "--repo", isolated); withRepo != 0 || sameOut != out {
+		t.Fatalf("schema --repo exit=%d stderr=%s", withRepo, repoErr)
+	}
 	var got any
 	if err := json.Unmarshal([]byte(out), &got); err != nil {
 		t.Fatalf("decode schema output: %v", err)
@@ -37,9 +41,6 @@ func TestSchemaNeedsNoRepositoryAndWritesNoFiles(t *testing.T) {
 	entries, err := os.ReadDir(isolated)
 	if err != nil || len(entries) != 0 {
 		t.Fatalf("read-only schema verb created files: entries=%v err=%v", entries, err)
-	}
-	if code, _, errout := runCLI(t, "schema", "--repo", "."); code != 2 || !strings.Contains(errout, "flag provided but not defined: -repo") {
-		t.Fatalf("schema unexpectedly accepted a repository flag: exit=%d stderr=%s", code, errout)
 	}
 	if _, help, _ := runCLI(t, "--help"); !strings.Contains(help, "  schema ") {
 		t.Fatalf("verb list omitted schema: %s", help)

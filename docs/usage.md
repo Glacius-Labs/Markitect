@@ -1,6 +1,6 @@
 # Using Markitect
 
-This page describes the Project/Domain engineering-resource compiler and historical versioned CLI contracts. Explicit source additions and removals are labelled below; published releases retain their actual immutable bytes. It is not the recommended path for new model-first projects. Start with the [model-first project workflow](project-workflow.md); it documents the current `markitect <verb>` source surface, its source-versus-release distinction, implemented commands and planned journey stages. The project model in a committed revision is the accepted repository specification Markitect uses for that revision; a draft is a proposal, and a commit or digest does not authenticate human approval.
+This page describes the Project/Domain engineering-resource compiler and historical versioned CLI contracts. In current source these commands run through the temporary `markitect-legacy` executable (`go run ./src/cmd/markitect-legacy COMMAND`) until ARCH-09 removes them; the installed v0.14.1 release still names them `markitect`. Explicit source additions and removals are labelled below; published releases retain their actual immutable bytes. It is not the recommended path for new model-first projects. Start with the [model-first project workflow](project-workflow.md); it documents the current `markitect <verb>` source surface, its source-versus-release distinction, implemented commands and planned journey stages. The project model in a committed revision is the accepted repository specification Markitect uses for that revision; a draft is a proposal, and a commit or digest does not authenticate human approval.
 
 The published [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1) preserves Project/Domain behavior and bundles a separate canonical Projection alpha. New projects should not start with these legacy contracts. Current source does not promise executable backwards compatibility. Source changes do not update an installed binary. The [roadmap](implementation-plan.md) owns exact release and evidence status.
 
@@ -53,9 +53,9 @@ coverage:
 The commit placeholder must be replaced with an exact 40- or 64-digit commit. Paths are literal, case-sensitive Git tree names, not directories or globs. Preparation checks the entire selected list before opening its blobs. A working-tree edit is not evidence. A newer commit is a new capture even when only unselected files changed; the selected-only content digest may remain equal.
 
 ```powershell
-markitect prepare --scope C:/review/scope.yaml --output C:/review/capture-1
+markitect-legacy prepare --scope C:/review/scope.yaml --output C:/review/capture-1
 # Review the emitted handoff and copy its handoff.digest:
-markitect prepare --scope C:/review/scope.yaml --output C:/review/capture-1 --write --expect REVIEWED_HANDOFF_DIGEST
+markitect-legacy prepare --scope C:/review/scope.yaml --output C:/review/capture-1 --write --expect REVIEWED_HANDOFF_DIGEST
 ```
 
 The destination is an absent absolute directory whose parent exists, outside every selected repository and its Git metadata. Preview writes nothing. Write recomputes the capture, checks the exact digest, and creates the directory/files exclusively. It persists `handoff.yaml` and selected bytes under `evidence/<repository-id>/<exact-path>`. Partial creation is reported without rollback; reruns refuse an existing workspace. Access and retention are owner responsibilities; Windows ACLs are not set by this command.
@@ -65,8 +65,8 @@ Selected Git objects must already be available locally. Preparation blocks remot
 Prepare separate candidate files and one `copy-me-queue/v1alpha1` YAML with evidence entries, `candidates: [{stableID, path, digest}]`, preserved coverage IDs/repositories/questions and optional requests. Coverage state/reason may advance as an interpretive claim; the report retains original preparation coverage as well. Candidate paths are literal relative paths beneath the queue directory; hashes bind raw candidate-file bytes. The [executable fixture](../examples/selective-adoption/README.md) provides complete queue, candidate and decision examples and a runnable lifecycle.
 
 ```powershell
-markitect copy-me --workspace C:/review/capture-1 --queue C:/review/dossier/queue.yaml
-markitect copy-me --workspace C:/review/capture-1 --queue C:/review/dossier/queue.yaml --decision C:/review/dossier/decision.yaml
+markitect-legacy copy-me --workspace C:/review/capture-1 --queue C:/review/dossier/queue.yaml
+markitect-legacy copy-me --workspace C:/review/capture-1 --queue C:/review/dossier/queue.yaml --decision C:/review/dossier/decision.yaml
 ```
 
 The report supplies raw handoff/queue/candidate hashes for an explicit human-supplied decision. A decision binds one candidate revision, queue bytes, handoff bytes and handoff identity, plus supplied reviewer/date/rationale/scope and `accept|reject|defer|split|revise`. Changed selected bytes fail handoff validation; changed candidate/queue/handoff bytes stale an old decision. Conflicts, uncertainty and coverage remain visible. A request for another repository path grants no read permission: the owner must supply a new preparation scope.
@@ -318,10 +318,10 @@ The v0.10.0 contract declares adapter entries under `spec.adapters`, each with `
 
 ```powershell
 New-Item -ItemType Directory -Force .artifacts/markitect/reconcile | Out-Null
-markitect reconcile --repo . --action observe --adapter markitect-render
-markitect reconcile --repo . --action plan --adapter markitect-render > .artifacts/markitect/reconcile/plan.yaml
-markitect reconcile --repo . --action apply --adapter markitect-render --plan .artifacts/markitect/reconcile/plan.yaml --write
-markitect reconcile --repo . --action verify --adapter markitect-render --plan .artifacts/markitect/reconcile/plan.yaml
+markitect-legacy reconcile --repo . --action observe --adapter markitect-render
+markitect-legacy reconcile --repo . --action plan --adapter markitect-render > .artifacts/markitect/reconcile/plan.yaml
+markitect-legacy reconcile --repo . --action apply --adapter markitect-render --plan .artifacts/markitect/reconcile/plan.yaml --write
+markitect-legacy reconcile --repo . --action verify --adapter markitect-render --plan .artifacts/markitect/reconcile/plan.yaml
 ```
 
 `observe` and `plan` write results only to standard output. Save the plan in `.artifacts/markitect/reconcile/` before applying. Apply is limited to the working tree and requires the unchanged plan plus explicit `--write`; it rejects stale inputs or changed plan content. Verification checks outputs after application. Plans do not automatically remove stale files. External command adapter inputs, protocol, output limits, and local-authority boundary are detailed in the [adapter contract at v0.14.1](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/provider-adapters.md#supported-command-adapter-contract).
@@ -390,8 +390,8 @@ Existing-content imports are implemented and reviewed as scripts owned by the pr
 Ordinary `context` and `impact` remain strict. To investigate a structurally valid candidate whose ordinary PolicyResults fail, use the explicit `--analyze-policy-failures` option:
 
 ```powershell
-markitect context --repo . --revision <candidate-commit> --api-version <domain-api> --namespace <namespace> --kind UseCase --name <name> --analyze-policy-failures
-markitect impact --repo . --base <base-commit> --revision <candidate-commit> --analyze-policy-failures
+markitect-legacy context --repo . --revision <candidate-commit> --api-version <domain-api> --namespace <namespace> --kind UseCase --name <name> --analyze-policy-failures
+markitect-legacy impact --repo . --base <base-commit> --revision <candidate-commit> --analyze-policy-failures
 ```
 
 The output has an `analysis` marker with per-snapshot structural, policy and validation status, failed-result count, and configuration/model identity. A policy-failing candidate remains `validationStatus: failed`. **Retain stdout on exit 1:** completed analysis returns 1 if either analyzed snapshot has failed policies, including a failing base with a repaired candidate. It returns 0 only when analysis completed and neither side has unwaived failures. Invocation, acquisition or compilation errors use exit 2; structural diagnostic reports retain their failure exit and contain no Context/Impact analysis payload.
@@ -430,7 +430,7 @@ Context reports its snapshot and selected-input digests, including activated Dom
 <a id="markitect-first-release-candidate"></a>
 ## Markitect-first (published v0.13.0)
 
-The provider-neutral [Change workflow](../src/internal/host/embedded/resources/workflow-markitect-first-change.yaml) is canonical. `markitect authoring` includes it without requiring a Project. An adopting owner can put a durable pointer to that version-bound command and the project's selected resource Context in its root agent guidance; selected provider Skills are derived through existing targets. Markitect's own [root Project](../markitect.yaml) uses `development/Skill/engineering-change`; its human-owned AGENTS.md is navigation, not a second workflow owner. Greenfield Init remains unchanged.
+The provider-neutral [Change workflow](../src/internal/host/embedded/resources/workflow-markitect-first-change.yaml) is canonical. `markitect-legacy authoring` includes it without requiring a Project. An adopting owner can put a durable pointer to that version-bound command and the project's selected resource Context in its root agent guidance; selected provider Skills are derived through existing targets. Markitect's own [root Project](../markitect.yaml) uses `development/Skill/engineering-change`; its human-owned AGENTS.md is navigation, not a second workflow owner. Greenfield Init remains unchanged.
 
 Begin with a full BASE commit: `markitect check --repo PATH --revision BASE`, then select context with `markitect context --repo PATH --revision BASE --namespace OWNER --kind Skill --name ENTRY`. Use find/explain/model to select a defensible owner. Classify implementation-only, engineering-intent change, policy migration or ambiguity. Intent changes update canonical desired state before technical implementation; commit/check the intended candidate, run fixed impact, then implement. Implementation-only work follows existing intent without artificial model edits. Failed ordinary policy is inspectable only through explicit read-only diagnostic options; strict acceptance and structural blockers remain unchanged.
 

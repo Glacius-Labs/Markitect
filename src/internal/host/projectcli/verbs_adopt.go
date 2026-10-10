@@ -52,6 +52,11 @@ var adoptVerb = define(verb{
 	if in.Input != nil {
 		input = *in.Input
 	}
+	// --execute authorizes only an adopt run that also writes; a preview with
+	// --execute would silently start nothing.
+	if in.Execute && (in.Action != "run" || !in.Write) {
+		return nil, usagef("--execute applies only to adopt run --write")
+	}
 	if in.Action == "run" {
 		if input.Run == nil {
 			return nil, usagef("adopt run requires --input with a \"run\" record")
@@ -60,9 +65,6 @@ var adoptVerb = define(verb{
 			Root: e.root, SourceRoot: e.sourceRoot, Revision: in.Revision, SessionID: in.Session,
 			Request: *input.Run, Write: in.Write, ExpectedDigest: in.Expect,
 		}, e.ops.Invoker)
-	}
-	if in.Execute {
-		return nil, usagef("--execute applies only to adopt run")
 	}
 	return e.ops.Brownfield(projectapp.BrownfieldOperation{
 		Root: e.root, SourceRoot: e.sourceRoot, Revision: in.Revision, SessionID: in.Session,
@@ -90,7 +92,7 @@ func verbTable() []verb {
 	}
 }
 
-const readOnlyInstructions = "This server is read-only: it serves reads and previews, and it writes nothing and starts no agents or checks, whatever the arguments. Tools use the explicitly selected repository. Only listed operations are available."
+const readOnlyInstructions = "This server is read-only: it serves reads and previews, and it writes no project files and starts no agents or checks, whatever the arguments. Known gap: in a guided project, context, brief, plan and ready may still record accepted briefing history under .markitect/state until a read-only history API replaces it. Tools use the explicitly selected repository. Only listed operations are available."
 
 // newMCPServer registers every MCP verb on a server fixed to one root. MCP
 // never takes the root or the adoption source from tool arguments.

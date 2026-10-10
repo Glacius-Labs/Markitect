@@ -240,7 +240,8 @@ func TestEffectRulesRejectBeforeAnyOperation(t *testing.T) {
 		{"ready acknowledge needs authority", append(append([]string{"ready"}, ready...), "--acknowledge", "--actor", "a"), "--acknowledge requires --actor, --authority and --decision-ref"},
 		{"ready acknowledge needs time", append(append([]string{"ready"}, ready...), "--acknowledge", "--actor", "a", "--authority", "b", "--decision-ref", "c", "--acknowledged-at", "yesterday"), "explicit RFC 3339 timestamp"},
 		{"onboard provider", []string{"onboard", "--provider", "gemini"}, "--provider must be codex, claude or both"},
-		{"adopt execute only for run", []string{"adopt", "status", "--session", "s", "--execute"}, "--execute applies only to adopt run"},
+		{"adopt execute only for run", []string{"adopt", "status", "--session", "s", "--execute"}, "--execute applies only to adopt run --write"},
+		{"adopt run preview refuses execute", []string{"adopt", "run", "--session", "s", "--input", runDraft, "--execute"}, "--execute applies only to adopt run --write"},
 		{"adopt run needs its record", []string{"adopt", "run", "--session", "s"}, `adopt run requires --input with a "run" record`},
 		{"adopt run write needs execute", []string{"adopt", "run", "--session", "s", "--input", runDraft, "--expect", "d", "--write"}, "adopt starts agents or configured checks and requires --execute; inspect first with `markitect adopt status`"},
 	}

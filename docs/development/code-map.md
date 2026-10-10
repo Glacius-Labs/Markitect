@@ -103,7 +103,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `src/cmd/markitect` | The `markitect` executable with the top-level verbs. | [docs/usage.md](../usage.md#commands) |
+| `src/cmd/markitect` | The `markitect` executable with the top-level verbs. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
 | `src/cmd/markitect-adapter-azure-devops` | Legacy Azure DevOps metadata adapter executable. | [src/cmd/markitect-adapter-azure-devops/README.md](../../src/cmd/markitect-adapter-azure-devops/README.md) |
 | `src/cmd/markitect-adapter-dotnet` | Legacy .NET reference adapter executable. | [src/cmd/markitect-adapter-dotnet/README.md](../../src/cmd/markitect-adapter-dotnet/README.md) |
 | `src/cmd/markitect-adapter-github` | Legacy GitHub repository-metadata adapter executable. | [src/cmd/markitect-adapter-github/README.md](../../src/cmd/markitect-adapter-github/README.md) |
