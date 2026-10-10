@@ -2323,3 +2323,7 @@ Root exactWindows4fc1fb00 VCS361c7f1a Go1.27.1modifiedfalse and361threeDocclosur
 ### Actual27 full verification passed; Windows Apply preflight basis inconsistency
 
 Root shortsharedimmutable state42verified independently bindsCheckexit0/initialVerifier262cpassed/3fullManagerreceipts7ef1-e25a-5179allpassed/4reviewsPASS. Owner originalRootrecovery/helperparallelpassed; readonlyApplypreflight actualcleanREADME80CRLFvs78LFblob rejectedinconsistentlywithPlanGitcleanfilterbasis, noApplywrite/fullA01. Terminalc8c6fa05/audit72bb9cf4 cumulative169combined165providers23282065partial/original99022once ownerunionnotRootreaudited. Narrowcapturedcleanfilter-equivalence/fixedattrs/index/rawtargetCASretained/regressionreviewactiveWIP; sourcefixnotyetRootfrozen, noenvironmentnormalizationworkaround/newframework/MainPASS/repeatedorder.
+
+### Captured Git-clean Apply basis correction verified; Actual28 active
+
+Root cleanpublic/localcdd30b0e/exactWindowsd56376cfGo1.27.1VCScddmodifiedfalse bound. Sourcea5cdApplydiff inspected: capturedcleanfilter-equivalence/fixedattrs/allselectedindexexistence-mode-OID/conflicts inclnewfiles, finalguardedcallbackrechecks/rawtargetCASunchanged, no environmentnormalization. Owner8focused69.013realPlanRunVerifyPreflightApplyApply+race/-text/attrs guards/vetrootmanageddiff/independentCLEAR. FreshPlanac57fa27/batcha01-apply-clean-filterae094/deadline15:51:43Z ownerreported/unchangedgoal-runtime-model active; actualfullnativeApply/terminalcounts pending, old27FullVerifyPASS/noApplypreserved/noReplay/newRootorder/Main/study/releasePASS.
