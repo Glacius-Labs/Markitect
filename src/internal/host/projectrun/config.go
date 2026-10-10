@@ -164,18 +164,8 @@ func ValidateRuntime(config Runtime) error {
 				return fmt.Errorf("runtime agent %q instructionPaths: %w", managerID, err)
 			}
 		}
-		switch agent.CostMode {
-		case "", CostModeMetered:
-			if agent.Pricing.InputMicrosPerMillion < 0 || agent.Pricing.OutputMicrosPerMillion < 0 ||
-				(agent.Pricing.InputMicrosPerMillion == 0 && agent.Pricing.OutputMicrosPerMillion == 0) {
-				return fmt.Errorf("runtime agent %q must declare nonnegative input/output pricing with at least one positive rate", managerID)
-			}
-		case CostModeUnmetered:
-			if agent.Pricing != (Pricing{}) {
-				return fmt.Errorf("runtime agent %q is unmetered and must not declare pricing", managerID)
-			}
-		default:
-			return fmt.Errorf("runtime agent %q has unsupported costMode %q; use %q or %q", managerID, agent.CostMode, CostModeMetered, CostModeUnmetered)
+		if err := validateCostMode(managerID, agent); err != nil {
+			return err
 		}
 		seen := map[string]bool{}
 		for _, name := range agent.Environment {
@@ -227,6 +217,30 @@ func ValidateRuntime(config Runtime) error {
 		l.MaxCandidateFileBytes <= 0 || l.MaxCandidateFileBytes > 8<<20 ||
 		l.MaxCandidateBytes < l.MaxCandidateFileBytes || l.MaxCandidateBytes > 32<<20 {
 		return fmt.Errorf("runtime limits must be finite and within supported bounds (depth 1..32, starts 1..256, retries 0..3, parallel 1..16, duration <=24h, candidate <=32 MiB)")
+	}
+	return nil
+}
+
+// validateCostMode requires rates for a metered agent and none for an
+// unmetered one. Only process executors may be unmetered.
+func validateCostMode(managerID string, agent Agent) error {
+	switch agent.CostMode {
+	case "", CostModeMetered:
+		if agent.Pricing.InputMicrosPerMillion < 0 || agent.Pricing.OutputMicrosPerMillion < 0 ||
+			(agent.Pricing.InputMicrosPerMillion == 0 && agent.Pricing.OutputMicrosPerMillion == 0) {
+			return fmt.Errorf("runtime agent %q must declare nonnegative input/output pricing with at least one positive rate", managerID)
+		}
+	case CostModeUnmetered:
+		if agent.Pricing != (Pricing{}) {
+			return fmt.Errorf("runtime agent %q is unmetered and must not declare pricing", managerID)
+		}
+		if agent.Transport == TransportCodexAppServer {
+			// The App Server reports token usage; leaving it unpriced would
+			// silently remove the known-cost budget for billed work.
+			return fmt.Errorf("runtime agent %q uses the Codex App Server, which reports token usage; it must be metered", managerID)
+		}
+	default:
+		return fmt.Errorf("runtime agent %q has unsupported costMode %q; use %q or %q", managerID, agent.CostMode, CostModeMetered, CostModeUnmetered)
 	}
 	return nil
 }

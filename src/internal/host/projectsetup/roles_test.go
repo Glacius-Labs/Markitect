@@ -144,6 +144,7 @@ func TestBuildRuntimeRejectsInvalidRoleProfiles(t *testing.T) {
 		{"codex with process arguments", RoleOptions{Reviewer: &RoleProfile{ProviderArgs: []string{"--x"}}}, "apply only to process executors"},
 		{"unknown role provider", RoleOptions{Verifier: &RoleProfile{Provider: "claude", Model: "sonnet"}}, `unsupported provider "claude"`},
 		{"unsupported native effort", RoleOptions{Verifier: &RoleProfile{Effort: "turbo"}}, "unsupported Codex reasoning effort"},
+		{"unmetered native role", RoleOptions{Reviewer: &RoleProfile{CostMode: projectrun.CostModeUnmetered}}, "must be metered"},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -180,6 +181,9 @@ func TestPreviewDiscoversEachRoleExecutableOnce(t *testing.T) {
 	if calls[ProviderCodex] != 1 || calls[ProviderProcess] != 1 {
 		t.Fatalf("discovery calls = %v, want one per distinct executable", calls)
 	}
+	if preview.Discovery.Provider != ProviderCodex || len(preview.Roles) != 3 || preview.Roles[RoleReviewer].ProviderBinary.Path != executor.Path || preview.Roles[RoleManager].Provider != ProviderCodex {
+		t.Fatalf("preview does not show each role's pinned executable: discovery=%+v roles=%+v", preview.Discovery, preview.Roles)
+	}
 	var config projectrun.Runtime
 	if err := yaml.Unmarshal([]byte(preview.Mutation.Files[0].Content), &config); err != nil {
 		t.Fatal(err)
@@ -191,5 +195,38 @@ func TestPreviewDiscoversEachRoleExecutableOnce(t *testing.T) {
 		if reviewer.Transport != projectrun.TransportProcess || !reviewer.Unmetered() || config.Agents[id].Transport != projectrun.TransportCodexAppServer {
 			t.Fatalf("previewed roles lost their profiles: manager=%+v reviewer=%+v", config.Agents[id], reviewer)
 		}
+	}
+}
+
+func TestPreviewSkipsTheDefaultExecutableWhenNoRoleUsesIt(t *testing.T) {
+	project := setupProjectFixture(t)
+	executor := processExecutorTool(t, t.TempDir())
+	process := &RoleProfile{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: executor.Path, CostMode: projectrun.CostModeUnmetered}
+	options := Options{Provider: ProviderCodex, Model: "gpt-6-luna", InputMicrosPerMillion: 7, OutputMicrosPerMillion: 11, MaxCostMicros: 5000,
+		Roles: &RoleOptions{Manager: process, Reviewer: process, Verifier: process}}
+	calls := map[string]int{}
+	preview, err := previewEditWithDiscovery(project, options, func(got Options) (Discovery, error) {
+		calls[got.Provider]++
+		if got.Provider != ProviderProcess {
+			t.Fatalf("unused default executable was discovered: %+v", got)
+		}
+		return Discover(got)
+	})
+	if err != nil || calls[ProviderProcess] != 1 || preview.Discovery.Provider != ProviderProcess {
+		t.Fatalf("process-only preview: discovery=%+v calls=%v err=%v", preview.Discovery, calls, err)
+	}
+}
+
+func TestRoleThatSwitchesProviderDoesNotInheritTheCostMode(t *testing.T) {
+	profiles, err := resolveRoleProfiles(Options{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: "C:/tools/executor.exe",
+		CostMode: projectrun.CostModeUnmetered, MaxCostMicros: 1, Roles: &RoleOptions{Manager: &RoleProfile{Provider: ProviderCodex, Model: "gpt-6-luna"}}})
+	if err == nil || !strings.Contains(err.Error(), "metered agent requires explicit") {
+		t.Fatalf("a Codex role under an unmetered default must ask for rates, got profiles=%+v err=%v", profiles, err)
+	}
+	profiles, err = resolveRoleProfiles(Options{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: "C:/tools/executor.exe",
+		CostMode: projectrun.CostModeUnmetered, MaxCostMicros: 1, Roles: &RoleOptions{Manager: &RoleProfile{Provider: ProviderCodex, Model: "gpt-6-luna",
+			InputMicrosPerMillion: int64Ref(1), OutputMicrosPerMillion: int64Ref(2)}}})
+	if err != nil || profiles[RoleManager].costMode != "" || profiles[RoleReviewer].costMode != projectrun.CostModeUnmetered {
+		t.Fatalf("switched Codex role is not metered while process roles stay unmetered: %+v err=%v", profiles, err)
 	}
 }

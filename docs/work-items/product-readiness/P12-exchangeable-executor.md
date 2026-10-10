@@ -6,7 +6,7 @@ The method stays deterministic and provider-neutral: compiled model, coverage, i
 
 ## Increment 1 — process executor and role profiles (this change)
 
-- Agent cost mode `metered` (default) or `unmetered`. Unmetered agents declare no rates, may omit usage and are recorded as unknown cost; start, duration and timeout limits are unchanged. Metered process executors that omit usage still stop.
+- Agent cost mode `metered` (default) or `unmetered`. Unmetered process executors declare no rates, may omit usage and are recorded as unknown cost; start, duration and timeout limits are unchanged. Metered process executors that omit usage still stop. The Codex App Server reports usage and stays metered.
 - `project setup` selects provider (`codex` or `process`), model, effort and cost mode per role class: Managers, reviewers, verifier. The default remains Codex App Server, `gpt-6-luna`, `high`; mixed profiles are allowed. The CLI takes the default profile from flags and per-role profiles from `--input`; MCP takes the same options record.
 - The process transport is documented as the bring-your-own executor contract in [Provider adapters](../../provider-adapters.md#bring-your-own-executor), with the reference adapter `markitect-exchange-executor` (`request.json`/`response.json`).
 - End-to-end tests drive Plan, Run, Review, Verify and Apply with mixed role profiles and scripted fault injection: a write outside scope, a forgotten file, a review finding with repair, and an integration failure despite green children.

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -25,12 +26,22 @@ func testInvocation(t *testing.T, role string) (agentexec.Invocation, []byte) {
 	return invocation, wire
 }
 
+// exchangeObservation is what the external party saw while answering.
+type exchangeObservation struct {
+	request      []byte
+	reasons      []string
+	rejectedKept bool
+}
+
 // respondWhenRequested plays the external party: it waits for request.json and
-// then writes each response in turn after the previous one was consumed.
-func respondWhenRequested(t *testing.T, dir, runID string, responses ...string) {
+// then writes each response in turn after the previous one was set aside. It
+// reports what it saw, because the adapter removes the exchange on success.
+func respondWhenRequested(t *testing.T, dir, runID string, responses ...string) <-chan exchangeObservation {
 	t.Helper()
 	exchangeDir := filepath.Join(dir, runID)
+	observed := make(chan exchangeObservation, 1)
 	go func() {
+		var observation exchangeObservation
 		for index, response := range responses {
 			for {
 				_, requestErr := os.Stat(filepath.Join(exchangeDir, RequestFile))
@@ -40,36 +51,43 @@ func respondWhenRequested(t *testing.T, dir, runID string, responses ...string) 
 				}
 				time.Sleep(20 * time.Millisecond)
 			}
-			if index > 0 {
-				// Wait until the adapter set the previous response aside.
+			if index == 0 {
+				observation.request, _ = os.ReadFile(filepath.Join(exchangeDir, RequestFile))
+			} else {
+				// Wait until the adapter explained why it set the previous response aside.
 				for {
-					if _, err := os.Stat(filepath.Join(exchangeDir, ErrorFile)); err == nil {
+					if reason, err := os.ReadFile(filepath.Join(exchangeDir, ErrorFile)); err == nil {
+						observation.reasons = append(observation.reasons, string(reason))
 						break
 					}
 					time.Sleep(20 * time.Millisecond)
 				}
+				_, err := os.Stat(filepath.Join(exchangeDir, fmt.Sprintf("response.rejected-%d.json", index)))
+				observation.rejectedKept = err == nil
+				_ = os.Remove(filepath.Join(exchangeDir, ErrorFile))
 			}
 			if err := writeAtomically(filepath.Join(exchangeDir, ResponseFile), []byte(response)); err != nil {
 				t.Error(err)
 				return
 			}
 		}
+		observed <- observation
 	}()
+	return observed
 }
 
 func TestExchangeWritesExactRequestAndCompletesTheResponseEnvelope(t *testing.T) {
 	dir := t.TempDir()
 	invocation, wire := testInvocation(t, agentexec.RoleExecutor)
-	respondWhenRequested(t, dir, invocation.RunID, `{"outcome":"proposed","reportJson":{"status":"complete"}}`)
+	observed := respondWhenRequested(t, dir, invocation.RunID, `{"outcome":"proposed","reportJson":{"summary":"<html> & more"}}`)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	completed, err := Exchange(ctx, dir, 100*time.Millisecond, wire, io.Discard)
 	if err != nil {
 		t.Fatalf("Exchange: %v", err)
 	}
-	request, err := os.ReadFile(filepath.Join(dir, invocation.RunID, RequestFile))
-	if err != nil || !bytes.Equal(request, wire) {
-		t.Fatalf("request.json does not hold the exact invocation bytes: err=%v", err)
+	if observation := <-observed; !bytes.Equal(observation.request, wire) {
+		t.Fatal("request.json does not hold the exact invocation bytes")
 	}
 	response, err := agentexec.DecodeResponse(completed, invocation, "")
 	if err != nil {
@@ -78,15 +96,23 @@ func TestExchangeWritesExactRequestAndCompletesTheResponseEnvelope(t *testing.T)
 	if response.Usage != nil || response.RunID != invocation.RunID || response.Nonce != invocation.Nonce || len(response.CandidateFiles) != 0 {
 		t.Fatalf("unexpected completed response: %+v", response)
 	}
+	if !bytes.Contains(completed, []byte("<html> & more")) {
+		t.Fatalf("completed response escaped markup and grew: %s", completed)
+	}
+	if _, err := os.Stat(filepath.Join(dir, invocation.RunID)); !os.IsNotExist(err) {
+		t.Fatalf("exchange copy of the scoped request was not removed: %v", err)
+	}
 }
 
 func TestExchangeSetsInvalidResponsesAsideAndKeepsWaiting(t *testing.T) {
 	dir := t.TempDir()
 	invocation, wire := testInvocation(t, agentexec.RoleVerifier)
-	respondWhenRequested(t, dir, invocation.RunID,
+	oversized := `{"outcome":"passed","uncertainty":["` + strings.Repeat("x", maxResponseBytes) + `"]}`
+	observed := respondWhenRequested(t, dir, invocation.RunID,
 		`{"nonce":"replayed","outcome":"passed","verifierObservations":[{"subject":"manager","outcome":"passed","detail":"checked"}]}`,
+		oversized,
 		`{"outcome":"passed","verifierObservations":[{"subject":"manager","outcome":"passed","detail":"checked"}]}`)
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	completed, err := Exchange(ctx, dir, 100*time.Millisecond, wire, io.Discard)
 	if err != nil {
@@ -95,12 +121,10 @@ func TestExchangeSetsInvalidResponsesAsideAndKeepsWaiting(t *testing.T) {
 	if _, err := agentexec.DecodeResponse(completed, invocation, ""); err != nil {
 		t.Fatalf("corrected response was not valid: %v", err)
 	}
-	reason, err := os.ReadFile(filepath.Join(dir, invocation.RunID, ErrorFile))
-	if err != nil || !strings.Contains(string(reason), "nonce does not match this invocation") {
-		t.Fatalf("rejection reason = %q, %v", reason, err)
-	}
-	if _, err := os.Stat(filepath.Join(dir, invocation.RunID, "response.rejected-1.json")); err != nil {
-		t.Fatalf("rejected response was not kept: %v", err)
+	observation := <-observed
+	if len(observation.reasons) != 2 || !strings.Contains(observation.reasons[0], "nonce does not match this invocation") ||
+		!strings.Contains(observation.reasons[1], "response exceeds") || !observation.rejectedKept {
+		t.Fatalf("rejections were not explained and kept: %+v", observation.reasons)
 	}
 }
 
