@@ -1,6 +1,7 @@
 package projectmodel
 
 import (
+	"fmt"
 	"math/rand/v2"
 	"slices"
 	"strings"
@@ -204,6 +205,62 @@ func TestImpactIsDeterministicOnGeneratedProjects(t *testing.T) {
 	}
 }
 
+// Conservative invalidation: adding a change to a revision never removes
+// anything from its impact, so impact(A and B) contains impact(A) and impact(B).
+func TestImpactNeverShrinksWhenChangesCombine(t *testing.T) {
+	description := func(i int) projectEdit {
+		return func(q *generatedProject) { q.statements[i].description = "Changed rule." }
+	}
+	purpose := func(i int) projectEdit {
+		return func(q *generatedProject) { q.statements[i].purpose = "Changed statement." }
+	}
+	check := func(t *testing.T, label string, base generatedProject, a, b []projectEdit) {
+		t.Helper()
+		report := base.analyze(t, nil)
+		combined := Impact(report, base.with(append(append([]projectEdit(nil), a...), b...)...).analyze(t, nil))
+		for name, part := range map[string][]projectEdit{"first": a, "second": b} {
+			alone := Impact(report, base.with(part...).analyze(t, nil))
+			for set, values := range map[string][2][]string{
+				"statements": {alone.AffectedStatements, combined.AffectedStatements},
+				"managers":   {alone.Managers, combined.Managers},
+				"files":      {alone.Files, combined.Files},
+				"checks":     {alone.Checks, combined.Checks},
+			} {
+				for _, v := range values[0] {
+					if !contains(values[1], v) {
+						t.Fatalf("%s: the %s change alone routes %s %s, combined it does not", label, name, set, v)
+					}
+				}
+			}
+			if len(alone.Unknown) > 0 && len(combined.Unknown) == 0 {
+				t.Fatalf("%s: the %s change alone widens to unknown scope, combined it does not: %v", label, name, alone.Unknown)
+			}
+		}
+	}
+	t.Run("purpose and description of one statement", func(t *testing.T) {
+		base := generatedProject{managers: []string{""}, statements: []generatedStatement{{description: "Rule.", purpose: "Statement."}},
+			artifacts: []generatedArtifact{{realizes: []int{0}}}, digests: []string{"sha256:a"}}
+		check(t, "purpose then description", base, []projectEdit{purpose(0)}, []projectEdit{description(0)})
+	})
+	t.Run("statement reached through uses first", func(t *testing.T) {
+		// 0 and 1 change; 2 uses 0, 3 uses 2, 1 uses 3. Statement 3 consumes 2, so its
+		// realization stays in the impact although 1 reaches it through uses first.
+		statement := func(uses ...int) generatedStatement {
+			return generatedStatement{description: "Rule.", purpose: "Statement.", uses: uses}
+		}
+		base := generatedProject{managers: []string{""}, statements: []generatedStatement{statement(), statement(3), statement(0), statement(2)},
+			artifacts: []generatedArtifact{{realizes: []int{3}}}, digests: []string{"sha256:a"}}
+		check(t, "uses chain", base, []projectEdit{description(0)}, []projectEdit{description(1)})
+	})
+	t.Run("generated projects", func(t *testing.T) {
+		for seed := uint64(1); seed <= 200; seed++ {
+			rng := rand.New(rand.NewPCG(seed, 11))
+			base := generateProject(rng)
+			check(t, fmt.Sprintf("seed %d", seed), base, randomEdits(rng, base), randomEdits(rng, base))
+		}
+	})
+}
+
 type generatedStatement struct {
 	namespace, description, purpose string
 	public                          bool
@@ -265,6 +322,49 @@ func generateProject(rng *rand.Rand) generatedProject {
 
 // mutateProject applies one to three edits that keep the project valid.
 func mutateProject(rng *rand.Rand, p generatedProject) generatedProject {
+	return p.with(randomEdits(rng, p)...)
+}
+
+type projectEdit func(*generatedProject)
+
+// randomEdits picks one to three edits. None undoes another, so any subset of
+// them combines into a larger change.
+func randomEdits(rng *rand.Rand, p generatedProject) []projectEdit {
+	var edits []projectEdit
+	for n := 1 + rng.IntN(3); n > 0; n-- {
+		i, j, k := rng.IntN(len(p.statements)), rng.IntN(len(p.statements)), rng.Int()
+		switch rng.IntN(6) {
+		case 0:
+			edits = append(edits, func(q *generatedProject) { q.statements[i].description = "Changed rule." })
+		case 1:
+			edits = append(edits, func(q *generatedProject) { q.statements[i].purpose = "Changed statement." })
+		case 2:
+			edits = append(edits, func(q *generatedProject) {
+				if i != j && q.canReference(i, j) && !slices.Contains(q.statements[i].uses, j) {
+					q.statements[i].uses = append(q.statements[i].uses, j)
+				}
+			})
+		case 3:
+			edits = append(edits, func(q *generatedProject) { q.statements[i].requires = nil })
+		case 4:
+			edits = append(edits, func(q *generatedProject) {
+				if len(q.command) > 0 {
+					q.command[k%len(q.command)] = "vet"
+				}
+			})
+		case 5:
+			edits = append(edits, func(q *generatedProject) {
+				if len(q.digests) > 0 {
+					q.digests[k%len(q.digests)] = "sha256:b"
+				}
+			})
+		}
+	}
+	return edits
+}
+
+// with returns a copy of p after the edits.
+func (p generatedProject) with(edits ...projectEdit) generatedProject {
 	q := p
 	q.statements = append([]generatedStatement(nil), p.statements...)
 	for i := range q.statements {
@@ -273,28 +373,8 @@ func mutateProject(rng *rand.Rand, p generatedProject) generatedProject {
 	}
 	q.command = append([]string(nil), p.command...)
 	q.digests = append([]string(nil), p.digests...)
-	for edits := 1 + rng.IntN(3); edits > 0; edits-- {
-		i, j := rng.IntN(len(q.statements)), rng.IntN(len(q.statements))
-		switch rng.IntN(6) {
-		case 0:
-			q.statements[i].description = "Changed rule."
-		case 1:
-			q.statements[i].purpose = "Changed statement."
-		case 2:
-			if i != j && q.canReference(i, j) && !slices.Contains(q.statements[i].uses, j) {
-				q.statements[i].uses = append(q.statements[i].uses, j)
-			}
-		case 3:
-			q.statements[i].requires = nil
-		case 4:
-			if len(q.command) > 0 {
-				q.command[rng.IntN(len(q.command))] = "vet"
-			}
-		case 5:
-			if len(q.digests) > 0 {
-				q.digests[rng.IntN(len(q.digests))] = "sha256:b"
-			}
-		}
+	for _, edit := range edits {
+		edit(&q)
 	}
 	return q
 }

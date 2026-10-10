@@ -283,56 +283,45 @@ func Impact(base, candidate Report) ChangeImpact {
 			}
 		}
 	}
-	// The closure grows one distance level at a time and each level is expanded as a whole.
-	// A statement first reached as a consumer gets its realization even when another member
-	// of the same level reaches it only through uses, so seed and report order do not matter.
+	// The closure is every statement reachable from a seed over uses and requires in either
+	// direction. Coverage below depends only on that set, never on the order of the walk, so
+	// adding a change can only add to the impact.
 	closure := map[string]bool{}
-	level := mapKeys(seed)
-	for _, id := range level {
-		closure[id] = true
+	pending := make([]string, 0, len(seed))
+	for id := range seed {
+		pending = append(pending, id)
 		addCoverage(id)
 	}
-	for len(level) > 0 {
-		next := map[string]bool{}
-		reachedAsConsumer := map[string]bool{}
-		for _, id := range level {
-			// uses adds context and ownership routing. It does not imply implementation coverage.
-			for _, dep := range uses[id] {
-				if !closure[dep] {
-					next[dep] = true
-				}
-				if s, ok := statementByID[dep]; ok {
-					managers[s.Owner] = true
-				}
-			}
-			// requires adds the target contract and its declared artifact/check coverage.
-			for _, dep := range requires[id] {
-				if !closure[dep] {
-					next[dep] = true
-				}
-				addCoverage(dep)
-				if s, ok := statementByID[dep]; ok {
-					managers[s.Owner] = true
-				}
-			}
-			// A changed contract routes every direct consumer; each consumer's own realization is affected too.
-			for _, consumer := range consumers[id] {
-				if !closure[consumer] {
-					next[consumer] = true
-					reachedAsConsumer[consumer] = true
-				}
+	for len(pending) > 0 {
+		id := pending[len(pending)-1]
+		pending = pending[:len(pending)-1]
+		if closure[id] {
+			continue
+		}
+		closure[id] = true
+		pending = append(append(append(pending, uses[id]...), requires[id]...), consumers[id]...)
+	}
+	for id := range closure {
+		// uses adds context and ownership routing. It does not imply implementation coverage.
+		for _, dep := range uses[id] {
+			if s, ok := statementByID[dep]; ok {
+				managers[s.Owner] = true
 			}
 		}
-		for id := range reachedAsConsumer {
-			addCoverage(id)
-			for _, owner := range statementOwners[id] {
+		// requires adds the target contract and its declared artifact/check coverage.
+		for _, dep := range requires[id] {
+			addCoverage(dep)
+			if s, ok := statementByID[dep]; ok {
+				managers[s.Owner] = true
+			}
+		}
+		// An affected statement routes every direct consumer; each consumer's own realization is affected too.
+		for _, consumer := range consumers[id] {
+			addCoverage(consumer)
+			for _, owner := range statementOwners[consumer] {
 				managers[owner] = true
 			}
 		}
-		for id := range next {
-			closure[id] = true
-		}
-		level = mapKeys(next)
 	}
 	for id := range closure {
 		out.AffectedStatements = append(out.AffectedStatements, id)
@@ -497,15 +486,16 @@ func compareChecks(a, b []Check, add func(string)) {
 	}
 }
 
-// unprojectedChange reports a definition whose unprojected parts changed while
-// its projection did not, such as a purpose or a Decision. Reports not built by
-// Analyze carry no such digests, so the change cannot be ruled out.
+// unprojectedChange reports a change the report collections do not show: an
+// unprojected part, such as a purpose, of a definition in both revisions, even
+// when its projection changed too, or a Decision added or removed. Reports not
+// built by Analyze carry no such digests, so the change cannot be ruled out.
 func unprojectedChange(base, candidate Report, changed map[string]bool) bool {
 	if base.unprojected == nil || candidate.unprojected == nil {
 		return true
 	}
 	for id, d := range base.unprojected {
-		if next, ok := candidate.unprojected[id]; (!ok || next != d) && !changed[id] {
+		if next, ok := candidate.unprojected[id]; ok && next != d || !ok && !changed[id] {
 			return true
 		}
 	}
