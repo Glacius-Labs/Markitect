@@ -108,9 +108,12 @@ A zone is a code area in which only one active package changes code at a time. T
 
 1. **One pull request per package or slice.** Its title starts with the package ID.
 2. **The PR head is frozen while the required Linux CI runs.** Nobody pushes to it during that run, and evidence goes into the PR description. Fixes may be pushed while a run that is not required (Windows) is still in progress, because only Linux is required ([DEC-013](concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)).
-3. **Linux CI is the required gate** (DEC-013). The integrator merges in dependency order with merge commits and deletes merged branches.
+3. **Linux CI is the required gate** (DEC-013). The integrator merges in dependency order, one pull request at a time, with merge commits.
 4. **The backlog stays current.** After each merge, the package's status is updated in the same or the next integrator pull request.
 5. **Decisions come first.** A decision that changes direction is recorded in the register before code relies on it.
+6. **Compile before merge.** The integrator first compiles each pull request merged onto current main (`go vet ./...`); two pull requests that pass alone can still break main together.
+7. **Stacked pull requests target main.** A pull request whose base is another branch is retargeted to `main` before it merges.
+8. **Worktree hygiene.** Never use `git stash`, because it is shared across worktrees; use patch files. Check `git show --stat` before every push. [CONTRIBUTING](../CONTRIBUTING.md#pull-requests-and-parallel-work) has the full rules.
 
 ## Waves
 
