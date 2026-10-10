@@ -26,20 +26,8 @@ spec:
     - src/internal/host/codexappserver
     - docs/validation/classic-commerce-entrypoint.md
     - examples/classic-commerce
-    - src/internal/host/canonical_controller_apply_receipt.go
-    - src/internal/host/canonical_controller_apply_receipt_test.go
-    - src/internal/host/cli/canonical_apply_result_test.go
     - experiments/sequential-operating-pilot
-    - src/internal/host/canonical_controller_model_change_test.go
-    - src/internal/host/canonical_controller_audit.go
-    - src/internal/host/canonical_controller_audit_test.go
-    - src/internal/host/canonical_controller_operating_test.go
-    - src/internal/host/cli/canonical_audit_test.go
     - docs/validation/standard-operating-model.md
-    - src/internal/host/canonical_controller_verification_windows_test.go
-    - src/internal/host/canonical_controller_lease_windows_test.go
-    - src/internal/host/canonical_controller_lease_linux_test.go
-    - src/internal/host/canonical_controller_lease_test.go
     - docs/design/host-write-identity.md
     - src/internal/host/format.go
     - src/internal/host/install.go
@@ -48,22 +36,12 @@ spec:
     - src/internal/host/guardedwrite
     - src/internal/host/writers_test.go
     - src/internal/infrastructure/source/selective_identity_test.go
-    - src/internal/host/canonical_controller_assurance_preflight_test.go
     - docs/validation/proof-capability-checkpoint-2026-10-06.md
     - docs/design/canonical-verifier-observation-coverage.md
-    - src/internal/host/canonical_controller_coverage.go
-    - src/internal/host/canonical_controller_coverage_test.go
     - runs/c11checktools
-    - src/internal/host/canonical_controller_reuse.go
-    - src/internal/host/canonical_verification_refresh_test.go
     - docs/design/canonical-verification-refresh.md
     - docs/validation/independent-proof-capability-review.md
-    - src/internal/host/cli/canonical_adoption_durable_test.go
-    - src/internal/host/canonical_adoption_store.go
-    - src/internal/modules/markdownreference
     - examples/module-replacement
-    - src/internal/host/canonical_markdown_reference.go
-    - src/internal/host/canonical_markdown_reference_test.go
     - .markitect
     - .githooks
     - .github/workflows
@@ -81,84 +59,25 @@ spec:
     - markitect-artifacts.yaml
     - docs/markitect-first.md
     - src/internal/core
-    - src/internal/host/canonical
-    - src/internal/host/records
-    - src/internal/host/assurance
     - src/internal/host/projectionengine
-    - src/internal/modules/markdown
-    - src/internal/modules/dotnet
-    - src/internal/host/canonical_load.go
-    - src/internal/host/canonical_load_test.go
-    - src/internal/host/canonical_projections.go
-    - src/internal/host/canonical_projections_test.go
     - src/internal/host/projection_primitives_test.go
-    - src/internal/host/cli/canonical.go
-    - src/internal/host/cli/canonical_test.go
     - examples/canonical-projection
-    - src/internal/host/canonical_impact.go
-    - src/internal/host/canonical_impact_test.go
-    - src/internal/host/canonical_reconciliation.go
-    - src/internal/host/canonical_reconciliation_test.go
-    - src/internal/host/canonical_verification.go
-    - src/harness/examples/canonical-projection_test.go
-    - src/internal/host/canonical_verification_test.go
     - docs/design/brownfield-representation-adoption.md
     - docs/strategy/sources/canonical-reset/markitect-coordinator-steer-latest-architecture-clarifications.md
-    - src/internal/host/canonical_adoption.go
-    - src/internal/host/canonical_adoption_test.go
     - src/harness/examples/capability_proof_test.go
     - src/internal/host/agentexec
-    - src/internal/host/recordstore
-    - src/internal/modules/agentrules
-    - src/internal/modules/githooks
-    - src/internal/modules/azurepipelines
     - src/internal/tooling/codexrunner
     - examples/capability-ontologies
-    - src/harness/examples/capability_ontologies_test.go
     - examples/operating-model
-    - src/harness/examples/operating_model_test.go
-    - src/internal/host/canonical_agent_context.go
-    - src/internal/host/canonical_controller.go
-    - src/internal/host/canonical_controller_assurance.go
-    - src/internal/host/canonical_controller_execution.go
-    - src/internal/host/canonical_scoped_reconciliation.go
-    - src/internal/host/canonical_workflow_projection_test.go
-    - src/internal/host/canonical_workflow_projection.go
-    - src/internal/host/canonical_scoped_test.go
-    - src/internal/host/canonical_scoped_write.go
-    - src/internal/host/canonical_selected.go
-    - src/internal/host/canonical_selected_test.go
     - docs/design/canonical-reverse-inference.md
     - examples/canonical-workflow
-    - src/internal/host/canonical_inference.go
-    - src/internal/host/canonical_inference_test.go
-    - src/internal/host/canonical_provider_projection.go
-    - src/internal/host/canonical_provider_projection_test.go
-    - src/internal/host/canonical_controller_verification.go
-    - src/internal/host/canonical_controller_verification_test.go
     - examples/recursive-assurance
     - experiments/operating-model-proof
-    - src/internal/host/canonical_controller_dependencies.go
-    - src/internal/host/canonical_controller_dependencies_test.go
-    - src/internal/host/canonical_controller_test.go
     - docs/design/candidate-dependency-execution.md
-    - src/harness/examples/recursive_assurance_test.go
-    - src/internal/host/canonical_goal_modeling.go
-    - src/internal/host/canonical_goal_modeling_test.go
     - docs/design/goal-led-modeling.md
     - docs/design/projection-evidence-refresh.md
     - examples/unknown-ontology
-    - src/harness/examples/unknown_ontology_test.go
-    - src/internal/host/canonical_target_exclusions.go
-    - src/internal/host/canonical_target_exclusions_test.go
     - docs/design/scoped-target-exclusions.md
-    - src/internal/host/cli/adoption_inference_test.go
-    - src/internal/host/canonical_evidence_refresh.go
-    - src/internal/host/canonical_evidence_refresh_test.go
-    - src/internal/host/cli/canonical_refresh.go
-    - src/internal/host/cli/canonical_refresh_test.go
-    - src/internal/host/cli/canonical_goal.go
-    - src/internal/host/cli/canonical_goal_test.go
     - src/harness/examples/public_fixture_test.go
     - experiments/live-operating-pilot
     - experiments/two-area-operating-pilot
@@ -288,26 +207,8 @@ spec:
       owner: classic-commerce-public-example
     - path: examples/classic-commerce/tools/smoke.py
       owner: classic-commerce-public-example
-    - path: src/internal/host/canonical_controller_apply_receipt.go
-      owner: controller-apply-verification-handoff
-    - path: src/internal/host/canonical_controller_apply_receipt_test.go
-      owner: controller-apply-verification-handoff
-    - path: src/internal/host/cli/canonical_apply_result_test.go
-      owner: controller-apply-verification-handoff
-    - path: src/internal/host/canonical_controller_model_change_test.go
-      owner: standard-operating-model-closure
-    - path: src/internal/host/canonical_controller_audit.go
-      owner: standard-operating-model-closure
-    - path: src/internal/host/canonical_controller_audit_test.go
-      owner: standard-operating-model-closure
-    - path: src/internal/host/canonical_controller_operating_test.go
-      owner: standard-operating-model-closure
-    - path: src/internal/host/cli/canonical_audit_test.go
-      owner: standard-operating-model-closure
     - path: docs/validation/standard-operating-model.md
       owner: standard-operating-model-closure
-    - path: src/internal/host/canonical_controller_verification_windows_test.go
-      owner: controller-verifier-fixture-path-controls
     - path: experiments/operating-model-proof/runs/windows-verifier-fixture-paths/receipt.json
       owner: preserved-verifier-fixture-focused-evidence
     - path: experiments/operating-model-proof/runs/gates-59b3e812/sanitized-gates.json
@@ -418,62 +319,14 @@ spec:
       owner: canonical-core-implementation
     - path: src/internal/core/types.go
       owner: canonical-core-implementation
-    - path: src/internal/host/canonical/binding.go
-      owner: canonical-implementation
-    - path: src/internal/host/canonical/binding_test.go
-      owner: canonical-implementation
-    - path: src/internal/host/canonical/catalog.go
-      owner: canonical-implementation
-    - path: src/internal/host/canonical/catalog_test.go
-      owner: canonical-implementation
-    - path: src/internal/host/canonical/codec.go
-      owner: canonical-implementation
-    - path: src/internal/host/canonical/codec_test.go
-      owner: canonical-implementation
-    - path: src/internal/host/records/README.md
-      owner: canonical-records-implementation
-    - path: src/internal/host/records/records.go
-      owner: canonical-records-implementation
-    - path: src/internal/host/records/records_test.go
-      owner: canonical-records-implementation
-    - path: src/internal/host/assurance/assurance.go
-      owner: canonical-assurance-implementation
-    - path: src/internal/host/assurance/assurance_test.go
-      owner: canonical-assurance-implementation
-    - path: src/internal/host/assurance/README.md
-      owner: canonical-assurance-implementation
     - path: src/internal/host/projectionengine/engine.go
       owner: canonical-projectionengine-implementation
     - path: src/internal/host/projectionengine/engine_test.go
       owner: canonical-projectionengine-implementation
     - path: src/internal/host/projectionengine/README.md
       owner: canonical-projectionengine-implementation
-    - path: src/internal/modules/markdown/markdown.go
-      owner: canonical-markdown-implementation
-    - path: src/internal/modules/markdown/markdown_test.go
-      owner: canonical-markdown-implementation
-    - path: src/internal/modules/markdown/README.md
-      owner: canonical-markdown-implementation
-    - path: src/internal/modules/dotnet/dotnet.go
-      owner: canonical-dotnet-implementation
-    - path: src/internal/modules/dotnet/dotnet_test.go
-      owner: canonical-dotnet-implementation
-    - path: src/internal/modules/dotnet/README.md
-      owner: canonical-dotnet-implementation
-    - path: src/internal/host/canonical_load.go
-      owner: canonical-load-implementation
-    - path: src/internal/host/canonical_load_test.go
-      owner: canonical-load-test-implementation
-    - path: src/internal/host/canonical_projections.go
-      owner: canonical-projections-implementation
-    - path: src/internal/host/canonical_projections_test.go
-      owner: canonical-projections-test-implementation
     - path: src/internal/host/projection_primitives_test.go
       owner: canonical-projection-primitives-test-implementation
-    - path: src/internal/host/cli/canonical.go
-      owner: canonical-implementation
-    - path: src/internal/host/cli/canonical_test.go
-      owner: canonical-test-implementation
     - path: examples/canonical-projection/binding-notes.md
       owner: canonical-projection-fixture
     - path: examples/canonical-projection/canonical.yaml
@@ -506,30 +359,12 @@ spec:
       owner: canonical-projection-fixture
     - path: examples/canonical-projection/modules/markdown/module.yaml
       owner: canonical-projection-fixture
-    - path: src/internal/host/canonical_impact.go
-      owner: canonical-projection-lifecycle
-    - path: src/internal/host/canonical_impact_test.go
-      owner: canonical-projection-lifecycle
-    - path: src/internal/host/canonical_reconciliation.go
-      owner: canonical-projection-lifecycle
-    - path: src/internal/host/canonical_reconciliation_test.go
-      owner: canonical-projection-lifecycle
-    - path: src/internal/host/canonical_verification.go
-      owner: canonical-projection-lifecycle
-    - path: src/harness/examples/canonical-projection_test.go
-      owner: canonical-projection-lifecycle
     - path: examples/canonical-projection/evidence/check.go
-      owner: canonical-projection-lifecycle
-    - path: src/internal/host/canonical_verification_test.go
       owner: canonical-projection-lifecycle
     - path: docs/design/brownfield-representation-adoption.md
       owner: canonical-adoption-design
     - path: docs/strategy/sources/canonical-reset/markitect-coordinator-steer-latest-architecture-clarifications.md
       owner: owner-supplied-architecture-direction
-    - path: src/internal/host/canonical_adoption.go
-      owner: canonical-projection-lifecycle
-    - path: src/internal/host/canonical_adoption_test.go
-      owner: canonical-projection-lifecycle
     - path: src/harness/examples/capability_proof_test.go
       owner: capability-proof-falsification-harness
     - path: examples/capability-ontologies/README.md
@@ -578,8 +413,6 @@ spec:
       owner: capability-ontology-proof-fixture
     - path: examples/capability-ontologies/workflow-responsibility/work-item.yaml
       owner: capability-ontology-proof-fixture
-    - path: src/harness/examples/capability_ontologies_test.go
-      owner: capability-ontology-proof-tests
     - path: examples/operating-model/README.md
       owner: operating-model-proof-fixture
     - path: examples/operating-model/canonical.yaml
@@ -638,8 +471,6 @@ spec:
       owner: operating-model-proof-fixture
     - path: examples/operating-model/negative-specifications.md
       owner: operating-model-proof-fixture
-    - path: src/harness/examples/operating_model_test.go
-      owner: operating-model-proof-tests
     - path: src/internal/host/agentexec/README.md
       owner: bounded-agent-execution-host
     - path: src/internal/host/agentexec/json.go
@@ -650,72 +481,12 @@ spec:
       owner: bounded-agent-execution-host
     - path: src/internal/host/agentexec/types.go
       owner: bounded-agent-execution-host
-    - path: src/internal/host/assurance/run.go
-      owner: recursive-assurance-runner
-    - path: src/internal/host/assurance/run_test.go
-      owner: recursive-assurance-runner-tests
-    - path: src/internal/host/canonical/request_validation.go
-      owner: canonical-controller-validation
-    - path: src/internal/host/canonical_agent_context.go
-      owner: canonical-agent-context
-    - path: src/internal/host/canonical_controller.go
-      owner: canonical-controller
-    - path: src/internal/host/canonical_controller_assurance.go
-      owner: canonical-controller-assurance
-    - path: src/internal/host/canonical_controller_execution.go
-      owner: canonical-controller-execution
-    - path: src/internal/modules/azurepipelines/azurepipelines.go
-      owner: azure-pipelines-projection-module
-    - path: src/internal/modules/azurepipelines/azurepipelines_test.go
-      owner: azure-pipelines-projection-module
-    - path: src/internal/modules/azurepipelines/README.md
-      owner: azure-pipelines-projection-module
-    - path: src/internal/modules/githooks/githooks.go
-      owner: git-hooks-projection-module
-    - path: src/internal/modules/githooks/githooks_test.go
-      owner: git-hooks-projection-module
-    - path: src/internal/host/canonical_scoped_reconciliation.go
-      owner: canonical-scoped-reconciliation
-    - path: src/internal/host/canonical_scoped_test.go
-      owner: canonical-scoped-reconciliation-tests
-    - path: src/internal/host/canonical_scoped_write.go
-      owner: canonical-scoped-write
-    - path: src/internal/host/canonical_selected.go
-      owner: canonical-selected-source
-    - path: src/internal/host/canonical_selected_test.go
-      owner: canonical-selected-source-tests
-    - path: src/internal/host/recordstore/README.md
-      owner: projection-recordstore-host
-    - path: src/internal/host/recordstore/path.go
-      owner: projection-recordstore-host
-    - path: src/internal/host/recordstore/store.go
-      owner: projection-recordstore-host
-    - path: src/internal/host/recordstore/store_test.go
-      owner: projection-recordstore-host
-    - path: src/internal/modules/agentrules/README.md
-      owner: agent-rules-projection-module
-    - path: src/internal/modules/agentrules/agentrules.go
-      owner: agent-rules-projection-module
-    - path: src/internal/modules/agentrules/agentrules_test.go
-      owner: agent-rules-projection-module
-    - path: src/internal/modules/agentrules/claude.go
-      owner: agent-rules-projection-module
-    - path: src/internal/modules/agentrules/codex.go
-      owner: agent-rules-projection-module
     - path: src/internal/tooling/codexrunner/README.md
       owner: codex-runner-tooling
     - path: src/internal/tooling/codexrunner/runner.py
       owner: codex-runner-tooling
     - path: src/internal/tooling/codexrunner/test_runner.py
       owner: codex-runner-tooling
-    - path: src/internal/modules/dotnet/proposal.go
-      owner: canonical-dotnet-proposal-implementation
-    - path: src/internal/modules/dotnet/proposal_test.go
-      owner: canonical-dotnet-proposal-tests
-    - path: src/internal/modules/markdown/proposal.go
-      owner: canonical-markdown-proposal-implementation
-    - path: src/internal/modules/markdown/proposal_test.go
-      owner: canonical-markdown-proposal-tests
     - path: docs/design/canonical-reverse-inference.md
       owner: canonical-reverse-inference-design
     - path: examples/canonical-workflow/README.md
@@ -772,24 +543,6 @@ spec:
       owner: canonical-workflow-proof-fixture
     - path: examples/canonical-workflow/modules/workflow/schema.yaml
       owner: canonical-workflow-proof-fixture
-    - path: src/internal/host/canonical_controller_verification.go
-      owner: canonical-controller-verification
-    - path: src/internal/host/canonical_controller_verification_test.go
-      owner: canonical-controller-verification-tests
-    - path: src/internal/host/canonical_inference.go
-      owner: canonical-inference-implementation
-    - path: src/internal/host/canonical_inference_test.go
-      owner: canonical-inference-tests
-    - path: src/internal/host/canonical_provider_projection.go
-      owner: canonical-provider-projection
-    - path: src/internal/host/canonical_provider_projection_test.go
-      owner: canonical-provider-projection-tests
-    - path: src/internal/host/canonical_controller_dependencies.go
-      owner: canonical-controller-dependency-preparation
-    - path: src/internal/host/canonical_controller_dependencies_test.go
-      owner: canonical-controller-dependency-tests
-    - path: src/internal/host/canonical_controller_test.go
-      owner: canonical-controller-lifecycle-tests
     - path: docs/design/candidate-dependency-execution.md
       owner: candidate-dependency-design
     - path: examples/recursive-assurance/README.md
@@ -860,8 +613,6 @@ spec:
       owner: operating-model-proof-harness
     - path: experiments/operating-model-proof/run.py
       owner: operating-model-proof-harness
-    - path: src/harness/examples/recursive_assurance_test.go
-      owner: recursive-assurance-fixture-tests
     - path: src/internal/host/agentexec/process_linux.go
       owner: agent-process-lifecycle
     - path: src/internal/host/agentexec/process_windows.go
@@ -870,10 +621,6 @@ spec:
       owner: agent-process-lifecycle
     - path: src/internal/host/agentexec/process_other.go
       owner: agent-process-lifecycle
-    - path: src/internal/host/canonical_goal_modeling.go
-      owner: goal-led-modeling-proposal
-    - path: src/internal/host/canonical_goal_modeling_test.go
-      owner: goal-led-modeling-tests
     - path: docs/design/goal-led-modeling.md
       owner: goal-led-modeling-design
     - path: docs/design/projection-evidence-refresh.md
@@ -916,8 +663,6 @@ spec:
       owner: unknown-ontology-fixture
     - path: examples/unknown-ontology/negative-specifications.md
       owner: unknown-ontology-fixture
-    - path: src/harness/examples/unknown_ontology_test.go
-      owner: unknown-ontology-fixture
     - path: experiments/operating-model-proof/protocol-v3.md
       owner: bounded-controller-contract
     - path: experiments/operating-model-proof/runs/c3-absent-01/binding.json
@@ -956,13 +701,7 @@ spec:
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/runs/c3-positive-01/events/propose-eb4a4daf44d34949b34cbfff90a459a8.json
       owner: operating-model-proof-evidence
-    - path: src/internal/host/canonical_target_exclusions.go
-      owner: bounded-controller-contract
-    - path: src/internal/host/canonical_target_exclusions_test.go
-      owner: bounded-controller-contract
     - path: docs/design/scoped-target-exclusions.md
-      owner: bounded-controller-contract
-    - path: src/internal/host/cli/adoption_inference_test.go
       owner: bounded-controller-contract
     - path: src/harness/examples/public_fixture_test.go
       owner: bounded-host-proposal-contract
@@ -1104,10 +843,6 @@ spec:
       owner: canonical-ontology-examples
     - path: examples/capability-ontologies/workflow-responsibility/module.yaml
       owner: canonical-ontology-examples
-    - path: src/internal/host/canonical_workflow_projection.go
-      owner: canonical-projection-host
-    - path: src/internal/host/canonical_workflow_projection_test.go
-      owner: canonical-projection-host
     - path: experiments/operating-model-proof/c12-goal-propose-01.md
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/c12-goal-recommend-01-precall-digest-correction.md
@@ -1122,18 +857,6 @@ spec:
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/runs/c3-positive-01/events/provider-3864ad67fd0b5477c2658a909253e291.json
       owner: operating-model-proof-evidence
-    - path: src/internal/host/canonical_evidence_refresh.go
-      owner: bounded-host-proposal-contract
-    - path: src/internal/host/canonical_evidence_refresh_test.go
-      owner: bounded-host-proposal-contract
-    - path: src/internal/host/cli/canonical_goal.go
-      owner: bounded-host-proposal-contract
-    - path: src/internal/host/cli/canonical_goal_test.go
-      owner: bounded-host-proposal-contract
-    - path: src/internal/host/cli/canonical_refresh.go
-      owner: bounded-host-proposal-contract
-    - path: src/internal/host/cli/canonical_refresh_test.go
-      owner: bounded-host-proposal-contract
     - path: experiments/operating-model-proof/runs/c3-insufficient-03/binding.json
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/runs/c3-insufficient-03/events.jsonl
@@ -1273,16 +996,6 @@ spec:
     - path: examples/module-replacement/original.yaml
       owner: independent-markdown-reference-projection
     - path: examples/module-replacement/replacement.yaml
-      owner: independent-markdown-reference-projection
-    - path: src/internal/host/canonical_markdown_reference.go
-      owner: independent-markdown-reference-projection
-    - path: src/internal/host/canonical_markdown_reference_test.go
-      owner: independent-markdown-reference-projection
-    - path: src/internal/modules/markdownreference/README.md
-      owner: independent-markdown-reference-projection
-    - path: src/internal/modules/markdownreference/markdownreference.go
-      owner: independent-markdown-reference-projection
-    - path: src/internal/modules/markdownreference/markdownreference_test.go
       owner: independent-markdown-reference-projection
     - path: examples/canonical-workflow/canonical-azurepipelines-only.yaml
       owner: immutable-operating-model-proof-records
@@ -1536,10 +1249,6 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/c4-postverify-propose-readonly-01/structured-summary.json
       owner: immutable-operating-model-proof-records
-    - path: src/internal/host/canonical_adoption_store.go
-      owner: canonical-adoption-host
-    - path: src/internal/host/cli/canonical_adoption_durable_test.go
-      owner: canonical-adoption-host
     - path: experiments/operating-model-proof/runs/c4-current-host-propose-wt-01/direct-current-host-observation.json
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/c13-durable-01/result.json
@@ -1610,18 +1319,10 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/c8-orders-owned-drift-control-02/propose-event.json
       owner: immutable-operating-model-proof-records
-    - path: src/internal/host/canonical_controller_coverage.go
-      owner: controller-verifier-observation-coverage
-    - path: src/internal/host/canonical_controller_coverage_test.go
-      owner: controller-verifier-observation-coverage
     - path: docs/design/canonical-verification-refresh.md
-      owner: controller-verification-freshness
-    - path: src/internal/host/canonical_verification_refresh_test.go
       owner: controller-verification-freshness
     - path: experiments/operating-model-proof/protocol-v8.md
       owner: operating-model-proof-protocol
-    - path: src/internal/host/canonical_controller_reuse.go
-      owner: controller-verification-freshness
     - path: experiments/operating-model-proof/runs/c11-original-markdown/assessment.json
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/c11-original-markdown/binding.json
@@ -1718,8 +1419,6 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/c7-unknown-exclusion-01/scope-note.md
       owner: immutable-operating-model-proof-records
-    - path: src/internal/host/canonical_controller_assurance_preflight_test.go
-      owner: controller-source-check-preflight
     - path: experiments/operating-model-proof/runs/windows-gates-4465186/receipt.json
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/c8-orders-auditall-control-02/pre-call-freeze.json
@@ -1734,14 +1433,6 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: docs/design/host-write-identity.md
       owner: host-write-identity
-    - path: src/internal/host/recordstore/rooted.go
-      owner: canonical-record-store
-    - path: src/internal/host/canonical_controller_lease_test.go
-      owner: controller-lease-identity
-    - path: src/internal/host/canonical_controller_lease_linux_test.go
-      owner: controller-lease-identity
-    - path: src/internal/host/canonical_controller_lease_windows_test.go
-      owner: controller-lease-identity
 
     - path: experiments/operating-model-proof/runs/gates-e788fc0/README.md
       owner: immutable-operating-model-proof-records
