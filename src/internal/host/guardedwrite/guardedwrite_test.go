@@ -278,7 +278,7 @@ func TestGuardedWriteRejectsBranchSwitch(t *testing.T) {
 
 func TestGuardedWriteRejectsUnsafeAndUnselectedPaths(t *testing.T) {
 	root := testRepo(t, "feature/guarded")
-	for _, selected := range [][]string{{"../escape"}, {"a.txt", "A.txt"}, {`nested\\file.txt`}} {
+	for _, selected := range [][]string{{"../escape"}, {"a.txt", "A.txt"}, {`nested\\file.txt`}, {"GIT~1/hooks/pre-commit"}, {"docs/git~1/config"}} {
 		if _, err := CaptureFiles(root, selected); err == nil {
 			t.Fatalf("CaptureFiles(%q) unexpectedly succeeded", selected)
 		}
