@@ -483,8 +483,11 @@ func projectRevisions(projects []*projectwork.Project) []string {
 // EnsureAcceptedHistory reconciles the bounded first-parent history ending at
 // targetRevision. The first valid committed project model is the baseline;
 // each subsequent canonical model-digest change gets one immutable briefing.
-// Working-tree state is never inspected or accepted. Git commit identity is
-// retained only as unauthenticated source metadata.
+// A cursor left on another branch is re-seated on the last commit it shares
+// with the active first-parent line when no briefing lies after that fork;
+// otherwise the history is ambiguous and the call fails. Working-tree state is
+// never inspected or accepted. Git commit identity is retained only as
+// unauthenticated source metadata.
 func EnsureAcceptedHistory(root, targetRevision string) (EnsureReceipt, error) {
 	var receipt EnsureReceipt
 	if !fullObjectID(targetRevision) {
@@ -515,6 +518,15 @@ func EnsureAcceptedHistory(root, targetRevision string) (EnsureReceipt, error) {
 	}
 	if state.History == nil && len(state.Briefings) > 0 {
 		return receipt, fmt.Errorf("existing briefing entries have no accepted-history cursor and cannot be safely rebased: %w", ErrAmbiguousHistory)
+	}
+	if state.History != nil && indexOf(activeRevisions, state.History.Revision) < 0 {
+		if _, err = reseatCursor(root, state, digest, activeRevisions); err != nil {
+			return receipt, err
+		}
+		state, digest, err = Read(root)
+		if err != nil {
+			return receipt, err
+		}
 	}
 	if err := validateAcceptedPrefix(state, projects); err != nil {
 		if state.History == nil || indexOf(activeRevisions, state.History.Revision) <= targetIndex {
@@ -731,6 +743,52 @@ func validateAcceptedPrefix(state Store, projects []*projectwork.Project) error 
 		}
 	}
 	return nil
+}
+
+// reseatCursor moves a cursor that another branch left off the active
+// first-parent line back to the last commit both lines share. It refuses when
+// a stored briefing lies after that fork: that model change was accepted only
+// on the other branch, so the active line's accepted history is ambiguous.
+func reseatCursor(root string, state Store, expectedDigest string, activeRevisions []string) (string, error) {
+	cursorProjects, err := acceptedProjects(root, state.History.Revision)
+	if err != nil {
+		return "", err
+	}
+	if err := validateAcceptedPrefix(state, cursorProjects); err != nil {
+		return "", err
+	}
+	active := make(map[string]bool, len(activeRevisions))
+	for _, revision := range activeRevisions {
+		active[revision] = true
+	}
+	fork := -1
+	for i, project := range cursorProjects {
+		if !active[project.Revision] {
+			break
+		}
+		fork = i
+	}
+	if fork < 0 {
+		return "", ErrAmbiguousHistory
+	}
+	shared := projectRevisions(cursorProjects[:fork+1])
+	for _, bundle := range state.Briefings {
+		if indexOf(shared, bundle.Revision) < 0 {
+			return "", fmt.Errorf("model change at %s was accepted off the active first-parent branch: %w", bundle.Revision, ErrAmbiguousHistory)
+		}
+	}
+	if cursorProjects[fork].Model.Digest != state.History.ModelDigest {
+		return "", ErrAmbiguousHistory
+	}
+	cursor := *state.History
+	return update(root, expectedDigest, func(current *Store) error {
+		if current.History == nil || *current.History != cursor {
+			return ErrStaleStore
+		}
+		current.History.Revision = cursorProjects[fork].Revision
+		current.History.ModelDigest = cursorProjects[fork].Model.Digest
+		return nil
+	})
 }
 
 func advanceCursor(root string, previous, current *projectwork.Project, expectedDigest string) (string, error) {
