@@ -7,6 +7,9 @@
 Secrets are only checked for existence and mounted read-only by path: the Codex login
 at /run/secrets/codex-auth.json, the Claude Code token at /run/secrets/claude-token.
 Their contents are never read, printed, hashed or passed as an environment variable.
+
+The container gets the normalized manifest (defaults filled in, Markitect's sourceRepo
+as an absolute path and its full commit); host.json records it with the host platform.
 """
 from __future__ import annotations
 
@@ -16,6 +19,7 @@ import hashlib
 import io
 import json
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -24,8 +28,8 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import cases
 from . import manifest as manifest_module
-from .lifecycle import LifecycleError, load_station_plan
 from .runner import overhead_bound_seconds
 
 ROOT = Path(__file__).resolve().parent.parent  # experiments/case-playground
@@ -77,12 +81,19 @@ def _retryable(out: Path) -> bool:
 
 
 def station_count(manifest: dict) -> int:
-    """Number of stations in the case's STATIONS.json (the runner checks the plan again)."""
-    case = manifest["case"]
+    """Stations the run plans: the manifest's `stations` (the normalized manifest always
+    has it), else every station of the case (the runner checks the plan again)."""
+    if manifest.get("stations"):
+        return manifest["stations"]
     try:
-        return len(load_station_plan(ROOT / "cases" / case / "STATIONS.json", case))
-    except LifecycleError as exc:
-        raise HostError(f"case {case} has no valid station plan: {exc}") from exc
+        return cases.get(manifest["case"], ROOT).stations
+    except cases.CaseError as exc:
+        raise HostError(str(exc)) from exc
+
+
+def host_platform() -> dict[str, str]:
+    """The host's OS and architecture; runs from different platforms are never paired."""
+    return {"system": platform.system(), "machine": platform.machine()}
 
 
 def host_timeout(manifest: dict, stations: int) -> int:
@@ -189,6 +200,20 @@ def build_image(manifest: dict, log_path: Path) -> str:
     return _capture(["docker", "image", "inspect", "--format", "{{.Id}}", tag])
 
 
+def resolve_markitect(product: dict) -> dict:
+    """The manifest's Markitect block with sourceRepo as an absolute path and the full commit."""
+    source = Path(product["sourceRepo"]).resolve()
+    if not source.is_dir():
+        raise HostError(f"markitect.sourceRepo is not a folder: {source}")
+    try:
+        commit = _capture(["git", "-C", str(source), "rev-parse", "--verify", "--quiet",
+                           f"{product['commit']}^{{commit}}"])
+    except HostError as exc:
+        raise HostError(f"markitect.commit {product['commit']} is not a commit in {source} "
+                        "(is it a Git checkout, and is the commit fetched?)") from exc
+    return {**product, "sourceRepo": str(source), "commit": commit}
+
+
 def build_markitect(product: dict, target: Path) -> dict:
     """Build a static Linux binary from sourceRepo at the pinned commit."""
     if shutil.which("go") is None:
@@ -216,12 +241,13 @@ def build_markitect(product: dict, target: Path) -> dict:
     return {"commit": commit, "sha256": hashlib.sha256(target.read_bytes()).hexdigest(), "go": go_version}
 
 
-def stage_inputs(manifest: dict, manifest_path: Path, inputs: Path) -> None:
-    """Copy what the container needs to `inputs` (mounted read-only at /in).
+def stage_inputs(manifest: dict, inputs: Path) -> None:
+    """Copy what the container needs to `inputs` (mounted read-only at /in), and the
+    normalized manifest as `manifest.json`.
 
     The agent can read /in, so only this run's case and the files the code uses are
-    staged: never the other case, the other arm's method files or notes for people
-    (methods/markitect/README.md).
+    staged: never another case (or its public checks), the other arm's method files or
+    notes for people (methods/markitect/README.md).
     """
     case = manifest["case"]
     folders = ["playground", "cases/common", f"cases/{case}"]
@@ -238,12 +264,12 @@ def stage_inputs(manifest: dict, manifest_path: Path, inputs: Path) -> None:
     for name in files:
         (inputs / name).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / name, inputs / name)
-    shutil.copyfile(manifest_path, inputs / "manifest.json")
+    _write_json(inputs / "manifest.json", manifest)
 
 
 def docker_run_argv(manifest: dict, *, name: str, image: str, image_id: str, inputs: Path,
                     results: Path, auth: Path | None, markitect: dict | None,
-                    claude_token: Path | None = None) -> list[str]:
+                    claude_token: Path | None = None, host_os: dict | None = None) -> list[str]:
     limits = manifest["container"]
     argv = ["docker", "run", "--detach", "--name", name, "--label", LABEL, "--init",
             *SECURITY_OPTS,
@@ -256,6 +282,9 @@ def docker_run_argv(manifest: dict, *, name: str, image: str, image_id: str, inp
     if claude_token is not None:  # the runner hands it only to the claude process
         argv += ["--mount", _mount(claude_token, CLAUDE_TOKEN_TARGET, readonly=True)]
     argv += ["--env", f"MPG_IMAGE_ID={image_id}"]
+    if host_os:  # the runner records it; inside, platform.system() would name the container
+        argv += ["--env", f"MPG_HOST_SYSTEM={host_os['system']}",
+                 "--env", f"MPG_HOST_MACHINE={host_os['machine']}"]
     if markitect:  # the resolved full commit and binary hash built on the host
         argv += ["--env", f"MPG_MARKITECT_COMMIT={markitect['commit']}",
                  "--env", f"MPG_MARKITECT_SHA256={markitect['sha256']}"]
@@ -316,7 +345,7 @@ def _write_json(path: Path, value: dict) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
-    manifest = manifest_module.load(Path(args.manifest))
+    manifest = manifest_module.load(Path(args.manifest), playground=ROOT)
     out = Path(args.out or Path.home() / "markitect-playground-runs" / manifest["id"]).resolve()
     if out.exists():
         if not _retryable(out):
@@ -341,8 +370,10 @@ def run(args: argparse.Namespace) -> int:
             raise HostError(f"Claude token file not found: {token}")
         token = token.resolve()
     stations = station_count(manifest)
-    if manifest["method"] == "markitect" and shutil.which("go") is None:
-        raise HostError("Go is required to build the Markitect binary (go not on PATH)")
+    if manifest["method"] == "markitect":
+        if shutil.which("go") is None:
+            raise HostError("Go is required to build the Markitect binary (go not on PATH)")
+        manifest = {**manifest, "markitect": resolve_markitect(manifest["markitect"])}
 
     inputs, results = out / "inputs", out / "results"
     results.mkdir(parents=True)
@@ -352,6 +383,7 @@ def run(args: argparse.Namespace) -> int:
                     "image": {"tag": image_tag(manifest), "id": None}, "dockerVersion": None,
                     "markitect": None, "hostStartedAt": _now(), "startedAt": None,
                     "endedAt": None, "hostTimeoutSeconds": timeout, "stations": stations,
+                    "hostPlatform": host_platform(),
                     "secrets": {"codexAuth": auth is not None, "claudeToken": token is not None},
                     "containerLaunched": False,
                     "containerExitCode": None, "error": None}
@@ -363,13 +395,14 @@ def run(args: argparse.Namespace) -> int:
                             "or use a new manifest id")
         print(f"building image {record['image']['tag']} ...", flush=True)
         record["image"]["id"] = build_image(manifest, out / "image-build.log")
-        stage_inputs(manifest, Path(args.manifest), inputs)
+        stage_inputs(manifest, inputs)
         if manifest["method"] == "markitect":
             print("building markitect binary ...", flush=True)
             record["markitect"] = build_markitect(manifest["markitect"], inputs / "bin" / "markitect")
         argv = docker_run_argv(manifest, name=name, image=record["image"]["tag"],
                                image_id=record["image"]["id"], inputs=inputs, results=results,
-                               auth=auth, markitect=record["markitect"], claude_token=token)
+                               auth=auth, markitect=record["markitect"], claude_token=token,
+                               host_os=record["hostPlatform"])
         record["dockerRun"] = argv
         record["startedAt"] = _now()
         # From here on the container may exist, even if `docker run` is interrupted or fails.

@@ -4,7 +4,8 @@
 
 Runs `python -m playground host run` for a fake-agent manifest (default
 examples/fake-roombook.json; `fake` stands in for Codex, `fake-claude` for Claude Code)
-and checks the end-to-end contract for every station of the case's STATIONS.json. A
+and checks the end-to-end contract for every station the run plans (the manifest's
+`stations`, default every station of the case's STATIONS.json). A
 `fake-claude` run gets a throwaway token file, which must reach the fake agent and must
 not survive anywhere in the run folder. Needs Docker (and Go for a Markitect manifest);
 makes no model call. Not picked up by unittest discovery.
@@ -13,6 +14,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import platform
+import re
 import secrets
 import shutil
 import subprocess
@@ -42,7 +45,7 @@ def main() -> int:
     if kind not in FAKE_KINDS:
         parser.error("the smoke only runs fake-agent manifests (no model calls)")
     plan = json.loads((ROOT / "cases" / manifest["case"] / "STATIONS.json").read_text(encoding="utf-8"))
-    count = len(plan["stations"])
+    count = manifest.get("stations") or len(plan["stations"])
     temp = Path(tempfile.mkdtemp(prefix="mpg-smoke-"))
     out = temp / "run"
     command = [sys.executable, "-B", "-m", "playground", "host", "run", "--manifest", str(manifest_path),
@@ -80,8 +83,9 @@ def main() -> int:
               "final assessment ran markitect project check")
         check(bool(report.get("roles")), f"Markitect roles recorded from runtime.yaml ({report.get('roles')})")
     stations = report.get("stations") or []
-    check(len(stations) == count and (report.get("totals") or {}).get("stationsPlanned") == count,
-          f"{count} stations ran (got {len(stations)})")
+    check(len(stations) == count and (report.get("totals") or {}).get("stationsPlanned") == count
+          and (report.get("fairness") or {}).get("stationsPlanned") == count,
+          f"{count} stations ran and are a fairness field (got {len(stations)})")
     commits = [s.get("newMainCommits") for s in stations]
     check(len(commits) == count and all(isinstance(c, int) and c > 0 for c in commits),
           f"every station added commits to main {commits}")
@@ -99,6 +103,14 @@ def main() -> int:
     check(host_record.get("status") == "completed", "host.json records status completed")
     image = (host_record.get("image") or {}).get("tag") or ""
     check("-claude-" in image, f"image tag names both CLI versions ({image})")
+    here = {"system": platform.system(), "machine": platform.machine()}
+    check(host_record.get("hostPlatform") == here and (report.get("fairness") or {}).get("hostPlatform") == here,
+          f"host.json and the report's fairness record the host platform {here}")
+    if manifest.get("method") == "markitect":
+        product = (host_record.get("manifest") or {}).get("markitect") or {}
+        check(Path(product.get("sourceRepo") or "").is_absolute()
+              and re.fullmatch(r"[0-9a-f]{40}", product.get("commit") or "") is not None,
+              f"host.json records sourceRepo as an absolute path and the full commit ({product})")
     if token is not None:
         events = out / "results" / "stations" / "S1" / "events.jsonl"
         text = events.read_text(encoding="utf-8") if events.is_file() else ""

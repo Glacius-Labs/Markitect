@@ -83,6 +83,8 @@ class RunnerTestCase(unittest.TestCase):
         in_dir = self.root / "in"
         shutil.copytree(PLAYGROUND / "cases", in_dir / "cases", ignore=shutil.ignore_patterns("readinglog2"))
         shutil.copytree(PLAYGROUND / "cases" / "roombook", in_dir / "cases" / "readinglog2")
+        checks = in_dir / "cases" / "readinglog2" / "checks"
+        (checks / "roombook.py").rename(checks / "readinglog2.py")
         shutil.copytree(PLAYGROUND / "methods" / "conventional", in_dir / "methods" / "conventional")
         ids = iter(f"X{i:02d}" for i in range(1, 30))
         plan = {"schema": 1, "case": "readinglog2", "stations": [
@@ -146,7 +148,9 @@ class FakeTrajectoryTests(RunnerTestCase):
         self.assertEqual(result["totals"]["tokensAllSessions"], {"input": 5200, "cachedInput": 3200, "output": 640})
         self.assertTrue((self.out / "evidence" / "codex-sessions").is_dir())
         self.assertEqual(result["classification"], {"class": "none", "reason": "completed S1-S4", "signals": []})
-        self.assertEqual((state["stationsPlanned"], state["stopCategory"]), (4, None))
+        self.assertEqual((state["stationsPlanned"], state["caseStations"], state["stopCategory"]), (4, 4, None))
+        self.assertIsNone(state["hostPlatform"])  # only the host knows it; it passes it in
+        self.assertEqual((result["fairness"]["stationsPlanned"], result["fairness"]["hostPlatform"]), (4, None))
         self.assertEqual(result["stratum"], "outer=fake")
         self.assertFalse((self.work / "roombook" / "CLAUDE.md").exists())
         self.assertIsNotNone(result["final"])
@@ -335,6 +339,28 @@ class SixStationTests(RunnerTestCase):
         self.assertEqual((result["totals"]["stationsPlanned"], result["totals"]["stationsRun"]), (6, 6))
         self.assertEqual(result["classification"]["reason"], "completed S1-S6")
         self.assertIn("6 of 6 ran", (self.out / "report.md").read_text(encoding="utf-8"))
+
+
+class StationSelectionTests(RunnerTestCase):
+    def test_the_run_takes_the_first_stations_only(self):
+        host_os = {"MPG_HOST_SYSTEM": "Linux", "MPG_HOST_MACHINE": "x86_64"}
+        with patch.dict(os.environ, host_os):
+            code = self.run_trajectory(make_manifest(stations=2))
+        error = self.out / "runner-error.txt"
+        self.assertEqual(code, 0, error.read_text(encoding="utf-8") if error.exists() else "")
+        state = read_json(self.out / "runner.json")
+        self.assertEqual((state["stationsPlanned"], state["caseStations"], state["stationsRun"]), (2, 4, 2))
+        self.assertEqual(state["hostPlatform"], {"system": "Linux", "machine": "x86_64"})
+        self.assertEqual(sorted(path.name for path in (self.out / "stations").iterdir()), ["S1", "S2"])
+        self.assertEqual(read_json(self.out / "audit" / "final-freeze" / "snapshot.json")["freezeReason"],
+                         "completed S1-S2")
+        self.assertEqual(read_json(self.out / "final" / "final.json")["checks"]["station"], 2)
+        result = read_json(self.out / "report.json")
+        self.assertEqual((result["fairness"]["stationsPlanned"], result["fairness"]["hostPlatform"]),
+                         (2, {"system": "Linux", "machine": "x86_64"}))
+        text = (self.out / "report.md").read_text(encoding="utf-8")
+        self.assertIn("2 of 2 ran (the first 2 of the case's 4)", text)
+        self.assertIn("stations 2; host Linux x86_64", text)
 
 
 class StopRuleTests(unittest.TestCase):

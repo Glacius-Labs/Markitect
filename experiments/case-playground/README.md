@@ -108,19 +108,19 @@ its path.
 
 The last line reads `smoke: passed` when every check above it is `[ok]`:
 
-- the host exited 0, every wave in the case's `STATIONS.json` ran and added commits to
-  `main`, and a captured `main` holds `FAKE_S1.md` to `FAKE_S<n>.md`;
+- the host exited 0, every planned wave ran and added commits to `main`, and a captured
+  `main` holds `FAKE_S1.md` to `FAKE_S<n>.md`;
 - the report exists, the setup is `ready`, the run is classified `none`, and the final
   assessment ran the public checks of the last wave;
 - token counts from the session records match the fake's, and leftover agent processes
   were killed after every wave;
-- `host.json` says `completed`, the image tag names both CLI versions, and no labelled
-  container is left;
+- `host.json` says `completed` and names the host platform, the image tag names both CLI
+  versions, and no labelled container is left;
 - `fake`: the agent could not open the results folder in any wave;
 - `fake-claude`: a throwaway token reached the agent, was redacted where the fake printed
   it and is nowhere in the run folder; the `CLAUDE.md` router was added;
-- Markitect: `markitect project check` ran at the end and the roles were read from
-  `.markitect/runtime.yaml`.
+- Markitect: `markitect project check` ran at the end, the roles were read from
+  `.markitect/runtime.yaml`, and `host.json` holds the resolved `sourceRepo` and commit.
 
 It says nothing about quality. The fake agent only writes `FAKE_S<n>.md`, so the public
 checks in its report fail. That is expected.
@@ -128,21 +128,21 @@ checks in its report fail. That is expected.
 ### Smoke the Markitect arm
 
 Save a manifest like this outside the checkout, for example as
-`~/fake-markitect-roombook.json`. Set `sourceRepo` to the absolute path of your
-Markitect checkout (no `~`) and `commit` to a commit in it
-(`git -C ~/Markitect rev-parse --short HEAD`):
+`~/fake-markitect-roombook.json`, with `commit` set to a commit of this checkout
+(`git rev-parse --short HEAD`), from which the binary is built. Two waves are enough:
 
 ```json
 {
   "schema": 1,
   "id": "fake-markitect-roombook-001",
   "case": "roombook",
+  "stations": 2,
   "method": "markitect",
   "agent": {"kind": "fake", "codexVersion": "0.162.0", "model": "gpt-6-luna",
             "effort": "high", "maxSubagents": 3},
   "limits": {"stationSeconds": 120, "totalSeconds": 600},
   "container": {"cpus": 2, "memory": "2g", "pidsLimit": 512},
-  "markitect": {"sourceRepo": "/home/you/Markitect", "commit": "3adf1d2f"}
+  "markitect": {"commit": "3adf1d2f"}
 }
 ```
 
@@ -195,6 +195,7 @@ repeat this, remove the run folder and the `compare-*.md` file next to it; a rep
 |---|---|
 | `playground/__main__.py` | Entry point: `run` (inside the run container), `host`, `assess`, `compare`. |
 | `playground/manifest.py` | Loads and validates a schema-1 manifest; the only validator. |
+| `playground/cases.py` | Finds the cases: every valid folder in `cases/` (see [Cases](#cases)). |
 | `playground/host.py` | Host side of a run: image and Markitect binary, staging, container start and wait, safety timeout, hand-back. Also `host clean`. |
 | `playground/runner.py` | Inside the container: one trajectory from agent home and setup through waves S1 to SN to freeze, final assessment and report. Counts tokens, records why a run stopped. |
 | `playground/lifecycle.py` | The case repository: prepare, snapshot, advance (release the next wave), freeze. Git on the agent's repo runs as its owner, with hooks off. Manual CLI: `python3 -m playground.lifecycle`. |
@@ -207,7 +208,7 @@ repeat this, remove the run folder and the `compare-*.md` file next to it; a rep
 | `playground/reviewers.py` | Codex and Claude reviewers: prompt, input bundle, commands, schema validation, agreement. |
 | `playground/compare.py` | Side-by-side comparison of two assessed runs after a fairness check. |
 | `container/Dockerfile` | The image: `node:22-bookworm-slim`, Python, Git, bubblewrap, Codex CLI and Claude Code at pinned versions, user `agent` (uid 1000). |
-| `cases/` | `task-prompt.txt` (the one prompt); `common/` (`AGENTS.md`, `QUALITY.md`, public checks `checks/acceptance.py`), seeded into every repository; one folder per case with `README.md`, `BACKLOG.md`, `STATIONS.json` and, for brownfield cases, starting code. |
+| `cases/` | `task-prompt.txt` (the one prompt); `common/` (`AGENTS.md`, `QUALITY.md`, the public checks' driver `checks/acceptance.py`), seeded into every repository; one folder per case with `README.md`, `BACKLOG.md`, `STATIONS.json`, its public checks `checks/<case>.py` and, for brownfield cases, starting code. |
 | `methods/` | `conventional/AGENTS.fragment.md`, appended to `AGENTS.md`; `markitect/README.md`, notes for people. |
 | `evaluation/` | Hidden: `config.json`, reviewer prompt and schema in `common/`, ground truth, holdouts, mutants, reference and `validate.py` in `readinglog2/`. Never staged into a run. |
 | `examples/` | Manifests: real arms (`conventional-readinglog.json`, `markitect-readinglog.json`) and fakes (`fake-roombook.json`, `fake-readinglog2.json`, `fake-claude-roombook.json`). |
@@ -221,7 +222,7 @@ HOST  python3 -m playground host run --manifest M.json
   |  docker build   -> image markitect-playground:codex-<v>-claude-<v>
   |  Markitect arm  -> go build of markitect.commit
   |  stage <out>/inputs: code, cases/common, cases/<case>, prompt,
-  |                      Conventional fragment or binary, fake agent, manifest
+  |                      Conventional fragment or binary, fake agent, normalized manifest
   v
 RUN CONTAINER mpg-<id>    /in = inputs (read-only)    /out = <out>/results
   |  agent home: copy of the Codex login; Claude token only in claude's environment
@@ -253,7 +254,8 @@ HOST  python3 -m playground compare RUN_A RUN_B  -> fairness check -> comparison
 What the agent sees:
 
 - It works in `/work/<case>` as user `agent` and can read `/in`. The public checks are
-  part of the seed (`checks/acceptance.py`), so it can run them itself.
+  part of the seed (`checks/acceptance.py` and `checks/<case>.py`), so it can run them
+  itself.
 - `/out` is root-only while the run lasts: no check results, snapshots or reports. It
   never sees the other case, the other arm's method files, `evaluation/` or this page.
 - Codex runs with `--dangerously-bypass-approvals-and-sandbox`, Claude Code with
@@ -273,8 +275,9 @@ after `totalSeconds` plus the runner's worst-case own work, as a safety net.
 ## Running real arms
 
 1. Copy an example manifest and give it a new `id`. For Markitect set
-   `markitect.sourceRepo` to your checkout; the examples hold a placeholder path. For
-   the six-wave change series set `case` to `readinglog2`.
+   `markitect.commit` to the product commit to test; it is built from this checkout
+   unless `markitect.sourceRepo` names another. For the six-wave change series set
+   `case` to `readinglog2`.
 2. Run the two arms of a pair one after the other, never in parallel (see
    [Caveats](#caveats)). Alternate which arm goes first from pair to pair. Keep both run
    folders; `host.json` records when each ran.
@@ -310,7 +313,8 @@ Unknown fields are rejected at every level.
 |---|---|---|---|
 | `schema` | `1` | required | Manifest schema. |
 | `id` | `[a-z0-9][a-z0-9-]{0,62}` | required | Names the container `mpg-<id>`, the default run folder and the assessment container `mpg-assess-<id>`. |
-| `case` | `roombook`, `readinglog`, `readinglog2` | required | Folder `cases/<case>/`. |
+| `case` | a folder in `cases/` ([Cases](#cases)) | required | Folder `cases/<case>/`. |
+| `stations` | positive integer, at most the case's waves | all waves | The run gets the first N waves only (waves build on each other). A fairness field. |
 | `method` | `conventional`, `markitect` | required | The arm. |
 | `agent.kind` | `codex`, `claude`, `fake` (for Codex), `fake-claude` (for Claude Code) | required | Outer agent. |
 | `agent.codexVersion` | `[0-9][0-9A-Za-z.-]{0,55}` | required | `@openai/codex` in the image. Always needed: Codex also runs Markitect's inner roles. |
@@ -319,12 +323,12 @@ Unknown fields are rejected at every level.
 | `agent.effort` | `[a-z]{1,32}` | required | Outer reasoning effort. |
 | `agent.maxSubagents` | positive integer | required | Codex `agents.max_concurrent_threads_per_session`. Does not limit Claude Code (recorded only). |
 | `limits.stationSeconds` | positive integer | required | Agent time limit per wave. |
-| `limits.totalSeconds` | positive integer | required | Agent time budget for all waves. Also sets Markitect's cost cap and the host's safety timeout. |
+| `limits.totalSeconds` | positive integer | required | Agent time budget for all waves. Also sets the host's safety timeout and Markitect's cost cap (x 50,000 tokens, at most 10^12). |
 | `container.cpus` | positive number | `4` | `docker run --cpus`. |
 | `container.memory` | `[1-9][0-9]*[bkmg]?` | `8g` | `docker run --memory`. |
 | `container.pidsLimit` | positive integer | `2048` | `docker run --pids-limit`. |
 | `markitect` | object | required for `markitect`, forbidden otherwise | The product to install. |
-| `markitect.sourceRepo` | non-empty path | required | Local Markitect checkout to build from. |
+| `markitect.sourceRepo` | non-empty path | the checkout holding the playground | Local Markitect checkout to build from; recorded as an absolute path. |
 | `markitect.commit` | 7 to 40 lowercase hex | required | Commit to build; the full hash is recorded. |
 | `markitect.innerModel` | like `agent.model` | `agent.model`; required for Claude kinds | Model of Markitect's inner roles. |
 | `markitect.innerEffort` | like `agent.effort` | `agent.effort`; required for Claude kinds | Effort of Markitect's inner roles. |
@@ -383,47 +387,25 @@ Unknown fields are rejected at every level.
 | `assess` | 0 written; 2 assessment error (`assessment/assess-error.txt`) or host error; 124 and 130 as above. |
 | `compare` | 0 written; 2 unreadable report or fairness mismatch. |
 
-### Hard-coded today
-
-| What | Where | Value |
-|---|---|---|
-| Case list | `playground/manifest.py` `CASES`, `cases/common/checks/acceptance.py` `STATION_COUNTS` | `roombook`, `readinglog`, `readinglog2`. A new case needs both and its folder. |
-| Image base | `container/Dockerfile` | `node:22-bookworm-slim`. Debian packages are not pinned; only the two CLIs are. |
-| Default Claude Code version | `manifest.py` `DEFAULT_CLAUDE_VERSION`, Dockerfile `ARG` | `2.1.296`, when a Codex manifest leaves `claudeVersion` out. |
-| Reviewer defaults | `playground/reviewers.py`, `playground/evaluate.py` | Codex and Claude, both on by default; fallbacks 2,700 s, 100,000 bytes, 600 s; Claude tools `Read`, `Grep`, `Glob`; Codex sandbox `read-only`. |
-| Cost weights | `playground/methods.py` | 1,000,000 micro-units per million input and output tokens, so cost equals tokens; cap `totalSeconds` x 50,000 (at most 10^12). |
-| Markitect setup sequence | `playground/methods.py` | Branch `markitect-setup`; `project init`, `onboard`, `setup`, each previewed, then written with the digest; commit; fast-forward; `project check`; MCP server `markitect project mcp --repo /work/<case>`. See [methods/markitect/README.md](methods/markitect/README.md). |
-| Inner-role provider | `playground/methods.py` | Always `project setup --provider codex` with the image's native Codex binary; onboarding for `codex`, or `both` behind Claude Code. |
-| Prompt | `cases/task-prompt.txt` | One German sentence for every case, method and wave. |
-| Also fixed | various | Markitect binary for linux/amd64 only; step timeouts (checks 600 s, own tests 900 s, product steps 600 s, Git steps 120 s); `seccomp=unconfined` for run and assessment containers; default run folder; diff categories; text patterns that mark an environment failure. |
-
 ## Results
 
 ### Run folder
 
 | Path | Content |
 |---|---|
-| `host.json` | Host record: manifest, status, image tag and ID, Docker version, Markitect commit, binary SHA-256 and Go version, times, `docker run` arguments, exit code, `handBack`. |
-| `image-build.log`, `container.log` | Build and container output. |
-| `inputs/` | What was mounted at `/in`. |
 | `results/report.md`, `report.json` | **Start here.** One row per wave, setup, final assessment, classification, fairness fields, versions. |
-| `results/runner.json` | Status, stop reason and category, versions, whether Codex rewrote its login, token redactions. |
-| `results/runner-error.txt` | Traceback, only after a runner error. |
-| `results/setup/` | `setup.json` and the output of every setup command. |
-| `results/stations/S<n>/` | `events.jsonl`, `stderr.log`, `last-message.txt`, `agent.json` (exit, timeout, session, tokens, commits), `checks.json`; `outside/` with work outside the repository (Markitect workspaces, extra worktrees); `*-error.txt` for harness errors. |
-| `results/final/` | `final.json`: public checks of the last wave, own tests (recorded, not judged), Markitect conformance. |
-| `results/audit/` | `run.json` (seed and wave plan), `snapshot-S<n>/` (`history.bundle`, `immutable-main/`, `worktree/`, `actor-state/`, `snapshot.json`), `transitions/`, `final-freeze/`. |
-| `results/evidence/` | Codex session records, Claude Code transcripts, Markitect's cache, when present. |
+| `host.json`, `image-build.log`, `container.log`, `inputs/` | Host record (normalized manifest, status, host platform, image, Docker version, Markitect build, times, `docker run` arguments, exit code, `handBack`); build and container output; what was mounted at `/in`. |
+| `results/runner.json`, `runner-error.txt` | Status, stop reason and category, versions, login rewrite, token redactions; a traceback after a runner error. |
+| `results/setup/`, `stations/S<n>/`, `final/` | Setup command output; per wave the agent's events, output, `agent.json`, `checks.json` and work outside the repository; the last wave's public checks, own tests and Markitect conformance. |
+| `results/audit/`, `evidence/` | Seed and wave plan (`run.json`), per-wave snapshots, the final freeze; session records, transcripts and Markitect's cache. |
 
 ### Assessment folder
 
 | Path under `<run>/assessment/` | Content |
 |---|---|
-| `report.md`, `report.json` | Per wave: public checks (again and during the run), holdouts, diff profile, findings per reviewer and their agreement, obligations, escalations, class. Plus evaluation commit and file hashes, reviewer models and CLI versions, image, blinding note. |
-| `product-findings.md` | Markitect setup steps, failed or unfinished MCP calls, failed product commands, with exact error text. |
-| `stations/S<n>/` | `assessment.json`, `checks/`, `holdouts/holdouts.json`, `wave.diff`, `review-input/` (what the reviewers got), `reviewers/<name>/review.json` and raw output. |
-| `host.json`, `container.log`, `inputs/` | Assessment host record (with `handBack`), container output, staged code and evaluation files. |
-| `assess-error.txt` | Traceback, only when the assessment failed. |
+| `report.md`, `report.json`, `product-findings.md` | Per wave: public checks, holdouts, diff profile, reviewer findings and agreement, obligations, escalations, class; evaluation commit and file hashes, reviewer models, image. Product findings: setup steps, failed MCP calls and product commands, with exact error text. |
+| `stations/S<n>/` | Checks, holdouts, `wave.diff`, what the reviewers got and their answers. |
+| `host.json`, `container.log`, `inputs/`, `assess-error.txt` | Host record, container output, staged code and evaluation files; a traceback when the assessment failed. |
 
 ### Outcome classes
 
@@ -464,6 +446,12 @@ cases the host warns, and the folder stays owned by root.
 | `roombook` | 4 | R01 to R12 | Greenfield room reservation CLI, no starting code. Smoke tests. |
 | `readinglog` | 4 | B01 to B12 | Brownfield reading log with code and tests. The shakedown pair. |
 | `readinglog2` | 6 | B01 to B15 | Brownfield change series with hidden evaluation files. |
+
+To add a case, add a folder `cases/<name>/` (name like a manifest `id`, not `common` or
+`acceptance`) with `README.md`, `BACKLOG.md`, a `STATIONS.json` whose `case` is `<name>`,
+its public checks `checks/<name>.py` (a function `checks(ctx)`, run by the shared
+`cases/common/checks/acceptance.py`) and any starting code; `evaluation/<name>/` is
+optional. Any other folder in `cases/` is an error that names the folder and the rule.
 
 S3 is a team wave in every case (`requiresTeam`). `readinglog2` starts with three
 cross-cutting rules in its public README (R1 audit log, R2 error contract, R3 text
@@ -544,13 +532,15 @@ python3 -I -B holdout.py --repo DIR --station N [--deadline SECONDS]
 `compare` refuses two runs unless these match, or `--allow-mismatch` is given:
 
 - case and outer provider;
-- the run report's fairness fields: Codex and Claude Code versions, image ID, model,
-  effort, subagent limit, time limits, container size;
+- the run report's fairness fields: stations, host platform, Codex and Claude Code
+  versions, image ID, model, effort, subagent limit, time limits, container size;
 - the SHA-256 of every evaluation file;
 - each reviewer's model, effort and CLI version.
 
-It does not compare the Markitect commit, the inner model, the evaluation commit or the
-host platform. Check those yourself; never pair runs from different host platforms.
+Never pool runs from different host platforms
+([DEC-013](../../docs/concepts/register.md#dec-013-linux-first-for-tests-and-the-playground));
+`--allow-mismatch` is for looking, not for study results. It does not compare the Markitect commit, the inner model or the evaluation commit;
+check those yourself.
 
 ## Caveats
 
@@ -575,6 +565,8 @@ host platform. Check those yourself; never pair runs from different host platfor
 - **Product limits.** The Markitect setup accepts only what the product allows at the
   pinned commit, such as certain models; see
   [methods/markitect/README.md](methods/markitect/README.md).
+- **Fixed in the code.** Step timeouts (public checks 600 s, own tests 900 s, product
+  steps 600 s, Git steps 120 s) and the Markitect binary for linux/amd64 only.
 
 ## Changing the playground
 

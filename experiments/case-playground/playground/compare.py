@@ -3,11 +3,12 @@
   python -m playground compare RUN_A RUN_B [--allow-mismatch] [--out FILE]
 
 Reads `<run>/assessment/report.json` of both runs. First it checks that the runs are
-comparable: the run's fairness fields (case, image, Codex version, model, effort,
-subagent limit, limits, container, as the run report lists them), the outer provider,
-the evaluation files (by SHA-256) and the reviewer models. Mismatched runs are refused
-unless `--allow-mismatch` is given; the mismatches are then printed at the top. The
-comparison goes to `--out` (default: `compare-<A>-vs-<B>.md` next to RUN_A).
+comparable: the run's fairness fields (case, stations, host platform, image, Codex
+version, model, effort, subagent limit, limits, container, as the run report lists
+them), the outer provider, the evaluation files (by SHA-256) and the reviewer models.
+Mismatched runs are refused unless `--allow-mismatch` is given; the mismatches are then
+printed at the top. The comparison goes to `--out` (default: `compare-<A>-vs-<B>.md`
+next to RUN_A).
 """
 from __future__ import annotations
 
@@ -120,8 +121,8 @@ def render(a: dict, b: dict, problems: list[tuple[str, Any, Any]]) -> str:
         lines += [f"- `{key}`: {_fmt(value_a)} vs {_fmt(value_b)}" for key, value_a, value_b in problems]
         lines.append("")
     else:
-        lines += ["Fairness fields match (case, image, versions, model, effort, limits, container, outer "
-                  "provider, evaluation files, reviewer models).", ""]
+        lines += ["Fairness fields match (case, stations, host platform, image, versions, model, effort, "
+                  "limits, container, outer provider, evaluation files, reviewer models).", ""]
     lines += [f"Each cell shows A │ B. A = {label_a}, B = {label_b}. Outer provider "
               f"{_fmt(run_a.get('outerProvider'))} │ {_fmt(run_b.get('outerProvider'))}; case "
               f"{_fmt(run_a.get('case'))}; classification {a['classification']['class']} │ "

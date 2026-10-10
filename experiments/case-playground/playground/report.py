@@ -133,15 +133,18 @@ def _stratum(manifest: dict[str, Any]) -> str | None:
     return f"outer={kind}" + (", inner=codex" if manifest.get("method") == "markitect" else "")
 
 
-def _fairness(manifest: dict[str, Any], versions: dict[str, Any]) -> dict[str, Any]:
+def _fairness(manifest: dict[str, Any], versions: dict[str, Any], runner: dict[str, Any] | None) -> dict[str, Any]:
     """Fields that must be equal for the two arms of one comparison (the stratum is not:
-    only the Markitect arm has inner roles)."""
+    only the Markitect arm has inner roles). Runs from different host platforms are never
+    paired (DEC-013)."""
     agent = manifest.get("agent") or {}
-    return {"case": manifest.get("case"), "outerProvider": agent.get("kind"),
+    return {"case": manifest.get("case"), "stationsPlanned": _get(runner, "stationsPlanned"),
+            "outerProvider": agent.get("kind"),
             "codex": versions.get("codex"), "claude": versions.get("claude"), "imageId": versions.get("imageId"),
             "model": agent.get("model"), "effort": agent.get("effort"),
             "maxSubagentsPerSession": agent.get("maxSubagents"),
-            "limits": manifest.get("limits"), "container": manifest.get("container")}
+            "limits": manifest.get("limits"), "container": manifest.get("container"),
+            "hostPlatform": _get(runner, "hostPlatform")}
 
 
 def _last_line(path: Path) -> str:
@@ -225,7 +228,7 @@ def build(out: Path) -> dict[str, Any]:
         "versions": {key: versions.get(key) for key in
                      ("codex", "claude", "imageId", "markitectCommit", "markitectSha256")},
         "stratum": _stratum(manifest),
-        "fairness": _fairness(manifest, versions),
+        "fairness": _fairness(manifest, versions, runner),
         "setup": {"status": _get(setup, "status"), "seconds": _get(setup, "seconds"),
                   "commit": _get(setup, "commit"), "error": _get(setup, "error"),
                   "blockedBy": _get(setup, "blockedBy"),
@@ -243,6 +246,7 @@ def build(out: Path) -> dict[str, Any]:
             "agentSeconds": sum_known([s["wallSeconds"] for s in stations]),
             "wallSeconds": _get(runner, "wallSeconds"),
             "stationsPlanned": _get(runner, "stationsPlanned"),
+            "caseStations": _get(runner, "caseStations"),
             "stationsRun": len(stations),
         },
     }
@@ -266,6 +270,12 @@ def _fmt(value: Any) -> str:
     if isinstance(value, dict):
         return ", ".join(f"{key} {_fmt(item)}" for key, item in value.items())
     return str(value)
+
+
+def _platform(value: Any) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    return f"{_fmt(value.get('system'))} {_fmt(value.get('machine'))}"
 
 
 def _ratio(block: Any) -> str:
@@ -322,7 +332,10 @@ def render_markdown(report: dict[str, Any]) -> str:
     fairness = report["fairness"]
     lines += [
         "",
-        f"- Stations: {_fmt(totals.get('stationsRun'))} of {_fmt(totals.get('stationsPlanned'))} ran.",
+        f"- Stations: {_fmt(totals.get('stationsRun'))} of {_fmt(totals.get('stationsPlanned'))} ran"
+        + (f" (the first {totals['stationsPlanned']} of the case's {totals['caseStations']})"
+           if isinstance(totals.get("caseStations"), int) and totals.get("stationsPlanned") != totals["caseStations"]
+           else "") + ".",
         f"- Setup: {_fmt(setup['status'])} in {_fmt(setup['seconds'])} s"
         + (f", commit {setup['commit'][:12]}" if setup.get("commit") else "")
         + (f", error: {setup['error']}" if setup.get("error") else "") + "."
@@ -363,7 +376,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.append(f"- The Claude Code token appeared in {report['claudeTokenRedactions']} result file(s) and was "
                      "redacted there (the agent printed its environment).")
     lines += [
-        f"- Fairness (must match the other arm): case {_fmt(fairness['case'])}; outer provider "
+        f"- Fairness (must match the other arm): case {_fmt(fairness['case'])}; stations "
+        f"{_fmt(fairness.get('stationsPlanned'))}; host {_platform(fairness.get('hostPlatform'))}; outer provider "
         f"{_fmt(fairness['outerProvider'])}; codex {_fmt(fairness['codex'])}; "
         f"claude {_fmt(fairness['claude'])}; image {_fmt(fairness['imageId'])}; model {_fmt(fairness['model'])}; "
         f"effort {_fmt(fairness['effort'])}; max subagents per session {_fmt(fairness['maxSubagentsPerSession'])}; "

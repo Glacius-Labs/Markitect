@@ -21,6 +21,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import stat
 import subprocess
@@ -30,11 +31,10 @@ import time
 import uuid
 from typing import Any, BinaryIO, Callable
 
-from .manifest import CASES
-
 SCHEMA = 1
 COMMON_REQUIRED = {"AGENTS.md", "QUALITY.md", "checks/acceptance.py"}
-CASE_REQUIRED = {"README.md", "BACKLOG.md", "STATIONS.json"}
+CASE_REQUIRED = {"README.md", "BACKLOG.md", "STATIONS.json"}  # plus checks/<case>.py
+CASE_NAME = re.compile(r"[a-z0-9][a-z0-9-]{0,62}")
 # Command-scope config wins over every config file: raw bytes, and nothing the
 # repository configures (hooks, fsmonitor) runs. Diffs also pass --no-ext-diff --no-textconv.
 GIT_CONFIG = (("core.autocrlf", "false"), ("core.fsmonitor", "false"), ("core.hooksPath", os.devnull),
@@ -320,14 +320,16 @@ def _station_record(station: int, plan: list[list[str]]) -> dict[str, Any]:
 
 # --- prepare -------------------------------------------------------------------------
 
-def prepare(seed_root: Path, repo: Path, audit: Path, *, case: str, method: str) -> dict[str, Any]:
+def prepare(seed_root: Path, repo: Path, audit: Path, *, case: str, method: str,
+            stations: int | None = None) -> dict[str, Any]:
     """Create a fresh case repo (seed commit on main, S1 released) and its audit directory.
 
     Seed = `<seed_root>/common` + `<seed_root>/<case>`; nothing else (e.g. the task prompt)
-    is copied.
+    is copied, so the repository holds only this case's public checks. `stations` keeps
+    the first N waves of the plan (default all); run.json records the case's full count.
     """
     seed_root, repo, audit = Path(seed_root).resolve(), Path(repo).resolve(), Path(audit).resolve()
-    if case not in CASES:
+    if not CASE_NAME.fullmatch(case) or case == "common":
         raise LifecycleError(f"unsupported case: {case}")
     if not method.strip():
         raise LifecycleError("method must be a non-empty label")
@@ -341,8 +343,9 @@ def prepare(seed_root: Path, repo: Path, audit: Path, *, case: str, method: str)
     common_files, case_files = _seed_files(common), _seed_files(case_root)
     if not COMMON_REQUIRED <= set(common_files):
         raise LifecycleError(f"common seed lacks {sorted(COMMON_REQUIRED - set(common_files))}")
-    if not CASE_REQUIRED <= set(case_files):
-        raise LifecycleError(f"case seed lacks {sorted(CASE_REQUIRED - set(case_files))}")
+    required = CASE_REQUIRED | {f"checks/{case}.py"}
+    if not required <= set(case_files):
+        raise LifecycleError(f"case seed lacks {sorted(required - set(case_files))}")
     collisions = set(common_files) & set(case_files)
     if collisions:
         raise LifecycleError(f"common/case seed paths overlap: {sorted(collisions)}")
@@ -350,6 +353,11 @@ def prepare(seed_root: Path, repo: Path, audit: Path, *, case: str, method: str)
     if reserved:
         raise LifecycleError(f"seed uses reserved paths: {sorted(reserved)}")
     plan = load_station_plan(case_root / "STATIONS.json", case)
+    case_stations = len(plan)
+    if stations is not None:
+        if isinstance(stations, bool) or not isinstance(stations, int) or not 1 <= stations <= case_stations:
+            raise LifecycleError(f"stations must be 1 to {case_stations} for case {case}, got {stations!r}")
+        plan = plan[:stations]  # waves are cumulative: only a prefix is a meaningful run
 
     repo.mkdir(parents=True)
     for source_root, files in ((common, common_files), (case_root, case_files)):
@@ -374,6 +382,7 @@ def prepare(seed_root: Path, repo: Path, audit: Path, *, case: str, method: str)
         "method": method,
         "seed": {"mainCommit": seed_commit, "rawGitManifest": _committed_manifest(repo, seed_commit)},
         "stationPlan": plan,
+        "caseStations": case_stations,
         "preparedAt": utc(),
     }
     audit.mkdir(parents=True)
@@ -590,8 +599,9 @@ def _cli(argv: list[str] | None = None) -> int:
     p.add_argument("--seed", type=Path, required=True, help="cases/ folder with common/ and <case>/")
     p.add_argument("--repo", type=Path, required=True)
     p.add_argument("--audit", type=Path, required=True)
-    p.add_argument("--case", choices=CASES, required=True)
+    p.add_argument("--case", required=True, help="a folder in --seed")
     p.add_argument("--method", required=True)
+    p.add_argument("--stations", type=int, help="run only the first N waves (default all)")
     for name in ("snapshot", "advance", "freeze"):
         cmd = commands.add_parser(name)
         cmd.add_argument("--repo", type=Path, required=True)
@@ -601,7 +611,8 @@ def _cli(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "prepare":
-            result = prepare(args.seed, args.repo, args.audit, case=args.case, method=args.method)
+            result = prepare(args.seed, args.repo, args.audit, case=args.case, method=args.method,
+                             stations=args.stations)
         elif args.command == "snapshot":
             result = snapshot(args.repo, args.audit)
         elif args.command == "advance":

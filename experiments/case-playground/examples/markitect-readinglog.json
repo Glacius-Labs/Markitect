@@ -13,7 +13,6 @@
   "limits": {"stationSeconds": 5400, "totalSeconds": 14400},
   "container": {"cpus": 4, "memory": "8g", "pidsLimit": 2048},
   "markitect": {
-    "sourceRepo": "C:/path/to/Markitect",
-    "commit": "669cecd2"
+    "commit": "fa2462b4"
   }
 }
