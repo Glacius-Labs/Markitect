@@ -226,10 +226,10 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 			}
 			return fmt.Errorf("targeted work response for %s: %w", managerID, err)
 		}
-		if parsed.Status == "no-op" && len(proposal.Response.CandidateFiles) > 0 {
+		if parsed.Status == "no-op" && (len(proposal.Response.CandidateFiles) > 0 || (proposal.Delta != nil && len(proposal.Delta.Changes) > 0)) {
 			return fmt.Errorf("targeted work response for %s claimed no-op while proposing files", managerID)
 		}
-		candidate, err := applyProposal(current, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "work", nil, runtime.Limits, input.Snapshot)
+		candidate, err := applyAgentCandidate(current, proposal, input.Config, input.Report, *task, "work", nil, runtime.Limits, input.Snapshot)
 		if err != nil {
 			return err
 		}
@@ -246,7 +246,7 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 			return err
 		}
 		task.CandidateID, task.ReportID = candidate.ID, invocation.ReportID
-		task.WrittenPaths = unionPaths(task.WrittenPaths, proposalPaths(proposal.Response.CandidateFiles))
+		task.WrittenPaths = unionPaths(task.WrittenPaths, agentCandidatePaths(proposal))
 		task.Summary, task.Questions, task.Risks, task.Delegations, task.ReportStatus = parsed.Summary, parsed.Questions, parsed.Risks, parsed.Delegations, parsed.Status
 		task.Obligations, err = newLocalObligations(task.ManagerID, parsed.Questions, parsed.Risks)
 		if err != nil {
@@ -334,6 +334,11 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 	if len(children) == 0 {
 		return nil, nil
 	}
+	// A reintegrated candidate can be accepted only through another integration
+	// review, so stop before spending a Manager start on one that cannot get it.
+	if reviewCount(report.Reviews, task.ManagerID, "integrate") >= runtime.Review.MaxRounds {
+		return nil, fmt.Errorf("manager %s exhausted the cumulative integration review round limit", task.ManagerID)
+	}
 	merged, conflicts, err := mergeChildCandidates(store, dir, report.Tasks, *task, children)
 	if err != nil {
 		return nil, err
@@ -399,11 +404,11 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 	} else if parsed.Status != "complete" || parsed.EscalateTo != "" {
 		return nil, fmt.Errorf("manager %s reintegration is not complete after resolving obligations", task.ManagerID)
 	}
-	candidate, err := applyProposal(merged, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "integrate", conflicts, runtime.Limits, input.Snapshot)
+	candidate, err := applyAgentCandidate(merged, proposal, input.Config, input.Report, *task, "integrate", conflicts, runtime.Limits, input.Snapshot)
 	if err != nil {
 		return nil, err
 	}
-	if len(conflicts) > 0 && !proposesEvery(proposal.Response.CandidateFiles, conflicts) {
+	if len(conflicts) > 0 && !proposesEvery(agentCandidatePaths(proposal), conflicts) {
 		return nil, fmt.Errorf("manager %s did not resolve integration conflict paths", task.ManagerID)
 	}
 	candidate.ID, err = newID()
@@ -466,9 +471,6 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 		return append([]ReworkRequest(nil), parsed.ReworkRequests...), nil
 	}
 	reviewRound := reviewCount(report.Reviews, task.ManagerID, "integrate") + 1
-	if reviewRound > runtime.Review.MaxRounds {
-		return nil, fmt.Errorf("manager %s exhausted the cumulative integration review round limit", task.ManagerID)
-	}
 	task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "invoking", candidate.ID, reviewRound
 	if err := persistState(store, report); err != nil {
 		return nil, err

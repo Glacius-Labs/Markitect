@@ -73,11 +73,10 @@ func DecodeIgnore(data []byte) (IgnoreFile, error) {
 		if previous, exists := seen[key]; exists {
 			return IgnoreFile{}, fmt.Errorf("%s repeats or case-aliases %q and %q", IgnorePath, previous, selector)
 		}
-		for oldKey, old := range seen {
-			if selectorsOverlap(strings.ToLower(old), strings.ToLower(selector)) {
-				return IgnoreFile{}, fmt.Errorf("%s entries %q and %q overlap", IgnorePath, old, selector)
+		for _, old := range cfg.Entries[:i] {
+			if selectorsOverlap(strings.ToLower(old.Path), strings.ToLower(selector)) {
+				return IgnoreFile{}, fmt.Errorf("%s entries %q and %q overlap", IgnorePath, old.Path, selector)
 			}
-			_ = oldKey
 		}
 		seen[key] = selector
 		cfg.Entries[i].Path = selector

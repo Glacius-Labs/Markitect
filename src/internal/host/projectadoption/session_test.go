@@ -68,6 +68,72 @@ func TestBrownfieldSessionPersistsAndResumesWithoutReplayingStages(t *testing.T)
 	}
 }
 
+// A clean core.autocrlf=true checkout has CRLF worktree bytes while HEAD
+// stores LF. Git reports no change, so the target worktree matches HEAD.
+func TestBrownfieldResumeTreatsCleanAutoCRLFCheckoutAsTargetCurrent(t *testing.T) {
+	repo, commit := committedRepository(t, map[string]string{"src/orders.go": "package src\nfunc Order() {}\n"})
+	root := repo.Dir
+	repo.Git("checkout", "-b", "codex/brownfield-crlf-fixture")
+	if _, err := projectwork.Init(root, "Target fixture", true); err != nil {
+		t.Fatal(err)
+	}
+	targetRevision := repo.Commit("initialize target")
+	target, err := projectwork.Load(root, targetRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	discovery, err := Discover(root, DiscoveryRequest{
+		APIVersion: DiscoveryVersion, ID: "brownfield-crlf", Purpose: "Map order module", Review: "human-review-1", Commit: commit,
+		ScopeRoots: []string{"."}, Selected: []SelectedPath{{ID: "orders-source", Path: "src/orders.go", Reason: "Implementation evidence", Basis: "code"}},
+		Exclusions: []PathReason{}, Unselected: []PathReason{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, err := StartBrownfieldSession(root, target, discovery, []ScopeStatus{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := WriteBrownfieldSession(root, session, session.Digest); err != nil {
+		t.Fatal(err)
+	}
+	if _, ready, err := ResumeBrownfieldSession(root, root, session.ID); err != nil || !ready.TargetCurrent {
+		t.Fatalf("precondition: LF checkout TargetCurrent=%v err=%v", ready.TargetCurrent, err)
+	}
+
+	// Re-checkout every tracked file with core.autocrlf=true.
+	repo.Git("config", "core.autocrlf", "true")
+	for _, name := range strings.Split(repo.Git("ls-files"), "\n") {
+		if err := os.Remove(filepath.Join(root, filepath.FromSlash(name))); err != nil {
+			t.Fatal(err)
+		}
+	}
+	repo.Git("checkout", "--", ".")
+	manifestPath := filepath.Join(root, projectwork.ManifestPath)
+	manifest, err := os.ReadFile(manifestPath)
+	if err != nil || !strings.Contains(string(manifest), "\r\n") {
+		t.Fatalf("precondition: manifest not CRLF after autocrlf checkout (err=%v)", err)
+	}
+	if status := repo.Git("status", "--porcelain", "--untracked-files=no"); status != "" {
+		t.Fatalf("precondition: tracked worktree not clean: %q", status)
+	}
+	_, ready, err := ResumeBrownfieldSession(root, root, session.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ready.TargetCurrent {
+		t.Fatalf("clean autocrlf checkout must be target-current: findings=%v", ready.Findings)
+	}
+
+	// A real worktree change is still not current.
+	if err := os.WriteFile(manifestPath, append(manifest, []byte("# local change\r\n")...), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, ready, err := ResumeBrownfieldSession(root, root, session.ID); err != nil || ready.TargetCurrent {
+		t.Fatalf("changed autocrlf worktree must not be target-current: TargetCurrent=%v err=%v", ready.TargetCurrent, err)
+	}
+}
+
 func TestReverseIterationRejectsStaleSourceAndTarget(t *testing.T) {
 	repo, commit := committedRepository(t, map[string]string{"src/orders.go": "package src\nfunc Order() {}\n"})
 	root := repo.Dir
@@ -133,6 +199,26 @@ func TestReadinessDoesNotPromoteTransitionalCoverage(t *testing.T) {
 	readiness := AssessReadiness(session, coverage)
 	if readiness.Ready || readiness.CoverageConforming {
 		t.Fatal("transitional coverage must never be promoted to conformance or readiness")
+	}
+}
+
+func TestBrownfieldStartRefusesScopeStatusesWithoutProposals(t *testing.T) {
+	root, discovery, _, target := distillationDiscovery(t)
+	session, err := StartBrownfieldSession(root, target, discovery, []ScopeStatus{{ScopeID: "orders", Status: "observed", Reason: "Owner already tracks this area"}})
+	if err == nil {
+		validateErr := ValidateBrownfieldSession(session)
+		_, writeErr := WriteBrownfieldSession(root, session, session.Digest)
+		t.Fatalf("start accepted initial scope statuses as session %s that fails validation (%v) and cannot be written (%v)", session.Digest, validateErr, writeErr)
+	}
+	if !strings.Contains(err.Error(), "initial scope statuses require recorded reverse-model proposals") {
+		t.Fatalf("start refused initial scope statuses without saying they need recorded proposals: %v", err)
+	}
+	session, err = StartBrownfieldSession(root, target, discovery, []ScopeStatus{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := WriteBrownfieldSession(root, session, session.Digest); err != nil {
+		t.Fatalf("a start without scope statuses must stay writable: %v", err)
 	}
 }
 

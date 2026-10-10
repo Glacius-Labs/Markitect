@@ -37,8 +37,9 @@ func MaterializeWithLimits(s *snapshot.Snapshot, destination string, limits Limi
 		return errors.New("snapshot exceeds file-count limit")
 	}
 	var total int64
-	paths := make([]string, 0, len(s.Files))
-	for p, data := range s.Files {
+	paths := snapshotPaths(s)
+	for _, p := range paths {
+		data := s.Files[p]
 		if err := validateRepoPath(p); err != nil {
 			return err
 		}
@@ -50,12 +51,10 @@ func MaterializeWithLimits(s *snapshot.Snapshot, destination string, limits Limi
 			return fmt.Errorf("snapshot exceeds byte limit at %q", p)
 		}
 		total += int64(len(data))
-		paths = append(paths, p)
 	}
 	if err := validatePortablePaths(paths); err != nil {
 		return err
 	}
-	sort.Strings(paths)
 	dest, err := filepath.Abs(destination)
 	if err != nil {
 		return fmt.Errorf("resolve destination: %w", err)
@@ -173,11 +172,14 @@ func validateRepoPath(p string) error {
 	return nil
 }
 
+// snapshotPaths returns the snapshot paths sorted so that validation
+// diagnostics do not depend on map iteration order.
 func snapshotPaths(s *snapshot.Snapshot) []string {
 	paths := make([]string, 0, len(s.Files))
 	for p := range s.Files {
 		paths = append(paths, p)
 	}
+	sort.Strings(paths)
 	return paths
 }
 

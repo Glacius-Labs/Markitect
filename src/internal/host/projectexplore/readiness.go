@@ -179,7 +179,7 @@ func completeScope(record *Record, scopeID string, binding Binding, receipt Appl
 		return err
 	}
 	if prior, ok := completionFor(*record, scopeID); ok {
-		if prior == receipt {
+		if sameApplyReceipt(prior, receipt) {
 			return nil
 		}
 		return errors.New("scope already has a different successful Apply receipt")
@@ -251,6 +251,25 @@ func completionFor(record Record, id string) (ApplyReceipt, bool) {
 		}
 	}
 	return ApplyReceipt{}, false
+}
+
+// sameAcknowledgement and sameApplyReceipt compare times by instant: a decoded
+// offset other than UTC or the machine's zone gets a fresh location, so == on
+// the struct would never match the same stored value.
+func sameAcknowledgement(left, right StructureAcknowledgement) bool {
+	if !left.RecordedAt.Equal(right.RecordedAt) {
+		return false
+	}
+	left.RecordedAt = right.RecordedAt
+	return left == right
+}
+
+func sameApplyReceipt(left, right ApplyReceipt) bool {
+	if !left.AppliedAt.Equal(right.AppliedAt) {
+		return false
+	}
+	left.AppliedAt = right.AppliedAt
+	return left == right
 }
 
 func contains(values []string, target string) bool {

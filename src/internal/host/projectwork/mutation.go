@@ -407,15 +407,19 @@ func ApplyEdit(root string, plan EditPlan, expected string) (EditPlan, error) {
 	if err != nil {
 		return plan, fmt.Errorf("capture reviewed project inputs: %w", err)
 	}
+	fileModeEnabled, err := source.GitFileModeEnabled(rootAbs)
+	if err != nil {
+		return plan, fmt.Errorf("inspect Git worktree mode policy: %w", err)
+	}
 	for file, data := range current.Snapshot.Files {
 		actual, found := capture.Files[file]
-		if !found || !actual.Exists || !bytes.Equal(actual.Bytes, data) || !sameSnapshotMode(actual.Mode, current.Snapshot.Modes[file]) {
+		if !found || !actual.Exists || !bytes.Equal(actual.Bytes, data) || !sameSnapshotMode(actual.Mode, current.Snapshot.Modes[file], fileModeEnabled) {
 			return plan, fmt.Errorf("selected project input changed before guarded write: %s", file)
 		}
 	}
 	for file, data := range prospectiveInventory.Files {
 		actual, found := capture.Files[file]
-		if !found || !actual.Exists || !bytes.Equal(actual.Bytes, data) || !sameSnapshotMode(actual.Mode, prospectiveInventory.Modes[file]) {
+		if !found || !actual.Exists || !bytes.Equal(actual.Bytes, data) || !sameSnapshotMode(actual.Mode, prospectiveInventory.Modes[file], fileModeEnabled) {
 			return plan, fmt.Errorf("prospectively selected inventory changed before guarded write: %s", file)
 		}
 	}
@@ -671,12 +675,15 @@ func selectedModelFiles(config Config) map[string]bool {
 	return result
 }
 
-func sameSnapshotMode(actual fs.FileMode, expected string) bool {
+// sameSnapshotMode compares a captured file with its snapshot mode. Without
+// core.filemode a tracked file's snapshot mode comes from the Git index, so the
+// on-disk executable bit is not observable and only the file type is compared.
+func sameSnapshotMode(actual fs.FileMode, expected string, fileModeEnabled bool) bool {
 	switch expected {
 	case snapshot.RegularMode:
-		return actual.Type() == 0 && actual.Perm()&0111 == 0
+		return actual.Type() == 0 && (!fileModeEnabled || actual.Perm()&0111 == 0)
 	case snapshot.ExecutableMode:
-		return actual.Type() == 0 && actual.Perm()&0111 != 0
+		return actual.Type() == 0 && (!fileModeEnabled || actual.Perm()&0111 != 0)
 	default:
 		return false
 	}

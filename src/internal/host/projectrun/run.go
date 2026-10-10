@@ -599,7 +599,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 						return failRun(store, report, err)
 					}
 					task.State, task.ReportID, task.CandidateID = "worked", invocation.ReportID, candidate.ID
-					task.WrittenPaths = unionPaths(task.WrittenPaths, proposalPaths(proposal.Response.CandidateFiles))
+					task.WrittenPaths = unionPaths(task.WrittenPaths, agentCandidatePaths(proposal))
 					task.Summary, task.Questions, task.Risks, task.Delegations, task.ReportStatus = parsed.Summary, parsed.Questions, parsed.Risks, parsed.Delegations, parsed.Status
 					report.Candidate = candidateRef(candidate, false)
 					if err := persistState(store, &report); err != nil {
@@ -807,7 +807,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 					if candidateErr != nil {
 						return candidateErr
 					}
-					if len(conflicts) > 0 && !proposesEvery(proposal.Response.CandidateFiles, conflicts) {
+					if len(conflicts) > 0 && !proposesEvery(agentCandidatePaths(proposal), conflicts) {
 						return fmt.Errorf("manager %s did not resolve child path conflict(s): %s", task.ManagerID, strings.Join(conflicts, ", "))
 					}
 					outstanding, obligationErr := managerObligationRecords(*task, report.Tasks, children)
@@ -2507,10 +2507,10 @@ func resolvesConflicts(c candidateData, paths []string) bool {
 	}
 	return true
 }
-func proposesEvery(proposals []agentexec.CandidateFile, paths []string) bool {
+func proposesEvery(proposed, paths []string) bool {
 	seen := map[string]bool{}
-	for _, p := range proposals {
-		seen[p.Path] = true
+	for _, p := range proposed {
+		seen[p] = true
 	}
 	for _, p := range paths {
 		if !seen[p] {

@@ -304,9 +304,9 @@ func normalizeBinding(binding Binding) (Binding, error) {
 	if binding.ModelAccepted && (!fullObjectID(binding.Head) || binding.ModelRevision != binding.Head || strings.TrimSpace(binding.AcceptancePolicy) == "") {
 		return Binding{}, errors.New("accepted readiness binding requires a fixed committed model at HEAD and an explicit acceptance policy")
 	}
-	for name, value := range map[string]string{"projectDigest": binding.ProjectDigest, "modelDigest": binding.ModelDigest, "snapshotDigest": binding.SnapshotDigest, "selectionDigest": binding.SelectionDigest} {
-		if !validDigest(value) {
-			return Binding{}, fmt.Errorf("binding %s is not a sha256 digest", name)
+	for _, field := range []struct{ name, value string }{{"projectDigest", binding.ProjectDigest}, {"modelDigest", binding.ModelDigest}, {"snapshotDigest", binding.SnapshotDigest}, {"selectionDigest", binding.SelectionDigest}} {
+		if !validDigest(field.value) {
+			return Binding{}, fmt.Errorf("binding %s is not a sha256 digest", field.name)
 		}
 	}
 	if binding.ScopeID == "" || strings.TrimSpace(binding.ScopeName) == "" || strings.TrimSpace(binding.Goal) == "" || binding.Operation == "" || binding.ManagerIDs == nil || !uniqueValues(binding.ManagerIDs, false) || binding.RequiredArtifacts == nil || binding.FileStructure == nil || binding.Checks == nil || binding.BasisFiles == nil {

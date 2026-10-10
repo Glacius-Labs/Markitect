@@ -77,7 +77,10 @@ Pop-Location
 
 `.markitect/bootstrap/run.go` is intentionally one self-contained Go file: the
 installed command invokes that file directly, and CI tests it with
-`.markitect/bootstrap/run_test.go`. The bootstrap validates the lock and
+`.markitect/bootstrap/run_test.go`. It imports only the Go standard library
+because `go run` builds it inside the adopting repository, whose module does
+not declare Markitect's dependencies. This is a distribution constraint of the
+bootstrap, not a layer rule. The bootstrap validates the lock and
 source archive before building the pinned CLI, so its version and path
 validation repeats some release-side rules without importing the code it has
 not yet built. When changing those rules, check both the release package and

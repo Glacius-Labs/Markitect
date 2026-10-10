@@ -173,6 +173,7 @@ packages:
     acceptance:
       - The base image is pinned by digest; the same manifest twice yields the same image.
       - Exit codes distinguish product, harness and environment failures.
+      - Pre-registration is enforced, not only recorded; reviewer models must differ from the arms' models; compare records the host platform (PLAY-03 findings).
 
   - id: PLAY-06
     title: Executor and model per role in study manifests
@@ -193,6 +194,7 @@ packages:
     owner: scientist
     depends_on: [PLAY-02, PLAY-04, PLAY-05]
     needs_owner: Freeze of the study protocol, cases and budget.
+    note: The playground's subagent limit also bounds Markitect's inner roles; the protocol must state it (PLAY-03 finding).
     zone: free
     inputs:
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
@@ -387,16 +389,17 @@ packages:
     title: Port the reduced knowledge core and explain
     stream: KG
     wave: 2
-    status: blocked
+    status: active
     owner: kg
     depends_on: [KG-01]
-    note: Narrower routing of unprojected changes (instead of widening to the whole project) needs an owner decision when KG-02 starts; until then any unprojected change widens impact.
+    note: Owner decisions DEC-021 to DEC-023 set the routing. The CLI and MCP surfaces follow as a second slice after CLI-02.
     zone: model
     inputs:
       - origin codex/knowledge-graph (projectknowledge core)
       - docs/work-items/surveys/knowledge-graph-and-government-20261010.md
     acceptance:
       - The graph view is derived from Manager context only; CLI and MCP return equal results; no visibility leaks.
+      - Purpose and meaning-free edits route narrowly (DEC-021); Decisions are visible and route through their subject (DEC-022); impact elements are classed change or context without dropping either (DEC-023); combining changes never shrinks impact.
 
   - id: KG-03
     title: Evaluate the knowledge graph as a variant in the playground

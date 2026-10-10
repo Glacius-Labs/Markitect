@@ -55,7 +55,7 @@ func layer(p string) (string, string) {
 		return "cli", p
 	// This isolated adopting-code fixture is compiled by Go, but is not a
 	// Markitect capability. It cannot import any Markitect product package.
-	case p == "examples/documentation/docs/implementation/src" || p == "examples/canonical-projection/evidence" || p == "examples/canonical-workflow/check" || p == "runs/c11checktools/original" || p == "runs/c11checktools/replacement":
+	case p == "examples/documentation/docs/implementation/src":
 		return "fixture", p
 	case p == "integration":
 		return "bootstrap", "bootstrap"
@@ -81,8 +81,6 @@ func Check(edges []Edge) []Violation {
 		to, target := layer(e.To)
 		rule := ""
 		switch {
-		case from == "core" && externalImport(e.To):
-			rule = "Core external imports require an explicitly approved generic dependency"
 		case from == "bootstrap":
 			rule = "standalone bootstrap tooling may not import Markitect packages"
 		case from == "fixture":
@@ -123,11 +121,6 @@ func Check(edges []Edge) []Violation {
 	return out
 }
 
-func externalImport(path string) bool {
-	first, _, _ := strings.Cut(path, "/")
-	return strings.Contains(first, ".")
-}
-
 func Inspect(root string) ([]Edge, error) {
 	var edges []Edge
 	err := filepath.WalkDir(root, func(name string, entry fs.DirEntry, err error) error {
@@ -149,7 +142,7 @@ func Inspect(root string) ([]Edge, error) {
 		}
 		rel = filepath.ToSlash(rel)
 		// Only product source and explicitly classified test/tool harnesses.
-		if !strings.HasPrefix(rel, "src/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "integration/") && !strings.HasPrefix(rel, "experiments/") && !strings.HasPrefix(rel, "benchmark/") && !strings.HasPrefix(rel, "runs/") {
+		if !strings.HasPrefix(rel, "src/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "integration/") && !strings.HasPrefix(rel, "experiments/") && !strings.HasPrefix(rel, "benchmark/") {
 			return nil
 		}
 		packagePath := filepath.ToSlash(filepath.Dir(rel))
@@ -166,10 +159,10 @@ func Inspect(root string) ([]Edge, error) {
 			if err != nil {
 				return err
 			}
+			// Only imports between Markitect packages are edges; third-party
+			// libraries are not restricted in any layer (DEC-020).
 			if strings.HasPrefix(imported, ModulePath) {
 				edges = append(edges, Edge{rel, fset.Position(imp.Pos()).Line, packagePath, strings.TrimPrefix(imported, ModulePath), strings.HasSuffix(rel, "_test.go")})
-			} else if from, _ := layer(packagePath); from == "core" && externalImport(imported) {
-				edges = append(edges, Edge{rel, fset.Position(imp.Pos()).Line, packagePath, imported, strings.HasSuffix(rel, "_test.go")})
 			}
 		}
 		return nil

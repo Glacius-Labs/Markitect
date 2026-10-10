@@ -50,7 +50,7 @@ func TestCodeMapPage(t *testing.T) {
 }
 
 // Every map layer names at least one real gate layer, and every gate layer
-// except "unknown" is reachable, so the finer layers can later drive the gate.
+// except "unknown" is reachable, so the finer layers can drive the gate.
 func TestCodeMapLayersMatchGateLayers(t *testing.T) {
 	gate := map[string]bool{"core": true, "host": true, "module": true, "infrastructure": true, "tooling": true, "cli": true, "fixture": true, "bootstrap": true, "harness-tests": true, "harness-runtime": true, "testkit": true}
 	reached := map[string]bool{}
@@ -81,7 +81,7 @@ func TestCodeMapLayersMatchGateLayers(t *testing.T) {
 		{"src/internal/modules/markdown", "application", false},
 		{"src/cmd/markitect", "legacy", false},
 		{"src/internal/core", "legacy", false},
-		{"runs/c11checktools/original", "fixture", true},
+		{"examples/documentation/docs/implementation/src", "fixture", true},
 		{"src/internal/unowned", "legacy", false},
 	} {
 		gateLayer, _ := layer(c.path)

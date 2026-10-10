@@ -8,7 +8,8 @@ import (
 )
 
 // RunArchitectureCheck is the read-only runtime for the repository-owned
-// import policy. It interprets implementation imports outside the semantic kernel.
+// import policy. It interprets implementation imports outside the semantic
+// kernel, including the layer rules of the code map in the checked repository.
 func RunArchitectureCheck(args []string, out, errout io.Writer) int {
 	flags := flag.NewFlagSet("markitect-check-architecture", flag.ContinueOnError)
 	flags.SetOutput(errout)
@@ -20,12 +21,11 @@ func RunArchitectureCheck(args []string, out, errout io.Writer) int {
 		fmt.Fprintln(errout, "unexpected positional arguments")
 		return 2
 	}
-	edges, err := architecture.Inspect(*repo)
+	violations, err := architecture.CheckRepository(*repo)
 	if err != nil {
 		fmt.Fprintln(errout, err)
 		return 2
 	}
-	violations := architecture.Check(edges)
 	for _, v := range violations {
 		fmt.Fprintln(out, v.String())
 	}

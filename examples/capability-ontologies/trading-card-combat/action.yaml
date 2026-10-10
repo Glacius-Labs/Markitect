@@ -1,8 +1,0 @@
-apiVersion: cardgame.example.org/v1
-kind: CombatAction
-metadata: {namespace: match-7, name: fox-attack}
-purpose: Declares Ember Fox attacking the opposing sentinel.
-spec:
-  card: {namespace: starter-deck, name: ember-fox}
-  action: attack
-  targets: [sentinel]

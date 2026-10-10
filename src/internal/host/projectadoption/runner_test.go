@@ -396,6 +396,48 @@ func TestNewPrivateLogDirectoryIsUniqueAndUncreated(t *testing.T) {
 	}
 }
 
+func TestRequireOutsideRepositoryComparesIdentityAcrossVolumes(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	other := substDrive(t, filepath.Dir(root)) + `\` + filepath.Base(root)
+	if err := requireOutsideRepository(other, os.TempDir()); err != nil {
+		t.Errorf("default temporary directory on another volume than the repository was rejected: %v", err)
+	}
+	for _, tc := range []struct{ name, root, candidate string }{
+		{name: "same volume", root: root, candidate: filepath.Join(root, "tmp")},
+		{name: "directory through another drive", root: root, candidate: filepath.Join(other, "tmp")},
+		{name: "repository through another drive", root: other, candidate: filepath.Join(root, "tmp")},
+	} {
+		if err := requireOutsideRepository(tc.root, tc.candidate); err == nil || !strings.Contains(err.Error(), "outside the source repository") {
+			t.Errorf("%s: directory inside the repository was not refused: %v", tc.name, err)
+		}
+	}
+}
+
+// substDrive maps a free drive letter to dir until the test ends, giving dir a
+// second spelling on another volume name.
+func substDrive(t *testing.T, dir string) string {
+	t.Helper()
+	if runtime.GOOS != "windows" {
+		t.Skip("drive letters exist only on Windows")
+	}
+	for letter := 'Z'; letter >= 'G'; letter-- {
+		drive := string(letter) + ":"
+		if _, err := os.Stat(drive + `\`); err == nil {
+			continue
+		}
+		if err := exec.Command("subst", drive, dir).Run(); err != nil {
+			continue
+		}
+		t.Cleanup(func() { _ = exec.Command("subst", drive, "/D").Run() })
+		return drive
+	}
+	t.Skip("no free drive letter for subst")
+	return ""
+}
+
 func TestSelectedEvidenceLineGuidePreservesLineEndingsAndBounds(t *testing.T) {
 	lines, err := selectedEvidenceLineGuide([]Evidence{
 		{ID: "windows", Content: "first\r\nsecond\n"},

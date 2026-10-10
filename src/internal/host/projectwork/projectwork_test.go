@@ -3,6 +3,7 @@ package projectwork
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -298,6 +299,62 @@ func TestFixedHEADPlanCanApplyOnlyWhileWorkingInputsMatch(t *testing.T) {
 	}
 }
 
+// With core.filemode=false the snapshot takes a tracked file's mode from the
+// Git index, so guarded writes must not compare it with on-disk permission bits.
+func TestUnchangedTrackedExecutableWithoutFileModeDoesNotBlockGuardedWrites(t *testing.T) {
+	setup := func(t *testing.T) (string, *Project) {
+		t.Helper()
+		root := testGitRoot(t)
+		gitTest(t, root, "config", "core.filemode", "false")
+		if _, err := Init(root, "Mode fixture", true); err != nil {
+			t.Fatal(err)
+		}
+		writeFile(t, root, "tool.sh", "#!/bin/sh\necho tool\n")
+		gitTest(t, root, "add", ".")
+		gitTest(t, root, "update-index", "--chmod=+x", "tool.sh")
+		gitTest(t, root, "commit", "-m", "executable tool")
+		p, err := Load(root, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if p.Snapshot.Modes["tool.sh"] != snapshot.ExecutableMode {
+			t.Fatalf("precondition: snapshot mode for tool.sh = %q, want %s", p.Snapshot.Modes["tool.sh"], snapshot.ExecutableMode)
+		}
+		return root, p
+	}
+	t.Run("Document", func(t *testing.T) {
+		_, p := setup(t)
+		if _, err := Document(p, true); err != nil {
+			t.Errorf("Document(write) failed for an unchanged tracked executable: %v", err)
+		}
+	})
+	t.Run("ApplyEdit", func(t *testing.T) {
+		root, p := setup(t)
+		original := string(p.Snapshot.Files[initManagerPath])
+		edited := strings.Replace(original, "Owns the repository-wide engineering mandate", "Owns the whole repository engineering mandate", 1)
+		if edited == original {
+			t.Fatal("could not edit manager purpose")
+		}
+		mutation := Mutation{APIVersion: APIVersion, BaseDigest: p.Digest, Actor: HumanActor, Goal: "Edit manager purpose",
+			Files: []FileChange{{Path: initManagerPath, Content: edited}}}
+		plan, err := PlanEdit(p, mutation)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := ApplyEdit(root, plan, p.Digest); err != nil {
+			t.Errorf("ApplyEdit failed for an unchanged tracked executable: %v", err)
+		}
+	})
+	t.Run("FileModeEnabledStillComparesExecutableBit", func(t *testing.T) {
+		if sameSnapshotMode(0644, snapshot.ExecutableMode, true) || sameSnapshotMode(0755, snapshot.RegularMode, true) {
+			t.Fatal("an executable-bit change must still count when Git tracks file modes")
+		}
+		if sameSnapshotMode(fs.ModeSymlink|0755, snapshot.ExecutableMode, false) {
+			t.Fatal("a non-regular file must never match a snapshot mode")
+		}
+	})
+}
+
 func TestUserCanSelectNewInventoryThroughReviewedManifestEdit(t *testing.T) {
 	root := testGitRoot(t)
 	if _, err := Init(root, "New project", true); err != nil {
@@ -451,6 +508,45 @@ func TestConfigRejectsDocumentControlPathCollisionsAndLinksFromCustomPath(t *tes
 	}
 	if got, want := sourceLinkAt(DocumentPath(config), "src/feature/file.go"), "[src/feature/file.go](../../src/feature/file.go)"; got != want {
 		t.Fatalf("custom document source link = %q, want %q", got, want)
+	}
+}
+
+func TestArtifactPathLinksAreRelativeToConfiguredDocumentPath(t *testing.T) {
+	project := &Project{
+		Config: Config{Name: "Fixture", CoverageMode: "full", DocumentPath: "ARCHITECTURE.md"},
+		Report: projectmodel.Report{
+			Statements: []projectmodel.Statement{{ID: "s", Name: "Goal", Source: ".markitect/model/goal.yaml", Description: "Goal."}},
+			Artifacts:  []projectmodel.Artifact{{ID: "a", Name: "Main", Paths: []string{"src/main.go"}}},
+		},
+	}
+	text := documentText(project)
+	if !strings.Contains(text, "- Source: [.markitect/model/goal.yaml](.markitect/model/goal.yaml)") {
+		t.Fatalf("statement source link is not relative to ARCHITECTURE.md:\n%s", text)
+	}
+	const want = "- Expected paths: [src/main.go](src/main.go)"
+	if !strings.Contains(text, want+"\n") {
+		got := "missing"
+		for _, line := range strings.Split(text, "\n") {
+			if strings.HasPrefix(line, "- Expected paths:") {
+				got = line
+			}
+		}
+		t.Fatalf("artifact path line = %q, want %q", got, want)
+	}
+}
+
+func TestSourceLinksAreCaseSensitiveOnEveryPlatform(t *testing.T) {
+	for _, test := range []struct{ destination, value, want string }{
+		{"docs/markitect/project.md", "Docs/guide.md", "[Docs/guide.md](../../Docs/guide.md)"},
+		{"docs/markitect/project.md", "docs/Markitect/guide.md", "[docs/Markitect/guide.md](../Markitect/guide.md)"},
+		{"docs/markitect/project.md", "docs/markitect/guide.md", "[docs/markitect/guide.md](guide.md)"},
+		{"docs/markitect/project.md", "docs", "[docs](..)"},
+		{"ARCHITECTURE.md", "src/my file.go", "[src/my file.go](src/my%20file.go)"},
+		{"docs/markitect/project.md", "../outside.md", "../outside.md"},
+	} {
+		if got := sourceLinkAt(test.destination, test.value); got != test.want {
+			t.Errorf("sourceLinkAt(%q, %q) = %q, want %q", test.destination, test.value, got, test.want)
+		}
 	}
 }
 

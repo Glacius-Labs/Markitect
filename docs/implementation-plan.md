@@ -19,7 +19,7 @@ This page owns the current direction: how parallel work is organized, the stream
 
 **Open work outside main:**
 - the exchangeable executor (pull request #92);
-- the rebuilt case playground (a local branch);
+- the rebuilt case playground (`experiments/case-playground`, on main since PLAY-01);
 - the knowledge-graph branch (old layout);
 - a started Government v1 (docs plus uncommitted code).
 

@@ -118,6 +118,16 @@ func TestProtectedDocumentationAndProviderTreesMatchAcrossSnapshotModes(t *testi
 	}
 }
 
+func TestWorkingTreeCollisionDiagnosticDoesNotDependOnMapOrder(t *testing.T) {
+	root := t.TempDir()
+	writeTestFile(t, root, "Docs/a.md", "a")
+	writeTestFile(t, root, "docs/b.md", "b")
+	if _, err := os.Stat(filepath.Join(root, "Docs", "b.md")); err == nil {
+		t.Skip("case-insensitive filesystem cannot hold both Docs and docs")
+	}
+	requireSameError(t, func() error { _, err := Load(root, ""); return err }, `between "Docs" and "docs"`)
+}
+
 func TestLoadRejectsWorkingTreeSymlinks(t *testing.T) {
 	root := t.TempDir()
 	target := filepath.Join(root, "target.txt")

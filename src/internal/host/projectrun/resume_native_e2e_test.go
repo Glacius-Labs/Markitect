@@ -179,6 +179,172 @@ func TestResumeReconstructsReviewReworkFromReviewedCandidate(t *testing.T) {
 	}
 }
 
+// nativeDeltaOnlyInvoker follows the documented App Server contract: the
+// report carries empty candidateFiles and the Host owns the bytes through the
+// harvested workspace delta. A set report replaces the fixture's report, and
+// writes land in the native workspace beside the fixture's own edit.
+type nativeDeltaOnlyInvoker struct {
+	inner  *nativeResumeFixtureInvoker
+	report *TaskResponse
+	writes map[string]string
+}
+
+func (i *nativeDeltaOnlyInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	result, err := i.inner.Run(ctx, config, request, options)
+	if err != nil {
+		return result, err
+	}
+	for path, content := range i.writes {
+		if err := os.WriteFile(filepath.Join(options.Workspace.CWD, filepath.FromSlash(path)), []byte(content), 0o644); err != nil {
+			return agentexec.RunResult{}, err
+		}
+	}
+	if i.report != nil {
+		reportJSON, err := json.Marshal(*i.report)
+		if err != nil {
+			return agentexec.RunResult{}, err
+		}
+		result.Response.ReportJSON = reportJSON
+	}
+	result.Response.CandidateFiles = []agentexec.CandidateFile{}
+	return result, nil
+}
+
+func (i *nativeDeltaOnlyInvoker) Fingerprint(config agentexec.Config) (string, error) {
+	return i.inner.Fingerprint(config)
+}
+
+func (i *nativeDeltaOnlyInvoker) Recover(ctx context.Context, config agentexec.Config, handle codexappserver.RecoveryHandle, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	result, err := i.inner.Recover(ctx, config, handle, options)
+	result.Response.CandidateFiles = []agentexec.CandidateFile{}
+	return result, err
+}
+
+func TestMainLoopAppliesNativeDeltaWithEmptyCandidateFiles(t *testing.T) {
+	fixture := seedNativeResumeRun(t)
+	fixture.invoker.result.Response.ReportJSON = json.RawMessage(`{}`)
+	fixture.invoker.retry = true
+	resumed, resumeErr := Resume(context.Background(), fixture.host, &nativeDeltaOnlyInvoker{inner: fixture.invoker}, fixture.root, fixture.plan.ID)
+	assertNativeResumeResult(t, fixture, resumed, resumeErr, true, 1)
+	if task := findTask(resumed.Tasks, fixture.managerID); !containsString(task.WrittenPaths, "src/project-owner.txt") {
+		t.Fatalf("native work did not record its harvested path as written: %v", task.WrittenPaths)
+	}
+}
+
+func TestTargetedReworkAppliesNativeWorkspaceDelta(t *testing.T) {
+	fixture := seedNativeResumeRun(t)
+	fixture.invoker.retry = true
+	report, base, runtime := loadNativeReworkState(t, fixture)
+	starts, spent := 1, int64(0)
+	reworkErr := executeReworkSubtree(context.Background(), fixture.host, &nativeDeltaOnlyInvoker{inner: fixture.invoker}, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report,
+		fixture.managerID, "Correct the project owner artifact.", "Independent review requested a correction.", &starts, &spent)
+	if fixture.invoker.runCalls != 1 {
+		t.Fatalf("targeted rework did not dispatch exactly one native turn: runCalls=%d err=%v", fixture.invoker.runCalls, reworkErr)
+	}
+	task := findTask(report.Tasks, fixture.managerID)
+	if task == nil || task.CandidateID == "" {
+		t.Fatalf("targeted rework did not bind a new candidate: task=%+v err=%v", task, reworkErr)
+	}
+	candidate, err := fixture.store.readCandidate(fixture.dir, task.CandidateID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := string(candidate.Files["src/project-owner.txt"].Content); got != "bounded native repair output\n" {
+		t.Fatalf("native targeted rework lost the harvested workspace bytes: %q (err=%v)", got, reworkErr)
+	}
+	if !containsString(task.WrittenPaths, "src/project-owner.txt") {
+		t.Fatalf("native targeted rework did not record its harvested path as written: %v", task.WrittenPaths)
+	}
+}
+
+func TestTargetedReworkRejectsNativeNoOpWithWorkspaceChanges(t *testing.T) {
+	fixture := seedNativeResumeRun(t)
+	fixture.invoker.retry = true
+	report, base, runtime := loadNativeReworkState(t, fixture)
+	noOp := TaskResponse{Status: "no-op", Summary: "Nothing to change.", Delegations: []Delegation{}, ReworkRequests: []ReworkRequest{},
+		Questions: []string{}, Risks: []string{}, ResolvedQuestions: []string{}, ResolvedRisks: []string{}}
+	starts, spent := 1, int64(0)
+	reworkErr := executeReworkSubtree(context.Background(), fixture.host, &nativeDeltaOnlyInvoker{inner: fixture.invoker, report: &noOp}, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report,
+		fixture.managerID, "Correct the project owner artifact.", "Independent review requested a correction.", &starts, &spent)
+	if reworkErr == nil || !strings.Contains(reworkErr.Error(), "claimed no-op while proposing files") {
+		t.Fatalf("native no-op with harvested workspace changes was accepted: %v", reworkErr)
+	}
+}
+
+func TestReintegrationAfterReworkAppliesNativeWorkspaceDelta(t *testing.T) {
+	const childPath, resolvedBytes = "src/orders/implementation.txt", "orders implementation resolved\n"
+	for _, test := range []struct {
+		name      string
+		conflict  bool
+		writes    map[string]string
+		wantBytes string
+		wantErr   string
+	}{
+		{name: "parent edit", wantBytes: "orders implementation v2\n"},
+		{name: "resolved conflict", conflict: true, writes: map[string]string{childPath: resolvedBytes}, wantBytes: resolvedBytes},
+		{name: "unresolved conflict", conflict: true, wantErr: "did not resolve integration conflict paths"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fixture := seedNativeIntegrationRun(t)
+			fixture.invoker.retry = true
+			report, base, runtime := loadNativeReworkState(t, fixture)
+			task := findTask(report.Tasks, fixture.managerID)
+			if task == nil {
+				t.Fatal("fixture omitted root task")
+			}
+			if test.conflict {
+				// A prior parent integration of the child's path conflicts with the
+				// child's new output, so the parent must resolve that path itself.
+				task.IntegrationCandidateID, task.IntegratedPaths = task.CandidateID, []string{childPath}
+			}
+			prior := task.IntegrationCandidateID
+			integrated := TaskResponse{Status: "complete", Summary: "Reintegrated with a native workspace edit.", Delegations: []Delegation{},
+				ReworkRequests: []ReworkRequest{}, Integrated: true, Questions: []string{}, Risks: []string{}, ResolvedQuestions: []string{}, ResolvedRisks: []string{}}
+			invoker := &nativeDeltaOnlyInvoker{inner: fixture.invoker, report: &integrated, writes: test.writes}
+			starts, spent := 2, int64(0)
+			_, reintegrateErr := reintegrateAfterRework(context.Background(), fixture.host, invoker, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report, task, &starts, &spent)
+			if test.wantErr != "" {
+				if reintegrateErr == nil || !strings.Contains(reintegrateErr.Error(), test.wantErr) {
+					t.Fatalf("reintegration error = %v, want %q", reintegrateErr, test.wantErr)
+				}
+				return
+			}
+			if fixture.invoker.runCalls != 1 || task.IntegrationCandidateID == "" || task.IntegrationCandidateID == prior {
+				t.Fatalf("reintegration did not dispatch one native turn and bind a new candidate: runCalls=%d task=%+v err=%v", fixture.invoker.runCalls, task, reintegrateErr)
+			}
+			candidate, err := fixture.store.readCandidate(fixture.dir, task.IntegrationCandidateID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := string(candidate.Files[childPath].Content); got != test.wantBytes {
+				t.Fatalf("reintegrated %s = %q, want %q (err=%v)", childPath, got, test.wantBytes, reintegrateErr)
+			}
+			if got := string(candidate.Files["src/project-owner.txt"].Content); got != "bounded native repair output\n" {
+				t.Fatalf("native reintegration lost the parent's harvested workspace edit: %q (err=%v)", got, reintegrateErr)
+			}
+		})
+	}
+}
+
+// loadNativeReworkState prepares the persisted run state for a direct targeted
+// rework call. No reviewer agent is configured, so a call may stop at the
+// review step after it has already bound its new candidate.
+func loadNativeReworkState(t *testing.T, fixture nativeResumeRunFixture) (RunReport, *Project, Runtime) {
+	t.Helper()
+	runtime := mustLoadRuntime(t, fixture.root)
+	runtime.Review = &ReviewConfig{Agents: map[string]Agent{}, MaxRounds: 1, MaxManagerRounds: 1}
+	runtime.Limits.MaxStarts = 32
+	report, err := fixture.store.readLatestState(fixture.plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	base, err := fixture.host.Load(fixture.root, fixture.plan.BaseRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return report, base, runtime
+}
+
 func seedNativeResumeRun(t *testing.T) nativeResumeRunFixture {
 	return seedNativeRun(t, "work", false)
 }

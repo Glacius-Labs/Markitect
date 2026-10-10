@@ -1,7 +1,0 @@
-apiVersion: commerce.example.org/v1
-kind: Handler
-metadata:
-  namespace: commerce
-  name: create-order-handler
-purpose: Coordinates the application behavior for creating an order.
-spec: {}

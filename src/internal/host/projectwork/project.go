@@ -13,7 +13,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/canonical"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
@@ -256,7 +255,7 @@ func FromSnapshot(root string, s *snapshot.Snapshot) (*Project, error) {
 		}
 		files[file] = append([]byte(nil), data...)
 		modes[file] = mode
-		definition, decodeErr := canonical.DecodeDefinition(file, data)
+		definition, decodeErr := decodeDefinition(file, data)
 		if decodeErr != nil {
 			return nil, decodeErr
 		}

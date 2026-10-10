@@ -2,6 +2,8 @@
 
 These reports preserve the exact scope, inputs, source references, and outcomes stated by each assessment. A report is evidence for that recorded run; its date or a `pending`/`NOT RUN` statement does not describe today's source status. Use the [implementation roadmap](../implementation-plan.md) for current source scope, the [backlog](../work-items/backlog.yaml) for work-item status, and the [production assessment](../production-assessment.md) for release-asset claims. The [work-items map](../work-items/README.md) routes the backlog and its surveys.
 
+Records may link to files that were removed later; read them at release v0.14.1 or in git history.
+
 ## Project workflow and integration reports
 
 - [Markitect-first dogfood](markitect-first-dogfood.md)

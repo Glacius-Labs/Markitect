@@ -22,22 +22,6 @@ func checkDiskComponentAlias(parent, component, repoPath string) error {
 	return nil
 }
 
-func cloneByteMap(input map[string][]byte) map[string][]byte {
-	result := make(map[string][]byte, len(input))
-	for key, value := range input {
-		result[key] = append([]byte(nil), value...)
-	}
-	return result
-}
-
-func cloneStringMap(input map[string]string) map[string]string {
-	result := make(map[string]string, len(input))
-	for key, value := range input {
-		result[key] = value
-	}
-	return result
-}
-
 func containsString(values []string, target string) bool {
 	for _, value := range values {
 		if value == target {

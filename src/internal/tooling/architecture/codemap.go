@@ -38,7 +38,7 @@ var Layers = []MapLayer{
 	{"infrastructure", "Infrastructure", "Git and working-tree access: fixed snapshots and guarded writes.", []string{"infrastructure", "host"}},
 	{"application", "Product application", "Current product use cases and their command and MCP surfaces.", []string{"host"}},
 	{"runtime", "Execution runtime", "Runs Manager, review and verify roles in owned workspaces.", []string{"host"}},
-	{"legacy", "Legacy and compatibility", "Published Project/Domain and canonical-alpha surfaces. DEC-014 allows removing them.", []string{"host", "module"}},
+	{"legacy", "Legacy and compatibility", "The published v0.13 Project/Domain surfaces. DEC-014 allows removing them.", []string{"host", "module"}},
 	{"module", "Modules", "Independent capability packages that import only Core.", []string{"module"}},
 	{"cli", "Executables", "Thin entrypoints that delegate to Host.", []string{"cli"}},
 	{"tooling", "Tooling", "Maintainer tooling: import gate, release, publication and notices.", []string{"tooling"}},
@@ -290,7 +290,7 @@ func RenderCodeMap(m CodeMap) []byte {
 	fmt.Fprintf(&b, "This page lists every Go package in the repository with its layer, purpose and owning document. Read the owning document before you change a package, and update it when the package's behavior changes.\n\n")
 	fmt.Fprintf(&b, "The page is generated from [codemap.yaml](%s). Do not edit it by hand. Change the YAML, then regenerate the page from the repository root:\n\n", relativeLink(pageDir, CodeMapSource))
 	fmt.Fprintf(&b, "```powershell\n%s\n```\n\n", CodeMapUpdate)
-	fmt.Fprintf(&b, "Tests in `src/internal/tooling/architecture` fail when a Go package is missing from the map, when an entry names a directory that is no longer a package, when an owning document is missing, or when this page is stale. Each layer must agree with the coarse layer of the [import gate](modules.md#mechanical-dependency-gate); the gate does not yet enforce the finer layers.\n\n")
+	fmt.Fprintf(&b, "Tests in `src/internal/tooling/architecture` fail when a Go package is missing from the map, when an entry names a directory that is no longer a package, when an owning document is missing, or when this page is stale. Each layer must agree with the coarse layer of the [import gate](modules.md#mechanical-dependency-gate). The gate also enforces two rules of the finer layers: `core`, `infrastructure`, `application` and `runtime` packages may not import `legacy` packages, and they may use only the guarded API of `src/internal/host/guardedwrite`.\n\n")
 	counts := map[string]int{}
 	for _, p := range m.Packages {
 		counts[p.Layer]++

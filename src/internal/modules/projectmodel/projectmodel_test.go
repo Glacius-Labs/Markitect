@@ -295,6 +295,45 @@ func TestAnalyzeKeepsRequiredArtifactWhenMappingIsAbsent(t *testing.T) {
 	}
 }
 
+// BUG-01: the root namespace is shallower than a top-level one, so a selector
+// the root delegates unchanged belongs to the delegate, as at every deeper level.
+func TestAnalyzeGivesEqualSelectorToTheDelegateBelowRoot(t *testing.T) {
+	ref := func(namespace, name string) map[string]any {
+		return map[string]any{"apiVersion": APIVersion, "kind": managerKind, "namespace": namespace, "name": name}
+	}
+	root := core.Definition{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Name: "root"}, Purpose: "Root manager.", Spec: map[string]any{"owns": []any{"src/", "docs/"}}}
+	backend := core.Definition{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Namespace: "backend", Name: "backend"}, Purpose: "Backend manager.", Spec: map[string]any{"parent": ref("", "root"), "owns": []any{"src/"}}}
+	api := core.Definition{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Namespace: "backend.api", Name: "api"}, Purpose: "API manager.", Spec: map[string]any{"parent": ref("backend", "backend"), "owns": []any{"src/"}}}
+	inventory := []File{{Path: "src/main.go", Digest: "sha256:main", Mode: "100644"}, {Path: "docs/guide.md", Digest: "sha256:guide", Mode: "100644"}}
+	for _, tc := range []struct {
+		name        string
+		definitions []core.Definition
+		owner       string
+	}{
+		{"root and top-level delegate", []core.Definition{root, backend}, "backend"},
+		{"two delegation levels", []core.Definition{root, backend, api}, "backend.api"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			model, diagnostics := core.Compile([]core.Schema{Schema()}, tc.definitions, "delegated-selector")
+			if len(diagnostics) != 0 {
+				t.Fatalf("compile: %+v", diagnostics)
+			}
+			r := Analyze(model, inventory)
+			if r.Status != "succeeded" {
+				t.Fatalf("delegating an identical selector is valid: status=%s findings=%+v", r.Status, r.Findings)
+			}
+			owners := map[string]string{}
+			for _, f := range r.Files {
+				owners[f.Path] = f.Owner
+			}
+			want := core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: tc.owner, Name: tc.owner[strings.LastIndex(tc.owner, ".")+1:]}.Key()
+			if owners["src/main.go"] != want || owners["docs/guide.md"] != rootManagerKey() {
+				t.Fatalf("owners = %v, want src/main.go by %s and docs/guide.md by root", owners, want)
+			}
+		})
+	}
+}
+
 // BUG-01: an absent optional Artifact path leaves an expected-artifact entry.
 // That entry is not inventory and must not satisfy a required Artifact that
 // expects the same path or a prefix covering it, whichever Artifact sorts first.
