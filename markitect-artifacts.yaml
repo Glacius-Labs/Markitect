@@ -675,6 +675,8 @@ spec:
       owner: git-hooks-projection-module
     - path: src/internal/modules/githooks/githooks_test.go
       owner: git-hooks-projection-module
+    - path: src/internal/modules/githooks/testmain_test.go
+      owner: git-hooks-projection-module
     - path: src/internal/host/canonical_scoped_reconciliation.go
       owner: canonical-scoped-reconciliation
     - path: src/internal/host/canonical_scoped_test.go
@@ -2188,6 +2190,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectwork/runtime_edit_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectwork/testmain_test.go
+      owner: project-world-implementation
     - path: docs/validation/project-world-delivery.md
       owner: project-world-validation
     - path: docs/validation/project-operations-2026-10-09.md
@@ -2204,6 +2208,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectsetup/setup_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectsetup/testmain_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectcoverage/types.go
       owner: project-world-implementation
     - path: src/internal/host/projectcoverage/ignore.go
@@ -2211,6 +2217,8 @@ spec:
     - path: src/internal/host/projectcoverage/coverage.go
       owner: project-world-implementation
     - path: src/internal/host/projectcoverage/coverage_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcoverage/testmain_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectcoverage/census.go
       owner: project-world-implementation
@@ -2280,6 +2288,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectbriefing/history_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectbriefing/testmain_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectcli/project_brownfield.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/project_brownfield_test.go
@@ -2291,6 +2301,8 @@ spec:
     - path: src/internal/host/projectcli/project_explore_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectexplore/projectexplore_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectexplore/testmain_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectexplore/readiness.go
       owner: project-world-implementation
@@ -2319,6 +2331,8 @@ spec:
     - path: src/internal/host/projectadoption/manager_run_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectadoption/process_lock_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectadoption/testmain_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectadoption/process_lock_unix.go
       owner: project-world-implementation
@@ -2397,6 +2411,8 @@ spec:
       owner: bounded-agent-execution-host
     - path: src/internal/host/agentexec/invocation_test.go
       owner: bounded-agent-execution-host
+    - path: src/internal/host/agentexec/testmain_test.go
+      owner: bounded-agent-execution-host
     - path: src/internal/host/agentexec/lifecycle.go
       owner: bounded-agent-execution-host
     - path: src/internal/host/projectrun/invoker_test.go
@@ -2419,11 +2435,15 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectapp/model_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectapp/testmain_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectapp/onboarding.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/mcp.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/mcp_integration_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/testmain_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectrun/scheduling.go
       owner: project-world-implementation
@@ -2436,6 +2456,8 @@ spec:
     - path: src/internal/host/mcp/tools.go
       owner: project-world-implementation
     - path: src/internal/host/mcp/mcp_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/mcp/testmain_test.go
       owner: project-world-implementation
     - path: docs/work-items/product-readiness/P05-mcp-handoff-20261009.md
       owner: project-world-implementation
@@ -2523,7 +2545,11 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectworkspace/git_reopen_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectworkspace/testmain_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectonboarding/newnative_workflow_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectonboarding/testmain_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectrun/coordinator.go
       owner: project-world-implementation
