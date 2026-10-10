@@ -20,12 +20,12 @@ means the observed literal references differ from the canonical model.
 
 ## Build and install
 
-Build the adapter with the Go version declared by the repository:
+Build the adapter with the Go version declared by the repository, from the Markitect repository root:
 
 ```powershell
 $adapterDirectory = Join-Path (Get-Location) ".artifacts/adapters"
 New-Item -ItemType Directory -Force $adapterDirectory | Out-Null
-go build -o (Join-Path $adapterDirectory "markitect-adapter-dotnet.exe") ./cmd/markitect-adapter-dotnet
+go build -o (Join-Path $adapterDirectory "markitect-adapter-dotnet.exe") ./src/cmd/markitect-adapter-dotnet
 $env:PATH = "$adapterDirectory;$env:PATH"
 ```
 

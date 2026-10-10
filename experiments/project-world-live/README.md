@@ -5,7 +5,7 @@ This harness uses the public `markitect project` CLI and an existing signed-in C
 Build a source candidate and keep its adapter bytes fixed for the whole exercise. From the Markitect source root:
 
 ```powershell
-go build -o "$env:TEMP\markitect-live.exe" ./cmd/markitect
+go build -o "$env:TEMP\markitect-live.exe" ./src/cmd/markitect
 python -B experiments/project-world-live/run.py --source . --tool "$env:TEMP\markitect-live.exe" --output "$env:TEMP\shop-live-proof" --model MODEL
 python -B experiments/project-world-live/run.py --source . --tool "$env:TEMP\markitect-live.exe" --output "$env:TEMP\shop-live-proof" --model MODEL --stage run
 python -B experiments/project-world-live/run.py --source . --tool "$env:TEMP\markitect-live.exe" --output "$env:TEMP\shop-live-proof" --model MODEL --stage verify

@@ -16,8 +16,10 @@ branch value.
 
 ## Build
 
+From the Markitect repository root:
+
 ```powershell
-go build -o .artifacts/adapters/markitect-adapter-azure-devops.exe ./cmd/markitect-adapter-azure-devops
+go build -o .artifacts/adapters/markitect-adapter-azure-devops.exe ./src/cmd/markitect-adapter-azure-devops
 ```
 
 ## Capture and configuration

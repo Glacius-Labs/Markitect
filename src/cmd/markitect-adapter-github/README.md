@@ -94,9 +94,9 @@ executable, not a Markitect protocol or scale guarantee.
 From the Markitect repository root:
 
 ```powershell
-go test ./cmd/markitect-adapter-github -count=1
+go test ./src/cmd/markitect-adapter-github -count=1
 New-Item -ItemType Directory -Force .artifacts/adapters | Out-Null
-go build -o .artifacts/adapters/markitect-adapter-github.exe ./cmd/markitect-adapter-github
+go build -o .artifacts/adapters/markitect-adapter-github.exe ./src/cmd/markitect-adapter-github
 ```
 
 The executable can be configured as any `type: command` adapter using the
