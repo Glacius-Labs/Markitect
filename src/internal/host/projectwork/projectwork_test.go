@@ -454,6 +454,45 @@ func TestConfigRejectsDocumentControlPathCollisionsAndLinksFromCustomPath(t *tes
 	}
 }
 
+func TestArtifactPathLinksAreRelativeToConfiguredDocumentPath(t *testing.T) {
+	project := &Project{
+		Config: Config{Name: "Fixture", CoverageMode: "full", DocumentPath: "ARCHITECTURE.md"},
+		Report: projectmodel.Report{
+			Statements: []projectmodel.Statement{{ID: "s", Name: "Goal", Source: ".markitect/model/goal.yaml", Description: "Goal."}},
+			Artifacts:  []projectmodel.Artifact{{ID: "a", Name: "Main", Paths: []string{"src/main.go"}}},
+		},
+	}
+	text := documentText(project)
+	if !strings.Contains(text, "- Source: [.markitect/model/goal.yaml](.markitect/model/goal.yaml)") {
+		t.Fatalf("statement source link is not relative to ARCHITECTURE.md:\n%s", text)
+	}
+	const want = "- Expected paths: [src/main.go](src/main.go)"
+	if !strings.Contains(text, want+"\n") {
+		got := "missing"
+		for _, line := range strings.Split(text, "\n") {
+			if strings.HasPrefix(line, "- Expected paths:") {
+				got = line
+			}
+		}
+		t.Fatalf("artifact path line = %q, want %q", got, want)
+	}
+}
+
+func TestSourceLinksAreCaseSensitiveOnEveryPlatform(t *testing.T) {
+	for _, test := range []struct{ destination, value, want string }{
+		{"docs/markitect/project.md", "Docs/guide.md", "[Docs/guide.md](../../Docs/guide.md)"},
+		{"docs/markitect/project.md", "docs/Markitect/guide.md", "[docs/Markitect/guide.md](../Markitect/guide.md)"},
+		{"docs/markitect/project.md", "docs/markitect/guide.md", "[docs/markitect/guide.md](guide.md)"},
+		{"docs/markitect/project.md", "docs", "[docs](..)"},
+		{"ARCHITECTURE.md", "src/my file.go", "[src/my file.go](src/my%20file.go)"},
+		{"docs/markitect/project.md", "../outside.md", "../outside.md"},
+	} {
+		if got := sourceLinkAt(test.destination, test.value); got != test.want {
+			t.Errorf("sourceLinkAt(%q, %q) = %q, want %q", test.destination, test.value, got, test.want)
+		}
+	}
+}
+
 func TestConfigDoesNotReserveRemovedRouterDocumentPath(t *testing.T) {
 	for _, destination := range []string{
 		".agents/skills/markitect-model-first/SKILL.md",
