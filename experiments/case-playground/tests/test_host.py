@@ -216,7 +216,7 @@ class RunTests(HostTestBase):
         docker = FakeDocker()
         with mock.patch.object(host, "hand_back", return_value="done") as hand_back:
             self.run_host(docker)
-        hand_back.assert_called_once_with("sha256:feed", self.out.resolve() / "results")
+        hand_back.assert_called_once_with("mpg-fake-roombook-001", "sha256:feed", self.out.resolve() / "results")
         self.assertEqual(self.host_record()["handBack"], "done")
 
     def test_timeout_kills_and_records(self):
@@ -420,7 +420,7 @@ class HandBackTests(unittest.TestCase):
     def hand_back(self, operator, docker):
         with mock.patch.object(host, "_operator", return_value=operator), \
                 mock.patch.object(host.subprocess, "run", docker.run):
-            return host.hand_back("sha256:feed", self.folder)
+            return host.hand_back("mpg-x", "sha256:feed", self.folder)
 
     def test_not_needed_without_operator_or_when_the_operator_owns_the_output(self):
         docker = FakeDocker()
@@ -431,14 +431,21 @@ class HandBackTests(unittest.TestCase):
     def test_foreign_output_is_given_back_without_following_links(self):
         docker = FakeDocker()
         self.assertEqual(self.hand_back((self.owner + 1, 4242), docker), "done")
-        self.assertEqual(len(docker.calls), 1)
-        run = docker.calls[0]
+        self.assertEqual(docker.commands(), ["docker container", "docker run"])
+        run = docker.calls[1]
         self.assertEqual(run[:3], ["docker", "run", "--rm"])
         for flag, value in (("--network", "none"), ("--user", "0:0"), ("--entrypoint", "chown"),
                             ("--mount", host._mount(self.folder, "/handback"))):
             self.assertEqual(run[run.index(flag) + 1], value)
         self.assertEqual(run[-5:], ["sha256:feed", "-R", "--no-dereference", f"{self.owner + 1}:4242",
                                     "/handback"])
+
+    def test_nothing_is_handed_back_while_the_container_runs(self):
+        docker = FakeDocker()
+        docker.container = "running"  # e.g. docker wait failed; the agent may still be inside
+        self.assertEqual(self.hand_back((self.owner + 1, 4242), docker),
+                         "skipped: container mpg-x is still running")
+        self.assertNotIn("docker run", docker.commands())
 
     def test_failure_is_reported_not_raised(self):
         self.assertEqual(self.hand_back((self.owner + 1, 4242), FakeDocker(run_fails=True)), "failed: conflict")

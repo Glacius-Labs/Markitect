@@ -103,15 +103,16 @@ def _operator() -> tuple[int, int] | None:
     return os.getuid(), os.getgid()
 
 
-def hand_back(image: str, folder: Path) -> str:
-    """Give a container's output folder back to the host user: "done", "not-needed" or
-    "failed: ...".
+def hand_back(container: str, image: str, folder: Path) -> str:
+    """Give a container's output folder back to the host user: "done", "not-needed",
+    "skipped: ..." or "failed: ...".
 
     Containers write as root and keep snapshots root-only (0700), so on a Linux host the
     operator could neither read nor delete a run. A short root container in the same
     image changes the owner, without following links. Nothing is needed on Windows, as
     root, or when the engine already maps container root to the operator (rootless
-    Docker, Docker Desktop on macOS).
+    Docker, Docker Desktop on macOS). The host user usually shares uid 1000 with the
+    container's agent, so nothing is handed back while `container` still runs.
     """
     operator = _operator()
     if operator is None:
@@ -123,7 +124,9 @@ def hand_back(image: str, folder: Path) -> str:
         return f"failed: {exc}"
     if not foreign:
         return "not-needed"
-    cmd = ["docker", "run", "--rm", "--label", LABEL, "--network", "none", "--user", "0:0",
+    if _container_state(container) == "running":
+        return f"skipped: container {container} is still running"
+    cmd =["docker", "run", "--rm", "--label", LABEL, "--network", "none", "--user", "0:0",
            "--mount", _mount(folder, "/handback"), "--entrypoint", "chown", image,
            "-R", "--no-dereference", f"{operator[0]}:{operator[1]}", "/handback"]
     try:
@@ -366,8 +369,8 @@ def run(args: argparse.Namespace) -> int:
     finally:
         if record["containerLaunched"]:
             _finish_container(name, record, out, args.keep_container)
-            record["handBack"] = hand_back(record["image"]["id"] or record["image"]["tag"], results)
-            if record["handBack"].startswith("failed"):
+            record["handBack"] = hand_back(name, record["image"]["id"] or record["image"]["tag"], results)
+            if record["handBack"].startswith(("failed", "skipped")):
                 print(f"warning: {results} stays owned by root ({record['handBack']})", file=sys.stderr)
         record["endedAt"] = _now()
         _write_json(out / "host.json", record)

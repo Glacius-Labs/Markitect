@@ -1102,7 +1102,7 @@ def host_assess(args: argparse.Namespace) -> int:
         if not codex_auth.is_file():
             raise AssessError(f"Codex auth file not found: {codex_auth}")
         codex_auth = codex_auth.resolve()
-    if "claude" in names:
+    if "claude" in names and not fake:
         claude_token = Path(args.claude_token or DEFAULT_CLAUDE_TOKEN)
         if not claude_token.is_file():
             raise AssessError(f"Claude token file not found: {claude_token} (create it once with `claude setup-token`)")
@@ -1166,8 +1166,8 @@ def host_assess(args: argparse.Namespace) -> int:
         print(f"error: {exc}", file=sys.stderr)
     finally:
         host._finish_container(name, result, out, args.keep_container)
-        result["handBack"] = host.hand_back(image_id, out)
-        if result["handBack"].startswith("failed"):
+        result["handBack"] = host.hand_back(name, image_id, out)
+        if result["handBack"].startswith(("failed", "skipped")):
             print(f"warning: {out} stays owned by root ({result['handBack']})", file=sys.stderr)
         if throwaway is not None:
             shutil.rmtree(throwaway, ignore_errors=True)

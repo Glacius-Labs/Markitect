@@ -538,7 +538,7 @@ class HostAssessTests(unittest.TestCase):
         with mock.patch.object(host, "hand_back", return_value="done") as hand_back:
             self.assertEqual(self.assess(docker), 0)
         out = self.run_dir / "assessment"
-        hand_back.assert_called_once_with("sha256:img", out)
+        hand_back.assert_called_once_with("mpg-assess-conv-x", "sha256:img", out)
         self.assertEqual(json.loads((out / "host.json").read_text(encoding="utf-8"))["handBack"], "done")
 
     def test_refuses_existing_assessment_unless_forced(self):
@@ -574,9 +574,9 @@ class HostAssessTests(unittest.TestCase):
         argv = ["assess", "--run", str(self.run_dir), "--fake-reviewers"]
         with mock.patch.object(host.subprocess, "run", docker.run), \
                 mock.patch.object(host.subprocess, "Popen", docker.popen), \
-                mock.patch.object(evaluate, "DEFAULT_CLAUDE_TOKEN", self.token), \
+                mock.patch.object(evaluate, "DEFAULT_CLAUDE_TOKEN", self.root / "no-login"), \
                 mock.patch.object(evaluate, "evaluation_identity", lambda: {"commit": None, "dirty": None}), quiet():
-            self.assertEqual(entry.main(argv), 0)
+            self.assertEqual(entry.main(argv), 0)  # no real login needed
             self.assertEqual(entry.main([*argv, "--force", "--claude-token", str(self.token)]), 2)
         run = next(call for call in docker.calls if call[:2] == ["docker", "run"])
         mounts = [run[i + 1] for i, arg in enumerate(run) if arg == "--mount"]
