@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -126,6 +127,46 @@ func TestWorkingTreeCollisionDiagnosticDoesNotDependOnMapOrder(t *testing.T) {
 		t.Skip("case-insensitive filesystem cannot hold both Docs and docs")
 	}
 	requireSameError(t, func() error { _, err := Load(root, ""); return err }, `between "Docs" and "docs"`)
+}
+
+func TestWorkingTreeTakesTrackedModesFromIndexWhenGitIgnoresFileMode(t *testing.T) {
+	root, _ := selectiveGitFixture(t)
+	// Git for Windows sets this; setting it here also covers other platforms.
+	gitTest(t, root, "config", "core.filemode", "false")
+	writeTestFile(t, root, "tool.sh", "#!/bin/sh\n")
+	gitTest(t, root, "add", "tool.sh")
+	gitTest(t, root, "update-index", "--chmod=+x", "tool.sh")
+	gitTest(t, root, "commit", "-qm", "executable tool")
+	if status := strings.TrimSpace(gitTest(t, root, "status", "--porcelain")); status != "" {
+		t.Fatalf("precondition: worktree not clean: %q", status)
+	}
+	working, err := Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fixed, err := Load(root, "HEAD")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if working.Modes["tool.sh"] != "100755" || working.Digest() != fixed.Digest() {
+		t.Fatalf("clean worktree mode %s (digest %s) != HEAD mode %s (digest %s) for tool.sh", working.Modes["tool.sh"], working.Digest(), fixed.Modes["tool.sh"], fixed.Digest())
+	}
+
+	writeTestFile(t, root, "untracked.sh", "#!/bin/sh\n")
+	if err := os.Chmod(filepath.Join(root, "untracked.sh"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	withUntracked, err := Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "100644"
+	if runtime.GOOS != "windows" {
+		want = "100755"
+	}
+	if withUntracked.Modes["untracked.sh"] != want || withUntracked.Modes["tool.sh"] != "100755" {
+		t.Fatalf("modes = %#v, want untracked filesystem mode %s and tracked index mode 100755", withUntracked.Modes, want)
+	}
 }
 
 func TestLoadRejectsWorkingTreeSymlinks(t *testing.T) {
