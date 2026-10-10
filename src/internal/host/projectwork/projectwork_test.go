@@ -3,6 +3,7 @@ package projectwork
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -296,6 +297,62 @@ func TestFixedHEADPlanCanApplyOnlyWhileWorkingInputsMatch(t *testing.T) {
 	if !strings.Contains(string(got), "Fixed revision edit.") {
 		t.Fatalf("fixed revision plan was not applied: %s", got)
 	}
+}
+
+// With core.filemode=false the snapshot takes a tracked file's mode from the
+// Git index, so guarded writes must not compare it with on-disk permission bits.
+func TestUnchangedTrackedExecutableWithoutFileModeDoesNotBlockGuardedWrites(t *testing.T) {
+	setup := func(t *testing.T) (string, *Project) {
+		t.Helper()
+		root := testGitRoot(t)
+		gitTest(t, root, "config", "core.filemode", "false")
+		if _, err := Init(root, "Mode fixture", true); err != nil {
+			t.Fatal(err)
+		}
+		writeFile(t, root, "tool.sh", "#!/bin/sh\necho tool\n")
+		gitTest(t, root, "add", ".")
+		gitTest(t, root, "update-index", "--chmod=+x", "tool.sh")
+		gitTest(t, root, "commit", "-m", "executable tool")
+		p, err := Load(root, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if p.Snapshot.Modes["tool.sh"] != snapshot.ExecutableMode {
+			t.Fatalf("precondition: snapshot mode for tool.sh = %q, want %s", p.Snapshot.Modes["tool.sh"], snapshot.ExecutableMode)
+		}
+		return root, p
+	}
+	t.Run("Document", func(t *testing.T) {
+		_, p := setup(t)
+		if _, err := Document(p, true); err != nil {
+			t.Errorf("Document(write) failed for an unchanged tracked executable: %v", err)
+		}
+	})
+	t.Run("ApplyEdit", func(t *testing.T) {
+		root, p := setup(t)
+		original := string(p.Snapshot.Files[initManagerPath])
+		edited := strings.Replace(original, "Owns the repository-wide engineering mandate", "Owns the whole repository engineering mandate", 1)
+		if edited == original {
+			t.Fatal("could not edit manager purpose")
+		}
+		mutation := Mutation{APIVersion: APIVersion, BaseDigest: p.Digest, Actor: HumanActor, Goal: "Edit manager purpose",
+			Files: []FileChange{{Path: initManagerPath, Content: edited}}}
+		plan, err := PlanEdit(p, mutation)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := ApplyEdit(root, plan, p.Digest); err != nil {
+			t.Errorf("ApplyEdit failed for an unchanged tracked executable: %v", err)
+		}
+	})
+	t.Run("FileModeEnabledStillComparesExecutableBit", func(t *testing.T) {
+		if sameSnapshotMode(0644, snapshot.ExecutableMode, true) || sameSnapshotMode(0755, snapshot.RegularMode, true) {
+			t.Fatal("an executable-bit change must still count when Git tracks file modes")
+		}
+		if sameSnapshotMode(fs.ModeSymlink|0755, snapshot.ExecutableMode, false) {
+			t.Fatal("a non-regular file must never match a snapshot mode")
+		}
+	})
 }
 
 func TestUserCanSelectNewInventoryThroughReviewedManifestEdit(t *testing.T) {
