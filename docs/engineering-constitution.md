@@ -1,122 +1,109 @@
 # Engineering constitution
 
-**Status:** v0.13.0 is the latest published product contract. It adds read-only policy-failure analysis, bounded selective handoff, the provider-neutral Markitect-first workflow and managed-artifact accounting; v0.12.0 adds the finite `same-target` assertion described in [Architecture](architecture.md). v0.11.0 is the historical baseline for reusable architecture contracts; v0.10.0 is the historical baseline for the generic model. The [roadmap](implementation-plan.md) owns verified release evidence; [Usage](usage.md) documents source syntax and published CLI behavior.
+This page states the engineering principles that every change to Markitect keeps. [Architecture](architecture.md) describes how current source implements them, and [CONTRIBUTING](../CONTRIBUTING.md) owns the contribution checks.
 
 ## Product purpose
 
-The [product vision](vision.md) owns the high-level thesis and human/agent responsibilities. The kernel invariants below are canonical for product and implementation decisions that support it. [Development coordination](development/README.md) applies them to work ownership; archived proposals remain design input. The goal of reducing routine human supervision does not weaken these invariants, explicit adoption, exception or mutation boundaries.
+The [vision](vision.md) owns the product thesis: model-first development with delegated realization. People keep one canonical model of the project; Managers realize changes of intent under independent review, verification and guarded Apply. The principles below keep that delegated work bounded and its evidence honest. The goal of less routine human supervision does not weaken them.
 
-The product direction is to make Markitect the desired-state model for the engineering intent a project deliberately governs. People decide which architecture and policies the project wants; selected structured decisions are recorded as canonical, versioned Domains and resources. The target operating model uses explicit adapters and AI agents to materialize those decisions into declared repository representations, with bounded evidence checking observed state against the contract. Human narrative, business requirements, implementation detail outside modeled contracts, vendor/tool inputs and external observations retain explicit owners. Markitect does not own every repository fact, choose the architecture, or decide whether the desired architecture is wise.
+## Determinism and explicit inputs
 
-The intended outcome is one canonical model whose relevant values can feed generated human-readable Domain contracts, agent instructions, deterministic checks, and explicitly configured adapters. When a Project selects the `markdown` target, the v0.11.0 Domain projection writes normalized Domain schemas, relations, and constraints under `docs/markitect/_domains/`; per-resource projections may include their applicable PolicyResults and explicit waiver decision. These are generated views, not canonical sources. A check establishes only its declared assertions for its fixed inputs. It does not establish that prose is true, that code satisfies business intent beyond the evidence a configured checker can observe, or that a human has accepted a change.
+- A fixed model, snapshot and tool version give the same compile, coverage and impact results.
+- Relationships and input scope are explicit. Prose, README links and paths create no dependency.
+- Impact follows declared relationships. It stays conservative for unknown inputs; nothing narrows it silently.
+- The structural Core stays generic. It has no providers, policy language, Git, paths or execution, and it does not depend on adopting repositories.
+- New Core semantics need repeated concrete failures, a comparison with solutions in checks or derived views, and a focused generic design. Names, YAML repetition or provider convenience do not justify one.
 
-## Kernel invariants
+## Distinct kinds of state
 
-- Fixed canonical data, inputs and executable/plugin versions produce deterministic results. Constraints are finite, terminating and side-effect free; the language remains smaller than its consumer Domains.
-- Authoring syntax and normalized meaning are distinct. Semantic relationships are explicit. Prose navigation and artifact selection create no inferred dependencies; Context and policy invalidation have separate declared semantics.
-- Canonical, observed, generated, inferred and proposed state remain distinct. AI proposals require explicit human-reviewed adoption. Generated outputs never own canonical meaning.
-- For selected governed decisions, Markitect is canonical and declared repository representations follow that intent. Incidental implementation choices within an accepted contract are adapter freedom, not competing architecture authority. Code outside a declared contract, human-owned narrative and external/vendor/tool sources retain their own explicit roles.
-- Domain meaning remains separate from technology/provider mappings. Core treats adopting code, configuration and prose as opaque inputs; specialist adapters/checks state what their evidence proves.
-- Structural invalidity blocks trustworthy analysis. Ordinary policy failure may be inspected explicitly read-only, with failed status and exit 1. Check, Verify and reconciliation remain strict; inspection is neither acceptance nor waiver.
-- Adapters consume canonical semantics plus explicit mappings/observations independently. Other adapters' generated representations are not canonical input. An existing shared contract should permit a new consumer without another adapter or provider-specific Core edits. Shared native rendering and external-target ownership limitations must be explained honestly.
-- Observe and Plan are read-only contracts. Apply is an explicit trust/mutation boundary; plans bind reviewed inputs and versions. Commands run under caller authority, not a claimed OS sandbox. Convergence is proved per adapter/target, not assumed universally.
-- Impact follows declared dependencies and broadens conservatively for unknown inputs. Direct policy subjects do not replace the conservative affected set. Explanation does not claim full source/business semantics.
-- Conflicts fail explicitly; no hidden precedence, implicit activation or independent Domain trait stacking. Architecture evolves through reviewed exact versions without changing historical meaning.
-- Exceptions are narrow, explicit, digest-bound and reviewable. Structural failures cannot be waived; recorded decisions do not authenticate authorization.
-- New Core semantics require repeated concrete failures, normalization/check/adapter alternatives and a focused generic design. Names, YAML repetition and provider convenience do not justify Pattern, Trait, inheritance, arbitrary queries, source analysis or background execution.
-- Tests and observations establish their declared scope, not human acceptance, runtime/business truth, productivity, token savings, general AI safety or demand.
+- The committed model is canonical. Observed repository state, inferred proposals, drafts, candidates and generated views stay distinct.
+- Typed YAML is the canonical model. Generated Markdown, Codex and Claude files are views of it; change the source and regenerate them.
+- Agent proposals and Brownfield findings become intent only when the owner commits the revised model.
+- An adopting project's files are opaque declared artifacts ([project artifact boundary](architecture.md#project-artifact-boundary)).
 
-## Reuse existing Domain packages
+## Manager authority
 
-Architecture contracts should be reusable as long-lived, versioned content packages. A consumer pins an exact package revision and explicitly activates a Domain declared by that package. A later architecture contract version is adopted through a reviewed exact pin update, followed by `check`, fixed-snapshot `impact`, and inspection of policy results. Markitect reports which declared assertions pass, fail, or are waived under the explicit exception contract; it does not rewrite application code or perform a migration automatically. The adopting team decides and implements code changes.
+- Manager authority comes from the active model revision. The Managers, the paths they own and their rules are those of the committed model that a plan binds.
+- Local agent settings, instructions and reports grant no authority.
+- Each Manager may propose changes only within the write paths its model responsibility allows. Control-plane paths under `.markitect/` are never writable by a role.
+- A parent Manager integrates its children's results and keeps the duty to integrate.
+- A changed model makes a plan stale. It needs a fresh preview.
 
-Keep one Domain definition for each active API group/version. Custom typed references stay within that same API version. Consequently, patterns that must compose over the same resource need to be composed in the same Domain definition and its versioned package. Independent traits from separately versioned Domains cannot be stacked onto one `UseCase` instance. A `conformsTo` link by itself does not import or activate constraints. A package update changes the active architecture contract only through the exact Domain definitions explicitly selected in the Project.
+## Explicit budgets and role starts
 
-Do not add a Core `Pattern` kind or a separate pattern DSL in v0.11.0. Express candidate patterns using the existing Domain kinds, relations, finite assertions, packages, and adapters. Prefer semantic relations over directory conventions. Introduce a new primitive only if repeated concrete contracts show that the existing model cannot express an essential invariant clearly and deterministically. Templates and one-time scaffolding solve project startup; versioned Domain packages solve ongoing conformance. They are different product concerns.
+- Every role start counts against explicit limits in `.markitect/runtime.yaml`: depth, starts, retries, parallel roles, duration, cost and candidate bytes.
+- Each role start is reserved and recorded in the run before it happens.
+- An unknown outcome is not replayed. Recovery inspects the saved attempt and never starts a replacement role ([candidate workspaces and recovery](project-operations.md#candidate-workspaces-and-recovery)).
+- Configured cost is an estimate, not billing enforcement. An unmetered role records unknown cost.
 
-## Example contract: vertical-slice UseCases
+## Lifecycle trust boundaries
 
-A project-owned or package-supplied Software Domain may express a UseCase with an explicit Command-or-Query kind, exactly one owning Module, exactly one required Handler, and declared optional extension points such as Validator, Authorization, Mapping, or EventPublication. It can state that slice-specific implementation belongs to its UseCase and that lateral UseCase dependencies are restricted. The same Domain may distinguish project rules for Modules, Features, Common/shared concepts, and interfaces.
+The lifecycle is inspect, explore, edit, readiness, plan, run, verify, preflight and Apply ([project workflow](project-workflow.md)).
 
-This is an example of a project-selected architecture, not a Markitect default. It does not make a specific Clean Architecture, DDD, folder layout, or .NET convention universal. It also does not imply that a relationship named `conformsTo` activates the linked Domain's assertions. The versioned package must carry the combined Domain contract for the resource kinds it constrains.
+- Inspection is read-only and starts no role.
+- A write that has a preview requires the preview's digest. A stale preview is refused.
+- A plan binds its base revision, snapshot and model digest. Run and Verify work in owned workspaces; only Apply writes the checkout.
+- Apply writes only the latest verified integrated candidate, after preflight, through guarded writes. It does not commit, merge, publish or deploy.
+- Check and Verify are strict. An error result stays an error, structural findings block readiness, and a failed or incomplete verification blocks Apply.
 
-The [Domain-language pressure test](design/domain-language-pressure.md) and its [software-architecture experiment](design/software-architecture-experiment.md) distinguish the structural slice rules this model can check from inverse-ownership, collection ownership and source-code claims that remain outside the current contract. The [resolved-target equality assessment](design/resolved-target-equality.md) records two independent Software and Delivery cases that justify the finite singleton-path assertion shipped in v0.12.0. This changes the v0.11.0 contract without justifying broader composition.
+## Executor, candidate and independent Verifier
 
-The finite constraint language can express cardinality over a single resource or over a selected resource set. v0.11.0 adds a `scope` distinction to `count`: `resource` evaluates relation cardinality independently for each selected subject; `selection` evaluates the selected population as a whole. For example, a per-UseCase exactly-one-Handler invariant is resource-scoped, while a constraint on the number of selected active UseCases is selection-scoped. Selection boundaries must account for additions and removals.
+- The method separates the Executor, its candidate and an independent Verifier ([operating methodology](operating-methodology.md#one-authority-model-distinct-responsibilities)).
+- In current source a Manager, or a helper it starts, produces a candidate. An independent reviewer with fresh context assesses each candidate and each integration result, and the verify role checks the integrated candidate.
+- Review and verify roles return no file changes.
+- Tests the Executor wrote are realizations too; they are not independent assurance on their own ([CPT-002](concepts/register.md#cpt-002-tests-are-realizations-too)).
 
-Do not claim that the core inspects source code to prove that a Query does not mutate state, that a Handler file exists, or that tests and documentation are present. Those implementation facts require explicit project-artifact inputs and a configured adapter or project-owned check. Without such evidence, a Domain check establishes only its structural assertion over canonical model data.
+## Evidence and acceptance
 
-## Policy results and explicit exceptions
+- AI evidence, passing checks and digests are not human acceptance.
+- Deterministic outputs, such as the generated model document, are checked byte for byte. Agent candidates vary and need project-owned checks.
+- A result establishes its declared scope. It does not prove semantic correctness, complete modeling or business value.
+- Agent settings and owned workspaces are not an operating-system sandbox.
+- Benefits such as fewer missed updates remain hypotheses until measured on repeated real tasks ([measurement](measurement.md)).
 
-v0.11.0 exposes a `PolicyResult` for each applicable constraint and subject with status `passed`, `failed`, or `waived`. Results are available through the normalized `model`, `check` and `verify` outputs, and relevant context: results for the context closure's subjects plus an explicit collection for global selection constraints. A result is tied to the Domain and constraint, the exact subject identity when applicable, and the fixed model and configuration inputs. A waived result also exposes the exception's rationale, owner, recorded decision, `expiresOn` when present, and frozen `policyDate`, while retaining the original violation message.
+## Intent changes and repairs
 
-A Project may declare at most 64 `policyExceptions`. Each exception requires `name`, `apiVersion`, `constraint`, the exact subject `GraphKey`, `constraintDigest`, `subjectDigest`, `rationale`, `owner`, and `decision`. `expiresOn` is optional and uses `YYYY-MM-DD`. Evaluating an exception with an expiry requires an explicitly frozen `policyDate` carried as as-of snapshot evidence; ambient wall-clock time must not change a result. The exception expires on the named day: `policyDate >= expiresOn` is expired and fails. The recorded owner and decision are data supplied by the Project. They are not a signature, authenticated identity, or proof that an authorized person approved the deviation.
+- A real intent change updates the model first: edit, check, inspect impact and commit under the repository's policy, then realize it.
+- A repair against unchanged intent uses the same model. It needs no invented model edit.
+- Both kinds of change use fixed snapshots, declared inputs and bounded evidence.
 
-Exceptions can waive only a failing per-resource constraint for the exact subject whose current digest matches. They cannot waive schema/type errors, malformed or unresolved references, cycles, selection-wide constraints, relation bounds, or other global structural failures. An exception that is malformed, unknown, stale, unused, or expired fails evaluation rather than silently widening the valid architecture. Exceptions are explicit deviations to review, not a second policy language or automatic migration path.
+## The earlier line
 
-Changing a Domain package can change constraint digests and make existing exceptions stale. The consumer reviews the exact pin update, `impact`, and per-subject results; it then removes, renews, or replaces exception data through an explicit reviewed Project change. Markitect does not carry exceptions forward as if their meaning were unchanged.
+The earlier v0.13 Project/Domain line had its own constitution, with Domains, finite policies, exceptions and Copy Me. Its text is kept in a [history record](history/engineering-constitution-v0.13-20261010.md). The line is not developed further, and compatibility is no reason to keep a function, mode or fallback ([DEC-014](concepts/register.md#dec-014-compatibility-does-not-drive-decisions)). ARCH-07 moves this repository off it, and ARCH-09 removes it.
 
-## Inspect a policy-breaking candidate
+## Historical constitution links
 
-v0.13.0 adds explicit read-only Context/Impact analysis of structurally valid policy-failing candidates. A failed policy is information: it blocks acceptance without requiring a waiver merely to inspect it. `--analyze-policy-failures` keeps failed validation visible and returns exit 1 when either analyzed snapshot fails policy. Structural errors and invalid exceptions remain blockers; Check, Verify and reconciliation retain their strict gates. The [design contract](design/policy-failure-analysis.md) records the contract; immutable v0.12.0 does not include this behavior.
+These retained anchors route existing links to the [history record](history/engineering-constitution-v0.13-20261010.md).
 
-## Copy Me: propose, review, adopt
+<a id="kernel-invariants"></a>
+The [v0.13 kernel invariants](history/engineering-constitution-v0.13-20261010.md#kernel-invariants) are historical.
 
-v0.13.0 includes the [selective handoff](design/selective-adoption-handoff.md): preparation opens only owner-selected Git blobs, stores an external capture with an explicit reviewed digest, and Copy Me validates supplied interpretation/decision bytes without acquiring more evidence. No Project or ContextRun is required. This infrastructure changes no Core assertion or authority invariant; immutable v0.12.0 retains its earlier guidance. An accepted candidate remains non-canonical until a separate reviewed project change adopts it.
+<a id="reuse-existing-domain-packages"></a>
+[Reusing Domain packages](history/engineering-constitution-v0.13-20261010.md#reuse-existing-domain-packages) is historical.
 
-The shipped v0.11.0 authoring resources include a provider-independent `Copy Me` workflow. It helps an agent propose a candidate engineering style from evidence a person explicitly selects. It does not add a `discover` CLI command, call a model from the Markitect kernel, or promote observations into canonical policy.
+<a id="example-contract-vertical-slice-usecases"></a>
+The [vertical-slice UseCase example](history/engineering-constitution-v0.13-20261010.md#example-contract-vertical-slice-usecases) is historical.
 
-The workflow must:
+<a id="policy-results-and-explicit-exceptions"></a>
+[Policy results and explicit exceptions](history/engineering-constitution-v0.13-20261010.md#policy-results-and-explicit-exceptions) are historical.
 
-1. Freeze the chosen repository revision and exact selected file paths and hashes before analysis. It does not scan an ambient workspace or infer that an unselected file is in scope.
-2. Separate observations from hypotheses. Each candidate states its supporting evidence, counterexamples, uncertainty, and the proposed rule; frequency is not correctness.
-3. Keep proposed resources in a separate staging candidate, outside active canonical Domains and package pins. The candidate cannot affect ordinary checks, context, projections, or impact as if it were adopted policy.
-4. Present the candidate and its evidence for explicit human review. Only a deliberate reviewed change that places the selected canonical definition in scope and updates the exact package pin adopts it.
+<a id="inspect-a-policy-breaking-candidate"></a>
+[Inspecting a policy-breaking candidate](history/engineering-constitution-v0.13-20261010.md#inspect-a-policy-breaking-candidate) is historical.
 
-The workflow may use an authoring agent to read the frozen, selected evidence and prepare a proposal. The Markitect core remains provider-independent and does not interpret source code, mine review history, profile contributors, or infer authorization. Adoption is the human's explicit source change; exception metadata alone does not authenticate acceptance.
+<a id="copy-me-propose-review-adopt"></a>
+[Copy Me](history/engineering-constitution-v0.13-20261010.md#copy-me-propose-review-adopt) is historical.
 
-## Normal changes and architecture changes
+<a id="normal-changes-and-architecture-changes"></a>
+The [earlier rule for normal and architecture changes](history/engineering-constitution-v0.13-20261010.md#normal-changes-and-architecture-changes) is historical; the current rule is [Intent changes and repairs](#intent-changes-and-repairs).
 
-A normal engineering change materializes or repairs a representation against accepted intent. When the intent changes, update its canonical owner, compile and inspect impact before materializing affected targets. When intent is unchanged, fix a bug or stale representation against that same model; no artificial Markitect edit is required. Modeled engineering intent remains authoritative; implementation-only repair does not change that intent. Both cases use fixed snapshots, declared inputs and bounded evidence. Architecture changes additionally update or select the canonical Domain package, assess affected subjects with `impact`, inspect PolicyResults and exceptions, update selected human and agent-facing projections through their declared consumers, and receive the adopting team's ordinary review and acceptance.
+<a id="projection-ownership-and-evidence"></a>
+[Projection ownership and evidence](history/engineering-constitution-v0.13-20261010.md#projection-ownership-and-evidence) is historical.
 
-This is the target operating principle for governed changes. The published v0.13.0 workflow supplies fixed-context guidance, configured checks, scoped artifact accounting and existing reconciliation; it does not intercept every edit, own every repository file, or establish universal projection convergence. The earlier [projection-first reconciliation design](design/projection-first-reconciliation.md) supplied validated lifecycle mechanics. Its implementation direction is superseded by the accepted [canonical reset](design/canonical-projection-reset.md), which is bundled with v0.14.1 as an experimental alpha and preserves published v0.13.0 behavior. The [production assessment](production-assessment.md) owns verified release evidence; do not describe planned interfaces or autonomous operation as shipped.
+<a id="deliberate-boundaries"></a>
+The [v0.11.0 deliberate boundaries](history/engineering-constitution-v0.13-20261010.md#deliberate-boundaries) are historical.
 
-### Projection ownership and evidence
+<a id="constraint-language-and-specialist-engines"></a>
+The [constraint language and specialist engines](history/engineering-constitution-v0.13-20261010.md#constraint-language-and-specialist-engines) of the v0.13 kernel are historical.
 
-Within a declared governed scope, each representation needs an explicit owner and role: canonical Markitect source, selected projection target, external input, tool/vendor-owned artifact, or exact exclusion. Ownership role is separate from evidence status. `drift`, `incomplete`, `unknown`, policy failure, explicit waiver and human acceptance must not collapse into one Boolean. A waiver remains visible and does not become a passed policy result.
-
-Deterministic projections may be checked against expected bytes. AI materialization is non-deterministic: the agent returns a candidate whose allowed variation and required project-owned checks are explicit. A pass establishes only those checks for their fixed inputs. It does not prove business correctness, completeness of the model, agent obedience outside coverage, reviewer identity or approval. Plan digests bind inputs and operations; they are not authorization or chronology proof.
-
-Core continues to treat source and representation bytes opaquely. Custom Domains may describe adopter-owned concepts with the existing finite kinds, properties, references, relations and constraints. A property containing behavior text is not executable proof. Source-language semantics and technology-specific projection mechanics remain in project checks or independent adapter Modules; repeated concrete failures are required before proposing any new shared primitive.
-
-This workflow makes affected knowledge visible; it does not guarantee all relevant behavior is modeled. Reports describe configured coverage and evidence limits. Product benefits such as fewer missed updates, less reconciliation effort, or safer autonomous implementation remain hypotheses until measured on repeated real tasks.
-
-## Deliberate boundaries
-
-The v0.11.0 implementation does not adopt the archived proposals as an unrestricted backlog. It excludes a Core Pattern primitive, a new architecture DSL, implicit pattern composition, code generation or automatic code migration, automatic exception approval, arbitrary policy code, source-code semantic inference in the kernel, provider-specific discovery, and automatic canonization. Pattern layering, broad architecture inheritance, cross-project behavioral profiling, and long-running background enforcement require separate evidence and product decisions.
-
-## Constraint language and specialist engines
-
-Keep core policy evaluation as a small finite language of deterministic assertions over explicit resources, relations, and selected sets. CUE is a plausible specialist for structural validation, composition through unification, and intentionally incomplete data; OPA Rego is a plausible specialist when policies need richer decisions over structured inputs and external data. Their official documentation describes those respective models: [CUE data validation](https://cuelang.org/docs/concept/how-cue-enables-data-validation/), [working with incomplete CUE](https://cuelang.org/docs/concept/working-with-incomplete-cue/), [OPA policy language](https://www.openpolicyagent.org/docs/policy-language), and [OPA external data](https://www.openpolicyagent.org/docs/external-data).
-
-Do not embed either runtime in Markitect by default. Reconsider a configured specialist adapter only when repeated concrete architecture-policy cases exceed the readable finite language. Evaluate those same cases for authoring clarity, explicit inputs, diagnostics, evidence and operation boundaries. This is an expressiveness decision, not a performance or market claim.
-
-The archived proposals remain useful discussion sources, but their claims and recommendations do not override this adopted scope. The [strategy index](strategy/README.md) identifies which ideas informed the target and which benefits remain unproven.
-
-The [Markitect-first Change workflow](../src/internal/host/embedded/resources/workflow-markitect-first-change.yaml) is the canonical task protocol. Humans retain engineering-intent and exception authority; implementation-only work uses existing intent without artificial model churn. Configured artifact accounting checks path ownership, while project-specific checks/adapters retain their narrower implementation proof. This adds an application workflow, not another constitution language.
-
-## Canonical reset source boundary
-
-The [canonical projection reset](design/canonical-projection-reset.md) was an accepted experimental alpha bundled with v0.14.1; current source has removed the alpha and keeps only its structural Core, which the model-first project model uses. The principles in this section remain the design record for that reset; they do not describe a current command. The [vision](vision.md) owns the product thesis. Preserve the historical v0.13.0 kernel and consumer behavior through an explicit Host compatibility seam while the new minimal Core is proved. The canonical Core owns only structural Schema/Kind/Property/Definition compilation and pure normalized IR; do not add old policy semantics, Project loading, provider knowledge, filesystem operations or execution to it. Do not lower new Definitions into legacy Resources as a second canonical model.
-
-A canonical concept should remain meaningful if current providers and file formats disappear. Model durable engineering meaning only when a project needs it; do not expand the shared foundation indiscriminately to include every possible Goal, Rule, Process, Responsibility or Invariant. Provider-specific Skills, Workflows, agent definitions, documentation and CI enforcement are normally projections of that meaning. Keep one canonical semantic owner, and do not use provider artifacts or sibling Modules as authority.
-
-An installable Module is exactly one of two extension types. A Schema Module extends canonical expression and has no projection behavior. A Projection Module supplies target expertise and representation/verification tools but introduces no canonical Kinds or semantics. Bundles may install multiple Modules. Modules do not synchronize with or treat sibling Module artifacts as authority. Host owns static composition; no dynamic loader is implied. Separate Modules are required when an ecosystem needs both new schema vocabulary and target projection.
-
-A canonical Projection, when useful, states desired representation semantics: type, exact scope, target and applicable ProjectionPolicies. It does not bind a concrete package, Module, Projector or Executor implementation. Runtime configuration binds a full Projection identity to one exact installed Module and Host resolves the version and entrypoint. Compatible binding changes do not change canonical intent, though they may stale plans and operational records. ProjectionPolicy is the project-owned semantic bridge from domain meaning to target constraints, not a code-generation DSL. The public model is Module capability. Projector is retained only as internal entrypoint identity/provenance, not a canonical Kind or standalone public operation.
-
-Users change canonical intent. The owner-preferred high-level workflow is `plan` for aggregate reconciliation followed by reviewed `apply`. Introduce those commands only when a coherent aggregate executable plan exists; narrow candidate operations are not aliases for them. The conceptual execution model is one bounded Executor → candidate → Verifier flow; deterministic renderers and checks are tools within it. The experimental alpha bundled with v0.14.1 provided explicit controller actions with Module-owned work/no-op/escalation proposals, bounded candidate execution, guarded Apply and independent verification; current source no longer contains them. The [roadmap](implementation-plan.md) owns current implementation status. Autonomous background operation and repeated real-agent convergence remain unproven. Executor-authored tests alone do not count as independent assurance.
-
-Brownfield inference is proposal-only: existing representations may inform candidate intent, but canonical authority requires owner review and a deliberate canonical change. Adoption follows accepted intent and exact artifact/scope matching. Preserve valid existing representations byte-for-byte and verify them against fixed source/target revisions before recording an adopted baseline. Adoption does not regenerate files, persist or select active records automatically, or authenticate the supplied review claim. Unknown artifacts are unresolved facts, not rewrite/delete instructions; do not claim whole-repository coverage from a bounded selection.
-
-Operational ProjectionRecords and VerificationResults remain separate from canonical Definitions. They bind exact source/target inputs, candidate bytes, runtime capability provenance and declared evidence. Digests establish identity and integrity of supplied facts, not authorization, semantic review, verifier independence, adequacy, complete coverage or human acceptance. Keep guarded writes, stale-plan rejection, exact-scope ownership and Git-backed reversibility for later reconciliation; existing-byte adoption performs no target writes.
+<a id="canonical-reset-source-boundary"></a>
+The [canonical reset source boundary](history/engineering-constitution-v0.13-20261010.md#canonical-reset-source-boundary) is historical; its Schema and Projection Module split left source with the canonical alpha.
