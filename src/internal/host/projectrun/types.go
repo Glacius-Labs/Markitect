@@ -11,6 +11,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
@@ -161,6 +162,9 @@ type PlanRequest struct {
 	// ExecuteAuthorized is set by an explicitly invoked write/run command. It
 	// represents the caller's existing authorization, not an agent decision.
 	ExecuteAuthorized bool `json:"executeAuthorized"`
+	// acceptedBriefings is accepted history a read preview in this package
+	// already computed in memory; a preview Plan reads briefings from it.
+	acceptedBriefings *projectbriefing.Store
 }
 
 type PlanRecord struct {

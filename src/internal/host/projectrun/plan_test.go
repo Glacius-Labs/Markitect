@@ -216,7 +216,7 @@ func TestPlanWithoutRoutingSelectsAllManagers(t *testing.T) {
 	}
 }
 
-func TestGuidedPlanCapturesAcceptedHistoryWithoutStalingSelectedBasis(t *testing.T) {
+func TestGuidedPlanPreviewReadsAcceptedHistoryWithoutStalingSelectedBasis(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
 	manifest, err := os.ReadFile(manifestPath)
@@ -238,8 +238,8 @@ func TestGuidedPlanCapturesAcceptedHistoryWithoutStalingSelectedBasis(t *testing
 	if plan.Status != StatusPlanned || plan.BaseRevision != revision || plan.WorkingSnapshot == "" {
 		t.Fatalf("guided plan did not retain its fixed and raw working bindings: %+v", plan)
 	}
-	if _, err := os.Stat(filepath.Join(root, ".markitect", "state", "briefings", "history.json")); err != nil {
-		t.Fatalf("guided planning did not persist accepted-history cursor: %v", err)
+	if _, err := os.Stat(filepath.Join(root, ".markitect", "state", "briefings", "history.json")); !os.IsNotExist(err) {
+		t.Fatalf("guided plan preview wrote accepted history: %v", err)
 	}
 }
 

@@ -3,6 +3,7 @@ package projectrun
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -235,6 +236,68 @@ func TestGuidedPlanCannotBypassAcknowledgedExploration(t *testing.T) {
 	}
 }
 
+func TestGuidedPreviewsMatchExecuteWithoutWritingHistory(t *testing.T) {
+	for _, laterChange := range []bool{false, true} {
+		name := "first model change"
+		if laterChange {
+			name = "later model change"
+		}
+		t.Run(name, func(t *testing.T) {
+			root := makeFullVerifyFixture(t)
+			enableGuidedWorkflow(t, root)
+			configureOperationsFullVerify(t, root)
+			if laterChange {
+				introduceAcceptedModelEvent(t, root)
+				commitManagerStatementChange(t, root, "%s artifact with explicitly documented line-item behavior.", "%s artifact with explicitly documented line-item and tax behavior.")
+			} else {
+				commitManagerStatementChange(t, root, "Implement the %s artifact.", "Implement the %s artifact with explicitly documented line-item behavior.")
+			}
+			historyPath := filepath.Join(root, filepath.FromSlash(".markitect/state/briefings/history.json"))
+			_, before, err := projectbriefing.Read(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			// The readiness acknowledgement and the plan below come from previews
+			// taken before any accepted history for this change was persisted.
+			const explorationID, scopeID = "preview-parity", "orders-change"
+			createDeliverExploration(t, root, explorationID, scopeID)
+			request := PlanRequest{ExplorationID: explorationID, ScopeID: scopeID, Operation: "apply", Goal: "Update the orders implementation",
+				Managers: uniqueSorted([]string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")})}
+			preview, err := Plan(projectworkHost(), root, "", request)
+			if err != nil {
+				t.Fatalf("plan preview: %v", err)
+			}
+			if !laterChange {
+				report, _ := FullVerify(context.Background(), projectworkHost(), ProcessInvoker{}, root, FullVerifyRequest{Revision: gitE2E(t, root, "rev-parse", "HEAD")})
+				if !stringMapsEqual(report.BriefingDigests, preview.BriefingDigests) {
+					t.Fatalf("full Verify preview briefings %v differ from the plan preview %v", report.BriefingDigests, preview.BriefingDigests)
+				}
+				if _, err := os.Stat(historyPath); !os.IsNotExist(err) {
+					t.Fatalf("previews wrote accepted history on a fresh guided repository: %v", err)
+				}
+			}
+			if _, after, err := projectbriefing.Read(root); err != nil || after != before {
+				t.Fatalf("previews changed the briefing store: before=%s after=%s err=%v", before, after, err)
+			}
+			request.ExecuteAuthorized = true
+			executed, err := Plan(projectworkHost(), root, "", request)
+			if err != nil {
+				t.Fatalf("execute rejected the readiness acknowledged from a preview: %v", err)
+			}
+			briefed := false
+			for _, digest := range executed.BriefingDigests {
+				briefed = briefed || digest != ""
+			}
+			if !briefed || !stringMapsEqual(executed.BriefingDigests, preview.BriefingDigests) {
+				t.Fatalf("execute briefings %v differ from the preview %v", executed.BriefingDigests, preview.BriefingDigests)
+			}
+			if _, err := os.Stat(historyPath); err != nil {
+				t.Fatalf("execute did not persist accepted history: %v", err)
+			}
+		})
+	}
+}
+
 func enableGuidedWorkflow(t *testing.T, root string) {
 	t.Helper()
 	manifest := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
@@ -273,14 +336,25 @@ func enableGuidedWorkflow(t *testing.T, root string) {
 
 func introduceAcceptedModelEvent(t *testing.T, root string) {
 	t.Helper()
+	revision := commitManagerStatementChange(t, root, "Implement the %s artifact.", "Implement the %s artifact with explicitly documented line-item behavior.")
+	if _, err := projectbriefing.EnsureAcceptedHistory(root, revision); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// commitManagerStatementChange commits a semantic change to the orders and
+// inventory statements, %s standing for each artifact's name, with the
+// regenerated project document. It records no accepted history.
+func commitManagerStatementChange(t *testing.T, root, old, replacement string) string {
+	t.Helper()
 	statementPaths := []string{".markitect/model/orders/statement.yaml", ".markitect/model/inventory/statement.yaml"}
 	for _, statementPath := range statementPaths {
 		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(statementPath)))
 		if err != nil {
 			t.Fatal(err)
 		}
-		updated := strings.Replace(string(data), "Implement the "+filepath.Base(filepath.Dir(statementPath))+" artifact.",
-			"Implement the "+filepath.Base(filepath.Dir(statementPath))+" artifact with explicitly documented line-item behavior.", 1)
+		name := filepath.Base(filepath.Dir(statementPath))
+		updated := strings.Replace(string(data), fmt.Sprintf(old, name), fmt.Sprintf(replacement, name), 1)
 		if updated == string(data) {
 			t.Fatalf("could not make a semantic Manager statement change in %s", statementPath)
 		}
@@ -300,9 +374,7 @@ func introduceAcceptedModelEvent(t *testing.T, root string) {
 	}
 	gitE2E(t, root, "add", project.Config.DocumentPath)
 	gitE2E(t, root, "commit", "-m", "accept orders statement clarification")
-	if _, err := projectbriefing.EnsureAcceptedHistory(root, gitE2E(t, root, "rev-parse", "HEAD")); err != nil {
-		t.Fatal(err)
-	}
+	return gitE2E(t, root, "rev-parse", "HEAD")
 }
 
 func dismissFirstUnresolvedEvent(t *testing.T, root string) projectbriefing.Event {

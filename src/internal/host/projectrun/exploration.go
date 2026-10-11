@@ -29,9 +29,11 @@ func ExplorationBinding(host Host, root, revision string, request PlanRequest) (
 		if revision != "" && revision != fixed {
 			return projectexplore.Binding{}, fmt.Errorf("readiness requires the active committed HEAD")
 		}
-		if _, err := projectbriefing.EnsureAcceptedHistory(root, fixed); err != nil {
+		history, err := projectbriefing.ReadAcceptedHistory(root, fixed)
+		if err != nil {
 			return projectexplore.Binding{}, err
 		}
+		request.acceptedBriefings = &history.State
 	}
 	request.ExecuteAuthorized = false
 	request.ExplorationID, request.ScopeID = "", ""

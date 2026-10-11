@@ -13,7 +13,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
@@ -88,8 +87,14 @@ func PlanExpecting(host Host, root, revision string, request PlanRequest, expect
 	if project.Snapshot.Provisional {
 		return plan, fmt.Errorf("project run requires a non-provisional snapshot")
 	}
-	if (project.Config.WorkflowMode == "guided" || request.ExplorationID != "") && request.ModelEdit == nil {
-		if _, err := projectbriefing.EnsureAcceptedHistory(root, project.Revision); err != nil {
+	// A preview reads accepted history in memory; only an authorized plan
+	// persists it. ExplorationBinding passes the view it already computed.
+	briefingView := request.acceptedBriefings
+	if request.ExecuteAuthorized {
+		briefingView = nil
+	}
+	if briefingView == nil && (project.Config.WorkflowMode == "guided" || request.ExplorationID != "") && request.ModelEdit == nil {
+		if briefingView, err = captureAcceptedHistory(root, project.Revision, request.ExecuteAuthorized); err != nil {
 			return plan, fmt.Errorf("capture accepted model history: %w", err)
 		}
 	}
@@ -176,7 +181,7 @@ func PlanExpecting(host Host, root, revision string, request PlanRequest, expect
 	}
 	briefingDigests := map[string]string{}
 	if request.ModelEdit == nil {
-		briefingDigests, err = briefingBindings(root, project)
+		briefingDigests, err = briefingBindingsIn(root, briefingView, project)
 		if err != nil {
 			return plan, err
 		}

@@ -45,6 +45,9 @@ type FullVerifyBinding struct {
 	PriorKnownCostInvocations   int           `json:"priorKnownCostInvocations,omitempty"`
 	PriorUnknownCostInvocations int           `json:"priorUnknownCostInvocations,omitempty"`
 	PreverifiedChecks           []CheckResult `json:"preverifiedChecks,omitempty"`
+	// acceptedBriefings is the accepted history a preview computed in memory;
+	// nil reads the persisted store.
+	acceptedBriefings *projectbriefing.Store
 }
 
 // fullReviewEvidence preserves both the reviewed candidate and the final
@@ -174,8 +177,11 @@ func FullVerify(ctx context.Context, host Host, invoker Invoker, root string, re
 	if project.Provisional || !fullVerifyCommitID(project.Revision) {
 		return empty, fmt.Errorf("full verification requires a committed immutable revision")
 	}
+	// Only a writing verification persists accepted history; a preview reads
+	// it in memory and audits against that view.
+	var briefingView *projectbriefing.Store
 	if project.Config.WorkflowMode == "guided" {
-		if _, err := projectbriefing.EnsureAcceptedHistory(root, project.Revision); err != nil {
+		if briefingView, err = captureAcceptedHistory(root, project.Revision, request.Write); err != nil {
 			return empty, err
 		}
 	}
@@ -188,6 +194,7 @@ func FullVerify(ctx context.Context, host Host, invoker Invoker, root string, re
 	}
 	return FullVerifyProject(ctx, host, invoker, root, project, runtime, FullVerifyBinding{
 		ExpectedSnapshot: project.Snapshot.Digest(), CheckCandidateID: project.Snapshot.Digest(), Write: request.Write, CheckSource: true,
+		acceptedBriefings: briefingView,
 	})
 }
 
@@ -303,7 +310,7 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 	briefingContexts := make(map[string]BriefingContext, len(managers))
 	briefingBindingInvalid := false
 	for _, manager := range managers {
-		briefing, briefingErr := managerBriefing(root, project.Report.ModelDigest, manager.ID, project.Revision)
+		briefing, briefingErr := managerBriefingIn(root, binding.acceptedBriefings, project.Report.ModelDigest, manager.ID, project.Revision)
 		if briefingErr != nil {
 			row := findFullManagerAssessment(out.Managers, manager.ID)
 			row.Status, row.Error = "incomplete", briefingErr.Error()
@@ -371,7 +378,7 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 		if _, ok := briefingContexts[row.ManagerID]; !ok {
 			continue
 		}
-		if err := freshFullBriefingBindings(root, project.Report.ModelDigest, out.BriefingDigests, project.Revision); err != nil {
+		if err := freshFullBriefingBindings(root, binding.acceptedBriefings, project.Report.ModelDigest, out.BriefingDigests, project.Revision); err != nil {
 			row.Status, row.Error = "incomplete", err.Error()
 			out.Error = ErrStale.Error()
 			markRemainingFullRows(out.Managers, i+1, "not started after stale briefing binding")
@@ -392,7 +399,7 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 			knownCostInvocations += known
 			unknownCostInvocations += unknown
 			freshPin, pinErr := runtimeDigestWithInvoker(invoker, runtime)
-			briefingErr := freshFullBriefingBindings(root, project.Report.ModelDigest, out.BriefingDigests, project.Revision)
+			briefingErr := freshFullBriefingBindings(root, binding.acceptedBriefings, project.Report.ModelDigest, out.BriefingDigests, project.Revision)
 			sourceErr := fullAuditFreshBinding(host, root, project, invoker, runtime, binding.CheckSource)
 			if !sameRuntimeSnapshot(project) || pinErr != nil || freshPin != runtimePin || briefingErr != nil || sourceErr != nil {
 				row.Status, row.Error = "incomplete", "snapshot, runtime, or briefing binding changed during audit"
@@ -478,7 +485,7 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 	}
 	out.CostAccounting = costAccountingFromCounts(knownCostInvocations, unknownCostInvocations)
 	bindingStale := false
-	if !sameRuntimeSnapshot(project) || freshFullBriefingBindings(root, project.Report.ModelDigest, out.BriefingDigests, project.Revision) != nil {
+	if !sameRuntimeSnapshot(project) || freshFullBriefingBindings(root, binding.acceptedBriefings, project.Report.ModelDigest, out.BriefingDigests, project.Revision) != nil {
 		bindingStale, out.Error = true, ErrStale.Error()
 	} else if freshPin, pinErr := runtimeDigestWithInvoker(invoker, runtime); pinErr != nil || freshPin != runtimePin {
 		bindingStale, out.Error = true, ErrStale.Error()
@@ -783,9 +790,9 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 	return row, nil
 }
 
-func freshFullBriefingBindings(root, modelDigest string, expected map[string]string, revision ...string) error {
+func freshFullBriefingBindings(root string, view *projectbriefing.Store, modelDigest string, expected map[string]string, revision ...string) error {
 	for managerID, digest := range expected {
-		briefing, err := managerBriefing(root, modelDigest, managerID, revision...)
+		briefing, err := managerBriefingIn(root, view, modelDigest, managerID, revision...)
 		if err != nil {
 			return err
 		}
