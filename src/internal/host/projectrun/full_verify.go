@@ -659,7 +659,7 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 	if err != nil {
 		return row, err
 	}
-	supportingStatements, supportingChecks := fullAuditArtifactSupport(project.Report, managerID)
+	supportingStatements := fullAuditArtifactSupport(project.Report, managerID)
 	files, err := fullManagerFiles(project, managerID)
 	if err != nil {
 		return row, err
@@ -689,7 +689,6 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 		ModelDigest             string                      `json:"modelDigest"`
 		Manager                 projectmodel.ManagerContext `json:"manager"`
 		SupportingStatements    []projectmodel.Statement    `json:"supportingStatements"`
-		SupportingChecks        []projectmodel.Check        `json:"supportingChecks"`
 		Briefing                BriefingContext             `json:"briefing"`
 		IntegrationObligations  []fullIntegrationObligation `json:"integrationObligations"`
 		ChildAssessments        []fullChildAssessment       `json:"childAssessments"`
@@ -699,7 +698,7 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 		Subjects                []string                    `json:"requiredSubjects"`
 		Strictness              StrictnessProfile           `json:"strictness"`
 		ResponseSchema          json.RawMessage             `json:"responseSchema"`
-	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, supportingStatements, supportingChecks, briefing, children, childAssessments, checkResults, integrationReviews, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
+	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, supportingStatements, briefing, children, childAssessments, checkResults, integrationReviews, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
 	contextJSON, err := json.Marshal(contextPayload)
 	if err != nil {
 		return row, err
@@ -1020,23 +1019,20 @@ func relevantManagerChecks(report projectmodel.Report, managerID string, results
 	return out
 }
 
-// fullAuditArtifactSupport exposes only the same-snapshot definitions that an
-// owned artifact explicitly references. These are audit context, not Manager
-// obligations: callers keep them separate from ManagerContext and required
-// audit subjects. Private Statement definitions and unrelated definitions are
-// intentionally excluded.
-func fullAuditArtifactSupport(report projectmodel.Report, managerID string) ([]projectmodel.Statement, []projectmodel.Check) {
+// fullAuditArtifactSupport exposes only the public foreign Statements that an
+// owned artifact realizes in the same snapshot. These are audit context, not
+// Manager obligations: callers keep them separate from ManagerContext and
+// required audit subjects. Private Statement definitions and unrelated
+// definitions are intentionally excluded. Checks that owned artifacts declare
+// reach the audit only through ManagerContext Checks and ForeignChecks, whose
+// uses are already limited to what the Manager may see.
+func fullAuditArtifactSupport(report projectmodel.Report, managerID string) []projectmodel.Statement {
 	statementsByID := make(map[string]projectmodel.Statement, len(report.Statements))
-	checksByID := make(map[string]projectmodel.Check, len(report.Checks))
 	for _, statement := range report.Statements {
 		statementsByID[statement.ID] = statement
 	}
-	for _, check := range report.Checks {
-		checksByID[check.ID] = check
-	}
 
 	statementIDs := map[string]bool{}
-	checkIDs := map[string]bool{}
 	for _, artifact := range report.Artifacts {
 		if artifact.Owner != managerID {
 			continue
@@ -1044,11 +1040,6 @@ func fullAuditArtifactSupport(report projectmodel.Report, managerID string) ([]p
 		for _, statementID := range artifact.Realizes {
 			if statement, ok := statementsByID[statementID]; ok && statement.Public && statement.Owner != managerID {
 				statementIDs[statementID] = true
-			}
-		}
-		for _, checkID := range artifact.Checks {
-			if _, ok := checksByID[checkID]; ok {
-				checkIDs[checkID] = true
 			}
 		}
 	}
@@ -1061,13 +1052,7 @@ func fullAuditArtifactSupport(report projectmodel.Report, managerID string) ([]p
 		statements = append(statements, statement)
 	}
 	sort.Slice(statements, func(i, j int) bool { return statements[i].ID < statements[j].ID })
-
-	checks := make([]projectmodel.Check, 0, len(checkIDs))
-	for checkID := range checkIDs {
-		checks = append(checks, checksByID[checkID])
-	}
-	sort.Slice(checks, func(i, j int) bool { return checks[i].ID < checks[j].ID })
-	return statements, checks
+	return statements
 }
 
 func visibleFullStatementRelations(ids []string, statements map[string]projectmodel.Statement) []string {
