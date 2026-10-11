@@ -1,0 +1,21 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Check
+metadata:
+  name: script-tests
+  namespace: ""
+purpose: Runs the unit tests of the documentation checker.
+spec:
+  command:
+    - python
+    - -B
+    - -m
+    - unittest
+    - discover
+    - -s
+    - scripts
+    - -p
+    - test_check_docs.py
+  uses:
+    - namespace: ""
+      name: repository
+  limitation: It runs only the documentation checker's tests; CI also runs the tests of the other repository scripts.

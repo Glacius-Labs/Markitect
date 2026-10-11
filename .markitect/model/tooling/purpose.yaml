@@ -6,7 +6,7 @@ metadata:
 purpose: States what the tooling Manager owns.
 spec:
   category: architecture
-  description: Maintainer tooling enforces the import gate and the code map, builds and publishes releases, embeds notices, ships the bootstrap and packaging, and provides test fixtures; it is not product code.
+  description: Maintainer tooling enforces the import gate and the code map, builds and publishes releases, embeds notices, and ships the bootstrap and packaging; it is not product code.
   public: true
   uses: []
   requires: []

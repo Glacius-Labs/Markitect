@@ -1,9 +1,9 @@
 apiVersion: project.markitect.example.org/v1alpha1
 kind: Artifact
 metadata:
-  name: legacy-views
+  name: legacy-skill-views
   namespace: legacy
-purpose: Maps the Codex, Claude and Markdown views the legacy renderer generates.
+purpose: Maps the Codex and Claude skill views the legacy renderer generates.
 spec:
   role: documentation
   realizes:
@@ -16,9 +16,6 @@ spec:
     - .agents/skills/engineering-change/
     - .claude/skills/authoring/
     - .claude/skills/engineering-change/
-    - docs/markitect/README.md
-    - docs/markitect/core/
-    - docs/markitect/development/
   checks:
     - namespace: legacy
       name: artifact-accounting

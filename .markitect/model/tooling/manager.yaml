@@ -3,7 +3,7 @@ kind: Manager
 metadata:
   name: tooling
   namespace: tooling
-purpose: "Owns maintainer tooling: the import gate, release, publication, notices, packaging, the bootstrap and test support."
+purpose: "Owns maintainer tooling: the import gate, release building and publication, notices, packaging and the bootstrap."
 spec:
   parent:
     namespace: ""
@@ -12,9 +12,6 @@ spec:
     - integration/
     - packaging/
     - src/cmd/markitect-check-architecture/
-    - src/cmd/markitect-release/
-    - src/internal/host/releasecli/
-    - src/internal/testkit/
     - src/internal/tooling/
     - tools/
   instructions: Validate a release candidate and publish it only through the documented release process.

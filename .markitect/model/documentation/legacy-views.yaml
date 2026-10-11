@@ -1,0 +1,24 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: legacy-views
+  namespace: documentation
+purpose: Maps the Markdown views the legacy renderer generates under docs/.
+spec:
+  role: documentation
+  realizes:
+    - namespace: documentation
+      name: documentation
+    - namespace: ""
+      name: canonical-sources
+    - namespace: legacy
+      name: legacy-line
+  paths:
+    - docs/markitect/README.md
+    - docs/markitect/core/
+    - docs/markitect/development/
+  checks:
+    - namespace: legacy
+      name: artifact-accounting
+  required: false
+  reason: The legacy renderer regenerates these views until ARCH-09 removes them, so they are not required.

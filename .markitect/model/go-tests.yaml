@@ -10,6 +10,7 @@ spec:
     - test
     - ./...
     - -count=1
+    - -timeout=20m
   uses:
     - namespace: product
       name: product
@@ -19,4 +20,4 @@ spec:
       name: tooling
     - namespace: examples
       name: examples
-  limitation: CI adds a timeout and JSON reporting; the tests cover finite cases and do not establish that the model is complete or correct.
+  limitation: CI adds JSON reporting and a longer timeout on Windows; the tests cover finite cases and do not establish that the model is complete or correct.

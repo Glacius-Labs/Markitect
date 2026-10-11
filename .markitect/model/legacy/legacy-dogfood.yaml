@@ -21,5 +21,7 @@ spec:
   checks:
     - namespace: legacy
       name: artifact-accounting
+    - namespace: legacy
+      name: module-checks
   required: false
   reason: The legacy line stays only until ARCH-09 removes it, so its files are not required.

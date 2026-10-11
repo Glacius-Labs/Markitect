@@ -6,7 +6,7 @@ metadata:
 purpose: States what the examples Manager owns.
 spec:
   category: architecture
-  description: Examples and benchmark fixtures are executable inputs that the harnesses and CI test; experiments are bounded pilots kept with their evaluation.
+  description: Examples and benchmark fixtures are executable inputs that the harnesses and CI test; the test kit gives every package's tests hermetic fixtures; experiments are bounded pilots kept with their evaluation.
   public: true
   uses: []
   requires: []

@@ -3,7 +3,7 @@ kind: Artifact
 metadata:
   name: maintainer-tooling
   namespace: tooling
-purpose: Maps the maintainer tools and test support to their packages.
+purpose: Maps the maintainer tools to their packages.
 spec:
   role: implementation
   realizes:
@@ -13,11 +13,14 @@ spec:
       name: published-releases
     - namespace: product
       name: core-stays-generic
+    - namespace: legacy
+      name: legacy-removal
+    - namespace: ""
+      name: canonical-sources
+    - namespace: product
+      name: evidence-not-acceptance
   paths:
     - src/cmd/markitect-check-architecture/
-    - src/cmd/markitect-release/
-    - src/internal/host/releasecli/
-    - src/internal/testkit/
     - src/internal/tooling/
     - tools/
   checks:

@@ -6,7 +6,7 @@ metadata:
 purpose: States what the product Manager owns.
 spec:
   category: architecture
-  description: "The product is the `markitect` executable, the reference exchange executor and the packages that the code map assigns to the core, infrastructure, application and runtime layers; the release command belongs to tooling."
+  description: "The product is the packages that the code map assigns to the core, infrastructure, application and runtime layers, with the `markitect`, exchange executor and release executables that delegate to them."
   public: true
   uses: []
   requires: []

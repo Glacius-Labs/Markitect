@@ -9,6 +9,10 @@ spec:
   realizes:
     - namespace: examples
       name: examples
+    - namespace: tooling
+      name: published-releases
+    - namespace: product
+      name: evidence-not-acceptance
   paths:
     - experiments/
   checks:

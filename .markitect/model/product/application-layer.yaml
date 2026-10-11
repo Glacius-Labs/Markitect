@@ -3,7 +3,7 @@ kind: Artifact
 metadata:
   name: application-layer
   namespace: product
-purpose: Maps the application layer to its packages and the executable.
+purpose: Maps the application layer to its packages and executables.
 spec:
   role: implementation
   realizes:
@@ -15,12 +15,19 @@ spec:
       name: explicit-relationships
     - namespace: legacy
       name: legacy-removal
+    - namespace: ""
+      name: canonical-sources
+    - namespace: ""
+      name: project-local-policy
     - namespace: product
       name: distinct-state
     - namespace: product
       name: evidence-not-acceptance
+    - namespace: tooling
+      name: published-releases
   paths:
     - src/cmd/markitect/
+    - src/cmd/markitect-release/
     - src/internal/host/mcp/
     - src/internal/host/projectadoption/
     - src/internal/host/projectapp/
@@ -28,6 +35,7 @@ spec:
     - src/internal/host/projectexplore/
     - src/internal/host/projectonboarding/
     - src/internal/host/projectwork/
+    - src/internal/host/releasecli/
   checks:
     - namespace: ""
       name: go-tests
@@ -36,4 +44,4 @@ spec:
     - namespace: tooling
       name: architecture-gate
   required: true
-  reason: The verbs, their MCP tools and the use cases behind them are the product surface.
+  reason: The verbs, their MCP tools, the release command and the use cases behind them are the product surface.

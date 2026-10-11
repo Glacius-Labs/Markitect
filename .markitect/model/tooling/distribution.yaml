@@ -11,6 +11,8 @@ spec:
       name: tooling
     - namespace: tooling
       name: published-releases
+    - namespace: ""
+      name: project-local-policy
   paths:
     - integration/
     - packaging/

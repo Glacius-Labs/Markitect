@@ -3,7 +3,7 @@ kind: Artifact
 metadata:
   name: executable-examples
   namespace: examples
-purpose: Maps the examples, benchmark fixtures and their harnesses.
+purpose: Maps the examples, benchmark fixtures, their harnesses and the test kit.
 spec:
   role: verification
   realizes:
@@ -11,10 +11,17 @@ spec:
       name: examples
     - namespace: ""
       name: project-local-policy
+    - namespace: ""
+      name: canonical-sources
+    - namespace: tooling
+      name: published-releases
+    - namespace: product
+      name: declared-inputs
   paths:
     - benchmark/
     - examples/
     - src/harness/
+    - src/internal/testkit/
   checks:
     - namespace: ""
       name: go-tests

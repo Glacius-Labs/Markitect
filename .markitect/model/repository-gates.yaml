@@ -18,5 +18,9 @@ spec:
   checks:
     - namespace: documentation
       name: docs-links
+    - namespace: ""
+      name: script-tests
+    - namespace: legacy
+      name: module-checks
   required: true
   reason: These files run the repository's checks on every change.

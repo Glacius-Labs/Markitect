@@ -15,6 +15,10 @@ spec:
       name: explicit-relationships
     - namespace: legacy
       name: legacy-removal
+    - namespace: ""
+      name: canonical-sources
+    - namespace: ""
+      name: project-local-policy
     - namespace: product
       name: distinct-state
   paths:

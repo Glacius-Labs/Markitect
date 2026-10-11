@@ -3,7 +3,7 @@ kind: Manager
 metadata:
   name: examples
   namespace: examples
-purpose: Owns the executable examples, the benchmark fixtures, the experiments and the harnesses that test them.
+purpose: Owns the executable examples, the benchmark fixtures, the experiments, the harnesses that test them and the test kit.
 spec:
   parent:
     namespace: ""
@@ -13,4 +13,5 @@ spec:
     - examples/
     - experiments/
     - src/harness/
+    - src/internal/testkit/
   instructions: Keep examples executable and keep each example's own policy inside it.
