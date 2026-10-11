@@ -83,6 +83,13 @@ jobs:
       - name: Verify modules
         run: go mod verify
 
+      - name: Check the self-hosted project model
+        shell: bash
+        run: |
+          # The full report goes to a file; a failure prints only its findings.
+          report="$RUNNER_TEMP/project-check.json"
+          go run ./src/cmd/markitect check --repo . --revision ${{ github.sha }} > "$report" || { grep -A3 '"code":' "$report" | head -n 200; exit 1; }
+
       - name: Check Markitect-first dogfood project
         run: go run ./src/cmd/markitect-legacy check --repo . --revision ${{ github.sha }}
 

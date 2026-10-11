@@ -1,4 +1,7 @@
 #!/bin/sh
 set -eu
 
-go run ./src/cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config
+go run ./src/cmd/markitect check --repo . >/dev/null || {
+	echo "pre-commit: the project model does not check green; run 'go run ./src/cmd/markitect check --repo .' for the findings" >&2
+	exit 1
+}
