@@ -140,10 +140,11 @@ func (o Operations) Context(operation ContextOperation) (projectmodel.ManagerCon
 // DocumentResult is the readable model document with its destination and
 // digest, so a write can be bound to the reviewed preview.
 type DocumentResult struct {
-	Path    string `json:"path"`
-	Digest  string `json:"digest"`
-	Content string `json:"content"`
-	Written bool   `json:"written"`
+	Revision string `json:"revision,omitempty"`
+	Path     string `json:"path"`
+	Digest   string `json:"digest"`
+	Content  string `json:"content"`
+	Written  bool   `json:"written"`
 }
 
 func (o Operations) Document(operation DocumentOperation) (DocumentResult, error) {
@@ -155,7 +156,7 @@ func (o Operations) Document(operation DocumentOperation) (DocumentResult, error
 	if err != nil {
 		return DocumentResult{}, err
 	}
-	result := DocumentResult{Path: projectwork.DocumentPath(project.Config), Digest: contentDigest(content), Content: content}
+	result := DocumentResult{Revision: project.Revision, Path: projectwork.DocumentPath(project.Config), Digest: contentDigest(content), Content: content}
 	if !operation.Write {
 		return result, nil
 	}

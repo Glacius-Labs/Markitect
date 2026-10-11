@@ -660,3 +660,73 @@ func runGitWithEnv(t *testing.T, root string, environment []string, args ...stri
 		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, output)
 	}
 }
+
+// Every --revision and --since accepts what Git resolves to a commit, and the
+// Host records the full commit ID it bound.
+func TestRevisionsAcceptAnythingGitResolvesToACommit(t *testing.T) {
+	repo := copyProjectWorld(t)
+	head := gitOutput(t, repo, "rev-parse", "HEAD")
+	short := gitOutput(t, repo, "rev-parse", "--short", "HEAD")
+	for _, revision := range []string{"HEAD", short, head} {
+		code, out, errout := runCLI(t, "check", "--repo", repo, "--revision", revision)
+		var report struct {
+			Revision string `json:"revision"`
+		}
+		if code != 0 || json.Unmarshal([]byte(out), &report) != nil || report.Revision != head {
+			t.Fatalf("check --revision %s: exit=%d revision=%q stderr=%s", revision, code, report.Revision, errout)
+		}
+	}
+	if code, out, errout := runCLI(t, "docs", "--repo", repo, "--revision", "HEAD"); code != 0 || !strings.Contains(out, `"revision": "`+head+`"`) {
+		t.Fatalf("docs --revision HEAD: exit=%d stderr=%s out=%.200s", code, errout, out)
+	}
+	if code, _, errout := runCLI(t, "impact", "--repo", repo, "--since", "HEAD", "--revision", short); code != 0 {
+		t.Fatalf("impact with HEAD and a short ID: exit=%d stderr=%s", code, errout)
+	}
+	code, out, errout := runCLI(t, "check", "--repo", repo, "--revision", "no-such-revision")
+	if code != 2 || out != "" || !strings.Contains(errout, `--revision "no-such-revision" does not name a commit in this repository`) {
+		t.Fatalf("unknown revision: exit=%d stdout=%q stderr=%s", code, out, errout)
+	}
+	server, err := newMCPServer(env{root: repo, ops: projectOperations()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := server.Call(context.Background(), "model", []byte(`{"revision":"HEAD"}`))
+	if err != nil || result.IsError {
+		t.Fatalf("MCP model with revision HEAD: %+v %v", result, err)
+	}
+	result, err = server.Call(context.Background(), "check", []byte(`{"revision":"no-such-revision"}`))
+	if err != nil || !result.IsError || !strings.Contains(result.Content[0].Text, "invalid_arguments") {
+		t.Fatalf("MCP unknown revision: %+v %v", result, err)
+	}
+}
+
+// context accepts a Manager's short name when it is unique in the project.
+func TestContextAcceptsAUniqueShortManagerName(t *testing.T) {
+	repo := copyProjectWorld(t)
+	code, out, errout := runCLI(t, "context", "orders", "--repo", repo)
+	if code != 0 || !strings.Contains(out, `"commerce.sales.orders"`) {
+		t.Fatalf("context orders: exit=%d stderr=%s out=%.200s", code, errout, out)
+	}
+	if code, _, errout := runCLI(t, "context", "no-such-manager", "--repo", repo); code != 2 || !strings.Contains(errout, `no Manager is named "no-such-manager"`) {
+		t.Fatalf("unknown name: exit=%d stderr=%s", code, errout)
+	}
+	duplicate := filepath.Join(repo, ".markitect", "model", "engineering", "orders", "manager.yaml")
+	if err := os.MkdirAll(filepath.Dir(duplicate), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(duplicate, []byte("apiVersion: project.markitect.example.org/v1alpha1\nkind: Manager\nmetadata:\n  name: orders\n  namespace: engineering.orders\npurpose: A second Manager with the same short name.\nspec:\n  parent:\n    namespace: engineering\n    name: engineering\n  owns: []\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	manifest := filepath.Join(repo, ".markitect", "project.yaml")
+	selected, err := os.ReadFile(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selected = []byte(strings.Replace(string(selected), "modelFiles:\n", "modelFiles:\n  - .markitect/model/engineering/orders/manager.yaml\n", 1))
+	if err := os.WriteFile(manifest, selected, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if code, _, errout := runCLI(t, "context", "orders", "--repo", repo); code != 2 || !strings.Contains(errout, `Manager name "orders" is ambiguous`) {
+		t.Fatalf("ambiguous name: exit=%d stderr=%s", code, errout)
+	}
+}
