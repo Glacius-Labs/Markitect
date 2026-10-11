@@ -126,7 +126,7 @@ func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *tes
 		Candidate: CandidateRef{ID: candidate.ID}, Invocations: []InvocationLog{originalLog}}
 	current := findTask(report.Tasks, task.ManagerID)
 	*current = task
-	err = recoverPendingNativeReview(context.Background(), host, invoker, root, store, dir, plan, runtime, base, &report, task.ManagerID)
+	_, err = recoverPendingNativeReview(context.Background(), host, invoker, root, store, dir, plan, runtime, base, &report, task.ManagerID)
 	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "journal is missing") {
 		t.Fatalf("missing native review journal was not preserved as blocking: %v", err)
 	}
@@ -202,13 +202,14 @@ func seedReviewRework(t *testing.T) reviewReworkFixture {
 	return reviewReworkFixture{root: root, host: host, plan: plan, store: store, dir: dir, initial: initial, reviewed: reviewed, report: report}
 }
 
-// reworkDispatchInvoker runs the fixture process and keeps the first work
-// request of one Manager with the durable state persisted for its dispatch.
+// reworkDispatchInvoker runs the fixture process and keeps the first request
+// of one Manager phase with the durable state persisted for its dispatch.
 type reworkDispatchInvoker struct {
 	inner     Invoker
 	store     *runStore
 	runID     string
 	managerID string
+	phase     string
 	request   *agentexec.Request
 	state     RunReport
 	stateErr  error
@@ -220,7 +221,7 @@ func (i *reworkDispatchInvoker) Run(ctx context.Context, config agentexec.Config
 		ManagerID string `json:"managerId"`
 		Phase     string `json:"phase"`
 	}
-	if i.request == nil && json.Unmarshal(request.Context, &payload) == nil && payload.Kind == "projectrun-task/v1" && payload.ManagerID == i.managerID && payload.Phase == "work" {
+	if i.request == nil && json.Unmarshal(request.Context, &payload) == nil && payload.Kind == "projectrun-task/v1" && payload.ManagerID == i.managerID && payload.Phase == i.phase {
 		i.request = &request
 		i.state, i.stateErr = i.store.readLatestState(i.runID)
 	}
@@ -242,7 +243,7 @@ func TestResumedReviewReworkStartsFromReviewedCandidate(t *testing.T) {
 		t.Fatal(err)
 	}
 	ordersID := e2eManagerID("orders", "orders")
-	invoker := &reworkDispatchInvoker{inner: ProcessInvoker{}, store: fixture.store, runID: fixture.plan.ID, managerID: ordersID}
+	invoker := &reworkDispatchInvoker{inner: ProcessInvoker{}, store: fixture.store, runID: fixture.plan.ID, managerID: ordersID, phase: "work"}
 	resumed, resumeErr := Resume(context.Background(), fixture.host, invoker, fixture.root, fixture.plan.ID)
 	if invoker.request == nil || invoker.stateErr != nil {
 		t.Fatalf("Resume did not dispatch the orders rework: status=%s err=%v state=%v", resumed.Status, resumeErr, invoker.stateErr)
@@ -352,10 +353,12 @@ func TestReviewReworkRefusesCandidateOutsideItsFailedReview(t *testing.T) {
 
 // nativeFinalReviewInvoker leaves one dispatched native reviewer turn behind
 // and later recovers it as a review failing on findingPath. Other requests are
-// only recorded; the fixture has no provider for them.
+// recorded; without managers the fixture has no provider for them, with
+// managers Manager turns run there and every later review passes.
 type nativeFinalReviewInvoker struct {
 	seed          bool
 	findingPath   string
+	managers      Invoker
 	reviewContext json.RawMessage
 	requests      []agentexec.Request
 	recoverCalls  int
@@ -364,7 +367,17 @@ type nativeFinalReviewInvoker struct {
 func (i *nativeFinalReviewInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
 	if !i.seed {
 		i.requests = append(i.requests, request)
-		return agentexec.RunResult{}, errors.New("fixture has no provider")
+		if i.managers == nil {
+			return agentexec.RunResult{}, errors.New("fixture has no provider")
+		}
+		if !strings.Contains(string(request.Context), `"kind":"projectrun-review/v1"`) {
+			return i.managers.Run(ctx, config, request, options)
+		}
+		invocation, _, err := agentexec.PrepareInvocation(request)
+		if err != nil {
+			return agentexec.RunResult{}, err
+		}
+		return nativeTurnResult(config, invocation, "later-review-session", "later-review-turn", reviewResponse{Status: "pass", Summary: "the candidate meets its accepted statement", Findings: []reviewFindingResponse{}})
 	}
 	i.seed, i.reviewContext = false, request.Context
 	invocation, _, err := agentexec.PrepareInvocation(request)
@@ -409,17 +422,46 @@ func (i *nativeFinalReviewInvoker) Recover(_ context.Context, config agentexec.C
 			findings = append(findings, reviewFindingResponse{Path: file.Path, Expectation: "restore the behaviour the integration changed", Grounding: file.Grounding[0]})
 		}
 	}
-	reportJSON, err := json.Marshal(reviewResponse{Status: "fail", Summary: "the integrated orders artifact misses its accepted statement", Findings: findings})
+	return nativeTurnResult(config, handle.Invocation, handle.SessionID, handle.TurnID, reviewResponse{Status: "fail", Summary: "the integrated candidate misses its accepted statement", Findings: findings})
+}
+
+// nativeNoEditManager completes every native Manager turn without edits.
+type nativeNoEditManager struct{}
+
+func (nativeNoEditManager) Run(_ context.Context, config agentexec.Config, request agentexec.Request, _ agentexec.RunOptions) (agentexec.RunResult, error) {
+	var task struct {
+		Phase string `json:"phase"`
+	}
+	if err := json.Unmarshal(request.Context, &task); err != nil {
+		return agentexec.RunResult{}, err
+	}
+	invocation, _, err := agentexec.PrepareInvocation(request)
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
-	fingerprint, err := i.Fingerprint(config)
+	return nativeTurnResult(config, invocation, "manager-session", "manager-turn", TaskResponse{Status: "complete", Summary: "completed without further edits",
+		Integrated: task.Phase == "integrate", Delegations: []Delegation{}, ReworkRequests: []ReworkRequest{}, Questions: []string{}, Risks: []string{},
+		ResolvedQuestions: []string{}, ResolvedRisks: []string{}})
+}
+
+func (nativeNoEditManager) Fingerprint(config agentexec.Config) (string, error) {
+	return NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+}
+
+// nativeTurnResult is a completed native turn reporting report, bound to its
+// invocation.
+func nativeTurnResult(config agentexec.Config, invocation agentexec.Invocation, sessionID, turnID string, report any) (agentexec.RunResult, error) {
+	reportJSON, err := json.Marshal(report)
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
-	invocation, tokens := handle.Invocation, int64(1)
+	fingerprint, err := NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	tokens := int64(1)
 	usage := &agentexec.Usage{Source: "provider-reported", InputTokens: &tokens, OutputTokens: &tokens}
-	lifecycle := &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: handle.SessionID, TurnID: handle.TurnID, State: "completed", Accounting: "partial",
+	lifecycle := &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: sessionID, TurnID: turnID, State: "completed", Accounting: "partial",
 		StartRequests: []agentexec.RoleStartRequest{{RequestID: invocation.RunID, Role: agentexec.RoleExecutor, State: "completed"}}}
 	return agentexec.RunResult{
 		Response: agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce, Role: agentexec.RoleExecutor,
@@ -430,18 +472,30 @@ func (i *nativeFinalReviewInvoker) Recover(_ context.Context, config agentexec.C
 	}, nil
 }
 
-type resumedFinalReview struct {
+// pendingReviewSeed selects the review the fixture leaves dispatched but
+// unobserved: the root's review of its own integration candidate, or else the
+// orders final review of that root candidate. The recovered review fails with
+// one finding on findingPath, which must be one of the reviewed Manager's
+// review paths: its owned and integrated paths plus reviewPaths. With
+// runManagers the root Manager is native too, later Manager turns complete
+// without edits and later reviews pass.
+type pendingReviewSeed struct {
+	rootReview  bool
+	findingPath string
+	reviewPaths []string
+	runManagers bool
+}
+
+type resumedReview struct {
 	report     RunReport
 	err        error
 	invoker    *nativeFinalReviewInvoker
+	dispatch   *reworkDispatchInvoker
 	integrated candidateData
 }
 
-// resumePendingFinalReview leaves the orders final review of the root
-// candidate dispatched but unobserved, then resumes the run. The recovered
-// review fails with one finding on findingPath, which must be one of the
-// orders review paths: its owned paths plus reviewPaths.
-func resumePendingFinalReview(t *testing.T, findingPath string, reviewPaths []string) resumedFinalReview {
+// resumePendingReview leaves the selected review pending, then resumes the run.
+func resumePendingReview(t *testing.T, seed pendingReviewSeed) resumedReview {
 	t.Helper()
 	root := makeProjectRunFixture(t)
 	configureWorkspaceBridgeInstructions(t, root)
@@ -454,6 +508,9 @@ func resumePendingFinalReview(t *testing.T, findingPath string, reviewPaths []st
 		native.AppServer = &AppServerSettings{ReasoningEffort: "medium", MaxEventBytes: 1 << 20}
 		runtime.Review = &ReviewConfig{Agents: map[string]Agent{rootID: native, ordersID: native, inventoryID: native}, MaxRounds: 3, MaxManagerRounds: 2}
 		runtime.Limits.MaxStarts = 32
+		if seed.runManagers {
+			runtime.Agents[rootID] = native
+		}
 	})
 	host := projectworkHost()
 	storage, workspaceLimits := t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20}
@@ -485,7 +542,8 @@ func resumePendingFinalReview(t *testing.T, findingPath string, reviewPaths []st
 	orders := storeReviewFixtureCandidate(t, store, dir, []string{plan.InitialCandidateID}, map[string]string{"src/orders/implementation.txt": "orders implementation v2\n"})
 	inventory := storeReviewFixtureCandidate(t, store, dir, []string{plan.InitialCandidateID}, map[string]string{"src/inventory/implementation.txt": "inventory implementation v2\n"})
 	integrated := storeReviewFixtureCandidate(t, store, dir, []string{orders.ID, inventory.ID}, map[string]string{
-		"src/orders/implementation.txt": "orders implementation v2 as integrated\n", "src/inventory/implementation.txt": "inventory implementation v2\n"})
+		"src/orders/implementation.txt": "orders implementation v2 as integrated\n", "src/inventory/implementation.txt": "inventory implementation v2\n",
+		"src/project-integration.txt": "BAD parent integration\n"})
 	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Operation: plan.Operation, Status: StatusInterrupted, Mode: ModeControlledLocal,
 		StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(), BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot,
 		ModelDigest: plan.ModelDigest, RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers), Candidate: candidateRef(integrated, false), Revision: 1}
@@ -495,22 +553,33 @@ func resumePendingFinalReview(t *testing.T, findingPath string, reviewPaths []st
 	}
 	rootTask.State, rootTask.CandidateID, rootTask.IntegrationCandidateID, rootTask.ReportStatus = "integrated", plan.InitialCandidateID, integrated.ID, "complete"
 	rootTask.WorkAttempts, rootTask.IntegrationAttempts, rootTask.Attempts, rootTask.ReviewStatus, rootTask.ReviewCandidateID = 1, 1, 2, "not-required", integrated.ID
+	rootTask.IntegratedPaths = []string{"src/project-integration.txt"}
 	inventoryTask.State, inventoryTask.CandidateID, inventoryTask.WorkAttempts, inventoryTask.Attempts, inventoryTask.ReportStatus = "worked", inventory.ID, 1, 1, "complete"
 	inventoryTask.ReviewStatus, inventoryTask.ReviewCandidateID = "not-required", inventory.ID
 	ordersTask.State, ordersTask.CandidateID, ordersTask.WorkAttempts, ordersTask.Attempts, ordersTask.ReportStatus = "worked", orders.ID, 1, 1, "complete"
-	ordersTask.WrittenPaths, ordersTask.IntegratedPaths = []string{"src/orders/implementation.txt"}, reviewPaths
-	// The final review loop reserved this reviewer start against the root candidate.
-	ordersTask.ReviewStatus, ordersTask.ReviewCandidateID, ordersTask.ReviewRound = "invoking", integrated.ID, 1
+	ordersTask.WrittenPaths = []string{"src/orders/implementation.txt"}
+	reviewed, phase := ordersTask, "work"
+	if seed.rootReview {
+		reviewed, phase = rootTask, "integrate"
+	}
+	reviewed.IntegratedPaths = unionPaths(reviewed.IntegratedPaths, seed.reviewPaths)
+	// The review loop reserved this reviewer start against the root candidate.
+	reviewed.ReviewStatus, reviewed.ReviewCandidateID, reviewed.ReviewRound = "invoking", integrated.ID, 1
 	finalProject, err := projectForCandidate(host, root, base.Snapshot, integrated)
 	if err != nil {
 		t.Fatal(err)
 	}
-	invoker := &nativeFinalReviewInvoker{seed: true, findingPath: findingPath}
-	if _, _, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, finalProject, *ordersTask, "work", 1, integrated, func(started InvocationLog) error {
+	invoker := &nativeFinalReviewInvoker{seed: true, findingPath: seed.findingPath}
+	var dispatch *reworkDispatchInvoker
+	if seed.runManagers {
+		dispatch = &reworkDispatchInvoker{inner: nativeNoEditManager{}, store: store, runID: plan.ID, managerID: reviewed.ManagerID, phase: phase}
+		invoker.managers = dispatch
+	}
+	if _, _, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, finalProject, *reviewed, phase, 1, integrated, func(started InvocationLog) error {
 		report.Invocations = append(report.Invocations, started)
 		return nil
 	}, report); err == nil || len(report.Invocations) != 1 || len(invoker.reviewContext) == 0 {
-		t.Fatalf("fixture did not leave one dispatched final review: err=%v invocations=%d", err, len(report.Invocations))
+		t.Fatalf("fixture did not leave one dispatched review: err=%v invocations=%d", err, len(report.Invocations))
 	}
 	if err := store.appendState(report); err != nil {
 		t.Fatal(err)
@@ -522,16 +591,16 @@ func resumePendingFinalReview(t *testing.T, findingPath string, reviewPaths []st
 
 	resumed, resumeErr := Resume(context.Background(), host, invoker, root, plan.ID)
 	if invoker.recoverCalls != 1 {
-		t.Fatalf("Resume recovered %d reviewer turns, want the pending final review: status=%s err=%v", invoker.recoverCalls, resumed.Status, resumeErr)
+		t.Fatalf("Resume recovered %d reviewer turns, want the pending review: status=%s err=%v", invoker.recoverCalls, resumed.Status, resumeErr)
 	}
 	recovered := false
 	for _, review := range resumed.Reviews {
-		recovered = recovered || review.ManagerID == ordersID && review.CandidateID == integrated.ID && review.Outcome == "fail"
+		recovered = recovered || review.ManagerID == reviewed.ManagerID && review.CandidateID == integrated.ID && review.Outcome == "fail"
 	}
 	if !recovered {
-		t.Fatalf("recovered final review was not recorded: %+v status=%s err=%v", resumed.Reviews, resumed.Status, resumeErr)
+		t.Fatalf("recovered review was not recorded: %+v status=%s err=%v", resumed.Reviews, resumed.Status, resumeErr)
 	}
-	return resumedFinalReview{report: resumed, err: resumeErr, invoker: invoker, integrated: integrated}
+	return resumedReview{report: resumed, err: resumeErr, invoker: invoker, dispatch: dispatch, integrated: integrated}
 }
 
 // The final review loop reviews a leaf against the root candidate and routes
@@ -539,7 +608,7 @@ func resumePendingFinalReview(t *testing.T, findingPath string, reviewPaths []st
 // crash during that review must not turn the recovered failure into leaf-only
 // rework: the root would keep its stale candidate and never receive the fix.
 func TestResumedFinalReviewFailureRoutesToParentRework(t *testing.T) {
-	result := resumePendingFinalReview(t, "src/orders/implementation.txt", nil)
+	result := resumePendingReview(t, pendingReviewSeed{findingPath: "src/orders/implementation.txt"})
 	resumed, resumeErr, invoker := result.report, result.err, result.invoker
 	rootID, ordersID := e2eManagerID("", "project-owner"), e2eManagerID("orders", "orders")
 	if len(resumed.ManagerReworkRounds) != 1 || len(resumed.ManagerReworkRounds[0].Requests) != 1 ||
@@ -559,7 +628,7 @@ func TestResumedFinalReviewFailureRoutesToParentRework(t *testing.T) {
 func TestResumedFinalReviewWithoutRouteBlocksAsFailedReview(t *testing.T) {
 	// A finding on a path owned outside the orders subtree has no parent route.
 	const foreignPath = "src/inventory/implementation.txt"
-	result := resumePendingFinalReview(t, foreignPath, []string{foreignPath})
+	result := resumePendingReview(t, pendingReviewSeed{findingPath: foreignPath, reviewPaths: []string{foreignPath}})
 	resumed, resumeErr := result.report, result.err
 	reported := "recovered final review for " + e2eManagerID("orders", "orders") + " failed and its findings have no rework route"
 	if resumed.Status != StatusBlocked || resumeErr == nil || !strings.HasPrefix(resumeErr.Error(), reported) {
@@ -573,6 +642,65 @@ func TestResumedFinalReviewWithoutRouteBlocksAsFailedReview(t *testing.T) {
 	}
 	if len(result.invoker.requests) != 0 {
 		t.Fatalf("Resume dispatched %d requests for an unroutable review failure", len(result.invoker.requests))
+	}
+}
+
+// The live loop reworks a failed review of the root's own integration in
+// place: the root reintegrates with the review findings, the failed review
+// stays failed, and the new candidate is reviewed again. Resume must take the
+// same path after recovering that failed review, with no other dispatch.
+func TestResumedRootReviewFailureReworksInPlaceLikeTheLoop(t *testing.T) {
+	// The fixture root owns no statements, so only delivered child artifacts can
+	// ground a finding of its integration review.
+	const findingPath = "src/orders/implementation.txt"
+	result := resumePendingReview(t, pendingReviewSeed{rootReview: true, findingPath: findingPath, runManagers: true})
+	rootID := e2eManagerID("", "project-owner")
+	if result.err != nil || result.report.Status != StatusIntegrated {
+		t.Fatalf("Resume did not finish the root's in-place rework: status=%s err=%v findings=%v", result.report.Status, result.err, result.report.Findings)
+	}
+	if result.dispatch.request == nil || result.dispatch.stateErr != nil {
+		t.Fatalf("Resume did not reintegrate the root: state=%v", result.dispatch.stateErr)
+	}
+	var integration struct {
+		RepairDiagnostic string `json:"repairDiagnostic"`
+	}
+	if err := json.Unmarshal(result.dispatch.request.Context, &integration); err != nil {
+		t.Fatal(err)
+	}
+	if want := "integration review findings: " + findingPath + ": "; !strings.HasPrefix(integration.RepairDiagnostic, want) {
+		t.Fatalf("root reintegration diagnostic = %q, want the integration review loop's %q...", integration.RepairDiagnostic, want)
+	}
+	if task := findTask(result.dispatch.state.Tasks, rootID); task == nil || task.State != "integrating" || task.ReviewStatus != "fail" {
+		t.Fatalf("root at its reintegration = %+v, want integrating with its review still failed", task)
+	}
+	integrations, rootReviews := 0, 0
+	for _, request := range result.invoker.requests {
+		var payload struct {
+			Kind      string `json:"kind"`
+			ManagerID string `json:"managerId"`
+			Phase     string `json:"phase"`
+		}
+		if err := json.Unmarshal(request.Context, &payload); err != nil {
+			t.Fatal(err)
+		}
+		switch {
+		case payload.Kind == "projectrun-task/v1":
+			integrations++
+		case payload.Kind == "projectrun-review/v1" && payload.ManagerID == rootID:
+			rootReviews++
+		}
+	}
+	if integrations != 1 || rootReviews != 1 {
+		t.Fatalf("Resume dispatched %d Manager turns and %d root reviews, want the one reintegration and its review", integrations, rootReviews)
+	}
+	root := findTask(result.report.Tasks, rootID)
+	rereviewed := false
+	for _, review := range result.report.Reviews {
+		rereviewed = rereviewed || review.ManagerID == rootID && review.Phase == "integrate" && review.Outcome == "pass" &&
+			review.CandidateID == root.IntegrationCandidateID && review.CandidateID != result.integrated.ID
+	}
+	if !rereviewed {
+		t.Fatalf("reintegrated root candidate was not reviewed again: %+v", result.report.Reviews)
 	}
 }
 
