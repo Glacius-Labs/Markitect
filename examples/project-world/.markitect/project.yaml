@@ -21,6 +21,7 @@ modelFiles:
   - .markitect/model/commerce/sales/integration.yaml
   - .markitect/model/commerce/sales/artifacts.yaml
   - .markitect/model/engineering/checks.yaml
+  - .markitect/model/engineering/readme-check.yaml
   - .markitect/model/engineering/manager.yaml
   - .markitect/model/engineering/artifacts.yaml
   - .markitect/model/engineering/workflow.yaml

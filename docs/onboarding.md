@@ -22,7 +22,7 @@ The scripted replay of this task, `scripts/onboarding/Measure-Adoption.ps1`, was
 - On every pull request, the [smoke driver](../tools/smoke/main.go) runs `init` and `onboard` with a preview, a digest-checked write and `check`.
 - The [playground smoke](../.github/workflows/playground-smoke.yaml) also runs it in a container.
 
-The driver also took over the script's version check and its fixed policy edit, which it checks with `impact` between full commit IDs. The legacy context compile and the `fixture.bundle` evidence were dropped. A fixed-revision `verify` replay waits for a fully verifiable example project.
+The driver also took over the script's version check and its fixed policy edit, which it checks with `impact` between full commit IDs. The legacy context compile and the `fixture.bundle` evidence were dropped. The driver also replays a fixed-revision `verify --execute` of the project-world example: the declared checks run, and a scripted auditor answers each Manager's audit through `markitect-exchange-executor`, so no model is needed.
 
 The dated result below is the record of the retired script.
 

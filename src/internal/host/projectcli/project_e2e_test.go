@@ -152,7 +152,7 @@ func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 	if initial.Report.Status != "succeeded" {
 		t.Fatalf("fixture model status = %q, findings=%+v, unknown=%v", initial.Report.Status, initial.Report.Findings, initial.Report.Unknown)
 	}
-	if len(initial.Report.Managers) != 6 || len(initial.Report.Artifacts) != 5 || len(initial.Report.Checks) != 1 {
+	if len(initial.Report.Managers) != 6 || len(initial.Report.Artifacts) != 5 || len(initial.Report.Checks) != 2 {
 		t.Fatalf("fixture report counts = managers:%d artifacts:%d checks:%d", len(initial.Report.Managers), len(initial.Report.Artifacts), len(initial.Report.Checks))
 	}
 
