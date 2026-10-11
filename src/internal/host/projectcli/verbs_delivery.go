@@ -173,7 +173,11 @@ var briefVerb = define(verb{
 		if in.Event == "" || in.Manager == "" || !in.Write {
 			return nil, usagef("brief dismiss requires --event, --manager, --expect and --write")
 		}
-		binding, err := projectbriefing.Dismiss(e.root, in.Event, in.Manager, in.Expect)
+		revision, err := gitHeadRevision(e.root)
+		if err != nil {
+			return nil, fmt.Errorf("resolve the committed model revision for briefings: %w", err)
+		}
+		binding, err := projectbriefing.DismissAcceptedHistory(e.root, revision, in.Event, in.Manager, in.Expect)
 		if err != nil {
 			return nil, err
 		}
@@ -218,33 +222,50 @@ func briefList(root, manager string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	if project.Config.WorkflowMode == "guided" {
-		if _, err := projectbriefing.EnsureAcceptedHistory(root, revision); err != nil {
+	state, stateDigest := projectbriefing.Store{}, ""
+	statusState := projectbriefing.Store{}
+	if project.Config.WorkflowMode == projectwork.WorkflowModeGuided {
+		accepted, err := projectbriefing.ReadAcceptedHistory(root, revision)
+		if err != nil {
 			return nil, err
 		}
-	}
-	state, stateDigest, err := projectbriefing.Read(root)
-	if err != nil {
-		return nil, err
+		state = accepted.State
+		stateDigest = accepted.Receipt.StoreDigest
+		var persistedDigest string
+		statusState, persistedDigest, err = projectbriefing.Read(root)
+		if err != nil {
+			return nil, err
+		}
+		if persistedDigest != accepted.PersistedDigest {
+			return nil, projectbriefing.ErrStaleStore
+		}
+	} else {
+		var err error
+		state, stateDigest, err = projectbriefing.Read(root)
+		if err != nil {
+			return nil, err
+		}
+		statusState = state
 	}
 	if manager == "" {
 		notifications, hidden, err := visibleBriefings(root, state)
 		if err != nil {
 			return nil, err
 		}
+		applyBriefingResolutionHints(notifications, statusState)
 		return struct {
 			Notifications        []visibleNotification `json:"notifications"`
 			HiddenDismissedCount int                   `json:"hiddenDismissedCount"`
 			StateDigest          string                `json:"stateDigest"`
 		}{notifications, hidden, stateDigest}, nil
 	}
-	briefings, events, binding, err := projectbriefing.LoadForManager(root, project.Report.ModelDigest, manager, project.Revision)
+	briefings, events, binding, err := projectbriefing.LoadForManagerFrom(root, state, project.Report.ModelDigest, manager, project.Revision)
 	if err != nil {
 		return nil, err
 	}
 	withStatus := make([]managerEvent, 0, len(events))
 	for _, event := range events {
-		resolution := projectbriefing.EventResolutionStatus(state, event.ID)
+		resolution := projectbriefing.EventResolutionStatus(statusState, event.ID)
 		withStatus = append(withStatus, managerEvent{Event: event, ResolutionStatus: resolution.Status, Resolution: resolution.Resolution})
 	}
 	return struct {
@@ -253,6 +274,21 @@ func briefList(root, manager string) (any, error) {
 		ContextDigest string                     `json:"contextDigest"`
 		StateDigest   string                     `json:"stateDigest"`
 	}{briefings, withStatus, binding, stateDigest}, nil
+}
+
+// ReadAcceptedHistory omits Read's transient delivered-uncommitted hints.
+// Keep those display-only hints from the matching persisted-store view.
+func applyBriefingResolutionHints(notifications []visibleNotification, persisted projectbriefing.Store) {
+	for i := range notifications {
+		resolution := projectbriefing.EventResolutionStatus(persisted, notifications[i].EventID)
+		notifications[i].ResolutionStatus = resolution.Status
+		notifications[i].Resolution = resolution.Resolution
+		if resolution.Status == projectbriefing.StatusResolved {
+			notifications[i].NextAction = "Inspect the recorded full verification and Apply evidence."
+		} else {
+			notifications[i].NextAction = "Review the declared model change and its affected responsibilities."
+		}
+	}
 }
 
 // --- Delivery -------------------------------------------------------------
