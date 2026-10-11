@@ -72,7 +72,7 @@ scripts/                       maintenance and evaluation helpers
 - Add a file to the package that owns the responsibility before you create a package.
 - [Modules and static composition](development/modules.md) owns the import rules. The import gate enforces them; directory names do not.
 
-This repository's own engineering resources still use the legacy line: `markitect.yaml`, `.markitect/areas/` and `.markitect/modules/`. They render `.agents/skills/`, `.claude/skills/` and `docs/markitect/` and run this repository's checks until ARCH-07 moves Markitect onto its own `.markitect/project.yaml` model. Change their canonical YAML and regenerate the views. [Managed-artifact accounting](../markitect-artifacts.yaml) declares a bounded source scope, not every file.
+This repository is modelled in [`.markitect/project.yaml`](../.markitect/project.yaml) and `.markitect/model/`, with full coverage; `docs/markitect/project.md` is its readable view. The legacy dogfood still runs beside it until ARCH-09: `markitect.yaml`, `.markitect/areas/` and `.markitect/modules/` render `.agents/skills/`, `.claude/skills/` and the other files in `docs/markitect/`. Change canonical YAML and regenerate the views. [Managed-artifact accounting](../markitect-artifacts.yaml) declares a bounded source scope, not every file.
 
 The root [AGENTS.md](../AGENTS.md) routes engineering tasks. `.github/` holds the hosted workflows and templates, and `.githooks/` the pre-commit hook. Local logs and build outputs belong outside source inputs ([CONTRIBUTING](../CONTRIBUTING.md#release-work)).
 
