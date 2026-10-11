@@ -1,7 +1,15 @@
 #!/bin/sh
 set -eu
 
-go run ./src/cmd/markitect check --repo . >/dev/null || {
-	echo "pre-commit: the project model does not check green; run 'go run ./src/cmd/markitect check --repo .' for the findings" >&2
+# Check what is being committed: the staged tree as a temporary commit, so
+# unstaged edits and untracked files do not count.
+tree=$(git write-tree)
+if git rev-parse --verify --quiet HEAD >/dev/null; then
+	c=$(git commit-tree "$tree" -p HEAD -m pre-commit)
+else
+	c=$(git commit-tree "$tree" -m pre-commit)
+fi
+go run ./src/cmd/markitect check --repo . --revision "$c" >/dev/null || {
+	echo "pre-commit: the staged project model does not check green; run 'go run ./src/cmd/markitect check --repo . --revision $c' for the findings" >&2
 	exit 1
 }
