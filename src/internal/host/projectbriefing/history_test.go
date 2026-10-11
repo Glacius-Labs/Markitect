@@ -704,7 +704,7 @@ func TestVerifiedResolutionRejectsFutureEventAtOldModelRevision(t *testing.T) {
 	}
 }
 
-func TestResolutionAndDismissalOnUnmergedTopicStayProvisional(t *testing.T) {
+func TestUnmergedTopicResolutionStaysProvisionalWhileDismissalFollowsEvent(t *testing.T) {
 	root, _, changed := committedModelFixture(t)
 	mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
@@ -731,17 +731,18 @@ func TestResolutionAndDismissalOnUnmergedTopicStayProvisional(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if status := EventResolutionStatus(state, event.ID); status.Status != "unresolved" || len(state.Dismissals) != 0 || len(state.Briefings) != 1 {
-		t.Fatalf("unmerged topic resolution or dismissal counted on %s: status=%#v dismissals=%#v", mainBranch, status, state.Dismissals)
+	// The event is accepted on main too, so its dismissal is; the delivery is
+	// not.
+	if status := EventResolutionStatus(state, event.ID); status.Status != "unresolved" || len(state.Dismissals) != 1 || len(state.Briefings) != 1 {
+		t.Fatalf("unmerged topic resolution counted or dismissal lost on %s: status=%#v dismissals=%#v", mainBranch, status, state.Dismissals)
 	}
 	gitTest(t, root, "merge", "--no-ff", "-m", "merge topic", "topic")
 	state, _, err = Read(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The delivery's result reached main; the dismissal stays on its branch.
-	if status := EventResolutionStatus(state, event.ID); status.Status != "resolved" || status.Resolution.ModelRevision != topic || len(state.Dismissals) != 0 {
-		t.Fatalf("merged topic resolution not accepted or dismissal carried over: status=%#v dismissals=%#v", status, state.Dismissals)
+	if status := EventResolutionStatus(state, event.ID); status.Status != "resolved" || status.Resolution.ModelRevision != topic || len(state.Dismissals) != 1 {
+		t.Fatalf("merged topic resolution or dismissal not accepted: status=%#v dismissals=%#v", status, state.Dismissals)
 	}
 }
 
@@ -982,8 +983,8 @@ func TestLatestAcceptedResolutionOnLineWins(t *testing.T) {
 	}
 }
 
-func TestDismissalOnFreshTopicStaysOnThatBranch(t *testing.T) {
-	root, _, changed := committedModelFixture(t)
+func TestDismissalFollowsItsEvent(t *testing.T) {
+	root, base, changed := committedModelFixture(t)
 	mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
 		t.Fatal(err)
@@ -997,13 +998,15 @@ func TestDismissalOnFreshTopicStaysOnThatBranch(t *testing.T) {
 	if _, err := Dismiss(root, event.ID, event.AffectedManagers[0], digest); err != nil {
 		t.Fatal(err)
 	}
+	// A dismissal counts wherever its event is accepted: on any branch or a
+	// detached HEAD whose line holds the event, but not before the event.
 	for _, check := range []struct {
-		branch string
-		want   int
-	}{{"topic", 1}, {mainBranch, 0}, {"topic", 1}} {
-		gitTest(t, root, "checkout", check.branch)
+		checkout []string
+		want     int
+	}{{[]string{"topic"}, 1}, {[]string{mainBranch}, 1}, {[]string{"--detach", changed}, 1}, {[]string{"--detach", base}, 0}} {
+		gitTest(t, root, append([]string{"checkout", "-q"}, check.checkout...)...)
 		if state, _, err := Read(root); err != nil || len(state.Dismissals) != check.want {
-			t.Fatalf("dismissals on %s = %#v, want %d (err=%v)", check.branch, state.Dismissals, check.want, err)
+			t.Fatalf("dismissals after checkout %v = %#v, want %d (err=%v)", check.checkout, state.Dismissals, check.want, err)
 		}
 	}
 }

@@ -83,8 +83,8 @@ func validateStore(state Store) error {
 	}
 	dismissals := map[string]bool{}
 	for _, dismissal := range state.Dismissals {
-		key := dismissal.EventID + "\x00" + dismissal.ManagerID + "\x00" + dismissal.Branch + "\x00" + dismissal.Revision
-		if dismissal.EventID == "" || dismissal.ManagerID == "" || (dismissal.Branch != "" && !strings.HasPrefix(dismissal.Branch, "refs/")) || !fullObjectID(dismissal.Revision) || dismissals[key] {
+		key := dismissal.EventID + "\x00" + dismissal.ManagerID
+		if dismissal.EventID == "" || dismissal.ManagerID == "" || dismissals[key] {
 			return errors.New("invalid or duplicate dismissal")
 		}
 		if !managerByEvent[dismissal.EventID][dismissal.ManagerID] {
@@ -243,14 +243,12 @@ func fullHexDigest(value string) bool {
 	return err == nil
 }
 
-// Dismissal hides an event from one Manager's notifications on the branch it
-// was made on. Branch is the checked-out branch ref, empty on a detached HEAD;
-// Revision is HEAD at that time.
+// Dismissal hides an event from one Manager's notifications. It is keyed by
+// the content-based event ID only, so it counts wherever that event is
+// accepted: across merges, squashes, fast-forwards and on a detached HEAD.
 type Dismissal struct {
 	EventID   string `json:"eventId"`
 	ManagerID string `json:"managerId"`
-	Branch    string `json:"branch,omitempty"`
-	Revision  string `json:"revision"`
 }
 
 type Store struct {
@@ -376,9 +374,8 @@ type EnsureReceipt struct {
 // A briefing counts when it was recorded at a commit on that line, and its
 // events with it. A resolution of such an event counts when HEAD's committed
 // tree holds everything its delivery wrote; of several, the latest on the
-// line is returned. A dismissal counts on the branch it was made on, while its
-// commit stays on the line. Other entries are provisional: they stay stored
-// and count once those conditions hold. History is the line's cursor. A
+// line is returned. A dismissal counts wherever its event does. Other entries
+// are provisional: they stay stored and count once those conditions hold. History is the line's cursor. A
 // missing store has an empty deterministic state and digest.
 func Read(root string) (Store, string, error) {
 	state, digest, err := readStore(root)
@@ -827,9 +824,9 @@ func validateAcceptedPrefix(state Store, projects []*projectwork.Project) error 
 // line is the first-parent history of the checked-out HEAD, the accepted
 // history. A briefing counts only when its commit lies on the line, and its
 // events count with it. A resolution of such an event counts when HEAD's
-// committed tree holds its delivered result; a dismissal when it was made on
-// the checked-out branch at a commit on the line. Other entries are
-// provisional: kept, but neither counted nor blocking.
+// committed tree holds its delivered result; a dismissal whenever its event
+// counts. Other entries are provisional: kept, but neither counted nor
+// blocking.
 type line struct {
 	root      string
 	head      string
@@ -838,10 +835,6 @@ type line struct {
 	reachable map[string]bool
 	// tree caches HEAD's committed entries by path.
 	tree map[string]treeEntry
-	// checkedOut is the checked-out branch ref, empty when detached; known
-	// tells whether it was read.
-	checkedOut string
-	known      bool
 }
 
 // treeEntry is HEAD's entry at a path: read tells whether HEAD's tree could
@@ -907,17 +900,6 @@ func (l *line) position(revision string) int {
 		}
 	}
 	return low
-}
-
-// branch returns the checked-out branch ref, or "" on a detached HEAD.
-func (l *line) branch() string {
-	if !l.known {
-		if output, err := source.GitOutput(l.root, "symbolic-ref", "-q", "HEAD"); err == nil {
-			l.checkedOut = strings.TrimSpace(string(output))
-		}
-		l.known = true
-	}
-	return l.checkedOut
 }
 
 // readTree loads HEAD's committed entries for paths into the cache, in
@@ -1093,7 +1075,7 @@ func (l *line) accepted(state Store) Store {
 		}
 	}
 	for _, dismissal := range state.Dismissals {
-		if events[dismissal.EventID] && l.index(dismissal.Revision) >= 0 && dismissal.Branch == l.branch() {
+		if events[dismissal.EventID] {
 			view.Dismissals = append(view.Dismissals, dismissal)
 		}
 	}
@@ -1319,8 +1301,8 @@ func appendCanonicalBundle(root string, active *line, bundle Bundle, expectedDig
 	})
 }
 
-// Dismiss records a local visibility choice on the checked-out branch for an
-// event accepted there. It has no field that could resolve an event or change
+// Dismiss records a local visibility choice for an event accepted on the
+// checked-out branch. It has no field that could resolve an event or change
 // its conformity state.
 func Dismiss(root, eventID, managerID, expectedDigest string) (string, error) {
 	if strings.TrimSpace(eventID) == "" || strings.TrimSpace(managerID) == "" {
@@ -1348,19 +1330,12 @@ func Dismiss(root, eventID, managerID, expectedDigest string) (string, error) {
 				return nil
 			}
 		}
-		state.Dismissals = append(state.Dismissals, Dismissal{EventID: eventID, ManagerID: managerID, Branch: active.branch(), Revision: active.head})
+		state.Dismissals = append(state.Dismissals, Dismissal{EventID: eventID, ManagerID: managerID})
 		sort.Slice(state.Dismissals, func(i, j int) bool {
-			a, b := state.Dismissals[i], state.Dismissals[j]
-			if a.EventID != b.EventID {
-				return a.EventID < b.EventID
+			if state.Dismissals[i].EventID != state.Dismissals[j].EventID {
+				return state.Dismissals[i].EventID < state.Dismissals[j].EventID
 			}
-			if a.ManagerID != b.ManagerID {
-				return a.ManagerID < b.ManagerID
-			}
-			if a.Branch != b.Branch {
-				return a.Branch < b.Branch
-			}
-			return a.Revision < b.Revision
+			return state.Dismissals[i].ManagerID < state.Dismissals[j].ManagerID
 		})
 		return nil
 	})
