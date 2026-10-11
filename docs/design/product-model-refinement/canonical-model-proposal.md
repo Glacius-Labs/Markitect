@@ -194,6 +194,31 @@ Die Beschreibungssprache braucht gut definierte Werte, Kombination, Namen und Ab
 
 Ein Ausdruck wie „Anzahl aktiver Ausleihen je Exemplar höchstens eins“ braucht definierte Mengen-, Zustands- und Zeitsemantik. Seine syntaktische Prüfung kann eine formale Modellprüfung leisten. Ob die Anwendung ihn erhält, verlangt einen geeigneten Nachweis am realisierten Stand. Der Vorschlag behauptet keinen vorhandenen Ausdrucksevaluator.
 
+### 6.4 Offene Frage: Strenge und Methodik
+
+Neuer Nutzerimpuls im selben Produktgespräch am 11. Oktober 2026:
+
+> Ausserdem könnte man noch über die "strictness" des "compilers" und typsystems reden. Eventuell reicht ein methodischer Ansatz bereits für das was Markitect erreichen will.
+
+Status: offene Designfrage und Hypothese, keine angenommene Abschwächung des aktuellen Vertrags. Die bisherige Empfehlung typisierter Facetten bleibt ein Kandidat; der erforderliche Formalisierungsgrad soll gemeinsam am [Dateisystem-/Syntaxbeispiel](library-filesystem-example.md) bestimmt werden.
+
+**Ableitung zur Diskussion:** Der Nutzen könnte bereits aus einer kanonischen Quelle, eindeutigen Zuständigkeiten, expliziten Beziehungen, systematischer Änderungsanalyse und verbindlichen Reviews entstehen. Ein formal strengerer Fachvertrag könnte zusätzliche Fehler früh erkennen, verlangt aber mehr Modellierungs- und Pflegeaufwand. Ob die zusätzliche Strenge für den gewünschten Nutzerwert nötig ist, ist bislang unbelegt.
+
+Strenge sollte zunächst nach Prüfgegenstand unterschieden werden:
+
+| Prüfgegenstand | Möglicher methodischer Anteil | Möglicher deterministischer Anteil |
+| --- | --- | --- |
+| Identitäten, Typen und Referenzen | Verständliche Benennung und Gliederung. | Auflösbare Ziele, gültige Werte, eindeutige Definitionen. |
+| Fachliche Beschreibung | Fragenkatalog, gezielte Kontextgabe und unabhängiges Review. | Pflichtfelder, erlaubte Rollen, Kompositions- und Beziehungsregeln. |
+| Verhalten und Invarianten | Präzise Prosa, Gegenbeispiele und begründete Prüfauswahl. | Definierte Bedingungen oder Zustandsverträge, soweit sie tatsächlich helfen. |
+| Realisierung und Nachweise | Agenten untersuchen und beurteilen relevante Inhalte. | Explizite Pfadzuordnung, feste Stände, vorhandene Bindungen und ausführbare Checks. |
+
+Ein möglicher Vergleich für die spätere Designentscheidung ist derselbe Bibliotheksfall mit minimaler strukturierter Beschreibung und methodischen Prüfaufträgen gegenüber einer stärker formalisierten Fassung. Hier wird dieser Vergleich nur vorgeschlagen, nicht ausgeführt oder als Studie beauftragt. Kriterien wären: Verständlichkeit, Pflegeaufwand, früh erkannte Fehler, übersehene Verpflichtungen und nachvollziehbare Änderungsfolgen.
+
+Offen bleibt insbesondere, ob ein einzelner Strictness-Schalter überhaupt sinnvoll ist. Ein projektspezifisches Profil könnte bestimmte Prüfungen als Fehler, Warnung oder Reviewpflicht behandeln. Dabei muss erkennbar bleiben, was tatsächlich geprüft wurde und welche Garantien daraus folgen; unsichere Beziehungen dürfen nicht still als vollständiger enger Impact gelten. Profile, Schweregrade und Freigaberegeln sind hier nur Ideen, keine aktuelle Produktfähigkeit.
+
+Vor dem Schemaumbau ist deshalb zu entscheiden: Welche Aussagen benötigt die systematische Koordination zwingend als Struktur, welche können zunächst verbindliche Prosa bleiben, und welche wiederkehrenden Fehler rechtfertigen zusätzliche formale Prüfungen? Der Umsetzungsplan in Abschnitt 8 ist entsprechend zu konkretisieren, sobald diese Entscheidung fällt.
+
 ## 7. Beispiel: Ausleihen vollständig genug beschreiben
 
 | Aussage | Strukturierter Beitrag |
@@ -209,6 +234,8 @@ Ein Ausdruck wie „Anzahl aktiver Ausleihen je Exemplar höchstens eins“ brau
 | Code, Prüfung und Bedienungsdokumentation sind erforderlich. | Unterschiedliche Realisierungsbeiträge mit Zuständigkeit und Zuordnung. |
 
 Die Beschreibung muss außerdem erklären, ob Ausleihdauer, Identitätsvergabe, Autorisierung, Wiederholung, Persistenzfehler und Wiederherstellung festgelegt oder außerhalb des gewählten Umfangs sind. Die bisherige C#-Factory beantwortet nicht alle diese Fragen. Sie ist kein Vollständigkeitsnachweis.
+
+Das [Dateisystem-/Syntaxbeispiel](library-filesystem-example.md) hält die im Gespräch gezeigte Ablage und YAML-Ausschnitte fest. Es dient zur gemeinsamen Festlegung der konkreten Modellsyntax; `vNext` und Facettenfelder sind Platzhalter.
 
 Ein zweites Beispiel, etwa ein kleines zustandsloses CLI-Werkzeug, soll prüfen, ob die Sprache unnötig bibliotheksspezifische oder organisationsspezifische Voraussetzungen enthält. Diese Prüfung ist hier nur geplant.
 
