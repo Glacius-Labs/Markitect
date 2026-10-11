@@ -15,73 +15,91 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 )
 
-// Schemas derive from the DTOs actually decoded, avoiding a second operation contract.
+// Schemas derive from the DTOs actually decoded, avoiding a second operation
+// contract. Input schemas are written inline, because clients build arguments
+// from them; result schemas use $defs (outputSchema).
 func schema(t reflect.Type) map[string]any { return schemaOf(t, map[reflect.Type]bool{}) }
 
 // schemaOf describes a recursive struct type's nested occurrence as any JSON
 // value instead of expanding it forever.
 func schemaOf(t reflect.Type, open map[reflect.Type]bool) map[string]any {
-	// RawMessage emits its underlying JSON value, unlike ordinary []byte's
-	// base64 string. The shared service owns validation of this embedded value.
-	if t == reflect.TypeFor[json.RawMessage]() {
-		return map[string]any{}
+	if special, ok := specialSchema(t); ok {
+		return special
 	}
-	if t == reflect.TypeFor[projectrun.Duration]() || t == reflect.TypeFor[[]byte]() {
-		return map[string]any{"type": "string"}
-	}
-	if t == reflect.TypeFor[codexappserver.WindowsSandboxBackend]() {
-		return map[string]any{"type": "string", "enum": []string{string(codexappserver.WindowsSandboxBackendMXC)}}
-	}
-	if t == reflect.TypeFor[projectrun.AppServerEnvironmentMode]() {
-		return map[string]any{"type": "string", "enum": []string{string(projectrun.AppServerEnvironmentModeInherit)}}
-	}
-	if t.Kind() == reflect.Pointer {
-		return map[string]any{"anyOf": []any{schemaOf(t.Elem(), open), map[string]any{"type": "null"}}}
-	}
-	if t == reflect.TypeFor[time.Time]() {
-		return map[string]any{"type": "string", "format": "date-time"}
-	}
+	of := func(t reflect.Type) map[string]any { return schemaOf(t, open) }
 	switch t.Kind() {
+	case reflect.Pointer:
+		return map[string]any{"anyOf": []any{of(t.Elem()), map[string]any{"type": "null"}}}
 	case reflect.Struct:
 		if open[t] {
 			return map[string]any{}
 		}
 		open[t] = true
 		defer delete(open, t)
-		p := map[string]any{}
-		required := []string{}
-		for i := 0; i < t.NumField(); i++ {
-			f := t.Field(i)
-			tag := strings.Split(f.Tag.Get("json"), ",")
-			name := tag[0]
-			if name == "-" {
-				continue
-			}
-			// encoding/json promotes the fields of an untagged embedded struct.
-			if f.Anonymous && name == "" && f.Type.Kind() == reflect.Struct {
-				embedded := schemaOf(f.Type, open)
-				for key, value := range embedded["properties"].(map[string]any) {
-					p[key] = value
-				}
-				required = append(required, toStrings(embedded["required"])...)
-				continue
-			}
-			if !f.IsExported() {
-				continue
-			}
-			if name == "" {
-				name = f.Name
-			}
-			p[name] = schemaOf(f.Type, open)
-			if !strings.Contains(f.Tag.Get("json"), ",omitempty") {
-				required = append(required, name)
-			}
-		}
-		return map[string]any{"type": "object", "properties": p, "required": required, "additionalProperties": false}
+		return structSchemaWith(t, of)
 	case reflect.Map:
-		return map[string]any{"type": []string{"object", "null"}, "additionalProperties": schemaOf(t.Elem(), open)}
+		return map[string]any{"type": []string{"object", "null"}, "additionalProperties": of(t.Elem())}
 	case reflect.Slice, reflect.Array:
-		return map[string]any{"type": []string{"array", "null"}, "items": schemaOf(t.Elem(), open)}
+		return map[string]any{"type": []string{"array", "null"}, "items": of(t.Elem())}
+	}
+	return scalarSchema(t)
+}
+
+// specialSchema covers types whose JSON form differs from their Go kind.
+func specialSchema(t reflect.Type) (map[string]any, bool) {
+	switch t {
+	case reflect.TypeFor[json.RawMessage]():
+		// RawMessage emits its underlying JSON value, unlike ordinary []byte's
+		// base64 string. The shared service owns validation of this embedded value.
+		return map[string]any{}, true
+	case reflect.TypeFor[projectrun.Duration](), reflect.TypeFor[[]byte]():
+		return map[string]any{"type": "string"}, true
+	case reflect.TypeFor[codexappserver.WindowsSandboxBackend]():
+		return map[string]any{"type": "string", "enum": []string{string(codexappserver.WindowsSandboxBackendMXC)}}, true
+	case reflect.TypeFor[projectrun.AppServerEnvironmentMode]():
+		return map[string]any{"type": "string", "enum": []string{string(projectrun.AppServerEnvironmentModeInherit)}}, true
+	case reflect.TypeFor[time.Time]():
+		return map[string]any{"type": "string", "format": "date-time"}, true
+	}
+	return nil, false
+}
+
+// structSchemaWith describes a struct's JSON object; of describes each field.
+func structSchemaWith(t reflect.Type, of func(reflect.Type) map[string]any) map[string]any {
+	p := map[string]any{}
+	required := []string{}
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		tag := strings.Split(f.Tag.Get("json"), ",")
+		name := tag[0]
+		if name == "-" {
+			continue
+		}
+		// encoding/json promotes the fields of an untagged embedded struct.
+		if f.Anonymous && name == "" && f.Type.Kind() == reflect.Struct {
+			embedded := structSchemaWith(f.Type, of)
+			for key, value := range embedded["properties"].(map[string]any) {
+				p[key] = value
+			}
+			required = append(required, toStrings(embedded["required"])...)
+			continue
+		}
+		if !f.IsExported() {
+			continue
+		}
+		if name == "" {
+			name = f.Name
+		}
+		p[name] = of(f.Type)
+		if !strings.Contains(f.Tag.Get("json"), ",omitempty") {
+			required = append(required, name)
+		}
+	}
+	return map[string]any{"type": "object", "properties": p, "required": required, "additionalProperties": false}
+}
+
+func scalarSchema(t reflect.Type) map[string]any {
+	switch t.Kind() {
 	case reflect.String:
 		return map[string]any{"type": "string"}
 	case reflect.Bool:
@@ -90,9 +108,8 @@ func schemaOf(t reflect.Type, open map[reflect.Type]bool) map[string]any {
 		return map[string]any{"type": "integer"}
 	case reflect.Float32, reflect.Float64:
 		return map[string]any{"type": "number"}
-	default:
-		return map[string]any{}
 	}
+	return map[string]any{}
 }
 func decodeTyped(raw []byte, s map[string]any, out any) error {
 	if len(raw) == 0 {
@@ -166,9 +183,21 @@ func uniqueValue(d *json.Decoder) (any, error) {
 // validate reports the failing field path; adapters decide whether the text
 // is shown, and it never contains argument values.
 func validate(v any, s map[string]any, path string) error {
+	defs, _ := s["$defs"].(map[string]any)
+	return validateIn(v, s, path, defs)
+}
+
+func validateIn(v any, s map[string]any, path string, defs map[string]any) error {
+	if ref, ok := s["$ref"].(string); ok {
+		def, ok := defs[strings.TrimPrefix(ref, "#/$defs/")].(map[string]any)
+		if !ok {
+			return schemaError(path, "refers to an unknown definition")
+		}
+		return validateIn(v, def, path, defs)
+	}
 	if variants, ok := s["anyOf"].([]any); ok {
 		for _, x := range variants {
-			if validate(v, x.(map[string]any), path) == nil {
+			if validateIn(v, x.(map[string]any), path, defs) == nil {
 				return nil
 			}
 		}
@@ -207,14 +236,14 @@ func validate(v any, s map[string]any, path string) error {
 		}
 		for k, x := range m {
 			if child, ok := p[k]; ok {
-				if err := validate(x, child.(map[string]any), join(path, k)); err != nil {
+				if err := validateIn(x, child.(map[string]any), join(path, k), defs); err != nil {
 					return err
 				}
 			} else if child, ok := s["additionalProperties"].(map[string]any); ok {
-				if err := validate(x, child, join(path, k)); err != nil {
+				if err := validateIn(x, child, join(path, k), defs); err != nil {
 					return err
 				}
-			} else {
+			} else if closed, ok := s["additionalProperties"].(bool); ok && !closed {
 				return schemaError(join(path, k), "is not a known field")
 			}
 		}
@@ -224,7 +253,7 @@ func validate(v any, s map[string]any, path string) error {
 			return schemaError(path, "must be an array")
 		}
 		for i, x := range a {
-			if err := validate(x, s["items"].(map[string]any), path+"["+strconv.Itoa(i)+"]"); err != nil {
+			if err := validateIn(x, s["items"].(map[string]any), path+"["+strconv.Itoa(i)+"]", defs); err != nil {
 				return err
 			}
 		}

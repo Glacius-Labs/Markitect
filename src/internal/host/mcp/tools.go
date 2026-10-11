@@ -135,7 +135,7 @@ func Register[T, R any](s *Server, name, description string, mutation bool, call
 		reg.recovery = genericRecovery
 	}
 	input := restrict(schema(reflect.TypeFor[T]()), reg.omit, reg.enums)
-	b := binding{tool: Tool{Name: name, Description: description, InputSchema: input, OutputSchema: schema(reflect.TypeFor[Outcome[R]]()), Annotations: map[string]bool{"readOnlyHint": !mutation, "destructiveHint": mutation, "openWorldHint": false}}, mutation: mutation, recovery: reg.recovery}
+	b := binding{tool: Tool{Name: name, Description: description, InputSchema: input, OutputSchema: outputSchema(reflect.TypeFor[Outcome[R]]()), Annotations: map[string]bool{"readOnlyHint": !mutation, "destructiveHint": mutation, "openWorldHint": false}}, mutation: mutation, recovery: reg.recovery}
 	b.call = func(ctx context.Context, raw json.RawMessage) (CallResult, error) {
 		var r T
 		if err := decodeTyped(raw, input, &r); err != nil {
@@ -253,6 +253,17 @@ func sanitize(v any) {
 		}
 	}
 }
+
+// ValidateResult checks a call's structured result against the tool's
+// published output schema.
+func (s *Server) ValidateResult(name string, result CallResult) error {
+	b, ok := s.tools[name]
+	if !ok {
+		return errors.New("unknown tool")
+	}
+	return validate(result.StructuredContent, b.tool.OutputSchema.(map[string]any), "")
+}
+
 func (s *Server) Tools() []Tool {
 	names := make([]string, 0, len(s.tools))
 	for n := range s.tools {
