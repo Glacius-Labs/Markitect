@@ -17,14 +17,16 @@ TABLE = {
     METHOD: "method outcome: the run stopped early with class none (agent time used up)",
     INVALID: "invalid input or refused by a rule: manifest, study file, options, folder, pre-registration, "
              "reviewer models, fairness mismatch",
-    PREFLIGHT: "study preflight failed, including the image and binary builds",
+    PREFLIGHT: "study preflight failed: a cheap check (image pins and committed image inventory included) or "
+               "the Markitect binary build",
     HARNESS: "harness failure: runner error, snapshot or wave release failed, assess-error.txt, study-error.txt, "
-             "an unexpected error of the command",
+             "an unexpected error of the command, a container killed (exit 137) that Docker does not report "
+             "OOMKilled",
     ENVIRONMENT: "environment failure: logins, no session id, host status setup-failed, start-failed or "
-                 "wait-failed (image build included), a container killed (exit 137) under its memory limit, "
-                 "image changed",
-    PRODUCT: "product failure: the Markitect binary does not build, setup blocked by the product, markitect "
-             "check could not run",
+                 "wait-failed, a failed image build or image inventory check (in study too), a container "
+                 "killed (exit 137) that Docker reports OOMKilled, image changed",
+    PRODUCT: "product failure: the Markitect binary does not build (compile errors in its own sources; any "
+             "other go build failure is 11), setup blocked by the product, markitect check could not run",
     TIMEOUT: "host safety timeout",
     INTERRUPTED: "interrupted",
 }
@@ -32,7 +34,7 @@ TABLE = {
 CLASS_CODES = {"harness": HARNESS, "environment": ENVIRONMENT, "product": PRODUCT}
 # A study's code is the first of these among its step codes.
 STUDY_ORDER = (INTERRUPTED, TIMEOUT, HARNESS, ENVIRONMENT, PRODUCT, METHOD, OK)
-KILLED = 137  # a container's exit after SIGKILL, as the kernel's OOM killer sends under --memory
+KILLED = 137  # a container's exit after SIGKILL; Docker's State.OOMKilled says whether for memory
 
 
 def help_text() -> str:
@@ -56,17 +58,26 @@ def _host_status(status: str | None, failure_class: str | None = None) -> int | 
     return None if status == "completed" else ENVIRONMENT  # setup-failed, start-failed, wait-failed
 
 
+def _killed(container_exit: int | None, oom_killed: bool | None) -> int | None:
+    """A container killed with SIGKILL (exit 137): the environment's when Docker reports
+    State.OOMKilled, else a harness failure (nothing explains the kill)."""
+    if container_exit != KILLED:
+        return None
+    return ENVIRONMENT if oom_killed is True else HARNESS
+
+
 def host_run(status: str | None, container_exit: int | None, run_class: str | None,
-             failure_class: str | None = None, memory_limited: bool = False) -> int:
-    """`host run`: the host status, then a container killed under its memory limit
-    (exit 137: the environment's), then the class in results/report.json, then the
-    runner's own 0 (every wave ran) or 1 (stopped early). No readable report, an unknown
-    class or any other runner exit is a harness failure."""
+             failure_class: str | None = None, oom_killed: bool | None = None) -> int:
+    """`host run`: the host status, then a container killed with exit 137 (_killed), then
+    the class in results/report.json, then the runner's own 0 (every wave ran) or 1
+    (stopped early). No readable report, an unknown class or any other runner exit is a
+    harness failure."""
     code = _host_status(status, failure_class)
     if code is not None:
         return code
-    if container_exit == KILLED and memory_limited:
-        return ENVIRONMENT
+    code = _killed(container_exit, oom_killed)
+    if code is not None:
+        return code
     if run_class in CLASS_CODES:
         return CLASS_CODES[run_class]
     if run_class == "none" and container_exit in (OK, METHOD):
@@ -74,14 +85,14 @@ def host_run(status: str | None, container_exit: int | None, run_class: str | No
     return HARNESS
 
 
-def assess(status: str | None, container_exit: int | None, memory_limited: bool = False) -> int:
+def assess(status: str | None, container_exit: int | None, oom_killed: bool | None = None) -> int:
     """`assess`: a finished container that did not exit 0 failed to write the assessment
-    (assess-error.txt), unless it was killed under its memory limit (the environment's);
+    (assess-error.txt), unless Docker reports it OOMKilled (exit 137, the environment's);
     failed holdouts or reviews inside a written one do not count."""
     code = _host_status(status)
     if code is not None:
         return code
-    if container_exit == KILLED and memory_limited:
+    if container_exit == KILLED and oom_killed is True:
         return ENVIRONMENT
     return OK if container_exit == 0 else HARNESS
 

@@ -5,7 +5,8 @@ one of the folders `cases.discover()` finds under the playground root (inside th
 container that is /in). `stations` defaults to the case's count. `markitect.sourceRepo`
 defaults to the Git checkout that holds the playground, if it is a Markitect checkout;
 the host then records it as an absolute path with the full commit
-(`host.resolve_markitect`).
+(`host.resolve_markitect`). `agent.model` and `markitect.innerModel` are full model ids,
+never aliases (`registration.alias_reason`).
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from . import cases
+from . import cases, registration
 
 SCHEMA = 1
 METHODS = ("conventional", "markitect")
@@ -92,7 +93,7 @@ def validate(data: Any, *, playground: Path | None = None) -> dict:
         "codexVersion": _match(agent["codexVersion"], _VERSION, "agent.codexVersion"),
         "claudeVersion": _match(agent.get("claudeVersion", DEFAULT_CLAUDE_VERSION), _VERSION,
                                 "agent.claudeVersion"),
-        "model": _match(agent["model"], _TOKEN, "agent.model"),
+        "model": _model(agent["model"], "agent.model"),
         "effort": _match(agent["effort"], _EFFORT, "agent.effort"),
         # Codex applies it per session; Claude Code has no such setting, so it is only recorded.
         "maxSubagents": _positive_int(agent["maxSubagents"], "agent.maxSubagents"),
@@ -127,12 +128,22 @@ def validate(data: Any, *, playground: Path | None = None) -> dict:
             raise ManifestError(f"markitect: missing {', '.join(missing)} (Markitect's inner roles run on "
                                 "Codex, not on the Claude Code outer agent's model)")
         if "innerModel" in product:
-            result["markitect"]["innerModel"] = _match(product["innerModel"], _TOKEN, "markitect.innerModel")
+            result["markitect"]["innerModel"] = _model(product["innerModel"], "markitect.innerModel")
         if "innerEffort" in product:
             result["markitect"]["innerEffort"] = _match(product["innerEffort"], _EFFORT, "markitect.innerEffort")
     elif "markitect" in root:
         raise ManifestError("markitect: only allowed when method is 'markitect'")
     return result
+
+
+def _model(value: Any, label: str) -> str:
+    """A full model id (registration.alias_reason): an alias could name the same model as
+    a reviewer under another name."""
+    model = _match(value, _TOKEN, label)
+    reason = registration.alias_reason(model)
+    if reason:
+        raise ManifestError(f"{label}: {reason}")
+    return model
 
 
 def default_source_repo(playground: Path | None = None) -> str:

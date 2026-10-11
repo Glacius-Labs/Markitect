@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest import mock
 
 from playground import __main__ as entry
-from playground import compare, evaluate, host, outcome, study
+from playground import compare, evaluate, host, outcome, runner, study
 
 README = Path(__file__).resolve().parent.parent / "README.md"
 HOST_STATUSES = ("completed", "setup-failed", "start-failed", "wait-failed", "host-timeout", "host-interrupted",
@@ -31,15 +31,19 @@ class MappingTests(unittest.TestCase):
                             want = by_class[run_class]
                         self.assertEqual(outcome.host_run(status, container_exit, run_class), want)
 
-    def test_a_product_build_failure_and_a_memory_kill(self):
+    def test_a_product_build_failure_and_a_killed_container(self):
         self.assertEqual(outcome.host_run("setup-failed", None, None, failure_class="product"), 12)
         self.assertEqual(outcome.host_run("setup-failed", None, None, failure_class="environment"), 11)
         self.assertEqual(outcome.host_run("start-failed", None, None, failure_class="product"), 11)
         for run_class in CLASSES:
             with self.subTest(run_class=run_class):
-                self.assertEqual(outcome.host_run("completed", 137, run_class, memory_limited=True), 11)
-        self.assertEqual(outcome.host_run("completed", 137, None), 10)  # no memory limit: not explained
-        self.assertEqual(outcome.assess("completed", 137, memory_limited=True), 11)
+                self.assertEqual(outcome.host_run("completed", 137, run_class, oom_killed=True), 11)
+                for oom in (False, None):  # Docker does not report OOMKilled: nothing explains the kill
+                    self.assertEqual(outcome.host_run("completed", 137, run_class, oom_killed=oom), 10)
+        self.assertEqual(outcome.host_run("completed", 1, "none", oom_killed=True), 1)  # only exit 137 counts
+        self.assertEqual(outcome.host_run("host-timeout", 137, None, oom_killed=True), 124)
+        self.assertEqual(outcome.assess("completed", 137, oom_killed=True), 11)
+        self.assertEqual(outcome.assess("completed", 137, oom_killed=False), 10)
         self.assertEqual(outcome.assess("completed", 137), 10)
 
     def test_assess_fails_only_when_its_container_did(self):
@@ -59,7 +63,8 @@ class MappingTests(unittest.TestCase):
 
 class UnexpectedErrorTests(unittest.TestCase):
     def test_an_unhandled_exception_in_any_command_is_a_harness_failure(self):
-        for argv, target in ((["host", "run", "--manifest", "m.json"], (host, "run")),
+        for argv, target in ((["run", "--manifest", "m.json", "--out", "o"], (runner, "load")),
+                             (["host", "run", "--manifest", "m.json"], (host, "run")),
                              (["assess", "--run", "r"], (evaluate, "host_assess")),
                              (["compare", "a", "b"], (compare, "load")),
                              (["study", "s.json"], (study, "run"))):

@@ -11,7 +11,9 @@ recorded in host.json, never from the working tree) into `<run>/assessment/input
 reviewer models come from that tree's `config.json` and must differ from the arms'
 models. A run without a registration or a reviewer clash is refused (exit 2) unless
 `--exploratory`: it uses the working tree, records `rules.exploratory: true`, and
-`compare` refuses the assessment. Then it launches one container `mpg-assess-<id>` from
+`compare` refuses the assessment. The commit of the judging code (playground/, the shared
+and the case's public checks) is recorded as `evaluation.code`; local changes in it make
+the assessment exploratory too. Then it launches one container `mpg-assess-<id>` from
 the run's image and waits for it. Mounts:
 the run folder read-only at /assess/run, the staged inputs read-only at /assess/in,
 the reviewer credentials read-only under /assess/secrets and `<run>/assessment` at
@@ -136,6 +138,10 @@ def check_config(config: Any, where: Any) -> dict:
     for name, cfg in config["reviewers"].items():
         if name not in reviewers.PROVIDERS or not isinstance(cfg, dict) or not cfg.get("model"):
             raise AssessError(f"evaluation config: reviewer {name!r} needs a model")
+        reason = registration.alias_reason(cfg["model"])
+        if reason:  # the config is pre-registered: the fix is a commit, never an override
+            raise AssessError(f"evaluation config ({where}): reviewer {name}: {reason}; commit the full id before "
+                              "the runs it judges")
     return config
 
 
@@ -527,10 +533,13 @@ def classify_run(host_record: dict, runner_state: dict, setup: dict | None, resu
         name = ("product" if host_record.get("failureClass") == "product"
                 else "environment" if status in ("start-failed", "wait-failed", "setup-failed") else "harness")
         causes.append({"class": name, "reason": _short(f"host status {status}: {host_record.get('error')}", 300)})
-    limits = (host_record.get("manifest") or {}).get("container") or {}
-    if host_record.get("containerExitCode") == outcome.KILLED and limits.get("memory"):
-        causes.append({"class": "environment", "reason": "the run container was killed (exit 137) under its "
-                                                         "memory limit"})
+    if host_record.get("containerExitCode") == outcome.KILLED:
+        if host_record.get("oomKilled") is True:
+            causes.append({"class": "environment", "reason": "the run container was killed (exit 137) and Docker "
+                                                             "reports it OOMKilled"})
+        else:
+            causes.append({"class": "harness", "reason": "the run container was killed (exit 137) and Docker does "
+                                                         "not report it OOMKilled"})
     if (results / "runner-error.txt").is_file():
         causes.append({"class": "harness", "reason": "runner error (results/runner-error.txt)"})
     if (setup or {}).get("status") == "blocked":
@@ -816,6 +825,7 @@ def _report(run_dir, out_dir, manifest, host_record, run_report, runner_state, s
                 "classification": run_report.get("classification")},
         "evaluation": {"source": evaluation.get("source"), "tree": evaluation.get("tree"),
                        "commit": evaluation.get("commit"), "dirty": evaluation.get("dirty"),
+                       "code": evaluation.get("code"),
                        "groundTruth": ctx["groundTruth"] is not None, "holdouts": ctx["holdout"] is not None,
                        "files": {key: ({"path": path.relative_to(evaluation_dir).as_posix(), "sha256": _sha256(path)}
                                        if path is not None and path.is_file() else None)
@@ -922,6 +932,7 @@ def render_report(report: dict, findings: dict) -> str:
     rules = report.get("rules") or {}
     clashes = rules.get("reviewerClashes") or []
     lines += [f"- Evaluation files: {_evaluation_source(evaluation)}; SHA-256: {'; '.join(file_notes)}.",
+              *_judging_code_line(evaluation.get("code")),
               f"- Rules: pre-registered {_fmt(rules.get('preRegistered'))}; exploratory {_fmt(rules.get('exploratory'))}; "
               f"reviewer models differ from the arms' models {_fmt(rules.get('reviewersIndependent'))}"
               + (f" ({registration.describe(clashes)})" if clashes else "")
@@ -1020,6 +1031,14 @@ def render_report(report: dict, findings: dict) -> str:
     return "\n".join(lines)
 
 
+def _judging_code_line(code: Any) -> list[str]:
+    if not isinstance(code, dict):  # an assessment from before the judging code was recorded
+        return []
+    state = {False: "", True: " with local changes (exploratory)"}.get(code.get("dirty"),
+                                                                       ", local changes unknown (exploratory)")
+    return [f"- Judging code (playground, public checks): commit {str(code.get('commit') or 'n/a')[:12]}{state}."]
+
+
 def _evaluation_source(evaluation: dict) -> str:
     commit = str(evaluation.get("commit") or "n/a")[:12]
     if evaluation.get("source") == "registered":
@@ -1097,6 +1116,12 @@ def evaluation_identity() -> dict:
     commit = git("rev-parse", "HEAD")
     status = git("status", "--porcelain", "--untracked-files=all", "--", ".")
     return {"commit": commit.strip() if commit else None, "dirty": None if status is None else bool(status.strip())}
+
+
+def judging_code(case: str) -> dict:
+    """The commit of the code that judges a run (playground/, the shared and the case's
+    public checks) and whether it has local changes (registration.code_state)."""
+    return registration.code_state(ROOT, ("playground", "cases/common/checks", f"cases/{case}/checks"))
 
 
 def evaluation_source(record: dict, exploratory: bool) -> tuple[dict, dict]:
@@ -1202,6 +1227,11 @@ def inside_command(names: list[str], evaluation: dict, image_id: str | None, *, 
         command += ["--evaluation-commit", evaluation["commit"]]
     if evaluation.get("dirty") is not None:
         command += ["--evaluation-dirty", "yes" if evaluation["dirty"] else "no"]
+    code = evaluation.get("code") or {}
+    if code.get("commit"):
+        command += ["--code-commit", code["commit"]]
+    if code.get("dirty") is not None:
+        command += ["--code-dirty", "yes" if code["dirty"] else "no"]
     if image_id:
         command += ["--image-id", image_id]
     return command
@@ -1263,6 +1293,14 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
     if missing:
         raise AssessError(f"evaluation/config.json has no reviewer {', '.join(missing)}")
     exploratory = exploratory or (record.get("rules") or {}).get("exploratory") is True
+    code = judging_code(manifest["case"])
+    evaluation["code"] = {"commit": code["commit"], "dirty": code["dirty"]}
+    if code["dirty"] is not False:  # judged by code that is not committed: not the registered judgment
+        exploratory = True
+        state = (f"has local changes ({', '.join(code['changed'][:5])})" if code["dirty"]
+                 else f"has no known commit ({code.get('error')})")
+        print(f"warning: the judging code {state}; the assessment is exploratory and compare refuses it",
+              file=sys.stderr)
     run_report = _read_json(run_dir / "results" / "report.json") or {}
     clashes = registration.clashes(config, names, registration.arm_models(manifest, run_report.get("roles")))
     if clashes and not (exploratory or fake):
@@ -1314,8 +1352,10 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
                               "image": {"ref": image, "id": image_id}, "dockerVersion": docker_version,
                               "reviewers": names, "fakeReviewers": fake, "evaluation": evaluation,
                               "rules": {"exploratory": exploratory, "reviewerClashes": clashes},
+                              "judgingCode": code,
                               "timeoutSeconds": timeout, "startedAt": _utc(), "endedAt": None,
-                              "containerExitCode": None, "exitCode": None, "dockerRun": argv, "error": None}
+                              "containerExitCode": None, "oomKilled": None, "exitCode": None, "dockerRun": argv,
+                              "error": None}
     try:
         host._capture(argv)
         code, error = host.wait_container(name, timeout)
@@ -1341,9 +1381,8 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
         if throwaway is not None:
             shutil.rmtree(throwaway, ignore_errors=True)
         result["endedAt"] = _utc()
-        result["exitCode"] = exit_code = outcome.assess(
-            result["status"], result["containerExitCode"],
-            memory_limited=bool((manifest.get("container") or {}).get("memory")))
+        result["exitCode"] = exit_code = outcome.assess(result["status"], result["containerExitCode"],
+                                                        oom_killed=result["oomKilled"])
         _write_json(out / "host.json", result)  # first, so an interrupted hand-back keeps the record
         result["handBack"] = host.hand_back(name, image_id, out)
         _write_json(out / "host.json", result)
@@ -1380,7 +1419,9 @@ def inside(args: argparse.Namespace) -> int:
                    executables=executables,
                    evaluation={"source": args.evaluation_source, "tree": args.evaluation_tree,
                                "commit": args.evaluation_commit,
-                               "dirty": None if args.evaluation_dirty is None else args.evaluation_dirty == "yes"},
+                               "dirty": None if args.evaluation_dirty is None else args.evaluation_dirty == "yes",
+                               "code": {"commit": args.code_commit,
+                                        "dirty": None if args.code_dirty is None else args.code_dirty == "yes"}},
                    image=args.image_id, exploratory=args.exploratory)
     except Exception:
         (out / "assess-error.txt").write_text(traceback.format_exc(), encoding="utf-8")
@@ -1414,6 +1455,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--evaluation-tree", help=argparse.SUPPRESS)
     parser.add_argument("--evaluation-commit", help=argparse.SUPPRESS)
     parser.add_argument("--evaluation-dirty", choices=("yes", "no"), help=argparse.SUPPRESS)
+    parser.add_argument("--code-commit", help=argparse.SUPPRESS)
+    parser.add_argument("--code-dirty", choices=("yes", "no"), help=argparse.SUPPRESS)
     parser.add_argument("--image-id", help=argparse.SUPPRESS)
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     if args.inside:
