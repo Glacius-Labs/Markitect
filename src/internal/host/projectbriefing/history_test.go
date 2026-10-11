@@ -856,6 +856,40 @@ func TestResolutionOfMergedTopicModelChangeCarriesToMain(t *testing.T) {
 	}
 }
 
+func TestSquashedTopicResolutionRanksWhereItsResultEnteredTheLine(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	state, _, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := state.Briefings[0].Events[0]
+	const topicPath = "src/shop/inventory/reservations.py"
+	gitTest(t, root, "checkout", "-b", "topic")
+	topicBase := commitReadmeTest(t, root, "Topic work.\n", "topic work")
+	if _, err := EnsureAcceptedHistory(root, topicBase); err != nil {
+		t.Fatal(err)
+	}
+	resolveDeliveredTest(t, root, topicBase, event.ID, "run-topic", topicPath, "# Topic delivery.\n")
+	gitTest(t, root, "add", topicPath)
+	gitCommitTest(t, root, "commit the topic delivery")
+	gitTest(t, root, "checkout", mainBranch)
+	resolveDeliveredTest(t, root, changed, event.ID, "run-main", deliveredPathTest, "# Main delivery.\n")
+	gitTest(t, root, "add", deliveredPathTest)
+	gitCommitTest(t, root, "commit the main delivery")
+	if status := resolutionStatusTest(t, root, event.ID); status.Status != "resolved" || status.Resolution.Evidence.RunID != "run-main" {
+		t.Fatalf("precondition: main delivery status = %#v", status)
+	}
+	// The squash brings the topic's delivery onto the line after main's.
+	mergeTopicTest(t, root, "squash")
+	if status := resolutionStatusTest(t, root, event.ID); status.Status != "resolved" || status.Resolution.Evidence.RunID != "run-topic" {
+		t.Fatalf("squashed topic delivery did not rank where it entered the line: %#v", status)
+	}
+}
+
 func TestEarlierStoreFormatIsRefusedWithRebuildInstruction(t *testing.T) {
 	root, _, changed := committedModelFixture(t)
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {

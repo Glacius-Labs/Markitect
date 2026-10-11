@@ -922,6 +922,37 @@ func (l *line) position(revision string) int {
 	return low
 }
 
+// rank orders a resolution along the line for latest-wins: where its commit
+// lies on the line or was merged in, else, for a delivery that reached the
+// line through a squash or rebase, where its delivered result entered it.
+func (l *line) rank(resolution Resolution) int {
+	if i := l.position(resolution.ModelRevision); i >= 0 {
+		return i
+	}
+	return l.entered(resolution.Evidence.Delivered)
+}
+
+// entered returns the line position of the newest first-parent commit that
+// wrote one of the delivered blobs at its path or removed one of the removed
+// paths, or -1 when none did or the history cannot be read.
+func (l *line) entered(files []DeliveredFile) int {
+	at := -1
+	for _, file := range files {
+		filter := "--find-object=" + file.Object
+		if file.Deleted {
+			filter = "--diff-filter=D"
+		}
+		output, err := source.GitOutput(l.root, "--literal-pathspecs", "log", "--first-parent", "-1", "--format=%H", filter, l.head, "--", file.Path)
+		if err != nil {
+			return -1
+		}
+		if i := l.index(strings.TrimSpace(string(output))); i > at {
+			at = i
+		}
+	}
+	return at
+}
+
 // readTree loads HEAD's committed entries for paths into the cache, in
 // batches so the command line stays short. A path HEAD lacks is read with no
 // entry. When the read fails, its paths stay unread, and a delivery that
@@ -1084,8 +1115,7 @@ func (l *line) acceptedHistory(state Store) Store {
 
 // accepted returns acceptedHistory with the dismissals and resolutions of its
 // events that are accepted on the line, keeping only the latest resolution of
-// each event: the one recorded at the latest commit along the line, and of
-// equals the one recorded last.
+// each event by rank, and of equals the one recorded last.
 func (l *line) accepted(state Store) Store {
 	view := l.acceptedHistory(state)
 	events := map[string]bool{}
@@ -1117,7 +1147,7 @@ func (l *line) accepted(state Store) Store {
 		if !seen {
 			latest[resolution.EventID] = len(view.Resolutions)
 			view.Resolutions = append(view.Resolutions, resolution)
-		} else if l.position(resolution.ModelRevision) >= l.position(view.Resolutions[i].ModelRevision) {
+		} else if l.rank(resolution) >= l.rank(view.Resolutions[i]) {
 			view.Resolutions[i] = resolution
 		}
 	}
