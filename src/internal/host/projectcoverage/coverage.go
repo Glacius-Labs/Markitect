@@ -49,10 +49,15 @@ func Classify(request Request) (Report, error) {
 	for _, state := range pathStates {
 		entry, matched := classifyPath(state, request, ignore)
 		if !matched {
-			report.Accounted = false
-			report.Conforming = false
-			report.Findings = append(report.Findings, Finding{Code: "coverage.unclassified", Path: state.Path,
-				Message: "Repository path has no canonical model, Artifact realization, registered tool owner, ignore reason, or transitional exclusion.", Severity: "error"})
+			// Only a current file needs a class. A working-tree deletion or
+			// rename leaves the old path in HEAD or the index; those layers
+			// describe the commit and the staging area, not the checked tree.
+			if stableCurrentPresent(state, request.Universe.FixedRevision) {
+				report.Accounted = false
+				report.Conforming = false
+				report.Findings = append(report.Findings, Finding{Code: "coverage.unclassified", Path: state.Path,
+					Message: "Repository path has no canonical model, Artifact realization, registered tool owner, ignore reason, or transitional exclusion.", Severity: "error"})
+			}
 			entry = Entry{Path: state.Path, Artifacts: []string{}, Statements: []string{}, Head: state.Head, Index: state.Index,
 				Worktree: state.Worktree, OpaqueBoundary: state.OpaqueBoundary}
 		}
