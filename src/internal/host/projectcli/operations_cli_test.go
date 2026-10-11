@@ -37,8 +37,8 @@ func TestPlanOperationAndSingleManagerContracts(t *testing.T) {
 		{"brief dismiss requires write", []string{"brief", "dismiss", "--event", "e", "--manager", "a", "--expect", "d"}, "--expect is valid only together with --write or --execute"},
 		{"brief dismiss requires event", []string{"brief", "dismiss", "--manager", "a", "--expect", "d", "--write"}, "brief dismiss requires --event, --manager, --expect and --write"},
 		{"brief write requires state digest", []string{"brief", "--since", strings.Repeat("a", 40), "--revision", strings.Repeat("b", 40), "--provenance", "ADR-1", "--write"}, "requires --expect"},
-		{"brief requires its range", []string{"brief", "--since", strings.Repeat("a", 40)}, "brief requires --since, --revision and --provenance"},
-		{"brief list takes only manager", []string{"brief", "list", "--since", strings.Repeat("a", 40)}, "brief list takes only --manager"},
+		{"brief requires its range", []string{"brief", "--provenance", "ADR-1"}, "brief requires --since, --revision and --provenance"},
+		{"brief list takes only manager", []string{"brief", "list", "--provenance", "ADR-1"}, "brief list takes only --manager"},
 		{"brief unknown action", []string{"brief", "remove"}, `unknown action "remove"`},
 	}
 	for _, test := range tests {

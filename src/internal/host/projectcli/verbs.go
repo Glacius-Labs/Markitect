@@ -154,20 +154,21 @@ var fullCommitID = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
 func resolveRevisions(root string, in reflect.Value) error {
 	for _, field := range []string{"Revision", "Since"} {
 		f := in.FieldByName(field)
-		// A full commit ID passes unchanged; the Host validates it as before.
-		if !f.IsValid() || f.Kind() != reflect.String || f.String() == "" || fullCommitID.MatchString(f.String()) {
+		if !f.IsValid() || f.Kind() != reflect.String || f.String() == "" {
 			continue
 		}
 		name := "--revision"
 		if field == "Since" {
 			name = "--since"
 		}
+		// Git peels tags to their commit, whatever the case of the ID.
 		out, err := source.GitOutput(root, "rev-parse", "--verify", "--quiet", "--end-of-options", f.String()+"^{commit}")
 		full := strings.ToLower(strings.TrimSpace(string(out)))
-		if err != nil || (len(full) != 40 && len(full) != 64) {
-			return usagef("%s %q does not name a commit in this repository", name, f.String())
+		if err == nil && fullCommitID.MatchString(full) {
+			f.SetString(full)
+			continue
 		}
-		f.SetString(full)
+		return usagef("%s %q does not name a commit in this repository", name, f.String())
 	}
 	return nil
 }
@@ -301,6 +302,10 @@ func publicError(err error) *mcp.Diagnostic {
 	var usage usageError
 	if errors.As(err, &usage) {
 		return &mcp.Diagnostic{Code: "invalid_arguments", Message: truncate(usage.Error(), 512), Recovery: "Correct the arguments as the message states; tools/list shows each tool's fields."}
+	}
+	var name projectapp.ManagerNameError
+	if errors.As(err, &name) {
+		return &mcp.Diagnostic{Code: "invalid_arguments", Message: truncate(name.Error(), 512), Recovery: "Use the Manager's full ID or a short name that is unique; `model` lists both."}
 	}
 	var outcome outcomeError
 	if errors.As(err, &outcome) {

@@ -14,7 +14,7 @@ A Markitect project keeps its control plane in `.markitect/` and its application
   workflows/model-first.md     shared workflow installed by onboarding
   state/                       explorations, decisions and briefings
   runs/                        plans, candidates, receipts and verification
-  .gitignore                   keeps cache/, runs/ and views/ out of Git
+  .gitignore                   keeps cache/, runs/, state/ and views/ out of Git
 .agents/skills/                optional Codex skills installed by onboarding
 .claude/skills/                optional Claude Code skills installed by onboarding
 AGENTS.md / CLAUDE.md          repository instructions with managed blocks
