@@ -836,8 +836,7 @@ type line struct {
 	revisions []string
 	positions map[string]int
 	reachable map[string]bool
-	// tree caches HEAD's committed entries by path; a missing path maps to
-	// the zero entry.
+	// tree caches HEAD's committed entries by path.
 	tree map[string]treeEntry
 	// checkedOut is the checked-out branch ref, empty when detached; known
 	// tells whether it was read.
@@ -845,7 +844,12 @@ type line struct {
 	known      bool
 }
 
-type treeEntry struct{ mode, object string }
+// treeEntry is HEAD's entry at a path: read tells whether HEAD's tree could
+// be read for it, and an empty object means HEAD has no entry there.
+type treeEntry struct {
+	read         bool
+	mode, object string
+}
 
 func activeLine(root string) (*line, error) {
 	head, err := source.GitOutput(root, "rev-parse", "--verify", "HEAD^{commit}")
@@ -917,8 +921,9 @@ func (l *line) branch() string {
 }
 
 // readTree loads HEAD's committed entries for paths into the cache, in
-// batches so the command line stays short. Paths HEAD lacks, or that cannot be
-// read, stay absent, which keeps a resolution provisional.
+// batches so the command line stays short. A path HEAD lacks is read with no
+// entry. When the read fails, its paths stay unread, and a delivery that
+// depends on them is not verified.
 func (l *line) readTree(paths []string) {
 	pending := make([]string, 0, len(paths))
 	for _, entry := range paths {
@@ -937,38 +942,52 @@ func (l *line) readTree(paths []string) {
 		if err != nil {
 			continue
 		}
+		for _, entry := range batch {
+			l.tree[entry] = treeEntry{read: true}
+		}
 		for _, record := range bytes.Split(output, []byte{0}) {
 			tab := bytes.IndexByte(record, '\t')
 			if tab < 0 {
 				continue
 			}
-			fields := strings.Fields(string(record[:tab]))
-			if len(fields) == 3 && fields[1] == "blob" {
-				l.tree[string(record[tab+1:])] = treeEntry{mode: fields[0], object: fields[2]}
+			if fields := strings.Fields(string(record[:tab])); len(fields) == 3 {
+				l.tree[string(record[tab+1:])] = treeEntry{read: true, mode: fields[0], object: fields[2]}
 			}
 		}
 	}
 }
 
-// present reports whether HEAD's committed tree holds a delivered result: each
+// inHead reports whether HEAD's committed tree holds a delivered result: each
 // written path with its blob and mode, and no entry at each removed path.
-func (l *line) present(files []DeliveredFile) bool {
+// known is false when HEAD's tree could not be read for one of the paths.
+func (l *line) inHead(files []DeliveredFile) (present, known bool) {
 	paths := make([]string, 0, len(files))
 	for _, file := range files {
 		paths = append(paths, file.Path)
 	}
 	l.readTree(paths)
+	present = true
 	for _, file := range files {
 		entry := l.tree[file.Path]
+		if !entry.read {
+			return false, false
+		}
 		if file.Deleted {
 			if entry.object != "" {
-				return false
+				present = false
 			}
 		} else if entry.mode != file.Mode || entry.object != file.Object {
-			return false
+			present = false
 		}
 	}
-	return true
+	return present, true
+}
+
+// present reports whether HEAD's committed tree verifiably holds a delivered
+// result; an unreadable tree never verifies one.
+func (l *line) present(files []DeliveredFile) bool {
+	present, known := l.inHead(files)
+	return present && known
 }
 
 // uncommitted returns, per accepted event in view without an accepted
@@ -988,7 +1007,10 @@ func (l *line) uncommitted(state, view Store) map[string]Resolution {
 	result := map[string]Resolution{}
 	for _, resolution := range state.Resolutions {
 		id := resolution.EventID
-		if !events[id] || resolved[id] || l.present(resolution.Evidence.Delivered) || !l.inWorkingTree(resolution.Evidence.Delivered) {
+		if !events[id] || resolved[id] {
+			continue
+		}
+		if committed, known := l.inHead(resolution.Evidence.Delivered); !known || committed || !l.inWorkingTree(resolution.Evidence.Delivered) {
 			continue
 		}
 		if prior, ok := result[id]; ok && l.position(resolution.ModelRevision) < l.position(prior.ModelRevision) {

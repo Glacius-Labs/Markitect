@@ -855,6 +855,49 @@ func TestResolutionOfMergedTopicModelChangeCarriesToMain(t *testing.T) {
 	}
 }
 
+func TestUnreadableHeadTreeNeverResolvesDelivery(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	state, digest, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := state.Briefings[0].Events[0]
+	const removedPath = "src/shop/inventory/reservations.py"
+	removed, err := NewDeliveredFile(root, removedPath, "", nil, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	project, err := projectwork.Load(root, changed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	evidence := validResolutionEvidence(event.ID, project.Report.Managers)
+	evidence.Delivered = []DeliveredFile{removed}
+	if _, err := ResolveVerified(root, changed, project.Model.Digest, evidence, digest); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "rm", "-q", "--", removedPath)
+	gitCommitTest(t, root, "commit the removal")
+	if status := resolutionStatusTest(t, root, event.ID); status.Status != "resolved" {
+		t.Fatalf("precondition: committed removal status = %#v", status)
+	}
+	// Drop HEAD's root tree object so that reading HEAD's tree fails.
+	tree := gitOutputTest(t, root, "rev-parse", "HEAD^{tree}")
+	object := filepath.Join(root, ".git", "objects", tree[:2], tree[2:])
+	if err := os.Chmod(object, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(object); err != nil {
+		t.Fatal(err)
+	}
+	if status := resolutionStatusTest(t, root, event.ID); status.Status != "unresolved" {
+		t.Fatalf("delivery counted although HEAD's tree could not be read: %#v", status)
+	}
+}
+
 func TestUncommittedDeliveryIsReportedButNotResolved(t *testing.T) {
 	root, _, changed := committedModelFixture(t)
 	mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
