@@ -15,7 +15,9 @@ Optional per-station behavior for tests: `$CODEX_HOME/fake-plan.json`, e.g.
 `*.md text eol=crlf`), fail-after-work (exit 1 with turn.failed after merging),
 no-thread (resume without a thread.started event), timeout (hang after merging).
 turn.started carries `fakeResultsVisible`: whether the agent can open /out (None
-outside the container).
+outside the container), and `fakeLoginGeneration`: like a token refresh, a throwaway
+Codex login `{"generation": N, ...}` in its Codex home is rewritten with N + 1 on every
+call, and the event names the N it found (None without such a login).
 """
 from __future__ import annotations
 
@@ -97,6 +99,20 @@ def add_usage(home: Path | None, thread: str, usage: dict) -> dict:
     return total
 
 
+def refresh_login(home: Path | None) -> int | None:
+    """Bump the generation of a throwaway login (a smoke test of the study's login hand-over)."""
+    path = home / "auth.json" if home else None
+    try:
+        login = json.loads(path.read_text(encoding="utf-8")) if path and path.is_file() else None
+    except (OSError, ValueError):
+        return None
+    if not isinstance(login, dict) or type(login.get("generation")) is not int:
+        return None
+    seen = login["generation"]
+    path.write_text(json.dumps({**login, "generation": seen + 1}), encoding="utf-8")
+    return seen
+
+
 def git(events: Events, *args: str) -> None:
     done = subprocess.run([*GIT, *args], capture_output=True, text=True, encoding="utf-8")
     events.item({"type": "command_execution", "command": "git " + " ".join(args),
@@ -130,7 +146,7 @@ def main(argv: list[str]) -> int:
         events.emit({"type": "thread.started", "thread_id": session})
     # Inside the container the agent must not reach the results under /out.
     visible = os.access("/out", os.R_OK | os.X_OK) if os.path.isdir("/out") else None
-    events.emit({"type": "turn.started", "fakeResultsVisible": visible})
+    events.emit({"type": "turn.started", "fakeResultsVisible": visible, "fakeLoginGeneration": refresh_login(home)})
     try:
         number = station.removeprefix("S")
         branch, name = f"fake/s{number}", f"FAKE_S{number}.md"

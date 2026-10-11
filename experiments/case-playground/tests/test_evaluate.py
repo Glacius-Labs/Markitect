@@ -185,7 +185,7 @@ class AssessRunTests(unittest.TestCase):
         cls.env.start()
         cls.run_dir = make_run(cls.root)
         cls.evaluation = make_evaluation(cls.root)
-        (cls.root / "auth.json").write_text('{"fake": "login"}', encoding="utf-8")
+        (cls.root / "auth.json").write_text('{"fake": "login", "generation": 0}', encoding="utf-8")
         (cls.root / "token").write_text(TOKEN + "\n", encoding="utf-8")
         cls.out = cls.run_dir / "assessment"
         with quiet():
@@ -193,7 +193,7 @@ class AssessRunTests(unittest.TestCase):
                 cls.run_dir, cls.evaluation, cls.out, reviewer_names=["codex", "claude"],
                 codex_auth=cls.root / "auth.json", claude_token_file=cls.root / "token",
                 executables={"codex": FAKE, "claude": FAKE}, evaluation={"commit": "abc123", "dirty": False},
-                image="sha256:img")
+                image="sha256:img", login_copy=cls.root / "login" / "codex-auth.json")
 
     @classmethod
     def tearDownClass(cls):
@@ -284,6 +284,16 @@ class AssessRunTests(unittest.TestCase):
         totals = self.report["totals"]["reviewers"]["claude"]
         self.assertEqual((totals["wavesReviewed"], totals["findings"], totals["obligations"]),
                          (2, 4, {"covered": 2, "total": 4}))
+
+    def test_a_refreshed_reviewer_login_is_carried_from_wave_to_wave(self):
+        # the fake Codex reviewer bumps the generation once per wave, starting from the working copy
+        working = self.root / "login" / "codex-auth.json"
+        self.assertEqual(json.loads(working.read_text(encoding="utf-8"))["generation"], 2)
+        self.assertEqual(json.loads((self.root / "auth.json").read_text(encoding="utf-8"))["generation"], 0)
+        self.assertTrue(self.report["totals"]["reviewers"]["codex"]["loginRefreshed"])
+        if os.name == "posix":
+            self.assertEqual(working.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(working.parent.stat().st_mode & 0o777, 0o700)
 
     def test_token_never_lands_in_any_output(self):
         for path in self.out.rglob("*"):

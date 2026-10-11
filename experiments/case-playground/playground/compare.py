@@ -6,8 +6,9 @@ Reads `<run>/assessment/report.json` of both runs. First it checks that the runs
 comparable: the run's fairness fields (case, stations, host platform, image, Codex
 version, model, effort, subagent limit, limits, container, as the run report lists
 them), the outer provider, the evaluation files (by SHA-256) and the reviewer models.
-Mismatched runs are refused unless `--allow-mismatch` is given; the mismatches are then
-printed at the top. The comparison goes to `--out` (default: `compare-<A>-vs-<B>.md`
+A host platform that a run does not record is unknown and never matches, not even
+another unknown one. Mismatched runs are refused unless `--allow-mismatch` is given; the
+mismatches are then printed at the top. The comparison goes to `--out` (default: `compare-<A>-vs-<B>.md`
 next to RUN_A).
 """
 from __future__ import annotations
@@ -19,6 +20,14 @@ from pathlib import Path
 from typing import Any
 
 from .reviewers import CATEGORIES, PROVIDERS
+
+
+# Fields that never match while unknown: an older run that did not record its host
+# platform cannot be paired, not even with another such run (DEC-013).
+KNOWN_REQUIRED = ("fairness.hostPlatform",)
+UNKNOWN = "unknown (not recorded)"
+UNKNOWN_HINT = ("A run that does not record its host platform is never paired: runs from different host platforms "
+                "are never pooled (DEC-013).")
 
 
 class CompareError(RuntimeError):
@@ -42,6 +51,8 @@ def fairness_fields(report: dict) -> dict[str, Any]:
     fields: dict[str, Any] = {"case": run.get("case"), "outerProvider": run.get("outerProvider")}
     for key, value in sorted((run.get("fairness") or {}).items()):
         fields[f"fairness.{key}"] = value
+    for key in KNOWN_REQUIRED:
+        fields.setdefault(key, None)
     for key, value in sorted(((report.get("evaluation") or {}).get("files") or {}).items()):
         fields[f"evaluation.{key}"] = (value or {}).get("sha256")
     for name, cfg in sorted((report.get("reviewers") or {}).items()):
@@ -53,7 +64,12 @@ def fairness_fields(report: dict) -> dict[str, Any]:
 def mismatches(a: dict, b: dict) -> list[tuple[str, Any, Any]]:
     first, second = fairness_fields(a), fairness_fields(b)
     return [(key, first.get(key), second.get(key)) for key in sorted(set(first) | set(second))
-            if first.get(key) != second.get(key)]
+            if first.get(key) != second.get(key)
+            or (key in KNOWN_REQUIRED and (first.get(key) is None or second.get(key) is None))]
+
+
+def _show(key: str, value: Any) -> str:
+    return UNKNOWN if value is None and key in KNOWN_REQUIRED else _fmt(value)
 
 
 # --- Markdown --------------------------------------------------------------------------
@@ -118,7 +134,9 @@ def render(a: dict, b: dict, problems: list[tuple[str, Any, Any]]) -> str:
     if problems:
         lines += ["**Fairness mismatch, compared anyway (--allow-mismatch).** These fields differ, so "
                   "differences below may come from them and not from the method:", ""]
-        lines += [f"- `{key}`: {_fmt(value_a)} vs {_fmt(value_b)}" for key, value_a, value_b in problems]
+        lines += [f"- `{key}`: {_show(key, value_a)} vs {_show(key, value_b)}" for key, value_a, value_b in problems]
+        if any(key in KNOWN_REQUIRED and None in (value_a, value_b) for key, value_a, value_b in problems):
+            lines += ["", UNKNOWN_HINT]
         lines.append("")
     else:
         lines += ["Fairness fields match (case, stations, host platform, image, versions, model, effort, "
@@ -204,7 +222,9 @@ def main(argv: list[str] | None = None) -> int:
         print("error: the runs are not comparable; these fairness fields differ "
               "(use --allow-mismatch to compare anyway):", file=sys.stderr)
         for key, value_a, value_b in problems:
-            print(f"  {key}: {_fmt(value_a)} vs {_fmt(value_b)}", file=sys.stderr)
+            print(f"  {key}: {_show(key, value_a)} vs {_show(key, value_b)}", file=sys.stderr)
+        if any(key in KNOWN_REQUIRED and None in (value_a, value_b) for key, value_a, value_b in problems):
+            print(f"  {UNKNOWN_HINT}", file=sys.stderr)
         return 2
     out = Path(args.out) if args.out else (
         Path(args.run_a).resolve().parent / f"compare-{a['run'].get('id')}-vs-{b['run'].get('id')}.md")
