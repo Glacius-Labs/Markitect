@@ -404,6 +404,138 @@ func TestWriteRejectsTamperedPreviewBundle(t *testing.T) {
 	}
 }
 
+func TestLoadForManagerHidesPrivateChildStatementFromAncestor(t *testing.T) {
+	root := t.TempDir()
+	copyProjectWorldTest(t, root)
+	privatePath := filepath.Join(root, ".markitect", "model", "commerce", "sales", "orders", "private-internal-guard.yaml")
+	projectConfigPath := filepath.Join(root, ".markitect", "project.yaml")
+	projectConfig, err := os.ReadFile(projectConfigPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projectConfigText := strings.Replace(string(projectConfig),
+		"  - .markitect/model/commerce/sales/orders/order.yaml\n",
+		"  - .markitect/model/commerce/sales/orders/order.yaml\n  - .markitect/model/commerce/sales/orders/private-internal-guard.yaml\n", 1)
+	if projectConfigText == string(projectConfig) {
+		t.Fatal("could not add the private Statement to the model inputs")
+	}
+	if err := os.WriteFile(projectConfigPath, []byte(projectConfigText), 0644); err != nil {
+		t.Fatal(err)
+	}
+	privateModel := `apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: private-internal-guard
+  namespace: commerce.sales.orders
+purpose: Internal order handling detail.
+spec:
+  category: rule
+  description: Internal guard before change.
+  public: false
+  uses: []
+  requires: []
+`
+	if err := os.WriteFile(privatePath, []byte(privateModel), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "init", "--initial-branch=private-briefing")
+	gitTest(t, root, "add", ".")
+	gitCommitTest(t, root, "private child Statement baseline")
+
+	privateUpdated := strings.Replace(privateModel, "Internal guard before change.", "Internal guard after change.", 1)
+	if err := os.WriteFile(privatePath, []byte(privateUpdated), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "add", ".markitect/model/commerce/sales/orders/private-internal-guard.yaml")
+	gitCommitTest(t, root, "change private child Statement")
+	publicPath := filepath.Join(root, ".markitect", "model", "commerce", "sales", "integration.yaml")
+	publicBytes, err := os.ReadFile(publicPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	publicDescription := "The Shop package exposes one cross-slice cancellation operation that changes order state and releases the matching active inventory reservation atomically."
+	publicUpdated := "The Shop exposes one cross-slice cancellation operation that atomically changes order state and releases its active inventory reservation."
+	publicModel := strings.Replace(string(publicBytes), publicDescription, publicUpdated, 1)
+	if publicModel == string(publicBytes) {
+		t.Fatal("could not update the public ancestor contract")
+	}
+	if err := os.WriteFile(publicPath, []byte(publicModel), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "add", ".markitect/model/commerce/sales/integration.yaml")
+	gitCommitTest(t, root, "change public ancestor contract")
+	revision := gitOutputTest(t, root, "rev-parse", "HEAD")
+	project, err := projectwork.Load(root, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	privateStatement := projectmodel.Statement{}
+	for _, statement := range project.Report.Statements {
+		if statement.Name == "private-internal-guard" {
+			privateStatement = statement
+		}
+	}
+	if privateStatement.ID == "" || privateStatement.Public {
+		t.Fatalf("fixture's child Statement is not private: %+v", privateStatement)
+	}
+	parentByManager := make(map[string]string, len(project.Report.Managers))
+	for _, manager := range project.Report.Managers {
+		parentByManager[manager.ID] = manager.Parent
+	}
+	ancestorID := parentByManager[privateStatement.Owner]
+	if ancestorID == "" {
+		t.Fatalf("child Statement owner %s has no ancestor", privateStatement.Owner)
+	}
+	if _, err := EnsureAcceptedHistory(root, revision); err != nil {
+		t.Fatal(err)
+	}
+	state, _, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rootBriefings, rootEvents, _, err := LoadForManagerFrom(root, state, project.Model.Digest, ancestorID, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	briefedEventCount := 0
+	for _, briefing := range rootBriefings {
+		briefedEventCount += len(briefing.EventIDs)
+	}
+	if len(rootBriefings) != 2 || briefedEventCount != 2 {
+		t.Fatalf("ancestor briefing lost authoritative event count: briefings=%+v", rootBriefings)
+	}
+	for _, event := range rootEvents {
+		if event.DefinitionID.Key() == privateStatement.ID {
+			t.Fatalf("ancestor received private child Statement event: %+v", event)
+		}
+	}
+	if len(rootEvents) != 1 || rootEvents[0].DefinitionID.Name != "cancellation-integration" {
+		t.Fatalf("ancestor should retain its public contract event: %+v", rootEvents)
+	}
+
+	_, childEvents, _, err := LoadForManagerFrom(root, state, project.Model.Digest, privateStatement.Owner, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(childEvents) != 1 {
+		t.Fatalf("owning Manager lost its private Statement or public contract events: %+v", childEvents)
+	}
+	storedPrivateEvent := false
+	for _, bundle := range state.Briefings {
+		if FullBundleDigest(bundle) != bundle.Digest {
+			t.Fatalf("manager projection changed the stored bundle digest for %s", bundle.Revision)
+		}
+		for _, event := range bundle.Events {
+			if event.DefinitionID.Key() == privateStatement.ID {
+				storedPrivateEvent = event.Before != nil && event.After != nil
+			}
+		}
+	}
+	if !storedPrivateEvent {
+		t.Fatal("manager projection mutated or removed the canonical private event from stored history")
+	}
+}
+
 func TestReadMissingStoreDoesNotCreateOperationalDirectories(t *testing.T) {
 	root := t.TempDir()
 	if _, _, err := Read(root); err != nil {
