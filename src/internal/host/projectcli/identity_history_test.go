@@ -119,17 +119,20 @@ func TestGlobalAndNamedCanonicalEditSupportsBriefingsAndReadiness(t *testing.T) 
 			if len(list.Notifications) != 1 || list.Notifications[0].DefinitionID.Namespace != namespace || list.Notifications[0].ResolutionStatus != "unresolved" {
 				t.Fatalf("legal namespace briefing lost or falsely resolved: %+v", list)
 			}
-			state, digest, err := projectbriefing.Read(root)
-			if err != nil || state.History == nil || state.History.Revision != revision || len(state.Briefings) != 1 {
-				t.Fatalf("CLI history state=%+v err=%v", state, err)
+			accepted, err := projectbriefing.ReadAcceptedHistory(root, revision)
+			if err != nil || accepted.State.History == nil || accepted.State.History.Revision != revision || len(accepted.State.Briefings) != 1 {
+				t.Fatalf("CLI accepted history view=%+v err=%v", accepted.State, err)
+			}
+			if _, err := projectbriefing.EnsureAcceptedHistory(root, revision); err != nil {
+				t.Fatalf("materialize accepted history for status overview: %v", err)
 			}
 			summary := decodeOutput[overview](t, cli("status"))
 			if len(summary.Briefings) == 0 {
 				t.Fatalf("status overview has no pending briefings: %+v", summary)
 			}
 			resumed := decodeOutput[projectapp.ReadinessResult](t, cli(readyArgs...))
-			_, afterDigest, err := projectbriefing.Read(root)
-			if err != nil || afterDigest != digest || resumed.Readiness.Digest != ready.Readiness.Digest {
+			afterAccepted, err := projectbriefing.ReadAcceptedHistory(root, revision)
+			if err != nil || afterAccepted.Receipt.StoreDigest != accepted.Receipt.StoreDigest || resumed.Readiness.Digest != ready.Readiness.Digest {
 				t.Fatalf("readiness resume changed the immutable history/binding: err=%v", err)
 			}
 		})
