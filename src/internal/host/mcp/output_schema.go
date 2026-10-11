@@ -15,14 +15,11 @@ func outputSchema(t reflect.Type) map[string]any {
 	b := &defsBuilder{defs: map[string]map[string]any{}, names: map[reflect.Type]string{}, building: map[reflect.Type]bool{}}
 	root := b.structSchema(t)
 	b.inlineSingleUses(root)
-	// The server produces results, so their schemas describe types only:
-	// required lists and closed objects guard inputs, not outputs.
+	// The server produces results, so their objects need not be closed; the
+	// required lists stay, because they tell a client which fields are always
+	// present.
 	open := func(node any) {
 		walkSchema(node, func(m map[string]any) {
-			// A field named "required" is a schema map, not a []string list.
-			if _, ok := m["required"].([]string); ok {
-				delete(m, "required")
-			}
 			if closed, ok := m["additionalProperties"].(bool); ok && !closed {
 				delete(m, "additionalProperties")
 			}

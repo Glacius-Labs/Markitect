@@ -520,16 +520,17 @@ func TestOutputSchemasShareRepeatedTypesAndStayTyped(t *testing.T) {
 		t.Fatalf("repeated type not referenced three times or single-use type not inline: %s", encoded)
 	}
 	walkSchema(s, func(m map[string]any) {
-		if _, ok := m["required"].([]string); ok {
-			t.Errorf("output schema keeps a required list: %v", m)
-		}
 		if closed, ok := m["additionalProperties"].(bool); ok && !closed {
 			t.Errorf("output schema keeps a closed object: %v", m)
 		}
 	})
+	// The result contract keeps which fields are always present.
+	if !reflect.DeepEqual(toStrings(s["required"]), []string{"first", "many", "single"}) {
+		t.Fatalf("result required list = %v", s["required"])
+	}
 	for _, def := range defs {
-		if _, ok := def.(map[string]any)["properties"].(map[string]any)["required"]; !ok {
-			t.Fatal("a field named required was dropped with the required lists")
+		if !reflect.DeepEqual(toStrings(def.(map[string]any)["required"]), []string{"name", "required"}) {
+			t.Fatalf("shared definition lost its required list: %v", def)
 		}
 	}
 	value := result{First: leaf{Name: "a"}, Second: &leaf{Name: "b", Required: true}, Many: []leaf{{Name: "c"}}, Single: once{Count: 2}}

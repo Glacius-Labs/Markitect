@@ -164,7 +164,7 @@ The plan record keeps its `executeAuthorized` field for CLI-02. It then means "p
   - `adopt` with its read stages and the preview of every write stage, including `adopt run`, without the `write`, `expect` and `execute` fields; `adopt apply` has no preview of its own (`adopt plan` is its preview), so it is left out.
 
   It does not register `run`, `resume`, `repair`, `verify` or `deliver`. The server's `initialize` instructions state that it is read-only. A read-only server cannot write or start anything, whatever the client sends.
-- **Schema size (MCP-01).** Input schemas stay inline and closed. Result schemas write each repeated type once under `$defs` and leave out required lists and closed objects; every result stays typed. The table's argument names did not change for this.
+- **Schema size (MCP-01).** Input schemas stay inline and closed. Result schemas write each repeated type once under `$defs` and are not closed objects; they keep their required lists, and every result stays typed. The table's argument names did not change for this.
 
 ## Status
 
