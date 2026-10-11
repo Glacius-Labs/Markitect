@@ -102,7 +102,7 @@ Full source gates use `-count=1` to require fresh test execution rather than rep
 
 Pull requests and main commits run the hosted quality job on Linux; that job is the required gate. It has a 30-minute limit and gives the suite a 20-minute test-binary limit, so a hung test still ends with Go's timeout report. Windows runs the same job nightly, on manual dispatch and in releases, with a 90-minute job limit and a 60-minute test-binary limit, and does not block merges ([DEC-013](docs/concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)). The job also executes the package, adapter, schema and example gates and the fixed-revision dogfood Verify.
 
-A parallel race-detector job runs the suite with `go test -race` on Linux; it is part of the pull-request gate and takes about as long as the slowest package under `-race`. Run `go test -race ./...` yourself (Linux or macOS with cgo) when you change concurrent code.
+A parallel race-detector job runs the suite with `go test -race` on Linux; it is part of the pull-request gate and takes about 16 minutes, against about 4 for the quality job. `projectrun` alone needs about 13 of them under `-race` until TEST-03 splits the runtime end-to-end tests. Run `go test -race ./...` yourself (Linux or macOS with cgo) when you change concurrent code.
 
 Go sources must be gofmt-clean: CI fails when `gofmt -l` lists any tracked Go file, so run `gofmt -w` on the files you change.
 
