@@ -394,7 +394,7 @@ class RunTests(HostTestBase):
         dockerfile = host.ROOT / "container" / "Dockerfile"
         base = host.image_pins()["base"]
         dockerfile.write_text(dockerfile.read_text(encoding="utf-8").replace(base, "node:22-bookworm-slim"),
-                              encoding="utf-8")
+                              encoding="utf-8", newline="\n")
         docker, err = FakeDocker(), io.StringIO()
         argv = ["run", "--manifest", str(self.manifest_path), "--out", str(self.out)]
         with mock.patch.object(host.subprocess, "run", docker.run), contextlib.redirect_stderr(err):

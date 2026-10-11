@@ -490,7 +490,7 @@ class StudyRunBase(unittest.TestCase):
         # The committed image inventory the build is compared with (none is committed in the tests' checkout).
         self.inventory = self.root / "inventory" / "codex-0.162.0-claude-2.1.296.txt"
         self.inventory.parent.mkdir()
-        self.inventory.write_text(sample_inventory(host.image_pins()), encoding="utf-8")
+        self.inventory.write_text(sample_inventory(host.image_pins()), encoding="utf-8", newline="\n")
         patchers = [mock.patch.object(study, name, value) for name, value in
                     (("STATE_HOME", self.state), ("CODEX_SOURCE", self.source), ("CLAUDE_SOURCE", self.token))]
         patchers.append(mock.patch.object(host, "committed_inventory", lambda manifest_: self.inventory))
