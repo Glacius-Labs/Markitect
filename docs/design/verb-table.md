@@ -98,7 +98,7 @@ Each argument has one name. The CLI flag is its kebab-case form, and the MCP fie
 | `--manager ID` | `manager` | Manager ID. Repeatable on `plan`; `context` takes it as its operand. With `impact --explain` it limits the explanation to what that Manager may see. | `managerId`, `managers` |
 | `--explain` | `explain` | `impact` adds, per element, the reason it is included, a shortest witness path from a change and its class, `change` or `context` ([DEC-023](../concepts/register.md#dec-023-impact-marks-change-and-context-without-dropping-either)). The impact itself is unchanged. | new (KG-02) |
 | `--trace ID` | `trace` | `context` also walks the Manager's knowledge graph, built from its context alone, from that node and returns each reached node with a witness path. A node the Manager cannot see is not found. | new (KG-02) |
-| `--direction D`, `--depth N` | `direction`, `depth` | With `--trace`: follow relations `out` (default), `in` or `both`, at most N relations deep (default 6, at most 32). | new (KG-02) |
+| `--direction D`, `--depth N` | `direction`, `depth` | With `--trace`: follow relations `out` (default), `in` or `both`, at most N relations deep (1 to 32, default 6). A `--trace` node that is absent or not visible to the Manager is a usage error with the same message. | new (KG-02) |
 | `--goal TEXT` | `goal` | Bounded plan goal. | same |
 | `--operation KIND` | `operation` | `apply` (default), `cleanup` or `reconcile`. | separate `cleanup` and `reconcile` verbs |
 | `--exploration ID` | `exploration` | Work-item exploration. | `explorationId` |

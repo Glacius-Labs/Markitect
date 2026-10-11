@@ -156,7 +156,9 @@ func validateRepoPath(p string) error {
 		return fmt.Errorf("unsafe repository path %q", p)
 	}
 	for _, component := range strings.Split(p, "/") {
-		if component == "" || component == "." || component == ".." || strings.HasSuffix(component, ".") || strings.HasSuffix(component, " ") {
+		// Like Git's core.protectNTFS, refuse git~1, the usual Windows 8.3
+		// short name of .git, on every platform.
+		if component == "" || component == "." || component == ".." || strings.HasSuffix(component, ".") || strings.HasSuffix(component, " ") || strings.EqualFold(component, "git~1") {
 			return fmt.Errorf("unsafe repository path %q", p)
 		}
 		for _, r := range component {

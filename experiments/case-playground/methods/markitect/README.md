@@ -79,9 +79,8 @@ conformance are recorded as method conformance, separate from the public checks.
 - `docs/project-operations.md`: `mcp --repo ABSOLUTE_ROOT`, setup rules, cost
   weights.
 - `docs/provider-adapters.md`: `codex mcp add markitect -- ... mcp --repo ...`.
-- `docs/usage.md` ("Initialize a project") and `docs/onboarding.md` with
-  `scripts/onboarding/Measure-Adoption.ps1`: init preview, then write, on a feature
-  branch.
+- `docs/usage.md` ("Initialize a project") and `docs/onboarding.md`: init preview, then
+  write, on a feature branch.
 - `src/internal/host/projectcli/options.go`, `run.go`, `mcp.go`, `operations.go`: flags,
   `--expect` rules, JSON output and exit codes.
 - `src/internal/host/projectsetup/setup.go`: native executable rules, model/effort/

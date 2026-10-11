@@ -70,7 +70,7 @@ observed facts, likely explanations and untested ideas apart.
 
 ## First run: the provider-free smoke
 
-The smoke runs the whole pipeline with a scripted fake agent. No model call, no login.
+The smokes run the whole pipeline with a scripted fake agent. No model call, no login.
 
 ### Prerequisites
 
@@ -79,8 +79,8 @@ The smoke runs the whole pipeline with a scripted fake agent. No model call, no 
 | Linux host with Docker (Linux engine) | everything | The reference platform ([DEC-013](../../docs/concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)). Your user must be allowed to run `docker`. |
 | Python 3.11 or newer | everything | Standard library only, nothing to install. |
 | Git and Go | Markitect arm only | The host builds a linux/amd64 `markitect` binary from a local product checkout. Go follows the product's `go.mod` (`GOTOOLCHAIN=auto`). |
-| Codex login `~/.codex/auth.json` | real Codex runs, Markitect behind Claude Code, Codex reviewer | Not for the smoke. See [Logins](#logins). |
-| Claude Code token file | real Claude Code runs, Claude reviewer | Not for the smoke. |
+| Codex login `~/.codex/auth.json` | real Codex runs, Markitect behind Claude Code, Codex reviewer | Not for the smokes. See [Logins](#logins). |
+| Claude Code token file | real Claude Code runs, Claude reviewer | Not for the smokes. |
 
 The first image build downloads the base image, Debian packages and both CLIs. It needs
 network access and takes a few minutes; later builds use the Docker cache.
@@ -89,83 +89,40 @@ network access and takes a few minutes; later builds use the Docker cache.
 
 ```
 cd experiments/case-playground
-python3 tests/smoke_docker.py
+python3 tests/smoke_docker.py    # one run: host run --manifest examples/fake-roombook.json
+python3 tests/smoke_study.py     # a whole study: both arms, assessments, comparison
 ```
 
-This runs `python3 -m playground host run --manifest examples/fake-roombook.json` into a
-new folder under `$TMPDIR` (default `/tmp`) and checks the result. Set `TMPDIR` to put
-it elsewhere, but not inside a Git checkout. Other fake manifests:
+Each smoke works in a new folder under `$TMPDIR` (default `/tmp`, never inside a Git
+checkout) and keeps it after a failure; `--keep` keeps it after a pass. `smoke_docker.py
+--manifest` takes the other fakes, `examples/fake-readinglog2.json` (six waves) and
+`examples/fake-claude-roombook.json` (Claude Code stand-in). `smoke_study.py` runs
+`study examples/study-fake-roombook.json --fake-reviewers` with a throwaway Codex login:
+two roombook waves per arm, the Markitect arm with the binary built from this checkout at
+the example's commit and the real product setup. If a product command fails, the setup
+is `blocked` and the smoke fails: a product finding, or a sign that the product's CLI
+changed under the setup sequence in `playground/methods.py`.
 
-```
-python3 tests/smoke_docker.py --manifest examples/fake-readinglog2.json      # six waves
-python3 tests/smoke_docker.py --manifest examples/fake-claude-roombook.json  # Claude Code stand-in
-```
-
-`--keep` keeps the run folder after a pass; a failed smoke always keeps it and prints
-its path.
-
-### What "smoke: passed" means
-
-The last line reads `smoke: passed` when every check above it is `[ok]`:
-
-- the host exited 0, every planned wave ran and added commits to `main`, and a captured
-  `main` holds `FAKE_S1.md` to `FAKE_S<n>.md`;
-- the report exists, the setup is `ready`, the run is classified `none`, and the final
-  assessment ran the public checks of the last wave;
-- token counts from the session records match the fake's, and leftover agent processes
-  were killed after every wave;
-- `host.json` says `completed` and names the host platform, the image tag names both CLI
-  versions, and no labelled container is left;
-- `fake`: the agent could not open the results folder in any wave;
-- `fake-claude`: a throwaway token reached the agent, was redacted where the fake printed
-  it and is nowhere in the run folder; the `CLAUDE.md` router was added;
-- Markitect: `markitect check` ran at the end, the roles were read from
-  `.markitect/runtime.yaml`, and `host.json` holds the resolved `sourceRepo` and commit.
-
-It says nothing about quality. The fake agent only writes `FAKE_S<n>.md`, so the public
-checks in its report fail. That is expected.
-
-### Smoke the Markitect arm
-
-Save a manifest like this outside the checkout, for example as
-`~/fake-markitect-roombook.json`, with `commit` set to a commit of this checkout
-(`git rev-parse --short HEAD`), from which the binary is built. Two waves are enough:
-
-```json
-{
-  "schema": 1,
-  "id": "fake-markitect-roombook-001",
-  "case": "roombook",
-  "stations": 2,
-  "method": "markitect",
-  "agent": {"kind": "fake", "codexVersion": "0.162.0", "model": "gpt-6-luna",
-            "effort": "high", "maxSubagents": 3},
-  "limits": {"stationSeconds": 120, "totalSeconds": 600},
-  "container": {"cpus": 2, "memory": "2g", "pidsLimit": 512},
-  "markitect": {"commit": "3adf1d2f"}
-}
-```
-
-```
-python3 tests/smoke_docker.py --manifest ~/fake-markitect-roombook.json
-```
-
-It builds the binary and runs the real product setup in the container; no login is
-needed. If a product command fails, the setup is `blocked` and the smoke fails: a
-product finding, or a sign that the product's CLI changed under the setup sequence in
-`playground/methods.py`.
+`smoke: passed`, the last line, means that every check above it is `[ok]`.
+`smoke_docker.py` checks one run: exit 0; every wave ran and merged its `FAKE_S<n>.md`;
+setup `ready`, class `none`, final public checks; token counts from the session records;
+leftover processes killed; `host.json` complete and no labelled container left; the
+agent never opened `/out`; for `fake-claude` a throwaway token reached the agent and is
+nowhere in the run folder. `smoke_study.py` checks the study: schedule order, both
+assessments, a comparison with matching fairness fields, a complete `study.json`, the
+login carried from run to run, nowhere in the study folder, the source never written, no
+login folder and no container left. Neither judges quality: the fake agent only writes
+`FAKE_S<n>.md`, so its public checks fail, as expected.
 
 ### Unit tests
 
 No Docker, no provider:
-
 ```
 python3 -B -m unittest discover -s tests -t .
 ```
 
-Some tests run only as root with the image's `agent` user, others only as a normal user;
-each skips cleanly elsewhere. For full coverage also run them in the image (any run
-above builds it; adjust the tag to your versions):
+Tests that need root and the image's `agent` user, or a normal user, skip cleanly
+elsewhere; for full coverage also run them in the image (adjust the tag):
 
 ```
 docker run --rm --network none --mount type=bind,source="$PWD",target=/src,readonly \
@@ -173,27 +130,48 @@ docker run --rm --network none --mount type=bind,source="$PWD",target=/src,reado
   python3 -B -m unittest discover -s tests -t .
 ```
 
-### Assess and compare without a provider (optional)
+## Running real arms
 
-From `experiments/case-playground`; with `--out`, use that folder instead of
-`~/markitect-playground-runs/fake-roombook-001`:
+A study runs everything with one command: preflight, runs, assessments, comparisons.
 
+1. Copy `examples/study-readinglog2.json`, give it a new `id` and set `markitect.commit`
+   to the product commit to test (built from this checkout unless `markitect.sourceRepo`
+   names another Markitect checkout).
+2. `python3 -m playground study my-study.json --preflight` prints every problem at once.
+3. `python3 -m playground study my-study.json` runs it; start with `study.md` in the
+   [study folder](#study-folder).
+
+The arms of a pair run one after the other, the first arm alternating from pair to pair;
+then every run whose container finished is assessed and each pair compared (A
+conventional, B markitect; a fairness mismatch fails the step). A failed or stopped run
+does not stop the study; it stops when the host could not run a container or the image
+changed under it, and then lists the `assess` and `compare` commands that finish its
+completed runs by hand. SIGTERM and SIGHUP stop it like Ctrl+C. There is no resume.
+
+`host run` is the tool for a single run; `assess` and `compare` take any run folder:
 ```
-python3 -m playground host run --manifest examples/fake-roombook.json
-python3 -m playground assess --run ~/markitect-playground-runs/fake-roombook-001 --fake-reviewers
-python3 -m playground compare ~/markitect-playground-runs/fake-roombook-001 ~/markitect-playground-runs/fake-roombook-001
+python3 -m playground host run --manifest my-run.json
+python3 -m playground assess --run ~/markitect-playground-runs/<id> [--fake-reviewers]
+python3 -m playground compare RUN_A RUN_B
 ```
 
-`--fake-reviewers` replaces both reviewer CLIs with `tests/fake_reviewer.py` and
-throwaway credentials. Comparing a run with itself only shows the format. Before you
-repeat this, remove the run folder and the `compare-*.md` file next to it; a repeated
-`compare` overwrites that file without asking.
+### Preflight
+
+The preflight checks Python 3.11; `docker`, its daemon and a Linux engine (linux/amd64
+for the Markitect arm); that no playground container runs and no other study holds
+`~/.markitect-playground/study.lock` (run one study at a time); that no container has the
+study's names; for the Markitect arm `git`, `go` and a checkout holding the commit; every
+needed login (present, not empty, with what needs it); a new study folder outside every
+Git checkout with 5 GiB free. It only warns when the commit is behind `HEAD`, the host is
+not Linux, evaluation files are uncommitted or an earlier study left login folders. Then
+it builds the image and the binary once for all runs (a failed build also exits 3);
+`--preflight` stops before that and writes nothing.
 
 ## Components
 
 | Path | Role |
 |---|---|
-| `playground/__main__.py` | Entry point: `run` (inside the run container), `host`, `assess`, `compare`. |
+| `playground/__main__.py` | Entry point: `run` (inside the run container), `host`, `assess`, `compare`, `study`. |
 | `playground/manifest.py` | Loads and validates a schema-1 manifest; the only validator. |
 | `playground/cases.py` | Finds the cases: every valid folder in `cases/` (see [Cases](#cases)). |
 | `playground/host.py` | Host side of a run: image and Markitect binary, staging, container start and wait, safety timeout, hand-back. Also `host clean`. |
@@ -207,16 +185,23 @@ repeat this, remove the run folder and the `compare-*.md` file next to it; a rep
 | `playground/evaluate.py` | `assess`: starts the assessment container; inside, checks, holdouts, diff profile, classification, product findings and reviews. |
 | `playground/reviewers.py` | Codex and Claude reviewers: prompt, input bundle, commands, schema validation, agreement. |
 | `playground/compare.py` | Side-by-side comparison of two assessed runs after a fairness check. |
+| `playground/study.py` | `study`: study file, schedule, preflight and login copies; runs, assesses and compares through the functions behind `host run`, `assess` and `compare`. |
 | `container/Dockerfile` | The image: `node:22-bookworm-slim`, Python, Git, bubblewrap, Codex CLI and Claude Code at pinned versions, user `agent` (uid 1000). |
 | `cases/` | `task-prompt.txt` (the one prompt); `common/` (`AGENTS.md`, `QUALITY.md`, the public checks' driver `checks/acceptance.py`), seeded into every repository; one folder per case with `README.md`, `BACKLOG.md`, `STATIONS.json`, its public checks `checks/<case>.py` and, for brownfield cases, starting code. |
 | `methods/` | `conventional/AGENTS.fragment.md`, appended to `AGENTS.md`; `markitect/README.md`, notes for people. |
 | `evaluation/` | Hidden: `config.json`, reviewer prompt and schema in `common/`, ground truth, holdouts, mutants, reference and `validate.py` in `readinglog2/`. Never staged into a run. |
-| `examples/` | Manifests: real arms (`conventional-readinglog.json`, `markitect-readinglog.json`) and fakes (`fake-roombook.json`, `fake-readinglog2.json`, `fake-claude-roombook.json`). |
-| `tests/` | Unit tests, fake stand-ins for Codex, Claude Code and the reviewers, and the Docker smoke `smoke_docker.py` (not picked up by unittest). |
+| `examples/` | Study files: real (`study-readinglog2.json`) and fake (`study-fake-roombook.json`). Manifests: real arms (`conventional-readinglog.json`, `markitect-readinglog.json`) and fakes (`fake-roombook.json`, `fake-readinglog2.json`, `fake-claude-roombook.json`). |
+| `tests/` | Unit tests, fake stand-ins for Codex, Claude Code and the reviewers, and the Docker smokes `smoke_docker.py` and `smoke_study.py` (not picked up by unittest). |
 
 ## Data flow
 
 ```
+HOST  python3 -m playground study S.json
+  |  validate; preflight; image and binary built once; logins copied once
+  |  each run in schedule order: host run (below) with its own login copies,
+  |     its Codex login copied back out after the container stops
+  v  assess each finished run, compare each pair (below) -> <out>/study.md, study.json
+
 HOST  python3 -m playground host run --manifest M.json
   |  validate manifest; check that login files exist (never read them)
   |  docker build   -> image markitect-playground:codex-<v>-claude-<v>
@@ -253,55 +238,43 @@ HOST  python3 -m playground compare RUN_A RUN_B  -> fairness check -> comparison
 
 What the agent sees:
 
-- It works in `/work/<case>` as user `agent` and can read `/in`. The public checks are
-  part of the seed (`checks/acceptance.py` and `checks/<case>.py`), so it can run them
-  itself.
+- It works in `/work/<case>` as user `agent` and can read `/in`, including the public
+  checks in the seed (`checks/acceptance.py`, `checks/<case>.py`), which it can run.
 - `/out` is root-only while the run lasts: no check results, snapshots or reports. It
   never sees the other case, the other arm's method files, `evaluation/` or this page.
 - Codex runs with `--dangerously-bypass-approvals-and-sandbox`, Claude Code with
   `--dangerously-skip-permissions`; the container is the isolation boundary. No host
-  home, settings, hooks or MCP servers are used.
-- With Claude Code as the outer agent, both arms first get the same one-line `CLAUDE.md`
-  (`@AGENTS.md`) when the repository has none.
+  home, settings, hooks or MCP servers are used. With Claude Code, both arms first get
+  the same one-line `CLAUDE.md` (`@AGENTS.md`) when the repository has none.
 
 Each wave's timeout is `stationSeconds` or the rest of `totalSeconds`, whichever is
 smaller. A run stops early only when a needed login is missing, the method setup is
 `blocked`, the agent never produced a session id, could not start or exited without any
-work, a snapshot or wave release failed, or the agent time is used up. A wave timeout or
-a failing agent that did work is recorded, and the run goes on. After a stop, freeze and
-report still run, and the final assessment when at least one wave ran. The host kills the container
-after `totalSeconds` plus the runner's worst-case own work, as a safety net.
+work, a snapshot or wave release failed, or the agent time is used up; a wave timeout or
+a failing agent that did work is recorded, and the run goes on. Freeze and report always
+run, the final assessment when at least one wave ran. The host kills the container after
+`totalSeconds` plus the runner's worst-case own work, as a safety net.
 
-## Running real arms
+## Logins
 
-1. Copy an example manifest and give it a new `id`. For Markitect set
-   `markitect.commit` to the product commit to test; it is built from this checkout
-   unless `markitect.sourceRepo` names another. For the six-wave change series set
-   `case` to `readinglog2`.
-2. Run the two arms of a pair one after the other, never in parallel (see
-   [Caveats](#caveats)). Alternate which arm goes first from pair to pair. Keep both run
-   folders; `host.json` records when each ran.
-3. Assess both runs, then compare them.
-
-```
-python3 -m playground host run --manifest my-conventional.json
-python3 -m playground host run --manifest my-markitect.json
-python3 -m playground assess --run ~/markitect-playground-runs/<conventional-id>
-python3 -m playground assess --run ~/markitect-playground-runs/<markitect-id>
-python3 -m playground compare ~/markitect-playground-runs/<conventional-id> ~/markitect-playground-runs/<markitect-id>
-```
-
-### Logins
-
-- **Codex:** `~/.codex/auth.json` from `codex login`. Needed for agent kind `codex`, for
-  kind `claude` with method `markitect` (inner roles run on Codex) and for the Codex
-  reviewer.
-- **Claude Code:** create a token once with `claude setup-token` and save the token alone
-  in a file. `assess` reads `~/.markitect-playground/claude-token` by default; `host run`
-  needs `--claude-token PATH` for kind `claude`. Your own `~/.claude` login is never used.
-- The host only checks that login files exist and mounts them read-only. Inside, the
-  Codex login is copied into a fresh agent home; the Claude token goes only into the
-  claude process environment and is redacted from results if the agent prints it.
+- **Codex:** `~/.codex/auth.json` from `codex login`, or `--codex-auth PATH`: for agent
+  kind `codex`, for kind `claude` in the Markitect arm (inner roles run on Codex) and for
+  the Codex reviewer. The fake agent gets one only when `--codex-auth` is given.
+- **Claude Code:** a token from `claude setup-token`, alone in a file. `study` and
+  `assess` read `~/.markitect-playground/claude-token` by default; `host run` needs
+  `--claude-token PATH` for kind `claude`. Your own `~/.claude` login is never used.
+- On the host, login files are only copied and stat'ed (never read, printed or hashed)
+  and mounted read-only. Inside, the Codex login goes into a fresh agent or reviewer
+  home (an assessment's reviewers share a working copy that keeps a refresh); the Claude
+  token only into the claude process environment, redacted if the agent prints it.
+- **Login copies in a study.** Each login is copied once into a private folder
+  `~/.markitect-playground/logins/<id>-<random>/` (0700); every run and assessment gets
+  its own 0600 copy. After a container stops, its Codex login is streamed out
+  (`docker cp CONTAINER:PATH -`); exactly one regular file of 1 B to 64 KiB becomes the
+  next step's copy, anything else is rejected unread. Your source login is never
+  written; when a step reported a refresh, the study ends with "Codex refreshed its
+  login during the study; your <source> may be used up: run `codex login` before the
+  next run." The folder is removed when the study ends, also after an interrupt.
 
 ## Parameters
 
@@ -328,10 +301,36 @@ Unknown fields are rejected at every level.
 | `container.memory` | `[1-9][0-9]*[bkmg]?` | `8g` | `docker run --memory`. |
 | `container.pidsLimit` | positive integer | `2048` | `docker run --pids-limit`. |
 | `markitect` | object | required for `markitect`, forbidden otherwise | The product to install. |
-| `markitect.sourceRepo` | non-empty path | the checkout holding the playground | Local Markitect checkout to build from. A relative path or `~` counts from the manifest's folder; recorded as an absolute path. |
+| `markitect.sourceRepo` | non-empty path | the checkout holding the playground, if its `go.mod` declares `github.com/Glacius-Labs/Markitect` | Local Markitect checkout to build from. A relative path or `~` counts from the manifest's folder; recorded as an absolute path. |
 | `markitect.commit` | 7 to 40 lowercase hex | required | Commit to build; the full hash is recorded. |
 | `markitect.innerModel` | like `agent.model` | `agent.model`; required for Claude kinds | Model of Markitect's inner roles. |
 | `markitect.innerEffort` | like `agent.effort` | `agent.effort`; required for Claude kinds | Effort of Markitect's inner roles. |
+
+### Study file (schema 1)
+
+Unknown fields are rejected. The study expands into one manifest per run, validated like
+any manifest and saved normalized in `manifests/`.
+
+| Field | Type, allowed values | Default | Meaning |
+|---|---|---|---|
+| `schema` | `1` | required | Study file schema. |
+| `id` | like a manifest `id`; `<id>-p<pairs>-conv` at most 63 characters | required | Run ids `<id>-p<p>-conv` and `<id>-p<p>-mkt`; the default study folder. |
+| `case`, `stations`, `agent`, `limits`, `container`, `markitect` | as in the manifest | as there; `container` is required | Shared by every run. `markitect` only with the Markitect arm; a relative `sourceRepo` counts from the study file's folder. |
+| `arms` | list of `conventional`, `markitect` | required | Both arms form pairs; one arm repeats. |
+| `firstArm` | one of `arms` | required | Goes first in odd pairs; the other arm goes first in even pairs. |
+| `pairs` | positive integer | `1` | Number of pairs (with one arm: of runs). |
+| `reviewers` | list of `codex`, `claude`, or `[]` | required | Reviewers of every assessment; their models are pre-registered in `evaluation/config.json`. |
+
+### `study`
+
+`python3 -m playground study STUDY.json [options]`
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--out DIR` | `~/markitect-playground-runs/<id>` | Study folder; must not exist and must not be inside a Git checkout. |
+| `--codex-auth PATH`, `--claude-token PATH` | `~/.codex/auth.json`, `~/.markitect-playground/claude-token` | Login sources, used only where needed ([Logins](#logins)). |
+| `--fake-reviewers`, `--keep-containers` | off | As for `assess`; keep every container. |
+| `--preflight` | off | Run the cheap checks only; build and write nothing. |
 
 ### `host run` and `host clean`
 
@@ -386,8 +385,17 @@ Unknown fields are rejected at every level.
 | `host run` | The runner's code: 0 all waves ran (whatever the quality), 1 stopped early, 2 runner error. Also 124 host safety timeout, 130 interrupted, 2 invalid manifest or the host could not build, start or wait. |
 | `assess` | 0 written; 2 assessment error (`assessment/assess-error.txt`) or host error; 124 and 130 as above. |
 | `compare` | 0 written; 2 unreadable report or fairness mismatch. |
+| `study` | 0 every step written and every run exited 0; 1 a step failed, a run stopped early, or the study stopped (the host could not run a container, or the image changed); 2 invalid study file or study error (`study-error.txt`); 3 preflight failed; 124 and 130 as above, and the study stops. `study --help` prints the same table. |
 
 ## Results
+
+### Study folder
+
+| Path | Content |
+|---|---|
+| `study.md`, `study.json` | **Start here.** Status, exit code and stop reason; resolved parameters; login paths, never contents; versions (playground commit and dirty flag, Python, host platform, Docker server, OS and architecture, Go, image ID, binary SHA-256); preflight results; per step its times, status, exit code and login handling; after a stop, the commands that finish by hand. Rewritten after every step. |
+| `study-file.json`, `manifests/`, `preflight/` | The study file as given; each run's normalized manifest; the printed checks, the image build log and the binary. |
+| `runs/<run id>/`, `comparisons/p<k>.md` | Each run folder (below) with its `assessment/`; pair k compared, A conventional, B markitect. |
 
 ### Run folder
 
@@ -419,23 +427,20 @@ The run report classifies the run; the assessment classifies the run and each wa
 | `product` | Markitect | Setup blocked by a product command, an MCP call that never finished, `markitect check` that could not run. |
 | `none` | No infrastructure cause | Completed, or the time budget was used up. |
 
-With several causes, `harness` wins over `environment`, which wins over `product`; the
-rest are listed too. A class other than `none` is a limit of the measurement or a
-product finding, never a result of the method.
+With several causes, `harness` wins over `environment`, which wins over `product`; all are
+listed. A class other than `none` is a limit of the measurement or a product finding,
+never a result of the method.
 
-Holdouts read `passed/total`, plus `+N not judged` for status ERROR. ERROR means the
-holdout could not judge, for example because its deadline passed. It is counted apart,
-never as a failure of the candidate.
+Holdouts read `passed/total`, plus `+N not judged` for status ERROR (the holdout could
+not judge, for example after its deadline), counted apart, never as a candidate failure.
 
 ### Linux ownership hand-back
 
-Containers write as root and keep snapshots root-only, so on a Linux host you could
-neither read nor delete a run. After a container has stopped, the host runs a short
-root container in the same image that gives `results/` (or `assessment/`) the owner of
-its parent folder, without following links. `handBack` in `host.json` says `done`,
-`not-needed` (Windows, running as root, or an engine that already maps root to you),
-`skipped: ...` (Docker could not confirm the stop) or `failed: ...`. In the last two
-cases the host warns, and the folder stays owned by root.
+Containers write as root and keep snapshots root-only. After a container has stopped,
+a short root container in the same image gives `results/` (or `assessment/`) the owner
+of its parent folder, without following links. `handBack` in `host.json` says `done`,
+`not-needed` (Windows, root, or an engine that maps root to you), `skipped: ...` (Docker
+could not confirm the stop) or `failed: ...`; the last two leave it owned by root.
 
 ## Evaluation layer
 
@@ -455,10 +460,10 @@ optional. Any other folder in `cases/` is an error that names the folder and the
 
 S3 is a team wave in every case (`requiresTeam`). `readinglog2` starts with three
 cross-cutting rules in its public README (R1 audit log, R2 error contract, R3 text
-normalization) that later items do not repeat. S1 to S3 add features, S3 as a team wave
-with interacting features; S4 refactors storage, S5 changes an earlier decision (pages
-become optional), S6 renames a domain term. The backlog for S4 to S6 names the decision,
-not the affected commands; finding them is the point.
+normalization) that later items do not repeat. S1 to S3 add features (S3 interacting
+ones), S4 refactors storage, S5 changes an earlier decision (pages become optional), S6
+renames a domain term. The backlog for S4 to S6 names the decision, not the affected
+commands; finding them is the point.
 
 ### Hidden evaluation files
 
@@ -476,42 +481,35 @@ into a run.
 ### Pre-registration
 
 Commit ground truth, holdouts, reviewer prompt, schema and config before the first run
-they judge. The assessment reads these files from your checkout when it runs. It records
-the checkout's commit, whether the playground folder had uncommitted changes, and each
-file's SHA-256. It does not check that the commit is older than the run: compare the
-commit date with `startedAt` in the run's `host.json` yourself.
+they judge. The assessment reads them from your checkout and records its commit, whether
+the playground folder had uncommitted changes, and each file's SHA-256. It does not check
+that the commit is older than the run: compare it with `startedAt` in `host.json`.
 
 ### Holdouts
 
-```
-python3 -I -B holdout.py --repo DIR --station N [--deadline SECONDS]
-```
-
-- Prints `{"station": N, "checks": [{"id", "status", "item", "rule", "detail",
-  "source"}]}` and exits 0 even when checks fail.
-- Station N runs every holdout released up to N, so earlier waves are checked again for
-  regressions. Each check runs the CLI on fresh temporary data.
-- Each holdout names its item, its rule and, in `source`, the public sentence it derives
-  from. What the public text leaves open is not tested.
-- PASS and FAIL judge the candidate; ERROR means the holdout could not judge. Checks not
-  yet run when `--deadline` passes report ERROR.
-- The assessment runs it as the unprivileged user on a copy of the wave's `main`, with
-  `--deadline` up to 90 s before `holdoutTimeoutSeconds`.
+`python3 -I -B holdout.py --repo DIR --station N [--deadline SECONDS]` prints
+`{"station": N, "checks": [{"id", "status", "item", "rule", "detail", "source"}]}` and
+exits 0 even when checks fail. Station N runs every holdout released up to N, so earlier
+waves are checked again for regressions, each on fresh temporary data. Each holdout names
+its item, its rule and, in `source`, the public sentence it derives from; what the public
+text leaves open is not tested. PASS and FAIL judge the candidate; ERROR means the
+holdout could not judge, as for checks not yet run when `--deadline` passes. The
+assessment runs it as the unprivileged user on a copy of the wave's `main`, with
+`--deadline` up to 90 s before `holdoutTimeoutSeconds`.
 
 ### Reviewers
 
-- Every selected reviewer reviews every wave, after all checks and holdouts. The
-  holdouts are removed first and `/assess` is root-only, so a reviewer never sees
-  holdouts, check results or the other reviewer's answer.
-- **Codex:** `codex exec --json --sandbox read-only --output-schema ...`, a fresh
-  `CODEX_HOME` holding only the login.
-- **Claude:** `claude -p --output-format json --json-schema ...`, tools `Read`, `Grep`,
-  `Glob` only, no settings (`--setting-sources ""`, `--strict-mcp-config`), a fresh
-  `CLAUDE_CONFIG_DIR`, the token only in its environment.
-- Both run as user `agent` in the input bundle folder, so no `AGENTS.md` or `CLAUDE.md`
-  is loaded as instructions; they read the snapshot copy by path. Model and effort come
-  from `evaluation/config.json`. Choose reviewer models that differ from the arms'
-  models; nothing checks this.
+- Every selected reviewer reviews every wave after all checks and holdouts, as user
+  `agent` in the input bundle folder (so no `AGENTS.md` or `CLAUDE.md` is loaded as
+  instructions), and reads the snapshot copy by path. The holdouts are removed first and
+  `/assess` is root-only: a reviewer never sees holdouts, check results or the other
+  reviewer's answer.
+- **Codex:** `codex exec --json --sandbox read-only --output-schema ...` in a fresh
+  `CODEX_HOME` holding only the login. **Claude:** `claude -p --output-format json
+  --json-schema ...`, tools `Read`, `Grep`, `Glob` only, no settings
+  (`--setting-sources ""`, `--strict-mcp-config`), a fresh `CLAUDE_CONFIG_DIR`, the token
+  only in its environment. Model and effort come from `evaluation/config.json`; choose
+  models that differ from the arms' models (nothing checks this).
 - **Prompt:** the fixed, versioned [reviewer-prompt.md](evaluation/common/reviewer-prompt.md),
   the same for every arm and provider, plus the wave's inputs: released item texts,
   earlier items, project rules (case README, `AGENTS.md`, `QUALITY.md`), the ground-truth
@@ -524,49 +522,49 @@ python3 -I -B holdout.py --repo DIR --station N [--deadline SECONDS]
 - A crash, timeout or invalid answer is recorded as `error` or `invalid` and never ends
   the assessment. Agreement counts findings with the same item and category.
 - **Blinding limit:** the prompt has no arm label, but the repository can reveal the
-  method (`.markitect/`, Markitect guidance in `AGENTS.md`). The reviews are not blind
-  to it.
+  method (`.markitect/`, Markitect guidance in `AGENTS.md`); the reviews are not blind.
 
 ### Compare's fairness check
 
-`compare` refuses two runs unless these match, or `--allow-mismatch` is given:
+`compare` refuses two runs unless these match, or `--allow-mismatch` is given: case and
+outer provider; the run report's fairness fields (stations, host platform, Codex and
+Claude Code versions, image ID, model, effort, subagent limit, time limits, container
+size); the SHA-256 of every evaluation file; each reviewer's model, effort and CLI
+version. It does not compare the Markitect commit, the inner model or the evaluation
+commit; check those yourself.
 
-- case and outer provider;
-- the run report's fairness fields: stations, host platform, Codex and Claude Code
-  versions, image ID, model, effort, subagent limit, time limits, container size;
-- the SHA-256 of every evaluation file;
-- each reviewer's model, effort and CLI version.
-
-Never pool runs from different host platforms
+A different host platform is a fairness mismatch, and so is a platform that a run does
+not record (older runs), even when both lack it. This is stricter than `host run` and
+`study`, which only warn on a non-Linux host: never pool runs from different platforms
 ([DEC-013](../../docs/concepts/register.md#dec-013-linux-first-for-tests-and-the-playground));
-`--allow-mismatch` is for looking, not for study results. It does not compare the Markitect commit, the inner model or the evaluation commit;
-check those yourself.
+`--allow-mismatch` is for looking, not for study results.
 
 ## Caveats
 
-- **Login refresh race.** Each run copies your Codex login. If Codex refreshes its token
-  inside a container, the host login can be used up, and the next run (often the other
-  arm) fails with "agent never produced a session id". Run arms one after the other, run
-  `codex login` right before each run, or give each run its own login file with
-  `--codex-auth`. The run report says when Codex rewrote its login, the assessment when
-  a reviewer refreshed its login.
-- **Never commit run outputs.** Keep them outside the repository. `host run` refuses a
-  run folder inside a Git checkout, and `runs/` is ignored as a safety net.
+- **Login refresh and trust.** Codex may refresh its token inside a container and so
+  use up the login it was copied from. A study hands the refreshed login to its next
+  step; separate `host run` and `assess` commands do not: run `codex login` before each,
+  or give each its own file with `--codex-auth`. Agents run with full permissions inside
+  their containers and hold the login anyway. A login one step hands on can be tampered
+  with; that shows up as an environment failure of the next step, never as a method
+  result, and nothing a container hands back is written to your source login.
+- **Never commit run outputs.** Keep them outside the repository. `host run` and `study`
+  refuse a folder inside a Git checkout, and `runs/` is ignored as a safety net.
 - **One sandbox relaxation.** Every run and assessment container runs with
-  `--security-opt seccomp=unconfined`: Codex's bubblewrap sandbox, which Markitect's inner roles use,
-  needs user namespaces. Both arms get it; no `--privileged`, no added capabilities.
-  There is no egress filtering.
+  `--security-opt seccomp=unconfined`: Codex's bubblewrap sandbox, used by Markitect's
+  inner roles, needs user namespaces. Both arms get it; no `--privileged`, no added
+  capabilities, no egress filtering.
 - **Same image for both arms.** Only the two CLIs are pinned. A rebuild that pulls newer
   base packages changes the image ID, and `compare` then refuses the pair.
 - **Unequal concurrency.** The subagent limit applies to Codex sessions. Markitect's inner
   roles are extra sessions, so total concurrency is not equal by construction.
 - **Old run folders.** Runs from the earlier Codex-only image need
   `--image markitect-playground:codex-0.162.0-claude-2.1.296` for the Claude reviewer.
-- **Product limits.** The Markitect setup accepts only what the product allows at the
-  pinned commit, such as certain models; see
-  [methods/markitect/README.md](methods/markitect/README.md).
+- **Product limits.** The Markitect setup accepts only what the pinned product allows,
+  such as certain models; see [methods/markitect/README.md](methods/markitect/README.md).
 - **Fixed in the code.** Step timeouts (public checks 600 s, own tests 900 s, product
-  steps 600 s, Git steps 120 s) and the Markitect binary for linux/amd64 only.
+  steps 600 s, Git steps 120 s), the Markitect binary for linux/amd64 only, and the
+  study's 5 GiB free-disk minimum and 64 KiB cap for a copied-out login.
 
 ## Changing the playground
 
@@ -576,7 +574,7 @@ check those yourself.
 - Everything a run needs comes from the manifest and command-line options: no dates,
   hashes or user paths in the source.
 - Unit tests run without Docker or a provider; tests that need root or the `agent` user
-  skip cleanly elsewhere. The Docker smoke covers the end-to-end contract.
+  skip cleanly elsewhere. The Docker smokes cover the end-to-end contract.
 - Evaluation files are pre-registered and hashed: `ground-truth.json`, `holdout.py`,
   the reviewer prompt and schema, and `config.json`. Any edit, even a comment, changes
   the hash, and `compare` then refuses runs assessed before and after it.

@@ -17,6 +17,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
@@ -930,6 +931,9 @@ func writeHelperFile(root *os.Root, change projectworkspace.Change) error {
 	if err := root.MkdirAll(filepath.Dir(name), 0755); err != nil {
 		return err
 	}
+	if err := guardedwrite.NewStoredNames(root.FS()).Require(change.Path); err != nil {
+		return fmt.Errorf("helper write: %w", err)
+	}
 	if info, err := root.Lstat(name); err == nil {
 		if change.Kind == projectworkspace.ChangeModify {
 			if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
@@ -982,6 +986,10 @@ func writeHelperFile(root *os.Root, change projectworkspace.Change) error {
 func checkHelperPathNoReparse(root *os.Root, value string, allowMissing bool) error {
 	if !safeRepoPath(value) || forbiddenRuntimePath(value) {
 		return fmt.Errorf("helper path is unsafe or control-plane reserved: %q", value)
+	}
+	// Lexical checks miss a Windows alias such as MARKIT~1 for .markitect.
+	if err := guardedwrite.NewStoredNames(root.FS()).Require(value); err != nil {
+		return fmt.Errorf("helper path: %w", err)
 	}
 	parts := strings.Split(filepath.FromSlash(value), string(filepath.Separator))
 	for i := 1; i < len(parts); i++ {

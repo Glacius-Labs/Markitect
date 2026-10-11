@@ -27,6 +27,7 @@ import tarfile
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable
 
 from . import cases
 from . import manifest as manifest_module
@@ -322,13 +323,27 @@ def _container_state(name: str) -> str | None:
     return "running" if done.stdout.strip() == "true" else "stopped"
 
 
-def _finish_container(name: str, record: dict, out: Path, keep: bool) -> None:
+def _finish_container(name: str, record: dict, out: Path, keep: bool,
+                      before_remove: Callable[[str], None] | None = None) -> None:
+    """Kill after a host timeout or interrupt, save the log, call `before_remove` once
+    Docker confirms the container has stopped (the study copies a login back out), then
+    remove the container unless `keep`, also when `before_remove` is interrupted."""
     if record["status"] in ("host-timeout", "host-interrupted"):
         _call(["docker", "kill", name], capture_output=True)
     with open(out / "container.log", "wb") as log:
         _call(["docker", "logs", name], stdout=log, stderr=subprocess.STDOUT)
-    if keep:
-        return
+    try:
+        if before_remove is not None and _container_state(name) == "stopped":
+            try:
+                before_remove(name)
+            except Exception as exc:
+                print(f"warning: after container {name} stopped: {exc}", file=sys.stderr)
+    finally:  # never let it keep a container (and its mounted logins) alive
+        if not keep:
+            _remove_container(name)
+
+
+def _remove_container(name: str) -> None:
     if _container_state(name) == "running":  # e.g. docker wait failed: never destroy a live run
         print(f"warning: container {name} is still running and was not removed; "
               f"`docker wait {name}` or `docker rm -f {name}`", file=sys.stderr)
@@ -342,6 +357,15 @@ def _finish_container(name: str, record: dict, out: Path, keep: bool) -> None:
 def _write_json(path: Path, value: dict) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8",
                     newline="\n")
+
+
+def platform_warning() -> str | None:
+    """A warning on a non-Linux host: Linux is the reference platform (DEC-013)."""
+    system = platform.system()
+    if system == "Linux":
+        return None
+    return (f"this host runs {system or 'an unknown system'}; Linux is the reference platform (DEC-013), "
+            "and compare refuses to pair runs from different host platforms")
 
 
 def run(args: argparse.Namespace) -> int:
@@ -369,12 +393,33 @@ def run(args: argparse.Namespace) -> int:
         if not token.is_file():  # existence check only; the file is never opened here
             raise HostError(f"Claude token file not found: {token}")
         token = token.resolve()
-    stations = station_count(manifest)
+    station_count(manifest)  # fails before Docker for a case without a valid plan
     if manifest["method"] == "markitect":
         if shutil.which("go") is None:
             raise HostError("Go is required to build the Markitect binary (go not on PATH)")
         manifest = {**manifest, "markitect": resolve_markitect(manifest["markitect"])}
+    warning = platform_warning()
+    if warning:
+        print(f"warning: {warning}", file=sys.stderr, flush=True)
+    exit_code, _record = run_manifest(manifest, out, auth=auth, token=token, keep=args.keep_container)
+    print(f"host record: {out / 'host.json'}")
+    print(f"report: {out / 'results' / 'report.md'}")
+    return exit_code
 
+
+def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | None, keep: bool = False,
+                 prebuilt: dict | None = None,
+                 before_remove: Callable[[str], None] | None = None) -> tuple[int, dict]:
+    """Run one validated manifest (Markitect block resolved) into the new folder `out`
+    and return (exit code, host record); host.json is written in any case.
+
+    `auth` and `token` are login files mounted read-only (never opened here). `prebuilt`
+    holds what a study built once for all its runs: {"image": {"tag", "id"}} and, for the
+    Markitect method, "markitect" (the build record) and "binary" (its path). Without it
+    the image and the binary are built here. `before_remove(container)` runs after the
+    container has stopped and before it is removed.
+    """
+    stations = station_count(manifest)
     inputs, results = out / "inputs", out / "results"
     results.mkdir(parents=True)
     name = f"mpg-{manifest['id']}"
@@ -393,13 +438,24 @@ def run(args: argparse.Namespace) -> int:
         if _container_state(name) is not None:
             raise HostError(f"a container named {name} already exists; remove it (docker rm -f {name}) "
                             "or use a new manifest id")
-        print(f"building image {record['image']['tag']} ...", flush=True)
-        record["image"]["id"] = build_image(manifest, out / "image-build.log")
+        if prebuilt is None:
+            print(f"building image {record['image']['tag']} ...", flush=True)
+            record["image"]["id"] = build_image(manifest, out / "image-build.log")
+        else:
+            record["image"] = dict(prebuilt["image"])
         stage_inputs(manifest, inputs)
         if manifest["method"] == "markitect":
-            print("building markitect binary ...", flush=True)
-            record["markitect"] = build_markitect(manifest["markitect"], inputs / "bin" / "markitect")
-        argv = docker_run_argv(manifest, name=name, image=record["image"]["tag"],
+            binary = inputs / "bin" / "markitect"
+            if prebuilt is None:
+                print("building markitect binary ...", flush=True)
+                record["markitect"] = build_markitect(manifest["markitect"], binary)
+            else:
+                binary.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(prebuilt["binary"], binary)
+                record["markitect"] = dict(prebuilt["markitect"])
+        # A prebuilt image runs by its ID, so a tag rebuilt meanwhile cannot change it.
+        argv = docker_run_argv(manifest, name=name, image=record["image"]["tag"] if prebuilt is None
+                               else record["image"]["id"],
                                image_id=record["image"]["id"], inputs=inputs, results=results,
                                auth=auth, markitect=record["markitect"], claude_token=token,
                                host_os=record["hostPlatform"])
@@ -425,7 +481,10 @@ def run(args: argparse.Namespace) -> int:
         print(f"error: {exc}", file=sys.stderr)
     finally:
         if record["containerLaunched"]:
-            _finish_container(name, record, out, args.keep_container)
+            try:
+                _finish_container(name, record, out, keep, before_remove)
+            except KeyboardInterrupt:  # e.g. during the login copy-out; the container is gone
+                record["status"], exit_code = "host-interrupted", 130
         record["endedAt"] = _now()
         _write_json(out / "host.json", record)  # first, so an interrupted hand-back keeps the record
         if record["containerLaunched"]:
@@ -433,9 +492,7 @@ def run(args: argparse.Namespace) -> int:
             _write_json(out / "host.json", record)
             if record["handBack"].startswith(("failed", "skipped")):
                 print(f"warning: {results} stays owned by root ({record['handBack']})", file=sys.stderr)
-    print(f"host record: {out / 'host.json'}")
-    print(f"report: {results / 'report.md'}")
-    return exit_code
+    return exit_code, record
 
 
 def clean() -> int:

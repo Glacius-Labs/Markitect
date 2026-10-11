@@ -44,6 +44,9 @@ const (
 	// process executor's JSON response.
 	DefaultProcessMaxStdout = 16 << 20
 	DefaultCodexEffort      = "high"
+	// DefaultCodexModel is the standard profile's model; guidance and help
+	// name it from here.
+	DefaultCodexModel = "gpt-6-luna"
 	// UndeclaredProviderVersion is recorded when a process executor declares no
 	// version. The executable bytes are still pinned by digest.
 	UndeclaredProviderVersion = "undeclared"

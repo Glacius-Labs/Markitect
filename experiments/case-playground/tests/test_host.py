@@ -249,6 +249,22 @@ class RunTests(HostTestBase):
         self.assertNotIn("docker kill", commands)
         self.assertIsNone(docker.container)
 
+    def test_a_non_linux_host_gets_a_warning_and_the_run_goes_on(self):
+        for system, warned in (("Windows", True), ("Darwin", True), ("Linux", False)):
+            with self.subTest(system=system):
+                shutil.rmtree(self.out, ignore_errors=True)
+                docker, err = FakeDocker(), io.StringIO()
+                argv = ["run", "--manifest", str(self.manifest_path), "--out", str(self.out)]
+                with mock.patch.object(host.subprocess, "run", docker.run), \
+                        mock.patch.object(host.subprocess, "Popen", docker.popen), \
+                        mock.patch.object(host.platform, "system", return_value=system), \
+                        contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+                    self.assertEqual(host.main(argv), 1)  # the container's exit code: the run went on
+                self.assertEqual("DEC-013" in err.getvalue(), warned, err.getvalue())
+                if warned:
+                    self.assertIn(f"warning: this host runs {system}", err.getvalue())
+                    self.assertIn("compare refuses", err.getvalue())
+
     def test_results_are_handed_back_after_the_container_ends(self):
         docker = FakeDocker()
         with mock.patch.object(host, "hand_back", return_value="done") as hand_back:
@@ -312,6 +328,40 @@ class RunTests(HostTestBase):
         self.assertIn("pipe closed", record["error"])
         self.assertNotIn("docker rm", docker.commands())
         self.assertEqual(docker.container, "running")
+
+    def run_prebuilt(self, docker, before_remove):
+        manifest = host.manifest_module.load(self.manifest_path, playground=host.ROOT)
+        prebuilt = {"image": {"tag": host.image_tag(manifest), "id": "sha256:built-once"}}
+        with mock.patch.object(host.subprocess, "run", docker.run),                 mock.patch.object(host.subprocess, "Popen", docker.popen), quiet():
+            return host.run_manifest(manifest, self.out, auth=None, token=None, prebuilt=prebuilt,
+                                     before_remove=before_remove)
+
+    def test_a_prebuilt_image_runs_by_its_id_and_the_hook_runs_before_removal(self):
+        docker, seen = FakeDocker(), []
+        code, record = self.run_prebuilt(docker, lambda name: seen.append((name, docker.container)))
+        self.assertEqual((code, record["image"]["id"]), (1, "sha256:built-once"))
+        self.assertEqual(seen, [("mpg-fake-roombook-001", "stopped")])
+        run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
+        self.assertIn("sha256:built-once", run)
+        self.assertFalse(any(arg.startswith("markitect-playground:") for arg in run))  # never the tag
+        self.assertFalse(any(c[:2] == ["docker", "build"] for c in docker.calls))
+        self.assertIsNone(docker.container)
+
+    def test_an_interrupt_in_the_pre_removal_hook_still_removes_the_container(self):
+        docker = FakeDocker()
+
+        def interrupted(name):
+            raise KeyboardInterrupt
+        code, record = self.run_prebuilt(docker, interrupted)
+        self.assertEqual((code, record["status"]), (130, "host-interrupted"))
+        self.assertIn(["docker", "rm", "-f", "mpg-fake-roombook-001"], docker.calls)
+        self.assertIsNone(docker.container)
+        self.assertEqual(self.host_record()["status"], "host-interrupted")  # host.json is still written
+        docker = FakeDocker()
+        self.out = self.base / "runs" / "failing-hook"
+        code, record = self.run_prebuilt(docker, lambda name: 1 / 0)  # an ordinary error only warns
+        self.assertEqual((code, record["status"]), (1, "completed"))
+        self.assertIsNone(docker.container)
 
     def test_setup_failure_can_be_retried_with_the_same_out(self):
         failing = FakeDocker(wait_effect=None)
@@ -401,7 +451,11 @@ class RunTests(HostTestBase):
             self.assertEqual(self.run_host(docker, manifest=manifest), 2)  # no checkout holds the fake root
         self.assertEqual(docker.calls, [])
         (host.ROOT / ".git").mkdir()  # the playground's checkout (the run folder stays outside it)
-        built = {"commit": "669cecd2" + "0" * 32, "sha256": "f" * 64}
+        with mock.patch.object(host.shutil, "which", return_value="go"):
+            self.assertEqual(self.run_host(docker, manifest=manifest), 2)  # not a Markitect checkout
+        self.assertEqual(docker.calls, [])
+        (host.ROOT / "go.mod").write_text("module github.com/Glacius-Labs/Markitect\n", encoding="utf-8")
+        built ={"commit": "669cecd2" + "0" * 32, "sha256": "f" * 64}
         with mock.patch.object(host.shutil, "which", return_value="go"), \
                 mock.patch.object(host, "resolve_markitect", side_effect=resolved) as resolve, \
                 mock.patch.object(host, "build_markitect", return_value=built):

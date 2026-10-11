@@ -64,7 +64,7 @@ var configVerb = define(verb{
 	name: "config", group: "Set up", effect: effectWrite,
 	summary:  "Preview or write the runtime configuration that runs the project's agents.",
 	synopsis: "config (--input FILE | --provider codex|process --model MODEL [--effort EFFORT] [--codex-profile PROFILE] [--windows-sandbox-backend mxc] [--provider-executable PATH] [--provider-arg ARG ...] [--provider-version TEXT] [--cost-mode metered|unmetered] [--input-micros-per-million N --output-micros-per-million N] --max-cost-micros N) [--expect DIGEST --write]",
-	notes:    "The standard profile is --provider codex --model gpt-6-luna; Codex effort defaults to high. --input holds complete options, including per-role profiles. Metered agents need both rates; unmetered is for process executors. Windows defaults to process-local MXC. The preview runs only the provider's --version.",
+	notes:    "The standard profile is --provider codex --model " + projectsetup.DefaultCodexModel + "; Codex effort defaults to " + projectsetup.DefaultCodexEffort + ". --input holds complete options, including per-role profiles. Metered agents need both rates; unmetered is for process executors. Windows defaults to process-local MXC. The preview runs only the provider's --version.",
 	args: []arg{argRepo,
 		{name: "input", kind: kindRecord, value: "FILE", help: "Complete options record, including per-role profiles; excludes the profile flags."},
 		{name: "provider", value: "P", help: "codex or process."},
@@ -315,7 +315,7 @@ var contextVerb = define(verb{
 	args: []arg{{name: "manager", value: "MANAGER", operand: true, required: true, help: "Manager ID."}, argRepo, argRevision,
 		{name: "trace", value: "ID", help: "Walk the Manager's knowledge graph from this node and return each reached node with a shortest witness path."},
 		{name: "direction", value: "out|in|both", help: "With --trace: follow relations outward (default), inward or both ways."},
-		{name: "depth", kind: kindInt, value: "N", help: "With --trace: the most relations to follow; default 6, at most 32."}},
+		{name: "depth", kind: kindInt, value: "N", help: "With --trace: the most relations to follow, 1 to 32; default 6."}},
 }, func(ctx context.Context, e env, in contextInput) (contextResult, error) {
 	operation := projectapp.ContextOperation{Selection: projectapp.Selection{Root: e.root, Revision: in.Revision}, ManagerID: in.Manager}
 	if in.Trace == "" {
@@ -328,10 +328,14 @@ var contextVerb = define(verb{
 	if !slices.Contains([]string{"", "out", "in", "both"}, in.Direction) {
 		return contextResult{}, usagef("--direction must be out, in or both")
 	}
-	if in.Depth < 0 {
-		return contextResult{}, usagef("--depth must not be negative")
+	if in.Depth < 0 || in.Depth > 32 {
+		return contextResult{}, usagef("--depth must be between 1 and 32")
 	}
 	traced, err := e.ops.Trace(projectapp.TraceOperation{ContextOperation: operation, Request: projectmodel.TraceRequest{From: in.Trace, Direction: in.Direction, MaxDepth: in.Depth}})
+	if errors.Is(err, projectmodel.ErrNodeNotFound) {
+		// The same answer for a node that does not exist and one the Manager cannot see.
+		return contextResult{}, usagef("--trace names no node in this Manager's knowledge graph")
+	}
 	if err != nil {
 		return contextResult{}, err
 	}
@@ -356,6 +360,7 @@ var impactVerb = define(verb{
 	name: "impact", group: "Model", effect: effectRead,
 	summary:  "Compare two revisions with deterministic, conservative change impact; --explain says why each element is in it.",
 	synopsis: "impact --since R1 --revision R2 [--explain [--manager ID]]",
+	notes:    "--manager narrows only the explanation to what that Manager may see; the impact itself, its sets and its digest, stays project scope.",
 	args: []arg{argRepo,
 		{name: "since", value: "R1", required: true, help: "Older revision."},
 		{name: "revision", value: "R2", required: true, help: "Newer revision."},

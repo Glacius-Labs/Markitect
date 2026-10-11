@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -71,6 +72,50 @@ func TestGitServiceOverlayExistenceAndDigestChecks(t *testing.T) {
 	}
 	if _, err := CandidateOverlayDigest([]Change{{Kind: ChangeDelete, Path: ".markitect/model.yaml"}}); err == nil {
 		t.Fatal("accepted control overlay")
+	}
+}
+
+// Overlay paths are checked lexically. Windows also resolves an existing entry
+// through its 8.3 short name or another case, so MARKIT~1/project.yaml once
+// overwrote .markitect/project.yaml in the owned clone, and the copy was
+// refused only afterwards, when its inventory differed.
+func TestGitServiceOverlayRefusesWindowsAliasesOfExistingEntries(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("short names and case aliases are resolved by Windows")
+	}
+	fixture := newGitFixture(t)
+	writeFixtureFile(t, fixture.root, ".markitect/project.yaml", []byte("project\n"), 0o644)
+	service, r := newGitServiceRequest(t, fixture, filepath.Join(t.TempDir(), "storage"), "aliases", []string{"src"}, nil)
+	probe := t.TempDir()
+	if err := os.Mkdir(filepath.Join(probe, ".markitect"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	longInfo, longErr := os.Stat(filepath.Join(probe, ".markitect"))
+	aliasInfo, aliasErr := os.Stat(filepath.Join(probe, "MARKIT~1"))
+	shortNames := longErr == nil && aliasErr == nil && os.SameFile(longInfo, aliasInfo)
+	// Every NTFS volume resolves case variants, so only the 8.3 case skips.
+	for _, tc := range []struct{ name, path string }{
+		{"8.3 short name", "MARKIT~1/project.yaml"},
+		{"case variant", "Docs/new.md"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if strings.HasPrefix(tc.path, "MARKIT~1/") && !shortNames {
+				t.Skip("volume generates no 8.3 short names")
+			}
+			changes := []Change{{Kind: ChangeAdd, Path: tc.path, Mode: "100644", Content: []byte("alias\n")}}
+			digest, err := CandidateOverlayDigest(changes)
+			if err != nil {
+				t.Fatal(err)
+			}
+			h, err := service.PrepareCandidate(context.Background(), r, changes, digest)
+			if err == nil {
+				service.Close(context.Background(), h)
+				t.Fatalf("PrepareCandidate accepted alias %s", tc.path)
+			}
+			if !strings.Contains(err.Error(), "stored under another name") {
+				t.Fatalf("alias %s was not refused before the write: %v", tc.path, err)
+			}
+		})
 	}
 }
 

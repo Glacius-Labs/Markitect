@@ -39,6 +39,44 @@ func TestSafeDestinationRetainsReparseRejectionWithShortPath(t *testing.T) {
 	}
 }
 
+// SafeDestination once listed each parent through os.DirFS, which cannot open
+// "." below a root spelled \\?\C:\..., so it refused every existing part of an
+// output path there. Aliases of existing entries must still be refused.
+func TestSafeDestinationChecksStoredNamesBelowExtendedLengthRoot(t *testing.T) {
+	root, err := os.MkdirTemp(os.TempDir(), "markitect-writer-extended-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(root) })
+	if err := os.MkdirAll(filepath.Join(root, "docs", "generated-protos"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "docs", "guide.md"), []byte("guide\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	extended := longPathAPISpelling(root)
+	if !strings.HasPrefix(extended, `\\?\`) {
+		t.Fatalf("root %q has no extended-length spelling", root)
+	}
+	for _, name := range []string{"docs/guide.md", "docs/generated-protos/schema.md", "new/output.md"} {
+		if _, err := SafeDestination(extended, name); err != nil {
+			t.Errorf("SafeDestination(%q) refused stored names below %q: %v", name, extended, err)
+		}
+	}
+	// Every NTFS volume resolves case variants, so only the 8.3 case skips.
+	t.Run("case variant", func(t *testing.T) {
+		if _, err := SafeDestination(extended, "Docs/guide.md"); err == nil {
+			t.Error("SafeDestination accepted case variant Docs/guide.md")
+		}
+	})
+	t.Run("8.3 short name", func(t *testing.T) {
+		alias := "docs/" + windowsShortLeaf(t, filepath.Join(root, "docs", "generated-protos")) + "/schema.md"
+		if _, err := SafeDestination(extended, alias); err == nil {
+			t.Errorf("SafeDestination accepted alias %s", alias)
+		}
+	})
+}
+
 func TestAnchoredAtomicWriteRefusesSwappedJunctionParent(t *testing.T) {
 	root, err := os.MkdirTemp(os.TempDir(), "markitect-rooted-junction-")
 	if err != nil {

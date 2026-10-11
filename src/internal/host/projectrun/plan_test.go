@@ -383,3 +383,43 @@ func TestExecutorOutcomeErrorUsesOnlyWhitelistedDiagnostics(t *testing.T) {
 		t.Fatalf("untrusted uncertainty escaped or generic fallback missing: %v", unknown)
 	}
 }
+
+// A parent that owns no files still needs an integration review once its
+// children deliver files, so planning counts that start up front.
+func TestPlanCountsTheIntegrationReviewOfAFileLessParent(t *testing.T) {
+	const (
+		rootID   = "project/root"
+		ordersID = "project/orders"
+		stockID  = "project/inventory"
+		orders   = "src/orders/notes.txt"
+		stock    = "src/inventory/implementation.txt"
+	)
+	project := &Project{
+		Config: projectwork.Config{InventoryRoots: []string{"src"}},
+		Snapshot: &snapshot.Snapshot{
+			Files: map[string][]byte{orders: []byte("orders\n"), stock: []byte("inventory\n")},
+			Modes: map[string]string{orders: snapshot.RegularMode, stock: snapshot.RegularMode},
+		},
+		Report: projectmodel.Report{
+			Managers: []projectmodel.Manager{{ID: rootID}, {ID: ordersID, Parent: rootID}, {ID: stockID, Parent: rootID}},
+			Files:    []projectmodel.FileEntry{{Path: orders, Owner: ordersID, Class: "documentation"}, {Path: stock, Owner: stockID, Class: "source"}},
+		},
+	}
+	parent := ManagerTask{ID: rootID, ManagerID: rootID}
+	children := []ManagerTask{{ID: ordersID, ManagerID: ordersID, ParentTask: rootID}, {ID: stockID, ManagerID: stockID, ParentTask: rootID}}
+	if reviewRequired(project, parent) {
+		t.Fatal("fixture parent must own no files")
+	}
+	childReviews := 0
+	for _, child := range children {
+		if reviewRequired(project, child) {
+			childReviews++
+		}
+	}
+	if got := reviewPhaseStarts(project, append([]ManagerTask{parent}, children...)); got != childReviews+1 {
+		t.Fatalf("review starts = %d, want the children's %d work reviews plus the parent's integration review", got, childReviews)
+	}
+	if got := reviewPhaseStarts(project, []ManagerTask{parent}); got != 0 {
+		t.Fatalf("a file-less parent without children needs no review, counted %d", got)
+	}
+}

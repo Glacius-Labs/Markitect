@@ -1960,6 +1960,9 @@ func applyProposal(base candidateData, proposals []agentexec.CandidateFile, conf
 	return base, nil
 }
 
+// forbiddenRuntimePath is lexical. Other Windows aliases of existing entries,
+// such as MARKIT~1 for .markitect, are refused by stored name where a path is
+// written: materializeCandidate, the helper writes and the guarded apply.
 func forbiddenRuntimePath(path string) bool {
 	lower := strings.ToLower(path)
 	for _, component := range strings.Split(lower, "/") {

@@ -268,17 +268,7 @@ func PlanExpecting(host Host, root, revision string, request PlanRequest, expect
 		minimumStarts++
 	}
 	if runtime.Review != nil {
-		phaseCount := 0
-		for _, task := range managerTasks {
-			if !reviewRequired(finalProject, task) {
-				continue
-			}
-			phaseCount++
-			if len(activeChildren(managerTasks, task.ManagerID)) > 0 {
-				phaseCount++
-			}
-		}
-		minimumStarts += phaseCount
+		minimumStarts += reviewPhaseStarts(finalProject, managerTasks)
 	}
 	if minimumStarts > runtime.Limits.MaxStarts {
 		return plan, fmt.Errorf("plan requires at least %d manager, check, and verifier starts; configured limit is %d", minimumStarts, runtime.Limits.MaxStarts)
@@ -904,6 +894,25 @@ func emptyCandidate() (candidateData, error) {
 		return candidateData{}, err
 	}
 	return candidateData{ID: id, Files: map[string]File{}}, nil
+}
+
+// reviewPhaseStarts counts the reviewer starts a plan must allow: the work
+// review of each Manager whose own scope requires one, and the integration
+// review of every Manager with active children. An integration review is
+// required whenever direct children deliver files (phaseReviewRequired), which
+// planning cannot know yet, so the count is conservative: a tight start limit
+// is rejected here instead of blocking the run.
+func reviewPhaseStarts(project *Project, tasks []ManagerTask) int {
+	starts := 0
+	for _, task := range tasks {
+		if reviewRequired(project, task) {
+			starts++
+		}
+		if len(activeChildren(tasks, task.ManagerID)) > 0 {
+			starts++
+		}
+	}
+	return starts
 }
 
 func modelEditCandidate(plan *EditPlan, base *Snapshot) (candidateData, error) {

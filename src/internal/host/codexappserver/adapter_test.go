@@ -1226,51 +1226,55 @@ func TestFileChangeApprovalDeclinesWindowsShortNameOfExcludedScope(t *testing.T)
 	alias := filepath.Join(handle.CWD, "docs", "GENERA~1", "schema.md")
 	aliasInfo, aliasErr := os.Stat(alias)
 	realInfo, realErr := os.Stat(excludedFile)
-	if aliasErr != nil || realErr != nil || !os.SameFile(aliasInfo, realInfo) {
-		t.Skipf("volume generates no 8.3 short name GENERA~1 for docs/generated-protos (%v, %v)", aliasErr, realErr)
-	}
+	shortNames := aliasErr == nil && realErr == nil && os.SameFile(aliasInfo, realInfo)
 	contextJSON, err := json.Marshal(map[string]any{"kind": "projectrun-task/v1", "managerId": "docs-manager", "phase": "work", "allowedWritePaths": allowed, "excludedWritePaths": excluded})
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Every NTFS volume resolves case variants, so only the 8.3 case skips.
 	for _, tc := range []struct {
-		path, want string
+		name, path, want string
 	}{
-		{alias, "decline"},
-		{filepath.Join(handle.CWD, "Docs", "guide.md"), "decline"},
-		{filepath.Join(handle.CWD, "docs", "guide.md"), "accept"},
+		{"8.3 short name", alias, "decline"},
+		{"case variant", filepath.Join(handle.CWD, "Docs", "guide.md"), "decline"},
+		{"stored name", filepath.Join(handle.CWD, "docs", "guide.md"), "accept"},
 	} {
-		decision, paths := "", []string(nil)
-		options := Options{OnEvent: func(_ context.Context, e Event) error {
-			if e.Method == "markitect/fileChangeApproval/decision" {
-				var value struct {
-					Decision string   `json:"decision"`
-					Paths    []string `json:"paths"`
-				}
-				if err := json.Unmarshal(e.Params, &value); err != nil {
-					return err
-				}
-				decision, paths = value.Decision, value.Paths
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.path == alias && !shortNames {
+				t.Skipf("volume generates no 8.3 short name GENERA~1 for docs/generated-protos (%v, %v)", aliasErr, realErr)
 			}
-			return nil
-		}}
-		adapter, shared, request, runOptions := fixture(t, "filechange-accept", options)
-		request.Role = agentexec.RoleExecutor
-		request.SourceRevision = workspaceRequest.BaseSHA
-		request.Context = contextJSON
-		runOptions.Workspace = &handle
-		changes := []fileUpdateChange{{Path: tc.path}}
-		changes[0].Kind.Type = "update"
-		changesJSON, err := json.Marshal(changes)
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Setenv("MARKITECT_P04_CHANGES", string(changesJSON))
-		t.Setenv("MARKITECT_P04_APPROVAL_VARIANT", "")
-		_, runErr := adapter.Run(context.Background(), shared, request, runOptions)
-		if decision != tc.want || (tc.want == "decline") != errors.Is(runErr, ErrApprovalRequired) {
-			t.Errorf("approval of %s: decision=%q paths=%v err=%v, want %s", tc.path, decision, paths, runErr, tc.want)
-		}
+			decision, paths := "", []string(nil)
+			options := Options{OnEvent: func(_ context.Context, e Event) error {
+				if e.Method == "markitect/fileChangeApproval/decision" {
+					var value struct {
+						Decision string   `json:"decision"`
+						Paths    []string `json:"paths"`
+					}
+					if err := json.Unmarshal(e.Params, &value); err != nil {
+						return err
+					}
+					decision, paths = value.Decision, value.Paths
+				}
+				return nil
+			}}
+			adapter, shared, request, runOptions := fixture(t, "filechange-accept", options)
+			request.Role = agentexec.RoleExecutor
+			request.SourceRevision = workspaceRequest.BaseSHA
+			request.Context = contextJSON
+			runOptions.Workspace = &handle
+			changes := []fileUpdateChange{{Path: tc.path}}
+			changes[0].Kind.Type = "update"
+			changesJSON, err := json.Marshal(changes)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("MARKITECT_P04_CHANGES", string(changesJSON))
+			t.Setenv("MARKITECT_P04_APPROVAL_VARIANT", "")
+			_, runErr := adapter.Run(context.Background(), shared, request, runOptions)
+			if decision != tc.want || (tc.want == "decline") != errors.Is(runErr, ErrApprovalRequired) {
+				t.Errorf("approval of %s: decision=%q paths=%v err=%v, want %s", tc.path, decision, paths, runErr, tc.want)
+			}
+		})
 	}
 }
 

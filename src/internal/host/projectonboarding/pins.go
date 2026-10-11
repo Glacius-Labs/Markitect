@@ -18,20 +18,15 @@ type RuntimePins struct {
 	ClaudeCode string `json:"claudeCode"`
 }
 
-const (
-	// standardModel is the standard runtime profile's model, as in
-	// `config --provider codex --model gpt-6-luna`.
-	standardModel = "gpt-6-luna"
-	// claudeCodeVersion is the outer Claude Code version the guidance is
-	// written for. Claude Code is never an inner worker, so no runtime binds it.
-	claudeCodeVersion = "2.1.295"
-)
+// claudeCodeVersion is the outer Claude Code version the guidance is written
+// for. Claude Code is never an inner worker, so no runtime binds it.
+const claudeCodeVersion = "2.1.295"
 
 // Pins returns the one source of the runtime pins in generated guidance.
 func Pins() RuntimePins {
 	return RuntimePins{
 		CodexCLI:   strings.TrimPrefix(codexappserver.SupportedProviderVersion, "codex-cli "),
-		Model:      standardModel,
+		Model:      projectsetup.DefaultCodexModel,
 		Effort:     projectsetup.DefaultCodexEffort,
 		ClaudeCode: claudeCodeVersion,
 	}

@@ -3,8 +3,9 @@
 `load(path)` is the only validator; other modules trust its result. The case must be
 one of the folders `cases.discover()` finds under the playground root (inside the run
 container that is /in). `stations` defaults to the case's count. `markitect.sourceRepo`
-defaults to the Git checkout that holds the playground; the host then records it as an
-absolute path with the full commit (`host.resolve_markitect`).
+defaults to the Git checkout that holds the playground, if it is a Markitect checkout;
+the host then records it as an absolute path with the full commit
+(`host.resolve_markitect`).
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ CLAUDE_KINDS = ("claude", "fake-claude")
 # The image always ships both CLIs; Codex manifests may leave the Claude version out.
 DEFAULT_CLAUDE_VERSION = "2.1.296"
 CONTAINER_DEFAULTS = {"cpus": 4, "memory": "8g", "pidsLimit": 2048}
+MARKITECT_MODULE = "github.com/Glacius-Labs/Markitect"  # what makes a checkout the default sourceRepo
 
 _ID = re.compile(r"[a-z0-9][a-z0-9-]{0,62}")
 _VERSION = re.compile(r"[0-9][0-9A-Za-z.-]{0,55}")  # both versions together form the Docker tag
@@ -134,13 +136,31 @@ def validate(data: Any, *, playground: Path | None = None) -> dict:
 
 
 def default_source_repo(playground: Path | None = None) -> str:
-    """The Git checkout that holds the playground, as an absolute path."""
+    """The Git checkout that holds the playground, as an absolute path, when it is a
+    Markitect checkout (its go.mod declares the product's module)."""
     start = Path(playground or cases.ROOT).resolve()
     for folder in (start, *start.parents):
         if (folder / ".git").exists():
+            if go_module(folder) != MARKITECT_MODULE:
+                raise ManifestError(f"markitect.sourceRepo: missing, and the Git checkout {folder} that holds the "
+                                    f"playground is not a Markitect checkout (its go.mod does not declare module "
+                                    f"{MARKITECT_MODULE}); set markitect.sourceRepo to a Markitect checkout")
             return str(folder)
     raise ManifestError(f"markitect.sourceRepo: missing, and no Git checkout holds the playground at {start} "
-                        "to use as the default; give the path of a Markitect checkout")
+                        "to use as the default; set markitect.sourceRepo to a Markitect checkout")
+
+
+def go_module(folder: Path) -> str | None:
+    """The module path that `folder/go.mod` declares, or None."""
+    try:
+        text = (Path(folder) / "go.mod").read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return None
+    for line in text.splitlines():
+        words = line.split("//", 1)[0].split()
+        if len(words) == 2 and words[0] == "module":
+            return words[1].strip('"`')
+    return None
 
 
 def _object(value: Any, where: str, *, required: set[str] = frozenset(),

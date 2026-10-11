@@ -23,8 +23,8 @@ var productLayers = map[string]bool{"core": true, "infrastructure": true, "appli
 // guardedWriteAPI is an allowlist, so a newly exported guardedwrite
 // identifier is forbidden to product packages until it is listed here.
 var guardedWriteAPI = map[string]bool{
-	"CaptureFiles": true, "Apply": true, "ApplyChecked": true,
-	"Capture": true, "Change": true, "File": true, "Result": true,
+	"CaptureFiles": true, "Apply": true, "ApplyChecked": true, "NewStoredNames": true,
+	"Capture": true, "Change": true, "File": true, "Result": true, "StoredNames": true,
 }
 
 // CheckRepository runs every import rule over the repository at root: the

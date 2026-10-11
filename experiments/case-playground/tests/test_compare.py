@@ -134,6 +134,22 @@ class CompareTests(unittest.TestCase):
         self.assertIn("fairness.hostPlatform", err)
         self.assertEqual(self.main(str(a), str(old), "--allow-mismatch")[0], 0)
 
+    def test_an_unknown_host_platform_never_matches_not_even_another_unknown_one(self):
+        old = report("old-1", "conventional", host_os=None)
+        older = report("older-1", "markitect")
+        del older["run"]["fairness"]["hostPlatform"]  # from before the field existed
+        a, b = self.save("old", old), self.save("older", older)
+        self.assertEqual(compare.mismatches(old, older), [("fairness.hostPlatform", None, None)])
+        code, err = self.main(str(a), str(b))
+        self.assertEqual(code, 2)
+        self.assertIn("fairness.hostPlatform: unknown (not recorded) vs unknown (not recorded)", err)
+        self.assertIn("never paired", err)
+        out = self.root / "cmp.md"
+        self.assertEqual(self.main(str(a), str(b), "--allow-mismatch", "--out", str(out))[0], 0)
+        text = out.read_text(encoding="utf-8")
+        self.assertIn("`fairness.hostPlatform`: unknown (not recorded) vs unknown (not recorded)", text)
+        self.assertIn("DEC-013", text)
+
     def test_fairness_fields_cover_the_required_set(self):
         fields = compare.fairness_fields(report("x", "conventional"))
         for key in ("case", "outerProvider", "fairness.imageId", "fairness.model", "fairness.effort",
