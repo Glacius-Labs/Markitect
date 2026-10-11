@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"unicode"
@@ -79,15 +81,24 @@ func MaterializeWithLimits(s *snapshot.Snapshot, destination string, limits Limi
 	if len(entries) != 0 {
 		return errors.New("destination directory is not empty")
 	}
+	// The path checks above are lexical, and Windows resolves an 8.3 short
+	// name such as MARKIT~1 to an entry written earlier. The listing goes
+	// through an opened root because os.DirFS cannot list a \\?\ root.
+	opened, err := os.OpenRoot(dest)
+	if err != nil {
+		return fmt.Errorf("open destination: %w", err)
+	}
+	defer opened.Close()
+	stored := NewStoredNames(opened.FS())
 	for _, p := range paths {
-		if err := writeMaterializedFile(dest, p, s.Files[p], s.Modes[p]); err != nil {
+		if err := writeMaterializedFile(stored, dest, p, s.Files[p], s.Modes[p]); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func writeMaterializedFile(dest, repoPath string, data []byte, mode string) error {
+func writeMaterializedFile(stored *StoredNames, dest, repoPath string, data []byte, mode string) error {
 	parts := strings.Split(repoPath, "/")
 	current := dest
 	for _, component := range parts[:len(parts)-1] {
@@ -99,6 +110,9 @@ func writeMaterializedFile(dest, repoPath string, data []byte, mode string) erro
 		if err != nil || isSymlink(info) || !info.IsDir() {
 			return fmt.Errorf("unsafe destination directory for %q", repoPath)
 		}
+	}
+	if err := stored.Require(repoPath); err != nil {
+		return err
 	}
 	file := filepath.Join(current, parts[len(parts)-1])
 	perm := os.FileMode(0644)
@@ -169,6 +183,74 @@ func validateRepoPath(p string) error {
 		base := strings.ToUpper(strings.SplitN(component, ".", 2)[0])
 		if windowsReservedName(base) {
 			return fmt.Errorf("unsafe Windows device path %q", p)
+		}
+	}
+	return nil
+}
+
+// RequireStoredName refuses an existing path component that Windows resolved
+// through another spelling: an 8.3 short name such as GIT~1 for .git, or a
+// case variant. Lexical checks see only the requested text, so a write through
+// such an alias would reach a path they never authorized. Only stored names
+// appear in a directory listing. It is a no-op outside Windows.
+func RequireStoredName(directory fs.FS, parent, part string) error {
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+	entries, err := fs.ReadDir(directory, parent)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.Name() == part {
+			return nil
+		}
+	}
+	return fmt.Errorf("%q names an existing entry stored under another name", part)
+}
+
+// StoredNames applies RequireStoredName to write paths below one directory.
+// Writers of copies use it where they write, after creating parent
+// directories, because an alias can only be resolved on disk. It remembers
+// the directories it has proven, so writing a whole tree lists each directory
+// once; use one value per tree while nothing else renames its entries.
+type StoredNames struct {
+	directory fs.FS
+	proven    map[string]bool
+}
+
+// NewStoredNames returns the check for paths below directory.
+func NewStoredNames(directory fs.FS) *StoredNames {
+	return &StoredNames{directory: directory, proven: map[string]bool{}}
+}
+
+// Require refuses the slash-separated name when one of its existing
+// components is stored under another spelling. It checks up to the first
+// component that does not exist yet and is a no-op outside Windows.
+func (s *StoredNames) Require(name string) error {
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+	parts := strings.Split(name, "/")
+	for i, part := range parts {
+		prefix := strings.Join(parts[:i+1], "/")
+		if s.proven[prefix] {
+			continue
+		}
+		if _, err := fs.Lstat(s.directory, prefix); errors.Is(err, fs.ErrNotExist) {
+			return nil
+		} else if err != nil {
+			return err
+		}
+		parent := "."
+		if i > 0 {
+			parent = strings.Join(parts[:i], "/")
+		}
+		if err := RequireStoredName(s.directory, parent, part); err != nil {
+			return fmt.Errorf("unsafe path %s: %w", name, err)
+		}
+		if i < len(parts)-1 {
+			s.proven[prefix] = true
 		}
 	}
 	return nil

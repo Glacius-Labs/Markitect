@@ -137,7 +137,6 @@ func writeExploreTestRuntime(t *testing.T, repo string, managers []projectmodel.
 
 func TestReadyShowsExactBindingAndPreviewsExplicitAcknowledgement(t *testing.T) {
 	repo := copyProjectWorld(t)
-	configureReadinessTestModel(t, repo)
 	project, err := projectwork.Load(repo, "")
 	if err != nil {
 		t.Fatal(err)
@@ -191,24 +190,4 @@ func TestReadyShowsExactBindingAndPreviewsExplicitAcknowledgement(t *testing.T) 
 	if len(summary.Explorations) != 1 || len(summary.Explorations[0].Scopes) != 1 || !summary.Explorations[0].Scopes[0].Acknowledged {
 		t.Fatalf("status overview does not show the acknowledged scope: %+v", summary.Explorations)
 	}
-}
-
-func configureReadinessTestModel(t *testing.T, repo string) {
-	t.Helper()
-	path := filepath.Join(repo, ".markitect", "model", "project-artifacts.yaml")
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	text := string(data)
-	marker := "  required: true\n"
-	if strings.Count(text, marker) != 1 {
-		t.Fatalf("expected one project-level required artifact, got %d", strings.Count(text, marker))
-	}
-	text = strings.Replace(text, marker, "  checks:\n    - namespace: engineering\n      name: cancellation-tests\n"+marker, 1)
-	if err := os.WriteFile(path, []byte(text), 0644); err != nil {
-		t.Fatal(err)
-	}
-	runGit(t, repo, "add", ".markitect/model/project-artifacts.yaml")
-	runGitWithEnv(t, repo, testCommitEnv, "commit", "--amend", "--no-edit")
 }

@@ -164,6 +164,10 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 						pendingReviewRecovered = true
 						continue
 					}
+					var unrouted unroutedReviewError
+					if errors.As(recoveryErr, &unrouted) {
+						return blockRun(store, report, fmt.Errorf("recovered final review for %s failed and its findings have no rework route: %w", task.ManagerID, unrouted.cause))
+					}
 					if current := findTask(report.Tasks, task.ManagerID); current != nil {
 						current.State = "uncertain"
 					}

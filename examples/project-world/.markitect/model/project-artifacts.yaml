@@ -11,5 +11,8 @@ spec:
       name: repository-overview
   paths:
     - README.md
+  checks:
+    - namespace: engineering
+      name: readme-guide
   required: true
   reason: Contributors need a precise guide to the fixture and the CLI behavior it demonstrates.

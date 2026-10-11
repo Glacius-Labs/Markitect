@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+// unroutedReviewError reports a recovered final review whose failure is
+// already recorded but whose findings have no empowered rework route.
+type unroutedReviewError struct{ cause error }
+
+func (e unroutedReviewError) Error() string { return e.cause.Error() }
+func (e unroutedReviewError) Unwrap() error { return e.cause }
+
 // recoverPendingNativeReview reconciles the exact persisted review candidate,
 // round and native journal before returning the Manager to the scheduler.
 func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime Runtime, base *Project, report *RunReport, managerID string) error {
@@ -69,18 +76,20 @@ func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker,
 		// candidate the reviewer assessed. Route the findings to the empowered
 		// parent as the final review loop does; the bounded rework rounds then
 		// rebuild the ancestor chain before the final reviews run again.
+		task.State = "worked"
+		if phase == "integrate" {
+			task.State = "integrated"
+		}
 		requester, requests, routeErr := routeReviewFindings(*task, record, selected.Report, report.Tasks)
 		parent := findTask(report.Tasks, requester)
 		if routeErr == nil && parent == nil {
 			routeErr = fmt.Errorf("review findings for %s have no empowered direct parent", task.ManagerID)
 		}
 		if routeErr != nil {
-			_ = persistState(store, report)
-			return routeErr
-		}
-		task.State = "worked"
-		if phase == "integrate" {
-			task.State = "integrated"
+			if err := persistState(store, report); err != nil {
+				return err
+			}
+			return unroutedReviewError{cause: routeErr}
 		}
 		parent.ReworkRequests = append(parent.ReworkRequests, requests...)
 	} else {

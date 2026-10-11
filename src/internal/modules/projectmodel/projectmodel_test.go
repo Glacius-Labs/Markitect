@@ -912,3 +912,67 @@ func TestImpactRoutesBothModelFilesOfAMovedDefinition(t *testing.T) {
 		t.Fatalf("moved definition: changed=%v files=%v unknown=%v, want both model files", impact.ChangedDefinitions, impact.Files, impact.Unknown)
 	}
 }
+
+// BUG-01: when a Statement changes, the Manager whose own Decision is about it
+// is routed; that Statement is one of its Contracts.
+func TestImpactRoutesTheOwnerOfADecisionOnAChangedStatement(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	definitions := append(copyDefinitions(model.Definitions),
+		core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "inventory", Name: "stock-unit"}, Purpose: "Unit of stock.", Spec: map[string]any{"category": "concept", "description": "Pieces.", "public": true}},
+		decisionDefinition("orders", "count-pieces", "inventory", "stock-unit", "Orders count pieces."),
+	)
+	analyze := func(description string) Report {
+		changed := copyDefinitions(definitions)
+		for i := range changed {
+			if changed[i].Metadata.Name == "stock-unit" {
+				changed[i].Spec["description"] = description
+			}
+		}
+		compiled, diagnostics := core.Compile(model.Schemas, changed, "decision-subject")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		return Analyze(compiled, files)
+	}
+	impact := Impact(analyze("Pieces."), analyze("Packs of ten pieces."))
+	orders := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}).Key()
+	if len(impact.Unknown) != 0 || !contains(impact.Managers, orders) {
+		t.Fatalf("the owner of a decision on the changed statement is not routed: managers=%v unknown=%v", impact.Managers, impact.Unknown)
+	}
+}
+
+// BUG-01: a Check that must run again because an Artifact declares it routes
+// its owner, like a Check that exercises the changed Statement.
+func TestImpactRoutesTheOwnerOfAnArtifactCheck(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	root := map[string]any{"apiVersion": APIVersion, "kind": managerKind, "namespace": "", "name": "root"}
+	smokeRef := map[string]any{"apiVersion": APIVersion, "kind": checkKind, "namespace": "qa", "name": "smoke"}
+	definitions := append(copyDefinitions(model.Definitions),
+		core.Definition{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Namespace: "qa", Name: "qa"}, Purpose: "Quality.", Spec: map[string]any{"parent": root, "owns": []any{"qa/"}}},
+		core.Definition{APIVersion: APIVersion, Kind: checkKind, Metadata: core.Metadata{Namespace: "qa", Name: "smoke"}, Purpose: "Smoke test.", Spec: map[string]any{"command": []any{"go", "test", "./qa"}}},
+	)
+	for i := range definitions {
+		if definitions[i].Metadata.Name == "cancel-order-code" {
+			definitions[i].Spec["checks"] = append(append([]any(nil), definitions[i].Spec["checks"].([]any)...), smokeRef)
+		}
+	}
+	analyze := func(description string) Report {
+		changed := copyDefinitions(definitions)
+		for i := range changed {
+			if changed[i].Metadata.Name == "cancel-order" {
+				changed[i].Spec["description"] = description
+			}
+		}
+		compiled, diagnostics := core.Compile(model.Schemas, changed, "artifact-check")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		return Analyze(compiled, files)
+	}
+	impact := Impact(analyze("Before."), analyze("After."))
+	smoke := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: checkKind, Namespace: "qa", Name: "smoke"}).Key()
+	qa := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "qa", Name: "qa"}).Key()
+	if !contains(impact.Checks, smoke) || !contains(impact.Managers, qa) {
+		t.Fatalf("artifact check or its owner not routed: checks=%v managers=%v", impact.Checks, impact.Managers)
+	}
+}

@@ -215,7 +215,7 @@ func witness(e element, parents map[element]cause) []WitnessStep {
 func (r routing) changeClass() map[element]bool {
 	change, rewrite := map[element]bool{}, map[element]bool{}
 	carries := map[string]bool{"realizes": true, "exercises": true, "decides on": true, "owns": true, "maps to": true,
-		"realized by": true, "exercised by": true, "expects": true, "checked by": true, "owned by": true, "written in": true}
+		"realized by": true, "exercised by": true, "decided by": true, "expects": true, "checked by": true, "owned by": true, "written in": true}
 	fromSeed := map[string]bool{"used by": true, "required by": true, "requires": true}
 	rewriteCarries := map[string]bool{"written in": true, "declares": true, "owned by": true}
 	for grew := true; grew; {
