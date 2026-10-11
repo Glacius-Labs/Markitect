@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/mcp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
 // The verb table is the single source of the command surface: CLI parsing,
@@ -113,6 +115,10 @@ func define[In, Out any](v verb, handler func(context.Context, env, In) (Out, er
 			var zero Out
 			return zero, err
 		}
+		if err := resolveRevisions(e.root, reflect.ValueOf(&in).Elem()); err != nil {
+			var zero Out
+			return zero, err
+		}
 		return handler(ctx, e, in)
 	}
 	v.invoke = func(ctx context.Context, e env, raw json.RawMessage) (any, error) {
@@ -138,6 +144,32 @@ func define[In, Out any](v verb, handler func(context.Context, env, In) (Out, er
 		mcp.Register(s, v.name, v.description(), mutation, func(ctx context.Context, in In) (Out, error) { return call(ctx, e, in) }, options...)
 	}
 	return v
+}
+
+var fullCommitID = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
+
+// resolveRevisions turns each revision argument into the full commit ID it
+// names, so a caller may write HEAD, a branch or a short ID while the Host
+// still binds one fixed, full commit and records it.
+func resolveRevisions(root string, in reflect.Value) error {
+	for _, field := range []string{"Revision", "Since"} {
+		f := in.FieldByName(field)
+		// A full commit ID passes unchanged; the Host validates it as before.
+		if !f.IsValid() || f.Kind() != reflect.String || f.String() == "" || fullCommitID.MatchString(f.String()) {
+			continue
+		}
+		name := "--revision"
+		if field == "Since" {
+			name = "--since"
+		}
+		out, err := source.GitOutput(root, "rev-parse", "--verify", "--quiet", "--end-of-options", f.String()+"^{commit}")
+		full := strings.ToLower(strings.TrimSpace(string(out)))
+		if err != nil || (len(full) != 40 && len(full) != 64) {
+			return usagef("%s %q does not name a commit in this repository", name, f.String())
+		}
+		f.SetString(full)
+	}
+	return nil
 }
 
 // checkEffect applies the effect rules shared by every adapter: --expect needs

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"slices"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
@@ -19,7 +20,7 @@ import (
 // Arguments shared by several verbs.
 var (
 	argRepo     = arg{name: "repo", value: "PATH", cliOnly: true, help: "Project root; defaults to the current directory. MCP fixes it with `mcp --repo`."}
-	argRevision = arg{name: "revision", value: "R", help: "Fixed commit to read; without it the working tree is read and reported as provisional."}
+	argRevision = arg{name: "revision", value: "R", help: "Fixed commit to read: anything Git resolves to a commit, such as HEAD or a short ID; without it the working tree is read and reported as provisional."}
 	argWrite    = arg{name: "write", kind: kindBool, help: "Persist exactly the reviewed preview."}
 	argExpect   = arg{name: "expect", value: "DIGEST", help: "Digest the write is bound to; the write fails as stale if it changed."}
 	argExecute  = arg{name: "execute", kind: kindBool, help: "Start agents or configured checks."}
@@ -312,12 +313,16 @@ var contextVerb = define(verb{
 	name: "context", group: "Model", effect: effectRead,
 	summary:  "Read one Manager's context under the accepted-history rules; --trace walks its knowledge graph.",
 	synopsis: "context MANAGER [--revision R] [--trace ID [--direction out|in|both] [--depth N]]",
-	args: []arg{{name: "manager", value: "MANAGER", operand: true, required: true, help: "Manager ID."}, argRepo, argRevision,
+	args: []arg{{name: "manager", value: "MANAGER", operand: true, required: true, help: "Manager ID, or its short name when that is unique in the project."}, argRepo, argRevision,
 		{name: "trace", value: "ID", help: "Walk the Manager's knowledge graph from this node and return each reached node with a shortest witness path."},
 		{name: "direction", value: "out|in|both", help: "With --trace: follow relations outward (default), inward or both ways."},
 		{name: "depth", kind: kindInt, value: "N", help: "With --trace: the most relations to follow, 1 to 32; default 6."}},
 }, func(ctx context.Context, e env, in contextInput) (contextResult, error) {
-	operation := projectapp.ContextOperation{Selection: projectapp.Selection{Root: e.root, Revision: in.Revision}, ManagerID: in.Manager}
+	managerID, err := resolveManager(e, in.Revision, in.Manager)
+	if err != nil {
+		return contextResult{}, err
+	}
+	operation := projectapp.ContextOperation{Selection: projectapp.Selection{Root: e.root, Revision: in.Revision}, ManagerID: managerID}
 	if in.Trace == "" {
 		if in.Direction != "" || in.Depth != 0 {
 			return contextResult{}, usagef("--direction and --depth require --trace")
@@ -418,6 +423,31 @@ var editVerb = define(verb{
 }, func(ctx context.Context, e env, in editInput) (projectwork.EditPlan, error) {
 	return e.ops.Edit(projectapp.EditOperation{Selection: projectapp.Selection{Root: e.root, Revision: in.Revision}, Mutation: in.Input, Write: in.Write, ExpectedDigest: in.Expect})
 })
+
+// resolveManager accepts a Manager's full ID or its short name when that name
+// is unique in the selected project.
+func resolveManager(e env, revision, manager string) (string, error) {
+	if strings.HasPrefix(manager, "[") {
+		return manager, nil
+	}
+	report, err := e.ops.Index(projectapp.Selection{Root: e.root, Revision: revision})
+	if err != nil {
+		return "", err
+	}
+	matches := []string{}
+	for _, candidate := range report.Managers {
+		if candidate.Name == manager {
+			matches = append(matches, candidate.ID)
+		}
+	}
+	switch len(matches) {
+	case 1:
+		return matches[0], nil
+	case 0:
+		return "", usagef("no Manager is named %q; `markitect model` lists each Manager's ID and name", manager)
+	}
+	return "", usagef("Manager name %q is ambiguous; use one of the full IDs: %s", manager, strings.Join(matches, ", "))
+}
 
 // staleOnly drops the report of a stale write: the operation did not run.
 func staleOnly[T any](report T, err error) (T, error) {

@@ -93,8 +93,8 @@ Each argument has one name. The CLI flag is its kebab-case form, and the MCP fie
 | Flag | MCP field | Meaning | Today |
 |---|---|---|---|
 | `--repo PATH` | none | Project root. Defaults to the current directory. MCP fixes it with `mcp --repo` and never takes it from tool arguments. | required in `project` |
-| `--revision R` | `revision` | The fixed commit a verb reads, verifies or plans against. Reads without it use the working tree and report `provisional`. | MCP `baseRevision` on plan |
-| `--since R` | `since` | The older revision for change impact (`impact`, `plan`, `brief`). | `--base`, `baseRevision` on impact; `sinceRevision` |
+| `--revision R` | `revision` | The fixed commit a verb reads, verifies or plans against: anything Git resolves to a commit, such as `HEAD`, a branch or a short ID. The output records the full commit ID. Reads without it use the working tree and report `provisional`. | MCP `baseRevision` on plan |
+| `--since R` | `since` | The older revision for change impact (`impact`, `plan`, `brief`); resolved like `--revision`. | `--base`, `baseRevision` on impact; `sinceRevision` |
 | `--manager ID` | `manager` | Manager ID. Repeatable on `plan`; `context` takes it as its operand. With `impact --explain` it limits the explanation to what that Manager may see. | `managerId`, `managers` |
 | `--explain` | `explain` | `impact` adds, per element, the reason it is included, a shortest witness path from a change and its class, `change` or `context` ([DEC-023](../concepts/register.md#dec-023-impact-marks-change-and-context-without-dropping-either)). The impact itself is unchanged. | new (KG-02) |
 | `--trace ID` | `trace` | `context` also walks the Manager's knowledge graph, built from its context alone, from that node and returns each reached node with a witness path. A node the Manager cannot see is not found. | new (KG-02) |
@@ -119,7 +119,7 @@ Each argument has one name. The CLI flag is its kebab-case form, and the MCP fie
 
 The remaining verb-specific flags keep their names and gain matching fields: `--name`, `--provider`, `--model`, `--effort`, `--codex-profile`, `--windows-sandbox-backend`, `--provider-executable`, `--provider-arg` (repeatable), `--provider-version`, `--cost-mode`, `--input-micros-per-million`, `--output-micros-per-million`, `--max-cost-micros`, `--document-path`, `--provenance` and `--event`. Today's nested MCP `options` objects for setup, doctor and onboard become these flat fields.
 
-**Operands.** A verb takes a positional operand only when it acts on one record named by one ID: `context MANAGER`, `run PLAN`, `resume RUN`, `repair RUN`, `status [RUN]` and `verify RUN`. Verbs that need several IDs use flags only. `adopt STAGE` and `brief [list|dismiss]` take a sub-verb. In MCP, an operand is an ordinary field: `manager`, `plan`, `run`, and `action` for every sub-verb (the `adopt` stage; for `brief`, `create`, `list` or `dismiss`, default `create`). Each operand has one CLI form; there is no flag alias for it.
+**Operands.** A verb takes a positional operand only when it acts on one record named by one ID: `context MANAGER`, `run PLAN`, `resume RUN`, `repair RUN`, `status [RUN]` and `verify RUN`. Verbs that need several IDs use flags only. `adopt STAGE` and `brief [list|dismiss]` take a sub-verb. In MCP, an operand is an ordinary field: `manager`, `plan`, `run`, and `action` for every sub-verb (the `adopt` stage; for `brief`, `create`, `list` or `dismiss`, default `create`). Each operand has one CLI form; there is no flag alias for it. `context` accepts a Manager's short name in place of its full ID when the name is unique in the project.
 
 ## Effects: read, write, execute
 

@@ -29,6 +29,10 @@ func TestInitPreviewAndGuardedWriteCreateControlPlaneAndDocumentation(t *testing
 		if !strings.HasPrefix(file.Path, ".markitect/") && file.Path != DefaultDocumentPath {
 			t.Fatalf("Init planned a path outside .markitect: %s", file.Path)
 		}
+		// Reads may record local state; Git must not see it as untracked.
+		if file.Path == ".markitect/.gitignore" && !strings.Contains(file.Content, "/state/\n") {
+			t.Fatalf("Init does not ignore .markitect/state/: %q", file.Content)
+		}
 		if _, err := os.Lstat(filepath.Join(root, filepath.FromSlash(file.Path))); !os.IsNotExist(err) {
 			t.Fatalf("preview wrote target %s: %v", file.Path, err)
 		}
