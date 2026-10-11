@@ -2,11 +2,17 @@
 
   python -m playground assess --run DIR [--codex-auth PATH] [--claude-token PATH]
                               [--reviewers codex,claude|none] [--image IMAGE] [--force] [--keep-container]
-                              [--fake-reviewers]
+                              [--fake-reviewers] [--exploratory]
 
-Host side: stage this evaluation (code, `evaluation/common`, `evaluation/config.json`
-and the case's evaluation files except `reference/`) into `<run>/assessment/inputs`,
-launch one container `mpg-assess-<id>` from the run's image and wait for it. Mounts:
+Host side: stage the code and the evaluation files the run was pre-registered with
+(registration.py: `evaluation/common`, `config.json` and the case's files except
+`reference/`, `mutants/` and `validate.py`, read with `git archive` from the Git tree
+recorded in host.json, never from the working tree) into `<run>/assessment/inputs`. The
+reviewer models come from that tree's `config.json` and must differ from the arms'
+models. A run without a registration or a reviewer clash is refused (exit 2) unless
+`--exploratory`: it uses the working tree, records `rules.exploratory: true`, and
+`compare` refuses the assessment. Then it launches one container `mpg-assess-<id>` from
+the run's image and waits for it. Mounts:
 the run folder read-only at /assess/run, the staged inputs read-only at /assess/in,
 the reviewer credentials read-only under /assess/secrets and `<run>/assessment` at
 /assess/out. Credentials are only checked for existence on the host, never read.
@@ -22,8 +28,9 @@ reviewer's answer. Writes `report.json`, `report.md` and `product-findings.md`.
 `--fake-reviewers` (smoke tests, no model call) runs `tests/fake_reviewer.py` in place
 of both CLIs with throwaway credentials; the real logins are never mounted then.
 
-Exit codes (outcome.py): 0 written; 10 the container did not exit 0 (assess-error.txt);
-failed holdouts or reviews inside a written assessment do not change it.
+Exit codes (outcome.py): 0 written; 2 refused (pre-registration, reviewer models); 10
+the container did not exit 0 (assess-error.txt); failed holdouts or reviews inside a
+written assessment do not change it.
 """
 from __future__ import annotations
 
@@ -42,7 +49,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-from . import assess, codex_agent, lifecycle, methods, outcome, reviewers
+from . import assess, codex_agent, lifecycle, methods, outcome, registration, reviewers
 from . import report as report_module
 from .lifecycle import read_text as _read_text
 
@@ -53,9 +60,11 @@ SECRET_CODEX = "/assess/secrets/codex-auth.json"
 SECRET_CLAUDE = "/assess/secrets/claude-token"
 REVIEWER_LOGIN = reviewers.LOGIN_COPY.as_posix()  # the reviewers' working copy, copied out by a study
 DEFAULT_CLAUDE_TOKEN = Path.home() / ".markitect-playground" / "claude-token"
-COPY_IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc")
+COPY_PATTERNS = ("__pycache__", "*.pyc")
+COPY_IGNORE = shutil.ignore_patterns(*COPY_PATTERNS)
 # The reference and the mutants that validate the holdouts are never staged, never shown.
-CASE_IGNORE = shutil.ignore_patterns("reference", "mutants", "validate.py", "__pycache__", "*.pyc")
+CASE_PATTERNS = ("reference", "mutants", "validate.py", *COPY_PATTERNS)
+CASE_IGNORE = shutil.ignore_patterns(*CASE_PATTERNS)
 GIT_TIMEOUT = 300
 HOLDOUT_TIMEOUT = 600
 HOLDOUT_MARGIN = 90  # seconds between holdout.py's own deadline and the hard timeout
@@ -118,9 +127,12 @@ def _short(text: Any, limit: int = TEXT_CAP) -> str:
 
 
 def load_config(path: Path) -> dict:
-    config = _read_json(path)
+    return check_config(_read_json(path), path)
+
+
+def check_config(config: Any, where: Any) -> dict:
     if not isinstance(config, dict) or not isinstance(config.get("reviewers"), dict):
-        raise AssessError(f"evaluation config missing or invalid: {path}")
+        raise AssessError(f"evaluation config missing or invalid: {where}")
     for name, cfg in config["reviewers"].items():
         if name not in reviewers.PROVIDERS or not isinstance(cfg, dict) or not cfg.get("model"):
             raise AssessError(f"evaluation config: reviewer {name!r} needs a model")
@@ -512,8 +524,13 @@ def classify_run(host_record: dict, runner_state: dict, setup: dict | None, resu
     causes = []
     status = host_record.get("status")
     if status and status != "completed":
-        name = "environment" if status in ("start-failed", "wait-failed", "setup-failed") else "harness"
+        name = ("product" if host_record.get("failureClass") == "product"
+                else "environment" if status in ("start-failed", "wait-failed", "setup-failed") else "harness")
         causes.append({"class": name, "reason": _short(f"host status {status}: {host_record.get('error')}", 300)})
+    limits = (host_record.get("manifest") or {}).get("container") or {}
+    if host_record.get("containerExitCode") == outcome.KILLED and limits.get("memory"):
+        causes.append({"class": "environment", "reason": "the run container was killed (exit 137) under its "
+                                                         "memory limit"})
     if (results / "runner-error.txt").is_file():
         causes.append({"class": "harness", "reason": "runner error (results/runner-error.txt)"})
     if (setup or {}).get("status") == "blocked":
@@ -677,11 +694,15 @@ def _review_root() -> Path:
 def assess_run(run_dir: Path, evaluation_dir: Path, out_dir: Path, *, reviewer_names: list[str] | tuple = (),
                codex_auth: Path | None = None, claude_token_file: Path | None = None, in_dir: Path | None = None,
                executables: dict | None = None, evaluation: dict | None = None, image: str | None = None,
-               login_copy: Path | None = None) -> dict:
+               login_copy: Path | None = None, exploratory: bool = False) -> dict:
     """Assess every station of one run folder; writes report.json, report.md and
     product-findings.md into `out_dir` and returns the report. The Codex reviewers share
     one working copy of `codex_auth` (at `login_copy`; default reviewers.LOGIN_COPY in
-    the container, else a temporary one), which carries a refreshed login between waves."""
+    the container, else a temporary one), which carries a refreshed login between waves.
+    `evaluation` says where `evaluation_dir` came from ({"source": "registered" or
+    "working-tree", "tree", "commit", "dirty"}); the report's `rules` say whether the
+    assessment counts as pre-registered (registered source, neither it nor the run
+    exploratory) and whether the reviewer models differ from the arms' models."""
     run_dir, evaluation_dir, out_dir = (Path(p).resolve() for p in (run_dir, evaluation_dir, out_dir))
     out_dir.mkdir(parents=True, exist_ok=True)
     results = run_dir / "results"
@@ -706,6 +727,11 @@ def assess_run(run_dir: Path, evaluation_dir: Path, out_dir: Path, *, reviewer_n
                                                        ("QUALITY.md", in_dir / "cases" / "common" / "QUALITY.md"))
              if path.is_file()}
     names = [name for name in reviewer_names if name in config["reviewers"]]
+    evaluation = dict(evaluation or {})
+    exploratory = bool(exploratory or (host_record.get("rules") or {}).get("exploratory") is True)
+    clashes = registration.clashes(config, names, registration.arm_models(manifest, run_report.get("roles")))
+    verdict = {"preRegistered": evaluation.get("source") == "registered" and not exploratory,
+               "exploratory": exploratory, "reviewersIndependent": not clashes, "reviewerClashes": clashes}
     token = None
     if "claude" in names and claude_token_file is not None and Path(claude_token_file).is_file():
         token = Path(claude_token_file).read_text(encoding="utf-8").strip() or None
@@ -722,7 +748,7 @@ def assess_run(run_dir: Path, evaluation_dir: Path, out_dir: Path, *, reviewer_n
         "backlog": _read_text(case_inputs / "BACKLOG.md"), "rules": rules,
         "allItems": [item for wave in plan for item in wave] or [i for s in stations for i in s["items"]],
         "codexAuth": login, "claudeToken": token,
-        "executables": executables or {}, "roles": None,
+        "executables": executables or {}, "roles": None, "verdict": verdict,
     }
     if names and not isinstance(ctx["schema"], dict):
         raise AssessError("reviewer schema missing or invalid")
@@ -747,7 +773,7 @@ def assess_run(run_dir: Path, evaluation_dir: Path, out_dir: Path, *, reviewer_n
         if temporary_login:
             reviewers.remove_tree(login.parent)
     report = _report(run_dir, out_dir, manifest, host_record, run_report, runner_state, setup, results, entries,
-                     ctx, evaluation_dir, case_eval, evaluation or {}, image, versions, errors)
+                     ctx, evaluation_dir, case_eval, evaluation, image, versions, errors)
     _write_json(out_dir / "report.json", report)
     (out_dir / "report.md").write_text(render_report(report, ctx["findings"]), encoding="utf-8", newline="\n")
     (out_dir / "product-findings.md").write_text(
@@ -788,11 +814,13 @@ def _report(run_dir, out_dir, manifest, host_record, run_report, runner_state, s
                 "stratum": run_report.get("stratum") or report_module._stratum(manifest),
                 "roles": run_report.get("roles") or ctx["roles"],
                 "classification": run_report.get("classification")},
-        "evaluation": {"commit": evaluation.get("commit"), "dirty": evaluation.get("dirty"),
+        "evaluation": {"source": evaluation.get("source"), "tree": evaluation.get("tree"),
+                       "commit": evaluation.get("commit"), "dirty": evaluation.get("dirty"),
                        "groundTruth": ctx["groundTruth"] is not None, "holdouts": ctx["holdout"] is not None,
                        "files": {key: ({"path": path.relative_to(evaluation_dir).as_posix(), "sha256": _sha256(path)}
                                        if path is not None and path.is_file() else None)
                                  for key, path in files.items()}},
+        "rules": ctx["verdict"],
         "reviewers": {name: {"model": ctx["config"]["reviewers"][name].get("model"),
                              "effort": ctx["config"]["reviewers"][name].get("effort"),
                              "timeoutSeconds": ctx["config"]["reviewers"][name].get("timeoutSeconds"),
@@ -891,9 +919,14 @@ def render_report(report: dict, findings: dict) -> str:
              f"Run status {_fmt(run.get('status'))}, {run['stationsRun']} station(s).",
              f"Classification: **{report['classification']['class']}** ({report['classification']['reason']}).", ""]
     file_notes = [f"{key} {(value or {}).get('sha256') or 'none'}" for key, value in evaluation["files"].items()]
-    lines += [f"- Evaluation commit {_fmt(evaluation.get('commit'))}"
-              + (" (with uncommitted changes in the playground folder)" if evaluation.get("dirty") else "")
-              + f"; SHA-256: {'; '.join(file_notes)}.",
+    rules = report.get("rules") or {}
+    clashes = rules.get("reviewerClashes") or []
+    lines += [f"- Evaluation files: {_evaluation_source(evaluation)}; SHA-256: {'; '.join(file_notes)}.",
+              f"- Rules: pre-registered {_fmt(rules.get('preRegistered'))}; exploratory {_fmt(rules.get('exploratory'))}; "
+              f"reviewer models differ from the arms' models {_fmt(rules.get('reviewersIndependent'))}"
+              + (f" ({registration.describe(clashes)})" if clashes else "")
+              + ("." if rules.get("preRegistered") and rules.get("reviewersIndependent")
+                 else "; compare refuses this assessment."),
               f"- Ground truth: {_fmt(evaluation['groundTruth'])}; holdouts: {_fmt(evaluation['holdouts'])}.",
               "- Reviewers: " + ("; ".join(f"{name} {cfg['model']} (effort {_fmt(cfg.get('effort'))}, "
                                            f"{_fmt(cfg.get('version'))})" for name, cfg in report["reviewers"].items())
@@ -987,6 +1020,15 @@ def render_report(report: dict, findings: dict) -> str:
     return "\n".join(lines)
 
 
+def _evaluation_source(evaluation: dict) -> str:
+    commit = str(evaluation.get("commit") or "n/a")[:12]
+    if evaluation.get("source") == "registered":
+        return f"registered Git tree {str(evaluation.get('tree'))[:12]} (commit {commit})"
+    if evaluation.get("source") == "working-tree":
+        return f"working tree at commit {commit}" + (" with uncommitted changes" if evaluation.get("dirty") else "")
+    return f"commit {commit}" + (" with uncommitted changes" if evaluation.get("dirty") else "")
+
+
 def render_product_findings(report: dict, setup: dict | None, results: Path, analyses: dict) -> str:
     run = report["run"]
     versions = run.get("versions") or {}
@@ -1057,13 +1099,57 @@ def evaluation_identity() -> dict:
     return {"commit": commit.strip() if commit else None, "dirty": None if status is None else bool(status.strip())}
 
 
-def stage_inputs(case: str, target: Path, *, fake_reviewers: bool = False) -> None:
-    """Code and evaluation files for the assessment container; never `reference/`."""
+def evaluation_source(record: dict, exploratory: bool) -> tuple[dict, dict]:
+    """(evaluation, config) an assessment judges with: the Git tree the run was
+    pre-registered with and its config.json, or with `exploratory` the working tree.
+    Raises AssessError (exit 2) for a run without a registration."""
+    root = EVALUATION.parent
+    if exploratory:
+        state = registration.observe(root)
+        dirty = None if state["status"] == "no-checkout" else state["status"] == "dirty"
+        return ({"source": "working-tree", "tree": None, "commit": state.get("commit"), "dirty": dirty},
+                load_config(EVALUATION / "config.json"))
+    pre = record.get("preRegistration")
+    if not isinstance(pre, dict):
+        raise AssessError("the run records no pre-registration (it started before pre-registration was enforced); "
+                          "assess it with --exploratory (compare then refuses the assessment)")
+    if pre.get("status") != "registered" or not pre.get("evaluationTree"):
+        raise AssessError(f"the run is not pre-registered: when it started, {registration.refusal(pre)}; assess it "
+                          "with --exploratory (compare then refuses the assessment)")
+    tree = pre["evaluationTree"]
+    try:
+        if not registration.tree_exists(root, tree):
+            raise AssessError(f"the registered evaluation tree {tree} (commit {pre.get('commit')}) is not in this "
+                              "checkout; fetch that commit")
+        config = check_config(registration.read_json(root, tree, "config.json"),
+                              f"config.json in the registered evaluation tree {tree}")
+    except registration.RegistrationError as exc:
+        raise AssessError(str(exc)) from exc
+    return {"source": "registered", "tree": tree, "commit": pre.get("commit"), "dirty": False}, config
+
+
+def stage_inputs(case: str, target: Path, *, fake_reviewers: bool = False, tree: str | None = None) -> None:
+    """Code and evaluation files for the assessment container; never `reference/`,
+    `mutants/` or `validate.py`. With `tree` the evaluation files are the committed
+    bytes of that registered Git tree, else the working tree's."""
     shutil.copytree(ROOT / "playground", target / "playground", ignore=COPY_IGNORE)
     if fake_reviewers:
         (target / "tests").mkdir(parents=True)
         shutil.copyfile(FAKE_REVIEWER, target / "tests" / FAKE_REVIEWER.name)
     evaluation = target / "evaluation"
+    if tree is not None:
+        def keep(parts: tuple[str, ...]) -> bool:
+            if parts == ("config.json",):
+                return True
+            patterns = {"common": COPY_PATTERNS, case: CASE_PATTERNS}.get(parts[0])
+            return patterns is not None and len(parts) > 1 and not registration.ignored(parts[1:], patterns)
+
+        evaluation.mkdir(parents=True)
+        try:
+            registration.extract(registration.archive(EVALUATION.parent, tree), evaluation, keep)
+        except registration.RegistrationError as exc:
+            raise AssessError(str(exc)) from exc
+        return
     shutil.copytree(EVALUATION / "common", evaluation / "common", ignore=COPY_IGNORE)
     shutil.copyfile(EVALUATION / "config.json", evaluation / "config.json")
     if (EVALUATION / case).is_dir():
@@ -1095,21 +1181,27 @@ def docker_argv(*, name: str, image: str, limits: dict, run_dir: Path, out: Path
     return argv + ["--workdir", "/assess/in", image, *command]
 
 
-def inside_command(names: list[str], identity: dict, image_id: str | None, *, codex: bool, claude: bool,
-                   fake_reviewers: bool = False) -> list[str]:
+def inside_command(names: list[str], evaluation: dict, image_id: str | None, *, codex: bool, claude: bool,
+                   fake_reviewers: bool = False, exploratory: bool = False) -> list[str]:
     command = ["python3", "-B", "-m", "playground", "assess", "--inside", "--run", "/assess/run",
                "--evaluation", "/assess/in/evaluation", "--out", "/assess/out",
                "--reviewers", ",".join(names) or "none"]
     if fake_reviewers:
         command.append("--fake-reviewers")
+    if exploratory:
+        command.append("--exploratory")
     if codex:
         command += ["--codex-auth", SECRET_CODEX]
     if claude:
         command += ["--claude-token", SECRET_CLAUDE]
-    if identity.get("commit"):
-        command += ["--evaluation-commit", identity["commit"]]
-    if identity.get("dirty") is not None:
-        command += ["--evaluation-dirty", "yes" if identity["dirty"] else "no"]
+    if evaluation.get("source"):
+        command += ["--evaluation-source", evaluation["source"]]
+    if evaluation.get("tree"):
+        command += ["--evaluation-tree", evaluation["tree"]]
+    if evaluation.get("commit"):
+        command += ["--evaluation-commit", evaluation["commit"]]
+    if evaluation.get("dirty") is not None:
+        command += ["--evaluation-dirty", "yes" if evaluation["dirty"] else "no"]
     if image_id:
         command += ["--image-id", image_id]
     return command
@@ -1136,7 +1228,8 @@ def host_assess(args: argparse.Namespace) -> int:
                               outcome.ENVIRONMENT)
         claude_token = claude_token.resolve()
     exit_code, _result = assess_container(run_dir, names=names, codex_auth=codex_auth, claude_token=claude_token,
-                                          fake=fake, image=args.image, force=args.force, keep=args.keep_container)
+                                          fake=fake, image=args.image, force=args.force, keep=args.keep_container,
+                                          exploratory=args.exploratory)
     print(f"assessment: {run_dir / 'assessment' / 'report.md'}")
     return exit_code
 
@@ -1144,9 +1237,15 @@ def host_assess(args: argparse.Namespace) -> int:
 def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None = None,
                      claude_token: Path | None = None, fake: bool = False, image: str | None = None,
                      force: bool = False, keep: bool = False,
-                     before_remove: Callable[[str], None] | None = None) -> tuple[int, dict]:
+                     before_remove: Callable[[str], None] | None = None,
+                     exploratory: bool = False) -> tuple[int, dict]:
     """Assess one run folder in its own container and return (exit code, host record);
     the code (outcome.assess) is also `exitCode` in the assessment's host.json.
+
+    The evaluation files are the run's registered Git tree (evaluation_source); a run
+    without a registration, or a reviewer whose model is also an arm's model, is refused
+    with AssessError (exit 2) before Docker, unless `exploratory` (or, for a model clash
+    only, `fake`): then the clash is a warning and the report records it.
 
     `codex_auth` and `claude_token` are login files mounted read-only (never opened here);
     with `fake` the reviewers get throwaway credentials instead. `before_remove(container)`
@@ -1159,10 +1258,19 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
     manifest = (record or {}).get("manifest")
     if not isinstance(manifest, dict) or not (run_dir / "results").is_dir():
         raise AssessError(f"not a run folder (needs host.json with a manifest and results/): {run_dir}")
-    config = load_config(EVALUATION / "config.json")
+    evaluation, config = evaluation_source(record, exploratory)
     missing = [name for name in names if name not in config["reviewers"]]
     if missing:
         raise AssessError(f"evaluation/config.json has no reviewer {', '.join(missing)}")
+    exploratory = exploratory or (record.get("rules") or {}).get("exploratory") is True
+    run_report = _read_json(run_dir / "results" / "report.json") or {}
+    clashes = registration.clashes(config, names, registration.arm_models(manifest, run_report.get("roles")))
+    if clashes and not (exploratory or fake):
+        raise AssessError(f"{registration.describe(clashes)}; reviewer models must differ from the arms' models: "
+                          "select other reviewers with --reviewers, or pass --exploratory (compare then refuses "
+                          "the assessment)")
+    if clashes:
+        print(f"warning: {registration.describe(clashes)}; compare refuses this assessment", file=sys.stderr)
     out = run_dir / "assessment"
     if out.exists() or out.is_symlink():
         if not force:
@@ -1183,11 +1291,10 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
                           outcome.ENVIRONMENT) from exc
     stations = len(discover_stations(run_dir / "results"))
     timeout = wait_bound(stations, config, names)
-    identity = evaluation_identity()
     out.mkdir()
     try:
-        stage_inputs(manifest["case"], out / "inputs", fake_reviewers=fake)
-    except OSError:
+        stage_inputs(manifest["case"], out / "inputs", fake_reviewers=fake, tree=evaluation["tree"])
+    except (OSError, AssessError):
         shutil.rmtree(out, ignore_errors=True)
         raise
     throwaway = Path(tempfile.mkdtemp(prefix="mpg-fake-credentials-")) if fake else None
@@ -1199,13 +1306,14 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
         if "claude" in names:
             claude_token = throwaway / "claude-token"
             claude_token.write_text(f"fake-reviewer-token-{secrets.token_hex(16)}\n", encoding="utf-8")
-    command = inside_command(names, identity, image_id, codex=codex_auth is not None, claude=claude_token is not None,
-                             fake_reviewers=fake)
+    command = inside_command(names, evaluation, image_id, codex=codex_auth is not None,
+                             claude=claude_token is not None, fake_reviewers=fake, exploratory=exploratory)
     argv = docker_argv(name=name, image=image_id, limits=manifest.get("container") or {}, run_dir=run_dir, out=out,
                        codex_auth=codex_auth, claude_token=claude_token, command=command)
     result: dict[str, Any] = {"run": str(run_dir), "status": "start-failed", "container": name,
                               "image": {"ref": image, "id": image_id}, "dockerVersion": docker_version,
-                              "reviewers": names, "fakeReviewers": fake, "evaluation": identity,
+                              "reviewers": names, "fakeReviewers": fake, "evaluation": evaluation,
+                              "rules": {"exploratory": exploratory, "reviewerClashes": clashes},
                               "timeoutSeconds": timeout, "startedAt": _utc(), "endedAt": None,
                               "containerExitCode": None, "exitCode": None, "dockerRun": argv, "error": None}
     try:
@@ -1222,6 +1330,9 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
     except host.HostError as exc:
         result["error"] = str(exc)
         print(f"error: {exc}", file=sys.stderr)
+    except Exception as exc:  # a bug of ours: recorded with the code __main__ exits with, then raised
+        result["status"], result["error"] = "harness-error", f"{type(exc).__name__}: {exc}"
+        raise
     finally:
         try:
             host._finish_container(name, result, out, keep, before_remove)
@@ -1230,7 +1341,9 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
         if throwaway is not None:
             shutil.rmtree(throwaway, ignore_errors=True)
         result["endedAt"] = _utc()
-        result["exitCode"] = exit_code = outcome.assess(result["status"], result["containerExitCode"])
+        result["exitCode"] = exit_code = outcome.assess(
+            result["status"], result["containerExitCode"],
+            memory_limited=bool((manifest.get("container") or {}).get("memory")))
         _write_json(out / "host.json", result)  # first, so an interrupted hand-back keeps the record
         result["handBack"] = host.hand_back(name, image_id, out)
         _write_json(out / "host.json", result)
@@ -1265,9 +1378,10 @@ def inside(args: argparse.Namespace) -> int:
                    codex_auth=Path(args.codex_auth) if args.codex_auth else None,
                    claude_token_file=Path(args.claude_token) if args.claude_token else None,
                    executables=executables,
-                   evaluation={"commit": args.evaluation_commit,
+                   evaluation={"source": args.evaluation_source, "tree": args.evaluation_tree,
+                               "commit": args.evaluation_commit,
                                "dirty": None if args.evaluation_dirty is None else args.evaluation_dirty == "yes"},
-                   image=args.image_id)
+                   image=args.image_id, exploratory=args.exploratory)
     except Exception:
         (out / "assess-error.txt").write_text(traceback.format_exc(), encoding="utf-8")
         print(traceback.format_exc(), file=sys.stderr)
@@ -1290,9 +1404,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--keep-container", action="store_true")
     parser.add_argument("--fake-reviewers", action="store_true",
                         help="smoke test: tests/fake_reviewer.py stands in for both CLIs (no model call)")
+    parser.add_argument("--exploratory", action="store_true",
+                        help="judge with the working tree's evaluation files, also for a run without a "
+                             "pre-registration or with a reviewer model clash; compare refuses the assessment")
     parser.add_argument("--inside", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--evaluation", help=argparse.SUPPRESS)
     parser.add_argument("--out", help=argparse.SUPPRESS)
+    parser.add_argument("--evaluation-source", choices=("registered", "working-tree"), help=argparse.SUPPRESS)
+    parser.add_argument("--evaluation-tree", help=argparse.SUPPRESS)
     parser.add_argument("--evaluation-commit", help=argparse.SUPPRESS)
     parser.add_argument("--evaluation-dirty", choices=("yes", "no"), help=argparse.SUPPRESS)
     parser.add_argument("--image-id", help=argparse.SUPPRESS)

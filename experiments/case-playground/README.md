@@ -93,10 +93,12 @@ python3 tests/smoke_docker.py    # one run: host run --manifest examples/fake-ro
 python3 tests/smoke_study.py     # a whole study: both arms, assessments, comparison
 ```
 
-Each smoke works in a new folder under `$TMPDIR` (default `/tmp`, never inside a Git
-checkout) and keeps it after a failure; `--keep` keeps it after a pass. `smoke_docker.py
---manifest` takes the other fakes, `examples/fake-readinglog2.json` (six waves) and
-`examples/fake-claude-roombook.json` (Claude Code stand-in). `smoke_study.py` runs
+Run them from a Git checkout whose `evaluation/` is committed and unchanged
+([Pre-registration](#pre-registration)). Each smoke works in a new folder under `$TMPDIR`
+(default `/tmp`, never inside a Git checkout) and keeps it after a failure; `--keep`
+keeps it after a pass. `smoke_docker.py --manifest` takes the other fakes,
+`examples/fake-readinglog2.json` (six waves) and `examples/fake-claude-roombook.json`
+(Claude Code stand-in). `smoke_study.py` runs
 `study examples/study-fake-roombook.json --fake-reviewers` with a throwaway Codex login:
 two roombook waves per arm, the Markitect arm with the binary built from this checkout at
 the example's commit and the real product setup. If a product command fails, the setup
@@ -106,11 +108,12 @@ changed under the setup sequence in `playground/methods.py`.
 `smoke: passed`, the last line, means that every check above it is `[ok]`.
 `smoke_docker.py` checks one run: exit 0; every wave ran and merged its `FAKE_S<n>.md`;
 setup `ready`, class `none`, final public checks; token counts from the session records;
-leftover processes killed; `host.json` complete and no labelled container left; the
-agent never opened `/out`; for `fake-claude` a throwaway token reached the agent and is
-nowhere in the run folder. `smoke_study.py` checks the study: schedule order, both
-assessments, a comparison with matching fairness fields, a complete `study.json`, the
-login carried from run to run, nowhere in the study folder, the source never written, no
+leftover processes killed; `host.json` complete with its pre-registration and no
+labelled container left; the agent never opened `/out`; for `fake-claude` a throwaway
+token reached the agent and is nowhere in the run folder. `smoke_study.py` checks the
+study: schedule order, both assessments on the registered evaluation tree, a comparison
+with matching fairness fields and host platform, a complete `study.json`, the login
+carried from run to run, nowhere in the study folder, the source never written, no
 login folder and no container left. Neither judges quality: the fake agent only writes
 `FAKE_S<n>.md`, so its public checks fail, as expected.
 
@@ -162,8 +165,9 @@ for the Markitect arm); that no playground container runs and no other study hol
 `~/.markitect-playground/study.lock` (run one study at a time); that no container has the
 study's names; for the Markitect arm `git`, `go` and a checkout holding the commit; every
 needed login (present, not empty, with what needs it); a new study folder outside every
-Git checkout with 5 GiB free. It only warns when the commit is behind `HEAD`, the host is
-not Linux, evaluation files are uncommitted or an earlier study left login folders. Then
+Git checkout with 5 GiB free; pre-registered evaluation files; reviewer models that differ
+from the arms' models (with `--fake-reviewers` only a warning). It only warns when the
+commit is behind `HEAD`, the host is not Linux or an earlier study left login folders. Then
 it builds the image and the binary once for all runs; `--preflight` stops before that
 and writes nothing.
 
@@ -185,6 +189,7 @@ and writes nothing.
 | `playground/evaluate.py` | `assess`: starts the assessment container; inside, checks, holdouts, diff profile, classification, product findings and reviews. |
 | `playground/reviewers.py` | Codex and Claude reviewers: prompt, input bundle, commands, schema validation, agreement. |
 | `playground/compare.py` | Side-by-side comparison of two assessed runs after a fairness check. |
+| `playground/registration.py` | [Pre-registration](#pre-registration) from Git and the reviewer model check. |
 | `playground/outcome.py` | The [exit codes](#exit-codes) and how each command computes its own. |
 | `playground/study.py` | `study`: study file, schedule, preflight and login copies; runs, assesses and compares through the functions behind `host run`, `assess` and `compare`. |
 | `container/Dockerfile` | The image: `node:22-bookworm-slim`, Python, Git, bubblewrap, Codex CLI and Claude Code at pinned versions, user `agent` (uid 1000). |
@@ -205,6 +210,7 @@ HOST  python3 -m playground study S.json
 
 HOST  python3 -m playground host run --manifest M.json
   |  validate manifest; check that login files exist (never read them)
+  |  pre-registration: evaluation/ committed -> commit and Git tree in host.json
   |  docker build   -> image markitect-playground:codex-<v>-claude-<v>
   |  Markitect arm  -> go build of markitect.commit
   |  stage <out>/inputs: code, cases/common, cases/<case>, prompt,
@@ -227,7 +233,7 @@ HOST  remove container; hand results/ back to you; write host.json
 HOST  python3 -m playground assess --run <out>
   v
 ASSESSMENT CONTAINER mpg-assess-<id> (same image)
-  |  /assess/run = run folder (ro)  /assess/in = code + evaluation files (ro)
+  |  /assess/run = run folder (ro)  /assess/in = code + the run's registered evaluation tree (ro)
   |  per wave, on a copy of that wave's main:
   |     public checks again, holdouts, diff profile, classification, product findings
   |  per wave: Codex and Claude reviews (holdouts removed first)
@@ -320,7 +326,7 @@ any manifest and saved normalized in `manifests/`.
 | `arms` | list of `conventional`, `markitect` | required | Both arms form pairs; one arm repeats. |
 | `firstArm` | one of `arms` | required | Goes first in odd pairs; the other arm goes first in even pairs. |
 | `pairs` | positive integer | `1` | Number of pairs (with one arm: of runs). |
-| `reviewers` | list of `codex`, `claude`, or `[]` | required | Reviewers of every assessment; their models are pre-registered in `evaluation/config.json`. |
+| `reviewers` | list of `codex`, `claude`, or `[]` | required | Reviewers of every assessment; their models are pre-registered in `evaluation/config.json` and must differ from the arms' models. |
 
 ### `study`
 
@@ -342,6 +348,7 @@ any manifest and saved normalized in `manifests/`.
 | `--codex-auth PATH` | `~/.codex/auth.json` | Codex login, used only when needed. |
 | `--claude-token PATH` | none | Required for kind `claude`, optional for `fake-claude`, ignored otherwise. |
 | `--keep-container` | off | Keep the container after it ends. |
+| `--exploratory` | off | Run although `evaluation/` has uncommitted changes; records `rules.exploratory`, and `compare` refuses the run. |
 
 `python3 -m playground host clean` removes every stopped playground container (label
 `markitect-playground=1`), assessment containers included.
@@ -351,13 +358,14 @@ any manifest and saved normalized in `manifests/`.
 | Option | Default | Meaning |
 |---|---|---|
 | `--run DIR` | required | Run folder with `host.json` and `results/`. |
-| `--reviewers LIST` | `codex,claude` | One, both or `none`; each must be in `evaluation/config.json`. |
+| `--reviewers LIST` | `codex,claude` | One, both or `none`; each must be in the registered `config.json`. |
 | `--codex-auth PATH` | `~/.codex/auth.json` | Codex reviewer login. |
 | `--claude-token PATH` | `~/.markitect-playground/claude-token` | Claude reviewer token. |
 | `--image IMAGE` | the run's image | Image of the assessment container. |
 | `--force` | off | Replace an existing `assessment/` folder. |
 | `--keep-container` | off | Keep the container after it ends. |
-| `--fake-reviewers` | off | Fake reviewer CLIs, throwaway credentials, no model call. Not with `--codex-auth` or `--claude-token`. |
+| `--fake-reviewers` | off | Fake reviewer CLIs, throwaway credentials, no model call. Not with `--codex-auth` or `--claude-token`. A reviewer model clash only warns. |
+| `--exploratory` | off | Judge with the working tree's evaluation files, also a run without a registration or with a reviewer model clash; `compare` refuses the assessment. |
 
 ### `compare`
 
@@ -372,7 +380,7 @@ any manifest and saved normalized in `manifests/`.
 | Key | Today | Default when missing | Meaning |
 |---|---|---|---|
 | `schema` | `1` | not checked | Config schema. |
-| `reviewers.codex.model` | `gpt-6.1-sol` | required | Codex reviewer model. A reviewer exists only if listed. |
+| `reviewers.codex.model` | `gpt-6.1-sol` | required | Codex reviewer model. A reviewer exists only if listed. Every model must differ from the arms' models ([Reviewers](#reviewers)). |
 | `reviewers.claude.model` | `claude-opus-5-5` | required | Claude reviewer model. |
 | `reviewers.<name>.effort` | `high` | flag left out | Reasoning effort. |
 | `reviewers.<name>.timeoutSeconds` | `2700` | `2700` | Hard limit per review. |
@@ -387,17 +395,19 @@ any manifest and saved normalized in `manifests/`.
 |---|---|
 | 0 | Completed. `host run`: every wave ran, class `none`; `assess`, `compare`: written; `study`: every step 0. |
 | 1 | Method outcome: the run stopped early with class `none` (agent time used up). |
-| 2 | Invalid input or refused by a rule: manifest, study file, options, folder, fairness mismatch. |
+| 2 | Invalid input or refused by a rule: manifest, study file, options, folder, pre-registration, reviewer models, fairness mismatch. |
 | 3 | `study` preflight failed, including the image and binary builds. |
-| 10 | Harness failure: runner error, failed snapshot or wave release, `assess-error.txt`, `study-error.txt`. |
-| 11 | Environment failure: logins, no session id, host status `setup-failed`, `start-failed` or `wait-failed` (image build included), image changed. |
-| 12 | Product failure: setup blocked by the product, `markitect check` could not run. |
+| 10 | Harness failure: runner error, failed snapshot or wave release, `assess-error.txt`, `study-error.txt`, an unexpected error of the command. |
+| 11 | Environment failure: logins, no session id, host status `setup-failed`, `start-failed` or `wait-failed` (image build included), a container killed (exit 137) under its memory limit, image changed. |
+| 12 | Product failure: the Markitect binary does not build, setup blocked by the product, `markitect check` could not run. |
 | 124, 130 | Host safety timeout; interrupted. |
 
 `host run` maps its host status and the run report's [class](#outcome-classes); the runner's
-own 0, 1 or 2 stays `containerExitCode` in `host.json`. Failed holdouts or reviews never
-fail `assess`. `study` gives its worst step code (130, 124, 10, 11, 12, 1, 0 in that
-order); a step refused inside a study (2) counts as 10.
+own 0, 1 or 2 stays `containerExitCode` in `host.json`, which always records the code the
+process exits with. Failed holdouts or reviews never fail `assess`. `study` gives its
+worst step code (130, 124, 10, 11, 12, 1, 0 in that order); a step refused inside a study
+(2) counts as 10. A study whose worst step is 1 has status `method-stopped`: the method
+stopped, the harness did not fail.
 
 ## Results
 
@@ -414,7 +424,7 @@ order); a step refused inside a study (2) counts as 10.
 | Path | Content |
 |---|---|
 | `results/report.md`, `report.json` | **Start here.** One row per wave, setup, final assessment, classification, fairness fields, versions. |
-| `host.json`, `image-build.log`, `container.log`, `inputs/` | Host record (normalized manifest, status, host platform, image, Docker version, Markitect build, times, `docker run` arguments, container and mapped exit code, `handBack`); build and container output; what was mounted at `/in`. |
+| `host.json`, `image-build.log`, `container.log`, `inputs/` | Host record (normalized manifest, status, host platform, `preRegistration`, `rules`, image, Docker version, Markitect build, times, `docker run` arguments, container and mapped exit code, `handBack`); build and container output; what was mounted at `/in`. |
 | `results/runner.json`, `runner-error.txt` | Status, stop reason and category, versions, login rewrite, token redactions; a traceback after a runner error. |
 | `results/setup/`, `stations/S<n>/`, `final/` | Setup command output; per wave the agent's events, output, `agent.json`, `checks.json` and work outside the repository; the last wave's public checks, own tests and Markitect conformance. |
 | `results/audit/`, `evidence/` | Seed and wave plan (`run.json`), per-wave snapshots, the final freeze; session records, transcripts and Markitect's cache. |
@@ -423,7 +433,7 @@ order); a step refused inside a study (2) counts as 10.
 
 | Path under `<run>/assessment/` | Content |
 |---|---|
-| `report.md`, `report.json`, `product-findings.md` | Per wave: public checks, holdouts, diff profile, reviewer findings and agreement, obligations, escalations, class; evaluation commit and file hashes, reviewer models, image. Product findings: setup steps, failed MCP calls and product commands, with exact error text. |
+| `report.md`, `report.json`, `product-findings.md` | Per wave: public checks, holdouts, diff profile, reviewer findings and agreement, obligations, escalations, class; evaluation source, Git tree, commit and file hashes, `rules`, reviewer models, image. Product findings: setup steps, failed MCP calls and product commands, with exact error text. |
 | `stations/S<n>/` | Checks, holdouts, `wave.diff`, what the reviewers got and their answers. |
 | `host.json`, `container.log`, `inputs/`, `assess-error.txt` | Host record, container output, staged code and evaluation files; a traceback when the assessment failed. |
 
@@ -492,10 +502,16 @@ into a run.
 
 ### Pre-registration
 
-Commit ground truth, holdouts, reviewer prompt, schema and config before the first run
-they judge. The assessment reads them from your checkout and records its commit, whether
-the playground folder had uncommitted changes, and each file's SHA-256. It does not check
-that the commit is older than the run: compare it with `startedAt` in `host.json`.
+Commit ground truth, holdouts, reviewer prompt, schema and config before the runs they
+judge. `host run` (before the build) and the `study` preflight refuse an `evaluation/`
+with uncommitted or untracked changes, or a playground outside a Git checkout, and list
+the paths; the run records `preRegistration` (`status`, `commit`, `evaluationTree`, the
+Git tree of `evaluation/`, and `recordedAt`) in `host.json`. `assess` judges with exactly
+that tree, read from Git (`git archive`), never from the working tree, including the
+reviewer models in its `config.json`; the report records `evaluation.source: registered`,
+the tree, the commit and each file's SHA-256. A run without a registration (older runs) is
+refused. `--exploratory` on `host run` or `assess` (never `study`) uses the working tree
+and records `rules.exploratory`; `compare` refuses such runs.
 
 ### Holdouts
 
@@ -520,8 +536,13 @@ assessment runs it as the unprivileged user on a copy of the wave's `main`, with
   `CODEX_HOME` holding only the login. **Claude:** `claude -p --output-format json
   --json-schema ...`, tools `Read`, `Grep`, `Glob` only, no settings
   (`--setting-sources ""`, `--strict-mcp-config`), a fresh `CLAUDE_CONFIG_DIR`, the token
-  only in its environment. Model and effort come from `evaluation/config.json`; choose
-  models that differ from the arms' models (nothing checks this).
+  only in its environment. Model and effort come from the registered `config.json`.
+- **Independence:** no reviewer model may be an arm's model: `agent.model`,
+  `markitect.innerModel` and, in `assess`, every Markitect role's model in the run report,
+  compared casefolded and without a trailing `[...]`; the provider is not checked. The
+  `study` preflight fails on a clash; `assess` refuses it (exit 2) unless `--reviewers`
+  leaves the clashing reviewer out or `--exploratory` records `reviewersIndependent:
+  false`. With `--fake-reviewers` a clash only warns.
 - **Prompt:** the fixed, versioned [reviewer-prompt.md](evaluation/common/reviewer-prompt.md),
   the same for every arm and provider, plus the wave's inputs: released item texts,
   earlier items, project rules (case README, `AGENTS.md`, `QUALITY.md`), the ground-truth
@@ -542,8 +563,10 @@ assessment runs it as the unprivileged user on a copy of the wave's `main`, with
 outer provider; the run report's fairness fields (stations, host platform, Codex and
 Claude Code versions, image ID, model, effort, subagent limit, time limits, container
 size); the SHA-256 of every evaluation file; each reviewer's model, effort and CLI
-version. It does not compare the Markitect commit, the inner model or the evaluation
-commit; check those yourself.
+version. Both assessments must also have `rules.preRegistered` and
+`rules.reviewersIndependent` true (missing counts as false). The comparison and its output
+name the matched host platform. It does not compare the Markitect commit, the inner model
+or the evaluation commit; check those yourself.
 
 A different host platform is a fairness mismatch, and so is a platform that a run does
 not record (older runs), even when both lack it. This is stricter than `host run` and
@@ -588,5 +611,6 @@ not record (older runs), even when both lack it. This is stricter than `host run
 - Unit tests run without Docker or a provider; tests that need root or the `agent` user
   skip cleanly elsewhere. The Docker smokes cover the end-to-end contract.
 - Evaluation files are pre-registered and hashed: `ground-truth.json`, `holdout.py`,
-  the reviewer prompt and schema, and `config.json`. Any edit, even a comment, changes
-  the hash, and `compare` then refuses runs assessed before and after it.
+  the reviewer prompt and schema, and `config.json`. Commit any edit before the next run;
+  even a comment changes the hash, and `compare` then refuses runs assessed before and
+  after it.
