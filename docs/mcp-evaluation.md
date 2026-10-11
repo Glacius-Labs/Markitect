@@ -1,5 +1,7 @@
 # MCP evaluation (2026-10-01)
 
+**Status:** dated record of the read-only MCP pilot. Its decision no longer describes the product: the MCP server now ships in the `markitect` binary as `markitect mcp`, with one tool per verb and a `--read-only` mode. For the current server see [Project operations](project-operations.md#mcp-server-and-tool-groups), [Provider adapters](provider-adapters.md#connect-the-outer-client) and the [verb table](design/verb-table.md#mcp). The text below is kept as it was written.
+
 ## Decision
 
 The authorized bounded assessment is complete with the available evidence:

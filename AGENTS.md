@@ -9,10 +9,10 @@ Markitect is model-first development with delegated realization. People maintain
 
    ```text
    go run ./src/cmd/markitect check --repo .
-   go run ./src/cmd/markitect context --repo . '["project.markitect.example.org/v1alpha1","Manager","product","product"]'
+   go run ./src/cmd/markitect context --repo . product
    ```
 
-   The root Manager `markitect` delegates to `product`, `legacy`, `tooling`, `documentation` and `examples`; copy a Manager's ID from its Identity line in the [readable view](docs/markitect/project.md). In Windows PowerShell 5.1, write each `"` inside the ID as `\"`. The context holds the Manager's paths, instructions, the repository rules that apply to it, its Artifacts, and the checks it owns or that verify its work. `check` fails when a file lies outside every Artifact path. [The workflow guide](docs/project-workflow.md) explains how to work with the model. Implementation-only work needs no model change.
+   The root Manager `markitect` delegates to `product`, `legacy`, `tooling`, `documentation` and `examples`; pass the name of the Manager that owns your change. The context holds the Manager's paths, instructions, the repository rules that apply to it, its Artifacts, and the checks it owns or that verify its work. `check` fails when a file lies outside every Artifact path. [The workflow guide](docs/project-workflow.md) explains how to work with the model. Implementation-only work needs no model change.
 3. If you change a file under `.markitect/model/`, preview the readable view with `go run ./src/cmd/markitect docs --repo .` and write it with `go run ./src/cmd/markitect docs --repo . --expect DIGEST --write`, using the preview's digest. Do not edit generated files. If `check` reports a path that no Artifact covers, for example a new package directory or top-level file, add it to the Artifact of the Manager that owns that area, or to `.markitect/ignore.yaml` with a reason, in the same pull request.
 4. Before you open a pull request, run the checks in [CONTRIBUTING](CONTRIBUTING.md#verify-a-change).
 
