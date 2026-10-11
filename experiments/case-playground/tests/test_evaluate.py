@@ -572,6 +572,11 @@ class HostAssessTests(unittest.TestCase):
         self.assertNotIn("LOGIN-CONTENT", everything)
         self.assertIn(["docker", "rm", "-f", "mpg-assess-conv-x"], docker.calls)
 
+    def test_a_container_that_did_not_exit_0_is_a_harness_failure(self):
+        self.assertEqual(self.assess(FakeDocker(exit_code=2)), 10)
+        record = json.loads((self.run_dir / "assessment" / "host.json").read_text(encoding="utf-8"))
+        self.assertEqual((record["status"], record["containerExitCode"], record["exitCode"]), ("completed", 2, 10))
+
     def test_assessment_is_handed_back_after_the_container_ends(self):
         docker = FakeDocker()
         with mock.patch.object(host, "hand_back", return_value="done") as hand_back:
@@ -605,7 +610,7 @@ class HostAssessTests(unittest.TestCase):
     def test_missing_token_is_refused_before_docker(self):
         docker = FakeDocker()
         self.token.unlink()
-        self.assertEqual(self.assess(docker), 2)
+        self.assertEqual(self.assess(docker), 11)  # a missing login is the environment's
         self.assertEqual(docker.calls, [])
 
     def test_fake_reviewers_get_throwaway_credentials_never_the_real_ones(self):

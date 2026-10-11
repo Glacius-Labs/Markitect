@@ -19,6 +19,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from . import outcome
 from .reviewers import CATEGORIES, PROVIDERS
 
 
@@ -206,6 +207,7 @@ def _tokens(block: dict | None) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m playground compare", description=__doc__,
+                                     epilog=outcome.help_text(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("run_a")
     parser.add_argument("run_b")
@@ -216,7 +218,7 @@ def main(argv: list[str] | None = None) -> int:
         a, b = load(Path(args.run_a)), load(Path(args.run_b))
     except CompareError as exc:
         print(f"error: {exc}", file=sys.stderr)
-        return 2
+        return outcome.INVALID
     problems = mismatches(a, b)
     if problems and not args.allow_mismatch:
         print("error: the runs are not comparable; these fairness fields differ "
@@ -225,10 +227,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {key}: {_show(key, value_a)} vs {_show(key, value_b)}", file=sys.stderr)
         if any(key in KNOWN_REQUIRED and None in (value_a, value_b) for key, value_a, value_b in problems):
             print(f"  {UNKNOWN_HINT}", file=sys.stderr)
-        return 2
+        return outcome.INVALID
     out = Path(args.out) if args.out else (
         Path(args.run_a).resolve().parent / f"compare-{a['run'].get('id')}-vs-{b['run'].get('id')}.md")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(render(a, b, problems), encoding="utf-8", newline="\n")
     print(f"comparison: {out}")
-    return 0
+    return outcome.OK

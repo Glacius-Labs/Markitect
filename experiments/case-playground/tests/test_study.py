@@ -122,15 +122,16 @@ class FakeDocker:
     """Stands in for subprocess.run/Popen: Docker, plus git and go answering like a checkout.
 
     A run container writes runner.json into its /out (codexLoginChanged: `report`, by
-    default whether it refreshed; None writes none), an assessment container writes
-    report.json; both "refresh" a mounted Codex login, which `docker cp ... -` streams out
-    in the shape `cp` names."""
+    default whether it refreshed; None writes none) and report.json (class from
+    `classes`, default none), an assessment container writes report.json; both "refresh"
+    a mounted Codex login, which `docker cp ... -` streams out in the shape `cp` names."""
 
     def __init__(self, *, exits=None, wait_effects=None, start_fails=(), login_changed=True, reviewer_refresh=False,
                  server="29.4.1|linux|amd64", running="", names="", ran_image=None, cp="file", git=None,
-                 mismatch=False, report="match"):
+                 mismatch=False, report="match", classes=None):
         self.calls, self.containers, self.seen_logins, self.order = [], {}, {}, []
         self.exits, self.wait_effects, self.start_fails = exits or {}, wait_effects or {}, set(start_fails)
+        self.classes = classes or {}
         self.login_changed, self.reviewer_refresh, self.server = login_changed, reviewer_refresh, server
         self.running, self.names, self.ran_image, self.cp, self.git = running, names, ran_image, cp, git or {}
         self.mismatch, self.report = mismatch, report
@@ -207,6 +208,8 @@ class FakeDocker:
             if changed is not None:
                 (mounts["/out"] / "runner.json").write_text(json.dumps({"codexLoginChanged": changed}),
                                                             encoding="utf-8")
+            report = {"classification": {"class": self.classes.get(name, "none"), "reason": "fake"}}
+            (mounts["/out"] / "report.json").write_text(json.dumps(report), encoding="utf-8")
         if login is not None:
             self.seen_logins[name] = login.read_text(encoding="utf-8")
             refresh = self.reviewer_refresh if name.startswith("mpg-assess-") else self.login_changed
@@ -650,10 +653,28 @@ class StudyRunTests(StudyRunBase):
         self.assertEqual(self.record()["status"], "failed")
         self.assertIsNone(self.record()["stopReason"])
 
+    def test_the_study_gives_its_worst_step_code(self):
+        for classes, exits, expected in (({"mpg-pilot-p1-mkt": "product"}, {"mpg-pilot-p1-conv": 1}, 12),
+                                         ({"mpg-pilot-p1-mkt": "product", "mpg-pilot-p1-conv": "environment"}, {}, 11),
+                                         ({"mpg-pilot-p1-mkt": "product"}, {"mpg-assess-pilot-p1-conv": 2}, 10)):
+            with self.subTest(classes=classes, exits=exits):
+                self.out = self.root / "runs" / f"worst-{expected}"
+                code, stdout, stderr = self.run_study(FakeDocker(classes=classes, exits=exits), "--fake-reviewers")
+                self.assertEqual(code, expected, stdout + stderr)
+                self.assertEqual(self.record()["exitCode"], expected)
+                self.assertEqual(len(self.steps("assess")), 2)  # a class or a failed step never stops the study
+
+    def test_an_error_of_the_study_itself_is_a_harness_failure(self):
+        with mock.patch.object(study.Study, "compare_pairs", side_effect=RuntimeError("bug")):
+            code, _stdout, stderr = self.run_study(FakeDocker(), "--fake-reviewers")
+        self.assertEqual(code, 10)
+        self.assertIn("RuntimeError: bug", (self.out / "study-error.txt").read_text(encoding="utf-8"))
+        self.assertEqual((self.record()["status"], self.record()["exitCode"]), ("error", 10))
+
     def test_a_stopped_study_lists_the_commands_that_finish_it_by_hand(self):
         docker = FakeDocker(start_fails={"mpg-pilot-p2-mkt"})
         code, stdout, stderr = self.run_study(docker, "--fake-reviewers", path=self.write_study(pairs=2))
-        self.assertEqual(code, 1, stdout + stderr)
+        self.assertEqual(code, 11, stdout + stderr)
         self.assertEqual(docker.started(), ["mpg-pilot-p1-conv", "mpg-pilot-p1-mkt"])  # no automatic assessment
         runs = self.out / "runs"
         expected = [f"python3 -m playground assess --run {runs / 'pilot-p1-conv'} --reviewers codex,claude "
@@ -701,7 +722,7 @@ class StudyRunTests(StudyRunBase):
     def test_the_study_stops_when_the_host_cannot_run_a_container(self):
         docker = FakeDocker(start_fails={"mpg-pilot-p1-conv"})
         code, stdout, stderr = self.run_study(docker, "--codex-auth", str(self.source), "--fake-reviewers")
-        self.assertEqual(code, 1, stdout + stderr)
+        self.assertEqual(code, 11, stdout + stderr)
         self.assertEqual(docker.started(), [])
         record = self.record()
         self.assertEqual(record["status"], "stopped")
@@ -740,15 +761,15 @@ class StudyRunTests(StudyRunBase):
     def test_the_study_stops_when_the_image_changed(self):
         docker = FakeDocker(ran_image="sha256:rebuilt")
         code, _stdout, _stderr = self.run_study(docker, "--fake-reviewers")
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 11)
         self.assertEqual(docker.started(), ["mpg-pilot-p1-conv"])
         self.assertIn("not the preflight build", self.record()["stopReason"])
 
     def test_a_fairness_mismatch_fails_the_comparison(self):
         code, _stdout, _stderr = self.run_study(FakeDocker(mismatch=True), "--fake-reviewers")
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 10)  # refused inside a study: the preflight should have caught it
         step = self.steps("compare")[0]
-        self.assertEqual(step["status"], "fairness-mismatch")
+        self.assertEqual((step["status"], step["exitCode"]), ("fairness-mismatch", 2))
         self.assertIn("fairness.imageId", [key for key, _a, _b in step["mismatches"]])
         self.assertFalse((self.out / "comparisons").exists())
 
