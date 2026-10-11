@@ -151,7 +151,8 @@ packages:
     title: Parametrize and run a study with one command
     stream: PLAY
     wave: 1
-    status: active
+    status: done
+    pr: 187
     owner: scientist
     depends_on: [PLAY-01, PLAY-03]
     zone: free
@@ -166,7 +167,7 @@ packages:
     title: Harden the playground
     stream: PLAY
     wave: 1
-    status: blocked
+    status: active
     owner: scientist
     depends_on: [PLAY-01, PLAY-04]
     zone: free
@@ -421,7 +422,8 @@ packages:
     title: Port the reduced knowledge core and explain
     stream: KG
     wave: 2
-    status: active
+    status: done
+    pr: 184
     owner: kg
     depends_on: [KG-01]
     note: The model-zone part merged as pull requests 165 to 168 (DEC-021 to DEC-023). The CLI and MCP surface slice (impact --explain/--manager, context --trace) follows in the interface zone, lent by the integrator.
@@ -574,7 +576,8 @@ packages:
     title: One smoke driver instead of shell scripts
     stream: CI
     wave: 2
-    status: active
+    status: done
+    pr: 183
     owner: qa
     depends_on: [CI-02]
     note: The integrator retired scripts/onboarding/Measure-Adoption.ps1; the smoke driver and the playground smoke cover onboarding.
@@ -619,7 +622,8 @@ packages:
     title: Formatting gate for Go sources
     stream: CI
     wave: 2
-    status: blocked
+    status: done
+    pr: 192
     owner: qa
     depends_on: [CLI-02]
     note: agentexec/lifecycle.go and codexappserver/contracts.go are not gofmt-clean, and CI has no formatting step.
@@ -633,7 +637,7 @@ packages:
     title: Race detector in the Linux gate
     stream: CI
     wave: 2
-    status: blocked
+    status: active
     owner: qa
     depends_on: [CI-03]
     note: From IDEA-01, no workflow runs go test -race.
@@ -687,7 +691,8 @@ packages:
     title: Re-render generated agent guidance for the new verbs
     stream: AGENT
     wave: 2
-    status: ready
+    status: done
+    pr: 181
     owner: interface
     depends_on: [CLI-02]
     zone: interface
@@ -803,7 +808,7 @@ packages:
     title: Markitect develops itself with its own model
     stream: ARCH
     wave: 3
-    status: blocked
+    status: active
     owner: cleaner
     depends_on: [CLI-02, AGENT-02]
     zone: ci
@@ -846,7 +851,8 @@ packages:
     title: Repository identity checked once per load
     stream: ARCH
     wave: 2
-    status: ready
+    status: done
+    pr: 180
     owner: bughunter
     zone: free
     note: A projectwork Load asks Git for the same repository identity about eight times; on a loaded Windows host each call costs about 0.5 s, so projectrun tests and real Windows runs are slow (BUG-01 finding).
