@@ -12,9 +12,9 @@ func TestGeneratedWorkflowUsesBoundedTypedMCPDelivery(t *testing.T) {
 	}
 	workflow := fileFor(t, Plan{Files: files}, workflowPath).Content
 	for _, tool := range []string{
-		"use model, check, and context", "with explore and write:false", "using ready", "Use edit to preview",
-		"Use adopt and its run stage", "use deliver to advance", "use plan, run, verify, and apply (preview, then write)",
-		"recover with status, resume, or repair",
+		"use `model`, `check`, and `context`", "with `explore` and write:false", "using `ready`", "Use `edit` to preview",
+		"Use `adopt` and its run stage", "use `deliver` to advance", "use `plan`, `run`, `verify`, and `apply` (preview, then write)",
+		"recover with `status`, `resume`, or `repair`",
 	} {
 		if !strings.Contains(workflow, tool) {
 			t.Errorf("shared workflow does not route through typed MCP tool %s", tool)
