@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: documentation
+  namespace: documentation
+purpose: States what the documentation Manager owns.
+spec:
+  category: architecture
+  description: The documentation explains the product, its architecture and operations, the roadmap, the backlog, the concept register and the evidence; dated reports keep their recorded scope.
+  public: true
+  uses: []
+  requires: []

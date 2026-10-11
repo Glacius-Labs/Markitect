@@ -1,0 +1,22 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: repository-gates
+  namespace: ""
+purpose: Maps the hosted workflows, the hook and the maintenance scripts.
+spec:
+  role: verification
+  realizes:
+    - namespace: ""
+      name: repository
+    - namespace: ""
+      name: canonical-sources
+  paths:
+    - .githooks/
+    - .github/
+    - scripts/
+  checks:
+    - namespace: documentation
+      name: docs-links
+  required: true
+  reason: These files run the repository's checks on every change.

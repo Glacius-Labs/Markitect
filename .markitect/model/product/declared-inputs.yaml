@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: declared-inputs
+  namespace: product
+purpose: Repository rule carried over from the legacy repository-boundaries Rule.
+spec:
+  category: rule
+  description: Adopting-project files are declared inputs. Markitect may track their exact paths and bytes but does not infer their structure or meaning; specialized checks and adapters own that interpretation.
+  public: true
+  uses: []
+  requires: []

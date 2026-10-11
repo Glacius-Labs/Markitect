@@ -1,0 +1,13 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: documentation
+  namespace: documentation
+purpose: Owns the maintained documentation under docs/.
+spec:
+  parent:
+    namespace: ""
+    name: markitect
+  owns:
+    - docs/
+  instructions: Find the document that owns a subject and update it instead of creating a parallel account.

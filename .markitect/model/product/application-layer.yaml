@@ -1,0 +1,39 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: application-layer
+  namespace: product
+purpose: Maps the application layer to its packages and the executable.
+spec:
+  role: implementation
+  realizes:
+    - namespace: product
+      name: product
+    - namespace: product
+      name: core-stays-generic
+    - namespace: product
+      name: explicit-relationships
+    - namespace: legacy
+      name: legacy-removal
+    - namespace: product
+      name: distinct-state
+    - namespace: product
+      name: evidence-not-acceptance
+  paths:
+    - src/cmd/markitect/
+    - src/internal/host/mcp/
+    - src/internal/host/projectadoption/
+    - src/internal/host/projectapp/
+    - src/internal/host/projectcli/
+    - src/internal/host/projectexplore/
+    - src/internal/host/projectonboarding/
+    - src/internal/host/projectwork/
+  checks:
+    - namespace: ""
+      name: go-tests
+    - namespace: ""
+      name: go-vet
+    - namespace: tooling
+      name: architecture-gate
+  required: true
+  reason: The verbs, their MCP tools and the use cases behind them are the product surface.

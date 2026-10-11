@@ -1,0 +1,17 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Check
+metadata:
+  name: architecture-gate
+  namespace: tooling
+purpose: Enforces the import directions and the code map.
+spec:
+  command:
+    - go
+    - test
+    - ./src/internal/tooling/architecture
+  uses:
+    - namespace: product
+      name: core-stays-generic
+    - namespace: legacy
+      name: legacy-removal
+  limitation: The gate checks Go imports and the code map; it does not check behavior or documentation.

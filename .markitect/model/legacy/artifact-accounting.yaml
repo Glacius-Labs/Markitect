@@ -1,0 +1,21 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Check
+metadata:
+  name: artifact-accounting
+  namespace: legacy
+purpose: Checks the legacy managed-artifact accounting.
+spec:
+  command:
+    - go
+    - run
+    - ./src/cmd/markitect-check-artifacts
+    - --repo
+    - .
+    - --config
+    - markitect-artifacts.yaml
+  uses:
+    - namespace: legacy
+      name: legacy-line
+    - namespace: ""
+      name: canonical-sources
+  limitation: It covers only the managed roots of markitect-artifacts.yaml, not every repository file.

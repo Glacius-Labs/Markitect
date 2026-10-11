@@ -1,0 +1,16 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: examples
+  namespace: examples
+purpose: Owns the executable examples, the benchmark fixtures, the experiments and the harnesses that test them.
+spec:
+  parent:
+    namespace: ""
+    name: markitect
+  owns:
+    - benchmark/
+    - examples/
+    - experiments/
+    - src/harness/
+  instructions: Keep examples executable and keep each example's own policy inside it.

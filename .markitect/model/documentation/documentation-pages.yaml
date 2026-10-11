@@ -1,0 +1,20 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: documentation-pages
+  namespace: documentation
+purpose: Maps the maintained documentation.
+spec:
+  role: documentation
+  realizes:
+    - namespace: documentation
+      name: documentation
+    - namespace: ""
+      name: project-local-policy
+  paths:
+    - docs/
+  checks:
+    - namespace: documentation
+      name: docs-links
+  required: false
+  reason: The prefix also matches the generated model document and the legacy views, so it cannot be a required path; those files have their own owners.

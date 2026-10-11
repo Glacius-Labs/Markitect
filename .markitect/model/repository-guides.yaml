@@ -1,0 +1,24 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: repository-guides
+  namespace: ""
+purpose: Maps the root guides.
+spec:
+  role: documentation
+  realizes:
+    - namespace: ""
+      name: repository
+    - namespace: ""
+      name: project-local-policy
+  paths:
+    - CONTRIBUTING.md
+    - LICENSE
+    - README.md
+    - SECURITY.md
+    - SUPPORT.md
+  checks:
+    - namespace: documentation
+      name: docs-links
+  required: true
+  reason: Readers and contributors start from these files.

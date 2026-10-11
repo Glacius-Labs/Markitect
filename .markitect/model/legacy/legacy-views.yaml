@@ -1,0 +1,26 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: legacy-views
+  namespace: legacy
+purpose: Maps the Codex, Claude and Markdown views the legacy renderer generates.
+spec:
+  role: documentation
+  realizes:
+    - namespace: legacy
+      name: legacy-line
+    - namespace: ""
+      name: canonical-sources
+  paths:
+    - .agents/skills/authoring/
+    - .agents/skills/engineering-change/
+    - .claude/skills/authoring/
+    - .claude/skills/engineering-change/
+    - docs/markitect/README.md
+    - docs/markitect/core/
+    - docs/markitect/development/
+  checks:
+    - namespace: legacy
+      name: artifact-accounting
+  required: false
+  reason: The legacy line stays only until ARCH-09 removes it, so its files are not required.

@@ -1,0 +1,10 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: markitect
+  namespace: ""
+purpose: Owns the Markitect repository, keeps its root files and gates, and integrates the work it delegates.
+spec:
+  owns:
+    - .
+  instructions: Decide routine repository questions within the roadmap and the concept register; return reserved product decisions to the owner.

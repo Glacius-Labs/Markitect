@@ -1,0 +1,18 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: experiments
+  namespace: examples
+purpose: Maps the bounded experiments and their evaluations.
+spec:
+  role: verification
+  realizes:
+    - namespace: examples
+      name: examples
+  paths:
+    - experiments/
+  checks:
+    - namespace: ""
+      name: go-tests
+  required: true
+  reason: Experiments keep their inputs next to their evaluation so the recorded result stays reproducible.

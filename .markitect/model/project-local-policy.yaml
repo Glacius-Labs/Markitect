@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: project-local-policy
+  namespace: ""
+purpose: Repository rule carried over from the legacy repository-boundaries Rule.
+spec:
+  category: rule
+  description: Keep project-local policy in the project that owns it unless a deliberate product decision makes it a general rule. Changes to an adopting project belong in its checkout and follow its instructions.
+  public: true
+  uses: []
+  requires: []

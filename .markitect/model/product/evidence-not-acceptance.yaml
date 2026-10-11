@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: evidence-not-acceptance
+  namespace: product
+purpose: Repository rule carried over from the legacy repository-boundaries Rule.
+spec:
+  category: rule
+  description: AI evidence, passing checks and digests are not human acceptance. Agent settings and owned workspaces are not an operating-system sandbox.
+  public: true
+  uses: []
+  requires: []

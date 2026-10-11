@@ -1,0 +1,25 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: legacy-dogfood
+  namespace: legacy
+purpose: Maps the legacy dogfood model, module configuration and generated schemas.
+spec:
+  role: configuration
+  realizes:
+    - namespace: legacy
+      name: legacy-line
+    - namespace: ""
+      name: canonical-sources
+  paths:
+    - .markitect/README.md
+    - .markitect/areas/
+    - .markitect/modules/
+    - markitect-artifacts.yaml
+    - markitect.yaml
+    - schema/
+  checks:
+    - namespace: legacy
+      name: artifact-accounting
+  required: false
+  reason: The legacy line stays only until ARCH-09 removes it, so its files are not required.
