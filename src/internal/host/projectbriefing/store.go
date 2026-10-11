@@ -429,7 +429,7 @@ func readStore(root string) (Store, string, error) {
 		return Store{}, "", errors.New("briefing store contains trailing data")
 	}
 	if state.APIVersion != APIVersion {
-		return Store{}, "", fmt.Errorf("briefing store %s has format %q, not %q; delete it and run a guided command to rebuild accepted history", storePath, state.APIVersion, APIVersion)
+		return Store{}, "", fmt.Errorf("briefing store %s has format %q, not %q; delete it and run a guided command to rebuild it: accepted history is re-briefed from the first committed model, and the stored dismissals and resolutions are lost", storePath, state.APIVersion, APIVersion)
 	}
 	if state.Briefings == nil || state.Dismissals == nil {
 		return Store{}, "", errors.New("briefing store has invalid shape")

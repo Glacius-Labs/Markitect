@@ -856,6 +856,34 @@ func TestResolutionOfMergedTopicModelChangeCarriesToMain(t *testing.T) {
 	}
 }
 
+func TestEarlierStoreFormatIsRefusedWithRebuildInstruction(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, filepath.FromSlash(storePath))
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const earlier = "markitect.example.org/project-model-briefing/v1alpha1"
+	older := strings.ReplaceAll(string(data), APIVersion, earlier)
+	if err := os.WriteFile(path, []byte(older), 0600); err != nil {
+		t.Fatal(err)
+	}
+	read := func() error { _, _, err := Read(root); return err }
+	ensure := func() error { _, err := EnsureAcceptedHistory(root, changed); return err }
+	for name, call := range map[string]func() error{"read": read, "ensure": ensure} {
+		err := call()
+		if err == nil || !strings.Contains(err.Error(), earlier) || !strings.Contains(err.Error(), "re-briefed from the first committed model") || !strings.Contains(err.Error(), "dismissals and resolutions are lost") {
+			t.Fatalf("%s of an earlier store format: %v", name, err)
+		}
+	}
+	if after, err := os.ReadFile(path); err != nil || string(after) != older {
+		t.Fatalf("refused store was changed: err=%v", err)
+	}
+}
+
 func TestReappliedModelChangeGetsItsOwnEventID(t *testing.T) {
 	root, _, changed := committedModelFixture(t)
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
