@@ -893,6 +893,26 @@ func TestAnalyzeExplicitlyReportsUnknownInventory(t *testing.T) {
 	}
 }
 
+// BUG-01: moving a definition to another model file routes both files, their
+// owner and what each declares; Source is not in the model digest, so no
+// other rule names the move (DEC-021).
+func TestImpactRoutesBothModelFilesOfAMovedDefinition(t *testing.T) {
+	definitions, model, files := sourcedFixture(t)
+	base := analyzeDefinitions(t, model, definitions, files)
+	moved := copyDefinitions(definitions)
+	var from string
+	for i := range moved {
+		if moved[i].Metadata.Name == "cancel-order-code" {
+			from = moved[i].Source.Path
+			moved[i].Source.Path = ".markitect/model/orders/moved.yaml"
+		}
+	}
+	impact := Impact(base, analyzeDefinitions(t, model, moved, files))
+	if len(impact.Unknown) != 0 || len(impact.ChangedDefinitions) != 0 || !contains(impact.Files, from) || !contains(impact.Files, ".markitect/model/orders/moved.yaml") {
+		t.Fatalf("moved definition: changed=%v files=%v unknown=%v, want both model files", impact.ChangedDefinitions, impact.Files, impact.Unknown)
+	}
+}
+
 // BUG-01: when a Statement changes, the Manager whose own Decision is about it
 // is routed; that Statement is one of its Contracts.
 func TestImpactRoutesTheOwnerOfADecisionOnAChangedStatement(t *testing.T) {
