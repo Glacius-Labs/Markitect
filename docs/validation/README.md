@@ -6,6 +6,7 @@ Records may link to files that were removed later; read them at release v0.14.1 
 
 ## Project workflow and integration reports
 
+- [Integration queue — 11–12 October 2026](integration-queue-20261011.md)
 - [Markitect-first dogfood](markitect-first-dogfood.md)
 - [Markitect-first v0.13.0 release-readiness record](markitect-first-release-readiness.md)
 - [Managed project workflow local validation](project-world-delivery.md)
@@ -29,6 +30,7 @@ Records may link to files that were removed later; read them at release v0.14.1 
 
 ## Adoption, comparison, and broader assessment
 
+- [Impact recall and width protocol — prepared, not run](impact-assessment-protocol.md)
 - [AGENTS.md versus Markitect matched MyMeetings comparison](agents-md-vs-markitect.md)
 - [Independent Markitect assessment — 6 October 2026](astra-assessment-2026-10-06.md)
 - [Real-code adoption pilot](real-project-adoption-pilot.md)

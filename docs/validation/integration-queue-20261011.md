@@ -1,4 +1,4 @@
-# Integration queue — 11 October 2026
+# Integration queue — 11–12 October 2026
 
 This record continues the dated [session handoff](../development/session-handoff.md). The owner delegated review, repairs and normal integration of its six open PRs to the integrator. Source checks, independent scoped review, provider runs, method measurements and human acceptance remain distinct. Historical and dirty worktrees were preserved; no release or provider run was performed.
 
@@ -25,7 +25,20 @@ Local composition locations were `C:\Users\Consiliari\.codex\worktrees\bb5d\Mark
 - #223: explicit cross-Manager evidence regression passed in 15.779 seconds on `e6281660589500ceb04a08869099755793d72ffd`. The subsequent composition above added only #222's AGENTS instructions; its Go source was unchanged. Structured private/unknown child verdict subjects are filtered. Arbitrary child summary, risk and question prose remains outside that filter.
 - #219: the existing unpushed inventory commit was reviewed and normally pushed. Its image provenance is cold build [38106437991](https://github.com/Glacius-Labs/Markitect/actions/runs/38106437991), image ID `sha256:13cd8225ab21ad16bb2d8169758323b769b6195ee50bc5e983a661643f88f539`, inventory SHA-256 `78f0ab386612ff4b12d37a9202ff3c5f5de61192a92ada65a7b3e17a0061df0c`. Fresh head [CI 38175483226](https://github.com/Glacius-Labs/Markitect/actions/runs/38175483226) and [provider-free playground smoke 38175483212](https://github.com/Glacius-Labs/Markitect/actions/runs/38175483212) passed. Additional Windows Python units on the composition ran 320 tests in 478.531 seconds with two failures and eight skips: unpinned-Dockerfile expected error text and an LF/CRLF inventory byte comparison. These original failures are preserved and a scoped follow-up is being investigated.
 
-## Remaining scoped work
+## Delegated dashboard follow-ups
+
+| PR | Full reviewed head | Local composition | Remote-main merge |
+|---|---|---|---|
+| [226](https://github.com/Glacius-Labs/Markitect/pull/226) | `7851b74b78b6eb5c3a570742c20ce4762117a209` | `9b0fe19e6e6b7f2c1a8963152bc14fa52ad9b62e` | `a0b79744371387f5c1e7f725fad12395d01f68a6` |
+| [227](https://github.com/Glacius-Labs/Markitect/pull/227) | `b7be6cba86ca98472fc8a23cff68dd039684fb25` | `da12912bb635d8819fe0681b53ec3a7f4a9d8e0c` | `a225d0caab868e43bb8afda31a78ae73d07a9461` |
+
+Both documentation heads received independent scoped approval and passed Linux Quality/Race: [226 CI](https://github.com/Glacius-Labs/Markitect/actions/runs/38177825309), [227 CI](https://github.com/Glacius-Labs/Markitect/actions/runs/38178262827). Their compositions in the integration-candidates worktree passed vet, fixed model checks, managed-artifact accounting and relevant links. No unchanged full local suite was repeated for prose.
+
+The [delegation source](../concepts/sources/dashboard-delegation-20261011.md) records the new DEC-023 authority and assessment-derived ASM-006 provenance. A temporary test against fixed source `7f1fde0df4519f8205a45e5d5c917df7d58d5cbd` passed in 2.506 seconds: explicitly realized Statements and their direct consumers receive `change` priority, while Explain preserves impact sets and routing. The injected test's SHA-256 was `F0C4AB7AD0A539B7051CB28BDA093479030C1FA130A853B07E2E43D37B621D86`; it was not committed and did not run a full Plan. The hypothesis comparing forgetting with misunderstanding is untested and is not asserted by the original owner wording.
+
+The [KG-04 protocol](impact-assessment-protocol.md) is **PREPARED / NOT RUN**. It pins Shop seed `069f0c1035b5e1c730539af323d10eac9a268c9e` and tree `d7f5224423e7d8105ebfce3f583e51b6342c890a`, and Markitect source `7f1fde0df4519f8205a45e5d5c917df7d58d5cbd`. Both expected lists remain unauthored and unfrozen. Proposed Explain metadata is a hypothetical measurement case, not adopted product intent. Preparation specifies independent expectation freezing and descriptive recall, missed files, width and excess without PASS thresholds.
+
+## Scoped repair follow-ups
 
 The audit reproduced private child Statement details reaching ancestor briefing loaders. Its separate BUG-01 repair uses each historical Manager context to project event sides and relations while retaining canonical history and opaque event IDs. The Context and brief-list callers also require a separate no-write repair. Neither is accepted merely because an earlier PR or unrelated suite passed.
 

@@ -459,9 +459,10 @@ packages:
     status: blocked
     owner: kg
     depends_on: [KG-02]
-    note: Setup was delegated on 11 October 2026 using Shop and Markitect, with an independent author freezing must-change expectations before impact and descriptive recall/missed/width/excess reporting without PASS thresholds. Protocol preparation is active under the integrator. Measurement remains NOT RUN and requires separate execution authority; the expected lists are not yet authored or frozen.
+    note: Setup delegated on 11 October 2026 is integrated as protocol PR227, using pinned Shop and Markitect cases, independent pre-impact expectations and descriptive recall/missed/width/excess reporting without PASS thresholds. Measurement remains NOT RUN and requires separate execution authority; the expected lists are not yet authored or frozen.
     zone: free
     inputs:
+      - docs/validation/impact-assessment-protocol.md
       - docs/work-items/surveys/earlier-plans-20261011.md
     acceptance:
       - For a fixed set of model changes, a must-change list written before seeing Markitect's impact is compared with the impact; recall and width are reported per change, provider-free.
