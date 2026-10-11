@@ -11,9 +11,173 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
-const checkDescendantHelperEnv = "MARKITECT_PROJECTRUN_CHECK_DESCENDANT"
+const (
+	checkDescendantHelperEnv = "MARKITECT_PROJECTRUN_CHECK_DESCENDANT"
+	modelledFileCheckEnv     = "MARKITECT_PROJECTRUN_CHECK_MODELLED_FILE"
+	legacyOrdersBytes        = "legacy orders bytes\n"
+)
+
+// A candidate may model a transitional file in place: it drops the exclusion
+// and leaves the bytes unchanged. Closure reads those bytes from the base, so
+// the declared checks Verify runs must see them too, and so must full
+// verification when it runs checks itself.
+func TestVerifyChecksSeeFilesModelledInPlace(t *testing.T) {
+	root := makeFullVerifyFixture(t)
+	configureOperationsFullVerify(t, root)
+	t.Setenv(modelledFileCheckEnv, "1")
+	updateE2ERuntime(t, root, func(config *Runtime) {
+		for id, agent := range config.Agents {
+			agent.Environment = append(agent.Environment, modelledFileCheckEnv)
+			config.Agents[id] = agent
+		}
+	})
+	manifest, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	transitional := strings.Replace(string(manifest), "exclusions: []\n", "exclusions: []\ntransitionalExclusions:\n  - path: "+fixtureLegacyOrdersFile+"\n    reason: Existing file awaits explicit modeling\n", 1)
+	if transitional == string(manifest) {
+		t.Fatal("could not add a transitional exclusion")
+	}
+	writeE2E(t, root, projectwork.ManifestPath, transitional)
+	writeE2E(t, root, fixtureLegacyOrdersFile, legacyOrdersBytes)
+	writeE2E(t, root, fixtureOrdersArtifact, e2eArtifact("orders", "orders-code", "orders-work", "orders-check", fixtureOrdersFile+", "+fixtureLegacyOrdersFile))
+	for _, check := range []string{".markitect/model/orders/check.yaml", ".markitect/model/inventory/check.yaml"} {
+		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(check)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		updated := strings.Replace(string(data), "TestProjectRunCheckProcess", "TestModelledFileCheckProcess", 1)
+		if updated == string(data) {
+			t.Fatalf("could not point %s at the modelled-file check", check)
+		}
+		writeE2E(t, root, check, updated)
+	}
+	gitE2E(t, root, "add", ".")
+	gitE2E(t, root, "commit", "-m", "model the transitional legacy orders file")
+	host := projectworkHost()
+	plan, err := Plan(host, root, gitE2E(t, root, "rev-parse", "HEAD"), PlanRequest{Goal: "Model the legacy orders file in place.", ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatalf("Plan: %v", err)
+	}
+	base, err := host.Load(root, plan.BaseRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err := store.runDir(plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The integrated candidate only drops the exclusion and carries the
+	// document the run would generate for it.
+	final := candidateData{Parents: []string{plan.InitialCandidateID}, Files: map[string]File{projectwork.ManifestPath: candidateWrite(projectwork.ManifestPath, string(manifest))}}
+	compiled, err := finalProjectForCandidate(host, root, base, final)
+	if err != nil {
+		t.Fatal(err)
+	}
+	document, err := projectwork.Document(compiled, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	documentPath := projectwork.DocumentPath(compiled.Config)
+	final.Files[documentPath] = candidateWrite(documentPath, document)
+	if final.ID, err = newID(); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.writeCandidate(dir, final); err != nil {
+		t.Fatal(err)
+	}
+	if final, err = store.readCandidate(dir, final.ID); err != nil {
+		t.Fatal(err)
+	}
+	if compiled, err = finalProjectForCandidate(host, root, base, final); err != nil {
+		t.Fatal(err)
+	}
+	if string(compiled.Snapshot.Files[fixtureLegacyOrdersFile]) != legacyOrdersBytes {
+		t.Fatal("precondition: closure did not bind the modelled file's base bytes")
+	}
+	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Operation: plan.Operation, Status: StatusIntegrated, Mode: ModeControlledLocal,
+		StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(), BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot,
+		ModelDigest: plan.ModelDigest, RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers),
+		Candidate: CandidateRef{ID: final.ID, Snapshot: final.Digest, Files: map[string]string{}, Integrated: true}, Revision: 1}
+	for i := range report.Tasks {
+		report.Tasks[i].ReportStatus = "complete"
+	}
+	var reviews []ReviewRecord
+	for _, task := range report.Tasks {
+		phase := "work"
+		if len(activeChildren(report.Tasks, task.ManagerID)) > 0 {
+			phase = "integrate"
+		}
+		if !phaseReviewRequired(compiled, task, report.Tasks, phase) {
+			continue
+		}
+		scope, err := reviewScopeDigest(plan, compiled, task, phase, report)
+		if err != nil {
+			t.Fatal(err)
+		}
+		reviews = append(reviews, ReviewRecord{TaskID: task.ID, ManagerID: task.ManagerID, Phase: phase, CandidateID: final.ID, CandidateDigest: final.Digest,
+			ScopeDigest: scope, InputDigest: "sha256:review-input", Outcome: "pass", Findings: []ReviewFinding{}, Receipt: agentexec.Receipt{RunID: "review-" + task.ID}})
+	}
+	report.Reviews = reviews
+	if err := persistState(store, &report); err != nil {
+		t.Fatal(err)
+	}
+	verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err != nil || verified.Status != StatusVerified {
+		t.Fatalf("Verify: report=%+v err=%v", verified, err)
+	}
+	assertChecksObservedLegacyFile(t, verified.Checks)
+	if verified.ManagerVerification == nil || verified.ManagerVerification.SnapshotDigest != compiled.Snapshot.Digest() {
+		t.Fatal("verification did not bind the closure snapshot that holds the modelled file's bytes")
+	}
+	// Full verification materializes its own check tree when no planned check
+	// result covers a declared check.
+	runtimeConfig, err := LoadRuntime(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	full, err := FullVerifyProject(context.Background(), host, ProcessInvoker{}, root, compiled, runtimeConfig, FullVerifyBinding{ExpectedSnapshot: compiled.Snapshot.Digest()})
+	if err != nil || full.Status != "passed" {
+		t.Fatalf("FullVerifyProject: report=%+v err=%v", full, err)
+	}
+	assertChecksObservedLegacyFile(t, full.Checks)
+}
+
+func assertChecksObservedLegacyFile(t *testing.T, checks []CheckResult) {
+	t.Helper()
+	if len(checks) == 0 {
+		t.Fatal("no declared check ran")
+	}
+	for _, check := range checks {
+		if check.Outcome != "passed" || !strings.Contains(check.Stdout, "observed "+fixtureLegacyOrdersFile) {
+			t.Fatalf("check %s did not observe the modelled file: %+v", check.ID, check)
+		}
+	}
+}
+
+// TestModelledFileCheckProcess is a declared check that passes only when the
+// check tree holds the legacy orders file with its committed bytes.
+func TestModelledFileCheckProcess(t *testing.T) {
+	if os.Getenv(modelledFileCheckEnv) != "1" {
+		return
+	}
+	content, err := os.ReadFile(fixtureLegacyOrdersFile)
+	if err != nil || string(content) != legacyOrdersBytes {
+		processExit(1, fmt.Sprintf("modelled file check failed: content=%q error=%v", content, err))
+	}
+	fmt.Println("observed " + fixtureLegacyOrdersFile)
+	processExit(0, "")
+}
 
 // Declared checks once ran in a materialized candidate under the repository's
 // run store. Below a deep repository (or GOTMPDIR) that directory exceeded the

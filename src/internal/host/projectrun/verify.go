@@ -162,7 +162,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 		return out, err
 	}
 	defer os.RemoveAll(verifyDir)
-	if err := materializeCandidate(verifyDir, base.Snapshot, candidate); err != nil {
+	if err := materializeCandidate(verifyDir, checkTreeBase(base.Snapshot, candidate, compiled), candidate); err != nil {
 		return out, err
 	}
 	out = VerifyReport{APIVersion: APIVersion, VerificationScope: "planned", RunID: runID, CandidateID: candidate.ID, CandidateHash: candidate.Digest, Status: "failed", VerifiedAt: time.Now().UTC(), Checks: []CheckResult{}}
@@ -418,6 +418,35 @@ func requireArtifacts(report projectmodel.Report) error {
 		}
 	}
 	return nil
+}
+
+// checkTreeBase is base plus the files the closure compile read from the base
+// source on demand, such as a transitional file the candidate models in place.
+// Checks then run on exactly the closure view, using the bytes that compile
+// read and full verification binds, without a second read.
+func checkTreeBase(base *Snapshot, candidate candidateData, closure *Project) *Snapshot {
+	if closure == nil || closure.Snapshot == nil {
+		return base
+	}
+	var read []string
+	for path := range closure.Snapshot.Files {
+		_, inBase := base.Files[path]
+		_, inCandidate := candidate.Files[path]
+		if !inBase && !inCandidate {
+			read = append(read, path)
+		}
+	}
+	if len(read) == 0 {
+		return base
+	}
+	tree := &Snapshot{ID: base.ID, Provisional: base.Provisional, Files: make(map[string][]byte, len(base.Files)+len(read)), Modes: make(map[string]string, len(base.Modes)+len(read))}
+	for path, data := range base.Files {
+		tree.Files[path], tree.Modes[path] = data, base.Modes[path]
+	}
+	for _, path := range read {
+		tree.Files[path], tree.Modes[path] = closure.Snapshot.Files[path], closure.Snapshot.Modes[path]
+	}
+	return tree
 }
 
 func materializeCandidate(dest string, base *Snapshot, candidate candidateData) error {
