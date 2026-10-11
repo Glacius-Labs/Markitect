@@ -633,6 +633,10 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectbriefing/store.go
       owner: project-world-implementation
+    - path: src/internal/host/projectbriefing/visibility.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectbriefing/visibility_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectbriefing/briefing_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectbriefing/identity_test.go

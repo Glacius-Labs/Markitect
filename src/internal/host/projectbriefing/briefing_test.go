@@ -100,7 +100,7 @@ func TestDismissIsSeparateFromImmutableEventAndLoadRequiresExactModelDigest(t *t
 	if err != nil {
 		t.Fatal(err)
 	}
-	managerID := bundle.Events[0].AffectedManagers[0]
+	managerID := managerExposingEvent(t, project, bundle.Events[0])
 	_, events, _, err := LoadForManager(root, project.Model.Digest, managerID, revision)
 	if err != nil || len(events) != 1 {
 		t.Fatalf("load manager events = %d, err = %v", len(events), err)
@@ -211,6 +211,53 @@ func committedModelFixture(t *testing.T) (root, base, revision string) {
 	gitCommitTest(t, root, "accepted model change")
 	revision = gitOutputTest(t, root, "rev-parse", "HEAD")
 	return root, base, revision
+}
+
+func managerExposingEvent(t *testing.T, project *projectwork.Project, event Event) string {
+	t.Helper()
+	for _, managerID := range event.AffectedManagers {
+		context, err := projectmodel.Context(project.Report, managerID)
+		if err != nil {
+			continue
+		}
+		for _, statement := range context.Statements {
+			if statement.ID == event.DefinitionID.Key() {
+				return managerID
+			}
+		}
+		for _, contract := range context.Contracts {
+			if contract.ID == event.DefinitionID.Key() {
+				return managerID
+			}
+		}
+	}
+	t.Fatalf("no affected ManagerContext exposes Statement %s", event.DefinitionID.Key())
+	return ""
+}
+
+func managerExposingEventInHistory(t *testing.T, before, after *projectwork.Project, event Event) string {
+	t.Helper()
+	for _, managerID := range event.AffectedManagers {
+		for _, project := range []*projectwork.Project{before, after} {
+			if project == nil {
+				continue
+			}
+			view, err := newManagerView(project, managerID)
+			if err != nil {
+				continue
+			}
+			for _, definition := range []*core.Definition{event.Before, event.After} {
+				if definition == nil || definition.Kind != "Statement" {
+					continue
+				}
+				if _, visible := view.statements[definition.Identity().Key()]; visible {
+					return managerID
+				}
+			}
+		}
+	}
+	t.Fatalf("no affected manager exposes an event side in its historical contexts: %s", event.ID)
+	return ""
 }
 
 // copyProjectWorldTest copies the project-world example into root.
@@ -326,7 +373,7 @@ func TestManagerHistoryUsesRevisionAncestryAcrossModelRevert(t *testing.T) {
 	if revertedProject.Model.Digest != baseProject.Model.Digest || changedProject.Model.Digest == baseProject.Model.Digest {
 		t.Fatalf("fixture did not form A→B→A model history: base=%s changed=%s reverted=%s", baseProject.Model.Digest, changedProject.Model.Digest, revertedProject.Model.Digest)
 	}
-	manager := first.Events[0].AffectedManagers[0]
+	manager := managerExposingEvent(t, revertedProject, first.Events[0])
 	briefings, events, _, err := LoadForManager(root, revertedProject.Model.Digest, manager, revertedRevision)
 	if err != nil {
 		t.Fatal(err)
@@ -401,6 +448,201 @@ func TestWriteRejectsTamperedPreviewBundle(t *testing.T) {
 	}
 	if _, err := Write(root, bundle, digest); !errors.Is(err, ErrInvalidBundle) {
 		t.Fatalf("tampered bundle write error = %v", err)
+	}
+}
+
+func TestLoadForManagerHidesPrivateChildStatementFromAncestor(t *testing.T) {
+	root := t.TempDir()
+	copyProjectWorldTest(t, root)
+	privatePath := filepath.Join(root, ".markitect", "model", "commerce", "sales", "orders", "private-internal-guard.yaml")
+	projectConfigPath := filepath.Join(root, ".markitect", "project.yaml")
+	projectConfig, err := os.ReadFile(projectConfigPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projectConfigText := strings.Replace(string(projectConfig),
+		"  - .markitect/model/commerce/sales/orders/order.yaml\n",
+		"  - .markitect/model/commerce/sales/orders/order.yaml\n  - .markitect/model/commerce/sales/orders/private-internal-guard.yaml\n", 1)
+	if projectConfigText == string(projectConfig) {
+		t.Fatal("could not add the private Statement to the model inputs")
+	}
+	if err := os.WriteFile(projectConfigPath, []byte(projectConfigText), 0644); err != nil {
+		t.Fatal(err)
+	}
+	privateModel := `apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: private-internal-guard
+  namespace: commerce.sales.orders
+purpose: Internal order handling detail.
+spec:
+  category: rule
+  description: Internal guard before change.
+  public: false
+  uses: []
+  requires: []
+`
+	if err := os.WriteFile(privatePath, []byte(privateModel), 0644); err != nil {
+		t.Fatal(err)
+	}
+	publicPath := filepath.Join(root, ".markitect", "model", "commerce", "sales", "orders", "cancel-order.yaml")
+	publicBytes, err := os.ReadFile(publicPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	publicModel := strings.Replace(string(publicBytes),
+		"    - namespace: commerce.sales.inventory.reservations\n      name: release-reservation\n  requires:",
+		"    - namespace: commerce.sales.inventory.reservations\n      name: release-reservation\n    - namespace: commerce.sales.orders\n      name: private-internal-guard\n  requires:", 1)
+	if publicModel == string(publicBytes) {
+		t.Fatal("could not add a private relation to the public contract")
+	}
+	if err := os.WriteFile(publicPath, []byte(publicModel), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "init", "--initial-branch=private-briefing")
+	gitTest(t, root, "add", ".")
+	gitCommitTest(t, root, "private child Statement baseline")
+
+	privateUpdated := strings.Replace(privateModel, "Internal guard before change.", "Internal guard after change.", 1)
+	if err := os.WriteFile(privatePath, []byte(privateUpdated), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "add", ".markitect/model/commerce/sales/orders/private-internal-guard.yaml")
+	gitCommitTest(t, root, "change private child Statement")
+	publicBytes, err = os.ReadFile(publicPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	publicDescription := "A confirmed order may be cancelled before shipment only when exactly one active inventory reservation exists; cancellation releases it in the same transaction or leaves both records unchanged on failure."
+	publicUpdated := "Cancel a confirmed order before shipment only when exactly one active reservation exists; release it in the same transaction or leave both records unchanged on failure."
+	publicModel = strings.Replace(string(publicBytes), publicDescription, publicUpdated, 1)
+	if publicModel == string(publicBytes) {
+		t.Fatal("could not update the public ancestor contract")
+	}
+	if err := os.WriteFile(publicPath, []byte(publicModel), 0644); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "add", ".markitect/model/commerce/sales/orders/cancel-order.yaml")
+	gitCommitTest(t, root, "change public ancestor contract")
+	revision := gitOutputTest(t, root, "rev-parse", "HEAD")
+	project, err := projectwork.Load(root, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	privateStatement := projectmodel.Statement{}
+	for _, statement := range project.Report.Statements {
+		if statement.Name == "private-internal-guard" {
+			privateStatement = statement
+		}
+	}
+	if privateStatement.ID == "" || privateStatement.Public {
+		t.Fatalf("fixture's child Statement is not private: %+v", privateStatement)
+	}
+	parentByManager := make(map[string]string, len(project.Report.Managers))
+	for _, manager := range project.Report.Managers {
+		parentByManager[manager.ID] = manager.Parent
+	}
+	ancestorID := parentByManager[privateStatement.Owner]
+	if ancestorID == "" {
+		t.Fatalf("child Statement owner %s has no ancestor", privateStatement.Owner)
+	}
+	if _, err := EnsureAcceptedHistory(root, revision); err != nil {
+		t.Fatal(err)
+	}
+	state, _, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rootBriefings, rootEvents, rootBinding, err := LoadForManagerFrom(root, state, project.Model.Digest, ancestorID, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	briefedEventCount := 0
+	for _, briefing := range rootBriefings {
+		briefedEventCount += len(briefing.EventIDs)
+	}
+	if len(rootBriefings) != 2 || briefedEventCount != 2 {
+		t.Fatalf("ancestor briefing lost authoritative event count: briefings=%+v", rootBriefings)
+	}
+	for _, event := range rootEvents {
+		if event.DefinitionID.Key() == privateStatement.ID {
+			t.Fatalf("ancestor received private child Statement event: %+v", event)
+		}
+		if event.DefinitionID.Name == "cancel-order" {
+			for _, definition := range []*core.Definition{event.Before, event.After} {
+				if definition == nil {
+					continue
+				}
+				for _, relationField := range []string{"uses", "requires"} {
+					relations, ok := definition.Spec[relationField].([]string)
+					if !ok {
+						t.Fatalf("projected %s relation has unexpected representation %T", relationField, definition.Spec[relationField])
+					}
+					for _, relatedID := range relations {
+						if relatedID == privateStatement.ID {
+							t.Fatalf("ancestor public contract event leaked private %s relation", relationField)
+						}
+					}
+				}
+			}
+		}
+	}
+	if len(rootEvents) != 1 || rootEvents[0].DefinitionID.Name != "cancel-order" {
+		t.Fatalf("ancestor should retain its public contract event: %+v", rootEvents)
+	}
+	publicContractID := ""
+	for _, statement := range project.Report.Statements {
+		if statement.Name == "cancel-order" && statement.Public {
+			publicContractID = statement.ID
+		}
+	}
+	contractRetained := false
+	for _, briefing := range rootBriefings {
+		for _, contract := range briefing.Contracts {
+			if contract.ID == publicContractID {
+				contractRetained = true
+			}
+			for _, relatedID := range append(append([]string(nil), contract.Uses...), contract.Requires...) {
+				if relatedID == privateStatement.ID {
+					t.Fatalf("Briefing.Contracts leaked private Statement relation %s", relatedID)
+				}
+			}
+		}
+	}
+	if publicContractID == "" || !contractRetained {
+		t.Fatalf("ancestor briefing lost its public contract obligation %s: %+v", publicContractID, rootBriefings)
+	}
+	_, _, repeatedRootBinding, err := LoadForManagerFrom(root, state, project.Model.Digest, ancestorID, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if repeatedRootBinding != rootBinding {
+		t.Fatalf("same ManagerContext produced unstable binding: first=%s repeated=%s", rootBinding, repeatedRootBinding)
+	}
+
+	_, childEvents, childBinding, err := LoadForManagerFrom(root, state, project.Model.Digest, privateStatement.Owner, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(childEvents) != 2 {
+		t.Fatalf("owning Manager lost its private Statement or public contract events: %+v", childEvents)
+	}
+	if childBinding == rootBinding {
+		t.Fatalf("distinct ManagerContexts produced identical bindings: %s", childBinding)
+	}
+	storedPrivateEvent := false
+	for _, bundle := range state.Briefings {
+		if FullBundleDigest(bundle) != bundle.Digest {
+			t.Fatalf("manager projection changed the stored bundle digest for %s", bundle.Revision)
+		}
+		for _, event := range bundle.Events {
+			if event.DefinitionID.Key() == privateStatement.ID {
+				storedPrivateEvent = event.Before != nil && event.After != nil
+			}
+		}
+	}
+	if !storedPrivateEvent {
+		t.Fatal("manager projection mutated or removed the canonical private event from stored history")
 	}
 }
 
