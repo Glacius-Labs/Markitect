@@ -131,7 +131,7 @@ func (o Operations) Context(operation ContextOperation) (projectmodel.ManagerCon
 		return projectmodel.ManagerContext{}, err
 	}
 	if project.Config.WorkflowMode == projectwork.WorkflowModeGuided && !project.Provisional && project.Revision != "" {
-		if _, err := projectbriefing.EnsureAcceptedHistory(operation.Selection.Root, project.Revision); err != nil {
+		if _, err := projectbriefing.ReadAcceptedHistory(operation.Selection.Root, project.Revision); err != nil {
 			return projectmodel.ManagerContext{}, err
 		}
 	}

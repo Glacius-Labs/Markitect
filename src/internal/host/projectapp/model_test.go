@@ -3,9 +3,11 @@ package projectapp
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
@@ -44,6 +46,58 @@ func TestModelOperationsDelegateProjectServices(t *testing.T) {
 	impact, err := operations.Impact(ImpactOperation{Root: root})
 	if err != nil || impact.Digest == "" || impact.BaseDigest != impact.CandidateDigest {
 		t.Fatalf("Impact = %#v, err=%v", impact, err)
+	}
+}
+
+func TestContextReadsAcceptedHistoryWithoutPersistingIt(t *testing.T) {
+	root := makePlanFixture(t)
+	modelPath := filepath.Join(root, ".markitect", "model", "manager.yaml")
+	data, err := os.ReadFile(modelPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := strings.Replace(string(data), "repository-wide engineering mandate", "repository-wide project mandate", 1)
+	if updated == string(data) {
+		t.Fatal("fixture Manager purpose was not found")
+	}
+	if err := os.WriteFile(modelPath, []byte(updated), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, root, "add", ".markitect/model/manager.yaml")
+	runGit(t, root, "commit", "-m", "change accepted Manager purpose")
+	revision := gitOutput(t, root, "rev-parse", "HEAD")
+	accepted, err := projectbriefing.ReadAcceptedHistory(root, revision)
+	if err != nil || len(accepted.Receipt.Bundles) != 1 {
+		t.Fatalf("accepted history preview = %+v, err=%v", accepted.Receipt, err)
+	}
+	storePath := filepath.Join(root, filepath.FromSlash(".markitect/state/briefings/history.json"))
+	if _, err := os.Stat(storePath); !os.IsNotExist(err) {
+		t.Fatalf("accepted history preview unexpectedly persisted the store: %v", err)
+	}
+	project, err := projectwork.Load(root, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	managerID := project.Report.Managers[0].ID
+	if _, err := (Operations{}).Context(ContextOperation{Selection: Selection{Root: root}, ManagerID: managerID}); err != nil {
+		t.Fatalf("Context with unpersisted accepted history: %v", err)
+	}
+	if _, err := os.Stat(storePath); !os.IsNotExist(err) {
+		t.Fatalf("Context persisted accepted history: %v", err)
+	}
+	if _, err := projectbriefing.EnsureAcceptedHistory(root, revision); err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.ReadFile(storePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := (Operations{}).Context(ContextOperation{Selection: Selection{Root: root}, ManagerID: managerID}); err != nil {
+		t.Fatalf("Context with unchanged persisted history: %v", err)
+	}
+	after, err := os.ReadFile(storePath)
+	if err != nil || string(after) != string(before) {
+		t.Fatalf("Context changed an unchanged history store: err=%v", err)
 	}
 }
 
