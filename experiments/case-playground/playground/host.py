@@ -3,11 +3,19 @@
   python -m playground host run --manifest M.json [--out DIR] [--codex-auth PATH]
       [--claude-token PATH] [--keep-container] [--exploratory]
   python -m playground host clean
+  python -m playground host image-key
 
 Before the build the evaluation files must be pre-registered (registration.py): no
 uncommitted or untracked change in `evaluation/`. host.json records the commit and the
 Git tree of `evaluation/` that `assess` will judge the run with. `--exploratory` runs
 anyway and records `rules.exploratory: true`; `compare` then refuses the run.
+
+The image is built from container/Dockerfile, the one place for its pins (image.py); a
+base without @sha256: is refused. After the build one `docker run --rm --network none`
+reads the image's inventory into the run folder's image-inventory.txt. A non-exact npm
+version, or a difference from the committed container/inventory/codex-<v>-claude-<v>.txt,
+fails the build (an environment failure, like every failed build); without that file the
+run only warns. `image-key` prints a cache key of the pinned inputs.
 
 Secrets are only checked for existence and mounted read-only by path: the Codex login
 at /run/secrets/codex-auth.json, the Claude Code token at /run/secrets/claude-token.
@@ -37,7 +45,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
-from . import cases, outcome, registration
+from . import cases, image, outcome, registration
 from . import manifest as manifest_module
 from .runner import overhead_bound_seconds
 
@@ -50,9 +58,22 @@ SECURITY_OPTS = ["--security-opt", "seccomp=unconfined"]
 COPY_IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc")
 CODEX_AUTH_TARGET = "/run/secrets/codex-auth.json"
 CLAUDE_TOKEN_TARGET = "/run/secrets/claude-token"
-# A `go build` that failed on the network (toolchain or module download) is not the product's.
-GO_NETWORK_ERROR = re.compile(r"dial tcp|no such host|i/o timeout|connection (?:refused|reset)|TLS handshake"
-                              r"|network is unreachable|name resolution|proxy\.golang\.org|sum\.golang\.org", re.I)
+# A failed `go build` is the product's only when the compiler reports errors in the
+# product's own sources (GO_COMPILE_ERROR) and nothing points at the machine: network,
+# disk, permissions, memory, a missing or undownloadable toolchain or module
+# (GO_ENVIRONMENT_ERROR). When unsure, it is the environment's.
+GO_ENVIRONMENT_ERROR = re.compile(
+    r"dial tcp|no such host|i/o timeout|connection (?:refused|reset)|TLS handshake|network is unreachable"
+    r"|name resolution|proxy\.golang\.org|sum\.golang\.org"
+    r"|no space left on device|disk quota exceeded|read-only file system|input/output error"
+    r"|permission denied|operation not permitted|too many open files|cannot allocate memory|out of memory"
+    r"|signal: killed|resource temporarily unavailable|fork/exec|exec format error|text file busy"
+    r"|toolchain not available|go: download go|requires go >= |GOROOT|go: cannot find|cannot find main module"
+    r"|missing go\.sum entry|verifying .*: checksum mismatch|reading .*: (?:\d{3}|unexpected)|unrecognized import path"
+    r"|go: (?:updates to go\.mod needed|errors parsing go\.mod)", re.I)
+# file.go:line[:column]: message, for a file of the product (a relative path), never the
+# module cache (path@version) or the toolchain (an absolute path).
+GO_COMPILE_ERROR = re.compile(r"(?:^|\s)(?![/\\])(?![A-Za-z]:)[^\s@:]+\.go:\d+(?::\d+)?: \S", re.M)
 
 
 class HostError(RuntimeError):
@@ -203,18 +224,72 @@ def image_tag(manifest: dict) -> str:
     return f"markitect-playground:codex-{agent['codexVersion']}-claude-{agent['claudeVersion']}"
 
 
-def build_image(manifest: dict, log_path: Path) -> str:
+PINS_HELP = 'see "Updating the image pins" in the playground README'
+
+
+def image_pins() -> dict:
+    """The pins of container/Dockerfile (image.pins); a missing or malformed pin is refused."""
+    try:
+        return image.pins(ROOT / "container" / "Dockerfile")
+    except image.ImageError as exc:
+        raise HostError(f"{exc}; {PINS_HELP}", outcome.INVALID) from exc
+
+
+def committed_inventory(manifest: dict) -> Path:
+    """The committed inventory of the image for the manifest's two CLI versions."""
+    agent = manifest["agent"]
+    return ROOT / "container" / "inventory" / image.inventory_name(agent["codexVersion"], agent["claudeVersion"])
+
+
+def read_inventory(image_id: str) -> str:
+    """The inventory the image's last build step wrote, read by one short container
+    without network."""
+    cmd = ["docker", "run", "--rm", "--label", LABEL, "--network", "none", "--entrypoint", "cat", image_id,
+           image.INVENTORY_IN_IMAGE]
+    try:
+        done = _call(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300)
+    except subprocess.TimeoutExpired as exc:
+        raise HostError(f"reading the image inventory timed out after {exc.timeout} s") from exc
+    if done.returncode != 0:
+        raise HostError(f"could not read the image inventory {image.INVENTORY_IN_IMAGE} (exit {done.returncode}): "
+                        f"{(done.stderr or '').strip()}")
+    return done.stdout
+
+
+def build_image(manifest: dict, log_path: Path, inventory_path: Path) -> dict:
+    """Build the image from the pinned Dockerfile, save its inventory as `inventory_path`
+    and check it (image.check): exact npm versions, the Dockerfile's pins and, when one is
+    committed, the same entries as committed_inventory. Returns the record host.json and
+    study.json keep as `image`. Any failure is a failed build: HostError, the environment's."""
+    pinned = image_pins()
     tag = image_tag(manifest)
     # Without provenance attestations a cached rebuild keeps its image ID, so both
-    # arms can show they ran the same image.
+    # arms can show they ran the same image. SOURCE_DATE_EPOCH (from the snapshot) fixes
+    # the image's own timestamps.
     cmd = ["docker", "build", "-t", tag, "--provenance=false",
+           "--build-arg", f"SOURCE_DATE_EPOCH={pinned['sourceDateEpoch']}",
            "--build-arg", f"CLAUDE_VERSION={manifest['agent']['claudeVersion']}",
            "--build-arg", f"CODEX_VERSION={manifest['agent']['codexVersion']}", str(ROOT / "container")]
     with open(log_path, "wb") as log:
         done = _call(cmd, stdout=log, stderr=subprocess.STDOUT)
     if done.returncode != 0:
         raise HostError(f"docker build failed; see {log_path}")
-    return _capture(["docker", "image", "inspect", "--format", "{{.Id}}", tag])
+    image_id = _capture(["docker", "image", "inspect", "--format", "{{.Id}}", tag])
+    text = read_inventory(image_id)
+    inventory_path.write_text(text, encoding="utf-8", newline="\n")
+    committed = committed_inventory(manifest)
+    try:
+        expected = committed.read_text(encoding="utf-8") if committed.is_file() else None
+        image.check(text, pinned, expected)
+    except (OSError, UnicodeError, image.ImageError) as exc:
+        raise HostError(f"image {image_id} failed its inventory check: {exc}; compare {inventory_path} with "
+                        f"{committed} and {PINS_HELP}") from exc
+    if expected is None:
+        print(f"warning: no committed image inventory {committed} to compare the image with; review {inventory_path} "
+              f"and commit it with the Dockerfile ({PINS_HELP}); a study refuses to run without it",
+              file=sys.stderr, flush=True)
+    return {"tag": tag, "id": image_id, "base": pinned["base"], "snapshot": pinned["snapshot"],
+            "dockerfileSha256": pinned["dockerfileSha256"], "inventorySha256": image.sha256(text)}
 
 
 def resolve_markitect(product: dict) -> dict:
@@ -255,12 +330,21 @@ def build_markitect(product: dict, target: Path) -> dict:
         try:
             _capture(["go", "build", "-trimpath", "-o", str(target), "./src/cmd/markitect"],
                      cwd=tree, env=env)
-        except HostError as exc:  # go ran and failed: the product commit does not build
-            if isinstance(exc.__cause__, FileNotFoundError) or GO_NETWORK_ERROR.search(str(exc)):
-                raise  # no go, or a toolchain or module download failed: the environment's
+        except HostError as exc:  # go ran and failed: the product's only for a compile error
+            if isinstance(exc.__cause__, FileNotFoundError) or go_failure_class(str(exc)) != outcome.PRODUCT:
+                raise  # no go, or the machine failed the build: the environment's
             raise HostError(f"the Markitect commit {commit} does not build: {exc}", outcome.PRODUCT) from exc
         go_version = _capture(["go", "version", str(target)], cwd=tree, env=env).split()[-1]
     return {"commit": commit, "sha256": hashlib.sha256(target.read_bytes()).hexdigest(), "go": go_version}
+
+
+def go_failure_class(output: str) -> int:
+    """outcome.PRODUCT when a failed `go build`'s output shows compile errors in the
+    product's sources and no sign of the machine (network, disk, permissions, memory,
+    toolchain or module download), else outcome.ENVIRONMENT."""
+    if GO_ENVIRONMENT_ERROR.search(output) or not GO_COMPILE_ERROR.search(output):
+        return outcome.ENVIRONMENT
+    return outcome.PRODUCT
 
 
 def stage_inputs(manifest: dict, inputs: Path) -> None:
@@ -344,15 +428,26 @@ def _container_state(name: str) -> str | None:
     return "running" if done.stdout.strip() == "true" else "stopped"
 
 
+def oom_killed(name: str) -> bool | None:
+    """Docker's State.OOMKilled of a container (the kernel killed it for memory); None
+    when Docker cannot say."""
+    done = _call(["docker", "container", "inspect", "--format", "{{.State.OOMKilled}}", name],
+                 capture_output=True, text=True, encoding="utf-8", errors="replace")
+    value = done.stdout.strip() if done.returncode == 0 else ""
+    return {"true": True, "false": False}.get(value)
+
+
 def _finish_container(name: str, record: dict, out: Path, keep: bool,
                       before_remove: Callable[[str], None] | None = None) -> None:
-    """Kill after a host timeout or interrupt, save the log, call `before_remove` once
-    Docker confirms the container has stopped (the study copies a login back out), then
-    remove the container unless `keep`, also when `before_remove` is interrupted."""
+    """Kill after a host timeout or interrupt, save the log, record Docker's
+    `oomKilled`, call `before_remove` once Docker confirms the container has stopped (the
+    study copies a login back out), then remove the container unless `keep`, also when
+    `before_remove` is interrupted."""
     if record["status"] in ("host-timeout", "host-interrupted"):
         _call(["docker", "kill", name], capture_output=True)
     with open(out / "container.log", "wb") as log:
         _call(["docker", "logs", name], stdout=log, stderr=subprocess.STDOUT)
+    record["oomKilled"] = oom_killed(name)
     try:
         if before_remove is not None and _container_state(name) == "stopped":
             try:
@@ -433,6 +528,7 @@ def run(args: argparse.Namespace) -> int:
             raise HostError(f"Claude token file not found: {token}")
         token = token.resolve()
     station_count(manifest)  # fails before Docker for a case without a valid plan
+    image_pins()  # refuses an unpinned Dockerfile before Docker
     if manifest["method"] == "markitect":
         if shutil.which("go") is None:
             raise HostError("Go is required to build the Markitect binary (go not on PATH)")
@@ -456,11 +552,13 @@ def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | 
     (outcome.host_run) is also `exitCode` in host.json.
 
     `auth` and `token` are login files mounted read-only (never opened here). `prebuilt`
-    holds what a study built once for all its runs: {"image": {"tag", "id"}} and, for the
-    Markitect method, "markitect" (the build record) and "binary" (its path). Without it
-    the image and the binary are built here. `before_remove(container)` runs after the
-    container has stopped and before it is removed. `pre_registration` (registration.observe
-    at run start) and `exploratory` go to host.json; `assess` judges with that registration.
+    holds what a study built once for all its runs: "image" (build_image's record),
+    "inventory" (the path of its image-inventory.txt) and, for the Markitect method,
+    "markitect" (the build record) and "binary" (its path). Without it the image and the
+    binary are built here. Either way the run folder gets image-inventory.txt.
+    `before_remove(container)` runs after the container has stopped and before it is
+    removed. `pre_registration` (registration.observe at run start) and `exploratory` go
+    to host.json; `assess` judges with that registration.
     """
     stations = station_count(manifest)
     inputs, results = out / "inputs", out / "results"
@@ -475,7 +573,7 @@ def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | 
                     "preRegistration": pre_registration, "rules": {"exploratory": bool(exploratory)},
                     "secrets": {"codexAuth": auth is not None, "claudeToken": token is not None},
                     "containerLaunched": False, "failureClass": None,
-                    "containerExitCode": None, "exitCode": None, "error": None}
+                    "containerExitCode": None, "oomKilled": None, "exitCode": None, "error": None}
     try:
         record["dockerVersion"] = _capture(["docker", "version", "--format", "{{.Server.Version}}"])
         if _container_state(name) is not None:
@@ -483,9 +581,10 @@ def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | 
                             "or use a new manifest id")
         if prebuilt is None:
             print(f"building image {record['image']['tag']} ...", flush=True)
-            record["image"]["id"] = build_image(manifest, out / "image-build.log")
+            record["image"] = build_image(manifest, out / "image-build.log", out / "image-inventory.txt")
         else:
             record["image"] = dict(prebuilt["image"])
+            shutil.copyfile(prebuilt["inventory"], out / "image-inventory.txt")
         stage_inputs(manifest, inputs)
         if manifest["method"] == "markitect":
             binary = inputs / "bin" / "markitect"
@@ -537,7 +636,7 @@ def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | 
         record["exitCode"] = exit_code = outcome.host_run(
             record["status"], record["containerExitCode"],
             run_class(results) if record["status"] == "completed" else None,
-            failure_class=record["failureClass"], memory_limited=bool(manifest["container"].get("memory")))
+            failure_class=record["failureClass"], oom_killed=record["oomKilled"])
         _write_json(out / "host.json", record)  # first, so an interrupted hand-back keeps the record
         if record["containerLaunched"]:
             record["handBack"] = hand_back(name, record["image"]["id"] or record["image"]["tag"], results)
@@ -558,6 +657,19 @@ def clean() -> int:
     return 0
 
 
+def image_key() -> int:
+    """Print a stable cache key of the image's pinned inputs (image.key), e.g. for CI caching."""
+    try:
+        key, files = image.key(ROOT / "container")
+    except (OSError, image.ImageError) as exc:
+        raise HostError(f"{exc}; {PINS_HELP}", outcome.INVALID) from exc
+    if not files:
+        print(f"warning: no committed image inventory in {ROOT / 'container' / 'inventory'}; the key covers the "
+              f"Dockerfile only ({PINS_HELP})", file=sys.stderr)
+    print(key)
+    return outcome.OK
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m playground host", description=__doc__,
                                      epilog=outcome.help_text(),
@@ -573,8 +685,12 @@ def main(argv: list[str] | None = None) -> int:
     run_parser.add_argument("--exploratory", action="store_true",
                             help="run although the evaluation files are not pre-registered; compare refuses the run")
     commands.add_parser("clean", help="remove stopped playground containers")
+    commands.add_parser("image-key", help="print a cache key of the pinned base, the Debian snapshot, the committed "
+                                          "image inventories and the Dockerfile's SHA-256")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     try:
+        if args.command == "image-key":
+            return image_key()
         return run(args) if args.command == "run" else clean()
     except HostError as exc:
         print(f"error: {exc}", file=sys.stderr)

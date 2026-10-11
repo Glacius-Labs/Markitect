@@ -21,7 +21,7 @@ PLAYGROUND = Path(__file__).resolve().parents[1]
 def make_manifest(**overrides) -> dict:
     data = {
         "schema": 1, "id": "fake-roombook-test", "case": "roombook", "method": "conventional",
-        "agent": {"kind": "fake", "codexVersion": "0.162.0", "model": "fake-model", "effort": "high",
+        "agent": {"kind": "fake", "codexVersion": "0.162.0", "model": "fake-model-1", "effort": "high",
                   "maxSubagents": 2},
         "limits": {"stationSeconds": 300, "totalSeconds": 1200},
     }
@@ -34,7 +34,7 @@ def read_json(path: Path) -> dict:
 
 
 def claude_agent_cfg(kind: str = "fake-claude") -> dict:
-    return {"kind": kind, "codexVersion": "0.162.0", "claudeVersion": "2.1.296", "model": "fake-model",
+    return {"kind": kind, "codexVersion": "0.162.0", "claudeVersion": "2.1.296", "model": "fake-model-1",
             "effort": "high", "maxSubagents": 2}
 
 
@@ -217,7 +217,7 @@ class FakeTrajectoryTests(RunnerTestCase):
         self.assertEqual((state["stopCategory"], result["classification"]["class"]), ("harness", "harness"))
 
     def test_codex_without_auth_stops_before_setup(self):
-        data = make_manifest(agent={"kind": "codex", "codexVersion": "0.162.0", "model": "m",
+        data = make_manifest(agent={"kind": "codex", "codexVersion": "0.162.0", "model": "gpt-6-luna",
                                     "effort": "high", "maxSubagents": 1})
         with patch.object(runner, "_codex_version", return_value=None):
             self.assertEqual(self.run_trajectory(data), 1)

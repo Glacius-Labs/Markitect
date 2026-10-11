@@ -15,8 +15,9 @@ from pathlib import Path
 from unittest import mock
 
 from playground import __main__ as entry
-from playground import host, manifest, study
+from playground import host, image, manifest, outcome, study
 from tests import evaluation_repo
+from tests.test_image import sample_inventory
 
 PLAYGROUND = Path(__file__).resolve().parents[1]
 STUDY = {
@@ -130,8 +131,9 @@ class FakeDocker:
 
     def __init__(self, *, exits=None, wait_effects=None, start_fails=(), login_changed=True, reviewer_refresh=False,
                  server="29.4.1|linux|amd64", running="", names="", ran_image=None, cp="file", git=None,
-                 mismatch=False, report="match", classes=None):
+                 mismatch=False, report="match", classes=None, build_fails=False, inventory=None):
         self.calls, self.containers, self.seen_logins, self.order = [], {}, {}, []
+        self.build_fails, self.inventory = build_fails, inventory
         self.exits, self.wait_effects, self.start_fails = exits or {}, wait_effects or {}, set(start_fails)
         self.classes = classes or {}
         self.login_changed, self.reviewer_refresh, self.server = login_changed, reviewer_refresh, server
@@ -156,8 +158,12 @@ class FakeDocker:
                 code, err = 1, "Cannot connect to the Docker daemon"
             else:
                 out = self.server if "|" in cmd[-1] else self.server.split("|")[0]
+        elif sub == "build":
+            code = 1 if self.build_fails else 0
         elif cmd[1:3] == ["image", "inspect"]:
             out = IMAGE
+        elif sub == "run" and cmd[-1] == image.INVENTORY_IN_IMAGE:
+            out = self.inventory if self.inventory is not None else sample_inventory(host.image_pins())
         elif cmd[1:3] == ["container", "inspect"]:
             name = cmd[-1]
             if name not in self.containers:
@@ -481,8 +487,13 @@ class StudyRunBase(unittest.TestCase):
         self.out = self.root / "runs" / "study"
         # The pre-registered evaluation files: registration and the assessments read them here.
         self.repo = evaluation_repo.committed(self.root / "registered", case="roombook")
+        # The committed image inventory the build is compared with (none is committed in the tests' checkout).
+        self.inventory = self.root / "inventory" / "codex-0.162.0-claude-2.1.296.txt"
+        self.inventory.parent.mkdir()
+        self.inventory.write_text(sample_inventory(host.image_pins()), encoding="utf-8")
         patchers = [mock.patch.object(study, name, value) for name, value in
                     (("STATE_HOME", self.state), ("CODEX_SOURCE", self.source), ("CLAUDE_SOURCE", self.token))]
+        patchers.append(mock.patch.object(host, "committed_inventory", lambda manifest_: self.inventory))
         for patcher in patchers + [evaluation_repo.use(self.repo)]:
             patcher.start()
             self.addCleanup(patcher.stop)
@@ -559,14 +570,23 @@ class StudyRunTests(StudyRunBase):
             self.assertEqual(manifest.validate(saved), saved)
             host_record = json.loads((self.out / step["folder"] / "host.json").read_text(encoding="utf-8"))
             self.assertEqual(host_record["manifest"], saved)
-            self.assertEqual(host_record["image"], {"tag": host.image_tag(saved), "id": IMAGE})
+            self.assertEqual(host_record["image"], record["versions"]["image"])
+            self.assertEqual((self.out / step["folder"] / "image-inventory.txt").read_bytes(),
+                             (self.out / "preflight" / "image-inventory.txt").read_bytes())
             self.assertEqual(step["imageId"], IMAGE)
             if step["arm"] == "markitect":
                 self.assertEqual(saved["markitect"]["commit"], FULL)
                 self.assertEqual(host_record["markitect"]["sha256"], "f" * 64)
                 self.assertEqual((self.out / step["folder"] / "inputs" / "bin" / "markitect").read_bytes(), b"binary")
         versions = record["versions"]
-        self.assertEqual(versions["image"], {"tag": "markitect-playground:codex-0.162.0-claude-2.1.296", "id": IMAGE})
+        pinned = host.image_pins()
+        built = (self.out / "preflight" / "image-inventory.txt").read_bytes()
+        self.assertEqual(built, self.inventory.read_bytes())
+        self.assertEqual(versions["image"], {"tag": "markitect-playground:codex-0.162.0-claude-2.1.296", "id": IMAGE,
+                                             "base": pinned["base"], "snapshot": pinned["snapshot"],
+                                             "dockerfileSha256": pinned["dockerfileSha256"],
+                                             "inventorySha256": image.sha256(built)})
+        self.assertIn(f"Debian snapshot {pinned['snapshot']}", (self.out / "study.md").read_text(encoding="utf-8"))
         self.assertEqual(versions["docker"], {"version": "29.4.1", "os": "linux", "arch": "amd64"})
         self.assertEqual(versions["markitect"]["sha256"], "f" * 64)
         self.assertEqual((versions["go"], versions["hostPlatform"]), ("go1.27.1", host.host_platform()))
@@ -786,6 +806,37 @@ class StudyRunTests(StudyRunBase):
         self.assertEqual(docker.started(), ["mpg-pilot-p1-conv"])
         self.assertIn("not the preflight build", self.record()["stopReason"])
 
+    def test_a_failed_image_build_is_the_environments(self):
+        for number, (docker, fragment) in enumerate((
+                (FakeDocker(build_fails=True), "docker build failed"),
+                (FakeDocker(inventory=sample_inventory(host.image_pins(), dpkg=("bash 9 amd64",))),
+                 "+ dpkg bash 9 amd64"))):
+            with self.subTest(fragment=fragment):
+                self.out = self.root / "runs" / f"build-{number}"
+                code, stdout, stderr = self.run_study(docker, "--fake-reviewers")
+                self.assertEqual(code, outcome.ENVIRONMENT, stdout + stderr)
+                record = self.record()
+                self.assertEqual((record["status"], record["exitCode"]), ("image-build-failed", 11))
+                check = next(c for c in record["preflight"]["checks"] if c["check"] == "image build")
+                self.assertEqual(check["status"], "fail")
+                self.assertIn(fragment, check["message"])
+                self.assertEqual(docker.started(), [])
+                self.assertEqual(record["steps"], [])
+
+    def test_a_markitect_binary_that_does_not_build_fails_the_preflight(self):
+        stack, stdout, stderr = capture()
+        docker = FakeDocker()
+        with stack, mock.patch.object(host.subprocess, "run", docker.run), \
+                mock.patch.object(host.subprocess, "Popen", docker.popen), \
+                mock.patch.object(study.shutil, "which", return_value="/usr/bin/tool"), \
+                mock.patch.object(study.shutil, "disk_usage", return_value=mock.Mock(free=100 << 30)), \
+                mock.patch.object(host, "resolve_markitect", side_effect=lambda p: {**p, "commit": FULL}), \
+                mock.patch.object(host, "build_markitect",
+                                  side_effect=host.HostError("does not build", outcome.PRODUCT)):
+            code = entry.main(["study", str(self.write_study()), "--out", str(self.out), "--fake-reviewers"])
+        self.assertEqual(code, outcome.PREFLIGHT, stdout.getvalue() + stderr.getvalue())
+        self.assertEqual(self.record()["status"], "preflight-failed")
+
     def test_a_fairness_mismatch_fails_the_comparison(self):
         code, _stdout, _stderr = self.run_study(FakeDocker(mismatch=True), "--fake-reviewers")
         self.assertEqual(code, 10)  # refused inside a study: the preflight should have caught it
@@ -843,6 +894,44 @@ class StudyRunTests(StudyRunBase):
         self.assertEqual(code, 0, stdout + stderr)
         self.assertEqual(self.steps("compare"), [])
         self.assertEqual([s["id"] for s in self.steps("run")], ["pilot-p1-conv", "pilot-p2-conv"])
+
+    def test_the_preflight_needs_the_image_pins_and_a_committed_inventory(self):
+        self.inventory.unlink()
+        docker = FakeDocker()
+        code, stdout, _stderr = self.run_study(docker, "--preflight", "--fake-reviewers")
+        self.assertEqual(code, 3, stdout)
+        self.assertIn(f"[FAIL] image inventory: no committed image inventory {self.inventory}", stdout)
+        self.assertIn("Updating the image pins", stdout)
+        self.inventory.write_text(sample_inventory({**host.image_pins(), "snapshot": "20200101T000000Z"}),
+                                  encoding="utf-8")
+        code, stdout, _stderr = self.run_study(docker, "--preflight", "--fake-reviewers")
+        self.assertEqual(code, 3, stdout)
+        self.assertIn("[FAIL] image inventory:", stdout)
+        self.assertIn("its snapshot is 20200101T000000Z", stdout)
+        self.inventory.write_text(sample_inventory(host.image_pins()), encoding="utf-8")
+        with mock.patch.object(host, "image_pins", side_effect=host.HostError("no digest", 2)):
+            code, stdout, _stderr = self.run_study(docker, "--preflight", "--fake-reviewers")
+        self.assertEqual(code, 3, stdout)
+        self.assertIn("[FAIL] image pins: no digest", stdout)
+        self.assertIn("[skip] image inventory: needs the image pins", stdout)
+        code, stdout, _stderr = self.run_study(docker, "--preflight", "--fake-reviewers")
+        self.assertEqual(code, 0, stdout)
+        self.assertIn("[ok]   image pins: base node:22-bookworm-slim@sha256:", stdout)
+        self.assertIn("[ok]   image inventory: committed codex-0.162.0-claude-2.1.296.txt", stdout)
+        self.assertFalse(any(call[:2] in (["docker", "build"], ["docker", "run"]) for call in docker.calls))
+
+    def test_changed_judging_code_fails_the_preflight(self):
+        (self.repo / "playground").mkdir()
+        (self.repo / "playground" / "assess.py").write_text("# changed\n", encoding="utf-8")
+        code, stdout, _stderr = self.run_study(FakeDocker(), "--preflight", "--fake-reviewers")
+        self.assertEqual(code, 3, stdout)
+        self.assertIn("[FAIL] judging code: the judging code (playground/, the public checks) has local changes "
+                      "(playground/assess.py)", stdout)
+        evaluation_repo.git(self.repo, "add", "-A")
+        evaluation_repo.git(self.repo, "commit", "-q", "-m", "commit the judging code")
+        code, stdout, _stderr = self.run_study(FakeDocker(), "--preflight", "--fake-reviewers")
+        self.assertEqual(code, 0, stdout)
+        self.assertIn("[ok]   judging code: playground and public checks committed at", stdout)
 
     def test_preflight_only_builds_and_writes_nothing(self):
         docker = FakeDocker()

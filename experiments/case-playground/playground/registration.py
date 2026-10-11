@@ -11,9 +11,16 @@ refused unless the run is exploratory.
 `assess` judges with exactly that tree: `archive` gives its committed bytes and
 `read_blob` its `config.json` (the reviewer models), never the working tree.
 
-Reviewer models must differ from the arms' models (`clashes`): model ids are compared
-casefolded, with a trailing `[...]` (such as `[1m]`) removed; the provider is not
-checked. Standard library only: the assessment container imports this module too.
+`code_state` records the commit of the judging code (playground/, the public checks)
+and whether it has local changes; `assess` treats changed judging code as exploratory.
+
+Model ids are full ids, never aliases (`alias_reason`: Claude Code's bare aliases such as
+`opus`, an id ending in `latest`, or one without any version digit). Reviewer models must
+differ from the arms' models (`clashes`), compared by `model_key`: casefolded, without a
+context suffix such as `[1m]`, a provider prefix (`anthropic/`, `openai/`, Bedrock's
+`us.anthropic.`), Bedrock's `-v1:0` or a trailing date (`-20251001`, `@20251001`,
+`-2025-10-01`); the provider itself is not checked. Standard library only: the
+assessment container imports this module too.
 """
 from __future__ import annotations
 
@@ -32,6 +39,12 @@ FOLDER = "evaluation"
 GIT_TIMEOUT = 120
 _OBJECT_ID = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 _SUFFIX = re.compile(r"\[[^\]]*\]$")
+# Bedrock-style prefixes: an optional region (us., eu., apac., global.) and the provider.
+_PROVIDER_PREFIX = re.compile(r"^(?:[a-z][a-z0-9-]*\.)?(?:anthropic|openai)\.")
+_BEDROCK_VERSION = re.compile(r"-v\d+:\d+$")
+_DATE_SUFFIX = re.compile(r"(?:[-@]\d{8}|-\d{4}-\d{2}-\d{2})$")
+# Bare aliases name a model family or a moving target, never one model.
+MODEL_ALIASES = frozenset({"opus", "sonnet", "haiku", "fable", "opusplan", "default", "best"})
 
 # A git runner takes the arguments after `git` and returns the finished process with
 # bytes on stdout and stderr; `git_in(root)` runs real git in `root`.
@@ -168,10 +181,51 @@ def ignored(parts: tuple[str, ...], patterns: Sequence[str]) -> bool:
 # --- reviewer independence -----------------------------------------------------------------
 
 def model_key(model: Any) -> str | None:
-    """A model id compared casefolded and without a trailing `[...]`; None when empty."""
+    """A model id as the independence check compares it: casefolded, without a trailing
+    `[...]`, a provider prefix (everything up to the last `/`, or Bedrock's
+    `[region.]anthropic.`), Bedrock's `-vN:N` and a trailing date; None when empty."""
     if not isinstance(model, str) or not model.strip():
         return None
-    return _SUFFIX.sub("", model.strip()).strip().casefold() or None
+    key = _SUFFIX.sub("", model.strip()).strip().casefold()
+    key = _PROVIDER_PREFIX.sub("", key.rsplit("/", 1)[-1])
+    key = _DATE_SUFFIX.sub("", _BEDROCK_VERSION.sub("", key))
+    return key or None
+
+
+def alias_reason(model: Any) -> str | None:
+    """Why `model` is not a full model id, or None: a bare alias (MODEL_ALIASES), an id
+    ending in `latest`, or one without any version digit. A full id names one model, so
+    the independence check cannot miss the same model under two names."""
+    key = model_key(model)
+    if key is None:
+        return None
+    if key in MODEL_ALIASES or key.endswith("latest") or not any(char.isdigit() for char in key):
+        return (f"{model!r} is a model alias, not a full model id; give the full id with its version "
+                "(such as claude-opus-5-5 or gpt-6.1-sol)")
+    return None
+
+
+def code_state(root: Path, paths: Sequence[str], git: Runner | None = None) -> dict:
+    """{"commit", "dirty", "paths", "changed"} of the code at `paths` (relative to `root`):
+    the checkout's commit and whether any of them has uncommitted or untracked changes;
+    `dirty` is None when Git cannot say (no checkout)."""
+    git = git or git_in(root)
+    record: dict[str, Any] = {"commit": None, "dirty": None, "paths": list(paths), "changed": []}
+    try:
+        head = git(["rev-parse", "HEAD^{commit}"])
+        status = git(["status", "--porcelain", "--untracked-files=all", "--", *paths])
+    except RegistrationError as exc:
+        record["error"] = str(exc)
+        return record
+    commit = _text(head.stdout).strip()
+    if head.returncode == 0 and _OBJECT_ID.fullmatch(commit):
+        record["commit"] = commit
+    if status.returncode != 0 or record["commit"] is None:
+        record["error"] = _first_line(status.stderr or head.stderr) or "not a Git checkout"
+        return record
+    changed = [line[3:] if len(line) > 3 else line for line in _text(status.stdout).splitlines() if line.strip()]
+    record.update(dirty=bool(changed), changed=changed[:20])
+    return record
 
 
 def arm_models(manifest: dict | None, roles: list | None = None) -> dict[str, str]:

@@ -14,6 +14,7 @@ Markitect manifest); makes no model call. Not picked up by unittest discovery.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import platform
 import re
@@ -104,6 +105,16 @@ def main() -> int:
     check(host_record.get("status") == "completed", "host.json records status completed")
     image = (host_record.get("image") or {}).get("tag") or ""
     check("-claude-" in image, f"image tag names both CLI versions ({image})")
+    sys.path.insert(0, str(ROOT))
+    from playground import image as image_pins  # the smoke runs from the playground folder
+    pinned = image_pins.pins(ROOT / "container" / "Dockerfile")
+    record_image = host_record.get("image") or {}
+    inventory = out / "image-inventory.txt"
+    inventory_hash = hashlib.sha256(inventory.read_bytes()).hexdigest() if inventory.is_file() else None
+    check(record_image.get("base") == pinned["base"] and record_image.get("snapshot") == pinned["snapshot"]
+          and record_image.get("dockerfileSha256") == pinned["dockerfileSha256"]
+          and inventory_hash is not None and record_image.get("inventorySha256") == inventory_hash,
+          f"host.json records the image pins and the hash of image-inventory.txt ({record_image})")
     pre = host_record.get("preRegistration") or {}
     check(pre.get("status") == "registered" and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}",
                                                              pre.get("evaluationTree") or "") is not None

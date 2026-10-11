@@ -82,8 +82,10 @@ The smokes run the whole pipeline with a scripted fake agent. No model call, no 
 | Codex login `~/.codex/auth.json` | real Codex runs, Markitect behind Claude Code, Codex reviewer | Not for the smokes. See [Logins](#logins). |
 | Claude Code token file | real Claude Code runs, Claude reviewer | Not for the smokes. |
 
-The first image build downloads the base image, Debian packages and both CLIs. It needs
-network access and takes a few minutes; later builds use the Docker cache.
+The first image build downloads the pinned base image, the Debian packages from
+snapshot.debian.org and both CLIs ([Updating the image pins](#updating-the-image-pins)). It
+needs network access and takes a few minutes, longer when the snapshot service is slow;
+later builds use the Docker cache.
 
 ### Run it
 
@@ -94,7 +96,9 @@ python3 tests/smoke_study.py     # a whole study: both arms, assessments, compar
 ```
 
 Run them from a Git checkout whose `evaluation/` is committed and unchanged
-([Pre-registration](#pre-registration)). Each smoke works in a new folder under `$TMPDIR`
+([Pre-registration](#pre-registration)); `smoke_study.py` also needs committed judging code
+and the committed image inventory ([Updating the image pins](#updating-the-image-pins)).
+Each smoke works in a new folder under `$TMPDIR`
 (default `/tmp`, never inside a Git checkout) and keeps it after a failure; `--keep`
 keeps it after a pass. `smoke_docker.py --manifest` takes the other fakes,
 `examples/fake-readinglog2.json` (six waves) and `examples/fake-claude-roombook.json`
@@ -108,8 +112,8 @@ changed under the setup sequence in `playground/methods.py`.
 `smoke: passed`, the last line, means that every check above it is `[ok]`.
 `smoke_docker.py` checks one run: exit 0; every wave ran and merged its `FAKE_S<n>.md`;
 setup `ready`, class `none`, final public checks; token counts from the session records;
-leftover processes killed; `host.json` complete with its pre-registration and no
-labelled container left; the agent never opened `/out`; for `fake-claude` a throwaway
+leftover processes killed; `host.json` complete with its pre-registration and the image
+pins, `image-inventory.txt` matching its hash, and no labelled container left; the agent never opened `/out`; for `fake-claude` a throwaway
 token reached the agent and is nowhere in the run folder. `smoke_study.py` checks the
 study: schedule order, both assessments on the registered evaluation tree, a comparison
 with matching fairness fields and host platform, a complete `study.json`, the login
@@ -165,11 +169,16 @@ for the Markitect arm); that no playground container runs and no other study hol
 `~/.markitect-playground/study.lock` (run one study at a time); that no container has the
 study's names; for the Markitect arm `git`, `go` and a checkout holding the commit; every
 needed login (present, not empty, with what needs it); a new study folder outside every
-Git checkout with 5 GiB free; pre-registered evaluation files; reviewer models that differ
-from the arms' models (with `--fake-reviewers` only a warning). It only warns when the
-commit is behind `HEAD`, the host is not Linux or an earlier study left login folders. Then
-it builds the image and the binary once for all runs; `--preflight` stops before that
-and writes nothing.
+Git checkout with 5 GiB free; the image pins in `container/Dockerfile` and a committed
+image inventory for the study's CLI versions with the same pins
+([Updating the image pins](#updating-the-image-pins)); pre-registered evaluation files;
+committed judging code (`playground/` and the public checks; changed code would make every
+assessment exploratory); full reviewer model ids that differ from the arms' models (with
+`--fake-reviewers` a clash only warns). It only warns when the commit is behind `HEAD`, the
+host is not Linux or an earlier study left login folders. Then it builds the image and the
+binary once for all runs; `--preflight` stops before that and writes nothing. A failed
+image build, its inventory check included, ends the study with 11 (status
+`image-build-failed`); a binary that does not build, with 3.
 
 ## Components
 
@@ -189,10 +198,12 @@ and writes nothing.
 | `playground/evaluate.py` | `assess`: starts the assessment container; inside, checks, holdouts, diff profile, classification, product findings and reviews. |
 | `playground/reviewers.py` | Codex and Claude reviewers: prompt, input bundle, commands, schema validation, agreement. |
 | `playground/compare.py` | Side-by-side comparison of two assessed runs after a fairness check. |
-| `playground/registration.py` | [Pre-registration](#pre-registration) from Git and the reviewer model check. |
+| `playground/registration.py` | [Pre-registration](#pre-registration) from Git, the judging code's commit, model ids and the reviewer model check. |
+| `playground/image.py` | The image pins in the Dockerfile, the image inventory and its check, the cache key of `host image-key` ([Updating the image pins](#updating-the-image-pins)). |
 | `playground/outcome.py` | The [exit codes](#exit-codes) and how each command computes its own. |
 | `playground/study.py` | `study`: study file, schedule, preflight and login copies; runs, assesses and compares through the functions behind `host run`, `assess` and `compare`. |
-| `container/Dockerfile` | The image: `node:22-bookworm-slim`, Python, Git, bubblewrap, Codex CLI and Claude Code at pinned versions, user `agent` (uid 1000). |
+| `container/Dockerfile` | The image and the one place for its pins: `node:22-bookworm-slim` by digest, Debian packages (Python, Git, bubblewrap, ...) from a snapshot.debian.org time, Codex CLI and Claude Code at exact versions, user `agent` (uid 1000); its last step writes the image inventory. |
+| `container/inventory/` | The committed inventory per CLI pair, `codex-<v>-claude-<v>.txt`, that every build is compared with. |
 | `cases/` | `task-prompt.txt` (the one prompt); `common/` (`AGENTS.md`, `QUALITY.md`, the public checks' driver `checks/acceptance.py`), seeded into every repository; one folder per case with `README.md`, `BACKLOG.md`, `STATIONS.json`, its public checks `checks/<case>.py` and, for brownfield cases, starting code. |
 | `methods/` | `conventional/AGENTS.fragment.md`, appended to `AGENTS.md`; `markitect/README.md`, notes for people. |
 | `evaluation/` | Hidden: `config.json`, reviewer prompt and schema in `common/`, ground truth, holdouts, mutants, reference and `validate.py` in `readinglog2/`. Never staged into a run. |
@@ -211,7 +222,9 @@ HOST  python3 -m playground study S.json
 HOST  python3 -m playground host run --manifest M.json
   |  validate manifest; check that login files exist (never read them)
   |  pre-registration: evaluation/ committed -> commit and Git tree in host.json
+  |  image pins: container/Dockerfile names a base digest and a Debian snapshot
   |  docker build   -> image markitect-playground:codex-<v>-claude-<v>
+  |  inventory      -> <out>/image-inventory.txt, compared with container/inventory/
   |  Markitect arm  -> go build of markitect.commit
   |  stage <out>/inputs: code, cases/common, cases/<case>, prompt,
   |                      Conventional fragment or binary, fake agent, normalized manifest
@@ -299,7 +312,7 @@ Unknown fields are rejected at every level.
 | `agent.kind` | `codex`, `claude`, `fake` (for Codex), `fake-claude` (for Claude Code) | required | Outer agent. |
 | `agent.codexVersion` | `[0-9][0-9A-Za-z.-]{0,55}` | required | `@openai/codex` in the image. Always needed: Codex also runs Markitect's inner roles. |
 | `agent.claudeVersion` | same pattern | `2.1.296`; required for Claude kinds | `@anthropic-ai/claude-code` in the image. |
-| `agent.model` | `[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}` | required | Outer model; for Codex also the subagent default. |
+| `agent.model` | `[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}`, a full model id | required | Outer model; for Codex also the subagent default. An alias is refused ([Reviewers](#reviewers)). |
 | `agent.effort` | `[a-z]{1,32}` | required | Outer reasoning effort. |
 | `agent.maxSubagents` | positive integer | required | Codex `agents.max_concurrent_threads_per_session`. Does not limit Claude Code (recorded only). |
 | `limits.stationSeconds` | positive integer | required | Agent time limit per wave. |
@@ -351,7 +364,8 @@ any manifest and saved normalized in `manifests/`.
 | `--exploratory` | off | Run although `evaluation/` has uncommitted changes; records `rules.exploratory`, and `compare` refuses the run. |
 
 `python3 -m playground host clean` removes every stopped playground container (label
-`markitect-playground=1`), assessment containers included.
+`markitect-playground=1`), assessment containers included. `python3 -m playground host
+image-key` prints the image's cache key ([Updating the image pins](#updating-the-image-pins)).
 
 ### `assess`
 
@@ -380,7 +394,7 @@ any manifest and saved normalized in `manifests/`.
 | Key | Today | Default when missing | Meaning |
 |---|---|---|---|
 | `schema` | `1` | not checked | Config schema. |
-| `reviewers.codex.model` | `gpt-6.1-sol` | required | Codex reviewer model. A reviewer exists only if listed. Every model must differ from the arms' models ([Reviewers](#reviewers)). |
+| `reviewers.codex.model` | `gpt-6.1-sol` | required | Codex reviewer model, a full model id. A reviewer exists only if listed. Every model must differ from the arms' models ([Reviewers](#reviewers)). |
 | `reviewers.claude.model` | `claude-opus-5-5` | required | Claude reviewer model. |
 | `reviewers.<name>.effort` | `high` | flag left out | Reasoning effort. |
 | `reviewers.<name>.timeoutSeconds` | `2700` | `2700` | Hard limit per review. |
@@ -396,15 +410,16 @@ any manifest and saved normalized in `manifests/`.
 | 0 | Completed. `host run`: every wave ran, class `none`; `assess`, `compare`: written; `study`: every step 0. |
 | 1 | Method outcome: the run stopped early with class `none` (agent time used up). |
 | 2 | Invalid input or refused by a rule: manifest, study file, options, folder, pre-registration, reviewer models, fairness mismatch. |
-| 3 | `study` preflight failed, including the image and binary builds. |
-| 10 | Harness failure: runner error, failed snapshot or wave release, `assess-error.txt`, `study-error.txt`, an unexpected error of the command. |
-| 11 | Environment failure: logins, no session id, host status `setup-failed`, `start-failed` or `wait-failed` (image build included), a container killed (exit 137) under its memory limit, image changed. |
-| 12 | Product failure: the Markitect binary does not build, setup blocked by the product, `markitect check` could not run. |
+| 3 | `study` preflight failed: a cheap check (image pins and committed image inventory included) or the Markitect binary build. |
+| 10 | Harness failure: runner error, failed snapshot or wave release, `assess-error.txt`, `study-error.txt`, an unexpected error of the command, a container killed (exit 137) that Docker does not report `OOMKilled`. |
+| 11 | Environment failure: logins, no session id, host status `setup-failed`, `start-failed` or `wait-failed`, a failed image build or image inventory check (in `study` too), a container killed (exit 137) that Docker reports `OOMKilled`, image changed. |
+| 12 | Product failure: the Markitect binary does not build (compile errors in its own sources; any other `go build` failure is 11), setup blocked by the product, `markitect check` could not run. |
 | 124, 130 | Host safety timeout; interrupted. |
 
 `host run` maps its host status and the run report's [class](#outcome-classes); the runner's
 own 0, 1 or 2 stays `containerExitCode` in `host.json`, which always records the code the
-process exits with. Failed holdouts or reviews never fail `assess`. `study` gives its
+process exits with, and `oomKilled`, Docker's `State.OOMKilled` read before the container
+is removed. Failed holdouts or reviews never fail `assess`. `study` gives its
 worst step code (130, 124, 10, 11, 12, 1, 0 in that order); a step refused inside a study
 (2) counts as 10. A study whose worst step is 1 has status `method-stopped`: the method
 stopped, the harness did not fail.
@@ -415,8 +430,8 @@ stopped, the harness did not fail.
 
 | Path | Content |
 |---|---|
-| `study.md`, `study.json` | **Start here.** Status, exit code and stop reason; resolved parameters; login paths, never contents; versions (playground commit and dirty flag, Python, host platform, Docker server, OS and architecture, Go, image ID, binary SHA-256); preflight results; per step its times, status, exit code and login handling; after a stop, the commands that finish by hand. Rewritten after every step. |
-| `study-file.json`, `manifests/`, `preflight/` | The study file as given; each run's normalized manifest; the printed checks, the image build log and the binary. |
+| `study.md`, `study.json` | **Start here.** Status, exit code and stop reason; resolved parameters; login paths, never contents; versions (playground commit and dirty flag, Python, host platform, Docker server, OS and architecture, Go, the image record as in `host.json`, binary SHA-256); preflight results; per step its times, status, exit code and login handling; after a stop, the commands that finish by hand. Rewritten after every step. |
+| `study-file.json`, `manifests/`, `preflight/` | The study file as given; each run's normalized manifest; the printed checks, the image build log, `image-inventory.txt` and the binary. |
 | `runs/<run id>/`, `comparisons/p<k>.md` | Each run folder (below) with its `assessment/`; pair k compared, A conventional, B markitect. |
 
 ### Run folder
@@ -424,7 +439,7 @@ stopped, the harness did not fail.
 | Path | Content |
 |---|---|
 | `results/report.md`, `report.json` | **Start here.** One row per wave, setup, final assessment, classification, fairness fields, versions. |
-| `host.json`, `image-build.log`, `container.log`, `inputs/` | Host record (normalized manifest, status, host platform, `preRegistration`, `rules`, image, Docker version, Markitect build, times, `docker run` arguments, container and mapped exit code, `handBack`); build and container output; what was mounted at `/in`. |
+| `host.json`, `image-build.log`, `image-inventory.txt`, `container.log`, `inputs/` | Host record (normalized manifest, status, host platform, `preRegistration`, `rules`, `image` with `tag`, `id`, `base`, `snapshot`, `dockerfileSha256` and `inventorySha256`, Docker version, Markitect build, times, `docker run` arguments, container and mapped exit code, `oomKilled`, `handBack`); build output, the image's inventory and container output; what was mounted at `/in`. |
 | `results/runner.json`, `runner-error.txt` | Status, stop reason and category, versions, login rewrite, token redactions; a traceback after a runner error. |
 | `results/setup/`, `stations/S<n>/`, `final/` | Setup command output; per wave the agent's events, output, `agent.json`, `checks.json` and work outside the repository; the last wave's public checks, own tests and Markitect conformance. |
 | `results/audit/`, `evidence/` | Seed and wave plan (`run.json`), per-wave snapshots, the final freeze; session records, transcripts and Markitect's cache. |
@@ -433,7 +448,7 @@ stopped, the harness did not fail.
 
 | Path under `<run>/assessment/` | Content |
 |---|---|
-| `report.md`, `report.json`, `product-findings.md` | Per wave: public checks, holdouts, diff profile, reviewer findings and agreement, obligations, escalations, class; evaluation source, Git tree, commit and file hashes, `rules`, reviewer models, image. Product findings: setup steps, failed MCP calls and product commands, with exact error text. |
+| `report.md`, `report.json`, `product-findings.md` | Per wave: public checks, holdouts, diff profile, reviewer findings and agreement, obligations, escalations, class; evaluation source, Git tree, commit and file hashes, the judging code's commit and dirty flag (`evaluation.code`), `rules`, reviewer models, image. Product findings: setup steps, failed MCP calls and product commands, with exact error text. |
 | `stations/S<n>/` | Checks, holdouts, `wave.diff`, what the reviewers got and their answers. |
 | `host.json`, `container.log`, `inputs/`, `assess-error.txt` | Host record, container output, staged code and evaluation files; a traceback when the assessment failed. |
 
@@ -444,8 +459,8 @@ The run report classifies the run; the assessment classifies the run and each wa
 
 | Class | Meaning | Typical causes |
 |---|---|---|
-| `harness` | Our code | Runner error, failed snapshot or wave release, harness error files, host timeout or interruption. |
-| `environment` | Docker, network, provider, logins | Missing login, no session id, auth or rate-limit errors, a wave without any agent activity, a failed container start or wait. |
+| `harness` | Our code | Runner error, failed snapshot or wave release, harness error files, host timeout or interruption, a container killed (exit 137) that Docker does not report `OOMKilled`. |
+| `environment` | Docker, network, provider, logins | Missing login, no session id, auth or rate-limit errors, a wave without any agent activity, a failed container start or wait, a container Docker reports `OOMKilled`. |
 | `product` | Markitect | Setup blocked by a product command, an MCP call that never finished, `markitect check` that could not run. |
 | `none` | No infrastructure cause | Completed, or the time budget was used up. |
 
@@ -513,6 +528,11 @@ the tree, the commit and each file's SHA-256. A run without a registration (olde
 refused. `--exploratory` on `host run` or `assess` (never `study`) uses the working tree
 and records `rules.exploratory`; `compare` refuses such runs.
 
+The code that judges also counts: `assess` records the commit of `playground/`,
+`cases/common/checks` and the case's checks, and whether they have local changes, as
+`evaluation.code`. Changed (or unknown) judging code makes the assessment exploratory, so
+`compare` refuses it; the `study` preflight fails on it.
+
 ### Holdouts
 
 `python3 -I -B holdout.py --repo DIR --station N [--deadline SECONDS]` prints
@@ -537,12 +557,19 @@ assessment runs it as the unprivileged user on a copy of the wave's `main`, with
   --json-schema ...`, tools `Read`, `Grep`, `Glob` only, no settings
   (`--setting-sources ""`, `--strict-mcp-config`), a fresh `CLAUDE_CONFIG_DIR`, the token
   only in its environment. Model and effort come from the registered `config.json`.
+- **Full model ids:** manifests, study files and `evaluation/config.json` take full model
+  ids only. An alias is refused: Claude Code's `opus`, `sonnet`, `haiku`, `fable`,
+  `opusplan`, `default` and `best`, an id ending in `latest`, or one without any version
+  digit. A registered `config.json` with an alias fails `assess` and the `study` preflight;
+  the fix is a commit.
 - **Independence:** no reviewer model may be an arm's model: `agent.model`,
-  `markitect.innerModel` and, in `assess`, every Markitect role's model in the run report,
-  compared casefolded and without a trailing `[...]`; the provider is not checked. The
-  `study` preflight fails on a clash; `assess` refuses it (exit 2) unless `--reviewers`
-  leaves the clashing reviewer out or `--exploratory` records `reviewersIndependent:
-  false`. With `--fake-reviewers` a clash only warns.
+  `markitect.innerModel` and, in `assess`, every Markitect role's model in the run report.
+  They are compared normalized: casefolded, without a context suffix such as `[1m]`, a
+  provider prefix (`anthropic/`, `openai/`, Bedrock's `us.anthropic.`), Bedrock's `-v1:0`
+  or a trailing date (`-20251001`, `@20251001`, `-2025-10-01`); the provider is not
+  checked. The `study` preflight fails on a clash; `assess` refuses it (exit 2) unless
+  `--reviewers` leaves the clashing reviewer out or `--exploratory` records
+  `reviewersIndependent: false`. With `--fake-reviewers` a clash only warns.
 - **Prompt:** the fixed, versioned [reviewer-prompt.md](evaluation/common/reviewer-prompt.md),
   the same for every arm and provider, plus the wave's inputs: released item texts,
   earlier items, project rules (case README, `AGENTS.md`, `QUALITY.md`), the ground-truth
@@ -589,8 +616,11 @@ not record (older runs), even when both lack it. This is stricter than `host run
   `--security-opt seccomp=unconfined`: Codex's bubblewrap sandbox, used by Markitect's
   inner roles, needs user namespaces. Both arms get it; no `--privileged`, no added
   capabilities, no egress filtering.
-- **Same image for both arms.** Only the two CLIs are pinned. A rebuild that pulls newer
-  base packages changes the image ID, and `compare` then refuses the pair.
+- **Same image for both arms.** The base image, the Debian packages and both CLIs are
+  pinned, and the inventory check fails a build that installed anything else. A study runs
+  every step on the one image it built, by its ID, and a warm-cache rebuild keeps that ID.
+  A cold build installs the same content but gets a new image ID (layer timestamps), and
+  `compare` then refuses pairs built apart. Cold builds depend on snapshot.debian.org.
 - **Unequal concurrency.** The subagent limit applies to Codex sessions. Markitect's inner
   roles are extra sessions, so total concurrency is not equal by construction.
 - **Old run folders.** Runs from the earlier Codex-only image need
@@ -614,3 +644,48 @@ not record (older runs), even when both lack it. This is stricter than `host run
   the reviewer prompt and schema, and `config.json`. Commit any edit before the next run;
   even a comment changes the hash, and `compare` then refuses runs assessed before and
   after it.
+
+### Updating the image pins
+
+`container/Dockerfile` is the one place for the pins; nothing else repeats them:
+
+- `ARG BASE_IMAGE=node:22-bookworm-slim@sha256:<index digest>`, the base by the digest of
+  its multi-platform index. The host refuses a base without `@sha256:`.
+- `ARG DEBIAN_SNAPSHOT=<YYYYMMDDTHHMMSSZ>`: every Debian package (debian and
+  debian-security) comes from snapshot.debian.org at that time, with `Check-Valid-Until`
+  off. apt retries every download (`Acquire::Retries`) and the step runs at most three
+  times. The host passes `SOURCE_DATE_EPOCH` from it as a build argument.
+- `CLAUDE_VERSION` and the manifest's `codexVersion`: exact npm versions.
+
+The last build step writes `/usr/share/markitect-playground/inventory.txt`: base, snapshot,
+Node version, every installed Debian package (`name version arch`) and every package in
+both CLIs' installed trees (`name@version`). After each build the host reads it with one
+`docker run --rm --network none`, saves it as `image-inventory.txt` (in the run folder; a
+study's in `preflight/` and every run folder) and records `image: {tag, id, base,
+snapshot, dockerfileSha256, inventorySha256}` in `host.json` and `study.json`. The build
+fails, exit 11, when an npm entry is not an exact version or when
+`container/inventory/codex-<v>-claude-<v>.txt` exists and differs; without that file
+`host run` only warns, and the `study` preflight fails. The committed inventory is for a
+linux/amd64 engine, the reference; another architecture installs other packages.
+
+To move a pin, or to add the inventory for new CLI versions:
+
+1. `docker buildx imagetools inspect node:22-bookworm-slim` prints the index `Digest:` (it
+   reads registry metadata only); `--format '{{json .Image}}'` shows each platform's
+   `created` time.
+2. Choose a snapshot time not older than that from
+   `https://snapshot.debian.org/archive/debian/?year=YYYY&month=MM`, and check that
+   `http://snapshot.debian.org/archive/debian/<time>/dists/bookworm/Release` and
+   `http://snapshot.debian.org/archive/debian-security/<time>/dists/bookworm-security/Release`
+   answer.
+3. Update the two `ARG` lines and remove the committed inventory for the CLI versions you
+   build (a build would fail on the old one).
+4. Build once: `python3 tests/smoke_docker.py --keep` (or `host run` with any manifest of
+   those versions) warns that no inventory is committed and keeps the run folder.
+5. Review `<run folder>/image-inventory.txt`, copy it to
+   `container/inventory/codex-<v>-claude-<v>.txt` and commit it together with the
+   Dockerfile.
+
+`python3 -m playground host image-key` prints a cache key from the pinned base digest, the
+snapshot time, every committed inventory file and the Dockerfile's SHA-256; it changes
+when any of them does, so a CI job can key its Docker build cache on it.
