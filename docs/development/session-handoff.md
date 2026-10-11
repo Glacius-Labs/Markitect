@@ -4,7 +4,7 @@ Dated handoff, 11 October 2026. Main basis: `5f9b6085a17d0907c826f9817f4255a0d99
 
 The owner requested an investigation, updates and a continuation plan. This handoff does not dispatch new chats, merge the six existing implementation PRs, authorize a provider run or study, publish a release, or approve deletion of old worktrees. It preserves existing product decisions and their authority boundaries.
 
-The later delegated integration is recorded separately in [Integration queue — 11 October 2026](../validation/integration-queue-20261011.md). Its results and the current backlog supersede the open-queue status below; this handoff's original evidence remains dated.
+The later delegated integration is recorded separately in [Integration queue — 11–12 October 2026](../validation/integration-queue-20261011.md). Its results and the current backlog supersede the open-queue status below; this handoff's original evidence remains dated.
 
 ## Evidence and source boundary
 

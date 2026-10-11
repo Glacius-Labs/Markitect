@@ -28,6 +28,10 @@ Follow [Project workflow](project-workflow.md): inspect, record a typed explorat
 
 A Manager's `context` lists the Checks it owns under `checks`, and under `foreignChecks` the Checks other Managers own that its own Artifacts declare or that use its own Statements, with their owner, command and limitation. Neither list exposes another Manager's private Statements.
 
+In guided mode, `context` and `brief list` read accepted briefing history without persisting it. Pass the `stateDigest` returned by `brief list` to `brief dismiss --expect … --write`; dismissal validates that accepted-history view and persists history plus dismissal in one guarded update. A stale token or intervening store change is rejected before replacement. The delivered-but-uncommitted status hint remains a display of the matching persisted-store state.
+
+Manager briefing events project their before and after definitions and relations through that Manager's context at each corresponding historical revision. Ancestors cannot read private child Statement details through these events. Canonical history, digests and opaque event IDs remain intact; this scoped projection does not hide the existence of history or establish a general confidentiality boundary.
+
 Full Verify passes each child's audit summary to its parent as free-form agent prose. It counts verdicts for private or unknown Statement IDs without naming them in the structured subject list, but does not redact summary text. A child summary may still reveal private facts or identifiers; this is a known visibility limitation, not a confidentiality boundary.
 
 `context MANAGER --trace ID` also walks that Manager's knowledge graph, which is built from its context alone, and returns each node it reaches with one shortest witness path. `--direction` and `--depth` bound the walk. A node the Manager cannot see is reported as not found, exactly like a node that does not exist.

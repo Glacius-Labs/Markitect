@@ -432,7 +432,7 @@ packages:
     pr: 184
     owner: kg
     depends_on: [KG-01]
-    note: The model-zone part merged as pull requests 165 to 168 (DEC-021 to DEC-023); the CLI and MCP explain/trace surface merged as 184. Private-child Full Verify follow-ups are tracked under BUG-01, including open 223.
+    note: The model-zone part merged as pull requests 165 to 168 (DEC-021 to DEC-023); the CLI and MCP explain/trace surface merged as 184. Structured private-child Full Verify filtering merged as 223; its prose visibility limit remains documented. Delegated DEC-023 clarification merged as 226.
     zone: model
     inputs:
       - origin codex/knowledge-graph (projectknowledge core)
@@ -1031,6 +1031,7 @@ packages:
     status: done
     pr: 171
     owner: cleaner
+    note: Delegated follow-up 226 records DEC-023 clarification and assessment-derived ASM-006 provenance. Positioning and literature remain unverified research notes; KG-04 protocol preparation merged as 227 without a measurement or benefit claim.
     zone: free
     inputs:
       - origin archive/wip/government-assessment-untracked-docs-20261010 (refinement plan, independent assessment, knowledge-graph plan)
