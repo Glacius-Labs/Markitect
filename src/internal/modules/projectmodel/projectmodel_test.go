@@ -892,3 +892,44 @@ func TestAnalyzeExplicitlyReportsUnknownInventory(t *testing.T) {
 		t.Fatalf("unknown inventory hidden: status=%s unknown=%v", r.Status, r.Unknown)
 	}
 }
+
+// BUG-01: an exact path, even of one character, is more specific than ".",
+// so the root keeps the file it names although a child also owns ".".
+func TestAnalyzeExactPathBeatsDotAtAnyLength(t *testing.T) {
+	for _, file := range []string{"x", "xy"} {
+		root := map[string]any{"apiVersion": APIVersion, "kind": managerKind, "namespace": "", "name": "root"}
+		model, diagnostics := core.Compile([]core.Schema{Schema()}, []core.Definition{
+			{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Name: "root"}, Purpose: "Root.", Spec: map[string]any{"owns": []any{".", file}}},
+			{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Namespace: "app", Name: "app"}, Purpose: "App.", Spec: map[string]any{"parent": root, "owns": []any{"."}}},
+		}, "dot-tie")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		r := Analyze(model, []File{{Path: file, Digest: "sha256:x", Mode: "100644"}})
+		if r.Status != "succeeded" || len(r.Files) != 1 || r.Files[0].Owner != rootManagerKey() {
+			t.Fatalf("%s: status=%s files=%+v, want it owned by the root's exact selector", file, r.Status, r.Files)
+		}
+	}
+}
+
+// BUG-01: the expected-artifact entry of an absent path lists every Artifact
+// whose exact path or prefix covers it, whatever order their names sort in.
+func TestAnalyzeExpectedEntryListsEveryCoveringArtifact(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	ref := map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "orders", "name": "cancel-order"}
+	for _, names := range [][2]string{{"a-exact", "b-prefix"}, {"b-exact", "a-prefix"}} {
+		definitions := append(copyDefinitions(model.Definitions),
+			core.Definition{APIVersion: APIVersion, Kind: artifactKind, Metadata: core.Metadata{Namespace: "orders", Name: names[0]}, Purpose: "Exact.", Spec: map[string]any{"role": "documentation", "realizes": []any{ref}, "paths": []any{"src/orders/gen/x.go"}}},
+			core.Definition{APIVersion: APIVersion, Kind: artifactKind, Metadata: core.Metadata{Namespace: "orders", Name: names[1]}, Purpose: "Prefix.", Spec: map[string]any{"role": "implementation", "realizes": []any{ref}, "paths": []any{"src/orders/gen/"}}},
+		)
+		compiled, diagnostics := core.Compile(model.Schemas, definitions, "expected-entry")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		for _, f := range Analyze(compiled, files).Files {
+			if f.Path == "src/orders/gen/x.go" && len(f.Artifacts) != 2 {
+				t.Fatalf("%v: the absent path's entry lists %v, want both artifacts", names, f.Artifacts)
+			}
+		}
+	}
+}
