@@ -54,7 +54,9 @@ func TestVerifyUsesEachCheckTimeoutAndRecordsEffectiveBound(t *testing.T) {
 	executable := mustTestExecutable(t)
 	t.Setenv("PATH", filepath.Dir(executable))
 	t.Setenv("MARKITECT_VERIFY_HELPER", "short-sleep")
-	seconds := 1
+	// The explicit bound must not expire, even when a race build starts the
+	// helper slowly; only the 50ms fallback must.
+	seconds := 60
 	argv := []string{filepath.Base(executable), "-test.run=^TestVerifyCommandHelper$"}
 	checks := []authoring.Check{
 		{Name: "explicit", Run: argv, TimeoutSeconds: &seconds},
@@ -62,7 +64,7 @@ func TestVerifyUsesEachCheckTimeoutAndRecordsEffectiveBound(t *testing.T) {
 	}
 	results, err := verifyRepositoryWithTimeout(verifyProject(nil, checks), 50*time.Millisecond)
 	var verifyErr *VerifyError
-	if len(results) != 2 || results[0].ExitCode != 0 || results[0].TimeoutMilliseconds != 1000 || results[1].ExitCode != -1 || results[1].TimeoutMilliseconds != 50 || !errors.As(err, &verifyErr) || verifyErr.Kind != "timeout" || verifyErr.Gate != "fallback" || !strings.Contains(err.Error(), "50ms execution limit") {
+	if len(results) != 2 || results[0].ExitCode != 0 || results[0].TimeoutMilliseconds != 60000 || results[1].ExitCode != -1 || results[1].TimeoutMilliseconds != 50 || !errors.As(err, &verifyErr) || verifyErr.Kind != "timeout" || verifyErr.Gate != "fallback" || !strings.Contains(err.Error(), "50ms execution limit") {
 		t.Fatalf("configured/fallback bounds or incomplete timeout classification changed: results=%#v error=%v", results, err)
 	}
 	maximum := 5400
@@ -183,7 +185,8 @@ func TestVerifyCommandSanitizesGitAndGoEnvironment(t *testing.T) {
 	t.Setenv("GIT_WORK_TREE", t.TempDir())
 	t.Setenv("GIT_INDEX_FILE", "foreign-index")
 	t.Setenv("MARKITECT_VERIFY_HELPER", "env")
-	result, err := runVerifyCommand(verifyCommand{name: "environment isolation", tool: "test", args: []string{"-test.run=^TestVerifyCommandHelper$"}}, mustTestExecutable(t), t.TempDir(), time.Second)
+	// Generous, because this test does not test time.
+	result, err := runVerifyCommand(verifyCommand{name: "environment isolation", tool: "test", args: []string{"-test.run=^TestVerifyCommandHelper$"}}, mustTestExecutable(t), t.TempDir(), time.Minute)
 	if err != nil || !strings.Contains(result.Output, "GOFLAGS= GOENV=off GOWORK=off") || !strings.Contains(result.Output, "git environment clean") {
 		t.Fatalf("check inherited forbidden Git/Go environment: result=%#v error=%v", result, err)
 	}
