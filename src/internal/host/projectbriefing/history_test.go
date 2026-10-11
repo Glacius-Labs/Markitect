@@ -46,7 +46,7 @@ func TestEnsureAcceptedHistoryBootstrapsAndAutomaticallyRecordsCommittedChanges(
 	if err != nil {
 		t.Fatal(err)
 	}
-	manager := bundle.Events[0].AffectedManagers[0]
+	manager := managerExposingEvent(t, project, bundle.Events[0])
 	briefings, events, _, err := LoadForManager(root, project.Model.Digest, manager, changed)
 	if err != nil || len(briefings) != 1 || len(events) != 1 {
 		t.Fatalf("ensured manager history briefings=%d events=%d err=%v", len(briefings), len(events), err)
@@ -349,7 +349,7 @@ func TestReadAcceptedHistoryWritesNothingAndMatchesEnsure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	manager := view.Receipt.Bundles[0].Events[0].AffectedManagers[0]
+	manager := managerExposingEvent(t, project, view.Receipt.Bundles[0].Events[0])
 	_, events, viewBinding, err := LoadForManagerFrom(root, view.State, project.Model.Digest, manager, changed)
 	if err != nil || len(events) != 1 {
 		t.Fatalf("manager briefing from the read-only view events=%d err=%v", len(events), err)
