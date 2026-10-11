@@ -1752,6 +1752,13 @@ func acquireStoreLock(path string) (*os.File, error) {
 		lock, err = os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 		return os.IsExist(err) || windowsBusy(err), err
 	})
+	if os.IsExist(err) {
+		shown := path
+		if absolute, absErr := filepath.Abs(path); absErr == nil {
+			shown = absolute
+		}
+		return nil, fmt.Errorf("acquire briefing store lock: %s is still held after %s; if no Markitect process is running, delete that file: %w", shown, storeLockWait, err)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("acquire briefing store lock: %w", err)
 	}

@@ -309,6 +309,29 @@ func TestEnsureAcceptedHistoryRejectsConflictingBriefingOnActiveLine(t *testing.
 	}
 }
 
+func TestEnsureAcceptedHistoryNamesALeftoverStoreLockAfterTheWait(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	third := commitModelChangeTest(t, root, "before shipment", "prior to fulfillment", "third model value")
+	lockPath := filepath.Join(root, filepath.FromSlash(storePath), "..", ".briefings.lock")
+	if err := os.WriteFile(lockPath, nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ReadAcceptedHistory(root, third); err != nil {
+		t.Fatalf("a reader must not wait for or fail on a writer's lock: %v", err)
+	}
+	_, err := EnsureAcceptedHistory(root, third)
+	absolute, absErr := filepath.Abs(filepath.Clean(lockPath))
+	if absErr != nil {
+		t.Fatal(absErr)
+	}
+	if err == nil || !strings.Contains(err.Error(), absolute) || !strings.Contains(err.Error(), "if no Markitect process is running, delete that file") {
+		t.Fatalf("a writer blocked by a leftover lock must name the lock file and how to clear it: %v", err)
+	}
+}
+
 func TestReadAcceptedHistoryWritesNothingAndMatchesEnsure(t *testing.T) {
 	root, baseline, changed := committedModelFixture(t)
 	stateDir := filepath.Join(root, ".markitect", "state")
