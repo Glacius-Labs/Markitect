@@ -684,7 +684,9 @@ To move a pin, or to add the inventory for new CLI versions:
    those versions) warns that no inventory is committed and keeps the run folder.
 5. Review `<run folder>/image-inventory.txt`, copy it to
    `container/inventory/codex-<v>-claude-<v>.txt` and commit it together with the
-   Dockerfile.
+   Dockerfile. Without a local build: when no inventory is committed or it differs, the
+   build prints the built inventory between `----- built image inventory ... -----`
+   markers, so CI's playground smoke log delivers the file.
 
 `python3 -m playground host image-key` prints a cache key from the pinned base digest, the
 snapshot time, every committed inventory file and the Dockerfile's SHA-256; it changes
