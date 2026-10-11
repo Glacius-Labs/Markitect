@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
@@ -66,24 +66,32 @@ func validateStore(state Store) error {
 			return fmt.Errorf("duplicate briefing bundle for revision %s", bundle.Revision)
 		}
 		bundleByRevision[bundle.Revision] = bundle
+		// The same change can be briefed at several commits, for example on a
+		// topic and where it was merged; its content must then agree.
 		for _, event := range bundle.Events {
-			if prior, exists := eventsByID[event.ID]; exists {
-				if hash(prior) != hash(event) {
-					return fmt.Errorf("event %s has conflicting definitions", event.ID)
-				}
-				return fmt.Errorf("duplicate model event %s", event.ID)
+			if prior, exists := eventsByID[event.ID]; exists && prior.Digest != event.Digest {
+				return fmt.Errorf("event %s has conflicting definitions", event.ID)
 			}
 			eventsByID[event.ID] = event
-			managerByEvent[event.ID] = make(map[string]bool)
+			if managerByEvent[event.ID] == nil {
+				managerByEvent[event.ID] = make(map[string]bool)
+			}
 			for _, manager := range event.AffectedManagers {
 				managerByEvent[event.ID][manager] = true
 			}
 		}
 	}
+	for _, bundle := range state.Briefings {
+		for _, event := range bundle.Events {
+			if event.Predecessor != "" && eventsByID[event.Predecessor].DefinitionID.Key() != event.DefinitionID.Key() {
+				return fmt.Errorf("event %s continues unknown or unrelated event %s", event.ID, event.Predecessor)
+			}
+		}
+	}
 	dismissals := map[string]bool{}
 	for _, dismissal := range state.Dismissals {
-		key := dismissal.EventID + "\x00" + dismissal.ManagerID + "\x00" + dismissal.Revision
-		if dismissal.EventID == "" || dismissal.ManagerID == "" || (dismissal.Revision != "" && !fullObjectID(dismissal.Revision)) || dismissals[key] {
+		key := dismissal.EventID + "\x00" + dismissal.ManagerID
+		if dismissal.EventID == "" || dismissal.ManagerID == "" || dismissals[key] {
 			return errors.New("invalid or duplicate dismissal")
 		}
 		if !managerByEvent[dismissal.EventID][dismissal.ManagerID] {
@@ -96,8 +104,7 @@ func validateStore(state Store) error {
 		if resolution.EventID == "" || !fullObjectID(resolution.ModelRevision) || strings.TrimSpace(resolution.ModelDigest) == "" || !validVerifiedEvidence(resolution.Evidence) || resolution.Digest != resolutionDigest(resolution) {
 			return ErrResolution
 		}
-		key := resolution.EventID + "\x00" + resolution.ModelRevision
-		if resolutions[key] || eventsByID[resolution.EventID].ID == "" {
+		if resolutions[resolution.Digest] || eventsByID[resolution.EventID].ID == "" {
 			return ErrResolution
 		}
 		if !contains(resolution.Evidence.EventIDs, resolution.EventID) {
@@ -108,7 +115,7 @@ func validateStore(state Store) error {
 				return ErrResolution
 			}
 		}
-		resolutions[key] = true
+		resolutions[resolution.Digest] = true
 	}
 	return nil
 }
@@ -199,11 +206,10 @@ func validateEvent(bundle Bundle, event Event) error {
 	default:
 		return fmt.Errorf("%w: unknown model change %q", ErrInvalidBundle, event.Change)
 	}
-	payload := struct {
-		Since, Revision, Key, Change string
-		Before, After                *core.Definition
-	}{bundle.SinceRevision, bundle.Revision, event.DefinitionID.Key(), event.Change, event.Before, event.After}
-	if hash(payload) != event.Digest {
+	if event.Predecessor != "" && !validEventID(event.Predecessor) {
+		return fmt.Errorf("%w: invalid predecessor event ID", ErrInvalidBundle)
+	}
+	if eventDigest(event.Predecessor, event.DefinitionID.Key(), event.Change, event.Before, event.After) != event.Digest {
 		return fmt.Errorf("%w: event digest does not match its declared content", ErrInvalidBundle)
 	}
 	return nil
@@ -247,13 +253,12 @@ func fullHexDigest(value string) bool {
 	return err == nil
 }
 
-// Dismissal hides an event from one Manager's notifications. Revision is the
-// HEAD it was recorded at; a dismissal without one predates that field and
-// follows its event.
+// Dismissal hides an event from one Manager's notifications. It is keyed by
+// the content-based event ID only, so it counts wherever that event is
+// accepted: across merges, squashes, fast-forwards and on a detached HEAD.
 type Dismissal struct {
 	EventID   string `json:"eventId"`
 	ManagerID string `json:"managerId"`
-	Revision  string `json:"revision,omitempty"`
 }
 
 type Store struct {
@@ -262,6 +267,11 @@ type Store struct {
 	Briefings   []Bundle       `json:"briefings"`
 	Dismissals  []Dismissal    `json:"dismissals"`
 	Resolutions []Resolution   `json:"resolutions,omitempty"`
+	// uncommitted is a status hint Read fills: per accepted event without an
+	// accepted resolution, the latest resolution whose delivered result is
+	// in the working tree but not in HEAD's tree. It is never persisted and
+	// never makes anything accepted.
+	uncommitted map[string]Resolution
 }
 
 // VerifiedResolutionEvidence binds a completed full verification and applied
@@ -278,6 +288,47 @@ type VerifiedResolutionEvidence struct {
 	FullVerifyPassed   bool     `json:"fullVerifyPassed"`
 	CoveredManagerIDs  []string `json:"coveredManagerIds"`
 	EvidenceRefs       []string `json:"evidenceRefs"`
+	// Delivered is what Apply wrote. The resolution counts only while HEAD's
+	// committed tree holds all of it.
+	Delivered []DeliveredFile `json:"delivered"`
+}
+
+// DeliveredFile is one path a delivery wrote: its Git blob and mode, or its
+// removal.
+type DeliveredFile struct {
+	Path    string `json:"path"`
+	Mode    string `json:"mode,omitempty"`
+	Object  string `json:"object,omitempty"`
+	Deleted bool   `json:"deleted,omitempty"`
+}
+
+// NewDeliveredFile records content written to filePath, or its removal, with
+// the Git blob ID that content has when committed unchanged.
+func NewDeliveredFile(root, filePath, mode string, content []byte, deleted bool) (DeliveredFile, error) {
+	if deleted {
+		return DeliveredFile{Path: filePath, Deleted: true}, nil
+	}
+	object, err := source.GitOutputInput(root, content, "hash-object", "--no-filters", "--stdin")
+	if err != nil {
+		return DeliveredFile{}, fmt.Errorf("hash delivered %s: %w", filePath, err)
+	}
+	return DeliveredFile{Path: filePath, Mode: mode, Object: strings.TrimSpace(string(object))}, nil
+}
+
+func validDelivered(files []DeliveredFile) bool {
+	for i, file := range files {
+		if file.Path == "" || file.Path != path.Clean(file.Path) || path.IsAbs(file.Path) || file.Path == ".." || strings.HasPrefix(file.Path, "../") || strings.Contains(file.Path, "\\") || (i > 0 && files[i-1].Path >= file.Path) {
+			return false
+		}
+		if file.Deleted {
+			if file.Mode != "" || file.Object != "" {
+				return false
+			}
+		} else if (file.Mode != "100644" && file.Mode != "100755") || !fullObjectID(file.Object) {
+			return false
+		}
+	}
+	return true
 }
 
 // Resolution is an immutable status record. Dismissal and resolution remain
@@ -294,6 +345,15 @@ type ResolutionStatus struct {
 	Status     string      `json:"status"`
 	Resolution *Resolution `json:"resolution,omitempty"`
 }
+
+// Status values reported by EventResolutionStatus.
+const (
+	StatusResolved   = "resolved"
+	StatusUnresolved = "unresolved"
+	// StatusDeliveredUncommitted means a delivery's result is in the working
+	// tree but not yet committed. The event is not resolved.
+	StatusDeliveredUncommitted = "delivered-uncommitted"
+)
 
 // HistoryCursor records the committed model history accepted by repository
 // policy. It is operational state, separate from draft/exploration content.
@@ -320,12 +380,13 @@ type EnsureReceipt struct {
 
 // Read validates the operational event history and returns the part of it
 // accepted on the checked-out branch, with the persisted store's digest as the
-// optimistic write token. Accepted history is the first-parent line of HEAD:
-// briefings recorded at commits on that line, and dismissals and resolutions
-// of their events recorded at commits that HEAD's history contains. Other
-// entries are provisional; they stay stored and count once the line contains
-// their commit. History is the line's cursor. A missing store has an empty
-// deterministic state and digest.
+// optimistic write token. Accepted history is the first-parent line of HEAD.
+// A briefing counts when it was recorded at a commit on that line, and its
+// events with it. A resolution of such an event counts when HEAD's committed
+// tree holds everything its delivery wrote; of several, the latest on the
+// line is returned. A dismissal counts wherever its event does. Other entries
+// are provisional: they stay stored and count once those conditions hold. History is the line's cursor. A
+// missing store has an empty deterministic state and digest.
 func Read(root string) (Store, string, error) {
 	state, digest, err := readStore(root)
 	if err != nil || (state.History == nil && len(state.Briefings) == 0) {
@@ -335,7 +396,9 @@ func Read(root string) (Store, string, error) {
 	if err != nil {
 		return Store{}, "", err
 	}
-	return active.accepted(state), digest, nil
+	view := active.accepted(state)
+	view.uncommitted = active.uncommitted(state, view)
+	return view, digest, nil
 }
 
 // readStore validates and returns the persisted store, provisional entries
@@ -365,8 +428,11 @@ func readStore(root string) (Store, string, error) {
 	if err := decoder.Decode(new(any)); err != io.EOF {
 		return Store{}, "", errors.New("briefing store contains trailing data")
 	}
-	if state.APIVersion != APIVersion || state.Briefings == nil || state.Dismissals == nil {
-		return Store{}, "", errors.New("briefing store has invalid shape or API version")
+	if state.APIVersion != APIVersion {
+		return Store{}, "", fmt.Errorf("briefing store %s has format %q, not %q; delete it and run a guided command to rebuild it: accepted history is re-briefed from the first committed model, and the stored dismissals and resolutions are lost", storePath, state.APIVersion, APIVersion)
+	}
+	if state.Briefings == nil || state.Dismissals == nil {
+		return Store{}, "", errors.New("briefing store has invalid shape")
 	}
 	if err := validateStore(state); err != nil {
 		return Store{}, "", fmt.Errorf("validate briefing store: %w", err)
@@ -379,22 +445,35 @@ func StoreDigest(state Store) string { return hash(state) }
 
 // EventResolutionStatus reports conformity resolution independently of
 // dismissal. Events remain available in manager context after either choice.
-// Given a state from Read, only resolutions accepted on the checked-out branch
-// count.
+// Given a state from Read, it reports the latest resolution accepted on the
+// checked-out branch as StatusResolved. Without one, it reports
+// StatusDeliveredUncommitted, with that resolution, when a delivery's result
+// is in the working tree but not committed; this is only a hint and the event
+// stays unresolved. Otherwise it reports StatusUnresolved.
 func EventResolutionStatus(state Store, eventID string) ResolutionStatus {
 	for i := range state.Resolutions {
 		if state.Resolutions[i].EventID == eventID {
 			copy := state.Resolutions[i]
-			return ResolutionStatus{Status: "resolved", Resolution: &copy}
+			return ResolutionStatus{Status: StatusResolved, Resolution: &copy}
 		}
 	}
-	return ResolutionStatus{Status: "unresolved"}
+	if resolution, ok := state.uncommitted[eventID]; ok {
+		return ResolutionStatus{Status: StatusDeliveredUncommitted, Resolution: &resolution}
+	}
+	return ResolutionStatus{Status: StatusUnresolved}
 }
 
 // ResolveVerified records fresh full-Manager Verify and successful Apply
 // evidence against the exact selected committed model. The caller is expected
-// to invoke this only from the Host's successful after-Apply path.
+// to invoke this only from the Host's successful after-Apply path, with
+// evidence.Delivered listing what Apply wrote. The resolution counts once
+// HEAD's committed tree holds that delivered result.
 func ResolveVerified(root, modelRevision, modelDigest string, evidence VerifiedResolutionEvidence, expectedStoreDigest string) (string, error) {
+	if evidence.Delivered == nil {
+		return "", ErrResolution
+	}
+	evidence.Delivered = append([]DeliveredFile{}, evidence.Delivered...)
+	sort.Slice(evidence.Delivered, func(i, j int) bool { return evidence.Delivered[i].Path < evidence.Delivered[j].Path })
 	if strings.TrimSpace(modelRevision) == "" || strings.TrimSpace(modelDigest) == "" || !validVerifiedEvidence(evidence) {
 		return "", ErrResolution
 	}
@@ -447,8 +526,10 @@ func ResolveVerified(root, modelRevision, modelDigest string, evidence VerifiedR
 			if !contains(evidence.EventIDs, event.ID) {
 				continue
 			}
+			// The same change briefed again later on the line is not evidence
+			// for this model.
 			if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", bundle.Revision, modelRevision); err != nil {
-				return "", fmt.Errorf("event %s is not ancestral to verified model: %w", event.ID, ErrStaleModel)
+				continue
 			}
 			events[event.ID] = event
 		}
@@ -470,7 +551,8 @@ func ResolveVerified(root, modelRevision, modelDigest string, evidence VerifiedR
 		resolutions = append(resolutions, resolution)
 	}
 	return update(root, expectedStoreDigest, func(current *Store) error {
-		// A provisional resolution recorded off this branch does not block.
+		// A provisional resolution, for example one whose delivered result is
+		// not committed here, does not block.
 		accepted := active.accepted(*current)
 		for _, resolution := range resolutions {
 			for _, prior := range accepted.Resolutions {
@@ -485,7 +567,7 @@ func ResolveVerified(root, modelRevision, modelDigest string, evidence VerifiedR
 		for _, resolution := range resolutions {
 			found := false
 			for _, prior := range current.Resolutions {
-				if prior.EventID == resolution.EventID && prior.ModelRevision == resolution.ModelRevision {
+				if prior.Digest == resolution.Digest {
 					found = true
 					break
 				}
@@ -494,18 +576,14 @@ func ResolveVerified(root, modelRevision, modelDigest string, evidence VerifiedR
 				current.Resolutions = append(current.Resolutions, resolution)
 			}
 		}
-		sort.Slice(current.Resolutions, func(i, j int) bool {
-			if current.Resolutions[i].EventID != current.Resolutions[j].EventID {
-				return current.Resolutions[i].EventID < current.Resolutions[j].EventID
-			}
-			return current.Resolutions[i].ModelRevision < current.Resolutions[j].ModelRevision
-		})
+		// Stable, so resolutions of one event stay in recording order.
+		sort.SliceStable(current.Resolutions, func(i, j int) bool { return current.Resolutions[i].EventID < current.Resolutions[j].EventID })
 		return nil
 	})
 }
 
 func validVerifiedEvidence(evidence VerifiedResolutionEvidence) bool {
-	return sortedUniqueNonempty(evidence.EventIDs) && strings.TrimSpace(evidence.RunID) != "" && strings.TrimSpace(evidence.PlanDigest) != "" && strings.TrimSpace(evidence.CandidateID) != "" && strings.TrimSpace(evidence.CandidateDigest) != "" && strings.TrimSpace(evidence.VerificationDigest) != "" && strings.TrimSpace(evidence.ApplyDigest) != "" && evidence.FullVerifyPassed && sortedUniqueNonempty(evidence.CoveredManagerIDs) && sortedUniqueNonempty(evidence.EvidenceRefs)
+	return sortedUniqueNonempty(evidence.EventIDs) && strings.TrimSpace(evidence.RunID) != "" && strings.TrimSpace(evidence.PlanDigest) != "" && strings.TrimSpace(evidence.CandidateID) != "" && strings.TrimSpace(evidence.CandidateDigest) != "" && strings.TrimSpace(evidence.VerificationDigest) != "" && strings.TrimSpace(evidence.ApplyDigest) != "" && evidence.FullVerifyPassed && sortedUniqueNonempty(evidence.CoveredManagerIDs) && sortedUniqueNonempty(evidence.EvidenceRefs) && evidence.Delivered != nil && validDelivered(evidence.Delivered)
 }
 
 func resolutionDigest(resolution Resolution) string {
@@ -528,7 +606,8 @@ func projectRevisions(projects []*projectwork.Project) []string {
 // immutable briefing recorded at the line's own commit. Briefings recorded off
 // the line stay provisional and neither count nor block, so a topic that was
 // merged, squashed or rebased is briefed again where its change entered the
-// line; only a fast-forward accepts the topic's own briefing. A briefing on the
+// line, with the same content-based event identities; only a fast-forward
+// accepts the topic's own briefing. A briefing on the
 // line that contradicts the line's transition is ambiguous and fails the call.
 // Working-tree state is never inspected or accepted. Git commit identity is
 // retained only as unauthenticated source metadata.
@@ -723,6 +802,9 @@ func validateAcceptedPrefix(state Store, projects []*projectwork.Project) error 
 	for _, bundle := range state.Briefings {
 		bundles[bundle.Revision] = bundle
 	}
+	// last tracks, per definition, the newest event on the line; each event
+	// must continue it.
+	last := map[string]string{}
 	for i := 1; i <= cursorIndex; i++ {
 		previous, current := projects[i-1], projects[i]
 		bundle, exists := bundles[current.Revision]
@@ -732,6 +814,13 @@ func validateAcceptedPrefix(state Store, projects []*projectwork.Project) error 
 			}
 			if bundle.SinceRevision != previous.Revision || bundle.SinceModelDigest != previous.Model.Digest || bundle.ModelDigest != current.Model.Digest {
 				return fmt.Errorf("briefing at %s contradicts the accepted model transition %s..%s: %w", current.Revision, previous.Revision, current.Revision, ErrAmbiguousHistory)
+			}
+			for _, event := range bundle.Events {
+				key := event.DefinitionID.Key()
+				if event.Predecessor != last[key] {
+					return fmt.Errorf("event %s at %s does not continue its definition's accepted events: %w", event.ID, current.Revision, ErrAmbiguousHistory)
+				}
+				last[key] = event.ID
 			}
 		} else if exists {
 			return fmt.Errorf("no-op model revision %s has a briefing bundle: %w", current.Revision, ErrAmbiguousHistory)
@@ -753,16 +842,26 @@ func validateAcceptedPrefix(state Store, projects []*projectwork.Project) error 
 }
 
 // line is the first-parent history of the checked-out HEAD, the accepted
-// history. A briefing counts only when its commit lies on the line; a
-// dismissal or resolution only when its event does and HEAD's history
-// contains the commit it was recorded at, which a merge commit provides for
-// its second parent. Other entries are provisional: kept, but neither counted
-// nor blocking.
+// history. A briefing counts only when its commit lies on the line, and its
+// events count with it. A resolution of such an event counts when HEAD's
+// committed tree holds its delivered result; a dismissal whenever its event
+// counts. Other entries are provisional: kept, but neither counted nor
+// blocking.
 type line struct {
 	root      string
 	head      string
+	revisions []string
 	positions map[string]int
 	reachable map[string]bool
+	// tree caches HEAD's committed entries by path.
+	tree map[string]treeEntry
+}
+
+// treeEntry is HEAD's entry at a path: read tells whether HEAD's tree could
+// be read for it, and an empty object means HEAD has no entry there.
+type treeEntry struct {
+	read         bool
+	mode, object string
 }
 
 func activeLine(root string) (*line, error) {
@@ -774,7 +873,7 @@ func activeLine(root string) (*line, error) {
 	if err != nil {
 		return nil, err
 	}
-	active := &line{root: root, head: revisions[len(revisions)-1], positions: make(map[string]int, len(revisions)), reachable: map[string]bool{}}
+	active := &line{root: root, head: revisions[len(revisions)-1], revisions: revisions, positions: make(map[string]int, len(revisions)), reachable: map[string]bool{}, tree: map[string]treeEntry{}}
 	for i, revision := range revisions {
 		active.positions[revision] = i
 	}
@@ -800,6 +899,188 @@ func (l *line) contains(revision string) bool {
 	_, err := source.GitOutput(l.root, "merge-base", "--is-ancestor", revision, l.head)
 	l.reachable[revision] = err == nil
 	return err == nil
+}
+
+// position orders revision along the line: its index on the line, the index
+// of the line commit that merged it in, or -1 outside HEAD's history.
+func (l *line) position(revision string) int {
+	if i := l.index(revision); i >= 0 {
+		return i
+	}
+	if !l.contains(revision) {
+		return -1
+	}
+	low, high := 0, len(l.revisions)-1
+	for low < high {
+		middle := (low + high) / 2
+		if _, err := source.GitOutput(l.root, "merge-base", "--is-ancestor", revision, l.revisions[middle]); err == nil {
+			high = middle
+		} else {
+			low = middle + 1
+		}
+	}
+	return low
+}
+
+// rank orders a resolution along the line for latest-wins: where its commit
+// lies on the line or was merged in, else, for a delivery that reached the
+// line through a squash or rebase, where its delivered result entered it.
+func (l *line) rank(resolution Resolution) int {
+	if i := l.position(resolution.ModelRevision); i >= 0 {
+		return i
+	}
+	return l.entered(resolution.Evidence.Delivered)
+}
+
+// entered returns the line position of the newest first-parent commit that
+// wrote one of the delivered blobs at its path or removed one of the removed
+// paths, or -1 when none did or the history cannot be read.
+func (l *line) entered(files []DeliveredFile) int {
+	at := -1
+	for _, file := range files {
+		filter := "--find-object=" + file.Object
+		if file.Deleted {
+			filter = "--diff-filter=D"
+		}
+		output, err := source.GitOutput(l.root, "--literal-pathspecs", "log", "--first-parent", "-1", "--format=%H", filter, l.head, "--", file.Path)
+		if err != nil {
+			return -1
+		}
+		if i := l.index(strings.TrimSpace(string(output))); i > at {
+			at = i
+		}
+	}
+	return at
+}
+
+// readTree loads HEAD's committed entries for paths into the cache, in
+// batches so the command line stays short. A path HEAD lacks is read with no
+// entry. When the read fails, its paths stay unread, and a delivery that
+// depends on them is not verified.
+func (l *line) readTree(paths []string) {
+	pending := make([]string, 0, len(paths))
+	for _, entry := range paths {
+		if _, ok := l.tree[entry]; !ok {
+			l.tree[entry] = treeEntry{}
+			pending = append(pending, entry)
+		}
+	}
+	for len(pending) > 0 {
+		batch := pending
+		if len(batch) > 200 {
+			batch = batch[:200]
+		}
+		pending = pending[len(batch):]
+		output, err := source.GitOutput(l.root, append([]string{"--literal-pathspecs", "ls-tree", "-r", "-z", l.head, "--"}, batch...)...)
+		if err != nil {
+			continue
+		}
+		for _, entry := range batch {
+			l.tree[entry] = treeEntry{read: true}
+		}
+		for _, record := range bytes.Split(output, []byte{0}) {
+			tab := bytes.IndexByte(record, '\t')
+			if tab < 0 {
+				continue
+			}
+			if fields := strings.Fields(string(record[:tab])); len(fields) == 3 {
+				l.tree[string(record[tab+1:])] = treeEntry{read: true, mode: fields[0], object: fields[2]}
+			}
+		}
+	}
+}
+
+// inHead reports whether HEAD's committed tree holds a delivered result: each
+// written path with its blob and mode, and no entry at each removed path.
+// known is false when HEAD's tree could not be read for one of the paths.
+func (l *line) inHead(files []DeliveredFile) (present, known bool) {
+	paths := make([]string, 0, len(files))
+	for _, file := range files {
+		paths = append(paths, file.Path)
+	}
+	l.readTree(paths)
+	present = true
+	for _, file := range files {
+		entry := l.tree[file.Path]
+		if !entry.read {
+			return false, false
+		}
+		if file.Deleted {
+			if entry.object != "" {
+				present = false
+			}
+		} else if entry.mode != file.Mode || entry.object != file.Object {
+			present = false
+		}
+	}
+	return present, true
+}
+
+// present reports whether HEAD's committed tree verifiably holds a delivered
+// result; an unreadable tree never verifies one.
+func (l *line) present(files []DeliveredFile) bool {
+	present, known := l.inHead(files)
+	return present && known
+}
+
+// uncommitted returns, per accepted event in view without an accepted
+// resolution, the latest resolution whose delivered result the working tree
+// holds although HEAD's tree does not. It reads the working tree only to tell
+// users why an event is not resolved yet; it never makes anything accepted.
+func (l *line) uncommitted(state, view Store) map[string]Resolution {
+	events, resolved := map[string]bool{}, map[string]bool{}
+	for _, bundle := range view.Briefings {
+		for _, event := range bundle.Events {
+			events[event.ID] = true
+		}
+	}
+	for _, resolution := range view.Resolutions {
+		resolved[resolution.EventID] = true
+	}
+	result := map[string]Resolution{}
+	for _, resolution := range state.Resolutions {
+		id := resolution.EventID
+		if !events[id] || resolved[id] {
+			continue
+		}
+		if committed, known := l.inHead(resolution.Evidence.Delivered); !known || committed || !l.inWorkingTree(resolution.Evidence.Delivered) {
+			continue
+		}
+		if prior, ok := result[id]; ok && l.position(resolution.ModelRevision) < l.position(prior.ModelRevision) {
+			continue
+		}
+		result[id] = resolution
+	}
+	return result
+}
+
+// inWorkingTree reports whether the working tree holds a delivered result:
+// each written path as a regular file with the delivered blob, hashed like
+// NewDeliveredFile, and each removed path absent. Modes are not compared;
+// not every platform's working tree keeps them.
+func (l *line) inWorkingTree(files []DeliveredFile) bool {
+	written, objects := []string{}, []string{}
+	for _, file := range files {
+		info, err := os.Lstat(filepath.Join(l.root, filepath.FromSlash(file.Path)))
+		if file.Deleted {
+			if !os.IsNotExist(err) {
+				return false
+			}
+			continue
+		}
+		if err != nil || !info.Mode().IsRegular() {
+			return false
+		}
+		written, objects = append(written, file.Path), append(objects, file.Object)
+	}
+	if len(written) == 0 {
+		return true
+	}
+	output, err := source.GitOutput(l.root, append([]string{"hash-object", "--no-filters", "--"}, written...)...)
+	if err != nil {
+		return false
+	}
+	return equalStrings(strings.Fields(string(output)), objects)
 }
 
 // cursor returns the accepted-history cursor on the line: the stored cursor
@@ -833,7 +1114,8 @@ func (l *line) acceptedHistory(state Store) Store {
 }
 
 // accepted returns acceptedHistory with the dismissals and resolutions of its
-// events that are accepted on the line.
+// events that are accepted on the line, keeping only the latest resolution of
+// each event by rank, and of equals the one recorded last.
 func (l *line) accepted(state Store) Store {
 	view := l.acceptedHistory(state)
 	events := map[string]bool{}
@@ -843,13 +1125,30 @@ func (l *line) accepted(state Store) Store {
 		}
 	}
 	for _, dismissal := range state.Dismissals {
-		if events[dismissal.EventID] && (dismissal.Revision == "" || l.contains(dismissal.Revision)) {
+		if events[dismissal.EventID] {
 			view.Dismissals = append(view.Dismissals, dismissal)
 		}
 	}
+	paths := []string{}
 	for _, resolution := range state.Resolutions {
-		if events[resolution.EventID] && l.contains(resolution.ModelRevision) {
+		if events[resolution.EventID] {
+			for _, file := range resolution.Evidence.Delivered {
+				paths = append(paths, file.Path)
+			}
+		}
+	}
+	l.readTree(paths)
+	latest := map[string]int{}
+	for _, resolution := range state.Resolutions {
+		if !events[resolution.EventID] || !l.present(resolution.Evidence.Delivered) {
+			continue
+		}
+		i, seen := latest[resolution.EventID]
+		if !seen {
+			latest[resolution.EventID] = len(view.Resolutions)
 			view.Resolutions = append(view.Resolutions, resolution)
+		} else if l.rank(resolution) >= l.rank(view.Resolutions[i]) {
+			view.Resolutions[i] = resolution
 		}
 	}
 	return view
@@ -1033,7 +1332,7 @@ func appendCanonicalBundle(root string, active *line, bundle Bundle, expectedDig
 		for _, event := range bundle.Events {
 			for _, prior := range state.Briefings {
 				for _, old := range prior.Events {
-					if old.ID == event.ID && hash(old) != hash(event) {
+					if old.ID == event.ID && old.Digest != event.Digest {
 						return errors.New("model event identity already exists with different content")
 					}
 				}
@@ -1052,9 +1351,9 @@ func appendCanonicalBundle(root string, active *line, bundle Bundle, expectedDig
 	})
 }
 
-// Dismiss records a local visibility choice at HEAD for an event accepted on
-// the checked-out branch. It has no field that could resolve an event or
-// change its conformity state.
+// Dismiss records a local visibility choice for an event accepted on the
+// checked-out branch. It has no field that could resolve an event or change
+// its conformity state.
 func Dismiss(root, eventID, managerID, expectedDigest string) (string, error) {
 	if strings.TrimSpace(eventID) == "" || strings.TrimSpace(managerID) == "" {
 		return "", ErrDismissal
@@ -1081,15 +1380,12 @@ func Dismiss(root, eventID, managerID, expectedDigest string) (string, error) {
 				return nil
 			}
 		}
-		state.Dismissals = append(state.Dismissals, Dismissal{EventID: eventID, ManagerID: managerID, Revision: active.head})
+		state.Dismissals = append(state.Dismissals, Dismissal{EventID: eventID, ManagerID: managerID})
 		sort.Slice(state.Dismissals, func(i, j int) bool {
 			if state.Dismissals[i].EventID != state.Dismissals[j].EventID {
 				return state.Dismissals[i].EventID < state.Dismissals[j].EventID
 			}
-			if state.Dismissals[i].ManagerID != state.Dismissals[j].ManagerID {
-				return state.Dismissals[i].ManagerID < state.Dismissals[j].ManagerID
-			}
-			return state.Dismissals[i].Revision < state.Dismissals[j].Revision
+			return state.Dismissals[i].ManagerID < state.Dismissals[j].ManagerID
 		})
 		return nil
 	})

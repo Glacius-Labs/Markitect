@@ -48,11 +48,7 @@ func TestBriefingEventRejectsMalformedIdentitiesUsingCompilerGrammar(t *testing.
 			}
 			// Re-seal the event so identity rejection cannot be masked by a stale
 			// digest or mismatched before/after payload.
-			payload := struct {
-				Since, Revision, Key, Change string
-				Before, After                *core.Definition
-			}{bundle.SinceRevision, bundle.Revision, event.DefinitionID.Key(), event.Change, event.Before, event.After}
-			event.Digest = hash(payload)
+			event.Digest = eventDigest(event.Predecessor, event.DefinitionID.Key(), event.Change, event.Before, event.After)
 			event.ID = "model-change-" + event.Digest[:24]
 			if err := validateEvent(bundle, event); !errors.Is(err, ErrInvalidBundle) || !strings.Contains(err.Error(), "invalid definition identity") {
 				t.Fatalf("malformed identity passed or failed an unrelated binding: %v", err)
