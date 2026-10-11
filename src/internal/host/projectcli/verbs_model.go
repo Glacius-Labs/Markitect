@@ -360,6 +360,7 @@ var impactVerb = define(verb{
 	name: "impact", group: "Model", effect: effectRead,
 	summary:  "Compare two revisions with deterministic, conservative change impact; --explain says why each element is in it.",
 	synopsis: "impact --since R1 --revision R2 [--explain [--manager ID]]",
+	notes:    "--manager narrows only the explanation to what that Manager may see; the impact itself, its sets and its digest, stays project scope.",
 	args: []arg{argRepo,
 		{name: "since", value: "R1", required: true, help: "Older revision."},
 		{name: "revision", value: "R2", required: true, help: "Newer revision."},
