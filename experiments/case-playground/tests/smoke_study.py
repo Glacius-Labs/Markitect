@@ -9,9 +9,11 @@ The fake agent bumps the generation on every call, as a token refresh would. Che
 0, the schedule order, both assessments, the comparison with matching fairness, a
 complete study.json, the login carried over from run to run, the throwaway login nowhere
 in the study folder and the source never written, the login folder removed and no
-labelled container left. Needs Docker, and Git and Go for the Markitect arm (built from the
-checkout holding the playground unless the study file names another); makes no model
-call. Not picked up by unittest discovery.
+labelled container left, every run and assessment on the study's pre-registered evaluation
+tree. Runs from a Git checkout whose evaluation files are committed and unchanged. Needs
+Docker, and Git and Go for the Markitect arm (built from the checkout holding the
+playground unless the study file names another); makes no model call. Not picked up by
+unittest discovery.
 """
 from __future__ import annotations
 
@@ -94,8 +96,25 @@ def main() -> int:
           "every run was assessed")
     comparison = out / "comparisons" / "p1.md"
     text = comparison.read_text(encoding="utf-8") if comparison.is_file() else ""
-    check("Fairness fields match" in text and f"{expected[0]}" in text,
-          "comparisons/p1.md compares the pair with matching fairness fields")
+    here_text = f"Host platform: {platform.system()} {platform.machine()}."
+    check("Fairness fields match" in text and f"{expected[0]}" in text and here_text in text,
+          f"comparisons/p1.md compares the pair with matching fairness fields ({here_text})")
+    pre = record.get("preRegistration") or {}
+    tree = pre.get("evaluationTree") or ""
+    check(pre.get("status") == "registered" and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", tree) is not None,
+          f"study.json records the pre-registration ({pre})")
+    hosts = [json.loads((out / "runs" / run_id / "host.json").read_text(encoding="utf-8"))
+             if (out / "runs" / run_id / "host.json").is_file() else {} for run_id in expected]
+    check(all((h.get("preRegistration") or {}).get("evaluationTree") == tree for h in hosts),
+          "every run records the study's pre-registration")
+    reports = [json.loads((out / "runs" / run_id / "assessment" / "report.json").read_text(encoding="utf-8"))
+               if (out / "runs" / run_id / "assessment" / "report.json").is_file() else {} for run_id in expected]
+    check(all((r.get("evaluation") or {}).get("source") == "registered"
+              and (r.get("evaluation") or {}).get("tree") == tree
+              and (r.get("rules") or {}).get("preRegistered") is True
+              and (r.get("rules") or {}).get("reviewersIndependent") is True for r in reports),
+          f"every assessment judged with the registered tree and independent reviewers "
+          f"{[(r.get('evaluation') or {}).get('source') for r in reports]}")
     versions = record.get("versions") or {}
     here = {"system": platform.system(), "machine": platform.machine()}
     complete = (bool((versions.get("playground") or {}).get("commit")) and versions.get("python")

@@ -3,19 +3,21 @@ import io
 import re
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from playground import __main__ as entry
-from playground import outcome
+from playground import compare, evaluate, host, outcome, study
 
 README = Path(__file__).resolve().parent.parent / "README.md"
-HOST_STATUSES = ("completed", "setup-failed", "start-failed", "wait-failed", "host-timeout", "host-interrupted")
+HOST_STATUSES = ("completed", "setup-failed", "start-failed", "wait-failed", "host-timeout", "host-interrupted",
+                 "harness-error")
 CLASSES = ("none", "harness", "environment", "product", None)  # None: no readable report.json
 
 
 class MappingTests(unittest.TestCase):
     def test_host_run_maps_every_host_status_and_class(self):
         expected = {"setup-failed": 11, "start-failed": 11, "wait-failed": 11, "host-timeout": 124,
-                    "host-interrupted": 130}
+                    "host-interrupted": 130, "harness-error": 10}
         by_class = {"harness": 10, "environment": 11, "product": 12, None: 10}
         for status in HOST_STATUSES:
             for run_class in CLASSES:
@@ -28,6 +30,17 @@ class MappingTests(unittest.TestCase):
                         else:
                             want = by_class[run_class]
                         self.assertEqual(outcome.host_run(status, container_exit, run_class), want)
+
+    def test_a_product_build_failure_and_a_memory_kill(self):
+        self.assertEqual(outcome.host_run("setup-failed", None, None, failure_class="product"), 12)
+        self.assertEqual(outcome.host_run("setup-failed", None, None, failure_class="environment"), 11)
+        self.assertEqual(outcome.host_run("start-failed", None, None, failure_class="product"), 11)
+        for run_class in CLASSES:
+            with self.subTest(run_class=run_class):
+                self.assertEqual(outcome.host_run("completed", 137, run_class, memory_limited=True), 11)
+        self.assertEqual(outcome.host_run("completed", 137, None), 10)  # no memory limit: not explained
+        self.assertEqual(outcome.assess("completed", 137, memory_limited=True), 11)
+        self.assertEqual(outcome.assess("completed", 137), 10)
 
     def test_assess_fails_only_when_its_container_did(self):
         cases = {("completed", 0): 0, ("completed", 2): 10, ("completed", None): 10, ("start-failed", None): 11,
@@ -42,6 +55,19 @@ class MappingTests(unittest.TestCase):
         for codes, want in cases:
             with self.subTest(codes=codes):
                 self.assertEqual(outcome.study(codes), want)
+
+
+class UnexpectedErrorTests(unittest.TestCase):
+    def test_an_unhandled_exception_in_any_command_is_a_harness_failure(self):
+        for argv, target in ((["host", "run", "--manifest", "m.json"], (host, "run")),
+                             (["assess", "--run", "r"], (evaluate, "host_assess")),
+                             (["compare", "a", "b"], (compare, "load")),
+                             (["study", "s.json"], (study, "run"))):
+            with self.subTest(command=argv[0]):
+                err = io.StringIO()
+                with mock.patch.object(*target, side_effect=RuntimeError("bug")), contextlib.redirect_stderr(err):
+                    self.assertEqual(entry.main(argv), outcome.HARNESS)
+                self.assertIn("RuntimeError: bug", err.getvalue())
 
 
 class TableTests(unittest.TestCase):

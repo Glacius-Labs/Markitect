@@ -7,8 +7,9 @@ examples/fake-roombook.json; `fake` stands in for Codex, `fake-claude` for Claud
 and checks the end-to-end contract for every station the run plans (the manifest's
 `stations`, default every station of the case's STATIONS.json). A
 `fake-claude` run gets a throwaway token file, which must reach the fake agent and must
-not survive anywhere in the run folder. Needs Docker (and Go for a Markitect manifest);
-makes no model call. Not picked up by unittest discovery.
+not survive anywhere in the run folder. Runs from a Git checkout whose evaluation files
+are committed and unchanged (the run must be pre-registered). Needs Docker (and Go for a
+Markitect manifest); makes no model call. Not picked up by unittest discovery.
 """
 from __future__ import annotations
 
@@ -103,6 +104,11 @@ def main() -> int:
     check(host_record.get("status") == "completed", "host.json records status completed")
     image = (host_record.get("image") or {}).get("tag") or ""
     check("-claude-" in image, f"image tag names both CLI versions ({image})")
+    pre = host_record.get("preRegistration") or {}
+    check(pre.get("status") == "registered" and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}",
+                                                             pre.get("evaluationTree") or "") is not None
+          and (host_record.get("rules") or {}).get("exploratory") is False,
+          f"host.json records the pre-registration of the evaluation files ({pre})")
     here = {"system": platform.system(), "machine": platform.machine()}
     check(host_record.get("hostPlatform") == here and (report.get("fairness") or {}).get("hostPlatform") == here,
           f"host.json and the report's fairness record the host platform {here}")

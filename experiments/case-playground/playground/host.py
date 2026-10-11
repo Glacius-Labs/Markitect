@@ -1,8 +1,13 @@
 """Host side: build the image (and Markitect binary), stage inputs, run one container.
 
   python -m playground host run --manifest M.json [--out DIR] [--codex-auth PATH]
-      [--claude-token PATH] [--keep-container]
+      [--claude-token PATH] [--keep-container] [--exploratory]
   python -m playground host clean
+
+Before the build the evaluation files must be pre-registered (registration.py): no
+uncommitted or untracked change in `evaluation/`. host.json records the commit and the
+Git tree of `evaluation/` that `assess` will judge the run with. `--exploratory` runs
+anyway and records `rules.exploratory: true`; `compare` then refuses the run.
 
 Secrets are only checked for existence and mounted read-only by path: the Codex login
 at /run/secrets/codex-auth.json, the Claude Code token at /run/secrets/claude-token.
@@ -22,6 +27,7 @@ import io
 import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -31,7 +37,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
-from . import cases, outcome
+from . import cases, outcome, registration
 from . import manifest as manifest_module
 from .runner import overhead_bound_seconds
 
@@ -44,6 +50,9 @@ SECURITY_OPTS = ["--security-opt", "seccomp=unconfined"]
 COPY_IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc")
 CODEX_AUTH_TARGET = "/run/secrets/codex-auth.json"
 CLAUDE_TOKEN_TARGET = "/run/secrets/claude-token"
+# A `go build` that failed on the network (toolchain or module download) is not the product's.
+GO_NETWORK_ERROR = re.compile(r"dial tcp|no such host|i/o timeout|connection (?:refused|reset)|TLS handshake"
+                              r"|network is unreachable|name resolution|proxy\.golang\.org|sum\.golang\.org", re.I)
 
 
 class HostError(RuntimeError):
@@ -243,8 +252,13 @@ def build_markitect(product: dict, target: Path) -> dict:
         # toolchain follows the commit's go.mod; the one actually used is recorded.
         env = {**os.environ, "GOOS": "linux", "GOARCH": "amd64", "GOAMD64": "v1", "CGO_ENABLED": "0",
                "GOFLAGS": "", "GOTOOLCHAIN": "auto", "GOWORK": "off", "GOEXPERIMENT": ""}
-        _capture(["go", "build", "-trimpath", "-o", str(target), "./src/cmd/markitect"],
-                 cwd=tree, env=env)
+        try:
+            _capture(["go", "build", "-trimpath", "-o", str(target), "./src/cmd/markitect"],
+                     cwd=tree, env=env)
+        except HostError as exc:  # go ran and failed: the product commit does not build
+            if isinstance(exc.__cause__, FileNotFoundError) or GO_NETWORK_ERROR.search(str(exc)):
+                raise  # no go, or a toolchain or module download failed: the environment's
+            raise HostError(f"the Markitect commit {commit} does not build: {exc}", outcome.PRODUCT) from exc
         go_version = _capture(["go", "version", str(target)], cwd=tree, env=env).split()[-1]
     return {"commit": commit, "sha256": hashlib.sha256(target.read_bytes()).hexdigest(), "go": go_version}
 
@@ -395,6 +409,14 @@ def run(args: argparse.Namespace) -> int:
         shutil.rmtree(out)
     if _inside_git_checkout(out):
         raise HostError(f"output folder must not be inside a git checkout: {out}", outcome.INVALID)
+    pre_registration = registration.observe(ROOT)
+    if pre_registration["status"] != "registered":
+        if not args.exploratory:
+            raise HostError(f"{registration.refusal(pre_registration)}; commit them before the runs they judge, "
+                            "or pass --exploratory (compare then refuses the run)", outcome.INVALID)
+        print(f"warning: exploratory run: {registration.refusal(pre_registration)}", file=sys.stderr, flush=True)
+    elif args.exploratory:
+        print("warning: exploratory run: compare refuses it", file=sys.stderr, flush=True)
     auth = token = None
     if needs_codex_auth(manifest):
         auth = Path(args.codex_auth or Path.home() / ".codex" / "auth.json")
@@ -418,7 +440,8 @@ def run(args: argparse.Namespace) -> int:
     warning = platform_warning()
     if warning:
         print(f"warning: {warning}", file=sys.stderr, flush=True)
-    exit_code, _record = run_manifest(manifest, out, auth=auth, token=token, keep=args.keep_container)
+    exit_code, _record = run_manifest(manifest, out, auth=auth, token=token, keep=args.keep_container,
+                                      pre_registration=pre_registration, exploratory=args.exploratory)
     print(f"host record: {out / 'host.json'}")
     print(f"report: {out / 'results' / 'report.md'}")
     return exit_code
@@ -426,7 +449,8 @@ def run(args: argparse.Namespace) -> int:
 
 def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | None, keep: bool = False,
                  prebuilt: dict | None = None,
-                 before_remove: Callable[[str], None] | None = None) -> tuple[int, dict]:
+                 before_remove: Callable[[str], None] | None = None,
+                 pre_registration: dict | None = None, exploratory: bool = False) -> tuple[int, dict]:
     """Run one validated manifest (Markitect block resolved) into the new folder `out`
     and return (exit code, host record); host.json is written in any case. The exit code
     (outcome.host_run) is also `exitCode` in host.json.
@@ -435,7 +459,8 @@ def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | 
     holds what a study built once for all its runs: {"image": {"tag", "id"}} and, for the
     Markitect method, "markitect" (the build record) and "binary" (its path). Without it
     the image and the binary are built here. `before_remove(container)` runs after the
-    container has stopped and before it is removed.
+    container has stopped and before it is removed. `pre_registration` (registration.observe
+    at run start) and `exploratory` go to host.json; `assess` judges with that registration.
     """
     stations = station_count(manifest)
     inputs, results = out / "inputs", out / "results"
@@ -447,8 +472,9 @@ def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | 
                     "markitect": None, "hostStartedAt": _now(), "startedAt": None,
                     "endedAt": None, "hostTimeoutSeconds": timeout, "stations": stations,
                     "hostPlatform": host_platform(),
+                    "preRegistration": pre_registration, "rules": {"exploratory": bool(exploratory)},
                     "secrets": {"codexAuth": auth is not None, "claudeToken": token is not None},
-                    "containerLaunched": False,
+                    "containerLaunched": False, "failureClass": None,
                     "containerExitCode": None, "exitCode": None, "error": None}
     try:
         record["dockerVersion"] = _capture(["docker", "version", "--format", "{{.Server.Version}}"])
@@ -494,8 +520,13 @@ def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | 
     except (HostError, OSError, tarfile.TarError) as exc:
         if record["containerLaunched"]:
             record["status"] = "start-failed"
+        elif isinstance(exc, HostError) and exc.code == outcome.PRODUCT:
+            record["failureClass"] = "product"  # the Markitect binary does not build
         record["error"] = str(exc)
         print(f"error: {exc}", file=sys.stderr)
+    except Exception as exc:  # a bug of ours: recorded with the code __main__ exits with, then raised
+        record["status"], record["error"] = "harness-error", f"{type(exc).__name__}: {exc}"
+        raise
     finally:
         if record["containerLaunched"]:
             try:
@@ -505,7 +536,8 @@ def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | 
         record["endedAt"] = _now()
         record["exitCode"] = exit_code = outcome.host_run(
             record["status"], record["containerExitCode"],
-            run_class(results) if record["status"] == "completed" else None)
+            run_class(results) if record["status"] == "completed" else None,
+            failure_class=record["failureClass"], memory_limited=bool(manifest["container"].get("memory")))
         _write_json(out / "host.json", record)  # first, so an interrupted hand-back keeps the record
         if record["containerLaunched"]:
             record["handBack"] = hand_back(name, record["image"]["id"] or record["image"]["tag"], results)
@@ -538,6 +570,8 @@ def main(argv: list[str] | None = None) -> int:
     run_parser.add_argument("--codex-auth")
     run_parser.add_argument("--claude-token", help="token file from `claude setup-token` (kind claude)")
     run_parser.add_argument("--keep-container", action="store_true")
+    run_parser.add_argument("--exploratory", action="store_true",
+                            help="run although the evaluation files are not pre-registered; compare refuses the run")
     commands.add_parser("clean", help="remove stopped playground containers")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     try:
