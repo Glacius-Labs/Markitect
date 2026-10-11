@@ -405,6 +405,15 @@ func route(base, candidate Report) routing {
 	for id := range changed {
 		routeModelFile(id, definitionElement(id, base, candidate))
 	}
+	// A definition moved to another model file routes both files like a rewrite;
+	// Source is not part of the model digest, so nothing else names the move.
+	for id, path := range base.sources {
+		if next, ok := candidate.sources[id]; ok && next != path && !changed[id] {
+			self := definitionElement(id, base, candidate)
+			rec.add(self, cause{reason: "moved"})
+			routeModelFile(id, self)
+		}
+	}
 	// A model change that nothing above names, or reports not built by Analyze, still widen.
 	if base.ModelDigest != candidate.ModelDigest && (len(changed) == 0 && len(rewritten) == 0 || !traced(base) || !traced(candidate)) {
 		out.Unknown = append(out.Unknown, "model digest changed without a definition change the report can name; the declared project needs review")
