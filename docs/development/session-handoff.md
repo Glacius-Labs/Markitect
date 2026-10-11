@@ -52,7 +52,7 @@ All six PRs are open with successful current hosted checks at the audit. That is
 | [#221](https://github.com/Glacius-Labs/Markitect/pull/221), BUG-01 | `fix/projectrun-previews-read-only` | Stacked on #205's branch. After #205 reaches main, reconcile with its latest head, retarget to main, validate and review. Never merge only into the already-merged feature branch. |
 | [#223](https://github.com/Glacius-Labs/Markitect/pull/223), BUG-01 / kg | `fix/full-verify-child-assessments` | Review private child verdict filtering and the documented residual risk of private identifiers in arbitrary agent prose. Coordinates runtime files with #205/#221. |
 | [#218](https://github.com/Glacius-Labs/Markitect/pull/218), MCP-01 | `dev/smaller-mcp-schemas` | Review result schema sharing, parity, size ceilings and current visibility fixes. Its main base is older. Clear this package before another interface writer starts. |
-| [#219](https://github.com/Glacius-Labs/Markitect/pull/219), PLAY-05 final slice | `dev/playground-image-pins` | **Not acceptance-complete:** its body explicitly says the pinned image inventory has not been produced. Generate and inspect it in an authorized owned environment, update the image key if needed, commit it, then run the required checks on that new head. |
+| [#219](https://github.com/Glacius-Labs/Markitect/pull/219), PLAY-05 final slice | `dev/playground-image-pins` | **Pushed head incomplete:** its body says the pinned image inventory is absent, but the local branch already holds the inventory in unpushed commit `b64f4748`. Review those bytes and their build provenance, submit the commit after confirming the old head's required checks have finished, update the PR description, then validate the new head. |
 | [#222](https://github.com/Glacius-Labs/Markitect/pull/222), ARCH-07 follow-up | `docs/short-manager-name` | Review the short Manager-ID contributor example and its executable command. This PR touches AGENTS.md; coordinate with docs-entry work. |
 
 The integrator may process independent #218/#222 while the runtime queue is being reviewed. #219 can be completed independently in the playground. Every merge remains sequential and validates composition with current main.
@@ -72,9 +72,11 @@ Exact candidate evidence at the audit (quality and race jobs succeeded at each l
 
 ## Working-copy recovery
 
-The registered scientist worktree is **clean** at `b64f4748369e3410a414e8a88bd574fd5d975d74`, branch `dev/playground-image-pins`, path `C:\Users\Consiliari\.claude\worktrees\markitect-scientist`. It is older than the pushed #219 head. The session's intended inventory commit is not a recovered candidate there. The missing path named by the PR is `experiments/case-playground/container/inventory/codex-0.162.0-claude-2.1.296.txt`. Inspect any session-specific Linux work location separately before assuming no other scratch exists; do not overwrite or delete it.
+The registered scientist worktree is **clean but one commit ahead of its remote** at `b64f4748369e3410a414e8a88bd574fd5d975d74`, branch `dev/playground-image-pins`, path `C:\Users\Consiliari\.claude\worktrees\markitect-scientist`. Its parent is the pushed #219 head `3b2fbb354dec6ebc1a0fc460896cdfffb2db1256`. The unpushed commit adds the 143-line inventory at `experiments/case-playground/container/inventory/codex-0.162.0-claude-2.1.296.txt`. Its commit message binds the inventory to the cold CI build on `3b2fbb35` and image key `playground-image-0033bf5ffc829ac7a8da39c6573aa7b791402bc2c064cd48966995e5390ff984`. Review that claim against the build output; green CI for the parent does not validate the unpushed child. The WSL work location is the same host worktree under `/mnt/c/Users/Consiliari/.claude/worktrees/markitect-scientist/`, not a separate missing checkout. The session reported 320 unit tests passing (six skips) locally; that report is not a rerun by this handoff.
 
 The registered #223 worktree is **clean** at `1d1d98991b8fd37f21069e971bb91dc3b1f0b692`, branch `fix/full-verify-child-assessments`, path `C:\Users\Consiliari\.claude\worktrees\markitect-kg-fa`. Its PR already documents the prose-summary limitation. The session intended another sentence near the #210 guide, but no corresponding dirty file was found here; compare current documentation and the PR before inventing or repeating that edit.
+
+The separate compile/schema-limit prose is already integrated by #202: source commit `4dda1b6d4e25abf2cfec68776d9082dd3b330f43`, merge `2053ad979f0a4fa8ef188519536b775a18cca060`. That record concerns input budgets and the single-Schema assumption; it does not settle the child-summary privacy limitation in #223.
 
 These completed worktrees are clean and their heads are ancestors of the audited main:
 
@@ -106,6 +108,20 @@ The audit found 86 registered worktrees and 13 dirty worktrees excluding this do
 
 Braces in this table abbreviate separate paths; they are not literal filenames. Re-run `git status --short` in the exact worktree before recovery and bind any selected bytes to a new candidate. Old repro files need current-main reproduction before they become new findings. This inventory grants no cleanup authority.
 
+The local-branch audit also compared every branch with its upstream, not only with main. The scientist inventory is the only pending implementation commit on a tracked branch ahead of its upstream. `fix/bootstrap-path-comparison` is ahead of stale tracking at `d3d6f4e55588f966849de9bf0f71fd3a9e4949f8`, but that exact commit is already an ancestor of main; it adds no unfinished work. This handoff's own unpushed documentation corrections are accounted for by its PR.
+
+These five non-archive branches have no configured upstream and commits outside the audited main. A missing upstream does not mean no remote backup exists. Treat them as preserved candidate inputs and compare their accepted scope with current source before porting anything:
+
+| Branch | Full head | Continuation boundary |
+|---|---|---|
+| `claude/case-playground-v2` | `f98313f1c0ae4a964b2cd2bc29aff813e52f6d98` | Old research history plus dirty harness work; PLAY-01's selected harness is already on main. Do not merge the entire research history. |
+| `codex/c11-module-replacement` | `6dd126fdf9e13cbddf0edf82fa4e72971744c792` | Historical proof records and dirty runner/evidence, not a current product package. |
+| `codex/government-implementation-20261010` | `9976991611beacb34a7e6b1440aef87a6500db7d` | Docs-only v1 contract; the separate WIP snapshot contains an incomplete model. GOV-01 remains blocked. |
+| `codex/projectrun-known-check-repair` | `97df2ca457687999823d57a8237a3f556e6c2e55` | Two earlier-layout repair/test commits; reproduce the need on current source before selecting a fix. |
+| `docs/product-model-concepts` | `8f5fa92aed4e8f13d1abbaa2f458a0542b18db93` | Nine proposal/documentation commits; preserve provenance and compare with accepted register entries, rather than adopting their model by assumption. |
+
+Ten additional no-upstream archive branches retain unique historical/snapshot commits: `archive/codex/{astra-assessment-snapshot,markitect-historian-working-history,vision-method-alignment}` and `archive/wip/{c11-module-replacement-20261010,case-playground-v2-20261010,concepts-historian-notes-20261010,government-assessment-untracked-docs-20261010,government-implementation-20261010,marketing-notes-20261010,readiness-candidate-fix-20261010}`. They are recovery references, not a new queue. The branch survey routes to their subjects and backup locations.
+
 ## Role starts
 
 Start the **integrator** first. Then interface, scientist, kg and bughunter can resume their narrowly bounded PR work. QA and cleaner can inspect without writing shared files. The integrator explicitly assigns the runtime and interface zones before implementation. Six sessions changing code remains the maximum, not a target.
@@ -130,9 +146,9 @@ source-bound evidence, remaining acceptance and owner decisions.
 
 | Role | Initial queue to append |
 |---|---|
-| integrator | Revalidate the six PRs and main CI; review #205 then retarget #221, and coordinate #223. Process independent #218/#222 after composition checks. Keep #219 incomplete until its inventory is committed and verified. Update status after each merge and explicitly release zones. Preserve outstanding owner questions below. |
+| integrator | Revalidate the six PRs and main CI; review #205 then retarget #221, and coordinate #223. Process independent #218/#222 after composition checks. Keep #219 incomplete until its local inventory commit is reviewed, pushed and verified at the new head. Update status after each merge and explicitly release zones. Preserve outstanding owner questions below. |
 | interface | Resume MCP-01/#218; compare its schemas and parity with current main. After that package closes and the integrator releases the zone, take CLI-03, CLI-04 and TEST-02 serially. Briefing preview changes depend on accepted-history #205/#221. |
-| scientist | Resume PLAY-05/#219 at its pushed head, checking any earlier Linux work location. Produce the missing inventory and ensure the build consumes it. Respect existing live resources. After PLAY-05 closes, take PLAY-06; keep PLAY-07 parked pending protocol and budget. |
+| scientist | Resume PLAY-05/#219 from the existing clean worktree at local `b64f4748`, one commit ahead of the pushed head. Review its inventory and build provenance, confirm the old head's CI has ended, then submit the commit and validate the new head. Respect existing live resources. After PLAY-05 closes, take PLAY-06; keep PLAY-07 parked pending protocol and budget. |
 | kg | Resume #223 and compare the intended known-limit guide sentence with current documentation. Keep public contracts, private Statements and untrusted prose distinct. KG-04 stays blocked until its repository, independent must-change author and thresholds are chosen. |
 | bughunter | Resume #205/#221. Refresh the follow-ups from merged #209, historical-census handling and private-Statement exposure in ancestor briefings; these are reported unfinished findings until reproduced on current main. Coordinate runtime files with kg and QA. |
 | qa | Inspect the current CI and flake artifacts, TEST-05's partial completion and the exact remaining timer risks. Do not repeat the merged TEST-01/CI-07 work. Runtime writes start only when assigned; TEST-04, RUN-02, TEST-03 and ARCH-05/06 then follow the roadmap's sequence. Any image-cache proposal waits for PLAY-05 closure. |
@@ -151,7 +167,7 @@ Local JSONL filename stem identifies each session. Timestamps below are its last
 | `b1362bde-6f1b-4da2-8153-4e84678f6fca` | integrator, 11 Oct 03:05 | Monitor expired at quota; #218 reported green. Reconstruct live queues instead of trusting the old dashboard. |
 | `2da50b5c-e23d-4a05-8a1a-7fe3b3d55b41` | qa, 11 Oct 02:57 | CI/test slices reported merged; remaining runtime tests and image-cache dependency. |
 | `58879dc0-5d6e-4d2c-a9ac-6700363c13af` | interface, 11 Oct 02:57 | #218 pushed; briefing read-only caller waited for #205. |
-| `e9e2616b-6436-46d1-b3c5-543c8406fd0c` | scientist, 11 Oct 03:07 | #219 green; inventory work still intended, not found as a local candidate. |
+| `e9e2616b-6436-46d1-b3c5-543c8406fd0c` | scientist, 11 Oct 03:07 | #219 parent green; inventory committed locally as `b64f4748` and not yet pushed. |
 | `67dbb1da-b88c-4112-b0b5-2babb85344a7` | kg, 11 Oct 02:59 | #223 plus intended known-limit prose; quota stop. |
 | `387bb0ef-4492-4ed4-bc3d-a081836d5ae4` | bughunter, 11 Oct 02:59 | #205 and preview/recovery/privacy follow-up queue; verify all claims on main. |
 | `68b7cab0-caca-4283-a1e8-b0054b740706` | cleaner, 11 Oct 02:59 | #222; ARCH-08 analysis helper failed at quota and supplied no usable completion. |
@@ -173,3 +189,5 @@ KG-04's repository, independently frozen must-change list and thresholds require
 ## Maintaining the transfer
 
 The handoff snapshot stays dated; subsequent package status is updated in the backlog through the integrator's normal PRs. Link later evidence rather than rewriting an old session's outcome. The local-only `.dashboard/` reads the canonical backlog/roadmap from `origin/main` and uses `sessions.yaml` for live chat state; mark the interrupted Claude roles stopped and request Codex starts without claiming they already exist. Refresh it after integration. Preserve its owner questions until answered.
+
+Local verification observed that fixed-revision `context` on the audited source created `.markitect/state/briefings/history.json`. The generated file was preserved outside this candidate at `C:\Users\Consiliari\.codex\worktrees\session-handoff\handoff-evidence\briefing-history-from-fixed-context.json`, SHA-256 `a1075a249e41255905f4f1202bbdc10917c0fba0a7227268c6fed7cd6f690a6b`. This is an observed current-source side effect relevant to #205/#221's read-only repair; it is not a validation of those unmerged fixes. No generated state was added to the documentation PR.

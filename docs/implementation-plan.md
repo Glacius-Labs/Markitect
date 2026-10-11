@@ -25,7 +25,7 @@ This page owns the current direction: how parallel work is organized, the stream
 - MCP schema reduction (#218) and the final playground image/inventory slice (#219);
 - read-only briefing history (#205), its stacked preview caller (#221), and private child assessment redaction (#223);
 - the short Manager name entrypoint follow-up (#222);
-- unfinished follow-ups reported by the scientist and knowledge-graph sessions: the registered PR worktrees are clean, so inspect the handoff before assuming a local candidate exists;
+- the scientist's clean but unpushed inventory commit, plus the knowledge-graph session's intended prose follow-up; inspect the handoff and remote divergence as well as dirty files;
 - historical Government and research candidates, preserved as references. They are not combined with current main or scheduled ahead of the backlog's gates.
 
 **Product Readiness program:** closed. P01 to P10 are complete. Its records were distilled into the [Product Readiness lessons survey](work-items/surveys/product-readiness-lessons-20261010.md) and the [A01 validation record](validation/a01-native-smoke-20261010.md); git history keeps the originals. Its open follow-ups now live in the backlog: RUN-04 replaces P11, AGENT-03 replaces R03-F01, and the KG packages replace KG01 to KG03.
@@ -48,7 +48,7 @@ A session is a long-running chat for one role. The backlog's `owner` field names
 |---|---|---|
 | integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | First: resume the existing review queue and assign zones |
 | interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | Resume #218; then interface packages one at a time |
-| scientist | PLAY | Produce and review #219's missing image inventory before PLAY-06 |
+| scientist | PLAY | Review and submit #219's local inventory commit, then verify its new head before PLAY-06 |
 | kg | KG | Finish #223's documentation follow-up; KG-04 waits for owner choices |
 | bughunter | BUG | Resume #205/#221 and the bounded unfinished finding queue |
 | qa | CI, TEST | Review existing results now; runtime writes wait for the assigned zone |

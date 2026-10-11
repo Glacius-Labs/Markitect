@@ -170,7 +170,7 @@ packages:
     status: review
     branch: dev/playground-image-pins
     pr: 219
-    note: Slices 1 and 2 merged as 212 and 213. Final slice 219 has green checks but its PR description explicitly lacks the pinned image's package inventory; the registered scientist worktree is clean, with no inventory candidate to recover. Produce the missing inventory before closure; see docs/development/session-handoff.md.
+    note: Slices 1 and 2 merged as 212 and 213. PR219's pushed head has green checks but lacks the image inventory. The clean scientist worktree holds unpushed commit b64f4748369e3410a414e8a88bd574fd5d975d74 with that inventory, one commit ahead of the PR. Review it, submit it after the current-head checks finish, and validate the new head before closure; see docs/development/session-handoff.md.
     owner: scientist
     depends_on: [PLAY-01, PLAY-04]
     zone: free
