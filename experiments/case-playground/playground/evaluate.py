@@ -21,6 +21,9 @@ reviewer's answer. Writes `report.json`, `report.md` and `product-findings.md`.
 
 `--fake-reviewers` (smoke tests, no model call) runs `tests/fake_reviewer.py` in place
 of both CLIs with throwaway credentials; the real logins are never mounted then.
+
+Exit codes (outcome.py): 0 written; 10 the container did not exit 0 (assess-error.txt);
+failed holdouts or reviews inside a written assessment do not change it.
 """
 from __future__ import annotations
 
@@ -39,7 +42,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-from . import assess, codex_agent, lifecycle, methods, reviewers
+from . import assess, codex_agent, lifecycle, methods, outcome, reviewers
 from . import report as report_module
 from .lifecycle import read_text as _read_text
 
@@ -76,7 +79,12 @@ FAKE_REVIEWER = ROOT / "tests" / "fake_reviewer.py"
 
 
 class AssessError(RuntimeError):
-    """A clear, user-facing reason why an assessment could not run."""
+    """A clear, user-facing reason why an assessment could not run. `code` is the exit
+    code: a refused input unless the environment failed (outcome.ENVIRONMENT)."""
+
+    def __init__(self, message: str, code: int = outcome.INVALID) -> None:
+        super().__init__(message)
+        self.code = code
 
 
 class GitError(RuntimeError):
@@ -1119,12 +1127,13 @@ def host_assess(args: argparse.Namespace) -> int:
     elif "codex" in names:  # existence checks only; the files are never opened on the host
         codex_auth = Path(args.codex_auth or Path.home() / ".codex" / "auth.json")
         if not codex_auth.is_file():
-            raise AssessError(f"Codex auth file not found: {codex_auth}")
+            raise AssessError(f"Codex auth file not found: {codex_auth}", outcome.ENVIRONMENT)
         codex_auth = codex_auth.resolve()
     if "claude" in names and not fake:
         claude_token = Path(args.claude_token or DEFAULT_CLAUDE_TOKEN)
         if not claude_token.is_file():
-            raise AssessError(f"Claude token file not found: {claude_token} (create it once with `claude setup-token`)")
+            raise AssessError(f"Claude token file not found: {claude_token} (create it once with `claude setup-token`)",
+                              outcome.ENVIRONMENT)
         claude_token = claude_token.resolve()
     exit_code, _result = assess_container(run_dir, names=names, codex_auth=codex_auth, claude_token=claude_token,
                                           fake=fake, image=args.image, force=args.force, keep=args.keep_container)
@@ -1136,7 +1145,8 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
                      claude_token: Path | None = None, fake: bool = False, image: str | None = None,
                      force: bool = False, keep: bool = False,
                      before_remove: Callable[[str], None] | None = None) -> tuple[int, dict]:
-    """Assess one run folder in its own container and return (exit code, host record).
+    """Assess one run folder in its own container and return (exit code, host record);
+    the code (outcome.assess) is also `exitCode` in the assessment's host.json.
 
     `codex_auth` and `claude_token` are login files mounted read-only (never opened here);
     with `fake` the reviewers get throwaway credentials instead. `before_remove(container)`
@@ -1164,11 +1174,13 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
         raise AssessError("host.json names no image; pass --image")
     docker_version = host._capture(["docker", "version", "--format", "{{.Server.Version}}"])
     if host._container_state(name) is not None:
-        raise AssessError(f"a container named {name} already exists; remove it (docker rm -f {name})")
+        raise AssessError(f"a container named {name} already exists; remove it (docker rm -f {name})",
+                          outcome.ENVIRONMENT)
     try:
         image_id = host._capture(["docker", "image", "inspect", "--format", "{{.Id}}", image])
     except host.HostError as exc:
-        raise AssessError(f"image {image} is not available ({exc}); rebuild it or pass --image") from exc
+        raise AssessError(f"image {image} is not available ({exc}); rebuild it or pass --image",
+                          outcome.ENVIRONMENT) from exc
     stations = len(discover_stations(run_dir / "results"))
     timeout = wait_bound(stations, config, names)
     identity = evaluation_identity()
@@ -1195,19 +1207,18 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
                               "image": {"ref": image, "id": image_id}, "dockerVersion": docker_version,
                               "reviewers": names, "fakeReviewers": fake, "evaluation": identity,
                               "timeoutSeconds": timeout, "startedAt": _utc(), "endedAt": None,
-                              "containerExitCode": None, "dockerRun": argv, "error": None}
-    exit_code = 2
+                              "containerExitCode": None, "exitCode": None, "dockerRun": argv, "error": None}
     try:
         host._capture(argv)
         code, error = host.wait_container(name, timeout)
         if error is None:
-            result["status"], result["containerExitCode"], exit_code = "completed", code, code
+            result["status"], result["containerExitCode"] = "completed", code
         else:
             result["status"], result["error"] = "wait-failed", error
     except subprocess.TimeoutExpired:
-        result["status"], exit_code = "host-timeout", 124
+        result["status"] = "host-timeout"
     except KeyboardInterrupt:
-        result["status"], exit_code = "host-interrupted", 130
+        result["status"] = "host-interrupted"
     except host.HostError as exc:
         result["error"] = str(exc)
         print(f"error: {exc}", file=sys.stderr)
@@ -1215,10 +1226,11 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
         try:
             host._finish_container(name, result, out, keep, before_remove)
         except KeyboardInterrupt:  # e.g. during the login copy-out; the container is gone
-            result["status"], exit_code = "host-interrupted", 130
+            result["status"] = "host-interrupted"
         if throwaway is not None:
             shutil.rmtree(throwaway, ignore_errors=True)
         result["endedAt"] = _utc()
+        result["exitCode"] = exit_code = outcome.assess(result["status"], result["containerExitCode"])
         _write_json(out / "host.json", result)  # first, so an interrupted hand-back keeps the record
         result["handBack"] = host.hand_back(name, image_id, out)
         _write_json(out / "host.json", result)
@@ -1266,6 +1278,7 @@ def inside(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m playground assess", description=__doc__,
+                                     epilog=outcome.help_text(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--run", required=True, help="run folder (with host.json and results/)")
     parser.add_argument("--codex-auth", help="Codex login file (default ~/.codex/auth.json)")
@@ -1293,4 +1306,4 @@ def main(argv: list[str] | None = None) -> int:
         return host_assess(args)
     except (AssessError, host.HostError) as exc:
         print(f"error: {exc}", file=sys.stderr)
-        return 2
+        return exc.code

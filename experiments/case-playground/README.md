@@ -164,8 +164,8 @@ study's names; for the Markitect arm `git`, `go` and a checkout holding the comm
 needed login (present, not empty, with what needs it); a new study folder outside every
 Git checkout with 5 GiB free. It only warns when the commit is behind `HEAD`, the host is
 not Linux, evaluation files are uncommitted or an earlier study left login folders. Then
-it builds the image and the binary once for all runs (a failed build also exits 3);
-`--preflight` stops before that and writes nothing.
+it builds the image and the binary once for all runs; `--preflight` stops before that
+and writes nothing.
 
 ## Components
 
@@ -185,6 +185,7 @@ it builds the image and the binary once for all runs (a failed build also exits 
 | `playground/evaluate.py` | `assess`: starts the assessment container; inside, checks, holdouts, diff profile, classification, product findings and reviews. |
 | `playground/reviewers.py` | Codex and Claude reviewers: prompt, input bundle, commands, schema validation, agreement. |
 | `playground/compare.py` | Side-by-side comparison of two assessed runs after a fairness check. |
+| `playground/outcome.py` | The [exit codes](#exit-codes) and how each command computes its own. |
 | `playground/study.py` | `study`: study file, schedule, preflight and login copies; runs, assesses and compares through the functions behind `host run`, `assess` and `compare`. |
 | `container/Dockerfile` | The image: `node:22-bookworm-slim`, Python, Git, bubblewrap, Codex CLI and Claude Code at pinned versions, user `agent` (uid 1000). |
 | `cases/` | `task-prompt.txt` (the one prompt); `common/` (`AGENTS.md`, `QUALITY.md`, the public checks' driver `checks/acceptance.py`), seeded into every repository; one folder per case with `README.md`, `BACKLOG.md`, `STATIONS.json`, its public checks `checks/<case>.py` and, for brownfield cases, starting code. |
@@ -380,12 +381,23 @@ any manifest and saved normalized in `manifests/`.
 
 ### Exit codes
 
-| Command | Exit code |
+`host run`, `assess`, `compare` and `study` share one table; their `--help` prints it.
+
+| Code | Meaning |
 |---|---|
-| `host run` | The runner's code: 0 all waves ran (whatever the quality), 1 stopped early, 2 runner error. Also 124 host safety timeout, 130 interrupted, 2 invalid manifest or the host could not build, start or wait. |
-| `assess` | 0 written; 2 assessment error (`assessment/assess-error.txt`) or host error; 124 and 130 as above. |
-| `compare` | 0 written; 2 unreadable report or fairness mismatch. |
-| `study` | 0 every step written and every run exited 0; 1 a step failed, a run stopped early, or the study stopped (the host could not run a container, or the image changed); 2 invalid study file or study error (`study-error.txt`); 3 preflight failed; 124 and 130 as above, and the study stops. `study --help` prints the same table. |
+| 0 | Completed. `host run`: every wave ran, class `none`; `assess`, `compare`: written; `study`: every step 0. |
+| 1 | Method outcome: the run stopped early with class `none` (agent time used up). |
+| 2 | Invalid input or refused by a rule: manifest, study file, options, folder, fairness mismatch. |
+| 3 | `study` preflight failed, including the image and binary builds. |
+| 10 | Harness failure: runner error, failed snapshot or wave release, `assess-error.txt`, `study-error.txt`. |
+| 11 | Environment failure: logins, no session id, host status `setup-failed`, `start-failed` or `wait-failed` (image build included), image changed. |
+| 12 | Product failure: setup blocked by the product, `markitect check` could not run. |
+| 124, 130 | Host safety timeout; interrupted. |
+
+`host run` maps its host status and the run report's [class](#outcome-classes); the runner's
+own 0, 1 or 2 stays `containerExitCode` in `host.json`. Failed holdouts or reviews never
+fail `assess`. `study` gives its worst step code (130, 124, 10, 11, 12, 1, 0 in that
+order); a step refused inside a study (2) counts as 10.
 
 ## Results
 
@@ -402,7 +414,7 @@ any manifest and saved normalized in `manifests/`.
 | Path | Content |
 |---|---|
 | `results/report.md`, `report.json` | **Start here.** One row per wave, setup, final assessment, classification, fairness fields, versions. |
-| `host.json`, `image-build.log`, `container.log`, `inputs/` | Host record (normalized manifest, status, host platform, image, Docker version, Markitect build, times, `docker run` arguments, exit code, `handBack`); build and container output; what was mounted at `/in`. |
+| `host.json`, `image-build.log`, `container.log`, `inputs/` | Host record (normalized manifest, status, host platform, image, Docker version, Markitect build, times, `docker run` arguments, container and mapped exit code, `handBack`); build and container output; what was mounted at `/in`. |
 | `results/runner.json`, `runner-error.txt` | Status, stop reason and category, versions, login rewrite, token redactions; a traceback after a runner error. |
 | `results/setup/`, `stations/S<n>/`, `final/` | Setup command output; per wave the agent's events, output, `agent.json`, `checks.json` and work outside the repository; the last wave's public checks, own tests and Markitect conformance. |
 | `results/audit/`, `evidence/` | Seed and wave plan (`run.json`), per-wave snapshots, the final freeze; session records, transcripts and Markitect's cache. |

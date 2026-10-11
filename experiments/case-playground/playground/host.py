@@ -10,6 +10,8 @@ Their contents are never read, printed, hashed or passed as an environment varia
 
 The container gets the normalized manifest (defaults filled in, Markitect's sourceRepo
 as an absolute path and its full commit); host.json records it with the host platform.
+The exit code (outcome.py) comes from the host status and the run report's class; the
+runner's own code stays `containerExitCode` in host.json.
 """
 from __future__ import annotations
 
@@ -29,7 +31,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
-from . import cases
+from . import cases, outcome
 from . import manifest as manifest_module
 from .runner import overhead_bound_seconds
 
@@ -45,7 +47,12 @@ CLAUDE_TOKEN_TARGET = "/run/secrets/claude-token"
 
 
 class HostError(RuntimeError):
-    """A clear, user-facing reason why the host could not run the container."""
+    """A clear, user-facing reason why the host could not run the container. `code` is
+    the exit code: an environment failure unless the input was refused (outcome.INVALID)."""
+
+    def __init__(self, message: str, code: int = outcome.ENVIRONMENT) -> None:
+        super().__init__(message)
+        self.code = code
 
 
 def _now() -> str:
@@ -89,7 +96,7 @@ def station_count(manifest: dict) -> int:
     try:
         return cases.get(manifest["case"], ROOT).stations
     except cases.CaseError as exc:
-        raise HostError(str(exc)) from exc
+        raise HostError(str(exc), outcome.INVALID) from exc
 
 
 def host_platform() -> dict[str, str]:
@@ -205,13 +212,13 @@ def resolve_markitect(product: dict) -> dict:
     """The manifest's Markitect block with sourceRepo as an absolute path and the full commit."""
     source = Path(product["sourceRepo"]).resolve()
     if not source.is_dir():
-        raise HostError(f"markitect.sourceRepo is not a folder: {source}")
+        raise HostError(f"markitect.sourceRepo is not a folder: {source}", outcome.INVALID)
     try:
         commit = _capture(["git", "-C", str(source), "rev-parse", "--verify", "--quiet",
                            f"{product['commit']}^{{commit}}"])
     except HostError as exc:
         raise HostError(f"markitect.commit {product['commit']} is not a commit in {source} "
-                        f"(is it a Git checkout, and is the commit fetched?): {exc}") from exc
+                        f"(is it a Git checkout, and is the commit fetched?): {exc}", outcome.INVALID) from exc
     return {**product, "sourceRepo": str(source), "commit": commit}
 
 
@@ -359,6 +366,16 @@ def _write_json(path: Path, value: dict) -> None:
                     newline="\n")
 
 
+def run_class(results: Path) -> str | None:
+    """The class in a run's results/report.json; None when there is no readable report."""
+    try:
+        report = json.loads((results / "report.json").read_text(encoding="utf-8"))
+        value = report["classification"]["class"]
+    except (OSError, UnicodeError, ValueError, KeyError, TypeError):
+        return None
+    return value if isinstance(value, str) else None
+
+
 def platform_warning() -> str | None:
     """A warning on a non-Linux host: Linux is the reference platform (DEC-013)."""
     system = platform.system()
@@ -373,11 +390,11 @@ def run(args: argparse.Namespace) -> int:
     out = Path(args.out or Path.home() / "markitect-playground-runs" / manifest["id"]).resolve()
     if out.exists():
         if not _retryable(out):
-            raise HostError(f"output folder already exists: {out}")
+            raise HostError(f"output folder already exists: {out}", outcome.INVALID)
         print(f"replacing {out} (its earlier attempt failed before a container was launched)", flush=True)
         shutil.rmtree(out)
     if _inside_git_checkout(out):
-        raise HostError(f"output folder must not be inside a git checkout: {out}")
+        raise HostError(f"output folder must not be inside a git checkout: {out}", outcome.INVALID)
     auth = token = None
     if needs_codex_auth(manifest):
         auth = Path(args.codex_auth or Path.home() / ".codex" / "auth.json")
@@ -387,7 +404,7 @@ def run(args: argparse.Namespace) -> int:
     kind = manifest["agent"]["kind"]
     if kind == "claude" and not args.claude_token:
         raise HostError("--claude-token PATH is required for agent kind claude (create the file once "
-                        "with `claude setup-token`)")
+                        "with `claude setup-token`)", outcome.INVALID)
     if args.claude_token and kind in manifest_module.CLAUDE_KINDS:  # optional for fake-claude
         token = Path(args.claude_token)
         if not token.is_file():  # existence check only; the file is never opened here
@@ -411,7 +428,8 @@ def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | 
                  prebuilt: dict | None = None,
                  before_remove: Callable[[str], None] | None = None) -> tuple[int, dict]:
     """Run one validated manifest (Markitect block resolved) into the new folder `out`
-    and return (exit code, host record); host.json is written in any case.
+    and return (exit code, host record); host.json is written in any case. The exit code
+    (outcome.host_run) is also `exitCode` in host.json.
 
     `auth` and `token` are login files mounted read-only (never opened here). `prebuilt`
     holds what a study built once for all its runs: {"image": {"tag", "id"}} and, for the
@@ -431,8 +449,7 @@ def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | 
                     "hostPlatform": host_platform(),
                     "secrets": {"codexAuth": auth is not None, "claudeToken": token is not None},
                     "containerLaunched": False,
-                    "containerExitCode": None, "error": None}
-    exit_code = 2
+                    "containerExitCode": None, "exitCode": None, "error": None}
     try:
         record["dockerVersion"] = _capture(["docker", "version", "--format", "{{.Server.Version}}"])
         if _container_state(name) is not None:
@@ -466,14 +483,14 @@ def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | 
         _capture(argv)
         code, error = wait_container(name, timeout)
         if error is None:
-            record["status"], record["containerExitCode"], exit_code = "completed", code, code
+            record["status"], record["containerExitCode"] = "completed", code
         else:
             record["status"], record["error"] = "wait-failed", error
             print(f"error: docker wait failed: {error}", file=sys.stderr)
     except subprocess.TimeoutExpired:
-        record["status"], exit_code = "host-timeout", 124
+        record["status"] = "host-timeout"
     except KeyboardInterrupt:
-        record["status"], exit_code = "host-interrupted", 130
+        record["status"] = "host-interrupted"
     except (HostError, OSError, tarfile.TarError) as exc:
         if record["containerLaunched"]:
             record["status"] = "start-failed"
@@ -484,8 +501,11 @@ def run_manifest(manifest: dict, out: Path, *, auth: Path | None, token: Path | 
             try:
                 _finish_container(name, record, out, keep, before_remove)
             except KeyboardInterrupt:  # e.g. during the login copy-out; the container is gone
-                record["status"], exit_code = "host-interrupted", 130
+                record["status"] = "host-interrupted"
         record["endedAt"] = _now()
+        record["exitCode"] = exit_code = outcome.host_run(
+            record["status"], record["containerExitCode"],
+            run_class(results) if record["status"] == "completed" else None)
         _write_json(out / "host.json", record)  # first, so an interrupted hand-back keeps the record
         if record["containerLaunched"]:
             record["handBack"] = hand_back(name, record["image"]["id"] or record["image"]["tag"], results)
@@ -508,9 +528,11 @@ def clean() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m playground host", description=__doc__,
+                                     epilog=outcome.help_text(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest="command", required=True)
-    run_parser = commands.add_parser("run", help="build, stage and run one manifest")
+    run_parser = commands.add_parser("run", help="build, stage and run one manifest", epilog=outcome.help_text(),
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
     run_parser.add_argument("--manifest", required=True)
     run_parser.add_argument("--out")
     run_parser.add_argument("--codex-auth")
@@ -520,6 +542,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     try:
         return run(args) if args.command == "run" else clean()
-    except (HostError, manifest_module.ManifestError) as exc:
+    except HostError as exc:
         print(f"error: {exc}", file=sys.stderr)
-        return 2
+        return exc.code
+    except manifest_module.ManifestError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return outcome.INVALID
