@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated 11 October 2026 against main `5f9b6085a17d0907c826f9817f4255a0d99a753c`. The [Claude-to-Codex handoff](development/session-handoff.md) records the interrupted sessions, remaining candidates and restart order at that snapshot.
+Updated 11 October 2026 against main `36215f84656ec321d5096bf23ad5df56d27a895b`. The [integration record](validation/integration-queue-20261011.md) continues the six-PR queue; the [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
 
 This page owns the current direction: how parallel work is organized, the streams and waves, the code zones, and the open owner decisions. The [backlog](work-items/backlog.yaml) is the single owner of each work package's status. The [concept register](concepts/register.md) records the decisions this roadmap relies on. Source changes do not change a published release.
 
@@ -11,21 +11,21 @@ This page owns the current direction: how parallel work is organized, the stream
 - The [concept record](concepts/README.md).
 - Exchangeable process execution and per-role configuration (RUN-01, #104), the top-level verb table (CLI-02, #161), and the reduced knowledge core and explain/trace surface (KG-02, #184).
 - The case playground, provider-free container smoke, shared source/bundle smoke driver, hermetic test kit and Linux race gate.
-- Markitect's own recursive Manager model and generated project view (ARCH-07, #203); its entrypoint follow-up remains in review.
+- Markitect's own recursive Manager model and generated project view (ARCH-07, #203), stable view (#216) and verified short-name contributor entrypoint (#222).
+- Read-only accepted briefing history (#205), guided previews (#221), structured private child assessment filtering (#223), smaller typed MCP schemas (#218), and the reviewed pinned-image inventory (#219).
 
 **Remaining older product line:** The canonical projection alpha has been removed (ARCH-04). The Project/Domain line and its explicit legacy gates remain until ARCH-09; distribution separation is ARCH-08. Current contributor instructions, CI and hooks also check the self-hosted model. Do not reuse the old survey's code-size estimate as a current measurement.
 
 **CI:**
 - Linux quality and race jobs are the required PR gates. The ordinary suite runs once per quality job; fixed-revision dogfood does not repeat it.
 - Windows is nightly, manual and release validation; it does not block ordinary merges (DEC-013).
-- Main `5f9b6085` has successful hosted CI and provider-free playground smoke. Their exact runs are linked in the handoff; they do not establish provider or method-study acceptance.
+- The original six PR heads passed required Linux Quality/Race and relevant provider-free smoke. Main CI is tracked separately for each merge; exact candidate results and local Windows failures are recorded in the integration record. They do not establish provider or method-study acceptance.
 - Freeze each PR head while its required Linux checks run. Recheck the current head and compile its merge onto current main before integration.
 
 **Open work outside main:**
-- MCP schema reduction (#218) and the final playground image/inventory slice (#219);
-- read-only briefing history (#205), its stacked preview caller (#221), and private child assessment redaction (#223);
-- the short Manager name entrypoint follow-up (#222);
-- the scientist's clean but unpushed inventory commit, plus the knowledge-graph session's intended prose follow-up; inspect the handoff and remote divergence as well as dirty files;
+- separately reproduced ancestor-briefing visibility and Context/brief-list no-write repairs;
+- a bounded Windows playground fixture portability follow-up after the additional local unit run;
+- delegated DEC-023/register clarification and KG-04 protocol preparation. The protocol uses Shop and Markitect with independent pre-impact expectations and descriptive metrics; measurement remains NOT RUN;
 - historical Government and research candidates, preserved as references. They are not combined with current main or scheduled ahead of the backlog's gates.
 
 **Product Readiness program:** closed. P01 to P10 are complete. Its records were distilled into the [Product Readiness lessons survey](work-items/surveys/product-readiness-lessons-20261010.md) and the [A01 validation record](validation/a01-native-smoke-20261010.md); git history keeps the originals. Its open follow-ups now live in the backlog: RUN-04 replaces P11, AGENT-03 replaces R03-F01, and the KG packages replace KG01 to KG03.
@@ -42,17 +42,17 @@ This page owns the current direction: how parallel work is organized, the stream
 
 ### Sessions
 
-A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. The Claude sessions were interrupted by the weekly quota. Their current handoff is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
+A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. The Codex integrator currently coordinates bounded subagents for the integration and delegated follow-ups; no separate role chat is dispatched by this roadmap. The interrupted Claude sessions' snapshot is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
 
 | Role | Streams | Starts |
 |---|---|---|
-| integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | First: resume the existing review queue and assign zones |
-| interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | Resume #218; then interface packages one at a time |
-| scientist | PLAY | Review and submit #219's local inventory commit, then verify its new head before PLAY-06 |
-| kg | KG | Finish #223's documentation follow-up; KG-04 waits for owner choices |
-| bughunter | BUG | Resume #205/#221 and the bounded unfinished finding queue |
+| integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | Complete the scoped repair queue and delegated documentation, then assign future zones |
+| interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | Integrator's caller-repair subagent holds the interface files; later packages wait for release |
+| scientist | PLAY | Integrator covers the Windows fixture follow-up; PLAY-06 remains a separate package |
+| kg | KG | Integrator covers KG-04 protocol preparation; measurement waits for separate authority |
+| bughunter | BUG | Integrator covers reproduced ancestor visibility; preserve unconfirmed historical findings |
 | qa | CI, TEST | Review existing results now; runtime writes wait for the assigned zone |
-| cleaner | ARCH, AGENT-01 | Review #222 and finish ARCH-08 analysis; implementation waits for interface ownership |
+| cleaner | ARCH, AGENT-01 | ARCH-08 caller analysis is complete; implementation waits for interface ownership |
 | runtime | RUN, MCP-02, ARCH-06 | After the bughunter/QA runtime queue is released |
 | government | GOV | After Wave 2 and the explicit GOV-01 dependencies (DEC-019) |
 

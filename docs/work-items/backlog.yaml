@@ -1,7 +1,7 @@
 schema: markitect-roadmap-backlog/v1
 updated: '2026-10-11'
 roadmap: docs/implementation-plan.md
-main_basis: 5f9b6085a17d0907c826f9817f4255a0d99a753c
+main_basis: 36215f84656ec321d5096bf23ad5df56d27a895b
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
@@ -167,10 +167,10 @@ packages:
     title: Harden the playground
     stream: PLAY
     wave: 1
-    status: review
+    status: done
     branch: dev/playground-image-pins
     pr: 219
-    note: Slices 1 and 2 merged as 212 and 213. PR219's pushed head has green checks but lacks the image inventory. The clean scientist worktree holds unpushed commit b64f4748369e3410a414e8a88bd574fd5d975d74 with that inventory, one commit ahead of the PR. Review it, submit it after the current-head checks finish, and validate the new head before closure; see docs/development/session-handoff.md.
+    note: Slices 212, 213 and 219 are merged. The existing inventory commit b64f4748369e3410a414e8a88bd574fd5d975d74 was independently reviewed, normally pushed and passed fresh Linux Quality/Race and provider-free smoke. Additional Windows fixture failures are recorded separately in docs/validation/integration-queue-20261011.md; no provider or method study was run.
     owner: scientist
     depends_on: [PLAY-01, PLAY-04]
     zone: free
@@ -351,12 +351,13 @@ packages:
     title: MCP parity, read-only mode and smaller schemas
     stream: MCP
     wave: 2
-    status: review
+    status: done
     branch: dev/smaller-mcp-schemas
     pr: 218
     owner: interface
     depends_on: [CLI-02]
-    zone: interface
+    zone: free
+    note: PR218 merged after independent review and current-main composition checks. Actual stdio tools/list shrank 27.41 percent with the same 23 tools; typed result tests passed. The separate Context/brief-list no-write repair belongs to BUG-01.
     inputs:
       - docs/work-items/surveys/cli-mcp-app-server-20261010.md
     acceptance:
@@ -458,8 +459,7 @@ packages:
     status: blocked
     owner: kg
     depends_on: [KG-02]
-    needs_owner: Repository, independent author of the frozen must-change list, and reporting thresholds.
-    note: From IDEA-01. The repository, the author of the frozen must-change list and the thresholds are owner choices.
+    note: Setup was delegated on 11 October 2026 using Shop and Markitect, with an independent author freezing must-change expectations before impact and descriptive recall/missed/width/excess reporting without PASS thresholds. Protocol preparation is active under the integrator. Measurement remains NOT RUN and requires separate execution authority; the expected lists are not yet authored or frozen.
     zone: free
     inputs:
       - docs/work-items/surveys/earlier-plans-20261011.md
@@ -670,9 +670,11 @@ packages:
       Zones for fixes, set by the integrator on 10 October 2026: findings in core and projectmodel go
       to kg; the bughunter fixes findings in projectwork, projectbriefing and projectcoverage and,
       while no runtime session runs, in the runtime zone; interface-zone findings go to the integrator.
-      Claude is interrupted, not a live writer. Review queue: 205 (briefing reads), stacked 221
-      (preview callers), and 223 (private child assessments, kg). The integrator must assign their
-      shared runtime files before any QA or new runtime implementation starts. See the session handoff.
+      Claude is interrupted, not a live writer. The integrator merged 205, 221 and 223 after
+      independent review and fixed-candidate checks. Additional Context/brief-list no-write and
+      historical-context ancestor-visibility repairs remain active in separate isolated worktrees.
+      Runtime/QA implementation still requires explicit zone assignment. See the integration record
+      docs/validation/integration-queue-20261011.md; the session handoff preserves its earlier snapshot.
     zone: free
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
@@ -824,10 +826,10 @@ packages:
     title: Markitect develops itself with its own model
     stream: ARCH
     wave: 3
-    status: review
+    status: done
     branch: docs/short-manager-name
     pr: 222
-    note: Self-hosted model and view merged as 203, with stable-view support in 216. Entrypoint follow-up 222 remains open. Earlier-line gates remain deliberately until ARCH-09; do not claim legacy removal from this package.
+    note: Self-hosted model and view merged as 203, stable-view support as 216, and verified short-name entrypoint follow-up as 222. Earlier-line gates remain deliberately until ARCH-09; this package does not establish legacy removal.
     owner: cleaner
     depends_on: [CLI-02, AGENT-02]
     zone: ci
