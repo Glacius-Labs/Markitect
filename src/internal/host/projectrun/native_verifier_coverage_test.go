@@ -69,6 +69,22 @@ func serveNativeVerifierFixture() {
 			if json.Unmarshal([]byte(os.Getenv("MARKITECT_PROJECTRUN_NATIVE_VERIFIER_RESPONSE")), &semantic) != nil || !json.Valid(semantic) {
 				return
 			}
+			// Like a real provider, write the files the answer claims into the
+			// workspace this server was started in.
+			var claimed struct {
+				CandidateFiles []struct {
+					Path    string `json:"path"`
+					Content string `json:"content"`
+				} `json:"candidateFiles"`
+			}
+			if json.Unmarshal(semantic, &claimed) != nil {
+				return
+			}
+			for _, file := range claimed.CandidateFiles {
+				if os.WriteFile(filepath.FromSlash(file.Path), []byte(file.Content), 0o644) != nil {
+					return
+				}
+			}
 			if encoder.Encode(map[string]any{"method": "turn/started", "params": map[string]any{"threadId": "thread-1", "turn": map[string]any{"id": "turn-1", "status": "inProgress"}}}) != nil {
 				return
 			}

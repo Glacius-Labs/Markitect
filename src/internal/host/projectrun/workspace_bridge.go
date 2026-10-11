@@ -54,6 +54,9 @@ func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root st
 	if agent.WorkspaceMode != "git" || project == nil || project.Snapshot == nil || host.Load == nil {
 		return agentexec.RunResult{}, errors.New("native App Server invocation requires an explicit owned Git workspace")
 	}
+	if _, err := agentexec.PreparePrivateLogDirectory(opts.PrivateLogDirectory); err != nil {
+		return agentexec.RunResult{}, err
+	}
 	if _, err := buildNativeWorkspace(root, project.Revision, project, agent); err != nil {
 		return agentexec.RunResult{}, err
 	}

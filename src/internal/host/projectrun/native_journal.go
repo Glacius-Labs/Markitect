@@ -83,8 +83,8 @@ func newNativeJournal(privateLogDirectory, workspaceCWD, workspaceID string) (*n
 	if err != nil {
 		return nil, fmt.Errorf("resolve native private log directory: %w", err)
 	}
-	if err := ensurePrivateDirectory(privateAbs); err != nil {
-		return nil, err
+	if _, err := agentexec.PreparePrivateLogDirectory(privateAbs); err != nil {
+		return nil, fmt.Errorf("prepare native private log directory: %w", err)
 	}
 	privateReal, err := filepath.EvalSymlinks(privateAbs)
 	if err != nil {
@@ -505,6 +505,11 @@ func nativeRandomID() (string, error) {
 	return hex.EncodeToString(bytes[:]), nil
 }
 
+// ensurePrivateDirectory creates a subdirectory that only holds Host journal
+// files beneath a private log root that agentexec.PreparePrivateLogDirectory
+// already prepared; it inherits that root's owner-only access. A directory
+// handed to an agent as its own private log directory must be prepared with
+// agentexec.PreparePrivateLogDirectory instead.
 func ensurePrivateDirectory(path string) error {
 	if err := os.MkdirAll(path, 0700); err != nil {
 		return fmt.Errorf("create native private directory: %w", err)

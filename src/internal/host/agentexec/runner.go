@@ -767,6 +767,18 @@ func pathWithinAny(path string, roots []string) bool {
 	return false
 }
 
+// PreparePrivateLogDirectory is the one way to make a private log directory
+// that agent runs share. It creates the directory owner-only (a protected
+// owner-only access list on Windows, mode 0700 elsewhere) or verifies an
+// existing one, and returns its canonical path. Every writer of private run
+// logs or journals must prepare the directory through it, so a later process
+// run accepts a directory an earlier native run created. An existing
+// directory that is not owner-only is refused, never adopted: its contents
+// cannot be attested.
+func PreparePrivateLogDirectory(path string) (string, error) {
+	return preparePrivateLogDirectory(path, nil)
+}
+
 func preparePrivateLogDirectory(value string, roots []string) (string, error) {
 	if value == "" {
 		return "", errors.New("a private log directory is required")
@@ -786,7 +798,7 @@ func preparePrivateLogDirectory(value string, roots []string) (string, error) {
 			return "", errors.New("private log directory must be outside audited input roots")
 		}
 		if err := verifyPrivateLogDirectory(canonical); err != nil {
-			return "", errors.New("private log directory access could not be verified")
+			return "", fmt.Errorf("existing private log directory %s is not owner-only; an older release or another account may have created or changed it, so inspect it and remove it before running again", canonical)
 		}
 		if runtime.GOOS != "windows" {
 			if err := os.Chmod(canonical, 0700); err != nil {
@@ -830,7 +842,14 @@ func preparePrivateLogDirectory(value string, roots []string) (string, error) {
 			return "", errors.New("private log directory parent could not be created")
 		}
 		if err := createPrivateLogDirectory(candidate); err != nil {
-			return "", errors.New("private log directory could not be created with a protected access list")
+			if !errors.Is(err, os.ErrExist) {
+				return "", errors.New("private log directory could not be created with a protected access list")
+			}
+			// A concurrent run created it first; verify it below like any
+			// existing directory.
+			if info, err := os.Lstat(candidate); err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+				return "", errors.New("private log directory must be a real directory")
+			}
 		}
 	} else if err := os.MkdirAll(absolute, 0700); err != nil {
 		return "", errors.New("private log directory could not be created")

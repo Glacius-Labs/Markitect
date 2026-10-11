@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -69,13 +70,20 @@ func TestPrivateLogWindowsFileDefaultOwnerGroupIsNormalized(t *testing.T) {
 	}
 }
 
+// A plain directory, as an older release's journal code created it, is refused
+// with guidance rather than adopted: its contents cannot be attested.
 func TestPrivateLogWindowsRejectsUnverifiedDirectoryACL(t *testing.T) {
 	directory := filepath.Join(t.TempDir(), "inherited-logs")
 	if err := os.Mkdir(directory, 0700); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := preparePrivateLogDirectory(directory, nil); err == nil {
+	_, err := PreparePrivateLogDirectory(directory)
+	if err == nil {
 		t.Skip("the test temp parent itself has the exact protected owner-only ACL")
+	}
+	if !strings.Contains(err.Error(), "is not owner-only") || !strings.Contains(err.Error(), "remove it") ||
+		!strings.Contains(err.Error(), filepath.Base(directory)) {
+		t.Fatalf("refusal does not name the directory, what is wrong and what to do: %v", err)
 	}
 	if err := verifyPrivateLogDirectory(directory); err == nil {
 		t.Fatal("rejected existing directory was unexpectedly changed into an accepted ACL")

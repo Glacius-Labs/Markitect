@@ -377,8 +377,10 @@ func (s *HelperSession) runHelper(ctx context.Context, call codexappserver.ToolC
 	if err != nil {
 		return s.failRequest(ctx, requestIndex, reservation, &handle, call.CallID, attempt, "failed", err, journal)
 	}
+	// The child agent keeps its own private logs here, so the directory is a
+	// private log root of its own, not just a folder of Host journal files.
 	privateDirectory := filepath.Join(privateLogs, "helpers")
-	if err := ensurePrivateDirectory(privateDirectory); err != nil {
+	if _, err := agentexec.PreparePrivateLogDirectory(privateDirectory); err != nil {
 		return s.failRequest(ctx, requestIndex, reservation, &handle, call.CallID, attempt, "failed", err, journal)
 	}
 	result, runErr := invoker.Run(ctx, childConfig, childRequest, agentexec.RunOptions{Workspace: &handle, PrivateLogDirectory: privateDirectory})
