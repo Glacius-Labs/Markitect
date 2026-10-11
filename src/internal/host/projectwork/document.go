@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
@@ -31,8 +32,10 @@ func IsGeneratedDocument(data []byte) bool {
 	return bytes.HasPrefix(data, []byte(generatedViewMarker+"\n"))
 }
 
-// Document renders a readable view with desired requirements, observed files,
-// and declared checks in separate sections.
+// Document renders a readable view of the model: its Managers, Statements,
+// Artifacts, checks and declared exclusions, the coverage verdict and only the
+// paths and definitions that have a finding. It lists no repository inventory
+// and no revision, so it changes only when the model or its findings change.
 func Document(project *Project, write bool) (string, error) {
 	if project == nil || project.Snapshot == nil {
 		return "", fmt.Errorf("project snapshot is required")
@@ -109,16 +112,9 @@ func documentText(project *Project) string {
 	sourceLink := func(value string) string { return sourceLinkAt(DocumentPath(project.Config), value) }
 	var out strings.Builder
 	fmt.Fprintf(&out, "%s\n\n# %s\n\n", generatedViewMarker, heading(project.Config.Name))
-	if project.Config.CoverageMode == "full" {
-		fmt.Fprintf(&out, "Model digest: %s  \nReport status: %s\n\n", project.Model.Digest, project.Report.Status)
-	} else if project.Provisional {
-		out.WriteString("Source: provisional working-tree snapshot\n\n")
-	} else {
-		fmt.Fprintf(&out, "Source revision: %s\n\n", project.Revision)
-	}
-	if project.Config.CoverageMode != "full" {
-		fmt.Fprintf(&out, "Project binding: %s  \nModel digest: %s  \nReport status: %s\n\n", project.Digest, project.Model.Digest, project.Report.Status)
-	}
+	// The revision and the project binding change with every commit, so the
+	// header names only the semantic model digest and the report status.
+	fmt.Fprintf(&out, "Model digest: %s\n\nReport status: %s\n\n", project.Model.Digest, project.Report.Status)
 	out.WriteString("The structural model compiled from the explicitly selected Definition files. This view does not establish that repository code, tests, or prose conform to the model. Declared checks are not evidence that they ran.\n\n")
 
 	out.WriteString("## Responsibilities\n\n")
@@ -196,27 +192,6 @@ func documentText(project *Project) string {
 		}
 	}
 
-	out.WriteString("## Observed inventory\n\n")
-	observed := append([]projectmodel.FileEntry(nil), project.Report.Files...)
-	sort.Slice(observed, func(i, j int) bool { return observed[i].Path < observed[j].Path })
-	if len(observed) == 0 {
-		out.WriteString("No files were supplied by the selected inventory roots. This does not mean that the repository contains no files.\n\n")
-	} else {
-		out.WriteString("| Path | Observation | Responsible Manager | Class | Coverage |\n|---|---|---|---|---|\n")
-		for _, file := range observed {
-			observation := "not present"
-			if file.Exists {
-				observation = "present"
-			}
-			coverage := "unmodeled: no Artifact path declared"
-			if len(file.Artifacts) > 0 {
-				coverage = "linked to an expected Artifact"
-			}
-			fmt.Fprintf(&out, "| %s | %s | %s | %s | %s |\n", sourceLink(file.Path), observation, inline(file.Owner), inline(file.Class), coverage)
-		}
-		out.WriteString("\n")
-	}
-
 	out.WriteString("## Declared checks\n\n")
 	checks := append([]projectmodel.Check(nil), project.Report.Checks...)
 	sort.Slice(checks, func(i, j int) bool { return checks[i].ID < checks[j].ID })
@@ -233,30 +208,141 @@ func documentText(project *Project) string {
 		out.WriteString("\n")
 	}
 
+	writeDeclaredExclusions(&out, project)
+	writeCoverageAndFindings(&out, project)
+	return trimLineEnds(out.String())
+}
+
+// writeDeclaredExclusions lists the paths the project declares outside its
+// modelled realization, each with its declared reason.
+func writeDeclaredExclusions(out *strings.Builder, project *Project) {
+	out.WriteString("## Declared exclusions\n\n")
+	var lines []string
+	add := func(label string, entries []Exclusion) {
+		sorted := append([]Exclusion(nil), entries...)
+		sort.Slice(sorted, func(i, j int) bool { return sorted[i].Path < sorted[j].Path })
+		for _, entry := range sorted {
+			lines = append(lines, fmt.Sprintf("- %s: %s — %s\n", label, inline(entry.Path), inline(entry.Reason)))
+		}
+	}
+	if project.Config.CoverageMode == "full" {
+		ignored, err := declaredIgnores(project)
+		if err != nil {
+			lines = append(lines, fmt.Sprintf("- Ignored: %s cannot be read: %s\n", projectcoverage.IgnorePath, inline(err.Error())))
+		}
+		add("Ignored", ignored)
+		add("Transitional", project.Config.TransitionalExclusions)
+		add("Legacy exclusion (no effect on full coverage)", project.Config.Exclusions)
+	} else {
+		add("Excluded from the selected inventory", project.Config.Exclusions)
+		add("Transitional", project.Config.TransitionalExclusions)
+	}
+	if len(lines) == 0 {
+		out.WriteString("No exclusions are declared.\n\n")
+		return
+	}
+	for _, line := range lines {
+		out.WriteString(line)
+	}
+	out.WriteString("\n")
+}
+
+// declaredIgnores reads the entries of the repository ignore file that the
+// project snapshot binds; a project without one ignores nothing.
+func declaredIgnores(project *Project) ([]Exclusion, error) {
+	if project.Snapshot == nil {
+		return nil, nil
+	}
+	data, ok := project.Snapshot.Files[projectcoverage.IgnorePath]
+	if !ok {
+		return nil, nil
+	}
+	ignore, err := projectcoverage.DecodeIgnore(data)
+	if err != nil {
+		return nil, err
+	}
+	entries := make([]Exclusion, 0, len(ignore.Entries))
+	for _, entry := range ignore.Entries {
+		entries = append(entries, Exclusion{Path: entry.Path, Reason: entry.Reason})
+	}
+	return entries, nil
+}
+
+// writeCoverageAndFindings states the coverage verdict and lists only the
+// paths and definitions that have a finding. Paths without one stay out of the
+// view, so adding or removing a conforming file leaves it unchanged.
+func writeCoverageAndFindings(out *strings.Builder, project *Project) {
 	out.WriteString("## Coverage and findings\n\n")
-	if len(project.Report.Unknown) == 0 {
-		out.WriteString("No unowned inventory paths were reported. Per-file Artifact coverage is shown above.\n\n")
-	} else {
-		for _, unknown := range project.Report.Unknown {
-			fmt.Fprintf(&out, "- Unknown: %s\n", inline(unknown))
-		}
-		out.WriteString("\n")
+	full := project.Config.CoverageMode == "full"
+	switch {
+	case full && project.Coverage != nil:
+		fmt.Fprintf(out, "- Coverage mode: full (the whole repository)\n- Accounted: %s\n- Conforming: %s\n\n",
+			yesNo(project.Coverage.Accounted), yesNo(project.Coverage.Conforming))
+	case full:
+		out.WriteString("- Coverage mode: full (the whole repository)\n- Accounted: not classified for this view\n- Conforming: not classified for this view\n\n")
+	case len(project.Config.InventoryRoots) == 0:
+		out.WriteString("- Coverage mode: selected (no inventory roots are selected; repository paths are not classified)\n\n")
+	default:
+		fmt.Fprintf(out, "- Coverage mode: selected (only the inventory roots %s are observed; other paths are not classified)\n\n", list(project.Config.InventoryRoots))
 	}
-	findings := append([]projectmodel.Finding(nil), project.Report.Findings...)
-	sort.Slice(findings, func(i, j int) bool {
-		if findings[i].Code != findings[j].Code {
-			return findings[i].Code < findings[j].Code
+	findings := map[string][]string{}
+	add := func(subject, text string) { findings[subject] = append(findings[subject], text) }
+	for _, unknown := range project.Report.Unknown {
+		add(unknown, "unowned: no Manager owns this path")
+	}
+	if !full {
+		// Full coverage reports a file without an Artifact as unclassified.
+		for _, file := range project.Report.Files {
+			if file.Exists && len(file.Artifacts) == 0 {
+				add(file.Path, "unmodeled: no Artifact path declared")
+			}
 		}
-		return findings[i].Subject < findings[j].Subject
-	})
+	}
+	for _, finding := range project.Report.Findings {
+		add(finding.Subject, fmt.Sprintf("%s (%s): %s", inline(finding.Severity), inline(finding.Code), inline(finding.Message)))
+	}
+	if full && project.Coverage != nil {
+		for _, finding := range project.Coverage.Findings {
+			add(finding.Path, fmt.Sprintf("%s (%s): %s", inline(finding.Severity), inline(finding.Code), inline(finding.Message)))
+		}
+	}
 	if len(findings) == 0 {
-		out.WriteString("No structural or coverage findings were reported.\n")
-	} else {
-		for _, finding := range findings {
-			fmt.Fprintf(&out, "- %s (%s, %s): %s\n", inline(finding.Severity), inline(finding.Code), inline(finding.Subject), inline(finding.Message))
+		out.WriteString("No path or definition has a finding.\n")
+		return
+	}
+	out.WriteString("Only the paths and definitions with a finding are listed.\n\n")
+	subjects := make([]string, 0, len(findings))
+	for subject := range findings {
+		subjects = append(subjects, subject)
+	}
+	sort.Strings(subjects)
+	for _, subject := range subjects {
+		name := inline(subject)
+		if strings.TrimSpace(subject) == "" {
+			name = "(project)"
+		}
+		fmt.Fprintf(out, "- %s\n", name)
+		for _, text := range uniqueSorted(findings[subject]) {
+			fmt.Fprintf(out, "  - %s\n", text)
 		}
 	}
-	return out.String()
+}
+
+func yesNo(value bool) string {
+	if value {
+		return "yes"
+	}
+	return "no"
+}
+
+// trimLineEnds drops the spaces and tabs that empty or newline-terminated model
+// values leave at the end of a line, such as a root Manager's empty Namespace.
+func trimLineEnds(text string) string {
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		lines[i] = strings.TrimRight(line, " \t")
+	}
+	return strings.Join(lines, "\n")
 }
 
 func heading(value string) string { return strings.TrimSpace(strings.ReplaceAll(value, "\n", " ")) }

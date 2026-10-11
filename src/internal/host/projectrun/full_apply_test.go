@@ -134,7 +134,17 @@ func TestFinalCandidateCoverageUsesRepositoryCensus(t *testing.T) {
 		root := makeFullVerifyFixture(t)
 		writeE2E(t, root, projectcoverage.IgnorePath, "apiVersion: "+projectcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries:\n  - path: scratch.txt\n    reason: Local notes outside the model\n")
 		writeE2E(t, root, "scratch.txt", "ignored notes\n")
-		gitE2E(t, root, "add", projectcoverage.IgnorePath, "scratch.txt")
+		// The view lists declared ignore entries, so the new entry needs it regenerated.
+		working, err := projectwork.Load(root, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		document, err := projectwork.Document(working, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		writeE2E(t, root, projectwork.DocumentPath(working.Config), document)
+		gitE2E(t, root, "add", projectcoverage.IgnorePath, "scratch.txt", projectwork.DocumentPath(working.Config))
 		gitE2E(t, root, "commit", "-m", "ignore one exact path")
 		base := loadHead(t, root)
 		if base.Coverage == nil || !base.Coverage.Conforming {

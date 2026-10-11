@@ -26,7 +26,7 @@ docs/markitect/project.md      generated readable view of the accepted model
 - Application paths are examples, not conventions. The model tree follows conceptual ownership, not the source directories.
 - Each ordinary file has one accountable Manager. Shared responsibility and dependencies are explicit in the model.
 - Markitect does not infer behavior, dependencies or ownership from paths, names or Markdown links.
-- `docs/markitect/project.md` is a view of the model, not a source of intent. Commit accepted model changes under the repository's policy before implementation.
+- `docs/markitect/project.md` is a view of the model, not a source of intent. Commit accepted model changes under the repository's policy before implementation. It shows the model, its declared exclusions, the coverage verdict and only the paths with findings, not the file inventory, so it changes only when the model or its findings change.
 - Markitect also uses `cache/`, `views/`, `drafts/` and `write.lock` under `.markitect/` while it works.
 
 ## Ownership and boundaries
