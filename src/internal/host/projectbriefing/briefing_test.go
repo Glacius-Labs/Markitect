@@ -438,6 +438,20 @@ spec:
 	if err := os.WriteFile(privatePath, []byte(privateModel), 0644); err != nil {
 		t.Fatal(err)
 	}
+	publicPath := filepath.Join(root, ".markitect", "model", "commerce", "sales", "orders", "cancel-order.yaml")
+	publicBytes, err := os.ReadFile(publicPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	publicModel := strings.Replace(string(publicBytes),
+		"    - namespace: commerce.sales.inventory.reservations\n      name: release-reservation\n  requires:",
+		"    - namespace: commerce.sales.inventory.reservations\n      name: release-reservation\n    - namespace: commerce.sales.orders\n      name: private-internal-guard\n  requires:", 1)
+	if publicModel == string(publicBytes) {
+		t.Fatal("could not add a private relation to the public contract")
+	}
+	if err := os.WriteFile(publicPath, []byte(publicModel), 0644); err != nil {
+		t.Fatal(err)
+	}
 	gitTest(t, root, "init", "--initial-branch=private-briefing")
 	gitTest(t, root, "add", ".")
 	gitCommitTest(t, root, "private child Statement baseline")
@@ -448,21 +462,20 @@ spec:
 	}
 	gitTest(t, root, "add", ".markitect/model/commerce/sales/orders/private-internal-guard.yaml")
 	gitCommitTest(t, root, "change private child Statement")
-	publicPath := filepath.Join(root, ".markitect", "model", "commerce", "architecture.yaml")
-	publicBytes, err := os.ReadFile(publicPath)
+	publicBytes, err = os.ReadFile(publicPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	publicDescription := "Order cancellation and reservation release commit or roll back together in one SQLite transaction."
-	publicUpdated := "Order cancellation and reservation release share one SQLite transaction, which either commits both changes or rolls both back."
-	publicModel := strings.Replace(string(publicBytes), publicDescription, publicUpdated, 1)
+	publicDescription := "A confirmed order may be cancelled before shipment only when exactly one active inventory reservation exists; cancellation releases it in the same transaction or leaves both records unchanged on failure."
+	publicUpdated := "Cancel a confirmed order before shipment only when exactly one active reservation exists; release it in the same transaction or leave both records unchanged on failure."
+	publicModel = strings.Replace(string(publicBytes), publicDescription, publicUpdated, 1)
 	if publicModel == string(publicBytes) {
 		t.Fatal("could not update the public ancestor contract")
 	}
 	if err := os.WriteFile(publicPath, []byte(publicModel), 0644); err != nil {
 		t.Fatal(err)
 	}
-	gitTest(t, root, "add", ".markitect/model/commerce/architecture.yaml")
+	gitTest(t, root, "add", ".markitect/model/commerce/sales/orders/cancel-order.yaml")
 	gitCommitTest(t, root, "change public ancestor contract")
 	revision := gitOutputTest(t, root, "rev-parse", "HEAD")
 	project, err := projectwork.Load(root, revision)
@@ -508,13 +521,31 @@ spec:
 		if event.DefinitionID.Key() == privateStatement.ID {
 			t.Fatalf("ancestor received private child Statement event: %+v", event)
 		}
+		if event.DefinitionID.Name == "cancel-order" {
+			for _, definition := range []*core.Definition{event.Before, event.After} {
+				if definition == nil {
+					continue
+				}
+				for _, relationField := range []string{"uses", "requires"} {
+					relations, ok := definition.Spec[relationField].([]string)
+					if !ok {
+						t.Fatalf("projected %s relation has unexpected representation %T", relationField, definition.Spec[relationField])
+					}
+					for _, relatedID := range relations {
+						if relatedID == privateStatement.ID {
+							t.Fatalf("ancestor public contract event leaked private %s relation", relationField)
+						}
+					}
+				}
+			}
+		}
 	}
-	if len(rootEvents) != 1 || rootEvents[0].DefinitionID.Name != "cancellation-transaction" {
+	if len(rootEvents) != 1 || rootEvents[0].DefinitionID.Name != "cancel-order" {
 		t.Fatalf("ancestor should retain its public contract event: %+v", rootEvents)
 	}
 	publicContractID := ""
 	for _, statement := range project.Report.Statements {
-		if statement.Name == "cancellation-transaction" && statement.Public {
+		if statement.Name == "cancel-order" && statement.Public {
 			publicContractID = statement.ID
 		}
 	}
@@ -546,7 +577,7 @@ spec:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(childEvents) != 1 {
+	if len(childEvents) != 2 {
 		t.Fatalf("owning Manager lost its private Statement or public contract events: %+v", childEvents)
 	}
 	if childBinding == rootBinding {
