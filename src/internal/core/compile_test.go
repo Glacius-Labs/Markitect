@@ -448,6 +448,36 @@ func TestCompileReportsTargetlessReferenceWithoutPanicking(t *testing.T) {
 	}
 }
 
+// BUG-01: a value that nests lists of objects as deep as the Schema allows
+// compiles. The preflight counts maps and slices, not the interfaces that
+// wrap them, so it no longer stops at about half the documented depth.
+func TestCompileAcceptsListsOfObjectsAtTheSchemaDepthLimit(t *testing.T) {
+	nested := func(levels int) ([]Schema, []Definition) {
+		properties := map[string]Property{"leaf": {Purpose: "Leaf value.", Type: TypeString, MinCount: 0, MaxCount: 1}}
+		spec := map[string]any{"leaf": "x"}
+		for i := 0; i < levels; i++ {
+			properties = map[string]Property{"items": {Purpose: "Nested items.", Type: TypeObject, MinCount: 0, MaxCount: Unbounded, Properties: properties}}
+			spec = map[string]any{"items": []any{spec}}
+		}
+		schemas := []Schema{{APIVersion: "nest.example.org/v1", Purpose: "Nested lists of objects.", Kinds: map[string]Kind{"Tree": {Purpose: "A nested tree.", Properties: properties}}}}
+		return schemas, []Definition{{APIVersion: "nest.example.org/v1", Kind: "Tree", Metadata: Metadata{Name: "tree"}, Purpose: "A nested tree.", Spec: spec}}
+	}
+	// The deepest nesting the Schema contract itself accepts.
+	deepest := 0
+	for levels := 1; levels <= MaxObjectDepth+1; levels++ {
+		if schemas, _ := nested(levels); len(func() []Diagnostic { _, d := Compile(schemas, nil, "rev"); return d }()) == 0 {
+			deepest = levels
+		}
+	}
+	if deepest < MaxObjectDepth-1 {
+		t.Fatalf("the Schema accepts only %d nested levels", deepest)
+	}
+	schemas, definitions := nested(deepest)
+	if _, diagnostics := Compile(schemas, definitions, "rev"); len(diagnostics) != 0 {
+		t.Fatalf("%d levels of lists of objects, which the Schema accepts, rejected: %+v", deepest, diagnostics)
+	}
+}
+
 // BUG-01: the preflight stops at the first value or property that breaks a
 // limit. It visits maps in sorted order, so the same input always gives the
 // same diagnostics, whether the local limit or the shared budget trips first.

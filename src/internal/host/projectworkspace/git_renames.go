@@ -10,6 +10,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 )
 
 // Git's similarity detection retains rename provenance for ordinary edits and
@@ -48,10 +50,16 @@ func detectRenames(ctx context.Context, storage string, before, after inventory,
 		if i == 1 {
 			root, inv = newRoot, after
 		}
+		// Inventory paths are checked lexically. On Windows an 8.3 short name
+		// or case variant of an entry written earlier would merge two paths.
+		stored := guardedwrite.NewStoredNames(os.DirFS(root))
 		for _, p := range paths {
 			dest := filepath.Join(root, filepath.FromSlash(p))
 			if err := os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
 				return nil, err
+			}
+			if err := stored.Require(p); err != nil {
+				return nil, fmt.Errorf("%w: rename scratch: %v", ErrInvalidDelta, err)
 			}
 			mode := fs.FileMode(0644)
 			if inv[p].Mode == "100755" {

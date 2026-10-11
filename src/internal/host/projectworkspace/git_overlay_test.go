@@ -86,13 +86,7 @@ func TestGitServiceOverlayRefusesWindowsAliasesOfExistingEntries(t *testing.T) {
 	fixture := newGitFixture(t)
 	writeFixtureFile(t, fixture.root, ".markitect/project.yaml", []byte("project\n"), 0o644)
 	service, r := newGitServiceRequest(t, fixture, filepath.Join(t.TempDir(), "storage"), "aliases", []string{"src"}, nil)
-	probe := t.TempDir()
-	if err := os.Mkdir(filepath.Join(probe, ".markitect"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	longInfo, longErr := os.Stat(filepath.Join(probe, ".markitect"))
-	aliasInfo, aliasErr := os.Stat(filepath.Join(probe, "MARKIT~1"))
-	shortNames := longErr == nil && aliasErr == nil && os.SameFile(longInfo, aliasInfo)
+	shortNames := shortNamesResolve(t)
 	// Every NTFS volume resolves case variants, so only the 8.3 case skips.
 	for _, tc := range []struct{ name, path string }{
 		{"8.3 short name", "MARKIT~1/project.yaml"},
@@ -117,6 +111,46 @@ func TestGitServiceOverlayRefusesWindowsAliasesOfExistingEntries(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Rename detection copies deleted and added inventory paths into scratch
+// trees. Those paths are checked lexically, so on Windows an alias of an
+// entry written earlier silently merged two paths in the copy.
+func TestRenameScratchRefusesWindowsAliasesOfExistingEntries(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("short names and case aliases are resolved by Windows")
+	}
+	shortNames := shortNamesResolve(t)
+	after := inventory{"src/new.go": {Mode: "100644", Content: []byte("package src\n")}}
+	// Every NTFS volume resolves case variants, so only the 8.3 case skips.
+	for _, tc := range []struct{ name, existing, alias string }{
+		{"8.3 short name", ".markitect/project.yaml", "MARKIT~1/runtime.yaml"},
+		{"case variant", "Docs/guide.md", "docs/new.md"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if strings.HasPrefix(tc.alias, "MARKIT~1/") && !shortNames {
+				t.Skip("volume generates no 8.3 short names")
+			}
+			before := inventory{tc.existing: {Mode: "100644", Content: []byte("existing\n")}, tc.alias: {Mode: "100644", Content: []byte("alias\n")}}
+			_, err := detectRenames(context.Background(), t.TempDir(), before, after, []string{tc.existing, tc.alias}, []string{"src/new.go"})
+			if err == nil || !strings.Contains(err.Error(), "stored under another name") {
+				t.Fatalf("rename scratch did not refuse alias %s: %v", tc.alias, err)
+			}
+		})
+	}
+}
+
+// shortNamesResolve reports whether the test volume generates 8.3 short
+// names, so that MARKIT~1 resolves to a directory named .markitect.
+func shortNamesResolve(t *testing.T) bool {
+	t.Helper()
+	probe := t.TempDir()
+	if err := os.Mkdir(filepath.Join(probe, ".markitect"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	longInfo, longErr := os.Stat(filepath.Join(probe, ".markitect"))
+	aliasInfo, aliasErr := os.Stat(filepath.Join(probe, "MARKIT~1"))
+	return longErr == nil && aliasErr == nil && os.SameFile(longInfo, aliasInfo)
 }
 
 func TestGitServiceCapturesIgnoredWIPAndImmutableScope(t *testing.T) {

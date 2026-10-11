@@ -154,6 +154,7 @@ func (s *smoke) distributionChecks(bootstrapDir, minimalRepo string) []check {
 		{"init previews, refuses a stale digest and writes", func() error { return s.initProject(bootstrapDir) }},
 		{"onboard previews, writes and is idempotent", s.onboard},
 		{"a policy edit has the expected fixed-revision impact", s.policyEditImpact},
+		{"a fixed revision passes full verification with a scripted auditor", s.verifyFixedRevision},
 		{"selective adoption replays with the packaged CLI", s.selectiveAdoption},
 		{"artifact accounting with the packaged checker", func() error {
 			_, err := s.run(s.repo, nil, s.tool("markitect-check-artifacts"), "--repo", s.repo, "--config", "markitect-artifacts.yaml")
@@ -222,7 +223,7 @@ func (s *smoke) buildTools(archive string) error {
 	if err := unzip(archive, source); err != nil {
 		return err
 	}
-	for _, name := range []string{"markitect", "markitect-legacy", "markitect-adapter-dotnet", "markitect-check-artifacts"} {
+	for _, name := range []string{"markitect", "markitect-legacy", "markitect-adapter-dotnet", "markitect-check-artifacts", "markitect-exchange-executor"} {
 		if _, err := s.run(source, nil, "go", "build", "-trimpath", "-buildvcs=false", "-o", s.tool(name), "./src/cmd/"+name); err != nil {
 			return err
 		}

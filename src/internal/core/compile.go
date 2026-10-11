@@ -374,7 +374,8 @@ func safeValue(value reflect.Value, depth int, budget *preflightBudget) bool {
 		if value.IsNil() {
 			return true
 		}
-		return safeValue(value.Elem(), depth+1, budget)
+		// An interface only wraps a value; only maps and slices add a level.
+		return safeValue(value.Elem(), depth, budget)
 	case reflect.Map:
 		if value.Type() != reflect.TypeOf(map[string]any{}) {
 			return false
@@ -524,6 +525,8 @@ func validatePropertyContract(p Property, identity, path string, depth int, sour
 }
 
 func validatePropertyValue(value any, p Property, identity, path string, source Source, definitions map[string]Definition, kinds map[string]Kind, add func(Diagnostic)) (bool, any) {
+	// Only an untyped nil is null. A typed nil list or map from a direct Go caller is
+	// taken as empty on purpose; decoded YAML never produces one.
 	if value == nil {
 		add(Diagnostic{Code: "property.null", Identity: identity, Property: path, Source: source, Message: "null is not a valid Property value; omit an optional Property instead"})
 		return false, value
