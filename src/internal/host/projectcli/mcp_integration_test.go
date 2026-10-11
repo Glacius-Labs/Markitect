@@ -511,13 +511,20 @@ func TestExplainAndTraceAreEqualThroughCLIAndMCP(t *testing.T) {
 		{"impact", "--repo", root, "--since", since, "--revision", revision, "--manager", inventory},
 		{"context", orders, "--repo", root, "--depth", "2"},
 		{"context", orders, "--repo", root, "--trace", cancel, "--direction", "sideways"},
+		{"context", orders, "--repo", root, "--trace", cancel, "--depth", "33"},
+		{"context", orders, "--repo", root, "--trace", `["project.markitect.example.org/v1alpha1","Statement","commerce.sales.orders","no-such"]`},
 	} {
 		if code, _, stderr := runCLI(t, args...); code != 2 {
 			t.Fatalf("%v: exit %d, want 2: %s", args, code, stderr)
 		}
 	}
-	if result, err := server.Call(context.Background(), "impact", mustRaw(t, map[string]any{"since": since, "revision": revision, "manager": inventory})); err != nil || !result.IsError ||
-		result.StructuredContent.(map[string]any)["diagnostic"].(map[string]any)["code"] != "invalid_arguments" {
-		t.Fatalf("MCP --manager without explain: %+v %v", result, err)
+	for tool, args := range map[string]map[string]any{
+		"impact":  {"since": since, "revision": revision, "manager": inventory},
+		"context": {"manager": orders, "trace": `["project.markitect.example.org/v1alpha1","Statement","commerce.sales.orders","no-such"]`},
+	} {
+		if result, err := server.Call(context.Background(), tool, mustRaw(t, args)); err != nil || !result.IsError ||
+			result.StructuredContent.(map[string]any)["diagnostic"].(map[string]any)["code"] != "invalid_arguments" {
+			t.Fatalf("MCP %s %v: %+v %v", tool, args, result, err)
+		}
 	}
 }
