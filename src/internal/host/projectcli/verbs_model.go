@@ -64,7 +64,7 @@ var configVerb = define(verb{
 	name: "config", group: "Set up", effect: effectWrite,
 	summary:  "Preview or write the runtime configuration that runs the project's agents.",
 	synopsis: "config (--input FILE | --provider codex|process --model MODEL [--effort EFFORT] [--codex-profile PROFILE] [--windows-sandbox-backend mxc] [--provider-executable PATH] [--provider-arg ARG ...] [--provider-version TEXT] [--cost-mode metered|unmetered] [--input-micros-per-million N --output-micros-per-million N] --max-cost-micros N) [--expect DIGEST --write]",
-	notes:    "The standard profile is --provider codex --model gpt-6-luna; Codex effort defaults to high. --input holds complete options, including per-role profiles. Metered agents need both rates; unmetered is for process executors. Windows defaults to process-local MXC. The preview runs only the provider's --version.",
+	notes:    "The standard profile is --provider codex --model " + projectsetup.DefaultCodexModel + "; Codex effort defaults to " + projectsetup.DefaultCodexEffort + ". --input holds complete options, including per-role profiles. Metered agents need both rates; unmetered is for process executors. Windows defaults to process-local MXC. The preview runs only the provider's --version.",
 	args: []arg{argRepo,
 		{name: "input", kind: kindRecord, value: "FILE", help: "Complete options record, including per-role profiles; excludes the profile flags."},
 		{name: "provider", value: "P", help: "codex or process."},
