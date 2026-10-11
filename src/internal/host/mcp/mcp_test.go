@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectsetup"
 )
@@ -573,16 +574,79 @@ func TestRecursiveOutputSchemasReferToThemselves(t *testing.T) {
 	}
 }
 
+// Lifecycle results with every field filled, including every nested and
+// shared type, validate against their published output schemas.
 func TestLifecycleResultsValidateAgainstTheirOutputSchemas(t *testing.T) {
-	for _, v := range []any{projectrun.PlanRecord{}, projectrun.RunReport{}, projectrun.StatusReport{}, projectrun.VerifyReport{}, projectrun.FullVerifyReport{}, projectrun.ApplyPreflight{}, projectrun.ApplyReport{}, projectrun.DeliverReport{}} {
-		raw, _ := json.Marshal(Outcome[any]{Operation: "fixture", Data: &v})
-		var decoded any
-		d := json.NewDecoder(bytes.NewReader(raw))
-		d.UseNumber()
-		d.Decode(&decoded)
-		data := decoded.(map[string]any)["data"]
-		if err := validate(data, outputSchema(reflect.TypeOf(v)), ""); err != nil {
-			t.Fatalf("%T output schema: %v", v, err)
+	for _, typ := range []reflect.Type{reflect.TypeFor[projectrun.PlanRecord](), reflect.TypeFor[projectrun.RunReport](), reflect.TypeFor[projectrun.StatusReport](), reflect.TypeFor[projectrun.VerifyReport](), reflect.TypeFor[projectrun.FullVerifyReport](), reflect.TypeFor[projectrun.ApplyPreflight](), reflect.TypeFor[projectrun.ApplyReport](), reflect.TypeFor[projectrun.DeliverReport]()} {
+		for _, value := range []reflect.Value{reflect.New(typ).Elem(), sampleValue(typ, 0)} {
+			raw, err := json.Marshal(value.Interface())
+			if err != nil {
+				t.Fatalf("%s: %v", typ, err)
+			}
+			var decoded any
+			d := json.NewDecoder(bytes.NewReader(raw))
+			d.UseNumber()
+			if err := d.Decode(&decoded); err != nil {
+				t.Fatalf("%s: decode: %v", typ, err)
+			}
+			if err := validate(decoded, outputSchema(typ), ""); err != nil {
+				t.Fatalf("%s output schema: %v", typ, err)
+			}
 		}
 	}
+}
+
+// sampleValue fills every exported field of t, one element per slice and map,
+// down to a fixed depth, so a schema check reaches nested types.
+func sampleValue(t reflect.Type, depth int) reflect.Value {
+	v := reflect.New(t).Elem()
+	if depth > 6 {
+		return v
+	}
+	switch t {
+	case reflect.TypeFor[time.Time]():
+		return reflect.ValueOf(time.Date(2026, 10, 11, 0, 0, 0, 0, time.UTC))
+	case reflect.TypeFor[json.RawMessage]():
+		return reflect.ValueOf(json.RawMessage(`{"sample":true}`))
+	case reflect.TypeFor[projectrun.Duration]():
+		return reflect.ValueOf(projectrun.Duration(time.Second))
+	case reflect.TypeFor[codexappserver.WindowsSandboxBackend]():
+		return reflect.ValueOf(codexappserver.WindowsSandboxBackendMXC)
+	case reflect.TypeFor[projectrun.AppServerEnvironmentMode]():
+		return reflect.ValueOf(projectrun.AppServerEnvironmentModeInherit)
+	}
+	switch t.Kind() {
+	case reflect.Struct:
+		for i := 0; i < t.NumField(); i++ {
+			if t.Field(i).IsExported() {
+				v.Field(i).Set(sampleValue(t.Field(i).Type, depth+1))
+			}
+		}
+	case reflect.Pointer:
+		p := reflect.New(t.Elem())
+		p.Elem().Set(sampleValue(t.Elem(), depth+1))
+		return p
+	case reflect.Slice:
+		if t.Elem().Kind() == reflect.Uint8 {
+			return reflect.ValueOf([]byte("sample")).Convert(t)
+		}
+		s := reflect.MakeSlice(t, 1, 1)
+		s.Index(0).Set(sampleValue(t.Elem(), depth+1))
+		return s
+	case reflect.Map:
+		m := reflect.MakeMap(t)
+		m.SetMapIndex(sampleValue(t.Key(), depth+1), sampleValue(t.Elem(), depth+1))
+		return m
+	case reflect.String:
+		v.SetString("sample")
+	case reflect.Bool:
+		v.SetBool(true)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		v.SetInt(1)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		v.SetUint(1)
+	case reflect.Float32, reflect.Float64:
+		v.SetFloat(1)
+	}
+	return v
 }

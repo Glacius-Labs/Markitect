@@ -243,7 +243,7 @@ func validateIn(v any, s map[string]any, path string, defs map[string]any) error
 				if err := validateIn(x, child, join(path, k), defs); err != nil {
 					return err
 				}
-			} else {
+			} else if closed, ok := s["additionalProperties"].(bool); ok && !closed {
 				return schemaError(join(path, k), "is not a known field")
 			}
 		}

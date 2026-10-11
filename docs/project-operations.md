@@ -4,7 +4,7 @@ This page is the current operational reference for the model-first `markitect <v
 
 ## MCP server and tool groups
 
-Start the repository-local stdio server with `markitect mcp --repo ABSOLUTE_PROJECT_ROOT`. The server fixes Host authority to that root at startup. MCP schemas are typed and closed; write operations enforce the exact authorization, preview digest, compare-and-swap, or durable-identity rules declared by their schemas. Consult `tools/list` for the exact current schema. Input schemas are written inline and closed. Result schemas (`outputSchema`) write each repeated type once under `$defs` and are not closed objects, which keeps `tools/list` small; they keep their required lists. `markitect mcp --read-only` serves only reads and previews; it writes nothing and starts no agents or checks.
+Start the repository-local stdio server with `markitect mcp --repo ABSOLUTE_PROJECT_ROOT`. The server fixes Host authority to that root at startup. MCP schemas are typed; input schemas are closed, result schemas are open. Write operations enforce the exact authorization, preview digest, compare-and-swap, or durable-identity rules declared by their schemas. Consult `tools/list` for the exact current schema. Input schemas are written inline and closed. Result schemas (`outputSchema`) write each repeated type once under `$defs` and are not closed objects, which keeps `tools/list` small; they keep their required lists. `markitect mcp --read-only` serves only reads and previews; it writes nothing and starts no agents or checks.
 
 The composed project server exposes these operation groups:
 
