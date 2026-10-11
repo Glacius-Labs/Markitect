@@ -391,6 +391,57 @@ func TestReadAcceptedHistoryChainsSuccessiveUnpersistedChangesLikeEnsure(t *test
 	}
 }
 
+func TestEnsureAcceptedHistoryChainsChangeRevertAndReapplyInOneCall(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	persisted, err := EnsureAcceptedHistory(root, changed)
+	if err != nil || len(persisted.Bundles) != 1 || len(persisted.Bundles[0].Events) != 1 {
+		t.Fatalf("precondition: persisted change receipt=%#v err=%v", persisted, err)
+	}
+	commitModelChangeTest(t, root, "before shipment", "prior to fulfillment", "change A to B")
+	commitModelChangeTest(t, root, "prior to fulfillment", "before shipment", "revert B to A")
+	head := commitModelChangeTest(t, root, "before shipment", "prior to fulfillment", "re-apply A to B")
+	view, err := ReadAcceptedHistory(root, head)
+	if err != nil {
+		t.Fatalf("read-only view of change, revert and re-apply: %v", err)
+	}
+	receipt, err := EnsureAcceptedHistory(root, head)
+	if err != nil || len(receipt.Bundles) != 3 {
+		t.Fatalf("one ensure over change, revert and re-apply: receipt=%#v err=%v", receipt, err)
+	}
+	events := make([]Event, 0, 3)
+	for i, bundle := range receipt.Bundles {
+		if len(bundle.Events) != 1 || len(view.Receipt.Bundles) != 3 || len(view.Receipt.Bundles[i].Events) != 1 || view.Receipt.Bundles[i].Events[0].ID != bundle.Events[0].ID {
+			t.Fatalf("briefing %d: ensure events %#v, read-only view %#v", i, bundle.Events, view.Receipt.Bundles)
+		}
+		events = append(events, bundle.Events[0])
+	}
+	change, revert, reapply := events[0], events[1], events[2]
+	if change.ID == revert.ID || revert.ID == reapply.ID || change.ID == reapply.ID {
+		t.Fatalf("change, revert and re-apply share event IDs: %s %s %s", change.ID, revert.ID, reapply.ID)
+	}
+	if change.Predecessor != persisted.Bundles[0].Events[0].ID || revert.Predecessor != change.ID || reapply.Predecessor != revert.ID {
+		t.Fatalf("predecessors do not chain re-apply -> revert -> change -> persisted: %q %q %q", change.Predecessor, revert.Predecessor, reapply.Predecessor)
+	}
+	if again, err := EnsureAcceptedHistory(root, head); err != nil || len(again.Bundles) != 0 {
+		t.Fatalf("ensure after the chained call: receipt=%#v err=%v", again, err)
+	}
+	after, err := ReadAcceptedHistory(root, head)
+	if err != nil || len(after.Receipt.Bundles) != 0 {
+		t.Fatalf("read-only view after the chained call: receipt=%#v err=%v", after.Receipt, err)
+	}
+	stored := map[string]bool{}
+	for _, bundle := range after.State.Briefings {
+		for _, event := range bundle.Events {
+			stored[event.ID] = true
+		}
+	}
+	for _, event := range events {
+		if !stored[event.ID] {
+			t.Fatalf("read-only view after the call lacks event %s", event.ID)
+		}
+	}
+}
+
 func TestReadAcceptedHistorySucceedsInParallelAfterNewCommits(t *testing.T) {
 	root, _, changed := committedModelFixture(t)
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
