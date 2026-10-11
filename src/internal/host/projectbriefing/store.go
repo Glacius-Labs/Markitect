@@ -259,6 +259,11 @@ type Store struct {
 	Briefings   []Bundle       `json:"briefings"`
 	Dismissals  []Dismissal    `json:"dismissals"`
 	Resolutions []Resolution   `json:"resolutions,omitempty"`
+	// uncommitted is a status hint Read fills: per accepted event without an
+	// accepted resolution, the latest resolution whose delivered result is
+	// in the working tree but not in HEAD's tree. It is never persisted and
+	// never makes anything accepted.
+	uncommitted map[string]Resolution
 }
 
 // VerifiedResolutionEvidence binds a completed full verification and applied
@@ -333,6 +338,15 @@ type ResolutionStatus struct {
 	Resolution *Resolution `json:"resolution,omitempty"`
 }
 
+// Status values reported by EventResolutionStatus.
+const (
+	StatusResolved   = "resolved"
+	StatusUnresolved = "unresolved"
+	// StatusDeliveredUncommitted means a delivery's result is in the working
+	// tree but not yet committed. The event is not resolved.
+	StatusDeliveredUncommitted = "delivered-uncommitted"
+)
+
 // HistoryCursor records the committed model history accepted by repository
 // policy. It is operational state, separate from draft/exploration content.
 // The stored cursor is where accepted history was last reconciled; on another
@@ -375,7 +389,9 @@ func Read(root string) (Store, string, error) {
 	if err != nil {
 		return Store{}, "", err
 	}
-	return active.accepted(state), digest, nil
+	view := active.accepted(state)
+	view.uncommitted = active.uncommitted(state, view)
+	return view, digest, nil
 }
 
 // readStore validates and returns the persisted store, provisional entries
@@ -423,15 +439,21 @@ func StoreDigest(state Store) string { return hash(state) }
 // EventResolutionStatus reports conformity resolution independently of
 // dismissal. Events remain available in manager context after either choice.
 // Given a state from Read, it reports the latest resolution accepted on the
-// checked-out branch.
+// checked-out branch as StatusResolved. Without one, it reports
+// StatusDeliveredUncommitted, with that resolution, when a delivery's result
+// is in the working tree but not committed; this is only a hint and the event
+// stays unresolved. Otherwise it reports StatusUnresolved.
 func EventResolutionStatus(state Store, eventID string) ResolutionStatus {
 	for i := range state.Resolutions {
 		if state.Resolutions[i].EventID == eventID {
 			copy := state.Resolutions[i]
-			return ResolutionStatus{Status: "resolved", Resolution: &copy}
+			return ResolutionStatus{Status: StatusResolved, Resolution: &copy}
 		}
 	}
-	return ResolutionStatus{Status: "unresolved"}
+	if resolution, ok := state.uncommitted[eventID]; ok {
+		return ResolutionStatus{Status: StatusDeliveredUncommitted, Resolution: &resolution}
+	}
+	return ResolutionStatus{Status: StatusUnresolved}
 }
 
 // ResolveVerified records fresh full-Manager Verify and successful Apply
@@ -947,6 +969,63 @@ func (l *line) present(files []DeliveredFile) bool {
 		}
 	}
 	return true
+}
+
+// uncommitted returns, per accepted event in view without an accepted
+// resolution, the latest resolution whose delivered result the working tree
+// holds although HEAD's tree does not. It reads the working tree only to tell
+// users why an event is not resolved yet; it never makes anything accepted.
+func (l *line) uncommitted(state, view Store) map[string]Resolution {
+	events, resolved := map[string]bool{}, map[string]bool{}
+	for _, bundle := range view.Briefings {
+		for _, event := range bundle.Events {
+			events[event.ID] = true
+		}
+	}
+	for _, resolution := range view.Resolutions {
+		resolved[resolution.EventID] = true
+	}
+	result := map[string]Resolution{}
+	for _, resolution := range state.Resolutions {
+		id := resolution.EventID
+		if !events[id] || resolved[id] || l.present(resolution.Evidence.Delivered) || !l.inWorkingTree(resolution.Evidence.Delivered) {
+			continue
+		}
+		if prior, ok := result[id]; ok && l.position(resolution.ModelRevision) < l.position(prior.ModelRevision) {
+			continue
+		}
+		result[id] = resolution
+	}
+	return result
+}
+
+// inWorkingTree reports whether the working tree holds a delivered result:
+// each written path as a regular file with the delivered blob, hashed like
+// NewDeliveredFile, and each removed path absent. Modes are not compared;
+// not every platform's working tree keeps them.
+func (l *line) inWorkingTree(files []DeliveredFile) bool {
+	written, objects := []string{}, []string{}
+	for _, file := range files {
+		info, err := os.Lstat(filepath.Join(l.root, filepath.FromSlash(file.Path)))
+		if file.Deleted {
+			if !os.IsNotExist(err) {
+				return false
+			}
+			continue
+		}
+		if err != nil || !info.Mode().IsRegular() {
+			return false
+		}
+		written, objects = append(written, file.Path), append(objects, file.Object)
+	}
+	if len(written) == 0 {
+		return true
+	}
+	output, err := source.GitOutput(l.root, append([]string{"hash-object", "--no-filters", "--"}, written...)...)
+	if err != nil {
+		return false
+	}
+	return equalStrings(strings.Fields(string(output)), objects)
 }
 
 // cursor returns the accepted-history cursor on the line: the stored cursor

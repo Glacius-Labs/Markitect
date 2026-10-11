@@ -66,13 +66,14 @@ func TestDeliverResumesIntegratedRunAndCompletesAcknowledgedScope(t *testing.T) 
 	if len(record.Completions) != 1 || record.Completions[0].RunID != plan.ID || record.Completions[0].BindingDigest == "" {
 		t.Fatalf("successful Apply did not complete the exact scope binding: %+v", record.Completions)
 	}
-	// The resolution counts once the applied result is committed.
+	// The resolution counts once the applied result is committed; until then
+	// the event is reported as delivered but not committed.
 	briefingState, _, err := projectbriefing.Read(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resolution := projectbriefing.EventResolutionStatus(briefingState, event.ID); resolution.Status != "unresolved" {
-		t.Fatalf("uncommitted delivery already resolved the event: %+v", resolution)
+	if resolution := projectbriefing.EventResolutionStatus(briefingState, event.ID); resolution.Status != projectbriefing.StatusDeliveredUncommitted || resolution.Resolution == nil || resolution.Resolution.Evidence.RunID != plan.ID {
+		t.Fatalf("uncommitted delivery status = %+v, want %s", resolution, projectbriefing.StatusDeliveredUncommitted)
 	}
 	// Re-entering a completed delivery must recover from the immutable Apply
 	// receipt, not make another proposal, verification, or write.

@@ -855,6 +855,64 @@ func TestResolutionOfMergedTopicModelChangeCarriesToMain(t *testing.T) {
 	}
 }
 
+func TestUncommittedDeliveryIsReportedButNotResolved(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "checkout", "-b", "topic")
+	state, digest, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := state.Briefings[0].Events[0]
+	const removedPath = "src/shop/inventory/reservations.py"
+	const content = "# Delivered, not yet committed.\n"
+	written, err := NewDeliveredFile(root, deliveredPathTest, "100644", []byte(content), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	removed, err := NewDeliveredFile(root, removedPath, "", nil, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	project, err := projectwork.Load(root, changed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	evidence := validResolutionEvidence(event.ID, project.Report.Managers)
+	evidence.Delivered = []DeliveredFile{written, removed}
+	recorded, err := ResolveVerified(root, changed, project.Model.Digest, evidence, digest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(deliveredPathTest)), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if status := resolutionStatusTest(t, root, event.ID); status.Status != "unresolved" {
+		t.Fatalf("delivery whose removal is not in the working tree was reported: %#v", status)
+	}
+	if err := os.Remove(filepath.Join(root, filepath.FromSlash(removedPath))); err != nil {
+		t.Fatal(err)
+	}
+	if status := resolutionStatusTest(t, root, event.ID); status.Status != "delivered-uncommitted" || status.Resolution == nil || status.Resolution.Evidence.RunID != evidence.RunID {
+		t.Fatalf("uncommitted delivery status = %#v, want delivered-uncommitted", status)
+	}
+	if _, current, err := Read(root); err != nil || current != recorded {
+		t.Fatalf("status hint changed the store: recorded=%s current=%s err=%v", recorded, current, err)
+	}
+	gitTest(t, root, "add", "--", deliveredPathTest, removedPath)
+	gitCommitTest(t, root, "commit the delivery")
+	if status := resolutionStatusTest(t, root, event.ID); status.Status != "resolved" {
+		t.Fatalf("committed delivery status = %#v, want resolved", status)
+	}
+	gitTest(t, root, "checkout", mainBranch)
+	if status := resolutionStatusTest(t, root, event.ID); status.Status != "unresolved" {
+		t.Fatalf("delivery committed only on the topic reported on %s: %#v", mainBranch, status)
+	}
+}
+
 func TestLatestAcceptedResolutionOnLineWins(t *testing.T) {
 	root, _, changed := committedModelFixture(t)
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
