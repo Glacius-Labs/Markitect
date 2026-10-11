@@ -689,6 +689,10 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectbriefing/history_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectbriefing/accepted_dismiss.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectbriefing/accepted_dismiss_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectbriefing/testmain_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/project_brownfield_test.go
