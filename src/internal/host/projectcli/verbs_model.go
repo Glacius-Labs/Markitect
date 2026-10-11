@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
@@ -293,33 +294,87 @@ var modelVerb = define(verb{
 })
 
 type contextInput struct {
-	Manager  string `json:"manager"`
-	Revision string `json:"revision,omitempty"`
+	Manager   string `json:"manager"`
+	Revision  string `json:"revision,omitempty"`
+	Trace     string `json:"trace,omitempty"`
+	Direction string `json:"direction,omitempty"`
+	Depth     int    `json:"depth,omitempty"`
+}
+
+// contextResult is a Manager's Context and, with --trace, a walk over its
+// knowledge graph, which is built from that Context alone (KG-02).
+type contextResult struct {
+	projectmodel.ManagerContext
+	Trace *projectmodel.TraceResult `json:"trace,omitempty"`
 }
 
 var contextVerb = define(verb{
 	name: "context", group: "Model", effect: effectRead,
-	summary:  "Read one Manager's context under the accepted-history rules.",
-	synopsis: "context MANAGER [--revision R]",
-	args:     []arg{{name: "manager", value: "MANAGER", operand: true, required: true, help: "Manager ID."}, argRepo, argRevision},
-}, func(ctx context.Context, e env, in contextInput) (projectmodel.ManagerContext, error) {
-	return e.ops.Context(projectapp.ContextOperation{Selection: projectapp.Selection{Root: e.root, Revision: in.Revision}, ManagerID: in.Manager})
+	summary:  "Read one Manager's context under the accepted-history rules; --trace walks its knowledge graph.",
+	synopsis: "context MANAGER [--revision R] [--trace ID [--direction out|in|both] [--depth N]]",
+	args: []arg{{name: "manager", value: "MANAGER", operand: true, required: true, help: "Manager ID."}, argRepo, argRevision,
+		{name: "trace", value: "ID", help: "Walk the Manager's knowledge graph from this node and return each reached node with a shortest witness path."},
+		{name: "direction", value: "out|in|both", help: "With --trace: follow relations outward (default), inward or both ways."},
+		{name: "depth", kind: kindInt, value: "N", help: "With --trace: the most relations to follow; default 6, at most 32."}},
+}, func(ctx context.Context, e env, in contextInput) (contextResult, error) {
+	operation := projectapp.ContextOperation{Selection: projectapp.Selection{Root: e.root, Revision: in.Revision}, ManagerID: in.Manager}
+	if in.Trace == "" {
+		if in.Direction != "" || in.Depth != 0 {
+			return contextResult{}, usagef("--direction and --depth require --trace")
+		}
+		managerContext, err := e.ops.Context(operation)
+		return contextResult{ManagerContext: managerContext}, err
+	}
+	if !slices.Contains([]string{"", "out", "in", "both"}, in.Direction) {
+		return contextResult{}, usagef("--direction must be out, in or both")
+	}
+	if in.Depth < 0 {
+		return contextResult{}, usagef("--depth must not be negative")
+	}
+	traced, err := e.ops.Trace(projectapp.TraceOperation{ContextOperation: operation, Request: projectmodel.TraceRequest{From: in.Trace, Direction: in.Direction, MaxDepth: in.Depth}})
+	if err != nil {
+		return contextResult{}, err
+	}
+	return contextResult{ManagerContext: traced.Context, Trace: &traced.Trace}, nil
 })
 
 type impactInput struct {
 	Since    string `json:"since"`
 	Revision string `json:"revision"`
+	Explain  bool   `json:"explain,omitempty"`
+	Manager  string `json:"manager,omitempty"`
+}
+
+// impactResult is the change impact and, with --explain, why each element is
+// in it and whether it must change or is context (DEC-023).
+type impactResult struct {
+	projectmodel.ChangeImpact
+	Explanation *projectmodel.ImpactExplanation `json:"explanation,omitempty"`
 }
 
 var impactVerb = define(verb{
 	name: "impact", group: "Model", effect: effectRead,
-	summary:  "Compare two revisions with deterministic, conservative change impact.",
-	synopsis: "impact --since R1 --revision R2",
+	summary:  "Compare two revisions with deterministic, conservative change impact; --explain says why each element is in it.",
+	synopsis: "impact --since R1 --revision R2 [--explain [--manager ID]]",
 	args: []arg{argRepo,
 		{name: "since", value: "R1", required: true, help: "Older revision."},
-		{name: "revision", value: "R2", required: true, help: "Newer revision."}},
-}, func(ctx context.Context, e env, in impactInput) (projectmodel.ChangeImpact, error) {
-	return e.ops.Impact(projectapp.ImpactOperation{Root: e.root, BaseRevision: in.Since, Revision: in.Revision})
+		{name: "revision", value: "R2", required: true, help: "Newer revision."},
+		{name: "explain", kind: kindBool, help: "Add each element's reason, shortest witness path and class: change or context."},
+		{name: "manager", value: "ID", help: "With --explain: explain only what this Manager may see. The impact itself stays project scope."}},
+}, func(ctx context.Context, e env, in impactInput) (impactResult, error) {
+	operation := projectapp.ImpactOperation{Root: e.root, BaseRevision: in.Since, Revision: in.Revision}
+	if !in.Explain {
+		if in.Manager != "" {
+			return impactResult{}, usagef("--manager requires --explain")
+		}
+		impact, err := e.ops.Impact(operation)
+		return impactResult{ChangeImpact: impact}, err
+	}
+	explained, err := e.ops.Explain(projectapp.ExplainOperation{ImpactOperation: operation, ManagerID: in.Manager})
+	if err != nil {
+		return impactResult{}, err
+	}
+	return impactResult{ChangeImpact: explained.Impact, Explanation: &explained.Explanation}, nil
 })
 
 type docsInput struct {

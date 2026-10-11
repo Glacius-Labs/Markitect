@@ -37,8 +37,8 @@ This page is the target contract. CLI-02 implements the verbs, the tools and the
 | `schema` | `schema` | read | `project schema`; new as an MCP tool |
 | `check` | `check [--revision R] [--coverage]` | read | `project check` and `project coverage` |
 | `model` | `model [--revision R]` | read | `project index` |
-| `context` | `context MANAGER [--revision R]` | read | `project context` |
-| `impact` | `impact --since R1 --revision R2` | read | `project impact` |
+| `context` | `context MANAGER [--revision R] [--trace ID [--direction out\|in\|both] [--depth N]]` | read | `project context`; `--trace` added by KG-02 |
+| `impact` | `impact --since R1 --revision R2 [--explain [--manager ID]]` | read | `project impact`; `--explain` added by KG-02 |
 | `docs` | `docs [--revision R] \| docs --expect D --write` | write | `project document`; gains `--expect`; a write uses the working tree |
 | `edit` | `edit --input FILE [--revision R] [--expect D --write]` | write | `project edit` |
 
@@ -95,7 +95,10 @@ Each argument has one name. The CLI flag is its kebab-case form, and the MCP fie
 | `--repo PATH` | none | Project root. Defaults to the current directory. MCP fixes it with `mcp --repo` and never takes it from tool arguments. | required in `project` |
 | `--revision R` | `revision` | The fixed commit a verb reads, verifies or plans against. Reads without it use the working tree and report `provisional`. | MCP `baseRevision` on plan |
 | `--since R` | `since` | The older revision for change impact (`impact`, `plan`, `brief`). | `--base`, `baseRevision` on impact; `sinceRevision` |
-| `--manager ID` | `manager` | Manager ID. Repeatable on `plan`; `context` takes it as its operand. | `managerId`, `managers` |
+| `--manager ID` | `manager` | Manager ID. Repeatable on `plan`; `context` takes it as its operand. With `impact --explain` it limits the explanation to what that Manager may see. | `managerId`, `managers` |
+| `--explain` | `explain` | `impact` adds, per element, the reason it is included, a shortest witness path from a change and its class, `change` or `context` ([DEC-023](../concepts/register.md#dec-023-impact-marks-change-and-context-without-dropping-either)). The impact itself is unchanged. | new (KG-02) |
+| `--trace ID` | `trace` | `context` also walks the Manager's knowledge graph, built from its context alone, from that node and returns each reached node with a witness path. A node the Manager cannot see is not found. | new (KG-02) |
+| `--direction D`, `--depth N` | `direction`, `depth` | With `--trace`: follow relations `out` (default), `in` or `both`, at most N relations deep (default 6, at most 32). | new (KG-02) |
 | `--goal TEXT` | `goal` | Bounded plan goal. | same |
 | `--operation KIND` | `operation` | `apply` (default), `cleanup` or `reconcile`. | separate `cleanup` and `reconcile` verbs |
 | `--exploration ID` | `exploration` | Work-item exploration. | `explorationId` |

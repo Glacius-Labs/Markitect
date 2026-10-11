@@ -426,3 +426,98 @@ func TestReadOnlyMCPRejectsWritesExecutionsAndProbes(t *testing.T) {
 		t.Fatalf("read-only MCP server changed the repository:\n%s", status)
 	}
 }
+
+// KG-02: impact --explain and context --trace return the same JSON through the
+// CLI and the MCP tool, and the new flags keep the plain outputs unchanged.
+func TestExplainAndTraceAreEqualThroughCLIAndMCP(t *testing.T) {
+	root := copyProjectWorld(t)
+	since := gitOutput(t, root, "rev-parse", "HEAD")
+	contract := filepath.Join(root, ".markitect", "model", "commerce", "sales", "inventory", "reservations", "release-reservation.yaml")
+	data, err := os.ReadFile(contract)
+	if err != nil {
+		t.Fatal(err)
+	}
+	edited := strings.Replace(string(data), "does not release quantity twice.", "never releases quantity twice.", 1)
+	if edited == string(data) {
+		t.Fatal("the Shop contract text changed; adjust the edit")
+	}
+	if err := os.WriteFile(contract, []byte(edited), 0644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, root, "add", ".")
+	runGitWithEnv(t, root, testCommitEnv, "commit", "-m", "tighten release")
+	revision := gitOutput(t, root, "rev-parse", "HEAD")
+	server, err := newMCPServer(env{root: root, ops: projectOperations()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	mcpJSON := func(tool string, args map[string]any) string {
+		t.Helper()
+		result, err := server.Call(context.Background(), tool, mustRaw(t, args))
+		if err != nil || result.IsError {
+			t.Fatalf("MCP %s %v: %+v %v", tool, args, result.StructuredContent, err)
+		}
+		data, err := json.Marshal(result.StructuredContent.(map[string]any)["data"])
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	cliJSON := func(args ...string) string {
+		t.Helper()
+		var value any
+		if err := json.Unmarshal(mustCLI(t, append(args, "--repo", root)...), &value); err != nil {
+			t.Fatal(err)
+		}
+		data, _ := json.Marshal(value)
+		return string(data)
+	}
+	inventory := `["project.markitect.example.org/v1alpha1","Manager","commerce.sales.inventory","inventory"]`
+	orders := `["project.markitect.example.org/v1alpha1","Manager","commerce.sales.orders","orders"]`
+	cancel := `["project.markitect.example.org/v1alpha1","Statement","commerce.sales.orders","cancel-order"]`
+	for name, pair := range map[string]struct {
+		cli  []string
+		tool string
+		args map[string]any
+	}{
+		"impact":                {[]string{"impact", "--since", since, "--revision", revision}, "impact", map[string]any{"since": since, "revision": revision}},
+		"impact --explain":      {[]string{"impact", "--since", since, "--revision", revision, "--explain"}, "impact", map[string]any{"since": since, "revision": revision, "explain": true}},
+		"impact --explain as a": {[]string{"impact", "--since", since, "--revision", revision, "--explain", "--manager", inventory}, "impact", map[string]any{"since": since, "revision": revision, "explain": true, "manager": inventory}},
+		"context":               {[]string{"context", orders}, "context", map[string]any{"manager": orders}},
+		"context --trace":       {[]string{"context", orders, "--trace", cancel, "--direction", "both", "--depth", "2"}, "context", map[string]any{"manager": orders, "trace": cancel, "direction": "both", "depth": 2}},
+	} {
+		cli, viaMCP := cliJSON(pair.cli...), mcpJSON(pair.tool, pair.args)
+		if cli != viaMCP {
+			t.Fatalf("%s differs:\nCLI %s\nMCP %s", name, cli, viaMCP)
+		}
+		hasExplanation, hasTrace := strings.Contains(cli, `"explanation":`), strings.Contains(cli, `"trace":`)
+		if hasExplanation != strings.Contains(name, "--explain") || hasTrace != strings.Contains(name, "--trace") {
+			t.Fatalf("%s: explanation %v, trace %v", name, hasExplanation, hasTrace)
+		}
+	}
+	// The explanation names why cancel-order is in the impact.
+	explained := decodeOutput[impactResult](t, mustCLI(t, "impact", "--repo", root, "--since", since, "--revision", revision, "--explain"))
+	if explained.Explanation == nil || explained.Explanation.ImpactDigest != explained.Digest {
+		t.Fatalf("explanation is not bound to the impact: %+v", explained.Explanation)
+	}
+	found := false
+	for _, e := range explained.Explanation.Elements {
+		found = found || e.ID == cancel && e.Reason == "consumer" && e.Class == "change"
+	}
+	if !found {
+		t.Fatalf("cancel-order is not explained as a changed consumer: %+v", explained.Explanation.Elements)
+	}
+	for _, args := range [][]string{
+		{"impact", "--repo", root, "--since", since, "--revision", revision, "--manager", inventory},
+		{"context", orders, "--repo", root, "--depth", "2"},
+		{"context", orders, "--repo", root, "--trace", cancel, "--direction", "sideways"},
+	} {
+		if code, _, stderr := runCLI(t, args...); code != 2 {
+			t.Fatalf("%v: exit %d, want 2: %s", args, code, stderr)
+		}
+	}
+	if result, err := server.Call(context.Background(), "impact", mustRaw(t, map[string]any{"since": since, "revision": revision, "manager": inventory})); err != nil || !result.IsError ||
+		result.StructuredContent.(map[string]any)["diagnostic"].(map[string]any)["code"] != "invalid_arguments" {
+		t.Fatalf("MCP --manager without explain: %+v %v", result, err)
+	}
+}
