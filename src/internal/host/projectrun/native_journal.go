@@ -505,6 +505,11 @@ func nativeRandomID() (string, error) {
 	return hex.EncodeToString(bytes[:]), nil
 }
 
+// ensurePrivateDirectory creates a subdirectory that only holds Host journal
+// files beneath a private log root that agentexec.PreparePrivateLogDirectory
+// already prepared; it inherits that root's owner-only access. A directory
+// handed to an agent as its own private log directory must be prepared with
+// agentexec.PreparePrivateLogDirectory instead.
 func ensurePrivateDirectory(path string) error {
 	if err := os.MkdirAll(path, 0700); err != nil {
 		return fmt.Errorf("create native private directory: %w", err)

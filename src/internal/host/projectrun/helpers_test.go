@@ -136,6 +136,39 @@ func TestHelperAllowsSuccessfullyClosedEmptyDelta(t *testing.T) {
 	}
 }
 
+// A native Manager's helper child runs through the real native transport,
+// which keeps its own private journal under the helpers log directory. The
+// Host must prepare that directory owner-only, as it does the run's own, or
+// the child is refused before it starts.
+func TestHelperNativeChildRunsWithItsOwnPrivateLogDirectory(t *testing.T) {
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	const content = "package child\n// native helper bytes\n"
+	response, err := json.Marshal(map[string]any{"outcome": "proposed", "verifierObservations": []any{}, "uncertainty": []any{},
+		"candidateFiles": []map[string]string{{"path": "src/child.go", "mode": "0644", "content": content}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(nativeVerifierFixtureEnv, "1")
+	t.Setenv("MARKITECT_PROJECTRUN_NATIVE_VERIFIER_RESPONSE", string(response))
+	fixture := newHelperFixture(t)
+	fixture.options.ParentConfig.Command = executable
+	fixture.options.ParentConfig.MaxStdoutBytes, fixture.options.ParentConfig.MaxStderrBytes = 1<<20, 1<<16
+	session := fixture.session(t, nil) // the default real native child transport
+	if err := session.BindHandle(fixture.parentRecoveryHandle()); err != nil {
+		t.Fatal(err)
+	}
+	result, err := session.HandleToolCall(context.Background(), helperCall("native-child", `{"task":"add one helper-owned source file","paths":["src/child.go"]}`))
+	if err != nil || !result.Success {
+		t.Fatalf("native helper child did not complete: result=%+v err=%v", result, err)
+	}
+	if got, err := os.ReadFile(filepath.Join(fixture.repo, "src", "child.go")); err != nil || string(got) != content {
+		t.Fatalf("native helper bytes were not applied to the parent: %q err=%v", got, err)
+	}
+}
+
 func TestHelperCountsMalformedAndOutOfScopeRequestsBeforeValidation(t *testing.T) {
 	fixture := newHelperFixture(t)
 	invocations := 0
