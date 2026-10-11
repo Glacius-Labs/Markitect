@@ -16,6 +16,8 @@ Die Arbeitsidee ist, das kanonische Modell zu pflegen und seine Realisierung dur
 
 `Apply` bezeichnet hier den abstrakten Realisierungsmechanismus. Seine interne Architektur und die Zuordnung zu bestehenden Komponenten oder CLI-Kommandos sind damit noch nicht festgelegt.
 
+Am 12. Oktober 2026 wurde `mandate.yaml` als Name der Verantwortungsdatei gewählt. Damit ist noch keine Umbenennung des bestehenden Kinds `Manager` beschlossen. Die bevorzugte Richtung `kind: Rule` anstelle von `Statement` mit `category: rule` ist im [Proposal](canonical-model-proposal.md#66-gewählter-dateiname-und-bevorzugte-kind-richtung) festgehalten; ihre konkreten Format- und Referenzverträge bleiben offen.
+
 ## Herkunft
 
 Vereinbart im Markitect-Produktgespräch am 10. Oktober 2026, Chat `01a121f1-b948-7050-ae5d-9921b99db9c0`.

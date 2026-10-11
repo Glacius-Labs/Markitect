@@ -239,6 +239,16 @@ Zusätzliche formale Semantik soll in dieser Alternative durch konkrete wiederke
 
 **Folge für den Umsetzungsplan:** In U0 zuerst Alternative A oder B anhand Bibliothek und CLI-Kontrast wählen. Bei B besteht U1 aus Beispiel und methodischem Vertrag; ein neuer Facettenschema-Vertrag ist dafür nicht vorausgesetzt. U2 bis U5 überprüfen die vorhandene Struktur und die nötigen Kontext-/Impact-/Coverage-Anschlüsse; Erweiterungen erfolgen nur bei nachgewiesener Lücke. Bei A gilt der Facetten-/Kind- und Versionierungsentwurf aus Abschnitt 8. Die Beispiele wurden hier nur dokumentiert, nicht kompiliert oder getestet.
 
+### 6.6 Gewählter Dateiname und bevorzugte Kind-Richtung
+
+Nutzerentscheidung vom 12. Oktober 2026: „Wir nehmen mandate.“ Für die beschriebenen Verantwortungsdateien wird deshalb `mandate.yaml` statt `manager.yaml` verwendet. Der Dateiname bezeichnet Auftrag, Verantwortung, Befugnisse und Grenzen eines Bereichs. Dies entscheidet noch nicht die Umbenennung des vorhandenen Modell-Kinds `Manager` oder die Runtime-Bezeichnung des ausführenden Agenten.
+
+Weiterer Nutzerimpuls: „Was category angeht fände ich kind rule interessanter“. Als bevorzugte Richtung wird deshalb ein eigenständiger nominaler `Rule`-Kind statt `Statement` mit `category: rule` festgehalten. Die genauen Feld-, Referenz-, Versionierungs- und Migrationsverträge bleiben offen. Eigene Kinds für andere Rollen wie Concept oder UseCase sind dadurch noch nicht gewählt.
+
+Der fachliche Inhalt einer `Rule` kann weiterhin Prosa bleiben. Nominale Unterscheidung und formale Auswertung sind getrennte Entscheidungen: Ein Schema könnte Referenzen gezielt auf Regeln begrenzen, ohne die fachliche Regel selbst auszuführen. Vor der Umsetzung sind besonders die Kind-übergreifenden Beziehungen und ihre Wirkung auf Kontext, Digest, Impact und Realisierung zu definieren; die bisherigen Referenzproperties zielen auf genau einen Kind.
+
+Die vorhandenen Bibliotheks-YAML-Blöcke bleiben als bisherige Statement-Form erkennbar. Ein separater Ausschnitt zeigt die bevorzugte neue Rule-Syntax mit `vNext` als Platzhalter. Es wird keine neue Semantik unter dem bestehenden `v1alpha1`-Vertrag behauptet. Die neue Kind-Richtung kann sowohl mit der methodischen Alternative B als auch mit weitergehender Formalisierung kombiniert werden.
+
 ## 7. Beispiel: Ausleihen vollständig genug beschreiben
 
 | Aussage | Strukturierter Beitrag |

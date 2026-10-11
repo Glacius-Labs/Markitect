@@ -8,6 +8,8 @@ Die YAML-Blöcke sind vollständig ausgeschriebene Gesprächsbeispiele in diesem
 
 ## Umfang und Annahmen
 
+Fortschreibung vom 12. Oktober 2026: Der gewählte Verantwortungsdateiname ist `mandate.yaml`. Der YAML-Inhalt zeigt weiterhin den bisherigen Kind `Manager`. Die unten stehenden Statements bewahren die bisherige Feldform; die bevorzugte nominale Rule-Richtung wird separat am Ende dieses Dokuments gezeigt.
+
 Betrachtet werden Ausleihe und Rückgabe. Beschaffung, Gebühren und Mahnungen bleiben außerhalb. Die alternative Modellierung verwendet die bestehenden groben Rollen `concept`, `rule` und `use-case`; sie benötigt keine neue Rolle `condition` und keine Fachfacetten.
 
 Die Berechtigung über einen aktiven Mitgliedsstatus und die unveränderte Wiederholungsrückgabe sind vorgeschlagene Fachentscheidungen des Beispiels. Sie gelten nicht als unabhängig bestätigte Nutzeranforderungen. Fristberechnung und Behandlung unbekannter Ausleihkennungen bleiben ausdrücklich offen. Solche Lücken sind vor Realisierung zu entscheiden oder mit erklärtem Umfang auszunehmen.
@@ -18,7 +20,7 @@ Die Berechtigung über einen aktiven Mitgliedsstatus und die unveränderte Wiede
 .markitect/
 ├── project.yaml
 └── model/
-    ├── manager.yaml
+    ├── mandate.yaml
     └── library/
         ├── library-system.yaml
         ├── title.yaml
@@ -47,7 +49,7 @@ name: library-methodical-alternative
 coverageMode: full
 documentPath: docs/markitect/project.md
 modelFiles:
-  - .markitect/model/manager.yaml
+  - .markitect/model/mandate.yaml
   - .markitect/model/library/library-system.yaml
   - .markitect/model/library/title.yaml
   - .markitect/model/library/copy.yaml
@@ -65,7 +67,7 @@ modelFiles:
   - .markitect/model/library/library-contract-check.yaml
 ```
 
-## Verantwortung: `model/manager.yaml`
+## Verantwortung: `model/mandate.yaml`
 
 ```yaml
 apiVersion: project.markitect.example.org/v1alpha1
@@ -478,3 +480,22 @@ Der unabhängige Realisierungsreview prüft:
 - Untersuchen die konkreten Checks diese Aussagen tatsächlich? Welche Behauptungen bleiben unbelegt?
 
 Die Fachprüfung und Vollständigkeit der deklarierten Beziehungen bleiben methodische Aufgaben. Grobe Kategorie, Referenzauflösung und Dateizuordnung sind deterministisch prüfbare Struktur. Nicht erklärte oder unsichere Auswirkungen dürfen nicht als nachweislich vollständiger enger Impact behandelt werden. Die Alternative übernimmt keine allgemeine Vollständigkeits- oder Korrektheitsgarantie.
+
+## Bevorzugte Weiterentwicklung: `kind: Rule`
+
+Der Nutzer bevorzugt für Regeln einen eigenen Kind. Folgender Ausschnitt ersetzt die nominale Einordnung `Statement` plus `category: rule`; er ist ein Zukunftsentwurf und kein gültig behaupteter `v1alpha1`-Vertrag. `vNext` ist ein Platzhalter, der genaue Feldvertrag und Beziehungen zu anderen Kinds bleiben offen.
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Rule
+metadata:
+  namespace: library
+  name: one-active-loan
+purpose: Definiert die Eindeutigkeitsinvariante der Vergabe.
+spec:
+  description: |
+    Für jedes Exemplar besteht höchstens eine aktive Ausleihe.
+    Diese Regel gilt auch bei konkurrierenden Anfragen.
+```
+
+Der Regeltext bleibt Prosa. Der Kind könnte eine gezielte Zieltypprüfung ermöglichen, beispielsweise für Verpflichtungsverweise. Welcher Vertrag das ausdrückt und wie Kontextbeziehungen mehrere nominale Kinds adressieren, ist vor dem Schemaumbau festzulegen. Dieser Ausschnitt ergänzt die bisherige Gesprächsvariante und mischt neue Kinds nicht still in deren bestehenden Versionsvertrag.

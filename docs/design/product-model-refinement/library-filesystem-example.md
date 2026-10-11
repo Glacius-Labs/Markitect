@@ -6,6 +6,8 @@ Grundlage: [Modell-Proposal](canonical-model-proposal.md), Produktgespräch `01a
 
 ## Mögliche Ablage
 
+Fortschreibung vom 12. Oktober 2026: Der Nutzer hat `mandate.yaml` als Dateinamen gewählt. Die früher gezeigten Verantwortungsdateien heißen im Baum entsprechend. Eine Änderung des Modell-Kinds ist damit nicht entschieden; zur bevorzugten Rule-Richtung siehe [Proposal](canonical-model-proposal.md#66-gewählter-dateiname-und-bevorzugte-kind-richtung).
+
 Die Gliederung folgt fachlicher Kohäsion. Innerhalb eines Bereichs stehen Begriffe, Regeln, Verhalten und Realisierungsverpflichtungen zusammen. Die Ordner bündeln Inhalte; explizite Modellreferenzen bilden den Graphen. Die konkrete Manager-/Namespacezuordnung bleibt ausdrücklich zu definieren.
 
 ```text
@@ -14,35 +16,35 @@ library/
 │   ├── project.yaml                 # Explizite Modelleingaben und Projektumfang
 │   ├── runtime.yaml                 # Agenten- und Ausführungsbindung
 │   └── model/                       # Kanonische Projektbeschreibung
-│       ├── manager.yaml             # Oberste Verantwortung
+│       ├── mandate.yaml             # Oberste Verantwortung
 │       ├── library/
-│       │   ├── manager.yaml
+│       │   ├── mandate.yaml
 │       │   ├── overview.yaml        # Zweck, Nutzer, Systemgrenze
 │       │   ├── goals.yaml           # Ziele und Qualitätsanforderungen
 │       │   ├── architecture.yaml    # Bausteine und Schnittstellen
 │       │   ├── inventory/
-│       │   │   ├── manager.yaml
+│       │   │   ├── mandate.yaml
 │       │   │   ├── title.yaml       # Was ein Buchtitel ist
 │       │   │   ├── copy.yaml        # Was ein Exemplar ist
 │       │   │   └── artifacts.yaml
 │       │   ├── membership/
-│       │   │   ├── manager.yaml
+│       │   │   ├── mandate.yaml
 │       │   │   ├── member.yaml
 │       │   │   ├── eligible-member.yaml
 │       │   │   └── artifacts.yaml
 │       │   └── circulation/
-│       │       ├── manager.yaml
+│       │       ├── mandate.yaml
 │       │       ├── loan.yaml
 │       │       ├── borrow.yaml
 │       │       ├── return.yaml
 │       │       ├── one-active-loan.yaml
 │       │       └── artifacts.yaml
 │       ├── engineering/
-│       │   ├── manager.yaml
+│       │   ├── mandate.yaml
 │       │   ├── checks.yaml
 │       │   └── workflow.yaml
 │       └── operations/
-│           ├── manager.yaml
+│           ├── mandate.yaml
 │           ├── environment.yaml
 │           ├── configuration.yaml
 │           └── backup.yaml
