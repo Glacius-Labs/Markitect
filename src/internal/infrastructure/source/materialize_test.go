@@ -39,10 +39,13 @@ func TestMaterializeDiagnosticsDoNotDependOnMapOrder(t *testing.T) {
 }
 
 func TestValidateRepoPathRejectsWindowsUnsafeNames(t *testing.T) {
-	for _, p := range []string{"C:/outside", "a\\b", "CON.txt", "nested/NUL", "trailing.", "trailing ", "../x", "a/./b"} {
+	for _, p := range []string{"C:/outside", "a\\b", "CON.txt", "nested/NUL", "trailing.", "trailing ", "../x", "a/./b", "GIT~1/config", "docs/git~1/hooks/pre-commit"} {
 		if err := validateRepoPath(p); err == nil {
 			t.Errorf("validateRepoPath(%q) succeeded", p)
 		}
+	}
+	if err := validateRepoPath("docs/notes~1/git~2.md"); err != nil {
+		t.Errorf("ordinary 8.3-shaped name refused: %v", err)
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -271,6 +272,61 @@ func TestHelperAppliesBinaryModifyDeleteAndRenameDeltas(t *testing.T) {
 			t.Fatalf("rename destination differs: %q %v", got, err)
 		}
 	})
+}
+
+// Helper paths are checked lexically. Windows also resolves an existing entry
+// through its 8.3 short name or another case, so MARKIT~1/project.yaml would
+// replace .markitect/project.yaml in the parent workspace.
+func TestHelperWritesRefuseWindowsAliasesOfExistingEntries(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("short names and case aliases are resolved by Windows")
+	}
+	dir := t.TempDir()
+	files := map[string]string{".markitect/project.yaml": "project\n", "Docs/guide.md": "guide\n"}
+	for name, content := range files {
+		path := filepath.Join(dir, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	// Every NTFS volume resolves case variants, so only the 8.3 case skips.
+	for _, tc := range []struct {
+		name string
+		kind projectworkspace.ChangeKind
+		path string
+	}{
+		{"8.3 short name", projectworkspace.ChangeModify, "MARKIT~1/project.yaml"},
+		{"case variant", projectworkspace.ChangeModify, "docs/guide.md"},
+		{"case variant parent", projectworkspace.ChangeAdd, "docs/new.md"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if strings.HasPrefix(tc.path, "MARKIT~1/") && !resolvesAsShortName(dir, ".markitect", "MARKIT~1") {
+				t.Skip("volume generates no 8.3 short names")
+			}
+			if err := writeHelperFile(root, projectworkspace.Change{Kind: tc.kind, Path: tc.path, Mode: "100644", Content: []byte("alias\n")}); err == nil {
+				t.Errorf("helper write accepted alias %s", tc.path)
+			}
+		})
+	}
+	for name, want := range files {
+		if got, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(name))); err != nil || string(got) != want {
+			t.Errorf("alias write changed %s to %q (%v)", name, got, err)
+		}
+	}
+	if _, err := os.Lstat(filepath.Join(dir, "Docs", "new.md")); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("alias write created Docs/new.md: %v", err)
+	}
+	if err := writeHelperFile(root, projectworkspace.Change{Kind: projectworkspace.ChangeAdd, Path: "Docs/new.md", Mode: "100644", Content: []byte("new\n")}); err != nil {
+		t.Fatalf("helper write refused a stored name: %v", err)
+	}
 }
 
 func TestHelperRejectsForeignParentThreadBeforeReservation(t *testing.T) {

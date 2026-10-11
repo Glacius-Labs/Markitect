@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"sort"
 	"sync"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 )
 
 type workspaceState struct {
@@ -151,10 +153,23 @@ func (s *GitService) PrepareCandidate(ctx context.Context, r Request, overlay []
 			return Handle{}, err
 		}
 	}
-	for p, f := range initial {
+	// Sorted, so a path that aliases an earlier one is refused on every run.
+	paths := make([]string, 0, len(initial))
+	for p := range initial {
+		paths = append(paths, p)
+	}
+	sort.Strings(paths)
+	// portablePath is lexical. On Windows an alias such as MARKIT~1 for
+	// .markitect, or a case variant, would write to another entry here.
+	stored := guardedwrite.NewStoredNames(os.DirFS(cwd))
+	for _, p := range paths {
+		f := initial[p]
 		dest := filepath.Join(cwd, filepath.FromSlash(p))
 		if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
 			return Handle{}, err
+		}
+		if err := stored.Require(p); err != nil {
+			return Handle{}, fmt.Errorf("%w: %v", ErrInvalidRequest, err)
 		}
 		perm := fs.FileMode(0644)
 		if f.Mode == "100755" {
