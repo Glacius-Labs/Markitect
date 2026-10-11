@@ -100,7 +100,7 @@ func TestDismissIsSeparateFromImmutableEventAndLoadRequiresExactModelDigest(t *t
 	if err != nil {
 		t.Fatal(err)
 	}
-	managerID := bundle.Events[0].AffectedManagers[0]
+	managerID := managerExposingEvent(t, project, bundle.Events[0])
 	_, events, _, err := LoadForManager(root, project.Model.Digest, managerID, revision)
 	if err != nil || len(events) != 1 {
 		t.Fatalf("load manager events = %d, err = %v", len(events), err)
@@ -211,6 +211,28 @@ func committedModelFixture(t *testing.T) (root, base, revision string) {
 	gitCommitTest(t, root, "accepted model change")
 	revision = gitOutputTest(t, root, "rev-parse", "HEAD")
 	return root, base, revision
+}
+
+func managerExposingEvent(t *testing.T, project *projectwork.Project, event Event) string {
+	t.Helper()
+	for _, managerID := range event.AffectedManagers {
+		context, err := projectmodel.Context(project.Report, managerID)
+		if err != nil {
+			continue
+		}
+		for _, statement := range context.Statements {
+			if statement.ID == event.DefinitionID.Key() {
+				return managerID
+			}
+		}
+		for _, contract := range context.Contracts {
+			if contract.ID == event.DefinitionID.Key() {
+				return managerID
+			}
+		}
+	}
+	t.Fatalf("no affected ManagerContext exposes Statement %s", event.DefinitionID.Key())
+	return ""
 }
 
 // copyProjectWorldTest copies the project-world example into root.
@@ -326,7 +348,7 @@ func TestManagerHistoryUsesRevisionAncestryAcrossModelRevert(t *testing.T) {
 	if revertedProject.Model.Digest != baseProject.Model.Digest || changedProject.Model.Digest == baseProject.Model.Digest {
 		t.Fatalf("fixture did not form A→B→A model history: base=%s changed=%s reverted=%s", baseProject.Model.Digest, changedProject.Model.Digest, revertedProject.Model.Digest)
 	}
-	manager := first.Events[0].AffectedManagers[0]
+	manager := managerExposingEvent(t, revertedProject, first.Events[0])
 	briefings, events, _, err := LoadForManager(root, revertedProject.Model.Digest, manager, revertedRevision)
 	if err != nil {
 		t.Fatal(err)
