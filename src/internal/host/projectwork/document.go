@@ -110,14 +110,14 @@ func documentText(project *Project) string {
 	var out strings.Builder
 	fmt.Fprintf(&out, "%s\n\n# %s\n\n", generatedViewMarker, heading(project.Config.Name))
 	if project.Config.CoverageMode == "full" {
-		fmt.Fprintf(&out, "Model digest: %s  \nReport status: %s\n\n", project.Model.Digest, project.Report.Status)
+		fmt.Fprintf(&out, "Model digest: %s\n\nReport status: %s\n\n", project.Model.Digest, project.Report.Status)
 	} else if project.Provisional {
 		out.WriteString("Source: provisional working-tree snapshot\n\n")
 	} else {
 		fmt.Fprintf(&out, "Source revision: %s\n\n", project.Revision)
 	}
 	if project.Config.CoverageMode != "full" {
-		fmt.Fprintf(&out, "Project binding: %s  \nModel digest: %s  \nReport status: %s\n\n", project.Digest, project.Model.Digest, project.Report.Status)
+		fmt.Fprintf(&out, "Project binding: %s\n\nModel digest: %s\n\nReport status: %s\n\n", project.Digest, project.Model.Digest, project.Report.Status)
 	}
 	out.WriteString("The structural model compiled from the explicitly selected Definition files. This view does not establish that repository code, tests, or prose conform to the model. Declared checks are not evidence that they ran.\n\n")
 
@@ -256,7 +256,17 @@ func documentText(project *Project) string {
 			fmt.Fprintf(&out, "- %s (%s, %s): %s\n", inline(finding.Severity), inline(finding.Code), inline(finding.Subject), inline(finding.Message))
 		}
 	}
-	return out.String()
+	return trimLineEnds(out.String())
+}
+
+// trimLineEnds drops the spaces and tabs that empty or newline-terminated model
+// values leave at the end of a line, such as a root Manager's empty Namespace.
+func trimLineEnds(text string) string {
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		lines[i] = strings.TrimRight(line, " \t")
+	}
+	return strings.Join(lines, "\n")
 }
 
 func heading(value string) string { return strings.TrimSpace(strings.ReplaceAll(value, "\n", " ")) }
