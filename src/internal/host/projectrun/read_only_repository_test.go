@@ -48,7 +48,7 @@ func TestRunReadOnlyRepositoryUsesSelectedSourceAndPreservesCurrentWIP(t *testin
 		t.Fatal(err)
 	}
 	service := readOnlyRepositoryService(t)
-	privateDir := t.TempDir()
+	privateDir := filepath.Join(t.TempDir(), "private")
 	invoker := &readOnlyRepositoryInvoker{call: func(config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
 		if config.Transport != TransportCodexAppServer || request.SourceRevision != sourceSHA {
 			t.Fatalf("request did not preserve the selected native source revision: config=%+v request=%+v", config, request)
@@ -89,7 +89,7 @@ func TestRunReadOnlyRepositoryUsesSelectedSourceAndPreservesCurrentWIP(t *testin
 func TestRunReadOnlyRepositoryPreservesUnknownLifecycleAndOriginalError(t *testing.T) {
 	sourceRoot, sourceSHA, _, _ := readOnlyRepositoryRoots(t)
 	service := readOnlyRepositoryService(t)
-	privateDir := t.TempDir()
+	privateDir := filepath.Join(t.TempDir(), "private")
 	providerErr := errors.New("original native call error")
 	invoker := &readOnlyRepositoryInvoker{call: func(_ agentexec.Config, _ agentexec.Request, _ agentexec.RunOptions) (agentexec.RunResult, error) {
 		return agentexec.RunResult{Receipt: agentexec.Receipt{RunID: "readonly-unknown", Lifecycle: &agentexec.Lifecycle{
@@ -121,7 +121,7 @@ func TestRunReadOnlyRepositoryPreservesUnknownLifecycleAndOriginalError(t *testi
 func TestRunReadOnlyRepositoryPreservesUnexpectedWritesAndInvocationError(t *testing.T) {
 	sourceRoot, sourceSHA, _, _ := readOnlyRepositoryRoots(t)
 	service := readOnlyRepositoryService(t)
-	privateDir := t.TempDir()
+	privateDir := filepath.Join(t.TempDir(), "private")
 	providerErr := errors.New("provider reported a partial failure")
 	invoker := &readOnlyRepositoryInvoker{call: func(_ agentexec.Config, _ agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
 		if err := os.WriteFile(filepath.Join(options.Workspace.CWD, "unexpected.txt"), []byte("must be preserved\n"), 0o644); err != nil {

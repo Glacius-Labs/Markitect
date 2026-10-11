@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -799,6 +800,34 @@ func TestRunAuditsInputRootAfterProcess(t *testing.T) {
 	}
 	if result.Receipt.RetryCount != 0 {
 		t.Fatalf("unexpected retry: %#v", result.Receipt)
+	}
+}
+
+// Runs that start together share one private log directory. Whichever creates
+// it first, every caller must accept the same owner-only directory.
+func TestPreparePrivateLogDirectoryConcurrentFirstUseAgrees(t *testing.T) {
+	for attempt := 0; attempt < 10; attempt++ {
+		directory := filepath.Join(t.TempDir(), "runs", "private")
+		const callers = 8
+		prepared := make([]string, callers)
+		errs := make([]error, callers)
+		var wg sync.WaitGroup
+		for i := 0; i < callers; i++ {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				prepared[i], errs[i] = PreparePrivateLogDirectory(directory)
+			}(i)
+		}
+		wg.Wait()
+		for i := range prepared {
+			if errs[i] != nil || prepared[i] != prepared[0] {
+				t.Fatalf("concurrent preparation %d = %q, %v; want the shared directory %q", i, prepared[i], errs[i], prepared[0])
+			}
+		}
+		if err := verifyPrivateLogDirectory(prepared[0]); err != nil {
+			t.Fatalf("shared private log directory is not owner-only: %v", err)
+		}
 	}
 }
 

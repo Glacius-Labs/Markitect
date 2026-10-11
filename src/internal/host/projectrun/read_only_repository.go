@@ -84,6 +84,10 @@ func RunReadOnlyRepository(
 		closeErr := service.Close(context.Background(), handle)
 		return agentexec.RunResult{}, errors.Join(fmt.Errorf("resolve private workspace journal directory: %w", err), closeErr)
 	}
+	if _, err := agentexec.PreparePrivateLogDirectory(privateDir); err != nil {
+		closeErr := service.Close(context.Background(), handle)
+		return agentexec.RunResult{}, errors.Join(err, closeErr)
+	}
 	journalPath := filepath.Join(privateDir, "workspaces", handle.ID+".json")
 	journal := workspaceJournal{Request: workspaceRequest, Handle: handle, State: "prepared"}
 	if err := persistWorkspaceJournalOutsideCWD(journalPath, handle.CWD, journal); err != nil {

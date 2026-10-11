@@ -2,13 +2,17 @@ package projectrun
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
@@ -317,4 +321,107 @@ func addRootIntegrationCheck(t *testing.T, root string) {
 	writeE2E(t, root, "src/project-integration.txt", "pending integration\n")
 	gitE2E(t, root, "add", ".")
 	gitE2E(t, root, "commit", "-m", "add root integration check")
+}
+
+// nativeRootInvoker answers native Manager turns in-process, as a completed
+// App Server turn without edits that delegates to every direct child, and runs
+// process Managers through the fixture executor.
+type nativeRootInvoker struct{ process ProcessInvoker }
+
+func (i nativeRootInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	if config.Transport != TransportCodexAppServer {
+		return i.process.Run(ctx, config, request, options)
+	}
+	var task struct {
+		Phase          string   `json:"phase"`
+		DirectChildren []string `json:"directChildren"`
+	}
+	if err := json.Unmarshal(request.Context, &task); err != nil {
+		return agentexec.RunResult{}, err
+	}
+	response := TaskResponse{Status: "complete", Summary: "native root " + task.Phase, Integrated: task.Phase == "integrate", Delegations: []Delegation{},
+		ReworkRequests: []ReworkRequest{}, Questions: []string{}, Risks: []string{}, ResolvedQuestions: []string{}, ResolvedRisks: []string{}}
+	if task.Phase == "work" {
+		for _, child := range task.DirectChildren {
+			response.Delegations = append(response.Delegations, Delegation{ManagerID: child, Goal: "Implement the owned source artifact."})
+		}
+	}
+	reportJSON, err := json.Marshal(response)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	invocation, _, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	fingerprint, err := i.Fingerprint(config)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	tokens := int64(1)
+	usage := &agentexec.Usage{Source: "provider-reported", InputTokens: &tokens, OutputTokens: &tokens}
+	lifecycle := &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "native-root-session", TurnID: "native-root-" + task.Phase, State: "completed", Accounting: "partial",
+		StartRequests: []agentexec.RoleStartRequest{{RequestID: invocation.RunID, Role: agentexec.RoleExecutor, State: "completed"}}}
+	return agentexec.RunResult{
+		Response: agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce, Role: agentexec.RoleExecutor,
+			InputDigest: invocation.InputDigest, Outcome: agentexec.OutcomeProposed, CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{},
+			VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}, ReportJSON: reportJSON, Usage: usage},
+		Receipt: agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, InputDigest: invocation.InputDigest, ConfigDigest: fingerprint,
+			ProviderVersion: config.ProviderVersion, Outcome: agentexec.OutcomeProposed, Usage: usage, Lifecycle: lifecycle},
+	}, nil
+}
+
+func (nativeRootInvoker) Fingerprint(config agentexec.Config) (string, error) {
+	return NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+}
+
+// A run may mix a native Manager with bring-your-own process Managers. When the
+// native turn comes first it creates the run's private log directory, and the
+// later process turns must still accept it as their owner-only log directory.
+func TestNativeManagerBeforeProcessManagersSharesThePrivateLogDirectory(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	configureWorkspaceBridgeInstructions(t, root)
+	setupE2EProcess(t, "normal")
+	rootID := e2eManagerID("", "project-owner")
+	updateE2ERuntime(t, root, func(runtime *Runtime) {
+		base := runtime.Agents[rootID]
+		native := workspaceBridgeAgent(t, root)
+		native.Command, native.Model, native.ProviderVersion, native.Timeout = base.Command, base.Model, codexappserver.SupportedProviderVersion, base.Timeout
+		native.MaxStdoutBytes, native.MaxStderrBytes, native.Pricing = base.MaxStdoutBytes, base.MaxStderrBytes, base.Pricing
+		native.AppServer = &AppServerSettings{ReasoningEffort: "medium", MaxEventBytes: 1 << 20}
+		runtime.Agents[rootID] = native
+	})
+	host := projectworkHost()
+	workspaces, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	host.Workspaces = workspaces
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and integrate them.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := Run(context.Background(), host, nativeRootInvoker{}, root, plan.ID)
+	if err != nil || run.Status != StatusIntegrated {
+		t.Fatalf("native-first mixed run did not integrate: status=%s err=%v", run.Status, err)
+	}
+	if len(run.Invocations) != 4 || run.Invocations[0].TaskID != findTask(run.Tasks, rootID).ID {
+		t.Fatalf("run did not start natively and continue with both process Managers: %+v", run.Invocations)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err := store.runDir(plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidate, err := store.readCandidate(dir, run.Candidate.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := string(candidate.Files["src/orders/implementation.txt"].Content); got != "orders implementation v2\n" {
+		t.Fatalf("process Manager output = %q, want the fixture executor's bytes", got)
+	}
 }

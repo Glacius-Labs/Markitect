@@ -83,8 +83,8 @@ func newNativeJournal(privateLogDirectory, workspaceCWD, workspaceID string) (*n
 	if err != nil {
 		return nil, fmt.Errorf("resolve native private log directory: %w", err)
 	}
-	if err := ensurePrivateDirectory(privateAbs); err != nil {
-		return nil, err
+	if _, err := agentexec.PreparePrivateLogDirectory(privateAbs); err != nil {
+		return nil, fmt.Errorf("prepare native private log directory: %w", err)
 	}
 	privateReal, err := filepath.EvalSymlinks(privateAbs)
 	if err != nil {
