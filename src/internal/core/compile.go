@@ -371,7 +371,8 @@ func safeValue(value reflect.Value, depth int, budget *preflightBudget) bool {
 		if value.IsNil() {
 			return true
 		}
-		return safeValue(value.Elem(), depth+1, budget)
+		// An interface only wraps a value; only maps and slices add a level.
+		return safeValue(value.Elem(), depth, budget)
 	case reflect.Map:
 		if value.Type() != reflect.TypeOf(map[string]any{}) {
 			return false
