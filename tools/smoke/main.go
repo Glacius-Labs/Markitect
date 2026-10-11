@@ -150,8 +150,10 @@ func (s *smoke) bundle(revision, expectSHA string) error {
 func (s *smoke) distributionChecks(bootstrapDir, minimalRepo string) []check {
 	checks := []check{
 		{"bootstrap prints third-party notices", func() error { return s.notices(bootstrapDir) }},
+		{"version names the build platform", s.version},
 		{"init previews, refuses a stale digest and writes", func() error { return s.initProject(bootstrapDir) }},
 		{"onboard previews, writes and is idempotent", s.onboard},
+		{"a policy edit has the expected fixed-revision impact", s.policyEditImpact},
 		{"selective adoption replays with the packaged CLI", s.selectiveAdoption},
 		{"artifact accounting with the packaged checker", func() error {
 			_, err := s.run(s.repo, nil, s.tool("markitect-check-artifacts"), "--repo", s.repo, "--config", "markitect-artifacts.yaml")
@@ -363,6 +365,21 @@ func (s *smoke) onboard() error {
 		}
 	}
 	return s.checkConforms(func() (string, error) { return cli("check", "--repo", repo) })
+}
+
+func (s *smoke) checkSucceeds(check func() (string, error)) error {
+	out, err := check()
+	if err != nil {
+		return err
+	}
+	var report struct{ Status string }
+	if err := decode(out, &report); err != nil {
+		return err
+	}
+	if report.Status != "succeeded" {
+		return fmt.Errorf("check did not succeed: %s", tail(out))
+	}
+	return nil
 }
 
 func (s *smoke) checkConforms(check func() (string, error)) error {
