@@ -154,7 +154,7 @@ A zone is a code area in which only one active package changes code at a time. T
 ### Wave 2: one interface, a clean runtime
 
 - **Interface zone, in sequence:** CLI-02 → CLI-03 and MCP-01 → TEST-02 → AGENT-02.
-- **Runtime zone, in sequence:** TEST-04 → RUN-02 → TEST-03 → ARCH-05 → ARCH-06. TEST-05 runs alongside where it does not conflict.
+- **Runtime zone, in sequence:** TEST-03 → TEST-04 → RUN-02 → ARCH-05 → ARCH-06. The 12 October assignment puts TEST-03 first after the bug integration queue closes. TEST-05 needs a later explicit handoff or a separately assigned nonconflicting slice.
 - **Also in this wave:**
   - CI-03: one smoke driver.
   - CI-04: container runtime tier.
