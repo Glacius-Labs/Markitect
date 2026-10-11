@@ -143,12 +143,36 @@ type fullIntegrationObligation struct {
 	Checks       []projectmodel.Check     `json:"checks"`
 }
 
+// fullObligationView is how an integration obligation reaches the parent's
+// audit: every public contract and every Check the child owes, by ID, and only
+// the definitions the parent's ManagerContext does not already carry.
+type fullObligationView struct {
+	ChildManager        string                   `json:"childManager"`
+	Contracts           []string                 `json:"contracts"`
+	ContractDefinitions []projectmodel.Statement `json:"contractDefinitions"`
+	Artifacts           []projectmodel.Artifact  `json:"artifacts"`
+	Checks              []string                 `json:"checks"`
+	CheckDefinitions    []projectmodel.Check     `json:"checkDefinitions"`
+}
+
 type fullChildAssessment struct {
 	ManagerID   string             `json:"managerId"`
 	Status      string             `json:"status"`
 	Summary     string             `json:"summary"`
 	ScopeDigest string             `json:"scopeDigest"`
 	Subjects    []fullChildSubject `json:"subjects"`
+	// PrivateStatements counts the child's verdicts on Statements its parent
+	// may not see, so none is dropped and none is named.
+	PrivateStatements fullPrivateVerdicts `json:"privateStatements"`
+}
+
+const fullPrivateVerdictsNote = "The child's assessments of its non-public Statements, counted by outcome without their IDs."
+
+type fullPrivateVerdicts struct {
+	Note           string `json:"note"`
+	Passed         int    `json:"passed"`
+	Failed         int    `json:"failed"`
+	NotEstablished int    `json:"notEstablished"`
 }
 
 type fullChildSubject struct {
@@ -688,7 +712,7 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 		ModelDigest             string                      `json:"modelDigest"`
 		Manager                 projectmodel.ManagerContext `json:"manager"`
 		Briefing                BriefingContext             `json:"briefing"`
-		IntegrationObligations  []fullIntegrationObligation `json:"integrationObligations"`
+		IntegrationObligations  []fullObligationView        `json:"integrationObligations"`
 		ChildAssessments        []fullChildAssessment       `json:"childAssessments"`
 		CheckResults            []CheckResult               `json:"checkResults"`
 		FreshIntegrationReviews []fullReviewEvidence        `json:"freshIntegrationReviews"`
@@ -696,7 +720,7 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 		Subjects                []string                    `json:"requiredSubjects"`
 		Strictness              StrictnessProfile           `json:"strictness"`
 		ResponseSchema          json.RawMessage             `json:"responseSchema"`
-	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, briefing, fullObligationsOutsideContext(children, modelContext), childAssessments, checkResults, integrationReviews, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
+	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, briefing, fullObligationViews(children, modelContext), childAssessments, checkResults, integrationReviews, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
 	contextJSON, err := json.Marshal(contextPayload)
 	if err != nil {
 		return row, err
@@ -919,11 +943,11 @@ func fullIntegrationObligations(report projectmodel.Report, parentID string) []f
 	return out
 }
 
-// fullObligationsOutsideContext drops the child contracts and Checks whose
-// definitions the parent's ManagerContext already carries (contracts,
-// foreignChecks), so the audit reads each definition from one source. Required
-// subjects still name them, from the full obligations.
-func fullObligationsOutsideContext(obligations []fullIntegrationObligation, mc projectmodel.ManagerContext) []fullIntegrationObligation {
+// fullObligationViews lists every contract and Check each child owes by ID and
+// leaves the definitions the parent's ManagerContext already carries
+// (contracts, foreignChecks) to it, so the audit reads each definition from one
+// source.
+func fullObligationViews(obligations []fullIntegrationObligation, mc projectmodel.ManagerContext) []fullObligationView {
 	defined := map[string]bool{}
 	for _, statement := range mc.Contracts {
 		defined[statement.ID] = true
@@ -931,22 +955,23 @@ func fullObligationsOutsideContext(obligations []fullIntegrationObligation, mc p
 	for _, check := range mc.ForeignChecks {
 		defined[check.ID] = true
 	}
-	out := make([]fullIntegrationObligation, 0, len(obligations))
+	out := make([]fullObligationView, 0, len(obligations))
 	for _, obligation := range obligations {
-		contracts := []projectmodel.Statement{}
+		view := fullObligationView{ChildManager: obligation.ChildManager, Contracts: []string{}, ContractDefinitions: []projectmodel.Statement{},
+			Artifacts: obligation.Artifacts, Checks: []string{}, CheckDefinitions: []projectmodel.Check{}}
 		for _, statement := range obligation.Contracts {
+			view.Contracts = append(view.Contracts, statement.ID)
 			if !defined[statement.ID] {
-				contracts = append(contracts, statement)
+				view.ContractDefinitions = append(view.ContractDefinitions, statement)
 			}
 		}
-		checks := []projectmodel.Check{}
 		for _, check := range obligation.Checks {
+			view.Checks = append(view.Checks, check.ID)
 			if !defined[check.ID] {
-				checks = append(checks, check)
+				view.CheckDefinitions = append(view.CheckDefinitions, check)
 			}
 		}
-		obligation.Contracts, obligation.Checks = contracts, checks
-		out = append(out, obligation)
+		out = append(out, view)
 	}
 	return out
 }
@@ -977,7 +1002,14 @@ func fullAuditSubjects(mc projectmodel.ManagerContext, children []fullIntegratio
 	return uniqueSorted(out)
 }
 
+// fullChildAssessments passes each direct child's verdicts to its parent. A
+// verdict on a Statement the parent may not see is counted in
+// PrivateStatements instead of being listed with its ID.
 func fullChildAssessments(rows []FullManagerAssessment, report projectmodel.Report, parentID string) []fullChildAssessment {
+	public := map[string]bool{}
+	for _, statement := range report.Statements {
+		public[statement.ID] = statement.Public
+	}
 	var out []fullChildAssessment
 	for _, manager := range report.Managers {
 		if manager.Parent != parentID {
@@ -987,8 +1019,24 @@ func fullChildAssessments(rows []FullManagerAssessment, report projectmodel.Repo
 		if row == nil {
 			continue
 		}
-		child := fullChildAssessment{ManagerID: row.ManagerID, Status: row.Status, Summary: row.Summary, ScopeDigest: row.ScopeDigest, Subjects: []fullChildSubject{}}
+		child := fullChildAssessment{ManagerID: row.ManagerID, Status: row.Status, Summary: row.Summary, ScopeDigest: row.ScopeDigest, Subjects: []fullChildSubject{},
+			PrivateStatements: fullPrivateVerdicts{Note: fullPrivateVerdictsNote}}
 		for _, assessment := range row.Assessments {
+			statementID, isStatement := strings.CutPrefix(assessment.Subject, "statement:")
+			if !isStatement {
+				statementID, isStatement = strings.CutPrefix(assessment.Subject, "integration:statement:")
+			}
+			if isStatement && !public[statementID] {
+				switch assessment.Outcome {
+				case "pass":
+					child.PrivateStatements.Passed++
+				case "fail":
+					child.PrivateStatements.Failed++
+				default:
+					child.PrivateStatements.NotEstablished++
+				}
+				continue
+			}
 			child.Subjects = append(child.Subjects, fullChildSubject{Subject: assessment.Subject, Outcome: assessment.Outcome})
 		}
 		sort.Slice(child.Subjects, func(i, j int) bool { return child.Subjects[i].Subject < child.Subjects[j].Subject })
