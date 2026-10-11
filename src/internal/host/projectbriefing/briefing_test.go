@@ -493,7 +493,7 @@ spec:
 	if err != nil {
 		t.Fatal(err)
 	}
-	rootBriefings, rootEvents, _, err := LoadForManagerFrom(root, state, project.Model.Digest, ancestorID, revision)
+	rootBriefings, rootEvents, rootBinding, err := LoadForManagerFrom(root, state, project.Model.Digest, ancestorID, revision)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -512,13 +512,45 @@ spec:
 	if len(rootEvents) != 1 || rootEvents[0].DefinitionID.Name != "cancellation-integration" {
 		t.Fatalf("ancestor should retain its public contract event: %+v", rootEvents)
 	}
+	publicContractID := ""
+	for _, statement := range project.Report.Statements {
+		if statement.Name == "cancellation-transaction" && statement.Public {
+			publicContractID = statement.ID
+		}
+	}
+	contractRetained := false
+	for _, briefing := range rootBriefings {
+		for _, contract := range briefing.Contracts {
+			if contract.ID == publicContractID {
+				contractRetained = true
+			}
+			for _, relatedID := range append(append([]string(nil), contract.Uses...), contract.Requires...) {
+				if relatedID == privateStatement.ID {
+					t.Fatalf("Briefing.Contracts leaked private Statement relation %s", relatedID)
+				}
+			}
+		}
+	}
+	if publicContractID == "" || !contractRetained {
+		t.Fatalf("ancestor briefing lost its public contract obligation %s: %+v", publicContractID, rootBriefings)
+	}
+	_, _, repeatedRootBinding, err := LoadForManagerFrom(root, state, project.Model.Digest, ancestorID, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if repeatedRootBinding != rootBinding {
+		t.Fatalf("same ManagerContext produced unstable binding: first=%s repeated=%s", rootBinding, repeatedRootBinding)
+	}
 
-	_, childEvents, _, err := LoadForManagerFrom(root, state, project.Model.Digest, privateStatement.Owner, revision)
+	_, childEvents, childBinding, err := LoadForManagerFrom(root, state, project.Model.Digest, privateStatement.Owner, revision)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(childEvents) != 1 {
 		t.Fatalf("owning Manager lost its private Statement or public contract events: %+v", childEvents)
+	}
+	if childBinding == rootBinding {
+		t.Fatalf("distinct ManagerContexts produced identical bindings: %s", childBinding)
 	}
 	storedPrivateEvent := false
 	for _, bundle := range state.Briefings {
